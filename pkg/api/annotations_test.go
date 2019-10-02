@@ -14,17 +14,21 @@ import (
 func TestAnnotationsApiEndpoint(t *testing.T) {
 	Convey("Given an annotation without a dashboard id", t, func() {
 		cmd := dtos.PostAnnotationsCmd{
-			Time:     1000,
-			Text:     "annotation text",
-			Tags:     []string{"tag1", "tag2"},
-			IsRegion: false,
+			Time: 1000,
+			Text: "annotation text",
+			Tags: []string{"tag1", "tag2"},
 		}
 
 		updateCmd := dtos.UpdateAnnotationsCmd{
-			Time:     1000,
-			Text:     "annotation text",
-			Tags:     []string{"tag1", "tag2"},
-			IsRegion: false,
+			Time: 1000,
+			Text: "annotation text",
+			Tags: []string{"tag1", "tag2"},
+		}
+
+		patchCmd := dtos.PatchAnnotationsCmd{
+			Time: 1000,
+			Text: "annotation text",
+			Tags: []string{"tag1", "tag2"},
 		}
 
 		Convey("When user is an Org Viewer", func() {
@@ -40,14 +44,13 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 					So(sc.resp.Code, ShouldEqual, 403)
 				})
 
-				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
-					sc.handlerFunc = DeleteAnnotationByID
-					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
+				patchAnnotationScenario("When calling PATCH on", "/api/annotations/1", "/api/annotations/:annotationId", role, patchCmd, func(sc *scenarioContext) {
+					sc.fakeReqWithParams("PATCH", sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 403)
 				})
 
-				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/annotations/region/1", "/api/annotations/region/:regionId", role, func(sc *scenarioContext) {
-					sc.handlerFunc = DeleteAnnotationRegion
+				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
+					sc.handlerFunc = DeleteAnnotationByID
 					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 403)
 				})
@@ -67,14 +70,13 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 					So(sc.resp.Code, ShouldEqual, 200)
 				})
 
-				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
-					sc.handlerFunc = DeleteAnnotationByID
-					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
+				patchAnnotationScenario("When calling PATCH on", "/api/annotations/1", "/api/annotations/:annotationId", role, patchCmd, func(sc *scenarioContext) {
+					sc.fakeReqWithParams("PATCH", sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 200)
 				})
 
-				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/annotations/region/1", "/api/annotations/region/:regionId", role, func(sc *scenarioContext) {
-					sc.handlerFunc = DeleteAnnotationRegion
+				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
+					sc.handlerFunc = DeleteAnnotationByID
 					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 200)
 				})
@@ -87,17 +89,22 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 			Time:        1000,
 			Text:        "annotation text",
 			Tags:        []string{"tag1", "tag2"},
-			IsRegion:    false,
 			DashboardId: 1,
 			PanelId:     1,
 		}
 
 		updateCmd := dtos.UpdateAnnotationsCmd{
-			Time:     1000,
-			Text:     "annotation text",
-			Tags:     []string{"tag1", "tag2"},
-			IsRegion: false,
-			Id:       1,
+			Time: 1000,
+			Text: "annotation text",
+			Tags: []string{"tag1", "tag2"},
+			Id:   1,
+		}
+
+		patchCmd := dtos.PatchAnnotationsCmd{
+			Time: 8000,
+			Text: "annotation text 50",
+			Tags: []string{"foo", "bar"},
+			Id:   1,
 		}
 
 		deleteCmd := dtos.DeleteAnnotationsCmd{
@@ -136,14 +143,13 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 					So(sc.resp.Code, ShouldEqual, 403)
 				})
 
-				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
-					sc.handlerFunc = DeleteAnnotationByID
-					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
+				patchAnnotationScenario("When calling PATCH on", "/api/annotations/1", "/api/annotations/:annotationId", role, patchCmd, func(sc *scenarioContext) {
+					sc.fakeReqWithParams("PATCH", sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 403)
 				})
 
-				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/annotations/region/1", "/api/annotations/region/:regionId", role, func(sc *scenarioContext) {
-					sc.handlerFunc = DeleteAnnotationRegion
+				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
+					sc.handlerFunc = DeleteAnnotationByID
 					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 403)
 				})
@@ -163,14 +169,13 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 					So(sc.resp.Code, ShouldEqual, 200)
 				})
 
-				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
-					sc.handlerFunc = DeleteAnnotationByID
-					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
+				patchAnnotationScenario("When calling PATCH on", "/api/annotations/1", "/api/annotations/:annotationId", role, patchCmd, func(sc *scenarioContext) {
+					sc.fakeReqWithParams("PATCH", sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 200)
 				})
 
-				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/annotations/region/1", "/api/annotations/region/:regionId", role, func(sc *scenarioContext) {
-					sc.handlerFunc = DeleteAnnotationRegion
+				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
+					sc.handlerFunc = DeleteAnnotationByID
 					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 200)
 				})
@@ -189,6 +194,12 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 					sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 200)
 				})
+
+				patchAnnotationScenario("When calling PATCH on", "/api/annotations/1", "/api/annotations/:annotationId", role, patchCmd, func(sc *scenarioContext) {
+					sc.fakeReqWithParams("PATCH", sc.url, map[string]string{}).exec()
+					So(sc.resp.Code, ShouldEqual, 200)
+				})
+
 				deleteAnnotationsScenario("When calling POST on", "/api/annotations/mass-delete", "/api/annotations/mass-delete", role, deleteCmd, func(sc *scenarioContext) {
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 200)
@@ -259,6 +270,29 @@ func putAnnotationScenario(desc string, url string, routePattern string, role m.
 		annotations.SetRepository(fakeAnnoRepo)
 
 		sc.m.Put(routePattern, sc.defaultHandler)
+
+		fn(sc)
+	})
+}
+
+func patchAnnotationScenario(desc string, url string, routePattern string, role m.RoleType, cmd dtos.PatchAnnotationsCmd, fn scenarioFunc) {
+	Convey(desc+" "+url, func() {
+		defer bus.ClearBusHandlers()
+
+		sc := setupScenarioContext(url)
+		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
+			sc.context = c
+			sc.context.UserId = TestUserID
+			sc.context.OrgId = TestOrgID
+			sc.context.OrgRole = role
+
+			return PatchAnnotation(c, cmd)
+		})
+
+		fakeAnnoRepo = &fakeAnnotationsRepo{}
+		annotations.SetRepository(fakeAnnoRepo)
+
+		sc.m.Patch(routePattern, sc.defaultHandler)
 
 		fn(sc)
 	})

@@ -26,7 +26,7 @@ type StackdriverBucketOptions struct {
 		Scale            float64 `json:"scale"`
 	} `json:"exponentialBuckets"`
 	ExplicitBuckets *struct {
-		Bounds []int64 `json:"bounds"`
+		Bounds []float64 `json:"bounds"`
 	} `json:"explicitBuckets"`
 }
 

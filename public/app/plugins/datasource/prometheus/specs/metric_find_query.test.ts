@@ -1,26 +1,29 @@
-import moment from 'moment';
 import { PrometheusDatasource } from '../datasource';
 import PrometheusMetricFindQuery from '../metric_find_query';
+//@ts-ignore
 import q from 'q';
+import { toUtc } from '@grafana/data';
+import { DataSourceInstanceSettings } from '@grafana/ui';
+import { PromOptions } from '../types';
 
 describe('PrometheusMetricFindQuery', () => {
-  const instanceSettings = {
+  const instanceSettings = ({
     url: 'proxied',
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
     jsonData: { httpMethod: 'GET' },
-  };
+  } as unknown) as DataSourceInstanceSettings<PromOptions>;
   const raw = {
-    from: moment.utc('2018-04-25 10:00'),
-    to: moment.utc('2018-04-25 11:00'),
+    from: toUtc('2018-04-25 10:00'),
+    to: toUtc('2018-04-25 11:00'),
   };
   const ctx: any = {
     backendSrvMock: {
       datasourceRequest: jest.fn(() => Promise.resolve({})),
     },
     templateSrvMock: {
-      replace: a => a,
+      replace: (a: string) => a,
     },
     timeSrvMock: {
       timeRange: () => ({
@@ -42,6 +45,25 @@ describe('PrometheusMetricFindQuery', () => {
   });
 
   describe('When performing metricFindQuery', () => {
+    it('label_names() should generate label name search query', async () => {
+      const query = ctx.setupMetricFindQuery({
+        query: 'label_names()',
+        response: {
+          data: ['name1', 'name2', 'name3'],
+        },
+      });
+      const results = await query.process();
+
+      expect(results).toHaveLength(3);
+      expect(ctx.backendSrvMock.datasourceRequest).toHaveBeenCalledTimes(1);
+      expect(ctx.backendSrvMock.datasourceRequest).toHaveBeenCalledWith({
+        method: 'GET',
+        url: 'proxied/api/v1/labels',
+        silent: true,
+        headers: {},
+      });
+    });
+
     it('label_values(resource) should generate label search query', async () => {
       const query = ctx.setupMetricFindQuery({
         query: 'label_values(resource)',
@@ -57,6 +79,7 @@ describe('PrometheusMetricFindQuery', () => {
         method: 'GET',
         url: 'proxied/api/v1/label/resource/values',
         silent: true,
+        headers: {},
       });
     });
 
@@ -79,6 +102,7 @@ describe('PrometheusMetricFindQuery', () => {
         method: 'GET',
         url: `proxied/api/v1/series?match[]=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
         silent: true,
+        headers: {},
       });
     });
 
@@ -103,6 +127,7 @@ describe('PrometheusMetricFindQuery', () => {
           'metric{label1="foo", label2="bar", label3="baz"}'
         )}&start=${raw.from.unix()}&end=${raw.to.unix()}`,
         silent: true,
+        headers: {},
       });
     });
 
@@ -127,6 +152,7 @@ describe('PrometheusMetricFindQuery', () => {
         method: 'GET',
         url: `proxied/api/v1/series?match[]=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
         silent: true,
+        headers: {},
       });
     });
 
@@ -145,6 +171,7 @@ describe('PrometheusMetricFindQuery', () => {
         method: 'GET',
         url: 'proxied/api/v1/label/__name__/values',
         silent: true,
+        headers: {},
       });
     });
 
@@ -172,6 +199,7 @@ describe('PrometheusMetricFindQuery', () => {
         method: 'GET',
         url: `proxied/api/v1/query?query=metric&time=${raw.to.unix()}`,
         requestId: undefined,
+        headers: {},
       });
     });
 
@@ -199,6 +227,7 @@ describe('PrometheusMetricFindQuery', () => {
           'up{job="job1"}'
         )}&start=${raw.from.unix()}&end=${raw.to.unix()}`,
         silent: true,
+        headers: {},
       });
     });
   });

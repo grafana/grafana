@@ -1,97 +1,28 @@
+// Libraries
 import React, { PureComponent } from 'react';
 
-// TODO make this datasource-plugin-dependent
-import QueryField from './PromQueryField';
+// Components
+import QueryRow from './QueryRow';
 
-class QueryRow extends PureComponent<any, {}> {
-  onChangeQuery = (value, override?: boolean) => {
-    const { index, onChangeQuery } = this.props;
-    if (onChangeQuery) {
-      onChangeQuery(value, index, override);
-    }
-  };
+// Types
+import { Emitter } from 'app/core/utils/emitter';
+import { ExploreId } from 'app/types/explore';
 
-  onClickAddButton = () => {
-    const { index, onAddQueryRow } = this.props;
-    if (onAddQueryRow) {
-      onAddQueryRow(index);
-    }
-  };
-
-  onClickClearButton = () => {
-    this.onChangeQuery('', true);
-  };
-
-  onClickHintFix = action => {
-    const { index, onClickHintFix } = this.props;
-    if (onClickHintFix) {
-      onClickHintFix(action, index);
-    }
-  };
-
-  onClickRemoveButton = () => {
-    const { index, onRemoveQueryRow } = this.props;
-    if (onRemoveQueryRow) {
-      onRemoveQueryRow(index);
-    }
-  };
-
-  onPressEnter = () => {
-    const { onExecuteQuery } = this.props;
-    if (onExecuteQuery) {
-      onExecuteQuery();
-    }
-  };
-
-  render() {
-    const { history, query, queryError, queryHint, request, supportsLogs } = this.props;
-    return (
-      <div className="query-row">
-        <div className="query-row-field">
-          <QueryField
-            error={queryError}
-            hint={queryHint}
-            initialQuery={query}
-            history={history}
-            portalPrefix="explore"
-            onClickHintFix={this.onClickHintFix}
-            onPressEnter={this.onPressEnter}
-            onQueryChange={this.onChangeQuery}
-            request={request}
-            supportsLogs={supportsLogs}
-          />
-        </div>
-        <div className="query-row-tools">
-          <button className="btn navbar-button navbar-button--tight" onClick={this.onClickClearButton}>
-            <i className="fa fa-times" />
-          </button>
-          <button className="btn navbar-button navbar-button--tight" onClick={this.onClickAddButton}>
-            <i className="fa fa-plus" />
-          </button>
-          <button className="btn navbar-button navbar-button--tight" onClick={this.onClickRemoveButton}>
-            <i className="fa fa-minus" />
-          </button>
-        </div>
-      </div>
-    );
-  }
+interface QueryRowsProps {
+  className?: string;
+  exploreEvents: Emitter;
+  exploreId: ExploreId;
+  queryKeys: string[];
 }
 
-export default class QueryRows extends PureComponent<any, {}> {
+export default class QueryRows extends PureComponent<QueryRowsProps> {
   render() {
-    const { className = '', queries, queryErrors, queryHints, ...handlers } = this.props;
+    const { className = '', exploreEvents, exploreId, queryKeys } = this.props;
     return (
       <div className={className}>
-        {queries.map((q, index) => (
-          <QueryRow
-            key={q.key}
-            index={index}
-            query={q.query}
-            queryError={queryErrors[index]}
-            queryHint={queryHints[index]}
-            {...handlers}
-          />
-        ))}
+        {queryKeys.map((key, index) => {
+          return <QueryRow key={key} exploreEvents={exploreEvents} exploreId={exploreId} index={index} />;
+        })}
       </div>
     );
   }

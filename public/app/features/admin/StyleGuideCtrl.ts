@@ -1,4 +1,6 @@
 import config from 'app/core/config';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { NavModelSrv } from 'app/core/core';
 
 export default class StyleGuideCtrl {
   theme: string;
@@ -8,8 +10,8 @@ export default class StyleGuideCtrl {
   navModel: any;
 
   /** @ngInject */
-  constructor(private $routeParams, private backendSrv, navModelSrv) {
-    this.navModel = navModelSrv.getNav('cfg', 'admin', 'styleguide', 1);
+  constructor(private $routeParams: any, private backendSrv: BackendSrv, navModelSrv: NavModelSrv) {
+    this.navModel = navModelSrv.getNav('admin', 'styleguide', 0);
     this.theme = config.bootData.user.lightTheme ? 'light' : 'dark';
   }
 
@@ -25,4 +27,3 @@ export default class StyleGuideCtrl {
     });
   }
 }
-

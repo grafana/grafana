@@ -7,7 +7,7 @@ apiVersion: 1
 #     orgId: 1
 
 # # list of datasources to insert/update depending
-# # on what's available in the datbase
+# # on what's available in the database
 #datasources:
 #   # <string, required> name of the datasource. Required
 # - name: Graphite

@@ -17,7 +17,6 @@ var grafanaComProxyTransport = &http.Transport{
 	Dial: (&net.Dialer{
 		Timeout:   30 * time.Second,
 		KeepAlive: 30 * time.Second,
-		DualStack: true,
 	}).Dial,
 	TLSHandshakeTimeout: 10 * time.Second,
 }
@@ -30,7 +29,7 @@ func ReverseProxyGnetReq(proxyPath string) *httputil.ReverseProxy {
 		req.URL.Host = url.Host
 		req.Host = url.Host
 
-		req.URL.Path = util.JoinUrlFragments(url.Path+"/api", proxyPath)
+		req.URL.Path = util.JoinURLFragments(url.Path+"/api", proxyPath)
 
 		// clear cookie headers
 		req.Header.Del("Cookie")

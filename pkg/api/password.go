@@ -4,10 +4,18 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func SendResetPasswordEmail(c *m.ReqContext, form dtos.SendResetPasswordEmailForm) Response {
+	if setting.LDAPEnabled || setting.AuthProxyEnabled {
+		return Error(401, "Not allowed to reset password when LDAP or Auth Proxy is enabled", nil)
+	}
+	if setting.DisableLoginForm {
+		return Error(401, "Not allowed to reset password when login form is disabled", nil)
+	}
+
 	userQuery := m.GetUserByLoginQuery{LoginOrEmail: form.UserOrEmail}
 
 	if err := bus.Dispatch(&userQuery); err != nil {

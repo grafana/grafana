@@ -19,14 +19,16 @@
 package grpc
 
 import (
+	"io"
 	"sync"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
+	"google.golang.org/grpc/internal/channelz"
+	"google.golang.org/grpc/internal/transport"
 	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/transport"
 )
 
 // pickerWrapper is a wrapper of balancer.Picker. It blocks on certain pick
@@ -72,6 +74,23 @@ func (bp *pickerWrapper) updatePicker(p balancer.Picker) {
 	close(bp.blockingCh)
 	bp.blockingCh = make(chan struct{})
 	bp.mu.Unlock()
+}
+
+func doneChannelzWrapper(acw *acBalancerWrapper, done func(balancer.DoneInfo)) func(balancer.DoneInfo) {
+	acw.mu.Lock()
+	ac := acw.ac
+	acw.mu.Unlock()
+	ac.incrCallsStarted()
+	return func(b balancer.DoneInfo) {
+		if b.Err != nil && b.Err != io.EOF {
+			ac.incrCallsFailed()
+		} else {
+			ac.incrCallsSucceeded()
+		}
+		if done != nil {
+			done(b)
+		}
+	}
 }
 
 // pick returns the transport that will be used for the RPC.
@@ -137,6 +156,9 @@ func (bp *pickerWrapper) pick(ctx context.Context, failfast bool, opts balancer.
 			continue
 		}
 		if t, ok := acw.getAddrConn().getReadyTransport(); ok {
+			if channelz.IsOn() {
+				return t, doneChannelzWrapper(acw, done), nil
+			}
 			return t, done, nil
 		}
 		grpclog.Infof("blockingPicker: the picked transport is not ready, loop back to repick")

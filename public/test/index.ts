@@ -2,7 +2,7 @@
 // context.keys().forEach(context);
 // module.exports = context;
 
-import 'babel-polyfill';
+import '@babel/polyfill';
 import 'jquery';
 import angular from 'angular';
 import 'angular-mocks';

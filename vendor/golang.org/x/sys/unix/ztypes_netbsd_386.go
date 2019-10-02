@@ -6,11 +6,11 @@
 package unix
 
 const (
-	sizeofPtr      = 0x4
-	sizeofShort    = 0x2
-	sizeofInt      = 0x4
-	sizeofLong     = 0x4
-	sizeofLongLong = 0x8
+	SizeofPtr      = 0x4
+	SizeofShort    = 0x2
+	SizeofInt      = 0x4
+	SizeofLong     = 0x4
+	SizeofLongLong = 0x8
 )
 
 type (
@@ -57,23 +57,23 @@ type Rlimit struct {
 type _Gid_t uint32
 
 type Stat_t struct {
-	Dev           uint64
-	Mode          uint32
-	Ino           uint64
-	Nlink         uint32
-	Uid           uint32
-	Gid           uint32
-	Rdev          uint64
-	Atimespec     Timespec
-	Mtimespec     Timespec
-	Ctimespec     Timespec
-	Birthtimespec Timespec
-	Size          int64
-	Blocks        int64
-	Blksize       uint32
-	Flags         uint32
-	Gen           uint32
-	Spare         [2]uint32
+	Dev     uint64
+	Mode    uint32
+	Ino     uint64
+	Nlink   uint32
+	Uid     uint32
+	Gid     uint32
+	Rdev    uint64
+	Atim    Timespec
+	Mtim    Timespec
+	Ctim    Timespec
+	Btim    Timespec
+	Size    int64
+	Blocks  int64
+	Blksize uint32
+	Flags   uint32
+	Gen     uint32
+	Spare   [2]uint32
 }
 
 type Statfs_t [0]byte
@@ -402,8 +402,16 @@ type Winsize struct {
 	Ypixel uint16
 }
 
+type Ptmget struct {
+	Cfd int32
+	Sfd int32
+	Cn  [1024]byte
+	Sn  [1024]byte
+}
+
 const (
 	AT_FDCWD            = -0x64
+	AT_SYMLINK_FOLLOW   = 0x400
 	AT_SYMLINK_NOFOLLOW = 0x200
 )
 
@@ -445,4 +453,14 @@ type Utsname struct {
 	Release  [256]byte
 	Version  [256]byte
 	Machine  [256]byte
+}
+
+const SizeofClockinfo = 0x14
+
+type Clockinfo struct {
+	Hz      int32
+	Tick    int32
+	Tickadj int32
+	Stathz  int32
+	Profhz  int32
 }

@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -88,7 +88,7 @@ func CreateOrg(c *m.ReqContext, cmd m.CreateOrgCommand) Response {
 		return Error(500, "Failed to create organization", err)
 	}
 
-	metrics.M_Api_Org_Create.Inc()
+	metrics.MApiOrgCreate.Inc()
 
 	return JSON(200, &util.DynMap{
 		"orgId":   cmd.Result.Id,

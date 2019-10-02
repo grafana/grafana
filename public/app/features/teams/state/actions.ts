@@ -1,5 +1,5 @@
 import { ThunkAction } from 'redux-thunk';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { StoreState, Team, TeamGroup, TeamMember } from 'app/types';
 import { updateNavIndex, UpdateNavIndexAction } from 'app/core/actions';
 import { buildNavModel } from './navModel';
@@ -158,5 +158,14 @@ export function deleteTeam(id: number): ThunkResult<void> {
   return async dispatch => {
     await getBackendSrv().delete(`/api/teams/${id}`);
     dispatch(loadTeams());
+  };
+}
+
+export function updateTeamMember(member: TeamMember): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv().put(`/api/teams/${member.teamId}/members/${member.userId}`, {
+      permission: member.permission,
+    });
+    dispatch(loadTeamMembers());
   };
 }

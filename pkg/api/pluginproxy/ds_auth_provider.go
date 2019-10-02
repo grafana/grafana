@@ -1,17 +1,16 @@
 package pluginproxy
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
-	"text/template"
 
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util"
+	"golang.org/x/oauth2/google"
 )
 
 //ApplyRoute should use the plugin route data to set auth headers and custom headers
@@ -23,7 +22,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		SecureJsonData: ds.SecureJsonData.Decrypt(),
 	}
 
-	interpolatedURL, err := interpolateString(route.Url, data)
+	interpolatedURL, err := InterpolateString(route.Url, data)
 	if err != nil {
 		logger.Error("Error interpolating proxy url", "error", err)
 		return
@@ -38,7 +37,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	req.URL.Scheme = routeURL.Scheme
 	req.URL.Host = routeURL.Host
 	req.Host = routeURL.Host
-	req.URL.Path = util.JoinUrlFragments(routeURL.Path, proxyPath)
+	req.URL.Path = util.JoinURLFragments(routeURL.Path, proxyPath)
 
 	if err := addHeaders(&req.Header, route, data); err != nil {
 		logger.Error("Failed to render plugin headers", "error", err)
@@ -50,39 +49,39 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		if token, err := tokenProvider.getAccessToken(data); err != nil {
 			logger.Error("Failed to get access token", "error", err)
 		} else {
-			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 		}
 	}
 
-	if route.JwtTokenAuth != nil {
+	authenticationType := ds.JsonData.Get("authenticationType").MustString("jwt")
+	if route.JwtTokenAuth != nil && authenticationType == "jwt" {
 		if token, err := tokenProvider.getJwtAccessToken(ctx, data); err != nil {
 			logger.Error("Failed to get access token", "error", err)
 		} else {
-			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 		}
 	}
+
+	if authenticationType == "gce" {
+		tokenSrc, err := google.DefaultTokenSource(ctx, route.JwtTokenAuth.Scopes...)
+		if err != nil {
+			logger.Error("Failed to get default token from meta data server", "error", err)
+		} else {
+			token, err := tokenSrc.Token()
+			if err != nil {
+				logger.Error("Failed to get default access token from meta data server", "error", err)
+			} else {
+				req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
+			}
+		}
+	}
+
 	logger.Info("Requesting", "url", req.URL.String())
-
-}
-
-func interpolateString(text string, data templateData) (string, error) {
-	t, err := template.New("content").Parse(text)
-	if err != nil {
-		return "", fmt.Errorf("could not parse template %s", text)
-	}
-
-	var contentBuf bytes.Buffer
-	err = t.Execute(&contentBuf, data)
-	if err != nil {
-		return "", fmt.Errorf("failed to execute template %s", text)
-	}
-
-	return contentBuf.String(), nil
 }
 
 func addHeaders(reqHeaders *http.Header, route *plugins.AppPluginRoute, data templateData) error {
 	for _, header := range route.Headers {
-		interpolated, err := interpolateString(header.Content, data)
+		interpolated, err := InterpolateString(header.Content, data)
 		if err != nil {
 			return err
 		}

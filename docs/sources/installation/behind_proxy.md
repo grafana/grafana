@@ -35,6 +35,8 @@ domain = foo.bar
 
 ### Nginx configuration
 
+Nginx is a high performance load balancer, web server and reverse proxy: https://www.nginx.com/
+
 ```bash
 server {
   listen 80;

@@ -3,7 +3,9 @@ package notifications
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -25,10 +27,12 @@ type Webhook struct {
 }
 
 var netTransport = &http.Transport{
+	TLSClientConfig: &tls.Config{
+		Renegotiation: tls.RenegotiateFreelyAsClient,
+	},
 	Proxy: http.ProxyFromEnvironment,
 	Dial: (&net.Dialer{
-		Timeout:   30 * time.Second,
-		DualStack: true,
+		Timeout: 30 * time.Second,
 	}).Dial,
 	TLSHandshakeTimeout: 5 * time.Second,
 }
@@ -69,11 +73,14 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 		return err
 	}
 
+	defer resp.Body.Close()
+
 	if resp.StatusCode/100 == 2 {
+		// flushing the body enables the transport to reuse the same connection
+		io.Copy(ioutil.Discard, resp.Body)
 		return nil
 	}
 
-	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err

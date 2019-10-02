@@ -80,12 +80,12 @@ describe('Alert rules', () => {
 
   it('should set alert rules', () => {
     const action: Action = {
-      type: ActionTypes.LoadAlertRules,
+      type: ActionTypes.LoadedAlertRules,
       payload: payload,
     };
 
     const result = alertRulesReducer(initialState, action);
-
-    expect(result.items).toEqual(payload);
+    expect(result.items.length).toEqual(payload.length);
+    expect(result.items[0].stateClass).toEqual('alert-state-critical');
   });
 });

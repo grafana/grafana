@@ -6,22 +6,24 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
 const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 type postgresMacroEngine struct {
-	*tsdb.SqlMacroEngineBase
+	*sqleng.SqlMacroEngineBase
 	timeRange   *tsdb.TimeRange
 	query       *tsdb.Query
 	timescaledb bool
 }
 
-func newPostgresMacroEngine(timescaledb bool) tsdb.SqlMacroEngine {
+func newPostgresMacroEngine(timescaledb bool) sqleng.SqlMacroEngine {
 	return &postgresMacroEngine{
-		SqlMacroEngineBase: tsdb.NewSqlMacroEngineBase(),
+		SqlMacroEngineBase: sqleng.NewSqlMacroEngineBase(),
 		timescaledb:        timescaledb,
 	}
 }
@@ -86,17 +88,21 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
 
-		return fmt.Sprintf("%s BETWEEN '%s' AND '%s'", args[0], m.timeRange.GetFromAsTimeUTC().Format(time.RFC3339), m.timeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
+		return fmt.Sprintf("%s BETWEEN '%s' AND '%s'", args[0], m.timeRange.GetFromAsTimeUTC().Format(time.RFC3339Nano), m.timeRange.GetToAsTimeUTC().Format(time.RFC3339Nano)), nil
+	case "__timeFrom":
+		return fmt.Sprintf("'%s'", m.timeRange.GetFromAsTimeUTC().Format(time.RFC3339Nano)), nil
+	case "__timeTo":
+		return fmt.Sprintf("'%s'", m.timeRange.GetToAsTimeUTC().Format(time.RFC3339Nano)), nil
 	case "__timeGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval and optional fill value", name)
 		}
-		interval, err := time.ParseDuration(strings.Trim(args[1], `'`))
+		interval, err := gtime.ParseInterval(strings.Trim(args[1], `'`))
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
 		if len(args) == 3 {
-			err := tsdb.SetupFillmode(m.query, interval, args[2])
+			err := sqleng.SetupFillmode(m.query, interval, args[2])
 			if err != nil {
 				return "", err
 			}
@@ -104,9 +110,13 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 
 		if m.timescaledb {
 			return fmt.Sprintf("time_bucket('%vs',%s)", interval.Seconds(), args[0]), nil
-		} else {
-			return fmt.Sprintf("floor(extract(epoch from %s)/%v)*%v", args[0], interval.Seconds(), interval.Seconds()), nil
 		}
+
+		return fmt.Sprintf(
+			"floor(extract(epoch from %s)/%v)*%v", args[0],
+			interval.Seconds(),
+			interval.Seconds(),
+		), nil
 	case "__timeGroupAlias":
 		tg, err := m.evaluateMacro("__timeGroup", args)
 		if err == nil {
@@ -118,16 +128,25 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
 		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], m.timeRange.GetFromAsSecondsEpoch(), args[0], m.timeRange.GetToAsSecondsEpoch()), nil
+	case "__unixEpochNanoFilter":
+		if len(args) == 0 {
+			return "", fmt.Errorf("missing time column argument for macro %v", name)
+		}
+		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], m.timeRange.GetFromAsTimeUTC().UnixNano(), args[0], m.timeRange.GetToAsTimeUTC().UnixNano()), nil
+	case "__unixEpochNanoFrom":
+		return fmt.Sprintf("%d", m.timeRange.GetFromAsTimeUTC().UnixNano()), nil
+	case "__unixEpochNanoTo":
+		return fmt.Sprintf("%d", m.timeRange.GetToAsTimeUTC().UnixNano()), nil
 	case "__unixEpochGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval and optional fill value", name)
 		}
-		interval, err := time.ParseDuration(strings.Trim(args[1], `'`))
+		interval, err := gtime.ParseInterval(strings.Trim(args[1], `'`))
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
 		if len(args) == 3 {
-			err := tsdb.SetupFillmode(m.query, interval, args[2])
+			err := sqleng.SetupFillmode(m.query, interval, args[2])
 			if err != nil {
 				return "", err
 			}

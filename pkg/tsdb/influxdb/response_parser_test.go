@@ -75,7 +75,10 @@ func TestInfluxdbResponseParser(t *testing.T) {
 							{
 								Name:    "cpu.upc",
 								Columns: []string{"time", "mean", "sum"},
-								Tags:    map[string]string{"datacenter": "America"},
+								Tags: map[string]string{
+									"datacenter":     "America",
+									"dc.region.name": "Northeast",
+								},
 								Values: [][]interface{}{
 									{json.Number("111"), json.Number("222"), json.Number("333")},
 								},
@@ -158,6 +161,13 @@ func TestInfluxdbResponseParser(t *testing.T) {
 					result := parser.Parse(response, query)
 
 					So(result.Series[0].Name, ShouldEqual, "alias America")
+				})
+
+				Convey("tag alias with periods", func() {
+					query := &Query{Alias: "alias [[tag_dc.region.name]]"}
+					result := parser.Parse(response, query)
+
+					So(result.Series[0].Name, ShouldEqual, "alias Northeast")
 				})
 			})
 		})

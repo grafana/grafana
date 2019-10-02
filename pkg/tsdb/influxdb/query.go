@@ -2,10 +2,9 @@ package influxdb
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
-
-	"regexp"
 
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -26,6 +25,7 @@ func (query *Query) Build(queryContext *tsdb.TsdbQuery) (string, error) {
 		res += query.renderWhereClause()
 		res += query.renderTimeFilter(queryContext)
 		res += query.renderGroupBy(queryContext)
+		res += query.renderTz()
 	}
 
 	calculator := tsdb.NewIntervalCalculator(&tsdb.IntervalOptions{})
@@ -153,4 +153,12 @@ func (query *Query) renderGroupBy(queryContext *tsdb.TsdbQuery) string {
 	}
 
 	return groupBy
+}
+
+func (query *Query) renderTz() string {
+	tz := query.Tz
+	if tz == "" {
+		return ""
+	}
+	return fmt.Sprintf(" tz('%s')", tz)
 }

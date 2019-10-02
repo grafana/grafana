@@ -2,9 +2,10 @@
   "type": "datasource",
   "name": "Elasticsearch",
   "id": "elasticsearch",
+  "category": "logging",
 
   "info": {
-    "description": "Elasticsearch Data Source for Grafana",
+    "description": "Open source logging & analytics database",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"
@@ -14,15 +15,13 @@
       "small": "img/elasticsearch.svg",
       "large": "img/elasticsearch.svg"
     },
-    "links": [
-      {"name": "elastic.co", "url": "https://www.elastic.co/products/elasticsearch"}
-    ],
-    "version": "5.0.0"
+    "links": [{ "name": "Learn more", "url": "https://grafana.com/docs/features/datasources/elasticsearch/" }]
   },
 
   "alerting": true,
   "annotations": true,
   "metrics": true,
+  "logs": true,
 
   "queryOptions": {
     "minInterval": true

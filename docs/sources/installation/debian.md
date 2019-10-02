@@ -13,53 +13,45 @@ weight = 1
 
 # Installing on Debian / Ubuntu
 
-Description | Download
------------- | -------------
-Stable for Debian-based Linux | [x86-64](https://grafana.com/grafana/download?platform=linux)
-Stable for Debian-based Linux | [ARM64](https://grafana.com/grafana/download?platform=arm)
-Stable for Debian-based Linux | [ARMv7](https://grafana.com/grafana/download?platform=arm)
-
 Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
 installation.
 
-## Install Stable
+## Download
 
+Go to the [download page](https://grafana.com/grafana/download?platform=linux) for the latest download
+links.
 
 ```bash
 wget <debian package url>
-sudo apt-get install -y adduser libfontconfig
-sudo dpkg -i grafana_5.1.4_amd64.deb
+sudo apt-get install -y adduser libfontconfig1
+sudo dpkg -i grafana_<version>_amd64.deb
 ```
 
-Example:
-
-```bash
-wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_5.1.4_amd64.deb
-sudo apt-get install -y adduser libfontconfig
-sudo dpkg -i grafana_5.1.4_amd64.deb
-```
+You will find package urls on the [download page](https://grafana.com/grafana/download?platform=linux).
 
 ## APT Repository
 
-Add the following line to your `/etc/apt/sources.list` file.
-
+The command `add-apt-repository` isn't a default app on Debian 9 and requires
 ```bash
-deb https://packagecloud.io/grafana/stable/debian/ stretch main
+apt-get install -y software-properties-common
 ```
 
-Use the above line even if you are on Ubuntu or another Debian version.
-There is also a testing repository if you want beta or release
-candidates.
+Install the repository for stable releases
 
 ```bash
-deb https://packagecloud.io/grafana/testing/debian/ stretch main
+sudo add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"
 ```
 
-Then add the [Package Cloud](https://packagecloud.io/grafana) key. This
-allows you to install signed packages.
+There is a separate repository if you want beta releases.
 
 ```bash
-curl https://packagecloud.io/gpg.key | sudo apt-key add -
+sudo add-apt-repository "deb https://packages.grafana.com/oss/deb beta main"
+```
+
+Use the above line even if you are on Ubuntu or another Debian version. Then add our gpg key. This allows you to install signed packages.
+
+```bash
+wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
 ```
 
 Update your Apt repositories and install Grafana
@@ -99,6 +91,8 @@ sudo service grafana-server start
 This will start the `grafana-server` process as the `grafana` user,
 which was created during the package installation. The default HTTP port
 is `3000` and default user and group is `admin`.
+
+Default login and password `admin`/ `admin`
 
 To configure the Grafana server to start at boot time:
 
@@ -147,10 +141,10 @@ those options.
 
 ### Adding data sources
 
-- [Graphite]({{< relref "features/datasources/graphite.md" >}})
-- [InfluxDB]({{< relref "features/datasources/influxdb.md" >}})
-- [OpenTSDB]({{< relref "features/datasources/opentsdb.md" >}})
-- [Prometheus]({{< relref "features/datasources/prometheus.md" >}})
+- [Graphite]({{< relref "../features/datasources/graphite.md" >}})
+- [InfluxDB]({{< relref "../features/datasources/influxdb.md" >}})
+- [OpenTSDB]({{< relref "../features/datasources/opentsdb.md" >}})
+- [Prometheus]({{< relref "../features/datasources/prometheus.md" >}})
 
 ## Installing from binary tar file
 
@@ -169,5 +163,5 @@ binary and the `public` folder is located).
 
 ## Logging in for the first time
 
-To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default http port that Grafana listens to if you haven't [configured a different port](/installation/configuration/#http-port).
+To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default HTTP port that Grafana listens to if you haven't [configured a different port](/installation/configuration/#http-port).
 Then follow the instructions [here](/guides/getting_started/).

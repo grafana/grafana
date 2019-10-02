@@ -106,7 +106,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					if timesCalled <= 2 {
 						return savedDash.Uid
 					}
-					return util.GenerateShortUid()
+					return util.GenerateShortUID()
 				}
 				cmd := m.SaveDashboardCommand{
 					OrgId: 1,
@@ -119,7 +119,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				err := SaveDashboard(&cmd)
 				So(err, ShouldBeNil)
 
-				generateNewUid = util.GenerateShortUid
+				generateNewUid = util.GenerateShortUID
 			})
 
 			Convey("Should be able to create dashboard", func() {
@@ -257,6 +257,50 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(hit.Type, ShouldEqual, search.DashHitFolder)
 				So(hit.Url, ShouldEqual, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.Uid, savedFolder.Slug))
 				So(hit.FolderTitle, ShouldEqual, "")
+			})
+
+			Convey("Should be able to limit search", func() {
+				query := search.FindPersistedDashboardsQuery{
+					OrgId:        1,
+					Limit:        1,
+					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
+				}
+
+				err := SearchDashboards(&query)
+				So(err, ShouldBeNil)
+
+				So(len(query.Result), ShouldEqual, 1)
+				So(query.Result[0].Title, ShouldEqual, "1 test dash folder")
+			})
+
+			Convey("Should be able to search beyond limit using paging", func() {
+				query := search.FindPersistedDashboardsQuery{
+					OrgId:        1,
+					Limit:        1,
+					Page:         2,
+					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
+				}
+
+				err := SearchDashboards(&query)
+				So(err, ShouldBeNil)
+
+				So(len(query.Result), ShouldEqual, 1)
+				So(query.Result[0].Title, ShouldEqual, "test dash 23")
+			})
+
+			Convey("Should be able to filter by tag and type", func() {
+				query := search.FindPersistedDashboardsQuery{
+					OrgId:        1,
+					Type:         "dash-db",
+					Tags:         []string{"prod"},
+					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
+				}
+
+				err := SearchDashboards(&query)
+				So(err, ShouldBeNil)
+
+				So(len(query.Result), ShouldEqual, 3)
+				So(query.Result[0].Title, ShouldEqual, "test dash 23")
 			})
 
 			Convey("Should be able to search for a dashboard folder's children", func() {

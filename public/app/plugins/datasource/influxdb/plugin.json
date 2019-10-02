@@ -2,9 +2,11 @@
   "type": "datasource",
   "name": "InfluxDB",
   "id": "influxdb",
+  "category": "tsdb",
 
   "defaultMatchFormat": "regex values",
   "metrics": true,
+  "logs": true,
   "annotations": true,
   "alerting": true,
 
@@ -13,7 +15,7 @@
   },
 
   "info": {
-    "description": "InfluxDB Data Source for Grafana",
+    "description": "Open source time series database",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"
@@ -21,7 +23,6 @@
     "logos": {
       "small": "img/influxdb_logo.svg",
       "large": "img/influxdb_logo.svg"
-    },
-    "version": "5.0.0"
+    }
   }
 }

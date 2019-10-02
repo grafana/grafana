@@ -1,0 +1,122 @@
+#!/usr/bin/env python
+from __future__ import print_function
+
+import argparse
+import os
+import sys
+import tempfile
+
+from subprocess import check_call, check_output
+
+
+PACKAGE_NAME = os.environ.get(
+    'CLI_PACKAGE_NAME', 'github.com/urfave/cli'
+)
+
+
+def main(sysargs=sys.argv[:]):
+    targets = {
+        'vet': _vet,
+        'test': _test,
+        'gfmrun': _gfmrun,
+        'toc': _toc,
+        'gen': _gen,
+    }
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        'target', nargs='?', choices=tuple(targets.keys()), default='test'
+    )
+    args = parser.parse_args(sysargs[1:])
+
+    targets[args.target]()
+    return 0
+
+
+def _test():
+    if check_output('go version'.split()).split()[2] < 'go1.2':
+        _run('go test -v .')
+        return
+
+    coverprofiles = []
+    for subpackage in ['', 'altsrc']:
+        coverprofile = 'cli.coverprofile'
+        if subpackage != '':
+            coverprofile = '{}.coverprofile'.format(subpackage)
+
+        coverprofiles.append(coverprofile)
+
+        _run('go test -v'.split() + [
+            '-coverprofile={}'.format(coverprofile),
+            ('{}/{}'.format(PACKAGE_NAME, subpackage)).rstrip('/')
+        ])
+
+    combined_name = _combine_coverprofiles(coverprofiles)
+    _run('go tool cover -func={}'.format(combined_name))
+    os.remove(combined_name)
+
+
+def _gfmrun():
+    go_version = check_output('go version'.split()).split()[2]
+    if go_version < 'go1.3':
+        print('runtests: skip on {}'.format(go_version), file=sys.stderr)
+        return
+    _run(['gfmrun', '-c', str(_gfmrun_count()), '-s', 'README.md'])
+
+
+def _vet():
+    _run('go vet ./...')
+
+
+def _toc():
+    _run('node_modules/.bin/markdown-toc -i README.md')
+    _run('git diff --exit-code')
+
+
+def _gen():
+    go_version = check_output('go version'.split()).split()[2]
+    if go_version < 'go1.5':
+        print('runtests: skip on {}'.format(go_version), file=sys.stderr)
+        return
+
+    _run('go generate ./...')
+    _run('git diff --exit-code')
+
+
+def _run(command):
+    if hasattr(command, 'split'):
+        command = command.split()
+    print('runtests: {}'.format(' '.join(command)), file=sys.stderr)
+    check_call(command)
+
+
+def _gfmrun_count():
+    with open('README.md') as infile:
+        lines = infile.read().splitlines()
+        return len(filter(_is_go_runnable, lines))
+
+
+def _is_go_runnable(line):
+    return line.startswith('package main')
+
+
+def _combine_coverprofiles(coverprofiles):
+    combined = tempfile.NamedTemporaryFile(
+        suffix='.coverprofile', delete=False
+    )
+    combined.write('mode: set\n')
+
+    for coverprofile in coverprofiles:
+        with open(coverprofile, 'r') as infile:
+            for line in infile.readlines():
+                if not line.startswith('mode: '):
+                    combined.write(line)
+
+    combined.flush()
+    name = combined.name
+    combined.close()
+    return name
+
+
+if __name__ == '__main__':
+    sys.exit(main())

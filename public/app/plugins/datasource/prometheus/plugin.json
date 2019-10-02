@@ -2,6 +2,8 @@
   "type": "datasource",
   "name": "Prometheus",
   "id": "prometheus",
+  "category": "tsdb",
+
   "includes": [
     {
       "type": "dashboard",
@@ -22,12 +24,11 @@
   "metrics": true,
   "alerting": true,
   "annotations": true,
-  "explore": true,
   "queryOptions": {
     "minInterval": true
   },
   "info": {
-    "description": "Prometheus Data Source for Grafana",
+    "description": "Open source time series database & alerting",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"
@@ -41,7 +42,6 @@
         "name": "Prometheus",
         "url": "https://prometheus.io/"
       }
-    ],
-    "version": "5.0.0"
+    ]
   }
 }

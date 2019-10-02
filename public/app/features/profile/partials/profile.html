@@ -1,0 +1,34 @@
+<page-header model="ctrl.navModel"></page-header>
+
+<div class="page-container page-body">
+  <react-profile-wrapper></react-profile-wrapper>
+
+  <h3 class="page-heading">Sessions</h3>
+  <div class="gf-form-group">
+    <table class="filter-table form-inline">
+      <thead>
+        <tr>
+          <th>Last seen</th>
+          <th>Logged on</th>
+          <th>IP address</th>
+          <th>Browser &amp; OS</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="session in ctrl.sessions">
+          <td ng-if="session.isActive">Now</td>
+          <td ng-if="!session.isActive">{{ session.seenAt }}</td>
+          <td>{{ session.createdAt }}</td>
+          <td>{{ session.clientIp }}</td>
+          <td>{{ session.browser }} on {{ session.os }} {{ session.osVersion }}</td>
+          <td>
+            <button class="btn btn-danger btn-small" ng-click="ctrl.revokeUserSession(session.id)">
+              <i class="fa fa-power-off"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

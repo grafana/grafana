@@ -32,6 +32,10 @@ Name | Description
 *Database* | Name of your MSSQL database.
 *User* | Database user's login/username
 *Password* | Database user's password
+*Encrypt* | This option determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server, default `false` (Grafana v5.4+).
+*Max open* | The maximum number of open connections to the database, default `unlimited` (Grafana v5.4+).
+*Max idle* | The maximum number of connections in the idle connection pool, default `2` (Grafana v5.4+).
+*Max lifetime* | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours (Grafana v5.4+).
 
 ### Min time interval
 
@@ -69,8 +73,8 @@ Make sure the user does not get any unwanted privileges from the public role.
 
 ### Known Issues
 
-MSSQL 2008 and 2008 R2 engine cannot handle login records when SSL encryption is not disabled. Due to this you may receive an `Login error: EOF` error when trying to create your datasource.
-To fix MSSQL 2008 R2 issue, install MSSQL 2008 R2 Service Pack 2. To fix MSSQL 2008 issue, install Microsoft MSSQL 2008 Service Pack 3 and Cumulative update package 3 for MSSQL 2008 SP3.
+If you're using an older version of Microsoft SQL Server like 2008 and 2008R2 you may need to disable encryption to be able to connect.
+If possible, we recommend you to use the latest service pack available for optimal compatibility.
 
 ## Query Editor
 
@@ -106,6 +110,9 @@ Macro example | Description
 *$__unixEpochFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as unix timestamp. For example, *dateColumn > 1494410783 AND dateColumn < 1494497183*
 *$__unixEpochFrom()* | Will be replaced by the start of the currently active time selection as unix timestamp. For example, *1494410783*
 *$__unixEpochTo()* | Will be replaced by the end of the currently active time selection as unix timestamp. For example, *1494497183*
+*$__unixEpochNanoFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as nanosecond timestamp. For example, *dateColumn > 1494410783152415214 AND dateColumn < 1494497183142514872*
+*$__unixEpochNanoFrom()* | Will be replaced by the start of the currently active time selection as nanosecond timestamp. For example, *1494410783152415214*
+*$__unixEpochNanoTo()* | Will be replaced by the end of the currently active time selection as nanosecond timestamp. For example, *1494497183142514872*
 *$__unixEpochGroup(dateColumn,'5m', [fillmode])* | Same as $__timeGroup but for times stored as unix timestamp (only available in Grafana 5.3+).
 *$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])* | Same as above but also adds a column alias (only available in Grafana 5.3+).
 
@@ -293,7 +300,7 @@ Any series lacking a value in a 3 minute window will have a value of zero which 
 
 Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data being displayed in your dashboard.
 
-Checkout the [Templating]({{< relref "reference/templating.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ### Query Variable
 
@@ -363,7 +370,7 @@ Grafana automatically creates a quoted, comma-separated string for multi-value v
 
 `${servers:csv}`
 
-Read more about variable formatting options in the [Variables]({{< relref "reference/templating.md#advanced-formatting-options" >}}) documentation.
+Read more about variable formatting options in the [Variables]({{< relref "../../reference/templating.md#advanced-formatting-options" >}}) documentation.
 
 ## Annotations
 
@@ -570,11 +577,11 @@ EXEC dbo.sp_test_datetime @from, @to
 Time series queries should work in alerting conditions. Table formatted queries are not yet supported in alert rule
 conditions.
 
-## Configure the Datasource with Provisioning
+## Configure the data source with provisioning
 
-It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources)
 
-Here are some provisioning examples for this datasource.
+Here are some provisioning examples for this data source.
 
 ```yaml
 apiVersion: 1
@@ -585,6 +592,10 @@ datasources:
     url: localhost:1433
     database: grafana
     user: grafana
+    jsonData:
+      maxOpenConns: 0         # Grafana v5.4+
+      maxIdleConns: 2         # Grafana v5.4+
+      connMaxLifetime: 14400  # Grafana v5.4+
     secureJsonData:
       password: "Password!"
 

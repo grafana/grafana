@@ -7,7 +7,7 @@ describe('API Keys selectors', () => {
     const mockKeys = getMultipleMockKeys(5);
 
     it('should return all keys if no search query', () => {
-      const mockState: ApiKeysState = { keys: mockKeys, searchQuery: '' };
+      const mockState: ApiKeysState = { keys: mockKeys, searchQuery: '', hasFetched: false };
 
       const keys = getApiKeys(mockState);
 
@@ -15,7 +15,7 @@ describe('API Keys selectors', () => {
     });
 
     it('should filter keys if search query exists', () => {
-      const mockState: ApiKeysState = { keys: mockKeys, searchQuery: '5' };
+      const mockState: ApiKeysState = { keys: mockKeys, searchQuery: '5', hasFetched: false };
 
       const keys = getApiKeys(mockState);
 

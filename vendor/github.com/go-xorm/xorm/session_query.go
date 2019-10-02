@@ -17,7 +17,7 @@ import (
 
 func (session *Session) genQuerySQL(sqlorArgs ...interface{}) (string, []interface{}, error) {
 	if len(sqlorArgs) > 0 {
-		return sqlorArgs[0].(string), sqlorArgs[1:], nil
+		return convertSQLOrArgs(sqlorArgs...)
 	}
 
 	if session.statement.RawSQL != "" {
@@ -35,7 +35,7 @@ func (session *Session) genQuerySQL(sqlorArgs ...interface{}) (string, []interfa
 		if session.statement.JoinStr == "" {
 			if columnStr == "" {
 				if session.statement.GroupByStr != "" {
-					columnStr = session.statement.Engine.Quote(strings.Replace(session.statement.GroupByStr, ",", session.engine.Quote(","), -1))
+					columnStr = session.engine.quoteColumns(session.statement.GroupByStr)
 				} else {
 					columnStr = session.statement.genColumnStr()
 				}
@@ -43,7 +43,7 @@ func (session *Session) genQuerySQL(sqlorArgs ...interface{}) (string, []interfa
 		} else {
 			if columnStr == "" {
 				if session.statement.GroupByStr != "" {
-					columnStr = session.statement.Engine.Quote(strings.Replace(session.statement.GroupByStr, ",", session.engine.Quote(","), -1))
+					columnStr = session.engine.quoteColumns(session.statement.GroupByStr)
 				} else {
 					columnStr = "*"
 				}
@@ -54,13 +54,17 @@ func (session *Session) genQuerySQL(sqlorArgs ...interface{}) (string, []interfa
 		}
 	}
 
+	if err := session.statement.processIDParam(); err != nil {
+		return "", nil, err
+	}
+
 	condSQL, condArgs, err := builder.ToSQL(session.statement.cond)
 	if err != nil {
 		return "", nil, err
 	}
 
 	args := append(session.statement.joinArgs, condArgs...)
-	sqlStr, err := session.statement.genSelectSQL(columnStr, condSQL)
+	sqlStr, err := session.statement.genSelectSQL(columnStr, condSQL, true, true)
 	if err != nil {
 		return "", nil, err
 	}
@@ -162,6 +166,34 @@ func row2mapStr(rows *core.Rows, fields []string) (resultsMap map[string]string,
 	return result, nil
 }
 
+func row2sliceStr(rows *core.Rows, fields []string) (results []string, err error) {
+	result := make([]string, 0, len(fields))
+	scanResultContainers := make([]interface{}, len(fields))
+	for i := 0; i < len(fields); i++ {
+		var scanResultContainer interface{}
+		scanResultContainers[i] = &scanResultContainer
+	}
+	if err := rows.Scan(scanResultContainers...); err != nil {
+		return nil, err
+	}
+
+	for i := 0; i < len(fields); i++ {
+		rawValue := reflect.Indirect(reflect.ValueOf(scanResultContainers[i]))
+		// if row is null then as empty string
+		if rawValue.Interface() == nil {
+			result = append(result, "")
+			continue
+		}
+
+		if data, err := value2String(&rawValue); err == nil {
+			result = append(result, data)
+		} else {
+			return nil, err
+		}
+	}
+	return result, nil
+}
+
 func rows2Strings(rows *core.Rows) (resultsSlice []map[string]string, err error) {
 	fields, err := rows.Columns()
 	if err != nil {
@@ -173,6 +205,22 @@ func rows2Strings(rows *core.Rows) (resultsSlice []map[string]string, err error)
 			return nil, err
 		}
 		resultsSlice = append(resultsSlice, result)
+	}
+
+	return resultsSlice, nil
+}
+
+func rows2SliceString(rows *core.Rows) (resultsSlice [][]string, err error) {
+	fields, err := rows.Columns()
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		record, err := row2sliceStr(rows, fields)
+		if err != nil {
+			return nil, err
+		}
+		resultsSlice = append(resultsSlice, record)
 	}
 
 	return resultsSlice, nil
@@ -196,6 +244,26 @@ func (session *Session) QueryString(sqlorArgs ...interface{}) ([]map[string]stri
 	defer rows.Close()
 
 	return rows2Strings(rows)
+}
+
+// QuerySliceString runs a raw sql and return records as [][]string
+func (session *Session) QuerySliceString(sqlorArgs ...interface{}) ([][]string, error) {
+	if session.isAutoClose {
+		defer session.Close()
+	}
+
+	sqlStr, args, err := session.genQuerySQL(sqlorArgs...)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := session.queryRows(sqlStr, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return rows2SliceString(rows)
 }
 
 func row2mapInterface(rows *core.Rows, fields []string) (resultsMap map[string]interface{}, err error) {

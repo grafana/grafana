@@ -1,0 +1,26 @@
+<page-header model="ctrl.navModel"></page-header>
+
+<div class="page-container page-body" ng-cloak>
+	<h3 class="page-sub-heading">New Team</h3>
+
+	<form name="ctrl.saveForm" class="gf-form-group" ng-submit="ctrl.create()">
+		<div class="gf-form max-width-30">
+			<span class="gf-form-label width-10">Name</span>
+			<input type="text" required ng-model="ctrl.name" class="gf-form-input max-width-22" give-focus="true">
+		</div>
+		<div class="gf-form max-width-30">
+			<span class="gf-form-label width-10">
+				Email
+				<info-popover mode="right-normal">
+					This is optional and is primarily used for allowing custom team avatars.
+				</info-popover>
+			</span>
+			<input class="gf-form-input max-width-22" type="email" ng-model="ctrl.email" placeholder="email@test.com">
+		</div>
+		<div class="gf-form-button-row">
+			<button type="submit" class="btn btn-primary">
+				Create
+			</button>
+		</div>
+	</form>
+</div>

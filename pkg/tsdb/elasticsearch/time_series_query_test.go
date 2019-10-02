@@ -60,7 +60,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
-					{ "type": "terms", "field": "@host", "id": "2" },
+					{ "type": "terms", "field": "@host", "id": "2", "settings": { "size": "0", "order": "asc" } },
 					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
 				],
 				"metrics": [{"type": "count", "id": "1" }]
@@ -69,7 +69,9 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			sr := c.multisearchRequests[0].Requests[0]
 			firstLevel := sr.Aggs[0]
 			So(firstLevel.Key, ShouldEqual, "2")
-			So(firstLevel.Aggregation.Aggregation.(*es.TermsAggregation).Field, ShouldEqual, "@host")
+			termsAgg := firstLevel.Aggregation.Aggregation.(*es.TermsAggregation)
+			So(termsAgg.Field, ShouldEqual, "@host")
+			So(termsAgg.Size, ShouldEqual, 500)
 			secondLevel := firstLevel.Aggregation.Aggs[0]
 			So(secondLevel.Key, ShouldEqual, "3")
 			So(secondLevel.Aggregation.Aggregation.(*es.DateHistogramAgg).Field, ShouldEqual, "@timestamp")
@@ -123,6 +125,60 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			avgAgg := sr.Aggs[0].Aggregation.Aggs[1].Aggregation.Aggs[0]
 			So(avgAgg.Key, ShouldEqual, "5")
 			So(avgAgg.Aggregation.Type, ShouldEqual, "avg")
+		})
+
+		Convey("With term agg and order by term", func() {
+			c := newFakeClient(5)
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{
+						"type": "terms",
+						"field": "@host",
+						"id": "2",
+						"settings": { "size": "5", "order": "asc", "orderBy": "_term"	}
+					},
+					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
+				],
+				"metrics": [
+					{"type": "count", "id": "1" },
+					{"type": "avg", "field": "@value", "id": "5" }
+				]
+			}`, from, to, 15*time.Second)
+			So(err, ShouldBeNil)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			So(firstLevel.Key, ShouldEqual, "2")
+			termsAgg := firstLevel.Aggregation.Aggregation.(*es.TermsAggregation)
+			So(termsAgg.Order["_term"], ShouldEqual, "asc")
+		})
+
+		Convey("With term agg and order by term with es6.x", func() {
+			c := newFakeClient(60)
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{
+						"type": "terms",
+						"field": "@host",
+						"id": "2",
+						"settings": { "size": "5", "order": "asc", "orderBy": "_term"	}
+					},
+					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
+				],
+				"metrics": [
+					{"type": "count", "id": "1" },
+					{"type": "avg", "field": "@value", "id": "5" }
+				]
+			}`, from, to, 15*time.Second)
+			So(err, ShouldBeNil)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			So(firstLevel.Key, ShouldEqual, "2")
+			termsAgg := firstLevel.Aggregation.Aggregation.(*es.TermsAggregation)
+			So(termsAgg.Order["_key"], ShouldEqual, "asc")
 		})
 
 		Convey("With metric percentiles", func() {
@@ -362,6 +418,38 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			So(pl.BucketPath, ShouldEqual, "3")
 		})
 
+		Convey("With moving average doc count", func() {
+			c := newFakeClient(5)
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
+				],
+				"metrics": [
+					{ "id": "3", "type": "count", "field": "select field" },
+					{
+						"id": "2",
+						"type": "moving_avg",
+						"field": "3",
+						"pipelineAgg": "3"
+					}
+				]
+			}`, from, to, 15*time.Second)
+			So(err, ShouldBeNil)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			So(firstLevel.Key, ShouldEqual, "4")
+			So(firstLevel.Aggregation.Type, ShouldEqual, "date_histogram")
+			So(firstLevel.Aggregation.Aggs, ShouldHaveLength, 1)
+
+			movingAvgAgg := firstLevel.Aggregation.Aggs[0]
+			So(movingAvgAgg.Key, ShouldEqual, "2")
+			So(movingAvgAgg.Aggregation.Type, ShouldEqual, "moving_avg")
+			pl := movingAvgAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
+			So(pl.BucketPath, ShouldEqual, "_count")
+		})
+
 		Convey("With broken moving average", func() {
 			c := newFakeClient(5)
 			_, err := executeTsdbQuery(c, `{
@@ -427,6 +515,105 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			So(plAgg.BucketPath, ShouldEqual, "3")
 		})
 
+		Convey("With derivative doc count", func() {
+			c := newFakeClient(5)
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
+				],
+				"metrics": [
+					{ "id": "3", "type": "count", "field": "select field" },
+					{
+						"id": "2",
+						"type": "derivative",
+						"pipelineAgg": "3"
+					}
+				]
+			}`, from, to, 15*time.Second)
+			So(err, ShouldBeNil)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			So(firstLevel.Key, ShouldEqual, "4")
+			So(firstLevel.Aggregation.Type, ShouldEqual, "date_histogram")
+
+			derivativeAgg := firstLevel.Aggregation.Aggs[0]
+			So(derivativeAgg.Key, ShouldEqual, "2")
+			plAgg := derivativeAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
+			So(plAgg.BucketPath, ShouldEqual, "_count")
+		})
+
+		Convey("With bucket_script", func() {
+			c := newFakeClient(5)
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
+				],
+				"metrics": [
+					{ "id": "3", "type": "sum", "field": "@value" },
+					{ "id": "5", "type": "max", "field": "@value" },
+					{
+						"id": "2",
+						"type": "bucket_script",
+						"pipelineVariables": [
+							{ "name": "var1", "pipelineAgg": "3" },
+							{ "name": "var2", "pipelineAgg": "5" }
+						],
+						"settings": { "script": "params.var1 * params.var2" }
+					}
+				]
+			}`, from, to, 15*time.Second)
+			So(err, ShouldBeNil)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			So(firstLevel.Key, ShouldEqual, "4")
+			So(firstLevel.Aggregation.Type, ShouldEqual, "date_histogram")
+
+			bucketScriptAgg := firstLevel.Aggregation.Aggs[2]
+			So(bucketScriptAgg.Key, ShouldEqual, "2")
+			plAgg := bucketScriptAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
+			So(plAgg.BucketPath.(map[string]interface{}), ShouldResemble, map[string]interface{}{
+				"var1": "3",
+				"var2": "5",
+			})
+		})
+
+		Convey("With bucket_script doc count", func() {
+			c := newFakeClient(5)
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
+				],
+				"metrics": [
+					{ "id": "3", "type": "count", "field": "select field" },
+					{
+						"id": "2",
+						"type": "bucket_script",
+						"pipelineVariables": [
+							{ "name": "var1", "pipelineAgg": "3" }
+						],
+						"settings": { "script": "params.var1 * 1000" }
+					}
+				]
+			}`, from, to, 15*time.Second)
+			So(err, ShouldBeNil)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			So(firstLevel.Key, ShouldEqual, "4")
+			So(firstLevel.Aggregation.Type, ShouldEqual, "date_histogram")
+
+			bucketScriptAgg := firstLevel.Aggregation.Aggs[0]
+			So(bucketScriptAgg.Key, ShouldEqual, "2")
+			plAgg := bucketScriptAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
+			So(plAgg.BucketPath.(map[string]interface{}), ShouldResemble, map[string]interface{}{
+				"var1": "_count",
+			})
+		})
 	})
 }
 
@@ -447,6 +634,8 @@ func newFakeClient(version int) *fakeClient {
 		multiSearchResponse: &es.MultiSearchResponse{},
 	}
 }
+
+func (c *fakeClient) EnableDebug() {}
 
 func (c *fakeClient) GetVersion() int {
 	return c.version

@@ -1,3 +1,12 @@
+import DatasourceSrv from 'app/features/plugins/datasource_srv';
+
+export interface JWT {
+  private_key: any;
+  token_uri: any;
+  client_email: any;
+  project_id: any;
+}
+
 export class StackdriverConfigCtrl {
   static templateUrl = 'public/app/plugins/datasource/stackdriver/partials/config.html';
   datasourceSrv: any;
@@ -5,23 +14,33 @@ export class StackdriverConfigCtrl {
   jsonText: string;
   validationErrors: string[] = [];
   inputDataValid: boolean;
+  authenticationTypes: any[];
+  defaultAuthenticationType: string;
 
   /** @ngInject */
-  constructor(datasourceSrv) {
+  constructor(datasourceSrv: DatasourceSrv) {
+    this.defaultAuthenticationType = 'jwt';
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData = this.current.jsonData || {};
+    this.current.jsonData.authenticationType = this.current.jsonData.authenticationType
+      ? this.current.jsonData.authenticationType
+      : this.defaultAuthenticationType;
     this.current.secureJsonData = this.current.secureJsonData || {};
     this.current.secureJsonFields = this.current.secureJsonFields || {};
+    this.authenticationTypes = [
+      { key: this.defaultAuthenticationType, value: 'Google JWT File' },
+      { key: 'gce', value: 'GCE Default Service Account' },
+    ];
   }
 
-  save(jwt) {
+  save(jwt: JWT) {
     this.current.secureJsonData.privateKey = jwt.private_key;
     this.current.jsonData.tokenUri = jwt.token_uri;
     this.current.jsonData.clientEmail = jwt.client_email;
     this.current.jsonData.defaultProject = jwt.project_id;
   }
 
-  validateJwt(jwt) {
+  validateJwt(jwt: JWT) {
     this.resetValidationMessages();
     if (!jwt.private_key || jwt.private_key.length === 0) {
       this.validationErrors.push('Private key field missing in JWT file.');
@@ -35,6 +54,10 @@ export class StackdriverConfigCtrl {
       this.validationErrors.push('Client Email field missing in JWT file.');
     }
 
+    if (!jwt.project_id || jwt.project_id.length === 0) {
+      this.validationErrors.push('Project Id field missing in JWT file.');
+    }
+
     if (this.validationErrors.length === 0) {
       this.inputDataValid = true;
       return true;
@@ -43,14 +66,14 @@ export class StackdriverConfigCtrl {
     return false;
   }
 
-  onUpload(json) {
+  onUpload(json: JWT) {
     this.jsonText = '';
     if (this.validateJwt(json)) {
       this.save(json);
     }
   }
 
-  onPasteJwt(e) {
+  onPasteJwt(e: any) {
     try {
       const json = JSON.parse(e.originalEvent.clipboardData.getData('text/plain') || this.jsonText);
       if (this.validateJwt(json)) {
@@ -67,7 +90,7 @@ export class StackdriverConfigCtrl {
     this.inputDataValid = false;
     this.jsonText = '';
 
-    this.current.jsonData = {};
+    this.current.jsonData = Object.assign({}, { authenticationType: this.current.jsonData.authenticationType });
     this.current.secureJsonData = {};
     this.current.secureJsonFields = {};
   }

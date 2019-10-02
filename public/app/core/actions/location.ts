@@ -1,13 +1,4 @@
-import { LocationUpdate } from 'app/types';
+import { LocationUpdate } from '@grafana/runtime';
+import { actionCreatorFactory } from 'app/core/redux';
 
-export type Action = UpdateLocationAction;
-
-export interface UpdateLocationAction {
-  type: 'UPDATE_LOCATION';
-  payload: LocationUpdate;
-}
-
-export const updateLocation = (location: LocationUpdate): UpdateLocationAction => ({
-  type: 'UPDATE_LOCATION',
-  payload: location,
-});
+export const updateLocation = actionCreatorFactory<LocationUpdate>('UPDATE_LOCATION').create();

@@ -14,7 +14,7 @@ import (
 )
 
 func (hs *HTTPServer) RenderToPng(c *m.ReqContext) {
-	queryReader, err := util.NewUrlQueryReader(c.Req.URL)
+	queryReader, err := util.NewURLQueryReader(c.Req.URL)
 	if err != nil {
 		c.Handle(400, "Render parameters error", err)
 		return

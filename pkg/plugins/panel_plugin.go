@@ -4,6 +4,7 @@ import "encoding/json"
 
 type PanelPlugin struct {
 	FrontendPluginBase
+	SkipDataQuery bool `json:"skipDataQuery"`
 }
 
 func (p *PanelPlugin) Load(decoder *json.Decoder, pluginDir string) error {

@@ -1,45 +1,22 @@
 package api
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-const HeaderNameNoBackendCache = "X-Grafana-NoCache"
-
-func (hs *HTTPServer) getDatasourceFromCache(id int64, c *m.ReqContext) (*m.DataSource, error) {
-	nocache := c.Req.Header.Get(HeaderNameNoBackendCache) == "true"
-	cacheKey := fmt.Sprintf("ds-%d", id)
-
-	if !nocache {
-		if cached, found := hs.cache.Get(cacheKey); found {
-			ds := cached.(*m.DataSource)
-			if ds.OrgId == c.OrgId {
-				return ds, nil
-			}
-		}
-	}
-
-	query := m.GetDataSourceByIdQuery{Id: id, OrgId: c.OrgId}
-	if err := bus.Dispatch(&query); err != nil {
-		return nil, err
-	}
-
-	hs.cache.Set(cacheKey, query.Result, time.Second*5)
-	return query.Result, nil
-}
-
 func (hs *HTTPServer) ProxyDataSourceRequest(c *m.ReqContext) {
-	c.TimeRequest(metrics.M_DataSource_ProxyReq_Timer)
+	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
 
-	ds, err := hs.getDatasourceFromCache(c.ParamsInt64(":id"), c)
+	dsId := c.ParamsInt64(":id")
+	ds, err := hs.DatasourceCache.GetDatasource(dsId, c.SignedInUser, c.SkipCache)
 	if err != nil {
+		if err == m.ErrDataSourceAccessDenied {
+			c.JsonApiErr(403, "Access denied to datasource", err)
+			return
+		}
 		c.JsonApiErr(500, "Unable to load datasource meta data", err)
 		return
 	}
@@ -54,7 +31,7 @@ func (hs *HTTPServer) ProxyDataSourceRequest(c *m.ReqContext) {
 	// macaron does not include trailing slashes when resolving a wildcard path
 	proxyPath := ensureProxyPathTrailingSlash(c.Req.URL.Path, c.Params("*"))
 
-	proxy := pluginproxy.NewDataSourceProxy(ds, plugin, c, proxyPath)
+	proxy := pluginproxy.NewDataSourceProxy(ds, plugin, c, proxyPath, hs.Cfg)
 	proxy.HandleRequest()
 }
 

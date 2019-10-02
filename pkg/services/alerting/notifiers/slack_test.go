@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -16,7 +16,7 @@ func TestSlackNotifier(t *testing.T) {
 				json := `{ }`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &m.AlertNotification{
+				model := &models.AlertNotification{
 					Name:     "ops",
 					Type:     "slack",
 					Settings: settingsJSON,
@@ -26,6 +26,7 @@ func TestSlackNotifier(t *testing.T) {
 				So(err, ShouldNotBeNil)
 			})
 
+			//nolint:goconst
 			Convey("from settings", func() {
 				json := `
 				{
@@ -33,7 +34,7 @@ func TestSlackNotifier(t *testing.T) {
 				}`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &m.AlertNotification{
+				model := &models.AlertNotification{
 					Name:     "ops",
 					Type:     "slack",
 					Settings: settingsJSON,
@@ -45,23 +46,29 @@ func TestSlackNotifier(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(slackNotifier.Name, ShouldEqual, "ops")
 				So(slackNotifier.Type, ShouldEqual, "slack")
-				So(slackNotifier.Url, ShouldEqual, "http://google.com")
+				So(slackNotifier.URL, ShouldEqual, "http://google.com")
 				So(slackNotifier.Recipient, ShouldEqual, "")
+				So(slackNotifier.Username, ShouldEqual, "")
+				So(slackNotifier.IconEmoji, ShouldEqual, "")
+				So(slackNotifier.IconURL, ShouldEqual, "")
 				So(slackNotifier.Mention, ShouldEqual, "")
 				So(slackNotifier.Token, ShouldEqual, "")
 			})
 
-			Convey("from settings with Recipient, Mention, and Token", func() {
+			Convey("from settings with Recipient, Username, IconEmoji, IconUrl, Mention, and Token", func() {
 				json := `
 				{
           "url": "http://google.com",
           "recipient": "#ds-opentsdb",
+          "username": "Grafana Alerts",
+          "icon_emoji": ":smile:",
+          "icon_url": "https://grafana.com/img/fav32.png",
           "mention": "@carl",
           "token": "xoxb-XXXXXXXX-XXXXXXXX-XXXXXXXXXX"
 				}`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &m.AlertNotification{
+				model := &models.AlertNotification{
 					Name:     "ops",
 					Type:     "slack",
 					Settings: settingsJSON,
@@ -73,8 +80,11 @@ func TestSlackNotifier(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(slackNotifier.Name, ShouldEqual, "ops")
 				So(slackNotifier.Type, ShouldEqual, "slack")
-				So(slackNotifier.Url, ShouldEqual, "http://google.com")
+				So(slackNotifier.URL, ShouldEqual, "http://google.com")
 				So(slackNotifier.Recipient, ShouldEqual, "#ds-opentsdb")
+				So(slackNotifier.Username, ShouldEqual, "Grafana Alerts")
+				So(slackNotifier.IconEmoji, ShouldEqual, ":smile:")
+				So(slackNotifier.IconURL, ShouldEqual, "https://grafana.com/img/fav32.png")
 				So(slackNotifier.Mention, ShouldEqual, "@carl")
 				So(slackNotifier.Token, ShouldEqual, "xoxb-XXXXXXXX-XXXXXXXX-XXXXXXXXXX")
 			})

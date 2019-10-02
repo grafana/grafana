@@ -1,5 +1,5 @@
 // uses code from https://github.com/antonholmquist/jason/blob/master/jason.go
-// MIT Licence
+// MIT License
 
 package dynmap
 

@@ -90,12 +90,6 @@ func (db *Mysql) SqlType(c *Column) string {
 	return res
 }
 
-func (db *Mysql) TableCheckSql(tableName string) (string, []interface{}) {
-	args := []interface{}{"grafana", tableName}
-	sql := "SELECT `TABLE_NAME` from `INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_SCHEMA`=? and `TABLE_NAME`=?"
-	return sql, args
-}
-
 func (db *Mysql) UpdateTableSql(tableName string, columns []*Column) string {
 	var statements = []string{}
 
@@ -106,6 +100,18 @@ func (db *Mysql) UpdateTableSql(tableName string, columns []*Column) string {
 	}
 
 	return "ALTER TABLE " + db.Quote(tableName) + " " + strings.Join(statements, ", ") + ";"
+}
+
+func (db *Mysql) IndexCheckSql(tableName, indexName string) (string, []interface{}) {
+	args := []interface{}{tableName, indexName}
+	sql := "SELECT 1 FROM " + db.Quote("INFORMATION_SCHEMA") + "." + db.Quote("STATISTICS") + " WHERE " + db.Quote("TABLE_SCHEMA") + " = DATABASE() AND " + db.Quote("TABLE_NAME") + "=? AND " + db.Quote("INDEX_NAME") + "=?"
+	return sql, args
+}
+
+func (db *Mysql) ColumnCheckSql(tableName, columnName string) (string, []interface{}) {
+	args := []interface{}{tableName, columnName}
+	sql := "SELECT 1 FROM " + db.Quote("INFORMATION_SCHEMA") + "." + db.Quote("COLUMNS") + " WHERE " + db.Quote("TABLE_SCHEMA") + " = DATABASE() AND " + db.Quote("TABLE_NAME") + "=? AND " + db.Quote("COLUMN_NAME") + "=?"
+	return sql, args
 }
 
 func (db *Mysql) CleanDB() error {
@@ -128,12 +134,20 @@ func (db *Mysql) CleanDB() error {
 	return nil
 }
 
-func (db *Mysql) IsUniqueConstraintViolation(err error) bool {
+func (db *Mysql) isThisError(err error, errcode uint16) bool {
 	if driverErr, ok := err.(*mysql.MySQLError); ok {
-		if driverErr.Number == mysqlerr.ER_DUP_ENTRY {
+		if driverErr.Number == errcode {
 			return true
 		}
 	}
 
 	return false
+}
+
+func (db *Mysql) IsUniqueConstraintViolation(err error) bool {
+	return db.isThisError(err, mysqlerr.ER_DUP_ENTRY)
+}
+
+func (db *Mysql) IsDeadlock(err error) bool {
+	return db.isThisError(err, mysqlerr.ER_LOCK_DEADLOCK)
 }

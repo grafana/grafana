@@ -8,7 +8,7 @@ aliases = ["/datasources/cloudwatch"]
 name = "AWS Cloudwatch"
 identifier = "cloudwatch"
 parent = "datasources"
-weight = 10
+weight = 5
 +++
 
 # Using AWS CloudWatch in Grafana
@@ -22,23 +22,24 @@ Grafana ships with built in support for CloudWatch. You just have to add it as a
 3. Click the `+ Add data source` button in the top header.
 4. Select `Cloudwatch` from the *Type* dropdown.
 
-> NOTE: If at any moment you have issues with getting this datasource to work and Grafana is giving you undescriptive errors then don't
+> NOTE: If at any moment you have issues with getting this data source to work and Grafana is giving you undescriptive errors then don't
 forget to check your log file (try looking in /var/log/grafana/grafana.log).
 
 Name | Description
 ------------ | -------------
 *Name* | The data source name. This is how you refer to the data source in panels & queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
-*Credentials* profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default.
 *Default Region* | Used in query editor to set region (can be changed on per query basis)
 *Custom Metrics namespace* | Specify the CloudWatch namespace of Custom metrics
+*Auth Provider* | Specify the provider to get credentials.
+*Credentials* profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default.
 *Assume Role Arn* | Specify the ARN of the role to assume
 
 ## Authentication
 
 ### IAM Roles
 
-Currently all access to CloudWatch is done server side by the Grafana backend using the official AWS SDK. If you grafana
+Currently all access to CloudWatch is done server side by the Grafana backend using the official AWS SDK. If your Grafana
 server is running on AWS you can use IAM Roles and authentication will be handled automatically.
 
 Checkout AWS docs on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
@@ -46,7 +47,7 @@ Checkout AWS docs on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGu
 ## IAM Policies
 
 Grafana needs permissions granted via IAM to be able to read CloudWatch metrics
-and EC2 tags/instances. You can attach these permissions to IAM roles and
+and EC2 tags/instances/regions. You can attach these permissions to IAM roles and
 utilize Grafana's built-in support for assuming roles.
 
 Here is a minimal policy example:
@@ -59,23 +60,42 @@ Here is a minimal policy example:
             "Sid": "AllowReadingMetricsFromCloudWatch",
             "Effect": "Allow",
             "Action": [
+                "cloudwatch:DescribeAlarmsForMetric",
                 "cloudwatch:ListMetrics",
-                "cloudwatch:GetMetricStatistics"
+                "cloudwatch:GetMetricStatistics",
+                "cloudwatch:GetMetricData"
             ],
             "Resource": "*"
         },
         {
-            "Sid": "AllowReadingTagsFromEC2",
+            "Sid": "AllowReadingTagsInstancesRegionsFromEC2",
             "Effect": "Allow",
             "Action": [
                 "ec2:DescribeTags",
-                "ec2:DescribeInstances"
+                "ec2:DescribeInstances",
+                "ec2:DescribeRegions"
             ],
             "Resource": "*"
+        },
+        {
+            "Sid": "AllowReadingResourcesForTags",
+            "Effect" : "Allow",
+            "Action" : "tag:GetResources",
+            "Resource" : "*"
         }
     ]
 }
 ```
+
+### AWS credentials
+If Auth Provider is `Credentials file`, Grafana try to get credentials by following order.
+
+- Environment variables. (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`)
+- Hard-code credentials.
+- Shared credentials file.
+- IAM role for Amazon EC2.
+
+Checkout AWS docs on [Configuring the AWS SDK for Go](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html)
 
 ### AWS credentials file
 
@@ -97,22 +117,30 @@ region = us-west-2
 
 You need to specify a namespace, metric, at least one stat, and at least one dimension.
 
+## Metric Math
+
+You can now create new time series metrics by operating on top of Cloudwatch metrics using mathematical functions. Arithmetic operators, unary subtraction and other functions are supported to be applied on cloudwatch metrics. More details on the available functions can be found on [AWS Metric Math](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html)
+
+As an example, if you want to apply arithmetic operator on a metric, you can do it by giving an alias(a unique string) to the raw metric as shown below. Then you can use this alias and apply arithmetic operator to it in the Expression field of created metric.
+
+![](/img/docs/v60/cloudwatch_metric_math.png)
+
 ## Templated queries
 
 Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place.
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
 being displayed in your dashboard.
 
-Checkout the [Templating]({{< relref "reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
 
-CloudWatch Datasource Plugin provides the following queries you can specify in the `Query` field in the Variable
+CloudWatch data source plugin provides the following queries you can specify in the `Query` field in the Variable
 edit view. They allow you to fill a variable's options list with things like `region`, `namespaces`, `metric names`
 and `dimension keys/values`.
 
-In place of `region` you can specify `default` to use the default region configured in the datasource for the query,
+In place of `region` you can specify `default` to use the default region configured in the data source for the query,
 e.g. `metrics(AWS/DynamoDB, default)` or `dimension_values(default, ..., ..., ...)`.
 
 Read more about the available dimensions in the [CloudWatch  Metrics and Dimensions Reference](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CW_Support_For_AWS.html).
@@ -126,6 +154,7 @@ Name | Description
 *dimension_values(region, namespace, metric, dimension_key, [filters])* | Returns a list of dimension values matching the specified `region`, `namespace`, `metric`, `dimension_key` or you can use dimension `filters` to get more specific result as well.
 *ebs_volume_ids(region, instance_id)* | Returns a list of volume ids matching the specified `region`, `instance_id`.
 *ec2_instance_attribute(region, attribute_name, filters)* | Returns a list of attributes matching the specified `region`, `attribute_name`, `filters`.
+*resource_arns(region, resource_type, tags)* | Returns a list of ARNs matching the specified `region`, `resource_type` and `tags`.
 
 For details about the metrics CloudWatch provides, please refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html).
 
@@ -141,6 +170,8 @@ Query | Service
 *dimension_values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)* | RDS
 *dimension_values(us-east-1,AWS/S3,BucketSizeBytes,BucketName)* | S3
 *dimension_values(us-east-1,CWAgent,disk_used_percent,device,{"InstanceId":"$instance_id"})* | CloudWatch Agent
+*resource_arns(eu-west-1,elasticloadbalancing:loadbalancer,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})* | ELB
+*resource_arns(eu-west-1,ec2:instance,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})* | EC2
 
 ## ec2_instance_attribute examples
 
@@ -203,6 +234,16 @@ Example `ec2_instance_attribute()` query
 ec2_instance_attribute(us-east-1, Tags.Name, { "tag:Team": [ "sysops" ] })
 ```
 
+## Using json format template variables
+
+Some of query takes JSON format filter. Grafana support to interpolate template variable to JSON format string, it can use as filter string.
+
+If `env = 'production', 'staging'`, following query will return ARNs of EC2 instances which `Environment` tag is `production` or `staging`.
+
+```
+resource_arns(us-east-1, ec2:instance, {"Environment":${env:json}})
+```
+
 ## Cost
 
 Amazon provides 1 million CloudWatch API requests each month at no additional charge. Past this,
@@ -210,11 +251,11 @@ it costs $0.01 per 1,000 GetMetricStatistics or ListMetrics requests. For each q
 issue a GetMetricStatistics request and every time you pick a dimension in the query editor
 Grafana will issue a ListMetrics request.
 
-## Configure the Datasource with Provisioning
+## Configure the data source with provisioning
 
-It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources)
 
-Here are some provisioning examples for this datasource.
+Here are some provisioning examples for this data source.
 
 Using a credentials file
 ```yaml

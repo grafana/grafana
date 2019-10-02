@@ -1,4 +1,4 @@
-import { NavModel, NavModelItem, NavIndex } from 'app/types';
+import { NavModel, NavModelItem, NavIndex } from '@grafana/data';
 
 function getNotFoundModel(): NavModel {
   const node: NavModelItem = {
@@ -41,3 +41,7 @@ export function getNavModel(navIndex: NavIndex, id: string, fallback?: NavModel)
 
   return getNotFoundModel();
 }
+
+export const getTitleFromNavModel = (navModel: NavModel) => {
+  return `${navModel.main.text}${navModel.node.text ? ': ' + navModel.node.text : ''}`;
+};

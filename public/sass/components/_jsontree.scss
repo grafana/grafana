@@ -3,16 +3,20 @@ json-tree {
   .json-tree-key {
     vertical-align: middle;
   }
+
   .expandable {
     position: relative;
+
     &::before {
       pointer-events: none;
     }
+
     &::before,
     & > .json-tree-key {
       cursor: pointer;
     }
   }
+
   .json-tree-branch-preview {
     display: inline-block;
     vertical-align: middle;
@@ -24,36 +28,44 @@ json-tree {
   ul {
     padding-left: $spacer;
   }
+
   li,
   ul {
     list-style: none;
   }
+
   li {
-    line-height: 1.3rem;
+    line-height: 18px;
   }
+
   .json-tree-key {
     color: $variable;
     padding: 5px 10px 5px 15px;
+
     &::after {
-      content: ":";
+      content: ':';
     }
   }
+
   json-node.expandable {
     &::before {
-      content: "\25b6";
+      content: '\25b6';
       position: absolute;
       left: 0px;
       font-size: 8px;
       transition: transform 0.1s ease;
     }
+
     &.expanded::before {
       transform: rotate(90deg);
     }
   }
+
   .json-tree-leaf-value,
   .json-tree-branch-preview {
     word-break: break-all;
   }
+
   .json-tree-branch-preview {
     overflow: hidden;
     font-style: italic;

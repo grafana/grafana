@@ -50,19 +50,22 @@
 
       function checkIsReady() {
         var panelsRendered = page.evaluate(function() {
-          var panelCount = document.querySelectorAll('.panel').length;
+          var panelCount = document.querySelectorAll('plugin-component').length;
           return window.panelsRendered >= panelCount;
         });
 
         if (panelsRendered || totalWaitMs > timeoutMs) {
           var bb = page.evaluate(function () {
-            return document.getElementsByClassName("main-view")[0].getBoundingClientRect();
+            var container = document.getElementsByClassName("dashboard-container")
+            if (container.length == 0) {
+               container = document.getElementsByClassName("panel-container")
+            }
+            return container[0].getBoundingClientRect();
           });
-
-          page.clipRect = {
-            top:    bb.top,
-            left:   bb.left,
-            width:  bb.width,
+          
+          // reset viewport to render full page
+          page.viewportSize = {
+            width: bb.width,
             height: bb.height
           };
 

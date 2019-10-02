@@ -7,20 +7,13 @@ exports[`Render should render component 1`] = `
   <div
     className="gf-form gf-form--grow"
   >
-    <label
-      className="gf-form--has-input-icon"
-    >
-      <input
-        className="gf-form-input width-20"
-        onChange={[Function]}
-        placeholder="Filter by name or type"
-        type="text"
-        value=""
-      />
-      <i
-        className="gf-form-input-icon fa fa-search"
-      />
-    </label>
+    <ForwardRef
+      inputClassName="gf-form-input width-20"
+      labelClassName="gf-form--has-input-icon"
+      onChange={[MockFunction]}
+      placeholder="Filter by name or type"
+      value=""
+    />
     <LayoutSelector
       onLayoutModeChanged={[Function]}
     />
@@ -29,7 +22,7 @@ exports[`Render should render component 1`] = `
     className="page-action-bar__spacer"
   />
   <a
-    className="btn btn-success"
+    className="btn btn-primary"
     href="some/url"
     target="_blank"
   >

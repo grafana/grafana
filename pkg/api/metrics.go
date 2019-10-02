@@ -2,13 +2,14 @@ package api
 
 import (
 	"context"
+	"sort"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"github.com/grafana/grafana/pkg/tsdb/testdata"
+	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -25,12 +26,15 @@ func (hs *HTTPServer) QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) R
 		return Error(400, "Query missing datasourceId", nil)
 	}
 
-	ds, err := hs.getDatasourceFromCache(datasourceId, c)
+	ds, err := hs.DatasourceCache.GetDatasource(datasourceId, c.SignedInUser, c.SkipCache)
 	if err != nil {
+		if err == m.ErrDataSourceAccessDenied {
+			return Error(403, "Access denied to datasource", err)
+		}
 		return Error(500, "Unable to load datasource meta data", err)
 	}
 
-	request := &tsdb.TsdbQuery{TimeRange: timeRange}
+	request := &tsdb.TsdbQuery{TimeRange: timeRange, Debug: reqDto.Debug}
 
 	for _, query := range reqDto.Queries {
 		request.Queries = append(request.Queries, &tsdb.Query{
@@ -63,7 +67,14 @@ func (hs *HTTPServer) QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) R
 func GetTestDataScenarios(c *m.ReqContext) Response {
 	result := make([]interface{}, 0)
 
-	for _, scenario := range testdata.ScenarioRegistry {
+	scenarioIds := make([]string, 0)
+	for id := range testdatasource.ScenarioRegistry {
+		scenarioIds = append(scenarioIds, id)
+	}
+	sort.Strings(scenarioIds)
+
+	for _, scenarioId := range scenarioIds {
+		scenario := testdatasource.ScenarioRegistry[scenarioId]
 		result = append(result, map[string]interface{}{
 			"id":          scenario.Id,
 			"name":        scenario.Name,
@@ -78,6 +89,7 @@ func GetTestDataScenarios(c *m.ReqContext) Response {
 // Generates a index out of range error
 func GenerateError(c *m.ReqContext) Response {
 	var array []string
+	// nolint: govet
 	return JSON(200, array[20])
 }
 

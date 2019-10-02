@@ -1,7 +1,7 @@
 import { ElasticQueryBuilder } from '../query_builder';
 
 describe('ElasticQueryBuilder', () => {
-  let builder;
+  let builder: any;
 
   beforeEach(() => {
     builder = new ElasticQueryBuilder({ timeField: '@timestamp' });
@@ -60,6 +60,55 @@ describe('ElasticQueryBuilder', () => {
 
     const aggs = query.aggs['2'].aggs;
     expect(aggs['1'].avg.field).toBe('@value');
+  });
+
+  it('with term agg and order by term', () => {
+    const query = builder.build(
+      {
+        metrics: [{ type: 'count', id: '1' }, { type: 'avg', field: '@value', id: '5' }],
+        bucketAggs: [
+          {
+            type: 'terms',
+            field: '@host',
+            settings: { size: 5, order: 'asc', orderBy: '_term' },
+            id: '2',
+          },
+          { type: 'date_histogram', field: '@timestamp', id: '3' },
+        ],
+      },
+      100,
+      1000
+    );
+
+    const firstLevel = query.aggs['2'];
+    expect(firstLevel.terms.order._term).toBe('asc');
+  });
+
+  it('with term agg and order by term on es6.x', () => {
+    const builder6x = new ElasticQueryBuilder({
+      timeField: '@timestamp',
+      esVersion: 60,
+    });
+    const query = builder6x.build(
+      {
+        metrics: [{ type: 'count', id: '1' }, { type: 'avg', field: '@value', id: '5' }],
+        bucketAggs: [
+          {
+            type: 'terms',
+            field: '@host',
+            settings: { size: 5, order: 'asc', orderBy: '_term' },
+            id: '2',
+          },
+          { type: 'date_histogram', field: '@timestamp', id: '3' },
+        ],
+      },
+      100,
+      // @ts-ignore
+      1000
+    );
+
+    const firstLevel = query.aggs['2'];
+    expect(firstLevel.terms.order._key).toBe('asc');
   });
 
   it('with term agg and order by metric agg', () => {
@@ -202,6 +251,31 @@ describe('ElasticQueryBuilder', () => {
     expect(firstLevel.aggs['2'].moving_avg.buckets_path).toBe('3');
   });
 
+  it('with moving average doc count', () => {
+    const query = builder.build({
+      metrics: [
+        {
+          id: '3',
+          type: 'count',
+          field: 'select field',
+        },
+        {
+          id: '2',
+          type: 'moving_avg',
+          field: '3',
+          pipelineAgg: '3',
+        },
+      ],
+      bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '4' }],
+    });
+
+    const firstLevel = query.aggs['4'];
+
+    expect(firstLevel.aggs['2']).not.toBe(undefined);
+    expect(firstLevel.aggs['2'].moving_avg).not.toBe(undefined);
+    expect(firstLevel.aggs['2'].moving_avg.buckets_path).toBe('_count');
+  });
+
   it('with broken moving average', () => {
     const query = builder.build({
       metrics: [
@@ -256,6 +330,107 @@ describe('ElasticQueryBuilder', () => {
     expect(firstLevel.aggs['2'].derivative.buckets_path).toBe('3');
   });
 
+  it('with derivative doc count', () => {
+    const query = builder.build({
+      metrics: [
+        {
+          id: '3',
+          type: 'count',
+          field: 'select field',
+        },
+        {
+          id: '2',
+          type: 'derivative',
+          pipelineAgg: '3',
+        },
+      ],
+      bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '4' }],
+    });
+
+    const firstLevel = query.aggs['4'];
+
+    expect(firstLevel.aggs['2']).not.toBe(undefined);
+    expect(firstLevel.aggs['2'].derivative).not.toBe(undefined);
+    expect(firstLevel.aggs['2'].derivative.buckets_path).toBe('_count');
+  });
+
+  it('with bucket_script', () => {
+    const query = builder.build({
+      metrics: [
+        {
+          id: '1',
+          type: 'sum',
+          field: '@value',
+        },
+        {
+          id: '3',
+          type: 'max',
+          field: '@value',
+        },
+        {
+          field: 'select field',
+          id: '4',
+          meta: {},
+          pipelineVariables: [
+            {
+              name: 'var1',
+              pipelineAgg: '1',
+            },
+            {
+              name: 'var2',
+              pipelineAgg: '3',
+            },
+          ],
+          settings: {
+            script: 'params.var1 * params.var2',
+          },
+          type: 'bucket_script',
+        },
+      ],
+      bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '2' }],
+    });
+
+    const firstLevel = query.aggs['2'];
+
+    expect(firstLevel.aggs['4']).not.toBe(undefined);
+    expect(firstLevel.aggs['4'].bucket_script).not.toBe(undefined);
+    expect(firstLevel.aggs['4'].bucket_script.buckets_path).toMatchObject({ var1: '1', var2: '3' });
+  });
+
+  it('with bucket_script doc count', () => {
+    const query = builder.build({
+      metrics: [
+        {
+          id: '3',
+          type: 'count',
+          field: 'select field',
+        },
+        {
+          field: 'select field',
+          id: '4',
+          meta: {},
+          pipelineVariables: [
+            {
+              name: 'var1',
+              pipelineAgg: '3',
+            },
+          ],
+          settings: {
+            script: 'params.var1 * 1000',
+          },
+          type: 'bucket_script',
+        },
+      ],
+      bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '2' }],
+    });
+
+    const firstLevel = query.aggs['2'];
+
+    expect(firstLevel.aggs['4']).not.toBe(undefined);
+    expect(firstLevel.aggs['4'].bucket_script).not.toBe(undefined);
+    expect(firstLevel.aggs['4'].bucket_script.buckets_path).toMatchObject({ var1: '_count' });
+  });
+
   it('with histogram', () => {
     const query = builder.build({
       metrics: [{ id: '1', type: 'count' }],
@@ -301,5 +476,89 @@ describe('ElasticQueryBuilder', () => {
     expect(query.query.bool.filter[3].range['key4'].gt).toBe('value4');
     expect(query.query.bool.filter[4].regexp['key5']).toBe('value5');
     expect(query.query.bool.filter[5].bool.must_not.regexp['key6']).toBe('value6');
+  });
+
+  // terms query ES<6.0 - check ordering for _term and doc_type
+
+  it('getTermsQuery(default case) es<6.0 should set asc sorting on _term', () => {
+    const query = builder.getTermsQuery({});
+    expect(query.aggs['1'].terms.order._term).toBe('asc');
+    expect(query.aggs['1'].terms.order._key).toBeUndefined();
+    expect(query.aggs['1'].terms.order._count).toBeUndefined();
+  });
+
+  it('getTermsQuery(order:desc) es<6.0 should set desc sorting on _term', () => {
+    const query = builder.getTermsQuery({ order: 'desc' });
+    expect(query.aggs['1'].terms.order._term).toBe('desc');
+    expect(query.aggs['1'].terms.order._key).toBeUndefined();
+    expect(query.aggs['1'].terms.order._count).toBeUndefined();
+  });
+
+  it('getTermsQuery(orderBy:doc_count) es<6.0 should set desc sorting on _count', () => {
+    const query = builder.getTermsQuery({ orderBy: 'doc_count' });
+    expect(query.aggs['1'].terms.order._term).toBeUndefined();
+    expect(query.aggs['1'].terms.order._key).toBeUndefined();
+    expect(query.aggs['1'].terms.order._count).toBe('desc');
+  });
+
+  it('getTermsQuery(orderBy:doc_count, order:asc) es<6.0 should set asc sorting on _count', () => {
+    const query = builder.getTermsQuery({ orderBy: 'doc_count', order: 'asc' });
+    expect(query.aggs['1'].terms.order._term).toBeUndefined();
+    expect(query.aggs['1'].terms.order._key).toBeUndefined();
+    expect(query.aggs['1'].terms.order._count).toBe('asc');
+  });
+
+  // terms query ES>=6.0 - check ordering for _key and doc_type
+
+  it('getTermsQuery(default case) es6.x should set asc sorting on _key', () => {
+    const builder6x = new ElasticQueryBuilder({
+      timeField: '@timestamp',
+      esVersion: 60,
+    });
+    const query = builder6x.getTermsQuery({});
+    expect(query.aggs['1'].terms.order._term).toBeUndefined();
+    expect(query.aggs['1'].terms.order._key).toBe('asc');
+    expect(query.aggs['1'].terms.order._count).toBeUndefined();
+  });
+
+  it('getTermsQuery(order:desc) es6.x should set desc sorting on _key', () => {
+    const builder6x = new ElasticQueryBuilder({
+      timeField: '@timestamp',
+      esVersion: 60,
+    });
+    const query = builder6x.getTermsQuery({ order: 'desc' });
+    expect(query.aggs['1'].terms.order._term).toBeUndefined();
+    expect(query.aggs['1'].terms.order._key).toBe('desc');
+    expect(query.aggs['1'].terms.order._count).toBeUndefined();
+  });
+
+  it('getTermsQuery(orderBy:doc_count) es6.x should set desc sorting on _count', () => {
+    const builder6x = new ElasticQueryBuilder({
+      timeField: '@timestamp',
+      esVersion: 60,
+    });
+    const query = builder6x.getTermsQuery({ orderBy: 'doc_count' });
+    expect(query.aggs['1'].terms.order._term).toBeUndefined();
+    expect(query.aggs['1'].terms.order._key).toBeUndefined();
+    expect(query.aggs['1'].terms.order._count).toBe('desc');
+  });
+
+  it('getTermsQuery(orderBy:doc_count, order:asc) es6.x should set asc sorting on _count', () => {
+    const builder6x = new ElasticQueryBuilder({
+      timeField: '@timestamp',
+      esVersion: 60,
+    });
+    const query = builder6x.getTermsQuery({ orderBy: 'doc_count', order: 'asc' });
+    expect(query.aggs['1'].terms.order._term).toBeUndefined();
+    expect(query.aggs['1'].terms.order._key).toBeUndefined();
+    expect(query.aggs['1'].terms.order._count).toBe('asc');
+  });
+
+  // Logs query
+
+  it('getTermsQuery should request documents and date histogram', () => {
+    const query = builder.getLogsQuery({});
+    expect(query).toHaveProperty('query.bool.filter');
+    expect(query.aggs['2']).toHaveProperty('date_histogram');
   });
 });

@@ -1,10 +1,25 @@
-module.exports = function (config, grunt) {
+module.exports = function(config, grunt) {
   'use strict';
 
   return {
-    tslint: 'node ./node_modules/tslint/lib/tslintCli.js -c tslint.json --project ./tsconfig.json',
-    tsc: 'yarn tsc --noEmit',
+    tslintPackages: {
+      command: 'yarn workspaces run tslint',
+      src: ['packages/**/*.ts*'],
+    },
+    tslintRoot: {
+      command: 'yarn run tslint',
+      src: ['public/app/**/*.ts*'],
+    },
+    typecheckPackages: {
+      command: 'yarn workspaces run typecheck',
+      src: ['packages/**/*.ts*'],
+    },
+    typecheckRoot: {
+      command: 'yarn run typecheck',
+      src: ['public/app/**/*.ts*'],
+    },
     jest: 'node ./node_modules/jest-cli/bin/jest.js --maxWorkers 2',
-    webpack: 'node ./node_modules/webpack/bin/webpack.js --config scripts/webpack/webpack.prod.js',
+    webpack:
+      'node ./node_modules/webpack/bin/webpack.js --config scripts/webpack/webpack.prod.js',
   };
 };

@@ -147,17 +147,6 @@ func TestStackdriver(t *testing.T) {
 			})
 
 			Convey("and alignmentPeriod is set in frontend", func() {
-				Convey("and alignment period is too big", func() {
-					tsdbQuery.Queries[0].IntervalMs = 1000
-					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-						"alignmentPeriod": "+360000s",
-					})
-
-					queries, err := executor.buildQueries(tsdbQuery)
-					So(err, ShouldBeNil)
-					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+3600s`)
-				})
-
 				Convey("and alignment period is within accepted range", func() {
 					tsdbQuery.Queries[0].IntervalMs = 1000
 					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
@@ -173,7 +162,7 @@ func TestStackdriver(t *testing.T) {
 			Convey("and query has aggregation mean set", func() {
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
 					"metricType":         "a/metric/type",
-					"primaryAggregation": "REDUCE_MEAN",
+					"crossSeriesReducer": "REDUCE_SUM",
 					"view":               "FULL",
 				})
 
@@ -182,11 +171,11 @@ func TestStackdriver(t *testing.T) {
 
 				So(len(queries), ShouldEqual, 1)
 				So(queries[0].RefID, ShouldEqual, "A")
-				So(queries[0].Target, ShouldEqual, "aggregation.alignmentPeriod=%2B60s&aggregation.crossSeriesReducer=REDUCE_MEAN&aggregation.perSeriesAligner=ALIGN_MEAN&filter=metric.type%3D%22a%2Fmetric%2Ftype%22&interval.endTime=2018-03-15T13%3A34%3A00Z&interval.startTime=2018-03-15T13%3A00%3A00Z&view=FULL")
+				So(queries[0].Target, ShouldEqual, "aggregation.alignmentPeriod=%2B60s&aggregation.crossSeriesReducer=REDUCE_SUM&aggregation.perSeriesAligner=ALIGN_MEAN&filter=metric.type%3D%22a%2Fmetric%2Ftype%22&interval.endTime=2018-03-15T13%3A34%3A00Z&interval.startTime=2018-03-15T13%3A00%3A00Z&view=FULL")
 				So(len(queries[0].Params), ShouldEqual, 7)
 				So(queries[0].Params["interval.startTime"][0], ShouldEqual, "2018-03-15T13:00:00Z")
 				So(queries[0].Params["interval.endTime"][0], ShouldEqual, "2018-03-15T13:34:00Z")
-				So(queries[0].Params["aggregation.crossSeriesReducer"][0], ShouldEqual, "REDUCE_MEAN")
+				So(queries[0].Params["aggregation.crossSeriesReducer"][0], ShouldEqual, "REDUCE_SUM")
 				So(queries[0].Params["aggregation.perSeriesAligner"][0], ShouldEqual, "ALIGN_MEAN")
 				So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, "+60s")
 				So(queries[0].Params["filter"][0], ShouldEqual, "metric.type=\"a/metric/type\"")
@@ -196,7 +185,7 @@ func TestStackdriver(t *testing.T) {
 			Convey("and query has group bys", func() {
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
 					"metricType":         "a/metric/type",
-					"primaryAggregation": "REDUCE_NONE",
+					"crossSeriesReducer": "REDUCE_NONE",
 					"groupBys":           []interface{}{"metric.label.group1", "metric.label.group2"},
 					"view":               "FULL",
 				})
@@ -236,13 +225,13 @@ func TestStackdriver(t *testing.T) {
 
 				Convey("timestamps should be in ascending order", func() {
 					So(res.Series[0].Points[0][0].Float64, ShouldEqual, 0.05)
-					So(res.Series[0].Points[0][1].Float64, ShouldEqual, 1536670020000)
+					So(res.Series[0].Points[0][1].Float64, ShouldEqual, int64(1536670020000))
 
 					So(res.Series[0].Points[1][0].Float64, ShouldEqual, 1.05)
-					So(res.Series[0].Points[1][1].Float64, ShouldEqual, 1536670080000)
+					So(res.Series[0].Points[1][1].Float64, ShouldEqual, int64(1536670080000))
 
 					So(res.Series[0].Points[2][0].Float64, ShouldEqual, 1.0666666666667)
-					So(res.Series[0].Points[2][1].Float64, ShouldEqual, 1536670260000)
+					So(res.Series[0].Points[2][1].Float64, ShouldEqual, int64(1536670260000))
 				})
 			})
 
@@ -344,8 +333,8 @@ func TestStackdriver(t *testing.T) {
 				})
 			})
 
-			Convey("when data from query is distribution", func() {
-				data, err := loadTestFile("./test-data/3-series-response-distribution.json")
+			Convey("when data from query is distribution with exponential bounds", func() {
+				data, err := loadTestFile("./test-data/3-series-response-distribution-exponential.json")
 				So(err, ShouldBeNil)
 				So(len(data.TimeSeries), ShouldEqual, 1)
 
@@ -365,9 +354,17 @@ func TestStackdriver(t *testing.T) {
 				}
 
 				Convey("timestamps should be in ascending order", func() {
-					So(res.Series[0].Points[0][1].Float64, ShouldEqual, 1536668940000)
-					So(res.Series[0].Points[1][1].Float64, ShouldEqual, 1536669000000)
-					So(res.Series[0].Points[2][1].Float64, ShouldEqual, 1536669060000)
+					So(res.Series[0].Points[0][1].Float64, ShouldEqual, int64(1536668940000))
+					So(res.Series[0].Points[1][1].Float64, ShouldEqual, int64(1536669000000))
+					So(res.Series[0].Points[2][1].Float64, ShouldEqual, int64(1536669060000))
+				})
+
+				Convey("bucket bounds should be correct", func() {
+					So(res.Series[0].Name, ShouldEqual, "0")
+					So(res.Series[1].Name, ShouldEqual, "1")
+					So(res.Series[2].Name, ShouldEqual, "2")
+					So(res.Series[3].Name, ShouldEqual, "4")
+					So(res.Series[4].Name, ShouldEqual, "8")
 				})
 
 				Convey("value should be correct", func() {
@@ -383,6 +380,45 @@ func TestStackdriver(t *testing.T) {
 				})
 			})
 
+			Convey("when data from query is distribution with explicit bounds", func() {
+				data, err := loadTestFile("./test-data/4-series-response-distribution-explicit.json")
+				So(err, ShouldBeNil)
+				So(len(data.TimeSeries), ShouldEqual, 1)
+
+				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+				query := &StackdriverQuery{AliasBy: "{{bucket}}"}
+				err = executor.parseResponse(res, data, query)
+				So(err, ShouldBeNil)
+
+				So(len(res.Series), ShouldEqual, 33)
+				for i := 0; i < 33; i++ {
+					if i == 0 {
+						So(res.Series[i].Name, ShouldEqual, "0")
+					}
+					So(len(res.Series[i].Points), ShouldEqual, 2)
+				}
+
+				Convey("timestamps should be in ascending order", func() {
+					So(res.Series[0].Points[0][1].Float64, ShouldEqual, int64(1550859086000))
+					So(res.Series[0].Points[1][1].Float64, ShouldEqual, int64(1550859146000))
+				})
+
+				Convey("bucket bounds should be correct", func() {
+					So(res.Series[0].Name, ShouldEqual, "0")
+					So(res.Series[1].Name, ShouldEqual, "0.01")
+					So(res.Series[2].Name, ShouldEqual, "0.05")
+					So(res.Series[3].Name, ShouldEqual, "0.1")
+				})
+
+				Convey("value should be correct", func() {
+					So(res.Series[8].Points[0][0].Float64, ShouldEqual, 381)
+					So(res.Series[9].Points[0][0].Float64, ShouldEqual, 212)
+					So(res.Series[10].Points[0][0].Float64, ShouldEqual, 56)
+					So(res.Series[8].Points[1][0].Float64, ShouldEqual, 375)
+					So(res.Series[9].Points[1][0].Float64, ShouldEqual, 213)
+					So(res.Series[10].Points[1][0].Float64, ShouldEqual, 56)
+				})
+			})
 		})
 
 		Convey("when interpolating filter wildcards", func() {

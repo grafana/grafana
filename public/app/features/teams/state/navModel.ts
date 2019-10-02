@@ -1,5 +1,6 @@
-import { Team, NavModelItem, NavModel } from 'app/types';
+import { Team, TeamPermissionLevel } from 'app/types';
 import config from 'app/core/config';
+import { NavModelItem, NavModel } from '@grafana/data';
 
 export function buildNavModel(team: Team): NavModelItem {
   const navModel = {
@@ -47,6 +48,7 @@ export function getTeamLoadingNav(pageName: string): NavModel {
     name: 'Loading',
     email: 'loading',
     memberCount: 0,
+    permission: TeamPermissionLevel.Member,
   });
 
   let node: NavModelItem;

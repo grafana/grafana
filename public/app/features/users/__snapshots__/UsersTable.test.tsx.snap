@@ -115,7 +115,7 @@ exports[`Render should render users table 1`] = `
       </td>
       <td>
         <div
-          className="btn btn-danger btn-mini"
+          className="btn btn-danger btn-small"
           onClick={[Function]}
         >
           <i
@@ -178,7 +178,7 @@ exports[`Render should render users table 1`] = `
       </td>
       <td>
         <div
-          className="btn btn-danger btn-mini"
+          className="btn btn-danger btn-small"
           onClick={[Function]}
         >
           <i
@@ -241,7 +241,7 @@ exports[`Render should render users table 1`] = `
       </td>
       <td>
         <div
-          className="btn btn-danger btn-mini"
+          className="btn btn-danger btn-small"
           onClick={[Function]}
         >
           <i
@@ -304,7 +304,7 @@ exports[`Render should render users table 1`] = `
       </td>
       <td>
         <div
-          className="btn btn-danger btn-mini"
+          className="btn btn-danger btn-small"
           onClick={[Function]}
         >
           <i
@@ -367,7 +367,7 @@ exports[`Render should render users table 1`] = `
       </td>
       <td>
         <div
-          className="btn btn-danger btn-mini"
+          className="btn btn-danger btn-small"
           onClick={[Function]}
         >
           <i
@@ -430,7 +430,7 @@ exports[`Render should render users table 1`] = `
       </td>
       <td>
         <div
-          className="btn btn-danger btn-mini"
+          className="btn btn-danger btn-small"
           onClick={[Function]}
         >
           <i

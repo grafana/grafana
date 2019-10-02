@@ -1,12 +1,13 @@
 package dashboards
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -23,10 +24,15 @@ func (cr *configReader) parseConfigs(file os.FileInfo) ([]*DashboardsAsConfig, e
 	}
 
 	apiVersion := &ConfigVersion{ApiVersion: 0}
-	yaml.Unmarshal(yamlFile, &apiVersion)
+
+	// We ignore the error here because it errors out for version 0 which does not have apiVersion
+	// specified (so 0 is default). This can also error in case the apiVersion is not an integer but at the moment
+	// this does not handle that case and would still go on as if version = 0.
+	// TODO: return appropriate error in case the apiVersion is specified but isn't integer (or even if it is
+	//  integer > max version?).
+	_ = yaml.Unmarshal(yamlFile, &apiVersion)
 
 	if apiVersion.ApiVersion > 0 {
-
 		v1 := &DashboardAsConfigV1{}
 		err := yaml.Unmarshal(yamlFile, &v1)
 		if err != nil {
@@ -36,7 +42,6 @@ func (cr *configReader) parseConfigs(file os.FileInfo) ([]*DashboardsAsConfig, e
 		if v1 != nil {
 			return v1.mapToDashboardAsConfig(), nil
 		}
-
 	} else {
 		var v0 []*DashboardsAsConfigV0
 		err := yaml.Unmarshal(yamlFile, &v0)
@@ -58,7 +63,7 @@ func (cr *configReader) readConfig() ([]*DashboardsAsConfig, error) {
 
 	files, err := ioutil.ReadDir(cr.path)
 	if err != nil {
-		cr.log.Error("can't read dashboard provisioning files from directory", "path", cr.path)
+		cr.log.Error("can't read dashboard provisioning files from directory", "path", cr.path, "error", err)
 		return dashboards, nil
 	}
 
@@ -69,7 +74,7 @@ func (cr *configReader) readConfig() ([]*DashboardsAsConfig, error) {
 
 		parsedDashboards, err := cr.parseConfigs(file)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("could not parse provisioning config file: %s error: %v", file.Name(), err)
 		}
 
 		if len(parsedDashboards) > 0 {
@@ -77,13 +82,23 @@ func (cr *configReader) readConfig() ([]*DashboardsAsConfig, error) {
 		}
 	}
 
-	for i := range dashboards {
-		if dashboards[i].OrgId == 0 {
-			dashboards[i].OrgId = 1
+	uidUsage := map[string]uint8{}
+	for _, dashboard := range dashboards {
+		if dashboard.OrgId == 0 {
+			dashboard.OrgId = 1
 		}
 
-		if dashboards[i].UpdateIntervalSeconds == 0 {
-			dashboards[i].UpdateIntervalSeconds = 10
+		if dashboard.UpdateIntervalSeconds == 0 {
+			dashboard.UpdateIntervalSeconds = 10
+		}
+		if len(dashboard.FolderUid) > 0 {
+			uidUsage[dashboard.FolderUid] += 1
+		}
+	}
+
+	for uid, times := range uidUsage {
+		if times > 1 {
+			cr.log.Error("the same 'folderUid' is used more than once", "folderUid", uid)
 		}
 	}
 

@@ -19,35 +19,6 @@
 }
 
 // Search
-.search-field-wrapper {
-  width: 100%;
-  display: flex;
-  background-color: $navbarBackground;
-  box-shadow: $navbarShadow;
-  position: relative;
-
-  & > input {
-    max-width: 653px;
-    //padding: 0.5rem 1.5rem 0.5rem 0;
-    padding: 1rem 1rem 0.75rem 1rem;
-    height: 51px;
-    box-sizing: border-box;
-    outline: none;
-    background: $side-menu-bg;
-    background-color: $navbarButtonBackground;
-    flex-grow: 10;
-  }
-}
-
-.search-field-spacer {
-  flex-grow: 1;
-}
-
-.search-field-icon {
-  font-size: $font-size-lg;
-  padding: 1rem 1rem 0.75rem 1.5rem;
-}
-
 .search-dropdown {
   display: flex;
   flex-direction: column;
@@ -60,6 +31,7 @@
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  height: 100%; // Chrome 74 needs this to make the element scrollable
 
   .search-item--indent {
     margin-left: 14px;
@@ -77,13 +49,13 @@
 .search-filter-box {
   background: $search-filter-box-bg;
   border-radius: 2px;
-  padding: $spacer*1.5;
+  padding: $spacer * 1.5;
   min-width: 340px;
   margin-bottom: $spacer * 1.5;
 }
 
 .search-filter-box__header {
-  border-bottom: 1px solid $dark-5;
+  border-bottom: 1px solid $hr-border-color;
   margin-bottom: $spacer * 1.5;
 }
 
@@ -112,7 +84,7 @@
   padding: $spacer;
   position: relative;
   flex-grow: 10;
-  margin-bottom: 1rem;
+  margin-bottom: $space-md;
 
   // Fix for search scroller in mobile view
   height: unset;
@@ -259,11 +231,11 @@
 
 .search-button-row {
   text-align: center;
-  padding: $spacer*2 $spacer;
+  padding: $spacer * 2 $spacer;
   background: $panel-bg;
 }
 
-@include media-breakpoint-up(sm) {
+@include media-breakpoint-up(md) {
   .search-container {
     left: $side-menu-width;
   }
@@ -274,7 +246,7 @@
 
   .search-dropdown__col_2 {
     display: flex;
-    margin-bottom: 1rem;
+    margin-bottom: $space-md;
   }
 }
 
@@ -285,10 +257,6 @@
     max-width: 700px;
     height: 260px;
     align-items: flex-start;
-  }
-
-  .search-dropdown__col_1 {
-    height: 100%;
   }
 
   .search-filter-box {

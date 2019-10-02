@@ -7,8 +7,10 @@ import (
 	"net/http/httputil"
 	"net/url"
 
+	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util"
@@ -37,7 +39,25 @@ func getHeaders(route *plugins.AppPluginRoute, orgId int64, appID string) (http.
 	return result, err
 }
 
-func NewApiPluginProxy(ctx *m.ReqContext, proxyPath string, route *plugins.AppPluginRoute, appID string) *httputil.ReverseProxy {
+func updateURL(route *plugins.AppPluginRoute, orgId int64, appID string) (string, error) {
+	query := m.GetPluginSettingByIdQuery{OrgId: orgId, PluginId: appID}
+	if err := bus.Dispatch(&query); err != nil {
+		return "", err
+	}
+
+	data := templateData{
+		JsonData:       query.Result.JsonData,
+		SecureJsonData: query.Result.SecureJsonData.Decrypt(),
+	}
+	interpolated, err := InterpolateString(route.Url, data)
+	if err != nil {
+		return "", err
+	}
+	return interpolated, err
+}
+
+// NewApiPluginProxy create a plugin proxy
+func NewApiPluginProxy(ctx *m.ReqContext, proxyPath string, route *plugins.AppPluginRoute, appID string, cfg *setting.Cfg) *httputil.ReverseProxy {
 	targetURL, _ := url.Parse(route.Url)
 
 	director := func(req *http.Request) {
@@ -46,8 +66,7 @@ func NewApiPluginProxy(ctx *m.ReqContext, proxyPath string, route *plugins.AppPl
 		req.URL.Host = targetURL.Host
 		req.Host = targetURL.Host
 
-		req.URL.Path = util.JoinUrlFragments(targetURL.Path, proxyPath)
-
+		req.URL.Path = util.JoinURLFragments(targetURL.Path, proxyPath)
 		// clear cookie headers
 		req.Header.Del("Cookie")
 		req.Header.Del("Set-Cookie")
@@ -71,13 +90,17 @@ func NewApiPluginProxy(ctx *m.ReqContext, proxyPath string, route *plugins.AppPl
 		}
 
 		// Create a HTTP header with the context in it.
-		ctxJson, err := json.Marshal(ctx.SignedInUser)
+		ctxJSON, err := json.Marshal(ctx.SignedInUser)
 		if err != nil {
 			ctx.JsonApiErr(500, "failed to marshal context to json.", err)
 			return
 		}
 
-		req.Header.Add("X-Grafana-Context", string(ctxJson))
+		req.Header.Add("X-Grafana-Context", string(ctxJSON))
+
+		if cfg.SendUserHeader && !ctx.SignedInUser.IsAnonymous {
+			req.Header.Add("X-Grafana-User", ctx.SignedInUser.Login)
+		}
 
 		if len(route.Headers) > 0 {
 			headers, err := getHeaders(route, ctx.OrgId, appID)
@@ -87,9 +110,25 @@ func NewApiPluginProxy(ctx *m.ReqContext, proxyPath string, route *plugins.AppPl
 			}
 
 			for key, value := range headers {
-				log.Trace("setting key %v value %v", key, value[0])
+				log.Trace("setting key %v value <redacted>", key)
 				req.Header.Set(key, value[0])
 			}
+		}
+
+		if len(route.Url) > 0 {
+			interpolatedURL, err := updateURL(route, ctx.OrgId, appID)
+			if err != nil {
+				ctx.JsonApiErr(500, "Could not interpolate plugin route url", err)
+			}
+			targetURL, err := url.Parse(interpolatedURL)
+			if err != nil {
+				ctx.JsonApiErr(500, "Could not parse custom url: %v", err)
+				return
+			}
+			req.URL.Scheme = targetURL.Scheme
+			req.URL.Host = targetURL.Host
+			req.Host = targetURL.Host
+			req.URL.Path = util.JoinURLFragments(targetURL.Path, proxyPath)
 		}
 
 		// reqBytes, _ := httputil.DumpRequestOut(req, true);

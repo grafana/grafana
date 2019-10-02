@@ -3,6 +3,7 @@ title = "LDAP Authentication"
 description = "Grafana LDAP Authentication Guide "
 keywords = ["grafana", "configuration", "documentation", "ldap", "active directory"]
 type = "docs"
+aliases = ["/installation/ldap/"]
 [menu.docs]
 name = "LDAP"
 identifier = "ldap"
@@ -89,6 +90,25 @@ member_of = "memberOf"
 email =  "email"
 ```
 
+## LDAP Debug View
+
+> Only available in Grafana v6.4+
+
+Grafana has an LDAP debug view built-in which allows you to test your LDAP configuration directly within Grafana. At the moment of writing, only Grafana admins can use the LDAP debug view.
+ 
+Within this view, you'll be able to see which LDAP servers are currently reachable and test your current configuration.
+
+{{< docs-imagebox img="/img/docs/ldap_debug.png" class="docs-image--no-shadow" max-width="600px" >}}
+
+
+To use the debug view:
+
+ 1. Type the username of a user that exists within any of your LDAP server(s)
+ 2. Then, press "Run"
+ 3. If the user is found within any of your LDAP instances, the mapping information is displayed
+
+{{< docs-imagebox img="/img/docs/ldap_debug_mapping_testing.png" class="docs-image--no-shadow" max-width="600px" >}}
+
 ### Bind
 
 #### Bind & Bind Password
@@ -125,8 +145,6 @@ group_search_base_dns = ["ou=groups,dc=grafana,dc=org"]
 group_search_filter_user_attribute = "uid"
 ```
 
-Also set `member_of = "dn"` in the `[servers.attributes]` section.
-
 ### Group Mappings
 
 In `[[servers.group_mappings]]` you can map an LDAP group to a Grafana organization and role.  These will be synced every time the user logs in, with LDAP being
@@ -162,9 +180,9 @@ org_role = "Viewer"
 Setting | Required | Description | Default
 ------------ | ------------ | ------------- | -------------
 `group_dn` | Yes | LDAP distinguished name (DN) of LDAP group. If you want to match all (or no LDAP groups) then you can use wildcard (`"*"`) |
-`org_role` | Yes | Assign users of `group_dn` the organisation role `"Admin"`, `"Editor"` or `"Viewer"` |
+`org_role` | Yes | Assign users of `group_dn` the organization role `"Admin"`, `"Editor"` or `"Viewer"` |
 `org_id` | No | The Grafana organization database id. Setting this allows for multiple group_dn's to be assigned to the same `org_role` provided the `org_id` differs | `1` (default org id)
-`grafana_admin` | No | When `true` makes user of `group_dn` Grafana server admin. A Grafana server admin has admin access over all organisations and users. Available in Grafana v5.3 and above | `false`
+`grafana_admin` | No | When `true` makes user of `group_dn` Grafana server admin. A Grafana server admin has admin access over all organizations and users. Available in Grafana v5.3 and above | `false`
 
 ### Nested/recursive group membership
 
@@ -214,6 +232,67 @@ email =  "email"
 # [[servers.group_mappings]] omitted for clarity
 ```
 
+### Multiple LDAP servers
+
+Grafana does support receiving information from multiple LDAP servers.
+
+**LDAP specific configuration file (ldap.toml):**
+```bash
+# --- First LDAP Server ---
+
+[[servers]]
+host = "10.0.0.1"
+port = 389
+use_ssl = false
+start_tls = false
+ssl_skip_verify = false
+bind_dn = "cn=admin,dc=grafana,dc=org"
+bind_password = 'grafana'
+search_filter = "(cn=%s)"
+search_base_dns = ["ou=users,dc=grafana,dc=org"]
+
+[servers.attributes]
+name = "givenName"
+surname = "sn"
+username = "cn"
+member_of = "memberOf"
+email =  "email"
+
+[[servers.group_mappings]]
+group_dn = "cn=admins,ou=groups,dc=grafana,dc=org"
+org_role = "Admin"
+grafana_admin = true
+
+# --- Second LDAP Server ---
+
+[[servers]]
+host = "10.0.0.2"
+port = 389
+use_ssl = false
+start_tls = false
+ssl_skip_verify = false
+
+bind_dn = "cn=admin,dc=grafana,dc=org"
+bind_password = 'grafana'
+search_filter = "(cn=%s)"
+search_base_dns = ["ou=users,dc=grafana,dc=org"]
+
+[servers.attributes]
+name = "givenName"
+surname = "sn"
+username = "cn"
+member_of = "memberOf"
+email =  "email"
+
+[[servers.group_mappings]]
+group_dn = "cn=editors,ou=groups,dc=grafana,dc=org"
+org_role = "Editor"
+
+[[servers.group_mappings]]
+group_dn = "*"
+org_role = "Viewer"
+```
+
 ### Active Directory
 
 [Active Directory](https://technet.microsoft.com/en-us/library/hh831484(v=ws.11).aspx) is a directory service which is commonly used in Windows environments.
@@ -245,6 +324,8 @@ email =  "mail"
 
 # [[servers.group_mappings]] omitted for clarity
 ```
+
+
 
 #### Port requirements
 

@@ -29,12 +29,14 @@ const (
 type responseParser struct {
 	Responses []*es.SearchResponse
 	Targets   []*Query
+	DebugInfo *es.SearchDebugInfo
 }
 
-var newResponseParser = func(responses []*es.SearchResponse, targets []*Query) *responseParser {
+var newResponseParser = func(responses []*es.SearchResponse, targets []*Query, debugInfo *es.SearchDebugInfo) *responseParser {
 	return &responseParser{
 		Responses: responses,
 		Targets:   targets,
+		DebugInfo: debugInfo,
 	}
 }
 
@@ -49,12 +51,19 @@ func (rp *responseParser) getTimeSeries() (*tsdb.Response, error) {
 	for i, res := range rp.Responses {
 		target := rp.Targets[i]
 
+		var debugInfo *simplejson.Json
+		if rp.DebugInfo != nil && i == 0 {
+			debugInfo = simplejson.NewFromAny(rp.DebugInfo)
+		}
+
 		if res.Error != nil {
 			result.Results[target.RefID] = getErrorFromElasticResponse(res)
+			result.Results[target.RefID].Meta = debugInfo
 			continue
 		}
 
 		queryRes := tsdb.NewQueryResult()
+		queryRes.Meta = debugInfo
 		props := make(map[string]string)
 		table := tsdb.Table{
 			Columns: make([]tsdb.TableColumn, 0),
@@ -260,6 +269,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 
 			newSeries.Tags["metric"] = metric.Type
 			newSeries.Tags["field"] = metric.Field
+			newSeries.Tags["metricId"] = metric.ID
 			for _, v := range esAgg.Get("buckets").MustArray() {
 				bucket := simplejson.NewFromAny(v)
 				key := castToNullFloat(bucket.Get("key"))
@@ -459,19 +469,41 @@ func (rp *responseParser) getSeriesName(series *tsdb.TimeSeries, target *Query, 
 	}
 	// todo, if field and pipelineAgg
 	if field != "" && isPipelineAgg(metricType) {
-		found := false
-		for _, metric := range target.Metrics {
-			if metric.ID == field {
-				metricName += " " + describeMetric(metric.Type, field)
-				found = true
+		if isPipelineAggWithMultipleBucketPaths(metricType) {
+			metricID := ""
+			if v, ok := series.Tags["metricId"]; ok {
+				metricID = v
 			}
-		}
-		if !found {
-			metricName = "Unset"
+
+			for _, metric := range target.Metrics {
+				if metric.ID == metricID {
+					metricName = metric.Settings.Get("script").MustString()
+					for name, pipelineAgg := range metric.PipelineVariables {
+						for _, m := range target.Metrics {
+							if m.ID == pipelineAgg {
+								metricName = strings.Replace(metricName, "params."+name, describeMetric(m.Type, m.Field), -1)
+							}
+						}
+					}
+				}
+			}
+		} else {
+			found := false
+			for _, metric := range target.Metrics {
+				if metric.ID == field {
+					metricName += " " + describeMetric(metric.Type, field)
+					found = true
+				}
+			}
+			if !found {
+				metricName = "Unset"
+			}
 		}
 	} else if field != "" {
 		metricName += " " + field
 	}
+
+	delete(series.Tags, "metricId")
 
 	if len(series.Tags) == 0 {
 		return metricName
@@ -541,7 +573,7 @@ func getErrorFromElasticResponse(response *es.SearchResponse) *tsdb.QueryResult 
 	} else if reason != "" {
 		result.ErrorString = reason
 	} else {
-		result.ErrorString = "Unkown elasticsearch error response"
+		result.ErrorString = "Unknown elasticsearch error response"
 	}
 
 	return result

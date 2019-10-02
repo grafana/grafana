@@ -3,10 +3,12 @@ package alerting
 import (
 	"io/ioutil"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -19,17 +21,17 @@ func TestAlertRuleExtraction(t *testing.T) {
 		})
 
 		// mock data
-		defaultDs := &m.DataSource{Id: 12, OrgId: 1, Name: "I am default", IsDefault: true}
-		graphite2Ds := &m.DataSource{Id: 15, OrgId: 1, Name: "graphite2"}
-		influxDBDs := &m.DataSource{Id: 16, OrgId: 1, Name: "InfluxDB"}
-		prom := &m.DataSource{Id: 17, OrgId: 1, Name: "Prometheus"}
+		defaultDs := &models.DataSource{Id: 12, OrgId: 1, Name: "I am default", IsDefault: true}
+		graphite2Ds := &models.DataSource{Id: 15, OrgId: 1, Name: "graphite2"}
+		influxDBDs := &models.DataSource{Id: 16, OrgId: 1, Name: "InfluxDB"}
+		prom := &models.DataSource{Id: 17, OrgId: 1, Name: "Prometheus"}
 
-		bus.AddHandler("test", func(query *m.GetDataSourcesQuery) error {
-			query.Result = []*m.DataSource{defaultDs, graphite2Ds}
+		bus.AddHandler("test", func(query *models.GetDataSourcesQuery) error {
+			query.Result = []*models.DataSource{defaultDs, graphite2Ds}
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.GetDataSourceByNameQuery) error {
+		bus.AddHandler("test", func(query *models.GetDataSourceByNameQuery) error {
 			if query.Name == defaultDs.Name {
 				query.Result = defaultDs
 			}
@@ -46,14 +48,14 @@ func TestAlertRuleExtraction(t *testing.T) {
 			return nil
 		})
 
-		json, err := ioutil.ReadFile("./test-data/graphite-alert.json")
+		json, err := ioutil.ReadFile("./testdata/graphite-alert.json")
 		So(err, ShouldBeNil)
 
 		Convey("Extractor should not modify the original json", func() {
-			dashJson, err := simplejson.NewJson(json)
+			dashJSON, err := simplejson.NewJson(json)
 			So(err, ShouldBeNil)
 
-			dash := m.NewDashboardFromJson(dashJson)
+			dash := models.NewDashboardFromJson(dashJSON)
 
 			getTarget := func(j *simplejson.Json) string {
 				rowObj := j.Get("rows").MustArray()[0]
@@ -66,24 +68,24 @@ func TestAlertRuleExtraction(t *testing.T) {
 			}
 
 			Convey("Dashboard json rows.panels.alert.query.model.target should be empty", func() {
-				So(getTarget(dashJson), ShouldEqual, "")
+				So(getTarget(dashJSON), ShouldEqual, "")
 			})
 
-			extractor := NewDashAlertExtractor(dash, 1)
+			extractor := NewDashAlertExtractor(dash, 1, nil)
 			_, _ = extractor.GetAlerts()
 
 			Convey("Dashboard json should not be updated after extracting rules", func() {
-				So(getTarget(dashJson), ShouldEqual, "")
+				So(getTarget(dashJSON), ShouldEqual, "")
 			})
 		})
 
 		Convey("Parsing and validating dashboard containing graphite alerts", func() {
 
-			dashJson, err := simplejson.NewJson(json)
+			dashJSON, err := simplejson.NewJson(json)
 			So(err, ShouldBeNil)
 
-			dash := m.NewDashboardFromJson(dashJson)
-			extractor := NewDashAlertExtractor(dash, 1)
+			dash := models.NewDashboardFromJson(dashJSON)
+			extractor := NewDashAlertExtractor(dash, 1, nil)
 
 			alerts, err := extractor.GetAlerts()
 
@@ -118,6 +120,11 @@ func TestAlertRuleExtraction(t *testing.T) {
 					So(alerts[1].PanelId, ShouldEqual, 4)
 				})
 
+				Convey("should extract for param", func() {
+					So(alerts[0].For, ShouldEqual, time.Minute*2)
+					So(alerts[1].For, ShouldEqual, time.Duration(0))
+				})
+
 				Convey("should extract name and desc", func() {
 					So(alerts[0].Name, ShouldEqual, "name1")
 					So(alerts[0].Message, ShouldEqual, "desc1")
@@ -140,13 +147,13 @@ func TestAlertRuleExtraction(t *testing.T) {
 		})
 
 		Convey("Panels missing id should return error", func() {
-			panelWithoutId, err := ioutil.ReadFile("./test-data/panels-missing-id.json")
+			panelWithoutID, err := ioutil.ReadFile("./testdata/panels-missing-id.json")
 			So(err, ShouldBeNil)
 
-			dashJson, err := simplejson.NewJson(panelWithoutId)
+			dashJSON, err := simplejson.NewJson(panelWithoutID)
 			So(err, ShouldBeNil)
-			dash := m.NewDashboardFromJson(dashJson)
-			extractor := NewDashAlertExtractor(dash, 1)
+			dash := models.NewDashboardFromJson(dashJSON)
+			extractor := NewDashAlertExtractor(dash, 1, nil)
 
 			_, err = extractor.GetAlerts()
 
@@ -156,13 +163,13 @@ func TestAlertRuleExtraction(t *testing.T) {
 		})
 
 		Convey("Panel with id set to zero should return error", func() {
-			panelWithIdZero, err := ioutil.ReadFile("./test-data/panel-with-id-0.json")
+			panelWithIDZero, err := ioutil.ReadFile("./testdata/panel-with-id-0.json")
 			So(err, ShouldBeNil)
 
-			dashJson, err := simplejson.NewJson(panelWithIdZero)
+			dashJSON, err := simplejson.NewJson(panelWithIDZero)
 			So(err, ShouldBeNil)
-			dash := m.NewDashboardFromJson(dashJson)
-			extractor := NewDashAlertExtractor(dash, 1)
+			dash := models.NewDashboardFromJson(dashJSON)
+			extractor := NewDashAlertExtractor(dash, 1, nil)
 
 			_, err = extractor.GetAlerts()
 
@@ -172,13 +179,13 @@ func TestAlertRuleExtraction(t *testing.T) {
 		})
 
 		Convey("Parse alerts from dashboard without rows", func() {
-			json, err := ioutil.ReadFile("./test-data/v5-dashboard.json")
+			json, err := ioutil.ReadFile("./testdata/v5-dashboard.json")
 			So(err, ShouldBeNil)
 
-			dashJson, err := simplejson.NewJson(json)
+			dashJSON, err := simplejson.NewJson(json)
 			So(err, ShouldBeNil)
-			dash := m.NewDashboardFromJson(dashJson)
-			extractor := NewDashAlertExtractor(dash, 1)
+			dash := models.NewDashboardFromJson(dashJSON)
+			extractor := NewDashAlertExtractor(dash, 1, nil)
 
 			alerts, err := extractor.GetAlerts()
 
@@ -191,74 +198,84 @@ func TestAlertRuleExtraction(t *testing.T) {
 			})
 		})
 
-		Convey("Parse and validate dashboard containing influxdb alert", func() {
-			json, err := ioutil.ReadFile("./test-data/influxdb-alert.json")
+		Convey("Alert notifications are in DB", func() {
+			sqlstore.InitTestDB(t)
+			firstNotification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
+			err = sqlstore.CreateAlertNotificationCommand(&firstNotification)
+			So(err, ShouldBeNil)
+			secondNotification := models.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
+			err = sqlstore.CreateAlertNotificationCommand(&secondNotification)
 			So(err, ShouldBeNil)
 
-			dashJson, err := simplejson.NewJson(json)
-			So(err, ShouldBeNil)
-			dash := m.NewDashboardFromJson(dashJson)
-			extractor := NewDashAlertExtractor(dash, 1)
-
-			alerts, err := extractor.GetAlerts()
-
-			Convey("Get rules without error", func() {
+			Convey("Parse and validate dashboard containing influxdb alert", func() {
+				json, err := ioutil.ReadFile("./testdata/influxdb-alert.json")
 				So(err, ShouldBeNil)
-			})
 
-			Convey("should be able to read interval", func() {
-				So(len(alerts), ShouldEqual, 1)
-
-				for _, alert := range alerts {
-					So(alert.DashboardId, ShouldEqual, 4)
-
-					conditions := alert.Settings.Get("conditions").MustArray()
-					cond := simplejson.NewFromAny(conditions[0])
-
-					So(cond.Get("query").Get("model").Get("interval").MustString(), ShouldEqual, ">10s")
-				}
-			})
-		})
-
-		Convey("Should be able to extract collapsed panels", func() {
-			json, err := ioutil.ReadFile("./test-data/collapsed-panels.json")
-			So(err, ShouldBeNil)
-
-			dashJson, err := simplejson.NewJson(json)
-			So(err, ShouldBeNil)
-
-			dash := m.NewDashboardFromJson(dashJson)
-			extractor := NewDashAlertExtractor(dash, 1)
-
-			alerts, err := extractor.GetAlerts()
-
-			Convey("Get rules without error", func() {
+				dashJSON, err := simplejson.NewJson(json)
 				So(err, ShouldBeNil)
+				dash := models.NewDashboardFromJson(dashJSON)
+				extractor := NewDashAlertExtractor(dash, 1, nil)
+
+				alerts, err := extractor.GetAlerts()
+
+				Convey("Get rules without error", func() {
+					So(err, ShouldBeNil)
+				})
+
+				Convey("should be able to read interval", func() {
+					So(len(alerts), ShouldEqual, 1)
+
+					for _, alert := range alerts {
+						So(alert.DashboardId, ShouldEqual, 4)
+
+						conditions := alert.Settings.Get("conditions").MustArray()
+						cond := simplejson.NewFromAny(conditions[0])
+
+						So(cond.Get("query").Get("model").Get("interval").MustString(), ShouldEqual, ">10s")
+					}
+				})
 			})
 
-			Convey("should be able to extract collapsed alerts", func() {
-				So(len(alerts), ShouldEqual, 4)
-			})
-		})
-
-		Convey("Parse and validate dashboard without id and containing an alert", func() {
-			json, err := ioutil.ReadFile("./test-data/dash-without-id.json")
-			So(err, ShouldBeNil)
-
-			dashJSON, err := simplejson.NewJson(json)
-			So(err, ShouldBeNil)
-			dash := m.NewDashboardFromJson(dashJSON)
-			extractor := NewDashAlertExtractor(dash, 1)
-
-			err = extractor.ValidateAlerts()
-
-			Convey("Should validate without error", func() {
+			Convey("Should be able to extract collapsed panels", func() {
+				json, err := ioutil.ReadFile("./testdata/collapsed-panels.json")
 				So(err, ShouldBeNil)
+
+				dashJSON, err := simplejson.NewJson(json)
+				So(err, ShouldBeNil)
+
+				dash := models.NewDashboardFromJson(dashJSON)
+				extractor := NewDashAlertExtractor(dash, 1, nil)
+
+				alerts, err := extractor.GetAlerts()
+
+				Convey("Get rules without error", func() {
+					So(err, ShouldBeNil)
+				})
+
+				Convey("should be able to extract collapsed alerts", func() {
+					So(len(alerts), ShouldEqual, 4)
+				})
 			})
 
-			Convey("Should fail on save", func() {
-				_, err := extractor.GetAlerts()
-				So(err, ShouldEqual, m.ErrDashboardContainsInvalidAlertData)
+			Convey("Parse and validate dashboard without id and containing an alert", func() {
+				json, err := ioutil.ReadFile("./testdata/dash-without-id.json")
+				So(err, ShouldBeNil)
+
+				dashJSON, err := simplejson.NewJson(json)
+				So(err, ShouldBeNil)
+				dash := models.NewDashboardFromJson(dashJSON)
+				extractor := NewDashAlertExtractor(dash, 1, nil)
+
+				err = extractor.ValidateAlerts()
+
+				Convey("Should validate without error", func() {
+					So(err, ShouldBeNil)
+				})
+
+				Convey("Should fail on save", func() {
+					_, err := extractor.GetAlerts()
+					So(err.Error(), ShouldEqual, "Alert validation error: Panel id is not correct, alertName=Influxdb, panelId=1")
+				})
 			})
 		})
 	})

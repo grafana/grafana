@@ -4,12 +4,12 @@ import appEvents from 'app/core/app_events';
 
 jest.mock('app/core/app_events', () => {
   return {
-    emit: jest.fn<any>(),
+    emit: jest.fn(),
   };
 });
 
 describe('SearchResultsCtrl', () => {
-  let ctrl;
+  let ctrl: any;
 
   describe('when checking an item that is not checked', () => {
     const item = { checked: false };
@@ -50,11 +50,11 @@ describe('SearchResultsCtrl', () => {
   });
 
   describe('when selecting a tag', () => {
-    let selectedTag = null;
+    let selectedTag: any = null;
 
     beforeEach(() => {
       ctrl = new SearchResultsCtrl({});
-      ctrl.onTagSelected = tag => (selectedTag = tag);
+      ctrl.onTagSelected = (tag: any) => (selectedTag = tag);
       ctrl.selectTag('tag-test');
     });
 

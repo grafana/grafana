@@ -9,6 +9,7 @@ func init() {
 	bus.AddHandler("sql", GetProvisionedDashboardDataQuery)
 	bus.AddHandler("sql", SaveProvisionedDashboard)
 	bus.AddHandler("sql", GetProvisionedDataByDashboardId)
+	bus.AddHandler("sql", UnprovisionDashboard)
 }
 
 type DashboardExtras struct {
@@ -18,16 +19,16 @@ type DashboardExtras struct {
 	Value       string
 }
 
-func GetProvisionedDataByDashboardId(cmd *models.IsDashboardProvisionedQuery) error {
+func GetProvisionedDataByDashboardId(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
 	result := &models.DashboardProvisioning{}
 
 	exist, err := x.Where("dashboard_id = ?", cmd.DashboardId).Get(result)
 	if err != nil {
 		return err
 	}
-
-	cmd.Result = exist
-
+	if exist {
+		cmd.Result = result
+	}
 	return nil
 }
 
@@ -44,14 +45,14 @@ func SaveProvisionedDashboard(cmd *models.SaveProvisionedDashboardCommand) error
 			cmd.DashboardProvisioning.Updated = cmd.Result.Updated.Unix()
 		}
 
-		return saveProvionedData(sess, cmd.DashboardProvisioning, cmd.Result)
+		return saveProvisionedData(sess, cmd.DashboardProvisioning, cmd.Result)
 	})
 }
 
-func saveProvionedData(sess *DBSession, cmd *models.DashboardProvisioning, dashboard *models.Dashboard) error {
+func saveProvisionedData(sess *DBSession, cmd *models.DashboardProvisioning, dashboard *models.Dashboard) error {
 	result := &models.DashboardProvisioning{}
 
-	exist, err := sess.Where("dashboard_id=?", dashboard.Id).Get(result)
+	exist, err := sess.Where("dashboard_id=? AND name = ?", dashboard.Id, cmd.Name).Get(result)
 	if err != nil {
 		return err
 	}
@@ -76,5 +77,14 @@ func GetProvisionedDashboardDataQuery(cmd *models.GetProvisionedDashboardDataQue
 	}
 
 	cmd.Result = result
+	return nil
+}
+
+// UnprovisionDashboard removes row in dashboard_provisioning for the dashboard making it seem as if manually created.
+// The dashboard will still have `created_by = -1` to see it was not created by any particular user.
+func UnprovisionDashboard(cmd *models.UnprovisionDashboardCommand) error {
+	if _, err := x.Where("dashboard_id = ?", cmd.Id).Delete(&models.DashboardProvisioning{}); err != nil {
+		return err
+	}
 	return nil
 }

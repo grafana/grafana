@@ -1,14 +1,24 @@
+// Libraries
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import PageHeader from '../../core/components/PageHeader/PageHeader';
-import OrgActionBar from '../../core/components/OrgActionBar/OrgActionBar';
-import EmptyListCTA from '../../core/components/EmptyListCTA/EmptyListCTA';
+
+// Components
+import Page from 'app/core/components/Page/Page';
+import OrgActionBar from 'app/core/components/OrgActionBar/OrgActionBar';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import DataSourcesList from './DataSourcesList';
-import { DataSource, NavModel } from 'app/types';
-import { LayoutMode } from '../../core/components/LayoutSelector/LayoutSelector';
+
+// Types
+import { DataSourceSettings } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
+import { StoreState } from 'app/types';
+import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
+
+// Actions
 import { loadDataSources, setDataSourcesLayoutMode, setDataSourcesSearchQuery } from './state/actions';
-import { getNavModel } from '../../core/selectors/navModel';
+import { getNavModel } from 'app/core/selectors/navModel';
+
 import {
   getDataSources,
   getDataSourcesCount,
@@ -18,10 +28,11 @@ import {
 
 export interface Props {
   navModel: NavModel;
-  dataSources: DataSource[];
+  dataSources: DataSourceSettings[];
   dataSourcesCount: number;
   layoutMode: LayoutMode;
   searchQuery: string;
+  hasFetched: boolean;
   loadDataSources: typeof loadDataSources;
   setDataSourcesLayoutMode: typeof setDataSourcesLayoutMode;
   setDataSourcesSearchQuery: typeof setDataSourcesSearchQuery;
@@ -29,7 +40,7 @@ export interface Props {
 
 const emptyListModel = {
   title: 'There are no data sources defined yet',
-  buttonIcon: 'gicon gicon-add-datasources',
+  buttonIcon: 'gicon gicon-datasources',
   buttonLink: 'datasources/new',
   buttonTitle: 'Add data source',
   proTip: 'You can also define data sources through configuration files.',
@@ -56,6 +67,7 @@ export class DataSourcesListPage extends PureComponent<Props> {
       searchQuery,
       setDataSourcesSearchQuery,
       setDataSourcesLayoutMode,
+      hasFetched,
     } = this.props;
 
     const linkButton = {
@@ -64,37 +76,37 @@ export class DataSourcesListPage extends PureComponent<Props> {
     };
 
     return (
-      <div>
-        <PageHeader model={navModel} />
-        <div className="page-container page-body">
-          {dataSourcesCount === 0 ? (
-            <EmptyListCTA model={emptyListModel} />
-          ) : (
-            [
-              <OrgActionBar
-                layoutMode={layoutMode}
-                searchQuery={searchQuery}
-                onSetLayoutMode={mode => setDataSourcesLayoutMode(mode)}
-                setSearchQuery={query => setDataSourcesSearchQuery(query)}
-                linkButton={linkButton}
-                key="action-bar"
-              />,
-              <DataSourcesList dataSources={dataSources} layoutMode={layoutMode} key="list" />,
-            ]
-          )}
-        </div>
-      </div>
+      <Page navModel={navModel}>
+        <Page.Contents isLoading={!hasFetched}>
+          <>
+            {hasFetched && dataSourcesCount === 0 && <EmptyListCTA {...emptyListModel} />}
+            {hasFetched &&
+              dataSourcesCount > 0 && [
+                <OrgActionBar
+                  layoutMode={layoutMode}
+                  searchQuery={searchQuery}
+                  onSetLayoutMode={mode => setDataSourcesLayoutMode(mode)}
+                  setSearchQuery={query => setDataSourcesSearchQuery(query)}
+                  linkButton={linkButton}
+                  key="action-bar"
+                />,
+                <DataSourcesList dataSources={dataSources} layoutMode={layoutMode} key="list" />,
+              ]}
+          </>
+        </Page.Contents>
+      </Page>
     );
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: StoreState) {
   return {
     navModel: getNavModel(state.navIndex, 'datasources'),
     dataSources: getDataSources(state.dataSources),
     layoutMode: getDataSourcesLayoutMode(state.dataSources),
     dataSourcesCount: getDataSourcesCount(state.dataSources),
     searchQuery: getDataSourcesSearchQuery(state.dataSources),
+    hasFetched: state.dataSources.hasFetched,
   };
 }
 
@@ -104,4 +116,9 @@ const mapDispatchToProps = {
   setDataSourcesLayoutMode,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DataSourcesListPage));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(DataSourcesListPage)
+);

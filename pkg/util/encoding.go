@@ -12,6 +12,7 @@ import (
 	"strings"
 )
 
+// GetRandomString generate random string by specify chars.
 // source: https://github.com/gogits/gogs/blob/9ee80e3e5426821f03a4e99fad34418f5c736413/modules/base/tool.go#L58
 func GetRandomString(n int, alphabets ...byte) string {
 	const alphanum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
@@ -27,18 +28,21 @@ func GetRandomString(n int, alphabets ...byte) string {
 	return string(bytes)
 }
 
+// EncodePassword encodes a password using PBKDF2.
 func EncodePassword(password string, salt string) string {
 	newPasswd := PBKDF2([]byte(password), []byte(salt), 10000, 50, sha256.New)
 	return hex.EncodeToString(newPasswd)
 }
 
-// Encode string to md5 hex value.
+// EncodeMd5 encodes a string to md5 hex value.
 func EncodeMd5(str string) string {
 	m := md5.New()
 	m.Write([]byte(str))
 	return hex.EncodeToString(m.Sum(nil))
 }
 
+// PBKDF2 implements Password-Based Key Derivation Function 2), aimed to reduce
+// the vulnerability of encrypted keys to brute force attacks.
 // http://code.google.com/p/go/source/browse/pbkdf2/pbkdf2.go?repo=crypto
 func PBKDF2(password, salt []byte, iter, keyLen int, h func() hash.Hash) []byte {
 	prf := hmac.New(h, password)
@@ -77,11 +81,13 @@ func PBKDF2(password, salt []byte, iter, keyLen int, h func() hash.Hash) []byte 
 	return dk[:keyLen]
 }
 
+// GetBasicAuthHeader returns a base64 encoded string from user and password.
 func GetBasicAuthHeader(user string, password string) string {
 	var userAndPass = user + ":" + password
 	return "Basic " + base64.StdEncoding.EncodeToString([]byte(userAndPass))
 }
 
+// DecodeBasicAuthHeader decodes user and password from a basic auth header.
 func DecodeBasicAuthHeader(header string) (string, string, error) {
 	var code string
 	parts := strings.SplitN(header, " ", 2)
@@ -100,4 +106,13 @@ func DecodeBasicAuthHeader(header string) (string, string, error) {
 	}
 
 	return userAndPass[0], userAndPass[1], nil
+}
+
+// RandomHex returns a random string from a n seed.
+func RandomHex(n int) (string, error) {
+	bytes := make([]byte, n)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
 }

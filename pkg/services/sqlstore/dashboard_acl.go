@@ -112,7 +112,7 @@ func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 				LEFT JOIN ` + dialect.Quote("user") + ` AS u ON u.id = da.user_id
 				LEFT JOIN team ug on ug.id = da.team_id
 			WHERE d.org_id = ? AND d.id = ? AND da.id IS NOT NULL
-			ORDER BY 1 ASC
+			ORDER BY da.id ASC
 			`
 
 		query.Result = make([]*m.DashboardAclInfoDTO, 0)

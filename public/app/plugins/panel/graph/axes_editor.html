@@ -44,7 +44,7 @@
 		</div>
 	</div>
 
-	<div class="section gf-form-group">
+	<div class="section gf-form-group" aria-label="X-Axis section">
 		<h5 class="section-heading">X-Axis</h5>
 		<gf-form-switch class="gf-form" label="Show" label-class="width-6" checked="ctrl.panel.xaxis.show" on-change="ctrl.render()"></gf-form-switch>
 
@@ -65,6 +65,17 @@
 		<div class="gf-form" ng-if="ctrl.panel.xaxis.mode === 'histogram'">
 			<label class="gf-form-label width-6">Buckets</label>
 			<input type="number" class="gf-form-input max-width-8" ng-model="ctrl.panel.xaxis.buckets" placeholder="auto" ng-change="ctrl.render()" ng-model-onblur bs-tooltip="'Number of buckets'" data-placement="right">
+		</div>
+
+		<div class="gf-form-inline" ng-if="ctrl.panel.xaxis.mode === 'histogram'">
+			<div class="gf-form">
+				<label class="gf-form-label width-6">X-Min</label>
+				<input type="number" class="gf-form-input width-5" placeholder="auto" empty-to-null ng-model="ctrl.panel.xaxis.min" ng-change="ctrl.render()" ng-model-onblur>
+			</div>
+			<div class="gf-form">
+				<label class="gf-form-label width-6">X-Max</label>
+				<input type="number" class="gf-form-input width-5" placeholder="auto" empty-to-null ng-model="ctrl.panel.xaxis.max" ng-change="ctrl.render()" ng-model-onblur>
+			</div>
 		</div>
 
 		<div>

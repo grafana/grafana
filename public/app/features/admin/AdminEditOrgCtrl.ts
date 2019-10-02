@@ -1,9 +1,11 @@
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { NavModelSrv } from 'app/core/core';
 
 export default class AdminEditOrgCtrl {
   /** @ngInject */
-  constructor($scope, $routeParams, backendSrv, $location, navModelSrv) {
+  constructor($scope: any, $routeParams: any, backendSrv: BackendSrv, $location: any, navModelSrv: NavModelSrv) {
     $scope.init = () => {
-      $scope.navModel = navModelSrv.getNav('cfg', 'admin', 'global-orgs', 1);
+      $scope.navModel = navModelSrv.getNav('admin', 'global-orgs', 0);
 
       if ($routeParams.id) {
         $scope.getOrg($routeParams.id);
@@ -11,14 +13,14 @@ export default class AdminEditOrgCtrl {
       }
     };
 
-    $scope.getOrg = id => {
-      backendSrv.get('/api/orgs/' + id).then(org => {
+    $scope.getOrg = (id: number) => {
+      backendSrv.get('/api/orgs/' + id).then((org: any) => {
         $scope.org = org;
       });
     };
 
-    $scope.getOrgUsers = id => {
-      backendSrv.get('/api/orgs/' + id + '/users').then(orgUsers => {
+    $scope.getOrgUsers = (id: number) => {
+      backendSrv.get('/api/orgs/' + id + '/users').then((orgUsers: any) => {
         $scope.orgUsers = orgUsers;
       });
     };
@@ -33,11 +35,11 @@ export default class AdminEditOrgCtrl {
       });
     };
 
-    $scope.updateOrgUser = orgUser => {
+    $scope.updateOrgUser = (orgUser: any) => {
       backendSrv.patch('/api/orgs/' + orgUser.orgId + '/users/' + orgUser.userId, orgUser);
     };
 
-    $scope.removeOrgUser = orgUser => {
+    $scope.removeOrgUser = (orgUser: any) => {
       backendSrv.delete('/api/orgs/' + orgUser.orgId + '/users/' + orgUser.userId).then(() => {
         $scope.getOrgUsers($scope.org.id);
       });
@@ -46,4 +48,3 @@ export default class AdminEditOrgCtrl {
     $scope.init();
   }
 }
-

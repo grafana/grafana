@@ -233,7 +233,7 @@ func (db *sqlite3) TableCheckSql(tableName string) (string, []interface{}) {
 }
 
 func (db *sqlite3) DropIndexSql(tableName string, index *core.Index) string {
-	//var unique string
+	// var unique string
 	quote := db.Quote
 	idxName := index.Name
 
@@ -452,5 +452,9 @@ type sqlite3Driver struct {
 }
 
 func (p *sqlite3Driver) Parse(driverName, dataSourceName string) (*core.Uri, error) {
+	if strings.Contains(dataSourceName, "?") {
+		dataSourceName = dataSourceName[:strings.Index(dataSourceName, "?")]
+	}
+
 	return &core.Uri{DbType: core.SQLITE, DbName: dataSourceName}, nil
 }

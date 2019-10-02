@@ -1,0 +1,17 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<Page
+  navModel={Object {}}
+>
+  <PageContents
+    isLoading={false}
+  >
+    <DashboardsTable
+      dashboards={Array []}
+      onImport={[Function]}
+      onRemove={[Function]}
+    />
+  </PageContents>
+</Page>
+`;

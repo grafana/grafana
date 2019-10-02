@@ -24,7 +24,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/rand"
 	"net"
 	"os"
 	"strconv"
@@ -34,6 +33,8 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/grpclog"
+	"google.golang.org/grpc/internal/backoff"
+	"google.golang.org/grpc/internal/grpcrand"
 	"google.golang.org/grpc/resolver"
 )
 
@@ -50,20 +51,31 @@ const (
 	txtAttribute = "grpc_config="
 )
 
-var errMissingAddr = errors.New("missing address")
+var (
+	errMissingAddr = errors.New("dns resolver: missing address")
+
+	// Addresses ending with a colon that is supposed to be the separator
+	// between host and port is not allowed.  E.g. "::" is a valid address as
+	// it is an IPv6 address (host only) and "[::]:" is invalid as it ends with
+	// a colon as the host and port separator
+	errEndsWithColon = errors.New("dns resolver: missing port after port-separator colon")
+)
 
 // NewBuilder creates a dnsBuilder which is used to factory DNS resolvers.
 func NewBuilder() resolver.Builder {
-	return &dnsBuilder{freq: defaultFreq}
+	return &dnsBuilder{minFreq: defaultFreq}
 }
 
 type dnsBuilder struct {
-	// frequency of polling the DNS server.
-	freq time.Duration
+	// minimum frequency of polling the DNS server.
+	minFreq time.Duration
 }
 
 // Build creates and starts a DNS resolver that watches the name resolution of the target.
 func (b *dnsBuilder) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOption) (resolver.Resolver, error) {
+	if target.Authority != "" {
+		return nil, fmt.Errorf("Default DNS resolver does not support custom DNS server")
+	}
 	host, port, err := parseTarget(target.Endpoint)
 	if err != nil {
 		return nil, err
@@ -87,14 +99,16 @@ func (b *dnsBuilder) Build(target resolver.Target, cc resolver.ClientConn, opts 
 	// DNS address (non-IP).
 	ctx, cancel := context.WithCancel(context.Background())
 	d := &dnsResolver{
-		freq:   b.freq,
-		host:   host,
-		port:   port,
-		ctx:    ctx,
-		cancel: cancel,
-		cc:     cc,
-		t:      time.NewTimer(0),
-		rn:     make(chan struct{}, 1),
+		freq:                 b.minFreq,
+		backoff:              backoff.Exponential{MaxDelay: b.minFreq},
+		host:                 host,
+		port:                 port,
+		ctx:                  ctx,
+		cancel:               cancel,
+		cc:                   cc,
+		t:                    time.NewTimer(0),
+		rn:                   make(chan struct{}, 1),
+		disableServiceConfig: opts.DisableServiceConfig,
 	}
 
 	d.wg.Add(1)
@@ -142,12 +156,14 @@ func (i *ipResolver) watcher() {
 
 // dnsResolver watches for the name resolution update for a non-IP target.
 type dnsResolver struct {
-	freq   time.Duration
-	host   string
-	port   string
-	ctx    context.Context
-	cancel context.CancelFunc
-	cc     resolver.ClientConn
+	freq       time.Duration
+	backoff    backoff.Exponential
+	retryCount int
+	host       string
+	port       string
+	ctx        context.Context
+	cancel     context.CancelFunc
+	cc         resolver.ClientConn
 	// rn channel is used by ResolveNow() to force an immediate resolution of the target.
 	rn chan struct{}
 	t  *time.Timer
@@ -157,7 +173,8 @@ type dnsResolver struct {
 	// If Close() doesn't wait for watcher() goroutine finishes, race detector sometimes
 	// will warns lookup (READ the lookup function pointers) inside watcher() goroutine
 	// has data race with replaceNetFunc (WRITE the lookup function pointers).
-	wg sync.WaitGroup
+	wg                   sync.WaitGroup
+	disableServiceConfig bool
 }
 
 // ResolveNow invoke an immediate resolution of the target that this dnsResolver watches.
@@ -185,9 +202,16 @@ func (d *dnsResolver) watcher() {
 		case <-d.rn:
 		}
 		result, sc := d.lookup()
-		// Next lookup should happen after an interval defined by d.freq.
-		d.t.Reset(d.freq)
-		d.cc.NewServiceConfig(string(sc))
+		// Next lookup should happen within an interval defined by d.freq. It may be
+		// more often due to exponential retry on empty address list.
+		if len(result) == 0 {
+			d.retryCount++
+			d.t.Reset(d.backoff.Backoff(d.retryCount))
+		} else {
+			d.retryCount = 0
+			d.t.Reset(d.freq)
+		}
+		d.cc.NewServiceConfig(sc)
 		d.cc.NewAddress(result)
 	}
 }
@@ -202,7 +226,7 @@ func (d *dnsResolver) lookupSRV() []resolver.Address {
 	for _, s := range srvs {
 		lbAddrs, err := lookupHost(d.ctx, s.Target)
 		if err != nil {
-			grpclog.Warningf("grpc: failed load banlacer address dns lookup due to %v.\n", err)
+			grpclog.Infof("grpc: failed load balancer address dns lookup due to %v.\n", err)
 			continue
 		}
 		for _, a := range lbAddrs {
@@ -221,7 +245,7 @@ func (d *dnsResolver) lookupSRV() []resolver.Address {
 func (d *dnsResolver) lookupTXT() string {
 	ss, err := lookupTXT(d.ctx, d.host)
 	if err != nil {
-		grpclog.Warningf("grpc: failed dns TXT record lookup due to %v.\n", err)
+		grpclog.Infof("grpc: failed dns TXT record lookup due to %v.\n", err)
 		return ""
 	}
 	var res string
@@ -257,10 +281,12 @@ func (d *dnsResolver) lookupHost() []resolver.Address {
 }
 
 func (d *dnsResolver) lookup() ([]resolver.Address, string) {
-	var newAddrs []resolver.Address
-	newAddrs = d.lookupSRV()
+	newAddrs := d.lookupSRV()
 	// Support fallback to non-balancer address.
 	newAddrs = append(newAddrs, d.lookupHost()...)
+	if d.disableServiceConfig {
+		return newAddrs, ""
+	}
 	sc := d.lookupTXT()
 	return newAddrs, canaryingSC(sc)
 }
@@ -288,7 +314,6 @@ func formatIP(addr string) (addrIP string, ok bool) {
 // target: "ipv4-host:80" returns host: "ipv4-host", port: "80"
 // target: "[ipv6-host]" returns host: "ipv6-host", port: "443"
 // target: ":80" returns host: "localhost", port: "80"
-// target: ":" returns host: "localhost", port: "443"
 func parseTarget(target string) (host, port string, err error) {
 	if target == "" {
 		return "", "", errMissingAddr
@@ -298,14 +323,14 @@ func parseTarget(target string) (host, port string, err error) {
 		return target, defaultPort, nil
 	}
 	if host, port, err = net.SplitHostPort(target); err == nil {
+		if port == "" {
+			// If the port field is empty (target ends with colon), e.g. "[::1]:", this is an error.
+			return "", "", errEndsWithColon
+		}
 		// target has port, i.e ipv4-host:port, [ipv6-host]:port, host-name:port
 		if host == "" {
 			// Keep consistent with net.Dial(): If the host is empty, as in ":80", the local system is assumed.
 			host = "localhost"
-		}
-		if port == "" {
-			// If the port field is empty(target ends with colon), e.g. "[::1]:", defaultPort is used.
-			port = defaultPort
 		}
 		return host, port, nil
 	}
@@ -339,12 +364,7 @@ func chosenByPercentage(a *int) bool {
 	if a == nil {
 		return true
 	}
-	s := rand.NewSource(time.Now().UnixNano())
-	r := rand.New(s)
-	if r.Intn(100)+1 > *a {
-		return false
-	}
-	return true
+	return grpcrand.Intn(100)+1 <= *a
 }
 
 func canaryingSC(js string) string {

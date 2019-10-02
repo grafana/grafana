@@ -67,13 +67,15 @@ exports[`Render should render component 1`] = `
     >
       <span
         className="sidemenu-item-text"
-      />
+      >
+        Hello
+      </span>
     </li>
   </ul>
 </div>
 `;
 
-exports[`Render should render organisation switcher 1`] = `
+exports[`Render should render organization switcher 1`] = `
 <div
   className="sidemenu-item dropdown dropup"
 >

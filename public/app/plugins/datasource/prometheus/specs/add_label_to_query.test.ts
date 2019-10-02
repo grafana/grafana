@@ -1,4 +1,4 @@
-import addLabelToQuery from '../add_label_to_query';
+import { addLabelToQuery, addLabelToSelector } from '../add_label_to_query';
 
 describe('addLabelToQuery()', () => {
   it('should add label to simple query', () => {
@@ -29,6 +29,9 @@ describe('addLabelToQuery()', () => {
       'foo{bar="baz",instance="my-host.com:9100"}'
     );
     expect(addLabelToQuery('foo:metric:rate1m', 'bar', 'baz')).toBe('foo:metric:rate1m{bar="baz"}');
+    expect(addLabelToQuery('avg(foo:metric:rate1m{a="b"})', 'bar', 'baz')).toBe(
+      'avg(foo:metric:rate1m{a="b",bar="baz"})'
+    );
     expect(addLabelToQuery('foo{list="a,b,c"}', 'bar', 'baz')).toBe('foo{bar="baz",list="a,b,c"}');
   });
 
@@ -54,5 +57,18 @@ describe('addLabelToQuery()', () => {
     expect(addLabelToQuery(addLabelToQuery('avg(foo) + sum(xx_yy)', 'bar', 'baz'), 'bar', 'baz')).toBe(
       'avg(foo{bar="baz"}) + sum(xx_yy{bar="baz"})'
     );
+  });
+});
+
+describe('addLabelToSelector()', () => {
+  test('should add a label to an empty selector', () => {
+    expect(addLabelToSelector('{}', 'foo', 'bar')).toBe('{foo="bar"}');
+    expect(addLabelToSelector('', 'foo', 'bar')).toBe('{foo="bar"}');
+  });
+  test('should add a label to a selector', () => {
+    expect(addLabelToSelector('{foo="bar"}', 'baz', '42')).toBe('{baz="42",foo="bar"}');
+  });
+  test('should add a label to a selector with custom operator', () => {
+    expect(addLabelToSelector('{}', 'baz', '42', '!=')).toBe('{baz!="42"}');
   });
 });

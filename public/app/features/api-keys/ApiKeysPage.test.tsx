@@ -1,18 +1,28 @@
-﻿import React from 'react';
+import React from 'react';
 import { shallow } from 'enzyme';
 import { Props, ApiKeysPage } from './ApiKeysPage';
-import { NavModel, ApiKey } from 'app/types';
+import { ApiKey } from 'app/types';
 import { getMultipleMockKeys, getMockKey } from './__mocks__/apiKeysMock';
+import { NavModel } from '@grafana/data';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
-    navModel: {} as NavModel,
+    navModel: {
+      main: {
+        text: 'Configuration',
+      },
+      node: {
+        text: 'Api Keys',
+      },
+    } as NavModel,
     apiKeys: [] as ApiKey[],
     searchQuery: '',
+    hasFetched: false,
     loadApiKeys: jest.fn(),
     deleteApiKey: jest.fn(),
     setSearchQuery: jest.fn(),
     addApiKey: jest.fn(),
+    apiKeysCount: 0,
   };
 
   Object.assign(props, propOverrides);
@@ -27,14 +37,20 @@ const setup = (propOverrides?: object) => {
 };
 
 describe('Render', () => {
-  it('should render component', () => {
-    const { wrapper } = setup();
+  it('should render API keys table if there are any keys', () => {
+    const { wrapper } = setup({
+      apiKeys: getMultipleMockKeys(5),
+      apiKeysCount: 5,
+    });
+
     expect(wrapper).toMatchSnapshot();
   });
 
-  it('should render API keys table', () => {
+  it('should render CTA if there are no API keys', () => {
     const { wrapper } = setup({
-      apiKeys: getMultipleMockKeys(5),
+      apiKeys: getMultipleMockKeys(0),
+      apiKeysCount: 0,
+      hasFetched: true,
     });
 
     expect(wrapper).toMatchSnapshot();
@@ -63,9 +79,8 @@ describe('Functions', () => {
   describe('on search query change', () => {
     it('should call setSearchQuery', () => {
       const { instance } = setup();
-      const mockEvent = { target: { value: 'test' } };
 
-      instance.onSearchQueryChange(mockEvent);
+      instance.onSearchQueryChange('test');
 
       expect(instance.props.setSearchQuery).toHaveBeenCalledWith('test');
     });

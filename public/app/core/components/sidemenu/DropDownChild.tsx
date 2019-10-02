@@ -1,10 +1,10 @@
-import React, { SFC } from 'react';
+import React, { FC } from 'react';
 
 export interface Props {
   child: any;
 }
 
-const DropDownChild: SFC<Props> = props => {
+const DropDownChild: FC<Props> = props => {
   const { child } = props;
   const listItemClassName = child.divider ? 'divider' : '';
 

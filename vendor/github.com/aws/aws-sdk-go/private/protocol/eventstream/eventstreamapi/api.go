@@ -94,6 +94,9 @@ func (r *EventReader) ReadEvent() (event interface{}, err error) {
 	switch typ {
 	case EventMessageType:
 		return r.unmarshalEventMessage(msg)
+	case ExceptionMessageType:
+		err = r.unmarshalEventException(msg)
+		return nil, err
 	case ErrorMessageType:
 		return nil, r.unmarshalErrorMessage(msg)
 	default:
@@ -120,6 +123,39 @@ func (r *EventReader) unmarshalEventMessage(
 	}
 
 	return ev, nil
+}
+
+func (r *EventReader) unmarshalEventException(
+	msg eventstream.Message,
+) (err error) {
+	eventType, err := GetHeaderString(msg, ExceptionTypeHeader)
+	if err != nil {
+		return err
+	}
+
+	ev, err := r.unmarshalerForEventType(eventType)
+	if err != nil {
+		return err
+	}
+
+	err = ev.UnmarshalEvent(r.payloadUnmarshaler, msg)
+	if err != nil {
+		return err
+	}
+
+	var ok bool
+	err, ok = ev.(error)
+	if !ok {
+		err = messageError{
+			code: "SerializationError",
+			msg: fmt.Sprintf(
+				"event stream exception %s mapped to non-error %T, %v",
+				eventType, ev, ev,
+			),
+		}
+	}
+
+	return err
 }
 
 func (r *EventReader) unmarshalErrorMessage(msg eventstream.Message) (err error) {

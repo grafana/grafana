@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
@@ -68,6 +68,8 @@ func init() {
 
 }
 
+// ThreemaNotifier is responsible for sending
+// alert notifications to Threema.
 type ThreemaNotifier struct {
 	NotifierBase
 	GatewayID   string
@@ -76,7 +78,8 @@ type ThreemaNotifier struct {
 	log         log.Logger
 }
 
-func NewThreemaNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
+// NewThreemaNotifier is the constructor for the Threema notifer
+func NewThreemaNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -114,6 +117,7 @@ func NewThreemaNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}, nil
 }
 
+// Notify send an alert notification to Threema
 func (notifier *ThreemaNotifier) Notify(evalContext *alerting.EvalContext) error {
 	notifier.log.Info("Sending alert notification from", "threema_id", notifier.GatewayID)
 	notifier.log.Info("Sending alert notification to", "threema_id", notifier.RecipientID)
@@ -127,11 +131,11 @@ func (notifier *ThreemaNotifier) Notify(evalContext *alerting.EvalContext) error
 	// Determine emoji
 	stateEmoji := ""
 	switch evalContext.Rule.State {
-	case m.AlertStateOK:
+	case models.AlertStateOK:
 		stateEmoji = "\u2705 " // White Heavy Check Mark
-	case m.AlertStateNoData:
+	case models.AlertStateNoData:
 		stateEmoji = "\u2753 " // Black Question Mark Ornament
-	case m.AlertStateAlerting:
+	case models.AlertStateAlerting:
 		stateEmoji = "\u26A0 " // Warning sign
 	}
 
@@ -139,12 +143,12 @@ func (notifier *ThreemaNotifier) Notify(evalContext *alerting.EvalContext) error
 	message := fmt.Sprintf("%s%s\n\n*State:* %s\n*Message:* %s\n",
 		stateEmoji, evalContext.GetNotificationTitle(),
 		evalContext.Rule.Name, evalContext.Rule.Message)
-	ruleURL, err := evalContext.GetRuleUrl()
+	ruleURL, err := evalContext.GetRuleURL()
 	if err == nil {
 		message = message + fmt.Sprintf("*URL:* %s\n", ruleURL)
 	}
-	if evalContext.ImagePublicUrl != "" {
-		message = message + fmt.Sprintf("*Image:* %s\n", evalContext.ImagePublicUrl)
+	if evalContext.ImagePublicURL != "" {
+		message = message + fmt.Sprintf("*Image:* %s\n", evalContext.ImagePublicURL)
 	}
 	data.Set("text", message)
 
@@ -154,7 +158,7 @@ func (notifier *ThreemaNotifier) Notify(evalContext *alerting.EvalContext) error
 	headers := map[string]string{
 		"Content-Type": "application/x-www-form-urlencoded",
 	}
-	cmd := &m.SendWebhookSync{
+	cmd := &models.SendWebhookSync{
 		Url:        url,
 		Body:       body,
 		HttpMethod: "POST",

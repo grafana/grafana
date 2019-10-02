@@ -1,9 +1,11 @@
 import _ from 'lodash';
-import flatten from '../../../core/utils/flatten';
-import TimeSeries from '../../../core/time_series2';
-import TableModel from '../../../core/table_model';
+import flatten from 'app/core/utils/flatten';
+import TimeSeries from 'app/core/time_series2';
+import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
+import { TableTransform } from './types';
+import { Column, TableData } from '@grafana/data';
 
-const transformers = {};
+const transformers: { [key: string]: TableTransform } = {};
 
 transformers['timeseries_to_rows'] = {
   description: 'Time series to rows',
@@ -32,7 +34,7 @@ transformers['timeseries_to_columns'] = {
     model.columns.push({ text: 'Time', type: 'date' });
 
     // group by time
-    const points = {};
+    const points: any = {};
 
     for (let i = 0; i < data.length; i++) {
       const series = data[i];
@@ -138,10 +140,10 @@ transformers['table'] = {
     }
 
     // Track column indexes: name -> index
-    const columnNames = {};
+    const columnNames: any = {};
 
     // Union of all columns
-    const columns = data.reduce((acc, series) => {
+    const columns = data.reduce((acc: Column[], series: TableData) => {
       series.columns.forEach(col => {
         const { text } = col;
         if (columnNames[text] === undefined) {
@@ -154,13 +156,12 @@ transformers['table'] = {
 
     return columns;
   },
-  transform: (data, panel, model) => {
+  transform: (data: any[], panel, model) => {
     if (!data || data.length === 0) {
       return;
     }
-
-    const noTableIndex = _.findIndex(data, d => d.type !== 'table');
-    if (noTableIndex > -1) {
+    const noTableIndex = _.findIndex(data, d => 'columns' in d && 'rows' in d);
+    if (noTableIndex < 0) {
       throw {
         message: `Result of query #${String.fromCharCode(
           65 + noTableIndex
@@ -168,97 +169,7 @@ transformers['table'] = {
       };
     }
 
-    // Single query returns data columns and rows as is
-    if (data.length === 1) {
-      model.columns = [...data[0].columns];
-      model.rows = [...data[0].rows];
-      return;
-    }
-
-    // Track column indexes of union: name -> index
-    const columnNames = {};
-
-    // Union of all non-value columns
-    const columnsUnion = data.reduce((acc, series) => {
-      series.columns.forEach(col => {
-        const { text } = col;
-        if (columnNames[text] === undefined) {
-          columnNames[text] = acc.length;
-          acc.push(col);
-        }
-      });
-      return acc;
-    }, []);
-
-    // Map old column index to union index per series, e.g.,
-    // given columnNames {A: 0, B: 1} and
-    // data [{columns: [{ text: 'A' }]}, {columns: [{ text: 'B' }]}] => [[0], [1]]
-    const columnIndexMapper = data.map(series => series.columns.map(col => columnNames[col.text]));
-
-    // Flatten rows of all series and adjust new column indexes
-    const flattenedRows = data.reduce((acc, series, seriesIndex) => {
-      const mapper = columnIndexMapper[seriesIndex];
-      series.rows.forEach(row => {
-        const alteredRow = [];
-        // Shifting entries according to index mapper
-        mapper.forEach((to, from) => {
-          alteredRow[to] = row[from];
-        });
-        acc.push(alteredRow);
-      });
-      return acc;
-    }, []);
-
-    // Returns true if both rows have matching non-empty fields as well as matching
-    // indexes where one field is empty and the other is not
-    function areRowsMatching(columns, row, otherRow) {
-      let foundFieldToMatch = false;
-      for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
-        if (row[columnIndex] !== undefined && otherRow[columnIndex] !== undefined) {
-          if (row[columnIndex] !== otherRow[columnIndex]) {
-            return false;
-          }
-        } else if (row[columnIndex] === undefined || otherRow[columnIndex] === undefined) {
-          foundFieldToMatch = true;
-        }
-      }
-      return foundFieldToMatch;
-    }
-
-    // Merge rows that have same values for columns
-    const mergedRows = {};
-    const compactedRows = flattenedRows.reduce((acc, row, rowIndex) => {
-      if (!mergedRows[rowIndex]) {
-        // Look from current row onwards
-        let offset = rowIndex + 1;
-        // More than one row can be merged into current row
-        while (offset < flattenedRows.length) {
-          // Find next row that could be merged
-          const match = _.findIndex(flattenedRows, otherRow => areRowsMatching(columnsUnion, row, otherRow), offset);
-          if (match > -1) {
-            const matchedRow = flattenedRows[match];
-            // Merge values from match into current row if there is a gap in the current row
-            for (let columnIndex = 0; columnIndex < columnsUnion.length; columnIndex++) {
-              if (row[columnIndex] === undefined && matchedRow[columnIndex] !== undefined) {
-                row[columnIndex] = matchedRow[columnIndex];
-              }
-            }
-            // Don't visit this row again
-            mergedRows[match] = matchedRow;
-            // Keep looking for more rows to merge
-            offset = match + 1;
-          } else {
-            // No match found, stop looking
-            break;
-          }
-        }
-        acc.push(row);
-      }
-      return acc;
-    }, []);
-
-    model.columns = columnsUnion;
-    model.rows = compactedRows;
+    mergeTablesIntoModel(model, ...data);
   },
 };
 
@@ -280,7 +191,7 @@ transformers['json'] = {
       const maxDocs = Math.min(series.datapoints.length, 100);
       for (let y = 0; y < maxDocs; y++) {
         const doc = series.datapoints[y];
-        const flattened = flatten(doc, null);
+        const flattened = flatten(doc, {});
         for (const propName in flattened) {
           names[propName] = true;
         }
@@ -317,7 +228,7 @@ transformers['json'] = {
         const values = [];
 
         if (_.isObject(dp) && panel.columns.length > 0) {
-          const flattened = flatten(dp, null);
+          const flattened = flatten(dp);
           for (z = 0; z < panel.columns.length; z++) {
             values.push(flattened[panel.columns[z].value]);
           }
@@ -331,7 +242,7 @@ transformers['json'] = {
   },
 };
 
-function transformDataToTable(data, panel) {
+function transformDataToTable(data: any, panel: any) {
   const model = new TableModel();
 
   if (!data || data.length === 0) {

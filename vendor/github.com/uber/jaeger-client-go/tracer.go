@@ -17,6 +17,7 @@ package jaeger
 import (
 	"fmt"
 	"io"
+	"math/rand"
 	"os"
 	"reflect"
 	"strconv"
@@ -50,6 +51,7 @@ type Tracer struct {
 		gen128Bit            bool // whether to generate 128bit trace IDs
 		zipkinSharedRPCSpan  bool
 		highTraceIDGenerator func() uint64 // custom high trace ID generator
+		maxTagValueLength    int
 		// more options to come
 	}
 	// pool for Span objects
@@ -95,13 +97,13 @@ func NewTracer(
 	}
 
 	// register default injectors/extractors unless they are already provided via options
-	textPropagator := newTextMapPropagator(getDefaultHeadersConfig(), t.metrics)
+	textPropagator := NewTextMapPropagator(getDefaultHeadersConfig(), t.metrics)
 	t.addCodec(opentracing.TextMap, textPropagator, textPropagator)
 
-	httpHeaderPropagator := newHTTPHeaderPropagator(getDefaultHeadersConfig(), t.metrics)
+	httpHeaderPropagator := NewHTTPHeaderPropagator(getDefaultHeadersConfig(), t.metrics)
 	t.addCodec(opentracing.HTTPHeaders, httpHeaderPropagator, httpHeaderPropagator)
 
-	binaryPropagator := newBinaryPropagator(t)
+	binaryPropagator := NewBinaryPropagator(t)
 	t.addCodec(opentracing.Binary, binaryPropagator, binaryPropagator)
 
 	// TODO remove after TChannel supports OpenTracing
@@ -121,9 +123,18 @@ func NewTracer(
 	}
 
 	if t.randomNumber == nil {
-		rng := utils.NewRand(time.Now().UnixNano())
+		seedGenerator := utils.NewRand(time.Now().UnixNano())
+		pool := sync.Pool{
+			New: func() interface{} {
+				return rand.NewSource(seedGenerator.Int63())
+			},
+		}
+
 		t.randomNumber = func() uint64 {
-			return uint64(rng.Int63())
+			generator := pool.Get().(rand.Source)
+			number := uint64(generator.Int63())
+			pool.Put(generator)
+			return number
 		}
 	}
 	if t.timeNow == nil {
@@ -151,6 +162,9 @@ func NewTracer(
 	} else if t.options.highTraceIDGenerator != nil {
 		t.logger.Error("Overriding high trace ID generator but not generating " +
 			"128 bit trace IDs, consider enabling the \"Gen128Bit\" option")
+	}
+	if t.options.maxTagValueLength == 0 {
+		t.options.maxTagValueLength = DefaultMaxTagValueLength
 	}
 	t.process = Process{
 		Service: serviceName,
@@ -194,6 +208,12 @@ func (t *Tracer) startSpanWithOptions(
 		options.StartTime = t.timeNow()
 	}
 
+	// Predicate whether the given span context is a valid reference
+	// which may be used as parent / debug ID / baggage items source
+	isValidReference := func(ctx SpanContext) bool {
+		return ctx.IsValid() || ctx.isDebugIDContainerOnly() || len(ctx.baggage) != 0
+	}
+
 	var references []Reference
 	var parent SpanContext
 	var hasParent bool // need this because `parent` is a value, not reference
@@ -205,7 +225,7 @@ func (t *Tracer) startSpanWithOptions(
 				reflect.ValueOf(ref.ReferencedContext)))
 			continue
 		}
-		if !(ctx.IsValid() || ctx.isDebugIDContainerOnly() || len(ctx.baggage) != 0) {
+		if !isValidReference(ctx) {
 			continue
 		}
 		references = append(references, Reference{Type: ref.Type, Context: ctx})
@@ -214,7 +234,7 @@ func (t *Tracer) startSpanWithOptions(
 			hasParent = ref.Type == opentracing.ChildOfRef
 		}
 	}
-	if !hasParent && parent.IsValid() {
+	if !hasParent && isValidReference(parent) {
 		// If ChildOfRef wasn't found but a FollowFromRef exists, use the context from
 		// the FollowFromRef as the parent
 		hasParent = true
@@ -299,7 +319,11 @@ func (t *Tracer) Extract(
 	carrier interface{},
 ) (opentracing.SpanContext, error) {
 	if extractor, ok := t.extractors[format]; ok {
-		return extractor.Extract(carrier)
+		spanCtx, err := extractor.Extract(carrier)
+		if err != nil {
+			return nil, err // ensure returned spanCtx is nil
+		}
+		return spanCtx, nil
 	}
 	return nil, opentracing.ErrUnsupportedFormat
 }

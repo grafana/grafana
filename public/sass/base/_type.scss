@@ -59,14 +59,6 @@ a.text-error:focus {
   color: darken($error-text-color, 10%);
 }
 
-.text-info {
-  color: $info-text-color;
-}
-a.text-info:hover,
-a.text-info:focus {
-  color: darken($info-text-color, 10%);
-}
-
 .text-success {
   color: $success-text-color;
 }
@@ -117,9 +109,8 @@ h6,
 .h4,
 .h5,
 .h6 {
-  margin-bottom: $headings-margin-bottom;
-  font-family: $headings-font-family;
-  font-weight: $headings-font-weight;
+  margin-bottom: $space-sm;
+  font-weight: $font-weight-regular;
   line-height: $headings-line-height;
   color: $headings-color;
 }
@@ -149,29 +140,6 @@ h6,
   font-size: $font-size-h6;
 }
 
-.lead {
-  font-size: $lead-font-size;
-  font-weight: $lead-font-weight;
-}
-
-// Type display classes
-.display-1 {
-  font-size: $display1-size;
-  font-weight: $display1-weight;
-}
-.display-2 {
-  font-size: $display2-size;
-  font-weight: $display2-weight;
-}
-.display-3 {
-  font-size: $display3-size;
-  font-weight: $display3-weight;
-}
-.display-4 {
-  font-size: $display4-size;
-  font-weight: $display4-weight;
-}
-
 //
 // Horizontal rules
 //
@@ -180,7 +148,7 @@ hr {
   margin-top: $spacer-y;
   margin-bottom: $spacer-y;
   border: 0;
-  border-top: $hr-border-width solid $hr-border-color;
+  border-top: $border-width solid $hr-border-color;
 }
 
 //
@@ -199,7 +167,6 @@ small,
 
 mark,
 .mark {
-  padding: 0.2em;
   background: $alert-warning-bg;
 }
 
@@ -275,7 +242,7 @@ dd {
 // Abbreviations and acronyms
 abbr[title] {
   cursor: help;
-  border-bottom: 1px dotted $gray-2;
+  border-bottom: 1px dotted $abbr-border-color;
 }
 
 abbr.initialism {
@@ -366,14 +333,14 @@ a.external-link {
 
   ul,
   ol {
-    padding-left: $spacer*1.5;
+    padding-left: $spacer * 1.5;
     margin-bottom: $spacer;
   }
 
   table {
     td,
     th {
-      padding: $spacer*0.5 $spacer;
+      padding: $spacer * 0.5 $spacer;
     }
     th {
       font-weight: $font-weight-semi-bold;

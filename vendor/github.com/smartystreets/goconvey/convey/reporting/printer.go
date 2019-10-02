@@ -30,11 +30,14 @@ func (self *Printer) format(message string, values ...interface{}) string {
 	if len(values) == 0 {
 		formatted = self.prefix + message
 	} else {
-		formatted = self.prefix + fmt.Sprintf(message, values...)
+		formatted = self.prefix + fmt_Sprintf(message, values...)
 	}
 	indented := strings.Replace(formatted, newline, newline+self.prefix, -1)
 	return strings.TrimRight(indented, space)
 }
+
+// Extracting fmt.Sprintf to a separate variable circumvents go vet, which, as of go 1.10 is run with go test.
+var fmt_Sprintf = fmt.Sprintf
 
 func (self *Printer) Indent() {
 	self.prefix += pad

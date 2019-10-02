@@ -3,19 +3,13 @@
 
 <div class="search-container" ng-if="ctrl.isOpen">
 
-	<div class="search-field-wrapper">
-		<div class="search-field-icon pointer" ng-click="ctrl.closeSearch()"><i class="fa fa-search"></i></div>
+  <search-field
+    query="ctrl.query"
+    autoFocus="ctrl.giveSearchFocus"
+    on-change="ctrl.onQueryChange"
+    on-key-down="ctrl.onKeyDown"
+  />
 
-		<input type="text" placeholder="Find dashboards by name" give-focus="ctrl.giveSearchFocus" tabindex="1"
-						ng-keydown="ctrl.keyDown($event)"
-						ng-model="ctrl.query.query"
-						ng-model-options="{ debounce: 500 }"
-						spellcheck='false'
-						ng-change="ctrl.search()"
-            />
-
-		<div class="search-field-spacer"></div>
-	</div>
 
 	<div class="search-dropdown">
     <div class="search-dropdown__col_1">
@@ -41,7 +35,7 @@
           </a>
         </div>
 
-        <tag-filter tags="ctrl.query.tag" tagOptions="ctrl.getTags" onSelect="ctrl.onTagSelect">
+        <tag-filter tags="ctrl.query.tags" tagOptions="ctrl.getTags" on-change="ctrl.onTagFiltersChanged">
         </tag-filter>
       </div>
 

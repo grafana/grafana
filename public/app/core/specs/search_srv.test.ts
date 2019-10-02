@@ -1,8 +1,12 @@
+// @ts-ignore
+import { IQService } from 'angular';
+
 import { SearchSrv } from 'app/core/services/search_srv';
 import { BackendSrvMock } from 'test/mocks/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { beforeEach } from 'test/lib/common';
+import { BackendSrv } from '../services/backend_srv';
 
 jest.mock('app/core/store', () => {
   return {
@@ -18,18 +22,18 @@ jest.mock('app/core/services/impression_srv', () => {
 });
 
 describe('SearchSrv', () => {
-  let searchSrv, backendSrvMock;
+  let searchSrv: SearchSrv, backendSrvMock: BackendSrvMock;
 
   beforeEach(() => {
     backendSrvMock = new BackendSrvMock();
-    searchSrv = new SearchSrv(backendSrvMock, Promise);
+    searchSrv = new SearchSrv(backendSrvMock as BackendSrv, (Promise as any) as IQService);
 
     contextSrv.isSignedIn = true;
     impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([]);
   });
 
   describe('With recent dashboards', () => {
-    let results;
+    let results: any;
 
     beforeEach(() => {
       backendSrvMock.search = jest
@@ -56,7 +60,7 @@ describe('SearchSrv', () => {
     });
 
     describe('and 3 recent dashboards removed in backend', () => {
-      let results;
+      let results: any;
 
       beforeEach(() => {
         backendSrvMock.search = jest
@@ -80,7 +84,7 @@ describe('SearchSrv', () => {
   });
 
   describe('With starred dashboards', () => {
-    let results;
+    let results: any;
 
     beforeEach(() => {
       backendSrvMock.search = jest.fn().mockReturnValue(Promise.resolve([{ id: 1, title: 'starred' }]));
@@ -97,7 +101,7 @@ describe('SearchSrv', () => {
   });
 
   describe('With starred dashboards and recent', () => {
-    let results;
+    let results: any;
 
     beforeEach(() => {
       backendSrvMock.search = jest
@@ -125,7 +129,7 @@ describe('SearchSrv', () => {
   });
 
   describe('with no query string and dashboards with folders returned', () => {
-    let results;
+    let results: any;
 
     beforeEach(() => {
       backendSrvMock.search = jest
@@ -173,12 +177,10 @@ describe('SearchSrv', () => {
   });
 
   describe('with query string and dashboards with folders returned', () => {
-    let results;
+    let results: any;
 
     beforeEach(() => {
-      backendSrvMock.search = jest.fn();
-
-      backendSrvMock.search.mockReturnValue(
+      backendSrvMock.search = jest.fn().mockReturnValue(
         Promise.resolve([
           {
             id: 2,
@@ -249,8 +251,9 @@ describe('SearchSrv', () => {
       backendSrvMock.search = jest.fn();
       backendSrvMock.search.mockReturnValue(Promise.resolve([]));
 
-      searchSrv.getRecentDashboards = () => {
+      searchSrv['getRecentDashboards'] = () => {
         getRecentDashboardsCalled = true;
+        return Promise.resolve();
       };
 
       return searchSrv.search({ skipRecent: true }).then(() => {});
@@ -269,8 +272,9 @@ describe('SearchSrv', () => {
       backendSrvMock.search.mockReturnValue(Promise.resolve([]));
       impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([]);
 
-      searchSrv.getStarred = () => {
+      searchSrv['getStarred'] = () => {
         getStarredCalled = true;
+        return Promise.resolve();
       };
 
       return searchSrv.search({ skipStarred: true }).then(() => {});

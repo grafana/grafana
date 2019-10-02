@@ -1,73 +1,88 @@
 import _ from 'lodash';
-import TableModel from 'app/core/table_model';
+import {
+  DataSourceApi,
+  DataQueryRequest,
+  DataSourceInstanceSettings,
+  DataQueryResponse,
+  MetricFindValue,
+} from '@grafana/ui';
+import { TableData, TimeSeries } from '@grafana/data';
+import { TestDataQuery, Scenario } from './types';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import { queryMetricTree } from './metricTree';
+import { Observable, from, merge } from 'rxjs';
+import { runStream } from './runStreams';
+import templateSrv from 'app/features/templating/template_srv';
 
-class TestDataDatasource {
-  id: any;
+type TestData = TimeSeries | TableData;
 
-  /** @ngInject */
-  constructor(instanceSettings, private backendSrv, private $q) {
-    this.id = instanceSettings.id;
+export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
+  constructor(instanceSettings: DataSourceInstanceSettings) {
+    super(instanceSettings);
   }
 
-  query(options) {
-    const queries = _.filter(options.targets, item => {
-      return item.hide !== true;
-    }).map(item => {
-      return {
-        refId: item.refId,
-        scenarioId: item.scenarioId,
-        intervalMs: options.intervalMs,
-        maxDataPoints: options.maxDataPoints,
-        stringInput: item.stringInput,
-        points: item.points,
-        alias: item.alias,
-        datasourceId: this.id,
-      };
-    });
+  query(options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
+    const queries: any[] = [];
+    const streams: Array<Observable<DataQueryResponse>> = [];
 
-    if (queries.length === 0) {
-      return this.$q.when({ data: [] });
+    // Start streams and prepare queries
+    for (const target of options.targets) {
+      if (target.scenarioId === 'streaming_client') {
+        streams.push(runStream(target, options));
+      } else {
+        queries.push({
+          ...target,
+          intervalMs: options.intervalMs,
+          maxDataPoints: options.maxDataPoints,
+          datasourceId: this.id,
+          alias: templateSrv.replace(target.alias || ''),
+        });
+      }
     }
 
-    return this.backendSrv
-      .datasourceRequest({
-        method: 'POST',
-        url: '/api/tsdb/query',
-        data: {
-          from: options.range.from.valueOf().toString(),
-          to: options.range.to.valueOf().toString(),
-          queries: queries,
-        },
-      })
-      .then(res => {
-        const data = [];
+    if (queries.length) {
+      const req: Promise<DataQueryResponse> = getBackendSrv()
+        .datasourceRequest({
+          method: 'POST',
+          url: '/api/tsdb/query',
+          data: {
+            from: options.range.from.valueOf().toString(),
+            to: options.range.to.valueOf().toString(),
+            queries: queries,
+          },
+          // This sets up a cancel token
+          requestId: options.requestId,
+        })
+        .then((res: any) => this.processQueryResult(queries, res));
 
-        if (res.data.results) {
-          _.forEach(res.data.results, queryRes => {
-            if (queryRes.tables) {
-              for (const table of queryRes.tables) {
-                const model = new TableModel();
-                model.rows = table.rows;
-                model.columns = table.columns;
+      streams.push(from(req));
+    }
 
-                data.push(model);
-              }
-            }
-            for (const series of queryRes.series) {
-              data.push({
-                target: series.name,
-                datapoints: series.points,
-              });
-            }
-          });
-        }
-
-        console.log(res);
-        return { data: data };
-      });
+    return merge(...streams);
   }
 
-  annotationQuery(options) {
+  processQueryResult(queries: any, res: any): DataQueryResponse {
+    const data: TestData[] = [];
+
+    for (const query of queries) {
+      const results = res.data.results[query.refId];
+
+      for (const t of results.tables || []) {
+        const table = t as TableData;
+        table.refId = query.refId;
+        table.name = query.alias;
+        data.push(table);
+      }
+
+      for (const series of results.series || []) {
+        data.push({ target: series.name, datapoints: series.points, refId: query.refId, tags: series.tags });
+      }
+    }
+
+    return { data };
+  }
+
+  annotationQuery(options: any) {
     let timeWalker = options.range.from.valueOf();
     const to = options.range.to.valueOf();
     const events = [];
@@ -83,8 +98,34 @@ class TestDataDatasource {
       });
       timeWalker += step;
     }
-    return this.$q.when(events);
+    return Promise.resolve(events);
+  }
+
+  getQueryDisplayText(query: TestDataQuery) {
+    if (query.alias) {
+      return query.scenarioId + ' as ' + query.alias;
+    }
+    return query.scenarioId;
+  }
+
+  testDatasource() {
+    return Promise.resolve({
+      status: 'success',
+      message: 'Data source is working',
+    });
+  }
+
+  getScenarios(): Promise<Scenario[]> {
+    return getBackendSrv().get('/api/tsdb/testdata/scenarios');
+  }
+
+  metricFindQuery(query: string) {
+    return new Promise<MetricFindValue[]>((resolve, reject) => {
+      setTimeout(() => {
+        const children = queryMetricTree(templateSrv.replace(query));
+        const items = children.map(item => ({ value: item.name, text: item.name }));
+        resolve(items);
+      }, 100);
+    });
   }
 }
-
-export { TestDataDatasource };

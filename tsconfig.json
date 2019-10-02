@@ -4,7 +4,7 @@
     "outDir": "public/dist",
     "target": "es5",
     "lib": ["es6", "dom"],
-    "rootDir": "public/",
+    "rootDirs": ["public/"],
     "jsx": "react",
     "module": "esnext",
     "declaration": false,
@@ -19,16 +19,28 @@
     "noEmitOnError": false,
     "emitDecoratorMetadata": false,
     "experimentalDecorators": true,
+    "strictNullChecks": false,
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "noImplicitUseStrict": false,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
+    "downlevelIteration": true,
     "noUnusedLocals": true,
     "baseUrl": "public",
     "pretty": true,
+    "typeRoots": ["node_modules/@types", "public/app/types"],
     "paths": {
-      "app": ["app"]
-    }
+      "app": ["app"],
+      "sass": ["sass"],
+      "@grafana/slate-react": ["../node_modules/@types/slate-react"]
+    },
+    "skipLibCheck": true
   },
-  "include": ["public/app/**/*.ts", "public/app/**/*.tsx", "public/test/**/*.ts"]
+  "include": [
+    "public/app/**/*.ts",
+    "public/app/**/*.tsx",
+    "public/test/**/*.ts",
+    "public/vendor/**/*.ts",
+    "public/e2e-test/**/*.ts"
+  ]
 }

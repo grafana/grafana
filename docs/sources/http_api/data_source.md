@@ -12,7 +12,7 @@ parent = "http_api"
 
 # Data source API
 
-## Get all datasources
+## Get all data sources
 
 `GET /api/datasources`
 
@@ -51,7 +51,7 @@ Content-Type: application/json
 ]
 ```
 
-## Get a single data sources by Id
+## Get a single data source by Id
 
 `GET /api/datasources/:datasourceId`
 
@@ -149,7 +149,7 @@ Content-Type: application/json
 }
 ```
 
-## Create data source
+## Create a data source
 
 `POST /api/datasources`
 
@@ -188,8 +188,8 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
     "defaultRegion": "us-west-1"
   },
   "secureJsonData": {
-    "accessKey": "Ol4pIDpeKSA6XikgOl4p", //should not be encoded
-    "secretKey": "dGVzdCBrZXkgYmxlYXNlIGRvbid0IHN0ZWFs" //should be Base-64 encoded
+    "accessKey": "Ol4pIDpeKSA6XikgOl4p",
+    "secretKey": "dGVzdCBrZXkgYmxlYXNlIGRvbid0IHN0ZWFs"
   }
 }
 ```
@@ -290,4 +290,4 @@ Content-Type: application/json
 
 `GET /api/datasources/proxy/:datasourceId/*`
 
-Proxies all calls to the actual datasource.
+Proxies all calls to the actual data source.

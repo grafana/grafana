@@ -12,7 +12,7 @@
 }
 
 .gicon--has-hover {
-  opacity: 0.5;
+  opacity: 0.7;
 
   &:hover {
     opacity: 1;
@@ -28,6 +28,7 @@
   background-image: url('../img/icons_#{$theme-name}_theme/icon_add_annotation.svg');
 }
 
+// not used
 .gicon-add-annotation-alt {
   background-image: url('../img/icons_#{$theme-name}_theme/icon_add_annotation_alt.svg');
 }
@@ -36,6 +37,7 @@
   background-image: url('../img/icons_#{$theme-name}_theme/icon_add_data_sources.svg');
 }
 
+// not used
 .gicon-add-user {
   background-image: url('../img/icons_#{$theme-name}_theme/icon_add_user.svg');
 }
@@ -64,6 +66,7 @@
   background-image: url('../img/icons_#{$theme-name}_theme/icon_alert.svg');
 }
 
+//not used
 .gicon-alert-alt {
   background-image: url('../img/icons_#{$theme-name}_theme/icon_alert_alt.svg');
 }
@@ -80,6 +83,7 @@
   background-image: url('../img/icons_#{$theme-name}_theme/icon_annotation.svg');
 }
 
+//not used
 .gicon-annotation-alt {
   background-image: url('../img/icons_#{$theme-name}_theme/icon_annotation_alt.svg');
 }
@@ -100,6 +104,7 @@
   background-image: url('../img/icons_#{$theme-name}_theme/icon_dashboard.svg');
 }
 
+//not used
 .gicon-dashboard-starred {
   background-image: url('../img/icons_#{$theme-name}_theme/icon_dashboard_fav.svg');
 }
@@ -188,8 +193,13 @@
   background-image: url('../img/icons_#{$theme-name}_theme/icon_viewer.svg');
 }
 
+//not used
 .gicon-zoom-out {
   background-image: url('../img/icons_#{$theme-name}_theme/icon_zoom_out.svg');
+}
+
+.gicon-explore {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_explore.svg');
 }
 
 .sidemenu {
@@ -205,9 +215,51 @@
   .gicon-question {
     background-image: url('../img/icons_dark_theme/icon_question.svg');
   }
+  .gicon-explore {
+    background-image: url('../img/icons_dark_theme/icon_explore.svg');
+  }
+  .gicon-shield {
+    background-image: url('../img/icons_dark_theme/icon_shield.svg');
+  }
 }
 
+// not used
 .fa--permissions-list {
   min-width: 20px;
   padding-right: 5px;
+}
+
+.panel-editor-tabs,
+.add-panel-widget__icon {
+  .gicon-advanced-active {
+    background-image: url('../img/icons_#{$theme-name}_theme/icon_advanced_active.svg');
+  }
+
+  .gicon-advanced {
+    background-image: url('../img/icons_#{$theme-name}_theme/icon_advanced.svg');
+  }
+
+  .gicon-alert-active {
+    background-image: url('../img/icons_#{$theme-name}_theme/icon_alerting_active.svg');
+  }
+
+  .gicon-alert {
+    background-image: url('../img/icons_#{$theme-name}_theme/icon_alerting.svg');
+  }
+
+  .gicon-queries-active {
+    background-image: url('../img/icons_#{$theme-name}_theme/icon_query_active.svg');
+  }
+
+  .gicon-queries {
+    background-image: url('../img/icons_#{$theme-name}_theme/icon_query.svg');
+  }
+
+  .gicon-visualization-active {
+    background-image: url('../img/icons_#{$theme-name}_theme/icon_visualize_active.svg');
+  }
+
+  .gicon-visualization {
+    background-image: url('../img/icons_#{$theme-name}_theme/icon_visualize.svg');
+  }
 }

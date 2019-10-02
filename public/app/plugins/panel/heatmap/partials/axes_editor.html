@@ -40,6 +40,11 @@
         </select>
       </div>
     </div>
+    <gf-form-switch ng-if="ctrl.panel.dataFormat == 'tsbuckets'"
+      class="gf-form" label-class="width-8"
+      label="Reverse order"
+      checked="ctrl.panel.reverseYBuckets" on-change="ctrl.refresh()">
+    </gf-form-switch>
   </div>
 
   <div class="section gf-form-group" ng-if="ctrl.panel.dataFormat == 'timeseries'">

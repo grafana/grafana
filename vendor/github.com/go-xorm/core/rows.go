@@ -1,3 +1,7 @@
+// Copyright 2019 The Xorm Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package core
 
 import (
@@ -9,7 +13,7 @@ import (
 
 type Rows struct {
 	*sql.Rows
-	Mapper IMapper
+	db *DB
 }
 
 func (rs *Rows) ToMapString() ([]map[string]string, error) {
@@ -105,7 +109,7 @@ func (rs *Rows) ScanStructByName(dest interface{}) error {
 	newDest := make([]interface{}, len(cols))
 	var v EmptyScanner
 	for j, name := range cols {
-		f := fieldByName(vv.Elem(), rs.Mapper.Table2Obj(name))
+		f := fieldByName(vv.Elem(), rs.db.Mapper.Table2Obj(name))
 		if f.IsValid() {
 			newDest[j] = f.Addr().Interface()
 		} else {
@@ -114,36 +118,6 @@ func (rs *Rows) ScanStructByName(dest interface{}) error {
 	}
 
 	return rs.Rows.Scan(newDest...)
-}
-
-type cacheStruct struct {
-	value reflect.Value
-	idx   int
-}
-
-var (
-	reflectCache      = make(map[reflect.Type]*cacheStruct)
-	reflectCacheMutex sync.RWMutex
-)
-
-func ReflectNew(typ reflect.Type) reflect.Value {
-	reflectCacheMutex.RLock()
-	cs, ok := reflectCache[typ]
-	reflectCacheMutex.RUnlock()
-
-	const newSize = 200
-
-	if !ok || cs.idx+1 > newSize-1 {
-		cs = &cacheStruct{reflect.MakeSlice(reflect.SliceOf(typ), newSize, newSize), 0}
-		reflectCacheMutex.Lock()
-		reflectCache[typ] = cs
-		reflectCacheMutex.Unlock()
-	} else {
-		reflectCacheMutex.Lock()
-		cs.idx = cs.idx + 1
-		reflectCacheMutex.Unlock()
-	}
-	return cs.value.Index(cs.idx).Addr()
 }
 
 // scan data to a slice's pointer, slice's length should equal to columns' number
@@ -197,9 +171,7 @@ func (rs *Rows) ScanMap(dest interface{}) error {
 	vvv := vv.Elem()
 
 	for i, _ := range cols {
-		newDest[i] = ReflectNew(vvv.Type().Elem()).Interface()
-		//v := reflect.New(vvv.Type().Elem())
-		//newDest[i] = v.Interface()
+		newDest[i] = rs.db.reflectNew(vvv.Type().Elem()).Interface()
 	}
 
 	err = rs.Rows.Scan(newDest...)
@@ -215,32 +187,6 @@ func (rs *Rows) ScanMap(dest interface{}) error {
 	return nil
 }
 
-/*func (rs *Rows) ScanMap(dest interface{}) error {
-	vv := reflect.ValueOf(dest)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Map {
-		return errors.New("dest should be a map's pointer")
-	}
-
-	cols, err := rs.Columns()
-	if err != nil {
-		return err
-	}
-
-	newDest := make([]interface{}, len(cols))
-	err = rs.ScanSlice(newDest)
-	if err != nil {
-		return err
-	}
-
-	vvv := vv.Elem()
-
-	for i, name := range cols {
-		vname := reflect.ValueOf(name)
-		vvv.SetMapIndex(vname, reflect.ValueOf(newDest[i]).Elem())
-	}
-
-	return nil
-}*/
 type Row struct {
 	rows *Rows
 	// One of these two will be non-nil:

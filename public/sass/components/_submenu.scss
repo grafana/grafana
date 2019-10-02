@@ -4,8 +4,7 @@
   flex-wrap: wrap;
   align-content: flex-start;
   align-items: flex-start;
-
-  margin: 0 0 $panel-margin 0;
+  padding: 0 0 $space-sm 0;
 }
 
 .annotation-disabled,
@@ -23,10 +22,8 @@
 }
 
 .submenu-item {
-  margin-right: 20px;
   display: inline-block;
   margin-right: 15px;
-  display: inline-block;
   float: left;
 
   .fa-caret-down {
@@ -39,14 +36,13 @@
 
 .variable-value-link {
   padding-right: 10px;
-  padding: $input-padding-y $input-padding-x;
+  padding: $space-sm;
   background-color: $input-bg;
   border: 1px solid $input-border-color;
   border-radius: $input-border-radius;
-  color: $input-color;
-  box-sizing: content-box;
   display: inline-block;
   color: $text-color;
+  height: $input-height;
 
   .label-tag {
     margin: 0 5px;

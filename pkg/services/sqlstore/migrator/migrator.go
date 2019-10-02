@@ -5,7 +5,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -94,8 +94,6 @@ func (mg *Migrator) Start() error {
 			Timestamp:   time.Now(),
 		}
 
-		mg.Logger.Debug("Executing", "sql", sql)
-
 		err := mg.inTransaction(func(sess *xorm.Session) error {
 			err := mg.exec(m, sess)
 			if err != nil {
@@ -123,18 +121,30 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 	condition := m.GetCondition()
 	if condition != nil {
 		sql, args := condition.Sql(mg.Dialect)
-		results, err := sess.SQL(sql).Query(args...)
-		if err != nil || len(results) == 0 {
-			mg.Logger.Debug("Skipping migration condition not fulfilled", "id", m.Id())
-			return sess.Rollback()
+
+		if sql != "" {
+			mg.Logger.Debug("Executing migration condition sql", "id", m.Id(), "sql", sql, "args", args)
+			results, err := sess.SQL(sql, args...).Query()
+			if err != nil {
+				mg.Logger.Error("Executing migration condition failed", "id", m.Id(), "error", err)
+				return err
+			}
+
+			if !condition.IsFulfilled(results) {
+				mg.Logger.Warn("Skipping migration: Already executed, but not recorded in migration log", "id", m.Id())
+				return nil
+			}
 		}
 	}
 
 	var err error
 	if codeMigration, ok := m.(CodeMigration); ok {
+		mg.Logger.Debug("Executing code migration", "id", m.Id())
 		err = codeMigration.Exec(sess, mg)
 	} else {
-		_, err = sess.Exec(m.Sql(mg.Dialect))
+		sql := m.Sql(mg.Dialect)
+		mg.Logger.Debug("Executing sql migration", "id", m.Id(), "sql", sql)
+		_, err = sess.Exec(sql)
 	}
 
 	if err != nil {

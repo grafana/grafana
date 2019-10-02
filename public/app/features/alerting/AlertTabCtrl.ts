@@ -1,15 +1,20 @@
 import _ from 'lodash';
+import coreModule from 'app/core/core_module';
 import { ThresholdMapper } from './state/ThresholdMapper';
 import { QueryPart } from 'app/core/components/query_part/query_part';
 import alertDef from './state/alertDef';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { DashboardSrv } from '../dashboard/services/DashboardSrv';
+import DatasourceSrv from '../plugins/datasource_srv';
+import { DataQuery } from '@grafana/ui/src/types/datasource';
+import { PanelModel } from 'app/features/dashboard/state';
+import { getDefaultCondition } from './getAlertingValidationMessage';
 
 export class AlertTabCtrl {
-  panel: any;
+  panel: PanelModel;
   panelCtrl: any;
-  testing: boolean;
-  testResult: any;
   subTabIndex: number;
   conditionTypes: any;
   alert: any;
@@ -18,21 +23,22 @@ export class AlertTabCtrl {
   evalOperators: any;
   noDataModes: any;
   executionErrorModes: any;
-  addNotificationSegment;
-  notifications;
-  alertNotifications;
+  addNotificationSegment: any;
+  notifications: any;
+  alertNotifications: any;
   error: string;
   appSubUrl: string;
   alertHistory: any;
+  newAlertRuleTag: any;
 
   /** @ngInject */
   constructor(
-    private $scope,
-    private backendSrv,
-    private dashboardSrv,
-    private uiSegmentSrv,
-    private $q,
-    private datasourceSrv
+    private $scope: any,
+    private backendSrv: BackendSrv,
+    private dashboardSrv: DashboardSrv,
+    private uiSegmentSrv: any,
+    private $q: any,
+    private datasourceSrv: DatasourceSrv
   ) {
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
@@ -44,6 +50,7 @@ export class AlertTabCtrl {
     this.noDataModes = alertDef.noDataModes;
     this.executionErrorModes = alertDef.executionErrorModes;
     this.appSubUrl = config.appSubUrl;
+    this.panelCtrl._enableAlert = this.enable;
   }
 
   $onInit() {
@@ -65,7 +72,7 @@ export class AlertTabCtrl {
     this.alertNotifications = [];
     this.alertHistory = [];
 
-    return this.backendSrv.get('/api/alert-notifications').then(res => {
+    return this.backendSrv.get('/api/alert-notifications/lookup').then((res: any) => {
       this.notifications = res;
 
       this.initModel();
@@ -76,7 +83,7 @@ export class AlertTabCtrl {
   getAlertHistory() {
     this.backendSrv
       .get(`/api/annotations?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}&limit=50&type=alert`)
-      .then(res => {
+      .then((res: any) => {
         this.alertHistory = _.map(res, ah => {
           ah.time = this.dashboardSrv.getCurrent().formatDate(ah.time, 'MMM D, YYYY HH:mm:ss');
           ah.stateModel = alertDef.getStateDisplayModel(ah.newState);
@@ -86,7 +93,7 @@ export class AlertTabCtrl {
       });
   }
 
-  getNotificationIcon(type): string {
+  getNotificationIcon(type: string): string {
     switch (type) {
       case 'email':
         return 'fa fa-envelope';
@@ -113,23 +120,15 @@ export class AlertTabCtrl {
   }
 
   getNotifications() {
-    return Promise.resolve(
-      this.notifications.map(item => {
+    return this.$q.when(
+      this.notifications.map((item: any) => {
         return this.uiSegmentSrv.newSegment(item.name);
       })
     );
   }
 
-  changeTabIndex(newTabIndex) {
-    this.subTabIndex = newTabIndex;
-
-    if (this.subTabIndex === 2) {
-      this.getAlertHistory();
-    }
-  }
-
   notificationAdded() {
-    const model = _.find(this.notifications, {
+    const model: any = _.find(this.notifications, {
       name: this.addNotificationSegment.value,
     });
     if (!model) {
@@ -140,17 +139,37 @@ export class AlertTabCtrl {
       name: model.name,
       iconClass: this.getNotificationIcon(model.type),
       isDefault: false,
+      uid: model.uid,
     });
-    this.alert.notifications.push({ id: model.id });
+
+    // avoid duplicates using both id and uid to be backwards compatible.
+    if (!_.find(this.alert.notifications, n => n.id === model.id || n.uid === model.uid)) {
+      this.alert.notifications.push({ uid: model.uid });
+    }
 
     // reset plus button
     this.addNotificationSegment.value = this.uiSegmentSrv.newPlusButton().value;
     this.addNotificationSegment.html = this.uiSegmentSrv.newPlusButton().html;
+    this.addNotificationSegment.fake = true;
   }
 
-  removeNotification(index) {
-    this.alert.notifications.splice(index, 1);
-    this.alertNotifications.splice(index, 1);
+  removeNotification(an: any) {
+    // remove notifiers refeered to by id and uid to support notifiers added
+    // before and after we added support for uid
+    _.remove(this.alert.notifications, (n: any) => n.uid === an.uid || n.id === an.id);
+    _.remove(this.alertNotifications, (n: any) => n.uid === an.uid || n.id === an.id);
+  }
+
+  addAlertRuleTag() {
+    if (this.newAlertRuleTag.name) {
+      this.alert.alertRuleTags[this.newAlertRuleTag.name] = this.newAlertRuleTag.value;
+    }
+    this.newAlertRuleTag.name = '';
+    this.newAlertRuleTag.value = '';
+  }
+
+  removeAlertRuleTag(tagName: string) {
+    delete this.alert.alertRuleTags[tagName];
   }
 
   initModel() {
@@ -161,14 +180,16 @@ export class AlertTabCtrl {
 
     alert.conditions = alert.conditions || [];
     if (alert.conditions.length === 0) {
-      alert.conditions.push(this.buildDefaultCondition());
+      alert.conditions.push(getDefaultCondition());
     }
 
     alert.noDataState = alert.noDataState || config.alertingNoDataOrNullValues;
     alert.executionErrorState = alert.executionErrorState || config.alertingErrorOrTimeout;
-    alert.frequency = alert.frequency || '60s';
+    alert.frequency = alert.frequency || '1m';
     alert.handler = alert.handler || 1;
     alert.notifications = alert.notifications || [];
+    alert.for = alert.for || '0m';
+    alert.alertRuleTags = alert.alertRuleTags || {};
 
     const defaultName = this.panel.title + ' alert';
     alert.name = alert.name || defaultName;
@@ -185,7 +206,14 @@ export class AlertTabCtrl {
     ThresholdMapper.alertToGraphThresholds(this.panel);
 
     for (const addedNotification of alert.notifications) {
-      const model = _.find(this.notifications, { id: addedNotification.id });
+      // lookup notifier type by uid
+      let model: any = _.find(this.notifications, { uid: addedNotification.uid });
+
+      // fallback to using id if uid is missing
+      if (!model) {
+        model = _.find(this.notifications, { id: addedNotification.id });
+      }
+
       if (model && model.isDefault === false) {
         model.iconClass = this.getNotificationIcon(model.type);
         this.alertNotifications.push(model);
@@ -204,7 +232,7 @@ export class AlertTabCtrl {
     this.panelCtrl.render();
   }
 
-  graphThresholdChanged(evt) {
+  graphThresholdChanged(evt: any) {
     for (const condition of this.alert.conditions) {
       if (condition.type === 'query') {
         condition.evaluator.params[evt.handleIndex] = evt.threshold.value;
@@ -214,23 +242,13 @@ export class AlertTabCtrl {
     }
   }
 
-  buildDefaultCondition() {
-    return {
-      type: 'query',
-      query: { params: ['A', '5m', 'now'] },
-      reducer: { type: 'avg', params: [] },
-      evaluator: { type: 'gt', params: [null] },
-      operator: { type: 'and' },
-    };
-  }
-
   validateModel() {
     if (!this.alert) {
       return;
     }
 
     let firstTarget;
-    let foundTarget = null;
+    let foundTarget: DataQuery = null;
 
     for (const condition of this.alert.conditions) {
       if (condition.type !== 'query') {
@@ -260,7 +278,7 @@ export class AlertTabCtrl {
       this.datasourceSrv.get(datasourceName).then(ds => {
         if (!ds.meta.alerting) {
           this.error = 'The datasource does not support alerting queries';
-        } else if (ds.targetContainsTemplate(foundTarget)) {
+        } else if (ds.targetContainsTemplate && ds.targetContainsTemplate(foundTarget)) {
           this.error = 'Template variables are not supported in alert queries';
         } else {
           this.error = '';
@@ -269,7 +287,7 @@ export class AlertTabCtrl {
     }
   }
 
-  buildConditionModel(source) {
+  buildConditionModel(source: any) {
     const cm: any = { source: source, type: source.type };
 
     cm.queryPart = new QueryPart(source.query, alertDef.alertQueryDef);
@@ -280,7 +298,7 @@ export class AlertTabCtrl {
     return cm;
   }
 
-  handleQueryPartEvent(conditionModel, evt) {
+  handleQueryPartEvent(conditionModel: any, evt: any) {
     switch (evt.name) {
       case 'action-remove-part': {
         break;
@@ -301,7 +319,7 @@ export class AlertTabCtrl {
     }
   }
 
-  handleReducerPartEvent(conditionModel, evt) {
+  handleReducerPartEvent(conditionModel: any, evt: any) {
     switch (evt.name) {
       case 'action': {
         conditionModel.source.reducer.type = evt.action.value;
@@ -320,15 +338,15 @@ export class AlertTabCtrl {
     }
   }
 
-  addCondition(type) {
-    const condition = this.buildDefaultCondition();
+  addCondition(type: string) {
+    const condition = getDefaultCondition();
     // add to persited model
     this.alert.conditions.push(condition);
     // add to view model
     this.conditionModels.push(this.buildConditionModel(condition));
   }
 
-  removeCondition(index) {
+  removeCondition(index: number) {
     this.alert.conditions.splice(index, 1);
     this.conditionModels.splice(index, 1);
   }
@@ -351,17 +369,18 @@ export class AlertTabCtrl {
     });
   }
 
-  enable() {
+  enable = () => {
     this.panel.alert = {};
     this.initModel();
-  }
+    this.panel.alert.for = '5m'; //default value for new alerts. for existing alerts we use 0m to avoid breaking changes
+  };
 
   evaluatorParamsChanged() {
     ThresholdMapper.alertToGraphThresholds(this.panel);
     this.panelCtrl.render();
   }
 
-  evaluatorTypeChanged(evaluator) {
+  evaluatorTypeChanged(evaluator: any) {
     // ensure params array is correct length
     switch (evaluator.type) {
       case 'lt':
@@ -394,26 +413,11 @@ export class AlertTabCtrl {
             dashboardId: this.panelCtrl.dashboard.id,
             panelId: this.panel.id,
           })
-          .then(res => {
+          .then(() => {
             this.alertHistory = [];
             this.panelCtrl.refresh();
           });
       },
-    });
-  }
-
-  test() {
-    this.testing = true;
-    this.testResult = false;
-
-    const payload = {
-      dashboard: this.dashboardSrv.getCurrent().getSaveModelClone(),
-      panelId: this.panelCtrl.panel.id,
-    };
-
-    return this.backendSrv.post('/api/alerts/test', payload).then(res => {
-      this.testResult = res;
-      this.testing = false;
     });
   }
 }
@@ -428,3 +432,5 @@ export function alertTab() {
     controller: AlertTabCtrl,
   };
 }
+
+coreModule.directive('alertTab', alertTab);

@@ -1,5 +1,5 @@
 +++
-title = "Google OAuth2 Authentication"
+title = "GitHub OAuth2 Authentication"
 description = "Grafana OAuthentication Guide "
 keywords = ["grafana", "configuration", "documentation", "oauth"]
 type = "docs"
@@ -45,6 +45,9 @@ api_url = https://api.github.com/user
 team_ids =
 allowed_organizations =
 ```
+
+You may have to set the `root_url` option of `[server]` for the callback URL to be 
+correct. For example in case you are serving Grafana behind a proxy.
 
 Restart the Grafana back-end. You should now see a GitHub login button
 on the login page. You can now login or sign up with your GitHub
@@ -96,3 +99,18 @@ allow_sign_up = true
 allowed_organizations = github google
 ```
 
+### Team Sync (Enterprise only)
+
+>  Only available in Grafana Enterprise v6.3+
+
+With Team Sync you can map your GitHub org teams to teams in Grafana so that your users will automatically be added to
+the correct teams. 
+
+Your GitHub teams can be referenced in two ways:
+
+- `https://github.com/orgs/<org>/teams/<slug>`
+- `@<org>/<slug>`
+
+Example: `@grafana/developers`
+
+[Learn more about Team Sync]({{< relref "auth/team-sync.md" >}})

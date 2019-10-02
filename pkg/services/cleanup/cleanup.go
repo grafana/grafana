@@ -8,15 +8,17 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type CleanUpService struct {
-	log log.Logger
-	Cfg *setting.Cfg `inject:""`
+	log               log.Logger
+	Cfg               *setting.Cfg                  `inject:""`
+	ServerLockService *serverlock.ServerLockService `inject:""`
 }
 
 func init() {
@@ -38,7 +40,10 @@ func (srv *CleanUpService) Run(ctx context.Context) error {
 			srv.cleanUpTmpFiles()
 			srv.deleteExpiredSnapshots()
 			srv.deleteExpiredDashboardVersions()
-			srv.deleteOldLoginAttempts()
+			srv.ServerLockService.LockAndExecute(ctx, "delete old login attempts", time.Minute*10, func() {
+				srv.deleteOldLoginAttempts()
+			})
+
 		case <-ctx.Done():
 			return ctx.Err()
 		}
@@ -73,7 +78,7 @@ func (srv *CleanUpService) cleanUpTmpFiles() {
 		}
 	}
 
-	srv.log.Debug("Found old rendered image to delete", "deleted", len(toDelete), "keept", len(files))
+	srv.log.Debug("Found old rendered image to delete", "deleted", len(toDelete), "kept", len(files))
 }
 
 func (srv *CleanUpService) shouldCleanupTempFile(filemtime time.Time, now time.Time) bool {

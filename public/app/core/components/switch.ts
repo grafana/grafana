@@ -1,16 +1,33 @@
 import coreModule from 'app/core/core_module';
 
 const template = `
-<label for="check-{{ctrl.id}}" class="gf-form-label {{ctrl.labelClass}} pointer" ng-show="ctrl.label">
-  {{ctrl.label}}
-  <info-popover mode="right-normal" ng-if="ctrl.tooltip" position="top center">
-    {{ctrl.tooltip}}
-  </info-popover>
+<label for="check-{{ctrl.id}}" class="gf-form-switch-container">
+  <div class="gf-form-label {{ctrl.labelClass}}" ng-show="ctrl.label">
+    {{ctrl.label}}
+    <info-popover mode="right-normal" ng-if="ctrl.tooltip" position="top center">
+      {{ctrl.tooltip}}
+    </info-popover>
+  </div>
+  <div class="gf-form-switch {{ctrl.switchClass}}" ng-if="ctrl.show">
+    <input id="check-{{ctrl.id}}" type="checkbox" ng-model="ctrl.checked" ng-change="ctrl.internalOnChange()">
+    <span class="gf-form-switch__slider"></span>
+  </div>
 </label>
-<div class="gf-form-switch {{ctrl.switchClass}}" ng-if="ctrl.show">
-  <input id="check-{{ctrl.id}}" type="checkbox" ng-model="ctrl.checked" ng-change="ctrl.internalOnChange()">
-  <label for="check-{{ctrl.id}}" data-on="Yes" data-off="No"></label>
-</div>
+`;
+
+const checkboxTemplate = `
+<label for="check-{{ctrl.id}}" class="gf-form-switch-container">
+   <div class="gf-form-label {{ctrl.labelClass}}" ng-show="ctrl.label">
+    {{ctrl.label}}
+    <info-popover mode="right-normal" ng-if="ctrl.tooltip" position="top center">
+      {{ctrl.tooltip}}
+    </info-popover>
+  </div>
+  <div class="gf-form-checkbox {{ctrl.switchClass}}" ng-if="ctrl.show">
+    <input id="check-{{ctrl.id}}" type="checkbox" ng-model="ctrl.checked" ng-change="ctrl.internalOnChange()">
+    <span class="gf-form-switch__checkbox"></span>
+  </div>
+</label>
 `;
 
 export class SwitchCtrl {
@@ -21,7 +38,7 @@ export class SwitchCtrl {
   label: string;
 
   /** @ngInject */
-  constructor($scope, private $timeout) {
+  constructor($scope: any, private $timeout: any) {
     this.show = true;
     this.id = $scope.$id;
   }
@@ -51,4 +68,23 @@ export function switchDirective() {
   };
 }
 
+export function checkboxDirective() {
+  return {
+    restrict: 'E',
+    controller: SwitchCtrl,
+    controllerAs: 'ctrl',
+    bindToController: true,
+    scope: {
+      checked: '=',
+      label: '@',
+      labelClass: '@',
+      tooltip: '@',
+      switchClass: '@',
+      onChange: '&',
+    },
+    template: checkboxTemplate,
+  };
+}
+
 coreModule.directive('gfFormSwitch', switchDirective);
+coreModule.directive('gfFormCheckbox', checkboxDirective);

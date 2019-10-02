@@ -27,9 +27,10 @@ type Interface interface {
 	Delete(interface{}) (int64, error)
 	Distinct(columns ...string) *Session
 	DropIndexes(bean interface{}) error
-	Exec(string, ...interface{}) (sql.Result, error)
+	Exec(sqlOrAgrs ...interface{}) (sql.Result, error)
 	Exist(bean ...interface{}) (bool, error)
 	Find(interface{}, ...interface{}) error
+	FindAndCount(interface{}, ...interface{}) (int64, error)
 	Get(interface{}) (bool, error)
 	GroupBy(keys string) *Session
 	ID(interface{}) *Session
@@ -41,6 +42,7 @@ type Interface interface {
 	IsTableExist(beanOrTableName interface{}) (bool, error)
 	Iterate(interface{}, IterFunc) error
 	Limit(int, ...int) *Session
+	MustCols(columns ...string) *Session
 	NoAutoCondition(...bool) *Session
 	NotIn(string, ...interface{}) *Session
 	Join(joinOperator string, tablename interface{}, condition string, args ...interface{}) *Session
@@ -70,29 +72,40 @@ type EngineInterface interface {
 
 	Before(func(interface{})) *Session
 	Charset(charset string) *Session
+	ClearCache(...interface{}) error
 	CreateTables(...interface{}) error
 	DBMetas() ([]*core.Table, error)
 	Dialect() core.Dialect
 	DropTables(...interface{}) error
 	DumpAllToFile(fp string, tp ...core.DbType) error
+	GetCacher(string) core.Cacher
 	GetColumnMapper() core.IMapper
 	GetDefaultCacher() core.Cacher
 	GetTableMapper() core.IMapper
 	GetTZDatabase() *time.Location
 	GetTZLocation() *time.Location
+	MapCacher(interface{}, core.Cacher) error
 	NewSession() *Session
 	NoAutoTime() *Session
 	Quote(string) string
+	SetCacher(string, core.Cacher)
+	SetConnMaxLifetime(time.Duration)
 	SetDefaultCacher(core.Cacher)
+	SetLogger(logger core.ILogger)
 	SetLogLevel(core.LogLevel)
 	SetMapper(core.IMapper)
+	SetMaxOpenConns(int)
+	SetMaxIdleConns(int)
+	SetSchema(string)
 	SetTZDatabase(tz *time.Location)
 	SetTZLocation(tz *time.Location)
+	ShowExecTime(...bool)
 	ShowSQL(show ...bool)
 	Sync(...interface{}) error
 	Sync2(...interface{}) error
 	StoreEngine(storeEngine string) *Session
 	TableInfo(bean interface{}) *Table
+	TableName(interface{}, ...bool) string
 	UnMapType(reflect.Type)
 }
 

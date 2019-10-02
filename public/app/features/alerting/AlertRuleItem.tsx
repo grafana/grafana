@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
+// @ts-ignore
 import Highlighter from 'react-highlight-words';
-import classNames from 'classnames/bind';
+import classNames from 'classnames';
 import { AlertRule } from '../../types';
 
 export interface Props {
@@ -23,13 +24,13 @@ class AlertRuleItem extends PureComponent<Props> {
   render() {
     const { rule, onTogglePause } = this.props;
 
-    const stateClass = classNames({
+    const iconClassName = classNames({
       fa: true,
       'fa-play': rule.state === 'paused',
       'fa-pause': rule.state !== 'paused',
     });
 
-    const ruleUrl = `${rule.url}?panelId=${rule.panelId}&fullscreen=true&edit=true&tab=alert`;
+    const ruleUrl = `${rule.url}?panelId=${rule.panelId}&fullscreen&edit&tab=alert`;
 
     return (
       <li className="alert-rule-item">
@@ -55,10 +56,10 @@ class AlertRuleItem extends PureComponent<Props> {
             title="Pausing an alert rule prevents it from executing"
             onClick={onTogglePause}
           >
-            <i className={stateClass} />
+            <i className={iconClassName} />
           </button>
           <a className="btn btn-small btn-inverse alert-list__btn width-2" href={ruleUrl} title="Edit alert rule">
-            <i className="icon-gf icon-gf-settings" />
+            <i className="gicon gicon-cog" />
           </a>
         </div>
       </li>

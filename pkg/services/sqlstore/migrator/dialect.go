@@ -29,9 +29,11 @@ type Dialect interface {
 	DropTable(tableName string) string
 	DropIndexSql(tableName string, index *Index) string
 
-	TableCheckSql(tableName string) (string, []interface{})
 	RenameTable(oldName string, newName string) string
 	UpdateTableSql(tableName string, columns []*Column) string
+
+	IndexCheckSql(tableName, indexName string) (string, []interface{})
+	ColumnCheckSql(tableName, columnName string) (string, []interface{})
 
 	ColString(*Column) string
 	ColStringNoPk(*Column) string
@@ -46,6 +48,7 @@ type Dialect interface {
 	NoOpSql() string
 
 	IsUniqueConstraintViolation(err error) bool
+	IsDeadlock(err error) bool
 }
 
 func NewDialect(engine *xorm.Engine) Dialect {
@@ -180,6 +183,10 @@ func (db *BaseDialect) DropTable(tableName string) string {
 func (db *BaseDialect) RenameTable(oldName string, newName string) string {
 	quote := db.dialect.Quote
 	return fmt.Sprintf("ALTER TABLE %s RENAME TO %s", quote(oldName), quote(newName))
+}
+
+func (db *BaseDialect) ColumnCheckSql(tableName, columnName string) (string, []interface{}) {
+	return "", nil
 }
 
 func (db *BaseDialect) DropIndexSql(tableName string, index *Index) string {

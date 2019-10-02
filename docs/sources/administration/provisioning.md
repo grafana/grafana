@@ -30,34 +30,22 @@ Checkout the [configuration](/installation/configuration) page for more informat
 
 ### Using Environment Variables
 
-All options in the configuration file (listed below) can be overridden
-using environment variables using the syntax:
+It is possible to use environment variable interpolation in all 3 provisioning config types. Allowed syntax
+is either `$ENV_VAR_NAME` or `${ENV_VAR_NAME}` and can be used only for values not for keys or bigger parts
+of the configs. It is not available in the dashboards definition files just the dashboard provisioning
+configuration.
+Example:
 
-```bash
-GF_<SectionName>_<KeyName>
+```yaml
+datasources:
+- name: Graphite
+  url: http://localhost:$PORT
+  user: $USER
+  secureJsonData:
+    password: $PASSWORD
 ```
 
-Where the section name is the text within the brackets. Everything
-should be upper case and `.` should be replaced by `_`. For example, given these configuration settings:
-
-```bash
-# default section
-instance_name = ${HOSTNAME}
-
-[security]
-admin_user = admin
-
-[auth.google]
-client_secret = 0ldS3cretKey
-```
-
-Overriding will be done like so:
-
-```bash
-export GF_DEFAULT_INSTANCE_NAME=my-instance
-export GF_SECURITY_ADMIN_USER=true
-export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
-```
+If you have a literal `$` in your value and want to avoid interpolation, `$$` can be used.
 
 <hr />
 
@@ -107,7 +95,7 @@ datasources:
   orgId: 1
   # <string> url
   url: http://localhost:8080
-  # <string> database password, if used
+  # <string> Deprecated, use secureJsonData.password
   password:
   # <string> database user, if used
   user:
@@ -117,7 +105,7 @@ datasources:
   basicAuth:
   # <string> basic auth username
   basicAuthUser:
-  # <string> basic auth password
+  # <string> Deprecated, use secureJsonData.basicAuthPassword
   basicAuthPassword:
   # <bool> enable/disable with credentials headers
   withCredentials:
@@ -133,6 +121,10 @@ datasources:
     tlsCACert: "..."
     tlsClientCert: "..."
     tlsClientKey: "..."
+    # <string> database password, if used
+    password:
+    # <string> basic auth password
+    basicAuthPassword:
   version: 1
   # <bool> allow users to edit datasources from the UI.
   editable: false
@@ -156,9 +148,11 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsSkipVerify | boolean | *All* | Controls whether a client verifies the server's certificate chain and host name. |
 | graphiteVersion | string | Graphite |  Graphite version  |
 | timeInterval | string | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL & MSSQL | Lowest interval/step value that should be used for this data source |
-| esVersion | number | Elastic | Elasticsearch version as a number (2/5/56) |
-| timeField | string | Elastic | Which field that should be used as timestamp |
-| interval | string | Elastic | Index date time format |
+| esVersion | number | Elasticsearch | Elasticsearch version as a number (2/5/56/60/70) |
+| timeField | string | Elasticsearch | Which field that should be used as timestamp |
+| interval | string | Elasticsearch | Index date time format. nil(No Pattern), 'Hourly', 'Daily', 'Weekly', 'Monthly' or 'Yearly' |
+| logMessageField | string | Elasticsearch | Which field should be used as the log message |
+| logLevelField | string | Elasticsearch | Which field should be used to indicate the priority of the log message |
 | authType | string | Cloudwatch | Auth provider. keys/credentials/arn |
 | assumeRoleArn | string | Cloudwatch | ARN of Assume Role |
 | defaultRegion | string | Cloudwatch | AWS region |
@@ -166,8 +160,12 @@ Since not all datasources have the same configuration settings we only have the 
 | tsdbVersion | string | OpenTSDB | Version |
 | tsdbResolution | string | OpenTSDB | Resolution |
 | sslmode | string | PostgreSQL | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full' |
+| encrypt | string | MSSQL | Connection SSL encryption handling. 'disable', 'false' or 'true' |
 | postgresVersion | number | PostgreSQL | Postgres version as a number (903/904/905/906/1000) meaning v9.3, v9.4, ..., v10 |
 | timescaledb | boolean | PostgreSQL | Enable usage of TimescaleDB extension |
+| maxOpenConns | number | MySQL, PostgreSQL & MSSQL | Maximum number of open connections to the database (Grafana v5.4+) |
+| maxIdleConns | number | MySQL, PostgreSQL & MSSQL | Maximum number of connections in the idle connection pool (Grafana v5.4+) |
+| connMaxLifetime | number | MySQL, PostgreSQL & MSSQL | Maximum amount of time in seconds a connection may be reused (Grafana v5.4+) |
 
 #### Secure Json Data
 
@@ -180,10 +178,28 @@ Secure json data is a map of settings that will be encrypted with [secret key](/
 | tlsCACert | string | *All* |CA cert for out going requests |
 | tlsClientCert | string | *All* |TLS Client cert for outgoing requests |
 | tlsClientKey | string | *All* |TLS Client key for outgoing requests |
-| password | string | PostgreSQL | password |
-| user | string | PostgreSQL | user |
+| password | string | *All* | password |
+| basicAuthPassword | string | *All* | password for basic authentication |
 | accessKey | string | Cloudwatch | Access key for connecting to Cloudwatch |
 | secretKey | string | Cloudwatch | Secret key for connecting to Cloudwatch |
+
+#### Custom HTTP headers for datasources
+Datasources managed by Grafanas provisioning can be configured to add HTTP headers to all requests
+going to that datasource. The header name is configured in the `jsonData` field and the header value should be
+configured in `secureJsonData`.
+
+```yaml
+apiVersion: 1
+
+datasources:
+- name: Graphite
+  jsonData:
+    httpHeaderName1: "HeaderName"
+    httpHeaderName2: "Authorization"
+  secureJsonData:
+    httpHeaderValue1: "HeaderValue"
+    httpHeaderValue2: "Bearer XXXXXXXXX"
+```
 
 ### Dashboards
 
@@ -195,17 +211,28 @@ The dashboard provider config file looks somewhat like this:
 apiVersion: 1
 
 providers:
-- name: 'default'
+  # <string> an unique provider name
+- name: 'a unique provider name'
+  # <int> org id. will default to orgId 1 if not specified
   orgId: 1
+  # <string, required> name of the dashboard folder. Required
   folder: ''
+  # <string> folder UID. will be automatically generated if not specified
+  folderUid: ''
+  # <string, required> provider type. Required
   type: file
+  # <bool> disable dashboard deletion
   disableDeletion: false
-  updateIntervalSeconds: 10 #how often Grafana will scan for changed dashboards
+  # <bool> enable dashboard editing
+  editable: true
+  # <int> how often Grafana will scan for changed dashboards
+  updateIntervalSeconds: 10
   options:
+    # <string, required> path to dashboard files on disk. Required
     path: /var/lib/grafana/dashboards
 ```
 
-When Grafana starts, it will update/insert all dashboards available in the configured path. Then later on poll that path and look for updated json files and insert those update/insert those into the database.
+When Grafana starts, it will update/insert all dashboards available in the configured path. Then later on poll that path every **updateIntervalSeconds** and look for updated json files and update/insert those into the database.
 
 #### Making changes to a provisioned dashboard
 
@@ -226,4 +253,201 @@ By default Grafana will delete dashboards in the database if the file is removed
 > **Note.** Provisioning allows you to overwrite existing dashboards
 > which leads to problems if you re-use settings that are supposed to be unique.
 > Be careful not to re-use the same `title` multiple times within a folder
-> or `uid` within the same installation as this will cause weird behaviours.
+> or `uid` within the same installation as this will cause weird behaviors.
+
+## Alert Notification Channels
+
+Alert Notification Channels can be provisioned by adding one or more yaml config files in the [`provisioning/notifiers`](/installation/configuration/#provisioning) directory.
+
+Each config file can contain the following top-level fields:
+- `notifiers`, a list of alert notifications that will be added or updated during start up. If the notification channel already exists, Grafana will update it to match the configuration file.
+- `delete_notifiers`, a list of alert notifications to be deleted before before inserting/updating those in the `notifiers` list.
+
+Provisioning looks up alert notifications by uid, and will update any existing notification with the provided uid.
+
+By default, exporting a dashboard as JSON will use a sequential identifier to refer to alert notifications. The field `uid` can be optionally specified to specify a string identifier for the alert name.
+
+```json
+{
+  ...
+      "alert": {
+        ...,
+        "conditions": [...],
+        "frequency": "24h",
+        "noDataState": "ok",
+        "notifications": [
+           {"uid": "notifier1"},
+           {"uid": "notifier2"},
+        ]
+      }
+  ...
+}
+```
+
+### Example Alert Notification Channels Config File
+
+```yaml
+notifiers:
+  - name: notification-channel-1
+    type: slack
+    uid: notifier1
+    # either
+    org_id: 2
+    # or
+    org_name: Main Org.
+    is_default: true
+    send_reminder: true
+    frequency: 1h
+    disable_resolve_message: false
+    # See `Supported Settings` section for settings supporter for each
+    # alert notification type.
+    settings:
+      recipient: "XXX"
+      token: "xoxb"
+      uploadImage: true
+      url: https://slack.com
+
+delete_notifiers:
+  - name: notification-channel-1
+    uid: notifier1
+    # either
+    org_id: 2
+    # or
+    org_name: Main Org.
+  - name: notification-channel-2
+    # default org_id: 1
+```
+
+### Supported Settings
+
+The following sections detail the supported settings for each alert notification type.
+
+#### Alert notification `pushover`
+
+| Name |
+| ---- |
+| apiToken |
+| userKey |
+| device |
+| retry |
+| expire |
+
+#### Alert notification `slack`
+
+| Name |
+| ---- |
+| url |
+| recipient |
+| username |
+| iconEmoji |
+| iconUrl |
+| uploadImage |
+| mention |
+| token |
+
+#### Alert notification `victorops`
+
+| Name |
+| ---- |
+| url |
+| autoResolve |
+
+#### Alert notification `kafka`
+
+| Name |
+| ---- |
+| kafkaRestProxy |
+| kafkaTopic |
+
+#### Alert notification `LINE`
+
+| Name |
+| ---- |
+| token |
+
+#### Alert notification `pagerduty`
+
+| Name |
+| ---- |
+| integrationKey |
+| autoResolve |
+
+#### Alert notification `sensu`
+
+| Name |
+| ---- |
+| url |
+| source |
+| handler |
+| username |
+| password |
+
+#### Alert notification `prometheus-alertmanager`
+
+| Name |
+| ---- |
+| url |
+
+#### Alert notification `teams`
+
+| Name |
+| ---- |
+| url |
+
+#### Alert notification `dingding`
+
+| Name |
+| ---- |
+| url |
+
+#### Alert notification `email`
+
+| Name |
+| ---- |
+| addresses |
+
+#### Alert notification `hipchat`
+
+| Name |
+| ---- |
+| url |
+| apikey |
+| roomid |
+
+#### Alert notification `opsgenie`
+
+| Name |
+| ---- |
+| apiKey |
+| apiUrl |
+| autoClose |
+
+#### Alert notification `telegram`
+
+| Name |
+| ---- |
+| bottoken |
+| chatid |
+
+#### Alert notification `threema`
+
+| Name |
+| ---- |
+| gateway_id |
+| recipient_id |
+| api_secret |
+
+#### Alert notification `webhook`
+
+| Name |
+| ---- |
+| url |
+| username |
+| password |
+
+#### Alert notification `googlechat`
+
+| Name |
+| ---- |
+| url |
+

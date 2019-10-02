@@ -17,6 +17,13 @@ var (
 	PluginTypeDashboard  = "dashboard"
 )
 
+type PluginState string
+
+var (
+	PluginStateAlpha PluginState = "alpha"
+	PluginStateBeta  PluginState = "beta"
+)
+
 type PluginNotFoundError struct {
 	PluginId string
 }
@@ -38,8 +45,10 @@ type PluginBase struct {
 	Includes     []*PluginInclude   `json:"includes"`
 	Module       string             `json:"module"`
 	BaseUrl      string             `json:"baseUrl"`
+	Category     string             `json:"category"`
 	HideFromList bool               `json:"hideFromList,omitempty"`
-	State        string             `json:"state,omitempty"`
+	Preload      bool               `json:"preload"`
+	State        PluginState        `json:"state,omitempty"`
 
 	IncludedInAppId string `json:"-"`
 	PluginDir       string `json:"-"`
@@ -103,11 +112,19 @@ type PluginDependencyItem struct {
 	Version string `json:"version"`
 }
 
+type PluginBuildInfo struct {
+	Time   int64  `json:"time,omitempty"`
+	Repo   string `json:"repo,omitempty"`
+	Branch string `json:"branch,omitempty"`
+	Hash   string `json:"hash,omitempty"`
+}
+
 type PluginInfo struct {
 	Author      PluginInfoLink      `json:"author"`
 	Description string              `json:"description"`
 	Links       []PluginInfoLink    `json:"links"`
 	Logos       PluginLogos         `json:"logos"`
+	Build       PluginBuildInfo     `json:"build"`
 	Screenshots []PluginScreenshots `json:"screenshots"`
 	Version     string              `json:"version"`
 	Updated     string              `json:"updated"`

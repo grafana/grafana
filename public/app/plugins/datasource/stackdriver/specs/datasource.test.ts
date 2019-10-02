@@ -1,27 +1,37 @@
 import StackdriverDataSource from '../datasource';
 import { metricDescriptors } from './testData';
-import moment from 'moment';
-import { TemplateSrvStub } from 'test/specs/helpers';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { CustomVariable } from 'app/features/templating/all';
+import { toUtc } from '@grafana/data';
+import { DataSourceInstanceSettings } from '@grafana/ui';
+import { StackdriverOptions } from '../types';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+
+interface Result {
+  status: any;
+  message?: any;
+}
 
 describe('StackdriverDataSource', () => {
-  const instanceSettings = {
+  const instanceSettings = ({
     jsonData: {
-      projectName: 'testproject',
+      defaultProject: 'testproject',
     },
-  };
-  const templateSrv = new TemplateSrvStub();
-  const timeSrv = {};
+  } as unknown) as DataSourceInstanceSettings<StackdriverOptions>;
+  const templateSrv = new TemplateSrv();
+  const timeSrv = {} as TimeSrv;
 
   describe('when performing testDataSource', () => {
     describe('and call to stackdriver api succeeds', () => {
       let ds;
-      let result;
+      let result: Result;
       beforeEach(async () => {
-        const backendSrv = {
+        const backendSrv = ({
           async datasourceRequest() {
             return Promise.resolve({ status: 200 });
           },
-        };
+        } as unknown) as BackendSrv;
         ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv, timeSrv);
         result = await ds.testDatasource();
       });
@@ -32,11 +42,11 @@ describe('StackdriverDataSource', () => {
 
     describe('and a list of metricDescriptors are returned', () => {
       let ds;
-      let result;
+      let result: Result;
       beforeEach(async () => {
-        const backendSrv = {
+        const backendSrv = ({
           datasourceRequest: async () => Promise.resolve({ status: 200, data: metricDescriptors }),
-        };
+        } as unknown) as BackendSrv;
         ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv, timeSrv);
         result = await ds.testDatasource();
       });
@@ -47,15 +57,17 @@ describe('StackdriverDataSource', () => {
 
     describe('and call to stackdriver api fails with 400 error', () => {
       let ds;
-      let result;
+      let result: Result;
       beforeEach(async () => {
-        const backendSrv = {
+        const backendSrv = ({
           datasourceRequest: async () =>
             Promise.reject({
               statusText: 'Bad Request',
-              data: { error: { code: 400, message: 'Field interval.endTime had an invalid value' } },
+              data: {
+                error: { code: 400, message: 'Field interval.endTime had an invalid value' },
+              },
             }),
-        };
+        } as unknown) as BackendSrv;
         ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv, timeSrv);
         result = await ds.testDatasource();
       });
@@ -67,48 +79,11 @@ describe('StackdriverDataSource', () => {
     });
   });
 
-  describe('when performing getProjects', () => {
-    describe('and call to resource manager api succeeds', () => {
-      let ds;
-      let result;
-      beforeEach(async () => {
-        const response = {
-          projects: [
-            {
-              projectNumber: '853996325002',
-              projectId: 'test-project',
-              lifecycleState: 'ACTIVE',
-              name: 'Test Project',
-              createTime: '2015-06-02T14:16:08.520Z',
-              parent: {
-                type: 'organization',
-                id: '853996325002',
-              },
-            },
-          ],
-        };
-        const backendSrv = {
-          async datasourceRequest() {
-            return Promise.resolve({ status: 200, data: response });
-          },
-        };
-        ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv, timeSrv);
-        result = await ds.getProjects();
-      });
-
-      it('should return successfully', () => {
-        expect(result.length).toBe(1);
-        expect(result[0].id).toBe('test-project');
-        expect(result[0].name).toBe('Test Project');
-      });
-    });
-  });
-
   describe('When performing query', () => {
     const options = {
       range: {
-        from: moment.utc('2017-08-22T20:00:00Z'),
-        to: moment.utc('2017-08-22T23:59:00Z'),
+        from: toUtc('2017-08-22T20:00:00Z'),
+        to: toUtc('2017-08-22T23:59:00Z'),
       },
       rangeRaw: {
         from: 'now-4h',
@@ -117,14 +92,13 @@ describe('StackdriverDataSource', () => {
       targets: [
         {
           refId: 'A',
-          aggregation: {},
         },
       ],
     };
 
     describe('and no time series data is returned', () => {
-      let ds;
-      const response = {
+      let ds: StackdriverDataSource;
+      const response: any = {
         results: {
           A: {
             refId: 'A',
@@ -138,14 +112,14 @@ describe('StackdriverDataSource', () => {
       };
 
       beforeEach(() => {
-        const backendSrv = {
+        const backendSrv = ({
           datasourceRequest: async () => Promise.resolve({ status: 200, data: response }),
-        };
+        } as unknown) as BackendSrv;
         ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv, timeSrv);
       });
 
       it('should return a list of datapoints', () => {
-        return ds.query(options).then(results => {
+        return ds.query(options as any).then(results => {
           expect(results.data.length).toBe(0);
         });
       });
@@ -155,9 +129,9 @@ describe('StackdriverDataSource', () => {
   describe('when performing getMetricTypes', () => {
     describe('and call to stackdriver api succeeds', () => {});
     let ds;
-    let result;
+    let result: any;
     beforeEach(async () => {
-      const backendSrv = {
+      const backendSrv = ({
         async datasourceRequest() {
           return Promise.resolve({
             data: {
@@ -174,8 +148,9 @@ describe('StackdriverDataSource', () => {
             },
           });
         },
-      };
+      } as unknown) as BackendSrv;
       ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv, timeSrv);
+      // @ts-ignore
       result = await ds.getMetricTypes();
     });
     it('should return successfully', () => {
@@ -190,15 +165,43 @@ describe('StackdriverDataSource', () => {
     });
   });
 
+  const noopBackendSrv = ({} as unknown) as BackendSrv;
+
+  describe('when interpolating a template variable for the filter', () => {
+    let interpolated: any[];
+    describe('and is single value variable', () => {
+      beforeEach(() => {
+        const filterTemplateSrv = initTemplateSrv('filtervalue1');
+        const ds = new StackdriverDataSource(instanceSettings, noopBackendSrv, filterTemplateSrv, timeSrv);
+        interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '${test}'], {});
+      });
+
+      it('should replace the variable with the value', () => {
+        expect(interpolated.length).toBe(3);
+        expect(interpolated[2]).toBe('filtervalue1');
+      });
+    });
+
+    describe('and is multi value variable', () => {
+      beforeEach(() => {
+        const filterTemplateSrv = initTemplateSrv(['filtervalue1', 'filtervalue2'], true);
+        const ds = new StackdriverDataSource(instanceSettings, noopBackendSrv, filterTemplateSrv, timeSrv);
+        interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '[[test]]'], {});
+      });
+
+      it('should replace the variable with a regex expression', () => {
+        expect(interpolated[2]).toBe('(filtervalue1|filtervalue2)');
+      });
+    });
+  });
+
   describe('when interpolating a template variable for group bys', () => {
-    let interpolated;
+    let interpolated: any[];
 
     describe('and is single value variable', () => {
       beforeEach(() => {
-        templateSrv.data = {
-          test: 'groupby1',
-        };
-        const ds = new StackdriverDataSource(instanceSettings, {}, templateSrv, timeSrv);
+        const groupByTemplateSrv = initTemplateSrv('groupby1');
+        const ds = new StackdriverDataSource(instanceSettings, noopBackendSrv, groupByTemplateSrv, timeSrv);
         interpolated = ds.interpolateGroupBys(['[[test]]'], {});
       });
 
@@ -210,10 +213,8 @@ describe('StackdriverDataSource', () => {
 
     describe('and is multi value variable', () => {
       beforeEach(() => {
-        templateSrv.data = {
-          test: 'groupby1,groupby2',
-        };
-        const ds = new StackdriverDataSource(instanceSettings, {}, templateSrv, timeSrv);
+        const groupByTemplateSrv = initTemplateSrv(['groupby1', 'groupby2'], true);
+        const ds = new StackdriverDataSource(instanceSettings, noopBackendSrv, groupByTemplateSrv, timeSrv);
         interpolated = ds.interpolateGroupBys(['[[test]]'], {});
       });
 
@@ -226,17 +227,17 @@ describe('StackdriverDataSource', () => {
   });
 
   describe('unit parsing', () => {
-    let ds, res;
+    let ds: StackdriverDataSource, res: any;
     beforeEach(() => {
-      ds = new StackdriverDataSource(instanceSettings, {}, templateSrv, timeSrv);
+      ds = new StackdriverDataSource(instanceSettings, noopBackendSrv, templateSrv, timeSrv);
     });
     describe('when theres only one target', () => {
       describe('and the stackdriver unit doesnt have a corresponding grafana unit', () => {
         beforeEach(() => {
           res = ds.resolvePanelUnitFromTargets([{ unit: 'megaseconds' }]);
         });
-        it('should return none', () => {
-          expect(res).toEqual('none');
+        it('should return undefined', () => {
+          expect(res).toBeUndefined();
         });
       });
       describe('and the stackdriver unit has a corresponding grafana unit', () => {
@@ -262,18 +263,34 @@ describe('StackdriverDataSource', () => {
         beforeEach(() => {
           res = ds.resolvePanelUnitFromTargets([{ unit: 'megaseconds' }, { unit: 'megaseconds' }]);
         });
-        it('should return the default value - none', () => {
-          expect(res).toEqual('none');
+        it('should return the default value of undefined', () => {
+          expect(res).toBeUndefined();
         });
       });
       describe('and all target units are not the same', () => {
         beforeEach(() => {
           res = ds.resolvePanelUnitFromTargets([{ unit: 'bit' }, { unit: 'min' }]);
         });
-        it('should return the default value - none', () => {
-          expect(res).toEqual('none');
+        it('should return the default value of undefined', () => {
+          expect(res).toBeUndefined();
         });
       });
     });
   });
 });
+function initTemplateSrv(values: any, multi = false) {
+  const templateSrv = new TemplateSrv();
+  templateSrv.init([
+    new CustomVariable(
+      {
+        name: 'test',
+        current: {
+          value: values,
+        },
+        multi: multi,
+      },
+      {} as any
+    ),
+  ]);
+  return templateSrv;
+}

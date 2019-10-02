@@ -10,15 +10,18 @@ exports[`Render should render component 1`] = `
     >
       External group sync
     </h3>
-    <class_1
-      className="page-sub-heading-icon"
+    <Component
       content="Sync LDAP or OAuth groups with your Grafana teams."
       placement="auto"
     >
-      <i
-        className="gicon gicon-question gicon--has-hover"
-      />
-    </class_1>
+      <div
+        className="page-sub-heading-icon"
+      >
+        <i
+          className="gicon gicon-question gicon--has-hover"
+        />
+      </div>
+    </Component>
     <div
       className="page-action-bar__spacer"
     />
@@ -47,7 +50,7 @@ exports[`Render should render component 1`] = `
         <div
           className="gf-form"
         >
-          <input
+          <Input
             className="gf-form-input width-30"
             onChange={[Function]}
             placeholder="cn=ops,ou=groups,dc=grafana,dc=org"
@@ -59,7 +62,7 @@ exports[`Render should render component 1`] = `
           className="gf-form"
         >
           <button
-            className="btn btn-success gf-form-btn"
+            className="btn btn-primary gf-form-btn"
             disabled={true}
             type="submit"
           >
@@ -69,40 +72,16 @@ exports[`Render should render component 1`] = `
       </form>
     </div>
   </Component>
-  <div
-    className="empty-list-cta"
-  >
-    <div
-      className="empty-list-cta__title"
-    >
-      There are no external groups to sync with
-    </div>
-    <button
-      className="empty-list-cta__button btn btn-xlarge btn-success"
-      onClick={[Function]}
-    >
-      <i
-        className="gicon gicon-add-team"
-      />
-      Add Group
-    </button>
-    <div
-      className="empty-list-cta__pro-tip"
-    >
-      <i
-        className="fa fa-rocket"
-      />
-       
-      Sync LDAP or OAuth groups with your Grafana teams.
-      <a
-        className="text-link empty-list-cta__pro-tip-link"
-        href="asd"
-        target="_blank"
-      >
-        Learn more
-      </a>
-    </div>
-  </div>
+  <EmptyListCTA
+    buttonIcon="gicon gicon-team"
+    buttonTitle="Add Group"
+    onClick={[Function]}
+    proTip="Sync LDAP or OAuth groups with your Grafana teams."
+    proTipLink="http://docs.grafana.org/auth/enhanced_ldap/"
+    proTipLinkTitle="Learn more"
+    proTipTarget="_blank"
+    title="There are no external groups to sync with"
+  />
 </div>
 `;
 
@@ -116,20 +95,23 @@ exports[`Render should render groups table 1`] = `
     >
       External group sync
     </h3>
-    <class_1
-      className="page-sub-heading-icon"
+    <Component
       content="Sync LDAP or OAuth groups with your Grafana teams."
       placement="auto"
     >
-      <i
-        className="gicon gicon-question gicon--has-hover"
-      />
-    </class_1>
+      <div
+        className="page-sub-heading-icon"
+      >
+        <i
+          className="gicon gicon-question gicon--has-hover"
+        />
+      </div>
+    </Component>
     <div
       className="page-action-bar__spacer"
     />
     <button
-      className="btn btn-success pull-right"
+      className="btn btn-primary pull-right"
       onClick={[Function]}
     >
       <i
@@ -162,7 +144,7 @@ exports[`Render should render groups table 1`] = `
         <div
           className="gf-form"
         >
-          <input
+          <Input
             className="gf-form-input width-30"
             onChange={[Function]}
             placeholder="cn=ops,ou=groups,dc=grafana,dc=org"
@@ -174,7 +156,7 @@ exports[`Render should render groups table 1`] = `
           className="gf-form"
         >
           <button
-            className="btn btn-success gf-form-btn"
+            className="btn btn-primary gf-form-btn"
             disabled={true}
             type="submit"
           >
@@ -219,7 +201,7 @@ exports[`Render should render groups table 1`] = `
             }
           >
             <a
-              className="btn btn-danger btn-mini"
+              className="btn btn-danger btn-small"
               onClick={[Function]}
             >
               <i
@@ -242,7 +224,7 @@ exports[`Render should render groups table 1`] = `
             }
           >
             <a
-              className="btn btn-danger btn-mini"
+              className="btn btn-danger btn-small"
               onClick={[Function]}
             >
               <i
@@ -265,7 +247,7 @@ exports[`Render should render groups table 1`] = `
             }
           >
             <a
-              className="btn btn-danger btn-mini"
+              className="btn btn-danger btn-small"
               onClick={[Function]}
             >
               <i

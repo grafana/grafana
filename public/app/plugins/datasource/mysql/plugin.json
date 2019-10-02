@@ -2,9 +2,10 @@
   "type": "datasource",
   "name": "MySQL",
   "id": "mysql",
+  "category": "sql",
 
   "info": {
-    "description": "MySQL Data Source for Grafana",
+    "description": "Data source for MySQL databases",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"
@@ -12,8 +13,7 @@
     "logos": {
       "small": "img/mysql_logo.svg",
       "large": "img/mysql_logo.svg"
-    },
-    "version": "5.0.0"
+    }
   },
 
   "alerting": true,
@@ -23,5 +23,4 @@
   "queryOptions": {
     "minInterval": true
   }
-
 }

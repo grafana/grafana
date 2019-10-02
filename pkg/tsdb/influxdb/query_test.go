@@ -47,6 +47,20 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "policy"."cpu" WHERE time > now() - 5m GROUP BY time(10s) fill(null)`)
 		})
 
+		Convey("can build query with tz", func() {
+			query := &Query{
+				Selects:     []*Select{{*qp1, *qp2}},
+				Measurement: "cpu",
+				GroupBy:     []*QueryPart{groupBy1},
+				Tz:          "Europe/Paris",
+				Interval:    time.Second * 5,
+			}
+
+			rawQuery, err := query.Build(queryContext)
+			So(err, ShouldBeNil)
+			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "cpu" WHERE time > now() - 5m GROUP BY time(5s) tz('Europe/Paris')`)
+		})
+
 		Convey("can build query with group bys", func() {
 			query := &Query{
 				Selects:     []*Select{{*qp1, *qp2}},

@@ -1,4 +1,4 @@
-import React, { SFC } from 'react';
+import React, { FC } from 'react';
 
 export type LayoutMode = LayoutModes.Grid | LayoutModes.List;
 
@@ -12,7 +12,7 @@ interface Props {
   onLayoutModeChanged: (mode: LayoutMode) => {};
 }
 
-const LayoutSelector: SFC<Props> = props => {
+const LayoutSelector: FC<Props> = props => {
   const { mode, onLayoutModeChanged } = props;
   return (
     <div className="layout-selector">

@@ -1,21 +1,31 @@
 import _ from 'lodash';
+// @ts-ignore
+import { IQService } from 'angular';
+
 import coreModule from 'app/core/core_module';
 import impressionSrv from 'app/core/services/impression_srv';
 import store from 'app/core/store';
 import { contextSrv } from 'app/core/services/context_srv';
+import { BackendSrv } from './backend_srv';
+import { Section } from '../components/manage_dashboards/manage_dashboards';
+import { DashboardSearchHit } from 'app/types/search';
+
+interface Sections {
+  [key: string]: Partial<Section>;
+}
 
 export class SearchSrv {
   recentIsOpen: boolean;
   starredIsOpen: boolean;
 
   /** @ngInject */
-  constructor(private backendSrv, private $q) {
+  constructor(private backendSrv: BackendSrv, private $q: IQService) {
     this.recentIsOpen = store.getBool('search.sections.recent', true);
     this.starredIsOpen = store.getBool('search.sections.starred', true);
   }
 
-  private getRecentDashboards(sections) {
-    return this.queryForRecentDashboards().then(result => {
+  private getRecentDashboards(sections: Sections) {
+    return this.queryForRecentDashboards().then((result: any[]) => {
       if (result.length > 0) {
         sections['recent'] = {
           title: 'Recent',
@@ -30,8 +40,8 @@ export class SearchSrv {
     });
   }
 
-  private queryForRecentDashboards() {
-    const dashIds = _.take(impressionSrv.getDashboardOpened(), 5);
+  private queryForRecentDashboards(): Promise<DashboardSearchHit[]> {
+    const dashIds: number[] = _.take(impressionSrv.getDashboardOpened(), 30);
     if (dashIds.length === 0) {
       return Promise.resolve([]);
     }
@@ -45,7 +55,7 @@ export class SearchSrv {
     });
   }
 
-  private toggleRecent(section) {
+  private toggleRecent(section: Section) {
     this.recentIsOpen = section.expanded = !section.expanded;
     store.set('search.sections.recent', this.recentIsOpen);
 
@@ -59,18 +69,18 @@ export class SearchSrv {
     });
   }
 
-  private toggleStarred(section) {
+  private toggleStarred(section: Section) {
     this.starredIsOpen = section.expanded = !section.expanded;
     store.set('search.sections.starred', this.starredIsOpen);
     return Promise.resolve(section);
   }
 
-  private getStarred(sections) {
+  private getStarred(sections: Sections) {
     if (!contextSrv.isSignedIn) {
       return Promise.resolve();
     }
 
-    return this.backendSrv.search({ starred: true, limit: 5 }).then(result => {
+    return this.backendSrv.search({ starred: true, limit: 30 }).then(result => {
       if (result.length > 0) {
         sections['starred'] = {
           title: 'Starred',
@@ -84,7 +94,7 @@ export class SearchSrv {
     });
   }
 
-  search(options) {
+  search(options: any) {
     const sections: any = {};
     const promises = [];
     const query = _.clone(options);
@@ -118,7 +128,7 @@ export class SearchSrv {
     });
   }
 
-  private handleSearchResult(sections, results) {
+  private handleSearchResult(sections: Sections, results: DashboardSearchHit[]): any {
     if (results.length === 0) {
       return sections;
     }
@@ -177,7 +187,7 @@ export class SearchSrv {
     }
   }
 
-  private toggleFolder(section) {
+  private toggleFolder(section: Section) {
     section.expanded = !section.expanded;
     section.icon = section.expanded ? 'fa fa-folder-open' : 'fa fa-folder';
 

@@ -8,9 +8,9 @@ const alertQueryDef = new QueryPartDef({
     {
       name: 'from',
       type: 'string',
-      options: ['1s', '10s', '1m', '5m', '10m', '15m', '1h', '24h', '48h'],
+      options: ['10s', '1m', '5m', '10m', '15m', '1h', '24h', '48h'],
     },
-    { name: 'to', type: 'string', options: ['now'] },
+    { name: 'to', type: 'string', options: ['now', 'now-1m', 'now-5m', 'now-10m', 'now-1h'] },
   ],
   defaultParams: ['#A', '15m', 'now', 'avg'],
 });
@@ -57,12 +57,12 @@ const noDataModes = [
 
 const executionErrorModes = [{ text: 'Alerting', value: 'alerting' }, { text: 'Keep Last State', value: 'keep_state' }];
 
-function createReducerPart(model) {
+function createReducerPart(model: any) {
   const def = new QueryPartDef({ type: model.type, defaultParams: [] });
   return new QueryPart(model, def);
 }
 
-function getStateDisplayModel(state) {
+function getStateDisplayModel(state: string) {
   switch (state) {
     case 'ok': {
       return {
@@ -99,12 +99,19 @@ function getStateDisplayModel(state) {
         stateClass: 'alert-state-warning',
       };
     }
+    case 'unknown': {
+      return {
+        text: 'UNKNOWN',
+        iconClass: 'fa fa-question',
+        stateClass: 'alert-state-paused',
+      };
+    }
   }
 
   throw { message: 'Unknown alert state' };
 }
 
-function joinEvalMatches(matches, separator: string) {
+function joinEvalMatches(matches: any, separator: string) {
   return _.reduce(
     matches,
     (res, ev) => {
@@ -123,7 +130,7 @@ function joinEvalMatches(matches, separator: string) {
   ).join(separator);
 }
 
-function getAlertAnnotationInfo(ah) {
+function getAlertAnnotationInfo(ah: any) {
   // backward compatibility, can be removed in grafana 5.x
   // old way stored evalMatches in data property directly,
   // new way stores it in evalMatches property on new data object

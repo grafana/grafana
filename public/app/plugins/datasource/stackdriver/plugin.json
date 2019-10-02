@@ -2,20 +2,22 @@
   "name": "Stackdriver",
   "type": "datasource",
   "id": "stackdriver",
+  "category": "cloud",
+
   "metrics": true,
   "alerting": true,
   "annotations": true,
-  "state": "beta",
   "queryOptions": {
     "maxDataPoints": true,
     "cacheTimeout": true
   },
+
   "info": {
-    "description": "Google Stackdriver Datasource for Grafana",
+    "description": "Data source for Google's monitoring service",
     "version": "1.0.0",
     "logos": {
-      "small": "img/stackdriver_logo.png",
-      "large": "img/stackdriver_logo.png"
+      "small": "img/stackdriver_logo.svg",
+      "large": "img/stackdriver_logo.svg"
     },
     "author": {
       "name": "Grafana Project",
@@ -28,10 +30,7 @@
       "method": "GET",
       "url": "https://content-monitoring.googleapis.com",
       "jwtTokenAuth": {
-        "scopes": [
-          "https://www.googleapis.com/auth/monitoring.read",
-          "https://www.googleapis.com/auth/cloudplatformprojects.readonly"
-        ],
+        "scopes": ["https://www.googleapis.com/auth/monitoring.read"],
         "params": {
           "token_uri": "{{.JsonData.tokenUri}}",
           "client_email": "{{.JsonData.clientEmail}}",

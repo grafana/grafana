@@ -1,13 +1,39 @@
 import { ResultTransformer } from '../result_transformer';
+import { DataQueryResponseData } from '@grafana/ui';
 
 describe('Prometheus Result Transformer', () => {
   const ctx: any = {};
 
   beforeEach(() => {
     ctx.templateSrv = {
-      replace: str => str,
+      replace: (str: string) => str,
     };
     ctx.resultTransformer = new ResultTransformer(ctx.templateSrv);
+  });
+
+  describe('When nothing is returned', () => {
+    test('should return empty series', () => {
+      const response = {
+        status: 'success',
+        data: {
+          resultType: '',
+          result: null as DataQueryResponseData[],
+        },
+      };
+      const series = ctx.resultTransformer.transform({ data: response }, {});
+      expect(series).toEqual([]);
+    });
+    test('should return empty table', () => {
+      const response = {
+        status: 'success',
+        data: {
+          resultType: '',
+          result: null as DataQueryResponseData[],
+        },
+      };
+      const table = ctx.resultTransformer.transform({ data: response }, { format: 'table' });
+      expect(table).toMatchObject([{ type: 'table', rows: [] }]);
+    });
   });
 
   describe('When resultFormat is table', () => {
@@ -41,11 +67,12 @@ describe('Prometheus Result Transformer', () => {
       ]);
       expect(table.columns).toMatchObject([
         { text: 'Time', type: 'time' },
-        { text: '__name__' },
-        { text: 'instance' },
+        { text: '__name__', filterable: true },
+        { text: 'instance', filterable: true },
         { text: 'job' },
         { text: 'Value' },
       ]);
+      expect(table.columns[4].filterable).toBeUndefined();
     });
 
     it('should column title include refId if response count is more than 2', () => {
@@ -120,9 +147,24 @@ describe('Prometheus Result Transformer', () => {
 
       const result = ctx.resultTransformer.transform({ data: response }, options);
       expect(result).toEqual([
-        { target: '1', datapoints: [[10, 1445000010000], [10, 1445000020000], [0, 1445000030000]] },
-        { target: '2', datapoints: [[10, 1445000010000], [0, 1445000020000], [30, 1445000030000]] },
-        { target: '3', datapoints: [[10, 1445000010000], [0, 1445000020000], [10, 1445000030000]] },
+        {
+          target: '1',
+          query: undefined,
+          datapoints: [[10, 1445000010000], [10, 1445000020000], [0, 1445000030000]],
+          tags: { __name__: 'test', job: 'testjob', le: '1' },
+        },
+        {
+          target: '2',
+          query: undefined,
+          datapoints: [[10, 1445000010000], [0, 1445000020000], [30, 1445000030000]],
+          tags: { __name__: 'test', job: 'testjob', le: '2' },
+        },
+        {
+          target: '3',
+          query: undefined,
+          datapoints: [[10, 1445000010000], [0, 1445000020000], [10, 1445000030000]],
+          tags: { __name__: 'test', job: 'testjob', le: '3' },
+        },
       ]);
     });
 
@@ -142,7 +184,7 @@ describe('Prometheus Result Transformer', () => {
     });
 
     it('should throw error when data in wrong format', () => {
-      const seriesList = [{ rows: [] }, { datapoints: [] }];
+      const seriesList = [{ rows: [] as any[] }, { datapoints: [] as any[] }];
       expect(() => {
         ctx.resultTransformer.transformToHistogramOverTime(seriesList);
       }).toThrow();
@@ -150,7 +192,7 @@ describe('Prometheus Result Transformer', () => {
 
     it('should throw error when prometheus returned non-timeseries', () => {
       // should be { metric: {}, values: [] } for timeseries
-      const metricData = { metric: {}, value: [] };
+      const metricData = { metric: {}, value: [] as any[] };
       expect(() => {
         ctx.resultTransformer.transformMetricData(metricData, { step: 1 }, 1000, 2000);
       }).toThrow();
@@ -178,7 +220,14 @@ describe('Prometheus Result Transformer', () => {
       };
 
       const result = ctx.resultTransformer.transform({ data: response }, options);
-      expect(result).toEqual([{ target: 'test{job="testjob"}', datapoints: [[10, 0], [10, 1000], [0, 2000]] }]);
+      expect(result).toEqual([
+        {
+          target: 'test{job="testjob"}',
+          query: undefined,
+          datapoints: [[10, 0], [10, 1000], [0, 2000]],
+          tags: { job: 'testjob' },
+        },
+      ]);
     });
 
     it('should fill timeseries with null values', () => {
@@ -202,7 +251,14 @@ describe('Prometheus Result Transformer', () => {
       };
 
       const result = ctx.resultTransformer.transform({ data: response }, options);
-      expect(result).toEqual([{ target: 'test{job="testjob"}', datapoints: [[null, 0], [10, 1000], [0, 2000]] }]);
+      expect(result).toEqual([
+        {
+          target: 'test{job="testjob"}',
+          query: undefined,
+          datapoints: [[null, 0], [10, 1000], [0, 2000]],
+          tags: { job: 'testjob' },
+        },
+      ]);
     });
 
     it('should align null values with step', () => {
@@ -227,7 +283,12 @@ describe('Prometheus Result Transformer', () => {
 
       const result = ctx.resultTransformer.transform({ data: response }, options);
       expect(result).toEqual([
-        { target: 'test{job="testjob"}', datapoints: [[null, 0], [null, 2000], [10, 4000], [null, 6000], [10, 8000]] },
+        {
+          target: 'test{job="testjob"}',
+          query: undefined,
+          datapoints: [[null, 0], [null, 2000], [10, 4000], [null, 6000], [10, 8000]],
+          tags: { job: 'testjob' },
+        },
       ]);
     });
   });

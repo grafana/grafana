@@ -1,0 +1,164 @@
+{
+  "type": "datasource",
+  "name": "Azure Monitor",
+  "id": "grafana-azure-monitor-datasource",
+  "category": "cloud",
+
+  "info": {
+    "description": "Data source for Microsoft Azure Monitor & Application Insights",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "keywords": ["azure", "monitor", "Application Insights", "Log Analytics", "App Insights"],
+    "logos": {
+      "small": "img/logo.jpg",
+      "large": "img/logo.jpg"
+    },
+    "links": [
+      { "name": "Project site", "url": "https://github.com/grafana/azure-monitor-datasource" },
+      { "name": "Apache License", "url": "https://github.com/grafana/azure-monitor-datasource/blob/master/LICENSE" }
+    ],
+    "screenshots": [
+      { "name": "Azure Contoso Loans", "path": "img/contoso_loans_grafana_dashboard.png" },
+      { "name": "Azure Monitor Network", "path": "img/azure_monitor_network.png" },
+      { "name": "Azure Monitor CPU", "path": "img/azure_monitor_cpu.png" }
+    ],
+    "version": "0.3.0",
+    "updated": "2018-12-06"
+  },
+
+  "routes": [
+    {
+      "path": "azuremonitor",
+      "method": "GET",
+      "url": "https://management.azure.com",
+      "tokenAuth": {
+        "url": "https://login.microsoftonline.com/{{.JsonData.tenantId}}/oauth2/token",
+        "params": {
+          "grant_type": "client_credentials",
+          "client_id": "{{.JsonData.clientId}}",
+          "client_secret": "{{.SecureJsonData.clientSecret}}",
+          "resource": "https://management.azure.com/"
+        }
+      },
+      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
+    },
+    {
+      "path": "govazuremonitor",
+      "method": "GET",
+      "url": "https://management.usgovcloudapi.net",
+      "tokenAuth": {
+        "url": "https://login.microsoftonline.us/{{.JsonData.tenantId}}/oauth2/token",
+        "params": {
+          "grant_type": "client_credentials",
+          "client_id": "{{.JsonData.clientId}}",
+          "client_secret": "{{.SecureJsonData.clientSecret}}",
+          "resource": "https://management.usgovcloudapi.net/"
+        }
+      },
+      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
+    },
+    {
+      "path": "germanyazuremonitor",
+      "method": "GET",
+      "url": "https://management.microsoftazure.de",
+      "tokenAuth": {
+        "url": "https://login.microsoftonline.de/{{.JsonData.tenantId}}/oauth2/token",
+        "params": {
+          "grant_type": "client_credentials",
+          "client_id": "{{.JsonData.clientId}}",
+          "client_secret": "{{.SecureJsonData.clientSecret}}",
+          "resource": "https://management.microsoftazure.de/"
+        }
+      },
+      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
+    },
+    {
+      "path": "chinaazuremonitor",
+      "method": "GET",
+      "url": "https://management.chinacloudapi.cn",
+      "tokenAuth": {
+        "url": "https://login.chinacloudapi.cn/{{.JsonData.tenantId}}/oauth2/token",
+        "params": {
+          "grant_type": "client_credentials",
+          "client_id": "{{.JsonData.clientId}}",
+          "client_secret": "{{.SecureJsonData.clientSecret}}",
+          "resource": "https://management.chinacloudapi.cn/"
+        }
+      },
+      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
+    },
+    {
+      "path": "appinsights",
+      "method": "GET",
+      "url": "https://api.applicationinsights.io",
+      "headers": [
+        { "name": "X-API-Key", "content": "{{.SecureJsonData.appInsightsApiKey}}" },
+        { "name": "x-ms-app", "content": "Grafana" }
+      ]
+    },
+    {
+      "path": "workspacesloganalytics",
+      "method": "GET",
+      "url": "https://management.azure.com",
+      "tokenAuth": {
+        "url": "https://login.microsoftonline.com/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
+        "params": {
+          "grant_type": "client_credentials",
+          "client_id": "{{.JsonData.logAnalyticsClientId}}",
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
+          "resource": "https://management.azure.com/"
+        }
+      },
+      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
+    },
+    {
+      "path": "loganalyticsazure",
+      "method": "GET",
+      "url": "https://api.loganalytics.io/v1/workspaces",
+      "tokenAuth": {
+        "url": "https://login.microsoftonline.com/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
+        "params": {
+          "grant_type": "client_credentials",
+          "client_id": "{{.JsonData.logAnalyticsClientId}}",
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret}}",
+          "resource": "https://api.loganalytics.io"
+        }
+      },
+      "headers": [
+        { "name": "x-ms-app", "content": "Grafana" },
+        { "name": "Cache-Control", "content": "public, max-age=60" },
+        { "name": "Accept-Encoding", "content": "gzip" }
+      ]
+    },
+    {
+      "path": "sameasloganalyticsazure",
+      "method": "GET",
+      "url": "https://api.loganalytics.io/v1/workspaces",
+      "tokenAuth": {
+        "url": "https://login.microsoftonline.com/{{.JsonData.tenantId}}/oauth2/token",
+        "params": {
+          "grant_type": "client_credentials",
+          "client_id": "{{.JsonData.clientId}}",
+          "client_secret": "{{.SecureJsonData.clientSecret}}",
+          "resource": "https://api.loganalytics.io"
+        }
+      },
+      "headers": [
+        { "name": "x-ms-app", "content": "Grafana" },
+        { "name": "Cache-Control", "content": "public, max-age=60" },
+        { "name": "Accept-Encoding", "content": "gzip" }
+      ]
+    }
+  ],
+
+  "dependencies": {
+    "grafanaVersion": "5.2.x",
+    "plugins": []
+  },
+
+  "metrics": true,
+  "annotations": true,
+  "alerting": true
+}

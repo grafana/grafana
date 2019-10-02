@@ -1,13 +1,28 @@
+// Libraries
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
-import config from 'app/core/config';
-import { importPluginModule } from './plugin_loader';
 
-export class DatasourceSrv {
-  datasources: any;
+// Services & Utils
+import config from 'app/core/config';
+import { importDataSourcePlugin } from './plugin_loader';
+import { DataSourceSrv as DataSourceService, getDataSourceSrv as getDataSourceService } from '@grafana/runtime';
+
+// Types
+import { DataSourceApi, DataSourceSelectItem } from '@grafana/ui';
+import { ScopedVars } from '@grafana/data';
+import { auto } from 'angular';
+import { TemplateSrv } from '../templating/template_srv';
+
+export class DatasourceSrv implements DataSourceService {
+  datasources: { [name: string]: DataSourceApi };
 
   /** @ngInject */
-  constructor(private $q, private $injector, private $rootScope, private templateSrv) {
+  constructor(
+    private $q: any,
+    private $injector: auto.IInjectorService,
+    private $rootScope: any,
+    private templateSrv: TemplateSrv
+  ) {
     this.init();
   }
 
@@ -15,12 +30,18 @@ export class DatasourceSrv {
     this.datasources = {};
   }
 
-  get(name?) {
+  get(name?: string, scopedVars?: ScopedVars): Promise<DataSourceApi> {
     if (!name) {
       return this.get(config.defaultDatasource);
     }
 
-    name = this.templateSrv.replace(name);
+    // Interpolation here is to support template variable in data source selection
+    name = this.templateSrv.replace(name, scopedVars, (value: any[], variable: any) => {
+      if (Array.isArray(value)) {
+        return value[0];
+      }
+      return value;
+    });
 
     if (name === 'default') {
       return this.get(config.defaultDatasource);
@@ -33,31 +54,34 @@ export class DatasourceSrv {
     return this.loadDatasource(name);
   }
 
-  loadDatasource(name) {
+  loadDatasource(name: string): Promise<DataSourceApi> {
     const dsConfig = config.datasources[name];
     if (!dsConfig) {
       return this.$q.reject({ message: 'Datasource named ' + name + ' was not found' });
     }
 
     const deferred = this.$q.defer();
-    const pluginDef = dsConfig.meta;
 
-    importPluginModule(pluginDef.module)
-      .then(plugin => {
+    importDataSourcePlugin(dsConfig.meta)
+      .then(dsPlugin => {
         // check if its in cache now
         if (this.datasources[name]) {
           deferred.resolve(this.datasources[name]);
           return;
         }
 
-        // plugin module needs to export a constructor function named Datasource
-        if (!plugin.Datasource) {
-          throw new Error('Plugin module is missing Datasource constructor');
-        }
+        // If there is only one constructor argument it is instanceSettings
+        const useAngular = dsPlugin.DataSourceClass.length !== 1;
+        const instance: DataSourceApi = useAngular
+          ? this.$injector.instantiate(dsPlugin.DataSourceClass, {
+              instanceSettings: dsConfig,
+            })
+          : new dsPlugin.DataSourceClass(dsConfig);
 
-        const instance = this.$injector.instantiate(plugin.Datasource, { instanceSettings: dsConfig });
-        instance.meta = pluginDef;
-        instance.name = name;
+        instance.components = dsPlugin.components;
+        instance.meta = dsConfig.meta;
+
+        // store in instance cache
         this.datasources[name] = instance;
         deferred.resolve(instance);
       })
@@ -69,11 +93,17 @@ export class DatasourceSrv {
   }
 
   getAll() {
-    return config.datasources;
+    const { datasources } = config;
+    return Object.keys(datasources).map(name => datasources[name]);
+  }
+
+  getExternal() {
+    const datasources = this.getAll().filter(ds => !ds.meta.builtIn);
+    return _.sortBy(datasources, ['name']);
   }
 
   getAnnotationSources() {
-    const sources = [];
+    const sources: any[] = [];
 
     this.addDataSourceVariables(sources);
 
@@ -86,16 +116,8 @@ export class DatasourceSrv {
     return sources;
   }
 
-  getExploreSources() {
-    const { datasources } = config;
-    const es = Object.keys(datasources)
-      .map(name => datasources[name])
-      .filter(ds => ds.meta && ds.meta.explore);
-    return _.sortBy(es, ['name']);
-  }
-
-  getMetricSources(options) {
-    const metricSources = [];
+  getMetricSources(options?: { skipVariables?: boolean }) {
+    const metricSources: DataSourceSelectItem[] = [];
 
     _.each(config.datasources, (value, key) => {
       if (value.meta && value.meta.metrics) {
@@ -104,8 +126,10 @@ export class DatasourceSrv {
         //Make sure grafana and mixed are sorted at the bottom
         if (value.meta.id === 'grafana') {
           metricSource.sort = String.fromCharCode(253);
-        } else if (value.meta.id === 'mixed') {
+        } else if (value.meta.id === 'dashboard') {
           metricSource.sort = String.fromCharCode(254);
+        } else if (value.meta.id === 'mixed') {
+          metricSource.sort = String.fromCharCode(255);
         }
 
         metricSources.push(metricSource);
@@ -134,7 +158,7 @@ export class DatasourceSrv {
     return metricSources;
   }
 
-  addDataSourceVariables(list) {
+  addDataSourceVariables(list: any[]) {
     // look for data source variables
     for (let i = 0; i < this.templateSrv.variables.length; i++) {
       const variable = this.templateSrv.variables[i];
@@ -160,6 +184,10 @@ export class DatasourceSrv {
       }
     }
   }
+}
+
+export function getDatasourceSrv(): DatasourceSrv {
+  return getDataSourceService() as DatasourceSrv;
 }
 
 coreModule.service('datasourceSrv', DatasourceSrv);

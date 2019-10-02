@@ -32,7 +32,8 @@ import (
 )
 
 // Address represents a server the client connects to.
-// This is the EXPERIMENTAL API and may be changed or extended in the future.
+//
+// Deprecated: please use package balancer.
 type Address struct {
 	// Addr is the server address on which a connection will be established.
 	Addr string
@@ -42,6 +43,8 @@ type Address struct {
 }
 
 // BalancerConfig specifies the configurations for Balancer.
+//
+// Deprecated: please use package balancer.
 type BalancerConfig struct {
 	// DialCreds is the transport credential the Balancer implementation can
 	// use to dial to a remote load balancer server. The Balancer implementations
@@ -54,7 +57,8 @@ type BalancerConfig struct {
 }
 
 // BalancerGetOptions configures a Get call.
-// This is the EXPERIMENTAL API and may be changed or extended in the future.
+//
+// Deprecated: please use package balancer.
 type BalancerGetOptions struct {
 	// BlockingWait specifies whether Get should block when there is no
 	// connected address.
@@ -62,7 +66,8 @@ type BalancerGetOptions struct {
 }
 
 // Balancer chooses network addresses for RPCs.
-// This is the EXPERIMENTAL API and may be changed or extended in the future.
+//
+// Deprecated: please use package balancer.
 type Balancer interface {
 	// Start does the initialization work to bootstrap a Balancer. For example,
 	// this function may start the name resolution and watch the updates. It will
@@ -135,6 +140,8 @@ func downErrorf(timeout, temporary bool, format string, a ...interface{}) downEr
 
 // RoundRobin returns a Balancer that selects addresses round-robin. It uses r to watch
 // the name resolution updates and updates the addresses available correspondingly.
+//
+// Deprecated: please use package balancer/roundrobin.
 func RoundRobin(r naming.Resolver) Balancer {
 	return &roundRobin{r: r}
 }

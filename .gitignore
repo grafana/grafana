@@ -8,7 +8,13 @@ awsconfig
 /dist
 /public/build
 /public/views/index.html
+/public/views/error.html
 /emails/dist
+
+# Enterprise emails
+/emails/templates/enterprise_*
+/public/emails/enterprise_*
+
 /public_gen
 /public/vendor/npm
 /tmp
@@ -38,13 +44,15 @@ public/css/*.min.css
 /data/*
 /bin/*
 
+# devenv
+/devenv/docker-compose.yaml
+/devenv/.env
+
 conf/custom.ini
-fig.yml
-devenv/docker-compose.yml
-devenv/docker-compose.yaml
 /conf/provisioning/**/custom.yaml
 /conf/provisioning/**/dev.yaml
 /conf/ldap_dev.toml
+/conf/ldap_freeipa.toml
 profile.cov
 /grafana
 /local
@@ -54,6 +62,7 @@ profile.cov
 /pkg/cmd/grafana-server/grafana-server
 /pkg/cmd/grafana-server/debug
 /pkg/extensions
+/public/app/extensions
 debug.test
 /examples/*/dist
 /packaging/**/*.rpm
@@ -68,10 +77,23 @@ debug.test
 /vendor/**/*.yml
 /vendor/**/*_test.go
 /vendor/**/.editorconfig
-/vendor/**/appengine*
 *.orig
 
 /devenv/bulk-dashboards/*.json
 /devenv/bulk_alerting_dashboards/*.json
 
 /scripts/build/release_publisher/release_publisher
+*.patch
+
+# Ignoring frontend packages specifics
+/packages/**/dist
+/packages/**/compiled
+/packages/**/.rpt2_cache
+
+theOutput/
+
+# Ignore go local build dependencies
+/scripts/go/bin/**
+
+# Ignore compilation stats from `yarn stats`
+compilation-stats.json

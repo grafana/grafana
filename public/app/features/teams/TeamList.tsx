@@ -1,22 +1,29 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import PageHeader from 'app/core/components/PageHeader/PageHeader';
-import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
+import Page from 'app/core/components/Page/Page';
+import { DeleteButton } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { NavModel, Team } from '../../types';
+import { Team, OrgRole } from 'app/types';
 import { loadTeams, deleteTeam, setSearchQuery } from './state/actions';
-import { getSearchQuery, getTeams, getTeamsCount } from './state/selectors';
+import { getSearchQuery, getTeams, getTeamsCount, isPermissionTeamAdmin } from './state/selectors';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
+import { config } from 'app/core/config';
+import { contextSrv, User } from 'app/core/services/context_srv';
 
 export interface Props {
   navModel: NavModel;
   teams: Team[];
   searchQuery: string;
   teamsCount: number;
+  hasFetched: boolean;
   loadTeams: typeof loadTeams;
   deleteTeam: typeof deleteTeam;
   setSearchQuery: typeof setSearchQuery;
+  editorsCanAdmin?: boolean;
+  signedInUser?: User;
 }
 
 export class TeamList extends PureComponent<Props, any> {
@@ -32,12 +39,15 @@ export class TeamList extends PureComponent<Props, any> {
     this.props.deleteTeam(team.id);
   };
 
-  onSearchQueryChange = event => {
-    this.props.setSearchQuery(event.target.value);
+  onSearchQueryChange = (value: string) => {
+    this.props.setSearchQuery(value);
   };
 
   renderTeam(team: Team) {
+    const { editorsCanAdmin, signedInUser } = this.props;
+    const permission = team.permission;
     const teamUrl = `org/teams/edit/${team.id}`;
+    const canDelete = isPermissionTeamAdmin({ permission, editorsCanAdmin, signedInUser });
 
     return (
       <tr key={team.id}>
@@ -56,7 +66,7 @@ export class TeamList extends PureComponent<Props, any> {
           <a href={teamUrl}>{team.memberCount}</a>
         </td>
         <td className="text-right">
-          <DeleteButton onConfirmDelete={() => this.deleteTeam(team)} />
+          <DeleteButton onConfirm={() => this.deleteTeam(team)} disabled={!canDelete} />
         </td>
       </tr>
     );
@@ -64,45 +74,41 @@ export class TeamList extends PureComponent<Props, any> {
 
   renderEmptyList() {
     return (
-      <div className="page-container page-body">
-        <EmptyListCTA
-          model={{
-            title: "You haven't created any teams yet.",
-            buttonIcon: 'fa fa-plus',
-            buttonLink: 'org/teams/new',
-            buttonTitle: ' New team',
-            proTip: 'Assign folder and dashboard permissions to teams instead of users to ease administration.',
-            proTipLink: '',
-            proTipLinkTitle: '',
-            proTipTarget: '_blank',
-          }}
-        />
-      </div>
+      <EmptyListCTA
+        title="You haven't created any teams yet."
+        buttonIcon="gicon gicon-team"
+        buttonLink="org/teams/new"
+        buttonTitle=" New team"
+        proTip="Assign folder and dashboard permissions to teams instead of users to ease administration."
+        proTipLink=""
+        proTipLinkTitle=""
+        proTipTarget="_blank"
+      />
     );
   }
 
   renderTeamList() {
-    const { teams, searchQuery } = this.props;
+    const { teams, searchQuery, editorsCanAdmin, signedInUser } = this.props;
+    const isCanAdminAndViewer = editorsCanAdmin && signedInUser.orgRole === OrgRole.Viewer;
+    const disabledClass = isCanAdminAndViewer ? ' disabled' : '';
+    const newTeamHref = isCanAdminAndViewer ? '#' : 'org/teams/new';
 
     return (
-      <div className="page-container page-body">
+      <>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
-            <label className="gf-form--has-input-icon gf-form--grow">
-              <input
-                type="text"
-                className="gf-form-input"
-                placeholder="Search teams"
-                value={searchQuery}
-                onChange={this.onSearchQueryChange}
-              />
-              <i className="gf-form-input-icon fa fa-search" />
-            </label>
+            <FilterInput
+              labelClassName="gf-form--has-input-icon gf-form--grow"
+              inputClassName="gf-form-input"
+              placeholder="Search teams"
+              value={searchQuery}
+              onChange={this.onSearchQueryChange}
+            />
           </div>
 
           <div className="page-action-bar__spacer" />
 
-          <a className="btn btn-success" href="org/teams/new">
+          <a className={`btn btn-primary${disabledClass}`} href={newTeamHref}>
             New team
           </a>
         </div>
@@ -121,28 +127,40 @@ export class TeamList extends PureComponent<Props, any> {
             <tbody>{teams.map(team => this.renderTeam(team))}</tbody>
           </table>
         </div>
-      </div>
+      </>
     );
   }
 
+  renderList() {
+    const { teamsCount } = this.props;
+
+    if (teamsCount > 0) {
+      return this.renderTeamList();
+    } else {
+      return this.renderEmptyList();
+    }
+  }
+
   render() {
-    const { navModel, teamsCount } = this.props;
+    const { hasFetched, navModel } = this.props;
 
     return (
-      <div>
-        <PageHeader model={navModel} />
-        {teamsCount > 0 ? this.renderTeamList() : this.renderEmptyList()}
-      </div>
+      <Page navModel={navModel}>
+        <Page.Contents isLoading={!hasFetched}>{hasFetched && this.renderList()}</Page.Contents>
+      </Page>
     );
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: any) {
   return {
     navModel: getNavModel(state.navIndex, 'teams'),
     teams: getTeams(state.teams),
     searchQuery: getSearchQuery(state.teams),
     teamsCount: getTeamsCount(state.teams),
+    hasFetched: state.teams.hasFetched,
+    editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
+    signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,
   };
 }
 
@@ -152,4 +170,9 @@ const mapDispatchToProps = {
   setSearchQuery,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TeamList));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(TeamList)
+);

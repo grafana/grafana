@@ -2,9 +2,33 @@ package es
 
 import (
 	"encoding/json"
+	"net/http"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 
 	"github.com/grafana/grafana/pkg/tsdb"
 )
+
+type response struct {
+	httpResponse *http.Response
+	reqInfo      *SearchRequestInfo
+}
+
+type SearchRequestInfo struct {
+	Method string `json:"method"`
+	Url    string `json:"url"`
+	Data   string `json:"data"`
+}
+
+type SearchResponseInfo struct {
+	Status int              `json:"status"`
+	Data   *simplejson.Json `json:"data"`
+}
+
+type SearchDebugInfo struct {
+	Request  *SearchRequestInfo  `json:"request"`
+	Response *SearchResponseInfo `json:"response"`
+}
 
 // SearchRequest represents a search request
 type SearchRequest struct {
@@ -41,8 +65,7 @@ func (r *SearchRequest) MarshalJSON() ([]byte, error) {
 
 // SearchResponseHits represents search response hits
 type SearchResponseHits struct {
-	Hits  []map[string]interface{}
-	Total int64
+	Hits []map[string]interface{}
 }
 
 // SearchResponse represents a search response
@@ -51,21 +74,6 @@ type SearchResponse struct {
 	Aggregations map[string]interface{} `json:"aggregations"`
 	Hits         *SearchResponseHits    `json:"hits"`
 }
-
-// func (r *Response) getErrMsg() string {
-// 	var msg bytes.Buffer
-// 	errJson := simplejson.NewFromAny(r.Err)
-// 	errType, err := errJson.Get("type").String()
-// 	if err == nil {
-// 		msg.WriteString(fmt.Sprintf("type:%s", errType))
-// 	}
-
-// 	reason, err := errJson.Get("type").String()
-// 	if err == nil {
-// 		msg.WriteString(fmt.Sprintf("reason:%s", reason))
-// 	}
-// 	return msg.String()
-// }
 
 // MultiSearchRequest represents a multi search request
 type MultiSearchRequest struct {
@@ -76,6 +84,7 @@ type MultiSearchRequest struct {
 type MultiSearchResponse struct {
 	Status    int               `json:"status,omitempty"`
 	Responses []*SearchResponse `json:"responses"`
+	DebugInfo *SearchDebugInfo  `json:"-"`
 }
 
 // Query represents a query
@@ -240,6 +249,7 @@ type DateHistogramAgg struct {
 	Missing        *string         `json:"missing,omitempty"`
 	ExtendedBounds *ExtendedBounds `json:"extended_bounds"`
 	Format         string          `json:"format"`
+	Offset         string          `json:"offset,omitempty"`
 }
 
 // FiltersAggregation represents a filters aggregation
@@ -291,7 +301,7 @@ func (a *MetricAggregation) MarshalJSON() ([]byte, error) {
 
 // PipelineAggregation represents a metric aggregation
 type PipelineAggregation struct {
-	BucketPath string
+	BucketPath interface{}
 	Settings   map[string]interface{}
 }
 

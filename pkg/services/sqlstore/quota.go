@@ -99,14 +99,14 @@ func UpdateOrgQuota(cmd *m.UpdateOrgQuotaCmd) error {
 	return inTransaction(func(sess *DBSession) error {
 		//Check if quota is already defined in the DB
 		quota := m.Quota{
-			Target:  cmd.Target,
-			OrgId:   cmd.OrgId,
-			Updated: time.Now(),
+			Target: cmd.Target,
+			OrgId:  cmd.OrgId,
 		}
 		has, err := sess.Get(&quota)
 		if err != nil {
 			return err
 		}
+		quota.Updated = time.Now()
 		quota.Limit = cmd.Limit
 		if !has {
 			quota.Created = time.Now()
@@ -201,14 +201,14 @@ func UpdateUserQuota(cmd *m.UpdateUserQuotaCmd) error {
 	return inTransaction(func(sess *DBSession) error {
 		//Check if quota is already defined in the DB
 		quota := m.Quota{
-			Target:  cmd.Target,
-			UserId:  cmd.UserId,
-			Updated: time.Now(),
+			Target: cmd.Target,
+			UserId: cmd.UserId,
 		}
 		has, err := sess.Get(&quota)
 		if err != nil {
 			return err
 		}
+		quota.Updated = time.Now()
 		quota.Limit = cmd.Limit
 		if !has {
 			quota.Created = time.Now()

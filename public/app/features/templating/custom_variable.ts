@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import { Variable, assignModelProperties, variableTypes } from './variable';
+import { VariableSrv } from './variable_srv';
 
 export class CustomVariable implements Variable {
   query: string;
@@ -9,7 +10,7 @@ export class CustomVariable implements Variable {
   current: any;
   skipUrlSync: boolean;
 
-  defaults = {
+  defaults: any = {
     type: 'custom',
     name: '',
     label: '',
@@ -24,11 +25,11 @@ export class CustomVariable implements Variable {
   };
 
   /** @ngInject */
-  constructor(private model, private variableSrv) {
+  constructor(private model: any, private variableSrv: VariableSrv) {
     assignModelProperties(this, model, this.defaults);
   }
 
-  setValue(option) {
+  setValue(option: any) {
     return this.variableSrv.setOptionAsCurrent(this, option);
   }
 
@@ -38,8 +39,9 @@ export class CustomVariable implements Variable {
   }
 
   updateOptions() {
-    // extract options in comma separated string
-    this.options = _.map(this.query.split(/[,]+/), text => {
+    // extract options in comma separated string (use backslash to escape wanted commas)
+    this.options = _.map(this.query.match(/(?:\\,|[^,])+/g), text => {
+      text = text.replace(/\\,/g, ',');
       return { text: text.trim(), value: text.trim() };
     });
 
@@ -54,11 +56,11 @@ export class CustomVariable implements Variable {
     this.options.unshift({ text: 'All', value: '$__all' });
   }
 
-  dependsOn(variable) {
+  dependsOn(variable: any) {
     return false;
   }
 
-  setValueFromUrl(urlValue) {
+  setValueFromUrl(urlValue: string[]) {
     return this.variableSrv.setOptionFromUrl(this, urlValue);
   }
 

@@ -9,10 +9,15 @@ module.exports = function (grunt) {
     destDir: 'dist',
     tempDir: 'tmp',
     platform: process.platform.replace('win32', 'windows'),
+    enterprise: false,
   };
 
   if (grunt.option('platform')) {
     config.platform = grunt.option('platform');
+  }
+
+  if (grunt.option('enterprise')) {
+    config.enterprise = true;
   }
 
   if (grunt.option('arch')) {

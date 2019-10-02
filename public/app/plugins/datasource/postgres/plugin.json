@@ -2,9 +2,10 @@
   "type": "datasource",
   "name": "PostgreSQL",
   "id": "postgres",
+  "category": "sql",
 
   "info": {
-    "description": "PostgreSQL Data Source for Grafana",
+    "description": "Data source for PostgreSQL and compatible databases",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"
@@ -12,8 +13,7 @@
     "logos": {
       "small": "img/postgresql_logo.svg",
       "large": "img/postgresql_logo.svg"
-    },
-    "version": "5.0.0"
+    }
   },
 
   "alerting": true,
@@ -23,5 +23,4 @@
   "queryOptions": {
     "minInterval": true
   }
-
 }

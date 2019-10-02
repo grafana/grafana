@@ -31,13 +31,13 @@ input,
 button,
 select,
 textarea {
-  @include font-shorthand($font-size-base,normal,$line-height-base); // Set size, weight, line-height here
+  @include font-shorthand($font-size-base, normal, $line-height-base); // Set size, weight, line-height here
 }
 input,
 button,
 select,
 textarea {
-  font-family: $font-family-base; // And only set font-family here for those that need it (note the missing label element)
+  font-family: $font-family-sans-serif; // And only set font-family here for those that need it (note the missing label element)
 }
 
 // Identify controls by their labels
@@ -58,19 +58,19 @@ textarea {
 }
 
 // Reset width of input images, buttons, radios, checkboxes
-input[type="file"],
-input[type="image"],
-input[type="submit"],
-input[type="reset"],
-input[type="button"],
-input[type="radio"],
-input[type="checkbox"] {
+input[type='file'],
+input[type='image'],
+input[type='submit'],
+input[type='reset'],
+input[type='button'],
+input[type='radio'],
+input[type='checkbox'] {
   width: auto; // Override of generic input selector
 }
 
 // Set the height of select and file controls to match text inputs
 select,
-input[type="file"] {
+input[type='file'] {
   height: $input-height; /* In IE7, the height of the select element cannot be changed by height, only font-size */
   line-height: $input-height;
 }
@@ -90,19 +90,19 @@ select[size] {
 
 // Focus for select, file, radio, and checkbox
 select:focus,
-input[type="file"]:focus,
-input[type="radio"]:focus,
-input[type="checkbox"]:focus {
+input[type='file']:focus,
+input[type='radio']:focus,
+input[type='checkbox']:focus {
   @include tab-focus();
 }
 
 // not a big fan of number fields
-input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button {
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-input[type="number"] {
+input[type='number'] {
   -moz-appearance: textfield;
 }
 // Placeholder
@@ -155,15 +155,15 @@ textarea[readonly] {
 }
 
 // Explicitly reset the colors here
-input[type="radio"][disabled],
-input[type="checkbox"][disabled],
-input[type="radio"][readonly],
-input[type="checkbox"][readonly] {
+input[type='radio'][disabled],
+input[type='checkbox'][disabled],
+input[type='radio'][readonly],
+input[type='checkbox'][readonly] {
   cursor: $cursor-disabled;
   background-color: transparent;
 }
 
-input[type="text"].input-fluid {
+input[type='text'].input-fluid {
   width: 100%;
   box-sizing: border-box;
   padding: 10px;
@@ -172,7 +172,7 @@ input[type="text"].input-fluid {
   height: 100%;
 }
 
-input[type="checkbox"].cr1 {
+input[type='checkbox'].cr1 {
   display: none;
 }
 
@@ -194,7 +194,7 @@ label.cr1 {
   cursor: pointer;
 }
 
-input[type="checkbox"].cr1:checked + label {
+input[type='checkbox'].cr1:checked + label {
   background: url($checkboxImageUrl) 0px -18px no-repeat;
 }
 
@@ -203,7 +203,7 @@ input[type="checkbox"].cr1:checked + label {
   display: block;
   overflow: hidden;
   padding-right: 10px;
-  input[type="text"] {
+  input[type='text'] {
     width: 100%;
     padding: 5px 6px;
     height: 100%;
@@ -224,7 +224,7 @@ input[type="checkbox"].cr1:checked + label {
 .form-control-success,
 .form-control-warning,
 .form-control-danger {
-  padding-right: ($input-padding-x * 3);
+  padding-right: $space-xl;
   background-repeat: no-repeat;
   background-position: center right ($input-height / 4);
   background-size: ($input-height / 2) ($input-height / 2);

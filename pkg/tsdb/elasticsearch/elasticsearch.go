@@ -4,17 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
+	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
 // ElasticsearchExecutor represents a handler for handling elasticsearch datasource request
 type ElasticsearchExecutor struct{}
 
 var (
-	glog               log.Logger
 	intervalCalculator tsdb.IntervalCalculator
 )
 
@@ -24,7 +22,6 @@ func NewElasticsearchExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint
 }
 
 func init() {
-	glog = log.New("tsdb.elasticsearch")
 	intervalCalculator = tsdb.NewIntervalCalculator(nil)
 	tsdb.RegisterTsdbQueryEndpoint("elasticsearch", NewElasticsearchExecutor)
 }
@@ -38,6 +35,10 @@ func (e *ElasticsearchExecutor) Query(ctx context.Context, dsInfo *models.DataSo
 	client, err := es.NewClient(ctx, dsInfo, tsdbQuery.TimeRange)
 	if err != nil {
 		return nil, err
+	}
+
+	if tsdbQuery.Debug {
+		client.EnableDebug()
 	}
 
 	query := newTimeSeriesQuery(client, tsdbQuery, intervalCalculator)

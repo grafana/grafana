@@ -24,6 +24,7 @@ exports[`Render should render component 1`] = `
         className="card-item-figure"
       >
         <img
+          alt="gdev-cloudwatch"
           src="public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png"
         />
       </figure>

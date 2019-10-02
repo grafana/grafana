@@ -48,7 +48,7 @@ export const getMockInvitees = (amount: number) => {
       orgId: 1,
       role: 'viewer',
       status: 'not accepted',
-      url: `localhost/invite/$${i}`,
+      url: `localhost/invite/${i}`,
     });
   }
 

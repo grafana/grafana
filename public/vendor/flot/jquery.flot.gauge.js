@@ -583,29 +583,33 @@
          * @param  {Number} [a] the angle of the value drawn
          */
         function drawText(x, y, id, text, textOptions, a) {
-            var span = $("." + id, placeholder);
+            var span = $(placeholder).find("#" + id);
             var exists = span.length;
             if (!exists) {
                 span = $("<span></span>")
                 span.attr("id", id);
-                span.css("position", "absolute");
-                span.css("top", y + "px");
-                if (textOptions.font.size) {
-                    span.css("font-size", textOptions.font.size + "px");
-                }
-                if (textOptions.font.family) {
-                    span.css("font-family", textOptions.font.family);
-                }
-                if (textOptions.color) {
-                    span.css("color", textOptions.color);
-                }
-                if (textOptions.background.color) {
-                    span.css("background-color", textOptions.background.color);
-                }
-                if (textOptions.background.opacity) {
-                    span.css("opacity", textOptions.background.opacity);
-                }
+                span.attr("class", "flot-temp-elem");
                 placeholder.append(span);
+            }
+
+            span.css("position", "absolute");
+            span.css("top", y + "px");
+            span.css("white-space", "nowrap");
+
+            if (textOptions.font.size) {
+              span.css("font-size", textOptions.font.size + "px");
+            }
+            if (textOptions.font.family) {
+              span.css("font-family", textOptions.font.family);
+            }
+            if (textOptions.color) {
+              span.css("color", textOptions.color);
+            }
+            if (textOptions.background.color) {
+              span.css("background-color", textOptions.background.color);
+            }
+            if (textOptions.background.opacity) {
+              span.css("opacity", textOptions.background.opacity);
             }
             span.text(text);
             // after append, readjust the left position
@@ -933,16 +937,7 @@
                         }
                     },
                     values: [
-                        {
-                            value: 50,
-                            color: "lightgreen"
-                        }, {
-                            value: 80,
-                            color: "yellow"
-                        }, {
-                            value: 100,
-                            color: "red"
-                        }
+
                     ]
                 }
             }
@@ -958,3 +953,4 @@
     });
 
 })(jQuery);
+

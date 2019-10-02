@@ -4,7 +4,7 @@ import appEvents from 'app/core/app_events';
 
 export class ErrorCtrl {
   /** @ngInject */
-  constructor($scope, contextSrv, navModelSrv) {
+  constructor($scope: any, contextSrv: any, navModelSrv: any) {
     $scope.navModel = navModelSrv.getNotFoundNav();
     $scope.appSubUrl = config.appSubUrl;
 

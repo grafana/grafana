@@ -1,31 +1,49 @@
+
 apiVersion: 1
 
 datasources:
   - name: gdev-graphite
     type: graphite
     access: proxy
-    url: http://localhost:8080
+    url: http://localhost:8180
     jsonData:
       graphiteVersion: "1.1"
 
   - name: gdev-prometheus
     type: prometheus
     access: proxy
-    isDefault: true
     url: http://localhost:9090
+
+  - name: gdev-slow-prometheus
+    type: prometheus
+    access: proxy
+    url: http://localhost:3011
 
   - name: gdev-testdata
     type: testdata
+    isDefault: true
 
   - name: gdev-influxdb
     type: influxdb
     access: proxy
     database: site
     user: grafana
-    password: grafana
     url: http://localhost:8086
     jsonData:
       timeInterval: "15s"
+    secureJsonData:
+      password: grafana
+
+  - name: gdev-influxdb-telegraf
+    type: influxdb
+    access: proxy
+    database: telegraf
+    user: grafana
+    url: http://localhost:8086
+    jsonData:
+      timeInterval: "10s"
+    secureJsonData:
+      password: grafana
 
   - name: gdev-opentsdb
     type: opentsdb
@@ -35,7 +53,7 @@ datasources:
       tsdbResolution: 1
       tsdbVersion: 1
 
-  - name: gdev-elasticsearch-metrics
+  - name: gdev-elasticsearch-v2-metrics
     type: elasticsearch
     access: proxy
     database: "[metrics-]YYYY.MM.DD"
@@ -43,20 +61,128 @@ datasources:
     jsonData:
       interval: Daily
       timeField: "@timestamp"
+      esVersion: 2
+
+  - name: gdev-elasticsearch-v2-logs
+    type: elasticsearch
+    access: proxy
+    database: "[logs-]YYYY.MM.DD"
+    url: http://localhost:9200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 2
+
+  - name: gdev-elasticsearch-v5-metrics
+    type: elasticsearch
+    access: proxy
+    database: "[metrics-]YYYY.MM.DD"
+    url: http://localhost:10200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 5
+
+  - name: gdev-elasticsearch-v5-logs
+    type: elasticsearch
+    access: proxy
+    database: "[logs-]YYYY.MM.DD"
+    url: http://localhost:10200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 5
+
+  - name: gdev-elasticsearch-v6-metrics
+    type: elasticsearch
+    access: proxy
+    database: "[metrics-]YYYY.MM.DD"
+    url: http://localhost:11200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 60
+
+  - name: gdev-elasticsearch-v6-logs
+    type: elasticsearch
+    access: proxy
+    database: "[logs-]YYYY.MM.DD"
+    url: http://localhost:11200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 60
+
+  - name: gdev-elasticsearch-v6-filebeat
+    type: elasticsearch
+    access: proxy
+    database: "[filebeat-]YYYY.MM.DD"
+    url: http://localhost:11200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 60
+
+  - name: gdev-elasticsearch-v7-metrics
+    type: elasticsearch
+    access: proxy
+    database: "[metrics-]YYYY.MM.DD"
+    url: http://localhost:12200
+    jsonData:
+      timeInterval: 10s
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 70
+
+  - name: gdev-elasticsearch-v7-logs
+    type: elasticsearch
+    access: proxy
+    database: "[logs-]YYYY.MM.DD"
+    url: http://localhost:12200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 70
+
+  - name: gdev-elasticsearch-v7-filebeat
+    type: elasticsearch
+    access: proxy
+    database: "[filebeat-]YYYY.MM.DD"
+    url: http://localhost:12200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 70
+      timeInterval: "10s"
+      logMessageField: message
+      logLevelField: fields.level
+
+  - name: gdev-elasticsearch-v7-metricbeat
+    type: elasticsearch
+    access: proxy
+    database: "[metricbeat-]YYYY.MM.DD"
+    url: http://localhost:12200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 70
+      timeInterval: "10s"
 
   - name: gdev-mysql
     type: mysql
     url: localhost:3306
     database: grafana
     user: grafana
-    password: password
+    secureJsonData:
+      password: password
 
   - name: gdev-mysql-ds-tests
     type: mysql
     url: localhost:3306
     database: grafana_ds_tests
     user: grafana
-    password: password
+    secureJsonData:
+      password: password
 
   - name: gdev-mssql
     type: mssql
@@ -100,5 +226,11 @@ datasources:
     jsonData:
       authType: credentials
       defaultRegion: eu-west-2
+
+  - name: gdev-loki
+    type: loki
+    access: proxy
+    url: http://localhost:3100
+    editable: false
 
 

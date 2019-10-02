@@ -51,7 +51,7 @@ func GetDashboardVersions(query *m.GetDashboardVersionsQuery) error {
 				dashboard_version.message,
 				dashboard_version.data,`+
 			dialect.Quote("user")+`.login as created_by`).
-		Join("LEFT", "user", `dashboard_version.created_by = `+dialect.Quote("user")+`.id`).
+		Join("LEFT", dialect.Quote("user"), `dashboard_version.created_by = `+dialect.Quote("user")+`.id`).
 		Join("LEFT", "dashboard", `dashboard.id = dashboard_version.dashboard_id`).
 		Where("dashboard_version.dashboard_id=? AND dashboard.org_id=?", query.DashboardId, query.OrgId).
 		OrderBy("dashboard_version.version DESC").
@@ -102,7 +102,8 @@ func DeleteExpiredVersions(cmd *m.DeleteExpiredVersionsCommand) error {
 
 		if len(versionIdsToDelete) > 0 {
 			deleteExpiredSql := `DELETE FROM dashboard_version WHERE id IN (?` + strings.Repeat(",?", len(versionIdsToDelete)-1) + `)`
-			expiredResponse, err := sess.Exec(deleteExpiredSql, versionIdsToDelete...)
+			sqlOrArgs := append([]interface{}{deleteExpiredSql}, versionIdsToDelete...)
+			expiredResponse, err := sess.Exec(sqlOrArgs...)
 			if err != nil {
 				return err
 			}

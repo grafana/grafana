@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-const keywords = 'by|without|on|ignoring|group_left|group_right';
+const keywords = 'by|without|on|ignoring|group_left|group_right|bool|or|and|unless';
 
 // Duplicate from mode-prometheus.js, which can't be used in tests due to global ace not being loaded.
 const builtInWords = [
@@ -25,13 +25,17 @@ export function addLabelToQuery(query: string, key: string, value: string, opera
   }
 
   // Add empty selectors to bare metric names
-  let previousWord;
+  let previousWord: string;
   query = query.replace(metricNameRegexp, (match, word, offset) => {
     const insideSelector = isPositionInsideChars(query, offset, '{', '}');
     // Handle "sum by (key) (metric)"
     const previousWordIsKeyWord = previousWord && keywords.split('|').indexOf(previousWord) > -1;
+
+    // check for colon as as "word boundary" symbol
+    const isColonBounded = word.endsWith(':');
+
     previousWord = word;
-    if (!insideSelector && !previousWordIsKeyWord && builtInWords.indexOf(word) === -1) {
+    if (!insideSelector && !isColonBounded && !previousWordIsKeyWord && builtInWords.indexOf(word) === -1) {
       return `${word}{}`;
     }
     return word;
@@ -49,7 +53,7 @@ export function addLabelToQuery(query: string, key: string, value: string, opera
     const selectorWithLabel = addLabelToSelector(selector, key, value, operator);
     lastIndex = match.index + match[1].length + 2;
     suffix = query.slice(match.index + match[0].length);
-    parts.push(prefix, '{', selectorWithLabel, '}');
+    parts.push(prefix, selectorWithLabel);
     match = selectorRegexp.exec(query);
   }
 
@@ -59,7 +63,7 @@ export function addLabelToQuery(query: string, key: string, value: string, opera
 
 const labelRegexp = /(\w+)\s*(=|!=|=~|!~)\s*("[^"]*")/g;
 
-function addLabelToSelector(selector: string, labelKey: string, labelValue: string, labelOperator?: string) {
+export function addLabelToSelector(selector: string, labelKey: string, labelValue: string, labelOperator?: string) {
   const parsedLabels = [];
 
   // Split selector into labels
@@ -76,13 +80,15 @@ function addLabelToSelector(selector: string, labelKey: string, labelValue: stri
   parsedLabels.push({ key: labelKey, operator: operatorForLabelKey, value: `"${labelValue}"` });
 
   // Sort labels by key and put them together
-  return _.chain(parsedLabels)
+  const formatted = _.chain(parsedLabels)
     .uniqWith(_.isEqual)
     .compact()
     .sortBy('key')
     .map(({ key, operator, value }) => `${key}${operator}${value}`)
     .value()
     .join(',');
+
+  return `{${formatted}}`;
 }
 
 function isPositionInsideChars(text: string, position: number, openChar: string, closeChar: string) {

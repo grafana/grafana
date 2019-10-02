@@ -4,7 +4,7 @@ import coreModule from '../core_module';
 import tags from 'app/core/utils/tags';
 import 'vendor/tagsinput/bootstrap-tagsinput.js';
 
-function setColor(name, element) {
+function setColor(name: string, element: JQuery) {
   const { color, borderColor } = tags.getTagColorsFromName(name);
   element.css('background-color', color);
   element.css('border-color', borderColor);
@@ -13,14 +13,14 @@ function setColor(name, element) {
 function tagColorFromName() {
   return {
     scope: { tagColorFromName: '=' },
-    link: (scope, element) => {
+    link: (scope: any, element: any) => {
       setColor(scope.tagColorFromName, element);
     },
   };
 }
 
 function bootstrapTagsinput() {
-  function getItemProperty(scope, property) {
+  function getItemProperty(scope: any, property: any) {
     if (!property) {
       return undefined;
     }
@@ -29,7 +29,7 @@ function bootstrapTagsinput() {
       return scope.$parent[property];
     }
 
-    return item => {
+    return (item: any) => {
       return item[property];
     };
   }
@@ -42,7 +42,7 @@ function bootstrapTagsinput() {
     },
     template: '<select multiple></select>',
     replace: false,
-    link: function(scope, element, attrs) {
+    link: function(scope: any, element: any, attrs: any) {
       if (!angular.isArray(scope.model)) {
         scope.model = [];
       }
@@ -69,7 +69,7 @@ function bootstrapTagsinput() {
             },
       });
 
-      select.on('itemAdded', event => {
+      select.on('itemAdded', (event: any) => {
         if (scope.model.indexOf(event.item) === -1) {
           scope.model.push(event.item);
           if (scope.onTagsUpdated) {
@@ -85,7 +85,7 @@ function bootstrapTagsinput() {
         setColor(event.item, tagElement);
       });
 
-      select.on('itemRemoved', event => {
+      select.on('itemRemoved', (event: any) => {
         const idx = scope.model.indexOf(event.item);
         if (idx !== -1) {
           scope.model.splice(idx, 1);

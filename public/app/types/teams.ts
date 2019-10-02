@@ -1,9 +1,12 @@
+import { TeamPermissionLevel } from './acl';
+
 export interface Team {
   id: number;
   name: string;
   avatarUrl: string;
   email: string;
   memberCount: number;
+  permission: TeamPermissionLevel;
 }
 
 export interface TeamMember {
@@ -13,6 +16,7 @@ export interface TeamMember {
   email: string;
   login: string;
   labels: string[];
+  permission: number;
 }
 
 export interface TeamGroup {
@@ -23,6 +27,7 @@ export interface TeamGroup {
 export interface TeamsState {
   teams: Team[];
   searchQuery: string;
+  hasFetched: boolean;
 }
 
 export interface TeamState {

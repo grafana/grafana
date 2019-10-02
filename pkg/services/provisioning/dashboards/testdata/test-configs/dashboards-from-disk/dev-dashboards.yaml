@@ -1,9 +1,10 @@
 apiVersion: 1
 
 providers:
-- name: 'general dashboards'
+- name: '$TEST_VAR dashboards'
   orgId: 2
   folder: 'developers'
+  folderUid: 'xyz'
   editable: true
   disableDeletion: true
   updateIntervalSeconds: 15

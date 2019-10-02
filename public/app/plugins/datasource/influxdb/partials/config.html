@@ -16,11 +16,29 @@
 			<span class="gf-form-label width-10">User</span>
 			<input type="text" class="gf-form-input" ng-model='ctrl.current.user' placeholder=""></input>
 		</div>
-		<div class="gf-form max-width-15">
-			<span class="gf-form-label width-10">Password</span>
-			<input type="password" class="gf-form-input" ng-model='ctrl.current.password' placeholder=""></input>
+		<div class="gf-form">
+      <secret-form-field
+        isConfigured="ctrl.current.password || ctrl.current.secureJsonFields.password"
+        value="ctrl.current.secureJsonData.password || ''"
+        on-reset="ctrl.onPasswordReset"
+        on-change="ctrl.onPasswordChange"
+        inputWidth="9"
+      />
 		</div>
 	</div>
+
+	<div class="gf-form">
+		<label class="gf-form-label width-8">HTTP Method</label>
+		<div class="gf-form-select-wrapper width-8 gf-form-select-wrapper--has-help-icon">
+			<select class="gf-form-input" ng-model="ctrl.current.jsonData.httpMode" ng-options="f.value as f.name for f in ctrl.httpMode"></select>
+      		<info-popover mode="right-absolute">
+        		You can use either <code>GET</code> or <code>POST</code> HTTP method to query your InfluxDB database. The <code>POST</code>
+				method allows you to perform heavy requests (with a lots of <code>WHERE</code> clause) while the <code>GET</code> method
+				will restrict you and return an error if the query is too large.
+      		</info-popover>
+		</div>
+	</div>
+
 </div>
 
 
@@ -41,7 +59,7 @@
 	<div class="gf-form-inline">
 		<div class="gf-form">
 			<span class="gf-form-label">Min time interval</span>
-			<input type="text" class="gf-form-input width-6" ng-model="ctrl.current.jsonData.timeInterval" spellcheck='false' placeholder="10s"></input>
+			<input type="text" class="gf-form-input width-6 gf-form-input--has-help-icon" ng-model="ctrl.current.jsonData.timeInterval" spellcheck='false' placeholder="10s"></input>
 			<info-popover mode="right-absolute">
 				A lower limit for the auto group by time interval. Recommended to be set to write frequency,
 				for example <code>1m</code> if your data is written every minute.

@@ -6,23 +6,27 @@
       <th><strong>Name</strong></th>
       <th><strong>Snapshot url</strong></th>
       <th style="width: 70px"></th>
+      <th style="width: 30px"></th>
       <th style="width: 25px"></th>
 		</thead>
 		<tr ng-repeat="snapshot in ctrl.snapshots">
       <td>
-				<a href="dashboard/snapshot/{{snapshot.key}}">{{snapshot.name}}</a>
+        <a href="{{snapshot.url}}">{{snapshot.name}}</a>
       </td>
       <td >
-        <a href="dashboard/snapshot/{{snapshot.key}}">dashboard/snapshot/{{snapshot.key}}</a>
+        <a href="{{snapshot.url}}">{{snapshot.url}}</a>
+      </td>
+      <td>
+        <span class="query-keyword" ng-if="snapshot.external">External</span>
       </td>
       <td class="text-center">
-        <a href="dashboard/snapshot/{{snapshot.key}}" class="btn btn-inverse btn-mini">
-          <i class="fa fa-eye"></i>
+        <a href="{{snapshot.url}}" class="btn btn-inverse btn-small">
+          <i class="gicon gicon-viewer"></i>
           View
         </a>
       </td>
       <td  class="text-right">
-        <a ng-click="ctrl.removeSnapshot(snapshot)" class="btn btn-danger btn-mini">
+        <a ng-click="ctrl.removeSnapshot(snapshot)" class="btn btn-danger btn-small">
           <i class="fa fa-remove"></i>
         </a>
       </td>

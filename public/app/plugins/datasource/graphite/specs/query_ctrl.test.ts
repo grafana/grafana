@@ -1,6 +1,7 @@
 import { uiSegmentSrv } from 'app/core/services/segment_srv';
 import gfunc from '../gfunc';
 import { GraphiteQueryCtrl } from '../query_ctrl';
+import { TemplateSrvStub } from 'test/specs/helpers';
 
 describe('GraphiteQueryCtrl', () => {
   const ctx = {
@@ -24,14 +25,15 @@ describe('GraphiteQueryCtrl', () => {
   beforeEach(() => {
     GraphiteQueryCtrl.prototype.target = ctx.target;
     GraphiteQueryCtrl.prototype.datasource = ctx.datasource;
-
     GraphiteQueryCtrl.prototype.panelCtrl = ctx.panelCtrl;
 
     ctx.ctrl = new GraphiteQueryCtrl(
       {},
-      {},
+      {} as any,
+      //@ts-ignore
       new uiSegmentSrv({ trustAsHtml: html => html }, { highlightVariablesAsHtml: () => {} }),
-      {},
+      //@ts-ignore
+      new TemplateSrvStub(),
       {}
     );
   });
@@ -84,22 +86,6 @@ describe('GraphiteQueryCtrl', () => {
     });
   });
 
-  describe('when initializing target without metric expression and only function', () => {
-    beforeEach(() => {
-      ctx.ctrl.target.target = 'asPercent(#A, #B)';
-      ctx.ctrl.datasource.metricFindQuery = () => Promise.resolve([]);
-      ctx.ctrl.parseTarget();
-    });
-
-    it('should not add select metric segment', () => {
-      expect(ctx.ctrl.segments.length).toBe(1);
-    });
-
-    it('should add second series ref as param', () => {
-      expect(ctx.ctrl.queryModel.functions[0].params.length).toBe(1);
-    });
-  });
-
   describe('when initializing a target with single param func using variable', () => {
     beforeEach(() => {
       ctx.ctrl.target.target = 'movingAverage(prod.count, $var)';
@@ -137,7 +123,7 @@ describe('GraphiteQueryCtrl', () => {
       ctx.ctrl.target.target = 'test.count';
       ctx.ctrl.datasource.metricFindQuery = () => Promise.resolve([]);
       ctx.ctrl.parseTarget();
-      ctx.ctrl.getAltSegments(1).then(results => {
+      ctx.ctrl.getAltSegments(1).then((results: any) => {
         ctx.altSegments = results;
       });
     });
@@ -308,7 +294,7 @@ describe('GraphiteQueryCtrl', () => {
       ctx.ctrl.target.target = "seriesByTag('tag1=value1', 'tag2!=~value2')";
       ctx.ctrl.datasource.metricFindQuery = () => Promise.resolve([{ expandable: false }]);
       ctx.ctrl.parseTarget();
-      ctx.ctrl.removeTag(0);
+      ctx.ctrl.tagChanged({ key: ctx.ctrl.removeTagValue });
     });
 
     it('should update tags', () => {

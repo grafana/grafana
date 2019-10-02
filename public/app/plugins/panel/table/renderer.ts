@@ -1,16 +1,27 @@
 import _ from 'lodash';
-import moment from 'moment';
-import kbn from 'app/core/utils/kbn';
+import { getValueFormat, getColorFromHexRgbOrName, GrafanaThemeType } from '@grafana/ui';
+import { stringToJsRegex, ScopedVars } from '@grafana/data';
+import { ColumnStyle } from '@grafana/ui/src/components/Table/TableCellBuilder';
+import { dateTime } from '@grafana/data';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TableRenderModel, ColumnRender } from './types';
 
 export class TableRenderer {
   formatters: any[];
   colorState: any;
 
-  constructor(private panel, private table, private isUtc, private sanitize, private templateSrv) {
+  constructor(
+    private panel: { styles: ColumnStyle[]; pageSize: number },
+    private table: TableRenderModel,
+    private isUtc: boolean,
+    private sanitize: (v: any) => any,
+    private templateSrv: TemplateSrv,
+    private theme?: GrafanaThemeType
+  ) {
     this.initColumns();
   }
 
-  setTable(table) {
+  setTable(table: TableRenderModel) {
     this.table = table;
 
     this.initColumns();
@@ -27,7 +38,7 @@ export class TableRenderer {
       for (let i = 0; i < this.panel.styles.length; i++) {
         const style = this.panel.styles[i];
 
-        const regex = kbn.stringToJsRegex(style.pattern);
+        const regex = stringToJsRegex(style.pattern);
         if (column.text.match(regex)) {
           column.style = style;
 
@@ -43,19 +54,19 @@ export class TableRenderer {
     }
   }
 
-  getColorForValue(value, style) {
-    if (!style.thresholds) {
+  getColorForValue(value: number, style: ColumnStyle) {
+    if (!style.thresholds || !style.colors) {
       return null;
     }
     for (let i = style.thresholds.length; i > 0; i--) {
       if (value >= style.thresholds[i - 1]) {
-        return style.colors[i];
+        return getColorFromHexRgbOrName(style.colors[i], this.theme);
       }
     }
-    return _.first(style.colors);
+    return getColorFromHexRgbOrName(_.first(style.colors), this.theme);
   }
 
-  defaultCellFormatter(v, style) {
+  defaultCellFormatter(v: any, style: ColumnStyle) {
     if (v === null || v === void 0 || v === undefined) {
       return '';
     }
@@ -71,19 +82,17 @@ export class TableRenderer {
     }
   }
 
-  createColumnFormatter(column) {
+  createColumnFormatter(column: ColumnRender) {
     if (!column.style) {
       return this.defaultCellFormatter;
     }
 
     if (column.style.type === 'hidden') {
-      return v => {
-        return undefined;
-      };
+      return (v: any): undefined => undefined;
     }
 
     if (column.style.type === 'date') {
-      return v => {
+      return (v: any) => {
         if (v === undefined || v === null) {
           return '-';
         }
@@ -91,16 +100,24 @@ export class TableRenderer {
         if (_.isArray(v)) {
           v = v[0];
         }
-        let date = moment(v);
+
+        // if is an epoch (numeric string and len > 12)
+        if (_.isString(v) && !isNaN(v as any) && v.length > 12) {
+          v = parseInt(v, 10);
+        }
+
+        let date = dateTime(v);
+
         if (this.isUtc) {
           date = date.utc();
         }
+
         return date.format(column.style.dateFormat);
       };
     }
 
     if (column.style.type === 'string') {
-      return v => {
+      return (v: any): any => {
         if (_.isArray(v)) {
           v = v.join(', ');
         }
@@ -154,14 +171,14 @@ export class TableRenderer {
     }
 
     if (column.style.type === 'number') {
-      const valueFormatter = kbn.valueFormats[column.unit || column.style.unit];
+      const valueFormatter = getValueFormat(column.unit || column.style.unit);
 
-      return v => {
+      return (v: any): any => {
         if (v === null || v === void 0) {
           return '-';
         }
 
-        if (_.isString(v) || _.isArray(v)) {
+        if (isNaN(v) || _.isArray(v)) {
           return this.defaultCellFormatter(v, column.style);
         }
 
@@ -170,12 +187,12 @@ export class TableRenderer {
       };
     }
 
-    return value => {
+    return (value: any) => {
       return this.defaultCellFormatter(value, column.style);
     };
   }
 
-  setColorState(value, style) {
+  setColorState(value: any, style: ColumnStyle) {
     if (!style.colorMode) {
       return;
     }
@@ -192,35 +209,36 @@ export class TableRenderer {
     this.colorState[style.colorMode] = this.getColorForValue(numericValue, style);
   }
 
-  renderRowVariables(rowIndex) {
-    const scopedVars = {};
+  renderRowVariables(rowIndex: number) {
+    const scopedVars: ScopedVars = {};
     let cellVariable;
     const row = this.table.rows[rowIndex];
     for (let i = 0; i < row.length; i++) {
       cellVariable = `__cell_${i}`;
-      scopedVars[cellVariable] = { value: row[i] };
+      scopedVars[cellVariable] = { value: row[i], text: row[i] ? row[i].toString() : '' };
     }
     return scopedVars;
   }
 
-  formatColumnValue(colIndex, value) {
+  formatColumnValue(colIndex: number, value: any) {
     return this.formatters[colIndex] ? this.formatters[colIndex](value) : value;
   }
 
-  renderCell(columnIndex, rowIndex, value, addWidthHack = false) {
+  renderCell(columnIndex: number, rowIndex: number, value: any, addWidthHack = false) {
     value = this.formatColumnValue(columnIndex, value);
 
     const column = this.table.columns[columnIndex];
-    let style = '';
+    let cellStyle = '';
+    let textStyle = '';
     const cellClasses = [];
     let cellClass = '';
 
     if (this.colorState.cell) {
-      style = ' style="background-color:' + this.colorState.cell + '"';
+      cellStyle = ' style="background-color:' + this.colorState.cell + '"';
       cellClasses.push('table-panel-color-cell');
       this.colorState.cell = null;
     } else if (this.colorState.value) {
-      style = ' style="color:' + this.colorState.value + '"';
+      textStyle = ' style="color:' + this.colorState.value + '"';
       this.colorState.value = null;
     }
     // because of the fixed table headers css only solution
@@ -232,7 +250,7 @@ export class TableRenderer {
     }
 
     if (value === undefined) {
-      style = ' style="display:none;"';
+      cellStyle = ' style="display:none;"';
       column.hidden = true;
     } else {
       column.hidden = false;
@@ -249,7 +267,7 @@ export class TableRenderer {
     if (column.style && column.style.link) {
       // Render cell as link
       const scopedVars = this.renderRowVariables(rowIndex);
-      scopedVars['__cell'] = { value: value };
+      scopedVars['__cell'] = { value: value, text: value ? value.toString() : '' };
 
       const cellLink = this.templateSrv.replace(column.style.linkUrl, scopedVars, encodeURIComponent);
       const cellLinkTooltip = this.templateSrv.replace(column.style.linkTooltip, scopedVars);
@@ -258,7 +276,7 @@ export class TableRenderer {
       cellClasses.push('table-panel-cell-link');
 
       columnHtml += `
-        <a href="${cellLink}" target="${cellTarget}" data-link-tooltip data-original-title="${cellLinkTooltip}" data-placement="right"${style}>
+        <a href="${cellLink}" target="${cellTarget}" data-link-tooltip data-original-title="${cellLinkTooltip}" data-placement="right"${textStyle}>
           ${value}
         </a>
       `;
@@ -283,22 +301,22 @@ export class TableRenderer {
       cellClass = ' class="' + cellClasses.join(' ') + '"';
     }
 
-    columnHtml = '<td' + cellClass + style + '>' + columnHtml + '</td>';
+    columnHtml = '<td' + cellClass + cellStyle + textStyle + '>' + columnHtml + '</td>';
     return columnHtml;
   }
 
-  render(page) {
+  render(page: number) {
     const pageSize = this.panel.pageSize || 100;
     const startPos = page * pageSize;
     const endPos = Math.min(startPos + pageSize, this.table.rows.length);
     let html = '';
-    const rowClasses = [];
-    let rowClass = '';
 
     for (let y = startPos; y < endPos; y++) {
       const row = this.table.rows[y];
       let cellHtml = '';
       let rowStyle = '';
+      const rowClasses = [];
+      let rowClass = '';
       for (let i = 0; i < this.table.columns.length; i++) {
         cellHtml += this.renderCell(i, y, row[i], y === startPos);
       }

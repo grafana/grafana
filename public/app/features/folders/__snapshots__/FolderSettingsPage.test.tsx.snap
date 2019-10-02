@@ -1,18 +1,17 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Render should enable save button 1`] = `
-<div>
-  <PageHeader
-    model={Object {}}
-  />
-  <div
-    className="page-container page-body"
+<Page
+  navModel={Object {}}
+>
+  <PageContents
+    isLoading={false}
   >
-    <h2
+    <h3
       className="page-sub-heading"
     >
       Folder Settings
-    </h2>
+    </h3>
     <div
       className="section gf-form-group"
     >
@@ -28,7 +27,7 @@ exports[`Render should enable save button 1`] = `
           >
             Name
           </label>
-          <input
+          <Input
             className="gf-form-input width-30"
             onChange={[Function]}
             type="text"
@@ -39,45 +38,38 @@ exports[`Render should enable save button 1`] = `
           className="gf-form-button-row"
         >
           <button
-            className="btn btn-success"
+            className="btn btn-primary"
             disabled={false}
             type="submit"
           >
-            <i
-              className="fa fa-save"
-            />
-             Save
+            Save
           </button>
           <button
             className="btn btn-danger"
             disabled={false}
             onClick={[Function]}
           >
-            <i
-              className="fa fa-trash"
-            />
-             Delete
+            Delete
           </button>
         </div>
       </form>
     </div>
-  </div>
-</div>
+  </PageContents>
+</Page>
 `;
 
 exports[`Render should render component 1`] = `
-<div>
-  <PageHeader
-    model={Object {}}
-  />
-  <div
-    className="page-container page-body"
+<Page
+  navModel={Object {}}
+>
+  <PageContents
+    isLoading={false}
   >
-    <h2
+    <h3
       className="page-sub-heading"
     >
       Folder Settings
-    </h2>
+    </h3>
     <div
       className="section gf-form-group"
     >
@@ -93,7 +85,7 @@ exports[`Render should render component 1`] = `
           >
             Name
           </label>
-          <input
+          <Input
             className="gf-form-input width-30"
             onChange={[Function]}
             type="text"
@@ -104,28 +96,22 @@ exports[`Render should render component 1`] = `
           className="gf-form-button-row"
         >
           <button
-            className="btn btn-success"
+            className="btn btn-primary"
             disabled={true}
             type="submit"
           >
-            <i
-              className="fa fa-save"
-            />
-             Save
+            Save
           </button>
           <button
             className="btn btn-danger"
             disabled={false}
             onClick={[Function]}
           >
-            <i
-              className="fa fa-trash"
-            />
-             Delete
+            Delete
           </button>
         </div>
       </form>
     </div>
-  </div>
-</div>
+  </PageContents>
+</Page>
 `;

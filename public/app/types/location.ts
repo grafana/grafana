@@ -1,15 +1,10 @@
-export interface LocationUpdate {
-  path?: string;
-  query?: UrlQueryMap;
-  routeParams?: UrlQueryMap;
-}
+import { UrlQueryMap } from '@grafana/runtime';
 
 export interface LocationState {
   url: string;
   path: string;
   query: UrlQueryMap;
   routeParams: UrlQueryMap;
+  replace: boolean;
+  lastUpdated: number;
 }
-
-export type UrlQueryValue = string | number | boolean | string[] | number[] | boolean[];
-export type UrlQueryMap = { [s: string]: UrlQueryValue };

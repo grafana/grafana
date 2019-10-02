@@ -2,9 +2,10 @@
   "type": "datasource",
   "name": "Microsoft SQL Server",
   "id": "mssql",
+  "category": "sql",
 
   "info": {
-    "description": "Microsoft SQL Server Data Source for Grafana",
+    "description": "Data source for Microsoft SQL Server compatible databases",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"
@@ -22,5 +23,4 @@
   "queryOptions": {
     "minInterval": true
   }
-
 }

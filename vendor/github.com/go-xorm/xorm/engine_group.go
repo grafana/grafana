@@ -5,6 +5,8 @@
 package xorm
 
 import (
+	"time"
+
 	"github.com/go-xorm/core"
 )
 
@@ -96,6 +98,14 @@ func (eg *EngineGroup) SetColumnMapper(mapper core.IMapper) {
 	eg.Engine.ColumnMapper = mapper
 	for i := 0; i < len(eg.slaves); i++ {
 		eg.slaves[i].ColumnMapper = mapper
+	}
+}
+
+// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
+func (eg *EngineGroup) SetConnMaxLifetime(d time.Duration) {
+	eg.Engine.SetConnMaxLifetime(d)
+	for i := 0; i < len(eg.slaves); i++ {
+		eg.slaves[i].SetConnMaxLifetime(d)
 	}
 }
 

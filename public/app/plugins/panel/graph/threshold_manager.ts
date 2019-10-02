@@ -1,6 +1,8 @@
 import 'vendor/flot/jquery.flot';
 import $ from 'jquery';
 import _ from 'lodash';
+import { getColorFromHexRgbOrName } from '@grafana/ui';
+import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 
 export class ThresholdManager {
   plot: any;
@@ -10,9 +12,9 @@ export class ThresholdManager {
   needsCleanup: boolean;
   hasSecondYAxis: any;
 
-  constructor(private panelCtrl) {}
+  constructor(private panelCtrl: PanelCtrl) {}
 
-  getHandleHtml(handleIndex, model, valueStr) {
+  getHandleHtml(handleIndex: any, model: { colorMode: string }, valueStr: any) {
     let stateClass = model.colorMode;
     if (model.colorMode === 'custom') {
       stateClass = 'critical';
@@ -29,17 +31,17 @@ export class ThresholdManager {
     </div>`;
   }
 
-  initDragging(evt) {
+  initDragging(evt: any) {
     const handleElem = $(evt.currentTarget).parents('.alert-handle-wrapper');
     const handleIndex = $(evt.currentTarget).data('handleIndex');
 
-    let lastY = null;
-    let posTop;
+    let lastY: number | null = null;
+    let posTop: number;
     const plot = this.plot;
     const panelCtrl = this.panelCtrl;
     const model = this.thresholds[handleIndex];
 
-    function dragging(evt) {
+    function dragging(evt: any) {
       if (lastY === null) {
         lastY = evt.clientY;
       } else {
@@ -83,7 +85,7 @@ export class ThresholdManager {
     this.needsCleanup = false;
   }
 
-  renderHandle(handleIndex, defaultHandleTopPos) {
+  renderHandle(handleIndex: number, defaultHandleTopPos: number) {
     const model = this.thresholds[handleIndex];
     const value = model.value;
     let valueStr = value;
@@ -106,10 +108,11 @@ export class ThresholdManager {
   }
 
   shouldDrawHandles() {
+    // @ts-ignore
     return !this.hasSecondYAxis && this.panelCtrl.editingThresholds && this.panelCtrl.panel.thresholds.length > 0;
   }
 
-  prepare(elem, data) {
+  prepare(elem: JQuery, data: any[]) {
     this.hasSecondYAxis = false;
     for (let i = 0; i < data.length; i++) {
       if (data[i].yaxis > 1) {
@@ -126,7 +129,7 @@ export class ThresholdManager {
     }
   }
 
-  draw(plot) {
+  draw(plot: any) {
     this.thresholds = this.panelCtrl.panel.thresholds;
     this.plot = plot;
     this.placeholder = plot.getPlaceholder();
@@ -153,7 +156,7 @@ export class ThresholdManager {
     this.needsCleanup = true;
   }
 
-  addFlotOptions(options, panel) {
+  addFlotOptions(options: any, panel: any) {
     if (!panel.thresholds || panel.thresholds.length === 0) {
       return;
     }
@@ -197,6 +200,7 @@ export class ThresholdManager {
       }
 
       let fillColor, lineColor;
+
       switch (threshold.colorMode) {
         case 'critical': {
           fillColor = 'rgba(234, 112, 112, 0.12)';
@@ -225,12 +229,12 @@ export class ThresholdManager {
         if (threshold.yaxis === 'right' && this.hasSecondYAxis) {
           options.grid.markings.push({
             y2axis: { from: threshold.value, to: limit },
-            color: fillColor,
+            color: getColorFromHexRgbOrName(fillColor),
           });
         } else {
           options.grid.markings.push({
             yaxis: { from: threshold.value, to: limit },
-            color: fillColor,
+            color: getColorFromHexRgbOrName(fillColor),
           });
         }
       }
@@ -238,12 +242,12 @@ export class ThresholdManager {
         if (threshold.yaxis === 'right' && this.hasSecondYAxis) {
           options.grid.markings.push({
             y2axis: { from: threshold.value, to: threshold.value },
-            color: lineColor,
+            color: getColorFromHexRgbOrName(lineColor),
           });
         } else {
           options.grid.markings.push({
             yaxis: { from: threshold.value, to: threshold.value },
-            color: lineColor,
+            color: getColorFromHexRgbOrName(lineColor),
           });
         }
       }

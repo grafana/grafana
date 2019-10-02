@@ -1,0 +1,93 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AbstractList allows custom item key 1`] = `
+<ul
+  className="css-1ld8h5b"
+>
+  <li
+    className="css-8qpjjf"
+    key="item1"
+  >
+    <div>
+      <h1>
+        Item 1
+      </h1>
+      <small>
+        item1
+      </small>
+    </div>
+  </li>
+  <li
+    className="css-8qpjjf"
+    key="item2"
+  >
+    <div>
+      <h1>
+        Item 2
+      </h1>
+      <small>
+        item2
+      </small>
+    </div>
+  </li>
+  <li
+    className="css-8qpjjf"
+    key="item3"
+  >
+    <div>
+      <h1>
+        Item 3
+      </h1>
+      <small>
+        item3
+      </small>
+    </div>
+  </li>
+</ul>
+`;
+
+exports[`AbstractList renders items using renderItem prop function 1`] = `
+<ul
+  className="css-1ld8h5b"
+>
+  <li
+    className="css-8qpjjf"
+    key="0"
+  >
+    <div>
+      <h1>
+        Item 1
+      </h1>
+      <small>
+        item1
+      </small>
+    </div>
+  </li>
+  <li
+    className="css-8qpjjf"
+    key="1"
+  >
+    <div>
+      <h1>
+        Item 2
+      </h1>
+      <small>
+        item2
+      </small>
+    </div>
+  </li>
+  <li
+    className="css-8qpjjf"
+    key="2"
+  >
+    <div>
+      <h1>
+        Item 3
+      </h1>
+      <small>
+        item3
+      </small>
+    </div>
+  </li>
+</ul>
+`;

@@ -1,18 +1,33 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { Props, TeamList } from './TeamList';
-import { NavModel, Team } from '../../types';
+import { Team, OrgRole } from '../../types';
 import { getMockTeam, getMultipleMockTeams } from './__mocks__/teamMocks';
+import { User } from 'app/core/services/context_srv';
+import { NavModel } from '@grafana/data';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
-    navModel: {} as NavModel,
+    navModel: {
+      main: {
+        text: 'Configuration',
+      },
+      node: {
+        text: 'Team List',
+      },
+    } as NavModel,
     teams: [] as Team[],
     loadTeams: jest.fn(),
     deleteTeam: jest.fn(),
     setSearchQuery: jest.fn(),
     searchQuery: '',
     teamsCount: 0,
+    hasFetched: false,
+    editorsCanAdmin: false,
+    signedInUser: {
+      id: 1,
+      orgRole: OrgRole.Viewer,
+    } as User,
   };
 
   Object.assign(props, propOverrides);
@@ -36,9 +51,46 @@ describe('Render', () => {
     const { wrapper } = setup({
       teams: getMultipleMockTeams(5),
       teamsCount: 5,
+      hasFetched: true,
     });
 
     expect(wrapper).toMatchSnapshot();
+  });
+
+  describe('when feature toggle editorsCanAdmin is turned on', () => {
+    describe('and signedin user is not viewer', () => {
+      it('should enable the new team button', () => {
+        const { wrapper } = setup({
+          teams: getMultipleMockTeams(1),
+          teamsCount: 1,
+          hasFetched: true,
+          editorsCanAdmin: true,
+          signedInUser: {
+            id: 1,
+            orgRole: OrgRole.Editor,
+          } as User,
+        });
+
+        expect(wrapper).toMatchSnapshot();
+      });
+    });
+
+    describe('and signedin user is a viewer', () => {
+      it('should disable the new team button', () => {
+        const { wrapper } = setup({
+          teams: getMultipleMockTeams(1),
+          teamsCount: 1,
+          hasFetched: true,
+          editorsCanAdmin: true,
+          signedInUser: {
+            id: 1,
+            orgRole: OrgRole.Viewer,
+          } as User,
+        });
+
+        expect(wrapper).toMatchSnapshot();
+      });
+    });
   });
 });
 
@@ -65,9 +117,8 @@ describe('Functions', () => {
   describe('on search query change', () => {
     it('should call setSearchQuery', () => {
       const { instance } = setup();
-      const mockEvent = { target: { value: 'test' } };
 
-      instance.onSearchQueryChange(mockEvent);
+      instance.onSearchQueryChange('test');
 
       expect(instance.props.setSearchQuery).toHaveBeenCalledWith('test');
     });

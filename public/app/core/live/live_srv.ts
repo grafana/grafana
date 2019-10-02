@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import config from 'app/core/config';
 
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 
 export class LiveSrv {
   conn: any;
@@ -30,7 +30,7 @@ export class LiveSrv {
       console.log('Live: connecting...');
       this.conn = new WebSocket(this.getWebSocketUrl());
 
-      this.conn.onclose = evt => {
+      this.conn.onclose = (evt: any) => {
         console.log('Live: websocket onclose', evt);
         reject({ message: 'Connection closed' });
 
@@ -38,17 +38,17 @@ export class LiveSrv {
         setTimeout(this.reconnect.bind(this), 2000);
       };
 
-      this.conn.onmessage = evt => {
+      this.conn.onmessage = (evt: any) => {
         this.handleMessage(evt.data);
       };
 
-      this.conn.onerror = evt => {
+      this.conn.onerror = (evt: any) => {
         this.initPromise = null;
         reject({ message: 'Connection error' });
         console.log('Live: websocket error', evt);
       };
 
-      this.conn.onopen = evt => {
+      this.conn.onopen = (evt: any) => {
         console.log('opened');
         this.initPromise = null;
         resolve(this.conn);
@@ -58,7 +58,7 @@ export class LiveSrv {
     return this.initPromise;
   }
 
-  handleMessage(message) {
+  handleMessage(message: any) {
     message = JSON.parse(message);
 
     if (!message.stream) {
@@ -83,38 +83,38 @@ export class LiveSrv {
 
     console.log('LiveSrv: Reconnecting');
 
-    this.getConnection().then(conn => {
+    this.getConnection().then((conn: any) => {
       _.each(this.observers, (value, key) => {
         this.send({ action: 'subscribe', stream: key });
       });
     });
   }
 
-  send(data) {
+  send(data: any) {
     this.conn.send(JSON.stringify(data));
   }
 
-  addObserver(stream, observer) {
+  addObserver(stream: any, observer: any) {
     this.observers[stream] = observer;
 
-    this.getConnection().then(conn => {
+    this.getConnection().then((conn: any) => {
       this.send({ action: 'subscribe', stream: stream });
     });
   }
 
-  removeObserver(stream, observer) {
+  removeObserver(stream: any, observer: any) {
     console.log('unsubscribe', stream);
     delete this.observers[stream];
 
-    this.getConnection().then(conn => {
+    this.getConnection().then((conn: any) => {
       this.send({ action: 'unsubscribe', stream: stream });
     });
   }
 
-  subscribe(streamName) {
+  subscribe(streamName: string) {
     console.log('LiveSrv.subscribe: ' + streamName);
 
-    return Observable.create(observer => {
+    return Observable.create((observer: any) => {
       this.addObserver(streamName, observer);
 
       return () => {

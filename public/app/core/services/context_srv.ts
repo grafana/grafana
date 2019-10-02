@@ -1,9 +1,9 @@
 import config from 'app/core/config';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
-import store from 'app/core/store';
 
 export class User {
+  id: number;
   isGrafanaAdmin: any;
   isSignedIn: any;
   orgRole: any;
@@ -29,13 +29,10 @@ export class ContextSrv {
   isSignedIn: any;
   isGrafanaAdmin: any;
   isEditor: any;
-  sidemenu: any;
   sidemenuSmallBreakpoint = false;
   hasEditPermissionInFolders: boolean;
 
   constructor() {
-    this.sidemenu = store.getBool('grafana.sidemenu', true);
-
     if (!config.bootData) {
       config.bootData = { user: {}, settings: {} };
     }
@@ -47,7 +44,7 @@ export class ContextSrv {
     this.hasEditPermissionInFolders = this.user.hasEditPermissionInFolders;
   }
 
-  hasRole(role) {
+  hasRole(role: string) {
     return this.user.orgRole === role;
   }
 
@@ -55,9 +52,8 @@ export class ContextSrv {
     return !!(document.visibilityState === undefined || document.visibilityState === 'visible');
   }
 
-  toggleSideMenu() {
-    this.sidemenu = !this.sidemenu;
-    store.set('grafana.sidemenu', this.sidemenu);
+  hasAccessToExplore() {
+    return (this.isEditor || config.viewersCanEdit) && config.exploreEnabled;
   }
 }
 

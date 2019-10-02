@@ -1,3 +1,7 @@
+// Copyright 2019 The Xorm Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package core
 
 import (
@@ -37,9 +41,9 @@ func (q *Quoter) Quote(content string) string {
 func (i *IdFilter) Do(sql string, dialect Dialect, table *Table) string {
 	quoter := NewQuoter(dialect)
 	if table != nil && len(table.PrimaryKeys) == 1 {
-		sql = strings.Replace(sql, "`(id)`", quoter.Quote(table.PrimaryKeys[0]), -1)
-		sql = strings.Replace(sql, quoter.Quote("(id)"), quoter.Quote(table.PrimaryKeys[0]), -1)
-		return strings.Replace(sql, "(id)", quoter.Quote(table.PrimaryKeys[0]), -1)
+		sql = strings.Replace(sql, " `(id)` ", " "+quoter.Quote(table.PrimaryKeys[0])+" ", -1)
+		sql = strings.Replace(sql, " "+quoter.Quote("(id)")+" ", " "+quoter.Quote(table.PrimaryKeys[0])+" ", -1)
+		return strings.Replace(sql, " (id) ", " "+quoter.Quote(table.PrimaryKeys[0])+" ", -1)
 	}
 	return sql
 }

@@ -1,13 +1,15 @@
+type StoreValue = string | number | boolean | null;
+
 export class Store {
-  get(key) {
+  get(key: string) {
     return window.localStorage[key];
   }
 
-  set(key, value) {
+  set(key: string, value: StoreValue) {
     window.localStorage[key] = value;
   }
 
-  getBool(key, def) {
+  getBool(key: string, def: any) {
     if (def !== void 0 && !this.exists(key)) {
       return def;
     }
@@ -46,11 +48,11 @@ export class Store {
     return true;
   }
 
-  exists(key) {
+  exists(key: string) {
     return window.localStorage[key] !== void 0;
   }
 
-  delete(key) {
+  delete(key: string) {
     window.localStorage.removeItem(key);
   }
 }

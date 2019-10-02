@@ -1,8 +1,11 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { AlertRuleList, Props } from './AlertRuleList';
-import { AlertRule, NavModel } from '../../types';
+import { AlertRule } from '../../types';
 import appEvents from '../../core/app_events';
+import { mockActionCreator } from 'app/core/redux';
+import { updateLocation } from 'app/core/actions';
+import { NavModel } from '@grafana/data';
 
 jest.mock('../../core/app_events', () => ({
   emit: jest.fn(),
@@ -12,12 +15,13 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     navModel: {} as NavModel,
     alertRules: [] as AlertRule[],
-    updateLocation: jest.fn(),
+    updateLocation: mockActionCreator(updateLocation),
     getAlertRulesAsync: jest.fn(),
     setSearchQuery: jest.fn(),
     togglePauseAlertRule: jest.fn(),
     stateFilter: '',
     search: '',
+    isLoading: false,
   };
 
   Object.assign(props, propOverrides);
@@ -121,7 +125,7 @@ describe('Functions', () => {
   describe('State filter changed', () => {
     it('should update location', () => {
       const { instance } = setup();
-      const mockEvent = { target: { value: 'alerting' } };
+      const mockEvent = { target: { value: 'alerting' } } as React.ChangeEvent<HTMLSelectElement>;
 
       instance.onStateFilterChanged(mockEvent);
 
@@ -146,9 +150,8 @@ describe('Functions', () => {
   describe('Search query change', () => {
     it('should set search query', () => {
       const { instance } = setup();
-      const mockEvent = { target: { value: 'dashboard' } };
 
-      instance.onSearchQueryChange(mockEvent);
+      instance.onSearchQueryChange('dashboard');
 
       expect(instance.props.setSearchQuery).toHaveBeenCalledWith('dashboard');
     });

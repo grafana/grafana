@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 )
 
@@ -36,13 +36,14 @@ func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (
 	defer middleware.RemoveRenderAuthKey(renderKey)
 
 	phantomDebugArg := "--debug=false"
-	if log.GetLogLevelFor("renderer") >= log.LvlDebug {
+	if log.GetLogLevelFor("rendering") >= log.LvlDebug {
 		phantomDebugArg = "--debug=true"
 	}
 
 	cmdArgs := []string{
 		"--ignore-ssl-errors=true",
-		"--web-security=false",
+		"--web-security=true",
+		"--local-url-access=false",
 		phantomDebugArg,
 		scriptPath,
 		fmt.Sprintf("url=%v", url),
@@ -64,12 +65,33 @@ func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (
 	cmd := exec.CommandContext(commandCtx, binPath, cmdArgs...)
 	cmd.Stderr = cmd.Stdout
 
+	timezone := ""
+
+	cmd.Env = os.Environ()
+
 	if opts.Timezone != "" {
-		baseEnviron := os.Environ()
-		cmd.Env = appendEnviron(baseEnviron, "TZ", isoTimeOffsetToPosixTz(opts.Timezone))
+		timezone = isoTimeOffsetToPosixTz(opts.Timezone)
+		cmd.Env = appendEnviron(cmd.Env, "TZ", timezone)
 	}
 
+	// Added to disable usage of newer version of OPENSSL
+	// that seem to be incompatible with PhantomJS (used in Debian Buster)
+	if runtime.GOOS == "linux" {
+		disableNewOpenssl := "/etc/ssl"
+		cmd.Env = appendEnviron(cmd.Env, "OPENSSL_CONF", disableNewOpenssl)
+	}
+
+	rs.log.Debug("executing Phantomjs", "binPath", binPath, "cmdArgs", cmdArgs, "timezone", timezone)
+
 	out, err := cmd.Output()
+
+	if out != nil {
+		rs.log.Debug("Phantomjs output", "out", string(out))
+	}
+
+	if err != nil {
+		rs.log.Debug("Phantomjs error", "error", err)
+	}
 
 	// check for timeout first
 	if commandCtx.Err() == context.DeadlineExceeded {
@@ -81,8 +103,6 @@ func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (
 		rs.log.Error("Phantomjs exited with non zero exit code", "error", err)
 		return nil, err
 	}
-
-	rs.log.Debug("Phantomjs output", "out", string(out))
 
 	rs.log.Debug("Image rendered", "path", pngPath)
 	return &RenderResult{FilePath: pngPath}, nil

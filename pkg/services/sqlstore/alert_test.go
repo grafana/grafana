@@ -109,7 +109,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			So(alert.DashboardId, ShouldEqual, testDash.Id)
 			So(alert.PanelId, ShouldEqual, 1)
 			So(alert.Name, ShouldEqual, "Alerting title")
-			So(alert.State, ShouldEqual, "pending")
+			So(alert.State, ShouldEqual, m.AlertStateUnknown)
 			So(alert.NewStateDate, ShouldNotBeNil)
 			So(alert.EvalData, ShouldNotBeNil)
 			So(alert.EvalData.Get("test").MustString(), ShouldEqual, "test")
@@ -154,7 +154,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				So(query.Result[0].Name, ShouldEqual, "Name")
 
 				Convey("Alert state should not be updated", func() {
-					So(query.Result[0].State, ShouldEqual, "pending")
+					So(query.Result[0].State, ShouldEqual, m.AlertStateUnknown)
 				})
 			})
 

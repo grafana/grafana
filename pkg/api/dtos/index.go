@@ -14,6 +14,7 @@ type IndexViewData struct {
 	NewGrafanaVersionExists bool
 	NewGrafanaVersion       string
 	AppName                 string
+	AppNameBodyClass        string
 }
 
 type PluginCss struct {

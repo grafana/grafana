@@ -1,16 +1,19 @@
-import React, { SFC } from 'react';
+import React, { FC } from 'react';
 import DropDownChild from './DropDownChild';
+import { NavModelItem } from '@grafana/data';
 
 interface Props {
-  link: any;
+  link: NavModelItem;
 }
 
-const SideMenuDropDown: SFC<Props> = props => {
+const SideMenuDropDown: FC<Props> = props => {
   const { link } = props;
   return (
     <ul className="dropdown-menu dropdown-menu--sidemenu" role="menu">
       <li className="side-menu-header">
-        <span className="sidemenu-item-text">{link.text}</span>
+        <a className="side-menu-header-link" href={link.url}>
+          <span className="sidemenu-item-text">{link.text}</span>
+        </a>
       </li>
       {link.children &&
         link.children.map((child, index) => {

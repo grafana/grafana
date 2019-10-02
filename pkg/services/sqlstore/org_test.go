@@ -2,18 +2,38 @@ package sqlstore
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
-	. "github.com/smartystreets/goconvey/convey"
-
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestAccountDataAccess(t *testing.T) {
 	Convey("Testing Account DB Access", t, func() {
 		InitTestDB(t)
+
+		Convey("Given we have organizations, we can query them by IDs", func() {
+			var err error
+			var cmd *m.CreateOrgCommand
+			ids := []int64{}
+
+			for i := 1; i < 4; i++ {
+				cmd = &m.CreateOrgCommand{Name: fmt.Sprint("Org #", i)}
+				err = CreateOrg(cmd)
+				So(err, ShouldBeNil)
+
+				ids = append(ids, cmd.Result.Id)
+			}
+
+			query := &m.SearchOrgsQuery{Ids: ids}
+			err = SearchOrgs(query)
+
+			So(err, ShouldBeNil)
+			So(len(query.Result), ShouldEqual, 3)
+		})
 
 		Convey("Given single org mode", func() {
 			setting.AutoAssignOrg = true
@@ -180,6 +200,21 @@ func TestAccountDataAccess(t *testing.T) {
 						So(err, ShouldBeNil)
 						So(query.Result.OrgId, ShouldEqual, ac2.OrgId)
 					})
+				})
+
+				Convey("Removing user from org should delete user completely if in no other org", func() {
+					// make sure ac2 has no org
+					err := DeleteOrg(&m.DeleteOrgCommand{Id: ac2.OrgId})
+					So(err, ShouldBeNil)
+
+					// remove ac2 user from ac1 org
+					remCmd := m.RemoveOrgUserCommand{OrgId: ac1.OrgId, UserId: ac2.Id, ShouldDeleteOrphanedUser: true}
+					err = RemoveOrgUser(&remCmd)
+					So(err, ShouldBeNil)
+					So(remCmd.UserWasDeleted, ShouldBeTrue)
+
+					err = GetSignedInUser(&m.GetSignedInUserQuery{UserId: ac2.Id})
+					So(err, ShouldEqual, m.ErrUserNotFound)
 				})
 
 				Convey("Cannot delete last admin org user", func() {

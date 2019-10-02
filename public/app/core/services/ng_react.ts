@@ -9,13 +9,14 @@
 // - reactComponent (generic directive for delegating off to React Components)
 // - reactDirective (factory for creating specific directives that correspond to reactComponent directives)
 
+import { kebabCase } from 'lodash';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import angular from 'angular';
+import angular, { auto } from 'angular';
 
 // get a react component from name (components can be an angular injectable e.g. value, factory or
 // available on window
-function getReactComponent(name, $injector) {
+function getReactComponent(name: string, $injector: auto.IInjectorService) {
   // if name is a function assume it is component and return it
   if (angular.isFunction(name)) {
     return name;
@@ -35,6 +36,7 @@ function getReactComponent(name, $injector) {
   if (!reactComponent) {
     try {
       reactComponent = name.split('.').reduce((current, namePart) => {
+        // @ts-ignore
         return current[namePart];
       }, window);
     } catch (e) {}
@@ -48,7 +50,7 @@ function getReactComponent(name, $injector) {
 }
 
 // wraps a function with scope.$apply, if already applied just return
-function applied(fn, scope) {
+function applied(fn: any, scope: any) {
   if (fn.wrappedInApply) {
     return fn;
   }
@@ -80,7 +82,7 @@ function applied(fn, scope) {
  * @param propsConfig configuration object for all properties
  * @returns {Object} props with the functions wrapped in scope.$apply
  */
-function applyFunctions(obj, scope, propsConfig?) {
+function applyFunctions(obj: any, scope: any, propsConfig?: any): object {
   return Object.keys(obj || {}).reduce((prev, key) => {
     const value = obj[key];
     const config = (propsConfig || {})[key] || {};
@@ -89,6 +91,7 @@ function applyFunctions(obj, scope, propsConfig?) {
      * ensures that when function is called from a React component
      * the Angular digest cycle is run
      */
+    // @ts-ignore
     prev[key] = angular.isFunction(value) && config.wrapApply !== false ? applied(value, scope) : value;
 
     return prev;
@@ -103,26 +106,29 @@ function applyFunctions(obj, scope, propsConfig?) {
  * Uses the watchDepth attribute to determine how to watch props on scope.
  * If watchDepth attribute is NOT reference or collection, watchDepth defaults to deep watching by value
  */
-function watchProps(watchDepth, scope, watchExpressions, listener) {
+function watchProps(watchDepth: string, scope: any, watchExpressions: any[], listener: any) {
   const supportsWatchCollection = angular.isFunction(scope.$watchCollection);
   const supportsWatchGroup = angular.isFunction(scope.$watchGroup);
 
   const watchGroupExpressions = [];
 
-  watchExpressions.forEach(expr => {
+  for (const expr of watchExpressions) {
     const actualExpr = getPropExpression(expr);
     const exprWatchDepth = getPropWatchDepth(watchDepth, expr);
+
+    // ignore empty expressions & expressions with functions
+    if (!actualExpr || actualExpr.match(/\(.*\)/) || exprWatchDepth === 'one-time') {
+      continue;
+    }
 
     if (exprWatchDepth === 'collection' && supportsWatchCollection) {
       scope.$watchCollection(actualExpr, listener);
     } else if (exprWatchDepth === 'reference' && supportsWatchGroup) {
       watchGroupExpressions.push(actualExpr);
-    } else if (exprWatchDepth === 'one-time') {
-      //do nothing because we handle our one time bindings after this
     } else {
       scope.$watch(actualExpr, listener, exprWatchDepth !== 'reference');
     }
-  });
+  }
 
   if (watchDepth === 'one-time') {
     listener();
@@ -134,37 +140,44 @@ function watchProps(watchDepth, scope, watchExpressions, listener) {
 }
 
 // render React component, with scope[attrs.props] being passed in as the component props
-function renderComponent(component, props, scope, elem) {
+function renderComponent(component: any, props: object, scope: any, elem: Element[]) {
   scope.$evalAsync(() => {
     ReactDOM.render(React.createElement(component, props), elem[0]);
   });
 }
 
 // get prop name from prop (string or array)
-function getPropName(prop) {
+function getPropName(prop: any) {
   return Array.isArray(prop) ? prop[0] : prop;
 }
 
 // get prop name from prop (string or array)
-function getPropConfig(prop) {
+function getPropConfig(prop: any) {
   return Array.isArray(prop) ? prop[1] : {};
 }
 
 // get prop expression from prop (string or array)
-function getPropExpression(prop) {
+function getPropExpression(prop: any) {
   return Array.isArray(prop) ? prop[0] : prop;
 }
 
-// find the normalized attribute knowing that React props accept any type of capitalization
-function findAttribute(attrs, propName) {
-  const index = Object.keys(attrs).filter(attr => {
-    return attr.toLowerCase() === propName.toLowerCase();
-  })[0];
+/**
+ * Finds the normalized attribute knowing that React props accept any type of capitalization and it also handles
+ * kabab case attributes which can be used in case the attribute would also be a standard html attribute and would be
+ * evaluated by the browser as such.
+ * @param attrs All attributes of the component.
+ * @param propName Name of the prop that react component expects.
+ */
+function findAttribute(attrs: string, propName: string): string {
+  const index = Object.keys(attrs).find(attr => {
+    return attr.toLowerCase() === propName.toLowerCase() || attr.toLowerCase() === kebabCase(propName);
+  });
+  // @ts-ignore
   return attrs[index];
 }
 
 // get watch depth of prop (string or array)
-function getPropWatchDepth(defaultWatch, prop) {
+function getPropWatchDepth(defaultWatch: string, prop: string | any[]) {
   const customWatchDepth = Array.isArray(prop) && angular.isObject(prop[1]) && prop[1].watchDepth;
   return customWatchDepth || defaultWatch;
 }
@@ -187,11 +200,11 @@ function getPropWatchDepth(defaultWatch, prop) {
 //         }
 //     }));
 //
-const reactComponent = $injector => {
+const reactComponent = ($injector: any): any => {
   return {
     restrict: 'E',
     replace: true,
-    link: function(scope, elem, attrs) {
+    link: function(scope: any, elem: Element[], attrs: any) {
       const reactComponent = getReactComponent(attrs.name, $injector);
 
       const renderMyComponent = () => {
@@ -244,12 +257,12 @@ const reactComponent = $injector => {
 //
 //     <hello name="name"/>
 //
-const reactDirective = $injector => {
-  return (reactComponentName, props, conf, injectableProps) => {
+const reactDirective = ($injector: auto.IInjectorService) => {
+  return (reactComponentName: string, props: string[], conf: any, injectableProps: any) => {
     const directive = {
       restrict: 'E',
       replace: true,
-      link: function(scope, elem, attrs) {
+      link: function(scope: any, elem: Element[], attrs: any) {
         const reactComponent = getReactComponent(reactComponentName, $injector);
 
         // if props is not defined, fall back to use the React component's propTypes if present
@@ -257,8 +270,8 @@ const reactDirective = $injector => {
 
         // for each of the properties, get their scope value and set it to scope.props
         const renderMyComponent = () => {
-          let scopeProps = {};
-          const config = {};
+          let scopeProps: any = {};
+          const config: any = {};
 
           props.forEach(prop => {
             const propName = getPropName(prop);
@@ -274,7 +287,9 @@ const reactDirective = $injector => {
         // watch each property name and trigger an update whenever something changes,
         // to update scope.props with new values
         const propExpressions = props.map(prop => {
-          return Array.isArray(prop) ? [attrs[getPropName(prop)], getPropConfig(prop)] : attrs[prop];
+          return Array.isArray(prop)
+            ? [findAttribute(attrs, prop[0]), getPropConfig(prop)]
+            : findAttribute(attrs, prop);
         });
 
         // If we don't have any props, then our watch statement won't fire.

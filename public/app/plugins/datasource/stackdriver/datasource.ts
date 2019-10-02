@@ -1,82 +1,100 @@
 import { stackdriverUnitMappings } from './constants';
 import appEvents from 'app/core/app_events';
+import _ from 'lodash';
+import StackdriverMetricFindQuery from './StackdriverMetricFindQuery';
+import { StackdriverQuery, MetricDescriptor, StackdriverOptions } from './types';
+import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui';
+import { ScopedVars } from '@grafana/data';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-export default class StackdriverDatasource {
-  id: number;
+export default class StackdriverDatasource extends DataSourceApi<StackdriverQuery, StackdriverOptions> {
   url: string;
   baseUrl: string;
   projectName: string;
+  authenticationType: string;
+  queryPromise: Promise<any>;
+  metricTypes: any[];
 
   /** @ngInject */
-  constructor(instanceSettings, private backendSrv, private templateSrv, private timeSrv) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<StackdriverOptions>,
+    private backendSrv: BackendSrv,
+    private templateSrv: TemplateSrv,
+    private timeSrv: TimeSrv
+  ) {
+    super(instanceSettings);
     this.baseUrl = `/stackdriver/`;
     this.url = instanceSettings.url;
-    this.doRequest = this.doRequest;
-    this.id = instanceSettings.id;
     this.projectName = instanceSettings.jsonData.defaultProject || '';
+    this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
+    this.metricTypes = [];
   }
 
-  async getTimeSeries(options) {
+  async getTimeSeries(options: any) {
     const queries = options.targets
-      .filter(target => {
+      .filter((target: any) => {
         return !target.hide && target.metricType;
       })
-      .map(t => {
-        if (!t.hasOwnProperty('aggregation')) {
-          t.aggregation = {
-            crossSeriesReducer: 'REDUCE_MEAN',
-            groupBys: [],
-          };
-        }
+      .map((t: any) => {
         return {
           refId: t.refId,
           intervalMs: options.intervalMs,
           datasourceId: this.id,
           metricType: this.templateSrv.replace(t.metricType, options.scopedVars || {}),
-          primaryAggregation: this.templateSrv.replace(t.aggregation.crossSeriesReducer, options.scopedVars || {}),
-          perSeriesAligner: this.templateSrv.replace(t.aggregation.perSeriesAligner, options.scopedVars || {}),
-          alignmentPeriod: this.templateSrv.replace(t.aggregation.alignmentPeriod, options.scopedVars || {}),
-          groupBys: this.interpolateGroupBys(t.aggregation.groupBys, options.scopedVars),
+          crossSeriesReducer: this.templateSrv.replace(t.crossSeriesReducer || 'REDUCE_MEAN', options.scopedVars || {}),
+          perSeriesAligner: this.templateSrv.replace(t.perSeriesAligner, options.scopedVars || {}),
+          alignmentPeriod: this.templateSrv.replace(t.alignmentPeriod, options.scopedVars || {}),
+          groupBys: this.interpolateGroupBys(t.groupBys, options.scopedVars),
           view: t.view || 'FULL',
-          filters: (t.filters || []).map(f => {
-            return this.templateSrv.replace(f, options.scopedVars || {});
-          }),
+          filters: this.interpolateFilters(t.filters, options.scopedVars),
           aliasBy: this.templateSrv.replace(t.aliasBy, options.scopedVars || {}),
           type: 'timeSeriesQuery',
         };
       });
 
-    const { data } = await this.backendSrv.datasourceRequest({
-      url: '/api/tsdb/query',
-      method: 'POST',
-      data: {
-        from: options.range.from.valueOf().toString(),
-        to: options.range.to.valueOf().toString(),
-        queries,
-      },
-    });
-    return data;
+    if (queries.length > 0) {
+      const { data } = await this.backendSrv.datasourceRequest({
+        url: '/api/tsdb/query',
+        method: 'POST',
+        data: {
+          from: options.range.from.valueOf().toString(),
+          to: options.range.to.valueOf().toString(),
+          queries,
+        },
+      });
+      return data;
+    } else {
+      return { results: [] };
+    }
   }
 
-  async getLabels(metricType, refId) {
-    return await this.getTimeSeries({
+  interpolateFilters(filters: string[], scopedVars: ScopedVars) {
+    return (filters || []).map(f => {
+      return this.templateSrv.replace(f, scopedVars || {}, 'regex');
+    });
+  }
+
+  async getLabels(metricType: string, refId: string) {
+    const response = await this.getTimeSeries({
       targets: [
         {
           refId: refId,
           datasourceId: this.id,
           metricType: this.templateSrv.replace(metricType),
-          aggregation: {
-            crossSeriesReducer: 'REDUCE_NONE',
-          },
+          crossSeriesReducer: 'REDUCE_NONE',
           view: 'HEADERS',
         },
       ],
       range: this.timeSrv.timeRange(),
     });
+
+    return response.results[refId];
   }
 
-  interpolateGroupBys(groupBys: string[], scopedVars): string[] {
-    let interpolatedGroupBys = [];
+  interpolateGroupBys(groupBys: string[], scopedVars: {}): string[] {
+    let interpolatedGroupBys: any[] = [];
     (groupBys || []).forEach(gb => {
       const interpolated = this.templateSrv.replace(gb, scopedVars || {}, 'csv').split(',');
       if (Array.isArray(interpolated)) {
@@ -89,54 +107,58 @@ export default class StackdriverDatasource {
   }
 
   resolvePanelUnitFromTargets(targets: any[]) {
-    let unit = 'none';
+    let unit;
     if (targets.length > 0 && targets.every(t => t.unit === targets[0].unit)) {
       if (stackdriverUnitMappings.hasOwnProperty(targets[0].unit)) {
+        // @ts-ignore
         unit = stackdriverUnitMappings[targets[0].unit];
       }
     }
     return unit;
   }
 
-  async query(options) {
-    const result = [];
+  async query(options: DataQueryRequest<StackdriverQuery>) {
+    const result: any[] = [];
     const data = await this.getTimeSeries(options);
     if (data.results) {
-      Object['values'](data.results).forEach(queryRes => {
+      Object['values'](data.results).forEach((queryRes: any) => {
         if (!queryRes.series) {
           return;
         }
-
         const unit = this.resolvePanelUnitFromTargets(options.targets);
-        queryRes.series.forEach(series => {
-          result.push({
+        queryRes.series.forEach((series: any) => {
+          let timeSerie: any = {
             target: series.name,
             datapoints: series.points,
             refId: queryRes.refId,
             meta: queryRes.meta,
-            unit,
-          });
+          };
+          if (unit) {
+            timeSerie = { ...timeSerie, unit };
+          }
+          result.push(timeSerie);
         });
       });
+      return { data: result };
+    } else {
+      return { data: [] };
     }
-
-    return { data: result };
   }
 
-  async annotationQuery(options) {
+  async annotationQuery(options: any) {
     const annotation = options.annotation;
     const queries = [
       {
         refId: 'annotationQuery',
         datasourceId: this.id,
         metricType: this.templateSrv.replace(annotation.target.metricType, options.scopedVars || {}),
-        primaryAggregation: 'REDUCE_NONE',
+        crossSeriesReducer: 'REDUCE_NONE',
         perSeriesAligner: 'ALIGN_NONE',
         title: this.templateSrv.replace(annotation.target.title, options.scopedVars || {}),
         text: this.templateSrv.replace(annotation.target.text, options.scopedVars || {}),
         tags: this.templateSrv.replace(annotation.target.tags, options.scopedVars || {}),
         view: 'FULL',
-        filters: (annotation.target.filters || []).map(f => {
+        filters: (annotation.target.filters || []).map((f: any) => {
           return this.templateSrv.replace(f, options.scopedVars || {});
         }),
         type: 'annotationQuery',
@@ -153,117 +175,130 @@ export default class StackdriverDatasource {
       },
     });
 
-    const results = data.results['annotationQuery'].tables[0].rows.map(v => {
+    const results = data.results['annotationQuery'].tables[0].rows.map((v: any) => {
       return {
         annotation: annotation,
         time: Date.parse(v[0]),
         title: v[1],
         tags: [],
         text: v[3],
-      };
+      } as any;
     });
 
     return results;
   }
 
-  metricFindQuery(query) {
-    throw new Error('Template variables support is not yet imlemented');
+  async metricFindQuery(query: string) {
+    const stackdriverMetricFindQuery = new StackdriverMetricFindQuery(this);
+    return stackdriverMetricFindQuery.execute(query);
   }
 
-  testDatasource() {
-    const path = `v3/projects/${this.projectName}/metricDescriptors`;
-    return this.doRequest(`${this.baseUrl}${path}`)
-      .then(response => {
-        if (response.status === 200) {
-          return {
-            status: 'success',
-            message: 'Successfully queried the Stackdriver API.',
-            title: 'Success',
-          };
-        }
-
-        return {
-          status: 'error',
-          message: 'Returned http status code ' + response.status,
-        };
-      })
-      .catch(error => {
-        let message = 'Stackdriver: ';
-        message += error.statusText ? error.statusText + ': ' : '';
-
+  async testDatasource() {
+    let status, message;
+    const defaultErrorMessage = 'Cannot connect to Stackdriver API';
+    try {
+      const projectName = await this.getDefaultProject();
+      const path = `v3/projects/${projectName}/metricDescriptors`;
+      const response = await this.doRequest(`${this.baseUrl}${path}`);
+      if (response.status === 200) {
+        status = 'success';
+        message = 'Successfully queried the Stackdriver API.';
+      } else {
+        status = 'error';
+        message = response.statusText ? response.statusText : defaultErrorMessage;
+      }
+    } catch (error) {
+      status = 'error';
+      if (_.isString(error)) {
+        message = error;
+      } else {
+        message = 'Stackdriver: ';
+        message += error.statusText ? error.statusText : defaultErrorMessage;
         if (error.data && error.data.error && error.data.error.code) {
-          // 400, 401
-          message += error.data.error.code + '. ' + error.data.error.message;
-        } else {
-          message += 'Cannot connect to Stackdriver API';
+          message += ': ' + error.data.error.code + '. ' + error.data.error.message;
         }
-        return {
-          status: 'error',
-          message: message,
-        };
-      });
+      }
+    } finally {
+      return {
+        status,
+        message,
+      };
+    }
   }
 
-  async getProjects() {
-    const response = await this.doRequest(`/cloudresourcemanager/v1/projects`);
-    return response.data.projects.map(p => ({ id: p.projectId, name: p.name }));
+  formatStackdriverError(error: any) {
+    let message = 'Stackdriver: ';
+    message += error.statusText ? error.statusText + ': ' : '';
+    if (error.data && error.data.error) {
+      try {
+        const res = JSON.parse(error.data.error);
+        message += res.error.code + '. ' + res.error.message;
+      } catch (err) {
+        message += error.data.error;
+      }
+    } else {
+      message += 'Cannot connect to Stackdriver API';
+    }
+    return message;
   }
 
   async getDefaultProject() {
     try {
-      const projects = await this.getProjects();
-      if (projects && projects.length > 0) {
-        const test = projects.filter(p => p.id === this.projectName)[0];
-        return test;
+      if (this.authenticationType === 'gce' || !this.projectName) {
+        const { data } = await this.backendSrv.datasourceRequest({
+          url: '/api/tsdb/query',
+          method: 'POST',
+          data: {
+            queries: [
+              {
+                refId: 'ensureDefaultProjectQuery',
+                type: 'ensureDefaultProjectQuery',
+                datasourceId: this.id,
+              },
+            ],
+          },
+        });
+        this.projectName = data.results.ensureDefaultProjectQuery.meta.defaultProject;
+        return this.projectName;
       } else {
-        throw new Error('No projects found');
+        return this.projectName;
       }
     } catch (error) {
-      let message = 'Projects cannot be fetched: ';
-      message += error.statusText ? error.statusText + ': ' : '';
-      if (error && error.data && error.data.error && error.data.error.message) {
-        if (error.data.error.code === 403) {
-          message += `
-            A list of projects could not be fetched from the Google Cloud Resource Manager API.
-            You might need to enable it first:
-            https://console.developers.google.com/apis/library/cloudresourcemanager.googleapis.com`;
-        } else {
-          message += error.data.error.code + '. ' + error.data.error.message;
-        }
-      } else {
-        message += 'Cannot connect to Stackdriver API';
-      }
-      appEvents.emit('ds-request-error', message);
+      throw this.formatStackdriverError(error);
     }
   }
 
-  async getMetricTypes(projectId: string) {
+  async getMetricTypes(projectName: string): Promise<MetricDescriptor[]> {
     try {
-      const metricsApiPath = `v3/projects/${projectId}/metricDescriptors`;
-      const { data } = await this.doRequest(`${this.baseUrl}${metricsApiPath}`);
+      if (this.metricTypes.length === 0) {
+        const metricsApiPath = `v3/projects/${projectName}/metricDescriptors`;
+        const { data } = await this.doRequest(`${this.baseUrl}${metricsApiPath}`);
 
-      const metrics = data.metricDescriptors.map(m => {
-        const [service] = m.type.split('/');
-        const [serviceShortName] = service.split('.');
-        m.service = service;
-        m.serviceShortName = serviceShortName;
-        m.displayName = m.displayName || m.type;
-        return m;
-      });
+        this.metricTypes = data.metricDescriptors.map((m: any) => {
+          const [service] = m.type.split('/');
+          const [serviceShortName] = service.split('.');
+          m.service = service;
+          m.serviceShortName = serviceShortName;
+          m.displayName = m.displayName || m.type;
 
-      return metrics;
+          return m;
+        });
+      }
+
+      return this.metricTypes;
     } catch (error) {
-      console.log(error);
+      appEvents.emit('ds-request-error', this.formatStackdriverError(error));
+      return [];
     }
   }
 
-  async doRequest(url, maxRetries = 1) {
+  async doRequest(url: string, maxRetries = 1) {
     return this.backendSrv
       .datasourceRequest({
         url: this.url + url,
         method: 'GET',
       })
-      .catch(error => {
+      .catch((error: any) => {
         if (maxRetries > 0) {
           return this.doRequest(url, maxRetries - 1);
         }

@@ -1,23 +1,15 @@
-<div class="gf-form-group">
-	<div class="gf-form-inline">
-		<div class="gf-form">
-			<span class="gf-form-label">Mode</span>
-			<span class="gf-form-select-wrapper">
-				<select class="gf-form-input" ng-model="ctrl.panel.mode" ng-options="f for f in ['html','markdown']"></select>
-			</span>
-		</div>
+<div class="gf-form-inline">
+	<div class="gf-form">
+		<span class="gf-form-label">Mode</span>
+		<span class="gf-form-select-wrapper">
+			<select class="gf-form-input" ng-model="ctrl.panel.mode" ng-options="f for f in ['html','markdown']"></select>
+		</span>
 	</div>
 </div>
 
-<h3 class="page-heading">Content</h3>
-
-<span ng-show="ctrl.panel.mode == 'markdown'">
-	(This area uses <a target="_blank" href="http://en.wikipedia.org/wiki/Markdown">Markdown</a>. HTML is not supported)
-</span>
-
 <div class="gf-form-inline">
 	<div class="gf-form gf-form--grow">
-		<code-editor content="ctrl.panel.content" on-change="ctrl.render()" data-mode="markdown" data-max-lines=20 code-editor-focus="true">
+		<code-editor content="ctrl.panel.content" on-change="ctrl.render()" data-mode="markdown" data-max-lines=20>
 		</code-editor>
 	</div>
 </div>

@@ -7,7 +7,7 @@ aliases = ["/datasources/influxdb"]
 [menu.docs]
 name = "InfluxDB"
 parent = "datasources"
-weight = 3
+weight = 2
 +++
 
 # Using InfluxDB in Grafana
@@ -27,11 +27,12 @@ Name | Description
 ------------ | -------------
 *Name* | The data source name. This is how you refer to the data source in panels & queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
-*Url* | The http protocol, ip and port of you influxdb api (influxdb api port is by default 8086)
+*Url* | The HTTP protocol, ip and port of you influxdb api (influxdb api port is by default 8086)
 *Access* | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
 *Database* | Name of your influxdb database
 *User* | Name of your database user
 *Password* | Database user's password
+*HTTP mode* | How to query the database (`GET` or `POST` HTTP verb). The `POST` verb allows heavy queries that would return an error using the `GET` verb. Default is `GET`.
 
 Access mode controls how requests to the data source will be handled. Server should be the preferred way if nothing else stated.
 
@@ -116,6 +117,26 @@ You can switch to raw query mode by clicking hamburger icon and then `Switch edi
 You can remove the group by time by clicking on the `time` part and then the `x` icon. You can
 change the option `Format As` to `Table` if you want to show raw data in the `Table` panel.
 
+## Querying Logs (BETA)
+
+> Only available in Grafana v6.3+.
+
+Querying and displaying log data from InfluxDB is available via [Explore](/features/explore).
+
+![](/img/docs/v63/influxdb_explore_logs.png)
+
+Select the InfluxDB data source, change to Logs using the Metrics/Logs switcher,
+and then use the `Measurements/Fields` button to display your logs.
+
+### Log Queries
+
+The Logs Explorer (the `Measurements/Fields` button) next to the query field shows a list of measurements and fields. Choose the desired measurement that contains your log data and then choose which field Explore should use to display the log message.
+
+Once the result is returned, the log panel shows a list of log rows and a bar chart where the x-axis shows the time and the y-axis shows the frequency/count.
+
+### Filter search
+
+To add a filter click the plus icon to the right of the `Measurements/Fields` button or a condition. You can remove tag filters by clicking on the first select and choosing `--remove filter--`.
 
 ## Templating
 
@@ -123,7 +144,7 @@ Instead of hard-coding things like server, application and sensor name in you me
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
 being displayed in your dashboard.
 
-Checkout the [Templating]({{< relref "reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -195,11 +216,11 @@ For InfluxDB you need to enter a query like in the above example. You need to ha
 part. If you only select one column you will not need to enter anything in the column mapping fields. The
 Tags field can be a comma separated string.
 
-## Configure the Datasource with Provisioning
+## Configure the data source with provisioning
 
-It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources)
 
-Here are some provisioning examples for this datasource.
+Here are some provisioning examples for this dat asource.
 
 ```yaml
 apiVersion: 1
@@ -212,4 +233,6 @@ datasources:
     user: grafana
     password: grafana
     url: http://localhost:8086
+    jsonData:
+      httpMode: GET
 ```

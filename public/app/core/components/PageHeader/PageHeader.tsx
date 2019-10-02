@@ -1,7 +1,7 @@
-import React from 'react';
-import { NavModel, NavModelItem } from 'app/types';
+import React, { FormEvent } from 'react';
 import classNames from 'classnames';
 import appEvents from 'app/core/app_events';
+import { NavModel, NavModelItem, NavModelBreadcrumb } from '@grafana/data';
 
 export interface Props {
   model: NavModel;
@@ -12,8 +12,8 @@ const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string 
     return navItem.active === true;
   });
 
-  const gotoUrl = evt => {
-    const element = evt.target;
+  const gotoUrl = (evt: FormEvent) => {
+    const element = evt.target as HTMLSelectElement;
     const url = element.options[element.selectedIndex].value;
     appEvents.emit('location-change', { href: url });
   };
@@ -80,7 +80,7 @@ const Navigation = ({ main }: { main: NavModelItem }) => {
 };
 
 export default class PageHeader extends React.Component<Props, any> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
   }
 
@@ -89,7 +89,7 @@ export default class PageHeader extends React.Component<Props, any> {
     return true;
   }
 
-  renderTitle(title: string, breadcrumbs: any[]) {
+  renderTitle(title: string, breadcrumbs: NavModelBreadcrumb[]) {
     if (!title && (!breadcrumbs || breadcrumbs.length === 0)) {
       return null;
     }
@@ -99,16 +99,15 @@ export default class PageHeader extends React.Component<Props, any> {
     }
 
     const breadcrumbsResult = [];
-    for (let i = 0; i < breadcrumbs.length; i++) {
-      const bc = breadcrumbs[i];
+    for (const bc of breadcrumbs) {
       if (bc.url) {
         breadcrumbsResult.push(
-          <a className="text-link" key={i} href={bc.url}>
+          <a className="text-link" key={breadcrumbsResult.length} href={bc.url}>
             {bc.title}
           </a>
         );
       } else {
-        breadcrumbsResult.push(<span key={i}> / {bc.title}</span>);
+        breadcrumbsResult.push(<span key={breadcrumbsResult.length}> / {bc.title}</span>);
       }
     }
     breadcrumbsResult.push(<span key={breadcrumbs.length + 1}> / {title}</span>);
@@ -116,7 +115,7 @@ export default class PageHeader extends React.Component<Props, any> {
     return <h1 className="page-header__title">{breadcrumbsResult}</h1>;
   }
 
-  renderHeaderTitle(main) {
+  renderHeaderTitle(main: NavModelItem) {
     return (
       <div className="page-header__inner">
         <span className="page-header__logo">
@@ -127,12 +126,6 @@ export default class PageHeader extends React.Component<Props, any> {
         <div className="page-header__info-block">
           {this.renderTitle(main.text, main.breadcrumbs)}
           {main.subTitle && <div className="page-header__sub-title">{main.subTitle}</div>}
-          {main.subType && (
-            <div className="page-header__stamps">
-              <i className={main.subType.icon} />
-              {main.subType.text}
-            </div>
-          )}
         </div>
       </div>
     );

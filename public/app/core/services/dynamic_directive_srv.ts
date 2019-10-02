@@ -3,9 +3,9 @@ import coreModule from '../core_module';
 
 class DynamicDirectiveSrv {
   /** @ngInject */
-  constructor(private $compile, private $rootScope) {}
+  constructor(private $compile: angular.ICompileService) {}
 
-  addDirective(element, name, scope) {
+  addDirective(element: any, name: string, scope: any) {
     const child = angular.element(document.createElement(name));
     this.$compile(child)(scope);
 
@@ -13,35 +13,28 @@ class DynamicDirectiveSrv {
     element.append(child);
   }
 
-  link(scope, elem, attrs, options) {
-    options
-      .directive(scope)
-      .then(directiveInfo => {
-        if (!directiveInfo || !directiveInfo.fn) {
-          elem.empty();
-          return;
-        }
+  link(scope: any, elem: JQLite, attrs: any, options: any) {
+    const directiveInfo = options.directive(scope);
+    if (!directiveInfo || !directiveInfo.fn) {
+      elem.empty();
+      return;
+    }
 
-        if (!directiveInfo.fn.registered) {
-          coreModule.directive(attrs.$normalize(directiveInfo.name), directiveInfo.fn);
-          directiveInfo.fn.registered = true;
-        }
+    if (!directiveInfo.fn.registered) {
+      coreModule.directive(attrs.$normalize(directiveInfo.name), directiveInfo.fn);
+      directiveInfo.fn.registered = true;
+    }
 
-        this.addDirective(elem, directiveInfo.name, scope);
-      })
-      .catch(err => {
-        console.log('Plugin load:', err);
-        this.$rootScope.appEvent('alert-error', ['Plugin error', err.toString()]);
-      });
+    this.addDirective(elem, directiveInfo.name, scope);
   }
 
-  create(options) {
+  create(options: any) {
     const directiveDef = {
       restrict: 'E',
       scope: options.scope,
-      link: (scope, elem, attrs) => {
+      link: (scope: any, elem: JQLite, attrs: any) => {
         if (options.watchPath) {
-          let childScope = null;
+          let childScope: any = null;
           scope.$watch(options.watchPath, () => {
             if (childScope) {
               childScope.$destroy();

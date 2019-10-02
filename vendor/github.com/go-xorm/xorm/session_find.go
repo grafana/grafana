@@ -29,6 +29,39 @@ func (session *Session) Find(rowsSlicePtr interface{}, condiBean ...interface{})
 	return session.find(rowsSlicePtr, condiBean...)
 }
 
+// FindAndCount find the results and also return the counts
+func (session *Session) FindAndCount(rowsSlicePtr interface{}, condiBean ...interface{}) (int64, error) {
+	if session.isAutoClose {
+		defer session.Close()
+	}
+
+	session.autoResetStatement = false
+	err := session.find(rowsSlicePtr, condiBean...)
+	if err != nil {
+		return 0, err
+	}
+
+	sliceValue := reflect.Indirect(reflect.ValueOf(rowsSlicePtr))
+	if sliceValue.Kind() != reflect.Slice && sliceValue.Kind() != reflect.Map {
+		return 0, errors.New("needs a pointer to a slice or a map")
+	}
+
+	sliceElementType := sliceValue.Type().Elem()
+	if sliceElementType.Kind() == reflect.Ptr {
+		sliceElementType = sliceElementType.Elem()
+	}
+	session.autoResetStatement = true
+
+	if session.statement.selectStr != "" {
+		session.statement.selectStr = ""
+	}
+	if session.statement.OrderStr != "" {
+		session.statement.OrderStr = ""
+	}
+
+	return session.Count(reflect.New(sliceElementType).Interface())
+}
+
 func (session *Session) find(rowsSlicePtr interface{}, condiBean ...interface{}) error {
 	sliceValue := reflect.Indirect(reflect.ValueOf(rowsSlicePtr))
 	if sliceValue.Kind() != reflect.Slice && sliceValue.Kind() != reflect.Map {
@@ -42,7 +75,7 @@ func (session *Session) find(rowsSlicePtr interface{}, condiBean ...interface{})
 		if sliceElementType.Kind() == reflect.Ptr {
 			if sliceElementType.Elem().Kind() == reflect.Struct {
 				pv := reflect.New(sliceElementType.Elem())
-				if err := session.statement.setRefValue(pv.Elem()); err != nil {
+				if err := session.statement.setRefValue(pv); err != nil {
 					return err
 				}
 			} else {
@@ -50,7 +83,7 @@ func (session *Session) find(rowsSlicePtr interface{}, condiBean ...interface{})
 			}
 		} else if sliceElementType.Kind() == reflect.Struct {
 			pv := reflect.New(sliceElementType)
-			if err := session.statement.setRefValue(pv.Elem()); err != nil {
+			if err := session.statement.setRefValue(pv); err != nil {
 				return err
 			}
 		} else {
@@ -102,7 +135,7 @@ func (session *Session) find(rowsSlicePtr interface{}, condiBean ...interface{})
 			if session.statement.JoinStr == "" {
 				if columnStr == "" {
 					if session.statement.GroupByStr != "" {
-						columnStr = session.statement.Engine.Quote(strings.Replace(session.statement.GroupByStr, ",", session.engine.Quote(","), -1))
+						columnStr = session.engine.quoteColumns(session.statement.GroupByStr)
 					} else {
 						columnStr = session.statement.genColumnStr()
 					}
@@ -110,7 +143,7 @@ func (session *Session) find(rowsSlicePtr interface{}, condiBean ...interface{})
 			} else {
 				if columnStr == "" {
 					if session.statement.GroupByStr != "" {
-						columnStr = session.statement.Engine.Quote(strings.Replace(session.statement.GroupByStr, ",", session.engine.Quote(","), -1))
+						columnStr = session.engine.quoteColumns(session.statement.GroupByStr)
 					} else {
 						columnStr = "*"
 					}
@@ -128,7 +161,7 @@ func (session *Session) find(rowsSlicePtr interface{}, condiBean ...interface{})
 		}
 
 		args = append(session.statement.joinArgs, condArgs...)
-		sqlStr, err = session.statement.genSelectSQL(columnStr, condSQL)
+		sqlStr, err = session.statement.genSelectSQL(columnStr, condSQL, true, true)
 		if err != nil {
 			return err
 		}
@@ -143,7 +176,7 @@ func (session *Session) find(rowsSlicePtr interface{}, condiBean ...interface{})
 	}
 
 	if session.canCache() {
-		if cacher := session.engine.getCacher2(table); cacher != nil &&
+		if cacher := session.engine.getCacher(table.Name); cacher != nil &&
 			!session.statement.IsDistinct &&
 			!session.statement.unscoped {
 			err = session.cacheFind(sliceElementType, sqlStr, rowsSlicePtr, args...)
@@ -288,6 +321,12 @@ func (session *Session) cacheFind(t reflect.Type, sqlStr string, rowsSlicePtr in
 		return ErrCacheFailed
 	}
 
+	tableName := session.statement.TableName()
+	cacher := session.engine.getCacher(tableName)
+	if cacher == nil {
+		return nil
+	}
+
 	for _, filter := range session.engine.dialect.Filters() {
 		sqlStr = filter.Do(sqlStr, session.engine.dialect, session.statement.RefTable)
 	}
@@ -297,9 +336,7 @@ func (session *Session) cacheFind(t reflect.Type, sqlStr string, rowsSlicePtr in
 		return ErrCacheFailed
 	}
 
-	tableName := session.statement.TableName()
 	table := session.statement.RefTable
-	cacher := session.engine.getCacher2(table)
 	ids, err := core.GetCacheSql(cacher, tableName, newsql, args)
 	if err != nil {
 		rows, err := session.queryRows(newsql, args...)

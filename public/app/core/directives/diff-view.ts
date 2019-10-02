@@ -5,8 +5,8 @@ export class DeltaCtrl {
   observer: any;
 
   /** @ngInject */
-  constructor(private $rootScope) {
-    const waitForCompile = mutations => {
+  constructor(private $rootScope: any) {
+    const waitForCompile = (mutations: any) => {
       if (mutations.length === 1) {
         this.$rootScope.appEvent('json-diff-ready');
       }
@@ -42,10 +42,10 @@ coreModule.directive('diffDelta', delta);
 // Link to JSON line number
 export class LinkJSONCtrl {
   /** @ngInject */
-  constructor(private $scope, private $rootScope, private $anchorScroll) {}
+  constructor(private $scope: any, private $rootScope: any, private $anchorScroll: any) {}
 
   goToLine(line: number) {
-    let unbind;
+    let unbind: () => void;
 
     const scroll = () => {
       this.$anchorScroll(`l${line}`);

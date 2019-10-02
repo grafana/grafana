@@ -1,15 +1,22 @@
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
-import { store } from 'app/store/configureStore';
+import { store } from 'app/store/store';
 import locationUtil from 'app/core/utils/location_util';
 import { updateLocation } from 'app/core/actions';
+import { ITimeoutService, ILocationService, IWindowService, IRootScopeService } from 'angular';
 
-// Services that handles angular -> mobx store sync & other react <-> angular sync
+// Services that handles angular -> redux store sync & other react <-> angular sync
 export class BridgeSrv {
-  private fullPageReloadRoutes;
+  private fullPageReloadRoutes: string[];
 
   /** @ngInject */
-  constructor(private $location, private $timeout, private $window, private $rootScope, private $route) {
+  constructor(
+    private $location: ILocationService,
+    private $timeout: ITimeoutService,
+    private $window: IWindowService,
+    private $rootScope: IRootScopeService,
+    private $route: any
+  ) {
     this.fullPageReloadRoutes = ['/logout'];
   }
 
@@ -46,12 +53,16 @@ export class BridgeSrv {
       if (angularUrl !== url) {
         this.$timeout(() => {
           this.$location.url(url);
+          // some state changes should not trigger new browser history
+          if (state.location.replace) {
+            this.$location.replace();
+          }
         });
         console.log('store updating angular $location.url', url);
       }
     });
 
-    appEvents.on('location-change', payload => {
+    appEvents.on('location-change', (payload: any) => {
       const urlWithoutBase = locationUtil.stripBaseFromUrl(payload.href);
       if (this.fullPageReloadRoutes.indexOf(urlWithoutBase) > -1) {
         this.$window.location.href = payload.href;

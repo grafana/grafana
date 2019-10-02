@@ -1,0 +1,6 @@
+{
+  "extends": "../../tslint.json",
+  "rules": {
+    "import-blacklist": [true, "moment", ["^@grafana/ui.*"], ["^@grafana/runtime.*"]]
+  }
+}

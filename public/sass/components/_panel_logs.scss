@@ -1,0 +1,58 @@
+$column-horizontal-spacing: 10px;
+
+.logs-panel-options {
+  display: flex;
+  background-color: $page-bg;
+  padding: $space-sm $space-md $space-sm $space-md;
+  border-radius: $border-radius;
+  margin: $space-md 0 $space-sm;
+  border: $panel-border;
+  flex-direction: column;
+}
+
+.logs-panel-controls {
+  display: flex;
+  justify-items: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
+
+  > * {
+    margin-right: $spacer * 2;
+  }
+}
+
+.logs-panel-nodata {
+  > * {
+    margin-left: 0.5em;
+  }
+}
+
+.logs-panel-meta {
+  flex: 1;
+  color: $text-color-weak;
+  margin-bottom: $spacer;
+  min-width: 30%;
+  display: flex;
+}
+
+.logs-panel-meta__item {
+  margin-right: $spacer;
+  display: flex;
+  align-items: baseline;
+}
+
+.logs-panel-meta__label {
+  margin-right: $spacer / 2;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semi-bold;
+}
+
+.logs-panel-meta__value {
+  font-family: $font-family-monospace;
+}
+
+.logs-panel-meta-item__labels {
+  // compensate for the labels padding
+  position: relative;
+  top: 4px;
+}

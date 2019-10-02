@@ -1,12 +1,21 @@
 package setting
 
 import (
+	"bufio"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
+	"gopkg.in/ini.v1"
+
 	. "github.com/smartystreets/goconvey/convey"
+)
+
+const (
+	windows = "windows"
 )
 
 func TestLoadingSettings(t *testing.T) {
@@ -23,6 +32,22 @@ func TestLoadingSettings(t *testing.T) {
 			So(cfg.RendererCallbackUrl, ShouldEqual, "http://localhost:3000/")
 		})
 
+		Convey("default.ini should have no semi-colon commented entries", func() {
+			file, err := os.Open("../../conf/defaults.ini")
+			if err != nil {
+				t.Errorf("failed to load defaults.ini file: %v", err)
+			}
+			defer file.Close()
+
+			scanner := bufio.NewScanner(file)
+			for scanner.Scan() {
+				// This only catches values commented out with ";" and will not catch those that are commented out with "#".
+				if strings.HasPrefix(scanner.Text(), ";") {
+					t.Errorf("entries in defaults.ini must not be commented or environment variables will not work: %v", scanner.Text())
+				}
+			}
+		})
+
 		Convey("Should be able to override via environment variables", func() {
 			os.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
 
@@ -30,8 +55,8 @@ func TestLoadingSettings(t *testing.T) {
 			cfg.Load(&CommandLineArgs{HomePath: "../../"})
 
 			So(AdminUser, ShouldEqual, "superduper")
-			So(DataPath, ShouldEqual, filepath.Join(HomePath, "data"))
-			So(LogsPath, ShouldEqual, filepath.Join(DataPath, "log"))
+			So(cfg.DataPath, ShouldEqual, filepath.Join(HomePath, "data"))
+			So(cfg.LogsPath, ShouldEqual, filepath.Join(cfg.DataPath, "log"))
 		})
 
 		Convey("Should replace password when defined in environment", func() {
@@ -70,14 +95,14 @@ func TestLoadingSettings(t *testing.T) {
 		})
 
 		Convey("Should be able to override via command line", func() {
-			if runtime.GOOS == "windows" {
+			if runtime.GOOS == windows {
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
 					Args:     []string{`cfg:paths.data=c:\tmp\data`, `cfg:paths.logs=c:\tmp\logs`},
 				})
-				So(DataPath, ShouldEqual, `c:\tmp\data`)
-				So(LogsPath, ShouldEqual, `c:\tmp\logs`)
+				So(cfg.DataPath, ShouldEqual, `c:\tmp\data`)
+				So(cfg.LogsPath, ShouldEqual, `c:\tmp\logs`)
 			} else {
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
@@ -85,8 +110,8 @@ func TestLoadingSettings(t *testing.T) {
 					Args:     []string{"cfg:paths.data=/tmp/data", "cfg:paths.logs=/tmp/logs"},
 				})
 
-				So(DataPath, ShouldEqual, "/tmp/data")
-				So(LogsPath, ShouldEqual, "/tmp/logs")
+				So(cfg.DataPath, ShouldEqual, "/tmp/data")
+				So(cfg.LogsPath, ShouldEqual, "/tmp/logs")
 			}
 		})
 
@@ -104,7 +129,7 @@ func TestLoadingSettings(t *testing.T) {
 		})
 
 		Convey("Defaults can be overridden in specified config file", func() {
-			if runtime.GOOS == "windows" {
+			if runtime.GOOS == windows {
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
@@ -112,7 +137,7 @@ func TestLoadingSettings(t *testing.T) {
 					Args:     []string{`cfg:default.paths.data=c:\tmp\data`},
 				})
 
-				So(DataPath, ShouldEqual, `c:\tmp\override`)
+				So(cfg.DataPath, ShouldEqual, `c:\tmp\override`)
 			} else {
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
@@ -121,12 +146,12 @@ func TestLoadingSettings(t *testing.T) {
 					Args:     []string{"cfg:default.paths.data=/tmp/data"},
 				})
 
-				So(DataPath, ShouldEqual, "/tmp/override")
+				So(cfg.DataPath, ShouldEqual, "/tmp/override")
 			}
 		})
 
 		Convey("Command line overrides specified config file", func() {
-			if runtime.GOOS == "windows" {
+			if runtime.GOOS == windows {
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
@@ -134,7 +159,7 @@ func TestLoadingSettings(t *testing.T) {
 					Args:     []string{`cfg:paths.data=c:\tmp\data`},
 				})
 
-				So(DataPath, ShouldEqual, `c:\tmp\data`)
+				So(cfg.DataPath, ShouldEqual, `c:\tmp\data`)
 			} else {
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
@@ -143,12 +168,12 @@ func TestLoadingSettings(t *testing.T) {
 					Args:     []string{"cfg:paths.data=/tmp/data"},
 				})
 
-				So(DataPath, ShouldEqual, "/tmp/data")
+				So(cfg.DataPath, ShouldEqual, "/tmp/data")
 			}
 		})
 
 		Convey("Can use environment variables in config values", func() {
-			if runtime.GOOS == "windows" {
+			if runtime.GOOS == windows {
 				os.Setenv("GF_DATA_PATH", `c:\tmp\env_override`)
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
@@ -156,7 +181,7 @@ func TestLoadingSettings(t *testing.T) {
 					Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
 				})
 
-				So(DataPath, ShouldEqual, `c:\tmp\env_override`)
+				So(cfg.DataPath, ShouldEqual, `c:\tmp\env_override`)
 			} else {
 				os.Setenv("GF_DATA_PATH", "/tmp/env_override")
 				cfg := NewCfg()
@@ -165,7 +190,7 @@ func TestLoadingSettings(t *testing.T) {
 					Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
 				})
 
-				So(DataPath, ShouldEqual, "/tmp/env_override")
+				So(cfg.DataPath, ShouldEqual, "/tmp/env_override")
 			}
 		})
 
@@ -187,6 +212,30 @@ func TestLoadingSettings(t *testing.T) {
 			})
 
 			So(cfg.RendererCallbackUrl, ShouldEqual, "http://myserver/renderer/")
+		})
+	})
+
+	Convey("Test reading string values from .ini file", t, func() {
+
+		iniFile, err := ini.Load(path.Join(HomePath, "pkg/setting/testdata/invalid.ini"))
+		So(err, ShouldBeNil)
+
+		Convey("If key is found - should return value from ini file", func() {
+			value, err := valueAsString(iniFile.Section("server"), "alt_url", "")
+			So(err, ShouldBeNil)
+			So(value, ShouldEqual, "https://grafana.com/")
+		})
+
+		Convey("If key is not found - should return default value", func() {
+			value, err := valueAsString(iniFile.Section("server"), "extra_url", "default_url_val")
+			So(err, ShouldBeNil)
+			So(value, ShouldEqual, "default_url_val")
+		})
+
+		Convey("In case of panic - should return user-friendly error", func() {
+			value, err := valueAsString(iniFile.Section("server"), "root_url", "")
+			So(err.Error(), ShouldEqual, "Invalid value for key 'root_url' in configuration file")
+			So(value, ShouldEqual, "")
 		})
 
 	})

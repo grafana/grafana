@@ -1,0 +1,29 @@
+.mapping-row {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.add-mapping-row {
+  display: flex;
+  overflow: hidden;
+  height: 37px;
+  cursor: pointer;
+  border-radius: $border-radius;
+  width: 200px;
+}
+
+.add-mapping-row-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  background-color: $green-base;
+}
+
+.add-mapping-row-label {
+  align-items: center;
+  display: flex;
+  padding: 5px 8px;
+  background-color: $input-label-bg;
+  width: calc(100% - 36px);
+}

@@ -1,5 +1,7 @@
+import QueryModel from './postgres_query';
+
 export class PostgresMetaQuery {
-  constructor(private target, private queryModel) {}
+  constructor(private target: { table: string; timeColumn: string }, private queryModel: QueryModel) {}
 
   getOperators(datatype: string) {
     switch (datatype) {
@@ -19,7 +21,7 @@ export class PostgresMetaQuery {
   }
 
   // quote identifier as literal to use in metadata queries
-  quoteIdentAsLiteral(value) {
+  quoteIdentAsLiteral(value: string) {
     return this.queryModel.quoteLiteral(this.queryModel.unquoteIdentifier(value));
   }
 
@@ -151,8 +153,7 @@ table_schema IN (
 
   buildDatatypeQuery(column: string) {
     let query = 'SELECT udt_name FROM information_schema.columns WHERE ';
-    query += this.buildSchemaConstraint();
-    query += ' AND table_name = ' + this.quoteIdentAsLiteral(this.target.table);
+    query += this.buildTableConstraint(this.target.table);
     query += ' AND column_name = ' + this.quoteIdentAsLiteral(column);
     return query;
   }

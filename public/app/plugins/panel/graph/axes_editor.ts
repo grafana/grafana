@@ -1,4 +1,4 @@
-import kbn from 'app/core/utils/kbn';
+import { getValueFormats } from '@grafana/ui';
 
 export class AxesEditorCtrl {
   panel: any;
@@ -10,12 +10,12 @@ export class AxesEditorCtrl {
   xNameSegment: any;
 
   /** @ngInject */
-  constructor(private $scope, private $q) {
+  constructor(private $scope: any) {
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
     this.$scope.ctrl = this;
 
-    this.unitFormats = kbn.getUnitFormats();
+    this.unitFormats = getValueFormats();
 
     this.logScales = {
       linear: 1,
@@ -48,7 +48,7 @@ export class AxesEditorCtrl {
     }
   }
 
-  setUnitFormat(axis, subItem) {
+  setUnitFormat(axis: { format: any }, subItem: { value: any }) {
     axis.format = subItem.value;
     this.panelCtrl.render();
   }
@@ -64,15 +64,6 @@ export class AxesEditorCtrl {
 
   xAxisValueChanged() {
     this.panelCtrl.onDataReceived(this.panelCtrl.dataList);
-  }
-
-  getDataFieldNames(onlyNumbers) {
-    const props = this.panelCtrl.processor.getDataFieldNames(this.panelCtrl.dataList, onlyNumbers);
-    const items = props.map(prop => {
-      return { text: prop, value: prop };
-    });
-
-    return this.$q.when(items);
   }
 }
 

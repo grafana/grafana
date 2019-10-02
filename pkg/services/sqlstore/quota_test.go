@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"testing"
+	"time"
 
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -167,6 +168,70 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 
 			So(query.Result.Limit, ShouldEqual, 5)
 			So(query.Result.Used, ShouldEqual, 1)
+		})
+
+		// related: https://github.com/grafana/grafana/issues/14342
+		Convey("Should org quota updating is successful even if it called multiple time", func() {
+			orgCmd := m.UpdateOrgQuotaCmd{
+				OrgId:  orgId,
+				Target: "org_user",
+				Limit:  5,
+			}
+			err := UpdateOrgQuota(&orgCmd)
+			So(err, ShouldBeNil)
+
+			query := m.GetOrgQuotaByTargetQuery{OrgId: orgId, Target: "org_user", Default: 1}
+			err = GetOrgQuotaByTarget(&query)
+			So(err, ShouldBeNil)
+			So(query.Result.Limit, ShouldEqual, 5)
+
+			// XXX: resolution of `Updated` column is 1sec, so this makes delay
+			time.Sleep(1 * time.Second)
+
+			orgCmd = m.UpdateOrgQuotaCmd{
+				OrgId:  orgId,
+				Target: "org_user",
+				Limit:  10,
+			}
+			err = UpdateOrgQuota(&orgCmd)
+			So(err, ShouldBeNil)
+
+			query = m.GetOrgQuotaByTargetQuery{OrgId: orgId, Target: "org_user", Default: 1}
+			err = GetOrgQuotaByTarget(&query)
+			So(err, ShouldBeNil)
+			So(query.Result.Limit, ShouldEqual, 10)
+		})
+
+		// related: https://github.com/grafana/grafana/issues/14342
+		Convey("Should user quota updating is successful even if it called multiple time", func() {
+			userQuotaCmd := m.UpdateUserQuotaCmd{
+				UserId: userId,
+				Target: "org_user",
+				Limit:  5,
+			}
+			err := UpdateUserQuota(&userQuotaCmd)
+			So(err, ShouldBeNil)
+
+			query := m.GetUserQuotaByTargetQuery{UserId: userId, Target: "org_user", Default: 1}
+			err = GetUserQuotaByTarget(&query)
+			So(err, ShouldBeNil)
+			So(query.Result.Limit, ShouldEqual, 5)
+
+			// XXX: resolution of `Updated` column is 1sec, so this makes delay
+			time.Sleep(1 * time.Second)
+
+			userQuotaCmd = m.UpdateUserQuotaCmd{
+				UserId: userId,
+				Target: "org_user",
+				Limit:  10,
+			}
+			err = UpdateUserQuota(&userQuotaCmd)
+			So(err, ShouldBeNil)
+
+			query = m.GetUserQuotaByTargetQuery{UserId: userId, Target: "org_user", Default: 1}
+			err = GetUserQuotaByTarget(&query)
+			So(err, ShouldBeNil)
+			So(query.Result.Limit, ShouldEqual, 10)
 		})
 	})
 }

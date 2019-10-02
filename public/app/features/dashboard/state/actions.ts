@@ -1,32 +1,41 @@
-import { StoreState } from 'app/types';
-import { ThunkAction } from 'redux-thunk';
-import { getBackendSrv } from 'app/core/services/backend_srv';
-
+// Services & Utils
+import { getBackendSrv } from '@grafana/runtime';
+import { actionCreatorFactory } from 'app/core/redux';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
+// Actions
+import { loadPluginDashboards } from '../../plugins/state/actions';
+import { notifyApp } from 'app/core/actions';
+// Types
 import {
+  ThunkResult,
   DashboardAcl,
   DashboardAclDTO,
   PermissionLevel,
   DashboardAclUpdateDTO,
   NewDashboardAclItem,
-} from 'app/types/acl';
+  MutableDashboard,
+  DashboardInitError,
+} from 'app/types';
 
-export enum ActionTypes {
-  LoadDashboardPermissions = 'LOAD_DASHBOARD_PERMISSIONS',
-}
+export const loadDashboardPermissions = actionCreatorFactory<DashboardAclDTO[]>('LOAD_DASHBOARD_PERMISSIONS').create();
 
-export interface LoadDashboardPermissionsAction {
-  type: ActionTypes.LoadDashboardPermissions;
-  payload: DashboardAcl[];
-}
+export const dashboardInitFetching = actionCreatorFactory('DASHBOARD_INIT_FETCHING').create();
 
-export type Action = LoadDashboardPermissionsAction;
+export const dashboardInitServices = actionCreatorFactory('DASHBOARD_INIT_SERVICES').create();
 
-type ThunkResult<R> = ThunkAction<R, StoreState, undefined, any>;
+export const dashboardInitSlow = actionCreatorFactory('SET_DASHBOARD_INIT_SLOW').create();
 
-export const loadDashboardPermissions = (items: DashboardAclDTO[]): LoadDashboardPermissionsAction => ({
-  type: ActionTypes.LoadDashboardPermissions,
-  payload: items,
-});
+export const dashboardInitCompleted = actionCreatorFactory<MutableDashboard>('DASHBOARD_INIT_COMLETED').create();
+
+/*
+ * Unrecoverable init failure (fetch or model creation failed)
+ */
+export const dashboardInitFailed = actionCreatorFactory<DashboardInitError>('DASHBOARD_INIT_FAILED').create();
+
+/*
+ * When leaving dashboard, resets state
+ * */
+export const cleanUpDashboard = actionCreatorFactory('DASHBOARD_CLEAN_UP').create();
 
 export function getDashboardPermissions(id: number): ThunkResult<void> {
   return async dispatch => {
@@ -60,7 +69,7 @@ export function updateDashboardPermission(
 
       const updated = toUpdateItem(item);
 
-      // if this is the item we want to update, update it's permisssion
+      // if this is the item we want to update, update it's permission
       if (itemToUpdate === item) {
         updated.permission = level;
       }
@@ -111,5 +120,20 @@ export function addDashboardPermission(dashboardId: number, newItem: NewDashboar
 
     await getBackendSrv().post(`/api/dashboards/id/${dashboardId}/permissions`, { items: itemsToUpdate });
     await dispatch(getDashboardPermissions(dashboardId));
+  };
+}
+
+export function importDashboard(data: any, dashboardTitle: string): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv().post('/api/dashboards/import', data);
+    dispatch(notifyApp(createSuccessNotification('Dashboard Imported', dashboardTitle)));
+    dispatch(loadPluginDashboards());
+  };
+}
+
+export function removeDashboard(uri: string): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv().delete(`/api/dashboards/${uri}`);
+    dispatch(loadPluginDashboards());
   };
 }

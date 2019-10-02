@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/go-xorm/builder"
 	"github.com/go-xorm/core"
 )
 
@@ -193,10 +194,33 @@ func (session *Session) exec(sqlStr string, args ...interface{}) (sql.Result, er
 	return session.DB().Exec(sqlStr, args...)
 }
 
+func convertSQLOrArgs(sqlorArgs ...interface{}) (string, []interface{}, error) {
+	switch sqlorArgs[0].(type) {
+	case string:
+		return sqlorArgs[0].(string), sqlorArgs[1:], nil
+	case *builder.Builder:
+		return sqlorArgs[0].(*builder.Builder).ToSQL()
+	case builder.Builder:
+		bd := sqlorArgs[0].(builder.Builder)
+		return bd.ToSQL()
+	}
+
+	return "", nil, ErrUnSupportedType
+}
+
 // Exec raw sql
-func (session *Session) Exec(sqlStr string, args ...interface{}) (sql.Result, error) {
+func (session *Session) Exec(sqlorArgs ...interface{}) (sql.Result, error) {
 	if session.isAutoClose {
 		defer session.Close()
+	}
+
+	if len(sqlorArgs) == 0 {
+		return nil, ErrUnSupportedType
+	}
+
+	sqlStr, args, err := convertSQLOrArgs(sqlorArgs...)
+	if err != nil {
+		return nil, err
 	}
 
 	return session.exec(sqlStr, args...)
