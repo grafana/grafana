@@ -59,7 +59,7 @@ we created in the previous step.
 
 Open [localhost:3004](http://localhost:3004) to view the docs.
 
-### Images & Content
+### Images and Content
 
 All markdown files are part of [this repository](https://github.com/grafana/grafana). However, all images are added to the [website repository](https://github.com/grafana/website). Therefore, the process of adding images is not as straightforward. These are the steps:
 

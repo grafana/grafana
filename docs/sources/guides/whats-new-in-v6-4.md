@@ -1,6 +1,6 @@
 +++
 title = "What's New in Grafana v6.4"
-description = "Feature & improvement highlights for Grafana v6.4"
+description = "Feature and improvement highlights for Grafana v6.4"
 keywords = ["grafana", "new", "documentation", "6.4"]
 type = "docs"
 [menu.docs]
@@ -33,7 +33,7 @@ Some of those new capabilities can already be seen in this release, like sharing
 - [**LDAP:** Debug UI]({{< relref "#ldap-debug-ui" >}})
 - [**Enterprise**: Reporting]({{< relref "#reporting" >}})
 - [**Enterprise**: GitLab OAuth Team Sync support]({{< relref "#gitlab-oauth-team-sync-support" >}})
-- [**Enterprise**: Teams & LDAP Improvements]({{< relref "#ldap-teams" >}})
+- [**Enterprise**: Teams and LDAP Improvements]({{< relref "#ldap-teams" >}})
 
 
 ### Go back to dashboard from Explore
@@ -73,7 +73,7 @@ Limitations: Even though Live tailing can be enabled on logs panels in dashboard
 With Grafana 6.3 we introduced a new way of creating [Data Links](https://grafana.com/blog/2019/08/27/new-in-grafana-6.3-easy-to-use-data-links/).
 Grafana 6.4 improves Data Links and adds them to the Gauge and Bar Gauge and panels.
 
-With Data Links you can define dynamic links to other dashboards and systems. The link can now reference template variables and query results like series name & labels, field name, value and time.
+With Data Links you can define dynamic links to other dashboards and systems. The link can now reference template variables and query results like series name and labels, field name, value and time.
 
 Read more about Data Links and what you can do with them in [documentation](https://grafana.com/docs/features/panels/graph/#data-link)
 
