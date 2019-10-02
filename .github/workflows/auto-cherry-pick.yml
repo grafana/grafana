@@ -1,0 +1,22 @@
+name: Automatical cherry picking (test action)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened] #closed when active
+
+jobs:
+  build:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 10.x
+      - run: npm install -g yarn
+      - run: yarn install --pure-lockfile
+      - name: Parse Milestone
+        uses: ./.github/actions/grafana-parse-milestone
+        id: parseMilestone
+      - name: Echo
+        run: echo "The parsed milestone was ${{ steps.parseMilestone.outputs.major }}"
