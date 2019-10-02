@@ -2,7 +2,7 @@ name: Automatical cherry picking (test action)
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened] #closed when active
+    types: [opened, edited, synchronize, reopened] #closed when active
 
 jobs:
   build:
