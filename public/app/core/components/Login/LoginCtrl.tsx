@@ -32,6 +32,7 @@ interface Props {
     authProxyEnabled: boolean;
     disableUserSignUp: boolean;
     isOauthEnabled: boolean;
+    isSamlEnabled: boolean;
     loginHint: string;
     passwordHint: string;
   }) => JSX.Element;
@@ -121,6 +122,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
       <>
         {children({
           isOauthEnabled: isOauthEnabled(),
+          isSamlEnabled: config.samlEnabled,
           loginHint,
           passwordHint,
           disableLoginForm,
