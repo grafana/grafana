@@ -9,6 +9,8 @@ try {
     return;
   }
 
+  console.log(`Milestone: ${milestone}!`);
+
   if (milestone.closed) {
     core.setFailed('Milestone ' + milestone.title + ' is closed! Please assign an open milestone.');
     return;
