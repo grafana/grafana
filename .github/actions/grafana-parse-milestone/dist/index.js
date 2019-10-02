@@ -13924,13 +13924,18 @@ const core = __webpack_require__(540);
 const github = __webpack_require__(392);
 
 try {
+  if (!github.context.payload.pull_request) {
+    core.setFailed('This is not a pull request so terminating');
+    return;
+  }
+
   const milestone = github.context.payload.pull_request.milestone;
 
   if (!milestone) {
     core.setFailed('This pull request has no milestone assigned! Please assign an open milestone.');
     return;
   }
-  
+
   if (milestone.state === 'closed') {
     core.setFailed('Milestone ' + milestone.title + ' is closed! Please assign an open milestone.');
     return;

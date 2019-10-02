@@ -2,13 +2,18 @@ const core = require('@actions/core');
 const github = require('@actions/github');
 
 try {
+  if (!github.context.payload.pull_request) {
+    core.setFailed('This is not a pull request so terminating');
+    return;
+  }
+
   const milestone = github.context.payload.pull_request.milestone;
 
   if (!milestone) {
     core.setFailed('This pull request has no milestone assigned! Please assign an open milestone.');
     return;
   }
-  
+
   if (milestone.state === 'closed') {
     core.setFailed('Milestone ' + milestone.title + ' is closed! Please assign an open milestone.');
     return;
