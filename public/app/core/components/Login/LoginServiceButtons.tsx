@@ -46,6 +46,29 @@ export interface LoginServices {
   [key: string]: LoginService;
 }
 
+const LoginDivider = (keyNames: string[]) => {
+  const serviceElementsEnabled = keyNames.filter(key => {
+    const service: LoginService = loginServices()[key];
+    return service.enabled;
+  });
+  return serviceElementsEnabled.length > 0 ? (
+    <>
+      <div className="text-center login-divider">
+        <div>
+          <div className="login-divider-line" />
+        </div>
+        <div>
+          <span className="login-divider-text">{config.disableLoginForm ? null : <span>or</span>}</span>
+        </div>
+        <div>
+          <div className="login-divider-line" />
+        </div>
+      </div>
+      <div className="clearfix" />
+    </>
+  ) : null;
+};
+
 export const LoginServiceButtons = () => {
   const keyNames = Object.keys(loginServices());
   const serviceElements = keyNames.map(key => {
@@ -63,5 +86,11 @@ export const LoginServiceButtons = () => {
     ) : null;
   });
 
-  return <div className="login-oauth text-center">{serviceElements}</div>;
+  const divider = LoginDivider(keyNames);
+  return (
+    <>
+      {divider}
+      <div className="login-oauth text-center">{serviceElements}</div>
+    </>
+  );
 };
