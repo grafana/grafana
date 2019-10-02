@@ -5,6 +5,7 @@ import LoginCtrl from './LoginCtrl';
 import { LoginForm } from './LoginForm';
 import { ChangePassword } from './ChangePassword';
 import { CSSTransition } from 'react-transition-group';
+import config from 'app/core/config';
 
 export const LoginPage: FC = () => {
   return (
@@ -41,7 +42,7 @@ export const LoginPage: FC = () => {
                   />
                 ) : null}
 
-                {isOauthEnabled ? (
+                {isOauthEnabled || config.samlEnabled ? (
                   <>
                     <div className="text-center login-divider">
                       <div>
