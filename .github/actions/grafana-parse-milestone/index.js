@@ -8,9 +8,7 @@ try {
     core.setFailed('This pull request has no milestone assigned! Please assign an open milestone.');
     return;
   }
-
-  console.log(`Milestone: ${JSON.stringify(milestone, null, 2)}!`);
-
+  
   if (milestone.state === 'closed') {
     core.setFailed('Milestone ' + milestone.title + ' is closed! Please assign an open milestone.');
     return;
