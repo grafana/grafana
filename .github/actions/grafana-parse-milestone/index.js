@@ -9,7 +9,7 @@ try {
     return;
   }
 
-  console.log(`Milestone: ${milestone}!`);
+  console.log(`Milestone: ${JSON.stringify(milestone, null, 2)}!`);
 
   if (milestone.closed) {
     core.setFailed('Milestone ' + milestone.title + ' is closed! Please assign an open milestone.');
