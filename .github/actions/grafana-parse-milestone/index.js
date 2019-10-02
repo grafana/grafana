@@ -6,16 +6,19 @@ try {
 
   if (!milestone) {
     core.setFailed('This pull request has no milestone assigned! Please assign an open milestone.');
+    return;
   }
 
   if (milestone.closed) {
     core.setFailed('Milestone ' + milestone.title + ' is closed! Please assign an open milestone.');
+    return;
   }
 
   const versionPattern = /^(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-([0-9A-Za-z\.]+))?/;
   const match = versionPattern.exec(milestone.title);
   if (!match) {
     core.setFailed('Could not parse Milestone title ' + milestone.title);
+    return;
   }
 
   const major = Number(match[1]);
