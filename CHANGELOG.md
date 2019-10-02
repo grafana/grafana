@@ -1,3 +1,11 @@
+# 6.4.1 (2019-10-02)
+
+### Bug Fixes
+
+* **Provisioning**: Fixed issue where empty nested keys in YAML provisioning caused server crash, [#19547](https://github.com/grafana/grafana/pull/19547)
+* **ImageRendering**: Fixed issue with image rendering in enterprise build (Enterprise)
+* **Reporting**: Fixed issue with reporting service when STMP disabled (Enterprise).
+
 # 6.4.0 (2019-10-01)
 
 ### Features / Enhancements
@@ -39,6 +47,7 @@
 # 6.4.0-beta1 (2019-09-17)
 
 ### Features / Enhancements
+* **Reporting**: Created scheduled PDF reports for any dashboard (Enterprise).
 * **API**: Readonly datasources should not be created via the API. [#19006](https://github.com/grafana/grafana/pull/19006), [@papagian](https://github.com/papagian)
 * **Alerting**: Include configured AlertRuleTags in Webhooks notifier. [#18233](https://github.com/grafana/grafana/pull/18233), [@dominic-miglar](https://github.com/dominic-miglar)
 * **Annotations**: Add annotations support to Loki. [#18949](https://github.com/grafana/grafana/pull/18949), [@aocenas](https://github.com/aocenas)

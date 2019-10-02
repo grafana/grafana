@@ -86,3 +86,5 @@ export { JSONFormatter } from './JSONFormatter/JSONFormatter';
 export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
 export { ErrorBoundary, ErrorBoundaryAlert } from './ErrorBoundary/ErrorBoundary';
 export { AlphaNotice } from './AlphaNotice/AlphaNotice';
+export { Spinner } from './Spinner/Spinner';
+export { FadeTransition } from './transitions/FadeTransition';

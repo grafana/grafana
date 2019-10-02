@@ -318,6 +318,9 @@ Array [
                 <div
                   className="gf-form-select-box__img-value"
                 >
+                  <div
+                    className="css-zyq2zu"
+                  />
                   stackdriver auto
                 </div>
               </div>

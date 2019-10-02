@@ -30,18 +30,4 @@ export const SelectOption = (props: ExtendedOptionProps) => {
   );
 };
 
-// was not able to type this without typescript error
-export const SingleValue = (props: any) => {
-  const { children, data } = props;
-
-  return (
-    <components.SingleValue {...props}>
-      <div className="gf-form-select-box__img-value">
-        {data.imgUrl && <img className="gf-form-select-box__desc-option__img" src={data.imgUrl} />}
-        {children}
-      </div>
-    </components.SingleValue>
-  );
-};
-
 export default SelectOption;
