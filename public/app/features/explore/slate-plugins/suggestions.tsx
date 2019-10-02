@@ -225,14 +225,16 @@ const handleTypeahead = debounce(
       )
       .toArray();
 
+    // Find the first label key to the left of the cursor
     const labelKeyDec = decorations
-      .filter(
-        decoration =>
-          decoration.end.offset === myOffset &&
+      .filter(decoration => {
+        return (
+          decoration.end.offset <= myOffset &&
           decoration.type === TOKEN_MARK &&
           decoration.data.get('className').includes('label-key')
-      )
-      .first();
+        );
+      })
+      .last();
 
     const labelKey = labelKeyDec && value.focusText.text.slice(labelKeyDec.start.offset, labelKeyDec.end.offset);
 
