@@ -1,0 +1,4 @@
+name: 'Parses the Milestone title into parts'
+runs:
+  using: 'node12'
+  main: 'index.js'
