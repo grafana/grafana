@@ -53,30 +53,30 @@ const getStyles = (theme: GrafanaTheme) => ({
 
 interface Props {
   title: string | JSX.Element;
+  isOpen?: boolean;
   onDismiss?: () => void;
   onClickBackdrop?: () => void;
-  visible?: boolean;
 }
 
 export class Modal extends React.PureComponent<Props> {
   static contextType = ThemeContext;
   context!: React.ContextType<typeof ThemeContext>;
 
-  handleDismiss = () => {
+  onDismiss = () => {
     if (this.props.onDismiss) {
       this.props.onDismiss();
     }
   };
 
-  handleClickBackdrop = () => {
-    this.handleDismiss();
+  onClickBackdrop = () => {
+    this.onDismiss();
   };
 
   render() {
-    const { title, visible = false } = this.props;
+    const { title, isOpen = false } = this.props;
     const styles = getStyles(this.context);
 
-    if (!visible) {
+    if (!isOpen) {
       return null;
     }
 
@@ -85,13 +85,13 @@ export class Modal extends React.PureComponent<Props> {
         <div className={cx(styles.modal)}>
           <div className={cx(styles.modalHeader)}>
             {typeof title === 'string' ? <h2 className={cx(styles.modalHeaderTitle)}>{title}</h2> : <>{title}</>}
-            <a className={cx(styles.modalHeaderClose)} onClick={this.handleDismiss}>
+            <a className={cx(styles.modalHeaderClose)} onClick={this.onDismiss}>
               <i className="fa fa-remove" />
             </a>
           </div>
           <div className={cx(styles.modalContent)}>{this.props.children}</div>
         </div>
-        <div className={cx(styles.modalBackdrop)} onClick={this.props.onClickBackdrop || this.handleClickBackdrop} />
+        <div className={cx(styles.modalBackdrop)} onClick={this.props.onClickBackdrop || this.onClickBackdrop} />
       </Portal>
     );
   }

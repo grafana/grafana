@@ -37,7 +37,7 @@ ModalStories.add('default', () => {
           <span className="p-l-1">My Modal</span>
         </div>
       }
-      visible={visible}
+      isOpen={visible}
     >
       {body}
     </Modal>
