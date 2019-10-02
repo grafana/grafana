@@ -35,6 +35,7 @@ type Rule struct {
 	State               models.AlertStateType
 	Conditions          []Condition
 	Notifications       []string
+	AlertRuleTags       []*models.Tag
 
 	StateChanges int64
 }
@@ -140,11 +141,12 @@ func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 		} else {
 			uid, err := jsonModel.Get("uid").String()
 			if err != nil {
-				return nil, ValidationError{Reason: "Neither id nor uid is specified, " + err.Error(), DashboardID: model.DashboardID, AlertID: model.ID, PanelID: model.PanelID}
+				return nil, ValidationError{Reason: "Neither id nor uid is specified in 'notifications' block, " + err.Error(), DashboardID: model.DashboardID, AlertID: model.ID, PanelID: model.PanelID}
 			}
 			model.Notifications = append(model.Notifications, uid)
 		}
 	}
+	model.AlertRuleTags = ruleDef.GetTagsFromSettings()
 
 	for index, condition := range ruleDef.Settings.Get("conditions").MustArray() {
 		conditionModel := simplejson.NewFromAny(condition)

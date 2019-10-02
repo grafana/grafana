@@ -44,9 +44,9 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 		annotationData.Set("noData", true)
 	}
 
-	metrics.M_Alerting_Result_State.WithLabelValues(string(evalContext.Rule.State)).Inc()
+	metrics.MAlertingResultState.WithLabelValues(string(evalContext.Rule.State)).Inc()
 	if evalContext.shouldUpdateAlertState() {
-		handler.log.Info("New state change", "alertId", evalContext.Rule.ID, "newState", evalContext.Rule.State, "prev state", evalContext.PrevAlertState)
+		handler.log.Info("New state change", "ruleId", evalContext.Rule.ID, "newState", evalContext.Rule.State, "prev state", evalContext.PrevAlertState)
 
 		cmd := &models.SetAlertStateCommand{
 			AlertId:  evalContext.Rule.ID,

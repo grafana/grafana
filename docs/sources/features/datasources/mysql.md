@@ -238,7 +238,7 @@ This feature is currently available in the nightly builds and will be included i
 
 Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data being displayed in your dashboard.
 
-Checkout the [Templating]({{< relref "reference/templating.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ### Query Variable
 
@@ -316,7 +316,7 @@ Grafana automatically creates a quoted, comma-separated string for multi-value v
 
 `${servers:csv}`
 
-Read more about variable formatting options in the [Variables]({{< relref "reference/templating.md#advanced-formatting-options" >}}) documentation.
+Read more about variable formatting options in the [Variables]({{< relref "../../reference/templating.md#advanced-formatting-options" >}}) documentation.
 
 ## Annotations
 
@@ -358,11 +358,11 @@ tags | Optional field name to use for event tags as a comma separated string.
 
 Time series queries should work in alerting conditions. Table formatted queries is not yet supported in alert rule conditions.
 
-## Configure the Datasource with Provisioning
+## Configure the data source with provisioning
 
-It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources)
 
-Here are some provisioning examples for this datasource.
+Here are some provisioning examples for this data source.
 
 ```yaml
 apiVersion: 1

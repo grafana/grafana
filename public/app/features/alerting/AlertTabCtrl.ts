@@ -10,6 +10,7 @@ import { DashboardSrv } from '../dashboard/services/DashboardSrv';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { DataQuery } from '@grafana/ui/src/types/datasource';
 import { PanelModel } from 'app/features/dashboard/state';
+import { getDefaultCondition } from './getAlertingValidationMessage';
 
 export class AlertTabCtrl {
   panel: PanelModel;
@@ -28,6 +29,7 @@ export class AlertTabCtrl {
   error: string;
   appSubUrl: string;
   alertHistory: any;
+  newAlertRuleTag: any;
 
   /** @ngInject */
   constructor(
@@ -70,7 +72,7 @@ export class AlertTabCtrl {
     this.alertNotifications = [];
     this.alertHistory = [];
 
-    return this.backendSrv.get('/api/alert-notifications').then((res: any) => {
+    return this.backendSrv.get('/api/alert-notifications/lookup').then((res: any) => {
       this.notifications = res;
 
       this.initModel();
@@ -158,6 +160,18 @@ export class AlertTabCtrl {
     _.remove(this.alertNotifications, (n: any) => n.uid === an.uid || n.id === an.id);
   }
 
+  addAlertRuleTag() {
+    if (this.newAlertRuleTag.name) {
+      this.alert.alertRuleTags[this.newAlertRuleTag.name] = this.newAlertRuleTag.value;
+    }
+    this.newAlertRuleTag.name = '';
+    this.newAlertRuleTag.value = '';
+  }
+
+  removeAlertRuleTag(tagName: string) {
+    delete this.alert.alertRuleTags[tagName];
+  }
+
   initModel() {
     const alert = (this.alert = this.panel.alert);
     if (!alert) {
@@ -166,7 +180,7 @@ export class AlertTabCtrl {
 
     alert.conditions = alert.conditions || [];
     if (alert.conditions.length === 0) {
-      alert.conditions.push(this.buildDefaultCondition());
+      alert.conditions.push(getDefaultCondition());
     }
 
     alert.noDataState = alert.noDataState || config.alertingNoDataOrNullValues;
@@ -175,6 +189,7 @@ export class AlertTabCtrl {
     alert.handler = alert.handler || 1;
     alert.notifications = alert.notifications || [];
     alert.for = alert.for || '0m';
+    alert.alertRuleTags = alert.alertRuleTags || {};
 
     const defaultName = this.panel.title + ' alert';
     alert.name = alert.name || defaultName;
@@ -225,16 +240,6 @@ export class AlertTabCtrl {
         break;
       }
     }
-  }
-
-  buildDefaultCondition() {
-    return {
-      type: 'query',
-      query: { params: ['A', '5m', 'now'] },
-      reducer: { type: 'avg', params: [] as any[] },
-      evaluator: { type: 'gt', params: [null] as any[] },
-      operator: { type: 'and' },
-    };
   }
 
   validateModel() {
@@ -334,7 +339,7 @@ export class AlertTabCtrl {
   }
 
   addCondition(type: string) {
-    const condition = this.buildDefaultCondition();
+    const condition = getDefaultCondition();
     // add to persited model
     this.alert.conditions.push(condition);
     // add to view model

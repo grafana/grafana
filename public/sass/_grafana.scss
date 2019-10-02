@@ -2,7 +2,6 @@
 @import '../../node_modules/react-table/react-table.css';
 
 // VENDOR
-@import '../vendor/css/timepicker.css';
 @import '../vendor/css/rc-cascader.scss';
 
 // MIXINS
@@ -67,7 +66,6 @@
 @import 'components/gf-form';
 @import 'components/sidemenu';
 @import 'components/navbar';
-@import 'components/timepicker';
 @import 'components/filter-controls';
 @import 'components/filter-list';
 @import 'components/filter-table';
@@ -92,7 +90,6 @@
 @import 'components/dashboard_list';
 @import 'components/page_header';
 @import 'components/dashboard_settings';
-@import 'components/empty_list_cta';
 @import 'components/panel_editor';
 @import 'components/toolbar';
 @import 'components/add_data_source.scss';

@@ -1,6 +1,6 @@
 import { storiesOf } from '@storybook/react';
 import { Button, LinkButton } from './Button';
-import { ButtonSize, ButtonVariant, CommonButtonProps } from './AbstractButton';
+import { CommonButtonProps } from './AbstractButton';
 // @ts-ignore
 import withPropsCombinations from 'react-storybook-addon-props-combinations';
 import { action } from '@storybook/addon-actions';
@@ -15,14 +15,8 @@ const defaultProps = {
 };
 
 const variants = {
-  size: [ButtonSize.ExtraSmall, ButtonSize.Small, ButtonSize.Medium, ButtonSize.Large, ButtonSize.ExtraLarge],
-  variant: [
-    ButtonVariant.Primary,
-    ButtonVariant.Secondary,
-    ButtonVariant.Danger,
-    ButtonVariant.Inverse,
-    ButtonVariant.Transparent,
-  ],
+  size: ['xs', 'sm', 'md', 'lg', 'xl'],
+  variant: ['primary', 'secondary', 'danger', 'inverse', 'transparent'],
 };
 const combinationOptions = {
   CombinationRenderer: ThemeableCombinationsRowRenderer,

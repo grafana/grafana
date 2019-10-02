@@ -14,6 +14,7 @@ import (
 	"os"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -154,7 +155,13 @@ func (val *StringMapValue) Value() map[string]string {
 // slices and the actual interpolation is done on all simple string values in the structure. It returns a copy of any
 // map or slice value instead of modifying them in place.
 func tranformInterface(i interface{}) interface{} {
-	switch reflect.TypeOf(i).Kind() {
+	typeOf := reflect.TypeOf(i)
+
+	if typeOf == nil {
+		return nil
+	}
+
+	switch typeOf.Kind() {
 	case reflect.Slice:
 		return transformSlice(i.([]interface{}))
 	case reflect.Map:
@@ -185,8 +192,14 @@ func transformMap(i map[interface{}]interface{}) interface{} {
 
 // interpolateValue returns final value after interpolation. At the moment only env var interpolation is done
 // here but in the future something like interpolation from file could be also done here.
+// For a literal '$', '$$' can be used to avoid interpolation.
 func interpolateValue(val string) string {
-	return os.ExpandEnv(val)
+	parts := strings.Split(val, "$$")
+	interpolated := make([]string, len(parts))
+	for i, v := range parts {
+		interpolated[i] = os.ExpandEnv(v)
+	}
+	return strings.Join(interpolated, "$")
 }
 
 type interpolated struct {

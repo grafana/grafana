@@ -3,6 +3,7 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import classNames from 'classnames';
+// @ts-ignore
 import sizeMe from 'react-sizeme';
 
 // Types
@@ -163,6 +164,7 @@ export class DashboardGrid extends PureComponent<Props> {
     for (const panel of this.props.dashboard.panels) {
       panel.resizeDone();
     }
+    this.forceUpdate();
   };
 
   onViewModeChanged = () => {

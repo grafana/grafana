@@ -32,7 +32,7 @@ export class AlertNotificationEditCtrl {
     private $templateCache: any,
     navModelSrv: NavModelSrv
   ) {
-    this.navModel = navModelSrv.getNav('alerting', 'channels');
+    this.navModel = navModelSrv.getNav('alerting', 'channels', 0);
     this.isNew = !this.$routeParams.id;
 
     this.getFrequencySuggestion = () => {
@@ -100,6 +100,13 @@ export class AlertNotificationEditCtrl {
     }
   }
 
+  deleteNotification() {
+    this.backendSrv.delete(`/api/alert-notifications/${this.model.id}`).then((res: any) => {
+      this.model = res;
+      this.$location.path('alerting/notifications');
+    });
+  }
+
   getNotifierTemplateId(type: string) {
     return `notifier-options-${type}`;
   }
@@ -121,9 +128,7 @@ export class AlertNotificationEditCtrl {
       settings: this.model.settings,
     };
 
-    this.backendSrv.post(`/api/alert-notifications/test`, payload).then((res: any) => {
-      appEvents.emit('alert-success', ['Test notification sent', '']);
-    });
+    this.backendSrv.post(`/api/alert-notifications/test`, payload);
   }
 }
 

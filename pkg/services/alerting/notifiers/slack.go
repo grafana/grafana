@@ -244,9 +244,6 @@ func slackFileUpload(evalContext *alerting.EvalContext, log log.Logger, url stri
 		log.Error("Failed to upload slack image", "error", err, "webhook", "file.upload")
 		return err
 	}
-	if err != nil {
-		return err
-	}
 	return nil
 }
 

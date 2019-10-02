@@ -167,35 +167,47 @@ Notifications can be sent by setting up an incoming webhook in Google Hangouts c
 
 ### All supported notifiers
 
-Name | Type | Supports images
------|------------ | ------
-DingDing | `dingding` | yes, external only
-Discord | `discord` | yes
-Email | `email` | yes
-Google Hangouts Chat | `googlechat` | yes, external only
-Hipchat | `hipchat` | yes, external only
-Kafka | `kafka` | yes, external only
-Line | `line` | yes, external only
-Microsoft Teams | `teams` | yes, external only
-OpsGenie | `opsgenie` | yes, external only
-Pagerduty | `pagerduty` | yes, external only
-Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only
-Pushover | `pushover` | yes
-Sensu | `sensu` | yes, external only
-Slack | `slack` | yes
-Telegram | `telegram` | yes
-Threema | `threema` | yes, external only
-VictorOps | `victorops` | yes, external only
-Webhook | `webhook` | yes, external only
+Name | Type | Supports images | Support alert rule tags
+-----|------|---------------- | -----------------------
+DingDing | `dingding` | yes, external only | no
+Discord | `discord` | yes | no
+Email | `email` | yes | no
+Google Hangouts Chat | `googlechat` | yes, external only | no
+Hipchat | `hipchat` | yes, external only | no
+Kafka | `kafka` | yes, external only | no
+Line | `line` | yes, external only | no
+Microsoft Teams | `teams` | yes, external only | no
+OpsGenie | `opsgenie` | yes, external only | no
+Pagerduty | `pagerduty` | yes, external only | no
+Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
+Pushover | `pushover` | yes | no
+Sensu | `sensu` | yes, external only | no
+Slack | `slack` | yes | no
+Telegram | `telegram` | yes | no
+Threema | `threema` | yes, external only | no
+VictorOps | `victorops` | yes, external only | no
+Webhook | `webhook` | yes, external only | yes
 
 # Enable images in notifications {#external-image-store}
 
-Grafana can render the panel associated with the alert rule and include that in the notification. Most Notification Channels require that this image be publicly accessible (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
+Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure image rendering [here](/administration/image_rendering/).
+
+Most Notification Channels require that this image be publicly accessible (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
 Amazon S3, Webdav, Google Cloud Storage and Azure Blob Storage. So to set that up you need to configure the [external image uploader](/installation/configuration/#external-image-storage) in your grafana-server ini config file.
 
 Be aware that some notifiers requires public access to the image to be able to include it in the notification. So make sure to enable public access to the images. If you're using local image uploader, your Grafana instance need to be accessible by the internet.
 
 Notification services which need public image access are marked as 'external only'.
+
+# Use alert rule tags in notifications {#alert-rule-tags}
+
+> Only available in Grafana v6.3+.
+
+Grafana can include a list of tags (key/value) in the notification.
+It's called alert rule tags to contrast with tags parsed from timeseries.
+It currently supports only the Prometheus Alertmanager notifier.
+
+ This is an optional feature. You can get notifications without using alert rule tags.
 
 # Configure the link back to Grafana from alert notifications
 

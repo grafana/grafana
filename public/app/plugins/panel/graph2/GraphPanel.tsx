@@ -1,5 +1,5 @@
 import React from 'react';
-import { PanelProps, GraphWithLegend /*, GraphSeriesXY*/ } from '@grafana/ui';
+import { PanelProps, GraphWithLegend } from '@grafana/ui';
 import { Options } from './types';
 import { GraphPanelController } from './GraphPanelController';
 import { LegendDisplayMode } from '@grafana/ui/src/components/Legend/Legend';
@@ -9,10 +9,12 @@ interface GraphPanelProps extends PanelProps<Options> {}
 export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
   data,
   timeRange,
+  timeZone,
   width,
   height,
   options,
   onOptionsChange,
+  onChangeTimeRange,
 }) => {
   if (!data) {
     return (
@@ -34,11 +36,17 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
   };
   const { asTable, isVisible, ...legendProps } = legendOptions;
   return (
-    <GraphPanelController data={data} options={options} onOptionsChange={onOptionsChange}>
-      {({ onSeriesToggle, ...controllerApi }) => {
+    <GraphPanelController
+      data={data}
+      options={options}
+      onOptionsChange={onOptionsChange}
+      onChangeTimeRange={onChangeTimeRange}
+    >
+      {({ onSeriesToggle, onHorizontalRegionSelected, ...controllerApi }) => {
         return (
           <GraphWithLegend
             timeRange={timeRange}
+            timeZone={timeZone}
             width={width}
             height={height}
             displayMode={asTable ? LegendDisplayMode.Table : LegendDisplayMode.List}
@@ -46,6 +54,7 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
             sortLegendBy={legendOptions.sortBy}
             sortLegendDesc={legendOptions.sortDesc}
             onSeriesToggle={onSeriesToggle}
+            onHorizontalRegionSelected={onHorizontalRegionSelected}
             {...graphProps}
             {...legendProps}
             {...controllerApi}

@@ -1,7 +1,7 @@
 import { transformers, transformDataToTable } from '../transformers';
 
 describe('when transforming time series table', () => {
-  let table;
+  let table: any;
 
   describe('given 2 time series', () => {
     const time = new Date().getTime();

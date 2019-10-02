@@ -2,7 +2,7 @@
   position: relative;
   z-index: $zindex-navbar-fixed;
   height: $navbarHeight;
-  padding: 0 20px 0 50px;
+  padding: 0 20px 0 60px;
   display: flex;
   flex-grow: 1;
   border-bottom: 1px solid transparent;
@@ -35,7 +35,7 @@
   .navbar-button--settings,
   .navbar-page-btn .fa-caret-down,
   .refresh-picker,
-  .gf-timepicker-nav {
+  .time-picker {
     display: none;
   }
 
@@ -44,9 +44,10 @@
   }
 }
 
-.panel-in-fullscreen {
+.panel-in-fullscreen,
+.panel-in-fullscreen.view-mode--tv {
   .navbar {
-    padding-left: 20px;
+    padding-left: $navbar-padding;
   }
 
   .navbar-button--add-panel,
@@ -134,7 +135,7 @@ i.navbar-page-btn__search {
   align-items: center;
   font-weight: $btn-font-weight;
   padding: 6px $space-sm;
-  line-height: 16px;
+  line-height: 18px;
   color: $text-muted;
   border: 1px solid $navbar-button-border;
   margin-left: $space-xs;
@@ -218,7 +219,8 @@ i.navbar-page-btn__search {
   i {
     font-size: $font-size-lg;
     position: relative;
-    top: 2px;
+    top: 1px;
+    right: 1px;
   }
 
   &:hover {

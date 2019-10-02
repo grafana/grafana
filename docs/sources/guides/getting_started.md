@@ -17,7 +17,7 @@ This guide will help you get started and acquainted with Grafana. It assumes you
 
 ## Logging in for the first time
 
-To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default http port that Grafana listens to if you haven't [configured a different port](/installation/configuration/#http-port).
+To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default HTTP port that Grafana listens to if you haven't [configured a different port](/installation/configuration/#http-port).
 
 There you will see the login page. Default username is admin and default password is admin. When you log in for the first time you will be asked to change your password. We strongly encourage you to
 follow Grafana’s best practices and change the default administrator password. You can later go to user preferences and change your user name.
@@ -80,7 +80,7 @@ Dashboards are at the core of what Grafana is all about. Dashboards are composed
 5. Graph legend. You can change series colors, y-axis and series visibility directly from the legend.
 
 
-## Adding & Editing Graphs and Panels
+## Adding and editing graphs and panels
 
 ![](/img/docs/v45/metrics_tab.png)
 

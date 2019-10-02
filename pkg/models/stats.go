@@ -16,6 +16,14 @@ type SystemStats struct {
 	Folders               int64
 	ProvisionedDashboards int64
 	AuthTokens            int64
+
+	Admins         int
+	Editors        int
+	Viewers        int
+	ActiveAdmins   int
+	ActiveEditors  int
+	ActiveViewers  int
+	ActiveSessions int
 }
 
 type DataSourceStats struct {

@@ -18,8 +18,21 @@ export class DashLinksEditorCtrl {
   mode: any;
   link: any;
 
+  emptyListCta = {
+    title: 'There are no dashboard links added yet',
+    buttonIcon: 'gicon gicon-link',
+    buttonTitle: 'Add Dashboard Link',
+    infoBox: {
+      __html: `<p>
+      Dashboard Links allow you to place links to other dashboards and web sites directly in below the dashboard
+      header.
+    </p>`,
+    },
+    infoBoxTitle: 'What are Dashboard Links?',
+  };
+
   /** @ngInject */
-  constructor($scope, $rootScope) {
+  constructor($scope: any, $rootScope: any) {
     this.iconMap = iconMap;
     this.dashboard.links = this.dashboard.links || [];
     this.mode = 'list';
@@ -33,10 +46,10 @@ export class DashLinksEditorCtrl {
     this.mode = 'list';
   }
 
-  setupNew() {
+  setupNew = () => {
     this.mode = 'new';
     this.link = { type: 'dashboards', icon: 'external link' };
-  }
+  };
 
   addLink() {
     this.dashboard.links.push(this.link);
@@ -44,7 +57,7 @@ export class DashLinksEditorCtrl {
     this.dashboard.updateSubmenuVisibility();
   }
 
-  editLink(link) {
+  editLink(link: any) {
     this.link = link;
     this.mode = 'edit';
     console.log(this.link);
@@ -54,12 +67,12 @@ export class DashLinksEditorCtrl {
     this.backToList();
   }
 
-  moveLink(index, dir) {
+  moveLink(index: string | number, dir: string | number) {
     // @ts-ignore
     _.move(this.dashboard.links, index, index + dir);
   }
 
-  deleteLink(index) {
+  deleteLink(index: number) {
     this.dashboard.links.splice(index, 1);
     this.dashboard.updateSubmenuVisibility();
   }

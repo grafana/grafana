@@ -91,7 +91,7 @@ func (ds *RemoteCache) Run(ctx context.Context) error {
 
 func createClient(opts *setting.RemoteCacheOptions, sqlstore *sqlstore.SqlStore) (CacheStorage, error) {
 	if opts.Name == redisCacheType {
-		return newRedisStorage(opts), nil
+		return newRedisStorage(opts)
 	}
 
 	if opts.Name == memcachedCacheType {

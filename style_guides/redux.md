@@ -43,31 +43,6 @@ export const someAction = actionCreatorFactory<string>('SOME_ACTION').create();
 export const theAction = actionCreatorFactory<string>('SOME_ACTION').create(); // will throw
 ```
 
-### noPayloadActionCreatorFactory
-
-Used when you don't need to supply a payload for your action. Will create an action creator with the following signature
-
-```typescript
-{ type: string , (): {type: string; payload: undefined;} }
-```
-
-where the `type` string will be ensured to be unique.
-
-#### Example
-
-```typescript
-export const noPayloadAction = noPayloadActionCreatorFactory('NO_PAYLOAD').create();
-
-// later when dispatched
-noPayloadAction();
-```
-
-```typescript
-// declaring an action creator with a type string that has already been defined will throw
-export const noPayloadAction = noPayloadActionCreatorFactory('NO_PAYLOAD').create();
-export const noAction = noPayloadActionCreatorFactory('NO_PAYLOAD').create(); // will throw
-```
-
 ### reducerFactory
 
 Fluent API used to create a reducer. (same as implementing the standard switch statement in Redux)

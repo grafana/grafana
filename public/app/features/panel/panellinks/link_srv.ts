@@ -1,14 +1,136 @@
-import angular from 'angular';
 import _ from 'lodash';
-import kbn from 'app/core/utils/kbn';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import templateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
+import coreModule from 'app/core/core_module';
+import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
+import { VariableSuggestion, VariableOrigin, DataLinkBuiltInVars } from '@grafana/ui';
+import { DataLink, KeyValue, deprecationWarning, LinkModel, DataFrame, ScopedVars } from '@grafana/data';
 
-export class LinkSrv {
+const timeRangeVars = [
+  {
+    value: `${DataLinkBuiltInVars.keepTime}`,
+    label: 'Time range',
+    documentation: 'Adds current time range',
+    origin: VariableOrigin.BuiltIn,
+  },
+  {
+    value: `${DataLinkBuiltInVars.timeRangeFrom}`,
+    label: 'Time range: from',
+    documentation: "Adds current time range's from value",
+    origin: VariableOrigin.BuiltIn,
+  },
+  {
+    value: `${DataLinkBuiltInVars.timeRangeTo}`,
+    label: 'Time range: to',
+    documentation: "Adds current time range's to value",
+    origin: VariableOrigin.BuiltIn,
+  },
+];
+
+const fieldVars = [
+  {
+    value: `${DataLinkBuiltInVars.fieldName}`,
+    label: 'Name',
+    documentation: 'Field name of the clicked datapoint (in ms epoch)',
+    origin: VariableOrigin.Field,
+  },
+];
+
+const valueVars = [
+  {
+    value: `${DataLinkBuiltInVars.valueNumeric}`,
+    label: 'Numeric',
+    documentation: 'Numeric representation of selected value',
+    origin: VariableOrigin.Value,
+  },
+  {
+    value: `${DataLinkBuiltInVars.valueText}`,
+    label: 'Text',
+    documentation: 'Text representation of selected value',
+    origin: VariableOrigin.Value,
+  },
+  {
+    value: `${DataLinkBuiltInVars.valueRaw}`,
+    label: 'Raw',
+    documentation: 'Raw value',
+    origin: VariableOrigin.Value,
+  },
+];
+
+const buildLabelPath = (label: string) => {
+  return label.indexOf('.') > -1 ? `["${label}"]` : `.${label}`;
+};
+
+export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
+  ...templateSrv.variables.map(variable => ({
+    value: variable.name as string,
+    label: variable.name,
+    origin: VariableOrigin.Template,
+  })),
+  {
+    value: `${DataLinkBuiltInVars.includeVars}`,
+    label: 'All variables',
+    documentation: 'Adds current variables',
+    origin: VariableOrigin.Template,
+  },
+  ...timeRangeVars,
+];
+
+const getSeriesVars = (dataFrames: DataFrame[]) => {
+  const labels = _.chain(dataFrames.map(df => Object.keys(df.labels || {})))
+    .flatten()
+    .uniq()
+    .value();
+
+  return [
+    {
+      value: `${DataLinkBuiltInVars.seriesName}`,
+      label: 'Name',
+      documentation: 'Name of the series',
+      origin: VariableOrigin.Series,
+    },
+    ...labels.map(label => ({
+      value: `__series.labels${buildLabelPath(label)}`,
+      label: `labels.${label}`,
+      documentation: `${label} label value`,
+      origin: VariableOrigin.Series,
+    })),
+  ];
+};
+export const getDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
+  const seriesVars = getSeriesVars(dataFrames);
+  const valueTimeVar = {
+    value: `${DataLinkBuiltInVars.valueTime}`,
+    label: 'Time',
+    documentation: 'Time value of the clicked datapoint (in ms epoch)',
+    origin: VariableOrigin.Value,
+  };
+
+  return [...seriesVars, ...fieldVars, ...valueVars, valueTimeVar, ...getPanelLinksVariableSuggestions()];
+};
+
+export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
+  const seriesVars = getSeriesVars(dataFrames);
+  const valueCalcVar = {
+    value: `${DataLinkBuiltInVars.valueCalc}`,
+    label: 'Calculation name',
+    documentation: 'Name of the calculation the value is a result of',
+    origin: VariableOrigin.Value,
+  };
+  return [...seriesVars, ...fieldVars, ...valueVars, valueCalcVar, ...getPanelLinksVariableSuggestions()];
+};
+
+export interface LinkService {
+  getDataLinkUIModel: <T>(link: DataLink, scopedVars: ScopedVars, origin: T) => LinkModel<T>;
+}
+
+export class LinkSrv implements LinkService {
   /** @ngInject */
-  constructor(private templateSrv, private timeSrv) {}
+  constructor(private templateSrv: TemplateSrv, private timeSrv: TimeSrv) {}
 
-  getLinkUrl(link) {
+  getLinkUrl(link: any) {
     const url = this.templateSrv.replace(link.url || '');
-    const params = {};
+    const params: { [key: string]: any } = {};
 
     if (link.keepTime) {
       const range = this.timeSrv.timeRangeForUrl();
@@ -20,96 +142,63 @@ export class LinkSrv {
       this.templateSrv.fillVariableValuesForUrl(params);
     }
 
-    return this.addParamsToUrl(url, params);
+    return appendQueryToUrl(url, toUrlParams(params));
   }
 
-  addParamsToUrl(url, params) {
-    const paramsArray = [];
-
-    _.each(params, (value, key) => {
-      if (value === null) {
-        return;
-      }
-      if (value === true) {
-        paramsArray.push(key);
-      } else if (_.isArray(value)) {
-        _.each(value, instance => {
-          paramsArray.push(key + '=' + encodeURIComponent(instance));
-        });
-      } else {
-        paramsArray.push(key + '=' + encodeURIComponent(value));
-      }
-    });
-
-    if (paramsArray.length === 0) {
-      return url;
-    }
-
-    return this.appendToQueryString(url, paramsArray.join('&'));
-  }
-
-  appendToQueryString(url, stringToAppend) {
-    if (!_.isUndefined(stringToAppend) && stringToAppend !== null && stringToAppend !== '') {
-      const pos = url.indexOf('?');
-      if (pos !== -1) {
-        if (url.length - pos > 1) {
-          url += '&';
-        }
-      } else {
-        url += '?';
-      }
-      url += stringToAppend;
-    }
-
-    return url;
-  }
-
-  getAnchorInfo(link) {
+  getAnchorInfo(link: any) {
     const info: any = {};
     info.href = this.getLinkUrl(link);
     info.title = this.templateSrv.replace(link.title || '');
     return info;
   }
 
-  getPanelLinkAnchorInfo(link, scopedVars) {
-    const info: any = {};
-    info.target = link.targetBlank ? '_blank' : '';
-    if (link.type === 'absolute') {
-      info.target = link.targetBlank ? '_blank' : '_self';
-      info.href = this.templateSrv.replace(link.url || '', scopedVars);
-      info.title = this.templateSrv.replace(link.title || '', scopedVars);
-    } else if (link.url) {
-      info.href = link.url;
-      info.title = this.templateSrv.replace(link.title || '', scopedVars);
-    } else if (link.dashUri) {
-      info.href = 'dashboard/' + link.dashUri + '?';
-      info.title = this.templateSrv.replace(link.title || '', scopedVars);
-    } else {
-      info.title = this.templateSrv.replace(link.title || '', scopedVars);
-      const slug = kbn.slugifyForUrl(link.dashboard || '');
-      info.href = 'dashboard/db/' + slug + '?';
-    }
+  getDataLinkUIModel = <T>(link: DataLink, scopedVars: ScopedVars, origin: T) => {
+    const params: KeyValue = {};
+    const timeRangeUrl = toUrlParams(this.timeSrv.timeRangeForUrl());
 
-    const params = {};
+    const info: LinkModel<T> = {
+      href: link.url.replace(/\s|\n/g, ''),
+      title: this.templateSrv.replace(link.title || '', scopedVars),
+      target: link.targetBlank ? '_blank' : '_self',
+      origin,
+    };
+    this.templateSrv.fillVariableValuesForUrl(params, scopedVars);
 
-    if (link.keepTime) {
-      const range = this.timeSrv.timeRangeForUrl();
-      params['from'] = range.from;
-      params['to'] = range.to;
-    }
-
-    if (link.includeVars) {
-      this.templateSrv.fillVariableValuesForUrl(params, scopedVars);
-    }
-
-    info.href = this.addParamsToUrl(info.href, params);
-
-    if (link.params) {
-      info.href = this.appendToQueryString(info.href, this.templateSrv.replace(link.params, scopedVars));
-    }
+    const variablesQuery = toUrlParams(params);
+    info.href = this.templateSrv.replace(info.href, {
+      ...scopedVars,
+      [DataLinkBuiltInVars.keepTime]: {
+        text: timeRangeUrl,
+        value: timeRangeUrl,
+      },
+      [DataLinkBuiltInVars.includeVars]: {
+        text: variablesQuery,
+        value: variablesQuery,
+      },
+    });
 
     return info;
+  };
+
+  /**
+   * getPanelLinkAnchorInfo method is left for plugins compatibility reasons
+   *
+   * @deprecated Drilldown links should be generated using getDataLinkUIModel method
+   */
+  getPanelLinkAnchorInfo(link: DataLink, scopedVars: ScopedVars) {
+    deprecationWarning('link_srv.ts', 'getPanelLinkAnchorInfo', 'getDataLinkUIModel');
+    return this.getDataLinkUIModel(link, scopedVars, {});
   }
 }
 
-angular.module('grafana.services').service('linkSrv', LinkSrv);
+let singleton: LinkService;
+
+export function setLinkSrv(srv: LinkService) {
+  singleton = srv;
+}
+
+export function getLinkSrv(): LinkService {
+  return singleton;
+}
+
+coreModule.service('linkSrv', LinkSrv);

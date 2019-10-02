@@ -1,5 +1,5 @@
 import coreModule from 'app/core/core_module';
-import { JsonExplorer } from '../json_explorer/json_explorer';
+import { JsonExplorer } from '@grafana/ui';
 
 coreModule.directive('jsonTree', [
   function jsonTreeDirective() {
@@ -11,12 +11,18 @@ coreModule.directive('jsonTree', [
         rootName: '@',
       },
       link: (scope: any, elem) => {
-        const jsonExp = new JsonExplorer(scope.object, 3, {
+        let expansionLevel = scope.startExpanded;
+        if (scope.startExpanded === 'true') {
+          expansionLevel = 2;
+        } else if (scope.startExpanded === 'false') {
+          expansionLevel = 1;
+        }
+        const jsonObject = { [scope.rootName]: scope.object };
+        const jsonExp = new JsonExplorer(jsonObject, expansionLevel, {
           animateOpen: true,
         });
-
         const html = jsonExp.render(true);
-        elem.replaceAll(html);
+        elem.append(html);
       },
     };
   },

@@ -1,7 +1,6 @@
-import React from 'react';
-import { PopperController, Popper } from '@grafana/ui';
-import rst2html from 'rst2html';
-import { FunctionDescriptor, FunctionEditorControlsProps, FunctionEditorControls } from './FunctionEditorControls';
+import React, { Suspense } from 'react';
+import { PopoverController, Popover } from '@grafana/ui';
+import { FunctionDescriptor, FunctionEditorControls, FunctionEditorControlsProps } from './FunctionEditorControls';
 
 interface FunctionEditorProps extends FunctionEditorControlsProps {
   func: FunctionDescriptor;
@@ -10,6 +9,15 @@ interface FunctionEditorProps extends FunctionEditorControlsProps {
 interface FunctionEditorState {
   showingDescription: boolean;
 }
+const FunctionDescription = React.lazy(async () => {
+  // @ts-ignore
+  const { default: rst2html } = await import(/* webpackChunkName: "rst2html" */ 'rst2html');
+  return {
+    default: (props: { description: string }) => (
+      <div dangerouslySetInnerHTML={{ __html: rst2html(props.description) }} />
+    ),
+  };
+});
 
 class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEditorState> {
   private triggerRef = React.createRef<HTMLSpanElement>();
@@ -22,7 +30,7 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
     };
   }
 
-  renderContent = ({ updatePopperPosition }) => {
+  renderContent = ({ updatePopperPosition }: any) => {
     const {
       onMoveLeft,
       onMoveRight,
@@ -36,11 +44,9 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
       return (
         <div style={{ overflow: 'auto', maxHeight: '30rem', textAlign: 'left', fontWeight: 'normal' }}>
           <h4 style={{ color: 'white' }}> {name} </h4>
-          <div
-            dangerouslySetInnerHTML={{
-              __html: rst2html(description),
-            }}
-          />
+          <Suspense fallback={<span>Loading description...</span>}>
+            <FunctionDescription description={description} />
+          </Suspense>
         </div>
       );
     }
@@ -67,12 +73,12 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
 
   render() {
     return (
-      <PopperController content={this.renderContent} placement="top" hideAfter={300}>
+      <PopoverController content={this.renderContent} placement="top" hideAfter={300}>
         {(showPopper, hidePopper, popperProps) => {
           return (
             <>
               {this.triggerRef && (
-                <Popper
+                <Popover
                   {...popperProps}
                   referenceElement={this.triggerRef.current}
                   wrapperClassName="popper"
@@ -102,7 +108,7 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
             </>
           );
         }}
-      </PopperController>
+      </PopoverController>
     );
   }
 }

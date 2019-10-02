@@ -38,7 +38,7 @@ function getTestDashboard(overrides?: any, metaOverrides?: any): DashboardModel 
   return new DashboardModel(data, meta);
 }
 
-function dashboardPageScenario(description, scenarioFn: (ctx: ScenarioContext) => void) {
+function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioContext) => void) {
   describe(description, () => {
     let setupFn: () => void;
 

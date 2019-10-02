@@ -1,10 +1,9 @@
 import { refreshExplore, testDatasource, loadDatasource } from './actions';
-import { ExploreId, ExploreUrlState, ExploreUpdateState } from 'app/types';
+import { ExploreId, ExploreUrlState, ExploreUpdateState, ExploreMode } from 'app/types';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import {
   initializeExploreAction,
   InitializeExplorePayload,
-  changeTimeAction,
   updateUIStateAction,
   setQueriesAction,
   testDataSourcePendingAction,
@@ -17,8 +16,7 @@ import { Emitter } from 'app/core/core';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { makeInitialUpdateState } from './reducers';
 import { DataQuery } from '@grafana/ui/src/types/datasource';
-import { DefaultTimeZone, RawTimeRange, LogsDedupStrategy } from '@grafana/ui';
-import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { DefaultTimeZone, RawTimeRange, LogsDedupStrategy, toUtc } from '@grafana/data';
 
 jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv: () => ({
@@ -27,6 +25,12 @@ jest.mock('app/features/plugins/datasource_srv', () => ({
       testDatasource: jest.fn(),
       init: jest.fn(),
     }),
+  }),
+}));
+
+jest.mock('../../dashboard/services/TimeSrv', () => ({
+  getTimeSrv: jest.fn().mockReturnValue({
+    init: jest.fn(),
   }),
 }));
 
@@ -55,12 +59,14 @@ const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
     datasource: 'some-datasource',
     queries: [],
     range: range.raw,
+    mode: ExploreMode.Metrics,
     ui,
   };
   const updateDefaults = makeInitialUpdateState();
   const update = { ...updateDefaults, ...updateOverides };
   const initialState = {
     user: {
+      orgId: '1',
       timeZone,
     },
     explore: {
@@ -114,19 +120,6 @@ describe('refreshExplore', () => {
         expect(payload.range.raw.from).toEqual(testRange.raw.from);
         expect(payload.range.raw.to).toEqual(testRange.raw.to);
         expect(payload.ui).toEqual(ui);
-      });
-    });
-
-    describe('and update range is set', () => {
-      it('then it should dispatch changeTimeAction', async () => {
-        const { exploreId, range, initialState } = setup({ range: true });
-
-        const dispatchedActions = await thunkTester(initialState)
-          .givenThunk(refreshExplore)
-          .whenThunkIsDispatched(exploreId);
-
-        expect(dispatchedActions[0].type).toEqual(changeTimeAction.type);
-        expect(dispatchedActions[0].payload).toEqual({ exploreId, range });
       });
     });
 

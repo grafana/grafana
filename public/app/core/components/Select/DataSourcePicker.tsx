@@ -2,10 +2,11 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { Select, SelectOptionItem } from '@grafana/ui';
+import { Select } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
 
 // Types
-import { DataSourceSelectItem } from '@grafana/ui/src/types';
+import { DataSourceSelectItem } from '@grafana/ui';
 
 export interface Props {
   onChange: (ds: DataSourceSelectItem) => void;
@@ -14,6 +15,7 @@ export interface Props {
   onBlur?: () => void;
   autoFocus?: boolean;
   openMenuOnFocus?: boolean;
+  showLoading?: boolean;
 }
 
 export class DataSourcePicker extends PureComponent<Props> {
@@ -28,13 +30,13 @@ export class DataSourcePicker extends PureComponent<Props> {
     super(props);
   }
 
-  onChange = (item: SelectOptionItem<string>) => {
+  onChange = (item: SelectableValue<string>) => {
     const ds = this.props.datasources.find(ds => ds.name === item.value);
     this.props.onChange(ds);
   };
 
   render() {
-    const { datasources, current, autoFocus, onBlur, openMenuOnFocus } = this.props;
+    const { datasources, current, autoFocus, onBlur, openMenuOnFocus, showLoading } = this.props;
 
     const options = datasources.map(ds => ({
       value: ds.name,
@@ -46,6 +48,7 @@ export class DataSourcePicker extends PureComponent<Props> {
       label: current.name,
       value: current.name,
       imgUrl: current.meta.info.logos.small,
+      loading: showLoading,
     };
 
     return (

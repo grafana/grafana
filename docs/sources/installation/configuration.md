@@ -127,7 +127,7 @@ Another way is put a webserver like Nginx or Apache in front of Grafana and have
 
 ### protocol
 
-`http`,`https` or `socket`
+`http`,`https`,`h2` or `socket`
 
 > **Note** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for ssl termination.
 
@@ -155,6 +155,7 @@ callback URL to be correct).
 > case add the subpath to the end of this URL setting.
 
 ### serve_from_sub_path
+> Available in 6.3 and above
 
 Serve Grafana from subpath specified in `root_url` setting. By
 default it is set to `false` for compatibility reasons.
@@ -178,11 +179,11 @@ reasons.
 
 ### cert_file
 
-Path to the certificate file (if `protocol` is set to `https`).
+Path to the certificate file (if `protocol` is set to `https` or `h2`).
 
 ### cert_key
 
-Path to the certificate key file (if `protocol` is set to `https`).
+Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 
 ### router_logging
 
@@ -280,9 +281,24 @@ Either `redis`, `memcached` or `database` default is `database`
 
 ### connstr
 
-The remote cache connection string. Leave empty when using `database` since it will use the primary database.
-Redis example config: `addr=127.0.0.1:6379,pool_size=100,db=grafana`
-Memcache example: `127.0.0.1:11211`
+The remote cache connection string. The format depends on the `type` of the remote cache.
+
+#### Database
+
+Leave empty when using `database` since it will use the primary database.
+
+#### Redis
+
+Example connstr: `addr=127.0.0.1:6379,pool_size=100,db=0,ssl=false`
+
+- `addr` is the host `:` port of the redis server.
+- `pool_size` (optional) is the number of underlying connections that can be made to redis.
+- `db` (optional) is the number indentifer of the redis database you want to use.
+- `ssl` (optional) is if SSL should be used to connect to redis server. The value may be `true`, `false`, or `insecure`. Setting the value to `insecure` skips verification of the certificate chain and hostname when making the connection.
+
+#### Memcache
+
+Example connstr: `127.0.0.1:11211`
 
 <hr />
 
@@ -303,8 +319,8 @@ The number of days the keep me logged in / remember me cookie lasts.
 
 ### secret_key
 
-Used for signing some datasource settings like secrets and passwords. Cannot be changed without requiring an update
-to datasource settings to re-encode them.
+Used for signing some data source settings like secrets and passwords, the encryption format used is AES-256 in CFB mode. Cannot be changed without requiring an update
+to data source settings to re-encode them.
 
 ### disable_gravatar
 
@@ -328,6 +344,30 @@ Sets the `SameSite` cookie attribute and prevents the browser from sending this 
 When `false`, the HTTP header `X-Frame-Options: deny` will be set in Grafana HTTP responses which will instruct
 browsers to not allow rendering Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>`. The main goal is to
 mitigate the risk of [Clickjacking](https://www.owasp.org/index.php/Clickjacking). Default is `false`.
+
+### strict_transport_security
+
+Set to `true` if you want to enable HTTP `Strict-Transport-Security` (HSTS) response header. This is only sent when HTTPS is enabled in this configuration. HSTS tells browsers that the site should only be accessed using HTTPS. The default value is `false` until the next minor release, `6.3`.
+
+### strict_transport_security_max_age_seconds
+
+Sets how long a browser should cache HSTS in seconds. Only applied if strict_transport_security is enabled. The default value is `86400`.
+
+### strict_transport_security_preload
+
+Set to `true` if to enable HSTS `preloading` option. Only applied if strict_transport_security is enabled. The default value is `false`.
+
+### strict_transport_security_subdomains
+
+Set to `true` if to enable the HSTS includeSubDomains option. Only applied if strict_transport_security is enabled. The default value is `false`.
+
+### x_content_type_options
+
+Set to `true` to enable the X-Content-Type-Options response header. The X-Content-Type-Options response HTTP header is a marker used by the server to indicate that the MIME types advertised in the Content-Type headers should not be changed and be followed. The default value is `false` until the next minor release, `6.3`.
+
+### x_xss_protection
+
+Set to `false` to disable the X-XSS-Protection header, which tells browsers to stop pages from loading when they detect reflected cross-site scripting (XSS) attacks. The default value is `false` until the next minor release, `6.3`.
 
 <hr />
 
@@ -389,14 +429,14 @@ Text used as placeholder text on login page for password input.
 Grafana provides many ways to authenticate users. The docs for authentication has been split in to many different pages
 below.
 
-- [Authentication Overview]({{< relref "auth/overview.md" >}}) (anonymous access options, hide login and more)
-- [Google OAuth]({{< relref "auth/google.md" >}}) (auth.google)
-- [GitHub OAuth]({{< relref "auth/github.md" >}}) (auth.github)
-- [Gitlab OAuth]({{< relref "auth/gitlab.md" >}}) (auth.gitlab)
-- [Generic OAuth]({{< relref "auth/generic-oauth.md" >}}) (auth.generic_oauth, okta2, auth0, bitbucket, azure)
-- [Basic Authentication]({{< relref "auth/overview.md" >}}) (auth.basic)
-- [LDAP Authentication]({{< relref "auth/ldap.md" >}}) (auth.ldap)
-- [Auth Proxy]({{< relref "auth/auth-proxy.md" >}}) (auth.proxy)
+- [Authentication Overview]({{< relref "../auth/overview.md" >}}) (anonymous access options, hide login and more)
+- [Google OAuth]({{< relref "../auth/google.md" >}}) (auth.google)
+- [GitHub OAuth]({{< relref "../auth/github.md" >}}) (auth.github)
+- [Gitlab OAuth]({{< relref "../auth/gitlab.md" >}}) (auth.gitlab)
+- [Generic OAuth]({{< relref "../auth/generic-oauth.md" >}}) (auth.generic_oauth, okta2, auth0, bitbucket, azure)
+- [Basic Authentication]({{< relref "../auth/overview.md" >}}) (auth.basic)
+- [LDAP Authentication]({{< relref "../auth/ldap.md" >}}) (auth.ldap)
+- [Auth Proxy]({{< relref "../auth/auth-proxy.md" >}}) (auth.proxy)
 
 ## [dataproxy]
 
@@ -507,6 +547,9 @@ If set configures the username to use for basic authentication on the metrics en
 
 ### basic_auth_password
 If set configures the password to use for basic authentication on the metrics endpoint.
+
+### disable_total_stats
+If set to `true`, then total stats generation (`stat_totals_*` metrics) is disabled. The default is `false`.
 
 ### interval_seconds
 
@@ -645,6 +688,17 @@ Default setting for alert notification timeout. Default value is `30`
 
 Default setting for max attempts to sending alert notifications. Default value is `3`
 
+## [rendering]
+
+Options to configure a remote HTTP image rendering service, e.g. using https://github.com/grafana/grafana-image-renderer.
+
+### server_url
+
+URL to a remote HTTP image renderer service, e.g. http://localhost:8081/render, will enable Grafana to render panels and dashboards to PNG-images using HTTP requests to an external service.
+
+### callback_url
+
+If the remote HTTP image renderer service runs on a different server than the Grafana server you may have to configure this to a URL where Grafana is reachable, e.g. http://grafana.domain/.
 
 ## [panels]
 
@@ -658,6 +712,11 @@ is false. This settings was introduced in Grafana v6.0.
 ### enable_alpha
 
 Set to true if you want to test alpha plugins that are not yet ready for general usage.
+
+## [feature_toggles]
+### enable
+
+Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`
 
 <hr />
 

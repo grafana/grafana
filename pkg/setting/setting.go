@@ -29,6 +29,7 @@ type Scheme string
 const (
 	HTTP              Scheme = "http"
 	HTTPS             Scheme = "https"
+	HTTP2             Scheme = "h2"
 	SOCKET            Scheme = "socket"
 	DEFAULT_HTTP_ADDR string = "0.0.0.0"
 )
@@ -87,20 +88,27 @@ var (
 	EnforceDomain      bool
 
 	// Security settings.
-	SecretKey                        string
-	DisableGravatar                  bool
-	EmailCodeValidMinutes            int
-	DataProxyWhiteList               map[string]bool
-	DisableBruteForceLoginProtection bool
-	CookieSecure                     bool
-	CookieSameSite                   http.SameSite
-	AllowEmbedding                   bool
+	SecretKey                         string
+	DisableGravatar                   bool
+	EmailCodeValidMinutes             int
+	DataProxyWhiteList                map[string]bool
+	DisableBruteForceLoginProtection  bool
+	CookieSecure                      bool
+	CookieSameSite                    http.SameSite
+	AllowEmbedding                    bool
+	XSSProtectionHeader               bool
+	ContentTypeProtectionHeader       bool
+	StrictTransportSecurity           bool
+	StrictTransportSecurityMaxAge     int
+	StrictTransportSecurityPreload    bool
+	StrictTransportSecuritySubDomains bool
 
 	// Snapshots
 	ExternalSnapshotUrl   string
 	ExternalSnapshotName  string
 	ExternalEnabled       bool
 	SnapShotRemoveExpired bool
+	SnapshotPublicMode    bool
 
 	// Dashboard history
 	DashboardVersionsToKeep int
@@ -235,6 +243,7 @@ type Cfg struct {
 	MetricsEndpointEnabled           bool
 	MetricsEndpointBasicAuthUsername string
 	MetricsEndpointBasicAuthPassword string
+	MetricsEndpointDisableTotalStats bool
 	PluginsEnableAlpha               bool
 	PluginsAppsSkipVerifyTLS         bool
 	DisableSanitizeHtml              bool
@@ -246,6 +255,9 @@ type Cfg struct {
 	LoginMaxLifetimeDays         int
 	TokenRotationIntervalMinutes int
 
+	// SAML Auth
+	SAMLEnabled bool
+
 	// Dataproxy
 	SendUserHeader bool
 
@@ -253,6 +265,10 @@ type Cfg struct {
 	RemoteCacheOptions *RemoteCacheOptions
 
 	EditorsCanAdmin bool
+
+	ApiKeyMaxSecondsToLive int64
+
+	FeatureToggles map[string]bool
 }
 
 type CommandLineArgs struct {
@@ -354,7 +370,7 @@ func applyCommandLineDefaultProperties(props map[string]string, file *ini.File) 
 func applyCommandLineProperties(props map[string]string, file *ini.File) {
 	for _, section := range file.Sections() {
 		sectionName := section.Name() + "."
-		if section.Name() == ini.DEFAULT_SECTION {
+		if section.Name() == ini.DefaultSection {
 			sectionName = ""
 		}
 		for _, key := range section.Keys() {
@@ -488,9 +504,9 @@ func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	// load specified config file
 	err = loadSpecifedConfigFile(args.Config, parsedFile)
 	if err != nil {
-		err = cfg.initLogging(parsedFile)
-		if err != nil {
-			return nil, err
+		err2 := cfg.initLogging(parsedFile)
+		if err2 != nil {
+			return nil, err2
 		}
 		log.Fatal(3, err.Error())
 	}
@@ -628,6 +644,11 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		CertFile = server.Key("cert_file").String()
 		KeyFile = server.Key("cert_key").String()
 	}
+	if protocolStr == "h2" {
+		Protocol = HTTP2
+		CertFile = server.Key("cert_file").String()
+		KeyFile = server.Key("cert_key").String()
+	}
 	if protocolStr == "socket" {
 		Protocol = SOCKET
 		SocketPath = server.Key("socket").String()
@@ -698,6 +719,13 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	AllowEmbedding = security.Key("allow_embedding").MustBool(false)
 
+	ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(false)
+	XSSProtectionHeader = security.Key("x_xss_protection").MustBool(false)
+	StrictTransportSecurity = security.Key("strict_transport_security").MustBool(false)
+	StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
+	StrictTransportSecurityPreload = security.Key("strict_transport_security_preload").MustBool(false)
+	StrictTransportSecuritySubDomains = security.Key("strict_transport_security_subdomains").MustBool(false)
+
 	// read snapshots settings
 	snapshots := iniFile.Section("snapshots")
 	ExternalSnapshotUrl, err = valueAsString(snapshots, "external_snapshot_url", "")
@@ -710,6 +738,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 	ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
 	SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
+	SnapshotPublicMode = snapshots.Key("public_mode").MustBool(false)
 
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
@@ -782,6 +811,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	LoginMaxLifetimeDays = auth.Key("login_maximum_lifetime_days").MustInt(30)
 	cfg.LoginMaxLifetimeDays = LoginMaxLifetimeDays
+	cfg.ApiKeyMaxSecondsToLive = auth.Key("api_key_max_seconds_to_live").MustInt64(-1)
 
 	cfg.TokenRotationIntervalMinutes = auth.Key("token_rotation_interval_minutes").MustInt(10)
 	if cfg.TokenRotationIntervalMinutes < 2 {
@@ -795,6 +825,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
+
+	// SAML auth
+	cfg.SAMLEnabled = iniFile.Section("auth.saml").Key("enabled").MustBool(false)
 
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -875,6 +908,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
+	cfg.MetricsEndpointDisableTotalStats = iniFile.Section("metrics").Key("disable_total_stats").MustBool(false)
 
 	analytics := iniFile.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
@@ -910,6 +944,17 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	pluginsSection := iniFile.Section("plugins")
 	cfg.PluginsEnableAlpha = pluginsSection.Key("enable_alpha").MustBool(false)
 	cfg.PluginsAppsSkipVerifyTLS = pluginsSection.Key("app_tls_skip_verify_insecure").MustBool(false)
+
+	// Read and populate feature toggles list
+	featureTogglesSection := iniFile.Section("feature_toggles")
+	cfg.FeatureToggles = make(map[string]bool)
+	featuresTogglesStr, err := valueAsString(featureTogglesSection, "enable", "")
+	if err != nil {
+		return err
+	}
+	for _, feature := range util.SplitString(featuresTogglesStr) {
+		cfg.FeatureToggles[feature] = true
+	}
 
 	// check old location for this option
 	if panelsSection.Key("enable_alpha").MustBool(false) {

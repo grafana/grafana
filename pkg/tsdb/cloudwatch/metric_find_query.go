@@ -56,6 +56,7 @@ func init() {
 		"AWS/Connect":           {"CallBackNotDialableNumber", "CallRecordingUploadError", "CallsBreachingConcurrencyQuota", "CallsPerInterval", "ConcurrentCalls", "ConcurrentCallsPercentage", "ContactFlowErrors", "ContactFlowFatalErrors", "LongestQueueWaitTime", "MisconfiguredPhoneNumbers", "MissedCalls", "PublicSigningKeyUsage", "QueueCapacityExceededError", "QueueSize", "ThrottledCalls", "ToInstancePacketLossRate"},
 		"AWS/DDoSProtection":    {"AllowedRequests", "BlockedRequests", "CountedRequests", "DDoSAttackBitsPerSecond", "DDoSAttackPacketsPerSecond", "DDoSAttackRequestsPerSecond", "DDoSDetected", "PassedRequests"},
 		"AWS/DMS":               {"CDCChangesDiskSource", "CDCChangesDiskTarget", "CDCChangesMemorySource", "CDCChangesMemoryTarget", "CDCIncomingChanges", "CDCLatencySource", "CDCLatencyTarget", "CDCThroughputBandwidthSource", "CDCThroughputBandwidthTarget", "CDCThroughputRowsSource", "CDCThroughputRowsTarget", "CPUUtilization", "FreeStorageSpace", "FreeableMemory", "FullLoadThroughputBandwidthSource", "FullLoadThroughputBandwidthTarget", "FullLoadThroughputRowsSource", "FullLoadThroughputRowsTarget", "NetworkReceiveThroughput", "NetworkTransmitThroughput", "ReadIOPS", "ReadLatency", "ReadThroughput", "SwapUsage", "WriteIOPS", "WriteLatency", "WriteThroughput"},
+		"AWS/DocDB":             {"BackupRetentionPeriodStorageUsed", "BufferCacheHitRatio", "CPUUtilization", "DatabaseConnections", "DBInstanceReplicaLag", "DBClusterReplicaLagMaximum", "DBClusterReplicaLagMinimum", "DiskQueueDepth", "EngineUptime", "FreeableMemory", "FreeLocalStorage", "NetworkReceiveThroughput", "NetworkThroughput", "NetworkTransmitThroughput", "ReadIOPS", "ReadLatency", "ReadThroughput", "SnapshotStorageUsed", "SwapUsage", "TotalBackupStorageBilled", "VolumeBytesUsed", "VolumeReadIOPs", "VolumeWriteIOPs", "WriteIOPS", "WriteLatency", "WriteThroughput"},
 		"AWS/DX":                {"ConnectionBpsEgress", "ConnectionBpsIngress", "ConnectionCRCErrorCount", "ConnectionLightLevelRx", "ConnectionLightLevelTx", "ConnectionPpsEgress", "ConnectionPpsIngress", "ConnectionState"},
 		"AWS/DynamoDB":          {"ConditionalCheckFailedRequests", "ConsumedReadCapacityUnits", "ConsumedWriteCapacityUnits", "OnlineIndexConsumedWriteCapacity", "OnlineIndexPercentageProgress", "OnlineIndexThrottleEvents", "PendingReplicationCount", "ProvisionedReadCapacityUnits", "ProvisionedWriteCapacityUnits", "ReadThrottleEvents", "ReplicationLatency", "ReturnedBytes", "ReturnedItemCount", "ReturnedRecordsCount", "SuccessfulRequestLatency", "SystemErrors", "ThrottledRequests", "TimeToLiveDeletedItemCount", "UserErrors", "WriteThrottleEvents"},
 		"AWS/EBS":               {"BurstBalance", "VolumeConsumedReadWriteOps", "VolumeIdleTime", "VolumeQueueLength", "VolumeReadBytes", "VolumeReadOps", "VolumeThroughputPercentage", "VolumeTotalReadTime", "VolumeTotalWriteTime", "VolumeWriteBytes", "VolumeWriteOps"},
@@ -115,6 +116,7 @@ func init() {
 		"AWS/TrustedAdvisor":    {"GreenChecks", "RedChecks", "RedResources", "ServiceLimitUsage", "YellowChecks", "YellowResources"},
 		"AWS/VPN":               {"TunnelDataIn", "TunnelDataOut", "TunnelState"},
 		"AWS/WorkSpaces":        {"Available", "ConnectionAttempt", "ConnectionFailure", "ConnectionSuccess", "InSessionLatency", "Maintenance", "SessionDisconnect", "SessionLaunchTime", "Stopped", "Unhealthy", "UserConnected"},
+		"ContainerInsights":     {"cluster_failed_node_count", "cluster_node_count", "namespace_number_of_running_pods", "node_cpu_limit", "node_cpu_reserved_capacity", "node_cpu_usage_total", "node_cpu_utilization", "node_filesystem_utilization", "node_memory_limit", "node_memory_reserved_capacity", "node_memory_utilization", "node_memory_working_set", "node_network_total_bytes", "node_number_of_running_containers", "node_number_of_running_pods", "pod_cpu_reserved_capacity", "pod_cpu_utilization", "pod_cpu_utilization_over_pod_limit", "pod_memory_reserved_capacity", "pod_memory_utilization", "pod_memory_utilization_over_pod_limit", "pod_number_of_container_restarts", "pod_network_rx_bytes", "pod_network_tx_bytes", "service_number_of_running_pods"},
 		"Rekognition":           {"DetectedFaceCount", "DetectedLabelCount", "ResponseTime", "ServerErrorCount", "SuccessfulRequestCount", "ThrottledCount", "UserErrorCount"},
 		"WAF":                   {"AllowedRequests", "BlockedRequests", "CountedRequests", "DDoSAttackBitsPerSecond", "DDoSAttackPacketsPerSecond", "DDoSAttackRequestsPerSecond", "DDoSDetected", "PassedRequests"},
 	}
@@ -135,6 +137,7 @@ func init() {
 		"AWS/Connect":           {"InstanceId", "MetricGroup", "Participant", "QueueName", "Stream Type", "Type of Connection"},
 		"AWS/DDoSProtection":    {"Region", "Rule", "RuleGroup", "WebACL"},
 		"AWS/DMS":               {"ReplicationInstanceIdentifier", "ReplicationTaskIdentifier"},
+		"AWS/DocDB":             {"DBClusterIdentifier"},
 		"AWS/DX":                {"ConnectionId"},
 		"AWS/DynamoDB":          {"GlobalSecondaryIndexName", "Operation", "ReceivingRegion", "StreamLabel", "TableName"},
 		"AWS/EBS":               {"VolumeId"},
@@ -153,7 +156,7 @@ func init() {
 		"AWS/Events":            {"RuleName"},
 		"AWS/FSx":               {},
 		"AWS/Firehose":          {"DeliveryStreamName"},
-		"AWS/GameLift":          {"FleetId", "InstanceType", "MatchmakingConfigurationName", "MatchmakingConfigurationName-RuleName", "MetricGroup", "OperatingSystem", "QueueName"},
+		"AWS/GameLift":          {"FleetId", "InstanceType", "MatchmakingConfigurationName", "MatchmakingConfigurationName-RuleName", "MetricGroups", "OperatingSystem", "QueueName"},
 		"AWS/Glue":              {"JobName", "JobRunId", "Type"},
 		"AWS/Inspector":         {},
 		"AWS/IoT":               {"ActionType", "BehaviorName", "CheckName", "JobId", "Protocol", "RuleName", "ScheduledAuditName", "SecurityProfileName"},
@@ -194,6 +197,7 @@ func init() {
 		"AWS/TrustedAdvisor":    {},
 		"AWS/VPN":               {"TunnelIpAddress", "VpnId"},
 		"AWS/WorkSpaces":        {"DirectoryId", "WorkspaceId"},
+		"ContainerInsights":     {"ClusterName", "NodeName", "Namespace", "InstanceId", "PodName", "Service"},
 		"Rekognition":           {},
 		"WAF":                   {"Region", "Rule", "RuleGroup", "WebACL"},
 	}
@@ -281,7 +285,7 @@ func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *s
 	}
 
 	regions := []string{
-		"ap-northeast-1", "ap-northeast-2", "ap-northeast-3", "ap-south-1", "ap-southeast-1", "ap-southeast-2", "ca-central-1",
+		"ap-east-1", "ap-northeast-1", "ap-northeast-2", "ap-northeast-3", "ap-south-1", "ap-southeast-1", "ap-southeast-2", "ca-central-1",
 		"eu-central-1", "eu-north-1", "eu-west-1", "eu-west-2", "eu-west-3", "me-south-1", "sa-east-1", "us-east-1", "us-east-2", "us-west-1", "us-west-2",
 		"cn-north-1", "cn-northwest-1", "us-gov-east-1", "us-gov-west-1", "us-isob-east-1", "us-iso-east-1",
 	}
@@ -640,7 +644,7 @@ func (e *CloudWatchExecutor) cloudwatchListMetrics(region string, namespace stri
 	var resp cloudwatch.ListMetricsOutput
 	err = svc.ListMetricsPages(params,
 		func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
-			metrics.M_Aws_CloudWatch_ListMetrics.Inc()
+			metrics.MAwsCloudWatchListMetrics.Inc()
 			metrics, _ := awsutil.ValuesAtPath(page, "Metrics")
 			for _, metric := range metrics {
 				resp.Metrics = append(resp.Metrics, metric.(*cloudwatch.Metric))
@@ -720,7 +724,7 @@ func getAllMetrics(cwData *DatasourceInfo) (cloudwatch.ListMetricsOutput, error)
 	var resp cloudwatch.ListMetricsOutput
 	err = svc.ListMetricsPages(params,
 		func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
-			metrics.M_Aws_CloudWatch_ListMetrics.Inc()
+			metrics.MAwsCloudWatchListMetrics.Inc()
 			metrics, _ := awsutil.ValuesAtPath(page, "Metrics")
 			for _, metric := range metrics {
 				resp.Metrics = append(resp.Metrics, metric.(*cloudwatch.Metric))

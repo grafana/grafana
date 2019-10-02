@@ -2,17 +2,18 @@ import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 
 /** @ngInject */
-export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
+export function SeriesOverridesCtrl($scope: any, $element: JQuery, popoverSrv: any) {
   $scope.overrideMenu = [];
   $scope.currentOverrides = [];
   $scope.override = $scope.override || {};
+  $scope.colorPickerModel = {};
 
-  $scope.addOverrideOption = (name, propertyName, values) => {
+  $scope.addOverrideOption = (name: string, propertyName: string, values: any) => {
     const option = {
       text: name,
       propertyName: propertyName,
       index: $scope.overrideMenu.length,
-      values: values,
+      values,
       submenu: _.map(values, value => {
         return { text: String(value), value: value };
       }),
@@ -21,7 +22,7 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
     $scope.overrideMenu.push(option);
   };
 
-  $scope.setOverride = (item, subItem) => {
+  $scope.setOverride = (item: { propertyName: string }, subItem: { value: any }) => {
     // handle color overrides
     if (item.propertyName === 'color') {
       $scope.openColorSelector($scope.override['color']);
@@ -41,33 +42,36 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
     $scope.ctrl.render();
   };
 
-  $scope.colorSelected = color => {
+  $scope.colorSelected = (color: any) => {
     $scope.override['color'] = color;
     $scope.updateCurrentOverrides();
     $scope.ctrl.render();
+
+    // update picker model so that the picker UI will also update
+    $scope.colorPickerModel.series.color = color;
   };
 
-  $scope.openColorSelector = color => {
-    const fakeSeries = { color: color };
+  $scope.openColorSelector = (color: any) => {
+    $scope.colorPickerModel = {
+      autoClose: true,
+      colorSelected: $scope.colorSelected,
+      series: { color },
+    };
+
     popoverSrv.show({
       element: $element.find('.dropdown')[0],
       position: 'top center',
       openOn: 'click',
-      template: '<series-color-picker-popover color="color" onColorChange="colorSelected" />',
+      template: '<series-color-picker-popover color="series.color" onColorChange="colorSelected" />',
       classNames: 'drop-popover drop-popover--transparent',
-      model: {
-        autoClose: true,
-        colorSelected: $scope.colorSelected,
-        series: fakeSeries,
-        color,
-      },
+      model: $scope.colorPickerModel,
       onClose: () => {
         $scope.ctrl.render();
       },
     });
   };
 
-  $scope.removeOverride = option => {
+  $scope.removeOverride = (option: { propertyName: string | number }) => {
     delete $scope.override[option.propertyName];
     $scope.updateCurrentOverrides();
     $scope.ctrl.refresh();
@@ -152,7 +156,7 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
   $scope.addOverrideOption('Color', 'color', ['change']);
   $scope.addOverrideOption('Y-axis', 'yaxis', [1, 2]);
   $scope.addOverrideOption('Z-index', 'zindex', [-3, -2, -1, 0, 1, 2, 3]);
-  $scope.addOverrideOption('Transform', 'transform', ['negative-Y']);
+  $scope.addOverrideOption('Transform', 'transform', ['constant', 'negative-Y']);
   $scope.addOverrideOption('Legend', 'legend', [true, false]);
   $scope.addOverrideOption('Hide in tooltip', 'hideTooltip', [true, false]);
   $scope.updateCurrentOverrides();

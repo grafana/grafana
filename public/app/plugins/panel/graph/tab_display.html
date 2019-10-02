@@ -37,6 +37,17 @@
         ></select>
       </div>
     </div>
+    <div class="gf-form" ng-if="ctrl.panel.lines && ctrl.panel.fill">
+      <label class="gf-form-label width-8">Fill Gradient</label>
+      <div class="gf-form-select-wrapper max-width-5">
+        <select
+          class="gf-form-input"
+          ng-model="ctrl.panel.fillGradient"
+          ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]"
+          ng-change="ctrl.render()"
+        ></select>
+      </div>
+    </div>
     <div class="gf-form">
       <label class="gf-form-label width-8">Line Width</label>
       <div class="gf-form-select-wrapper max-width-5">

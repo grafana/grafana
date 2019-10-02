@@ -1,6 +1,7 @@
 package authproxy
 
 import (
+	"encoding/base32"
 	"fmt"
 	"net"
 	"net/mail"
@@ -13,8 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -31,6 +32,9 @@ var isLDAPEnabled = ldap.IsEnabled
 
 // newLDAP creates multiple LDAP instance
 var newLDAP = multildap.New
+
+// supportedHeaders states the supported headers configuration fields
+var supportedHeaderFields = []string{"Name", "Email", "Login", "Groups"}
 
 // AuthProxy struct
 type AuthProxy struct {
@@ -142,9 +146,18 @@ func (auth *AuthProxy) IsAllowedIP() (bool, *Error) {
 	return false, newError("Proxy authentication required", err)
 }
 
-// getKey forms a key for the cache
+// getKey forms a key for the cache based on the headers received as part of the authentication flow.
+// Our configuration supports multiple headers. The main header contains the email or username.
+// And the additional ones that allow us to specify extra attributes: Name, Email or Groups.
 func (auth *AuthProxy) getKey() string {
-	return fmt.Sprintf(CachePrefix, auth.header)
+	key := strings.TrimSpace(auth.header) // start the key with the main header
+
+	auth.headersIterator(func(_, header string) {
+		key = strings.Join([]string{key, header}, "-") // compose the key with any additional headers
+	})
+
+	hashedKey := base32.StdEncoding.EncodeToString([]byte(key))
+	return fmt.Sprintf(CachePrefix, hashedKey)
 }
 
 // Login logs in user id with whatever means possible
@@ -205,67 +218,83 @@ func (auth *AuthProxy) LoginViaLDAP() (int64, *Error) {
 		return 0, newError("Failed to get LDAP config", nil)
 	}
 
-	extUser, err := newLDAP(config.Servers).User(auth.header)
+	extUser, _, err := newLDAP(config.Servers).User(auth.header)
 	if err != nil {
 		return 0, newError(err.Error(), nil)
 	}
 
 	// Have to sync grafana and LDAP user during log in
-	user, err := user.Upsert(&user.UpsertArgs{
+	upsert := &models.UpsertUserCommand{
 		ReqContext:    auth.ctx,
 		SignupAllowed: auth.LDAPAllowSignup,
 		ExternalUser:  extUser,
-	})
+	}
+	err = bus.Dispatch(upsert)
 	if err != nil {
 		return 0, newError(err.Error(), nil)
 	}
 
-	return user.Id, nil
+	return upsert.Result.Id, nil
 }
 
 // LoginViaHeader logs in user from the header only
-// TODO: refactor - cyclomatic complexity should be much lower
 func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 	extUser := &models.ExternalUserInfo{
 		AuthModule: "authproxy",
 		AuthId:     auth.header,
 	}
 
-	if auth.headerType == "username" {
+	switch auth.headerType {
+	case "username":
 		extUser.Login = auth.header
 
-		// only set Email if it can be parsed as an email address
-		emailAddr, emailErr := mail.ParseAddress(auth.header)
+		emailAddr, emailErr := mail.ParseAddress(auth.header) // only set Email if it can be parsed as an email address
 		if emailErr == nil {
 			extUser.Email = emailAddr.Address
 		}
-	} else if auth.headerType == "email" {
+	case "email":
 		extUser.Email = auth.header
 		extUser.Login = auth.header
-	} else {
+	default:
 		return 0, newError("Auth proxy header property invalid", nil)
+
 	}
 
-	for _, field := range []string{"Name", "Email", "Login"} {
-		if auth.headers[field] == "" {
-			continue
+	auth.headersIterator(func(field string, header string) {
+		if field == "Groups" {
+			extUser.Groups = util.SplitString(header)
+		} else {
+			reflect.ValueOf(extUser).Elem().FieldByName(field).SetString(header)
 		}
-
-		if val := auth.ctx.Req.Header.Get(auth.headers[field]); val != "" {
-			reflect.ValueOf(extUser).Elem().FieldByName(field).SetString(val)
-		}
-	}
-
-	result, err := user.Upsert(&user.UpsertArgs{
-		ReqContext:    auth.ctx,
-		SignupAllowed: true,
-		ExternalUser:  extUser,
 	})
+
+	upsert := &models.UpsertUserCommand{
+		ReqContext:    auth.ctx,
+		SignupAllowed: setting.AuthProxyAutoSignUp,
+		ExternalUser:  extUser,
+	}
+
+	err := bus.Dispatch(upsert)
 	if err != nil {
 		return 0, err
 	}
 
-	return result.Id, nil
+	return upsert.Result.Id, nil
+}
+
+// headersIterator iterates over all non-empty supported additional headers
+func (auth *AuthProxy) headersIterator(fn func(field string, header string)) {
+	for _, field := range supportedHeaderFields {
+		h := auth.headers[field]
+
+		if h == "" {
+			continue
+		}
+
+		if value := auth.ctx.Req.Header.Get(h); value != "" {
+			fn(field, strings.TrimSpace(value))
+		}
+	}
 }
 
 // GetSignedUser get full signed user info
@@ -292,7 +321,7 @@ func (auth *AuthProxy) Remember(id int64) *Error {
 		return nil
 	}
 
-	expiration := time.Duration(-auth.cacheTTL) * time.Minute
+	expiration := time.Duration(auth.cacheTTL) * time.Minute
 
 	err := auth.store.Set(key, id, expiration)
 	if err != nil {

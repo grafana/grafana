@@ -117,6 +117,21 @@ func (this *Alert) ContainsUpdates(other *Alert) bool {
 	return result
 }
 
+func (alert *Alert) GetTagsFromSettings() []*Tag {
+	tags := []*Tag{}
+	if alert.Settings != nil {
+		if data, ok := alert.Settings.CheckGet("alertRuleTags"); ok {
+			for tagNameString, tagValue := range data.MustMap() {
+				// MustMap() already guarantees the return of a `map[string]interface{}`.
+				// Therefore we only need to verify that tagValue is a String.
+				tagValueString := simplejson.NewFromAny(tagValue).MustString()
+				tags = append(tags, &Tag{Key: tagNameString, Value: tagValueString})
+			}
+		}
+	}
+	return tags
+}
+
 type AlertingClusterInfo struct {
 	ServerId       string
 	ClusterSize    int

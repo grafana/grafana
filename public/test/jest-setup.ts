@@ -22,12 +22,12 @@ const global = window as any;
 global.$ = global.jQuery = $;
 
 const localStorageMock = (() => {
-  let store = {};
+  let store: any = {};
   return {
     getItem: (key: string) => {
       return store[key];
     },
-    setItem: (key: string, value) => {
+    setItem: (key: string, value: any) => {
       store[key] = value.toString();
     },
     clear: () => {
@@ -41,3 +41,11 @@ const localStorageMock = (() => {
 
 global.localStorage = localStorageMock;
 // Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+
+const throwUnhandledRejections = () => {
+  process.on('unhandledRejection', err => {
+    throw err;
+  });
+};
+
+throwUnhandledRejections();

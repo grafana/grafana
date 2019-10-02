@@ -36,19 +36,12 @@ exports[`Render should render CTA if there are no API keys 1`] = `
     isLoading={false}
   >
     <EmptyListCTA
-      model={
-        Object {
-          "buttonIcon": "gicon gicon-apikeys",
-          "buttonLink": "#",
-          "buttonTitle": " New API Key",
-          "onClick": [Function],
-          "proTip": "Remember you can provide view-only API access to other applications.",
-          "proTipLink": "",
-          "proTipLinkTitle": "",
-          "proTipTarget": "_blank",
-          "title": "You haven't added any API Keys yet.",
-        }
-      }
+      buttonIcon="gicon gicon-apikeys"
+      buttonLink="#"
+      buttonTitle=" New API Key"
+      onClick={[Function]}
+      proTip="Remember you can provide view-only API access to other applications."
+      title="You haven't added any API Keys yet."
     />
     <Component
       in={false}
@@ -129,6 +122,32 @@ exports[`Render should render CTA if there are no API keys 1`] = `
                   </option>
                 </select>
               </span>
+            </div>
+            <div
+              className="gf-form max-width-21"
+            >
+              <Component
+                tooltip="The api key life duration. For example 1d if your key is going to last for one day. All the supported units are: s,m,h,d,w,M,y"
+              >
+                Time to live
+              </Component>
+              <Input
+                className="gf-form-input"
+                onChange={[Function]}
+                placeholder="1d"
+                type="text"
+                validationEvents={
+                  Object {
+                    "onBlur": Array [
+                      Object {
+                        "errorMessage": "Not a valid duration",
+                        "rule": [Function],
+                      },
+                    ],
+                  }
+                }
+                value=""
+              />
             </div>
             <div
               className="gf-form"

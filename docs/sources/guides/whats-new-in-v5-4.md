@@ -43,7 +43,7 @@ The Stackdriver templating query editor lets you choose from a set of different 
 find, filter and select the templating values you're interested in, see screenshot for details. The templating query editor also supports chaining multiple variables
 making it easy to define variables that's dependent on other variables.
 
-Stackdriver is the first datasource which has support for a custom templating query editor. But starting from Grafana v5.4 it's now possible for all datasources, including plugin datasources, to
+Stackdriver is the first data source which has support for a custom templating query editor. But starting from Grafana v5.4 it's now possible for all data sources, including plugin data sources, to
 create their very own templating query editor.
 
 Additionally, if Grafana is running on a Google Compute Engine (GCE) virtual machine, it is now possible for Grafana to automatically retrieve default credentials from the metadata server.
@@ -55,7 +55,7 @@ Please read [Using Google Stackdriver in Grafana](/features/datasources/stackdri
 
 ## MySQL Query Builder
 
-Grafana v5.4 comes with a new graphical query builder for MySQL. This brings MySQL integration more in line with some of the other datasources and makes it easier for both advanced users and beginners to work with timeseries in MySQL. Learn more about it in the [documentation](/features/datasources/mysql/#query-editor).
+Grafana v5.4 comes with a new graphical query builder for MySQL. This brings MySQL integration more in line with some of the other data sources and makes it easier for both advanced users and beginners to work with timeseries in MySQL. Learn more about it in the [documentation](/features/datasources/mysql/#query-editor).
 
 {{< docs-imagebox img="/img/docs/v54/mysql_query_still.png" animated-gif="/img/docs/v54/mysql_query.gif" >}}
 

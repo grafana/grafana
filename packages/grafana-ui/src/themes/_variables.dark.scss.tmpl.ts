@@ -20,6 +20,7 @@ $red-base: ${theme.colors.redBase};
 $red-shade: ${theme.colors.redShade};
 $green-base: ${theme.colors.greenBase};
 $green-shade: ${theme.colors.greenShade};
+$orange-dark: ${theme.colors.orangeDark};
 
 // Grays
 // -------------------------
@@ -39,6 +40,7 @@ $gray-2: ${theme.colors.gray2};
 $gray-3: ${theme.colors.gray3};
 $gray-4: ${theme.colors.gray4};
 $gray-5: ${theme.colors.gray5};
+$gray-6: ${theme.colors.gray6};
 
 $gray-blue: ${theme.colors.grayBlue};
 $input-black: #09090b;
@@ -87,13 +89,8 @@ $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
 $textShadow: none;
 
 // gradients
-$brand-gradient: linear-gradient(
-  to right,
-  rgba(255, 213, 0, 0.7) 0%,
-  rgba(255, 68, 0, 0.7) 99%,
-  rgba(255, 68, 0, 0.7) 100%
-);
-
+$brand-gradient-horizontal: linear-gradient(to right, #f05a28 30%, #fbca0a 99%);
+$brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
 $page-gradient: linear-gradient(180deg, $dark-5 10px, dark-2 100px);
 $edit-gradient: linear-gradient(180deg, $dark-2 50%, $input-black);
 
@@ -282,10 +279,11 @@ $alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
 $popover-bg: $dark-2;
 $popover-color: $text-color;
 $popover-border-color: $dark-9;
+$popover-header-bg: $dark-9;
 $popover-shadow: 0 0 20px black;
 
 $popover-help-bg: $btn-secondary-bg;
-$popover-help-color: $text-color;
+$popover-help-color: $gray-6;
 
 $popover-error-bg: $btn-danger-bg;
 
@@ -395,4 +393,8 @@ $button-toggle-group-btn-seperator-border: 1px solid $dark-2;
 $vertical-resize-handle-bg: $dark-10;
 $vertical-resize-handle-dots: $gray-1;
 $vertical-resize-handle-dots-hover: $gray-2;
+
+// Calendar
+$calendar-bg-days: $input-bg;
+$calendar-bg-now: $dark-10;
 `;

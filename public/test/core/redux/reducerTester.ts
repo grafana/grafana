@@ -11,14 +11,14 @@ export interface When<State> {
 }
 
 export interface Then<State> {
-  thenStateShouldEqual: (state: State) => Then<State>;
+  thenStateShouldEqual: (state: State) => When<State>;
 }
 
 interface ObjectType extends Object {
   [key: string]: any;
 }
 
-const deepFreeze = <T>(obj: T): T => {
+export const deepFreeze = <T>(obj: T): T => {
   Object.freeze(obj);
 
   const isNotException = (object: any, propertyName: any) =>
@@ -49,9 +49,9 @@ const deepFreeze = <T>(obj: T): T => {
 interface ReducerTester<State> extends Given<State>, When<State>, Then<State> {}
 
 export const reducerTester = <State>(): Given<State> => {
-  let reducerUnderTest: Reducer<State, ActionOf<any>> = null;
-  let resultingState: State = null;
-  let initialState: State = null;
+  let reducerUnderTest: Reducer<State, ActionOf<any>>;
+  let resultingState: State;
+  let initialState: State;
 
   const givenReducer = (reducer: Reducer<State, ActionOf<any>>, state: State): When<State> => {
     reducerUnderTest = reducer;
@@ -62,12 +62,12 @@ export const reducerTester = <State>(): Given<State> => {
   };
 
   const whenActionIsDispatched = (action: ActionOf<any>): Then<State> => {
-    resultingState = reducerUnderTest(initialState, action);
+    resultingState = reducerUnderTest(resultingState || initialState, action);
 
     return instance;
   };
 
-  const thenStateShouldEqual = (state: State): Then<State> => {
+  const thenStateShouldEqual = (state: State): When<State> => {
     expect(state).toEqual(resultingState);
 
     return instance;

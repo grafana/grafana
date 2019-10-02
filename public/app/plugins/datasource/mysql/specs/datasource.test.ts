@@ -1,13 +1,13 @@
 import { MysqlDatasource } from '../datasource';
 import { CustomVariable } from 'app/features/templating/custom_variable';
-import { toUtc, dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc, dateTime } from '@grafana/data';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 describe('MySQLDatasource', () => {
   const instanceSettings = { name: 'mysql' };
   const backendSrv = {};
-  const templateSrv = {
-    replace: jest.fn(text => text),
-  };
+  const templateSrv: TemplateSrv = new TemplateSrv();
 
   const raw = {
     from: toUtc('2018-04-25 10:00'),
@@ -25,11 +25,11 @@ describe('MySQLDatasource', () => {
   } as any;
 
   beforeEach(() => {
-    ctx.ds = new MysqlDatasource(instanceSettings, backendSrv, {}, templateSrv, ctx.timeSrvMock);
+    ctx.ds = new MysqlDatasource(instanceSettings, backendSrv as BackendSrv, {} as any, templateSrv, ctx.timeSrvMock);
   });
 
   describe('When performing annotationQuery', () => {
-    let results;
+    let results: any;
 
     const annotationName = 'MyAnno';
 
@@ -66,7 +66,7 @@ describe('MySQLDatasource', () => {
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({ data: response, status: 200 });
       });
-      ctx.ds.annotationQuery(options).then(data => {
+      ctx.ds.annotationQuery(options).then((data: any) => {
         results = data;
       });
     });
@@ -86,7 +86,7 @@ describe('MySQLDatasource', () => {
   });
 
   describe('When performing metricFindQuery', () => {
-    let results;
+    let results: any;
     const query = 'select * from atable';
     const response = {
       results: {
@@ -109,7 +109,7 @@ describe('MySQLDatasource', () => {
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({ data: response, status: 200 });
       });
-      ctx.ds.metricFindQuery(query).then(data => {
+      ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });
     });
@@ -122,7 +122,7 @@ describe('MySQLDatasource', () => {
   });
 
   describe('When performing metricFindQuery with key, value columns', () => {
-    let results;
+    let results: any;
     const query = 'select * from atable';
     const response = {
       results: {
@@ -145,7 +145,7 @@ describe('MySQLDatasource', () => {
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({ data: response, status: 200 });
       });
-      ctx.ds.metricFindQuery(query).then(data => {
+      ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });
     });
@@ -160,7 +160,7 @@ describe('MySQLDatasource', () => {
   });
 
   describe('When performing metricFindQuery with key, value columns and with duplicate keys', () => {
-    let results;
+    let results: any;
     const query = 'select * from atable';
     const response = {
       results: {
@@ -183,7 +183,7 @@ describe('MySQLDatasource', () => {
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({ data: response, status: 200 });
       });
-      ctx.ds.metricFindQuery(query).then(data => {
+      ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });
     });
@@ -197,7 +197,7 @@ describe('MySQLDatasource', () => {
 
   describe('When interpolating variables', () => {
     beforeEach(() => {
-      ctx.variable = new CustomVariable({}, {});
+      ctx.variable = new CustomVariable({}, {} as any);
     });
 
     describe('and value is a string', () => {
@@ -237,6 +237,55 @@ describe('MySQLDatasource', () => {
         ctx.variable.includeAll = true;
         expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual("'abc'");
       });
+    });
+  });
+
+  describe('targetContainsTemplate', () => {
+    it('given query that contains template variable it should return true', () => {
+      const rawSql = `SELECT
+      $__timeGroup(createdAt,'$summarize') as time_sec,
+      avg(value) as value,
+      hostname as metric
+    FROM
+      grafana_metric
+    WHERE
+      $__timeFilter(createdAt) AND
+      measurement = 'logins.count' AND
+      hostname IN($host)
+    GROUP BY 1, 3
+    ORDER BY 1`;
+      const query = {
+        rawSql,
+        rawQuery: true,
+      };
+      templateSrv.init([
+        { type: 'query', name: 'summarize', current: { value: '1m' } },
+        { type: 'query', name: 'host', current: { value: 'a' } },
+      ]);
+      expect(ctx.ds.targetContainsTemplate(query)).toBeTruthy();
+    });
+
+    it('given query that only contains global template variable it should return false', () => {
+      const rawSql = `SELECT
+      $__timeGroup(createdAt,'$__interval') as time_sec,
+      avg(value) as value,
+      hostname as metric
+    FROM
+      grafana_metric
+    WHERE
+      $__timeFilter(createdAt) AND
+      measurement = 'logins.count'
+    GROUP BY 1, 3
+    ORDER BY 1`;
+      const query = {
+        rawSql,
+        rawQuery: true,
+      };
+      templateSrv.init([
+        { type: 'query', name: 'summarize', current: { value: '1m' } },
+        { type: 'query', name: 'host', current: { value: 'a' } },
+      ]);
+      expect(ctx.ds.targetContainsTemplate(query)).toBeFalsy();
     });
   });
 });

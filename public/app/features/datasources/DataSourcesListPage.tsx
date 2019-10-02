@@ -10,7 +10,8 @@ import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import DataSourcesList from './DataSourcesList';
 
 // Types
-import { NavModel, DataSourceSettings } from '@grafana/ui';
+import { DataSourceSettings } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 import { StoreState } from 'app/types';
 import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
 
@@ -78,7 +79,7 @@ export class DataSourcesListPage extends PureComponent<Props> {
       <Page navModel={navModel}>
         <Page.Contents isLoading={!hasFetched}>
           <>
-            {hasFetched && dataSourcesCount === 0 && <EmptyListCTA model={emptyListModel} />}
+            {hasFetched && dataSourcesCount === 0 && <EmptyListCTA {...emptyListModel} />}
             {hasFetched &&
               dataSourcesCount > 0 && [
                 <OrgActionBar

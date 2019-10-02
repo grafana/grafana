@@ -1,7 +1,6 @@
 import React, { FunctionComponent, ReactNode } from 'react';
 import classNames from 'classnames';
-import { Tooltip } from '../Tooltip/Tooltip';
-import { PopperContent } from '../Tooltip/PopperController';
+import { Tooltip, PopoverContent } from '../Tooltip/Tooltip';
 
 interface Props {
   children: ReactNode;
@@ -9,7 +8,7 @@ interface Props {
   htmlFor?: string;
   isFocused?: boolean;
   isInvalid?: boolean;
-  tooltip?: PopperContent<any>;
+  tooltip?: PopoverContent;
   width?: number;
 }
 
