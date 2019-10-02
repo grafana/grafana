@@ -1,6 +1,6 @@
 # Grafana Docker image
 
-This topic coontains instructions for installing Grafana using the Docker image.
+This topic contains instructions for installing Grafana using the Docker image.
 
 ## Run the Grafana Docker container
 
