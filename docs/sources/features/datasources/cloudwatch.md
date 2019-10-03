@@ -37,14 +37,14 @@ Name | Description
 
 ## Authentication
 
-### IAM Roles
+### IAM roles
 
 Currently all access to CloudWatch is done server side by the Grafana backend using the official AWS SDK. If your Grafana
 server is running on AWS you can use IAM Roles and authentication will be handled automatically.
 
 Checkout AWS docs on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
 
-## IAM Policies
+## IAM policies
 
 Grafana needs permissions granted via IAM to be able to read CloudWatch metrics
 and EC2 tags/instances/regions. You can attach these permissions to IAM roles and
@@ -111,13 +111,13 @@ aws_secret_access_key = dasdasdsadasdasdasdsa
 region = us-west-2
 ```
 
-## Metric Query Editor
+## Metric query editor
 
 ![](/img/docs/v43/cloudwatch_editor.png)
 
 You need to specify a namespace, metric, at least one stat, and at least one dimension.
 
-## Metric Math
+## Metric math
 
 You can now create new time series metrics by operating on top of Cloudwatch metrics using mathematical functions. Arithmetic operators, unary subtraction and other functions are supported to be applied on cloudwatch metrics. More details on the available functions can be found on [AWS Metric Math](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html)
 
@@ -158,7 +158,7 @@ Name | Description
 
 For details about the metrics CloudWatch provides, please refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html).
 
-#### Examples templated Queries
+#### Examples templated queries
 
 Example dimension queries which will return list of resources for individual AWS Services:
 
@@ -193,7 +193,7 @@ Example `ec2_instance_attribute()` query
 ec2_instance_attribute(us-east-1, InstanceId, { "tag:Environment": [ "production" ] })
 ```
 
-### Selecting Attributes
+### Selecting attributes
 
 Only 1 attribute per instance can be returned. Any flat attribute can be selected (i.e. if the attribute has a single value and isn't an object or array). Below is a list of available flat attributes:
 

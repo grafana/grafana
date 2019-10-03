@@ -12,7 +12,7 @@ identifier = "http_api_playlist"
 
 # Playlist API
 
-## Search Playlist
+## Search playlist
 
 `GET /api/playlists`
 
@@ -90,7 +90,7 @@ Content-Type: application/json
 }
 ```
 
-## Get Playlist items
+## Get playlist items
 
 `GET /api/playlists/:id/items`
 
@@ -127,7 +127,7 @@ Content-Type: application/json
 ]
 ```
 
-## Get Playlist dashboards
+## Get playlist dashboards
 
 `GET /api/playlists/:id/dashboards`
 

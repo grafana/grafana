@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -11
 +++
 
-# What's New in Grafana v6.0
+# What's new in Grafana v6.0
 
 This update to Grafana introduces a new way of exploring your data, support for log data, and tons of other features.
 
@@ -75,7 +75,7 @@ for other log sources to Explore and the next planned integration is Elasticsear
 
 <br />
 
-## New Panel Editor
+## New panel editor
 
 Grafana v6.0 has a completely redesigned UX around editing panels. You can now resize the visualization area if you want
 more space for queries/options and vice versa. You can now also change visualization (panel type) from within the new
@@ -91,7 +91,7 @@ video below to see the new Panel Editor in action.
 
 <br>
 
-### Gauge Panel
+### Gauge panel
 
 We have created a new separate Gauge panel as we felt having this visualization be a hidden option in the Singlestat panel
 was not ideal. When it supports 100% of the Singlestat Gauge features, we plan to add a migration so all
@@ -102,7 +102,7 @@ continue to refine and start using in other panels.
 
 <br>
 
-### React Panels and Query Editors
+### React panels and query editors
 
 A major part of all the work that has gone into Grafana v6.0 has been on the migration to React. This investment
 is part of the future-proofing of Grafana's code base and ecosystem. Starting in v6.0 **Panels** and **Data
@@ -149,7 +149,7 @@ Besides these changes we have also made security improvements regarding Cross-Si
 > If you're using [Auth Proxy Authentication](/auth/auth-proxy/) you still need to have user sessions set up and configured
 but our goal is to remove this requirement in the near future.
 
-## Named Colors
+## Named colors
 
 {{< docs-imagebox img="/img/docs/v60/named_colors.png" max-width="400px" class="docs-image--right" caption="Named Colors" >}}
 

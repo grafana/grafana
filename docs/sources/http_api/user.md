@@ -11,7 +11,7 @@ parent = "http_api"
 
 # User HTTP resources / actions
 
-## Search Users
+## Search users
 
 `GET /api/users?perpage=10&page=1`
 
@@ -50,7 +50,7 @@ Content-Type: application/json
 ]
 ```
 
-## Search Users with Paging
+## Search users with paging
 
 `GET /api/users/search?perpage=10&page=1&query=mygraf`
 
@@ -95,7 +95,7 @@ Content-Type: application/json
 }
 ```
 
-## Get single user by Id
+## Get single user by id
 
 `GET /api/users/:id`
 
@@ -131,7 +131,7 @@ Content-Type: application/json
 }
 ```
 
-## Get single user by Username(login) or Email
+## Get single user by username (login) or email
 
 `GET /api/users/lookup?loginOrEmail=user@mygraf.com`
 
@@ -177,7 +177,7 @@ Content-Type: application/json
 }
 ```
 
-## User Update
+## User update
 
 `PUT /api/users/:id`
 
@@ -208,7 +208,7 @@ Content-Type: application/json
 {"message":"User updated"}
 ```
 
-## Get Organizations for user
+## Get organizations for user
 
 `GET /api/users/:id/orgs`
 
@@ -238,7 +238,7 @@ Content-Type: application/json
 ]
 ```
 
-## Get Teams for user
+## Get teams for user
 
 `GET /api/users/:id/teams`
 
@@ -274,7 +274,7 @@ Content-Type: application/json
 
 ## User
 
-## Actual User
+## Actual user
 
 `GET /api/user`
 
@@ -303,7 +303,7 @@ Content-Type: application/json
 }
 ```
 
-## Change Password
+## Change password
 
 `PUT /api/user/password`
 
@@ -379,7 +379,7 @@ Content-Type: application/json
 {"message":"Active organization changed"}
 ```
 
-## Organizations of the actual User
+## Organizations of the actual user
 
 `GET /api/user/orgs`
 
@@ -409,7 +409,7 @@ Content-Type: application/json
 ]
 ```
 
-## Teams that the actual User is member of
+## Teams that the actual user is member of
 
 `GET /api/user/teams`
 
@@ -490,7 +490,7 @@ Content-Type: application/json
 {"message":"Dashboard unstarred"}
 ```
 
-## Auth tokens of the actual User
+## Auth tokens of the actual user
 
 `GET /api/user/auth-tokens`
 
@@ -539,7 +539,7 @@ Content-Type: application/json
 ]
 ```
 
-## Revoke an auth token of the actual User
+## Revoke an auth token of the actual user
 
 `POST /api/user/revoke-auth-token`
 

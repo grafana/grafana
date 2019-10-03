@@ -8,7 +8,7 @@ weight = 9
 +++
 
 
-# Scripted Dashboards
+# Scripted dashboards
 
 If you have lots of metric names that change (new servers etc) in a defined pattern it is irritating to constantly have to create new dashboards.
 

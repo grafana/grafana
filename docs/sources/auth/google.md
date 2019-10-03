@@ -10,7 +10,7 @@ parent = "authentication"
 weight = 3
 +++
 
-# Google OAuth2 Authentication
+# Google OAuth2 authentication
 
 To enable the Google OAuth2 you must register your application with Google. Google will generate a client ID and secret key for you to use.
 

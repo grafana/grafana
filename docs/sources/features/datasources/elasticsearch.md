@@ -91,7 +91,7 @@ For example, if you're using a default setup of Filebeat for shipping logs to El
 - **Message field name:**  message
 - **Level field name:** fields.level
 
-## Metric Query editor
+## Metric query editor
 
 ![Elasticsearch Query Editor](/img/docs/elasticsearch/query_editor.png)
 
@@ -195,13 +195,13 @@ Select the Elasticsearch data source, change to Logs using the Metrics/Logs swit
 
 Finally, press the `Enter` key or the `Run Query` button to display your logs.
 
-### Log Queries
+### Log queries
 
 Once the result is returned, the log panel shows a list of log rows and a bar chart where the x-axis shows the time and the y-axis shows the frequency/count.
 
 Note that the fields used for log message and level is based on an [optional data source configuration](#logs-beta).
 
-### Filter Log Messages
+### Filter log messages
 
 Optionally enter a lucene query into the query field to filter the log messages. For example, using a default Filebeat setup you should be able to use `fields.level:error` to only show error log messages.
 

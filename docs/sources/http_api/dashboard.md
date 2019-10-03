@@ -22,7 +22,7 @@ for more information. This means that changing the title of a dashboard will not
 
 The uid can have a maximum length of 40 characters.
 
-## Create / Update dashboard
+## Create / update dashboard
 
 `POST /api/dashboards/db`
 
@@ -240,7 +240,7 @@ Content-Type: application/json
 }
 ```
 
-## Tags for Dashboard
+## Tags for dashboard
 
 `GET /api/dashboards/tags`
 
@@ -273,7 +273,7 @@ Content-Type: application/json
 ]
 ```
 
-## Dashboard Search
+## Dashboard search
 See [Folder/Dashboard Search API](/http_api/folder_dashboard_search).
 
 ## Deprecated resources

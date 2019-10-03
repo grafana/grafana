@@ -75,7 +75,7 @@ If you do not see template variables being populated in `Preview of values` sect
 `tsd.core.meta.enable_realtime_ts` in the OpenTSDB server settings. Also, to populate metadata of
 the existing time series data in OpenTSDB, you need to run `tsdb uid metasync` on the OpenTSDB server.
 
-### Nested Templating
+### Nested templating
 
 One template variable can be used to filter tag values for another template variable. First parameter is the metric name,
 second parameter is the tag key for which you need to find tag values, and after that all other dependent template variables.

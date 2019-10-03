@@ -6,7 +6,7 @@ parent = "plugins"
 weight = 1
 +++
 
-# Grafana Plugins
+# Grafana plugins
 
 From Grafana 3.0+ not only are data source plugins supported but also panel plugins and apps.
 Having panels as plugins make it easy to create and add any kind of panel, to show your data
@@ -19,15 +19,15 @@ can grow even stronger and develop new plugins that we would never think about.
 
 To discover plugins checkout the official [Plugin Repository](https://grafana.com/plugins).
 
-# Installing Plugins
+# Installing plugins
 
 The easiest way to install plugins is by using the CLI tool grafana-cli which is bundled with grafana. Before any modification take place after modifying plugins, grafana-server needs to be restarted.
 
-### Grafana Plugin Directory
+### Grafana plugin directory
 
 On Linux systems the grafana-cli will assume that the grafana plugin directory is `/var/lib/grafana/plugins`. It's possible to override the directory which grafana-cli will operate on by specifying the --pluginsDir flag. On Windows systems this parameter have to be specified for every call.
 
-### Grafana-cli Commands
+### grafana-cli commands
 
 List available plugins
 ```bash
@@ -64,7 +64,7 @@ Remove one plugin
 grafana-cli plugins remove <plugin-id>
 ```
 
-### Installing Plugins Manually
+### Installing plugins manually
 
 If your Grafana Server does not have access to the Internet, then the plugin will have to downloaded and manually copied to your Grafana Server.
 

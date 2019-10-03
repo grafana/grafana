@@ -9,12 +9,12 @@ parent = "authentication"
 weight = 1
 +++
 
-# User Authentication Overview
+# User authentication overview
 
 Grafana provides many ways to authenticate users. Some authentication integrations also enable syncing user
 permissions and org memberships.
 
-## OAuth Integrations
+## OAuth integrations
 
 - [Google OAuth]({{< relref "auth/google.md" >}})
 - [GitHub OAuth]({{< relref "auth/github.md" >}})
@@ -30,7 +30,7 @@ permissions and org memberships.
 - [Auth Proxy]({{< relref "auth/auth-proxy.md" >}}) If you want to handle authentication outside Grafana using a reverse
     proxy.
 
-## Grafana Auth
+## Grafana auth
 
 Grafana of course has a built in user authentication system with password authentication enabled by default. You can
 disable authentication by enabling anonymous access. You can also hide login form and only allow login through an auth

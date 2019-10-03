@@ -9,7 +9,7 @@ parent = "panels"
 weight = 3
 +++
 
-# Heatmap Panel
+# Heatmap panel
 
 ![](/img/docs/v43/heatmap_panel_cover.jpg)
 
@@ -47,11 +47,11 @@ Example:
 
 Here we can clearly see what values are more common and how they trend over time.
 
-## Data Options
+## Data options
 
 Data and bucket options can be found in the `Axes` tab.
 
-### Data Formats
+### Data formats
 
 Data format | Description
 ------------ | -------------
@@ -64,7 +64,7 @@ When Data format is *Time series buckets* data source returns series with names 
 on data source, a bound may be *upper* or *lower*. This option allows to adjust a bound type. If *Auto* is set, a bound
 option will be chosen based on panels' data source type.
 
-### Bucket Size
+### Bucket size
 
 The Bucket count and size options are used by Grafana to calculate how big each cell in the heatmap is. You can
 define the bucket size either by count (the first input box) or by specifying a size interval. For the Y-Axis
@@ -90,11 +90,11 @@ With Prometheus you can only control X-axis by adjusting *Min step* and *Resolut
 
 ![Prometheus histogram](/img/docs/v51/prometheus_histogram.png)
 
-## Display Options
+## Display options
 
 In the heatmap *Display* tab you define how the cells are rendered and what color they are assigned.
 
-### Color Mode and Spectrum
+### Color mode and spectrum
 
 {{< imgbox max-width="40%" img="/img/docs/v43/heatmap_scheme.png" caption="Color spectrum" >}}
 

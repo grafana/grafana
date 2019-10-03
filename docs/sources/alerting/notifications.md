@@ -10,7 +10,7 @@ weight = 2
 +++
 
 
-# Alert Notifications
+# Alert notifications
 
 > Alerting is only available in Grafana v4.0 and above.
 
@@ -19,7 +19,7 @@ multiple notifications. In order to add a notification to an alert rule you firs
 to add and configure a `notification` channel (can be email, PagerDuty or other integration).
 This is done from the Notification Channels page.
 
-## Notification Channel Setup
+## Notification channel setup
 
 On the Notification Channels page hit the `New Channel` button to go the page where you
 can configure and setup a new Notification Channel.
@@ -59,7 +59,7 @@ Alert rule evaluation interval | Send reminders every | Reminder sent every (aft
 
 When checked, this option will disable resolve message [OK] that is sent when alerting state returns to false.
 
-## Supported Notification Types
+## Supported notification types
 
 Grafana ships with the following set of notification types:
 
@@ -161,7 +161,7 @@ There are a couple of configuration options which need to be set up in Grafana U
 
 Once these two properties are set, you can send the alerts to Kafka for further processing or throttling.
 
-### Google Hangouts Chat
+### Google Hangouts chat
 
 Notifications can be sent by setting up an incoming webhook in Google Hangouts chat. Configuring such a webhook is described [here](https://developers.google.com/hangouts/chat/how-tos/webhooks).
 

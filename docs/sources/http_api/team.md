@@ -13,7 +13,7 @@ parent = "http_api"
 
 This API can be used to create/update/delete Teams and to add/remove users to Teams. All actions require that the user has the Admin role for the organization.
 
-## Team Search With Paging
+## Team search With paging
 
 `GET /api/teams/search?perpage=50&page=1&query=mytea`
 
@@ -69,7 +69,7 @@ Status Codes:
 - **403** - Permission denied
 - **404** - Team not found (if searching by name)
 
-## Get Team By Id
+## Get team By id
 
 `GET /api/teams/:id`
 
@@ -105,7 +105,7 @@ Status Codes:
 - **403** - Permission denied
 - **404** - Team not found
 
-## Add Team
+## Add team
 
 The Team `name` needs to be unique. `name` is required and `email` is optional.
 
@@ -141,7 +141,7 @@ Status Codes:
 - **403** - Permission denied
 - **409** - Team name is taken
 
-## Update Team
+## Update team
 
 There are two fields that can be updated for a team: `name` and `email`.
 
@@ -178,7 +178,7 @@ Status Codes:
 - **404** - Team not found
 - **409** - Team name is taken
 
-## Delete Team By Id
+## Delete team by id
 
 `DELETE /api/teams/:id`
 
@@ -207,7 +207,7 @@ Status Codes:
 - **403** - Permission denied
 - **404** - Failed to delete Team. ID not found
 
-## Get Team Members
+## Get team members
 
 `GET /api/teams/:teamId/members`
 
@@ -252,7 +252,7 @@ Status Codes:
 - **401** - Unauthorized
 - **403** - Permission denied
 
-## Add Team Member
+## Add team member
 
 `POST /api/teams/:teamId/members`
 
@@ -286,7 +286,7 @@ Status Codes:
 - **403** - Permission denied
 - **404** - Team not found
 
-## Remove Member From Team
+## Remove member from team
 
 `DELETE /api/teams/:teamId/members/:userId`
 
@@ -315,7 +315,7 @@ Status Codes:
 - **403** - Permission denied
 - **404** - Team not found/Team member not found
 
-## Get Team Preferences
+## Get team preferences
 
 `GET /api/teams/:teamId/preferences`
 
@@ -341,7 +341,7 @@ Content-Type: application/json
 }
 ```
 
-## Update Team Preferences
+## Update team preferences
 
 `PUT /api/teams/:teamId/preferences`
 

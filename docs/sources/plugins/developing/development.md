@@ -8,7 +8,7 @@ parent = "developing"
 weight = 1
 +++
 
-# Developer Guide
+# Developer guide
 
 You can extend Grafana by writing your own plugins and then share them with other users in [our plugin repository](https://grafana.com/plugins).
 
@@ -104,7 +104,7 @@ When Grafana starts it will scan the plugin folders and mount every folder that 
 the folder contains a subfolder named dist. In that case grafana will mount the dist folder instead.
 This makes it possible to have both built and src content in the same plugin git repo.
 
-## Grafana Events
+## Grafana events
 
 There are a number of Grafana events that a plugin can hook into:
 
@@ -126,7 +126,7 @@ We currently have three different examples that you can fork/download to get sta
  - [singlestat-panel](https://github.com/grafana/grafana/blob/master/public/app/plugins/panel/singlestat/module.ts)
  - [piechart-panel](https://github.com/grafana/piechart-panel)
 
-## Other Articles
+## Other articles
 
 - [Getting Plugins to work in Snapshot Mode]({{< relref "snapshot-mode.md" >}})
 - [Plugin Defaults and Editor Mode]({{< relref "defaults-and-editor-mode.md" >}})

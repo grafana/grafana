@@ -10,7 +10,7 @@ parent = "authentication"
 weight = 4
 +++
 
-# GitHub OAuth2 Authentication
+# GitHub OAuth2 authentication
 
 To enable the GitHub OAuth2 you must register your application with GitHub. GitHub will generate a client ID and secret key for you to use.
 

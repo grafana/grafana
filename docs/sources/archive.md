@@ -7,7 +7,7 @@ name = "Docs Archive"
 weight = 200
 +++
 
-# Docs Archive
+# Docs archive
 
 Here you can find links to older versions of the documentation that might be better suited for your version
 of Grafana.

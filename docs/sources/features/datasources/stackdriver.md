@@ -37,7 +37,7 @@ Grafana ships with built-in support for Google Stackdriver. Just add it as a dat
 
 There are two ways to authenticate the Stackdriver plugin - either by uploading a Google JWT file, or by automatically retrieving credentials from Google metadata server. The latter option is only available when running Grafana on GCE virtual machine.
 
-### Using a Google Service Account Key File
+### Using a Google service account key file
 
 To authenticate with the Stackdriver API, you need to create a Google Cloud Platform (GCP) Service Account for the Project you want to show data for. A Grafana data source integrates with one GCP Project. If you want to visualize data from multiple GCP Projects then you need to create one data source per GCP Project.
 
@@ -52,7 +52,7 @@ Click on the links above and click the `Enable` button:
 
 {{< docs-imagebox img="/img/docs/v53/stackdriver_enable_api.png" class="docs-image--no-shadow" caption="Enable GCP APIs" >}}
 
-#### Create a GCP Service Account for a Project
+#### Create a GCP service account for a project
 
 1. Navigate to the [APIs and Services Credentials page](https://console.cloud.google.com/apis/credentials).
 2. Click on the `Create credentials` dropdown/button and choose the `Service account key` option.
@@ -76,7 +76,7 @@ Click on the links above and click the `Enable` button:
 
     {{< docs-imagebox img="/img/docs/v53/stackdriver_grafana_key_uploaded.png" class="docs-image--no-shadow" caption="Service key file is uploaded to Grafana" >}}
 
-### Using GCE Default Service Account
+### Using GCE default service account
 
 If Grafana is running on a Google Compute Engine (GCE) virtual machine, it is possible for Grafana to automatically retrieve default credentials from the metadata server. This has the advantage of not needing to generate a private key file for the service account and also not having to upload the file to Grafana. However for this to work, there are a few preconditions that need to be met.
 
@@ -86,7 +86,7 @@ If Grafana is running on a Google Compute Engine (GCE) virtual machine, it is po
 
 Read more about creating and enabling service accounts for GCE VM instances [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances).
 
-## Metric Query Editor
+## Metric query editor
 
 {{< docs-imagebox img="/img/docs/v53/stackdriver_query_editor.png" max-width= "400px" class="docs-image--right" >}}
 
@@ -114,7 +114,7 @@ The aggregation field lets you combine time series based on common statistics. R
 
 The `Aligner` field allows you to align multiple time series after the same group by time interval. Read more about how it works [here](https://cloud.google.com/monitoring/charts/metrics-selector#alignment).
 
-#### Alignment Period/Group by Time
+#### Alignment period/group by time
 
 The `Alignment Period` groups a metric by time if an aggregation is chosen. The default is to use the GCP Stackdriver default groupings (which allows you to compare graphs in Grafana with graphs in the Stackdriver UI).
 The option is called `Stackdriver auto` and the defaults are:
@@ -131,11 +131,11 @@ It is also possible to choose fixed time intervals to group by, like `1h` or `1d
 
 Group by resource or metric labels to reduce the number of time series and to aggregate the results by a group by. E.g. Group by instance_name to see an aggregated metric for a Compute instance.
 
-### Alias Patterns
+### Alias patterns
 
 The Alias By field allows you to control the format of the legend keys. The default is to show the metric name and labels. This can be long and hard to read. Using the following patterns in the alias field, you can format the legend key the way you want it.
 
-#### Metric Type Patterns
+#### Metric type patterns
 
 | Alias Pattern        | Description                  | Example Result                                    |
 | -------------------- | ---------------------------- | ------------------------------------------------- |
@@ -143,7 +143,7 @@ The Alias By field allows you to control the format of the legend keys. The defa
 | `{{metric.name}}`    | returns the metric name part | `instance/cpu/utilization`                        |
 | `{{metric.service}}` | returns the service part     | `compute`                                         |
 
-#### Label Patterns
+#### Label patterns
 
 In the Group By dropdown, you can see a list of metric and resource labels for a metric. These can be included in the legend key using alias patterns.
 
@@ -175,7 +175,7 @@ being displayed in your dashboard.
 Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
-### Query Variable
+### Query variable
 
 Variable of the type *Query* allows you to query Stackdriver for various types of data. The Stackdriver data source plugin provides the following `Query Types`.
 
@@ -211,7 +211,7 @@ With the query editor for annotations, you can select a metric and filters. The 
 
 Example Result: `monitoring.googleapis.com/uptime_check/http_status has this value: 502`
 
-### Patterns for the Annotation Query Editor
+### Patterns for the annotation query editor
 
 | Alias Pattern Format     | Description                      | Alias Pattern Example            | Example Result                                    |
 | ------------------------ | -------------------------------- | -------------------------------- | ------------------------------------------------- |

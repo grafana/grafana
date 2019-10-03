@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -3
 +++
 
-## What's New in Grafana v4.4
+## What's new in Grafana v4.4
 
 Grafana v4.4 is now [available for download](https://grafana.com/grafana/download/4.4.0).
 
@@ -18,7 +18,7 @@ Grafana v4.4 is now [available for download](https://grafana.com/grafana/downloa
 
 - Dashboard History - version control for dashboards.
 
-## New Features
+## New features
 
 **Dashboard History**: View dashboard version history, compare any two versions (summary and json diffs), restore to old version. This big feature
 was contributed by **Walmart Labs**. Big thanks to them for this massive contribution!
@@ -32,11 +32,11 @@ Pull Request: [#8472](https://github.com/grafana/grafana/pull/8472)
 * **Table Panel**: Column style that preserves formatting/indentation (like pre tag) [#6617](https://github.com/grafana/grafana/issues/6617)
 * **DingDing**: Add DingDing Alert Notifier [#8473](https://github.com/grafana/grafana/pull/8473) thx [@jiamliang](https://github.com/jiamliang)
 
-## Minor Enhancements
+## Minor enhancements
 
 * **Elasticsearch**: Add option for result set size in raw_document [#3426](https://github.com/grafana/grafana/issues/3426) [#8527](https://github.com/grafana/grafana/pull/8527), thx [@mk-dhia](github.com/mk-dhia)
 
-## Bug Fixes
+## Bug fixes
 
 * **Graph**: Bug fix for negative values in histogram mode [#8628](https://github.com/grafana/grafana/issues/8628)
 

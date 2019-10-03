@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -14
 +++
 
-# What's New in Grafana v6.3
+# What's new in Grafana v6.3
 
 For all details please read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
 
@@ -61,7 +61,7 @@ simplified query interface specifically designed for logs search.
 
 Please read [Using InfluxDB in Grafana](/features/datasources/influxdb/#querying-logs-beta) for more detailed information on how to get started and use it.
 
-## Data Links
+## Data links
 
 We have simplified the UI for defining panel drilldown links (and renamed them to Panel links). We have also added a
 new type of link named `Data link`. The reason to have two different types is to make it clear how they are used
@@ -90,13 +90,13 @@ You can then click on point in the Graph.
 
 For now only the Graph panel supports `Data links` but we hope to add these to many visualizations.
 
-## New Time Picker
+## New time picker
 
 The time picker has been re-designed and with a more basic design that makes accessing quick ranges more easy.
 
 {{< docs-imagebox img="/img/docs/v63/time_picker.png" max-width="400px" caption="New Time Picker" >}}
 
-## Graph Gradients
+## Graph gradients
 
 Want more eye candy in your graphs? Then the fill gradient option might be for you! Works really well for
 graphs with only a single series.
@@ -107,7 +107,7 @@ Looks really nice in light theme as well.
 
 {{< docs-imagebox img="/img/docs/v63/graph_gradients_white.png" max-width="800px" caption="Graph Gradient Area" >}}
 
-## Grafana Enterprise
+## Grafana enterprise
 
 Substantial refactoring and improvements to the external auth systems has gone in to this release making the  features
 listed below possible as well as laying a foundation for future enhancements.
@@ -126,7 +126,7 @@ belonging to an LDAP group that gives them access to Grafana.
 
 [Read more](/auth/enhanced_ldap/#active-ldap-synchronization)
 
-### SAML Authentication
+### SAML authentication
 
 Built-in support for SAML is now available in Grafana Enterprise.
 

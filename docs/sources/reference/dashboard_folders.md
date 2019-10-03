@@ -8,11 +8,11 @@ parent = "dashboard_features"
 weight = 3
 +++
 
-# Dashboard Folders
+# Dashboard folders
 
 Folders are a way to organize and group dashboards - very useful if you have a lot of dashboards or multiple teams using the same Grafana instance.
 
-## How To Create A Folder
+## How to create a folder
 
 - Create a folder by using the Create Folder link in the side menu (under the create menu (+ icon))
 - Use the create Folder button on the Manage Dashboards page.
@@ -20,7 +20,7 @@ Folders are a way to organize and group dashboards - very useful if you have a l
 
 On the Create Folder page, fill in a unique name for the folder and press Create.
 
-## Manage Dashboards
+## Manage dashboards
 
 {{< docs-imagebox img="/img/docs/v50/manage_dashboard_menu.png" max-width="300px" class="docs-image--right" >}}
 
@@ -32,7 +32,7 @@ There is a new Manage Dashboards page where you can carry out a variety of tasks
 - delete multiple dashboards
 - navigate to a folder page (where you can set permissions for a folder and/or its dashboards)
 
-## Dashboard Folder Page
+## Dashboard folder page
 
 You reach the dashboard folder page by clicking on the cog icon that appears when you hover
 over a folder in the dashboard list in the search result or on the Manage dashboards page.

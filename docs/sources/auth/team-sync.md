@@ -40,7 +40,7 @@ a user as member of a team and it will not be removed when the user signs in. Th
 
 5. Click on `Add group` button to save.
 
-### Supported Providers
+### Supported providers
 
 * [LDAP]({{< relref "auth/enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
 * [GitHub OAuth]({{< relref "auth/github.md#team-sync-enterprise-only" >}})

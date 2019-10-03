@@ -9,7 +9,7 @@ name = "Folder Permissions"
 parent = "http_api"
 +++
 
-# Folder Permissions API
+# Folder permissions API
 
 This API can be used to update/get the permissions for a folder.
 

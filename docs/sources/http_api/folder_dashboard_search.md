@@ -9,7 +9,7 @@ name = "Folder/dashboard search"
 parent = "http_api"
 +++
 
-# Folder/Dashboard Search API
+# Folder/dashboard search API
 
 ## Search folders and dashboards
 

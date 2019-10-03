@@ -8,7 +8,7 @@ parent = "developing"
 weight = 5
 +++
 
-# Data Sources
+# Data sources
 
 Data source plugins enables people to develop plugins for any database that
 communicates over http. Its up to the plugin to transform the data into
@@ -27,7 +27,7 @@ To interact with the rest of grafana the plugins module file can export 5 differ
 - ConfigCtrl (Required)
 - AnnotationsQueryCtrl
 
-## Plugin json
+## Plugin JSON
 
 There are two data source specific settings for the plugin.json
 
@@ -134,7 +134,7 @@ An array of:
 ]
 ```
 
-### Annotation Query
+### Annotation query
 
 Request object passed to datasource.annotationQuery function:
 

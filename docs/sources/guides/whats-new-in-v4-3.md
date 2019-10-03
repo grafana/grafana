@@ -10,11 +10,11 @@ parent = "whatsnew"
 weight = -2
 +++
 
-## What's New in Grafana v4.3
+## What's new in Grafana v4.3
 
 Grafana v4.3 Beta is now [available for download](https://grafana.com/grafana/download/4.3.0-beta1).
 
-## Release Highlights
+## Release highlights
 
 - New [Heatmap Panel](http://docs.grafana.org/features/panels/heatmap/)
 - Graph Panel Histogram Mode
@@ -25,7 +25,7 @@ Grafana v4.3 Beta is now [available for download](https://grafana.com/grafana/do
 
 Check out the [New Features in v4.3 Dashboard](http://play.grafana.org/dashboard/db/new-features-in-v4-3?orgId=1) on the Grafana Play site for a showcase of these new features.
 
-## Histogram Support
+## Histogram support
 
 A Histogram is a kind of bar chart that groups numbers into ranges, often called buckets or bins. Taller bars show that more data falls in that range.
 
@@ -33,11 +33,11 @@ The Graph Panel now supports Histograms.
 
 ![](/img/docs/v43/heatmap_histogram.png)
 
-## Histogram Aggregation Support for Elasticsearch
+## Histogram aggregation support for Elasticsearch
 
 Elasticsearch is the only supported data source that can return pre-bucketed data (data that is already grouped into ranges). With other data sources there is a risk of returning inaccurate data in a histogram due to using already aggregated data rather than raw data. This release adds support for Elasticsearch pre-bucketed data that can be visualized with the new [Heatmap Panel](http://docs.grafana.org/features/panels/heatmap/).
 
-## Heatmap Panel
+## Heatmap panel
 
 The Histogram support in the Graph Panel does not show changes over time - it aggregates all the data together for the chosen time range. To visualize a histogram over time, we have built a new [Heatmap Panel](http://docs.grafana.org/features/panels/heatmap/).
 
@@ -49,7 +49,7 @@ The Heatmap panel also works with Elasticsearch Histogram Aggregations for more 
 
 ![](/assets/img/blog/v4/elastic_heatmap.jpg)
 
-## MySQL Data Source (alpha)
+## MySQL data source (alpha)
 
 This release includes a [new core data source for MySQL](http://docs.grafana.org/features/datasources/mysql/). You can write any possible MySQL query and format it as either Time Series or Table Data allowing it be used with the Graph Panel, Table Panel and SingleStat Panel.
 
@@ -64,21 +64,21 @@ labeling the state of the data source as Alpha. Instead of holding up the releas
 
 ![](/img/docs/v43/mysql_query_error.png)
 
-## Health Check Endpoint
+## Health check endpoint
 
 Now you can monitor the monitoring with the Health Check Endpoint! The new `/api/health` endpoint returns HTTP 200 OK if everything is up and HTTP 503 Error if the Grafana database cannot be pinged.
 
-## Lazy Load Panels
+## Lazy load panels
 
 Grafana now delays loading panels until they become visible (scrolled into view). This means panels out of view are not sending requests thereby reducing the load on your time series database.
 
-## Prometheus - Table Data (column per label)
+## Prometheus - table data (column per label)
 
 The Prometheus data source now supports the Table Data format by automatically assigning a column to a label. This makes it really easy to browse data in the table panel.
 
 ![](/img/docs/v43/prom_table_cols_as_labels.png)
 
-## Other Highlights From The Changelog
+## Other highlights drom the Changelog
 
 Changes:
 

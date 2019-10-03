@@ -10,13 +10,13 @@ parent = "authentication"
 weight = 3
 +++
 
-# Enhanced LDAP Integration
+# Enhanced LDAP integration
 
 > Enhanced LDAP Integration is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "enterprise" >}}).
 
 The enhanced LDAP integration adds additional functionality on top of the [existing LDAP integration]({{< relref "auth/ldap.md" >}}).
 
-## LDAP Group Synchronization for Teams
+## LDAP group synchronization for teams
 
 {{< docs-imagebox img="/img/docs/enterprise/team_members_ldap.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" >}}
 
@@ -32,7 +32,7 @@ a user as member of a team and it will not be removed when the user signs in. Th
 
 <div class="clearfix"></div>
 
-## Active LDAP Synchronization
+## Active LDAP synchronization
 
 > Only available in Grafana Enterprise v6.3+
 

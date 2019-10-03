@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -6
 +++
 
-# What's New in Grafana v5.0
+# What's new in Grafana v5.0
 
 This is the most substantial update that Grafana has ever seen. This article will detail the major new features and enhancements.
 
@@ -30,7 +30,7 @@ This is the most substantial update that Grafana has ever seen. This article wil
 <iframe width="450" height="270" src="https://www.youtube.com/embed/Izr0IBgoTZQ?rel=0&amp;" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 <br />
 
-## New Dashboard Layout Engine
+## New dashboard layout engine
 
 {{< docs-imagebox img="/img/docs/v50/new_grid.png" max-width="1000px" class="docs-image--right">}}
 
@@ -51,7 +51,7 @@ Almost every page has seen significant UX improvements. All pages (except dashbo
 
 <div class="clearfix"></div>
 
-## Dashboard Settings
+## Dashboard settings
 
 {{< docs-imagebox img="/img/docs/v50/dashboard_settings.png" max-width="1000px" class="docs-image--right" >}}
 Dashboard pages have a new header toolbar where buttons and actions are now all moved to the right. All the dashboard
@@ -59,7 +59,7 @@ settings views have been combined with a side nav which allows you to easily mov
 
 <div class="clearfix"></div>
 
-## New Light Theme
+## New light theme
 
 {{< docs-imagebox img="/img/docs/v50/new_white_theme.png" max-width="1000px" class="docs-image--right" >}}
 
@@ -67,7 +67,7 @@ This theme has not seen a lot of love in recent years and we felt it was time to
 
 <div class="clearfix"></div>
 
-## Dashboard Folders
+## Dashboard folders
 
 {{< docs-imagebox img="/img/docs/v50/new_search.png" max-width="1000px" class="docs-image--right" >}}
 
@@ -118,7 +118,7 @@ which makes it possible to star them, use one as the home dashboard, set permiss
 expects the dashboards to exist in the database. More info in the [dashboard provisioning docs](/administration/provisioning/#dashboards)
 
 
-## Graphite Tags and Integrated Function Docs
+## Graphite tags and integrated function docs
 
 {{< docs-imagebox img="/img/docs/v50/graphite_tags.png" max-width="1000px" class="docs-image--right" >}}
 

@@ -10,7 +10,7 @@ parent = "authentication"
 weight = 3
 +++
 
-# Generic OAuth Authentication
+# Generic OAuth authentication
 
 You can configure many different oauth2 authentication services with Grafana using the generic oauth2 feature. Below you
 can find examples using Okta, BitBucket, OneLogin and Azure.

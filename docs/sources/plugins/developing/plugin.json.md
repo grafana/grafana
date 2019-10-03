@@ -12,7 +12,7 @@ weight = 8
 
 The plugin.json file is mandatory for all plugins. When Grafana starts it will scan the plugin folders and mount every folder that contains a plugin.json file unless the folder contains a subfolder named `dist`. In that case grafana will mount the `dist` folder instead.
 
-## Plugin JSON Schema
+## Plugin JSON schema
 
 | Property | Description |
 | ------------- |-------------|

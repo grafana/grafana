@@ -10,7 +10,7 @@ parent = "authentication"
 weight = 5
 +++
 
-# GitLab OAuth2 Authentication
+# GitLab OAuth2 authentication
 
 To enable the GitLab OAuth2 you must register an application in GitLab. GitLab will generate a client ID and secret key for you to use.
 

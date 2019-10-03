@@ -10,9 +10,9 @@ parent = "whatsnew"
 weight = 6
 +++
 
-# What's New in Grafana v3.0
+# What's new in Grafana v3.0
 
-## Commercial Support
+## Commercial support
 
 Commercial Support subscriptions for Grafana are now [generally available](https://grafana.com/support/plans/).
 
@@ -76,13 +76,13 @@ example:
 grafana-cli install grafana-pie-chart-panel
 ```
 
-## Personalization and Preferences
+## Personalization and preferences
 
 The home dashboard, timezone and theme can now be customized on Organization
 and user Profile level. Grafana can also track recently viewed dashboards, which
 can then be displayed in the dashboard list panel.
 
-## Improved Playlists
+## Improved playlists
 
 You can now save Playlists, and start them by using a Playlist URL. If
 you update a running Playlist, it will update after its next cycle.
@@ -131,7 +131,7 @@ And here's the new look for Dashboard settings:
 Check out the <a href="http://play.grafana.org" target="_blank">Play
 Site</a> to get a feel for some of the UI changes.
 
-## Improved Annotations
+## Improved annotations
 
 It is now possible to define a link in each annotation. You can hover
 over the link and click the annotation text. This feature is very
@@ -199,21 +199,21 @@ you can install it manually from [Grafana.com](https://grafana.com)
 Discovering and installing plugins is very quick and easy with Grafana 3.0 and [Grafana.com](https://grafana.com). Here
 are a couple that I encourage you try!
 
-#### [Clock Panel](https://grafana.com/plugins/grafana-clock-panel)
+#### [Clock panel](https://grafana.com/plugins/grafana-clock-panel)
 Support's both current time and count down mode.
 <img src="/img/docs/v3/clock_panel.png">
 
-#### [Pie Chart Panel](https://grafana.com/plugins/grafana-piechart-panel)
+#### [Pie chart panel](https://grafana.com/plugins/grafana-piechart-panel)
 A simple pie chart panel is now available as an external plugin.
 <img src="/img/docs/v3/pie_chart_panel.png">
 
-#### [WorldPing App](https://grafana.com/plugins/raintank-worldping-app)
+#### [WorldPing app](https://grafana.com/plugins/raintank-worldping-app)
 This is full blown Grafana App that adds new panels, data sources and pages to give
 feature rich global performance monitoring directly from your on-prem Grafana.
 
 <img src="/img/docs/v3/wP-Screenshot-dash-web.png">
 
-#### [Zabbix App](https://grafana.com/plugins/alexanderzobnin-zabbix-app)
+#### [Zabbix app](https://grafana.com/plugins/alexanderzobnin-zabbix-app)
 This app contains the already very pouplar Zabbix data source plugin, 2 dashboards and a triggers panel. It is
 created and maintained by [Alexander Zobnin](https://github.com/alexanderzobnin/grafana-zabbix).
 

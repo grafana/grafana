@@ -10,13 +10,13 @@ weight = 2
 +++
 
 
-# Singlestat Panel
+# Singlestat panel
 
 {{< docs-imagebox img="/img/docs/v45/singlestat-panel.png" class="docs-image--no-shadow" max-width="900px" >}}
 
 The Singlestat Panel allows you to show the one main summary stat of a SINGLE series. It reduces the series into a single number (by looking at the max, min, average, or sum of values in the series). Singlestat also provides thresholds to color the stat or the Panel background. It can also translate the single number into a text value, and show a sparkline summary of the series.
 
-### Singlestat Panel Configuration
+### Singlestat panel configuration
 
 The singlestat panel has a normal query editor to allow you define your exact metric queries like many other Panels. In the Options tab, you can access the Singlestat-specific functionality.
 
@@ -49,7 +49,7 @@ The coloring options of the Singlestat Panel config allow you to dynamically cha
 4. **Value**: This checkbox applies the configured thresholds and colors to the summary stat.
 5. **Invert order**: This link toggles the threshold color order.</br>For example: Green, Orange, Red (<img class="no-shadow" src="/img/docs/v1/gyr.png">) will become Red, Orange, Green (<img class="no-shadow" src="/img/docs/v1/ryg.png">).
 
-### Spark Lines
+### Spark lines
 
 Sparklines are a great way of seeing the historical data related to the summary stat, providing valuable context at a glance. Sparklines act differently than traditional Graph Panels and do not include x or y axis, coordinates, a legend, or ability to interact with the graph.
 
@@ -89,7 +89,7 @@ Value/Range to text mapping allows you to translate the value of the summary sta
 
 ## Troubleshooting
 
-### Multiple Series Error
+### Multiple series error
 
 {{< docs-imagebox img="/img/docs/v45/singelstat-multiple-series-error.png" class="docs-image--right docs-image--no-shadow">}}
 

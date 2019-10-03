@@ -55,7 +55,7 @@ Identifier | Description
 `s`   | second
 `ms`  | millisecond
 
-### Database User Permissions (Important!)
+### Database user permissions (Important!)
 
 The database user you specify when you add the data source should only be granted SELECT permissions on
 the specified database and tables you want to query. Grafana does not validate that the query is safe. The query
@@ -71,12 +71,12 @@ Example:
 
 Make sure the user does not get any unwanted privileges from the public role.
 
-### Known Issues
+### Known issues
 
 If you're using an older version of Microsoft SQL Server like 2008 and 2008R2 you may need to disable encryption to be able to connect.
 If possible, we recommend you to use the latest service pack available for optimal compatibility.
 
-## Query Editor
+## Query editor
 
 {{< docs-imagebox img="/img/docs/v51/mssql_query_editor.png" class="docs-image--no-shadow" >}}
 
@@ -302,7 +302,7 @@ Instead of hard-coding things like server, application and sensor name in you me
 
 Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
-### Query Variable
+### Query variable
 
 If you add a template variable of the type `Query`, you can write a MSSQL query that can
 return things like measurement names, key names or key values that are shown as a dropdown select box.
@@ -332,7 +332,7 @@ the hosts variable only show hosts from the current selected region with a query
 SELECT hostname FROM host WHERE region IN ($region)
 ```
 
-### Using Variables in Queries
+### Using variables in queries
 
 > From Grafana 4.3.0 to 4.6.0, template variables are always quoted automatically so if it is a string value do not wrap them in quotes in where clauses.
 >
@@ -364,7 +364,7 @@ WHERE $__timeFilter(atimestamp) and hostname in([[hostname]])
 ORDER BY atimestamp
 ```
 
-#### Disabling Quoting for Multi-value Variables
+#### Disabling quoting for multi-value variables
 
 Grafana automatically creates a quoted, comma-separated string for multi-value variables. For example: if `server01` and `server02` are selected then it will be formatted as: `'server01', 'server02'`. Do disable quoting, use the csv formatting option for variables:
 

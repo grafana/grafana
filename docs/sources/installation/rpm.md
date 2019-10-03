@@ -49,7 +49,7 @@ $ sudo rpm -Uvh <local rpm package>
 $ sudo rpm -i --nodeps <local rpm package>
 ```
 
-## Install via YUM Repository
+## Install via YUM repository
 
 Add the following to a new file at `/etc/yum.repos.d/grafana.repo`
 
@@ -85,7 +85,7 @@ Then install Grafana via the `yum` command.
 $ sudo yum install grafana
 ```
 
-### RPM GPG Key
+### RPM GPG key
 
 The RPMs are signed, you can verify the signature with this [public GPG
 key](https://packages.grafana.com/gpg.key).

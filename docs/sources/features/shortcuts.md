@@ -38,14 +38,14 @@ Hit `?` on your keyboard to open the shortcuts help modal.
 - `d` `C`	Collapse all rows
 - `mod+o`	Toggle shared graph crosshair
 
-### Focused Panel
+### Focused panel
 - `e`	Toggle panel edit view
 - `v`	Toggle panel fullscreen view
 - `p` `s` Open Panel Share Modal
 - `p` `d` Duplicate Panel
 - `p` `r` Remove Panel
 
-### Time Range
+### Time range
 - `t` `z`	Zoom out time range
 - `t`	Move time range back
 - `t`	Move time range forward

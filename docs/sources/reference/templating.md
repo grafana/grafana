@@ -36,7 +36,7 @@ interpolation the variable value might be **escaped** in order to conform to the
 For example, a variable used in a regex expression in an InfluxDB or Prometheus query will be regex escaped. Read the data source specific
 documentation article for details on value escaping during interpolation.
 
-### Advanced Formatting Options
+### Advanced formatting options
 
 The formatting of the variable interpolation depends on the data source but there are some situations where you might want to change the default formatting. For example, the default for the MySql data source is to join multiple values as comma-separated with quotes: `'server01','server02'`. In some cases you might want to have a comma-separated string without quotes: `server01,server02`. This is now possible with the advanced formatting options.
 
@@ -69,7 +69,7 @@ String to interpolate: '${servers:pipe}'
 Interpolation result: 'test1.|test2'
 ```
 
-### Csv
+### CSV
 Formats multi-value variable as a comma-separated string.
 
 ```bash
@@ -78,7 +78,7 @@ String to interpolate: '${servers:csv}'
 Interpolation result: 'test1,test2'
 ```
 
-### Json
+### JSON
 Formats multi-value variable as a comma-separated string.
 
 ```bash
@@ -208,7 +208,7 @@ Result:
 02
 ```
 
-#### Filter and modify - Prometheus Example
+#### Filter and modify - Prometheus example
 
 List of options:
 
@@ -245,7 +245,7 @@ The query expressions are different for each data source.
 One thing to note is that query expressions can contain references to other variables and in effect create linked variables.
 Grafana will detect this and automatically refresh a variable when one of it's containing variables change.
 
-## Selection Options
+## Selection options
 
 Option | Description
 ------- | --------
@@ -301,7 +301,7 @@ Example using the template variable `myinterval` of type `Interval` in a graphit
 summarize($myinterval, sum, false)
 ```
 
-## Global Built-in Variables
+## Global built-in variables
 
 Grafana has global built-in variables that can be used in expressions in the query editor.
 
@@ -310,7 +310,7 @@ Grafana has global built-in variables that can be used in expressions in the que
 Grafana has two built in time range variables in `$__from` and `$__to`. They are currently always interpolated
 as epoch milliseconds. These variables are only available in Grafana v6.0 and above.
 
-### The $__interval Variable
+### The $__interval variable
 
 This $__interval variable is similar to the `auto` interval variable that is described above. It can be used as a parameter to group by time (for InfluxDB, MySQL, Postgres, MSSQL), Date histogram interval (for Elasticsearch) or as a *summarize* function parameter (for Graphite).
 
@@ -324,11 +324,11 @@ In the InfluxDB data source, the legacy variable `$interval` is the same variabl
 
 The InfluxDB and Elasticsearch data sources have `Group by time interval` fields that are used to hard code the interval or to set the minimum limit for the `$__interval` variable (by using the `>` syntax -> `>10m`).
 
-### The $__interval_ms Variable
+### The $__interval_ms variable
 
 This variable is the `$__interval` variable in milliseconds (and not a time interval formatted string). For example, if the `$__interval` is `20m` then the `$__interval_ms` is `1200000`.
 
-### The $timeFilter or $__timeFilter Variable
+### The $timeFilter or $__timeFilter variable
 
 The `$timeFilter` variable returns the currently selected time range as an expression. For example, the time range interval `Last 7 days` expression is `time > now() - 7d`.
 
@@ -336,17 +336,17 @@ This is used in the WHERE clause for the InfluxDB data source. Grafana adds it a
 
 The `$__timeFilter` is used in the MySQL data source.
 
-### The $__name Variable
+### The $__name variable
 
 This variable is only available in the Singlestat panel and can be used in the prefix or suffix fields on the Options tab. The variable will be replaced with the series name or alias.
 
-### The $__range Variable
+### The $__range variable
 
 > Only available in Grafana v5.3+
 
 Currently only supported for Prometheus data sources. This variable represents the range for the current dashboard. It is calculated by `to - from`. It has a millisecond and a second representation called `$__range_ms` and `$__range_s`.
 
-## Repeating Panels
+## Repeating panels
 
 Template variables can be very useful to dynamically change your queries across a whole dashboard. If you want
 Grafana to dynamically create new panels or rows based on what values you have selected you can use the *Repeat* feature.
@@ -367,7 +367,7 @@ By choosing `vertical` the panels will be arranged from top to bottom in a colum
 Only make changes to the first panel (the original template). To have the changes take effect on all panels you need to trigger a dynamic dashboard re-build.
 You can do this by either changing the variable value (that is the basis for the repeat) or reload the dashboard.
 
-## Repeating Rows
+## Repeating rows
 
 As seen above with the *Panels* you can also repeat *Rows* if you have variables set with  `Multi-value` or
 `Include all value` selection option.

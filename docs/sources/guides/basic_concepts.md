@@ -10,11 +10,11 @@ parent = "guides"
 weight = 2
 +++
 
-# Basic Concepts
+# Basic concepts
 
 This document is a “bottom up” introduction to basic concepts in Grafana, and can be used as a starting point to get familiar with core features.
 
-### Data Source
+### Data source
 
 Grafana supports many different storage backends for your time series data (Data Source). Each Data Source has a specific Query Editor that is customized for the features and capabilities that the particular Data Source exposes.
 
@@ -79,7 +79,7 @@ The time range on Panels is normally what is set in the [Dashboard time picker](
 Panels (or an entire Dashboard) can be [Shared](/reference/sharing/) easily in a variety of ways. You can send a link to someone who has a login to your Grafana. You can use the [Snapshot](/reference/sharing/#snapshots) feature to encode all the data currently being viewed into a static and interactive JSON document; it's so much better than emailing a screenshot!
 
 
-### Query Editor
+### Query editor
 
 The Query Editor exposes capabilities of your Data Source and allows you to query the metrics that it contains.
 

@@ -7,7 +7,7 @@ parent = "tutorials"
 weight = 10
 +++
 
-# How to Use IIS with URL Rewrite as a Reverse Proxy for Grafana on Windows
+# How to use IIS with URL rewrite as a reverse proxy for Grafana on Windows
 
 If you want Grafana to be a subpath or subfolder under a website in IIS then the URL Rewrite module for ISS can be used to support this.
 
@@ -24,7 +24,7 @@ If you have not already done it, then a requirement is to install URL Rewrite mo
 
 Download and install the URL Rewrite module for IIS: https://www.iis.net/downloads/microsoft/url-rewrite
 
-## Grafana Config
+## Grafana config
 
 The Grafana config can be set by creating a file named `custom.ini` in the `conf` subdirectory of your Grafana installation. See the [installation instructions](http://docs.grafana.org/installation/windows/#configure) for more details.
 
@@ -38,7 +38,7 @@ root_url = %(protocol)s://%(domain)s/grafana/
 
 Restart the Grafana server after changing the config file.
 
-## IIS Config
+## IIS config
 
 1. Open the IIS Manager and click on the parent website
 2. In the admin console for this website, double click on the Url Rewrite option:
@@ -68,7 +68,7 @@ When navigating to the grafana url (`http://localhost:8080/grafana` in the examp
 - the pattern for the Inbound Rule is incorrect. Edit the rule, click on the `Test pattern...` button, test the part of the url after `http://localhost:8080/` and make sure it matches. For `grafana/login` the test should return 3 capture groups: {R:0}: `grafana` {R:1}: `/` and {R:2}: `login`.
 - The `root_url` setting in the Grafana config file does not match the parent url with subpath.
 
-### Grafana Website only shows text with no images or css
+### Grafana website only shows text with no images or CSS
 
 {{< docs-imagebox img="/img/docs/tutorials/IIS_proxy_error.png"  max-width= "800px" >}}
 

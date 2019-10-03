@@ -11,7 +11,7 @@ type = "docs"
 The release includes a new Table panel, a new InfluxDB query editor, support for Elasticsearch Pipeline Metrics and
 support for multiple Cloudwatch credentials.
 
-## Table Panel
+## Table panel
 <img src="/assets/img/features/table-panel.png">
 
 The new table panel is very flexible, supporting both multiple modes for time series as well as for
@@ -24,11 +24,11 @@ Where `Metric` is the name of the time series.
 
 <img src="/img/docs/v2/table_ts_to_rows.png">
 
-### Table Transform
+### Table transform
 Above you see the options tab for the **Table Panel**. The most important option is the `To Table Transform`.
 This option controls how the result of the metric/data query is turned into a table.
 
-### Column Styles
+### Column styles
 The column styles allow you control how dates and numbers are formatted.
 
 ### Time series to columns
@@ -74,7 +74,7 @@ The table can also show any annotations you have enabled in the dashboard.
 
 <img src="/img/docs/v2/table_annotations.png">
 
-## The New InfluxDB Editor
+## The new InfluxDB editor
 The new InfluxDB editor is a lot more flexible and powerful. It supports nested functions, like `derivative`.
 It also uses the same technique as the Graphite query editor in that it presents nested functions as chain of function
 transformations. It tries to simplify and unify the complicated nature of InfluxDB's query language.

@@ -11,7 +11,7 @@ parent = "authentication"
 weight = 2
 +++
 
-# Auth Proxy Authentication
+# Auth proxy authentication
 
 You can configure Grafana to let a HTTP reverse proxy handling authentication. Popular web servers have a very
 extensive list of pluggable authentication modules, and any of them can be used with the AuthProxy feature.
@@ -145,7 +145,7 @@ any ports for this container as it will only be connected to by our Apache conta
 docker run -i -v $(pwd)/grafana.ini:/etc/grafana/grafana.ini --name grafana grafana/grafana
 ```
 
-### Apache Container
+### Apache container
 
 For this example we use the official Apache docker image available at [Docker Hub](https://hub.docker.com/_/httpd/)
 

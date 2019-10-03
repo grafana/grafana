@@ -10,7 +10,7 @@ parent = "authentication"
 weight = 5
 +++
 
-# SAML Authentication
+# SAML authentication
 
 > SAML Authentication integration is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "enterprise" >}}).
 
@@ -42,7 +42,7 @@ At the moment of writing, Grafana supports:
 
 4. In terms of initiation, only SP-initiated requests are supported. There's no support for IdP-initiated request.
 
-## Set up SAML Authentication
+## Set up SAML authentication
 
 To use the SAML integration, you need to enable SAML in the [main config file]({{< relref "installation/configuration.md" >}}).
 
@@ -93,7 +93,7 @@ Important to note:
 - like any other Grafana configuration, use of [environment variables for these options is supported]({{< relref "installation/configuration.md#using-environment-variables" >}})
 - only one form of configuration option is required. Using multiple forms, e.g. both `certificate` and `certificate_path` will result in an error
 
-## Grafana Configuration
+## Grafana configuration
 
 An example working configuration example looks like:
 
@@ -124,19 +124,19 @@ And here is a comprehensive list of the options:
 | `assertion_attribute_login`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user's login handle | `mail`        |
 | `assertion_attribute_email`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user's email        | `mail`        |
 
-### Cert and Private Key
+### Cert and private key
 
 The SAML SSO standard uses asymmetric encryption to exchange information between the SP (Grafana) and the IdP. To perform such encryption, you need a public part and a private part. In this case, the X.509 certificate provides the public part, while the private key provides the private part.
 
 Grafana supports two ways of specifying both the `certificate` and `private_key`. Without a suffix (e.g. `certificate=`), the configuration assumes you've supplied the base64-encoded file contents. However, if specified with the `_path` suffix (e.g. `certificate_path=`) Grafana will treat it as a file path and attempt to read the file from the file system.
 
-### IdP Metadata
+### IdP metadata
 
 Expanding on the above, we'll also need the public part from our IdP for message verification. The SAML IdP metadata XML tells us where and how we should exchange the user information.
 
 Currently, we support three ways of specifying the IdP metadata. Without a suffix `idp_metadata=` Grafana assumes base64-encoded XML file contents, with the `_path` suffix assumes a file path and attempts to read the file from the file system and with the `_url` suffix assumes an URL and attempts to load the metadata from the given location.
 
-### Max Issue Delay
+### Max issue delay
 
 Prevention of SAML response replay attacks and internal clock skews between the SP (Grafana), and the IdP is covered. You can set a maximum amount of time between the IdP issuing a response and the SP (Grafana) processing it.
 

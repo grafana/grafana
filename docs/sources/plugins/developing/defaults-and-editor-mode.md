@@ -7,7 +7,7 @@ parent = "developing"
 weight = 3
 +++
 
-# Plugin Defaults and Editor Mode
+# Plugin defaults and editor mode
 
 Most plugins allow users to customize the behavior by changing settings on an editor tab. These setting fields are saved in the dashboard json.
 
@@ -57,13 +57,13 @@ These panel fields can be used in the controller or module.html template:
 
 If you want your users to be able to change these panel values then you need to expose them in the Grafana editor.
 
-## Editor Mode
+## Editor mode
 
 Editor mode is when a user clicks Edit on a panel. Every panel has a general tab where you change the title and width and some panels have more inbuilt tabs like the Metrics tab or Time Range tab. A panel plugin can add its own tab(s) so that a user can customize the panel. 
 
 Grafana conventions mean all you need to do is to hook up an Angular template with input fields and Grafana will automatically save the values to the dashboard json and load them on dashboard load.
 
-## Using Events
+## Using events
 
 To add an editor tab you need to hook into the event model so that the tab is added when the *init-edit-mode* event is triggered. The following code should be added to the constructor of the plugin Ctrl class:
 
@@ -121,7 +121,7 @@ The color picker (or spectrum picker) is a component that already exists in Graf
 <spectrum-picker class="gf-form-input" ng-model="ctrl.panel.bgColor" ng-change="ctrl.render()" ></spectrum-picker>
 ```
 
-## Editor Tab Finished
+## Editor tab finished
 
 To reiterate, this all ties together quite neatly. We specify properties and panel defaults in the constructor for the panel controller and these can then be changed in the editor. Grafana takes care of saving the changes.
 

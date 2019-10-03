@@ -9,7 +9,7 @@ parent = "panels"
 weight = 1
 +++
 
-# Graph Panel
+# Graph panel
 
 {{< docs-imagebox img="/img/docs/v45/graph_overview.png" class="docs-image--no-shadow" max-width="850px" >}}
 
@@ -123,15 +123,15 @@ Hide series when all values of a series from a metric query are of a specific va
 
 Display styles control visual properties of the graph.
 
-### Draw Options
+### Draw options
 
-#### Draw Modes
+#### Draw modes
 
 - **Bar** - Display values as a bar chart
 - **Lines** - Display values as a line graph
 - **Points** - Display points for values
 
-#### Mode Options
+#### Mode options
 
 - **Fill** - Amount of color fill for a series (default 1). 0 is none.
 - **Line Width** - The width of the line for a series (default 1).
@@ -146,7 +146,7 @@ Display styles control visual properties of the graph.
    - Individual: the value for the series you hover over
    - Cumulative - sum of series below plus the series you hover over
 
-#### Stacking and Null value
+#### Stacking and null value
 
 If there are multiple series, they can be displayed as a group.
 
@@ -161,7 +161,7 @@ If there are multiple series, they can be displayed as a group.
 The section allows a series to be rendered differently from the others. For example, one series can be given
 a thicker line width to make it stand out and/or be moved to the right Y-axis.
 
-#### Dashes Drawing Style
+#### Dashes drawing style
 
 There is an option under Series overrides to draw lines as dashes. Set Dashes to the value True to override the line draw setting for a specific series.
 
@@ -172,7 +172,7 @@ There is an option under Series overrides to draw lines as dashes. Set Dashes to
 Thresholds allow you to add arbitrary lines or sections to the graph to make it easier to see when
 the graph crosses a particular threshold.
 
-### Time Regions
+### Time regions
 
 > Only available in Grafana v5.4 and above.
 
@@ -180,7 +180,7 @@ the graph crosses a particular threshold.
 
 Time regions allow you to highlight certain time regions of the graph to make it easier to see for example weekends, business hours and/or off work hours.
 
-## Time Range
+## Time range
 
 {{< docs-imagebox img="/img/docs/v51/graph-time-range.png"  max-width= "900px" >}}
 

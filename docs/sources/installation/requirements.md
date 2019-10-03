@@ -14,7 +14,7 @@ weight = -1
 
 This page includes useful information on the supported Operating Systems as well as the hardware requirements that are needed to install and use Grafana.
 
-## Operating Systems
+## Operating systems
 
 ### Supported
 

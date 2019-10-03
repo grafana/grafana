@@ -10,9 +10,9 @@ parent = "whatsnew"
 weight = 5
 +++
 
-# What's New in Grafana v3.1
+# What's new in Grafana v3.1
 
-## Dashboard Export and Import
+## Dashboard export and import
 
 The export feature is now accessed from the share menu.
 
@@ -30,7 +30,7 @@ The next step in the import process:
 
 Here you can change the name of the dashboard and also pick what data sources you want the dashboard to use. The above screenshot shows a CollectD dashboard for Graphite that requires a metric prefix be specified.
 
-## Discover Dashboards
+## Discover dashboards
 
 On [Grafana.com](https://grafana.com) you can now browse and search for dashboards. We have already added a few but more are being uploaded every day. To import a dashboard just copy the dashboard url and head back to Grafana, then Dashboard Search -> Import -> Paste Grafana.com Dashboard URL.
 
@@ -40,7 +40,7 @@ On [Grafana.com](https://grafana.com) you can now browse and search for dashboar
 
 We added a new template variable named constant that makes it easier to share and export dashboard that have custom prefixes.
 
-## Dashboard Urls
+## Dashboard URLs
 
 Having current time range and template variable value always sync with the URL makes it possible to always copy your current Grafana url to share with a colleague without having to use the Share modal.
 

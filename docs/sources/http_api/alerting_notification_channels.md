@@ -9,7 +9,7 @@ name = "Alerting Notification Channels"
 parent = "http_api"
 +++
 
-# Alerting Notification Channels API
+# Alerting notification channels API
 
 ## Identifier (id) vs unique identifier (uid)
 

@@ -9,7 +9,7 @@ name = "Dashboard Versions"
 parent = "http_api"
 +++
 
-# Dashboard Versions
+# Dashboard versions
 
 ## Get all dashboard versions
 

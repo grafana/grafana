@@ -9,7 +9,7 @@ parent = "admin"
 weight = 8
 +++
 
-# Image Rendering
+# Image rendering
 
 Grafana supports rendering of panels and dashboards as PNG-images.
 

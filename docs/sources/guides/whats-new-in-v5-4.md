@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -10
 +++
 
-# What's New in Grafana v5.4
+# What's new in Grafana v5.4
 
 Grafana v5.4 brings new features, many enhancements and bug fixes. This article will detail the major new features and enhancements.
 
@@ -53,13 +53,13 @@ Please read [Using Google Stackdriver in Grafana](/features/datasources/stackdri
 
 <div class="clearfix"></div>
 
-## MySQL Query Builder
+## MySQL query builder
 
 Grafana v5.4 comes with a new graphical query builder for MySQL. This brings MySQL integration more in line with some of the other data sources and makes it easier for both advanced users and beginners to work with timeseries in MySQL. Learn more about it in the [documentation](/features/datasources/mysql/#query-editor).
 
 {{< docs-imagebox img="/img/docs/v54/mysql_query_still.png" animated-gif="/img/docs/v54/mysql_query.gif" >}}
 
-## Graph Panel Enhancements
+## Graph panel enhancements
 
 Grafana v5.4 adds support for highlighting weekdays and/or certain timespans in the graph panel. This should make it easier to compare for example weekends, business hours and/or off work hours.
 
@@ -70,7 +70,7 @@ automatically be rendered for that data point. This should make it easier to und
 
 {{< docs-imagebox img="/img/docs/v54/graph_dot_single_point.png" max-width= "800px" >}}
 
-## Team Preferences
+## Team preferences
 
 Grafana v5.4 adds support for customizing home dashboard, timezone and theme for teams, in addition to the existing customization on Organization and user Profile level.
 

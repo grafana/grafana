@@ -8,13 +8,13 @@ parent = "developing"
 weight = 5
 +++
 
-# Backend Plugins
+# Backend plugins
 
 Grafana added support for plugins in Grafana 3.0 and this enabled the Grafana community to create panel plugins and data source plugins. It was wildly successful and has made Grafana much more useful as you can integrate it with anything and do any type of custom visualization that you want. However, these plugin hooks are on the frontend only and we also want to provide hooks into the Grafana backend to allow the community to extend and improve Grafana in new ways.
 
 Once Grafana introduced the alerting feature, external data source plugins needed a backend component for the Grafana server to execute queries for evaluating alert rules (as the alerting engine cannot call frontend JavaScript code). So the the obvious first backend plugin type is the **Datasource backend plugin** and it is a new component for an existing data source plugin. This new plugin type will enable alerting for external data source plugins but can also be used for achieving different goals such as query caching, request proxying, custom authentication methods, and more.
 
-## Grafana's Backend Plugin System
+## Grafana's backend plugin system
 
 The backend plugin feature is implemented with the [HashiCorp plugin system](https://github.com/hashicorp/go-plugin) which is a Go plugin system over RPC. Grafana server launches each plugin as a subprocess and communicates with it over RPC. This approach has a number of benefits:
 

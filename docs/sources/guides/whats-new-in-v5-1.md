@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -7
 +++
 
-# What's New in Grafana v5.1
+# What's new in Grafana v5.1
 
 Grafana v5.1 brings new features, many enhancements and bug fixes. This article will detail the major new features and enhancements.
 
@@ -67,7 +67,7 @@ Please read [Using Microsoft SQL Server in Grafana documentation](/features/data
 
 <div class="clearfix"></div>
 
-## Dashboards and Panels
+## Dashboards and panels
 
 ### Adding new panels to dashboards
 
@@ -84,11 +84,11 @@ copied panel into the current dashboard.
 
 <div class="clearfix"></div>
 
-### Graph Panel
+### Graph panel
 
 New enhancements includes support for multiple series stacking in histogram mode, thresholds for right Y axis, aligning left and right Y-axes to one level and additional units. More information in the [Graph panel documentation](/features/panels/graph/).
 
-### Table Panel
+### Table panel
 
 New enhancements includes support for mapping a numeric value/range to text and additional units. More information in the [Table panel documentation](/features/panels/table_panel/#string).
 

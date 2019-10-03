@@ -15,7 +15,7 @@ parent = "http_api"
 
 Currently you can authenticate via an `API Token` or via a `Session cookie` (acquired using regular login or oauth).
 
-## Basic Auth
+## Basic auth
 
 If basic auth is enabled (it is enabled by default) you can authenticate your HTTP request via
 standard basic auth. Basic auth will also authenticate LDAP users.
@@ -26,7 +26,7 @@ curl example:
 {"id":1,"name":"Main Org."}
 ```
 
-## Create API Token
+## Create API token
 
 Open the sidemenu and click the organization dropdown and select the `API Keys` option.
 
@@ -54,7 +54,7 @@ curl example:
 
 # Auth HTTP resources / actions
 
-## Api Keys
+## Api keys
 
 `GET /api/auth/keys`
 
@@ -88,7 +88,7 @@ Content-Type: application/json
 ]
 ```
 
-## Create API Key
+## Create API key
 
 `POST /api/auth/keys`
 
@@ -127,7 +127,7 @@ Content-Type: application/json
 {"name":"mykey","key":"eyJrIjoiWHZiSWd3NzdCYUZnNUtibE9obUpESmE3bzJYNDRIc0UiLCJuIjoibXlrZXkiLCJpZCI6MX1="}
 ```
 
-## Delete API Key
+## Delete API key
 
 `DELETE /api/auth/keys/:id`
 

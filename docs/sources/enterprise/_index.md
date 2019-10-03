@@ -21,11 +21,11 @@ Grafana Enterprise includes all of the features found in the open source edition
 
 ___
 
-### Enhanced LDAP Integration
+### Enhanced LDAP integration
 
 With Grafana Enterprise you can set up synchronization between LDAP Groups and Teams. [Learn More]({{< relref "auth/enhanced_ldap.md" >}}).
 
-### SAML Authentication
+### SAML authentication
 
 Enables your Grafana Enterprise users to authenticate with SAML. [Learn More]({{< relref "auth/saml.md" >}}).
 
@@ -47,7 +47,7 @@ Data source permissions allow you to restrict query access to only specific Team
 
 Reports make it possible to take any Dashboard and generate a PDF report and setup a schedule to have it delivered. [Learn More]({{< relref "administration/reports.md" >}}).
 
-### Premium Plugins
+### Premium plugins
 
 With a Grafana Enterprise license you will get access to premium plugins, including:
 

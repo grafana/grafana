@@ -9,7 +9,7 @@ parent = "panels"
 weight = 2
 +++
 
-# Logs Panel
+# Logs panel
 
 <img class="screenshot" src="/img/docs/v64/logs-panel.png">
 
@@ -18,17 +18,17 @@ weight = 2
 The logs panel shows log lines from datasources that support logs, e.g., Elastic, Influx, and Loki.
 Typically you would use this panel next to a graph panel to display the log output of a related process.
 
-## Querying Data
+## Querying data
 
 The logs panel will show the result of queries that are specified in the **Queries** tab.
 The results of multiple queries will be merged and sorted by time.
 Note that you can scroll inside the panel in case the datasource returns more lines than can be displayed at any one time.
 
-### Query Options
+### Query options
 
 To limit the number of lines rendered, you can use the queries-wide **Max data points** setting. If it is not set, the datasource will usually enforce a limit.
 
-## Visualization Options
+## Visualization options
 
 ### Columns
 

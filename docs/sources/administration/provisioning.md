@@ -13,11 +13,11 @@ weight = 8
 
 In previous versions of Grafana, you could only use the API for provisioning data sources and dashboards. But that required the service to be running before you started creating dashboards and you also needed to set up credentials for the HTTP API. In v5.0 we decided to improve this experience by adding a new active provisioning system that uses config files. This will make GitOps more natural as data sources and dashboards can be defined via files that can be version controlled. We hope to extend this system to later add support for users, orgs and alerts as well.
 
-## Config File
+## Config file
 
 Checkout the [configuration](/installation/configuration) page for more information on what you can configure in `grafana.ini`
 
-### Config File Locations
+### Config file locations
 
 - Default configuration from `$WORKING_DIR/conf/defaults.ini`
 - Custom configuration from `$WORKING_DIR/conf/custom.ini`
@@ -28,7 +28,7 @@ Checkout the [configuration](/installation/configuration) page for more informat
 > `/etc/grafana/grafana.ini`. This path is specified in the Grafana
 > init.d script using `--config` file parameter.
 
-### Using Environment Variables
+### Using environment variables
 
 It is possible to use environment variable interpolation in all 3 provisioning config types. Allowed syntax
 is either `$ENV_VAR_NAME` or `${ENV_VAR_NAME}` and can be used only for values not for keys or bigger parts
@@ -49,7 +49,7 @@ If you have a literal `$` in your value and want to avoid interpolation, `$$` ca
 
 <hr />
 
-## Configuration Management Tools
+## Configuration management tools
 
 Currently we do not provide any scripts/manifests for configuring Grafana. Rather than spending time learning and creating scripts/manifests for each tool, we think our time is better spent making Grafana easier to provision. Therefore, we heavily relay on the expertise of the community.
 
@@ -67,11 +67,11 @@ Jsonnet | [https://github.com/grafana/grafonnet-lib/](https://github.com/grafana
 
 It's possible to manage datasources in Grafana by adding one or more yaml config files in the [`provisioning/datasources`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `datasources` that will be added or updated during start up. If the datasource already exists, Grafana will update it to match the configuration file. The config file can also contain a list of datasources that should be deleted. That list is called `deleteDatasources`. Grafana will delete datasources listed in `deleteDatasources` before inserting/updating those in the `datasource` list.
 
-### Running Multiple Grafana Instances
+### Running multiple Grafana instances
 
 If you are running multiple instances of Grafana you might run into problems if they have different versions of the `datasource.yaml` configuration file. The best way to solve this problem is to add a version number to each datasource in the configuration and increase it when you update the config. Grafana will only update datasources with the same or lower version number than specified in the config. That way, old configs cannot overwrite newer configs if they restart at the same time.
 
-### Example Datasource Config File
+### Example datasource config file
 
 ```yaml
 # config file version
@@ -130,14 +130,14 @@ datasources:
   editable: false
 ```
 
-#### Custom Settings per Datasource
+#### Custom settings per datasource
 Please refer to each datasource documentation for specific provisioning examples.
 
 | Datasource | Misc |
 | ---- | ---- |
 | Elasticsearch | Elasticsearch uses the `database` property to configure the index for a datasource |
 
-#### Json Data
+#### JSON data
 
 Since not all datasources have the same configuration settings we only have the most common ones as fields. The rest should be stored as a json blob in the `jsonData` field. Here are the most common settings that the core datasources use.
 
@@ -167,7 +167,7 @@ Since not all datasources have the same configuration settings we only have the 
 | maxIdleConns | number | MySQL, PostgreSQL and MSSQL | Maximum number of connections in the idle connection pool (Grafana v5.4+) |
 | connMaxLifetime | number | MySQL, PostgreSQL and MSSQL | Maximum amount of time in seconds a connection may be reused (Grafana v5.4+) |
 
-#### Secure Json Data
+#### Secure Json data
 
 `{"authType":"keys","defaultRegion":"us-west-2","timeField":"@timestamp"}`
 
@@ -244,7 +244,7 @@ Note: The JSON shown in input field and when using `Copy JSON to Clipboard` and/
 
 {{< docs-imagebox img="/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
 
-### Reusable Dashboard Urls
+### Reusable dashboard URLs
 
 If the dashboard in the json file contains an [uid](/reference/dashboard/#json-fields), Grafana will force insert/update on that uid. This allows you to migrate dashboards betweens Grafana instances and provisioning Grafana from configuration without breaking the urls given since the new dashboard url uses the uid as identifier.
 When Grafana starts, it will update/insert all dashboards available in the configured folders. If you modify the file, the dashboard will also be updated.
@@ -255,7 +255,7 @@ By default Grafana will delete dashboards in the database if the file is removed
 > Be careful not to re-use the same `title` multiple times within a folder
 > or `uid` within the same installation as this will cause weird behaviors.
 
-## Alert Notification Channels
+## Alert notification channels
 
 Alert Notification Channels can be provisioned by adding one or more yaml config files in the [`provisioning/notifiers`](/installation/configuration/#provisioning) directory.
 
@@ -284,7 +284,7 @@ By default, exporting a dashboard as JSON will use a sequential identifier to re
 }
 ```
 
-### Example Alert Notification Channels Config File
+### Example alert notification channels config file
 
 ```yaml
 notifiers:
@@ -318,7 +318,7 @@ delete_notifiers:
     # default org_id: 1
 ```
 
-### Supported Settings
+### Supported settings
 
 The following sections detail the supported settings for each alert notification type.
 

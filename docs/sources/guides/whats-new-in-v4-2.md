@@ -17,7 +17,7 @@ Just like the last release this one contains lots bug fixes and minor improvemen
 We are very happy to say that 27 of 40 issues was closed by pull requests from the community.
 Big thumbs up!
 
-## Release Highlights
+## Release highlights
 
 - **Hipchat**: Adds support for sending alert notifications to hipchat [#6451](https://github.com/grafana/grafana/issues/6451), thx [@jregovic](https://github.com/jregovic)
 - **Telegram**: Added Telegram alert notifier [#7098](https://github.com/grafana/grafana/pull/7098), thx [@leonoff](https://github.com/leonoff)
@@ -65,7 +65,7 @@ This makes it possible for users to share dashboards between orgs without changi
 We aim to introduce [dashboard groups](https://github.com/grafana/grafana/issues/1611) sometime in the future which will introduce access control and user groups within one org.
 Making it possible to have users in multiple groups and have detailed access control.
 
-## Upgrade and Breaking changes
+## Upgrade and breaking changes
 
 If you're using https in grafana we now force you to use tls 1.2 and the most secure ciphers.
 We think its better to be secure by default rather then making it configurable.

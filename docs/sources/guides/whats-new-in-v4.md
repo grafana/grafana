@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = 4
 +++
 
-# What's New in Grafana v4.0
+# What's new in Grafana v4.0
 
 As usual this release contains a ton of minor new features, fixes and improved UX. But on top of the usual new goodies
 is a core new feature: Alerting! Read on below for a detailed description of what's new in v4.0.
@@ -66,7 +66,7 @@ currently only supports storing annotations in Grafana's own internal database (
 The Grafana annotation storage is currently only used for alert state changes but we hope to add the ability for users
 to add graph comments in the form of annotations directly from within Grafana in a future release.
 
-### Alert List Panel
+### Alert list panel
 
 {{< imgbox max-width="30%" img="/img/docs/v4/alert_list_panel.png" caption="Alert List Panel" >}}
 
@@ -87,7 +87,7 @@ is grouped, and an interval variable for controlling the granularity of the time
 was a way to dynamically apply filters to the log query. With the `Ad-Hoc Filters` variable you can
 dynamically add filters to any log property!
 
-## UX Improvements
+## UX improvements
 
 We always try to bring some UX/UI refinements and polish in every release.
 
@@ -162,7 +162,7 @@ Some nice navigation shortcuts are:
 
 <div class="clearfix"></div>
 
-## Upgrade and Breaking changes
+## Upgrade and breaking changes
 
 There are no breaking changes. Old dashboards and features should work the same. Grafana-server will automatically upgrade its db
 schema on restart. It's advisable to do a backup of Grafana's database before updating.

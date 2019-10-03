@@ -81,7 +81,7 @@ Keys:
 - **deleteKey** – Key generated to delete the snapshot
 - **key** – Key generated to share the dashboard
 
-## Get list of Snapshots
+## Get list of snapshots
 
 `GET /api/dashboard/snapshots`
 
@@ -120,7 +120,7 @@ Content-Type: application/json
 ]
 ```
 
-## Get Snapshot by Key
+## Get snapshot by key
 
 `GET /api/snapshots/:key`
 
@@ -178,7 +178,7 @@ Content-Type: application/json
 }
 ```
 
-## Delete Snapshot by Key
+## Delete snapshot by key
 
 `DELETE /api/snapshots/:key`
 
@@ -199,7 +199,7 @@ Content-Type: application/json
 {"message":"Snapshot deleted. It might take an hour before it's cleared from any CDN caches."}
 ```
 
-## Delete Snapshot by deleteKey
+## Delete snapshot by deleteKey
 
 This API call can be used without authentication by using the secret delete key for the snapshot.
 

@@ -10,11 +10,11 @@ parent = "whatsnew"
 weight = -12
 +++
 
-# What's New in Grafana v6.1
+# What's new in Grafana v6.1
 
 ## Highlights
 
-### Ad hoc Filtering for Prometheus
+### Ad hoc filtering for Prometheus
 
 {{< imgbox max-width="30%" img="/img/docs/v61/prometheus-ad-hoc.gif" caption="Ad-hoc filters variable for Prometheus" >}}
 
@@ -43,7 +43,7 @@ editors_can_admin = true
 
 As the first step of a feature to be able to list a user's signed in devices/sessions and to be able log out those devices from the Grafana UI, support has been added to the [API to list and revoke user authentication tokens](/http_api/admin/#auth-tokens-for-user).
 
-### Minor Features and Fixes
+### Minor features and fixes
 
 This release contains a lot of small features and fixes:
 

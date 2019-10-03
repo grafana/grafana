@@ -5,7 +5,7 @@ page_keywords: grafana, tutorials, graphite, statsd, setup, configuration, howto
 author: Torkel Ödegaard
 ---
 
-# Stack Setup and Config Guide: Graphite + Grafana + StatsD
+# Stack setup and config guide: Graphite + Grafana + StatsD
 
 This lengthy article will guide you through installation, configuration and getting started with the amazing metric
 stack that is composed of Graphite, Grafana and StatsD.

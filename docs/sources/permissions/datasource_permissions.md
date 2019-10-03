@@ -10,7 +10,7 @@ parent = "permissions"
 weight = 4
 +++
 
-# Data Source Permissions
+# Data source permissions
 
 > Data source permissions is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "enterprise" >}}).
 
@@ -18,7 +18,7 @@ Data source permissions allows you to restrict access for users to query a data 
 a permission page that makes it possible to enable permissions and restrict query permissions to specific
 **Users** and **Teams**.
 
-## Restricting Access - Enable Permissions
+## Restricting access - enable permissions
 
 {{< docs-imagebox img="/img/docs/enterprise/datasource_permissions_enable_still.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" animated-gif="/img/docs/enterprise/datasource_permissions_enable.gif" >}}
 
@@ -54,7 +54,7 @@ permissions to users and teams which will allow access to query the data source.
 
 <div class="clearfix"></div>
 
-## Restore Default Access - Disable Permissions
+## Restore default access - disable permissions
 
 {{< docs-imagebox img="/img/docs/enterprise/datasource_permissions_disable_still.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" animated-gif="/img/docs/enterprise/datasource_permissions_disable.gif" >}}
 

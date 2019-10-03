@@ -10,7 +10,7 @@ weight = 4
 +++
 
 
-# Dashboard List Panel
+# Dashboard list panel
 
 {{< docs-imagebox img="/img/docs/v45/dashboard-list-panels.png" max-width="850px">}}
 
@@ -18,7 +18,7 @@ The dashboard list panel allows you to display dynamic links to other dashboards
 
 > On each dashboard load, the dashlist panel will re-query the dashboard list, always providing the most up to date results.
 
-## Dashboard List Options
+## Dashboard list options
 
 {{< docs-imagebox img="/img/docs/v45/dashboard-list-options.png" class="docs-image--no-shadow docs-image--right">}}
 

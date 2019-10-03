@@ -18,7 +18,7 @@ With Reports you can generate PDFs of any of your Dashboards and have them sent 
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_list.png" max-width="500px" class="docs-image--no-shadow" >}}
 
-## Dashboard as a Report
+## Dashboard as a report
 
 With Reports there are a few things to keep in mind, most importantly, any changes you make to the Dashboard used in a report will be reflected in the report. If you change the time range in the Dashboard the time range will be the same in the report as well. 
 

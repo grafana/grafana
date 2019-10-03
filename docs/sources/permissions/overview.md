@@ -11,7 +11,7 @@ parent = "permissions"
 weight = 1
 +++
 
-# Permissions Overview
+# Permissions overview
 
 Grafana users have permissions that are determined by their:
 
@@ -20,17 +20,17 @@ Grafana users have permissions that are determined by their:
 - Via permissions assigned directly to user (on folders, dashboards, data sources)
 - The Grafana Admin (i.e. Super Admin) user flag.
 
-## Grafana Admin
+## Grafana admin
 
 This admin flag makes a user a `Super Admin`. This means they can access the `Server Admin` views where all users and organizations can be administrated.
 
-## Organization Roles
+## Organization roles
 
 Users can be belong to one or more organizations. A user's organization membership is tied to a role that defines what the user is allowed to do
 in that organization. Learn more about [Organization Roles]({{< relref "permissions/organization_roles.md" >}}).
 
 
-## Dashboard and Folder Permissions
+## Dashboard and folder permissions
 
 Dashboard and folder permissions allows you to remove the default role based permissions for Editors and Viewers and assign permissions to specific **Users** and **Teams**. Learn more about [Dashboard and Folder Permissions]({{< relref "permissions/dashboard_folder_permissions.md" >}}).
 

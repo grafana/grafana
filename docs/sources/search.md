@@ -2,7 +2,7 @@
 
 *Please activate JavaScript to enable the search functionality.*
 
-## How To Search
+## How to search
 
 From here you can search these documents. Enter your search words into
 the box below and click "search". Note that the search function will

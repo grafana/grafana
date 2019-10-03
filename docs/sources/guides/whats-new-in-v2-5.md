@@ -67,7 +67,7 @@ When selected this will allow you to specify data source on a per query basis. T
 to plot metrics from different Graphite servers on the same Graph or plot data from Elasticsearch alongside
 data from Prometheus. Mixing different data sources on the same graph works for any data source, even custom ones.
 
-### Panel Resize handles
+### Panel resize handles
 <img src="/img/docs/whatsnew_2_5/panel_resize.gif" alt="">
 
 This release adds resize handles to the the bottom right corners of panels making is easy to resize both width and height.

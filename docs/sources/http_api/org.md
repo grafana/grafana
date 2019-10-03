@@ -16,9 +16,9 @@ The Organization HTTP API is divided in two resources, `/api/org` (current organ
 and `/api/orgs` (admin organizations). One big difference between these are that
 the admin of all organizations API only works with basic authentication, see [Admin Organizations API](#admin-organizations-api) for more information.
 
-## Current Organization API
+## Current organization API
 
-### Get current Organization
+### Get current organization
 
 `GET /api/org/`
 
@@ -160,7 +160,7 @@ Content-Type: application/json
 {"message":"User removed from organization"}
 ```
 
-### Update current Organization
+### Update current organization
 
 `PUT /api/org`
 
@@ -215,7 +215,7 @@ Content-Type: application/json
 {"message":"User added to organization"}
 ```
 
-## Admin Organizations API
+## Admin organizations API
 
 The Admin Organizations HTTP API does not currently work with an API Token. API Tokens are currently
 only linked to an organization and an organization role. They cannot be given the permission of server
@@ -223,7 +223,7 @@ admin, only users can be given that permission. So in order to use these API cal
 use Basic Auth and the Grafana user must have the Grafana Admin permission (The default admin user
 is called `admin` and has permission to use this API).
 
-### Get Organization by Id
+### Get organization by id
 
 `GET /api/orgs/:orgId`
 
@@ -256,7 +256,7 @@ Content-Type: application/json
   }
 }
 ```
-### Get Organization by Name
+### Get organization by name
 
 `GET /api/orgs/name/:orgName`
 
@@ -290,7 +290,7 @@ Content-Type: application/json
 }
 ```
 
-### Create Organization
+### Create organization
 
 `POST /api/orgs`
 
@@ -323,7 +323,7 @@ Content-Type: application/json
 }
 ```
 
-### Search all Organizations
+### Search all organizations
 
 `GET /api/orgs`
 
@@ -353,7 +353,7 @@ Content-Type: application/json
 ]
 ```
 
-### Update Organization
+### Update organization
 
 `PUT /api/orgs/:orgId`
 
@@ -381,7 +381,7 @@ Content-Type: application/json
 {"message":"Organization updated"}
 ```
 
-### Delete Organization
+### Delete organization
 
 `DELETE /api/orgs/:orgId`
 
@@ -403,7 +403,7 @@ Content-Type: application/json
 {"message":"Organization deleted"}
 ```
 
-### Get Users in Organization
+### Get users in organization
 
 `GET /api/orgs/:orgId/users`
 
@@ -436,7 +436,7 @@ Content-Type: application/json
 ]
 ```
 
-### Add User in Organization
+### Add user in organization
 
 `POST /api/orgs/:orgId/users`
 
@@ -464,7 +464,7 @@ Content-Type: application/json
 {"message":"User added to organization"}
 ```
 
-### Update Users in Organization
+### Update users in organization
 
 `PATCH /api/orgs/:orgId/users/:userId`
 
@@ -491,7 +491,7 @@ Content-Type: application/json
 {"message":"Organization user updated"}
 ```
 
-### Delete User in Organization
+### Delete user in organization
 
 `DELETE /api/orgs/:orgId/users/:userId`
 

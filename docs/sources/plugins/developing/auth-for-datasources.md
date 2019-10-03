@@ -21,7 +21,7 @@ This means that users that access the data source config page cannot access the 
 
 For backend authentication to work, the external/third-party API must either have an OAuth endpoint or that the API accepts an API key as a HTTP header for authentication.
 
-## Plugin Routes
+## Plugin routes
 
 You can specify routes in the `plugin.json` file for your data source plugin. [Here is an example](https://github.com/grafana/azure-monitor-datasource/blob/d74c82145c0a4af07a7e96cc8dde231bfd449bd9/src/plugin.json#L30-L95) with lots of routes (though most plugins will just have one route).
 
@@ -51,7 +51,7 @@ then the Grafana proxy will transform it into "https://management.azure.com/foo/
 
 The `method` parameter is optional. It can be set to any HTTP verb to provide more fine-grained control.
 
-### Dynamic Routes
+### Dynamic routes
 
 When using routes, you can also reference a variable stored in JsonData or SecureJsonData which will be interpolated when connecting to the data source.
 
@@ -81,7 +81,7 @@ In the above example, the app is able to set the value for `dynamicUrl` in JsonD
 
 An app using this feature can be found [here](https://github.com/grafana/kentik-app).
 
-## Encrypting Sensitive Data
+## Encrypting sensitive data
 
 When a user saves a password or secret with your data source plugin's Config page, then you can save data to a column in the data source table called `secureJsonData` that is an encrypted blob. Any data saved in the blob is encrypted by Grafana and can only be decrypted by the Grafana server on the backend. This means once a password is saved, no sensitive data is sent to the browser. If the password is saved in the `jsonData` blob or the `password` field then it is unencrypted and anyone with Admin access (with the help of Chrome Developer Tools) can read it.
 
@@ -106,7 +106,7 @@ Some third-party API's accept a HTTP Header for authentication. The [example](ht
 }
 ```
 
-## How Token Authentication Works
+## How token authentication works
 
 The token auth section in the `plugin.json` file looks like this:
 
@@ -124,6 +124,6 @@ The token auth section in the `plugin.json` file looks like this:
 
 This interpolates in data from both `jsonData`  and `secureJsonData` to generate the token request to the third-party API. It is common for tokens to have a short expiry period (30 minutes). The proxy in Grafana server will automatically renew the token if it has expired.
 
-## Always Restart the Grafana Server After Route Changes
+## Always restart the Grafana server after route changes
 
 The plugin.json files are only loaded when the Grafana server starts so when a route is added or changed then the Grafana server has to be restarted for the changes to take effect.

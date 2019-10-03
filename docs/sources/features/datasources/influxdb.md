@@ -60,7 +60,7 @@ Identifier | Description
 `s`   | second
 `ms`  | millisecond
 
-## Query Editor
+## Query editor
 
 {{< docs-imagebox img="/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v45/influxdb_query.gif" >}}
 
@@ -76,7 +76,7 @@ the tag key and select `--remove tag filter--`.
 You can type in regex patterns for metric names or tag filter values, be sure to wrap the regex pattern in forward slashes (`/`). Grafana
 will automatically adjust the filter tag condition to use the InfluxDB regex match condition operator (`=~`).
 
-### Field and Aggregation functions
+### Field and aggregation functions
 In the `SELECT` row you can specify what fields and functions you want to use. If you have a
 group by time you need an aggregation function. Some functions like derivative require an aggregation function. The editor tries simplify and unify this part of the query. For example:<br>
 ![](/img/docs/influxdb/select_editor.png)<br>
@@ -95,7 +95,7 @@ specify an asterix `*` to select all fields.
 To group by a tag click the plus icon at the end of the GROUP BY row. Pick a tag from the dropdown that appears.
 You can remove the group by by clicking on the `tag` and then click on the x icon.
 
-### Text Editor Mode (RAW)
+### Text editor mode (RAW)
 You can switch to raw query mode by clicking hamburger icon and then `Switch editor mode`.
 
 > If you use Raw Query be sure your query at minimum have `WHERE $timeFilter`
@@ -117,7 +117,7 @@ You can switch to raw query mode by clicking hamburger icon and then `Switch edi
 You can remove the group by time by clicking on the `time` part and then the `x` icon. You can
 change the option `Format As` to `Table` if you want to show raw data in the `Table` panel.
 
-## Querying Logs (BETA)
+## Querying logs (BETA)
 
 > Only available in Grafana v6.3+.
 
@@ -128,7 +128,7 @@ Querying and displaying log data from InfluxDB is available via [Explore](/featu
 Select the InfluxDB data source, change to Logs using the Metrics/Logs switcher,
 and then use the `Measurements/Fields` button to display your logs.
 
-### Log Queries
+### Log queries
 
 The Logs Explorer (the `Measurements/Fields` button) next to the query field shows a list of measurements and fields. Choose the desired measurement that contains your log data and then choose which field Explore should use to display the log message.
 

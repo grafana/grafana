@@ -27,7 +27,7 @@ For infrastructure monitoring and incident response, you no longer need to switc
 
 If you just want to explore your data and do not want to create a dashboard then Explore makes this much easier. Explore will show the results as both a graph and a table enabling you to see trends in the data and more detail at the same time (if the data source supports both graph and table data).
 
-## How to Start Exploring
+## How to start exploring
 
 There is a new Explore icon on the menu bar to the left. This opens a new empty Explore tab.
 
@@ -41,7 +41,7 @@ Choose your data source in the dropdown in the top left. Prometheus has a custom
 
 The query field is where you can write your query and explore your data. There are three buttons beside the query field, a clear button (X), an add query button (+) and the remove query button (-). Just like the normal query editor, you can add and remove multiple queries.
 
-## Split and Compare
+## Split and compare
 
 The Split feature is an easy way to compare graphs and tables side-by-side or to look at related data together on one page. Click the split button to duplicate the current query and split the page into two side-by-side queries. It is possible to select another data source for the new query which for example, allows you to compare the same query for two different servers or to compare the staging environment to the production environment.
 
@@ -49,17 +49,17 @@ The Split feature is an easy way to compare graphs and tables side-by-side or to
 
 You can close the newly created query by clicking on the Close Split button.
 
-## Prometheus-specific Features
+## Prometheus-specific features
 
 The first version of Explore features a custom querying experience for Prometheus. When a query is executed, it actually executes two queries, a normal Prometheus query for the graph and an Instant Query for the table. An Instant Query returns the last value for each time series which shows a good summary of the data shown in the graph.
 
-### Metrics Explorer
+### Metrics explorer
 
 On the left-hand side of the query field is a `Metrics` button, clicking on this opens the Metric Explorer. This shows a hierarchical menu with metrics grouped by their prefix. For example, all the Alert Manager metrics will be grouped under the `alertmanager` prefix. This is a good starting point if you just want to explore which metrics are available.
 
 {{< docs-imagebox img="/img/docs/v60/explore_metric_explorer.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
-### Query Field
+### Query field
 
 The Query field supports autocomplete for metric names, function and works mostly the same way as the standard Prometheus query editor. Press the enter key to execute a query.
 
@@ -71,11 +71,11 @@ Suggestions can appear under the query field - click on them to update your quer
 * For buckets, a histogram function will be suggested.
 * For recording rules, possible to expand the rules.
 
-### Table Filters
+### Table filters
 
 Click on the filter button <span title="Filter for label" class="logs-label__icon fa fa-search-plus"></span> in a labels column in the Table panel to add filters to the query expression. This works with multiple queries too - the filter will be added for all the queries.
 
-## Logs Integration
+## Logs integration
 
 Along with metrics, Explore allows you to investigate your logs with the following data sources:
 - [Loki](../datasources/loki)
@@ -90,7 +90,7 @@ Log data can be very repetitive and Explore can help by hiding duplicate log lin
 * `numbers` Matches on the line after stripping out numbers (durations, IP addresses etc.).
 * `signature` The most aggressive deduping - strips all letters and numbers, and matches on the remaining whitespace and punctuation.
 
-### Timestamp, Local time and Labels
+### Timestamp, local time and labels
 
 There are some other check boxes under the logging graph apart from the Deduping options.
 
@@ -98,13 +98,13 @@ There are some other check boxes under the logging graph apart from the Deduping
 * Local time: shows/hides the Local time column
 * Labels: shows/hides the label filters column
 
-### Loki-specific Features
+### Loki-specific features
 
 As mentioned, one of the log integrations is for the new open source log aggregation system from Grafana Labs - [Loki](https://github.com/grafana/loki). Loki is designed to be very cost effective, as it does not index the contents of the logs, but rather a set of labels for each log stream. The logs from Loki are queried in a similar way to querying with label selectors in Prometheus. It uses labels to group log streams which can be made to match up with your Prometheus labels. Read more about Grafana Loki [here](https://github.com/grafana/loki) or the Grafana Labs hosted variant: [Grafana Cloud Logs](https://grafana.com/loki).
 
 See [Loki's data source documentation](../datasources/loki) on how to query for log data.
 
-#### Switching from Metrics to Logs
+#### Switching from metrics to logs
 
 If you switch from a Prometheus query to a logs query (you can do a split first to have your metrics and logs side by side) then it will keep the labels from your query that exist in the logs and use those to query the log streams. For example, the following Prometheus query:
 
@@ -126,7 +126,7 @@ While in Live tail view new logs will come from the bottom of the screen and wil
 
 {{< docs-imagebox img="/img/docs/v64/explore_live_tailing.gif" class="docs-image--no-shadow" caption="Explore Live tailing in action" >}}
 
-## Navigating between Explore and a dashboard
+## Navigating between explore and a dashboard
 
 To help accelerate workflows that involve regularly switching from Explore to a dashboard and vice-versa, we've added the ability to return to the origin dashboard
 after navigating to Explore from the panel's dropdown.

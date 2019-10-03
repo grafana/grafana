@@ -9,7 +9,7 @@ weight = 7
 +++
 
 
-# Time Range Controls
+# Time range controls
 
 Grafana provides numerous ways to manage the time ranges of the data being visualized, both at the Dashboard-level and the Panel-level.
 
@@ -24,7 +24,7 @@ In the top right, you have the master Dashboard time picker (it's in between the
 
 These settings apply to all Panels in the Dashboard (except those with Panel Time Overrides enabled)
 
-## Time Units
+## Time units
 
 The following time units are supported: `s (seconds)`, `m (minutes)`, `h (hours)`, `d (days)`, `w (weeks)`, `M (months)`, `y (years)`. The minus operator allows you to step back in time, relative to now. If you wish to display the full period of the unit (day, week, month, etc...), append `/$unit` to the end.
 
@@ -39,19 +39,19 @@ Week to date | `now/w` | `now`
 Previous Month | `now-1M/M` | `now-1M/M`
 
 
-## Dashboard Time Options
+## Dashboard time options
 
 There are two settings available in the Dashboard Settings General tab, allowing customization of the auto-refresh intervals and the definition of `now`.
 
 <img class="no-shadow" src="/img/docs/v50/time_options.png" width="500px">
 
-### Auto-Refresh Options
+### Auto-refresh options
 
 It's possible to customize the options displayed for relative time and the auto-refresh options.
 
 From Dashboard settings, click the Timepicker tab. From here you can specify the relative and auto-refresh intervals. The Timepicker tab settings are saved on a per Dashboard basis.  Entries are comma separated and accept any valid time unit.
 
-### Defining Now
+### Defining now
 
 Grafana offers the ability to override the `now` value on a per dashboard basis. Most commonly, this feature is used to accommodate known delays in data aggregation to avoid null values.
 

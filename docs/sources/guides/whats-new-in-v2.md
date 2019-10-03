@@ -5,7 +5,7 @@ keywords = ["grafana", "new", "documentation", "2.0"]
 type = "docs"
 +++
 
-# What's New in Grafana v2.0
+# What's new in Grafana v2.0
 
 Grafana 2.0 represents months of work by the Grafana team and the community. We are pleased to be able to
 release the Grafana 2.0 beta. This is a guide that describes some of changes and new features that can
@@ -19,7 +19,7 @@ Grafana now ships with its own required backend server. Also completely open-sou
 
 In addition to new features, the backend server makes it much easier to set up and enjoy Grafana. Grafana 2.0 now ships as cross platform binaries with no dependencies. Authentication is built in, and Grafana is now capable of proxying connections to Data Sources.  There are no longer any CORS (Cross Origin Resource Sharing) issues requiring messy workarounds. Elasticsearch is no longer required just to store dashboards.
 
-## User and Organization permissions
+## User and organization permissions
 
 All Dashboards and Data Sources are linked to an Organization (not to a User). Users are linked to
 Organizations via a role. That role can be:
@@ -104,7 +104,7 @@ The top header has gotten a major streamlining in Grafana V2.0.
 > longer create a new Dashboard. It will just change the name for the current Dashboard.
 > To change name and create a new Dashboard use the `Save As...` menu option
 
-### New Side menubar
+### New side menubar
 
 The new side menubar provides access to features such as User Preferences, Organizations, and Data Sources.
 
@@ -135,7 +135,7 @@ The dashlist is a new panel in Grafana v2.0. It allows you to show your personal
 
 dashlist is used on the new Grafana Home screen. It is included as a reference Panel and is useful to provide basic linking between Dashboards.
 
-## Data Source proxy and admin views
+## Data source proxy and admin views
 
 Data sources in Grafana v2.0 are no longer defined in a config file. Instead, they are added through the UI or the HTTP API.
 
@@ -166,7 +166,7 @@ If you open side menu (by clicking on the Grafana icon in the top header) you ca
 
 Here you can update your user details, UI Theme, and change your password.
 
-## Server-side Panel rendering
+## Server-side panel rendering
 
 Grafana now supports server-side PNG rendering. From the Panel share dialog you now have access to a link that will render a particular Panel to a PNG image.
 

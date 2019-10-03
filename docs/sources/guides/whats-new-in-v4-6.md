@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -5
 +++
 
-# What's New in Grafana v4.6
+# What's new in Grafana v4.6
 
 Grafana v4.6 brings many enhancements to Annotations, Cloudwatch and Prometheus. It also adds support for Postgres as metric and table data source!
 
@@ -41,7 +41,7 @@ This makes exploring and filtering Prometheus data much easier.
 
 ## Changelog
 
-### New Features
+### New features
 
 * **GCS**: Adds support for Google Cloud Storage [#8370](https://github.com/grafana/grafana/issues/8370) thx [@chuhlomin](https://github.com/chuhlomin)
 * **Prometheus**: Adds /metrics endpoint for exposing Grafana metrics. [#9187](https://github.com/grafana/grafana/pull/9187)
@@ -58,7 +58,7 @@ This makes exploring and filtering Prometheus data much easier.
 * **Postgres**: New Postgres data source [#9209](https://github.com/grafana/grafana/pull/9209), thx [@svenklemm](https://github.com/svenklemm)
 * **Data sources**: closes [#9371](https://github.com/grafana/grafana/issues/9371), [#5334](https://github.com/grafana/grafana/issues/5334), [#8812](https://github.com/grafana/grafana/issues/8812), thx [@mattbostock](https://github.com/mattbostock)
 
-### Minor Changes
+### Minor changes
 
 * **SMTP**: Make it possible to set specific EHLO for smtp client. [#9319](https://github.com/grafana/grafana/issues/9319)
 * **Dataproxy**: Allow Grafana to renegotiate tls connection [#9250](https://github.com/grafana/grafana/issues/9250)

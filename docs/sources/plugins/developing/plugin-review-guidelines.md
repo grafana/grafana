@@ -7,7 +7,7 @@ parent = "developing"
 weight = 2
 +++
 
-# Plugin Review Guidelines
+# Plugin review guidelines
 
 The Grafana team reviews all plugins that are published on Grafana.com. There are two areas we review, the metadata for the plugin and the plugin functionality.
 
@@ -71,11 +71,11 @@ A minimal `plugin.json` file:
 
 The full file format for the `plugin.json` file is described [here](http://docs.grafana.org/plugins/developing/plugin.json/).
 
-## Plugin Language
+## Plugin language
 
 JavaScript, TypeScript, ES6 (or any other language) are all fine as long as the contents of the `dist` subdirectory are transpiled to JavaScript (ES5).
 
-## File and Directory Structure Conventions
+## File and directory structure conventions
 
 Here is a typical directory structure for a plugin.
 
@@ -134,11 +134,11 @@ Below is a minimal example of an editor row with one form group and two fields, 
 
 Use the `width-x` and `max-width-x` classes to control the width of your labels and input fields. Try to get labels and input fields to line up neatly by having the same width for all the labels in a group and the same width for all inputs in a group if possible.
 
-## Data Sources
+## Data sources
 
 A basic guide for data sources can be found [here](http://docs.grafana.org/plugins/developing/datasources/).
 
-### Config Page Guidelines
+### Config page guidelines
 
 - It should be as easy as possible for a user to configure a url. If the data source is using the `datasource-http-settings` component, it should use the `suggest-url` attribute to suggest the default url or a url that is similar to what it should be (especially important if the url refers to a REST endpoint that is not common knowledge for most users e.g. `https://yourserver:4000/api/custom-endpoint`).
 
@@ -151,7 +151,7 @@ A basic guide for data sources can be found [here](http://docs.grafana.org/plugi
 
 - The `testDatasource` function should make a query to the data source that will also test that the authentication details are correct. This is so the data source is correctly configured when the user tries to write a query in a new dashboard.
 
-#### Password Security
+#### Password security
 
 If possible, any passwords or secrets should be be saved in the `secureJsonData` blob. To encrypt sensitive data, the Grafana server's proxy feature must be used. The Grafana server has support for token authentication (OAuth) and HTTP Header authentication. If the calls have to be sent directly from the browser to a third-party API then this will not be possible and sensitive data will not be encrypted.
 
@@ -162,7 +162,7 @@ If using the proxy feature then the Config page should use the `secureJsonData` 
   - good: `<input type="password" class="gf-form-input" ng-model='ctrl.current.secureJsonData.password' placeholder="password"></input>`
   - bad: `<input type="password" class="gf-form-input" ng-model='ctrl.current.password' placeholder="password"></input>`
 
-### Query Editor
+### Query editor
 
 Each query editor is unique and can have a unique style. It should be adapted to what the users of the data source are used to.
 

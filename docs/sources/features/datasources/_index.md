@@ -9,7 +9,7 @@ parent = "features"
 weight = 5
 +++
 
-# Data Source Overview
+# Data source overview
 
 Grafana supports many different storage backends for your time series data (data source). Each data source has a specific Query Editor that is customized for the features and capabilities that the particular data source exposes.
 

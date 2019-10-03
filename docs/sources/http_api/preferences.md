@@ -9,7 +9,7 @@ name = "Preferences"
 parent = "http_api"
 +++
 
-# User and Org Preferences API
+# User and org preferences API
 
 Keys:
 
@@ -20,7 +20,7 @@ Keys:
 Omitting a key will cause the current value to be replaced with the
 system default value.
 
-## Get Current User Prefs
+## Get current user prefs
 
 `GET /api/user/preferences`
 
@@ -42,7 +42,7 @@ Content-Type: application/json
 {"theme":"","homeDashboardId":0,"timezone":""}
 ```
 
-## Update Current User Prefs
+## Update current user prefs
 
 `PUT /api/user/preferences`
 
@@ -70,7 +70,7 @@ Content-Type: text/plain; charset=utf-8
 {"message":"Preferences updated"}
 ```
 
-## Get Current Org Prefs
+## Get current org prefs
 
 `GET /api/org/preferences`
 
@@ -92,7 +92,7 @@ Content-Type: application/json
 {"theme":"","homeDashboardId":0,"timezone":""}
 ```
 
-## Update Current Org Prefs
+## Update current org prefs
 
 `PUT /api/org/preferences`
 

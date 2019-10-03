@@ -33,11 +33,11 @@ that is provided by [Raintank](http://raintank.io) that allows you to publish da
 The same rules still apply, anyone with the link can view it. You can set an expiration time if you want the snapshot to be removed
 after a certain time period.
 
-## Share Panel
+## Share panel
 
 Click a panel title to open the panel menu, then click share in the panel menu to open the Share Panel dialog. Here you have access to a link that will take you to exactly this panel with the current time range and selected template variables.
 
-### Direct Link Rendered Image
+### Direct link rendered image
 
 You also get a link to render a PNG image of the panel. Useful if you want to share an image of the panel. Read more about the requirements and how to configure image rendering [here](/administration/image_rendering/).
 
@@ -47,14 +47,14 @@ Example of a link to a server-side rendered PNG:
 https://play.grafana.org/d/000000012/grafana-play-home?orgId=1&from=1568719680173&to=1568726880174&panelId=4&fullscreen
 ```
 
-#### Query String Parameters For Server-Side Rendered Images
+#### Query string parameters for server-side eendered images
 
 - **width**: width in pixels. Default is 800.
 - **height**: height in pixels. Default is 400.
 - **tz**: timezone in the format `UTC%2BHH%3AMM` where HH and MM are offset in hours and minutes after UTC
 - **timeout**: number of seconds. The timeout can be increased if the query for the panel needs more than the default 30 seconds.
 
-### Embed Panel
+### Embed panel
 
 You can embed a panel using an iframe on another web site. This tab will show you the html that you need to use.
 
@@ -70,7 +70,7 @@ Below there should be an interactive Grafana graph embedded in an iframe:
 
 <iframe src="https://snapshot.raintank.io/dashboard-solo/snapshot/y7zwi2bZ7FcoTlB93WN7yWO4aMiz3pZb?from=1493369923321&to=1493377123321&panelId=4" width="650" height="300" frameborder="0"></iframe>
 
-### Export Panel Data
+### Export panel data
 
 {{< docs-imagebox img="/img/docs/v50/export_panel_data.png" max-width="500px" >}}
 

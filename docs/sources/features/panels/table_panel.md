@@ -10,7 +10,7 @@ weight = 2
 +++
 
 
-# Table Panel
+# Table panel
 
 <img class="screenshot" src="/assets/img/features/table-panel.png">
 
@@ -19,13 +19,13 @@ table, annotation and raw JSON data. It also provides date formatting and value 
 
 To view table panels in action and test different configurations with sample data, check out the [Table Panel Showcase in the Grafana Playground](http://play.grafana.org/dashboard/db/table-panel-showcase).
 
-## Querying Data
+## Querying data
 
 The table panel displays the results of a query specified in the **Metrics** tab.
 The result being displayed depends on the data source and the query, but generally there is one row per datapoint, with extra columns for associated keys and values, as well as one column for the numeric value of the datapoint.
 You can change the behavior in the section **Data to Table** below.
 
-### Merge Multiple Queries per Table
+### Merge multiple queries per table
 
 > Only available in Grafana v5.0+.
 
@@ -71,7 +71,7 @@ The table panel has many ways to manipulate your data for optimal presentation.
 2. **Paging**: Table display options.
 
 
-## Data to Table
+## Data to table
 
 {{< docs-imagebox img="/img/docs/v45/table_data_options.png" max-width="500px" class="docs-image--right">}}
 
@@ -108,7 +108,7 @@ This table transformation will lay out your table into rows by metric, allowing 
 If you have annotations enabled in the dashboard you can have the table show them. If you configure this
 mode then any queries you have in the metrics tab will be ignored.
 
-### JSON Data
+### JSON data
 
 {{< docs-imagebox img="/img/docs/v45/table_json_data.png" max-width="500px" >}}
 
@@ -118,7 +118,7 @@ transform mode and pick the columns using the **Columns** section.
 
 {{< docs-imagebox img="/img/docs/v45/elastic_raw_doc.png" >}}
 
-## Table Display
+## Table display
 
 {{< docs-imagebox img="/img/docs/v45/table_paging.png" class="docs-image--no-shadow docs-image--right" max-width="350px" >}}
 
@@ -127,7 +127,7 @@ transform mode and pick the columns using the **Columns** section.
 3. **Font Size**: The font size field allows you to increase or decrease the size for the panel, relative to the default font size.
 
 
-## Column Styles
+## Column styles
 
 The column styles allow you control how dates and numbers are formatted.
 

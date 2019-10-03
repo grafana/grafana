@@ -173,7 +173,7 @@ Content-Type: application/json
   }
 }
 ```
-## Grafana Stats
+## Grafana stats
 
 `GET /api/admin/stats`
 
@@ -207,7 +207,7 @@ Content-Type: application/json
 }
 ```
 
-## Global Users
+## Global users
 
 `POST /api/admin/users`
 
@@ -237,7 +237,7 @@ Content-Type: application/json
 {"id":5,"message":"User created"}
 ```
 
-## Password for User
+## Password for user
 
 `PUT /api/admin/users/:id/password`
 
@@ -288,7 +288,7 @@ Content-Type: application/json
 {"message": "User permissions updated"}
 ```
 
-## Delete global User
+## Delete global user
 
 `DELETE /api/admin/users/:id`
 
@@ -346,7 +346,7 @@ Content-Type: application/json
 }
 ```
 
-## Auth tokens for User
+## Auth tokens for user
 
 `GET /api/admin/users/:id/auth-tokens`
 
@@ -396,7 +396,7 @@ Content-Type: application/json
 ]
 ```
 
-## Revoke auth token for User
+## Revoke auth token for user
 
 `POST /api/admin/users/:id/revoke-auth-token`
 
@@ -428,7 +428,7 @@ Content-Type: application/json
 }
 ```
 
-## Logout User
+## Logout user
 
 `POST /api/admin/users/:id/logout`
 

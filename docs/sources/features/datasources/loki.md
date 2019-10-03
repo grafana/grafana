@@ -36,11 +36,11 @@ Just add it as a data source and you are ready to query your log data in [Explor
 | _URL_           | The URL of the Loki instance, e.g., `http://localhost:3100`                                                                                   |
 | _Maximum lines_ | Upper limit for number of log lines returned by Loki (default is 1000). Decrease if your browser is sluggish when displaying logs in Explore. |
 
-## Querying Logs
+## Querying logs
 
 Querying and displaying log data from Loki is available via [Explore](/features/explore), and with the [logs panel](/features/panels/logs/) in dashboards. Select the Loki data source, and then enter a log query to display your logs.
 
-### Log Queries
+### Log queries
 
 A log query consists of two parts: **log stream selector**, and a **search expression**. For performance reasons you need to start by choosing a log stream by selecting a log label.
 
@@ -57,7 +57,7 @@ Once the result is returned, the log panel shows a list of log rows and a bar ch
 
 <br />
 
-### Log Stream Selector
+### Log stream selector
 
 For the label part of the query expression, wrap it in curly braces `{}` and then use the key value syntax for selecting labels. Multiple label expressions are separated by a comma:
 
@@ -79,7 +79,7 @@ The [same rules that apply for Prometheus Label Selectors](https://prometheus.io
 
 Another way to add a label selector, is in the table section, clicking on the **Filter** button beside a label will add the label to the query expression. This even works for multiple queries and will the label selector to each query.
 
-### Search Expression
+### Search expression
 
 After writing the Log Stream Selector, you can filter the results further by writing a search expression. The search expression can be just text or a regex expression.
 
@@ -113,7 +113,7 @@ Note that Live Tailing relies on two Websocket connections: one between the brow
 
 > Note: This feature is only available in Grafana v6.3+
 
-## Log Context
+## Log context
 
 When using a search expression as detailed above, you now have the ability to retrieve the context surrounding your filtered results.
 By clicking the `Show Context` link on the filtered rows, you'll be able to investigate the log messages that came before and after the

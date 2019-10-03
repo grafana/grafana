@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -13
 +++
 
-# What's New in Grafana v6.2
+# What's new in Grafana v6.2
 
 For all details please read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
 
@@ -39,7 +39,7 @@ To mitigate the risk of sensitive information being cached in browser after a us
 
 Grafana v6.2 ships with official support for Elasticsearch v7, see [Using Elasticsearch in Grafana](/features/datasources/elasticsearch/#elasticsearch-version) for more information.
 
-## Bar Gauge Panel
+## Bar gauge panel
 
 Grafana v6.2 ships with a new exciting panel! This new panel, named Bar Gauge, is very similar to the current
 Gauge panel and shares almost all it's options. The main difference is that the Bar Gauge uses both horizontal and
@@ -75,7 +75,7 @@ to use the full panel height in case there is no panel title.
 
 {{< docs-imagebox img="/img/docs/v62/panels_with_no_title.jpg" max-width="800px" caption="Bar Gauge Gradient mode" >}}
 
-## Minor Features and Fixes
+## Minor features and fixes
 
 This release contains a lot of small features and fixes:
 

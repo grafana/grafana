@@ -10,9 +10,9 @@ parent = "http_api"
 +++
 
 
-# Frontend Settings API
+# Frontend settings API
 
-## Get Settings
+## Get settings
 
 `GET /api/frontend/settings`
 

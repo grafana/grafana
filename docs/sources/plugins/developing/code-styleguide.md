@@ -7,7 +7,7 @@ parent = "developing"
 weight = 2
 +++
 
-# Grafana Plugin Code Styleguide
+# Grafana plugin code styleguide
 
 This guide has two parts. The first part describes the metadata and the second part is a styleguide for HTML/CSS and JavaScript in Grafana plugins and applies if you are using ES6 in your plugin. If using TypeScript then the [Angular TypeScript styleguide](https://angular.io/styleguide) is recommended.
 
@@ -62,7 +62,7 @@ Minimal plugin.json:
 
 The README.md file is rendered both on Grafana.net and in the plugins section in Grafana. The only difference from how GitHub renders markdown is that html is not allowed.
 
-## File and Directory Structure Conventions
+## File and directory structure conventions
 
 Here is a typical directory structure for a plugin.
 
@@ -126,7 +126,7 @@ Below is a minimal example of an editor row with one form group and two fields, 
 
 Use the `width-x` and `max-width-x` classes to control the width of your labels and input fields. Try to get labels and input fields to line up neatly by having the same width for all the labels in a group and the same width for all inputs in a group if possible.
 
-## Build Scripts
+## Build scripts
 
 Our recommendation is to use whatever you usually use - Grunt, Gulp or npm scripts. Most plugins seems to use Grunt so that is probably the easiest to get started with if you do not have a preferred build system. The only requirement is that it supports systemjs which is required by Grafana to load plugins.
 

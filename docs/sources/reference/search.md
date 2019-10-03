@@ -8,7 +8,7 @@ weight = 5
 +++
 
 
-# Dashboard Search
+# Dashboard search
 
 Dashboards can be searched by the dashboard name, filtered by one (or many) tags or filtered by starred status. The dashboard search is accessed through the dashboard picker, available in the dashboard top nav area. The dashboard search can also be opened by using the shortcut `F`.
 
@@ -32,7 +32,7 @@ Dashboard search is:
 - *Not* case sensitive
 - Functional across stored *and* file based dashboards.
 
-## Filter by Tag(s)
+## Filter by tag(s)
 
 Tags are a great way to organize your dashboards, especially as the number of dashboards grow. Tags can be added and managed in the dashboard `Settings`.
 

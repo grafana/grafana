@@ -9,7 +9,7 @@ parent = "alerting"
 weight = 1
 +++
 
-# Alerting Engine and Rules Guide
+# Alerting engine and rules guide
 
 > Alerting is only available in Grafana v4.0 and above.
 
@@ -38,14 +38,14 @@ Currently alerting supports a limited form of high availability. Since v4.2.0 of
 
 <div class="clearfix"></div>
 
-## Rule Config
+## Rule config
 
 
 
 Currently only the graph panel supports alert rules but this will be added to the **Singlestat** and **Table**
 panels as well in a future release.
 
-### Name and Evaluation interval
+### Name and evaluation interval
 
 Here you can specify the name of the alert rule and how often the scheduler should evaluate the alert rule.
 
@@ -88,7 +88,7 @@ so the result will be calculated as ((TRUE OR FALSE) AND TRUE) = TRUE.
 We plan to add other condition types in the future, like `Other Alert`, where you can include the state
 of another alert in your conditions, and `Time Of Day`.
 
-#### Multiple Series
+#### Multiple series
 
 If a query returns multiple series then the aggregation function and threshold check will be evaluated for each series.
 What Grafana does not do currently is track alert rule state **per series**. This has implications that are detailed
@@ -109,7 +109,7 @@ we plan to track state **per series** in a future release.
 > be included in the reminder notification. Depending on what notification channel you're using you may be able to take advantage
 > of this feature for identifying new/existing series causing alert to fire. [Read more about notification reminders here](/alerting/notifications/#send-reminders).
 
-### No Data / Null values
+### No data / null values
 
 Below your conditions you can configure how the rule evaluation engine should handle queries that return no data or only null values.
 
@@ -139,7 +139,7 @@ The message can contain anything, information about how you might solve the issu
 The actual notifications are configured and shared between multiple alerts. Read the
 [notifications]({{< relref "notifications.md" >}}) guide for how to configure and setup notifications.
 
-## Alert State History and Annotations
+## Alert state history and annotations
 
 Alert state changes are recorded in the internal annotation table in Grafana's database. The state changes
 are visualized as annotations in the alert rule's graph panel. You can also go into the `State history`

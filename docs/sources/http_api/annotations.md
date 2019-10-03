@@ -14,7 +14,7 @@ parent = "http_api"
 
 This is the API documentation for the new Grafana Annotations feature released in Grafana 4.6. Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be global annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.
 
-## Find Annotations
+## Find annotations
 
 `GET /api/annotations?from=1506676478816&to=1507281278816&tags=tag1&tags=tag2&limit=100`
 
@@ -89,7 +89,7 @@ Content-Type: application/json
 
 > Starting in Grafana v6.4 regions annotations are now returned in one entity that now includes the timeEnd property.
 
-## Create Annotation
+## Create annotation
 
 Creates an annotation in the Grafana database. The `dashboardId` and `panelId` fields are optional.
 If they are not specified then a global annotation is created and can be queried in any dashboard that adds
@@ -130,7 +130,7 @@ Content-Type: application/json
 also get an endId if you where creating a region. But in 6.4 regions are represented using a single event with time and
 timeEnd properties.
 
-## Create Annotation in Graphite format
+## Create annotation in Graphite format
 
 Creates an annotation by using Graphite-compatible event format. The `when` and `data` fields are optional. If `when` is not specified then the current time will be used as annotation's timestamp. The `tags` field can also be in prior to Graphite `0.10.0`
 format (string with multiple tags being separated by a space).
@@ -164,7 +164,7 @@ Content-Type: application/json
 }
 ```
 
-## Update Annotation
+## Update annotation
 
 `PUT /api/annotations/:id`
 
@@ -197,7 +197,7 @@ Content-Type: application/json
 }
 ```
 
-## Patch Annotation
+## Patch annotation
 > This is available in Grafana 6.0.0-beta2 and above.
 
 `PATCH /api/annotations/:id`
@@ -231,7 +231,7 @@ Content-Type: application/json
 }
 ```
 
-## Delete Annotation By Id
+## Delete annotation by id
 
 `DELETE /api/annotations/:id`
 

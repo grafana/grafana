@@ -57,7 +57,7 @@ Identifier | Description
 `s`   | second
 `ms`  | millisecond
 
-### Database User Permissions (Important!)
+### Database user permissions (Important!)
 
 The database user you specify when you add the data source should only be granted SELECT permissions on
 the specified database and tables you want to query. Grafana does not validate that the query is safe. The query
@@ -74,7 +74,7 @@ Example:
 
 Make sure the user does not get any unwanted privileges from the public role.
 
-## Query Editor
+## Query editor
 
 > Only available in Grafana v5.3+.
 
@@ -99,7 +99,7 @@ If you want to use a column with a different datatype as metric column you may e
 You may also enter arbitrary SQL expressions in the metric column field that evaluate to a text datatype like
 `hostname || ' ' || container_name`.
 
-### Columns, Window and Aggregation functions (SELECT)
+### Columns, window and aggregation functions (SELECT)
 
 In the `SELECT` row you can specify what columns and functions you want to use.
 In the column field you may write arbitrary expressions instead of a column name like `column1 * column2 / column3`.
@@ -128,11 +128,11 @@ You can remove the group by clicking on the item and then selecting `Remove`.
 
 If you add any grouping, all selected columns need to have an aggregate function applied. The query builder will automatically add aggregate functions to all columns without aggregate functions when you add groupings.
 
-#### Gap Filling
+#### Gap filling
 
 Grafana can fill in missing values when you group by time. The time function accepts two arguments. The first argument is the time window that you would like to group by, and the second argument is the value you want Grafana to fill missing items with.
 
-### Text Editor Mode (RAW)
+### Text editor mode (RAW)
 You can switch to the raw query editor mode by clicking the hamburger icon and selecting `Switch editor mode` or by clicking `Edit SQL` below the query.
 
 > If you use the raw query editor, be sure your query at minimum has `ORDER BY time` and a filter on the returned time range.
@@ -246,7 +246,7 @@ Instead of hard-coding things like server, application and sensor name in you me
 
 Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
-### Query Variable
+### Query qariable
 
 If you add a template variable of the type `Query`, you can write a PostgreSQL query that can
 return things like measurement names, key names or key values that are shown as a dropdown select box.
@@ -282,7 +282,7 @@ the hosts variable only show hosts from the current selected region with a query
 SELECT hostname FROM host  WHERE region IN($region)
 ```
 
-### Using Variables in Queries
+### Using variables in queries
 
 From Grafana 4.3.0 to 4.6.0, template variables are always quoted automatically. If your template variables are strings, do not wrap them in quotes in where clauses.
 
@@ -314,7 +314,7 @@ WHERE $__timeFilter(atimestamp) and hostname in([[hostname]])
 ORDER BY atimestamp ASC
 ```
 
-#### Disabling Quoting for Multi-value Variables
+#### Disabling quoting for multi-value variables
 
 Grafana automatically creates a quoted, comma-separated string for multi-value variables. For example: if `server01` and `server02` are selected then it will be formatted as: `'server01', 'server02'`. To disable quoting, use the csv formatting option for variables:
 

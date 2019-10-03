@@ -9,11 +9,11 @@ name = "External Group Sync"
 parent = "http_api"
 +++
 
-# External Group Synchronization API
+# External group synchronization API
 
 > External Group Synchronization is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "enterprise" >}}).
 
-## Get External Groups
+## Get external groups
 
 `GET /api/teams/:teamId/groups`
 
@@ -47,7 +47,7 @@ Status Codes:
 - **401** - Unauthorized
 - **403** - Permission denied
 
-## Add External Group
+## Add external group
 
 `POST /api/teams/:teamId/groups`
 
@@ -81,7 +81,7 @@ Status Codes:
 - **403** - Permission denied
 - **404** - Team not found
 
-## Remove External Group
+## Remove external group
 
 `DELETE /api/teams/:teamId/groups/:groupId`
 

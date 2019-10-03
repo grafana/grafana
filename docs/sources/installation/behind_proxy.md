@@ -87,7 +87,7 @@ backend grafana_backend
   server grafana localhost:3000
 ```
 
-### IIS URL Rewrite Rule (Windows) with Subpath
+### IIS URL rewrite rule (Windows) with subpath
 
 IIS requires that the URL Rewrite module is installed.
 

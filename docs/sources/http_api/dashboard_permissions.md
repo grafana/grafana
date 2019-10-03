@@ -9,7 +9,7 @@ name = "Dashboard Permissions"
 parent = "http_api"
 +++
 
-# Dashboard Permissions API
+# Dashboard permissions API
 
 This API can be used to update/get the permissions for a dashboard.
 

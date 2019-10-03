@@ -23,7 +23,7 @@ well as server-side sharing and rendering.
 We've attempted to provide a smooth migration path for v1.9 users to
 migrate to Grafana 2.0.
 
-## Adding Data sources
+## Adding data sources
 
 The `config.js` file has been deprecated. Data sources are now managed via
 the UI or HTTP API. Manage your organizations data sources by clicking on the `Data Sources` menu on the
@@ -66,7 +66,7 @@ Start by going to the `Data Sources` view (via the side menu), and make
 sure your InfluxDB data source is added. Specify the database name where
 your Grafana v1.x dashboards are stored, the default is `grafana`.
 
-### Go to Import dashboards view
+### Go to import dashboards view
 
 Go to the `Dashboards` view and click on the dashboards search drop
 down. Click the `Import` button at the bottom of the search drop down.

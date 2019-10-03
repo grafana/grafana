@@ -6,7 +6,7 @@ type = "docs"
 aliases = ["/v1.1", "/guides/reference/admin", "/v3.1"]
 +++
 
-# Grafana Documentation
+# Grafana documentation
 
 <h2>Installing Grafana</h2>
 <div class="nav-cards">

@@ -17,7 +17,7 @@ specified in a `.ini` configuration file or specified using environment variable
 
 > **Note.** Grafana needs to be restarted for any configuration changes to take effect.
 
-## Comments In .ini Files
+## Comments in .ini files
 
 Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` file.
 

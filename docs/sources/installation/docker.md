@@ -40,7 +40,7 @@ those options.
 
 > For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect you need to restart Grafana by restarting the Docker container.
 
-### Default Paths
+### Default paths
 
 The following settings are hard-coded when launching the Grafana Docker container and can only be overridden using environment variables, not in `conf/grafana.ini`.
 
@@ -53,7 +53,7 @@ GF_PATHS_LOGS         | /var/log/grafana
 GF_PATHS_PLUGINS      | /var/lib/grafana/plugins
 GF_PATHS_PROVISIONING | /etc/grafana/provisioning
 
-## Running a Specific Version of Grafana
+## Running a specific version of Grafana
 
 ```bash
 # specify right tag, e.g. 5.1.0 - see Docker Hub for available tags
@@ -72,7 +72,7 @@ When running Grafana master in production we **strongly** recommend that you use
 
 For a list of available tags, check out [grafana/grafana](https://hub.docker.com/r/grafana/grafana/tags/) and [grafana/grafana-dev](https://hub.docker.com/r/grafana/grafana-dev/tags/). 
 
-## Installing Plugins for Grafana
+## Installing plugins for Grafana
 
 Pass the plugins you want installed to docker with the `GF_INSTALL_PLUGINS` environment variable as a comma separated list. This will pass each plugin name to `grafana-cli plugins install ${plugin}` and install them when Grafana starts.
 
@@ -103,7 +103,7 @@ docker run \
   grafana:latest-with-plugins
 ```
 
-## Installing Plugins from other sources
+## Installing plugins from other sources
 
 > Only available in Grafana v5.3.1+
 
@@ -118,7 +118,7 @@ docker run \
   grafana/grafana
 ```
 
-## Configuring AWS Credentials for CloudWatch Support
+## Configuring AWS credentials for CloudWatch support
 
 ```bash
 $ docker run \
@@ -168,7 +168,7 @@ ID=$(id -u) # saves your user id in the ID variable
 docker run -d --user $ID --volume "$PWD/data:/var/lib/grafana" -p 3000:3000 grafana/grafana:5.1.0
 ```
 
-## Reading secrets from files (support for Docker Secrets)
+## Reading secrets from files (support for Docker secrets)
 
 > Only available in Grafana v5.2+.
 

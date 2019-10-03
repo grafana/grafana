@@ -7,7 +7,7 @@ parent = "developing"
 weight = 6
 +++
 
-# Getting Plugins to work in Snapshot Mode
+# Getting plugins to work in snapshot mode
 
 {{< imgbox img="/img/docs/Grafana-snapshot-example.png" caption="A dashboard using snapshot data and not live data." >}}
 

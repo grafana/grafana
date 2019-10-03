@@ -130,7 +130,7 @@ the second syntax in expressions like  `my.server[[serverNumber]].count`.
 Example:
 [Graphite Templated Dashboard](http://play.grafana.org/dashboard/db/graphite-templated-nested)
 
-### Variable Usage in Tag Queries
+### Variable usage in tag queries
 
 Multi-value variables in tag queries use the advanced formatting syntax introduced in Grafana 5.0 for variables: `{var:regex}`. Non-tag queries will use the default glob formatting for multi-value variables.
 

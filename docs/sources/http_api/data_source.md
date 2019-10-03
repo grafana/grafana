@@ -88,7 +88,7 @@ Content-Type: application/json
 }
 ```
 
-## Get a single data source by Name
+## Get a single data source by name
 
 `GET /api/datasources/name/:name`
 
@@ -125,7 +125,7 @@ Content-Type: application/json
 }
 ```
 
-## Get data source Id by Name
+## Get data source Id by name
 
 `GET /api/datasources/id/:name`
 

@@ -11,7 +11,7 @@ weight = 8
 
 # Troubleshooting
 
-## Visualization and Query issues
+## Visualization and query issues
 
 {{< imgbox max-width="40%" img="/img/docs/v45/query_inspector.png" caption="Query Inspector" >}}
 

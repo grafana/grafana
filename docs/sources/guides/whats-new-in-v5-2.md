@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -8
 +++
 
-# What's New in Grafana v5.2
+# What's new in Grafana v5.2
 
 Grafana v5.2 brings new features, many enhancements and bug fixes. This article will detail the major new features and enhancements.
 
@@ -68,7 +68,7 @@ The InfluxDB data source now includes support for the *mode* function which retu
 
 By popular demand Grafana now includes support for an alert notification channel type for [Discord](https://discordapp.com/).
 
-## Dashboards and Panels
+## Dashboards and panels
 
 ### Modified time range and variables are no longer saved by default
 

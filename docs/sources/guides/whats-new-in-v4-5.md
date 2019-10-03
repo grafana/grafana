@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -4
 +++
 
-# What's New in Grafana v4.5
+# What's new in Grafana v4.5
 
 ## Highlights
 
@@ -35,7 +35,7 @@ More information [here](https://community.grafana.com/t/using-grafanas-query-ins
 
 ## Changelog
 
-### New Features
+### New features
 
 * **Table panel**: Render cell values as links that can have an url template that uses variables from current table row. [#3754](https://github.com/grafana/grafana/issues/3754)
 * **Elasticsearch**: Add ad hoc filters directly by clicking values in table panel [#8052](https://github.com/grafana/grafana/issues/8052).
@@ -59,12 +59,12 @@ This option is now renamed (and moved to Options sub section above your queries)
 Data source selection and options and help are now above your metric queries.
 ![image|690x179](upload://5kNDxKgMz1BycOKgG3iWYLsEVXv.png)
 
-### Minor Changes
+### Minor changes
 
 * **InfluxDB**: Change time range filter for absolute time ranges to be inclusive instead of exclusive [#8319](https://github.com/grafana/grafana/issues/8319), thx [@Oxydros](https://github.com/Oxydros)
 * **InfluxDB**: Added parenthesis around tag filters in queries [#9131](https://github.com/grafana/grafana/pull/9131)
 
-## Bug Fixes
+## Bug fixes
 
 * **Modals**: Maintain scroll position after opening/leaving modal [#8800](https://github.com/grafana/grafana/issues/8800)
 * **Templating**: You cannot select data source variables as data source for other template variables [#7510](https://github.com/grafana/grafana/issues/7510)

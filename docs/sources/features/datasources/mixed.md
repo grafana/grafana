@@ -8,7 +8,7 @@ parent = "datasources"
 weight = 20
 +++
 
-# Mixed Data Source
+# Mixed data source
 
 This Data Source allows you to specify data source on a per query basis.
 
