@@ -578,7 +578,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
           datasource: this.name,
           expr: this.templateSrv.replace(query.expr, {}, this.interpolateQueryExpr),
         };
-
         return expandedQuery;
       });
     }
