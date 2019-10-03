@@ -6,8 +6,8 @@ import { Select } from '../Select/Select';
 import { OptionType } from './';
 
 export interface Props<T> {
-  options: OptionType<T> | undefined;
-  onChange: (item: SelectableValue<T>) => void;
+  options: OptionType<T>;
+  onChange: (value: T) => void;
   onClickOutside: () => void;
   width: number;
   noOptionsMessage?: string;
@@ -53,7 +53,7 @@ export function SegmentSelect<T>({
         placeholder=""
         autoFocus={true}
         isOpen={true}
-        onChange={onChange}
+        onChange={({ value }) => onChange(value!)}
         options={optionTypes}
       />
     </div>

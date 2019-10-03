@@ -8,7 +8,7 @@ export interface SegmentAsyncProps<T> extends SegmentProps<T> {
 }
 
 export function SegmentAsync<T>({
-  currentOption: { label } = { label: '' },
+  value,
   onChange,
   loadOptions,
   Component,
@@ -26,7 +26,7 @@ export function SegmentAsync<T>({
           setLoadedOptions(opts);
           setSelectPlaceholder(opts.length ? '' : 'No options found');
         }}
-        Component={Component || <a className="gf-form-label query-part">{label}</a>}
+        Component={Component || <a className="gf-form-label query-part">{value}</a>}
       />
     );
   }

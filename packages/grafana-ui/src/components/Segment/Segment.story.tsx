@@ -20,7 +20,7 @@ const toOption = (value: any) => ({ label: value, value: value });
 SegmentStories.add('Array Options', () => {
   const options = ['Option1', 'Option2', 'OptionWithLooongLabel', 'Option4'].map(toOption);
   return (
-    <UseState initialState={options[0] as SelectableValue<string>}>
+    <UseState initialState={options[0].value}>
       {(value, updateValue) => (
         <>
           <div className="gf-form-inline">
@@ -28,16 +28,16 @@ SegmentStories.add('Array Options', () => {
               <span className="gf-form-label width-8 query-keyword">Segment Name</span>
             </div>
             <Segment
-              currentOption={value}
+              value={value}
               options={options}
-              onChange={(item: SelectableValue<string>) => {
-                updateValue(item);
-                action('Segment value changed')(item.value);
+              onChange={(value: SelectableValue<string>) => {
+                updateValue(value);
+                action('Segment value changed')(value);
               }}
             />
             <Segment
               Component={AddButton}
-              onChange={(item: SelectableValue<string>) => action('New value added')(item.value)}
+              onChange={(value: SelectableValue<string>) => action('New value added')(value)}
               options={options}
             />
           </div>
@@ -54,7 +54,7 @@ const groupedOptions = {
 
 SegmentStories.add('Grouped Array Options', () => {
   return (
-    <UseState initialState={groupedOptions.Prime[2] as SelectableValue<string>}>
+    <UseState initialState={groupedOptions.Prime[2].value}>
       {(value, updateValue) => (
         <>
           <div className="gf-form-inline">
@@ -62,16 +62,16 @@ SegmentStories.add('Grouped Array Options', () => {
               <span className="gf-form-label width-8 query-keyword">Segment Name</span>
             </div>
             <Segment
-              currentOption={value}
+              value={value}
               options={groupedOptions}
-              onChange={(item: SelectableValue<string>) => {
-                updateValue(item);
-                action('Segment value changed')(item.value);
+              onChange={(value: SelectableValue<string>) => {
+                updateValue(value);
+                action('Segment value changed')(value);
               }}
             />
             <Segment
               Component={AddButton}
-              onChange={item => action('New value added')(item.value)}
+              onChange={value => action('New value added')(value)}
               options={groupedOptions}
             />
           </div>
@@ -100,24 +100,24 @@ const CustomLabelComponent = ({ value }: any) => (
     <span
       className="pointer fa fa-arrow-left"
       onClick={e => {
-        action('Left arrow was clicked')();
         e.stopPropagation();
+        action('Left arrow was clicked')();
       }}
     />
     <span className="pointer fa fa-question-circle" onMouseEnter={() => action('onMouseEnter question mark')()} />
     <a className="value">{value}</a>
     <span
       onClick={e => {
-        action('Remove was clicked')();
         e.stopPropagation();
+        action('Remove was clicked')();
       }}
       className="pointer fa fa-remove"
     />
     <span
       className="pointer fa fa-arrow-right"
       onClick={e => {
-        action('Right arrow was clicked')();
         e.stopPropagation();
+        action('Right arrow was clicked')();
       }}
     />
   </div>
@@ -125,24 +125,24 @@ const CustomLabelComponent = ({ value }: any) => (
 
 SegmentStories.add('Custom Label Field', () => {
   return (
-    <UseState initialState={groupedOptions.Prime[2] as SelectableValue<string>}>
-      {(item, updateItem) => (
+    <UseState initialState={groupedOptions.Prime[2].value}>
+      {(value, setValue) => (
         <>
           <div className="gf-form-inline">
             <div className="gf-form">
               <span className="gf-form-label width-8 query-keyword">Segment Name</span>
             </div>
             <Segment
-              Component={<CustomLabelComponent {...item} />}
+              Component={<CustomLabelComponent value={value} />}
               options={groupedOptions}
-              onChange={(item: SelectableValue<string>) => {
-                updateItem(item);
-                action('Segment value changed')(item.value);
+              onChange={(value: SelectableValue<string>) => {
+                setValue(value);
+                action('Segment value changed')(value);
               }}
             />
             <Segment
               Component={AddButton}
-              onChange={item => action('New value added')(item.value)}
+              onChange={value => action('New value added')(value)}
               options={groupedOptions}
             />
           </div>

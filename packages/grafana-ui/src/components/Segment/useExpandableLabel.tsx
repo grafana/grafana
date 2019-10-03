@@ -9,9 +9,13 @@ export const useExpandableLabel = (initialExpanded: boolean) => {
       className="gf-form"
       ref={ref}
       onClick={() => {
-        ref && ref.current && setWidth(ref.current.clientWidth);
         setExpanded(true);
-        onClick && onClick();
+        if (ref && ref.current) {
+          setWidth(ref.current.clientWidth);
+        }
+        if (onClick) {
+          onClick();
+        }
       }}
     >
       {Component}
