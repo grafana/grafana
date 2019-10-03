@@ -36,7 +36,7 @@ If you have an idea of how to improve Grafana, submit an [enhancement request](h
 Unsure where to begin contributing to Grafana? Start by browsing issues labeled `beginner friendly` or `help wanted`.
 
 - [Beginner-friendly](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22beginner+friendly%22) issues are generally straightforward to complete.
-- [Help wanted](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) are issues that are a bit more involved than `beginner friendly` issues.
+- [Help wanted](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) issues are problems we would like the community to help us with regardless of complexity.
 
 If you're looking to make a code change, see how to set up your environment for [local development](contribute/development.md).
 
