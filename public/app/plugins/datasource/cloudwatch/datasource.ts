@@ -14,7 +14,10 @@ import { CloudWatchQuery } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-// import * as moment from 'moment';
+
+export interface Options extends DataSourceJsonData {
+  apiKey?: string;
+}
 
 export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery> {
   type: any;
@@ -225,6 +228,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
       return {
         text: v[0],
         value: v[1],
+        label: v[1],
       };
     });
   }
