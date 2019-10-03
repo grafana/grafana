@@ -305,6 +305,7 @@ export interface ExploreUrlState {
   range: RawTimeRange;
   ui: ExploreUIState;
   originPanelId?: number;
+  context?: string;
 }
 
 export interface HistoryItem<TQuery extends DataQuery = DataQuery> {

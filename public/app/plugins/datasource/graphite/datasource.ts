@@ -7,7 +7,6 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 //Types
-import { ExploreUrlState } from 'app/types';
 import { GraphiteQuery } from './types';
 
 export class GraphiteDatasource {
@@ -121,24 +120,18 @@ export class GraphiteDatasource {
     return tags;
   }
 
-  getExploreState(queries: GraphiteQuery[]): Partial<ExploreUrlState> {
-    let state: Partial<ExploreUrlState> = { datasource: this.name };
+  interpolateVariablesInQueries(queries: GraphiteQuery[]): GraphiteQuery[] {
+    let expandedQueries = queries;
     if (queries && queries.length > 0) {
-      const expandedQueries = queries.map(query => {
+      expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
           target: this.templateSrv.replace(query.target),
-          context: 'explore',
         };
         return expandedQuery;
       });
-
-      state = {
-        ...state,
-        queries: expandedQueries,
-      };
     }
-    return state;
+    return expandedQueries;
   }
 
   annotationQuery(options: { annotation: { target: string; tags: string }; rangeRaw: any }) {
