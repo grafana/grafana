@@ -39,8 +39,12 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
             value={key}
             loadOptions={() => loadKeys().then(keys => [removeOption, ...excludeUsedKeys(keys)])}
             onChange={newKey => {
-              const { [key]: value, ...newDimensions } = data;
-              setData({ ...newDimensions, [newKey]: '' });
+              let { [key]: value, ...newDimensions } = data;
+              if (newKey === removeText) {
+                setData({ ...newDimensions });
+              } else {
+                setData({ ...newDimensions, [newKey]: '' });
+              }
             }}
           />
           <Segment
