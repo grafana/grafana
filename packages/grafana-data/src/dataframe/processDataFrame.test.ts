@@ -103,6 +103,36 @@ describe('toDataFrame', () => {
     expect(norm.fields[2].type).toBe(FieldType.other);
     expect(norm.fields[3].type).toBe(FieldType.time); // based on name
   });
+
+  it('converts JSON document data to series', () => {
+    const input1 = {
+      datapoints: [
+        {
+          _id: 'W5rvjW0BKe0cA-E1aHvr',
+          _type: '_doc',
+          _index: 'logs-2019.10.02',
+          '@message': 'Deployed website',
+          '@timestamp': [1570044340458],
+          tags: ['deploy', 'website-01'],
+          description: 'Torkel deployed website',
+          coordinates: { latitude: 12, longitude: 121, level: { depth: 3, coolnes: 'very' } },
+          long:
+            'asdsaa asdas dasdas dasdasdas asdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa asdasdasdasdasdasdas asd',
+          'unescaped-content': 'breaking <br /> the <br /> row',
+        },
+      ],
+      filterable: true,
+      target: 'docs',
+      total: 206,
+      type: 'docs',
+    };
+    const dataFrame = toDataFrame(input1);
+    expect(dataFrame.fields[0].name).toBe(input1.target);
+
+    const v0 = dataFrame.fields[0].values;
+    expect(v0.length).toEqual(1);
+    expect(v0.get(0)).toEqual(input1.datapoints[0]);
+  });
 });
 
 describe('SerisData backwards compatibility', () => {

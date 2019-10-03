@@ -127,6 +127,33 @@ function convertGraphSeriesToDataFrame(graphSeries: GraphSeriesXY): DataFrame {
   };
 }
 
+function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
+  const fields = [
+    {
+      name: timeSeries.target,
+      type: FieldType.other,
+      config: {
+        unit: timeSeries.unit,
+        filterable: (timeSeries as any).filterable,
+      },
+      values: new ArrayVector(),
+    },
+  ];
+
+  for (const point of timeSeries.datapoints) {
+    fields[0].values.buffer.push(point);
+  }
+
+  return {
+    name: timeSeries.target,
+    labels: timeSeries.tags,
+    refId: timeSeries.refId,
+    meta: { json: true },
+    fields,
+    length: timeSeries.datapoints.length,
+  };
+}
+
 // PapaParse Dynamic Typing regex:
 // https://github.com/mholt/PapaParse/blob/master/papaparse.js#L998
 const NUMBER = /^\s*-?(\d*\.?\d+|\d+\.?\d*)(e[-+]?\d+)?\s*$/i;
@@ -217,6 +244,8 @@ export const guessFieldTypes = (series: DataFrame): DataFrame => {
 
 export const isTableData = (data: any): data is DataFrame => data && data.hasOwnProperty('columns');
 
+export const isJSONDocumentData = (data: any): data is DataFrame => data && data.meta && data.meta.json;
+
 export const isDataFrame = (data: any): data is DataFrame => data && data.hasOwnProperty('fields');
 
 export const toDataFrame = (data: any): DataFrame => {
@@ -239,6 +268,11 @@ export const toDataFrame = (data: any): DataFrame => {
 
     // This will convert the array values into Vectors
     return new MutableDataFrame(data as DataFrameDTO);
+  }
+
+  // Handle legacy docs/json type
+  if (data.hasOwnProperty('type') && data.type === 'docs') {
+    return convertJSONDocumentDataToDataFrame(data);
   }
 
   if (data.hasOwnProperty('datapoints')) {

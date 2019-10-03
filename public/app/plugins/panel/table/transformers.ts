@@ -3,7 +3,7 @@ import flatten from 'app/core/utils/flatten';
 import TimeSeries from 'app/core/time_series2';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { TableTransform } from './types';
-import { Column, TableData } from '@grafana/data';
+import { Column, TableData, toDataFrame } from '@grafana/data';
 
 const transformers: { [key: string]: TableTransform } = {};
 
@@ -182,15 +182,17 @@ transformers['json'] = {
 
     const names: any = {};
     for (let i = 0; i < data.length; i++) {
-      const series = data[i];
-      if (series.type !== 'docs') {
+      const dataFrame = toDataFrame(data[i]);
+      if (!dataFrame.meta || !dataFrame.meta.json) {
         continue;
       }
 
+      const jsonField = dataFrame.fields[0];
+
       // only look at 100 docs
-      const maxDocs = Math.min(series.datapoints.length, 100);
+      const maxDocs = Math.min(dataFrame.length, 100);
       for (let y = 0; y < maxDocs; y++) {
-        const doc = series.datapoints[y];
+        const doc = jsonField.values.get(y);
         const flattened = flatten(doc, {});
         for (const propName in flattened) {
           names[propName] = true;
@@ -209,8 +211,11 @@ transformers['json'] = {
       const tableCol: any = { text: column.text };
 
       // if filterable data then set columns to filterable
-      if (data.length > 0 && data[0].filterable) {
-        tableCol.filterable = true;
+      if (data.length > 0) {
+        const dataFrame = toDataFrame(data[0]);
+        if (dataFrame.meta && dataFrame.fields[0].config.filterable) {
+          tableCol.filterable = true;
+        }
       }
 
       model.columns.push(tableCol);
@@ -221,10 +226,11 @@ transformers['json'] = {
     }
 
     for (i = 0; i < data.length; i++) {
-      const series = data[i];
+      const dataFrame = toDataFrame(data[i]);
+      const jsonField = dataFrame.fields[0];
 
-      for (y = 0; y < series.datapoints.length; y++) {
-        const dp = series.datapoints[y];
+      for (y = 0; y < jsonField.values.length; y++) {
+        const dp = jsonField.values.get(y);
         const values = [];
 
         if (_.isObject(dp) && panel.columns.length > 0) {
