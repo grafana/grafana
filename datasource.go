@@ -146,12 +146,12 @@ func asTimeSeries(df *dataframe.Frame) (*datasource.TimeSeries, error) {
 	pts := []*datasource.Point{}
 
 	for i := 0; i < timeVec.Len(); i++ {
-		t := timeVec.At(i).Time()
-		v := valueVec.At(i).Float()
+		t := timeVec.At(i).(*time.Time)
+		v := valueVec.At(i).(*float64)
 
 		pts = append(pts, &datasource.Point{
 			Timestamp: int64(t.UnixNano()) / int64(time.Millisecond),
-			Value:     v,
+			Value:     *v,
 		})
 	}
 
@@ -178,22 +178,25 @@ func asTable(df *dataframe.Frame) *datasource.Table {
 			case dataframe.FieldTypeTime:
 				rowvals[j] = &datasource.RowValue{
 					Kind:        datasource.RowValue_TYPE_DOUBLE,
-					DoubleValue: f.Vector.At(i).Float(),
+					DoubleValue: float64(f.Vector.At(i).(*time.Time).UnixNano()),
 				}
 			case dataframe.FieldTypeNumber:
+				v := f.Vector.At(i).(*float64)
 				rowvals[j] = &datasource.RowValue{
 					Kind:        datasource.RowValue_TYPE_DOUBLE,
-					DoubleValue: f.Vector.At(i).Float(),
+					DoubleValue: *v,
 				}
 			case dataframe.FieldTypeString:
+				v := f.Vector.At(i).(*string)
 				rowvals[j] = &datasource.RowValue{
 					Kind:        datasource.RowValue_TYPE_STRING,
-					StringValue: f.Vector.At(i).String(),
+					StringValue: *v,
 				}
 			case dataframe.FieldTypeBoolean:
+				v := f.Vector.At(i).(*bool)
 				rowvals[j] = &datasource.RowValue{
 					Kind:      datasource.RowValue_TYPE_BOOL,
-					BoolValue: f.Vector.At(i).Bool(),
+					BoolValue: *v,
 				}
 			}
 		}
