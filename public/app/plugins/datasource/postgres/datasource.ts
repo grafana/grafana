@@ -53,7 +53,6 @@ export class PostgresDatasource {
 
   interpolateVariablesInQueries(queries: PostgresQueryForInterpolation[]): PostgresQueryForInterpolation[] {
     let expandedQueries = queries;
-    console.log('queries', queries);
     if (queries && queries.length > 0) {
       expandedQueries = queries.map(query => {
         const expandedQuery = {
