@@ -24,21 +24,21 @@ Access the Playlist feature from Grafana's side menu, in the Dashboard submenu.
 To create a playlist: 
 
 1. Click the __New playlist__ button.
-2. Name your playlist in the __Name__ field.
-3. Enter a time interval in the __Interval__ field.
+1. Name your playlist in the __Name__ text box.
+1. Enter a time interval in the __Interval__ text box.
 
-The time interval is the amount of time for Grafana to stay on a particular Dashboard before advancing to the next one on the Playlist.
+The time interval is the amount of time for Grafana to stay on a particular Dashboard before advancing to the next one on the playlist.
 
 ## Add a dashboard to a playlist
 
 To add a dashboard:
 
-1. Click the __Find dashboards by name__ field.
-2. Search for the playlist by name or regular expression.
+1. Click the __Find dashboards by name__ text box.
+1. Search for the playlist by name or regular expression.
    - You can also filter your results by starred status or tags.
 
      By default, your starred dashboards will appear as options to add to the Playlist.
-3. Click __Add to playlist__ next to the dashboard you want to add.
+1. Click __Add to playlist__ next to the dashboard you want to add.
    - Click on __Remove[x]__ to remove a dashboard from the playlist.
 
 The Playlist is essentially a list of dashboards. Be sure that all the dashboards you want to appear in your playlist are added in this section before saving the playlist.
@@ -47,8 +47,8 @@ The Playlist is essentially a list of dashboards. Be sure that all the dashboard
 
 To save a playlist: 
 
-1. Ensure that your Playlist has a __Name__, __Interval__, and at least one __Dashboard__ added to it.
-2. Click the green __Create__ button.
+1. Ensure that your playlist has a __Name__, __Interval__, and at least one __Dashboard__ added to it.
+1. Click the green __Create__ button.
 
    This will generate a unique, shareable URL for your playlist.
 
@@ -59,8 +59,8 @@ To save a playlist:
 To start a playlist: 
 
 1. From the Dashboard submenu, click __Playlists__.
-2. Next to the playlist you want to start, click __Start Playlist__.
-3. In the dropdown, select the mode you want the playlist to display in.
+1. Next to the playlist you want to start, click __Start playlist__.
+1. In the dropdown, select the mode you want the playlist to display in.
    - In Normal mode
    - In TV mode
    - In TV mode (with auto fit panels)
@@ -88,18 +88,19 @@ To control a playlist:
 
    Note: A playlist cannot be controlled manually in __Kiosk__ mode.
 
-2. Click the __next__ button (right arrow) to advance to the next dashboard. 
-3. Click the __back__ button (left arrow) in the navbar to return to the previous dashboard. 
-4. Click the square __Stop__ button to stop the playlist. This will exit to the current Dashboard.
+1. Click the __next__ button (right arrow) to advance to the next dashboard. 
+1. Click the __back__ button (left arrow) in the navbar to return to the previous dashboard. 
+1. Click the square __Stop__ button to stop the playlist. This will exit to the current dashboard.
 
->Shortcut: Click the __Esc__ key to stop the playlist from your keyboard.
+>Shortcut: Click the Esc key to stop the playlist from your keyboard.
 
 ### Link to a playlist in Kiosk mode
 
-To create a link to a playlist with kiosk mode enabled:
+To create a link to a playlist with Kiosk mode enabled:
 
-1. Copy the Start URL (right click the __Play__ button and choose __Copy link address__).
-2. Add the `?kiosk` parameter to the URL.
+1. Next to the playlist you want to link to, click __Start playlist__.
+1. In the dropdown, right click __In Kiosk mode__.
+1. Click __Copy Link Address__ to copy the link to your clipboard. 
 
 For example, to open the first playlist on the Grafana Play site in Kiosk mode, the URL should look like this:
 [http://play.grafana.org/playlists/play/1?kiosk](http://play.grafana.org/playlists/play/1?kiosk).
