@@ -11,7 +11,7 @@ We know you're excited to create your first pull request. Before we get started,
 
 ## Your first pull request
 
-If this is your first time contributing to a open-source project on GitHub, make sure you read about [Creating a pull request](https://help.github.com/en/articles/creating-a-pull-request).
+If this is your first time contributing to an open-source project on GitHub, make sure you read about [Creating a pull request](https://help.github.com/en/articles/creating-a-pull-request).
 
 To increase the chance of having your pull request accepted, make sure your pull request follows these guidelines:
 
@@ -32,7 +32,7 @@ Pull requests for frontend contributions must:
 
 - Use [Emotion](https://github.com/grafana/grafana/blob/master/style_guides/styling.md) for styling.
 - Not increase the Angular code base.
-- Not use `any` or `{}` without comments describing why.
+- Not use `any` or `{}` without reason.
 - Not contain large React components that could easily be split into several smaller components.
 - Not contain backend calls directly from components—use actions and Redux instead.
 
@@ -49,7 +49,7 @@ Once you've created a pull request, the next step is to have someone review your
 
 If you think a specific person needs to review your pull request, then you can tag them in the description or in a comment. Tag a user by typing the `@` symbol followed by their GitHub username.
 
-We recommend that you read [How to do a code review](https://google.github.io/eng-practices/review/reviewer/) to learn more about some best practices for code reviews.
+We recommend that you read [How to do a code review](https://google.github.io/eng-practices/review/reviewer/) to learn more about code reviews.
 
 ## Formatting guidelines
 

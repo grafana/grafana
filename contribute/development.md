@@ -83,7 +83,7 @@ go test -v ./pkg/...
 
 ## Add data sources
 
-By now, you should be able to build and test a change you've made to the Grafana source code. In most cases, you're going to need to add at least one data source to verify the change you made.
+By now, you should be able to build and test a change you've made to the Grafana source code. In most cases, you need to add at least one data source to verify the change.
 
 To set up data sources for your development environment, go to the `devenv` directory in the Grafana repository:
 
@@ -111,4 +111,4 @@ See the repository for all the [available data sources](https://github.com/grafa
 
 - Read our [style guides](/contribute/style-guides).
 - Learn how to [Create a pull request](/contribute/pull-request.md).
-- Check out [How to contribute to Grafana as a junior dev](https://medium.com/@ivanahuckova/how-to-contribute-to-grafana-as-junior-dev-c01fe3064502) by [Ivana Huckova](https://medium.com/@ivanahuckova).
+- Read [How to contribute to Grafana as a junior dev](https://medium.com/@ivanahuckova/how-to-contribute-to-grafana-as-junior-dev-c01fe3064502) by [Ivana Huckova](https://medium.com/@ivanahuckova).

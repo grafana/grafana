@@ -4,7 +4,7 @@ The code [styleguide](/contribute/style-guides/backend.md) and brief description
 
 # Ongoing refactorings
 
-These issues are not something we want to address all at once but something we will improve over time. Since Grafana is released at a regular schedule the prefer approach is to do this in batches. Not only is it easier to review, it also reduces the risk of conflicts when cherry-picking fixes from master to release branches. Please try to submit changes that span multiple locations at the end of the release cycle. We prefer waiting until the end, because we make fewer patch releases at the end of the release cycle, so there are fewer opportunities for complications.
+These issues are not something we want to address all at once but something we will improve over time. Since Grafana is released at a regular schedule the preferred approach is to do this in batches. Not only is it easier to review, but it also reduces the risk of conflicts when cherry-picking fixes from master to release branches. Please try to submit changes that span multiple locations at the end of the release cycle. We prefer waiting until the end because we make fewer patch releases at the end of the release cycle, so there are fewer opportunities for complications.
 
 ## Global state
 
