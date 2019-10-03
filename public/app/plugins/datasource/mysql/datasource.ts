@@ -55,6 +55,7 @@ export class MysqlDatasource {
       expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
+          datasource: this.name,
           rawSql: this.templateSrv.replace(query.rawSql, {}, this.interpolateVariable),
         };
         return expandedQuery;

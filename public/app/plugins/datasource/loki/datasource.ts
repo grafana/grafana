@@ -225,6 +225,21 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return merge(...subQueries);
   }
 
+  interpolateVariablesInQueries(queries: LokiQuery[]): LokiQuery[] {
+    let expandedQueries = queries;
+    if (queries && queries.length > 0) {
+      expandedQueries = queries.map(query => {
+        const expandedQuery = {
+          ...query,
+          datasource: this.name,
+          expr: this.templateSrv.replace(query.expr),
+        };
+        return expandedQuery;
+      });
+    }
+    return expandedQueries;
+  }
+
   async importQueries(queries: LokiQuery[], originMeta: PluginMeta): Promise<LokiQuery[]> {
     return this.languageProvider.importQueries(queries, originMeta.id);
   }

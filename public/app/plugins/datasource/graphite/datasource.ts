@@ -126,6 +126,7 @@ export class GraphiteDatasource {
       expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
+          datasource: this.name,
           target: this.templateSrv.replace(query.target),
         };
         return expandedQuery;

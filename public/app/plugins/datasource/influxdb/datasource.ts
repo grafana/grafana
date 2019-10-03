@@ -189,6 +189,7 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
         });
         const expandedQuery = {
           ...query,
+          datasource: this.name,
           tags: expandedTags,
         };
         return expandedQuery;

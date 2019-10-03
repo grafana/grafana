@@ -88,6 +88,7 @@ export async function getExploreUrl(
       state = {
         ...state,
         datasource: exploreDatasource.name,
+        context: 'explore',
         queries: exploreTargets.map(t => ({ ...t, datasource: exploreDatasource.name })),
       };
     }

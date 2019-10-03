@@ -232,6 +232,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
+          datasource: this.name,
           query: this.templateSrv.replace(query.query),
         };
         return expandedQuery;
