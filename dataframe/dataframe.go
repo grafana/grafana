@@ -116,27 +116,27 @@ func (f *Field) Len() int {
 // Labels are used to add metadata to an object.
 type Labels map[string]string
 
-func (l Labels) Contains(other Labels) bool {
-	if len(l) < len(other) {
+// Equals returns true if the argument has the same k=v pairs as the receiver.
+func (l Labels) Equals(arg Labels) bool {
+	if len(l) != len(arg) {
 		return false
 	}
-	for k, v := range other {
-		if argVal, ok := other[k]; !ok || argVal != v {
+	for k, v := range l {
+		if argVal, ok := arg[k]; !ok || argVal != v {
 			return false
-
 		}
 	}
 	return true
 }
 
-func (l Labels) Equals(other Labels) bool {
-	if len(l) != len(other) {
+// Contains returns true if all k=v pairs of the argument are in the receiver.
+func (l Labels) Contains(arg Labels) bool {
+	if len(arg) > len(l) {
 		return false
 	}
-	for k, v := range l {
-		if argVal, ok := other[k]; !ok || argVal != v {
+	for k, v := range arg {
+		if argVal, ok := l[k]; !ok || argVal != v {
 			return false
-
 		}
 	}
 	return true

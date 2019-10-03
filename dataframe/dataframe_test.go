@@ -27,3 +27,37 @@ func TestNewDataFrame(t *testing.T) {
 		t.Fatal("unexpected length")
 	}
 }
+
+func TestNewField_Float64(t *testing.T) {
+	f := dataframe.NewField("value", dataframe.FieldTypeNumber, make([]*float64, 3))
+
+	want := 2.0
+	f.Vector.Set(1, &want)
+
+	if f.Len() != 3 {
+		t.Fatal("unexpected length")
+	}
+
+	got := f.Vector.At(1).(*float64)
+
+	if *got != want {
+		t.Errorf("%+v", *got)
+	}
+}
+
+func TestNewField_String(t *testing.T) {
+	f := dataframe.NewField("value", dataframe.FieldTypeString, make([]*string, 3))
+
+	want := "foo"
+	f.Vector.Set(1, &want)
+
+	if f.Len() != 3 {
+		t.Fatal("unexpected length")
+	}
+
+	got := f.Vector.At(1).(*string)
+
+	if *got != want {
+		t.Errorf("%+v", *got)
+	}
+}
