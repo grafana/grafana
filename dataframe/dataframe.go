@@ -49,6 +49,31 @@ func NewField(name string, fieldType FieldType, values interface{}) *Field {
 	var vec Vector
 
 	switch v := values.(type) {
+	case []*float64:
+		vec = newVector(fieldType, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []*int64:
+		vec = newVector(fieldType, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []*time.Time:
+		vec = newVector(fieldType, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []*string:
+		vec = newVector(fieldType, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
+	case []*bool:
+		vec = newVector(fieldType, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.Set(i, v[i])
+		}
 	case []float64:
 		vec = newVector(fieldType, len(v))
 		for i := 0; i < len(v); i++ {
