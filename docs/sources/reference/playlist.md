@@ -15,7 +15,7 @@ The Playlist is a special type of Dashboard that rotates through a list of Dashb
 
 Grafana automatically scales Dashboards to any resolution, which makes them perfect for big screens.
 
-Access the Playlist feature from Grafana's side menu, in the Dashboard submenu.
+Access the Playlist feature from Grafana's side menu, in the Dashboards submenu.
 
 ## Create a playlist
 
@@ -27,7 +27,7 @@ To create a playlist:
 1. Name your playlist in the __Name__ text box.
 1. Enter a time interval in the __Interval__ text box.
 
-The time interval is the amount of time for Grafana to stay on a particular Dashboard before advancing to the next one on the playlist.
+The time interval is the amount of time for Grafana to stay on a particular dashboard before advancing to the next one on the playlist.
 
 ## Add a dashboard to a playlist
 
@@ -58,7 +58,7 @@ To save a playlist:
 
 To start a playlist: 
 
-1. From the Dashboard submenu, click __Playlists__.
+1. From the Dashboards submenu, click __Playlists__.
 1. Next to the playlist you want to start, click __Start playlist__.
 1. In the dropdown, select the mode you want the playlist to display in.
    - In Normal mode
