@@ -1,43 +1,11 @@
 package dataframe
 
-import (
-	"fmt"
-	"time"
-)
+type floatVector []*float64
 
-type floatVector []floatElement
-
-func (v floatVector) Set(i int, val interface{}) {
-	v[i].Set(val)
+func newFloatVector(l int) *floatVector {
+	v := make(floatVector, l)
+	return &v
 }
-func (v floatVector) At(i int) Element { return &v[i] }
-func (v floatVector) Len() int         { return len(v) }
-
-type floatElement struct {
-	val float64
-}
-
-func (e *floatElement) Set(value interface{}) {
-	switch val := value.(type) {
-	case float64:
-		e.val = val
-	default:
-		panic("invalid type")
-	}
-}
-
-func (e *floatElement) Bool() bool {
-	return e.val > 0
-}
-
-func (e *floatElement) Float() float64 {
-	return e.val
-}
-
-func (e *floatElement) String() string {
-	return fmt.Sprintf("%v", e.val)
-}
-
-func (e *floatElement) Time() time.Time {
-	return time.Unix(0, int64(e.val)*1000)
-}
+func (v floatVector) Set(i int, val interface{}) { v[i] = val.(*float64) }
+func (v floatVector) At(i int) interface{}       { return &v[i] }
+func (v floatVector) Len() int                   { return len(v) }

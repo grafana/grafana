@@ -101,9 +101,9 @@ func buildArrowColumns(f *Frame, arrowFields []arrow.Field) ([]array.Column, err
 	for fieldIdx, field := range f.Fields {
 		switch field.Type {
 		case FieldTypeNumber:
-			columns[fieldIdx] = *buildFloatColumn(pool, arrowFields[fieldIdx], field.Vector.(floatVector))
+			columns[fieldIdx] = *buildFloatColumn(pool, arrowFields[fieldIdx], field.Vector.(*floatVector))
 		case FieldTypeTime:
-			columns[fieldIdx] = *buildTimeColumn(pool, arrowFields[fieldIdx], field.Vector.(timeVector))
+			columns[fieldIdx] = *buildTimeColumn(pool, arrowFields[fieldIdx], field.Vector.(*timeVector))
 		default:
 			return nil, fmt.Errorf("unsupported field type: %s", field.Type)
 		}
@@ -111,16 +111,16 @@ func buildArrowColumns(f *Frame, arrowFields []arrow.Field) ([]array.Column, err
 	return columns, nil
 }
 
-func buildFloatColumn(pool memory.Allocator, field arrow.Field, vec floatVector) *array.Column {
+func buildFloatColumn(pool memory.Allocator, field arrow.Field, vec *floatVector) *array.Column {
 	builder := array.NewFloat64Builder(pool)
 	defer builder.Release()
 
-	for _, v := range vec {
-		//if v == nil {
-		//	builder.AppendNull()
-		//	continue
-		//}
-		builder.Append(v.Float())
+	for _, v := range *vec {
+		if v == nil {
+			builder.AppendNull()
+			continue
+		}
+		builder.Append(*v)
 	}
 
 	chunked := array.NewChunked(field.Type, []array.Interface{builder.NewArray()})
@@ -129,18 +129,18 @@ func buildFloatColumn(pool memory.Allocator, field arrow.Field, vec floatVector)
 	return array.NewColumn(field, chunked)
 }
 
-func buildTimeColumn(pool memory.Allocator, field arrow.Field, vec timeVector) *array.Column {
+func buildTimeColumn(pool memory.Allocator, field arrow.Field, vec *timeVector) *array.Column {
 	builder := array.NewTimestampBuilder(pool, &arrow.TimestampType{
 		Unit: arrow.Nanosecond,
 	})
 	defer builder.Release()
 
-	for _, v := range vec {
-		//if v == nil {
-		//	builder.AppendNull()
-		//	continue
-		//}
-		builder.Append(arrow.Timestamp(v.Time().UnixNano()))
+	for _, v := range *vec {
+		if v == nil {
+			builder.AppendNull()
+			continue
+		}
+		builder.Append(arrow.Timestamp((*v).UnixNano()))
 	}
 
 	chunked := array.NewChunked(field.Type, []array.Interface{builder.NewArray()})

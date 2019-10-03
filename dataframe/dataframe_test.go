@@ -20,7 +20,7 @@ func TestNewDataFrame(t *testing.T) {
 		dataframe.NewField("timestamp", dataframe.FieldTypeTime, []time.Time{time.Now(), time.Now(), time.Now()}),
 		dataframe.NewField("value", dataframe.FieldTypeNumber, []float64{1.0, 2.0, 3.0}),
 		dataframe.NewField("category", dataframe.FieldTypeString, []string{"foo", "bar", "test"}),
-		dataframe.NewField("valid", dataframe.FieldTypeString, []bool{true, false, true}),
+		dataframe.NewField("valid", dataframe.FieldTypeBoolean, []bool{true, false, true}),
 	)
 
 	if df.Rows() != 3 {
