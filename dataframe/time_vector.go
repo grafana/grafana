@@ -4,6 +4,9 @@ import "time"
 
 type timeVector []timeElement
 
+func (v timeVector) Set(i int, val interface{}) {
+	v[i].Set(val)
+}
 func (v timeVector) At(i int) Element { return &v[i] }
 func (v timeVector) Len() int         { return len(v) }
 

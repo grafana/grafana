@@ -7,6 +7,9 @@ import (
 
 type floatVector []floatElement
 
+func (v floatVector) Set(i int, val interface{}) {
+	v[i].Set(val)
+}
 func (v floatVector) At(i int) Element { return &v[i] }
 func (v floatVector) Len() int         { return len(v) }
 

@@ -8,6 +8,9 @@ import (
 
 type stringVector []stringElement
 
+func (v stringVector) Set(i int, val interface{}) {
+	v[i].Set(val)
+}
 func (v stringVector) At(i int) Element { return &v[i] }
 func (v stringVector) Len() int         { return len(v) }
 

@@ -42,6 +42,8 @@ type Field struct {
 	Vector Vector
 }
 
+type Fields []*Field
+
 // NewField returns a new instance of Field.
 func NewField(name string, fieldType FieldType, values interface{}) *Field {
 	var vec Vector
@@ -88,6 +90,32 @@ func (f *Field) Len() int {
 
 // Labels are used to add metadata to an object.
 type Labels map[string]string
+
+func (l Labels) Contains(other Labels) bool {
+	if len(l) < len(other) {
+		return false
+	}
+	for k, v := range other {
+		if argVal, ok := other[k]; !ok || argVal != v {
+			return false
+
+		}
+	}
+	return true
+}
+
+func (l Labels) Equals(other Labels) bool {
+	if len(l) != len(other) {
+		return false
+	}
+	for k, v := range l {
+		if argVal, ok := other[k]; !ok || argVal != v {
+			return false
+
+		}
+	}
+	return true
+}
 
 func (l Labels) String() string {
 	// Better structure, should be sorted, copy prom probably

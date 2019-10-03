@@ -4,6 +4,7 @@ import "time"
 
 // Vector represents a collection of Elements.
 type Vector interface {
+	Set(idx int, i interface{})
 	At(i int) Element
 	Len() int
 }

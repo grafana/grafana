@@ -7,6 +7,9 @@ import (
 
 type boolVector []boolElement
 
+func (v boolVector) Set(i int, val interface{}) {
+	v[i].Set(val)
+}
 func (v boolVector) At(i int) Element { return &v[i] }
 func (v boolVector) Len() int         { return len(v) }
 
