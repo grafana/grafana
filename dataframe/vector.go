@@ -2,11 +2,13 @@ package dataframe
 
 import "time"
 
+// Vector represents a collection of Elements.
 type Vector interface {
 	At(i int) Element
 	Len() int
 }
 
+// Element represents a single data value.
 type Element interface {
 	Set(val interface{})
 

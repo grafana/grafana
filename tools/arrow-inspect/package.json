@@ -1,0 +1,17 @@
+{
+  "name": "js",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "babel src -d lib"
+  },
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "apache-arrow": "^0.14.1"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.6.2",
+    "@babel/core": "^7.6.2",
+    "@babel/preset-env": "^7.6.2"
+  }
+}

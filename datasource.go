@@ -11,12 +11,14 @@ import (
 	plugin "github.com/hashicorp/go-plugin"
 )
 
+// TimeRange represents a time range for a query.
 type TimeRange struct {
 	From time.Time
 	To   time.Time
 }
 
-type DatasourceInfo struct {
+// DataSourceInfo holds metadata for the queried data source.
+type DataSourceInfo struct {
 	ID       int64
 	OrgID    int64
 	Name     string
@@ -25,11 +27,7 @@ type DatasourceInfo struct {
 	JSONData json.RawMessage
 }
 
-type Point struct {
-	Timestamp time.Time
-	Value     float64
-}
-
+// Query represents the query as sent from the frontend.
 type Query struct {
 	RefID         string
 	MaxDataPoints int64
@@ -37,22 +35,24 @@ type Query struct {
 	ModelJSON     json.RawMessage
 }
 
+// QueryResult holds the results for a given query.
 type QueryResult struct {
 	Error      string
 	RefID      string
 	MetaJSON   string
-	DataFrames []*dataframe.DataFrame
+	DataFrames []*dataframe.Frame
 }
 
-type DatasourceHandler interface {
-	Query(ctx context.Context, tr TimeRange, ds DatasourceInfo, queries []Query) ([]QueryResult, error)
+// DataSourceHandler handles data source queries.
+type DataSourceHandler interface {
+	Query(ctx context.Context, tr TimeRange, ds DataSourceInfo, queries []Query) ([]QueryResult, error)
 }
 
 // datasourcePluginWrapper converts to and from protobuf types.
 type datasourcePluginWrapper struct {
 	plugin.NetRPCUnsupportedPlugin
 
-	handler DatasourceHandler
+	handler DataSourceHandler
 }
 
 func (p *datasourcePluginWrapper) Query(ctx context.Context, req *datasource.DatasourceRequest) (*datasource.DatasourceResponse, error) {
@@ -61,7 +61,7 @@ func (p *datasourcePluginWrapper) Query(ctx context.Context, req *datasource.Dat
 		To:   time.Unix(0, req.TimeRange.FromEpochMs*int64(time.Millisecond)),
 	}
 
-	dsi := DatasourceInfo{
+	dsi := DataSourceInfo{
 		ID:       req.Datasource.Id,
 		OrgID:    req.Datasource.OrgId,
 		Name:     req.Datasource.Name,
@@ -132,7 +132,7 @@ func (p *datasourcePluginWrapper) Query(ctx context.Context, req *datasource.Dat
 //
 // It will use the first time field found as the timestamp, and the first
 // number field as the value.
-func asTimeSeries(df *dataframe.DataFrame) (*datasource.TimeSeries, error) {
+func asTimeSeries(df *dataframe.Frame) (*datasource.TimeSeries, error) {
 	timeIdx := indexOfFieldType(df, dataframe.FieldTypeTime)
 	timeVec := df.Fields[timeIdx].Vector
 
@@ -163,7 +163,7 @@ func asTimeSeries(df *dataframe.DataFrame) (*datasource.TimeSeries, error) {
 }
 
 // asTable converts the data frame into a protobuf table.
-func asTable(df *dataframe.DataFrame) *datasource.Table {
+func asTable(df *dataframe.Frame) *datasource.Table {
 	if len(df.Fields) == 0 {
 		return &datasource.Table{}
 	}
@@ -214,7 +214,7 @@ func asTable(df *dataframe.DataFrame) *datasource.Table {
 	}
 }
 
-func indexOfFieldType(df *dataframe.DataFrame, t dataframe.FieldType) int {
+func indexOfFieldType(df *dataframe.Frame, t dataframe.FieldType) int {
 	for idx, f := range df.Fields {
 		if f.Type == t {
 			return idx
