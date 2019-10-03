@@ -25,7 +25,7 @@ Grafana ships with very feature rich data source plugin for InfluxDB. Supporting
 
 Name | Description
 ------------ | -------------
-*Name* | The data source name. This is how you refer to the data source in panels & queries.
+*Name* | The data source name. This is how you refer to the data source in panels and queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
 *Url* | The HTTP protocol, ip and port of you influxdb api (influxdb api port is by default 8086)
 *Access* | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
@@ -76,7 +76,7 @@ the tag key and select `--remove tag filter--`.
 You can type in regex patterns for metric names or tag filter values, be sure to wrap the regex pattern in forward slashes (`/`). Grafana
 will automatically adjust the filter tag condition to use the InfluxDB regex match condition operator (`=~`).
 
-### Field & Aggregation functions
+### Field and Aggregation functions
 In the `SELECT` row you can specify what fields and functions you want to use. If you have a
 group by time you need an aggregation function. Some functions like derivative require an aggregation function. The editor tries simplify and unify this part of the query. For example:<br>
 ![](/img/docs/influxdb/select_editor.png)<br>

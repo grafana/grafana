@@ -111,10 +111,10 @@ To use the debug view:
 
 ### Bind
 
-#### Bind & Bind Password
+#### Bind and Bind Password
 
 By default the configuration expects you to specify a bind DN and bind password. This should be a read only user that can perform LDAP searches.
-When the user DN is found a second bind is performed with the user provided username & password (in the normal Grafana login form).
+When the user DN is found a second bind is performed with the user provided username and password (in the normal Grafana login form).
 
 ```bash
 bind_dn = "cn=admin,dc=grafana,dc=org"

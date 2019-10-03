@@ -1,6 +1,6 @@
 +++
 title = "What's New in Grafana v5.2"
-description = "Feature & improvement highlights for Grafana v5.2"
+description = "Feature and improvement highlights for Grafana v5.2"
 keywords = ["grafana", "new", "documentation", "5.2"]
 type = "docs"
 [menu.docs]
@@ -21,7 +21,7 @@ Grafana v5.2 brings new features, many enhancements and bug fixes. This article 
 - [Prometheus]({{< relref "#prometheus" >}}) with alignment enhancements
 - [InfluxDB]({{< relref "#influxdb" >}}) now supports the `mode` function
 - [Alerting]({{< relref "#alerting" >}}) with alert notification channel type for Discord
-- [Dashboards & Panels]({{< relref "#dashboards-panels" >}}) with save & import enhancements
+- [Dashboards and Panels]({{< relref "#dashboards-panels" >}}) with save and import enhancements
 
 ## Elasticsearch alerting
 
@@ -68,7 +68,7 @@ The InfluxDB data source now includes support for the *mode* function which retu
 
 By popular demand Grafana now includes support for an alert notification channel type for [Discord](https://discordapp.com/).
 
-## Dashboards & Panels
+## Dashboards and Panels
 
 ### Modified time range and variables are no longer saved by default
 
