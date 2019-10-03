@@ -47,7 +47,7 @@ The Playlist is essentially a list of dashboards. Be sure that all the dashboard
 
 To save a playlist: 
 
-1. Ensure that your Playlist has a __Name__, __Interval__, and at least one (1) __Dashboard__ added to it.
+1. Ensure that your Playlist has a __Name__, __Interval__, and at least one __Dashboard__ added to it.
 2. Click the green __Create__ button.
 
    This will generate a unique, shareable URL for your playlist.
