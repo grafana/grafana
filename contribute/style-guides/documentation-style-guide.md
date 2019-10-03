@@ -59,7 +59,7 @@ For all items not covered in this guide, refer to the [Microsoft Style Guide](ht
 
 ### Word usage
 
-Grafana products has some words, abbreviations, and slang particular to this discourse commmunity.
+Grafana products has some words, abbreviations, and slang particular to this discourse community.
 
 #### data source
 

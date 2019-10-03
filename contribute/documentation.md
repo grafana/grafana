@@ -1,15 +1,8 @@
-+++
-title = "Documentation"
-description = "Contributing to documentation"
-type = "docs"
-[menu.docs]
-parent = "contribute"
-weight = 2
-+++
-
 # Contributing to documentation
 
-## How do I contribute?
+This documents guides you through the process of contributing to the Grafana documentation. Make sure you've read the guide for [Contributing to Grafana](/CONTRIBUTING.md).
+
+## Your first contribution
 
 If you’re unsure about where to start, check out some of our [open docs issues](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3Atype%2Fdocs).
 
@@ -19,20 +12,18 @@ When you’ve found an issue you want to work on, you’re encouraged to comment
 
 If you encounter any misspellings, or violations to the style guide, please let us know by submitting an issue.
 
-On every page in the documentation there are two links:
+On every page in the [documentation](https://grafana.com/docs/) there are two links:
 
-- __Edit this page__ takes you directly to the file on GitHub where you can contribute a fix.
-- __Request doc changes__ prepares an issue on GitHub with relevant information already filled in.
+- **Edit this page** takes you directly to the file on GitHub where you can contribute a fix.
+- **Request doc changes** prepares an issue on GitHub with relevant information already filled in.
 
 ## Community
-
-If you have questions on a specific issue, post a comment to ask for clarification, or to give feedback.
 
 For general discussions on documentation, you’re welcome to join the `#docs` channel on our [public Grafana Slack](http://slack.raintank.io) team.
 
 ## Guidelines
 
-All Grafana documentation is written using [Markdown](https://en.wikipedia.org/wiki/Markdown), and can be found in the [docs](https://github.com/grafana/grafana/tree/master/docs) directory in the [Grafana GitHub repository](https://github.com/grafana/grafana). The [documentation website](https://grafana.com/docs) is generated with [hugo](https://gohugo.io) which uses [Blackfriday](https://github.com/russross/blackfriday) as its Markdown rendering engine.
+All Grafana documentation is written using [Markdown](https://en.wikipedia.org/wiki/Markdown), and can be found in the [docs](https://github.com/grafana/grafana/tree/master/docs) directory in the [Grafana GitHub repository](https://github.com/grafana/grafana). The [documentation website](https://grafana.com/docs) is generated with [Hugo](https://gohugo.io) which uses [Blackfriday](https://github.com/russross/blackfriday) as its Markdown rendering engine.
 
 ### Structure
 
