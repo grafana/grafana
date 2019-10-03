@@ -29,7 +29,6 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import TableModel from 'app/core/table_model';
 
-
 export interface PromDataQueryResponse {
   data: {
     status: string;
