@@ -176,6 +176,27 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
     return false;
   }
 
+  interpolateVariablesInQueries(queries: InfluxQuery[]): InfluxQuery[] {
+    let expandedQueries = queries;
+    if (queries && queries.length > 0) {
+      expandedQueries = queries.map(query => {
+        const expandedTags = query.tags.map(tag => {
+          const expandedTag = {
+            ...tag,
+            value: this.templateSrv.replace(tag.value, null, 'regex'),
+          };
+          return expandedTag;
+        });
+        const expandedQuery = {
+          ...query,
+          tags: expandedTags,
+        };
+        return expandedQuery;
+      });
+    }
+    return expandedQueries;
+  }
+
   metricFindQuery(query: string, options?: any) {
     const interpolated = this.templateSrv.replace(query, null, 'regex');
 
