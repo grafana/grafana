@@ -19,6 +19,7 @@ export const Stats: SFC<Props> = ({ values, onChange }) => (
   <>
     {values.map((value, index) => (
       <Segment
+        key={value + index}
         value={value}
         options={[removeOption, ...options]}
         onChange={value =>

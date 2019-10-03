@@ -4,6 +4,7 @@ import { CloudWatchQuery } from '../types';
 import { FormField, QueryEditorProps, Segment, SegmentAsync } from '@grafana/ui';
 import DataSource, { Options } from '../datasource';
 import { Stats } from './Stats';
+import { Dimensions } from './Dimensions';
 
 type Props = QueryEditorProps<DataSource, CloudWatchQuery, Options>;
 
@@ -34,10 +35,8 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const { query, onChange } = this.props;
+    const { query, onChange, datasource } = this.props;
     const { regions, namespaces } = this.state;
-    console.log('this.props', this.props);
-
     return (
       <>
         <div className="gf-form inline">
@@ -80,6 +79,33 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
               inputEl={<Stats values={query.statistics} onChange={statistics => onChange({ ...query, statistics })} />}
             />
           </div>
+        </div>
+        <div className="gf-form inline">
+          <FormField
+            className="query-keyword"
+            width={24}
+            label="Dimensions"
+            inputEl={
+              <Dimensions
+                dimensions={query.dimensions}
+                onChange={dimensions => {
+                  console.log('dimensions changed', { dimensions });
+                  onChange({ ...query, dimensions });
+                }}
+                loadKeys={() => datasource.getDimensionKeys(query.namespace, query.region)}
+                loadValues={newKey => {
+                  const { [newKey]: value, ...newDimensions } = query.dimensions;
+                  return datasource.getDimensionValues(
+                    query.region,
+                    query.namespace,
+                    query.metricName,
+                    newKey,
+                    newDimensions
+                  );
+                }}
+              />
+            }
+          />
         </div>
       </>
     );
