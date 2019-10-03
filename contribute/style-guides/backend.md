@@ -5,7 +5,7 @@ Grafanas backend has been developed for a long time with a mix of code styles.
 This style guide is a guide for how we want to write Go code in the future. Generally, we want to follow the style guides used in Go [Code Review Comments](https://code.google.com/p/go-wiki/wiki/CodeReviewComments) and Peter Bourgon's [Go: Best Practices for Production Environments](http://peter.bourgon.org/go-in-production/#formatting-and-style)
 
 ## Linting and formatting
-We enforce strict `gofmt` formating and use some linters on our codebase. You can lint the codebase with <akefile -
+We enforce strict `gofmt` formatting and use some linters on our codebase. You can lint the codebase with <akefile -
 ```bash
 $ make lint-go
 ```

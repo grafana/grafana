@@ -9,7 +9,7 @@ Generally we follow the Airbnb [React Style Guide](https://github.com/airbnb/jav
   - [Basic rules](#basic-rules)
   - [Organization](#organization)
   - [Props](#props)
-  - [State mangement](#state-mangement)
+  - [State management](#state-management)
 
 ## Basic rules
 
@@ -85,9 +85,9 @@ static defaultProps: Partial<Props> = { ... }
 static defaultProps = { ... }
 ```
 
-## State mangement 
+## State management
 
 - Don't mutate state in reducers or thunks.
-- Use helpers `actionCreatorFactory` and `reducerFactory` instead of traditional `switch statement` reducers in Redux. See [Redux framework](https://github.com/grafana/grafana/tree/master/style_guides/redux.md) for more details.
-- Use `reducerTester` to test reducers. See [Redux framework](https://github.com/grafana/grafana/tree/master/style_guides/redux.md) for more details.
+- Use helpers `actionCreatorFactory` and `reducerFactory` instead of traditional `switch statement` reducers in Redux. See [Redux framework](redux.md) for more details.
+- Use `reducerTester` to test reducers. See [Redux framework](redux.md) for more details.
 - Use state selectors to access state instead of accessing state directly.

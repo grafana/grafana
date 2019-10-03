@@ -55,7 +55,7 @@ Data and bucket options can be found in the `Axes` tab.
 
 Data format | Description
 ------------ | -------------
-*Time series* | Grafana does the bucketing by going through all time series values. The bucket sizes & intervals will be determined using the Buckets options.
+*Time series* | Grafana does the bucketing by going through all time series values. The bucket sizes and intervals will be determined using the Buckets options.
 *Time series buckets* | Each time series already represents a Y-Axis bucket. The time series name (alias) needs to be a numeric value representing the upper or lower interval for the bucket. Grafana does no bucketing so the bucket size options are hidden.
 
 ### Bucket bound
@@ -66,7 +66,7 @@ option will be chosen based on panels' data source type.
 
 ### Bucket Size
 
-The Bucket count & size options are used by Grafana to calculate how big each cell in the heatmap is. You can
+The Bucket count and size options are used by Grafana to calculate how big each cell in the heatmap is. You can
 define the bucket size either by count (the first input box) or by specifying a size interval. For the Y-Axis
 the size interval is just a value but for the X-bucket you can specify a time range in the *Size* input, for example,
 the time range `1h`. This will make the cells 1h wide on the X-axis.
@@ -94,7 +94,7 @@ With Prometheus you can only control X-axis by adjusting *Min step* and *Resolut
 
 In the heatmap *Display* tab you define how the cells are rendered and what color they are assigned.
 
-### Color Mode & Spectrum
+### Color Mode and Spectrum
 
 {{< imgbox max-width="40%" img="/img/docs/v43/heatmap_scheme.png" caption="Color spectrum" >}}
 
@@ -117,5 +117,5 @@ to do the bucketing during metric collection or store the data in Elasticsearch,
 supports doing Histogram bucketing on the raw data.
 
 If you remove or lower the group by time (or raise maxDataPoints) in your query to return more data points your heatmap will be
-more accurate but this can also be very CPU & Memory taxing for your browser and could cause hangs and crashes if the number of
+more accurate but this can also be very CPU and Memory taxing for your browser and could cause hangs and crashes if the number of
 data points becomes unreasonably large.

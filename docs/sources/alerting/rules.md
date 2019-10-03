@@ -1,15 +1,15 @@
 +++
-title = "Alerting Engine & Rules Guide"
+title = "Alerting Engine and Rules Guide"
 description = "Configuring Alert Rules"
 keywords = ["grafana", "alerting", "guide", "rules"]
 type = "docs"
 [menu.docs]
-name = "Engine & Rules"
+name = "Engine and Rules"
 parent = "alerting"
 weight = 1
 +++
 
-# Alerting Engine & Rules Guide
+# Alerting Engine and Rules Guide
 
 > Alerting is only available in Grafana v4.0 and above.
 
@@ -45,7 +45,7 @@ Currently alerting supports a limited form of high availability. Since v4.2.0 of
 Currently only the graph panel supports alert rules but this will be added to the **Singlestat** and **Table**
 panels as well in a future release.
 
-### Name & Evaluation interval
+### Name and Evaluation interval
 
 Here you can specify the name of the alert rule and how often the scheduler should evaluate the alert rule.
 
@@ -139,11 +139,11 @@ The message can contain anything, information about how you might solve the issu
 The actual notifications are configured and shared between multiple alerts. Read the
 [notifications]({{< relref "notifications.md" >}}) guide for how to configure and setup notifications.
 
-## Alert State History & Annotations
+## Alert State History and Annotations
 
 Alert state changes are recorded in the internal annotation table in Grafana's database. The state changes
 are visualized as annotations in the alert rule's graph panel. You can also go into the `State history`
-submenu in the alert tab to view & clear state history.
+submenu in the alert tab to view and clear state history.
 
 ## Troubleshooting
 

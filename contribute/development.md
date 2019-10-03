@@ -1,15 +1,6 @@
-+++
-title = "Developing on macOS"
-description = "Developing on macOS"
-type = "docs"
-[menu.docs]
-parent = "development"
-weight = 1
-+++
+# Develop Grafana
 
-# Developing on macOS
-
-This guide helps you get started developing Grafana on macOS.
+This guide helps you get started developing Grafana.
 
 ## Dependencies
 
@@ -19,6 +10,8 @@ Make sure you have the following dependencies installed before moving on to set 
 - [Go](https://golang.org/dl/)
 - [Node.js (Long Term Support)](https://nodejs.org)
 - [Yarn](https://yarnpkg.com)
+
+### macOS
 
 We recommend using [Homebrew](https://brew.sh/) for installing any missing dependencies:
 
@@ -50,7 +43,7 @@ Before we can build the frontend assets, we need to install the dependencies:
 yarn install --pure-lockfile
 ```
 
-When this is done, we can start building our source code:
+After the command has finished, we can start building our source code:
 
 ```
 yarn start
@@ -64,19 +57,19 @@ Next, we'll build the web server that will serve the frontend assets we just bui
 
 Build and run the backend, by running `make run` in the root directory of the repository. This command will compile the Go source code, and start a web server.
 
-By default, the web server will be served at `http://localhost:3000/`.
+By default, you can access the web server at `http://localhost:3000/`.
 
 Log in using the default credentials:
 
 | username | password |
-|----------|----------|
-| `admin`  | `admin` |
+| -------- | -------- |
+| `admin`  | `admin`  |
 
-When you log in for the first time, you'll be asked to change your password.
+When you log in for the first time, Grafana will ask you to change your password.
 
 ## Test Grafana
 
-The tests for the frontend are written using [jest](https://jestjs.io/). Run them using yarn:
+We use [jest](https://jestjs.io/) for our frontend tests. Run them using yarn:
 
 ```
 yarn jest
@@ -90,7 +83,7 @@ go test -v ./pkg/...
 
 ## Add data sources
 
-By now, you should be able to build and test a change you've made to the Grafana source code. Most likely though, you're going to need to add a few data sources to verify the change you made.
+By now, you should be able to build and test a change you've made to the Grafana source code. In most cases, you need to add at least one data source to verify the change.
 
 To set up data sources for your development environment, go to the `devenv` directory in the Grafana repository:
 
@@ -98,7 +91,7 @@ To set up data sources for your development environment, go to the `devenv` dire
 cd devenv
 ```
 
-Run the `setup.sh` script to setup a set of data sources and dashboards in your local Grafana. Data sources are named **gdev-\<type\>**, and dashboards are located in a folder called **gdev dashboards**.
+Run the `setup.sh` script to setup a set of data sources and dashboards in your local Grafana. The script creates a set of data sources called **gdev-\<type\>**, and a set of dashboards located in a folder called **gdev dashboards**.
 
 Some of the data sources require databases to run in the background.
 
@@ -116,4 +109,6 @@ See the repository for all the [available data sources](https://github.com/grafa
 
 ## Learn more
 
-- [How to contribute to Grafana as a junior dev](https://medium.com/@ivanahuckova/how-to-contribute-to-grafana-as-junior-dev-c01fe3064502) by [Ivana Huckova](https://medium.com/@ivanahuckova).
+- Read our [style guides](/contribute/style-guides).
+- Learn how to [Create a pull request](/contribute/pull-request.md).
+- Read [How to contribute to Grafana as a junior dev](https://medium.com/@ivanahuckova/how-to-contribute-to-grafana-as-junior-dev-c01fe3064502) by [Ivana Huckova](https://medium.com/@ivanahuckova).
