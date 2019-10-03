@@ -172,6 +172,8 @@ type Frame struct {
 	Name   string
 	Labels Labels
 	Fields []*Field
+
+	RefID string
 }
 
 // New returns a new instance of a Frame.
