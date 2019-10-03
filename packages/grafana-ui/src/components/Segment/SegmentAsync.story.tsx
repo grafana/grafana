@@ -3,8 +3,7 @@ import { storiesOf } from '@storybook/react';
 import { css, cx } from 'emotion';
 import { action } from '@storybook/addon-actions';
 
-import { SelectableValue } from '@grafana/data';
-import { SegmentAsync } from './';
+import { SegmentAsync, OptionType } from './';
 import { UseState } from '../../utils/storybook/UseState';
 
 const SegmentStories = storiesOf('UI/Segment/SegmentAsync', module);
@@ -17,7 +16,7 @@ const AddButton = (
 
 const toOption = (value: any) => ({ label: value, value: value });
 
-const loadOptions = (options: any): Promise<Array<SelectableValue<string>>> =>
+const loadOptions = (options: any): Promise<OptionType<string>> =>
   new Promise(res => setTimeout(() => res(options), 2000));
 
 SegmentStories.add('Array Options', () => {
@@ -33,14 +32,14 @@ SegmentStories.add('Array Options', () => {
             <SegmentAsync
               value={value}
               loadOptions={() => loadOptions(options)}
-              onChange={(value: SelectableValue<any>) => {
+              onChange={value => {
                 updateValue(value);
                 action('Segment value changed')(value);
               }}
             />
             <SegmentAsync
               Component={AddButton}
-              onChange={(value: SelectableValue<any>) => action('New value added')(value)}
+              onChange={value => action('New value added')(value)}
               loadOptions={() => loadOptions(options)}
             />
           </div>
@@ -128,7 +127,7 @@ const CustomLabelComponent = ({ value }: any) => (
 
 SegmentStories.add('Custom Label Field', () => {
   return (
-    <UseState initialState={groupedOptions.Prime[2].value as SelectableValue<string>}>
+    <UseState initialState={groupedOptions.Prime[2].value}>
       {(value, updateValue) => (
         <>
           <div className="gf-form-inline">
@@ -138,7 +137,7 @@ SegmentStories.add('Custom Label Field', () => {
             <SegmentAsync
               Component={<CustomLabelComponent value={value} />}
               loadOptions={() => loadOptions(groupedOptions)}
-              onChange={(value: SelectableValue<string>) => {
+              onChange={value => {
                 updateValue(value);
                 action('Segment value changed')(value);
               }}

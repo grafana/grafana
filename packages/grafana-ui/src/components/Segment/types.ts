@@ -8,7 +8,7 @@ type ObjectOption<T> = {
 export type OptionType<T> = Array<SelectableValue<T>> | ObjectOption<T>;
 
 export interface SegmentProps<T> {
-  onChange: (item: SelectableValue<T>) => void;
+  onChange: (item: T) => void;
   value?: T;
   Component?: ReactElement;
 }
