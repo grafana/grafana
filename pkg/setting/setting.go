@@ -120,6 +120,7 @@ var (
 	AutoAssignOrgId         int
 	AutoAssignOrgRole       string
 	VerifyEmailEnabled      bool
+	LoginBgImage            string
 	LoginHint               string
 	PasswordHint            string
 	DefaultTheme            string
@@ -772,6 +773,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
 	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
+	LoginBgImage, err = valueAsString(users, "login_background_image", "")
+	if err != nil {
+		return err
+	}
 	LoginHint, err = valueAsString(users, "login_hint", "")
 	if err != nil {
 		return err

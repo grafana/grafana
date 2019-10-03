@@ -1,14 +1,15 @@
 import React, { FC } from 'react';
 import { UserSignup } from './UserSignup';
 import { LoginServiceButtons } from './LoginServiceButtons';
-import LoginCtrl from './LoginCtrl';
+import LoginCtrl, { loginBgImage } from './LoginCtrl';
 import { LoginForm } from './LoginForm';
 import { ChangePassword } from './ChangePassword';
 import { CSSTransition } from 'react-transition-group';
 
 export const LoginPage: FC = () => {
+  const loginBgUrl = '/public/img/' + loginBgImage;
   return (
-    <div className="login container">
+    <div className="login container" style={{ backgroundImage: loginBgUrl }}>
       <div className="login-content">
         <div className="login-branding">
           <img className="logo-icon" src="public/img/grafana_icon.svg" alt="Grafana" />

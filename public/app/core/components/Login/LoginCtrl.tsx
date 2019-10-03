@@ -150,3 +150,5 @@ export default hot(module)(
     mapDispatchToProps
   )(LoginCtrl)
 );
+
+export const loginBgImage = config.loginBgImage;

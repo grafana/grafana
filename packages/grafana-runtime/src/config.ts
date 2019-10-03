@@ -36,6 +36,7 @@ export class GrafanaBootConfig {
   samlEnabled = false;
   oauth: any;
   disableUserSignUp = false;
+  loginBgImage: any;
   loginHint: any;
   passwordHint: any;
   loginError: any;

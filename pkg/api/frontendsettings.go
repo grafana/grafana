@@ -180,6 +180,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		"googleAnalyticsId":          setting.GoogleAnalyticsId,
 		"disableLoginForm":           setting.DisableLoginForm,
 		"disableUserSignUp":          !setting.AllowUserSignUp,
+		"loginBgImage":               setting.LoginBgImage,
 		"loginHint":                  setting.LoginHint,
 		"passwordHint":               setting.PasswordHint,
 		"externalUserMngInfo":        setting.ExternalUserMngInfo,
