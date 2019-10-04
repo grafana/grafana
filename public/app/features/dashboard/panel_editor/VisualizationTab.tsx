@@ -1,31 +1,30 @@
 // Libraries
 import React, { PureComponent } from 'react';
-
 // Utils & Services
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 import { StoreState } from 'app/types';
 import { updateLocation } from 'app/core/actions';
-
 // Components
 import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { VizTypePicker } from './VizTypePicker';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
-
 // Types
-import { PanelModel } from '../state';
-import { DashboardModel } from '../state';
+import { PanelModel, DashboardModel } from '../state';
 import { VizPickerSearch } from './VizPickerSearch';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
-import { PanelPlugin, PanelPluginMeta } from '@grafana/ui';
+import { PanelPlugin, PanelPluginMeta, PanelData } from '@grafana/ui';
+import { PanelCtrl } from 'app/plugins/sdk';
+import { Unsubscribable } from 'rxjs';
+import { LoadingState, DefaultTimeRange } from '@grafana/data';
 
 interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   plugin: PanelPlugin;
   angularPanel?: AngularComponent;
-  onTypeChanged: (newType: PanelPluginMeta) => void;
+  onPluginTypeChange: (newType: PanelPluginMeta) => void;
   updateLocation: typeof updateLocation;
   urlOpenVizPicker: boolean;
 }
@@ -35,11 +34,13 @@ interface State {
   searchQuery: string;
   scrollTop: number;
   hasBeenFocused: boolean;
+  data: PanelData;
 }
 
 export class VisualizationTab extends PureComponent<Props, State> {
   element: HTMLElement;
   angularOptions: AngularComponent;
+  querySubscription: Unsubscribable;
 
   constructor(props: Props) {
     super(props);
@@ -49,6 +50,11 @@ export class VisualizationTab extends PureComponent<Props, State> {
       hasBeenFocused: false,
       searchQuery: '',
       scrollTop: 0,
+      data: {
+        state: LoadingState.NotStarted,
+        series: [],
+        timeRange: DefaultTimeRange,
+      },
     };
   }
 
@@ -65,16 +71,28 @@ export class VisualizationTab extends PureComponent<Props, State> {
     }
 
     if (plugin.editor) {
-      return <plugin.editor options={this.getReactPanelOptions()} onOptionsChange={this.onPanelOptionsChanged} />;
+      return (
+        <plugin.editor
+          data={this.state.data}
+          options={this.getReactPanelOptions()}
+          onOptionsChange={this.onPanelOptionsChanged}
+        />
+      );
     }
 
     return <p>Visualization has no options</p>;
   }
 
   componentDidMount() {
+    const { panel } = this.props;
+    const queryRunner = panel.getQueryRunner();
     if (this.shouldLoadAngularOptions()) {
       this.loadAngularOptions();
     }
+
+    this.querySubscription = queryRunner.getData().subscribe({
+      next: (data: PanelData) => this.setState({ data }),
+    });
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -104,8 +122,9 @@ export class VisualizationTab extends PureComponent<Props, State> {
       return;
     }
 
-    const panelCtrl = scope.$$childHead.ctrl;
+    const panelCtrl: PanelCtrl = scope.$$childHead.ctrl;
     panelCtrl.initEditMode();
+    panelCtrl.onPluginTypeChange = this.onPluginTypeChange;
 
     let template = '';
     for (let i = 0; i < panelCtrl.editorTabs.length; i++) {
@@ -197,11 +216,11 @@ export class VisualizationTab extends PureComponent<Props, State> {
     }
   };
 
-  onTypeChanged = (plugin: PanelPluginMeta) => {
+  onPluginTypeChange = (plugin: PanelPluginMeta) => {
     if (plugin.id === this.props.plugin.meta.id) {
       this.setState({ isVizPickerOpen: false });
     } else {
-      this.props.onTypeChanged(plugin);
+      this.props.onPluginTypeChange(plugin);
     }
   };
 
@@ -235,7 +254,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
           <FadeIn in={isVizPickerOpen} duration={200} unmountOnExit={true} onExited={this.clearQuery}>
             <VizTypePicker
               current={meta}
-              onTypeChanged={this.onTypeChanged}
+              onTypeChange={this.onPluginTypeChange}
               searchQuery={searchQuery}
               onClose={this.onCloseVizPicker}
             />

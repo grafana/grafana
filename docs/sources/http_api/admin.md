@@ -466,7 +466,7 @@ Content-Type: application/json
 
 Reloads the provisioning config files for specified type and provision entities again. It won't return
 until the new provisioned entities are already stored in the database. In case of dashboards, it will stop
-polling for changes in dashboard files and then restart it with new configs after returning. 
+polling for changes in dashboard files and then restart it with new configs after returning.
 
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 
@@ -486,5 +486,32 @@ Content-Type: application/json
 
 {
   "message": "Dashboards config reloaded"
+}
+```
+
+## Reload LDAP configuration
+
+`POST /api/admin/ldap/reload`
+
+Reloads the LDAP configuration.
+
+Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+
+**Example Request**:
+
+```http
+POST /api/admin/ldap/reload HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+  "message": "LDAP config reloaded"
 }
 ```

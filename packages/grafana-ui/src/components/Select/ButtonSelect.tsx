@@ -1,6 +1,6 @@
 import React, { PureComponent, ReactElement } from 'react';
 import Select from './Select';
-import { PopperContent } from '../Tooltip/PopperController';
+import { PopoverContent } from '../Tooltip/Tooltip';
 import { SelectableValue } from '@grafana/data';
 
 interface ButtonComponentProps {
@@ -13,11 +13,12 @@ const ButtonComponent = (buttonProps: ButtonComponentProps) => (props: any) => {
   const { label, className, iconClass } = buttonProps;
 
   return (
-    <button
+    <div // changed to div because of FireFox on MacOs issue below
       ref={props.innerRef}
       className={`btn navbar-button navbar-button--tight ${className}`}
       onClick={props.selectProps.menuIsOpen ? props.selectProps.onMenuClose : props.selectProps.onMenuOpen}
       onBlur={props.selectProps.onMenuClose}
+      tabIndex={0} // necessary to get onBlur to work https://developer.mozilla.org/en-US/docs/Web/HTML/Element/button#Clicking_and_focus
     >
       <div className="select-button">
         {iconClass && <i className={`select-button-icon ${iconClass}`} />}
@@ -25,7 +26,7 @@ const ButtonComponent = (buttonProps: ButtonComponentProps) => (props: any) => {
         {!props.menuIsOpen && <i className="fa fa-caret-down fa-fw" />}
         {props.menuIsOpen && <i className="fa fa-caret-up fa-fw" />}
       </div>
-    </button>
+    </div>
   );
 };
 
@@ -38,11 +39,12 @@ export interface Props<T> {
   components?: any;
   maxMenuHeight?: number;
   onChange: (item: SelectableValue<T>) => void;
-  tooltipContent?: PopperContent<any>;
+  tooltipContent?: PopoverContent;
   isMenuOpen?: boolean;
   onOpenMenu?: () => void;
   onCloseMenu?: () => void;
   tabSelectsValue?: boolean;
+  autoFocus?: boolean;
 }
 
 export class ButtonSelect<T> extends PureComponent<Props<T>> {
@@ -65,14 +67,16 @@ export class ButtonSelect<T> extends PureComponent<Props<T>> {
       onOpenMenu,
       onCloseMenu,
       tabSelectsValue,
+      autoFocus = true,
     } = this.props;
     const combinedComponents = {
       ...components,
       Control: ButtonComponent({ label, className, iconClass }),
     };
+
     return (
       <Select
-        autoFocus
+        autoFocus={autoFocus}
         backspaceRemovesValue={false}
         isClearable={false}
         isSearchable={false}

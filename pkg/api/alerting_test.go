@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -14,24 +14,24 @@ import (
 func TestAlertingApiEndpoint(t *testing.T) {
 	Convey("Given an alert in a dashboard with an acl", t, func() {
 
-		singleAlert := &m.Alert{Id: 1, DashboardId: 1, Name: "singlealert"}
+		singleAlert := &models.Alert{Id: 1, DashboardId: 1, Name: "singlealert"}
 
-		bus.AddHandler("test", func(query *m.GetAlertByIdQuery) error {
+		bus.AddHandler("test", func(query *models.GetAlertByIdQuery) error {
 			query.Result = singleAlert
 			return nil
 		})
 
-		viewerRole := m.ROLE_VIEWER
-		editorRole := m.ROLE_EDITOR
+		viewerRole := models.ROLE_VIEWER
+		editorRole := models.ROLE_EDITOR
 
-		aclMockResp := []*m.DashboardAclInfoDTO{}
-		bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
+		aclMockResp := []*models.DashboardAclInfoDTO{}
+		bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
 			query.Result = aclMockResp
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.GetTeamsByUserQuery) error {
-			query.Result = []*m.TeamDTO{}
+		bus.AddHandler("test", func(query *models.GetTeamsByUserQuery) error {
+			query.Result = []*models.TeamDTO{}
 			return nil
 		})
 
@@ -41,7 +41,7 @@ func TestAlertingApiEndpoint(t *testing.T) {
 					AlertId: 1,
 					Paused:  true,
 				}
-				postAlertScenario("When calling POST on", "/api/alerts/1/pause", "/api/alerts/:alertId/pause", m.ROLE_EDITOR, cmd, func(sc *scenarioContext) {
+				postAlertScenario("When calling POST on", "/api/alerts/1/pause", "/api/alerts/:alertId/pause", models.ROLE_EDITOR, cmd, func(sc *scenarioContext) {
 					CallPauseAlert(sc)
 					So(sc.resp.Code, ShouldEqual, 403)
 				})
@@ -49,9 +49,9 @@ func TestAlertingApiEndpoint(t *testing.T) {
 		})
 
 		Convey("When user is editor and dashboard has default ACL", func() {
-			aclMockResp = []*m.DashboardAclInfoDTO{
-				{Role: &viewerRole, Permission: m.PERMISSION_VIEW},
-				{Role: &editorRole, Permission: m.PERMISSION_EDIT},
+			aclMockResp = []*models.DashboardAclInfoDTO{
+				{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
+				{Role: &editorRole, Permission: models.PERMISSION_EDIT},
 			}
 
 			Convey("Should be able to pause the alert", func() {
@@ -59,22 +59,22 @@ func TestAlertingApiEndpoint(t *testing.T) {
 					AlertId: 1,
 					Paused:  true,
 				}
-				postAlertScenario("When calling POST on", "/api/alerts/1/pause", "/api/alerts/:alertId/pause", m.ROLE_EDITOR, cmd, func(sc *scenarioContext) {
+				postAlertScenario("When calling POST on", "/api/alerts/1/pause", "/api/alerts/:alertId/pause", models.ROLE_EDITOR, cmd, func(sc *scenarioContext) {
 					CallPauseAlert(sc)
 					So(sc.resp.Code, ShouldEqual, 200)
 				})
 			})
 		})
 
-		loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/alerts?dashboardId=1", "/api/alerts", m.ROLE_EDITOR, func(sc *scenarioContext) {
+		loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/alerts?dashboardId=1", "/api/alerts", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			var searchQuery *search.Query
 			bus.AddHandler("test", func(query *search.Query) error {
 				searchQuery = query
 				return nil
 			})
 
-			var getAlertsQuery *m.GetAlertsQuery
-			bus.AddHandler("test", func(query *m.GetAlertsQuery) error {
+			var getAlertsQuery *models.GetAlertsQuery
+			bus.AddHandler("test", func(query *models.GetAlertsQuery) error {
 				getAlertsQuery = query
 				return nil
 			})
@@ -86,7 +86,7 @@ func TestAlertingApiEndpoint(t *testing.T) {
 			So(getAlertsQuery, ShouldNotBeNil)
 		})
 
-		loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/alerts?dashboardId=1&dashboardId=2&folderId=3&dashboardTag=abc&dashboardQuery=dbQuery&limit=5&query=alertQuery", "/api/alerts", m.ROLE_EDITOR, func(sc *scenarioContext) {
+		loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/alerts?dashboardId=1&dashboardId=2&folderId=3&dashboardTag=abc&dashboardQuery=dbQuery&limit=5&query=alertQuery", "/api/alerts", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			var searchQuery *search.Query
 			bus.AddHandler("test", func(query *search.Query) error {
 				searchQuery = query
@@ -97,8 +97,8 @@ func TestAlertingApiEndpoint(t *testing.T) {
 				return nil
 			})
 
-			var getAlertsQuery *m.GetAlertsQuery
-			bus.AddHandler("test", func(query *m.GetAlertsQuery) error {
+			var getAlertsQuery *models.GetAlertsQuery
+			bus.AddHandler("test", func(query *models.GetAlertsQuery) error {
 				getAlertsQuery = query
 				return nil
 			})
@@ -120,7 +120,7 @@ func TestAlertingApiEndpoint(t *testing.T) {
 			So(getAlertsQuery.Query, ShouldEqual, "alertQuery")
 		})
 
-		loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/alert-notifications/1", "/alert-notifications/:notificationId", m.ROLE_ADMIN, func(sc *scenarioContext) {
+		loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/alert-notifications/1", "/alert-notifications/:notificationId", models.ROLE_ADMIN, func(sc *scenarioContext) {
 			sc.handlerFunc = GetAlertNotificationByID
 			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 			So(sc.resp.Code, ShouldEqual, 404)
@@ -129,19 +129,19 @@ func TestAlertingApiEndpoint(t *testing.T) {
 }
 
 func CallPauseAlert(sc *scenarioContext) {
-	bus.AddHandler("test", func(cmd *m.PauseAlertCommand) error {
+	bus.AddHandler("test", func(cmd *models.PauseAlertCommand) error {
 		return nil
 	})
 
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }
 
-func postAlertScenario(desc string, url string, routePattern string, role m.RoleType, cmd dtos.PauseAlertCommand, fn scenarioFunc) {
+func postAlertScenario(desc string, url string, routePattern string, role models.RoleType, cmd dtos.PauseAlertCommand, fn scenarioFunc) {
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
+		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID
 			sc.context.OrgId = TestOrgID

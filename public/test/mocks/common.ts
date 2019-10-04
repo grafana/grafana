@@ -31,8 +31,10 @@ export function createNavModel(title: string, ...tabs: string[]): NavModel {
     breadcrumbs: [],
   };
 
+  const children = [];
+
   for (const tab of tabs) {
-    node.children.push({
+    children.push({
       id: tab,
       icon: 'icon',
       subTitle: 'subTitle',
@@ -42,7 +44,9 @@ export function createNavModel(title: string, ...tabs: string[]): NavModel {
     });
   }
 
-  node.children[0].active = true;
+  children[0].active = true;
+
+  node.children = children;
 
   return {
     node: node,

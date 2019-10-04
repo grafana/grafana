@@ -157,32 +157,34 @@ func latestSupportedVersion(plugin *m.Plugin) *m.Version {
 
 // SelectVersion returns latest version if none is specified or the specified version. If the version string is not
 // matched to existing version it errors out. It also errors out if version that is matched is not available for current
-// os and platform.
+// os and platform. It expects plugin.Versions to be sorted so the newest version is first.
 func SelectVersion(plugin *m.Plugin, version string) (*m.Version, error) {
-	var ver *m.Version
-	if version == "" {
-		ver = &plugin.Versions[0]
-	}
-
-	for _, v := range plugin.Versions {
-		if v.Version == version {
-			ver = &v
-		}
-	}
-
-	if ver == nil {
-		return nil, xerrors.New("Could not find the version you're looking for")
-	}
+	var ver m.Version
 
 	latestForArch := latestSupportedVersion(plugin)
 	if latestForArch == nil {
 		return nil, xerrors.New("Plugin is not supported on your architecture and os.")
 	}
 
-	if latestForArch.Version == ver.Version {
-		return ver, nil
+	if version == "" {
+		return latestForArch, nil
 	}
-	return nil, xerrors.Errorf("Version you want is not supported on your architecture and os. Latest suitable version is %v", latestForArch.Version)
+	for _, v := range plugin.Versions {
+		if v.Version == version {
+			ver = v
+			break
+		}
+	}
+
+	if len(ver.Version) == 0 {
+		return nil, xerrors.New("Could not find the version you're looking for")
+	}
+
+	if !supportsCurrentArch(&ver) {
+		return nil, xerrors.Errorf("Version you want is not supported on your architecture and os. Latest suitable version is %v", latestForArch.Version)
+	}
+
+	return &ver, nil
 }
 
 func RemoveGitBuildFromName(pluginName, filename string) string {
@@ -199,14 +201,14 @@ func extractFiles(body []byte, pluginName string, filePath string, allowSymlinks
 	}
 	for _, zf := range r.File {
 		newFileName := RemoveGitBuildFromName(pluginName, zf.Name)
-		if !isPathSafe(newFileName, path.Join(filePath, pluginName)) {
+		if !isPathSafe(newFileName, filepath.Join(filePath, pluginName)) {
 			return xerrors.Errorf("filepath: %v tries to write outside of plugin directory: %v. This can be a security risk.", zf.Name, path.Join(filePath, pluginName))
 		}
 		newFile := path.Join(filePath, newFileName)
 
 		if zf.FileInfo().IsDir() {
 			err := os.Mkdir(newFile, 0755)
-			if permissionsError(err) {
+			if os.IsPermission(err) {
 				return fmt.Errorf(permissionsDeniedMessage, newFile)
 			}
 		} else {
@@ -232,10 +234,6 @@ func extractFiles(body []byte, pluginName string, filePath string, allowSymlinks
 	}
 
 	return nil
-}
-
-func permissionsError(err error) bool {
-	return err != nil && strings.Contains(err.Error(), "permission denied")
 }
 
 func isSymlink(file *zip.File) bool {
@@ -269,7 +267,7 @@ func extractFile(file *zip.File, filePath string) (err error) {
 
 	dst, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fileMode)
 	if err != nil {
-		if permissionsError(err) {
+		if os.IsPermission(err) {
 			return xerrors.Errorf(permissionsDeniedMessage, filePath)
 		}
 		return errutil.Wrap("Failed to open file", err)

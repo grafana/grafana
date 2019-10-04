@@ -36,6 +36,7 @@ const basicColors = {
   purple: '#9933cc',
   variable: '#32d1df',
   orange: '#eb7b18',
+  orangeDark: '#ff780a',
 };
 
 const darkTheme: GrafanaTheme = {
@@ -70,11 +71,16 @@ const darkTheme: GrafanaTheme = {
     linkHover: basicColors.white,
     linkExternal: basicColors.blue,
     headingColor: basicColors.gray4,
+    pageHeaderBorder: basicColors.dark9,
   },
   background: {
     dropdown: basicColors.dark3,
     scrollbar: basicColors.dark9,
     scrollbar2: basicColors.dark9,
+    pageHeader: `linear-gradient(90deg, ${basicColors.dark7}, ${basicColors.black})`,
+  },
+  shadow: {
+    pageHeader: `inset 0px -4px 14px ${basicColors.dark3}`,
   },
 };
 

@@ -96,6 +96,7 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     dropdown: string;
     scrollbar: string;
     scrollbar2: string;
+    pageHeader: string;
   };
   colors: {
     black: string;
@@ -135,6 +136,7 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     purple: string;
     variable: string;
     orange: string;
+    orangeDark: string;
     queryRed: string;
     queryGreen: string;
     queryPurple: string;
@@ -168,6 +170,11 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     bodyBg: string;
     pageBg: string;
     headingColor: string;
+
+    pageHeaderBorder: string;
+  };
+  shadow: {
+    pageHeader: string;
   };
 }
 

@@ -9,7 +9,7 @@ import { PluginMeta } from '@grafana/ui';
 import execa = require('execa');
 import path = require('path');
 import fs from 'fs';
-import { getPackageDetails, findImagesInFolder, appendPluginHistory } from '../../plugins/utils';
+import { getPackageDetails, findImagesInFolder, appendPluginHistory, getGrafanaVersions } from '../../plugins/utils';
 import {
   job,
   getJobFolder,
@@ -35,7 +35,7 @@ import { runEndToEndTests } from '../../plugins/e2e/launcher';
 import { getEndToEndSettings } from '../../plugins/index';
 
 export interface PluginCIOptions {
-  backend?: string;
+  backend?: boolean;
   full?: boolean;
   upload?: boolean;
 }
@@ -58,14 +58,13 @@ const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ backend }) => {
   fs.mkdirSync(workDir);
 
   if (backend) {
-    console.log('TODO, backend support?');
-    fs.mkdirSync(path.resolve(process.cwd(), 'dist'));
-    const file = path.resolve(process.cwd(), 'dist', `README_${backend}.txt`);
-    fs.writeFile(file, `TODO... build bakend plugin: ${backend}!`, err => {
-      if (err) {
-        throw new Error('Unable to write: ' + file);
-      }
-    });
+    const makefile = path.resolve(process.cwd(), 'Makefile');
+    if (!fs.existsSync(makefile)) {
+      throw new Error(`Missing: ${makefile}. A Makefile is required for backend plugins.`);
+    }
+
+    // Run plugin-ci task
+    execa('make', ['backend-plugin-ci']).stdout!.pipe(process.stdout);
   } else {
     // Do regular build process with coverage
     await pluginBuildRunner({ coverage: true });
@@ -318,6 +317,7 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
 
   const pluginJsonFile = path.resolve(ciDir, 'dist', 'plugin.json');
   console.log('Load info from: ' + pluginJsonFile);
+
   const pluginMeta = getPluginJson(pluginJsonFile);
   const report: PluginBuildReport = {
     plugin: pluginMeta,
@@ -326,6 +326,7 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
     coverage: agregateCoverageInfo(),
     tests: agregateTestInfo(),
     artifactsBaseURL: await getCircleDownloadBaseURL(),
+    grafanaVersion: getGrafanaVersions(),
   };
   const pr = getPullRequestNumber();
   if (pr) {
@@ -352,10 +353,10 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
   const branch = build.branch || 'unknown';
   const buildNumber = getBuildNumber();
   const root = `dev/${pluginMeta.id}`;
-  const dirKey = pr ? `${root}/pr/${pr}` : `${root}/branch/${branch}/${buildNumber}`;
+  const dirKey = pr ? `${root}/pr/${pr}/${buildNumber}` : `${root}/branch/${branch}/${buildNumber}`;
 
   const jobKey = `${dirKey}/index.json`;
-  if (await s3.exits(jobKey)) {
+  if (await s3.exists(jobKey)) {
     throw new Error('Job already registered: ' + jobKey);
   }
 
@@ -378,19 +379,20 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
     version,
   };
 
+  let base = `${root}/branch/${branch}/`;
+  latest.build.number = buildNumber;
   if (pr) {
     latest.build.pr = pr;
-  } else {
-    latest.build.number = buildNumber;
-    const base = `${root}/branch/${branch}/`;
-    const historyKey = base + `history.json`;
-    console.log('Read', historyKey);
-    const history: PluginHistory = await s3.readJSON(historyKey, defaultPluginHistory);
-    appendPluginHistory(report, latest, history);
-
-    await s3.writeJSON(historyKey, history);
-    console.log('wrote history');
+    base = `${root}/pr/${pr}/`;
   }
+
+  const historyKey = base + `history.json`;
+  console.log('Read', historyKey);
+  const history: PluginHistory = await s3.readJSON(historyKey, defaultPluginHistory);
+  appendPluginHistory(report, latest, history);
+
+  await s3.writeJSON(historyKey, history);
+  console.log('wrote history');
 
   // Private things may want to upload
   if (upload) {

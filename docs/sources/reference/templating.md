@@ -38,7 +38,7 @@ documentation article for details on value escaping during interpolation.
 
 ### Advanced Formatting Options
 
-The formatting of the variable interpolation depends on the data source but there are some situations where you might want to change the default formatting. For example, the default for the MySql datasource is to join multiple values as comma-separated with quotes: `'server01','server02'`. In some cases you might want to have a comma-separated string without quotes: `server01,server02`. This is now possible with the advanced formatting options.
+The formatting of the variable interpolation depends on the data source but there are some situations where you might want to change the default formatting. For example, the default for the MySql data source is to join multiple values as comma-separated with quotes: `'server01','server02'`. In some cases you might want to have a comma-separated string without quotes: `server01,server02`. This is now possible with the advanced formatting options.
 
 Syntax: `${var_name:option}`
 
@@ -106,7 +106,7 @@ Interpolation result: '("test1" OR "test2")'
 ```
 
 ### Percentencode
-Formats single & multi valued variables for use in URL parameters.
+Formats single and multi valued variables for use in URL parameters.
 
 ```bash
 servers = ['foo()bar BAZ', 'test2']
@@ -147,10 +147,10 @@ Type | Description
 ------- | --------
 *Query* | This variable type allows you to write a data source query that usually returns a list of metric names, tag values or keys. For example, a query that returns a list of server names, sensor ids or data centers.
 *Interval* | This variable can represent time spans. Instead of hard-coding a group by time or date histogram interval, use a variable of this type.
-*Datasource* | This type allows you to quickly change the data source for an entire Dashboard. Useful if you have multiple instances of a data source in for example different environments.
+*Data source* | This type allows you to quickly change the data source for an entire Dashboard. Useful if you have multiple instances of a data source in for example different environments.
 *Custom* | Define the variable options manually using a comma separated list.
 *Constant* | Define a hidden constant. Useful for metric path prefixes for dashboards you want to share. During dashboard export, constant variables will be made into an import option.
-*Ad hoc filters* | Very special kind of variable that only works with some data sources, InfluxDB & Elasticsearch currently. It allows you to add key/value filters that will automatically be added to all metric queries that use the specified data source.
+*Ad hoc filters* | Very special kind of variable that only works with some data sources, InfluxDB and Elasticsearch currently. It allows you to add key/value filters that will automatically be added to all metric queries that use the specified data source.
 *Text box* | This variable type will display as a free text input field with an optional default value.
 
 ### Query options
@@ -273,7 +273,7 @@ needs to be escaped so that the value can contain lucene control words and quota
 
 #### Formatting troubles
 
-Automatic escaping & formatting can cause problems and it can be tricky to grasp the logic is behind it.
+Automatic escaping and formatting can cause problems and it can be tricky to grasp the logic is behind it.
 Especially for InfluxDB and Prometheus where the use of regex syntax requires that the variable is used in regex operator context.
 If you do not want Grafana to do this automatic regex escaping and formatting your only option is to disable the *Multi-value* or *Include All option*
 options.

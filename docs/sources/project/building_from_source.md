@@ -80,7 +80,7 @@ does this.
 If you using *nix machine, you can just use the `make run` command, otherwise you need install `bra` binary first:
 
 ```bash
-go get github.com/Unknwon/bra
+go get github.com/unknwon/bra
 
 bra run
 ```
@@ -92,13 +92,13 @@ You'll also need to run `yarn start` to watch for changes to the front-end (type
 - You can run backend Golang tests using `go test ./pkg/...`.
 - Execute all frontend tests with `yarn test`
 
-Writing & watching frontend tests
+Writing and watching frontend tests
 
 - Start watcher: `yarn jest`
 - Jest will run all test files that end with the name ".test.ts"
 
 
-### Datasource and dashboard provisioning
+### Data source and dashboard provisioning
 
 [Here](https://github.com/grafana/grafana/tree/master/devenv) you can find helpful scripts and docker-compose setup
 that will populate your dev environment for quicker testing end experimenting.
@@ -143,7 +143,7 @@ Please contribute to the Grafana project and submit a pull request! Build new fe
 
 **Problem**: When executing a `go get` command on Windows and you get an error about the git repository not existing.
 
-**Solution**: `go get` requires Git. If you run `go get` without Git then it will create an empty directory in your Go workspace for the library you are trying to get. Even after installing Git, you will get a similar error. To fix this, delete the empty directory (for example: if you tried to run `go get github.com/Unknwon/bra` then delete `%USERPROFILE%\go\src\github.com\Unknwon\bra`) and run the `go get` command again.
+**Solution**: `go get` requires Git. If you run `go get` without Git then it will create an empty directory in your Go workspace for the library you are trying to get. Even after installing Git, you will get a similar error. To fix this, delete the empty directory (for example: if you tried to run `go get github.com/unknwon/bra` then delete `%USERPROFILE%\go\src\github.com\unknwon\bra`) and run the `go get` command again.
 <br><br>
 
 **Problem**: On Windows, getting errors about a tool not being installed even though you just installed that tool.

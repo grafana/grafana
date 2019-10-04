@@ -26,7 +26,7 @@ Grafana ships with a built-in PostgreSQL data source plugin that allows you to q
 
 Name | Description
 ------------ | -------------
-*Name* | The data source name. This is how you refer to the data source in panels & queries.
+*Name* | The data source name. This is how you refer to the data source in panels and queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
 *Host* | The IP address/hostname and optional port of your PostgreSQL instance.
 *Database* | Name of your PostgreSQL database.
@@ -60,7 +60,7 @@ Identifier | Description
 ### Database User Permissions (Important!)
 
 The database user you specify when you add the data source should only be granted SELECT permissions on
-the specified database & tables you want to query. Grafana does not validate that the query is safe. The query
+the specified database and tables you want to query. Grafana does not validate that the query is safe. The query
 could include any SQL statement. For example, statements like `DELETE FROM user;` and `DROP TABLE user;` would be
 executed. To protect against this we **highly** recommend you create a specific PostgreSQL user with restricted permissions.
 
@@ -104,7 +104,7 @@ You may also enter arbitrary SQL expressions in the metric column field that eva
 In the `SELECT` row you can specify what columns and functions you want to use.
 In the column field you may write arbitrary expressions instead of a column name like `column1 * column2 / column3`.
 
-The available functions in the query editor depend on the PostgreSQL version you selected when configuring the datasource.
+The available functions in the query editor depend on the PostgreSQL version you selected when configuring the data source.
 If you use aggregate functions you need to group your resultset. The editor will automatically add a `GROUP BY time` if you add an aggregate function.
 
 The editor tries to simplify and unify this part of the query. For example:<br>
@@ -166,7 +166,7 @@ We plan to add many more macros. If you have suggestions for what macros you wou
 
 ## Table queries
 
-If the `Format as` query option is set to `Table` then you can basically do any type of SQL query. The table panel will automatically show the results of whatever columns & rows your query returns.
+If the `Format as` query option is set to `Table` then you can basically do any type of SQL query. The table panel will automatically show the results of whatever columns and rows your query returns.
 
 Query editor with example query:
 
@@ -363,11 +363,11 @@ tags | Optional field name to use for event tags as a comma separated string.
 Time series queries should work in alerting conditions. Table formatted queries are not yet supported in alert rule
 conditions.
 
-## Configure the Datasource with Provisioning
+## Configure the data source with provisioning
 
-It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources)
 
-Here are some provisioning examples for this datasource.
+Here are some provisioning examples for this data source.
 
 ```yaml
 apiVersion: 1

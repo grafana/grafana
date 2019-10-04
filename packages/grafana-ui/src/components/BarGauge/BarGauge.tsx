@@ -26,6 +26,8 @@ export interface Props extends Themeable {
   orientation: VizOrientation;
   itemSpacing?: number;
   displayMode: 'basic' | 'lcd' | 'gradient';
+  onClick?: React.MouseEventHandler<HTMLElement>;
+  className?: string;
 }
 
 export class BarGauge extends PureComponent<Props> {
@@ -43,16 +45,20 @@ export class BarGauge extends PureComponent<Props> {
   };
 
   render() {
+    const { onClick, className } = this.props;
     const { title } = this.props.value;
-
-    if (!title) {
-      return this.renderBarAndValue();
-    }
-
     const styles = getTitleStyles(this.props);
 
+    if (!title) {
+      return (
+        <div style={styles.wrapper} onClick={onClick} className={className}>
+          {this.renderBarAndValue()}
+        </div>
+      );
+    }
+
     return (
-      <div style={styles.wrapper}>
+      <div style={styles.wrapper} onClick={onClick} className={className}>
         <div style={styles.title}>{title}</div>
         {this.renderBarAndValue()}
       </div>

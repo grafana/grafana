@@ -1,9 +1,11 @@
 import { LegendOptions } from '@grafana/ui';
+import { YAxis } from '@grafana/data';
+
 import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
 
 export interface SeriesOptions {
   color?: string;
-  yAxis?: number;
+  yAxis?: YAxis;
   [key: string]: any;
 }
 export interface GraphOptions {

@@ -10,10 +10,15 @@ import {
   FieldPropertiesEditor,
   Switch,
   PanelOptionsGroup,
+  DataLinksEditor,
 } from '@grafana/ui';
-import { Field, Threshold, ValueMapping } from '@grafana/data';
+import { Threshold, ValueMapping, FieldConfig, DataLink } from '@grafana/data';
 
 import { GaugeOptions } from './types';
+import {
+  getCalculationValueDataLinksVariableSuggestions,
+  getDataLinksVariableSuggestions,
+} from 'app/features/panel/panellinks/link_srv';
 
 export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOptions>> {
   labelWidth = 6;
@@ -49,10 +54,17 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
       fieldOptions,
     });
 
-  onDefaultsChange = (field: Partial<Field>) => {
+  onDefaultsChange = (field: FieldConfig) => {
     this.onDisplayOptionsChanged({
       ...this.props.options.fieldOptions,
       defaults: field,
+    });
+  };
+
+  onDataLinksChanged = (links: DataLink[]) => {
+    this.onDefaultsChange({
+      ...this.props.options.fieldOptions.defaults,
+      links,
     });
   };
 
@@ -60,6 +72,10 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
     const { options } = this.props;
     const { fieldOptions, showThresholdLabels, showThresholdMarkers } = options;
     const { defaults } = fieldOptions;
+
+    const suggestions = fieldOptions.values
+      ? getDataLinksVariableSuggestions(this.props.data.series)
+      : getCalculationValueDataLinksVariableSuggestions(this.props.data.series);
 
     return (
       <>
@@ -92,6 +108,15 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
         </PanelOptionsGrid>
 
         <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
+
+        <PanelOptionsGroup title="Data links">
+          <DataLinksEditor
+            value={defaults.links}
+            onChange={this.onDataLinksChanged}
+            suggestions={suggestions}
+            maxLinks={10}
+          />
+        </PanelOptionsGroup>
       </>
     );
   }

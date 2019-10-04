@@ -39,7 +39,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
     super(props);
     const { query } = props;
     this.query = query;
-    // Query target properties that are fullu controlled inputs
+    // Query target properties that are fully controlled inputs
     this.state = {
       // Fully controlled text inputs
       interval: query.interval,
@@ -92,7 +92,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const { datasource, query, panelData, queryResponse } = this.props;
+    const { datasource, query, data } = this.props;
     const { formatOption, instant, interval, intervalFactorOption, legendFormat } = this.state;
 
     return (
@@ -103,8 +103,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
           onRunQuery={this.onRunQuery}
           onChange={this.onFieldChange}
           history={[]}
-          panelData={panelData}
-          queryResponse={queryResponse}
+          data={data}
           datasourceStatus={DataSourceStatus.Connected} // TODO: replace with real DataSourceStatus
         />
 
@@ -123,6 +122,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
               placeholder="legend format"
               value={legendFormat}
               onChange={this.onLegendChange}
+              onBlur={this.onRunQuery}
             />
           </div>
 
@@ -140,6 +140,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
               className="gf-form-input width-8"
               placeholder={interval}
               onChange={this.onIntervalChange}
+              onBlur={this.onRunQuery}
               value={interval}
             />
           </div>
@@ -163,7 +164,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
               <PromLink
                 datasource={datasource}
                 query={this.query} // Use modified query
-                panelData={panelData}
+                panelData={data}
               />
             </FormLabel>
           </div>

@@ -24,16 +24,16 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 type RenderRequest struct {
-	Url                  string   `protobuf:"bytes,1,opt,name=url" json:"url,omitempty"`
-	Width                int32    `protobuf:"varint,2,opt,name=width" json:"width,omitempty"`
-	Height               int32    `protobuf:"varint,3,opt,name=height" json:"height,omitempty"`
-	Timeout              int32    `protobuf:"varint,4,opt,name=timeout" json:"timeout,omitempty"`
-	Timezone             string   `protobuf:"bytes,5,opt,name=timezone" json:"timezone,omitempty"`
-	Encoding             string   `protobuf:"bytes,6,opt,name=encoding" json:"encoding,omitempty"`
-	FilePath             string   `protobuf:"bytes,7,opt,name=filePath" json:"filePath,omitempty"`
-	RenderKey            string   `protobuf:"bytes,8,opt,name=renderKey" json:"renderKey,omitempty"`
-	Domain               string   `protobuf:"bytes,9,opt,name=domain" json:"domain,omitempty"`
-	Debug                bool     `protobuf:"varint,10,opt,name=debug" json:"debug,omitempty"`
+	Url                  string   `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	Width                int32    `protobuf:"varint,2,opt,name=width,proto3" json:"width,omitempty"`
+	Height               int32    `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
+	Timeout              int32    `protobuf:"varint,4,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	Timezone             string   `protobuf:"bytes,5,opt,name=timezone,proto3" json:"timezone,omitempty"`
+	Encoding             string   `protobuf:"bytes,6,opt,name=encoding,proto3" json:"encoding,omitempty"`
+	FilePath             string   `protobuf:"bytes,7,opt,name=filePath,proto3" json:"filePath,omitempty"`
+	RenderKey            string   `protobuf:"bytes,8,opt,name=renderKey,proto3" json:"renderKey,omitempty"`
+	Domain               string   `protobuf:"bytes,9,opt,name=domain,proto3" json:"domain,omitempty"`
+	Debug                bool     `protobuf:"varint,10,opt,name=debug,proto3" json:"debug,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -43,7 +43,7 @@ func (m *RenderRequest) Reset()         { *m = RenderRequest{} }
 func (m *RenderRequest) String() string { return proto.CompactTextString(m) }
 func (*RenderRequest) ProtoMessage()    {}
 func (*RenderRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_renderer_1ebd8e2bd96661e9, []int{0}
+	return fileDescriptor_renderer_e28a7c8dd05fc171, []int{0}
 }
 func (m *RenderRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RenderRequest.Unmarshal(m, b)
@@ -134,7 +134,7 @@ func (m *RenderRequest) GetDebug() bool {
 }
 
 type RenderResponse struct {
-	Error                string   `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	Error                string   `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -144,7 +144,7 @@ func (m *RenderResponse) Reset()         { *m = RenderResponse{} }
 func (m *RenderResponse) String() string { return proto.CompactTextString(m) }
 func (*RenderResponse) ProtoMessage()    {}
 func (*RenderResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_renderer_1ebd8e2bd96661e9, []int{1}
+	return fileDescriptor_renderer_e28a7c8dd05fc171, []int{1}
 }
 func (m *RenderResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RenderResponse.Unmarshal(m, b)
@@ -208,8 +208,7 @@ func (c *rendererClient) Render(ctx context.Context, in *RenderRequest, opts ...
 	return out, nil
 }
 
-// Server API for Renderer service
-
+// RendererServer is the server API for Renderer service.
 type RendererServer interface {
 	Render(context.Context, *RenderRequest) (*RenderResponse, error)
 }
@@ -249,9 +248,9 @@ var _Renderer_serviceDesc = grpc.ServiceDesc{
 	Metadata: "renderer.proto",
 }
 
-func init() { proto.RegisterFile("renderer.proto", fileDescriptor_renderer_1ebd8e2bd96661e9) }
+func init() { proto.RegisterFile("renderer.proto", fileDescriptor_renderer_e28a7c8dd05fc171) }
 
-var fileDescriptor_renderer_1ebd8e2bd96661e9 = []byte{
+var fileDescriptor_renderer_e28a7c8dd05fc171 = []byte{
 	// 265 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x5c, 0x91, 0xb1, 0x4e, 0xc3, 0x30,
 	0x10, 0x86, 0x95, 0x96, 0xa4, 0xce, 0x49, 0x54, 0xc8, 0x82, 0xea, 0x54, 0x31, 0x44, 0x1d, 0x50,

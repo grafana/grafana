@@ -11,7 +11,7 @@ Grafanas backend is written in GO using sqlite3/mysql or postgres as storage for
 | /pkg/components | Mixed content of packages that we copied into Grafana and packages we implemented ourself. The Purpose of this folders should be packages that are too big for util and doesnt belong somewhere else. |
 | /pkg/infra | Packages in infra should be packages that are used in multiple places of Grafana without knowing anything about Grafana domain. E.g. Logs, Metrics, Traces. |
 | /pkg/services | Packages in services are responsible for peristing domain objects and manage the relationship between domain objects. Services should communicate with each other using DI when possible. Most part of Grafana's codebase still relay on Global state for this. Any new features going forwards should use DI. |
-| /pkg/tsdb | All backend implementations of the datasources in Grafana. Used by both Grafanas frontend and alerting. |
+| /pkg/tsdb | All backend implementations of the data sources in Grafana. Used by both Grafanas frontend and alerting. |
 | /pkg/util | Small helper functions that are used in multiple parts of the codebase. Many functions are placed directly in the util folders which is something we want to avoid. Its better to give the util function a more descriptive package name. Ex `errutil`. |
 
 ## Central components of Grafanas backend
@@ -45,4 +45,4 @@ When Grafana starts all init functions within the services will be called and re
 Grafana will then create a Graph of all dependencies and inject the services that other services depend on. This is solved with [inject library](https://github.com/facebookgo/inject) in https://github.com/grafana/grafana/blob/master/pkg/cmd/grafana-server/server.go#L75
 
 ## Provisionable*
-All new features that require state should be possible to configure using config files. Ex [datasources](https://github.com/grafana/grafana/tree/master/pkg/services/provisioning/datasources), [alert notifiers](https://github.com/grafana/grafana/tree/master/pkg/services/provisioning/notifiers), [dashboards](https://github.com/grafana/grafana/tree/master/pkg/services/provisioning/dashboards), teams etc. Today its only possible to provision datasources and dashboards but this is something we want to support all over Grafana.
+All new features that require state should be possible to configure using config files. Ex [data sources](https://github.com/grafana/grafana/tree/master/pkg/services/provisioning/datasources), [alert notifiers](https://github.com/grafana/grafana/tree/master/pkg/services/provisioning/notifiers), [dashboards](https://github.com/grafana/grafana/tree/master/pkg/services/provisioning/dashboards), teams etc. Today its only possible to provision data sources and dashboards but this is something we want to support all over Grafana.

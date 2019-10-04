@@ -94,7 +94,7 @@ export class S3Client {
     });
   }
 
-  async exits(key: string): Promise<boolean> {
+  async exists(key: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
       this.s3.getObject(
         {

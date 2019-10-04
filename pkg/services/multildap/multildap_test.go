@@ -4,14 +4,65 @@ import (
 	"errors"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
-
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestMultiLDAP(t *testing.T) {
 	Convey("Multildap", t, func() {
+		Convey("Ping()", func() {
+			Convey("Should return error for absent config list", func() {
+				setup()
+
+				multi := New([]*ldap.ServerConfig{})
+				_, err := multi.Ping()
+
+				So(err, ShouldBeError)
+				So(err, ShouldEqual, ErrNoLDAPServers)
+
+				teardown()
+			})
+			Convey("Should return an unavailable status on dial error", func() {
+				mock := setup()
+
+				expectedErr := errors.New("Dial error")
+				mock.dialErrReturn = expectedErr
+
+				multi := New([]*ldap.ServerConfig{
+					{Host: "10.0.0.1", Port: 361},
+				})
+
+				statuses, err := multi.Ping()
+
+				So(err, ShouldBeNil)
+				So(statuses[0].Host, ShouldEqual, "10.0.0.1")
+				So(statuses[0].Port, ShouldEqual, 361)
+				So(statuses[0].Available, ShouldBeFalse)
+				So(statuses[0].Error, ShouldEqual, expectedErr)
+				So(mock.closeCalledTimes, ShouldEqual, 0)
+
+				teardown()
+			})
+			Convey("Should get the LDAP server statuses", func() {
+				mock := setup()
+
+				multi := New([]*ldap.ServerConfig{
+					{Host: "10.0.0.1", Port: 361},
+				})
+
+				statuses, err := multi.Ping()
+
+				So(err, ShouldBeNil)
+				So(statuses[0].Host, ShouldEqual, "10.0.0.1")
+				So(statuses[0].Port, ShouldEqual, 361)
+				So(statuses[0].Available, ShouldBeTrue)
+				So(statuses[0].Error, ShouldBeNil)
+				So(mock.closeCalledTimes, ShouldEqual, 1)
+
+				teardown()
+			})
+		})
 		Convey("Login()", func() {
 			Convey("Should return error for absent config list", func() {
 				setup()
@@ -82,7 +133,26 @@ func TestMultiLDAP(t *testing.T) {
 				teardown()
 			})
 
-			Convey("Should still call a second error for invalid cred error", func() {
+			Convey("Should still call a second error for invalid not found error", func() {
+				mock := setup()
+
+				mock.loginErrReturn = ErrCouldNotFindUser
+
+				multi := New([]*ldap.ServerConfig{
+					{}, {},
+				})
+				_, err := multi.Login(&models.LoginUserQuery{})
+
+				So(mock.dialCalledTimes, ShouldEqual, 2)
+				So(mock.loginCalledTimes, ShouldEqual, 2)
+				So(mock.closeCalledTimes, ShouldEqual, 2)
+
+				So(err, ShouldEqual, ErrInvalidCredentials)
+
+				teardown()
+			})
+
+			Convey("Should still try to auth with the second server after receiving an invalid credentials error from the first", func() {
 				mock := setup()
 
 				mock.loginErrReturn = ErrInvalidCredentials
@@ -127,7 +197,7 @@ func TestMultiLDAP(t *testing.T) {
 				setup()
 
 				multi := New([]*ldap.ServerConfig{})
-				_, err := multi.User("test")
+				_, _, err := multi.User("test")
 
 				So(err, ShouldBeError)
 				So(err, ShouldEqual, ErrNoLDAPServers)
@@ -145,7 +215,7 @@ func TestMultiLDAP(t *testing.T) {
 					{}, {},
 				})
 
-				_, err := multi.User("test")
+				_, _, err := multi.User("test")
 
 				So(err, ShouldBeError)
 				So(err, ShouldEqual, expected)
@@ -159,7 +229,7 @@ func TestMultiLDAP(t *testing.T) {
 				multi := New([]*ldap.ServerConfig{
 					{}, {},
 				})
-				_, err := multi.User("test")
+				_, _, err := multi.User("test")
 
 				So(mock.dialCalledTimes, ShouldEqual, 2)
 				So(mock.usersCalledTimes, ShouldEqual, 2)
@@ -179,7 +249,7 @@ func TestMultiLDAP(t *testing.T) {
 				multi := New([]*ldap.ServerConfig{
 					{}, {},
 				})
-				_, err := multi.User("test")
+				_, _, err := multi.User("test")
 
 				So(mock.dialCalledTimes, ShouldEqual, 1)
 				So(mock.usersCalledTimes, ShouldEqual, 1)
@@ -206,7 +276,7 @@ func TestMultiLDAP(t *testing.T) {
 				multi := New([]*ldap.ServerConfig{
 					{}, {},
 				})
-				user, err := multi.User("test")
+				user, _, err := multi.User("test")
 
 				So(mock.dialCalledTimes, ShouldEqual, 1)
 				So(mock.usersCalledTimes, ShouldEqual, 1)

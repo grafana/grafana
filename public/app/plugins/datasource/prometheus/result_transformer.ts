@@ -6,7 +6,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 export class ResultTransformer {
   constructor(private templateSrv: TemplateSrv) {}
 
-  transform(response: any, options: any): any[] {
+  transform(response: any, options: any): Array<TableModel | TimeSeries> {
     const prometheusResult = response.data.data.result;
 
     if (options.format === 'table') {
@@ -76,10 +76,11 @@ export class ResultTransformer {
       datapoints: dps,
       query: options.query,
       target: metricLabel,
+      tags: metricData.metric,
     };
   }
 
-  transformMetricDataToTable(md: any, resultCount: number, refId: string, valueWithRefId?: boolean) {
+  transformMetricDataToTable(md: any, resultCount: number, refId: string, valueWithRefId?: boolean): TableModel {
     const table = new TableModel();
     let i: number, j: number;
     const metricLabels: { [key: string]: number } = {};

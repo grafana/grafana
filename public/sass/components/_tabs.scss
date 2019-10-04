@@ -50,7 +50,7 @@
       right: 0;
       height: 2px;
       top: 0;
-      background-image: linear-gradient(to right, #ffd500 0%, #ff4400 99%, #ff4400 100%);
+      background-image: $brand-gradient-horizontal;
     }
   }
 

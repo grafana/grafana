@@ -6,8 +6,9 @@ import find from 'lodash/find';
 
 // Types
 import { UrlQueryMap } from '@grafana/runtime';
-import { StoreState } from 'app/types';
+import { StoreState, AppNotificationSeverity } from 'app/types';
 import {
+  Alert,
   PluginType,
   GrafanaPlugin,
   PluginInclude,
@@ -140,7 +141,7 @@ class PluginPage extends PureComponent<Props, State> {
     const { plugin, nav } = this.state;
 
     if (!plugin) {
-      return <div>Plugin not found.</div>;
+      return <Alert severity={AppNotificationSeverity.Error} title="Plugin Not Found" />;
     }
 
     const active = nav.main.children.find(tab => tab.active);
@@ -277,7 +278,7 @@ class PluginPage extends PureComponent<Props, State> {
           {info.links.map(link => {
             return (
               <li key={link.url}>
-                <a href={link.url} className="external-link" target="_blank">
+                <a href={link.url} className="external-link" target="_blank" rel="noopener">
                   {link.name}
                 </a>
               </li>
@@ -297,7 +298,21 @@ class PluginPage extends PureComponent<Props, State> {
         <Page.Contents isLoading={loading}>
           {!loading && (
             <div className="sidebar-container">
-              <div className="sidebar-content">{this.renderBody()}</div>
+              <div className="sidebar-content">
+                {plugin.loadError && (
+                  <Alert
+                    severity={AppNotificationSeverity.Error}
+                    title="Error Loading Plugin"
+                    children={
+                      <>
+                        Check the server startup logs for more information. <br />
+                        If this plugin was loaded from git, make sure it was compiled.
+                      </>
+                    }
+                  />
+                )}
+                {this.renderBody()}
+              </div>
               <aside className="page-sidebar">
                 {plugin && (
                   <section className="page-sidebar-section">

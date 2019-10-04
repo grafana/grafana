@@ -39,10 +39,13 @@ Supported auth providers:
 * [GitHub OAuth]({{< relref "auth/github.md#team-sync-enterprise-only" >}})
 * [Auth Proxy]({{< relref "auth/auth-proxy.md#team-sync-enterprise-only">}})
 
-### Datasource Permissions
+### Data source permissions
 
-Datasource permissions allow you to restrict query access to only specific Teams and Users. [Learn More]({{< relref "permissions/datasource_permissions.md" >}}).
+Data source permissions allow you to restrict query access to only specific Teams and Users. [Learn More]({{< relref "permissions/datasource_permissions.md" >}}).
 
+### Reports
+
+Reports make it possible to take any Dashboard and generate a PDF report and setup a schedule to have it delivered. [Learn More]({{< relref "administration/reports.md" >}}).
 
 ### Premium Plugins
 

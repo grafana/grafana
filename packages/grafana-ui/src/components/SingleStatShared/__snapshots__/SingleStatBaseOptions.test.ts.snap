@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`sharedSingleStatMigrationCheck from old valueOptions model without pluginVersion 1`] = `
+exports[`sharedSingleStatMigrationHandler from old valueOptions model without pluginVersion 1`] = `
 Object {
   "fieldOptions": Object {
     "calcs": Array [

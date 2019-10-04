@@ -55,7 +55,7 @@ From Dashboard settings, click the Timepicker tab. From here you can specify the
 
 Grafana offers the ability to override the `now` value on a per dashboard basis. Most commonly, this feature is used to accommodate known delays in data aggregation to avoid null values.
 
-## Panel time overrides & timeshift
+## Panel time overrides and timeshift
 
 You can override the relative time range for individual panels, causing them to be different than what is selected in the Dashboard time picker in the upper right. This allows you to show metrics from different time periods or days at the same time.
 
