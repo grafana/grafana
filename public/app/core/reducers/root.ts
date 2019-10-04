@@ -1,6 +1,4 @@
 import { combineReducers } from 'redux';
-
-import { StoreState } from '../../types';
 import { ActionOf } from '../redux';
 import { CleanUp, cleanUpAction } from '../actions/cleanUp';
 import sharedReducers from 'app/core/reducers';
@@ -33,9 +31,30 @@ const rootReducers = {
   ...ldapReducers,
 };
 
-export function addRootReducer(reducers: any) {
-  Object.assign(rootReducers, ...reducers);
-}
+const addedReducers = {};
+
+export const addReducer = (addedReducer: any) => {
+  Object.assign(addedReducers, ...addedReducer);
+};
+
+export const createRootReducer = () => {
+  const appReducer = combineReducers({
+    ...rootReducers,
+    ...addedReducers,
+  });
+
+  return (state: any, action: ActionOf<any>): any => {
+    if (action.type !== cleanUpAction.type) {
+      return appReducer(state, action);
+    }
+
+    const { stateSelector } = action.payload as CleanUp<any>;
+    const stateSlice = stateSelector(state);
+    recursiveCleanState(state, stateSlice);
+
+    return appReducer(state, action);
+  };
+};
 
 export const recursiveCleanState = (state: any, stateSlice: any): boolean => {
   for (const stateKey in state) {
@@ -53,18 +72,4 @@ export const recursiveCleanState = (state: any, stateSlice: any): boolean => {
   }
 
   return false;
-};
-
-const appReducer = combineReducers(rootReducers);
-
-export const rootReducer = (state: StoreState, action: ActionOf<any>): StoreState => {
-  if (action.type !== cleanUpAction.type) {
-    return appReducer(state, action);
-  }
-
-  const { stateSelector } = action.payload as CleanUp<any>;
-  const stateSlice = stateSelector(state);
-  recursiveCleanState(state, stateSlice);
-
-  return appReducer(state, action);
 };

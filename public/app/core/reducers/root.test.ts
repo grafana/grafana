@@ -1,4 +1,4 @@
-import { recursiveCleanState, rootReducer } from './root';
+import { createRootReducer, recursiveCleanState } from './root';
 import { describe, expect } from '../../../test/lib/common';
 import { NavModelItem } from '@grafana/data';
 import { reducerTester } from '../../../test/core/redux/reducerTester';
@@ -52,6 +52,8 @@ describe('recursiveCleanState', () => {
 });
 
 describe('rootReducer', () => {
+  const rootReducer = createRootReducer();
+
   describe('when called with any action except cleanUpAction', () => {
     it('then it should not clean state', () => {
       const teams = [{ id: 1 }];
