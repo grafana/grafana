@@ -1,6 +1,6 @@
 # Grafana backend codebase
 
-The code should follow the [Backend style guide](/contribute/style-guides/backend.md). 
+The code should follow the [Backend style guide](/contribute/style-guides/backend.md).
 
 Refer to [architecture](ARCHITECTURE.md) for a description of the backend codebase architecture.
 
