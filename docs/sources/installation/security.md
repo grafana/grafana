@@ -18,7 +18,7 @@ If you have non-Grafana web services running on your Grafana server or within it
 
 To prevent this type of exploitation from happening we explain a couple of different solutions  below.
 
-### Configure Grafana to only allow certain IP addresses/hostnames to be used as datasource url
+### Configure Grafana to only allow certain IP addresses/hostnames to be used as data source url
 
 You can configure Grafana to only allow certain IP addresses/hostnames to be used as data source url and by that proxied through the Grafana data source proxy. See [data_source_proxy_whitelist](/installation/configuration/#data-source-proxy-whitelist) for usage instructions.
 

@@ -1,9 +1,7 @@
 import _ from 'lodash';
 import React from 'react';
-// @ts-ignore
-import PluginPrism from 'slate-prism';
-// @ts-ignore
-import Prism from 'prismjs';
+
+import { SlatePrism } from '@grafana/ui';
 
 // dom also includes Element polyfills
 import QueryField from 'app/features/explore/QueryField';
@@ -24,7 +22,7 @@ class ElasticsearchQueryField extends React.PureComponent<Props, State> {
     super(props, context);
 
     this.plugins = [
-      PluginPrism({
+      SlatePrism({
         onlyIn: (node: any) => node.type === 'code_block',
         getSyntax: (node: any) => 'lucene',
       }),
@@ -64,7 +62,7 @@ class ElasticsearchQueryField extends React.PureComponent<Props, State> {
   };
 
   render() {
-    const { queryResponse, query } = this.props;
+    const { data, query } = this.props;
     const { syntaxLoaded } = this.state;
 
     return (
@@ -82,9 +80,7 @@ class ElasticsearchQueryField extends React.PureComponent<Props, State> {
             />
           </div>
         </div>
-        {queryResponse && queryResponse.error ? (
-          <div className="prom-query-field-info text-error">{queryResponse.error.message}</div>
-        ) : null}
+        {data && data.error ? <div className="prom-query-field-info text-error"> data.error.message}</div> : null}
       </>
     );
   }

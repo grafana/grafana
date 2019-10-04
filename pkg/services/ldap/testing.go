@@ -19,6 +19,8 @@ type MockConnection struct {
 	DelParams *ldap.DelRequest
 	DelCalled bool
 
+	CloseCalled bool
+
 	UnauthenticatedBindCalled bool
 	BindCalled                bool
 
@@ -49,7 +51,9 @@ func (c *MockConnection) UnauthenticatedBind(username string) error {
 }
 
 // Close mocks Close connection function
-func (c *MockConnection) Close() {}
+func (c *MockConnection) Close() {
+	c.CloseCalled = true
+}
 
 func (c *MockConnection) setSearchResult(result *ldap.SearchResult) {
 	c.SearchResult = result

@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
-import { Themeable, withTheme, GrafanaTheme, selectThemeVariant, getLogRowStyles } from '@grafana/ui';
+import tinycolor from 'tinycolor2';
 
+import { Themeable, withTheme, GrafanaTheme, getLogRowStyles } from '@grafana/ui';
 import { LogsModel, LogRowModel, TimeZone } from '@grafana/data';
 
 import ElapsedTime from './ElapsedTime';
@@ -9,6 +10,8 @@ import ElapsedTime from './ElapsedTime';
 const getStyles = (theme: GrafanaTheme) => ({
   logsRowsLive: css`
     label: logs-rows-live;
+    font-family: ${theme.typography.fontFamily.monospace};
+    font-size: ${theme.typography.size.sm};
     display: flex;
     flex-flow: column nowrap;
     height: 65vh;
@@ -17,18 +20,27 @@ const getStyles = (theme: GrafanaTheme) => ({
       margin-top: auto !important;
     }
   `,
-  logsRowFresh: css`
+  logsRowFade: css`
     label: logs-row-fresh;
     color: ${theme.colors.text};
-    background-color: ${selectThemeVariant({ light: theme.colors.gray6, dark: theme.colors.gray1 }, theme.type)};
-  `,
-  logsRowOld: css`
-    label: logs-row-old;
-    opacity: 0.8;
+    background-color: ${tinycolor(theme.colors.blueLight)
+      .setAlpha(0.25)
+      .toString()};
+    animation: fade 1s ease-out 1s 1 normal forwards;
+    @keyframes fade {
+      from {
+        background-color: ${tinycolor(theme.colors.blueLight)
+          .setAlpha(0.25)
+          .toString()};
+      }
+      to {
+        background-color: transparent;
+      }
+    }
   `,
   logsRowsIndicator: css`
     font-size: ${theme.typography.size.md};
-    padding: ${theme.spacing.sm} 0;
+    padding-top: ${theme.spacing.sm};
     display: flex;
     align-items: center;
   `,
@@ -81,7 +93,7 @@ class LiveLogs extends PureComponent<Props, State> {
     }
   }
 
-  static getDerivedStateFromProps(nextProps: Props) {
+  static getDerivedStateFromProps(nextProps: Props, state: State) {
     if (!nextProps.isPaused) {
       return {
         // We update what we show only if not paused. We keep any background subscriptions running and keep updating
@@ -126,29 +138,26 @@ class LiveLogs extends PureComponent<Props, State> {
     const { logsRow, logsRowLocalTime, logsRowMessage } = getLogRowStyles(theme);
 
     return (
-      <>
+      <div>
         <div
           onScroll={isPaused ? undefined : this.onScroll}
           className={cx(['logs-rows', styles.logsRowsLive])}
           ref={this.scrollContainerRef}
         >
-          {this.rowsToRender().map((row: any, index) => {
+          {this.rowsToRender().map((row: LogRowModel) => {
             return (
-              <div
-                className={row.fresh ? cx([logsRow, styles.logsRowFresh]) : cx([logsRow, styles.logsRowOld])}
-                key={`${row.timeEpochMs}-${index}`}
-              >
+              <div className={cx(logsRow, styles.logsRowFade)} key={row.uid}>
                 {showUtc && (
-                  <div className={cx([logsRowLocalTime])} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
+                  <div className={cx(logsRowLocalTime)} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
                     {row.timeUtc}
                   </div>
                 )}
                 {!showUtc && (
-                  <div className={cx([logsRowLocalTime])} title={`${row.timeUtc} (${row.timeFromNow})`}>
+                  <div className={cx(logsRowLocalTime)} title={`${row.timeUtc} (${row.timeFromNow})`}>
                     {row.timeLocal}
                   </div>
                 )}
-                <div className={cx([logsRowMessage])}>{row.entry}</div>
+                <div className={cx(logsRowMessage)}>{row.entry}</div>
               </div>
             );
           })}
@@ -171,7 +180,7 @@ class LiveLogs extends PureComponent<Props, State> {
           </button>
           <button onClick={this.props.stopLive} className={cx('btn btn-inverse', styles.button)}>
             <i className={'fa fa-stop'} />
-            &nbsp; Stop
+            &nbsp; Exit live mode
           </button>
           {isPaused || (
             <span>
@@ -179,7 +188,7 @@ class LiveLogs extends PureComponent<Props, State> {
             </span>
           )}
         </div>
-      </>
+      </div>
     );
   }
 }

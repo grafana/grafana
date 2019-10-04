@@ -1,13 +1,11 @@
 // Libraries
 import _ from 'lodash';
-
 // Utils
 import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
-
 // Types
-import { DataQuery, ScopedVars, DataQueryResponseData, PanelPlugin } from '@grafana/ui';
-import { DataLink } from '@grafana/data';
+import { DataQuery, DataQueryResponseData, PanelPlugin } from '@grafana/ui';
+import { DataLink, DataTransformerConfig, ScopedVars } from '@grafana/data';
 
 import config from 'app/core/config';
 
@@ -66,11 +64,11 @@ const mustKeepProps: { [str: string]: boolean } = {
   transparent: true,
   pluginVersion: true,
   queryRunner: true,
+  transformations: true,
 };
 
 const defaults: any = {
   gridPos: { x: 0, y: 0, h: 3, w: 6 },
-  datasource: null,
   targets: [{ refId: 'A' }],
   cachedPluginOptions: {},
   transparent: false,
@@ -93,6 +91,7 @@ export class PanelModel {
   panels?: any;
   soloMode?: boolean;
   targets: DataQuery[];
+  transformations?: DataTransformerConfig[];
   datasource: string;
   thresholds?: any;
   pluginVersion?: string;
@@ -125,6 +124,10 @@ export class PanelModel {
 
   constructor(model: any) {
     this.events = new Emitter();
+
+    // should not be part of defaults as defaults are removed in save model and
+    // this should not be removed in save model as exporter needs to templatize it
+    this.datasource = null;
 
     // copy properties from persisted model
     for (const property in model) {
@@ -290,7 +293,6 @@ export class PanelModel {
       } else if (oldOptions && oldOptions.options) {
         old = oldOptions.options;
       }
-
       this.options = this.options || {};
       Object.assign(this.options, newPlugin.onPanelTypeChanged(this.options, oldPluginId, old));
     }
@@ -326,13 +328,18 @@ export class PanelModel {
 
   getQueryRunner(): PanelQueryRunner {
     if (!this.queryRunner) {
-      this.queryRunner = new PanelQueryRunner(this.id);
+      this.queryRunner = new PanelQueryRunner();
+      this.setTransformations(this.transformations);
     }
     return this.queryRunner;
   }
 
   hasTitle() {
     return this.title && this.title.length > 0;
+  }
+
+  isAngularPlugin(): boolean {
+    return this.plugin && !!this.plugin.angularPanelCtrl;
   }
 
   destroy() {
@@ -343,6 +350,11 @@ export class PanelModel {
       this.queryRunner.destroy();
       this.queryRunner = null;
     }
+  }
+
+  setTransformations(transformations: DataTransformerConfig[]) {
+    this.transformations = transformations;
+    this.getQueryRunner().setTransformations(transformations);
   }
 }
 

@@ -1,4 +1,4 @@
-jest.mock('@grafana/data/src/utils/moment_wrapper', () => ({
+jest.mock('@grafana/data/src/datetime/moment_wrapper', () => ({
   dateTime: (ts: any) => {
     return {
       valueOf: () => ts,
@@ -16,7 +16,7 @@ jest.mock('@grafana/data/src/utils/moment_wrapper', () => ({
 import { ResultProcessor } from './ResultProcessor';
 import { ExploreItemState, ExploreMode } from 'app/types/explore';
 import TableModel from 'app/core/table_model';
-import { TimeSeries, LogRowModel, LogsMetaItem, GraphSeriesXY, toDataFrame, FieldType } from '@grafana/data';
+import { TimeSeries, LogRowModel, toDataFrame, FieldType } from '@grafana/data';
 
 const testContext = (options: any = {}) => {
   const timeSeries = toDataFrame({
@@ -38,10 +38,11 @@ const testContext = (options: any = {}) => {
     ],
   });
 
+  const emptyTable = toDataFrame({ name: 'empty-table', refId: 'A', fields: [] });
+
   const defaultOptions = {
     mode: ExploreMode.Metrics,
-    replacePreviousResults: true,
-    dataFrames: [timeSeries, table],
+    dataFrames: [timeSeries, table, emptyTable],
     graphResult: [] as TimeSeries[],
     tableResult: new TableModel(),
     logsResult: { hasUniqueLabels: false, rows: [] as LogRowModel[] },
@@ -57,11 +58,7 @@ const testContext = (options: any = {}) => {
     queryIntervals: { intervalMs: 10 },
   } as any) as ExploreItemState;
 
-  const resultProcessor = new ResultProcessor(
-    state,
-    combinedOptions.replacePreviousResults,
-    combinedOptions.dataFrames
-  );
+  const resultProcessor = new ResultProcessor(state, combinedOptions.dataFrames, 60000);
 
   return {
     dataFrames: combinedOptions.dataFrames,
@@ -72,20 +69,20 @@ const testContext = (options: any = {}) => {
 describe('ResultProcessor', () => {
   describe('constructed without result', () => {
     describe('when calling getGraphResult', () => {
-      it('then it should return an empty array', () => {
+      it('then it should return null', () => {
         const { resultProcessor } = testContext({ dataFrames: [] });
         const theResult = resultProcessor.getGraphResult();
 
-        expect(theResult).toEqual([]);
+        expect(theResult).toEqual(null);
       });
     });
 
     describe('when calling getTableResult', () => {
-      it('then it should return an empty TableModel', () => {
+      it('then it should return null', () => {
         const { resultProcessor } = testContext({ dataFrames: [] });
         const theResult = resultProcessor.getTableResult();
 
-        expect(theResult).toEqual(new TableModel());
+        expect(theResult).toEqual(null);
       });
     });
 
@@ -159,6 +156,7 @@ describe('ResultProcessor', () => {
               timeLocal: 'format() jest mocked',
               timeUtc: 'format() jest mocked',
               timestamp: 300,
+              uid: '2',
               uniqueLabels: {},
             },
             {
@@ -173,6 +171,7 @@ describe('ResultProcessor', () => {
               timeLocal: 'format() jest mocked',
               timeUtc: 'format() jest mocked',
               timestamp: 200,
+              uid: '1',
               uniqueLabels: {},
             },
             {
@@ -187,6 +186,7 @@ describe('ResultProcessor', () => {
               timeLocal: 'format() jest mocked',
               timeUtc: 'format() jest mocked',
               timestamp: 100,
+              uid: '0',
               uniqueLabels: {},
             },
           ],
@@ -203,162 +203,6 @@ describe('ResultProcessor', () => {
             },
           ],
         });
-      });
-    });
-  });
-
-  describe('constructed with result that is a DataQueryResponse and merging with previous results', () => {
-    describe('when calling getLogsResult', () => {
-      it('then it should return correct logs result', () => {
-        const { resultProcessor } = testContext({
-          mode: ExploreMode.Logs,
-          replacePreviousResults: false,
-          logsResult: {
-            hasUniqueLabels: false,
-            meta: [],
-            rows: [
-              {
-                entry: 'This is a previous message 1',
-                fresh: true,
-                hasAnsi: false,
-                labels: { cluster: 'some-cluster' },
-                logLevel: 'unknown',
-                raw: 'This is a previous message 1',
-                searchWords: [] as string[],
-                timeEpochMs: 1558038519831,
-                timeFromNow: 'fromNow() jest mocked',
-                timeLocal: 'format() jest mocked',
-                timeUtc: 'format() jest mocked',
-                timestamp: 1558038519831,
-                uniqueLabels: {},
-              },
-              {
-                entry: 'This is a previous message 2',
-                fresh: true,
-                hasAnsi: false,
-                labels: { cluster: 'some-cluster' },
-                logLevel: 'unknown',
-                raw: 'This is a previous message 2',
-                searchWords: [] as string[],
-                timeEpochMs: 1558038518831,
-                timeFromNow: 'fromNow() jest mocked',
-                timeLocal: 'format() jest mocked',
-                timeUtc: 'format() jest mocked',
-                timestamp: 1558038518831,
-                uniqueLabels: {},
-              },
-            ],
-            series: [
-              {
-                label: 'A-series',
-                color: '#7EB26D',
-                data: [[1558038518831, 37.91264531864214], [1558038519831, 38.35179822906545]],
-                info: undefined,
-                isVisible: true,
-                yAxis: {
-                  index: 1,
-                },
-              },
-            ],
-          },
-        });
-
-        const theResult = resultProcessor.getLogsResult();
-        const expected = {
-          hasUniqueLabels: false,
-          meta: [] as LogsMetaItem[],
-          rows: [
-            {
-              entry: 'This is a previous message 1',
-              fresh: false,
-              hasAnsi: false,
-              labels: { cluster: 'some-cluster' },
-              logLevel: 'unknown',
-              raw: 'This is a previous message 1',
-              searchWords: [] as string[],
-              timeEpochMs: 1558038519831,
-              timeFromNow: 'fromNow() jest mocked',
-              timeLocal: 'format() jest mocked',
-              timeUtc: 'format() jest mocked',
-              timestamp: 1558038519831,
-              uniqueLabels: {},
-            },
-            {
-              entry: 'This is a previous message 2',
-              fresh: false,
-              hasAnsi: false,
-              labels: { cluster: 'some-cluster' },
-              logLevel: 'unknown',
-              raw: 'This is a previous message 2',
-              searchWords: [] as string[],
-              timeEpochMs: 1558038518831,
-              timeFromNow: 'fromNow() jest mocked',
-              timeLocal: 'format() jest mocked',
-              timeUtc: 'format() jest mocked',
-              timestamp: 1558038518831,
-              uniqueLabels: {},
-            },
-            {
-              entry: 'third',
-              fresh: true,
-              hasAnsi: false,
-              labels: undefined,
-              logLevel: 'unknown',
-              raw: 'third',
-              searchWords: [] as string[],
-              timeEpochMs: 300,
-              timeFromNow: 'fromNow() jest mocked',
-              timeLocal: 'format() jest mocked',
-              timeUtc: 'format() jest mocked',
-              timestamp: 300,
-              uniqueLabels: {},
-            },
-            {
-              entry: 'second message',
-              fresh: true,
-              hasAnsi: false,
-              labels: undefined,
-              logLevel: 'unknown',
-              raw: 'second message',
-              searchWords: [] as string[],
-              timeEpochMs: 200,
-              timeFromNow: 'fromNow() jest mocked',
-              timeLocal: 'format() jest mocked',
-              timeUtc: 'format() jest mocked',
-              timestamp: 200,
-              uniqueLabels: {},
-            },
-            {
-              entry: 'this is a message',
-              fresh: true,
-              hasAnsi: false,
-              labels: undefined,
-              logLevel: 'unknown',
-              raw: 'this is a message',
-              searchWords: [] as string[],
-              timeEpochMs: 100,
-              timeFromNow: 'fromNow() jest mocked',
-              timeLocal: 'format() jest mocked',
-              timeUtc: 'format() jest mocked',
-              timestamp: 100,
-              uniqueLabels: {},
-            },
-          ],
-          series: [
-            {
-              label: 'A-series',
-              color: '#7EB26D',
-              data: [[100, 4], [200, 5], [300, 6]],
-              info: undefined,
-              isVisible: true,
-              yAxis: {
-                index: 1,
-              },
-            } as GraphSeriesXY,
-          ],
-        };
-
-        expect(theResult).toEqual(expected);
       });
     });
   });

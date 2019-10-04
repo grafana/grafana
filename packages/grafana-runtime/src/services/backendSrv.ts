@@ -20,11 +20,11 @@ export interface BackendSrv {
 
   delete(url: string): Promise<any>;
 
-  post(url: string, data: any): Promise<any>;
+  post(url: string, data?: any): Promise<any>;
 
-  patch(url: string, data: any): Promise<any>;
+  patch(url: string, data?: any): Promise<any>;
 
-  put(url: string, data: any): Promise<any>;
+  put(url: string, data?: any): Promise<any>;
 
   // If there is an error, set: err.isHandled = true
   // otherwise the backend will show a message for you

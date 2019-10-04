@@ -3,13 +3,13 @@ import { DataSourceStatus } from '@grafana/ui/src/types/datasource';
 import { AbsoluteTimeRange } from '@grafana/data';
 
 import LanguageProvider from 'app/plugins/datasource/loki/language_provider';
+
 import { useLokiSyntax } from './useLokiSyntax';
 import { CascaderOption } from 'app/plugins/datasource/loki/components/LokiQueryFieldForm';
+import { makeMockLokiDatasource } from '../mocks';
 
 describe('useLokiSyntax hook', () => {
-  const datasource = {
-    metadataRequest: () => ({ data: { data: [] as any[] } }),
-  };
+  const datasource = makeMockLokiDatasource({});
   const languageProvider = new LanguageProvider(datasource);
   const logLabelOptionsMock = ['Holy mock!'];
   const logLabelOptionsMock2 = ['Mock the hell?!'];

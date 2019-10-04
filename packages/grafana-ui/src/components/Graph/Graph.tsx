@@ -2,9 +2,8 @@
 import $ from 'jquery';
 import React, { PureComponent } from 'react';
 import uniqBy from 'lodash/uniqBy';
-
 // Types
-import { TimeRange, GraphSeriesXY, AbsoluteTimeRange, TimeZone, DefaultTimeZone } from '@grafana/data';
+import { TimeRange, GraphSeriesXY, TimeZone, DefaultTimeZone } from '@grafana/data';
 
 export interface GraphProps {
   series: GraphSeriesXY[];
@@ -17,7 +16,7 @@ export interface GraphProps {
   height: number;
   isStacked?: boolean;
   lineWidth?: number;
-  onSelectionChanged?: (range: AbsoluteTimeRange) => void;
+  onHorizontalRegionSelected?: (from: number, to: number) => void;
 }
 
 export class Graph extends PureComponent<GraphProps> {
@@ -49,35 +48,21 @@ export class Graph extends PureComponent<GraphProps> {
   }
 
   onPlotSelected = (event: JQueryEventObject, ranges: { xaxis: { from: number; to: number } }) => {
-    const { onSelectionChanged } = this.props;
-    if (onSelectionChanged) {
-      onSelectionChanged({
-        from: ranges.xaxis.from,
-        to: ranges.xaxis.to,
-      });
+    const { onHorizontalRegionSelected } = this.props;
+    if (onHorizontalRegionSelected) {
+      onHorizontalRegionSelected(ranges.xaxis.from, ranges.xaxis.to);
     }
   };
 
-  draw() {
-    if (this.element === null) {
-      return;
+  getYAxes(series: GraphSeriesXY[]) {
+    if (series.length === 0) {
+      return [{ show: true, min: -1, max: 1 }];
     }
-
-    const { width, series, timeRange, showLines, showBars, showPoints, isStacked, lineWidth, timeZone } = this.props;
-
-    if (!width) {
-      return;
-    }
-
-    const ticks = width / 100;
-    const min = timeRange.from.valueOf();
-    const max = timeRange.to.valueOf();
-    const yaxes = uniqBy(
+    return uniqBy(
       series.map(s => {
         const index = s.yAxis ? s.yAxis.index : 1;
         const min = s.yAxis && !isNaN(s.yAxis.min as number) ? s.yAxis.min : null;
         const tickDecimals = s.yAxis && !isNaN(s.yAxis.tickDecimals as number) ? s.yAxis.tickDecimals : null;
-
         return {
           show: true,
           index,
@@ -88,6 +73,35 @@ export class Graph extends PureComponent<GraphProps> {
       }),
       yAxisConfig => yAxisConfig.index
     );
+  }
+
+  draw() {
+    if (this.element === null) {
+      return;
+    }
+
+    const {
+      width,
+      series,
+      timeRange,
+      showLines,
+      showBars,
+      showPoints,
+      isStacked,
+      lineWidth,
+      timeZone,
+      onHorizontalRegionSelected,
+    } = this.props;
+
+    if (!width) {
+      return;
+    }
+
+    const ticks = width / 100;
+    const min = timeRange.from.valueOf();
+    const max = timeRange.to.valueOf();
+    const yaxes = this.getYAxes(series);
+
     const flotOptions: any = {
       legend: {
         show: false,
@@ -115,6 +129,7 @@ export class Graph extends PureComponent<GraphProps> {
         shadowSize: 0,
       },
       xaxis: {
+        show: true,
         mode: 'time',
         min: min,
         max: max,
@@ -136,7 +151,7 @@ export class Graph extends PureComponent<GraphProps> {
         labelMarginX: 0,
       },
       selection: {
-        mode: 'x',
+        mode: onHorizontalRegionSelected ? 'x' : null,
         color: '#666',
       },
     };
@@ -150,10 +165,12 @@ export class Graph extends PureComponent<GraphProps> {
   }
 
   render() {
-    const { height } = this.props;
+    const { height, series } = this.props;
+    const noDataToBeDisplayed = series.length === 0;
     return (
       <div className="graph-panel">
         <div className="graph-panel__chart" ref={e => (this.element = e)} style={{ height }} />
+        {noDataToBeDisplayed && <div className="datapoints-warning">No data</div>}
       </div>
     );
   }

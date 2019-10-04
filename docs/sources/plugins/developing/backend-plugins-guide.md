@@ -10,9 +10,9 @@ weight = 5
 
 # Backend Plugins
 
-Grafana added support for plugins in Grafana 3.0 and this enabled the Grafana community to create panel plugins and datasource plugins. It was wildly successful and has made Grafana much more useful as you can integrate it with anything and do any type of custom visualization that you want. However, these plugin hooks are on the frontend only and we also want to provide hooks into the Grafana backend to allow the community to extend and improve Grafana in new ways.
+Grafana added support for plugins in Grafana 3.0 and this enabled the Grafana community to create panel plugins and data source plugins. It was wildly successful and has made Grafana much more useful as you can integrate it with anything and do any type of custom visualization that you want. However, these plugin hooks are on the frontend only and we also want to provide hooks into the Grafana backend to allow the community to extend and improve Grafana in new ways.
 
-Once Grafana introduced the alerting feature, external datasource plugins needed a backend component for the Grafana server to execute queries for evaluating alert rules (as the alerting engine cannot call frontend JavaScript code). So the the obvious first backend plugin type is the **Datasource backend plugin** and it is a new component for an existing datasource plugin. This new plugin type will enable alerting for external datasource plugins but can also be used for achieving different goals such as query caching, request proxying, custom authentication methods, and more.
+Once Grafana introduced the alerting feature, external data source plugins needed a backend component for the Grafana server to execute queries for evaluating alert rules (as the alerting engine cannot call frontend JavaScript code). So the the obvious first backend plugin type is the **Datasource backend plugin** and it is a new component for an existing data source plugin. This new plugin type will enable alerting for external data source plugins but can also be used for achieving different goals such as query caching, request proxying, custom authentication methods, and more.
 
 ## Grafana's Backend Plugin System
 
@@ -22,7 +22,7 @@ The backend plugin feature is implemented with the [HashiCorp plugin system](htt
 - Plugins are easy to develop: just write a Go application and `go build` (or use any other language which supports gRPC).
 - Plugins can be relatively secure: The plugin only has access to the interfaces and args given to it, not to the entire memory space of the process.
 
-## Datasource Plugin Interface
+## Data source plugin interface
 
 The plugin interface is very simple and described as a Go interface type in [Grafana](https://github.com/grafana/grafana/blob/6724aaeff9a332dc73b4ee0f8abe0621f7253142/pkg/tsdb/query_endpoint.go#L10-L12) and as a general [RPC service](https://github.com/grafana/grafana-plugin-model/blob/84176c64269d8060f99e750ee8aba6f062753336/datasource.proto#L96-L98) in the corresponding `.proto` (protocol buffer file):
 
@@ -42,11 +42,11 @@ Thus, a datasource plugin should only implement the `Query()` method.
 
 ## Introduction to building a backend component for a plugin
 
-The [Simple JSON backend](https://github.com/grafana/simple-json-backend-datasource) datasource is a good example of writing a simple backend plugin in Go. Let's take a look at some key points.
+The [Simple JSON backend](https://github.com/grafana/simple-json-backend-datasource) data source is a good example of writing a simple backend plugin in Go. Let's take a look at some key points.
 
 ### Metadata
 
-The plugin needs to know it has a backend component, this is done in the `plugin.json` file by setting two fields: `backend` and `executable`. If you want to enable alerting for your datasource, set the `alerting` field to `true` as well.
+The plugin needs to know it has a backend component, this is done in the `plugin.json` file by setting two fields: `backend` and `executable`. If you want to enable alerting for your data source, set the `alerting` field to `true` as well.
 
 ```json
 {
@@ -93,11 +93,11 @@ simple-json-backend-datasource/
 
 A `pkg/` directory contains three `.go` files:
 
-- `plugin.go` - an entry point of the plugin. This file would be very similar for your datasource - you just need to change some details like the plugin name etc.
+- `plugin.go` - an entry point of the plugin. This file would be very similar for your data source - you just need to change some details like the plugin name etc.
 - `datasource.go` - contains `Query()` method implementation and other plugin logic.
-- `models.go` - types for request and response specific to your datasource.
+- `models.go` - types for request and response specific to your data source.
 
-The datasource type is declared in [`datasource.go`](https://github.com/grafana/simple-json-backend-datasource/blob/7927ff0db60c3402dbf954a454f19d7230e18deb/pkg/datasource.go#L21-L24):
+The data source type is declared in [`datasource.go`](https://github.com/grafana/simple-json-backend-datasource/blob/7927ff0db60c3402dbf954a454f19d7230e18deb/pkg/datasource.go#L21-L24):
 
 ```go
 package main
@@ -111,7 +111,7 @@ type JsonDatasource struct {
 }
 ```
 
-The only requirement for the plugin type is that it should extend `plugin.NetRPCUnsupportedPlugin`. You can include more fields into your struct if you want to add some datasource-specific features, like logging, cache etc:
+The only requirement for the plugin type is that it should extend `plugin.NetRPCUnsupportedPlugin`. You can include more fields into your struct if you want to add some data source-specific features, like logging, cache etc:
 
 ```go
 type JsonDatasource struct {
@@ -129,7 +129,7 @@ func (t *JsonDatasource) Query(ctx context.Context, tsdbReq *datasource.Datasour
 
 #### Request format
 
-In order to call this method from the [frontend part of your datasource](https://github.com/grafana/simple-json-backend-datasource/blob/7927ff0db60c3402dbf954a454f19d7230e18deb/src/datasource.ts#L116), use the `/api/tsdb/query` endpoint:
+In order to call this method from the [frontend part of your data source](https://github.com/grafana/simple-json-backend-datasource/blob/7927ff0db60c3402dbf954a454f19d7230e18deb/src/datasource.ts#L116), use the `/api/tsdb/query` endpoint:
 
 ```js
 class SimpleJSONDatasource {

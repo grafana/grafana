@@ -1,6 +1,6 @@
 +++
 title = "What's New in Grafana v5.1"
-description = "Feature & improvement highlights for Grafana v5.1"
+description = "Feature and improvement highlights for Grafana v5.1"
 keywords = ["grafana", "new", "documentation", "5.1"]
 type = "docs"
 [menu.docs]
@@ -17,8 +17,8 @@ Grafana v5.1 brings new features, many enhancements and bug fixes. This article 
 * [Improved scrolling experience]({{< relref "#improved-scrolling-experience" >}})
 * [Improved docker image]({{< relref "#improved-docker-image-breaking-change" >}}) with a breaking change!
 * [Heatmap support for Prometheus]({{< relref "#prometheus" >}})
-* [Microsoft SQL Server]({{< relref "#microsoft-sql-server" >}}) as metric & table datasource!
-* [Dashboards & Panels]({{< relref "#dashboards-panels" >}}) Improved adding panels to dashboards and enhancements to Graph and Table panels.
+* [Microsoft SQL Server]({{< relref "#microsoft-sql-server" >}}) as metric and table data source!
+* [Dashboards and Panels]({{< relref "#dashboards-panels" >}}) Improved adding panels to dashboards and enhancements to Graph and Table panels.
 * [New variable interpolation syntax]({{< relref "#new-variable-interpolation-syntax" >}})
 * [Improved workflow for provisioned dashboards]({{< relref "#improved-workflow-for-provisioned-dashboards" >}})
 
@@ -47,7 +47,7 @@ Please read the [updated documentation](/installation/docker/#migration-from-a-p
 
 {{< docs-imagebox img="/img/docs/v51/prometheus_heatmap.png" max-width="800px" class="docs-image--right" >}}
 
-The Prometheus datasource now support transforming Prometheus histograms to the heatmap panel. Prometheus histogram is a powerful feature, and we're
+The Prometheus data source now support transforming Prometheus histograms to the heatmap panel. Prometheus histogram is a powerful feature, and we're
 really happy to finally allow our users to render those as heatmaps. Please read [Heatmap panel documentation](/features/panels/heatmap/#pre-bucketed-data)
 for more information on how to use it.
 
@@ -61,13 +61,13 @@ Prometheus query editor also got support for autocomplete of template variables.
 
 Grafana v5.1 now ships with a built-in Microsoft SQL Server (MSSQL) data source plugin that allows you to query and visualize data from any
 Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database. Do you have metric or log data in MSSQL? You can now visualize
-that data and define alert rules on it like with any of Grafana's other core datasources.
+that data and define alert rules on it like with any of Grafana's other core data sources.
 
 Please read [Using Microsoft SQL Server in Grafana documentation](/features/datasources/mssql/) for more detailed information on how to get started and use it.
 
 <div class="clearfix"></div>
 
-## Dashboards & Panels
+## Dashboards and Panels
 
 ### Adding new panels to dashboards
 

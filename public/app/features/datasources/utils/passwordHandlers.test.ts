@@ -1,9 +1,6 @@
 import { createResetHandler, PasswordFieldEnum, Ctrl } from './passwordHandlers';
-
 describe('createResetHandler', () => {
-  Object.keys(PasswordFieldEnum).forEach(fieldKey => {
-    const field: any = PasswordFieldEnum[fieldKey as any];
-
+  Object.values(PasswordFieldEnum).forEach(field => {
     it(`should reset existing ${field} field`, () => {
       const event: any = {
         preventDefault: () => {},

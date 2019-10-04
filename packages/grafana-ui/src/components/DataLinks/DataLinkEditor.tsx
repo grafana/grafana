@@ -2,25 +2,39 @@ import React, { useState, ChangeEvent, useContext } from 'react';
 import { DataLink } from '@grafana/data';
 import { FormField, Switch } from '../index';
 import { VariableSuggestion } from './DataLinkSuggestions';
-import { css, cx } from 'emotion';
-import { ThemeContext } from '../../themes/index';
+import { css } from 'emotion';
+import { ThemeContext, stylesFactory } from '../../themes/index';
 import { DataLinkInput } from './DataLinkInput';
+import { GrafanaTheme } from '../../types';
 
 interface DataLinkEditorProps {
   index: number;
+  isLast: boolean;
   value: DataLink;
   suggestions: VariableSuggestion[];
-  onChange: (index: number, link: DataLink) => void;
+  onChange: (index: number, link: DataLink, callback?: () => void) => void;
   onRemove: (link: DataLink) => void;
 }
 
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  listItem: css`
+    margin-bottom: ${theme.spacing.sm};
+  `,
+  infoText: css`
+    padding-bottom: ${theme.spacing.md};
+    margin-left: 66px;
+    color: ${theme.colors.textWeak};
+  `,
+}));
+
 export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
-  ({ index, value, onChange, onRemove, suggestions }) => {
+  ({ index, value, onChange, onRemove, suggestions, isLast }) => {
     const theme = useContext(ThemeContext);
+    const styles = getStyles(theme);
     const [title, setTitle] = useState(value.title);
 
-    const onUrlChange = (url: string) => {
-      onChange(index, { ...value, url });
+    const onUrlChange = (url: string, callback?: () => void) => {
+      onChange(index, { ...value, url }, callback);
     };
     const onTitleChange = (event: ChangeEvent<HTMLInputElement>) => {
       setTitle(event.target.value);
@@ -39,45 +53,37 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
     };
 
     return (
-      <div
-        className={cx(
-          'gf-form gf-form--inline',
-          css`
-            > * {
-              margin-right: ${theme.spacing.xs};
-              &:last-child {
-                margin-right: 0;
-              }
-            }
-          `
-        )}
-      >
-        <FormField
-          label="Title"
-          value={title}
-          onChange={onTitleChange}
-          onBlur={onTitleBlur}
-          inputWidth={15}
-          labelWidth={5}
-          placeholder="Show details"
-        />
-
+      <div className={styles.listItem}>
+        <div className="gf-form gf-form--inline">
+          <FormField
+            className="gf-form--grow"
+            label="Title"
+            value={title}
+            onChange={onTitleChange}
+            onBlur={onTitleBlur}
+            inputWidth={0}
+            labelWidth={5}
+            placeholder="Show details"
+          />
+          <Switch label="Open in new tab" checked={value.targetBlank || false} onChange={onOpenInNewTabChanged} />
+          <button className="gf-form-label gf-form-label--btn" onClick={onRemoveClick} title="Remove link">
+            <i className="fa fa-times" />
+          </button>
+        </div>
         <FormField
           label="URL"
-          labelWidth={4}
+          labelWidth={5}
           inputEl={<DataLinkInput value={value.url} onChange={onUrlChange} suggestions={suggestions} />}
           className={css`
             width: 100%;
           `}
         />
-
-        <Switch label="Open in new tab" checked={value.targetBlank || false} onChange={onOpenInNewTabChanged} />
-
-        <div className="gf-form">
-          <button className="gf-form-label gf-form-label--btn" onClick={onRemoveClick}>
-            <i className="fa fa-times" />
-          </button>
-        </div>
+        {isLast && (
+          <div className={styles.infoText}>
+            With data links you can reference data variables like series name, labels and values. Type CMD+Space,
+            CTRL+Space, or $ to open variable suggestions.
+          </div>
+        )}
       </div>
     );
   }

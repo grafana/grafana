@@ -319,8 +319,8 @@ The number of days the keep me logged in / remember me cookie lasts.
 
 ### secret_key
 
-Used for signing some datasource settings like secrets and passwords, the encryption format used is AES-256 in CFB mode. Cannot be changed without requiring an update
-to datasource settings to re-encode them.
+Used for signing some data source settings like secrets and passwords, the encryption format used is AES-256 in CFB mode. Cannot be changed without requiring an update
+to data source settings to re-encode them.
 
 ### disable_gravatar
 
@@ -347,7 +347,7 @@ mitigate the risk of [Clickjacking](https://www.owasp.org/index.php/Clickjacking
 
 ### strict_transport_security
 
-Set to `true` if you want to enable http `Strict-Transport-Security` (HSTS) response header. This is only sent when HTTPS is enabled in this configuration. HSTS tells browsers that the site should only be accessed using HTTPS. The default value is `false` until the next minor release, `6.3`.
+Set to `true` if you want to enable HTTP `Strict-Transport-Security` (HSTS) response header. This is only sent when HTTPS is enabled in this configuration. HSTS tells browsers that the site should only be accessed using HTTPS. The default value is `false` until the next minor release, `6.3`.
 
 ### strict_transport_security_max_age_seconds
 
@@ -460,7 +460,7 @@ If enabled and user is not anonymous, data proxy will add X-Grafana-User header 
 
 When enabled Grafana will send anonymous usage statistics to
 `stats.grafana.org`. No IP addresses are being tracked, only simple counters to
-track running instances, versions, dashboard & error counts. It is very helpful
+track running instances, versions, dashboard and error counts. It is very helpful
 to us, so please leave this enabled. Counters are sent every 24 hours. Default
 value is `true`.
 
@@ -547,6 +547,9 @@ If set configures the username to use for basic authentication on the metrics en
 
 ### basic_auth_password
 If set configures the password to use for basic authentication on the metrics endpoint.
+
+### disable_total_stats
+If set to `true`, then total stats generation (`stat_totals_*` metrics) is disabled. The default is `false`.
 
 ### interval_seconds
 
@@ -685,6 +688,17 @@ Default setting for alert notification timeout. Default value is `30`
 
 Default setting for max attempts to sending alert notifications. Default value is `3`
 
+## [rendering]
+
+Options to configure a remote HTTP image rendering service, e.g. using https://github.com/grafana/grafana-image-renderer.
+
+### server_url
+
+URL to a remote HTTP image renderer service, e.g. http://localhost:8081/render, will enable Grafana to render panels and dashboards to PNG-images using HTTP requests to an external service.
+
+### callback_url
+
+If the remote HTTP image renderer service runs on a different server than the Grafana server you may have to configure this to a URL where Grafana is reachable, e.g. http://grafana.domain/.
 
 ## [panels]
 
@@ -698,6 +712,11 @@ is false. This settings was introduced in Grafana v6.0.
 ### enable_alpha
 
 Set to true if you want to test alpha plugins that are not yet ready for general usage.
+
+## [feature_toggles]
+### enable
+
+Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`
 
 <hr />
 

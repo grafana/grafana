@@ -17,7 +17,7 @@ The main panel in Grafana is simply named Graph. It provides a very rich set of 
 
 1. Clicking the title for a panel exposes a menu.  The `edit` option opens additional configuration
 options for the panel.
-2. Click to open color & axis selection.
+2. Click to open color and axis selection.
 3. Click to only show this series. Shift/Ctrl + click to hide series.
 
 ## General
@@ -38,7 +38,7 @@ Repeat a panel for each value of a variable.  Repeating panels are described in 
 
 ## Metrics
 
-The metrics tab defines what series data and sources to render.  Each datasource provides different
+The metrics tab defines what series data and sources to render.  Each data source provides different
 options.
 
 ## Axes
@@ -146,7 +146,7 @@ Display styles control visual properties of the graph.
    - Individual: the value for the series you hover over
    - Cumulative - sum of series below plus the series you hover over
 
-#### Stacking & Null value
+#### Stacking and Null value
 
 If there are multiple series, they can be displayed as a group.
 
@@ -186,13 +186,13 @@ Time regions allow you to highlight certain time regions of the graph to make it
 
 The time range tab allows you to override the dashboard time range and specify a panel specific time.
 Either through a relative from now time option or through a timeshift.
-Panel time overrides & timeshift are described in more detail [here]({{< relref "reference/timerange.md#panel-time-overrides-timeshift" >}}).
+Panel time overrides and timeshift are described in more detail [here]({{< relref "reference/timerange.md#panel-time-overrides-timeshift" >}}).
 
 ### Data link
 
 > Only available in Grafana v6.3+.
 
-Data link in graph settings allows adding dynamic links to the visualization. Those links can link to either other dashboard or to an external URL.
+Data link allows adding dynamic links to the visualization. Those links can link to either other dashboard or to an external URL.
 
 {{< docs-imagebox img="/img/docs/data_link.png"  max-width= "800px" >}}
 
@@ -208,14 +208,42 @@ available suggestions:
 {{< docs-imagebox img="/img/docs/data_link_typeahead.png"  max-width= "800px" >}}
 
 
-Available built-in variables are:
+#### Built-in variables
 
-1. ``__all_variables`` - will add all current dashboard's variables to the URL
-2. ``__url_time_range`` - will add current dashboard's time range to the URL (i.e. ``?from=now-6h&to=now``)
-3. ``__series_name`` - will add series name as a query param in the URL (i.e. ``?series=B-series``)
-4. ``__value_time`` - will add datapoint's timestamp (Unix ms epoch) to the URL (i.e. ``?time=1560268814105``)
+> These variables changed in 6.4 so if you have an older version of Grafana please use the version picker to select
+docs for an older version of Grafana.
+
+``__url_time_range`` - current dashboard's time range (i.e. ``?from=now-6h&to=now``)
+``__from`` - current dashboard's time range from value
+``__to`` - current dashboard's time range to value
+
+#### Series variables
+Series specific variables are available under ``__series`` namespace:
+
+``__series.name`` - series name to the URL
+
+``__series.labels.<LABEL>`` - label's value to the URL. If your label contains dots use ``__series.labels["<LABEL>"]`` syntax
+
+#### Field variables
+Field specific variables are available under ``__field`` namespace:
+
+``__field.name`` - field name to the URL
+
+#### Value variables
+Value specific variables are available under ``__value`` namespace:
+
+``__value.time`` - value's timestamp (Unix ms epoch) to the URL (i.e. ``?time=1560268814105``)
+
+``__value.raw`` - raw value
+
+``__value.numeric`` - numeric representation of a value
+
+``__value.text`` - text representation of a value
+
+``__value.calc`` - calculation name if the value is result of calculation
 
 
-#### Template variables in data links
+#### Template variables
+
 When linking to another dashboard that uses template variables, you can use ``var-myvar=${myvar}`` syntax (where ``myvar`` is a name of template variable)
-to use current dashboard's variable value.
+to use current dashboard's variable value. If you want to add all of the current dashboard's variables to the URL use  ``__all_variables`` variable.
