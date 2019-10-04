@@ -179,7 +179,7 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 	req.URL.Path = path.Join(req.URL.Path, query.ApiURL)
 	req.URL.RawQuery = query.Params.Encode()
 
-	span, ctx := opentracing.StartSpanFromContext(ctx, "azuremonitor query")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "application insights query")
 	span.SetTag("target", query.Target)
 	span.SetTag("datasource_id", e.dsInfo.Id)
 	span.SetTag("org_id", e.dsInfo.OrgId)
@@ -234,7 +234,7 @@ func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInf
 	// find plugin
 	plugin, ok := plugins.DataSources[dsInfo.Type]
 	if !ok {
-		return nil, errors.New("Unable to find datasource plugin Azure Monitor")
+		return nil, errors.New("Unable to find datasource plugin Azure Application Insights")
 	}
 
 	var appInsightsRoute *plugins.AppPluginRoute
@@ -268,7 +268,7 @@ func (e *ApplicationInsightsDatasource) parseTimeSeriesFromQuery(body []byte, qu
 	var data ApplicationInsightsQueryResponse
 	err := json.Unmarshal(body, &data)
 	if err != nil {
-		azlog.Error("Failed to unmarshal AzureMonitor response", "error", err, "body", string(body))
+		azlog.Error("Failed to unmarshal Application Insights response", "error", err, "body", string(body))
 		return nil, nil, err
 	}
 
@@ -446,7 +446,7 @@ func processSegment(slice *tsdb.TimeSeriesSlice, segment map[string]interface{},
 			mapping, hasValues := v.(map[string]interface{})
 			if hasValues {
 				valueName = k
-				value, err = getAggrgatedValue(mapping, valueName)
+				value, err = getAggregatedValue(mapping, valueName)
 				if err != nil {
 					return err
 				}
@@ -501,7 +501,7 @@ func parseSingleValueTimeSeries(query *ApplicationInsightsQuery, metricName stri
 		return nil, errors.New("bad value aggregation")
 	}
 
-	metricValue, err := getAggrgatedValue(valueMap, metricName)
+	metricValue, err := getAggregatedValue(valueMap, metricName)
 	if err != nil {
 		return nil, err
 	}
@@ -518,7 +518,7 @@ func parseSingleValueTimeSeries(query *ApplicationInsightsQuery, metricName stri
 	}, nil
 }
 
-func getAggrgatedValue(valueMap map[string]interface{}, valueName string) (float64, error) {
+func getAggregatedValue(valueMap map[string]interface{}, valueName string) (float64, error) {
 
 	aggValue := ""
 	var metricValue float64
