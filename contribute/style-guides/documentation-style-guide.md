@@ -55,7 +55,7 @@ For all items not covered in this guide, refer to the [Microsoft Style Guide](ht
 
 * Grafana, Loki, and Prometheus are always capitalized unless part of a code block.
 * Git is always capitalized, unless part of a code block.
-* Abbreviations are always capitalized (such as HTTP or URL)
+* Abbreviations are always capitalized, e.g. HTTP, URL, JSON, API, and ID.
 
 ### Word usage
 
