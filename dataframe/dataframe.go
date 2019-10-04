@@ -1,6 +1,7 @@
 package dataframe
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 	"time"
@@ -44,57 +45,73 @@ type Field struct {
 
 type Fields []*Field
 
+func assertFieldType(got, want FieldType) {
+	if got != want {
+		panic(fmt.Sprintf("values doesn't match the specified field type"))
+	}
+}
+
 // NewField returns a new instance of Field.
 func NewField(name string, fieldType FieldType, values interface{}) *Field {
 	var vec Vector
 
 	switch v := values.(type) {
 	case []*float64:
+		assertFieldType(fieldType, FieldTypeNumber)
 		vec = newVector(fieldType, len(v))
 		for i := 0; i < len(v); i++ {
 			vec.Set(i, v[i])
 		}
 	case []*int64:
+		assertFieldType(fieldType, FieldTypeNumber)
 		vec = newVector(fieldType, len(v))
 		for i := 0; i < len(v); i++ {
 			vec.Set(i, v[i])
 		}
 	case []*time.Time:
+		assertFieldType(fieldType, FieldTypeTime)
 		vec = newVector(fieldType, len(v))
 		for i := 0; i < len(v); i++ {
 			vec.Set(i, v[i])
 		}
 	case []*string:
+		assertFieldType(fieldType, FieldTypeString)
 		vec = newVector(fieldType, len(v))
 		for i := 0; i < len(v); i++ {
 			vec.Set(i, v[i])
 		}
 	case []*bool:
+		assertFieldType(fieldType, FieldTypeBoolean)
 		vec = newVector(fieldType, len(v))
 		for i := 0; i < len(v); i++ {
 			vec.Set(i, v[i])
 		}
 	case []float64:
+		assertFieldType(fieldType, FieldTypeNumber)
 		vec = newVector(fieldType, len(v))
 		for i := 0; i < len(v); i++ {
 			vec.Set(i, &v[i])
 		}
 	case []int64:
+		assertFieldType(fieldType, FieldTypeNumber)
 		vec = newVector(fieldType, len(v))
 		for i := 0; i < len(v); i++ {
 			vec.Set(i, &v[i])
 		}
 	case []time.Time:
+		assertFieldType(fieldType, FieldTypeTime)
 		vec = newVector(fieldType, len(v))
 		for i := 0; i < len(v); i++ {
 			vec.Set(i, &v[i])
 		}
 	case []string:
+		assertFieldType(fieldType, FieldTypeString)
 		vec = newVector(fieldType, len(v))
 		for i := 0; i < len(v); i++ {
 			vec.Set(i, &v[i])
 		}
 	case []bool:
+		assertFieldType(fieldType, FieldTypeBoolean)
 		vec = newVector(fieldType, len(v))
 		for i := 0; i < len(v); i++ {
 			vec.Set(i, &v[i])
