@@ -1,6 +1,5 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
-import { css, cx } from 'emotion';
 import { action } from '@storybook/addon-actions';
 
 import { SegmentAsync, OptionType } from './';
@@ -83,47 +82,7 @@ SegmentStories.add('Grouped Array Options', () => {
   );
 });
 
-const CustomLabelComponent = ({ value }: any) => (
-  <div
-    className={`query-part ${cx(css`
-      display: flex;
-      align-items: center;
-      height: 100%;
-      padding: 0 4px;
-      .pointer + .pointer {
-        margin: 0 2px;
-        font-size: 14px;
-      }
-      .value {
-        margin: 0 8px;
-      }
-    `)}`}
-  >
-    <span
-      className="pointer fa fa-arrow-left"
-      onClick={e => {
-        e.stopPropagation();
-        action('Left arrow was clicked')();
-      }}
-    />
-    <span className="pointer fa fa-question-circle" onMouseEnter={() => action('onMouseEnter question mark')()} />
-    <a className="value">{value}</a>
-    <span
-      onClick={e => {
-        e.stopPropagation();
-        action('Remove was clicked')();
-      }}
-      className="pointer fa fa-remove"
-    />
-    <span
-      className="pointer fa fa-arrow-right"
-      onClick={e => {
-        e.stopPropagation();
-        action('Right arrow was clicked')();
-      }}
-    />
-  </div>
-);
+const CustomLabelComponent = ({ value }: any) => <div className="gf-form-label">custom({value})</div>;
 
 SegmentStories.add('Custom Label Field', () => {
   return (
