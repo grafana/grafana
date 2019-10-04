@@ -144,6 +144,7 @@ export class PanelQueryRunner {
 
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
+      console.log('to', request.range.to.valueOf());
 
       this.lastRequest = request;
       this.pipeToSubject(runRequest(ds, request));

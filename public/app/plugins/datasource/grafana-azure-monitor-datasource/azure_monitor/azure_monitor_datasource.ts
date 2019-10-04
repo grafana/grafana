@@ -75,6 +75,7 @@ export default class AzureMonitorDatasource {
       const metricDefinition = this.templateSrv.replace(item.metricDefinition, options.scopedVars);
       const timeGrain = this.templateSrv.replace((item.timeGrain || '').toString(), options.scopedVars);
       const aggregation = this.templateSrv.replace(item.aggregation, options.scopedVars);
+      const top = this.templateSrv.replace(item.top || '', options.scopedVars);
 
       return {
         refId: target.refId,
@@ -95,6 +96,7 @@ export default class AzureMonitorDatasource {
             metricNamespace && metricNamespace !== this.defaultDropdownValue ? metricNamespace : metricDefinition,
           aggregation: aggregation,
           dimension: this.templateSrv.replace(item.dimension, options.scopedVars),
+          top: top || '10',
           dimensionFilter: this.templateSrv.replace(item.dimensionFilter, options.scopedVars),
           alias: item.alias,
           format: target.format,

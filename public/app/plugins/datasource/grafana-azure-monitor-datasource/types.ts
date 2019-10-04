@@ -41,6 +41,7 @@ export interface AzureMetricQuery {
   dimension: string;
   dimensionFilter: string;
   alias: string;
+  top: string;
 }
 
 export interface AzureLogsQuery {

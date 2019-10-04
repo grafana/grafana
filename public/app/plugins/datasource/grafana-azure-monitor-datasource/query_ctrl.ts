@@ -36,6 +36,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       allowedTimeGrainsMs: number[];
       dimensions: any[];
       dimension: any;
+      top: string;
       aggregation: string;
       aggOptions: string[];
     };
@@ -71,6 +72,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       metricName: this.defaultDropdownValue,
       dimensionFilter: '*',
       timeGrain: 'auto',
+      top: '10',
     },
     azureLogAnalytics: {
       query: [

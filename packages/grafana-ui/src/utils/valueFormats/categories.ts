@@ -155,7 +155,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'gigabytes/sec', id: 'GBs', fn: decimalSIPrefix('Bs', 3) },
       { name: 'gigabits/sec', id: 'Gbits', fn: decimalSIPrefix('bps', 3) },
       { name: 'terabytes/sec', id: 'TBs', fn: decimalSIPrefix('Bs', 4) },
-      { name: 'terabits/sec', id: 'Gbits', fn: decimalSIPrefix('bps', 4) },
+      { name: 'terabits/sec', id: 'Tbits', fn: decimalSIPrefix('bps', 4) },
       { name: 'petabytes/sec', id: 'PBs', fn: decimalSIPrefix('Bs', 5) },
       { name: 'petabits/sec', id: 'Pbits', fn: decimalSIPrefix('bps', 5) },
     ],
