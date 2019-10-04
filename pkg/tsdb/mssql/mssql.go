@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/util"
+	"golang.org/x/xerrors"
 )
 
 func init() {
@@ -46,7 +47,10 @@ func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 }
 
 func generateConnectionString(datasource *models.DataSource) (string, error) {
-	server, port := util.SplitHostPortDefault(datasource.Url, "localhost", "1433")
+	server, port, err := util.SplitHostPortDefault(datasource.Url, "localhost", "1433")
+	if err != nil {
+		return "", xerrors.Errorf("Invalid data source URL '%s': %w", datasource.Url, err)
+	}
 
 	encrypt := datasource.JsonData.Get("encrypt").MustString("false")
 	connStr := fmt.Sprintf("server=%s;port=%s;database=%s;user id=%s;password=%s;",
