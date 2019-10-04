@@ -1,0 +1,38 @@
+{
+  "type": "panel",
+  "name": "Discrete",
+  "id": "natel-discrete-panel",
+
+  "info": {
+    "description": "Discrete Events grafana",
+    "author": {
+      "name": "Natel Energy"
+    },
+    "keywords": [ "discrete", "events", "strings" ],
+    "logos": {
+      "small": "img/discrete_logo.svg",
+      "large": "img/discrete_logo.svg"
+    },
+    "links": [
+      {"name": "Project site", "url": "https://github.com/NatelEnergy/grafana-discrete-panel"},
+      {"name": "MIT License",  "url": "https://github.com/NatelEnergy/grafana-discrete-panel/blob/master/LICENSE"},
+      {"name": "Natel Energy", "url": "http://www.natelenergy.com/"}
+    ],
+    "screenshots": [
+      { "name": "Single State",     "path": "img/screenshot-single-1.png"  },
+      { "name": "Tooltips",         "path": "img/screenshot-single-2.png"  },
+      { "name": "Summary Tooltips", "path": "img/screenshot-single-3.png"  },
+      { "name": "Show all values",  "path": "img/screenshot-single-4.png"  },
+      { "name": "Multiple Results", "path": "img/screenshot-multiple.png"  },
+      { "name": "Options",          "path": "img/screenshot-options-1.png" },
+      { "name": "Legend",           "path": "img/screenshot-options-2.png" }
+    ],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+
+  "dependencies": {
+    "grafanaVersion": "4.x.x",
+    "plugins": [ ]
+  }
+}

@@ -1,0 +1,69 @@
+
+
+<div class="editor-row">
+  <h5 class="page-heading">Value Mappings</h5>
+  <div class="gf-form-group">
+    <div class="gf-form" ng-repeat="map in ctrl.panel.valueMaps">
+      <span class="gf-form-label">
+        <i class="fa fa-remove pointer" ng-click="ctrl.removeValueMap(map)"></i>
+      </span>
+      <input type="text" ng-model="map.value" placeholder="value" class="gf-form-input max-width-6" ng-blur="ctrl.render()">
+      <span class="gf-form-label">
+        <i class="fa fa-arrow-right"></i>
+      </span>
+      <input type="text" placeholder="text" ng-model="map.text" class="gf-form-input max-width-8" ng-blur="ctrl.render()">
+    </div>
+
+    <div class="gf-form-button-row">
+      <button class="btn btn-inverse" ng-click="ctrl.addValueMap();">
+        <i class="fa fa-plus"></i>
+        Add a value mapping
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="editor-row">
+  <h5 class="page-heading">Range Mappings</h5>
+  <div class="gf-form-group">
+    <div class="gf-form" ng-repeat="rangeMap in ctrl.panel.rangeMaps">
+        <span class="gf-form-label">
+          <i class="fa fa-remove pointer" ng-click="ctrl.removeRangeMap(rangeMap)"></i>
+        </span>
+        <span class="gf-form-label">From</span>
+        <input type="text" ng-model="rangeMap.from" class="gf-form-input max-width-6" ng-blur="ctrl.render()">
+        <span class="gf-form-label">To</span>
+        <input type="text" ng-model="rangeMap.to" class="gf-form-input max-width-6" ng-blur="ctrl.render()">
+        <span class="gf-form-label">Text</span>
+        <input type="text" ng-model="rangeMap.text" class="gf-form-input max-width-8" ng-blur="ctrl.render()">
+    </div>
+
+    <div class="gf-form-button-row">
+      <button class="btn btn-inverse" ng-click="ctrl.addRangeMap()">
+        <i class="fa fa-plus"></i>
+        Add a range mapping
+      </button>
+    </div>
+  </div>
+</div>
+
+
+
+<div class="editor-row">
+  <h5 class="page-heading">Numeric Conversion</h5>
+  <div class="gf-form-group">
+    <div class="gf-form">
+      <label class="gf-form-label width-6">Unit</label>
+      <div class="gf-form-dropdown-typeahead max-width-20" ng-model="ctrl.panel.units" 
+        dropdown-typeahead2="ctrl.unitFormats" 
+        dropdown-typeahead-on-select="ctrl.panel.units = $subItem.value; ctrl.onConfigChanged(true);"></div>
+    </div>
+
+    <div class="gf-form">
+      <label class="gf-form-label width-6">Decimals</label>
+      <input type="number" class="gf-form-input max-width-20" placeholder="auto" empty-to-null bs-tooltip="'Override automatic decimal precision'" data-placement="right" ng-model="ctrl.panel.decimals" ng-change="ctrl.onConfigChanged(true);" ng-model-onblur>
+    </div>
+
+  </div>
+</div>
+

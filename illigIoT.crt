@@ -1,0 +1,1 @@
+openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes -keyout illigIoT.key -out illigIoT.crt -extensions san -config <(echo "[req]"; echo distinguished_name=req; echo "[san]"; echo subjectAltName=DNS:illig.de,DNS:illig-group.com,IP:10.150.144.14) -subj /CN=illig.de

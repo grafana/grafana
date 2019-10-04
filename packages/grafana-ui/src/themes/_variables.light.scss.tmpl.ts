@@ -241,7 +241,7 @@ $navbar-page-btn-color: $blue-base;
 // -------------------------
 $side-menu-bg: $blue-base; //$dark-1;
 $side-menu-bg-mobile: rgba(0, 0, 0, 0); //$gray-6;
-$side-menu-item-hover-bg: $gray-1;
+$side-menu-item-hover-bg: $blue-base;
 $side-menu-shadow: 0px 0px 0px -0px $gray-1;
 $side-menu-link-color: $gray-6;
 

@@ -1,0 +1,82 @@
+
+
+<div class="editor-row">
+
+
+    <div class="section gf-form-group">
+        <h5 class="section-heading">Legend</h5>
+          <gf-form-switch class="gf-form"
+            label="Show Legend"
+            label-class="gf-form-label width-14"
+            checked="ctrl.panel.showLegend"
+            on-change="ctrl.onConfigChanged()"></gf-form-switch>
+          <gf-form-switch class="gf-form"
+            label="Show Distinct Metrics"
+            label-class="gf-form-label width-14"
+            checked="ctrl.panel.showLegendNames"
+            on-change="ctrl.updateLegendMetrics(true)"></gf-form-switch>
+          <gf-form-switch class="gf-form"
+            label="Transition Count"
+            label-class="gf-form-label width-14"
+            checked="ctrl.panel.showTransitionCount"
+            on-change="ctrl.onConfigChanged()"></gf-form-switch>
+          <gf-form-switch class="gf-form"
+            label="Distinct Values Count"
+            label-class="gf-form-label width-14"
+            checked="ctrl.panel.showDistinctCount"
+            on-change="ctrl.onConfigChanged()"></gf-form-switch>
+    </div>
+
+    <div class="section gf-form-group">
+        <h5 class="section-heading">Values</h5>
+              <gf-form-switch class="gf-form"
+                label="Show"
+                label-class="gf-form-label width-14"
+                checked="ctrl.panel.showLegendValues"
+                on-change="ctrl.onConfigChanged()"></gf-form-switch>
+
+              <div class="gf-form">
+                <label class="gf-form-label width-7">Sort By</label>
+                <div class="gf-form-select-wrapper max-width-14">
+                  <select class="gf-form-input" ng-model="ctrl.panel.legendSortBy" ng-change="ctrl.onConfigChanged()">
+                    <option value="-ms">Time (desc)</option>
+                    <option value="ms">Time (asc)</option>
+                    <option value="-count">Count (desc)</option>
+                    <option value="count">Count (asc)</option>
+                  </select>
+                </div>
+              </div>
+
+            <div class="gf-form">
+              <label class="gf-form-label width-14">Limit</label>
+              <input type="number" ng-model="ctrl.panel.legendMaxValues" class="gf-form-input max-width-5" ng-blur="ctrl.render()" min="1" max="100" placeholder="all"/>
+            </div>
+
+
+              <gf-form-switch class="gf-form"
+                label="Show Time"
+                label-class="gf-form-label width-14"
+                checked="ctrl.panel.showLegendTime"
+                on-change="ctrl.onConfigChanged()"></gf-form-switch>
+
+              <gf-form-switch class="gf-form"
+                label="Show Counts"
+                label-class="gf-form-label width-14"
+                checked="ctrl.panel.showLegendCounts"
+                on-change="ctrl.onConfigChanged()"></gf-form-switch>
+
+              <gf-form-switch class="gf-form"
+                label="Show Percent"
+                label-class="gf-form-label width-14"
+                checked="ctrl.panel.showLegendPercent"
+                on-change="ctrl.onConfigChanged()"></gf-form-switch>
+
+            <div class="gf-form" ng-show="ctrl.panel.showLegendPercent">
+              <label class="gf-form-label width-14">Percent Decimals</label>
+              <input type="number" ng-model="ctrl.panel.legendPercentDecimals" class="gf-form-input max-width-5" ng-blur="ctrl.render()" placeholder="auto" min="0" max="10" />
+            </div>
+
+        </div>
+    </div>
+
+</div>

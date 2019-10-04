@@ -1,0 +1,66 @@
+{
+  "name": "natel-discrete-panel",
+  "version": "0.0.9",
+  "description": "Discrete Events in Grafana",
+  "scripts": {
+    "build": "webpack --config webpack.config.prod.js",
+    "dev": "webpack --mode development",
+    "watch": "webpack --mode development --watch",
+    "test": "jest --config jest.config.js",
+    "release": "node release.js",
+    "precommit": "pretty-quick --staged",
+    "lint": "tslint -c tslint.json --project tsconfig.json",
+    "pretty": "prettier --write src/**/*.ts"
+  },
+  "author": "ryantxu",
+  "license": "MIT",
+  "keywords": [
+    "discrete",
+    "canvas",
+    "grafana",
+    "plugin",
+    "panel"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NatelEnergy/grafana-discrete-panel.git"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "trailingComma": "es5",
+    "useTabs": false,
+    "printWidth": 90,
+    "bracketSpacing": false,
+    "semi": true
+  },
+  "dependencies": {
+    "jquery": "^3.2.1",
+    "lodash": "^4.17.10",
+    "moment": "^2.22.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^23.3.1",
+    "@types/lodash": "^4.14.74",
+    "babel-core": "^6.26.3",
+    "babel-jest": "^23.0.1",
+    "babel-loader": "^7.1.4",
+    "babel-preset-env": "^1.7.0",
+    "clean-webpack-plugin": "^0.1.19",
+    "copy-webpack-plugin": "^4.5.1",
+    "css-loader": "^1.0.0",
+    "grafana-sdk-mocks": "github:ryantxu/grafana-sdk-mocks",
+    "jest": "^23.0.1",
+    "ng-annotate-webpack-plugin": "^0.3.0",
+    "prettier": "^1.14",
+    "pretty-quick": "^1.4.1",
+    "release-it": "^9.1.0",
+    "replace-in-file-webpack-plugin": "^1.0.6",
+    "style-loader": "^0.22",
+    "ts-jest": "^23",
+    "ts-loader": "^4.3.0",
+    "typescript": "^3",
+    "uglifyjs-webpack-plugin": "^2.0.1",
+    "webpack": "^4.9.1",
+    "webpack-cli": "^3.1"
+  }
+}

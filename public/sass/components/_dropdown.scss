@@ -120,7 +120,7 @@
       border-left: 2px solid transparent;
 
       &:hover {
-        @include left-brand-border-gradient();
+        //@include left-brand-border-gradient();
         color: $link-hover-color;
         background: $menu-dropdown-hover-bg !important;
       }
@@ -334,7 +334,7 @@
     }
 
     &:hover {
-      @include left-brand-border-gradient();
+      //@include left-brand-border-gradient();
       color: $link-hover-color;
       background: $input-label-bg;
     }

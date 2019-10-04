@@ -1,0 +1,23 @@
+<div>
+    <div class="canvas-spot" style="width:100%;"></div>
+
+    <div ng-show="ctrl.panel.showLegend">
+        <div ng-repeat="metric in ctrl.legend">
+            <span ng-show="ctrl.panel.showLegendNames">{{ metric.name }}: </span>
+            <div ng-show="ctrl.panel.showLegendValues"
+                ng-repeat="info in metric.legendInfo | orderBy:ctrl.panel.legendSortBy | limitTo:ctrl.panel.legendMaxValues"
+                style="cursor: default; display:inline-block; margin-right:15px;"
+                ng-mousemove="ctrl.showLegandTooltip($event, info);"
+                ng-mouseleave="ctrl.clearTT()">
+                <div ng-style="{ 'background-color': ctrl.getColor(info.val) }" 
+                  style="width:10px; height:10px; display:inline-block;"></div> {{ ctrl.getLegendDisplay( info, metric ) }}
+            </div>
+            <div ng-show="ctrl.panel.showTransitionCount" style="display:inline-block;">
+                &nbsp; Transitions: {{metric.transitionCount}}
+            </div>
+            <div ng-show="ctrl.panel.showDistinctCount" style="display:inline-block;">
+                &nbsp; Distinct: {{metric.distinctValuesCount}}
+            </div>
+        </div>
+    </div>
+</div>

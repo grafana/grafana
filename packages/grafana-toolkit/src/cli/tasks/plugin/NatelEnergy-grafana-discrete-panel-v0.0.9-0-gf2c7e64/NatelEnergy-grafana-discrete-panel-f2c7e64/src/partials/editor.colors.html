@@ -1,0 +1,87 @@
+
+<div class="editor-row">
+    <h5 class="page-heading">Text Colors</h5>
+    <div class="gf-form-group">
+        <div class="gf-form">
+            <span class="gf-form-label width-10">
+                Metric Names
+            </span>
+            <input type="text" placeholder="text" ng-model="ctrl.panel.metricNameColor" class="gf-form-input width-13" ng-blur="ctrl.updateColorInfo()">
+            <span class="gf-form-label">
+                <spectrum-picker ng-model="ctrl.panel.metricNameColor" ng-change="ctrl.updateColorInfo()" ></spectrum-picker>
+            </span>
+        </div>
+
+        <div class="gf-form">
+            <span class="gf-form-label width-10">
+                Value Text
+            </span>
+            <input type="text" placeholder="text" ng-model="ctrl.panel.valueTextColor" class="gf-form-input width-13" ng-blur="ctrl.updateColorInfo()">
+            <span class="gf-form-label">
+                <spectrum-picker ng-model="ctrl.panel.valueTextColor" ng-change="ctrl.updateColorInfo()" ></spectrum-picker>
+            </span>
+        </div>
+
+        <div class="gf-form">
+            <span class="gf-form-label width-10">
+                Time Text
+            </span>
+            <input type="text" placeholder="text" ng-model="ctrl.panel.timeTextColor" class="gf-form-input width-13" ng-blur="ctrl.updateColorInfo()">
+            <span class="gf-form-label">
+                <spectrum-picker ng-model="ctrl.panel.timeTextColor" ng-change="ctrl.updateColorInfo()" ></spectrum-picker>
+            </span>
+        </div>
+
+
+        <div class="gf-form">
+            <span class="gf-form-label width-10">
+                Background
+            </span>
+            <input type="text" placeholder="text" ng-model="ctrl.panel.backgroundColor" class="gf-form-input width-13" ng-blur="ctrl.updateColorInfo()">
+            <span class="gf-form-label">
+                <spectrum-picker ng-model="ctrl.panel.backgroundColor" ng-change="ctrl.updateColorInfo()" ></spectrum-picker>
+            </span>
+        </div>
+
+        <div class="gf-form">
+            <span class="gf-form-label width-10">
+                Lines
+            </span>
+            <input type="text" placeholder="text" ng-model="ctrl.panel.lineColor" class="gf-form-input width-13" ng-blur="ctrl.updateColorInfo()">
+            <span class="gf-form-label">
+                <spectrum-picker ng-model="ctrl.panel.lineColor" ng-change="ctrl.updateColorInfo()" ></spectrum-picker>
+            </span>
+        </div>
+    </div>
+</div>
+
+
+<div class="editor-row">
+  <h5 class="page-heading">Color Mappings</h5>
+  <div class="gf-form-group">
+    <div class="gf-form" ng-repeat="map in ctrl.panel.colorMaps">
+      <span class="gf-form-label">
+        <i class="fa fa-remove pointer" ng-click="ctrl.removeColorMap(map)"></i>
+      </span>
+      <input type="text" ng-model="map.text" placeholder="value" class="gf-form-input max-width-10" ng-blur="ctrl.render()">
+      <span class="gf-form-label">
+        <i class="fa fa-arrow-right"></i>
+      </span>
+      <input type="text" placeholder="text" ng-model="map.color" class="gf-form-input max-width-8" ng-blur="ctrl.updateColorInfo()">
+      <span class="gf-form-label">
+        <spectrum-picker ng-model="map.color" ng-change="ctrl.updateColorInfo()" ></spectrum-picker>
+      </span>
+    </div>
+
+    <div class="gf-form-button-row">
+      <button class="btn btn-inverse" ng-click="ctrl.addColorMap();">
+        <i class="fa fa-plus"></i>
+        Add a Color mapping
+      </button>
+      <button class="btn btn-inverse" ng-click="ctrl.addColorMap('curent');">
+        <i class="fa fa-plus"></i>
+        Add Current Values
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,142 @@
+<div class="editor-row">
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Display</h5>
+
+    <!--
+        <div class="gf-form">
+          <label class="gf-form-label width-7">Show</label>
+          <div class="gf-form-select-wrapper max-width-14">
+            <select class="gf-form-input" ng-model="ctrl.panel.display" ng-change="ctrl.onConfigChanged()">
+              <option value="timeline">Timeline</option>
+              <option value="stacked">Bar Chart (stacked)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="gf-form" ng-show="ctrl.panel.display != 'timeline'">
+          <label class="gf-form-label width-7">Sort By</label>
+          <div class="gf-form-select-wrapper max-width-14">
+            <select class="gf-form-input" ng-model="ctrl.panel.displaySortBy" ng-change="ctrl.onConfigChanged()">
+              <option value="-ms">Time (desc)</option>
+              <option value="ms">Time (asc)</option>
+              <option value="-count">Count (desc)</option>
+              <option value="count">Count (asc)</option>
+            </select>
+          </div>
+        </div>
+      -->
+
+    <div class="gf-form">
+      <label class="gf-form-label width-14">Row Height</label>
+      <input
+        type="number"
+        ng-model="ctrl.panel.rowHeight"
+        class="gf-form-input max-width-5"
+        ng-blur="ctrl.render()"
+        min="1"
+      />
+    </div>
+    <div class="gf-form">
+      <label class="gf-form-label width-14">Text Size</label>
+      <input
+        type="number"
+        ng-model="ctrl.panel.textSize"
+        class="gf-form-input max-width-5"
+        ng-blur="ctrl.render()"
+        min="1"
+      />
+    </div>
+    <div class="gf-form">
+      <label class="gf-form-label width-14">Text Size Time</label>
+      <input
+        type="number"
+        ng-model="ctrl.panel.textSizeTime"
+        class="gf-form-input max-width-5"
+        ng-blur="ctrl.render()"
+        min="1"
+      />
+    </div>
+
+    <gf-form-switch
+      class="gf-form"
+      label="Show Time Axis"
+      label-class="gf-form-label width-14"
+      checked="ctrl.panel.showTimeAxis"
+      on-change="ctrl.onConfigChanged()"
+    ></gf-form-switch>
+
+    <gf-form-switch
+      class="gf-form"
+      label="Write Last Value"
+      label-class="gf-form-label width-14"
+      checked="ctrl.panel.writeLastValue"
+      on-change="ctrl.onConfigChanged()"
+    ></gf-form-switch>
+
+    <gf-form-switch
+      class="gf-form"
+      label="Write Metric Names"
+      label-class="gf-form-label width-14"
+      checked="ctrl.panel.writeMetricNames"
+      on-change="ctrl.onConfigChanged()"
+    ></gf-form-switch>
+
+    <gf-form-switch
+      class="gf-form"
+      label="Write All Values"
+      label-class="gf-form-label width-14"
+      checked="ctrl.panel.writeAllValues"
+      on-change="ctrl.onConfigChanged()"
+    ></gf-form-switch>
+  </div>
+
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Hover tooltip</h5>
+    <gf-form-switch
+      class="gf-form"
+      label="Highlight on Hover"
+      label-class="gf-form-label width-14"
+      checked="ctrl.panel.highlightOnMouseover"
+      on-change="ctrl.onConfigChanged()"
+    ></gf-form-switch>
+
+    <gf-form-switch
+      class="gf-form"
+      label="Use Custom Precision"
+      label-class="gf-form-label width-14"
+      checked="ctrl.panel.useTimePrecision"
+      on-change="ctrl.onConfigChanged()"
+    ></gf-form-switch>
+
+    <div class="gf-form-select-wrapper width-18" ng-show="ctrl.panel.useTimePrecision">
+      <select
+        class="gf-form-input"
+        ng-model="ctrl.panel.timePrecision"
+        ng-options="option.name for option in ctrl.panel.timeOptions track by option.value"
+        ng-change="ctrl.onConfigChanged()"
+      >
+      </select>
+    </div>
+  </div>
+
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Query</h5>
+    <div class="gf-form">
+      <label class="gf-form-label width-12"
+        >Expand 'from' query
+        <info-popover mode="right-normal"
+          >This will expand the query to include time before the normal query
+          range</info-popover
+        >
+      </label>
+      <input
+        type="number"
+        ng-model="ctrl.panel.expandFromQueryS"
+        class="gf-form-input max-width-5"
+        ng-blur="ctrl.onConfigChanged()"
+        min="0"
+      />
+      &nbsp; Seconds
+    </div>
+  </div>
+</div>

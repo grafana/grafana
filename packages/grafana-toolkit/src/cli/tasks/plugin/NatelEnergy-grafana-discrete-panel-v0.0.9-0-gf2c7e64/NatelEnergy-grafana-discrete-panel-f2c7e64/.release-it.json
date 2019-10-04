@@ -1,0 +1,18 @@
+{
+  "github": {
+    "release": true,
+    "assets": ["dist/*.zip"]
+  },
+  "git": {
+    "tagName": "v${version}",
+    "requireCleanWorkingDir": true
+  },
+  "scripts": {
+    "afterBump": "yarn build; git add --verbose --force dist/;",
+    "beforeStage": "cd dist; zip -r natel-discrete-panel-${version}.zip *",
+    "afterRelease": "echo Successfully released ${name} v${version} to ${repo.repository}."
+  },
+  "npm": {
+    "publish": false
+  }
+}

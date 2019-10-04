@@ -1,0 +1,25 @@
+version: 2
+jobs:
+  build:
+    docker:
+      # specify the version you desire here
+      - image: circleci/node:8
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+      - run:
+          name: install yarn
+          command: 'sudo npm install -g yarn --quiet'
+      - run:
+          name: npm install
+          command: 'npm install --pure-lockfile --no-progress'
+      - run:
+          name: build
+          command: 'yarn build'
+      - run:
+          name: zip dist
+          command: 'cd dist && zip -r9 ../grafana-discrete-panel-dev.zip *'
+      - store_artifacts:
+          path: grafana-discrete-panel-dev.zip
