@@ -5,6 +5,8 @@ import { LegendItem } from '../Legend/Legend';
 import { SeriesColorChangeHandler } from './GraphWithLegend';
 import { LegendStatsList } from '../Legend/LegendStatsList';
 import { ThemeContext } from '../../themes/ThemeContext';
+import { stylesFactory } from '../../themes';
+import { GrafanaTheme } from '../../types';
 
 export interface GraphLegendItemProps {
   key?: React.Key;
@@ -56,6 +58,32 @@ export const GraphLegendListItem: React.FunctionComponent<GraphLegendItemProps> 
   );
 };
 
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    row: css`
+      font-size: ${theme.typography.size.sm};
+      td {
+        padding: ${theme.spacing.xxs} ${theme.spacing.sm};
+        white-space: nowrap;
+      }
+    `,
+    label: css`
+      cursor: pointer;
+      white-space: nowrap;
+    `,
+    itemWrapper: css`
+      display: flex;
+      white-space: nowrap;
+    `,
+    value: css`
+      text-align: right;
+    `,
+    yAxisLabel: css`
+      color: ${theme.colors.gray2};
+    `,
+  };
+});
+
 export const GraphLegendTableRow: React.FunctionComponent<GraphLegendItemProps> = ({
   item,
   onSeriesColorChange,
@@ -64,27 +92,11 @@ export const GraphLegendTableRow: React.FunctionComponent<GraphLegendItemProps> 
   className,
 }) => {
   const theme = useContext(ThemeContext);
-
+  const styles = getStyles(theme);
   return (
-    <tr
-      className={cx(
-        css`
-          font-size: ${theme.typography.size.sm};
-          td {
-            padding: ${theme.spacing.xxs} ${theme.spacing.sm};
-            white-space: nowrap;
-          }
-        `,
-        className
-      )}
-    >
+    <tr className={cx(styles.row, className)}>
       <td>
-        <span
-          className={css`
-            display: flex;
-            white-space: nowrap;
-          `}
-        >
+        <span className={styles.itemWrapper}>
           <LegendSeriesIcon
             disabled={!!onSeriesColorChange}
             color={item.color}
@@ -102,33 +114,16 @@ export const GraphLegendTableRow: React.FunctionComponent<GraphLegendItemProps> 
                 onLabelClick(item, event);
               }
             }}
-            className={css`
-              cursor: pointer;
-              white-space: nowrap;
-            `}
+            className={styles.label}
           >
-            {item.label}{' '}
-            {item.yAxis === 2 && (
-              <span
-                className={css`
-                  color: ${theme.colors.gray2};
-                `}
-              >
-                (right y-axis)
-              </span>
-            )}
+            {item.label} {item.yAxis === 2 && <span className={styles.yAxisLabel}>(right y-axis)</span>}
           </div>
         </span>
       </td>
       {item.displayValues &&
         item.displayValues.map((stat, index) => {
           return (
-            <td
-              className={css`
-                text-align: right;
-              `}
-              key={`${stat.title}-${index}`}
-            >
+            <td className={styles.value} key={`${stat.title}-${index}`}>
               {stat.text}
             </td>
           );

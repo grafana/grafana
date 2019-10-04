@@ -29,7 +29,7 @@ Grafana ships with built-in support for Google Stackdriver. Just add it as a dat
 
 | Name                  | Description                                                                         |
 | --------------------- | ----------------------------------------------------------------------------------- |
-| _Name_                | The data source name. This is how you refer to the data source in panels & queries.   |
+| _Name_                | The data source name. This is how you refer to the data source in panels and queries.   |
 | _Default_             | Default data source means that it will be pre-selected for new panels.               |
 | _Service Account Key_ | Service Account Key File for a GCP Project. Instructions below on how to create it. |
 
@@ -54,7 +54,7 @@ Click on the links above and click the `Enable` button:
 
 #### Create a GCP Service Account for a Project
 
-1. Navigate to the [APIs & Services Credentials page](https://console.cloud.google.com/apis/credentials).
+1. Navigate to the [APIs and Services Credentials page](https://console.cloud.google.com/apis/credentials).
 2. Click on the `Create credentials` dropdown/button and choose the `Service account key` option.
 
     {{< docs-imagebox img="/img/docs/v53/stackdriver_create_service_account_button.png" class="docs-image--no-shadow" caption="Create service account button" >}}

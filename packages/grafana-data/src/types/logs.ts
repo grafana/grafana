@@ -48,6 +48,7 @@ export interface LogRowModel {
   timeEpochMs: number;
   timeLocal: string;
   timeUtc: string;
+  uid: string;
   uniqueLabels?: Labels;
 }
 

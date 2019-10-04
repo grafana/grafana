@@ -37,6 +37,7 @@ export { RefreshPicker } from './RefreshPicker/RefreshPicker';
 export { TimePicker } from './TimePicker/TimePicker';
 export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
 export { List } from './List/List';
+export { Modal } from './Modal/Modal';
 
 // Renderless
 export { SetInterval } from './SetInterval/SetInterval';
@@ -86,3 +87,5 @@ export { JSONFormatter } from './JSONFormatter/JSONFormatter';
 export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
 export { ErrorBoundary, ErrorBoundaryAlert } from './ErrorBoundary/ErrorBoundary';
 export { AlphaNotice } from './AlphaNotice/AlphaNotice';
+export { Spinner } from './Spinner/Spinner';
+export { FadeTransition } from './transitions/FadeTransition';

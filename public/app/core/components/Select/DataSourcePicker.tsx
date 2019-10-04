@@ -15,6 +15,7 @@ export interface Props {
   onBlur?: () => void;
   autoFocus?: boolean;
   openMenuOnFocus?: boolean;
+  showLoading?: boolean;
 }
 
 export class DataSourcePicker extends PureComponent<Props> {
@@ -35,7 +36,7 @@ export class DataSourcePicker extends PureComponent<Props> {
   };
 
   render() {
-    const { datasources, current, autoFocus, onBlur, openMenuOnFocus } = this.props;
+    const { datasources, current, autoFocus, onBlur, openMenuOnFocus, showLoading } = this.props;
 
     const options = datasources.map(ds => ({
       value: ds.name,
@@ -47,6 +48,7 @@ export class DataSourcePicker extends PureComponent<Props> {
       label: current.name,
       value: current.name,
       imgUrl: current.meta.info.logos.small,
+      loading: showLoading,
     };
 
     return (

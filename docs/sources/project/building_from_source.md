@@ -92,7 +92,7 @@ You'll also need to run `yarn start` to watch for changes to the front-end (type
 - You can run backend Golang tests using `go test ./pkg/...`.
 - Execute all frontend tests with `yarn test`
 
-Writing & watching frontend tests
+Writing and watching frontend tests
 
 - Start watcher: `yarn jest`
 - Jest will run all test files that end with the name ".test.ts"
