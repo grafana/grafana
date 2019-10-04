@@ -18,10 +18,10 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
   state: State = { regions: [], namespaces: [], metricNames: [] };
 
   componentDidMount() {
-    this.loadRegions().then(regions => this.setState({ ...this.state, regions }));
-    this.props.datasource
-      .metricFindQuery('namespaces()')
-      .then((namespaces: SelectableValue<string>[]) => this.setState({ ...this.state, namespaces }));
+    const { datasource } = this.props;
+    Promise.all([this.loadRegions(), datasource.metricFindQuery('namespaces()')]).then(([regions, namespaces]) => {
+      this.setState({ ...this.state, regions, namespaces });
+    });
   }
 
   loadRegions = async () => {
@@ -34,8 +34,14 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
     return this.props.datasource.metricFindQuery(`metrics(${namespace},${region})`);
   };
 
+  onChange(query: CloudWatchQuery) {
+    const { onChange, onRunQuery } = this.props;
+    onChange(query);
+    onRunQuery();
+  }
+
   render() {
-    const { query, onChange, datasource } = this.props;
+    const { query, datasource } = this.props;
     const { regions, namespaces } = this.state;
     return (
       <>
@@ -45,7 +51,11 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
             width={24}
             label="Region"
             inputEl={
-              <Segment value={query.region} options={regions} onChange={region => onChange({ ...query, region })} />
+              <Segment
+                value={query.region}
+                options={regions}
+                onChange={region => this.onChange({ ...query, region })}
+              />
             }
           />
         </div>
@@ -60,12 +70,12 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
                   <Segment
                     value={query.namespace}
                     options={namespaces}
-                    onChange={namespace => onChange({ ...query, namespace })}
+                    onChange={namespace => this.onChange({ ...query, namespace })}
                   />
                   <SegmentAsync
                     value={query.metricName}
                     loadOptions={this.loadMetricNames}
-                    onChange={metricName => onChange({ ...query, metricName })}
+                    onChange={metricName => this.onChange({ ...query, metricName })}
                   />
                 </>
               }
@@ -76,7 +86,9 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
               className="query-keyword"
               width={24}
               label="Stats"
-              inputEl={<Stats values={query.statistics} onChange={statistics => onChange({ ...query, statistics })} />}
+              inputEl={
+                <Stats values={query.statistics} onChange={statistics => this.onChange({ ...query, statistics })} />
+              }
             />
           </div>
         </div>
@@ -90,7 +102,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
                 dimensions={query.dimensions}
                 onChange={dimensions => {
                   console.log('dimensions changed', { dimensions });
-                  onChange({ ...query, dimensions });
+                  this.onChange({ ...query, dimensions });
                 }}
                 loadKeys={() => datasource.getDimensionKeys(query.namespace, query.region)}
                 loadValues={newKey => {
