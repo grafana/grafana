@@ -1,7 +1,7 @@
 import React, { FunctionComponent, Fragment, useState, useEffect } from 'react';
+import isEqual from 'lodash/isEqual';
 import { SelectableValue } from '@grafana/data';
 import { Segment, SegmentAsync } from '@grafana/ui';
-import isEqual from 'lodash/isEqual';
 
 export interface Props {
   dimensions: { [key: string]: string };
@@ -11,7 +11,6 @@ export interface Props {
 }
 
 const operators: SelectableValue<string>[] = ['='].map(v => ({ label: v, value: v }));
-
 const removeText = '-- remove dimension --';
 const removeOption: SelectableValue<string> = { label: removeText, value: removeText };
 
@@ -49,7 +48,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
           />
           <Segment
             Component={<a className="gf-form-label query-segment-operator">=</a>}
-            onChange={value => {}}
+            onChange={() => {}}
             options={operators}
           />
           <SegmentAsync

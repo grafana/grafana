@@ -1,7 +1,14 @@
 import React, { PureComponent } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { CloudWatchQuery } from '../types';
-import { FormField, QueryEditorProps, Segment, SegmentAsync } from '@grafana/ui';
+import {
+  FormField,
+  QueryEditorProps,
+  Segment,
+  SegmentAsync,
+  ValidationEvents,
+  EventsWithValidation,
+} from '@grafana/ui';
 import DataSource, { Options } from '../datasource';
 import { Stats } from './Stats';
 import { Dimensions } from './Dimensions';
@@ -13,6 +20,18 @@ interface State {
   namespaces: SelectableValue<string>[];
   metricNames: SelectableValue<string>[];
 }
+
+const idValidationEvents: ValidationEvents = {
+  [EventsWithValidation.onBlur]: [
+    {
+      rule: value => {
+        console.log(value);
+        return false;
+      },
+      errorMessage: 'Not a valid duration',
+    },
+  ],
+};
 
 export class CloudWatchQueryEditor extends PureComponent<Props, State> {
   state: State = { regions: [], namespaces: [], metricNames: [] };
@@ -117,6 +136,15 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
                 }}
               />
             }
+          />
+        </div>
+        <div className="gf-form inline">
+          <FormField
+            className="query-keyword"
+            width={16}
+            label="Id"
+            onChange={console.log}
+            validationEvents={idValidationEvents}
           />
         </div>
       </>
