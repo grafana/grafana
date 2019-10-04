@@ -206,9 +206,10 @@ allowed_organizations =
     allow_sign_up = true
     client_id = <OpenID Connect Client ID from Centrify>
     client_secret = <your generated OpenID Connect Client Sercret"
-    scopes = openid email name
+    scopes = openid profile email
     auth_url = https://<your domain>.my.centrify.com/OAuth2/Authorize/<Application ID>
     token_url = https://<your domain>.my.centrify.com/OAuth2/Token/<Application ID>
+    api_url = https://<your domain>.my.centrify.com/OAuth2/UserInfo/<Application ID>
     ```
 
 ## Set up OAuth2 with non-compliant providers

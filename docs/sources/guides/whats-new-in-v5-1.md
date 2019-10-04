@@ -1,6 +1,6 @@
 +++
 title = "What's New in Grafana v5.1"
-description = "Feature & improvement highlights for Grafana v5.1"
+description = "Feature and improvement highlights for Grafana v5.1"
 keywords = ["grafana", "new", "documentation", "5.1"]
 type = "docs"
 [menu.docs]
@@ -17,8 +17,8 @@ Grafana v5.1 brings new features, many enhancements and bug fixes. This article 
 * [Improved scrolling experience]({{< relref "#improved-scrolling-experience" >}})
 * [Improved docker image]({{< relref "#improved-docker-image-breaking-change" >}}) with a breaking change!
 * [Heatmap support for Prometheus]({{< relref "#prometheus" >}})
-* [Microsoft SQL Server]({{< relref "#microsoft-sql-server" >}}) as metric & table data source!
-* [Dashboards & Panels]({{< relref "#dashboards-panels" >}}) Improved adding panels to dashboards and enhancements to Graph and Table panels.
+* [Microsoft SQL Server]({{< relref "#microsoft-sql-server" >}}) as metric and table data source!
+* [Dashboards and Panels]({{< relref "#dashboards-panels" >}}) Improved adding panels to dashboards and enhancements to Graph and Table panels.
 * [New variable interpolation syntax]({{< relref "#new-variable-interpolation-syntax" >}})
 * [Improved workflow for provisioned dashboards]({{< relref "#improved-workflow-for-provisioned-dashboards" >}})
 
@@ -67,7 +67,7 @@ Please read [Using Microsoft SQL Server in Grafana documentation](/features/data
 
 <div class="clearfix"></div>
 
-## Dashboards & Panels
+## Dashboards and Panels
 
 ### Adding new panels to dashboards
 

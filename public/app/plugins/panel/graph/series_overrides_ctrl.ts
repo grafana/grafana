@@ -6,6 +6,7 @@ export function SeriesOverridesCtrl($scope: any, $element: JQuery, popoverSrv: a
   $scope.overrideMenu = [];
   $scope.currentOverrides = [];
   $scope.override = $scope.override || {};
+  $scope.colorPickerModel = {};
 
   $scope.addOverrideOption = (name: string, propertyName: string, values: any) => {
     const option = {
@@ -45,22 +46,25 @@ export function SeriesOverridesCtrl($scope: any, $element: JQuery, popoverSrv: a
     $scope.override['color'] = color;
     $scope.updateCurrentOverrides();
     $scope.ctrl.render();
+
+    // update picker model so that the picker UI will also update
+    $scope.colorPickerModel.series.color = color;
   };
 
   $scope.openColorSelector = (color: any) => {
-    const fakeSeries = { color };
+    $scope.colorPickerModel = {
+      autoClose: true,
+      colorSelected: $scope.colorSelected,
+      series: { color },
+    };
+
     popoverSrv.show({
       element: $element.find('.dropdown')[0],
       position: 'top center',
       openOn: 'click',
-      template: '<series-color-picker-popover color="color" onColorChange="colorSelected" />',
+      template: '<series-color-picker-popover color="series.color" onColorChange="colorSelected" />',
       classNames: 'drop-popover drop-popover--transparent',
-      model: {
-        autoClose: true,
-        colorSelected: $scope.colorSelected,
-        series: fakeSeries,
-        color,
-      },
+      model: $scope.colorPickerModel,
       onClose: () => {
         $scope.ctrl.render();
       },
