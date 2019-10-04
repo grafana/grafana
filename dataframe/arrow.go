@@ -10,15 +10,15 @@ import (
 	"github.com/mattetti/filebuffer"
 )
 
-// toArrow converts the Frame to an arrow table and returns a byte
+// MarshalArrow converts the Frame to an arrow table and returns a byte
 // representation of that table.
-func toArrow(refID string, f *Frame) ([]byte, error) {
+func MarshalArrow(f *Frame) ([]byte, error) {
 	arrowFields, err := buildArrowFields(f)
 	if err != nil {
 		return nil, err
 	}
 
-	schema, err := buildArrowSchema(refID, f, arrowFields)
+	schema, err := buildArrowSchema(f, arrowFields)
 	if err != nil {
 		return nil, err
 	}
@@ -150,10 +150,10 @@ func buildTimeColumn(pool memory.Allocator, field arrow.Field, vec *timeVector) 
 }
 
 // buildArrowSchema builds an Arrow schema for a DataFrame.
-func buildArrowSchema(refID string, f *Frame, fs []arrow.Field) (*arrow.Schema, error) {
+func buildArrowSchema(f *Frame, fs []arrow.Field) (*arrow.Schema, error) {
 	tableMetaMap := map[string]string{
 		"name":  f.Name,
-		"refId": refID,
+		"refId": f.RefID,
 	}
 
 	if f.Labels != nil {
