@@ -29,7 +29,7 @@ data from a MySQL compatible database.
 
 Name | Description
 ------------ | -------------
-*Name* | The data source name. This is how you refer to the data source in panels & queries.
+*Name* | The data source name. This is how you refer to the data source in panels and queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
 *Host* | The IP address/hostname and optional port of your MySQL instance.
 *Database* | Name of your MySQL database.
@@ -60,7 +60,7 @@ Identifier | Description
 ### Database User Permissions (Important!)
 
 The database user you specify when you add the data source should only be granted SELECT permissions on
-the specified database & tables you want to query. Grafana does not validate that the query is safe. The query
+the specified database and tables you want to query. Grafana does not validate that the query is safe. The query
 could include any SQL statement. For example, statements like `USE otherdb;` and `DROP TABLE user;` would be
 executed. To protect against this we **Highly** recommend you create a specific mysql user with restricted permissions.
 
@@ -156,7 +156,7 @@ The query editor has a link named `Generated SQL` that show up after a query as 
 
 ## Table queries
 
-If the `Format as` query option is set to `Table` then you can basically do any type of SQL query. The table panel will automatically show the results of whatever columns & rows your query returns.
+If the `Format as` query option is set to `Table` then you can basically do any type of SQL query. The table panel will automatically show the results of whatever columns and rows your query returns.
 
 Query editor with example query:
 
@@ -229,7 +229,7 @@ GROUP BY time
 ORDER BY time
 ```
 
-Currently, there is no support for a dynamic group by time based on time range & panel width.
+Currently, there is no support for a dynamic group by time based on time range and panel width.
 This is something we plan to add.
 
 ## Templating
