@@ -8,7 +8,8 @@ export const connectWithCleanUp = <
   TDispatchProps = {},
   TOwnProps = {},
   State = {},
-  TSelector extends object = {}
+  TSelector extends object = {},
+  Statics = {}
 >(
   mapStateToProps: MapStateToPropsParam<TStateProps, TOwnProps, State>,
   mapDispatchToProps: MapDispatchToPropsParam<TDispatchProps, TOwnProps>,
@@ -22,7 +23,9 @@ export const connectWithCleanUp = <
   const ConnectedComponentWithCleanUp: FunctionComponent = props => {
     const dispatch = useDispatch();
     useEffect(() => {
-      return () => dispatch(cleanUpAction({ stateSelector }));
+      return function cleanUp() {
+        dispatch(cleanUpAction({ stateSelector }));
+      };
     }, []);
     // @ts-ignore
     return <ConnectedComponent {...props} />;
@@ -30,7 +33,7 @@ export const connectWithCleanUp = <
 
   ConnectedComponentWithCleanUp.displayName = `ConnectWithCleanUp(${ConnectedComponent.displayName})`;
   hoistNonReactStatics(ConnectedComponentWithCleanUp, Component);
-  type Hoisted = typeof ConnectedComponentWithCleanUp;
+  type Hoisted = typeof ConnectedComponentWithCleanUp & Statics;
 
   return ConnectedComponentWithCleanUp as Hoisted;
 };

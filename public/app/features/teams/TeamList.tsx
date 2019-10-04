@@ -4,7 +4,7 @@ import Page from 'app/core/components/Page/Page';
 import { DeleteButton } from '@grafana/ui';
 import { NavModel } from '@grafana/data';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { Team, OrgRole } from 'app/types';
+import { Team, OrgRole, StoreState } from 'app/types';
 import { loadTeams, deleteTeam, setSearchQuery } from './state/actions';
 import { getSearchQuery, getTeams, getTeamsCount, isPermissionTeamAdmin } from './state/selectors';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -152,7 +152,7 @@ export class TeamList extends PureComponent<Props, any> {
   }
 }
 
-function mapStateToProps(state: any) {
+function mapStateToProps(state: StoreState) {
   return {
     navModel: getNavModel(state.navIndex, 'teams'),
     teams: getTeams(state.teams),
@@ -170,4 +170,4 @@ const mapDispatchToProps = {
   setSearchQuery,
 };
 
-export default hot(module)(connectWithCleanUp(mapStateToProps, mapDispatchToProps, state => state.team)(TeamList));
+export default hot(module)(connectWithCleanUp(mapStateToProps, mapDispatchToProps, state => state.teams)(TeamList));
