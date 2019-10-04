@@ -3,7 +3,7 @@ import React, { memo } from 'react';
 
 // Types
 import { AbsoluteTimeRange } from '@grafana/data';
-import { QueryEditorProps, Switch, DataSourceStatus } from '@grafana/ui';
+import { QueryEditorProps, DataSourceStatus } from '@grafana/ui';
 import { LokiDatasource } from '../datasource';
 import { LokiQuery } from '../types';
 import { LokiQueryField } from './LokiQueryField';
@@ -51,14 +51,6 @@ export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
         absoluteRange={absolute}
         {...syntaxProps}
       />
-      <div className="gf-form-inline">
-        <div className="gf-form">
-          <Switch label="Live" checked={!!query.live} onChange={() => onChange({ ...query, live: !query.live })} />
-        </div>
-        <div className="gf-form gf-form--grow">
-          <div className="gf-form-label gf-form-label--grow" />
-        </div>
-      </div>
     </div>
   );
 });

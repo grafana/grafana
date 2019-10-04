@@ -33,6 +33,7 @@ describe('getRowContexts', () => {
         timeLocal: '',
         timeUtc: '',
         timestamp: '4',
+        uid: '1',
       };
 
       let called = false;
@@ -65,6 +66,7 @@ describe('getRowContexts', () => {
         timeLocal: '',
         timeUtc: '',
         timestamp: '4',
+        uid: '1',
       };
 
       let called = false;

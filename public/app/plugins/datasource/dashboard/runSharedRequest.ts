@@ -1,10 +1,9 @@
 import { Observable } from 'rxjs';
 import { DataQuery, PanelData, DataSourceApi } from '@grafana/ui';
 import { QueryRunnerOptions } from 'app/features/dashboard/state/PanelQueryRunner';
-import { DashboardQuery } from './types';
+import { DashboardQuery, SHARED_DASHBODARD_QUERY } from './types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { LoadingState } from '@grafana/data';
-import { SHARED_DASHBODARD_QUERY } from './types';
+import { LoadingState, DefaultTimeRange } from '@grafana/data';
 
 export function isSharedDashboardQuery(datasource: string | DataSourceApi) {
   if (!datasource) {
@@ -76,5 +75,6 @@ function getQueryError(msg: string): PanelData {
     state: LoadingState.Error,
     series: [],
     error: { message: msg },
+    timeRange: DefaultTimeRange,
   };
 }

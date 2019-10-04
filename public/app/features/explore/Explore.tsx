@@ -67,7 +67,6 @@ interface ExploreProps {
   changeSize: typeof changeSize;
   datasourceError: string;
   datasourceInstance: DataSourceApi;
-  datasourceLoading: boolean | null;
   datasourceMissing: boolean;
   exploreId: ExploreId;
   initializeExplore: typeof initializeExplore;
@@ -251,7 +250,6 @@ export class Explore extends React.PureComponent<ExploreProps> {
       StartPage,
       datasourceInstance,
       datasourceError,
-      datasourceLoading,
       datasourceMissing,
       exploreId,
       showingStartPage,
@@ -272,7 +270,6 @@ export class Explore extends React.PureComponent<ExploreProps> {
     return (
       <div className={exploreClass} ref={this.getRef}>
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
-        {datasourceLoading ? <div className="explore-container">Loading datasource...</div> : null}
         {datasourceMissing ? this.renderEmptyState() : null}
 
         <FadeIn duration={datasourceError ? 150 : 5} in={datasourceError ? true : false}>
@@ -360,7 +357,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     StartPage,
     datasourceError,
     datasourceInstance,
-    datasourceLoading,
     datasourceMissing,
     initialized,
     showingStartPage,
@@ -406,7 +402,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     StartPage,
     datasourceError,
     datasourceInstance,
-    datasourceLoading,
     datasourceMissing,
     initialized,
     showingStartPage,

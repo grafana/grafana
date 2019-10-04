@@ -115,7 +115,7 @@ lint-go: go-vet golangci-lint revive revive-alerting gosec
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 shellcheck: $(SH_FILES)
 	@docker run --rm -v "$$PWD:/mnt" koalaman/shellcheck:stable \
-	$(SH_FILES) -e SC1071
+	$(SH_FILES) -e SC1071 -e SC2162
 
 run: scripts/go/bin/bra
 	@scripts/go/bin/bra run

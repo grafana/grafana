@@ -16,6 +16,8 @@ export interface PanelData {
   series: DataFrame[];
   request?: DataQueryRequest;
   error?: DataQueryError;
+  // Contains the range from the request or a shifted time range if a request uses relative time
+  timeRange: TimeRange;
 }
 
 export interface PanelProps<T = any> {

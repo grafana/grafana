@@ -11,7 +11,7 @@ weight = 8
 
 # Image Rendering
 
-Grafana supports rendering of panels and dasnhboards as PNG-images.
+Grafana supports rendering of panels and dashboards as PNG-images.
 
 When an image is being rendered the PNG-image is temporary written to the filesystem, i.e. a sub-directory of Grafana's [data](/installation/configuration/#data) directory named `png`.
 

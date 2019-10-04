@@ -68,6 +68,7 @@ interface StateProps {
   isPaused: boolean;
   originPanelId: number;
   queries: DataQuery[];
+  datasourceLoading: boolean | null;
 }
 
 interface DispatchProps {
@@ -156,6 +157,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
       isLive,
       isPaused,
       originPanelId,
+      datasourceLoading,
     } = this.props;
 
     const styles = getStyles();
@@ -193,6 +195,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                     onChange={this.onChangeDatasource}
                     datasources={exploreDatasources}
                     current={selectedDatasource}
+                    showLoading={datasourceLoading}
                   />
                 </div>
                 {supportedModes.length > 1 ? (
@@ -316,6 +319,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     isPaused,
     originPanelId,
     queries,
+    datasourceLoading,
   } = exploreItem;
   const selectedDatasource = datasourceInstance
     ? exploreDatasources.find(datasource => datasource.name === datasourceInstance.name)
@@ -339,6 +343,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     isPaused,
     originPanelId,
     queries,
+    datasourceLoading,
   };
 };
 
