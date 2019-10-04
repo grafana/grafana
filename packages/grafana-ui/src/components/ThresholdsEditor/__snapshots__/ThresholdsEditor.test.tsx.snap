@@ -74,6 +74,7 @@ exports[`Render should render with base threshold 1`] = `
                           Object {
                             "background": Object {
                               "dropdown": "#1f1f20",
+                              "pageHeader": "linear-gradient(90deg, #292a2d, #000000)",
                               "scrollbar": "#343436",
                               "scrollbar2": "#343436",
                             },
@@ -138,6 +139,7 @@ exports[`Render should render with base threshold 1`] = `
                               "orange": "#eb7b18",
                               "orangeDark": "#ff780a",
                               "pageBg": "#161719",
+                              "pageHeaderBorder": "#343436",
                               "purple": "#9933cc",
                               "queryGreen": "#74e680",
                               "queryKeyword": "#66d9ef",
@@ -165,6 +167,9 @@ exports[`Render should render with base threshold 1`] = `
                             "name": "Grafana Dark",
                             "panelHeaderHeight": 28,
                             "panelPadding": 8,
+                            "shadow": Object {
+                              "pageHeader": "inset 0px -4px 14px #1f1f20",
+                            },
                             "spacing": Object {
                               "d": "14px",
                               "gutter": "30px",
@@ -236,6 +241,7 @@ exports[`Render should render with base threshold 1`] = `
                                 Object {
                                   "background": Object {
                                     "dropdown": "#1f1f20",
+                                    "pageHeader": "linear-gradient(90deg, #292a2d, #000000)",
                                     "scrollbar": "#343436",
                                     "scrollbar2": "#343436",
                                   },
@@ -300,6 +306,7 @@ exports[`Render should render with base threshold 1`] = `
                                     "orange": "#eb7b18",
                                     "orangeDark": "#ff780a",
                                     "pageBg": "#161719",
+                                    "pageHeaderBorder": "#343436",
                                     "purple": "#9933cc",
                                     "queryGreen": "#74e680",
                                     "queryKeyword": "#66d9ef",
@@ -327,6 +334,9 @@ exports[`Render should render with base threshold 1`] = `
                                   "name": "Grafana Dark",
                                   "panelHeaderHeight": 28,
                                   "panelPadding": 8,
+                                  "shadow": Object {
+                                    "pageHeader": "inset 0px -4px 14px #1f1f20",
+                                  },
                                   "spacing": Object {
                                     "d": "14px",
                                     "gutter": "30px",

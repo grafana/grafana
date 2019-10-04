@@ -1,6 +1,6 @@
 +++
 title = "What's New in Grafana v5.4"
-description = "Feature & improvement highlights for Grafana v5.4"
+description = "Feature and improvement highlights for Grafana v5.4"
 keywords = ["grafana", "new", "documentation", "5.4"]
 type = "docs"
 [menu.docs]

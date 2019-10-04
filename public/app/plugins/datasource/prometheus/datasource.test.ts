@@ -1,6 +1,6 @@
 import { PrometheusDatasource } from './datasource';
 import { DataSourceInstanceSettings } from '@grafana/ui';
-import { PromOptions } from './types';
+import { PromContext, PromOptions } from './types';
 import { dateTime, LoadingState } from '@grafana/data';
 
 const defaultInstanceSettings: DataSourceInstanceSettings<PromOptions> = {
@@ -67,14 +67,28 @@ describe('datasource', () => {
       });
     });
 
-    it('with 2 queries, waits for all to finish until sending Done status', done => {
+    it('with 2 queries and used from Explore, sends results as they arrive', done => {
       expect.assertions(4);
       backendSrvMock.datasourceRequest.mockReturnValue(Promise.resolve(makePromResponse()));
       const responseStatus = [LoadingState.Loading, LoadingState.Done];
-      ds.query(makeQuery([{}, {}])).subscribe({
+      ds.query(makeQuery([{ context: PromContext.Explore }, { context: PromContext.Explore }])).subscribe({
         next(next) {
           expect(next.data.length).not.toBe(0);
           expect(next.state).toBe(responseStatus.shift());
+        },
+        complete() {
+          done();
+        },
+      });
+    });
+
+    it('with 2 queries and used from Panel, waits for all to finish until sending Done status', done => {
+      expect.assertions(2);
+      backendSrvMock.datasourceRequest.mockReturnValue(Promise.resolve(makePromResponse()));
+      ds.query(makeQuery([{ context: PromContext.Panel }, { context: PromContext.Panel }])).subscribe({
+        next(next) {
+          expect(next.data.length).not.toBe(0);
+          expect(next.state).toBe(LoadingState.Done);
         },
         complete() {
           done();
@@ -92,6 +106,7 @@ function makeQuery(targets: any[]): any {
         start: dateTime().subtract(5, 'minutes'),
         end: dateTime(),
         expr: 'test',
+        showingGraph: true,
         ...t,
       };
     }),

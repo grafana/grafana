@@ -1,6 +1,6 @@
 +++
 title = "What's New in Grafana v4.2"
-description = "Feature & improvement highlights for Grafana v4.2"
+description = "Feature and improvement highlights for Grafana v4.2"
 keywords = ["grafana", "new", "documentation", "4.2.0"]
 type = "docs"
 [menu.docs]
@@ -65,7 +65,7 @@ This makes it possible for users to share dashboards between orgs without changi
 We aim to introduce [dashboard groups](https://github.com/grafana/grafana/issues/1611) sometime in the future which will introduce access control and user groups within one org.
 Making it possible to have users in multiple groups and have detailed access control.
 
-## Upgrade & Breaking changes
+## Upgrade and Breaking changes
 
 If you're using https in grafana we now force you to use tls 1.2 and the most secure ciphers.
 We think its better to be secure by default rather then making it configurable.
@@ -81,8 +81,8 @@ of new features, changes, and bug fixes.
 
 ## Download
 
-Head to [v4.2-beta download page](/download/4_2_0/) for download links & instructions.
+Head to [v4.2-beta download page](/download/4_2_0/) for download links and instructions.
 
 ## Thanks
 
-A big thanks to all the Grafana users who contribute by submitting PRs, bug reports & feedback!
+A big thanks to all the Grafana users who contribute by submitting PRs, bug reports and feedback!

@@ -21,20 +21,20 @@ The query language and capabilities of each data source are obviously very diffe
 
 The following data sources are officially supported:
 
-* [Graphite]({{< relref "graphite.md" >}})
-* [Prometheus]({{< relref "prometheus.md" >}})
-* [InfluxDB]({{< relref "influxdb.md" >}})
-* [Elasticsearch]({{< relref "elasticsearch.md" >}})
-* [Google Stackdriver]({{< relref "stackdriver.md" >}})
 * [AWS CloudWatch]({{< relref "cloudwatch.md" >}})
 * [Azure Monitor]({{< relref "azuremonitor.md" >}})
+* [Elasticsearch]({{< relref "elasticsearch.md" >}})
+* [Google Stackdriver]({{< relref "stackdriver.md" >}})
+* [Graphite]({{< relref "graphite.md" >}})
+* [InfluxDB]({{< relref "influxdb.md" >}})
 * [Loki]({{< relref "loki.md" >}})
-* [MySQL]({{< relref "mysql.md" >}})
-* [PostgreSQL]({{< relref "postgres.md" >}})
 * [Microsoft SQL Server (MSSQL)]({{< relref "mssql.md" >}})
-* [OpenTSDB]({{< relref "opentsdb.md" >}})
-* [Testdata]({{< relref "testdata.md" >}})
 * [Mixed]({{< relref "mixed.md" >}})
+* [MySQL]({{< relref "mysql.md" >}})
+* [OpenTSDB]({{< relref "opentsdb.md" >}})
+* [PostgreSQL]({{< relref "postgres.md" >}})
+* [Prometheus]({{< relref "prometheus.md" >}})
+* [Testdata]({{< relref "testdata.md" >}})
 
 ## Data source plugins
 
