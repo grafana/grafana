@@ -7,9 +7,16 @@ import { ChangePassword } from './ChangePassword';
 import { CSSTransition } from 'react-transition-group';
 
 export const LoginPage: FC = () => {
+  const defaultBgUrl = '/public/img/' + 'heatmap_bg_test.svg';
   const loginBgUrl = '/public/img/' + loginBgImage;
   return (
-    <div className="login container" style={{ backgroundImage: loginBgUrl }}>
+    <div
+      className="login container"
+      style={{
+        backgroundImage: `url(${loginBgUrl})`,
+        backgroundSize: defaultBgUrl === loginBgUrl ? 'cover' : 'initial',
+      }}
+    >
       <div className="login-content">
         <div className="login-branding">
           <img className="logo-icon" src="public/img/grafana_icon.svg" alt="Grafana" />
