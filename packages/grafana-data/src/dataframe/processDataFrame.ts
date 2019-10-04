@@ -299,6 +299,7 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
       }
       return { text: name };
     }),
+    type: 'table',
     refId: frame.refId,
     meta: frame.meta,
     rows,
