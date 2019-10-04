@@ -1,11 +1,10 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
-
-import { SegmentAsync, OptionType } from './';
-import { UseState } from '../../utils/storybook/UseState';
-
+import { SelectableValue } from '@grafana/data';
 const SegmentStories = storiesOf('UI/Segment/SegmentAsync', module);
+import { SegmentAsync } from './';
+import { UseState } from '../../utils/storybook/UseState';
 
 const AddButton = (
   <a className="gf-form-label query-part">
@@ -15,7 +14,7 @@ const AddButton = (
 
 const toOption = (value: any) => ({ label: value, value: value });
 
-const loadOptions = (options: any): Promise<OptionType<string>> =>
+const loadOptions = (options: any): Promise<Array<SelectableValue<string>>> =>
   new Promise(res => setTimeout(() => res(options), 2000));
 
 SegmentStories.add('Array Options', () => {
@@ -48,14 +47,14 @@ SegmentStories.add('Array Options', () => {
   );
 });
 
-const groupedOptions = {
-  Names: ['Jane', 'Tom', 'Lisa'].map(toOption),
-  Prime: [2, 3, 5, 7, 11, 13].map(toOption),
-};
+const groupedOptions = [
+  { label: 'Names', options: ['Jane', 'Tom', 'Lisa'].map(toOption) },
+  { label: 'Prime', options: [2, 3, 5, 7, 11, 13].map(toOption) },
+];
 
 SegmentStories.add('Grouped Array Options', () => {
   return (
-    <UseState initialState={groupedOptions.Prime[2].value}>
+    <UseState initialState={groupedOptions[0].options[0].value}>
       {(value, updateValue) => (
         <>
           <div className="gf-form-inline">
@@ -86,7 +85,7 @@ const CustomLabelComponent = ({ value }: any) => <div className="gf-form-label">
 
 SegmentStories.add('Custom Label Field', () => {
   return (
-    <UseState initialState={groupedOptions.Prime[2].value}>
+    <UseState initialState={groupedOptions[0].options[0].value}>
       {(value, updateValue) => (
         <>
           <div className="gf-form-inline">

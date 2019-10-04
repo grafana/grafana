@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { cx } from 'emotion';
 import { SegmentSelect } from './SegmentSelect';
-import { OptionType, useExpandableLabel, SegmentProps } from '.';
+import { SelectableValue } from '@grafana/data';
+import { useExpandableLabel, SegmentProps } from '.';
 
 export interface SegmentAsyncProps<T> extends SegmentProps<T> {
-  loadOptions: () => Promise<OptionType<T>>;
+  loadOptions: () => Promise<Array<SelectableValue<T>>>;
 }
 
 export function SegmentAsync<T>({
@@ -11,9 +13,10 @@ export function SegmentAsync<T>({
   onChange,
   loadOptions,
   Component,
+  className,
 }: React.PropsWithChildren<SegmentAsyncProps<T>>) {
   const [selectPlaceholder, setSelectPlaceholder] = useState<string>('');
-  const [loadedOptions, setLoadedOptions] = useState<OptionType<T>>([]);
+  const [loadedOptions, setLoadedOptions] = useState<Array<SelectableValue<T>>>([]);
   const [Label, width, expanded, setExpanded] = useExpandableLabel(false);
 
   if (!expanded) {
@@ -25,7 +28,7 @@ export function SegmentAsync<T>({
           setLoadedOptions(opts);
           setSelectPlaceholder(opts.length ? '' : 'No options found');
         }}
-        Component={Component || <a className="gf-form-label query-part">{value}</a>}
+        Component={Component || <a className={cx('gf-form-label', 'query-part', className)}>{value}</a>}
       />
     );
   }

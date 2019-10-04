@@ -1,12 +1,11 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef } from 'react';
 import { css, cx } from 'emotion';
 import useClickAway from 'react-use/lib/useClickAway';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '../Select/Select';
-import { OptionType } from './';
 
 export interface Props<T> {
-  options: OptionType<T>;
+  options: Array<SelectableValue<T>>;
   onChange: (value: T) => void;
   onClickOutside: () => void;
   width: number;
@@ -21,21 +20,6 @@ export function SegmentSelect<T>({
   noOptionsMessage = '',
 }: React.PropsWithChildren<Props<T>>) {
   const ref = useRef(null);
-  const [optionTypes, setOptionsTypes] = useState<Array<SelectableValue<T>>>([]);
-
-  useEffect(() => {
-    const selectOptions = Array.isArray(options)
-      ? options
-      : Object.entries(options).map(([key, values]: [string, Array<OptionType<T>>]) => {
-          return {
-            label: key,
-            expanded: true,
-            options: values,
-          };
-        });
-
-    setOptionsTypes(selectOptions);
-  }, [options]);
 
   useClickAway(ref, () => {
     onClickOutside();
@@ -54,7 +38,7 @@ export function SegmentSelect<T>({
         autoFocus={true}
         isOpen={true}
         onChange={({ value }) => onChange(value!)}
-        options={optionTypes}
+        options={options}
       />
     </div>
   );

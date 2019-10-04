@@ -1,9 +1,10 @@
 import React from 'react';
 import { cx } from 'emotion';
-import { OptionType, SegmentSelect, useExpandableLabel, SegmentProps } from './';
+import { SelectableValue } from '@grafana/data';
+import { SegmentSelect, useExpandableLabel, SegmentProps } from './';
 
 export interface SegmentSyncProps<T> extends SegmentProps<T> {
-  options: OptionType<T>;
+  options: Array<SelectableValue<T>>;
 }
 
 export function Segment<T>({
