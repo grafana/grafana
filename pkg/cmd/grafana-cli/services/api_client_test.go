@@ -12,8 +12,9 @@ import (
 
 func TestHandleResponse(t *testing.T) {
 	t.Run("Returns body if status == 200", func(t *testing.T) {
-		body, err := handleResponse(makeResponse(200, "test"))
+		bodyReader, err := handleResponse(makeResponse(200, "test"))
 		assert.Nil(t, err)
+		body, _ := ioutil.ReadAll(bodyReader)
 		assert.Equal(t, "test", string(body))
 	})
 
