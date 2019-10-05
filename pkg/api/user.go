@@ -57,6 +57,8 @@ func GetUserByLoginOrEmail(c *m.ReqContext) Response {
 		Theme:          user.Theme,
 		IsGrafanaAdmin: user.IsAdmin,
 		OrgId:          user.OrgId,
+		UpdatedAt:      user.Updated,
+		CreatedAt:      user.Created,
 	}
 	return JSON(200, &result)
 }

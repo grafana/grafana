@@ -460,7 +460,7 @@ If enabled and user is not anonymous, data proxy will add X-Grafana-User header 
 
 When enabled Grafana will send anonymous usage statistics to
 `stats.grafana.org`. No IP addresses are being tracked, only simple counters to
-track running instances, versions, dashboard & error counts. It is very helpful
+track running instances, versions, dashboard and error counts. It is very helpful
 to us, so please leave this enabled. Counters are sent every 24 hours. Default
 value is `true`.
 

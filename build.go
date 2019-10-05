@@ -529,7 +529,7 @@ func ldflags() string {
 	b.WriteString(fmt.Sprintf(" -X main.buildstamp=%d", buildStamp()))
 	b.WriteString(fmt.Sprintf(" -X main.buildBranch=%s", getGitBranch()))
 	if v := os.Getenv("LDFLAGS"); v != "" {
-		b.WriteString(fmt.Sprintf(" -extldflags=%s", v))
+		b.WriteString(fmt.Sprintf(" -extldflags \"%s\"", v))
 	}
 	return b.String()
 }

@@ -11,7 +11,8 @@ import { default as ReactAsyncSelect } from '@torkelo/react-select/lib/Async';
 import { components } from '@torkelo/react-select';
 
 // Components
-import { SelectOption, SingleValue } from './SelectOption';
+import { SelectOption } from './SelectOption';
+import { SingleValue } from './SingleValue';
 import SelectOptionGroup from './SelectOptionGroup';
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';

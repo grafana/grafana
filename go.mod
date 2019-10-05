@@ -1,6 +1,6 @@
 module github.com/grafana/grafana
 
-go 1.12
+go 1.13
 
 require (
 	github.com/BurntSushi/toml v0.3.1
@@ -32,9 +32,9 @@ require (
 	github.com/google/go-cmp v0.2.0 // indirect
 	github.com/gorilla/websocket v1.4.0
 	github.com/gosimple/slug v1.4.2
-	github.com/grafana/grafana-plugin-model v0.0.0-20180518082423-84176c64269d
+	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 	github.com/hashicorp/go-hclog v0.8.0
-	github.com/hashicorp/go-plugin v0.0.0-20190220160451-3f118e8ee104
+	github.com/hashicorp/go-plugin v1.0.1
 	github.com/hashicorp/go-version v1.1.0
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
 	github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
@@ -58,7 +58,7 @@ require (
 	github.com/russellhaering/goxmldsig v0.0.0-20180430223755-7acd5e4a6ef7 // indirect
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337
-	github.com/stretchr/testify v1.3.0
+	github.com/stretchr/testify v1.4.0
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 	github.com/ua-parser/uap-go v0.0.0-20190826212731-daf92ba38329
 	github.com/uber-go/atomic v1.3.2 // indirect
@@ -72,7 +72,7 @@ require (
 	golang.org/x/net v0.0.0-20190724013045-ca1201d0de80
 	golang.org/x/oauth2 v0.0.0-20190319182350-c85d3e98c914
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
-	golang.org/x/xerrors v0.0.0-20190410155217-1f06c39b4373
+	golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
 	gopkg.in/ini.v1 v1.46.0

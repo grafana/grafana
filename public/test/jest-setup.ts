@@ -40,7 +40,8 @@ const localStorageMock = (() => {
 })();
 
 global.localStorage = localStorageMock;
-// Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+
+HTMLCanvasElement.prototype.getContext = jest.fn() as any;
 
 const throwUnhandledRejections = () => {
   process.on('unhandledRejection', err => {

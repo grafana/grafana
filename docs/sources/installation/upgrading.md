@@ -13,7 +13,7 @@ weight = 10
 # Upgrading Grafana
 
 We recommend everyone to upgrade Grafana often to stay up to date with the latest fixes and enhancements.
-In order make this a reality Grafana upgrades are backward compatible and the upgrade process is simple & quick.
+In order make this a reality Grafana upgrades are backward compatible and the upgrade process is simple and quick.
 
 Upgrading is generally always safe (between many minor and one major version) and dashboards and graphs will look the same. There can be minor breaking changes in some edge cases which are usually outlined in the [Release Notes](https://community.grafana.com/c/releases) and [Changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
 
@@ -197,3 +197,10 @@ is `7.0+` and `max concurrent shard requests` properly configured. 256 was the d
 ## Upgrading to v6.4
 
 One of the database migrations included in this release will merge multiple rows used to represent an annotation range into a single row.  If you have a large number of region annotations the database migration may take a long time to complete.  See [Upgrading to v5.2](#upgrading-to-v5-2) for tips on how to manage this process.
+
+Plugins that need updating:
+
+* [Splunk](https://grafana.com/grafana/plugins/grafana-splunk-datasource)
+
+
+

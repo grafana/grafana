@@ -823,6 +823,8 @@ type Sigset_t struct {
 	Val [16]uint64
 }
 
+const _C__NSIG = 0x80
+
 type SignalfdSiginfo struct {
 	Signo     uint32
 	Errno     int32
@@ -1443,6 +1445,21 @@ type TpacketBlockDesc struct {
 	Version uint32
 	To_priv uint32
 	Hdr     [40]byte
+}
+
+type TpacketBDTS struct {
+	Sec  uint32
+	Usec uint32
+}
+
+type TpacketHdrV1 struct {
+	Block_status        uint32
+	Num_pkts            uint32
+	Offset_to_first_pkt uint32
+	Blk_len             uint32
+	Seq_num             uint64
+	Ts_first_pkt        TpacketBDTS
+	Ts_last_pkt         TpacketBDTS
 }
 
 type TpacketReq struct {
@@ -2126,4 +2143,376 @@ type FanotifyEventMetadata struct {
 type FanotifyResponse struct {
 	Fd       int32
 	Response uint32
+}
+
+const (
+	CRYPTO_MSG_BASE      = 0x10
+	CRYPTO_MSG_NEWALG    = 0x10
+	CRYPTO_MSG_DELALG    = 0x11
+	CRYPTO_MSG_UPDATEALG = 0x12
+	CRYPTO_MSG_GETALG    = 0x13
+	CRYPTO_MSG_DELRNG    = 0x14
+	CRYPTO_MSG_GETSTAT   = 0x15
+)
+
+const (
+	CRYPTOCFGA_UNSPEC           = 0x0
+	CRYPTOCFGA_PRIORITY_VAL     = 0x1
+	CRYPTOCFGA_REPORT_LARVAL    = 0x2
+	CRYPTOCFGA_REPORT_HASH      = 0x3
+	CRYPTOCFGA_REPORT_BLKCIPHER = 0x4
+	CRYPTOCFGA_REPORT_AEAD      = 0x5
+	CRYPTOCFGA_REPORT_COMPRESS  = 0x6
+	CRYPTOCFGA_REPORT_RNG       = 0x7
+	CRYPTOCFGA_REPORT_CIPHER    = 0x8
+	CRYPTOCFGA_REPORT_AKCIPHER  = 0x9
+	CRYPTOCFGA_REPORT_KPP       = 0xa
+	CRYPTOCFGA_REPORT_ACOMP     = 0xb
+	CRYPTOCFGA_STAT_LARVAL      = 0xc
+	CRYPTOCFGA_STAT_HASH        = 0xd
+	CRYPTOCFGA_STAT_BLKCIPHER   = 0xe
+	CRYPTOCFGA_STAT_AEAD        = 0xf
+	CRYPTOCFGA_STAT_COMPRESS    = 0x10
+	CRYPTOCFGA_STAT_RNG         = 0x11
+	CRYPTOCFGA_STAT_CIPHER      = 0x12
+	CRYPTOCFGA_STAT_AKCIPHER    = 0x13
+	CRYPTOCFGA_STAT_KPP         = 0x14
+	CRYPTOCFGA_STAT_ACOMP       = 0x15
+)
+
+type CryptoUserAlg struct {
+	Name        [64]int8
+	Driver_name [64]int8
+	Module_name [64]int8
+	Type        uint32
+	Mask        uint32
+	Refcnt      uint32
+	Flags       uint32
+}
+
+type CryptoStatAEAD struct {
+	Type         [64]int8
+	Encrypt_cnt  uint64
+	Encrypt_tlen uint64
+	Decrypt_cnt  uint64
+	Decrypt_tlen uint64
+	Err_cnt      uint64
+}
+
+type CryptoStatAKCipher struct {
+	Type         [64]int8
+	Encrypt_cnt  uint64
+	Encrypt_tlen uint64
+	Decrypt_cnt  uint64
+	Decrypt_tlen uint64
+	Verify_cnt   uint64
+	Sign_cnt     uint64
+	Err_cnt      uint64
+}
+
+type CryptoStatCipher struct {
+	Type         [64]int8
+	Encrypt_cnt  uint64
+	Encrypt_tlen uint64
+	Decrypt_cnt  uint64
+	Decrypt_tlen uint64
+	Err_cnt      uint64
+}
+
+type CryptoStatCompress struct {
+	Type            [64]int8
+	Compress_cnt    uint64
+	Compress_tlen   uint64
+	Decompress_cnt  uint64
+	Decompress_tlen uint64
+	Err_cnt         uint64
+}
+
+type CryptoStatHash struct {
+	Type      [64]int8
+	Hash_cnt  uint64
+	Hash_tlen uint64
+	Err_cnt   uint64
+}
+
+type CryptoStatKPP struct {
+	Type                      [64]int8
+	Setsecret_cnt             uint64
+	Generate_public_key_cnt   uint64
+	Compute_shared_secret_cnt uint64
+	Err_cnt                   uint64
+}
+
+type CryptoStatRNG struct {
+	Type          [64]int8
+	Generate_cnt  uint64
+	Generate_tlen uint64
+	Seed_cnt      uint64
+	Err_cnt       uint64
+}
+
+type CryptoStatLarval struct {
+	Type [64]int8
+}
+
+type CryptoReportLarval struct {
+	Type [64]int8
+}
+
+type CryptoReportHash struct {
+	Type       [64]int8
+	Blocksize  uint32
+	Digestsize uint32
+}
+
+type CryptoReportCipher struct {
+	Type        [64]int8
+	Blocksize   uint32
+	Min_keysize uint32
+	Max_keysize uint32
+}
+
+type CryptoReportBlkCipher struct {
+	Type        [64]int8
+	Geniv       [64]int8
+	Blocksize   uint32
+	Min_keysize uint32
+	Max_keysize uint32
+	Ivsize      uint32
+}
+
+type CryptoReportAEAD struct {
+	Type        [64]int8
+	Geniv       [64]int8
+	Blocksize   uint32
+	Maxauthsize uint32
+	Ivsize      uint32
+}
+
+type CryptoReportComp struct {
+	Type [64]int8
+}
+
+type CryptoReportRNG struct {
+	Type     [64]int8
+	Seedsize uint32
+}
+
+type CryptoReportAKCipher struct {
+	Type [64]int8
+}
+
+type CryptoReportKPP struct {
+	Type [64]int8
+}
+
+type CryptoReportAcomp struct {
+	Type [64]int8
+}
+
+const (
+	BPF_REG_0                           = 0x0
+	BPF_REG_1                           = 0x1
+	BPF_REG_2                           = 0x2
+	BPF_REG_3                           = 0x3
+	BPF_REG_4                           = 0x4
+	BPF_REG_5                           = 0x5
+	BPF_REG_6                           = 0x6
+	BPF_REG_7                           = 0x7
+	BPF_REG_8                           = 0x8
+	BPF_REG_9                           = 0x9
+	BPF_REG_10                          = 0xa
+	BPF_MAP_CREATE                      = 0x0
+	BPF_MAP_LOOKUP_ELEM                 = 0x1
+	BPF_MAP_UPDATE_ELEM                 = 0x2
+	BPF_MAP_DELETE_ELEM                 = 0x3
+	BPF_MAP_GET_NEXT_KEY                = 0x4
+	BPF_PROG_LOAD                       = 0x5
+	BPF_OBJ_PIN                         = 0x6
+	BPF_OBJ_GET                         = 0x7
+	BPF_PROG_ATTACH                     = 0x8
+	BPF_PROG_DETACH                     = 0x9
+	BPF_PROG_TEST_RUN                   = 0xa
+	BPF_PROG_GET_NEXT_ID                = 0xb
+	BPF_MAP_GET_NEXT_ID                 = 0xc
+	BPF_PROG_GET_FD_BY_ID               = 0xd
+	BPF_MAP_GET_FD_BY_ID                = 0xe
+	BPF_OBJ_GET_INFO_BY_FD              = 0xf
+	BPF_PROG_QUERY                      = 0x10
+	BPF_RAW_TRACEPOINT_OPEN             = 0x11
+	BPF_BTF_LOAD                        = 0x12
+	BPF_BTF_GET_FD_BY_ID                = 0x13
+	BPF_TASK_FD_QUERY                   = 0x14
+	BPF_MAP_LOOKUP_AND_DELETE_ELEM      = 0x15
+	BPF_MAP_TYPE_UNSPEC                 = 0x0
+	BPF_MAP_TYPE_HASH                   = 0x1
+	BPF_MAP_TYPE_ARRAY                  = 0x2
+	BPF_MAP_TYPE_PROG_ARRAY             = 0x3
+	BPF_MAP_TYPE_PERF_EVENT_ARRAY       = 0x4
+	BPF_MAP_TYPE_PERCPU_HASH            = 0x5
+	BPF_MAP_TYPE_PERCPU_ARRAY           = 0x6
+	BPF_MAP_TYPE_STACK_TRACE            = 0x7
+	BPF_MAP_TYPE_CGROUP_ARRAY           = 0x8
+	BPF_MAP_TYPE_LRU_HASH               = 0x9
+	BPF_MAP_TYPE_LRU_PERCPU_HASH        = 0xa
+	BPF_MAP_TYPE_LPM_TRIE               = 0xb
+	BPF_MAP_TYPE_ARRAY_OF_MAPS          = 0xc
+	BPF_MAP_TYPE_HASH_OF_MAPS           = 0xd
+	BPF_MAP_TYPE_DEVMAP                 = 0xe
+	BPF_MAP_TYPE_SOCKMAP                = 0xf
+	BPF_MAP_TYPE_CPUMAP                 = 0x10
+	BPF_MAP_TYPE_XSKMAP                 = 0x11
+	BPF_MAP_TYPE_SOCKHASH               = 0x12
+	BPF_MAP_TYPE_CGROUP_STORAGE         = 0x13
+	BPF_MAP_TYPE_REUSEPORT_SOCKARRAY    = 0x14
+	BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE  = 0x15
+	BPF_MAP_TYPE_QUEUE                  = 0x16
+	BPF_MAP_TYPE_STACK                  = 0x17
+	BPF_PROG_TYPE_UNSPEC                = 0x0
+	BPF_PROG_TYPE_SOCKET_FILTER         = 0x1
+	BPF_PROG_TYPE_KPROBE                = 0x2
+	BPF_PROG_TYPE_SCHED_CLS             = 0x3
+	BPF_PROG_TYPE_SCHED_ACT             = 0x4
+	BPF_PROG_TYPE_TRACEPOINT            = 0x5
+	BPF_PROG_TYPE_XDP                   = 0x6
+	BPF_PROG_TYPE_PERF_EVENT            = 0x7
+	BPF_PROG_TYPE_CGROUP_SKB            = 0x8
+	BPF_PROG_TYPE_CGROUP_SOCK           = 0x9
+	BPF_PROG_TYPE_LWT_IN                = 0xa
+	BPF_PROG_TYPE_LWT_OUT               = 0xb
+	BPF_PROG_TYPE_LWT_XMIT              = 0xc
+	BPF_PROG_TYPE_SOCK_OPS              = 0xd
+	BPF_PROG_TYPE_SK_SKB                = 0xe
+	BPF_PROG_TYPE_CGROUP_DEVICE         = 0xf
+	BPF_PROG_TYPE_SK_MSG                = 0x10
+	BPF_PROG_TYPE_RAW_TRACEPOINT        = 0x11
+	BPF_PROG_TYPE_CGROUP_SOCK_ADDR      = 0x12
+	BPF_PROG_TYPE_LWT_SEG6LOCAL         = 0x13
+	BPF_PROG_TYPE_LIRC_MODE2            = 0x14
+	BPF_PROG_TYPE_SK_REUSEPORT          = 0x15
+	BPF_PROG_TYPE_FLOW_DISSECTOR        = 0x16
+	BPF_CGROUP_INET_INGRESS             = 0x0
+	BPF_CGROUP_INET_EGRESS              = 0x1
+	BPF_CGROUP_INET_SOCK_CREATE         = 0x2
+	BPF_CGROUP_SOCK_OPS                 = 0x3
+	BPF_SK_SKB_STREAM_PARSER            = 0x4
+	BPF_SK_SKB_STREAM_VERDICT           = 0x5
+	BPF_CGROUP_DEVICE                   = 0x6
+	BPF_SK_MSG_VERDICT                  = 0x7
+	BPF_CGROUP_INET4_BIND               = 0x8
+	BPF_CGROUP_INET6_BIND               = 0x9
+	BPF_CGROUP_INET4_CONNECT            = 0xa
+	BPF_CGROUP_INET6_CONNECT            = 0xb
+	BPF_CGROUP_INET4_POST_BIND          = 0xc
+	BPF_CGROUP_INET6_POST_BIND          = 0xd
+	BPF_CGROUP_UDP4_SENDMSG             = 0xe
+	BPF_CGROUP_UDP6_SENDMSG             = 0xf
+	BPF_LIRC_MODE2                      = 0x10
+	BPF_FLOW_DISSECTOR                  = 0x11
+	BPF_STACK_BUILD_ID_EMPTY            = 0x0
+	BPF_STACK_BUILD_ID_VALID            = 0x1
+	BPF_STACK_BUILD_ID_IP               = 0x2
+	BPF_ADJ_ROOM_NET                    = 0x0
+	BPF_HDR_START_MAC                   = 0x0
+	BPF_HDR_START_NET                   = 0x1
+	BPF_LWT_ENCAP_SEG6                  = 0x0
+	BPF_LWT_ENCAP_SEG6_INLINE           = 0x1
+	BPF_OK                              = 0x0
+	BPF_DROP                            = 0x2
+	BPF_REDIRECT                        = 0x7
+	BPF_SOCK_OPS_VOID                   = 0x0
+	BPF_SOCK_OPS_TIMEOUT_INIT           = 0x1
+	BPF_SOCK_OPS_RWND_INIT              = 0x2
+	BPF_SOCK_OPS_TCP_CONNECT_CB         = 0x3
+	BPF_SOCK_OPS_ACTIVE_ESTABLISHED_CB  = 0x4
+	BPF_SOCK_OPS_PASSIVE_ESTABLISHED_CB = 0x5
+	BPF_SOCK_OPS_NEEDS_ECN              = 0x6
+	BPF_SOCK_OPS_BASE_RTT               = 0x7
+	BPF_SOCK_OPS_RTO_CB                 = 0x8
+	BPF_SOCK_OPS_RETRANS_CB             = 0x9
+	BPF_SOCK_OPS_STATE_CB               = 0xa
+	BPF_SOCK_OPS_TCP_LISTEN_CB          = 0xb
+	BPF_TCP_ESTABLISHED                 = 0x1
+	BPF_TCP_SYN_SENT                    = 0x2
+	BPF_TCP_SYN_RECV                    = 0x3
+	BPF_TCP_FIN_WAIT1                   = 0x4
+	BPF_TCP_FIN_WAIT2                   = 0x5
+	BPF_TCP_TIME_WAIT                   = 0x6
+	BPF_TCP_CLOSE                       = 0x7
+	BPF_TCP_CLOSE_WAIT                  = 0x8
+	BPF_TCP_LAST_ACK                    = 0x9
+	BPF_TCP_LISTEN                      = 0xa
+	BPF_TCP_CLOSING                     = 0xb
+	BPF_TCP_NEW_SYN_RECV                = 0xc
+	BPF_TCP_MAX_STATES                  = 0xd
+	BPF_FIB_LKUP_RET_SUCCESS            = 0x0
+	BPF_FIB_LKUP_RET_BLACKHOLE          = 0x1
+	BPF_FIB_LKUP_RET_UNREACHABLE        = 0x2
+	BPF_FIB_LKUP_RET_PROHIBIT           = 0x3
+	BPF_FIB_LKUP_RET_NOT_FWDED          = 0x4
+	BPF_FIB_LKUP_RET_FWD_DISABLED       = 0x5
+	BPF_FIB_LKUP_RET_UNSUPP_LWT         = 0x6
+	BPF_FIB_LKUP_RET_NO_NEIGH           = 0x7
+	BPF_FIB_LKUP_RET_FRAG_NEEDED        = 0x8
+	BPF_FD_TYPE_RAW_TRACEPOINT          = 0x0
+	BPF_FD_TYPE_TRACEPOINT              = 0x1
+	BPF_FD_TYPE_KPROBE                  = 0x2
+	BPF_FD_TYPE_KRETPROBE               = 0x3
+	BPF_FD_TYPE_UPROBE                  = 0x4
+	BPF_FD_TYPE_URETPROBE               = 0x5
+)
+
+type CapUserHeader struct {
+	Version uint32
+	Pid     int32
+}
+
+type CapUserData struct {
+	Effective   uint32
+	Permitted   uint32
+	Inheritable uint32
+}
+
+const (
+	LINUX_CAPABILITY_VERSION_1 = 0x19980330
+	LINUX_CAPABILITY_VERSION_2 = 0x20071026
+	LINUX_CAPABILITY_VERSION_3 = 0x20080522
+)
+
+const (
+	LO_FLAGS_READ_ONLY = 0x1
+	LO_FLAGS_AUTOCLEAR = 0x4
+	LO_FLAGS_PARTSCAN  = 0x8
+	LO_FLAGS_DIRECT_IO = 0x10
+)
+
+type LoopInfo struct {
+	Number           int32
+	Device           uint32
+	Inode            uint64
+	Rdevice          uint32
+	Offset           int32
+	Encrypt_type     int32
+	Encrypt_key_size int32
+	Flags            int32
+	Name             [64]int8
+	Encrypt_key      [32]uint8
+	Init             [2]uint64
+	Reserved         [4]int8
+	_                [4]byte
+}
+type LoopInfo64 struct {
+	Device           uint64
+	Inode            uint64
+	Rdevice          uint64
+	Offset           uint64
+	Sizelimit        uint64
+	Number           uint32
+	Encrypt_type     uint32
+	Encrypt_key_size uint32
+	Flags            uint32
+	File_name        [64]uint8
+	Crypt_name       [64]uint8
+	Encrypt_key      [32]uint8
+	Init             [2]uint64
 }

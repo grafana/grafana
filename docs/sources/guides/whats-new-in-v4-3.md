@@ -1,6 +1,6 @@
 +++
 title = "What's New in Grafana v4.3"
-description = "Feature & improvement highlights for Grafana v4.3"
+description = "Feature and improvement highlights for Grafana v4.3"
 keywords = ["grafana", "new", "documentation", "4.3.0"]
 type = "docs"
 [menu.docs]
@@ -97,7 +97,7 @@ Lots more enhancements and fixes can be found in the [Changelog](https://github.
 
 ## Download
 
-Head to the [v4.3 download page](https://grafana.com/grafana/download) for download links & instructions.
+Head to the [v4.3 download page](https://grafana.com/grafana/download) for download links and instructions.
 
 ## Thanks
 
