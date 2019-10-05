@@ -34,7 +34,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
         component: importDashboardPage,
       },
     })
-    .when('/d/:uid/:slug', {
+    .when('/d/:uid', {
       template: '<react-container />',
       pageClass: 'page-dashboard',
       routeInfo: DashboardRouteInfo.Normal,
