@@ -100,7 +100,7 @@ docker run --name=my-grafana-container --restart=always -v /var/lib/grafana:/var
 
 ### Windows
 
-If you downloaded the windows binary package you can just download a newer package and extract
+If you downloaded the Windows binary package you can just download a newer package and extract
 to the same location (and overwrite the existing files). This might overwrite your config changes. We
 recommend you place your config changes in a file named  `<grafana_install_dir>/conf/custom.ini`
 as this will make upgrades easier without risking losing your config changes.
