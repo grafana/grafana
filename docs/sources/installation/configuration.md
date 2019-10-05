@@ -238,7 +238,7 @@ For MySQL, use either `true`, `false`, or `skip-verify`.
 
 ### ca_cert_path
 
-The path to the CA certificate to use. On many linux systems, certs can be found in `/etc/ssl/certs`.
+The path to the CA certificate to use. On many Linux systems, certs can be found in `/etc/ssl/certs`.
 
 ### client_key_path
 

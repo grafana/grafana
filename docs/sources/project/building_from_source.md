@@ -106,7 +106,7 @@ that will populate your dev environment for quicker testing end experimenting.
 
 ## Creating optimized release packages
 
-This step builds linux packages and requires that fpm is installed. Install fpm via `gem install fpm`:
+This step builds Linux packages and requires that fpm is installed. Install fpm via `gem install fpm`:
 
 ```bash
 go run build.go build package
