@@ -107,8 +107,8 @@ You can Drag-and-Drop Panels by simply clicking and holding the Panel title, and
 
 ## Grafana loves the keyboard
 
-* Ctrl + S Saves the current dashboard
-* Ctrl + F Opens the dashboard finder / search
-* Ctrl + H Hides all controls (good for tv displays)
+* Ctrl+S Saves the current dashboard
+* Ctrl+F Opens the dashboard finder / search
+* Ctrl+H Hides all controls (good for tv displays)
 * Hit Escape to exit graph when in fullscreen or edit mode
 
