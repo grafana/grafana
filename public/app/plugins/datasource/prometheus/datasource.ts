@@ -422,9 +422,11 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   performInstantQuery(query: PromQueryRequest, time: number) {
     const url = '/api/v1/query';
+    // if the query time is in the future, set it to now since we don't want future dated data
+    // since latest is the default value in the Prometheus api we can use an empty string
     const data: any = {
       query: query.expr,
-      time,
+      time: time > Math.round(Date.now() / 1000) ? '' : time,
     };
 
     if (this.queryTimeout) {
