@@ -71,11 +71,10 @@ func (n *NotifierBase) ShouldNotify(ctx context.Context, context *alerting.EvalC
 		}
 	}
 
-	unknownOrNoData := prevState == models.AlertStateUnknown || prevState == models.AlertStateNoData
 	okOrPending := newState == models.AlertStatePending || newState == models.AlertStateOK
 
-	// Do not notify when new state is ok/pending when previous is unknown or no_data
-	if unknownOrNoData && okOrPending {
+	// Do not notify when new state is ok/pending when previous is unknown
+	if prevState == models.AlertStateUnknown && okOrPending {
 		return false
 	}
 

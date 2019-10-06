@@ -6,6 +6,7 @@ import { LogRow } from './LogRow';
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
+import memoizeOne from 'memoize-one';
 
 const PREVIEW_LIMIT = 100;
 const RENDER_LIMIT = 500;
@@ -29,8 +30,8 @@ interface State {
 }
 
 class UnThemedLogRows extends PureComponent<Props, State> {
-  deferLogsTimer: NodeJS.Timer | null = null;
-  renderAllTimer: NodeJS.Timer | null = null;
+  deferLogsTimer: number | null = null;
+  renderAllTimer: number | null = null;
 
   state: State = {
     deferLogs: true,
@@ -44,14 +45,14 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       const rowCount = data && data.rows ? data.rows.length : 0;
       // Render all right away if not too far over the limit
       const renderAll = rowCount <= PREVIEW_LIMIT * 2;
-      this.deferLogsTimer = setTimeout(() => this.setState({ deferLogs: false, renderAll }), rowCount);
+      this.deferLogsTimer = window.setTimeout(() => this.setState({ deferLogs: false, renderAll }), rowCount);
     }
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
     // Staged rendering
     if (prevState.deferLogs && !this.state.deferLogs && !this.state.renderAll) {
-      this.renderAllTimer = setTimeout(() => this.setState({ renderAll: true }), 2000);
+      this.renderAllTimer = window.setTimeout(() => this.setState({ renderAll: true }), 2000);
     }
   }
 
@@ -64,6 +65,10 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       clearTimeout(this.renderAllTimer);
     }
   }
+
+  makeGetRows = memoizeOne((processedRows: LogRowModel[]) => {
+    return () => processedRows;
+  });
 
   render() {
     const {
@@ -95,7 +100,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const lastRows = processedRows.slice(PREVIEW_LIMIT, rowCount);
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
-    const getRows = () => processedRows;
+    const getRows = this.makeGetRows(processedRows);
     const getRowContext = this.props.getRowContext ? this.props.getRowContext : () => Promise.resolve([]);
     const { logsRows } = getLogRowStyles(theme);
 
@@ -105,7 +110,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
         !deferLogs && // Only inject highlighterExpression in the first set for performance reasons
           firstRows.map((row, index) => (
             <LogRow
-              key={index}
+              key={row.uid}
               getRows={getRows}
               getRowContext={getRowContext}
               highlighterExpressions={highlighterExpressions}
@@ -122,7 +127,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
           renderAll &&
           lastRows.map((row, index) => (
             <LogRow
-              key={PREVIEW_LIMIT + index}
+              key={row.uid}
               getRows={getRows}
               getRowContext={getRowContext}
               row={row}

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -27,44 +28,17 @@ import (
 // If needed, change the variable below to the IP address of the database.
 var serverIP = "localhost"
 
-func TestGenerateConnectionString(t *testing.T) {
-	encrypted, _ := simplejson.NewJson([]byte(`{"encrypt":"false"}`))
-	testSet := []struct {
-		ds       *models.DataSource
-		expected string
-	}{
-		{
-			&models.DataSource{
-				User:     "user",
-				Database: "db",
-				Url:      "localhost:1433",
-				SecureJsonData: securejsondata.GetEncryptedJsonData(map[string]string{
-					"password": "pass;word",
-				}),
-				JsonData: encrypted,
-			},
-			"sqlserver://user:pass;word@localhost:1433?database=db&encrypt=false",
-		},
-	}
-	for i := range testSet {
-		got := generateConnectionString(testSet[i].ds)
-		if got != testSet[i].expected {
-			t.Errorf("mssql connString error for testCase %d got: %s expected: %s", i, got, testSet[i].expected)
-		}
-	}
-}
-
 func TestMSSQL(t *testing.T) {
 	SkipConvey("MSSQL", t, func() {
 		x := InitMSSQLTestDB(t)
 
-		origXormEngine := tsdb.NewXormEngine
-		tsdb.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
+		origXormEngine := sqleng.NewXormEngine
+		sqleng.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
 			return x, nil
 		}
 
-		origInterpolate := tsdb.Interpolate
-		tsdb.Interpolate = func(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
+		origInterpolate := sqleng.Interpolate
+		sqleng.Interpolate = func(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
 			return sql, nil
 		}
 
@@ -79,8 +53,8 @@ func TestMSSQL(t *testing.T) {
 
 		Reset(func() {
 			sess.Close()
-			tsdb.NewXormEngine = origXormEngine
-			tsdb.Interpolate = origInterpolate
+			sqleng.NewXormEngine = origXormEngine
+			sqleng.Interpolate = origInterpolate
 		})
 
 		Convey("Given a table with different native data types", func() {
@@ -330,11 +304,11 @@ func TestMSSQL(t *testing.T) {
 			})
 
 			Convey("When doing a metric query using timeGroup and $__interval", func() {
-				mockInterpolate := tsdb.Interpolate
-				tsdb.Interpolate = origInterpolate
+				mockInterpolate := sqleng.Interpolate
+				sqleng.Interpolate = origInterpolate
 
 				Reset(func() {
-					tsdb.Interpolate = mockInterpolate
+					sqleng.Interpolate = mockInterpolate
 				})
 
 				Convey("Should replace $__interval", func() {
@@ -704,7 +678,7 @@ func TestMSSQL(t *testing.T) {
 			})
 
 			Convey("When doing a query with timeFrom,timeTo,unixEpochFrom,unixEpochTo macros", func() {
-				tsdb.Interpolate = origInterpolate
+				sqleng.Interpolate = origInterpolate
 				query := &tsdb.TsdbQuery{
 					TimeRange: tsdb.NewFakeTimeRange("5m", "now", fromStart),
 					Queries: []*tsdb.Query{
@@ -771,7 +745,7 @@ func TestMSSQL(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				Convey("When doing a metric query using stored procedure should return correct result", func() {
-					tsdb.Interpolate = origInterpolate
+					sqleng.Interpolate = origInterpolate
 					query := &tsdb.TsdbQuery{
 						Queries: []*tsdb.Query{
 							{
@@ -850,7 +824,7 @@ func TestMSSQL(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				Convey("When doing a metric query using stored procedure should return correct result", func() {
-					tsdb.Interpolate = origInterpolate
+					sqleng.Interpolate = origInterpolate
 					query := &tsdb.TsdbQuery{
 						Queries: []*tsdb.Query{
 							{

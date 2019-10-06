@@ -7,18 +7,18 @@ import { dataFrameToLogsModel } from 'app/core/logs_model';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 
 export class ResultProcessor {
-  constructor(
-    private state: ExploreItemState,
-    private replacePreviousResults: boolean,
-    private dataFrames: DataFrame[]
-  ) {}
+  constructor(private state: ExploreItemState, private dataFrames: DataFrame[], private intervalMs: number) {}
 
   getGraphResult(): GraphSeriesXY[] {
     if (this.state.mode !== ExploreMode.Metrics) {
-      return [];
+      return null;
     }
 
     const onlyTimeSeries = this.dataFrames.filter(isTimeSeries);
+
+    if (onlyTimeSeries.length === 0) {
+      return null;
+    }
 
     return getGraphSeriesModel(
       onlyTimeSeries,
@@ -30,7 +30,7 @@ export class ResultProcessor {
 
   getTableResult(): TableModel {
     if (this.state.mode !== ExploreMode.Metrics) {
-      return new TableModel();
+      return null;
     }
 
     // For now ignore time series
@@ -38,10 +38,14 @@ export class ResultProcessor {
     // Ignore time series only for prometheus
     const onlyTables = this.dataFrames.filter(frame => !isTimeSeries(frame));
 
+    if (onlyTables.length === 0) {
+      return null;
+    }
+
     const tables = onlyTables.map(frame => {
       const { fields } = frame;
       const fieldCount = fields.length;
-      const rowCount = fields[0].values.length;
+      const rowCount = frame.length;
 
       const columns = fields.map(field => ({
         text: field.name,
@@ -73,36 +77,12 @@ export class ResultProcessor {
       return null;
     }
 
-    const graphInterval = this.state.queryIntervals.intervalMs;
-
-    const newResults = dataFrameToLogsModel(this.dataFrames, graphInterval);
+    const newResults = dataFrameToLogsModel(this.dataFrames, this.intervalMs);
     const sortOrder = refreshIntervalToSortOrder(this.state.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);
 
-    if (this.replacePreviousResults) {
-      const slice = 1000;
-      const rows = sortedNewResults.rows.slice(0, slice);
-      const series = sortedNewResults.series;
-
-      return { ...sortedNewResults, rows, series };
-    }
-
-    const prevLogsResult: LogsModel = this.state.logsResult || { hasUniqueLabels: false, rows: [] };
-    const sortedLogResult = sortLogsResult(prevLogsResult, sortOrder);
-    const rowsInState = sortedLogResult.rows;
-
-    const processedRows = [];
-    for (const row of rowsInState) {
-      processedRows.push({ ...row, fresh: false });
-    }
-    for (const row of sortedNewResults.rows) {
-      processedRows.push({ ...row, fresh: true });
-    }
-
-    const slice = -1000;
-    const rows = processedRows.slice(slice);
-    const series = sortedNewResults.series.slice(slice);
-
+    const rows = sortedNewResults.rows;
+    const series = sortedNewResults.series;
     return { ...sortedNewResults, rows, series };
   }
 }

@@ -1,6 +1,6 @@
 +++
 title = "What's New in Grafana v4.0"
-description = "Feature & improvement highlights for Grafana v4.0"
+description = "Feature and improvement highlights for Grafana v4.0"
 keywords = ["grafana", "new", "documentation", "4.0"]
 type = "docs"
 [menu.docs]
@@ -89,22 +89,22 @@ dynamically add filters to any log property!
 
 ## UX Improvements
 
-We always try to bring some UX/UI refinements & polish in every release.
+We always try to bring some UX/UI refinements and polish in every release.
 
-### TV-mode & Kiosk mode
+### TV-mode and Kiosk mode
 
 
 <div class="row">
   <div class="medium-6 columns">
     <p>
       Grafana is so often used on wall mounted TVs that we figured a clean TV mode would be
-      really nice. In TV mode the top navbar, row & panel controls will all fade to transparent.
+      really nice. In TV mode the top navbar, row and panel controls will all fade to transparent.
     </p>
 
     <p>
       This happens automatically after one minute of user inactivity but can also be toggled manually
       with the <code>d v</code> sequence shortcut. Any mouse movement or keyboard action will
-      restore navbar & controls.
+      restore navbar and controls.
     </p>
 
     <p>
@@ -122,7 +122,7 @@ We always try to bring some UX/UI refinements & polish in every release.
   </div>
 </div>
 
-### New row menu & add panel experience
+### New row menu and add panel experience
 
 {{< imgbox max-width="50%" img="/img/docs/v4/add_panel.gif" caption="Add Panel flow" >}}
 
@@ -143,7 +143,7 @@ required, you can also just click the panel type and it will be inserted at the 
 automatically. Dragging a new panel has an advantage in that you can insert a new panel where ever you want
 not just at the end of the row.
 
-We plan to further improve dashboard building in the future with a more rich grid & layout system.
+We plan to further improve dashboard building in the future with a more rich grid and layout system.
 
 ### Keyboard shortcuts
 
@@ -162,7 +162,7 @@ Some nice navigation shortcuts are:
 
 <div class="clearfix"></div>
 
-## Upgrade & Breaking changes
+## Upgrade and Breaking changes
 
 There are no breaking changes. Old dashboards and features should work the same. Grafana-server will automatically upgrade its db
 schema on restart. It's advisable to do a backup of Grafana's database before updating.

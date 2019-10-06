@@ -131,6 +131,8 @@ func TestValues(t *testing.T) {
                      - two
                      - three:
                          inside: $STRING
+                     - six:
+                         empty:
                    four:
                      nested:
                        onemore: $INT
@@ -146,9 +148,16 @@ func TestValues(t *testing.T) {
 					"one": 1,
 					"two": "test",
 					"three": []interface{}{
-						1, "two", anyMap{
+						1,
+						"two",
+						anyMap{
 							"three": anyMap{
 								"inside": "test",
+							},
+						},
+						anyMap{
+							"six": anyMap{
+								"empty": interface{}(nil),
 							},
 						},
 					},
@@ -166,9 +175,16 @@ func TestValues(t *testing.T) {
 					"one": 1,
 					"two": "$STRING",
 					"three": []interface{}{
-						1, "two", anyMap{
+						1,
+						"two",
+						anyMap{
 							"three": anyMap{
 								"inside": "$STRING",
+							},
+						},
+						anyMap{
+							"six": anyMap{
+								"empty": interface{}(nil),
 							},
 						},
 					},

@@ -83,9 +83,8 @@ $select-input-bg-disabled: $input-bg-disabled;
 .gf-form-select-box__multi-value__remove {
   text-align: center;
   display: inline-block;
-  height: 14px;
-  vertical-align: middle;
   margin-left: 2px;
+  position: relative;
 }
 
 .gf-form-select-box__multi-value__label {
@@ -109,6 +108,10 @@ $select-input-bg-disabled: $input-bg-disabled;
       color: $input-color-select-arrow;
     }
   }
+}
+
+.gf-form-select-box__placeholder {
+  color: $input-color-placeholder;
 }
 
 .gf-form-select-box__control--is-focused .gf-form-select-box__placeholder {

@@ -9,7 +9,7 @@ import config from 'app/core/config';
 import { css } from 'emotion';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PanelModel } from 'app/features/dashboard/state';
-import { SHARED_DASHBODARD_QUERY } from './SharedQueryRunner';
+import { SHARED_DASHBODARD_QUERY } from './types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { filterPanelDataToQuery } from 'app/features/dashboard/panel_editor/QueryEditorRow';
 

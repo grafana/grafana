@@ -22,7 +22,7 @@ To view table panels in action and test different configurations with sample dat
 ## Querying Data
 
 The table panel displays the results of a query specified in the **Metrics** tab.
-The result being displayed depends on the datasource and the query, but generally there is one row per datapoint, with extra columns for associated keys and values, as well as one column for the numeric value of the datapoint.
+The result being displayed depends on the data source and the query, but generally there is one row per datapoint, with extra columns for associated keys and values, as well as one column for the numeric value of the datapoint.
 You can change the behavior in the section **Data to Table** below.
 
 ### Merge Multiple Queries per Table
@@ -35,7 +35,7 @@ In this example usage and capacity are metrics that will have corresponding data
 
 In its simplest case, both queries return time-series data with a numeric value and a timestamp.
 If the timestamps are the same, datapoints will be matched and rendered on the same row.
-Some datasources return keys and values (labels, tags) associated with the datapoint.
+Some data sources return keys and values (labels, tags) associated with the datapoint.
 These are being matched as well if they are present in both results and have the same value.
 The following datapoints will end up on the same row with one time column, two label columns ("host" and "job") and two value columns:
 

@@ -12,6 +12,10 @@ export interface LokiOptions extends DataSourceJsonData {
   maxLines?: string;
 }
 
+export interface LokiResponse {
+  streams: LokiLogsStream[];
+}
+
 export interface LokiLogsStream {
   labels: string;
   entries: LokiLogsStreamEntry[];

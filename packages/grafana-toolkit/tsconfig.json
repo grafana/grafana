@@ -7,7 +7,7 @@
     "rootDirs": ["."],
     "outDir": "dist/src",
     "declaration": true,
-    "declarationDir": "dist",
+    "declarationDir": "dist/src",
     "typeRoots": ["./node_modules/@types"],
     "esModuleInterop": true,
     "lib": ["es2015", "es2017.string", "dom"]

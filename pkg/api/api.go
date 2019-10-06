@@ -24,7 +24,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r := hs.RouteRegister
 
 	// not logged in views
-	r.Get("/", reqSignedIn, hs.Index)
 	r.Get("/logout", hs.Logout)
 	r.Post("/login", quota("session"), bind(dtos.LoginCommand{}), Wrap(hs.LoginPost))
 	r.Get("/login/:name", quota("session"), hs.OAuthLogin)
@@ -56,6 +55,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/orgs", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/stats", reqGrafanaAdmin, hs.Index)
+	r.Get("/admin/ldap", reqGrafanaAdmin, hs.Index)
 
 	r.Get("/styleguide", reqSignedIn, hs.Index)
 
@@ -395,6 +395,7 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Post("/provisioning/datasources/reload", Wrap(hs.AdminProvisioningReloadDatasources))
 		adminRoute.Post("/provisioning/notifications/reload", Wrap(hs.AdminProvisioningReloadNotifications))
 		adminRoute.Post("/ldap/reload", Wrap(hs.ReloadLDAPCfg))
+		adminRoute.Post("/ldap/sync/:id", Wrap(hs.PostSyncUserWithLDAP))
 		adminRoute.Get("/ldap/:username", Wrap(hs.GetUserFromLDAP))
 		adminRoute.Get("/ldap/status", Wrap(hs.GetLDAPStatus))
 	}, reqGrafanaAdmin)
@@ -421,4 +422,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/snapshots/:key", GetDashboardSnapshot)
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, Wrap(DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqEditorRole, Wrap(DeleteDashboardSnapshot))
+
+	r.Get("/*", reqSignedIn, hs.Index)
 }

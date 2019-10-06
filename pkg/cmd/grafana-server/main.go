@@ -29,7 +29,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/tsdb/postgres"
 	_ "github.com/grafana/grafana/pkg/tsdb/prometheus"
 	_ "github.com/grafana/grafana/pkg/tsdb/stackdriver"
-	_ "github.com/grafana/grafana/pkg/tsdb/testdata"
+	_ "github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
 
 var version = "5.0.0"

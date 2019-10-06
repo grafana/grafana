@@ -120,7 +120,7 @@ If a panel receives data and hooks into the `data-received` event then it should
 
 We currently have three different examples that you can fork/download to get started developing your grafana plugin.
 
- - [simple-json-datasource](https://github.com/grafana/simple-json-datasource) (small datasource plugin for querying json data from backends)
+ - [simple-json-datasource](https://github.com/grafana/simple-json-datasource) (small data source plugin for querying json data from backends)
  - [example-app](https://github.com/grafana/example-app)
  - [clock-panel](https://github.com/grafana/clock-panel)
  - [singlestat-panel](https://github.com/grafana/grafana/blob/master/public/app/plugins/panel/singlestat/module.ts)
@@ -132,5 +132,5 @@ We currently have three different examples that you can fork/download to get sta
 - [Plugin Defaults and Editor Mode]({{< relref "defaults-and-editor-mode.md" >}})
 - [Grafana Plugin Code Styleguide]({{< relref "code-styleguide.md" >}})
 - [Grafana Apps]({{< relref "apps.md" >}})
-- [Grafana Datasources]({{< relref "datasources.md" >}})
+- [Grafana Data Sources]({{< relref "datasources.md" >}})
 - [plugin.json Schema]({{< relref "plugin.json.md" >}})

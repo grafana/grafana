@@ -157,6 +157,7 @@ export class BackendSrv implements BackendService {
     // is canceled, canceling the previous datasource request if it is still
     // in-flight.
     const requestId = options.requestId;
+
     if (requestId) {
       this.resolveCancelerIfExists(requestId);
       // create new canceler
@@ -263,14 +264,15 @@ export class BackendSrv implements BackendService {
     return this.get(`/api/folders/${uid}`);
   }
 
-  saveDashboard(dash: DashboardModel, options: any) {
-    options = options || {};
-
+  saveDashboard(
+    dash: DashboardModel,
+    { message = '', folderId, overwrite = false }: { message?: string; folderId?: number; overwrite?: boolean } = {}
+  ) {
     return this.post('/api/dashboards/db/', {
       dashboard: dash,
-      folderId: options.folderId,
-      overwrite: options.overwrite === true,
-      message: options.message || '',
+      folderId,
+      overwrite,
+      message,
     });
   }
 

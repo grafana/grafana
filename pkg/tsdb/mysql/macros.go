@@ -1,30 +1,43 @@
 package mysql
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/components/gtime"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
 const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
+var restrictedRegExp = regexp.MustCompile(`(?im)([\s]*show[\s]+grants|[\s,]session_user\([^\)]*\)|[\s,]current_user(\([^\)]*\))?|[\s,]system_user\([^\)]*\)|[\s,]user\([^\)]*\))([\s,;]|$)`)
+
 type mySqlMacroEngine struct {
-	*tsdb.SqlMacroEngineBase
+	*sqleng.SqlMacroEngineBase
 	timeRange *tsdb.TimeRange
 	query     *tsdb.Query
+	logger    log.Logger
 }
 
-func newMysqlMacroEngine() tsdb.SqlMacroEngine {
-	return &mySqlMacroEngine{SqlMacroEngineBase: tsdb.NewSqlMacroEngineBase()}
+func newMysqlMacroEngine(logger log.Logger) sqleng.SqlMacroEngine {
+	return &mySqlMacroEngine{SqlMacroEngineBase: sqleng.NewSqlMacroEngineBase(), logger: logger}
 }
 
 func (m *mySqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
 	m.timeRange = timeRange
 	m.query = query
+
+	matches := restrictedRegExp.FindAllStringSubmatch(sql, 1)
+	if len(matches) > 0 {
+		m.logger.Error("show grants, session_user(), current_user(), system_user() or user() not allowed in query")
+		return "", errors.New("Invalid query. Inspect Grafana server log for details")
+	}
+
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
 
@@ -74,7 +87,7 @@ func (m *mySqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
 		if len(args) == 3 {
-			err := tsdb.SetupFillmode(m.query, interval, args[2])
+			err := sqleng.SetupFillmode(m.query, interval, args[2])
 			if err != nil {
 				return "", err
 			}
@@ -109,7 +122,7 @@ func (m *mySqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
 		if len(args) == 3 {
-			err := tsdb.SetupFillmode(m.query, interval, args[2])
+			err := sqleng.SetupFillmode(m.query, interval, args[2])
 			if err != nil {
 				return "", err
 			}
