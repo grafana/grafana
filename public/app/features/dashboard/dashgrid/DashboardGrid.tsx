@@ -5,11 +5,11 @@ import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import classNames from 'classnames';
 // @ts-ignore
 import sizeMe from 'react-sizeme';
-
 // Types
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { DashboardPanel } from './DashboardPanel';
 import { DashboardModel, PanelModel } from '../state';
+import { EventsConsumer } from '../../../core/utils/EventsProvider';
 
 let lastGridWidth = 1200;
 let ignoreNextWidthChange = false;
@@ -245,13 +245,19 @@ export class DashboardGrid extends PureComponent<Props> {
             this.panelRef[id] = elem;
           }}
         >
-          <DashboardPanel
-            panel={panel}
-            dashboard={this.props.dashboard}
-            isEditing={panel.isEditing}
-            isFullscreen={panel.fullscreen}
-            isInView={panel.isInView}
-          />
+          <EventsConsumer>
+            {({ publishEvent, subscribeToEvents }) => (
+              <DashboardPanel
+                panel={panel}
+                dashboard={this.props.dashboard}
+                isEditing={panel.isEditing}
+                isFullscreen={panel.fullscreen}
+                isInView={panel.isInView}
+                publishEvent={publishEvent}
+                subscribeToEvents={subscribeToEvents}
+              />
+            )}
+          </EventsConsumer>
         </div>
       );
     }

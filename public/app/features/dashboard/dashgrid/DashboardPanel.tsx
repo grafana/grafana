@@ -1,24 +1,22 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
-
 // Utils & Services
-import { getAngularLoader, AngularComponent } from '@grafana/runtime';
+import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
-
 // Components
 import { AddPanelWidget } from '../components/AddPanelWidget';
 import { DashboardRow } from '../components/DashboardRow';
 import { PanelChrome } from './PanelChrome';
 import { PanelEditor } from '../panel_editor/PanelEditor';
 import { PanelResizer } from './PanelResizer';
-
 // Types
-import { PanelModel, DashboardModel } from '../state';
-import { PanelPluginMeta, PanelPlugin } from '@grafana/ui/src/types/panel';
+import { DashboardModel, PanelModel } from '../state';
+import { PanelPlugin, PanelPluginMeta } from '@grafana/ui/src/types/panel';
 import { AutoSizer } from 'react-virtualized';
+import { Eventing } from '../../../core/hooks/useEventing';
 
-export interface Props {
+export interface Props extends Eventing {
   panel: PanelModel;
   dashboard: DashboardModel;
   isEditing: boolean;
@@ -90,7 +88,20 @@ export class DashboardPanel extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    this.loadPlugin(this.props.panel.type);
+    const { panel } = this.props;
+    this.loadPlugin(panel.type);
+    this.props.subscribeToEvents({
+      filter: event => {
+        if (event.origin === panel.id.toString()) {
+          return false;
+        }
+
+        return event.name === 'mouse-move-event';
+      },
+      tap: event => {
+        console.log(`New event arrived from ${event.origin} at ${panel.id}`, event);
+      },
+    });
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
@@ -190,7 +201,12 @@ export class DashboardPanel extends PureComponent<Props, State> {
     });
 
     return (
-      <div className={editorContainerClasses}>
+      <div
+        className={editorContainerClasses}
+        onMouseMove={event =>
+          this.props.publishEvent({ name: 'mouse-move-event', origin: this.props.panel.id.toString(), payload: event })
+        }
+      >
         <PanelResizer
           isEditing={isEditing}
           panel={panel}
