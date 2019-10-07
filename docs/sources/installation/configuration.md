@@ -214,9 +214,9 @@ will be stored.
 
 ### host
 
-Only applicable to MySQL or Postgres. Includes IP or hostname and port or in case of unix sockets the path to it.
+Only applicable to MySQL or Postgres. Includes IP or hostname and port or in case of Unix sockets the path to it.
 For example, for MySQL running on the same host as Grafana: `host =
-127.0.0.1:3306` or with unix sockets: `host = /var/run/mysqld/mysqld.sock`
+127.0.0.1:3306` or with Unix sockets: `host = /var/run/mysqld/mysqld.sock`
 
 ### name
 
@@ -238,7 +238,7 @@ For MySQL, use either `true`, `false`, or `skip-verify`.
 
 ### ca_cert_path
 
-The path to the CA certificate to use. On many linux systems, certs can be found in `/etc/ssl/certs`.
+The path to the CA certificate to use. On many Linux systems, certs can be found in `/etc/ssl/certs`.
 
 ### client_key_path
 
@@ -739,7 +739,7 @@ session provider you have configured.
 - **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
 - **postgres:** ex:  `user=a password=b host=localhost port=5432 dbname=c sslmode=verify-full`
 - **memcache:** ex:  `127.0.0.1:11211`
-- **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`. For unix socket, use for example: `network=unix,addr=/var/run/redis/redis.sock,pool_size=100,db=grafana`
+- **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`. For Unix socket, use for example: `network=unix,addr=/var/run/redis/redis.sock,pool_size=100,db=grafana`
 
 Postgres valid `sslmode` are `disable`, `require`, `verify-ca`, and `verify-full` (default).
 

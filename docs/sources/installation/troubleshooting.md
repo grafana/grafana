@@ -27,7 +27,7 @@ older versions of Grafana read the [how troubleshoot metric query issue](https:/
 ## Logging
 
 If you encounter an error or problem it is a good idea to check the grafana server log. Usually
-located at `/var/log/grafana/grafana.log` on unix systems or in `<grafana_install_dir>/data/log` on
+located at `/var/log/grafana/grafana.log` on Unix systems or in `<grafana_install_dir>/data/log` on
 other platforms and manual installs.
 
 You can enable more logging by changing log level in you grafana configuration file.
