@@ -24,7 +24,10 @@ func upgradeCommand(c utils.CommandLine) error {
 	}
 
 	if shouldUpgrade(localPlugin.Info.Version, &plugin) {
-		s.RemoveInstalledPlugin(pluginsDir, pluginName)
+		if err := s.RemoveInstalledPlugin(pluginsDir, pluginName); err != nil {
+			return err
+		}
+
 		return InstallPlugin(pluginName, "", c)
 	}
 

@@ -163,7 +163,9 @@ func (g *GrafanaServerImpl) Run() error {
 		})
 	}
 
-	sendSystemdNotification("READY=1")
+	if err := sendSystemdNotification("READY=1"); err != nil {
+		return err
+	}
 
 	return g.childRoutines.Wait()
 }
@@ -193,7 +195,9 @@ func (g *GrafanaServerImpl) Shutdown(reason string) {
 	g.shutdownFn()
 
 	// wait for child routines
-	g.childRoutines.Wait()
+	if err := g.childRoutines.Wait(); err != nil {
+		g.log.Debug("Error waiting on child routines", "err", err)
+	}
 }
 
 func (g *GrafanaServerImpl) Exit(reason error) int {

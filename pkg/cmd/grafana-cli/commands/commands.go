@@ -22,11 +22,14 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 		cfg := setting.NewCfg()
 
 		configOptions := strings.Split(cmd.GlobalString("configOverrides"), " ")
-		cfg.Load(&setting.CommandLineArgs{
+		if err := cfg.Load(&setting.CommandLineArgs{
 			Config:   cmd.ConfigFile(),
 			HomePath: cmd.HomePath(),
 			Args:     append(configOptions, cmd.Args()...), // tailing arguments have precedence over the options string
-		})
+		}); err != nil {
+			logger.Errorf("\n%s: Failed to load configuration", color.RedString("Error"))
+			os.Exit(1)
+		}
 
 		if debug {
 			cfg.LogConfigSources()
@@ -35,7 +38,10 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 		engine := &sqlstore.SqlStore{}
 		engine.Cfg = cfg
 		engine.Bus = bus.GetBus()
-		engine.Init()
+		if err := engine.Init(); err != nil {
+			logger.Errorf("\n%s: Failed initialize SQL engine", color.RedString("Error"))
+			os.Exit(1)
+		}
 
 		if err := command(cmd, engine); err != nil {
 			logger.Errorf("\n%s: ", color.RedString("Error"))
