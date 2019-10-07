@@ -23,7 +23,9 @@ type userAuthToken struct {
 
 func userAuthTokenFromUserToken(ut *models.UserToken) *userAuthToken {
 	var uat userAuthToken
-	uat.fromUserToken(ut)
+	if err := uat.fromUserToken(ut); err != nil {
+		// TODO: Deal with error
+	}
 	return &uat
 }
 

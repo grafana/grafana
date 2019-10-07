@@ -151,13 +151,20 @@ func HandleAlertsQuery(query *m.GetAlertsQuery) error {
 
 func deleteAlertDefinition(dashboardId int64, sess *DBSession) error {
 	alerts := make([]*m.Alert, 0)
-	sess.Where("dashboard_id = ?", dashboardId).Find(&alerts)
-
-	for _, alert := range alerts {
-		deleteAlertByIdInternal(alert.Id, "Dashboard deleted", sess)
+	if err := sess.Where("dashboard_id = ?", dashboardId).Find(&alerts); err != nil {
+		return err
 	}
 
-	return nil
+	var gotErr error
+	for _, alert := range alerts {
+		if err := deleteAlertByIdInternal(alert.Id, "Dashboard deleted", sess); err != nil {
+			if gotErr == nil {
+				gotErr = err
+			}
+		}
+	}
+
+	return gotErr
 }
 
 func SaveAlerts(cmd *m.SaveAlertsCommand) error {
@@ -240,6 +247,7 @@ func updateAlerts(existingAlerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *DBS
 }
 
 func deleteMissingAlerts(alerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *DBSession) error {
+	var gotErr error
 	for _, missingAlert := range alerts {
 		missing := true
 
@@ -251,11 +259,15 @@ func deleteMissingAlerts(alerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *DBSe
 		}
 
 		if missing {
-			deleteAlertByIdInternal(missingAlert.Id, "Removed from dashboard", sess)
+			if err := deleteAlertByIdInternal(missingAlert.Id, "Removed from dashboard", sess); err != nil {
+				if gotErr == nil {
+					gotErr = err
+				}
+			}
 		}
 	}
 
-	return nil
+	return gotErr
 }
 
 func GetAlertsByDashboardId2(dashboardId int64, sess *DBSession) ([]*m.Alert, error) {

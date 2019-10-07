@@ -40,10 +40,12 @@ func (srv *CleanUpService) Run(ctx context.Context) error {
 			srv.cleanUpTmpFiles()
 			srv.deleteExpiredSnapshots()
 			srv.deleteExpiredDashboardVersions()
-			srv.ServerLockService.LockAndExecute(ctx, "delete old login attempts", time.Minute*10, func() {
-				srv.deleteOldLoginAttempts()
-			})
-
+			if err := srv.ServerLockService.LockAndExecute(ctx, "delete old login attempts",
+				time.Minute*10, func() {
+					srv.deleteOldLoginAttempts()
+				}); err != nil {
+				srv.log.Error("Locking/executing failed", "err", err)
+			}
 		case <-ctx.Done():
 			return ctx.Err()
 		}

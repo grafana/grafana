@@ -99,12 +99,14 @@ func (mg *Migrator) Start() error {
 			if err != nil {
 				mg.Logger.Error("Exec failed", "error", err, "sql", sql)
 				record.Error = err.Error()
-				sess.Insert(&record)
+				if _, err := sess.Insert(&record); err != nil {
+					return err
+				}
 				return err
 			}
 			record.Success = true
-			sess.Insert(&record)
-			return nil
+			_, err = sess.Insert(&record)
+			return err
 		})
 
 		if err != nil {
@@ -170,7 +172,9 @@ func (mg *Migrator) inTransaction(callback dbTransactionFunc) error {
 	err = callback(sess)
 
 	if err != nil {
-		sess.Rollback()
+		if err := sess.Rollback(); err != nil {
+			return err
+		}
 		return err
 	} else if err = sess.Commit(); err != nil {
 		return err

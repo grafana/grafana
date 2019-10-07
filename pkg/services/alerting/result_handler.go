@@ -98,6 +98,5 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 		}
 	}
 
-	handler.notifier.SendIfNeeded(evalContext)
-	return nil
+	return handler.notifier.SendIfNeeded(evalContext)
 }

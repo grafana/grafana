@@ -23,11 +23,13 @@ func TestPreferencesDataAccess(t *testing.T) {
 		})
 
 		Convey("GetPreferencesWithDefaults with saved org and user home dashboard should return user home dashboard", func() {
-			SavePreferences(&models.SavePreferencesCommand{OrgId: 1, HomeDashboardId: 1})
-			SavePreferences(&models.SavePreferencesCommand{OrgId: 1, UserId: 1, HomeDashboardId: 4})
+			err := SavePreferences(&models.SavePreferencesCommand{OrgId: 1, HomeDashboardId: 1})
+			So(err, ShouldBeNil)
+			err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, UserId: 1, HomeDashboardId: 4})
+			So(err, ShouldBeNil)
 
 			query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{OrgId: 1, UserId: 1}}
-			err := GetPreferencesWithDefaults(query)
+			err = GetPreferencesWithDefaults(query)
 			So(err, ShouldBeNil)
 			So(query.Result.HomeDashboardId, ShouldEqual, 4)
 		})

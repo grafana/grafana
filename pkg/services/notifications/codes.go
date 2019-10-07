@@ -38,7 +38,10 @@ func createTimeLimitCode(data string, minutes int, startInf interface{}) string 
 
 	// create sha1 encode string
 	sh := sha1.New()
-	sh.Write([]byte(data + setting.SecretKey + startStr + endStr + com.ToStr(minutes)))
+	if _, err := sh.Write([]byte(data + setting.SecretKey + startStr + endStr +
+		com.ToStr(minutes))); err != nil {
+		// TODO: Deal with error
+	}
 	encoded := hex.EncodeToString(sh.Sum(nil))
 
 	code := fmt.Sprintf("%s%06d%s", startStr, minutes, encoded)

@@ -73,7 +73,8 @@ func TestAlertingDataAccess(t *testing.T) {
 			stateDateBeforePause := alert.NewStateDate
 
 			Convey("can pause all alerts", func() {
-				pauseAllAlerts(true)
+				err := pauseAllAlerts(true)
+				So(err, ShouldBeNil)
 
 				Convey("cannot updated paused alert", func() {
 					cmd := &m.SetAlertStateCommand{
@@ -98,7 +99,8 @@ func TestAlertingDataAccess(t *testing.T) {
 				})
 
 				Convey("unpausing alerts should update their NewStateDate again", func() {
-					pauseAllAlerts(false)
+					err := pauseAllAlerts(false)
+					So(err, ShouldBeNil)
 					alert, _ = getAlertById(1)
 					stateDateAfterUnpause := alert.NewStateDate
 					So(stateDateBeforePause, ShouldHappenBefore, stateDateAfterUnpause)
@@ -241,13 +243,13 @@ func TestAlertingDataAccess(t *testing.T) {
 				UserId:      1,
 			}
 
-			SaveAlerts(&cmd)
+			err = SaveAlerts(&cmd)
+			So(err, ShouldBeNil)
 
 			err = DeleteDashboard(&m.DeleteDashboardCommand{
 				OrgId: 1,
 				Id:    testDash.Id,
 			})
-
 			So(err, ShouldBeNil)
 
 			Convey("Alerts should be removed", func() {
@@ -275,10 +277,12 @@ func TestPausingAlerts(t *testing.T) {
 		stateDateBeforePause := alert.NewStateDate
 		stateDateAfterPause := stateDateBeforePause
 		Convey("when paused", func() {
-			pauseAlert(testDash.OrgId, 1, true)
+			_, err := pauseAlert(testDash.OrgId, 1, true)
+			So(err, ShouldBeNil)
 
 			Convey("the NewStateDate should be updated", func() {
-				alert, _ := getAlertById(1)
+				alert, err := getAlertById(1)
+				So(err, ShouldBeNil)
 
 				stateDateAfterPause = alert.NewStateDate
 				So(stateDateBeforePause, ShouldHappenBefore, stateDateAfterPause)
@@ -286,10 +290,12 @@ func TestPausingAlerts(t *testing.T) {
 		})
 
 		Convey("when unpaused", func() {
-			pauseAlert(testDash.OrgId, 1, false)
+			_, err := pauseAlert(testDash.OrgId, 1, false)
+			So(err, ShouldBeNil)
 
 			Convey("the NewStateDate should be updated again", func() {
-				alert, _ := getAlertById(1)
+				alert, err := getAlertById(1)
+				So(err, ShouldBeNil)
 
 				stateDateAfterUnpause := alert.NewStateDate
 				So(stateDateAfterPause, ShouldHappenBefore, stateDateAfterUnpause)

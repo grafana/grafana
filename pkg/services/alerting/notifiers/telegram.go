@@ -120,7 +120,9 @@ func (tn *TelegramNotifier) buildMessageLinkedImage(evalContext *alerting.EvalCo
 
 	cmd := tn.generateTelegramCmd(message, "text", "sendMessage", func(w *multipart.Writer) {
 		fw, _ := w.CreateFormField("parse_mode")
-		fw.Write([]byte("html"))
+		if _, err := fw.Write([]byte("html")); err != nil {
+			// TODO: Deal with error
+		}
 	})
 	return cmd
 }
@@ -151,7 +153,9 @@ func (tn *TelegramNotifier) buildMessageInlineImage(evalContext *alerting.EvalCo
 
 	cmd := tn.generateTelegramCmd(message, "caption", "sendPhoto", func(w *multipart.Writer) {
 		fw, _ := w.CreateFormFile("photo", evalContext.ImageOnDiskPath)
-		io.Copy(fw, imageFile)
+		if _, err := io.Copy(fw, imageFile); err != nil {
+			// TODO: Deal with error
+		}
 	})
 	return cmd, nil
 }
@@ -160,11 +164,21 @@ func (tn *TelegramNotifier) generateTelegramCmd(message string, messageField str
 	var body bytes.Buffer
 	w := multipart.NewWriter(&body)
 
-	fw, _ := w.CreateFormField("chat_id")
-	fw.Write([]byte(tn.ChatID))
+	fw, err := w.CreateFormField("chat_id")
+	if err != nil {
+		// TODO: Deal with error
+	}
+	if _, err := fw.Write([]byte(tn.ChatID)); err != nil {
+		// TODO: Deal with error
+	}
 
-	fw, _ = w.CreateFormField(messageField)
-	fw.Write([]byte(message))
+	fw, err = w.CreateFormField(messageField)
+	if err != nil {
+		// TODO: Deal with error
+	}
+	if _, err := fw.Write([]byte(message)); err != nil {
+		// TODO: Deal with error
+	}
 
 	extraConf(w)
 

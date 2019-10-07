@@ -210,7 +210,10 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 		// dont reuse the evalContext and get its own context.
 		evalContext.Ctx = resultHandleCtx
 		evalContext.Rule.State = evalContext.GetNewState()
-		e.resultHandler.handle(evalContext)
+		if err := e.resultHandler.handle(evalContext); err != nil {
+			// TODO: Deal with error
+		}
+
 		span.Finish()
 		e.log.Debug("Job Execution completed", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.ID, "name", evalContext.Rule.Name, "firing", evalContext.Firing, "attemptID", attemptID)
 		close(attemptChan)
