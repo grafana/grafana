@@ -3,7 +3,7 @@ import { Labels } from '@grafana/data';
 
 export interface LokiQuery extends DataQuery {
   expr: string;
-  live?: boolean;
+  liveStreaming?: boolean;
   query?: string;
   regexp?: string;
 }

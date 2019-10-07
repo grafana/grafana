@@ -797,7 +797,7 @@ describe('ElasticResponse', () => {
           interval: '10s',
           isLogsQuery: true,
           key: 'Q-1561369883389-0.7611823271062786-0',
-          live: false,
+          liveStreaming: false,
           maxDataPoints: 1620,
           query: '',
           timeField: '@timestamp',
