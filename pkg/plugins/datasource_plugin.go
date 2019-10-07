@@ -62,7 +62,11 @@ func (p *DataSourcePlugin) startBackendPlugin(ctx context.Context, log log.Logge
 
 	err := p.spawnSubProcess()
 	if err == nil {
-		go p.restartKilledProcess(ctx)
+		go func() {
+			if err := p.restartKilledProcess(ctx); err != nil {
+				// TODO: Deal with error
+			}
+		}()
 	}
 
 	return err

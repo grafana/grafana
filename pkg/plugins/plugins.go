@@ -63,7 +63,9 @@ func (pm *PluginManager) Init() error {
 	}
 
 	pm.log.Info("Starting plugin search")
-	scan(path.Join(setting.StaticRootPath, "app/plugins"))
+	if err := scan(path.Join(setting.StaticRootPath, "app/plugins")); err != nil {
+		return err
+	}
 
 	// check if plugins dir exists
 	if _, err := os.Stat(setting.PluginsPath); os.IsNotExist(err) {
@@ -71,14 +73,20 @@ func (pm *PluginManager) Init() error {
 			plog.Error("Failed to create plugin dir", "dir", setting.PluginsPath, "error", err)
 		} else {
 			plog.Info("Plugin dir created", "dir", setting.PluginsPath)
-			scan(setting.PluginsPath)
+			if err := scan(setting.PluginsPath); err != nil {
+				return err
+			}
 		}
 	} else {
-		scan(setting.PluginsPath)
+		if err := scan(setting.PluginsPath); err != nil {
+			return err
+		}
 	}
 
 	// check plugin paths defined in config
-	checkPluginPaths()
+	if err := checkPluginPaths(); err != nil {
+		return err
+	}
 
 	for _, panel := range Panels {
 		panel.initFrontendPlugin()
@@ -108,7 +116,9 @@ func (pm *PluginManager) startBackendPlugins(ctx context.Context) error {
 }
 
 func (pm *PluginManager) Run(ctx context.Context) error {
-	pm.startBackendPlugins(ctx)
+	if err := pm.startBackendPlugins(ctx); err != nil {
+		return err
+	}
 	pm.updateAppDashboards()
 	pm.checkForUpdates()
 
@@ -137,7 +147,9 @@ func checkPluginPaths() error {
 		if strings.HasPrefix(section.Name(), "plugin.") {
 			path := section.Key("path").String()
 			if path != "" {
-				scan(path)
+				if err := scan(path); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -227,7 +239,9 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 		}
 	}
 
-	reader.Seek(0, 0)
+	if _, err := reader.Seek(0, 0); err != nil {
+		return err
+	}
 	return loader.Load(jsonParser, currentDir)
 }
 
