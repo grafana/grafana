@@ -6,7 +6,7 @@ import './editor/editor_component';
 import kbn from 'app/core/utils/kbn';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { auto } from 'angular';
+import { auto, IPromise } from 'angular';
 import { DataFrame } from '@grafana/data';
 
 export interface ResultFormat {
@@ -35,6 +35,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       allowedTimeGrainsMs: number[];
       dimensions: any[];
       dimension: any;
+      top: string;
       aggregation: string;
       aggOptions: string[];
       timeGrains: Array<{ text: string; value: string }>;
@@ -80,6 +81,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       metricName: this.defaultDropdownValue,
       dimensionFilter: '*',
       timeGrain: 'auto',
+      top: '10',
       aggOptions: [] as string[],
       timeGrains: [] as string[],
     },
@@ -454,9 +456,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.target.azureMonitor.dimension = '';
   }
 
-  onMetricNameChange() {
+  onMetricNameChange(): IPromise<void> {
     if (!this.target.azureMonitor.metricName || this.target.azureMonitor.metricName === this.defaultDropdownValue) {
-      return;
+      return Promise.resolve();
     }
 
     return this.datasource

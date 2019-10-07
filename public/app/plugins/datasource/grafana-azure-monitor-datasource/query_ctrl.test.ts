@@ -194,8 +194,8 @@ describe('AzureMonitorQueryCtrl', () => {
     describe('when onMetricNameChange is triggered for the Metric Names dropdown', () => {
       const response: any = {
         primaryAggType: 'Average',
-        supportAggOptions: ['Average', 'Total'],
-        supportedTimeGrains: ['PT1M', 'P1D'],
+        supportedAggTypes: ['Average', 'Total'],
+        supportedTimeGrains: [{ text: 'PT1M', value: 'PT1M' }, { text: 'P1D', value: 'P1D' }],
         dimensions: [],
       };
 
@@ -227,8 +227,12 @@ describe('AzureMonitorQueryCtrl', () => {
       it('should set the options and default selected value for the Aggregations dropdown', () => {
         queryCtrl.onMetricNameChange().then(() => {
           expect(queryCtrl.target.azureMonitor.aggregation).toBe('Average');
-          expect(queryCtrl.target.azureMonitor.aggOptions).toBe(['Average', 'Total']);
-          expect(queryCtrl.target.azureMonitor.timeGrains).toBe(['PT1M', 'P1D']);
+          expect(queryCtrl.target.azureMonitor.aggOptions).toEqual(['Average', 'Total']);
+          expect(queryCtrl.target.azureMonitor.timeGrains).toEqual([
+            { text: 'auto', value: 'auto' },
+            { text: 'PT1M', value: 'PT1M' },
+            { text: 'P1D', value: 'P1D' },
+          ]);
         });
       });
     });

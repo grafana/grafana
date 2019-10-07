@@ -89,7 +89,7 @@ export default class LokiCheatSheet extends PureComponent<ExploreStartPageProps,
           {this.renderExpression('{app="cassandra"} |= "exact match"')}
           {this.renderExpression('{app="cassandra"} != "do not match"')}
           <div className="cheat-sheet-item__label">
-            <a href="https://github.com/grafana/loki/blob/master/docs/usage.md#filter-expression" target="logql">
+            <a href="https://github.com/grafana/loki/blob/master/docs/logql.md#filter-expression" target="logql">
               LogQL
             </a>{' '}
             supports exact and regular expression filters.

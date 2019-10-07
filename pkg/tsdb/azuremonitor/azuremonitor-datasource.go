@@ -125,6 +125,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		dimensionFilter := strings.TrimSpace(fmt.Sprintf("%v", azureMonitorTarget["dimensionFilter"]))
 		if azureMonitorTarget["dimension"] != nil && azureMonitorTarget["dimensionFilter"] != nil && len(dimension) > 0 && len(dimensionFilter) > 0 && dimension != "None" {
 			params.Add("$filter", fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
+			params.Add("top", fmt.Sprintf("%v", azureMonitorTarget["top"]))
 		}
 
 		target = params.Encode()

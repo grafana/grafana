@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useContext, useRef, RefObject } from 'react';
+import React, { useState, useMemo, useContext, useRef, RefObject } from 'react';
 import { VariableSuggestion, VariableOrigin, DataLinkSuggestions } from './DataLinkSuggestions';
 import { ThemeContext, DataLinkBuiltInVars, makeValue } from '../../index';
 import { SelectionReference } from './SelectionReference';
@@ -8,11 +8,12 @@ import { Editor } from '@grafana/slate-react';
 import { Value, Editor as CoreEditor } from 'slate';
 import Plain from 'slate-plain-serializer';
 import { Popper as ReactPopper } from 'react-popper';
-import useDebounce from 'react-use/lib/useDebounce';
 import { css, cx } from 'emotion';
 
 import { SlatePrism } from '../../slate-plugins';
 import { SCHEMA } from '../../utils/slate';
+import { stylesFactory } from '../../themes';
+import { GrafanaTheme } from '../../types';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 
@@ -29,53 +30,31 @@ const plugins = [
   }),
 ];
 
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  editor: css`
+    .token.builtInVariable {
+      color: ${theme.colors.queryGreen};
+    }
+    .token.variable {
+      color: ${theme.colors.queryKeyword};
+    }
+  `,
+}));
+
 export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, suggestions }) => {
   const editorRef = useRef<Editor>() as RefObject<Editor>;
   const theme = useContext(ThemeContext);
+  const styles = getStyles(theme);
   const [showingSuggestions, setShowingSuggestions] = useState(false);
-
   const [suggestionsIndex, setSuggestionsIndex] = useState(0);
-  const [usedSuggestions, setUsedSuggestions] = useState(
-    suggestions.filter(suggestion => value.includes(suggestion.value))
-  );
-
   const [linkUrl, setLinkUrl] = useState<Value>(makeValue(value));
 
-  const getStyles = useCallback(() => {
-    return {
-      editor: css`
-        .token.builtInVariable {
-          color: ${theme.colors.queryGreen};
-        }
-        .token.variable {
-          color: ${theme.colors.queryKeyword};
-        }
-      `,
-    };
-  }, [theme]);
-
-  const currentSuggestions = useMemo(
-    () => suggestions.filter(suggestion => !usedSuggestions.map(s => s.value).includes(suggestion.value)),
-    [usedSuggestions, suggestions]
-  );
-
   // Workaround for https://github.com/ianstormtaylor/slate/issues/2927
-  const stateRef = useRef({ showingSuggestions, currentSuggestions, suggestionsIndex, linkUrl, onChange });
-  stateRef.current = { showingSuggestions, currentSuggestions, suggestionsIndex, linkUrl, onChange };
+  const stateRef = useRef({ showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange });
+  stateRef.current = { showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange };
 
   // SelectionReference is used to position the variables suggestion relatively to current DOM selection
   const selectionRef = useMemo(() => new SelectionReference(), [setShowingSuggestions, linkUrl]);
-
-  // Keep track of variables that has been used already
-  const updateUsedSuggestions = () => {
-    const currentLink = Plain.serialize(linkUrl);
-    const next = usedSuggestions.filter(suggestion => currentLink.includes(suggestion.value));
-    if (next.length !== usedSuggestions.length) {
-      setUsedSuggestions(next);
-    }
-  };
-
-  useDebounce(updateUsedSuggestions, 250, [linkUrl]);
 
   const onKeyDown = React.useCallback((event: KeyboardEvent, next: () => any) => {
     if (!stateRef.current.showingSuggestions) {
@@ -93,13 +72,13 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
 
       case 'Enter':
         event.preventDefault();
-        return onVariableSelect(stateRef.current.currentSuggestions[stateRef.current.suggestionsIndex]);
+        return onVariableSelect(stateRef.current.suggestions[stateRef.current.suggestionsIndex]);
 
       case 'ArrowDown':
       case 'ArrowUp':
         event.preventDefault();
         const direction = event.key === 'ArrowDown' ? 1 : -1;
-        return setSuggestionsIndex(index => modulo(index + direction, stateRef.current.currentSuggestions.length));
+        return setSuggestionsIndex(index => modulo(index + direction, stateRef.current.suggestions.length));
       default:
         return next();
     }
@@ -126,9 +105,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
 
     setLinkUrl(editor.value);
     setShowingSuggestions(false);
-    setUsedSuggestions((previous: VariableSuggestion[]) => {
-      return [...previous, item];
-    });
+
     setSuggestionsIndex(0);
     onChange(Plain.serialize(editor.value));
   };
@@ -159,7 +136,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
                 return (
                   <div ref={ref} style={style} data-placement={placement}>
                     <DataLinkSuggestions
-                      suggestions={currentSuggestions}
+                      suggestions={stateRef.current.suggestions}
                       onSuggestionSelect={onVariableSelect}
                       onClose={() => setShowingSuggestions(false)}
                       activeIndex={suggestionsIndex}
@@ -179,7 +156,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
           onBlur={onUrlBlur}
           onKeyDown={(event, _editor, next) => onKeyDown(event as KeyboardEvent, next)}
           plugins={plugins}
-          className={getStyles().editor}
+          className={styles.editor}
         />
       </div>
     </div>

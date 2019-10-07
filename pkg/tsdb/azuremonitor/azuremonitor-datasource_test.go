@@ -43,6 +43,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 								"metricDefinition": "Microsoft.Compute/virtualMachines",
 								"metricNamespace":  "Microsoft.Compute-virtualMachines",
 								"metricName":       "Percentage CPU",
+								"top":              "10",
 								"alias":            "testalias",
 								"queryType":        "Azure Monitor",
 							},
@@ -127,13 +128,14 @@ func TestAzureMonitorDatasource(t *testing.T) {
 						"queryType":        "Azure Monitor",
 						"dimension":        "blob",
 						"dimensionFilter":  "*",
+						"top":              "30",
 					},
 				})
 
 				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
 				So(err, ShouldBeNil)
 
-				So(queries[0].Target, ShouldEqual, "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
+				So(queries[0].Target, ShouldEqual, "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30")
 
 			})
 
@@ -151,6 +153,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 						"queryType":        "Azure Monitor",
 						"dimension":        "None",
 						"dimensionFilter":  "*",
+						"top":              "10",
 					},
 				})
 

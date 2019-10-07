@@ -1,17 +1,22 @@
 // Libraries
 import _ from 'lodash';
-
 // Utils
 import kbn from 'app/core/utils/kbn';
 import coreModule from 'app/core/core_module';
-import { dateMath } from '@grafana/data';
-
 // Types
-import { TimeRange, RawTimeRange, TimeZone } from '@grafana/data';
+import {
+  dateMath,
+  DefaultTimeRange,
+  TimeRange,
+  RawTimeRange,
+  TimeZone,
+  toUtc,
+  dateTime,
+  isDateTime,
+} from '@grafana/data';
 import { ITimeoutService, ILocationService } from 'angular';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
-import { toUtc, dateTime, isDateTime } from '@grafana/data';
 import { getZoomedTimeRange, getShiftedTimeRange } from 'app/core/utils/timePicker';
 
 export class TimeSrv {
@@ -32,7 +37,7 @@ export class TimeSrv {
     private contextSrv: ContextSrv
   ) {
     // default time
-    this.time = { from: '6h', to: 'now' };
+    this.time = DefaultTimeRange.raw;
 
     $rootScope.$on('zoom-out', this.zoomOut.bind(this));
     $rootScope.$on('shift-time', this.shiftTime.bind(this));
