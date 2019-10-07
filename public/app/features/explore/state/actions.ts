@@ -425,7 +425,7 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
       // This is used for logs streaming for buffer size, with undefined it falls back to datasource config if it
       // supports that.
       maxDataPoints: mode === ExploreMode.Logs ? undefined : containerWidth,
-      live,
+      liveStreaming: live,
       showingGraph,
       showingTable,
     };
