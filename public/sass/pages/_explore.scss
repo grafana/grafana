@@ -108,6 +108,18 @@
   }
 }
 
+@media only screen and (max-width: 1400px) {
+  .explore-toolbar.splitted {
+    .explore-toolbar-content-item {
+      .navbar-button {
+        span {
+          display: none;
+        }
+      }
+    }
+  }
+}
+
 @media only screen and (max-width: 1070px) {
   .timepicker {
     .timepicker-rangestring {
