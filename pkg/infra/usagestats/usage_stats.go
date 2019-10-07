@@ -151,7 +151,11 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	data := bytes.NewBuffer(out)
 
 	client := http.Client{Timeout: 5 * time.Second}
-	go client.Post(usageStatsURL, "application/json", data)
+	go func() {
+		if _, err := client.Post(usageStatsURL, "application/json", data); err != nil {
+			// TODO: Deal with error
+		}
+	}()
 }
 
 func (uss *UsageStatsService) updateTotalStats() {
