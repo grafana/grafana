@@ -161,7 +161,12 @@ func (f *JSONFormatter) Format(diff diff.Diff) (result string, err error) {
 func (f *JSONFormatter) formatObject(left map[string]interface{}, df diff.Diff) {
 	f.addLineWith(ChangeNil, "{")
 	f.push("ROOT", len(left), false)
-	f.processObject(left, df.Deltas())
+	if err := f.processObject(left, df.Deltas()); err != nil {
+		f.pop()
+		// TODO: Deal with error
+		return
+	}
+
 	f.pop()
 	f.addLineWith(ChangeNil, "}")
 }
@@ -169,7 +174,11 @@ func (f *JSONFormatter) formatObject(left map[string]interface{}, df diff.Diff) 
 func (f *JSONFormatter) formatArray(left []interface{}, df diff.Diff) {
 	f.addLineWith(ChangeNil, "[")
 	f.push("ROOT", len(left), true)
-	f.processArray(left, df.Deltas())
+	if err := f.processArray(left, df.Deltas()); err != nil {
+		f.pop()
+		// TODO: Deal with error
+		return
+	}
 	f.pop()
 	f.addLineWith(ChangeNil, "]")
 }
@@ -177,7 +186,10 @@ func (f *JSONFormatter) formatArray(left []interface{}, df diff.Diff) {
 func (f *JSONFormatter) processArray(array []interface{}, deltas []diff.Delta) error {
 	patchedIndex := 0
 	for index, value := range array {
-		f.processItem(value, deltas, diff.Index(index))
+		if err := f.processItem(value, deltas, diff.Index(index)); err != nil {
+			return err
+		}
+
 		patchedIndex++
 	}
 
@@ -201,7 +213,9 @@ func (f *JSONFormatter) processObject(object map[string]interface{}, deltas []di
 	names := sortKeys(object)
 	for _, name := range names {
 		value := object[name]
-		f.processItem(value, deltas, diff.Name(name))
+		if err := f.processItem(value, deltas, diff.Name(name)); err != nil {
+			return err
+		}
 	}
 
 	// Added
@@ -236,7 +250,11 @@ func (f *JSONFormatter) processItem(value interface{}, deltas []diff.Delta, posi
 				f.print("{")
 				f.closeLine()
 				f.push(positionStr, len(o), false)
-				f.processObject(o, matchedDelta.Deltas)
+				if err := f.processObject(o, matchedDelta.Deltas); err != nil {
+					f.pop()
+					return err
+				}
+
 				f.pop()
 				f.newLine(ChangeNil)
 				f.print("}")
@@ -257,7 +275,11 @@ func (f *JSONFormatter) processItem(value interface{}, deltas []diff.Delta, posi
 				f.print("[")
 				f.closeLine()
 				f.push(positionStr, len(a), true)
-				f.processArray(a, matchedDelta.Deltas)
+				if err := f.processArray(a, matchedDelta.Deltas); err != nil {
+					f.pop()
+					return err
+				}
+
 				f.pop()
 				f.newLine(ChangeNil)
 				f.print("]")

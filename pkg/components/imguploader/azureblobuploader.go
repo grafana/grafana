@@ -162,7 +162,9 @@ func (c *StorageClient) FileUpload(container, blobName string, body io.Reader) (
 	extension := strings.ToLower(path.Ext(blobName))
 	contentType := mime.TypeByExtension(extension)
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(body)
+	if _, err := buf.ReadFrom(body); err != nil {
+		return nil, err
+	}
 	req, err := http.NewRequest(
 		"PUT",
 		c.absUrl("%s/%s", container, blobName),
@@ -221,7 +223,10 @@ func (a *Auth) SignRequest(req *http.Request) {
 	decodedKey, _ := base64.StdEncoding.DecodeString(a.Key)
 
 	sha256 := hmac.New(sha256.New, decodedKey)
-	sha256.Write([]byte(strToSign))
+	if _, err := sha256.Write([]byte(strToSign)); err != nil {
+		// TODO: Deal with error
+		return
+	}
 
 	signature := base64.StdEncoding.EncodeToString(sha256.Sum(nil))
 
