@@ -1,24 +1,24 @@
 import _ from 'lodash';
-import { sanitize, escapeHtml } from 'app/core/utils/text';
+import { escapeHtml, sanitize } from 'app/core/utils/text';
 import {
-  renderMarkdown,
+  AppEvent,
   componentDidMount,
   editModeInitialized,
   initPanelActions,
   panelChangeView,
-  AppEvent,
+  renderMarkdown,
 } from '@grafana/data';
 
 import config from 'app/core/config';
-import { profiler, Emitter } from 'app/core/core';
+import { Emitter, profiler } from 'app/core/core';
 import getFactors from 'app/core/utils/factors';
 import {
-  duplicatePanel,
-  removePanel,
-  copyPanel as copyPanelUtil,
-  editPanelJson as editPanelJsonUtil,
-  sharePanel as sharePanelUtil,
   calculateInnerPanelHeight,
+  copyPanel as copyPanelUtil,
+  duplicatePanel,
+  editPanelJson as editPanelJsonUtil,
+  removePanel,
+  sharePanel as sharePanelUtil,
 } from 'app/features/dashboard/utils/panel';
 import TimeSeries from 'app/core/time_series2';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
@@ -28,7 +28,6 @@ import { PanelPluginMeta } from '@grafana/ui/src/types/panel';
 import { getPanelLinksSupplier } from './panellinks/linkSuppliers';
 import TableModel from 'app/core/table_model';
 import { rendered } from 'app/types';
-import { GrafanaRootScope } from '../../routes/GrafanaCtrl';
 
 export class PanelCtrl {
   panel: any;
@@ -51,7 +50,7 @@ export class PanelCtrl {
   maxPanelsPerRowOptions: number[];
 
   /** @ngInject */
-  constructor($scope: GrafanaRootScope, $injector: auto.IInjectorService) {
+  constructor($scope: any, $injector: auto.IInjectorService) {
     this.$injector = $injector;
     this.$location = $injector.get('$location');
     this.$scope = $scope;
