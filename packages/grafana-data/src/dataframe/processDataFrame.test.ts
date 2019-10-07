@@ -124,11 +124,13 @@ describe('SerisData backwards compatibility', () => {
     const table = {
       columns: [],
       rows: [],
+      type: 'table',
     };
 
     const series = toDataFrame(table);
     const roundtrip = toLegacyResponseData(series) as TableData;
     expect(roundtrip.columns.length).toBe(0);
+    expect(roundtrip.type).toBe('table');
   });
 
   it('converts TableData to series and back again', () => {
