@@ -41,7 +41,7 @@ For all items not covered in this guide, refer to the [Microsoft Style Guide](ht
 * Avoid following one heading with another heading.
 * Avoid skipping heading levels. For example, an h1 should be followed by an h2 rather than an h3.
 * Avoid having just one lower-level heading. For example, h1, h2, h2, h3, h3, h2 is a good order. Do no go h1, h2, h3, h2, h3, h2.
-* Do not include parenthetical words like (Important!) in headings.
+* Don't include parenthetical words like (Important!) in headings.
 
 ### Images
 
