@@ -91,8 +91,8 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
   };
 });
 
-const defaultZoomOutTooltip = () => {
-  return <>Live tailing</>;
+const defaultLiveTooltip = () => {
+  return <>Live</>;
 };
 
 type LiveTailButtonProps = {
@@ -112,7 +112,7 @@ export function LiveTailButton(props: LiveTailButtonProps) {
 
   return (
     <>
-      <Tooltip content={defaultZoomOutTooltip} placement="bottom">
+      <Tooltip content={defaultLiveTooltip} placement="bottom">
         <button
           className={classNames('btn navbar-button', styles.liveButton, {
             [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: isLive,
@@ -122,7 +122,7 @@ export function LiveTailButton(props: LiveTailButtonProps) {
           onClick={onClickMain}
         >
           <i className={classNames('fa', isPaused || !isLive ? 'fa-play' : 'fa-pause')} />
-          <span>&nbsp; Live tailing</span>
+          <span>&nbsp; Live</span>
         </button>
       </Tooltip>
       <CSSTransition
