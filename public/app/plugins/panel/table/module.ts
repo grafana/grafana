@@ -2,7 +2,7 @@ import _ from 'lodash';
 import $ from 'jquery';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import config from 'app/core/config';
-import { transformDataToTable, isJSONDocumentData } from './transformers';
+import { transformDataToTable } from './transformers';
 import { tablePanelEditor } from './editor';
 import { columnOptionsTab } from './column_options';
 import { TableRenderer } from './renderer';
@@ -117,13 +117,15 @@ class TablePanelCtrl extends MetricsPanelCtrl {
 
     // automatically correct transform mode based on data
     if (this.dataRaw && this.dataRaw.length) {
-      if (isJSONDocumentData(this.dataRaw[0])) {
-        this.panel.transform = 'json';
-      } else if (isTableData(this.dataRaw[0])) {
+      if (isTableData(this.dataRaw[0])) {
         this.panel.transform = 'table';
       } else {
-        if (this.panel.transform === 'table' || this.panel.transform === 'json') {
-          this.panel.transform = 'timeseries_to_rows';
+        if (this.dataRaw[0].type === 'docs') {
+          this.panel.transform = 'json';
+        } else {
+          if (this.panel.transform === 'table' || this.panel.transform === 'json') {
+            this.panel.transform = 'timeseries_to_rows';
+          }
         }
       }
     }

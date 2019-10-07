@@ -3,7 +3,7 @@ import flatten from 'app/core/utils/flatten';
 import TimeSeries from 'app/core/time_series2';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { TableTransform } from './types';
-import { Column, TableData, toDataFrame, DataFrame } from '@grafana/data';
+import { Column, TableData } from '@grafana/data';
 
 const transformers: { [key: string]: TableTransform } = {};
 
@@ -173,8 +173,6 @@ transformers['table'] = {
   },
 };
 
-const isJSONDocumentData = (data: any): data is DataFrame => data && data.meta && data.meta.json;
-
 transformers['json'] = {
   description: 'JSON Data',
   getColumns: data => {
@@ -184,17 +182,15 @@ transformers['json'] = {
 
     const names: any = {};
     for (let i = 0; i < data.length; i++) {
-      const dataFrame = toDataFrame(data[i]);
-      if (!isJSONDocumentData(dataFrame)) {
+      const series = data[i];
+      if (series.type !== 'docs') {
         continue;
       }
 
-      const jsonField = dataFrame.fields[0];
-
       // only look at 100 docs
-      const maxDocs = Math.min(dataFrame.length, 100);
+      const maxDocs = Math.min(series.datapoints.length, 100);
       for (let y = 0; y < maxDocs; y++) {
-        const doc = jsonField.values.get(y);
+        const doc = series.datapoints[y];
         const flattened = flatten(doc, {});
         for (const propName in flattened) {
           names[propName] = true;
@@ -213,11 +209,8 @@ transformers['json'] = {
       const tableCol: any = { text: column.text };
 
       // if filterable data then set columns to filterable
-      if (data.length > 0) {
-        const dataFrame = toDataFrame(data[0]);
-        if (dataFrame.meta && dataFrame.fields[0].config.filterable) {
-          tableCol.filterable = true;
-        }
+      if (data.length > 0 && data[0].filterable) {
+        tableCol.filterable = true;
       }
 
       model.columns.push(tableCol);
@@ -228,11 +221,10 @@ transformers['json'] = {
     }
 
     for (i = 0; i < data.length; i++) {
-      const dataFrame = toDataFrame(data[i]);
-      const jsonField = dataFrame.fields[0];
+      const series = data[i];
 
-      for (y = 0; y < jsonField.values.length; y++) {
-        const dp = jsonField.values.get(y);
+      for (y = 0; y < series.datapoints.length; y++) {
+        const dp = series.datapoints[y];
         const values = [];
 
         if (_.isObject(dp) && panel.columns.length > 0) {
@@ -266,4 +258,4 @@ function transformDataToTable(data: any, panel: any) {
   return model;
 }
 
-export { transformers, transformDataToTable, isJSONDocumentData };
+export { transformers, transformDataToTable };

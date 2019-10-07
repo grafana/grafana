@@ -147,7 +147,7 @@ function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
   return {
     name: timeSeries.target,
     labels: timeSeries.tags,
-    refId: timeSeries.refId,
+    refId: timeSeries.target,
     meta: { json: true },
     fields,
     length: timeSeries.datapoints.length,
@@ -318,6 +318,16 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
         meta: frame.meta,
       } as TimeSeries;
     }
+  }
+
+  if (frame.meta && frame.meta.json) {
+    return {
+      alias: fields[0].name || frame.name,
+      target: fields[0].name || frame.name,
+      datapoints: fields[0].values.toArray(),
+      filterable: fields[0].config ? fields[0].config.filterable : undefined,
+      type: 'docs',
+    } as TimeSeries;
   }
 
   return {
