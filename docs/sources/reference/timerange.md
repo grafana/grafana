@@ -69,4 +69,4 @@ When you zoom or change the Dashboard time to a custom absolute time range, all 
 The `Hide time override info` option allows you to hide the override info text that is by default shown in the
 upper right of a panel when overridden time range options.
 
-**Note**: You can only override the dashboard time with relative time ranges. Absolute time ranges are not available.
+**Note:** You can only override the dashboard time with relative time ranges. Absolute time ranges are not available.
