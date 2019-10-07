@@ -92,6 +92,8 @@ export interface GrafanaThemeCommons {
 
 export interface GrafanaTheme extends GrafanaThemeCommons {
   type: GrafanaThemeType;
+  isDark: boolean;
+  isLight: boolean;
   background: {
     dropdown: string;
     scrollbar: string;
