@@ -5,7 +5,7 @@ import { SelectableValue } from '@grafana/data';
 import { useExpandableLabel, SegmentProps } from '.';
 
 export interface SegmentAsyncProps<T> extends SegmentProps<T> {
-  loadOptions: () => Promise<Array<SelectableValue<T>>>;
+  loadOptions: (query?: string) => Promise<Array<SelectableValue<T>>>;
 }
 
 export function SegmentAsync<T>({
