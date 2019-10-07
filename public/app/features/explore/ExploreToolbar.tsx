@@ -44,6 +44,9 @@ const getStyles = memoizeOne(() => {
   return {
     liveTailButtons: css`
       margin-left: 10px;
+      @media (max-width: 1110px) {
+        margin-left: 4px;
+      }
     `,
   };
 });
