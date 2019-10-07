@@ -80,5 +80,3 @@ Two words, not one
 **Exceptions:**
 * "datasource" used as an identifier
 * "datasource" in a URL
-
-
