@@ -47,6 +47,7 @@ export interface TableData extends QueryResultBase {
   name?: string;
   columns: Column[];
   rows: any[][];
+  type?: string;
 }
 
 export type TimeSeriesValue = number | null;
