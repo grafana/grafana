@@ -44,5 +44,7 @@ var saveInvalidLoginAttempt = func(query *m.LoginUserQuery) {
 		IpAddress: query.IpAddress,
 	}
 
-	bus.Dispatch(&loginAttemptCommand)
+	if err := bus.Dispatch(&loginAttemptCommand); err != nil {
+		// TODO: Deal with error
+	}
 }
