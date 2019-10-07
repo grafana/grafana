@@ -216,7 +216,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const subQueries = options.targets
       .filter(target => target.expr && !target.hide)
       .map(target => {
-        if (target.live) {
+        if (target.liveStreaming) {
           return this.runLiveQuery(options, target);
         }
         return this.runQuery(options, target);
