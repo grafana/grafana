@@ -88,7 +88,7 @@ export class TagsInput extends PureComponent<Props, State> {
     return (
       <div className={containerStyle}>
         <div className="gf-form-inline">
-          <Input placeholder="Add name" onChange={this.onNameChange} value={newTag} onKeyUp={this.onKeyboardAdd} />
+          <Input placeholder="Add Name" onChange={this.onNameChange} value={newTag} onKeyUp={this.onKeyboardAdd} />
           <Button onClick={this.onAdd} variant="primary" size="md">
             Add
           </Button>
