@@ -142,7 +142,7 @@ use GitHub or Google OAuth.
 ### enforce_domain
 
 Redirect to correct domain if host header does not match domain.
-Prevents DNS rebinding attacks. Default is false.
+Prevents DNS rebinding attacks. Default is `false`.
 
 ### root_url
 
@@ -187,7 +187,7 @@ Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 
 ### router_logging
 
-Set to true for Grafana to log all HTTP requests (not just errors). These are logged as Info level events
+Set to `true` for Grafana to log all HTTP requests (not just errors). These are logged as Info level events
 to grafana log.
 
 <hr />
@@ -229,7 +229,7 @@ The database user (not applicable for `sqlite3`).
 
 ### password
 
-The database user's password (not applicable for `sqlite3`). If the password contains `#` or `;` you have to wrap it with triple quotes. Ex `"""#password;"""`
+The database user's password (not applicable for `sqlite3`). If the password contains `#` or `;` you have to wrap it with triple quotes. For example `"""#password;"""`
 
 ### ssl_mode
 
@@ -269,7 +269,7 @@ Set to `true` to log the sql calls and execution times.
 ### cache_mode
 
 For "sqlite3" only. [Shared cache](https://www.sqlite.org/sharedcache.html) setting used for connecting to the database. (private, shared)
-Defaults to private.
+Defaults to `private`.
 
 <hr />
 
@@ -277,7 +277,7 @@ Defaults to private.
 
 ### type
 
-Either `redis`, `memcached` or `database` default is `database`
+Either `redis`, `memcached` or `database`. Defaults to `database`
 
 ### connstr
 
@@ -329,7 +329,7 @@ Default is `false`.
 
 ### data_source_proxy_whitelist
 
-Define a white list of allowed ips/domains to use in data sources. Format: `ip_or_domain:port` separated by spaces
+Define a white list of allowed ips/domains to use in data sources. Format: `ip_or_domain:port` separated by spaces.
 
 ### cookie_secure
 
@@ -406,7 +406,7 @@ options are `Admin` and `Editor`. e.g. :
 
 ### viewers_can_edit
 
-Viewers can edit/inspect dashboard settings in the browser. But not save the dashboard.
+Viewers can edit/inspect dashboard settings in the browser, but not save the dashboard.
 Defaults to `false`.
 
 ### editors_can_admin
@@ -442,15 +442,15 @@ below.
 
 ### logging
 
-This enables data proxy logging, default is false.
+This enables data proxy logging, default is `false`.
 
 ### timeout
 
-How long the data proxy should wait before timing out default is 30 (seconds)
+How long the data proxy should wait before timing out. Default is `30` (seconds)
 
 ### send_user_header
 
-If enabled and user is not anonymous, data proxy will add X-Grafana-User header with username into the request, default is false.
+If enabled and user is not anonymous, data proxy will add X-Grafana-User header with username into the request. Default is `false`.
 
 <hr />
 
@@ -479,7 +479,7 @@ Set to false to disable all checks to https://grafana.com for new versions of in
 
 ### versions_to_keep
 
-Number dashboard versions to keep (per dashboard). Default: 20, Minimum: 1.
+Number dashboard versions to keep (per dashboard). Default: `20`, Minimum: `1`.
 
 ## [dashboards.json]
 
@@ -495,10 +495,10 @@ The full path to a directory containing your json dashboards.
 Email server settings.
 
 ### enabled
-defaults to false
+defaults to `false`
 
 ### host
-defaults to localhost:25
+defaults to `localhost:25`
 
 ### user
 In case of SMTP auth, defaults to `empty`
@@ -527,15 +527,15 @@ Name to be used as client identity for EHLO in SMTP dialog, defaults to instance
 ## [log]
 
 ### mode
-Either "console", "file", "syslog". Default is console and  file
-Use space to separate multiple modes, e.g. "console file"
+Either "console", "file", "syslog". Default is "console" and "file".
+Use spaces to separate multiple modes, e.g. `console file`
 
 ### level
-Either "debug", "info", "warn", "error", "critical", default is "info"
+Either "debug", "info", "warn", "error", "critical", default is `info`
 
 ### filters
 optional settings to set different levels for specific loggers.
-Ex `filters = sqlstore:debug`
+For example `filters = sqlstore:debug`
 
 ## [metrics]
 
@@ -567,10 +567,10 @@ Graphite metric prefix. Defaults to `prod.grafana.%(instance_name)s.`
 ## [snapshots]
 
 ### external_enabled
-Set to false to disable external snapshot publish endpoint (default true)
+Set to `false` to disable external snapshot publish endpoint (default `true`)
 
 ### external_snapshot_url
-Set root url to a Grafana instance where you want to publish external snapshots (defaults to https://snapshots-origin.raintank.io)
+Set root URL to a Grafana instance where you want to publish external snapshots (defaults to https://snapshots-origin.raintank.io)
 
 ### external_snapshot_name
 Set name for external snapshot button. Defaults to `Publish to snapshot.raintank.io`
@@ -651,7 +651,7 @@ Container name where to store "Blob" images with random names. Creating the blob
 ## [alerting]
 
 ### enabled
-Defaults to true. Set to false to disable alerting engine and hide Alerting from UI.
+Defaults to `true`. Set to `false` to disable alerting engine and hide Alerting from UI.
 
 ### execute_alerts
 
