@@ -130,7 +130,10 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		}
 
 		// Make socket writable by group
-		os.Chmod(setting.SocketPath, 0660)
+		if err := os.Chmod(setting.SocketPath, 0660); err != nil {
+			hs.log.Debug("server was shutdown gracefully")
+			return nil
+		}
 
 		err = hs.httpSrv.Serve(ln)
 		if err != nil {
@@ -340,7 +343,9 @@ func (hs *HTTPServer) healthHandler(ctx *macaron.Context) {
 	}
 
 	dataBytes, _ := data.EncodePretty()
-	ctx.Resp.Write(dataBytes)
+	if _, err := ctx.Resp.Write(dataBytes); err != nil {
+		hs.log.Error("Failed to write to response", "err", err)
+	}
 }
 
 func (hs *HTTPServer) mapStatic(m *macaron.Macaron, rootDir string, dir string, prefix string) {

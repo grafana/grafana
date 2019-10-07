@@ -52,8 +52,12 @@ func (c *connection) readPump() {
 	}()
 
 	c.ws.SetReadLimit(maxMessageSize)
-	c.ws.SetReadDeadline(time.Now().Add(pongWait))
-	c.ws.SetPongHandler(func(string) error { c.ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	if err := c.ws.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
+		log.Warn("Setting read deadline failed: %s", err)
+	}
+	c.ws.SetPongHandler(func(string) error {
+		return c.ws.SetReadDeadline(time.Now().Add(pongWait))
+	})
 	for {
 		_, message, err := c.ws.ReadMessage()
 		if err != nil {
@@ -91,7 +95,9 @@ func (c *connection) handleMessage(message []byte) {
 }
 
 func (c *connection) write(mt int, payload []byte) error {
-	c.ws.SetWriteDeadline(time.Now().Add(writeWait))
+	if err := c.ws.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
+		return err
+	}
 	return c.ws.WriteMessage(mt, payload)
 }
 
@@ -106,7 +112,9 @@ func (c *connection) writePump() {
 		select {
 		case message, ok := <-c.send:
 			if !ok {
-				c.write(websocket.CloseMessage, []byte{})
+				if err := c.write(websocket.CloseMessage, []byte{}); err != nil {
+					log.Warn("Failed to write close message to connection: %s", err)
+				}
 				return
 			}
 			if err := c.write(websocket.TextMessage, message); err != nil {

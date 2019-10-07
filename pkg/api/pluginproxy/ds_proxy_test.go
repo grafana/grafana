@@ -503,7 +503,8 @@ func TestDSRouteRule(t *testing.T) {
 			backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				http.SetCookie(w, &http.Cookie{Name: "flavor", Value: "chocolateChip"})
 				w.WriteHeader(200)
-				w.Write([]byte("I am the backend"))
+				_, err := w.Write([]byte("I am the backend"))
+				So(err, ShouldBeNil)
 			}))
 			defer backend.Close()
 

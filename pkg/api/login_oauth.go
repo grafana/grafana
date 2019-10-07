@@ -31,7 +31,10 @@ var (
 
 func GenStateString() string {
 	rnd := make([]byte, 32)
-	rand.Read(rnd)
+	if _, err := rand.Read(rnd); err != nil {
+		oauthLogger.Error("failed to generate state string", "err", err)
+		return ""
+	}
 	return base64.URLEncoding.EncodeToString(rnd)
 }
 
@@ -239,7 +242,9 @@ func hashStatecode(code, seed string) string {
 
 func (hs *HTTPServer) redirectWithError(ctx *m.ReqContext, err error, v ...interface{}) {
 	ctx.Logger.Error(err.Error(), v...)
-	hs.trySetEncryptedCookie(ctx, LoginErrorCookieName, err.Error(), 60)
+	if err := hs.trySetEncryptedCookie(ctx, LoginErrorCookieName, err.Error(), 60); err != nil {
+		oauthLogger.Error("Failed to set encrypted cookie", "err", err)
+	}
 
 	ctx.Redirect(setting.AppSubUrl + "/login")
 }

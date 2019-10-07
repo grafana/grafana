@@ -51,7 +51,10 @@ func HashEmail(email string) string {
 	email = strings.ToLower(email)
 
 	h := md5.New()
-	h.Write([]byte(email))
+	if _, err := h.Write([]byte(email)); err != nil {
+		// TODO: Deal with error
+		log.Warn("Failed to hash email address: %s", err)
+	}
 	return hex.EncodeToString(h.Sum(nil))
 }
 
@@ -119,7 +122,9 @@ func (this *CacheServer) Handler(ctx *macaron.Context) {
 	if avatar.notFound {
 		avatar = this.notFound
 	} else {
-		this.cache.Add(hash, avatar, gocache.DefaultExpiration)
+		if err := this.cache.Add(hash, avatar, gocache.DefaultExpiration); err != nil {
+			log.Warn("Error adding avatar to cache: %s", err)
+		}
 	}
 
 	ctx.Resp.Header().Add("Content-Type", "image/jpeg")
