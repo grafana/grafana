@@ -7,16 +7,17 @@ const BRACES: any = {
   '(': ')',
 };
 
-export default function BracesPlugin(): Plugin {
+export function BracesPlugin(): Plugin {
   return {
-    onKeyDown(event: KeyboardEvent, editor: CoreEditor, next: Function) {
+    onKeyDown(event: Event, editor: CoreEditor, next: Function) {
+      const keyEvent = event as KeyboardEvent;
       const { value } = editor;
 
-      switch (event.key) {
+      switch (keyEvent.key) {
         case '(':
         case '{':
         case '[': {
-          event.preventDefault();
+          keyEvent.preventDefault();
           const {
             start: { offset: startOffset, key: startKey },
             end: { offset: endOffset, key: endKey },
@@ -27,17 +28,17 @@ export default function BracesPlugin(): Plugin {
           // If text is selected, wrap selected text in parens
           if (value.selection.isExpanded) {
             editor
-              .insertTextByKey(startKey, startOffset, event.key)
-              .insertTextByKey(endKey, endOffset + 1, BRACES[event.key])
+              .insertTextByKey(startKey, startOffset, keyEvent.key)
+              .insertTextByKey(endKey, endOffset + 1, BRACES[keyEvent.key])
               .moveEndBackward(1);
           } else if (
             focusOffset === text.length ||
             text[focusOffset] === ' ' ||
             Object.values(BRACES).includes(text[focusOffset])
           ) {
-            editor.insertText(`${event.key}${BRACES[event.key]}`).moveBackward(1);
+            editor.insertText(`${keyEvent.key}${BRACES[keyEvent.key]}`).moveBackward(1);
           } else {
-            editor.insertText(event.key);
+            editor.insertText(keyEvent.key);
           }
 
           return true;
@@ -49,7 +50,7 @@ export default function BracesPlugin(): Plugin {
           const previousChar = text[offset - 1];
           const nextChar = text[offset];
           if (BRACES[previousChar] && BRACES[previousChar] === nextChar) {
-            event.preventDefault();
+            keyEvent.preventDefault();
             // Remove closing brace if directly following
             editor
               .deleteBackward(1)

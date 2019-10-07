@@ -10,10 +10,11 @@ const getCopiedText = (textBlocks: string[], startOffset: number, endOffset: num
   return textBlocks.join('\n').slice(startOffset, excludingLastLineLength + endOffset);
 };
 
-export default function ClipboardPlugin(): Plugin {
-  const clipboardPlugin = {
-    onCopy(event: ClipboardEvent, editor: CoreEditor) {
-      event.preventDefault();
+export function ClipboardPlugin(): Plugin {
+  const clipboardPlugin: Plugin = {
+    onCopy(event: Event, editor: CoreEditor, next: () => any) {
+      const clipEvent = event as ClipboardEvent;
+      clipEvent.preventDefault();
 
       const { document, selection } = editor.value;
       const {
@@ -26,22 +27,25 @@ export default function ClipboardPlugin(): Plugin {
         .map(block => block.text);
 
       const copiedText = getCopiedText(selectedBlocks, startOffset, endOffset);
-      if (copiedText) {
-        event.clipboardData.setData('Text', copiedText);
+      if (copiedText && clipEvent.clipboardData) {
+        clipEvent.clipboardData.setData('Text', copiedText);
       }
 
       return true;
     },
 
-    onPaste(event: ClipboardEvent, editor: CoreEditor) {
-      event.preventDefault();
-      const pastedValue = event.clipboardData.getData('Text');
-      const lines = pastedValue.split('\n');
+    onPaste(event: Event, editor: CoreEditor, next: () => any) {
+      const clipEvent = event as ClipboardEvent;
+      clipEvent.preventDefault();
+      if (clipEvent.clipboardData) {
+        const pastedValue = clipEvent.clipboardData.getData('Text');
+        const lines = pastedValue.split('\n');
 
-      if (lines.length) {
-        editor.insertText(lines[0]);
-        for (const line of lines.slice(1)) {
-          editor.splitBlock().insertText(line);
+        if (lines.length) {
+          editor.insertText(lines[0]);
+          for (const line of lines.slice(1)) {
+            editor.splitBlock().insertText(line);
+          }
         }
       }
 
@@ -51,8 +55,9 @@ export default function ClipboardPlugin(): Plugin {
 
   return {
     ...clipboardPlugin,
-    onCut(event: ClipboardEvent, editor: CoreEditor) {
-      clipboardPlugin.onCopy(event, editor);
+    onCut(event: Event, editor: CoreEditor, next: () => any) {
+      const clipEvent = event as ClipboardEvent;
+      clipboardPlugin.onCopy!(clipEvent, editor, next);
       editor.deleteAtRange(editor.value.selection);
 
       return true;

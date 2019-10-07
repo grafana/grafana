@@ -549,3 +549,19 @@ export interface AnnotationQueryRequest<MoreOptions = {}> {
     name: string;
   } & MoreOptions;
 }
+
+export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
+  ts: number;
+  query: TQuery;
+}
+
+export abstract class LanguageProvider {
+  datasource!: DataSourceApi;
+  request!: (url: string, params?: any) => Promise<any>;
+  /**
+   * Returns startTask that resolves with a task list when main syntax is loaded.
+   * Task list consists of secondary promises that load more detailed language features.
+   */
+  start!: () => Promise<any[]>;
+  startTask?: Promise<any[]>;
+}

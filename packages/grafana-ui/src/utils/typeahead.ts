@@ -1,7 +1,6 @@
-import { GrafanaTheme } from '@grafana/ui';
 import { default as calculateSize } from 'calculate-size';
-
-import { CompletionItemGroup, CompletionItem, CompletionItemKind } from 'app/types';
+import { CompletionItemGroup, CompletionItem, CompletionItemKind } from '../types/completion';
+import { GrafanaTheme } from '..';
 
 export const flattenGroupItems = (groupedItems: CompletionItemGroup[]): CompletionItem[] => {
   return groupedItems.reduce((all, current) => {
@@ -10,7 +9,7 @@ export const flattenGroupItems = (groupedItems: CompletionItemGroup[]): Completi
       kind: CompletionItemKind.GroupTitle,
     };
     return all.concat(titleItem, current.items);
-  }, []);
+  }, new Array<CompletionItem>());
 };
 
 export const calculateLongestLabel = (allItems: CompletionItem[]): string => {

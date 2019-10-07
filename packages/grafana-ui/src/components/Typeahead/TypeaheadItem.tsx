@@ -1,11 +1,10 @@
-import React, { FunctionComponent, useContext } from 'react';
+import React, { useContext } from 'react';
 
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
 import { css, cx } from 'emotion';
-import { GrafanaTheme, ThemeContext, selectThemeVariant } from '@grafana/ui';
 
-import { CompletionItem, CompletionItemKind } from 'app/types/explore';
+import { CompletionItem, CompletionItemKind, GrafanaTheme, ThemeContext, selectThemeVariant } from '../..';
 
 interface Props {
   isSelected: boolean;
@@ -57,7 +56,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
 });
 
-export const TypeaheadItem: FunctionComponent<Props> = (props: Props) => {
+export const TypeaheadItem: React.FC<Props> = (props: Props) => {
   const theme = useContext(ThemeContext);
   const styles = getStyles(theme);
 

@@ -2,7 +2,7 @@ import Plain from 'slate-plain-serializer';
 import { Editor as SlateEditor } from 'slate';
 import LanguageProvider from '../language_provider';
 import { PrometheusDatasource } from '../datasource';
-import { HistoryItem } from 'app/types';
+import { HistoryItem } from '@grafana/ui';
 import { PromQuery } from '../types';
 
 describe('Language completion provider', () => {

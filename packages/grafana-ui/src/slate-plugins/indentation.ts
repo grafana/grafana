@@ -21,7 +21,7 @@ const handleTabKey = (event: KeyboardEvent, editor: CoreEditor, next: Function):
   const first = startBlock.getFirstText();
 
   const startBlockIsSelected =
-    startOffset === 0 && startKey === first.key && endOffset === first.text.length && endKey === first.key;
+    first && startOffset === 0 && startKey === first.key && endOffset === first.text.length && endKey === first.key;
 
   if (startBlockIsSelected || !startBlock.equals(endBlock)) {
     handleIndent(editor, 'right');
@@ -38,7 +38,7 @@ const handleIndent = (editor: CoreEditor, indentDirection: 'left' | 'right') => 
     for (const block of selectedBlocks) {
       const blockWhitespace = block.text.length - block.text.trimLeft().length;
 
-      const textKey = block.getFirstText().key;
+      const textKey = block.getFirstText()!.key;
 
       const rangeProperties: RangeJSON = {
         anchor: {
@@ -61,7 +61,7 @@ const handleIndent = (editor: CoreEditor, indentDirection: 'left' | 'right') => 
     const isWhiteSpace = /^\s*$/.test(textBeforeCaret);
 
     for (const block of selectedBlocks) {
-      editor.insertTextByKey(block.getFirstText().key, 0, SLATE_TAB);
+      editor.insertTextByKey(block.getFirstText()!.key, 0, SLATE_TAB);
     }
 
     if (isWhiteSpace) {
@@ -71,18 +71,19 @@ const handleIndent = (editor: CoreEditor, indentDirection: 'left' | 'right') => 
 };
 
 // Clears the rest of the line after the caret
-export default function IndentationPlugin(): Plugin {
+export function IndentationPlugin(): Plugin {
   return {
-    onKeyDown(event: KeyboardEvent, editor: CoreEditor, next: Function) {
-      if (isIndentLeftHotkey(event) || isShiftTabHotkey(event)) {
-        event.preventDefault();
+    onKeyDown(event: Event, editor: CoreEditor, next: Function) {
+      const keyEvent = event as KeyboardEvent;
+      if (isIndentLeftHotkey(keyEvent) || isShiftTabHotkey(keyEvent)) {
+        keyEvent.preventDefault();
         handleIndent(editor, 'left');
-      } else if (isIndentRightHotkey(event)) {
-        event.preventDefault();
+      } else if (isIndentRightHotkey(keyEvent)) {
+        keyEvent.preventDefault();
         handleIndent(editor, 'right');
-      } else if (event.key === 'Tab') {
-        event.preventDefault();
-        handleTabKey(event, editor, next);
+      } else if (keyEvent.key === 'Tab') {
+        keyEvent.preventDefault();
+        handleTabKey(keyEvent, editor, next);
       } else {
         return next();
       }
