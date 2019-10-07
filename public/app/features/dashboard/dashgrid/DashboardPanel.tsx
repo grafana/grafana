@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 // Utils & Services
-import { getAngularLoader, AngularComponent } from '@grafana/runtime';
+import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
 // Components
 import { AddPanelWidget } from '../components/AddPanelWidget';
@@ -11,13 +11,13 @@ import { PanelChrome } from './PanelChrome';
 import { PanelEditor } from '../panel_editor/PanelEditor';
 import { PanelResizer } from './PanelResizer';
 // Types
-import { PanelModel, DashboardModel } from '../state';
-import { PanelPluginMeta, PanelPlugin } from '@grafana/ui/src/types/panel';
+import { DashboardModel, PanelModel } from '../state';
+import { PanelPlugin, PanelPluginMeta } from '@grafana/ui/src/types/panel';
 import { AutoSizer } from 'react-virtualized';
+import { Eventing } from '../../../core/utils/EventsProvider';
 import { mouseMoveEvent } from '@grafana/data';
-import { EventsContextApi, withEvents } from '../../../core/utils/EventsProvider';
 
-export interface Props extends EventsContextApi<React.MouseEvent<HTMLDivElement, MouseEvent>, React.MouseEvent<HTMLDivElement, MouseEvent>> {
+export interface Props extends Eventing {
   panel: PanelModel;
   dashboard: DashboardModel;
   isEditing: boolean;
@@ -31,7 +31,7 @@ export interface State {
   isLazy: boolean;
 }
 
-class DashboardPanelWithOutEvents extends PureComponent<Props, State> {
+export class DashboardPanel extends PureComponent<Props, State> {
   element: HTMLElement;
   specialPanels: { [key: string]: Function } = {};
 
@@ -89,9 +89,19 @@ class DashboardPanelWithOutEvents extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    this.loadPlugin(this.props.panel.type);
-    this.props.events(`Panel:${this.props.panel.id}`).subscribe(event => {
-      console.log(`New Event received from ${event.origin} received by Panel:${this.props.panel.id}`, event);
+    const { panel } = this.props;
+    this.loadPlugin(panel.type);
+    this.props.subscribeToEvents({
+      filter: event => {
+        if (event.origin === panel.id.toString()) {
+          return false;
+        }
+
+        return event.name === mouseMoveEvent.name;
+      },
+      tap: event => {
+        // console.log('Event', event);
+      },
     });
   }
 
@@ -194,9 +204,7 @@ class DashboardPanelWithOutEvents extends PureComponent<Props, State> {
     return (
       <div
         className={editorContainerClasses}
-        onMouseMove={event => {
-          this.props.publish(mouseMoveEvent, `Panel:${this.props.panel.id}`, event);
-        }}
+        onMouseMove={event => this.props.publishEvent(mouseMoveEvent, this.props.panel.id.toString(), event)}
       >
         <PanelResizer
           isEditing={isEditing}
@@ -225,7 +233,3 @@ class DashboardPanelWithOutEvents extends PureComponent<Props, State> {
     );
   }
 }
-
-export const DashboardPanel = withEvents(mouseMoveEvent)(DashboardPanelWithOutEvents);
-
-DashboardPanel.displayName = 'DashboardPanel';

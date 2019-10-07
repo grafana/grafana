@@ -1,101 +1,75 @@
-import React, { ComponentType, FunctionComponent, useEffect } from 'react';
-import { Observable, Subject, Unsubscribable } from 'rxjs';
-import { filter } from 'rxjs/operators';
-import { AppEvent, Subtract } from '@grafana/data';
+import React, { ComponentType, FunctionComponent } from 'react';
+import { Observable, Subject } from 'rxjs';
+import { AppEvent } from '@grafana/data';
 
 import appEvents from '../app_events';
+import { useEventing } from '../hooks/useEventing';
 
-export interface EventsContextApi<SubscribeEvents, PublishEvents> {
-  events: (originFilter: string) => Observable<AppEvent<SubscribeEvents>>;
-  publish: (event: AppEvent<PublishEvents>, origin: string, payload?: PublishEvents) => void;
-}
-
-export interface RootEventsContextApi {
-  rootEvents: Observable<AppEvent<any>>;
-  rootPublish: (event: AppEvent<any>, payload?: any) => void;
+export interface EventsContextType {
+  events: Observable<AppEvent<any>>;
+  publish: (event: AppEvent<any>, payload?: any) => void;
+  cleanUp: () => void;
 }
 
 const events = new Subject<AppEvent<any>>();
-const publish = <T extends {} = {}>(event: AppEvent<T>, payload?: T) => {
-  events.next({ ...event, payload });
-  appEvents.emit(event, payload);
+
+export const cleanUpEventing = () => {
+  events.unsubscribe();
 };
 
-export const rootEventing: RootEventsContextApi = {
-  rootEvents: events,
-  rootPublish: publish,
+const eventing: EventsContextType = {
+  events,
+  publish: <T extends {} = {}>(event: AppEvent<T>, payload?: T) => {
+    events.next({ ...event, payload });
+    appEvents.emit(event, payload);
+  },
+  cleanUp: cleanUpEventing,
 };
 
-export const EventsContext = React.createContext(rootEventing);
+export const EventsContext = React.createContext(eventing);
 EventsContext.displayName = 'EventsContext';
 
-export const EventsProvider = ({ children }: { children: React.ReactNode }) => {
-  return <EventsContext.Provider value={rootEventing}>{children}</EventsContext.Provider>;
+const EventsProvider = ({ children }: { children: React.ReactNode }) => {
+  return <EventsContext.Provider value={eventing}>{children}</EventsContext.Provider>;
 };
 
 export const provideEvents = (component: ComponentType<any>) => (props: any) => (
   <EventsProvider>{React.createElement(component, { ...props })}</EventsProvider>
 );
 
-export const withEvents = <SubscribeEvents extends {}, PublishEvents extends {}>(
-  ...subscribeEvents: Array<AppEvent<SubscribeEvents>>
-) => {
-  type ComponentWithEventingType = EventsContextApi<SubscribeEvents, PublishEvents>;
-  return <C extends ComponentWithEventingType>(Component: ComponentType<C>) => {
-    type ComponentWithOutEventingType = Subtract<C, ComponentWithEventingType>;
+export interface Eventing {
+  subscribeToEvents: (options: {
+    tap: (event: AppEvent<any>) => void;
+    filter?: (event: AppEvent<any>) => boolean;
+  }) => void;
+  publishEvent: (event: AppEvent<any>, origin: string, payload?: any) => void;
+}
 
-    const ComponentWithEventing: FunctionComponent<ComponentWithOutEventingType> = (props: any) => {
-      useEffect(() => {
-        return function unsubscribe() {
-          if (subscription) {
-            subscription.unsubscribe();
-            subscription = null;
-          }
-          events.unsubscribe();
-        };
-      }, []);
-      let subscription: Unsubscribable | null = null;
-      const events = new Subject<AppEvent<SubscribeEvents>>();
-      const subscribe = (origin: string): Observable<AppEvent<SubscribeEvents>> => {
-        subscription = props.rootEvents
-          .pipe(
-            filter((event: AppEvent<any>) => {
-              if (event.origin === origin) {
-                return false;
-              }
-              const found = subscribeEvents.filter(value => value.name === event.name)[0];
-              return found !== undefined;
-            })
-          )
-          .subscribe((value: AppEvent<SubscribeEvents>) => {
-            if (events) {
-              events.next(value);
-            }
-          });
+interface EventsControllerProps {
+  events: Observable<AppEvent<any>>;
+  publish: (event: AppEvent<any>, payload?: any) => void;
+  children: (eventing: Eventing) => React.ReactElement;
+}
 
-        return events.asObservable();
-      };
-      const publish = (event: AppEvent<PublishEvents>, origin: string, payload?: PublishEvents): void => {
-        props.rootPublish({ ...event, origin }, payload);
-      };
+export interface EventsControllerApi {
+  children: (eventing: Eventing) => React.ReactElement;
+}
 
-      return <Component {...props} events={subscribe} publish={publish} />;
-    };
+const EventsController: FunctionComponent<EventsControllerProps> = React.memo(props => {
+  const eventing = useEventing(props.events, props.publish);
+  return props.children(eventing);
+});
 
-    ComponentWithEventing.displayName = `ComponentWithEventing(${Component.displayName})`;
+EventsController.displayName = 'EventsController';
 
-    const EventsConsumer: FunctionComponent<ComponentWithOutEventingType> = props => {
-      return (
-        <EventsContext.Consumer>
-          {(eventing: RootEventsContextApi) => {
-            return <ComponentWithEventing {...props} rootEvents={eventing.rootEvents} rootPublish={eventing.rootPublish} />;
-          }}
-        </EventsContext.Consumer>
-      );
-    };
+export const EventsConsumer: FunctionComponent<EventsControllerApi> = React.memo(props => {
+  return (
+    <EventsContext.Consumer>
+      {(eventing: EventsContextType) => {
+        return <EventsController events={eventing.events} publish={eventing.publish} {...props} />;
+      }}
+    </EventsContext.Consumer>
+  );
+});
 
-    EventsConsumer.displayName = 'EventsConsumer';
-
-    return EventsConsumer;
-  };
-};
+EventsConsumer.displayName = 'EventsConsumer';
