@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
-import { getTagColorsFromName } from '../../../../../public/app/core/utils/tags';
+import { getTagColorsFromName } from '../../utils';
 
 interface Props {
   name: string;
