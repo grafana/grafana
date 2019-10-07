@@ -139,6 +139,16 @@
   }
 }
 
+@media only screen and (max-width: 788px) {
+  .explore-toolbar {
+    .explore-toolbar-content-item {
+      .navbar-button span {
+        display: none;
+      }
+    }
+  }
+}
+
 @media only screen and (max-width: 702px) {
   .explore-toolbar-content-item:first-child {
     padding-left: 2px;
