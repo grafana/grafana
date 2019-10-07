@@ -5,7 +5,7 @@ import memoizeOne from 'memoize-one';
 import tinycolor from 'tinycolor2';
 import { CSSTransition } from 'react-transition-group';
 
-import { GrafanaTheme, useTheme } from '@grafana/ui';
+import { GrafanaTheme, useTheme, Tooltip } from '@grafana/ui';
 
 const getStyles = memoizeOne((theme: GrafanaTheme) => {
   const orangeLighter = tinycolor(theme.colors.orangeDark)
@@ -91,6 +91,10 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
   };
 });
 
+const defaultZoomOutTooltip = () => {
+  return <>Live tailing</>;
+};
+
 type LiveTailButtonProps = {
   start: () => void;
   stop: () => void;
@@ -108,17 +112,19 @@ export function LiveTailButton(props: LiveTailButtonProps) {
 
   return (
     <>
-      <button
-        className={classNames('btn navbar-button', styles.liveButton, {
-          [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: isLive,
-          [styles.isLive]: isLive && !isPaused,
-          [styles.isPaused]: isLive && isPaused,
-        })}
-        onClick={onClickMain}
-      >
-        <i className={classNames('fa', isPaused || !isLive ? 'fa-play' : 'fa-pause')} />
-        &nbsp; Live tailing
-      </button>
+      <Tooltip content={defaultZoomOutTooltip} placement="bottom">
+        <button
+          className={classNames('btn navbar-button', styles.liveButton, {
+            [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: isLive,
+            [styles.isLive]: isLive && !isPaused,
+            [styles.isPaused]: isLive && isPaused,
+          })}
+          onClick={onClickMain}
+        >
+          <i className={classNames('fa', isPaused || !isLive ? 'fa-play' : 'fa-pause')} />
+          <span>&nbsp; Live tailing</span>
+        </button>
+      </Tooltip>
       <CSSTransition
         mountOnEnter={true}
         unmountOnExit={true}
