@@ -25,6 +25,8 @@ func Gziper() macaron.Handler {
 			return
 		}
 
-		ctx.Invoke(macaronGziper)
+		if _, err := ctx.Invoke(macaronGziper); err != nil {
+			// TODO: Deal with error
+		}
 	}
 }
