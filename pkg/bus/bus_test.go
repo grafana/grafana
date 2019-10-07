@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 type testQuery struct {
@@ -36,7 +38,8 @@ func TestDispatchCtxCanUseNormalHandlers(t *testing.T) {
 	bus.AddHandler(handler)
 
 	t.Run("when a normal handler is registered", func(t *testing.T) {
-		bus.Dispatch(&testQuery{})
+		err := bus.Dispatch(&testQuery{})
+		So(err, ShouldBeNil)
 
 		if handlerCallCount != 1 {
 			t.Errorf("Expected normal handler to be called 1 time. was called %d", handlerCallCount)
@@ -44,7 +47,8 @@ func TestDispatchCtxCanUseNormalHandlers(t *testing.T) {
 
 		t.Run("when a ctx handler is registered", func(t *testing.T) {
 			bus.AddHandlerCtx(handlerWithCtx)
-			bus.Dispatch(&testQuery{})
+			err := bus.Dispatch(&testQuery{})
+			So(err, ShouldBeNil)
 
 			if handlerWithCtxCallCount != 1 {
 				t.Errorf("Expected ctx handler to be called 1 time. was called %d", handlerWithCtxCallCount)
