@@ -25,7 +25,7 @@ A background job runs each 10 minutes and will remove temporary images. You can 
 
 [PhantomJS](https://phantomjs.org/) have been the only supported and default image renderer since Grafana v2.x and is shipped with Grafana.
 
-Please note that for OSX and Windows, you will need to ensure that a phantomjs binary is available under tools/phantomjs/phantomjs. For Linux, a phantomjs binary is included - however, you should ensure that any required libraries, e.g. libfontconfig1, are available.
+Please note that for macOS and Windows, you will need to ensure that a phantomjs binary is available under tools/phantomjs/phantomjs. For Linux, a phantomjs binary is included - however, you should ensure that any required libraries, e.g. libfontconfig1, are available.
 
 ### Grafana image renderer plugin
 

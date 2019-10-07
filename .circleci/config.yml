@@ -925,8 +925,6 @@ workflows:
             filters: *filter-not-release-or-master
         - lint-go:
             filters: *filter-not-release-or-master
-        - lint-go:
-            filters: *filter-not-release-or-master
         - shellcheck:
             filters: *filter-not-release-or-master
         - test-frontend:
