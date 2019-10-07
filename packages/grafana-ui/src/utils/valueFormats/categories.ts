@@ -43,7 +43,7 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Acceleration',
     formats: [
-      { name: 'Metres/sec²', id: 'accMS2', fn: toFixedUnit('m/sec²') },
+      { name: 'Meters/sec²', id: 'accMS2', fn: toFixedUnit('m/sec²') },
       { name: 'Feet/sec²', id: 'accFS2', fn: toFixedUnit('f/sec²') },
       { name: 'G unit', id: 'accG', fn: toFixedUnit('g') },
     ],
@@ -61,7 +61,7 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Area',
     formats: [
-      { name: 'Square Metres (m²)', id: 'areaM2', fn: toFixedUnit('m²') },
+      { name: 'Square Meters (m²)', id: 'areaM2', fn: toFixedUnit('m²') },
       { name: 'Square Feet (ft²)', id: 'areaF2', fn: toFixedUnit('ft²') },
       { name: 'Square Miles (mi²)', id: 'areaMI2', fn: toFixedUnit('mi²') },
     ],
@@ -84,14 +84,14 @@ export const getCategories = (): ValueFormatCategory[] => [
     formats: [
       { name: 'parts-per-million (ppm)', id: 'ppm', fn: toFixedUnit('ppm') },
       { name: 'parts-per-billion (ppb)', id: 'conppb', fn: toFixedUnit('ppb') },
-      { name: 'nanogram per cubic metre (ng/m³)', id: 'conngm3', fn: toFixedUnit('ng/m³') },
-      { name: 'nanogram per normal cubic metre (ng/Nm³)', id: 'conngNm3', fn: toFixedUnit('ng/Nm³') },
-      { name: 'microgram per cubic metre (μg/m³)', id: 'conμgm3', fn: toFixedUnit('μg/m³') },
-      { name: 'microgram per normal cubic metre (μg/Nm³)', id: 'conμgNm3', fn: toFixedUnit('μg/Nm³') },
-      { name: 'milligram per cubic metre (mg/m³)', id: 'conmgm3', fn: toFixedUnit('mg/m³') },
-      { name: 'milligram per normal cubic metre (mg/Nm³)', id: 'conmgNm3', fn: toFixedUnit('mg/Nm³') },
-      { name: 'gram per cubic metre (g/m³)', id: 'congm3', fn: toFixedUnit('g/m³') },
-      { name: 'gram per normal cubic metre (g/Nm³)', id: 'congNm3', fn: toFixedUnit('g/Nm³') },
+      { name: 'nanogram per cubic meter (ng/m³)', id: 'conngm3', fn: toFixedUnit('ng/m³') },
+      { name: 'nanogram per normal cubic meter (ng/Nm³)', id: 'conngNm3', fn: toFixedUnit('ng/Nm³') },
+      { name: 'microgram per cubic meter (μg/m³)', id: 'conμgm3', fn: toFixedUnit('μg/m³') },
+      { name: 'microgram per normal cubic meter (μg/Nm³)', id: 'conμgNm3', fn: toFixedUnit('μg/Nm³') },
+      { name: 'milligram per cubic meter (mg/m³)', id: 'conmgm3', fn: toFixedUnit('mg/m³') },
+      { name: 'milligram per normal cubic meter (mg/Nm³)', id: 'conmgNm3', fn: toFixedUnit('mg/Nm³') },
+      { name: 'gram per cubic meter (g/m³)', id: 'congm3', fn: toFixedUnit('g/m³') },
+      { name: 'gram per normal cubic meter (g/Nm³)', id: 'congNm3', fn: toFixedUnit('g/Nm³') },
       { name: 'milligrams per decilitre (mg/dL)', id: 'conmgdL', fn: toFixedUnit('mg/dL') },
       { name: 'millimoles per litre (mmol/L)', id: 'conmmolL', fn: toFixedUnit('mmol/L') },
     ],
@@ -174,7 +174,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Watt (W)', id: 'watt', fn: decimalSIPrefix('W') },
       { name: 'Kilowatt (kW)', id: 'kwatt', fn: decimalSIPrefix('W', 1) },
       { name: 'Milliwatt (mW)', id: 'mwatt', fn: decimalSIPrefix('W', -1) },
-      { name: 'Watt per square metre (W/m²)', id: 'Wm2', fn: toFixedUnit('W/m²') },
+      { name: 'Watt per square meter (W/m²)', id: 'Wm2', fn: toFixedUnit('W/m²') },
       { name: 'Volt-ampere (VA)', id: 'voltamp', fn: decimalSIPrefix('VA') },
       { name: 'Kilovolt-ampere (kVA)', id: 'kvoltamp', fn: decimalSIPrefix('VA', 1) },
       { name: 'Volt-ampere reactive (var)', id: 'voltampreact', fn: decimalSIPrefix('var') },
@@ -202,7 +202,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     name: 'Flow',
     formats: [
       { name: 'Gallons/min (gpm)', id: 'flowgpm', fn: toFixedUnit('gpm') },
-      { name: 'Cubic metres/sec (cms)', id: 'flowcms', fn: toFixedUnit('cms') },
+      { name: 'Cubic meters/sec (cms)', id: 'flowcms', fn: toFixedUnit('cms') },
       { name: 'Cubic feet/sec (cfs)', id: 'flowcfs', fn: toFixedUnit('cfs') },
       { name: 'Cubic feet/min (cfm)', id: 'flowcfm', fn: toFixedUnit('cfm') },
       { name: 'Litre/hour', id: 'litreh', fn: toFixedUnit('L/h') },
@@ -214,8 +214,8 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Force',
     formats: [
-      { name: 'Newton-metres (Nm)', id: 'forceNm', fn: decimalSIPrefix('Nm') },
-      { name: 'Kilonewton-metres (kNm)', id: 'forcekNm', fn: decimalSIPrefix('Nm', 1) },
+      { name: 'Newton-meters (Nm)', id: 'forceNm', fn: decimalSIPrefix('Nm') },
+      { name: 'Kilonewton-meters (kNm)', id: 'forcekNm', fn: decimalSIPrefix('Nm', 1) },
       { name: 'Newtons (N)', id: 'forceN', fn: decimalSIPrefix('N') },
       { name: 'Kilonewtons (kN)', id: 'forcekN', fn: decimalSIPrefix('N', 1) },
     ],
@@ -244,10 +244,10 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'length',
     formats: [
-      { name: 'millimetre (mm)', id: 'lengthmm', fn: decimalSIPrefix('m', -1) },
+      { name: 'millimeter (mm)', id: 'lengthmm', fn: decimalSIPrefix('m', -1) },
       { name: 'feet (ft)', id: 'lengthft', fn: toFixedUnit('ft') },
-      { name: 'metre (m)', id: 'lengthm', fn: decimalSIPrefix('m') },
-      { name: 'kilometre (km)', id: 'lengthkm', fn: decimalSIPrefix('m', 1) },
+      { name: 'meter (m)', id: 'lengthm', fn: decimalSIPrefix('m') },
+      { name: 'kilometer (km)', id: 'lengthkm', fn: decimalSIPrefix('m', 1) },
       { name: 'mile (mi)', id: 'lengthmi', fn: toFixedUnit('mi') },
     ],
   },
@@ -322,8 +322,8 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Velocity',
     formats: [
-      { name: 'metres/second (m/s)', id: 'velocityms', fn: toFixedUnit('m/s') },
-      { name: 'kilometres/hour (km/h)', id: 'velocitykmh', fn: toFixedUnit('km/h') },
+      { name: 'meters/second (m/s)', id: 'velocityms', fn: toFixedUnit('m/s') },
+      { name: 'kilometers/hour (km/h)', id: 'velocitykmh', fn: toFixedUnit('km/h') },
       { name: 'miles/hour (mph)', id: 'velocitymph', fn: toFixedUnit('mph') },
       { name: 'knot (kn)', id: 'velocityknot', fn: toFixedUnit('kn') },
     ],
@@ -333,9 +333,9 @@ export const getCategories = (): ValueFormatCategory[] => [
     formats: [
       { name: 'millilitre (mL)', id: 'mlitre', fn: decimalSIPrefix('L', -1) },
       { name: 'litre (L)', id: 'litre', fn: decimalSIPrefix('L') },
-      { name: 'cubic metre', id: 'm3', fn: toFixedUnit('m³') },
-      { name: 'Normal cubic metre', id: 'Nm3', fn: toFixedUnit('Nm³') },
-      { name: 'cubic decimetre', id: 'dm3', fn: toFixedUnit('dm³') },
+      { name: 'cubic meter', id: 'm3', fn: toFixedUnit('m³') },
+      { name: 'Normal cubic meter', id: 'Nm3', fn: toFixedUnit('Nm³') },
+      { name: 'cubic decimeter', id: 'dm3', fn: toFixedUnit('dm³') },
       { name: 'gallons', id: 'gallons', fn: toFixedUnit('gal') },
     ],
   },
