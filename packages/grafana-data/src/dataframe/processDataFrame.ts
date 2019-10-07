@@ -244,8 +244,6 @@ export const guessFieldTypes = (series: DataFrame): DataFrame => {
 
 export const isTableData = (data: any): data is DataFrame => data && data.hasOwnProperty('columns');
 
-export const isJSONDocumentData = (data: any): data is DataFrame => data && data.meta && data.meta.json;
-
 export const isDataFrame = (data: any): data is DataFrame => data && data.hasOwnProperty('fields');
 
 export const toDataFrame = (data: any): DataFrame => {

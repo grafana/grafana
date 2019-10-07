@@ -2,11 +2,11 @@ import _ from 'lodash';
 import $ from 'jquery';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import config from 'app/core/config';
-import { transformDataToTable } from './transformers';
+import { transformDataToTable, isJSONDocumentData } from './transformers';
 import { tablePanelEditor } from './editor';
 import { columnOptionsTab } from './column_options';
 import { TableRenderer } from './renderer';
-import { isTableData, isJSONDocumentData } from '@grafana/data';
+import { isTableData } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 class TablePanelCtrl extends MetricsPanelCtrl {

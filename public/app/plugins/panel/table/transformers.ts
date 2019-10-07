@@ -3,7 +3,7 @@ import flatten from 'app/core/utils/flatten';
 import TimeSeries from 'app/core/time_series2';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { TableTransform } from './types';
-import { Column, TableData, toDataFrame, isJSONDocumentData } from '@grafana/data';
+import { Column, TableData, toDataFrame, DataFrame } from '@grafana/data';
 
 const transformers: { [key: string]: TableTransform } = {};
 
@@ -173,6 +173,8 @@ transformers['table'] = {
   },
 };
 
+const isJSONDocumentData = (data: any): data is DataFrame => data && data.meta && data.meta.json;
+
 transformers['json'] = {
   description: 'JSON Data',
   getColumns: data => {
@@ -264,4 +266,4 @@ function transformDataToTable(data: any, panel: any) {
   return model;
 }
 
-export { transformers, transformDataToTable };
+export { transformers, transformDataToTable, isJSONDocumentData };
