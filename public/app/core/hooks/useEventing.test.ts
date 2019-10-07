@@ -17,7 +17,7 @@ describe('useEventing', () => {
   describe('when publishing events filter returns true', () => {
     it('then it should call tap and filter on each subscriber', () => {
       const events = new Subject<Event<any>>();
-      const publish = (event: any, payload: any) => events.next({ ...event, payload });
+      const publish = (event: any) => events.next(event);
       const tap = jest.fn();
       const filter = jest.fn().mockReturnValue(true);
       const event = { name: 'event1' };
@@ -39,7 +39,7 @@ describe('useEventing', () => {
   describe('when publishing events filter returns false', () => {
     it('then it should call filter but not tap on each subscriber', () => {
       const events = new Subject<Event<any>>();
-      const publish = (event: any, payload: any) => events.next({ ...event, payload });
+      const publish = (event: any) => events.next(event);
       const tap = jest.fn();
       const filter = jest.fn().mockReturnValue(false);
       const event = { name: 'event1' };
