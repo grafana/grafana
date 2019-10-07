@@ -119,10 +119,12 @@ func (ss *SqlStore) ensureDefaults() error {
 			if err := bus.Dispatch(&orgCmd); err != nil {
 				return fmt.Errorf("Failed to create default org: %v", err)
 			}
+
+			ss.log.Info("Created default org", "org", orgCmd.Name)
 		}
 
 		// ensure admin user
-		if !ss.Cfg.DisableAdminUser {
+		if !ss.Cfg.DisableInitAdminCreation {
 			err := bus.DispatchCtx(ctx, &systemUserCountQuery)
 			if err != nil {
 				return fmt.Errorf("Could not determine if admin user exists: %v", err)
@@ -318,7 +320,7 @@ func InitTestDB(t ITestDB) *SqlStore {
 
 	// set test db config
 	sqlstore.Cfg = setting.NewCfg()
-	sqlstore.Cfg.DisableAdminUser = true
+	sqlstore.Cfg.DisableInitAdminCreation = true
 	sec, _ := sqlstore.Cfg.Raw.NewSection("database")
 	sec.NewKey("type", dbType)
 

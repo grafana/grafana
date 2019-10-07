@@ -133,11 +133,11 @@ var (
 	ViewersCanEdit          bool
 
 	// Http auth
-	DisableAdminUser     bool
-	AdminUser            string
-	AdminPassword        string
-	LoginCookieName      string
-	LoginMaxLifetimeDays int
+	DisableInitAdminCreation bool
+	AdminUser                string
+	AdminPassword            string
+	LoginCookieName          string
+	LoginMaxLifetimeDays     int
 
 	AnonymousEnabled bool
 	AnonymousOrgName string
@@ -236,7 +236,7 @@ type Cfg struct {
 	RendererLimitAlerting int
 
 	// Security
-	DisableAdminUser                 bool
+	DisableInitAdminCreation         bool
 	DisableBruteForceLoginProtection bool
 	CookieSecure                     bool
 	CookieSameSite                   http.SameSite
@@ -757,7 +757,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	// admin
-	cfg.DisableAdminUser = security.Key("disable_admin_user").MustBool(false)
+	cfg.DisableInitAdminCreation = security.Key("disable_initial_admin_creation").MustBool(false)
 	AdminUser, err = valueAsString(security, "admin_user", "")
 	if err != nil {
 		return err
