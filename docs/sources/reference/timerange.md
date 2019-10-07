@@ -15,7 +15,7 @@ Grafana provides numerous ways to manage the time ranges of the data being visua
 
 <img class="no-shadow" src="/img/docs/v50/timepicker.png" width="700px">
 
-In the top right you'll find the two controls for time visualization:
+The two controls for time visualization are available in the top right:
 
 1. **Current time range**: This shows the current dashboard time. You can click on it to change it.
 2. **Refresh interval**: This shows the current refresh interval for the current dashboard. You can click on it to change
