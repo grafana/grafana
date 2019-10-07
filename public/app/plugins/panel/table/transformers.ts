@@ -183,7 +183,7 @@ transformers['json'] = {
     const names: any = {};
     for (let i = 0; i < data.length; i++) {
       const dataFrame = toDataFrame(data[i]);
-      if (!dataFrame.meta || !dataFrame.meta.json) {
+      if (!isJSONDocumentData(dataFrame)) {
         continue;
       }
 
