@@ -216,7 +216,9 @@ Examples:
 
 ### Application Insights Alerting
 
-Not implemented yet.
+Grafana alerting is supported for Application Insights. This is not Azure Alerts support. Read more about how alerting in Grafana works [here]({{< relref "alerting/rules.md" >}}).
+
+{{< docs-imagebox img="/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
 
 ## Querying the Azure Log Analytics Service
 
