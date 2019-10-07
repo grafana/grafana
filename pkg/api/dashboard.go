@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -26,6 +27,25 @@ import (
 const (
 	anonString = "Anonymous"
 )
+
+// Error holds response status code
+type RequestError struct {
+	// Err is the underlying error
+	Err error
+	// Response Status code
+	StatusCode int
+	// Description
+	Desc string
+}
+
+// NewError creates an Error error with the given code and underlying error
+func NewRequestError(statusCode int, desc string, err error) error {
+	return &RequestError{StatusCode: statusCode, Desc: desc, Err: err}
+}
+
+func (err RequestError) Error() string {
+	return err.Err.Error()
+}
 
 func isDashboardStarredByUser(c *m.ReqContext, dashID int64) (bool, error) {
 	if !c.IsSignedIn {
@@ -107,7 +127,7 @@ func (hs *HTTPServer) GetDashboard(c *m.ReqContext) Response {
 		meta.FolderUrl = query.Result.GetUrl()
 	}
 
-	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardId(dash.Id)
+	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardId(nil, &dash.Id)
 	if err != nil {
 		return Error(500, "Error while checking if dashboard is provisioned", err)
 	}
@@ -205,92 +225,111 @@ func deleteDashboard(c *m.ReqContext) Response {
 }
 
 func (hs *HTTPServer) PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand) Response {
-	cmd.OrgId = c.OrgId
-	cmd.UserId = c.UserId
+	var response *NormalResponse
+	err := bus.InTransaction(context.Background(), func(ctx context.Context) error {
+		cmd.OrgId = c.OrgId
+		cmd.UserId = c.UserId
 
-	dash := cmd.GetDashboardModel()
+		dash := cmd.GetDashboardModel()
 
-	newDashboard := dash.Id == 0 && dash.Uid == ""
-	if newDashboard {
-		limitReached, err := hs.QuotaService.QuotaReached(c, "dashboard")
+		newDashboard := dash.Id == 0 && dash.Uid == ""
+		if newDashboard {
+			limitReached, err := hs.QuotaService.QuotaReached(c, "dashboard", ctx)
+			if err != nil {
+				return NewRequestError(500, "failed to get quota", err)
+			}
+			if limitReached {
+				return NewRequestError(403, "Quota reached", nil)
+			}
+		}
+
+		dashItem := &dashboards.SaveDashboardDTO{
+			Dashboard: dash,
+			Message:   cmd.Message,
+			OrgId:     c.OrgId,
+			User:      c.SignedInUser,
+			Overwrite: cmd.Overwrite,
+		}
+
+		dashboard, err := dashboards.NewService().SaveDashboard(ctx, dashItem)
+
+		if err == m.ErrDashboardTitleEmpty ||
+			err == m.ErrDashboardWithSameNameAsFolder ||
+			err == m.ErrDashboardFolderWithSameNameAsDashboard ||
+			err == m.ErrDashboardTypeMismatch ||
+			err == m.ErrDashboardInvalidUid ||
+			err == m.ErrDashboardUidToLong ||
+			err == m.ErrDashboardWithSameUIDExists ||
+			err == m.ErrFolderNotFound ||
+			err == m.ErrDashboardFolderCannotHaveParent ||
+			err == m.ErrDashboardFolderNameExists ||
+			err == m.ErrDashboardCannotSaveProvisionedDashboard {
+			return NewRequestError(400, err.Error(), nil)
+		}
+
+		if err == m.ErrDashboardUpdateAccessDenied {
+			return NewRequestError(403, err.Error(), err)
+		}
+
+		if validationErr, ok := err.(alerting.ValidationError); ok {
+			return NewRequestError(422, validationErr.Error(), nil)
+		}
+
 		if err != nil {
-			return Error(500, "failed to get quota", err)
+			if err == m.ErrDashboardWithSameNameInFolderExists {
+				response = JSON(412, util.DynMap{"status": "name-exists", "message": err.Error()})
+				return nil
+			}
+			if err == m.ErrDashboardVersionMismatch {
+				response = JSON(412, util.DynMap{"status": "version-mismatch", "message": err.Error()})
+				return nil
+			}
+			if pluginErr, ok := err.(m.UpdatePluginDashboardError); ok {
+				message := "The dashboard belongs to plugin " + pluginErr.PluginId + "."
+				// look up plugin name
+				if pluginDef, exist := plugins.Plugins[pluginErr.PluginId]; exist {
+					message = "The dashboard belongs to plugin " + pluginDef.Name + "."
+				}
+				response = JSON(412, util.DynMap{"status": "plugin-dashboard", "message": message})
+				return nil
+			}
+			if err == m.ErrDashboardNotFound {
+				response = JSON(404, util.DynMap{"status": "not-found", "message": err.Error()})
+				return nil
+			}
+			return NewRequestError(500, "Failed to save dashboard", err)
 		}
-		if limitReached {
-			return Error(403, "Quota reached", nil)
+
+		if hs.Cfg.EditorsCanAdmin && newDashboard {
+			inFolder := cmd.FolderId > 0
+			err := dashboards.MakeUserAdmin(hs.Bus, cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder, ctx)
+			if err != nil {
+				hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
+			}
 		}
-	}
 
-	dashItem := &dashboards.SaveDashboardDTO{
-		Dashboard: dash,
-		Message:   cmd.Message,
-		OrgId:     c.OrgId,
-		User:      c.SignedInUser,
-		Overwrite: cmd.Overwrite,
-	}
-
-	dashboard, err := dashboards.NewService().SaveDashboard(dashItem)
-
-	if err == m.ErrDashboardTitleEmpty ||
-		err == m.ErrDashboardWithSameNameAsFolder ||
-		err == m.ErrDashboardFolderWithSameNameAsDashboard ||
-		err == m.ErrDashboardTypeMismatch ||
-		err == m.ErrDashboardInvalidUid ||
-		err == m.ErrDashboardUidToLong ||
-		err == m.ErrDashboardWithSameUIDExists ||
-		err == m.ErrFolderNotFound ||
-		err == m.ErrDashboardFolderCannotHaveParent ||
-		err == m.ErrDashboardFolderNameExists ||
-		err == m.ErrDashboardCannotSaveProvisionedDashboard {
-		return Error(400, err.Error(), nil)
-	}
-
-	if err == m.ErrDashboardUpdateAccessDenied {
-		return Error(403, err.Error(), err)
-	}
-
-	if validationErr, ok := err.(alerting.ValidationError); ok {
-		return Error(422, validationErr.Error(), nil)
-	}
+		c.TimeRequest(metrics.MApiDashboardSave)
+		response = JSON(200, util.DynMap{
+			"status":  "success",
+			"slug":    dashboard.Slug,
+			"version": dashboard.Version,
+			"id":      dashboard.Id,
+			"uid":     dashboard.Uid,
+			"url":     dashboard.GetUrl(),
+		})
+		return nil
+	})
 
 	if err != nil {
-		if err == m.ErrDashboardWithSameNameInFolderExists {
-			return JSON(412, util.DynMap{"status": "name-exists", "message": err.Error()})
-		}
-		if err == m.ErrDashboardVersionMismatch {
-			return JSON(412, util.DynMap{"status": "version-mismatch", "message": err.Error()})
-		}
-		if pluginErr, ok := err.(m.UpdatePluginDashboardError); ok {
-			message := "The dashboard belongs to plugin " + pluginErr.PluginId + "."
-			// look up plugin name
-			if pluginDef, exist := plugins.Plugins[pluginErr.PluginId]; exist {
-				message = "The dashboard belongs to plugin " + pluginDef.Name + "."
-			}
-			return JSON(412, util.DynMap{"status": "plugin-dashboard", "message": message})
-		}
-		if err == m.ErrDashboardNotFound {
-			return JSON(404, util.DynMap{"status": "not-found", "message": err.Error()})
-		}
-		return Error(500, "Failed to save dashboard", err)
-	}
-
-	if hs.Cfg.EditorsCanAdmin && newDashboard {
-		inFolder := cmd.FolderId > 0
-		err := dashboards.MakeUserAdmin(hs.Bus, cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
-		if err != nil {
-			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
+		requestErr, ok := err.(RequestError)
+		if ok {
+			return Error(requestErr.StatusCode, requestErr.Desc, requestErr)
+		} else {
+			return Error(500, "Something went wrong", err)
 		}
 	}
 
-	c.TimeRequest(metrics.MApiDashboardSave)
-	return JSON(200, util.DynMap{
-		"status":  "success",
-		"slug":    dashboard.Slug,
-		"version": dashboard.Version,
-		"id":      dashboard.Id,
-		"uid":     dashboard.Uid,
-		"url":     dashboard.GetUrl(),
-	})
+	return response
 }
 
 func GetHomeDashboard(c *m.ReqContext) Response {

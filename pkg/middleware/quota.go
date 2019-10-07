@@ -14,7 +14,7 @@ func Quota(quotaService *quota.QuotaService) func(target string) macaron.Handler
 	//https://open.spotify.com/track/7bZSoBEAEEUsGEuLOf94Jm?si=T1Tdju5qRSmmR0zph_6RBw fuuuuunky
 	return func(target string) macaron.Handler {
 		return func(c *m.ReqContext) {
-			limitReached, err := quotaService.QuotaReached(c, target)
+			limitReached, err := quotaService.QuotaReached(c, target, nil)
 			if err != nil {
 				c.JsonApiErr(500, "failed to get quota", err)
 				return

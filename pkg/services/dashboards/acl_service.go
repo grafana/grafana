@@ -1,12 +1,13 @@
 package dashboards
 
 import (
+	"context"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"time"
 )
 
-func MakeUserAdmin(bus bus.Bus, orgId int64, userId int64, dashboardId int64, setViewAndEditPermissions bool) error {
+func MakeUserAdmin(bus bus.Bus, orgId int64, userId int64, dashboardId int64, setViewAndEditPermissions bool, ctx context.Context) error {
 	rtEditor := models.ROLE_EDITOR
 	rtViewer := models.ROLE_VIEWER
 
@@ -47,8 +48,14 @@ func MakeUserAdmin(bus bus.Bus, orgId int64, userId int64, dashboardId int64, se
 		Items:       items,
 	}
 
-	if err := bus.Dispatch(aclCmd); err != nil {
-		return err
+	if ctx != nil {
+		if err := bus.DispatchCtx(ctx, aclCmd); err != nil {
+			return err
+		}
+	} else {
+		if err := bus.Dispatch(aclCmd); err != nil {
+			return err
+		}
 	}
 
 	return nil

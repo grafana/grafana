@@ -5,6 +5,8 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
+
+	"context"
 )
 
 func init() {
@@ -19,7 +21,7 @@ func (qs *QuotaService) Init() error {
 	return nil
 }
 
-func (qs *QuotaService) QuotaReached(c *m.ReqContext, target string) (bool, error) {
+func (qs *QuotaService) QuotaReached(c *m.ReqContext, target string, ctx context.Context) (bool, error) {
 	if !setting.Quota.Enabled {
 		return false, nil
 	}
@@ -55,8 +57,14 @@ func (qs *QuotaService) QuotaReached(c *m.ReqContext, target string) (bool, erro
 				continue
 			}
 			query := m.GetGlobalQuotaByTargetQuery{Target: scope.Target}
-			if err := bus.Dispatch(&query); err != nil {
-				return true, err
+			if ctx != nil {
+				if err := bus.DispatchCtx(ctx, &query); err != nil {
+					return true, err
+				}
+			} else {
+				if err := bus.Dispatch(&query); err != nil {
+					return true, err
+				}
 			}
 			if query.Result.Used >= scope.DefaultLimit {
 				return true, nil
@@ -66,7 +74,7 @@ func (qs *QuotaService) QuotaReached(c *m.ReqContext, target string) (bool, erro
 				continue
 			}
 			query := m.GetOrgQuotaByTargetQuery{OrgId: c.OrgId, Target: scope.Target, Default: scope.DefaultLimit}
-			if err := bus.Dispatch(&query); err != nil {
+			if err := bus.DispatchCtx(ctx, &query); err != nil {
 				return true, err
 			}
 			if query.Result.Limit < 0 {
@@ -84,7 +92,7 @@ func (qs *QuotaService) QuotaReached(c *m.ReqContext, target string) (bool, erro
 				continue
 			}
 			query := m.GetUserQuotaByTargetQuery{UserId: c.UserId, Target: scope.Target, Default: scope.DefaultLimit}
-			if err := bus.Dispatch(&query); err != nil {
+			if err := bus.DispatchCtx(ctx, &query); err != nil {
 				return true, err
 			}
 			if query.Result.Limit < 0 {

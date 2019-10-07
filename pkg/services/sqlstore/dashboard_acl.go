@@ -3,41 +3,49 @@ package sqlstore
 import (
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+
+	"context"
+	"errors"
 )
 
 func init() {
-	bus.AddHandler("sql", UpdateDashboardAcl)
+	bus.AddHandlerCtx("sql", UpdateDashboardAcl)
 	bus.AddHandler("sql", GetDashboardAclInfoList)
 }
 
-func UpdateDashboardAcl(cmd *m.UpdateDashboardAclCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		// delete existing items
-		_, err := sess.Exec("DELETE FROM dashboard_acl WHERE dashboard_id=?", cmd.DashboardId)
-		if err != nil {
+func UpdateDashboardAcl(ctx context.Context, cmd *m.UpdateDashboardAclCommand) error {
+	value := ctx.Value(ContextSessionName)
+	var sess *DBSession
+	sess, ok := value.(*DBSession)
+
+	if !ok {
+		return errors.New("No valid session was found")
+	}
+	// delete existing items
+	_, err := sess.Exec("DELETE FROM dashboard_acl WHERE dashboard_id=?", cmd.DashboardId)
+	if err != nil {
+		return err
+	}
+
+	for _, item := range cmd.Items {
+		if item.UserId == 0 && item.TeamId == 0 && (item.Role == nil || !item.Role.IsValid()) {
+			return m.ErrDashboardAclInfoMissing
+		}
+
+		if item.DashboardId == 0 {
+			return m.ErrDashboardPermissionDashboardEmpty
+		}
+
+		sess.Nullable("user_id", "team_id")
+		if _, err := sess.Insert(item); err != nil {
 			return err
 		}
+	}
 
-		for _, item := range cmd.Items {
-			if item.UserId == 0 && item.TeamId == 0 && (item.Role == nil || !item.Role.IsValid()) {
-				return m.ErrDashboardAclInfoMissing
-			}
-
-			if item.DashboardId == 0 {
-				return m.ErrDashboardPermissionDashboardEmpty
-			}
-
-			sess.Nullable("user_id", "team_id")
-			if _, err := sess.Insert(item); err != nil {
-				return err
-			}
-		}
-
-		// Update dashboard HasAcl flag
-		dashboard := m.Dashboard{HasAcl: true}
-		_, err = sess.Cols("has_acl").Where("id=?", cmd.DashboardId).Update(&dashboard)
-		return err
-	})
+	// Update dashboard HasAcl flag
+	dashboard := m.Dashboard{HasAcl: true}
+	_, err = sess.Cols("has_acl").Where("id=?", cmd.DashboardId).Update(&dashboard)
+	return err
 }
 
 // GetDashboardAclInfoList returns a list of permissions for a dashboard. They can be fetched from three

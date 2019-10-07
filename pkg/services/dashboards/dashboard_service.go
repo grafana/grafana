@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"context"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -14,7 +15,7 @@ import (
 
 // DashboardService service for operating on dashboards
 type DashboardService interface {
-	SaveDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
+	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO) (*models.Dashboard, error)
 	ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
 	DeleteDashboard(dashboardId int64, orgId int64) error
 }
@@ -24,23 +25,27 @@ type DashboardProvisioningService interface {
 	SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
 	SaveFolderForProvisionedDashboards(*SaveDashboardDTO) (*models.Dashboard, error)
 	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
-	GetProvisionedDashboardDataByDashboardId(dashboardId int64) (*models.DashboardProvisioning, error)
+	GetProvisionedDashboardDataByDashboardId(ctx context.Context, dashboardId *int64) (*models.DashboardProvisioning, error)
 	UnprovisionDashboard(dashboardId int64) error
 	DeleteProvisionedDashboard(dashboardId int64, orgId int64) error
 }
 
 // NewService factory for creating a new dashboard service
 var NewService = func() DashboardService {
-	return &dashboardServiceImpl{
+	newService := &dashboardServiceImpl{
 		log: log.New("dashboard-service"),
 	}
+	bus.AddHandlerCtx("dashboards", newService.SaveDashboard)
+	return newService
 }
 
 // NewProvisioningService factory for creating a new dashboard provisioning service
 var NewProvisioningService = func() DashboardProvisioningService {
-	return &dashboardServiceImpl{
+	newProvisingService := &dashboardServiceImpl{
 		log: log.New("dashboard-provisioning-service"),
 	}
+	bus.AddHandlerCtx("dashboards", newProvisingService.GetProvisionedDashboardDataByDashboardId)
+	return newProvisingService
 }
 
 type SaveDashboardDTO struct {
@@ -68,17 +73,24 @@ func (dr *dashboardServiceImpl) GetProvisionedDashboardData(name string) ([]*mod
 	return cmd.Result, nil
 }
 
-func (dr *dashboardServiceImpl) GetProvisionedDashboardDataByDashboardId(dashboardId int64) (*models.DashboardProvisioning, error) {
-	cmd := &models.GetProvisionedDashboardDataByIdQuery{DashboardId: dashboardId}
-	err := bus.Dispatch(cmd)
-	if err != nil {
-		return nil, err
+func (dr *dashboardServiceImpl) GetProvisionedDashboardDataByDashboardId(ctx context.Context, dashboardId *int64) (*models.DashboardProvisioning, error) {
+	cmd := &models.GetProvisionedDashboardDataByIdQuery{DashboardId: *dashboardId}
+	if ctx != nil {
+		err := bus.DispatchCtx(ctx, cmd)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		err := bus.Dispatch(cmd)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return cmd.Result, nil
 }
 
-func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO, validateAlerts bool, validateProvisionedDashboard bool) (*models.SaveDashboardCommand, error) {
+func (dr *dashboardServiceImpl) buildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, validateAlerts bool, validateProvisionedDashboard bool) (*models.SaveDashboardCommand, error) {
 	dash := dto.Dashboard
 
 	dash.Title = strings.TrimSpace(dash.Title)
@@ -110,8 +122,14 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 			User:      dto.User,
 		}
 
-		if err := bus.Dispatch(&validateAlertsCmd); err != nil {
-			return nil, err
+		if ctx != nil {
+			if err := bus.DispatchCtx(ctx, &validateAlertsCmd); err != nil {
+				return nil, err
+			}
+		} else {
+			if err := bus.Dispatch(&validateAlertsCmd); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -121,7 +139,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 		Overwrite: dto.Overwrite,
 	}
 
-	if err := bus.Dispatch(&validateBeforeSaveCmd); err != nil {
+	if err := bus.DispatchCtx(ctx, &validateBeforeSaveCmd); err != nil {
 		return nil, err
 	}
 
@@ -136,7 +154,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 	}
 
 	if validateProvisionedDashboard {
-		provisionedData, err := dr.GetProvisionedDashboardDataByDashboardId(dash.Id)
+		provisionedData, err := dr.GetProvisionedDashboardDataByDashboardId(ctx, &dash.Id)
 		if err != nil {
 			return nil, err
 		}
@@ -172,14 +190,18 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 	return cmd, nil
 }
 
-func (dr *dashboardServiceImpl) updateAlerting(cmd *models.SaveDashboardCommand, dto *SaveDashboardDTO) error {
+func (dr *dashboardServiceImpl) updateAlerting(cmd *models.SaveDashboardCommand, dto *SaveDashboardDTO, ctx context.Context) error {
 	alertCmd := models.UpdateDashboardAlertsCommand{
 		OrgId:     dto.OrgId,
 		Dashboard: cmd.Result,
 		User:      dto.User,
 	}
 
-	return bus.Dispatch(&alertCmd)
+	if ctx != nil {
+		return bus.DispatchCtx(ctx, &alertCmd)
+	} else {
+		return bus.Dispatch(&alertCmd)
+	}
 }
 
 func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
@@ -189,7 +211,7 @@ func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO, 
 		OrgId:   dto.OrgId,
 	}
 
-	cmd, err := dr.buildSaveDashboardCommand(dto, true, false)
+	cmd, err := dr.buildSaveDashboardCommand(nil, dto, true, false)
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +228,7 @@ func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO, 
 	}
 
 	//alerts
-	err = dr.updateAlerting(cmd, dto)
+	err = dr.updateAlerting(cmd, dto, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -219,7 +241,7 @@ func (dr *dashboardServiceImpl) SaveFolderForProvisionedDashboards(dto *SaveDash
 		UserId:  0,
 		OrgRole: models.ROLE_ADMIN,
 	}
-	cmd, err := dr.buildSaveDashboardCommand(dto, false, false)
+	cmd, err := dr.buildSaveDashboardCommand(nil, dto, false, false)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +251,7 @@ func (dr *dashboardServiceImpl) SaveFolderForProvisionedDashboards(dto *SaveDash
 		return nil, err
 	}
 
-	err = dr.updateAlerting(cmd, dto)
+	err = dr.updateAlerting(cmd, dto, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -237,18 +259,18 @@ func (dr *dashboardServiceImpl) SaveFolderForProvisionedDashboards(dto *SaveDash
 	return cmd.Result, nil
 }
 
-func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
-	cmd, err := dr.buildSaveDashboardCommand(dto, true, true)
+func (dr *dashboardServiceImpl) SaveDashboard(ctx context.Context, dto *SaveDashboardDTO) (*models.Dashboard, error) {
+	cmd, err := dr.buildSaveDashboardCommand(ctx, dto, true, true)
 	if err != nil {
 		return nil, err
 	}
 
-	err = bus.Dispatch(cmd)
+	err = bus.DispatchCtx(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	err = dr.updateAlerting(cmd, dto)
+	err = dr.updateAlerting(cmd, dto, ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -269,7 +291,7 @@ func (dr *dashboardServiceImpl) DeleteProvisionedDashboard(dashboardId int64, or
 
 func (dr *dashboardServiceImpl) deleteDashboard(dashboardId int64, orgId int64, validateProvisionedDashboard bool) error {
 	if validateProvisionedDashboard {
-		provisionedData, err := dr.GetProvisionedDashboardDataByDashboardId(dashboardId)
+		provisionedData, err := dr.GetProvisionedDashboardDataByDashboardId(nil, &dashboardId)
 		if err != nil {
 			return errutil.Wrap("failed to check if dashboard is provisioned", err)
 		}
@@ -283,7 +305,7 @@ func (dr *dashboardServiceImpl) deleteDashboard(dashboardId int64, orgId int64, 
 }
 
 func (dr *dashboardServiceImpl) ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
-	cmd, err := dr.buildSaveDashboardCommand(dto, false, true)
+	cmd, err := dr.buildSaveDashboardCommand(nil, dto, false, true)
 	if err != nil {
 		return nil, err
 	}
@@ -309,7 +331,7 @@ type FakeDashboardService struct {
 	SavedDashboards     []*SaveDashboardDTO
 }
 
-func (s *FakeDashboardService) SaveDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
+func (s *FakeDashboardService) SaveDashboard(ctx context.Context, dto *SaveDashboardDTO) (*models.Dashboard, error) {
 	s.SavedDashboards = append(s.SavedDashboards, dto)
 
 	if s.SaveDashboardResult == nil && s.SaveDashboardError == nil {
@@ -320,7 +342,7 @@ func (s *FakeDashboardService) SaveDashboard(dto *SaveDashboardDTO) (*models.Das
 }
 
 func (s *FakeDashboardService) ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
-	return s.SaveDashboard(dto)
+	return s.SaveDashboard(nil, dto)
 }
 
 func (s *FakeDashboardService) DeleteDashboard(dashboardId int64, orgId int64) error {

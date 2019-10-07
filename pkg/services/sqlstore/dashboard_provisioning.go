@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -8,7 +9,7 @@ import (
 func init() {
 	bus.AddHandler("sql", GetProvisionedDashboardDataQuery)
 	bus.AddHandler("sql", SaveProvisionedDashboard)
-	bus.AddHandler("sql", GetProvisionedDataByDashboardId)
+	bus.AddHandlerCtx("sql", GetProvisionedDataByDashboardId)
 	bus.AddHandler("sql", UnprovisionDashboard)
 }
 
@@ -19,7 +20,7 @@ type DashboardExtras struct {
 	Value       string
 }
 
-func GetProvisionedDataByDashboardId(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
+func GetProvisionedDataByDashboardId(ctx context.Context, cmd *models.GetProvisionedDashboardDataByIdQuery) error {
 	result := &models.DashboardProvisioning{}
 
 	exist, err := x.Where("dashboard_id = ?", cmd.DashboardId).Get(result)

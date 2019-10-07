@@ -49,7 +49,7 @@ func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
 			return ErrInvalidCredentials
 		}
 
-		limitReached, err := ls.QuotaService.QuotaReached(cmd.ReqContext, "user")
+		limitReached, err := ls.QuotaService.QuotaReached(cmd.ReqContext, "user", nil)
 		if err != nil {
 			log.Warn("Error getting user quota. error: %v", err)
 			return ErrGettingUserQuota

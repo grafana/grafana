@@ -1,16 +1,17 @@
 package alerting
 
 import (
+	"context"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
 
 func init() {
 	bus.AddHandler("alerting", updateDashboardAlerts)
-	bus.AddHandler("alerting", validateDashboardAlerts)
+	bus.AddHandlerCtx("alerting", ValidateDashboardAlerts)
 }
 
-func validateDashboardAlerts(cmd *models.ValidateDashboardAlertsCommand) error {
+func ValidateDashboardAlerts(ctx context.Context, cmd *models.ValidateDashboardAlertsCommand) error {
 	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId, cmd.User)
 
 	return extractor.ValidateAlerts()

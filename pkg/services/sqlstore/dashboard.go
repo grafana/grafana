@@ -4,6 +4,8 @@ import (
 	"strings"
 	"time"
 
+	"context"
+	"errors"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
@@ -12,7 +14,7 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", SaveDashboard)
+	bus.AddHandlerCtx("sql", SaveDashboard)
 	bus.AddHandler("sql", GetDashboard)
 	bus.AddHandler("sql", GetDashboards)
 	bus.AddHandler("sql", DeleteDashboard)
@@ -23,17 +25,21 @@ func init() {
 	bus.AddHandler("sql", GetDashboardsByPluginId)
 	bus.AddHandler("sql", GetDashboardPermissionsForUser)
 	bus.AddHandler("sql", GetDashboardsBySlug)
-	bus.AddHandler("sql", ValidateDashboardBeforeSave)
+	bus.AddHandlerCtx("sql", ValidateDashboardBeforeSave)
 	bus.AddHandler("sql", HasEditPermissionInFolders)
 	bus.AddHandler("sql", HasAdminPermissionInFolders)
 }
 
 var generateNewUid func() string = util.GenerateShortUID
 
-func SaveDashboard(cmd *models.SaveDashboardCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		return saveDashboard(sess, cmd)
-	})
+func SaveDashboard(ctx context.Context, cmd *models.SaveDashboardCommand) error {
+	value := ctx.Value(ContextSessionName)
+	var sess *DBSession
+	sess, ok := value.(*DBSession)
+	if !ok {
+		return errors.New("No valid session was found")
+	}
+	return saveDashboard(sess, cmd)
 }
 
 func saveDashboard(sess *DBSession, cmd *models.SaveDashboardCommand) error {
@@ -617,7 +623,7 @@ func getExistingDashboardByTitleAndFolder(sess *DBSession, cmd *models.ValidateD
 	return nil
 }
 
-func ValidateDashboardBeforeSave(cmd *models.ValidateDashboardBeforeSaveCommand) (err error) {
+func ValidateDashboardBeforeSave(ctx context.Context, cmd *models.ValidateDashboardBeforeSaveCommand) (err error) {
 	cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
 	return inTransaction(func(sess *DBSession) error {
 		if err = getExistingDashboardByIdOrUidForUpdate(sess, cmd); err != nil {
