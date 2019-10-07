@@ -8,13 +8,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+
+	"context"
 )
 
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
 
 func init() {
-	bus.AddHandler("sql", SaveAlerts)
+	bus.AddHandlerCtx("sql", SaveAlerts)
 	bus.AddHandler("sql", HandleAlertsQuery)
 	bus.AddHandler("sql", GetAlertById)
 	bus.AddHandler("sql", GetAllAlertQueryHandler)
@@ -160,7 +162,7 @@ func deleteAlertDefinition(dashboardId int64, sess *DBSession) error {
 	return nil
 }
 
-func SaveAlerts(cmd *m.SaveAlertsCommand) error {
+func SaveAlerts(ctx context.Context, cmd *m.SaveAlertsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		existingAlerts, err := GetAlertsByDashboardId2(cmd.DashboardId, sess)
 		if err != nil {

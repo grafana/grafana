@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	bus.AddHandler("alerting", updateDashboardAlerts)
+	bus.AddHandlerCtx("alerting", updateDashboardAlerts)
 	bus.AddHandlerCtx("alerting", ValidateDashboardAlerts)
 }
 
@@ -17,7 +17,7 @@ func ValidateDashboardAlerts(ctx context.Context, cmd *models.ValidateDashboardA
 	return extractor.ValidateAlerts()
 }
 
-func updateDashboardAlerts(cmd *models.UpdateDashboardAlertsCommand) error {
+func updateDashboardAlerts(ctx context.Context, cmd *models.UpdateDashboardAlertsCommand) error {
 	saveAlerts := models.SaveAlertsCommand{
 		OrgId:       cmd.OrgId,
 		UserId:      cmd.User.UserId,
@@ -33,5 +33,5 @@ func updateDashboardAlerts(cmd *models.UpdateDashboardAlertsCommand) error {
 
 	saveAlerts.Alerts = alerts
 
-	return bus.Dispatch(&saveAlerts)
+	return bus.DispatchCtx(ctx, &saveAlerts)
 }
