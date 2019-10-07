@@ -1,8 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { SelectableValue } from '@grafana/data';
-import { FormField } from '../FormField/FormField';
-import Select from '../Select/Select';
-import { Switch } from '../Switch/Switch';
+import { FormField, FormLabel, Select, Switch, TagsInput } from '..';
 import { BasicAuthSettings } from './BasicAuthSettings';
 import { HttpProxySettings } from './HttpProxySettings';
 import { TLSAuthSettings } from './TLSAuthSettings';
@@ -92,8 +90,6 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
     />
   );
 
-  const cookieTagsInput = <strong>TODO: migrate bootstrap-tagsinput</strong>;
-
   return (
     <div className="gf-form-group">
       <>
@@ -140,12 +136,17 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
           {dataSourceConfig.access === 'proxy' && (
             <div className="gf-form max-width-30">
               {/* keepCookies is an array of strings*/}
-              <FormField
-                label="Whitelisted Cookies"
-                labelWidth={11}
-                value={dataSourceConfig.jsonData.keepCookies}
-                inputEl={cookieTagsInput}
+              <FormLabel
+                width={11}
                 tooltip="Grafana Proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source."
+              >
+                Whitelisted Cookies
+              </FormLabel>
+              <TagsInput
+                tags={dataSourceConfig.jsonData.keepCookies}
+                onChange={cookies =>
+                  onSettingsChange({ jsonData: { ...dataSourceConfig.jsonData, keepCookies: cookies } })
+                }
               />
             </div>
           )}

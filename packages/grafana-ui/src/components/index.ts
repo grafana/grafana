@@ -37,6 +37,7 @@ export { RefreshPicker } from './RefreshPicker/RefreshPicker';
 export { TimePicker } from './TimePicker/TimePicker';
 export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
 export { List } from './List/List';
+export { TagsInput } from './TagsInput/TagsInput';
 
 // Renderless
 export { SetInterval } from './SetInterval/SetInterval';

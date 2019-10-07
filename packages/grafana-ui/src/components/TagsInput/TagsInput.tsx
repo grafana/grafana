@@ -42,22 +42,21 @@ export class TagsInput extends PureComponent<Props, State> {
   };
 
   onAdd = () => {
-    if (this.state.newTag === '') {
-      return;
+    if (this.state.newTag !== '') {
+      this.setNewTags();
     }
-
-    this.setState(
-      (prevState: State) => ({
-        ...prevState,
-        tags: [...prevState.tags, prevState.newTag],
-        newTag: '',
-      }),
-      () => this.onChange()
-    );
   };
 
   onKeyboardAdd = (event: KeyboardEvent) => {
     if (event.key === 'Enter' && this.state.newTag !== '') {
+      this.setNewTags();
+    }
+  };
+
+  setNewTags = () => {
+    // We don't want to duplicate tags, clearing the input if
+    // the user is trying to add the same tag.
+    if (!this.state.tags.includes(this.state.newTag)) {
       this.setState(
         (prevState: State) => ({
           ...prevState,
@@ -66,6 +65,8 @@ export class TagsInput extends PureComponent<Props, State> {
         }),
         () => this.onChange()
       );
+    } else {
+      this.setState({ newTag: '' });
     }
   };
 
