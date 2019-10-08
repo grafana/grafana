@@ -216,13 +216,28 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const subQueries = options.targets
       .filter(target => target.expr && !target.hide)
       .map(target => {
-        if (target.live) {
+        if (target.liveStreaming) {
           return this.runLiveQuery(options, target);
         }
         return this.runQuery(options, target);
       });
 
     return merge(...subQueries);
+  }
+
+  interpolateVariablesInQueries(queries: LokiQuery[]): LokiQuery[] {
+    let expandedQueries = queries;
+    if (queries && queries.length > 0) {
+      expandedQueries = queries.map(query => {
+        const expandedQuery = {
+          ...query,
+          datasource: this.name,
+          expr: this.templateSrv.replace(query.expr),
+        };
+        return expandedQuery;
+      });
+    }
+    return expandedQueries;
   }
 
   async importQueries(queries: LokiQuery[], originMeta: PluginMeta): Promise<LokiQuery[]> {

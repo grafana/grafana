@@ -10,6 +10,7 @@ export enum PluginType {
   panel = 'panel',
   datasource = 'datasource',
   app = 'app',
+  renderer = 'renderer',
 }
 
 export interface PluginMeta<T extends {} = KeyValue> {

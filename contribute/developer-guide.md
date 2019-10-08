@@ -1,4 +1,4 @@
-# Develop Grafana
+# Developer guide
 
 This guide helps you get started developing Grafana.
 
@@ -69,11 +69,17 @@ When you log in for the first time, Grafana will ask you to change your password
 
 ## Test Grafana
 
+The test suite consists of three types of tests: _Frontend tests_, _backend tests_, and _end-to-end tests_.
+
+### Run frontend tests
+
 We use [jest](https://jestjs.io/) for our frontend tests. Run them using yarn:
 
 ```
 yarn jest
 ```
+
+### Run backend tests
 
 If you're developing for the backend, run the tests with the standard Go tool:
 
@@ -81,11 +87,44 @@ If you're developing for the backend, run the tests with the standard Go tool:
 go test -v ./pkg/...
 ```
 
-## Add data sources
+### Run end-to-end tests
+
+The end-to-end tests in Grafana uses [puppeteer](https://github.com/GoogleChrome/puppeteer) to run automated scripts in a headless Chrome browser. To run the tests:
+
+```
+yarn e2e-tests
+```
+
+By default, the end-to-end tests assumes Grafana is available on `localhost:3000`. To use a specific URL, set the `BASE_URL` environment variable:
+
+```
+BASE_URL=http://localhost:3333 yarn e2e-tests
+```
+
+To follow the tests in the browser while they're running, add the `BROWSER` and `SLOWMO` environment variables:
+
+```
+BROWSER=1 SLOWMO=1 yarn e2e-tests
+```
+
+## Configure Grafana for development
+
+The default configuration, `grafana.ini`, is located in the `conf` directory. 
+
+To override the default configuration, create a `custom.ini` file in the `conf` directory. You only need to add the options you wish to override.
+
+Enable the development mode, by adding the following line in your `custom.ini`:
+
+```
+app_mode = development
+```
+
+
+### Add data sources
 
 By now, you should be able to build and test a change you've made to the Grafana source code. In most cases, you need to add at least one data source to verify the change.
 
-To set up data sources for your development environment, go to the `devenv` directory in the Grafana repository:
+To set up data sources for your development environment, go to the [devenv](devenv) directory in the Grafana repository:
 
 ```
 cd devenv
@@ -106,6 +145,23 @@ make devenv sources=influxdb,loki
 The script generates a Docker Compose file with the databases you specify as `sources`, and runs them in the background.
 
 See the repository for all the [available data sources](https://github.com/grafana/grafana/tree/master/devenv/docker/blocks). Note that some data sources have specific Docker images for macOS, e.g. `prometheus_mac`.
+
+## Build a Docker image
+
+To build a Docker image, run:
+
+```
+make build-docker-full
+```
+
+The resulting image will be tagged as grafana/grafana:dev.
+
+**Note:** If you've already set up a local development environment, and you're running a `linux/amd64` machine, you can speed up building the Docker image:
+
+1. Build the frontend: `go run build.go build-frontend`.
+1. Build the Docker image: `make build-docker-dev`.
+
+**Note:** If you are using Docker for macOS, be sure to set the memory limit to be larger than 2 GiB. Otherwise `grunt build` may fail. The memory limit settings are available under **Docker Desktop** -> **Preferences** -> **Advanced**.
 
 ## Learn more
 
