@@ -320,10 +320,10 @@ func PauseAlert(cmd *m.PauseAlertCommand) error {
 		buffer.WriteString(`UPDATE alert SET state = ?, new_state_date = ?`)
 		if cmd.Paused {
 			params = append(params, string(m.AlertStatePaused))
-			params = append(params, timeNow())
+			params = append(params, timeNow().UTC())
 		} else {
 			params = append(params, string(m.AlertStateUnknown))
-			params = append(params, timeNow())
+			params = append(params, timeNow().UTC())
 		}
 
 		buffer.WriteString(` WHERE id IN (?` + strings.Repeat(",?", len(cmd.AlertIds)-1) + `)`)
@@ -351,7 +351,7 @@ func PauseAllAlerts(cmd *m.PauseAllAlertCommand) error {
 			newState = string(m.AlertStateUnknown)
 		}
 
-		res, err := sess.Exec(`UPDATE alert SET state = ?, new_state_date = ?`, newState, timeNow())
+		res, err := sess.Exec(`UPDATE alert SET state = ?, new_state_date = ?`, newState, timeNow().UTC())
 		if err != nil {
 			return err
 		}

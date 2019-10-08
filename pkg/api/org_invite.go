@@ -177,10 +177,12 @@ func (hs *HTTPServer) CompleteInvite(c *m.ReqContext, completeInvite dtos.Comple
 
 	user := &cmd.Result
 
-	bus.Publish(&events.SignUpCompleted{
+	if err := bus.Publish(&events.SignUpCompleted{
 		Name:  user.NameOrFallback(),
 		Email: user.Email,
-	})
+	}); err != nil {
+		return Error(500, "failed to publish event", err)
+	}
 
 	if ok, rsp := applyUserInvite(user, invite, true); !ok {
 		return rsp

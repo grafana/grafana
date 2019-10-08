@@ -89,6 +89,7 @@ interface ExploreProps {
   mode: ExploreMode;
   initialUI: ExploreUIState;
   isLive: boolean;
+  syncedTimes: boolean;
   updateTimeRange: typeof updateTimeRange;
   graphResult?: GraphSeriesXY[];
   loading?: boolean;
@@ -178,7 +179,6 @@ export class Explore extends React.PureComponent<ExploreProps> {
 
   onChangeTime = (rawRange: RawTimeRange) => {
     const { updateTimeRange, exploreId } = this.props;
-
     updateTimeRange({ exploreId, rawRange });
   };
 
@@ -218,7 +218,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
   };
 
   onUpdateTimeRange = (absoluteRange: AbsoluteTimeRange) => {
-    const { updateTimeRange, exploreId } = this.props;
+    const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
   };
 
@@ -263,6 +263,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
       showingTable,
       timeZone,
       queryResponse,
+      syncedTimes,
     } = this.props;
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const styles = getStyles();
@@ -326,6 +327,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
                             <LogsContainer
                               width={width}
                               exploreId={exploreId}
+                              syncedTimes={syncedTimes}
                               onClickLabel={this.onClickLabel}
                               onStartScanning={this.onStartScanning}
                               onStopScanning={this.onStopScanning}
@@ -350,7 +352,7 @@ const getTimeRangeFromUrlMemoized = memoizeOne(getTimeRangeFromUrl);
 
 function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partial<ExploreProps> {
   const explore = state.explore;
-  const { split } = explore;
+  const { split, syncedTimes } = explore;
   const item: ExploreItemState = explore[exploreId];
   const timeZone = getTimeZone(state.user);
   const {
@@ -421,6 +423,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     absoluteRange,
     queryResponse,
     originPanelId,
+    syncedTimes,
   };
 }
 
