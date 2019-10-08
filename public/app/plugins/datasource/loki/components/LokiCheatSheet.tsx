@@ -61,7 +61,7 @@ export default class LokiCheatSheet extends PureComponent<ExploreStartPageProps,
     const { userExamples } = this.state;
 
     return (
-      <div>
+      <>
         <h2>Loki Cheat Sheet</h2>
         <div className="cheat-sheet-item">
           <div className="cheat-sheet-item__title">See your logs</div>
@@ -95,7 +95,7 @@ export default class LokiCheatSheet extends PureComponent<ExploreStartPageProps,
             supports exact and regular expression filters.
           </div>
         </div>
-      </div>
+      </>
     );
   }
 }
