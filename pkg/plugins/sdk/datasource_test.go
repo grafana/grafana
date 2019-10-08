@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/pkg/plugins/sdk/dataframe"
-	"github.com/grafana/pkg/plugins/sdk/genproto/datasource"
+	"github.com/grafana/grafana/pkg/plugins/sdk/dataframe"
+	"github.com/grafana/grafana/pkg/plugins/sdk/genproto/datasource"
 )
 
 func TestAsTable(t *testing.T) {

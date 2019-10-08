@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	gf "github.com/grafana/pkg/plugins/sdk"
-	"github.com/grafana/pkg/plugins/sdk/dataframe"
+	gf "github.com/grafana/grafana/pkg/plugins/sdk"
+	"github.com/grafana/grafana/pkg/plugins/sdk/dataframe"
 )
 
 const pluginID = "myorg-custom-datasource"

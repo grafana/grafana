@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/pkg/plugins/sdk/dataframe"
+	"github.com/grafana/grafana/pkg/plugins/sdk/dataframe"
 )
 
 func TestDataFrame(t *testing.T) {
