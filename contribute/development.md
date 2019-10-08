@@ -81,11 +81,24 @@ If you're developing for the backend, run the tests with the standard Go tool:
 go test -v ./pkg/...
 ```
 
-## Add data sources
+## Configure Grafana for development
+
+The default configuration, `grafana.ini`, is located in the `conf` directory. 
+
+To override the default configuration, create a `custom.ini` file in the `conf` directory. You only need to add the options you wish to override.
+
+Enable the development mode, by adding the following line in your `custom.ini`:
+
+```
+app_mode = development
+```
+
+
+### Add data sources
 
 By now, you should be able to build and test a change you've made to the Grafana source code. In most cases, you need to add at least one data source to verify the change.
 
-To set up data sources for your development environment, go to the `devenv` directory in the Grafana repository:
+To set up data sources for your development environment, go to the [devenv](devenv) directory in the Grafana repository:
 
 ```
 cd devenv
