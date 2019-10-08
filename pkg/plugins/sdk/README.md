@@ -1,5 +1,7 @@
 # Grafana Plugin SDK for Go
 
+**Warning**: This SDK is currently in alpha and will likely have major breaking changes during early development. Please do not consider this SDK published until this warning has been removed.
+
 Develop Grafana backend plugins with this Go SDK.
 
 ## Usage
