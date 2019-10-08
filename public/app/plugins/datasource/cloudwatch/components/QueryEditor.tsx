@@ -16,11 +16,8 @@ interface State {
 const idValidationEvents: ValidationEvents = {
   [EventsWithValidation.onBlur]: [
     {
-      rule: value => {
-        console.log(value);
-        return false;
-      },
-      errorMessage: 'Do some nice validation here...',
+      rule: value => new RegExp(/^[a-z][a-zA-Z0-9_]*$/).test(value),
+      errorMessage: 'Invalid format. Only alphanumeric characters and underscores are allowed',
     },
   ],
 };
@@ -122,7 +119,14 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
           className="inline query-keyword"
           grow
           label="Id"
-          inputEl={<Input width={16} onChange={console.log} validationEvents={idValidationEvents} />}
+          inputEl={
+            <Input
+              className={`gf-form-input width-${12}`}
+              width={16}
+              onBlur={console.log}
+              validationEvents={idValidationEvents}
+            />
+          }
         />
       </>
     );
