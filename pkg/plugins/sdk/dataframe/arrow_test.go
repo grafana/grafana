@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/dataframe"
+	"github.com/grafana/pkg/plugins/sdk/dataframe"
 )
 
 var update = flag.Bool("update", false, "update .golden.arrow files")

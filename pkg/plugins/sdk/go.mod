@@ -1,4 +1,4 @@
-module github.com/grafana/grafana-plugin-sdk-go
+module github.com/grafana/pkg/plugins/sdk
 
 go 1.12
 
