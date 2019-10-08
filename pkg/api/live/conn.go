@@ -38,12 +38,12 @@ type connection struct {
 	log  log.Logger
 }
 
-func newConnection(ws *websocket.Conn, hub *hub, logger *log.Logger) *connection {
+func newConnection(ws *websocket.Conn, hub *hub, logger log.Logger) *connection {
 	return &connection{
 		hub:  hub,
 		send: make(chan []byte, 256),
 		ws:   ws,
-		log:  *logger,
+		log:  logger,
 	}
 }
 
