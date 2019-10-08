@@ -175,6 +175,10 @@ export class TemplateSrv {
         }
         return this.encodeURIComponentStrict(value);
       }
+      case 'dashboardurl': {
+        const escaped = _.map(value, this.encodeURIComponentStrict);
+        return _.map(escaped, val => 'var-' + variable.name + '=' + val).join('&');
+      }
       default: {
         if (_.isArray(value) && value.length > 1) {
           return '{' + value.join(',') + '}';

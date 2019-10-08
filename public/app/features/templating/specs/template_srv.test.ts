@@ -322,6 +322,11 @@ describe('templateSrv', () => {
       const result = _templateSrv.formatValue('Gi3/14', 'regex');
       expect(result).toBe('Gi3\\/14');
     });
+
+    it('multi value and dashboardurl format should name the variable each time', () => {
+      const result = _templateSrv.formatValue(['foo', 'bar'], 'dashboardurl', { name: 'test' });
+      expect(result).toBe('var-test=foo&var-test=bar');
+    });
   });
 
   describe('can check if variable exists', () => {

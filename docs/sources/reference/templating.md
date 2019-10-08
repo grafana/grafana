@@ -114,6 +114,17 @@ String to interpolate: '${servers:percentencode}'
 Interpolation result: 'foo%28%29bar%20BAZ%2Ctest2'
 ```
 
+### Dashboardurl
+Formats single and multi-value variables for use in URLs of Grafana dashboards,
+to propagate variables from the current dashboard to another one being linked
+to.
+
+```bash
+servers = ['foo()bar BAZ', 'test2']
+String to interpolate: '/d/XAsdys2Wk/variables-test?${servers:dashboardurl}'
+Interpolation result: '/d/XAsdys2Wk/variables-test?var-servers=foo%28%29bar%20BAZ&var-servers=test2'
+```
+
 Test the formatting options on the [Grafana Play site](http://play.grafana.org/d/cJtIfcWiz/template-variable-formatting-options?orgId=1).
 
 If any invalid formatting option is specified, then `glob` is the default/fallback option.
