@@ -177,6 +177,10 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
   }
 
   interpolateVariablesInQueries(queries: InfluxQuery[]): InfluxQuery[] {
+    if (!queries) {
+      return [];
+    }
+
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map(query => {
