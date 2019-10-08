@@ -6,6 +6,9 @@ import { IQService } from 'angular';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
+//Types
+import { GraphiteQuery } from './types';
+
 export class GraphiteDatasource {
   basicAuth: string;
   url: string;
@@ -115,6 +118,21 @@ export class GraphiteDatasource {
       }
     }
     return tags;
+  }
+
+  interpolateVariablesInQueries(queries: GraphiteQuery[]): GraphiteQuery[] {
+    let expandedQueries = queries;
+    if (queries && queries.length > 0) {
+      expandedQueries = queries.map(query => {
+        const expandedQuery = {
+          ...query,
+          datasource: this.name,
+          target: this.templateSrv.replace(query.target),
+        };
+        return expandedQuery;
+      });
+    }
+    return expandedQueries;
   }
 
   annotationQuery(options: { annotation: { target: string; tags: string }; rangeRaw: any }) {
