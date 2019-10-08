@@ -1,18 +1,9 @@
 import React, { PureComponent } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { CloudWatchQuery } from '../types';
-import {
-  FormField,
-  Input,
-  QueryEditorProps,
-  Segment,
-  SegmentAsync,
-  ValidationEvents,
-  EventsWithValidation,
-} from '@grafana/ui';
+import { Input, QueryEditorProps, Segment, SegmentAsync, ValidationEvents, EventsWithValidation } from '@grafana/ui';
 import DataSource, { Options } from '../datasource';
-import { Stats } from './Stats';
-import { Dimensions } from './Dimensions';
+import { Stats, Dimensions, FormField } from './';
 
 type Props = QueryEditorProps<DataSource, CloudWatchQuery, Options>;
 
@@ -29,7 +20,7 @@ const idValidationEvents: ValidationEvents = {
         console.log(value);
         return false;
       },
-      errorMessage: 'Not a valid duration',
+      errorMessage: 'Do some nice validation here...',
     },
   ],
 };
@@ -65,89 +56,74 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
     const { regions, namespaces } = this.state;
     return (
       <>
+        <FormField
+          className="inline query-keyword"
+          width={24}
+          grow
+          label="Region"
+          inputEl={
+            <Segment value={query.region} options={regions} onChange={region => this.onChange({ ...query, region })} />
+          }
+        />
         <div className="gf-form inline">
           <FormField
             className="query-keyword"
-            width={24}
-            label="Region"
+            label="Metric"
             inputEl={
-              <Segment
-                value={query.region}
-                options={regions}
-                onChange={region => this.onChange({ ...query, region })}
-              />
+              <>
+                <Segment
+                  value={query.namespace}
+                  options={namespaces}
+                  onChange={namespace => this.onChange({ ...query, namespace })}
+                />
+                <SegmentAsync
+                  value={query.metricName}
+                  loadOptions={this.loadMetricNames}
+                  onChange={metricName => this.onChange({ ...query, metricName })}
+                />
+              </>
             }
           />
-        </div>
-        <div className="gf-form inline">
-          <div className="gf-form">
-            <FormField
-              className="query-keyword"
-              width={24}
-              label="Metric"
-              inputEl={
-                <>
-                  <Segment
-                    value={query.namespace}
-                    options={namespaces}
-                    onChange={namespace => this.onChange({ ...query, namespace })}
-                  />
-                  <SegmentAsync
-                    value={query.metricName}
-                    loadOptions={this.loadMetricNames}
-                    onChange={metricName => this.onChange({ ...query, metricName })}
-                  />
-                </>
-              }
-            />
-          </div>
-          <div className="gf-form">
-            <FormField
-              className="query-keyword"
-              width={24}
-              label="Stats"
-              inputEl={
-                <Stats values={query.statistics} onChange={statistics => this.onChange({ ...query, statistics })} />
-              }
-            />
-          </div>
-        </div>
-        <div className="gf-form inline">
           <FormField
             className="query-keyword"
-            width={24}
-            label="Dimensions"
+            labelWidth={4}
+            label="Stats"
             inputEl={
-              <Dimensions
-                dimensions={query.dimensions}
-                onChange={dimensions => {
-                  console.log('dimensions changed', { dimensions });
-                  this.onChange({ ...query, dimensions });
-                }}
-                loadKeys={() => datasource.getDimensionKeys(query.namespace, query.region)}
-                loadValues={newKey => {
-                  const { [newKey]: value, ...newDimensions } = query.dimensions;
-                  return datasource.getDimensionValues(
-                    query.region,
-                    query.namespace,
-                    query.metricName,
-                    newKey,
-                    newDimensions
-                  );
-                }}
-              />
+              <Stats values={query.statistics} onChange={statistics => this.onChange({ ...query, statistics })} />
             }
           />
+          <div className="gf-form gf-form--grow">
+            <div className="gf-form-label gf-form-label--grow" />
+          </div>
         </div>
-        <div className="gf-form inline">
-          <Input
-            className="query-keyword"
-            width={16}
-            label="Id"
-            onChange={console.log}
-            validationEvents={idValidationEvents}
-          />
-        </div>
+        <FormField
+          className="inline query-keyword"
+          grow
+          label="Dimensions"
+          inputEl={
+            <Dimensions
+              dimensions={query.dimensions}
+              onChange={dimensions => this.onChange({ ...query, dimensions })}
+              loadKeys={() => datasource.getDimensionKeys(query.namespace, query.region)}
+              loadValues={newKey => {
+                const { [newKey]: value, ...newDimensions } = query.dimensions;
+                return datasource.getDimensionValues(
+                  query.region,
+                  query.namespace,
+                  query.metricName,
+                  newKey,
+                  newDimensions
+                );
+              }}
+            />
+          }
+        />
+        <FormField
+          className="inline query-keyword"
+          grow
+          label="Id"
+          inputEl={<Input width={16} onChange={console.log} validationEvents={idValidationEvents} />}
+        />
       </>
     );
   }
