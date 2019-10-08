@@ -24,8 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	_ "github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	_ "github.com/lib/pq"
-	"golang.org/x/xerrors"
 )
 
 var (
@@ -188,7 +188,7 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 	case migrator.POSTGRES:
 		host, port, err := util.SplitHostPortDefault(ss.dbCfg.Host, "127.0.0.1", "5432")
 		if err != nil {
-			return "", xerrors.Errorf("Invalid host specifier '%s': %w", ss.dbCfg.Host, err)
+			return "", errutil.Wrapf(err, "Invalid host specifier '%s'", ss.dbCfg.Host)
 		}
 
 		if ss.dbCfg.Pwd == "" {
