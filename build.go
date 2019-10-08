@@ -51,6 +51,7 @@ var (
 	skipRpmGen            bool     = false
 	skipDebGen            bool     = false
 	printGenVersion       bool     = false
+	modVendor             bool     = true
 )
 
 func main() {
@@ -68,6 +69,7 @@ func main() {
 	flag.StringVar(&pkgArch, "pkg-arch", "", "PKG ARCH")
 	flag.StringVar(&phjsToRelease, "phjs", "", "PhantomJS binary")
 	flag.BoolVar(&race, "race", race, "Use race detector")
+	flag.BoolVar(&modVendor, "modVendor", modVendor, "Go modules use vendor folder")
 	flag.BoolVar(&includeBuildId, "includeBuildId", includeBuildId, "IncludeBuildId in package name")
 	flag.BoolVar(&enterprise, "enterprise", enterprise, "Build enterprise version of Grafana")
 	flag.StringVar(&buildIdRaw, "buildId", "0", "Build ID from CI system")
@@ -499,6 +501,9 @@ func build(binaryName, pkg string, tags []string) {
 	if race {
 		args = append(args, "-race")
 	}
+	if modVendor {
+		args = append(args, "-mod=vendor")
+	}
 
 	args = append(args, "-o", binary)
 	args = append(args, pkg)
@@ -621,6 +626,7 @@ func runError(cmd string, args ...string) ([]byte, error) {
 func runPrint(cmd string, args ...string) {
 	log.Println(cmd, strings.Join(args, " "))
 	ecmd := exec.Command(cmd, args...)
+	ecmd.Env = append(os.Environ(), "GO111MODULE=on")
 	ecmd.Stdout = os.Stdout
 	ecmd.Stderr = os.Stderr
 	err := ecmd.Run()
