@@ -1,14 +1,13 @@
 import React from 'react';
 import classNames from 'classnames';
 import { css } from 'emotion';
-import memoizeOne from 'memoize-one';
 
-import { GrafanaTheme, useTheme } from '@grafana/ui';
+import { GrafanaTheme, useTheme, stylesFactory } from '@grafana/ui';
 
 //Components
 import { Tooltip } from '@grafana/ui';
 
-const getStyles = memoizeOne((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     timePickerSynced: css`
       label: timePickerSynced;
@@ -41,7 +40,9 @@ export function TimeSyncButton(props: TimeSyncButtonProps) {
   const styles = getStyles(theme);
 
   const syncTimesTooltip = () => {
-    return <>Sync all views to this time range</>;
+    const { isSynced } = props;
+    const tooltip = isSynced ? 'Unsync all views' : 'Sync all views to this time range';
+    return <>{tooltip}</>;
   };
 
   return (
