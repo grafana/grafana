@@ -120,6 +120,23 @@ The script generates a Docker Compose file with the databases you specify as `so
 
 See the repository for all the [available data sources](https://github.com/grafana/grafana/tree/master/devenv/docker/blocks). Note that some data sources have specific Docker images for macOS, e.g. `prometheus_mac`.
 
+## Build a Docker image
+
+To build a Docker image, run:
+
+```
+make build-docker-full
+```
+
+The resulting image will be tagged as grafana/grafana:dev.
+
+**Note:** If you've already set up a local development environment, and running a `linux/amd64` machine, you can speed up building the Docker image:
+
+1. Build the frontend: `go run build.go build-frontend`.
+1. Build the Docker image: `make build-docker-dev`.
+
+**Note:** If you are using Docker for macOS, be sure to set the memory limit to be larger than 2 GiB. Otherwise `grunt build` may fail. The memory limit settings are available under **Docker Desktop** -> **Preferences** -> **Advanced**.
+
 ## Learn more
 
 - Read our [style guides](/contribute/style-guides).
