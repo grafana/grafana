@@ -147,8 +147,6 @@ describe('toDataFrame', () => {
           tags: ['deploy', 'website-01'],
           description: 'Torkel deployed website',
           coordinates: { latitude: 12, longitude: 121, level: { depth: 3, coolnes: 'very' } },
-          long:
-            'asdsaa asdas dasdas dasdasdas asdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa asdasdasdasdasdasdas asd',
           'unescaped-content': 'breaking <br /> the <br /> row',
         },
       ],
@@ -252,8 +250,6 @@ describe('SerisData backwards compatibility', () => {
           tags: ['deploy', 'website-01'],
           description: 'Torkel deployed website',
           coordinates: { latitude: 12, longitude: 121, level: { depth: 3, coolnes: 'very' } },
-          long:
-            'asdsaa asdas dasdas dasdasdas asdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa asdasdasdasdasdasdas asd',
           'unescaped-content': 'breaking <br /> the <br /> row',
         },
       ],
