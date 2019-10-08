@@ -152,18 +152,18 @@ func TestDashboardSnapshotApiEndpoint(t *testing.T) {
 			mockSnapshotResult.UserId = TestUserID
 
 			Convey("Should gracefully delete local snapshot when remote snapshot has already been removed", func() {
-				var err error
+				var writeErr error
 				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/snapshots/12345", "/api/snapshots/:key", m.ROLE_EDITOR, func(sc *scenarioContext) {
 					ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
-						_, err = rw.Write([]byte(`{"message":"Failed to get dashboard snapshot"}`))
+						_, writeErr = rw.Write([]byte(`{"message":"Failed to get dashboard snapshot"}`))
 						rw.WriteHeader(500)
 					})
-					So(err, ShouldBeNil)
 
 					mockSnapshotResult.ExternalDeleteUrl = ts.URL
 					sc.handlerFunc = DeleteDashboardSnapshot
 					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
+					So(writeErr, ShouldBeNil)
 					So(sc.resp.Code, ShouldEqual, 200)
 				})
 			})
