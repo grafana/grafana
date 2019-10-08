@@ -52,7 +52,7 @@ Unsure where to begin contributing to Grafana? Start by browsing issues labeled 
 - [Beginner-friendly](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22beginner+friendly%22) issues are generally straightforward to complete.
 - [Help wanted](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) issues are problems we would like the community to help us with regardless of complexity.
 
-If you're looking to make a code change, see how to set up your environment for [local development](contribute/development.md).
+If you're looking to make a code change, see how to set up your environment for [local development](contribute/developer-guide.md).
 
 When you're ready to contribute, it's time to [Create a pull request](/contribute/pull-request.md).
 
@@ -69,6 +69,6 @@ Before we can accept your pull request, you need to [sign our CLA](https://grafa
 
 ## Where do I go from here?
 
-- Set up your [development environment](contribute/development.md).
+- Set up your [development environment](contribute/developer-guide.md).
 - Learn how to [contribute documentation](contribute/documentation.md).
 - Get started [developing plugins](https://grafana.com/docs/plugins/developing/development/) for Grafana.
