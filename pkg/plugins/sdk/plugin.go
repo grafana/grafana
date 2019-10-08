@@ -3,7 +3,7 @@ package grafana
 import (
 	"context"
 
-	"github.com/grafana/grafana-plugin-sdk-go/genproto/datasource"
+	"github.com/grafana/pkg/plugins/sdk/genproto/datasource"
 	plugin "github.com/hashicorp/go-plugin"
 	"google.golang.org/grpc"
 )
