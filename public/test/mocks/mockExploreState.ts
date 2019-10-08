@@ -72,9 +72,11 @@ export const mockExploreState = (options: any = {}) => {
     range,
   };
   const split: boolean = options.split || false;
+  const syncedTimes: boolean = options.syncedTimes || false;
   const explore: ExploreState = {
     left,
     right,
+    syncedTimes,
     split,
   };
 
