@@ -5,6 +5,8 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 import { IQService } from 'angular';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+//Types
+import { MysqlQueryForInterpolation } from './types';
 
 export class MysqlDatasource {
   id: any;
@@ -46,6 +48,21 @@ export class MysqlDatasource {
     });
     return quotedValues.join(',');
   };
+
+  interpolateVariablesInQueries(queries: MysqlQueryForInterpolation[]): MysqlQueryForInterpolation[] {
+    let expandedQueries = queries;
+    if (queries && queries.length > 0) {
+      expandedQueries = queries.map(query => {
+        const expandedQuery = {
+          ...query,
+          datasource: this.name,
+          rawSql: this.templateSrv.replace(query.rawSql, {}, this.interpolateVariable),
+        };
+        return expandedQuery;
+      });
+    }
+    return expandedQueries;
+  }
 
   query(options: any) {
     const queries = _.filter(options.targets, target => {
