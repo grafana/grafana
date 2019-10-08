@@ -1,3 +1,4 @@
+node_modules
 npm-debug.log
 yarn-error.log
 coverage/
@@ -99,4 +100,3 @@ compilation-stats.json
 
 # Ignore plugins sdk stuff
 ./pkg/plugins/sdk/js/lib
-./pkg/plugins/sdk/node_modules
