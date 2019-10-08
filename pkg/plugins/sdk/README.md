@@ -14,7 +14,7 @@ import (
 	"log"
 	"os"
 
-	gf "github.com/grafana/grafana-plugin-sdk-go"
+	gf "github.com/grafana/pkg/plugins/sdk"
 )
 
 const pluginID = "myorg-custom-datasource"
