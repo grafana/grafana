@@ -1,5 +1,6 @@
 // Libraries
 import React, { PureComponent, createRef } from 'react';
+import classNames from 'classnames';
 
 // Components
 import { ButtonSelect } from '../Select/ButtonSelect';
@@ -142,6 +143,7 @@ export class TimePicker extends PureComponent<Props, State> {
       </>
     );
     const isAbsolute = isDateTime(value.raw.to);
+    const isLongDate = typeof this.props.value.raw.from !== 'string' || typeof this.props.value.raw.to !== 'string';
 
     return (
       <div className="time-picker" ref={this.pickerTriggerRef}>
@@ -152,7 +154,7 @@ export class TimePicker extends PureComponent<Props, State> {
             </button>
           )}
           <ButtonSelect
-            className="time-picker-button-select"
+            className={classNames('time-picker-button-select', isLongDate ? 'time-picker-long-date' : '')}
             value={currentOption}
             label={label}
             options={options}
