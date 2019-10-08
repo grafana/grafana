@@ -1,5 +1,5 @@
 # Golang build container
-FROM golang:1.12.10-alpine
+FROM golang:1.13.1-alpine
 
 RUN apk add --no-cache gcc g++
 

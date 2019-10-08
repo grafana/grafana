@@ -27,7 +27,6 @@ import {
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { ExploreUrlState } from 'app/types';
 import TableModel from 'app/core/table_model';
 
 export interface PromDataQueryResponse {
@@ -625,25 +624,19 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     });
   }
 
-  getExploreState(queries: PromQuery[]): Partial<ExploreUrlState> {
-    let state: Partial<ExploreUrlState> = { datasource: this.name };
+  interpolateVariablesInQueries(queries: PromQuery[]): PromQuery[] {
+    let expandedQueries = queries;
     if (queries && queries.length > 0) {
-      const expandedQueries = queries.map(query => {
+      expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
+          datasource: this.name,
           expr: this.templateSrv.replace(query.expr, {}, this.interpolateQueryExpr),
-          context: 'explore',
         };
-
         return expandedQuery;
       });
-
-      state = {
-        ...state,
-        queries: expandedQueries,
-      };
     }
-    return state;
+    return expandedQueries;
   }
 
   getQueryHints(query: PromQuery, result: any[]) {

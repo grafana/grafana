@@ -3,21 +3,20 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import find from 'lodash/find';
-
 // Types
 import { UrlQueryMap } from '@grafana/runtime';
-import { StoreState, AppNotificationSeverity } from 'app/types';
+import { AppNotificationSeverity, StoreState } from 'app/types';
 import {
   Alert,
-  PluginType,
+  AppPlugin,
   GrafanaPlugin,
-  PluginInclude,
   PluginDependencies,
+  PluginInclude,
+  PluginIncludeType,
   PluginMeta,
   PluginMetaInfo,
+  PluginType,
   Tooltip,
-  AppPlugin,
-  PluginIncludeType,
 } from '@grafana/ui';
 import { NavModel, NavModelItem } from '@grafana/data';
 
@@ -62,6 +61,9 @@ function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
           return plugin;
         });
       });
+    }
+    if (info.type === PluginType.renderer) {
+      return Promise.resolve({ meta: info } as GrafanaPlugin);
     }
     return Promise.reject('Unknown Plugin type: ' + info.type);
   });

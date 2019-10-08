@@ -305,6 +305,7 @@ export interface ExploreUrlState {
   range: RawTimeRange;
   ui: ExploreUIState;
   originPanelId?: number;
+  context?: string;
 }
 
 export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
@@ -345,7 +346,9 @@ export interface QueryIntervals {
 export interface QueryOptions {
   minInterval: string;
   maxDataPoints?: number;
-  live?: boolean;
+  liveStreaming?: boolean;
+  showingGraph?: boolean;
+  showingTable?: boolean;
 }
 
 export interface QueryTransaction {

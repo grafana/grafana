@@ -29,6 +29,7 @@
     "@grafana/slate-react": "0.22.9-grafana",
     "@torkelo/react-select": "2.1.1",
     "@types/react-color": "2.17.0",
+    "bizcharts": "^3.5.5",
     "@types/slate": "0.47.1",
     "@types/slate-react": "0.22.5",
     "classnames": "2.2.6",

@@ -41,7 +41,7 @@ describe('AzureMonitorQueryCtrl', () => {
       expect(queryCtrl.target.azureMonitor.resourceName).toBe('select');
       expect(queryCtrl.target.azureMonitor.metricNamespace).toBe('select');
       expect(queryCtrl.target.azureMonitor.metricName).toBe('select');
-      expect(queryCtrl.target.appInsights.groupBy).toBe('none');
+      expect(queryCtrl.target.appInsights.dimension).toBe('none');
     });
   });
 
@@ -239,6 +239,35 @@ describe('AzureMonitorQueryCtrl', () => {
   });
 
   describe('and query type is Application Insights', () => {
+    describe('and target is in old format', () => {
+      it('data is migrated', () => {
+        queryCtrl.target.appInsights.xaxis = 'sample-x';
+        queryCtrl.target.appInsights.yaxis = 'sample-y';
+        queryCtrl.target.appInsights.spliton = 'sample-split';
+        queryCtrl.target.appInsights.groupBy = 'sample-group';
+        queryCtrl.target.appInsights.groupByOptions = ['sample-group-1', 'sample-group-2'];
+        queryCtrl.target.appInsights.filter = 'sample-filter';
+        queryCtrl.target.appInsights.metricName = 'sample-metric';
+
+        queryCtrl.migrateApplicationInsightsKeys();
+
+        expect(queryCtrl.target.appInsights.xaxis).toBeUndefined();
+        expect(queryCtrl.target.appInsights.yaxis).toBeUndefined();
+        expect(queryCtrl.target.appInsights.spliton).toBeUndefined();
+        expect(queryCtrl.target.appInsights.groupBy).toBeUndefined();
+        expect(queryCtrl.target.appInsights.groupByOptions).toBeUndefined();
+        expect(queryCtrl.target.appInsights.filter).toBeUndefined();
+
+        expect(queryCtrl.target.appInsights.timeColumn).toBe('sample-x');
+        expect(queryCtrl.target.appInsights.valueColumn).toBe('sample-y');
+        expect(queryCtrl.target.appInsights.segmentColumn).toBe('sample-split');
+        expect(queryCtrl.target.appInsights.dimension).toBe('sample-group');
+        expect(queryCtrl.target.appInsights.dimensions).toEqual(['sample-group-1', 'sample-group-2']);
+        expect(queryCtrl.target.appInsights.dimensionFilter).toBe('sample-filter');
+        expect(queryCtrl.target.appInsights.metricName).toBe('sample-metric');
+      });
+    });
+
     describe('when getOptions for the Metric Names dropdown is called', () => {
       const response = [{ text: 'metric1', value: 'metric1' }, { text: 'metric2', value: 'metric2' }];
 
@@ -259,7 +288,7 @@ describe('AzureMonitorQueryCtrl', () => {
 
     describe('when getOptions for the GroupBy segments dropdown is called', () => {
       beforeEach(() => {
-        queryCtrl.target.appInsights.groupByOptions = ['opt1', 'opt2'];
+        queryCtrl.target.appInsights.dimensions = ['opt1', 'opt2'];
       });
 
       it('should return a list of GroupBy segments', () => {
@@ -291,8 +320,8 @@ describe('AzureMonitorQueryCtrl', () => {
           expect(queryCtrl.target.appInsights.aggregation).toBe('avg');
           expect(queryCtrl.target.appInsights.aggOptions).toContain('avg');
           expect(queryCtrl.target.appInsights.aggOptions).toContain('sum');
-          expect(queryCtrl.target.appInsights.groupByOptions).toContain('client/os');
-          expect(queryCtrl.target.appInsights.groupByOptions).toContain('client/city');
+          expect(queryCtrl.target.appInsights.dimensions).toContain('client/os');
+          expect(queryCtrl.target.appInsights.dimensions).toContain('client/city');
         });
       });
     });
