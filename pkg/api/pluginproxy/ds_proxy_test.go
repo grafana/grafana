@@ -500,10 +500,11 @@ func TestDSRouteRule(t *testing.T) {
 		})
 
 		Convey("HandleRequest()", func() {
+			var writeErr error
 			backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				http.SetCookie(w, &http.Cookie{Name: "flavor", Value: "chocolateChip"})
 				w.WriteHeader(200)
-				w.Write([]byte("I am the backend"))
+				_, writeErr = w.Write([]byte("I am the backend"))
 			}))
 			defer backend.Close()
 
@@ -533,19 +534,28 @@ func TestDSRouteRule(t *testing.T) {
 			}
 
 			Convey("When response header Set-Cookie is not set should remove proxied Set-Cookie header", func() {
+				writeErr = nil
 				ctx := setupCtx(nil)
 				proxy := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{})
+
 				proxy.HandleRequest()
+
+				So(writeErr, ShouldBeNil)
 				So(proxy.ctx.Resp.Header().Get("Set-Cookie"), ShouldBeEmpty)
 			})
 
 			Convey("When response header Set-Cookie is set should remove proxied Set-Cookie header and restore the original Set-Cookie header", func() {
+				writeErr = nil
 				ctx := setupCtx(func(w http.ResponseWriter) {
 					w.Header().Set("Set-Cookie", "important_cookie=important_value")
 				})
 				proxy := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{})
+
 				proxy.HandleRequest()
-				So(proxy.ctx.Resp.Header().Get("Set-Cookie"), ShouldEqual, "important_cookie=important_value")
+
+				So(writeErr, ShouldBeNil)
+				So(proxy.ctx.Resp.Header().Get("Set-Cookie"), ShouldEqual,
+					"important_cookie=important_value")
 			})
 		})
 	})

@@ -70,7 +70,7 @@ To download your Grafana Enterprise license log in to your [Grafana.com](https:/
 Profile**. In the side menu there is a section for Grafana Enterprise licenses. At the bottom of the license
 details page there is **Download Token** link that will download the *license.jwt* file containing your license.
 
-Place the *license.jwt* file in Grafana's data folder. This is usually located at `/var/lib/grafana/data` on linux systems.
+Place the *license.jwt* file in Grafana's data folder. This is usually located at `/var/lib/grafana/data` on Linux systems.
 
 You can also configure a custom location for the license file via the ini setting:
 

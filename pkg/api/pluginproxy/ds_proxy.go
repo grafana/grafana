@@ -96,10 +96,12 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")
 	proxy.addTraceFromHeaderValue(span, "X-Dashboard-Id", "dashboard_id")
 
-	opentracing.GlobalTracer().Inject(
+	if err := opentracing.GlobalTracer().Inject(
 		span.Context(),
 		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(proxy.ctx.Req.Request.Header))
+		opentracing.HTTPHeadersCarrier(proxy.ctx.Req.Request.Header)); err != nil {
+		logger.Error("Failed to inject span context instance", "err", err)
+	}
 
 	originalSetCookie := proxy.ctx.Resp.Header().Get("Set-Cookie")
 
