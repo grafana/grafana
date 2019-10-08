@@ -1,4 +1,4 @@
-# Develop Grafana
+# Developer guide
 
 This guide helps you get started developing Grafana.
 
