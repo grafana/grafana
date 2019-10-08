@@ -8,7 +8,7 @@ coreModule.directive('datasourceHttpSettings', () => {
       suggestUrl: '@',
       noDirectAccess: '@',
     },
-    templateUrl: 'public/app/features/datasources/partials/http_settings.html',
+    templateUrl: 'public/app/features/datasources/partials/http_settings_next.html',
     link: {
       pre: ($scope: any, elem, attrs) => {
         // do not show access option if direct access is disabled
