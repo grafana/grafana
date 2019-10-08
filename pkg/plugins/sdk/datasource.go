@@ -6,8 +6,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/dataframe"
-	"github.com/grafana/grafana-plugin-sdk-go/genproto/datasource"
+	"github.com/grafana/pkg/plugins/sdk/dataframe"
+	"github.com/grafana/pkg/plugins/sdk/genproto/datasource"
 	plugin "github.com/hashicorp/go-plugin"
 )
 
