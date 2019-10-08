@@ -195,7 +195,8 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 	return &userToken, err
 }
 
-func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *models.UserToken, clientIP, userAgent string) (bool, error) {
+func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *models.UserToken,
+	clientAddr, userAgent string) (bool, error) {
 	if token == nil {
 		return false, nil
 	}
@@ -218,12 +219,10 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *models
 
 	s.log.Debug("token needs rotation", "tokenId", model.Id, "authTokenSeen", model.AuthTokenSeen, "rotatedAt", rotatedAt)
 
-	clientIP, err := util.ParseIPAddress(clientIP)
+	clientIP, err := util.ParseIPAddress(clientAddr)
 	if err != nil {
-		s.log.Debug("Failed to parse client IP address", "clientIp", clientIP, "err", err)
+		s.log.Debug("Failed to parse client IP address", "clientAddr", clientAddr, "err", err)
 		clientIP = ""
-	} else {
-		s.log.Debug("Parsed client IP address", "clientIp", clientIP)
 	}
 
 	newToken, err := util.RandomHex(16)
