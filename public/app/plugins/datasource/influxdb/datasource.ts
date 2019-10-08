@@ -199,7 +199,6 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
         return expandedQuery;
       });
     }
-    console.log(expandedQueries);
     return expandedQueries;
   }
 
