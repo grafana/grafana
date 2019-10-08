@@ -1,6 +1,6 @@
 // Services & Utils
 import { getBackendSrv } from '@grafana/runtime';
-import { actionCreatorFactory, noPayloadActionCreatorFactory } from 'app/core/redux';
+import { actionCreatorFactory } from 'app/core/redux';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 // Actions
 import { loadPluginDashboards } from '../../plugins/state/actions';
@@ -19,11 +19,11 @@ import {
 
 export const loadDashboardPermissions = actionCreatorFactory<DashboardAclDTO[]>('LOAD_DASHBOARD_PERMISSIONS').create();
 
-export const dashboardInitFetching = noPayloadActionCreatorFactory('DASHBOARD_INIT_FETCHING').create();
+export const dashboardInitFetching = actionCreatorFactory('DASHBOARD_INIT_FETCHING').create();
 
-export const dashboardInitServices = noPayloadActionCreatorFactory('DASHBOARD_INIT_SERVICES').create();
+export const dashboardInitServices = actionCreatorFactory('DASHBOARD_INIT_SERVICES').create();
 
-export const dashboardInitSlow = noPayloadActionCreatorFactory('SET_DASHBOARD_INIT_SLOW').create();
+export const dashboardInitSlow = actionCreatorFactory('SET_DASHBOARD_INIT_SLOW').create();
 
 export const dashboardInitCompleted = actionCreatorFactory<MutableDashboard>('DASHBOARD_INIT_COMLETED').create();
 
@@ -35,7 +35,7 @@ export const dashboardInitFailed = actionCreatorFactory<DashboardInitError>('DAS
 /*
  * When leaving dashboard, resets state
  * */
-export const cleanUpDashboard = noPayloadActionCreatorFactory('DASHBOARD_CLEAN_UP').create();
+export const cleanUpDashboard = actionCreatorFactory('DASHBOARD_CLEAN_UP').create();
 
 export function getDashboardPermissions(id: number): ThunkResult<void> {
   return async dispatch => {

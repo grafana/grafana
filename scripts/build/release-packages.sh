@@ -16,6 +16,9 @@ fi
 
 echo "$_grafana_version"
 
+# lerna bootstrap might have created yarn.lock
+git checkout .
+
 # Get current version from lerna.json
 # Since this happens on tagged branch, the lerna.json version and package.json file SHOULD be updated already
 # as specified in release guideline

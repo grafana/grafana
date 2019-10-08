@@ -1,8 +1,4 @@
-import {
-  actionCreatorFactory,
-  resetAllActionCreatorTypes,
-  noPayloadActionCreatorFactory,
-} from './actionCreatorFactory';
+import { actionCreatorFactory, resetAllActionCreatorTypes } from './actionCreatorFactory';
 
 interface Dummy {
   n: number;
@@ -18,7 +14,7 @@ interface Dummy {
 const setup = (payload?: Dummy) => {
   resetAllActionCreatorTypes();
   const actionCreator = actionCreatorFactory<Dummy>('dummy').create();
-  const noPayloadactionCreator = noPayloadActionCreatorFactory('NoPayload').create();
+  const noPayloadactionCreator = actionCreatorFactory('NoPayload').create();
   const result = actionCreator(payload);
   const noPayloadResult = noPayloadactionCreator();
 
@@ -49,7 +45,7 @@ describe('actionCreatorFactory', () => {
       setup(payload);
 
       expect(() => {
-        noPayloadActionCreatorFactory('DuMmY').create();
+        actionCreatorFactory('DuMmY').create();
       }).toThrow();
     });
   });

@@ -48,7 +48,7 @@
           get-options="ctrl.getMetricNamespaces($query)" on-change="ctrl.onMetricNamespacesChange()" css-class="min-width-12">
         </gf-form-dropdown>
       </div>
-      <div class="gf-form">        
+      <div class="gf-form">
         <label class="gf-form-label query-keyword width-9">Metric</label>
         <gf-form-dropdown model="ctrl.target.azureMonitor.metricName" allow-custom="true" lookup-text="true"
           get-options="ctrl.getMetricNames($query)" on-change="ctrl.onMetricNameChange()" css-class="min-width-12">
@@ -62,7 +62,7 @@
         </div>
       </div>
     </div>
-    <div class="gf-form-inline">      
+    <div class="gf-form-inline">
       <div class="gf-form">
         <label class="gf-form-label query-keyword width-9">Time Grain</label>
         <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent timegrainunit-dropdown-wrapper">
@@ -72,7 +72,7 @@
       </div>
       <div class="gf-form" ng-show="ctrl.target.azureMonitor.timeGrain.trim() === 'auto'">
         <label class="gf-form-label">Auto Interval</label>
-        <label class="gf-form-label">{{ctrl.getAutoInterval()}}</label>
+        <label class="gf-form-label">{{ctrl.getAzureMonitorAutoInterval()}}</label>
       </div>
       <div class="gf-form gf-form--grow">
         <div class="gf-form-label gf-form-label--grow"></div>
@@ -90,6 +90,11 @@
         <label class="gf-form-label query-keyword width-3">eq</label>
         <input type="text" class="gf-form-input width-17" ng-model="ctrl.target.azureMonitor.dimensionFilter"
           spellcheck="false" placeholder="auto" ng-blur="ctrl.refresh()">
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label query-keyword width-9">Top</label>
+        <input type="text" class="gf-form-input width-3" ng-model="ctrl.target.azureMonitor.top"
+          spellcheck="false" placeholder="10" ng-blur="ctrl.refresh()">
       </div>
       <div class="gf-form gf-form--grow">
         <div class="gf-form-label gf-form-label--grow"></div>
@@ -233,19 +238,19 @@
       <div class="gf-form-inline">
         <div class="gf-form">
           <label class="gf-form-label query-keyword width-9">Group By</label>
-          <gf-form-dropdown allow-custom="true" ng-hide="ctrl.target.appInsights.groupBy !== 'none'" model="ctrl.target.appInsights.groupBy"
+          <gf-form-dropdown allow-custom="true" ng-hide="ctrl.target.appInsights.dimension !== 'none'" model="ctrl.target.appInsights.dimension"
             lookup-text="true" get-options="ctrl.getAppInsightsGroupBySegments($query)" on-change="ctrl.refresh()"
             css-class="min-width-20">
           </gf-form-dropdown>
-          <label class="gf-form-label min-width-20 pointer" ng-hide="ctrl.target.appInsights.groupBy === 'none'"
-            ng-click="ctrl.resetAppInsightsGroupBy()">{{ctrl.target.appInsights.groupBy}}
+          <label class="gf-form-label min-width-20 pointer" ng-hide="ctrl.target.appInsights.dimension === 'none'"
+            ng-click="ctrl.resetAppInsightsGroupBy()">{{ctrl.target.appInsights.dimension}}
             <i class="fa fa-remove"></i>
           </label>
         </div>
         <div class="gf-form-inline">
           <div class="gf-form">
             <label class="gf-form-label query-keyword width-9">Filter</label>
-            <input type="text" class="gf-form-input width-17" ng-model="ctrl.target.appInsights.filter" spellcheck="false"
+            <input type="text" class="gf-form-input width-17" ng-model="ctrl.target.appInsights.dimensionFilter" spellcheck="false"
               placeholder="your/groupby eq 'a_value'" ng-blur="ctrl.refresh()">
           </div>
         </div>
@@ -253,7 +258,6 @@
           <div class="gf-form-label gf-form-label--grow"></div>
         </div>
       </div>
-
       <div class="gf-form-inline">
         <div class="gf-form">
           <label class="gf-form-label query-keyword width-9">Time Grain</label>
@@ -263,17 +267,17 @@
           </div>
         </div>
         <div class="gf-form" ng-hide="ctrl.target.appInsights.timeGrainType === 'auto' || ctrl.target.appInsights.timeGrainType === 'none'">
-          <input type="text" class="gf-form-input width-3" ng-model="ctrl.target.appInsights.timeGrain" spellcheck="false"
-            placeholder="" ng-blur="ctrl.refresh()">
+          <input type="text" class="gf-form-input width-3" ng-model="ctrl.target.appInsights.timeGrainCount" spellcheck="false"
+            placeholder="" ng-blur="ctrl.updateAppInsightsTimeGrain()">
         </div>
         <div class="gf-form" ng-hide="ctrl.target.appInsights.timeGrainType === 'auto' || ctrl.target.appInsights.timeGrainType === 'none'">
-          <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent timegrainunit-dropdown-wrapper">
+            <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent timegrainunit-dropdown-wrapper">
             <select class="gf-form-input" ng-model="ctrl.target.appInsights.timeGrainUnit" ng-options="f as f for f in ['minute', 'hour', 'day', 'month', 'year']"
-              ng-change="ctrl.refresh()"></select>
+                ng-change="ctrl.updateAppInsightsTimeGrain()"></select>
+            </div>
           </div>
-        </div>
         <div class="gf-form" ng-hide="ctrl.target.appInsights.timeGrainType !== 'auto'">
-          <label class="gf-form-label">Auto Interval</label>
+            <label class="gf-form-label">Auto Interval</label>
           <label class="gf-form-label">{{ctrl.getAppInsightsAutoInterval()}}</label>
         </div>
         <div class="gf-form gf-form--grow">
@@ -286,10 +290,9 @@
           <input type="text" class="gf-form-input width-30" ng-model="ctrl.target.appInsights.alias" spellcheck="false"
             placeholder="alias patterns (see help for more info)" ng-blur="ctrl.refresh()">
         </div>
-
-        <div class="gf-form gf-form--grow">
-          <div class="gf-form-label gf-form-label--grow"></div>
-        </div>
+      </div>
+      <div class="gf-form gf-form--grow">
+        <div class="gf-form-label gf-form-label--grow"></div>
       </div>
     </div>
     <div ng-show="ctrl.target.appInsights.rawQuery">
@@ -311,13 +314,13 @@
       <div class="gf-form-inline">
         <div class="gf-form">
           <label class="gf-form-label query-keyword width-9">X-axis</label>
-          <gf-form-dropdown model="ctrl.target.appInsights.xaxis" allow-custom="true" placeholder="eg. 'timestamp'"
+          <gf-form-dropdown model="ctrl.target.appInsights.timeColumn" allow-custom="true" placeholder="eg. 'timestamp'"
             get-options="ctrl.getAppInsightsColumns($query)" on-change="ctrl.onAppInsightsColumnChange()" css-class="min-width-20">
           </gf-form-dropdown>
         </div>
         <div class="gf-form">
-          <label class="gf-form-label query-keyword width-9">Y-axis(es)</label>
-          <gf-form-dropdown model="ctrl.target.appInsights.yaxis" allow-custom="true" get-options="ctrl.getAppInsightsColumns($query)"
+          <label class="gf-form-label query-keyword width-9">Y-axis</label>
+          <gf-form-dropdown model="ctrl.target.appInsights.valueColumn" allow-custom="true" get-options="ctrl.getAppInsightsColumns($query)"
             on-change="ctrl.onAppInsightsColumnChange()" css-class="min-width-20">
           </gf-form-dropdown>
         </div>
@@ -328,7 +331,7 @@
       <div class="gf-form-inline">
         <div class="gf-form">
           <label class="gf-form-label query-keyword width-9">Split On</label>
-          <gf-form-dropdown model="ctrl.target.appInsights.spliton" allow-custom="true" get-options="ctrl.getAppInsightsColumns($query)"
+          <gf-form-dropdown model="ctrl.target.appInsights.segmentColumn" allow-custom="true" get-options="ctrl.getAppInsightsColumns($query)"
             on-change="ctrl.onAppInsightsColumnChange()" css-class="min-width-20">
           </gf-form-dropdown>
         </div>

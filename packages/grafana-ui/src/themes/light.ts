@@ -42,6 +42,8 @@ const basicColors = {
 const lightTheme: GrafanaTheme = {
   ...defaultTheme,
   type: GrafanaThemeType.Light,
+  isDark: false,
+  isLight: true,
   name: 'Grafana Light',
   colors: {
     ...basicColors,
@@ -72,11 +74,16 @@ const lightTheme: GrafanaTheme = {
     linkHover: basicColors.dark1,
     linkExternal: basicColors.blueLight,
     headingColor: basicColors.gray1,
+    pageHeaderBorder: basicColors.gray4,
   },
   background: {
     dropdown: basicColors.white,
     scrollbar: basicColors.gray5,
     scrollbar2: basicColors.gray5,
+    pageHeader: `linear-gradient(90deg, ${basicColors.white}, ${basicColors.gray7})`,
+  },
+  shadow: {
+    pageHeader: `inset 0px -3px 10px ${basicColors.gray6}`,
   },
 };
 

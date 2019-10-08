@@ -40,7 +40,11 @@ export class MockDataSourceApi extends DataSourceApi {
     if (this.queryResolver) {
       return this.queryResolver;
     }
-    return Promise.resolve(this.result);
+    return new Promise(resolver => {
+      setTimeout(() => {
+        resolver(this.result);
+      });
+    });
   }
 
   testDatasource() {

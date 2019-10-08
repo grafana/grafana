@@ -2,7 +2,6 @@
   "type": "panel",
   "name": "Logs",
   "id": "logs",
-  "state": "alpha",
 
   "info": {
     "author": {

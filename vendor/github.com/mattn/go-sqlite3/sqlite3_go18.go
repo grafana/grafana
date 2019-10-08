@@ -10,7 +10,6 @@ package sqlite3
 
 import (
 	"database/sql/driver"
-	"errors"
 
 	"context"
 )
@@ -18,7 +17,8 @@ import (
 // Ping implement Pinger.
 func (c *SQLiteConn) Ping(ctx context.Context) error {
 	if c.db == nil {
-		return errors.New("Connection was closed")
+		// must be ErrBadConn for sql to close the database
+		return driver.ErrBadConn
 	}
 	return nil
 }

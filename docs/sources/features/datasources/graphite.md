@@ -28,7 +28,7 @@ queries through the use of query references.
 
 Name | Description
 ------------ | -------------
-*Name* | The data source name. This is how you refer to the data source in panels & queries.
+*Name* | The data source name. This is how you refer to the data source in panels and queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
 *Url* | The HTTP protocol, IP, and port of your graphite-web or graphite-api install.
 *Access* | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
