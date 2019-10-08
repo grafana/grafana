@@ -4,11 +4,11 @@ import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.gauge';
 import 'app/features/panel/panellinks/link_srv';
 import {
-  LegacyResponseData,
-  getFlotPairs,
-  getDisplayProcessor,
   convertOldAngulrValueMapping,
   getColorFromHexRgbOrName,
+  getDisplayProcessor,
+  getFlotPairs,
+  LegacyResponseData,
 } from '@grafana/ui';
 
 import kbn from 'app/core/utils/kbn';
@@ -16,15 +16,15 @@ import config from 'app/core/config';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import {
   DataFrame,
-  FieldType,
-  reduceField,
-  ReducerID,
-  Field,
-  GraphSeriesValue,
   DisplayValue,
+  Field,
   fieldReducers,
+  FieldType,
+  GraphSeriesValue,
   KeyValue,
   LinkModel,
+  reduceField,
+  ReducerID,
 } from '@grafana/data';
 import { auto } from 'angular';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
@@ -257,7 +257,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       sparkline,
     };
 
-    data.scopedVars['__name'] = name;
+    data.scopedVars['__name'] = { value: name };
     panel.tableColumn = this.fieldNames.length > 1 ? name : '';
 
     // Get the fields for a sparkline
