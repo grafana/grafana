@@ -35,13 +35,16 @@ type connection struct {
 	hub  *hub
 	ws   *websocket.Conn
 	send chan []byte
+	log  log.Logger
 }
 
 func newConnection(ws *websocket.Conn, hub *hub) *connection {
+	logger := log.New("conn")
 	return &connection{
 		hub:  hub,
 		send: make(chan []byte, 256),
 		ws:   ws,
+		log:  logger,
 	}
 }
 
@@ -53,7 +56,7 @@ func (c *connection) readPump() {
 
 	c.ws.SetReadLimit(maxMessageSize)
 	if err := c.ws.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
-		log.Warn("Setting read deadline failed: %s", err)
+		c.log.Warn("Setting read deadline failed", "err", err)
 	}
 	c.ws.SetPongHandler(func(string) error {
 		return c.ws.SetReadDeadline(time.Now().Add(pongWait))
@@ -62,7 +65,7 @@ func (c *connection) readPump() {
 		_, message, err := c.ws.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				log.Info("error: %v", err)
+				c.log.Info("error", "err", err)
 			}
 			break
 		}
@@ -113,7 +116,7 @@ func (c *connection) writePump() {
 		case message, ok := <-c.send:
 			if !ok {
 				if err := c.write(websocket.CloseMessage, []byte{}); err != nil {
-					log.Warn("Failed to write close message to connection: %s", err)
+					c.log.Warn("Failed to write close message to connection", "err", err)
 				}
 				return
 			}
