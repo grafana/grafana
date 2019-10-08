@@ -5,9 +5,8 @@ import { connect } from 'react-redux';
 import find from 'lodash/find';
 // Types
 import { UrlQueryMap } from '@grafana/runtime';
-import { StoreState, AppNotificationSeverity, CoreEvents } from 'app/types';
+import { AppNotificationSeverity, StoreState } from 'app/types';
 import {
-  Alert,
   AppPlugin,
   GrafanaPlugin,
   PluginDependencies,
