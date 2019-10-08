@@ -170,17 +170,17 @@ func TestDashboardSnapshotApiEndpoint(t *testing.T) {
 
 			Convey("Should fail to delete local snapshot when an unexpected 500 error occurs", func() {
 				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/snapshots/12345", "/api/snapshots/:key", m.ROLE_EDITOR, func(sc *scenarioContext) {
-					var err error
+					var writeErr error
 					ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
 						rw.WriteHeader(500)
-						_, err = rw.Write([]byte(`{"message":"Unexpected"}`))
+						_, writeErr = rw.Write([]byte(`{"message":"Unexpected"}`))
 					})
-					So(err, ShouldBeNil)
 
 					mockSnapshotResult.ExternalDeleteUrl = ts.URL
 					sc.handlerFunc = DeleteDashboardSnapshot
 					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
+					So(writeErr, ShouldBeNil)
 					So(sc.resp.Code, ShouldEqual, 500)
 				})
 			})
