@@ -29,9 +29,11 @@ The plan is to move all settings to from package level vars in settings package 
 
 We want to migrate away from using GoConvey. Instead, we want to use stdlib testing, because it's the most common approach in the Go community and we think it will be easier for new contributors. Read more about how we want to write tests in [ARCHITECTURE.MD](ARCHITECTURE.md#Testing).
 
-## SQLStore refactoring
+## Refactor SqlStore
 
-The SQLStore handlers all use a global xorm engine variable. Refactor them to use the SQLStore instance.
+The `sqlstore` handlers all use a global xorm engine variable. Refactor them to use the `SqlStore` instance.
+
+In the long term, all instances should change to SQLStore. Refer to Issue ##### for more information.
 
 ## Avoid global HTTP handler functions
 
