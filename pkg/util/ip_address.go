@@ -10,19 +10,19 @@ import (
 
 // ParseIPAddress parses an IP address and removes port and/or IPV6 format
 func ParseIPAddress(input string) (string, error) {
-	host, _, err := SplitHostPort(input)
+	addr, err := SplitHostPort(input)
 	if err != nil {
 		return "", errutil.Wrapf(err, "Failed to split network address '%s' by host and port",
 			input)
 	}
 
-	ip := net.ParseIP(host)
+	ip := net.ParseIP(addr.Host)
 	if ip == nil {
-		return host, nil
+		return addr.Host, nil
 	}
 
 	if ip.IsLoopback() {
-		if strings.Contains(host, ":") {
+		if strings.Contains(addr.Host, ":") {
 			// IPv6
 			return "::1", nil
 		}
@@ -32,10 +32,19 @@ func ParseIPAddress(input string) (string, error) {
 	return ip.String(), nil
 }
 
+type NetworkAddress struct {
+	Host string
+	Port string
+}
+
 // SplitHostPortDefault splits ip address/hostname string by host and port. Defaults used if no match found
-func SplitHostPortDefault(input, defaultHost, defaultPort string) (host string, port string, err error) {
+func SplitHostPortDefault(input, defaultHost, defaultPort string) (NetworkAddress, error) {
+	addr := NetworkAddress{
+		Host: defaultHost,
+		Port: defaultPort,
+	}
 	if len(input) == 0 {
-		return "", "", fmt.Errorf("Input is empty")
+		return addr, fmt.Errorf("Input is empty")
 	}
 
 	start := 0
@@ -44,7 +53,7 @@ func SplitHostPortDefault(input, defaultHost, defaultPort string) (host string, 
 		addrEnd := strings.LastIndex(input, "]")
 		if addrEnd < 0 {
 			// Malformed address
-			return "", "", fmt.Errorf("Malformed IPv6 address: '%s'", input)
+			return addr, fmt.Errorf("Malformed IPv6 address: '%s'", input)
 		}
 
 		start = addrEnd
@@ -56,22 +65,22 @@ func SplitHostPortDefault(input, defaultHost, defaultPort string) (host string, 
 		input = fmt.Sprintf("%s:%s", input, defaultPort)
 	}
 
-	host, port, err = net.SplitHostPort(input)
+	host, port, err := net.SplitHostPort(input)
 	if err != nil {
-		return "", "", errutil.Wrapf(err, "net.SplitHostPort failed for '%s'", input)
+		return addr, errutil.Wrapf(err, "net.SplitHostPort failed for '%s'", input)
 	}
 
-	if len(host) == 0 {
-		host = defaultHost
+	if len(host) > 0 {
+		addr.Host = host
 	}
-	if len(port) == 0 {
-		port = defaultPort
+	if len(port) > 0 {
+		addr.Port = port
 	}
 
-	return host, port, nil
+	return addr, nil
 }
 
 // SplitHostPort splits ip address/hostname string by host and port
-func SplitHostPort(input string) (host string, port string, err error) {
+func SplitHostPort(input string) (NetworkAddress, error) {
 	return SplitHostPortDefault(input, "", "")
 }
