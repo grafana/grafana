@@ -54,14 +54,11 @@ func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context) (int64, err
 	return count, err
 }
 
-func (s *UserAuthTokenService) CreateToken(ctx context.Context, userId int64, clientIP, userAgent string) (*models.UserToken, error) {
-	s.log.Debug("Creating user auth token", "clientIp", clientIP)
-	clientIP, err := util.ParseIPAddress(clientIP)
+func (s *UserAuthTokenService) CreateToken(ctx context.Context, userId int64, clientAddr, userAgent string) (*models.UserToken, error) {
+	clientIP, err := util.ParseIPAddress(clientAddr)
 	if err != nil {
-		s.log.Debug("Failed to parse client IP address", "clientIp", clientIP, "err", err)
+		s.log.Debug("Failed to parse client IP address", "clientAddr", clientAddr, "err", err)
 		clientIP = ""
-	} else {
-		s.log.Debug("Parsed client IP address", "clientIp", clientIP)
 	}
 	token, err := util.RandomHex(16)
 	if err != nil {
