@@ -226,6 +226,21 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     });
   }
 
+  interpolateVariablesInQueries(queries: ElasticsearchQuery[]): ElasticsearchQuery[] {
+    let expandedQueries = queries;
+    if (queries && queries.length > 0) {
+      expandedQueries = queries.map(query => {
+        const expandedQuery = {
+          ...query,
+          datasource: this.name,
+          query: this.templateSrv.replace(query.query),
+        };
+        return expandedQuery;
+      });
+    }
+    return expandedQueries;
+  }
+
   testDatasource() {
     // validate that the index exist and has date field
     return this.getFields({ type: 'date' }).then(

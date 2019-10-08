@@ -18,7 +18,7 @@ The main panel in Grafana is simply named Graph. It provides a very rich set of 
 1. Clicking the title for a panel exposes a menu.  The `edit` option opens additional configuration
 options for the panel.
 2. Click to open color and axis selection.
-3. Click to only show this series. Shift/Ctrl + click to hide series.
+3. Click to only show this series. Shift/Ctrl+Click to hide series.
 
 ## General
 

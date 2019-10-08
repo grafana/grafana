@@ -25,6 +25,7 @@ import {
   splitClose,
   runQueries,
   splitOpen,
+  syncTimes,
   changeRefreshInterval,
   changeMode,
   clearOrigin,
@@ -60,6 +61,7 @@ interface StateProps {
   timeZone: TimeZone;
   selectedDatasource: DataSourceSelectItem;
   splitted: boolean;
+  syncedTimes: boolean;
   refreshInterval: string;
   supportedModes: ExploreMode[];
   selectedMode: ExploreMode;
@@ -77,6 +79,7 @@ interface DispatchProps {
   runQueries: typeof runQueries;
   closeSplit: typeof splitClose;
   split: typeof splitOpen;
+  syncTimes: typeof syncTimes;
   changeRefreshInterval: typeof changeRefreshInterval;
   changeMode: typeof changeMode;
   clearOrigin: typeof clearOrigin;
@@ -110,6 +113,11 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
   onModeChange = (mode: ExploreMode) => {
     const { changeMode, exploreId } = this.props;
     changeMode(exploreId, mode);
+  };
+
+  onChangeTimeSync = () => {
+    const { syncTimes, exploreId } = this.props;
+    syncTimes(exploreId);
   };
 
   returnToPanel = async ({ withChanges = false } = {}) => {
@@ -148,6 +156,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
       timeZone,
       selectedDatasource,
       splitted,
+      syncedTimes,
       refreshInterval,
       onChangeTime,
       split,
@@ -259,6 +268,9 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                   range={range}
                   timeZone={timeZone}
                   onChangeTime={onChangeTime}
+                  splitted={splitted}
+                  syncedTimes={syncedTimes}
+                  onChangeTimeSync={this.onChangeTimeSync}
                 />
               </div>
             )}
@@ -305,6 +317,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
 
 const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps => {
   const splitted = state.explore.split;
+  const syncedTimes = state.explore.syncedTimes;
   const exploreItem: ExploreItemState = state.explore[exploreId];
   const {
     datasourceInstance,
@@ -343,6 +356,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     isPaused,
     originPanelId,
     queries,
+    syncedTimes,
     datasourceLoading,
   };
 };
@@ -355,6 +369,7 @@ const mapDispatchToProps: DispatchProps = {
   runQueries,
   closeSplit: splitClose,
   split: splitOpen,
+  syncTimes,
   changeMode: changeMode,
   clearOrigin,
 };

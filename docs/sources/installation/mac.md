@@ -1,6 +1,6 @@
 +++
-title = "Installing on Mac"
-description = "Installing Grafana on Mac"
+title = "Installing on macOS"
+description = "Installing Grafana on macOS"
 keywords = ["grafana", "configuration", "documentation", "mac", "homebrew", "osx"]
 type = "docs"
 [menu.docs]
@@ -9,7 +9,7 @@ weight = 4
 +++
 
 
-# Installing on Mac
+# Installing on macOS
 
 ## Install using homebrew
 

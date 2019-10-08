@@ -18,7 +18,7 @@ Grafana v4.6 brings many enhancements to Annotations, Cloudwatch and Prometheus.
 
 {{< docs-imagebox img="/img/docs/v46/add_annotation_region.png"  max-width= "800px" >}}
 
-You can now add annotation events and regions right from the graph panel! Just hold CTRL/CMD + click or drag region to open the **Add Annotation** view. The
+You can now add annotation events and regions right from the graph panel! Just hold Ctrl/Cmd+Click or drag region to open the **Add Annotation** view. The
 [Annotations]({{< relref "reference/annotations.md" >}}) documentation is updated to include details on this new exciting feature.
 
 ### Cloudwatch

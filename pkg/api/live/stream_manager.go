@@ -44,7 +44,7 @@ func (sm *StreamManager) Serve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c := newConnection(ws, sm.hub)
+	c := newConnection(ws, sm.hub, sm.log)
 	sm.hub.register <- c
 
 	go c.writePump()
