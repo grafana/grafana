@@ -7,7 +7,7 @@ export interface Props {
   onChange: (values: string[]) => void;
 }
 
-const options: SelectableValue<string>[] = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'].map(value => ({
+const options: Array<SelectableValue<string>> = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'].map(value => ({
   label: value,
   value: value,
 }));
@@ -31,14 +31,16 @@ export const Stats: SFC<Props> = ({ values, onChange }) => (
         }
       />
     ))}
-    <Segment
-      Component={
-        <a className="gf-form-label query-part">
-          <i className="fa fa-plus" />
-        </a>
-      }
-      onChange={value => onChange([...values, value])}
-      options={options}
-    />
+    {values.length !== options.length && (
+      <Segment
+        Component={
+          <a className="gf-form-label query-part">
+            <i className="fa fa-plus" />
+          </a>
+        }
+        onChange={(value: string) => onChange([...values, value])}
+        options={options.filter(({ value }) => !values.includes(value))}
+      />
+    )}
   </>
 );

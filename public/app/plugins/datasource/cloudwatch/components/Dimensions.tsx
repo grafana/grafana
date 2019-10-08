@@ -6,11 +6,11 @@ import { Segment, SegmentAsync } from '@grafana/ui';
 export interface Props {
   dimensions: { [key: string]: string };
   onChange: (dimensions: { [key: string]: string }) => void;
-  loadValues: (key: string) => Promise<SelectableValue<string>[]>;
-  loadKeys: () => Promise<SelectableValue<string>[]>;
+  loadValues: (key: string) => Promise<Array<SelectableValue<string>>>;
+  loadKeys: () => Promise<Array<SelectableValue<string>>>;
 }
 
-const operators: SelectableValue<string>[] = ['='].map(v => ({ label: v, value: v }));
+const operators: Array<SelectableValue<string>> = ['='].map(v => ({ label: v, value: v }));
 const removeText = '-- remove dimension --';
 const removeOption: SelectableValue<string> = { label: removeText, value: removeText };
 
@@ -38,7 +38,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
             value={key}
             loadOptions={() => loadKeys().then(keys => [removeOption, ...excludeUsedKeys(keys)])}
             onChange={newKey => {
-              let { [key]: value, ...newDimensions } = data;
+              const { [key]: value, ...newDimensions } = data;
               if (newKey === removeText) {
                 setData({ ...newDimensions });
               } else {
@@ -66,7 +66,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
             </a>
           }
           loadOptions={() => loadKeys().then(excludeUsedKeys)}
-          onChange={newKey => setData({ ...data, [newKey]: '' })}
+          onChange={(newKey: string) => setData({ ...data, [newKey]: '' })}
         />
       )}
     </>

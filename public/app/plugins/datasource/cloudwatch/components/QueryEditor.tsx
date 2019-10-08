@@ -3,6 +3,7 @@ import { SelectableValue } from '@grafana/data';
 import { CloudWatchQuery } from '../types';
 import {
   FormField,
+  Input,
   QueryEditorProps,
   Segment,
   SegmentAsync,
@@ -16,9 +17,9 @@ import { Dimensions } from './Dimensions';
 type Props = QueryEditorProps<DataSource, CloudWatchQuery, Options>;
 
 interface State {
-  regions: SelectableValue<string>[];
-  namespaces: SelectableValue<string>[];
-  metricNames: SelectableValue<string>[];
+  regions: Array<SelectableValue<string>>;
+  namespaces: Array<SelectableValue<string>>;
+  metricNames: Array<SelectableValue<string>>;
 }
 
 const idValidationEvents: ValidationEvents = {
@@ -139,7 +140,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
           />
         </div>
         <div className="gf-form inline">
-          <FormField
+          <Input
             className="query-keyword"
             width={16}
             label="Id"
