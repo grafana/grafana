@@ -19,18 +19,30 @@ import {
 } from '@grafana/data';
 
 import {
-  LegacyResponseData,
-  getFlotPairs,
-  getDisplayProcessor,
-  convertOldAngularValueMapping,
+  convertOldAngulrValueMapping,
   getColorFromHexRgbOrName,
-  PanelEvents,
+  getDisplayProcessor,
+  getFlotPairs,
+  LegacyResponseData,
 } from '@grafana/ui';
 
 import { CoreEvents } from 'app/types';
 import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
+import {
+  DataFrame,
+  DisplayValue,
+  Field,
+  fieldReducers,
+  FieldType,
+  GraphSeriesValue,
+  KeyValue,
+  LinkModel,
+  reduceField,
+  ReducerID,
+} from '@grafana/data';
+import { auto } from 'angular';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
 
