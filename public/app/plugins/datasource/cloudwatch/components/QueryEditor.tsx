@@ -100,6 +100,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
           inputEl={
             <Dimensions
               dimensions={query.dimensions}
+              variables={datasource.variables}
               onChange={dimensions => this.onChange({ ...query, dimensions })}
               loadKeys={() => datasource.getDimensionKeys(query.namespace, query.region)}
               loadValues={newKey => {

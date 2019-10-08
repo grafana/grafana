@@ -105,6 +105,10 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
     return this.performTimeSeriesQuery(request, options.range);
   }
 
+  get variables() {
+    return this.templateSrv.variables.map(v => `$${v.name}`);
+  }
+
   getPeriod(target: any, options: any, now?: number) {
     const start = this.convertToCloudWatchTime(options.range.from, false);
     const end = this.convertToCloudWatchTime(options.range.to, true);
