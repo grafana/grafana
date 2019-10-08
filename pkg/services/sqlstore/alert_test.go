@@ -85,6 +85,12 @@ func TestAlertingDataAccess(t *testing.T) {
 					So(err, ShouldNotBeNil)
 				})
 
+				Convey("alert is paused", func() {
+					alert, _ = getAlertById(1)
+					currentState := alert.State
+					So(currentState, ShouldEqual, "paused")
+				})
+
 				Convey("pausing alerts should update their NewStateDate", func() {
 					alert, _ = getAlertById(1)
 					stateDateAfterPause := alert.NewStateDate
