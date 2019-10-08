@@ -116,6 +116,16 @@
   }
 }
 
+@media only screen and (max-width: 1210px) {
+  .time-picker-long-date {
+    .select-button {
+      span {
+        display: none;
+      }
+    }
+  }
+}
+
 @media only screen and (max-width: 1070px) {
   .timepicker {
     .timepicker-rangestring {
@@ -156,7 +166,7 @@
   }
 }
 
-@media only screen and (max-width: 648px) {
+@media only screen and (max-width: 697px) {
   .explore-toolbar {
     .explore-toolbar-content-item {
       &:first-child {
