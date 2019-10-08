@@ -1,0 +1,12 @@
+language: go
+sudo: false
+go:
+  - 1.x
+  - tip
+install:
+  - go get -v github.com/golang/lint/golint
+  - go build ./...
+script:
+  - go vet ./...
+  - $HOME/gopath/bin/golint .
+  - go test -v -race ./...

@@ -1,4 +1,3 @@
-node_modules
 npm-debug.log
 yarn-error.log
 coverage/
@@ -97,3 +96,7 @@ theOutput/
 
 # Ignore compilation stats from `yarn stats`
 compilation-stats.json
+
+# Ignore plugins sdk stuff
+./pkg/plugins/sdk/js/lib
+./pkg/plugins/sdk/node_modules

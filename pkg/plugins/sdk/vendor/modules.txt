@@ -1,0 +1,88 @@
+# github.com/apache/arrow/go/arrow v0.0.0-20190716210558-5f564424c71c
+github.com/apache/arrow/go/arrow
+github.com/apache/arrow/go/arrow/array
+github.com/apache/arrow/go/arrow/ipc
+github.com/apache/arrow/go/arrow/memory
+github.com/apache/arrow/go/arrow/decimal128
+github.com/apache/arrow/go/arrow/float16
+github.com/apache/arrow/go/arrow/internal/bitutil
+github.com/apache/arrow/go/arrow/internal/debug
+github.com/apache/arrow/go/arrow/arrio
+github.com/apache/arrow/go/arrow/internal/flatbuf
+github.com/apache/arrow/go/arrow/internal/cpu
+# github.com/golang/protobuf v1.3.2
+github.com/golang/protobuf/proto
+github.com/golang/protobuf/ptypes
+github.com/golang/protobuf/ptypes/any
+github.com/golang/protobuf/ptypes/duration
+github.com/golang/protobuf/ptypes/timestamp
+# github.com/google/flatbuffers v1.11.0
+github.com/google/flatbuffers/go
+# github.com/hashicorp/go-hclog v0.0.0-20180709165350-ff2cf002a8dd
+github.com/hashicorp/go-hclog
+# github.com/hashicorp/go-plugin v1.0.1
+github.com/hashicorp/go-plugin
+github.com/hashicorp/go-plugin/internal/plugin
+# github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb
+github.com/hashicorp/yamux
+# github.com/mattetti/filebuffer v1.0.0
+github.com/mattetti/filebuffer
+# github.com/mitchellh/go-testing-interface v0.0.0-20171004221916-a61a99592b77
+github.com/mitchellh/go-testing-interface
+# github.com/oklog/run v1.0.0
+github.com/oklog/run
+# github.com/pkg/errors v0.8.1
+github.com/pkg/errors
+# golang.org/x/net v0.0.0-20190311183353-d8887717615a
+golang.org/x/net/context
+golang.org/x/net/trace
+golang.org/x/net/internal/timeseries
+golang.org/x/net/http2
+golang.org/x/net/http2/hpack
+golang.org/x/net/http/httpguts
+golang.org/x/net/idna
+# golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a
+golang.org/x/sys/unix
+# golang.org/x/text v0.3.0
+golang.org/x/text/secure/bidirule
+golang.org/x/text/unicode/bidi
+golang.org/x/text/unicode/norm
+golang.org/x/text/transform
+# google.golang.org/genproto v0.0.0-20180817151627-c66870c02cf8
+google.golang.org/genproto/googleapis/rpc/status
+# google.golang.org/grpc v1.23.1
+google.golang.org/grpc
+google.golang.org/grpc/codes
+google.golang.org/grpc/status
+google.golang.org/grpc/credentials
+google.golang.org/grpc/health
+google.golang.org/grpc/health/grpc_health_v1
+google.golang.org/grpc/balancer
+google.golang.org/grpc/balancer/roundrobin
+google.golang.org/grpc/connectivity
+google.golang.org/grpc/encoding
+google.golang.org/grpc/encoding/proto
+google.golang.org/grpc/grpclog
+google.golang.org/grpc/internal
+google.golang.org/grpc/internal/backoff
+google.golang.org/grpc/internal/balancerload
+google.golang.org/grpc/internal/binarylog
+google.golang.org/grpc/internal/channelz
+google.golang.org/grpc/internal/envconfig
+google.golang.org/grpc/internal/grpcrand
+google.golang.org/grpc/internal/grpcsync
+google.golang.org/grpc/internal/transport
+google.golang.org/grpc/keepalive
+google.golang.org/grpc/metadata
+google.golang.org/grpc/naming
+google.golang.org/grpc/peer
+google.golang.org/grpc/resolver
+google.golang.org/grpc/resolver/dns
+google.golang.org/grpc/resolver/passthrough
+google.golang.org/grpc/serviceconfig
+google.golang.org/grpc/stats
+google.golang.org/grpc/tap
+google.golang.org/grpc/credentials/internal
+google.golang.org/grpc/balancer/base
+google.golang.org/grpc/binarylog/grpc_binarylog_v1
+google.golang.org/grpc/internal/syscall
