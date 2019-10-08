@@ -41,6 +41,7 @@ For all items not covered in this guide, refer to the [Microsoft Style Guide](ht
 * Avoid following one heading with another heading.
 * Avoid skipping heading levels. For example, an h1 should be followed by an h2 rather than an h3.
 * Avoid having just one lower-level heading. For example, h1, h2, h2, h3, h3, h2 is a good order. Do no go h1, h2, h3, h2, h3, h2.
+* Don't include parenthetical words like (Important!) in headings.
 
 ### Images
 
@@ -55,7 +56,18 @@ For all items not covered in this guide, refer to the [Microsoft Style Guide](ht
 
 * Grafana, Loki, and Prometheus are always capitalized unless part of a code block.
 * Git is always capitalized, unless part of a code block.
-* Abbreviations are always capitalized (such as HTTP or URL)
+* Abbreviations are always capitalized (such as JSON, SQL, HTTP, or URL) unless they are part of a code block.
+
+### Links and references
+
+When referencing another document, use "Refer to" rather than alternatives such as "See" or "Check out."
+
+Always give the reader some idea of what to expect in the reference. Avoid blind references, such as, "Refer to [this file](link)."
+
+When possible, use the exact title of the page or section you are linking to as the link text.
+
+**Example**
+* Refer to the [Documentation style guide](documentation-style-guide.md) for information about word usage and capitalization guidelines.
 
 ### Word usage
 
