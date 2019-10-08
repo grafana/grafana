@@ -129,6 +129,7 @@ export const createEmptyQueryResponse = (): PanelData => ({
 export const initialExploreItemState = makeExploreItemState();
 export const initialExploreState: ExploreState = {
   split: null,
+  syncedTimes: false,
   left: initialExploreItemState,
   right: initialExploreItemState,
 };
@@ -726,6 +727,9 @@ export const exploreReducer = (state = initialExploreState, action: HigherOrderA
 
     case ActionTypes.SplitOpen: {
       return { ...state, split: true, right: { ...action.payload.itemState } };
+    }
+    case ActionTypes.SyncTimes: {
+      return { ...state, syncedTimes: action.payload.syncedTimes };
     }
 
     case ActionTypes.ResetExplore: {
