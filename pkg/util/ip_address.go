@@ -5,15 +5,15 @@ import (
 	"net"
 	"strings"
 
-	"golang.org/x/xerrors"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // ParseIPAddress parses an IP address and removes port and/or IPV6 format
 func ParseIPAddress(input string) (string, error) {
 	host, _, err := SplitHostPort(input)
 	if err != nil {
-		return "", xerrors.Errorf("Failed to split network address '%s' by host and port: %w",
-			input, err)
+		return "", errutil.Wrapf(err, "Failed to split network address '%s' by host and port",
+			input)
 	}
 
 	ip := net.ParseIP(host)
@@ -35,7 +35,7 @@ func ParseIPAddress(input string) (string, error) {
 // SplitHostPortDefault splits ip address/hostname string by host and port. Defaults used if no match found
 func SplitHostPortDefault(input, defaultHost, defaultPort string) (host string, port string, err error) {
 	if len(input) == 0 {
-		return "", "", xerrors.Errorf("Input is empty")
+		return "", "", fmt.Errorf("Input is empty")
 	}
 
 	start := 0
@@ -44,7 +44,7 @@ func SplitHostPortDefault(input, defaultHost, defaultPort string) (host string, 
 		addrEnd := strings.LastIndex(input, "]")
 		if addrEnd < 0 {
 			// Malformed address
-			return "", "", xerrors.Errorf("Malformed IPv6 address: '%s'", input)
+			return "", "", fmt.Errorf("Malformed IPv6 address: '%s'", input)
 		}
 
 		start = addrEnd
@@ -58,7 +58,7 @@ func SplitHostPortDefault(input, defaultHost, defaultPort string) (host string, 
 
 	host, port, err = net.SplitHostPort(input)
 	if err != nil {
-		return "", "", xerrors.Errorf("net.SplitHostPort failed for '%s': %w", input, err)
+		return "", "", errutil.Wrapf(err, "net.SplitHostPort failed for '%s'", input)
 	}
 
 	if len(host) == 0 {
