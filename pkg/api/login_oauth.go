@@ -29,13 +29,13 @@ var (
 	OauthStateCookieName = "oauth_state"
 )
 
-func GenStateString() string {
+func GenStateString() (string, error) {
 	rnd := make([]byte, 32)
 	if _, err := rand.Read(rnd); err != nil {
 		oauthLogger.Error("failed to generate state string", "err", err)
-		return ""
+		return "", err
 	}
-	return base64.URLEncoding.EncodeToString(rnd)
+	return base64.URLEncoding.EncodeToString(rnd), nil
 }
 
 func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
@@ -61,7 +61,13 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 
 	code := ctx.Query("code")
 	if code == "" {
-		state := GenStateString()
+		state, err := GenStateString()
+		if err != nil {
+			ctx.Logger.Error("Generating state string failed", "err", err)
+			ctx.Handle(500, "An internal error occurred", nil)
+			return
+		}
+
 		hashedState := hashStatecode(state, setting.OAuthService.OAuthInfos[name].ClientSecret)
 		hs.writeCookie(ctx.Resp, OauthStateCookieName, hashedState, 60, hs.Cfg.CookieSameSite)
 		if setting.OAuthService.OAuthInfos[name].HostedDomain == "" {

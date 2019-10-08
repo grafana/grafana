@@ -152,12 +152,13 @@ func TestDashboardSnapshotApiEndpoint(t *testing.T) {
 			mockSnapshotResult.UserId = TestUserID
 
 			Convey("Should gracefully delete local snapshot when remote snapshot has already been removed", func() {
+				var err error
 				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/snapshots/12345", "/api/snapshots/:key", m.ROLE_EDITOR, func(sc *scenarioContext) {
 					ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
-						_, err := rw.Write([]byte(`{"message":"Failed to get dashboard snapshot"}`))
-						So(err, ShouldBeNil)
+						_, err = rw.Write([]byte(`{"message":"Failed to get dashboard snapshot"}`))
 						rw.WriteHeader(500)
 					})
+					So(err, ShouldBeNil)
 
 					mockSnapshotResult.ExternalDeleteUrl = ts.URL
 					sc.handlerFunc = DeleteDashboardSnapshot
@@ -169,11 +170,12 @@ func TestDashboardSnapshotApiEndpoint(t *testing.T) {
 
 			Convey("Should fail to delete local snapshot when an unexpected 500 error occurs", func() {
 				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/snapshots/12345", "/api/snapshots/:key", m.ROLE_EDITOR, func(sc *scenarioContext) {
+					var err error
 					ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
 						rw.WriteHeader(500)
-						_, err := rw.Write([]byte(`{"message":"Unexpected"}`))
-						So(err, ShouldBeNil)
+						_, err = rw.Write([]byte(`{"message":"Unexpected"}`))
 					})
+					So(err, ShouldBeNil)
 
 					mockSnapshotResult.ExternalDeleteUrl = ts.URL
 					sc.handlerFunc = DeleteDashboardSnapshot
