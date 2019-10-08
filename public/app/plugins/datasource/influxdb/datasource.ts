@@ -191,10 +191,10 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
           ...query,
           datasource: this.name,
           tags: expandedTags,
-          measurement: this.templateSrv.replace(query.measurement),
+          measurement: this.templateSrv.replace(query.measurement, null, 'regex'),
         };
         if (query.rawQuery) {
-          expandedQuery.query = this.templateSrv.replace(query.query);
+          expandedQuery.query = this.templateSrv.replace(query.query, null, 'regex');
         }
         return expandedQuery;
       });
