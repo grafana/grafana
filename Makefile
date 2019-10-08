@@ -83,6 +83,7 @@ revive: scripts/go/bin/revive
 	@echo "lint via revive"
 	@scripts/go/bin/revive \
 		-formatter stylish \
+		-exclude ./pkg/plugins/sdk/vendor/... \
 		-config ./scripts/go/configs/revive.toml \
 		$(GO_FILES)
 

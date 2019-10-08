@@ -16,7 +16,7 @@ errorCode = 1
 # This can be checked by other tools like megacheck
 [rule.unreachable-code]
 
-# Those are probably should be enabled at some point
+# These should probably be enabled at some point
 # [rule.unexported-return]
 # [rule.exported]
 # [rule.var-naming]
