@@ -177,28 +177,32 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
   }
 
   interpolateVariablesInQueries(queries: InfluxQuery[]): InfluxQuery[] {
-    if (!queries) {
+    if (!queries || queries.length === 0) {
       return [];
     }
 
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map(query => {
-        const expandedTags = query.tags.map(tag => {
-          const expandedTag = {
-            ...tag,
-            value: this.templateSrv.replace(tag.value, null, 'regex'),
-          };
-          return expandedTag;
-        });
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          tags: expandedTags,
           measurement: this.templateSrv.replace(query.measurement, null, 'regex'),
         };
+
         if (query.rawQuery) {
           expandedQuery.query = this.templateSrv.replace(query.query, null, 'regex');
+        }
+
+        if (query.tags) {
+          const expandedTags = query.tags.map(tag => {
+            const expandedTag = {
+              ...tag,
+              value: this.templateSrv.replace(tag.value, null, 'regex'),
+            };
+            return expandedTag;
+          });
+          expandedQuery.tags = expandedTags;
         }
         return expandedQuery;
       });
