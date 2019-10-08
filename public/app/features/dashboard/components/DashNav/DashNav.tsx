@@ -16,8 +16,7 @@ import { updateLocation } from 'app/core/actions';
 
 // Types
 import { DashboardModel } from '../../state';
-import { StoreState } from 'app/types';
-import { toggleKioskMode, showDashSearch, showModal } from '@grafana/data';
+import { StoreState, toggleKioskMode, showDashSearch, showModal } from 'app/types';
 
 export interface OwnProps {
   dashboard: DashboardModel;

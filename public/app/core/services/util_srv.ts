@@ -1,6 +1,6 @@
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
-import { showModal, hideModal, showConfirmModal } from '@grafana/data';
+import { showModal, hideModal, showConfirmModal } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export class UtilSrv {

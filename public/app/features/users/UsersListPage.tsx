@@ -1,12 +1,12 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { renderMarkdown, showConfirmModal } from '@grafana/data';
+import { renderMarkdown } from '@grafana/data';
 import Page from 'app/core/components/Page/Page';
 import UsersActionBar from './UsersActionBar';
 import UsersTable from './UsersTable';
 import InviteesTable from './InviteesTable';
-import { Invitee, OrgUser } from 'app/types';
+import { Invitee, OrgUser, showConfirmModal } from 'app/types';
 import appEvents from 'app/core/app_events';
 import { loadUsers, loadInvitees, setUsersSearchQuery, updateUser, removeUser } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';

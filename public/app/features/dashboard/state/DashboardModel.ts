@@ -13,19 +13,19 @@ import sortByKeys from 'app/core/utils/sort_by_keys';
 // Types
 import { PanelModel, GridPos, viewModeChanged, panelAdded, panelRemoved } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
+import { TimeRange, TimeZone, AppEvent } from '@grafana/data';
+import { UrlQueryValue } from '@grafana/runtime';
 import {
-  TimeRange,
-  TimeZone,
+  KIOSK_MODE_TV,
+  DashboardMeta,
+  panelEventRender,
   repeatsProcessed,
   rowExpanded,
   rowCollapsed,
   templateVariableValueUpdated,
   clientRefreshed,
   timeRangeUpdated as timeRangeUpdatedEvent,
-  AppEvent,
-} from '@grafana/data';
-import { UrlQueryValue } from '@grafana/runtime';
-import { KIOSK_MODE_TV, DashboardMeta, rendered } from 'app/types';
+} from 'app/types';
 import { toUtc, DateTimeInput, dateTime, isDateTime } from '@grafana/data';
 
 export interface CloneOptions {
@@ -243,7 +243,7 @@ export class DashboardModel {
   }
 
   render() {
-    this.events.emit(rendered);
+    this.events.emit(panelEventRender);
 
     for (const panel of this.panels) {
       panel.render();

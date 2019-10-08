@@ -5,7 +5,7 @@ import { SearchSrv } from 'app/core/services/search_srv';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/nav_model_srv';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { showConfirmModal, showModal } from '@grafana/data';
+import { showConfirmModal, showModal } from 'app/types';
 
 export interface Section {
   id: number;

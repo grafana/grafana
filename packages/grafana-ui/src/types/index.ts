@@ -4,4 +4,6 @@ export * from './app';
 export * from './datasource';
 export * from './theme';
 export * from './input';
-export * from './events';
+
+import * as PanelEvents from './events';
+export { PanelEvents };

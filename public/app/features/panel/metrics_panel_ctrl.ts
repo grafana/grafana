@@ -6,28 +6,12 @@ import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/utils/panel';
 import { ContextSrv } from 'app/core/services/context_srv';
-import {
-  toLegacyResponseData,
-  toDataFrameDTO,
-  TimeRange,
-  LoadingState,
-  DataFrame,
-  panelTeardown,
-  clientRefreshed,
-  dataFramesReceived,
-} from '@grafana/data';
+import { toLegacyResponseData, toDataFrameDTO, TimeRange, LoadingState, DataFrame } from '@grafana/data';
 
-import {
-  LegacyResponseData,
-  DataSourceApi,
-  PanelData,
-  DataQueryResponse,
-  dataSnapshotLoad,
-  dataError,
-  dataReceived,
-} from '@grafana/ui';
+import { LegacyResponseData, DataSourceApi, PanelData, DataQueryResponse, PanelEvents } from '@grafana/ui';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
+import { clientRefreshed, panelTeardown, dataFramesReceived } from 'app/types';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
@@ -88,7 +72,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       // Defer panel rendering till the next digest cycle.
       // For some reason snapshot panels don't init at this time, so this helps to avoid rendering issues.
       return this.$timeout(() => {
-        this.events.emit(dataSnapshotLoad, data);
+        this.events.emit(PanelEvents.dataSnapshotLoad, data);
       });
     }
 
@@ -128,7 +112,7 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     console.log('Panel data error:', err);
     return this.$timeout(() => {
-      this.events.emit(dataError, err);
+      this.events.emit(PanelEvents.dataError, err);
     });
   }
 
@@ -250,7 +234,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
 
     try {
-      this.events.emit(dataReceived, result.data);
+      this.events.emit(PanelEvents.dataReceived, result.data);
     } catch (err) {
       this.processDataError(err);
     }

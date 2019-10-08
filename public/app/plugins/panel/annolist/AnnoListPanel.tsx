@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { AnnoOptions } from './types';
-import { dateTime, alertWarning, DurationUnit, AnnotationEvent } from '@grafana/data';
+import { dateTime, DurationUnit, AnnotationEvent, alertWarning } from '@grafana/data';
 import { PanelProps, Tooltip } from '@grafana/ui';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { AbstractList } from '@grafana/ui/src/components/List/AbstractList';

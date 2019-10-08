@@ -2,7 +2,7 @@ import angular from 'angular';
 import * as fileExport from 'app/core/utils/file_export';
 import appEvents from 'app/core/app_events';
 import { DashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { hideModal } from '@grafana/data';
+import { hideModal } from 'app/types';
 
 export class ExportDataModalCtrl {
   private data: any;

@@ -4,7 +4,7 @@ import coreModule from 'app/core/core_module';
 import { DashboardModel } from 'app/features/dashboard/state';
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
 import { VariableSrv } from 'app/features/templating/all';
-import { templateVariableValueUpdated } from '@grafana/data';
+import { templateVariableValueUpdated } from 'app/types';
 
 export class AdHocFiltersCtrl {
   segments: any;

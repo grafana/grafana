@@ -1,7 +1,7 @@
 import store from 'app/core/store';
 import coreModule from 'app/core/core_module';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { layoutModeChanged } from '@grafana/data';
+import { layoutModeChanged } from 'app/types';
 
 const template = `
 <div class="layout-selector">

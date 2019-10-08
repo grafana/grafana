@@ -1,7 +1,7 @@
 import config from 'app/core/config';
 import coreModule from '../core_module';
 import appEvents from 'app/core/app_events';
-import { toggleSidemenuHidden } from '@grafana/data';
+import { toggleSidemenuHidden } from 'app/types';
 
 export class ErrorCtrl {
   /** @ngInject */

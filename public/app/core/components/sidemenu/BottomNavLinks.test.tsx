@@ -2,7 +2,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import BottomNavLinks from './BottomNavLinks';
 import appEvents from '../../app_events';
-import { showModal } from '@grafana/data';
+import { showModal } from 'app/types';
 
 jest.mock('../../app_events', () => ({
   emit: jest.fn(),

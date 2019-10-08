@@ -1,13 +1,6 @@
 import _ from 'lodash';
 import { sanitize, escapeHtml } from 'app/core/utils/text';
-import {
-  renderMarkdown,
-  componentDidMount,
-  editModeInitialized,
-  initPanelActions,
-  panelChangeView,
-  AppEvent,
-} from '@grafana/data';
+import { renderMarkdown, AppEvent } from '@grafana/data';
 
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';
@@ -28,7 +21,7 @@ import { TemplateSrv } from '../templating/template_srv';
 import { PanelPluginMeta } from '@grafana/ui/src/types/panel';
 import { getPanelLinksSupplier } from './panellinks/linkSuppliers';
 import TableModel from 'app/core/table_model';
-import { rendered } from 'app/types';
+import { panelEventRender, componentDidMount, editModeInitialized, initPanelActions, panelChangeView } from 'app/types';
 
 export class PanelCtrl {
   panel: any;
@@ -222,7 +215,7 @@ export class PanelCtrl {
   }
 
   render(payload?: TableModel | TimeSeries[]) {
-    this.events.emit(rendered, payload);
+    this.events.emit(panelEventRender, payload);
   }
 
   duplicate() {

@@ -4,12 +4,13 @@ import AppNotificationItem from './AppNotificationItem';
 import { notifyApp, clearAppNotification } from 'app/core/actions';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 import { AppNotification, StoreState } from 'app/types';
-import { alertWarning, alertSuccess, alertError } from '@grafana/data';
+
 import {
   createErrorNotification,
   createSuccessNotification,
   createWarningNotification,
 } from '../../copy/appNotification';
+import { alertWarning, alertSuccess, alertError } from '@grafana/data';
 
 export interface Props {
   appNotifications: AppNotification[];

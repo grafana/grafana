@@ -10,7 +10,7 @@ import sizeMe from 'react-sizeme';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { DashboardPanel } from './DashboardPanel';
 import { DashboardModel, PanelModel } from '../state';
-import { repeatsProcessed, rowCollapsed, rowExpanded } from '@grafana/data';
+import { repeatsProcessed, rowCollapsed, rowExpanded } from 'app/types';
 import { panelAdded, panelRemoved, viewModeChanged } from '../state/PanelModel';
 
 let lastGridWidth = 1200;

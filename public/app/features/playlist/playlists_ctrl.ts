@@ -2,7 +2,8 @@ import _ from 'lodash';
 import coreModule from '../../core/core_module';
 import { BackendSrv } from '@grafana/runtime';
 import { NavModelSrv } from 'app/core/nav_model_srv';
-import { alertSuccess, alertError, showConfirmModal } from '@grafana/data';
+import { showConfirmModal } from 'app/types';
+import { alertSuccess, alertError } from '@grafana/data';
 
 export class PlaylistsCtrl {
   playlists: any;

@@ -6,10 +6,10 @@ import { transformDataToTable } from './transformers';
 import { tablePanelEditor } from './editor';
 import { columnOptionsTab } from './column_options';
 import { TableRenderer } from './renderer';
-import { isTableData, showModal, editModeInitialized, initPanelActions } from '@grafana/data';
+import { isTableData } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { dataReceived, dataError, dataSnapshotLoad } from '@grafana/ui';
-import { rendered } from 'app/types';
+import { PanelEvents } from '@grafana/ui';
+import { panelEventRender, showModal, editModeInitialized, initPanelActions } from 'app/types';
 
 class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -70,9 +70,9 @@ class TablePanelCtrl extends MetricsPanelCtrl {
 
     _.defaults(this.panel, this.panelDefaults);
 
-    this.events.on(dataReceived, this.onDataReceived.bind(this));
-    this.events.on(dataError, this.onDataError.bind(this));
-    this.events.on(dataSnapshotLoad, this.onDataReceived.bind(this));
+    this.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this));
+    this.events.on(PanelEvents.dataError, this.onDataError.bind(this));
+    this.events.on(PanelEvents.dataSnapshotLoad, this.onDataReceived.bind(this));
     this.events.on(editModeInitialized, this.onInitEditMode.bind(this));
     this.events.on(initPanelActions, this.onInitPanelActions.bind(this));
   }
@@ -274,7 +274,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       unbindDestroy();
     });
 
-    ctrl.events.on(rendered, (renderData: any) => {
+    ctrl.events.on(panelEventRender, (renderData: any) => {
       data = renderData || data;
       if (data) {
         renderPanel();

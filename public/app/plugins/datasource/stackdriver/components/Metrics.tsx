@@ -6,7 +6,7 @@ import appEvents from 'app/core/app_events';
 import { MetricDescriptor } from '../types';
 import { MetricSelect } from 'app/core/components/Select/MetricSelect';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { dsRequestError } from '@grafana/data';
+import { dsRequestError } from 'app/types';
 
 export interface Props {
   onChange: (metricDescriptor: MetricDescriptor) => void;

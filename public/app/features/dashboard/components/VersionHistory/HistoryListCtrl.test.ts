@@ -3,8 +3,7 @@ import { HistoryListCtrl } from './HistoryListCtrl';
 import { versions, compare, restore } from './__mocks__/history';
 // @ts-ignore
 import $q from 'q';
-import { showConfirmModal } from '@grafana/data';
-import { dashboardSaved } from 'app/types';
+import { dashboardSaved, showConfirmModal } from 'app/types';
 
 describe('HistoryListCtrl', () => {
   const RESTORE_ID = 4;

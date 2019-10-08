@@ -5,7 +5,7 @@ import appEvents from 'app/core/app_events';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { VariableSrv } from './all';
 import { TemplateSrv } from './template_srv';
-import { alertError, alertWarning } from '@grafana/data';
+import { alertWarning, alertError } from '@grafana/data';
 
 export class VariableEditorCtrl {
   /** @ngInject */

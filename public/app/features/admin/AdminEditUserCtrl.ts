@@ -1,10 +1,9 @@
 import _ from 'lodash';
-import { dateTime, showConfirmModal } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/core';
 import { User } from 'app/core/services/context_srv';
-import { UserSession, Scope } from 'app/types';
-import { AppEventEmitter } from 'app/routes/GrafanaCtrl';
+import { UserSession, Scope, showConfirmModal, AppEventEmitter } from 'app/types';
+import { dateTime } from '@grafana/data';
 
 export default class AdminEditUserCtrl {
   /** @ngInject */

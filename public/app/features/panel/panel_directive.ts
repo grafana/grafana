@@ -4,9 +4,8 @@ import $ from 'jquery';
 import Drop from 'tether-drop';
 // @ts-ignore
 import baron from 'baron';
-import { componentDidMount, panelSizeChanged } from '@grafana/data';
 import { viewModeChanged } from '../dashboard/state/PanelModel';
-import { rendered } from 'app/types';
+import { panelEventRender, componentDidMount, panelSizeChanged } from 'app/types';
 
 const module = angular.module('grafana.directives');
 
@@ -126,7 +125,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         }, 10);
       });
 
-      ctrl.events.on(rendered, () => {
+      ctrl.events.on(panelEventRender, () => {
         // set initial height
         if (!ctrl.height) {
           ctrl.calculatePanelHeight(panelContainer[0].offsetHeight);

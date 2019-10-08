@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import coreModule from '../../core_module';
 import appEvents from 'app/core/app_events';
-import { hideDashSearch } from '@grafana/data';
+import { hideDashSearch } from 'app/types';
 
 export class SearchResultsCtrl {
   results: any;

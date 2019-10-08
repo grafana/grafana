@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import { appEvents } from 'app/core/core';
-import { graphHover, graphClicked, graphHoverClear } from '@grafana/data';
+import { graphHover, graphClicked, graphHoverClear } from 'app/types';
 
 export default function GraphTooltip(this: any, elem: any, dashboard: any, scope: any, getSeriesFn: any) {
   const self = this;

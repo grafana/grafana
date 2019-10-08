@@ -3,7 +3,7 @@ import { NavModelSrv } from 'app/core/core';
 import { ILocationService } from 'angular';
 import { BackendSrv } from '@grafana/runtime';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { showConfirmModal } from '@grafana/data';
+import { showConfirmModal } from 'app/types';
 
 export class SnapshotListCtrl {
   navModel: any;

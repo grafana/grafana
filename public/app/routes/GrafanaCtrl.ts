@@ -21,13 +21,8 @@ import { LocationUpdate, setLocationSrv } from '@grafana/runtime';
 import { updateLocation } from 'app/core/actions';
 
 // Types
-import { KioskUrlValue } from 'app/types';
-import { setLinkSrv, LinkSrv } from 'app/features/panel/panellinks/link_srv';
-import { UtilSrv } from 'app/core/services/util_srv';
-import { ContextSrv } from 'app/core/services/context_srv';
-import { BridgeSrv } from 'app/core/services/bridge_srv';
-import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 import {
+  KioskUrlValue,
   toggleSidemenuMobile,
   toggleSidemenuHidden,
   playlistStarted,
@@ -35,27 +30,16 @@ import {
   toggleKioskMode,
   toggleViewMode,
   hideDashSearch,
-  alertSuccess,
-  AppEvent,
-} from '@grafana/data';
+  AppEventEmitter,
+  AppEventConsumer,
+} from 'app/types';
+import { setLinkSrv, LinkSrv } from 'app/features/panel/panellinks/link_srv';
+import { UtilSrv } from 'app/core/services/util_srv';
+import { ContextSrv } from 'app/core/services/context_srv';
+import { BridgeSrv } from 'app/core/services/bridge_srv';
+import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 import { ILocationService, ITimeoutService, IRootScopeService, IAngularEvent } from 'angular';
-
-export interface AppEventEmitter {
-  /**
-   * DEPRECATED.
-   */
-  appEvent(name: string, data?: any): void;
-
-  appEvent<T extends undefined>(event: AppEvent<T>): void;
-  // This overload allows for omitting the appEvent payload if the payload's type only contains optional properties
-  appEvent<T extends Partial<T> extends T ? Partial<T> : never>(event: AppEvent<T>): void;
-  appEvent<T>(event: AppEvent<T>, payload: T): void;
-}
-
-export interface AppEventConsumer {
-  onAppEvent(name: string, callback: (event: IAngularEvent, ...args: any[]) => void, localScope?: any): void;
-  onAppEvent<T>(event: AppEvent<T>, callback: (event: IAngularEvent, ...args: any[]) => void, localScope?: any): void;
-}
+import { AppEvent, alertSuccess } from '@grafana/data';
 
 export type GrafanaRootScope = IRootScopeService & AppEventEmitter & AppEventConsumer & { colors: string[] };
 

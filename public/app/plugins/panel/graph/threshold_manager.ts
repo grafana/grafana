@@ -2,7 +2,7 @@ import 'vendor/flot/jquery.flot';
 import $ from 'jquery';
 import _ from 'lodash';
 import { getColorFromHexRgbOrName } from '@grafana/ui';
-import { thresholdChanged } from '@grafana/data';
+import { thresholdChanged } from 'app/types';
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 
 export class ThresholdManager {

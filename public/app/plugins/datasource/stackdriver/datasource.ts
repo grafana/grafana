@@ -8,7 +8,7 @@ import { ScopedVars } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { dsRequestError } from '@grafana/data';
+import { dsRequestError } from 'app/types';
 
 export default class StackdriverDatasource extends DataSourceApi<StackdriverQuery, StackdriverOptions> {
   url: string;

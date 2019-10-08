@@ -1,8 +1,6 @@
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/core';
-import { showConfirmModal } from '@grafana/data';
-import { AppEventEmitter } from 'app/routes/GrafanaCtrl';
-import { Scope } from 'app/types';
+import { Scope, showConfirmModal, AppEventEmitter } from 'app/types';
 
 export default class AdminListOrgsCtrl {
   /** @ngInject */

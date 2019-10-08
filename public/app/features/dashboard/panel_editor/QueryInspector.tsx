@@ -2,7 +2,8 @@ import React, { PureComponent } from 'react';
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
 import { LoadingPlaceholder, JSONFormatter } from '@grafana/ui';
-import { dsRequestResponse, dsRequestError, alertError, alertSuccess, clientRefreshed } from '@grafana/data';
+import { dsRequestResponse, dsRequestError, clientRefreshed } from 'app/types';
+import { alertError, alertSuccess } from '@grafana/data';
 
 interface DsQuery {
   isLoading: boolean;

@@ -5,7 +5,8 @@ import { AlertRule } from '../../types';
 import appEvents from '../../core/app_events';
 import { mockActionCreator } from 'app/core/redux';
 import { updateLocation } from 'app/core/actions';
-import { NavModel, showModal } from '@grafana/data';
+import { NavModel } from '@grafana/data';
+import { showModal } from 'app/types';
 
 jest.mock('../../core/app_events', () => ({
   emit: jest.fn(),

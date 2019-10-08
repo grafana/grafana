@@ -1,10 +1,10 @@
 // Libaries
 import React, { Component } from 'react';
-import { dateMath, shiftTime, zoomOut } from '@grafana/data';
+import { dateMath } from '@grafana/data';
 
 // Types
 import { DashboardModel } from '../../state';
-import { LocationState } from 'app/types';
+import { LocationState, shiftTime, zoomOut } from 'app/types';
 import { TimeRange, TimeOption, RawTimeRange } from '@grafana/data';
 
 // State

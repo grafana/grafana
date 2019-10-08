@@ -2,9 +2,8 @@ import angular, { ILocationService, IRootScopeService } from 'angular';
 import _ from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { GrafanaRootScope, AppEventConsumer } from 'app/routes/GrafanaCtrl';
-import { showModal, saveDashboard } from '@grafana/data';
-import { dashboardSaved } from 'app/types';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { dashboardSaved, showModal, saveDashboard, AppEventConsumer } from 'app/types';
 
 export class ChangeTracker {
   current: any;

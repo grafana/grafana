@@ -2,7 +2,7 @@ import angular from 'angular';
 import _ from 'lodash';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { dashLinksUpdated } from '@grafana/data';
+import { dashLinksUpdated } from 'app/types';
 
 export let iconMap = {
   'external link': 'fa-external-link',

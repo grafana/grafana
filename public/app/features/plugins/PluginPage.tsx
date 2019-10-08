@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import find from 'lodash/find';
 // Types
 import { UrlQueryMap } from '@grafana/runtime';
-import { AppNotificationSeverity, StoreState } from 'app/types';
+import { StoreState, AppNotificationSeverity, showModal } from 'app/types';
 import {
   Alert,
   AppPlugin,
@@ -18,7 +18,7 @@ import {
   PluginType,
   Tooltip,
 } from '@grafana/ui';
-import { NavModel, NavModelItem, showModal } from '@grafana/data';
+import { NavModel, NavModelItem } from '@grafana/data';
 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';

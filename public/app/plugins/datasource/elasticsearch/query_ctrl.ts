@@ -8,7 +8,7 @@ import * as queryDef from './query_def';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { ElasticsearchAggregation } from './types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { elasticQueryUpdated } from '@grafana/data';
+import { elasticQueryUpdated } from 'app/types';
 
 export class ElasticQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';

@@ -6,11 +6,11 @@ import AlertRuleItem from './AlertRuleItem';
 import appEvents from 'app/core/app_events';
 import { updateLocation } from 'app/core/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { StoreState, AlertRule } from 'app/types';
+import { StoreState, AlertRule, showModal } from 'app/types';
 import { getAlertRulesAsync, setSearchQuery, togglePauseAlertRule } from './state/actions';
 import { getAlertRuleItems, getSearchQuery } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
-import { NavModel, showModal } from '@grafana/data';
+import { NavModel } from '@grafana/data';
 
 export interface Props {
   navModel: NavModel;

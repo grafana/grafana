@@ -3,8 +3,8 @@ import coreModule from '../../core/core_module';
 import { ILocationService } from 'angular';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/nav_model_srv';
+import { AppEventEmitter } from 'app/types';
 import { alertSuccess, alertError } from '@grafana/data';
-import { AppEventEmitter } from 'app/routes/GrafanaCtrl';
 
 export interface PlaylistItem {
   value: any;

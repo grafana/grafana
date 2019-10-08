@@ -3,18 +3,19 @@ import { appEvents } from 'app/core/app_events';
 import locationUtil from 'app/core/utils/location_util';
 import { DashboardModel } from '../state/DashboardModel';
 import { removePanel } from '../utils/panel';
-import { DashboardMeta, dashboardSaved } from 'app/types';
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { BackendSrv } from 'app/core/services/backend_srv';
 import {
+  DashboardMeta,
+  dashboardSaved,
   saveDashboard,
   panelChangeView,
   removePanel as removePanelEvent,
-  alertSuccess,
   showModal,
   showConfirmModal,
-} from '@grafana/data';
+} from 'app/types';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { BackendSrv } from 'app/core/services/backend_srv';
 import { ILocationService } from 'angular';
+import { alertSuccess } from '@grafana/data';
 
 interface DashboardSaveOptions {
   folderId?: number;

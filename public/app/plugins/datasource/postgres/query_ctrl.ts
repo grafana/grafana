@@ -7,8 +7,8 @@ import PostgresQuery from './postgres_query';
 import sqlPart from './sql_part';
 import { auto, IQService } from 'angular';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { showConfirmModal } from '@grafana/data';
-import { dataReceived, dataError } from '@grafana/ui';
+import { showConfirmModal } from 'app/types';
+import { PanelEvents } from '@grafana/ui';
 
 export interface QueryMeta {
   sql: string;
@@ -101,8 +101,8 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.whereAdd = this.uiSegmentSrv.newPlusButton();
     this.groupAdd = this.uiSegmentSrv.newPlusButton();
 
-    this.panelCtrl.events.on(dataReceived, this.onDataReceived.bind(this), $scope);
-    this.panelCtrl.events.on(dataError, this.onDataError.bind(this), $scope);
+    this.panelCtrl.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this), $scope);
+    this.panelCtrl.events.on(PanelEvents.dataError, this.onDataError.bind(this), $scope);
   }
 
   updateRawSqlAndRefresh() {

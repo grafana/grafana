@@ -4,7 +4,7 @@ import store from 'app/core/store';
 // Models
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel, panelRemoved, panelAdded } from 'app/features/dashboard/state/PanelModel';
-import { TimeRange, showModal, alertSuccess, showConfirmModal } from '@grafana/data';
+import { TimeRange, alertSuccess } from '@grafana/data';
 
 // Utils
 import { isString as _isString } from 'lodash';
@@ -18,6 +18,7 @@ import templateSrv from 'app/features/templating/template_srv';
 
 // Constants
 import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
+import { showConfirmModal, showModal } from 'app/types';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion

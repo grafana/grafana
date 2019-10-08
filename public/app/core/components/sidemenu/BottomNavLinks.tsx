@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
 import appEvents from '../../app_events';
 import { User } from '../../services/context_srv';
-import { NavModelItem, showModal } from '@grafana/data';
+import { NavModelItem } from '@grafana/data';
+import { showModal } from 'app/types';
 
 export interface Props {
   link: NavModelItem;

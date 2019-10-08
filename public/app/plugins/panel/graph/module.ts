@@ -11,25 +11,23 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { getColorFromHexRgbOrName, VariableSuggestion, dataError, dataSnapshotLoad } from '@grafana/ui';
+import { getColorFromHexRgbOrName, VariableSuggestion, PanelEvents } from '@grafana/ui';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
-import {
-  DataFrame,
-  DataLink,
-  DateTimeInput,
-  initPanelActions,
-  dataFramesReceived,
-  zoomOut,
-  editModeInitialized,
-  showModal,
-} from '@grafana/data';
+import { DataFrame, DataLink, DateTimeInput } from '@grafana/data';
 
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { auto } from 'angular';
 import { AnnotationsSrv } from 'app/features/annotations/all';
-import { rendered } from 'app/types';
+import {
+  panelEventRender,
+  initPanelActions,
+  dataFramesReceived,
+  zoomOut,
+  editModeInitialized,
+  showModal,
+} from 'app/types';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -157,10 +155,10 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.processor = new DataProcessor(this.panel);
     this.contextMenuCtrl = new GraphContextMenuCtrl($scope);
 
-    this.events.on(rendered, this.onRender.bind(this));
+    this.events.on(panelEventRender, this.onRender.bind(this));
     this.events.on(dataFramesReceived, this.onDataFramesReceived.bind(this));
-    this.events.on(dataError, this.onDataError.bind(this));
-    this.events.on(dataSnapshotLoad, this.onDataSnapshotLoad.bind(this));
+    this.events.on(PanelEvents.dataReceived, this.onDataError.bind(this));
+    this.events.on(PanelEvents.dataSnapshotLoad, this.onDataSnapshotLoad.bind(this));
     this.events.on(editModeInitialized, this.onInitEditMode.bind(this));
     this.events.on(initPanelActions, this.onInitPanelActions.bind(this));
 

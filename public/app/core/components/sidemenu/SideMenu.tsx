@@ -3,7 +3,7 @@ import appEvents from '../../app_events';
 import TopSection from './TopSection';
 import BottomSection from './BottomSection';
 import config from 'app/core/config';
-import { toggleSidemenuMobile } from '@grafana/data';
+import { toggleSidemenuMobile } from 'app/types';
 
 const homeUrl = config.appSubUrl || '/';
 

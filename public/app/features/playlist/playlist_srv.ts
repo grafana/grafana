@@ -8,7 +8,7 @@ import appEvents from 'app/core/app_events';
 import locationUtil from 'app/core/utils/location_util';
 import kbn from 'app/core/utils/kbn';
 import { store } from 'app/store/store';
-import { toggleKioskMode, playlistStarted, playlistStopped } from '@grafana/data';
+import { toggleKioskMode, playlistStarted, playlistStopped } from 'app/types';
 
 export const queryParamsToPreserve: { [key: string]: boolean } = {
   kiosk: true,

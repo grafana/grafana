@@ -16,8 +16,6 @@ import {
   LinkModel,
   reduceField,
   ReducerID,
-  dataFramesReceived,
-  editModeInitialized,
 } from '@grafana/data';
 
 import {
@@ -26,11 +24,10 @@ import {
   getDisplayProcessor,
   convertOldAngulrValueMapping,
   getColorFromHexRgbOrName,
-  dataError,
-  dataSnapshotLoad,
+  PanelEvents,
 } from '@grafana/ui';
 
-import { rendered } from 'app/types';
+import { panelEventRender, dataFramesReceived, editModeInitialized } from 'app/types';
 import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
@@ -126,8 +123,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     _.defaults(this.panel, this.panelDefaults);
 
     this.events.on(dataFramesReceived, this.onFramesReceived.bind(this));
-    this.events.on(dataError, this.onDataError.bind(this));
-    this.events.on(dataSnapshotLoad, this.onSnapshotLoad.bind(this));
+    this.events.on(PanelEvents.dataError, this.onDataError.bind(this));
+    this.events.on(PanelEvents.dataSnapshotLoad, this.onSnapshotLoad.bind(this));
     this.events.on(editModeInitialized, this.onInitEditMode.bind(this));
 
     this.useDataFrames = true;
@@ -665,7 +662,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     hookupDrilldownLinkTooltip();
 
-    this.events.on(rendered, () => {
+    this.events.on(panelEventRender, () => {
       render();
       ctrl.renderingCompleted();
     });

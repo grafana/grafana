@@ -2,7 +2,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import { SideMenu } from './SideMenu';
 import appEvents from '../../app_events';
-import { toggleSidemenuMobile } from '@grafana/data';
+import { toggleSidemenuMobile } from 'app/types';
 
 jest.mock('../../app_events', () => ({
   emit: jest.fn(),

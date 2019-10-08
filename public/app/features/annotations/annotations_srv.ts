@@ -15,7 +15,8 @@ import DatasourceSrv from '../plugins/datasource_srv';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv } from '../dashboard/services/TimeSrv';
 import { DataSourceApi } from '@grafana/ui';
-import { AnnotationEvent, clientRefreshed, alertError } from '@grafana/data';
+import { AnnotationEvent, alertError } from '@grafana/data';
+import { clientRefreshed } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export class AnnotationsSrv {

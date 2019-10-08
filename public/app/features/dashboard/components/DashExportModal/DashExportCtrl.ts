@@ -6,7 +6,7 @@ import { DashboardExporter } from './DashboardExporter';
 import { DashboardSrv } from '../../services/DashboardSrv';
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { showModal } from '@grafana/data';
+import { showModal } from 'app/types';
 
 export class DashExportCtrl {
   dash: any;

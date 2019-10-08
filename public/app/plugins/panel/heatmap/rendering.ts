@@ -7,8 +7,8 @@ import { HeatmapTooltip } from './heatmap_tooltip';
 import { mergeZeroBuckets } from './heatmap_data_converter';
 import { getColorScale, getOpacityScale } from './color_scale';
 import { GrafanaThemeType, getColorFromHexRgbOrName, getValueFormat } from '@grafana/ui';
-import { toUtc, graphHover, graphHoverClear } from '@grafana/data';
-import { rendered } from 'app/types';
+import { toUtc } from '@grafana/data';
+import { panelEventRender, graphHover, graphHoverClear } from 'app/types';
 
 const MIN_CARD_SIZE = 1,
   CARD_PADDING = 1,
@@ -67,7 +67,7 @@ export class HeatmapRenderer {
     this.margin = { left: 25, right: 15, top: 10, bottom: 20 };
     this.dataRangeWidingFactor = DATA_RANGE_WIDING_FACTOR;
 
-    this.ctrl.events.on(rendered, this.onRender.bind(this));
+    this.ctrl.events.on(panelEventRender, this.onRender.bind(this));
 
     this.ctrl.tickValueFormatter = this.tickValueFormatter.bind(this);
 

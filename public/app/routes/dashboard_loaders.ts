@@ -4,9 +4,7 @@ import { UrlQueryMap } from '@grafana/runtime';
 import { DashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { ILocationService } from 'angular';
-import { AppEventEmitter } from './GrafanaCtrl';
-import { dashboardFetchStart } from '@grafana/data';
-import { Scope } from 'app/types';
+import { Scope, dashboardFetchStart, AppEventEmitter } from 'app/types';
 
 export class LoadDashboardCtrl {
   /** @ngInject */

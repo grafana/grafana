@@ -5,21 +5,13 @@ import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
 // Types
 import { DataQuery, DataQueryResponseData, PanelPlugin } from '@grafana/ui';
-import {
-  DataLink,
-  DataTransformerConfig,
-  ScopedVars,
-  panelSizeChanged,
-  panelInitialized,
-  panelTeardown,
-  clientRefreshed,
-  eventFactory,
-} from '@grafana/data';
+import { DataLink, DataTransformerConfig, ScopedVars } from '@grafana/data';
 
 import config from 'app/core/config';
 
 import { PanelQueryRunner } from './PanelQueryRunner';
-import { rendered } from 'app/types';
+import { panelEventRender, panelSizeChanged, panelInitialized, panelTeardown, clientRefreshed } from 'app/types';
+import { eventFactory } from '@grafana/data';
 
 export const viewModeChanged = eventFactory('view-mode-changed');
 export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
@@ -226,7 +218,7 @@ export class PanelModel {
     if (!this.hasRefreshed) {
       this.refresh();
     } else {
-      this.events.emit(rendered);
+      this.events.emit(panelEventRender);
     }
   }
 

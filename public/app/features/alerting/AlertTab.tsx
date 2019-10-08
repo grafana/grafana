@@ -19,7 +19,7 @@ import { TestRuleResult } from './TestRuleResult';
 import { AppNotificationSeverity, StoreState } from 'app/types';
 import { PanelEditorTabIds, getPanelEditorTab } from '../dashboard/panel_editor/state/reducers';
 import { changePanelEditorTab } from '../dashboard/panel_editor/state/actions';
-import { showConfirmModal } from '@grafana/data';
+import { showConfirmModal } from 'app/types';
 
 interface Props {
   angularPanel?: AngularComponent;

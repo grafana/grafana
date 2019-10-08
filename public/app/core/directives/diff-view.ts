@@ -1,7 +1,7 @@
 import angular from 'angular';
 import coreModule from '../core_module';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { jsonDiffReady } from '@grafana/data';
+import { jsonDiffReady } from 'app/types';
 
 export class DeltaCtrl {
   observer: any;

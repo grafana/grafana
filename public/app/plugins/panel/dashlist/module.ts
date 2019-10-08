@@ -4,7 +4,7 @@ import impressionSrv from 'app/core/services/impression_srv';
 import { auto } from 'angular';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { clientRefreshed, editModeInitialized } from '@grafana/data';
+import { clientRefreshed, editModeInitialized } from 'app/types';
 
 class DashListCtrl extends PanelCtrl {
   static templateUrl = 'module.html';

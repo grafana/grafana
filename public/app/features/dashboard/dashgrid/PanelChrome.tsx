@@ -14,16 +14,8 @@ import templateSrv from 'app/features/templating/template_srv';
 import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
-import {
-  LoadingState,
-  ScopedVars,
-  AbsoluteTimeRange,
-  DefaultTimeRange,
-  toUtc,
-  toDataFrameDTO,
-  clientRefreshed,
-} from '@grafana/data';
-import { rendered } from 'app/types';
+import { LoadingState, ScopedVars, AbsoluteTimeRange, DefaultTimeRange, toUtc, toDataFrameDTO } from '@grafana/data';
+import { panelEventRender, clientRefreshed } from 'app/types';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -69,7 +61,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   componentDidMount() {
     const { panel, dashboard } = this.props;
     panel.events.on(clientRefreshed, this.onRefresh);
-    panel.events.on(rendered, this.onRender);
+    panel.events.on(panelEventRender, this.onRender);
     dashboard.panelInitialized(this.props.panel);
 
     // Move snapshot data into the query response

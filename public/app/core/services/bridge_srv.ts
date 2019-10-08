@@ -4,7 +4,7 @@ import { store } from 'app/store/store';
 import locationUtil from 'app/core/utils/location_util';
 import { updateLocation } from 'app/core/actions';
 import { ITimeoutService, ILocationService, IWindowService } from 'angular';
-import { LocationChangePayload, locationChange } from '@grafana/data';
+import { LocationChangePayload, locationChange } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 // Services that handles angular -> redux store sync & other react <-> angular sync

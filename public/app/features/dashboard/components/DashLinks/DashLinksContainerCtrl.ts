@@ -4,7 +4,7 @@ import { iconMap } from './DashLinksEditorCtrl';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../../services/DashboardSrv';
-import { clientRefreshed, dashLinksUpdated } from '@grafana/data';
+import { clientRefreshed, dashLinksUpdated } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export type DashboardLink = { tags: any; target: string; keepTime: any; includeVars: any };

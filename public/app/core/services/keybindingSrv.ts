@@ -20,13 +20,14 @@ import {
   saveDashboard,
   zoomOut,
   shiftTime,
-} from '@grafana/data';
+  AppEventEmitter,
+} from 'app/types';
 
 import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
 import { ContextSrv } from './context_srv';
 import { ILocationService, ITimeoutService, IRootScopeService } from 'angular';
-import { GrafanaRootScope, AppEventEmitter } from 'app/routes/GrafanaCtrl';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export class KeybindingSrv {
   helpModal: boolean;

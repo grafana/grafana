@@ -1,7 +1,8 @@
 import React, { FormEvent } from 'react';
 import classNames from 'classnames';
 import appEvents from 'app/core/app_events';
-import { NavModel, NavModelItem, NavModelBreadcrumb, locationChange } from '@grafana/data';
+import { NavModel, NavModelItem, NavModelBreadcrumb } from '@grafana/data';
+import { locationChange } from 'app/types';
 
 export interface Props {
   model: NavModel;

@@ -33,12 +33,12 @@ import {
   getFlotPairsConstant,
 } from '@grafana/ui';
 import { provideTheme, getCurrentTheme } from 'app/core/utils/ConfigProvider';
-import { toUtc, LinkModelSupplier, DataFrameView, panelTeardown, graphHover, graphHoverClear } from '@grafana/data';
+import { toUtc, LinkModelSupplier, DataFrameView } from '@grafana/data';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
-import { rendered } from 'app/types';
+import { panelEventRender, panelTeardown, graphHover, graphHoverClear } from 'app/types';
 
 const LegendWithThemeProvider = provideTheme(Legend);
 
@@ -76,7 +76,7 @@ class GraphElement {
 
     // panel events
     this.ctrl.events.on(panelTeardown, this.onPanelTeardown.bind(this));
-    this.ctrl.events.on(rendered, this.onRender.bind(this));
+    this.ctrl.events.on(panelEventRender, this.onRender.bind(this));
 
     // global events
     appEvents.on(graphHover, this.onGraphHover.bind(this), scope);

@@ -6,7 +6,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import appEvents from 'app/core/app_events';
 import { parse, SearchParserOptions, SearchParserResult } from 'search-query-parser';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { showDashSearch, hideDashSearch, searchQuery } from '@grafana/data';
+import { showDashSearch, hideDashSearch, searchQuery } from 'app/types';
 
 export interface SearchQuery {
   query: string;

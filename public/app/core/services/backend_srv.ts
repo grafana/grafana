@@ -6,9 +6,9 @@ import config from 'app/core/config';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardSearchHit } from 'app/types/search';
 import { ContextSrv } from './context_srv';
-import { FolderInfo, DashboardDTO } from 'app/types';
+import { FolderInfo, DashboardDTO, dsRequestResponse, dsRequestError } from 'app/types';
 import { BackendSrv as BackendService, getBackendSrv as getBackendService, BackendSrvRequest } from '@grafana/runtime';
-import { alertWarning, alertSuccess, dsRequestResponse, dsRequestError, alertError } from '@grafana/data';
+import { alertWarning, alertError, alertSuccess } from '@grafana/data';
 
 export class BackendSrv implements BackendService {
   private inFlightRequests: { [key: string]: Array<angular.IDeferred<any>> } = {};

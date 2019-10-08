@@ -1,7 +1,7 @@
 import { SearchResultsCtrl } from '../components/search/search_results';
 import { beforeEach, afterEach } from 'test/lib/common';
 import appEvents from 'app/core/app_events';
-import { hideDashSearch } from '@grafana/data';
+import { hideDashSearch } from 'app/types';
 
 jest.mock('app/core/app_events', () => {
   return {

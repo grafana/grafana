@@ -4,7 +4,7 @@ import * as queryDef from './query_def';
 import { ElasticsearchAggregation } from './types';
 import { IQService } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { elasticQueryUpdated } from '@grafana/data';
+import { elasticQueryUpdated } from 'app/types';
 
 export class ElasticMetricAggCtrl {
   /** @ngInject */

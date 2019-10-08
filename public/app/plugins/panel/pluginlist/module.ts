@@ -3,7 +3,7 @@ import { PanelCtrl } from '../../../features/panel/panel_ctrl';
 import { auto } from 'angular';
 import { BackendSrv } from '@grafana/runtime';
 import { ContextSrv } from '../../../core/services/context_srv';
-import { editModeInitialized, showModal } from '@grafana/data';
+import { editModeInitialized, showModal } from 'app/types';
 
 class PluginListCtrl extends PanelCtrl {
   static templateUrl = 'module.html';
