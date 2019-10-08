@@ -57,6 +57,14 @@
       width: 100%;
     }
   }
+
+  .time-picker-long-date {
+    .select-button {
+      span {
+        display: none;
+      }
+    }
+  }
 }
 
 .explore-toolbar-item:last-child {
