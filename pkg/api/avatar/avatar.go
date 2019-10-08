@@ -9,8 +9,6 @@ package avatar
 import (
 	"bufio"
 	"bytes"
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -41,21 +39,6 @@ func UpdateGravatarSource() {
 		!strings.HasPrefix(gravatarSource, "https://") {
 		gravatarSource = "http://" + gravatarSource
 	}
-}
-
-// hash email to md5 string
-// keep this func in order to make this package independent
-func HashEmail(email string) string {
-	// https://en.gravatar.com/site/implement/hash/
-	email = strings.TrimSpace(email)
-	email = strings.ToLower(email)
-
-	h := md5.New()
-	if _, err := h.Write([]byte(email)); err != nil {
-		// TODO: Deal with error
-		log.Warn("Failed to hash email address: %s", err)
-	}
-	return hex.EncodeToString(h.Sum(nil))
 }
 
 // Avatar represents the avatar object.
