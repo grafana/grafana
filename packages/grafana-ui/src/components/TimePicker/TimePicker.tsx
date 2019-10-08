@@ -1,5 +1,7 @@
 // Libraries
 import React, { PureComponent, createRef } from 'react';
+import { css } from 'emotion';
+import memoizeOne from 'memoize-one';
 import classNames from 'classnames';
 
 // Components
@@ -12,15 +14,41 @@ import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper'
 import { isDateTime, DateTime } from '@grafana/data';
 import { rangeUtil } from '@grafana/data';
 import { rawToTimeRange } from './time';
+import { withTheme } from '../../themes/ThemeContext';
 
 // Types
-import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue } from '@grafana/data';
-import { dateMath } from '@grafana/data';
+import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue, dateMath } from '@grafana/data';
+import { GrafanaTheme } from '../../types/theme';
+import { Themeable } from '../../types';
 
-export interface Props {
+const getStyles = memoizeOne((theme: GrafanaTheme) => {
+  return {
+    timePickerSynced: css`
+      label: timePickerSynced;
+      border-color: ${theme.colors.orangeDark};
+      background-image: none;
+      background-color: transparent;
+      color: ${theme.colors.orangeDark};
+      &:focus,
+      :hover {
+        color: ${theme.colors.orangeDark};
+        background-image: none;
+        background-color: transparent;
+      }
+    `,
+    noRightBorderStyle: css`
+      label: noRightBorderStyle;
+      border-right: 0;
+    `,
+  };
+});
+
+export interface Props extends Themeable {
   value: TimeRange;
   selectOptions: TimeOption[];
   timeZone?: TimeZone;
+  timeSyncButton?: JSX.Element;
+  isSynced?: boolean;
   onChange: (timeRange: TimeRange) => void;
   onMoveBackward: () => void;
   onMoveForward: () => void;
@@ -71,7 +99,7 @@ const defaultZoomOutTooltip = () => {
 export interface State {
   isCustomOpen: boolean;
 }
-export class TimePicker extends PureComponent<Props, State> {
+class UnThemedTimePicker extends PureComponent<Props, State> {
   pickerTriggerRef = createRef<HTMLDivElement>();
 
   state: State = {
@@ -121,7 +149,19 @@ export class TimePicker extends PureComponent<Props, State> {
   };
 
   render() {
-    const { selectOptions: selectTimeOptions, value, onMoveBackward, onMoveForward, onZoom, timeZone } = this.props;
+    const {
+      selectOptions: selectTimeOptions,
+      value,
+      onMoveBackward,
+      onMoveForward,
+      onZoom,
+      timeZone,
+      timeSyncButton,
+      isSynced,
+      theme,
+    } = this.props;
+
+    const styles = getStyles(theme);
     const { isCustomOpen } = this.state;
     const options = this.mapTimeOptionsToSelectableValues(selectTimeOptions);
     const currentOption = options.find(item => isTimeOptionEqualToTimeRange(item.value, value));
@@ -154,7 +194,10 @@ export class TimePicker extends PureComponent<Props, State> {
             </button>
           )}
           <ButtonSelect
-            className={classNames('time-picker-button-select', isLongDate ? 'time-picker-long-date' : '')}
+            className={classNames('time-picker-button-select', isLongDate ? 'time-picker-long-date' : null, {
+              [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: timeSyncButton,
+              [styles.timePickerSynced]: timeSyncButton ? isSynced : null,
+            })}
             value={currentOption}
             label={label}
             options={options}
@@ -163,6 +206,9 @@ export class TimePicker extends PureComponent<Props, State> {
             iconClass={'fa fa-clock-o fa-fw'}
             tooltipContent={<TimePickerTooltipContent timeRange={value} />}
           />
+
+          {timeSyncButton}
+
           {isAbsolute && (
             <button className="btn navbar-button navbar-button--tight" onClick={onMoveForward}>
               <i className="fa fa-chevron-right" />
@@ -197,3 +243,5 @@ const TimePickerTooltipContent = ({ timeRange }: { timeRange: TimeRange }) => (
 function isTimeOptionEqualToTimeRange(option: TimeOption, range: TimeRange): boolean {
   return range.raw.from === option.from && range.raw.to === option.to;
 }
+
+export const TimePicker = withTheme(UnThemedTimePicker);

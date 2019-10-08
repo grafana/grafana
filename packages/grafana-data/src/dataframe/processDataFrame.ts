@@ -127,6 +127,33 @@ function convertGraphSeriesToDataFrame(graphSeries: GraphSeriesXY): DataFrame {
   };
 }
 
+function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
+  const fields = [
+    {
+      name: timeSeries.target,
+      type: FieldType.other,
+      config: {
+        unit: timeSeries.unit,
+        filterable: (timeSeries as any).filterable,
+      },
+      values: new ArrayVector(),
+    },
+  ];
+
+  for (const point of timeSeries.datapoints) {
+    fields[0].values.buffer.push(point);
+  }
+
+  return {
+    name: timeSeries.target,
+    labels: timeSeries.tags,
+    refId: timeSeries.target,
+    meta: { json: true },
+    fields,
+    length: timeSeries.datapoints.length,
+  };
+}
+
 // PapaParse Dynamic Typing regex:
 // https://github.com/mholt/PapaParse/blob/master/papaparse.js#L998
 const NUMBER = /^\s*-?(\d*\.?\d+|\d+\.?\d*)(e[-+]?\d+)?\s*$/i;
@@ -241,6 +268,11 @@ export const toDataFrame = (data: any): DataFrame => {
     return new MutableDataFrame(data as DataFrameDTO);
   }
 
+  // Handle legacy docs/json type
+  if (data.hasOwnProperty('type') && data.type === 'docs') {
+    return convertJSONDocumentDataToDataFrame(data);
+  }
+
   if (data.hasOwnProperty('datapoints')) {
     return convertTimeSeriesToDataFrame(data);
   }
@@ -286,6 +318,16 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
         meta: frame.meta,
       } as TimeSeries;
     }
+  }
+
+  if (frame.meta && frame.meta.json) {
+    return {
+      alias: fields[0].name || frame.name,
+      target: fields[0].name || frame.name,
+      datapoints: fields[0].values.toArray(),
+      filterable: fields[0].config ? fields[0].config.filterable : undefined,
+      type: 'docs',
+    } as TimeSeries;
   }
 
   return {
