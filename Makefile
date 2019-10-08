@@ -44,9 +44,16 @@ build-docker-full:
 	@echo "build docker container"
 	docker build --tag grafana/grafana:dev .
 
-test-go:
-	@echo "test backend"
+test-go-grafana:
+	@echo "test backend grafana"
 	$(GO) test -v ./pkg/...
+
+test-go-sdk:
+	@echo "test backend sdk"
+	@cd pkg/plugins/sdk; \
+	$(GO) test -v ./...
+
+test-go: test-go-grafana test-go-sdk
 
 test-js:
 	@echo "test frontend"
