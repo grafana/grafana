@@ -91,7 +91,7 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 		}
 
 		RefId := queryContext.Queries[i].RefId
-		query, err := parseQuery(queryContext.Queries[i].Model)
+		query, err := parseQuery(queryContext.Queries[i].Model, RefId)
 		if err != nil {
 			results.Results[RefId] = &tsdb.QueryResult{
 				Error: err,
@@ -100,14 +100,14 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 		}
 		query.RefId = RefId
 
-		if query.Id != "" {
-			query.Id = strings.ToLower(query.RefId)
-		}
+		// if query.Id == "" {
+		// 	query.Id = strings.ToLower(query.RefId)
+		// }
 
 		if _, ok := getMetricDataQueries[query.Region]; !ok {
 			getMetricDataQueries[query.Region] = make(map[string]*CloudWatchQuery)
 		}
-		getMetricDataQueries[query.Region][query.Id] = query
+		getMetricDataQueries[query.Region][RefId] = query
 
 		// eg.Go(func() error {
 		// 	defer func() {
