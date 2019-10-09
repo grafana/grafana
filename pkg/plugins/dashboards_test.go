@@ -12,7 +12,6 @@ import (
 )
 
 func TestPluginDashboards(t *testing.T) {
-
 	Convey("When asking plugin dashboard info", t, func() {
 		setting.Raw = ini.Empty()
 		sec, _ := setting.Raw.NewSection("plugin.test-app")
