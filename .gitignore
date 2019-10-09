@@ -99,4 +99,4 @@ theOutput/
 compilation-stats.json
 
 # Ignore plugins sdk stuff
-./pkg/plugins/sdk/js/lib
+/pkg/plugins/sdk/js/lib
