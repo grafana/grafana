@@ -21,12 +21,10 @@ type userAuthToken struct {
 	UnhashedToken string `xorm:"-"`
 }
 
-func userAuthTokenFromUserToken(ut *models.UserToken) *userAuthToken {
+func userAuthTokenFromUserToken(ut *models.UserToken) (*userAuthToken, error) {
 	var uat userAuthToken
-	if err := uat.fromUserToken(ut); err != nil {
-		// TODO: Deal with error
-	}
-	return &uat
+	err := uat.fromUserToken(ut)
+	return &uat, err
 }
 
 func (uat *userAuthToken) fromUserToken(ut *models.UserToken) error {

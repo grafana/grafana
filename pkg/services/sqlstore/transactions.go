@@ -43,7 +43,10 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callbac
 	// special handling of database locked errors for sqlite, then we can retry 5 times
 	if sqlError, ok := err.(sqlite3.Error); ok && retry < 5 {
 		if sqlError.Code == sqlite3.ErrLocked || sqlError.Code == sqlite3.ErrBusy {
-			sess.Rollback()
+			if err := sess.Rollback(); err != nil {
+				return err
+			}
+
 			time.Sleep(time.Millisecond * time.Duration(10))
 			sqlog.Info("Database locked, sleeping then retrying", "error", err, "retry", retry)
 			return inTransactionWithRetry(callback, retry+1)
@@ -51,9 +54,12 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callbac
 	}
 
 	if err != nil {
-		sess.Rollback()
+		if err := sess.Rollback(); err != nil {
+			return err
+		}
 		return err
-	} else if err = sess.Commit(); err != nil {
+	}
+	if err := sess.Commit(); err != nil {
 		return err
 	}
 

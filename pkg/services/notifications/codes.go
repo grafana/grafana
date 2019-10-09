@@ -16,7 +16,7 @@ const timeLimitCodeLength = 12 + 6 + 40
 
 // create a time limit code
 // code format: 12 length date time string + 6 minutes string + 40 sha1 encoded string
-func createTimeLimitCode(data string, minutes int, startInf interface{}) string {
+func createTimeLimitCode(data string, minutes int, startInf interface{}) (string, error) {
 	format := "200601021504"
 
 	var start, end time.Time
@@ -40,18 +40,18 @@ func createTimeLimitCode(data string, minutes int, startInf interface{}) string 
 	sh := sha1.New()
 	if _, err := sh.Write([]byte(data + setting.SecretKey + startStr + endStr +
 		com.ToStr(minutes))); err != nil {
-		// TODO: Deal with error
+		return "", err
 	}
 	encoded := hex.EncodeToString(sh.Sum(nil))
 
 	code := fmt.Sprintf("%s%06d%s", startStr, minutes, encoded)
-	return code
+	return code, nil
 }
 
 // verify time limit code
-func validateUserEmailCode(user *m.User, code string) bool {
+func validateUserEmailCode(user *m.User, code string) (bool, error) {
 	if len(code) <= 18 {
-		return false
+		return false, nil
 	}
 
 	minutes := setting.EmailCodeValidMinutes
@@ -66,18 +66,21 @@ func validateUserEmailCode(user *m.User, code string) bool {
 
 	// right active code
 	data := com.ToStr(user.Id) + user.Email + user.Login + user.Password + user.Rands
-	retCode := createTimeLimitCode(data, minutes, start)
+	retCode, err := createTimeLimitCode(data, minutes, start)
+	if err != nil {
+		return false, err
+	}
 	fmt.Printf("code : %s\ncode2: %s", retCode, code)
 	if retCode == code && minutes > 0 {
 		// check time is expired or not
 		before, _ := time.ParseInLocation("200601021504", start, time.Local)
 		now := time.Now()
 		if before.Add(time.Minute*time.Duration(minutes)).Unix() > now.Unix() {
-			return true
+			return true, nil
 		}
 	}
 
-	return false
+	return false, nil
 }
 
 func getLoginForEmailCode(code string) string {
@@ -91,12 +94,15 @@ func getLoginForEmailCode(code string) string {
 	return string(b)
 }
 
-func createUserEmailCode(u *m.User, startInf interface{}) string {
+func createUserEmailCode(u *m.User, startInf interface{}) (string, error) {
 	minutes := setting.EmailCodeValidMinutes
 	data := com.ToStr(u.Id) + u.Email + u.Login + u.Password + u.Rands
-	code := createTimeLimitCode(data, minutes, startInf)
+	code, err := createTimeLimitCode(data, minutes, startInf)
+	if err != nil {
+		return "", err
+	}
 
 	// add tail hex username
 	code += hex.EncodeToString([]byte(u.Login))
-	return code
+	return code, nil
 }

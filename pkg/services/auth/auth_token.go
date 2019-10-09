@@ -201,7 +201,10 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *models
 		return false, nil
 	}
 
-	model := userAuthTokenFromUserToken(token)
+	model, err := userAuthTokenFromUserToken(token)
+	if err != nil {
+		return false, nil
+	}
 
 	now := getTime()
 
@@ -276,10 +279,12 @@ func (s *UserAuthTokenService) RevokeToken(ctx context.Context, token *models.Us
 		return models.ErrUserTokenNotFound
 	}
 
-	model := userAuthTokenFromUserToken(token)
+	model, err := userAuthTokenFromUserToken(token)
+	if err != nil {
+		return err
+	}
 
 	var rowsAffected int64
-	var err error
 	err = s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		rowsAffected, err = dbSession.Delete(model)
 		return err
