@@ -2,7 +2,6 @@ package cloudwatch
 
 import (
 	"context"
-	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -80,24 +79,67 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 	results := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
 	}
+	resultChan := make(chan *tsdb.QueryResult, len(queryContext.Queries))
 
-	metricQueriesByRegion, err := e.buildQueriesByRegion(queryContext)
-	if err != nil {
-		if e, ok := err.(*queryBuilderError); ok {
-			results.Results[e.RefID] = &tsdb.QueryResult{
+	eg, ectx := errgroup.WithContext(ctx)
+
+	getMetricDataQueries := make(map[string]map[string]*CloudWatchQuery)
+	for i, model := range queryContext.Queries {
+		queryType := model.Model.Get("type").MustString()
+		if queryType != "timeSeriesQuery" && queryType != "" {
+			continue
+		}
+
+		RefId := queryContext.Queries[i].RefId
+		query, err := parseQuery(queryContext.Queries[i].Model)
+		if err != nil {
+			results.Results[RefId] = &tsdb.QueryResult{
 				Error: err,
 			}
 			return results, nil
-		} else {
-			return results, err
 		}
+		query.RefId = RefId
+
+		if query.Id != "" {
+			query.Id = strings.ToLower(query.RefId)
+		}
+
+		if _, ok := getMetricDataQueries[query.Region]; !ok {
+			getMetricDataQueries[query.Region] = make(map[string]*CloudWatchQuery)
+		}
+		getMetricDataQueries[query.Region][query.Id] = query
+
+		// eg.Go(func() error {
+		// 	defer func() {
+		// 		if err := recover(); err != nil {
+		// 			plog.Error("Execute Query Panic", "error", err, "stack", log.Stack(1))
+		// 			if theErr, ok := err.(error); ok {
+		// 				resultChan <- &tsdb.QueryResult{
+		// 					RefId: query.RefId,
+		// 					Error: theErr,
+		// 				}
+		// 			}
+		// 		}
+		// 	}()
+
+		// 	queryRes, err := e.executeQuery(ectx, query, queryContext)
+		// 	if ae, ok := err.(awserr.Error); ok && ae.Code() == "500" {
+		// 		return err
+		// 	}
+		// 	if err != nil {
+		// 		resultChan <- &tsdb.QueryResult{
+		// 			RefId: query.RefId,
+		// 			Error: err,
+		// 		}
+		// 		return nil
+		// 	}
+		// 	resultChan <- queryRes
+		// 	return nil
+		// })
 	}
 
-	resultChan := make(chan *tsdb.QueryResult, len(queryContext.Queries))
-	eg, ectx := errgroup.WithContext(ctx)
-
-	if len(metricQueriesByRegion) > 0 {
-		for region, getMetricDataQuery := range metricQueriesByRegion {
+	if len(getMetricDataQueries) > 0 {
+		for region, getMetricDataQuery := range getMetricDataQueries {
 			q := getMetricDataQuery
 			eg.Go(func() error {
 				defer func() {
@@ -111,20 +153,12 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 					}
 				}()
 
-				queryResponses, err := e.executeQuery(ectx, region, q, queryContext)
+				queryResponses, err := e.executeGetMetricDataQuery(ectx, region, q, queryContext)
 				if err != nil {
 					plog.Info("executeGetMetricDataQueryError", "", err)
 				}
-				if ae, ok := err.(awserr.Error); ok {
-					plog.Info("errorcode", "", ae.Code())
-					switch ae.Code() {
-					case "InternalFailure":
-						return err
-					case "ValidationError":
-						return err
-					case "ThrottlingException":
-						return fmt.Errorf("You've been throttled")
-					}
+				if ae, ok := err.(awserr.Error); ok && ae.Code() == "500" {
+					return err
 				}
 				for _, queryRes := range queryResponses {
 					if err != nil {
