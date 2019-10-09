@@ -60,16 +60,17 @@ var handshakeConfig = plugin.HandshakeConfig{
 func (p *DataSourcePlugin) startBackendPlugin(ctx context.Context, log log.Logger) error {
 	p.log = log.New("plugin-id", p.Id)
 
-	err := p.spawnSubProcess()
-	if err == nil {
-		go func() {
-			if err := p.restartKilledProcess(ctx); err != nil {
-				// TODO: Deal with error
-			}
-		}()
+	if err := p.spawnSubProcess(); err != nil {
+		return err
 	}
 
-	return err
+	go func() {
+		if err := p.restartKilledProcess(ctx); err != nil {
+			p.log.Error("Attempting to restart killed process failed", "err", err)
+		}
+	}()
+
+	return nil
 }
 
 func (p *DataSourcePlugin) spawnSubProcess() error {
@@ -111,13 +112,16 @@ func (p *DataSourcePlugin) restartKilledProcess(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
-			if p.client.Exited() {
-				err := p.spawnSubProcess()
-				p.log.Debug("Spawning new sub process", "name", p.Name, "id", p.Id)
-				if err != nil {
-					p.log.Error("Failed to spawn subprocess")
-				}
+			if !p.client.Exited() {
+				continue
 			}
+
+			if err := p.spawnSubProcess(); err != nil {
+				p.log.Error("Failed to spawn subprocess")
+				continue
+			}
+
+			p.log.Debug("Spawned new sub process", "name", p.Name, "id", p.Id)
 		}
 	}
 }
