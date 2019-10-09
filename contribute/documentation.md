@@ -35,8 +35,8 @@ For each section, a `_index.md` file is used to provide an overview of the topic
 
 ### Style guide
 
-The [codespell](https://github.com/codespell-project/codespell) tool is run for every change to catch common misspellings.
+A [style guide](https://github.com/grafana/grafana/blob/master/style_guides/documentation-style-guide.md), which applies to all documentation created by the Grafana project, is located in the [Grafana GitHub repository](https://github.com/grafana/grafana).
 
-- "Open source" should be hyphenated when used as an adjective, e.g. _open-source software_. The open form should be preferred when used as a noun, e.g. _Grafana is open source_.
-- Use "data source" instead of "datasource" unless used as an identifier, in code or as part of URLs.
-- Acronyms should be uppercased, e.g. URL, DNS, or TCP/IP.
+### Spelling
+
+The [codespell](https://github.com/codespell-project/codespell) tool is run for every change to catch common misspellings.
