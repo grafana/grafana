@@ -2,7 +2,6 @@ package cloudwatch
 
 import (
 	"context"
-	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -102,47 +101,41 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 		query.RefId = RefId
 
 		if query.Id != "" {
-			if _, ok := getMetricDataQueries[query.Region]; !ok {
-				getMetricDataQueries[query.Region] = make(map[string]*CloudWatchQuery)
-			}
-			getMetricDataQueries[query.Region][query.Id] = query
-			continue
+			query.Id = strings.ToLower(query.RefId)
 		}
 
-		if query.Id == "" && query.Expression != "" {
-			results.Results[query.RefId] = &tsdb.QueryResult{
-				Error: fmt.Errorf("Invalid query: id should be set if using expression"),
-			}
-			return results, nil
+		if _, ok := getMetricDataQueries[query.Region]; !ok {
+			getMetricDataQueries[query.Region] = make(map[string]*CloudWatchQuery)
 		}
+		getMetricDataQueries[query.Region][query.Id] = query
 
-		eg.Go(func() error {
-			defer func() {
-				if err := recover(); err != nil {
-					plog.Error("Execute Query Panic", "error", err, "stack", log.Stack(1))
-					if theErr, ok := err.(error); ok {
-						resultChan <- &tsdb.QueryResult{
-							RefId: query.RefId,
-							Error: theErr,
-						}
-					}
-				}
-			}()
+		// eg.Go(func() error {
+		// 	defer func() {
+		// 		if err := recover(); err != nil {
+		// 			plog.Error("Execute Query Panic", "error", err, "stack", log.Stack(1))
+		// 			if theErr, ok := err.(error); ok {
+		// 				resultChan <- &tsdb.QueryResult{
+		// 					RefId: query.RefId,
+		// 					Error: theErr,
+		// 				}
+		// 			}
+		// 		}
+		// 	}()
 
-			queryRes, err := e.executeQuery(ectx, query, queryContext)
-			if ae, ok := err.(awserr.Error); ok && ae.Code() == "500" {
-				return err
-			}
-			if err != nil {
-				resultChan <- &tsdb.QueryResult{
-					RefId: query.RefId,
-					Error: err,
-				}
-				return nil
-			}
-			resultChan <- queryRes
-			return nil
-		})
+		// 	queryRes, err := e.executeQuery(ectx, query, queryContext)
+		// 	if ae, ok := err.(awserr.Error); ok && ae.Code() == "500" {
+		// 		return err
+		// 	}
+		// 	if err != nil {
+		// 		resultChan <- &tsdb.QueryResult{
+		// 			RefId: query.RefId,
+		// 			Error: err,
+		// 		}
+		// 		return nil
+		// 	}
+		// 	resultChan <- queryRes
+		// 	return nil
+		// })
 	}
 
 	if len(getMetricDataQueries) > 0 {
@@ -161,6 +154,9 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 				}()
 
 				queryResponses, err := e.executeGetMetricDataQuery(ectx, region, q, queryContext)
+				if err != nil {
+					plog.Info("executeGetMetricDataQueryError", "", err)
+				}
 				if ae, ok := err.(awserr.Error); ok && ae.Code() == "500" {
 					return err
 				}
