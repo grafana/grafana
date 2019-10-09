@@ -39,7 +39,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 		engine.Cfg = cfg
 		engine.Bus = bus.GetBus()
 		if err := engine.Init(); err != nil {
-			logger.Errorf("\n%s: Failed initialize SQL engine", color.RedString("Error"))
+			logger.Errorf("\n%s: Failed to initialize SQL engine", color.RedString("Error"))
 			os.Exit(1)
 		}
 
@@ -47,7 +47,10 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 			logger.Errorf("\n%s: ", color.RedString("Error"))
 			logger.Errorf("%s\n\n", err)
 
-			cmd.ShowHelp()
+			if err := cmd.ShowHelp(); err != nil {
+				logger.Errorf("\n%s: Failed to show help: %s %s\n\n", color.RedString("Error"),
+					color.RedString("✗"), err)
+			}
 			os.Exit(1)
 		}
 
@@ -63,7 +66,10 @@ func runPluginCommand(command func(commandLine utils.CommandLine) error) func(co
 			logger.Errorf("\n%s: ", color.RedString("Error"))
 			logger.Errorf("%s %s\n\n", color.RedString("✗"), err)
 
-			cmd.ShowHelp()
+			if err := cmd.ShowHelp(); err != nil {
+				logger.Errorf("\n%s: Failed to show help: %s %s\n\n", color.RedString("Error"),
+					color.RedString("✗"), err)
+			}
 			os.Exit(1)
 		}
 
