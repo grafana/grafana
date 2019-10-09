@@ -9,7 +9,7 @@ import { DataSourceSrv as DataSourceService, getDataSourceSrv as getDataSourceSe
 
 // Types
 import { DataSourceApi, DataSourceSelectItem } from '@grafana/ui';
-import { ScopedVars, alertError } from '@grafana/data';
+import { ScopedVars, AppEvents } from '@grafana/data';
 import { auto } from 'angular';
 import { TemplateSrv } from '../templating/template_srv';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
@@ -87,7 +87,7 @@ export class DatasourceSrv implements DataSourceService {
         deferred.resolve(instance);
       })
       .catch(err => {
-        this.$rootScope.appEvent(alertError, [dsConfig.name + ' plugin failed', err.toString()]);
+        this.$rootScope.appEvent(AppEvents.alertError, [dsConfig.name + ' plugin failed', err.toString()]);
       });
 
     return deferred.promise;

@@ -14,14 +14,12 @@ import {
   sharePanel as sharePanelUtil,
   calculateInnerPanelHeight,
 } from 'app/features/dashboard/utils/panel';
-import TimeSeries from 'app/core/time_series2';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { auto } from 'angular';
 import { TemplateSrv } from '../templating/template_srv';
 import { PanelPluginMeta } from '@grafana/ui/src/types/panel';
 import { getPanelLinksSupplier } from './panellinks/linkSuppliers';
-import TableModel from 'app/core/table_model';
-import { panelEventRender, componentDidMount, editModeInitialized, initPanelActions, panelChangeView } from 'app/types';
+import { PanelEvents } from '@grafana/ui';
 
 export class PanelCtrl {
   panel: any;
@@ -59,11 +57,11 @@ export class PanelCtrl {
       this.pluginName = plugin.name;
     }
 
-    $scope.$on(componentDidMount.name, () => this.panelDidMount());
+    $scope.$on(PanelEvents.componentDidMount.name, () => this.panelDidMount());
   }
 
   panelDidMount() {
-    this.events.emit(componentDidMount);
+    this.events.emit(PanelEvents.componentDidMount);
     this.dashboard.panelInitialized(this.panel);
   }
 
@@ -80,7 +78,7 @@ export class PanelCtrl {
   }
 
   changeView(fullscreen: boolean, edit: boolean) {
-    this.publishAppEvent(panelChangeView, {
+    this.publishAppEvent(PanelEvents.panelChangeView, {
       fullscreen,
       edit,
       panelId: this.panel.id,
@@ -102,7 +100,7 @@ export class PanelCtrl {
   initEditMode() {
     if (!this.editModeInitiated) {
       this.editModeInitiated = true;
-      this.events.emit(editModeInitialized);
+      this.events.emit(PanelEvents.editModeInitialized);
       this.maxPanelsPerRowOptions = getFactors(GRID_COLUMN_COUNT);
     }
   }
@@ -196,7 +194,7 @@ export class PanelCtrl {
       click: 'ctrl.editPanelJson(); dismiss();',
     });
 
-    this.events.emit(initPanelActions, menu);
+    this.events.emit(PanelEvents.initPanelActions, menu);
     return menu;
   }
 
@@ -214,8 +212,8 @@ export class PanelCtrl {
     this.height = calculateInnerPanelHeight(this.panel, containerHeight);
   }
 
-  render(payload?: TableModel | TimeSeries[]) {
-    this.events.emit(panelEventRender, payload);
+  render(payload?: any) {
+    this.events.emit(PanelEvents.render, payload);
   }
 
   duplicate() {

@@ -4,7 +4,7 @@ import * as queryDef from './query_def';
 import { ElasticsearchAggregation } from './types';
 import { IQService } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { elasticQueryUpdated } from 'app/types';
+import { CoreEvents } from 'app/types';
 
 export class ElasticMetricAggCtrl {
   /** @ngInject */
@@ -26,7 +26,7 @@ export class ElasticMetricAggCtrl {
     };
 
     $rootScope.onAppEvent(
-      elasticQueryUpdated,
+      CoreEvents.elasticQueryUpdated,
       () => {
         $scope.index = _.indexOf(metricAggs, $scope.agg);
         $scope.updatePipelineAggOptions();

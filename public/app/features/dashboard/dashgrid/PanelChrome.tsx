@@ -15,7 +15,7 @@ import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { LoadingState, ScopedVars, AbsoluteTimeRange, DefaultTimeRange, toUtc, toDataFrameDTO } from '@grafana/data';
-import { panelEventRender, clientRefreshed } from 'app/types';
+import { PanelEvents } from '@grafana/ui';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -60,8 +60,8 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   componentDidMount() {
     const { panel, dashboard } = this.props;
-    panel.events.on(clientRefreshed, this.onRefresh);
-    panel.events.on(panelEventRender, this.onRender);
+    panel.events.on(PanelEvents.clientRefreshed, this.onRefresh);
+    panel.events.on(PanelEvents.render, this.onRender);
     dashboard.panelInitialized(this.props.panel);
 
     // Move snapshot data into the query response
@@ -80,7 +80,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
-    this.props.panel.events.off(clientRefreshed, this.onRefresh);
+    this.props.panel.events.off(PanelEvents.clientRefreshed, this.onRefresh);
     if (this.querySubscription) {
       this.querySubscription.unsubscribe();
       this.querySubscription = null;

@@ -1,26 +1,7 @@
-import { DataFrame, TimeRange, AppEvent } from '@grafana/data';
-import { IHttpResponse, IAngularEvent } from 'angular';
-import TableModel from 'app/core/table_model';
-import TimeSeries from 'app/core/time_series2';
+import { DataFrame, TimeRange } from '@grafana/data';
+import { IHttpResponse } from 'angular';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { eventFactory } from '@grafana/data';
-
-export interface AppEventEmitter {
-  /**
-   * DEPRECATED.
-   */
-  appEvent(name: string, data?: any): void;
-
-  appEvent<T extends undefined>(event: AppEvent<T>): void;
-  // This overload allows for omitting the appEvent payload if the payload's type only contains optional properties
-  appEvent<T extends Partial<T> extends T ? Partial<T> : never>(event: AppEvent<T>): void;
-  appEvent<T>(event: AppEvent<T>, payload: T): void;
-}
-
-export interface AppEventConsumer {
-  onAppEvent(name: string, callback: (event: IAngularEvent, ...args: any[]) => void, localScope?: any): void;
-  onAppEvent<T>(event: AppEvent<T>, callback: (event: IAngularEvent, ...args: any[]) => void, localScope?: any): void;
-}
 
 /**
  * Event Payloads
@@ -66,15 +47,6 @@ export interface SaveDashboardPayload {
   makeEditable?: boolean;
 }
 
-export interface PanelChangeViewPayload {
-  fullscreen?: boolean;
-  edit?: boolean;
-  panelId?: number;
-  toggle?: boolean;
-}
-
-export type RemovePanelPayload = number;
-
 export interface GraphHoverPayload {
   pos: any;
   panel: {
@@ -103,13 +75,6 @@ export interface DashScrollPayload {
   pos?: number;
 }
 
-export interface MenuElement {
-  text: string;
-  click: string;
-  role?: string;
-  shortcut?: string;
-}
-
 /**
  * Events
  */
@@ -121,7 +86,6 @@ export const dashScroll = eventFactory<DashScrollPayload>('dash-scroll');
 export const dashLinksUpdated = eventFactory('dash-links-updated');
 export const saveDashboard = eventFactory<SaveDashboardPayload>('save-dashboard');
 export const dashboardFetchStart = eventFactory('dashboard-fetch-start');
-export const panelEventRender = eventFactory<Partial<TableModel | TimeSeries[]>>('render');
 export const dashboardSaved = eventFactory<DashboardModel>('dashboard-saved');
 
 export const searchQuery = eventFactory('search-query');
@@ -157,19 +121,7 @@ export const rowExpanded = eventFactory('row-expanded');
 export const rowCollapsed = eventFactory('row-collapsed');
 export const templateVariableValueUpdated = eventFactory('template-variable-value-updated');
 
-export const panelSizeChanged = eventFactory('panel-size-changed');
-export const panelInitialized = eventFactory('panel-initialized');
-export const panelTeardown = eventFactory('panel-teardown');
-export const panelChangeView = eventFactory<PanelChangeViewPayload>('panel-change-view');
-export const removePanel = eventFactory<RemovePanelPayload>('remove-panel');
-export const initPanelActions = eventFactory<MenuElement[]>('init-panel-actions');
-
-export const editModeInitialized = eventFactory('init-edit-mode');
-export const clientRefreshed = eventFactory('refresh');
-
 export const dataFramesReceived = eventFactory<DataFrame[]>('data-frames-received');
-
-export const componentDidMount = eventFactory('component-did-mount');
 
 export const graphClicked = eventFactory<GraphClickedPayload>('graph-click');
 

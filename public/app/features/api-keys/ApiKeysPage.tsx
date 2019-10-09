@@ -19,7 +19,7 @@ import { store } from 'app/store/store';
 import kbn from 'app/core/utils/kbn';
 
 // Utils
-import { showModal } from 'app/types';
+import { CoreEvents } from 'app/types';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 
 const timeRangeValidationEvents: ValidationEvents = {
@@ -106,7 +106,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
       const rootPath = window.location.origin + config.appSubUrl;
       const modalTemplate = ReactDOMServer.renderToString(<ApiKeysAddedModal apiKey={apiKey} rootPath={rootPath} />);
 
-      appEvents.emit(showModal, {
+      appEvents.emit(CoreEvents.showModal, {
         templateHtml: modalTemplate,
       });
     };

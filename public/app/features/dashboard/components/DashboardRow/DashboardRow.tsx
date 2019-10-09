@@ -4,7 +4,7 @@ import { PanelModel } from '../../state/PanelModel';
 import { DashboardModel } from '../../state/DashboardModel';
 import templateSrv from 'app/features/templating/template_srv';
 import appEvents from 'app/core/app_events';
-import { showConfirmModal, showModal, templateVariableValueUpdated } from 'app/types';
+import { CoreEvents } from 'app/types';
 
 export interface DashboardRowProps {
   panel: PanelModel;
@@ -19,11 +19,11 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
       collapsed: this.props.panel.collapsed,
     };
 
-    this.props.dashboard.on(templateVariableValueUpdated, this.onVariableUpdated);
+    this.props.dashboard.on(CoreEvents.templateVariableValueUpdated, this.onVariableUpdated);
   }
 
   componentWillUnmount() {
-    this.props.dashboard.off(templateVariableValueUpdated, this.onVariableUpdated);
+    this.props.dashboard.off(CoreEvents.templateVariableValueUpdated, this.onVariableUpdated);
   }
 
   onVariableUpdated = () => {
@@ -44,7 +44,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
   };
 
   onOpenSettings = () => {
-    appEvents.emit(showModal, {
+    appEvents.emit(CoreEvents.showModal, {
       templateHtml: `<row-options row="model.row" on-updated="model.onUpdated()" dismiss="dismiss()"></row-options>`,
       modalClass: 'modal--narrow',
       model: {
@@ -55,7 +55,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
   };
 
   onDelete = () => {
-    appEvents.emit(showConfirmModal, {
+    appEvents.emit(CoreEvents.showConfirmModal, {
       title: 'Delete Row',
       text: 'Are you sure you want to remove this row and all its panels?',
       altActionText: 'Delete row only',

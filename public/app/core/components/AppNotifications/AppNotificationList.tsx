@@ -10,7 +10,7 @@ import {
   createSuccessNotification,
   createWarningNotification,
 } from '../../copy/appNotification';
-import { alertWarning, alertSuccess, alertError } from '@grafana/data';
+import { AppEvents } from '@grafana/data';
 
 export interface Props {
   appNotifications: AppNotification[];
@@ -22,9 +22,9 @@ export class AppNotificationList extends PureComponent<Props> {
   componentDidMount() {
     const { notifyApp } = this.props;
 
-    appEvents.on(alertWarning, payload => notifyApp(createWarningNotification(...payload)));
-    appEvents.on(alertSuccess, payload => notifyApp(createSuccessNotification(...payload)));
-    appEvents.on(alertError, payload => notifyApp(createErrorNotification(...payload)));
+    appEvents.on(AppEvents.alertWarning, payload => notifyApp(createWarningNotification(...payload)));
+    appEvents.on(AppEvents.alertSuccess, payload => notifyApp(createSuccessNotification(...payload)));
+    appEvents.on(AppEvents.alertError, payload => notifyApp(createErrorNotification(...payload)));
   }
 
   onClearAppNotification = (id: number) => {

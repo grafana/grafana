@@ -11,21 +11,12 @@ import { contextSrv } from 'app/core/services/context_srv';
 import sortByKeys from 'app/core/utils/sort_by_keys';
 
 // Types
-import { PanelModel, GridPos, viewModeChanged, panelAdded, panelRemoved } from './PanelModel';
+import { PanelModel, GridPos, panelAdded, panelRemoved } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
 import { TimeRange, TimeZone, AppEvent } from '@grafana/data';
 import { UrlQueryValue } from '@grafana/runtime';
-import {
-  KIOSK_MODE_TV,
-  DashboardMeta,
-  panelEventRender,
-  repeatsProcessed,
-  rowExpanded,
-  rowCollapsed,
-  templateVariableValueUpdated,
-  clientRefreshed,
-  timeRangeUpdated as timeRangeUpdatedEvent,
-} from 'app/types';
+import { PanelEvents } from '@grafana/ui';
+import { KIOSK_MODE_TV, DashboardMeta, CoreEvents } from 'app/types';
 import { toUtc, DateTimeInput, dateTime, isDateTime } from '@grafana/data';
 
 export interface CloneOptions {
@@ -225,15 +216,15 @@ export class DashboardModel {
 
     panel.setViewMode(fullscreen, this.meta.isEditing);
 
-    this.events.emit(viewModeChanged, panel);
+    this.events.emit(PanelEvents.viewModeChanged, panel);
   }
 
   timeRangeUpdated(timeRange: TimeRange) {
-    this.events.emit(timeRangeUpdatedEvent, timeRange);
+    this.events.emit(CoreEvents.timeRangeUpdated, timeRange);
   }
 
   startRefresh() {
-    this.events.emit(clientRefreshed);
+    this.events.emit(PanelEvents.clientRefreshed);
 
     for (const panel of this.panels) {
       if (!this.otherPanelInFullscreen(panel)) {
@@ -243,7 +234,7 @@ export class DashboardModel {
   }
 
   render() {
-    this.events.emit(panelEventRender);
+    this.events.emit(PanelEvents.render);
 
     for (const panel of this.panels) {
       panel.render();
@@ -353,7 +344,7 @@ export class DashboardModel {
     _.pull(this.panels, ...panelsToRemove);
     panelsToRemove.map(p => p.destroy());
     this.sortPanelsByGridPos();
-    this.events.emit(repeatsProcessed);
+    this.events.emit(CoreEvents.repeatsProcessed);
   }
 
   processRepeats() {
@@ -373,7 +364,7 @@ export class DashboardModel {
     }
 
     this.sortPanelsByGridPos();
-    this.events.emit(repeatsProcessed);
+    this.events.emit(CoreEvents.repeatsProcessed);
   }
 
   cleanUpRowRepeats(rowPanels: PanelModel[]) {
@@ -771,7 +762,7 @@ export class DashboardModel {
       this.sortPanelsByGridPos();
 
       // emit change event
-      this.events.emit(rowExpanded);
+      this.events.emit(CoreEvents.rowExpanded);
       return;
     }
 
@@ -784,7 +775,7 @@ export class DashboardModel {
     row.collapsed = true;
 
     // emit change event
-    this.events.emit(rowCollapsed);
+    this.events.emit(CoreEvents.rowCollapsed);
   }
 
   /**
@@ -921,7 +912,7 @@ export class DashboardModel {
 
   templateVariableValueUpdated() {
     this.processRepeats();
-    this.events.emit(templateVariableValueUpdated);
+    this.events.emit(CoreEvents.templateVariableValueUpdated);
   }
 
   expandParentRowFor(panelId: number) {

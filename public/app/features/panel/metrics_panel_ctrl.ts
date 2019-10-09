@@ -11,7 +11,7 @@ import { toLegacyResponseData, toDataFrameDTO, TimeRange, LoadingState, DataFram
 import { LegacyResponseData, DataSourceApi, PanelData, DataQueryResponse, PanelEvents } from '@grafana/ui';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
-import { clientRefreshed, panelTeardown, dataFramesReceived } from 'app/types';
+import { CoreEvents } from 'app/types';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
@@ -43,8 +43,8 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.scope = $scope;
     this.panel.datasource = this.panel.datasource || null;
 
-    this.events.on(clientRefreshed, this.onMetricsPanelRefresh.bind(this));
-    this.events.on(panelTeardown, this.onPanelTearDown.bind(this));
+    this.events.on(PanelEvents.clientRefreshed, this.onMetricsPanelRefresh.bind(this));
+    this.events.on(PanelEvents.panelTeardown, this.onPanelTearDown.bind(this));
   }
 
   private onPanelTearDown() {
@@ -215,7 +215,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
 
     try {
-      this.events.emit(dataFramesReceived, data);
+      this.events.emit(CoreEvents.dataFramesReceived, data);
     } catch (err) {
       this.processDataError(err);
     }

@@ -6,7 +6,7 @@ import { DashboardExporter } from './DashboardExporter';
 import { DashboardSrv } from '../../services/DashboardSrv';
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { showModal } from 'app/types';
+import { CoreEvents } from 'app/types';
 
 export class DashExportCtrl {
   dash: any;
@@ -63,7 +63,7 @@ export class DashExportCtrl {
       enableCopy: true,
     };
 
-    this.$rootScope.appEvent(showModal, {
+    this.$rootScope.appEvent(CoreEvents.showModal, {
       src: 'public/app/partials/edit_json.html',
       model: model,
     });

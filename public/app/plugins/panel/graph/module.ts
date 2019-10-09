@@ -20,14 +20,7 @@ import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/l
 
 import { auto } from 'angular';
 import { AnnotationsSrv } from 'app/features/annotations/all';
-import {
-  panelEventRender,
-  initPanelActions,
-  dataFramesReceived,
-  zoomOut,
-  editModeInitialized,
-  showModal,
-} from 'app/types';
+import { CoreEvents } from 'app/types';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -155,12 +148,12 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.processor = new DataProcessor(this.panel);
     this.contextMenuCtrl = new GraphContextMenuCtrl($scope);
 
-    this.events.on(panelEventRender, this.onRender.bind(this));
-    this.events.on(dataFramesReceived, this.onDataFramesReceived.bind(this));
+    this.events.on(PanelEvents.render, this.onRender.bind(this));
+    this.events.on(CoreEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
     this.events.on(PanelEvents.dataReceived, this.onDataError.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onDataSnapshotLoad.bind(this));
-    this.events.on(editModeInitialized, this.onInitEditMode.bind(this));
-    this.events.on(initPanelActions, this.onInitPanelActions.bind(this));
+    this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
+    this.events.on(PanelEvents.initPanelActions, this.onInitPanelActions.bind(this));
 
     this.onDataLinksChange = this.onDataLinksChange.bind(this);
   }
@@ -198,7 +191,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   zoomOut(evt: any) {
-    this.publishAppEvent(zoomOut, 2);
+    this.publishAppEvent(CoreEvents.zoomOut, 2);
   }
 
   onDataSnapshotLoad(snapshotData: any) {
@@ -334,7 +327,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   exportCsv() {
     const scope = this.$scope.$new(true);
     scope.seriesList = this.seriesList;
-    this.publishAppEvent(showModal, {
+    this.publishAppEvent(CoreEvents.showModal, {
       templateHtml: '<export-data-modal data="seriesList"></export-data-modal>',
       scope,
       modalClass: 'modal--narrow',

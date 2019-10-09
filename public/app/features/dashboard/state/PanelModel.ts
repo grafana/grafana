@@ -4,16 +4,14 @@ import _ from 'lodash';
 import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
 // Types
-import { DataQuery, DataQueryResponseData, PanelPlugin } from '@grafana/ui';
+import { DataQuery, DataQueryResponseData, PanelPlugin, PanelEvents } from '@grafana/ui';
 import { DataLink, DataTransformerConfig, ScopedVars } from '@grafana/data';
 
 import config from 'app/core/config';
 
 import { PanelQueryRunner } from './PanelQueryRunner';
-import { panelEventRender, panelSizeChanged, panelInitialized, panelTeardown, clientRefreshed } from 'app/types';
 import { eventFactory } from '@grafana/data';
 
-export const viewModeChanged = eventFactory('view-mode-changed');
 export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
 export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
 
@@ -185,7 +183,7 @@ export class PanelModel {
   setViewMode(fullscreen: boolean, isEditing: boolean) {
     this.fullscreen = fullscreen;
     this.isEditing = isEditing;
-    this.events.emit(viewModeChanged);
+    this.events.emit(PanelEvents.viewModeChanged);
   }
 
   updateGridPos(newPos: GridPos) {
@@ -201,29 +199,29 @@ export class PanelModel {
     this.gridPos.h = newPos.h;
 
     if (sizeChanged) {
-      this.events.emit(panelSizeChanged);
+      this.events.emit(PanelEvents.panelSizeChanged);
     }
   }
 
   resizeDone() {
-    this.events.emit(panelSizeChanged);
+    this.events.emit(PanelEvents.panelSizeChanged);
   }
 
   refresh() {
     this.hasRefreshed = true;
-    this.events.emit(clientRefreshed);
+    this.events.emit(PanelEvents.clientRefreshed);
   }
 
   render() {
     if (!this.hasRefreshed) {
       this.refresh();
     } else {
-      this.events.emit(panelEventRender);
+      this.events.emit(PanelEvents.render);
     }
   }
 
   initialized() {
-    this.events.emit(panelInitialized);
+    this.events.emit(PanelEvents.panelInitialized);
   }
 
   private getOptionsToRemember() {
@@ -349,7 +347,7 @@ export class PanelModel {
   }
 
   destroy() {
-    this.events.emit(panelTeardown);
+    this.events.emit(PanelEvents.panelTeardown);
     this.events.removeAllListeners();
 
     if (this.queryRunner) {

@@ -31,6 +31,7 @@ import {
   ContextMenuItem,
   getDisplayProcessor,
   getFlotPairsConstant,
+  PanelEvents,
 } from '@grafana/ui';
 import { provideTheme, getCurrentTheme } from 'app/core/utils/ConfigProvider';
 import { toUtc, LinkModelSupplier, DataFrameView } from '@grafana/data';
@@ -38,7 +39,7 @@ import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
-import { panelEventRender, panelTeardown, graphHover, graphHoverClear } from 'app/types';
+import { CoreEvents } from 'app/types';
 
 const LegendWithThemeProvider = provideTheme(Legend);
 
@@ -75,12 +76,12 @@ class GraphElement {
     });
 
     // panel events
-    this.ctrl.events.on(panelTeardown, this.onPanelTeardown.bind(this));
-    this.ctrl.events.on(panelEventRender, this.onRender.bind(this));
+    this.ctrl.events.on(PanelEvents.panelTeardown, this.onPanelTeardown.bind(this));
+    this.ctrl.events.on(PanelEvents.render, this.onRender.bind(this));
 
     // global events
-    appEvents.on(graphHover, this.onGraphHover.bind(this), scope);
-    appEvents.on(graphHoverClear, this.onGraphHoverClear.bind(this), scope);
+    appEvents.on(CoreEvents.graphHover, this.onGraphHover.bind(this), scope);
+    appEvents.on(CoreEvents.graphHoverClear, this.onGraphHoverClear.bind(this), scope);
     this.elem.bind('plotselected', this.onPlotSelected.bind(this));
     this.elem.bind('plotclick', this.onPlotClick.bind(this));
 

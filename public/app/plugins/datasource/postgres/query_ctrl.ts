@@ -7,7 +7,7 @@ import PostgresQuery from './postgres_query';
 import sqlPart from './sql_part';
 import { auto, IQService } from 'angular';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { showConfirmModal } from 'app/types';
+import { CoreEvents } from 'app/types';
 import { PanelEvents } from '@grafana/ui';
 
 export interface QueryMeta {
@@ -191,7 +191,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   toggleEditorMode() {
     if (this.target.rawQuery) {
-      appEvents.emit(showConfirmModal, {
+      appEvents.emit(CoreEvents.showConfirmModal, {
         title: 'Warning',
         text2: 'Switching to query builder may overwrite your raw SQL.',
         icon: 'fa-exclamation',

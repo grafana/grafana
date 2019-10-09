@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { appEvents, coreModule, NavModelSrv } from 'app/core/core';
 import { BackendSrv } from 'app/core/services/backend_srv';
-import { alertSuccess, alertError } from '@grafana/data';
+import { AppEvents } from '@grafana/data';
 
 export class AlertNotificationEditCtrl {
   theForm: any;
@@ -79,23 +79,23 @@ export class AlertNotificationEditCtrl {
         .put(`/api/alert-notifications/${this.model.id}`, this.model)
         .then((res: any) => {
           this.model = res;
-          appEvents.emit(alertSuccess, ['Notification updated']);
+          appEvents.emit(AppEvents.alertSuccess, ['Notification updated']);
         })
         .catch((err: any) => {
           if (err.data && err.data.error) {
-            appEvents.emit(alertError, [err.data.error]);
+            appEvents.emit(AppEvents.alertError, [err.data.error]);
           }
         });
     } else {
       this.backendSrv
         .post(`/api/alert-notifications`, this.model)
         .then((res: any) => {
-          appEvents.emit(alertSuccess, ['Notification created']);
+          appEvents.emit(AppEvents.alertSuccess, ['Notification created']);
           this.$location.path('alerting/notifications');
         })
         .catch((err: any) => {
           if (err.data && err.data.error) {
-            appEvents.emit(alertError, [err.data.error]);
+            appEvents.emit(AppEvents.alertError, [err.data.error]);
           }
         });
     }

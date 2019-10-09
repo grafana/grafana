@@ -9,7 +9,7 @@ import { TableRenderer } from './renderer';
 import { isTableData } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { PanelEvents } from '@grafana/ui';
-import { panelEventRender, showModal, editModeInitialized, initPanelActions } from 'app/types';
+import { CoreEvents } from 'app/types';
 
 class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -73,8 +73,8 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     this.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this));
     this.events.on(PanelEvents.dataError, this.onDataError.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onDataReceived.bind(this));
-    this.events.on(editModeInitialized, this.onInitEditMode.bind(this));
-    this.events.on(initPanelActions, this.onInitPanelActions.bind(this));
+    this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
+    this.events.on(PanelEvents.initPanelActions, this.onInitPanelActions.bind(this));
   }
 
   onInitEditMode() {
@@ -174,7 +174,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     const scope = this.$scope.$new(true);
     scope.tableData = this.renderer.render_values();
     scope.panel = 'table';
-    this.publishAppEvent(showModal, {
+    this.publishAppEvent(CoreEvents.showModal, {
       templateHtml: '<export-data-modal panel="panel" data="tableData"></export-data-modal>',
       scope,
       modalClass: 'modal--narrow',
@@ -274,7 +274,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       unbindDestroy();
     });
 
-    ctrl.events.on(panelEventRender, (renderData: any) => {
+    ctrl.events.on(PanelEvents.render, (renderData: any) => {
       data = renderData || data;
       if (data) {
         renderPanel();

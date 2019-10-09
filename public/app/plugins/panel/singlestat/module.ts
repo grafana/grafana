@@ -27,7 +27,7 @@ import {
   PanelEvents,
 } from '@grafana/ui';
 
-import { panelEventRender, dataFramesReceived, editModeInitialized } from 'app/types';
+import { CoreEvents } from 'app/types';
 import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
@@ -122,10 +122,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
-    this.events.on(dataFramesReceived, this.onFramesReceived.bind(this));
+    this.events.on(CoreEvents.dataFramesReceived, this.onFramesReceived.bind(this));
     this.events.on(PanelEvents.dataError, this.onDataError.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onSnapshotLoad.bind(this));
-    this.events.on(editModeInitialized, this.onInitEditMode.bind(this));
+    this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
 
     this.useDataFrames = true;
 
@@ -662,7 +662,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     hookupDrilldownLinkTooltip();
 
-    this.events.on(panelEventRender, () => {
+    this.events.on(PanelEvents.render, () => {
       render();
       ctrl.renderingCompleted();
     });

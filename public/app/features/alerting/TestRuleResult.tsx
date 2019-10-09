@@ -5,7 +5,7 @@ import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
 import { DashboardModel } from '../dashboard/state/DashboardModel';
 import { getBackendSrv, BackendSrv } from '@grafana/runtime';
-import { alertSuccess } from '@grafana/data';
+import { AppEvents } from '@grafana/data';
 
 export interface Props {
   panelId: number;
@@ -56,7 +56,7 @@ export class TestRuleResult extends PureComponent<Props, State> {
   };
 
   onClipboardSuccess = () => {
-    appEvents.emit(alertSuccess, ['Content copied to clipboard']);
+    appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
   };
 
   onToggleExpand = () => {

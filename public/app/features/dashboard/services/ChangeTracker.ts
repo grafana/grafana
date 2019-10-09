@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { dashboardSaved, showModal, saveDashboard, AppEventConsumer } from 'app/types';
+import { CoreEvents, AppEventConsumer } from 'app/types';
 
 export class ChangeTracker {
   current: any;
@@ -32,7 +32,7 @@ export class ChangeTracker {
     this.scope = scope;
 
     // register events
-    scope.onAppEvent(dashboardSaved, () => {
+    scope.onAppEvent(CoreEvents.dashboardSaved, () => {
       this.original = this.current.getSaveModelClone();
       this.originalPath = $location.path();
     });
@@ -163,7 +163,7 @@ export class ChangeTracker {
   }
 
   open_modal() {
-    this.$rootScope.appEvent(showModal, {
+    this.$rootScope.appEvent(CoreEvents.showModal, {
       templateHtml: '<unsaved-changes-modal dismiss="dismiss()"></unsaved-changes-modal>',
       modalClass: 'modal--narrow confirm-modal',
     });
@@ -178,7 +178,7 @@ export class ChangeTracker {
       });
     });
 
-    this.$rootScope.appEvent(saveDashboard);
+    this.$rootScope.appEvent(CoreEvents.saveDashboard);
   }
 
   gotoNext() {

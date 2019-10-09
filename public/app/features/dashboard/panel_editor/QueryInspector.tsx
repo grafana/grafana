@@ -1,9 +1,9 @@
 import React, { PureComponent } from 'react';
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
-import { LoadingPlaceholder, JSONFormatter } from '@grafana/ui';
-import { dsRequestResponse, dsRequestError, clientRefreshed } from 'app/types';
-import { alertError, alertSuccess } from '@grafana/data';
+import { LoadingPlaceholder, JSONFormatter, PanelEvents } from '@grafana/ui';
+import { CoreEvents } from 'app/types';
+import { AppEvents } from '@grafana/data';
 
 interface DsQuery {
   isLoading: boolean;
@@ -41,20 +41,20 @@ export class QueryInspector extends PureComponent<Props, State> {
   componentDidMount() {
     const { panel } = this.props;
 
-    appEvents.on(dsRequestResponse, this.onDataSourceResponse);
-    appEvents.on(dsRequestError, this.onRequestError);
+    appEvents.on(CoreEvents.dsRequestResponse, this.onDataSourceResponse);
+    appEvents.on(CoreEvents.dsRequestError, this.onRequestError);
 
-    panel.events.on(clientRefreshed, this.onPanelRefresh);
+    panel.events.on(PanelEvents.clientRefreshed, this.onPanelRefresh);
     panel.refresh();
   }
 
   componentWillUnmount() {
     const { panel } = this.props;
 
-    appEvents.off(dsRequestResponse, this.onDataSourceResponse);
-    appEvents.on(dsRequestError, this.onRequestError);
+    appEvents.off(CoreEvents.dsRequestResponse, this.onDataSourceResponse);
+    appEvents.on(CoreEvents.dsRequestError, this.onRequestError);
 
-    panel.events.off(clientRefreshed, this.onPanelRefresh);
+    panel.events.off(PanelEvents.clientRefreshed, this.onPanelRefresh);
   }
 
   handleMocking(response: any) {
@@ -63,7 +63,7 @@ export class QueryInspector extends PureComponent<Props, State> {
     try {
       mockedData = JSON.parse(mockedResponse);
     } catch (err) {
-      appEvents.emit(alertError, ['R: Failed to parse mocked response']);
+      appEvents.emit(AppEvents.alertError, ['R: Failed to parse mocked response']);
       return;
     }
 
@@ -136,7 +136,7 @@ export class QueryInspector extends PureComponent<Props, State> {
   };
 
   onClipboardSuccess = () => {
-    appEvents.emit(alertSuccess, ['Content copied to clipboard']);
+    appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
   };
 
   onToggleExpand = () => {

@@ -5,7 +5,7 @@ import { getPluginSettings } from './PluginSettingsCache';
 import { PluginMeta } from '@grafana/ui';
 import { NavModelSrv } from 'app/core/core';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { alertError } from '@grafana/data';
+import { AppEvents } from '@grafana/data';
 
 export class AppPageCtrl {
   page: any;
@@ -28,7 +28,7 @@ export class AppPageCtrl {
         this.initPage(settings);
       })
       .catch(err => {
-        this.$rootScope.appEvent(alertError, ['Unknown Plugin']);
+        this.$rootScope.appEvent(AppEvents.alertError, ['Unknown Plugin']);
         this.navModel = this.navModelSrv.getNotFoundNav();
       });
   }
@@ -38,12 +38,12 @@ export class AppPageCtrl {
     this.page = _.find(app.includes, { slug: this.$routeParams.slug });
 
     if (!this.page) {
-      this.$rootScope.appEvent(alertError, ['App Page Not Found']);
+      this.$rootScope.appEvent(AppEvents.alertError, ['App Page Not Found']);
       this.navModel = this.navModelSrv.getNotFoundNav();
       return;
     }
     if (app.type !== 'app' || !app.enabled) {
-      this.$rootScope.appEvent(alertError, ['Application Not Enabled']);
+      this.$rootScope.appEvent(AppEvents.alertError, ['Application Not Enabled']);
       this.navModel = this.navModelSrv.getNotFoundNav();
       return;
     }

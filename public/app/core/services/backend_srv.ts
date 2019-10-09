@@ -6,9 +6,9 @@ import config from 'app/core/config';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardSearchHit } from 'app/types/search';
 import { ContextSrv } from './context_srv';
-import { FolderInfo, DashboardDTO, dsRequestResponse, dsRequestError } from 'app/types';
+import { FolderInfo, DashboardDTO, CoreEvents } from 'app/types';
 import { BackendSrv as BackendService, getBackendSrv as getBackendService, BackendSrvRequest } from '@grafana/runtime';
-import { alertWarning, alertError, alertSuccess } from '@grafana/data';
+import { AppEvents } from '@grafana/data';
 
 export class BackendSrv implements BackendService {
   private inFlightRequests: { [key: string]: Array<angular.IDeferred<any>> } = {};
@@ -61,7 +61,7 @@ export class BackendSrv implements BackendService {
     }
 
     if (err.status === 422) {
-      appEvents.emit(alertWarning, ['Validation failed', data.message]);
+      appEvents.emit(AppEvents.alertWarning, ['Validation failed', data.message]);
       throw data;
     }
 
@@ -73,7 +73,7 @@ export class BackendSrv implements BackendService {
         message = 'Error';
       }
 
-      appEvents.emit(err.status < 500 ? alertWarning : alertError, [message, description]);
+      appEvents.emit(err.status < 500 ? AppEvents.alertWarning : AppEvents.alertError, [message, description]);
     }
 
     throw data;
@@ -100,7 +100,7 @@ export class BackendSrv implements BackendService {
         if (options.method !== 'GET') {
           if (results && results.data.message) {
             if (options.showSuccessAlert !== false) {
-              appEvents.emit(alertSuccess, [results.data.message]);
+              appEvents.emit(AppEvents.alertSuccess, [results.data.message]);
             }
           }
         }
@@ -187,7 +187,7 @@ export class BackendSrv implements BackendService {
     return this.$http(options)
       .then((response: any) => {
         if (!options.silent) {
-          appEvents.emit(dsRequestResponse, response);
+          appEvents.emit(CoreEvents.dsRequestResponse, response);
         }
         return response;
       })
@@ -227,7 +227,7 @@ export class BackendSrv implements BackendService {
           err.data.message = err.data.error;
         }
         if (!options.silent) {
-          appEvents.emit(dsRequestError, err);
+          appEvents.emit(CoreEvents.dsRequestError, err);
         }
         throw err;
       })

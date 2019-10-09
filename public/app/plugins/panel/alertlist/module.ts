@@ -3,7 +3,7 @@ import alertDef from '../../../features/alerting/state/alertDef';
 import { PanelCtrl } from 'app/plugins/sdk';
 
 import { dateMath, dateTime } from '@grafana/data';
-import { editModeInitialized, clientRefreshed } from 'app/types';
+import { PanelEvents } from '@grafana/ui';
 import { auto } from 'angular';
 import { BackendSrv } from '@grafana/runtime';
 
@@ -42,8 +42,8 @@ class AlertListPanel extends PanelCtrl {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
-    this.events.on(editModeInitialized, this.onInitEditMode.bind(this));
-    this.events.on(clientRefreshed, this.onRefresh.bind(this));
+    this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
+    this.events.on(PanelEvents.clientRefreshed, this.onRefresh.bind(this));
     this.templateSrv = this.$injector.get('templateSrv');
 
     for (const key in this.panel.stateFilter) {

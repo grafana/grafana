@@ -4,7 +4,7 @@ import store from 'app/core/store';
 // Models
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel, panelRemoved, panelAdded } from 'app/features/dashboard/state/PanelModel';
-import { TimeRange, alertSuccess } from '@grafana/data';
+import { TimeRange, AppEvents } from '@grafana/data';
 
 // Utils
 import { isString as _isString } from 'lodash';
@@ -18,7 +18,7 @@ import templateSrv from 'app/features/templating/template_srv';
 
 // Constants
 import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
-import { showConfirmModal, showModal } from 'app/types';
+import { CoreEvents } from 'app/types';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
@@ -26,7 +26,7 @@ export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: b
     const text2 = panel.alert ? 'Panel includes an alert rule, removing panel will also remove alert rule' : null;
     const confirmText = panel.alert ? 'YES' : null;
 
-    appEvents.emit(showConfirmModal, {
+    appEvents.emit(CoreEvents.showConfirmModal, {
       title: 'Remove Panel',
       text: 'Are you sure you want to remove this panel?',
       text2: text2,
@@ -46,7 +46,7 @@ export const duplicatePanel = (dashboard: DashboardModel, panel: PanelModel) => 
 
 export const copyPanel = (panel: PanelModel) => {
   store.set(LS_PANEL_COPY_KEY, JSON.stringify(panel.getSaveModel()));
-  appEvents.emit(alertSuccess, ['Panel copied. Open Add Panel to paste']);
+  appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Open Add Panel to paste']);
 };
 
 const replacePanel = (dashboard: DashboardModel, newPanel: PanelModel, oldPanel: PanelModel) => {
@@ -75,14 +75,14 @@ export const editPanelJson = (dashboard: DashboardModel, panel: PanelModel) => {
     enableCopy: true,
   };
 
-  appEvents.emit(showModal, {
+  appEvents.emit(CoreEvents.showModal, {
     src: 'public/app/partials/edit_json.html',
     model: model,
   });
 };
 
 export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {
-  appEvents.emit(showModal, {
+  appEvents.emit(CoreEvents.showModal, {
     src: 'public/app/features/dashboard/components/ShareModal/template.html',
     model: {
       dashboard: dashboard,

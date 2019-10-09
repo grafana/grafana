@@ -2,7 +2,7 @@ import _ from 'lodash';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/core';
 import { User } from 'app/core/services/context_srv';
-import { UserSession, Scope, showConfirmModal, AppEventEmitter } from 'app/types';
+import { UserSession, Scope, CoreEvents, AppEventEmitter } from 'app/types';
 import { dateTime } from '@grafana/data';
 
 export default class AdminEditUserCtrl {
@@ -168,7 +168,7 @@ export default class AdminEditUserCtrl {
     };
 
     $scope.deleteUser = (user: any) => {
-      $scope.appEvent(showConfirmModal, {
+      $scope.appEvent(CoreEvents.showConfirmModal, {
         title: 'Delete',
         text: 'Do you want to delete ' + user.login + '?',
         icon: 'fa-trash',

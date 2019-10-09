@@ -3,7 +3,7 @@ import _ from 'lodash';
 import * as queryDef from './query_def';
 import { IQService } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { elasticQueryUpdated } from 'app/types';
+import { CoreEvents } from 'app/types';
 
 export class ElasticBucketAggCtrl {
   /** @ngInject */
@@ -25,7 +25,7 @@ export class ElasticBucketAggCtrl {
     };
 
     $rootScope.onAppEvent(
-      elasticQueryUpdated,
+      CoreEvents.elasticQueryUpdated,
       () => {
         $scope.validateModel();
       },

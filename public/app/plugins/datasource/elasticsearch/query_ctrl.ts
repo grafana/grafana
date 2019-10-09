@@ -8,7 +8,7 @@ import * as queryDef from './query_def';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { ElasticsearchAggregation } from './types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { elasticQueryUpdated } from 'app/types';
+import { CoreEvents } from 'app/types';
 
 export class ElasticQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -57,7 +57,7 @@ export class ElasticQueryCtrl extends QueryCtrl {
     }
 
     this.rawQueryOld = newJson;
-    this.$rootScope.appEvent(elasticQueryUpdated);
+    this.$rootScope.appEvent(CoreEvents.elasticQueryUpdated);
   }
 
   getCollapsedText() {

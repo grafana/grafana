@@ -1,6 +1,6 @@
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/core';
-import { Scope, showConfirmModal, AppEventEmitter } from 'app/types';
+import { Scope, CoreEvents, AppEventEmitter } from 'app/types';
 
 export default class AdminListOrgsCtrl {
   /** @ngInject */
@@ -17,7 +17,7 @@ export default class AdminListOrgsCtrl {
     };
 
     $scope.deleteOrg = (org: any) => {
-      $scope.appEvent(showConfirmModal, {
+      $scope.appEvent(CoreEvents.showConfirmModal, {
         title: 'Delete',
         text: `Do you want to delete organization ${org.name}?`,
         text2: 'All dashboards for this organization will be removed!',

@@ -1,7 +1,7 @@
 import store from 'app/core/store';
 import coreModule from 'app/core/core_module';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { layoutModeChanged } from 'app/types';
+import { CoreEvents } from 'app/types';
 
 const template = `
 <div class="layout-selector">
@@ -25,13 +25,13 @@ export class LayoutSelectorCtrl {
   listView() {
     this.mode = 'list';
     store.set('grafana.list.layout.mode', 'list');
-    this.$rootScope.appEvent(layoutModeChanged, 'list');
+    this.$rootScope.appEvent(CoreEvents.layoutModeChanged, 'list');
   }
 
   gridView() {
     this.mode = 'grid';
     store.set('grafana.list.layout.mode', 'grid');
-    this.$rootScope.appEvent(layoutModeChanged, 'grid');
+    this.$rootScope.appEvent(CoreEvents.layoutModeChanged, 'grid');
   }
 }
 
@@ -58,7 +58,7 @@ export function layoutMode($rootScope: GrafanaRootScope) {
       elem.addClass(className);
 
       $rootScope.onAppEvent(
-        layoutModeChanged,
+        CoreEvents.layoutModeChanged,
         (evt: any, newLayout: any) => {
           elem.removeClass(className);
           className = 'card-list-layout-' + newLayout;

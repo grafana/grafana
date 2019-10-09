@@ -1,7 +1,7 @@
 import angular from 'angular';
 import coreModule from '../core_module';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { jsonDiffReady } from 'app/types';
+import { CoreEvents } from 'app/types';
 
 export class DeltaCtrl {
   observer: any;
@@ -10,7 +10,7 @@ export class DeltaCtrl {
   constructor(private $rootScope: GrafanaRootScope) {
     const waitForCompile = (mutations: any) => {
       if (mutations.length === 1) {
-        this.$rootScope.appEvent(jsonDiffReady);
+        this.$rootScope.appEvent(CoreEvents.jsonDiffReady);
       }
     };
 

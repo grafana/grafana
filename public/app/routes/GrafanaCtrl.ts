@@ -21,25 +21,14 @@ import { LocationUpdate, setLocationSrv } from '@grafana/runtime';
 import { updateLocation } from 'app/core/actions';
 
 // Types
-import {
-  KioskUrlValue,
-  toggleSidemenuMobile,
-  toggleSidemenuHidden,
-  playlistStarted,
-  playlistStopped,
-  toggleKioskMode,
-  toggleViewMode,
-  hideDashSearch,
-  AppEventEmitter,
-  AppEventConsumer,
-} from 'app/types';
+import { KioskUrlValue, CoreEvents, AppEventEmitter, AppEventConsumer } from 'app/types';
 import { setLinkSrv, LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { UtilSrv } from 'app/core/services/util_srv';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { BridgeSrv } from 'app/core/services/bridge_srv';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 import { ILocationService, ITimeoutService, IRootScopeService, IAngularEvent } from 'angular';
-import { AppEvent, alertSuccess } from '@grafana/data';
+import { AppEvent, AppEvents } from '@grafana/data';
 
 export type GrafanaRootScope = IRootScopeService & AppEventEmitter & AppEventConsumer & { colors: string[] };
 
@@ -158,19 +147,19 @@ export function grafanaAppDirective(
 
       $('.preloader').remove();
 
-      appEvents.on(toggleSidemenuMobile, () => {
+      appEvents.on(CoreEvents.toggleSidemenuMobile, () => {
         body.toggleClass('sidemenu-open--xs');
       });
 
-      appEvents.on(toggleSidemenuHidden, () => {
+      appEvents.on(CoreEvents.toggleSidemenuHidden, () => {
         body.toggleClass('sidemenu-hidden');
       });
 
-      appEvents.on(playlistStarted, () => {
+      appEvents.on(CoreEvents.playlistStarted, () => {
         elem.toggleClass('view-mode--playlist', true);
       });
 
-      appEvents.on(playlistStopped, () => {
+      appEvents.on(CoreEvents.playlistStopped, () => {
         elem.toggleClass('view-mode--playlist', false);
       });
 
@@ -207,11 +196,11 @@ export function grafanaAppDirective(
           drop.destroy();
         }
 
-        appEvents.emit(hideDashSearch);
+        appEvents.emit(CoreEvents.hideDashSearch);
       });
 
       // handle kiosk mode
-      appEvents.on(toggleKioskMode, (options: { exit?: boolean }) => {
+      appEvents.on(CoreEvents.toggleKioskMode, (options: { exit?: boolean }) => {
         const search: { kiosk?: KioskUrlValue } = $location.search();
 
         if (options && options.exit) {
@@ -221,7 +210,7 @@ export function grafanaAppDirective(
         switch (search.kiosk) {
           case 'tv': {
             search.kiosk = true;
-            appEvents.emit(alertSuccess, ['Press ESC to exit Kiosk mode']);
+            appEvents.emit(AppEvents.alertSuccess, ['Press ESC to exit Kiosk mode']);
             break;
           }
           case '1':
@@ -277,7 +266,7 @@ export function grafanaAppDirective(
       // check every 2 seconds
       setInterval(checkForInActiveUser, 2000);
 
-      appEvents.on(toggleViewMode, () => {
+      appEvents.on(CoreEvents.toggleViewMode, () => {
         lastActivity = 0;
         checkForInActiveUser();
       });
@@ -307,7 +296,7 @@ export function grafanaAppDirective(
         if (body.find('.search-container').length > 0) {
           if (target.parents('.search-results-container, .search-field-wrapper').length === 0) {
             scope.$apply(() => {
-              scope.appEvent(hideDashSearch);
+              scope.appEvent(CoreEvents.hideDashSearch);
             });
           }
         }

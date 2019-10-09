@@ -1,6 +1,6 @@
 import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
-import { panelTeardown } from 'app/types';
+import { PanelEvents } from '@grafana/ui';
 
 class TablePanelCtrl {}
 
@@ -145,7 +145,7 @@ describe('PanelModel', () => {
       let tearDownPublished = false;
 
       beforeEach(() => {
-        model.events.on(panelTeardown, () => {
+        model.events.on(PanelEvents.panelTeardown, () => {
           tearDownPublished = true;
         });
         model.changePlugin(getPanelPlugin({ id: 'graph' }));

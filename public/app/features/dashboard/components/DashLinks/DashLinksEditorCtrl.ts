@@ -2,7 +2,7 @@ import angular from 'angular';
 import _ from 'lodash';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { dashLinksUpdated } from 'app/types';
+import { CoreEvents } from 'app/types';
 
 export let iconMap = {
   'external link': 'fa-external-link',
@@ -40,7 +40,7 @@ export class DashLinksEditorCtrl {
     this.mode = 'list';
 
     $scope.$on('$destroy', () => {
-      $rootScope.appEvent(dashLinksUpdated);
+      $rootScope.appEvent(CoreEvents.dashLinksUpdated);
     });
   }
 
