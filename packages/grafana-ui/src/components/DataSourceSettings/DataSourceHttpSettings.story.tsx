@@ -1,7 +1,6 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { DataSourceHttpSettings } from './DataSourceHttpSettings';
-// import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { DataSourceSettings } from '../../types';
 import { UseState } from '../../utils/storybook/UseState';
 

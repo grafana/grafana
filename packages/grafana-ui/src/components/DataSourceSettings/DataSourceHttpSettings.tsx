@@ -95,7 +95,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
       <>
         <h3 className="page-heading">HTTP</h3>
         <div className="gf-form-group">
-          <div className="gf-form max-width-30">
+          <div className="gf-form">
             <FormField
               label="URL"
               labelWidth={11}
@@ -110,11 +110,11 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
           {showAccessOptions && (
             <>
               <div className="gf-form-inline">
-                <div className="gf-form max-width-30">
+                <div className="gf-form">
                   <FormField
                     label="Access"
                     labelWidth={11}
-                    inputWidth={30}
+                    inputWidth={20}
                     placeholder={defaultUrl}
                     value={dataSourceConfig.url}
                     inputEl={accessSelect}
@@ -134,8 +134,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
             </>
           )}
           {dataSourceConfig.access === 'proxy' && (
-            <div className="gf-form max-width-30">
-              {/* keepCookies is an array of strings*/}
+            <div className="gf-form">
               <FormLabel
                 width={11}
                 tooltip="Grafana Proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source."
@@ -147,6 +146,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
                 onChange={cookies =>
                   onSettingsChange({ jsonData: { ...dataSourceConfig.jsonData, keepCookies: cookies } })
                 }
+                width={20}
               />
             </div>
           )}
