@@ -15,6 +15,7 @@ type CloudWatchQuery struct {
 	Period             int
 	Alias              string
 	Id                 string
+	Identifier         string
 	Expression         string
 	ReturnData         bool
 	HighResolution     bool

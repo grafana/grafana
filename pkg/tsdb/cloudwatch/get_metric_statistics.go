@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"regexp"
 	"sort"
 	"strconv"
@@ -92,7 +93,7 @@ func (e *CloudWatchExecutor) executeQuery(ctx context.Context, query *CloudWatch
 	return queryRes, nil
 }
 
-func parseQuery(model *simplejson.Json) (*CloudWatchQuery, error) {
+func parseQuery(model *simplejson.Json, refId string) (*CloudWatchQuery, error) {
 	region, err := model.Get("region").String()
 	if err != nil {
 		return nil, err
@@ -109,6 +110,7 @@ func parseQuery(model *simplejson.Json) (*CloudWatchQuery, error) {
 	}
 
 	id := model.Get("id").MustString("")
+
 	expression := model.Get("expression").MustString("")
 
 	dimensions, err := parseDimensions(model)
@@ -119,6 +121,11 @@ func parseQuery(model *simplejson.Json) (*CloudWatchQuery, error) {
 	statistics, extendedStatistics, err := parseStatistics(model)
 	if err != nil {
 		return nil, err
+	}
+
+	identifier := id
+	if identifier == "" || len(statistics) > 1 {
+		identifier = generateUniqueString()
 	}
 
 	p := model.Get("period").MustString("")
@@ -166,6 +173,7 @@ func parseQuery(model *simplejson.Json) (*CloudWatchQuery, error) {
 		Period:             period,
 		Alias:              alias,
 		Id:                 id,
+		Identifier:         identifier,
 		Expression:         expression,
 		ReturnData:         returnData,
 		HighResolution:     highResolution,
@@ -273,4 +281,14 @@ func parseResponse(resp *cloudwatch.GetMetricStatisticsOutput, query *CloudWatch
 	}
 
 	return queryRes, nil
+}
+
+func generateUniqueString() string {
+	var letter = []rune("abcdefghijklmnopqrstuvwxyz")
+
+	b := make([]rune, 8)
+	for i := range b {
+		b[i] = letter[rand.Intn(len(letter))]
+	}
+	return string(b)
 }
