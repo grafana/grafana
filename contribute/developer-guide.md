@@ -69,7 +69,6 @@ Log in using the default credentials:
 
 When you log in for the first time, Grafana will ask you to change your password.
 
-
 ## Test Grafana
 
 The test suite consists of three types of tests: _Frontend tests_, _backend tests_, and _end-to-end tests_.
