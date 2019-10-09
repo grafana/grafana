@@ -98,5 +98,10 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 		}
 	}
 
-	return handler.notifier.SendIfNeeded(evalContext)
+	if err := handler.notifier.SendIfNeeded(evalContext); err != nil {
+		// TODO: Consider if error should propagate
+		handler.log.Error("handler.notifier.SendIfNeeded failed", "err", err)
+	}
+
+	return nil
 }
