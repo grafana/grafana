@@ -57,6 +57,8 @@ Next, we'll build the web server that will serve the frontend assets we just bui
 
 Build and run the backend, by running `make run` in the root directory of the repository. This command will compile the Go source code, and start a web server.
 
+> Are you having problems with [too many open files](#troubleshooting)?
+
 By default, you can access the web server at `http://localhost:3000/`.
 
 Log in using the default credentials:
@@ -162,6 +164,34 @@ The resulting image will be tagged as grafana/grafana:dev.
 1. Build the Docker image: `make build-docker-dev`.
 
 **Note:** If you are using Docker for macOS, be sure to set the memory limit to be larger than 2 GiB. Otherwise `grunt build` may fail. The memory limit settings are available under **Docker Desktop** -> **Preferences** -> **Advanced**.
+
+## Troubleshooting
+
+Are you having issues with setting up your environment? Here are some tips that might help.
+
+### Too many open files when running `make run`
+
+Depending on your environment, you may have to increase the maximum number of open files allowed.
+
+To see how many open files are allowed, run:
+
+```
+ulimit -a
+```
+
+To change the number of open files allowed, run:
+
+```
+ulimit -S -n 2048
+```
+
+The number of files needed may be different on your environment. To determine the number of open files needed by `make run`, run:
+
+```
+find ./conf ./pkg ./public/views | wc -l
+```
+
+Another alternative is to limit the files being watched. The directories that are watched for changes are listed in the `.bra.toml` file in the root directory. 
 
 ## Learn more
 
