@@ -155,16 +155,15 @@ func deleteAlertDefinition(dashboardId int64, sess *DBSession) error {
 		return err
 	}
 
-	var gotErr error
 	for _, alert := range alerts {
 		if err := deleteAlertByIdInternal(alert.Id, "Dashboard deleted", sess); err != nil {
-			if gotErr == nil {
-				gotErr = err
-			}
+			// If we return an error, the current transaction gets rolled back, so no use
+			// trying to delete more
+			return err
 		}
 	}
 
-	return gotErr
+	return nil
 }
 
 func SaveAlerts(cmd *m.SaveAlertsCommand) error {
@@ -247,7 +246,6 @@ func updateAlerts(existingAlerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *DBS
 }
 
 func deleteMissingAlerts(alerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *DBSession) error {
-	var gotErr error
 	for _, missingAlert := range alerts {
 		missing := true
 
@@ -260,14 +258,14 @@ func deleteMissingAlerts(alerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *DBSe
 
 		if missing {
 			if err := deleteAlertByIdInternal(missingAlert.Id, "Removed from dashboard", sess); err != nil {
-				if gotErr == nil {
-					gotErr = err
-				}
+				// No use trying to delete more, since we're in a transaction and it will be
+				// rolled back on error.
+				return err
 			}
 		}
 	}
 
-	return gotErr
+	return nil
 }
 
 func GetAlertsByDashboardId2(dashboardId int64, sess *DBSession) ([]*m.Alert, error) {
