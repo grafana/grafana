@@ -139,7 +139,7 @@ ifeq ($(sources),)
 devenv:
 	@printf 'You have to define sources for this command \nexample: make devenv sources=postgres,openldap\n'
 else
-devenv: devenv-down ## Set up development environment.
+devenv: devenv-down ## Start optional services, e.g. postgres, prometheus, and elasticsearch.
 	$(eval targets := $(shell echo '$(sources)' | tr "," " "))
 
 	@cd devenv; \
@@ -150,7 +150,7 @@ devenv: devenv-down ## Set up development environment.
 	docker-compose up -d --build
 endif
 
-devenv-down: ## Tear down development environment.
+devenv-down: ## Stop optional services.
 	@cd devenv; \
 	test -f docker-compose.yaml && \
 	docker-compose down || exit 0;
