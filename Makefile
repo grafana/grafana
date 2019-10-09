@@ -131,7 +131,7 @@ build-docker-full: ## Build Docker image for development.
 	@echo "build docker container"
 	docker build --tag grafana/grafana:dev .
 
-##@ Development environment
+##@ Services
 
 # create docker-compose file with provided sources and start them
 # example: make devenv sources=postgres,openldap
