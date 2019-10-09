@@ -172,7 +172,10 @@ func (g *GrafanaServerImpl) Run() (err error) {
 		}
 	}()
 
-	err = sendSystemdNotification("READY=1")
+	if err := sendSystemdNotification("READY=1"); err != nil {
+		g.log.Warn("Unable to send systemd notification", "err", err)
+	}
+
 	return
 }
 
