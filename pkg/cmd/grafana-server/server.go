@@ -67,8 +67,7 @@ type GrafanaServerImpl struct {
 	HttpServer    *api.HTTPServer       `inject:""`
 }
 
-func (g *GrafanaServerImpl) Run() error {
-	var err error
+func (g *GrafanaServerImpl) Run() (err error) {
 	g.loadConfiguration()
 	g.writePIDFile()
 
@@ -163,11 +162,18 @@ func (g *GrafanaServerImpl) Run() error {
 		})
 	}
 
-	if err := sendSystemdNotification("READY=1"); err != nil {
-		return err
-	}
+	defer func() {
+		g.log.Debug("Waiting on services...")
+		if waitErr := g.childRoutines.Wait(); waitErr != nil {
+			g.log.Error("A service failed", "err", waitErr)
+			if err == nil {
+				err = waitErr
+			}
+		}
+	}()
 
-	return g.childRoutines.Wait()
+	err = sendSystemdNotification("READY=1")
+	return
 }
 
 func (g *GrafanaServerImpl) loadConfiguration() {
@@ -196,7 +202,7 @@ func (g *GrafanaServerImpl) Shutdown(reason string) {
 
 	// wait for child routines
 	if err := g.childRoutines.Wait(); err != nil {
-		g.log.Debug("Error waiting on child routines", "err", err)
+		g.log.Error("Failed waiting for services to shutdown", "err", err)
 	}
 }
 
