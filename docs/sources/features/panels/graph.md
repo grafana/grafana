@@ -127,7 +127,7 @@ Display styles control visual properties of the graph.
 
 #### Draw Modes
 
-- **Bar** - Display values as a bar chart
+- **Bars** - Display values as a bar chart
 - **Lines** - Display values as a line graph
 - **Points** - Display points for values
 
@@ -137,6 +137,7 @@ Display styles control visual properties of the graph.
 - **Line Width** - The width of the line for a series (default 1).
 - **Staircase** - Draws adjacent points as staircase
 - **Points Radius** - Adjust the size of points when *Points* are selected as *Draw Mode*.
+- **Center** - Centers the bars regarding to the X-Axis when *Bars* are selected as *Draw Mode*.
 
 #### Hover tooltip
 
