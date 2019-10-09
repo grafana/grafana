@@ -183,7 +183,9 @@ func (c *StorageClient) FileUpload(container, blobName string, body io.Reader) (
 		"Content-Length": strconv.Itoa(buf.Len()),
 	})
 
-	c.Auth.SignRequest(req)
+	if err := c.Auth.SignRequest(req); err != nil {
+		return nil, err
+	}
 
 	return c.transport().RoundTrip(req)
 }
@@ -203,7 +205,7 @@ type Auth struct {
 	Key     string
 }
 
-func (a *Auth) SignRequest(req *http.Request) {
+func (a *Auth) SignRequest(req *http.Request) error {
 	strToSign := fmt.Sprintf("%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s",
 		strings.ToUpper(req.Method),
 		tryget(req.Header, "Content-Encoding"),
@@ -224,8 +226,7 @@ func (a *Auth) SignRequest(req *http.Request) {
 
 	sha256 := hmac.New(sha256.New, decodedKey)
 	if _, err := sha256.Write([]byte(strToSign)); err != nil {
-		// TODO: Deal with error
-		return
+		return err
 	}
 
 	signature := base64.StdEncoding.EncodeToString(sha256.Sum(nil))
@@ -233,6 +234,8 @@ func (a *Auth) SignRequest(req *http.Request) {
 	copyHeadersToRequest(req, map[string]string{
 		"Authorization": fmt.Sprintf("SharedKey %s:%s", a.Account, signature),
 	})
+
+	return nil
 }
 
 func tryget(headers map[string][]string, key string) string {

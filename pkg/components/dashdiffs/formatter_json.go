@@ -141,9 +141,13 @@ type AsciiLine struct {
 
 func (f *JSONFormatter) Format(diff diff.Diff) (result string, err error) {
 	if v, ok := f.left.(map[string]interface{}); ok {
-		f.formatObject(v, diff)
+		if err := f.formatObject(v, diff); err != nil {
+			return "", err
+		}
 	} else if v, ok := f.left.([]interface{}); ok {
-		f.formatArray(v, diff)
+		if err := f.formatArray(v, diff); err != nil {
+			return "", err
+		}
 	} else {
 		return "", fmt.Errorf("expected map[string]interface{} or []interface{}, got %T",
 			f.left)
@@ -155,32 +159,34 @@ func (f *JSONFormatter) Format(diff diff.Diff) (result string, err error) {
 		fmt.Printf("%v\n", err)
 		return "", err
 	}
+
 	return b.String(), nil
 }
 
-func (f *JSONFormatter) formatObject(left map[string]interface{}, df diff.Diff) {
+func (f *JSONFormatter) formatObject(left map[string]interface{}, df diff.Diff) error {
 	f.addLineWith(ChangeNil, "{")
 	f.push("ROOT", len(left), false)
 	if err := f.processObject(left, df.Deltas()); err != nil {
 		f.pop()
-		// TODO: Deal with error
-		return
+		return err
 	}
 
 	f.pop()
 	f.addLineWith(ChangeNil, "}")
+	return nil
 }
 
-func (f *JSONFormatter) formatArray(left []interface{}, df diff.Diff) {
+func (f *JSONFormatter) formatArray(left []interface{}, df diff.Diff) error {
 	f.addLineWith(ChangeNil, "[")
 	f.push("ROOT", len(left), true)
 	if err := f.processArray(left, df.Deltas()); err != nil {
 		f.pop()
-		// TODO: Deal with error
-		return
+		return err
 	}
+
 	f.pop()
 	f.addLineWith(ChangeNil, "]")
+	return nil
 }
 
 func (f *JSONFormatter) processArray(array []interface{}, deltas []diff.Delta) error {
