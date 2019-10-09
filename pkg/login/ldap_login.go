@@ -90,7 +90,7 @@ func DisableExternalUser(username string) error {
 		}
 
 		if err := bus.Dispatch(disableUserCmd); err != nil {
-			ldapLogge.Debug(
+			ldapLogger.Debug(
 				"Error disabling external user",
 				"user",
 				userQuery.Result.Login,
