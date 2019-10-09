@@ -33,15 +33,13 @@ We want to migrate away from using GoConvey. Instead, we want to use stdlib test
 
 The `sqlstore` handlers all use a global xorm engine variable. Refactor them to use the `SqlStore` instance.
 
-In the long term, all instances should change to SQLStore. Refer to Issue ##### for more information.
-
 ## Avoid global HTTP handler functions
 
 Refactor HTTP handlers so that the handler methods are on the HttpServer instance or a more detailed handler struct. E.g (AuthHandler). This ensures they get access to HttpServer service dependencies (and Cfg object) and can avoid global state.
 
 ## Date comparison
 
-Store newly introduced date columns in the database as epochs if they require date comparison. This permits a unified approach for comparing dates against all the supported databases instead of handling each one separately. Also, by comparing epochs, we no longer need error pruning transformations to and from other time zones.
+Store newly introduced date columns in the database as epochs if they require date comparison. This permits a unified approach for comparing dates against all the supported databases instead of handling dates differently for each database. Also, by comparing epochs, we no longer need error pruning transformations to and from other time zones.
 
 ## Dependency management
 
