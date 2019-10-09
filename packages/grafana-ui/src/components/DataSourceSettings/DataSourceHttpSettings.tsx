@@ -1,6 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { SelectableValue } from '@grafana/data';
-import { FormField, FormLabel, Select, Switch, TagsInput } from '..';
+import { css } from 'emotion';
+import { FormField, FormLabel, Input, Select, Switch, TagsInput } from '..';
+import { useTheme } from '../../themes';
 import { BasicAuthSettings } from './BasicAuthSettings';
 import { HttpProxySettings } from './HttpProxySettings';
 import { TLSAuthSettings } from './TLSAuthSettings';
@@ -50,6 +52,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
   const { defaultUrl, dataSourceConfig, onChange, showAccessOptions } = props;
   let urlTooltip;
   const [isAccessHelpVisible, setIsAccessHelpVisible] = useState(false);
+  const theme = useTheme();
 
   const onSettingsChange = useCallback(
     (change: Partial<DataSourceSettings<any, any>>) => {
@@ -90,35 +93,37 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
     />
   );
 
+  const isValidUrl = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/.test(
+    dataSourceConfig.url
+  );
+
+  const notValidStyle = css`
+    box-shadow: inset 0 0px 5px ${theme.colors.red};
+  `;
+
+  const urlInput = (
+    <Input
+      className={!isValidUrl ? notValidStyle : ''}
+      placeholder={defaultUrl}
+      value={dataSourceConfig.url}
+      onChange={event => onSettingsChange({ url: event.currentTarget.value })}
+    />
+  );
+
   return (
     <div className="gf-form-group">
       <>
         <h3 className="page-heading">HTTP</h3>
         <div className="gf-form-group">
           <div className="gf-form">
-            <FormField
-              label="URL"
-              labelWidth={11}
-              inputWidth={20}
-              placeholder={defaultUrl}
-              value={dataSourceConfig.url}
-              tooltip={urlTooltip}
-              onChange={event => onSettingsChange({ url: event.currentTarget.value })}
-            />
+            <FormField label="URL" labelWidth={11} inputWidth={20} tooltip={urlTooltip} inputEl={urlInput} />
           </div>
 
           {showAccessOptions && (
             <>
               <div className="gf-form-inline">
                 <div className="gf-form">
-                  <FormField
-                    label="Access"
-                    labelWidth={11}
-                    inputWidth={20}
-                    placeholder={defaultUrl}
-                    value={dataSourceConfig.url}
-                    inputEl={accessSelect}
-                  />
+                  <FormField label="Access" labelWidth={11} inputWidth={20} inputEl={accessSelect} />
                 </div>
                 <div className="gf-form">
                   <label
