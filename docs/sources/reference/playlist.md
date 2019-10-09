@@ -11,11 +11,9 @@ weight = 4
 
 # Playlist
 
-## About Playlists
+A playlist is a list of dashboards that are displayed in a sequence. You might use a Playlist to build situational awareness or to present your metrics to your team or visitors.
 
-The Playlist is a list of dashboards that are displayed in a sequence. You might use a Playlist to build situational awareness or to present your metrics to your team or visitors.
-
-Grafana automatically scales Dashboards to any resolution, which makes them perfect for big screens.
+Grafana automatically scales dashboards to any resolution, which makes them perfect for big screens.
 
 You can access the Playlist feature from Grafana's side menu, in the Dashboards submenu.
 
@@ -44,31 +42,44 @@ You can edit playlists while creating them or after saving them.
 1. Click on the Playlist that you want to edit.
 
 ### Edit the Name of a playlist
-   1. Double-click within the **Name** text box.
-   1. Enter a name. 
-   1. Click **Save** to save your changes.
+
+1. Double-click within the **Name** text box.
+1. Enter a name. 
+1. Click **Save** to save your changes.
+
 ### Edit the Interval of a playlist
-   1. Double-click within the **Interval** text box.
-   1. Enter a time interval.
-   1. Click **Save** to save your changes.
+
+1. Double-click within the **Interval** text box.
+1. Enter a time interval.
+1. Click **Save** to save your changes.
+
 ### Add a dashboard to a playlist
-   1. Next to the dashboard you want to add, click **Add to playlist**.
-   1. Click **Save** to save your changes.
+
+1. Next to the dashboard you want to add, click **Add to playlist**.
+1. Click **Save** to save your changes.
+
 ### Search for a dashboard to add
-   1. Click the **Find dashboards by name** text box. 
-   1. Search for the playlist by name or regular expression. 
-   3. If needed, filter your results by starred status or tags.  
-      By default, your starred dashboards will appear as options to add to the Playlist.
-   1. Click **Save** to save your changes.
+
+1. Click the **Find dashboards by name** text box. 
+1. Search for the playlist by name or regular expression. 
+1. If needed, filter your results by starred status or tags.  
+   By default, your starred dashboards will appear as options to add to the Playlist.
+1. Click **Save** to save your changes.
+
 ### Rearrange dashboard order
-   1. Next to the dashboard you want to move, click the up or down arrow.
-   1. Click **Save** to save your changes.
+
+1. Next to the dashboard you want to move, click the up or down arrow.
+1. Click **Save** to save your changes.
+
 ### Remove a dashboard
-   - Click **Remove[x]** to remove a dashboard from the playlist.
-      1. Click **Save** to save your changes.
+
+1. Click **Remove[x]** to remove a dashboard from the playlist.
+1. Click **Save** to save your changes.
+
 ### Delete a playlist
-   1. Click **Playlists**.
-   1. Next to the Playlist you want to delete, click **Remove[x]**.
+
+1. Click **Playlists**.
+1. Next to the Playlist you want to delete, click **Remove[x]**.
 
 ## Save a playlist
 
@@ -124,7 +135,7 @@ You can control a playlist in **Normal** or **TV** mode after it's started, usin
 | Time range | Displays data within a time range. It can be set to display the last 5 minutes up to 5 years ago, or a custom time range, using the down arrow. |
 | Refresh (circle arrow) | Reloads the dashboard, to display the current data. It can be set to reload automatically every 5 seconds to 1 day, using the drop down arrow. |
 
->Shortcut: Click the Esc key to stop the playlist from your keyboard.
+> Shortcut: Press the Esc key to stop the playlist from your keyboard.
 
 ## Share a playlist in a view mode
 
