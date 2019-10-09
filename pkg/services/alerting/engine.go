@@ -211,6 +211,7 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 		evalContext.Ctx = resultHandleCtx
 		evalContext.Rule.State = evalContext.GetNewState()
 		if err := e.resultHandler.handle(evalContext); err != nil {
+			// TODO: Consider if error should be propagated
 			e.log.Error("Failed to handle result", "err", err)
 		}
 
