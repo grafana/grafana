@@ -3,7 +3,7 @@ import flatten from 'app/core/utils/flatten';
 import TimeSeries from 'app/core/time_series2';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { TableTransform } from './types';
-import { Column, TableData } from '@grafana/data';
+import { Column, TableData, AnnotationEvent } from '@grafana/data';
 
 const transformers: { [key: string]: TableTransform } = {};
 
@@ -115,14 +115,20 @@ transformers['annotations'] = {
     model.columns.push({ text: 'Title' });
     model.columns.push({ text: 'Text' });
     model.columns.push({ text: 'Tags' });
-
     if (!data || !data.annotations || data.annotations.length === 0) {
       return;
     }
-
+    const dataKeys: Set<string> = new Set(
+      [].concat.apply(
+        [],
+        data.annotations.map((a: AnnotationEvent) => (a.data instanceof Object ? Object.keys(a.data) : []))
+      )
+    );
+    model.columns.push(...Array.from(dataKeys, k => ({ text: k })));
     for (let i = 0; i < data.annotations.length; i++) {
       const evt = data.annotations[i];
-      model.rows.push([evt.time, evt.title, evt.text, evt.tags]);
+      const annotationData = [...dataKeys].map(k => (evt.data instanceof Object ? evt.data[k] : undefined));
+      model.rows.push([evt.time, evt.title, evt.text, evt.tags].concat(annotationData));
     }
   },
 };

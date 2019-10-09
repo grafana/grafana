@@ -279,6 +279,26 @@ describe('when transforming time series table', () => {
             tags: ['tags', 'asd'],
             title: 'title',
           },
+          {
+            time: 1001,
+            text: 'text1',
+            tags: ['aze'],
+            title: 'title1',
+            data: { any: 'thing1', other: 'other' },
+          },
+          {
+            time: 1002,
+            text: 'text2',
+            tags: ['tags', 'aze'],
+            title: 'title2',
+            data: { any: 'thing2', other2: 'other2' },
+          },
+          {
+            time: 1003,
+            text: 'text3',
+            title: 'title3',
+            data: 'whatever',
+          },
         ],
       };
 
@@ -287,16 +307,22 @@ describe('when transforming time series table', () => {
       });
 
       it('should return 4 columns', () => {
-        expect(table.columns.length).toBe(4);
+        expect(table.columns.length).toBe(7);
         expect(table.columns[0].text).toBe('Time');
         expect(table.columns[1].text).toBe('Title');
         expect(table.columns[2].text).toBe('Text');
         expect(table.columns[3].text).toBe('Tags');
+        expect(table.columns[4].text).toBe('any');
+        expect(table.columns[5].text).toBe('other');
+        expect(table.columns[6].text).toBe('other2');
       });
 
-      it('should return 1 rows', () => {
-        expect(table.rows.length).toBe(1);
-        expect(table.rows[0][0]).toBe(1000);
+      it('should return 4 rows', () => {
+        expect(table.rows.length).toBe(4);
+        expect(table.rows[0]).toEqual([1000, 'title', 'hej', ['tags', 'asd'], undefined, undefined, undefined]);
+        expect(table.rows[1]).toEqual([1001, 'title1', 'text1', ['aze'], 'thing1', 'other', undefined]);
+        expect(table.rows[2]).toEqual([1002, 'title2', 'text2', ['tags', 'aze'], 'thing2', undefined, 'other2']);
+        expect(table.rows[3]).toEqual([1003, 'title3', 'text3', undefined, undefined, undefined, undefined]);
       });
     });
   });
