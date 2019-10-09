@@ -41,7 +41,7 @@ var loginUsingLDAP = func(query *models.LoginUserQuery) (bool, error) {
 		if err == ldap.ErrCouldNotFindUser {
 			// Ignore the error since user might not be present anyway
 			if err := DisableExternalUser(query.Username); err != nil {
-				// TODO: Deal with error
+				logger.Debug("Failed to disable external user", "err", err)
 			}
 
 			return true, ldap.ErrInvalidCredentials

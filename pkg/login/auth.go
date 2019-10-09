@@ -50,7 +50,10 @@ func AuthenticateUser(query *models.LoginUserQuery) error {
 	}
 
 	if err == ErrInvalidCredentials || err == ldap.ErrInvalidCredentials {
-		saveInvalidLoginAttempt(query)
+		if err := saveInvalidLoginAttempt(query); err != nil {
+			logger.Error("Failed to save invalid login attempt", "err", err)
+		}
+
 		return ErrInvalidCredentials
 	}
 
