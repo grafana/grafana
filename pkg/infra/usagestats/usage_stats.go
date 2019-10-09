@@ -153,7 +153,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	client := http.Client{Timeout: 5 * time.Second}
 	go func() {
 		if _, err := client.Post(usageStatsURL, "application/json", data); err != nil {
-			// TODO: Deal with error
+			metricsLogger.Error("Failed to post stats", "usageStatsURL", usageStatsURL, "err", err)
 		}
 	}()
 }

@@ -224,7 +224,7 @@ func (w *FileLogWriter) deleteOldLog() {
 		return
 	})
 	if err != nil {
-		// TODO: Deal with error
+		fmt.Fprintf(os.Stderr, "FileLogWriter(%q): %s\n", w.Filename, err)
 	}
 }
 
@@ -238,7 +238,7 @@ func (w *FileLogWriter) Close() {
 // flush file means sync file from disk.
 func (w *FileLogWriter) Flush() {
 	if err := w.mw.fd.Sync(); err != nil {
-		// TODO: Deal with error
+		fmt.Fprintf(os.Stderr, "FileLogWriter(%q): %s\n", w.Filename, err)
 	}
 }
 
