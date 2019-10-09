@@ -203,7 +203,7 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *models
 
 	model, err := userAuthTokenFromUserToken(token)
 	if err != nil {
-		return false, nil
+		return false, err
 	}
 
 	now := getTime()
