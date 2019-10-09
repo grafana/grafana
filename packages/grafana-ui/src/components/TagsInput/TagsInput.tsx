@@ -1,5 +1,5 @@
 import React, { ChangeEvent, KeyboardEvent, PureComponent } from 'react';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { Button, Input } from '..';
 import { TagItem } from './TagItem';
 
@@ -80,7 +80,6 @@ export class TagsInput extends PureComponent<Props, State> {
     const tagsCloudStyle = css`
       display: flex;
       justify-content: flex-start;
-      margin-bottom: 8px;
       flex-wrap: wrap;
     `;
 
@@ -91,7 +90,14 @@ export class TagsInput extends PureComponent<Props, State> {
 
     return (
       <div className="width-20">
-        <div className="gf-form-inline">
+        <div
+          className={cx(
+            ['gf-form-inline'],
+            css`
+              margin-bottom: 4px;
+            `
+          )}
+        >
           <Input placeholder="Add Name" onChange={this.onNameChange} value={newTag} onKeyUp={this.onKeyboardAdd} />
           <Button className={addButtonStyle} onClick={this.onAdd} variant="primary" size="md">
             Add
