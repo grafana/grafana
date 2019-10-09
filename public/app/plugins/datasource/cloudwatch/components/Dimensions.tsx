@@ -28,7 +28,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, variables, lo
     }
   }, [data]);
 
-  const appendTemplateVariables = (values: Array<SelectableValue>) => [
+  const appendTemplateVariables = (values: SelectableValue[]) => [
     ...values,
     { label: 'Template Variables', options: variables.map(v => ({ label: v, value: v })) },
   ];
