@@ -1,4 +1,4 @@
-package grafana
+package sdk
 
 import (
 	plugin "github.com/hashicorp/go-plugin"
