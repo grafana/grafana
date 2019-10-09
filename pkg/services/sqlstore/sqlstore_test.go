@@ -55,13 +55,13 @@ var sqlStoreTestCases = []sqlStoreTest{
 	{
 		name:          "MySQL IPv6 (Default Port)",
 		dbType:        "mysql",
-		dbHost:        "::1",
-		connStrValues: []string{"tcp(::1)"},
+		dbHost:        "[::1]",
+		connStrValues: []string{"tcp([::1])"},
 	},
 	{
 		name:          "Postgres IPv6 (Default Port)",
 		dbType:        "postgres",
-		dbHost:        "::1",
+		dbHost:        "[::1]",
 		connStrValues: []string{"host=::1", "port=5432"},
 	},
 }

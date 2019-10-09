@@ -52,7 +52,7 @@ scripts/go/bin/bra: scripts/go/go.mod
 	$(GO) build -o ./bin/bra github.com/unknwon/bra
 
 run: scripts/go/bin/bra ## Build and run web server on filesystem changes.
-	@scripts/go/bin/bra run
+	@GO111MODULE=on scripts/go/bin/bra run
 
 ##@ Testing
 
