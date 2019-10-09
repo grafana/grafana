@@ -1,4 +1,4 @@
-import React, { ChangeEvent, KeyboardEvent, PureComponent } from 'react';
+import React, { ChangeEvent, MouseEvent, KeyboardEvent, PureComponent } from 'react';
 import { css, cx } from 'emotion';
 import { Button, Input } from '..';
 import { TagItem } from './TagItem';
@@ -41,13 +41,15 @@ export class TagsInput extends PureComponent<Props, State> {
     );
   };
 
-  onAdd = () => {
+  onAdd = (event: MouseEvent) => {
+    event.preventDefault();
     if (this.state.newTag !== '') {
       this.setNewTags();
     }
   };
 
   onKeyboardAdd = (event: KeyboardEvent) => {
+    event.preventDefault();
     if (event.key === 'Enter' && this.state.newTag !== '') {
       this.setNewTags();
     }
@@ -99,7 +101,7 @@ export class TagsInput extends PureComponent<Props, State> {
           )}
         >
           <Input placeholder="Add Name" onChange={this.onNameChange} value={newTag} onKeyUp={this.onKeyboardAdd} />
-          <Button className={addButtonStyle} onClick={this.onAdd} variant="primary" size="md">
+          <Button className={addButtonStyle} onClick={this.onAdd} variant="secondary" size="md">
             Add
           </Button>
         </div>
