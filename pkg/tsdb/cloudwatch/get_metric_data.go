@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -58,12 +59,12 @@ func (e *CloudWatchExecutor) executeGetMetricDataQuery(ctx context.Context, regi
 		nextToken = *resp.NextToken
 	}
 
-	for id, query := range queries {
+	for _, query := range queries {
 		queryRes := tsdb.NewQueryResult()
 		queryRes.RefId = query.RefId
 		queryRes.Meta = simplejson.New()
 		for _, stat := range query.Statistics {
-			lr := mdr[id+"_____"+*stat]
+			lr := mdr[getQueryId(query, *stat)]
 			series, err := parseGetMetricDataTimeSeries(lr, query, *stat)
 			if err != nil {
 				return queryResponses, err
@@ -141,7 +142,7 @@ func parseGetMetricDataQuery(queries map[string]*CloudWatchQuery, queryContext *
 			}
 
 			mdq := &cloudwatch.MetricDataQuery{
-				Id:         aws.String(query.Id + "_____" + *stat),
+				Id:         aws.String(getQueryId(query, *stat)),
 				ReturnData: aws.Bool(query.ReturnData),
 			}
 			if query.Expression != "" {
@@ -216,42 +217,10 @@ func parseGetMetricDataTimeSeries(lr map[string]*cloudwatch.MetricDataResult, qu
 	return &result, nil
 }
 
-// func parseGetMetricDataResponse(lr map[string]*cloudwatch.MetricDataResult, query *CloudWatchQuery) (*tsdb.QueryResult, error) {
-// 	queryRes := tsdb.NewQueryResult()
-// 	queryRes.RefId = query.RefId
-
-// 	for label, r := range lr {
-// 		if *r.StatusCode != "Complete" {
-// 			return queryRes, fmt.Errorf("Part of query is failed: %s", *r.StatusCode)
-// 		}
-
-// 		series := tsdb.TimeSeries{
-// 			Tags:   map[string]string{},
-// 			Points: make([]tsdb.TimePoint, 0),
-// 		}
-// 		for _, d := range query.Dimensions {
-// 			series.Tags[*d.Name] = *d.Value
-// 		}
-// 		s := ""
-// 		if len(query.Statistics) == 1 {
-// 			s = *query.Statistics[0]
-// 		} else {
-// 			s = *query.ExtendedStatistics[0]
-// 		}
-// 		series.Name = formatAlias(query, s, series.Tags, label)
-
-// 		for j, t := range r.Timestamps {
-// 			if j > 0 {
-// 				expectedTimestamp := r.Timestamps[j-1].Add(time.Duration(query.Period) * time.Second)
-// 				if expectedTimestamp.Before(*t) {
-// 					series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), float64(expectedTimestamp.Unix()*1000)))
-// 				}
-// 			}
-// 			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(*r.Values[j]), float64((*t).Unix())*1000))
-// 		}
-
-// 		queryRes.Series = append(queryRes.Series, &series)
-// 		queryRes.Meta = simplejson.New()
-// 	}
-// 	return queryRes, nil
-// }
+func getQueryId(query *CloudWatchQuery, stat string) string {
+	queryID := query.Identifier
+	if len(query.Statistics) > 1 {
+		queryID = query.Identifier + "_____" + strings.ToLower(stat)
+	}
+	return queryID
+}
