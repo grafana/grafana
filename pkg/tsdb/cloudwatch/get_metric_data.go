@@ -108,12 +108,21 @@ func buildGetMetricDataQuery(queries map[string]*CloudWatchQuery, queryContext *
 				mdq.Expression = aws.String(query.Expression)
 			} else {
 				dimensionKeys := ""
-				searchTerm := fmt.Sprintf("MetricName=\"%v\"", query.MetricName)
-				for _, d := range query.Dimensions {
-					dimensionKeys += fmt.Sprintf(",%s", *d.Name)
-					searchTerm += fmt.Sprintf(" %s=\"%s\"", *d.Name, *d.Value)
+				searchTerm := fmt.Sprintf("MetricName=\"%v\" AND", query.MetricName)
+				for key, values := range query.Dimensions {
+					dimensionKeys += fmt.Sprintf(",%s", key)
+					searchTerm += fmt.Sprintf("(")
+					for id, value := range values {
+						searchTerm += fmt.Sprintf(" %s=\"%s\"", key, value)
+						if len(values) > 1 && id+1 != len(values) {
+							searchTerm += fmt.Sprintf(" OR")
+						}
+					}
+					searchTerm += fmt.Sprintf(")")
 				}
+
 				searchExpression := fmt.Sprintf("SEARCH(' {%s%s} %s', '%s', %s)", query.Namespace, dimensionKeys, searchTerm, *stat, strconv.Itoa(query.Period))
+				plog.Info("searchexpression", "", searchExpression)
 				mdq.Expression = aws.String(searchExpression)
 			}
 			params.MetricDataQueries = append(params.MetricDataQueries, mdq)
@@ -134,9 +143,12 @@ func parseGetMetricDataTimeSeries(lr map[string]*cloudwatch.MetricDataResult, qu
 			Tags:   map[string]string{},
 			Points: make([]tsdb.TimePoint, 0),
 		}
-		for _, d := range query.Dimensions {
-			series.Tags[*d.Name] = *d.Value
+		for key, values := range query.Dimensions {
+			series.Tags[key] = values[0]
 		}
+		// for _, d := range query.Dimensions {
+		// 	series.Tags[key] = values[0]
+		// }
 
 		series.Name = formatAlias(query, stat, series.Tags, label)
 
