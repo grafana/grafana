@@ -1,7 +1,10 @@
 package models
 
 import (
+	"io/ioutil"
 	"log"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -171,14 +174,13 @@ func TestDataSourceCache(t *testing.T) {
 	Convey("When caching a datasource proxy with custom headers specified", t, func() {
 		clearCache()
 
+		json := simplejson.NewFromAny(map[string]interface{}{
+			"httpHeaderName1": "Authorization",
+		})
 		encryptedData, err := util.Encrypt([]byte(`Bearer xf5yhfkpsnmgo`), setting.SecretKey)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
-
-		json := simplejson.NewFromAny(map[string]interface{}{
-			"httpHeaderName1": "Authorization",
-		})
 
 		ds := DataSource{
 			Id:             1,
@@ -188,10 +190,44 @@ func TestDataSourceCache(t *testing.T) {
 			SecureJsonData: map[string][]byte{"httpHeaderValue1": encryptedData},
 		}
 
-		headers := ds.getCustomHeaders()
-
 		Convey("Should match header value after decryption", func() {
+			headers := ds.getCustomHeaders()
 			So(headers["Authorization"], ShouldEqual, "Bearer xf5yhfkpsnmgo")
+		})
+
+		Convey("Should add header fields in HTTP Transport", func() {
+			// 1. Start HTTP test server which checks the request headers
+			backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// Can't use So() here, see: https://github.com/smartystreets/goconvey/issues/561
+				if r.Header.Get("Authorization") == "Bearer xf5yhfkpsnmgo" {
+					w.WriteHeader(200)
+					w.Write([]byte("Ok"))
+					return
+				}
+				w.WriteHeader(403)
+				w.Write([]byte("Invalid bearer token provided"))
+			}))
+			defer backend.Close()
+
+			// 2. Get HTTP transport from datasoruce which uses the test server as backend
+			ds.Url = backend.URL
+			transport, err := ds.GetHttpTransport()
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+
+			// 3. Send test request which should have the Authorization header set
+			req := httptest.NewRequest("GET", backend.URL+"/test-headers", nil)
+			res, err := transport.RoundTrip(req)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+			body, err := ioutil.ReadAll(res.Body)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+			bodyStr := string(body)
+			So(bodyStr, ShouldEqual, "Ok")
 		})
 	})
 }
