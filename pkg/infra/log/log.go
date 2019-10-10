@@ -209,7 +209,11 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 			handler = log15.StreamHandler(os.Stdout, format)
 		case "file":
 			fileName := sec.Key("file_name").MustString(filepath.Join(logsPath, "grafana.log"))
-			os.MkdirAll(filepath.Dir(fileName), os.ModePerm)
+			dpath := filepath.Dir(fileName)
+			if err := os.MkdirAll(dpath, os.ModePerm); err != nil {
+				Root.Error("Failed to create directory", "dpath", dpath, "err", err)
+				break
+			}
 			fileHandler := NewFileWriter()
 			fileHandler.Filename = fileName
 			fileHandler.Format = format
@@ -218,7 +222,10 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 			fileHandler.Maxsize = 1 << uint(sec.Key("max_size_shift").MustInt(28))
 			fileHandler.Daily = sec.Key("daily_rotate").MustBool(true)
 			fileHandler.Maxdays = sec.Key("max_days").MustInt64(7)
-			fileHandler.Init()
+			if err := fileHandler.Init(); err != nil {
+				Root.Error("Failed to create directory", "dpath", dpath, "err", err)
+				break
+			}
 
 			loggersToClose = append(loggersToClose, fileHandler)
 			loggersToReload = append(loggersToReload, fileHandler)
