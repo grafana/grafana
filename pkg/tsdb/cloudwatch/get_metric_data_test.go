@@ -44,7 +44,7 @@ func TestCloudWatchGetMetricData(t *testing.T) {
 			queryContext := &tsdb.TsdbQuery{
 				TimeRange: tsdb.NewFakeTimeRange("5m", "now", time.Now()),
 			}
-			res, err := parseGetMetricDataQuery(queries, queryContext)
+			res, err := buildGetMetricDataQuery(queries, queryContext)
 			So(err, ShouldBeNil)
 
 			for _, v := range res.MetricDataQueries {
