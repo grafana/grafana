@@ -5,7 +5,7 @@ export interface CloudWatchQuery extends DataQuery {
   region: string;
   namespace: string;
   metricName: string;
-  dimensions: { [key: string]: string };
+  dimensions: { [key: string]: string | string[] };
   statistics: string[];
   period: string;
   expression: string;

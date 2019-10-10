@@ -27,7 +27,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
     private instanceSettings: DataSourceInstanceSettings,
     private $q: IQService,
     private backendSrv: BackendSrv,
-    private templateSrv: TemplateSrv,
+    public templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
   ) {
     super(instanceSettings);
@@ -40,7 +40,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
 
   query(options: DataQueryRequest<CloudWatchQuery>) {
     options = angular.copy(options);
-    options.targets = this.expandTemplateVariable(options.targets, options.scopedVars, this.templateSrv);
+    // options.targets = this.expandTemplateVariable(options.targets, options.scopedVars, this.templateSrv);
 
     const queries = _.filter(options.targets, item => {
       return (
@@ -48,43 +48,45 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
         ((!!item.region && !!item.namespace && !!item.metricName && !_.isEmpty(item.statistics)) ||
           item.expression.length > 0)
       );
-    }).map(item => {
-      item.region = this.templateSrv.replace(this.getActualRegion(item.region), options.scopedVars);
-      item.namespace = this.templateSrv.replace(item.namespace, options.scopedVars);
-      item.metricName = this.templateSrv.replace(item.metricName, options.scopedVars);
-      item.dimensions = this.convertDimensionFormat(item.dimensions, options.scopedVars);
-      item.statistics = item.statistics.map(s => {
-        return this.templateSrv.replace(s, options.scopedVars);
-      });
-      item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
-      item.id = this.templateSrv.replace(item.id, options.scopedVars);
-      item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
+    })
+      // .map(this.toSearchExpression)
+      .map(item => {
+        item.region = this.templateSrv.replace(this.getActualRegion(item.region), options.scopedVars);
+        item.namespace = this.templateSrv.replace(item.namespace, options.scopedVars);
+        item.metricName = this.templateSrv.replace(item.metricName, options.scopedVars);
+        item.dimensions = this.convertDimensionFormat(item.dimensions, options.scopedVars);
+        item.statistics = item.statistics.map(s => {
+          return this.templateSrv.replace(s, options.scopedVars);
+        });
+        item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
+        item.id = this.templateSrv.replace(item.id, options.scopedVars);
+        item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
 
-      // valid ExtendedStatistics is like p90.00, check the pattern
-      const hasInvalidStatistics = item.statistics.some(s => {
-        if (s.indexOf('p') === 0) {
-          const matches = /^p\d{2}(?:\.\d{1,2})?$/.exec(s);
-          return !matches || matches[0] !== s;
+        // valid ExtendedStatistics is like p90.00, check the pattern
+        const hasInvalidStatistics = item.statistics.some(s => {
+          if (s.indexOf('p') === 0) {
+            const matches = /^p\d{2}(?:\.\d{1,2})?$/.exec(s);
+            return !matches || matches[0] !== s;
+          }
+
+          return false;
+        });
+
+        if (hasInvalidStatistics) {
+          throw { message: 'Invalid extended statistics' };
         }
 
-        return false;
+        return _.extend(
+          {
+            refId: item.refId,
+            intervalMs: options.intervalMs,
+            maxDataPoints: options.maxDataPoints,
+            datasourceId: this.instanceSettings.id,
+            type: 'timeSeriesQuery',
+          },
+          item
+        );
       });
-
-      if (hasInvalidStatistics) {
-        throw { message: 'Invalid extended statistics' };
-      }
-
-      return _.extend(
-        {
-          refId: item.refId,
-          intervalMs: options.intervalMs,
-          maxDataPoints: options.maxDataPoints,
-          datasourceId: this.instanceSettings.id,
-          type: 'timeSeriesQuery',
-        },
-        item
-      );
-    });
 
     // No valid targets, return the empty result to save a round trip.
     if (_.isEmpty(queries)) {
@@ -385,6 +387,24 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
     return this.$q.when([]);
   }
 
+  // toSearchExpression(query: CloudWatchQuery) {
+  //   const { expression, dimensions, namespace, metricName } = query;
+  //   if (expression) {
+  //     return query;
+  //   }
+
+  //   const dimensionKeys = Object.keys(dimensions).join(',');
+  //   const dimensionKeyAndValues = Object.entries(dimensions).reduce((result, [key, value]) => {
+  //     return (result += `${key}=\"${value}\"`);
+  //   }, '');
+
+  //   const res = `SEARCH(' {${namespace}, ${dimensionKeys}} MetricName=\"${metricName} ${dimensionKeyAndValues} $\"', '%s', %s)`;
+  //   console.log({ dimensionKeyAndValues, res });
+  //   return {
+  //     expression: res,
+  //   };
+  // }
+
   annotationQuery(options: any) {
     const annotation = options.annotation;
     const statistics = _.map(annotation.statistics, s => {
@@ -548,11 +568,24 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
     return Math.round(date.valueOf() / 1000);
   }
 
-  convertDimensionFormat(dimensions: any, scopedVars: ScopedVars) {
-    const convertedDimensions: any = {};
-    _.each(dimensions, (value, key) => {
-      convertedDimensions[this.templateSrv.replace(key, scopedVars)] = this.templateSrv.replace(value, scopedVars);
-    });
-    return convertedDimensions;
+  convertDimensionFormat(dimensions: { [key: string]: string | string[] }, scopedVars: ScopedVars) {
+    return Object.entries(dimensions).reduce((result, [key, value]) => {
+      if (Array.isArray(value)) {
+        return { ...result, [key]: value };
+      }
+
+      const variable = this.templateSrv.variables.find(
+        variable => variable.name === this.templateSrv.getVariableName(value)
+      );
+      if (variable) {
+        if (variable.multi) {
+          const values = this.templateSrv.replace(value, scopedVars, 'pipe').split('|');
+          return { ...result, [key]: values };
+        }
+        return { ...result, [key]: [this.templateSrv.replace(value, scopedVars)] };
+      }
+
+      return { ...result, [key]: [value] };
+    }, {});
   }
 }
