@@ -1,9 +1,17 @@
 .icon-margin-right {
   margin-right: 0.25em;
+
+  @media only screen and (max-width: 1320px) {
+    margin-right: 0;
+  }
 }
 
 .icon-margin-left {
   margin-left: 0.25em;
+
+  @media only screen and (max-width: 1320px) {
+    margin-left: 0;
+  }
 }
 
 .datasource-picker {
@@ -131,6 +139,20 @@
     i {
       position: relative;
       top: -1px;
+
+      @media only screen and (max-width: 1320px) {
+        margin: 0 -3px;
+      }
+    }
+  }
+}
+
+.explore-toolbar.splitted {
+  .explore-icon-align {
+    .navbar-button {
+      i {
+        margin: 0 -3px;
+      }
     }
   }
 }
