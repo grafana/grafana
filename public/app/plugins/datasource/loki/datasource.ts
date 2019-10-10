@@ -417,6 +417,9 @@ function queryRequestFromAnnotationOptions(options: AnnotationQueryRequest<LokiQ
     // This should mean the default defined on datasource is used.
     maxDataPoints: 0,
 
+    widthPixels: 0,
+    heightPixels: 0,
+
     // Dummy values, are required in type but not used here.
     timezone: 'utc',
     panelId: 0,

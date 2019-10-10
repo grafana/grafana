@@ -264,6 +264,7 @@ export function initializeExplore(
   rawRange: RawTimeRange,
   mode: ExploreMode,
   containerWidth: number,
+  containerHeight: number,
   eventBridge: Emitter,
   ui: ExploreUIState,
   originPanelId: number
@@ -276,6 +277,7 @@ export function initializeExplore(
       initializeExploreAction({
         exploreId,
         containerWidth,
+        containerHeight,
         eventBridge,
         queries,
         range,
@@ -443,6 +445,7 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
       queries,
       datasourceError,
       containerWidth,
+      containerHeight,
       isLive: live,
       range,
       scanning,
@@ -476,6 +479,8 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
       // This is used for logs streaming for buffer size, with undefined it falls back to datasource config if it
       // supports that.
       maxDataPoints: mode === ExploreMode.Logs ? undefined : containerWidth,
+      widthPixels: containerWidth,
+      heightPixels: containerHeight,
       liveStreaming: live,
       showingGraph,
       showingTable,
@@ -756,7 +761,7 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
       return;
     }
 
-    const { urlState, update, containerWidth, eventBridge } = itemState;
+    const { urlState, update, containerWidth, containerHeight, eventBridge } = itemState;
     const { datasource, queries, range: urlRange, mode, ui, originPanelId } = urlState;
     const refreshQueries: DataQuery[] = [];
     for (let index = 0; index < queries.length; index++) {
@@ -777,6 +782,7 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
           range,
           mode,
           containerWidth,
+          containerHeight,
           eventBridge,
           ui,
           originPanelId

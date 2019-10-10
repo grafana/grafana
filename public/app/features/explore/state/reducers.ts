@@ -80,6 +80,7 @@ export const makeInitialUpdateState = (): ExploreUpdateState => ({
 export const makeExploreItemState = (): ExploreItemState => ({
   StartPage: undefined,
   containerWidth: 0,
+  containerHeight: 0,
   datasourceInstance: null,
   requestedDatasourceName: null,
   datasourceError: null,
@@ -177,7 +178,8 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     filter: changeSizeAction,
     mapper: (state, action): ExploreItemState => {
       const containerWidth = action.payload.width;
-      return { ...state, containerWidth };
+      const containerHeight = action.payload.height;
+      return { ...state, containerWidth, containerHeight };
     },
   })
   .addMapper({
@@ -250,10 +252,11 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: initializeExploreAction,
     mapper: (state, action): ExploreItemState => {
-      const { containerWidth, eventBridge, queries, range, mode, ui, originPanelId } = action.payload;
+      const { containerWidth, containerHeight, eventBridge, queries, range, mode, ui, originPanelId } = action.payload;
       return {
         ...state,
         containerWidth,
+        containerHeight,
         eventBridge,
         range,
         mode,

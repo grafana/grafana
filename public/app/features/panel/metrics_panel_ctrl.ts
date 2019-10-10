@@ -24,7 +24,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   range: TimeRange;
   interval: any;
   intervalMs: any;
-  resolution: any;
+  resolution: { width: number; height: number };
   timeInfo?: string;
   skipDataOnInit: boolean;
   dataList: LegacyResponseData[];
@@ -175,7 +175,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       intervalOverride = this.datasource.interval;
     }
 
-    const res = kbn.calculateInterval(this.range, this.resolution, intervalOverride);
+    const res = kbn.calculateInterval(this.range, this.resolution.width, intervalOverride);
     this.interval = res.interval;
     this.intervalMs = res.intervalMs;
   }
@@ -197,7 +197,8 @@ class MetricsPanelCtrl extends PanelCtrl {
       dashboardId: this.dashboard.id,
       timezone: this.dashboard.timezone,
       timeRange: this.range,
-      widthPixels: this.resolution, // The pixel width
+      widthPixels: this.resolution.width, // The pixel width
+      heightPixels: this.resolution.height, // The pixel height
       maxDataPoints: panel.maxDataPoints,
       minInterval: panel.interval,
       scopedVars: panel.scopedVars,

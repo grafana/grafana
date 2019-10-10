@@ -154,6 +154,10 @@ export interface ExploreItemState {
    */
   containerWidth: number;
   /**
+   * Height in pixels
+   */
+  containerHeight: number;
+  /**
    * Datasource instance that has been selected. Datasource-specific logic can be run on this object.
    */
   datasourceInstance: DataSourceApi | null;
@@ -349,6 +353,8 @@ export interface QueryIntervals {
 
 export interface QueryOptions {
   minInterval: string;
+  widthPixels?: number;
+  heightPixels?: number;
   maxDataPoints?: number;
   liveStreaming?: boolean;
   showingGraph?: boolean;

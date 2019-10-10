@@ -17,6 +17,8 @@ export function getQueryOptions<TQuery extends DataQuery>(
     dashboardId: 1,
     interval: '60s',
     intervalMs: 60000,
+    widthPixels: 500,
+    heightPixels: 500,
     maxDataPoints: 500,
     startTime: 0,
   };

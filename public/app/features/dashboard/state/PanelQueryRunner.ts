@@ -27,6 +27,7 @@ export interface QueryRunnerOptions<
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
   widthPixels: number;
+  heightPixels: number;
   maxDataPoints: number | undefined | null;
   minInterval: string | undefined | null;
   scopedVars?: ScopedVars;
@@ -85,6 +86,7 @@ export class PanelQueryRunner {
       timeInfo,
       cacheTimeout,
       widthPixels,
+      heightPixels,
       maxDataPoints,
       scopedVars,
       minInterval,
@@ -107,6 +109,8 @@ export class PanelQueryRunner {
       intervalMs: 0,
       targets: cloneDeep(queries),
       maxDataPoints: maxDataPoints || widthPixels,
+      widthPixels,
+      heightPixels,
       scopedVars: scopedVars || {},
       cacheTimeout,
       startTime: Date.now(),

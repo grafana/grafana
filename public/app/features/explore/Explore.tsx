@@ -148,6 +148,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
       originPanelId,
     } = this.props;
     const width = this.el ? this.el.offsetWidth : 0;
+    const height = this.el ? this.el.offsetHeight : 0;
 
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
     if (!initialized) {
@@ -158,6 +159,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
         initialRange,
         mode,
         width,
+        height,
         this.exploreEvents,
         initialUI,
         originPanelId

@@ -83,6 +83,7 @@ export interface HighlightLogsExpressionPayload {
 export interface InitializeExplorePayload {
   exploreId: ExploreId;
   containerWidth: number;
+  containerHeight: number;
   eventBridge: Emitter;
   queries: DataQuery[];
   range: TimeRange;

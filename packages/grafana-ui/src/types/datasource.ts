@@ -449,6 +449,8 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   interval: string;
   intervalMs: number;
   maxDataPoints: number;
+  widthPixels: number;
+  heightPixels: number;
   scopedVars: ScopedVars;
 
   // Request Timing
