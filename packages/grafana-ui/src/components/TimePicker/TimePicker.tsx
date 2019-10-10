@@ -182,19 +182,18 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
         {isUTC && <span className="time-picker-utc">UTC</span>}
       </>
     );
-    const isAbsolute = isDateTime(value.raw.to);
-    const isLongDate = typeof this.props.value.raw.from !== 'string' || typeof this.props.value.raw.to !== 'string';
+    const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
 
     return (
       <div className="time-picker" ref={this.pickerTriggerRef}>
         <div className="time-picker-buttons">
-          {isAbsolute && (
+          {hasAbsolute && (
             <button className="btn navbar-button navbar-button--tight" onClick={onMoveBackward}>
               <i className="fa fa-chevron-left" />
             </button>
           )}
           <ButtonSelect
-            className={classNames('time-picker-button-select', isLongDate ? 'time-picker-long-date' : null, {
+            className={classNames('time-picker-button-select', hasAbsolute ? 'time-picker-long-date' : null, {
               [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: timeSyncButton,
               [styles.timePickerSynced]: timeSyncButton ? isSynced : null,
             })}
@@ -209,7 +208,7 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
 
           {timeSyncButton}
 
-          {isAbsolute && (
+          {hasAbsolute && (
             <button className="btn navbar-button navbar-button--tight" onClick={onMoveForward}>
               <i className="fa fa-chevron-right" />
             </button>
