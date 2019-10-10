@@ -11,15 +11,15 @@ weight = 4
 
 # Playlist
 
-A playlist is a list of dashboards that are displayed in a sequence. You might use a Playlist to build situational awareness or to present your metrics to your team or visitors.
+A playlist is a list of dashboards that are displayed in a sequence. You might use a playlist to build situational awareness or to present your metrics to your team or visitors.
 
 Grafana automatically scales dashboards to any resolution, which makes them perfect for big screens.
 
 You can access the Playlist feature from Grafana's side menu, in the Dashboards submenu.
 
-## Create a playlist
+{{< docs-imagebox img="/img/docs/v50/playlist.png" max-width="25rem">}}
 
-{{< docs-imagebox img="/img/docs/v50/playlist.png" max-width="25rem" class="docs-image--right">}}
+## Create a playlist
 
 You create a playlist to present dashboards in a sequence, with a set order and time interval between dashboards. 
 
@@ -29,7 +29,8 @@ You create a playlist to present dashboards in a sequence, with a set order and 
 1. In the **Name** text box, enter a name for your playlist.
 1. In the **Interval** text box, enter a time interval.
 
-   The time interval is the amount of time for Grafana to stay on a particular dashboard before advancing to the next one on the playlist.
+The time interval is the amount of time for Grafana to stay on a particular dashboard before advancing to the next one on the playlist.
+
 1. Next to the dashboard(s) you want to add to your playlist, click **Add to playlist**. 
 1. Click **Create**.
 
