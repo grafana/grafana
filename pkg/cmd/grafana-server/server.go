@@ -173,9 +173,7 @@ func (g *GrafanaServerImpl) Run() (err error) {
 		}
 	}()
 
-	if err := sendSystemdNotification("READY=1"); err != nil {
-		g.log.Warn("Unable to send systemd notification", "err", err)
-	}
+	g.sendSystemdNotification("READY=1")
 
 	return
 }
@@ -245,27 +243,28 @@ func (g *GrafanaServerImpl) writePIDFile() {
 	g.log.Info("Writing PID file", "path", *pidFile, "pid", pid)
 }
 
-func sendSystemdNotification(state string) error {
+func (g *GrafanaServerImpl) sendSystemdNotification(state string) {
 	notifySocket := os.Getenv("NOTIFY_SOCKET")
-
 	if notifySocket == "" {
-		return fmt.Errorf("NOTIFY_SOCKET environment variable empty or unset")
+		g.log.Debug(
+			"NOTIFY_SOCKET environment variable empty or unset, can't send systemd notification")
+		return
 	}
 
 	socketAddr := &net.UnixAddr{
 		Name: notifySocket,
 		Net:  "unixgram",
 	}
-
 	conn, err := net.DialUnix(socketAddr.Net, nil, socketAddr)
-
 	if err != nil {
-		return err
+		g.log.Warn("Failed to connect to systemd", "err", err, "socket", notifySocket)
+		return
 	}
 
+	defer conn.Close()
+
 	_, err = conn.Write([]byte(state))
-
-	conn.Close()
-
-	return err
+	if err != nil {
+		g.log.Warn("Failed to write notification to systemd", "err", err)
+	}
 }
