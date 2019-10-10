@@ -39,6 +39,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/search"
 	_ "github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"golang.org/x/xerrors"
 )
 
 func NewGrafanaServer() *GrafanaServerImpl {
@@ -164,7 +165,7 @@ func (g *GrafanaServerImpl) Run() (err error) {
 
 	defer func() {
 		g.log.Debug("Waiting on services...")
-		if waitErr := g.childRoutines.Wait(); waitErr != nil {
+		if waitErr := g.childRoutines.Wait(); waitErr != nil && !xerrors.Is(waitErr, context.Canceled) {
 			g.log.Error("A service failed", "err", waitErr)
 			if err == nil {
 				err = waitErr
@@ -204,7 +205,7 @@ func (g *GrafanaServerImpl) Shutdown(reason string) {
 	g.shutdownFn()
 
 	// wait for child routines
-	if err := g.childRoutines.Wait(); err != nil {
+	if err := g.childRoutines.Wait(); err != nil && !xerrors.Is(err, context.Canceled) {
 		g.log.Error("Failed waiting for services to shutdown", "err", err)
 	}
 }
