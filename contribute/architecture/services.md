@@ -26,7 +26,7 @@ func (s *MyService) Init() error {
 }
 ```
 
-The `Init` method is used to initialize and configure the service to make it ready to use.
+The `Init` method is used to initialize and configure the service to make it ready to use. Services that return an error halt Grafana's startup process and cause the error to be logged as it exits.
 
 ### Register a service
 
@@ -111,7 +111,7 @@ A command is a request for an change to be made. Unlike an event, a command can 
 
 #### Dispatch a command
 
-To dispatch a command to another service, pass a command object to the `Dispatch` method:
+To dispatch a command, pass the object to the `Dispatch` method:
 
 ```go
 cmd := &models.SendStickersCommand {
