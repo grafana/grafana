@@ -117,7 +117,7 @@ func (p *DataSourcePlugin) restartKilledProcess(ctx context.Context) error {
 			}
 
 			if err := p.spawnSubProcess(); err != nil {
-				p.log.Error("Failed to spawn subprocess")
+				p.log.Error("Failed to restart plugin", "err", err)
 				continue
 			}
 
