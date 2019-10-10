@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
 	"github.com/grafana/grafana/pkg/tsdb"
 	plugin "github.com/hashicorp/go-plugin"
+	"golang.org/x/xerrors"
 )
 
 // DataSourcePlugin contains all metadata about a datasource plugin
@@ -110,7 +111,10 @@ func (p *DataSourcePlugin) restartKilledProcess(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			if err := ctx.Err(); err != nil && !xerrors.Is(err, context.Canceled) {
+				return err
+			}
+			return nil
 		case <-ticker.C:
 			if !p.client.Exited() {
 				continue
