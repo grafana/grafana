@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -63,6 +64,7 @@ func parseQuery(model *simplejson.Json, refId string) (*CloudWatchQuery, error) 
 	}
 
 	id := model.Get("id").MustString("")
+
 	expression := model.Get("expression").MustString("")
 
 	dimensions, err := parseDimensions(model)
@@ -73,6 +75,11 @@ func parseQuery(model *simplejson.Json, refId string) (*CloudWatchQuery, error) 
 	statistics, err := parseStatistics(model)
 	if err != nil {
 		return nil, err
+	}
+
+	identifier := id
+	if identifier == "" || len(statistics) > 1 {
+		identifier = generateUniqueString()
 	}
 
 	p := model.Get("period").MustString("")
@@ -100,11 +107,6 @@ func parseQuery(model *simplejson.Json, refId string) (*CloudWatchQuery, error) 
 
 	alias := model.Get("alias").MustString()
 
-	identifier := id
-	if identifier == "" || len(statistics) > 1 {
-		identifier = generateUniqueString()
-	}
-
 	returnData := !model.Get("hide").MustBool(false)
 	queryType := model.Get("type").MustString()
 	if queryType == "" {
@@ -117,7 +119,6 @@ func parseQuery(model *simplejson.Json, refId string) (*CloudWatchQuery, error) 
 
 	return &CloudWatchQuery{
 		RefId:          refId,
-		Identifier:     identifier,
 		Region:         region,
 		Namespace:      namespace,
 		MetricName:     metricName,
@@ -126,6 +127,7 @@ func parseQuery(model *simplejson.Json, refId string) (*CloudWatchQuery, error) 
 		Period:         period,
 		Alias:          alias,
 		Id:             id,
+		Identifier:     identifier,
 		Expression:     expression,
 		ReturnData:     returnData,
 		HighResolution: highResolution,
@@ -161,34 +163,25 @@ func parseStatistics(model *simplejson.Json) ([]string, error) {
 	return statistics, nil
 }
 
-func parseDimensions(model *simplejson.Json) (map[string][]string, error) {
-	parsedDimensions := make(map[string][]string)
+func parseDimensions(model *simplejson.Json) ([]*cloudwatch.Dimension, error) {
+	var result []*cloudwatch.Dimension
+
 	for k, v := range model.Get("dimensions").MustMap() {
 		kk := k
-		// This is for backwards compatibility. Before 6.5 dimensions values were stored as strings and not arrays
-		if value, ok := v.(string); ok {
-			parsedDimensions[kk] = []string{value}
-		} else if values, ok := v.([]interface{}); ok {
-			for _, value := range values {
-				parsedDimensions[kk] = append(parsedDimensions[kk], value.(string))
-			}
+		if vv, ok := v.(string); ok {
+			result = append(result, &cloudwatch.Dimension{
+				Name:  &kk,
+				Value: &vv,
+			})
 		} else {
 			return nil, errors.New("failed to parse")
 		}
 	}
 
-	sortedDimensions := make(map[string][]string)
-	var keys []string
-	for k := range parsedDimensions {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	// To perform the opertion you want
-	for _, k := range keys {
-		sortedDimensions[k] = parsedDimensions[k]
-	}
-	return parsedDimensions, nil
+	sort.Slice(result, func(i, j int) bool {
+		return *result[i].Name < *result[j].Name
+	})
+	return result, nil
 }
 
 func generateUniqueString() string {
