@@ -304,6 +304,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                 <LiveTailControls exploreId={exploreId}>
                   {controls => (
                     <LiveTailButton
+                      splitted={splitted}
                       isLive={isLive}
                       isPaused={isPaused}
                       start={controls.start}
