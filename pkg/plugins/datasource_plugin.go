@@ -121,7 +121,7 @@ func (p *DataSourcePlugin) restartKilledProcess(ctx context.Context) error {
 				continue
 			}
 
-			p.log.Debug("Spawned new sub process", "name", p.Name, "id", p.Id)
+			p.log.Debug("Plugin process restarted")
 		}
 	}
 }
