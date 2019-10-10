@@ -118,7 +118,7 @@ shellcheck: $(SH_FILES)
 	$(SH_FILES) -e SC1071 -e SC2162
 
 run: scripts/go/bin/bra
-	@scripts/go/bin/bra run
+	@GO111MODULE=on scripts/go/bin/bra run
 
 # create docker-compose file with provided sources and start them
 # example: make devenv sources=postgres,openldap
