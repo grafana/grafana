@@ -1,16 +1,14 @@
 package cloudwatch
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
 	"regexp"
-	"sort"
 	"strconv"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -48,90 +46,94 @@ func (e *CloudWatchExecutor) buildQueriesByRegion(queryContext *tsdb.TsdbQuery) 
 }
 
 func parseQuery(model *simplejson.Json, refId string) (*CloudWatchQuery, error) {
-	region, err := model.Get("region").String()
+	var target CloudWatchQuery
+	data, err := model.MarshalJSON()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Invalid query format")
+	}
+	json.Unmarshal(data, &target)
+
+	// region, err := model.Get("region").String()
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// namespace, err := model.Get("namespace").String()
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// metricName, err := model.Get("metricName").String()
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// dimensions, err := parseDimensions(model)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// statistics, err := parseStatistics(model)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	target.Identifier = target.Id
+	if target.Identifier == "" || len(target.Statistics) > 1 {
+		target.Identifier = generateUniqueString()
 	}
 
-	namespace, err := model.Get("namespace").String()
-	if err != nil {
-		return nil, err
-	}
-
-	metricName, err := model.Get("metricName").String()
-	if err != nil {
-		return nil, err
-	}
-
-	id := model.Get("id").MustString("")
-
-	expression := model.Get("expression").MustString("")
-
-	dimensions, err := parseDimensions(model)
-	if err != nil {
-		return nil, err
-	}
-
-	statistics, err := parseStatistics(model)
-	if err != nil {
-		return nil, err
-	}
-
-	identifier := id
-	if identifier == "" || len(statistics) > 1 {
-		identifier = generateUniqueString()
-	}
-
-	p := model.Get("period").MustString("")
-	if p == "" {
-		if namespace == "AWS/EC2" {
-			p = "300"
+	p := target.Period
+	if p == 0 {
+		if target.Namespace == "AWS/EC2" {
+			p = 300
 		} else {
-			p = "60"
+			p = 60
 		}
 	}
 
 	var period int
-	if regexp.MustCompile(`^\d+$`).Match([]byte(p)) {
-		period, err = strconv.Atoi(p)
+	if regexp.MustCompile(`^\d+$`).Match([]byte(target.PeriodString)) {
+		period, err = strconv.Atoi(target.PeriodString)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		d, err := time.ParseDuration(p)
+		d, err := time.ParseDuration(target.PeriodString)
 		if err != nil {
 			return nil, err
 		}
 		period = int(d.Seconds())
 	}
+	target.Period = period
+	target.PeriodString = strconv.Itoa(period)
 
-	alias := model.Get("alias").MustString()
+	target.ReturnData = !target.ReturnData
 
-	returnData := !model.Get("hide").MustBool(false)
-	queryType := model.Get("type").MustString()
-	if queryType == "" {
+	if target.QueryType == "" {
 		// If no type is provided we assume we are called by alerting service, which requires to return data!
 		// Note, this is sort of a hack, but the official Grafana interfaces do not carry the information
 		// who (which service) called the TsdbQueryEndpoint.Query(...) function.
-		returnData = true
+		target.ReturnData = true
 	}
-	highResolution := model.Get("highResolution").MustBool(false)
 
-	return &CloudWatchQuery{
-		RefId:          refId,
-		Region:         region,
-		Namespace:      namespace,
-		MetricName:     metricName,
-		Dimensions:     dimensions,
-		Statistics:     aws.StringSlice(statistics),
-		Period:         period,
-		Alias:          alias,
-		Id:             id,
-		Identifier:     identifier,
-		Expression:     expression,
-		ReturnData:     returnData,
-		HighResolution: highResolution,
-	}, nil
+	// return &CloudWatchQuery{
+	// 	RefId:          refId,
+	// 	Region:         region,
+	// 	Namespace:      namespace,
+	// 	MetricName:     metricName,
+	// 	Dimensions:     dimensions,
+	// 	Statistics:     aws.StringSlice(statistics),
+	// 	Period:         period,
+	// 	Alias:          alias,
+	// 	Id:             id,
+	// 	Identifier:     identifier,
+	// 	Expression:     expression,
+	// 	ReturnData:     returnData,
+	// 	HighResolution: highResolution,
+	// }, nil
+
+	return &target, nil
 }
 
 func parseStatisticsAndExtendedStatistics(model *simplejson.Json) ([]string, []string, error) {
@@ -163,26 +165,51 @@ func parseStatistics(model *simplejson.Json) ([]string, error) {
 	return statistics, nil
 }
 
-func parseDimensions(model *simplejson.Json) ([]*cloudwatch.Dimension, error) {
-	var result []*cloudwatch.Dimension
+func parseDimensions(model *simplejson.Json) (map[string][]string, error) {
+	var result map[string][]string
+	plog.Info("dimensions", "", model.Get("dimensions").MustMap())
+	for k, values := range model.Get("dimensions").MustMap() {
+		for _, value := range values.([]interface{}) {
+			plog.Info("dimensions", "", value.([]string))
 
-	for k, v := range model.Get("dimensions").MustMap() {
-		kk := k
-		if vv, ok := v.(string); ok {
-			result = append(result, &cloudwatch.Dimension{
-				Name:  &kk,
-				Value: &vv,
-			})
-		} else {
-			return nil, errors.New("failed to parse")
 		}
+		plog.Info("dimensionsK", "", k)
 	}
+	// 	kk := k
 
-	sort.Slice(result, func(i, j int) bool {
-		return *result[i].Name < *result[j].Name
-	})
+	// if vv, ok := v.(string); ok {
+	// 	result[vv] = v.MustArray()
+	// } else {
+	// 	return nil, errors.New("failed to parse")
+	// }
+	// }
+
+	// sort.Slice(result, func(i, j int) bool {
+	// 	return *result[i].Name < *result[j].Name
+	// })
 	return result, nil
 }
+
+// func parseDimensions(model *simplejson.Json) ([]*cloudwatch.Dimension, error) {
+// 	var result []*cloudwatch.Dimension
+
+// 	for k, v := range model.Get("dimensions").MustMap() {
+// 		kk := k
+// 		if vv, ok := v.(string); ok {
+// 			result = append(result, &cloudwatch.Dimension{
+// 				Name:  &kk,
+// 				Value: &vv,
+// 			})
+// 		} else {
+// 			return nil, errors.New("failed to parse")
+// 		}
+// 	}
+
+// 	sort.Slice(result, func(i, j int) bool {
+// 		return *result[i].Name < *result[j].Name
+// 	})
+// 	return result, nil
+// }
 
 func generateUniqueString() string {
 	var letter = []rune("abcdefghijklmnopqrstuvwxyz")
