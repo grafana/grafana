@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -63,8 +62,8 @@ func (e *CloudWatchExecutor) executeGetMetricDataQuery(ctx context.Context, regi
 		queryRes := tsdb.NewQueryResult()
 		queryRes.RefId = query.RefId
 		queryRes.Meta = simplejson.New()
-		for _, stat := range query.Statistics {
-			lr := mdr[getQueryId(query, *stat)]
+		for i, stat := range query.Statistics {
+			lr := mdr[getQueryID(query, i)]
 			series, err := parseGetMetricDataTimeSeries(lr, query, *stat)
 			if err != nil {
 				return queryResponses, err
@@ -73,29 +72,6 @@ func (e *CloudWatchExecutor) executeGetMetricDataQuery(ctx context.Context, regi
 		}
 		queryResponses = append(queryResponses, queryRes)
 	}
-
-	// for id, lr := range mdr {
-	// 	queryIDArr := strings.Split(id, "_____")
-	// 	query := queries[queryIDArr[0]]
-	// 	series, err := parseGetMetricDataTimeSeries(lr, query)
-	// 	if err != nil {
-	// 		return queryResponses, err
-	// 	}
-
-	// 	if queryResponseExist(queryResponses, query.RefId) {
-
-	// 	}
-	// 	queryRes := tsdb.NewQueryResult()
-	// 	queryRes.RefId = query.RefId
-	// 	for _, qr := range queryResponses {
-	// 		if qr.RefId == query.RefId {
-	// 			queryRes = qr
-	// 			break
-	// 		}
-	// 	}
-	// 	queryRes.Series = append(queryRes.Series, *series...)
-	// 	queryResponses = append(queryResponses, queryRes)
-	// }
 
 	return queryResponses, nil
 }
@@ -110,14 +86,6 @@ func queryResponseExist(queryResponses []*tsdb.QueryResult, refID string) bool {
 }
 
 func parseGetMetricDataQuery(queries map[string]*CloudWatchQuery, queryContext *tsdb.TsdbQuery) (*cloudwatch.GetMetricDataInput, error) {
-	// validate query
-	// for _, query := range queries {
-	// 	if !(len(query.Statistics) == 1 && len(query.ExtendedStatistics) == 0) &&
-	// 		!(len(query.Statistics) == 0 && len(query.ExtendedStatistics) == 1) {
-	// 		return nil, errors.New("Statistics count should be 1")
-	// 	}
-	// }
-
 	startTime, err := queryContext.TimeRange.ParseFrom()
 	if err != nil {
 		return nil, err
@@ -134,7 +102,7 @@ func parseGetMetricDataQuery(queries map[string]*CloudWatchQuery, queryContext *
 		ScanBy:    aws.String("TimestampAscending"),
 	}
 	for _, query := range queries {
-		for _, stat := range query.Statistics {
+		for i, stat := range query.Statistics {
 
 			// 1 minutes resolution metrics is stored for 15 days, 15 * 24 * 60 = 21600
 			if query.HighResolution && (((endTime.Unix() - startTime.Unix()) / int64(query.Period)) > 21600) {
@@ -142,7 +110,7 @@ func parseGetMetricDataQuery(queries map[string]*CloudWatchQuery, queryContext *
 			}
 
 			mdq := &cloudwatch.MetricDataQuery{
-				Id:         aws.String(getQueryId(query, *stat)),
+				Id:         aws.String(getQueryID(query, i)),
 				ReturnData: aws.Bool(query.ReturnData),
 			}
 			if query.Expression != "" {
@@ -158,26 +126,6 @@ func parseGetMetricDataQuery(queries map[string]*CloudWatchQuery, queryContext *
 				}
 				searchExpression := fmt.Sprintf("SEARCH(' {%s%s} %s', '%s', %s)", query.Namespace, dimensionKeys, searchTerm, *stat, strconv.Itoa(query.Period))
 				mdq.Expression = aws.String(searchExpression)
-
-				// mdq.MetricStat = &cloudwatch.MetricStat{
-				// 	Metric: &cloudwatch.Metric{
-				// 		Namespace:  aws.String(query.Namespace),
-				// 		MetricName: aws.String(query.MetricName),
-				// 	},
-				// 	Period: aws.Int64(int64(query.Period)),
-				// }
-				// for _, d := range query.Dimensions {
-				// 	mdq.MetricStat.Metric.Dimensions = append(mdq.MetricStat.Metric.Dimensions,
-				// 		&cloudwatch.Dimension{
-				// 			Name:  d.Name,
-				// 			Value: d.Value,
-				// 		})
-				// }
-				// if len(query.Statistics) == 1 {
-				// 	mdq.MetricStat.Stat = query.Statistics[0]
-				// } else {
-				// 	mdq.MetricStat.Stat = query.ExtendedStatistics[0]
-				// }
 			}
 			params.MetricDataQueries = append(params.MetricDataQueries, mdq)
 
@@ -217,10 +165,10 @@ func parseGetMetricDataTimeSeries(lr map[string]*cloudwatch.MetricDataResult, qu
 	return &result, nil
 }
 
-func getQueryId(query *CloudWatchQuery, stat string) string {
+func getQueryID(query *CloudWatchQuery, statIndex int) string {
 	queryID := query.Identifier
 	if len(query.Statistics) > 1 {
-		queryID = query.Identifier + "_____" + strings.ToLower(stat)
+		queryID = query.Identifier + "_____" + strconv.Itoa(statIndex)
 	}
 	return queryID
 }

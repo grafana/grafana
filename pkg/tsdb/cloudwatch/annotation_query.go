@@ -24,7 +24,7 @@ func (e *CloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 	namespace := parameters.Get("namespace").MustString("")
 	metricName := parameters.Get("metricName").MustString("")
 	dimensions := parameters.Get("dimensions").MustMap()
-	statistics, extendedStatistics, err := parseStatistics(parameters)
+	statistics, extendedStatistics, err := parseStatisticsAndExtendedStatistics(parameters)
 	if err != nil {
 		return nil, err
 	}
