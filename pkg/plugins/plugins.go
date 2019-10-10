@@ -108,22 +108,20 @@ func (pm *PluginManager) Init() error {
 	return nil
 }
 
-func (pm *PluginManager) startBackendPlugins(ctx context.Context) error {
+func (pm *PluginManager) startBackendPlugins(ctx context.Context) {
 	for _, ds := range DataSources {
-		if ds.Backend {
-			if err := ds.startBackendPlugin(ctx, plog); err != nil {
-				pm.log.Error("Failed to init plugin.", "error", err, "plugin", ds.Id)
-			}
+		if !ds.Backend {
+			continue
+		}
+
+		if err := ds.startBackendPlugin(ctx, plog); err != nil {
+			pm.log.Error("Failed to init plugin.", "error", err, "plugin", ds.Id)
 		}
 	}
-
-	return nil
 }
 
 func (pm *PluginManager) Run(ctx context.Context) error {
-	if err := pm.startBackendPlugins(ctx); err != nil {
-		return err
-	}
+	pm.startBackendPlugins(ctx)
 	pm.updateAppDashboards()
 	pm.checkForUpdates()
 
