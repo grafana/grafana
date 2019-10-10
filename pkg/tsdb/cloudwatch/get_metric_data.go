@@ -23,7 +23,7 @@ func (e *CloudWatchExecutor) executeGetMetricDataQuery(ctx context.Context, regi
 		return queryResponses, err
 	}
 
-	params, err := parseGetMetricDataQuery(queries, queryContext)
+	params, err := buildGetMetricDataQuery(queries, queryContext)
 	if err != nil {
 		return queryResponses, err
 	}
@@ -76,16 +76,7 @@ func (e *CloudWatchExecutor) executeGetMetricDataQuery(ctx context.Context, regi
 	return queryResponses, nil
 }
 
-func queryResponseExist(queryResponses []*tsdb.QueryResult, refID string) bool {
-	for _, qr := range queryResponses {
-		if qr.RefId == refID {
-			return true
-		}
-	}
-	return false
-}
-
-func parseGetMetricDataQuery(queries map[string]*CloudWatchQuery, queryContext *tsdb.TsdbQuery) (*cloudwatch.GetMetricDataInput, error) {
+func buildGetMetricDataQuery(queries map[string]*CloudWatchQuery, queryContext *tsdb.TsdbQuery) (*cloudwatch.GetMetricDataInput, error) {
 	startTime, err := queryContext.TimeRange.ParseFrom()
 	if err != nil {
 		return nil, err
@@ -118,8 +109,6 @@ func parseGetMetricDataQuery(queries map[string]*CloudWatchQuery, queryContext *
 			} else {
 				dimensionKeys := ""
 				searchTerm := fmt.Sprintf("MetricName=\"%v\"", query.MetricName)
-				// stats := ""
-				// stats = *query.Statistics[0]
 				for _, d := range query.Dimensions {
 					dimensionKeys += fmt.Sprintf(",%s", *d.Name)
 					searchTerm += fmt.Sprintf(" %s=\"%s\"", *d.Name, *d.Value)
