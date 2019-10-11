@@ -63,7 +63,7 @@ On the left-hand side of the query field is a `Metrics` button, clicking on this
 
 The Query field supports autocomplete for metric names, function and works mostly the same way as the standard Prometheus query editor. Press the enter key to execute a query.
 
-The autocomplete menu can be trigger by pressing Ctrl + Space. The Autocomplete menu contains a new History section with a list of recently executed queries.
+The autocomplete menu can be trigger by pressing Ctrl+Space. The Autocomplete menu contains a new History section with a list of recently executed queries.
 
 Suggestions can appear under the query field - click on them to update your query with the suggested change.
 
@@ -115,6 +115,16 @@ after switching to the Logs data source, the query changes to:
 `{job="grafana"}`
 
 This will return a chunk of logs in the selected time range that can be grepped/text searched.
+
+#### Live tailing
+
+Use the Live tailing feature to see real-time logs on supported data sources.
+
+Click the **Live** button in the Explore toolbar to switch to Live tail view.
+
+While in Live tail view new logs will come from the bottom of the screen and will have fading contrasting background so you can keep track of what is new. Click the **Pause** button or scroll the the logs view to pause the Live tailing and explore previous logs without interruption. Click **Resume** button to resume the Live tailing or click **Stop** button to exit Live tailing and go back to standard Explore view.
+
+{{< docs-imagebox img="/img/docs/v64/explore_live_tailing.gif" class="docs-image--no-shadow" caption="Explore Live tailing in action" >}}
 
 ## Navigating between Explore and a dashboard
 

@@ -35,6 +35,7 @@ func TestUserApiEndpoint(t *testing.T) {
 					IsDisabled:     false,
 					IsExternal:     false,
 					UpdatedAt:      fakeNow,
+					CreatedAt:      fakeNow,
 				}
 				return nil
 			})
@@ -63,7 +64,53 @@ func TestUserApiEndpoint(t *testing.T) {
 				"authLabels": [
 					"LDAP"
 				],
-				"updatedAt": "2019-02-11T17:30:40Z"
+				"updatedAt": "2019-02-11T17:30:40Z",
+				"createdAt": "2019-02-11T17:30:40Z"
+			}
+			`
+
+			require.Equal(t, http.StatusOK, sc.resp.Code)
+			require.JSONEq(t, expected, sc.resp.Body.String())
+		})
+
+		loggedInUserScenario("When calling GET on", "/api/users/lookup", func(sc *scenarioContext) {
+			fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
+			bus.AddHandler("test", func(query *models.GetUserByLoginQuery) error {
+				require.Equal(t, "danlee", query.LoginOrEmail)
+
+				query.Result = &models.User{
+					Id:         int64(1),
+					Email:      "daniel@grafana.com",
+					Name:       "Daniel",
+					Login:      "danlee",
+					Theme:      "light",
+					IsAdmin:    true,
+					OrgId:      int64(2),
+					IsDisabled: false,
+					Updated:    fakeNow,
+					Created:    fakeNow,
+				}
+
+				return nil
+			})
+
+			sc.handlerFunc = GetUserByLoginOrEmail
+			sc.fakeReqWithParams("GET", sc.url, map[string]string{"loginOrEmail": "danlee"}).exec()
+
+			expected := `
+			{
+				"id": 1,
+				"email": "daniel@grafana.com",
+				"name": "Daniel",
+				"login": "danlee",
+				"theme": "light",
+				"orgId": 2,
+				"isGrafanaAdmin": true,
+				"isDisabled": false,
+				"authLabels": null,
+				"isExternal": false,
+				"updatedAt": "2019-02-11T17:30:40Z",
+				"createdAt": "2019-02-11T17:30:40Z"
 			}
 			`
 

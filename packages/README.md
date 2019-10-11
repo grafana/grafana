@@ -29,20 +29,18 @@ Every commit to master that has changes within `packages` directory is a subject
 Automatic prereleases are published under `canary` dist tag.
 
 ### Manual release
-> All of the steps below should be performed on a release branch, according to Grafana Release Guide
+> **Checkout** to the tag you are about to release first, i.e. `git checkout v6.4.0`
 
-> Make sure you are logged in to npm in your terminal and that you are a part of Grafana org on npm
+> Make sure **you are logged in to npm** in your terminal and that **you are a part of Grafana org on npm**
 
-1. Run `yarn packages:prepare` script from root directory. This will perform tests on the packages and prompt for version of the packages. The version should be the same as the one being released.
-  - Make sure you use semver convention. So, *place a dot between prerelease id and prelease number*!!! i.e. 6.3.0-alpha.1
-  - Make sure you confirm the version bump when prompted!
-2. Commit changes (lerna.json & package.json files) - *"Packages version update: \<VERSION\>"*
-3. Run `yarn packages:build` script that will prepare distribution packages in `packages/grafana-*/dist`. These directories are going to be published to npm
-4. Depending whether  or not it's a prerelease:
-  - When releasing a prelease run `packages:publishNext` to publish new versions.
-  - When releasing a stable version run `packages:publishLatest` to publish new versions.
+In Grafana's repo main directory **run**:
 
-5. Push version commit to the release branch
+```
+./scripts/build/release-packages.sh <VERSION>
+```
+
+where `<VERSION>` is the same as the version tag, i.e. `v6.4.0`
+
 
 ### Building individual packages
 To build induvidual packages run `grafana-toolkit package:build --scope=<ui|toolkit|runtime|data>`

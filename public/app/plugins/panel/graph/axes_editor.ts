@@ -1,8 +1,9 @@
 import { getValueFormats } from '@grafana/ui';
+import { GraphCtrl } from './module';
 
 export class AxesEditorCtrl {
   panel: any;
-  panelCtrl: any;
+  panelCtrl: GraphCtrl;
   unitFormats: any;
   logScales: any;
   xAxisModes: any;
@@ -11,7 +12,7 @@ export class AxesEditorCtrl {
 
   /** @ngInject */
   constructor(private $scope: any) {
-    this.panelCtrl = $scope.ctrl;
+    this.panelCtrl = $scope.ctrl as GraphCtrl;
     this.panel = this.panelCtrl.panel;
     this.$scope.ctrl = this;
 
@@ -59,11 +60,11 @@ export class AxesEditorCtrl {
 
   xAxisModeChanged() {
     this.panelCtrl.processor.setPanelDefaultsForNewXAxisMode();
-    this.panelCtrl.onDataReceived(this.panelCtrl.dataList);
+    this.panelCtrl.onDataFramesReceived(this.panelCtrl.dataList);
   }
 
   xAxisValueChanged() {
-    this.panelCtrl.onDataReceived(this.panelCtrl.dataList);
+    this.panelCtrl.onDataFramesReceived(this.panelCtrl.dataList);
   }
 }
 
