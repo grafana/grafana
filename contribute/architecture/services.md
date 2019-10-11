@@ -54,7 +54,7 @@ For example, to access the [bus](communication.md), add it to the `MyService` st
 
 ```go
 type MyService struct {
-    bus bus.Bus `inject:""`
+    Bus bus.Bus `inject:""`
 }
 ```
 
@@ -62,6 +62,8 @@ You can also inject other services in the same way:
 
 ```go
 type MyService struct {
-    service other.Service `inject:""`
+    Service other.Service `inject:""`
 }
 ```
+
+**Note:** Any injected dependency needs to be an exported field. Any unexported fields result in a runtime error.
