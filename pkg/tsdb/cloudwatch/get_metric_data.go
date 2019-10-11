@@ -69,6 +69,8 @@ func (e *CloudWatchExecutor) executeQuery(ctx context.Context, region string, qu
 				return queryResponses, err
 			}
 			queryRes.Series = append(queryRes.Series, *series...)
+			queryRes.Meta.Set("searchExpressions", query.SearchExpressions)
+
 		}
 		queryResponses = append(queryResponses, queryRes)
 	}
@@ -98,6 +100,7 @@ func buildGetMetricDataQuery(queries map[string]*CloudWatchQuery, queryContext *
 	}
 
 	for _, query := range queries {
+		query.SearchExpressions = []string{}
 		for i, stat := range query.Statistics {
 
 			// 1 minutes resolution metrics is stored for 15 days, 15 * 24 * 60 = 21600
@@ -131,6 +134,7 @@ func buildGetMetricDataQuery(queries map[string]*CloudWatchQuery, queryContext *
 					counter++
 				}
 				searchExpression := fmt.Sprintf("SEARCH('{%s%s} %s', '%s', %s)", query.Namespace, dimensionKeys, searchTerm, *stat, strconv.Itoa(query.Period))
+				query.SearchExpressions = append(query.SearchExpressions, searchExpression)
 				mdq.Expression = aws.String(searchExpression)
 			}
 			params.MetricDataQueries = append(params.MetricDataQueries, mdq)
