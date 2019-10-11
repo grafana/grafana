@@ -2,7 +2,9 @@
 
 A Grafana _service_ encapsulates and exposes application logic to the rest of the application, through a set of related operations. 
 
-Services are self-contained, and only talk to services using a [service bus](#service-bus) or repositories. Before a service can start communicating with the rest of Grafana, it needs to be registered in the _service registry_. The service registry keeps track of all available services during runtime.
+Before a service can start communicating with the rest of Grafana, it needs to be registered in the _service registry_.
+
+The service registry keeps track of all available services during runtime. On start-up, Grafana uses the registry to build a dependency graph of services, a _service graph_.
 
 ## Your first service
 
@@ -30,7 +32,7 @@ The `Init` method is used to initialize and configure the service to make it rea
 
 ### Register a service
 
-Every service needs to be registered for the application to find it.
+Every service needs to be registered for the application for it to be included in the service graph.
 
 To register a service, call the `registry.RegisterService` function in a `init` function within your package.
 
@@ -48,9 +50,9 @@ import _ "github.com/grafana/grafana/pkg/services/mysvc"
 
 ## Communication
 
-So far, our service is not doing much. Let's change that by having it interact with other services.
+So far, our service is not doing much. Let's change that by having it the rest of the application.
 
-Grafana uses a _service bus_ to pass messages from one service to another. The bus helps decouple the services from each other. All communication over the bus happens synchronously.
+Grafana uses a _bus_ to pass messages to and from a service to other parts of the application. All communication over the bus happens synchronously.
 
 For our service to access the bus, we need to add it to the `MyService` struct:
 
@@ -105,7 +107,7 @@ if err := s.bus.Publish(event); err != nil {
 
 ### Commands
 
-A command is a request for an change to be made. Unlike an event, a command can be declined by the handler for that command. The handler will then return an error.
+A command is a request for an actions to be taken. Unlike an event's fire-and-forget approach, a command can fail as it is handled. The handler will then return an error.
 
 > Because we request an operation to be performed, command are written in imperative mood, such as `CreateFolderCommand`, and `DeletePlaylistCommand`.
 
@@ -132,7 +134,7 @@ if err := s.bus.Dispatch(cmd); err != nil {
 
 #### Handle commands
 
-Let others services dispatch commands to your service, by registering a _command handler_:
+Let others parts of the application dispatch commands to your service, by registering a _command handler_:
 
 To handle a command, register a command handler in the `Init` function.
 
