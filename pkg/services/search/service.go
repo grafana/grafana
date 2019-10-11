@@ -45,11 +45,11 @@ type FindPersistedDashboardsQuery struct {
 }
 
 type SearchService struct {
-	bus bus.Bus `inject:""`
+	Bus bus.Bus `inject:""`
 }
 
 func (s *SearchService) Init() error {
-	s.bus.AddHandler(s.searchHandler)
+	s.Bus.AddHandler(s.searchHandler)
 	return nil
 }
 
