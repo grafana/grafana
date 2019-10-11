@@ -2,7 +2,7 @@
 
 Grafana uses a _bus_ to pass messages to and from a service to other parts of the application. All communication over the bus happens synchronously.
 
-Now we can start sending and receiving messages! In Grafana, services communicate with each other through three types of messages: _events_, _commands_, and _queries_.
+There are three types of messages: _events_, _commands_, and _queries_.
 
 ## Events
 
@@ -31,7 +31,7 @@ func (s *MyService) UserCreated(event *events.UserCreated) error {
 
 ### Publish an event
 
-If you want to let other services react to changes in your service, you can publish your own events:
+If you want to let other parts of the application react to changes in your service, you can publish your own events:
 
 ```go
 event := &events.StickersSentEvent {
