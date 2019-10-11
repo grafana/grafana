@@ -15,10 +15,8 @@ import {
   PanelData,
   AlphaNotice,
   PluginState,
-  Select,
 } from '@grafana/ui';
 import { QueryEditorRows } from './QueryEditorRows';
-
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -26,15 +24,11 @@ import config from 'app/core/config';
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import { LoadingState, DataTransformerConfig, DefaultTimeRange, SelectableValue } from '@grafana/data';
+import { LoadingState, DataTransformerConfig, DefaultTimeRange } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
+import { addQuery } from 'app/core/utils/query';
 import { Unsubscribable } from 'rxjs';
 import { isSharedDashboardQuery, DashboardQueryEditor } from 'app/plugins/datasource/dashboard';
-import { isMultiResolutionQuery, getQueriesForResolution } from 'app/plugins/datasource/multi/MultiDataSource';
-import { addQuery } from 'app/core/utils/query';
-import { MultiQueryEditor } from 'app/plugins/datasource/multi/MultiQueryEditor';
-import { getMultiResolutionQuery } from 'app/plugins/datasource/multi/MultiDataSource';
-import { ResolutionSelection } from 'app/plugins/datasource/multi/types';
 
 interface Props {
   panel: PanelModel;
@@ -53,7 +47,6 @@ interface State {
 
 export class QueriesTab extends PureComponent<Props, State> {
   datasources: DataSourceSelectItem[] = getDatasourceSrv().getMetricSources();
-  mixedDataSourceItem: DataSourceSelectItem;
   backendSrv = getBackendSrv();
   querySubscription: Unsubscribable;
 
@@ -93,8 +86,6 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   findCurrentDataSource(): DataSourceSelectItem {
     const { panel } = this.props;
-    // TODO in one loop?
-    this.mixedDataSourceItem = this.datasources.find(datasource => datasource.meta.id === 'mixed');
     return this.datasources.find(datasource => datasource.value === panel.datasource) || this.datasources[0];
   }
 
@@ -102,32 +93,19 @@ export class QueriesTab extends PureComponent<Props, State> {
     const { panel } = this.props;
     const { currentDS } = this.state;
 
-    // switching to mixed|multi
+    // switching to mixed
     if (datasource.meta.mixed) {
-      // Add the datasource to everything
+      // Set the datasource on all targets
       panel.targets.forEach(target => {
         target.datasource = panel.datasource;
         if (!target.datasource) {
           target.datasource = config.defaultDatasource;
         }
       });
-
-      // Move the queries under the first value
-      if (isMultiResolutionQuery(datasource.name)) {
-        const q = getMultiResolutionQuery([]);
-        q.resolutions[0].targets = panel.targets;
-        panel.targets = [q];
-      }
     } else if (currentDS) {
-      // if switching from mixed|multi
+      // if switching from mixed
       if (currentDS.meta.mixed) {
-        // Use targets from the first resolution
-        if (isMultiResolutionQuery(currentDS.name)) {
-          const q = getMultiResolutionQuery(panel.targets);
-          panel.targets = q.resolutions[0].targets;
-        }
-
-        // Remove the datasource description
+        // Remove the explicit datasource
         for (const target of panel.targets) {
           delete target.datasource;
         }
@@ -167,21 +145,22 @@ export class QueriesTab extends PureComponent<Props, State> {
       this.setState({ isAddingMixed: true });
       return;
     }
+
     this.onUpdateQueries(addQuery(this.props.panel.targets));
     this.onScrollBottom();
   };
 
+  onScrollBottom = () => {
+    this.setState({ scrollTop: this.state.scrollTop + 10000 });
+  };
+
   renderToolbar = () => {
     const { currentDS, isAddingMixed } = this.state;
-
-    const isMultiResolution = isMultiResolutionQuery(currentDS.name);
     const showAddButton = !(isAddingMixed || isSharedDashboardQuery(currentDS.name));
 
     return (
       <>
         <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />
-        {isMultiResolution && this.renderMultiPicker()}
-
         <div className="flex-grow-1" />
         {showAddButton && (
           <button className="btn navbar-button" onClick={this.onAddQueryClick}>
@@ -189,44 +168,6 @@ export class QueriesTab extends PureComponent<Props, State> {
           </button>
         )}
         {isAddingMixed && this.renderMixedPicker()}
-      </>
-    );
-  };
-
-  onSelectResolutionType = (item: SelectableValue<ResolutionSelection>) => {
-    const query = getMultiResolutionQuery(this.props.panel.targets);
-    query.select = item.value!;
-    this.onUpdateQueries([query]);
-  };
-
-  renderMultiPicker = () => {
-    const { panel } = this.props;
-    const s0 = { value: ResolutionSelection.interval, label: 'Interval', description: 'Select queries by interval' };
-    const s1 = { value: ResolutionSelection.range, label: 'Range', description: 'Select queries based on range' };
-
-    const q = getMultiResolutionQuery(panel.targets);
-    const isInterval = q.select === s0.value;
-
-    let time = '';
-    const last = panel.getQueryRunner().lastRequest;
-    if (last) {
-      if (isInterval) {
-        time = last.interval;
-      } else if (last.range) {
-        const ms = last.range.to.valueOf() - last.range.from.valueOf();
-        time = ms / 1000.0 + 's';
-      }
-    }
-
-    return (
-      <>
-        <div className="gf-form-inline">
-          <Select options={[s0, s1]} value={isInterval ? s0 : s1} onChange={this.onSelectResolutionType} />
-        </div>
-        <div className="gf-form-inline">
-          &nbsp;&nbsp;
-          {time}
-        </div>
       </>
     );
   };
@@ -245,23 +186,18 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   onAddMixedQuery = (datasource: any) => {
-    const { panel } = this.props;
-    const { targets } = panel;
-    // Add the query to the currently selected resolution
-    if (isMultiResolutionQuery(this.state.currentDS.name)) {
-      const q = getMultiResolutionQuery(targets);
-      const index = getQueriesForResolution(q, panel.getQueryRunner().lastRequest).index;
-      const res = q.resolutions[index];
-      res.targets = addQuery(res.targets, { datasource: datasource.name });
-      this.onUpdateQueries([q]);
-    } else {
-      this.onUpdateQueries(addQuery(targets, { datasource: datasource.name }));
-    }
+    this.props.panel.targets = addQuery(this.props.panel.targets, { datasource: datasource.name });
     this.setState({ isAddingMixed: false, scrollTop: this.state.scrollTop + 10000 });
+    this.forceUpdate();
   };
 
   onMixedPickerBlur = () => {
     this.setState({ isAddingMixed: false });
+  };
+
+  onQueryChange = (query: DataQuery, index: number) => {
+    this.props.panel.changeQuery(query, index);
+    this.forceUpdate();
   };
 
   onTransformersChange = (transformers: DataTransformerConfig[]) => {
@@ -274,10 +210,6 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ scrollTop: target.scrollTop });
   };
 
-  onScrollBottom = () => {
-    this.setState({ scrollTop: this.state.scrollTop + 10000 });
-  };
-
   renderQueryBody = () => {
     const { panel, dashboard } = this.props;
     const { currentDS, data } = this.state;
@@ -288,26 +220,15 @@ export class QueriesTab extends PureComponent<Props, State> {
 
     return (
       <>
-        {isMultiResolutionQuery(currentDS.name) ? (
-          <MultiQueryEditor
-            panel={panel}
-            data={data}
-            onChange={query => this.onUpdateQueries([query])}
-            dashboard={dashboard}
-            onScrollBottom={this.onScrollBottom}
-            mixed={this.mixedDataSourceItem}
-          />
-        ) : (
-          <QueryEditorRows
-            queries={panel.targets}
-            datasource={currentDS}
-            onChangeQueries={this.onUpdateQueries}
-            onScrollBottom={this.onScrollBottom}
-            panel={panel}
-            dashboard={dashboard}
-            data={data}
-          />
-        )}
+        <QueryEditorRows
+          queries={panel.targets}
+          datasource={currentDS}
+          onChangeQueries={this.onUpdateQueries}
+          onScrollBottom={this.onScrollBottom}
+          panel={panel}
+          dashboard={dashboard}
+          data={data}
+        />
         <PanelOptionsGroup>
           <QueryOptions panel={panel} datasource={currentDS} />
         </PanelOptionsGroup>
