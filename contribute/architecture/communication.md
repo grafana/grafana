@@ -31,7 +31,7 @@ func (s *MyService) UserCreated(event *events.UserCreated) error {
 
 ### Publish an event
 
-If you want to let other parts of the application react to changes in your service, you can publish your own events:
+If you want to let other parts of the application react to changes in a service, you can publish your own events:
 
 ```go
 event := &events.StickersSentEvent {
@@ -45,7 +45,7 @@ if err := s.bus.Publish(event); err != nil {
 
 ## Commands
 
-A command is a request for an actions to be taken. Unlike an event's fire-and-forget approach, a command can fail as it is handled. The handler will then return an error.
+A command is a request for an action to be taken. Unlike an event's fire-and-forget approach, a command can fail as it is handled. The handler will then return an error.
 
 > Because we request an operation to be performed, command are written in imperative mood, such as `CreateFolderCommand`, and `DeletePlaylistCommand`.
 
@@ -66,13 +66,13 @@ if err := s.bus.Dispatch(cmd); err != nil {
 }
 ```
 
-**Note:** `Dispatch` will return an error if no handler has been registered for that command.
+**Note:** `Dispatch` will return an error if no handler is registered for that command.
 
 **Tip:** Browse the available commands in the `models` package.
 
 ### Handle commands
 
-Let others parts of the application dispatch commands to your service, by registering a _command handler_:
+Let others parts of the application dispatch commands to a service, by registering a _command handler_:
 
 To handle a command, register a command handler in the `Init` function.
 
@@ -91,7 +91,7 @@ func (s *MyService) SendStickers(cmd *models.SendStickersCommand) error {
 
 ## Queries
 
-A command handler can optionally populate the command sent it it. You can use this to implement _queries_.
+A command handler can optionally populate the command sent it. This pattern is commonly used to implement _queries_.
 
 ### Making a query
 

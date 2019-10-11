@@ -30,7 +30,7 @@ The `Init` method is used to initialize and configure the service to make it rea
 
 ## Register a service
 
-Every service needs to be registered for the application for it to be included in the service graph.
+Every service needs to be registered with the application for it to be included in the service graph.
 
 To register a service, call the `registry.RegisterService` function in a `init` function within your package.
 
