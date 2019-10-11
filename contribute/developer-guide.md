@@ -197,5 +197,5 @@ Another alternative is to limit the files being watched. The directories that ar
 
 - [Create a pull request](/contribute/pull-request.md)
 - [Style guides](/contribute/style-guides)
-- [Architecture](architecture/README.md)
+- [Architecture](architecture)
 - [How to contribute to Grafana as a junior dev](https://medium.com/@ivanahuckova/how-to-contribute-to-grafana-as-junior-dev-c01fe3064502)
