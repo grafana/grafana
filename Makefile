@@ -4,7 +4,7 @@
 
 GO = GO111MODULE=on GOFLAGS="-mod=vendor" go
 GO_FILES ?= ./pkg/...
-SH_FILES ?= $(shell find ./scripts -name *.sh)
+SH_FILES ?= $(shell find ./scripts -name '*.sh' -not -path './scripts/go/vendor/*' )
 
 all: deps build
 
