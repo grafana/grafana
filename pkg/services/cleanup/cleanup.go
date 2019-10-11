@@ -45,7 +45,7 @@ func (srv *CleanUpService) Run(ctx context.Context) error {
 					srv.deleteOldLoginAttempts()
 				})
 			if err != nil {
-				srv.log.Error("Locking/executing failed", "err", err)
+				srv.log.Error("failed to lock and execute cleanup of old login attempts", "error", err)
 			}
 		case <-ctx.Done():
 			return ctx.Err()
