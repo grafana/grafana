@@ -87,7 +87,7 @@ func TestCloudWatchGetMetricData(t *testing.T) {
 					res, err := buildGetMetricDataQuery(queries, queryContext)
 					So(err, ShouldBeNil)
 					So(len(res.MetricDataQueries), ShouldEqual, 1)
-					So(*res.MetricDataQueries[0].Expression, ShouldEqual, "SEARCH('{AWS/EC2,LoadBalancer} MetricName=\"CPUUtilization\" (LoadBalancer=\"lb1\" OR LoadBalancer=\"lb2\" OR LoadBalancer=\"lb3\")', 'Average', 300)")
+					So(*res.MetricDataQueries[0].Expression, ShouldEqual, "SEARCH('{AWS/EC2,LoadBalancer} MetricName=\"CPUUtilization\" LoadBalancer=(\"lb1\" OR \"lb2\" OR \"lb3\")', 'Average', 300)")
 				})
 
 				Convey("and query has three dimension values for two given dimension keys", func() {
@@ -112,7 +112,7 @@ func TestCloudWatchGetMetricData(t *testing.T) {
 					res, err := buildGetMetricDataQuery(queries, queryContext)
 					So(err, ShouldBeNil)
 					So(len(res.MetricDataQueries), ShouldEqual, 1)
-					So(*res.MetricDataQueries[0].Expression, ShouldEqual, "SEARCH('{AWS/EC2,LoadBalancer,InstanceId} MetricName=\"CPUUtilization\" (LoadBalancer=\"lb1\" OR LoadBalancer=\"lb2\" OR LoadBalancer=\"lb3\") AND (InstanceId=\"i-123\" OR InstanceId=\"i-456\" OR InstanceId=\"i-789\")', 'Average', 300)")
+					So(*res.MetricDataQueries[0].Expression, ShouldEqual, "SEARCH('{AWS/EC2,LoadBalancer,InstanceId} MetricName=\"CPUUtilization\" LoadBalancer=(\"lb1\" OR \"lb2\" OR \"lb3\") AND InstanceId=(\"i-123\" OR \"i-456\" OR \"i-789\")', 'Average', 300)")
 				})
 
 				Convey("and no AND/OR operators were added if no dimension keys exist", func() {
