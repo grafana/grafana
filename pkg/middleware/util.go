@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"log"
 	"strings"
 
 	"github.com/go-macaron/gzip"
@@ -8,9 +9,9 @@ import (
 )
 
 func Gziper() macaron.Handler {
-	macaronGziper := gzip.Gziper()
+	gziper := gzip.Gziper()
 
-	return func(ctx *macaron.Context) {
+	return func(ctx *macaron.Context, logger *log.Logger) {
 		requestPath := ctx.Req.URL.RequestURI()
 		// ignore datasource proxy requests
 		if strings.HasPrefix(requestPath, "/api/datasources/proxy") {
@@ -25,8 +26,8 @@ func Gziper() macaron.Handler {
 			return
 		}
 
-		if _, err := ctx.Invoke(macaronGziper); err != nil {
-			// TODO: Deal with error
+		if _, err := ctx.Invoke(gziper); err != nil {
+			logger.Printf("Invoking gzip handler failed: %s\n", err)
 		}
 	}
 }
