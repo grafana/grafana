@@ -92,6 +92,11 @@ func buildGetMetricDataQuery(queries map[string]*CloudWatchQuery, queryContext *
 		EndTime:   aws.Time(endTime),
 		ScanBy:    aws.String("TimestampAscending"),
 	}
+
+	if !startTime.Before(endTime) {
+		return nil, fmt.Errorf("Invalid time range: Start time must be before end time")
+	}
+
 	for _, query := range queries {
 		for i, stat := range query.Statistics {
 
@@ -125,9 +130,7 @@ func buildGetMetricDataQuery(queries map[string]*CloudWatchQuery, queryContext *
 					}
 					counter++
 				}
-				plog.Info("len(query.Dimensions)", "", len(query.Dimensions))
 				searchExpression := fmt.Sprintf("SEARCH('{%s%s} %s', '%s', %s)", query.Namespace, dimensionKeys, searchTerm, *stat, strconv.Itoa(query.Period))
-				plog.Info("searchexpression", "", searchExpression)
 				mdq.Expression = aws.String(searchExpression)
 			}
 			params.MetricDataQueries = append(params.MetricDataQueries, mdq)
