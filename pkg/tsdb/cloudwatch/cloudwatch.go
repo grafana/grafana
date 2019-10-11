@@ -111,7 +111,7 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 					}
 				}()
 
-				queryResponses, err := e.executeGetMetricDataQuery(ectx, region, q, queryContext)
+				queryResponses, err := e.executeQuery(ectx, region, q, queryContext)
 				if err != nil {
 					plog.Info("executeGetMetricDataQueryError", "", err)
 				}

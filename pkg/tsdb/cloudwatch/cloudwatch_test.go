@@ -22,12 +22,12 @@ func TestCloudWatch(t *testing.T) {
 			}
 
 			Convey("End time before start time should result in error", func() {
-				_, err := e.executeQuery(context.Background(), &CloudWatchQuery{}, &tsdb.TsdbQuery{TimeRange: tsdb.NewTimeRange("now-1h", "now-2h")})
+				_, err := e.executeQuery(context.Background(), "", make(map[string]*CloudWatchQuery), &tsdb.TsdbQuery{TimeRange: tsdb.NewTimeRange("now-1h", "now-2h")})
 				So(err.Error(), ShouldEqual, "Invalid time range: Start time must be before end time")
 			})
 
 			Convey("End time equals start time should result in error", func() {
-				_, err := e.executeQuery(context.Background(), &CloudWatchQuery{}, &tsdb.TsdbQuery{TimeRange: tsdb.NewTimeRange("now-1h", "now-1h")})
+				_, err := e.executeQuery(context.Background(), "", make(map[string]*CloudWatchQuery), &tsdb.TsdbQuery{TimeRange: tsdb.NewTimeRange("now-1h", "now-1h")})
 				So(err.Error(), ShouldEqual, "Invalid time range: Start time must be before end time")
 			})
 		})
