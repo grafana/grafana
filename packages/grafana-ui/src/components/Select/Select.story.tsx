@@ -36,3 +36,30 @@ SelectStories.add('default', () => {
     </UseState>
   );
 });
+
+SelectStories.add('With allowCustomValue', () => {
+  const intialState: SelectableValue<string> = { label: 'A label', value: 'A value' };
+  const value = object<SelectableValue<string>>('Selected Value:', intialState);
+  const options = object<Array<SelectableValue<string>>>('Options:', [
+    intialState,
+    { label: 'Another label', value: 'Another value' },
+  ]);
+
+  return (
+    <UseState initialState={value}>
+      {(value, updateValue) => {
+        return (
+          <Select
+            value={value}
+            options={options}
+            allowCustomValue={true}
+            onChange={value => {
+              action('onChanged fired')(value);
+              updateValue(value);
+            }}
+          />
+        );
+      }}
+    </UseState>
+  );
+});
