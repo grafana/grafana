@@ -1,0 +1,5 @@
+*.exe
+*.exe~
+.DS_Store
+bra.sublime-project
+bra.sublime-workspace

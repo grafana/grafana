@@ -1,0 +1,81 @@
+syntax = "proto3";
+package diff;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "sourcegraph.com/sqs/pbtypes/timestamp.proto";
+
+option (gogoproto.goproto_getters_all) = false;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+
+// A FileDiff represents a unified diff for a single file.
+//
+// A file unified diff has a header that resembles the following:
+//
+//   --- oldname	2009-10-11 15:12:20.000000000 -0700
+//   +++ newname	2009-10-11 15:12:30.000000000 -0700
+message FileDiff {
+	// the original name of the file
+	string OrigName = 1;
+
+	// the original timestamp (nil if not present)
+	pbtypes.Timestamp OrigTime = 2;
+
+	// the new name of the file (often same as OrigName)
+	string NewName = 3;
+
+	// the new timestamp (nil if not present)
+	pbtypes.Timestamp NewTime = 4;
+
+	// extended header lines (e.g., git's "new mode <mode>", "rename from <path>", etc.)
+	repeated string Extended = 5;
+
+	// hunks that were changed from orig to new
+	repeated Hunk Hunks = 6;
+}
+
+
+// A Hunk represents a series of changes (additions or deletions) in a file's
+// unified diff.
+message Hunk {
+	// starting line number in original file
+	int32 OrigStartLine = 1;
+
+	// number of lines the hunk applies to in the original file
+	int32 OrigLines = 2;
+
+	// if > 0, then the original file had a 'No newline at end of file' mark at this offset
+	int32 OrigNoNewlineAt = 3;
+
+	// starting line number in new file
+	int32 NewStartLine = 4;
+
+	// number of lines the hunk applies to in the new file
+	int32 NewLines = 5;
+
+	// optional section heading
+	string Section = 6;
+
+	// 0-indexed line offset in unified file diff (including section headers); this is
+	// only set when Hunks are read from entire file diff (i.e., when ReadAllHunks is
+	// called) This accounts for hunk headers, too, so the StartPosition of the first
+	// hunk will be 1.
+	int32 StartPosition = 7;
+
+	// hunk body (lines prefixed with '-', '+', or ' ')
+	bytes Body = 8;
+}
+
+// A Stat is a diff stat that represents the number of lines added/changed/deleted.
+message Stat {
+	// number of lines added
+	int32 Added = 1 [(gogoproto.jsontag) = ""];
+
+	// number of lines changed
+	int32 Changed = 2 [(gogoproto.jsontag) = ""];
+
+	// number of lines deleted
+	int32 Deleted = 3 [(gogoproto.jsontag) = ""];
+}
+

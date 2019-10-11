@@ -1,0 +1,307 @@
+# github.com/BurntSushi/toml v0.3.1
+github.com/BurntSushi/toml
+# github.com/OpenPeeDeeP/depguard v1.0.1
+github.com/OpenPeeDeeP/depguard
+# github.com/bombsimon/wsl v1.0.1
+github.com/bombsimon/wsl
+# github.com/davecgh/go-spew v1.1.1
+github.com/davecgh/go-spew/spew
+# github.com/fatih/color v1.7.0
+github.com/fatih/color
+# github.com/fatih/structtag v1.0.0
+github.com/fatih/structtag
+# github.com/fsnotify/fsnotify v1.4.7
+github.com/fsnotify/fsnotify
+# github.com/go-critic/go-critic v0.3.5-0.20190904082202-d79a9f0c64db
+github.com/go-critic/go-critic/checkers
+github.com/go-critic/go-critic/checkers/internal/lintutil
+# github.com/go-lintpack/lintpack v0.5.2
+github.com/go-lintpack/lintpack
+github.com/go-lintpack/lintpack/astwalk
+# github.com/go-toolsmith/astcast v1.0.0
+github.com/go-toolsmith/astcast
+# github.com/go-toolsmith/astcopy v1.0.0
+github.com/go-toolsmith/astcopy
+# github.com/go-toolsmith/astequal v1.0.0
+github.com/go-toolsmith/astequal
+# github.com/go-toolsmith/astfmt v1.0.0
+github.com/go-toolsmith/astfmt
+# github.com/go-toolsmith/astp v1.0.0
+github.com/go-toolsmith/astp
+# github.com/go-toolsmith/strparse v1.0.0
+github.com/go-toolsmith/strparse
+# github.com/go-toolsmith/typep v1.0.0
+github.com/go-toolsmith/typep
+# github.com/gobwas/glob v0.2.3
+github.com/gobwas/glob
+github.com/gobwas/glob/compiler
+github.com/gobwas/glob/match
+github.com/gobwas/glob/syntax
+github.com/gobwas/glob/syntax/ast
+github.com/gobwas/glob/syntax/lexer
+github.com/gobwas/glob/util/runes
+github.com/gobwas/glob/util/strings
+# github.com/gogo/protobuf v1.2.1
+github.com/gogo/protobuf/proto
+# github.com/golangci/check v0.0.0-20180506172741-cfe4005ccda2
+github.com/golangci/check/cmd/structcheck
+github.com/golangci/check/cmd/varcheck
+# github.com/golangci/dupl v0.0.0-20180902072040-3e9179ac440a
+github.com/golangci/dupl
+github.com/golangci/dupl/job
+github.com/golangci/dupl/printer
+github.com/golangci/dupl/suffixtree
+github.com/golangci/dupl/syntax
+github.com/golangci/dupl/syntax/golang
+# github.com/golangci/errcheck v0.0.0-20181223084120-ef45e06d44b6
+github.com/golangci/errcheck/golangci
+github.com/golangci/errcheck/internal/errcheck
+# github.com/golangci/go-misc v0.0.0-20180628070357-927a3d87b613
+github.com/golangci/go-misc/deadcode
+# github.com/golangci/goconst v0.0.0-20180610141641-041c5f2b40f3
+github.com/golangci/goconst
+# github.com/golangci/gocyclo v0.0.0-20180528134321-2becd97e67ee
+github.com/golangci/gocyclo/pkg/gocyclo
+# github.com/golangci/gofmt v0.0.0-20190930125516-244bba706f1a
+github.com/golangci/gofmt/gofmt
+github.com/golangci/gofmt/goimports
+# github.com/golangci/golangci-lint v1.19.2-0.20191006164544-7577d548a389
+github.com/golangci/golangci-lint/cmd/golangci-lint
+github.com/golangci/golangci-lint/internal/cache
+github.com/golangci/golangci-lint/internal/errorutil
+github.com/golangci/golangci-lint/internal/pkgcache
+github.com/golangci/golangci-lint/internal/renameio
+github.com/golangci/golangci-lint/internal/robustio
+github.com/golangci/golangci-lint/pkg/commands
+github.com/golangci/golangci-lint/pkg/config
+github.com/golangci/golangci-lint/pkg/exitcodes
+github.com/golangci/golangci-lint/pkg/fsutils
+github.com/golangci/golangci-lint/pkg/golinters
+github.com/golangci/golangci-lint/pkg/golinters/goanalysis
+github.com/golangci/golangci-lint/pkg/golinters/goanalysis/load
+github.com/golangci/golangci-lint/pkg/goutil
+github.com/golangci/golangci-lint/pkg/lint
+github.com/golangci/golangci-lint/pkg/lint/linter
+github.com/golangci/golangci-lint/pkg/lint/lintersdb
+github.com/golangci/golangci-lint/pkg/logutils
+github.com/golangci/golangci-lint/pkg/packages
+github.com/golangci/golangci-lint/pkg/printers
+github.com/golangci/golangci-lint/pkg/report
+github.com/golangci/golangci-lint/pkg/result
+github.com/golangci/golangci-lint/pkg/result/processors
+github.com/golangci/golangci-lint/pkg/timeutils
+# github.com/golangci/ineffassign v0.0.0-20190609212857-42439a7714cc
+github.com/golangci/ineffassign
+# github.com/golangci/lint-1 v0.0.0-20190930103755-fad67e08aa89
+github.com/golangci/lint-1
+# github.com/golangci/maligned v0.0.0-20180506175553-b1d89398deca
+github.com/golangci/maligned
+# github.com/golangci/misspell v0.0.0-20180809174111-950f5d19e770
+github.com/golangci/misspell
+# github.com/golangci/prealloc v0.0.0-20180630174525-215b22d4de21
+github.com/golangci/prealloc
+# github.com/golangci/revgrep v0.0.0-20180526074752-d9c87f5ffaf0
+github.com/golangci/revgrep
+# github.com/golangci/unconvert v0.0.0-20180507085042-28b1c447d1f4
+github.com/golangci/unconvert
+# github.com/gostaticanalysis/analysisutil v0.0.0-20190318220348-4088753ea4d3
+github.com/gostaticanalysis/analysisutil
+# github.com/hashicorp/hcl v1.0.0
+github.com/hashicorp/hcl
+github.com/hashicorp/hcl/hcl/ast
+github.com/hashicorp/hcl/hcl/parser
+github.com/hashicorp/hcl/hcl/printer
+github.com/hashicorp/hcl/hcl/scanner
+github.com/hashicorp/hcl/hcl/strconv
+github.com/hashicorp/hcl/hcl/token
+github.com/hashicorp/hcl/json/parser
+github.com/hashicorp/hcl/json/scanner
+github.com/hashicorp/hcl/json/token
+# github.com/inconshreveable/mousetrap v1.0.0
+github.com/inconshreveable/mousetrap
+# github.com/kisielk/gotool v1.0.0
+github.com/kisielk/gotool
+github.com/kisielk/gotool/internal/load
+# github.com/konsorten/go-windows-terminal-sequences v1.0.1
+github.com/konsorten/go-windows-terminal-sequences
+# github.com/magiconair/properties v1.8.0
+github.com/magiconair/properties
+# github.com/matoous/godox v0.0.0-20190911065817-5d6d842e92eb
+github.com/matoous/godox
+# github.com/mattn/go-colorable v0.1.4
+github.com/mattn/go-colorable
+# github.com/mattn/go-isatty v0.0.9
+github.com/mattn/go-isatty
+# github.com/mattn/go-runewidth v0.0.4
+github.com/mattn/go-runewidth
+# github.com/mgechev/dots v0.0.0-20181228164730-18fa4c4b71cc
+github.com/mgechev/dots
+# github.com/mgechev/revive v0.0.0-20190917153825-40564c5052ae
+github.com/mgechev/revive
+github.com/mgechev/revive/formatter
+github.com/mgechev/revive/lint
+github.com/mgechev/revive/rule
+# github.com/mitchellh/go-homedir v1.1.0
+github.com/mitchellh/go-homedir
+# github.com/mitchellh/mapstructure v1.1.2
+github.com/mitchellh/mapstructure
+# github.com/nbutton23/zxcvbn-go v0.0.0-20180912185939-ae427f1e4c1d
+github.com/nbutton23/zxcvbn-go
+github.com/nbutton23/zxcvbn-go/adjacency
+github.com/nbutton23/zxcvbn-go/data
+github.com/nbutton23/zxcvbn-go/entropy
+github.com/nbutton23/zxcvbn-go/frequency
+github.com/nbutton23/zxcvbn-go/match
+github.com/nbutton23/zxcvbn-go/matching
+github.com/nbutton23/zxcvbn-go/scoring
+github.com/nbutton23/zxcvbn-go/utils/math
+# github.com/olekukonko/tablewriter v0.0.1
+github.com/olekukonko/tablewriter
+# github.com/pelletier/go-toml v1.2.0
+github.com/pelletier/go-toml
+# github.com/pkg/errors v0.8.1
+github.com/pkg/errors
+# github.com/pmezard/go-difflib v1.0.0
+github.com/pmezard/go-difflib/difflib
+# github.com/securego/gosec v0.0.0-20190912120752-140048b2a218
+github.com/securego/gosec
+github.com/securego/gosec/rules
+# github.com/sirupsen/logrus v1.4.2
+github.com/sirupsen/logrus
+# github.com/sourcegraph/go-diff v0.5.1
+github.com/sourcegraph/go-diff/diff
+# github.com/spf13/afero v1.1.2
+github.com/spf13/afero
+github.com/spf13/afero/mem
+# github.com/spf13/cast v1.3.0
+github.com/spf13/cast
+# github.com/spf13/cobra v0.0.5
+github.com/spf13/cobra
+# github.com/spf13/jwalterweatherman v1.0.0
+github.com/spf13/jwalterweatherman
+# github.com/spf13/pflag v1.0.5
+github.com/spf13/pflag
+# github.com/spf13/viper v1.4.0
+github.com/spf13/viper
+# github.com/stretchr/objx v0.2.0
+github.com/stretchr/objx
+# github.com/stretchr/testify v1.4.0
+github.com/stretchr/testify/assert
+github.com/stretchr/testify/mock
+# github.com/timakin/bodyclose v0.0.0-20190930140734-f7f2e9bca95e
+github.com/timakin/bodyclose/passes/bodyclose
+# github.com/ultraware/funlen v0.0.2
+github.com/ultraware/funlen
+# github.com/ultraware/whitespace v0.0.4
+github.com/ultraware/whitespace
+# github.com/unknwon/bra v0.0.0-20190805204333-bb0929b6cca0
+github.com/unknwon/bra
+github.com/unknwon/bra/cmd
+github.com/unknwon/bra/modules/bindata
+github.com/unknwon/bra/modules/setting
+# github.com/unknwon/com v1.0.1
+github.com/unknwon/com
+# github.com/unknwon/log v0.0.0-20150304194804-e617c87089d3
+github.com/unknwon/log
+# github.com/urfave/cli v1.20.0
+github.com/urfave/cli
+# github.com/uudashr/gocognit v0.0.0-20190926065955-1655d0de0517
+github.com/uudashr/gocognit
+# golang.org/x/sys v0.0.0-20190911201528-7ad0cfa0b7b5
+golang.org/x/sys/unix
+# golang.org/x/text v0.3.2
+golang.org/x/text/transform
+golang.org/x/text/unicode/norm
+golang.org/x/text/width
+# golang.org/x/tools v0.0.0-20191010201905-e5ffc44a6fee
+golang.org/x/tools/go/analysis
+golang.org/x/tools/go/analysis/passes/asmdecl
+golang.org/x/tools/go/analysis/passes/assign
+golang.org/x/tools/go/analysis/passes/atomic
+golang.org/x/tools/go/analysis/passes/atomicalign
+golang.org/x/tools/go/analysis/passes/bools
+golang.org/x/tools/go/analysis/passes/buildssa
+golang.org/x/tools/go/analysis/passes/buildtag
+golang.org/x/tools/go/analysis/passes/cgocall
+golang.org/x/tools/go/analysis/passes/composite
+golang.org/x/tools/go/analysis/passes/copylock
+golang.org/x/tools/go/analysis/passes/ctrlflow
+golang.org/x/tools/go/analysis/passes/deepequalerrors
+golang.org/x/tools/go/analysis/passes/errorsas
+golang.org/x/tools/go/analysis/passes/findcall
+golang.org/x/tools/go/analysis/passes/httpresponse
+golang.org/x/tools/go/analysis/passes/inspect
+golang.org/x/tools/go/analysis/passes/internal/analysisutil
+golang.org/x/tools/go/analysis/passes/loopclosure
+golang.org/x/tools/go/analysis/passes/lostcancel
+golang.org/x/tools/go/analysis/passes/nilfunc
+golang.org/x/tools/go/analysis/passes/nilness
+golang.org/x/tools/go/analysis/passes/pkgfact
+golang.org/x/tools/go/analysis/passes/printf
+golang.org/x/tools/go/analysis/passes/shadow
+golang.org/x/tools/go/analysis/passes/shift
+golang.org/x/tools/go/analysis/passes/sortslice
+golang.org/x/tools/go/analysis/passes/stdmethods
+golang.org/x/tools/go/analysis/passes/structtag
+golang.org/x/tools/go/analysis/passes/tests
+golang.org/x/tools/go/analysis/passes/unmarshal
+golang.org/x/tools/go/analysis/passes/unreachable
+golang.org/x/tools/go/analysis/passes/unsafeptr
+golang.org/x/tools/go/analysis/passes/unusedresult
+golang.org/x/tools/go/ast/astutil
+golang.org/x/tools/go/ast/inspector
+golang.org/x/tools/go/buildutil
+golang.org/x/tools/go/cfg
+golang.org/x/tools/go/gcexportdata
+golang.org/x/tools/go/internal/cgo
+golang.org/x/tools/go/internal/gcimporter
+golang.org/x/tools/go/internal/packagesdriver
+golang.org/x/tools/go/loader
+golang.org/x/tools/go/packages
+golang.org/x/tools/go/ssa
+golang.org/x/tools/go/ssa/ssautil
+golang.org/x/tools/go/types/objectpath
+golang.org/x/tools/go/types/typeutil
+golang.org/x/tools/imports
+golang.org/x/tools/internal/fastwalk
+golang.org/x/tools/internal/gopathwalk
+golang.org/x/tools/internal/imports
+golang.org/x/tools/internal/module
+golang.org/x/tools/internal/semver
+# gopkg.in/fsnotify/fsnotify.v1 v1.4.7
+gopkg.in/fsnotify/fsnotify.v1
+# gopkg.in/yaml.v2 v2.2.4
+gopkg.in/yaml.v2
+# honnef.co/go/tools v0.0.1-2019.2.3
+honnef.co/go/tools/arg
+honnef.co/go/tools/config
+honnef.co/go/tools/deprecated
+honnef.co/go/tools/facts
+honnef.co/go/tools/functions
+honnef.co/go/tools/go/types/typeutil
+honnef.co/go/tools/internal/cache
+honnef.co/go/tools/internal/passes/buildssa
+honnef.co/go/tools/internal/renameio
+honnef.co/go/tools/internal/sharedcheck
+honnef.co/go/tools/lint
+honnef.co/go/tools/lint/lintdsl
+honnef.co/go/tools/lint/lintutil
+honnef.co/go/tools/lint/lintutil/format
+honnef.co/go/tools/loader
+honnef.co/go/tools/printf
+honnef.co/go/tools/simple
+honnef.co/go/tools/ssa
+honnef.co/go/tools/ssautil
+honnef.co/go/tools/staticcheck
+honnef.co/go/tools/staticcheck/vrp
+honnef.co/go/tools/stylecheck
+honnef.co/go/tools/unused
+honnef.co/go/tools/version
+# mvdan.cc/interfacer v0.0.0-20180901003855-c20040233aed
+mvdan.cc/interfacer/check
+# mvdan.cc/lint v0.0.0-20170908181259-adc824a0674b
+mvdan.cc/lint
+# mvdan.cc/unparam v0.0.0-20190720180237-d51796306d8f
+mvdan.cc/unparam/check
+# sourcegraph.com/sqs/pbtypes v0.0.0-20180604144634-d3ebe8f20ae4
+sourcegraph.com/sqs/pbtypes

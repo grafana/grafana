@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package pbtypes;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+
+// HTML is a type which marshals into {__html: "html code here"} to designate
+// that this value is sanitized HTML code, see
+// https://facebook.github.io/react/tips/dangerously-set-inner-html.html
+message HTML {
+	string HTML = 1 [(gogoproto.jsontag) = "__html"];
+}

@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package pbtypes;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+
+// Void is an empty type used as the protobuf RPC method arg or result
+// for methods that take no parameters or yield no results,
+// respectively.
+message Void {}

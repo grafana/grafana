@@ -1,0 +1,23 @@
+language: go
+go: 1.11.x
+node_js: 11.15.0
+before_install:
+- openssl aes-256-cbc -K $encrypted_ff954c97a679_key -iv $encrypted_ff954c97a679_iv -in .docs-deploy-key.pem.enc -out .docs-deploy-key -d
+- export GA_SERVICE_ACCOUNT_KEY=$(cat .docs-deploy-key)
+install: make install
+script:
+- make build
+- make test
+- git clone https://github.com/mgechev/revive.run revive-docs && cd revive-docs
+- npm i || true
+- npm run build || true
+- git config --global user.email "mgechev@gmail.com"
+- git config --global user.name "mgechev"
+- git add .
+- git commit -am 'Travis CI deployment'
+- git push --force --quiet "https://${GH_TOKEN}@${GH_REF}" || true
+env:
+  global:
+  - GH_REF: github.com/mgechev/revive.run.git
+  - secure: Bp2/fJOVEor5aj3rNwA3+4/wecCmX2mVQ2pQt1AJ1n+pT6MjKYywswTDT6kzK/Cu1bPcfEGh3a7XKieAhIWVKvchoyYVV8J80F76HGyqgSBuzFXvV0c32zFn2LtxQxvmtCNynjmGAV57dHtsxGmHxkX9u8JIJ4J06E2Eq9nuuflTCf5o5gHtaE7P7hQT2WL/JRJVABHUMa0XzsMuUdRNO0OBXGMm+SqiWEcZetf2Vq3tfo2LL4ula99oTKKspg0iRKiauCZZaRxyZG/V3QiR0Rl9nhTVnb6hx6/RFrxru63Pm1FUaK1gIqEq9EUMpZRTddGW77UPp9GSB81/GaUm+e0GNFjUAL2e59t72wMxCQEOT+835hVbeCjgdksg0IDbn7sR/S+rYbiCyxTuCA/4YNlDoEajl9RMxK4culsq35LnibE1x7L4Q/5blD7HwVSMhA33HSDCC5MINwTdWwsdHYiAvFo0RCi5B0GngMzE6/pJxvYhWV3YhKWrgSmhafV1QO3Qu9dCn6P+7KsEVDbUeA8Yxnugd60kQNh2vG7bdTYKaZ6GhfU12zAM15xd2SSrKl6szSAo64CYOTznNFMBMskpm05SubTW1w+xDQy8vGjIHqb6zntiqUhFhTDd326iRYfrQuhAK53XbU1NUFFOyZa8kCTlSsPWDoSOX68oH9Q=
+  - secure: WhbUu6HA4S8quk2bLuU/cuxZPRBAi47iFYuPZOd2zKnPkd8j+FAApeNwdGcYReUJUmmYIJHbSAH8MmlaD2TwMpiGXHm83EXT5TtSL612T0fG8IZ3LNdQ2j+q736IDDt3Z024QixfB4uPnO+Q8no6/nAR4m9kdrhNVOQFIEMPtunrWLeD5v7snF3Nhzr01Djl9G7GJnSPenwpBdIVQwpcYTR9qIUWjeXI/Cosvbz/fzLHla1QNKilV2l7PiKWt6zYsTnDX7Sqfh7WGVpmDganG5LITOmKoJsg13rx52/4cNhOTIuvSikpAC3opfrMW7Q+Lif6GWkVFtgVHRTNY2xBjBGRImFvYhKz5vbv04YrbG5GhRoTjJoJsyoyKlQUg6fKIk19eNRpSirL5Z6xUldquQk9WpeSP9ODfYwReKcGx2g8vUEExcaawmGLvKRjxKjqDPbfB/7DHic198fJwJdeYeyF8TfikuT82o59ppaMiEPVtD2FsMQAccXHUi13pu2uLifqHXqVpWpKNr3SMT8zh6KG96QNr+Wvz7ZBm4cYLrTx2AUvpN/bIsHiwrgENVLHn4a9x+r7DJi3tKLl6EN+ndc8netH7qn7GgvJdI1m+enolQbpdhL/U0yVWhFfMLZAqkZqh5hi1cE9dmuBCJO9cq8R+6OxUWN3N9glY+wcxYk=

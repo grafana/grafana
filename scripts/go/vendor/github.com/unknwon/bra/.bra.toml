@@ -1,0 +1,18 @@
+[run]
+init_cmds = [
+	["go", "install"]
+]						# Commands run in start
+watch_all = true		# Watch all sub-directories
+watch_dirs = [
+	"$WORKDIR/cmd",
+	"$WORKDIR/modules"
+]						# Directories to watch
+watch_exts = [".go"]	# Extensions to watch
+build_delay = 1500		# Minimal interval to Trigger build event
+cmds = [
+	["go", "install"]	
+]						# Commands to run
+
+[sync]
+listen_addr = ":5050"
+remote_addr = ":5050"

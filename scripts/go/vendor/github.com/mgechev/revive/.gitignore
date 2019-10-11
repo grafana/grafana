@@ -1,0 +1,4 @@
+golinter
+revive
+vendor
+*.swp
