@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -114,8 +115,16 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 				if err != nil {
 					plog.Info("executeGetMetricDataQueryError", "", err)
 				}
-				if ae, ok := err.(awserr.Error); ok && ae.Code() == "500" {
-					return err
+				if ae, ok := err.(awserr.Error); ok {
+					plog.Info("errorcode", "", ae.Code())
+					switch ae.Code() {
+					case "InternalFailure":
+						return err
+					case "ValidationError":
+						return err
+					case "ThrottlingException":
+						return fmt.Errorf("You've been throttled")
+					}
 				}
 				for _, queryRes := range queryResponses {
 					if err != nil {

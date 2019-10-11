@@ -108,20 +108,20 @@ func buildGetMetricDataQuery(queries map[string]*CloudWatchQuery, queryContext *
 				mdq.Expression = aws.String(query.Expression)
 			} else {
 				dimensionKeys := ""
-				searchTerm := fmt.Sprintf("MetricName=\"%v\" AND", query.MetricName)
+				searchTerm := fmt.Sprintf("MetricName=\"%v\" AND ", query.MetricName)
 				for key, values := range query.Dimensions {
 					dimensionKeys += fmt.Sprintf(",%s", key)
 					searchTerm += fmt.Sprintf("(")
 					for id, value := range values {
-						searchTerm += fmt.Sprintf(" %s=\"%s\"", key, value)
+						searchTerm += fmt.Sprintf("%s=\"%s\"", key, value)
 						if len(values) > 1 && id+1 != len(values) {
-							searchTerm += fmt.Sprintf(" OR")
+							searchTerm += fmt.Sprintf(" OR ")
 						}
 					}
 					searchTerm += fmt.Sprintf(")")
 				}
 
-				searchExpression := fmt.Sprintf("SEARCH(' {%s%s} %s', '%s', %s)", query.Namespace, dimensionKeys, searchTerm, *stat, strconv.Itoa(query.Period))
+				searchExpression := fmt.Sprintf("SEARCH('{%s%s} %s', '%s', %s)", query.Namespace, dimensionKeys, searchTerm, *stat, strconv.Itoa(query.Period))
 				plog.Info("searchexpression", "", searchExpression)
 				mdq.Expression = aws.String(searchExpression)
 			}
