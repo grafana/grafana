@@ -165,6 +165,8 @@ github.com/pkg/errors
 github.com/pmezard/go-difflib/difflib
 # github.com/securego/gosec v0.0.0-20190912120752-140048b2a218
 github.com/securego/gosec
+github.com/securego/gosec/cmd/gosec
+github.com/securego/gosec/output
 github.com/securego/gosec/rules
 # github.com/sirupsen/logrus v1.4.2
 github.com/sirupsen/logrus
