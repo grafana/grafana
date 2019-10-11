@@ -74,7 +74,9 @@ FROM ubuntu:14.04
 ENV GOVERSION=1.13.1 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=10.14.2
+    NODEVERSION=10.14.2 \
+    CHKSUM_ARMV7_MUSL=3043bd16a0287b02f3f1045ec5f7fa42bd47bd8329183fc52b179dbb80a56d5f \
+    CHKSUM_ARMV8_MUSL=1a935561ebe3155bfd02b1b25cd7533c81906dd47b1de1fa43b74209130b941c
 
 COPY --from=toolchain /tmp/x86_64-centos6-linux-gnu.tar.xz /tmp/
 COPY --from=toolchain /tmp/osxcross.tar.xz /tmp/
@@ -107,6 +109,17 @@ RUN apt-get update   && \
     curl -L https://storage.googleapis.com/golang/go${GOVERSION}.linux-amd64.tar.gz \
       | tar -xz -C /usr/local && \
     git clone https://github.com/raspberrypi/tools.git /opt/rpi-tools --depth=1
+
+# Install musl cross compilers
+RUN cd /tmp && \
+curl -O https://musl.cc/arm-linux-musleabihf-cross.tgz && \
+[ "$(sha256sum arm-linux-musleabihf-cross.tgz|cut -f1 -d ' ')" = "$CHKSUM_ARMV7_MUSL" ] && \
+tar xf arm-linux-musleabihf-cross.tgz && \
+rm arm-linux-musleabihf-cross.tgz && \
+curl -O https://musl.cc/aarch64-linux-musl-cross.tgz && \
+[ "$(sha256sum aarch64-linux-musl-cross.tgz|cut -f1 -d ' ')" = "$CHKSUM_ARMV8_MUSL" ] && \
+tar xf aarch64-linux-musl-cross.tgz && \
+rm aarch64-linux-musl-cross.tgz
 
 RUN apt-get install -y                           \
         gcc libc-dev make && \
