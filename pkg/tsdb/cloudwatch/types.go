@@ -2,16 +2,15 @@ package cloudwatch
 
 type CloudWatchQuery struct {
 	RefId              string
-	Region             string              `json:"region"`
-	Id                 string              `json:"id"`
-	Namespace          string              `json:"namespace"`
-	MetricName         string              `json:"metricName"`
-	Dimensions         map[string][]string `json:"dimensions"`
-	Statistics         []*string           `json:"statistics"`
-	QueryType          string              `json:"type"`
-	PeriodString       string              `json:"period"`
-	Expression         string              `json:"expression"`
-	ReturnData         bool                `json:"hide"`
+	Region             string
+	Id                 string
+	Namespace          string
+	MetricName         string
+	Statistics         []*string
+	QueryType          string
+	Expression         string
+	ReturnData         bool
+	Dimensions         map[string][]string
 	ExtendedStatistics []*string
 	Period             int
 	Alias              string
