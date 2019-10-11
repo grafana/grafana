@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
 	"github.com/grafana/grafana/pkg/tsdb"
 	plugin "github.com/hashicorp/go-plugin"
+	"golang.org/x/xerrors"
 )
 
 // DataSourcePlugin contains all metadata about a datasource plugin
@@ -60,12 +61,17 @@ var handshakeConfig = plugin.HandshakeConfig{
 func (p *DataSourcePlugin) startBackendPlugin(ctx context.Context, log log.Logger) error {
 	p.log = log.New("plugin-id", p.Id)
 
-	err := p.spawnSubProcess()
-	if err == nil {
-		go p.restartKilledProcess(ctx)
+	if err := p.spawnSubProcess(); err != nil {
+		return err
 	}
 
-	return err
+	go func() {
+		if err := p.restartKilledProcess(ctx); err != nil {
+			p.log.Error("Attempting to restart killed process failed", "err", err)
+		}
+	}()
+
+	return nil
 }
 
 func (p *DataSourcePlugin) spawnSubProcess() error {
@@ -105,15 +111,21 @@ func (p *DataSourcePlugin) restartKilledProcess(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
-		case <-ticker.C:
-			if p.client.Exited() {
-				err := p.spawnSubProcess()
-				p.log.Debug("Spawning new sub process", "name", p.Name, "id", p.Id)
-				if err != nil {
-					p.log.Error("Failed to spawn subprocess")
-				}
+			if err := ctx.Err(); err != nil && !xerrors.Is(err, context.Canceled) {
+				return err
 			}
+			return nil
+		case <-ticker.C:
+			if !p.client.Exited() {
+				continue
+			}
+
+			if err := p.spawnSubProcess(); err != nil {
+				p.log.Error("Failed to restart plugin", "err", err)
+				continue
+			}
+
+			p.log.Debug("Plugin process restarted")
 		}
 	}
 }
