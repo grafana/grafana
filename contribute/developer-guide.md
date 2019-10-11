@@ -28,7 +28,7 @@ npm install -g yarn
 We recommend using Go to download the source code for the Grafana project:
 
 1. Add `export GOPATH=$HOME/go/` to the bottom of your `$HOME/.bash_profile`.
-1. Open a terminal and run `go get github.com/grafana/` in your terminal. This command downloads, and installs Grafana to your `$GOPATH`.
+1. Open a terminal and run `go get github.com/grafana/grafana` in your terminal. This command downloads, and installs Grafana to your `$GOPATH`.
 1. Open `$GOPATH/src/github.com/grafana/grafana` in your favorite code editor.
 
 ## Build Grafana
