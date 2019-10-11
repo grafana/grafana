@@ -55,6 +55,7 @@ For all items not covered in this guide, refer to the [Microsoft Style Guide](ht
 ### Capitalization
 
 * Grafana, Loki, and Prometheus are always capitalized unless part of a code block.
+* API names are always Title Case, followed by "API"—for example, "Dashboard Permissions API"
 * Git is always capitalized, unless part of a code block.
 * Abbreviations are always capitalized (such as API, HTTP, ID, JSON, SQL, or URL) unless they are part of a code block.
 
@@ -73,10 +74,6 @@ When possible, use the exact title of the page or section you are linking to as 
 
 Grafana products has some words, abbreviations, and slang particular to this discourse community.
 
-#### data source
-
-Two words, not one
-
-**Exceptions:**
-* "datasource" used as an identifier
-* "datasource" in a URL
+* "Open source" should be hyphenated when used as an adjective, e.g. *open-source software*. The open form should be preferred when used as a noun, e.g. *Grafana is open source*.
+* Use "data source" instead of "datasource" unless used as an identifier, in code, or as part of a URL.
+* Spell out "repository" and avoid the shorter "repo."

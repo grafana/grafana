@@ -1,9 +1,17 @@
 .icon-margin-right {
   margin-right: 0.25em;
+
+  @media only screen and (max-width: 1320px) {
+    margin-right: 0;
+  }
 }
 
 .icon-margin-left {
   margin-left: 0.25em;
+
+  @media only screen and (max-width: 1320px) {
+    margin-left: 0;
+  }
 }
 
 .datasource-picker {
@@ -148,7 +156,16 @@
   .explore-toolbar.splitted {
     .explore-toolbar-content-item {
       padding: 2px 0;
-      margin: 0;
+    }
+  }
+}
+
+@media only screen and (max-width: 788px) {
+  .explore-toolbar {
+    .explore-toolbar-content-item {
+      .navbar-button span {
+        display: none;
+      }
     }
   }
 }
@@ -221,6 +238,29 @@
         .ds-picker {
           min-width: 150px;
         }
+      }
+    }
+  }
+}
+
+.explore-icon-align {
+  .navbar-button {
+    i {
+      position: relative;
+      top: -1px;
+
+      @media only screen and (max-width: 1320px) {
+        margin: 0 -3px;
+      }
+    }
+  }
+}
+
+.explore-toolbar.splitted {
+  .explore-icon-align {
+    .navbar-button {
+      i {
+        margin: 0 -3px;
       }
     }
   }

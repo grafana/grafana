@@ -1,6 +1,10 @@
 package models
 
 import (
+	"io/ioutil"
+	"log"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -31,13 +35,13 @@ func TestDataSourceCache(t *testing.T) {
 			So(t2, ShouldEqual, t1)
 		})
 		Convey("Should verify TLS by default", func() {
-			So(t1.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
+			So(t1.transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
 		})
 		Convey("Should have no TLS client certificate configured", func() {
-			So(len(t1.TLSClientConfig.Certificates), ShouldEqual, 0)
+			So(len(t1.transport.TLSClientConfig.Certificates), ShouldEqual, 0)
 		})
 		Convey("Should have no user-supplied TLS CA onfigured", func() {
-			So(t1.TLSClientConfig.RootCAs, ShouldBeNil)
+			So(t1.transport.TLSClientConfig.RootCAs, ShouldBeNil)
 		})
 	})
 
@@ -62,13 +66,13 @@ func TestDataSourceCache(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("Should verify TLS by default", func() {
-			So(t1.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
+			So(t1.transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
 		})
 		Convey("Should have no TLS client certificate configured", func() {
-			So(len(t1.TLSClientConfig.Certificates), ShouldEqual, 0)
+			So(len(t1.transport.TLSClientConfig.Certificates), ShouldEqual, 0)
 		})
 		Convey("Should have no user-supplied TLS CA configured", func() {
-			So(t1.TLSClientConfig.RootCAs, ShouldBeNil)
+			So(t1.transport.TLSClientConfig.RootCAs, ShouldBeNil)
 		})
 
 		ds.JsonData = nil
@@ -79,7 +83,7 @@ func TestDataSourceCache(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("Should have no user-supplied TLS CA configured after the update", func() {
-			So(t2.TLSClientConfig.RootCAs, ShouldBeNil)
+			So(t2.transport.TLSClientConfig.RootCAs, ShouldBeNil)
 		})
 	})
 
@@ -110,10 +114,10 @@ func TestDataSourceCache(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("Should verify TLS by default", func() {
-			So(tr.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
+			So(tr.transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
 		})
 		Convey("Should have a TLS client certificate configured", func() {
-			So(len(tr.TLSClientConfig.Certificates), ShouldEqual, 1)
+			So(len(tr.transport.TLSClientConfig.Certificates), ShouldEqual, 1)
 		})
 	})
 
@@ -139,10 +143,10 @@ func TestDataSourceCache(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("Should verify TLS by default", func() {
-			So(tr.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
+			So(tr.transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
 		})
 		Convey("Should have a TLS CA configured", func() {
-			So(len(tr.TLSClientConfig.RootCAs.Subjects()), ShouldEqual, 1)
+			So(len(tr.transport.TLSClientConfig.RootCAs.Subjects()), ShouldEqual, 1)
 		})
 	})
 
@@ -163,7 +167,67 @@ func TestDataSourceCache(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("Should skip TLS verification", func() {
-			So(tr.TLSClientConfig.InsecureSkipVerify, ShouldEqual, true)
+			So(tr.transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, true)
+		})
+	})
+
+	Convey("When caching a datasource proxy with custom headers specified", t, func() {
+		clearCache()
+
+		json := simplejson.NewFromAny(map[string]interface{}{
+			"httpHeaderName1": "Authorization",
+		})
+		encryptedData, err := util.Encrypt([]byte(`Bearer xf5yhfkpsnmgo`), setting.SecretKey)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		ds := DataSource{
+			Id:             1,
+			Url:            "http://k8s:8001",
+			Type:           "Kubernetes",
+			JsonData:       json,
+			SecureJsonData: map[string][]byte{"httpHeaderValue1": encryptedData},
+		}
+
+		Convey("Should match header value after decryption", func() {
+			headers := ds.getCustomHeaders()
+			So(headers["Authorization"], ShouldEqual, "Bearer xf5yhfkpsnmgo")
+		})
+
+		Convey("Should add header fields in HTTP Transport", func() {
+			// 1. Start HTTP test server which checks the request headers
+			backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// Can't use So() here, see: https://github.com/smartystreets/goconvey/issues/561
+				if r.Header.Get("Authorization") == "Bearer xf5yhfkpsnmgo" {
+					w.WriteHeader(200)
+					w.Write([]byte("Ok"))
+					return
+				}
+				w.WriteHeader(403)
+				w.Write([]byte("Invalid bearer token provided"))
+			}))
+			defer backend.Close()
+
+			// 2. Get HTTP transport from datasoruce which uses the test server as backend
+			ds.Url = backend.URL
+			transport, err := ds.GetHttpTransport()
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+
+			// 3. Send test request which should have the Authorization header set
+			req := httptest.NewRequest("GET", backend.URL+"/test-headers", nil)
+			res, err := transport.RoundTrip(req)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+			body, err := ioutil.ReadAll(res.Body)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+			bodyStr := string(body)
+			So(bodyStr, ShouldEqual, "Ok")
 		})
 	})
 }
