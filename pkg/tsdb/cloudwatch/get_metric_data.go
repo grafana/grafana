@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func (e *CloudWatchExecutor) executeGetMetricDataQuery(ctx context.Context, region string, queries map[string]*CloudWatchQuery, queryContext *tsdb.TsdbQuery) ([]*tsdb.QueryResult, error) {
+func (e *CloudWatchExecutor) executeQuery(ctx context.Context, region string, queries map[string]*CloudWatchQuery, queryContext *tsdb.TsdbQuery) ([]*tsdb.QueryResult, error) {
 	queryResponses := make([]*tsdb.QueryResult, 0)
 
 	client, err := e.getClient(region)
@@ -107,20 +107,25 @@ func buildGetMetricDataQuery(queries map[string]*CloudWatchQuery, queryContext *
 			if query.Expression != "" {
 				mdq.Expression = aws.String(query.Expression)
 			} else {
+				counter := 1
 				dimensionKeys := ""
-				searchTerm := fmt.Sprintf("MetricName=\"%v\" AND ", query.MetricName)
+				searchTerm := fmt.Sprintf("MetricName=\"%v\" ", query.MetricName)
 				for key, values := range query.Dimensions {
 					dimensionKeys += fmt.Sprintf(",%s", key)
-					searchTerm += fmt.Sprintf("(")
-					for id, value := range values {
+					searchTerm += "("
+					for i, value := range values {
 						searchTerm += fmt.Sprintf("%s=\"%s\"", key, value)
-						if len(values) > 1 && id+1 != len(values) {
-							searchTerm += fmt.Sprintf(" OR ")
+						if len(values) > 1 && i+1 != len(values) {
+							searchTerm += " OR "
 						}
 					}
-					searchTerm += fmt.Sprintf(")")
+					searchTerm += ")"
+					if len(query.Dimensions) > 1 && counter != len(query.Dimensions) {
+						searchTerm += " AND "
+					}
+					counter++
 				}
-
+				plog.Info("len(query.Dimensions)", "", len(query.Dimensions))
 				searchExpression := fmt.Sprintf("SEARCH('{%s%s} %s', '%s', %s)", query.Namespace, dimensionKeys, searchTerm, *stat, strconv.Itoa(query.Period))
 				plog.Info("searchexpression", "", searchExpression)
 				mdq.Expression = aws.String(searchExpression)
