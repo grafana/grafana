@@ -16,4 +16,5 @@ type CloudWatchQuery struct {
 	Alias              string
 	Identifier         string
 	HighResolution     bool
+	SearchExpressions  []string
 }
