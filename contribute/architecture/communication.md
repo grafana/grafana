@@ -1,6 +1,6 @@
 # Communication
 
-Grafana uses a _bus_ to pass messages to and from a service to other parts of the application. All communication over the bus happens synchronously.
+Grafana uses a _bus_ to pass messages between different parts of the application. All communication over the bus happens synchronously.
 
 There are three types of messages: _events_, _commands_, and _queries_.
 
