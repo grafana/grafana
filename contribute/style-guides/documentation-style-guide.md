@@ -55,6 +55,7 @@ For all items not covered in this guide, refer to the [Microsoft Style Guide](ht
 ### Capitalization
 
 * Grafana, Loki, and Prometheus are always capitalized unless part of a code block.
+* API names are always Title Case, followed by "API"—for example, "Dashboard Permissions API"
 * Git is always capitalized, unless part of a code block.
 * Abbreviations are always capitalized (such as API, HTTP, ID, JSON, SQL, or URL) unless they are part of a code block.
 
