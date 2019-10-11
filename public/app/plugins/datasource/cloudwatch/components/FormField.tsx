@@ -1,5 +1,5 @@
 import React, { InputHTMLAttributes, FunctionComponent } from 'react';
-import { Input } from '@grafana/ui';
+import { Input, FormLabel } from '@grafana/ui';
 import { cx } from 'emotion';
 
 export interface Props extends InputHTMLAttributes<HTMLInputElement> {
@@ -8,6 +8,7 @@ export interface Props extends InputHTMLAttributes<HTMLInputElement> {
   labelWidth?: number;
   inputWidth?: number;
   inputEl?: React.ReactNode;
+  tooltip?: string;
 }
 
 const defaultProps = {
@@ -23,11 +24,14 @@ export const FormField: FunctionComponent<Props> = ({
   inputEl,
   className,
   grow,
+  tooltip,
   ...inputProps
 }) => {
   return (
     <div className={cx('gf-form', className)}>
-      <span className={`gf-form-label query-keyword width-${labelWidth}`}>{label}</span>
+      <FormLabel className={`gf-form-label query-keyword width-${labelWidth}`} tooltip={tooltip}>
+        {label}
+      </FormLabel>
       {inputEl || (
         <Input type="text" className={`gf-form-input ${inputWidth ? `width-${inputWidth}` : ''}`} {...inputProps} />
       )}

@@ -1,7 +1,15 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ChangeEvent } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { CloudWatchQuery } from '../types';
-import { Input, QueryEditorProps, Segment, SegmentAsync, ValidationEvents, EventsWithValidation } from '@grafana/ui';
+import {
+  Input,
+  QueryEditorProps,
+  Segment,
+  SegmentAsync,
+  ValidationEvents,
+  EventsWithValidation,
+  Switch,
+} from '@grafana/ui';
 import DataSource, { Options } from '../datasource';
 import { Stats, Dimensions, FormField } from './';
 
@@ -53,82 +61,169 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
     const { regions, namespaces } = this.state;
     return (
       <>
-        <FormField
-          className="inline query-keyword"
-          width={24}
-          grow
-          label="Region"
-          inputEl={
-            <Segment value={query.region} options={regions} onChange={region => this.onChange({ ...query, region })} />
-          }
-        />
-        <div className="gf-form inline">
+        <div className="gf-form-inline">
           <FormField
             className="query-keyword"
-            label="Metric"
+            width={24}
+            label="Region"
             inputEl={
-              <>
-                <Segment
-                  value={query.namespace}
-                  options={namespaces}
-                  onChange={namespace => this.onChange({ ...query, namespace })}
-                />
-                <SegmentAsync
-                  value={query.metricName}
-                  loadOptions={this.loadMetricNames}
-                  onChange={metricName => this.onChange({ ...query, metricName })}
-                />
-              </>
-            }
-          />
-          <FormField
-            className="query-keyword"
-            labelWidth={4}
-            label="Stats"
-            inputEl={
-              <Stats values={query.statistics} onChange={statistics => this.onChange({ ...query, statistics })} />
+              <Segment
+                value={query.region}
+                options={regions}
+                onChange={region => this.onChange({ ...query, region })}
+              />
             }
           />
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--grow" />
           </div>
         </div>
-        <FormField
-          className="inline query-keyword"
-          grow
-          label="Dimensions"
-          inputEl={
-            <Dimensions
-              dimensions={query.dimensions}
-              variables={datasource.variables}
-              onChange={dimensions => this.onChange({ ...query, dimensions })}
-              loadKeys={() => datasource.getDimensionKeys(query.namespace, query.region)}
-              loadValues={newKey => {
-                const { [newKey]: value, ...newDimensions } = query.dimensions;
-                return datasource.getDimensionValues(
-                  query.region,
-                  query.namespace,
-                  query.metricName,
-                  newKey,
-                  newDimensions
-                );
-              }}
+
+        {query.expression.length === 0 && (
+          <div className="gf-form-inline">
+            <FormField
+              className="query-keyword"
+              label="Metric"
+              inputEl={
+                <>
+                  <Segment
+                    value={query.namespace}
+                    options={namespaces}
+                    onChange={namespace => this.onChange({ ...query, namespace })}
+                  />
+                  <SegmentAsync
+                    value={query.metricName}
+                    loadOptions={this.loadMetricNames}
+                    onChange={metricName => this.onChange({ ...query, metricName })}
+                  />
+                </>
+              }
             />
-          }
-        />
-        <FormField
-          className="inline query-keyword"
-          grow
-          label="Id"
-          inputEl={
-            <Input
-              className={`gf-form-input width-${12}`}
-              width={16}
-              onBlur={console.log}
-              validationEvents={idValidationEvents}
+            <FormField
+              className="query-keyword"
+              labelWidth={4}
+              label="Stats"
+              inputEl={
+                <Stats values={query.statistics} onChange={statistics => this.onChange({ ...query, statistics })} />
+              }
             />
-          }
-        />
+            <div className="gf-form gf-form--grow">
+              <div className="gf-form-label gf-form-label--grow" />
+            </div>
+          </div>
+        )}
+
+        {query.expression.length === 0 && (
+          <div className="gf-form-inline">
+            <FormField
+              className="query-keyword"
+              grow
+              label="Dimensions"
+              inputEl={
+                <Dimensions
+                  dimensions={query.dimensions}
+                  variables={datasource.variables}
+                  onChange={dimensions => this.onChange({ ...query, dimensions })}
+                  loadKeys={() => datasource.getDimensionKeys(query.namespace, query.region)}
+                  loadValues={newKey => {
+                    const { [newKey]: value, ...newDimensions } = query.dimensions;
+                    return datasource.getDimensionValues(
+                      query.region,
+                      query.namespace,
+                      query.metricName,
+                      newKey,
+                      newDimensions
+                    );
+                  }}
+                />
+              }
+            />
+            <div className="gf-form gf-form--grow">
+              <div className="gf-form-label gf-form-label--grow" />
+            </div>
+          </div>
+        )}
+
+        {query.statistics.length === 1 && (
+          <div className="gf-form-inline">
+            <FormField
+              className="query-keyword"
+              label="Id"
+              tooltip="Id can include numbers, letters, and underscore, and must start with a lowercase letter."
+              inputEl={
+                <Input
+                  className={`gf-form-input width-${12}`}
+                  width={16}
+                  onBlur={console.log}
+                  validationEvents={idValidationEvents}
+                  value={query.id}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                    this.onChange({ ...query, id: event.target.value })
+                  }
+                />
+              }
+            />
+            <FormField
+              className="query-keyword"
+              label="Expression"
+              inputEl={
+                <Input
+                  className={`gf-form-input width-${18}`}
+                  width={16}
+                  onBlur={console.log}
+                  value={query.expression}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                    this.onChange({ ...query, expression: event.target.value })
+                  }
+                />
+              }
+            />
+          </div>
+        )}
+
+        <div className="gf-form-inline">
+          <FormField
+            className="query-keyword"
+            label="Min Period"
+            tooltip="Minimum interval between points in seconds"
+            inputEl={
+              <Input
+                className={`gf-form-input width-${12}`}
+                width={16}
+                onBlur={console.log}
+                value={query.period}
+                placeholder="auto"
+                onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                  this.onChange({ ...query, period: event.target.value })
+                }
+              />
+            }
+          />
+          <FormField
+            className="query-keyword"
+            label="Alias"
+            tooltip="Alias replacement variables: {{metric}}, {{stat}}, {{namespace}}, {{region}}, {{period}}, {{label}}, {{YOUR_DIMENSION_NAME}}"
+            inputEl={
+              <Input
+                className={`gf-form-input width-${18}`}
+                width={16}
+                onBlur={console.log}
+                value={query.alias}
+                onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                  this.onChange({ ...query, alias: event.target.value })
+                }
+              />
+            }
+          />
+          <Switch
+            label="HighRes"
+            checked={query.highResolution}
+            onChange={() => this.onChange({ ...query, highResolution: !query.highResolution })}
+          />
+          <div className="gf-form gf-form--grow">
+            <div className="gf-form-label gf-form-label--grow" />
+          </div>
+        </div>
       </>
     );
   }
