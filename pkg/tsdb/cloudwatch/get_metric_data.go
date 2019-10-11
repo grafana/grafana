@@ -120,9 +120,9 @@ func buildGetMetricDataQuery(queries map[string]*CloudWatchQuery, queryContext *
 				searchTerm := fmt.Sprintf("MetricName=\"%v\" ", query.MetricName)
 				for key, values := range query.Dimensions {
 					dimensionKeys += fmt.Sprintf(",%s", key)
-					searchTerm += "("
+					searchTerm += fmt.Sprintf("%s=(", key)
 					for i, value := range values {
-						searchTerm += fmt.Sprintf("%s=\"%s\"", key, value)
+						searchTerm += fmt.Sprintf("\"%s\"", value)
 						if len(values) > 1 && i+1 != len(values) {
 							searchTerm += " OR "
 						}
@@ -155,12 +155,14 @@ func parseGetMetricDataTimeSeries(lr map[string]*cloudwatch.MetricDataResult, qu
 			Tags:   map[string]string{},
 			Points: make([]tsdb.TimePoint, 0),
 		}
+
 		for key, values := range query.Dimensions {
-			series.Tags[key] = values[0]
+			for _, value := range values {
+				if value == label {
+					series.Tags[key] = label
+				}
+			}
 		}
-		// for _, d := range query.Dimensions {
-		// 	series.Tags[key] = values[0]
-		// }
 
 		series.Name = formatAlias(query, stat, series.Tags, label)
 
