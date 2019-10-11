@@ -5,8 +5,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	m "github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSearch_SortedResults(t *testing.T) {
@@ -21,13 +21,13 @@ func TestSearch_SortedResults(t *testing.T) {
 		return nil
 	})
 
-	bus.AddHandler("test", func(query *m.GetUserStarsQuery) error {
+	bus.AddHandler("test", func(query *models.GetUserStarsQuery) error {
 		query.Result = map[int64]bool{10: true, 12: true}
 		return nil
 	})
 
-	bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-		query.Result = &m.SignedInUser{IsGrafanaAdmin: true}
+	bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+		query.Result = &models.SignedInUser{IsGrafanaAdmin: true}
 		return nil
 	})
 
@@ -41,7 +41,7 @@ func TestSearch_SortedResults(t *testing.T) {
 	}
 
 	err := svc.searchHandler(query)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	// Assert results are sorted.
 	assert.Equal(t, "FOLDER", query.Result[0].Title)
