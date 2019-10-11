@@ -4,8 +4,9 @@ import { css } from 'emotion';
 import memoizeOne from 'memoize-one';
 import tinycolor from 'tinycolor2';
 import { CSSTransition } from 'react-transition-group';
+import { ResponsiveButton } from './ResponsiveButton';
 
-import { GrafanaTheme, useTheme } from '@grafana/ui';
+import { GrafanaTheme, useTheme, Tooltip } from '@grafana/ui';
 
 const getStyles = memoizeOne((theme: GrafanaTheme) => {
   const orangeLighter = tinycolor(theme.colors.orangeDark)
@@ -91,7 +92,12 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
   };
 });
 
+const defaultLiveTooltip = () => {
+  return <>Live</>;
+};
+
 type LiveTailButtonProps = {
+  splitted: boolean;
   start: () => void;
   stop: () => void;
   pause: () => void;
@@ -100,7 +106,7 @@ type LiveTailButtonProps = {
   isPaused: boolean;
 };
 export function LiveTailButton(props: LiveTailButtonProps) {
-  const { start, pause, resume, isLive, isPaused, stop } = props;
+  const { start, pause, resume, isLive, isPaused, stop, splitted } = props;
   const theme = useTheme();
   const styles = getStyles(theme);
 
@@ -108,17 +114,19 @@ export function LiveTailButton(props: LiveTailButtonProps) {
 
   return (
     <>
-      <button
-        className={classNames('btn navbar-button', styles.liveButton, {
-          [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: isLive,
-          [styles.isLive]: isLive && !isPaused,
-          [styles.isPaused]: isLive && isPaused,
-        })}
-        onClick={onClickMain}
-      >
-        <i className={classNames('fa', isPaused || !isLive ? 'fa-play' : 'fa-pause')} />
-        &nbsp; Live tailing
-      </button>
+      <Tooltip content={defaultLiveTooltip} placement="bottom">
+        <ResponsiveButton
+          splitted={splitted}
+          buttonClassName={classNames('btn navbar-button', styles.liveButton, {
+            [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: isLive,
+            [styles.isLive]: isLive && !isPaused,
+            [styles.isPaused]: isLive && isPaused,
+          })}
+          iconClassName={classNames('fa', isPaused || !isLive ? 'fa-play' : 'fa-pause')}
+          onClick={onClickMain}
+          title={'\xa0Live'}
+        />
+      </Tooltip>
       <CSSTransition
         mountOnEnter={true}
         unmountOnExit={true}
