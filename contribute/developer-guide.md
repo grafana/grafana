@@ -193,8 +193,9 @@ find ./conf ./pkg ./public/views | wc -l
 
 Another alternative is to limit the files being watched. The directories that are watched for changes are listed in the `.bra.toml` file in the root directory. 
 
-## Learn more
+## Next steps
 
-- Read our [style guides](/contribute/style-guides).
-- Learn how to [Create a pull request](/contribute/pull-request.md).
-- Read [How to contribute to Grafana as a junior dev](https://medium.com/@ivanahuckova/how-to-contribute-to-grafana-as-junior-dev-c01fe3064502) by [Ivana Huckova](https://medium.com/@ivanahuckova).
+- [Create a pull request](/contribute/pull-request.md)
+- [Style guides](/contribute/style-guides)
+- [Architecture](architecture)
+- [How to contribute to Grafana as a junior dev](https://medium.com/@ivanahuckova/how-to-contribute-to-grafana-as-junior-dev-c01fe3064502)
