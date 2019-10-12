@@ -409,10 +409,11 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
 
     if (isBasic) {
       // Basic styles
-      barStyles.background = `${tinycolor(valueColor)
-        .setAlpha(0.25)
+      barStyles.background = valueColor;
+      barStyles.borderTop = `2px solid ${tinycolor(valueColor)
+        .setAlpha(1)
         .toRgbString()}`;
-      barStyles.borderTop = `2px solid ${valueColor}`;
+
     } else {
       // Gradient styles
       barStyles.background = getBarGradient(props, maxBarHeight);
@@ -433,10 +434,10 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
 
     if (isBasic) {
       // Basic styles
-      barStyles.background = `${tinycolor(valueColor)
-        .setAlpha(0.25)
+      barStyles.background = valueColor;
+      barStyles.borderRight = `2px solid ${tinycolor(valueColor)
+        .setAlpha(1)
         .toRgbString()}`;
-      barStyles.borderRight = `2px solid ${valueColor}`;
     } else {
       // Gradient styles
       barStyles.background = getBarGradient(props, maxBarWidth);
@@ -504,7 +505,7 @@ function getValueStyles(value: string, color: string, width: number, height: num
   const fontSize = Math.min(Math.max(guess, 14), heightFont);
 
   return {
-    color: color,
+    color: `${tinycolor(color).setAlpha(1).toRgbString()}`,
     height: `${height}px`,
     width: `${width}px`,
     display: 'flex',
