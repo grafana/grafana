@@ -60,10 +60,6 @@
   .explore-toolbar-content-item:first-child {
     padding-left: 0;
     margin-right: auto;
-
-    @media only screen and (max-width: 1010px) {
-      width: 100%;
-    }
   }
 
   .time-picker-long-date {
@@ -140,6 +136,23 @@
       }
     }
   }
+
+  .explore-toolbar.splitted {
+    .explore-toolbar-content-item {
+      .datasource-picker {
+        .ds-picker {
+          min-width: 50px;
+          max-width: 50px;
+
+          .gf-form-select-box__single-value {
+            span {
+              display: none;
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 @media only screen and (max-width: 1070px) {
@@ -156,16 +169,6 @@
   .explore-toolbar.splitted {
     .explore-toolbar-content-item {
       padding: 2px 0;
-    }
-  }
-}
-
-@media only screen and (max-width: 788px) {
-  .explore-toolbar {
-    .explore-toolbar-content-item {
-      .navbar-button span {
-        display: none;
-      }
     }
   }
 }
@@ -191,52 +194,15 @@
   }
 }
 
-@media only screen and (max-width: 697px) {
-  .explore-toolbar {
-    .explore-toolbar-content-item {
-      &:first-child {
-        width: 100%;
-      }
+@media only screen and (max-width: 634px) {
+  .datasource-picker {
+    .ds-picker {
+      min-width: 50px;
+      max-width: 50px;
 
-      .datasource-picker {
-        .ds-picker {
-          min-width: 400px;
-        }
-      }
-    }
-  }
-}
-
-@media only screen and (max-width: 540px) {
-  .explore-toolbar {
-    .explore-toolbar-content-item {
-      .datasource-picker {
-        .ds-picker {
-          min-width: 300px;
-        }
-      }
-    }
-  }
-}
-
-@media only screen and (max-width: 440px) {
-  .explore-toolbar {
-    .explore-toolbar-content-item {
-      .datasource-picker {
-        .ds-picker {
-          min-width: 250px;
-        }
-      }
-    }
-  }
-}
-
-@media only screen and (max-width: 390px) {
-  .explore-toolbar {
-    .explore-toolbar-content-item {
-      .datasource-picker {
-        .ds-picker {
-          min-width: 150px;
+      .gf-form-select-box__single-value {
+        span {
+          display: none;
         }
       }
     }
