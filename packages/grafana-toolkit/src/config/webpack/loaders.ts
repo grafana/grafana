@@ -139,5 +139,13 @@ export const getFileLoaders = () => {
             },
       ],
     },
+    {
+      test: /\.(woff|woff2|eot|ttf|otf)(\?v=\d+\.\d+\.\d+)?$/,
+      loader: 'file-loader',
+      options: {
+        outputPath: 'fonts/',
+        name: '[path][name].[ext]',
+      },
+    },
   ];
 };
