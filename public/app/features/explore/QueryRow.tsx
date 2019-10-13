@@ -8,7 +8,7 @@ import { connect } from 'react-redux';
 // Components
 import QueryEditor from './QueryEditor';
 // Actions
-import { changeQuery, modifyQueries, runQueries, addQueryRow } from './state/actions';
+import { changeQuery, modifyQueries, runQueries, addQueryRow, hideQueries } from './state/actions';
 // Types
 import { StoreState } from 'app/types';
 import { TimeRange, AbsoluteTimeRange } from '@grafana/data';
@@ -39,6 +39,7 @@ interface QueryRowProps extends PropsFromParent {
   absoluteRange: AbsoluteTimeRange;
   removeQueryRowAction: typeof removeQueryRowAction;
   runQueries: typeof runQueries;
+  hideQueries: typeof hideQueries;
   queryResponse: PanelData;
   latency: number;
   mode: ExploreMode;
@@ -46,11 +47,13 @@ interface QueryRowProps extends PropsFromParent {
 
 interface QueryRowState {
   textEditModeEnabled: boolean;
+  hiddenQuery: boolean;
 }
 
 export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
   state: QueryRowState = {
     textEditModeEnabled: false,
+    hiddenQuery: false,
   };
 
   onRunQuery = () => {
@@ -76,8 +79,14 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     this.props.addQueryRow(exploreId, index);
   };
 
-  onClickClearButton = () => {
-    this.onChange(null, true);
+  onClickToggleHiddenQuery = () => {
+    const { exploreId } = this.props;
+    this.setState({ hiddenQuery: !this.state.hiddenQuery });
+    if (!this.state.hiddenQuery) {
+      this.props.hideQueries(exploreId);
+    } else {
+      this.props.runQueries(exploreId);
+    }
   };
 
   onClickHintFix = (action: QueryFixAction) => {
@@ -174,8 +183,8 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
             </div>
           )}
           <div className="gf-form">
-            <button className="gf-form-label gf-form-label--btn" onClick={this.onClickClearButton}>
-              <i className="fa fa-times" />
+            <button className="gf-form-label gf-form-label--btn" onClick={this.onClickToggleHiddenQuery}>
+              <i className={`${this.state.hiddenQuery ? 'fa fa-eye-slash' : 'fa fa-eye'}`} />
             </button>
           </div>
           <div className="gf-form">
@@ -231,6 +240,7 @@ const mapDispatchToProps = {
   modifyQueries,
   removeQueryRowAction,
   runQueries,
+  hideQueries,
 };
 
 export default hot(module)(connect(
