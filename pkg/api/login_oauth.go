@@ -217,7 +217,15 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	metrics.MApiLoginOAuth.Inc()
 
 	if redirectTo, _ := url.QueryUnescape(ctx.GetCookie("redirect_to")); len(redirectTo) > 0 {
-		ctx.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
+		ctx.Resp.Header().Del("Set-Cookie")
+		cookie := http.Cookie{
+			Name:   "redirect_to",
+			Value:  "",
+			Path:   setting.AppSubUrl + "/",
+			Secure: setting.CookieSecure,
+			MaxAge: -1,
+		}
+		http.SetCookie(ctx.Resp, &cookie)
 		ctx.Redirect(redirectTo)
 		return
 	}
