@@ -151,6 +151,9 @@ export class VisualizationTab extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
+    if (this.querySubscription) {
+      this.querySubscription.unsubscribe();
+    }
     this.cleanUpAngularOptions();
   }
 
