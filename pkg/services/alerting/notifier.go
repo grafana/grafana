@@ -34,14 +34,15 @@ type notificationService struct {
 	renderService rendering.Service
 }
 
-func (n *notificationService) SendIfNeeded(context *EvalContext) error {
+func (n *notificationService) SendIfNeeded(context *EvalContext) {
 	notifierStates, err := n.getNeededNotifiers(context.Rule.OrgID, context.Rule.Notifications, context)
 	if err != nil {
-		return err
+		n.log.Error("Failed to get alert notifiers", "error", err)
+		return
 	}
 
 	if len(notifierStates) == 0 {
-		return nil
+		return
 	}
 
 	if notifierStates.ShouldUploadImage() {
@@ -50,7 +51,7 @@ func (n *notificationService) SendIfNeeded(context *EvalContext) error {
 		}
 	}
 
-	return n.sendNotifications(context, notifierStates)
+	n.sendNotifications(context, notifierStates)
 }
 
 func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, notifierState *notifierState) error {
@@ -104,16 +105,13 @@ func (n *notificationService) sendNotification(evalContext *EvalContext, notifie
 	return n.sendAndMarkAsComplete(evalContext, notifierState)
 }
 
-func (n *notificationService) sendNotifications(evalContext *EvalContext, notifierStates notifierStateSlice) error {
+func (n *notificationService) sendNotifications(evalContext *EvalContext, notifierStates notifierStateSlice) {
 	for _, notifierState := range notifierStates {
 		err := n.sendNotification(evalContext, notifierState)
 		if err != nil {
 			n.log.Error("failed to send notification", "uid", notifierState.notifier.GetNotifierUID(), "error", err)
-			return err
 		}
 	}
-
-	return nil
 }
 
 func (n *notificationService) uploadImage(context *EvalContext) (err error) {
