@@ -82,7 +82,6 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 			if err := validateRedirectTo(redirectTo); err != nil {
 				viewData.Settings["loginError"] = err.Error()
 				c.HTML(200, getViewIndex(), viewData)
-				c.Resp.Header().Del("Set-Cookie")
 				cookie := http.Cookie{
 					Name:   "redirect_to",
 					Value:  "",
@@ -93,7 +92,6 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 				http.SetCookie(c.Resp, &cookie)
 				return
 			}
-			c.Resp.Header().Del("Set-Cookie")
 			cookie := http.Cookie{
 				Name:   "redirect_to",
 				Value:  "",
