@@ -25,14 +25,14 @@ const defaultErrorNotification = {
   timeout: AppNotificationTimeout.Error,
 };
 
-export const createSuccessNotification = (title: string, text?: string): AppNotification => ({
+export const createSuccessNotification = (title: string, text = ''): AppNotification => ({
   ...defaultSuccessNotification,
   title: title,
   text: text,
   id: Date.now(),
 });
 
-export const createErrorNotification = (title: string, text?: any): AppNotification => {
+export const createErrorNotification = (title: string, text = ''): AppNotification => {
   return {
     ...defaultErrorNotification,
     title: title,
@@ -41,7 +41,7 @@ export const createErrorNotification = (title: string, text?: any): AppNotificat
   };
 };
 
-export const createWarningNotification = (title: string, text?: string): AppNotification => ({
+export const createWarningNotification = (title: string, text = ''): AppNotification => ({
   ...defaultWarningNotification,
   title: title,
   text: text,
