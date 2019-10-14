@@ -76,50 +76,17 @@ type Server struct {
 }
 
 func (s *Server) Run() error {
-	var err error
 	s.loadConfiguration()
 	s.writePIDFile()
 
 	login.Init()
 	social.NewOAuthService()
 
-	serviceGraph := inject.Graph{}
-	err = serviceGraph.Provide(&inject.Object{Value: bus.GetBus()})
-	if err != nil {
-		return fmt.Errorf("Failed to provide object to the graph: %v", err)
-	}
-	err = serviceGraph.Provide(&inject.Object{Value: s.cfg})
-	if err != nil {
-		return fmt.Errorf("Failed to provide object to the graph: %v", err)
-	}
-	err = serviceGraph.Provide(&inject.Object{Value: routing.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing)})
-	if err != nil {
-		return fmt.Errorf("Failed to provide object to the graph: %v", err)
-	}
-	err = serviceGraph.Provide(&inject.Object{Value: localcache.New(5*time.Minute, 10*time.Minute)})
-	if err != nil {
-		return fmt.Errorf("Failed to provide object to the graph: %v", err)
-	}
-
 	// self registered services
 	services := registry.GetServices()
 
-	// Add all services to dependency graph
-	for _, service := range services {
-		err = serviceGraph.Provide(&inject.Object{Value: service.Instance})
-		if err != nil {
-			return fmt.Errorf("Failed to provide object to the graph: %v", err)
-		}
-	}
-
-	err = serviceGraph.Provide(&inject.Object{Value: s})
-	if err != nil {
-		return fmt.Errorf("Failed to provide object to the graph: %v", err)
-	}
-
-	// Inject dependencies to services
-	if err := serviceGraph.Populate(); err != nil {
-		return fmt.Errorf("Failed to populate service dependency: %v", err)
+	if err := s.buildServiceGraph(services); err != nil {
+		return err
 	}
 
 	// Init & start services
@@ -174,6 +141,35 @@ func (s *Server) Run() error {
 	sendSystemdNotification("READY=1")
 
 	return s.childRoutines.Wait()
+}
+
+// buildServiceGraph builds a graph of services and their dependencies.
+func (s *Server) buildServiceGraph(services []*registry.Descriptor) error {
+	// Specify service dependencies.
+	objs := []interface{}{
+		bus.GetBus(),
+		s.cfg,
+		routing.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing),
+		localcache.New(5*time.Minute, 10*time.Minute),
+		s,
+	}
+
+	for _, service := range services {
+		objs = append(objs, service.Instance)
+	}
+
+	// Create and populate service graph.
+	var serviceGraph inject.Graph
+	for _, obj := range objs {
+		if err := serviceGraph.Provide(&inject.Object{Value: obj}); err != nil {
+			return fmt.Errorf("Failed to provide object to the graph: %v", err)
+		}
+	}
+	if err := serviceGraph.Populate(); err != nil {
+		return fmt.Errorf("Failed to populate service dependency: %v", err)
+	}
+
+	return nil
 }
 
 func (s *Server) loadConfiguration() {
