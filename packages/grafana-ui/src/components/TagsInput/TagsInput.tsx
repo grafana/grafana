@@ -1,5 +1,6 @@
-import React, { ChangeEvent, MouseEvent, KeyboardEvent, PureComponent } from 'react';
+import React, { ChangeEvent, KeyboardEvent, PureComponent } from 'react';
 import { css, cx } from 'emotion';
+import { stylesFactory } from '../../themes/stylesFactory';
 import { Button, Input } from '..';
 import { TagItem } from './TagItem';
 
@@ -41,7 +42,8 @@ export class TagsInput extends PureComponent<Props, State> {
     );
   };
 
-  onAdd = (event: MouseEvent) => {
+  // Using React.MouseEvent to avoid tslint error
+  onAdd = (event: React.MouseEvent) => {
     event.preventDefault();
     if (this.state.newTag !== '') {
       this.setNewTags();
@@ -79,16 +81,18 @@ export class TagsInput extends PureComponent<Props, State> {
   render() {
     const { tags, newTag } = this.state;
 
-    const tagsCloudStyle = css`
-      display: flex;
-      justify-content: flex-start;
-      flex-wrap: wrap;
-    `;
+    const getStyles = stylesFactory(() => ({
+      tagsCloudStyle: css`
+        display: flex;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      `,
 
-    const addButtonStyle = css`
-      margin-left: 8px;
-      margin-top: 2px;
-    `;
+      addButtonStyle: css`
+        margin-left: 8px;
+        margin-top: 2px;
+      `,
+    }));
 
     return (
       <div className="width-20">
@@ -101,11 +105,11 @@ export class TagsInput extends PureComponent<Props, State> {
           )}
         >
           <Input placeholder="Add Name" onChange={this.onNameChange} value={newTag} onKeyUp={this.onKeyboardAdd} />
-          <Button className={addButtonStyle} onClick={this.onAdd} variant="secondary" size="md">
+          <Button className={getStyles().addButtonStyle} onClick={this.onAdd} variant="secondary" size="md">
             Add
           </Button>
         </div>
-        <div className={tagsCloudStyle}>
+        <div className={getStyles().tagsCloudStyle}>
           {tags &&
             tags.map((tag: string, index: number) => {
               return <TagItem key={`${tag}-${index}`} name={tag} onRemove={this.onRemove} />;
