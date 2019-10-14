@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { Tooltip, PanelPlugin, PanelPluginMeta } from '@grafana/ui';
+import { PanelPlugin, PanelPluginMeta, Tooltip } from '@grafana/ui';
 import { AngularComponent, config } from '@grafana/runtime';
 
 import { QueriesTab } from './QueriesTab';
@@ -12,8 +12,9 @@ import { AlertTab } from '../../alerting/AlertTab';
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
 import { StoreState } from '../../../types';
-import { PanelEditorTabIds, PanelEditorTab } from './state/reducers';
-import { refreshPanelEditor, changePanelEditorTab, panelEditorCleanUp } from './state/actions';
+import { PanelEditorTab, PanelEditorTabIds } from './state/reducers';
+import { changePanelEditorTab, panelEditorCleanUp, refreshPanelEditor } from './state/actions';
+import { getActiveTabAndTabs } from './state/selectors';
 
 interface PanelEditorProps {
   panel: PanelModel;
@@ -108,10 +109,7 @@ class UnConnectedPanelEditor extends PureComponent<PanelEditorProps> {
   }
 }
 
-export const mapStateToProps = (state: StoreState) => ({
-  activeTab: state.location.query.tab || PanelEditorTabIds.Queries,
-  tabs: state.panelEditor.tabs,
-});
+export const mapStateToProps = (state: StoreState) => getActiveTabAndTabs(state.location, state.panelEditor);
 
 const mapDispatchToProps = { refreshPanelEditor, panelEditorCleanUp, changePanelEditorTab };
 
