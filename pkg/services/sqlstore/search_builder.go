@@ -109,7 +109,15 @@ func (sb *SearchBuilder) ToSql() (string, []interface{}) {
 		LEFT OUTER JOIN dashboard folder on folder.id = dashboard.folder_id
 		LEFT OUTER JOIN dashboard_tag on dashboard.id = dashboard_tag.dashboard_id`)
 
+	sb.sql.WriteString(`
+		LEFT OUTER JOIN `)
+	sb.buildPermissionsTable(sb.signedInUser, sb.permission)
+	sb.sql.WriteString(` as permissions ON dashboard.id = permissions.d_id
+		WHERE (permissions.viewable + permissions.listable > 0)
+	`)
+
 	sb.sql.WriteString(" ORDER BY dashboard.title ASC")
+
 	return sb.sql.String(), sb.params
 }
 
@@ -125,7 +133,9 @@ func (sb *SearchBuilder) buildSelect() {
 			dashboard.folder_id,
 			folder.uid as folder_uid,
 			folder.slug as folder_slug,
-			folder.title as folder_title
+			folder.title as folder_title,
+			permissions.viewable as viewable,
+			permissions.folder_viewable as folder_viewable
 		FROM `)
 }
 
@@ -180,8 +190,6 @@ func (sb *SearchBuilder) buildSearchWhereClause() {
 			sb.params = append(sb.params, dashboardId)
 		}
 	}
-
-	sb.writeDashboardPermissionFilter(sb.signedInUser, sb.permission)
 
 	if len(sb.whereTitle) > 0 {
 		sb.sql.WriteString(" AND dashboard.title " + dialect.LikeStr() + " ?")

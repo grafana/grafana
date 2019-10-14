@@ -28,25 +28,21 @@ func (sb *SqlBuilder) AddParams(params ...interface{}) {
 	sb.params = append(sb.params, params...)
 }
 
-func (sb *SqlBuilder) writeDashboardPermissionFilter(user *m.SignedInUser, permission m.PermissionType) {
-
-	if user.OrgRole == m.ROLE_ADMIN {
-		return
-	}
-
+func (sb *SqlBuilder) buildPermissionsTable(user *m.SignedInUser, permission m.PermissionType) {
+	falseStr := dialect.BooleanStr(false)
 	okRoles := []interface{}{user.OrgRole}
 
 	if user.OrgRole == m.ROLE_EDITOR {
 		okRoles = append(okRoles, m.ROLE_VIEWER)
+	} else if user.OrgRole == m.ROLE_ADMIN {
+		sb.sql.WriteString(`(SELECT id AS d_id, 1 AS viewable, 1 as listable, 1 AS folder_viewable FROM dashboard)`)
+		return
 	}
 
-	falseStr := dialect.BooleanStr(false)
-
-	sb.sql.WriteString(` AND
-	(
-		dashboard.id IN (
-			SELECT distinct DashboardId from (
-				SELECT d.id AS DashboardId
+	sb.sql.WriteString(`
+			(
+			SELECT DashboardId as d_id, MAX(viewable) AS viewable, MAX(listable) as listable, MAX(folder_viewable) as folder_viewable FROM (
+				SELECT d.id AS DashboardId, 1 as viewable, 1 as listable, CASE WHEN da.dashboard_id = d.folder_id THEN 1 ELSE 0 END as folder_viewable
 					FROM dashboard AS d
 					LEFT JOIN dashboard AS folder on folder.id = d.folder_id
 					LEFT JOIN dashboard_acl AS da ON
@@ -61,8 +57,25 @@ func (sb *SqlBuilder) writeDashboardPermissionFilter(user *m.SignedInUser, permi
 							ugm.user_id = ? OR
 							da.role IN (?` + strings.Repeat(",?", len(okRoles)-1) + `)
 						)
+				-- include permissions from child dashboards -->
 				UNION
-				SELECT d.id AS DashboardId
+				SELECT folder.id AS DashboardId, 0 as viewable, 1 as listable, 0 as folder_viewable
+					FROM dashboard AS folder
+					LEFT JOIN dashboard AS d on folder.id = d.folder_id
+					LEFT JOIN dashboard_acl AS da ON
+						da.dashboard_id = d.id
+					LEFT JOIN team_member as ugm on ugm.team_id = da.team_id
+					WHERE
+						folder.is_folder =1 AND
+						d.org_id = ? AND
+						da.permission >= ? AND
+						(
+							da.user_id = ? OR
+							ugm.user_id = ? OR
+							da.role IN (?` + strings.Repeat(",?", len(okRoles)-1) + `)
+						)
+				UNION
+				SELECT d.id AS DashboardId, 1 as viewable, 1 as listable, CASE WHEN folder.id = d.folder_id THEN 1 ELSE 0 END as folder_viewable
 					FROM dashboard AS d
 					LEFT JOIN dashboard AS folder on folder.id = d.folder_id
 					LEFT JOIN dashboard_acl AS da ON
@@ -81,12 +94,14 @@ func (sb *SqlBuilder) writeDashboardPermissionFilter(user *m.SignedInUser, permi
 							da.role IN (?` + strings.Repeat(",?", len(okRoles)-1) + `)
 						)
 			) AS a
+			GROUP BY DashboardId
 		)
-	)`)
+	`)
 
 	sb.params = append(sb.params, user.OrgId, permission, user.UserId, user.UserId)
 	sb.params = append(sb.params, okRoles...)
-
+	sb.params = append(sb.params, user.OrgId, permission, user.UserId, user.UserId)
+	sb.params = append(sb.params, okRoles...)
 	sb.params = append(sb.params, user.OrgId, permission, user.UserId)
 	sb.params = append(sb.params, okRoles...)
 }

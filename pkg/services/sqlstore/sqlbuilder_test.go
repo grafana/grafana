@@ -336,8 +336,10 @@ func getDashboards(sqlStore *SqlStore, search Search, aclUserId int64) ([]*dashb
 	}
 
 	var res []*dashboardResponse
-	builder.Write("SELECT * FROM dashboard WHERE true")
-	builder.writeDashboardPermissionFilter(signedInUser, search.RequiredPermission)
+	builder.Write("SELECT * FROM dashboard LEFT OUTER JOIN")
+	builder.buildPermissionsTable(signedInUser, search.RequiredPermission)
+	builder.Write(` as permissions ON dashboard.id = permissions.d_id
+		WHERE permissions.viewable = 1`)
 	err := sqlStore.engine.SQL(builder.GetSqlString(), builder.params...).Find(&res)
 	return res, err
 }

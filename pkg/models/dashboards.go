@@ -209,6 +209,14 @@ func GetDashboardFolderUrl(isFolder bool, uid string, slug string) string {
 	return GetDashboardUrl(uid, slug)
 }
 
+// GetDashboardFolderUrl return the html url for a folder if it's folder, otherwise for a dashboard
+func GetDashboardFolderUrlForPermission(isFolder bool, uid string, slug string, viewable bool, admin bool) string {
+	if !viewable && !admin {
+		return ""
+	}
+	return GetDashboardFolderUrl(isFolder, uid, slug)
+}
+
 // GetDashboardUrl return the html url for a dashboard
 func GetDashboardUrl(uid string, slug string) string {
 	return fmt.Sprintf("%s/d/%s/%s", setting.AppSubUrl, uid, slug)

@@ -95,9 +95,9 @@ func TestGuardianEditor(t *testing.T) {
 			sc.dashboardPermissionScenario(EDITOR, m.PERMISSION_VIEW, VIEWER_ACCESS)
 
 			// dashboard has viewer role with permission
-			sc.dashboardPermissionScenario(VIEWER, m.PERMISSION_ADMIN, NO_ACCESS)
-			sc.dashboardPermissionScenario(VIEWER, m.PERMISSION_EDIT, NO_ACCESS)
-			sc.dashboardPermissionScenario(VIEWER, m.PERMISSION_VIEW, NO_ACCESS)
+			sc.dashboardPermissionScenario(VIEWER, m.PERMISSION_ADMIN, FULL_ACCESS)
+			sc.dashboardPermissionScenario(VIEWER, m.PERMISSION_EDIT, EDITOR_ACCESS)
+			sc.dashboardPermissionScenario(VIEWER, m.PERMISSION_VIEW, VIEWER_ACCESS)
 
 			// parent folder has user with permission
 			sc.parentFolderPermissionScenario(USER, m.PERMISSION_ADMIN, FULL_ACCESS)
@@ -115,9 +115,9 @@ func TestGuardianEditor(t *testing.T) {
 			sc.parentFolderPermissionScenario(EDITOR, m.PERMISSION_VIEW, VIEWER_ACCESS)
 
 			// parent folder has viweer role with permission
-			sc.parentFolderPermissionScenario(VIEWER, m.PERMISSION_ADMIN, NO_ACCESS)
-			sc.parentFolderPermissionScenario(VIEWER, m.PERMISSION_EDIT, NO_ACCESS)
-			sc.parentFolderPermissionScenario(VIEWER, m.PERMISSION_VIEW, NO_ACCESS)
+			sc.parentFolderPermissionScenario(VIEWER, m.PERMISSION_ADMIN, FULL_ACCESS)
+			sc.parentFolderPermissionScenario(VIEWER, m.PERMISSION_EDIT, EDITOR_ACCESS)
+			sc.parentFolderPermissionScenario(VIEWER, m.PERMISSION_VIEW, VIEWER_ACCESS)
 		})
 	})
 }

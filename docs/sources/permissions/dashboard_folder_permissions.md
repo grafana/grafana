@@ -27,7 +27,8 @@ Permission levels:
 
 ## Restricting Access
 
-The highest permission always wins so if you for example want to hide a folder or dashboard from others you need to remove the **Organization Role** based permission from the Access Control List (ACL).
+The highest permission always wins for dashboards so if you for example want to hide a dashboard from others you need to remove the **Organization Role** based permission from the Access Control List (ACL).
+However in case of folder - restricting its permission will not be enough when dashboards inside are visible to user.
 
 - You cannot override permissions for users with the **Org Admin Role**. Admins always have access to everything.
 - A more specific permission with a lower permission level will not have any effect if a more general rule exists with higher permission level. You need to remove or lower the permission level of the more general rule.
