@@ -74,7 +74,7 @@ type Server struct {
 	pidFile    string
 
 	RouteRegister routing.RouteRegister `inject:""`
-	HttpServer    *api.HTTPServer       `inject:""`
+	HTTPServer    *api.HTTPServer       `inject:""`
 }
 
 // Run initializes and starts services. This will block until all services have
