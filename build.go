@@ -66,7 +66,7 @@ func main() {
 	flag.StringVar(&goarch, "goarch", runtime.GOARCH, "GOARCH")
 	flag.StringVar(&goos, "goos", runtime.GOOS, "GOOS")
 	flag.StringVar(&gocc, "cc", "", "CC")
-	flag.StringVar(&libc, "libc", "gnu", "LIBC")
+	flag.StringVar(&libc, "libc", "", "LIBC")
 	flag.BoolVar(&cgo, "cgo-enabled", cgo, "Enable cgo")
 	flag.StringVar(&pkgArch, "pkg-arch", "", "PKG ARCH")
 	flag.StringVar(&phjsToRelease, "phjs", "", "PhantomJS binary")
@@ -484,7 +484,7 @@ func test(pkg string) {
 
 func build(binaryName, pkg string, tags []string) {
 	libcPart := ""
-	if goos == "linux" {
+	if libc != "" {
 		libcPart = fmt.Sprintf("-%s", libc)
 	}
 	binary := fmt.Sprintf("./bin/%s-%s%s/%s", goos, goarch, libcPart, binaryName)
@@ -518,7 +518,7 @@ func build(binaryName, pkg string, tags []string) {
 		setBuildEnv()
 		runPrint("go", "version")
 		libcPart := ""
-		if goos == "linux" {
+		if libc != "" {
 			libcPart = fmt.Sprintf("/%s", libc)
 		}
 		fmt.Printf("Targeting %s/%s%s\n", goos, goarch, libcPart)
