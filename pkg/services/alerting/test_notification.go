@@ -44,7 +44,8 @@ func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
 		return err
 	}
 
-	return notifier.sendNotifications(createTestEvalContext(cmd), notifierStateSlice{{notifier: notifiers}})
+	notifier.sendNotifications(createTestEvalContext(cmd), notifierStateSlice{{notifier: notifiers}})
+	return nil
 }
 
 func createTestEvalContext(cmd *NotificationTestCommand) *EvalContext {
