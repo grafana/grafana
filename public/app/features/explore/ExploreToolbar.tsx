@@ -91,10 +91,32 @@ interface DispatchProps {
 
 type Props = StateProps & DispatchProps & OwnProps;
 
-export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
+interface State {
+  datasourcePickerCollapsed: boolean;
+}
+
+export class UnConnectedExploreToolbar extends PureComponent<Props, State> {
+  state: State = {
+    datasourcePickerCollapsed: this.props.splitted ? window.innerWidth <= 1210 : window.innerWidth <= 760,
+  };
+
   constructor(props: Props) {
     super(props);
   }
+
+  componentDidMount() {
+    window.addEventListener('resize', this.onWidthChange);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.onWidthChange);
+  }
+
+  onWidthChange = () => {
+    this.setState({
+      datasourcePickerCollapsed: this.props.splitted ? window.innerWidth <= 1210 : window.innerWidth <= 760,
+    });
+  };
 
   onChangeDatasource = async (option: { value: any }) => {
     this.props.changeDatasource(this.props.exploreId, option.value);
@@ -172,6 +194,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
       datasourceLoading,
     } = this.props;
 
+    const { datasourcePickerCollapsed } = this.state;
+
     const styles = getStyles();
     const originDashboardIsEditable = Number.isInteger(originPanelId);
     const panelReturnClasses = classNames('btn', 'navbar-button', {
@@ -208,6 +232,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                     datasources={exploreDatasources}
                     current={selectedDatasource}
                     showLoading={datasourceLoading}
+                    isCollapsed={datasourcePickerCollapsed}
                   />
                 </div>
                 {supportedModes.length > 1 ? (

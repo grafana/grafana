@@ -48,6 +48,7 @@ export interface CommonProps<T> {
   onOpenMenu?: () => void;
   onCloseMenu?: () => void;
   tabSelectsValue?: boolean;
+  isCollapsed?: boolean;
 }
 
 export interface SelectProps<T> extends CommonProps<T> {
@@ -120,6 +121,7 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
       tabSelectsValue,
       onCloseMenu,
       onOpenMenu,
+      isCollapsed,
     } = this.props;
 
     let widthClass = '';
@@ -127,7 +129,18 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
       widthClass = 'width-' + width;
     }
 
-    const selectClassNames = classNames('gf-form-input', 'gf-form-input--form-dropdown', widthClass, className);
+    let collapseClass = '';
+    if (isCollapsed) {
+      collapseClass = 'collapsed';
+    }
+
+    const selectClassNames = classNames(
+      'gf-form-input',
+      'gf-form-input--form-dropdown',
+      widthClass,
+      className,
+      collapseClass
+    );
     const selectComponents = { ...Select.defaultProps.components, ...components };
 
     return (

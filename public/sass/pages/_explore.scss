@@ -18,11 +18,6 @@
   .ds-picker {
     min-width: 200px;
     max-width: 200px;
-
-    .gf-form-select-box__img-value {
-      max-width: 150px;
-      overflow: hidden;
-    }
   }
 }
 
@@ -127,12 +122,6 @@
         .ds-picker {
           min-width: 50px;
           max-width: 50px;
-
-          .gf-form-select-box__single-value {
-            span {
-              display: none;
-            }
-          }
         }
       }
     }
@@ -178,17 +167,11 @@
   }
 }
 
-@media only screen and (max-width: 634px) {
+@media only screen and (max-width: 760px) {
   .datasource-picker {
     .ds-picker {
       min-width: 50px;
       max-width: 50px;
-
-      .gf-form-select-box__single-value {
-        span {
-          display: none;
-        }
-      }
     }
   }
 }
