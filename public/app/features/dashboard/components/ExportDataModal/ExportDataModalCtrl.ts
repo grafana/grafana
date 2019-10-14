@@ -2,6 +2,7 @@ import angular from 'angular';
 import * as fileExport from 'app/core/utils/file_export';
 import appEvents from 'app/core/app_events';
 import { DashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { CoreEvents } from 'app/types';
 
 export class ExportDataModalCtrl {
   private data: any;
@@ -34,7 +35,7 @@ export class ExportDataModalCtrl {
   }
 
   dismiss() {
-    appEvents.emit('hide-modal');
+    appEvents.emit(CoreEvents.hideModal);
   }
 }
 
