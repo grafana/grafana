@@ -1,8 +1,11 @@
 #!/bin/bash
+
+# shellcheck disable=SC2086
+
 #
 #   This script is executed from within the container.
 #
-set -xeo pipefail
+set -e
 
 ##########
 CCARMV6=/opt/rpi-tools/arm-bcm2708/arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc
