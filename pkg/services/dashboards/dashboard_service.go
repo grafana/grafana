@@ -44,12 +44,13 @@ var NewProvisioningService = func() DashboardProvisioningService {
 }
 
 type SaveDashboardDTO struct {
-	OrgId     int64
-	UpdatedAt time.Time
-	User      *models.SignedInUser
-	Message   string
-	Overwrite bool
-	Dashboard *models.Dashboard
+	OrgId                           int64
+	UpdatedAt                       time.Time
+	User                            *models.SignedInUser
+	Message                         string
+	Overwrite                       bool
+	Dashboard                       *models.Dashboard
+	AllowSavingProvisionedDashboard bool
 }
 
 type dashboardServiceImpl struct {
@@ -135,7 +136,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 		}
 	}
 
-	if validateProvisionedDashboard {
+	if validateProvisionedDashboard && !dto.AllowSavingProvisionedDashboard {
 		provisionedData, err := dr.GetProvisionedDashboardDataByDashboardId(dash.Id)
 		if err != nil {
 			return nil, err
@@ -238,6 +239,7 @@ func (dr *dashboardServiceImpl) SaveFolderForProvisionedDashboards(dto *SaveDash
 }
 
 func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
+
 	cmd, err := dr.buildSaveDashboardCommand(dto, true, true)
 	if err != nil {
 		return nil, err

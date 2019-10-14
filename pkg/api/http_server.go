@@ -47,6 +47,7 @@ type ProvisioningService interface {
 	ProvisionNotifications() error
 	ProvisionDashboards() error
 	GetDashboardProvisionerResolvedPath(name string) string
+	GetAllowUiUpdatesFromConfig(name string) bool
 }
 
 type HTTPServer struct {

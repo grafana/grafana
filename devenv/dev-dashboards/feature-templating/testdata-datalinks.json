@@ -19,7 +19,7 @@
   "links": [],
   "panels": [
     {
-      "content": "## Data link variables overview\n\nThis dashboard presents variables that one can use when creating *data links*. All links redirect to this dashboard and this panel represents the values that were interpolated in the link that was clicked.\n\n\n#### Series variables\n1. **Name:** <span style=\"color: orange;\">$seriesName</span>\n2. **label.datacenter:** <span style=\"color: orange;\">$labelDatacenter</span>\n3. **label.datacenter.region:** <span style=\"color: orange;\">$labelDatacenterRegion</span>\n\n#### Field variables\n1. **Name:** <span style=\"color: orange;\">$fieldName</span>\n\n#### Value variables\n1. **Time:** <span style=\"color: orange;\">$valueTime</span>\n2. **Numeric:** <span style=\"color: orange;\">$valueNumeric</span>\n3. **Text:** <span style=\"color: orange;\">$valueText</span>\n4. **Calc:** <span style=\"color: orange;\">$valueCalc</span>\n\n",
+      "content": "## !?!Data link variables overview\n\nThis dashboard presents variables that one can use when creating *data links*. All links redirect to this dashboard and this panel represents the values that were interpolated in the link that was clicked.\n\n\n#### Series variables\n1. **Name:** <span style=\"color: orange;\">$seriesName</span>\n2. **label.datacenter:** <span style=\"color: orange;\">$labelDatacenter</span>\n3. **label.datacenter.region:** <span style=\"color: orange;\">$labelDatacenterRegion</span>\n\n#### Field variables\n1. **Name:** <span style=\"color: orange;\">$fieldName</span>\n\n#### Value variables\n1. **Time:** <span style=\"color: orange;\">$valueTime</span>\n2. **Numeric:** <span style=\"color: orange;\">$valueNumeric</span>\n3. **Text:** <span style=\"color: orange;\">$valueText</span>\n4. **Calc:** <span style=\"color: orange;\">$valueCalc</span>\n\n",
       "gridPos": {
         "h": 16,
         "w": 6,
@@ -506,5 +506,5 @@
   "timezone": "",
   "title": "Datalinks - variables",
   "uid": "wfTJJL5Wz",
-  "version": 1
+  "version": 15
 }
