@@ -1,16 +1,18 @@
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
+import { CoreEvents } from 'app/types';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export class UtilSrv {
   modalScope: any;
 
   /** @ngInject */
-  constructor(private $rootScope: any, private $modal: any) {}
+  constructor(private $rootScope: GrafanaRootScope, private $modal: any) {}
 
   init() {
-    appEvents.on('show-modal', this.showModal.bind(this), this.$rootScope);
-    appEvents.on('hide-modal', this.hideModal.bind(this), this.$rootScope);
-    appEvents.on('confirm-modal', this.showConfirmModal.bind(this), this.$rootScope);
+    appEvents.on(CoreEvents.showModal, this.showModal.bind(this), this.$rootScope);
+    appEvents.on(CoreEvents.hideModal, this.hideModal.bind(this), this.$rootScope);
+    appEvents.on(CoreEvents.showConfirmModal, this.showConfirmModal.bind(this), this.$rootScope);
   }
 
   hideModal() {
@@ -50,7 +52,7 @@ export class UtilSrv {
   }
 
   showConfirmModal(payload: any) {
-    const scope = this.$rootScope.$new();
+    const scope: any = this.$rootScope.$new();
 
     scope.updateConfirmText = (value: any) => {
       scope.confirmTextValid = payload.confirmText.toLowerCase() === value.toLowerCase();
@@ -70,7 +72,7 @@ export class UtilSrv {
     scope.noText = payload.noText || 'Cancel';
     scope.confirmTextValid = scope.confirmText ? false : true;
 
-    appEvents.emit('show-modal', {
+    appEvents.emit(CoreEvents.showModal, {
       src: 'public/app/partials/confirm_modal.html',
       scope: scope,
       modalClass: 'confirm-modal',
