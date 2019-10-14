@@ -2,7 +2,9 @@ import angular, { IQService } from 'angular';
 import _ from 'lodash';
 import { dateMath, ScopedVars, DataSourceApi, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/data';
 import kbn from 'app/core/utils/kbn';
+import appEvents from 'app/core/app_events';
 import { CloudWatchQuery } from './types';
+import { displayThrottlingError } from './errors';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -32,7 +34,6 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
 
   query(options: DataQueryRequest<CloudWatchQuery>) {
     options = angular.copy(options);
-    // options.targets = this.expandTemplateVariable(options.targets, options.scopedVars, this.templateSrv);
 
     const queries = _.filter(options.targets, item => {
       return (
@@ -40,45 +41,43 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
         ((!!item.region && !!item.namespace && !!item.metricName && !_.isEmpty(item.statistics)) ||
           item.expression.length > 0)
       );
-    })
-      // .map(this.toSearchExpression)
-      .map(item => {
-        item.region = this.templateSrv.replace(this.getActualRegion(item.region), options.scopedVars);
-        item.namespace = this.templateSrv.replace(item.namespace, options.scopedVars);
-        item.metricName = this.templateSrv.replace(item.metricName, options.scopedVars);
-        item.dimensions = this.convertDimensionFormat(item.dimensions, options.scopedVars);
-        item.statistics = item.statistics.map(s => {
-          return this.templateSrv.replace(s, options.scopedVars);
-        });
-        item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
-        item.id = this.templateSrv.replace(item.id, options.scopedVars);
-        item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
+    }).map(item => {
+      item.region = this.templateSrv.replace(this.getActualRegion(item.region), options.scopedVars);
+      item.namespace = this.templateSrv.replace(item.namespace, options.scopedVars);
+      item.metricName = this.templateSrv.replace(item.metricName, options.scopedVars);
+      item.dimensions = this.convertDimensionFormat(item.dimensions, options.scopedVars);
+      item.statistics = item.statistics.map(s => {
+        return this.templateSrv.replace(s, options.scopedVars);
+      });
+      item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
+      item.id = this.templateSrv.replace(item.id, options.scopedVars);
+      item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
 
-        // valid ExtendedStatistics is like p90.00, check the pattern
-        const hasInvalidStatistics = item.statistics.some(s => {
-          if (s.indexOf('p') === 0) {
-            const matches = /^p\d{2}(?:\.\d{1,2})?$/.exec(s);
-            return !matches || matches[0] !== s;
-          }
-
-          return false;
-        });
-
-        if (hasInvalidStatistics) {
-          throw { message: 'Invalid extended statistics' };
+      // valid ExtendedStatistics is like p90.00, check the pattern
+      const hasInvalidStatistics = item.statistics.some(s => {
+        if (s.indexOf('p') === 0) {
+          const matches = /^p\d{2}(?:\.\d{1,2})?$/.exec(s);
+          return !matches || matches[0] !== s;
         }
 
-        return _.extend(
-          {
-            refId: item.refId,
-            intervalMs: options.intervalMs,
-            maxDataPoints: options.maxDataPoints,
-            datasourceId: this.instanceSettings.id,
-            type: 'timeSeriesQuery',
-          },
-          item
-        );
+        return false;
       });
+
+      if (hasInvalidStatistics) {
+        throw { message: 'Invalid extended statistics' };
+      }
+
+      return _.extend(
+        {
+          refId: item.refId,
+          intervalMs: options.intervalMs,
+          maxDataPoints: options.maxDataPoints,
+          datasourceId: this.instanceSettings.id,
+          type: 'timeSeriesQuery',
+        },
+        item
+      );
+    });
 
     // No valid targets, return the empty result to save a round trip.
     if (_.isEmpty(queries)) {
@@ -143,26 +142,37 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
   }
 
   performTimeSeriesQuery(request: any) {
-    return this.awsRequest('/api/tsdb/query', request).then((res: any) => {
-      const data = [];
+    return this.awsRequest('/api/tsdb/query', request)
+      .then((res: any) => {
+        const data = [];
 
-      if (res.results) {
-        for (const query of request.queries) {
-          const queryRes = res.results[query.refId];
-          if (queryRes) {
-            for (const series of queryRes.series) {
-              const s = { target: series.name, datapoints: series.points } as any;
-              if (queryRes.meta.unit) {
-                s.unit = queryRes.meta.unit;
+        if (res.results) {
+          for (const query of request.queries) {
+            const queryRes = res.results[query.refId];
+            if (queryRes) {
+              for (const series of queryRes.series) {
+                const s = { target: series.name, datapoints: series.points } as any;
+                if (queryRes.meta.unit) {
+                  s.unit = queryRes.meta.unit;
+                }
+                data.push(s);
               }
-              data.push(s);
             }
           }
         }
-      }
 
-      return { data: data };
-    });
+        return { data: data };
+      })
+      .catch((err: any = { data: { error: '' } }) => {
+        if (/^ValidationError:.*/.test(err.data.error)) {
+          appEvents.emit('ds-request-error', err.data.error);
+        }
+
+        if (/^ThrottlingException:.*/.test(err.data.error)) {
+          displayThrottlingError();
+        }
+        throw err;
+      });
   }
 
   transformSuggestDataFromTable(suggestData: any) {
