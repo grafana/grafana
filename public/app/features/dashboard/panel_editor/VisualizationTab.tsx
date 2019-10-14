@@ -165,9 +165,9 @@ export class VisualizationTab extends PureComponent<Props, State> {
     this.setState({ searchQuery: '' });
   };
 
-  onPanelOptionsChanged = (options: any) => {
+  onPanelOptionsChanged = (options: any, callback?: () => void) => {
     this.props.panel.updateOptions(options);
-    this.forceUpdate();
+    this.forceUpdate(callback);
   };
 
   onOpenVizPicker = () => {

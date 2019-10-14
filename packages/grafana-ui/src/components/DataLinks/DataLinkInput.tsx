@@ -91,6 +91,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
   const onUrlBlur = React.useCallback((event: Event, editor: CoreEditor, next: () => any) => {
     // Callback needed for blur to work correctly
     stateRef.current.onChange(Plain.serialize(stateRef.current.linkUrl), () => {
+      // This needs to be called after state is updated.
       editorRef.current!.blur();
     });
   }, []);
