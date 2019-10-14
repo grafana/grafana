@@ -105,13 +105,17 @@ func (n *notificationService) sendNotification(evalContext *EvalContext, notifie
 	return n.sendAndMarkAsComplete(evalContext, notifierState)
 }
 
-func (n *notificationService) sendNotifications(evalContext *EvalContext, notifierStates notifierStateSlice) {
+func (n *notificationService) sendNotifications(evalContext *EvalContext, notifierStates notifierStateSlice) error {
 	for _, notifierState := range notifierStates {
 		err := n.sendNotification(evalContext, notifierState)
 		if err != nil {
 			n.log.Error("failed to send notification", "uid", notifierState.notifier.GetNotifierUID(), "error", err)
+			if evalContext.IsTestRun {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
 func (n *notificationService) uploadImage(context *EvalContext) (err error) {
