@@ -9,8 +9,10 @@ import {
   DataQueryRequest,
   DataSourceInstanceSettings,
 } from '@grafana/data';
+import appEvents from 'app/core/app_events';
 import kbn from 'app/core/utils/kbn';
 import { CloudWatchQuery } from './types';
+import { displayThrottlingError } from './errors';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -40,7 +42,6 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
 
   query(options: DataQueryRequest<CloudWatchQuery>) {
     options = angular.copy(options);
-    // options.targets = this.expandTemplateVariable(options.targets, options.scopedVars, this.templateSrv);
 
     const queries = _.filter(options.targets, item => {
       return (
@@ -48,45 +49,43 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
         ((!!item.region && !!item.namespace && !!item.metricName && !_.isEmpty(item.statistics)) ||
           item.expression.length > 0)
       );
-    })
-      // .map(this.toSearchExpression)
-      .map(item => {
-        item.region = this.templateSrv.replace(this.getActualRegion(item.region), options.scopedVars);
-        item.namespace = this.templateSrv.replace(item.namespace, options.scopedVars);
-        item.metricName = this.templateSrv.replace(item.metricName, options.scopedVars);
-        item.dimensions = this.convertDimensionFormat(item.dimensions, options.scopedVars);
-        item.statistics = item.statistics.map(s => {
-          return this.templateSrv.replace(s, options.scopedVars);
-        });
-        item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
-        item.id = this.templateSrv.replace(item.id, options.scopedVars);
-        item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
+    }).map(item => {
+      item.region = this.templateSrv.replace(this.getActualRegion(item.region), options.scopedVars);
+      item.namespace = this.templateSrv.replace(item.namespace, options.scopedVars);
+      item.metricName = this.templateSrv.replace(item.metricName, options.scopedVars);
+      item.dimensions = this.convertDimensionFormat(item.dimensions, options.scopedVars);
+      item.statistics = item.statistics.map(s => {
+        return this.templateSrv.replace(s, options.scopedVars);
+      });
+      item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
+      item.id = this.templateSrv.replace(item.id, options.scopedVars);
+      item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
 
-        // valid ExtendedStatistics is like p90.00, check the pattern
-        const hasInvalidStatistics = item.statistics.some(s => {
-          if (s.indexOf('p') === 0) {
-            const matches = /^p\d{2}(?:\.\d{1,2})?$/.exec(s);
-            return !matches || matches[0] !== s;
-          }
-
-          return false;
-        });
-
-        if (hasInvalidStatistics) {
-          throw { message: 'Invalid extended statistics' };
+      // valid ExtendedStatistics is like p90.00, check the pattern
+      const hasInvalidStatistics = item.statistics.some(s => {
+        if (s.indexOf('p') === 0) {
+          const matches = /^p\d{2}(?:\.\d{1,2})?$/.exec(s);
+          return !matches || matches[0] !== s;
         }
 
-        return _.extend(
-          {
-            refId: item.refId,
-            intervalMs: options.intervalMs,
-            maxDataPoints: options.maxDataPoints,
-            datasourceId: this.instanceSettings.id,
-            type: 'timeSeriesQuery',
-          },
-          item
-        );
+        return false;
       });
+
+      if (hasInvalidStatistics) {
+        throw { message: 'Invalid extended statistics' };
+      }
+
+      return _.extend(
+        {
+          refId: item.refId,
+          intervalMs: options.intervalMs,
+          maxDataPoints: options.maxDataPoints,
+          datasourceId: this.instanceSettings.id,
+          type: 'timeSeriesQuery',
+        },
+        item
+      );
+    });
 
     // No valid targets, return the empty result to save a round trip.
     if (_.isEmpty(queries)) {
@@ -182,44 +181,55 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
   }
 
   performTimeSeriesQuery(request: any, { from, to }: TimeRange) {
-    return this.awsRequest('/api/tsdb/query', request).then((res: any) => {
-      if (!res.results) {
-        return { data: [] };
-      }
-      const dataFrames = Object.values(request.queries).reduce((acc: any, queryRequest: any) => {
-        const queryResult = res.results[queryRequest.refId];
-        if (!queryResult) {
-          return acc;
+    return this.awsRequest('/api/tsdb/query', request)
+      .then((res: any) => {
+        if (!res.results) {
+          return { data: [] };
+        }
+        const dataFrames = Object.values(request.queries).reduce((acc: any, queryRequest: any) => {
+          const queryResult = res.results[queryRequest.refId];
+          if (!queryResult) {
+            return acc;
+          }
+
+          const link = this.buildCloudwatchConsoleUrl(
+            queryRequest,
+            from.toISOString(),
+            to.toISOString(),
+            `query${queryRequest.refId}`
+          );
+
+          return [
+            ...acc,
+            ...queryResult.series.map(({ name, points, meta }: any) => {
+              const series = { target: name, datapoints: points };
+              const dataFrame = toDataFrame(meta && meta.unit ? { ...series, unit: meta.unit } : series);
+              for (const field of dataFrame.fields) {
+                field.config.links = [
+                  {
+                    url: link,
+                    title: 'View in CloudWatch console',
+                    targetBlank: true,
+                  },
+                ];
+              }
+              return dataFrame;
+            }),
+          ];
+        }, []);
+
+        return { data: dataFrames };
+      })
+      .catch((err: any = { data: { error: '' } }) => {
+        if (/^ValidationError:.*/.test(err.data.error)) {
+          appEvents.emit('ds-request-error', err.data.error);
         }
 
-        const link = this.buildCloudwatchConsoleUrl(
-          queryRequest,
-          from.toISOString(),
-          to.toISOString(),
-          `query${queryRequest.refId}`
-        );
-
-        return [
-          ...acc,
-          ...queryResult.series.map(({ name, points, meta }: any) => {
-            const series = { target: name, datapoints: points };
-            const dataFrame = toDataFrame(meta && meta.unit ? { ...series, unit: meta.unit } : series);
-            for (const field of dataFrame.fields) {
-              field.config.links = [
-                {
-                  url: link,
-                  title: 'View in CloudWatch console',
-                  targetBlank: true,
-                },
-              ];
-            }
-            return dataFrame;
-          }),
-        ];
-      }, []);
-
-      return { data: dataFrames };
-    });
+        if (/^ThrottlingException:.*/.test(err.data.error)) {
+          displayThrottlingError();
+        }
+        throw err;
+      });
   }
 
   transformSuggestDataFromTable(suggestData: any) {
