@@ -46,13 +46,11 @@ interface QueryRowProps extends PropsFromParent {
 
 interface QueryRowState {
   textEditModeEnabled: boolean;
-  hiddenQuery: boolean;
 }
 
 export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
   state: QueryRowState = {
     textEditModeEnabled: false,
-    hiddenQuery: !!this.props.query.hide,
   };
 
   onRunQuery = () => {
@@ -80,9 +78,8 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
 
   onClickToggleHiddenQuery = (query: DataQuery) => {
     const { exploreId, index } = this.props;
-    this.state.hiddenQuery ? (query.hide = false) : (query.hide = true);
+    !!this.props.query.hide ? (query.hide = false) : (query.hide = true);
     this.props.changeQuery(exploreId, query, index, true);
-    this.setState({ hiddenQuery: !this.state.hiddenQuery });
   };
 
   onClickHintFix = (action: QueryFixAction) => {
@@ -183,7 +180,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
               className="gf-form-label gf-form-label--btn"
               onClick={() => this.onClickToggleHiddenQuery(this.props.query)}
             >
-              <i className={`${this.state.hiddenQuery ? 'fa fa-eye-slash' : 'fa fa-eye'}`} />
+              <i className={`${!!this.props.query.hide ? 'fa fa-eye-slash' : 'fa fa-eye'}`} />
             </button>
           </div>
           <div className="gf-form">
