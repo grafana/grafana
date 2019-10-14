@@ -61,14 +61,6 @@
     padding-left: 0;
     margin-right: auto;
   }
-
-  .time-picker-long-date {
-    .select-button {
-      span {
-        display: none;
-      }
-    }
-  }
 }
 
 .explore-toolbar-item:last-child {
@@ -129,14 +121,6 @@
 }
 
 @media only screen and (max-width: 1210px) {
-  .time-picker-long-date {
-    .select-button {
-      span {
-        display: none;
-      }
-    }
-  }
-
   .explore-toolbar.splitted {
     .explore-toolbar-content-item {
       .datasource-picker {
