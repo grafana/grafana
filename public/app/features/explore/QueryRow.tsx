@@ -165,7 +165,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
           )}
         </div>
         <div className="query-row-status">
-          <QueryStatus queryResponse={queryResponse} latency={latency} />
+          <QueryStatus queryResponse={queryResponse} latency={this.props.query.hide ? 0 : latency} />
         </div>
         <div className="gf-form-inline flex-shrink-0">
           {canToggleEditorModes && (
