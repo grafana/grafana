@@ -58,6 +58,13 @@ For all items not covered in this guide, refer to the [Microsoft Style Guide](ht
 * API names are always Title Case, followed by "API"—for example, "Dashboard Permissions API"
 * Git is always capitalized, unless part of a code block.
 * Abbreviations are always capitalized (such as API, HTTP, ID, JSON, SQL, or URL) unless they are part of a code block.
+* Menu and submenu titles always use sentence case: capitalize the first word, and lowercase the rest.
+  - "Dashboards" when referring to the submenu title.
+  - "Keyboard shortcuts" when referring to the submenu topic.
+* Generic and plural versions are always lowercase.
+  - Lowercase "dashboard" when referring to a dashboard generally.
+  - Lowercase "dashboards" when referring to multiple dashboards.
+* **Exceptions:** If a term is lowercased in the Grafana UI, then match the UI.
 
 ### Links and references
 
