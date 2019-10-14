@@ -41,7 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func NewServer() *Server {
+func NewServer(configFile, homePath, pidFile string) *Server {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
 
@@ -51,6 +51,10 @@ func NewServer() *Server {
 		childRoutines: childRoutines,
 		log:           log.New("server"),
 		cfg:           setting.NewCfg(),
+
+		configFile: configFile,
+		homePath:   homePath,
+		pidFile:    pidFile,
 	}
 }
 
@@ -62,6 +66,10 @@ type Server struct {
 	cfg                *setting.Cfg
 	shutdownReason     string
 	shutdownInProgress bool
+
+	configFile string
+	homePath   string
+	pidFile    string
 
 	RouteRegister routing.RouteRegister `inject:""`
 	HttpServer    *api.HTTPServer       `inject:""`
@@ -170,8 +178,8 @@ func (s *Server) Run() error {
 
 func (s *Server) loadConfiguration() {
 	err := s.cfg.Load(&setting.CommandLineArgs{
-		Config:   *configFile,
-		HomePath: *homePath,
+		Config:   s.configFile,
+		HomePath: s.homePath,
 		Args:     flag.Args(),
 	})
 
@@ -210,12 +218,12 @@ func (s *Server) Exit(reason error) int {
 }
 
 func (s *Server) writePIDFile() {
-	if *pidFile == "" {
+	if s.pidFile == "" {
 		return
 	}
 
 	// Ensure the required directory structure exists.
-	err := os.MkdirAll(filepath.Dir(*pidFile), 0700)
+	err := os.MkdirAll(filepath.Dir(s.pidFile), 0700)
 	if err != nil {
 		s.log.Error("Failed to verify pid directory", "error", err)
 		os.Exit(1)
@@ -223,12 +231,12 @@ func (s *Server) writePIDFile() {
 
 	// Retrieve the PID and write it.
 	pid := strconv.Itoa(os.Getpid())
-	if err := ioutil.WriteFile(*pidFile, []byte(pid), 0644); err != nil {
+	if err := ioutil.WriteFile(s.pidFile, []byte(pid), 0644); err != nil {
 		s.log.Error("Failed to write pidfile", "error", err)
 		os.Exit(1)
 	}
 
-	s.log.Info("Writing PID file", "path", *pidFile, "pid", pid)
+	s.log.Info("Writing PID file", "path", s.pidFile, "pid", pid)
 }
 
 func sendSystemdNotification(state string) error {
