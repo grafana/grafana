@@ -33,6 +33,7 @@ var (
 	goos    string
 	gocc    string
 	cgo     bool
+	libc    string
 	pkgArch string
 	version string = "v1"
 	// deb & rpm does not support semver so have to handle their version a little differently
@@ -65,6 +66,7 @@ func main() {
 	flag.StringVar(&goarch, "goarch", runtime.GOARCH, "GOARCH")
 	flag.StringVar(&goos, "goos", runtime.GOOS, "GOOS")
 	flag.StringVar(&gocc, "cc", "", "CC")
+	flag.StringVar(&libc, "libc", "", "LIBC")
 	flag.BoolVar(&cgo, "cgo-enabled", cgo, "Enable cgo")
 	flag.StringVar(&pkgArch, "pkg-arch", "", "PKG ARCH")
 	flag.StringVar(&phjsToRelease, "phjs", "", "PhantomJS binary")
@@ -481,9 +483,13 @@ func test(pkg string) {
 }
 
 func build(binaryName, pkg string, tags []string) {
-	binary := fmt.Sprintf("./bin/%s-%s/%s", goos, goarch, binaryName)
+	libcPart := ""
+	if libc != "" {
+		libcPart = fmt.Sprintf("-%s", libc)
+	}
+	binary := fmt.Sprintf("./bin/%s-%s%s/%s", goos, goarch, libcPart, binaryName)
 	if isDev {
-		//don't include os and arch in output path in dev environment
+		//don't include os/arch/libc in output path in dev environment
 		binary = fmt.Sprintf("./bin/%s", binaryName)
 	}
 
@@ -511,7 +517,11 @@ func build(binaryName, pkg string, tags []string) {
 	if !isDev {
 		setBuildEnv()
 		runPrint("go", "version")
-		fmt.Printf("Targeting %s/%s\n", goos, goarch)
+		libcPart := ""
+		if libc != "" {
+			libcPart = fmt.Sprintf("/%s", libc)
+		}
+		fmt.Printf("Targeting %s/%s%s\n", goos, goarch, libcPart)
 	}
 
 	runPrint("go", args...)
