@@ -2,6 +2,7 @@ import React from 'react';
 import { KeyValue } from '@grafana/data';
 import { css, cx } from 'emotion';
 import { Tooltip } from '..';
+import { CertificationTextArea } from './CertificationTextArea';
 import { HttpSettingsBaseProps } from './types';
 
 // TODO: Refactor forms below to a reusable Cert component
@@ -58,12 +59,10 @@ export const TLSAuthSettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceCon
               <label className="gf-form-label width-7">CA Cert</label>
             </div>
             {!hasTLSCACert && (
-              <div className="gf-form gf-form--grow" ng-if="!current.secureJsonFields.tlsCACert">
-                <textarea
-                  rows={7}
-                  className="gf-form-input gf-form-textarea"
+              <div className="gf-form gf-form--grow">
+                <CertificationTextArea
+                  value={dataSourceConfig.secureJsonData.tlsCACert}
                   onChange={onCertificateChangeFactory('tlsCACert')}
-                  ng-model="current.secureJsonData.tlsCACert"
                   placeholder="Begins with -----BEGIN CERTIFICATE-----"
                 />
               </div>
@@ -88,12 +87,10 @@ export const TLSAuthSettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceCon
               </div>
               {!hasTLSClientCert && (
                 <div className="gf-form gf-form--grow">
-                  <textarea
-                    rows={7}
-                    className="gf-form-input gf-form-textarea"
+                  <CertificationTextArea
+                    value={dataSourceConfig.secureJsonData.tlsClientCert}
                     onChange={onCertificateChangeFactory('tlsClientCert')}
                     placeholder="Begins with -----BEGIN CERTIFICATE-----"
-                    required
                   />
                 </div>
               )}
@@ -113,12 +110,10 @@ export const TLSAuthSettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceCon
               </div>
               {!hasTLSClientKey && (
                 <div className="gf-form gf-form--grow">
-                  <textarea
-                    rows={7}
-                    className="gf-form-input gf-form-textarea"
-                    onChange={onCertificateChangeFactory('tlsClientKey')}
+                  <CertificationTextArea
+                    value={dataSourceConfig.secureJsonData.tlsClientKey}
                     placeholder="Begins with -----BEGIN RSA PRIVATE KEY-----"
-                    required
+                    onChange={onCertificateChangeFactory('tlsClientKey')}
                   />
                 </div>
               )}
