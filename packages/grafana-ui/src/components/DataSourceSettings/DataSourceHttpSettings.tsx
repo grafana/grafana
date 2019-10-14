@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { SelectableValue } from '@grafana/data';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { FormField, FormLabel, Input, Select, Switch, TagsInput } from '..';
 import { useTheme } from '../../themes';
 import { BasicAuthSettings } from './BasicAuthSettings';
@@ -101,9 +101,11 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
     box-shadow: inset 0 0px 5px ${theme.colors.red};
   `;
 
+  const inputStyle = cx({ [`width-20`]: true, [notValidStyle]: !isValidUrl });
+
   const urlInput = (
     <Input
-      className={!isValidUrl ? notValidStyle : ''}
+      className={inputStyle}
       placeholder={defaultUrl}
       value={dataSourceConfig.url}
       onChange={event => onSettingsChange({ url: event.currentTarget.value })}
@@ -116,7 +118,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
         <h3 className="page-heading">HTTP</h3>
         <div className="gf-form-group">
           <div className="gf-form">
-            <FormField label="URL" labelWidth={11} inputWidth={20} tooltip={urlTooltip} inputEl={urlInput} />
+            <FormField label="URL" labelWidth={11} tooltip={urlTooltip} inputEl={urlInput} />
           </div>
 
           {showAccessOptions && (
