@@ -88,7 +88,7 @@ func main() {
 
 	metrics.SetBuildInformation(version, commit, buildBranch)
 
-	server := NewGrafanaServer()
+	server := NewServer()
 
 	go listenToSystemSignals(server)
 
@@ -111,7 +111,7 @@ func validPackaging(packaging string) string {
 	return "unknown"
 }
 
-func listenToSystemSignals(server *GrafanaServerImpl) {
+func listenToSystemSignals(server *Server) {
 	signalChan := make(chan os.Signal, 1)
 	sighupChan := make(chan os.Signal, 1)
 
