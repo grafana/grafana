@@ -44,6 +44,9 @@ const getStyles = memoizeOne(() => {
   return {
     liveTailButtons: css`
       margin-left: 10px;
+      @media (max-width: 1110px) {
+        margin-left: 4px;
+      }
     `,
   };
 });
@@ -301,6 +304,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                 <LiveTailControls exploreId={exploreId}>
                   {controls => (
                     <LiveTailButton
+                      splitted={splitted}
                       isLive={isLive}
                       isPaused={isPaused}
                       start={controls.start}
