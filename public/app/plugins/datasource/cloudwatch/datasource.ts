@@ -16,7 +16,6 @@ import { displayThrottlingError } from './errors';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-// import * as moment from 'moment';
 
 export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery> {
   type: any;
@@ -397,24 +396,6 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
     return this.$q.when([]);
   }
 
-  // toSearchExpression(query: CloudWatchQuery) {
-  //   const { expression, dimensions, namespace, metricName } = query;
-  //   if (expression) {
-  //     return query;
-  //   }
-
-  //   const dimensionKeys = Object.keys(dimensions).join(',');
-  //   const dimensionKeyAndValues = Object.entries(dimensions).reduce((result, [key, value]) => {
-  //     return (result += `${key}=\"${value}\"`);
-  //   }, '');
-
-  //   const res = `SEARCH(' {${namespace}, ${dimensionKeys}} MetricName=\"${metricName} ${dimensionKeyAndValues} $\"', '%s', %s)`;
-  //   console.log({ dimensionKeyAndValues, res });
-  //   return {
-  //     expression: res,
-  //   };
-  // }
-
   annotationQuery(options: any) {
     const annotation = options.annotation;
     const statistics = _.map(annotation.statistics, s => {
@@ -507,68 +488,6 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
       return this.getDefaultRegion();
     }
     return region;
-  }
-
-  getExpandedVariables(target: any, dimensionKey: any, variable: any, templateSrv: TemplateSrv) {
-    /* if the all checkbox is marked we should add all values to the targets */
-    const allSelected: any = _.find(variable.options, { selected: true, text: 'All' });
-    const selectedVariables = _.filter(variable.options, v => {
-      if (allSelected) {
-        return v.text !== 'All';
-      } else {
-        return v.selected;
-      }
-    });
-    const currentVariables = !_.isArray(variable.current.value)
-      ? [variable.current]
-      : variable.current.value.map((v: any) => {
-          return {
-            text: v,
-            value: v,
-          };
-        });
-    const useSelectedVariables =
-      selectedVariables.some((s: any) => {
-        return s.value === currentVariables[0].value;
-      }) || currentVariables[0].value === '$__all';
-    return (useSelectedVariables ? selectedVariables : currentVariables).map((v: any) => {
-      const t = angular.copy(target);
-      const scopedVar: any = {};
-      scopedVar[variable.name] = v;
-      t.refId = target.refId + '_' + v.value;
-      t.dimensions[dimensionKey] = templateSrv.replace(t.dimensions[dimensionKey], scopedVar);
-      if (variable.multi && target.id) {
-        t.id = target.id + window.btoa(v.value).replace(/=/g, '0'); // generate unique id
-      } else {
-        t.id = target.id;
-      }
-      return t;
-    });
-  }
-
-  expandTemplateVariable(targets: any, scopedVars: ScopedVars, templateSrv: TemplateSrv) {
-    // Datasource and template srv logic uber-complected. This should be cleaned up.
-    return _.chain(targets)
-      .map(target => {
-        if (target.id && target.id.length > 0 && target.expression && target.expression.length > 0) {
-          return [target];
-        }
-
-        const variableIndex = _.keyBy(templateSrv.variables, 'name');
-        const dimensionKey = _.findKey(target.dimensions, v => {
-          const variableName = templateSrv.getVariableName(v);
-          return templateSrv.variableExists(v) && !_.has(scopedVars, variableName) && variableIndex[variableName].multi;
-        });
-
-        if (dimensionKey) {
-          const multiVariable = variableIndex[templateSrv.getVariableName(target.dimensions[dimensionKey])];
-          return this.getExpandedVariables(target, dimensionKey, multiVariable, templateSrv);
-        } else {
-          return [target];
-        }
-      })
-      .flatten()
-      .value();
   }
 
   convertToCloudWatchTime(date: any, roundUp: any) {
