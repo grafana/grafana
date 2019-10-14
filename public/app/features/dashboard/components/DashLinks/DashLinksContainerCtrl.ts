@@ -87,7 +87,7 @@ function dashLink($compile: any, $sanitize: any, linkSrv: LinkSrv) {
       }
 
       update();
-      dashboard.events.on(PanelEvents.clientRefreshed, update, scope);
+      dashboard.events.on(PanelEvents.refresh, update, scope);
     },
   };
 }

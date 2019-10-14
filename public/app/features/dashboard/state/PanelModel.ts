@@ -209,7 +209,7 @@ export class PanelModel {
 
   refresh() {
     this.hasRefreshed = true;
-    this.events.emit(PanelEvents.clientRefreshed);
+    this.events.emit(PanelEvents.refresh);
   }
 
   render() {

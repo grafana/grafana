@@ -36,7 +36,7 @@ export class AnnotationsSrv {
     // always clearPromiseCaches when loading new dashboard
     this.clearPromiseCaches();
     // clear promises on refresh events
-    dashboard.on(PanelEvents.clientRefreshed, this.clearPromiseCaches.bind(this));
+    dashboard.on(PanelEvents.refresh, this.clearPromiseCaches.bind(this));
   }
 
   clearPromiseCaches() {

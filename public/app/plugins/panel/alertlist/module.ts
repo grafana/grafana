@@ -43,7 +43,7 @@ class AlertListPanel extends PanelCtrl {
     _.defaults(this.panel, this.panelDefaults);
 
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
-    this.events.on(PanelEvents.clientRefreshed, this.onRefresh.bind(this));
+    this.events.on(PanelEvents.refresh, this.onRefresh.bind(this));
     this.templateSrv = this.$injector.get('templateSrv');
 
     for (const key in this.panel.stateFilter) {

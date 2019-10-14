@@ -44,7 +44,7 @@ export class QueryInspector extends PureComponent<Props, State> {
     appEvents.on(CoreEvents.dsRequestResponse, this.onDataSourceResponse);
     appEvents.on(CoreEvents.dsRequestError, this.onRequestError);
 
-    panel.events.on(PanelEvents.clientRefreshed, this.onPanelRefresh);
+    panel.events.on(PanelEvents.refresh, this.onPanelRefresh);
     panel.refresh();
   }
 
@@ -54,7 +54,7 @@ export class QueryInspector extends PureComponent<Props, State> {
     appEvents.off(CoreEvents.dsRequestResponse, this.onDataSourceResponse);
     appEvents.on(CoreEvents.dsRequestError, this.onRequestError);
 
-    panel.events.off(PanelEvents.clientRefreshed, this.onPanelRefresh);
+    panel.events.off(PanelEvents.refresh, this.onPanelRefresh);
   }
 
   handleMocking(response: any) {

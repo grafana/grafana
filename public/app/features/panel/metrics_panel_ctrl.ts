@@ -43,7 +43,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.scope = $scope;
     this.panel.datasource = this.panel.datasource || null;
 
-    this.events.on(PanelEvents.clientRefreshed, this.onMetricsPanelRefresh.bind(this));
+    this.events.on(PanelEvents.refresh, this.onMetricsPanelRefresh.bind(this));
     this.events.on(PanelEvents.panelTeardown, this.onPanelTearDown.bind(this));
   }
 

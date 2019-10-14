@@ -60,7 +60,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   componentDidMount() {
     const { panel, dashboard } = this.props;
-    panel.events.on(PanelEvents.clientRefreshed, this.onRefresh);
+    panel.events.on(PanelEvents.refresh, this.onRefresh);
     panel.events.on(PanelEvents.render, this.onRender);
     dashboard.panelInitialized(this.props.panel);
 
@@ -80,7 +80,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
-    this.props.panel.events.off(PanelEvents.clientRefreshed, this.onRefresh);
+    this.props.panel.events.off(PanelEvents.refresh, this.onRefresh);
     if (this.querySubscription) {
       this.querySubscription.unsubscribe();
       this.querySubscription = null;

@@ -224,7 +224,7 @@ export class DashboardModel {
   }
 
   startRefresh() {
-    this.events.emit(PanelEvents.clientRefreshed);
+    this.events.emit(PanelEvents.refresh);
 
     for (const panel of this.panels) {
       if (!this.otherPanelInFullscreen(panel)) {

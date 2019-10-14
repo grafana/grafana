@@ -19,7 +19,7 @@ export interface MenuElement {
 
 /** Events */
 
-export const clientRefreshed = eventFactory('refresh');
+export const refresh = eventFactory('refresh');
 export const componentDidMount = eventFactory('component-did-mount');
 export const dataError = eventFactory<DataQueryError>('data-error');
 export const dataReceived = eventFactory<DataQueryResponseData[]>('data-received');

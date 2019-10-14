@@ -39,7 +39,7 @@ class DashListCtrl extends PanelCtrl {
       delete this.panel.tag;
     }
 
-    this.events.on(PanelEvents.clientRefreshed, this.onRefresh.bind(this));
+    this.events.on(PanelEvents.refresh, this.onRefresh.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
 
     this.groups = [
