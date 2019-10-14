@@ -10,6 +10,7 @@ module.exports = function (grunt) {
     tempDir: 'tmp',
     platform: process.platform.replace('win32', 'windows'),
     enterprise: false,
+    libc: null,
   };
 
   if (grunt.option('platform')) {
