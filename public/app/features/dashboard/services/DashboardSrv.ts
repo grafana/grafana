@@ -28,7 +28,7 @@ export class DashboardSrv {
   ) {
     appEvents.on(CoreEvents.saveDashboard, this.saveDashboard.bind(this), $rootScope);
     appEvents.on(PanelEvents.panelChangeView, this.onPanelChangeView);
-    appEvents.on(PanelEvents.removePanel, this.onRemovePanel);
+    appEvents.on(CoreEvents.removePanel, this.onRemovePanel);
 
     // Export to react
     setDashboardSrv(this);

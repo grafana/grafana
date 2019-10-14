@@ -236,7 +236,7 @@ export class KeybindingSrv {
     // delete panel
     this.bind('p r', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
-        appEvents.emit(PanelEvents.removePanel, dashboard.meta.focusPanelId);
+        appEvents.emit(CoreEvents.removePanel, dashboard.meta.focusPanelId);
         dashboard.meta.focusPanelId = 0;
       }
     });

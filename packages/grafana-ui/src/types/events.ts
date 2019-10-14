@@ -30,6 +30,5 @@ export const panelChangeView = eventFactory<PanelChangeViewPayload>('panel-chang
 export const panelInitialized = eventFactory('panel-initialized');
 export const panelSizeChanged = eventFactory('panel-size-changed');
 export const panelTeardown = eventFactory('panel-teardown');
-export const removePanel = eventFactory<number>('remove-panel');
 export const render = eventFactory<any>('render');
 export const viewModeChanged = eventFactory('view-mode-changed');
