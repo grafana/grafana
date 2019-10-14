@@ -189,7 +189,6 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 		} else {
 			log.Info("Ignored invalid redirect_to cookie value: %v", redirectTo)
 		}
-		c.Resp.Header().Del("Set-Cookie")
 		cookie := http.Cookie{
 			Name:     "redirect_to",
 			Value:    "",
