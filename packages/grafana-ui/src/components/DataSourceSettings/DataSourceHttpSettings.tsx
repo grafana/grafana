@@ -197,7 +197,9 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
           </>
         )}
 
-        {<TLSAuthSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />}
+        {(dataSourceConfig.jsonData.tlsAuth || dataSourceConfig.jsonData.tlsAuthWithCACert) && (
+          <TLSAuthSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />
+        )}
       </>
     </div>
   );

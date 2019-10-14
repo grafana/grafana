@@ -1,13 +1,13 @@
 import React from 'react';
-import { HttpSettingsBaseProps } from './types';
 import { KeyValue } from '@grafana/data';
+import { css, cx } from 'emotion';
+import { Tooltip } from '..';
+import { HttpSettingsBaseProps } from './types';
 
 // TODO: Refactor forms below to a reusable Cert component
 export const TLSAuthSettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceConfig, onChange }) => {
-  console.log();
   const hasTLSCACert = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsCACert;
   const hasTLSClientCert = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsClientCert;
-  // @ts-ignre
   const hasTLSClientKey = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsClientKey;
 
   const onResetClickFactory = (field: string) => (event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -32,9 +32,24 @@ export const TLSAuthSettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceCon
 
   return (
     <div className="gf-form-group">
-      <div className="gf-form">
+      <div
+        className={cx(
+          'gf-form',
+          css`
+            align-items: baseline;
+          `
+        )}
+      >
         <h6>TLS Auth Details</h6>
-        <h6>TODO: add missing info popover</h6>
+        <Tooltip
+          placement="right-end"
+          content="TLS Certs are encrypted and stored in the Grafana database."
+          theme="info"
+        >
+          <div className="gf-form-help-icon gf-form-help-icon--right-normal">
+            <i className="fa fa-info-circle" />
+          </div>
+        </Tooltip>
       </div>
       <div>
         {dataSourceConfig.jsonData.tlsAuthWithCACert && (
