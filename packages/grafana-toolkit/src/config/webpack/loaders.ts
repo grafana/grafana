@@ -145,7 +145,6 @@ export const getFileLoaders = () => {
       loader: 'file-loader',
       options: {
         publicPath: `/public/plugins/${getPluginId()}`,
-        outputPath: 'fonts/',
         name: '[path][name].[ext]',
       },
     },
