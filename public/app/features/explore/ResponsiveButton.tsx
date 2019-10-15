@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 
 export enum IconSide {
   left = 'left',
@@ -19,7 +19,7 @@ function formatBtnTitle(title: string, iconSide?: string): string {
   return iconSide === IconSide.left ? '\xA0' + title : iconSide === IconSide.right ? title + '\xA0' : title;
 }
 
-export const ResponsiveButton = (props: Props) => {
+export const ResponsiveButton = forwardRef<HTMLButtonElement, Props>((props, ref) => {
   const defaultProps = {
     iconSide: IconSide.left,
   };
@@ -37,4 +37,4 @@ export const ResponsiveButton = (props: Props) => {
       {iconClassName && iconSide === IconSide.right ? <i className={`${iconClassName}`} /> : null}
     </button>
   );
-};
+});
