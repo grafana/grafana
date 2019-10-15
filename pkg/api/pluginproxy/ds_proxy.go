@@ -239,6 +239,12 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		if proxy.ctx.Req.Request.Method == "POST" && proxy.proxyPath != "_msearch" {
 			return errors.New("Posts not allowed on proxied Elasticsearch datasource except on /_msearch")
 		}
+		if proxy.ctx.Req.Request.Body != nil && proxy.ctx.Req.Request.Method == "POST" && proxy.proxyPath == "_msearch" {
+			err := enforceRequestedEsIndex(proxy)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	// found route if there are any

@@ -126,6 +126,34 @@ func TestDSRouteRule(t *testing.T) {
 					err := proxy.validateRequest()
 					So(err, ShouldBeNil)
 				})
+
+				ds := &m.DataSource{
+					Type:     "elasticsearch",
+					Database: "test-*",
+					JsonData: simplejson.NewFromAny(map[string]interface{}{
+						"timeField": "@timestamp",
+					}),
+				}
+
+				var body = `{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"toto-*"}
+{"size":0,"query":{"bool":{"filter":[{"range":{"@timestamp":{"gte":"1568468555056","lte":"1571060555056","format":"epoch_millis"}}},{"query_string":{"analyze_wildcard":true,"query":"host:test"}}]}}}`
+				var bodyStr = []byte(body)
+				req, _ := http.NewRequest("POST", "http://localhost/api/datasources/proxy/1/_msearch", bytes.NewBuffer(bodyStr))
+				req.Header.Set("Content-Type", "application/json;charset=utf-8")
+				ctx := &m.ReqContext{
+					Context: &macaron.Context{
+						Req: macaron.Request{Request: req},
+					},
+					SignedInUser: &m.SignedInUser{OrgRole: m.ROLE_EDITOR},
+				}
+
+				Convey("requested elasticsearch index is not the right one", func() {
+					ctx.SignedInUser.OrgRole = m.ROLE_ADMIN
+					proxy := NewDataSourceProxy(ds, plugin, ctx, "_msearch", &setting.Cfg{})
+					err := proxy.validateRequest()
+					So(err, ShouldNotBeNil)
+				})
+
 			})
 		})
 

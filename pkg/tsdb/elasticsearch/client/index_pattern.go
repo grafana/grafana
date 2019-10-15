@@ -22,11 +22,10 @@ type indexPattern interface {
 	GetIndices(timeRange *tsdb.TimeRange) ([]string, error)
 }
 
-var newIndexPattern = func(interval string, pattern string) (indexPattern, error) {
+var NewIndexPattern = func(interval string, pattern string) (indexPattern, error) {
 	if interval == noInterval {
 		return &staticIndexPattern{indexName: pattern}, nil
 	}
-
 	return newDynamicIndexPattern(interval, pattern)
 }
 

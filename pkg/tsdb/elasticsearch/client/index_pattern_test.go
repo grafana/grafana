@@ -268,7 +268,7 @@ func TestIndexPattern(t *testing.T) {
 
 func indexPatternScenario(interval string, pattern string, timeRange *tsdb.TimeRange, fn func(indices []string)) {
 	Convey(fmt.Sprintf("Index pattern (interval=%s, index=%s", interval, pattern), func() {
-		ip, err := newIndexPattern(interval, pattern)
+		ip, err := NewIndexPattern(interval, pattern)
 		So(err, ShouldBeNil)
 		So(ip, ShouldNotBeNil)
 		indices, err := ip.GetIndices(timeRange)

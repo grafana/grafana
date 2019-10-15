@@ -54,7 +54,7 @@ var NewClient = func(ctx context.Context, ds *models.DataSource, timeRange *tsdb
 	}
 
 	indexInterval := ds.JsonData.Get("interval").MustString()
-	ip, err := newIndexPattern(indexInterval, ds.Database)
+	ip, err := NewIndexPattern(indexInterval, ds.Database)
 	if err != nil {
 		return nil, err
 	}
