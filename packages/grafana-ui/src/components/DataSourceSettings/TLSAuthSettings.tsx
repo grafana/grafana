@@ -21,7 +21,7 @@ export const TLSAuthSettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceCon
   };
 
   const onCertificateChangeFactory = (field: string) => (event: React.SyntheticEvent<HTMLTextAreaElement>) => {
-    const newSecureJsonData = { ...dataSourceConfig.jsonData };
+    const newSecureJsonData = { ...dataSourceConfig.secureJsonData };
     newSecureJsonData[field] = event.currentTarget.value;
 
     onChange({
