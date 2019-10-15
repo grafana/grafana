@@ -34,15 +34,15 @@ type notificationService struct {
 	renderService rendering.Service
 }
 
-func (n *notificationService) SendIfNeeded(context *EvalContext) {
+func (n *notificationService) SendIfNeeded(context *EvalContext) error {
 	notifierStates, err := n.getNeededNotifiers(context.Rule.OrgID, context.Rule.Notifications, context)
 	if err != nil {
 		n.log.Error("Failed to get alert notifiers", "error", err)
-		return
+		return err
 	}
 
 	if len(notifierStates) == 0 {
-		return
+		return nil
 	}
 
 	if notifierStates.ShouldUploadImage() {
@@ -51,7 +51,7 @@ func (n *notificationService) SendIfNeeded(context *EvalContext) {
 		}
 	}
 
-	n.sendNotifications(context, notifierStates)
+	return n.sendNotifications(context, notifierStates)
 }
 
 func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, notifierState *notifierState) error {
