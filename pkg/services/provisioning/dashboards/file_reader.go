@@ -102,14 +102,7 @@ func (fr *fileReader) startWalkingDisk() error {
 		provisioningMetadata, err := fr.saveDashboard(path, folderId, fileInfo, provisionedDashboardRefs)
 		sanityChecker.track(provisioningMetadata)
 		if err != nil {
-
-			if err == models.ErrDashboardProvisioningVersionMismatch {
-				fr.log.Info("failed to save dashboard", "error", err)
-			} else {
-				fr.log.Error("failed to save dashboard", "error", err)
-
-			}
-
+			fr.log.Error("failed to save dashboard", "error", err)
 		}
 	}
 	sanityChecker.logWarnings(fr.log)
