@@ -10,6 +10,7 @@ export interface Props<T> {
   onClickOutside: () => void;
   width: number;
   noOptionsMessage?: string;
+  allowCustomValue?: boolean;
 }
 
 export function SegmentSelect<T>({
@@ -18,6 +19,7 @@ export function SegmentSelect<T>({
   onClickOutside,
   width,
   noOptionsMessage = '',
+  allowCustomValue = false,
 }: React.PropsWithChildren<Props<T>>) {
   const ref = useRef(null);
 
@@ -39,6 +41,7 @@ export function SegmentSelect<T>({
         isOpen={true}
         onChange={({ value }) => onChange(value!)}
         options={options}
+        allowCustomValue={allowCustomValue}
       />
     </div>
   );
