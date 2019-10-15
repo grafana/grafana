@@ -30,6 +30,7 @@ func (sb *SqlBuilder) AddParams(params ...interface{}) {
 
 func (sb *SqlBuilder) buildPermissionsTable(user *m.SignedInUser, permission m.PermissionType) {
 	falseStr := dialect.BooleanStr(false)
+	trueStr := dialect.BooleanStr(true)
 	okRoles := []interface{}{user.OrgRole}
 
 	if user.OrgRole == m.ROLE_EDITOR {
@@ -66,7 +67,7 @@ func (sb *SqlBuilder) buildPermissionsTable(user *m.SignedInUser, permission m.P
 						da.dashboard_id = d.id
 					LEFT JOIN team_member as ugm on ugm.team_id = da.team_id
 					WHERE
-						folder.is_folder =1 AND
+						folder.is_folder = ` + trueStr + ` AND
 						d.org_id = ? AND
 						da.permission >= ? AND
 						(
