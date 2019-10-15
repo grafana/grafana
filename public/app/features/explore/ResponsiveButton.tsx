@@ -31,6 +31,7 @@ export const ResponsiveButton = forwardRef<HTMLButtonElement, Props>((props, ref
       className={`btn navbar-button ${buttonClassName ? buttonClassName : ''}`}
       onClick={onClick}
       disabled={disabled || false}
+      ref={ref}
     >
       {iconClassName && iconSide === IconSide.left ? <i className={`${iconClassName}`} /> : null}
       <span className="btn-title">{!splitted ? formatBtnTitle(title, iconSide) : ''}</span>
