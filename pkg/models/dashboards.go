@@ -271,11 +271,10 @@ type DeleteDashboardCommand struct {
 }
 
 type ValidateDashboardBeforeSaveCommand struct {
-	OrgId                int64
-	Dashboard            *Dashboard
-	Overwrite            bool
-	Result               *ValidateDashboardBeforeSaveResult
-	EnforceHigherVersion bool
+	OrgId     int64
+	Dashboard *Dashboard
+	Overwrite bool
+	Result    *ValidateDashboardBeforeSaveResult
 }
 
 //

@@ -116,10 +116,9 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 	}
 
 	validateBeforeSaveCmd := models.ValidateDashboardBeforeSaveCommand{
-		OrgId:                dto.OrgId,
-		Dashboard:            dash,
-		Overwrite:            dto.Overwrite,
-		EnforceHigherVersion: allowUiUpdate,
+		OrgId:     dto.OrgId,
+		Dashboard: dash,
+		Overwrite: dto.Overwrite,
 	}
 
 	if err := bus.Dispatch(&validateBeforeSaveCmd); err != nil {
