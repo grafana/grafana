@@ -217,7 +217,6 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 			} else if xerrors.Is(err, context.DeadlineExceeded) {
 				e.log.Debug("Result handler returned context.DeadlineExceeded")
 			} else {
-				// TODO: Consider if error should be propagated
 				e.log.Error("Failed to handle result", "err", err)
 			}
 		}

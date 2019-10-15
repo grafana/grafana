@@ -106,7 +106,6 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 		} else if xerrors.Is(err, context.DeadlineExceeded) {
 			handler.log.Debug("handler.notifier.SendIfNeeded returned context.DeadlineExceeded")
 		} else {
-			// TODO: Consider if error should be propagated
 			handler.log.Error("handler.notifier.SendIfNeeded failed", "err", err)
 		}
 	}
