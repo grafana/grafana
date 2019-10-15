@@ -152,12 +152,13 @@ const getContextMenuStyles = stylesFactory((theme: GrafanaTheme) => {
 
 export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClose, items, renderHeader }) => {
   const theme = useContext(ThemeContext);
-  const menuRef = useRef(null);
-  const [positionStyles, setPositionStyles] = useState(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [positionStyles, setPositionStyles] = useState({});
 
   useEffect(() => {
-    if (menuRef) {
-      const rect = menuRef.current.getBoundingClientRect();
+    const menuElement = menuRef && menuRef.current;
+    if (menuElement) {
+      const rect = menuElement.getBoundingClientRect();
       const OFFSET = 5;
       const collisions = {
         right: window.innerWidth < x + rect.width,
