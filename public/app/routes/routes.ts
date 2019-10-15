@@ -82,6 +82,18 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
           ),
       },
     })
+    .when('/d-solo/:uid', {
+      template: '<react-container />',
+      pageClass: 'dashboard-solo',
+      routeInfo: DashboardRouteInfo.Normal,
+      reloadOnSearch: false,
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
+          ),
+      },
+    })
     .when('/dashboard-solo/:type/:slug', {
       template: '<react-container />',
       pageClass: 'dashboard-solo',

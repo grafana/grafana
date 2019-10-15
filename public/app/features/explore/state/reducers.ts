@@ -11,7 +11,7 @@ import {
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
 import { LoadingState, toLegacyResponseData, DefaultTimeRange } from '@grafana/data';
-import { DataQuery, DataSourceApi, PanelData, DataQueryRequest, RefreshPicker } from '@grafana/ui';
+import { DataQuery, DataSourceApi, PanelData, DataQueryRequest, RefreshPicker, PanelEvents } from '@grafana/ui';
 import {
   HigherOrderAction,
   ActionTypes,
@@ -600,7 +600,7 @@ export const processQueryResponse = (
     }
 
     // For Angular editors
-    state.eventBridge.emit('data-error', error);
+    state.eventBridge.emit(PanelEvents.dataError, error);
 
     return {
       ...state,
@@ -624,7 +624,7 @@ export const processQueryResponse = (
   if (state.datasourceInstance.components.QueryCtrl) {
     const legacy = series.map(v => toLegacyResponseData(v));
 
-    state.eventBridge.emit('data-received', legacy);
+    state.eventBridge.emit(PanelEvents.dataReceived, legacy);
   }
 
   return {

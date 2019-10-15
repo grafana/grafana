@@ -5,7 +5,7 @@ cloud.google.com/go/compute/metadata
 github.com/BurntSushi/toml
 # github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
 github.com/VividCortex/mysqlerr
-# github.com/aws/aws-sdk-go v1.18.5
+# github.com/aws/aws-sdk-go v1.25.6
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/awserr
 github.com/aws/aws-sdk-go/aws/awsutil
@@ -27,6 +27,7 @@ github.com/aws/aws-sdk-go/aws/signer/v4
 github.com/aws/aws-sdk-go/internal/ini
 github.com/aws/aws-sdk-go/internal/s3err
 github.com/aws/aws-sdk-go/internal/sdkio
+github.com/aws/aws-sdk-go/internal/sdkmath
 github.com/aws/aws-sdk-go/internal/sdkrand
 github.com/aws/aws-sdk-go/internal/sdkuri
 github.com/aws/aws-sdk-go/internal/shareddefaults
@@ -48,6 +49,7 @@ github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi
 github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface
 github.com/aws/aws-sdk-go/service/s3
 github.com/aws/aws-sdk-go/service/sts
+github.com/aws/aws-sdk-go/service/sts/stsiface
 # github.com/beevik/etree v1.1.0
 github.com/beevik/etree
 # github.com/benbjohnson/clock v0.0.0-20161215174838-7dc76406b6d3
