@@ -5,4 +5,5 @@ export interface SegmentProps<T> {
   value?: T;
   Component?: ReactElement;
   className?: string;
+  allowCustomValue?: boolean;
 }
