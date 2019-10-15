@@ -2,7 +2,7 @@ import React from 'react';
 import { TimeSyncButton } from './TimeSyncButton';
 import { mount } from 'enzyme';
 
-const setup = (isSynced: boolean = true) => {
+const setup = (isSynced: boolean) => {
   const onClick = () => {};
   return mount(<TimeSyncButton onClick={onClick} isSynced={isSynced} />);
 };
