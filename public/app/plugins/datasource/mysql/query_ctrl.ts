@@ -7,6 +7,8 @@ import MysqlQuery from './mysql_query';
 import sqlPart from './sql_part';
 import { auto, IQService } from 'angular';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { CoreEvents } from 'app/types';
+import { PanelEvents } from '@grafana/ui';
 
 export interface QueryMeta {
   sql: string;
@@ -101,8 +103,8 @@ export class MysqlQueryCtrl extends QueryCtrl {
     this.whereAdd = this.uiSegmentSrv.newPlusButton();
     this.groupAdd = this.uiSegmentSrv.newPlusButton();
 
-    this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
-    this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
+    this.panelCtrl.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this), $scope);
+    this.panelCtrl.events.on(PanelEvents.dataError, this.onDataError.bind(this), $scope);
   }
 
   updateRawSqlAndRefresh() {
@@ -158,7 +160,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
 
   toggleEditorMode() {
     if (this.target.rawQuery) {
-      appEvents.emit('confirm-modal', {
+      appEvents.emit(CoreEvents.showConfirmModal, {
         title: 'Warning',
         text2: 'Switching to query builder may overwrite your raw SQL.',
         icon: 'fa-exclamation',
