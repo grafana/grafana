@@ -28,10 +28,10 @@ export interface CommonProps<T> {
   defaultValue?: any;
   getOptionLabel?: (item: SelectableValue<T>) => string;
   getOptionValue?: (item: SelectableValue<T>) => string;
-  onChange: (item: SelectableValue<T>) => {} | void;
+  onChange: (item: SelectableValue<T> | SelectableValue<T>[]) => {} | void;
   placeholder?: string;
   width?: number;
-  value?: SelectableValue<T>;
+  value?: SelectableValue<T> | SelectableValue<T>[];
   className?: string;
   isDisabled?: boolean;
   isSearchable?: boolean;

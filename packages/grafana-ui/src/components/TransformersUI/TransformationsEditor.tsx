@@ -1,4 +1,10 @@
-import { DataTransformerID, DataTransformerConfig, DataFrame, transformDataFrame } from '@grafana/data';
+import {
+  DataTransformerID,
+  DataTransformerConfig,
+  DataFrame,
+  transformDataFrame,
+  SelectableValue,
+} from '@grafana/data';
 import { Select } from '../Select/Select';
 import { transformersUIRegistry } from './transformers';
 import React from 'react';
@@ -74,7 +80,7 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
                 key={`${t.id}-${i}`}
                 options={availableTransformers}
                 placeholder="Select transformation"
-                onChange={v => {
+                onChange={(v: SelectableValue<string>) => {
                   this.onTransformationChange(i, {
                     id: v.value as string,
                     options: {},

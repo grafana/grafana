@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { cx } from 'emotion';
 import { SegmentSelect } from './SegmentSelect';
 import { SelectableValue } from '@grafana/data';
 import { useExpandableLabel, SegmentProps } from '.';
@@ -15,10 +14,11 @@ export function SegmentAsync<T>({
   Component,
   className,
   allowCustomValue,
+  isMulti,
 }: React.PropsWithChildren<SegmentAsyncProps<T>>) {
   const [selectPlaceholder, setSelectPlaceholder] = useState<string>('');
   const [loadedOptions, setLoadedOptions] = useState<Array<SelectableValue<T>>>([]);
-  const [Label, width, expanded, setExpanded] = useExpandableLabel(false);
+  const [Label, width, expanded, setExpanded] = useExpandableLabel(false, value, className, Component);
 
   if (!expanded) {
     return (
@@ -29,7 +29,6 @@ export function SegmentAsync<T>({
           setLoadedOptions(opts);
           setSelectPlaceholder(opts.length ? '' : 'No options found');
         }}
-        Component={Component || <a className={cx('gf-form-label', 'query-part', className)}>{value}</a>}
       />
     );
   }
@@ -38,17 +37,21 @@ export function SegmentAsync<T>({
     <SegmentSelect
       width={width}
       options={loadedOptions}
+      value={value}
       noOptionsMessage={selectPlaceholder}
       allowCustomValue={allowCustomValue}
+      isMulti={isMulti}
       onClickOutside={() => {
         setSelectPlaceholder('');
         setLoadedOptions([]);
         setExpanded(false);
       }}
       onChange={value => {
-        setSelectPlaceholder('');
-        setLoadedOptions([]);
-        setExpanded(false);
+        if (!isMulti) {
+          setSelectPlaceholder('');
+          setLoadedOptions([]);
+          setExpanded(false);
+        }
         onChange(value);
       }}
     />
