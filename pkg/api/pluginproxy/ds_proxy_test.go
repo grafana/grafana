@@ -148,7 +148,6 @@ func TestDSRouteRule(t *testing.T) {
 				}
 
 				Convey("requested elasticsearch index is not the right one", func() {
-					ctx.SignedInUser.OrgRole = m.ROLE_ADMIN
 					proxy := NewDataSourceProxy(ds, plugin, ctx, "_msearch", &setting.Cfg{})
 					err := proxy.validateRequest()
 					So(err, ShouldNotBeNil)
