@@ -39,6 +39,8 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/search"
 	_ "github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
+	"golang.org/x/xerrors"
 )
 
 // NewServer returns a new instance of Server.
@@ -79,7 +81,7 @@ type Server struct {
 
 // Run initializes and starts services. This will block until all services have
 // exited. To initiate shutdown, call the Shutdown method in another goroutine.
-func (s *Server) Run() error {
+func (s *Server) Run() (err error) {
 	s.loadConfiguration()
 	s.writePIDFile()
 
@@ -88,8 +90,8 @@ func (s *Server) Run() error {
 
 	services := registry.GetServices()
 
-	if err := s.buildServiceGraph(services); err != nil {
-		return err
+	if err = s.buildServiceGraph(services); err != nil {
+		return
 	}
 
 	// Initialize services.
@@ -107,18 +109,17 @@ func (s *Server) Run() error {
 
 	// Start background services.
 	for _, svc := range services {
-		// Variable is needed for accessing loop variable in function callback
-		descriptor := svc
-
 		service, ok := svc.Instance.(registry.BackgroundService)
 		if !ok {
 			continue
 		}
 
-		if registry.IsDisabled(descriptor.Instance) {
+		if registry.IsDisabled(svc.Instance) {
 			continue
 		}
 
+		// Variable is needed for accessing loop variable in callback
+		descriptor := svc
 		s.childRoutines.Go(func() error {
 			// Don't start new services when server is shutting down.
 			if s.shutdownInProgress {
@@ -134,19 +135,28 @@ func (s *Server) Run() error {
 				}
 			}
 
+			// Mark that we are in shutdown mode
+			// So more services are not started
 			s.shutdownInProgress = true
-
 			return nil
 		})
 	}
 
-	notifySystemd("READY=1")
+	defer func() {
+		s.log.Debug("Waiting on services...")
+		if waitErr := s.childRoutines.Wait(); waitErr != nil && !xerrors.Is(waitErr, context.Canceled) {
+			s.log.Error("A service failed", "err", waitErr)
+			if err == nil {
+				err = waitErr
+			}
+		}
+	}()
 
-	return s.childRoutines.Wait()
+	s.notifySystemd("READY=1")
+
+	return
 }
 
-// Shutdown initiates a shutdown of the services, and waits for all services to
-// exit.
 func (s *Server) Shutdown(reason string) {
 	s.log.Info("Shutdown started", "reason", reason)
 	s.shutdownReason = reason
@@ -156,7 +166,9 @@ func (s *Server) Shutdown(reason string) {
 	s.shutdownFn()
 
 	// wait for child routines
-	s.childRoutines.Wait()
+	if err := s.childRoutines.Wait(); err != nil && !xerrors.Is(err, context.Canceled) {
+		s.log.Error("Failed waiting for services to shutdown", "err", err)
+	}
 }
 
 // ExitCode returns an exit code for a given error.
@@ -216,13 +228,13 @@ func (s *Server) buildServiceGraph(services []*registry.Descriptor) error {
 	// Provide services and their dependencies to the graph.
 	for _, obj := range objs {
 		if err := serviceGraph.Provide(&inject.Object{Value: obj}); err != nil {
-			return fmt.Errorf("Failed to provide object to the graph: %v", err)
+			return errutil.Wrapf(err, "Failed to provide object to the graph")
 		}
 	}
 
 	// Resolve services and their dependencies.
 	if err := serviceGraph.Populate(); err != nil {
-		return fmt.Errorf("Failed to populate service dependency: %v", err)
+		return errutil.Wrapf(err, "Failed to populate service dependency")
 	}
 
 	return nil
@@ -252,25 +264,27 @@ func (s *Server) loadConfiguration() {
 }
 
 // notifySystemd sends state notifications to systemd.
-func notifySystemd(state string) error {
+func (s *Server) notifySystemd(state string) {
 	notifySocket := os.Getenv("NOTIFY_SOCKET")
-
 	if notifySocket == "" {
-		return fmt.Errorf("NOTIFY_SOCKET environment variable empty or unset")
+		s.log.Debug(
+			"NOTIFY_SOCKET environment variable empty or unset, can't send systemd notification")
+		return
 	}
 
 	socketAddr := &net.UnixAddr{
 		Name: notifySocket,
 		Net:  "unixgram",
 	}
-
 	conn, err := net.DialUnix(socketAddr.Net, nil, socketAddr)
 	if err != nil {
-		return err
+		s.log.Warn("Failed to connect to systemd", "err", err, "socket", notifySocket)
+		return
 	}
 	defer conn.Close()
 
 	_, err = conn.Write([]byte(state))
-
-	return err
+	if err != nil {
+		s.log.Warn("Failed to write notification to systemd", "err", err)
+	}
 }
