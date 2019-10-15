@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { getPluginId } from '../utils/getPluginId';
 
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
@@ -138,6 +139,15 @@ export const getFileLoaders = () => {
               loader: 'url-loader',
             },
       ],
+    },
+    {
+      test: /\.(woff|woff2|eot|ttf|otf)(\?v=\d+\.\d+\.\d+)?$/,
+      loader: 'file-loader',
+      options: {
+        publicPath: `/public/plugins/${getPluginId()}/fonts`,
+        outputPath: 'fonts',
+        name: '[name].[ext]',
+      },
     },
   ];
 };
