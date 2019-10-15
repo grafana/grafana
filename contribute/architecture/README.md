@@ -6,4 +6,5 @@ Learn more about the backend architecture:
 
 - Part 1: [Services](services.md) 
 - Part 2: [Communication](communication.md)
+- Part 3: [Database](database.md)
 
