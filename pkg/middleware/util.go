@@ -8,9 +8,8 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
-var gziperLogger log.Logger = log.New("gziper")
-
 func Gziper() macaron.Handler {
+	gziperLogger := log.New("gziper")
 	gziper := gzip.Gziper()
 
 	return func(ctx *macaron.Context) {
@@ -29,7 +28,7 @@ func Gziper() macaron.Handler {
 		}
 
 		if _, err := ctx.Invoke(gziper); err != nil {
-			gziperLogger.Debug("Invoking gzip handler failed", "err", err)
+			gziperLogger.Error("Invoking gzip handler failed", "err", err)
 		}
 	}
 }
