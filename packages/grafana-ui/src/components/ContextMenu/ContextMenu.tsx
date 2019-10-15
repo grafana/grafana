@@ -1,4 +1,4 @@
-import React, { useContext, useRef, useState, useEffect } from 'react';
+import React, { useContext, useRef, useState, useLayoutEffect } from 'react';
 import { css, cx } from 'emotion';
 import useClickAway from 'react-use/lib/useClickAway';
 import { GrafanaTheme, selectThemeVariant, ThemeContext } from '../../index';
@@ -155,8 +155,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
   const menuRef = useRef<HTMLDivElement>(null);
   const [positionStyles, setPositionStyles] = useState({});
 
-  useEffect(() => {
-    const menuElement = menuRef && menuRef.current;
+  useLayoutEffect(() => {
+    const menuElement = menuRef.current;
     if (menuElement) {
       const rect = menuElement.getBoundingClientRect();
       const OFFSET = 5;
@@ -171,7 +171,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
         top: collisions.bottom ? y - rect.height - OFFSET : y + OFFSET,
       });
     }
-  }, [menuRef]);
+  }, [menuRef.current]);
 
   useClickAway(menuRef, () => {
     if (onClose) {
