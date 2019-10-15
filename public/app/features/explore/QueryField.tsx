@@ -26,7 +26,7 @@ export interface QueryFieldProps {
   // We have both value and local state. This is usually an antipattern but we need to keep local state
   // for perf reasons and also have outside value in for example in Explore redux that is mutable from logs
   // creating a two way binding.
-  value: string | null;
+  query: string | null;
   onRunQuery?: () => void;
   onChange?: (value: string) => void;
   onTypeahead?: (typeahead: TypeaheadInput) => Promise<TypeaheadOutput>;
@@ -94,7 +94,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       typeaheadContext: null,
       typeaheadPrefix: '',
       typeaheadText: '',
-      value: makeValue(props.value || '', props.syntax),
+      value: makeValue(props.query || '', props.syntax),
     };
   }
 
@@ -108,15 +108,15 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   }
 
   componentDidUpdate(prevProps: QueryFieldProps, prevState: QueryFieldState) {
-    const { value: propValue, syntax } = this.props;
+    const { query, syntax } = this.props;
     const { value } = this.state;
 
     // Handle two way binging between local state and outside prop.
     // if query changed from the outside
-    if (propValue !== prevProps.value) {
+    if (query !== prevProps.query) {
       // and we have a version that differs
-      if (propValue !== Plain.serialize(value)) {
-        this.setState({ value: makeValue(propValue || '', syntax) });
+      if (query !== Plain.serialize(value)) {
+        this.setState({ value: makeValue(query || '', syntax) });
       }
     }
   }
