@@ -80,6 +80,38 @@ SegmentStories.add('Grouped Array Options', () => {
   );
 });
 
+SegmentStories.add('With custom options allowed', () => {
+  const options = ['Option1', 'Option2', 'OptionWithLooongLabel', 'Option4'].map(toOption);
+  return (
+    <UseState initialState={options[0].value}>
+      {(value, updateValue) => (
+        <>
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <span className="gf-form-label width-8 query-keyword">Segment Name</span>
+            </div>
+            <Segment
+              allowCustomValue
+              value={value}
+              options={options}
+              onChange={(value: SelectableValue<string>) => {
+                updateValue(value);
+                action('Segment value changed')(value);
+              }}
+            />
+            <Segment
+              allowCustomValue
+              Component={AddButton}
+              onChange={(value: SelectableValue<string>) => action('New value added')(value)}
+              options={options}
+            />
+          </div>
+        </>
+      )}
+    </UseState>
+  );
+});
+
 const CustomLabelComponent = ({ value }: any) => <div className="gf-form-label">custom({value})</div>;
 
 SegmentStories.add('Custom Label Field', () => {
