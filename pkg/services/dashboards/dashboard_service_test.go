@@ -27,7 +27,7 @@ func TestDashboardService(t *testing.T) {
 
 				for _, title := range titles {
 					dto.Dashboard = models.NewDashboard(title)
-					_, err := service.SaveDashboard(dto)
+					_, err := service.SaveDashboard(dto, false)
 					So(err, ShouldEqual, models.ErrDashboardTitleEmpty)
 				}
 			})
@@ -35,13 +35,13 @@ func TestDashboardService(t *testing.T) {
 			Convey("Should return validation error if it's a folder and have a folder id", func() {
 				dto.Dashboard = models.NewDashboardFolder("Folder")
 				dto.Dashboard.FolderId = 1
-				_, err := service.SaveDashboard(dto)
+				_, err := service.SaveDashboard(dto, false)
 				So(err, ShouldEqual, models.ErrDashboardFolderCannotHaveParent)
 			})
 
 			Convey("Should return validation error if folder is named General", func() {
 				dto.Dashboard = models.NewDashboardFolder("General")
-				_, err := service.SaveDashboard(dto)
+				_, err := service.SaveDashboard(dto, false)
 				So(err, ShouldEqual, models.ErrDashboardFolderNameExists)
 			})
 
@@ -103,7 +103,7 @@ func TestDashboardService(t *testing.T) {
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
-				_, err := service.SaveDashboard(dto)
+				_, err := service.SaveDashboard(dto, false)
 				So(provisioningValidated, ShouldBeTrue)
 				So(err, ShouldEqual, models.ErrDashboardCannotSaveProvisionedDashboard)
 			})
@@ -119,7 +119,7 @@ func TestDashboardService(t *testing.T) {
 				})
 
 				dto.Dashboard = models.NewDashboard("Dash")
-				_, err := service.SaveDashboard(dto)
+				_, err := service.SaveDashboard(dto, false)
 				So(err.Error(), ShouldEqual, "Alert validation error")
 			})
 		})
@@ -155,7 +155,7 @@ func TestDashboardService(t *testing.T) {
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
-				_, err := service.SaveProvisionedDashboard(dto, nil)
+				_, err := service.SaveProvisionedDashboard(dto, nil, false)
 				So(err, ShouldBeNil)
 				So(provisioningValidated, ShouldBeFalse)
 			})

@@ -57,8 +57,5 @@ func (mock *ProvisioningServiceMock) GetDashboardProvisionerResolvedPath(name st
 
 func (mock *ProvisioningServiceMock) GetAllowUiUpdatesFromConfig(name string) bool {
 	mock.Calls.GetAllowUiUpdatesFromConfig = append(mock.Calls.GetAllowUiUpdatesFromConfig, name)
-	if mock.GetAllowUiUpdatesFromConfig != nil {
-		return mock.GetAllowUiUpdatesFromConfigFunc(name)
-	}
-	return ""
+	return mock.GetAllowUiUpdatesFromConfigFunc(name)
 }
