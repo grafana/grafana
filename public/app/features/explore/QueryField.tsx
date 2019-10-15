@@ -16,8 +16,6 @@ import ClipboardPlugin from './slate-plugins/clipboard';
 import RunnerPlugin from './slate-plugins/runner';
 import SuggestionsPlugin, { SuggestionsState } from './slate-plugins/suggestions';
 
-import { Typeahead } from './Typeahead';
-
 import { makeValue, SCHEMA } from '@grafana/ui';
 
 export const HIGHLIGHT_WAIT = 500;
@@ -68,7 +66,6 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   mounted: boolean;
   updateHighlightsTimer: Function;
   editor: Editor;
-  typeaheadRef: Typeahead;
 
   constructor(props: QueryFieldProps, context: Context<any>) {
     super(props, context);
@@ -80,7 +77,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     // Base plugins
     this.plugins = [
       NewlinePlugin(),
-      SuggestionsPlugin({ onTypeahead, cleanText, portalOrigin, onWillApplySuggestion, component: this }),
+      SuggestionsPlugin({ onTypeahead, cleanText, portalOrigin, onWillApplySuggestion }),
       ClearPlugin(),
       RunnerPlugin({ handler: this.executeOnChangeAndRunQueries }),
       SelectionShortcutsPlugin(),
