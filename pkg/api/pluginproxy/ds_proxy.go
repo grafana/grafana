@@ -26,8 +26,9 @@ import (
 )
 
 var (
-	logger = log.New("data-proxy-log")
-	client = newHTTPClient()
+	logger      = log.New("data-proxy-log")
+	client      = newHTTPClient()
+	POST_METHOD = "POST"
 )
 
 type DataSourceProxy struct {
@@ -224,7 +225,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		if proxy.ctx.Req.Request.Method == "PUT" {
 			return errors.New("Puts not allowed on proxied Prometheus datasource")
 		}
-		if proxy.ctx.Req.Request.Method == "POST" && !(proxy.proxyPath == "api/v1/query" || proxy.proxyPath == "api/v1/query_range") {
+		if proxy.ctx.Req.Request.Method == POST_METHOD && !(proxy.proxyPath == "api/v1/query" || proxy.proxyPath == "api/v1/query_range") {
 			return errors.New("Posts not allowed on proxied Prometheus datasource except on /query and /query_range")
 		}
 	}
@@ -236,10 +237,10 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		if proxy.ctx.Req.Request.Method == "PUT" {
 			return errors.New("Puts not allowed on proxied Elasticsearch datasource")
 		}
-		if proxy.ctx.Req.Request.Method == "POST" && proxy.proxyPath != "_msearch" {
+		if proxy.ctx.Req.Request.Method == POST_METHOD && proxy.proxyPath != "_msearch" {
 			return errors.New("Posts not allowed on proxied Elasticsearch datasource except on /_msearch")
 		}
-		if proxy.ctx.Req.Request.Body != nil && proxy.ctx.Req.Request.Method == "POST" && proxy.proxyPath == "_msearch" {
+		if proxy.ctx.Req.Request.Body != nil && proxy.ctx.Req.Request.Method == POST_METHOD && proxy.proxyPath == "_msearch" {
 			err := enforceRequestedEsIndex(proxy)
 			if err != nil {
 				return err

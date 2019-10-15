@@ -3,7 +3,6 @@ package pluginproxy
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -88,7 +87,7 @@ func enforceRequestedEsIndex(proxy *DataSourceProxy) error {
 	}
 	err = json.Unmarshal([]byte(jsonPart), &requestIndex)
 	if err != nil {
-		return errors.New(fmt.Sprintf("Unable to unmarshall JSON request body : %s", err.Error()))
+		return fmt.Errorf("Unable to unmarshall JSON request body : %s", err.Error())
 	}
 	var found = false
 	switch requestIndex.Names.(type) {
@@ -109,10 +108,10 @@ func enforceRequestedEsIndex(proxy *DataSourceProxy) error {
 			}
 		}
 	default:
-		return errors.New(fmt.Sprintf("Unable to get type of the index: %+v", requestIndex.Names))
+		return fmt.Errorf("Unable to get type of the index: %+v", requestIndex.Names)
 	}
 	if !found {
-		return errors.New(fmt.Sprintf("The index requested '%v' is not present in the datasources.\n", requestIndex.Names))
+		return fmt.Errorf("The index requested '%v' is not present in the datasources.\n", requestIndex.Names)
 	}
 	return nil
 }
