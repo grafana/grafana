@@ -3,6 +3,7 @@ import Clipboard from 'clipboard';
 import coreModule from '../core_module';
 import kbn from 'app/core/utils/kbn';
 import { appEvents } from 'app/core/core';
+import { AppEvents } from '@grafana/data';
 
 /** @ngInject */
 function tip($compile: any) {
@@ -34,7 +35,7 @@ function clipboardButton() {
       });
 
       scope.clipboard.on('success', () => {
-        appEvents.emit('alert-success', ['Content copied to clipboard']);
+        appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
       });
 
       scope.$on('$destroy', () => {

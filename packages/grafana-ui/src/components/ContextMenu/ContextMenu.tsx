@@ -1,4 +1,4 @@
-import React, { useContext, useRef } from 'react';
+import React, { useContext, useRef, useState, useLayoutEffect } from 'react';
 import { css, cx } from 'emotion';
 import useClickAway from 'react-use/lib/useClickAway';
 import { GrafanaTheme, selectThemeVariant, ThemeContext } from '../../index';
@@ -107,6 +107,7 @@ const getContextMenuStyles = stylesFactory((theme: GrafanaTheme) => {
       z-index: 1;
       box-shadow: 0 2px 5px 0 ${wrapperShadow};
       min-width: 200px;
+      display: inline-block;
       border-radius: ${theme.border.radius.sm};
     `,
     link: css`
@@ -151,7 +152,27 @@ const getContextMenuStyles = stylesFactory((theme: GrafanaTheme) => {
 
 export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClose, items, renderHeader }) => {
   const theme = useContext(ThemeContext);
-  const menuRef = useRef(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [positionStyles, setPositionStyles] = useState({});
+
+  useLayoutEffect(() => {
+    const menuElement = menuRef.current;
+    if (menuElement) {
+      const rect = menuElement.getBoundingClientRect();
+      const OFFSET = 5;
+      const collisions = {
+        right: window.innerWidth < x + rect.width,
+        bottom: window.innerHeight < rect.bottom + rect.height + OFFSET,
+      };
+
+      setPositionStyles({
+        position: 'fixed',
+        left: collisions.right ? x - rect.width - OFFSET : x - OFFSET,
+        top: collisions.bottom ? y - rect.height - OFFSET : y + OFFSET,
+      });
+    }
+  }, [menuRef.current]);
+
   useClickAway(menuRef, () => {
     if (onClose) {
       onClose();
@@ -159,10 +180,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
   });
 
   const styles = getContextMenuStyles(theme);
-
   return (
     <Portal>
-      <div ref={menuRef} style={getStyle(menuRef.current)} className={styles.wrapper}>
+      <div ref={menuRef} style={positionStyles} className={styles.wrapper}>
         {renderHeader && <div className={styles.header}>{renderHeader()}</div>}
         <List
           items={items || []}
@@ -177,25 +197,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
       </div>
     </Portal>
   );
-
-  function getStyle(menuNode: HTMLDivElement | null) {
-    const haventMeasuredMenuYet = !menuNode;
-    if (haventMeasuredMenuYet) {
-      return { visibility: 'hidden' as const };
-    }
-    const rect = menuNode!.getBoundingClientRect();
-    const OFFSET = 5;
-    const collisions = {
-      right: window.innerWidth < x + rect.width,
-      bottom: window.innerHeight < rect.bottom + rect.height + OFFSET,
-    };
-
-    return {
-      position: 'fixed' as const,
-      left: collisions.right ? x - rect.width - OFFSET : x - OFFSET,
-      top: collisions.bottom ? y - rect.height - OFFSET : y + OFFSET,
-    };
-  }
 });
 
 interface ContextMenuItemProps {
