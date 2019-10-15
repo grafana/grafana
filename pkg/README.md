@@ -57,7 +57,7 @@ The plan is to move all settings to from package level vars in settings package 
 
 ### Reduce the use of GoConvey
 
-We want to migrate away from using GoConvey. Instead, we want to use stdlib testing, because it's the most common approach in the Go community and we think it will be easier for new contributors. Read more about how we want to write tests in [ARCHITECTURE.MD](ARCHITECTURE.md#Testing).
+We want to migrate away from using GoConvey. Instead, we want to use stdlib testing, because it's the most common approach in the Go community and we think it will be easier for new contributors. Read more about how we want to write tests in the [style guide](/contribute/style-guides/backend.md).
 
 ### Refactor SqlStore
 
