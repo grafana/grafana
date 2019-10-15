@@ -7,7 +7,8 @@ import (
 	"path"
 	"time"
 
-	"github.com/grafana/grafana-plugin-model/go/datasource"
+	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
+	sdk "github.com/grafana/grafana-plugin-sdk-go"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
@@ -34,6 +35,7 @@ type DataSourcePlugin struct {
 
 	Backend    bool   `json:"backend,omitempty"`
 	Executable string `json:"executable,omitempty"`
+	Version    int    `json:"version,omitempty"`
 
 	log    log.Logger
 	client *plugin.Client
@@ -73,18 +75,36 @@ func (p *DataSourcePlugin) startBackendPlugin(ctx context.Context, log log.Logge
 
 	return nil
 }
+func (p *DataSourcePlugin) isVersionOne() bool {
+	// if version is empty (which defaults to 0) or explicitly set to one
+	return p.Version == 0 || p.Version == 1
+}
 
 func (p *DataSourcePlugin) spawnSubProcess() error {
 	cmd := ComposePluginStartCommmand(p.Executable)
 	fullpath := path.Join(p.PluginDir, cmd)
 
-	p.client = plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig:  handshakeConfig,
-		Plugins:          map[string]plugin.Plugin{p.Id: &datasource.DatasourcePluginImpl{}},
-		Cmd:              exec.Command(fullpath),
-		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
-		Logger:           LogWrapper{Logger: p.log},
-	})
+	var newClient *plugin.Client
+	if p.isVersionOne() {
+		newClient = plugin.NewClient(&plugin.ClientConfig{
+			HandshakeConfig:  handshakeConfig,
+			Plugins:          map[string]plugin.Plugin{p.Id: &datasourceV1.DatasourcePluginImpl{}},
+			Cmd:              exec.Command(fullpath),
+			AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
+			Logger:           LogWrapper{Logger: p.log},
+		})
+
+	} else {
+		newClient = plugin.NewClient(&plugin.ClientConfig{
+			HandshakeConfig:  handshakeConfig,
+			Plugins:          map[string]plugin.Plugin{p.Id: &sdk.DatasourcePlugin{}},
+			Cmd:              exec.Command(fullpath),
+			AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
+			Logger:           LogWrapper{Logger: p.log},
+		})
+	}
+
+	p.client = newClient
 
 	rpcClient, err := p.client.Client()
 	if err != nil {
@@ -96,11 +116,13 @@ func (p *DataSourcePlugin) spawnSubProcess() error {
 		return err
 	}
 
-	plugin := raw.(datasource.DatasourcePlugin)
+	if p.isVersionOne() {
+		plugin := raw.(datasourceV1.DatasourcePlugin)
 
-	tsdb.RegisterTsdbQueryEndpoint(p.Id, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-		return wrapper.NewDatasourcePluginWrapper(p.log, plugin), nil
-	})
+		tsdb.RegisterTsdbQueryEndpoint(p.Id, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+			return wrapper.NewDatasourcePluginWrapper(p.log, plugin), nil
+		})
+	}
 
 	return nil
 }
