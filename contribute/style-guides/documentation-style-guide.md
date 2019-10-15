@@ -77,3 +77,4 @@ Grafana products has some words, abbreviations, and slang particular to this dis
 * "Open source" should be hyphenated when used as an adjective, e.g. *open-source software*. The open form should be preferred when used as a noun, e.g. *Grafana is open source*.
 * Use "data source" instead of "datasource" unless used as an identifier, in code, or as part of a URL.
 * Spell out "repository" and avoid the shorter "repo."
+* Use "Unix" as the preferred spelling (as opposed to "UNIX", or "unix") when referring to the family of operating systems.
