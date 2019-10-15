@@ -144,8 +144,9 @@ export const getFileLoaders = () => {
       test: /\.(woff|woff2|eot|ttf|otf)(\?v=\d+\.\d+\.\d+)?$/,
       loader: 'file-loader',
       options: {
-        publicPath: `/public/plugins/${getPluginId()}`,
-        name: '[path][name].[ext]',
+        publicPath: `/public/plugins/${getPluginId()}/fonts`,
+        outputPath: 'fonts',
+        name: '[name].[ext]',
       },
     },
   ];
