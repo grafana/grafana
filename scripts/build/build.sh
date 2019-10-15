@@ -115,6 +115,8 @@ function package_all() {
   go run build.go -goos linux -pkg-arch armv6 ${OPT} -skipRpm package-only
   go run build.go -goos linux -pkg-arch armv7 ${OPT} package-only
   go run build.go -goos linux -pkg-arch arm64 ${OPT} package-only
+  go run build.go -goos linux -pkg-arch armv7 -libc musl -skipRpm -skipDeb ${OPT} package-only
+  go run build.go -goos linux -pkg-arch arm64 -libc musl -skipRpm -skipDeb ${OPT} package-only
   package_linux_amd64
   echo "PACKAGE ALL: finished"
 }
