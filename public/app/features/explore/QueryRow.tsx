@@ -76,10 +76,8 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     this.props.addQueryRow(exploreId, index);
   };
 
-  onClickToggleHiddenQuery = (query: DataQuery) => {
-    const { exploreId, index } = this.props;
-    !!this.props.query.hide ? (query.hide = false) : (query.hide = true);
-    this.props.changeQuery(exploreId, query, index, true);
+  onClickClearButton = () => {
+    this.onChange(null, true);
   };
 
   onClickHintFix = (action: QueryFixAction) => {
@@ -165,7 +163,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
           )}
         </div>
         <div className="query-row-status">
-          <QueryStatus queryResponse={queryResponse} latency={this.props.query.hide ? 0 : latency} />
+          <QueryStatus queryResponse={queryResponse} latency={latency} />
         </div>
         <div className="gf-form-inline flex-shrink-0">
           {canToggleEditorModes && (
@@ -176,11 +174,8 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
             </div>
           )}
           <div className="gf-form">
-            <button
-              className="gf-form-label gf-form-label--btn"
-              onClick={() => this.onClickToggleHiddenQuery(this.props.query)}
-            >
-              <i className={`${!!this.props.query.hide ? 'fa fa-eye-slash' : 'fa fa-eye'}`} />
+            <button className="gf-form-label gf-form-label--btn" onClick={this.onClickClearButton}>
+              <i className="fa fa-times" />
             </button>
           </div>
           <div className="gf-form">
