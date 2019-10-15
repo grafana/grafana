@@ -45,7 +45,7 @@ func InterpolateURL(anURL *url.URL, route *plugins.AppPluginRoute, orgID int64, 
 			if err == nil {
 				result, err = url.Parse(interpolatedResult)
 				if err != nil {
-					return nil, fmt.Errorf("Error parsing plugin route url %v", err)
+					return nil, fmt.Errorf("error parsing plugin route url %v", err)
 				}
 			}
 		}
@@ -87,7 +87,7 @@ func enforceRequestedEsIndex(proxy *DataSourceProxy) error {
 	}
 	err = json.Unmarshal([]byte(jsonPart), &requestIndex)
 	if err != nil {
-		return fmt.Errorf("Unable to unmarshall JSON request body : %s", err.Error())
+		return fmt.Errorf("unable to unmarshall JSON request body : %s", err.Error())
 	}
 	var found = false
 	switch requestIndex.Names.(type) {
@@ -108,10 +108,10 @@ func enforceRequestedEsIndex(proxy *DataSourceProxy) error {
 			}
 		}
 	default:
-		return fmt.Errorf("Unable to get type of the index: %+v", requestIndex.Names)
+		return fmt.Errorf("unable to get type of the index: %+v", requestIndex.Names)
 	}
 	if !found {
-		return fmt.Errorf("The index requested '%v' is not present in the datasources.\n", requestIndex.Names)
+		return fmt.Errorf("the index requested '%v' is not present in the datasources", requestIndex.Names)
 	}
 	return nil
 }
