@@ -184,7 +184,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
             <QueryField
               additionalPlugins={this.plugins}
               cleanText={cleanText}
-              initialQuery={query.expr}
+              query={query.expr}
               onTypeahead={this.onTypeahead}
               onWillApplySuggestion={willApplySuggestion}
               onChange={this.onChangeQuery}
