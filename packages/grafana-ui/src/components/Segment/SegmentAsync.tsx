@@ -14,6 +14,7 @@ export function SegmentAsync<T>({
   loadOptions,
   Component,
   className,
+  allowCustomValue,
 }: React.PropsWithChildren<SegmentAsyncProps<T>>) {
   const [selectPlaceholder, setSelectPlaceholder] = useState<string>('');
   const [loadedOptions, setLoadedOptions] = useState<Array<SelectableValue<T>>>([]);
@@ -38,6 +39,7 @@ export function SegmentAsync<T>({
       width={width}
       options={loadedOptions}
       noOptionsMessage={selectPlaceholder}
+      allowCustomValue={allowCustomValue}
       onClickOutside={() => {
         setSelectPlaceholder('');
         setLoadedOptions([]);
