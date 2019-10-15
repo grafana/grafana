@@ -346,7 +346,8 @@ func TestMiddlewareContext(t *testing.T) {
 				})
 
 				key := fmt.Sprintf(cachePrefix, base32.StdEncoding.EncodeToString([]byte(name+"-"+group)))
-				sc.remoteCacheService.Set(key, int64(33), 0)
+				err := sc.remoteCacheService.Set(key, int64(33), 0)
+				So(err, ShouldBeNil)
 				sc.fakeReq("GET", "/")
 
 				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
