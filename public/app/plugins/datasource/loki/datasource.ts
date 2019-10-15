@@ -30,7 +30,7 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
 import { LiveTarget, LiveStreams } from './live_streams';
-import { Observable, from, merge } from 'rxjs';
+import { Observable, from, merge, of } from 'rxjs';
 import { map, filter } from 'rxjs/operators';
 
 export const DEFAULT_MAX_LINES = 1000;
@@ -221,6 +221,14 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         }
         return this.runQuery(options, target);
       });
+
+    // No valid targets, return the empty result to save a round trip.
+    if (_.isEmpty(subQueries)) {
+      return of({
+        data: [],
+        state: LoadingState.Done,
+      });
+    }
 
     return merge(...subQueries);
   }
