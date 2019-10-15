@@ -48,7 +48,11 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
     });
   };
 
-  onDisplayOptionsChanged = (fieldOptions: FieldDisplayOptions, callback?: () => void) =>
+  onDisplayOptionsChanged = (
+    fieldOptions: FieldDisplayOptions,
+    event?: React.SyntheticEvent<HTMLElement>,
+    callback?: () => void
+  ) =>
     this.props.onOptionsChange(
       {
         ...this.props.options,
@@ -57,12 +61,13 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
       callback
     );
 
-  onDefaultsChange = (field: FieldConfig, callback?: () => void) => {
+  onDefaultsChange = (field: FieldConfig, event?: React.SyntheticEvent<HTMLElement>, callback?: () => void) => {
     this.onDisplayOptionsChanged(
       {
         ...this.props.options.fieldOptions,
         defaults: field,
       },
+      event,
       callback
     );
   };
@@ -73,6 +78,7 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
         ...this.props.options.fieldOptions.defaults,
         links,
       },
+      undefined,
       callback
     );
   };
