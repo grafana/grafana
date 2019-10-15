@@ -14,7 +14,7 @@ import (
 
 // DashboardService service for operating on dashboards
 type DashboardService interface {
-	SaveDashboard(dto *SaveDashboardDTO, preventSavingProvisionedDashboard bool) (*models.Dashboard, error)
+	SaveDashboard(dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
 	ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
 	DeleteDashboard(dashboardId int64, orgId int64) error
 }
@@ -78,7 +78,7 @@ func (dr *dashboardServiceImpl) GetProvisionedDashboardDataByDashboardId(dashboa
 	return cmd.Result, nil
 }
 
-func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO, validateAlerts bool, allowUiUpdate bool) (*models.SaveDashboardCommand, error) {
+func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO, validateAlerts bool, validateProvisionedDashboard bool) (*models.SaveDashboardCommand, error) {
 	dash := dto.Dashboard
 
 	dash.Title = strings.TrimSpace(dash.Title)
@@ -135,7 +135,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 		}
 	}
 
-	if !allowUiUpdate {
+	if validateProvisionedDashboard {
 		provisionedData, err := dr.GetProvisionedDashboardDataByDashboardId(dash.Id)
 		if err != nil {
 			return nil, err
@@ -189,7 +189,7 @@ func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO, 
 		OrgId:   dto.OrgId,
 	}
 
-	cmd, err := dr.buildSaveDashboardCommand(dto, true, allowUiUpdates)
+	cmd, err := dr.buildSaveDashboardCommand(dto, true, !allowUiUpdates)
 	if err != nil {
 		return nil, err
 	}
@@ -239,7 +239,7 @@ func (dr *dashboardServiceImpl) SaveFolderForProvisionedDashboards(dto *SaveDash
 
 func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error) {
 
-	cmd, err := dr.buildSaveDashboardCommand(dto, true, allowUiUpdate)
+	cmd, err := dr.buildSaveDashboardCommand(dto, true, !allowUiUpdate)
 	if err != nil {
 		return nil, err
 	}
