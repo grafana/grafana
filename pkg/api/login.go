@@ -85,6 +85,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 				cookie := http.Cookie{
 					Name:   "redirect_to",
 					Value:  "",
+					HttpOnly: true,
 					Path:   setting.AppSubUrl + "/",
 					Secure: setting.CookieSecure,
 					MaxAge: -1,
@@ -95,6 +96,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 			cookie := http.Cookie{
 				Name:   "redirect_to",
 				Value:  "",
+				HttpOnly: true,
 				Path:   setting.AppSubUrl + "/",
 				Secure: setting.CookieSecure,
 				MaxAge: -1,

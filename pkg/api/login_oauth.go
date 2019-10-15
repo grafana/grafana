@@ -218,11 +218,12 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 
 	if redirectTo, _ := url.QueryUnescape(ctx.GetCookie("redirect_to")); len(redirectTo) > 0 {
 		cookie := http.Cookie{
-			Name:   "redirect_to",
-			Value:  "",
-			Path:   setting.AppSubUrl + "/",
-			Secure: setting.CookieSecure,
-			MaxAge: -1,
+			Name:     "redirect_to",
+			Value:    "",
+			HttpOnly: true,
+			Path:     setting.AppSubUrl + "/",
+			Secure:   setting.CookieSecure,
+			MaxAge:   -1,
 		}
 		http.SetCookie(ctx.Resp, &cookie)
 		ctx.Redirect(redirectTo)
