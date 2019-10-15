@@ -2,10 +2,9 @@ import React from 'react';
 import { KeyValue } from '@grafana/data';
 import { css, cx } from 'emotion';
 import { Tooltip } from '..';
-import { CertificationTextArea } from './CertificationTextArea';
+import { CertificationKey } from './CertificationKey';
 import { HttpSettingsBaseProps } from './types';
 
-// TODO: Refactor forms below to a reusable Cert component
 export const TLSAuthSettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceConfig, onChange }) => {
   const hasTLSCACert = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsCACert;
   const hasTLSClientCert = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsClientCert;
@@ -54,78 +53,32 @@ export const TLSAuthSettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceCon
       </div>
       <div>
         {dataSourceConfig.jsonData.tlsAuthWithCACert && (
-          <div className="gf-form-inline">
-            <div className="gf-form gf-form--v-stretch">
-              <label className="gf-form-label width-7">CA Cert</label>
-            </div>
-            {!hasTLSCACert && (
-              <div className="gf-form gf-form--grow">
-                <CertificationTextArea
-                  value={dataSourceConfig.secureJsonData.tlsCACert}
-                  onChange={onCertificateChangeFactory('tlsCACert')}
-                  placeholder="Begins with -----BEGIN CERTIFICATE-----"
-                />
-              </div>
-            )}
-
-            {hasTLSCACert && (
-              <div className="gf-form">
-                <input type="text" className="gf-form-input max-width-12" disabled value="configured" />
-                <a className="btn btn-secondary gf-form-btn" onClick={onResetClickFactory('tlsCACert')}>
-                  reset
-                </a>
-              </div>
-            )}
-          </div>
+          <CertificationKey
+            hasCert={!!hasTLSCACert}
+            onChange={onCertificateChangeFactory('tlsCACert')}
+            placeholder="Begins with -----BEGIN CERTIFICATE-----"
+            label="CA Cert"
+            onClick={onResetClickFactory('tlsCACert')}
+          />
         )}
 
         {dataSourceConfig.jsonData.tlsAuth && (
           <>
-            <div className="gf-form-inline">
-              <div className="gf-form gf-form--v-stretch">
-                <label className="gf-form-label width-7">Client Cert</label>
-              </div>
-              {!hasTLSClientCert && (
-                <div className="gf-form gf-form--grow">
-                  <CertificationTextArea
-                    value={dataSourceConfig.secureJsonData.tlsClientCert}
-                    onChange={onCertificateChangeFactory('tlsClientCert')}
-                    placeholder="Begins with -----BEGIN CERTIFICATE-----"
-                  />
-                </div>
-              )}
-              {hasTLSClientCert && (
-                <div className="gf-form">
-                  <input type="text" className="gf-form-input max-width-12" disabled value="configured" />
-                  <a className="btn btn-secondary gf-form-btn" onClick={onResetClickFactory('tlsClientCert')}>
-                    reset
-                  </a>
-                </div>
-              )}
-            </div>
+            <CertificationKey
+              hasCert={!!hasTLSClientCert}
+              label="Client Cert"
+              onChange={onCertificateChangeFactory('tlsClientCert')}
+              placeholder="Begins with -----BEGIN CERTIFICATE-----"
+              onClick={onResetClickFactory('tlsClientCert')}
+            />
 
-            <div className="gf-form-inline">
-              <div className="gf-form gf-form--v-stretch">
-                <label className="gf-form-label width-7">Client Key</label>
-              </div>
-              {!hasTLSClientKey && (
-                <div className="gf-form gf-form--grow">
-                  <CertificationTextArea
-                    value={dataSourceConfig.secureJsonData.tlsClientKey}
-                    placeholder="Begins with -----BEGIN RSA PRIVATE KEY-----"
-                    onChange={onCertificateChangeFactory('tlsClientKey')}
-                  />
-                </div>
-              )}
-              {hasTLSClientKey && (
-                <div className="gf-form">
-                  <input type="text" className="gf-form-input max-width-12" disabled value="configured" />
-                  <a className="btn btn-secondary gf-form-btn" onClick={onResetClickFactory('tlsClientKey')}>
-                    reset
-                  </a>
-                </div>
-              )}
-            </div>
+            <CertificationKey
+              hasCert={!!hasTLSClientKey}
+              label="Client Key"
+              placeholder="Begins with -----BEGIN RSA PRIVATE KEY-----"
+              onChange={onCertificateChangeFactory('tlsClientKey')}
+              onClick={onResetClickFactory('tlsClientKey')}
+            />
           </>
         )}
       </div>
