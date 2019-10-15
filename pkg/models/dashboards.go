@@ -32,6 +32,7 @@ var (
 	ErrDashboardUidToLong                        = errors.New("uid to long. max 40 characters")
 	ErrDashboardCannotSaveProvisionedDashboard   = errors.New("Cannot save provisioned dashboard")
 	ErrDashboardCannotDeleteProvisionedDashboard = errors.New("provisioned dashboard cannot be deleted")
+	ErrDashboardProvisioningVersionMismatch      = errors.New("provisioned dashboard version is lower then an already existing dashboard")
 	RootFolderName                               = "General"
 )
 
@@ -270,10 +271,11 @@ type DeleteDashboardCommand struct {
 }
 
 type ValidateDashboardBeforeSaveCommand struct {
-	OrgId     int64
-	Dashboard *Dashboard
-	Overwrite bool
-	Result    *ValidateDashboardBeforeSaveResult
+	OrgId                int64
+	Dashboard            *Dashboard
+	Overwrite            bool
+	Result               *ValidateDashboardBeforeSaveResult
+	EnforceHigherVersion bool
 }
 
 //

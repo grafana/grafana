@@ -566,6 +566,12 @@ func getExistingDashboardByIdOrUidForUpdate(sess *DBSession, cmd *models.Validat
 		cmd.Result.IsParentFolderChanged = true
 	}
 
+	if cmd.EnforceHigherVersion {
+		if dash.Version < existing.Version {
+			return models.ErrDashboardProvisioningVersionMismatch
+		}
+	}
+
 	// check for is someone else has written in between
 	if dash.Version != existing.Version {
 		if cmd.Overwrite {

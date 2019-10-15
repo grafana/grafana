@@ -232,15 +232,14 @@ func (hs *HTTPServer) PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand)
 	allowUiUpdate := hs.ProvisioningService.GetAllowUiUpdatesFromConfig(provisioningData.Name)
 
 	dashItem := &dashboards.SaveDashboardDTO{
-		Dashboard:                       dash,
-		Message:                         cmd.Message,
-		OrgId:                           c.OrgId,
-		User:                            c.SignedInUser,
-		Overwrite:                       cmd.Overwrite,
-		AllowSavingProvisionedDashboard: allowUiUpdate,
+		Dashboard: dash,
+		Message:   cmd.Message,
+		OrgId:     c.OrgId,
+		User:      c.SignedInUser,
+		Overwrite: cmd.Overwrite,
 	}
 
-	dashboard, err := dashboards.NewService().SaveDashboard(dashItem)
+	dashboard, err := dashboards.NewService().SaveDashboard(dashItem, allowUiUpdate)
 
 	if err == m.ErrDashboardTitleEmpty ||
 		err == m.ErrDashboardWithSameNameAsFolder ||
