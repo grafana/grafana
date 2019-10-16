@@ -1,6 +1,7 @@
 import React, { PureComponent, SyntheticEvent, ChangeEvent } from 'react';
 import { Tooltip } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { AppEvents } from '@grafana/data';
 
 interface Props {
   onSubmit: (pw: string) => void;
@@ -42,7 +43,7 @@ export class ChangePassword extends PureComponent<Props, State> {
     if (valid) {
       this.props.onSubmit(newPassword);
     } else {
-      appEvents.emit('alert-warning', ['New passwords do not match', '']);
+      appEvents.emit(AppEvents.alertWarning, ['New passwords do not match']);
     }
   };
 

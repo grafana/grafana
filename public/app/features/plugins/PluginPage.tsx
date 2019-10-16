@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import find from 'lodash/find';
 // Types
 import { UrlQueryMap } from '@grafana/runtime';
-import { AppNotificationSeverity, StoreState } from 'app/types';
+import { StoreState, AppNotificationSeverity, CoreEvents } from 'app/types';
 import {
   Alert,
   AppPlugin,
@@ -173,7 +173,7 @@ class PluginPage extends PureComponent<Props, State> {
   }
 
   showUpdateInfo = () => {
-    appEvents.emit('show-modal', {
+    appEvents.emit(CoreEvents.showModal, {
       src: 'public/app/features/plugins/partials/update_instructions.html',
       model: this.state.plugin.meta,
     });
