@@ -81,7 +81,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   componentWillUnmount() {
     this.props.panel.events.off(PanelEvents.refresh, this.onRefresh);
-    this.props.panel.events.off('render', this.onRender);
+    this.props.panel.events.off(PanelEvents.render, this.onRender);
 
     if (this.querySubscription) {
       this.querySubscription.unsubscribe();
