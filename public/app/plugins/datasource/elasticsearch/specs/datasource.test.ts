@@ -14,7 +14,7 @@ describe('ElasticDatasource', function(this: any) {
     datasourceRequest: jest.fn(),
   };
 
-  const $rootScope: any = {
+  const $rootScope = {
     $on: jest.fn(),
     appEvent: jest.fn(),
   };
