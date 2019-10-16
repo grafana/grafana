@@ -84,8 +84,8 @@ if echo "$EXTRA_OPTS" | grep -vq enterprise ; then
   go run build.go -goos linux -pkg-arch armv6 ${OPT} -skipRpm package-only
   go run build.go -goos linux -pkg-arch armv7 ${OPT} package-only
   go run build.go -goos linux -pkg-arch arm64 ${OPT} package-only
-  go run build.go -goos linux -pkg-arch armv7 -libc musl ${OPT} -skip-rpm -skip-deb package-only
-  go run build.go -goos linux -pkg-arch arm64 -libc musl ${OPT} -skip-rpm -skip-deb package-only
+  go run build.go -goos linux -pkg-arch armv7 -libc musl ${OPT} -skipRpm -skipDeb package-only
+  go run build.go -goos linux -pkg-arch arm64 -libc musl ${OPT} -skipRpm -skipDeb package-only
 
   if [ -d '/tmp/phantomjs/darwin' ]; then
     cp /tmp/phantomjs/darwin/phantomjs tools/phantomjs/phantomjs
