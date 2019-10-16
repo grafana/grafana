@@ -3,86 +3,123 @@ package cloudwatch
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/grafana/grafana/pkg/models"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestQueryBuilder(t *testing.T) {
-	Convey("QueryBuilder", t, func() {
-		Convey("using new dimensions structure", func() {
-			query := simplejson.NewFromAny(map[string]interface{}{
-				"refId":      "ref1",
-				"region":     "us-east-1",
-				"namespace":  "ec2",
-				"metricName": "CPUUtilization",
-				"id":         "",
-				"expression": "",
-				"dimensions": map[string]interface{}{
-					"InstanceId":   []interface{}{"test"},
-					"InstanceType": []interface{}{"test2", "test3"},
-				},
-				"statistics":     []interface{}{"Average", "Sum"},
-				"period":         "600",
-				"hide":           false,
-				"highResolution": false,
+func TestCloudWatchQueryBuilder(t *testing.T) {
+	Convey("TestCloudWatchQueryBuilder", t, func() {
+		e := &CloudWatchExecutor{
+			DataSource: &models.DataSource{
+				JsonData: simplejson.New(),
+			},
+		}
+
+		Convey("building GetMetricDataInputs", func() {
+			Convey("and one GetMetricDataInput is generated for each query statistic", func() {
+				dimensions := make(map[string][]string)
+				dimensions["InstanceId"] = []string{"i-12345678"}
+				query := &CloudWatchQuery{
+					RefId:      "A",
+					Region:     "us-east-1",
+					Namespace:  "AWS/EC2",
+					MetricName: "CPUUtilization",
+					Dimensions: dimensions,
+					Statistics: []*string{aws.String("Average"), aws.String("Sum")},
+					Period:     300,
+					Id:         "id1",
+					Identifier: "id1",
+					Expression: "",
+				}
+
+				res, err := e.buildMetricDataQueries(query)
+				So(err, ShouldBeNil)
+				So(len(res), ShouldEqual, 1)
+				So(*res[0].Id, ShouldEqual, "id1_____0")
+				So(*res[1].Id, ShouldEqual, "id1_____1")
 			})
 
-			res, err := parseQuery(query, "ref1")
-			So(err, ShouldBeNil)
-			So(res.Region, ShouldEqual, "us-east-1")
-			So(res.RefId, ShouldEqual, "ref1")
-			So(res.Namespace, ShouldEqual, "ec2")
-			So(res.MetricName, ShouldEqual, "CPUUtilization")
-			So(res.Id, ShouldEqual, "")
-			So(res.Expression, ShouldEqual, "")
-			So(res.Period, ShouldEqual, 600)
-			So(res.ReturnData, ShouldEqual, true)
-			So(res.HighResolution, ShouldEqual, false)
-			So(len(res.Dimensions), ShouldEqual, 2)
-			So(len(res.Dimensions["InstanceId"]), ShouldEqual, 1)
-			So(len(res.Dimensions["InstanceType"]), ShouldEqual, 2)
-			So(res.Dimensions["InstanceType"][1], ShouldEqual, "test3")
-			So(len(res.Statistics), ShouldEqual, 2)
-			So(*res.Statistics[1], ShouldEqual, "Sum")
-			So(res.Identifier, ShouldNotBeEmpty)
-		})
+			Convey("and query expression will be used if it was set in query editor", func() {
+				query := &CloudWatchQuery{
+					RefId:      "A",
+					Region:     "us-east-1",
+					Expression: "SEARCH(someexpression)",
+					Statistics: []*string{aws.String("Average")},
+					Period:     300,
+					Id:         "id1",
+					Identifier: "id1",
+				}
 
-		Convey("using old dimensions structure (backwards compatibility)", func() {
-			query := simplejson.NewFromAny(map[string]interface{}{
-				"refId":      "ref1",
-				"region":     "us-east-1",
-				"namespace":  "ec2",
-				"metricName": "CPUUtilization",
-				"id":         "",
-				"expression": "",
-				"dimensions": map[string]interface{}{
-					"InstanceId":   "test",
-					"InstanceType": "test2",
-				},
-				"statistics":     []interface{}{"Average", "Sum"},
-				"period":         "600",
-				"hide":           false,
-				"highResolution": false,
+				res, err := e.buildMetricDataQueries(query)
+				So(err, ShouldBeNil)
+				So(len(res), ShouldEqual, 1)
+				So(*res[0].Expression, ShouldEqual, "SEARCH(someexpression)")
 			})
 
-			res, err := parseQuery(query, "ref1")
-			So(err, ShouldBeNil)
-			So(res.Region, ShouldEqual, "us-east-1")
-			So(res.RefId, ShouldEqual, "ref1")
-			So(res.Namespace, ShouldEqual, "ec2")
-			So(res.MetricName, ShouldEqual, "CPUUtilization")
-			So(res.Id, ShouldEqual, "")
-			So(res.Expression, ShouldEqual, "")
-			So(res.Period, ShouldEqual, 600)
-			So(res.ReturnData, ShouldEqual, true)
-			So(res.HighResolution, ShouldEqual, false)
-			So(len(res.Dimensions), ShouldEqual, 2)
-			So(len(res.Dimensions["InstanceId"]), ShouldEqual, 1)
-			So(len(res.Dimensions["InstanceType"]), ShouldEqual, 1)
-			So(res.Dimensions["InstanceType"][0], ShouldEqual, "test2")
-			So(len(res.Statistics), ShouldEqual, 2)
-			So(*res.Statistics[1], ShouldEqual, "Sum")
-			So(res.Identifier, ShouldNotBeEmpty)
+			Convey("and query expression is being generated server side", func() {
+				Convey("and query has three dimension values for a given dimension key", func() {
+					dimensions := make(map[string][]string)
+					dimensions["LoadBalancer"] = []string{"lb1", "lb2", "lb3"}
+					query := &CloudWatchQuery{
+						Namespace:  "AWS/EC2",
+						MetricName: "CPUUtilization",
+						Dimensions: dimensions,
+						Statistics: []*string{aws.String("Average")},
+						Period:     300,
+						Identifier: "id1",
+						Expression: "",
+					}
+
+					res, err := e.buildMetricDataQueries(query)
+					So(err, ShouldBeNil)
+					So(len(res), ShouldEqual, 1)
+					So(len(res), ShouldEqual, 1)
+					So(*res[0].Expression, ShouldEqual, "SEARCH('{AWS/EC2,LoadBalancer} MetricName=\"CPUUtilization\" LoadBalancer=(\"lb1\" OR \"lb2\" OR \"lb3\")', 'Average', 300)")
+				})
+
+				Convey("and query has three dimension values for two given dimension keys", func() {
+					dimensions := make(map[string][]string)
+					dimensions["InstanceId"] = []string{"i-123", "i-456", "i-789"}
+					dimensions["LoadBalancer"] = []string{"lb1", "lb2", "lb3"}
+					query := &CloudWatchQuery{
+						Namespace:  "AWS/EC2",
+						MetricName: "CPUUtilization",
+						Dimensions: dimensions,
+						Statistics: []*string{aws.String("Average")},
+						Period:     300,
+						Identifier: "id1",
+						Expression: "",
+					}
+
+					res, err := e.buildMetricDataQueries(query)
+					So(err, ShouldBeNil)
+					So(len(res), ShouldEqual, 1)
+					So(*res[0].Expression, ShouldEqual, "SEARCH('{AWS/EC2,LoadBalancer,InstanceId} MetricName=\"CPUUtilization\" LoadBalancer=(\"lb1\" OR \"lb2\" OR \"lb3\") AND InstanceId=(\"i-123\" OR \"i-456\" OR \"i-789\")', 'Average', 300)")
+				})
+
+				Convey("and no AND/OR operators were added if a star was used for dimension value", func() {
+					dimensions := make(map[string][]string)
+					dimensions["LoadBalancer"] = []string{"*"}
+					query := &CloudWatchQuery{
+						Namespace:  "AWS/EC2",
+						MetricName: "CPUUtilization",
+						Dimensions: dimensions,
+						Statistics: []*string{aws.String("Average")},
+						Period:     300,
+						Identifier: "id1",
+						Expression: "",
+					}
+
+					res, err := e.buildMetricDataQueries(query)
+					So(err, ShouldBeNil)
+					So(len(res), ShouldEqual, 1)
+					So(*res[0].Expression, ShouldNotContainSubstring, "AND")
+					So(*res[0].Expression, ShouldNotContainSubstring, "OR")
+				})
+			})
 		})
 	})
 }

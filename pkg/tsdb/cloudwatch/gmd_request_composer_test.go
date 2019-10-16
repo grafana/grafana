@@ -1,7 +1,6 @@
 package cloudwatch
 
 import (
-	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -11,25 +10,25 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestCloudWatch(t *testing.T) {
-	Convey("CloudWatch", t, func() {
+func TestCloudWatchGMDRequestComposer(t *testing.T) {
+	Convey("TestCloudWatchGMDRequestComposer", t, func() {
+		e := &CloudWatchExecutor{
+			DataSource: &models.DataSource{
+				JsonData: simplejson.New(),
+			},
+		}
 
-		Convey("executeQuery", func() {
-			e := &CloudWatchExecutor{
-				DataSource: &models.DataSource{
-					JsonData: simplejson.New(),
-				},
-			}
-
+		Convey("Time range is valid", func() {
 			Convey("End time before start time should result in error", func() {
-				_, err := e.executeQuery(context.Background(), "", make(map[string]*CloudWatchQuery), &tsdb.TsdbQuery{TimeRange: tsdb.NewTimeRange("now-1h", "now-2h")})
+				_, err := e.buildGetMetricDataQueries(&tsdb.TsdbQuery{TimeRange: tsdb.NewTimeRange("now-1h", "now-2h")}, []*CloudWatchQuery{})
 				So(err.Error(), ShouldEqual, "Invalid time range: Start time must be before end time")
 			})
 
 			Convey("End time equals start time should result in error", func() {
-				_, err := e.executeQuery(context.Background(), "", make(map[string]*CloudWatchQuery), &tsdb.TsdbQuery{TimeRange: tsdb.NewTimeRange("now-1h", "now-1h")})
+				_, err := e.buildGetMetricDataQueries(&tsdb.TsdbQuery{TimeRange: tsdb.NewTimeRange("now-1h", "now-1h")}, []*CloudWatchQuery{})
 				So(err.Error(), ShouldEqual, "Invalid time range: Start time must be before end time")
 			})
 		})
 	})
+
 }
