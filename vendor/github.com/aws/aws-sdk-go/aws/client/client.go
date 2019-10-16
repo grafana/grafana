@@ -64,7 +64,7 @@ func New(cfg aws.Config, info metadata.ClientInfo, handlers request.Handlers, op
 	default:
 		maxRetries := aws.IntValue(cfg.MaxRetries)
 		if cfg.MaxRetries == nil || maxRetries == aws.UseServiceDefaultRetries {
-			maxRetries = 3
+			maxRetries = DefaultRetryerMaxNumRetries
 		}
 		svc.Retryer = DefaultRetryer{NumMaxRetries: maxRetries}
 	}

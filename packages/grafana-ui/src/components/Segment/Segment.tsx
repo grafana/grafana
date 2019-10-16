@@ -13,6 +13,7 @@ export function Segment<T>({
   onChange,
   Component,
   className,
+  allowCustomValue,
 }: React.PropsWithChildren<SegmentSyncProps<T>>) {
   const [Label, width, expanded, setExpanded] = useExpandableLabel(false);
 
@@ -25,6 +26,7 @@ export function Segment<T>({
       width={width}
       options={options}
       onClickOutside={() => setExpanded(false)}
+      allowCustomValue={allowCustomValue}
       onChange={value => {
         setExpanded(false);
         onChange(value);
