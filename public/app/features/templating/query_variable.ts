@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Variable, containsVariable, assignModelProperties, variableTypes } from './variable';
+import { assignModelProperties, containsVariable, SEARCH_FILTER_VARIABLE, Variable, variableTypes } from './variable';
 import { stringToJsRegex } from '@grafana/data';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { TemplateSrv } from './template_srv';
@@ -62,6 +62,7 @@ export class QueryVariable implements Variable {
   ) {
     // copy model properties to this instance
     assignModelProperties(this, model, this.defaults);
+    this.updateOptionsFromMetricFindQuery.bind(this);
   }
 
   getSaveModel() {
@@ -91,10 +92,10 @@ export class QueryVariable implements Variable {
     return this.current.value;
   }
 
-  updateOptions() {
+  updateOptions(searchFilter?: string) {
     return this.datasourceSrv
       .get(this.datasource)
-      .then(this.updateOptionsFromMetricFindQuery.bind(this))
+      .then(ds => this.updateOptionsFromMetricFindQuery(ds, searchFilter))
       .then(this.updateTags.bind(this))
       .then(this.variableSrv.validateVariableSelectionState.bind(this.variableSrv, this));
   }
@@ -126,8 +127,10 @@ export class QueryVariable implements Variable {
     });
   }
 
-  updateOptionsFromMetricFindQuery(datasource: any) {
-    return this.metricFindQuery(datasource, this.query).then((results: any) => {
+  updateOptionsFromMetricFindQuery(datasource: any, searchFilter?: string) {
+    const filter = searchFilter ? `${searchFilter}*` : '*';
+    const query = this.query.replace(SEARCH_FILTER_VARIABLE, filter);
+    return this.metricFindQuery(datasource, query).then((results: any) => {
       this.options = this.metricNamesToVariableValues(results);
       if (this.includeAll) {
         this.addAllOption();

@@ -1,7 +1,8 @@
-import angular from 'angular';
+import angular, { IScope } from 'angular';
 import _ from 'lodash';
 import coreModule from '../core_module';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { containsSearchFilter } from '../../features/templating/variable';
 
 export class ValueSelectDropdownCtrl {
   dropdownVisible: any;
@@ -19,7 +20,7 @@ export class ValueSelectDropdownCtrl {
   onUpdated: any;
 
   /** @ngInject */
-  constructor(private $q: any) {}
+  constructor(private $q: any, private $scope: IScope) {}
 
   show() {
     this.oldVariableText = this.variable.current.text;
@@ -230,7 +231,13 @@ export class ValueSelectDropdownCtrl {
     }
   }
 
-  queryChanged() {
+  async queryChanged() {
+    if (containsSearchFilter(this.variable)) {
+      const options = await this.lazyLoadOptions(this.search.query);
+      this.refreshLazyOptions(this.$scope, options);
+      return;
+    }
+
     this.highlightIndex = -1;
     this.search.options = _.filter(this.options, option => {
       return option.text.toLowerCase().indexOf(this.search.query.toLowerCase()) !== -1;
@@ -242,6 +249,18 @@ export class ValueSelectDropdownCtrl {
   init() {
     this.selectedTags = this.variable.current.tags || [];
     this.updateLinkText();
+  }
+
+  async lazyLoadOptions(query: string): Promise<any[]> {
+    await this.variable.updateOptions(query);
+    return this.variable.options;
+  }
+
+  refreshLazyOptions($scope: IScope, options: any[]) {
+    this.highlightIndex = -1;
+    this.options = options;
+    this.search.options = options.slice(0, Math.min(options.length, 1000));
+    $scope.$apply();
   }
 }
 

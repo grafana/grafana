@@ -15,9 +15,13 @@ export const variableRegexExec = (variableString: string) => {
   return variableRegex.exec(variableString);
 };
 
+export const SEARCH_FILTER_VARIABLE = '$__searchFilter';
+export const containsSearchFilter = (variable: any): boolean =>
+  variable && variable.query ? variable.query.indexOf(SEARCH_FILTER_VARIABLE) !== -1 : false;
+
 export interface Variable {
   setValue(option: any): any;
-  updateOptions(): any;
+  updateOptions(searchFilter?: string): any;
   dependsOn(variable: any): any;
   setValueFromUrl(urlValue: any): any;
   getValueForUrl(): any;
