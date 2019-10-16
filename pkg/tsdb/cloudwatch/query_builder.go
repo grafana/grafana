@@ -22,7 +22,6 @@ func (e *CloudWatchExecutor) buildMetricDataQueries(query *CloudWatchQuery) ([]*
 		} else {
 
 			shouldBuildSearchExpression := false
-			hasStar := false
 			for _, values := range query.Dimensions {
 				if len(values) > 1 {
 					shouldBuildSearchExpression = true
@@ -31,34 +30,13 @@ func (e *CloudWatchExecutor) buildMetricDataQueries(query *CloudWatchQuery) ([]*
 				for _, v := range values {
 					if v == "*" {
 						shouldBuildSearchExpression = true
-						hasStar = true
 						break
 					}
 				}
 			}
 
 			if shouldBuildSearchExpression {
-				counter := 1
-				dimensionKeys := ""
-				searchTerm := fmt.Sprintf("MetricName=\"%v\" ", query.MetricName)
-				for key, values := range query.Dimensions {
-					dimensionKeys += fmt.Sprintf(",%s", key)
-					if !hasStar {
-						searchTerm += fmt.Sprintf("%s=(", key)
-						for i, value := range values {
-							searchTerm += fmt.Sprintf("\"%s\"", value)
-							if len(values) > 1 && i+1 != len(values) {
-								searchTerm += " OR "
-							}
-						}
-						searchTerm += ")"
-						if len(query.Dimensions) > 1 && counter != len(query.Dimensions) {
-							searchTerm += " AND "
-						}
-					}
-					counter++
-				}
-				searchExpression := fmt.Sprintf("SEARCH('{%s%s} %s', '%s', %s)", query.Namespace, dimensionKeys, searchTerm, *stat, strconv.Itoa(query.Period))
+				searchExpression := buildSearchExpression(query, *stat)
 				query.SearchExpressions = append(query.SearchExpressions, searchExpression)
 				mdq.Expression = aws.String(searchExpression)
 			} else {
@@ -82,4 +60,37 @@ func (e *CloudWatchExecutor) buildMetricDataQueries(query *CloudWatchQuery) ([]*
 		metridDataQueries = append(metridDataQueries, mdq)
 	}
 	return metridDataQueries, nil
+}
+
+func buildSearchExpression(query *CloudWatchQuery, stat string) string {
+	counter := 1
+	dimensionKeys := ""
+	searchTerm := fmt.Sprintf("MetricName=\"%v\" ", query.MetricName)
+	for key, values := range query.Dimensions {
+		dimensionKeys += fmt.Sprintf(",%s", key)
+		hasStar := false
+		keySearchTerm := fmt.Sprintf("%s=(", key)
+		for i, value := range values {
+			keySearchTerm += fmt.Sprintf("\"%s\"", value)
+			if len(values) > 1 && i+1 != len(values) {
+				keySearchTerm += " OR "
+			}
+			if value == "*" {
+				hasStar = true
+				break
+			}
+		}
+		keySearchTerm += ")"
+		if len(query.Dimensions) > 1 && counter != 1 && !hasStar {
+			keySearchTerm = fmt.Sprintf(" AND %s", keySearchTerm)
+		}
+
+		if !hasStar {
+			searchTerm += keySearchTerm
+		}
+
+		counter++
+	}
+	searchExpression := fmt.Sprintf("SEARCH('{%s%s} %s', '%s', %s)", query.Namespace, dimensionKeys, searchTerm, stat, strconv.Itoa(query.Period))
+	return searchExpression
 }
