@@ -14,7 +14,7 @@ exports[`TimeSyncButton should render component 1`] = `
       placement="bottom"
     >
       <button
-        aria-label="synced-times"
+        aria-label="Synced times"
         className="btn navbar-button navbar-button--attached css-14r9fpj-timePickerSynced"
         onClick={[Function]}
         onMouseEnter={[Function]}
