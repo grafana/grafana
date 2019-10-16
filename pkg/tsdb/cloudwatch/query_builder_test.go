@@ -18,7 +18,7 @@ func TestCloudWatchQueryBuilder(t *testing.T) {
 			},
 		}
 
-		Convey("building GetMetricDataInputs", func() {
+		Convey("building GetMetricDataQueries", func() {
 			Convey("and one GetMetricDataInput is generated for each query statistic", func() {
 				dimensions := make(map[string][]string)
 				dimensions["InstanceId"] = []string{"i-12345678"}
@@ -37,7 +37,7 @@ func TestCloudWatchQueryBuilder(t *testing.T) {
 
 				res, err := e.buildMetricDataQueries(query)
 				So(err, ShouldBeNil)
-				So(len(res), ShouldEqual, 1)
+				So(len(res), ShouldEqual, 2)
 				So(*res[0].Id, ShouldEqual, "id1_____0")
 				So(*res[1].Id, ShouldEqual, "id1_____1")
 			})
@@ -57,6 +57,51 @@ func TestCloudWatchQueryBuilder(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(len(res), ShouldEqual, 1)
 				So(*res[0].Expression, ShouldEqual, "SEARCH(someexpression)")
+			})
+
+			Convey("and metric stat", func() {
+				Convey("will be used when expression is not set in the client and not more than one dimension value is used for on specific key and a star is not being used as dimension value", func() {
+					dimensions := make(map[string][]string)
+					dimensions["InstanceId"] = []string{"i-12345678"}
+					query := &CloudWatchQuery{
+						RefId:      "A",
+						Region:     "us-east-1",
+						Expression: "",
+						Statistics: []*string{aws.String("Average")},
+						Period:     300,
+						Id:         "id1",
+						Identifier: "id1",
+						Dimensions: dimensions,
+					}
+
+					res, err := e.buildMetricDataQueries(query)
+					So(err, ShouldBeNil)
+					So(len(res), ShouldEqual, 1)
+					So(res[0].Expression, ShouldBeNil)
+					So(res[0].MetricStat, ShouldNotBeNil)
+				})
+
+				Convey("will be not used when expression is set in the client", func() {
+					dimensions := make(map[string][]string)
+					dimensions["InstanceId"] = []string{"i-12345678"}
+					query := &CloudWatchQuery{
+						RefId:      "A",
+						Region:     "us-east-1",
+						Expression: "SEARCH(",
+						Statistics: []*string{aws.String("Average")},
+						Period:     300,
+						Id:         "id1",
+						Identifier: "id1",
+						Dimensions: dimensions,
+					}
+
+					res, err := e.buildMetricDataQueries(query)
+					So(err, ShouldBeNil)
+					So(len(res), ShouldEqual, 1)
+					So(res[0].Expression, ShouldNotBeNil)
+					So(res[0].MetricStat, ShouldBeNil)
+				})
+
 			})
 
 			Convey("and query expression is being generated server side", func() {
@@ -82,8 +127,8 @@ func TestCloudWatchQueryBuilder(t *testing.T) {
 
 				Convey("and query has three dimension values for two given dimension keys", func() {
 					dimensions := make(map[string][]string)
-					dimensions["InstanceId"] = []string{"i-123", "i-456", "i-789"}
 					dimensions["LoadBalancer"] = []string{"lb1", "lb2", "lb3"}
+					dimensions["InstanceId"] = []string{"i-123", "i-456", "i-789"}
 					query := &CloudWatchQuery{
 						Namespace:  "AWS/EC2",
 						MetricName: "CPUUtilization",
