@@ -1,11 +1,32 @@
+import { ScopedVars } from './ScopedVars';
+
+/**
+ * Callback info for DataLink click events
+ */
+export interface DataLinkClickEvent<T = any> {
+  origin: T;
+  scopedVars: ScopedVars;
+  e?: any; // mouse/react event?
+}
+
 /**
  * Link configuration.  The values may contain variables that need to be
  * processed before running
  */
 export interface DataLink {
-  url: string;
   title: string;
   targetBlank?: boolean;
+
+  // 3: The URL if others did not set it first
+  url: string;
+
+  // 2: If exists, use this to construct the URL
+  // Not saved in JSON/DTO
+  onBuildHref?: (event: DataLinkClickEvent) => string;
+
+  // 1: If exists, handle click directly
+  // Not saved in JSON/DTO
+  onClick?: (event: DataLinkClickEvent) => void;
 }
 
 export type LinkTarget = '_blank' | '_self';
@@ -18,6 +39,10 @@ export interface LinkModel<T> {
   title: string;
   target: LinkTarget;
   origin: T;
+
+  // If exists, call this when clicked
+  // with context it is: React.MouseEvent<HTMLAnchorElement>
+  onClick?: (e: any) => void;
 }
 
 /**

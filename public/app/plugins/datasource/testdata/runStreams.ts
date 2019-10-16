@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 
 import { DataQueryRequest, DataQueryResponse } from '@grafana/ui';
 
-import { FieldType, CircularDataFrame, CSVReader, Field, LoadingState } from '@grafana/data';
+import { FieldType, CircularDataFrame, CSVReader, Field, LoadingState, DataLink } from '@grafana/data';
 
 import { TestDataQuery, StreamingQuery } from './types';
 import { getRandomLine } from './LogIpsum';
@@ -39,21 +39,53 @@ export function runSignalStream(
     const streamId = `signal-${req.panelId}-${target.refId}`;
     const maxDataPoints = req.maxDataPoints || 1000;
 
+    // title: string;
+    // targetBlank?: boolean;
+
+    // // 3: The URL if others did not set it first
+    // url: string;
+
+    // // 2: If exists, use this to construct the URL
+    // // Not saved in JSON/DTO
+    // onBuildHref?: (event: DataLinkClickEvent) => string;
+
+    // // 1: If exists, handle click directly
+    // // Not saved in JSON/DTO
+    // onClick?: (event: DataLinkClickEvent) => void;
+
+    const onBuildHref: DataLink[] = [
+      {
+        title: 'HREF From DataSource callback',
+        onBuildHref: (event: DataLinkClickEvent) => {
+          console.log('BUILD HREF', event);
+          return '/STREAM/XXX';
+        },
+      },
+    ];
+    const onClick = [
+      {
+        title: 'HREF From DataSource callback',
+        onClick: (event: DataLinkClickEvent) => {
+          console.log('CLICK CLICK', event);
+        },
+      },
+    ];
+
     const data = new CircularDataFrame({
       append: 'tail',
       capacity: maxDataPoints,
     });
     data.refId = target.refId;
     data.name = target.alias || 'Signal ' + target.refId;
-    data.addField({ name: 'time', type: FieldType.time });
-    data.addField({ name: 'value', type: FieldType.number });
+    data.addField({ name: 'time', type: FieldType.time }).config.links = onBuildHref;
+    data.addField({ name: 'value', type: FieldType.number }).config.links = onBuildHref;
 
     const { spread, speed, bands, noise } = query;
 
     for (let i = 0; i < bands; i++) {
       const suffix = bands > 1 ? ` ${i + 1}` : '';
-      data.addField({ name: 'Min' + suffix, type: FieldType.number });
-      data.addField({ name: 'Max' + suffix, type: FieldType.number });
+      data.addField({ name: 'Min' + suffix, type: FieldType.number }).config.links = onClick;
+      data.addField({ name: 'Max' + suffix, type: FieldType.number }).config.links = onClick;
     }
 
     let value = Math.random() * 100;

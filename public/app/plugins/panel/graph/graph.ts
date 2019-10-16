@@ -200,6 +200,8 @@ class GraphElement {
         },
       ];
 
+      console.log('getContextMenuItemsSupplier', linksSupplier);
+
       if (!linksSupplier) {
         return items;
       }
@@ -246,18 +248,22 @@ class GraphElement {
       if (item) {
         // pickup y-axis index to know which field's config to apply
         const yAxisConfig = this.panel.yaxes[item.series.yaxis.n === 2 ? 1 : 0];
-        const fieldConfig = {
-          decimals: yAxisConfig.decimals,
-          links: this.panel.options.dataLinks || [],
-        };
         const dataFrame = this.ctrl.dataList[item.series.dataFrameIndex];
         const field = dataFrame.fields[item.series.fieldIndex];
 
+        // Over
+        let links = this.panel.options.dataLinks || [];
+        if (field.config.links && field.config.links.length) {
+          links = field.config.links;
+        }
+        const fieldConfig = {
+          decimals: yAxisConfig.decimals,
+          links,
+        };
         const fieldDisplay = getDisplayProcessor({
           config: fieldConfig,
           theme: getCurrentTheme(),
         })(field.values.get(item.dataIndex));
-
         linksSupplier = this.panel.options.dataLinks
           ? getFieldLinksSupplier({
               display: fieldDisplay,

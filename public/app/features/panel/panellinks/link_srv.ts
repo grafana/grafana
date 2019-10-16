@@ -156,11 +156,32 @@ export class LinkSrv implements LinkService {
     const params: KeyValue = {};
     const timeRangeUrl = toUrlParams(this.timeSrv.timeRangeForUrl());
 
+    console.log('getDataLinkUIModel', link, scopedVars);
+
+    let href = link.url;
+    if (link.onBuildHref) {
+      href = link.onBuildHref({
+        origin,
+        scopedVars,
+      });
+    }
+    let onClick: (e: any) => void = undefined;
+    if (link.onClick) {
+      onClick = (e: any) => {
+        link.onClick({
+          origin,
+          scopedVars,
+          e,
+        });
+      };
+    }
+
     const info: LinkModel<T> = {
-      href: link.url.replace(/\s|\n/g, ''),
+      href: href.replace(/\s|\n/g, ''),
       title: this.templateSrv.replace(link.title || '', scopedVars),
       target: link.targetBlank ? '_blank' : '_self',
       origin,
+      onClick,
     };
     this.templateSrv.fillVariableValuesForUrl(params, scopedVars);
 
