@@ -1,5 +1,5 @@
 // Libraries
-import _ from 'lodash';
+import { isEmpty, isString } from 'lodash';
 // Services & Utils
 import {
   dateMath,
@@ -30,7 +30,7 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
 import { LiveTarget, LiveStreams } from './live_streams';
-import { Observable, from, merge } from 'rxjs';
+import { Observable, from, merge, of } from 'rxjs';
 import { map, filter } from 'rxjs/operators';
 
 export const DEFAULT_MAX_LINES = 1000;
@@ -222,6 +222,14 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         return this.runQuery(options, target);
       });
 
+    // No valid targets, return the empty result to save a round trip.
+    if (isEmpty(subQueries)) {
+      return of({
+        data: [],
+        state: LoadingState.Done,
+      });
+    }
+
     return merge(...subQueries);
   }
 
@@ -273,7 +281,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   getTime(date: string | DateTime, roundUp: boolean) {
-    if (_.isString(date)) {
+    if (isString(date)) {
       date = dateMath.parse(date, roundUp);
     }
     return Math.ceil(date.valueOf() * 1e6);
