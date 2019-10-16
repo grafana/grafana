@@ -168,7 +168,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
           )}
         </div>
         <div className="query-row-status">
-          <QueryStatus queryResponse={queryResponse} latency={this.props.query.hide ? 0 : latency} />
+          <QueryStatus queryResponse={queryResponse} latency={query.hide ? 0 : latency} />
         </div>
         <div className="gf-form-inline flex-shrink-0">
           {canToggleEditorModes && (
@@ -180,7 +180,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
           )}
           <div className="gf-form">
             <button className="gf-form-label gf-form-label--btn" onClick={this.onClickToggleHiddenQuery}>
-              <i className={!!this.props.query.hide ? 'fa fa-eye-slash' : 'fa fa-eye'} />
+              <i className={query.hide ? 'fa fa-eye-slash' : 'fa fa-eye'} />
             </button>
           </div>
           <div className="gf-form">
