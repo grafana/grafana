@@ -7,6 +7,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 //Types
 import { MysqlQueryForInterpolation } from './types';
+import { containsSearchFilter, SEARCH_FILTER_VARIABLE } from '../../../features/templating/variable';
 
 export class MysqlDatasource {
   id: any;
@@ -124,6 +125,18 @@ export class MysqlDatasource {
       .then((data: any) => this.responseParser.transformAnnotationResponse(options, data));
   }
 
+  interpolateSearchFilter(query: string, options: any) {
+    if (!containsSearchFilter(query)) {
+      return query;
+    }
+
+    options = options || {};
+
+    const replaceValue = options.searchFilter ? `'${options.searchFilter}%'` : "'%'";
+
+    return query.replace(SEARCH_FILTER_VARIABLE, replaceValue);
+  }
+
   metricFindQuery(query: string, optionalOptions: any) {
     let refId = 'tempvar';
     if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
@@ -133,7 +146,10 @@ export class MysqlDatasource {
     const interpolatedQuery = {
       refId: refId,
       datasourceId: this.id,
-      rawSql: this.templateSrv.replace(query, {}, this.interpolateVariable),
+      rawSql: this.interpolateSearchFilter(
+        this.templateSrv.replace(query, {}, this.interpolateVariable),
+        optionalOptions
+      ),
       format: 'table',
     };
 
