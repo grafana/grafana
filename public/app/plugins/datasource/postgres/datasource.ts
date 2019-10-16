@@ -5,6 +5,8 @@ import { IQService } from 'angular';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+//Types
+import { PostgresQueryForInterpolation } from './types';
 
 export class PostgresDatasource {
   id: any;
@@ -48,6 +50,21 @@ export class PostgresDatasource {
     });
     return quotedValues.join(',');
   };
+
+  interpolateVariablesInQueries(queries: PostgresQueryForInterpolation[]): PostgresQueryForInterpolation[] {
+    let expandedQueries = queries;
+    if (queries && queries.length > 0) {
+      expandedQueries = queries.map(query => {
+        const expandedQuery = {
+          ...query,
+          datasource: this.name,
+          rawSql: this.templateSrv.replace(query.rawSql, {}, this.interpolateVariable),
+        };
+        return expandedQuery;
+      });
+    }
+    return expandedQueries;
+  }
 
   query(options: any) {
     const queries = _.filter(options.targets, target => {

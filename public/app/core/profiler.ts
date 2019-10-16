@@ -1,10 +1,12 @@
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+
 export class Profiler {
   panelsRendered: number;
   enabled: boolean;
-  $rootScope: any;
+  $rootScope: GrafanaRootScope;
   window: any;
 
-  init(config: any, $rootScope: any) {
+  init(config: any, $rootScope: GrafanaRootScope) {
     this.$rootScope = $rootScope;
     this.window = window;
 

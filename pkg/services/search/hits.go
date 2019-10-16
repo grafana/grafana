@@ -1,7 +1,6 @@
 package search
 
 import "strings"
-import "github.com/grafana/grafana/pkg/models"
 
 type HitType string
 
@@ -41,36 +40,4 @@ func (s HitList) Less(i, j int) bool {
 	}
 
 	return strings.ToLower(s[i].Title) < strings.ToLower(s[j].Title)
-}
-
-type Query struct {
-	Title        string
-	Tags         []string
-	OrgId        int64
-	SignedInUser *models.SignedInUser
-	Limit        int64
-	Page         int64
-	IsStarred    bool
-	Type         string
-	DashboardIds []int64
-	FolderIds    []int64
-	Permission   models.PermissionType
-
-	Result HitList
-}
-
-type FindPersistedDashboardsQuery struct {
-	Title        string
-	OrgId        int64
-	SignedInUser *models.SignedInUser
-	IsStarred    bool
-	DashboardIds []int64
-	Type         string
-	FolderIds    []int64
-	Tags         []string
-	Limit        int64
-	Page         int64
-	Permission   models.PermissionType
-
-	Result HitList
 }
