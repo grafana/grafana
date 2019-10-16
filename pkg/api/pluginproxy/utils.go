@@ -106,6 +106,9 @@ func enforceRequestedEsIndex(proxy *DataSourceProxy) error {
 					break
 				}
 			}
+			if found {
+				break
+			}
 		}
 	default:
 		return fmt.Errorf("unable to get type of the index: %+v", requestIndex.Names)
