@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -81,7 +82,16 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 		Results: make(map[string]*tsdb.QueryResult),
 	}
 
-	metricQueriesByRegion, err := e.buildQueriesByRegion(queryContext)
+	metricDataInputsByRegion := make(map[string][]*cloudwatch.GetMetricDataInput, 0)
+	queriesByRegion, err := e.parseQueriesByRegion(queryContext)
+	for region, queries := range queriesByRegion {
+		metricQueries, err := e.buildGetMetricDataQueries(queryContext, queries)
+		if err != nil {
+			return results, err
+		}
+		metricDataInputsByRegion[region] = metricQueries
+	}
+
 	if err != nil {
 		if e, ok := err.(*queryBuilderError); ok {
 			results.Results[e.RefID] = &tsdb.QueryResult{
@@ -96,9 +106,9 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 	resultChan := make(chan *tsdb.QueryResult, len(queryContext.Queries))
 	eg, ectx := errgroup.WithContext(ctx)
 
-	if len(metricQueriesByRegion) > 0 {
-		for region, getMetricDataQuery := range metricQueriesByRegion {
-			q := getMetricDataQuery
+	if len(metricDataInputsByRegion) > 0 {
+		for region, metricDataQueries := range metricDataInputsByRegion {
+			queries := metricDataQueries
 			eg.Go(func() error {
 				defer func() {
 					if err := recover(); err != nil {
@@ -111,21 +121,34 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 					}
 				}()
 
-				queryResponses, err := e.executeQuery(ectx, region, q, queryContext)
-				if err != nil {
-					plog.Info("executeGetMetricDataQueryError", "", err)
-				}
-				if ae, ok := err.(awserr.Error); ok {
-					plog.Info("errorcode", "", ae.Code())
-					switch ae.Code() {
-					case "InternalFailure":
-						return err
-					case "ValidationError":
-						return err
-					case "ThrottlingException":
-						return fmt.Errorf("You've been throttled")
+				queryResponses := make([]*tsdb.QueryResult, 0)
+				metricDataResults := make([]*cloudwatch.MetricDataResult, 0)
+				for _, query := range queries {
+					res, err := e.executeRequest(ectx, region, query)
+					if err != nil {
+						plog.Info("executeGetMetricDataQueryError", "", err)
 					}
+
+					if ae, ok := err.(awserr.Error); ok {
+						plog.Info("errorcode", "", ae.Code())
+						switch ae.Code() {
+						case "InternalFailure":
+							return err
+						case "ValidationError":
+							return err
+						case "ThrottlingException":
+							return fmt.Errorf("You've been throttled")
+						}
+					}
+					metricDataResults = append(metricDataResults, res...)
+					plog.Info("res", "", res)
 				}
+
+				queryResponses, err := e.parseResponse(metricDataResults, queriesByRegion[region])
+				if err != nil {
+					return err
+				}
+
 				for _, queryRes := range queryResponses {
 					if err != nil {
 						queryRes.Error = err

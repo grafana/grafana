@@ -1,5 +1,7 @@
 package cloudwatch
 
+import "fmt"
+
 type CloudWatchQuery struct {
 	RefId              string
 	Region             string
@@ -17,4 +19,13 @@ type CloudWatchQuery struct {
 	Identifier         string
 	HighResolution     bool
 	SearchExpressions  []string
+}
+
+type queryBuilderError struct {
+	err   error
+	RefID string
+}
+
+func (e *queryBuilderError) Error() string {
+	return fmt.Sprintf("Error parsing query %s, %s", e.RefID, e.err)
 }
