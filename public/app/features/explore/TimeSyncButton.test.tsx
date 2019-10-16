@@ -14,10 +14,10 @@ describe('TimeSyncButton', () => {
   });
   it('should change style when synced', () => {
     const wrapper = setup(true);
-    expect(wrapper.find('button').hasClass('css-14r9fpj-timePickerSynced')).toEqual(true);
+    expect(wrapper.find('button').props()['aria-label']).toEqual('synced-times');
   });
   it('should not change style when not synced', () => {
     const wrapper = setup(false);
-    expect(wrapper.find('button').hasClass('css-14r9fpj-timePickerSynced')).toEqual(false);
+    expect(wrapper.find('button').props()['aria-label']).toEqual('unsynced-times');
   });
 });
