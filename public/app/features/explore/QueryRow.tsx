@@ -76,10 +76,13 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     this.props.addQueryRow(exploreId, index);
   };
 
-  onClickToggleHiddenQuery = (query: DataQuery) => {
-    const { exploreId, index } = this.props;
-    !!this.props.query.hide ? (query.hide = false) : (query.hide = true);
-    this.props.changeQuery(exploreId, query, index, true);
+  onClickToggleHiddenQuery = () => {
+    const { exploreId, index, query } = this.props;
+    const newQuery = {
+      ...query,
+      hide: !query.hide,
+    };
+    this.props.changeQuery(exploreId, newQuery, index, true);
   };
 
   onClickHintFix = (action: QueryFixAction) => {
@@ -176,11 +179,8 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
             </div>
           )}
           <div className="gf-form">
-            <button
-              className="gf-form-label gf-form-label--btn"
-              onClick={() => this.onClickToggleHiddenQuery(this.props.query)}
-            >
-              <i className={`${!!this.props.query.hide ? 'fa fa-eye-slash' : 'fa fa-eye'}`} />
+            <button className="gf-form-label gf-form-label--btn" onClick={this.onClickToggleHiddenQuery}>
+              <i className={!!this.props.query.hide ? 'fa fa-eye-slash' : 'fa fa-eye'} />
             </button>
           </div>
           <div className="gf-form">
