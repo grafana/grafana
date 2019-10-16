@@ -65,6 +65,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
         unit: timeSeries.unit,
       },
       values: new ArrayVector<TimeSeriesValue>(),
+      labels: timeSeries.tags,
     },
     {
       name: 'Time',
@@ -83,7 +84,6 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
 
   return {
     name: timeSeries.target,
-    labels: timeSeries.tags,
     refId: timeSeries.refId,
     meta: timeSeries.meta,
     fields,
@@ -132,6 +132,7 @@ function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
     {
       name: timeSeries.target,
       type: FieldType.other,
+      labels: timeSeries.tags,
       config: {
         unit: timeSeries.unit,
         filterable: (timeSeries as any).filterable,
@@ -146,7 +147,6 @@ function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
 
   return {
     name: timeSeries.target,
-    labels: timeSeries.tags,
     refId: timeSeries.target,
     meta: { json: true },
     fields,
@@ -445,6 +445,7 @@ export function toDataFrameDTO(data: DataFrame): DataFrameDTO {
       type: f.type,
       config: f.config,
       values: f.values.toArray(),
+      labels: f.labels,
     };
   });
 
@@ -453,6 +454,5 @@ export function toDataFrameDTO(data: DataFrame): DataFrameDTO {
     refId: data.refId,
     meta: data.meta,
     name: data.name,
-    labels: data.labels,
   };
 }
