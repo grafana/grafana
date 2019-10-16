@@ -215,7 +215,7 @@ class QueryField extends React.Component<any, any> {
     );
   };
 
-  handleBlur = () => {
+  handleBlur = (event: Event, editor: CoreEditor, next: Function) => {
     const { onBlur } = this.props;
     // If we dont wait here, menu clicks wont work because the menu
     // will be gone.
@@ -224,15 +224,17 @@ class QueryField extends React.Component<any, any> {
       onBlur();
     }
     this.restoreEscapeKeyBinding();
+    return next();
   };
 
-  handleFocus = () => {
+  handleFocus = (event: Event, editor: CoreEditor, next: Function) => {
     const { onFocus } = this.props;
     if (onFocus) {
       onFocus();
     }
     // Don't go back to dashboard if Escape pressed inside the editor.
     this.removeEscapeKeyBinding();
+    return next();
   };
 
   removeEscapeKeyBinding() {
