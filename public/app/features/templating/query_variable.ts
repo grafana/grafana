@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { assignModelProperties, containsVariable, SEARCH_FILTER_VARIABLE, Variable, variableTypes } from './variable';
+import { assignModelProperties, containsVariable, Variable, variableTypes } from './variable';
 import { stringToJsRegex } from '@grafana/data';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { TemplateSrv } from './template_srv';
@@ -128,9 +128,7 @@ export class QueryVariable implements Variable {
   }
 
   updateOptionsFromMetricFindQuery(datasource: any, searchFilter?: string) {
-    const filter = searchFilter ? `${searchFilter}*` : '*';
-    const query = this.query.replace(SEARCH_FILTER_VARIABLE, filter);
-    return this.metricFindQuery(datasource, query).then((results: any) => {
+    return this.metricFindQuery(datasource, this.query, searchFilter).then((results: any) => {
       this.options = this.metricNamesToVariableValues(results);
       if (this.includeAll) {
         this.addAllOption();
@@ -142,8 +140,8 @@ export class QueryVariable implements Variable {
     });
   }
 
-  metricFindQuery(datasource: any, query: string) {
-    const options: any = { range: undefined, variable: this };
+  metricFindQuery(datasource: any, query: string, searchFilter?: string) {
+    const options: any = { range: undefined, variable: this, searchFilter };
 
     if (this.refresh === 2) {
       options.range = this.timeSrv.timeRange();

@@ -5,9 +5,9 @@ import gfunc from './gfunc';
 import { IQService } from 'angular';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-
 //Types
 import { GraphiteQuery } from './types';
+import { containsSearchFilter, SEARCH_FILTER_VARIABLE } from '../../../features/templating/variable';
 
 export class GraphiteDatasource {
   basicAuth: string;
@@ -249,9 +249,21 @@ export class GraphiteDatasource {
     return date.unix();
   }
 
+  interpolateSearchFilter(query: string, options: any) {
+    if (!containsSearchFilter(query)) {
+      return query;
+    }
+
+    options = options || {};
+
+    const replaceValue = options.searchFilter ? `${options.searchFilter}*` : '*';
+
+    return query.replace(SEARCH_FILTER_VARIABLE, replaceValue);
+  }
+
   metricFindQuery(query: string, optionalOptions: any) {
     const options: any = optionalOptions || {};
-    const interpolatedQuery = this.templateSrv.replace(query);
+    const interpolatedQuery = this.interpolateSearchFilter(this.templateSrv.replace(query), optionalOptions);
 
     // special handling for tag_values(<tag>[,<expression>]*), this is used for template variables
     let matches = interpolatedQuery.match(/^tag_values\(([^,]+)((, *[^,]+)*)\)$/);

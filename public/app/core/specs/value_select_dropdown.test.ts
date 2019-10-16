@@ -3,7 +3,6 @@ import { ValueSelectDropdownCtrl } from '../directives/value_select_dropdown';
 // @ts-ignore
 import q from 'q';
 import { IScope } from 'angular';
-import { SEARCH_FILTER_VARIABLE } from '../../features/templating/variable';
 
 describe('SelectDropdownCtrl', () => {
   const tagValuesMap: any = {};
@@ -174,12 +173,10 @@ describe('queryChanged', () => {
       ];
       ctrl.lazyLoadOptions = jest.fn().mockResolvedValue(options);
       ctrl.refreshLazyOptions = jest.fn();
-      ctrl.variable = {
-        query: `$server.${SEARCH_FILTER_VARIABLE}`,
-      };
       ctrl.search = {
         query: 'alpha',
       };
+      ctrl.queryHasSearchFilter = true;
 
       await ctrl.queryChanged();
 
@@ -196,12 +193,10 @@ describe('queryChanged', () => {
       const ctrl = new ValueSelectDropdownCtrl(q, $scope);
       ctrl.lazyLoadOptions = jest.fn().mockResolvedValue([]);
       ctrl.refreshLazyOptions = jest.fn();
-      ctrl.variable = {
-        query: `$server.alpha`,
-      };
       ctrl.search = {
         query: 'alpha',
       };
+      ctrl.queryHasSearchFilter = false;
 
       await ctrl.queryChanged();
 

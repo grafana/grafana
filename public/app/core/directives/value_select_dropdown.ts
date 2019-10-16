@@ -18,9 +18,12 @@ export class ValueSelectDropdownCtrl {
 
   hide: any;
   onUpdated: any;
+  queryHasSearchFilter: boolean;
 
   /** @ngInject */
-  constructor(private $q: any, private $scope: IScope) {}
+  constructor(private $q: any, private $scope: IScope) {
+    this.queryHasSearchFilter = this.variable ? containsSearchFilter(this.variable.query) : false;
+  }
 
   show() {
     this.oldVariableText = this.variable.current.text;
@@ -39,8 +42,12 @@ export class ValueSelectDropdownCtrl {
       return tag;
     });
 
+    // new behaviour, if this is a query that uses searchfilter it might be a nicer
+    // user experience to show the last typed search query in the input field
+    const query = this.queryHasSearchFilter && this.search && this.search.query ? this.search.query : '';
+
     this.search = {
-      query: '',
+      query,
       options: this.options.slice(0, Math.min(this.options.length, 1000)),
     };
 
@@ -129,11 +136,11 @@ export class ValueSelectDropdownCtrl {
       if (this.search.options.length === 0) {
         this.commitChanges();
       } else {
-        this.selectValue(this.search.options[this.highlightIndex], {}, true, false);
+        this.selectValue(this.search.options[this.highlightIndex], {}, true);
       }
     }
     if (evt.keyCode === 32) {
-      this.selectValue(this.search.options[this.highlightIndex], {}, false, false);
+      this.selectValue(this.search.options[this.highlightIndex], {}, false);
     }
   }
 
@@ -141,7 +148,7 @@ export class ValueSelectDropdownCtrl {
     this.highlightIndex = (this.highlightIndex + direction) % this.search.options.length;
   }
 
-  selectValue(option: any, event: any, commitChange?: boolean, excludeOthers?: boolean) {
+  selectValue(option: any, event: any, commitChange?: boolean) {
     if (!option) {
       return;
     }
@@ -149,7 +156,6 @@ export class ValueSelectDropdownCtrl {
     option.selected = this.variable.multi ? !option.selected : true;
 
     commitChange = commitChange || false;
-    excludeOthers = excludeOthers || false;
 
     const setAllExceptCurrentTo = (newValue: any) => {
       _.each(this.options, other => {
@@ -164,7 +170,9 @@ export class ValueSelectDropdownCtrl {
       option.selected = true;
     }
 
-    if (option.text === 'All' || excludeOthers) {
+    if (option.text === 'All') {
+      // always clear search query if all is marked
+      this.search.query = '';
       setAllExceptCurrentTo(false);
       commitChange = true;
     } else if (!this.variable.multi) {
@@ -225,6 +233,9 @@ export class ValueSelectDropdownCtrl {
 
     this.dropdownVisible = false;
     this.updateLinkText();
+    if (this.queryHasSearchFilter) {
+      this.updateLazyLoadedOptions();
+    }
 
     if (this.variable.current.text !== this.oldVariableText) {
       this.onUpdated();
@@ -232,9 +243,8 @@ export class ValueSelectDropdownCtrl {
   }
 
   async queryChanged() {
-    if (containsSearchFilter(this.variable)) {
-      const options = await this.lazyLoadOptions(this.search.query);
-      this.refreshLazyOptions(this.$scope, options);
+    if (this.queryHasSearchFilter) {
+      await this.updateLazyLoadedOptions();
       return;
     }
 
@@ -249,6 +259,11 @@ export class ValueSelectDropdownCtrl {
   init() {
     this.selectedTags = this.variable.current.tags || [];
     this.updateLinkText();
+  }
+
+  async updateLazyLoadedOptions() {
+    const options = await this.lazyLoadOptions(this.search.query);
+    this.refreshLazyOptions(this.$scope, options);
   }
 
   async lazyLoadOptions(query: string): Promise<any[]> {

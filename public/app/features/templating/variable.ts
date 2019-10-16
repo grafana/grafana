@@ -16,8 +16,8 @@ export const variableRegexExec = (variableString: string) => {
 };
 
 export const SEARCH_FILTER_VARIABLE = '$__searchFilter';
-export const containsSearchFilter = (variable: any): boolean =>
-  variable && variable.query ? variable.query.indexOf(SEARCH_FILTER_VARIABLE) !== -1 : false;
+export const containsSearchFilter = (query: string): boolean =>
+  query ? query.indexOf(SEARCH_FILTER_VARIABLE) !== -1 : false;
 
 export interface Variable {
   setValue(option: any): any;
