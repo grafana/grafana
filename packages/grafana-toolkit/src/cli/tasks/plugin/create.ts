@@ -24,12 +24,15 @@ interface PluginDetails {
 type PluginType = 'angular-panel' | 'react-panel' | 'datasource-plugin';
 
 const RepositoriesPaths = {
-  'angular-panel': 'git@github.com:grafana/simple-angular-panel.git',
-  'react-panel': 'git@github.com:grafana/simple-react-panel.git',
-  'datasource-plugin': 'git@github.com:grafana/simple-datasource.git',
+  'angular-panel': 'https://github.com/grafana/simple-angular-panel.git',
+  'react-panel': 'https://github.com/grafana/simple-react-panel.git',
+  'datasource-plugin': 'https://github.com/grafana/simple-datasource.git',
 };
 
-export const getGitUsername = async () => await simpleGit.raw(['config', '--global', 'user.name']);
+export const getGitUsername = async () => {
+  const name = await simpleGit.raw(['config', '--global', 'user.name']);
+  return name || '';
+};
 export const getPluginIdFromName = (name: string) => kebabCase(name);
 export const getPluginId = (pluginDetails: PluginDetails) =>
   `${kebabCase(pluginDetails.org)}-${getPluginIdFromName(pluginDetails.name)}`;
