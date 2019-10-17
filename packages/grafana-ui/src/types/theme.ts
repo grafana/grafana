@@ -61,6 +61,20 @@ export interface GrafanaThemeCommons {
     lg: string;
     xl: string;
     gutter: string;
+
+    // Next-gen forms spacing variables
+    // TODO: Move variables definition to respective components when implementing
+    formMargin: string;
+    formFieldsetMargin: string;
+    formLegendMargin: string;
+    formInputHeight: string;
+    formInputPaddingHorizontal: string;
+    // Used for icons do define spacing between icon and input field
+    // Applied on the right(prefix) or left(suffix)
+    formInputAffixPaddingHorizontal: string;
+    formInputMargin: string;
+    formLabelPadding: string;
+    formLabelMargin: string;
   };
   border: {
     radius: {
