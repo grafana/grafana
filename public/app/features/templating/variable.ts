@@ -19,6 +19,29 @@ export const SEARCH_FILTER_VARIABLE = '$__searchFilter';
 export const containsSearchFilter = (query: string): boolean =>
   query ? query.indexOf(SEARCH_FILTER_VARIABLE) !== -1 : false;
 
+export interface InterpolateSearchFilterOptions {
+  query: string;
+  options: any;
+  wildcharChar: string;
+  quoteLiteral: boolean;
+}
+
+export const interpolateSearchFilter = (args: InterpolateSearchFilterOptions): string => {
+  const { query, wildcharChar, quoteLiteral } = args;
+  let { options } = args;
+
+  if (!containsSearchFilter(query)) {
+    return query;
+  }
+
+  options = options || {};
+
+  const filter = options.searchFilter ? `${options.searchFilter}${wildcharChar}` : `${wildcharChar}`;
+  const replaceValue = quoteLiteral ? `'${filter}'` : filter;
+
+  return query.replace(SEARCH_FILTER_VARIABLE, replaceValue);
+};
+
 export interface Variable {
   setValue(option: any): any;
   updateOptions(searchFilter?: string): any;

@@ -121,7 +121,7 @@ describe('MySQLDatasource', () => {
     });
   });
 
-  describe('When performing metricFindQuery with $__searchFilter', () => {
+  describe('When performing metricFindQuery with $__searchFilter and a searchFilter is given', () => {
     let results: any;
     let calledWith: any = {};
     const query = 'select title from atable where title LIKE $__searchFilter';
@@ -159,7 +159,7 @@ describe('MySQLDatasource', () => {
     });
   });
 
-  describe('When performing metricFindQuery with $__searchFilter but no searchfilter is given', () => {
+  describe('When performing metricFindQuery with $__searchFilter but no searchFilter is given', () => {
     let results: any;
     let calledWith: any = {};
     const query = 'select title from atable where title LIKE $__searchFilter';
