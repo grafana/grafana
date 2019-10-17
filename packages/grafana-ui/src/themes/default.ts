@@ -21,6 +21,8 @@ export const commonColorsPalette = {
   red88: '#e02f44',
 };
 
+const SPACING_BASE = 8;
+
 const theme: GrafanaThemeCommons = {
   name: 'Grafana Default',
   typography: {
@@ -77,6 +79,22 @@ const theme: GrafanaThemeCommons = {
     lg: '24px',
     xl: '32px',
     gutter: '30px',
+
+    // Next-gen forms spacing variables
+    // TODO: Move variables definition to respective components when implementing
+    formMargin: `${SPACING_BASE * 4}px`,
+    formFieldsetMargin: `${SPACING_BASE * 2}px`,
+    formLegendMargin: `${SPACING_BASE * 2}px`,
+    formInputHeight: `${SPACING_BASE * 4}px`,
+    formInputPaddingHorizontal: `${SPACING_BASE}px`,
+
+    // Used for icons do define spacing between icon and input field
+    // Applied on the right(prefix) or left(suffix)
+    formInputAffixPaddingHorizontal: `${SPACING_BASE / 2}px`,
+
+    formInputMargin: `${SPACING_BASE * 2}px`,
+    formLabelPadding: '0 0 0 2px',
+    formLabelMargin: '0 0 4px 0',
   },
   border: {
     radius: {
