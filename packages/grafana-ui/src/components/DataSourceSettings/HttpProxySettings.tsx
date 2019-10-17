@@ -9,14 +9,14 @@ export const HttpProxySettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceC
         <Switch
           label="TLS Client Auth"
           labelClass="width-13"
-          checked={dataSourceConfig.jsonData.tlsAuth}
+          checked={dataSourceConfig.jsonData.tlsAuth || false}
           onChange={event => onChange({ ...dataSourceConfig.jsonData, tlsAuth: event!.currentTarget.checked })}
         />
 
         <Switch
           label="With CA Cert"
           labelClass="width-13"
-          checked={dataSourceConfig.jsonData.tlsAuthWithCACert}
+          checked={dataSourceConfig.jsonData.tlsAuthWithCACert || false}
           onChange={event =>
             onChange({ ...dataSourceConfig.jsonData, tlsAuthWithCACert: event!.currentTarget.checked })
           }
@@ -27,7 +27,7 @@ export const HttpProxySettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceC
         <Switch
           label="Skip TLS Verify"
           labelClass="width-13"
-          checked={dataSourceConfig.jsonData.tlsSkipVerify}
+          checked={dataSourceConfig.jsonData.tlsSkipVerify || false}
           onChange={event => onChange({ ...dataSourceConfig.jsonData, tlsSkipVerify: event!.currentTarget.checked })}
         />
       </div>
@@ -35,7 +35,7 @@ export const HttpProxySettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceC
         <Switch
           label="Forward OAuth Identity"
           labelClass="width-13"
-          checked={dataSourceConfig.jsonData.oauthPassThru}
+          checked={dataSourceConfig.jsonData.oauthPassThru || false}
           onChange={event => onChange({ ...dataSourceConfig.jsonData, oauthPassThru: event!.currentTarget.checked })}
           tooltip="Forward the user's upstream OAuth identity to the data source (Their access token gets passed along)."
         />
