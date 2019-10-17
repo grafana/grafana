@@ -61,6 +61,20 @@ export interface GrafanaThemeCommons {
     lg: string;
     xl: string;
     gutter: string;
+
+    // Next-gen forms spacing variables
+    // TODO: Move variables definition to respective components when implementing
+    formMargin: string;
+    formFieldsetMargin: string;
+    formLegendMargin: string;
+    formInputHeight: string;
+    formInputPaddingHorizontal: string;
+    // Used for icons do define spacing between icon and input field
+    // Applied on the right(prefix) or left(suffix)
+    formInputAffixPaddingHorizontal: string;
+    formInputMargin: string;
+    formLabelPadding: string;
+    formLabelMargin: string;
   };
   border: {
     radius: {
@@ -120,6 +134,26 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     gray5: string;
     gray6: string;
     gray7: string;
+
+    // New greys palette used by next-gen form elements
+    gray98: string;
+    gray95: string;
+    gray85: string;
+    gray70: string;
+    gray33: string;
+    gray25: string;
+    gray15: string;
+    gray10: string;
+    gray05: string;
+
+    // New blues palette used by next-gen form elements
+    blue95: string;
+    blue85: string;
+    blue77: string;
+
+    // New reds palette used by next-gen form elements
+    red88: string;
+
     grayBlue: string;
     inputBlack: string;
 
@@ -174,6 +208,23 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     headingColor: string;
 
     pageHeaderBorder: string;
+
+    // Next-gen forms functional colors
+    formLabel: string;
+    formDescription: string;
+    formLegend: string;
+    formInputBg: string;
+    formInputBgDisabled: string;
+    formInputBorder: string;
+    formInputBorderHover: string;
+    formInputBorderActive: string;
+    formInputBorderInvalid: string;
+    formInputFocusOutline: string;
+    formInputText: string;
+    formInputTextStrong: string;
+    formInputTextWhite: string;
+    formValidationMessageText: string;
+    formValidationMessageBg: string;
   };
   shadow: {
     pageHeader: string;

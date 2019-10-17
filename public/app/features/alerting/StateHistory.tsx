@@ -3,6 +3,7 @@ import alertDef from './state/alertDef';
 import { getBackendSrv } from '@grafana/runtime';
 import { DashboardModel } from '../dashboard/state/DashboardModel';
 import appEvents from '../../core/app_events';
+import { CoreEvents } from 'app/types';
 
 interface Props {
   dashboard: DashboardModel;
@@ -42,7 +43,7 @@ class StateHistory extends PureComponent<Props, State> {
   clearHistory = () => {
     const { dashboard, onRefresh, panelId } = this.props;
 
-    appEvents.emit('confirm-modal', {
+    appEvents.emit(CoreEvents.showConfirmModal, {
       title: 'Delete Alert History',
       text: 'Are you sure you want to remove all history & annotations for this alert?',
       icon: 'fa-trash',
