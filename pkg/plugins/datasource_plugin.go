@@ -35,7 +35,7 @@ type DataSourcePlugin struct {
 
 	Backend    bool   `json:"backend,omitempty"`
 	Executable string `json:"executable,omitempty"`
-	Version    int    `json:"version,omitempty"`
+	SDK        bool   `json:"sdk,omitempty"`
 
 	log    log.Logger
 	client *plugin.Client
@@ -77,7 +77,8 @@ func (p *DataSourcePlugin) startBackendPlugin(ctx context.Context, log log.Logge
 }
 func (p *DataSourcePlugin) isVersionOne() bool {
 	// if version is empty (which defaults to 0) or explicitly set to one
-	return p.Version == 0 || p.Version == 1
+	p.log.Debug(fmt.Sprintf(">>>> SDK: %v", p.SDK))
+	return !p.SDK
 }
 
 func (p *DataSourcePlugin) spawnSubProcess() error {
@@ -97,7 +98,7 @@ func (p *DataSourcePlugin) spawnSubProcess() error {
 	} else {
 		newClient = plugin.NewClient(&plugin.ClientConfig{
 			HandshakeConfig:  handshakeConfig,
-			Plugins:          map[string]plugin.Plugin{p.Id: &sdk.DatasourcePlugin{}},
+			Plugins:          map[string]plugin.Plugin{p.Id: &sdk.DatasourcePluginImpl{}},
 			Cmd:              exec.Command(fullpath),
 			AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
 			Logger:           LogWrapper{Logger: p.log},
@@ -122,7 +123,28 @@ func (p *DataSourcePlugin) spawnSubProcess() error {
 		tsdb.RegisterTsdbQueryEndpoint(p.Id, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 			return wrapper.NewDatasourcePluginWrapper(p.log, plugin), nil
 		})
+		return nil
 	}
+
+	// What goes here?
+	// A client of some sort??
+	// What do we need? Interface Query() signature  method?
+	// Export the GRPC client from the SDK?
+
+	plugin, ok := raw.(sdk.DatasourcePlugin)
+	if !ok {
+		return fmt.Errorf("unxpected type %T, expeced sdk.DatasourcePlugin", raw)
+	}
+
+	tsdb.RegisterTsdbQueryEndpoint(p.Id, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+		return wrapper.NewDatasourcePluginWrapperV2(p.log, plugin), nil
+	})
+
+	// Now we need to register this somewhere?
+	// trans.RegisterTransformEndPoint ... ?
+	// Different type of wrapper that uses sdk instead of plugin-model?
+
+	// and then have an HTTP endpoint API to register to?
 
 	return nil
 }
