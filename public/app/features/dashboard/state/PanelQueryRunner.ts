@@ -46,8 +46,6 @@ export class PanelQueryRunner {
   private transformations?: DataTransformerConfig[];
   private lastResult?: PanelData;
 
-  lastRequest?: DataQueryRequest;
-
   constructor() {
     this.subject = new ReplaySubject(1);
   }
@@ -146,7 +144,6 @@ export class PanelQueryRunner {
       request.intervalMs = norm.intervalMs;
       console.log('to', request.range.to.valueOf());
 
-      this.lastRequest = request;
       this.pipeToSubject(runRequest(ds, request));
     } catch (err) {
       console.log('PanelQueryRunner Error', err);
