@@ -165,6 +165,23 @@ Option | Description
 *Regex* | Regex to filter or capture specific parts of the names return by your data source query. Optional.
 *Sort* | Define sort order for options in dropdown. **Disabled** means that the order of options returned by your data source query will be used.
 
+#### Using `$__searchFilter` to filter query results
+> Only supported for Graphite, MySQL and Postgres data sources
+
+Using `$__searchFilter` in the query field will filter the query result based on what the user types in the dropdown select box
+
+Examples of how to use `$__searchFilter` as part of the query
+
+Graphite:
+```bash
+server.$__searchFilter
+```
+
+MySQL:
+```bash
+SELECT server FROM servers WHERE server LIKE $__searchFilter
+```
+
 #### Using regex to filter/modify values in the Variable dropdown
 
 Using the Regex Query Option, you filter the list of options returned by the Variable query or modify the options returned.
