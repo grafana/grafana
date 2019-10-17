@@ -155,7 +155,7 @@ func TestDashboardService(t *testing.T) {
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
-				_, err := service.SaveProvisionedDashboard(dto, nil, false)
+				_, err := service.SaveProvisionedDashboard(dto, nil, true)
 				So(err, ShouldBeNil)
 				So(provisioningValidated, ShouldBeFalse)
 			})

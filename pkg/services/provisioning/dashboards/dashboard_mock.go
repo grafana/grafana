@@ -39,7 +39,7 @@ func (dpm *DashboardProvisionerMock) PollChanges(ctx context.Context) {
 }
 
 func (dpm *DashboardProvisionerMock) GetProvisionerResolvedPath(name string) string {
-	dpm.Calls.PollChanges = append(dpm.Calls.GetProvisionerResolvedPath, name)
+	dpm.Calls.GetProvisionerResolvedPath = append(dpm.Calls.GetProvisionerResolvedPath, name)
 	if dpm.GetProvisionerResolvedPathFunc != nil {
 		return dpm.GetProvisionerResolvedPathFunc(name)
 	}
@@ -47,7 +47,7 @@ func (dpm *DashboardProvisionerMock) GetProvisionerResolvedPath(name string) str
 }
 
 func (dpm *DashboardProvisionerMock) GetAllowUiUpdatesFromConfig(name string) bool {
-	dpm.Calls.PollChanges = append(dpm.Calls.GetAllowUiUpdatesFromConfig, name)
+	dpm.Calls.GetAllowUiUpdatesFromConfig = append(dpm.Calls.GetAllowUiUpdatesFromConfig, name)
 	if dpm.GetAllowUiUpdatesFromConfigFunc != nil {
 		return dpm.GetAllowUiUpdatesFromConfigFunc(name)
 	}
