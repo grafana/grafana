@@ -6,7 +6,7 @@ This documents guides you through the process of contributing to the Grafana doc
 
 If you’re unsure about where to start, check out some of our [open docs issues](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3Atype%2Fdocs).
 
-Sometimes it can be difficult to understand an issue when you're just getting started. Check out the [beginner-friendly issues](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3Atype%2Fdocs+label%3A"beginner+friendly") for tasks suitable for first-time contributors.
+Sometimes it can be difficult to understand an issue when you're just getting started. Refer to this list of [beginner-friendly issues](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3Atype%2Fdocs+label%3A"beginner+friendly") for tasks suitable for first-time contributors.
 
 When you’ve found an issue you want to work on, please comment on the issue to let other people know you intend to work on it.
 
