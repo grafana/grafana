@@ -32,10 +32,6 @@ func (e *CloudWatchQuery) isUserDefinedSearchExpression() bool {
 }
 
 func (e *CloudWatchQuery) isInferredSearchExpression() bool {
-	if len(e.Statistics) > 1 {
-		return false
-	}
-
 	for _, values := range e.Dimensions {
 		if len(values) > 1 {
 			return true

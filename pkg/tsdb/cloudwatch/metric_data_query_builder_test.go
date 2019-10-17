@@ -4,19 +4,17 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/grafana/grafana/pkg/models"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestCloudWatchQueryBuilder(t *testing.T) {
-	Convey("TestCloudWatchQueryBuilder", t, func() {
-		e := &CloudWatchExecutor{
-			DataSource: &models.DataSource{
-				JsonData: simplejson.New(),
-			},
-		}
+func TestMetricDataQueryBuilder(t *testing.T) {
+	Convey("TestMetricDataQueryBuilder", t, func() {
+		const (
+			maxNoOfSearchExpressions = 2
+			maxNoOfMetricDataQueries = 10
+		)
+		mdib := &metricDataInputBuilder{maxNoOfSearchExpressions, maxNoOfMetricDataQueries}
 
 		Convey("buildMetricDataQueries", func() {
 			Convey("and one GetMetricDataInput is generated for each query statistic", func() {
@@ -35,7 +33,7 @@ func TestCloudWatchQueryBuilder(t *testing.T) {
 					Expression: "",
 				}
 
-				res, err := e.buildMetricDataQueries(query)
+				res, err := mdib.buildMetricDataQueries(query)
 				So(err, ShouldBeNil)
 				So(len(res), ShouldEqual, 2)
 				So(*res[0].Id, ShouldEqual, "id1_____0")
