@@ -331,30 +331,31 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     };
     const range = Math.ceil(end - start);
 
-    // options.interval is the dynamically calculated interval
-    let interval = kbn.interval_to_seconds(options.interval);
-    // Minimum interval ("Min step"), if specified for the query or datasource. or same as interval otherwise
-    const minInterval = kbn.interval_to_seconds(
+    // Dynamically calculated interval based on minInterval and the resolution
+    const interval = kbn.interval_to_seconds(options.interval);
+    // Use step from query editor ("Min step") or default to interval
+    const step = kbn.interval_to_seconds(
       this.templateSrv.replace(target.interval, options.scopedVars) || options.interval
     );
+
+    // Adjust the interval and step to take into account resolution factor and Prometheus limits
     const intervalFactor = target.intervalFactor || 1;
-    // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
-    const adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
-    let scopedVars = { ...options.scopedVars, ...this.getRangeScopedVars(options.range) };
+    const adjustedInterval = this.adjustInterval(interval, range, intervalFactor);
+    const adjustedStep = this.adjustInterval(step, range, intervalFactor);
+    query.step = adjustedStep;
+
     // If the interval was adjusted, make a shallow copy of scopedVars with updated interval vars
+    let scopedVars = { ...options.scopedVars, ...this.getRangeScopedVars(options.range) };
     if (interval !== adjustedInterval) {
-      interval = adjustedInterval;
       scopedVars = Object.assign({}, options.scopedVars, {
-        __interval: { text: interval + 's', value: interval + 's' },
-        __interval_ms: { text: interval * 1000, value: interval * 1000 },
+        __interval: { text: adjustedInterval + 's', value: adjustedInterval + 's' },
+        __interval_ms: { text: adjustedInterval * 1000, value: adjustedInterval * 1000 },
         ...this.getRangeScopedVars(options.range),
       });
     }
-    query.step = interval;
-
-    let expr = target.expr;
 
     // Apply adhoc filters
+    let expr = target.expr;
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
     expr = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
       const { key, operator } = filter;
@@ -378,13 +379,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return query;
   }
 
-  adjustInterval(interval: number, minInterval: number, range: number, intervalFactor: number) {
+  adjustInterval(interval: number, range: number, intervalFactor: number) {
     // Prometheus will drop queries that might return more than 11000 data points.
-    // Calibrate interval if it is too small.
     if (interval !== 0 && range / intervalFactor / interval > 11000) {
       interval = Math.ceil(range / intervalFactor / 11000);
     }
-    return Math.max(interval * intervalFactor, minInterval, 1);
+    // Calibrate interval if it is too small.
+    return Math.max(interval * intervalFactor, 1);
   }
 
   performTimeSeriesQuery(query: PromQueryRequest, start: number, end: number) {

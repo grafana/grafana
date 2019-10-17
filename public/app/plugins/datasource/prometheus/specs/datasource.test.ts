@@ -418,7 +418,7 @@ const instanceSettings = ({
   directUrl: 'direct',
   user: 'test',
   password: 'mupp',
-  jsonData: { httpMethod: 'GET' },
+  jsonData: { httpMethod: 'GET', minInterval: '60s' },
 } as unknown) as DataSourceInstanceSettings<PromOptions>;
 const backendSrv = {
   datasourceRequest: jest.fn(),
@@ -1199,7 +1199,7 @@ describe('PrometheusDatasource', () => {
         },
       });
     });
-    it('should be min interval when greater than interval * intervalFactor', async () => {
+    it('should be independent from step', async () => {
       const query = {
         // 6 minute range
         range: { from: time({ minutes: 1 }), to: time({ minutes: 7 }) },
@@ -1210,16 +1210,16 @@ describe('PrometheusDatasource', () => {
             intervalFactor: 2,
           },
         ],
-        interval: '5s',
+        interval: '50s',
         scopedVars: {
-          __interval: { text: '5s', value: '5s' },
-          __interval_ms: { text: 5 * 1000, value: 5 * 1000 },
+          __interval: { text: '50s', value: '50s' },
+          __interval_ms: { text: 50 * 1000, value: 50 * 1000 },
         },
       };
       const urlExpected =
         'proxied/api/v1/query_range?query=' +
         encodeURIComponent('rate(test[$__interval])') +
-        '&start=60&end=420&step=15';
+        '&start=60&end=420&step=30';
 
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
@@ -1231,12 +1231,12 @@ describe('PrometheusDatasource', () => {
       // @ts-ignore
       expect(templateSrv.replace.mock.calls[0][1]).toEqual({
         __interval: {
-          text: '5s',
-          value: '5s',
+          text: '50s',
+          value: '50s',
         },
         __interval_ms: {
-          text: 5000,
-          value: 5000,
+          text: 50000,
+          value: 50000,
         },
       });
     });
