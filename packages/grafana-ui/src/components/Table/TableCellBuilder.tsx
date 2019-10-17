@@ -58,6 +58,8 @@ export interface ColumnStyle {
   valueMaps?: any;
   rangeMaps?: any;
 
+  align?: string;
+
   link?: any;
   linkUrl?: any;
   linkTooltip?: any;
