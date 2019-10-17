@@ -10,25 +10,8 @@ import { ContextSrv } from 'app/core/services/context_srv';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
 import { ErrorBoundaryAlert } from '@grafana/ui';
 import { GrafanaRootScope } from './GrafanaCtrl';
-import appEvents from '../core/app_events';
-import { AppEvents } from '@grafana/data';
-
-// Check to see if browser is not supported by Grafana
-// IE11 and older
-// Older versions of Firefox
-function checkBrowserCompatibility() {
-  if (navigator.userAgent.indexOf('MSIE') !== -1 || navigator.appVersion.indexOf('Trident/') > -1) {
-    return false;
-  }
-
-  return true;
-}
 
 function WrapInProvider(store: any, Component: any, props: any) {
-  if (checkBrowserCompatibility()) {
-    appEvents.emit(AppEvents.alertWarning, ['Your browser is not supported']);
-  }
-
   return (
     <Provider store={store}>
       <ErrorBoundaryAlert style="page">
