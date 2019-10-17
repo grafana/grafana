@@ -22,12 +22,12 @@ export const containsSearchFilter = (query: string): boolean =>
 export interface InterpolateSearchFilterOptions {
   query: string;
   options: any;
-  wildcharChar: string;
+  wildcardChar: string;
   quoteLiteral: boolean;
 }
 
 export const interpolateSearchFilter = (args: InterpolateSearchFilterOptions): string => {
-  const { query, wildcharChar, quoteLiteral } = args;
+  const { query, wildcardChar, quoteLiteral } = args;
   let { options } = args;
 
   if (!containsSearchFilter(query)) {
@@ -36,7 +36,7 @@ export const interpolateSearchFilter = (args: InterpolateSearchFilterOptions): s
 
   options = options || {};
 
-  const filter = options.searchFilter ? `${options.searchFilter}${wildcharChar}` : `${wildcharChar}`;
+  const filter = options.searchFilter ? `${options.searchFilter}${wildcardChar}` : `${wildcardChar}`;
   const replaceValue = quoteLiteral ? `'${filter}'` : filter;
 
   return query.replace(SEARCH_FILTER_VARIABLE, replaceValue);

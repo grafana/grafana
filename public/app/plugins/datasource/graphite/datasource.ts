@@ -254,7 +254,7 @@ export class GraphiteDatasource {
     const interpolatedQuery = interpolateSearchFilter({
       query: this.templateSrv.replace(query),
       options: optionalOptions,
-      wildcharChar: '*',
+      wildcardChar: '*',
       quoteLiteral: false,
     });
 

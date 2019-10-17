@@ -106,13 +106,13 @@ describe('interpolateSearchFilter', () => {
     it('then it should return query', () => {
       const query = '$app.*';
       const options = { searchFilter: 'filter' };
-      const wildcharChar = '*';
+      const wildcardChar = '*';
       const quoteLiteral = false;
 
       const result = interpolateSearchFilter({
         query,
         options,
-        wildcharChar,
+        wildcardChar,
         quoteLiteral,
       });
 
@@ -126,13 +126,13 @@ describe('interpolateSearchFilter', () => {
     describe('and no searchFilter is given', () => {
       it(`then ${SEARCH_FILTER_VARIABLE} should be replaced by wildchar character`, () => {
         const options = {};
-        const wildcharChar = '*';
+        const wildcardChar = '*';
         const quoteLiteral = false;
 
         const result = interpolateSearchFilter({
           query,
           options,
-          wildcharChar,
+          wildcardChar,
           quoteLiteral,
         });
 
@@ -144,13 +144,13 @@ describe('interpolateSearchFilter', () => {
       const options = { searchFilter: 'filter' };
 
       it(`then ${SEARCH_FILTER_VARIABLE} should be replaced with searchfilter and wildchar character`, () => {
-        const wildcharChar = '*';
+        const wildcardChar = '*';
         const quoteLiteral = false;
 
         const result = interpolateSearchFilter({
           query,
           options,
-          wildcharChar,
+          wildcardChar,
           quoteLiteral,
         });
 
@@ -159,13 +159,13 @@ describe('interpolateSearchFilter', () => {
 
       describe(`and quoteLiteral is used`, () => {
         it(`then the literal should be quoted`, () => {
-          const wildcharChar = '*';
+          const wildcardChar = '*';
           const quoteLiteral = true;
 
           const result = interpolateSearchFilter({
             query,
             options,
-            wildcharChar,
+            wildcardChar,
             quoteLiteral,
           });
 

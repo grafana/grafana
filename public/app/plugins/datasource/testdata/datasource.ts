@@ -12,7 +12,7 @@ import { queryMetricTree } from './metricTree';
 import { from, merge, Observable } from 'rxjs';
 import { runStream } from './runStreams';
 import templateSrv from 'app/features/templating/template_srv';
-import { containsSearchFilter, SEARCH_FILTER_VARIABLE } from '../../../features/templating/variable';
+import { interpolateSearchFilter } from '../../../features/templating/variable';
 
 type TestData = TimeSeries | TableData;
 
@@ -119,22 +119,16 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
     return getBackendSrv().get('/api/tsdb/testdata/scenarios');
   }
 
-  interpolateSearchFilter(query: string, options: any) {
-    if (!containsSearchFilter(query)) {
-      return query;
-    }
-
-    options = options || {};
-
-    const replaceValue = options.searchFilter ? `${options.searchFilter}*` : '*';
-
-    return query.replace(SEARCH_FILTER_VARIABLE, replaceValue);
-  }
-
   metricFindQuery(query: string, options: any) {
     return new Promise<MetricFindValue[]>((resolve, reject) => {
       setTimeout(() => {
-        const children = queryMetricTree(this.interpolateSearchFilter(templateSrv.replace(query), options));
+        const interpolatedQuery = interpolateSearchFilter({
+          query: templateSrv.replace(query),
+          options,
+          wildcardChar: '*',
+          quoteLiteral: false,
+        });
+        const children = queryMetricTree(interpolatedQuery);
         const items = children.map(item => ({ value: item.name, text: item.name }));
         resolve(items);
       }, 100);
