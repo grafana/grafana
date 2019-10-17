@@ -40,9 +40,26 @@ describe('when rendering table', () => {
       { text: 'MappingColored' },
       { text: 'RangeMappingColored' },
       { text: 'HiddenType' },
+      { text: 'RightAligned' },
     ];
     table.rows = [
-      [1388556366666, 1230, 40, undefined, '', '', 'my.host.com', 'host1', ['value1', 'value2'], 1, 2, 1, 2, 'ignored'],
+      [
+        1388556366666,
+        1230,
+        40,
+        undefined,
+        '',
+        '',
+        'my.host.com',
+        'host1',
+        ['value1', 'value2'],
+        1,
+        2,
+        1,
+        2,
+        'ignored',
+        42,
+      ],
     ];
 
     const panel = {
@@ -185,13 +202,17 @@ describe('when rendering table', () => {
           pattern: 'HiddenType',
           type: 'hidden',
         },
+        {
+          pattern: 'RightAligned',
+          align: 'right',
+        },
       ],
     };
 
     //@ts-ignore
     const renderer = new TableRenderer(panel, table, 'utc', sanitize, templateSrv);
 
-    it('time column should be formated', () => {
+    it('time column should be formatted', () => {
       const html = renderer.renderCell(0, 0, 1388556366666);
       expect(html).toBe('<td>2014-01-01T06:06:06Z</td>');
     });
@@ -396,6 +417,11 @@ describe('when rendering table', () => {
       expect(html).toBe('');
     });
 
+    it('right aligned column should have correct text-align style', () => {
+      const html = renderer.renderCell(14, 0, 42);
+      expect(html).toBe('<td style="text-align:right">42</td>');
+    });
+
     it('render_values should ignore hidden columns', () => {
       renderer.render(0); // this computes the hidden markers on the columns
       const { columns, rows } = renderer.render_values();
@@ -449,6 +475,45 @@ describe('when rendering table with different patterns', () => {
       expect(html).toBe(expected);
     }
   );
+});
+
+describe('when rendering cells with different alignment options', () => {
+  it.each`
+    align        | expected
+    ${'default'} | ${'<td style="text-align:default">42</td>'}
+    ${'left'}    | ${'<td style="text-align:left">42</td>'}
+    ${'center'}  | ${'<td style="text-align:center">42</td>'}
+    ${'right'}   | ${'<td style="text-align:right">42</td>'}
+    ${'justify'} | ${'<td style="text-align:justify">42</td>'}
+  `('$align-aligned columns should be formatted with correct style', ({ align, expected }) => {
+    const table = new TableModel();
+    table.columns = [{ text: 'Time' }, { text: align }];
+    table.rows = [[0, 42]];
+
+    const panel = {
+      pageSize: 10,
+      styles: [
+        {
+          pattern: 'Time',
+          type: 'date',
+          format: 'LLL',
+          alias: 'Timestamp',
+        },
+        {
+          pattern: `/${align}/`,
+          align: align,
+          type: 'number',
+          unit: 'none',
+        },
+      ],
+    };
+
+    //@ts-ignore
+    const renderer = new TableRenderer(panel, table, 'utc', sanitize, templateSrv);
+    const html = renderer.renderCell(1, 0, 42);
+
+    expect(html).toBe(expected);
+  });
 });
 
 function normalize(str: string) {
