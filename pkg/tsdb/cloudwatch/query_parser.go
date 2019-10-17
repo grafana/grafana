@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"errors"
+	"fmt"
 	"math/rand"
 	"regexp"
 	"sort"
@@ -12,6 +13,15 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
+
+type queryBuilderError struct {
+	err   error
+	RefID string
+}
+
+func (e *queryBuilderError) Error() string {
+	return fmt.Sprintf("Error parsing query %s, %s", e.RefID, e.err)
+}
 
 func (e *CloudWatchExecutor) parseQueriesByRegion(queryContext *tsdb.TsdbQuery) (map[string][]*CloudWatchQuery, error) {
 	metricQueriesByRegion := make(map[string][]*CloudWatchQuery)
