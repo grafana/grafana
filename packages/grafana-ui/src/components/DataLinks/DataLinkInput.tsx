@@ -1,11 +1,12 @@
-import React, { useState, useMemo, useContext, useRef, RefObject, memo } from 'react';
+import React, { useState, useMemo, useContext, useRef, RefObject, memo, useEffect } from 'react';
+import usePrevious from 'react-use/lib/usePrevious';
 import { VariableSuggestion, VariableOrigin, DataLinkSuggestions } from './DataLinkSuggestions';
 import { ThemeContext, DataLinkBuiltInVars, makeValue } from '../../index';
 import { SelectionReference } from './SelectionReference';
 import { Portal } from '../index';
 
 import { Editor } from '@grafana/slate-react';
-import { Value, Editor as CoreEditor } from 'slate';
+import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
 import { Popper as ReactPopper } from 'react-popper';
 import { css, cx } from 'emotion';
@@ -50,6 +51,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(({ value, onChan
   const [showingSuggestions, setShowingSuggestions] = useState(false);
   const [suggestionsIndex, setSuggestionsIndex] = useState(0);
   const [linkUrl, setLinkUrl] = useState<Value>(makeValue(value));
+  const prevLinkUrl = usePrevious<Value>(linkUrl);
 
   // Workaround for https://github.com/ianstormtaylor/slate/issues/2927
   const stateRef = useRef({ showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange });
@@ -86,16 +88,17 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(({ value, onChan
     }
   }, []);
 
+  useEffect(() => {
+    // Update the state of the link in the parent. This is basically done on blur but we need to do it after
+    // our state have been updated. The duplicity of state is done for perf reasons and also because local
+    // state also contains things like selection and formating.
+    if (prevLinkUrl && prevLinkUrl.selection.isFocused && !linkUrl.selection.isFocused) {
+      stateRef.current.onChange(Plain.serialize(linkUrl));
+    }
+  }, [linkUrl, prevLinkUrl]);
+
   const onUrlChange = React.useCallback(({ value }: { value: Value }) => {
     setLinkUrl(value);
-  }, []);
-
-  const onUrlBlur = React.useCallback((event: Event, editor: CoreEditor, next: () => any) => {
-    // Callback needed for blur to work correctly
-    stateRef.current.onChange(Plain.serialize(stateRef.current.linkUrl), () => {
-      // This needs to be called after state is updated.
-      editorRef.current!.blur();
-    });
   }, []);
 
   const onVariableSelect = (item: VariableSuggestion, editor = editorRef.current!) => {
@@ -156,7 +159,6 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(({ value, onChan
           placeholder="http://your-grafana.com/d/000000010/annotations"
           value={stateRef.current.linkUrl}
           onChange={onUrlChange}
-          onBlur={onUrlBlur}
           onKeyDown={(event, _editor, next) => onKeyDown(event as KeyboardEvent, next)}
           plugins={plugins}
           className={styles.editor}
