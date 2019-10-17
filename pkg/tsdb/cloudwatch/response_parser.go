@@ -2,6 +2,8 @@ package cloudwatch
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -80,4 +82,53 @@ func parseGetMetricDataTimeSeries(lr map[string]*cloudwatch.MetricDataResult, qu
 		result = append(result, &series)
 	}
 	return &result, nil
+}
+
+func formatAlias(query *CloudWatchQuery, stat string, dimensions map[string]string, label string) string {
+	region := query.Region
+	namespace := query.Namespace
+	metricName := query.MetricName
+	period := strconv.Itoa(query.Period)
+	if len(query.Id) > 0 && len(query.Expression) > 0 {
+		if strings.Index(query.Expression, "SEARCH(") == 0 {
+			pIndex := strings.LastIndex(query.Expression, ",")
+			period = strings.Trim(query.Expression[pIndex+1:], " )")
+			sIndex := strings.LastIndex(query.Expression[:pIndex], ",")
+			stat = strings.Trim(query.Expression[sIndex+1:pIndex], " '")
+		} else if len(query.Alias) > 0 {
+			// expand by Alias
+		} else {
+			return query.Id
+		}
+	}
+
+	data := map[string]string{}
+	data["region"] = region
+	data["namespace"] = namespace
+	data["metric"] = metricName
+	data["stat"] = stat
+	data["period"] = period
+	if len(label) != 0 {
+		data["label"] = label
+	}
+	for k, v := range dimensions {
+		data[k] = v
+	}
+
+	result := aliasFormat.ReplaceAllFunc([]byte(query.Alias), func(in []byte) []byte {
+		labelName := strings.Replace(string(in), "{{", "", 1)
+		labelName = strings.Replace(labelName, "}}", "", 1)
+		labelName = strings.TrimSpace(labelName)
+		if val, exists := data[labelName]; exists {
+			return []byte(val)
+		}
+
+		return in
+	})
+
+	if string(result) == "" {
+		return metricName + "_" + stat
+	}
+
+	return string(result)
 }
