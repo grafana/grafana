@@ -20,7 +20,7 @@ export const HttpProxySettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceC
           onChange={event =>
             onChange({ ...dataSourceConfig.jsonData, tlsAuthWithCACert: event!.currentTarget.checked })
           }
-          tooltip="Needed forverifing self-signed TLS Certs"
+          tooltip="Needed for verifying self-signed TLS Certs"
         />
       </div>
       <div className="gf-form-inline">
@@ -37,7 +37,7 @@ export const HttpProxySettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceC
           labelClass="width-13"
           checked={dataSourceConfig.jsonData.oauthPassThru}
           onChange={event => onChange({ ...dataSourceConfig.jsonData, oauthPassThru: event!.currentTarget.checked })}
-          tooltip="Forward the user's upstream OAuth identity to the datasource (Their access token gets passed along)."
+          tooltip="Forward the user's upstream OAuth identity to the data source (Their access token gets passed along)."
         />
       </div>
     </>
