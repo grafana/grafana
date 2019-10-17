@@ -3,6 +3,7 @@ package plugins
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os/exec"
 	"path"
 	"time"
@@ -77,7 +78,6 @@ func (p *DataSourcePlugin) startBackendPlugin(ctx context.Context, log log.Logge
 }
 func (p *DataSourcePlugin) isVersionOne() bool {
 	// if version is empty (which defaults to 0) or explicitly set to one
-	p.log.Debug(fmt.Sprintf(">>>> SDK: %v", p.SDK))
 	return !p.SDK
 }
 
