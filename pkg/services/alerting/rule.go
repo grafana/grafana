@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -137,7 +138,8 @@ func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 	for _, v := range ruleDef.Settings.Get("notifications").MustArray() {
 		jsonModel := simplejson.NewFromAny(v)
 		if id, err := jsonModel.Get("id").Int64(); err == nil {
-			model.Notifications = append(model.Notifications, fmt.Sprintf("%09d", id))
+			maybeUID := translateNotificationIDToUID(id, ruleDef.OrgId)
+			model.Notifications = append(model.Notifications, maybeUID...)
 		} else {
 			uid, err := jsonModel.Get("uid").String()
 			if err != nil {
@@ -167,6 +169,33 @@ func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 	}
 
 	return model, nil
+}
+
+func translateNotificationIDToUID(id int64, orgID int64) []string {
+	notificationDto, err := getAlertNotificationByIDAndOrgID(id, orgID)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to translate Notification Id to Uid for [ OrgId: %v, Id: %v ]", orgID, id))
+		return []string{}
+	}
+
+	return []string{notificationDto.Uid}
+}
+
+func getAlertNotificationByIDAndOrgID(notificationID int64, orgID int64) (*models.AlertNotification, error) {
+	query := &models.GetAlertNotificationsQuery{
+		OrgId: orgID,
+		Id:    notificationID,
+	}
+
+	if err := bus.Dispatch(query); err != nil {
+		return nil, err
+	}
+
+	if query.Result == nil {
+		return nil, fmt.Errorf("Alert notification [ Id: %v, OrgId: %v ] doesn't exists", notificationID, orgID)
+	}
+
+	return query.Result, nil
 }
 
 // ConditionFactory is the function signature for creating `Conditions`.
