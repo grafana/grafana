@@ -141,7 +141,6 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 						}
 					}
 					metricDataResults = append(metricDataResults, res...)
-					plog.Info("res", "", res)
 				}
 
 				queryResponses, err := e.parseResponse(metricDataResults, queriesByRegion[region])

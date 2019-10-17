@@ -20,22 +20,7 @@ func (e *CloudWatchExecutor) buildMetricDataQueries(query *CloudWatchQuery) ([]*
 		if query.Expression != "" {
 			mdq.Expression = aws.String(query.Expression)
 		} else {
-
-			shouldBuildSearchExpression := false
-			for _, values := range query.Dimensions {
-				if len(values) > 1 {
-					shouldBuildSearchExpression = true
-					break
-				}
-				for _, v := range values {
-					if v == "*" {
-						shouldBuildSearchExpression = true
-						break
-					}
-				}
-			}
-
-			if shouldBuildSearchExpression {
+			if query.isSearchExpression() {
 				searchExpression := buildSearchExpression(query, *stat)
 				query.SearchExpressions = append(query.SearchExpressions, searchExpression)
 				mdq.Expression = aws.String(searchExpression)

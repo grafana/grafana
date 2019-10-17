@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -26,15 +27,19 @@ func (e *CloudWatchExecutor) buildGetMetricDataQueries(queryContext *tsdb.TsdbQu
 		return nil, fmt.Errorf("Invalid time range: Start time must be before end time")
 	}
 
+	sort.Slice(queries, func(i, j int) bool {
+		return getSortOrder(queries[i]) > getSortOrder(queries[j])
+	})
+
+	noOfSearchExpressions := 0
 	params := &cloudwatch.GetMetricDataInput{
 		StartTime: aws.Time(startTime),
 		EndTime:   aws.Time(endTime),
 		ScanBy:    aws.String("TimestampAscending"),
 	}
-	noOfSearchExpressions := 0
 
 	for _, query := range queries {
-
+		plog.Info("SortOrder", "", query.RefId)
 		// 1 minutes resolution metrics is stored for 15 days, 15 * 24 * 60 = 21600
 		if query.HighResolution && (((endTime.Unix() - startTime.Unix()) / int64(query.Period)) > 21600) {
 			return nil, &queryBuilderError{errors.New("too long query period"), query.RefId}
@@ -71,4 +76,13 @@ func (e *CloudWatchExecutor) buildGetMetricDataQueries(queryContext *tsdb.TsdbQu
 	metricDataInputs = append(metricDataInputs, params)
 
 	return metricDataInputs, nil
+}
+
+func getSortOrder(query *CloudWatchQuery) int {
+	if query.Id != "" && query.Expression == "" && len(query.Statistics) == 1 {
+		return 2
+	} else if query.isMathExpression() {
+		return 1
+	}
+	return 0
 }
