@@ -39,6 +39,35 @@
 	</div>
 </div>
 
+<b>Connection Certificate Files</b>
+
+<div class="gf-form-group">
+	<div class="gf-form max-width-15">
+		<span class="gf-form-label width-7">SSL Root Cert</span>
+ 		<input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslrootcertfile' placeholder="SSL root cert file"></input>
+		<info-popover mode="right-absolute">
+			If selected SSL Mode needs a SSL Root Certificate, provide here the path to the file. 
+      Be sure that the file is readable by grafana user.
+		</info-popover>
+	</div>
+	<div class="gf-form max-width-15">
+		<span class="gf-form-label width-7">SSL User Cert</span>
+ 		<input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslcertfile' placeholder="SSL user cert file"></input>
+		<info-popover mode="right-absolute">
+			If selected SSL Mode needs a SSL User Certificate, provide here the path to the file. 
+      Be sure that the file is readable by grafana user.
+		</info-popover>
+	</div>
+	<div class="gf-form max-width-15">
+		<span class="gf-form-label width-7">SSL User Key</span>
+ 		<input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslkeyfile' placeholder="SSL user key file"></input>
+		<info-popover mode="right-absolute">
+			If selected SSL Mode needs a SSL User Key, provide here the path to the file. 
+      Be sure that the file is readable by grafana user.
+		</info-popover>
+	</div>
+</div>
+
 <b>Connection limits</b>
 
 <div class="gf-form-group">
