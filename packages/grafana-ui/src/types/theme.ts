@@ -120,6 +120,26 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     gray5: string;
     gray6: string;
     gray7: string;
+
+    // New greys palette used by next-gen form elements
+    gray98: string;
+    gray95: string;
+    gray85: string;
+    gray70: string;
+    gray33: string;
+    gray25: string;
+    gray15: string;
+    gray10: string;
+    gray05: string;
+
+    // New blues palette used by next-gen form elements
+    blue95: string;
+    blue85: string;
+    blue77: string;
+
+    // New reds palette used by next-gen form elements
+    red88: string;
+
     grayBlue: string;
     inputBlack: string;
 

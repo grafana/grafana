@@ -1,5 +1,26 @@
 import { GrafanaThemeCommons } from '../types/theme';
 
+export const commonColorsPalette = {
+  // New greys palette used by next-gen form elements
+  gray98: '#f7f8fa',
+  gray95: '#e9edf2',
+  gray85: '#c7d0d9',
+  gray70: '#9fa7b3',
+  gray33: '#464c54',
+  gray25: '#343b40',
+  gray15: '#202226',
+  gray10: '#141619',
+  gray05: '#0b0c0e',
+
+  // New blues palette used by next-gen form elements
+  blue95: '#5794f2',
+  blue85: '#3274d9',
+  blue77: '#1f60c4',
+
+  // New reds palette used by next-gen form elements
+  red88: '#e02f44',
+};
+
 const theme: GrafanaThemeCommons = {
   name: 'Grafana Default',
   typography: {
