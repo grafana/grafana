@@ -194,6 +194,23 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     headingColor: string;
 
     pageHeaderBorder: string;
+
+    // Next-gen forms functional colors
+    formLabel: string;
+    formDescription: string;
+    formLegend: string;
+    formInputBg: string;
+    formInputBgDisabled: string;
+    formInputBorder: string;
+    formInputBorderHover: string;
+    formInputBorderActive: string;
+    formInputBorderInvalid: string;
+    formInputFocusOutline: string;
+    formInputText: string;
+    formInputTextStrong: string;
+    formInputTextWhite: string;
+    formValidationMessageText: string;
+    formValidationMessageBg: string;
   };
   shadow: {
     pageHeader: string;
