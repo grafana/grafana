@@ -19,6 +19,7 @@ import (
 
 type CloudWatchExecutor struct {
 	*models.DataSource
+	mdib    *metricDataInputBuilder
 	ec2Svc  ec2iface.EC2API
 	rgtaSvc resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
 }
@@ -34,8 +35,14 @@ type DatasourceInfo struct {
 	SecretKey string
 }
 
+const (
+	maxNoOfSearchExpressions = 5
+	maxNoOfMetricDataQueries = 100
+)
+
 func NewCloudWatchExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	return &CloudWatchExecutor{}, nil
+	mdib := &metricDataInputBuilder{maxNoOfSearchExpressions, maxNoOfMetricDataQueries}
+	return &CloudWatchExecutor{mdib: mdib}, nil
 }
 
 var (
@@ -85,7 +92,7 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 	metricDataInputsByRegion := make(map[string][]*cloudwatch.GetMetricDataInput, 0)
 	queriesByRegion, err := e.parseQueriesByRegion(queryContext)
 	for region, queries := range queriesByRegion {
-		metricQueries, err := e.buildGetMetricDataQueries(queryContext, queries)
+		metricQueries, err := e.mdib.buildMetricDataInput(queryContext, queries)
 		if err != nil {
 			return results, err
 		}

@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 )
 
-func (e *CloudWatchExecutor) buildMetricDataQueries(query *CloudWatchQuery) ([]*cloudwatch.MetricDataQuery, error) {
+func (mdib *metricDataInputBuilder) buildMetricDataQueries(query *CloudWatchQuery) ([]*cloudwatch.MetricDataQuery, error) {
 	metridDataQueries := make([]*cloudwatch.MetricDataQuery, 0)
 	query.SearchExpressions = []string{}
 

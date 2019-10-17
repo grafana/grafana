@@ -86,7 +86,7 @@ func TestCloudwatchQuery(t *testing.T) {
 				So(query.isUserDefinedSearchExpression(), ShouldBeFalse)
 			})
 
-			Convey("it is not a search expression", func() {
+			Convey("it is a search expression", func() {
 				So(query.isSearchExpression(), ShouldBeTrue)
 			})
 
