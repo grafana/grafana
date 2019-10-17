@@ -1,42 +1,63 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { Observable, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
+import { AppEvent, eventFactory } from '@grafana/data';
+
+export interface SubscribeToEventsOptions {
+  tap: (event: AppEvent<any>) => void;
+  filter?: (event: AppEvent<any>) => boolean;
+}
+
+export interface PublishEventOptions<T> {
+  event: AppEvent<T>;
+  origin: string;
+  payload: T;
+}
+
+export interface EventingProps {
+  events: Observable<AppEvent<any>>;
+  publish: (event: AppEvent<any>) => void;
+}
 
 export interface Eventing {
-  subscribeToEvents: (options: { tap: (event: Event<any>) => void; filter?: (event: Event<any>) => boolean }) => void;
-  publishEvent: (event: Event<any>) => void;
+  subscribeToEvents: (options: SubscribeToEventsOptions) => void;
+  publishEvent: <T>(options: PublishEventOptions<T>) => void;
 }
 
-export interface Event<T extends {} = {}> {
-  name?: string;
-  origin?: string;
-  payload?: T;
+export interface MouseMove {
+  clientX: number;
+  clientY: number;
+  screenX: number;
+  screenY: number;
 }
 
-export const useEventing = (
-  events: Observable<Event<any>>,
-  publish: (event: Event<any>, payload?: any) => void
-): Eventing => {
-  const subscription = useMemo(() => new Subscription(), [events, publish]);
+export const mouseMoveEvent = eventFactory<MouseMove>('mouse-move-event');
+
+export const useEventing = (props: EventingProps): Eventing => {
+  const subscription = useMemo(() => new Subscription(), [props]);
 
   const subscribeToEvents = useCallback(
-    (options: { tap: (event: Event<any>) => void; filter?: (event: Event<any>) => boolean }) => {
-      const innerSubscription = events
+    (options: SubscribeToEventsOptions) => {
+      const innerSubscription = props.events
         .pipe(
-          filter((event: Event<any>) => {
+          filter((event: AppEvent<any>) => {
             return options.filter ? options.filter(event) : true;
           })
         )
-        .subscribe((value: Event<any>) => {
+        .subscribe((value: AppEvent<any>) => {
           options.tap(value);
         });
 
       subscription.add(innerSubscription);
     },
-    [events, publish]
+    [props]
   );
 
-  const publishEvent = useCallback((event: Event<any>): void => publish(event), [events, publish]);
+  const publishEvent = useCallback(
+    <T>(options: PublishEventOptions<T>): void =>
+      props.publish({ ...options.event, origin: options.origin, payload: options.payload }),
+    [props]
+  );
 
   useEffect(() => {
     return function unsubscribe() {

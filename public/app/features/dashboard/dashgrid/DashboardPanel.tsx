@@ -14,7 +14,7 @@ import { PanelResizer } from './PanelResizer';
 import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin, PanelPluginMeta } from '@grafana/ui/src/types/panel';
 import { AutoSizer } from 'react-virtualized';
-import { Eventing } from '../../../core/hooks/useEventing';
+import { Eventing, mouseMoveEvent } from '../../../core/hooks/useEventing';
 
 export interface Props extends Eventing {
   panel: PanelModel;
@@ -96,7 +96,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
           return false;
         }
 
-        return event.name === 'mouse-move-event';
+        return event.name === mouseMoveEvent.name;
       },
       tap: event => {
         console.log(`New event arrived from ${event.origin} at ${panel.id}`, event);
@@ -204,7 +204,11 @@ export class DashboardPanel extends PureComponent<Props, State> {
       <div
         className={editorContainerClasses}
         onMouseMove={event =>
-          this.props.publishEvent({ name: 'mouse-move-event', origin: this.props.panel.id.toString(), payload: event })
+          this.props.publishEvent({
+            event: mouseMoveEvent,
+            origin: this.props.panel.id.toString(),
+            payload: { clientX: event.clientX, clientY: event.clientY, screenX: event.screenX, screenY: event.screenY },
+          })
         }
       >
         <PanelResizer
