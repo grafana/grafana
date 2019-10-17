@@ -23,6 +23,8 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   AnnotationQueryRequest,
+  DerivedField,
+  DerivedLinkField,
 } from '@grafana/ui';
 
 import { LokiQuery, LokiOptions, LokiLogsStream, LokiResponse } from './types';
@@ -407,6 +409,22 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     }
 
     return annotations;
+  }
+
+  async getDerivedFields(logRow: LogRowModel): Promise<DerivedField[]> {
+    const match = logRow.entry.match(/level=(\w+)/);
+    if (match) {
+      return [
+        {
+          type: 'link',
+          label: 'traceId',
+          value: match[1],
+          url: `http://localhost:16686/trace/${match[1]}`,
+        },
+      ];
+    } else {
+      return [];
+    }
   }
 }
 

@@ -268,6 +268,8 @@ export abstract class DataSourceApi<
    * in the annotation editor `annotations` capability also needs to be enabled in plugin.json.
    */
   annotationQuery?(options: AnnotationQueryRequest<TQuery>): Promise<AnnotationEvent[]>;
+
+  getDerivedFields?(data: any): Promise<DerivedField[]>;
 }
 
 export interface QueryEditorProps<
@@ -555,3 +557,18 @@ export interface AnnotationQueryRequest<MoreOptions = {}> {
     name: string;
   } & MoreOptions;
 }
+
+export type DerivedField = DerivedTextField | DerivedLinkField;
+
+export type DerivedTextField = {
+  type: 'text';
+  label: string;
+  value: string;
+};
+
+export type DerivedLinkField = {
+  type: 'link';
+  label: string;
+  value: string;
+  url: string;
+};

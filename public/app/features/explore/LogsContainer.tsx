@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { DataSourceApi, Collapse } from '@grafana/ui';
+import { DataSourceApi, Collapse, DerivedField } from '@grafana/ui';
 
 import {
   RawTimeRange,
@@ -80,6 +80,16 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     return [];
   };
 
+  getDerivedFields = async (row: LogRowModel): Promise<DerivedField[]> => {
+    const { datasourceInstance } = this.props;
+
+    if (datasourceInstance && datasourceInstance.getDerivedFields) {
+      return datasourceInstance.getDerivedFields(row);
+    }
+
+    return [];
+  };
+
   render() {
     const {
       loading,
@@ -136,6 +146,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               scanRange={range.raw}
               width={width}
               getRowContext={this.getLogRowContext}
+              getDerivedFields={this.getDerivedFields}
             />
           </Collapse>
         </LogsCrossFadeTransition>

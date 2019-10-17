@@ -7,6 +7,7 @@ import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
 import memoizeOne from 'memoize-one';
+import { DerivedField } from '../../types';
 
 const PREVIEW_LIMIT = 100;
 const RENDER_LIMIT = 500;
@@ -22,6 +23,7 @@ export interface Props extends Themeable {
   rowLimit?: number;
   onClickLabel?: (label: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
+  getDerivedFields: (row: LogRowModel) => Promise<DerivedField[]>;
 }
 
 interface State {
@@ -82,6 +84,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       onClickLabel,
       rowLimit,
       theme,
+      getDerivedFields,
     } = this.props;
     const { deferLogs, renderAll } = this.state;
     const dedupedData = deduplicatedData ? deduplicatedData : data;
@@ -120,6 +123,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
               showTime={showTime}
               timeZone={timeZone}
               onClickLabel={onClickLabel}
+              getDerivedFields={getDerivedFields}
             />
           ))}
         {hasData &&
@@ -136,6 +140,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
               showTime={showTime}
               timeZone={timeZone}
               onClickLabel={onClickLabel}
+              getDerivedFields={getDerivedFields}
             />
           ))}
         {hasData && deferLogs && <span>Rendering {rowCount} rows...</span>}
