@@ -156,7 +156,7 @@ function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
 
 // PapaParse Dynamic Typing regex:
 // https://github.com/mholt/PapaParse/blob/master/papaparse.js#L998
-const NUMBER = /^\s*-?(\d*\.?\d+|\d+\.?\d*)(e[-+]?\d+)?\s*$/i;
+const NUMBER = /^\s*(-?(\d*\.?\d+|\d+\.?\d*)(e[-+]?\d+)?|NAN)\s*$/i;
 
 /**
  * Given a value this will guess the best column type
