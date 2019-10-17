@@ -26,23 +26,18 @@ legend {
 
 // Reset height since textareas have rows
 // Set font for forms
-label,
+
 input,
 button,
 select,
 textarea {
-  @include font-shorthand($font-size-base, normal, $line-height-base); // Set size, weight, line-height here
+  @include font-shorthand($font-size-base, normal, $line-height-base);
 }
 input,
 button,
 select,
 textarea {
   font-family: $font-family-sans-serif; // And only set font-family here for those that need it (note the missing label element)
-}
-
-// Identify controls by their labels
-label {
-  display: block;
 }
 
 input,
