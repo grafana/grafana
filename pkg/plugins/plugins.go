@@ -187,7 +187,7 @@ func (pm *PluginManager) scan(pluginDir string) error {
 	}
 
 	if len(scanner.errors) > 0 {
-		return errutil.Wrapf(scanner.errors[0], "Some plugins failed to load")
+		pm.log.Warn("Some plugins failed to load", "errors", scanner.errors)
 	}
 
 	return nil
