@@ -59,7 +59,7 @@ func enforceRequestedEsIndex(proxy *DataSourceProxy) error {
 	nowFrom := time.Now()
 	from := time.Date(nowFrom.Year(), nowFrom.Month(), nowFrom.Day(), nowFrom.Hour(), nowFrom.Minute(), 0, 0, time.UTC)
 
-	nowTo := nowFrom.Add(time.Duration(5) * time.Minute) // Add the 5minutes
+	nowTo := nowFrom.Add(time.Duration(5) * time.Minute)
 	to := time.Date(nowTo.Year(), nowTo.Month(), nowTo.Day(), nowTo.Hour(), nowTo.Minute(), 0, 0, time.UTC)
 
 	fromStr := fmt.Sprintf("%d", from.UnixNano()/int64(time.Millisecond))
