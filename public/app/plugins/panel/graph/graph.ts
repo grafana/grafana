@@ -121,6 +121,8 @@ class GraphElement {
       onToggleSort: this.ctrl.onToggleSort,
       onColorChange: this.ctrl.onColorChange,
       onToggleAxis: this.ctrl.onToggleAxis,
+      yaxisUnits: [this.panel.yaxes[0].format, this.panel.yaxes[1].format],
+      decimals: this.panel.decimals,
     };
 
     const legendReactElem = React.createElement(LegendWithThemeProvider, legendProps);

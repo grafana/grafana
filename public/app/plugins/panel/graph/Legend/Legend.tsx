@@ -8,6 +8,8 @@ type Sort = 'min' | 'max' | 'avg' | 'current' | 'total';
 interface LegendProps {
   seriesList: TimeSeries[];
   optionalClass?: string;
+  yaxisUnits?: string[];
+  decimals?: number;
 }
 
 interface LegendEventHandlers {
@@ -196,8 +198,9 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
       onColorChange: this.props.onColorChange,
       ...seriesValuesProps,
       ...sortProps,
+      yaxisUnits: this.props.yaxisUnits,
+      decimals: this.props.decimals,
     };
-
     return (
       <div className={`graph-legend-content ${legendClass}`} style={legendStyle}>
         {this.props.alignAsTable ? <LegendTable {...legendProps} /> : <LegendSeriesList {...legendProps} />}
@@ -208,7 +211,7 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
 
 class LegendSeriesList extends PureComponent<LegendComponentProps> {
   render() {
-    const { seriesList, hiddenSeries, values, min, max, avg, current, total } = this.props;
+    const { seriesList, hiddenSeries, values, min, max, avg, current, total, yaxisUnits, decimals } = this.props;
     const seriesValuesProps = { values, min, max, avg, current, total };
     return seriesList.map((series, i) => (
       <LegendItem
@@ -216,6 +219,8 @@ class LegendSeriesList extends PureComponent<LegendComponentProps> {
         // In future would be good to make id unique across the series list.
         key={`${series.id}-${i}`}
         series={series}
+        decimals={decimals}
+        unit={yaxisUnits[series.yaxis - 1]}
         hidden={hiddenSeries[series.alias]}
         {...seriesValuesProps}
         onLabelClick={this.props.onToggleSeries}
@@ -247,7 +252,7 @@ class LegendTable extends PureComponent<Partial<LegendComponentProps>> {
 
   render() {
     const seriesList = this.props.seriesList;
-    const { values, min, max, avg, current, total, sort, sortDesc, hiddenSeries } = this.props;
+    const { values, min, max, avg, current, total, sort, sortDesc, hiddenSeries, yaxisUnits } = this.props;
     const seriesValuesProps: any = { values, min, max, avg, current, total };
     return (
       <table>
@@ -277,6 +282,8 @@ class LegendTable extends PureComponent<Partial<LegendComponentProps>> {
               key={`${series.id}-${i}`}
               asTable={true}
               series={series}
+              decimals={series.decimals}
+              unit={yaxisUnits[series.yaxis - 1]}
               hidden={hiddenSeries[series.alias]}
               onLabelClick={this.props.onToggleSeries}
               onColorChange={this.props.onColorChange}
