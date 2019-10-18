@@ -25,7 +25,6 @@ export const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
 
 export const Label: React.FC<LabelProps> = ({ children, description, className, ...labelProps }) => {
   const theme = useTheme();
-  console.log(theme);
   const styles = getLabelStyles(theme);
 
   return (
