@@ -958,6 +958,32 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				So(dash.Meta.ProvisionedExternalId, ShouldEqual, "test/dashboard1.json")
 			})
 		})
+
+		loggedInUserScenarioWithRole("When allowUiUpdates is true and calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", m.ROLE_EDITOR, func(sc *scenarioContext) {
+			mock := provisioning.NewProvisioningServiceMock()
+			mock.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
+				return "/tmp/grafana/dashboards"
+			}
+			mock.GetAllowUiUpdatesFromConfigFunc = func(name string) bool {
+				return true
+			}
+
+			hs := &HTTPServer{
+				Cfg:                 setting.NewCfg(),
+				ProvisioningService: mock,
+			}
+			CallGetDashboard(sc, hs)
+
+			So(sc.resp.Code, ShouldEqual, 200)
+
+			dash := dtos.DashboardFullWithMeta{}
+			err := json.NewDecoder(sc.resp.Body).Decode(&dash)
+			So(err, ShouldBeNil)
+
+			Convey("Should have metadata that says Provisioned is false", func() {
+				So(dash.Meta.Provisioned, ShouldEqual, false)
+			})
+		})
 	})
 }
 
@@ -1041,29 +1067,6 @@ func CallPostDashboardShouldReturnSuccess(sc *scenarioContext) {
 	CallPostDashboard(sc)
 
 	So(sc.resp.Code, ShouldEqual, 200)
-}
-
-type mockDashboardProvisioningService struct {
-}
-
-func (m mockDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO, provisioning *m.DashboardProvisioning, allowUiUpdates bool) (*m.Dashboard, error) {
-	panic("implement me")
-}
-
-func (m mockDashboardProvisioningService) SaveFolderForProvisionedDashboards(*dashboards.SaveDashboardDTO) (*m.Dashboard, error) {
-	panic("implement me")
-}
-
-func (m mockDashboardProvisioningService) GetProvisionedDashboardData(name string) ([]*m.DashboardProvisioning, error) {
-	panic("implement me")
-}
-
-func (mock mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboardId(dashboardId int64) (*m.DashboardProvisioning, error) {
-	return &m.DashboardProvisioning{}, nil
-}
-
-func (m mockDashboardProvisioningService) UnprovisionDashboard(dashboardId int64) error {
-	panic("implement me")
 }
 
 func (m mockDashboardProvisioningService) DeleteProvisionedDashboard(dashboardId int64, orgId int64) error {
@@ -1175,4 +1178,27 @@ func (sc *scenarioContext) ToJSON() *simplejson.Json {
 	err := json.NewDecoder(sc.resp.Body).Decode(&result)
 	So(err, ShouldBeNil)
 	return result
+}
+
+type mockDashboardProvisioningService struct {
+}
+
+func (m mockDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO, provisioning *m.DashboardProvisioning, allowUiUpdates bool) (*m.Dashboard, error) {
+	panic("implement me")
+}
+
+func (m mockDashboardProvisioningService) SaveFolderForProvisionedDashboards(*dashboards.SaveDashboardDTO) (*m.Dashboard, error) {
+	panic("implement me")
+}
+
+func (m mockDashboardProvisioningService) GetProvisionedDashboardData(name string) ([]*m.DashboardProvisioning, error) {
+	panic("implement me")
+}
+
+func (mock mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboardId(dashboardId int64) (*m.DashboardProvisioning, error) {
+	return &m.DashboardProvisioning{}, nil
+}
+
+func (m mockDashboardProvisioningService) UnprovisionDashboard(dashboardId int64) error {
+	panic("implement me")
 }
