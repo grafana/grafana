@@ -43,8 +43,6 @@ DataSourceHttpSettingsStories.add('default', () => {
             dataSourceConfig={dataSourceSettings}
             onChange={updateDataSourceSettings}
             showAccessOptions={true}
-            onBasicAuthPasswordChange={() => {}}
-            onBasicAuthPasswordReset={() => {}}
           />
         );
       }}
