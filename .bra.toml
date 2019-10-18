@@ -17,3 +17,5 @@ cmds = [
   ["go", "run", "-mod=vendor", "build.go", "-dev", "build-server"],
 	["./bin/grafana-server", "-packaging=dev", "cfg:app_mode=development"]
 ]
+interrupt_timout = 5
+graceful_kill = true

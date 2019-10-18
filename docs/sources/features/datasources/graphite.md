@@ -114,6 +114,19 @@ variable with all possible values that exist in the wildcard position.
 You can also create nested variables that use other variables in their definition. For example
 `apps.$app.servers.*` uses the variable `$app` in its query definition.
 
+#### Using `$__searchFilter` to filter results in Query Variable
+> Available from Grafana 6.5 and above
+
+Using `$__searchFilter` in the query field will filter the query result based on what the user types in the dropdown select box.
+When nothing has been entered by the user the default value for `$__searchFilter` is `*`.
+
+The example below shows how to use `$__searchFilter` as part of the query field to enable searching for `server` while the user types in the dropdown select box.
+
+Query
+```bash
+apps.$app.servers.$__searchFilter
+```
+
 ### Variable Usage
 
 You can use a variable in a metric node path or as a parameter to a function.
