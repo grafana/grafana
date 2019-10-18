@@ -1,7 +1,6 @@
 import { renderHook, act } from 'react-hooks-testing-library';
 import LanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import { useLokiLabels } from './useLokiLabels';
-import { DataSourceStatus } from '@grafana/ui/src/types/datasource';
 import { AbsoluteTimeRange } from '@grafana/data';
 import { makeMockLokiDatasource } from '../mocks';
 
@@ -20,9 +19,7 @@ describe('useLokiLabels hook', () => {
       return Promise.resolve();
     };
 
-    const { result, waitForNextUpdate } = renderHook(() =>
-      useLokiLabels(languageProvider, true, [], rangeMock, DataSourceStatus.Connected, DataSourceStatus.Connected)
-    );
+    const { result, waitForNextUpdate } = renderHook(() => useLokiLabels(languageProvider, true, [], rangeMock));
     act(() => result.current.refreshLabels());
     expect(result.current.logLabelOptions).toEqual([]);
     await waitForNextUpdate();
@@ -40,9 +37,7 @@ describe('useLokiLabels hook', () => {
     const languageProvider = new LanguageProvider(datasource);
     languageProvider.refreshLogLabels = jest.fn();
 
-    renderHook(() =>
-      useLokiLabels(languageProvider, true, [], rangeMock, DataSourceStatus.Connected, DataSourceStatus.Disconnected)
-    );
+    renderHook(() => useLokiLabels(languageProvider, true, [], rangeMock));
 
     expect(languageProvider.refreshLogLabels).toBeCalledTimes(1);
     expect(languageProvider.refreshLogLabels).toBeCalledWith(rangeMock, true);
@@ -59,9 +54,7 @@ describe('useLokiLabels hook', () => {
     const languageProvider = new LanguageProvider(datasource);
     languageProvider.refreshLogLabels = jest.fn();
 
-    renderHook(() =>
-      useLokiLabels(languageProvider, true, [], rangeMock, DataSourceStatus.Disconnected, DataSourceStatus.Connected)
-    );
+    renderHook(() => useLokiLabels(languageProvider, true, [], rangeMock));
 
     expect(languageProvider.refreshLogLabels).not.toBeCalled();
   });

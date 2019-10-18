@@ -13,7 +13,7 @@ import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import QueryField, { TypeaheadInput } from 'app/features/explore/QueryField';
 import { PromQuery, PromContext, PromOptions } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
-import { ExploreQueryFieldProps, DataSourceStatus, QueryHint, DOMUtil } from '@grafana/ui';
+import { ExploreQueryFieldProps, QueryHint, DOMUtil } from '@grafana/ui';
 import { isDataFrame, toLegacyResponseData } from '@grafana/data';
 import { PrometheusDatasource } from '../datasource';
 import PromQlLanguageProvider from '../language_provider';
@@ -24,10 +24,7 @@ const METRIC_MARK = 'metric';
 const PRISM_SYNTAX = 'promql';
 export const RECORDING_RULES_GROUP = '__recording_rules__';
 
-function getChooserText(hasSyntax: boolean, datasourceStatus: DataSourceStatus) {
-  if (datasourceStatus === DataSourceStatus.Disconnected) {
-    return '(Disconnected)';
-  }
+function getChooserText(hasSyntax: boolean) {
   if (!hasSyntax) {
     return 'Loading metrics...';
   }
@@ -159,21 +156,6 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     if (data && prevProps.data && prevProps.data.series !== data.series) {
       this.refreshHint();
     }
-
-    const reconnected =
-      prevProps.datasourceStatus === DataSourceStatus.Disconnected &&
-      this.props.datasourceStatus === DataSourceStatus.Connected;
-    if (!reconnected) {
-      return;
-    }
-
-    if (this.languageProviderInitializationPromise) {
-      this.languageProviderInitializationPromise.cancel();
-    }
-
-    if (this.languageProvider) {
-      this.refreshMetrics(makePromiseCancelable(this.languageProvider.fetchMetrics()));
-    }
   }
 
   refreshHint = () => {
@@ -291,11 +273,11 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   render() {
-    const { data, query, datasourceStatus } = this.props;
+    const { data, query } = this.props;
     const { metricsOptions, syntaxLoaded, hint } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
-    const chooserText = getChooserText(syntaxLoaded, datasourceStatus);
-    const buttonDisabled = !syntaxLoaded || datasourceStatus === DataSourceStatus.Disconnected;
+    const chooserText = getChooserText(syntaxLoaded);
+    const buttonDisabled = !syntaxLoaded;
     const showError = data && data.error && data.error.refId === query.refId;
 
     return (
