@@ -1,16 +1,7 @@
 const path = require('path');
+const IgnoreNotFoundExportPlugin = require('../../../scripts/webpack/IgnoreNotFoundExportPlugin');
 
 module.exports = ({config, mode}) => {
-  config.module.rules.push({
-    test: /\.(ts|tsx)$/,
-    use: [
-      {
-        loader: require.resolve('ts-loader'),
-        options: {}
-      },
-    ],
-  });
-
   config.module.rules.push({
     test: /\.scss$/,
     use: [
@@ -53,7 +44,6 @@ module.exports = ({config, mode}) => {
     ],
   });
 
-  config.resolve.extensions.push('.ts', '.tsx');
 
   return config;
 };
