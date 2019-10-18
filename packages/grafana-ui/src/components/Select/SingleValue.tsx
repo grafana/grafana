@@ -4,10 +4,11 @@ import { css, cx } from 'emotion';
 // Ignoring because I couldn't get @types/react-select work wih Torkel's fork
 // @ts-ignore
 import { components } from '@torkelo/react-select';
-import { FadeTransition, Spinner } from '..';
 import { useDelayedSwitch } from '../../utils/useDelayedSwitch';
 import { stylesFactory } from '../../themes';
 import { SlideOutTransition } from '../transitions/SlideOutTransition';
+import { Spinner } from '../Spinner/Spinner';
+import { FadeTransition } from '../transitions/FadeTransition';
 
 const getStyles = stylesFactory(() => {
   const container = css`

@@ -11,11 +11,15 @@ const BasicGreen = getColorDefinitionByName('green');
 const BasicRed = getColorDefinitionByName('red');
 const LightBlue = getColorDefinitionByName('light-blue');
 
-const NamedColorsPaletteStories = storiesOf('UI/ColorPicker/Palettes/NamedColorsPalette', module);
+export default {
+  title: 'UI/ColorPicker/Palettes/NamedColorsPalette',
+  parameters: {
+    component: NamedColorsPalette,
+    decorators: [withCenteredStory],
+  },
+};
 
-NamedColorsPaletteStories.addDecorator(withCenteredStory);
-
-NamedColorsPaletteStories.add('Named colors swatch - support for named colors', () => {
+export const namedColorsSupport = () => {
   const selectedColor = select(
     'Selected color',
     {
@@ -36,7 +40,9 @@ NamedColorsPaletteStories.add('Named colors swatch - support for named colors', 
       }}
     </UseState>
   );
-}).add('Named colors swatch - support for hex values', () => {
+};
+
+export const hexColorsSupport = () => {
   const selectedColor = select(
     'Selected color',
     {
@@ -56,4 +62,4 @@ NamedColorsPaletteStories.add('Named colors swatch - support for named colors', 
       }}
     </UseState>
   );
-});
+};

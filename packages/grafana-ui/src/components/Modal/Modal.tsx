@@ -1,7 +1,8 @@
 import React from 'react';
 import { Portal } from '../Portal/Portal';
 import { css, cx } from 'emotion';
-import { GrafanaTheme, ThemeContext } from '../..';
+import { ThemeContext } from '../../themes';
+import { GrafanaTheme } from '../../types/theme';
 
 const getStyles = (theme: GrafanaTheme) => ({
   modal: css`

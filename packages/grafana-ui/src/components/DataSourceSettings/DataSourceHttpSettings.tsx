@@ -1,13 +1,18 @@
 import React, { useState, useCallback } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { css, cx } from 'emotion';
-import { FormField, FormLabel, Input, Select, Switch, TagsInput } from '..';
 import { useTheme } from '../../themes';
 import { BasicAuthSettings } from './BasicAuthSettings';
 import { HttpProxySettings } from './HttpProxySettings';
 import { TLSAuthSettings } from './TLSAuthSettings';
 import { DataSourceSettings } from '../../types';
 import { HttpSettingsProps } from './types';
+import { Input } from '../Input/Input';
+import { FormField } from '../FormField/FormField';
+import { FormLabel } from '../FormLabel/FormLabel';
+import { TagsInput } from '../TagsInput/TagsInput';
+import { Switch } from '../Switch/Switch';
+import { Select } from '../Select/Select';
 
 const ACCESS_OPTIONS: Array<SelectableValue<string>> = [
   {
