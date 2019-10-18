@@ -148,7 +148,7 @@ export class GrafanaApp {
 
       this.preBootModules = null;
 
-      if (checkBrowserCompatibility()) {
+      if (!checkBrowserCompatibility()) {
         setTimeout(() => {
           appEvents.emit(AppEvents.alertWarning, ['Your browser is not supported']);
         }, 1000);
