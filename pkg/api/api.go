@@ -154,7 +154,7 @@ func (hs *HTTPServer) registerRoutes() {
 			teamsRoute.Post("/", bind(models.CreateTeamCommand{}), Wrap(hs.CreateTeam))
 			teamsRoute.Put("/:teamId", bind(models.UpdateTeamCommand{}), Wrap(hs.UpdateTeam))
 			teamsRoute.Delete("/:teamId", Wrap(hs.DeleteTeamByID))
-			teamsRoute.Get("/:teamId/members", Wrap(GetTeamMembers))
+			teamsRoute.Get("/:teamId/members", Wrap(hs.GetTeamMembers))
 			teamsRoute.Post("/:teamId/members", bind(models.AddTeamMemberCommand{}), Wrap(hs.AddTeamMember))
 			teamsRoute.Put("/:teamId/members/:userId", bind(models.UpdateTeamMemberCommand{}), Wrap(hs.UpdateTeamMember))
 			teamsRoute.Delete("/:teamId/members/:userId", Wrap(hs.RemoveTeamMember))
