@@ -81,8 +81,17 @@ func (pn *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 		eventType = "resolve"
 	}
 	customData := triggMetrString
+
+	evalMatches := simplejson.New()
 	for _, evt := range evalContext.EvalMatches {
 		customData = customData + fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
+		evalMatches.Set("eval_metric", evt.Metric)
+		evalMatches.Set("eval_value", evt.Value)
+		if len(evt.Tags) > 0 {
+			for k, v := range evt.Tags {
+				evalMatches.Set(k, v)
+			}
+		}
 	}
 
 	pn.log.Info("Notifying Pagerduty", "event_type", eventType)
@@ -102,6 +111,7 @@ func (pn *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 	payloadJSON.Set("timestamp", time.Now())
 	payloadJSON.Set("component", "Grafana")
 	payloadJSON.Set("custom_details", customData)
+	payloadJSON.Set("evalMatches", evalMatches)
 
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("routing_key", pn.Key)
@@ -119,8 +129,16 @@ func (pn *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 	linkJSON.Set("href", ruleURL)
 	bodyJSON.Set("client_url", ruleURL)
 	bodyJSON.Set("client", "Grafana")
+
+	panelTags := simplejson.New()
+	for _, tag := range evalContext.Rule.AlertRuleTags {
+		panelTags.Set(tag.Key, tag.Value)
+	}
+
 	links[0] = linkJSON
 	bodyJSON.Set("links", links)
+
+	bodyJSON.Set("event_metadata", panelTags)
 
 	if evalContext.ImagePublicURL != "" {
 		contexts := make([]interface{}, 1)
