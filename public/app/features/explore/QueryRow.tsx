@@ -46,13 +46,11 @@ interface QueryRowProps extends PropsFromParent {
 
 interface QueryRowState {
   textEditModeEnabled: boolean;
-  hiddenQuery: boolean;
 }
 
 export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
   state: QueryRowState = {
     textEditModeEnabled: false,
-    hiddenQuery: false,
   };
 
   onRunQuery = () => {
@@ -80,10 +78,6 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
 
   onClickToggleHiddenQuery = () => {
     const { exploreId, index, query, queryResponse } = this.props;
-    this.setState(state => {
-      return { hiddenQuery: !state.hiddenQuery };
-    });
-
     if (queryResponse.state !== LoadingState.NotStarted) {
       const newQuery = {
         ...query,
@@ -133,7 +127,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       latency,
       mode,
     } = this.props;
-    const { hiddenQuery } = this.state;
+
     const canToggleEditorModes =
       mode === ExploreMode.Metrics && has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
     const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
@@ -177,7 +171,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
           )}
         </div>
         <div className="query-row-status">
-          <QueryStatus queryResponse={queryResponse} latency={hiddenQuery ? 0 : latency} />
+          <QueryStatus queryResponse={queryResponse} latency={query.hide ? 0 : latency} />
         </div>
         <div className="gf-form-inline flex-shrink-0">
           {canToggleEditorModes && (
@@ -189,7 +183,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
           )}
           <div className="gf-form">
             <button className="gf-form-label gf-form-label--btn" onClick={this.onClickToggleHiddenQuery}>
-              <i className={hiddenQuery ? 'fa fa-eye-slash' : 'fa fa-eye'} />
+              <i className={query.hide ? 'fa fa-eye-slash' : 'fa fa-eye'} />
             </button>
           </div>
           <div className="gf-form">
