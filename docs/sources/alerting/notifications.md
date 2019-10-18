@@ -178,7 +178,7 @@ Kafka | `kafka` | yes, external only | no
 Line | `line` | yes, external only | no
 Microsoft Teams | `teams` | yes, external only | no
 OpsGenie | `opsgenie` | yes, external only | no
-Pagerduty | `pagerduty` | yes, external only | no
+Pagerduty | `pagerduty` | yes, external only | yes
 Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
 Pushover | `pushover` | yes | no
 Sensu | `sensu` | yes, external only | no
