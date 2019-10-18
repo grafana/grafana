@@ -256,12 +256,11 @@ export class ValueSelectDropdownCtrl {
       return;
     }
 
-    this.highlightIndex = -1;
-    this.search.options = filter(this.options, option => {
+    const options = filter(this.options, option => {
       return option.text.toLowerCase().indexOf(this.search.query.toLowerCase()) !== -1;
     });
 
-    this.search.options = this.search.options.slice(0, Math.min(this.search.options.length, 1000));
+    this.updateUIBoundOptions(this.$scope, options);
   }
 
   init() {
@@ -270,8 +269,8 @@ export class ValueSelectDropdownCtrl {
   }
 
   async updateLazyLoadedOptions() {
-    const options = await this.lazyLoadOptions(this.search.query);
-    this.refreshLazyOptions(this.$scope, options);
+    this.options = await this.lazyLoadOptions(this.search.query);
+    this.updateUIBoundOptions(this.$scope, this.options);
   }
 
   async lazyLoadOptions(query: string): Promise<any[]> {
@@ -279,9 +278,8 @@ export class ValueSelectDropdownCtrl {
     return this.variable.options;
   }
 
-  refreshLazyOptions($scope: IScope, options: any[]) {
+  updateUIBoundOptions($scope: IScope, options: any[]) {
     this.highlightIndex = -1;
-    this.options = options;
     this.search.options = options.slice(0, Math.min(options.length, 1000));
     $scope.$apply();
   }

@@ -172,7 +172,7 @@ describe('queryChanged', () => {
         { text: 'server-3', value: 'server-3' },
       ];
       ctrl.lazyLoadOptions = jest.fn().mockResolvedValue(options);
-      ctrl.refreshLazyOptions = jest.fn();
+      ctrl.updateUIBoundOptions = jest.fn();
       ctrl.search = {
         query: 'alpha',
       };
@@ -182,8 +182,8 @@ describe('queryChanged', () => {
 
       expect(ctrl.lazyLoadOptions).toBeCalledTimes(1);
       expect(ctrl.lazyLoadOptions).toBeCalledWith('alpha');
-      expect(ctrl.refreshLazyOptions).toBeCalledTimes(1);
-      expect(ctrl.refreshLazyOptions).toBeCalledWith($scope, options);
+      expect(ctrl.updateUIBoundOptions).toBeCalledTimes(1);
+      expect(ctrl.updateUIBoundOptions).toBeCalledWith($scope, options);
     });
   });
 
@@ -192,7 +192,7 @@ describe('queryChanged', () => {
       const $scope = {} as IScope;
       const ctrl = new ValueSelectDropdownCtrl(q, $scope);
       ctrl.lazyLoadOptions = jest.fn().mockResolvedValue([]);
-      ctrl.refreshLazyOptions = jest.fn();
+      ctrl.updateUIBoundOptions = jest.fn();
       ctrl.search = {
         query: 'alpha',
       };
@@ -201,7 +201,7 @@ describe('queryChanged', () => {
       await ctrl.queryChanged();
 
       expect(ctrl.lazyLoadOptions).toBeCalledTimes(0);
-      expect(ctrl.refreshLazyOptions).toBeCalledTimes(0);
+      expect(ctrl.updateUIBoundOptions).toBeCalledTimes(1);
     });
   });
 });
@@ -230,7 +230,7 @@ describe('lazyLoadOptions', () => {
   });
 });
 
-describe('refreshLazyOptions', () => {
+describe('updateUIBoundOptions', () => {
   describe('when called with options', () => {
     let options: any[];
     let ctrl: ValueSelectDropdownCtrl;
@@ -250,21 +250,18 @@ describe('refreshLazyOptions', () => {
       ctrl.search = {
         options: [],
       };
-      ctrl.refreshLazyOptions($scope, options);
+      ctrl.updateUIBoundOptions($scope, options);
     });
 
     it('then highlightIndex should be reset', () => {
       expect(ctrl.highlightIndex).toEqual(-1);
     });
 
-    it('then options should be set', () => {
-      expect(ctrl.options).toEqual(options);
-    });
-
     it('then search.options should be same as options but capped to 1000', () => {
       expect(ctrl.search.options.length).toEqual(1000);
+
       for (let index = 0; index < 1000; index++) {
-        expect(ctrl.search.options[index]).toEqual(ctrl.options[index]);
+        expect(ctrl.search.options[index]).toEqual(options[index]);
       }
     });
 
