@@ -175,7 +175,7 @@ export class QueriesTab extends PureComponent<Props, State> {
   renderMixedPicker = () => {
     return (
       <DataSourcePicker
-        datasources={this.datasources}
+        datasources={this.datasources.filter(ds => !ds.meta.mixed)}
         onChange={this.onAddMixedQuery}
         current={null}
         autoFocus={true}
