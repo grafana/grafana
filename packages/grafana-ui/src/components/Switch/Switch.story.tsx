@@ -8,7 +8,7 @@ import { text } from '@storybook/addon-knobs';
 const getKnobs = () => {
   return {
     label: text('Label Text', 'Label'),
-    tooltip: text('Tooltip', null),
+    tooltip: text('Tooltip', ''),
   };
 };
 

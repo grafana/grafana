@@ -15,6 +15,10 @@ type Props = {
   disabled?: boolean;
 };
 
+function formatBtnTitle(title: string, iconSide?: string): string {
+  return iconSide === IconSide.left ? '\xA0' + title : iconSide === IconSide.right ? title + '\xA0' : title;
+}
+
 export const ResponsiveButton = (props: Props) => {
   const defaultProps = {
     iconSide: IconSide.left,
@@ -28,19 +32,9 @@ export const ResponsiveButton = (props: Props) => {
       onClick={onClick}
       disabled={disabled || false}
     >
-      {iconClassName && iconSide === IconSide.left ? (
-        <>
-          <i className={`${iconClassName}`} />
-          &nbsp;
-        </>
-      ) : null}
-      <span className="btn-title">{!splitted ? title : ''}</span>
-      {iconClassName && iconSide === IconSide.right ? (
-        <>
-          &nbsp;
-          <i className={`${iconClassName}`} />
-        </>
-      ) : null}
+      {iconClassName && iconSide === IconSide.left ? <i className={`${iconClassName}`} /> : null}
+      <span className="btn-title">{!splitted ? formatBtnTitle(title, iconSide) : ''}</span>
+      {iconClassName && iconSide === IconSide.right ? <i className={`${iconClassName}`} /> : null}
     </button>
   );
 };

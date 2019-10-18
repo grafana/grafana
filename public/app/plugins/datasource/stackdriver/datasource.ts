@@ -8,6 +8,7 @@ import { ScopedVars } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { CoreEvents } from 'app/types';
 
 export default class StackdriverDatasource extends DataSourceApi<StackdriverQuery, StackdriverOptions> {
   url: string;
@@ -287,7 +288,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
 
       return this.metricTypes;
     } catch (error) {
-      appEvents.emit('ds-request-error', this.formatStackdriverError(error));
+      appEvents.emit(CoreEvents.dsRequestError, { error: { data: { error: this.formatStackdriverError(error) } } });
       return [];
     }
   }

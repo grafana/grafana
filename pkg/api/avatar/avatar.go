@@ -9,8 +9,6 @@ package avatar
 import (
 	"bufio"
 	"bytes"
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -41,18 +39,6 @@ func UpdateGravatarSource() {
 		!strings.HasPrefix(gravatarSource, "https://") {
 		gravatarSource = "http://" + gravatarSource
 	}
-}
-
-// hash email to md5 string
-// keep this func in order to make this package independent
-func HashEmail(email string) string {
-	// https://en.gravatar.com/site/implement/hash/
-	email = strings.TrimSpace(email)
-	email = strings.ToLower(email)
-
-	h := md5.New()
-	h.Write([]byte(email))
-	return hex.EncodeToString(h.Sum(nil))
 }
 
 // Avatar represents the avatar object.
@@ -119,7 +105,9 @@ func (this *CacheServer) Handler(ctx *macaron.Context) {
 	if avatar.notFound {
 		avatar = this.notFound
 	} else {
-		this.cache.Add(hash, avatar, gocache.DefaultExpiration)
+		if err := this.cache.Add(hash, avatar, gocache.DefaultExpiration); err != nil {
+			log.Warn("Error adding avatar to cache: %s", err)
+		}
 	}
 
 	ctx.Resp.Header().Add("Content-Type", "image/jpeg")

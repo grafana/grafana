@@ -9,12 +9,13 @@ export interface AzureSubscription {
 }
 
 export interface AzureMonitorQuery extends DataQuery {
+  refId: string;
   format: string;
   subscription: string;
   azureMonitor: AzureMetricQuery;
   azureLogAnalytics: AzureLogsQuery;
   azureResourceGraph: AzureResourceGraphQuery;
-  //   appInsights: any;
+  appInsights: ApplicationInsightsQuery;
 }
 
 export interface AzureDataSourceJsonData extends DataSourceJsonData {
@@ -44,7 +45,6 @@ export interface AzureMetricQuery {
   metricName: string;
   timeGrainUnit: string;
   timeGrain: string;
-  timeGrains: string[];
   allowedTimeGrainsMs: number[];
   aggregation: string;
   dimension: string;
@@ -64,6 +64,19 @@ export interface AzureResourceGraphQuery {
   top: number;
   skip: number;
   subscriptions: string[];
+}
+
+export interface ApplicationInsightsQuery {
+  rawQuery: boolean;
+  rawQueryString: any;
+  metricName: string;
+  timeGrainUnit: string;
+  timeGrain: string;
+  allowedTimeGrainsMs: number[];
+  aggregation: string;
+  dimension: string;
+  dimensionFilter: string;
+  alias: string;
 }
 
 // Azure Monitor API Types

@@ -25,7 +25,7 @@ weight = 3
 {{< imgbox max-width="60%" img="/img/docs/v41/shared_tooltip.gif" caption="Shared tooltip" >}}
 
 Showing the tooltip on all panels at the same time has been a long standing request in Grafana and we are really happy to finally be able to release it.
-You can enable/disable the shared tooltip from the dashboard settings menu or cycle between default, shared tooltip and shared crosshair by pressing `CTRL + O` or `CMD + O`.
+You can enable/disable the shared tooltip from the dashboard settings menu or cycle between default, shared tooltip and shared crosshair by pressing Ctrl/Cmd+O.
 
 <div class="clearfix"></div>
 

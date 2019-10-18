@@ -24,12 +24,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   ) {
     super(instanceSettings);
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings, this.backendSrv, this.templateSrv);
-    this.appInsightsDatasource = new AppInsightsDatasource(
-      instanceSettings,
-      this.backendSrv,
-      this.templateSrv,
-      this.$q
-    );
+    this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings, this.backendSrv, this.templateSrv);
 
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(
       instanceSettings,

@@ -167,7 +167,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 
 		Convey("Parse AzureMonitor API response in the time series format", func() {
 			Convey("when data from query aggregated as average to one time series", func() {
-				data, err := loadTestFile("./test-data/1-azure-monitor-response-avg.json")
+				data, err := loadTestFile("./test-data/azuremonitor/1-azure-monitor-response-avg.json")
 				So(err, ShouldBeNil)
 				So(data.Interval, ShouldEqual, "PT1M")
 
@@ -204,7 +204,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 			})
 
 			Convey("when data from query aggregated as total to one time series", func() {
-				data, err := loadTestFile("./test-data/2-azure-monitor-response-total.json")
+				data, err := loadTestFile("./test-data/azuremonitor/2-azure-monitor-response-total.json")
 				So(err, ShouldBeNil)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
@@ -224,7 +224,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 			})
 
 			Convey("when data from query aggregated as maximum to one time series", func() {
-				data, err := loadTestFile("./test-data/3-azure-monitor-response-maximum.json")
+				data, err := loadTestFile("./test-data/azuremonitor/3-azure-monitor-response-maximum.json")
 				So(err, ShouldBeNil)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
@@ -244,7 +244,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 			})
 
 			Convey("when data from query aggregated as minimum to one time series", func() {
-				data, err := loadTestFile("./test-data/4-azure-monitor-response-minimum.json")
+				data, err := loadTestFile("./test-data/azuremonitor/4-azure-monitor-response-minimum.json")
 				So(err, ShouldBeNil)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
@@ -264,7 +264,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 			})
 
 			Convey("when data from query aggregated as Count to one time series", func() {
-				data, err := loadTestFile("./test-data/5-azure-monitor-response-count.json")
+				data, err := loadTestFile("./test-data/azuremonitor/5-azure-monitor-response-count.json")
 				So(err, ShouldBeNil)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
@@ -284,7 +284,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 			})
 
 			Convey("when data from query aggregated as total and has dimension filter", func() {
-				data, err := loadTestFile("./test-data/6-azure-monitor-response-multi-dimension.json")
+				data, err := loadTestFile("./test-data/azuremonitor/6-azure-monitor-response-multi-dimension.json")
 				So(err, ShouldBeNil)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
@@ -311,7 +311,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 			})
 
 			Convey("when data from query has alias patterns", func() {
-				data, err := loadTestFile("./test-data/2-azure-monitor-response-total.json")
+				data, err := loadTestFile("./test-data/azuremonitor/2-azure-monitor-response-total.json")
 				So(err, ShouldBeNil)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
@@ -331,7 +331,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 			})
 
 			Convey("when data has dimension filters and alias patterns", func() {
-				data, err := loadTestFile("./test-data/6-azure-monitor-response-multi-dimension.json")
+				data, err := loadTestFile("./test-data/azuremonitor/6-azure-monitor-response-multi-dimension.json")
 				So(err, ShouldBeNil)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
@@ -363,16 +363,16 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				"2d":  172800000,
 			}
 
-			closest := datasource.findClosestAllowedIntervalMS(intervals["3m"], []int64{})
+			closest := findClosestAllowedIntervalMS(intervals["3m"], []int64{})
 			So(closest, ShouldEqual, intervals["5m"])
 
-			closest = datasource.findClosestAllowedIntervalMS(intervals["10m"], []int64{})
+			closest = findClosestAllowedIntervalMS(intervals["10m"], []int64{})
 			So(closest, ShouldEqual, intervals["15m"])
 
-			closest = datasource.findClosestAllowedIntervalMS(intervals["2d"], []int64{})
+			closest = findClosestAllowedIntervalMS(intervals["2d"], []int64{})
 			So(closest, ShouldEqual, intervals["1d"])
 
-			closest = datasource.findClosestAllowedIntervalMS(intervals["3m"], []int64{intervals["1d"]})
+			closest = findClosestAllowedIntervalMS(intervals["3m"], []int64{intervals["1d"]})
 			So(closest, ShouldEqual, intervals["1d"])
 		})
 	})
