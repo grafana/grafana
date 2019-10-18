@@ -48,6 +48,7 @@ export class QueryEditorRows extends PureComponent<Props> {
     const { queries, onChangeQueries, panel } = this.props;
 
     const index = _.indexOf(queries, query);
+    // @ts-ignore
     _.move(queries, index, index + direction);
     onChangeQueries(queries);
     panel.refresh();
