@@ -1,6 +1,5 @@
 const path = require('path');
-
-module.exports = ({config, mode}) => {
+module.exports = ({ config, mode }) => {
   config.module.rules = [
     ...(config.module.rules || []),
     {
@@ -9,7 +8,7 @@ module.exports = ({config, mode}) => {
         {
           loader: require.resolve('ts-loader'),
           options: {
-            transpileOnly: true,
+            // transpileOnly: true,
             configFile: path.resolve(__dirname, '../tsconfig.json'),
           },
         },
@@ -29,9 +28,8 @@ module.exports = ({config, mode}) => {
           },
         },
       ],
-    }
+    },
   ];
-
 
   config.module.rules.push({
     test: /\.scss$/,
@@ -76,6 +74,8 @@ module.exports = ({config, mode}) => {
   });
 
   config.resolve.extensions.push('.ts', '.tsx');
-
+  config.stats = {
+    warningsFilter: /export .* was not found in/,
+  };
   return config;
 };
