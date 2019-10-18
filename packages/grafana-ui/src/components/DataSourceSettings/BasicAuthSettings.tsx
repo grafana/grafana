@@ -37,6 +37,7 @@ export const BasicAuthSettings: React.FC<HttpSettingsProps> = ({ dataSourceConfi
         <FormField
           label="User"
           labelWidth={10}
+          inputWidth={18}
           placeholder="user"
           value={dataSourceConfig.basicAuthUser}
           onChange={event => onChange({ ...dataSourceConfig, basicAuthUser: event.currentTarget.value })}
