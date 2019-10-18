@@ -1,6 +1,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import coreModule from '../core_module';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export class ValueSelectDropdownCtrl {
   dropdownVisible: any;
@@ -245,7 +246,7 @@ export class ValueSelectDropdownCtrl {
 }
 
 /** @ngInject */
-export function valueSelectDropdown($compile: any, $window: any, $timeout: any, $rootScope: any) {
+export function valueSelectDropdown($compile: any, $window: any, $timeout: any, $rootScope: GrafanaRootScope) {
   return {
     scope: { dashboard: '=', variable: '=', onUpdated: '&' },
     templateUrl: 'public/app/partials/valueSelectDropdown.html',
