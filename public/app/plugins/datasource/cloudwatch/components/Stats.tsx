@@ -17,20 +17,21 @@ const removeOption: SelectableValue<string> = { label: removeText, value: remove
 
 export const Stats: SFC<Props> = ({ values, onChange }) => (
   <>
-    {values.map((value, index) => (
-      <Segment
-        key={value + index}
-        value={value}
-        options={[removeOption, ...options]}
-        onChange={value =>
-          onChange(
-            value === removeText
-              ? values.filter((_, i) => i !== index)
-              : values.map((v, i) => (i === index ? value : v))
-          )
-        }
-      />
-    ))}
+    {values &&
+      values.map((value, index) => (
+        <Segment
+          key={value + index}
+          value={value}
+          options={[removeOption, ...options]}
+          onChange={value =>
+            onChange(
+              value === removeText
+                ? values.filter((_, i) => i !== index)
+                : values.map((v, i) => (i === index ? value : v))
+            )
+          }
+        />
+      ))}
     {values.length !== options.length && (
       <Segment
         Component={
@@ -38,6 +39,7 @@ export const Stats: SFC<Props> = ({ values, onChange }) => (
             <i className="fa fa-plus" />
           </a>
         }
+        allowCustomValue={true}
         onChange={(value: string) => onChange([...values, value])}
         options={options.filter(({ value }) => !values.includes(value))}
       />

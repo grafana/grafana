@@ -28,7 +28,7 @@ export const FormField: FunctionComponent<Props> = ({
   ...inputProps
 }) => {
   return (
-    <div className={cx('gf-form', className)}>
+    <div className={cx('gf-form-inline', className)}>
       <FormLabel className={`gf-form-label query-keyword width-${labelWidth}`} tooltip={tooltip}>
         {label}
       </FormLabel>

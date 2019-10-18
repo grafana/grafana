@@ -33,6 +33,22 @@ const idValidationEvents: ValidationEvents = {
 export class CloudWatchQueryEditor extends PureComponent<Props, State> {
   state: State = { regions: [], namespaces: [], metricNames: [] };
 
+  componentWillMount() {
+    const { query } = this.props;
+
+    if (!query.hasOwnProperty('statistics')) {
+      query.statistics = [];
+    }
+
+    if (!query.hasOwnProperty('expression')) {
+      query.expression = '';
+    }
+
+    if (!query.hasOwnProperty('dimensions')) {
+      query.dimensions = {};
+    }
+  }
+
   componentDidMount() {
     const { datasource } = this.props;
     Promise.all([this.loadRegions(), datasource.metricFindQuery('namespaces()')]).then(([regions, namespaces]) => {
@@ -61,24 +77,14 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
     const { regions, namespaces } = this.state;
     return (
       <>
-        <div className="gf-form-inline">
-          <FormField
-            className="query-keyword"
-            width={24}
-            label="Region"
-            inputEl={
-              <Segment
-                value={query.region}
-                options={regions}
-                onChange={region => this.onChange({ ...query, region })}
-              />
-            }
-          />
-          <div className="gf-form gf-form--grow">
-            <div className="gf-form-label gf-form-label--grow" />
-          </div>
-        </div>
-
+        <FormField
+          className="query-keyword"
+          width={24}
+          label="Region"
+          inputEl={
+            <Segment value={query.region} options={regions} onChange={region => this.onChange({ ...query, region })} />
+          }
+        />
         {query.expression.length === 0 && (
           <div className="gf-form-inline">
             <FormField
@@ -114,34 +120,29 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
         )}
 
         {query.expression.length === 0 && (
-          <div className="gf-form-inline">
-            <FormField
-              className="query-keyword"
-              grow
-              label="Dimensions"
-              inputEl={
-                <Dimensions
-                  dimensions={query.dimensions}
-                  variables={datasource.variables}
-                  onChange={dimensions => this.onChange({ ...query, dimensions })}
-                  loadKeys={() => datasource.getDimensionKeys(query.namespace, query.region)}
-                  loadValues={newKey => {
-                    const { [newKey]: value, ...newDimensions } = query.dimensions;
-                    return datasource.getDimensionValues(
-                      query.region,
-                      query.namespace,
-                      query.metricName,
-                      newKey,
-                      newDimensions
-                    );
-                  }}
-                />
-              }
-            />
-            <div className="gf-form gf-form--grow">
-              <div className="gf-form-label gf-form-label--grow" />
-            </div>
-          </div>
+          <FormField
+            className="query-keyword"
+            grow
+            label="Dimensions"
+            inputEl={
+              <Dimensions
+                dimensions={query.dimensions}
+                variables={datasource.variables}
+                onChange={dimensions => this.onChange({ ...query, dimensions })}
+                loadKeys={() => datasource.getDimensionKeys(query.namespace, query.region)}
+                loadValues={newKey => {
+                  const { [newKey]: value, ...newDimensions } = query.dimensions;
+                  return datasource.getDimensionValues(
+                    query.region,
+                    query.namespace,
+                    query.metricName,
+                    newKey,
+                    newDimensions
+                  );
+                }}
+              />
+            }
+          />
         )}
 
         {query.statistics.length === 1 && (
