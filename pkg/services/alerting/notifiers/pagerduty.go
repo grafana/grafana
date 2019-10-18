@@ -138,7 +138,7 @@ func (pn *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 	links[0] = linkJSON
 	bodyJSON.Set("links", links)
 
-	bodyJSON.Set("event_metadata", panelTags)
+	bodyJSON.Set("tags", panelTags)
 
 	if evalContext.ImagePublicURL != "" {
 		contexts := make([]interface{}, 1)
