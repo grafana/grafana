@@ -18,6 +18,7 @@ export const connectWithCleanUp = <
   const ConnectedComponent = connect(
     mapStateToProps,
     mapDispatchToProps
+    // @ts-ignore
   )(Component);
 
   const ConnectedComponentWithCleanUp: FunctionComponent = props => {
