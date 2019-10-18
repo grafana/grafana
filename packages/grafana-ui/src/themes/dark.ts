@@ -1,7 +1,8 @@
-import defaultTheme from './default';
+import defaultTheme, { commonColorsPalette } from './default';
 import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
 
 const basicColors = {
+  ...commonColorsPalette,
   black: '#000000',
   white: '#ffffff',
   dark1: '#141414',
@@ -74,6 +75,23 @@ const darkTheme: GrafanaTheme = {
     linkExternal: basicColors.blue,
     headingColor: basicColors.gray4,
     pageHeaderBorder: basicColors.dark9,
+
+    // Next-gen forms functional colors
+    formLabel: basicColors.gray70,
+    formDescription: basicColors.gray70,
+    formLegend: basicColors.gray85,
+    formInputBg: basicColors.gray15,
+    formInputBgDisabled: basicColors.gray10,
+    formInputBorder: basicColors.gray25,
+    formInputBorderHover: basicColors.gray33,
+    formInputBorderActive: basicColors.blue95,
+    formInputBorderInvalid: basicColors.red88,
+    formInputFocusOutline: basicColors.blue77,
+    formInputText: basicColors.gray70,
+    formInputTextStrong: basicColors.gray85,
+    formInputTextWhite: basicColors.white,
+    formValidationMessageText: basicColors.white,
+    formValidationMessageBg: basicColors.red88,
   },
   background: {
     dropdown: basicColors.dark3,
