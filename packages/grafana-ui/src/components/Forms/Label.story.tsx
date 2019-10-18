@@ -1,5 +1,4 @@
 import React from 'react';
-import { storiesOf } from '@storybook/react';
 import { text } from '@storybook/addon-knobs';
 
 import { Label } from './Label';
@@ -11,10 +10,13 @@ const getKnobs = () => {
   };
 };
 
-const story = storiesOf('UI/Forms', module);
+export default {
+  title: 'UI|Forms',
+  component: Label,
+};
 
-story.add('Label', () => {
+export const simple = () => {
   const { label, description } = getKnobs();
 
   return <Label description={description}>{label}</Label>;
-});
+};
