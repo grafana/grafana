@@ -3,7 +3,7 @@ title = "Building from source"
 type = "docs"
 [menu.docs]
 parent = "installation"
-weight = 5
+weight = 700
 +++
 
 # Building Grafana from source
