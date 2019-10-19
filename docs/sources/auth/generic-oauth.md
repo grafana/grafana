@@ -46,7 +46,10 @@ Grafana will attempt to determine the user's e-mail address by querying the OAut
 4. Query the `/emails` endpoint of the OAuth provider's API (configured with `api_url`) and check for the presence of an e-mail address marked as a primary address.
 5. If no e-mail address is found in steps (1-4), then the e-mail address of the user is set to the empty string.
 
-Grafana will also attempt to do role mapping through OAuth based on the key in the setting `role_attribute_name` (defaults to `role`) where the role needs to be mapped as string attribute to userinfo.
+Grafana will also attempt to do role mapping through OAuth as described below:
+
+1. Check for the presence of an role using the [JMES path](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option.
+2. Based on the key in the setting `role_attribute_name` (defaults to `role`) where the role needs to be mapped as string attribute to userinfo.
 
 ## Set up OAuth2 with Okta
 

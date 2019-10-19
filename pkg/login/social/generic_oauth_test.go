@@ -84,3 +84,58 @@ func TestSearchJSONForEmail(t *testing.T) {
 		}
 	})
 }
+
+
+func TestSearchJSONForRole(t *testing.T) {
+	Convey("Given a generic OAuth provider", t, func() {
+		provider := SocialGenericOAuth{
+			SocialBase: &SocialBase{
+				log: log.New("generic_oauth_test"),
+			},
+		}
+
+		tests := []struct {
+			Name                 string
+			UserInfoJSONResponse []byte
+			RoleAttributePath   string
+			ExpectedResult       string
+		}{
+			{
+				Name:                 "Given an invalid user info JSON response",
+				UserInfoJSONResponse: []byte("{"),
+				RoleAttributePath:   "attributes.role",
+				ExpectedResult:       "",
+			},
+			{
+				Name:                 "Given an empty user info JSON response and empty JMES path",
+				UserInfoJSONResponse: []byte{},
+				RoleAttributePath:   "",
+				ExpectedResult:       "",
+			},
+			{
+				Name:                 "Given an empty user info JSON response and valid JMES path",
+				UserInfoJSONResponse: []byte{},
+				RoleAttributePath:   "attributes.role",
+				ExpectedResult:       "",
+			},
+			{
+				Name: "Given a simple user info JSON response and valid JMES path",
+				UserInfoJSONResponse: []byte(`{
+	"attributes": {
+		"role": "admin"
+	}
+}`),
+				RoleAttributePath: "attributes.role",
+				ExpectedResult:     "admin",
+			},
+		}
+
+		for _, test := range tests {
+			provider.roleAttributePath = test.RoleAttributePath
+			Convey(test.Name, func() {
+				actualResult := provider.searchJSONForAttr(test.RoleAttributePath,test.UserInfoJSONResponse)
+				So(actualResult, ShouldEqual, test.ExpectedResult)
+			})
+		}
+	})
+}
