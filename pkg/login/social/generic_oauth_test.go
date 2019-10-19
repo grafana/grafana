@@ -78,7 +78,7 @@ func TestSearchJSONForEmail(t *testing.T) {
 		for _, test := range tests {
 			provider.emailAttributePath = test.EmailAttributePath
 			Convey(test.Name, func() {
-				actualResult := provider.searchJSONForEmail(test.UserInfoJSONResponse)
+				actualResult := provider.searchJSONForAttr(test.EmailAttributePath,test.UserInfoJSONResponse)
 				So(actualResult, ShouldEqual, test.ExpectedResult)
 			})
 		}
