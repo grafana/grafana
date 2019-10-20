@@ -225,10 +225,11 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
 
   const allLabels: Labels[] = [];
   for (let n = 0; n < logSeries.length; n++) {
-    const series = logSeries[n];
-    if (series.labels) {
-      allLabels.push(series.labels);
-    }
+    logSeries[n].fields.forEach(f => {
+      if (f.labels) {
+        allLabels.push(f.labels);
+      }
+    });
   }
 
   let commonLabels: Labels = {};
@@ -242,19 +243,20 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
   for (let i = 0; i < logSeries.length; i++) {
     const series = logSeries[i];
     const fieldCache = new FieldCache(series);
-    const uniqueLabels = findUniqueLabels(series.labels, commonLabels);
-    if (Object.keys(uniqueLabels).length > 0) {
-      hasUniqueLabels = true;
-    }
 
     const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
     const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
     const logLevelField = fieldCache.getFieldByName('level');
     const idField = getIdField(fieldCache);
 
+    const uniqueLabels = findUniqueLabels(stringField.labels, commonLabels);
+    if (Object.keys(uniqueLabels).length > 0) {
+      hasUniqueLabels = true;
+    }
+
     let seriesLogLevel: LogLevel | undefined = undefined;
-    if (series.labels && Object.keys(series.labels).indexOf('level') !== -1) {
-      seriesLogLevel = getLogLevelFromKey(series.labels['level']);
+    if (stringField.labels && Object.keys(stringField.labels).indexOf('level') !== -1) {
+      seriesLogLevel = getLogLevelFromKey(stringField.labels['level']);
     }
 
     for (let j = 0; j < series.length; j++) {
@@ -291,7 +293,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
         searchWords,
         entry: hasAnsi ? ansicolor.strip(message) : message,
         raw: message,
-        labels: series.labels,
+        labels: stringField.labels,
         timestamp: ts,
         uid: idField ? idField.values.get(j) : j.toString(),
       });

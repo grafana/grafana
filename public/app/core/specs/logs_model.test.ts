@@ -199,10 +199,6 @@ describe('dataFrameToLogsModel', () => {
   it('given one series should return expected logs model', () => {
     const series: DataFrame[] = [
       new MutableDataFrame({
-        labels: {
-          filename: '/var/log/grafana/grafana.log',
-          job: 'grafana',
-        },
         fields: [
           {
             name: 'time',
@@ -216,6 +212,10 @@ describe('dataFrameToLogsModel', () => {
               't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
               't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
             ],
+            labels: {
+              filename: '/var/log/grafana/grafana.log',
+              job: 'grafana',
+            },
           },
           {
             name: 'id',
@@ -254,7 +254,7 @@ describe('dataFrameToLogsModel', () => {
     expect(logsModel.meta).toHaveLength(2);
     expect(logsModel.meta[0]).toMatchObject({
       label: 'Common labels',
-      value: series[0].labels,
+      value: series[0].fields[1].labels,
       kind: LogsMetaKind.LabelsMap,
     });
     expect(logsModel.meta[1]).toMatchObject({

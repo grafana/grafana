@@ -57,9 +57,9 @@ const valueVars = [
   },
 ];
 
-const buildLabelPath = (label: string) => {
-  return label.indexOf('.') > -1 ? `["${label}"]` : `.${label}`;
-};
+// const buildLabelPath = (label: string) => {
+//   return label.indexOf('.') > -1 ? `["${label}"]` : `.${label}`;
+// };
 
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
   ...templateSrv.variables.map(variable => ({
@@ -77,10 +77,10 @@ export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
 ];
 
 const getSeriesVars = (dataFrames: DataFrame[]) => {
-  const labels = _.chain(dataFrames.map(df => Object.keys(df.labels || {})))
-    .flatten()
-    .uniq()
-    .value();
+  // const labels = _.chain(dataFrames.map(df => Object.keys(df.labels || {})))
+  //   .flatten()
+  //   .uniq()
+  //   .value();
 
   return [
     {
@@ -89,12 +89,12 @@ const getSeriesVars = (dataFrames: DataFrame[]) => {
       documentation: 'Name of the series',
       origin: VariableOrigin.Series,
     },
-    ...labels.map(label => ({
-      value: `__series.labels${buildLabelPath(label)}`,
-      label: `labels.${label}`,
-      documentation: `${label} label value`,
-      origin: VariableOrigin.Series,
-    })),
+    // ...labels.map(label => ({
+    //   value: `__series.labels${buildLabelPath(label)}`,
+    //   label: `labels.${label}`,
+    //   documentation: `${label} label value`,
+    //   origin: VariableOrigin.Series,
+    // })),
   ];
 };
 export const getDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
