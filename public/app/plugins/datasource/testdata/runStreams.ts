@@ -3,7 +3,15 @@ import { Observable } from 'rxjs';
 
 import { DataQueryRequest, DataQueryResponse } from '@grafana/ui';
 
-import { FieldType, CircularDataFrame, CSVReader, Field, LoadingState, DataLink } from '@grafana/data';
+import {
+  FieldType,
+  CircularDataFrame,
+  CSVReader,
+  Field,
+  LoadingState,
+  DataLink,
+  DataLinkClickEvent,
+} from '@grafana/data';
 
 import { TestDataQuery, StreamingQuery } from './types';
 import { getRandomLine } from './LogIpsum';
@@ -55,6 +63,7 @@ export function runSignalStream(
 
     const onBuildHref: DataLink[] = [
       {
+        url: '',
         title: 'HREF From DataSource callback',
         onBuildHref: (event: DataLinkClickEvent) => {
           console.log('BUILD HREF', event);
@@ -64,6 +73,7 @@ export function runSignalStream(
     ];
     const onClick = [
       {
+        url: '',
         title: 'HREF From DataSource callback',
         onClick: (event: DataLinkClickEvent) => {
           console.log('CLICK CLICK', event);
