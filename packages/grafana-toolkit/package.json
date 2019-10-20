@@ -26,8 +26,8 @@
   },
   "main": "src/index.ts",
   "dependencies": {
-    "@babel/core": "7.4.5",
-    "@babel/preset-env": "7.4.5",
+    "@babel/core": "7.6.4",
+    "@babel/preset-env": "7.6.3",
     "@grafana/data": "^6.4.0-alpha",
     "@grafana/ui": "^6.4.0-alpha",
     "@types/command-exists": "^1.2.0",

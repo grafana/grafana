@@ -276,6 +276,19 @@ the hosts variable only show hosts from the current selected region with a query
 SELECT hostname FROM my_host  WHERE region IN($region)
 ```
 
+#### Using `$__searchFilter` to filter results in Query Variable
+> Available from Grafana 6.5 and above
+
+Using `$__searchFilter` in the query field will filter the query result based on what the user types in the dropdown select box.
+When nothing has been entered by the user the default value for `$__searchFilter` is `%`.
+
+The example below shows how to use `$__searchFilter` as part of the query field to enable searching for `hostname` while the user types in the dropdown select box.
+
+Query
+```sql
+SELECT hostname FROM my_host  WHERE hostname LIKE $__searchFilter
+```
+
 ### Using Variables in Queries
 
 From Grafana 4.3.0 to 4.6.0, template variables are always quoted automatically so if it is a string value do not wrap them in quotes in where clauses.

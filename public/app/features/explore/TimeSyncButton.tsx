@@ -51,6 +51,7 @@ export function TimeSyncButton(props: TimeSyncButtonProps) {
         className={classNames('btn navbar-button navbar-button--attached', {
           [styles.timePickerSynced]: isSynced,
         })}
+        aria-label={isSynced ? 'Synced times' : 'Unsynced times'}
         onClick={() => onClick()}
       >
         <i className="fa fa-link" />
