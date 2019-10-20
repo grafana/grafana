@@ -61,7 +61,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
   const values: TimeSeriesValue[] = [];
   for (const point of timeSeries.datapoints) {
     values.push(point[0]);
-    times.push(point[1]);
+    times.push(point[1] as number);
   }
 
   const fields = [
