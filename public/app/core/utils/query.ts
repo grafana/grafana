@@ -12,7 +12,7 @@ export const getNextRefIdChar = (queries: DataQuery[]): string => {
 };
 
 export function addQuery(queries: DataQuery[], query?: Partial<DataQuery>): DataQuery[] {
-  const q = query || { refId: 'A' };
+  const q = query || {};
   q.refId = getNextRefIdChar(queries);
   return [...queries, q as DataQuery];
 }

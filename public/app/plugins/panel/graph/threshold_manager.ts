@@ -2,6 +2,7 @@ import 'vendor/flot/jquery.flot';
 import $ from 'jquery';
 import _ from 'lodash';
 import { getColorFromHexRgbOrName } from '@grafana/ui';
+import { CoreEvents } from 'app/types';
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 
 export class ThresholdManager {
@@ -65,7 +66,7 @@ export class ThresholdManager {
       // trigger digest and render
       panelCtrl.$scope.$apply(() => {
         panelCtrl.render();
-        panelCtrl.events.emit('threshold-changed', {
+        panelCtrl.events.emit(CoreEvents.thresholdChanged, {
           threshold: model,
           handleIndex: handleIndex,
         });

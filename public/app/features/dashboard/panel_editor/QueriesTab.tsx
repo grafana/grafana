@@ -104,7 +104,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
     // switching to mixed|multi
     if (datasource.meta.mixed) {
-      // Add the datasource to everything
+      // Set the datasource on all targets
       panel.targets.forEach(target => {
         target.datasource = panel.datasource;
         if (!target.datasource) {
@@ -127,7 +127,7 @@ export class QueriesTab extends PureComponent<Props, State> {
           panel.targets = q.resolutions[0].targets;
         }
 
-        // Remove the datasource description
+        // Remove the explicit datasource
         for (const target of panel.targets) {
           delete target.datasource;
         }
@@ -234,7 +234,7 @@ export class QueriesTab extends PureComponent<Props, State> {
   renderMixedPicker = () => {
     return (
       <DataSourcePicker
-        datasources={this.datasources}
+        datasources={this.datasources.filter(ds => !ds.meta.mixed)}
         onChange={this.onAddMixedQuery}
         current={null}
         autoFocus={true}
@@ -258,6 +258,7 @@ export class QueriesTab extends PureComponent<Props, State> {
       this.onUpdateQueries(addQuery(targets, { datasource: datasource.name }));
     }
     this.setState({ isAddingMixed: false, scrollTop: this.state.scrollTop + 10000 });
+    this.forceUpdate();
   };
 
   onMixedPickerBlur = () => {

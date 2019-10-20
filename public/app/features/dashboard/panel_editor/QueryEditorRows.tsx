@@ -1,5 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
+
+// @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
 import _ from 'lodash';
 
 // Types
@@ -39,7 +41,6 @@ export class QueryEditorRows extends PureComponent<Props> {
       return q !== query;
     });
     onChangeQueries(removed);
-    console.log('REMOVE (QueryEditorRows)', removed, queries);
     panel.refresh();
   };
 

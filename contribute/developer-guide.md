@@ -28,7 +28,7 @@ npm install -g yarn
 We recommend using Go to download the source code for the Grafana project:
 
 1. Add `export GOPATH=$HOME/go/` to the bottom of your `$HOME/.bash_profile`.
-1. Open a terminal and run `go get github.com/grafana/` in your terminal. This command downloads, and installs Grafana to your `$GOPATH`.
+1. Open a terminal and run `go get github.com/grafana/grafana` in your terminal. This command downloads, and installs Grafana to your `$GOPATH`.
 1. Open `$GOPATH/src/github.com/grafana/grafana` in your favorite code editor.
 
 ## Build Grafana
@@ -193,8 +193,9 @@ find ./conf ./pkg ./public/views | wc -l
 
 Another alternative is to limit the files being watched. The directories that are watched for changes are listed in the `.bra.toml` file in the root directory. 
 
-## Learn more
+## Next steps
 
-- Read our [style guides](/contribute/style-guides).
-- Learn how to [Create a pull request](/contribute/pull-request.md).
-- Read [How to contribute to Grafana as a junior dev](https://medium.com/@ivanahuckova/how-to-contribute-to-grafana-as-junior-dev-c01fe3064502) by [Ivana Huckova](https://medium.com/@ivanahuckova).
+- [Create a pull request](/contribute/pull-request.md)
+- [Style guides](/contribute/style-guides)
+- [Architecture](architecture)
+- [How to contribute to Grafana as a junior dev](https://medium.com/@ivanahuckova/how-to-contribute-to-grafana-as-junior-dev-c01fe3064502)

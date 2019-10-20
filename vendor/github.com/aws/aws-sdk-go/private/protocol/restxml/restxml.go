@@ -37,8 +37,9 @@ func Build(r *request.Request) {
 		err := xmlutil.BuildXML(r.Params, xml.NewEncoder(&buf))
 		if err != nil {
 			r.Error = awserr.NewRequestFailure(
-				awserr.New("SerializationError", "failed to encode rest XML request", err),
-				r.HTTPResponse.StatusCode,
+				awserr.New(request.ErrCodeSerialization,
+					"failed to encode rest XML request", err),
+				0,
 				r.RequestID,
 			)
 			return
@@ -55,7 +56,8 @@ func Unmarshal(r *request.Request) {
 		err := xmlutil.UnmarshalXML(r.Data, decoder, "")
 		if err != nil {
 			r.Error = awserr.NewRequestFailure(
-				awserr.New("SerializationError", "failed to decode REST XML response", err),
+				awserr.New(request.ErrCodeSerialization,
+					"failed to decode REST XML response", err),
 				r.HTTPResponse.StatusCode,
 				r.RequestID,
 			)

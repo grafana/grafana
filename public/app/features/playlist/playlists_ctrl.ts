@@ -2,6 +2,8 @@ import _ from 'lodash';
 import coreModule from '../../core/core_module';
 import { BackendSrv } from '@grafana/runtime';
 import { NavModelSrv } from 'app/core/nav_model_srv';
+import { CoreEvents } from 'app/types';
+import { AppEvents } from '@grafana/data';
 
 export class PlaylistsCtrl {
   playlists: any;
@@ -24,17 +26,17 @@ export class PlaylistsCtrl {
 
     this.backendSrv.delete('/api/playlists/' + playlist.id).then(
       () => {
-        this.$scope.appEvent('alert-success', ['Playlist deleted', '']);
+        this.$scope.appEvent(AppEvents.alertSuccess, ['Playlist deleted']);
       },
       () => {
-        this.$scope.appEvent('alert-error', ['Unable to delete playlist', '']);
+        this.$scope.appEvent(AppEvents.alertError, ['Unable to delete playlist']);
         this.playlists.push(playlist);
       }
     );
   }
 
   removePlaylist(playlist: any) {
-    this.$scope.appEvent('confirm-modal', {
+    this.$scope.appEvent(CoreEvents.showConfirmModal, {
       title: 'Delete',
       text: 'Are you sure you want to delete playlist ' + playlist.name + '?',
       yesText: 'Delete',
