@@ -57,6 +57,13 @@ function convertTableToDataFrame(table: TableData): DataFrame {
 }
 
 function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
+  const times: number[] = [];
+  const values: TimeSeriesValue[] = [];
+  for (const point of timeSeries.datapoints) {
+    values.push(point[0]);
+    times.push(point[1]);
+  }
+
   const fields = [
     {
       name: timeSeries.target || 'Value',
@@ -64,7 +71,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
       config: {
         unit: timeSeries.unit,
       },
-      values: new ArrayVector<TimeSeriesValue>(),
+      values: new ArrayVector<TimeSeriesValue>(values),
       labels: timeSeries.tags,
     },
     {
@@ -73,21 +80,16 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
       config: {
         unit: 'dateTimeAsIso',
       },
-      values: new ArrayVector<number>(),
+      values: new ArrayVector<number>(times),
     },
   ];
-
-  for (const point of timeSeries.datapoints) {
-    fields[0].values.buffer.push(point[0]);
-    fields[1].values.buffer.push(point[1]);
-  }
 
   return {
     name: timeSeries.target,
     refId: timeSeries.refId,
     meta: timeSeries.meta,
     fields,
-    length: timeSeries.datapoints.length,
+    length: values.length,
   };
 }
 
