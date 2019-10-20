@@ -14,10 +14,11 @@
   }
 }
 
-.datasource-picker {
+.explore-ds-picker {
+  width: 60px;
+
   .ds-picker {
-    min-width: 200px;
-    max-width: 200px;
+    min-width: 60px;
   }
 }
 
@@ -115,19 +116,6 @@
   }
 }
 
-@media only screen and (max-width: 1210px) {
-  .explore-toolbar.splitted {
-    .explore-toolbar-content-item {
-      .datasource-picker {
-        .ds-picker {
-          min-width: 50px;
-          max-width: 50px;
-        }
-      }
-    }
-  }
-}
-
 @media only screen and (max-width: 1070px) {
   .timepicker {
     .timepicker-rangestring {
@@ -161,17 +149,8 @@
     .explore-toolbar-content-item {
       &:first-child {
         padding-left: 2px;
-        margin-right: 0;
+        margin-right: 12px;
       }
-    }
-  }
-}
-
-@media only screen and (max-width: 760px) {
-  .datasource-picker {
-    .ds-picker {
-      min-width: 50px;
-      max-width: 50px;
     }
   }
 }
