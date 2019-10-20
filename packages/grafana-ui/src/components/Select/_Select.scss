@@ -221,20 +221,6 @@ $select-input-bg-disabled: $input-bg-disabled;
   display: flex;
 }
 
-.datasource-picker {
-  .ds-picker {
-    .gf-form-select-box__img-value {
-      max-width: 150px;
-      overflow: hidden;
-    }
-  }
-}
-
-.collapsed {
-  min-width: 50px;
-  max-width: 50px;
-
-  span {
-    display: none;
-  }
+.gf-form-select-box__img-value-hidden {
+  max-width: 60px;
 }
