@@ -264,7 +264,7 @@ $arrowPadding: $arrowPaddingToBorder * 3;
 .time-picker-long-date {
   .select-button {
     span {
-      @media only screen and (max-width: 1210px) {
+      @include media-breakpoint-down(lg) {
         display: none;
       }
     }
