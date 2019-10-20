@@ -12,7 +12,7 @@ export interface Props {
   onChange: (ds: DataSourceSelectItem) => void;
   datasources: DataSourceSelectItem[];
   current: DataSourceSelectItem;
-  isCollapsed?: boolean;
+  hideTextValue?: boolean;
   onBlur?: () => void;
   autoFocus?: boolean;
   openMenuOnFocus?: boolean;
@@ -37,7 +37,7 @@ export class DataSourcePicker extends PureComponent<Props> {
   };
 
   render() {
-    const { datasources, current, autoFocus, isCollapsed, onBlur, openMenuOnFocus, showLoading } = this.props;
+    const { datasources, current, autoFocus, hideTextValue, onBlur, openMenuOnFocus, showLoading } = this.props;
 
     const options = datasources.map(ds => ({
       value: ds.name,
@@ -50,6 +50,7 @@ export class DataSourcePicker extends PureComponent<Props> {
       value: current.name,
       imgUrl: current.meta.info.logos.small,
       loading: showLoading,
+      hideText: hideTextValue,
     };
 
     return (
@@ -58,7 +59,6 @@ export class DataSourcePicker extends PureComponent<Props> {
           className="ds-picker"
           isMulti={false}
           isClearable={false}
-          isCollapsed={isCollapsed}
           backspaceRemovesValue={false}
           onChange={this.onChange}
           options={options}
