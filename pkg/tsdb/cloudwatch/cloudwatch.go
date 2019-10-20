@@ -126,10 +126,15 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 					}
 				}()
 
+				client, err := e.getClient(region)
+				if err != nil {
+					return err
+				}
+
 				queryResponses := make([]*tsdb.QueryResult, 0)
 				metricDataResults := make([]*cloudwatch.MetricDataResult, 0)
 				for _, query := range queries {
-					res, err := e.executeRequest(ectx, region, query)
+					res, err := e.executeRequest(ectx, client, query)
 					if err != nil {
 						plog.Info("executeGetMetricDataQueryError", "", err)
 					}
@@ -148,7 +153,7 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 					metricDataResults = append(metricDataResults, res...)
 				}
 
-				queryResponses, err := e.parseResponse(metricDataResults, queriesByRegion[region])
+				queryResponses, err = e.parseResponse(metricDataResults, queriesByRegion[region])
 				if err != nil {
 					return err
 				}
