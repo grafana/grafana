@@ -344,17 +344,20 @@ export class TableRenderer {
 
   render_values() {
     const rows = [];
+    const visibleColumns = this.table.columns.filter(column => !column.hidden);
 
     for (let y = 0; y < this.table.rows.length; y++) {
       const row = this.table.rows[y];
       const newRow = [];
       for (let i = 0; i < this.table.columns.length; i++) {
-        newRow.push(this.formatColumnValue(i, row[i]));
+        if (!this.table.columns[i].hidden) {
+          newRow.push(this.formatColumnValue(i, row[i]));
+        }
       }
       rows.push(newRow);
     }
     return {
-      columns: this.table.columns,
+      columns: visibleColumns,
       rows: rows,
     };
   }
