@@ -57,11 +57,20 @@ export function appendResponseToBufferedData(response: LokiResponse, data: Mutab
   const streams: LokiLogsStream[] = response.streams;
   if (streams && streams.length) {
     const { values } = data;
+    let baseLabels: Labels = {};
+    for (const f of data.fields) {
+      if (f.type === FieldType.string) {
+        if (f.labels) {
+          baseLabels = f.labels;
+        }
+        break;
+      }
+    }
 
     for (const stream of streams) {
       // Find unique labels
       const labels = parseLabels(stream.labels);
-      const unique = findUniqueLabels(labels, values.line.labels || {});
+      const unique = findUniqueLabels(labels, baseLabels);
 
       // Add each line
       for (const entry of stream.entries) {
