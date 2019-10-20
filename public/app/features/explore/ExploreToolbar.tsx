@@ -74,6 +74,7 @@ interface StateProps {
   originPanelId: number;
   queries: DataQuery[];
   datasourceLoading: boolean | null;
+  containerWidth: number;
 }
 
 interface DispatchProps {
@@ -91,33 +92,7 @@ interface DispatchProps {
 
 type Props = StateProps & DispatchProps & OwnProps;
 
-interface State {
-  datasourcePickerCollapsed: boolean;
-}
-
-export class UnConnectedExploreToolbar extends PureComponent<Props, State> {
-  state: State = {
-    datasourcePickerCollapsed: this.props.splitted ? window.innerWidth <= 1210 : window.innerWidth <= 760,
-  };
-
-  constructor(props: Props) {
-    super(props);
-  }
-
-  componentDidMount() {
-    window.addEventListener('resize', this.onWidthChange);
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.onWidthChange);
-  }
-
-  onWidthChange = () => {
-    this.setState({
-      datasourcePickerCollapsed: this.props.splitted ? window.innerWidth <= 1210 : window.innerWidth <= 760,
-    });
-  };
-
+export class UnConnectedExploreToolbar extends PureComponent<Props> {
   onChangeDatasource = async (option: { value: any }) => {
     this.props.changeDatasource(this.props.exploreId, option.value);
   };
@@ -192,9 +167,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, State> {
       isPaused,
       originPanelId,
       datasourceLoading,
+      containerWidth,
     } = this.props;
-
-    const { datasourcePickerCollapsed } = this.state;
 
     const styles = getStyles();
     const originDashboardIsEditable = Number.isInteger(originPanelId);
@@ -202,6 +176,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, State> {
       'btn--radius-right-0': originDashboardIsEditable,
       'navbar-button navbar-button--border-right-0': originDashboardIsEditable,
     });
+
+    const showSmallDataSourcePicker = (splitted ? containerWidth < 600 : containerWidth < 710) || false;
 
     return (
       <div className={splitted ? 'explore-toolbar splitted' : 'explore-toolbar'}>
@@ -226,13 +202,13 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, State> {
           <div className="explore-toolbar-content">
             {!datasourceMissing ? (
               <div className="explore-toolbar-content-item">
-                <div className="datasource-picker">
+                <div className={showSmallDataSourcePicker ? 'explore-ds-picker' : ''}>
                   <DataSourcePicker
                     onChange={this.onChangeDatasource}
                     datasources={exploreDatasources}
                     current={selectedDatasource}
                     showLoading={datasourceLoading}
-                    isCollapsed={datasourcePickerCollapsed}
+                    hideTextValue={showSmallDataSourcePicker}
                   />
                 </div>
                 {supportedModes.length > 1 ? (
@@ -366,6 +342,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     originPanelId,
     queries,
     datasourceLoading,
+    containerWidth,
   } = exploreItem;
   const selectedDatasource = datasourceInstance
     ? exploreDatasources.find(datasource => datasource.name === datasourceInstance.name)
@@ -391,6 +368,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     queries,
     syncedTimes,
     datasourceLoading,
+    containerWidth,
   };
 };
 
