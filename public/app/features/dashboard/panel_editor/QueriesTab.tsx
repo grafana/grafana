@@ -171,6 +171,10 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.onScrollBottom();
   };
 
+  onScrollBottom = () => {
+    this.setState({ scrollTop: this.state.scrollTop + 10000 });
+  };
+
   renderToolbar = () => {
     const { currentDS, isAddingMixed } = this.state;
 
@@ -273,10 +277,6 @@ export class QueriesTab extends PureComponent<Props, State> {
   setScrollTop = (event: React.MouseEvent<HTMLElement>) => {
     const target = event.target as HTMLElement;
     this.setState({ scrollTop: target.scrollTop });
-  };
-
-  onScrollBottom = () => {
-    this.setState({ scrollTop: this.state.scrollTop + 10000 });
   };
 
   renderQueryBody = () => {

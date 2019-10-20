@@ -15,8 +15,6 @@ const influxdbPlugin = async () =>
 const lokiPlugin = async () => await import(/* webpackChunkName: "lokiPlugin" */ 'app/plugins/datasource/loki/module');
 const mixedPlugin = async () =>
   await import(/* webpackChunkName: "mixedPlugin" */ 'app/plugins/datasource/mixed/module');
-const multiPlugin = async () =>
-  await import(/* webpackChunkName: "multiPlugin" */ 'app/plugins/datasource/multi/module');
 const mysqlPlugin = async () =>
   await import(/* webpackChunkName: "mysqlPlugin" */ 'app/plugins/datasource/mysql/module');
 const postgresPlugin = async () =>
@@ -33,6 +31,9 @@ const stackdriverPlugin = async () =>
   await import(/* webpackChunkName: "stackdriverPlugin" */ 'app/plugins/datasource/stackdriver/module');
 const azureMonitorPlugin = async () =>
   await import(/* webpackChunkName: "azureMonitorPlugin" */ 'app/plugins/datasource/grafana-azure-monitor-datasource/module');
+
+// Not async since it is small and used in the query editor
+import * as multiPlugin from 'app/plugins/datasource/multi/module';
 
 import * as textPanel from 'app/plugins/panel/text/module';
 import * as text2Panel from 'app/plugins/panel/text2/module';
