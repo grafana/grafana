@@ -9,11 +9,11 @@
     "url": "http://github.com/grafana/grafana.git"
   },
   "devDependencies": {
-    "@babel/core": "7.4.3",
+    "@babel/core": "7.6.4",
     "@babel/plugin-syntax-dynamic-import": "7.2.0",
-    "@babel/preset-env": "7.4.2",
-    "@babel/preset-react": "7.0.0",
-    "@babel/preset-typescript": "7.3.3",
+    "@babel/preset-env": "7.6.3",
+    "@babel/preset-react": "7.6.3",
+    "@babel/preset-typescript": "7.6.0",
     "@emotion/core": "10.0.10",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
     "@types/angular": "1.6.56",
@@ -64,6 +64,7 @@
     "babel-loader": "8.0.5",
     "babel-plugin-angularjs-annotate": "0.10.0",
     "clean-webpack-plugin": "2.0.0",
+    "core-js": "2.6.9",
     "css-loader": "2.1.1",
     "enzyme": "3.9.0",
     "enzyme-adapter-react-16": "1.11.2",
@@ -195,7 +196,7 @@
     "printWidth": 120
   },
   "dependencies": {
-    "@babel/polyfill": "7.2.5",
+    "@babel/polyfill": "7.6.0",
     "@grafana/slate-react": "0.22.9-grafana",
     "@torkelo/react-select": "2.4.1",
     "angular": "1.6.9",
