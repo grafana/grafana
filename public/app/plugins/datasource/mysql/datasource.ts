@@ -7,6 +7,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 //Types
 import { MysqlQueryForInterpolation } from './types';
+import { interpolateSearchFilter } from '../../../features/templating/variable';
 
 export class MysqlDatasource {
   id: any;
@@ -130,10 +131,17 @@ export class MysqlDatasource {
       refId = optionalOptions.variable.name;
     }
 
+    const rawSql = interpolateSearchFilter({
+      query: this.templateSrv.replace(query, {}, this.interpolateVariable),
+      options: optionalOptions,
+      wildcardChar: '%',
+      quoteLiteral: true,
+    });
+
     const interpolatedQuery = {
       refId: refId,
       datasourceId: this.id,
-      rawSql: this.templateSrv.replace(query, {}, this.interpolateVariable),
+      rawSql,
       format: 'table',
     };
 
