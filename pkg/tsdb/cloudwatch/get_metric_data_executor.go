@@ -8,13 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 )
 
-func (e *CloudWatchExecutor) executeRequest(ctx context.Context, region string, metricDataInput *cloudwatch.GetMetricDataInput) ([]*cloudwatch.MetricDataResult, error) {
+func (e *CloudWatchExecutor) executeRequest(ctx context.Context, client cloudWatchClient, metricDataInput *cloudwatch.GetMetricDataInput) ([]*cloudwatch.MetricDataResult, error) {
 	mdr := make([]*cloudwatch.MetricDataResult, 0)
-
-	client, err := e.getClient(region)
-	if err != nil {
-		return mdr, err
-	}
 
 	nextToken := ""
 	for {
