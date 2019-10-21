@@ -227,6 +227,8 @@ providers:
   editable: true
   # <int> how often Grafana will scan for changed dashboards
   updateIntervalSeconds: 10
+  # <bool> allow updating provisioned dashboards from the UI
+  allowUiUpdates: false
   options:
     # <string, required> path to dashboard files on disk. Required
     path: /var/lib/grafana/dashboards
@@ -236,12 +238,18 @@ When Grafana starts, it will update/insert all dashboards available in the confi
 
 #### Making changes to a provisioned dashboard
 
-It's possible to make changes to a provisioned dashboard in Grafana UI, but there's currently no possibility to automatically save the changes back to the provisioning source.
-However, if you make changes to a provisioned dashboard you can `Save` the dashboard which will bring up a *Cannot save provisioned dashboard* dialog like seen in the screenshot below.
-Here available options will let you `Copy JSON to Clipboard` and/or `Save JSON to file` which can help you synchronize your dashboard changes back to the provisioning source.
+If the the `allowUiUpdates` configuration value is set to true `Save` will let you save provisioned dashboards as with any manually created dashboard.
 
+> **Note.** 
+> If a dashboard is saved from the UI and then later updated / saved to disk the dashboard will always be overwritten. The `Version` property in the json file will not affect this even if it is lower then the existing dashboard.
+> 
+> If a dashboard is saved from the UI and then later the file is removed from disk, the dashboard will be deleted unless the configuration option `disableDeletion` is set to true.
+
+If the `allowUiUpdates` configuration value is set to false, then `Save` will instead bring up a *Cannot save provisioned dashboard* dialog like seen in the screenshot below.
+Here available options will let you `Copy JSON to Clipboard` and/or `Save JSON to file`. This can help you synchronize your dashboard changes back to the provisioning source.
+                                                                                                                                                                 
 Note: The JSON shown in input field and when using `Copy JSON to Clipboard` and/or `Save JSON to file` will have the `id` field automatically removed to aid the provisioning workflow.
-
+                                                                                                                                                                 
 {{< docs-imagebox img="/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Reusable Dashboard Urls
