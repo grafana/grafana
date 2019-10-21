@@ -37,6 +37,7 @@ export { RefreshPicker } from './RefreshPicker/RefreshPicker';
 export { TimePicker } from './TimePicker/TimePicker';
 export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
 export { List } from './List/List';
+export { TagsInput } from './TagsInput/TagsInput';
 export { Modal } from './Modal/Modal';
 
 // Renderless
@@ -87,8 +88,8 @@ export { JSONFormatter } from './JSONFormatter/JSONFormatter';
 export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
 export { ErrorBoundary, ErrorBoundaryAlert } from './ErrorBoundary/ErrorBoundary';
 export { AlphaNotice } from './AlphaNotice/AlphaNotice';
+export { DataSourceHttpSettings } from './DataSourceSettings/DataSourceHttpSettings';
 export { Spinner } from './Spinner/Spinner';
 export { FadeTransition } from './transitions/FadeTransition';
 export { SlideOutTransition } from './transitions/SlideOutTransition';
-// Segment
 export { Segment, SegmentAsync, SegmentSelect } from './Segment/';
