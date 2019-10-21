@@ -62,7 +62,7 @@ func parseGetMetricDataTimeSeries(lr map[string]*cloudwatch.MetricDataResult, qu
 
 		for key, values := range query.Dimensions {
 			for _, value := range values {
-				if value == label {
+				if value == label || value == "*" {
 					series.Tags[key] = label
 				}
 			}
