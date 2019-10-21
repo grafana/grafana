@@ -4,7 +4,7 @@ import { Table } from './Table';
 import { getTheme } from '../../themes';
 
 import { migratedTestTable, migratedTestStyles, simpleTable } from './examples';
-import { GrafanaThemeType } from '../../types/index';
+import { GrafanaThemeType } from '../../types/theme';
 import { DataFrame, FieldType, ArrayVector, ScopedVars } from '@grafana/data';
 import { withFullSizeStory } from '../../utils/storybook/withFullSizeStory';
 import { number, boolean } from '@storybook/addon-knobs';
