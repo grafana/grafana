@@ -108,6 +108,31 @@ func TestDashboardService(t *testing.T) {
 				So(err, ShouldEqual, models.ErrDashboardCannotSaveProvisionedDashboard)
 			})
 
+			Convey("Should not return validation error if dashboard is provisioned but UI updates allowed", func() {
+				provisioningValidated := false
+				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
+					provisioningValidated = true
+					cmd.Result = &models.DashboardProvisioning{}
+					return nil
+				})
+
+				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
+					return nil
+				})
+
+				bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
+					cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
+					return nil
+				})
+
+				dto.Dashboard = models.NewDashboard("Dash")
+				dto.Dashboard.SetId(3)
+				dto.User = &models.SignedInUser{UserId: 1}
+				_, err := service.SaveDashboard(dto, true)
+				So(provisioningValidated, ShouldBeFalse)
+				So(err, ShouldNotBeNil)
+			})
+
 			Convey("Should return validation error if alert data is invalid", func() {
 				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
 					cmd.Result = nil
