@@ -1,4 +1,10 @@
-import { containsVariable, assignModelProperties } from '../variable';
+import {
+  assignModelProperties,
+  containsSearchFilter,
+  containsVariable,
+  interpolateSearchFilter,
+  SEARCH_FILTER_VARIABLE,
+} from '../variable';
 
 describe('containsVariable', () => {
   describe('when checking if a string contains a variable', () => {
@@ -66,5 +72,106 @@ describe('assignModelProperties', () => {
     const target: any = { test: 'asd' };
     assignModelProperties(target, { propA: 1, propB: 2 }, { propC: 10 });
     expect(target.propC).toBe(10);
+  });
+});
+
+describe('containsSearchFilter', () => {
+  describe('when called without query', () => {
+    it('then it should return false', () => {
+      const result = containsSearchFilter(null);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe(`when called with a query without ${SEARCH_FILTER_VARIABLE}`, () => {
+    it('then it should return false', () => {
+      const result = containsSearchFilter('$app.*');
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe(`when called with a query with ${SEARCH_FILTER_VARIABLE}`, () => {
+    it('then it should return false', () => {
+      const result = containsSearchFilter(`$app.${SEARCH_FILTER_VARIABLE}`);
+
+      expect(result).toBe(true);
+    });
+  });
+});
+
+describe('interpolateSearchFilter', () => {
+  describe('when called with a query without ${SEARCH_FILTER_VARIABLE}', () => {
+    it('then it should return query', () => {
+      const query = '$app.*';
+      const options = { searchFilter: 'filter' };
+      const wildcardChar = '*';
+      const quoteLiteral = false;
+
+      const result = interpolateSearchFilter({
+        query,
+        options,
+        wildcardChar,
+        quoteLiteral,
+      });
+
+      expect(result).toEqual(query);
+    });
+  });
+
+  describe(`when called with a query with ${SEARCH_FILTER_VARIABLE}`, () => {
+    const query = `$app.${SEARCH_FILTER_VARIABLE}`;
+
+    describe('and no searchFilter is given', () => {
+      it(`then ${SEARCH_FILTER_VARIABLE} should be replaced by wildchar character`, () => {
+        const options = {};
+        const wildcardChar = '*';
+        const quoteLiteral = false;
+
+        const result = interpolateSearchFilter({
+          query,
+          options,
+          wildcardChar,
+          quoteLiteral,
+        });
+
+        expect(result).toEqual(`$app.*`);
+      });
+    });
+
+    describe('and searchFilter is given', () => {
+      const options = { searchFilter: 'filter' };
+
+      it(`then ${SEARCH_FILTER_VARIABLE} should be replaced with searchfilter and wildchar character`, () => {
+        const wildcardChar = '*';
+        const quoteLiteral = false;
+
+        const result = interpolateSearchFilter({
+          query,
+          options,
+          wildcardChar,
+          quoteLiteral,
+        });
+
+        expect(result).toEqual(`$app.filter*`);
+      });
+
+      describe(`and quoteLiteral is used`, () => {
+        it(`then the literal should be quoted`, () => {
+          const wildcardChar = '*';
+          const quoteLiteral = true;
+
+          const result = interpolateSearchFilter({
+            query,
+            options,
+            wildcardChar,
+            quoteLiteral,
+          });
+
+          expect(result).toEqual(`$app.'filter*'`);
+        });
+      });
+    });
   });
 });

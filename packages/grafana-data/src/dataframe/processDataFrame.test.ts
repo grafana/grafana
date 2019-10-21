@@ -81,6 +81,7 @@ describe('toDataFrame', () => {
   it('Guess Colum Types from strings', () => {
     expect(guessFieldTypeFromValue('1')).toBe(FieldType.number);
     expect(guessFieldTypeFromValue('1.234')).toBe(FieldType.number);
+    expect(guessFieldTypeFromValue('NaN')).toBe(FieldType.number);
     expect(guessFieldTypeFromValue('3.125e7')).toBe(FieldType.number);
     expect(guessFieldTypeFromValue('True')).toBe(FieldType.boolean);
     expect(guessFieldTypeFromValue('FALSE')).toBe(FieldType.boolean);
@@ -95,6 +96,7 @@ describe('toDataFrame', () => {
         { name: 'B (strings)', values: [null, 'Hello'] },
         { name: 'C (nulls)', values: [null, null] },
         { name: 'Time', values: ['2000', 1967] },
+        { name: 'D (number strings)', values: ['NaN', null, 1] },
       ],
     });
     const norm = guessFieldTypes(series);
@@ -102,6 +104,7 @@ describe('toDataFrame', () => {
     expect(norm.fields[1].type).toBe(FieldType.string);
     expect(norm.fields[2].type).toBe(FieldType.other);
     expect(norm.fields[3].type).toBe(FieldType.time); // based on name
+    expect(norm.fields[4].type).toBe(FieldType.number);
   });
 
   it('converts JSON document data to series', () => {

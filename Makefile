@@ -96,7 +96,7 @@ revive-alerting: scripts/go/bin/revive
 gosec: scripts/go/bin/gosec
 	@echo "lint via gosec"
 	@scripts/go/bin/gosec -quiet \
-		-exclude=G104,G107,G201,G202,G204,G301,G304,G401,G402,G501 \
+		-exclude=G104,G107,G108,G201,G202,G204,G301,G304,G401,G402,G501 \
 		-conf=./scripts/go/configs/gosec.json \
 		$(GO_FILES)
 
