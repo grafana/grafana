@@ -4,7 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { Segment, SegmentAsync } from '@grafana/ui';
 
 export interface Props {
-  dimensions: { [key: string]: string };
+  dimensions: { [key: string]: string | string[] };
   variables: string[];
   onChange: (dimensions: { [key: string]: string }) => void;
   loadValues: (key: string) => Promise<Array<SelectableValue<string>>>;
