@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useContext, useRef, RefObject } from 'react';
+import React, { useState, useMemo, useContext, useRef, RefObject, memo } from 'react';
 import { VariableSuggestion, VariableOrigin, DataLinkSuggestions } from './DataLinkSuggestions';
 import { ThemeContext, DataLinkBuiltInVars, makeValue } from '../../index';
 import { SelectionReference } from './SelectionReference';
@@ -41,7 +41,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
 }));
 
-export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, suggestions }) => {
+// This memoised also because rerendering the slate editor grabs focus which created problem in some cases this
+// was used and changes to different state were propagated here.
+export const DataLinkInput: React.FC<DataLinkInputProps> = memo(({ value, onChange, suggestions }) => {
   const editorRef = useRef<Editor>() as RefObject<Editor>;
   const theme = useContext(ThemeContext);
   const styles = getStyles(theme);
@@ -91,6 +93,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
   const onUrlBlur = React.useCallback((event: Event, editor: CoreEditor, next: () => any) => {
     // Callback needed for blur to work correctly
     stateRef.current.onChange(Plain.serialize(stateRef.current.linkUrl), () => {
+      // This needs to be called after state is updated.
       editorRef.current!.blur();
     });
   }, []);
@@ -161,6 +164,6 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
       </div>
     </div>
   );
-};
+});
 
 DataLinkInput.displayName = 'DataLinkInput';
