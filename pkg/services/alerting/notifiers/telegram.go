@@ -123,7 +123,9 @@ func (tn *TelegramNotifier) buildMessageLinkedImage(evalContext *alerting.EvalCo
 		fw, err := w.CreateFormField("parse_mode")
 		if err != nil {
 			tn.log.Error("Failed to create form file", "err", err)
+			return
 		}
+
 		if _, err := fw.Write([]byte("html")); err != nil {
 			tn.log.Error("Failed to write to form field", "err", err)
 		}
@@ -158,7 +160,9 @@ func (tn *TelegramNotifier) buildMessageInlineImage(evalContext *alerting.EvalCo
 		fw, err := w.CreateFormFile("photo", evalContext.ImageOnDiskPath)
 		if err != nil {
 			tn.log.Error("Failed to create form file", "err", err)
+			return
 		}
+
 		if _, err := io.Copy(fw, imageFile); err != nil {
 			tn.log.Error("Failed to write to form file", "err", err)
 		}
