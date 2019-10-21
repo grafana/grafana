@@ -52,7 +52,7 @@ func (u *WebdavUploader) Upload(ctx context.Context, pa string) (string, error) 
 		return "", err
 	}
 
-	filename += ".png"
+	filename += pngExt
 	url.Path = path.Join(url.Path, filename)
 
 	imgData, err := ioutil.ReadFile(pa)

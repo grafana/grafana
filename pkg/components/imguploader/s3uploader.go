@@ -65,7 +65,7 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 	if err != nil {
 		return "", err
 	}
-	key := u.path + rand + ".png"
+	key := u.path + rand + pngExt
 	image_url := s3_endpoint.URL + "/" + u.bucket + "/" + key
 	log.Debug("Uploading image to s3. url = %s", image_url)
 
