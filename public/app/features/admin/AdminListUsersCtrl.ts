@@ -1,6 +1,6 @@
+import { getTagColorsFromName } from '@grafana/ui';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/core';
-import tags from 'app/core/utils/tags';
 
 export default class AdminListUsersCtrl {
   users: any;
@@ -63,7 +63,7 @@ function getAuthLabelStyle(label: string) {
     return {};
   }
 
-  const { color, borderColor } = tags.getTagColorsFromName(label);
+  const { color, borderColor } = getTagColorsFromName(label);
   return {
     'background-color': color,
     'border-color': borderColor,

@@ -37,6 +37,7 @@ type notificationService struct {
 func (n *notificationService) SendIfNeeded(context *EvalContext) error {
 	notifierStates, err := n.getNeededNotifiers(context.Rule.OrgID, context.Rule.Notifications, context)
 	if err != nil {
+		n.log.Error("Failed to get alert notifiers", "error", err)
 		return err
 	}
 
@@ -109,10 +110,11 @@ func (n *notificationService) sendNotifications(evalContext *EvalContext, notifi
 		err := n.sendNotification(evalContext, notifierState)
 		if err != nil {
 			n.log.Error("failed to send notification", "uid", notifierState.notifier.GetNotifierUID(), "error", err)
-			return err
+			if evalContext.IsTestRun {
+				return err
+			}
 		}
 	}
-
 	return nil
 }
 
