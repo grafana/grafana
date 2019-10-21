@@ -11,7 +11,7 @@ import {
   Switch,
 } from '@grafana/ui';
 import DataSource, { Options } from '../datasource';
-import { Stats, Dimensions, FormField } from './';
+import { Stats, Dimensions, FormField, Alias } from './';
 
 type Props = QueryEditorProps<DataSource, CloudWatchQuery, Options>;
 
@@ -24,7 +24,7 @@ interface State {
 const idValidationEvents: ValidationEvents = {
   [EventsWithValidation.onBlur]: [
     {
-      rule: value => new RegExp(/^[a-z][a-zA-Z0-9_]*$/).test(value),
+      rule: value => new RegExp(/^$|^[a-z][a-zA-Z0-9_]*$/).test(value),
       errorMessage: 'Invalid format. Only alphanumeric characters and underscores are allowed',
     },
   ],
@@ -205,15 +205,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
             label="Alias"
             tooltip="Alias replacement variables: {{metric}}, {{stat}}, {{namespace}}, {{region}}, {{period}}, {{label}}, {{YOUR_DIMENSION_NAME}}"
             inputEl={
-              <Input
-                className={`gf-form-input width-${18}`}
-                width={16}
-                onBlur={console.log}
-                value={query.alias}
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  this.onChange({ ...query, alias: event.target.value })
-                }
-              />
+              <Alias value={query.alias} onChange={(value: string) => this.onChange({ ...query, alias: value })} />
             }
           />
           <Switch
