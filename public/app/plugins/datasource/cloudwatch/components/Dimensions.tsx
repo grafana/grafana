@@ -60,6 +60,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, variables, lo
             options={operators}
           />
           <SegmentAsync
+            allowCustomValue
             value={value || 'select dimension value'}
             loadOptions={() => loadValues(key).then(appendTemplateVariables)}
             onChange={newValue => setData({ ...data, [key]: newValue })}

@@ -12,7 +12,7 @@ export interface Props extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const defaultProps = {
-  labelWidth: 6,
+  labelWidth: 8,
   inputWidth: 12,
   grow: false,
 };

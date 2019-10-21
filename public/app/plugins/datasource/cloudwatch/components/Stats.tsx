@@ -5,6 +5,7 @@ import { Segment } from '@grafana/ui';
 export interface Props {
   values: string[];
   onChange: (values: string[]) => void;
+  variableOptionGroup: SelectableValue<string>;
 }
 
 const options: Array<SelectableValue<string>> = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'].map(value => ({
@@ -15,14 +16,14 @@ const options: Array<SelectableValue<string>> = ['Average', 'Maximum', 'Minimum'
 const removeText = '-- remove stat --';
 const removeOption: SelectableValue<string> = { label: removeText, value: removeText };
 
-export const Stats: SFC<Props> = ({ values, onChange }) => (
+export const Stats: SFC<Props> = ({ values, onChange, variableOptionGroup }) => (
   <>
     {values &&
       values.map((value, index) => (
         <Segment
           key={value + index}
           value={value}
-          options={[removeOption, ...options]}
+          options={[removeOption, ...options, variableOptionGroup]}
           onChange={value =>
             onChange(
               value === removeText

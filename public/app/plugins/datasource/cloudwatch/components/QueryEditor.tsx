@@ -52,19 +52,28 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
   componentDidMount() {
     const { datasource } = this.props;
     Promise.all([this.loadRegions(), datasource.metricFindQuery('namespaces()')]).then(([regions, namespaces]) => {
-      this.setState({ ...this.state, regions, namespaces });
+      this.setState({
+        ...this.state,
+        regions,
+        namespaces: this.appendTemplateVariables(namespaces),
+      });
     });
   }
 
   loadRegions = async () => {
     const regions = await this.props.datasource.metricFindQuery('regions()');
-    return [{ label: 'default', value: 'default' }, ...regions];
+    return [{ label: 'default', value: 'default' }, ...this.appendTemplateVariables(regions)];
   };
 
   loadMetricNames = async () => {
     const { namespace, region } = this.props.query;
-    return this.props.datasource.metricFindQuery(`metrics(${namespace},${region})`);
+    return this.props.datasource.metricFindQuery(`metrics(${namespace},${region})`).then(this.appendTemplateVariables);
   };
+
+  appendTemplateVariables = (values: SelectableValue[]) => [
+    ...values,
+    { label: 'Template Variables', options: this.props.datasource.variables.map(v => ({ label: v, value: v })) },
+  ];
 
   onChange(query: CloudWatchQuery) {
     const { onChange, onRunQuery } = this.props;
@@ -79,70 +88,88 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
       <>
         <FormField
           className="query-keyword"
-          width={24}
           label="Region"
+          width={24}
+          grow
           inputEl={
-            <Segment value={query.region} options={regions} onChange={region => this.onChange({ ...query, region })} />
+            <Segment
+              value={query.region}
+              options={regions}
+              allowCustomValue
+              onChange={region => this.onChange({ ...query, region })}
+            />
           }
         />
         {query.expression.length === 0 && (
-          <div className="gf-form-inline">
+          <>
+            <FormField
+              className="query-keyword"
+              label="Namespace"
+              grow
+              inputEl={
+                <Segment
+                  value={query.namespace}
+                  allowCustomValue
+                  options={namespaces}
+                  onChange={namespace => this.onChange({ ...query, namespace })}
+                />
+              }
+            />
+
             <FormField
               className="query-keyword"
               label="Metric"
+              grow
               inputEl={
-                <>
-                  <Segment
-                    value={query.namespace}
-                    options={namespaces}
-                    onChange={namespace => this.onChange({ ...query, namespace })}
-                  />
-                  <SegmentAsync
-                    value={query.metricName}
-                    loadOptions={this.loadMetricNames}
-                    onChange={metricName => this.onChange({ ...query, metricName })}
-                  />
-                </>
+                <SegmentAsync
+                  value={query.metricName}
+                  allowCustomValue
+                  loadOptions={this.loadMetricNames}
+                  onChange={metricName => this.onChange({ ...query, metricName })}
+                />
               }
             />
+
             <FormField
               className="query-keyword"
-              labelWidth={4}
               label="Stats"
+              grow
               inputEl={
-                <Stats values={query.statistics} onChange={statistics => this.onChange({ ...query, statistics })} />
+                <Stats
+                  values={query.statistics}
+                  onChange={statistics => this.onChange({ ...query, statistics })}
+                  variableOptionGroup={{
+                    label: 'Template Variables',
+                    options: datasource.variables.map(v => ({ label: v, value: v })),
+                  }}
+                />
               }
             />
-            <div className="gf-form gf-form--grow">
-              <div className="gf-form-label gf-form-label--grow" />
-            </div>
-          </div>
-        )}
 
-        {query.expression.length === 0 && (
-          <FormField
-            className="query-keyword"
-            grow
-            label="Dimensions"
-            inputEl={
-              <Dimensions
-                dimensions={query.dimensions}
-                variables={datasource.variables}
-                onChange={dimensions => this.onChange({ ...query, dimensions })}
-                loadKeys={() => datasource.getDimensionKeys(query.namespace, query.region)}
-                loadValues={newKey => {
-                  const { [newKey]: value, ...newDimensions } = query.dimensions;
-                  return datasource.getDimensionValues(
-                    query.region,
-                    query.namespace,
-                    query.metricName,
-                    newKey,
-                    newDimensions
-                  );
-                }}
-              />
-            }
-          />
+            <FormField
+              className="query-keyword"
+              grow
+              label="Dimensions"
+              inputEl={
+                <Dimensions
+                  dimensions={query.dimensions}
+                  variables={datasource.variables}
+                  onChange={dimensions => this.onChange({ ...query, dimensions })}
+                  loadKeys={() => datasource.getDimensionKeys(query.namespace, query.region)}
+                  loadValues={newKey => {
+                    const { [newKey]: value, ...newDimensions } = query.dimensions;
+                    return datasource.getDimensionValues(
+                      query.region,
+                      query.namespace,
+                      query.metricName,
+                      newKey,
+                      newDimensions
+                    );
+                  }}
+                />
+              }
+            />
+          </>
         )}
 
         {query.statistics.length === 1 && (
@@ -153,8 +180,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
               tooltip="Id can include numbers, letters, and underscore, and must start with a lowercase letter."
               inputEl={
                 <Input
-                  className={`gf-form-input width-${12}`}
-                  width={16}
+                  className={`gf-form-input width-${8}`}
                   onBlur={console.log}
                   validationEvents={idValidationEvents}
                   value={query.id}
@@ -169,8 +195,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
               label="Expression"
               inputEl={
                 <Input
-                  className={`gf-form-input width-${18}`}
-                  width={16}
+                  className={`gf-form-input width-${28}`}
                   onBlur={console.log}
                   value={query.expression}
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
@@ -189,8 +214,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
             tooltip="Minimum interval between points in seconds"
             inputEl={
               <Input
-                className={`gf-form-input width-${12}`}
-                width={16}
+                className={`gf-form-input width-${16}`}
                 onBlur={console.log}
                 value={query.period}
                 placeholder="auto"

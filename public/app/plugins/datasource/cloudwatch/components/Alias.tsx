@@ -17,5 +17,5 @@ export const Alias: FunctionComponent<Props> = ({ value, onChange }) => {
     propagateOnChange(e.target.value);
   };
 
-  return <Input type="text" className="gf-form-input width-24" value={alias} onChange={onChange} />;
+  return <Input type="text" className="gf-form-input" width={16} value={alias} onChange={onChange} />;
 };
