@@ -6,7 +6,7 @@ We're excited that you're considering making a contribution to the Grafana proje
 
 We know you're excited to create your first pull request. Before we get started, read these resources first:
 
-- Learn how to start [Contributing to Grafana](https://grafana.com/docs/contribute/overview/).
+- Learn how to start [Contributing to Grafana](/CONTRIBUTING.md).
 - Make sure your code follows the relevant [style guides](/contribute/style-guides).
 
 ## Your first pull request
@@ -30,7 +30,7 @@ If the pull request fixes a bug:
 
 Pull requests for frontend contributions must:
 
-- Use [Emotion](https://github.com/grafana/grafana/blob/master/style_guides/styling.md) for styling.
+- Use [Emotion](/contribute/style-guides/styling.md) for styling.
 - Not increase the Angular code base.
 - Not use `any` or `{}` without reason.
 - Not contain large React components that could easily be split into several smaller components.
@@ -38,8 +38,8 @@ Pull requests for frontend contributions must:
 
 Pull requests for Redux contributions must:
 
-- Use the `actionCreatorFactory` and `reducerFactory` helpers instead of traditional switch statement reducers in Redux. Refer to [Redux framework](https://github.com/grafana/grafana/tree/master/style_guides/redux.md) for more details.
-- Use `reducerTester` to test reducers. Refer to [Redux framework](https://github.com/grafana/grafana/tree/master/style_guides/redux.md) for more details.
+- Use the `actionCreatorFactory` and `reducerFactory` helpers instead of traditional switch statement reducers in Redux. Refer to [Redux framework](/contribute/style-guides/redux.md) for more details.
+- Use `reducerTester` to test reducers. Refer to [Redux framework](/contribute/style-guides/redux.md) for more details.
 - Not contain code that mutates state in reducers or thunks.
 - Not contain code that accesses the reducers state slice directly. Instead, the code should use state selectors to access state.
 

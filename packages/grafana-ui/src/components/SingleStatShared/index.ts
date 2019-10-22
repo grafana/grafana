@@ -5,5 +5,5 @@ export {
   SingleStatBaseOptions,
   sharedSingleStatPanelChangedHandler,
   sharedSingleStatMigrationHandler,
-  convertOldAngulrValueMapping,
+  convertOldAngularValueMapping,
 } from './SingleStatBaseOptions';
