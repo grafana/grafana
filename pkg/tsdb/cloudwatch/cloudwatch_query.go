@@ -24,11 +24,11 @@ type CloudWatchQuery struct {
 }
 
 func (e *CloudWatchQuery) isMathExpression() bool {
-	return len(e.Statistics) == 1 && e.Expression != "" && strings.Index(e.Expression, "SEARCH(") == -1
+	return len(e.Statistics) == 1 && e.Expression != "" && !strings.Contains(e.Expression, "SEARCH(")
 }
 
 func (e *CloudWatchQuery) isUserDefinedSearchExpression() bool {
-	return len(e.Statistics) == 1 && strings.Index(e.Expression, "SEARCH(") != -1
+	return len(e.Statistics) == 1 && strings.Contains(e.Expression, "SEARCH(")
 }
 
 func (e *CloudWatchQuery) isInferredSearchExpression() bool {
