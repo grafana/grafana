@@ -85,7 +85,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
   }
 
   render() {
-    const { query, datasource } = this.props;
+    const { query, datasource, onChange, onRunQuery } = this.props;
     const { regions, namespaces, variableOptionGroup: variableOptionGroup } = this.state;
     return (
       <>
@@ -96,7 +96,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
           grow
           inputEl={
             <Segment
-              value={query.region}
+              value={query.region || 'Select region'}
               options={regions}
               allowCustomValue
               onChange={region => this.onChange({ ...query, region })}
@@ -111,7 +111,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
               grow
               inputEl={
                 <Segment
-                  value={query.namespace}
+                  value={query.namespace || 'Select namespace'}
                   allowCustomValue
                   options={namespaces}
                   onChange={namespace => this.onChange({ ...query, namespace })}
@@ -125,7 +125,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
               grow
               inputEl={
                 <SegmentAsync
-                  value={query.metricName}
+                  value={query.metricName || 'Select metric name'}
                   allowCustomValue
                   loadOptions={this.loadMetricNames}
                   onChange={metricName => this.onChange({ ...query, metricName })}
@@ -178,12 +178,10 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
               inputEl={
                 <Input
                   className={`gf-form-input width-${8}`}
-                  onBlur={console.log}
+                  onBlur={onRunQuery}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => onChange({ ...query, id: event.target.value })}
                   validationEvents={idValidationEvents}
                   value={query.id}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                    this.onChange({ ...query, id: event.target.value })
-                  }
                 />
               }
             />
@@ -193,10 +191,10 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
               inputEl={
                 <Input
                   className={`gf-form-input width-${28}`}
-                  onBlur={console.log}
+                  onBlur={onRunQuery}
                   value={query.expression}
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                    this.onChange({ ...query, expression: event.target.value })
+                    onChange({ ...query, expression: event.target.value })
                   }
                 />
               }
@@ -212,12 +210,10 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
             inputEl={
               <Input
                 className={`gf-form-input width-${16}`}
-                onBlur={console.log}
                 value={query.period}
                 placeholder="auto"
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  this.onChange({ ...query, period: event.target.value })
-                }
+                onBlur={onRunQuery}
+                onChange={(event: ChangeEvent<HTMLInputElement>) => onChange({ ...query, period: event.target.value })}
               />
             }
           />
