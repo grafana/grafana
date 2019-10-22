@@ -1,7 +1,13 @@
 import path = require('path');
 import fs from 'fs';
 
-export const allowedJestConfigOverrides = ['snapshotSerializers', 'moduleNameMapper', 'globalSetup', 'globalTeardown'];
+export const allowedJestConfigOverrides = [
+  'snapshotSerializers',
+  'moduleNameMapper',
+  'globalSetup',
+  'globalTeardown',
+  'testEnvironment',
+];
 
 interface EnabledJestConfigOverrides {
   snapshotSerializers: string[];
