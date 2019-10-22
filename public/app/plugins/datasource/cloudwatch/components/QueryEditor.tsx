@@ -11,7 +11,7 @@ import {
   Switch,
 } from '@grafana/ui';
 import DataSource, { Options } from '../datasource';
-import { Stats, Dimensions, FormField, Alias } from './';
+import { Stats, Dimensions, InlineFormField, FormField, Alias } from './';
 
 type Props = QueryEditorProps<DataSource, CloudWatchQuery, Options>;
 
@@ -89,11 +89,9 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
     const { regions, namespaces, variableOptionGroup: variableOptionGroup } = this.state;
     return (
       <>
-        <FormField
-          className="query-keyword"
+        <InlineFormField
           label="Region"
           width={24}
-          grow
           inputEl={
             <Segment
               value={query.region || 'Select region'}
@@ -103,12 +101,11 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
             />
           }
         />
+
         {query.expression.length === 0 && (
           <>
-            <FormField
-              className="query-keyword"
+            <InlineFormField
               label="Namespace"
-              grow
               inputEl={
                 <Segment
                   value={query.namespace || 'Select namespace'}
@@ -119,10 +116,8 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
               }
             />
 
-            <FormField
-              className="query-keyword"
+            <InlineFormField
               label="Metric Name"
-              grow
               inputEl={
                 <SegmentAsync
                   value={query.metricName || 'Select metric name'}
@@ -133,10 +128,8 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
               }
             />
 
-            <FormField
-              className="query-keyword"
+            <InlineFormField
               label="Stats"
-              grow
               inputEl={
                 <Stats
                   values={query.statistics}
@@ -146,9 +139,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
               }
             />
 
-            <FormField
-              className="query-keyword"
-              grow
+            <InlineFormField
               label="Dimensions"
               inputEl={
                 <Dimensions
@@ -171,65 +162,75 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
 
         {query.statistics.length === 1 && (
           <div className="gf-form-inline">
+            <div className="gf-form">
+              <FormField
+                className="query-keyword"
+                label="Id"
+                tooltip="Id can include numbers, letters, and underscore, and must start with a lowercase letter."
+                inputEl={
+                  <Input
+                    className={`gf-form-input width-${8}`}
+                    onBlur={onRunQuery}
+                    onChange={(event: ChangeEvent<HTMLInputElement>) => onChange({ ...query, id: event.target.value })}
+                    validationEvents={idValidationEvents}
+                    value={query.id}
+                  />
+                }
+              />
+            </div>
+            <div className="gf-form gf-form--grow">
+              <FormField
+                className="gf-form--grow"
+                label="Expression"
+                inputEl={
+                  <Input
+                    className={`gf-form-input`}
+                    onBlur={onRunQuery}
+                    value={query.expression}
+                    onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                      onChange({ ...query, expression: event.target.value })
+                    }
+                  />
+                }
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="gf-form-inline">
+          <div className="gf-form">
             <FormField
               className="query-keyword"
-              label="Id"
-              tooltip="Id can include numbers, letters, and underscore, and must start with a lowercase letter."
+              label="Min Period"
+              tooltip="Minimum interval between points in seconds"
               inputEl={
                 <Input
-                  className={`gf-form-input width-${8}`}
+                  className={`gf-form-input width-${16}`}
+                  value={query.period}
+                  placeholder="auto"
                   onBlur={onRunQuery}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => onChange({ ...query, id: event.target.value })}
-                  validationEvents={idValidationEvents}
-                  value={query.id}
-                />
-              }
-            />
-            <FormField
-              className="query-keyword"
-              label="Expression"
-              inputEl={
-                <Input
-                  className={`gf-form-input width-${28}`}
-                  onBlur={onRunQuery}
-                  value={query.expression}
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                    onChange({ ...query, expression: event.target.value })
+                    onChange({ ...query, period: event.target.value })
                   }
                 />
               }
             />
           </div>
-        )}
-
-        <div className="gf-form-inline">
-          <FormField
-            className="query-keyword"
-            label="Min Period"
-            tooltip="Minimum interval between points in seconds"
-            inputEl={
-              <Input
-                className={`gf-form-input width-${16}`}
-                value={query.period}
-                placeholder="auto"
-                onBlur={onRunQuery}
-                onChange={(event: ChangeEvent<HTMLInputElement>) => onChange({ ...query, period: event.target.value })}
-              />
-            }
-          />
-          <FormField
-            className="query-keyword"
-            label="Alias"
-            tooltip="Alias replacement variables: {{metric}}, {{stat}}, {{namespace}}, {{region}}, {{period}}, {{label}}, {{YOUR_DIMENSION_NAME}}"
-            inputEl={
-              <Alias value={query.alias} onChange={(value: string) => this.onChange({ ...query, alias: value })} />
-            }
-          />
-          <Switch
-            label="HighRes"
-            checked={query.highResolution}
-            onChange={() => this.onChange({ ...query, highResolution: !query.highResolution })}
-          />
+          <div className="gf-form">
+            <FormField
+              className="query-keyword"
+              label="Alias"
+              tooltip="Alias replacement variables: {{metric}}, {{stat}}, {{namespace}}, {{region}}, {{period}}, {{label}}, {{YOUR_DIMENSION_NAME}}"
+              inputEl={
+                <Alias value={query.alias} onChange={(value: string) => this.onChange({ ...query, alias: value })} />
+              }
+            />
+            <Switch
+              label="HighRes"
+              checked={query.highResolution}
+              onChange={() => this.onChange({ ...query, highResolution: !query.highResolution })}
+            />
+          </div>
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--grow" />
           </div>
