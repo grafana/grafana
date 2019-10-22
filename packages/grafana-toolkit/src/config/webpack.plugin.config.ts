@@ -90,6 +90,7 @@ const getCommonPlugins = (options: WebpackConfigurationOptions) => {
         { from: '**/*.png', to: '.' },
         { from: '**/*.html', to: '.' },
         { from: 'libs/*', to: '.' },
+        { from: 'static/*', to: '.' },
       ],
       { logLevel: options.watch ? 'silent' : 'warn' }
     ),
