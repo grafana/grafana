@@ -7,6 +7,7 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 // Components
 import QueryEditor from './QueryEditor';
+import { QueryRowActions } from './QueryRowActions';
 // Actions
 import { changeQuery, modifyQueries, runQueries, addQueryRow } from './state/actions';
 // Types
@@ -173,30 +174,14 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
         <div className="query-row-status">
           <QueryStatus queryResponse={queryResponse} latency={query.hide ? 0 : latency} />
         </div>
-        <div className="gf-form-inline flex-shrink-0">
-          {canToggleEditorModes && (
-            <div className="gf-form">
-              <button className="gf-form-label gf-form-label--btn" onClick={this.onClickToggleEditorMode}>
-                <i className="fa fa-pencil" />
-              </button>
-            </div>
-          )}
-          <div className="gf-form">
-            <button className="gf-form-label gf-form-label--btn" onClick={this.onClickToggleHiddenQuery}>
-              <i className={query.hide ? 'fa fa-eye-slash' : 'fa fa-eye'} />
-            </button>
-          </div>
-          <div className="gf-form">
-            <button className="gf-form-label gf-form-label--btn" onClick={this.onClickAddButton}>
-              <i className="fa fa-plus" />
-            </button>
-          </div>
-          <div className="gf-form">
-            <button className="gf-form-label gf-form-label--btn" onClick={this.onClickRemoveButton}>
-              <i className="fa fa-minus" />
-            </button>
-          </div>
-        </div>
+        <QueryRowActions
+          canToggleEditorModes={canToggleEditorModes}
+          hideQuery={query.hide}
+          onClickToggleEditorMode={this.onClickToggleEditorMode}
+          onClickToggleHiddenQuery={this.onClickToggleHiddenQuery}
+          onClickAddButton={this.onClickAddButton}
+          onClickRemoveButton={this.onClickRemoveButton}
+        />
       </div>
     );
   }
