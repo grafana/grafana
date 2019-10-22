@@ -10,6 +10,7 @@ import {
   DataFrameDTO,
   AnnotationEvent,
   ScopedVars,
+  KeyValue,
 } from '@grafana/data';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 import { PanelData } from './panel';
@@ -504,6 +505,7 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   isDefault: boolean;
   jsonData: T;
   secureJsonData?: S;
+  secureJsonFields?: KeyValue<boolean>;
   readOnly: boolean;
   withCredentials: boolean;
 }

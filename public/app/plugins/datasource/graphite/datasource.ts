@@ -5,9 +5,9 @@ import gfunc from './gfunc';
 import { IQService } from 'angular';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-
 //Types
 import { GraphiteQuery } from './types';
+import { interpolateSearchFilter } from '../../../features/templating/variable';
 
 export class GraphiteDatasource {
   basicAuth: string;
@@ -251,7 +251,12 @@ export class GraphiteDatasource {
 
   metricFindQuery(query: string, optionalOptions: any) {
     const options: any = optionalOptions || {};
-    const interpolatedQuery = this.templateSrv.replace(query);
+    const interpolatedQuery = interpolateSearchFilter({
+      query: this.templateSrv.replace(query),
+      options: optionalOptions,
+      wildcardChar: '*',
+      quoteLiteral: false,
+    });
 
     // special handling for tag_values(<tag>[,<expression>]*), this is used for template variables
     let matches = interpolatedQuery.match(/^tag_values\(([^,]+)((, *[^,]+)*)\)$/);
