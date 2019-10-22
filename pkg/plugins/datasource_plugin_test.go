@@ -3,8 +3,9 @@ package plugins
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestLoadDatasourceVersion(t *testing.T) {
@@ -16,18 +17,18 @@ func TestLoadDatasourceVersion(t *testing.T) {
 	})
 
 	t.Run("If plugin version is set to one, it should be treated as plugin version one", func(t *testing.T) {
-		pluginJSON, _ := json.Marshal(DataSourcePlugin{Version: 1})
+		pluginJSON, _ := json.Marshal(DataSourcePlugin{SDK: false})
 		datasourcePlugin := DataSourcePlugin{}
 		(&datasourcePlugin).Load(json.NewDecoder(bytes.NewReader(pluginJSON)), "/tmp")
 		assert.True(t, datasourcePlugin.isVersionOne())
-		assert.Equal(t, datasourcePlugin.Version, 1)
+		assert.False(t, datasourcePlugin.SDK)
 	})
 
 	t.Run("If plugin version is set to two, it should not be treated as plugin version one", func(t *testing.T) {
-		pluginJSON, _ := json.Marshal(DataSourcePlugin{Version: 2})
+		pluginJSON, _ := json.Marshal(DataSourcePlugin{SDK: true})
 		datasourcePlugin := DataSourcePlugin{}
 		(&datasourcePlugin).Load(json.NewDecoder(bytes.NewReader(pluginJSON)), "/tmp")
 		assert.False(t, datasourcePlugin.isVersionOne())
-		assert.Equal(t, datasourcePlugin.Version, 2)
+		assert.True(t, datasourcePlugin.SDK)
 	})
 }
