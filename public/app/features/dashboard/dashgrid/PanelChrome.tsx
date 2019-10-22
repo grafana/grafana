@@ -16,6 +16,7 @@ import config from 'app/core/config';
 import { DashboardModel, PanelModel } from '../state';
 import { LoadingState, ScopedVars, AbsoluteTimeRange, DefaultTimeRange, toUtc, toDataFrameDTO } from '@grafana/data';
 import { PanelEvents } from '@grafana/ui';
+import { PANEL_BORDER } from 'app/core/constants';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -253,11 +254,12 @@ export class PanelChrome extends PureComponent<Props, State> {
     const PanelComponent = plugin.panel;
     const innerPanelHeight = calculateInnerPanelHeight(panel, height);
     const timeRange = data.timeRange || this.timeSrv.timeRange();
+    const panelPadding = plugin.zeroChromePadding ? 0 : theme.panelPadding;
 
     return (
       <>
         {loading === LoadingState.Loading && this.renderLoadingState()}
-        <div className="panel-content">
+        <div className="panel-content" style={{ padding: panelPadding }}>
           <PanelComponent
             id={panel.id}
             data={data}
@@ -265,7 +267,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             timeZone={this.props.dashboard.getTimezone()}
             options={panel.getOptions()}
             transparent={panel.transparent}
-            width={width - theme.panelPadding * 2}
+            width={width - panelPadding * 2 - PANEL_BORDER}
             height={innerPanelHeight}
             renderCounter={renderCounter}
             replaceVariables={this.replaceVariables}

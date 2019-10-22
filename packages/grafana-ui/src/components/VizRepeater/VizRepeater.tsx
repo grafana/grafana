@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, CSSProperties } from 'react';
 import { VizOrientation } from '../../types';
 
 interface Props<T> {
@@ -76,12 +76,12 @@ export class VizRepeater<T> extends PureComponent<Props<T>, State<T>> {
       repeaterStyle.flexDirection = 'column';
       itemStyles.marginBottom = `${itemSpacing}px`;
       vizWidth = width;
-      vizHeight = height / values.length - itemSpacing;
+      vizHeight = height / values.length - itemSpacing + itemSpacing / values.length;
     } else {
       repeaterStyle.flexDirection = 'row';
       itemStyles.marginRight = `${itemSpacing}px`;
       vizHeight = height;
-      vizWidth = width / values.length - itemSpacing;
+      vizWidth = width / values.length - itemSpacing + itemSpacing / values.length;
     }
 
     itemStyles.width = `${vizWidth}px`;
@@ -91,7 +91,7 @@ export class VizRepeater<T> extends PureComponent<Props<T>, State<T>> {
       <div style={repeaterStyle}>
         {values.map((value, index) => {
           return (
-            <div key={index} style={itemStyles}>
+            <div key={index} style={getItemStylesForIndex(itemStyles, index, values.length)}>
               {renderValue(value, vizWidth, vizHeight)}
             </div>
           );
@@ -99,4 +99,18 @@ export class VizRepeater<T> extends PureComponent<Props<T>, State<T>> {
       </div>
     );
   }
+}
+
+/*
+ * Removes any padding on the last item
+ */
+function getItemStylesForIndex(itemStyles: CSSProperties, index: number, length: number): CSSProperties {
+  if (index === length - 1) {
+    return {
+      ...itemStyles,
+      marginRight: 0,
+      marginBottom: 0,
+    };
+  }
+  return itemStyles;
 }
