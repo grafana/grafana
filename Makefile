@@ -4,8 +4,6 @@
 
 -include local/Makefile
 
-.DEFAULT_GOAL:=help
-
 .PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go gosec revive golangci-lint go-vet test-go test-js test run clean devenv devenv-down revive-alerting help
 
 GO = GO111MODULE=on go
@@ -23,13 +21,13 @@ deps-js: node_modules ## Install frontend dependencies.
 
 deps: deps-js ## Install all dependencies.
 
-node_modules: package.json yarn.lock # Install node modules.
+node_modules: package.json yarn.lock ## Install node modules.
 	@echo "install frontend dependencies"
 	yarn install --pure-lockfile --no-progress
 
 ##@ Building
 
-build-go: ## Build all binaries.
+build-go: ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go build
 
