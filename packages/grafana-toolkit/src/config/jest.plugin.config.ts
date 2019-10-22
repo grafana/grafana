@@ -1,7 +1,7 @@
 import path = require('path');
 import fs from 'fs';
 
-export const allowedJestConfigOverrides = ['snapshotSerializers', 'moduleNameMapper'];
+export const allowedJestConfigOverrides = ['snapshotSerializers', 'moduleNameMapper', 'globalSetup', 'globalTeardown'];
 
 interface EnabledJestConfigOverrides {
   snapshotSerializers: string[];
@@ -22,7 +22,7 @@ export const jestConfig = (baseDir: string = process.cwd()) => {
   }
 
   const shimsFilePath = path.resolve(baseDir, 'config/jest-shim.ts');
-  const setupFilePath = path.resolve(baseDir, 'config/jest-setup.ts');
+  const setupFilePath = path.resolve(baseDir, 'config/jest-setup.js');
 
   // Mock css imports for tests. Otherwise Jest will have troubles understanding SASS/CSS imports
   const { moduleNameMapper, ...otherOverrides } = jestConfigOverrides;
@@ -42,11 +42,15 @@ export const jestConfig = (baseDir: string = process.cwd()) => {
     setupFiles,
     globals: { 'ts-jest': { isolatedModules: true } },
     coverageReporters: ['json-summary', 'text', 'lcov'],
-    collectCoverageFrom: ['src/**/*.{ts,tsx}', '!**/node_modules/**', '!**/vendor/**'],
+    collectCoverageFrom: ['src/**/*.{ts,tsx}', '!**/node_modulers/**', '!**/vendor/**'],
     testMatch: [
       '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
       '<rootDir>/src/**/*.{spec,test,jest}.{js,jsx,ts,tsx}',
+      '<rootDir>/spec/**/*.{spec,test,jest}.{js,jsx,ts,tsx}',
     ],
+    transform: {
+      '^.+\\.js$': 'babel-jest',
+    },
     transformIgnorePatterns: [
       '[/\\\\\\\\]node_modules[/\\\\\\\\].+\\\\.(js|jsx|ts|tsx)$',
       '^.+\\\\.module\\\\.(css|sass|scss)$',
