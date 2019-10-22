@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func (e *CloudWatchExecutor) parseResponse(metricDataResults []*cloudwatch.MetricDataResult, queries []*CloudWatchQuery) ([]*tsdb.QueryResult, error) {
+func (e *CloudWatchExecutor) parseResponse(metricDataResults []*cloudwatch.MetricDataResult, queries []*cloudWatchQuery) ([]*tsdb.QueryResult, error) {
 	queryResponses := make([]*tsdb.QueryResult, 0)
 
 	mdr := make(map[string]map[string]*cloudwatch.MetricDataResult)
@@ -48,7 +48,7 @@ func (e *CloudWatchExecutor) parseResponse(metricDataResults []*cloudwatch.Metri
 	return queryResponses, nil
 }
 
-func parseGetMetricDataTimeSeries(lr map[string]*cloudwatch.MetricDataResult, query *CloudWatchQuery, stat string) (*tsdb.TimeSeriesSlice, error) {
+func parseGetMetricDataTimeSeries(lr map[string]*cloudwatch.MetricDataResult, query *cloudWatchQuery, stat string) (*tsdb.TimeSeriesSlice, error) {
 	result := tsdb.TimeSeriesSlice{}
 	for label, r := range lr {
 		if *r.StatusCode != "Complete" {
@@ -84,7 +84,7 @@ func parseGetMetricDataTimeSeries(lr map[string]*cloudwatch.MetricDataResult, qu
 	return &result, nil
 }
 
-func formatAlias(query *CloudWatchQuery, stat string, dimensions map[string]string, label string) string {
+func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]string, label string) string {
 	region := query.Region
 	namespace := query.Namespace
 	metricName := query.MetricName

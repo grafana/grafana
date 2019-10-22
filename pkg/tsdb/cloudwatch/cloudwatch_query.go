@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-type CloudWatchQuery struct {
+type cloudWatchQuery struct {
 	RefId              string
 	Region             string
 	Id                 string
@@ -23,15 +23,15 @@ type CloudWatchQuery struct {
 	SearchExpressions  []string
 }
 
-func (e *CloudWatchQuery) isMathExpression() bool {
+func (e *cloudWatchQuery) isMathExpression() bool {
 	return len(e.Statistics) == 1 && e.Expression != "" && !strings.Contains(e.Expression, "SEARCH(")
 }
 
-func (e *CloudWatchQuery) isUserDefinedSearchExpression() bool {
+func (e *cloudWatchQuery) isUserDefinedSearchExpression() bool {
 	return len(e.Statistics) == 1 && strings.Contains(e.Expression, "SEARCH(")
 }
 
-func (e *CloudWatchQuery) isInferredSearchExpression() bool {
+func (e *cloudWatchQuery) isInferredSearchExpression() bool {
 	for _, values := range e.Dimensions {
 		if len(values) > 1 {
 			return true
@@ -46,6 +46,6 @@ func (e *CloudWatchQuery) isInferredSearchExpression() bool {
 	return false
 }
 
-func (e *CloudWatchQuery) isSearchExpression() bool {
+func (e *cloudWatchQuery) isSearchExpression() bool {
 	return e.isUserDefinedSearchExpression() || e.isInferredSearchExpression()
 }

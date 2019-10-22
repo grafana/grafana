@@ -15,7 +15,7 @@ type metricDataInputBuilder struct {
 	maxNoOfMetricDataQueries int
 }
 
-func (mdib *metricDataInputBuilder) buildMetricDataInput(queryContext *tsdb.TsdbQuery, queries []*CloudWatchQuery) ([]*cloudwatch.GetMetricDataInput, error) {
+func (mdib *metricDataInputBuilder) buildMetricDataInput(queryContext *tsdb.TsdbQuery, queries []*cloudWatchQuery) ([]*cloudwatch.GetMetricDataInput, error) {
 	metricDataInputs := make([]*cloudwatch.GetMetricDataInput, 0)
 	startTime, err := queryContext.TimeRange.ParseFrom()
 	if err != nil {
@@ -79,14 +79,14 @@ func (mdib *metricDataInputBuilder) buildMetricDataInput(queryContext *tsdb.Tsdb
 	return metricDataInputs, nil
 }
 
-func sortQueries(queries []*CloudWatchQuery) []*CloudWatchQuery {
+func sortQueries(queries []*cloudWatchQuery) []*cloudWatchQuery {
 	sort.SliceStable(queries, func(i, j int) bool {
 		return getSortOrder(queries[i]) > getSortOrder(queries[j])
 	})
 	return queries
 }
 
-func getSortOrder(query *CloudWatchQuery) int {
+func getSortOrder(query *cloudWatchQuery) int {
 	if len(query.Statistics) > 1 {
 		if !query.isSearchExpression() {
 			return 1

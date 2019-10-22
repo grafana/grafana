@@ -13,8 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func (e *CloudWatchExecutor) parseQueriesByRegion(queryContext *tsdb.TsdbQuery) (map[string][]*CloudWatchQuery, error) {
-	metricQueriesByRegion := make(map[string][]*CloudWatchQuery)
+func (e *CloudWatchExecutor) parseQueriesByRegion(queryContext *tsdb.TsdbQuery) (map[string][]*cloudWatchQuery, error) {
+	metricQueriesByRegion := make(map[string][]*cloudWatchQuery)
 
 	for i, model := range queryContext.Queries {
 		queryType := model.Model.Get("type").MustString()
@@ -28,7 +28,7 @@ func (e *CloudWatchExecutor) parseQueriesByRegion(queryContext *tsdb.TsdbQuery) 
 			return nil, &queryBuilderError{err, RefID}
 		}
 		if _, ok := metricQueriesByRegion[query.Region]; !ok {
-			metricQueriesByRegion[query.Region] = make([]*CloudWatchQuery, 0)
+			metricQueriesByRegion[query.Region] = make([]*cloudWatchQuery, 0)
 		}
 		metricQueriesByRegion[query.Region] = append(metricQueriesByRegion[query.Region], query)
 	}
@@ -36,7 +36,7 @@ func (e *CloudWatchExecutor) parseQueriesByRegion(queryContext *tsdb.TsdbQuery) 
 	return metricQueriesByRegion, nil
 }
 
-func parseQuery(model *simplejson.Json, refId string) (*CloudWatchQuery, error) {
+func parseQuery(model *simplejson.Json, refId string) (*cloudWatchQuery, error) {
 	region, err := model.Get("region").String()
 	if err != nil {
 		return nil, err
@@ -105,7 +105,7 @@ func parseQuery(model *simplejson.Json, refId string) (*CloudWatchQuery, error) 
 	}
 	highResolution := model.Get("highResolution").MustBool(false)
 
-	return &CloudWatchQuery{
+	return &cloudWatchQuery{
 		RefId:          refId,
 		Identifier:     identifier,
 		Region:         region,
@@ -191,7 +191,7 @@ func generateUniqueString() string {
 	return string(b)
 }
 
-func getQueryID(query *CloudWatchQuery, statIndex int) string {
+func getQueryID(query *cloudWatchQuery, statIndex int) string {
 	queryID := query.Identifier
 	if len(query.Statistics) > 1 {
 		queryID = query.Identifier + "_____" + strconv.Itoa(statIndex)

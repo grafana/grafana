@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 )
 
-func (mdib *metricDataInputBuilder) buildMetricDataQueries(query *CloudWatchQuery) ([]*cloudwatch.MetricDataQuery, error) {
+func (mdib *metricDataInputBuilder) buildMetricDataQueries(query *cloudWatchQuery) ([]*cloudwatch.MetricDataQuery, error) {
 	metridDataQueries := make([]*cloudwatch.MetricDataQuery, 0)
 	query.SearchExpressions = []string{}
 
@@ -47,7 +47,7 @@ func (mdib *metricDataInputBuilder) buildMetricDataQueries(query *CloudWatchQuer
 	return metridDataQueries, nil
 }
 
-func buildSearchExpression(query *CloudWatchQuery, stat string) string {
+func buildSearchExpression(query *cloudWatchQuery, stat string) string {
 	counter := 1
 	dimensionKeys := ""
 	searchTerm := fmt.Sprintf("MetricName=\"%v\" ", query.MetricName)

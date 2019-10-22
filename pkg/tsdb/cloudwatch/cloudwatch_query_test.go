@@ -7,10 +7,10 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestCloudwatchQuery(t *testing.T) {
-	Convey("TestCloudwatchQuery", t, func() {
+func TestcloudWatchQuery(t *testing.T) {
+	Convey("TestcloudWatchQuery", t, func() {
 		Convey("and SEARCH(someexpression) was specified in the query editor", func() {
-			query := &CloudWatchQuery{
+			query := &cloudWatchQuery{
 				RefId:      "A",
 				Region:     "us-east-1",
 				Expression: "SEARCH(someexpression)",
@@ -40,7 +40,7 @@ func TestCloudwatchQuery(t *testing.T) {
 		Convey("and no expression, no multi dimension key values and no * was used", func() {
 			dimensions := make(map[string][]string)
 			dimensions["InstanceId"] = []string{"i-12345678"}
-			query := &CloudWatchQuery{
+			query := &cloudWatchQuery{
 				RefId:      "A",
 				Region:     "us-east-1",
 				Expression: "",
@@ -71,7 +71,7 @@ func TestCloudwatchQuery(t *testing.T) {
 		Convey("and no expression but multi dimension key values exist", func() {
 			dimensions := make(map[string][]string)
 			dimensions["InstanceId"] = []string{"i-12345678", "i-34562312"}
-			query := &CloudWatchQuery{
+			query := &cloudWatchQuery{
 				RefId:      "A",
 				Region:     "us-east-1",
 				Expression: "",
@@ -103,7 +103,7 @@ func TestCloudwatchQuery(t *testing.T) {
 			dimensions := make(map[string][]string)
 			dimensions["InstanceType"] = []string{"abc", "def"}
 			dimensions["InstanceId"] = []string{"i-12345678", "*"}
-			query := &CloudWatchQuery{
+			query := &cloudWatchQuery{
 				RefId:      "A",
 				Region:     "us-east-1",
 				Expression: "",
