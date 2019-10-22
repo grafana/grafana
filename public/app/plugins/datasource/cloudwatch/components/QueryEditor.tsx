@@ -19,6 +19,7 @@ interface State {
   regions: Array<SelectableValue<string>>;
   namespaces: Array<SelectableValue<string>>;
   metricNames: Array<SelectableValue<string>>;
+  variableOptionGroup: SelectableValue<string>;
 }
 
 const idValidationEvents: ValidationEvents = {
@@ -31,7 +32,7 @@ const idValidationEvents: ValidationEvents = {
 };
 
 export class CloudWatchQueryEditor extends PureComponent<Props, State> {
-  state: State = { regions: [], namespaces: [], metricNames: [] };
+  state: State = { regions: [], namespaces: [], metricNames: [], variableOptionGroup: {} };
 
   componentWillMount() {
     const { query } = this.props;
@@ -51,19 +52,21 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
 
   componentDidMount() {
     const { datasource } = this.props;
-    Promise.all([this.loadRegions(), datasource.metricFindQuery('namespaces()')]).then(([regions, namespaces]) => {
-      this.setState({
-        ...this.state,
-        regions,
-        namespaces: this.appendTemplateVariables(namespaces),
-      });
-    });
+    const variableOptionGroup = {
+      label: 'Template Variables',
+      options: this.props.datasource.variables.map(v => ({ label: v, value: v })),
+    };
+    Promise.all([datasource.metricFindQuery('regions()'), datasource.metricFindQuery('namespaces()')]).then(
+      ([regions, namespaces]) => {
+        this.setState({
+          ...this.state,
+          regions: [...regions, variableOptionGroup],
+          namespaces: [...namespaces, variableOptionGroup],
+          variableOptionGroup,
+        });
+      }
+    );
   }
-
-  loadRegions = async () => {
-    const regions = await this.props.datasource.metricFindQuery('regions()');
-    return [{ label: 'default', value: 'default' }, ...this.appendTemplateVariables(regions)];
-  };
 
   loadMetricNames = async () => {
     const { namespace, region } = this.props.query;
@@ -83,7 +86,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
 
   render() {
     const { query, datasource } = this.props;
-    const { regions, namespaces } = this.state;
+    const { regions, namespaces, variableOptionGroup: variableOptionGroup } = this.state;
     return (
       <>
         <FormField
@@ -118,7 +121,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
 
             <FormField
               className="query-keyword"
-              label="Metric"
+              label="Metric Name"
               grow
               inputEl={
                 <SegmentAsync
@@ -138,10 +141,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
                 <Stats
                   values={query.statistics}
                   onChange={statistics => this.onChange({ ...query, statistics })}
-                  variableOptionGroup={{
-                    label: 'Template Variables',
-                    options: datasource.variables.map(v => ({ label: v, value: v })),
-                  }}
+                  variableOptionGroup={variableOptionGroup}
                 />
               }
             />
@@ -153,18 +153,15 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
               inputEl={
                 <Dimensions
                   dimensions={query.dimensions}
-                  variables={datasource.variables}
                   onChange={dimensions => this.onChange({ ...query, dimensions })}
-                  loadKeys={() => datasource.getDimensionKeys(query.namespace, query.region)}
+                  loadKeys={() =>
+                    datasource.getDimensionKeys(query.namespace, query.region).then(this.appendTemplateVariables)
+                  }
                   loadValues={newKey => {
                     const { [newKey]: value, ...newDimensions } = query.dimensions;
-                    return datasource.getDimensionValues(
-                      query.region,
-                      query.namespace,
-                      query.metricName,
-                      newKey,
-                      newDimensions
-                    );
+                    return datasource
+                      .getDimensionValues(query.region, query.namespace, query.metricName, newKey, newDimensions)
+                      .then(this.appendTemplateVariables);
                   }}
                 />
               }

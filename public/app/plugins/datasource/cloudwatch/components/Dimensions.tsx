@@ -5,7 +5,6 @@ import { Segment, SegmentAsync } from '@grafana/ui';
 
 export interface Props {
   dimensions: { [key: string]: string | string[] };
-  variables: string[];
   onChange: (dimensions: { [key: string]: string }) => void;
   loadValues: (key: string) => Promise<Array<SelectableValue<string>>>;
   loadKeys: () => Promise<Array<SelectableValue<string>>>;
@@ -15,7 +14,7 @@ const operators: Array<SelectableValue<string>> = ['='].map(v => ({ label: v, va
 const removeText = '-- remove dimension --';
 const removeOption: SelectableValue<string> = { label: removeText, value: removeText };
 
-export const Dimensions: FunctionComponent<Props> = ({ dimensions, variables, loadValues, loadKeys, onChange }) => {
+export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, loadKeys, onChange }) => {
   const [data, setData] = useState(dimensions);
 
   useEffect(() => {
@@ -28,11 +27,6 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, variables, lo
     }
   }, [data]);
 
-  const appendTemplateVariables = (values: SelectableValue[]) => [
-    ...values,
-    { label: 'Template Variables', options: variables.map(v => ({ label: v, value: v })) },
-  ];
-
   const excludeUsedKeys = (options: Array<SelectableValue<string>>) =>
     options.filter(({ value }) => !Object.keys(data).includes(value));
 
@@ -42,9 +36,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, variables, lo
         <Fragment key={index}>
           <SegmentAsync
             value={key}
-            loadOptions={() =>
-              loadKeys().then(keys => appendTemplateVariables([removeOption, ...excludeUsedKeys(keys)]))
-            }
+            loadOptions={() => loadKeys().then(keys => [removeOption, ...excludeUsedKeys(keys)])}
             onChange={newKey => {
               const { [key]: value, ...newDimensions } = data;
               if (newKey === removeText) {
@@ -62,7 +54,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, variables, lo
           <SegmentAsync
             allowCustomValue
             value={value || 'select dimension value'}
-            loadOptions={() => loadValues(key).then(appendTemplateVariables)}
+            loadOptions={() => loadValues(key)}
             onChange={newValue => setData({ ...data, [key]: newValue })}
           />
         </Fragment>
@@ -74,7 +66,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, variables, lo
               <i className="fa fa-plus" />
             </a>
           }
-          loadOptions={() => loadKeys().then(values => appendTemplateVariables(excludeUsedKeys(values)))}
+          loadOptions={loadKeys}
           onChange={(newKey: string) => setData({ ...data, [newKey]: '' })}
         />
       )}
