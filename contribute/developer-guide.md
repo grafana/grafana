@@ -2,9 +2,12 @@
 
 This guide helps you get started developing Grafana.
 
+Before you begin, you might want to read [How to contribute to Grafana as a junior dev](https://medium.com/@ivanahuckova/how-to-contribute-to-grafana-as-junior-dev-c01fe3064502) by [Ivana Huckova](https://medium.com/@ivanahuckova).
+
+
 ## Dependencies
 
-Make sure you have the following dependencies installed before moving on to set up your developer environment:
+Make sure you have the following dependencies installed before setting up your developer environment:
 
 - [Git](https://git-scm.com/)
 - [Go](https://golang.org/dl/)
@@ -49,13 +52,13 @@ After the command has finished, we can start building our source code:
 yarn start
 ```
 
-Once `yarn start` has built the assets it will continue to do so whenever any of the files change. This means you don't have to manually build the assets whenever you've made a change to the code.
+Once `yarn start` has built the assets, it will continue to do so whenever any of the files change. This means you don't have to manually build the assets whenever every time you change the code.
 
 Next, we'll build the web server that will serve the frontend assets we just built.
 
 ### Backend
 
-Build and run the backend, by running `make run` in the root directory of the repository. This command will compile the Go source code, and start a web server.
+Build and run the backend by running `make run` in the root directory of the repository. This command compiles the Go source code and starts a web server.
 
 > Are you having problems with [too many open files](#troubleshooting)?
 
@@ -67,7 +70,7 @@ Log in using the default credentials:
 | -------- | -------- |
 | `admin`  | `admin`  |
 
-When you log in for the first time, Grafana will ask you to change your password.
+When you log in for the first time, Grafana asks you to change your password.
 
 ## Test Grafana
 
@@ -75,7 +78,7 @@ The test suite consists of three types of tests: _Frontend tests_, _backend test
 
 ### Run frontend tests
 
-We use [jest](https://jestjs.io/) for our frontend tests. Run them using yarn:
+We use [jest](https://jestjs.io/) for our frontend tests. Run them using Yarn:
 
 ```
 yarn jest
@@ -132,7 +135,7 @@ To set up data sources for your development environment, go to the [devenv](deve
 cd devenv
 ```
 
-Run the `setup.sh` script to setup a set of data sources and dashboards in your local Grafana. The script creates a set of data sources called **gdev-\<type\>**, and a set of dashboards located in a folder called **gdev dashboards**.
+Run the `setup.sh` script to set up a set of data sources and dashboards in your local Grafana instance. The script creates a set of data sources called **gdev-\<type\>**, and a set of dashboards located in a folder called **gdev dashboards**.
 
 Some of the data sources require databases to run in the background.
 
@@ -195,7 +198,6 @@ Another alternative is to limit the files being watched. The directories that ar
 
 ## Next steps
 
-- [Create a pull request](/contribute/pull-request.md)
-- [Style guides](/contribute/style-guides)
-- [Architecture](architecture)
-- [How to contribute to Grafana as a junior dev](https://medium.com/@ivanahuckova/how-to-contribute-to-grafana-as-junior-dev-c01fe3064502)
+- Read our [style guides](/contribute/style-guides).
+- Learn how to [Create a pull request](/contribute/pull-request.md).
+- [Architecture](architecture).

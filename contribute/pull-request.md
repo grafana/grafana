@@ -16,7 +16,7 @@ If this is your first time contributing to an open-source project on GitHub, mak
 To increase the chance of having your pull request accepted, make sure your pull request follows these guidelines:
 
 - Title and description matches the implementation.
-- Commits within the pull request follow the [style guide](#style-guide).
+- Commits within the pull request follow the [Formatting guidelines](#Formatting-guidelines). 
 - The pull request closes one related issue.
 - The pull request contains necessary tests that verify the intended behavior.
 - If your pull request has conflicts, rebase your branch onto the master branch.
@@ -79,11 +79,12 @@ For changes to data sources, the area should be the name of the data source, e.g
 
 For changes to panels, the area should be the name of the panel, suffixed with Panel, e.g., GraphPanel, SinglestatPanel, and TablePanel.
 
-**Example**
+**Examples**
 
 - `Build: Support publishing MSI to grafana.com`
 - `Explore: Add Live option for supported data sources`
 - `GraphPanel: Fix legend sorting issues`
+- `Docs: Changed url to URL in all documentation files`
 
 ### Pull request titles
 
