@@ -59,7 +59,7 @@ export const jestConfig = (baseDir: string = process.cwd()) => {
     setupFiles,
     globals: { 'ts-jest': { isolatedModules: true } },
     coverageReporters: ['json-summary', 'text', 'lcov'],
-    collectCoverageFrom: ['src/**/*.{ts,tsx}', '!**/node_modulers/**', '!**/vendor/**'],
+    collectCoverageFrom: ['src/**/*.{ts,tsx}', '!**/node_modules/**', '!**/vendor/**'],
     testMatch: [
       '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
       '<rootDir>/src/**/*.{spec,test,jest}.{js,jsx,ts,tsx}',
