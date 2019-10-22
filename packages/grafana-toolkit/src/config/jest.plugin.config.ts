@@ -14,6 +14,16 @@ interface EnabledJestConfigOverrides {
   moduleNameMapper: { [key: string]: string };
 }
 
+const getSetupFile = (filePath: string) => {
+  if (fs.existsSync(`${filePath}.js`)) {
+    return `${filePath}.js`;
+  }
+  if (fs.existsSync(`${filePath}.ts`)) {
+    return `${filePath}.ts`;
+  }
+  return undefined;
+};
+
 export const jestConfig = (baseDir: string = process.cwd()) => {
   const jestConfigOverrides = (require(path.resolve(baseDir, 'package.json')).jest || {}) as EnabledJestConfigOverrides;
 
@@ -27,8 +37,8 @@ export const jestConfig = (baseDir: string = process.cwd()) => {
     throw new Error('Provided Jest config is not supported');
   }
 
-  const shimsFilePath = path.resolve(baseDir, 'config/jest-shim.ts');
-  const setupFilePath = path.resolve(baseDir, 'config/jest-setup.js');
+  const shimsFilePath = path.resolve(baseDir, 'config/jest-shim');
+  const setupFilePath = path.resolve(baseDir, 'config/jest-setup');
 
   // Mock css imports for tests. Otherwise Jest will have troubles understanding SASS/CSS imports
   const { moduleNameMapper, ...otherOverrides } = jestConfigOverrides;
@@ -37,8 +47,9 @@ export const jestConfig = (baseDir: string = process.cwd()) => {
     ...moduleNameMapper,
   };
 
-  const setupFile = fs.existsSync(setupFilePath) ? setupFilePath : undefined;
-  const shimsFile = fs.existsSync(shimsFilePath) ? shimsFilePath : undefined;
+  const setupFile = getSetupFile(setupFilePath);
+  const shimsFile = getSetupFile(shimsFilePath);
+
   const setupFiles = [setupFile, shimsFile].filter(f => f);
   const defaultJestConfig = {
     preset: 'ts-jest',
