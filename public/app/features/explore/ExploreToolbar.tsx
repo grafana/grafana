@@ -177,7 +177,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
       'navbar-button navbar-button--border-right-0': originDashboardIsEditable,
     });
 
-    const showSmallDataSourcePicker = (splitted ? containerWidth < 600 : containerWidth < 710) || false;
+    const showSmallDataSourcePicker = (splitted ? containerWidth < 670 : containerWidth < 780) || false;
+    const showSmallTimePicker = splitted || containerWidth < 1190;
 
     return (
       <div className={splitted ? 'explore-toolbar splitted' : 'explore-toolbar'}>
@@ -202,7 +203,12 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
           <div className="explore-toolbar-content">
             {!datasourceMissing ? (
               <div className="explore-toolbar-content-item">
-                <div className={showSmallDataSourcePicker ? 'explore-ds-picker' : ''}>
+                <div
+                  className={classNames(
+                    'explore-ds-picker',
+                    showSmallDataSourcePicker ? 'explore-ds-picker--small' : ''
+                  )}
+                >
                   <DataSourcePicker
                     onChange={this.onChangeDatasource}
                     datasources={exploreDatasources}
@@ -275,6 +281,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                   splitted={splitted}
                   syncedTimes={syncedTimes}
                   onChangeTimeSync={this.onChangeTimeSync}
+                  hideText={showSmallTimePicker}
                 />
               </div>
             )}

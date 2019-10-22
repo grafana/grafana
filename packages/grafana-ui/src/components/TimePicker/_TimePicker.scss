@@ -251,24 +251,6 @@ $arrowPadding: $arrowPaddingToBorder * 3;
       }
     }
   }
-
-  .time-picker-long-date {
-    .select-button {
-      span {
-        display: none;
-      }
-    }
-  }
-}
-
-.time-picker-long-date {
-  .select-button {
-    span {
-      @include media-breakpoint-down(lg) {
-        display: none;
-      }
-    }
-  }
 }
 
 .dashboard-timepicker-wrapper {

@@ -44,6 +44,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
 });
 
 export interface Props extends Themeable {
+  hideText?: boolean;
   value: TimeRange;
   selectOptions: TimeOption[];
   timeZone?: TimeZone;
@@ -159,6 +160,7 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
       timeSyncButton,
       isSynced,
       theme,
+      hideText,
     } = this.props;
 
     const styles = getStyles(theme);
@@ -175,12 +177,14 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
     };
     const rangeString = rangeUtil.describeTimeRange(adjustedTimeRange);
 
-    const label = (
+    const label = !hideText ? (
       <>
         {isCustomOpen && <span>Custom time range</span>}
         {!isCustomOpen && <span>{rangeString}</span>}
         {isUTC && <span className="time-picker-utc">UTC</span>}
       </>
+    ) : (
+      ''
     );
     const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
 
@@ -193,7 +197,7 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
             </button>
           )}
           <ButtonSelect
-            className={classNames('time-picker-button-select', hasAbsolute ? 'time-picker-long-date' : null, {
+            className={classNames('time-picker-button-select', {
               [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: timeSyncButton,
               [styles.timePickerSynced]: timeSyncButton ? isSynced : null,
             })}

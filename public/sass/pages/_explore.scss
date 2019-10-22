@@ -15,10 +15,17 @@
 }
 
 .explore-ds-picker {
-  width: 60px;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.explore-ds-picker--small {
+  min-width: 60px;
+  max-width: 60px;
 
   .ds-picker {
     min-width: 60px;
+    max-width: 60px;
   }
 }
 

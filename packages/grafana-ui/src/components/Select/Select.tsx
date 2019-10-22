@@ -50,7 +50,6 @@ export interface CommonProps<T> {
   onOpenMenu?: () => void;
   onCloseMenu?: () => void;
   tabSelectsValue?: boolean;
-  hideTextValue?: boolean;
   allowCustomValue: boolean;
 }
 
@@ -88,7 +87,6 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
     maxMenuHeight: 300,
     tabSelectsValue: true,
     allowCustomValue: false,
-    hideTextValue: false,
     components: {
       Option: SelectOption,
       SingleValue,
@@ -126,7 +124,6 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
       tabSelectsValue,
       onCloseMenu,
       onOpenMenu,
-      hideTextValue,
       allowCustomValue,
     } = this.props;
 
@@ -155,7 +152,6 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
               className={selectClassNames}
               components={selectComponents}
               defaultValue={defaultValue}
-              hideText={hideTextValue}
               value={value}
               getOptionLabel={getOptionLabel}
               getOptionValue={getOptionValue}
@@ -231,7 +227,6 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
       onCloseMenu,
       onOpenMenu,
       isOpen,
-      hideTextValue,
     } = this.props;
 
     let widthClass = '';
@@ -256,7 +251,6 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
               }}
               defaultValue={defaultValue}
               value={value}
-              hideText={hideTextValue}
               getOptionLabel={getOptionLabel}
               getOptionValue={getOptionValue}
               menuShouldScrollIntoView={false}
