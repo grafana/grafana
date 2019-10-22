@@ -8,6 +8,7 @@ exports[`QueryRowActions should render component 1`] = `
     className="gf-form"
   >
     <button
+      aria-label="Edit mode button"
       className="gf-form-label gf-form-label--btn"
       onClick={[Function]}
     >
@@ -21,10 +22,11 @@ exports[`QueryRowActions should render component 1`] = `
   >
     <button
       className="gf-form-label gf-form-label--btn"
+      disabled={false}
       onClick={[Function]}
     >
       <i
-        className="fa fa-eye-slash"
+        className="fa fa-eye"
       />
     </button>
   </div>

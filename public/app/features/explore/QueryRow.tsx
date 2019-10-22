@@ -78,14 +78,12 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
   };
 
   onClickToggleHiddenQuery = () => {
-    const { exploreId, index, query, queryResponse } = this.props;
-    if (queryResponse.state !== LoadingState.NotStarted) {
-      const newQuery = {
-        ...query,
-        hide: !query.hide,
-      };
-      this.props.changeQuery(exploreId, newQuery, index, true);
-    }
+    const { exploreId, index, query } = this.props;
+    const newQuery = {
+      ...query,
+      hide: !query.hide,
+    };
+    this.props.changeQuery(exploreId, newQuery, index, true);
   };
 
   onClickHintFix = (action: QueryFixAction) => {
@@ -131,6 +129,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
 
     const canToggleEditorModes =
       mode === ExploreMode.Metrics && has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
+    const canHide = queryResponse.state !== LoadingState.NotStarted;
     const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
     let QueryField;
 
@@ -177,6 +176,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
         <QueryRowActions
           canToggleEditorModes={canToggleEditorModes}
           hideQuery={query.hide}
+          canHide={canHide}
           onClickToggleEditorMode={this.onClickToggleEditorMode}
           onClickToggleHiddenQuery={this.onClickToggleHiddenQuery}
           onClickAddButton={this.onClickAddButton}

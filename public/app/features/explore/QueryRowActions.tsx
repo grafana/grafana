@@ -3,6 +3,7 @@ import React from 'react';
 export type Props = {
   canToggleEditorModes: boolean;
   hideQuery: boolean;
+  canHide: boolean;
   onClickToggleEditorMode: () => void;
   onClickToggleHiddenQuery: () => void;
   onClickAddButton: () => void;
@@ -17,19 +18,24 @@ export function QueryRowActions(props: Props) {
     onClickAddButton,
     onClickRemoveButton,
     hideQuery,
+    canHide,
   } = props;
 
   return (
     <div className="gf-form-inline flex-shrink-0">
       {canToggleEditorModes && (
         <div className="gf-form">
-          <button className="gf-form-label gf-form-label--btn" onClick={onClickToggleEditorMode}>
+          <button
+            aria-label="Edit mode button"
+            className="gf-form-label gf-form-label--btn"
+            onClick={onClickToggleEditorMode}
+          >
             <i className="fa fa-pencil" />
           </button>
         </div>
       )}
       <div className="gf-form">
-        <button className="gf-form-label gf-form-label--btn" onClick={onClickToggleHiddenQuery}>
+        <button disabled={!canHide} className="gf-form-label gf-form-label--btn" onClick={onClickToggleHiddenQuery}>
           <i className={hideQuery ? 'fa fa-eye-slash' : 'fa fa-eye'} />
         </button>
       </div>
