@@ -15,8 +15,6 @@ import IndentationPlugin from './slate-plugins/indentation';
 import ClipboardPlugin from './slate-plugins/clipboard';
 import RunnerPlugin from './slate-plugins/runner';
 import SuggestionsPlugin, { SuggestionsState } from './slate-plugins/suggestions';
-import { Typeahead } from './Typeahead';
-
 import { makeValue, SCHEMA } from '@grafana/ui';
 
 export interface QueryFieldProps {
@@ -66,8 +64,6 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   mounted: boolean;
   runOnChangeDebounced: Function;
   editor: Editor;
-  // Is required by SuggestionsPlugin
-  typeaheadRef: Typeahead;
   lastExecutedValue: Value | null = null;
 
   constructor(props: QueryFieldProps, context: Context<any>) {
@@ -80,7 +76,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     // Base plugins
     this.plugins = [
       NewlinePlugin(),
-      SuggestionsPlugin({ onTypeahead, cleanText, portalOrigin, onWillApplySuggestion, component: this }),
+      SuggestionsPlugin({ onTypeahead, cleanText, portalOrigin, onWillApplySuggestion }),
       ClearPlugin(),
       RunnerPlugin({ handler: this.runOnChangeAndRunQuery }),
       SelectionShortcutsPlugin(),

@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import { Select } from '..';
+import { Select } from '../Select/Select';
 
 import { getValueFormats } from '../../utils';
 
