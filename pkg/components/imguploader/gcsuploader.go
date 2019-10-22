@@ -40,7 +40,7 @@ func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string,
 		return "", err
 	}
 
-	fileName += ".png"
+	fileName += pngExt
 	key := path.Join(u.path, fileName)
 
 	u.log.Debug("Opening key file ", u.keyFile)
