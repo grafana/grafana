@@ -5,9 +5,17 @@ import { Themeable, GrafanaTheme } from '../../types';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import { stylesFactory } from '../../themes/stylesFactory';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'inverse' | 'transparent';
+export type ButtonVariant =
+  | 'primary'
+  | 'secondary'
+  | 'danger'
+  | 'inverse'
+  | 'transparent'
+  | 'primary-ng'
+  | 'secondary-ng'
+  | 'destructive-ng';
 
-export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'sm-ng' | 'md-ng' | 'lg-ng';
 
 export interface CommonButtonProps {
   size?: ButtonSize;
@@ -72,12 +80,30 @@ const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: Style
       iconDistance = theme.spacing.xs;
       height = theme.height.sm;
       break;
+
+    case 'sm-ng':
+      padding = `${theme.spacing.xs} ${theme.spacing.sm}`;
+      fontSize = theme.typography.size.sm;
+      iconDistance = theme.spacing.xs;
+      height = theme.height.sm;
+      fontWeight = theme.typography.weight.bold;
+      break;
+
     case 'md':
       padding = `${theme.spacing.sm} ${theme.spacing.md}`;
       fontSize = theme.typography.size.md;
       iconDistance = theme.spacing.sm;
       height = theme.height.md;
       break;
+
+    case 'md-ng':
+      padding = `${theme.spacing.sm} ${theme.spacing.md}`;
+      fontSize = theme.typography.size.md;
+      iconDistance = theme.spacing.sm;
+      height = `${theme.spacing.formButtonHeight}px`;
+      fontWeight = theme.typography.weight.bold;
+      break;
+
     case 'lg':
       padding = `${theme.spacing.md} ${theme.spacing.lg}`;
       fontSize = theme.typography.size.lg;
@@ -85,6 +111,16 @@ const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: Style
       iconDistance = theme.spacing.sm;
       height = theme.height.lg;
       break;
+
+    case 'lg-ng':
+      padding = `${theme.spacing.md} ${theme.spacing.lg}`;
+      fontSize = theme.typography.size.lg;
+      fontWeight = theme.typography.weight.regular;
+      iconDistance = theme.spacing.sm;
+      height = theme.height.lg;
+      fontWeight = theme.typography.weight.bold;
+      break;
+
     default:
       padding = `${theme.spacing.sm} ${theme.spacing.md}`;
       iconDistance = theme.spacing.sm;
@@ -96,12 +132,17 @@ const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: Style
     case 'primary':
       background = buttonVariantStyles(theme.colors.greenBase, theme.colors.greenShade, theme.colors.white);
       break;
+
     case 'secondary':
+    case 'primary-ng':
       background = buttonVariantStyles(theme.colors.blueBase, theme.colors.blueShade, theme.colors.white);
       break;
+
+    case 'destructive-ng':
     case 'danger':
       background = buttonVariantStyles(theme.colors.redBase, theme.colors.redShade, theme.colors.white);
       break;
+
     case 'inverse':
       const from = selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.dark6 }, theme.type) as string;
       const to = selectThemeVariant(
@@ -118,11 +159,17 @@ const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: Style
 
       background = buttonVariantStyles(from, to, theme.colors.link, 'rgba(0, 0, 0, 0.1)', true);
       break;
+
     case 'transparent':
       background = css`
         ${buttonVariantStyles('', '', theme.colors.link, 'rgba(0, 0, 0, 0.1)', true)};
         background: transparent;
       `;
+      break;
+
+    case 'secondary-ng':
+      //linear-gradient(180deg, #202226 0%, #0B0C0E 100%);
+      background = buttonVariantStyles(theme.colors.gray15, theme.colors.gray05, theme.colors.gray4);
       break;
   }
 
@@ -168,7 +215,7 @@ export const AbstractButton: React.FunctionComponent<AbstractButtonProps> = ({
   renderAs,
   theme,
   size = 'md',
-  variant = 'primary',
+  variant = 'primary-ng',
   className,
   icon,
   children,
