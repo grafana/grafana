@@ -23,13 +23,13 @@ For general discussions on documentation, you’re welcome to join the `#docs` c
 
 ## Style and formatting
 
-All Grafana documentation is written using [Markdown](https://en.wikipedia.org/wiki/Markdown), and can be found in the [docs](https://github.com/grafana/grafana/tree/master/docs) directory in the [Grafana GitHub repository](https://github.com/grafana/grafana). The [documentation website](https://grafana.com/docs) is generated with [Hugo](https://gohugo.io) which uses [Blackfriday](https://github.com/russross/blackfriday) as its Markdown rendering engine.
+All Grafana documentation is written using [Markdown](https://en.wikipedia.org/wiki/Markdown), and can be found in the [docs](/docs) directory in the [Grafana GitHub repository](https://github.com/grafana/grafana). The [documentation website](https://grafana.com/docs) is generated with [Hugo](https://gohugo.io) which uses [Blackfriday](https://github.com/russross/blackfriday) as its Markdown rendering engine.
 
 ### Documentation structure
 
 The Grafana documentation is organized into topics, called _sections_. You can take a look at the current build at [grafana.com/docs/](https://grafana.com/docs/).
 
-Each top-level section is located under the [docs/sources](https://github.com/grafana/grafana/tree/master/docs/sources) directory. Subsections are added by creating a subdirectory in the directory of the parent section.
+Each top-level section is located under the [docs/sources](/docs/sources) directory. Subsections are added by creating a subdirectory in the directory of the parent section.
 
 For each section, an `_index.md` file provides an overview of the topic.
 
