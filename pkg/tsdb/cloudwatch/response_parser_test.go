@@ -37,7 +37,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			dimensions["LoadBalancer"] = []string{"lb"}
 			dimensions["TargetGroup"] = []string{"tg"}
 
-			query := &CloudWatchQuery{
+			query := &cloudWatchQuery{
 				RefId:      "refId1",
 				Region:     "us-east-1",
 				Namespace:  "AWS/ApplicationELB",

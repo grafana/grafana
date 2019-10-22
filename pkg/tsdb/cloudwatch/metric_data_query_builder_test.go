@@ -20,7 +20,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			Convey("and one GetMetricDataInput is generated for each query statistic", func() {
 				dimensions := make(map[string][]string)
 				dimensions["InstanceId"] = []string{"i-12345678"}
-				query := &CloudWatchQuery{
+				query := &cloudWatchQuery{
 					RefId:      "A",
 					Region:     "us-east-1",
 					Namespace:  "AWS/EC2",
@@ -45,7 +45,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			Convey("and query has three dimension values for a given dimension key", func() {
 				dimensions := make(map[string][]string)
 				dimensions["LoadBalancer"] = []string{"lb1", "lb2", "lb3"}
-				query := &CloudWatchQuery{
+				query := &cloudWatchQuery{
 					Namespace:  "AWS/EC2",
 					MetricName: "CPUUtilization",
 					Dimensions: dimensions,
@@ -62,7 +62,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 				dimensions := make(map[string][]string)
 				dimensions["LoadBalancer"] = []string{"lb1", "lb2", "lb3"}
 				dimensions["InstanceId"] = []string{"i-123", "i-456", "i-789"}
-				query := &CloudWatchQuery{
+				query := &cloudWatchQuery{
 					Namespace:  "AWS/EC2",
 					MetricName: "CPUUtilization",
 					Dimensions: dimensions,
@@ -78,7 +78,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			Convey("and no AND/OR operators were added if a star was used for dimension value", func() {
 				dimensions := make(map[string][]string)
 				dimensions["LoadBalancer"] = []string{"*"}
-				query := &CloudWatchQuery{
+				query := &cloudWatchQuery{
 					Namespace:  "AWS/EC2",
 					MetricName: "CPUUtilization",
 					Dimensions: dimensions,
@@ -95,7 +95,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			Convey("and query has one dimension key with a * value", func() {
 				dimensions := make(map[string][]string)
 				dimensions["LoadBalancer"] = []string{"*"}
-				query := &CloudWatchQuery{
+				query := &cloudWatchQuery{
 					Namespace:  "AWS/EC2",
 					MetricName: "CPUUtilization",
 					Dimensions: dimensions,
@@ -112,7 +112,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 				dimensions := make(map[string][]string)
 				dimensions["LoadBalancer"] = []string{"lb1", "lb2", "lb3"}
 				dimensions["InstanceId"] = []string{"i-123", "*", "i-789"}
-				query := &CloudWatchQuery{
+				query := &cloudWatchQuery{
 					Namespace:  "AWS/EC2",
 					MetricName: "CPUUtilization",
 					Dimensions: dimensions,

@@ -18,7 +18,7 @@ func TestMetricDataInputBuilder(t *testing.T) {
 		mdib := &metricDataInputBuilder{maxNoOfSearchExpressions, maxNoOfMetricDataQueries}
 		ctx := &tsdb.TsdbQuery{TimeRange: tsdb.NewTimeRange("now-3h", "now-2h")}
 
-		metricStatQueryWithID := &CloudWatchQuery{
+		metricStatQueryWithID := &cloudWatchQuery{
 			RefId:      "metricStatQueryWithID",
 			Expression: "",
 			Statistics: []*string{aws.String("Average")},
@@ -30,7 +30,7 @@ func TestMetricDataInputBuilder(t *testing.T) {
 			},
 		}
 
-		userDefinedSearchExpressionQueryWithID := &CloudWatchQuery{
+		userDefinedSearchExpressionQueryWithID := &cloudWatchQuery{
 			RefId:      "userDefinedSearchExpressionQueryWithID",
 			Expression: "SEARCH(someexpression)",
 			Statistics: []*string{aws.String("Average")},
@@ -40,7 +40,7 @@ func TestMetricDataInputBuilder(t *testing.T) {
 			Dimensions: map[string][]string{},
 		}
 
-		userDefinedSearchExpressionQueryWithoutID := &CloudWatchQuery{
+		userDefinedSearchExpressionQueryWithoutID := &cloudWatchQuery{
 			RefId:      "userDefinedSearchExpressionQueryWithoutID",
 			Expression: "SEARCH(someexpression)",
 			Statistics: []*string{aws.String("Average")},
@@ -50,7 +50,7 @@ func TestMetricDataInputBuilder(t *testing.T) {
 			Dimensions: map[string][]string{},
 		}
 
-		metricStatQueryWithoutID := &CloudWatchQuery{
+		metricStatQueryWithoutID := &cloudWatchQuery{
 			RefId:      "metricStatQueryWithoutID",
 			Expression: "",
 			Statistics: []*string{aws.String("Average")},
@@ -60,7 +60,7 @@ func TestMetricDataInputBuilder(t *testing.T) {
 			Dimensions: map[string][]string{"InstanceId": {"i-12345678"}},
 		}
 
-		inferredSearchExpressionQueryWithID := &CloudWatchQuery{
+		inferredSearchExpressionQueryWithID := &cloudWatchQuery{
 			RefId:      "inferredSearchExpressionQueryWithID",
 			Expression: "",
 			Statistics: []*string{aws.String("Average")},
@@ -70,7 +70,7 @@ func TestMetricDataInputBuilder(t *testing.T) {
 			Dimensions: map[string][]string{"InstanceId": {"i-12345678", "i-34562312"}},
 		}
 
-		inferredSearchExpressionQueryWithoutID := &CloudWatchQuery{
+		inferredSearchExpressionQueryWithoutID := &cloudWatchQuery{
 			RefId:      "inferredSearchExpressionQueryWithoutID",
 			Expression: "",
 			Statistics: []*string{aws.String("Average")},
@@ -80,7 +80,7 @@ func TestMetricDataInputBuilder(t *testing.T) {
 			Dimensions: map[string][]string{"InstanceId": {"i-12345678", "i-34562312"}},
 		}
 
-		inferredSearchExpressionQueryWithMultipleStats := &CloudWatchQuery{
+		inferredSearchExpressionQueryWithMultipleStats := &cloudWatchQuery{
 			RefId:      "inferredSearchExpressionQueryWithMultipleStats",
 			Expression: "",
 			Statistics: []*string{aws.String("Average"), aws.String("Sum")},
@@ -90,7 +90,7 @@ func TestMetricDataInputBuilder(t *testing.T) {
 			Dimensions: map[string][]string{"InstanceId": {"i-12345678", "i-34562312"}},
 		}
 
-		metricStatQueryWithMultipleStats := &CloudWatchQuery{
+		metricStatQueryWithMultipleStats := &cloudWatchQuery{
 			RefId:      "metricStatQueryWithMultipleStats",
 			Expression: "",
 			Statistics: []*string{aws.String("Average"), aws.String("Sum")},
@@ -102,19 +102,19 @@ func TestMetricDataInputBuilder(t *testing.T) {
 
 		Convey("Time range is valid", func() {
 			Convey("End time before start time should result in error", func() {
-				_, err := mdib.buildMetricDataInput(&tsdb.TsdbQuery{TimeRange: tsdb.NewTimeRange("now-1h", "now-2h")}, []*CloudWatchQuery{})
+				_, err := mdib.buildMetricDataInput(&tsdb.TsdbQuery{TimeRange: tsdb.NewTimeRange("now-1h", "now-2h")}, []*cloudWatchQuery{})
 				So(err.Error(), ShouldEqual, "Invalid time range: Start time must be before end time")
 			})
 
 			Convey("End time equals start time should result in error", func() {
-				_, err := mdib.buildMetricDataInput(&tsdb.TsdbQuery{TimeRange: tsdb.NewTimeRange("now-1h", "now-1h")}, []*CloudWatchQuery{})
+				_, err := mdib.buildMetricDataInput(&tsdb.TsdbQuery{TimeRange: tsdb.NewTimeRange("now-1h", "now-1h")}, []*cloudWatchQuery{})
 				So(err.Error(), ShouldEqual, "Invalid time range: Start time must be before end time")
 			})
 		})
 
 		Convey("and testing sort order", func() {
 			Convey("and there's two metric stat queries with id and one search expression", func() {
-				queries := []*CloudWatchQuery{userDefinedSearchExpressionQueryWithID, metricStatQueryWithID, metricStatQueryWithID}
+				queries := []*cloudWatchQuery{userDefinedSearchExpressionQueryWithID, metricStatQueryWithID, metricStatQueryWithID}
 				res := sortQueries(queries)
 				So(res[0].RefId, ShouldEqual, "metricStatQueryWithID")
 				So(res[1].RefId, ShouldEqual, "metricStatQueryWithID")
@@ -122,7 +122,7 @@ func TestMetricDataInputBuilder(t *testing.T) {
 			})
 
 			Convey("with four queries ", func() {
-				queries := []*CloudWatchQuery{userDefinedSearchExpressionQueryWithID, metricStatQueryWithID,
+				queries := []*cloudWatchQuery{userDefinedSearchExpressionQueryWithID, metricStatQueryWithID,
 					userDefinedSearchExpressionQueryWithoutID, metricStatQueryWithoutID}
 				res := sortQueries(queries)
 				So(res[0].RefId, ShouldEqual, "metricStatQueryWithID")
@@ -132,7 +132,7 @@ func TestMetricDataInputBuilder(t *testing.T) {
 			})
 
 			Convey("with search expressions only ", func() {
-				queries := []*CloudWatchQuery{userDefinedSearchExpressionQueryWithID, userDefinedSearchExpressionQueryWithoutID, inferredSearchExpressionQueryWithID, inferredSearchExpressionQueryWithoutID}
+				queries := []*cloudWatchQuery{userDefinedSearchExpressionQueryWithID, userDefinedSearchExpressionQueryWithoutID, inferredSearchExpressionQueryWithID, inferredSearchExpressionQueryWithoutID}
 				res := sortQueries(queries)
 				So(res[0].RefId, ShouldEqual, "userDefinedSearchExpressionQueryWithID")
 				So(res[1].RefId, ShouldEqual, "inferredSearchExpressionQueryWithID")
@@ -141,7 +141,7 @@ func TestMetricDataInputBuilder(t *testing.T) {
 			})
 
 			Convey("queries without id", func() {
-				queries := []*CloudWatchQuery{inferredSearchExpressionQueryWithoutID, metricStatQueryWithoutID, userDefinedSearchExpressionQueryWithoutID}
+				queries := []*cloudWatchQuery{inferredSearchExpressionQueryWithoutID, metricStatQueryWithoutID, userDefinedSearchExpressionQueryWithoutID}
 				res := sortQueries(queries)
 				So(res[0].RefId, ShouldEqual, "metricStatQueryWithoutID")
 				So(res[1].RefId, ShouldEqual, "inferredSearchExpressionQueryWithoutID")
@@ -149,7 +149,7 @@ func TestMetricDataInputBuilder(t *testing.T) {
 			})
 
 			Convey("queries with multiple stats", func() {
-				queries := []*CloudWatchQuery{inferredSearchExpressionQueryWithMultipleStats, metricStatQueryWithMultipleStats, inferredSearchExpressionQueryWithoutID}
+				queries := []*cloudWatchQuery{inferredSearchExpressionQueryWithMultipleStats, metricStatQueryWithMultipleStats, inferredSearchExpressionQueryWithoutID}
 				res := sortQueries(queries)
 				So(res[0].RefId, ShouldEqual, "metricStatQueryWithMultipleStats")
 				So(res[1].RefId, ShouldEqual, "inferredSearchExpressionQueryWithMultipleStats")
@@ -159,7 +159,7 @@ func TestMetricDataInputBuilder(t *testing.T) {
 
 		Convey("and testing metricDataInput bulding", func() {
 			Convey("first metricDataInput is filled with metric stat queries", func() {
-				res, err := mdib.buildMetricDataInput(ctx, []*CloudWatchQuery{inferredSearchExpressionQueryWithoutID, inferredSearchExpressionQueryWithoutID, metricStatQueryWithoutID, metricStatQueryWithoutID, metricStatQueryWithoutID, metricStatQueryWithoutID, metricStatQueryWithoutID})
+				res, err := mdib.buildMetricDataInput(ctx, []*cloudWatchQuery{inferredSearchExpressionQueryWithoutID, inferredSearchExpressionQueryWithoutID, metricStatQueryWithoutID, metricStatQueryWithoutID, metricStatQueryWithoutID, metricStatQueryWithoutID, metricStatQueryWithoutID})
 				So(err, ShouldBeNil)
 				So(*res[0].MetricDataQueries[0].Id, ShouldEqual, "metricStatQueryWithoutID")
 				So(*res[0].MetricDataQueries[1].Id, ShouldEqual, "metricStatQueryWithoutID")
@@ -172,7 +172,7 @@ func TestMetricDataInputBuilder(t *testing.T) {
 			})
 
 			Convey("a maximum of 2 search expressions are used in each metricDataInput", func() {
-				res, err := mdib.buildMetricDataInput(ctx, []*CloudWatchQuery{
+				res, err := mdib.buildMetricDataInput(ctx, []*cloudWatchQuery{
 					inferredSearchExpressionQueryWithoutID,
 					inferredSearchExpressionQueryWithID,
 					userDefinedSearchExpressionQueryWithID,
