@@ -48,11 +48,14 @@ func (mdib *metricDataInputBuilder) buildMetricDataQueries(query *cloudWatchQuer
 }
 
 func buildSearchExpression(query *cloudWatchQuery, stat string) string {
+	searchExpression := fmt.Sprintf("SEARCH('")
 	counter := 1
+	dimensionSchemaKeys := ""
 	dimensionKeys := ""
-	searchTerm := fmt.Sprintf("MetricName=\"%v\" ", query.MetricName)
+	searchTerm := fmt.Sprintf("MetricName=\"%s\"", query.MetricName)
+
 	for key, values := range query.Dimensions {
-		dimensionKeys += fmt.Sprintf(",%s", key)
+		dimensionSchemaKeys += fmt.Sprintf(",%s", key)
 		hasStar := false
 		keySearchTerm := fmt.Sprintf("%s=(", key)
 		for i, value := range values {
@@ -66,16 +69,34 @@ func buildSearchExpression(query *cloudWatchQuery, stat string) string {
 			}
 		}
 		keySearchTerm += ")"
-		if len(query.Dimensions) > 1 && counter != 1 && !hasStar {
-			keySearchTerm = fmt.Sprintf(" AND %s", keySearchTerm)
-		}
 
 		if !hasStar {
-			searchTerm += keySearchTerm
+			searchTerm += fmt.Sprintf(" %s", keySearchTerm)
+		}
+
+		if hasStar || len(values) == 0 {
+			if dimensionKeys == "" {
+				dimensionKeys = fmt.Sprintf("\"%s\"", key)
+			} else {
+				dimensionKeys += fmt.Sprintf(" \"%s\"", key)
+			}
 		}
 
 		counter++
 	}
-	searchExpression := fmt.Sprintf("SEARCH('{%s%s} %s', '%s', %s)", query.Namespace, dimensionKeys, searchTerm, stat, strconv.Itoa(query.Period))
-	return searchExpression
+
+	if query.MatchExact {
+		return fmt.Sprintf("SEARCH('{%s%s} %s', '%s', %s)", query.Namespace, dimensionSchemaKeys, searchTerm, stat, strconv.Itoa(query.Period))
+	} else {
+		searchExpression += fmt.Sprintf("Namespace=\"%s\"", query.Namespace)
+		if searchTerm != "" {
+			searchExpression += fmt.Sprintf(" %s", searchTerm)
+		}
+		if dimensionKeys != "" {
+			searchExpression += fmt.Sprintf(" %s", dimensionKeys)
+		}
+		// return fmt.Sprintf("SEARCH('Namespace=\"%s\" %s %s', '%s', %s)", query.Namespace, searchTerm, dimensionKeys, stat, strconv.Itoa(query.Period))
+	}
+
+	return fmt.Sprintf("%s', '%s', %s)", searchExpression, stat, strconv.Itoa(query.Period))
 }
