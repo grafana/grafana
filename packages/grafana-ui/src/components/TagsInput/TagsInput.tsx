@@ -1,7 +1,8 @@
 import React, { ChangeEvent, KeyboardEvent, PureComponent } from 'react';
 import { css, cx } from 'emotion';
 import { stylesFactory } from '../../themes/stylesFactory';
-import { Button, Input } from '..';
+import { Button } from '../Button/Button';
+import { Input } from '../Input/Input';
 import { TagItem } from './TagItem';
 
 interface Props {

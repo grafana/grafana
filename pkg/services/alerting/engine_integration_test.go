@@ -18,7 +18,8 @@ import (
 func TestEngineTimeouts(t *testing.T) {
 	Convey("Alerting engine timeout tests", t, func() {
 		engine := &AlertEngine{}
-		engine.Init()
+		err := engine.Init()
+		So(err, ShouldBeNil)
 		setting.AlertingNotificationTimeout = 30 * time.Second
 		setting.AlertingMaxAttempts = 3
 		engine.resultHandler = &FakeResultHandler{}
@@ -36,7 +37,8 @@ func TestEngineTimeouts(t *testing.T) {
 				engine.evalHandler = evalHandler
 				engine.resultHandler = resultHandler
 
-				engine.processJobWithRetry(context.TODO(), job)
+				err := engine.processJobWithRetry(context.TODO(), job)
+				So(err, ShouldBeNil)
 
 				So(evalHandler.EvalSucceed, ShouldEqual, true)
 				So(resultHandler.ResultHandleSucceed, ShouldEqual, true)

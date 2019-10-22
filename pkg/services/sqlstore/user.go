@@ -296,7 +296,9 @@ func UpdateUserLastSeenAt(cmd *models.UpdateUserLastSeenAtCommand) error {
 
 func SetUsingOrg(cmd *models.SetUsingOrgCommand) error {
 	getOrgsForUserCmd := &models.GetUserOrgListQuery{UserId: cmd.UserId}
-	GetUserOrgList(getOrgsForUserCmd)
+	if err := GetUserOrgList(getOrgsForUserCmd); err != nil {
+		return err
+	}
 
 	valid := false
 	for _, other := range getOrgsForUserCmd.Result {
@@ -304,7 +306,6 @@ func SetUsingOrg(cmd *models.SetUsingOrgCommand) error {
 			valid = true
 		}
 	}
-
 	if !valid {
 		return fmt.Errorf("user does not belong to org")
 	}
@@ -519,7 +520,9 @@ func SearchUsers(query *models.SearchUsersQuery) error {
 func DisableUser(cmd *models.DisableUserCommand) error {
 	user := models.User{}
 	sess := x.Table("user")
-	sess.ID(cmd.UserId).Get(&user)
+	if _, err := sess.ID(cmd.UserId).Get(&user); err != nil {
+		return err
+	}
 
 	user.IsDisabled = cmd.IsDisabled
 	sess.UseBool("is_disabled")
@@ -585,7 +588,9 @@ func deleteUserInTransaction(sess *DBSession, cmd *models.DeleteUserCommand) err
 func UpdateUserPermissions(cmd *models.UpdateUserPermissionsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		user := models.User{}
-		sess.ID(cmd.UserId).Get(&user)
+		if _, err := sess.ID(cmd.UserId).Get(&user); err != nil {
+			return err
+		}
 
 		user.IsAdmin = cmd.IsGrafanaAdmin
 		sess.UseBool("is_admin")

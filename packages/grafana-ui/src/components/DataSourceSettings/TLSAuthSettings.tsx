@@ -1,7 +1,7 @@
 import React from 'react';
 import { KeyValue } from '@grafana/data';
 import { css, cx } from 'emotion';
-import { Tooltip } from '..';
+import { Tooltip } from '../Tooltip/Tooltip';
 import { CertificationKey } from './CertificationKey';
 import { HttpSettingsBaseProps } from './types';
 
