@@ -186,13 +186,17 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     if (!fieldInfo) {
+      const processor = getDisplayProcessor({
+        config: {
+          mappings: convertOldAngulrValueMapping(this.panel),
+          noValue: 'No Data',
+        },
+        theme: config.theme,
+      });
       // When we don't have any field
       this.data = {
         value: 'No Data',
-        display: {
-          text: 'No Data',
-          numeric: NaN,
-        },
+        display: processor(null),
       };
     } else {
       this.data = this.processField(fieldInfo);
