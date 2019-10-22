@@ -89,7 +89,13 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.streamManager.Run(ctx)
 
 	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
-	hs.log.Info("HTTP Server Listen", "address", listenAddr, "protocol", setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
+	listener, err := net.Listen("tcp", listenAddr)
+	if err != nil {
+		hs.log.Debug("server was shutdown gracefully")
+		return nil
+	}
+
+	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol", setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
 
 	hs.httpSrv = &http.Server{Addr: listenAddr, Handler: hs.macaron}
 
@@ -105,19 +111,19 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 
 	switch setting.Protocol {
 	case setting.HTTP:
-		err = hs.httpSrv.ListenAndServe()
+		err = hs.httpSrv.Serve(listener)
 		if err == http.ErrServerClosed {
 			hs.log.Debug("server was shutdown gracefully")
 			return nil
 		}
 	case setting.HTTP2:
-		err = hs.listenAndServeH2TLS(setting.CertFile, setting.KeyFile)
+		err = hs.listenAndServeH2TLS(listener, setting.CertFile, setting.KeyFile)
 		if err == http.ErrServerClosed {
 			hs.log.Debug("server was shutdown gracefully")
 			return nil
 		}
 	case setting.HTTPS:
-		err = hs.listenAndServeTLS(setting.CertFile, setting.KeyFile)
+		err = hs.listenAndServeTLS(listener, setting.CertFile, setting.KeyFile)
 		if err == http.ErrServerClosed {
 			hs.log.Debug("server was shutdown gracefully")
 			return nil
@@ -148,7 +154,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	return err
 }
 
-func (hs *HTTPServer) listenAndServeTLS(certfile, keyfile string) error {
+func (hs *HTTPServer) listenAndServeTLS(listener net.Listener, certfile, keyfile string) error {
 	if certfile == "" {
 		return fmt.Errorf("cert_file cannot be empty when using HTTPS")
 	}
@@ -187,10 +193,10 @@ func (hs *HTTPServer) listenAndServeTLS(certfile, keyfile string) error {
 	hs.httpSrv.TLSConfig = tlsCfg
 	hs.httpSrv.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler))
 
-	return hs.httpSrv.ListenAndServeTLS(setting.CertFile, setting.KeyFile)
+	return hs.httpSrv.ServeTLS(listener, setting.CertFile, setting.KeyFile)
 }
 
-func (hs *HTTPServer) listenAndServeH2TLS(certfile, keyfile string) error {
+func (hs *HTTPServer) listenAndServeH2TLS(listener net.Listener, certfile, keyfile string) error {
 	if certfile == "" {
 		return fmt.Errorf("cert_file cannot be empty when using HTTP2")
 	}
@@ -226,7 +232,7 @@ func (hs *HTTPServer) listenAndServeH2TLS(certfile, keyfile string) error {
 
 	hs.httpSrv.TLSConfig = tlsCfg
 
-	return hs.httpSrv.ListenAndServeTLS(setting.CertFile, setting.KeyFile)
+	return hs.httpSrv.ServeTLS(listener, setting.CertFile, setting.KeyFile)
 }
 
 func (hs *HTTPServer) newMacaron() *macaron.Macaron {
