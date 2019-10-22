@@ -170,18 +170,23 @@ func parseDimensions(model *simplejson.Json) (map[string][]string, error) {
 		}
 	}
 
+	sortedDimensions := sortDimensions(parsedDimensions)
+
+	return sortedDimensions, nil
+}
+
+func sortDimensions(dimensions map[string][]string) map[string][]string {
 	sortedDimensions := make(map[string][]string)
 	var keys []string
-	for k := range parsedDimensions {
+	for k := range dimensions {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 
-	// To perform the opertion you want
 	for _, k := range keys {
-		sortedDimensions[k] = parsedDimensions[k]
+		sortedDimensions[k] = dimensions[k]
 	}
-	return parsedDimensions, nil
+	return sortedDimensions
 }
 
 func generateUniqueString() string {
