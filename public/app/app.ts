@@ -150,7 +150,10 @@ export class GrafanaApp {
 
       if (!checkBrowserCompatibility()) {
         setTimeout(() => {
-          appEvents.emit(AppEvents.alertWarning, ['Your browser is not supported']);
+          appEvents.emit(AppEvents.alertWarning, [
+            'Your browser is not fully supported',
+            'A newer browser version is recommended',
+          ]);
         }, 1000);
       }
     });
