@@ -64,6 +64,7 @@ export interface GrafanaThemeCommons {
 
     // Next-gen forms spacing variables
     // TODO: Move variables definition to respective components when implementing
+    formSpacingBase: number;
     formMargin: string;
     formFieldsetMargin: string;
     formLegendMargin: string;

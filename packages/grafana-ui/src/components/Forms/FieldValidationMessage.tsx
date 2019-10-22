@@ -17,12 +17,13 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
       padding: ${theme.spacing.formValidationMessagePadding};
       color: ${theme.colors.formValidationMessageText};
       background: ${theme.colors.formValidationMessageBg};
+      border-radius: ${theme.border.radius.sm};
       position: relative;
 
       &:before {
         content: '';
         position: absolute;
-        left: 16px;
+        left: 9px;
         top: -5px;
         width: 0;
         height: 0;
@@ -30,6 +31,9 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
         border-right: 5px solid transparent;
         border-bottom: 5px solid ${theme.colors.formValidationMessageBg};
       }
+    `,
+    fieldValidationMessageIcon: css`
+      margin-right: ${theme.spacing.formSpacingBase}px;
     `,
   };
 });
@@ -40,7 +44,8 @@ export const FieldValidationMessage: React.FC<FieldValidationMessageProps> = ({ 
 
   return (
     <div className={cx(styles.fieldValidationMessage, className)}>
-      <i className="fa fa-warning" /> {children}
+      <i className={cx(styles.fieldValidationMessageIcon, 'fa', 'fa-warning')} />
+      {children}
     </div>
   );
 };
