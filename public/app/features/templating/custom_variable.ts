@@ -2,6 +2,11 @@ import _ from 'lodash';
 import { Variable, assignModelProperties, variableTypes } from './variable';
 import { VariableSrv } from './variable_srv';
 
+export interface OptionMapping {
+  __text: string;
+  __value: string;
+}
+
 export class CustomVariable implements Variable {
   query: string;
   options: any;
@@ -39,11 +44,17 @@ export class CustomVariable implements Variable {
   }
 
   updateOptions() {
-    // extract options in comma separated string (use backslash to escape wanted commas)
-    this.options = _.map(this.query.match(/(?:\\,|[^,])+/g), text => {
-      text = text.replace(/\\,/g, ',');
-      return { text: text.trim(), value: text.trim() };
-    });
+    try {
+      // content is a json ? read text and value
+      const mappings: OptionMapping[] = JSON.parse(this.query);
+      this.options = mappings.map(mapping => ({ text: mapping.__text, value: mapping.__value }));
+    } catch (e) {
+      // extract options in comma separated string (use backslash to escape wanted commas)
+      this.options = _.map(this.query.match(/(?:\\,|[^,])+/g), text => {
+        text = text.replace(/\\,/g, ',');
+        return { text: text.trim(), value: text.trim() };
+      });
+    }
 
     if (this.includeAll) {
       this.addAllOption();
