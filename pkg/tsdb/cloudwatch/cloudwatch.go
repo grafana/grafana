@@ -87,7 +87,7 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 		Results: make(map[string]*tsdb.QueryResult),
 	}
 
-	metricDataInputsByRegion := make(map[string][]*cloudwatch.GetMetricDataInput, 0)
+	metricDataInputsByRegion := make(map[string][]*cloudwatch.GetMetricDataInput)
 	queriesByRegion, err := e.parseQueriesByRegion(queryContext)
 	for region, queries := range queriesByRegion {
 		metricQueries, err := e.mdib.buildMetricDataInput(queryContext, queries)
@@ -131,7 +131,6 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 					return err
 				}
 
-				queryResponses := make([]*tsdb.QueryResult, 0)
 				metricDataResults := make([]*cloudwatch.MetricDataResult, 0)
 				for _, query := range queries {
 					res, err := e.executeRequest(ectx, client, query)
@@ -153,7 +152,7 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 					metricDataResults = append(metricDataResults, res...)
 				}
 
-				queryResponses, err = e.parseResponse(metricDataResults, queriesByRegion[region])
+				queryResponses, err := e.parseResponse(metricDataResults, queriesByRegion[region])
 				if err != nil {
 					return err
 				}
