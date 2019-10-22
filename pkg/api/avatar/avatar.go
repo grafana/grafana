@@ -105,7 +105,7 @@ func (this *CacheServer) Handler(ctx *macaron.Context) {
 	if avatar.notFound {
 		avatar = this.notFound
 	} else {
-		if err := this.cache.Add(hash, avatar, gocache.DefaultExpiration); err != nil {
+		if err := this.cache.Add(hash, avatar, gocache.DefaultExpiration); err != nil && !strings.Contains(err.Error(), "already exists") {
 			log.Warn("Error adding avatar to cache: %s", err)
 		}
 	}
