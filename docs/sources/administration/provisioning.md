@@ -243,7 +243,7 @@ If the the `allowUiUpdates` configuration value is set to true `Save` will let y
 > **Note.** 
 > If a provisioned dashboard is saved from the UI and then later updated on disk the dashboard stored in the database will always be overwritten. The `version` property in the json file will not affect this even if it is lower then the existing dashboard.
 > 
-> If a dashboard is saved from the UI and then later the file is removed from disk, the dashboard will be deleted unless the configuration option `disableDeletion` is set to true.
+> If a provisioned dashboard is saved from the UI and then later the file is removed from disk, the dashboard stored in the database will be deleted unless the configuration option `disableDeletion` is set to true.
 
 If the `allowUiUpdates` configuration value is set to false, then `Save` will instead bring up a *Cannot save provisioned dashboard* dialog like seen in the screenshot below.
 Here available options will let you `Copy JSON to Clipboard` and/or `Save JSON to file`. This can help you synchronize your dashboard changes back to the provisioning source.
