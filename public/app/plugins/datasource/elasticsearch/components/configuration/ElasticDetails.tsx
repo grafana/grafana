@@ -1,14 +1,6 @@
-import React, { useEffect } from 'react';
-import {
-  DataSourceHttpSettings,
-  DataSourcePluginOptionsEditorProps,
-  DataSourceSettings,
-  EventsWithValidation,
-  FormField,
-  Input,
-  regexValidation,
-} from '@grafana/ui';
-import { ElasticsearchOptions } from '../types';
+import React from 'react';
+import { DataSourceSettings, EventsWithValidation, FormField, Input, regexValidation } from '@grafana/ui';
+import { ElasticsearchOptions } from '../../types';
 
 const indexPatternTypes = [
   { name: 'No pattern', value: 'none' },
@@ -27,77 +19,11 @@ const esVersions = [
   { name: '7.0+', value: 70 },
 ];
 
-export type Props = DataSourcePluginOptionsEditorProps<ElasticsearchOptions>;
-export const ConfigEditor = (props: Props) => {
-  const { options, onOptionsChange } = props;
-
-  // Apply some defaults on initial render
-  useEffect(() => {
-    const esVersion = options.jsonData.esVersion || 5;
-    const defaultMaxConcurrentShardRequests = esVersion >= 70 ? 5 : 256;
-    onOptionsChange({
-      ...options,
-      jsonData: {
-        ...options.jsonData,
-        timeField: options.jsonData.timeField || '@timestamp',
-        esVersion,
-        maxConcurrentShardRequests: options.jsonData.maxConcurrentShardRequests || defaultMaxConcurrentShardRequests,
-        logMessageField: options.jsonData.logMessageField || '',
-        logLevelField: options.jsonData.logLevelField || '',
-      },
-    });
-  }, []);
-
-  // Apply some default to database field when interval changes and database is empty.
-  useEffect(() => {
-    if (!options.database || options.database.length === 0 || options.database.startsWith('[logstash-]')) {
-      const pattern = indexPatternTypes.find(pattern => pattern.value === options.jsonData.interval);
-      onOptionsChange({
-        ...options,
-        database: pattern.example || 'es-index-name',
-      });
-    }
-  }, [options.database, options.jsonData.interval]);
-
-  return (
-    <>
-      <DataSourceHttpSettings
-        defaultUrl={'http://localhost:3100'}
-        dataSourceConfig={options}
-        showAccessOptions={true}
-        onChange={onOptionsChange}
-      />
-
-      <Details
-        value={options}
-        onChange={value => {
-          // We need to do this as selecting no value would not overwrite the data during merge of objects. So we set
-          // explicit value which mean this field should be empty and then delete that value before saving.
-          if (value.jsonData.interval === 'none') {
-            delete value.jsonData.interval;
-            onOptionsChange(value);
-          }
-        }}
-      />
-
-      <Logs
-        value={options.jsonData}
-        onChange={newValue =>
-          onOptionsChange({
-            ...options,
-            jsonData: newValue,
-          })
-        }
-      />
-    </>
-  );
-};
-
-type DetailsProps = {
+type Props = {
   value: DataSourceSettings<ElasticsearchOptions>;
   onChange: (value: DataSourceSettings<ElasticsearchOptions>) => void;
 };
-const Details = (props: DetailsProps) => {
+export const ElasticDetails = (props: Props) => {
   const { value, onChange } = props;
 
   const changeHandler = (key: keyof DataSourceSettings<ElasticsearchOptions>) => (
@@ -134,6 +60,7 @@ const Details = (props: DetailsProps) => {
               label="Index name"
               value={value.database || ''}
               onChange={changeHandler('database')}
+              placeholder={'es-index-name'}
               required
             />
           </div>
@@ -146,7 +73,37 @@ const Details = (props: DetailsProps) => {
                 <select
                   className="gf-form-input gf-size-auto"
                   value={value.jsonData.interval}
-                  onChange={jsonDataChangeHandler('interval')}
+                  onChange={event => {
+                    const { database } = value;
+                    const newInterval = event.currentTarget.value;
+
+                    if (!database || database.length === 0 || database.startsWith('[logstash-]')) {
+                      let newDatabase = '';
+                      if (newInterval !== 'none') {
+                        const pattern = indexPatternTypes.find(pattern => pattern.value === newInterval);
+                        if (pattern) {
+                          newDatabase = pattern.example;
+                        }
+                      }
+
+                      onChange({
+                        ...value,
+                        database: newDatabase,
+                        jsonData: {
+                          ...value.jsonData,
+                          interval: newInterval,
+                        },
+                      });
+                    } else {
+                      onChange({
+                        ...value,
+                        jsonData: {
+                          ...value.jsonData,
+                          interval: newInterval,
+                        },
+                      });
+                    }
+                  }}
                 >
                   {indexPatternTypes.map(pattern => (
                     <option key={pattern.value} value={pattern.value}>
@@ -223,48 +180,6 @@ const Details = (props: DetailsProps) => {
               }
             />
           </div>
-        </div>
-      </div>
-    </>
-  );
-};
-
-type LogsProps = {
-  value: ElasticsearchOptions;
-  onChange: (value: ElasticsearchOptions) => void;
-};
-const Logs = (props: LogsProps) => {
-  const { value, onChange } = props;
-  const changeHandler = (key: keyof ElasticsearchOptions) => (
-    event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    onChange({
-      ...value,
-      [key]: event.currentTarget.value,
-    });
-  };
-
-  return (
-    <>
-      <h3 className="page-heading">Logs</h3>
-
-      <div className="gf-form-group">
-        <div className="gf-form max-width-30">
-          <FormField
-            labelWidth={11}
-            label="Message field name"
-            value={value.logMessageField}
-            onChange={changeHandler('logMessageField')}
-            placeholder="_source"
-          />
-        </div>
-        <div className="gf-form max-width-30">
-          <FormField
-            labelWidth={11}
-            label="Level field name"
-            value={value.logLevelField}
-            onChange={changeHandler('logLevelField')}
-          />
         </div>
       </div>
     </>
