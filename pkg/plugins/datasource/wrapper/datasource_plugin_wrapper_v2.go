@@ -128,10 +128,12 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 	}
 
 	for _, q := range query.Queries {
-		modelJson, _ := q.Model.MarshalJSON()
-
+		modelJSON, err := q.Model.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
 		pbQuery.Queries = append(pbQuery.Queries, &datasource.Query{
-			ModelJson:     string(modelJson),
+			ModelJson:     string(modelJSON),
 			IntervalMs:    q.IntervalMs,
 			RefId:         q.RefId,
 			MaxDataPoints: q.MaxDataPoints,
@@ -159,11 +161,11 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 		}
 
 		if r.MetaJson != "" {
-			metaJson, err := simplejson.NewJson([]byte(r.MetaJson))
+			metaJSON, err := simplejson.NewJson([]byte(r.MetaJson))
 			if err != nil {
 				tw.logger.Error("Error parsing JSON Meta field: " + err.Error())
 			}
-			qr.Meta = metaJson
+			qr.Meta = metaJSON
 		}
 		qr.Dataframes = r.Dataframes
 
@@ -172,58 +174,3 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 
 	return res, nil
 }
-
-// func (tw *DatasourcePluginWrapperV2) mapTables(r *datasource.QueryResult) ([]*tsdb.Table, error) {
-// 	var tables []*tsdb.Table
-// 	for _, t := range r.GetTables() {
-// 		mappedTable, err := tw.mapTable(t)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		tables = append(tables, mappedTable)
-// 	}
-// 	return tables, nil
-// }
-
-// func (tw *DatasourcePluginWrapperV2) mapTable(t *datasource.Table) (*tsdb.Table, error) {
-// 	table := &tsdb.Table{}
-// 	for _, c := range t.GetColumns() {
-// 		table.Columns = append(table.Columns, tsdb.TableColumn{
-// 			Text: c.Name,
-// 		})
-// 	}
-
-// 	table.Rows = make([]tsdb.RowValues, 0)
-// 	for _, r := range t.GetRows() {
-// 		row := tsdb.RowValues{}
-// 		for _, rv := range r.Values {
-// 			mappedRw, err := tw.mapRowValue(rv)
-// 			if err != nil {
-// 				return nil, err
-// 			}
-
-// 			row = append(row, mappedRw)
-// 		}
-// 		table.Rows = append(table.Rows, row)
-// 	}
-
-// 	return table, nil
-// }
-// func (tw *DatasourcePluginWrapperV2) mapRowValue(rv *datasource.RowValue) (interface{}, error) {
-// 	switch rv.Type {
-// 	case datasource.RowValue_TYPE_NULL:
-// 		return nil, nil
-// 	case datasource.RowValue_TYPE_INT64:
-// 		return rv.Int64Value, nil
-// 	case datasource.RowValue_TYPE_BOOL:
-// 		return rv.BoolValue, nil
-// 	case datasource.RowValue_TYPE_STRING:
-// 		return rv.StringValue, nil
-// 	case datasource.RowValue_TYPE_DOUBLE:
-// 		return rv.DoubleValue, nil
-// 	case datasource.RowValue_TYPE_BYTES:
-// 		return rv.BytesValue, nil
-// 	default:
-// 		return nil, fmt.Errorf("Unsupported row value %v from plugin", rv.Type)
-// 	}
-// }

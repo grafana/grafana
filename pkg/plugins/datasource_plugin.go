@@ -126,11 +126,6 @@ func (p *DataSourcePlugin) spawnSubProcess() error {
 		return nil
 	}
 
-	// What goes here?
-	// A client of some sort??
-	// What do we need? Interface Query() signature  method?
-	// Export the GRPC client from the SDK?
-
 	plugin, ok := raw.(sdk.DatasourcePlugin)
 	if !ok {
 		return fmt.Errorf("unxpected type %T, expeced sdk.DatasourcePlugin", raw)
@@ -139,12 +134,6 @@ func (p *DataSourcePlugin) spawnSubProcess() error {
 	tsdb.RegisterTsdbQueryEndpoint(p.Id, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 		return wrapper.NewDatasourcePluginWrapperV2(p.log, plugin), nil
 	})
-
-	// Now we need to register this somewhere?
-	// trans.RegisterTransformEndPoint ... ?
-	// Different type of wrapper that uses sdk instead of plugin-model?
-
-	// and then have an HTTP endpoint API to register to?
 
 	return nil
 }
