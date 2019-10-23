@@ -3,13 +3,11 @@ package tsdb
 import (
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana-plugin-sdk-go/dataframe"
 )
 
 // SeriesToFrame converts a TimeSeries to a sdk Frame
 func SeriesToFrame(series *TimeSeries) (*dataframe.Frame, error) {
-	spew.Dump(series)
 	timeVec := make([]*time.Time, len(series.Points))
 	floatVec := make([]*float64, len(series.Points))
 	for idx, point := range series.Points {
@@ -20,7 +18,6 @@ func SeriesToFrame(series *TimeSeries) (*dataframe.Frame, error) {
 		dataframe.NewField("value", dataframe.FieldTypeNumber, floatVec),
 	)
 
-	spew.Dump(frame)
 	return frame, nil
 }
 

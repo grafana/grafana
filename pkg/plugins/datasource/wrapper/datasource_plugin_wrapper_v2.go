@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/davecgh/go-spew/spew"
 	sdk "github.com/grafana/grafana-plugin-sdk-go"
 	"github.com/grafana/grafana-plugin-sdk-go/dataframe"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/datasource"
@@ -24,7 +23,6 @@ func (s *grafanaAPI) QueryDatasource(ctx context.Context, req *datasource.QueryD
 	if len(req.Queries) == 0 {
 		return nil, fmt.Errorf("zero queries found in datasource request")
 	}
-	spew.Dump(req)
 	getDsInfo := &models.GetDataSourceByIdQuery{
 		Id:    req.DatasourceId,
 		OrgId: req.OrgId,
@@ -61,7 +59,6 @@ func (s *grafanaAPI) QueryDatasource(ctx context.Context, req *datasource.QueryD
 	if err != nil {
 		return nil, err
 	}
-	spew.Dump("tesbRes", tsdbRes)
 	// Convert tsdb results (map) to plugin-model/datasource (slice) results
 	// Only error and Series responses mapped.
 	results := make([]*datasource.QueryResult, len(tsdbRes.Results))
