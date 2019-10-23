@@ -1,6 +1,6 @@
 import React from 'react';
 import { DataSourceSettings, EventsWithValidation, FormField, Input, regexValidation } from '@grafana/ui';
-import { ElasticsearchOptions } from '../../types';
+import { ElasticsearchOptions } from '../types';
 
 const indexPatternTypes = [
   { name: 'No pattern', value: 'none' },
@@ -26,27 +26,6 @@ type Props = {
 export const ElasticDetails = (props: Props) => {
   const { value, onChange } = props;
 
-  const changeHandler = (key: keyof DataSourceSettings<ElasticsearchOptions>) => (
-    event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    onChange({
-      ...value,
-      [key]: event.currentTarget.value,
-    });
-  };
-
-  const jsonDataChangeHandler = (key: keyof ElasticsearchOptions) => (
-    event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    onChange({
-      ...value,
-      jsonData: {
-        ...value.jsonData,
-        [key]: event.currentTarget.value,
-      },
-    });
-  };
-
   return (
     <>
       <h3 className="page-heading">Elasticsearch details</h3>
@@ -59,7 +38,7 @@ export const ElasticDetails = (props: Props) => {
               inputWidth={15}
               label="Index name"
               value={value.database || ''}
-              onChange={changeHandler('database')}
+              onChange={changeHandler('database', value, onChange)}
               placeholder={'es-index-name'}
               required
             />
@@ -71,39 +50,10 @@ export const ElasticDetails = (props: Props) => {
               label="Pattern"
               inputEl={
                 <select
+                  aria-label={'Pattern select'}
                   className="gf-form-input gf-size-auto"
                   value={value.jsonData.interval}
-                  onChange={event => {
-                    const { database } = value;
-                    const newInterval = event.currentTarget.value;
-
-                    if (!database || database.length === 0 || database.startsWith('[logstash-]')) {
-                      let newDatabase = '';
-                      if (newInterval !== 'none') {
-                        const pattern = indexPatternTypes.find(pattern => pattern.value === newInterval);
-                        if (pattern) {
-                          newDatabase = pattern.example;
-                        }
-                      }
-
-                      onChange({
-                        ...value,
-                        database: newDatabase,
-                        jsonData: {
-                          ...value.jsonData,
-                          interval: newInterval,
-                        },
-                      });
-                    } else {
-                      onChange({
-                        ...value,
-                        jsonData: {
-                          ...value.jsonData,
-                          interval: newInterval,
-                        },
-                      });
-                    }
-                  }}
+                  onChange={intervalHandler(value, onChange)}
                 >
                   {indexPatternTypes.map(pattern => (
                     <option key={pattern.value} value={pattern.value}>
@@ -122,7 +72,7 @@ export const ElasticDetails = (props: Props) => {
             inputWidth={15}
             label="Time field name"
             value={value.jsonData.timeField || ''}
-            onChange={jsonDataChangeHandler('timeField')}
+            onChange={jsonDataChangeHandler('timeField', value, onChange)}
             required
           />
         </div>
@@ -136,7 +86,7 @@ export const ElasticDetails = (props: Props) => {
                 <select
                   className="gf-form-input gf-size-auto"
                   value={value.jsonData.esVersion}
-                  onChange={jsonDataChangeHandler('esVersion')}
+                  onChange={jsonDataChangeHandler('esVersion', value, onChange)}
                 >
                   {esVersions.map(version => (
                     <option key={version.value} value={version.value}>
@@ -151,10 +101,11 @@ export const ElasticDetails = (props: Props) => {
         {value.jsonData.esVersion >= 56 && (
           <div className="gf-form max-width-30">
             <FormField
+              aria-label={'Max concurrent Shard Requests input'}
               labelWidth={15}
               label="Max concurrent Shard Requests"
               value={value.jsonData.maxConcurrentShardRequests || ''}
-              onChange={jsonDataChangeHandler('maxConcurrentShardRequests')}
+              onChange={jsonDataChangeHandler('maxConcurrentShardRequests', value, onChange)}
             />
           </div>
         )}
@@ -167,7 +118,7 @@ export const ElasticDetails = (props: Props) => {
                 <Input
                   className={'width-6'}
                   value={value.jsonData.timeInterval || ''}
-                  onChange={jsonDataChangeHandler('timeInterval')}
+                  onChange={jsonDataChangeHandler('timeInterval', value, onChange)}
                   placeholder="10s"
                   validationEvents={{ [EventsWithValidation.onBlur]: [regexValidation(/^\d+(ms|[Mwdhmsy])$/)] }}
                 />
@@ -184,4 +135,61 @@ export const ElasticDetails = (props: Props) => {
       </div>
     </>
   );
+};
+
+const changeHandler = (
+  key: keyof DataSourceSettings<ElasticsearchOptions>,
+  value: Props['value'],
+  onChange: Props['onChange']
+) => (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
+  onChange({
+    ...value,
+    [key]: event.currentTarget.value,
+  });
+};
+
+const jsonDataChangeHandler = (key: keyof ElasticsearchOptions, value: Props['value'], onChange: Props['onChange']) => (
+  event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
+) => {
+  onChange({
+    ...value,
+    jsonData: {
+      ...value.jsonData,
+      [key]: event.currentTarget.value,
+    },
+  });
+};
+
+const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => (
+  event: React.SyntheticEvent<HTMLSelectElement>
+) => {
+  const { database } = value;
+  const newInterval = event.currentTarget.value;
+
+  if (!database || database.length === 0 || database.startsWith('[logstash-]')) {
+    let newDatabase = '';
+    if (newInterval !== 'none') {
+      const pattern = indexPatternTypes.find(pattern => pattern.value === newInterval);
+      if (pattern) {
+        newDatabase = pattern.example;
+      }
+    }
+
+    onChange({
+      ...value,
+      database: newDatabase,
+      jsonData: {
+        ...value.jsonData,
+        interval: newInterval,
+      },
+    });
+  } else {
+    onChange({
+      ...value,
+      jsonData: {
+        ...value.jsonData,
+        interval: newInterval,
+      },
+    });
+  }
 };

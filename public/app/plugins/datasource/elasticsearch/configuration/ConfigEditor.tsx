@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { DataSourceHttpSettings, DataSourcePluginOptionsEditorProps } from '@grafana/ui';
-import { ElasticsearchOptions } from '../../types';
+import { ElasticsearchOptions } from '../types';
 import { ElasticDetails } from './ElasticDetails';
 import { LogsConfig } from './LogsConfig';
 
