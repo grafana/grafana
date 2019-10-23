@@ -1,41 +1,9 @@
-import React, { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
+import React from 'react';
 import tinycolor from 'tinycolor2';
 import { css, cx } from 'emotion';
-import { Themeable, GrafanaTheme } from '../../types';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import { stylesFactory } from '../../themes/stylesFactory';
-
-export type ButtonVariant =
-  | 'primary'
-  | 'secondary'
-  | 'danger'
-  | 'inverse'
-  | 'transparent'
-  | 'primary-ng'
-  | 'secondary-ng'
-  | 'destructive-ng';
-
-export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'sm-ng' | 'md-ng' | 'lg-ng';
-
-export interface CommonButtonProps {
-  size?: ButtonSize;
-  variant?: ButtonVariant;
-  /**
-   * icon prop is a temporary solution. It accepts lefacy icon class names for the icon to be rendered.
-   * TODO: migrate to a component when we are going to migrate icons to @grafana/ui
-   */
-  icon?: string;
-  className?: string;
-}
-
-export interface LinkButtonProps extends CommonButtonProps, AnchorHTMLAttributes<HTMLAnchorElement> {
-  disabled?: boolean;
-}
-export interface ButtonProps extends CommonButtonProps, ButtonHTMLAttributes<HTMLButtonElement> {}
-
-interface AbstractButtonProps extends CommonButtonProps, Themeable {
-  renderAs: React.ComponentType<CommonButtonProps> | string;
-}
+import { AbstractButtonProps, StyleDeps } from './types';
 
 const buttonVariantStyles = (
   from: string,
@@ -58,13 +26,8 @@ const buttonVariantStyles = (
   }
 `;
 
-interface StyleDeps {
-  theme: GrafanaTheme;
-  size: ButtonSize;
-  variant: ButtonVariant;
-  withIcon: boolean;
-}
 const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: StyleDeps) => {
+  console.log(variant);
   const borderRadius = theme.border.radius.sm;
   let padding,
     background,
@@ -81,27 +44,11 @@ const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: Style
       height = theme.height.sm;
       break;
 
-    case 'sm-ng':
-      padding = `${theme.spacing.xs} ${theme.spacing.sm}`;
-      fontSize = theme.typography.size.sm;
-      iconDistance = theme.spacing.xs;
-      height = theme.height.sm;
-      fontWeight = theme.typography.weight.bold;
-      break;
-
     case 'md':
       padding = `${theme.spacing.sm} ${theme.spacing.md}`;
       fontSize = theme.typography.size.md;
       iconDistance = theme.spacing.sm;
       height = theme.height.md;
-      break;
-
-    case 'md-ng':
-      padding = `${theme.spacing.sm} ${theme.spacing.md}`;
-      fontSize = theme.typography.size.md;
-      iconDistance = theme.spacing.sm;
-      height = `${theme.spacing.formButtonHeight}px`;
-      fontWeight = theme.typography.weight.bold;
       break;
 
     case 'lg':
@@ -110,15 +57,6 @@ const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: Style
       fontWeight = theme.typography.weight.regular;
       iconDistance = theme.spacing.sm;
       height = theme.height.lg;
-      break;
-
-    case 'lg-ng':
-      padding = `${theme.spacing.md} ${theme.spacing.lg}`;
-      fontSize = theme.typography.size.lg;
-      fontWeight = theme.typography.weight.regular;
-      iconDistance = theme.spacing.sm;
-      height = theme.height.lg;
-      fontWeight = theme.typography.weight.bold;
       break;
 
     default:
@@ -134,11 +72,9 @@ const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: Style
       break;
 
     case 'secondary':
-    case 'primary-ng':
       background = buttonVariantStyles(theme.colors.blueBase, theme.colors.blueShade, theme.colors.white);
       break;
 
-    case 'destructive-ng':
     case 'danger':
       background = buttonVariantStyles(theme.colors.redBase, theme.colors.redShade, theme.colors.white);
       break;
@@ -165,11 +101,6 @@ const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: Style
         ${buttonVariantStyles('', '', theme.colors.link, 'rgba(0, 0, 0, 0.1)', true)};
         background: transparent;
       `;
-      break;
-
-    case 'secondary-ng':
-      //linear-gradient(180deg, #202226 0%, #0B0C0E 100%);
-      background = buttonVariantStyles(theme.colors.gray15, theme.colors.gray05, theme.colors.gray4);
       break;
   }
 
@@ -215,7 +146,7 @@ export const AbstractButton: React.FunctionComponent<AbstractButtonProps> = ({
   renderAs,
   theme,
   size = 'md',
-  variant = 'primary-ng',
+  variant = 'primary',
   className,
   icon,
   children,

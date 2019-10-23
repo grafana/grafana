@@ -4,6 +4,7 @@
   "exclude": ["dist", "node_modules"],
   "compilerOptions": {
     "rootDirs": [".", "stories"],
+    "noUnusedLocals": false,
     "typeRoots": ["./node_modules/@types", "types"],
     "baseUrl": "./node_modules/@types",
     "paths": {

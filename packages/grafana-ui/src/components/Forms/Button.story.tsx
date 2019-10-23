@@ -1,10 +1,10 @@
 import React from 'react';
 import { Button } from './Button';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { select } from '@storybook/addon-knobs';
+import { select, text } from '@storybook/addon-knobs';
+import { ThemeContext } from '../../themes';
+import { ButtonSize, ButtonVariant } from '../..';
 import mdx from './Button.mdx';
-import { ButtonVariant } from '..';
-import { ButtonSize } from '../Button/AbstractButton';
 
 export default {
   title: 'UI/Forms/Button',
@@ -17,26 +17,24 @@ export default {
   },
 };
 
-const variants = [
-  'primary',
-  'secondary',
-  'danger',
-  'inverse',
-  'transparent',
-  'primary-ng',
-  'secondary-ng',
-  'destructive-ng',
-];
+const variants = ['primary', 'secondary', 'destructive'];
 
-const sizes = ['sm', 'md', 'lg', 'sm-ng', 'md-ng', 'lg-ng'];
+const sizes = ['sm', 'md', 'lg'];
 
 export const simple = () => {
   const variant = select('Variant', variants, 'primary');
   const size = select('Size', sizes, 'md');
+  const buttonText = text('text', 'Button');
 
   return (
-    <Button variant={variant as ButtonVariant} size={size as ButtonSize}>
-      {`${variant.substring(0, 1).toUpperCase()}${variant.substring(1, variant.length)}`}
-    </Button>
+    <ThemeContext.Consumer>
+      {theme => {
+        return (
+          <Button theme={theme} variant={variant as ButtonVariant} size={size as ButtonSize} renderAs="button">
+            {buttonText}
+          </Button>
+        );
+      }}
+    </ThemeContext.Consumer>
   );
 };
