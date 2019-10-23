@@ -241,7 +241,7 @@ When Grafana starts, it will update/insert all dashboards available in the confi
 If the the `allowUiUpdates` configuration value is set to true `Save` will let you save provisioned dashboards as with any manually created dashboard.
 
 > **Note.** 
-> If a dashboard is saved from the UI and then later updated / saved to disk the dashboard will always be overwritten. The `Version` property in the json file will not affect this even if it is lower then the existing dashboard.
+> If a provisioned dashboard is saved from the UI and then later updated on disk the dashboard stored in the database will always be overwritten. The `version` property in the json file will not affect this even if it is lower then the existing dashboard.
 > 
 > If a dashboard is saved from the UI and then later the file is removed from disk, the dashboard will be deleted unless the configuration option `disableDeletion` is set to true.
 
