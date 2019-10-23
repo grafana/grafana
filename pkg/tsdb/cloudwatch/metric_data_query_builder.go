@@ -82,12 +82,12 @@ func buildSearchExpression(query *cloudWatchQuery, stat string) string {
 			schema += fmt.Sprintf(",%s", join(dimensionNames, ",", "", "", "", ""))
 		}
 
-		return fmt.Sprintf("SEARCH('{%s} %s', '%s', %s)", schema, searchTerm, stat, strconv.Itoa(query.Period))
+		return fmt.Sprintf("REMOVE_EMPTY(SEARCH('{%s} %s', '%s', %s))", schema, searchTerm, stat, strconv.Itoa(query.Period))
 	}
 
 	sort.Strings(dimensionNamesWithoutKnownValues)
 	searchTerm = appendSearch(searchTerm, join(dimensionNamesWithoutKnownValues, " ", `"`, `"`, "", ""))
-	return fmt.Sprintf(`SEARCH('Namespace="%s" %s', '%s', %s)`, query.Namespace, searchTerm, stat, strconv.Itoa(query.Period))
+	return fmt.Sprintf(`REMOVE_EMPTY(SEARCH('Namespace="%s" %s', '%s', %s))`, query.Namespace, searchTerm, stat, strconv.Itoa(query.Period))
 }
 
 func join(arr []string, delimiter string, valuePrefix string, valueSuffix string, resultPrefix string, resultSuffix string) string {
