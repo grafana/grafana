@@ -35,7 +35,12 @@ func NewGCSUploader(keyFile, bucket, path string) *GCSUploader {
 }
 
 func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string, error) {
-	fileName := util.GetRandomString(20) + ".png"
+	fileName, err := util.GetRandomString(20)
+	if err != nil {
+		return "", err
+	}
+
+	fileName += pngExt
 	key := path.Join(u.path, fileName)
 
 	u.log.Debug("Opening key file ", u.keyFile)

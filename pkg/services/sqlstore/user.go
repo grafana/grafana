@@ -114,11 +114,23 @@ func CreateUser(ctx context.Context, cmd *models.CreateUserCommand) error {
 			LastSeenAt:    time.Now().AddDate(-10, 0, 0),
 		}
 
-		user.Salt = util.GetRandomString(10)
-		user.Rands = util.GetRandomString(10)
+		salt, err := util.GetRandomString(10)
+		if err != nil {
+			return err
+		}
+		user.Salt = salt
+		rands, err := util.GetRandomString(10)
+		if err != nil {
+			return err
+		}
+		user.Rands = rands
 
 		if len(cmd.Password) > 0 {
-			user.Password = util.EncodePassword(cmd.Password, user.Salt)
+			encodedPassword, err := util.EncodePassword(cmd.Password, user.Salt)
+			if err != nil {
+				return err
+			}
+			user.Password = encodedPassword
 		}
 
 		sess.UseBool("is_admin")
