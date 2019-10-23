@@ -4,15 +4,12 @@ import LokiCheatSheet from './components/LokiCheatSheet';
 import LokiQueryField from './components/LokiQueryField';
 import LokiQueryEditor from './components/LokiQueryEditor';
 import { LokiAnnotationsQueryCtrl } from './LokiAnnotationsQueryCtrl';
-
-export class LokiConfigCtrl {
-  static templateUrl = 'partials/config.html';
-}
+import { ConfigEditor } from './components/ConfigEditor';
 
 export {
   Datasource,
+  ConfigEditor,
   LokiQueryEditor as QueryEditor,
-  LokiConfigCtrl as ConfigCtrl,
   LokiQueryField as ExploreQueryField,
   LokiCheatSheet as ExploreStartPage,
   LokiAnnotationsQueryCtrl as AnnotationsQueryCtrl,

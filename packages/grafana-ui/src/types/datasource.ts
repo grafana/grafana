@@ -1,4 +1,5 @@
 import { ComponentType, ComponentClass } from 'react';
+import { omit } from 'lodash';
 import {
   TimeRange,
   RawTimeRange,
@@ -16,10 +17,9 @@ import { PluginMeta, GrafanaPlugin } from './plugin';
 import { PanelData } from './panel';
 import { Observable } from 'rxjs';
 
-// NOTE: this seems more general than just DataSource
-export interface DataSourcePluginOptionsEditorProps<TOptions> {
-  options: TOptions;
-  onOptionsChange: (options: TOptions) => void;
+export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
+  options: DataSourceSettings<JSONData, SecureJSONData>;
+  onOptionsChange: (options: DataSourceSettings<JSONData, SecureJSONData>) => void;
 }
 
 export class DataSourcePlugin<
@@ -36,7 +36,7 @@ export class DataSourcePlugin<
     this.components = {};
   }
 
-  setConfigEditor(editor: ComponentType<DataSourcePluginOptionsEditorProps<DataSourceSettings<TOptions>>>) {
+  setConfigEditor(editor: ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>) {
     this.components.ConfigEditor = editor;
     return this;
   }
@@ -89,12 +89,7 @@ export class DataSourcePlugin<
   setComponentsFromLegacyExports(pluginExports: any) {
     this.angularConfigCtrl = pluginExports.ConfigCtrl;
 
-    this.components.QueryCtrl = pluginExports.QueryCtrl;
-    this.components.AnnotationsQueryCtrl = pluginExports.AnnotationsQueryCtrl;
-    this.components.ExploreQueryField = pluginExports.ExploreQueryField;
-    this.components.ExploreStartPage = pluginExports.ExploreStartPage;
-    this.components.QueryEditor = pluginExports.QueryEditor;
-    this.components.VariableQueryEditor = pluginExports.VariableQueryEditor;
+    this.components = omit(pluginExports, ['ConfigCtrl', 'Datasource']);
   }
 }
 
@@ -138,7 +133,7 @@ export interface DataSourcePluginComponents<
   ExploreMetricsQueryField?: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
   ExploreLogsQueryField?: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
   ExploreStartPage?: ComponentClass<ExploreStartPageProps>;
-  ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<DataSourceSettings<TOptions>>>;
+  ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>;
 }
 
 // Only exported for tests
@@ -508,6 +503,7 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   secureJsonFields?: KeyValue<boolean>;
   readOnly: boolean;
   withCredentials: boolean;
+  version?: number;
 }
 
 /**
