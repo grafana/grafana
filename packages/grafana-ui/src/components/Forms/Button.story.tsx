@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from './Button';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { select, text } from '@storybook/addon-knobs';
 import { ThemeContext } from '../../themes';
 import { ButtonSize, ButtonVariant } from '../..';
@@ -9,7 +9,7 @@ import mdx from './Button.mdx';
 export default {
   title: 'UI/Forms/Button',
   component: Button,
-  decorators: [withCenteredStory],
+  decorators: [withCenteredStory, withHorizontallyCenteredStory],
   parameters: {
     docs: {
       page: mdx,

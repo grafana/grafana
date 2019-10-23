@@ -1,8 +1,9 @@
-import React, { FC } from 'react';
-import { css, cx } from 'emotion';
+import { FC } from 'react';
+import { css } from 'emotion';
 import tinycolor from 'tinycolor2';
 import { selectThemeVariant, stylesFactory } from '../../themes';
 import { AbstractButtonProps, StyleDeps } from '../Button/types';
+import { renderButton } from '../Button/AbstractButton';
 
 const buttonVariantStyles = (from: string, to: string, textColor: string) => css`
   background: linear-gradient(180deg, ${from} 0%, ${to} 100%);
@@ -132,35 +133,6 @@ export const Button: FC<AbstractButtonProps> = ({
   ...otherProps
 }) => {
   const buttonStyles = getButtonStyles({ theme, size, variant, withIcon: !!icon });
-  const nonHtmlProps = {
-    theme,
-    size,
-    variant,
-  };
 
-  const finalClassName = cx(buttonStyles.button, className);
-  const finalChildren = icon ? (
-    <span className={buttonStyles.iconWrap}>
-      <i className={cx([icon, buttonStyles.icon])} />
-      <span>{children}</span>
-    </span>
-  ) : (
-    children
-  );
-
-  const finalProps =
-    typeof renderAs === 'string'
-      ? {
-          ...otherProps,
-          className: finalClassName,
-          children: finalChildren,
-        }
-      : {
-          ...otherProps,
-          ...nonHtmlProps,
-          className: finalClassName,
-          children: finalChildren,
-        };
-
-  return React.createElement(renderAs, finalProps);
+  return renderButton(theme, buttonStyles, renderAs, children, size, variant, icon, className, otherProps);
 };

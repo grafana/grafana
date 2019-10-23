@@ -15,7 +15,7 @@ const defaultProps = {
 };
 
 const variants = {
-  size: ['sm', 'md', 'lg'],
+  size: ['xs', 'sm', 'md', 'lg'],
   variant: ['primary', 'secondary', 'danger', 'inverse', 'transparent'],
 };
 const combinationOptions = {

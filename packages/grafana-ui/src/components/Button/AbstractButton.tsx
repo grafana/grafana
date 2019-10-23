@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { ComponentType, ReactNode } from 'react';
 import tinycolor from 'tinycolor2';
 import { css, cx } from 'emotion';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import { stylesFactory } from '../../themes/stylesFactory';
-import { AbstractButtonProps, StyleDeps } from './types';
+import { AbstractButtonProps, ButtonSize, ButtonStyles, ButtonVariant, CommonButtonProps, StyleDeps } from './types';
+import { GrafanaTheme } from '../../types';
 
 const buttonVariantStyles = (
   from: string,
@@ -27,7 +28,6 @@ const buttonVariantStyles = (
 `;
 
 const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: StyleDeps) => {
-  console.log(variant);
   const borderRadius = theme.border.radius.sm;
   let padding,
     background,
@@ -142,23 +142,22 @@ const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: Style
   };
 });
 
-export const AbstractButton: React.FunctionComponent<AbstractButtonProps> = ({
-  renderAs,
-  theme,
-  size = 'md',
-  variant = 'primary',
-  className,
-  icon,
-  children,
-  ...otherProps
-}) => {
-  const buttonStyles = getButtonStyles({ theme, size, variant, withIcon: !!icon });
+export const renderButton = (
+  theme: GrafanaTheme,
+  buttonStyles: ButtonStyles,
+  renderAs: ComponentType<CommonButtonProps> | string,
+  children: ReactNode,
+  size: ButtonSize,
+  variant: ButtonVariant,
+  icon?: string,
+  className?: string,
+  otherProps?: Partial<AbstractButtonProps>
+) => {
   const nonHtmlProps = {
     theme,
     size,
     variant,
   };
-
   const finalClassName = cx(buttonStyles.button, className);
   const finalChildren = icon ? (
     <span className={buttonStyles.iconWrap}>
@@ -184,6 +183,21 @@ export const AbstractButton: React.FunctionComponent<AbstractButtonProps> = ({
         };
 
   return React.createElement(renderAs, finalProps);
+};
+
+export const AbstractButton: React.FunctionComponent<AbstractButtonProps> = ({
+  renderAs,
+  theme,
+  size = 'md',
+  variant = 'primary',
+  className,
+  icon,
+  children,
+  ...otherProps
+}) => {
+  const buttonStyles = getButtonStyles({ theme, size, variant, withIcon: !!icon });
+
+  return renderButton(theme, buttonStyles, renderAs, children, size, variant, icon, className, otherProps);
 };
 
 AbstractButton.displayName = 'AbstractButton';
