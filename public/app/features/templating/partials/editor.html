@@ -184,13 +184,27 @@
     <div ng-if="current.type === 'custom'" class="gf-form-group">
       <h5 class="section-heading">Custom Options</h5>
       <div class="gf-form">
-        <span class="gf-form-label width-14">Values separated by comma or JSON-Array</span>
+        <span class="gf-form-label width-15">
+          Values separated by comma
+          <info-popover mode="right-normal">
+            You can also use a JSON-Array to define a displayed text for your value.
+            <br /><br />
+            <pre>
+              <code>
+[{
+  "__text": "Friendly Value",
+  "__value": "myvalue
+"},...]
+              </code>
+            </pre>
+          </info-popover>
+        </span>
         <input
           type="text"
           class="gf-form-input"
           ng-model="current.query"
           ng-blur="runQuery()"
-          placeholder="1, 10, 20, myvalue, escaped\,value or [{'__text': 'foo','__value': 'bar'}, ...]"
+          placeholder="1, 10, 20, myvalue, escaped\,value"
           required
         />
       </div>
