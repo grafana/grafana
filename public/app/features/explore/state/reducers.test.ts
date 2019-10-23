@@ -43,7 +43,7 @@ describe('Explore item reducer', () => {
         .givenReducer(itemReducer as Reducer<ExploreItemState, ActionOf<any>>, initalState)
         .whenActionIsDispatched(scanStartAction({ exploreId: ExploreId.left }))
         .thenStateShouldEqual({
-          ...initalState,
+          ...makeExploreItemState(),
           scanning: true,
         });
     });
@@ -58,7 +58,7 @@ describe('Explore item reducer', () => {
         .givenReducer(itemReducer as Reducer<ExploreItemState, ActionOf<any>>, initalState)
         .whenActionIsDispatched(scanStopAction({ exploreId: ExploreId.left }))
         .thenStateShouldEqual({
-          ...initalState,
+          ...makeExploreItemState(),
           scanning: false,
           scanRange: undefined,
         });
@@ -188,7 +188,7 @@ describe('Explore item reducer', () => {
           rows: [] as any[],
         },
         queryResponse: {
-          ...initalState.queryResponse,
+          ...makeExploreItemState().queryResponse,
           state: LoadingState.Streaming,
         },
       };
@@ -208,7 +208,7 @@ describe('Explore item reducer', () => {
           rows: [] as any[],
         },
         queryResponse: {
-          ...initalState.queryResponse,
+          ...makeExploreItemState().queryResponse,
           state: LoadingState.Done,
         },
       };
