@@ -375,7 +375,7 @@ func (hs *HTTPServer) NotFoundHandler(c *m.ReqContext) {
 func getAppNameBodyClass(validLicense bool) string {
 	if validLicense {
 		return "app-enterprise"
-	} else {
-		return "app-grafana"
 	}
+
+	return "app-grafana"
 }
