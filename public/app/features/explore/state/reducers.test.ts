@@ -179,7 +179,7 @@ describe('Explore item reducer', () => {
     it("should result in 'streaming' state, when live-tailing is active", () => {
       const initalState = makeExploreItemState();
       const expectedState = {
-        ...initalState,
+        ...makeExploreItemState(),
         refreshInterval: 'LIVE',
         isLive: true,
         loading: true,
@@ -201,7 +201,7 @@ describe('Explore item reducer', () => {
     it("should result in 'done' state, when live-tailing is stopped", () => {
       const initalState = makeExploreItemState();
       const expectedState = {
-        ...initalState,
+        ...makeExploreItemState(),
         refreshInterval: '',
         logsResult: {
           hasUniqueLabels: false,
