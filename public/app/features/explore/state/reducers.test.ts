@@ -177,10 +177,7 @@ describe('Explore item reducer', () => {
 
   describe('changing refresh intervals', () => {
     it("should result in 'streaming' state, when live-tailing is active", () => {
-      const initalState = {
-        ...makeExploreItemState(),
-      };
-
+      const initalState = makeExploreItemState();
       const expectedState = {
         ...initalState,
         refreshInterval: 'LIVE',
@@ -196,16 +193,13 @@ describe('Explore item reducer', () => {
         },
       };
       reducerTester()
-        .givenReducer(itemReducer as Reducer<ExploreItemState, ActionOf<any>>, initalState)
+        .givenReducer(itemReducer, initalState)
         .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId: ExploreId.left, refreshInterval: 'LIVE' }))
         .thenStateShouldEqual(expectedState);
     });
 
     it("should result in 'done' state, when live-tailing is stopped", () => {
-      const initalState = {
-        ...makeExploreItemState(),
-      };
-
+      const initalState = makeExploreItemState();
       const expectedState = {
         ...initalState,
         refreshInterval: '',
@@ -219,7 +213,7 @@ describe('Explore item reducer', () => {
         },
       };
       reducerTester()
-        .givenReducer(itemReducer as Reducer<ExploreItemState, ActionOf<any>>, initalState)
+        .givenReducer(itemReducer, initalState)
         .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId: ExploreId.left, refreshInterval: '' }))
         .thenStateShouldEqual(expectedState);
     });
