@@ -120,7 +120,14 @@ export const ElasticDetails = (props: Props) => {
                   value={value.jsonData.timeInterval || ''}
                   onChange={jsonDataChangeHandler('timeInterval', value, onChange)}
                   placeholder="10s"
-                  validationEvents={{ [EventsWithValidation.onBlur]: [regexValidation(/^\d+(ms|[Mwdhmsy])$/)] }}
+                  validationEvents={{
+                    [EventsWithValidation.onBlur]: [
+                      regexValidation(
+                        /^\d+(ms|[Mwdhmsy])$/,
+                        'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s'
+                      ),
+                    ],
+                  }}
                 />
               }
               tooltip={
