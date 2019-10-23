@@ -1,6 +1,12 @@
 import angular, { IQService } from 'angular';
 import _ from 'lodash';
-import { DataSourceApi, DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse } from '@grafana/ui';
+import {
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  DataQueryRequest,
+  DataQueryResponse,
+  DerivedField,
+} from '@grafana/ui';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
@@ -28,7 +34,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
   /** @ngInject */
   constructor(
-    instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
+    private instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
     private $q: IQService,
     private backendSrv: BackendSrv,
     private templateSrv: TemplateSrv,
@@ -544,6 +550,30 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     }
 
     return false;
+  }
+
+  async getDerivedFields(row: { [key: string]: string | number | null }): Promise<DerivedField[]> {
+    return (this.instanceSettings.jsonData.derivedFields || []).map(field => {
+      if (row[field.key]) {
+        const interpolated = field.template
+          // Remove escaped $, negative look behind is not supported in every browser so supporting escaping this way.
+          .split('$$')
+          .map(part => part.replace('$0', row[field.key].toString()))
+          .join('$$');
+
+        return {
+          type: 'link',
+          label: field.label,
+          value: row[field.key].toString(),
+          url: interpolated,
+        };
+      }
+
+      return {
+        type: 'link',
+        label: field.label,
+      };
+    });
   }
 
   private isPrimitive(obj: any) {

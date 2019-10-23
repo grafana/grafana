@@ -36,6 +36,7 @@ export interface LogsMetaItem {
 }
 
 export interface LogRowModel {
+  dataFrameRow: any;
   duplicates?: number;
   entry: string;
   hasAnsi: boolean;

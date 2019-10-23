@@ -22,6 +22,7 @@ import {
   toDataFrame,
   FieldCache,
   FieldWithIndex,
+  DataFrameView,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
@@ -193,6 +194,7 @@ export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number)
   const logsModel = logSeriesToLogsModel(logSeries);
   if (logsModel) {
     if (metricSeries.length === 0) {
+      // In case we did not get any metrics from the datasource directly we manually compute metrics from the logs.
       logsModel.series = makeSeriesForLogs(logsModel.rows, intervalMs);
     } else {
       logsModel.series = getGraphSeriesModel(
@@ -257,6 +259,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
       seriesLogLevel = getLogLevelFromKey(series.labels['level']);
     }
 
+    const dfView = new DataFrameView(series);
     for (let j = 0; j < series.length; j++) {
       const ts = timeField.values.get(j);
       const time = dateTime(ts);
@@ -281,6 +284,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
       const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
 
       rows.push({
+        dataFrameRow: { ...dfView.get(j) },
         logLevel,
         timeFromNow,
         timeEpochMs,

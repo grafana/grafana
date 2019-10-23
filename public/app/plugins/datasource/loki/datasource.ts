@@ -24,10 +24,9 @@ import {
   DataQueryResponse,
   AnnotationQueryRequest,
   DerivedField,
-  DerivedLinkField,
 } from '@grafana/ui';
 
-import { LokiQuery, LokiOptions, LokiLogsStream, LokiResponse } from './types';
+import { LokiQuery, LokiOptions, LokiLogsStream, LokiResponse, LokiRow } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
@@ -407,20 +406,28 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return annotations;
   }
 
-  async getDerivedFields(logRow: LogRowModel): Promise<DerivedField[]> {
-    const match = logRow.entry.match(/level=(\w+)/);
-    if (match) {
-      return [
-        {
-          type: 'link',
-          label: 'traceId',
-          value: match[1],
-          url: `http://localhost:16686/trace/${match[1]}`,
-        },
-      ];
-    } else {
-      return [];
-    }
+  async getDerivedFields(row: LokiRow): Promise<DerivedField[]> {
+    return (this.instanceSettings.jsonData.derivedFields || []).map(field => {
+      const logMatch = row.line.match(field.matcherRegex);
+      const interpolated = field.template
+        // Remove escaped $, negative look behind is not supported in every browser so supporting escaping this way.
+        .split('$$')
+        // Replace $n with stuff captured by the regex.
+        .map(part =>
+          part.replace(/\$(\d)+/, (match, p1) => {
+            return logMatch[parseInt(p1, 10) + 1];
+          })
+        )
+        // Get the escaped $ back.
+        .join('$$');
+
+      return {
+        type: 'link',
+        label: field.label,
+        value: logMatch[1],
+        url: interpolated,
+      };
+    });
   }
 }
 

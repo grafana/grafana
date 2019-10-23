@@ -10,6 +10,7 @@ export interface LokiQuery extends DataQuery {
 
 export interface LokiOptions extends DataSourceJsonData {
   maxLines?: string;
+  derivedFields?: DerivedFieldConfig[];
 }
 
 export interface LokiResponse {
@@ -35,3 +36,15 @@ export interface LokiExpression {
   regexp: string;
   query: string;
 }
+
+export type DerivedFieldConfig = {
+  matcherRegex: string;
+  template: string;
+  label: string;
+};
+
+export type LokiRow = {
+  id: string;
+  line: string;
+  ts: string;
+};

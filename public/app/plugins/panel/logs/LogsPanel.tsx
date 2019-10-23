@@ -33,6 +33,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
         showTime={showTime}
         showLabels={false}
         timeZone={timeZone}
+        getDerivedFields={async () => []}
       />
     </CustomScrollbar>
   );

@@ -98,7 +98,7 @@ class UnThemedLogRow extends Component<Props, State> {
               this.setState({
                 loadingDerivedFields: true,
               });
-              const derivedFields = await getDerivedFields(row);
+              const derivedFields = await getDerivedFields(row.dataFrameRow);
               if (this.mounted) {
                 this.setState({
                   loadingDerivedFields: false,
@@ -151,8 +151,8 @@ class UnThemedLogRow extends Component<Props, State> {
               padding: 20,
             }}
           >
-            {this.state.derivedFields &&
-              this.state.derivedFields.length &&
+            {!!this.state.derivedFields &&
+              !!this.state.derivedFields.length &&
               this.state.derivedFields.map((field: DerivedField) => {
                 if (field.type === 'link') {
                   return (
