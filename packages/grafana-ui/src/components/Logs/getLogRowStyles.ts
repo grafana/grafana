@@ -111,6 +111,21 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
         background-color: ${logColor};
       }
     `,
+    logsRowLevelDetails: css`
+      label: logs-row-details__level;
+      position: relative;
+      width: 10px;
+
+      &::after {
+        content: '';
+        display: block;
+        position: absolute;
+        top: -3px;
+        bottom: 1px;
+        width: 3px;
+        background-color: ${logColor};
+      }
+    `,
     logsRowLocalTime: css`
       label: logs-row__localtime;
       white-space: nowrap;
@@ -118,9 +133,12 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     `,
     logsRowLabels: css`
       label: logs-row__labels;
-      width: 20%;
       line-height: 1.2;
-      position: relative;
+      display: contents;
+      &::after {
+        content: '';
+        display: table-row;
+      }
     `,
     logsRowMessage: css`
       label: logs-row__message;

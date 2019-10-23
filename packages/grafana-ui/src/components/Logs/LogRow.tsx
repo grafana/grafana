@@ -13,6 +13,7 @@ import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
 import { LogRowMessage } from './LogRowMessage';
+import { LogDetails } from './LogDetails';
 
 interface Props extends Themeable {
   highlighterExpressions?: string[];
@@ -73,44 +74,38 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     const showUtc = timeZone === 'utc';
 
     return (
-      <div className={cx([style.logsRow])}>
-        {showDuplicates && (
-          <div className={cx([style.logsRowDuplicates])}>
-            {row.duplicates && row.duplicates > 0 ? `${row.duplicates + 1}x` : null}
-          </div>
-        )}
-        <div className={cx([style.logsRowLevel])} />
-        {showTime && showUtc && (
-          <div className={cx([style.logsRowLocalTime])} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
-            {row.timeUtc}
-          </div>
-        )}
-        {showTime && !showUtc && (
-          <div className={cx([style.logsRowLocalTime])} title={`${row.timeUtc} (${row.timeFromNow})`}>
-            {row.timeLocal}
-          </div>
-        )}
-        {showLabels && (
-          <div className={cx([style.logsRowLabels])}>
-            <LogLabels
-              getRows={getRows}
-              labels={row.uniqueLabels ? row.uniqueLabels : {}}
-              onClickLabel={onClickLabel}
-            />
-          </div>
-        )}
-        <LogRowMessage
-          highlighterExpressions={highlighterExpressions}
-          row={row}
-          getRows={getRows}
-          errors={errors}
-          hasMoreContextRows={hasMoreContextRows}
-          updateLimit={updateLimit}
-          context={context}
-          showContext={showContext}
-          onToggleContext={this.toggleContext}
-        />
-      </div>
+      <>
+        <div className={cx([style.logsRow])}>
+          {showDuplicates && (
+            <div className={cx([style.logsRowDuplicates])}>
+              {row.duplicates && row.duplicates > 0 ? `${row.duplicates + 1}x` : null}
+            </div>
+          )}
+          <div className={cx([style.logsRowLevel])} />
+          {showTime && showUtc && (
+            <div className={cx([style.logsRowLocalTime])} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
+              {row.timeUtc}
+            </div>
+          )}
+          {showTime && !showUtc && (
+            <div className={cx([style.logsRowLocalTime])} title={`${row.timeUtc} (${row.timeFromNow})`}>
+              {row.timeLocal}
+            </div>
+          )}
+          <LogRowMessage
+            highlighterExpressions={highlighterExpressions}
+            row={row}
+            getRows={getRows}
+            errors={errors}
+            hasMoreContextRows={hasMoreContextRows}
+            updateLimit={updateLimit}
+            context={context}
+            showContext={showContext}
+            onToggleContext={this.toggleContext}
+          />
+        </div>
+        {showLabels && <LogDetails onClickLabel={onClickLabel} getRows={getRows} row={row} />}
+      </>
     );
   }
 
