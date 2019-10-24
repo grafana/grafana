@@ -3,10 +3,13 @@ package plugins
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os/exec"
 	"path"
 	"time"
+
+	"github.com/grafana/grafana/pkg/setting"
 
 	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
 	sdk "github.com/grafana/grafana-plugin-sdk-go"
@@ -42,9 +45,21 @@ type DataSourcePlugin struct {
 	client *plugin.Client
 }
 
+func isExpressionsEnabled() bool {
+	v, ok := setting.FeatureToggles["expressions"]
+	if !ok {
+		return false
+	}
+	return v
+}
+
 func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string) error {
 	if err := decoder.Decode(&p); err != nil {
 		return err
+	}
+
+	if !p.isVersionOne() && !isExpressionsEnabled() {
+		return errors.New("A plugin version 2 was found but expressions feature toggle are not enabled")
 	}
 
 	if err := p.registerPlugin(pluginDir); err != nil {
@@ -77,7 +92,6 @@ func (p *DataSourcePlugin) startBackendPlugin(ctx context.Context, log log.Logge
 	return nil
 }
 func (p *DataSourcePlugin) isVersionOne() bool {
-	// if version is empty (which defaults to 0) or explicitly set to one
 	return !p.SDK
 }
 
