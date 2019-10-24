@@ -27,12 +27,12 @@ const timeRangeVars = [
   },
 ];
 
-const fieldVars = [
+const seriesVars = [
   {
-    value: `${DataLinkBuiltInVars.fieldName}`,
+    value: `${DataLinkBuiltInVars.seriesName}`,
     label: 'Name',
-    documentation: 'Field name of the clicked datapoint (in ms epoch)',
-    origin: VariableOrigin.Field,
+    documentation: 'Name of the series',
+    origin: VariableOrigin.Series,
   },
 ];
 
@@ -57,9 +57,9 @@ const valueVars = [
   },
 ];
 
-// const buildLabelPath = (label: string) => {
-//   return label.indexOf('.') > -1 ? `["${label}"]` : `.${label}`;
-// };
+const buildLabelPath = (label: string) => {
+  return label.indexOf('.') > -1 ? `["${label}"]` : `.${label}`;
+};
 
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
   ...templateSrv.variables.map(variable => ({
@@ -76,35 +76,49 @@ export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
   ...timeRangeVars,
 ];
 
-const getSeriesVars = (dataFrames: DataFrame[]) => {
-  // const labels = _.chain(dataFrames.map(df => Object.keys(df.labels || {})))
-  //   .flatten()
-  //   .uniq()
-  //   .value();
+const getFieldVars = (dataFrames: DataFrame[]) => {
+  const all = [];
+  debugger;
+  for (const df of dataFrames) {
+    for (const f of df.fields) {
+      if (f.labels) {
+        for (const k of Object.keys(f.labels)) {
+          all.push(k);
+        }
+      }
+    }
+  }
+
+  const labels = _.chain(all)
+    .flatten()
+    .uniq()
+    .value();
 
   return [
     {
-      value: `${DataLinkBuiltInVars.seriesName}`,
+      value: `${DataLinkBuiltInVars.fieldName}`,
       label: 'Name',
-      documentation: 'Name of the series',
-      origin: VariableOrigin.Series,
+      documentation: 'Field name of the clicked datapoint (in ms epoch)',
+      origin: VariableOrigin.Field,
     },
-    // ...labels.map(label => ({
-    //   value: `__series.labels${buildLabelPath(label)}`,
-    //   label: `labels.${label}`,
-    //   documentation: `${label} label value`,
-    //   origin: VariableOrigin.Series,
-    // })),
+    ...labels.map(label => ({
+      value: `__field.labels${buildLabelPath(label)}`,
+      label: `labels.${label}`,
+      documentation: `${label} label value`,
+      origin: VariableOrigin.Field,
+    })),
   ];
 };
 export const getDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
-  const seriesVars = getSeriesVars(dataFrames);
+  const fieldVars = getFieldVars(dataFrames);
   const valueTimeVar = {
     value: `${DataLinkBuiltInVars.valueTime}`,
     label: 'Time',
     documentation: 'Time value of the clicked datapoint (in ms epoch)',
     origin: VariableOrigin.Value,
   };
+
+  console.log('FIELD Vars', fieldVars);
 
   return [...seriesVars, ...fieldVars, ...valueVars, valueTimeVar, ...getPanelLinksVariableSuggestions()];
 };
