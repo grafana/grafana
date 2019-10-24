@@ -5,7 +5,14 @@ import React, { PureComponent } from 'react';
 import { config } from 'app/core/config';
 
 // Components
-import { BarGauge, VizRepeater, getFieldDisplayValues, FieldDisplay, DataLinksContextMenu } from '@grafana/ui';
+import {
+  BarGauge,
+  BarGaugeDimensionInput,
+  VizRepeater,
+  getFieldDisplayValues,
+  FieldDisplay,
+  DataLinksContextMenu,
+} from '@grafana/ui';
 
 // Types
 import { BarGaugeOptions } from './types';
@@ -13,7 +20,24 @@ import { PanelProps } from '@grafana/ui';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
-  renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
+  findMaximumInput = (values: FieldDisplay[], width: number, height: number): BarGaugeDimensionInput => {
+    const info: BarGaugeDimensionInput = {
+      title: '',
+      text: '',
+    };
+    for (let i = 0; i < values.length; i++) {
+      const v = values[i].display;
+      if (v.text && v.text.length > info.text.length) {
+        info.text = v.text;
+      }
+      if (v.title && v.title.length > info.title.length) {
+        info.title = v.text;
+      }
+    }
+    return info;
+  };
+
+  renderValue = (value: FieldDisplay, width: number, height: number, info: BarGaugeDimensionInput): JSX.Element => {
     const { options } = this.props;
     const { field, display } = value;
 
@@ -34,6 +58,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
               maxValue={field.max}
               onClick={openMenu}
               className={targetClassName}
+              maxDimensionInput={info}
             />
           );
         }}
@@ -65,6 +90,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     return (
       <VizRepeater
         source={data}
+        calculateInternalSizes={this.findMaximumInput}
         getValues={this.getValues}
         renderValue={this.renderValue}
         renderCounter={renderCounter}

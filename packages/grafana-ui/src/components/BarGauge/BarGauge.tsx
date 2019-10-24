@@ -16,6 +16,18 @@ const MAX_VALUE_WIDTH = 150;
 const TITLE_LINE_HEIGHT = 1.5;
 const VALUE_LINE_HEIGHT = 1;
 
+/**
+ * These values calculate the internal font sizes and
+ * placement.  For consistent behavior across repeating
+ * panels, we can optionally pass in the maximum values.
+ *
+ * If performace becomes a problem, we can cache the results
+ */
+export interface BarGaugeDimensionInput {
+  title: string;
+  text: string;
+}
+
 export interface Props extends Themeable {
   height: number;
   width: number;
@@ -28,6 +40,7 @@ export interface Props extends Themeable {
   displayMode: 'basic' | 'lcd' | 'gradient';
   onClick?: React.MouseEventHandler<HTMLElement>;
   className?: string;
+  maxDimensionInput?: BarGaugeDimensionInput;
 }
 
 export class BarGauge extends PureComponent<Props> {
@@ -230,8 +243,8 @@ function isVertical(props: Props) {
 }
 
 function calculateTitleDimensions(props: Props): TitleDimensions {
-  const { title } = props.value;
-  const { height, width } = props;
+  const { height, width, maxDimensionDeps } = props;
+  const title = maxDimensionDeps ? maxDimensionDeps.title : props.value.text;
 
   if (!title) {
     return { fontSize: 0, width: 0, height: 0, placement: 'above' };

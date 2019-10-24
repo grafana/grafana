@@ -52,7 +52,7 @@ export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { GraphLegend } from './Graph/GraphLegend';
 export { GraphWithLegend } from './Graph/GraphWithLegend';
-export { BarGauge } from './BarGauge/BarGauge';
+export { BarGauge, BarGaugeDimensionInput } from './BarGauge/BarGauge';
 export { VizRepeater } from './VizRepeater/VizRepeater';
 export {
   LegendOptions,
