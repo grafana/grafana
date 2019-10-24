@@ -301,11 +301,6 @@ describe('dataFrameToLogsModel', () => {
   it('given multiple series with unique times should return expected logs model', () => {
     const series: DataFrame[] = [
       toDataFrame({
-        labels: {
-          foo: 'bar',
-          baz: '1',
-          level: 'dbug',
-        },
         fields: [
           {
             name: 'ts',
@@ -316,16 +311,16 @@ describe('dataFrameToLogsModel', () => {
             name: 'line',
             type: FieldType.string,
             values: ['WARN boooo'],
+            labels: {
+              foo: 'bar',
+              baz: '1',
+              level: 'dbug',
+            },
           },
         ],
       }),
       toDataFrame({
         name: 'logs',
-        labels: {
-          foo: 'bar',
-          baz: '2',
-          level: 'err',
-        },
         fields: [
           {
             name: 'time',
@@ -336,6 +331,11 @@ describe('dataFrameToLogsModel', () => {
             name: 'message',
             type: FieldType.string,
             values: ['INFO 1', 'INFO 2'],
+            labels: {
+              foo: 'bar',
+              baz: '2',
+              level: 'err',
+            },
           },
         ],
       }),

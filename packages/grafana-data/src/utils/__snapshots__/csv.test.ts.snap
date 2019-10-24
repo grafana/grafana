@@ -5,6 +5,7 @@ Object {
   "fields": Array [
     Object {
       "config": Object {},
+      "labels": undefined,
       "name": "Field 1",
       "type": "string",
       "values": Array [
@@ -16,6 +17,7 @@ Object {
     },
     Object {
       "config": Object {},
+      "labels": undefined,
       "name": "Field 2",
       "type": "number",
       "values": Array [
@@ -27,6 +29,7 @@ Object {
     },
     Object {
       "config": Object {},
+      "labels": undefined,
       "name": "Field 3",
       "type": "number",
       "values": Array [
@@ -38,6 +41,7 @@ Object {
     },
     Object {
       "config": Object {},
+      "labels": undefined,
       "name": "Field 4",
       "type": "number",
       "values": Array [
@@ -48,7 +52,6 @@ Object {
       ],
     },
   ],
-  "labels": undefined,
   "meta": undefined,
   "name": undefined,
   "refId": undefined,
@@ -60,6 +63,7 @@ Object {
   "fields": Array [
     Object {
       "config": Object {},
+      "labels": undefined,
       "name": "a",
       "type": "number",
       "values": Array [
@@ -69,6 +73,7 @@ Object {
     },
     Object {
       "config": Object {},
+      "labels": undefined,
       "name": "b",
       "type": "number",
       "values": Array [
@@ -78,6 +83,7 @@ Object {
     },
     Object {
       "config": Object {},
+      "labels": undefined,
       "name": "c",
       "type": "number",
       "values": Array [
@@ -86,7 +92,6 @@ Object {
       ],
     },
   ],
-  "labels": undefined,
   "meta": undefined,
   "name": undefined,
   "refId": undefined,
@@ -100,6 +105,7 @@ Object {
       "config": Object {
         "unit": "ms",
       },
+      "labels": undefined,
       "name": "a",
       "type": "number",
       "values": Array [
@@ -113,6 +119,7 @@ Object {
       "config": Object {
         "unit": "lengthm",
       },
+      "labels": undefined,
       "name": "b",
       "type": "number",
       "values": Array [
@@ -126,6 +133,7 @@ Object {
       "config": Object {
         "unit": "s",
       },
+      "labels": undefined,
       "name": "c",
       "type": "boolean",
       "values": Array [
@@ -136,7 +144,6 @@ Object {
       ],
     },
   ],
-  "labels": undefined,
   "meta": undefined,
   "name": undefined,
   "refId": undefined,

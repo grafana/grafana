@@ -116,14 +116,11 @@ export const getDataLinksVariableSuggestions = (dataFrames: DataFrame[]): Variab
     documentation: 'Time value of the clicked datapoint (in ms epoch)',
     origin: VariableOrigin.Value,
   };
-
-  console.log('FIELD Vars', fieldVars);
-
   return [...seriesVars, ...fieldVars, ...valueVars, valueTimeVar, ...getPanelLinksVariableSuggestions()];
 };
 
 export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
-  const seriesVars = getSeriesVars(dataFrames);
+  const fieldVars = getFieldVars(dataFrames);
   const valueCalcVar = {
     value: `${DataLinkBuiltInVars.valueCalc}`,
     label: 'Calculation name',

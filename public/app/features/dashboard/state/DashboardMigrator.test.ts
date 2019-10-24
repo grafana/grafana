@@ -128,7 +128,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(20);
+      expect(model.schemaVersion).toBe(21);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -532,7 +532,6 @@ describe('DashboardModel', () => {
                       url: 'http://mylink.com?series=${__series.labels}&${__series.labels.x}',
                     },
                   ],
-                  title: '$__cell_0 * $__field_name * $__series_name',
                 },
               },
             },
@@ -546,7 +545,7 @@ describe('DashboardModel', () => {
         expect(model.panels[0].options.dataLinks[0].url).toBe(
           'http://mylink.com?series=${__field.labels}&${__field.labels.a}'
         );
-        expect(model.panels[0].options.fieldOptions.defaults.links[0].url).toBe(
+        expect(model.panels[1].options.fieldOptions.defaults.links[0].url).toBe(
           'http://mylink.com?series=${__field.labels}&${__field.labels.x}'
         );
       });
