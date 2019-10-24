@@ -546,7 +546,7 @@ describe('DashboardModel', () => {
         expect(model.panels[0].options.dataLinks[0].url).toBe(
           'http://mylink.com?series=${__field.labels}&${__field.labels.a}'
         );
-        expect(model.panels[1].options.fieldOptions.defaults.links[0].url).toBe(
+        expect(model.panels[0].options.fieldOptions.defaults.links[0].url).toBe(
           'http://mylink.com?series=${__field.labels}&${__field.labels.x}'
         );
       });
