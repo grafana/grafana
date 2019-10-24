@@ -2,7 +2,6 @@ package cloudwatch
 
 import (
 	"context"
-	"fmt"
 	"regexp"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -145,8 +144,8 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 							return err
 						case "ValidationError":
 							return err
-						case "ThrottlingException":
-							return fmt.Errorf("You've been throttled")
+						case "Throttling":
+							return err
 						}
 					}
 					metricDataOutputs = append(metricDataOutputs, res...)
