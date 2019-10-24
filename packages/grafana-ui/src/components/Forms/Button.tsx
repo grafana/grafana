@@ -1,9 +1,10 @@
-import { FC } from 'react';
+import React, { FC } from 'react';
 import { css } from 'emotion';
 import tinycolor from 'tinycolor2';
 import { selectThemeVariant, stylesFactory, useTheme } from '../../themes';
 import { AbstractButtonProps, StyleDeps } from '../Button/types';
 import { renderButton } from '../Button/AbstractButton';
+import { GrafanaTheme } from '../../types';
 
 const buttonVariantStyles = (from: string, to: string, textColor: string) => css`
   background: linear-gradient(180deg, ${from} 0%, ${to} 100%);
@@ -86,6 +87,7 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }
 
   return {
     button: css`
+      position: relative;
       label: button;
       display: inline-flex;
       align-items: center;
@@ -107,6 +109,22 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }
         cursor: not-allowed;
         opacity: 0.65;
         box-shadow: none;
+      }
+
+      &[focus],
+      &:focus {
+        &:before {
+          content: '';
+          position: absolute;
+          border: 2px solid ${theme.colors.blueLight};
+          border-radius: 2px;
+          background-color: ${theme.colors.bodyBg};
+          height: calc(100% + 8px);
+          width: calc(100% + 8px);
+          top: -4px;
+          left: -4px;
+          z-index: -1;
+        }
       }
     `,
     iconWrap: css`
