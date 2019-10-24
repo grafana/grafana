@@ -55,17 +55,17 @@ export function runSignalStream(
 
     // // 2: If exists, use this to construct the URL
     // // Not saved in JSON/DTO
-    // onBuildHref?: (event: DataLinkClickEvent) => string;
+    // onBuildUrl?: (event: DataLinkClickEvent) => string;
 
     // // 1: If exists, handle click directly
     // // Not saved in JSON/DTO
     // onClick?: (event: DataLinkClickEvent) => void;
 
-    const onBuildHref: DataLink[] = [
+    const onBuildUrl: DataLink[] = [
       {
         url: '',
         title: 'HREF From DataSource callback',
-        onBuildHref: (event: DataLinkClickEvent) => {
+        onBuildUrl: (event: DataLinkClickEvent) => {
           console.log('BUILD HREF', event);
           return '/STREAM/XXX';
         },
@@ -87,8 +87,8 @@ export function runSignalStream(
     });
     data.refId = target.refId;
     data.name = target.alias || 'Signal ' + target.refId;
-    data.addField({ name: 'time', type: FieldType.time }).config.links = onBuildHref;
-    data.addField({ name: 'value', type: FieldType.number }).config.links = onBuildHref;
+    data.addField({ name: 'time', type: FieldType.time }).config.links = onBuildUrl;
+    data.addField({ name: 'value', type: FieldType.number }).config.links = onBuildUrl;
 
     const { spread, speed, bands, noise } = query;
 

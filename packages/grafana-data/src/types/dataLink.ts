@@ -22,7 +22,7 @@ export interface DataLink {
 
   // 2: If exists, use this to construct the URL
   // Not saved in JSON/DTO
-  onBuildHref?: (event: DataLinkClickEvent) => string;
+  onBuildUrl?: (event: DataLinkClickEvent) => string;
 
   // 1: If exists, handle click directly
   // Not saved in JSON/DTO

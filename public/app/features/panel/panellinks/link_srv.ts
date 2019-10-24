@@ -159,8 +159,8 @@ export class LinkSrv implements LinkService {
     console.log('getDataLinkUIModel', link, scopedVars);
 
     let href = link.url;
-    if (link.onBuildHref) {
-      href = link.onBuildHref({
+    if (link.onBuildUrl) {
+      href = link.onBuildUrl({
         origin,
         scopedVars,
       });
