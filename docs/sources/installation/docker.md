@@ -74,7 +74,7 @@ For a list of available tags, check out [grafana/grafana](https://hub.docker.com
 
 ## Installing Plugins for Grafana
 
-Pass the plugins you want installed to docker with the `GF_INSTALL_PLUGINS` environment variable as a comma separated list. This will pass each plugin name to `grafana-cli plugins install ${plugin}` and install them when Grafana starts. If you need to specify a specific plugin version you can add optional version to plugin evnironment variable otherwise latest will be assumed `--build-arg "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1,grafana-simple-json-datasource 1.3.5"`
+Pass the plugins you want installed to docker with the `GF_INSTALL_PLUGINS` environment variable as a comma separated list. This will pass each plugin name to `grafana-cli plugins install ${plugin}` and install them when Grafana starts. If you need to specify a specific plugin version you can add optional version to plugin environment variable otherwise latest will be assumed `--build-arg "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1,grafana-simple-json-datasource 1.3.5"`
 
 ```bash
 docker run \
