@@ -64,7 +64,7 @@ export function runSignalStream(
     const onBuildUrl: DataLink[] = [
       {
         url: '',
-        title: 'HREF From DataSource callback',
+        title: 'HREF HREF HREF',
         onBuildUrl: (event: DataLinkClickEvent) => {
           console.log('BUILD HREF', event);
           return '/STREAM/XXX';
@@ -74,9 +74,10 @@ export function runSignalStream(
     const onClick = [
       {
         url: '',
-        title: 'HREF From DataSource callback',
+        title: 'CLICK CLICK CLICK',
         onClick: (event: DataLinkClickEvent) => {
           console.log('CLICK CLICK', event);
+          debugger;
         },
       },
     ];
