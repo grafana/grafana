@@ -1,7 +1,7 @@
 ARG BASE_IMAGE=alpine:3.10
 FROM ${BASE_IMAGE}
 
-ARG GRAFANA_TGZ="grafana-latest.linux-x64.tar.gz"
+ARG GRAFANA_TGZ="grafana-latest.linux-x64-musl.tar.gz"
 
 COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
