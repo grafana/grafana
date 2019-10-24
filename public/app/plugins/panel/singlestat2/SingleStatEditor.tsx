@@ -17,7 +17,7 @@ import {
 
 import { Threshold, ValueMapping, FieldConfig, DataLink } from '@grafana/data';
 
-import { SingleStatOptions, SparklineOptions, displayModes, colorModes } from './types';
+import { SingleStatOptions, SparklineOptions, displayModes } from './types';
 import { SparklineEditor } from './SparklineEditor';
 import {
   getDataLinksVariableSuggestions,
@@ -54,7 +54,6 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
     });
 
   onDisplayModeChange = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, displayMode: value });
-  onColorModeChange = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, colorMode: value });
 
   onDefaultsChange = (field: FieldConfig) => {
     this.onDisplayOptionsChanged({
@@ -91,16 +90,6 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
                 defaultValue={displayModes[0]}
                 onChange={this.onDisplayModeChange}
                 value={displayModes.find(item => item.value === options.displayMode)}
-              />
-            </div>
-            <div className="form-field">
-              <FormLabel width={8}>Color by</FormLabel>
-              <Select
-                width={12}
-                options={colorModes}
-                defaultValue={colorModes[0]}
-                onChange={this.onColorModeChange}
-                value={colorModes.find(item => item.value === options.colorMode)}
               />
             </div>
             <SparklineEditor options={options.sparkline} onChange={this.onSparklineChanged} />

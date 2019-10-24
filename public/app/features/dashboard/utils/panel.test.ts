@@ -83,7 +83,7 @@ describe('applyPanelTimeOverrides', () => {
 
   it('Calculate panel height with panel plugin zeroChromePadding', () => {
     const panelModel = new PanelModel({});
-    panelModel.pluginLoaded(getPanelPlugin({ id: 'table' }, null, null).setZeroChromePadding());
+    panelModel.pluginLoaded(getPanelPlugin({ id: 'table' }, null, null).setFullChromeControl());
 
     const height = calculateInnerPanelHeight(panelModel, 100);
     expect(height).toBe(98);

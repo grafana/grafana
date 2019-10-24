@@ -173,7 +173,7 @@ export function getResolution(panel: PanelModel): number {
 }
 
 export function calculateInnerPanelHeight(panel: PanelModel, containerHeight: number): number {
-  const chromePadding = panel.plugin && panel.plugin.zeroChromePadding ? 0 : config.theme.panelPadding * 2;
+  const chromePadding = panel.plugin && panel.plugin.hasFullChromeControl ? 0 : config.theme.panelPadding * 2;
   const headerHeight = panel.hasTitle() ? config.theme.panelHeaderHeight : 0;
   return containerHeight - headerHeight - chromePadding - PANEL_BORDER;
 }

@@ -71,7 +71,7 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
   defaults?: TOptions;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
-  zeroChromePadding: boolean;
+  hasFullChromeControl: boolean;
 
   /**
    * Legacy angular ctrl.  If this exists it will be used instead of the panel
@@ -93,8 +93,8 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
     return this;
   }
 
-  setZeroChromePadding() {
-    this.zeroChromePadding = true;
+  setFullChromeControl() {
+    this.hasFullChromeControl = true;
     return this;
   }
 

@@ -7,7 +7,7 @@ import { PanelHeader } from './PanelHeader/PanelHeader';
 import { ErrorBoundary, PanelData, PanelPlugin } from '@grafana/ui';
 // Utils & Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
-import { applyPanelTimeOverrides, calculateInnerPanelHeight } from 'app/features/dashboard/utils/panel';
+import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { profiler } from 'app/core/profiler';
 import { getProcessedDataFrames } from '../state/runRequest';
 import templateSrv from 'app/features/templating/template_srv';
@@ -252,14 +252,22 @@ export class PanelChrome extends PureComponent<Props, State> {
     }
 
     const PanelComponent = plugin.panel;
-    const innerPanelHeight = calculateInnerPanelHeight(panel, height);
     const timeRange = data.timeRange || this.timeSrv.timeRange();
-    const panelPadding = plugin.zeroChromePadding ? 0 : theme.panelPadding;
+
+    const headerHeight = this.hasOverlayHeader() ? 0 : theme.panelHeaderHeight;
+    const chromePadding = plugin.hasFullChromeControl ? 0 : theme.panelPadding;
+    const panelWidth = width - chromePadding * 2 - PANEL_BORDER;
+    const innerPanelHeight = height - headerHeight - chromePadding * 2;
+
+    const panelContentClassNames = classNames({
+      'panel-content': true,
+      'panel-content--no-padding': plugin.hasFullChromeControl,
+    });
 
     return (
       <>
         {loading === LoadingState.Loading && this.renderLoadingState()}
-        <div className="panel-content" style={{ padding: panelPadding }}>
+        <div className={panelContentClassNames}>
           <PanelComponent
             id={panel.id}
             data={data}
@@ -267,7 +275,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             timeZone={this.props.dashboard.getTimezone()}
             options={panel.getOptions()}
             transparent={panel.transparent}
-            width={width - panelPadding * 2 - PANEL_BORDER}
+            width={panelWidth}
             height={innerPanelHeight}
             renderCounter={renderCounter}
             replaceVariables={this.replaceVariables}
@@ -287,16 +295,33 @@ export class PanelChrome extends PureComponent<Props, State> {
     );
   }
 
+  hasOverlayHeader() {
+    const { panel, plugin } = this.props;
+    const { errorMessage, data } = this.state;
+
+    // always show normal header if we have an error message
+    if (errorMessage) {
+      return false;
+    }
+
+    // always show normal header if we have time override
+    if (data.request && data.request.timeInfo) {
+      return false;
+    }
+
+    return !panel.hasTitle() || plugin.hasFullChromeControl;
+  }
+
   render() {
-    const { dashboard, panel, isFullscreen, width, height } = this.props;
+    const { dashboard, panel, isFullscreen, width, height, plugin } = this.props;
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
     const containerClassNames = classNames({
       'panel-container': true,
       'panel-container--absolute': true,
-      'panel-container--no-title': !panel.hasTitle(),
-      'panel-transparent': transparent,
+      'panel-container--overlay-header': this.hasOverlayHeader(),
+      'panel-transparent': transparent || plugin.hasFullChromeControl,
     });
 
     return (

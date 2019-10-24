@@ -78,11 +78,15 @@ div.flot-text {
 }
 
 .panel-content {
+  padding: $panel-padding;
   height: calc(100% - #{$panel-header-height});
   width: 100%;
   position: relative;
-  // Fixes scrolling on mobile devices
   overflow: auto;
+
+  &--no-padding {
+    padding: 0;
+  }
 }
 
 // For larger screens, set back to hidden to avoid double scroll bars

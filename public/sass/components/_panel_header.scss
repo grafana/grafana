@@ -2,16 +2,25 @@ $panel-header-no-title-zindex: 1;
 
 .panel-header {
   &:hover {
-    transition: background-color 0.1s ease-in-out;
-    background-color: $panel-header-hover-bg;
+    .panel-title {
+      transition: background-color 0.1s ease-in-out;
+      background-color: $panel-header-hover-bg;
+      visibility: visible !important;
+    }
   }
 }
 
-.panel-container--no-title {
+.panel-container--overlay-header {
   .panel-header {
     position: absolute;
     width: 100%;
     z-index: $panel-header-z-index;
+
+    .panel-title {
+      visibility: hidden;
+      // top: -$panel-header-height/2;
+      top: -$panel-header-height;
+    }
   }
   .panel-content {
     height: 100%;
