@@ -8,7 +8,6 @@ import {
   HasMoreContextRows,
   LogRowContextProvider,
 } from './LogRowContextProvider';
-import { LogLabels } from './LogLabels';
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
@@ -19,7 +18,6 @@ interface Props extends Themeable {
   highlighterExpressions?: string[];
   row: LogRowModel;
   showDuplicates: boolean;
-  showLabels: boolean;
   showTime: boolean;
   timeZone: TimeZone;
   getRows: () => LogRowModel[];
@@ -30,6 +28,7 @@ interface Props extends Themeable {
 
 interface State {
   showContext: boolean;
+  showDetails: boolean;
 }
 
 /**
@@ -42,12 +41,21 @@ interface State {
 class UnThemedLogRow extends PureComponent<Props, State> {
   state: State = {
     showContext: false,
+    showDetails: false,
   };
 
   toggleContext = () => {
     this.setState(state => {
       return {
         showContext: !state.showContext,
+      };
+    });
+  };
+
+  toggleDetails = () => {
+    this.setState(state => {
+      return {
+        showDetails: !state.showDetails,
       };
     });
   };
@@ -64,47 +72,60 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       onClickLabel,
       row,
       showDuplicates,
-      showLabels,
       timeZone,
       showTime,
       theme,
     } = this.props;
-    const { showContext } = this.state;
+    const { showContext, showDetails } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
     const showUtc = timeZone === 'utc';
 
     return (
       <>
-        <div className={cx([style.logsRow])}>
+        <tr className={cx([style.logsRow])}>
           {showDuplicates && (
-            <div className={cx([style.logsRowDuplicates])}>
+            <td className={cx([style.logsRowDuplicates])}>
               {row.duplicates && row.duplicates > 0 ? `${row.duplicates + 1}x` : null}
-            </div>
+            </td>
           )}
-          <div className={cx([style.logsRowLevel])} />
-          {showTime && showUtc && (
-            <div className={cx([style.logsRowLocalTime])} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
-              {row.timeUtc}
-            </div>
-          )}
-          {showTime && !showUtc && (
-            <div className={cx([style.logsRowLocalTime])} title={`${row.timeUtc} (${row.timeFromNow})`}>
-              {row.timeLocal}
-            </div>
-          )}
-          <LogRowMessage
-            highlighterExpressions={highlighterExpressions}
-            row={row}
-            getRows={getRows}
-            errors={errors}
-            hasMoreContextRows={hasMoreContextRows}
-            updateLimit={updateLimit}
-            context={context}
-            showContext={showContext}
-            onToggleContext={this.toggleContext}
-          />
-        </div>
-        {showLabels && <LogDetails onClickLabel={onClickLabel} getRows={getRows} row={row} />}
+          <td className={cx([style.logsRowLevel])} />
+          <td onClick={this.toggleDetails} className={cx([style.logsRowToggleDetails])}>
+            <i className={showDetails ? 'fa fa-chevron-up' : 'fa fa-chevron-down'} />
+          </td>
+          <td>
+            <tr>
+              {showTime && showUtc && (
+                <td className={cx([style.logsRowLocalTime])} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
+                  {row.timeUtc}
+                </td>
+              )}
+
+              {showTime && !showUtc && (
+                <td className={cx([style.logsRowLocalTime])} title={`${row.timeUtc} (${row.timeFromNow})`}>
+                  {row.timeLocal}
+                </td>
+              )}
+              <LogRowMessage
+                highlighterExpressions={highlighterExpressions}
+                row={row}
+                getRows={getRows}
+                errors={errors}
+                hasMoreContextRows={hasMoreContextRows}
+                updateLimit={updateLimit}
+                context={context}
+                showContext={showContext}
+                onToggleContext={this.toggleContext}
+              />
+            </tr>
+            <tr>
+              {this.state.showDetails && (
+                <td colspan="2">
+                  <LogDetails onClickLabel={onClickLabel} getRows={getRows} row={row} />
+                </td>
+              )}
+            </tr>
+          </td>
+        </tr>
       </>
     );
   }

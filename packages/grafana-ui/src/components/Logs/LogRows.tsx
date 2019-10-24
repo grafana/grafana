@@ -16,7 +16,6 @@ export interface Props extends Themeable {
   dedupStrategy: LogsDedupStrategy;
   highlighterExpressions: string[];
   showTime: boolean;
-  showLabels: boolean;
   timeZone: TimeZone;
   deduplicatedData?: LogsModel;
   rowLimit?: number;
@@ -77,7 +76,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       data,
       deduplicatedData,
       highlighterExpressions,
-      showLabels,
       timeZone,
       onClickLabel,
       rowLimit,
@@ -86,7 +84,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const { deferLogs, renderAll } = this.state;
     const dedupedData = deduplicatedData ? deduplicatedData : data;
     const hasData = data && data.rows && data.rows.length > 0;
-    const hasLabel = hasData && dedupedData && dedupedData.hasUniqueLabels ? true : false;
+    // const hasLabel = hasData && dedupedData && dedupedData.hasUniqueLabels ? true : false;
     const dedupCount = dedupedData
       ? dedupedData.rows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
       : 0;
@@ -116,7 +114,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
               highlighterExpressions={highlighterExpressions}
               row={row}
               showDuplicates={showDuplicates}
-              showLabels={showLabels && hasLabel}
               showTime={showTime}
               timeZone={timeZone}
               onClickLabel={onClickLabel}
@@ -132,7 +129,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
               getRowContext={getRowContext}
               row={row}
               showDuplicates={showDuplicates}
-              showLabels={showLabels && hasLabel}
               showTime={showTime}
               timeZone={timeZone}
               onClickLabel={onClickLabel}

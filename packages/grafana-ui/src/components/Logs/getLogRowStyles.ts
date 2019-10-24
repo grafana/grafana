@@ -77,10 +77,8 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     `,
     logsRow: css`
       label: logs-row;
-      display: table-row;
 
-      > div {
-        display: table-cell;
+      > td {
         padding-right: 10px;
         border-top: 1px solid transparent;
         border-bottom: 1px solid transparent;
@@ -111,34 +109,18 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
         background-color: ${logColor};
       }
     `,
-    logsRowLevelDetails: css`
-      label: logs-row-details__level;
+    logsRowToggleDetails: css`
+      label: logs-row-toggle-details__level;
       position: relative;
-      width: 10px;
-
-      &::after {
-        content: '';
-        display: block;
-        position: absolute;
-        top: -3px;
-        bottom: 1px;
-        width: 3px;
-        background-color: ${logColor};
-      }
+      width: 15px;
+      padding-right: 10px;
+      font-size: 10px;
+      cursor: pointer;
     `,
     logsRowLocalTime: css`
       label: logs-row__localtime;
       white-space: nowrap;
       width: 12.5em;
-    `,
-    logsRowLabels: css`
-      label: logs-row__labels;
-      line-height: 1.2;
-      display: contents;
-      &::after {
-        content: '';
-        display: table-row;
-      }
     `,
     logsRowMessage: css`
       label: logs-row__message;
@@ -147,6 +129,15 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     logsRowStats: css`
       label: logs-row__stats;
       margin: 5px 0;
+    `,
+    //Log details sepcific CSS
+    logsRowDetailsTable: css`
+      label: logs-row-details-table;
+      display: table;
+      border: 1px solid gray;
+      margin: 20px 0;
+      padding: 10px;
+      width: 100%;
     `,
   };
 });

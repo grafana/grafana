@@ -1,7 +1,6 @@
 import React from 'react';
 import { LogRowModel } from '@grafana/data';
 import { cx } from 'emotion';
-import { LogLabels } from './LogLabels';
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
@@ -13,14 +12,27 @@ interface Props extends Themeable {
 }
 
 function UnThemedLogDetails(props: Props) {
-  const { getRows, onClickLabel, row, theme } = props;
+  const { row, theme } = props;
+  // const { getRows, onClickLabel } = props;
   const style = getLogRowStyles(theme, row.logLevel);
   return (
-    <div className={cx([style.logsRow])}>
-      <div className={cx([style.logsRowLevelDetails])} />
-      <div className={cx([style.logsRowLabels])}>
-        <LogLabels getRows={getRows} labels={row.uniqueLabels ? row.uniqueLabels : {}} onClickLabel={onClickLabel} />
-      </div>
+    <div className={cx([style.logsRowDetailsTable])}>
+      <tr>
+        <td>A</td>
+        <td>B</td>
+        <td>C</td>
+      </tr>
+      <tr>
+        <td>A</td>
+        <td>B</td>
+        <td>C</td>
+      </tr>
+      <tr>
+        <td>A</td>
+        <td>B</td>
+        <td>C</td>
+      </tr>
+      {/* <LogLabels getRows={getRows} labels={row.uniqueLabels ? row.uniqueLabels : {}} onClickLabel={onClickLabel} /> */}
     </div>
   );
 }

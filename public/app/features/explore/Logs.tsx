@@ -48,13 +48,11 @@ interface Props {
 }
 
 interface State {
-  showLabels: boolean;
   showTime: boolean;
 }
 
 export class Logs extends PureComponent<Props, State> {
   state = {
-    showLabels: false,
     showTime: true,
   };
 
@@ -64,15 +62,6 @@ export class Logs extends PureComponent<Props, State> {
       return onDedupStrategyChange(LogsDedupStrategy.none);
     }
     return onDedupStrategyChange(dedup);
-  };
-
-  onChangeLabels = (event?: React.SyntheticEvent) => {
-    const target = event && (event.target as HTMLInputElement);
-    if (target) {
-      this.setState({
-        showLabels: target.checked,
-      });
-    }
   };
 
   onChangeTime = (event?: React.SyntheticEvent) => {
@@ -122,7 +111,7 @@ export class Logs extends PureComponent<Props, State> {
       return null;
     }
 
-    const { showLabels, showTime } = this.state;
+    const { showTime } = this.state;
     const { dedupStrategy } = this.props;
     const hasData = data && data.rows && data.rows.length > 0;
     const dedupCount = dedupedData
@@ -163,7 +152,6 @@ export class Logs extends PureComponent<Props, State> {
         <div className="logs-panel-options">
           <div className="logs-panel-controls">
             <Switch label="Time" checked={showTime} onChange={this.onChangeTime} transparent />
-            <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
             <ToggleButtonGroup label="Dedup" transparent={true}>
               {Object.keys(LogsDedupStrategy).map((dedupType: string, i) => (
                 <ToggleButton
@@ -200,7 +188,6 @@ export class Logs extends PureComponent<Props, State> {
           highlighterExpressions={highlighterExpressions}
           onClickLabel={onClickLabel}
           rowLimit={data ? data.rows.length : undefined}
-          showLabels={showLabels}
           showTime={showTime}
           timeZone={timeZone}
         />
