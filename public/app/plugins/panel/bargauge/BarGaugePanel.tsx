@@ -90,7 +90,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     return (
       <VizRepeater
         source={data}
-        calculateInternalSizes={this.findMaximumInput}
+        calculateInternalDimensions={this.findMaximumInput}
         getValues={this.getValues}
         renderValue={this.renderValue}
         renderCounter={renderCounter}

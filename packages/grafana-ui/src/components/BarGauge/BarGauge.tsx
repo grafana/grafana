@@ -243,8 +243,8 @@ function isVertical(props: Props) {
 }
 
 function calculateTitleDimensions(props: Props): TitleDimensions {
-  const { height, width, maxDimensionDeps } = props;
-  const title = maxDimensionDeps ? maxDimensionDeps.title : props.value.text;
+  const { height, width, maxDimensionInput } = props;
+  const title = maxDimensionInput ? maxDimensionInput.title : props.value.text;
 
   if (!title) {
     return { fontSize: 0, width: 0, height: 0, placement: 'above' };

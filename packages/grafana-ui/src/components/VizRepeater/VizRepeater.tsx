@@ -70,7 +70,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
   render() {
     const { renderValue, height, width, itemSpacing, calculateInternalDimensions } = this.props as PropsWithDefaults<
       V,
-      M
+      D
     >;
     const { values } = this.state;
     const orientation = this.getOrientation();
@@ -101,13 +101,13 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
     itemStyles.width = `${vizWidth}px`;
     itemStyles.height = `${vizHeight}px`;
 
-    const dims = calculateInternalDimensions ? calculateInternalDimensions(values, vizWidth, vizHeight) : {};
+    const dims = calculateInternalDimensions ? calculateInternalDimensions(values, vizWidth, vizHeight) : ({} as D);
     return (
       <div style={repeaterStyle}>
         {values.map((value, index) => {
           return (
             <div key={index} style={itemStyles}>
-              {renderValue(value, vizWidth, vizHeight, dims as D)}
+              {renderValue(value, vizWidth, vizHeight, dims)}
             </div>
           );
         })}

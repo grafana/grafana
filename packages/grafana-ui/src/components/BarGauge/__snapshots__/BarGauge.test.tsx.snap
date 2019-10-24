@@ -28,7 +28,7 @@ exports[`BarGauge Render with basic options should render 1`] = `
           "color": "#73BF69",
           "display": "flex",
           "fontSize": "27.2727px",
-          "height": "300px",
+          "height": "250px",
           "lineHeight": 1,
           "paddingLeft": "10px",
           "width": "60px",
@@ -43,7 +43,7 @@ exports[`BarGauge Render with basic options should render 1`] = `
           "background": "rgba(115, 191, 105, 0.25)",
           "borderRadius": "3px",
           "borderRight": "2px solid #73BF69",
-          "height": "300px",
+          "height": "250px",
           "transition": "width 1s",
           "width": "60px",
         }
