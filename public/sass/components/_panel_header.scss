@@ -1,11 +1,13 @@
 $panel-header-no-title-zindex: 1;
 
 .panel-header {
+  border-radius: 3px;
+
   &:hover {
     .panel-title {
-      transition: background-color 0.1s ease-in-out;
+      opacity: 1 !important;
+      transition: opacity 0.2s ease-in;
       background-color: $panel-header-hover-bg;
-      visibility: visible !important;
     }
   }
 }
@@ -17,11 +19,11 @@ $panel-header-no-title-zindex: 1;
     z-index: $panel-header-z-index;
 
     .panel-title {
-      visibility: hidden;
-      // top: -$panel-header-height/2;
-      top: -$panel-header-height;
+      top: -$panel-header-height/2;
+      opacity: 0;
     }
   }
+
   .panel-content {
     height: 100%;
   }

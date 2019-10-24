@@ -79,6 +79,7 @@ export class VizRepeater<T> extends PureComponent<Props<T>, State<T>> {
       vizHeight = height / values.length - itemSpacing + itemSpacing / values.length;
     } else {
       repeaterStyle.flexDirection = 'row';
+      repeaterStyle.justifyContent = 'space-between';
       itemStyles.marginRight = `${itemSpacing}px`;
       vizHeight = height;
       vizWidth = width / values.length - itemSpacing + itemSpacing / values.length;
