@@ -377,11 +377,6 @@ describe('dataFrameToLogsModel', () => {
   it('given multiple series with equal times should return expected logs model', () => {
     const series: DataFrame[] = [
       toDataFrame({
-        labels: {
-          foo: 'bar',
-          baz: '1',
-          level: 'dbug',
-        },
         fields: [
           {
             name: 'ts',
@@ -392,15 +387,15 @@ describe('dataFrameToLogsModel', () => {
             name: 'line',
             type: FieldType.string,
             values: ['WARN boooo 1'],
+            labels: {
+              foo: 'bar',
+              baz: '1',
+              level: 'dbug',
+            },
           },
         ],
       }),
       toDataFrame({
-        labels: {
-          foo: 'bar',
-          baz: '2',
-          level: 'dbug',
-        },
         fields: [
           {
             name: 'ts',
@@ -411,16 +406,16 @@ describe('dataFrameToLogsModel', () => {
             name: 'line',
             type: FieldType.string,
             values: ['WARN boooo 2'],
+            labels: {
+              foo: 'bar',
+              baz: '2',
+              level: 'dbug',
+            },
           },
         ],
       }),
       toDataFrame({
         name: 'logs',
-        labels: {
-          foo: 'bar',
-          baz: '2',
-          level: 'err',
-        },
         fields: [
           {
             name: 'time',
@@ -431,6 +426,11 @@ describe('dataFrameToLogsModel', () => {
             name: 'message',
             type: FieldType.string,
             values: ['INFO 1', 'INFO 2'],
+            labels: {
+              foo: 'bar',
+              baz: '2',
+              level: 'err',
+            },
           },
         ],
       }),
