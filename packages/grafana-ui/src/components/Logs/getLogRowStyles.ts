@@ -157,7 +157,11 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       position: relative;
       width: 15px;
       padding-right: 20px;
-      cursor: pointer;
+      color: ${theme.colors.gray3};
+      &:hover {
+        cursor: pointer;
+        color: ${theme.colors.yellow};
+      }
     `,
     logsRowDetailsLabel: css`
       label: logs-row-details__label;
