@@ -252,7 +252,6 @@ class GraphElement {
         const dataFrame = this.ctrl.dataList[item.series.dataFrameIndex];
         const field = dataFrame.fields[item.series.fieldIndex];
 
-        debugger;
         let links = this.panel.options.dataLinks || [];
         if (field.config.links && field.config.links.length) {
           // Append the configured links to the panel datalinks
