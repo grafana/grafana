@@ -15,7 +15,7 @@ describe('Modal', () => {
     expect(wrapper.html()).toBe(null);
   });
 
-  it('renders ', () => {
+  it('renders correct contents', () => {
     const wrapper = mount(
       <Modal title={'Some Title'} isOpen={true}>
         <div id={'modal-content'}>Content</div>
