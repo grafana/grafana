@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -32,28 +33,41 @@ func (e *CloudWatchExecutor) parseResponse(metricDataResults []*cloudwatch.Metri
 		queryRes := tsdb.NewQueryResult()
 		queryRes.RefId = query.RefId
 		queryRes.Meta = simplejson.New()
+		queryMessages := []*cloudwatch.MessageData{}
+		timeSeries := make(tsdb.TimeSeriesSlice, 0)
 		for i, stat := range query.Statistics {
 			lr := mdr[getQueryID(query, i)]
-			series, err := parseGetMetricDataTimeSeries(lr, query, *stat)
+			series, messages, err := parseGetMetricDataTimeSeries(lr, query, *stat)
+			queryMessages = append(queryMessages, messages...)
 			if err != nil {
 				return queryResponses, err
 			}
-			queryRes.Series = append(queryRes.Series, *series...)
+			timeSeries = append(timeSeries, *series...)
 			queryRes.Meta.Set("searchExpressions", query.SearchExpressions)
-
 		}
+		sort.Slice(timeSeries, func(i, j int) bool {
+			return timeSeries[i].Name < timeSeries[j].Name
+		})
+		queryRes.Series = timeSeries
+		for _, message := range queryMessages {
+			plog.Info("QueryResponseMessage", "", message.Value)
+		}
+
 		queryResponses = append(queryResponses, queryRes)
 	}
 
 	return queryResponses, nil
 }
 
-func parseGetMetricDataTimeSeries(lr map[string]*cloudwatch.MetricDataResult, query *cloudWatchQuery, stat string) (*tsdb.TimeSeriesSlice, error) {
+func parseGetMetricDataTimeSeries(lr map[string]*cloudwatch.MetricDataResult, query *cloudWatchQuery, stat string) (*tsdb.TimeSeriesSlice, []*cloudwatch.MessageData, error) {
 	result := tsdb.TimeSeriesSlice{}
+	messages := []*cloudwatch.MessageData{}
 	for label, r := range lr {
 		if *r.StatusCode != "Complete" {
-			return &result, fmt.Errorf("Part of query is failed: %s", *r.StatusCode)
+			return &result, messages, fmt.Errorf("Part of query is failed: %s", *r.StatusCode)
 		}
+
+		messages = append(messages, r.Messages...)
 
 		series := tsdb.TimeSeries{
 			Tags:   map[string]string{},
@@ -81,7 +95,7 @@ func parseGetMetricDataTimeSeries(lr map[string]*cloudwatch.MetricDataResult, qu
 		}
 		result = append(result, &series)
 	}
-	return &result, nil
+	return &result, messages, nil
 }
 
 func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]string, label string) string {

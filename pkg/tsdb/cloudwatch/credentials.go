@@ -12,9 +12,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials/endpointcreds"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/sts"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type cache struct {
@@ -180,6 +182,7 @@ func (e *CloudWatchExecutor) getAwsConfig(dsInfo *DatasourceInfo) (*aws.Config, 
 		Region:      aws.String(dsInfo.Region),
 		Credentials: creds,
 	}
+
 	return cfg, nil
 }
 
@@ -196,5 +199,10 @@ func (e *CloudWatchExecutor) getClient(region string) (*cloudwatch.CloudWatch, e
 	}
 
 	client := cloudwatch.New(sess, cfg)
+
+	client.Handlers.Send.PushFront(func(r *request.Request) {
+		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+	})
+
 	return client, nil
 }
