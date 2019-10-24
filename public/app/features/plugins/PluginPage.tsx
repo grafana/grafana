@@ -403,7 +403,7 @@ function getPluginTabsNav(
     text: meta.name,
     img: meta.info.logos.large,
     subTitle: meta.info.author.name,
-    breadcrumbs: [{ title: 'Plugins', url: '/plugins' }],
+    breadcrumbs: [{ title: 'Plugins', url: 'plugins' }],
     url: `${appSubUrl}${path}`,
     children: setActivePage(query.page as string, pages, defaultPage),
   };
