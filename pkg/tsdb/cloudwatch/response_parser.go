@@ -13,19 +13,21 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func (e *CloudWatchExecutor) parseResponse(metricDataResults []*cloudwatch.MetricDataResult, queries []*cloudWatchQuery) ([]*tsdb.QueryResult, error) {
+func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMetricDataOutput, queries []*cloudWatchQuery) ([]*tsdb.QueryResult, error) {
 	queryResponses := make([]*tsdb.QueryResult, 0)
 
 	mdr := make(map[string]map[string]*cloudwatch.MetricDataResult)
-	for _, r := range metricDataResults {
-		if _, ok := mdr[*r.Id]; !ok {
-			mdr[*r.Id] = make(map[string]*cloudwatch.MetricDataResult)
-			mdr[*r.Id][*r.Label] = r
-		} else if _, ok := mdr[*r.Id][*r.Label]; !ok {
-			mdr[*r.Id][*r.Label] = r
-		} else {
-			mdr[*r.Id][*r.Label].Timestamps = append(mdr[*r.Id][*r.Label].Timestamps, r.Timestamps...)
-			mdr[*r.Id][*r.Label].Values = append(mdr[*r.Id][*r.Label].Values, r.Values...)
+	for _, mdo := range metricDataOutputs {
+		for _, r := range mdo.MetricDataResults {
+			if _, ok := mdr[*r.Id]; !ok {
+				mdr[*r.Id] = make(map[string]*cloudwatch.MetricDataResult)
+				mdr[*r.Id][*r.Label] = r
+			} else if _, ok := mdr[*r.Id][*r.Label]; !ok {
+				mdr[*r.Id][*r.Label] = r
+			} else {
+				mdr[*r.Id][*r.Label].Timestamps = append(mdr[*r.Id][*r.Label].Timestamps, r.Timestamps...)
+				mdr[*r.Id][*r.Label].Values = append(mdr[*r.Id][*r.Label].Values, r.Values...)
+			}
 		}
 	}
 
