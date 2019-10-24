@@ -94,7 +94,7 @@ describe('BarGauge', () => {
         orientation: VizOrientation.Vertical,
       });
       const styles = getBasicAndGradientStyles(props);
-      expect(styles.bar.height).toBe('270px');
+      expect(styles.bar.height).toBe('249px');
     });
   });
 
