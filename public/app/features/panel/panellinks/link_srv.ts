@@ -78,7 +78,6 @@ export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
 
 const getFieldVars = (dataFrames: DataFrame[]) => {
   const all = [];
-  debugger;
   for (const df of dataFrames) {
     for (const f of df.fields) {
       if (f.labels) {

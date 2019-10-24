@@ -464,7 +464,6 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 21) {
-      debugger;
       const updateLinks = (link: DataLink) => {
         return {
           ...link,
