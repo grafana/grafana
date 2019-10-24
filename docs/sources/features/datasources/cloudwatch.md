@@ -44,6 +44,9 @@ server is running on AWS you can use IAM Roles and authentication will be handle
 
 Checkout AWS docs on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
 
+
+> NOTE: AWS Role Switching as described [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-cli.html) it not supported at the moment. 
+
 ## IAM Policies
 
 Grafana needs permissions granted via IAM to be able to read CloudWatch metrics

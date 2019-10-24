@@ -21,6 +21,7 @@ import {
   toggleGraphAction,
   toggleTableAction,
   changeRangeAction,
+  changeRefreshIntervalAction,
 } from './actionTypes';
 import { Reducer } from 'redux';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
@@ -28,7 +29,7 @@ import { updateLocation } from 'app/core/actions/location';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import TableModel from 'app/core/table_model';
 import { DataSourceApi, DataQuery } from '@grafana/ui';
-import { LogsModel, LogsDedupStrategy, dateTime } from '@grafana/data';
+import { LogsModel, LogsDedupStrategy, dateTime, LoadingState } from '@grafana/data';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
@@ -42,7 +43,7 @@ describe('Explore item reducer', () => {
         .givenReducer(itemReducer as Reducer<ExploreItemState, ActionOf<any>>, initalState)
         .whenActionIsDispatched(scanStartAction({ exploreId: ExploreId.left }))
         .thenStateShouldEqual({
-          ...initalState,
+          ...makeExploreItemState(),
           scanning: true,
         });
     });
@@ -57,7 +58,7 @@ describe('Explore item reducer', () => {
         .givenReducer(itemReducer as Reducer<ExploreItemState, ActionOf<any>>, initalState)
         .whenActionIsDispatched(scanStopAction({ exploreId: ExploreId.left }))
         .thenStateShouldEqual({
-          ...initalState,
+          ...makeExploreItemState(),
           scanning: false,
           scanRange: undefined,
         });
@@ -171,6 +172,50 @@ describe('Explore item reducer', () => {
             .thenStateShouldEqual(expectedState);
         });
       });
+    });
+  });
+
+  describe('changing refresh intervals', () => {
+    it("should result in 'streaming' state, when live-tailing is active", () => {
+      const initalState = makeExploreItemState();
+      const expectedState = {
+        ...makeExploreItemState(),
+        refreshInterval: 'LIVE',
+        isLive: true,
+        loading: true,
+        logsResult: {
+          hasUniqueLabels: false,
+          rows: [] as any[],
+        },
+        queryResponse: {
+          ...makeExploreItemState().queryResponse,
+          state: LoadingState.Streaming,
+        },
+      };
+      reducerTester()
+        .givenReducer(itemReducer, initalState)
+        .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId: ExploreId.left, refreshInterval: 'LIVE' }))
+        .thenStateShouldEqual(expectedState);
+    });
+
+    it("should result in 'done' state, when live-tailing is stopped", () => {
+      const initalState = makeExploreItemState();
+      const expectedState = {
+        ...makeExploreItemState(),
+        refreshInterval: '',
+        logsResult: {
+          hasUniqueLabels: false,
+          rows: [] as any[],
+        },
+        queryResponse: {
+          ...makeExploreItemState().queryResponse,
+          state: LoadingState.Done,
+        },
+      };
+      reducerTester()
+        .givenReducer(itemReducer, initalState)
+        .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId: ExploreId.left, refreshInterval: '' }))
+        .thenStateShouldEqual(expectedState);
     });
   });
 

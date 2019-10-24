@@ -6,7 +6,7 @@ We're excited that you're considering making a contribution to the Grafana proje
 
 We know you're excited to create your first pull request. Before we get started, read these resources first:
 
-- Learn how to start [Contributing to Grafana](https://grafana.com/docs/contribute/overview/).
+- Learn how to start [Contributing to Grafana](/CONTRIBUTING.md).
 - Make sure your code follows the relevant [style guides](/contribute/style-guides).
 
 ## Your first pull request
@@ -16,7 +16,7 @@ If this is your first time contributing to an open-source project on GitHub, mak
 To increase the chance of having your pull request accepted, make sure your pull request follows these guidelines:
 
 - Title and description matches the implementation.
-- Commits within the pull request follow the [style guide](#style-guide).
+- Commits within the pull request follow the [Formatting guidelines](#Formatting-guidelines). 
 - The pull request closes one related issue.
 - The pull request contains necessary tests that verify the intended behavior.
 - If your pull request has conflicts, rebase your branch onto the master branch.
@@ -30,7 +30,7 @@ If the pull request fixes a bug:
 
 Pull requests for frontend contributions must:
 
-- Use [Emotion](https://github.com/grafana/grafana/blob/master/style_guides/styling.md) for styling.
+- Use [Emotion](/contribute/style-guides/styling.md) for styling.
 - Not increase the Angular code base.
 - Not use `any` or `{}` without reason.
 - Not contain large React components that could easily be split into several smaller components.
@@ -38,8 +38,8 @@ Pull requests for frontend contributions must:
 
 Pull requests for Redux contributions must:
 
-- Use the `actionCreatorFactory` and `reducerFactory` helpers instead of traditional switch statement reducers in Redux. Refer to [Redux framework](https://github.com/grafana/grafana/tree/master/style_guides/redux.md) for more details.
-- Use `reducerTester` to test reducers. Refer to [Redux framework](https://github.com/grafana/grafana/tree/master/style_guides/redux.md) for more details.
+- Use the `actionCreatorFactory` and `reducerFactory` helpers instead of traditional switch statement reducers in Redux. Refer to [Redux framework](/contribute/style-guides/redux.md) for more details.
+- Use `reducerTester` to test reducers. Refer to [Redux framework](/contribute/style-guides/redux.md) for more details.
 - Not contain code that mutates state in reducers or thunks.
 - Not contain code that accesses the reducers state slice directly. Instead, the code should use state selectors to access state.
 
@@ -79,11 +79,12 @@ For changes to data sources, the area should be the name of the data source, e.g
 
 For changes to panels, the area should be the name of the panel, suffixed with Panel, e.g., GraphPanel, SinglestatPanel, and TablePanel.
 
-**Example**
+**Examples**
 
 - `Build: Support publishing MSI to grafana.com`
 - `Explore: Add Live option for supported data sources`
 - `GraphPanel: Fix legend sorting issues`
+- `Docs: Changed url to URL in all documentation files`
 
 ### Pull request titles
 
