@@ -63,7 +63,7 @@ export function runSignalStream(
         title: 'CLICK CLICK CLICK',
         onClick: (event: DataLinkClickEvent) => {
           console.log('CLICK CLICK', event);
-          debugger;
+          alert('Clicked: ' + JSON.stringify(event.origin));
         },
       },
     ];

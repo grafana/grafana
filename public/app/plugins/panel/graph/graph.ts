@@ -254,10 +254,11 @@ class GraphElement {
         const dataFrame = this.ctrl.dataList[item.series.dataFrameIndex];
         const field = dataFrame.fields[item.series.fieldIndex];
 
-        // Over
+        debugger;
         let links = this.panel.options.dataLinks || [];
         if (field.config.links && field.config.links.length) {
-          links = field.config.links;
+          // Append the configured links to the panel datalinks
+          links = [...links, ...field.config.links];
         }
         const fieldConfig = {
           decimals: yAxisConfig.decimals,
@@ -267,7 +268,7 @@ class GraphElement {
           config: fieldConfig,
           theme: getCurrentTheme(),
         })(field.values.get(item.dataIndex));
-        linksSupplier = this.panel.options.dataLinks
+        linksSupplier = links.length
           ? getFieldLinksSupplier({
               display: fieldDisplay,
               name: field.name,
