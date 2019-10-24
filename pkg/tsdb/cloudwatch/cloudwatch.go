@@ -131,7 +131,7 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 					return err
 				}
 
-				metricDataResults := make([]*cloudwatch.MetricDataResult, 0)
+				metricDataOutputs := make([]*cloudwatch.GetMetricDataOutput, 0)
 				for _, query := range queries {
 					res, err := e.executeRequest(ectx, client, query)
 					if err != nil {
@@ -149,10 +149,10 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 							return fmt.Errorf("You've been throttled")
 						}
 					}
-					metricDataResults = append(metricDataResults, res...)
+					metricDataOutputs = append(metricDataOutputs, res...)
 				}
 
-				queryResponses, err := e.parseResponse(metricDataResults, queriesByRegion[region])
+				queryResponses, err := e.parseResponse(metricDataOutputs, queriesByRegion[region])
 				if err != nil {
 					return err
 				}

@@ -8,8 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 )
 
-func (e *CloudWatchExecutor) executeRequest(ctx context.Context, client cloudWatchClient, metricDataInput *cloudwatch.GetMetricDataInput) ([]*cloudwatch.MetricDataResult, error) {
-	mdr := make([]*cloudwatch.MetricDataResult, 0)
+func (e *CloudWatchExecutor) executeRequest(ctx context.Context, client cloudWatchClient, metricDataInput *cloudwatch.GetMetricDataInput) ([]*cloudwatch.GetMetricDataOutput, error) {
+	mdo := make([]*cloudwatch.GetMetricDataOutput, 0)
 
 	nextToken := ""
 	for {
@@ -18,10 +18,16 @@ func (e *CloudWatchExecutor) executeRequest(ctx context.Context, client cloudWat
 		}
 		resp, err := client.GetMetricDataWithContext(ctx, metricDataInput)
 		if err != nil {
-			return mdr, err
+			return mdo, err
 		}
-		mdr = append(mdr, resp.MetricDataResults...)
+		mdo = append(mdo, resp)
 		metrics.MAwsCloudWatchGetMetricData.Add(float64(len(metricDataInput.MetricDataQueries)))
+
+		// for _, message := range resp.Messages {
+		// 	if *message.Code == "MaxMetricsExceeded" {
+		// 		return mdo, fmt.Errorf(*message.Value)
+		// 	}
+		// }
 
 		if resp.NextToken == nil || *resp.NextToken == "" {
 			break
@@ -29,5 +35,5 @@ func (e *CloudWatchExecutor) executeRequest(ctx context.Context, client cloudWat
 		nextToken = *resp.NextToken
 	}
 
-	return mdr, nil
+	return mdo, nil
 }
