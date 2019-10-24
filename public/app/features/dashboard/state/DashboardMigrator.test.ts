@@ -506,6 +506,52 @@ describe('DashboardModel', () => {
       });
     });
   });
+
+  describe('when migrating labels from DataFrame to Field', () => {
+    let model: any;
+    beforeEach(() => {
+      model = new DashboardModel({
+        panels: [
+          {
+            //graph panel
+            options: {
+              dataLinks: [
+                {
+                  url: 'http://mylink.com?series=${__series.labels}&${__series.labels.a}',
+                },
+              ],
+            },
+          },
+          {
+            //  panel with field options
+            options: {
+              fieldOptions: {
+                defaults: {
+                  links: [
+                    {
+                      url: 'http://mylink.com?series=${__series.labels}&${__series.labels.x}',
+                    },
+                  ],
+                  title: '$__cell_0 * $__field_name * $__series_name',
+                },
+              },
+            },
+          },
+        ],
+      });
+    });
+
+    describe('data links', () => {
+      it('should replace __series.label variable with __field.label', () => {
+        expect(model.panels[0].options.dataLinks[0].url).toBe(
+          'http://mylink.com?series=${__field.labels}&${__field.labels.a}'
+        );
+        expect(model.panels[1].options.fieldOptions.defaults.links[0].url).toBe(
+          'http://mylink.com?series=${__field.labels}&${__field.labels.x}'
+        );
+      });
+    });
+  });
 });
 
 function createRow(options: any, panelDescriptions: any[]) {
