@@ -5,8 +5,6 @@ import { getLegendStyles } from './Legend';
 import { getFieldValidationMessageStyles } from './FieldValidationMessage';
 import { getButtonStyles } from './Button';
 
-
-
 export const getFormStyles = stylesFactory((theme: GrafanaTheme, options?: any) => {
   return {
     ...getLabelStyles(theme),
