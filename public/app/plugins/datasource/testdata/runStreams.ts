@@ -3,15 +3,7 @@ import { Observable } from 'rxjs';
 
 import { DataQueryRequest, DataQueryResponse } from '@grafana/ui';
 
-import {
-  FieldType,
-  CircularDataFrame,
-  CSVReader,
-  Field,
-  LoadingState,
-  DataLink,
-  DataLinkClickEvent,
-} from '@grafana/data';
+import { FieldType, CircularDataFrame, CSVReader, Field, LoadingState } from '@grafana/data';
 
 import { TestDataQuery, StreamingQuery } from './types';
 import { getRandomLine } from './LogIpsum';
@@ -47,42 +39,21 @@ export function runSignalStream(
     const streamId = `signal-${req.panelId}-${target.refId}`;
     const maxDataPoints = req.maxDataPoints || 1000;
 
-    // const testFUNC: DataLink[] = [
-    //   {
-    //     url: '',
-    //     title: 'HREF HREF HREF',
-    //     onBuildUrl: (event: DataLinkClickEvent) => {
-    //       console.log('BUILD HREF', event);
-    //       return '/STREAM/XXX';
-    //     },
-    //   },
-    // ];
-    const testFUNC: DataLink[] = [
-      {
-        url: '',
-        title: 'CLICK CLICK CLICK',
-        onClick: (event: DataLinkClickEvent) => {
-          console.log('CLICK CLICK', event);
-          alert('Clicked: ' + JSON.stringify(event.origin));
-        },
-      },
-    ];
-
     const data = new CircularDataFrame({
       append: 'tail',
       capacity: maxDataPoints,
     });
     data.refId = target.refId;
     data.name = target.alias || 'Signal ' + target.refId;
-    data.addField({ name: 'time', type: FieldType.time }).config.links = testFUNC;
-    data.addField({ name: 'value', type: FieldType.number }).config.links = testFUNC;
+    data.addField({ name: 'time', type: FieldType.time });
+    data.addField({ name: 'value', type: FieldType.number });
 
     const { spread, speed, bands, noise } = query;
 
     for (let i = 0; i < bands; i++) {
       const suffix = bands > 1 ? ` ${i + 1}` : '';
-      data.addField({ name: 'Min' + suffix, type: FieldType.number }).config.links = testFUNC;
-      data.addField({ name: 'Max' + suffix, type: FieldType.number }).config.links = testFUNC;
+      data.addField({ name: 'Min' + suffix, type: FieldType.number });
+      data.addField({ name: 'Max' + suffix, type: FieldType.number });
     }
 
     let value = Math.random() * 100;
