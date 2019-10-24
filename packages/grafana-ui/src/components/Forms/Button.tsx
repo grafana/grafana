@@ -1,7 +1,7 @@
 import { FC } from 'react';
 import { css } from 'emotion';
 import tinycolor from 'tinycolor2';
-import { selectThemeVariant, stylesFactory } from '../../themes';
+import { selectThemeVariant, stylesFactory, useTheme } from '../../themes';
 import { AbstractButtonProps, StyleDeps } from '../Button/types';
 import { renderButton } from '../Button/AbstractButton';
 
@@ -122,9 +122,8 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }
   };
 });
 
-export const Button: FC<AbstractButtonProps> = ({
+export const Button: FC<Omit<AbstractButtonProps, 'theme'>> = ({
   renderAs,
-  theme,
   size = 'md',
   variant = 'primary',
   className,
@@ -132,6 +131,7 @@ export const Button: FC<AbstractButtonProps> = ({
   children,
   ...otherProps
 }) => {
+  const theme = useTheme();
   const buttonStyles = getButtonStyles({ theme, size, variant, withIcon: !!icon });
 
   return renderButton(theme, buttonStyles, renderAs, children, size, variant, icon, className, otherProps);

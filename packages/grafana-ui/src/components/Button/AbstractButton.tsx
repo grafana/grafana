@@ -1,8 +1,7 @@
 import React, { ComponentType, ReactNode } from 'react';
 import tinycolor from 'tinycolor2';
 import { css, cx } from 'emotion';
-import { selectThemeVariant } from '../../themes/selectThemeVariant';
-import { stylesFactory } from '../../themes/stylesFactory';
+import { selectThemeVariant, stylesFactory } from '../../themes';
 import { AbstractButtonProps, ButtonSize, ButtonStyles, ButtonVariant, CommonButtonProps, StyleDeps } from './types';
 import { GrafanaTheme } from '../../types';
 

@@ -2,8 +2,7 @@ import React from 'react';
 import { Button } from './Button';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { select, text } from '@storybook/addon-knobs';
-import { ThemeContext } from '../../themes';
-import { ButtonSize, ButtonVariant } from '../..';
+import { ButtonSize, ButtonVariant } from '../Button/types';
 import mdx from './Button.mdx';
 
 export default {
@@ -27,14 +26,8 @@ export const simple = () => {
   const buttonText = text('text', 'Button');
 
   return (
-    <ThemeContext.Consumer>
-      {theme => {
-        return (
-          <Button theme={theme} variant={variant as ButtonVariant} size={size as ButtonSize} renderAs="button">
-            {buttonText}
-          </Button>
-        );
-      }}
-    </ThemeContext.Consumer>
+    <Button variant={variant as ButtonVariant} size={size as ButtonSize} renderAs="button">
+      {buttonText}
+    </Button>
   );
 };
