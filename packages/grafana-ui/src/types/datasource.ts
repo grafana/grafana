@@ -1,5 +1,4 @@
-import { ComponentType, ComponentClass } from 'react';
-import { omit } from 'lodash';
+import { ComponentType } from 'react';
 import {
   TimeRange,
   RawTimeRange,
@@ -61,22 +60,22 @@ export class DataSourcePlugin<
     return this;
   }
 
-  setExploreQueryField(ExploreQueryField: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>) {
+  setExploreQueryField(ExploreQueryField: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>) {
     this.components.ExploreQueryField = ExploreQueryField;
     return this;
   }
 
-  setExploreMetricsQueryField(ExploreQueryField: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>) {
+  setExploreMetricsQueryField(ExploreQueryField: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>) {
     this.components.ExploreMetricsQueryField = ExploreQueryField;
     return this;
   }
 
-  setExploreLogsQueryField(ExploreQueryField: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>) {
+  setExploreLogsQueryField(ExploreQueryField: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>) {
     this.components.ExploreLogsQueryField = ExploreQueryField;
     return this;
   }
 
-  setExploreStartPage(ExploreStartPage: ComponentClass<ExploreStartPageProps>) {
+  setExploreStartPage(ExploreStartPage: ComponentType<ExploreStartPageProps>) {
     this.components.ExploreStartPage = ExploreStartPage;
     return this;
   }
@@ -89,7 +88,12 @@ export class DataSourcePlugin<
   setComponentsFromLegacyExports(pluginExports: any) {
     this.angularConfigCtrl = pluginExports.ConfigCtrl;
 
-    this.components = omit(pluginExports, ['ConfigCtrl', 'Datasource']);
+    this.components.QueryCtrl = pluginExports.QueryCtrl;
+    this.components.AnnotationsQueryCtrl = pluginExports.AnnotationsQueryCtrl;
+    this.components.ExploreQueryField = pluginExports.ExploreQueryField;
+    this.components.ExploreStartPage = pluginExports.ExploreStartPage;
+    this.components.QueryEditor = pluginExports.QueryEditor;
+    this.components.VariableQueryEditor = pluginExports.VariableQueryEditor;
   }
 }
 
@@ -129,10 +133,10 @@ export interface DataSourcePluginComponents<
   AnnotationsQueryCtrl?: any;
   VariableQueryEditor?: any;
   QueryEditor?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
-  ExploreQueryField?: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
-  ExploreMetricsQueryField?: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
-  ExploreLogsQueryField?: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
-  ExploreStartPage?: ComponentClass<ExploreStartPageProps>;
+  ExploreQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
+  ExploreMetricsQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
+  ExploreLogsQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
+  ExploreStartPage?: ComponentType<ExploreStartPageProps>;
   ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>;
 }
 

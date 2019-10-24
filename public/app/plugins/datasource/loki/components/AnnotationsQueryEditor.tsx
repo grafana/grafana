@@ -2,14 +2,15 @@
 import React, { memo } from 'react';
 
 // Types
-import { DataSourceApi, DataSourceJsonData, DataSourceStatus } from '@grafana/ui';
+import { DataSourceStatus } from '@grafana/ui';
 import { LokiQuery } from '../types';
 import { useLokiSyntax } from './useLokiSyntax';
 import { LokiQueryFieldForm } from './LokiQueryFieldForm';
+import LokiDatasource from '../datasource';
 
 interface Props {
   expr: string;
-  datasource: DataSourceApi<LokiQuery, DataSourceJsonData>;
+  datasource: LokiDatasource;
   onChange: (expr: string) => void;
 }
 
