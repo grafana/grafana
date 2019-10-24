@@ -44,6 +44,7 @@
     "@types/webpack": "4.4.34",
     "aws-sdk": "^2.495.0",
     "axios": "0.19.0",
+    "babel-jest": "24.8.0",
     "babel-loader": "8.0.6",
     "babel-plugin-angularjs-annotate": "0.10.0",
     "chalk": "^2.4.2",

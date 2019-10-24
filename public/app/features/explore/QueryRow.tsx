@@ -7,11 +7,12 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 // Components
 import QueryEditor from './QueryEditor';
+import { QueryRowActions } from './QueryRowActions';
 // Actions
 import { changeQuery, modifyQueries, runQueries, addQueryRow } from './state/actions';
 // Types
 import { StoreState } from 'app/types';
-import { TimeRange, AbsoluteTimeRange } from '@grafana/data';
+import { TimeRange, AbsoluteTimeRange, LoadingState } from '@grafana/data';
 import { DataQuery, DataSourceApi, QueryFixAction, DataSourceStatus, PanelData } from '@grafana/ui';
 import { HistoryItem, ExploreItemState, ExploreId, ExploreMode } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
@@ -76,8 +77,13 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     this.props.addQueryRow(exploreId, index);
   };
 
-  onClickClearButton = () => {
-    this.onChange(null, true);
+  onClickToggleHiddenQuery = () => {
+    const { exploreId, index, query } = this.props;
+    const newQuery = {
+      ...query,
+      hide: !query.hide,
+    };
+    this.props.changeQuery(exploreId, newQuery, index, true);
   };
 
   onClickHintFix = (action: QueryFixAction) => {
@@ -120,8 +126,10 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       latency,
       mode,
     } = this.props;
+
     const canToggleEditorModes =
       mode === ExploreMode.Metrics && has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
+    const canHide = queryResponse.state !== LoadingState.NotStarted;
     const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
     let QueryField;
 
@@ -163,32 +171,17 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
           )}
         </div>
         <div className="query-row-status">
-          <QueryStatus queryResponse={queryResponse} latency={latency} />
+          <QueryStatus queryResponse={queryResponse} latency={query.hide ? 0 : latency} />
         </div>
-        <div className="gf-form-inline flex-shrink-0">
-          {canToggleEditorModes && (
-            <div className="gf-form">
-              <button className="gf-form-label gf-form-label--btn" onClick={this.onClickToggleEditorMode}>
-                <i className="fa fa-pencil" />
-              </button>
-            </div>
-          )}
-          <div className="gf-form">
-            <button className="gf-form-label gf-form-label--btn" onClick={this.onClickClearButton}>
-              <i className="fa fa-times" />
-            </button>
-          </div>
-          <div className="gf-form">
-            <button className="gf-form-label gf-form-label--btn" onClick={this.onClickAddButton}>
-              <i className="fa fa-plus" />
-            </button>
-          </div>
-          <div className="gf-form">
-            <button className="gf-form-label gf-form-label--btn" onClick={this.onClickRemoveButton}>
-              <i className="fa fa-minus" />
-            </button>
-          </div>
-        </div>
+        <QueryRowActions
+          canToggleEditorModes={canToggleEditorModes}
+          hideQuery={query.hide}
+          canHide={canHide}
+          onClickToggleEditorMode={this.onClickToggleEditorMode}
+          onClickToggleHiddenQuery={this.onClickToggleHiddenQuery}
+          onClickAddButton={this.onClickAddButton}
+          onClickRemoveButton={this.onClickRemoveButton}
+        />
       </div>
     );
   }
