@@ -8,13 +8,26 @@ import { getLogRowStyles } from './getLogRowStyles';
 interface Props extends Themeable {
   row: LogRowModel;
   getRows: () => LogRowModel[];
-  onClickLabel?: (label: string, value: string) => void;
+  onClickFilterLabel?: (key: string, value: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string) => void;
 }
 
 function UnThemedLogDetails(props: Props) {
-  const { row, theme } = props;
+  const { row, theme, onClickFilterLabel, onClickFilterOutLabel } = props;
   // const { getRows, onClickLabel } = props;
   /* <LogLabels getRows={getRows} labels={row.uniqueLabels ? row.uniqueLabels : {}} onClickLabel={onClickLabel} /> */
+
+  const filterLabel = (label: string, value: string) => {
+    if (onClickFilterLabel) {
+      onClickFilterLabel(label, value);
+    }
+  };
+
+  const filterOutLabel = (label: string, value: string) => {
+    if (onClickFilterOutLabel) {
+      onClickFilterOutLabel(label, value);
+    }
+  };
   const style = getLogRowStyles(theme, row.logLevel);
   const labels = row.labels;
   return (
@@ -25,10 +38,10 @@ function UnThemedLogDetails(props: Props) {
             <div onClick={() => alert('1')} className={cx([style.logsRowDetailsIcon])}>
               <i className={'fa fa-signal'} />
             </div>
-            <div onClick={() => alert('2')} className={cx([style.logsRowDetailsIcon])}>
+            <div onClick={() => filterLabel(key, labels[key])} className={cx([style.logsRowDetailsIcon])}>
               <i className={'fa fa-search-plus'} />
             </div>
-            <div onClick={() => alert('3')} className={cx([style.logsRowDetailsIcon])}>
+            <div onClick={() => filterOutLabel(key, labels[key])} className={cx([style.logsRowDetailsIcon])}>
               <i className={'fa fa-search-minus'} />
             </div>
             <div className={cx([style.logsRowDetailsLabel])}>{key}</div>

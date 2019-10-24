@@ -21,7 +21,8 @@ interface Props extends Themeable {
   showTime: boolean;
   timeZone: TimeZone;
   getRows: () => LogRowModel[];
-  onClickLabel?: (label: string, value: string) => void;
+  onClickFilterLabel?: (key: string, value: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string) => void;
   onContextClick?: () => void;
   getRowContext: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>;
 }
@@ -69,7 +70,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     const {
       getRows,
       highlighterExpressions,
-      onClickLabel,
+      onClickFilterLabel,
+      onClickFilterOutLabel,
       row,
       showDuplicates,
       timeZone,
@@ -121,7 +123,12 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             <div>
               {this.state.showDetails && (
                 <div className={cx([style.logsRowCell])}>
-                  <LogDetails onClickLabel={onClickLabel} getRows={getRows} row={row} />
+                  <LogDetails
+                    onClickFilterLabel={onClickFilterLabel}
+                    onClickFilterOutLabel={onClickFilterOutLabel}
+                    getRows={getRows}
+                    row={row}
+                  />
                 </div>
               )}
             </div>

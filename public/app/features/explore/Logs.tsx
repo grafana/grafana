@@ -39,7 +39,8 @@ interface Props {
   scanRange?: RawTimeRange;
   dedupStrategy: LogsDedupStrategy;
   onChangeTime: (range: AbsoluteTimeRange) => void;
-  onClickLabel?: (label: string, value: string) => void;
+  onClickFilterLabel?: (key: string, value: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string) => void;
   onStartScanning?: () => void;
   onStopScanning?: () => void;
   onDedupStrategyChange: (dedupStrategy: LogsDedupStrategy) => void;
@@ -97,7 +98,8 @@ export class Logs extends PureComponent<Props, State> {
       data,
       highlighterExpressions,
       loading = false,
-      onClickLabel,
+      onClickFilterLabel,
+      onClickFilterOutLabel,
       timeZone,
       scanning,
       scanRange,
@@ -186,7 +188,8 @@ export class Logs extends PureComponent<Props, State> {
           dedupStrategy={dedupStrategy}
           getRowContext={this.props.getRowContext}
           highlighterExpressions={highlighterExpressions}
-          onClickLabel={onClickLabel}
+          onClickFilterLabel={onClickFilterLabel}
+          onClickFilterOutLabel={onClickFilterOutLabel}
           rowLimit={data ? data.rows.length : undefined}
           showTime={showTime}
           timeZone={timeZone}
