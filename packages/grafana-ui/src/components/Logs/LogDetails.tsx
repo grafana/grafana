@@ -16,11 +16,12 @@ function UnThemedLogDetails(props: Props) {
   // const { getRows, onClickLabel } = props;
   /* <LogLabels getRows={getRows} labels={row.uniqueLabels ? row.uniqueLabels : {}} onClickLabel={onClickLabel} /> */
   const style = getLogRowStyles(theme, row.logLevel);
+  const labels = row.labels;
   return (
     <div className={cx([style.logsRowDetailsTable])}>
-      {Object.keys(row).map((item, idx) => {
+      {Object.keys(labels).map(key => {
         return (
-          <div key={idx} className={cx([style.logsRowDetailsRow])}>
+          <div key={key} className={cx([style.logsRowDetailsRow])}>
             <div onClick={() => alert('1')} className={cx([style.logsRowDetailsIcon])}>
               <i className={'fa fa-signal'} />
             </div>
@@ -30,8 +31,8 @@ function UnThemedLogDetails(props: Props) {
             <div onClick={() => alert('3')} className={cx([style.logsRowDetailsIcon])}>
               <i className={'fa fa-search-minus'} />
             </div>
-            <div className={cx([style.logsRowDetailsLabel])}>{item}</div>
-            <div className={cx([style.logsRowCell])}>{JSON.stringify(row[item])}</div>
+            <div className={cx([style.logsRowDetailsLabel])}>{key}</div>
+            <div className={cx([style.logsRowCell])}>{labels[key]}</div>
           </div>
         );
       })}
