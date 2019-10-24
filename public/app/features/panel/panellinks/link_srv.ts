@@ -156,8 +156,6 @@ export class LinkSrv implements LinkService {
     const params: KeyValue = {};
     const timeRangeUrl = toUrlParams(this.timeSrv.timeRangeForUrl());
 
-    console.log('getDataLinkUIModel', link, scopedVars);
-
     let href = link.url;
     if (link.onBuildUrl) {
       href = link.onBuildUrl({
@@ -165,6 +163,7 @@ export class LinkSrv implements LinkService {
         scopedVars,
       });
     }
+
     let onClick: (e: any) => void = undefined;
     if (link.onClick) {
       onClick = (e: any) => {

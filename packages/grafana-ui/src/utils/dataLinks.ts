@@ -21,8 +21,6 @@ export const DataLinkBuiltInVars = {
  */
 export const linkModelToContextMenuItems: (links: LinkModelSupplier<any>) => ContextMenuItem[] = links => {
   return links.getLinks().map(link => {
-    debugger;
-    console.log('LINK TO CONTEXT', link);
     return {
       label: link.title,
       // TODO: rename to href

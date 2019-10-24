@@ -216,6 +216,7 @@ class GraphElement {
               url: link.href,
               target: link.target,
               icon: `fa ${link.target === '_self' ? 'fa-link' : 'fa-external-link'}`,
+              onClick: link.onClick,
             };
           }),
         },

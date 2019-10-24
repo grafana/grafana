@@ -47,31 +47,17 @@ export function runSignalStream(
     const streamId = `signal-${req.panelId}-${target.refId}`;
     const maxDataPoints = req.maxDataPoints || 1000;
 
-    // title: string;
-    // targetBlank?: boolean;
-
-    // // 3: The URL if others did not set it first
-    // url: string;
-
-    // // 2: If exists, use this to construct the URL
-    // // Not saved in JSON/DTO
-    // onBuildUrl?: (event: DataLinkClickEvent) => string;
-
-    // // 1: If exists, handle click directly
-    // // Not saved in JSON/DTO
-    // onClick?: (event: DataLinkClickEvent) => void;
-
-    const onBuildUrl: DataLink[] = [
-      {
-        url: '',
-        title: 'HREF HREF HREF',
-        onBuildUrl: (event: DataLinkClickEvent) => {
-          console.log('BUILD HREF', event);
-          return '/STREAM/XXX';
-        },
-      },
-    ];
-    const onClick = [
+    // const testFUNC: DataLink[] = [
+    //   {
+    //     url: '',
+    //     title: 'HREF HREF HREF',
+    //     onBuildUrl: (event: DataLinkClickEvent) => {
+    //       console.log('BUILD HREF', event);
+    //       return '/STREAM/XXX';
+    //     },
+    //   },
+    // ];
+    const testFUNC: DataLink[] = [
       {
         url: '',
         title: 'CLICK CLICK CLICK',
@@ -88,15 +74,15 @@ export function runSignalStream(
     });
     data.refId = target.refId;
     data.name = target.alias || 'Signal ' + target.refId;
-    data.addField({ name: 'time', type: FieldType.time }).config.links = onBuildUrl;
-    data.addField({ name: 'value', type: FieldType.number }).config.links = onBuildUrl;
+    data.addField({ name: 'time', type: FieldType.time }).config.links = testFUNC;
+    data.addField({ name: 'value', type: FieldType.number }).config.links = testFUNC;
 
     const { spread, speed, bands, noise } = query;
 
     for (let i = 0; i < bands; i++) {
       const suffix = bands > 1 ? ` ${i + 1}` : '';
-      data.addField({ name: 'Min' + suffix, type: FieldType.number }).config.links = onClick;
-      data.addField({ name: 'Max' + suffix, type: FieldType.number }).config.links = onClick;
+      data.addField({ name: 'Min' + suffix, type: FieldType.number }).config.links = testFUNC;
+      data.addField({ name: 'Max' + suffix, type: FieldType.number }).config.links = testFUNC;
     }
 
     let value = Math.random() * 100;
