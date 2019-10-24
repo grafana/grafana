@@ -14,25 +14,27 @@ interface Props extends Themeable {
 function UnThemedLogDetails(props: Props) {
   const { row, theme } = props;
   // const { getRows, onClickLabel } = props;
+  /* <LogLabels getRows={getRows} labels={row.uniqueLabels ? row.uniqueLabels : {}} onClickLabel={onClickLabel} /> */
   const style = getLogRowStyles(theme, row.logLevel);
   return (
     <div className={cx([style.logsRowDetailsTable])}>
-      <tr>
-        <td>A</td>
-        <td>B</td>
-        <td>C</td>
-      </tr>
-      <tr>
-        <td>A</td>
-        <td>B</td>
-        <td>C</td>
-      </tr>
-      <tr>
-        <td>A</td>
-        <td>B</td>
-        <td>C</td>
-      </tr>
-      {/* <LogLabels getRows={getRows} labels={row.uniqueLabels ? row.uniqueLabels : {}} onClickLabel={onClickLabel} /> */}
+      {Object.keys(row).map((item, idx) => {
+        return (
+          <div key={idx} className={cx([style.logsRowDetailsRow])}>
+            <div onClick={() => alert('1')} className={cx([style.logsRowDetailsIcon])}>
+              <i className={'fa fa-signal'} />
+            </div>
+            <div onClick={() => alert('2')} className={cx([style.logsRowDetailsIcon])}>
+              <i className={'fa fa-search-plus'} />
+            </div>
+            <div onClick={() => alert('3')} className={cx([style.logsRowDetailsIcon])}>
+              <i className={'fa fa-search-minus'} />
+            </div>
+            <div className={cx([style.logsRowDetailsLabel])}>{item}</div>
+            <div className={cx([style.logsRowCell])}>{JSON.stringify(row[item])}</div>
+          </div>
+        );
+      })}
     </div>
   );
 }
