@@ -202,8 +202,6 @@ class GraphElement {
         },
       ];
 
-      console.log('getContextMenuItemsSupplier', linksSupplier);
-
       if (!linksSupplier) {
         return items;
       }
