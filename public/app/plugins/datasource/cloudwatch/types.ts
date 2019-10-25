@@ -1,4 +1,4 @@
-import { DataQuery } from '@grafana/data';
+import { DataQuery, DataSourceJsonData } from '@grafana/ui';
 
 export interface CloudWatchQuery extends DataQuery {
   id: string;
@@ -9,4 +9,12 @@ export interface CloudWatchQuery extends DataQuery {
   statistics: string[];
   period: string;
   expression: string;
+}
+
+export interface CloudWatchOptions extends DataSourceJsonData {
+  version: number;
+  jsonData: object;
+  editorJsonData?: object;
+  secureJsonData: object;
+  editorSecureJsonData?: object;
 }

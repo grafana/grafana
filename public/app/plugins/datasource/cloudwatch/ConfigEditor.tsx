@@ -1,18 +1,23 @@
 import React, { PureComponent, ChangeEvent } from 'react';
-import { DataSourcePluginOptionsEditorProps, FormLabel, Select, Input, Button } from '@grafana/ui';
+import { DataSourcePluginOptionsEditorProps, DataSourceSettings, FormLabel, Select, Input, Button } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import DatasourceSrv, { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import CloudWatchDatasource from './datasource';
+import { CloudWatchOptions } from './types';
 
 export type Props = DataSourcePluginOptionsEditorProps<any>;
 
+export type CloudwatchSettings = DataSourceSettings<CloudWatchOptions>;
+
 export interface State {
-  config: any;
+  config: CloudwatchSettings;
   authProviderOptions: SelectableValue[];
   regions: SelectableValue[];
 }
 
 export class ConfigEditor extends PureComponent<Props, State> {
+  datasourceSrv: DatasourceSrv = null;
+
   constructor(props: Props) {
     super(props);
 
@@ -31,11 +36,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     this.datasourceSrv = getDatasourceSrv();
 
     this.updateDatasource(this.state.config);
-
-    this.getRegions();
   }
-
-  datasourceSrv: DatasourceSrv = null;
 
   static getDerivedStateFromProps(props: Props, state: State) {
     return {
@@ -71,6 +72,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
     return options;
   };
+
+  componentDidMount() {
+    this.getRegions();
+  }
 
   getRegions() {
     this.datasourceSrv
