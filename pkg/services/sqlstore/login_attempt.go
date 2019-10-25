@@ -43,6 +43,10 @@ func DeleteOldLoginAttempts(cmd *m.DeleteOldLoginAttemptsCommand) error {
 		if err != nil {
 			return err
 		}
+		// nolint: gosimple
+		if result == nil || len(result) == 0 || result[0] == nil {
+			return nil
+		}
 
 		maxId = toInt64(result[0]["id"])
 
@@ -78,14 +82,14 @@ func GetUserLoginAttemptCount(query *m.GetUserLoginAttemptCountQuery) error {
 }
 
 func toInt64(i interface{}) int64 {
-	switch i.(type) {
+	switch i := i.(type) {
 	case []byte:
-		n, _ := strconv.ParseInt(string(i.([]byte)), 10, 64)
+		n, _ := strconv.ParseInt(string(i), 10, 64)
 		return n
 	case int:
-		return int64(i.(int))
+		return int64(i)
 	case int64:
-		return i.(int64)
+		return i
 	}
 	return 0
 }

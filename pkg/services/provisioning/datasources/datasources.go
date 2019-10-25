@@ -5,13 +5,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/grafana/grafana/pkg/models"
 )
 
 var (
-	ErrInvalidConfigToManyDefault = errors.New("datasource.yaml config is invalid. Only one datasource can be marked as default")
+	ErrInvalidConfigToManyDefault = errors.New("datasource.yaml config is invalid. Only one datasource per organization can be marked as default")
 )
 
 func Provision(configDirectory string) error {

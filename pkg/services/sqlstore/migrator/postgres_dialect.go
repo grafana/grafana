@@ -4,15 +4,19 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/go-xorm/xorm"
+	"github.com/lib/pq"
 )
 
 type Postgres struct {
 	BaseDialect
 }
 
-func NewPostgresDialect() *Postgres {
+func NewPostgresDialect(engine *xorm.Engine) *Postgres {
 	d := Postgres{}
 	d.BaseDialect.dialect = &d
+	d.BaseDialect.engine = engine
 	d.BaseDialect.driverName = POSTGRES
 	return &d
 }
@@ -23,10 +27,6 @@ func (db *Postgres) SupportEngine() bool {
 
 func (db *Postgres) Quote(name string) string {
 	return "\"" + name + "\""
-}
-
-func (db *Postgres) QuoteStr() string {
-	return "\""
 }
 
 func (b *Postgres) LikeStr() string {
@@ -45,9 +45,8 @@ func (b *Postgres) Default(col *Column) string {
 	if col.Type == DB_Bool {
 		if col.Default == "0" {
 			return "FALSE"
-		} else {
-			return "TRUE"
 		}
+		return "TRUE"
 	}
 	return col.Default
 }
@@ -92,8 +91,8 @@ func (db *Postgres) SqlType(c *Column) string {
 		res = t
 	}
 
-	var hasLen1 bool = (c.Length > 0)
-	var hasLen2 bool = (c.Length2 > 0)
+	var hasLen1 = (c.Length > 0)
+	var hasLen2 = (c.Length2 > 0)
 	if hasLen2 {
 		res += "(" + strconv.Itoa(c.Length) + "," + strconv.Itoa(c.Length2) + ")"
 	} else if hasLen1 {
@@ -102,24 +101,57 @@ func (db *Postgres) SqlType(c *Column) string {
 	return res
 }
 
-func (db *Postgres) TableCheckSql(tableName string) (string, []interface{}) {
-	args := []interface{}{"grafana", tableName}
-	sql := "SELECT table_name FROM information_schema.tables WHERE table_schema=? and table_name=?"
+func (db *Postgres) IndexCheckSql(tableName, indexName string) (string, []interface{}) {
+	args := []interface{}{tableName, indexName}
+	sql := "SELECT 1 FROM " + db.Quote("pg_indexes") + " WHERE" + db.Quote("tablename") + "=? AND " + db.Quote("indexname") + "=?"
 	return sql, args
 }
 
 func (db *Postgres) DropIndexSql(tableName string, index *Index) string {
 	quote := db.Quote
 	idxName := index.XName(tableName)
-	return fmt.Sprintf("DROP INDEX %v", quote(idxName))
+	return fmt.Sprintf("DROP INDEX %v CASCADE", quote(idxName))
 }
 
 func (db *Postgres) UpdateTableSql(tableName string, columns []*Column) string {
 	var statements = []string{}
 
 	for _, col := range columns {
-		statements = append(statements, "ALTER "+db.QuoteStr()+col.Name+db.QuoteStr()+" TYPE "+db.SqlType(col))
+		statements = append(statements, "ALTER "+db.Quote(col.Name)+" TYPE "+db.SqlType(col))
 	}
 
 	return "ALTER TABLE " + db.Quote(tableName) + " " + strings.Join(statements, ", ") + ";"
+}
+
+func (db *Postgres) CleanDB() error {
+	sess := db.engine.NewSession()
+	defer sess.Close()
+
+	if _, err := sess.Exec("DROP SCHEMA public CASCADE;"); err != nil {
+		return fmt.Errorf("Failed to drop schema public")
+	}
+
+	if _, err := sess.Exec("CREATE SCHEMA public;"); err != nil {
+		return fmt.Errorf("Failed to create schema public")
+	}
+
+	return nil
+}
+
+func (db *Postgres) isThisError(err error, errcode string) bool {
+	if driverErr, ok := err.(*pq.Error); ok {
+		if string(driverErr.Code) == errcode {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (db *Postgres) IsUniqueConstraintViolation(err error) bool {
+	return db.isThisError(err, "23505")
+}
+
+func (db *Postgres) IsDeadlock(err error) bool {
+	return db.isThisError(err, "40P01")
 }

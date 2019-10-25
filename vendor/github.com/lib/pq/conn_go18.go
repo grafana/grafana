@@ -1,5 +1,3 @@
-// +build go1.8
-
 package pq
 
 import (
@@ -9,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"time"
 )
 
 // Implement the "QueryerContext" interface
@@ -76,13 +75,32 @@ func (cn *conn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, 
 	return tx, nil
 }
 
+func (cn *conn) Ping(ctx context.Context) error {
+	if finish := cn.watchCancel(ctx); finish != nil {
+		defer finish()
+	}
+	rows, err := cn.simpleQuery("SELECT 'lib/pq ping test';")
+	if err != nil {
+		return driver.ErrBadConn // https://golang.org/pkg/database/sql/driver/#Pinger
+	}
+	rows.Close()
+	return nil
+}
+
 func (cn *conn) watchCancel(ctx context.Context) func() {
 	if done := ctx.Done(); done != nil {
 		finished := make(chan struct{})
 		go func() {
 			select {
 			case <-done:
-				_ = cn.cancel()
+				// At this point the function level context is canceled,
+				// so it must not be used for the additional network
+				// request to cancel the query.
+				// Create a new context to pass into the dial.
+				ctxCancel, cancel := context.WithTimeout(context.Background(), time.Second*10)
+				defer cancel()
+
+				_ = cn.cancel(ctxCancel)
 				finished <- struct{}{}
 			case <-finished:
 			}
@@ -97,8 +115,8 @@ func (cn *conn) watchCancel(ctx context.Context) func() {
 	return nil
 }
 
-func (cn *conn) cancel() error {
-	c, err := dial(cn.dialer, cn.opts)
+func (cn *conn) cancel(ctx context.Context) error {
+	c, err := dial(ctx, cn.dialer, cn.opts)
 	if err != nil {
 		return err
 	}
@@ -108,7 +126,10 @@ func (cn *conn) cancel() error {
 		can := conn{
 			c: c,
 		}
-		can.ssl(cn.opts)
+		err = can.ssl(cn.opts)
+		if err != nil {
+			return err
+		}
 
 		w := can.writeBuf(0)
 		w.int32(80877102) // cancel request code

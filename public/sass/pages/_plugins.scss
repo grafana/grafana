@@ -2,10 +2,12 @@
   color: $gray-3;
   font-size: $font-size-sm;
   position: relative;
-  top: 1.2rem;
+  top: $space-md;
+
   &:hover {
     color: $link-hover-color;
   }
+
   img {
     vertical-align: top;
   }
@@ -18,12 +20,12 @@
 }
 
 .plugin-info-list-item {
-  img {
-    width: 16px;
-  }
-
   white-space: nowrap;
   max-width: $page-sidebar-width;
   text-overflow: ellipsis;
   overflow: hidden;
+
+  img {
+    width: 16px;
+  }
 }

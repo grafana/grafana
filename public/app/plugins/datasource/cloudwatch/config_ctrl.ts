@@ -1,17 +1,23 @@
+import _ from 'lodash';
+import DatasourceSrv from 'app/features/plugins/datasource_srv';
+import CloudWatchDatasource from './datasource';
 export class CloudWatchConfigCtrl {
   static templateUrl = 'partials/config.html';
   current: any;
+  datasourceSrv: any;
 
   accessKeyExist = false;
   secretKeyExist = false;
 
   /** @ngInject */
-  constructor($scope) {
+  constructor($scope: any, datasourceSrv: DatasourceSrv) {
     this.current.jsonData.timeField = this.current.jsonData.timeField || '@timestamp';
     this.current.jsonData.authType = this.current.jsonData.authType || 'credentials';
 
     this.accessKeyExist = this.current.secureJsonFields.accessKey;
     this.secretKeyExist = this.current.secureJsonFields.secretKey;
+    this.datasourceSrv = datasourceSrv;
+    this.getRegions();
   }
 
   resetAccessKey() {
@@ -28,7 +34,7 @@ export class CloudWatchConfigCtrl {
     { name: 'ARN', value: 'arn' },
   ];
 
-  indexPatternTypes = [
+  indexPatternTypes: any = [
     { name: 'No pattern', value: undefined },
     { name: 'Hourly', value: 'Hourly', example: '[logstash-]YYYY.MM.DD.HH' },
     { name: 'Daily', value: 'Daily', example: '[logstash-]YYYY.MM.DD' },
@@ -36,4 +42,48 @@ export class CloudWatchConfigCtrl {
     { name: 'Monthly', value: 'Monthly', example: '[logstash-]YYYY.MM' },
     { name: 'Yearly', value: 'Yearly', example: '[logstash-]YYYY' },
   ];
+
+  regions = [
+    'ap-east-1',
+    'ap-northeast-1',
+    'ap-northeast-2',
+    'ap-northeast-3',
+    'ap-south-1',
+    'ap-southeast-1',
+    'ap-southeast-2',
+    'ca-central-1',
+    'cn-north-1',
+    'cn-northwest-1',
+    'eu-central-1',
+    'eu-north-1',
+    'eu-west-1',
+    'eu-west-2',
+    'eu-west-3',
+    'me-south-1',
+    'sa-east-1',
+    'us-east-1',
+    'us-east-2',
+    'us-gov-east-1',
+    'us-gov-west-1',
+    'us-iso-east-1',
+    'us-isob-east-1',
+    'us-west-1',
+    'us-west-2',
+  ];
+
+  getRegions() {
+    this.datasourceSrv
+      .loadDatasource(this.current.name)
+      .then((ds: CloudWatchDatasource) => {
+        return ds.getRegions();
+      })
+      .then(
+        (regions: any) => {
+          this.regions = _.map(regions, 'value');
+        },
+        (err: any) => {
+          console.error('failed to get latest regions');
+        }
+      );
+  }
 }

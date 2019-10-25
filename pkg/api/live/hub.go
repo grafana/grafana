@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 type hub struct {
@@ -35,9 +35,6 @@ func newHub() *hub {
 		subChannel:    make(chan *streamSubscription),
 		log:           log.New("stream.hub"),
 	}
-}
-
-func (h *hub) removeConnection() {
 }
 
 func (h *hub) run(ctx context.Context) {

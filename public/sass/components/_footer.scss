@@ -4,7 +4,7 @@
 
 .footer {
   color: $footer-link-color;
-  padding: 5rem 0 1rem 0;
+  padding: $space-md 0 $space-md 0;
   font-size: $font-size-sm;
   position: relative;
   width: 98%; /* was causing horiz scrollbars - need to examine */
@@ -25,7 +25,7 @@
     display: inline-block;
     padding-right: 2px;
     &::after {
-      content: " | ";
+      content: ' | ';
       padding-left: 2px;
     }
   }
@@ -33,14 +33,33 @@
   li:last-child {
     &::after {
       padding-left: 0;
-      content: "";
+      content: '';
     }
   }
 }
 
+.is-react .footer {
+  display: none;
+}
+
+.is-react .custom-scrollbar .footer {
+  display: block;
+}
+
+// Keeping footer inside the graphic on Login screen
 .login-page {
   .footer {
-    position: absolute;
+    display: block;
     bottom: $spacer;
+    position: absolute;
+    padding: $space-md 0 $space-md 0;
+  }
+}
+
+@include media-breakpoint-up(sm) {
+  .login-page {
+    .footer {
+      padding: 70px 0 $space-md 0;
+    }
   }
 }

@@ -2,17 +2,20 @@ package imguploader
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
+	"github.com/aws/aws-sdk-go/aws/credentials/endpointcreds"
+	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -50,7 +53,7 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 				SecretAccessKey: u.secretKey,
 			}},
 			&credentials.EnvProvider{},
-			&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute},
+			remoteCredProvider(sess),
 		})
 	cfg := &aws.Config{
 		Region:      aws.String(u.region),
@@ -58,14 +61,19 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 	}
 
 	s3_endpoint, _ := endpoints.DefaultResolver().EndpointFor("s3", u.region)
-	key := u.path + util.GetRandomString(20) + ".png"
+	rand, err := util.GetRandomString(20)
+	if err != nil {
+		return "", err
+	}
+	key := u.path + rand + pngExt
 	image_url := s3_endpoint.URL + "/" + u.bucket + "/" + key
-	log.Debug("Uploading image to s3", "url = ", image_url)
+	log.Debug("Uploading image to s3. url = %s", image_url)
 
 	file, err := os.Open(imageDiskPath)
 	if err != nil {
 		return "", err
 	}
+	defer file.Close()
 
 	sess, err = session.NewSession(cfg)
 	if err != nil {
@@ -84,4 +92,28 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 		return "", err
 	}
 	return image_url, nil
+}
+
+func remoteCredProvider(sess *session.Session) credentials.Provider {
+	ecsCredURI := os.Getenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
+
+	if len(ecsCredURI) > 0 {
+		return ecsCredProvider(sess, ecsCredURI)
+	}
+	return ec2RoleProvider(sess)
+}
+
+func ecsCredProvider(sess *session.Session, uri string) credentials.Provider {
+	const host = `169.254.170.2`
+
+	d := defaults.Get()
+	return endpointcreds.NewProviderClient(
+		*d.Config,
+		d.Handlers,
+		fmt.Sprintf("http://%s%s", host, uri),
+		func(p *endpointcreds.Provider) { p.ExpiryWindow = 5 * time.Minute })
+}
+
+func ec2RoleProvider(sess *session.Session) credentials.Provider {
+	return &ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute}
 }

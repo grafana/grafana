@@ -27,6 +27,11 @@ func SearchOrgs(query *m.SearchOrgsQuery) error {
 	if query.Name != "" {
 		sess.Where("name=?", query.Name)
 	}
+
+	if len(query.Ids) > 0 {
+		sess.In("id", query.Ids)
+	}
+
 	sess.Limit(query.Limit, query.Limit*query.Page)
 	sess.Cols("id", "name")
 	err := sess.Find(&query.Result)
@@ -133,7 +138,7 @@ func UpdateOrg(cmd *m.UpdateOrgCommand) error {
 			Updated: time.Now(),
 		}
 
-		affectedRows, err := sess.Id(cmd.OrgId).Update(&org)
+		affectedRows, err := sess.ID(cmd.OrgId).Update(&org)
 
 		if err != nil {
 			return err
@@ -166,7 +171,7 @@ func UpdateOrgAddress(cmd *m.UpdateOrgAddressCommand) error {
 			Updated: time.Now(),
 		}
 
-		if _, err := sess.Id(cmd.OrgId).Update(&org); err != nil {
+		if _, err := sess.ID(cmd.OrgId).Update(&org); err != nil {
 			return err
 		}
 

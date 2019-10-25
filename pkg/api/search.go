@@ -4,41 +4,41 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/metrics"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
 )
 
-func Search(c *middleware.Context) {
+func Search(c *m.ReqContext) Response {
 	query := c.Query("query")
 	tags := c.QueryStrings("tag")
 	starred := c.Query("starred")
-	limit := c.QueryInt("limit")
+	limit := c.QueryInt64("limit")
+	page := c.QueryInt64("page")
 	dashboardType := c.Query("type")
-	permission := models.PERMISSION_VIEW
+	permission := m.PERMISSION_VIEW
 
-	if limit == 0 {
-		limit = 1000
+	if limit > 5000 {
+		return Error(422, "Limit is above maximum allowed (5000), use page parameter to access hits beyond limit", nil)
 	}
 
 	if c.Query("permission") == "Edit" {
-		permission = models.PERMISSION_EDIT
+		permission = m.PERMISSION_EDIT
 	}
 
-	dbids := make([]int64, 0)
+	dbIDs := make([]int64, 0)
 	for _, id := range c.QueryStrings("dashboardIds") {
-		dashboardId, err := strconv.ParseInt(id, 10, 64)
+		dashboardID, err := strconv.ParseInt(id, 10, 64)
 		if err == nil {
-			dbids = append(dbids, dashboardId)
+			dbIDs = append(dbIDs, dashboardID)
 		}
 	}
 
-	folderIds := make([]int64, 0)
+	folderIDs := make([]int64, 0)
 	for _, id := range c.QueryStrings("folderIds") {
-		folderId, err := strconv.ParseInt(id, 10, 64)
+		folderID, err := strconv.ParseInt(id, 10, 64)
 		if err == nil {
-			folderIds = append(folderIds, folderId)
+			folderIDs = append(folderIDs, folderID)
 		}
 	}
 
@@ -47,20 +47,20 @@ func Search(c *middleware.Context) {
 		Tags:         tags,
 		SignedInUser: c.SignedInUser,
 		Limit:        limit,
+		Page:         page,
 		IsStarred:    starred == "true",
 		OrgId:        c.OrgId,
-		DashboardIds: dbids,
+		DashboardIds: dbIDs,
 		Type:         dashboardType,
-		FolderIds:    folderIds,
+		FolderIds:    folderIDs,
 		Permission:   permission,
 	}
 
 	err := bus.Dispatch(&searchQuery)
 	if err != nil {
-		c.JsonApiErr(500, "Search failed", err)
-		return
+		return Error(500, "Search failed", err)
 	}
 
-	c.TimeRequest(metrics.M_Api_Dashboard_Search)
-	c.JSON(200, searchQuery.Result)
+	c.TimeRequest(metrics.MApiDashboardSearch)
+	return JSON(200, searchQuery.Result)
 }

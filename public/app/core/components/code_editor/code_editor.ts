@@ -21,6 +21,8 @@
  * data-tab-size           - Tab size, default is 2.
  * data-behaviours-enabled - Specifies whether to use behaviors or not. "Behaviors" in this case is the auto-pairing of
  *                           special characters, like quotation marks, parenthesis, or brackets.
+ * data-snippets-enabled   - Specifies whether to use snippets or not. "Snippets" are small pieces of code that can be
+ *                           inserted via the completion box.
  *
  * Keybindings:
  * Ctrl-Enter (Command-Enter): run onChange() function
@@ -28,42 +30,49 @@
 
 import coreModule from 'app/core/core_module';
 import config from 'app/core/config';
-import ace from 'brace';
-import './theme-grafana-dark';
-import 'brace/ext/language_tools';
-import 'brace/theme/textmate';
-import 'brace/mode/text';
-import 'brace/snippets/text';
-import 'brace/mode/sql';
-import 'brace/snippets/sql';
-import 'brace/mode/markdown';
-import 'brace/snippets/markdown';
-import 'brace/mode/json';
-import 'brace/snippets/json';
 
 const DEFAULT_THEME_DARK = 'ace/theme/grafana-dark';
 const DEFAULT_THEME_LIGHT = 'ace/theme/textmate';
 const DEFAULT_MODE = 'text';
 const DEFAULT_MAX_LINES = 10;
 const DEFAULT_TAB_SIZE = 2;
-const DEFAULT_BEHAVIOURS = true;
+const DEFAULT_BEHAVIORS = true;
+const DEFAULT_SNIPPETS = true;
 
-let editorTemplate = `<div></div>`;
+const editorTemplate = `<div></div>`;
 
-function link(scope, elem, attrs) {
+async function link(scope: any, elem: any, attrs: any) {
   // Options
-  let langMode = attrs.mode || DEFAULT_MODE;
-  let maxLines = attrs.maxLines || DEFAULT_MAX_LINES;
-  let showGutter = attrs.showGutter !== undefined;
-  let tabSize = attrs.tabSize || DEFAULT_TAB_SIZE;
-  let behavioursEnabled = attrs.behavioursEnabled ? attrs.behavioursEnabled === 'true' : DEFAULT_BEHAVIOURS;
+  const langMode = attrs.mode || DEFAULT_MODE;
+  const maxLines = attrs.maxLines || DEFAULT_MAX_LINES;
+  const showGutter = attrs.showGutter !== undefined;
+  const tabSize = attrs.tabSize || DEFAULT_TAB_SIZE;
+  const behavioursEnabled = attrs.behavioursEnabled ? attrs.behavioursEnabled === 'true' : DEFAULT_BEHAVIORS;
+  const snippetsEnabled = attrs.snippetsEnabled ? attrs.snippetsEnabled === 'true' : DEFAULT_SNIPPETS;
 
   // Initialize editor
-  let aceElem = elem.get(0);
-  let codeEditor = ace.edit(aceElem);
-  let editorSession = codeEditor.getSession();
+  const aceElem = elem.get(0);
+  const { default: ace } = await import(/* webpackChunkName: "brace" */ 'brace');
+  await import('brace/ext/language_tools');
+  await import('brace/theme/textmate');
+  await import('brace/mode/text');
+  await import('brace/snippets/text');
+  await import('brace/mode/sql');
+  await import('brace/snippets/sql');
+  await import('brace/mode/sqlserver');
+  await import('brace/snippets/sqlserver');
+  await import('brace/mode/markdown');
+  await import('brace/snippets/markdown');
+  await import('brace/mode/json');
+  await import('brace/snippets/json');
 
-  let editorOptions = {
+  // @ts-ignore
+  await import('./theme-grafana-dark');
+
+  const codeEditor = ace.edit(aceElem);
+  const editorSession = codeEditor.getSession();
+
+  const editorOptions = {
     maxLines: maxLines,
     showGutter: showGutter,
     tabSize: tabSize,
@@ -78,7 +87,7 @@ function link(scope, elem, attrs) {
   // disable depreacation warning
   codeEditor.$blockScrolling = Infinity;
   // Padding hacks
-  (<any>codeEditor.renderer).setScrollMargin(15, 15);
+  (codeEditor.renderer as any).setScrollMargin(10, 10);
   codeEditor.renderer.setPadding(10);
 
   setThemeMode();
@@ -87,15 +96,15 @@ function link(scope, elem, attrs) {
 
   // Add classes
   elem.addClass('gf-code-editor');
-  let textarea = elem.find('textarea');
+  const textarea = elem.find('textarea');
   textarea.addClass('gf-form-input');
 
   if (scope.codeEditorFocus) {
-    setTimeout(function() {
+    setTimeout(() => {
       textarea.focus();
-      var domEl = textarea[0];
+      const domEl = textarea[0];
       if (domEl.setSelectionRange) {
-        var pos = textarea.val().length * 2;
+        const pos = textarea.val().length * 2;
         domEl.setSelectionRange(pos, pos);
       }
     }, 100);
@@ -104,16 +113,16 @@ function link(scope, elem, attrs) {
   // Event handlers
   editorSession.on('change', e => {
     scope.$apply(() => {
-      let newValue = codeEditor.getValue();
+      const newValue = codeEditor.getValue();
       scope.content = newValue;
     });
   });
 
   // Sync with outer scope - update editor content if model has been changed from outside of directive.
-  scope.$watch('content', (newValue, oldValue) => {
-    let editorValue = codeEditor.getValue();
+  scope.$watch('content', (newValue: any, oldValue: any) => {
+    const editorValue = codeEditor.getValue();
     if (newValue !== editorValue && newValue !== oldValue) {
-      scope.$$postDigest(function() {
+      scope.$$postDigest(() => {
         setEditorContent(newValue);
       });
     }
@@ -136,22 +145,22 @@ function link(scope, elem, attrs) {
     },
   });
 
-  function setLangMode(lang) {
+  function setLangMode(lang: string) {
     ace.acequire('ace/ext/language_tools');
     codeEditor.setOptions({
       enableBasicAutocompletion: true,
       enableLiveAutocompletion: true,
-      enableSnippets: true,
+      enableSnippets: snippetsEnabled,
     });
 
     if (scope.getCompleter()) {
       // make copy of array as ace seems to share completers array between instances
-      const anyEditor = <any>codeEditor;
+      const anyEditor = codeEditor as any;
       anyEditor.completers = anyEditor.completers.slice();
       anyEditor.completers.push(scope.getCompleter());
     }
 
-    let aceModeName = `ace/mode/${lang}`;
+    const aceModeName = `ace/mode/${lang}`;
     editorSession.setMode(aceModeName);
   }
 
@@ -164,7 +173,7 @@ function link(scope, elem, attrs) {
     codeEditor.setTheme(theme);
   }
 
-  function setEditorContent(value) {
+  function setEditorContent(value: string) {
     codeEditor.setValue(value);
     codeEditor.clearSelection();
   }

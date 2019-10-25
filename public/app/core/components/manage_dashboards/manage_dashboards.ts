@@ -2,6 +2,30 @@ import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { SearchSrv } from 'app/core/services/search_srv';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { NavModelSrv } from 'app/core/nav_model_srv';
+import { ContextSrv } from 'app/core/services/context_srv';
+import { CoreEvents } from 'app/types';
+
+export interface Section {
+  id: number;
+  uid: string;
+  title: string;
+  expanded: boolean;
+  removable: boolean;
+  items: any[];
+  url: string;
+  icon: string;
+  score: number;
+  checked: boolean;
+  hideHeader: boolean;
+  toggle: Function;
+}
+
+export interface FoldersAndDashboardUids {
+  folderUids: string[];
+  dashboardUids: string[];
+}
 
 class Query {
   query: string;
@@ -14,7 +38,7 @@ class Query {
 }
 
 export class ManageDashboardsCtrl {
-  public sections: any[];
+  sections: Section[];
 
   query: Query;
   navModel: any;
@@ -42,9 +66,17 @@ export class ManageDashboardsCtrl {
   // if user has editor role or higher
   isEditor: boolean;
 
+  hasEditPermissionInFolders: boolean;
+
   /** @ngInject */
-  constructor(private backendSrv, navModelSrv, private searchSrv: SearchSrv, private contextSrv) {
+  constructor(
+    private backendSrv: BackendSrv,
+    navModelSrv: NavModelSrv,
+    private searchSrv: SearchSrv,
+    private contextSrv: ContextSrv
+  ) {
     this.isEditor = this.contextSrv.isEditor;
+    this.hasEditPermissionInFolders = this.contextSrv.hasEditPermissionInFolders;
 
     this.query = {
       query: '',
@@ -70,7 +102,7 @@ export class ManageDashboardsCtrl {
   refreshList() {
     return this.searchSrv
       .search(this.query)
-      .then(result => {
+      .then((result: Section[]) => {
         return this.initDashboardList(result);
       })
       .then(() => {
@@ -78,13 +110,16 @@ export class ManageDashboardsCtrl {
           return;
         }
 
-        return this.backendSrv.getFolderByUid(this.folderUid).then(folder => {
+        return this.backendSrv.getFolderByUid(this.folderUid).then((folder: any) => {
           this.canSave = folder.canSave;
+          if (!this.canSave) {
+            this.hasEditPermissionInFolders = false;
+          }
         });
       });
   }
 
-  initDashboardList(result: any) {
+  initDashboardList(result: Section[]) {
     this.canMove = false;
     this.canDelete = false;
     this.selectAllChecked = false;
@@ -97,10 +132,10 @@ export class ManageDashboardsCtrl {
 
     this.sections = result;
 
-    for (let section of this.sections) {
+    for (const section of this.sections) {
       section.checked = false;
 
-      for (let dashboard of section.items) {
+      for (const dashboard of section.items) {
         dashboard.checked = false;
       }
     }
@@ -113,8 +148,8 @@ export class ManageDashboardsCtrl {
   selectionChanged() {
     let selectedDashboards = 0;
 
-    for (let section of this.sections) {
-      selectedDashboards += _.filter(section.items, { checked: true }).length;
+    for (const section of this.sections) {
+      selectedDashboards += _.filter(section.items, { checked: true } as any).length;
     }
 
     const selectedFolders = _.filter(this.sections, { checked: true }).length;
@@ -122,27 +157,27 @@ export class ManageDashboardsCtrl {
     this.canDelete = selectedDashboards > 0 || selectedFolders > 0;
   }
 
-  getFoldersAndDashboardsToDelete() {
-    let selectedDashboards = {
-      folders: [],
-      dashboards: [],
+  getFoldersAndDashboardsToDelete(): FoldersAndDashboardUids {
+    const selectedDashboards: FoldersAndDashboardUids = {
+      folderUids: [],
+      dashboardUids: [],
     };
 
     for (const section of this.sections) {
       if (section.checked && section.id !== 0) {
-        selectedDashboards.folders.push(section.uid);
+        selectedDashboards.folderUids.push(section.uid);
       } else {
-        const selected = _.filter(section.items, { checked: true });
-        selectedDashboards.dashboards.push(..._.map(selected, 'uid'));
+        const selected = _.filter(section.items, { checked: true } as any);
+        selectedDashboards.dashboardUids.push(..._.map(selected, 'uid'));
       }
     }
 
     return selectedDashboards;
   }
 
-  getFolderIds(sections) {
+  getFolderIds(sections: Section[]) {
     const ids = [];
-    for (let s of sections) {
+    for (const s of sections) {
       if (s.checked) {
         ids.push(s.id);
       }
@@ -152,8 +187,8 @@ export class ManageDashboardsCtrl {
 
   delete() {
     const data = this.getFoldersAndDashboardsToDelete();
-    const folderCount = data.folders.length;
-    const dashCount = data.dashboards.length;
+    const folderCount = data.folderUids.length;
+    const dashCount = data.dashboardUids.length;
     let text = 'Do you want to delete the ';
     let text2;
 
@@ -166,29 +201,29 @@ export class ManageDashboardsCtrl {
       text += `selected dashboard${dashCount === 1 ? '' : 's'}?`;
     }
 
-    appEvents.emit('confirm-modal', {
+    appEvents.emit(CoreEvents.showConfirmModal, {
       title: 'Delete',
       text: text,
       text2: text2,
       icon: 'fa-trash',
       yesText: 'Delete',
       onConfirm: () => {
-        this.deleteFoldersAndDashboards(data.folders, data.dashboards);
+        this.deleteFoldersAndDashboards(data.folderUids, data.dashboardUids);
       },
     });
   }
 
-  private deleteFoldersAndDashboards(folderUids, dashboardUids) {
+  private deleteFoldersAndDashboards(folderUids: string[], dashboardUids: string[]) {
     this.backendSrv.deleteFoldersAndDashboards(folderUids, dashboardUids).then(() => {
       this.refreshList();
     });
   }
 
   getDashboardsToMove() {
-    let selectedDashboards = [];
+    const selectedDashboards = [];
 
     for (const section of this.sections) {
-      const selected = _.filter(section.items, { checked: true });
+      const selected = _.filter(section.items, { checked: true } as any);
       selectedDashboards.push(..._.map(selected, 'uid'));
     }
 
@@ -201,8 +236,8 @@ export class ManageDashboardsCtrl {
     const template =
       '<move-to-folder-modal dismiss="dismiss()" ' +
       'dashboards="model.dashboards" after-save="model.afterSave()">' +
-      '</move-to-folder-modal>`';
-    appEvents.emit('show-modal', {
+      '</move-to-folder-modal>';
+    appEvents.emit(CoreEvents.showModal, {
       templateHtml: template,
       modalClass: 'modal--narrow',
       model: {
@@ -213,13 +248,13 @@ export class ManageDashboardsCtrl {
   }
 
   initTagFilter() {
-    return this.searchSrv.getDashboardTags().then(results => {
+    return this.searchSrv.getDashboardTags().then((results: any) => {
       this.tagFilterOptions = [{ term: 'Filter By Tag', disabled: true }].concat(results);
       this.selectedTagFilter = this.tagFilterOptions[0];
     });
   }
 
-  filterByTag(tag) {
+  filterByTag(tag: any) {
     if (_.indexOf(this.query.tag, tag) === -1) {
       this.query.tag.push(tag);
     }
@@ -232,12 +267,12 @@ export class ManageDashboardsCtrl {
   }
 
   onTagFilterChange() {
-    var res = this.filterByTag(this.selectedTagFilter.term);
+    const res = this.filterByTag(this.selectedTagFilter.term);
     this.selectedTagFilter = this.tagFilterOptions[0];
     return res;
   }
 
-  removeTag(tag, evt) {
+  removeTag(tag: any, evt: Event) {
     this.query.tag = _.without(this.query.tag, tag);
     this.refreshList();
     if (evt) {
@@ -258,12 +293,12 @@ export class ManageDashboardsCtrl {
   }
 
   onSelectAllChanged() {
-    for (let section of this.sections) {
+    for (const section of this.sections) {
       if (!section.hideHeader) {
         section.checked = this.selectAllChecked;
       }
 
-      section.items = _.map(section.items, item => {
+      section.items = _.map(section.items, (item: any) => {
         item.checked = this.selectAllChecked;
         return item;
       });
@@ -281,6 +316,16 @@ export class ManageDashboardsCtrl {
 
   createDashboardUrl() {
     let url = 'dashboard/new';
+
+    if (this.folderId) {
+      url += `?folderId=${this.folderId}`;
+    }
+
+    return url;
+  }
+
+  importDashboardUrl() {
+    let url = 'dashboard/import';
 
     if (this.folderId) {
       url += `?folderId=${this.folderId}`;

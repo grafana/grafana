@@ -23,7 +23,8 @@ import (
 
 	"gopkg.in/macaron.v1"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -34,7 +35,7 @@ var (
 	slash     = []byte("/")
 )
 
-// stack returns a nicely formated stack frame, skipping skip frames
+// stack returns a nicely formatted stack frame, skipping skip frames
 func stack(skip int) []byte {
 	buf := new(bytes.Buffer) // the returned data
 	// As we loop, we open files and read them. These variables record the currently
@@ -106,7 +107,7 @@ func Recovery() macaron.Handler {
 				panicLogger := log.Root
 				// try to get request logger
 				if ctx, ok := c.Data["ctx"]; ok {
-					ctxTyped := ctx.(*Context)
+					ctxTyped := ctx.(*m.ReqContext)
 					panicLogger = ctxTyped.Logger
 				}
 
@@ -114,6 +115,7 @@ func Recovery() macaron.Handler {
 
 				c.Data["Title"] = "Server Error"
 				c.Data["AppSubUrl"] = setting.AppSubUrl
+				c.Data["Theme"] = setting.DefaultTheme
 
 				if setting.Env == setting.DEV {
 					if theErr, ok := err.(error); ok {
@@ -123,7 +125,7 @@ func Recovery() macaron.Handler {
 					c.Data["ErrorMsg"] = string(stack)
 				}
 
-				ctx, ok := c.Data["ctx"].(*Context)
+				ctx, ok := c.Data["ctx"].(*m.ReqContext)
 
 				if ok && ctx.IsApiRequest() {
 					resp := make(map[string]interface{})
@@ -137,7 +139,7 @@ func Recovery() macaron.Handler {
 
 					c.JSON(500, resp)
 				} else {
-					c.HTML(500, "error")
+					c.HTML(500, setting.ERR_TEMPLATE_NAME)
 				}
 			}
 		}()

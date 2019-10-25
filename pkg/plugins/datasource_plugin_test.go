@@ -1,35 +1,34 @@
 package plugins
 
 import (
+	"bytes"
+	"encoding/json"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestComposeBinaryName(t *testing.T) {
-	tests := []struct {
-		name string
-		os   string
-		arch string
+func TestLoadDatasourceVersion(t *testing.T) {
+	t.Run("If plugin version is not set, it should be treated as plugin version one", func(t *testing.T) {
+		pluginJSON, _ := json.Marshal(DataSourcePlugin{})
+		datasourcePlugin := DataSourcePlugin{}
+		(&datasourcePlugin).Load(json.NewDecoder(bytes.NewReader(pluginJSON)), "/tmp")
+		assert.True(t, datasourcePlugin.isVersionOne())
+	})
 
-		expectedPath string
-	}{
-		{
-			name:         "simple-json",
-			os:           "linux",
-			arch:         "amd64",
-			expectedPath: `simple-json_linux_amd64`,
-		},
-		{
-			name:         "simple-json",
-			os:           "windows",
-			arch:         "amd64",
-			expectedPath: `simple-json_windows_amd64.exe`,
-		},
-	}
+	t.Run("If plugin version is set to one, it should be treated as plugin version one", func(t *testing.T) {
+		pluginJSON, _ := json.Marshal(DataSourcePlugin{SDK: false})
+		datasourcePlugin := DataSourcePlugin{}
+		(&datasourcePlugin).Load(json.NewDecoder(bytes.NewReader(pluginJSON)), "/tmp")
+		assert.True(t, datasourcePlugin.isVersionOne())
+		assert.False(t, datasourcePlugin.SDK)
+	})
 
-	for _, v := range tests {
-		have := composeBinaryName(v.name, v.os, v.arch)
-		if have != v.expectedPath {
-			t.Errorf("expected %s got %s", v.expectedPath, have)
-		}
-	}
+	t.Run("If plugin version is set to two, it should not be treated as plugin version one", func(t *testing.T) {
+		pluginJSON, _ := json.Marshal(DataSourcePlugin{SDK: true})
+		datasourcePlugin := DataSourcePlugin{}
+		(&datasourcePlugin).Load(json.NewDecoder(bytes.NewReader(pluginJSON)), "/tmp")
+		assert.False(t, datasourcePlugin.isVersionOne())
+		assert.True(t, datasourcePlugin.SDK)
+	})
 }

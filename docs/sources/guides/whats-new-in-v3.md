@@ -1,6 +1,6 @@
 +++
 title = "What's New in Grafana v3.0"
-description = "Feature & improvement highlights for Grafana v3.0"
+description = "Feature and improvement highlights for Grafana v3.0"
 keywords = ["grafana", "new", "documentation", "3.0"]
 type = "docs"
 [menu.docs]
@@ -76,7 +76,7 @@ example:
 grafana-cli install grafana-pie-chart-panel
 ```
 
-## Personalization & Preferences
+## Personalization and Preferences
 
 The home dashboard, timezone and theme can now be customized on Organization
 and user Profile level. Grafana can also track recently viewed dashboards, which
@@ -197,7 +197,7 @@ you can install it manually from [Grafana.com](https://grafana.com)
 ## Plugin showcase
 
 Discovering and installing plugins is very quick and easy with Grafana 3.0 and [Grafana.com](https://grafana.com). Here
-are a couple that I incurage you try!
+are a couple that I encourage you try!
 
 #### [Clock Panel](https://grafana.com/plugins/grafana-clock-panel)
 Support's both current time and count down mode.

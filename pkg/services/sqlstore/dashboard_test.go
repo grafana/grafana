@@ -1,11 +1,11 @@
 package sqlstore
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
 
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -15,10 +15,8 @@ import (
 )
 
 func TestDashboardDataAccess(t *testing.T) {
-	var x *xorm.Engine
-
 	Convey("Testing DB", t, func() {
-		x = InitTestDB(t)
+		InitTestDB(t)
 
 		Convey("Given saved dashboard", func() {
 			savedFolder := insertTestDashboard("1 test dash folder", 1, 0, true, "prod", "webapp")
@@ -107,9 +105,8 @@ func TestDashboardDataAccess(t *testing.T) {
 					timesCalled += 1
 					if timesCalled <= 2 {
 						return savedDash.Uid
-					} else {
-						return util.GenerateShortUid()
 					}
+					return util.GenerateShortUID()
 				}
 				cmd := m.SaveDashboardCommand{
 					OrgId: 1,
@@ -122,7 +119,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				err := SaveDashboard(&cmd)
 				So(err, ShouldBeNil)
 
-				generateNewUid = util.GenerateShortUid
+				generateNewUid = util.GenerateShortUID
 			})
 
 			Convey("Should be able to create dashboard", func() {
@@ -184,7 +181,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(query.Result.FolderId, ShouldEqual, 0)
 				So(query.Result.CreatedBy, ShouldEqual, savedDash.CreatedBy)
-				So(query.Result.Created, ShouldEqual, savedDash.Created.Truncate(time.Second))
+				So(query.Result.Created, ShouldHappenWithin, 3*time.Second, savedDash.Created)
 				So(query.Result.UpdatedBy, ShouldEqual, 100)
 				So(query.Result.Updated.IsZero(), ShouldBeFalse)
 			})
@@ -262,6 +259,50 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(hit.FolderTitle, ShouldEqual, "")
 			})
 
+			Convey("Should be able to limit search", func() {
+				query := search.FindPersistedDashboardsQuery{
+					OrgId:        1,
+					Limit:        1,
+					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
+				}
+
+				err := SearchDashboards(&query)
+				So(err, ShouldBeNil)
+
+				So(len(query.Result), ShouldEqual, 1)
+				So(query.Result[0].Title, ShouldEqual, "1 test dash folder")
+			})
+
+			Convey("Should be able to search beyond limit using paging", func() {
+				query := search.FindPersistedDashboardsQuery{
+					OrgId:        1,
+					Limit:        1,
+					Page:         2,
+					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
+				}
+
+				err := SearchDashboards(&query)
+				So(err, ShouldBeNil)
+
+				So(len(query.Result), ShouldEqual, 1)
+				So(query.Result[0].Title, ShouldEqual, "test dash 23")
+			})
+
+			Convey("Should be able to filter by tag and type", func() {
+				query := search.FindPersistedDashboardsQuery{
+					OrgId:        1,
+					Type:         "dash-db",
+					Tags:         []string{"prod"},
+					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
+				}
+
+				err := SearchDashboards(&query)
+				So(err, ShouldBeNil)
+
+				So(len(query.Result), ShouldEqual, 3)
+				So(query.Result[0].Title, ShouldEqual, "test dash 23")
+			})
+
 			Convey("Should be able to search for a dashboard folder's children", func() {
 				query := search.FindPersistedDashboardsQuery{
 					OrgId:        1,
@@ -304,15 +345,17 @@ func TestDashboardDataAccess(t *testing.T) {
 
 			Convey("Given two dashboards, one is starred dashboard by user 10, other starred by user 1", func() {
 				starredDash := insertTestDashboard("starred dash", 1, 0, false)
-				StarDashboard(&m.StarDashboardCommand{
+				err := StarDashboard(&m.StarDashboardCommand{
 					DashboardId: starredDash.Id,
 					UserId:      10,
 				})
+				So(err, ShouldBeNil)
 
-				StarDashboard(&m.StarDashboardCommand{
+				err = StarDashboard(&m.StarDashboardCommand{
 					DashboardId: savedDash.Id,
 					UserId:      1,
 				})
+				So(err, ShouldBeNil)
 
 				Convey("Should be able to search for starred dashboards", func() {
 					query := search.FindPersistedDashboardsQuery{
@@ -390,14 +433,16 @@ func insertTestDashboardForPlugin(title string, orgId int64, folderId int64, isF
 
 func createUser(name string, role string, isAdmin bool) m.User {
 	setting.AutoAssignOrg = true
+	setting.AutoAssignOrgId = 1
 	setting.AutoAssignOrgRole = role
 
 	currentUserCmd := m.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
-	err := CreateUser(&currentUserCmd)
+	err := CreateUser(context.Background(), &currentUserCmd)
 	So(err, ShouldBeNil)
 
 	q1 := m.GetUserOrgListQuery{UserId: currentUserCmd.Result.Id}
-	GetUserOrgList(&q1)
+	err = GetUserOrgList(&q1)
+	So(err, ShouldBeNil)
 	So(q1.Result[0].Role, ShouldEqual, role)
 
 	return currentUserCmd.Result

@@ -1,10 +1,15 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
+import config from 'app/core/config';
 import { transformDataToTable } from './transformers';
 import { tablePanelEditor } from './editor';
 import { columnOptionsTab } from './column_options';
 import { TableRenderer } from './renderer';
+import { isTableData } from '@grafana/data';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { PanelEvents } from '@grafana/ui';
+import { CoreEvents } from 'app/types';
 
 class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -14,7 +19,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   table: any;
   renderer: any;
 
-  panelDefaults = {
+  panelDefaults: any = {
     targets: [{}],
     transform: 'timeseries_to_columns',
     pageSize: null,
@@ -38,13 +43,20 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       },
     ],
     columns: [],
-    scroll: true,
+
     fontSize: '100%',
     sort: { col: 0, desc: true },
   };
 
   /** @ngInject */
-  constructor($scope, $injector, templateSrv, private annotationsSrv, private $sanitize, private variableSrv) {
+  constructor(
+    $scope: any,
+    $injector: any,
+    templateSrv: TemplateSrv,
+    private annotationsSrv: any,
+    private $sanitize: any,
+    private variableSrv: any
+  ) {
     super($scope, $injector);
 
     this.pageIndex = 0;
@@ -58,11 +70,11 @@ class TablePanelCtrl extends MetricsPanelCtrl {
 
     _.defaults(this.panel, this.panelDefaults);
 
-    this.events.on('data-received', this.onDataReceived.bind(this));
-    this.events.on('data-error', this.onDataError.bind(this));
-    this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
-    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
-    this.events.on('init-panel-actions', this.onInitPanelActions.bind(this));
+    this.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this));
+    this.events.on(PanelEvents.dataError, this.onDataError.bind(this));
+    this.events.on(PanelEvents.dataSnapshotLoad, this.onDataReceived.bind(this));
+    this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
+    this.events.on(PanelEvents.initPanelActions, this.onInitPanelActions.bind(this));
   }
 
   onInitEditMode() {
@@ -70,41 +82,44 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Column Styles', columnOptionsTab, 3);
   }
 
-  onInitPanelActions(actions) {
+  onInitPanelActions(actions: any[]) {
     actions.push({ text: 'Export CSV', click: 'ctrl.exportCsv()' });
   }
 
-  issueQueries(datasource) {
+  issueQueries(datasource: any) {
     this.pageIndex = 0;
 
     if (this.panel.transform === 'annotations') {
-      this.setTimeQueryStart();
       return this.annotationsSrv
         .getAnnotations({
           dashboard: this.dashboard,
           panel: this.panel,
           range: this.range,
         })
-        .then(annotations => {
-          return { data: annotations };
+        .then((anno: any) => {
+          this.loading = false;
+          this.dataRaw = anno;
+          this.pageIndex = 0;
+          this.render();
+          return { data: this.dataRaw }; // Not used
         });
     }
 
     return super.issueQueries(datasource);
   }
 
-  onDataError(err) {
+  onDataError(err: any) {
     this.dataRaw = [];
     this.render();
   }
 
-  onDataReceived(dataList) {
+  onDataReceived(dataList: any) {
     this.dataRaw = dataList;
     this.pageIndex = 0;
 
     // automatically correct transform mode based on data
     if (this.dataRaw && this.dataRaw.length) {
-      if (this.dataRaw[0].type === 'table') {
+      if (isTableData(this.dataRaw[0])) {
         this.panel.transform = 'table';
       } else {
         if (this.dataRaw[0].type === 'docs') {
@@ -129,13 +144,14 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       this.table,
       this.dashboard.isTimezoneUtc(),
       this.$sanitize,
-      this.templateSrv
+      this.templateSrv,
+      config.theme.type
     );
 
     return super.render(this.table);
   }
 
-  toggleColumnSort(col, colIndex) {
+  toggleColumnSort(col: any, colIndex: any) {
     // remove sort flag from current column
     if (this.table.columns[this.panel.sort.col]) {
       this.table.columns[this.panel.sort.col].sort = false;
@@ -155,23 +171,23 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   }
 
   exportCsv() {
-    var scope = this.$scope.$new(true);
+    const scope = this.$scope.$new(true);
     scope.tableData = this.renderer.render_values();
     scope.panel = 'table';
-    this.publishAppEvent('show-modal', {
+    this.publishAppEvent(CoreEvents.showModal, {
       templateHtml: '<export-data-modal panel="panel" data="tableData"></export-data-modal>',
       scope,
       modalClass: 'modal--narrow',
     });
   }
 
-  link(scope, elem, attrs, ctrl: TablePanelCtrl) {
-    var data;
-    var panel = ctrl.panel;
-    var pageCount = 0;
+  link(scope: any, elem: JQuery, attrs: any, ctrl: TablePanelCtrl) {
+    let data: any;
+    const panel = ctrl.panel;
+    let pageCount = 0;
 
     function getTableHeight() {
-      var panelHeight = ctrl.height;
+      let panelHeight = ctrl.height;
 
       if (pageCount > 1) {
         panelHeight -= 26;
@@ -180,35 +196,35 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       return panelHeight - 31 + 'px';
     }
 
-    function appendTableRows(tbodyElem) {
+    function appendTableRows(tbodyElem: JQuery) {
       ctrl.renderer.setTable(data);
       tbodyElem.empty();
       tbodyElem.html(ctrl.renderer.render(ctrl.pageIndex));
     }
 
-    function switchPage(e) {
-      var el = $(e.currentTarget);
+    function switchPage(e: any) {
+      const el = $(e.currentTarget);
       ctrl.pageIndex = parseInt(el.text(), 10) - 1;
       renderPanel();
     }
 
-    function appendPaginationControls(footerElem) {
+    function appendPaginationControls(footerElem: JQuery) {
       footerElem.empty();
 
-      var pageSize = panel.pageSize || 100;
+      const pageSize = panel.pageSize || 100;
       pageCount = Math.ceil(data.rows.length / pageSize);
       if (pageCount === 1) {
         return;
       }
 
-      var startPage = Math.max(ctrl.pageIndex - 3, 0);
-      var endPage = Math.min(pageCount, startPage + 9);
+      const startPage = Math.max(ctrl.pageIndex - 3, 0);
+      const endPage = Math.min(pageCount, startPage + 9);
 
-      var paginationList = $('<ul></ul>');
+      const paginationList = $('<ul></ul>');
 
-      for (var i = startPage; i < endPage; i++) {
-        var activeClass = i === ctrl.pageIndex ? 'active' : '';
-        var pageLinkElem = $(
+      for (let i = startPage; i < endPage; i++) {
+        const activeClass = i === ctrl.pageIndex ? 'active' : '';
+        const pageLinkElem = $(
           '<li><a class="table-panel-page-link pointer ' + activeClass + '">' + (i + 1) + '</a></li>'
         );
         paginationList.append(pageLinkElem);
@@ -218,18 +234,18 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     }
 
     function renderPanel() {
-      var panelElem = elem.parents('.panel');
-      var rootElem = elem.find('.table-panel-scroll');
-      var tbodyElem = elem.find('tbody');
-      var footerElem = elem.find('.table-panel-footer');
+      const panelElem = elem.parents('.panel-content');
+      const rootElem = elem.find('.table-panel-scroll');
+      const tbodyElem = elem.find('tbody');
+      const footerElem = elem.find('.table-panel-footer');
 
       elem.css({ 'font-size': panel.fontSize });
-      panelElem.addClass('table-panel-wrapper');
+      panelElem.addClass('table-panel-content');
 
       appendTableRows(tbodyElem);
       appendPaginationControls(footerElem);
 
-      rootElem.css({ 'max-height': panel.scroll ? getTableHeight() : '' });
+      rootElem.css({ 'max-height': getTableHeight() });
     }
 
     // hook up link tooltips
@@ -237,9 +253,9 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       selector: '[data-link-tooltip]',
     });
 
-    function addFilterClicked(e) {
-      let filterData = $(e.currentTarget).data();
-      var options = {
+    function addFilterClicked(e: any) {
+      const filterData = $(e.currentTarget).data();
+      const options = {
         datasource: panel.datasource,
         key: data.columns[filterData.column].text,
         value: data.rows[filterData.row][filterData.column],
@@ -252,13 +268,13 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     elem.on('click', '.table-panel-page-link', switchPage);
     elem.on('click', '.table-panel-filter-link', addFilterClicked);
 
-    var unbindDestroy = scope.$on('$destroy', function() {
+    const unbindDestroy = scope.$on('$destroy', () => {
       elem.off('click', '.table-panel-page-link');
       elem.off('click', '.table-panel-filter-link');
       unbindDestroy();
     });
 
-    ctrl.events.on('render', function(renderData) {
+    ctrl.events.on(PanelEvents.render, (renderData: any) => {
       data = renderData || data;
       if (data) {
         renderPanel();

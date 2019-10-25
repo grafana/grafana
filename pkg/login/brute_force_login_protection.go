@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	maxInvalidLoginAttempts int64         = 5
-	loginAttemptsWindow     time.Duration = time.Minute * 5
+	maxInvalidLoginAttempts int64 = 5
+	loginAttemptsWindow           = time.Minute * 5
 )
 
 var validateLoginAttempts = func(username string) error {
@@ -34,9 +34,9 @@ var validateLoginAttempts = func(username string) error {
 	return nil
 }
 
-var saveInvalidLoginAttempt = func(query *LoginUserQuery) {
+var saveInvalidLoginAttempt = func(query *m.LoginUserQuery) error {
 	if setting.DisableBruteForceLoginProtection {
-		return
+		return nil
 	}
 
 	loginAttemptCommand := m.CreateLoginAttemptCommand{
@@ -44,5 +44,5 @@ var saveInvalidLoginAttempt = func(query *LoginUserQuery) {
 		IpAddress: query.IpAddress,
 	}
 
-	bus.Dispatch(&loginAttemptCommand)
+	return bus.Dispatch(&loginAttemptCommand)
 }

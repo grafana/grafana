@@ -1,28 +1,40 @@
 import angular from 'angular';
 
-var directiveModule = angular.module('grafana.directives');
+const directiveModule = angular.module('grafana.directives');
+const directiveCache: any = {};
 
 /** @ngInject */
-function panelEditorTab(dynamicDirectiveSrv) {
+function panelEditorTab(dynamicDirectiveSrv: any) {
   return dynamicDirectiveSrv.create({
     scope: {
       ctrl: '=',
       editorTab: '=',
-      index: '=',
     },
-    directive: scope => {
-      var pluginId = scope.ctrl.pluginId;
-      var tabIndex = scope.index;
-      // create a wrapper for directiveFn
-      // required for metrics tab directive
-      // that is the same for many panels but
-      // given different names in this function
-      var fn = () => scope.editorTab.directiveFn();
+    directive: (scope: any) => {
+      const pluginId = scope.ctrl.pluginId;
+      const tabName = scope.editorTab.title
+        .toLowerCase()
+        .replace(' ', '-')
+        .replace('&', '')
+        .replace(' ', '')
+        .replace(' ', '-');
 
-      return Promise.resolve({
-        name: `panel-editor-tab-${pluginId}${tabIndex}`,
-        fn: fn,
-      });
+      if (directiveCache[pluginId]) {
+        if (directiveCache[pluginId][tabName]) {
+          return directiveCache[pluginId][tabName];
+        }
+      } else {
+        directiveCache[pluginId] = [];
+      }
+
+      const result = {
+        fn: () => scope.editorTab.directiveFn(),
+        name: `panel-editor-tab-${pluginId}${tabName}`,
+      };
+
+      directiveCache[pluginId][tabName] = result;
+
+      return result;
     },
   });
 }

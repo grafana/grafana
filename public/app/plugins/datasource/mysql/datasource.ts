@@ -1,22 +1,40 @@
 import _ from 'lodash';
 import ResponseParser from './response_parser';
+import MysqlQuery from 'app/plugins/datasource/mysql/mysql_query';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { IQService } from 'angular';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+//Types
+import { MysqlQueryForInterpolation } from './types';
+import { interpolateSearchFilter } from '../../../features/templating/variable';
 
 export class MysqlDatasource {
   id: any;
   name: any;
   responseParser: ResponseParser;
+  queryModel: MysqlQuery;
+  interval: string;
 
-  /** @ngInject **/
-  constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
+  /** @ngInject */
+  constructor(
+    instanceSettings: any,
+    private backendSrv: BackendSrv,
+    private $q: IQService,
+    private templateSrv: TemplateSrv,
+    private timeSrv: TimeSrv
+  ) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser(this.$q);
+    this.queryModel = new MysqlQuery({});
+    this.interval = (instanceSettings.jsonData || {}).timeInterval || '1m';
   }
 
-  interpolateVariable(value, variable) {
+  interpolateVariable = (value: string, variable: any) => {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
-        return "'" + value + "'";
+        return this.queryModel.quoteLiteral(value);
       } else {
         return value;
       }
@@ -26,27 +44,40 @@ export class MysqlDatasource {
       return value;
     }
 
-    var quotedValues = _.map(value, function(val) {
-      if (typeof value === 'number') {
-        return value;
-      }
-
-      return "'" + val + "'";
+    const quotedValues = _.map(value, (v: any) => {
+      return this.queryModel.quoteLiteral(v);
     });
     return quotedValues.join(',');
+  };
+
+  interpolateVariablesInQueries(queries: MysqlQueryForInterpolation[]): MysqlQueryForInterpolation[] {
+    let expandedQueries = queries;
+    if (queries && queries.length > 0) {
+      expandedQueries = queries.map(query => {
+        const expandedQuery = {
+          ...query,
+          datasource: this.name,
+          rawSql: this.templateSrv.replace(query.rawSql, {}, this.interpolateVariable),
+        };
+        return expandedQuery;
+      });
+    }
+    return expandedQueries;
   }
 
-  query(options) {
-    var queries = _.filter(options.targets, item => {
-      return item.hide !== true;
-    }).map(item => {
+  query(options: any) {
+    const queries = _.filter(options.targets, target => {
+      return target.hide !== true;
+    }).map(target => {
+      const queryModel = new MysqlQuery(target, this.templateSrv, options.scopedVars);
+
       return {
-        refId: item.refId,
+        refId: target.refId,
         intervalMs: options.intervalMs,
         maxDataPoints: options.maxDataPoints,
         datasourceId: this.id,
-        rawSql: this.templateSrv.replace(item.rawSql, options.scopedVars, this.interpolateVariable),
-        format: item.format,
+        rawSql: queryModel.render(this.interpolateVariable as any),
+        format: target.format,
       };
     });
 
@@ -67,7 +98,7 @@ export class MysqlDatasource {
       .then(this.responseParser.processQueryResult);
   }
 
-  annotationQuery(options) {
+  annotationQuery(options: any) {
     if (!options.annotation.rawQuery) {
       return this.$q.reject({
         message: 'Query missing in annotation definition',
@@ -91,24 +122,34 @@ export class MysqlDatasource {
           queries: [query],
         },
       })
-      .then(data => this.responseParser.transformAnnotationResponse(options, data));
+      .then((data: any) => this.responseParser.transformAnnotationResponse(options, data));
   }
 
-  metricFindQuery(query, optionalOptions) {
+  metricFindQuery(query: string, optionalOptions: any) {
     let refId = 'tempvar';
     if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
       refId = optionalOptions.variable.name;
     }
 
+    const rawSql = interpolateSearchFilter({
+      query: this.templateSrv.replace(query, {}, this.interpolateVariable),
+      options: optionalOptions,
+      wildcardChar: '%',
+      quoteLiteral: true,
+    });
+
     const interpolatedQuery = {
       refId: refId,
       datasourceId: this.id,
-      rawSql: this.templateSrv.replace(query, {}, this.interpolateVariable),
+      rawSql,
       format: 'table',
     };
 
-    var data = {
+    const range = this.timeSrv.timeRange();
+    const data = {
       queries: [interpolatedQuery],
+      from: range.from.valueOf().toString(),
+      to: range.to.valueOf().toString(),
     };
 
     if (optionalOptions && optionalOptions.range && optionalOptions.range.from) {
@@ -124,7 +165,7 @@ export class MysqlDatasource {
         method: 'POST',
         data: data,
       })
-      .then(data => this.responseParser.parseMetricFindQueryResult(refId, data));
+      .then((data: any) => this.responseParser.parseMetricFindQueryResult(refId, data));
   }
 
   testDatasource() {
@@ -147,10 +188,10 @@ export class MysqlDatasource {
           ],
         },
       })
-      .then(res => {
+      .then((res: any) => {
         return { status: 'success', message: 'Database Connection OK' };
       })
-      .catch(err => {
+      .catch((err: any) => {
         console.log(err);
         if (err.data && err.data.message) {
           return { status: 'error', message: err.data.message };
@@ -158,5 +199,20 @@ export class MysqlDatasource {
           return { status: 'error', message: err.status };
         }
       });
+  }
+
+  targetContainsTemplate(target: any) {
+    let rawSql = '';
+
+    if (target.rawQuery) {
+      rawSql = target.rawSql;
+    } else {
+      const query = new MysqlQuery(target);
+      rawSql = query.buildQuery();
+    }
+
+    rawSql = rawSql.replace('$__', '');
+
+    return this.templateSrv.variableExists(rawSql);
   }
 }

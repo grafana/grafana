@@ -71,6 +71,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/internal/sdkio"
 	"github.com/aws/aws-sdk-go/private/protocol/rest"
 )
 
@@ -97,25 +98,25 @@ var ignoredHeaders = rules{
 var requiredSignedHeaders = rules{
 	whitelist{
 		mapRule{
-			"Cache-Control":                                               struct{}{},
-			"Content-Disposition":                                         struct{}{},
-			"Content-Encoding":                                            struct{}{},
-			"Content-Language":                                            struct{}{},
-			"Content-Md5":                                                 struct{}{},
-			"Content-Type":                                                struct{}{},
-			"Expires":                                                     struct{}{},
-			"If-Match":                                                    struct{}{},
-			"If-Modified-Since":                                           struct{}{},
-			"If-None-Match":                                               struct{}{},
-			"If-Unmodified-Since":                                         struct{}{},
-			"Range":                                                       struct{}{},
-			"X-Amz-Acl":                                                   struct{}{},
-			"X-Amz-Copy-Source":                                           struct{}{},
-			"X-Amz-Copy-Source-If-Match":                                  struct{}{},
-			"X-Amz-Copy-Source-If-Modified-Since":                         struct{}{},
-			"X-Amz-Copy-Source-If-None-Match":                             struct{}{},
-			"X-Amz-Copy-Source-If-Unmodified-Since":                       struct{}{},
-			"X-Amz-Copy-Source-Range":                                     struct{}{},
+			"Cache-Control":                         struct{}{},
+			"Content-Disposition":                   struct{}{},
+			"Content-Encoding":                      struct{}{},
+			"Content-Language":                      struct{}{},
+			"Content-Md5":                           struct{}{},
+			"Content-Type":                          struct{}{},
+			"Expires":                               struct{}{},
+			"If-Match":                              struct{}{},
+			"If-Modified-Since":                     struct{}{},
+			"If-None-Match":                         struct{}{},
+			"If-Unmodified-Since":                   struct{}{},
+			"Range":                                 struct{}{},
+			"X-Amz-Acl":                             struct{}{},
+			"X-Amz-Copy-Source":                     struct{}{},
+			"X-Amz-Copy-Source-If-Match":            struct{}{},
+			"X-Amz-Copy-Source-If-Modified-Since":   struct{}{},
+			"X-Amz-Copy-Source-If-None-Match":       struct{}{},
+			"X-Amz-Copy-Source-If-Unmodified-Since": struct{}{},
+			"X-Amz-Copy-Source-Range":               struct{}{},
 			"X-Amz-Copy-Source-Server-Side-Encryption-Customer-Algorithm": struct{}{},
 			"X-Amz-Copy-Source-Server-Side-Encryption-Customer-Key":       struct{}{},
 			"X-Amz-Copy-Source-Server-Side-Encryption-Customer-Key-Md5":   struct{}{},
@@ -133,7 +134,9 @@ var requiredSignedHeaders = rules{
 			"X-Amz-Server-Side-Encryption-Customer-Key":                   struct{}{},
 			"X-Amz-Server-Side-Encryption-Customer-Key-Md5":               struct{}{},
 			"X-Amz-Storage-Class":                                         struct{}{},
+			"X-Amz-Tagging":                                               struct{}{},
 			"X-Amz-Website-Redirect-Location":                             struct{}{},
+			"X-Amz-Content-Sha256":                                        struct{}{},
 		},
 	},
 	patterns{"X-Amz-Meta-"},
@@ -179,7 +182,7 @@ type Signer struct {
 	// http://docs.aws.amazon.com/general/latest/gr/sigv4-create-canonical-request.html
 	DisableURIPathEscaping bool
 
-	// Disales the automatical setting of the HTTP request's Body field with the
+	// Disables the automatical setting of the HTTP request's Body field with the
 	// io.ReadSeeker passed in to the signer. This is useful if you're using a
 	// custom wrapper around the body for the io.ReadSeeker and want to preserve
 	// the Body value on the Request.Body.
@@ -341,7 +344,9 @@ func (v4 Signer) signWithBody(r *http.Request, body io.ReadSeeker, service, regi
 
 	ctx.sanitizeHostForHeader()
 	ctx.assignAmzQueryValues()
-	ctx.build(v4.DisableHeaderHoisting)
+	if err := ctx.build(v4.DisableHeaderHoisting); err != nil {
+		return nil, err
+	}
 
 	// If the request is not presigned the body should be attached to it. This
 	// prevents the confusion of wanting to send a signed request without
@@ -417,7 +422,7 @@ var SignRequestHandler = request.NamedHandler{
 // If the credentials of the request's config are set to
 // credentials.AnonymousCredentials the request will not be signed.
 func SignSDKRequest(req *request.Request) {
-	signSDKRequestWithCurrTime(req, time.Now)
+	SignSDKRequestWithCurrentTime(req, time.Now)
 }
 
 // BuildNamedHandler will build a generic handler for signing.
@@ -425,12 +430,15 @@ func BuildNamedHandler(name string, opts ...func(*Signer)) request.NamedHandler 
 	return request.NamedHandler{
 		Name: name,
 		Fn: func(req *request.Request) {
-			signSDKRequestWithCurrTime(req, time.Now, opts...)
+			SignSDKRequestWithCurrentTime(req, time.Now, opts...)
 		},
 	}
 }
 
-func signSDKRequestWithCurrTime(req *request.Request, curTimeFn func() time.Time, opts ...func(*Signer)) {
+// SignSDKRequestWithCurrentTime will sign the SDK's request using the time
+// function passed in. Behaves the same as SignSDKRequest with the exception
+// the request is signed with the value returned by the current time function.
+func SignSDKRequestWithCurrentTime(req *request.Request, curTimeFn func() time.Time, opts ...func(*Signer)) {
 	// If the request does not need to be signed ignore the signing of the
 	// request if the AnonymousCredentials object is used.
 	if req.Config.Credentials == credentials.AnonymousCredentials {
@@ -466,13 +474,9 @@ func signSDKRequestWithCurrTime(req *request.Request, curTimeFn func() time.Time
 		opt(v4)
 	}
 
-	signingTime := req.Time
-	if !req.LastSignedAt.IsZero() {
-		signingTime = req.LastSignedAt
-	}
-
+	curTime := curTimeFn()
 	signedHeaders, err := v4.signWithBody(req.HTTPRequest, req.GetBody(),
-		name, region, req.ExpireTime, req.ExpireTime > 0, signingTime,
+		name, region, req.ExpireTime, req.ExpireTime > 0, curTime,
 	)
 	if err != nil {
 		req.Error = err
@@ -481,7 +485,7 @@ func signSDKRequestWithCurrTime(req *request.Request, curTimeFn func() time.Time
 	}
 
 	req.SignedHeaderVals = signedHeaders
-	req.LastSignedAt = curTimeFn()
+	req.LastSignedAt = curTime
 }
 
 const logSignInfoMsg = `DEBUG: Request Signature:
@@ -503,11 +507,13 @@ func (v4 *Signer) logSigningInfo(ctx *signingCtx) {
 	v4.Logger.Log(msg)
 }
 
-func (ctx *signingCtx) build(disableHeaderHoisting bool) {
+func (ctx *signingCtx) build(disableHeaderHoisting bool) error {
 	ctx.buildTime()             // no depends
 	ctx.buildCredentialString() // no depends
 
-	ctx.buildBodyDigest()
+	if err := ctx.buildBodyDigest(); err != nil {
+		return err
+	}
 
 	unsignedHeaders := ctx.Request.Header
 	if ctx.isPresign {
@@ -535,6 +541,8 @@ func (ctx *signingCtx) build(disableHeaderHoisting bool) {
 		}
 		ctx.Request.Header.Set("Authorization", strings.Join(parts, ", "))
 	}
+
+	return nil
 }
 
 func (ctx *signingCtx) buildTime() {
@@ -661,21 +669,38 @@ func (ctx *signingCtx) buildSignature() {
 	ctx.signature = hex.EncodeToString(signature)
 }
 
-func (ctx *signingCtx) buildBodyDigest() {
+func (ctx *signingCtx) buildBodyDigest() error {
 	hash := ctx.Request.Header.Get("X-Amz-Content-Sha256")
 	if hash == "" {
-		if ctx.unsignedPayload || (ctx.isPresign && ctx.ServiceName == "s3") {
+		includeSHA256Header := ctx.unsignedPayload ||
+			ctx.ServiceName == "s3" ||
+			ctx.ServiceName == "glacier"
+
+		s3Presign := ctx.isPresign && ctx.ServiceName == "s3"
+
+		if ctx.unsignedPayload || s3Presign {
 			hash = "UNSIGNED-PAYLOAD"
+			includeSHA256Header = !s3Presign
 		} else if ctx.Body == nil {
 			hash = emptyStringSHA256
 		} else {
-			hash = hex.EncodeToString(makeSha256Reader(ctx.Body))
+			if !aws.IsReaderSeekable(ctx.Body) {
+				return fmt.Errorf("cannot use unseekable request body %T, for signed request with body", ctx.Body)
+			}
+			hashBytes, err := makeSha256Reader(ctx.Body)
+			if err != nil {
+				return err
+			}
+			hash = hex.EncodeToString(hashBytes)
 		}
-		if ctx.unsignedPayload || ctx.ServiceName == "s3" || ctx.ServiceName == "glacier" {
+
+		if includeSHA256Header {
 			ctx.Request.Header.Set("X-Amz-Content-Sha256", hash)
 		}
 	}
 	ctx.bodyDigest = hash
+
+	return nil
 }
 
 // isRequestSigned returns if the request is currently signed or presigned
@@ -713,19 +738,33 @@ func makeSha256(data []byte) []byte {
 	return hash.Sum(nil)
 }
 
-func makeSha256Reader(reader io.ReadSeeker) []byte {
+func makeSha256Reader(reader io.ReadSeeker) (hashBytes []byte, err error) {
 	hash := sha256.New()
-	start, _ := reader.Seek(0, 1)
-	defer reader.Seek(start, 0)
+	start, err := reader.Seek(0, sdkio.SeekCurrent)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		// ensure error is return if unable to seek back to start of payload.
+		_, err = reader.Seek(start, sdkio.SeekStart)
+	}()
 
-	io.Copy(hash, reader)
-	return hash.Sum(nil)
+	// Use CopyN to avoid allocating the 32KB buffer in io.Copy for bodies
+	// smaller than 32KB. Fall back to io.Copy if we fail to determine the size.
+	size, err := aws.SeekerLen(reader)
+	if err != nil {
+		io.Copy(hash, reader)
+	} else {
+		io.CopyN(hash, reader, size)
+	}
+
+	return hash.Sum(nil), nil
 }
 
 const doubleSpace = "  "
 
 // stripExcessSpaces will rewrite the passed in slice's string values to not
-// contain muliple side-by-side spaces.
+// contain multiple side-by-side spaces.
 func stripExcessSpaces(vals []string) {
 	var j, k, l, m, spaces int
 	for i, str := range vals {

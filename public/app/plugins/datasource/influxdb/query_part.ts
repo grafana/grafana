@@ -1,8 +1,8 @@
 import _ from 'lodash';
 import { QueryPartDef, QueryPart, functionRenderer, suffixRenderer } from 'app/core/components/query_part/query_part';
 
-var index = [];
-var categories = {
+const index: any[] = [];
+const categories: any = {
   Aggregations: [],
   Selectors: [],
   Transformations: [],
@@ -12,8 +12,8 @@ var categories = {
   Fields: [],
 };
 
-function createPart(part): any {
-  var def = index[part.type];
+function createPart(part: any): any {
+  const def = index[part.type];
   if (!def) {
     throw { message: 'Could not find query part ' + part.type };
   }
@@ -26,24 +26,46 @@ function register(options: any) {
   options.category.push(index[options.type]);
 }
 
-var groupByTimeFunctions = [];
+const groupByTimeFunctions: any[] = [];
 
-function aliasRenderer(part, innerExpr) {
+function aliasRenderer(part: { params: string[] }, innerExpr: string) {
   return innerExpr + ' AS ' + '"' + part.params[0] + '"';
 }
 
-function fieldRenderer(part, innerExpr) {
+function fieldRenderer(part: { params: string[] }, innerExpr: any) {
   if (part.params[0] === '*') {
     return '*';
   }
   return '"' + part.params[0] + '"';
 }
 
-function replaceAggregationAddStrategy(selectParts, partModel) {
+function replaceAggregationAddStrategy(selectParts: any[], partModel: { def: { type: string } }) {
   // look for existing aggregation
-  for (var i = 0; i < selectParts.length; i++) {
-    var part = selectParts[i];
+  for (let i = 0; i < selectParts.length; i++) {
+    const part = selectParts[i];
     if (part.def.category === categories.Aggregations) {
+      if (part.def.type === partModel.def.type) {
+        return;
+      }
+      // count distinct is allowed
+      if (part.def.type === 'count' && partModel.def.type === 'distinct') {
+        break;
+      }
+      // remove next aggregation if distinct was replaced
+      if (part.def.type === 'distinct') {
+        const morePartsAvailable = selectParts.length >= i + 2;
+        if (partModel.def.type !== 'count' && morePartsAvailable) {
+          const nextPart = selectParts[i + 1];
+          if (nextPart.def.category === categories.Aggregations) {
+            selectParts.splice(i + 1, 1);
+          }
+        } else if (partModel.def.type === 'count') {
+          if (!morePartsAvailable || selectParts[i + 1].def.type !== 'count') {
+            selectParts.splice(i + 1, 0, partModel);
+          }
+          return;
+        }
+      }
       selectParts[i] = partModel;
       return;
     }
@@ -56,11 +78,11 @@ function replaceAggregationAddStrategy(selectParts, partModel) {
   selectParts.splice(1, 0, partModel);
 }
 
-function addTransformationStrategy(selectParts, partModel) {
-  var i;
+function addTransformationStrategy(selectParts: any[], partModel: any) {
+  let i;
   // look for index to add transformation
   for (i = 0; i < selectParts.length; i++) {
-    var part = selectParts[i];
+    const part = selectParts[i];
     if (part.def.category === categories.Math || part.def.category === categories.Aliasing) {
       break;
     }
@@ -69,8 +91,8 @@ function addTransformationStrategy(selectParts, partModel) {
   selectParts.splice(i, 0, partModel);
 }
 
-function addMathStrategy(selectParts, partModel) {
-  var partCount = selectParts.length;
+function addMathStrategy(selectParts: any[], partModel: any) {
+  const partCount = selectParts.length;
   if (partCount > 0) {
     // if last is math, replace it
     if (selectParts[partCount - 1].def.type === 'math') {
@@ -90,8 +112,8 @@ function addMathStrategy(selectParts, partModel) {
   selectParts.push(partModel);
 }
 
-function addAliasStrategy(selectParts, partModel) {
-  var partCount = selectParts.length;
+function addAliasStrategy(selectParts: any[], partModel: any) {
+  const partCount = selectParts.length;
   if (partCount > 0) {
     // if last is alias, replace it
     if (selectParts[partCount - 1].def.type === 'alias') {
@@ -102,9 +124,9 @@ function addAliasStrategy(selectParts, partModel) {
   selectParts.push(partModel);
 }
 
-function addFieldStrategy(selectParts, partModel, query) {
+function addFieldStrategy(selectParts: any, partModel: any, query: { selectModels: any[][] }) {
   // copy all parts
-  var parts = _.map(selectParts, function(part: any) {
+  const parts = _.map(selectParts, (part: any) => {
     return createPart({ type: part.def.type, params: _.clone(part.params) });
   });
 
@@ -431,7 +453,8 @@ register({
 
 export default {
   create: createPart,
-  getCategories: function() {
+  getCategories: () => {
     return categories;
   },
+  replaceAggregationAdd: replaceAggregationAddStrategy,
 };

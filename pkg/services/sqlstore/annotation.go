@@ -5,10 +5,30 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 )
+
+// Update the item so that EpochEnd >= Epoch
+func validateTimeRange(item *annotations.Item) error {
+	if item.EpochEnd == 0 {
+		if item.Epoch == 0 {
+			return errors.New("Missing Time Range")
+		}
+		item.EpochEnd = item.Epoch
+	}
+	if item.Epoch == 0 {
+		item.Epoch = item.EpochEnd
+	}
+	if item.EpochEnd < item.Epoch {
+		tmp := item.Epoch
+		item.Epoch = item.EpochEnd
+		item.EpochEnd = tmp
+	}
+	return nil
+}
 
 type SqlAnnotationRepo struct {
 }
@@ -17,44 +37,33 @@ func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
 	return inTransaction(func(sess *DBSession) error {
 		tags := models.ParseTagPairs(item.Tags)
 		item.Tags = models.JoinTagPairs(tags)
+		item.Created = time.Now().UnixNano() / int64(time.Millisecond)
+		item.Updated = item.Created
+		if item.Epoch == 0 {
+			item.Epoch = item.Created
+		}
+		if err := validateTimeRange(item); err != nil {
+			return err
+		}
+
 		if _, err := sess.Table("annotation").Insert(item); err != nil {
 			return err
 		}
 
 		if item.Tags != nil {
-			if tags, err := r.ensureTagsExist(sess, tags); err != nil {
+			tags, err := EnsureTagsExist(sess, tags)
+			if err != nil {
 				return err
-			} else {
-				for _, tag := range tags {
-					if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", item.Id, tag.Id); err != nil {
-						return err
-					}
+			}
+			for _, tag := range tags {
+				if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", item.Id, tag.Id); err != nil {
+					return err
 				}
 			}
 		}
 
 		return nil
 	})
-}
-
-// Will insert if needed any new key/value pars and return ids
-func (r *SqlAnnotationRepo) ensureTagsExist(sess *DBSession, tags []*models.Tag) ([]*models.Tag, error) {
-	for _, tag := range tags {
-		var existingTag models.Tag
-
-		// check if it exists
-		if exists, err := sess.Table("tag").Where("`key`=? AND `value`=?", tag.Key, tag.Value).Get(&existingTag); err != nil {
-			return nil, err
-		} else if exists {
-			tag.Id = existingTag.Id
-		} else {
-			if _, err := sess.Table("tag").Insert(tag); err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	return tags, nil
 }
 
 func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
@@ -65,12 +74,7 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 		)
 		existing := new(annotations.Item)
 
-		if item.Id == 0 && item.RegionId != 0 {
-			// Update region end time
-			isExist, err = sess.Table("annotation").Where("region_id=? AND id!=? AND org_id=?", item.RegionId, item.RegionId, item.OrgId).Get(existing)
-		} else {
-			isExist, err = sess.Table("annotation").Where("id=? AND org_id=?", item.Id, item.OrgId).Get(existing)
-		}
+		isExist, err = sess.Table("annotation").Where("id=? AND org_id=?", item.Id, item.OrgId).Get(existing)
 
 		if err != nil {
 			return err
@@ -79,34 +83,39 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 			return errors.New("Annotation not found")
 		}
 
-		existing.Epoch = item.Epoch
+		existing.Updated = time.Now().UnixNano() / int64(time.Millisecond)
 		existing.Text = item.Text
-		if item.RegionId != 0 {
-			existing.RegionId = item.RegionId
+
+		if item.Epoch != 0 {
+			existing.Epoch = item.Epoch
+		}
+		if item.EpochEnd != 0 {
+			existing.EpochEnd = item.EpochEnd
+		}
+
+		if err := validateTimeRange(existing); err != nil {
+			return err
 		}
 
 		if item.Tags != nil {
-			if tags, err := r.ensureTagsExist(sess, models.ParseTagPairs(item.Tags)); err != nil {
+			tags, err := EnsureTagsExist(sess, models.ParseTagPairs(item.Tags))
+			if err != nil {
 				return err
-			} else {
-				if _, err := sess.Exec("DELETE FROM annotation_tag WHERE annotation_id = ?", existing.Id); err != nil {
+			}
+			if _, err := sess.Exec("DELETE FROM annotation_tag WHERE annotation_id = ?", existing.Id); err != nil {
+				return err
+			}
+			for _, tag := range tags {
+				if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", existing.Id, tag.Id); err != nil {
 					return err
-				}
-				for _, tag := range tags {
-					if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", existing.Id, tag.Id); err != nil {
-						return err
-					}
 				}
 			}
 		}
 
 		existing.Tags = item.Tags
 
-		if _, err := sess.Table("annotation").Id(existing.Id).Cols("epoch", "text", "region_id", "tags").Update(existing); err != nil {
-			return err
-		}
-
-		return nil
+		_, err = sess.Table("annotation").ID(existing.Id).Cols("epoch", "text", "epoch_end", "updated", "tags").Update(existing)
+		return err
 	})
 }
 
@@ -118,15 +127,17 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 		SELECT
 			annotation.id,
 			annotation.epoch as time,
+			annotation.epoch_end as time_end,
 			annotation.dashboard_id,
 			annotation.panel_id,
 			annotation.new_state,
 			annotation.prev_state,
 			annotation.alert_id,
-			annotation.region_id,
 			annotation.text,
 			annotation.tags,
 			annotation.data,
+			annotation.created,
+			annotation.updated,
 			usr.email,
 			usr.login,
 			alert.name as alert_name
@@ -139,14 +150,9 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 	params = append(params, query.OrgId)
 
 	if query.AnnotationId != 0 {
-		fmt.Print("annotation query")
+		// fmt.Print("annotation query")
 		sql.WriteString(` AND annotation.id = ?`)
 		params = append(params, query.AnnotationId)
-	}
-
-	if query.RegionId != 0 {
-		sql.WriteString(` AND annotation.region_id = ?`)
-		params = append(params, query.RegionId)
 	}
 
 	if query.AlertId != 0 {
@@ -164,13 +170,20 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 		params = append(params, query.PanelId)
 	}
 
+	if query.UserId != 0 {
+		sql.WriteString(` AND annotation.user_id = ?`)
+		params = append(params, query.UserId)
+	}
+
 	if query.From > 0 && query.To > 0 {
-		sql.WriteString(` AND annotation.epoch BETWEEN ? AND ?`)
-		params = append(params, query.From, query.To)
+		sql.WriteString(` AND annotation.epoch <= ? AND annotation.epoch_end >= ?`)
+		params = append(params, query.To, query.From)
 	}
 
 	if query.Type == "alert" {
 		sql.WriteString(` AND annotation.alert_id > 0`)
+	} else if query.Type == "annotation" {
+		sql.WriteString(` AND annotation.alert_id = 0`)
 	}
 
 	if len(query.Tags) > 0 {
@@ -179,10 +192,10 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 		tags := models.ParseTagPairs(query.Tags)
 		for _, tag := range tags {
 			if tag.Value == "" {
-				keyValueFilters = append(keyValueFilters, "(tag.key = ?)")
+				keyValueFilters = append(keyValueFilters, "(tag."+dialect.Quote("key")+" = ?)")
 				params = append(params, tag.Key)
 			} else {
-				keyValueFilters = append(keyValueFilters, "(tag.key = ? AND tag.value = ?)")
+				keyValueFilters = append(keyValueFilters, "(tag."+dialect.Quote("key")+" = ? AND tag."+dialect.Quote("value")+" = ?)")
 				params = append(params, tag.Key, tag.Value)
 			}
 		}
@@ -197,19 +210,24 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
             )
       `, strings.Join(keyValueFilters, " OR "))
 
-			sql.WriteString(fmt.Sprintf(" AND (%s) = %d ", tagsSubQuery, len(tags)))
+			if query.MatchAny {
+				sql.WriteString(fmt.Sprintf(" AND (%s) > 0 ", tagsSubQuery))
+			} else {
+				sql.WriteString(fmt.Sprintf(" AND (%s) = %d ", tagsSubQuery, len(tags)))
+			}
+
 		}
 	}
 
 	if query.Limit == 0 {
-		query.Limit = 10
+		query.Limit = 100
 	}
 
-	sql.WriteString(fmt.Sprintf(" ORDER BY epoch DESC LIMIT %v", query.Limit))
+	sql.WriteString(" ORDER BY epoch DESC" + dialect.Limit(query.Limit))
 
 	items := make([]*annotations.ItemDTO, 0)
 
-	if err := x.Sql(sql.String(), params...).Find(&items); err != nil {
+	if err := x.SQL(sql.String(), params...).Find(&items); err != nil {
 		return nil, err
 	}
 
@@ -224,25 +242,26 @@ func (r *SqlAnnotationRepo) Delete(params *annotations.DeleteParams) error {
 			queryParams []interface{}
 		)
 
-		if params.RegionId != 0 {
-			annoTagSql = "DELETE FROM annotation_tag WHERE annotation_id IN (SELECT id FROM annotation WHERE region_id = ?)"
-			sql = "DELETE FROM annotation WHERE region_id = ?"
-			queryParams = []interface{}{params.RegionId}
-		} else if params.Id != 0 {
-			annoTagSql = "DELETE FROM annotation_tag WHERE annotation_id IN (SELECT id FROM annotation WHERE id = ?)"
-			sql = "DELETE FROM annotation WHERE id = ?"
-			queryParams = []interface{}{params.Id}
+		sqlog.Info("delete", "orgId", params.OrgId)
+		if params.Id != 0 {
+			annoTagSql = "DELETE FROM annotation_tag WHERE annotation_id IN (SELECT id FROM annotation WHERE id = ? AND org_id = ?)"
+			sql = "DELETE FROM annotation WHERE id = ? AND org_id = ?"
+			queryParams = []interface{}{params.Id, params.OrgId}
 		} else {
-			annoTagSql = "DELETE FROM annotation_tag WHERE annotation_id IN (SELECT id FROM annotation WHERE dashboard_id = ? AND panel_id = ?)"
-			sql = "DELETE FROM annotation WHERE dashboard_id = ? AND panel_id = ?"
-			queryParams = []interface{}{params.DashboardId, params.PanelId}
+			annoTagSql = "DELETE FROM annotation_tag WHERE annotation_id IN (SELECT id FROM annotation WHERE dashboard_id = ? AND panel_id = ? AND org_id = ?)"
+			sql = "DELETE FROM annotation WHERE dashboard_id = ? AND panel_id = ? AND org_id = ?"
+			queryParams = []interface{}{params.DashboardId, params.PanelId, params.OrgId}
 		}
 
-		if _, err := sess.Exec(annoTagSql, queryParams...); err != nil {
+		sqlOrArgs := append([]interface{}{annoTagSql}, queryParams...)
+
+		if _, err := sess.Exec(sqlOrArgs...); err != nil {
 			return err
 		}
 
-		if _, err := sess.Exec(sql, queryParams...); err != nil {
+		sqlOrArgs = append([]interface{}{sql}, queryParams...)
+
+		if _, err := sess.Exec(sqlOrArgs...); err != nil {
 			return err
 		}
 

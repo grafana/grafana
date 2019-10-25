@@ -1,0 +1,27 @@
+  influxdb:
+    image: influxdb:1.7.6
+    container_name: influxdb
+    ports:
+      - '2004:2004'
+      - '8083:8083'
+      - '8086:8086'
+    volumes:
+      - ./docker/blocks/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf
+
+  fake-influxdb-data:
+    image: grafana/fake-data-gen
+    links:
+      - influxdb
+    environment:
+      FD_DATASOURCE: influxdb
+      FD_PORT: 8086
+
+  telegraf:
+    image: telegraf:1.10.4
+    links:
+      - influxdb
+    volumes:
+      - ./docker/blocks/influxdb/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      - /var/log:/var/log
+      - ../data/log:/var/log/grafana
+

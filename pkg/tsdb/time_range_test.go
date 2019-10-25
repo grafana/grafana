@@ -70,11 +70,11 @@ func TestTimeRange(t *testing.T) {
 
 			res, err := tr.ParseFrom()
 			So(err, ShouldBeNil)
-			So(res.UnixNano()/int64(time.Millisecond), ShouldEqual, 1474973725473)
+			So(res.UnixNano()/int64(time.Millisecond), ShouldEqual, int64(1474973725473))
 
 			res, err = tr.ParseTo()
 			So(err, ShouldBeNil)
-			So(res.UnixNano()/int64(time.Millisecond), ShouldEqual, 1474975757930)
+			So(res.UnixNano()/int64(time.Millisecond), ShouldEqual, int64(1474975757930))
 		})
 
 		Convey("Cannot parse asdf", func() {

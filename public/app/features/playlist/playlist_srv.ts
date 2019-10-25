@@ -1,50 +1,65 @@
-import coreModule from '../../core/core_module';
-import kbn from 'app/core/utils/kbn';
-import appEvents from 'app/core/app_events';
+// Libraries
+import _ from 'lodash';
 
-class PlaylistSrv {
+// Utils
+import { toUrlParams } from 'app/core/utils/url';
+import coreModule from '../../core/core_module';
+import appEvents from 'app/core/app_events';
+import locationUtil from 'app/core/utils/location_util';
+import kbn from 'app/core/utils/kbn';
+import { store } from 'app/store/store';
+import { CoreEvents } from 'app/types';
+
+export const queryParamsToPreserve: { [key: string]: boolean } = {
+  kiosk: true,
+  autofitpanels: true,
+  orgId: true,
+};
+
+export class PlaylistSrv {
   private cancelPromise: any;
-  private dashboards: any;
+  private dashboards: Array<{ url: string }>;
   private index: number;
-  private interval: any;
+  private interval: number;
   private startUrl: string;
-  public isPlaying: boolean;
+  private numberOfLoops = 0;
+  private storeUnsub: () => void;
+  private validPlaylistUrl: string;
+  isPlaying: boolean;
 
   /** @ngInject */
-  constructor(private $location: any, private $timeout: any, private backendSrv: any, private $routeParams: any) {}
+  constructor(private $location: any, private $timeout: any, private backendSrv: any) {}
 
   next() {
     this.$timeout.cancel(this.cancelPromise);
 
-    var playedAllDashboards = this.index > this.dashboards.length - 1;
-
+    const playedAllDashboards = this.index > this.dashboards.length - 1;
     if (playedAllDashboards) {
-      window.location.href = this.getUrlWithKioskMode();
-      return;
+      this.numberOfLoops++;
+
+      // This does full reload of the playlist to keep memory in check due to existing leaks but at the same time
+      // we do not want page to flicker after each full loop.
+      if (this.numberOfLoops >= 3) {
+        window.location.href = this.startUrl;
+        return;
+      }
+      this.index = 0;
     }
 
-    var dash = this.dashboards[this.index];
-    this.$location.url('dashboard/' + dash.uri);
+    const dash = this.dashboards[this.index];
+    const queryParams = this.$location.search();
+    const filteredParams = _.pickBy(queryParams, (value: any, key: string) => queryParamsToPreserve[key]);
+    const nextDashboardUrl = locationUtil.stripBaseFromUrl(dash.url);
+
+    // this is done inside timeout to make sure digest happens after
+    // as this can be called from react
+    this.$timeout(() => {
+      this.$location.url(nextDashboardUrl + '?' + toUrlParams(filteredParams));
+    });
 
     this.index++;
+    this.validPlaylistUrl = nextDashboardUrl;
     this.cancelPromise = this.$timeout(() => this.next(), this.interval);
-  }
-
-  getUrlWithKioskMode() {
-    const inKioskMode = document.body.classList.contains('page-kiosk-mode');
-
-    // check if should add kiosk query param
-    if (inKioskMode && this.startUrl.indexOf('kiosk') === -1) {
-      return this.startUrl + '?kiosk=true';
-    }
-
-    // check if should remove kiosk query param
-    if (!inKioskMode) {
-      return this.startUrl.split('?')[0];
-    }
-
-    // already has kiosk query param, just return startUrl
-    return this.startUrl;
   }
 
   prev() {
@@ -52,19 +67,30 @@ class PlaylistSrv {
     this.next();
   }
 
-  start(playlistId) {
+  // Detect url changes not caused by playlist srv and stop playlist
+  storeUpdated() {
+    const state = store.getState();
+
+    if (state.location.path !== this.validPlaylistUrl) {
+      this.stop();
+    }
+  }
+
+  start(playlistId: number) {
     this.stop();
 
     this.startUrl = window.location.href;
     this.index = 0;
     this.isPlaying = true;
 
-    if (this.$routeParams.kiosk) {
-      appEvents.emit('toggle-kiosk-mode');
-    }
+    // setup location tracking
+    this.storeUnsub = store.subscribe(() => this.storeUpdated());
+    this.validPlaylistUrl = this.$location.path();
 
-    this.backendSrv.get(`/api/playlists/${playlistId}`).then(playlist => {
-      this.backendSrv.get(`/api/playlists/${playlistId}/dashboards`).then(dashboards => {
+    appEvents.emit(CoreEvents.playlistStarted);
+
+    return this.backendSrv.get(`/api/playlists/${playlistId}`).then((playlist: any) => {
+      return this.backendSrv.get(`/api/playlists/${playlistId}/dashboards`).then((dashboards: any) => {
         this.dashboards = dashboards;
         this.interval = kbn.interval_to_ms(playlist.interval);
         this.next();
@@ -73,12 +99,25 @@ class PlaylistSrv {
   }
 
   stop() {
+    if (this.isPlaying) {
+      const queryParams = this.$location.search();
+      if (queryParams.kiosk) {
+        appEvents.emit(CoreEvents.toggleKioskMode, { exit: true });
+      }
+    }
+
     this.index = 0;
     this.isPlaying = false;
+
+    if (this.storeUnsub) {
+      this.storeUnsub();
+    }
 
     if (this.cancelPromise) {
       this.$timeout.cancel(this.cancelPromise);
     }
+
+    appEvents.emit(CoreEvents.playlistStopped);
   }
 }
 

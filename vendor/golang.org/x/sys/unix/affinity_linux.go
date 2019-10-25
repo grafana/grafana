@@ -16,7 +16,7 @@ const cpuSetSize = _CPU_SETSIZE / _NCPUBITS
 type CPUSet [cpuSetSize]cpuMask
 
 func schedAffinity(trap uintptr, pid int, set *CPUSet) error {
-	_, _, e := RawSyscall(trap, uintptr(pid), uintptr(unsafe.Sizeof(set)), uintptr(unsafe.Pointer(set)))
+	_, _, e := RawSyscall(trap, uintptr(pid), uintptr(unsafe.Sizeof(*set)), uintptr(unsafe.Pointer(set)))
 	if e != 0 {
 		return errnoErr(e)
 	}
@@ -91,9 +91,13 @@ func onesCount64(x uint64) int {
 	const m0 = 0x5555555555555555 // 01010101 ...
 	const m1 = 0x3333333333333333 // 00110011 ...
 	const m2 = 0x0f0f0f0f0f0f0f0f // 00001111 ...
-	const m3 = 0x00ff00ff00ff00ff // etc.
-	const m4 = 0x0000ffff0000ffff
 
+	// Unused in this function, but definitions preserved for
+	// documentation purposes:
+	//
+	//   const m3 = 0x00ff00ff00ff00ff // etc.
+	//   const m4 = 0x0000ffff0000ffff
+	//
 	// Implementation: Parallel summing of adjacent bits.
 	// See "Hacker's Delight", Chap. 5: Counting Bits.
 	// The following pattern shows the general approach:

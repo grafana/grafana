@@ -3,12 +3,10 @@ package corehandlers
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"regexp"
-	"runtime"
 	"strconv"
 	"time"
 
@@ -36,18 +34,13 @@ var BuildContentLengthHandler = request.NamedHandler{Name: "core.BuildContentLen
 	if slength := r.HTTPRequest.Header.Get("Content-Length"); slength != "" {
 		length, _ = strconv.ParseInt(slength, 10, 64)
 	} else {
-		switch body := r.Body.(type) {
-		case nil:
-			length = 0
-		case lener:
-			length = int64(body.Len())
-		case io.Seeker:
-			r.BodyStart, _ = body.Seek(0, 1)
-			end, _ := body.Seek(0, 2)
-			body.Seek(r.BodyStart, 0) // make sure to seek back to original location
-			length = end - r.BodyStart
-		default:
-			panic("Cannot get length of body, must provide `ContentLength`")
+		if r.Body != nil {
+			var err error
+			length, err = aws.SeekerLen(r.Body)
+			if err != nil {
+				r.Error = awserr.New(request.ErrCodeSerialization, "failed to get request body's length", err)
+				return
+			}
 		}
 	}
 
@@ -59,13 +52,6 @@ var BuildContentLengthHandler = request.NamedHandler{Name: "core.BuildContentLen
 		r.HTTPRequest.Header.Del("Content-Length")
 	}
 }}
-
-// SDKVersionUserAgentHandler is a request handler for adding the SDK Version to the user agent.
-var SDKVersionUserAgentHandler = request.NamedHandler{
-	Name: "core.SDKVersionUserAgentHandler",
-	Fn: request.MakeAddToUserAgentHandler(aws.SDKName, aws.SDKVersion,
-		runtime.Version(), runtime.GOOS, runtime.GOARCH),
-}
 
 var reStatusCode = regexp.MustCompile(`^(\d{3})`)
 
@@ -86,9 +72,9 @@ var ValidateReqSigHandler = request.NamedHandler{
 			signedTime = r.LastSignedAt
 		}
 
-		// 10 minutes to allow for some clock skew/delays in transmission.
+		// 5 minutes to allow for some clock skew/delays in transmission.
 		// Would be improved with aws/aws-sdk-go#423
-		if signedTime.Add(10 * time.Minute).After(time.Now()) {
+		if signedTime.Add(5 * time.Minute).After(time.Now()) {
 			return
 		}
 
@@ -173,9 +159,9 @@ func handleSendError(r *request.Request, err error) {
 			Body:       ioutil.NopCloser(bytes.NewReader([]byte{})),
 		}
 	}
-	// Catch all other request errors.
+	// Catch all request errors, and let the default retrier determine
+	// if the error is retryable.
 	r.Error = awserr.New("RequestError", "send request failed", err)
-	r.Retryable = aws.Bool(true) // network errors are retryable
 
 	// Override the error with a context canceled error, if that was canceled.
 	ctx := r.Context()
@@ -198,37 +184,39 @@ var ValidateResponseHandler = request.NamedHandler{Name: "core.ValidateResponseH
 
 // AfterRetryHandler performs final checks to determine if the request should
 // be retried and how long to delay.
-var AfterRetryHandler = request.NamedHandler{Name: "core.AfterRetryHandler", Fn: func(r *request.Request) {
-	// If one of the other handlers already set the retry state
-	// we don't want to override it based on the service's state
-	if r.Retryable == nil || aws.BoolValue(r.Config.EnforceShouldRetryCheck) {
-		r.Retryable = aws.Bool(r.ShouldRetry(r))
-	}
-
-	if r.WillRetry() {
-		r.RetryDelay = r.RetryRules(r)
-
-		if sleepFn := r.Config.SleepDelay; sleepFn != nil {
-			// Support SleepDelay for backwards compatibility and testing
-			sleepFn(r.RetryDelay)
-		} else if err := aws.SleepWithContext(r.Context(), r.RetryDelay); err != nil {
-			r.Error = awserr.New(request.CanceledErrorCode,
-				"request context canceled", err)
-			r.Retryable = aws.Bool(false)
-			return
+var AfterRetryHandler = request.NamedHandler{
+	Name: "core.AfterRetryHandler",
+	Fn: func(r *request.Request) {
+		// If one of the other handlers already set the retry state
+		// we don't want to override it based on the service's state
+		if r.Retryable == nil || aws.BoolValue(r.Config.EnforceShouldRetryCheck) {
+			r.Retryable = aws.Bool(r.ShouldRetry(r))
 		}
 
-		// when the expired token exception occurs the credentials
-		// need to be expired locally so that the next request to
-		// get credentials will trigger a credentials refresh.
-		if r.IsErrorExpired() {
-			r.Config.Credentials.Expire()
-		}
+		if r.WillRetry() {
+			r.RetryDelay = r.RetryRules(r)
 
-		r.RetryCount++
-		r.Error = nil
-	}
-}}
+			if sleepFn := r.Config.SleepDelay; sleepFn != nil {
+				// Support SleepDelay for backwards compatibility and testing
+				sleepFn(r.RetryDelay)
+			} else if err := aws.SleepWithContext(r.Context(), r.RetryDelay); err != nil {
+				r.Error = awserr.New(request.CanceledErrorCode,
+					"request context canceled", err)
+				r.Retryable = aws.Bool(false)
+				return
+			}
+
+			// when the expired token exception occurs the credentials
+			// need to be expired locally so that the next request to
+			// get credentials will trigger a credentials refresh.
+			if r.IsErrorExpired() {
+				r.Config.Credentials.Expire()
+			}
+
+			r.RetryCount++
+			r.Error = nil
+		}
+	}}
 
 // ValidateEndpointHandler is a request handler to validate a request had the
 // appropriate Region and Endpoint set. Will set r.Error if the endpoint or

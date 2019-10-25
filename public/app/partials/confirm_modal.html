@@ -16,9 +16,8 @@
 
 		<div class="confirm-modal-text">
 			{{text}}
-			<div class="confirm-modal-text2" ng-show="text2">
-				{{text2}}
-			</div>
+			<div ng-if="text2 && text2htmlBind" class="confirm-modal-text2" ng-bind-html="text2"></div>
+      <div ng-if="text2 && !text2htmlBind" class="confirm-modal-text2">{{text2}}</div>
 		</div>
 
 		<div class="modal-content-confirm-text" ng-if="confirmText">
@@ -26,8 +25,8 @@
 		</div>
 
 		<div class="confirm-modal-buttons">
-			<button ng-show="onAltAction" type="button" class="btn btn-success" ng-click="dismiss();onAltAction();">{{altActionText}}</button>
-			<button type="button" class="btn btn-danger" ng-click="onConfirm();dismiss();" ng-disabled="!confirmTextValid" give-focus="true">{{yesText}}</button>
+			<button ng-show="onAltAction" type="button" class="btn btn-primary" ng-click="dismiss();onAltAction();">{{altActionText}}</button>
+			<button ng-show="onConfirm" type="button" class="btn btn-danger" ng-click="onConfirm();dismiss();" ng-disabled="!confirmTextValid" give-focus="true">{{yesText}}</button>
 			<button type="button" class="btn btn-inverse" ng-click="dismiss()">{{noText}}</button>
 		</div>
 	</div>

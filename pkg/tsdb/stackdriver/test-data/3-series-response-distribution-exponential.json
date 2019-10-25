@@ -1,0 +1,112 @@
+{
+  "timeSeries": [
+    {
+      "metric": {
+        "type": "loadbalancing.googleapis.com\/https\/backend_latencies"
+      },
+      "resource": {
+        "type": "https_lb_rule",
+        "labels": {
+          "project_id": "grafana-prod"
+        }
+      },
+      "metricKind": "DELTA",
+      "valueType": "DISTRIBUTION",
+      "points": [
+        {
+          "interval": {
+            "startTime": "2018-09-11T12:30:00Z",
+            "endTime": "2018-09-11T12:31:00Z"
+          },
+          "value": {
+            "distributionValue": {
+              "count": "1",
+              "bucketOptions": {
+                "exponentialBuckets": {
+                  "numFiniteBuckets": 10,
+                  "growthFactor": 2,
+                  "scale": 1
+                }
+              },
+              "bucketCounts": [
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "1",
+                "0"
+              ]
+            }
+          }
+        },
+        {
+          "interval": {
+            "startTime": "2018-09-11T12:29:00Z",
+            "endTime": "2018-09-11T12:30:00Z"
+          },
+          "value": {
+            "distributionValue": {
+              "count": "1",
+              "bucketOptions": {
+                "exponentialBuckets": {
+                  "numFiniteBuckets": 10,
+                  "growthFactor": 2,
+                  "scale": 1
+                }
+              },
+              "bucketCounts": [
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "1"
+              ]
+            }
+          }
+        },
+        {
+          "interval": {
+            "startTime": "2018-09-11T12:28:00Z",
+            "endTime": "2018-09-11T12:29:00Z"
+          },
+          "value": {
+            "distributionValue": {
+              "count": "3",
+              "bucketOptions": {
+                "exponentialBuckets": {
+                  "numFiniteBuckets": 10,
+                  "growthFactor": 2,
+                  "scale": 1
+                }
+              },
+              "bucketCounts": [
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "1",
+                "1",
+                "1"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

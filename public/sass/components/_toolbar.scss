@@ -1,0 +1,54 @@
+.toolbar {
+  display: flex;
+  align-content: center;
+  align-items: center;
+  padding: 3px 20px 3px 20px;
+  position: relative;
+  flex: 0 0 auto;
+  background: $toolbar-bg;
+  border-radius: 3px;
+  height: 44px;
+}
+
+.toolbar__heading {
+  font-size: $font-size-lg;
+  padding-right: 20px;
+}
+
+.toolbar__left {
+  display: flex;
+  flex-grow: 1;
+  align-items: center;
+}
+
+.toolbar__main {
+  padding: 0 $space-sm;
+  font-size: $font-size-md;
+  line-height: $input-line-height;
+  color: $input-color;
+  background-color: $input-bg;
+  height: $input-height;
+  border: $input-border;
+  border-radius: $input-border-radius;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+
+  .fa {
+    margin-left: 20px;
+    display: inline-block;
+    position: relative;
+  }
+}
+
+.toolbar__main-image {
+  margin-right: 10px;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+}
+
+.toolbar__close {
+  flex-grow: 1;
+  text-align: left;
+}

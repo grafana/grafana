@@ -2,23 +2,33 @@
   "type": "datasource",
   "name": "Prometheus",
   "id": "prometheus",
+  "category": "tsdb",
 
   "includes": [
-    {"type": "dashboard", "name": "Prometheus Stats", "path": "dashboards/prometheus_stats.json"},
-    {"type": "dashboard", "name": "Prometheus 2.0 Stats", "path": "dashboards/prometheus_2_stats.json"},
-    {"type": "dashboard", "name": "Grafana Stats", "path": "dashboards/grafana_stats.json"}
+    {
+      "type": "dashboard",
+      "name": "Prometheus Stats",
+      "path": "dashboards/prometheus_stats.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Prometheus 2.0 Stats",
+      "path": "dashboards/prometheus_2_stats.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Grafana Stats",
+      "path": "dashboards/grafana_stats.json"
+    }
   ],
-
   "metrics": true,
   "alerting": true,
   "annotations": true,
-
   "queryOptions": {
     "minInterval": true
   },
-
   "info": {
-    "description": "Prometheus Data Source for Grafana",
+    "description": "Open source time series database & alerting",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"
@@ -28,8 +38,10 @@
       "large": "img/prometheus_logo.svg"
     },
     "links": [
-      {"name": "Prometheus", "url": "https://prometheus.io/"}
-    ],
-    "version": "5.0.0"
+      {
+        "name": "Prometheus",
+        "url": "https://prometheus.io/"
+      }
+    ]
   }
 }

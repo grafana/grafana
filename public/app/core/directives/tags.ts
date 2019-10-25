@@ -1,11 +1,11 @@
 import angular from 'angular';
+import { getTagColorsFromName } from '@grafana/ui';
 import $ from 'jquery';
 import coreModule from '../core_module';
-import tags from 'app/core/utils/tags';
 import 'vendor/tagsinput/bootstrap-tagsinput.js';
 
-function setColor(name, element) {
-  const { color, borderColor } = tags.getTagColorsFromName(name);
+function setColor(name: string, element: JQuery) {
+  const { color, borderColor } = getTagColorsFromName(name);
   element.css('background-color', color);
   element.css('border-color', borderColor);
 }
@@ -13,14 +13,14 @@ function setColor(name, element) {
 function tagColorFromName() {
   return {
     scope: { tagColorFromName: '=' },
-    link: function(scope, element) {
+    link: (scope: any, element: any) => {
       setColor(scope.tagColorFromName, element);
     },
   };
 }
 
 function bootstrapTagsinput() {
-  function getItemProperty(scope, property) {
+  function getItemProperty(scope: any, property: any) {
     if (!property) {
       return undefined;
     }
@@ -29,7 +29,7 @@ function bootstrapTagsinput() {
       return scope.$parent[property];
     }
 
-    return function(item) {
+    return (item: any) => {
       return item[property];
     };
   }
@@ -42,12 +42,12 @@ function bootstrapTagsinput() {
     },
     template: '<select multiple></select>',
     replace: false,
-    link: function(scope, element, attrs) {
+    link: function(scope: any, element: any, attrs: any) {
       if (!angular.isArray(scope.model)) {
         scope.model = [];
       }
 
-      var select = $('select', element);
+      const select = $('select', element);
 
       if (attrs.placeholder) {
         select.attr('placeholder', attrs.placeholder);
@@ -64,29 +64,29 @@ function bootstrapTagsinput() {
         itemText: getItemProperty(scope, attrs.itemtext),
         tagClass: angular.isFunction(scope.$parent[attrs.tagclass])
           ? scope.$parent[attrs.tagclass]
-          : function() {
+          : () => {
               return attrs.tagclass;
             },
       });
 
-      select.on('itemAdded', function(event) {
+      select.on('itemAdded', (event: any) => {
         if (scope.model.indexOf(event.item) === -1) {
           scope.model.push(event.item);
           if (scope.onTagsUpdated) {
             scope.onTagsUpdated();
           }
         }
-        var tagElement = select
+        const tagElement = select
           .next()
           .children('span')
-          .filter(function() {
+          .filter(() => {
             return $(this).text() === event.item;
           });
         setColor(event.item, tagElement);
       });
 
-      select.on('itemRemoved', function(event) {
-        var idx = scope.model.indexOf(event.item);
+      select.on('itemRemoved', (event: any) => {
+        const idx = scope.model.indexOf(event.item);
         if (idx !== -1) {
           scope.model.splice(idx, 1);
           if (scope.onTagsUpdated) {
@@ -97,14 +97,14 @@ function bootstrapTagsinput() {
 
       scope.$watch(
         'model',
-        function() {
+        () => {
           if (!angular.isArray(scope.model)) {
             scope.model = [];
           }
 
           select.tagsinput('removeAll');
 
-          for (var i = 0; i < scope.model.length; i++) {
+          for (let i = 0; i < scope.model.length; i++) {
             select.tagsinput('add', scope.model[i]);
           }
         },

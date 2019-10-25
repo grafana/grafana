@@ -4,7 +4,9 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/defaults"
 )
 
 // EnvProviderName provides a name of the provider when config is loaded from environment.
@@ -78,7 +80,7 @@ type envConfig struct {
 	//	AWS_CONFIG_FILE=$HOME/my_shared_config
 	SharedConfigFile string
 
-	// Sets the path to a custom Credentials Authroity (CA) Bundle PEM file
+	// Sets the path to a custom Credentials Authority (CA) Bundle PEM file
 	// that the SDK will use instead of the system's root CA bundle.
 	// Only use this if you want to configure the SDK to use a custom set
 	// of CAs.
@@ -95,9 +97,49 @@ type envConfig struct {
 	//
 	//  AWS_CA_BUNDLE=$HOME/my_custom_ca_bundle
 	CustomCABundle string
+
+	csmEnabled  string
+	CSMEnabled  *bool
+	CSMPort     string
+	CSMHost     string
+	CSMClientID string
+
+	// Enables endpoint discovery via environment variables.
+	//
+	//	AWS_ENABLE_ENDPOINT_DISCOVERY=true
+	EnableEndpointDiscovery *bool
+	enableEndpointDiscovery string
+
+	// Specifies the WebIdentity token the SDK should use to assume a role
+	// with.
+	//
+	//  AWS_WEB_IDENTITY_TOKEN_FILE=file_path
+	WebIdentityTokenFilePath string
+
+	// Specifies the IAM role arn to use when assuming an role.
+	//
+	//  AWS_ROLE_ARN=role_arn
+	RoleARN string
+
+	// Specifies the IAM role session name to use when assuming a role.
+	//
+	//  AWS_ROLE_SESSION_NAME=session_name
+	RoleSessionName string
 }
 
 var (
+	csmEnabledEnvKey = []string{
+		"AWS_CSM_ENABLED",
+	}
+	csmHostEnvKey = []string{
+		"AWS_CSM_HOST",
+	}
+	csmPortEnvKey = []string{
+		"AWS_CSM_PORT",
+	}
+	csmClientIDEnvKey = []string{
+		"AWS_CSM_CLIENT_ID",
+	}
 	credAccessEnvKey = []string{
 		"AWS_ACCESS_KEY_ID",
 		"AWS_ACCESS_KEY",
@@ -108,6 +150,10 @@ var (
 	}
 	credSessionEnvKey = []string{
 		"AWS_SESSION_TOKEN",
+	}
+
+	enableEndpointDiscoveryEnvKey = []string{
+		"AWS_ENABLE_ENDPOINT_DISCOVERY",
 	}
 
 	regionEnvKeys = []string{
@@ -123,6 +169,15 @@ var (
 	}
 	sharedConfigFileEnvKey = []string{
 		"AWS_CONFIG_FILE",
+	}
+	webIdentityTokenFilePathEnvKey = []string{
+		"AWS_WEB_IDENTITY_TOKEN_FILE",
+	}
+	roleARNEnvKey = []string{
+		"AWS_ROLE_ARN",
+	}
+	roleSessionNameEnvKey = []string{
+		"AWS_ROLE_SESSION_NAME",
 	}
 )
 
@@ -152,15 +207,33 @@ func envConfigLoad(enableSharedConfig bool) envConfig {
 
 	cfg.EnableSharedConfig = enableSharedConfig
 
-	setFromEnvVal(&cfg.Creds.AccessKeyID, credAccessEnvKey)
-	setFromEnvVal(&cfg.Creds.SecretAccessKey, credSecretEnvKey)
-	setFromEnvVal(&cfg.Creds.SessionToken, credSessionEnvKey)
+	// Static environment credentials
+	var creds credentials.Value
+	setFromEnvVal(&creds.AccessKeyID, credAccessEnvKey)
+	setFromEnvVal(&creds.SecretAccessKey, credSecretEnvKey)
+	setFromEnvVal(&creds.SessionToken, credSessionEnvKey)
+	if creds.HasKeys() {
+		// Require logical grouping of credentials
+		creds.ProviderName = EnvProviderName
+		cfg.Creds = creds
+	}
 
-	// Require logical grouping of credentials
-	if len(cfg.Creds.AccessKeyID) == 0 || len(cfg.Creds.SecretAccessKey) == 0 {
-		cfg.Creds = credentials.Value{}
-	} else {
-		cfg.Creds.ProviderName = EnvProviderName
+	// Role Metadata
+	setFromEnvVal(&cfg.RoleARN, roleARNEnvKey)
+	setFromEnvVal(&cfg.RoleSessionName, roleSessionNameEnvKey)
+
+	// Web identity environment variables
+	setFromEnvVal(&cfg.WebIdentityTokenFilePath, webIdentityTokenFilePathEnvKey)
+
+	// CSM environment variables
+	setFromEnvVal(&cfg.csmEnabled, csmEnabledEnvKey)
+	setFromEnvVal(&cfg.CSMHost, csmHostEnvKey)
+	setFromEnvVal(&cfg.CSMPort, csmPortEnvKey)
+	setFromEnvVal(&cfg.CSMClientID, csmClientIDEnvKey)
+
+	if len(cfg.csmEnabled) != 0 {
+		v, _ := strconv.ParseBool(cfg.csmEnabled)
+		cfg.CSMEnabled = &v
 	}
 
 	regionKeys := regionEnvKeys
@@ -173,8 +246,21 @@ func envConfigLoad(enableSharedConfig bool) envConfig {
 	setFromEnvVal(&cfg.Region, regionKeys)
 	setFromEnvVal(&cfg.Profile, profileKeys)
 
+	// endpoint discovery is in reference to it being enabled.
+	setFromEnvVal(&cfg.enableEndpointDiscovery, enableEndpointDiscoveryEnvKey)
+	if len(cfg.enableEndpointDiscovery) > 0 {
+		cfg.EnableEndpointDiscovery = aws.Bool(cfg.enableEndpointDiscovery != "false")
+	}
+
 	setFromEnvVal(&cfg.SharedCredentialsFile, sharedCredsFileEnvKey)
 	setFromEnvVal(&cfg.SharedConfigFile, sharedConfigFileEnvKey)
+
+	if len(cfg.SharedCredentialsFile) == 0 {
+		cfg.SharedCredentialsFile = defaults.SharedCredentialsFilename()
+	}
+	if len(cfg.SharedConfigFile) == 0 {
+		cfg.SharedConfigFile = defaults.SharedConfigFilename()
+	}
 
 	cfg.CustomCABundle = os.Getenv("AWS_CA_BUNDLE")
 

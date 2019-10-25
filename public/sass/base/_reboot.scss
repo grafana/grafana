@@ -70,7 +70,7 @@ html {
 
 body {
   // Make the `body` use the `font-size-root`
-  font-family: $font-family-base;
+  font-family: $font-family-sans-serif;
   font-size: $font-size-base;
   line-height: $line-height-base;
   // Go easy on the eyes and use something other than `#000` for text
@@ -87,7 +87,7 @@ body {
 // might still respond to pointer events.
 //
 // Credit: https://github.com/suitcss/base
-[tabindex="-1"]:focus {
+[tabindex='-1']:focus {
   outline: none !important;
 }
 
@@ -106,7 +106,7 @@ h4,
 h5,
 h6 {
   margin-top: 0;
-  margin-bottom: 0.5rem;
+  margin-bottom: $space-sm;
 }
 
 // Reset margins on paragraphs
@@ -115,7 +115,7 @@ h6 {
 // bottom margin to use `rem` units instead of `em`.
 p {
   margin-top: 0;
-  margin-bottom: 1rem;
+  margin-bottom: $space-md;
 }
 
 // Abbreviations and acronyms
@@ -125,7 +125,7 @@ abbr[title] {
 }
 
 address {
-  margin-bottom: 1rem;
+  margin-bottom: $space-md;
   font-style: normal;
   line-height: inherit;
 }
@@ -134,7 +134,7 @@ ol,
 ul,
 dl {
   margin-top: 0;
-  margin-bottom: 0rem;
+  margin-bottom: 0;
 }
 
 ol ol,
@@ -145,16 +145,16 @@ ul ol {
 }
 
 dt {
-  font-weight: $dt-font-weight;
+  font-weight: $font-weight-semi-bold;
 }
 
 dd {
-  margin-bottom: 0.5rem;
+  margin-bottom: $space-sm;
   margin-left: 0; // Undo browser default
 }
 
 blockquote {
-  margin: 0 0 1rem;
+  margin: 0 0 $space-md;
 }
 
 //
@@ -171,7 +171,7 @@ a {
   }
 
   &:focus {
-    @include tab-focus();
+    @include no-focus();
   }
 }
 
@@ -183,7 +183,7 @@ pre {
   // Remove browser default top margin
   margin-top: 0;
   // Reset browser default of `1em` to use `rem`s
-  margin-bottom: 1rem;
+  margin-bottom: $space-md;
 }
 
 //
@@ -193,7 +193,7 @@ pre {
 figure {
   // Normalize adds `margin` to `figure`s as browsers apply it inconsistently.
   // We reset that to create a better flow in-page.
-  margin: 0 0 1rem;
+  margin: 0 0 $space-md;
 }
 
 //
@@ -214,7 +214,7 @@ img {
 // for traditionally non-focusable elements with role="button"
 // see https://developer.mozilla.org/en-US/docs/Web/Events/click#Safari_Mobile
 
-[role="button"] {
+[role='button'] {
   cursor: pointer;
 }
 
@@ -231,7 +231,7 @@ img {
 a,
 area,
 button,
-[role="button"],
+[role='button'],
 input,
 label,
 select,
@@ -246,12 +246,12 @@ textarea {
 
 table {
   // Reset for nesting within parents with `background-color`.
-  background-color: $table-bg;
+  background-color: transparent;
 }
 
 caption {
-  padding-top: $table-cell-padding;
-  padding-bottom: $table-cell-padding;
+  padding-top: $space-inset-squish-md;
+  padding-bottom: $space-inset-squish-md;
   color: $text-muted;
   text-align: left;
   caption-side: bottom;
@@ -314,13 +314,13 @@ legend {
   display: block;
   width: 100%;
   padding: 0;
-  margin-bottom: 0.5rem;
-  font-size: 1.5rem;
+  margin-bottom: $space-sm;
+  font-size: $space-lg;
   line-height: inherit;
   //  border: 0;
 }
 
-input[type="search"] {
+input[type='search'] {
   // This overrides the extra rounded corners on search inputs in iOS so that our
   // `.form-control` class can properly style them. Note that this cannot simply
   // be added to `.form-control` as it's not specific enough. For details, see

@@ -60,7 +60,7 @@ fi
 # overwrite settings from default file
 [ -e /etc/sysconfig/$NAME ] && . /etc/sysconfig/$NAME
 
-DAEMON_OPTS="--pidfile=${PID_FILE} --config=${CONF_FILE} cfg:default.paths.provisioning=$PROVISIONING_CFG_DIR cfg:default.paths.data=${DATA_DIR} cfg:default.paths.logs=${LOG_DIR} cfg:default.paths.plugins=${PLUGINS_DIR}"
+DAEMON_OPTS="--pidfile=${PID_FILE} --config=${CONF_FILE} --packaging=rpm cfg:default.paths.provisioning=$PROVISIONING_CFG_DIR cfg:default.paths.data=${DATA_DIR} cfg:default.paths.logs=${LOG_DIR} cfg:default.paths.plugins=${PLUGINS_DIR}"
 
 function isRunning() {
   status -p $PID_FILE $NAME > /dev/null 2>&1

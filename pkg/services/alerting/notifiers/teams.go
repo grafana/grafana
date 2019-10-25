@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
@@ -13,7 +13,7 @@ func init() {
 	alerting.RegisterNotifier(&alerting.NotifierPlugin{
 		Type:        "teams",
 		Name:        "Microsoft Teams",
-		Description: "Sends notifications using Incomming Webhook connector to Microsoft Teams",
+		Description: "Sends notifications using Incoming Webhook connector to Microsoft Teams",
 		Factory:     NewTeamsNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Teams settings</h3>
@@ -26,37 +26,35 @@ func init() {
 
 }
 
-func NewTeamsNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
+// NewTeamsNotifier is the constructor for Teams notifier.
+func NewTeamsNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
 
 	return &TeamsNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
-		Url:          url,
+		NotifierBase: NewNotifierBase(model),
+		URL:          url,
 		log:          log.New("alerting.notifier.teams"),
 	}, nil
 }
 
+// TeamsNotifier is responsible for sending
+// alert notifications to Microsoft teams.
 type TeamsNotifier struct {
 	NotifierBase
-	Url       string
-	Recipient string
-	Mention   string
-	log       log.Logger
+	URL string
+	log log.Logger
 }
 
-func (this *TeamsNotifier) ShouldNotify(context *alerting.EvalContext) bool {
-	return defaultShouldNotify(context)
-}
+// Notify send an alert notification to Microsoft teams.
+func (tn *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
+	tn.log.Info("Executing teams notification", "ruleId", evalContext.Rule.ID, "notification", tn.Name)
 
-func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
-	this.log.Info("Executing teams notification", "ruleId", evalContext.Rule.Id, "notification", this.Name)
-
-	ruleUrl, err := evalContext.GetRuleUrl()
+	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
-		this.log.Error("Failed get rule link", "error", err)
+		tn.log.Error("Failed get rule link", "error", err)
 		return err
 	}
 
@@ -79,35 +77,52 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 		})
 	}
 
-	message := this.Mention
-	if evalContext.Rule.State != m.AlertStateOK { //dont add message when going back to alert state ok.
-		message += " " + evalContext.Rule.Message
+	message := ""
+	if evalContext.Rule.State != models.AlertStateOK { //don't add message when going back to alert state ok.
+		message = evalContext.Rule.Message
+	}
+
+	images := make([]map[string]interface{}, 0)
+	if evalContext.ImagePublicURL != "" {
+		images = append(images, map[string]interface{}{
+			"image": evalContext.ImagePublicURL,
+		})
 	}
 
 	body := map[string]interface{}{
-		"@type":      "MessageCard",
-		"@context":   "http://schema.org/extensions",
-		"summary":    message,
+		"@type":    "MessageCard",
+		"@context": "http://schema.org/extensions",
+		// summary MUST not be empty or the webhook request fails
+		// summary SHOULD contain some meaningful information, since it is used for mobile notifications
+		"summary":    evalContext.GetNotificationTitle(),
 		"title":      evalContext.GetNotificationTitle(),
 		"themeColor": evalContext.GetStateModel().Color,
 		"sections": []map[string]interface{}{
 			{
-				"title": "Details",
-				"facts": fields,
-				"images": []map[string]interface{}{
+				"title":  "Details",
+				"facts":  fields,
+				"images": images,
+				"text":   message,
+			},
+		},
+		"potentialAction": []map[string]interface{}{
+			{
+				"@context": "http://schema.org",
+				"@type":    "OpenUri",
+				"name":     "View Rule",
+				"targets": []map[string]interface{}{
 					{
-						"image": evalContext.ImagePublicUrl,
+						"os": "default", "uri": ruleURL,
 					},
 				},
-				"text": message,
-				"potentialAction": []map[string]interface{}{
+			},
+			{
+				"@context": "http://schema.org",
+				"@type":    "OpenUri",
+				"name":     "View Graph",
+				"targets": []map[string]interface{}{
 					{
-						"@context": "http://schema.org",
-						"@type":    "ViewAction",
-						"name":     "View Rule",
-						"target": []string{
-							ruleUrl,
-						},
+						"os": "default", "uri": evalContext.ImagePublicURL,
 					},
 				},
 			},
@@ -115,10 +130,10 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	data, _ := json.Marshal(&body)
-	cmd := &m.SendWebhookSync{Url: this.Url, Body: string(data)}
+	cmd := &models.SendWebhookSync{Url: tn.URL, Body: string(data)}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
-		this.log.Error("Failed to send teams notification", "error", err, "webhook", this.Name)
+		tn.log.Error("Failed to send teams notification", "error", err, "webhook", tn.Name)
 		return err
 	}
 

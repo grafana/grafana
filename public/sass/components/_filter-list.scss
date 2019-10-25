@@ -67,17 +67,17 @@
   text-transform: uppercase;
 
   &.online {
-    background-image: url("/img/online.svg");
+    background-image: url('/img/online.svg');
     color: $online;
   }
 
   &.warn {
-    background-image: url("/img/warn-tiny.svg");
+    background-image: url('/img/warn-tiny.svg');
     color: $warn;
   }
 
   &.critical {
-    background-image: url("/img/critical.svg");
+    background-image: url('/img/critical.svg');
     color: $critical;
   }
 }

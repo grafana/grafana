@@ -16,6 +16,7 @@ type ImportDashboardCommand struct {
 	Path      string
 	Inputs    []ImportDashboardInput
 	Overwrite bool
+	FolderId  int64
 
 	OrgId    int64
 	User     *m.SignedInUser
@@ -70,7 +71,7 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 		UserId:    cmd.User.UserId,
 		Overwrite: cmd.Overwrite,
 		PluginId:  cmd.PluginId,
-		FolderId:  dashboard.FolderId,
+		FolderId:  cmd.FolderId,
 	}
 
 	dto := &dashboards.SaveDashboardDTO{
@@ -80,7 +81,7 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 		User:      cmd.User,
 	}
 
-	savedDash, err := dashboards.NewService().SaveDashboard(dto)
+	savedDash, err := dashboards.NewService().ImportDashboard(dto)
 
 	if err != nil {
 		return err
@@ -91,10 +92,13 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 		Title:            savedDash.Title,
 		Path:             cmd.Path,
 		Revision:         savedDash.Data.Get("revision").MustInt64(1),
+		FolderId:         savedDash.FolderId,
 		ImportedUri:      "db/" + savedDash.Slug,
 		ImportedUrl:      savedDash.GetUrl(),
 		ImportedRevision: dashboard.Data.Get("revision").MustInt64(1),
 		Imported:         true,
+		DashboardId:      savedDash.Id,
+		Slug:             savedDash.Slug,
 	}
 
 	return nil
@@ -148,11 +152,11 @@ func (this *DashTemplateEvaluator) evalValue(source *simplejson.Json) interface{
 	switch v := sourceValue.(type) {
 	case string:
 		interpolated := this.varRegex.ReplaceAllStringFunc(v, func(match string) string {
-			if replacement, exists := this.variables[match]; exists {
+			replacement, exists := this.variables[match]
+			if exists {
 				return replacement
-			} else {
-				return match
 			}
+			return match
 		})
 		return interpolated
 	case bool:

@@ -16,6 +16,7 @@ func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json, dsInfo *models.Data
 	rawQuery := model.Get("query").MustString("")
 	useRawQuery := model.Get("rawQuery").MustBool(false)
 	alias := model.Get("alias").MustString("")
+	tz := model.Get("tz").MustString("")
 
 	measurement := model.Get("measurement").MustString("")
 
@@ -40,6 +41,9 @@ func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json, dsInfo *models.Data
 	}
 
 	parsedInterval, err := tsdb.GetIntervalFrom(dsInfo, model, time.Millisecond*1)
+	if err != nil {
+		return nil, err
+	}
 
 	return &Query{
 		Measurement:  measurement,
@@ -52,6 +56,7 @@ func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json, dsInfo *models.Data
 		Interval:     parsedInterval,
 		Alias:        alias,
 		UseRawQuery:  useRawQuery,
+		Tz:           tz,
 	}, nil
 }
 

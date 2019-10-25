@@ -8,4 +8,5 @@ const (
 	TWITTER
 	GENERIC
 	GRAFANA_COM
+	GITLAB
 )

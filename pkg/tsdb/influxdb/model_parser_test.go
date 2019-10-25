@@ -41,6 +41,7 @@ func TestInfluxdbQueryParser(t *testing.T) {
           }
         ],
         "measurement": "logins.count",
+        "tz": "Europe/Paris",
         "policy": "default",
         "refId": "B",
         "resultFormat": "time_series",
@@ -115,6 +116,7 @@ func TestInfluxdbQueryParser(t *testing.T) {
 			So(len(res.GroupBy), ShouldEqual, 3)
 			So(len(res.Selects), ShouldEqual, 3)
 			So(len(res.Tags), ShouldEqual, 2)
+			So(res.Tz, ShouldEqual, "Europe/Paris")
 			So(res.Interval, ShouldEqual, time.Second*20)
 			So(res.Alias, ShouldEqual, "serie alias")
 		})

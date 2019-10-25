@@ -14,7 +14,7 @@ ace.define("ace/theme/grafana-dark",["require","exports","module","ace/lib/dom"]
   background: #555651\
   }\
   .gf-code-dark {\
-  background-color: #111;\
+  background-color: #09090b;\
   color: #e0e0e0\
   }\
   .gf-code-dark .ace_cursor {\

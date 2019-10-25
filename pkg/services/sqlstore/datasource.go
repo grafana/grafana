@@ -3,11 +3,13 @@ package sqlstore
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
+
 	"github.com/go-xorm/xorm"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
-	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
@@ -23,10 +25,11 @@ func init() {
 }
 
 func GetDataSourceById(query *m.GetDataSourceByIdQuery) error {
-	metrics.M_DB_DataSource_QueryById.Inc()
+	metrics.MDBDataSourceQueryByID.Inc()
 
 	datasource := m.DataSource{OrgId: query.OrgId, Id: query.Id}
 	has, err := x.Get(&datasource)
+
 	if err != nil {
 		return err
 	}
@@ -52,14 +55,14 @@ func GetDataSourceByName(query *m.GetDataSourceByNameQuery) error {
 }
 
 func GetDataSources(query *m.GetDataSourcesQuery) error {
-	sess := x.Limit(1000, 0).Where("org_id=?", query.OrgId).Asc("name")
+	sess := x.Limit(5000, 0).Where("org_id=?", query.OrgId).Asc("name")
 
 	query.Result = make([]*m.DataSource, 0)
 	return sess.Find(&query.Result)
 }
 
 func GetAllDataSources(query *m.GetAllDataSourcesQuery) error {
-	sess := x.Limit(1000, 0).Asc("name")
+	sess := x.Limit(5000, 0).Asc("name")
 
 	query.Result = make([]*m.DataSource, 0)
 	return sess.Find(&query.Result)
@@ -92,6 +95,10 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 
 		if has {
 			return m.ErrDataSourceNameExists
+		}
+
+		if cmd.JsonData == nil {
+			cmd.JsonData = simplejson.New()
 		}
 
 		ds := &m.DataSource{
@@ -141,6 +148,10 @@ func updateIsDefaultFlag(ds *m.DataSource, sess *DBSession) error {
 
 func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 	return inTransaction(func(sess *DBSession) error {
+		if cmd.JsonData == nil {
+			cmd.JsonData = simplejson.New()
+		}
+
 		ds := &m.DataSource{
 			Id:                cmd.Id,
 			OrgId:             cmd.OrgId,
@@ -167,6 +178,10 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 		sess.UseBool("basic_auth")
 		sess.UseBool("with_credentials")
 		sess.UseBool("read_only")
+		// Make sure password are zeroed out if empty. We do this as we want to migrate passwords from
+		// plain text fields to SecureJsonData.
+		sess.MustCols("password")
+		sess.MustCols("basic_auth_password")
 
 		var updateSession *xorm.Session
 		if cmd.Version != 0 {

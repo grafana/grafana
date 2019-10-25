@@ -1,13 +1,8 @@
 +++
 title = "What's New in Grafana v2.1"
-description = "Feature & improvement highlights for Grafana v2.1"
+description = "Feature and improvement highlights for Grafana v2.1"
 keywords = ["grafana", "new", "documentation", "2.1"]
 type = "docs"
-[menu.docs]
-name = "Version 2.1"
-identifier = "v2.1"
-parent = "whatsnew"
-weight = 10
 +++
 
 # What's new in Grafana v2.1
@@ -34,7 +29,7 @@ on a multi-value template variable.</p>
 ![Repeating Rows and Panels](/img/docs/v2/panel-row-repeat.gif "Repeating Rows and Panels")
 <br/><br/>
 
-### Dashboard Links & Navigation
+### Dashboard Links and Navigation
 To support better navigation between dashboards, it's now possible to create custom and dynamic links from individual
 panels to appropriate Dashboards. You also have the ability to create flexible top-level links on any
 given dashboard thanks to the new dashboard navigation bar feature.

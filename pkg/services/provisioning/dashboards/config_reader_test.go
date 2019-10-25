@@ -1,16 +1,17 @@
 package dashboards
 
 import (
+	"os"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 var (
-	simpleDashboardConfig string = "./test-configs/dashboards-from-disk"
-	oldVersion            string = "./test-configs/version-0"
-	brokenConfigs         string = "./test-configs/broken-configs"
+	simpleDashboardConfig = "./testdata/test-configs/dashboards-from-disk"
+	oldVersion            = "./testdata/test-configs/version-0"
+	brokenConfigs         = "./testdata/test-configs/broken-configs"
 )
 
 func TestDashboardsAsConfig(t *testing.T) {
@@ -18,11 +19,13 @@ func TestDashboardsAsConfig(t *testing.T) {
 		logger := log.New("test-logger")
 
 		Convey("Can read config file version 1 format", func() {
+			_ = os.Setenv("TEST_VAR", "general")
 			cfgProvider := configReader{path: simpleDashboardConfig, log: logger}
 			cfg, err := cfgProvider.readConfig()
+			_ = os.Unsetenv("TEST_VAR")
 			So(err, ShouldBeNil)
 
-			validateDashboardAsConfig(cfg)
+			validateDashboardAsConfig(t, cfg)
 		})
 
 		Convey("Can read config file in version 0 format", func() {
@@ -30,7 +33,7 @@ func TestDashboardsAsConfig(t *testing.T) {
 			cfg, err := cfgProvider.readConfig()
 			So(err, ShouldBeNil)
 
-			validateDashboardAsConfig(cfg)
+			validateDashboardAsConfig(t, cfg)
 		})
 
 		Convey("Should skip invalid path", func() {
@@ -56,7 +59,9 @@ func TestDashboardsAsConfig(t *testing.T) {
 		})
 	})
 }
-func validateDashboardAsConfig(cfg []*DashboardsAsConfig) {
+func validateDashboardAsConfig(t *testing.T, cfg []*DashboardsAsConfig) {
+	t.Helper()
+
 	So(len(cfg), ShouldEqual, 2)
 
 	ds := cfg[0]
@@ -64,18 +69,22 @@ func validateDashboardAsConfig(cfg []*DashboardsAsConfig) {
 	So(ds.Type, ShouldEqual, "file")
 	So(ds.OrgId, ShouldEqual, 2)
 	So(ds.Folder, ShouldEqual, "developers")
+	So(ds.FolderUid, ShouldEqual, "xyz")
 	So(ds.Editable, ShouldBeTrue)
 	So(len(ds.Options), ShouldEqual, 1)
 	So(ds.Options["path"], ShouldEqual, "/var/lib/grafana/dashboards")
 	So(ds.DisableDeletion, ShouldBeTrue)
+	So(ds.UpdateIntervalSeconds, ShouldEqual, 15)
 
 	ds2 := cfg[1]
 	So(ds2.Name, ShouldEqual, "default")
 	So(ds2.Type, ShouldEqual, "file")
 	So(ds2.OrgId, ShouldEqual, 1)
 	So(ds2.Folder, ShouldEqual, "")
+	So(ds2.FolderUid, ShouldEqual, "")
 	So(ds2.Editable, ShouldBeFalse)
 	So(len(ds2.Options), ShouldEqual, 1)
 	So(ds2.Options["path"], ShouldEqual, "/var/lib/grafana/dashboards")
 	So(ds2.DisableDeletion, ShouldBeFalse)
+	So(ds2.UpdateIntervalSeconds, ShouldEqual, 10)
 }

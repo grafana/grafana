@@ -1,0 +1,35 @@
+notifiers:
+  - type: slack
+    org_id: 2
+    uid: no-name_added-notification
+    is_default: true
+    settings:
+      recipient: "XXX"
+      token: "xoxb"
+      uploadImage: true
+  - name: no-uid 
+    type: slack
+    org_id: 2    
+    is_default: true
+    settings:
+      recipient: "XXX"
+      token: "xoxb"
+      uploadImage: true
+delete_notifiers:
+  - name: no-uid 
+    type: slack
+    org_id: 2    
+    is_default: true
+    settings:
+      recipient: "XXX"
+      token: "xoxb"
+      uploadImage: true
+  - type: slack
+    org_id: 2
+    uid: no-name_added-notification
+    is_default: true
+    settings:
+      recipient: "XXX"
+      token: "xoxb"
+      uploadImage: true
+      

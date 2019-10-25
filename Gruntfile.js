@@ -1,4 +1,3 @@
-/* jshint node:true */
 'use strict';
 module.exports = function (grunt) {
   var os = require('os');
@@ -10,7 +9,17 @@ module.exports = function (grunt) {
     destDir: 'dist',
     tempDir: 'tmp',
     platform: process.platform.replace('win32', 'windows'),
+    enterprise: false,
+    libc: null,
   };
+
+  if (grunt.option('platform')) {
+    config.platform = grunt.option('platform');
+  }
+
+  if (grunt.option('enterprise')) {
+    config.enterprise = true;
+  }
 
   if (grunt.option('arch')) {
     config.arch = grunt.option('arch');
@@ -22,7 +31,10 @@ module.exports = function (grunt) {
     }
   }
 
-  config.coverage = grunt.option('coverage');
+  if (grunt.option('libc')) {
+    config.libc = grunt.option('libc');
+  }
+
   config.phjs = grunt.option('phjsToRelease');
   config.pkg.version = grunt.option('pkgVer') || config.pkg.version;
 
@@ -35,7 +47,7 @@ module.exports = function (grunt) {
   grunt.loadTasks('./scripts/grunt');
 
   // Utility function to load plugin settings into config
-  function loadConfig(config,path) {
+  function loadConfig(config, path) {
     require('glob').sync('*', {cwd: path}).forEach(function(option) {
       var key = option.replace(/\.js$/,'');
       // If key already exists, extend it. It is your responsibility to avoid naming collisions

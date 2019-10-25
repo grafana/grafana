@@ -1,0 +1,90 @@
+<query-editor-row query-ctrl="ctrl" can-collapse="false">
+	<div class="gf-form-inline">
+		<div class="gf-form gf-form--grow">
+			<code-editor content="ctrl.target.rawSql" datasource="ctrl.datasource" on-change="ctrl.panelCtrl.refresh()" data-mode="sqlserver">
+			</code-editor>
+		</div>
+	</div>
+
+  <div class="gf-form-inline">
+    <div class="gf-form">
+			<label class="gf-form-label query-keyword">Format as</label>
+			<div class="gf-form-select-wrapper">
+				<select class="gf-form-input gf-size-auto" ng-model="ctrl.target.format" ng-options="f.value as f.text for f in ctrl.formats" ng-change="ctrl.refresh()"></select>
+			</div>
+		</div>
+		<div class="gf-form">
+      <label class="gf-form-label query-keyword" ng-click="ctrl.showHelp = !ctrl.showHelp">
+        Show Help
+        <i class="fa fa-caret-down" ng-show="ctrl.showHelp"></i>
+        <i class="fa fa-caret-right" ng-hide="ctrl.showHelp"></i>
+      </label>
+		</div>
+		<div class="gf-form" ng-show="ctrl.lastQueryMeta">
+      <label class="gf-form-label query-keyword" ng-click="ctrl.showLastQuerySQL = !ctrl.showLastQuerySQL">
+        Generated SQL
+        <i class="fa fa-caret-down" ng-show="ctrl.showLastQuerySQL"></i>
+        <i class="fa fa-caret-right" ng-hide="ctrl.showLastQuerySQL"></i>
+      </label>
+		</div>
+		<div class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>
+	</div>
+
+	<div class="gf-form" ng-show="ctrl.showLastQuerySQL">
+		<pre class="gf-form-pre">{{ctrl.lastQueryMeta.sql}}</pre>
+	</div>
+
+	<div class="gf-form"  ng-show="ctrl.showHelp">
+		<pre class="gf-form-pre alert alert-info">Time series:
+- return column named time (in UTC), as a unix time stamp or any sql native date data type. You can use the macros below.
+- any other columns returned will be the time point values.
+Optional:
+  - return column named <i>metric</i> to represent the series name.
+  - If multiple value columns are returned the metric column is used as prefix.
+  - If no column named metric is found the column name of the value column is used as series name
+
+Resultsets of time series queries need to be sorted by time.
+
+Table:
+- return any set of columns
+
+Macros:
+- $__time(column) -&gt; column AS time
+- $__timeEpoch(column) -&gt; DATEDIFF(second, '1970-01-01', column) AS time
+- $__timeFilter(column) -&gt; column BETWEEN '2017-04-21T05:01:17Z' AND '2017-04-21T05:01:17Z'
+- $__unixEpochFilter(column) -&gt; column &gt;= 1492750877 AND column &lt;= 1492750877
+- $__unixEpochNanoFilter(column) -&gt;  column &gt;= 1494410783152415214 AND column &lt;= 1494497183142514872
+- $__timeGroup(column, '5m'[, fillvalue]) -&gt; CAST(ROUND(DATEDIFF(second, '1970-01-01', column)/300.0, 0) as bigint)*300.
+     by setting fillvalue grafana will fill in missing values according to the interval
+     fillvalue can be either a literal value, NULL or previous; previous will fill in the previous seen value or NULL if none has been seen yet
+- $__timeGroupAlias(column, '5m'[, fillvalue]) -&gt; CAST(ROUND(DATEDIFF(second, '1970-01-01', column)/300.0, 0) as bigint)*300 AS [time]
+- $__unixEpochGroup(column,'5m') -&gt; FLOOR(column/300)*300
+- $__unixEpochGroupAlias(column,'5m') -&gt; FLOOR(column/300)*300 AS [time]
+
+Example of group by and order by with $__timeGroup:
+SELECT
+  $__timeGroup(date_time_col, '1h') AS time,
+  sum(value) as value
+FROM yourtable
+GROUP BY $__timeGroup(date_time_col, '1h')
+ORDER BY 1
+
+Or build your own conditionals using these macros which just return the values:
+- $__timeFrom() -&gt;  '2017-04-21T05:01:17Z'
+- $__timeTo() -&gt;  '2017-04-21T05:01:17Z'
+- $__unixEpochFrom() -&gt; 1492750877
+- $__unixEpochTo() -&gt; 1492750877
+- $__unixEpochNanoFrom() -&gt;  1494410783152415214
+- $__unixEpochNanoTo() -&gt;  1494497183142514872
+		</pre>
+	</div>
+
+	</div>
+
+	<div class="gf-form" ng-show="ctrl.lastQueryError">
+		<pre class="gf-form-pre alert alert-error">{{ctrl.lastQueryError}}</pre>
+	</div>
+
+</query-editor-row>

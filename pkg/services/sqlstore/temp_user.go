@@ -96,7 +96,7 @@ func GetTempUsersQuery(query *m.GetTempUsersQuery) error {
 	rawSql += " ORDER BY tu.created desc"
 
 	query.Result = make([]*m.TempUserDTO, 0)
-	sess := x.Sql(rawSql, params...)
+	sess := x.SQL(rawSql, params...)
 	err := sess.Find(&query.Result)
 	return err
 }
@@ -121,12 +121,12 @@ func GetTempUserByCode(query *m.GetTempUserByCodeQuery) error {
 	                WHERE tu.code=?`
 
 	var tempUser m.TempUserDTO
-	sess := x.Sql(rawSql, query.Code)
+	sess := x.SQL(rawSql, query.Code)
 	has, err := sess.Get(&tempUser)
 
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		return m.ErrTempUserNotFound
 	}
 

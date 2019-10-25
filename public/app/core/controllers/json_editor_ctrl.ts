@@ -3,14 +3,14 @@ import coreModule from '../core_module';
 
 export class JsonEditorCtrl {
   /** @ngInject */
-  constructor($scope) {
-    $scope.json = angular.toJson($scope.object, true);
-    $scope.canUpdate = $scope.updateHandler !== void 0 && $scope.contextSrv.isEditor;
-    $scope.canCopy = $scope.enableCopy;
+  constructor($scope: any) {
+    $scope.json = angular.toJson($scope.model.object, true);
+    $scope.canUpdate = $scope.model.updateHandler !== void 0 && $scope.model.canUpdate;
+    $scope.canCopy = $scope.model.enableCopy;
 
-    $scope.update = function() {
-      var newObject = angular.fromJson($scope.json);
-      $scope.updateHandler(newObject, $scope.object);
+    $scope.update = () => {
+      const newObject = angular.fromJson($scope.json);
+      $scope.model.updateHandler(newObject, $scope.model.object);
     };
 
     $scope.getContentForClipboard = () => $scope.json;

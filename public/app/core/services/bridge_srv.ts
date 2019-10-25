@@ -1,45 +1,70 @@
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
-import { store } from 'app/stores/store';
-import { reaction } from 'mobx';
+import { store } from 'app/store/store';
 import locationUtil from 'app/core/utils/location_util';
+import { updateLocation } from 'app/core/actions';
+import { ITimeoutService, ILocationService, IWindowService } from 'angular';
+import { CoreEvents } from 'app/types';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
-// Services that handles angular -> mobx store sync & other react <-> angular sync
+// Services that handles angular -> redux store sync & other react <-> angular sync
 export class BridgeSrv {
-  private fullPageReloadRoutes;
+  private fullPageReloadRoutes: string[];
 
   /** @ngInject */
-  constructor(private $location, private $timeout, private $window, private $rootScope, private $route) {
+  constructor(
+    private $location: ILocationService,
+    private $timeout: ITimeoutService,
+    private $window: IWindowService,
+    private $rootScope: GrafanaRootScope,
+    private $route: any
+  ) {
     this.fullPageReloadRoutes = ['/logout'];
   }
 
   init() {
     this.$rootScope.$on('$routeUpdate', (evt, data) => {
-      let angularUrl = this.$location.url();
-      if (store.view.currentUrl !== angularUrl) {
-        store.view.updatePathAndQuery(this.$location.path(), this.$location.search(), this.$route.current.params);
+      const angularUrl = this.$location.url();
+      const state = store.getState();
+      if (state.location.url !== angularUrl) {
+        store.dispatch(
+          updateLocation({
+            path: this.$location.path(),
+            query: this.$location.search(),
+            routeParams: this.$route.current.params,
+          })
+        );
       }
     });
 
     this.$rootScope.$on('$routeChangeSuccess', (evt, data) => {
-      store.view.updatePathAndQuery(this.$location.path(), this.$location.search(), this.$route.current.params);
+      store.dispatch(
+        updateLocation({
+          path: this.$location.path(),
+          query: this.$location.search(),
+          routeParams: this.$route.current.params,
+        })
+      );
     });
 
-    reaction(
-      () => store.view.currentUrl,
-      currentUrl => {
-        let angularUrl = this.$location.url();
-        const url = locationUtil.stripBaseFromUrl(currentUrl);
-        if (angularUrl !== url) {
-          this.$timeout(() => {
-            this.$location.url(url);
-          });
-          console.log('store updating angular $location.url', url);
-        }
+    // Listen for changes in redux location -> update angular location
+    store.subscribe(() => {
+      const state = store.getState();
+      const angularUrl = this.$location.url();
+      const url = locationUtil.stripBaseFromUrl(state.location.url);
+      if (angularUrl !== url) {
+        this.$timeout(() => {
+          this.$location.url(url);
+          // some state changes should not trigger new browser history
+          if (state.location.replace) {
+            this.$location.replace();
+          }
+        });
+        console.log('store updating angular $location.url', url);
       }
-    );
+    });
 
-    appEvents.on('location-change', payload => {
+    appEvents.on(CoreEvents.locationChange, payload => {
       const urlWithoutBase = locationUtil.stripBaseFromUrl(payload.href);
       if (this.fullPageReloadRoutes.indexOf(urlWithoutBase) > -1) {
         this.$window.location.href = payload.href;

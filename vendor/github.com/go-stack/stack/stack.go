@@ -81,7 +81,9 @@ var ErrNoFunc = errors.New("no call stack information")
 //
 // It accepts the '+' and '#' flags for most of the verbs as follows.
 //
-//    %+s   path of source file relative to the compile time GOPATH
+//    %+s   path of source file relative to the compile time GOPATH,
+//          or the module path joined to the path of source file relative
+//          to module root
 //    %#s   full path of source file
 //    %+n   import path qualified function name
 //    %+k   full package path
@@ -100,7 +102,7 @@ func (c Call) Format(s fmt.State, verb rune) {
 		case s.Flag('#'):
 			// done
 		case s.Flag('+'):
-			file = file[pkgIndex(file, c.frame.Function):]
+			file = pkgFilePath(&c.frame)
 		default:
 			const sep = "/"
 			if i := strings.LastIndex(file, sep); i != -1 {
@@ -283,6 +285,80 @@ func pkgIndex(file, funcName string) int {
 	}
 	// get back to 0 or trim the leading separator
 	return i + len(sep)
+}
+
+// pkgFilePath returns the frame's filepath relative to the compile-time GOPATH,
+// or its module path joined to its path relative to the module root.
+//
+// As of Go 1.11 there is no direct way to know the compile time GOPATH or
+// module paths at runtime, but we can piece together the desired information
+// from available information. We note that runtime.Frame.Function contains the
+// function name qualified by the package path, which includes the module path
+// but not the GOPATH. We can extract the package path from that and append the
+// last segments of the file path to arrive at the desired package qualified
+// file path. For example, given:
+//
+//    GOPATH          /home/user
+//    import path     pkg/sub
+//    frame.File      /home/user/src/pkg/sub/file.go
+//    frame.Function  pkg/sub.Type.Method
+//    Desired return  pkg/sub/file.go
+//
+// It appears that we simply need to trim ".Type.Method" from frame.Function and
+// append "/" + path.Base(file).
+//
+// But there are other wrinkles. Although it is idiomatic to do so, the internal
+// name of a package is not required to match the last segment of its import
+// path. In addition, the introduction of modules in Go 1.11 allows working
+// without a GOPATH. So we also must make these work right:
+//
+//    GOPATH          /home/user
+//    import path     pkg/go-sub
+//    package name    sub
+//    frame.File      /home/user/src/pkg/go-sub/file.go
+//    frame.Function  pkg/sub.Type.Method
+//    Desired return  pkg/go-sub/file.go
+//
+//    Module path     pkg/v2
+//    import path     pkg/v2/go-sub
+//    package name    sub
+//    frame.File      /home/user/cloned-pkg/go-sub/file.go
+//    frame.Function  pkg/v2/sub.Type.Method
+//    Desired return  pkg/v2/go-sub/file.go
+//
+// We can handle all of these situations by using the package path extracted
+// from frame.Function up to, but not including, the last segment as the prefix
+// and the last two segments of frame.File as the suffix of the returned path.
+// This preserves the existing behavior when working in a GOPATH without modules
+// and a semantically equivalent behavior when used in module aware project.
+func pkgFilePath(frame *runtime.Frame) string {
+	pre := pkgPrefix(frame.Function)
+	post := pathSuffix(frame.File)
+	if pre == "" {
+		return post
+	}
+	return pre + "/" + post
+}
+
+// pkgPrefix returns the import path of the function's package with the final
+// segment removed.
+func pkgPrefix(funcName string) string {
+	const pathSep = "/"
+	end := strings.LastIndex(funcName, pathSep)
+	if end == -1 {
+		return ""
+	}
+	return funcName[:end]
+}
+
+// pathSuffix returns the last two segments of path.
+func pathSuffix(path string) string {
+	const pathSep = "/"
+	lastSep := strings.LastIndex(path, pathSep)
+	if lastSep == -1 {
+		return path
+	}
+	return path[strings.LastIndex(path[:lastSep], pathSep)+1:]
 }
 
 var runtimePath string

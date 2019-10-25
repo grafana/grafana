@@ -24,6 +24,9 @@ var (
 	// os.Stdout is used.
 	Output = colorable.NewColorableStdout()
 
+	// Error defines a color supporting writer for os.Stderr.
+	Error = colorable.NewColorableStderr()
+
 	// colorsCache is used to reduce the count of created Color objects and
 	// allows to reuse already created objects with required Attribute.
 	colorsCache   = make(map[Attribute]*Color)
@@ -341,7 +344,7 @@ func (c *Color) SprintlnFunc() func(a ...interface{}) string {
 	}
 }
 
-// sequence returns a formated SGR sequence to be plugged into a "\x1b[...m"
+// sequence returns a formatted SGR sequence to be plugged into a "\x1b[...m"
 // an example output might be: "1;36" -> bold cyan
 func (c *Color) sequence() string {
 	format := make([]string, len(c.params))

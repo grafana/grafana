@@ -32,12 +32,8 @@
         <input type="password" class="gf-form-input max-width-14" required ng-model="formModel.password" id="inputPassword" placeholder="password" autocomplete="off">
       </div>
 
-      <div class="signup__password-strength">
-        <password-strength password="formModel.password"></password-strength>
-      </div>
-
       <div class="gf-form-button-row p-t-3">
-        <button type="submit" class="btn btn-success" ng-click="ctrl.submit();" ng-disabled="!signUpForm.$valid">
+        <button type="submit" class="btn btn-primary" ng-click="ctrl.submit();" ng-disabled="!signUpForm.$valid">
           Sign Up
         </button>
         <a href="login" class="btn btn-inverse">

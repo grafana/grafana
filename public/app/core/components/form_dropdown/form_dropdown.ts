@@ -1,8 +1,9 @@
 import _ from 'lodash';
 import coreModule from '../../core_module';
+import { ISCEService, IQService } from 'angular';
 
-function typeaheadMatcher(item) {
-  var str = this.query;
+function typeaheadMatcher(this: any, item: string) {
+  let str = this.query;
   if (str === '') {
     return true;
   }
@@ -16,8 +17,8 @@ function typeaheadMatcher(item) {
 }
 
 export class FormDropdownCtrl {
-  inputElement: any;
-  linkElement: any;
+  inputElement: JQLite;
+  linkElement: JQLite;
   model: any;
   display: any;
   text: any;
@@ -36,8 +37,14 @@ export class FormDropdownCtrl {
   startOpen: any;
   debounce: number;
 
-  /** @ngInject **/
-  constructor(private $scope, $element, private $sce, private templateSrv, private $q) {
+  /** @ngInject */
+  constructor(
+    private $scope: any,
+    $element: JQLite,
+    private $sce: ISCEService,
+    private templateSrv: any,
+    private $q: IQService
+  ) {
     this.inputElement = $element.find('input').first();
     this.linkElement = $element.find('a').first();
     this.linkMode = true;
@@ -67,7 +74,7 @@ export class FormDropdownCtrl {
 
     // modify typeahead lookup
     // this = typeahead
-    var typeahead = this.inputElement.data('typeahead');
+    const typeahead = this.inputElement.data('typeahead');
     typeahead.lookup = function() {
       this.query = this.$element.val() || '';
       this.source(this.query, this.process.bind(this));
@@ -88,7 +95,7 @@ export class FormDropdownCtrl {
       if (evt.keyCode === 13) {
         setTimeout(() => {
           this.inputElement.blur();
-        }, 100);
+        }, 300);
       }
     });
 
@@ -99,26 +106,26 @@ export class FormDropdownCtrl {
     }
   }
 
-  getOptionsInternal(query) {
-    var result = this.getOptions({ $query: query });
+  getOptionsInternal(query: string) {
+    const result = this.getOptions({ $query: query });
     if (this.isPromiseLike(result)) {
       return result;
     }
     return this.$q.when(result);
   }
 
-  isPromiseLike(obj) {
+  isPromiseLike(obj: any) {
     return obj && typeof obj.then === 'function';
   }
 
   modelChanged() {
     if (_.isObject(this.model)) {
-      this.updateDisplay(this.model.text);
+      this.updateDisplay((this.model as any).text);
     } else {
       // if we have text use it
       if (this.lookupText) {
-        this.getOptionsInternal('').then(options => {
-          var item = _.find(options, { value: this.model });
+        this.getOptionsInternal('').then((options: any) => {
+          const item: any = _.find(options, { value: this.model });
           this.updateDisplay(item ? item.text : this.model);
         });
       } else {
@@ -127,12 +134,12 @@ export class FormDropdownCtrl {
     }
   }
 
-  typeaheadSource(query, callback) {
-    this.getOptionsInternal(query).then(options => {
+  typeaheadSource(query: string, callback: (res: any) => void) {
+    this.getOptionsInternal(query).then((options: any) => {
       this.optionCache = options;
 
       // extract texts
-      let optionTexts = _.map(options, op => {
+      const optionTexts = _.map(options, (op: any) => {
         return _.escape(op.text);
       });
 
@@ -147,7 +154,7 @@ export class FormDropdownCtrl {
     });
   }
 
-  typeaheadUpdater(text) {
+  typeaheadUpdater(text: string) {
     if (text === this.text) {
       clearTimeout(this.cancelBlur);
       this.inputElement.focus();
@@ -159,7 +166,7 @@ export class FormDropdownCtrl {
     return text;
   }
 
-  switchToLink(fromClick) {
+  switchToLink(fromClick: boolean) {
     if (this.linkMode && !fromClick) {
       return;
     }
@@ -178,7 +185,7 @@ export class FormDropdownCtrl {
     this.cancelBlur = setTimeout(this.switchToLink.bind(this), 200);
   }
 
-  updateValue(text) {
+  updateValue(text: string) {
     text = _.unescape(text);
 
     if (text === '' || this.text === text) {
@@ -186,7 +193,7 @@ export class FormDropdownCtrl {
     }
 
     this.$scope.$apply(() => {
-      var option = _.find(this.optionCache, { text: text });
+      const option: any = _.find(this.optionCache, { text: text });
 
       if (option) {
         if (_.isObject(this.model)) {
@@ -197,7 +204,7 @@ export class FormDropdownCtrl {
         this.text = option.text;
       } else if (this.allowCustom) {
         if (_.isObject(this.model)) {
-          this.model.text = this.model.value = text;
+          (this.model as any).text = (this.model as any).value = text;
         } else {
           this.model = text;
         }
@@ -214,7 +221,7 @@ export class FormDropdownCtrl {
     });
   }
 
-  updateDisplay(text) {
+  updateDisplay(text: string) {
     this.text = text;
     this.display = this.$sce.trustAsHtml(this.templateSrv.highlightVariablesAsHtml(text));
   }
@@ -228,7 +235,7 @@ export class FormDropdownCtrl {
     this.linkElement.hide();
     this.linkMode = false;
 
-    var typeahead = this.inputElement.data('typeahead');
+    const typeahead = this.inputElement.data('typeahead');
     if (typeahead) {
       this.inputElement.val('');
       typeahead.lookup();

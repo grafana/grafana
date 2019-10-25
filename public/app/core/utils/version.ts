@@ -9,7 +9,7 @@ export class SemVersion {
   meta: string;
 
   constructor(version: string) {
-    let match = versionPattern.exec(version);
+    const match = versionPattern.exec(version);
     if (match) {
       this.major = Number(match[1]);
       this.minor = Number(match[2] || 0);
@@ -19,16 +19,29 @@ export class SemVersion {
   }
 
   isGtOrEq(version: string): boolean {
-    let compared = new SemVersion(version);
-    return !(this.major < compared.major || this.minor < compared.minor || this.patch < compared.patch);
+    const compared = new SemVersion(version);
+
+    for (let i = 0; i < this.comparable.length; ++i) {
+      if (this.comparable[i] > compared.comparable[i]) {
+        return true;
+      }
+      if (this.comparable[i] < compared.comparable[i]) {
+        return false;
+      }
+    }
+    return true;
   }
 
   isValid(): boolean {
     return _.isNumber(this.major);
   }
+
+  get comparable() {
+    return [this.major, this.minor, this.patch];
+  }
 }
 
 export function isVersionGtOrEq(a: string, b: string): boolean {
-  let a_semver = new SemVersion(a);
-  return a_semver.isGtOrEq(b);
+  const aSemver = new SemVersion(a);
+  return aSemver.isGtOrEq(b);
 }

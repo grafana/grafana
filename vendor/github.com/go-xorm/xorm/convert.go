@@ -209,10 +209,10 @@ func convertAssign(dest, src interface{}) error {
 		if src == nil {
 			dv.Set(reflect.Zero(dv.Type()))
 			return nil
-		} else {
-			dv.Set(reflect.New(dv.Type().Elem()))
-			return convertAssign(dv.Interface(), src)
 		}
+
+		dv.Set(reflect.New(dv.Type().Elem()))
+		return convertAssign(dv.Interface(), src)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		s := asString(src)
 		i64, err := strconv.ParseInt(s, 10, dv.Type().Bits())
@@ -246,4 +246,103 @@ func convertAssign(dest, src interface{}) error {
 	}
 
 	return fmt.Errorf("unsupported Scan, storing driver.Value type %T into type %T", src, dest)
+}
+
+func asKind(vv reflect.Value, tp reflect.Type) (interface{}, error) {
+	switch tp.Kind() {
+	case reflect.Int64:
+		return vv.Int(), nil
+	case reflect.Int:
+		return int(vv.Int()), nil
+	case reflect.Int32:
+		return int32(vv.Int()), nil
+	case reflect.Int16:
+		return int16(vv.Int()), nil
+	case reflect.Int8:
+		return int8(vv.Int()), nil
+	case reflect.Uint64:
+		return vv.Uint(), nil
+	case reflect.Uint:
+		return uint(vv.Uint()), nil
+	case reflect.Uint32:
+		return uint32(vv.Uint()), nil
+	case reflect.Uint16:
+		return uint16(vv.Uint()), nil
+	case reflect.Uint8:
+		return uint8(vv.Uint()), nil
+	case reflect.String:
+		return vv.String(), nil
+	case reflect.Slice:
+		if tp.Elem().Kind() == reflect.Uint8 {
+			v, err := strconv.ParseInt(string(vv.Interface().([]byte)), 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			return v, nil
+		}
+
+	}
+	return nil, fmt.Errorf("unsupported primary key type: %v, %v", tp, vv)
+}
+
+func convertFloat(v interface{}) (float64, error) {
+	switch v.(type) {
+	case float32:
+		return float64(v.(float32)), nil
+	case float64:
+		return v.(float64), nil
+	case string:
+		i, err := strconv.ParseFloat(v.(string), 64)
+		if err != nil {
+			return 0, err
+		}
+		return i, nil
+	case []byte:
+		i, err := strconv.ParseFloat(string(v.([]byte)), 64)
+		if err != nil {
+			return 0, err
+		}
+		return i, nil
+	}
+	return 0, fmt.Errorf("unsupported type: %v", v)
+}
+
+func convertInt(v interface{}) (int64, error) {
+	switch v.(type) {
+	case int:
+		return int64(v.(int)), nil
+	case int8:
+		return int64(v.(int8)), nil
+	case int16:
+		return int64(v.(int16)), nil
+	case int32:
+		return int64(v.(int32)), nil
+	case int64:
+		return v.(int64), nil
+	case []byte:
+		i, err := strconv.ParseInt(string(v.([]byte)), 10, 64)
+		if err != nil {
+			return 0, err
+		}
+		return i, nil
+	case string:
+		i, err := strconv.ParseInt(v.(string), 10, 64)
+		if err != nil {
+			return 0, err
+		}
+		return i, nil
+	}
+	return 0, fmt.Errorf("unsupported type: %v", v)
+}
+
+func asBool(bs []byte) (bool, error) {
+	if len(bs) == 0 {
+		return false, nil
+	}
+	if bs[0] == 0x00 {
+		return false, nil
+	} else if bs[0] == 0x01 {
+		return true, nil
+	}
+	return strconv.ParseBool(string(bs))
 }

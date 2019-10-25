@@ -1,18 +1,22 @@
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 import { Variable, assignModelProperties, variableTypes } from './variable';
+import { TimeSrv } from '../dashboard/services/TimeSrv';
+import { TemplateSrv } from './template_srv';
+import { VariableSrv } from './variable_srv';
 
 export class IntervalVariable implements Variable {
   name: string;
-  auto_count: number;
-  auto_min: number;
+  auto_count: number; // tslint:disable-line variable-name
+  auto_min: number; // tslint:disable-line variable-name
   options: any;
   auto: boolean;
   query: string;
   refresh: number;
   current: any;
+  skipUrlSync: boolean;
 
-  defaults = {
+  defaults: any = {
     type: 'interval',
     name: '',
     hide: 0,
@@ -24,10 +28,16 @@ export class IntervalVariable implements Variable {
     auto: false,
     auto_min: '10s',
     auto_count: 30,
+    skipUrlSync: false,
   };
 
-  /** @ngInject **/
-  constructor(private model, private timeSrv, private templateSrv, private variableSrv) {
+  /** @ngInject */
+  constructor(
+    private model: any,
+    private timeSrv: TimeSrv,
+    private templateSrv: TemplateSrv,
+    private variableSrv: VariableSrv
+  ) {
     assignModelProperties(this, model, this.defaults);
     this.refresh = 2;
   }
@@ -37,7 +47,7 @@ export class IntervalVariable implements Variable {
     return this.model;
   }
 
-  setValue(option) {
+  setValue(option: any) {
     this.updateAutoValue();
     return this.variableSrv.setOptionAsCurrent(this, option);
   }
@@ -55,7 +65,7 @@ export class IntervalVariable implements Variable {
       });
     }
 
-    var res = kbn.calculateInterval(this.timeSrv.timeRange(), this.auto_count, this.auto_min);
+    const res = kbn.calculateInterval(this.timeSrv.timeRange(), this.auto_count, this.auto_min);
     this.templateSrv.setGrafanaVariable('$__auto_interval_' + this.name, res.interval);
     // for backward compatibility, to be removed eventually
     this.templateSrv.setGrafanaVariable('$__auto_interval', res.interval);
@@ -63,7 +73,7 @@ export class IntervalVariable implements Variable {
 
   updateOptions() {
     // extract options between quotes and/or comma
-    this.options = _.map(this.query.match(/(["'])(.*?)\1|\w+/g), function(text) {
+    this.options = _.map(this.query.match(/(["'])(.*?)\1|\w+/g), text => {
       text = text.replace(/["']+/g, '');
       return { text: text.trim(), value: text.trim() };
     });
@@ -72,11 +82,11 @@ export class IntervalVariable implements Variable {
     return this.variableSrv.validateVariableSelectionState(this);
   }
 
-  dependsOn(variable) {
+  dependsOn(variable: any) {
     return false;
   }
 
-  setValueFromUrl(urlValue) {
+  setValueFromUrl(urlValue: string | string[]) {
     this.updateAutoValue();
     return this.variableSrv.setOptionFromUrl(this, urlValue);
   }
@@ -86,6 +96,7 @@ export class IntervalVariable implements Variable {
   }
 }
 
+// @ts-ignore
 variableTypes['interval'] = {
   name: 'Interval',
   ctor: IntervalVariable,

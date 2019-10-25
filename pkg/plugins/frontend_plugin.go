@@ -45,9 +45,9 @@ func (fp *FrontendPluginBase) setPathsBasedOnApp(app *AppPlugin) {
 	fp.BaseUrl = app.BaseUrl
 
 	if isExternalPlugin(app.PluginDir) {
-		fp.Module = util.JoinUrlFragments("plugins/"+app.Id, appSubPath) + "/module"
+		fp.Module = util.JoinURLFragments("plugins/"+app.Id, appSubPath) + "/module"
 	} else {
-		fp.Module = util.JoinUrlFragments("app/plugins/app/"+app.Id, appSubPath) + "/module"
+		fp.Module = util.JoinURLFragments("app/plugins/app/"+app.Id, appSubPath) + "/module"
 	}
 }
 

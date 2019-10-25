@@ -13,7 +13,7 @@ import (
 
 	"golang.org/x/net/context/ctxhttp"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -28,12 +28,9 @@ func NewGraphiteExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint,
 	return &GraphiteExecutor{}, nil
 }
 
-var (
-	glog log.Logger
-)
+var glog = log.New("tsdb.graphite")
 
 func init() {
-	glog = log.New("tsdb.graphite")
 	tsdb.RegisterTsdbQueryEndpoint("graphite", NewGraphiteExecutor)
 }
 
@@ -52,6 +49,7 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 	}
 
 	for _, query := range tsdbQuery.Queries {
+		glog.Debug("graphite", "query", query.Model)
 		if fullTarget, err := query.Model.Get("targetFull").String(); err == nil {
 			target = fixIntervalFormat(fullTarget)
 		} else {
@@ -79,12 +77,17 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 	span.SetTag("target", target)
 	span.SetTag("from", from)
 	span.SetTag("until", until)
+	span.SetTag("datasource_id", dsInfo.Id)
+	span.SetTag("org_id", dsInfo.OrgId)
+
 	defer span.Finish()
 
-	opentracing.GlobalTracer().Inject(
+	if err := opentracing.GlobalTracer().Inject(
 		span.Context(),
 		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(req.Header))
+		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
+		return nil, err
+	}
 
 	res, err := ctxhttp.Do(ctx, httpClient, req)
 	if err != nil {
@@ -148,7 +151,7 @@ func (e *GraphiteExecutor) createRequest(dsInfo *models.DataSource, data url.Val
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	if dsInfo.BasicAuth {
-		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.BasicAuthPassword)
+		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.DecryptedBasicAuthPassword())
 	}
 
 	return req, err
@@ -163,14 +166,12 @@ func formatTimeRange(input string) string {
 
 func fixIntervalFormat(target string) string {
 	rMinute := regexp.MustCompile(`'(\d+)m'`)
-	rMin := regexp.MustCompile("m")
 	target = rMinute.ReplaceAllStringFunc(target, func(m string) string {
-		return rMin.ReplaceAllString(m, "min")
+		return strings.Replace(m, "m", "min", -1)
 	})
 	rMonth := regexp.MustCompile(`'(\d+)M'`)
-	rMon := regexp.MustCompile("M")
 	target = rMonth.ReplaceAllStringFunc(target, func(M string) string {
-		return rMon.ReplaceAllString(M, "mon")
+		return strings.Replace(M, "M", "mon", -1)
 	})
 	return target
 }

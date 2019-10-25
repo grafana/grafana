@@ -12,7 +12,7 @@ parent = "http_api"
 
 # Data source API
 
-## Get all datasources
+## Get all data sources
 
 `GET /api/datasources`
 
@@ -51,7 +51,7 @@ Content-Type: application/json
 ]
 ```
 
-## Get a single data sources by Id
+## Get a single data source by Id
 
 `GET /api/datasources/:datasourceId`
 
@@ -90,7 +90,7 @@ Content-Type: application/json
 
 ## Get a single data source by Name
 
-`GET /api/datasources/:name`
+`GET /api/datasources/name/:name`
 
 **Example Request**:
 
@@ -149,7 +149,7 @@ Content-Type: application/json
 }
 ```
 
-## Create data source
+## Create a data source
 
 `POST /api/datasources`
 
@@ -290,4 +290,4 @@ Content-Type: application/json
 
 `GET /api/datasources/proxy/:datasourceId/*`
 
-Proxies all calls to the actual datasource.
+Proxies all calls to the actual data source.

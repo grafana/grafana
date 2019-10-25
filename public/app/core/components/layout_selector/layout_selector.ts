@@ -1,7 +1,9 @@
 import store from 'app/core/store';
 import coreModule from 'app/core/core_module';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { CoreEvents } from 'app/types';
 
-var template = `
+const template = `
 <div class="layout-selector">
   <button ng-click="ctrl.listView()" ng-class="{active: ctrl.mode === 'list'}">
     <i class="fa fa-list"></i>
@@ -15,25 +17,25 @@ var template = `
 export class LayoutSelectorCtrl {
   mode: string;
 
-  /** @ngInject **/
-  constructor(private $rootScope) {
+  /** @ngInject */
+  constructor(private $rootScope: GrafanaRootScope) {
     this.mode = store.get('grafana.list.layout.mode') || 'grid';
   }
 
   listView() {
     this.mode = 'list';
     store.set('grafana.list.layout.mode', 'list');
-    this.$rootScope.appEvent('layout-mode-changed', 'list');
+    this.$rootScope.appEvent(CoreEvents.layoutModeChanged, 'list');
   }
 
   gridView() {
     this.mode = 'grid';
     store.set('grafana.list.layout.mode', 'grid');
-    this.$rootScope.appEvent('layout-mode-changed', 'grid');
+    this.$rootScope.appEvent(CoreEvents.layoutModeChanged, 'grid');
   }
 }
 
-/** @ngInject **/
+/** @ngInject */
 export function layoutSelector() {
   return {
     restrict: 'E',
@@ -45,19 +47,19 @@ export function layoutSelector() {
   };
 }
 
-/** @ngInject **/
-export function layoutMode($rootScope) {
+/** @ngInject */
+export function layoutMode($rootScope: GrafanaRootScope) {
   return {
     restrict: 'A',
     scope: {},
-    link: function(scope, elem) {
-      var layout = store.get('grafana.list.layout.mode') || 'grid';
-      var className = 'card-list-layout-' + layout;
+    link: (scope: any, elem: any) => {
+      const layout = store.get('grafana.list.layout.mode') || 'grid';
+      let className = 'card-list-layout-' + layout;
       elem.addClass(className);
 
       $rootScope.onAppEvent(
-        'layout-mode-changed',
-        (evt, newLayout) => {
+        CoreEvents.layoutModeChanged,
+        (evt: any, newLayout: any) => {
           elem.removeClass(className);
           className = 'card-list-layout-' + newLayout;
           elem.addClass(className);

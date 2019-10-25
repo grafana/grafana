@@ -1,0 +1,31 @@
+.popover-box {
+  background-color: $popover-bg;
+  color: $popover-color;
+  border: 1px solid $popover-border-color;
+  border-radius: $border-radius;
+  max-width: 500px;
+}
+
+.popover-box__header {
+  background-color: $popover-border-color;
+  padding: 6px 10px;
+  display: flex;
+}
+
+.popover-box__title {
+  font-weight: $font-weight-semi-bold;
+  padding-right: $spacer;
+  overflow: hidden;
+  display: inline-block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  flex-grow: 1;
+}
+
+.popover-box__body {
+  padding: 20px 10px 10px 10px;
+}
+
+.popover-box__close {
+  cursor: pointer;
+}

@@ -1,14 +1,20 @@
-import kbn from 'app/core/utils/kbn';
 import { Variable, containsVariable, assignModelProperties, variableTypes } from './variable';
+import { stringToJsRegex } from '@grafana/data';
+import { VariableSrv } from './variable_srv';
+import { TemplateSrv } from './template_srv';
+import { DatasourceSrv } from '../plugins/datasource_srv';
 
 export class DatasourceVariable implements Variable {
   regex: any;
   query: string;
   options: any;
   current: any;
+  multi: boolean;
+  includeAll: boolean;
   refresh: any;
+  skipUrlSync: boolean;
 
-  defaults = {
+  defaults: any = {
     type: 'datasource',
     name: '',
     hide: 0,
@@ -17,11 +23,19 @@ export class DatasourceVariable implements Variable {
     regex: '',
     options: [],
     query: '',
+    multi: false,
+    includeAll: false,
     refresh: 1,
+    skipUrlSync: false,
   };
 
-  /** @ngInject **/
-  constructor(private model, private datasourceSrv, private variableSrv, private templateSrv) {
+  /** @ngInject */
+  constructor(
+    private model: any,
+    private datasourceSrv: DatasourceSrv,
+    private variableSrv: VariableSrv,
+    private templateSrv: TemplateSrv
+  ) {
     assignModelProperties(this, model, this.defaults);
     this.refresh = 1;
   }
@@ -29,27 +43,27 @@ export class DatasourceVariable implements Variable {
   getSaveModel() {
     assignModelProperties(this.model, this, this.defaults);
 
-    // dont persist options
+    // don't persist options
     this.model.options = [];
     return this.model;
   }
 
-  setValue(option) {
+  setValue(option: any) {
     return this.variableSrv.setOptionAsCurrent(this, option);
   }
 
   updateOptions() {
-    var options = [];
-    var sources = this.datasourceSrv.getMetricSources({ skipVariables: true });
-    var regex;
+    const options = [];
+    const sources = this.datasourceSrv.getMetricSources({ skipVariables: true });
+    let regex;
 
     if (this.regex) {
       regex = this.templateSrv.replace(this.regex, null, 'regex');
-      regex = kbn.stringToJsRegex(regex);
+      regex = stringToJsRegex(regex);
     }
 
-    for (var i = 0; i < sources.length; i++) {
-      var source = sources[i];
+    for (let i = 0; i < sources.length; i++) {
+      const source = sources[i];
       // must match on type
       if (source.meta.id !== this.query) {
         continue;
@@ -67,21 +81,31 @@ export class DatasourceVariable implements Variable {
     }
 
     this.options = options;
+    if (this.includeAll) {
+      this.addAllOption();
+    }
     return this.variableSrv.validateVariableSelectionState(this);
   }
 
-  dependsOn(variable) {
+  addAllOption() {
+    this.options.unshift({ text: 'All', value: '$__all' });
+  }
+
+  dependsOn(variable: any) {
     if (this.regex) {
       return containsVariable(this.regex, variable.name);
     }
     return false;
   }
 
-  setValueFromUrl(urlValue) {
+  setValueFromUrl(urlValue: string | string[]) {
     return this.variableSrv.setOptionFromUrl(this, urlValue);
   }
 
   getValueForUrl() {
+    if (this.current.text === 'All') {
+      return 'All';
+    }
     return this.current.value;
   }
 }
@@ -89,5 +113,6 @@ export class DatasourceVariable implements Variable {
 variableTypes['datasource'] = {
   name: 'Datasource',
   ctor: DatasourceVariable,
+  supportsMulti: true,
   description: 'Enabled you to dynamically switch the datasource for multiple panels',
 };

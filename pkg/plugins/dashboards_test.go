@@ -1,7 +1,6 @@
 package plugins
 
 import (
-	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -13,13 +12,14 @@ import (
 )
 
 func TestPluginDashboards(t *testing.T) {
-
 	Convey("When asking plugin dashboard info", t, func() {
-		setting.Cfg = ini.Empty()
-		sec, _ := setting.Cfg.NewSection("plugin.test-app")
-		sec.NewKey("path", "../../tests/test-app")
-		err := initPlugins(context.Background())
+		setting.Raw = ini.Empty()
+		sec, _ := setting.Raw.NewSection("plugin.test-app")
+		_, err := sec.NewKey("path", "testdata/test-app")
+		So(err, ShouldBeNil)
 
+		pm := &PluginManager{}
+		err = pm.Init()
 		So(err, ShouldBeNil)
 
 		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {

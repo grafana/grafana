@@ -20,6 +20,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 
 	"github.com/uber/jaeger-client-go/internal/baggage"
+	"github.com/uber/jaeger-client-go/internal/throttler"
 )
 
 // TracerOption is a function that sets some option on the tracer
@@ -50,10 +51,10 @@ func (tracerOptions) CustomHeaderKeys(headerKeys *HeadersConfig) TracerOption {
 		if headerKeys == nil {
 			return
 		}
-		textPropagator := newTextMapPropagator(headerKeys.applyDefaults(), tracer.metrics)
+		textPropagator := NewTextMapPropagator(headerKeys.ApplyDefaults(), tracer.metrics)
 		tracer.addCodec(opentracing.TextMap, textPropagator, textPropagator)
 
-		httpHeaderPropagator := newHTTPHeaderPropagator(headerKeys.applyDefaults(), tracer.metrics)
+		httpHeaderPropagator := NewHTTPHeaderPropagator(headerKeys.ApplyDefaults(), tracer.metrics)
 		tracer.addCodec(opentracing.HTTPHeaders, httpHeaderPropagator, httpHeaderPropagator)
 	}
 }
@@ -127,6 +128,12 @@ func (tracerOptions) HighTraceIDGenerator(highTraceIDGenerator func() uint64) Tr
 	}
 }
 
+func (tracerOptions) MaxTagValueLength(maxTagValueLength int) TracerOption {
+	return func(tracer *Tracer) {
+		tracer.options.maxTagValueLength = maxTagValueLength
+	}
+}
+
 func (tracerOptions) ZipkinSharedRPCSpan(zipkinSharedRPCSpan bool) TracerOption {
 	return func(tracer *Tracer) {
 		tracer.options.zipkinSharedRPCSpan = zipkinSharedRPCSpan
@@ -142,5 +149,11 @@ func (tracerOptions) Tag(key string, value interface{}) TracerOption {
 func (tracerOptions) BaggageRestrictionManager(mgr baggage.RestrictionManager) TracerOption {
 	return func(tracer *Tracer) {
 		tracer.baggageRestrictionManager = mgr
+	}
+}
+
+func (tracerOptions) DebugThrottler(throttler throttler.Throttler) TracerOption {
+	return func(tracer *Tracer) {
+		tracer.debugThrottler = throttler
 	}
 }

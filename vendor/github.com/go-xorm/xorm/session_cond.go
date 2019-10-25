@@ -17,25 +17,25 @@ func (session *Session) Sql(query string, args ...interface{}) *Session {
 // SQL provides raw sql input parameter. When you have a complex SQL statement
 // and cannot use Where, Id, In and etc. Methods to describe, you can use SQL.
 func (session *Session) SQL(query interface{}, args ...interface{}) *Session {
-	session.Statement.SQL(query, args...)
+	session.statement.SQL(query, args...)
 	return session
 }
 
 // Where provides custom query condition.
 func (session *Session) Where(query interface{}, args ...interface{}) *Session {
-	session.Statement.Where(query, args...)
+	session.statement.Where(query, args...)
 	return session
 }
 
 // And provides custom query condition.
 func (session *Session) And(query interface{}, args ...interface{}) *Session {
-	session.Statement.And(query, args...)
+	session.statement.And(query, args...)
 	return session
 }
 
 // Or provides custom query condition.
 func (session *Session) Or(query interface{}, args ...interface{}) *Session {
-	session.Statement.Or(query, args...)
+	session.statement.Or(query, args...)
 	return session
 }
 
@@ -48,23 +48,23 @@ func (session *Session) Id(id interface{}) *Session {
 
 // ID provides converting id as a query condition
 func (session *Session) ID(id interface{}) *Session {
-	session.Statement.ID(id)
+	session.statement.ID(id)
 	return session
 }
 
 // In provides a query string like "id in (1, 2, 3)"
 func (session *Session) In(column string, args ...interface{}) *Session {
-	session.Statement.In(column, args...)
+	session.statement.In(column, args...)
 	return session
 }
 
 // NotIn provides a query string like "id in (1, 2, 3)"
 func (session *Session) NotIn(column string, args ...interface{}) *Session {
-	session.Statement.NotIn(column, args...)
+	session.statement.NotIn(column, args...)
 	return session
 }
 
-// Conds returns session query conditions
+// Conds returns session query conditions except auto bean conditions
 func (session *Session) Conds() builder.Cond {
-	return session.Statement.cond
+	return session.statement.cond
 }

@@ -8,14 +8,21 @@ import rendering from './rendering';
 import {
   convertToHeatMap,
   convertToCards,
-  elasticHistogramToHeatmap,
+  histogramToHeatmap,
   calculateBucketSize,
+  sortSeriesByLabel,
 } from './heatmap_data_converter';
+import { auto } from 'angular';
+import { LegacyResponseData, PanelEvents } from '@grafana/ui';
+import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
+import { DataProcessor } from '../graph/data_processor';
+import { DataFrame } from '@grafana/data';
+import { CoreEvents } from 'app/types';
 
-let X_BUCKET_NUMBER_DEFAULT = 30;
-let Y_BUCKET_NUMBER_DEFAULT = 10;
+const X_BUCKET_NUMBER_DEFAULT = 30;
+const Y_BUCKET_NUMBER_DEFAULT = 10;
 
-let panelDefaults = {
+const panelDefaults: any = {
   heatmap: {},
   cards: {
     cardPadding: null,
@@ -32,6 +39,8 @@ let panelDefaults = {
     show: false,
   },
   dataFormat: 'timeseries',
+  yBucketBound: 'auto',
+  reverseYBuckets: false,
   xAxis: {
     show: true,
   },
@@ -53,14 +62,15 @@ let panelDefaults = {
     showHistogram: false,
   },
   highlightCards: true,
+  hideZeroBuckets: false,
 };
 
-let colorModes = ['opacity', 'spectrum'];
-let opacityScales = ['linear', 'sqrt'];
+const colorModes = ['opacity', 'spectrum'];
+const opacityScales = ['linear', 'sqrt'];
 
 // Schemes from d3-scale-chromatic
 // https://github.com/d3/d3-scale-chromatic
-let colorSchemes = [
+const colorSchemes = [
   // Diverging
   { name: 'Spectral', value: 'interpolateSpectral', invert: 'always' },
   { name: 'RdYlGn', value: 'interpolateRdYlGn', invert: 'always' },
@@ -74,6 +84,15 @@ let colorSchemes = [
   { name: 'Reds', value: 'interpolateReds', invert: 'dark' },
 
   // Sequential (Multi-Hue)
+  { name: 'Turbo', value: 'interpolateTurbo', invert: 'light' },
+  { name: 'Cividis', value: 'interpolateCividis', invert: 'light' },
+  { name: 'Viridis', value: 'interpolateViridis', invert: 'light' },
+  { name: 'Magma', value: 'interpolateMagma', invert: 'light' },
+  { name: 'Inferno', value: 'interpolateInferno', invert: 'light' },
+  { name: 'Plasma', value: 'interpolatePlasma', invert: 'light' },
+  { name: 'Warm', value: 'interpolateWarm', invert: 'light' },
+  { name: 'Cool', value: 'interpolateCool', invert: 'light' },
+  { name: 'Cubehelix', value: 'interpolateCubehelixDefault', invert: 'light' },
   { name: 'BuGn', value: 'interpolateBuGn', invert: 'dark' },
   { name: 'BuPu', value: 'interpolateBuPu', invert: 'dark' },
   { name: 'GnBu', value: 'interpolateGnBu', invert: 'dark' },
@@ -85,8 +104,10 @@ let colorSchemes = [
   { name: 'YlGnBu', value: 'interpolateYlGnBu', invert: 'dark' },
   { name: 'YlGn', value: 'interpolateYlGn', invert: 'dark' },
   { name: 'YlOrBr', value: 'interpolateYlOrBr', invert: 'dark' },
-  { name: 'YlOrRd', value: 'interpolateYlOrRd', invert: 'darm' },
+  { name: 'YlOrRd', value: 'interpolateYlOrRd', invert: 'dark' },
 ];
+
+const dsSupportHistogramSort = ['elasticsearch'];
 
 export class HeatmapCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -97,16 +118,16 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   selectionActivated: boolean;
   unitFormats: any;
   data: any;
-  series: any;
-  timeSrv: any;
+  series: TimeSeries[];
   dataWarning: any;
   decimals: number;
   scaledDecimals: number;
 
+  processor: DataProcessor; // Shared with graph panel
+
   /** @ngInject */
-  constructor($scope, $injector, timeSrv) {
+  constructor($scope: any, $injector: auto.IInjectorService) {
     super($scope, $injector);
-    this.timeSrv = timeSrv;
     this.selectionActivated = false;
 
     _.defaultsDeep(this.panel, panelDefaults);
@@ -114,12 +135,19 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     this.colorModes = colorModes;
     this.colorSchemes = colorSchemes;
 
+    // Use DataFrames
+    this.useDataFrames = true;
+    this.processor = new DataProcessor({
+      xaxis: { mode: 'custom' }, // NOT: 'histogram' :)
+      aliasColors: {}, // avoids null reference
+    });
+
     // Bind grafana panel events
-    this.events.on('render', this.onRender.bind(this));
-    this.events.on('data-received', this.onDataReceived.bind(this));
-    this.events.on('data-error', this.onDataError.bind(this));
-    this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
-    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
+    this.events.on(PanelEvents.render, this.onRender.bind(this));
+    this.events.on(CoreEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
+    this.events.on(PanelEvents.dataError, this.onDataError.bind(this));
+    this.events.on(PanelEvents.dataSnapshotLoad, this.onSnapshotLoad.bind(this));
+    this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
 
     this.onCardColorChange = this.onCardColorChange.bind(this);
   }
@@ -130,69 +158,62 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     this.unitFormats = kbn.getUnitFormats();
   }
 
-  zoomOut(evt) {
-    this.publishAppEvent('zoom-out', 2);
+  zoomOut(evt: any) {
+    this.publishAppEvent(CoreEvents.zoomOut, 2);
   }
 
   onRender() {
-    if (!this.range) {
+    if (!this.range || !this.series) {
       return;
     }
 
-    let xBucketSize, yBucketSize, heatmapStats, bucketsData;
-    let logBase = this.panel.yAxis.logBase;
-
     if (this.panel.dataFormat === 'tsbuckets') {
-      heatmapStats = this.parseHistogramSeries(this.series);
-      bucketsData = elasticHistogramToHeatmap(this.series);
-
-      // Calculate bucket size based on ES heatmap data
-      let xBucketBoundSet = _.map(_.keys(bucketsData), key => Number(key));
-      let yBucketBoundSet = _.map(this.series, series => Number(series.alias));
-      xBucketSize = calculateBucketSize(xBucketBoundSet);
-      yBucketSize = calculateBucketSize(yBucketBoundSet, logBase);
-      if (logBase !== 1) {
-        // Use yBucketSize in meaning of "Split factor" for log scales
-        yBucketSize = 1 / yBucketSize;
-      }
+      this.convertHistogramToHeatmapData();
     } else {
-      let xBucketNumber = this.panel.xBucketNumber || X_BUCKET_NUMBER_DEFAULT;
-      let xBucketSizeByNumber = Math.floor((this.range.to - this.range.from) / xBucketNumber);
-
-      // Parse X bucket size (number or interval)
-      let isIntervalString = kbn.interval_regex.test(this.panel.xBucketSize);
-      if (isIntervalString) {
-        xBucketSize = kbn.interval_to_ms(this.panel.xBucketSize);
-      } else if (
-        isNaN(Number(this.panel.xBucketSize)) ||
-        this.panel.xBucketSize === '' ||
-        this.panel.xBucketSize === null
-      ) {
-        xBucketSize = xBucketSizeByNumber;
-      } else {
-        xBucketSize = Number(this.panel.xBucketSize);
-      }
-
-      // Calculate Y bucket size
-      heatmapStats = this.parseSeries(this.series);
-      let yBucketNumber = this.panel.yBucketNumber || Y_BUCKET_NUMBER_DEFAULT;
-      if (logBase !== 1) {
-        yBucketSize = this.panel.yAxis.splitFactor;
-      } else {
-        if (heatmapStats.max === heatmapStats.min) {
-          if (heatmapStats.max) {
-            yBucketSize = heatmapStats.max / Y_BUCKET_NUMBER_DEFAULT;
-          } else {
-            yBucketSize = 1;
-          }
-        } else {
-          yBucketSize = (heatmapStats.max - heatmapStats.min) / yBucketNumber;
-        }
-        yBucketSize = this.panel.yBucketSize || yBucketSize;
-      }
-
-      bucketsData = convertToHeatMap(this.series, yBucketSize, xBucketSize, logBase);
+      this.convertTimeSeriesToHeatmapData();
     }
+  }
+
+  convertTimeSeriesToHeatmapData() {
+    let xBucketSize, yBucketSize, bucketsData, heatmapStats;
+    const logBase = this.panel.yAxis.logBase;
+
+    const xBucketNumber = this.panel.xBucketNumber || X_BUCKET_NUMBER_DEFAULT;
+    const xBucketSizeByNumber = Math.floor((this.range.to.valueOf() - this.range.from.valueOf()) / xBucketNumber);
+
+    // Parse X bucket size (number or interval)
+    const isIntervalString = kbn.interval_regex.test(this.panel.xBucketSize);
+    if (isIntervalString) {
+      xBucketSize = kbn.interval_to_ms(this.panel.xBucketSize);
+    } else if (
+      isNaN(Number(this.panel.xBucketSize)) ||
+      this.panel.xBucketSize === '' ||
+      this.panel.xBucketSize === null
+    ) {
+      xBucketSize = xBucketSizeByNumber;
+    } else {
+      xBucketSize = Number(this.panel.xBucketSize);
+    }
+
+    // Calculate Y bucket size
+    heatmapStats = this.parseSeries(this.series);
+    const yBucketNumber = this.panel.yBucketNumber || Y_BUCKET_NUMBER_DEFAULT;
+    if (logBase !== 1) {
+      yBucketSize = this.panel.yAxis.splitFactor;
+    } else {
+      if (heatmapStats.max === heatmapStats.min) {
+        if (heatmapStats.max) {
+          yBucketSize = heatmapStats.max / Y_BUCKET_NUMBER_DEFAULT;
+        } else {
+          yBucketSize = 1;
+        }
+      } else {
+        yBucketSize = (heatmapStats.max - heatmapStats.min) / yBucketNumber;
+      }
+      yBucketSize = this.panel.yBucketSize || yBucketSize;
+    }
+
+    bucketsData = convertToHeatMap(this.series, yBucketSize, xBucketSize, logBase);
 
     // Set default Y range if no data
     if (!heatmapStats.min && !heatmapStats.max) {
@@ -200,7 +221,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
       yBucketSize = 1;
     }
 
-    let { cards, cardStats } = convertToCards(bucketsData);
+    const { cards, cardStats } = convertToCards(bucketsData, this.panel.hideZeroBuckets);
 
     this.data = {
       buckets: bucketsData,
@@ -212,8 +233,75 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     };
   }
 
-  onDataReceived(dataList) {
-    this.series = dataList.map(this.seriesHandler.bind(this));
+  convertHistogramToHeatmapData() {
+    const panelDatasource = this.getPanelDataSourceType();
+    let xBucketSize, yBucketSize, bucketsData, tsBuckets;
+
+    // Try to sort series by bucket bound, if datasource doesn't do it.
+    if (!_.includes(dsSupportHistogramSort, panelDatasource)) {
+      this.series.sort(sortSeriesByLabel);
+    }
+
+    if (this.panel.reverseYBuckets) {
+      this.series.reverse();
+    }
+
+    // Convert histogram to heatmap. Each histogram bucket represented by the series which name is
+    // a top (or bottom, depends of datasource) bucket bound. Further, these values will be used as Y axis labels.
+    bucketsData = histogramToHeatmap(this.series);
+
+    tsBuckets = _.map(this.series, 'label');
+    const yBucketBound = this.panel.yBucketBound;
+    if (
+      (panelDatasource === 'prometheus' && yBucketBound !== 'lower' && yBucketBound !== 'middle') ||
+      yBucketBound === 'upper'
+    ) {
+      // Prometheus labels are upper inclusive bounds, so add empty bottom bucket label.
+      tsBuckets = [''].concat(tsBuckets);
+    } else {
+      // Elasticsearch uses labels as lower bucket bounds, so add empty top bucket label.
+      // Use this as a default mode as well.
+      tsBuckets.push('');
+    }
+
+    // Calculate bucket size based on heatmap data
+    const xBucketBoundSet = _.map(_.keys(bucketsData), key => Number(key));
+    xBucketSize = calculateBucketSize(xBucketBoundSet);
+    // Always let yBucketSize=1 in 'tsbuckets' mode
+    yBucketSize = 1;
+
+    const { cards, cardStats } = convertToCards(bucketsData, this.panel.hideZeroBuckets);
+
+    this.data = {
+      buckets: bucketsData,
+      xBucketSize: xBucketSize,
+      yBucketSize: yBucketSize,
+      tsBuckets: tsBuckets,
+      cards: cards,
+      cardStats: cardStats,
+    };
+  }
+
+  getPanelDataSourceType() {
+    if (this.datasource && this.datasource.meta && this.datasource.meta.id) {
+      return this.datasource.meta.id;
+    } else {
+      return 'unknown';
+    }
+  }
+
+  // This should only be called from the snapshot callback
+  onSnapshotLoad(dataList: LegacyResponseData[]) {
+    this.onDataFramesReceived(getProcessedDataFrames(dataList));
+  }
+
+  // Directly support DataFrame
+  onDataFramesReceived(data: DataFrame[]) {
+    this.series = this.processor.getSeriesList({ dataList: data, range: this.range }).map(ts => {
+      ts.color = null; // remove whatever the processor set
+      ts.flotpairs = ts.getFlotPairs(this.panel.nullPointMode);
+      return ts;
+    });
 
     this.dataWarning = null;
     const datapointsCount = _.reduce(
@@ -230,7 +318,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
         tip: 'No datapoints returned from data query',
       };
     } else {
-      for (let series of this.series) {
+      for (const series of this.series) {
         if (series.isOutsideRange) {
           this.dataWarning = {
             title: 'Data points outside time range',
@@ -249,35 +337,28 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  onCardColorChange(newColor) {
+  onCardColorChange(newColor: any) {
     this.panel.color.cardColor = newColor;
     this.render();
   }
 
-  seriesHandler(seriesData) {
-    let series = new TimeSeries({
-      datapoints: seriesData.datapoints,
-      alias: seriesData.target,
-    });
+  parseSeries(series: TimeSeries[]) {
+    const min = _.min(_.map(series, s => s.stats.min));
+    const minLog = _.min(_.map(series, s => s.stats.logmin));
+    const max = _.max(_.map(series, s => s.stats.max));
 
-    series.flotpairs = series.getFlotPairs(this.panel.nullPointMode);
-
-    let datapoints = seriesData.datapoints || [];
-    if (datapoints && datapoints.length > 0) {
-      let last = datapoints[datapoints.length - 1][1];
-      let from = this.range.from;
-      if (last - from < -10000) {
-        series.isOutsideRange = true;
-      }
-    }
-
-    return series;
+    return {
+      max,
+      min,
+      minLog,
+    };
   }
 
-  parseSeries(series) {
-    let min = _.min(_.map(series, s => s.stats.min));
-    let minLog = _.min(_.map(series, s => s.stats.logmin));
-    let max = _.max(_.map(series, s => s.stats.max));
+  parseHistogramSeries(series: TimeSeries[]) {
+    const bounds = _.map(series, s => Number(s.alias));
+    const min = _.min(bounds);
+    const minLog = _.min(bounds);
+    const max = _.max(bounds);
 
     return {
       max: max,
@@ -286,20 +367,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     };
   }
 
-  parseHistogramSeries(series) {
-    let bounds = _.map(series, s => Number(s.alias));
-    let min = _.min(bounds);
-    let minLog = _.min(bounds);
-    let max = _.max(bounds);
-
-    return {
-      max: max,
-      min: min,
-      minLog: minLog,
-    };
-  }
-
-  link(scope, elem, attrs, ctrl) {
+  link(scope: any, elem: any, attrs: any, ctrl: any) {
     rendering(scope, elem, attrs, ctrl);
   }
 }

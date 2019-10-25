@@ -1,0 +1,38 @@
+{
+  "type": "datasource",
+  "name": "Loki",
+  "id": "loki",
+  "category": "logging",
+
+  "metrics": true,
+  "alerting": false,
+  "annotations": true,
+  "logs": true,
+  "streaming": true,
+
+  "queryOptions": {
+    "maxDataPoints": true
+  },
+
+  "info": {
+    "description": "Like Prometheus but for logs. OSS logging solution from Grafana Labs",
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/loki_icon.svg",
+      "large": "img/loki_icon.svg"
+    },
+    "links": [
+      {
+        "name": "Learn more",
+        "url": "https://grafana.com/loki"
+      },
+      {
+        "name": "GitHub Project",
+        "url": "https://github.com/grafana/loki"
+      }
+    ]
+  }
+}

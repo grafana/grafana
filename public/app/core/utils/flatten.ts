@@ -1,22 +1,22 @@
 // Copyright (c) 2014, Hugh Kennedy
 // Based on code from https://github.com/hughsk/flat/blob/master/index.js
 //
-export default function flatten(target, opts): any {
+export default function flatten(target: object, opts?: { delimiter?: any; maxDepth?: any; safe?: any }): any {
   opts = opts || {};
 
-  var delimiter = opts.delimiter || '.';
-  var maxDepth = opts.maxDepth || 3;
-  var currentDepth = 1;
-  var output = {};
+  const delimiter = opts.delimiter || '.';
+  let maxDepth = opts.maxDepth || 3;
+  let currentDepth = 1;
+  const output: any = {};
 
-  function step(object, prev) {
-    Object.keys(object).forEach(function(key) {
-      var value = object[key];
-      var isarray = opts.safe && Array.isArray(value);
-      var type = Object.prototype.toString.call(value);
-      var isobject = type === '[object Object]';
+  function step(object: any, prev: string) {
+    Object.keys(object).forEach(key => {
+      const value = object[key];
+      const isarray = opts.safe && Array.isArray(value);
+      const type = Object.prototype.toString.call(value);
+      const isobject = type === '[object Object]';
 
-      var newKey = prev ? prev + delimiter + key : key;
+      const newKey = prev ? prev + delimiter + key : key;
 
       if (!opts.maxDepth) {
         maxDepth = currentDepth + 1;

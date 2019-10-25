@@ -4,17 +4,16 @@ import (
 	"errors"
 	"fmt"
 
-	"golang.org/x/sync/errgroup"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/imguploader"
-	"github.com/grafana/grafana/pkg/components/renderer"
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
-
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
+// NotifierPlugin holds meta information about a notifier.
 type NotifierPlugin struct {
 	Type            string          `json:"type"`
 	Name            string          `json:"name"`
@@ -23,54 +22,100 @@ type NotifierPlugin struct {
 	Factory         NotifierFactory `json:"-"`
 }
 
-type NotificationService interface {
-	SendIfNeeded(context *EvalContext) error
-}
-
-func NewNotificationService() NotificationService {
-	return newNotificationService()
+func newNotificationService(renderService rendering.Service) *notificationService {
+	return &notificationService{
+		log:           log.New("alerting.notifier"),
+		renderService: renderService,
+	}
 }
 
 type notificationService struct {
-	log log.Logger
-}
-
-func newNotificationService() *notificationService {
-	return &notificationService{
-		log: log.New("alerting.notifier"),
-	}
+	log           log.Logger
+	renderService rendering.Service
 }
 
 func (n *notificationService) SendIfNeeded(context *EvalContext) error {
-	notifiers, err := n.getNeededNotifiers(context.Rule.OrgId, context.Rule.Notifications, context)
+	notifierStates, err := n.getNeededNotifiers(context.Rule.OrgID, context.Rule.Notifications, context)
 	if err != nil {
+		n.log.Error("Failed to get alert notifiers", "error", err)
 		return err
 	}
 
-	if len(notifiers) == 0 {
+	if len(notifierStates) == 0 {
 		return nil
 	}
 
-	if notifiers.ShouldUploadImage() {
+	if notifierStates.ShouldUploadImage() {
 		if err = n.uploadImage(context); err != nil {
 			n.log.Error("Failed to upload alert panel image.", "error", err)
 		}
 	}
 
-	return n.sendNotifications(context, notifiers)
+	return n.sendNotifications(context, notifierStates)
 }
 
-func (n *notificationService) sendNotifications(context *EvalContext, notifiers []Notifier) error {
-	g, _ := errgroup.WithContext(context.Ctx)
+func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, notifierState *notifierState) error {
+	notifier := notifierState.notifier
 
-	for _, notifier := range notifiers {
-		not := notifier //avoid updating scope variable in go routine
-		n.log.Debug("Sending notification", "type", not.GetType(), "id", not.GetNotifierId(), "isDefault", not.GetIsDefault())
-		metrics.M_Alerting_Notification_Sent.WithLabelValues(not.GetType()).Inc()
-		g.Go(func() error { return not.Notify(context) })
+	n.log.Debug("Sending notification", "type", notifier.GetType(), "uid", notifier.GetNotifierUID(), "isDefault", notifier.GetIsDefault())
+	metrics.MAlertingNotificationSent.WithLabelValues(notifier.GetType()).Inc()
+
+	err := notifier.Notify(evalContext)
+
+	if err != nil {
+		n.log.Error("failed to send notification", "uid", notifier.GetNotifierUID(), "error", err)
+		metrics.MAlertingNotificationFailed.WithLabelValues(notifier.GetType()).Inc()
+		return err
 	}
 
-	return g.Wait()
+	if evalContext.IsTestRun {
+		return nil
+	}
+
+	cmd := &models.SetAlertNotificationStateToCompleteCommand{
+		Id:      notifierState.state.Id,
+		Version: notifierState.state.Version,
+	}
+
+	return bus.DispatchCtx(evalContext.Ctx, cmd)
+}
+
+func (n *notificationService) sendNotification(evalContext *EvalContext, notifierState *notifierState) error {
+	if !evalContext.IsTestRun {
+		setPendingCmd := &models.SetAlertNotificationStateToPendingCommand{
+			Id:                           notifierState.state.Id,
+			Version:                      notifierState.state.Version,
+			AlertRuleStateUpdatedVersion: evalContext.Rule.StateChanges,
+		}
+
+		err := bus.DispatchCtx(evalContext.Ctx, setPendingCmd)
+		if err == models.ErrAlertNotificationStateVersionConflict {
+			return nil
+		}
+
+		if err != nil {
+			return err
+		}
+
+		// We need to update state version to be able to log
+		// unexpected version conflicts when marking notifications as ok
+		notifierState.state.Version = setPendingCmd.ResultVersion
+	}
+
+	return n.sendAndMarkAsComplete(evalContext, notifierState)
+}
+
+func (n *notificationService) sendNotifications(evalContext *EvalContext, notifierStates notifierStateSlice) error {
+	for _, notifierState := range notifierStates {
+		err := n.sendNotification(evalContext, notifierState)
+		if err != nil {
+			n.log.Error("failed to send notification", "uid", notifierState.notifier.GetNotifierUID(), "error", err)
+			if evalContext.IsTestRun {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (n *notificationService) uploadImage(context *EvalContext) (err error) {
@@ -79,57 +124,80 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 		return err
 	}
 
-	renderOpts := &renderer.RenderOpts{
-		Width:          "800",
-		Height:         "400",
-		Timeout:        "30",
-		OrgId:          context.Rule.OrgId,
-		IsAlertContext: true,
+	renderOpts := rendering.Opts{
+		Width:           1000,
+		Height:          500,
+		Timeout:         setting.AlertingEvaluationTimeout,
+		OrgId:           context.Rule.OrgID,
+		OrgRole:         models.ROLE_ADMIN,
+		ConcurrentLimit: setting.AlertingRenderLimit,
 	}
 
-	if ref, err := context.GetDashboardUID(); err != nil {
-		return err
-	} else {
-		renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?panelId=%d", ref.Uid, ref.Slug, context.Rule.PanelId)
-	}
-
-	if imagePath, err := renderer.RenderToPng(renderOpts); err != nil {
-		return err
-	} else {
-		context.ImageOnDiskPath = imagePath
-	}
-
-	context.ImagePublicUrl, err = uploader.Upload(context.Ctx, context.ImageOnDiskPath)
+	ref, err := context.GetDashboardUID()
 	if err != nil {
 		return err
 	}
 
-	n.log.Info("uploaded", "url", context.ImagePublicUrl)
+	renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?orgId=%d&panelId=%d", ref.Uid, ref.Slug, context.Rule.OrgID, context.Rule.PanelID)
+
+	result, err := n.renderService.Render(context.Ctx, renderOpts)
+	if err != nil {
+		return err
+	}
+
+	context.ImageOnDiskPath = result.FilePath
+	context.ImagePublicURL, err = uploader.Upload(context.Ctx, context.ImageOnDiskPath)
+	if err != nil {
+		return err
+	}
+
+	if context.ImagePublicURL != "" {
+		n.log.Info("uploaded screenshot of alert to external image store", "url", context.ImagePublicURL)
+	}
+
 	return nil
 }
 
-func (n *notificationService) getNeededNotifiers(orgId int64, notificationIds []int64, context *EvalContext) (NotifierSlice, error) {
-	query := &m.GetAlertNotificationsToSendQuery{OrgId: orgId, Ids: notificationIds}
+func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids []string, evalContext *EvalContext) (notifierStateSlice, error) {
+	query := &models.GetAlertNotificationsWithUidToSendQuery{OrgId: orgID, Uids: notificationUids}
 
 	if err := bus.Dispatch(query); err != nil {
 		return nil, err
 	}
 
-	var result []Notifier
+	var result notifierStateSlice
 	for _, notification := range query.Result {
-		if not, err := n.createNotifierFor(notification); err != nil {
-			return nil, err
-		} else {
-			if not.ShouldNotify(context) {
-				result = append(result, not)
-			}
+		not, err := InitNotifier(notification)
+		if err != nil {
+			n.log.Error("Could not create notifier", "notifier", notification.Uid, "error", err)
+			continue
+		}
+
+		query := &models.GetOrCreateNotificationStateQuery{
+			NotifierId: notification.Id,
+			AlertId:    evalContext.Rule.ID,
+			OrgId:      evalContext.Rule.OrgID,
+		}
+
+		err = bus.DispatchCtx(evalContext.Ctx, query)
+		if err != nil {
+			n.log.Error("Could not get notification state.", "notifier", notification.Id, "error", err)
+			continue
+		}
+
+		if not.ShouldNotify(evalContext.Ctx, evalContext, query.Result) {
+			result = append(result, &notifierState{
+				notifier: not,
+				state:    query.Result,
+			})
 		}
 	}
 
 	return result, nil
 }
 
-func (n *notificationService) createNotifierFor(model *m.AlertNotification) (Notifier, error) {
+// InitNotifier instantiate a new notifier based on the model.
+func InitNotifier(model *models.AlertNotification) (Notifier, error) {
 	notifierPlugin, found := notifierFactories[model.Type]
 	if !found {
 		return nil, errors.New("Unsupported notification type")
@@ -138,14 +206,17 @@ func (n *notificationService) createNotifierFor(model *m.AlertNotification) (Not
 	return notifierPlugin.Factory(model)
 }
 
-type NotifierFactory func(notification *m.AlertNotification) (Notifier, error)
+// NotifierFactory is a signature for creating notifiers.
+type NotifierFactory func(notification *models.AlertNotification) (Notifier, error)
 
-var notifierFactories map[string]*NotifierPlugin = make(map[string]*NotifierPlugin)
+var notifierFactories = make(map[string]*NotifierPlugin)
 
+// RegisterNotifier register an notifier
 func RegisterNotifier(plugin *NotifierPlugin) {
 	notifierFactories[plugin.Type] = plugin
 }
 
+// GetNotifiers returns a list of metadata about available notifiers.
 func GetNotifiers() []*NotifierPlugin {
 	list := make([]*NotifierPlugin, 0)
 

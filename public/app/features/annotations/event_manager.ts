@@ -1,15 +1,16 @@
 import _ from 'lodash';
-import moment from 'moment';
 import tinycolor from 'tinycolor2';
-import { MetricsPanelCtrl } from 'app/plugins/sdk';
-import { AnnotationEvent } from './event';
 import {
   OK_COLOR,
   ALERTING_COLOR,
   NO_DATA_COLOR,
+  PENDING_COLOR,
   DEFAULT_ANNOTATION_COLOR,
   REGION_FILL_ALPHA,
-} from 'app/core/utils/colors';
+} from '@grafana/ui';
+
+import { MetricsPanelCtrl } from 'app/plugins/sdk';
+import { AnnotationEvent } from '@grafana/data';
 
 export class EventManager {
   event: AnnotationEvent;
@@ -27,35 +28,36 @@ export class EventManager {
     this.editorOpen = true;
   }
 
-  updateTime(range) {
+  updateTime(range: { from: any; to: any }) {
     if (!this.event) {
-      this.event = new AnnotationEvent();
+      this.event = {};
       this.event.dashboardId = this.panelCtrl.dashboard.id;
       this.event.panelId = this.panelCtrl.panel.id;
     }
 
     // update time
-    this.event.time = moment(range.from);
+    this.event.time = range.from;
     this.event.isRegion = false;
+
     if (range.to) {
-      this.event.timeEnd = moment(range.to);
+      this.event.timeEnd = range.to;
       this.event.isRegion = true;
     }
 
     this.panelCtrl.render();
   }
 
-  editEvent(event, elem?) {
+  editEvent(event: AnnotationEvent, elem?: any) {
     this.event = event;
     this.panelCtrl.render();
   }
 
-  addFlotEvents(annotations, flotOptions) {
+  addFlotEvents(annotations: any, flotOptions: any) {
     if (!this.event && annotations.length === 0) {
       return;
     }
 
-    var types = {
+    const types: any = {
       $__alerting: {
         color: ALERTING_COLOR,
         position: 'BOTTOM',
@@ -71,6 +73,11 @@ export class EventManager {
         position: 'BOTTOM',
         markerSize: 5,
       },
+      $__pending: {
+        color: PENDING_COLOR,
+        position: 'BOTTOM',
+        markerSize: 5,
+      },
       $__editing: {
         color: DEFAULT_ANNOTATION_COLOR,
         position: 'BOTTOM',
@@ -83,8 +90,8 @@ export class EventManager {
         annotations = [
           {
             isRegion: true,
-            min: this.event.time.valueOf(),
-            timeEnd: this.event.timeEnd.valueOf(),
+            min: this.event.time,
+            timeEnd: this.event.timeEnd,
             text: this.event.text,
             eventType: '$__editing',
             editModel: this.event,
@@ -93,7 +100,7 @@ export class EventManager {
       } else {
         annotations = [
           {
-            min: this.event.time.valueOf(),
+            min: this.event.time,
             text: this.event.text,
             editModel: this.event,
             eventType: '$__editing',
@@ -102,8 +109,8 @@ export class EventManager {
       }
     } else {
       // annotations from query
-      for (var i = 0; i < annotations.length; i++) {
-        var item = annotations[i];
+      for (let i = 0; i < annotations.length; i++) {
+        const item = annotations[i];
 
         // add properties used by jquery flot events
         item.min = item.time;
@@ -125,11 +132,11 @@ export class EventManager {
       }
     }
 
-    let regions = getRegions(annotations);
+    const regions = getRegions(annotations);
     addRegionMarking(regions, flotOptions);
 
-    let eventSectionHeight = 20;
-    let eventSectionMargin = 7;
+    const eventSectionHeight = 20;
+    const eventSectionMargin = 7;
     flotOptions.grid.eventSectionHeight = eventSectionMargin;
     flotOptions.xaxis.eventSectionHeight = eventSectionHeight;
 
@@ -142,13 +149,13 @@ export class EventManager {
   }
 }
 
-function getRegions(events) {
+function getRegions(events: AnnotationEvent[]) {
   return _.filter(events, 'isRegion');
 }
 
-function addRegionMarking(regions, flotOptions) {
-  let markings = flotOptions.grid.markings;
-  let defaultColor = DEFAULT_ANNOTATION_COLOR;
+function addRegionMarking(regions: any[], flotOptions: { grid: { markings: any } }) {
+  const markings = flotOptions.grid.markings;
+  const defaultColor = DEFAULT_ANNOTATION_COLOR;
   let fillColor;
 
   _.each(regions, region => {
@@ -167,7 +174,7 @@ function addRegionMarking(regions, flotOptions) {
 }
 
 function addAlphaToRGB(colorString: string, alpha: number): string {
-  let color = tinycolor(colorString);
+  const color = tinycolor(colorString);
   if (color.isValid()) {
     color.setAlpha(alpha);
     return color.toRgbString();

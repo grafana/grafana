@@ -16,7 +16,7 @@ func (like Like) WriteTo(w Writer) error {
 	if _, err := fmt.Fprintf(w, "%s LIKE ?", like[0]); err != nil {
 		return err
 	}
-	// FIXME: if use other regular express, this will be failed. but for compitable, keep this
+	// FIXME: if use other regular express, this will be failed. but for compatible, keep this
 	if like[1][0] == '%' || like[1][len(like[1])-1] == '%' {
 		w.Append(like[1])
 	} else {

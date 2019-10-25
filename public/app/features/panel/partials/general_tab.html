@@ -1,0 +1,49 @@
+<div class="panel-options-group">
+  <!-- <div class="panel&#45;option&#45;section__header">Information</div> -->
+  <div class="panel-options-group__body">
+    <div class="section">
+      <div class="gf-form">
+        <span class="gf-form-label width-7">Title</span>
+        <input type="text" class="gf-form-input width-25" ng-model='ctrl.panel.title' ng-model-onblur></input>
+      </div>
+      <gf-form-switch class="gf-form" label-class="width-7" switch-class="max-width-6" label="Transparent" checked="ctrl.panel.transparent" on-change="ctrl.render()"></gf-form-switch>
+    </div>
+    <div class="section">
+      <div class="gf-form gf-form--v-stretch">
+        <span class="gf-form-label width-7">Description</span>
+        <textarea class="gf-form-input width-25" rows="5" ng-model="ctrl.panel.description" ng-model-onblur placeholder="Panel description, supports markdown & links"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel-options-group">
+  <div class="panel-options-group__header">
+    <div class="panel-options-group__title">Repeating</div>
+  </div>
+  <div class="panel-options-group__body">
+    <div class="section">
+      <div class="gf-form">
+        <span class="gf-form-label width-9">Repeat</span>
+        <dash-repeat-option panel="ctrl.panel"></dash-repeat-option>
+      </div>
+      <div class="gf-form" ng-show="ctrl.panel.repeat">
+        <span class="gf-form-label width-9">Direction</span>
+        <select class="gf-form-input" ng-model="ctrl.panel.repeatDirection" ng-options="f.value as f.text for f in [{value: 'v', text: 'Vertical'}, {value: 'h', text: 'Horizontal'}]">
+          <option value=""></option>
+        </select>
+      </div>
+      <div class="gf-form" ng-show="ctrl.panel.repeat && ctrl.panel.repeatDirection == 'h'">
+        <span class="gf-form-label width-9">Max per row</span>
+        <select class="gf-form-input" ng-model="ctrl.panel.maxPerRow" ng-options="f for f in [2,3,4,6,12,24]">
+          <option value=""></option>
+        </select>
+      </div>
+      <div class="gf-form-hint">
+        <div class="gf-form-hint-text muted">
+          Note: You may need to change the variable selection to see this in action.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

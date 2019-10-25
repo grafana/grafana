@@ -1,7 +1,7 @@
-# Graph Panel -  Native Plugin
+# Graph Panel
 
-The Graph is the main graph panel and is **included** with Grafana. It provides a very rich set of graphing options.
+This is the main Graph panel and is **included** with Grafana. It provides a very rich set of graphing options.
 
-Read more about it here:
+For full reference documentation:
 
 [http://docs.grafana.org/reference/graph/](http://docs.grafana.org/reference/graph/)

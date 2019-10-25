@@ -1,7 +1,8 @@
 .dashboard-container {
-  padding: $dashboard-padding;
+  padding: $dashboard-padding $dashboard-padding 0 $dashboard-padding;
   width: 100%;
-  min-height: 100%;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .template-variable {
@@ -14,12 +15,30 @@ div.flot-text {
 
 .panel {
   height: 100%;
+}
 
-  &--solo {
-    .panel-container {
-      border: none;
-      z-index: $zindex-sidemenu + 1;
-    }
+.dashboard-solo {
+  .footer,
+  .sidemenu {
+    display: none;
+  }
+}
+
+.panel-solo {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  margin: 0;
+  left: 0;
+  top: 0;
+
+  .panel-container {
+    border: none;
+  }
+
+  .panel-menu-toggle,
+  .panel-menu {
+    display: none;
   }
 }
 
@@ -34,176 +53,47 @@ div.flot-text {
   position: relative;
   border-radius: 3px;
   height: 100%;
+  width: 100%;
 
   &.panel-transparent {
     background-color: transparent;
     border: none;
   }
+
+  &:hover {
+    .panel-menu-toggle {
+      visibility: visible;
+      transition: opacity 0.1s ease-in 0.2s;
+      opacity: 1;
+    }
+  }
+
+  &--is-editing {
+    height: auto;
+  }
+
+  &--absolute {
+    position: absolute;
+  }
 }
 
 .panel-content {
   padding: $panel-padding;
-  height: calc(100% - 27px);
-  position: relative;
-  overflow: hidden;
-}
-
-.panel-title-container {
-  min-height: 9px;
-  cursor: move;
-  word-wrap: break-word;
-  display: block;
-}
-
-.panel-title {
-  border: 0px;
-  font-weight: $font-weight-semi-bold;
-  position: relative;
+  height: calc(100% - #{$panel-header-height});
   width: 100%;
-  display: block;
-  padding-bottom: 2px;
+  position: relative;
+  // Fixes scrolling on mobile devices
+  overflow: auto;
 }
 
-.panel-title-text {
-  cursor: pointer;
-  font-weight: $font-weight-semi-bold;
-
-  &:hover {
-    color: $link-hover-color;
+// For larger screens, set back to hidden to avoid double scroll bars
+@include media-breakpoint-up(md) {
+  .panel-content {
+    overflow: hidden;
   }
-}
-
-.panel-menu-container {
-  width: 1px;
-  height: 19px;
-  display: inline-block;
-}
-
-.panel-menu-toggle {
-  color: $text-color-weak;
-  cursor: pointer;
-  padding: 3px 5px;
-  visibility: hidden;
-  opacity: 0;
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  left: 1px;
-  top: 4px;
-
-  &:hover {
-    color: $link-hover-color;
-  }
-}
-
-.panel-loading {
-  position: absolute;
-  top: -3px;
-  right: 0px;
-  z-index: 800;
-  font-size: $font-size-sm;
-  color: $text-color-weak;
-}
-
-.panel-header {
-  text-align: center;
-
-  &:hover {
-    transition: background-color 0.1s ease-in-out;
-    background-color: $panel-header-hover-bg;
-  }
-}
-
-.panel-menu {
-  top: 25px;
-  left: -100px;
-}
-
-.panel-info-corner-inner {
-  width: 0;
-  height: 0;
-  position: absolute;
-  left: 0;
-  bottom: 0;
-}
-
-@mixin panel-corner-color($corner-bg) {
-  .panel-info-corner-inner {
-    border-left: 27px solid $corner-bg;
-    border-right: none;
-    border-bottom: 27px solid transparent;
-  }
-}
-
-.panel-info-corner {
-  color: $text-muted;
-  cursor: pointer;
-  position: absolute;
-  display: none;
-  left: 0;
-  width: 27px;
-  height: 27px;
-  top: 0;
-  z-index: 1;
-
-  .fa {
-    position: relative;
-    top: -4px;
-    left: -6px;
-    font-size: 75%;
-    z-index: 1;
-  }
-
-  &--info {
-    display: block;
-    @include panel-corner-color(lighten($panel-bg, 4%));
-    .fa:before {
-      content: '\f129';
-    }
-  }
-
-  &--links {
-    display: block;
-    @include panel-corner-color(lighten($panel-bg, 4%));
-    .fa {
-      left: -5px;
-    }
-    .fa:before {
-      content: '\f08e';
-    }
-  }
-
-  &--error {
-    display: block;
-    color: $text-color;
-    @include panel-corner-color($popover-error-bg);
-    .fa:before {
-      content: '\f12a';
-    }
-  }
-}
-
-.panel-hover-highlight {
-  .panel-menu-toggle {
-    visibility: visible;
-    transition: opacity 0.1s ease-in 0.2s;
-    opacity: 1;
-  }
-}
-
-.panel-time-info {
-  font-weight: bold;
-  float: right;
-  margin-right: 15px;
-  color: $blue;
-  font-size: 85%;
-  position: absolute;
-  top: 4px;
-  right: 0;
 }
 
 .dashboard-header {
-  font-family: $headings-font-family;
   font-size: $font-size-h3;
   text-align: center;
   overflow: hidden;
@@ -212,10 +102,22 @@ div.flot-text {
   span {
     display: inline-block;
     @include brand-bottom-border();
-    padding: 0.5rem 0.5rem 0.2rem 0.5rem;
+    padding: $space-sm $space-sm $space-xxs $space-sm;
   }
 }
 
-.panel-full-edit {
-  margin: $dashboard-padding (-$dashboard-padding) 0 (-$dashboard-padding);
+.dashboard-loading {
+  height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .alert {
+    max-width: 600px;
+    min-width: 600px;
+  }
+}
+
+.dashboard-loading__text {
+  font-size: $font-size-lg;
 }

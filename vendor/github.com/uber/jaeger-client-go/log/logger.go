@@ -47,7 +47,7 @@ func (l *stdLogger) Infof(msg string, args ...interface{}) {
 	log.Printf(msg, args...)
 }
 
-// NullLogger is implementation of the Logger interface that delegates to default `log` package
+// NullLogger is implementation of the Logger interface that is no-op
 var NullLogger = &nullLogger{}
 
 type nullLogger struct{}
@@ -80,4 +80,11 @@ func (l *BytesBufferLogger) String() string {
 	l.mux.Lock()
 	defer l.mux.Unlock()
 	return l.buf.String()
+}
+
+// Flush empties the underlying buffer.
+func (l *BytesBufferLogger) Flush() {
+	l.mux.Lock()
+	defer l.mux.Unlock()
+	l.buf.Reset()
 }

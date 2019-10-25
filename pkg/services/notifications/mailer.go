@@ -7,76 +7,71 @@ package notifications
 import (
 	"bytes"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"html/template"
+	"io"
 	"net"
 	"strconv"
-	"strings"
 
-	"github.com/grafana/grafana/pkg/log"
-	m "github.com/grafana/grafana/pkg/models"
+	gomail "gopkg.in/mail.v2"
+
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"gopkg.in/gomail.v2"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var mailQueue chan *Message
-
-func initMailQueue() {
-	mailQueue = make(chan *Message, 10)
-	go processMailQueue()
-}
-
-func processMailQueue() {
-	for {
-		select {
-		case msg := <-mailQueue:
-			num, err := send(msg)
-			tos := strings.Join(msg.To, "; ")
-			info := ""
-			if err != nil {
-				if len(msg.Info) > 0 {
-					info = ", info: " + msg.Info
-				}
-				log.Error(4, fmt.Sprintf("Async sent email %d succeed, not send emails: %s%s err: %s", num, tos, info, err))
-			} else {
-				log.Trace(fmt.Sprintf("Async sent email %d succeed, sent emails: %s%s", num, tos, info))
-			}
-		}
-	}
-}
-
-var addToMailQueue = func(msg *Message) {
-	mailQueue <- msg
-}
-
-func send(msg *Message) (int, error) {
-	dialer, err := createDialer()
+func (ns *NotificationService) send(msg *Message) (int, error) {
+	dialer, err := ns.createDialer()
 	if err != nil {
 		return 0, err
 	}
 
+	var num int
 	for _, address := range msg.To {
 		m := gomail.NewMessage()
 		m.SetHeader("From", msg.From)
 		m.SetHeader("To", address)
 		m.SetHeader("Subject", msg.Subject)
-		for _, file := range msg.EmbededFiles {
-			m.Embed(file)
+
+		ns.setFiles(m, msg)
+
+		for _, replyTo := range msg.ReplyTo {
+			m.SetAddressHeader("Reply-To", replyTo, "")
 		}
 
 		m.SetBody("text/html", msg.Body)
 
-		if err := dialer.DialAndSend(m); err != nil {
-			return 0, err
+		e := dialer.DialAndSend(m)
+		if e != nil {
+			err = errutil.Wrapf(e, "Failed to send notification to email address: %s", address)
+			continue
 		}
+
+		num++
 	}
 
-	return len(msg.To), nil
+	return num, err
 }
 
-func createDialer() (*gomail.Dialer, error) {
-	host, port, err := net.SplitHostPort(setting.Smtp.Host)
+// setFiles attaches files in various forms
+func (ns *NotificationService) setFiles(
+	m *gomail.Message,
+	msg *Message,
+) {
+	for _, file := range msg.EmbededFiles {
+		m.Embed(file)
+	}
+
+	for _, file := range msg.AttachedFiles {
+		m.Attach(file.Name, gomail.SetCopyFunc(func(writer io.Writer) error {
+			_, err := writer.Write(file.Content)
+			return err
+		}))
+	}
+}
+
+func (ns *NotificationService) createDialer() (*gomail.Dialer, error) {
+	host, port, err := net.SplitHostPort(ns.Cfg.Smtp.Host)
 
 	if err != nil {
 		return nil, err
@@ -87,31 +82,32 @@ func createDialer() (*gomail.Dialer, error) {
 	}
 
 	tlsconfig := &tls.Config{
-		InsecureSkipVerify: setting.Smtp.SkipVerify,
+		InsecureSkipVerify: ns.Cfg.Smtp.SkipVerify,
 		ServerName:         host,
 	}
 
-	if setting.Smtp.CertFile != "" {
-		cert, err := tls.LoadX509KeyPair(setting.Smtp.CertFile, setting.Smtp.KeyFile)
+	if ns.Cfg.Smtp.CertFile != "" {
+		cert, err := tls.LoadX509KeyPair(ns.Cfg.Smtp.CertFile, ns.Cfg.Smtp.KeyFile)
 		if err != nil {
 			return nil, fmt.Errorf("Could not load cert or key file. error: %v", err)
 		}
 		tlsconfig.Certificates = []tls.Certificate{cert}
 	}
 
-	d := gomail.NewDialer(host, iPort, setting.Smtp.User, setting.Smtp.Password)
+	d := gomail.NewDialer(host, iPort, ns.Cfg.Smtp.User, ns.Cfg.Smtp.Password)
 	d.TLSConfig = tlsconfig
-	if setting.Smtp.EhloIdentity != "" {
-		d.LocalName = setting.Smtp.EhloIdentity
+
+	if ns.Cfg.Smtp.EhloIdentity != "" {
+		d.LocalName = ns.Cfg.Smtp.EhloIdentity
 	} else {
 		d.LocalName = setting.InstanceName
 	}
 	return d, nil
 }
 
-func buildEmailMessage(cmd *m.SendEmailCommand) (*Message, error) {
-	if !setting.Smtp.Enabled {
-		return nil, m.ErrSmtpNotEnabled
+func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (*Message, error) {
+	if !ns.Cfg.Smtp.Enabled {
+		return nil, models.ErrSmtpNotEnabled
 	}
 
 	var buffer bytes.Buffer
@@ -135,7 +131,7 @@ func buildEmailMessage(cmd *m.SendEmailCommand) (*Message, error) {
 		subjectText, hasSubject := subjectData["value"]
 
 		if !hasSubject {
-			return nil, errors.New(fmt.Sprintf("Missing subject in Template %s", cmd.Template))
+			return nil, fmt.Errorf("Missing subject in Template %s", cmd.Template)
 		}
 
 		subjectTmpl, err := template.New("subject").Parse(subjectText.(string))
@@ -153,10 +149,27 @@ func buildEmailMessage(cmd *m.SendEmailCommand) (*Message, error) {
 	}
 
 	return &Message{
-		To:           cmd.To,
-		From:         fmt.Sprintf("%s <%s>", setting.Smtp.FromName, setting.Smtp.FromAddress),
-		Subject:      subject,
-		Body:         buffer.String(),
-		EmbededFiles: cmd.EmbededFiles,
+		To:            cmd.To,
+		From:          fmt.Sprintf("%s <%s>", ns.Cfg.Smtp.FromName, ns.Cfg.Smtp.FromAddress),
+		Subject:       subject,
+		Body:          buffer.String(),
+		EmbededFiles:  cmd.EmbededFiles,
+		AttachedFiles: buildAttachedFiles(cmd.AttachedFiles),
 	}, nil
+}
+
+// buildAttachedFiles build attached files
+func buildAttachedFiles(
+	attached []*models.SendEmailAttachFile,
+) []*AttachedFile {
+	result := make([]*AttachedFile, 0)
+
+	for _, file := range attached {
+		result = append(result, &AttachedFile{
+			Name:    file.Name,
+			Content: file.Content,
+		})
+	}
+
+	return result
 }

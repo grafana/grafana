@@ -1,6 +1,6 @@
-import moment from 'moment';
+import { toUtc, dateTime } from '@grafana/data';
 
-const intervalMap = {
+const intervalMap: any = {
   Hourly: { startOf: 'hour', amount: 'hours' },
   Daily: { startOf: 'day', amount: 'days' },
   Weekly: { startOf: 'isoWeek', amount: 'weeks' },
@@ -9,30 +9,30 @@ const intervalMap = {
 };
 
 export class IndexPattern {
-  constructor(private pattern, private interval: string | null) {}
+  constructor(private pattern: any, private interval: string | null) {}
 
   getIndexForToday() {
     if (this.interval) {
-      return moment.utc().format(this.pattern);
+      return toUtc().format(this.pattern);
     } else {
       return this.pattern;
     }
   }
 
-  getIndexList(from, to) {
+  getIndexList(from: any, to: any) {
     if (!this.interval) {
       return this.pattern;
     }
 
-    var intervalInfo = intervalMap[this.interval];
-    var start = moment(from)
+    const intervalInfo = intervalMap[this.interval];
+    const start = dateTime(from)
       .utc()
       .startOf(intervalInfo.startOf);
-    var endEpoch = moment(to)
+    const endEpoch = dateTime(to)
       .utc()
       .startOf(intervalInfo.startOf)
       .valueOf();
-    var indexList = [];
+    const indexList = [];
 
     while (start.valueOf() <= endEpoch) {
       indexList.push(start.format(this.pattern));

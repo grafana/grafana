@@ -1,0 +1,30 @@
+apiVersion: 1
+
+datasources:
+  - name: $TEST_VAR
+    type: type
+    access: proxy
+    orgId: 2
+    url: url
+    password: password
+    user: user
+    database: database
+    basicAuth: true
+    basicAuthUser: basic_auth_user
+    basicAuthPassword: basic_auth_password
+    withCredentials: true
+    isDefault: true
+    jsonData:
+      graphiteVersion: "1.1"
+      tlsAuth: true
+      tlsAuthWithCACert: true
+    secureJsonData:
+      tlsCACert: "MjNOcW9RdkbUDHZmpco2HCYzVq9dE+i6Yi+gmUJotq5CDA=="
+      tlsClientCert: "ckN0dGlyMXN503YNfjTcf9CV+GGQneN+xmAclQ=="
+      tlsClientKey: "ZkN4aG1aNkja/gKAB1wlnKFIsy2SRDq4slrM0A=="
+    editable: true
+    version: 10
+
+deleteDatasources:
+  - name: old-graphite3
+    orgId: 2

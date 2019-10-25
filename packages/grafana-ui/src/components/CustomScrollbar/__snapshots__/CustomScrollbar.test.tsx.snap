@@ -1,0 +1,82 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CustomScrollbar renders correctly 1`] = `
+<div
+  className="custom-scrollbar"
+  style={
+    Object {
+      "height": "auto",
+      "maxHeight": "100%",
+      "minHeight": "0",
+      "overflow": "hidden",
+      "position": "relative",
+      "width": "100%",
+    }
+  }
+>
+  <div
+    className="view"
+    style={
+      Object {
+        "WebkitOverflowScrolling": "touch",
+        "bottom": undefined,
+        "left": undefined,
+        "marginBottom": 0,
+        "marginRight": 0,
+        "maxHeight": "calc(100% + 0px)",
+        "minHeight": "calc(0 + 0px)",
+        "overflow": "scroll",
+        "position": "relative",
+        "right": undefined,
+        "top": undefined,
+      }
+    }
+  >
+    <p>
+      Scrollable content
+    </p>
+  </div>
+  <div
+    className="css-52gpmd track-horizontal"
+    style={
+      Object {
+        "display": "none",
+        "height": 6,
+        "position": "absolute",
+      }
+    }
+  >
+    <div
+      className="thumb-horizontal"
+      style={
+        Object {
+          "display": "block",
+          "height": "100%",
+          "position": "relative",
+        }
+      }
+    />
+  </div>
+  <div
+    className="css-52gpmd track-vertical"
+    style={
+      Object {
+        "display": "none",
+        "position": "absolute",
+        "width": 6,
+      }
+    }
+  >
+    <div
+      className="thumb-vertical"
+      style={
+        Object {
+          "display": "block",
+          "position": "relative",
+          "width": "100%",
+        }
+      }
+    />
+  </div>
+</div>
+`;

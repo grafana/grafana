@@ -9,8 +9,6 @@ package avatar
 import (
 	"bufio"
 	"bytes"
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -22,7 +20,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/macaron.v1"
 
@@ -41,18 +39,6 @@ func UpdateGravatarSource() {
 		!strings.HasPrefix(gravatarSource, "https://") {
 		gravatarSource = "http://" + gravatarSource
 	}
-}
-
-// hash email to md5 string
-// keep this func in order to make this package independent
-func HashEmail(email string) string {
-	// https://en.gravatar.com/site/implement/hash/
-	email = strings.TrimSpace(email)
-	email = strings.ToLower(email)
-
-	h := md5.New()
-	h.Write([]byte(email))
-	return hex.EncodeToString(h.Sum(nil))
 }
 
 // Avatar represents the avatar object.
@@ -97,15 +83,6 @@ type CacheServer struct {
 	cache    *gocache.Cache
 }
 
-func (this *CacheServer) mustInt(r *http.Request, defaultValue int, keys ...string) (v int) {
-	for _, k := range keys {
-		if _, err := fmt.Sscanf(r.FormValue(k), "%d", &v); err == nil {
-			defaultValue = v
-		}
-	}
-	return defaultValue
-}
-
 func (this *CacheServer) Handler(ctx *macaron.Context) {
 	urlPath := ctx.Req.URL.Path
 	hash := urlPath[strings.LastIndex(urlPath, "/")+1:]
@@ -128,7 +105,9 @@ func (this *CacheServer) Handler(ctx *macaron.Context) {
 	if avatar.notFound {
 		avatar = this.notFound
 	} else {
-		this.cache.Add(hash, avatar, gocache.DefaultExpiration)
+		if err := this.cache.Add(hash, avatar, gocache.DefaultExpiration); err != nil {
+			log.Warn("Error adding avatar to cache: %s", err)
+		}
 	}
 
 	ctx.Resp.Header().Add("Content-Type", "image/jpeg")
@@ -226,7 +205,7 @@ func (this *thunderTask) Fetch() {
 	this.Done()
 }
 
-var client *http.Client = &http.Client{
+var client = &http.Client{
 	Timeout:   time.Second * 2,
 	Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
 }
@@ -258,9 +237,6 @@ func (this *thunderTask) fetch() error {
 	this.Avatar.data = &bytes.Buffer{}
 	writer := bufio.NewWriter(this.Avatar.data)
 
-	if _, err = io.Copy(writer, resp.Body); err != nil {
-		return err
-	}
-
-	return nil
+	_, err = io.Copy(writer, resp.Body)
+	return err
 }

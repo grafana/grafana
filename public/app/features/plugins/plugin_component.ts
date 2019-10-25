@@ -1,29 +1,38 @@
-import angular from 'angular';
+import angular, { IQService } from 'angular';
 import _ from 'lodash';
 
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
-import { importPluginModule } from './plugin_loader';
 
-import { UnknownPanelCtrl } from 'app/plugins/panel/unknown/module';
-import { DashboardRowCtrl } from './row_ctrl';
+import { DataSourceApi } from '@grafana/ui';
+import { importPanelPlugin, importDataSourcePlugin, importAppPlugin } from './plugin_loader';
+import DatasourceSrv from './datasource_srv';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
-/** @ngInject **/
-function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $templateCache) {
-  function getTemplate(component) {
+/** @ngInject */
+function pluginDirectiveLoader(
+  $compile: any,
+  datasourceSrv: DatasourceSrv,
+  $rootScope: GrafanaRootScope,
+  $q: IQService,
+  $http: any,
+  $templateCache: any,
+  $timeout: any
+) {
+  function getTemplate(component: { template: any; templateUrl: any }) {
     if (component.template) {
       return $q.when(component.template);
     }
-    var cached = $templateCache.get(component.templateUrl);
+    const cached = $templateCache.get(component.templateUrl);
     if (cached) {
       return $q.when(cached);
     }
-    return $http.get(component.templateUrl).then(res => {
+    return $http.get(component.templateUrl).then((res: any) => {
       return res.data;
     });
   }
 
-  function relativeTemplateUrlToAbs(templateUrl, baseUrl) {
+  function relativeTemplateUrlToAbs(templateUrl: string, baseUrl: string) {
     if (!templateUrl) {
       return undefined;
     }
@@ -33,11 +42,11 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     return baseUrl + '/' + templateUrl;
   }
 
-  function getPluginComponentDirective(options) {
+  function getPluginComponentDirective(options: any) {
     // handle relative template urls for plugin templates
     options.Component.templateUrl = relativeTemplateUrlToAbs(options.Component.templateUrl, options.baseUrl);
 
-    return function() {
+    return () => {
       return {
         templateUrl: options.Component.templateUrl,
         template: options.Component.template,
@@ -46,7 +55,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
         controllerAs: 'ctrl',
         bindToController: true,
         scope: options.bindings,
-        link: (scope, elem, attrs, ctrl) => {
+        link: (scope: any, elem: any, attrs: any, ctrl: any) => {
           if (ctrl.link) {
             ctrl.link(scope, elem, attrs, ctrl);
           }
@@ -58,17 +67,8 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     };
   }
 
-  function loadPanelComponentInfo(scope, attrs) {
-    if (scope.panel.type === 'row') {
-      return $q.when({
-        name: 'dashboard-row',
-        bindings: { dashboard: '=', panel: '=' },
-        attrs: { dashboard: 'ctrl.dashboard', panel: 'panel' },
-        Component: DashboardRowCtrl,
-      });
-    }
-
-    var componentInfo: any = {
+  function loadPanelComponentInfo(scope: any, attrs: any) {
+    const componentInfo: any = {
       name: 'panel-plugin-' + scope.panel.type,
       bindings: { dashboard: '=', panel: '=', row: '=' },
       attrs: {
@@ -78,15 +78,9 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       },
     };
 
-    let panelInfo = config.panels[scope.panel.type];
-    var panelCtrlPromise = Promise.resolve(UnknownPanelCtrl);
-    if (panelInfo) {
-      panelCtrlPromise = importPluginModule(panelInfo.module).then(function(panelModule) {
-        return panelModule.PanelCtrl;
-      });
-    }
-
-    return panelCtrlPromise.then(function(PanelCtrl: any) {
+    const panelInfo = config.panels[scope.panel.type];
+    return importPanelPlugin(panelInfo.id).then(panelPlugin => {
+      const PanelCtrl = panelPlugin.angularPanelCtrl;
       componentInfo.Component = PanelCtrl;
 
       if (!PanelCtrl || PanelCtrl.registered) {
@@ -94,7 +88,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       }
 
       if (PanelCtrl.templatePromise) {
-        return PanelCtrl.templatePromise.then(res => {
+        return PanelCtrl.templatePromise.then((res: any) => {
           return componentInfo;
         });
       }
@@ -103,7 +97,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
         PanelCtrl.templateUrl = relativeTemplateUrlToAbs(PanelCtrl.templateUrl, panelInfo.baseUrl);
       }
 
-      PanelCtrl.templatePromise = getTemplate(PanelCtrl).then(template => {
+      PanelCtrl.templatePromise = getTemplate(PanelCtrl).then((template: any) => {
         PanelCtrl.templateUrl = null;
         PanelCtrl.template = `<grafana-panel ctrl="ctrl" class="panel-height-helper">${template}</grafana-panel>`;
         return componentInfo;
@@ -113,50 +107,27 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     });
   }
 
-  function getModule(scope, attrs) {
+  function getModule(scope: any, attrs: any): any {
     switch (attrs.type) {
       // QueryCtrl
       case 'query-ctrl': {
-        let datasource = scope.target.datasource || scope.ctrl.panel.datasource;
-        return datasourceSrv.get(datasource).then(ds => {
-          scope.datasource = ds;
+        const ds: DataSourceApi = scope.ctrl.datasource as DataSourceApi;
 
-          return importPluginModule(ds.meta.module).then(dsModule => {
-            return {
-              baseUrl: ds.meta.baseUrl,
-              name: 'query-ctrl-' + ds.meta.id,
-              bindings: { target: '=', panelCtrl: '=', datasource: '=' },
-              attrs: {
-                target: 'target',
-                'panel-ctrl': 'ctrl.panelCtrl',
-                datasource: 'datasource',
-              },
-              Component: dsModule.QueryCtrl,
-            };
-          });
-        });
-      }
-      // QueryOptionsCtrl
-      case 'query-options-ctrl': {
-        return datasourceSrv.get(scope.ctrl.panel.datasource).then(ds => {
-          return importPluginModule(ds.meta.module).then((dsModule): any => {
-            if (!dsModule.QueryOptionsCtrl) {
-              return { notFound: true };
-            }
-
-            return {
-              baseUrl: ds.meta.baseUrl,
-              name: 'query-options-ctrl-' + ds.meta.id,
-              bindings: { panelCtrl: '=' },
-              attrs: { 'panel-ctrl': 'ctrl.panelCtrl' },
-              Component: dsModule.QueryOptionsCtrl,
-            };
-          });
+        return $q.when({
+          baseUrl: ds.meta.baseUrl,
+          name: 'query-ctrl-' + ds.meta.id,
+          bindings: { target: '=', panelCtrl: '=', datasource: '=' },
+          attrs: {
+            target: 'ctrl.target',
+            'panel-ctrl': 'ctrl',
+            datasource: 'ctrl.datasource',
+          },
+          Component: ds.components.QueryCtrl,
         });
       }
       // Annotations
       case 'annotations-query-ctrl': {
-        return importPluginModule(scope.ctrl.currentDatasource.meta.module).then(function(dsModule) {
+        return importDataSourcePlugin(scope.ctrl.currentDatasource.meta).then(dsPlugin => {
           return {
             baseUrl: scope.ctrl.currentDatasource.meta.baseUrl,
             name: 'annotations-query-ctrl-' + scope.ctrl.currentDatasource.meta.id,
@@ -165,50 +136,54 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
               annotation: 'ctrl.currentAnnotation',
               datasource: 'ctrl.currentDatasource',
             },
-            Component: dsModule.AnnotationsQueryCtrl,
+            Component: dsPlugin.components.AnnotationsQueryCtrl,
           };
         });
       }
       // Datasource ConfigCtrl
       case 'datasource-config-ctrl': {
-        var dsMeta = scope.ctrl.datasourceMeta;
-        return importPluginModule(dsMeta.module).then(function(dsModule): any {
-          if (!dsModule.ConfigCtrl) {
-            return { notFound: true };
-          }
+        const dsMeta = scope.ctrl.datasourceMeta;
+        return importDataSourcePlugin(dsMeta).then(dsPlugin => {
+          scope.$watch(
+            'ctrl.current',
+            () => {
+              scope.onModelChanged(scope.ctrl.current);
+            },
+            true
+          );
 
           return {
             baseUrl: dsMeta.baseUrl,
             name: 'ds-config-' + dsMeta.id,
             bindings: { meta: '=', current: '=' },
             attrs: { meta: 'ctrl.datasourceMeta', current: 'ctrl.current' },
-            Component: dsModule.ConfigCtrl,
+            Component: dsPlugin.angularConfigCtrl,
           };
         });
       }
       // AppConfigCtrl
       case 'app-config-ctrl': {
-        let model = scope.ctrl.model;
-        return importPluginModule(model.module).then(function(appModule) {
+        const model = scope.ctrl.model;
+        return importAppPlugin(model).then(appPlugin => {
           return {
             baseUrl: model.baseUrl,
             name: 'app-config-' + model.id,
             bindings: { appModel: '=', appEditCtrl: '=' },
             attrs: { 'app-model': 'ctrl.model', 'app-edit-ctrl': 'ctrl' },
-            Component: appModule.ConfigCtrl,
+            Component: appPlugin.angularConfigCtrl,
           };
         });
       }
       // App Page
       case 'app-page': {
-        let appModel = scope.ctrl.appModel;
-        return importPluginModule(appModel.module).then(function(appModule) {
+        const appModel = scope.ctrl.appModel;
+        return importAppPlugin(appModel).then(appPlugin => {
           return {
             baseUrl: appModel.baseUrl,
             name: 'app-page-' + appModel.id + '-' + scope.ctrl.page.slug,
             bindings: { appModel: '=' },
             attrs: { 'app-model': 'ctrl.appModel' },
-            Component: appModule[scope.ctrl.page.component],
+            Component: appPlugin.angularPages[scope.ctrl.page.component],
           };
         });
       }
@@ -224,8 +199,8 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     }
   }
 
-  function appendAndCompile(scope, elem, componentInfo) {
-    var child = angular.element(document.createElement(componentInfo.name));
+  function appendAndCompile(scope: any, elem: JQuery, componentInfo: any) {
+    const child = angular.element(document.createElement(componentInfo.name));
     _.each(componentInfo.attrs, (value, key) => {
       child.attr(key, value);
     });
@@ -234,16 +209,19 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     elem.empty();
 
     // let a binding digest cycle complete before adding to dom
-    setTimeout(function() {
-      elem.append(child);
-      scope.$applyAsync(function() {
-        scope.$broadcast('component-did-mount');
-        scope.$broadcast('refresh');
+    setTimeout(() => {
+      scope.$applyAsync(() => {
+        elem.append(child);
+        setTimeout(() => {
+          scope.$applyAsync(() => {
+            scope.$broadcast('component-did-mount');
+          });
+        });
       });
     });
   }
 
-  function registerPluginComponent(scope, elem, attrs, componentInfo) {
+  function registerPluginComponent(scope: any, elem: JQuery, attrs: any, componentInfo: any) {
     if (componentInfo.notFound) {
       elem.empty();
       return;
@@ -256,8 +234,8 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     }
 
     if (!componentInfo.Component.registered) {
-      var directiveName = attrs.$normalize(componentInfo.name);
-      var directiveFn = getPluginComponentDirective(componentInfo);
+      const directiveName = attrs.$normalize(componentInfo.name);
+      const directiveFn = getPluginComponentDirective(componentInfo);
       coreModule.directive(directiveName, directiveFn);
       componentInfo.Component.registered = true;
     }
@@ -267,13 +245,12 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
 
   return {
     restrict: 'E',
-    link: function(scope, elem, attrs) {
+    link: (scope: any, elem: JQuery, attrs: any) => {
       getModule(scope, attrs)
-        .then(function(componentInfo) {
+        .then((componentInfo: any) => {
           registerPluginComponent(scope, elem, attrs, componentInfo);
         })
-        .catch(err => {
-          $rootScope.appEvent('alert-error', ['Plugin Error', err.message || err]);
+        .catch((err: any) => {
           console.log('Plugin component error', err);
         });
     },

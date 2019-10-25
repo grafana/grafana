@@ -5,13 +5,14 @@
 }
 
 .search-results {
-  margin-top: 2rem;
+  margin-top: $space-xl;
 }
 
 .search-results-filter-row {
   height: 35px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
 
   .gf-form-button-row {
     padding-top: 0;

@@ -1,0 +1,284 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<div>
+  <div
+    className="page-action-bar"
+  >
+    <div
+      className="gf-form gf-form--grow"
+    >
+      <ForwardRef
+        inputClassName="gf-form-input"
+        labelClassName="gf-form--has-input-icon gf-form--grow"
+        onChange={[Function]}
+        placeholder="Search members"
+        value=""
+      />
+    </div>
+    <div
+      className="page-action-bar__spacer"
+    />
+    <button
+      className="btn btn-primary pull-right"
+      disabled={false}
+      onClick={[Function]}
+    >
+      Add member
+    </button>
+  </div>
+  <Component
+    in={false}
+  >
+    <div
+      className="cta-form"
+    >
+      <button
+        className="cta-form__close btn btn-transparent"
+        onClick={[Function]}
+      >
+        <i
+          className="fa fa-close"
+        />
+      </button>
+      <h5>
+        Add team member
+      </h5>
+      <div
+        className="gf-form-inline"
+      >
+        <UserPicker
+          className="min-width-30"
+          onSelected={[Function]}
+        />
+      </div>
+    </div>
+  </Component>
+  <div
+    className="admin-list-table"
+  >
+    <table
+      className="filter-table filter-table--hover form-inline"
+    >
+      <thead>
+        <tr>
+          <th />
+          <th>
+            Name
+          </th>
+          <th>
+            Email
+          </th>
+          <Component
+            featureToggle={false}
+          >
+            <th>
+              Permission
+            </th>
+          </Component>
+          <th
+            style={
+              Object {
+                "width": "1%",
+              }
+            }
+          />
+        </tr>
+      </thead>
+      <tbody />
+    </table>
+  </div>
+</div>
+`;
+
+exports[`Render should render team members 1`] = `
+<div>
+  <div
+    className="page-action-bar"
+  >
+    <div
+      className="gf-form gf-form--grow"
+    >
+      <ForwardRef
+        inputClassName="gf-form-input"
+        labelClassName="gf-form--has-input-icon gf-form--grow"
+        onChange={[Function]}
+        placeholder="Search members"
+        value=""
+      />
+    </div>
+    <div
+      className="page-action-bar__spacer"
+    />
+    <button
+      className="btn btn-primary pull-right"
+      disabled={false}
+      onClick={[Function]}
+    >
+      Add member
+    </button>
+  </div>
+  <Component
+    in={false}
+  >
+    <div
+      className="cta-form"
+    >
+      <button
+        className="cta-form__close btn btn-transparent"
+        onClick={[Function]}
+      >
+        <i
+          className="fa fa-close"
+        />
+      </button>
+      <h5>
+        Add team member
+      </h5>
+      <div
+        className="gf-form-inline"
+      >
+        <UserPicker
+          className="min-width-30"
+          onSelected={[Function]}
+        />
+      </div>
+    </div>
+  </Component>
+  <div
+    className="admin-list-table"
+  >
+    <table
+      className="filter-table filter-table--hover form-inline"
+    >
+      <thead>
+        <tr>
+          <th />
+          <th>
+            Name
+          </th>
+          <th>
+            Email
+          </th>
+          <Component
+            featureToggle={false}
+          >
+            <th>
+              Permission
+            </th>
+          </Component>
+          <th
+            style={
+              Object {
+                "width": "1%",
+              }
+            }
+          />
+        </tr>
+      </thead>
+      <tbody>
+        <Component
+          editorsCanAdmin={false}
+          key="1"
+          member={
+            Object {
+              "avatarUrl": "some/url/",
+              "email": "test@test.com",
+              "labels": Array [
+                "label 1",
+                "label 2",
+              ],
+              "login": "testUser-1",
+              "permission": 0,
+              "teamId": 1,
+              "userId": 1,
+            }
+          }
+          signedInUserIsTeamAdmin={true}
+          syncEnabled={false}
+        />
+        <Component
+          editorsCanAdmin={false}
+          key="2"
+          member={
+            Object {
+              "avatarUrl": "some/url/",
+              "email": "test@test.com",
+              "labels": Array [
+                "label 1",
+                "label 2",
+              ],
+              "login": "testUser-2",
+              "permission": 0,
+              "teamId": 1,
+              "userId": 2,
+            }
+          }
+          signedInUserIsTeamAdmin={true}
+          syncEnabled={false}
+        />
+        <Component
+          editorsCanAdmin={false}
+          key="3"
+          member={
+            Object {
+              "avatarUrl": "some/url/",
+              "email": "test@test.com",
+              "labels": Array [
+                "label 1",
+                "label 2",
+              ],
+              "login": "testUser-3",
+              "permission": 0,
+              "teamId": 1,
+              "userId": 3,
+            }
+          }
+          signedInUserIsTeamAdmin={true}
+          syncEnabled={false}
+        />
+        <Component
+          editorsCanAdmin={false}
+          key="4"
+          member={
+            Object {
+              "avatarUrl": "some/url/",
+              "email": "test@test.com",
+              "labels": Array [
+                "label 1",
+                "label 2",
+              ],
+              "login": "testUser-4",
+              "permission": 0,
+              "teamId": 1,
+              "userId": 4,
+            }
+          }
+          signedInUserIsTeamAdmin={true}
+          syncEnabled={false}
+        />
+        <Component
+          editorsCanAdmin={false}
+          key="5"
+          member={
+            Object {
+              "avatarUrl": "some/url/",
+              "email": "test@test.com",
+              "labels": Array [
+                "label 1",
+                "label 2",
+              ],
+              "login": "testUser-5",
+              "permission": 4,
+              "teamId": 1,
+              "userId": 5,
+            }
+          }
+          signedInUserIsTeamAdmin={true}
+          syncEnabled={false}
+        />
+      </tbody>
+    </table>
+  </div>
+</div>
+`;

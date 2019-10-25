@@ -2,6 +2,7 @@ package yaml
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // Flush the buffer if needed.
@@ -664,7 +665,7 @@ func yaml_emitter_emit_node(emitter *yaml_emitter_t, event *yaml_event_t,
 		return yaml_emitter_emit_mapping_start(emitter, event)
 	default:
 		return yaml_emitter_set_emitter_error(emitter,
-			"expected SCALAR, SEQUENCE-START, MAPPING-START, or ALIAS")
+			fmt.Sprintf("expected SCALAR, SEQUENCE-START, MAPPING-START, or ALIAS, but got %v", event.typ))
 	}
 }
 
@@ -842,7 +843,7 @@ func yaml_emitter_select_scalar_style(emitter *yaml_emitter_t, event *yaml_event
 	return true
 }
 
-// Write an achor.
+// Write an anchor.
 func yaml_emitter_process_anchor(emitter *yaml_emitter_t) bool {
 	if emitter.anchor_data.anchor == nil {
 		return true

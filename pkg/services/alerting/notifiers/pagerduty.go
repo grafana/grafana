@@ -1,14 +1,16 @@
 package notifiers
 
 import (
+	"os"
 	"strconv"
+	"time"
 
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
@@ -38,10 +40,11 @@ func init() {
 }
 
 var (
-	pagerdutyEventApiUrl string = "https://events.pagerduty.com/generic/2010-04-15/create_event.json"
+	pagerdutyEventAPIURL = "https://events.pagerduty.com/v2/enqueue"
 )
 
-func NewPagerdutyNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
+// NewPagerdutyNotifier is the constructor for the PagerDuty notifier
+func NewPagerdutyNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	autoResolve := model.Settings.Get("autoResolve").MustBool(false)
 	key := model.Settings.Get("integrationKey").MustString()
 	if key == "" {
@@ -49,13 +52,15 @@ func NewPagerdutyNotifier(model *m.AlertNotification) (alerting.Notifier, error)
 	}
 
 	return &PagerdutyNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		Key:          key,
 		AutoResolve:  autoResolve,
 		log:          log.New("alerting.notifier.pagerduty"),
 	}, nil
 }
 
+// PagerdutyNotifier is responsible for sending
+// alert notifications to pagerduty
 type PagerdutyNotifier struct {
 	NotifierBase
 	Key         string
@@ -63,62 +68,81 @@ type PagerdutyNotifier struct {
 	log         log.Logger
 }
 
-func (this *PagerdutyNotifier) ShouldNotify(context *alerting.EvalContext) bool {
-	return defaultShouldNotify(context)
-}
+// Notify sends an alert notification to PagerDuty
+func (pn *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 
-func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
-
-	if evalContext.Rule.State == m.AlertStateOK && !this.AutoResolve {
-		this.log.Info("Not sending a trigger to Pagerduty", "state", evalContext.Rule.State, "auto resolve", this.AutoResolve)
+	if evalContext.Rule.State == models.AlertStateOK && !pn.AutoResolve {
+		pn.log.Info("Not sending a trigger to Pagerduty", "state", evalContext.Rule.State, "auto resolve", pn.AutoResolve)
 		return nil
 	}
 
 	eventType := "trigger"
-	if evalContext.Rule.State == m.AlertStateOK {
+	if evalContext.Rule.State == models.AlertStateOK {
 		eventType = "resolve"
 	}
-	customData := "Triggered metrics:\n\n"
+	customData := triggMetrString
 	for _, evt := range evalContext.EvalMatches {
 		customData = customData + fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
 	}
 
-	this.log.Info("Notifying Pagerduty", "event_type", eventType)
+	pn.log.Info("Notifying Pagerduty", "event_type", eventType)
+
+	payloadJSON := simplejson.New()
+
+	summary := evalContext.Rule.Name + " - " + evalContext.Rule.Message
+	if len(summary) > 1024 {
+		summary = summary[0:1024]
+	}
+	payloadJSON.Set("summary", summary)
+
+	if hostname, err := os.Hostname(); err == nil {
+		payloadJSON.Set("source", hostname)
+	}
+	payloadJSON.Set("severity", "critical")
+	payloadJSON.Set("timestamp", time.Now())
+	payloadJSON.Set("component", "Grafana")
+	payloadJSON.Set("custom_details", customData)
 
 	bodyJSON := simplejson.New()
-	bodyJSON.Set("service_key", this.Key)
-	bodyJSON.Set("description", evalContext.Rule.Name+" - "+evalContext.Rule.Message)
-	bodyJSON.Set("client", "Grafana")
-	bodyJSON.Set("details", customData)
-	bodyJSON.Set("event_type", eventType)
-	bodyJSON.Set("incident_key", "alertId-"+strconv.FormatInt(evalContext.Rule.Id, 10))
+	bodyJSON.Set("routing_key", pn.Key)
+	bodyJSON.Set("event_action", eventType)
+	bodyJSON.Set("dedup_key", "alertId-"+strconv.FormatInt(evalContext.Rule.ID, 10))
+	bodyJSON.Set("payload", payloadJSON)
 
-	ruleUrl, err := evalContext.GetRuleUrl()
+	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
-		this.log.Error("Failed get rule link", "error", err)
+		pn.log.Error("Failed get rule link", "error", err)
 		return err
 	}
-	bodyJSON.Set("client_url", ruleUrl)
+	links := make([]interface{}, 1)
+	linkJSON := simplejson.New()
+	linkJSON.Set("href", ruleURL)
+	bodyJSON.Set("client_url", ruleURL)
+	bodyJSON.Set("client", "Grafana")
+	links[0] = linkJSON
+	bodyJSON.Set("links", links)
 
-	if evalContext.ImagePublicUrl != "" {
+	if evalContext.ImagePublicURL != "" {
 		contexts := make([]interface{}, 1)
 		imageJSON := simplejson.New()
-		imageJSON.Set("type", "image")
-		imageJSON.Set("src", evalContext.ImagePublicUrl)
+		imageJSON.Set("src", evalContext.ImagePublicURL)
 		contexts[0] = imageJSON
-		bodyJSON.Set("contexts", contexts)
+		bodyJSON.Set("images", contexts)
 	}
 
 	body, _ := bodyJSON.MarshalJSON()
 
-	cmd := &m.SendWebhookSync{
-		Url:        pagerdutyEventApiUrl,
+	cmd := &models.SendWebhookSync{
+		Url:        pagerdutyEventAPIURL,
 		Body:       string(body),
 		HttpMethod: "POST",
+		HttpHeader: map[string]string{
+			"Content-Type": "application/json",
+		},
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
-		this.log.Error("Failed to send notification to Pagerduty", "error", err, "body", string(body))
+		pn.log.Error("Failed to send notification to Pagerduty", "error", err, "body", string(body))
 		return err
 	}
 

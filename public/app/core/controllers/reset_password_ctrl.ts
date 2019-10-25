@@ -1,13 +1,18 @@
 import coreModule from '../core_module';
+import config from 'app/core/config';
+import { BackendSrv } from '../services/backend_srv';
+import { AppEvents } from '@grafana/data';
 
 export class ResetPasswordCtrl {
   /** @ngInject */
-  constructor($scope, contextSrv, backendSrv, $location) {
-    contextSrv.sidemenu = false;
+  constructor($scope: any, backendSrv: BackendSrv, $location: any) {
     $scope.formModel = {};
     $scope.mode = 'send';
+    $scope.ldapEnabled = config.ldapEnabled;
+    $scope.authProxyEnabled = config.authProxyEnabled;
+    $scope.disableLoginForm = config.disableLoginForm;
 
-    var params = $location.search();
+    const params = $location.search();
     if (params.code) {
       $scope.mode = 'reset';
       $scope.formModel.code = params.code;
@@ -22,26 +27,26 @@ export class ResetPasswordCtrl {
       },
     };
 
-    $scope.sendResetEmail = function() {
+    $scope.sendResetEmail = () => {
       if (!$scope.sendResetForm.$valid) {
         return;
       }
-      backendSrv.post('/api/user/password/send-reset-email', $scope.formModel).then(function() {
+      backendSrv.post('/api/user/password/send-reset-email', $scope.formModel).then(() => {
         $scope.mode = 'email-sent';
       });
     };
 
-    $scope.submitReset = function() {
+    $scope.submitReset = () => {
       if (!$scope.resetForm.$valid) {
         return;
       }
 
       if ($scope.formModel.newPassword !== $scope.formModel.confirmPassword) {
-        $scope.appEvent('alert-warning', ['New passwords do not match', '']);
+        $scope.appEvent(AppEvents.alertWarning, ['New passwords do not match']);
         return;
       }
 
-      backendSrv.post('/api/user/password/reset', $scope.formModel).then(function() {
+      backendSrv.post('/api/user/password/reset', $scope.formModel).then(() => {
         $location.path('login');
       });
     };

@@ -1,4 +1,4 @@
-import 'babel-polyfill';
+import '@babel/polyfill';
 import 'file-saver';
 import 'lodash';
 import 'jquery';
@@ -11,38 +11,52 @@ import 'react';
 import 'react-dom';
 
 import 'vendor/bootstrap/bootstrap';
-import 'vendor/angular-ui/ui-bootstrap-tpls';
 import 'vendor/angular-other/angular-strap';
 
 import $ from 'jquery';
 import angular from 'angular';
 import config from 'app/core/config';
+// @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
 import _ from 'lodash';
-import moment from 'moment';
+import { AppEvents, setMarkdownOptions, setLocale } from '@grafana/data';
+import appEvents from 'app/core/app_events';
+import { addClassIfNoOverlayScrollbar } from 'app/core/utils/scrollbar';
+import { checkBrowserCompatibility } from 'app/core/utils/browser';
+import { importPluginModule } from 'app/features/plugins/plugin_loader';
 
 // add move to lodash for backward compatabiltiy
-_.move = function(array, fromIndex, toIndex) {
+// @ts-ignore
+_.move = (array: [], fromIndex: number, toIndex: number) => {
   array.splice(toIndex, 0, array.splice(fromIndex, 1)[0]);
   return array;
 };
 
-import { coreModule, registerAngularDirectives } from './core/core';
-import { setupAngularRoutes } from './routes/routes';
+import { coreModule, angularModules } from 'app/core/core_module';
+import { registerAngularDirectives } from 'app/core/core';
+import { setupAngularRoutes } from 'app/routes/routes';
 
-declare var System: any;
+import 'app/routes/GrafanaCtrl';
+import 'app/features/all';
+
+// import symlinked extensions
+const extensionsIndex = (require as any).context('.', true, /extensions\/index.ts/);
+extensionsIndex.keys().forEach((key: any) => {
+  extensionsIndex(key);
+});
 
 export class GrafanaApp {
   registerFunctions: any;
   ngModuleDependencies: any[];
-  preBootModules: any[];
+  preBootModules: any[] | null;
 
   constructor() {
+    addClassIfNoOverlayScrollbar('no-overlay-scrollbar');
     this.preBootModules = [];
     this.registerFunctions = {};
     this.ngModuleDependencies = [];
   }
 
-  useModule(module) {
+  useModule(module: angular.IModule) {
     if (this.preBootModules) {
       this.preBootModules.push(module);
     } else {
@@ -53,44 +67,55 @@ export class GrafanaApp {
   }
 
   init() {
-    var app = angular.module('grafana', []);
+    const app = angular.module('grafana', []);
 
-    moment.locale(config.bootData.user.locale);
+    setLocale(config.bootData.user.locale);
 
-    app.config(($locationProvider, $controllerProvider, $compileProvider, $filterProvider, $httpProvider, $provide) => {
-      // pre assing bindings before constructor calls
-      $compileProvider.preAssignBindingsEnabled(true);
+    setMarkdownOptions({ sanitize: !config.disableSanitizeHtml });
 
-      if (config.buildInfo.env !== 'development') {
-        $compileProvider.debugInfoEnabled(false);
-      }
+    app.config(
+      (
+        $locationProvider: angular.ILocationProvider,
+        $controllerProvider: angular.IControllerProvider,
+        $compileProvider: angular.ICompileProvider,
+        $filterProvider: angular.IFilterProvider,
+        $httpProvider: angular.IHttpProvider,
+        $provide: angular.auto.IProvideService
+      ) => {
+        // pre assing bindings before constructor calls
+        $compileProvider.preAssignBindingsEnabled(true);
 
-      $httpProvider.useApplyAsync(true);
+        if (config.buildInfo.env !== 'development') {
+          $compileProvider.debugInfoEnabled(false);
+        }
 
-      this.registerFunctions.controller = $controllerProvider.register;
-      this.registerFunctions.directive = $compileProvider.directive;
-      this.registerFunctions.factory = $provide.factory;
-      this.registerFunctions.service = $provide.service;
-      this.registerFunctions.filter = $filterProvider.register;
+        $httpProvider.useApplyAsync(true);
 
-      $provide.decorator('$http', [
-        '$delegate',
-        '$templateCache',
-        function($delegate, $templateCache) {
-          var get = $delegate.get;
-          $delegate.get = function(url, config) {
-            if (url.match(/\.html$/)) {
-              // some template's already exist in the cache
-              if (!$templateCache.get(url)) {
-                url += '?v=' + new Date().getTime();
+        this.registerFunctions.controller = $controllerProvider.register;
+        this.registerFunctions.directive = $compileProvider.directive;
+        this.registerFunctions.factory = $provide.factory;
+        this.registerFunctions.service = $provide.service;
+        this.registerFunctions.filter = $filterProvider.register;
+
+        $provide.decorator('$http', [
+          '$delegate',
+          '$templateCache',
+          ($delegate: any, $templateCache: any) => {
+            const get = $delegate.get;
+            $delegate.get = (url: string, config: any) => {
+              if (url.match(/\.html$/)) {
+                // some template's already exist in the cache
+                if (!$templateCache.get(url)) {
+                  url += '?v=' + new Date().getTime();
+                }
               }
-            }
-            return get(url, config);
-          };
-          return $delegate;
-        },
-      ]);
-    });
+              return get(url, config);
+            };
+            return $delegate;
+          },
+        ]);
+      }
+    );
 
     this.ngModuleDependencies = [
       'grafana.core',
@@ -100,44 +125,43 @@ export class GrafanaApp {
       'ang-drag-drop',
       'grafana',
       'pasvaz.bindonce',
-      'ui.bootstrap',
-      'ui.bootstrap.tpls',
       'react',
     ];
 
-    var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
-
-    _.each(module_types, type => {
-      var moduleName = 'grafana.' + type;
-      this.useModule(angular.module(moduleName, []));
-    });
-
     // makes it possible to add dynamic stuff
-    this.useModule(coreModule);
+    _.each(angularModules, (m: angular.IModule) => {
+      this.useModule(m);
+    });
 
     // register react angular wrappers
     coreModule.config(setupAngularRoutes);
     registerAngularDirectives();
 
-    var preBootRequires = [System.import('app/features/all')];
+    // disable tool tip animation
+    $.fn.tooltip.defaults.animation = false;
 
-    Promise.all(preBootRequires)
-      .then(() => {
-        // disable tool tip animation
-        $.fn.tooltip.defaults.animation = false;
-
-        // bootstrap the app
-        angular.bootstrap(document, this.ngModuleDependencies).invoke(() => {
-          _.each(this.preBootModules, module => {
-            _.extend(module, this.registerFunctions);
-          });
-
-          this.preBootModules = null;
-        });
-      })
-      .catch(function(err) {
-        console.log('Application boot failed:', err);
+    // bootstrap the app
+    angular.bootstrap(document, this.ngModuleDependencies).invoke(() => {
+      _.each(this.preBootModules, (module: angular.IModule) => {
+        _.extend(module, this.registerFunctions);
       });
+
+      this.preBootModules = null;
+
+      if (!checkBrowserCompatibility()) {
+        setTimeout(() => {
+          appEvents.emit(AppEvents.alertWarning, [
+            'Your browser is not fully supported',
+            'A newer browser version is recommended',
+          ]);
+        }, 1000);
+      }
+    });
+
+    // Preload selected app plugins
+    for (const modulePath of config.pluginsToPreload) {
+      importPluginModule(modulePath);
+    }
   }
 }
 

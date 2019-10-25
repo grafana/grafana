@@ -2,12 +2,28 @@ package plugin
 
 import (
 	"bytes"
+	"context"
+	"io"
 	"net"
 	"net/rpc"
 
 	"github.com/mitchellh/go-testing-interface"
+	hclog "github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-plugin/internal/plugin"
 	"google.golang.org/grpc"
 )
+
+// TestOptions allows specifying options that can affect the behavior of the
+// test functions
+type TestOptions struct {
+	//ServerStdout causes the given value to be used in place of a blank buffer
+	//for RPCServer's Stdout
+	ServerStdout io.ReadCloser
+
+	//ServerStderr causes the given value to be used in place of a blank buffer
+	//for RPCServer's Stderr
+	ServerStderr io.ReadCloser
+}
 
 // The testing file contains test helpers that you can use outside of
 // this package for making it easier to test plugins themselves.
@@ -60,12 +76,20 @@ func TestRPCConn(t testing.T) (*rpc.Client, *rpc.Server) {
 
 // TestPluginRPCConn returns a plugin RPC client and server that are connected
 // together and configured.
-func TestPluginRPCConn(t testing.T, ps map[string]Plugin) (*RPCClient, *RPCServer) {
+func TestPluginRPCConn(t testing.T, ps map[string]Plugin, opts *TestOptions) (*RPCClient, *RPCServer) {
 	// Create two net.Conns we can use to shuttle our control connection
 	clientConn, serverConn := TestConn(t)
 
 	// Start up the server
 	server := &RPCServer{Plugins: ps, Stdout: new(bytes.Buffer), Stderr: new(bytes.Buffer)}
+	if opts != nil {
+		if opts.ServerStdout != nil {
+			server.Stdout = opts.ServerStdout
+		}
+		if opts.ServerStderr != nil {
+			server.Stderr = opts.ServerStderr
+		}
+	}
 	go server.ServeConn(serverConn)
 
 	// Connect the client to the server
@@ -75,6 +99,35 @@ func TestPluginRPCConn(t testing.T, ps map[string]Plugin) (*RPCClient, *RPCServe
 	}
 
 	return client, server
+}
+
+// TestGRPCConn returns a gRPC client conn and grpc server that are connected
+// together and configured. The register function is used to register services
+// prior to the Serve call. This is used to test gRPC connections.
+func TestGRPCConn(t testing.T, register func(*grpc.Server)) (*grpc.ClientConn, *grpc.Server) {
+	// Create a listener
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	server := grpc.NewServer()
+	register(server)
+	go server.Serve(l)
+
+	// Connect to the server
+	conn, err := grpc.Dial(
+		l.Addr().String(),
+		grpc.WithBlock(),
+		grpc.WithInsecure())
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Connection successful, close the listener
+	l.Close()
+
+	return conn, server
 }
 
 // TestPluginGRPCConn returns a plugin gRPC client and server that are connected
@@ -89,9 +142,11 @@ func TestPluginGRPCConn(t testing.T, ps map[string]Plugin) (*GRPCClient, *GRPCSe
 	// Start up the server
 	server := &GRPCServer{
 		Plugins: ps,
+		DoneCh:  make(chan struct{}),
 		Server:  DefaultGRPCServer,
 		Stdout:  new(bytes.Buffer),
 		Stderr:  new(bytes.Buffer),
+		logger:  hclog.Default(),
 	}
 	if err := server.Init(); err != nil {
 		t.Fatalf("err: %s", err)
@@ -107,13 +162,18 @@ func TestPluginGRPCConn(t testing.T, ps map[string]Plugin) (*GRPCClient, *GRPCSe
 		t.Fatalf("err: %s", err)
 	}
 
-	// Connection successful, close the listener
-	l.Close()
+	brokerGRPCClient := newGRPCBrokerClient(conn)
+	broker := newGRPCBroker(brokerGRPCClient, nil)
+	go broker.Run()
+	go brokerGRPCClient.StartStream()
 
 	// Create the client
 	client := &GRPCClient{
-		Conn:    conn,
-		Plugins: ps,
+		Conn:       conn,
+		Plugins:    ps,
+		broker:     broker,
+		doneCtx:    context.Background(),
+		controller: plugin.NewGRPCControllerClient(conn),
 	}
 
 	return client, server

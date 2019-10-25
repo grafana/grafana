@@ -1,69 +1,86 @@
 import _ from 'lodash';
+import { TimeRange } from '@grafana/data';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { PrometheusDatasource, PromDataQueryResponse } from './datasource';
+import { PromQueryRequest } from './types';
 
 export default class PrometheusMetricFindQuery {
-  datasource: any;
-  query: any;
-  range: any;
+  range: TimeRange;
 
-  constructor(datasource, query, timeSrv) {
+  constructor(private datasource: PrometheusDatasource, private query: string, timeSrv: TimeSrv) {
     this.datasource = datasource;
     this.query = query;
     this.range = timeSrv.timeRange();
   }
 
   process() {
-    var label_values_regex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]+)\)\s*$/;
-    var metric_names_regex = /^metrics\((.+)\)\s*$/;
-    var query_result_regex = /^query_result\((.+)\)\s*$/;
+    const labelNamesRegex = /^label_names\(\)\s*$/;
+    const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
+    const metricNamesRegex = /^metrics\((.+)\)\s*$/;
+    const queryResultRegex = /^query_result\((.+)\)\s*$/;
 
-    var label_values_query = this.query.match(label_values_regex);
-    if (label_values_query) {
-      if (label_values_query[1]) {
-        return this.labelValuesQuery(label_values_query[2], label_values_query[1]);
+    const labelNamesQuery = this.query.match(labelNamesRegex);
+    if (labelNamesQuery) {
+      return this.labelNamesQuery();
+    }
+
+    const labelValuesQuery = this.query.match(labelValuesRegex);
+    if (labelValuesQuery) {
+      if (labelValuesQuery[1]) {
+        return this.labelValuesQuery(labelValuesQuery[2], labelValuesQuery[1]);
       } else {
-        return this.labelValuesQuery(label_values_query[2], null);
+        return this.labelValuesQuery(labelValuesQuery[2], null);
       }
     }
 
-    var metric_names_query = this.query.match(metric_names_regex);
-    if (metric_names_query) {
-      return this.metricNameQuery(metric_names_query[1]);
+    const metricNamesQuery = this.query.match(metricNamesRegex);
+    if (metricNamesQuery) {
+      return this.metricNameQuery(metricNamesQuery[1]);
     }
 
-    var query_result_query = this.query.match(query_result_regex);
-    if (query_result_query) {
-      return this.queryResultQuery(query_result_query[1]);
+    const queryResultQuery = this.query.match(queryResultRegex);
+    if (queryResultQuery) {
+      return this.queryResultQuery(queryResultQuery[1]);
     }
 
     // if query contains full metric name, return metric name and label list
     return this.metricNameAndLabelsQuery(this.query);
   }
 
-  labelValuesQuery(label, metric) {
-    var url;
+  labelNamesQuery() {
+    const url = '/api/v1/labels';
+    return this.datasource.metadataRequest(url).then((result: any) => {
+      return _.map(result.data.data, value => {
+        return { text: value };
+      });
+    });
+  }
+
+  labelValuesQuery(label: string, metric?: string) {
+    let url: string;
 
     if (!metric) {
       // return label values globally
       url = '/api/v1/label/' + label + '/values';
 
-      return this.datasource._request('GET', url).then(function(result) {
-        return _.map(result.data.data, function(value) {
+      return this.datasource.metadataRequest(url).then((result: any) => {
+        return _.map(result.data.data, value => {
           return { text: value };
         });
       });
     } else {
-      var start = this.datasource.getPrometheusTime(this.range.from, false);
-      var end = this.datasource.getPrometheusTime(this.range.to, true);
+      const start = this.datasource.getPrometheusTime(this.range.from, false);
+      const end = this.datasource.getPrometheusTime(this.range.to, true);
       url = '/api/v1/series?match[]=' + encodeURIComponent(metric) + '&start=' + start + '&end=' + end;
 
-      return this.datasource._request('GET', url).then(function(result) {
-        var _labels = _.map(result.data.data, function(metric) {
+      return this.datasource.metadataRequest(url).then((result: any) => {
+        const _labels = _.map(result.data.data, metric => {
           return metric[label] || '';
-        }).filter(function(label) {
+        }).filter(label => {
           return label !== '';
         });
 
-        return _.uniq(_labels).map(function(metric) {
+        return _.uniq(_labels).map(metric => {
           return {
             text: metric,
             expandable: true,
@@ -73,16 +90,16 @@ export default class PrometheusMetricFindQuery {
     }
   }
 
-  metricNameQuery(metricFilterPattern) {
-    var url = '/api/v1/label/__name__/values';
+  metricNameQuery(metricFilterPattern: string) {
+    const url = '/api/v1/label/__name__/values';
 
-    return this.datasource._request('GET', url).then(function(result) {
+    return this.datasource.metadataRequest(url).then((result: any) => {
       return _.chain(result.data.data)
-        .filter(function(metricName) {
-          var r = new RegExp(metricFilterPattern);
+        .filter(metricName => {
+          const r = new RegExp(metricFilterPattern);
           return r.test(metricName);
         })
-        .map(function(matchedMetricName) {
+        .map(matchedMetricName => {
           return {
             text: matchedMetricName,
             expandable: true,
@@ -92,15 +109,16 @@ export default class PrometheusMetricFindQuery {
     });
   }
 
-  queryResultQuery(query) {
-    var end = this.datasource.getPrometheusTime(this.range.to, true);
-    return this.datasource.performInstantQuery({ expr: query }, end).then(function(result) {
-      return _.map(result.data.data.result, function(metricData) {
-        var text = metricData.metric.__name__ || '';
+  queryResultQuery(query: string) {
+    const end = this.datasource.getPrometheusTime(this.range.to, true);
+    const instantQuery: PromQueryRequest = { expr: query } as PromQueryRequest;
+    return this.datasource.performInstantQuery(instantQuery, end).then((result: PromDataQueryResponse) => {
+      return _.map(result.data.data.result, metricData => {
+        let text = metricData.metric.__name__ || '';
         delete metricData.metric.__name__;
         text +=
           '{' +
-          _.map(metricData.metric, function(v, k) {
+          _.map(metricData.metric, (v, k) => {
             return k + '="' + v + '"';
           }).join(',') +
           '}';
@@ -114,14 +132,14 @@ export default class PrometheusMetricFindQuery {
     });
   }
 
-  metricNameAndLabelsQuery(query) {
-    var start = this.datasource.getPrometheusTime(this.range.from, false);
-    var end = this.datasource.getPrometheusTime(this.range.to, true);
-    var url = '/api/v1/series?match[]=' + encodeURIComponent(query) + '&start=' + start + '&end=' + end;
+  metricNameAndLabelsQuery(query: string) {
+    const start = this.datasource.getPrometheusTime(this.range.from, false);
+    const end = this.datasource.getPrometheusTime(this.range.to, true);
+    const url = '/api/v1/series?match[]=' + encodeURIComponent(query) + '&start=' + start + '&end=' + end;
 
-    var self = this;
-    return this.datasource._request('GET', url).then(function(result) {
-      return _.map(result.data.data, function(metric) {
+    const self = this;
+    return this.datasource.metadataRequest(url).then((result: PromDataQueryResponse) => {
+      return _.map(result.data.data, (metric: { [key: string]: string }) => {
         return {
           text: self.datasource.getOriginalMetricName(metric),
           expandable: true,

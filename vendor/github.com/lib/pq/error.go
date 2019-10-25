@@ -460,6 +460,11 @@ func errorf(s string, args ...interface{}) {
 	panic(fmt.Errorf("pq: %s", fmt.Sprintf(s, args...)))
 }
 
+// TODO(ainar-g) Rename to errorf after removing panics.
+func fmterrorf(s string, args ...interface{}) error {
+	return fmt.Errorf("pq: %s", fmt.Sprintf(s, args...))
+}
+
 func errRecoverNoErrBadConn(err *error) {
 	e := recover()
 	if e == nil {
@@ -473,13 +478,13 @@ func errRecoverNoErrBadConn(err *error) {
 	}
 }
 
-func (c *conn) errRecover(err *error) {
+func (cn *conn) errRecover(err *error) {
 	e := recover()
 	switch v := e.(type) {
 	case nil:
 		// Do nothing
 	case runtime.Error:
-		c.bad = true
+		cn.bad = true
 		panic(v)
 	case *Error:
 		if v.Fatal() {
@@ -488,7 +493,8 @@ func (c *conn) errRecover(err *error) {
 			*err = v
 		}
 	case *net.OpError:
-		*err = driver.ErrBadConn
+		cn.bad = true
+		*err = v
 	case error:
 		if v == io.EOF || v.(error).Error() == "remote error: handshake failure" {
 			*err = driver.ErrBadConn
@@ -497,13 +503,13 @@ func (c *conn) errRecover(err *error) {
 		}
 
 	default:
-		c.bad = true
+		cn.bad = true
 		panic(fmt.Sprintf("unknown error: %#v", e))
 	}
 
 	// Any time we return ErrBadConn, we need to remember it since *Tx doesn't
 	// mark the connection bad in database/sql.
 	if *err == driver.ErrBadConn {
-		c.bad = true
+		cn.bad = true
 	}
 }

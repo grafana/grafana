@@ -16,7 +16,7 @@ Example:
 - Parent site: http://localhost:8080
 - Grafana: http://localhost:3000
 
-Grafana as a subpath: http://localhost:8080/grafana 
+Grafana as a subpath: http://localhost:8080/grafana
 
 ## Setup
 
@@ -33,7 +33,7 @@ Given that the subpath should be `grafana` and the parent site is `localhost:808
  ```bash
 [server]
 domain = localhost:8080
-root_url = %(protocol)s://%(domain)s:/grafana
+root_url = %(protocol)s://%(domain)s/grafana/
 ```
 
 Restart the Grafana server after changing the config file.
@@ -74,11 +74,11 @@ When navigating to the grafana url (`http://localhost:8080/grafana` in the examp
 
 1. The `root_url` setting in the Grafana config file does not match the parent url with subpath. This could happen if the root_url is commented out by mistake (`;` is used for commenting out a line in .ini files):
 
-    `; root_url = %(protocol)s://%(domain)s:/grafana`
+    `; root_url = %(protocol)s://%(domain)s/grafana/`
 
 2. or if the subpath in the `root_url` setting does not match the subpath used in the pattern in the Inbound Rule in IIS:
 
-    `root_url = %(protocol)s://%(domain)s:/grafana`
+    `root_url = %(protocol)s://%(domain)s/grafana/`
 
     pattern in Inbound Rule: `wrongsubpath(/)?(.*)`
 

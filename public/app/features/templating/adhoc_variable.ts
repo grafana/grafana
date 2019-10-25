@@ -3,22 +3,24 @@ import { Variable, assignModelProperties, variableTypes } from './variable';
 
 export class AdhocVariable implements Variable {
   filters: any[];
+  skipUrlSync: boolean;
 
-  defaults = {
+  defaults: any = {
     type: 'adhoc',
     name: '',
     label: '',
     hide: 0,
     datasource: null,
     filters: [],
+    skipUrlSync: false,
   };
 
-  /** @ngInject **/
-  constructor(private model) {
+  /** @ngInject */
+  constructor(private model: any) {
     assignModelProperties(this, model, this.defaults);
   }
 
-  setValue(option) {
+  setValue(option: any) {
     return Promise.resolve();
   }
 
@@ -31,17 +33,17 @@ export class AdhocVariable implements Variable {
     return Promise.resolve();
   }
 
-  dependsOn(variable) {
+  dependsOn(variable: any) {
     return false;
   }
 
-  setValueFromUrl(urlValue) {
+  setValueFromUrl(urlValue: string[] | string[]) {
     if (!_.isArray(urlValue)) {
       urlValue = [urlValue];
     }
 
     this.filters = urlValue.map(item => {
-      var values = item.split('|').map(value => {
+      const values = item.split('|').map(value => {
         return this.unescapeDelimiter(value);
       });
       return {
@@ -64,11 +66,11 @@ export class AdhocVariable implements Variable {
     });
   }
 
-  escapeDelimiter(value) {
+  escapeDelimiter(value: string) {
     return value.replace(/\|/g, '__gfp__');
   }
 
-  unescapeDelimiter(value) {
+  unescapeDelimiter(value: string) {
     return value.replace(/__gfp__/g, '|');
   }
 

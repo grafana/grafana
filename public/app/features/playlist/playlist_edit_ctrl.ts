@@ -1,6 +1,17 @@
 import _ from 'lodash';
 import coreModule from '../../core/core_module';
+import { ILocationService } from 'angular';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { NavModelSrv } from 'app/core/nav_model_srv';
+import { AppEventEmitter } from 'app/types';
+import { AppEvents } from '@grafana/data';
 
+export interface PlaylistItem {
+  value: any;
+  id: any;
+  type: string;
+  order: any;
+}
 export class PlaylistEditCtrl {
   filteredDashboards: any = [];
   filteredTags: any = [];
@@ -17,38 +28,33 @@ export class PlaylistEditCtrl {
   isNew: boolean;
 
   /** @ngInject */
-  constructor(private $scope, private backendSrv, private $location, $route, navModelSrv) {
+  constructor(
+    private $scope: AppEventEmitter,
+    private backendSrv: BackendSrv,
+    private $location: ILocationService,
+    $route: any,
+    navModelSrv: NavModelSrv
+  ) {
     this.navModel = navModelSrv.getNav('dashboards', 'playlists', 0);
-    this.isNew = $route.current.params.id;
+    this.isNew = !$route.current.params.id;
 
     if ($route.current.params.id) {
-      var playlistId = $route.current.params.id;
+      const playlistId = $route.current.params.id;
 
-      backendSrv.get('/api/playlists/' + playlistId).then(result => {
+      backendSrv.get('/api/playlists/' + playlistId).then((result: any) => {
         this.playlist = result;
-        this.navModel.node = {
-          text: result.name,
-          icon: this.navModel.node.icon,
-        };
-        this.navModel.breadcrumbs.push(this.navModel.node);
       });
 
-      backendSrv.get('/api/playlists/' + playlistId + '/items').then(result => {
+      backendSrv.get('/api/playlists/' + playlistId + '/items').then((result: any) => {
         this.playlistItems = result;
       });
-    } else {
-      this.navModel.node = {
-        text: 'New playlist',
-        icon: this.navModel.node.icon,
-      };
-      this.navModel.breadcrumbs.push(this.navModel.node);
     }
   }
 
   filterFoundPlaylistItems() {
     this.filteredDashboards = _.reject(this.dashboardresult, playlistItem => {
       return _.find(this.playlistItems, listPlaylistItem => {
-        return parseInt(listPlaylistItem.value) === playlistItem.id;
+        return parseInt(listPlaylistItem.value, 10) === playlistItem.id;
       });
     });
 
@@ -59,7 +65,7 @@ export class PlaylistEditCtrl {
     });
   }
 
-  addPlaylistItem(playlistItem) {
+  addPlaylistItem(playlistItem: PlaylistItem) {
     playlistItem.value = playlistItem.id.toString();
     playlistItem.type = 'dashboard_by_id';
     playlistItem.order = this.playlistItems.length + 1;
@@ -68,8 +74,8 @@ export class PlaylistEditCtrl {
     this.filterFoundPlaylistItems();
   }
 
-  addTagPlaylistItem(tag) {
-    var playlistItem: any = {
+  addTagPlaylistItem(tag: { term: any }) {
+    const playlistItem: any = {
       value: tag.term,
       type: 'dashboard_by_tag',
       order: this.playlistItems.length + 1,
@@ -80,15 +86,15 @@ export class PlaylistEditCtrl {
     this.filterFoundPlaylistItems();
   }
 
-  removePlaylistItem(playlistItem) {
+  removePlaylistItem(playlistItem: PlaylistItem) {
     _.remove(this.playlistItems, listedPlaylistItem => {
       return playlistItem === listedPlaylistItem;
     });
     this.filterFoundPlaylistItems();
   }
 
-  savePlaylist(playlist, playlistItems) {
-    var savePromise;
+  savePlaylist(playlist: any, playlistItems: PlaylistItem[]) {
+    let savePromise;
 
     playlist.items = playlistItems;
 
@@ -98,11 +104,11 @@ export class PlaylistEditCtrl {
 
     savePromise.then(
       () => {
-        this.$scope.appEvent('alert-success', ['Playlist saved', '']);
+        this.$scope.appEvent(AppEvents.alertSuccess, ['Playlist saved']);
         this.$location.path('/playlists');
       },
       () => {
-        this.$scope.appEvent('alert-error', ['Unable to save playlist', '']);
+        this.$scope.appEvent(AppEvents.alertError, ['Unable to save playlist']);
       }
     );
   }
@@ -115,17 +121,17 @@ export class PlaylistEditCtrl {
     this.$location.path('/playlists');
   }
 
-  searchStarted(promise) {
-    promise.then(data => {
+  searchStarted(promise: Promise<any>) {
+    promise.then((data: any) => {
       this.dashboardresult = data.dashboardResult;
       this.tagresult = data.tagResult;
       this.filterFoundPlaylistItems();
     });
   }
 
-  movePlaylistItem(playlistItem, offset) {
-    var currentPosition = this.playlistItems.indexOf(playlistItem);
-    var newPosition = currentPosition + offset;
+  movePlaylistItem(playlistItem: PlaylistItem, offset: number) {
+    const currentPosition = this.playlistItems.indexOf(playlistItem);
+    const newPosition = currentPosition + offset;
 
     if (newPosition >= 0 && newPosition < this.playlistItems.length) {
       this.playlistItems.splice(currentPosition, 1);
@@ -133,11 +139,11 @@ export class PlaylistEditCtrl {
     }
   }
 
-  movePlaylistItemUp(playlistItem) {
+  movePlaylistItemUp(playlistItem: PlaylistItem) {
     this.movePlaylistItem(playlistItem, -1);
   }
 
-  movePlaylistItemDown(playlistItem) {
+  movePlaylistItemDown(playlistItem: PlaylistItem) {
     this.movePlaylistItem(playlistItem, 1);
   }
 }

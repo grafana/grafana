@@ -1,59 +1,139 @@
-import _ from 'lodash';
-import moment from 'moment';
+import { isBoolean, isNumber, sortedUniq, sortedIndexOf, unescape as htmlUnescaped } from 'lodash';
 import { saveAs } from 'file-saver';
+import { isNullOrUndefined } from 'util';
+import { dateTime, TimeZone, TableData } from '@grafana/data';
 
 const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DDTHH:mm:ssZ';
 const POINT_TIME_INDEX = 1;
 const POINT_VALUE_INDEX = 0;
 
-export function convertSeriesListToCsv(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT, excel = false) {
-  var text = (excel ? 'sep=;\n' : '') + 'Series;Time;Value\n';
-  _.each(seriesList, function(series) {
-    _.each(series.datapoints, function(dp) {
-      text +=
-        series.alias + ';' + moment(dp[POINT_TIME_INDEX]).format(dateTimeFormat) + ';' + dp[POINT_VALUE_INDEX] + '\n';
-    });
-  });
+const END_COLUMN = ';';
+const END_ROW = '\r\n';
+const QUOTE = '"';
+const EXPORT_FILENAME = 'grafana_data_export.csv';
+
+interface SeriesListToCsvColumnsOptions {
+  dateTimeFormat: string;
+  excel: boolean;
+  timezone: TimeZone;
+}
+
+type SeriesList = Array<{
+  datapoints: any;
+  alias: any;
+}>;
+
+const defaultOptions: SeriesListToCsvColumnsOptions = {
+  dateTimeFormat: DEFAULT_DATETIME_FORMAT,
+  excel: false,
+  timezone: '',
+};
+
+function csvEscaped(text: string) {
+  if (!text) {
+    return text;
+  }
+
+  return text
+    .split(QUOTE)
+    .join(QUOTE + QUOTE)
+    .replace(/^([-+=@])/, "'$1")
+    .replace(/\s+$/, '');
+}
+
+const domParser = new DOMParser();
+function htmlDecoded(text: string) {
+  if (!text) {
+    return text;
+  }
+
+  const regexp = /&[^;]+;/g;
+  function htmlDecoded(value: string) {
+    const parsedDom = domParser.parseFromString(value, 'text/html');
+    return parsedDom.body.textContent;
+  }
+  return text.replace(regexp, htmlDecoded).replace(regexp, htmlDecoded);
+}
+
+function formatSpecialHeader(useExcelHeader: boolean) {
+  return useExcelHeader ? `sep=${END_COLUMN}${END_ROW}` : '';
+}
+
+function formatRow(row: any[], addEndRowDelimiter = true) {
+  let text = '';
+  for (let i = 0; i < row.length; i += 1) {
+    if (isBoolean(row[i]) || isNumber(row[i]) || isNullOrUndefined(row[i])) {
+      text += row[i];
+    } else {
+      text += `${QUOTE}${csvEscaped(htmlUnescaped(htmlDecoded(row[i])))}${QUOTE}`;
+    }
+
+    if (i < row.length - 1) {
+      text += END_COLUMN;
+    }
+  }
+  return addEndRowDelimiter ? text + END_ROW : text;
+}
+
+export function convertSeriesListToCsv(seriesList: SeriesList, options: Partial<SeriesListToCsvColumnsOptions>) {
+  const { dateTimeFormat, excel, timezone } = { ...defaultOptions, ...options };
+  let text = formatSpecialHeader(excel) + formatRow(['Series', 'Time', 'Value']);
+  for (let seriesIndex = 0; seriesIndex < seriesList.length; seriesIndex += 1) {
+    for (let i = 0; i < seriesList[seriesIndex].datapoints.length; i += 1) {
+      text += formatRow(
+        [
+          seriesList[seriesIndex].alias,
+          timezone === 'utc'
+            ? dateTime(seriesList[seriesIndex].datapoints[i][POINT_TIME_INDEX])
+                .utc()
+                .format(dateTimeFormat)
+            : dateTime(seriesList[seriesIndex].datapoints[i][POINT_TIME_INDEX]).format(dateTimeFormat),
+          seriesList[seriesIndex].datapoints[i][POINT_VALUE_INDEX],
+        ],
+        i < seriesList[seriesIndex].datapoints.length - 1 || seriesIndex < seriesList.length - 1
+      );
+    }
+  }
   return text;
 }
 
-export function exportSeriesListToCsv(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT, excel = false) {
-  var text = convertSeriesListToCsv(seriesList, dateTimeFormat, excel);
-  saveSaveBlob(text, 'grafana_data_export.csv');
+export function exportSeriesListToCsv(seriesList: SeriesList, options: Partial<SeriesListToCsvColumnsOptions>) {
+  const text = convertSeriesListToCsv(seriesList, options);
+  saveSaveBlob(text, EXPORT_FILENAME);
 }
 
-export function convertSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT, excel = false) {
-  let text = (excel ? 'sep=;\n' : '') + 'Time;';
+export function convertSeriesListToCsvColumns(seriesList: SeriesList, options: Partial<SeriesListToCsvColumnsOptions>) {
+  const { dateTimeFormat, excel, timezone } = { ...defaultOptions, ...options };
   // add header
-  _.each(seriesList, function(series) {
-    text += series.alias + ';';
-  });
-  text = text.substring(0, text.length - 1);
-  text += '\n';
-
+  let text =
+    formatSpecialHeader(excel) +
+    formatRow(
+      ['Time'].concat(
+        seriesList.map(val => {
+          return val.alias;
+        })
+      )
+    );
   // process data
-  seriesList = mergeSeriesByTime(seriesList);
-  var dataArr = [[]];
-  var sIndex = 1;
-  _.each(seriesList, function(series) {
-    var cIndex = 0;
-    dataArr.push([]);
-    _.each(series.datapoints, function(dp) {
-      dataArr[0][cIndex] = moment(dp[POINT_TIME_INDEX]).format(dateTimeFormat);
-      dataArr[sIndex][cIndex] = dp[POINT_VALUE_INDEX];
-      cIndex++;
-    });
-    sIndex++;
-  });
+  const extendedDatapointsList = mergeSeriesByTime(seriesList);
 
   // make text
-  for (var i = 0; i < dataArr[0].length; i++) {
-    text += dataArr[0][i] + ';';
-    for (var j = 1; j < dataArr.length; j++) {
-      text += dataArr[j][i] + ';';
-    }
-    text = text.substring(0, text.length - 1);
-    text += '\n';
+  for (let i = 0; i < extendedDatapointsList[0].length; i += 1) {
+    const timestamp =
+      timezone === 'utc'
+        ? dateTime(extendedDatapointsList[0][i][POINT_TIME_INDEX])
+            .utc()
+            .format(dateTimeFormat)
+        : dateTime(extendedDatapointsList[0][i][POINT_TIME_INDEX]).format(dateTimeFormat);
+
+    text += formatRow(
+      [timestamp].concat(
+        extendedDatapointsList.map(datapoints => {
+          return datapoints[i][POINT_VALUE_INDEX];
+        })
+      ),
+      i < extendedDatapointsList[0].length - 1
+    );
   }
 
   return text;
@@ -63,57 +143,57 @@ export function convertSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAU
  * Collect all unique timestamps from series list and use it to fill
  * missing points by null.
  */
-function mergeSeriesByTime(seriesList) {
+function mergeSeriesByTime(seriesList: SeriesList) {
   let timestamps = [];
   for (let i = 0; i < seriesList.length; i++) {
-    let seriesPoints = seriesList[i].datapoints;
+    const seriesPoints = seriesList[i].datapoints;
     for (let j = 0; j < seriesPoints.length; j++) {
       timestamps.push(seriesPoints[j][POINT_TIME_INDEX]);
     }
   }
-  timestamps = _.sortedUniq(timestamps.sort());
+  timestamps = sortedUniq(timestamps.sort());
 
+  const result = [];
   for (let i = 0; i < seriesList.length; i++) {
-    let seriesPoints = seriesList[i].datapoints;
-    let seriesTimestamps = _.map(seriesPoints, p => p[POINT_TIME_INDEX]);
-    let extendedSeries = [];
-    let pointIndex;
+    const seriesPoints = seriesList[i].datapoints;
+    const seriesTimestamps = seriesPoints.map((p: any) => p[POINT_TIME_INDEX]);
+    const extendedDatapoints = [];
     for (let j = 0; j < timestamps.length; j++) {
-      pointIndex = _.sortedIndexOf(seriesTimestamps, timestamps[j]);
+      const timestamp = timestamps[j];
+      const pointIndex = sortedIndexOf(seriesTimestamps, timestamp);
       if (pointIndex !== -1) {
-        extendedSeries.push(seriesPoints[pointIndex]);
+        extendedDatapoints.push(seriesPoints[pointIndex]);
       } else {
-        extendedSeries.push([null, timestamps[j]]);
+        extendedDatapoints.push([null, timestamp]);
       }
     }
-    seriesList[i].datapoints = extendedSeries;
+    result.push(extendedDatapoints);
   }
-  return seriesList;
+  return result;
 }
 
-export function exportSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT, excel = false) {
-  let text = convertSeriesListToCsvColumns(seriesList, dateTimeFormat, excel);
-  saveSaveBlob(text, 'grafana_data_export.csv');
+export function exportSeriesListToCsvColumns(seriesList: SeriesList, options: Partial<SeriesListToCsvColumnsOptions>) {
+  const text = convertSeriesListToCsvColumns(seriesList, options);
+  saveSaveBlob(text, EXPORT_FILENAME);
 }
 
-export function exportTableDataToCsv(table, excel = false) {
-  var text = excel ? 'sep=;\n' : '';
-  // add header
-  _.each(table.columns, function(column) {
-    text += (column.title || column.text) + ';';
-  });
-  text += '\n';
+export function convertTableDataToCsv(table: TableData, excel = false) {
+  let text = formatSpecialHeader(excel);
+  // add headline
+  text += formatRow(table.columns.map((val: any) => val.title || val.text));
   // process data
-  _.each(table.rows, function(row) {
-    _.each(row, function(value) {
-      text += value + ';';
-    });
-    text += '\n';
-  });
-  saveSaveBlob(text, 'grafana_data_export.csv');
+  for (let i = 0; i < table.rows.length; i += 1) {
+    text += formatRow(table.rows[i], i < table.rows.length - 1);
+  }
+  return text;
 }
 
-export function saveSaveBlob(payload, fname) {
-  var blob = new Blob([payload], { type: 'text/csv;charset=utf-8' });
+export function exportTableDataToCsv(table: TableData, excel = false) {
+  const text = convertTableDataToCsv(table, excel);
+  saveSaveBlob(text, EXPORT_FILENAME);
+}
+
+export function saveSaveBlob(payload: any, fname: string) {
+  const blob = new Blob([payload], { type: 'text/csv;charset=utf-8;header=present;' });
   saveAs(blob, fname);
 }

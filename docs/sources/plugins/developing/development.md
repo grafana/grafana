@@ -10,7 +10,7 @@ weight = 1
 
 # Developer Guide
 
-You can extend Grafana by writing your own plugins and then share then with other users in [our plugin repository](https://grafana.com/plugins).
+You can extend Grafana by writing your own plugins and then share them with other users in [our plugin repository](https://grafana.com/plugins).
 
 ## Short version
 
@@ -20,7 +20,8 @@ You can extend Grafana by writing your own plugins and then share then with othe
 
 Example plugins
 
-- [Typescript data source example](https://github.com/grafana/typescript-template-datasource)
+- ["Hello World" panel using Angular](https://github.com/grafana/simple-angular-panel)
+- ["Hello World" panel using React](https://github.com/grafana/simple-react-panel)
 - [Simple json data source](https://github.com/grafana/simple-json-datasource)
 - [Clock panel](https://github.com/grafana/clock-panel)
 - [Pie chart panel](https://github.com/grafana/piechart-panel)
@@ -33,7 +34,7 @@ There are two blog posts about authoring a plugin that might also be of interest
 ## What languages?
 
 Since everything turns into javascript it's up to you to choose which language you want. That said it's probably a good idea to choose es6 or typescript since
-we use es6 classes in Grafana. So it's easier to get inspiration from the Grafana repo is you choose one of those languages.
+we use es6 classes in Grafana. So it's easier to get inspiration from the Grafana repo if you choose one of those languages.
 
 ## Buildscript
 
@@ -60,7 +61,6 @@ and [apps]({{< relref "apps.md" >}}) plugins in the documentation.
 The Grafana SDK is quite small so far and can be found here:
 
 - [SDK file in Grafana](https://github.com/grafana/grafana/blob/master/public/app/plugins/sdk.ts)
-- [SDK Readme](https://github.com/grafana/grafana/blob/master/public/app/plugins/plugin_api.md)
 
 The SDK contains three different plugin classes: PanelCtrl, MetricsPanelCtrl and QueryCtrl. For plugins of the panel type, the module.js file should export one of these. There are some extra classes for [data sources]({{< relref "datasources.md" >}}).
 
@@ -120,7 +120,7 @@ If a panel receives data and hooks into the `data-received` event then it should
 
 We currently have three different examples that you can fork/download to get started developing your grafana plugin.
 
- - [simple-json-datasource](https://github.com/grafana/simple-json-datasource) (small datasource plugin for querying json data from backends)
+ - [simple-json-datasource](https://github.com/grafana/simple-json-datasource) (small data source plugin for querying json data from backends)
  - [example-app](https://github.com/grafana/example-app)
  - [clock-panel](https://github.com/grafana/clock-panel)
  - [singlestat-panel](https://github.com/grafana/grafana/blob/master/public/app/plugins/panel/singlestat/module.ts)
@@ -132,5 +132,5 @@ We currently have three different examples that you can fork/download to get sta
 - [Plugin Defaults and Editor Mode]({{< relref "defaults-and-editor-mode.md" >}})
 - [Grafana Plugin Code Styleguide]({{< relref "code-styleguide.md" >}})
 - [Grafana Apps]({{< relref "apps.md" >}})
-- [Grafana Datasources]({{< relref "datasources.md" >}})
+- [Grafana Data Sources]({{< relref "datasources.md" >}})
 - [plugin.json Schema]({{< relref "plugin.json.md" >}})

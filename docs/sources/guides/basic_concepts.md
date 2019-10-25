@@ -18,7 +18,7 @@ This document is a “bottom up” introduction to basic concepts in Grafana, an
 
 Grafana supports many different storage backends for your time series data (Data Source). Each Data Source has a specific Query Editor that is customized for the features and capabilities that the particular Data Source exposes.
 
-The following datasources are officially supported: [Graphite]({{< relref "features/datasources/graphite.md" >}}), [InfluxDB]({{< relref "features/datasources/influxdb.md" >}}), [OpenTSDB]({{< relref "features/datasources/opentsdb.md" >}}), [Prometheus]({{< relref "features/datasources/prometheus.md" >}}), [Elasticsearch]({{< relref "features/datasources/elasticsearch.md" >}}), [CloudWatch]({{< relref "features/datasources/cloudwatch.md" >}}).
+The following data sources are officially supported: [Graphite]({{< relref "features/datasources/graphite.md" >}}), [InfluxDB]({{< relref "features/datasources/influxdb.md" >}}), [OpenTSDB]({{< relref "features/datasources/opentsdb.md" >}}), [Prometheus]({{< relref "features/datasources/prometheus.md" >}}), [Elasticsearch]({{< relref "features/datasources/elasticsearch.md" >}}), [CloudWatch]({{< relref "features/datasources/cloudwatch.md" >}}).
 
 The query language and capabilities of each Data Source are obviously very different. You can combine data from multiple Data Sources onto a single Dashboard, but each Panel is tied to a specific Data Source that belongs to a particular Organization.
 
@@ -54,7 +54,7 @@ We utilize a unit abstraction so that Grafana looks great on all screens both sm
 
  > Note: With MaxDataPoint functionality, Grafana can show you the perfect amount of datapoints no matter your resolution or time-range.
 
-Utilize the [Repeating Row functionality](/reference/templating/#utilizing-template-variables-with-repeating-panels-and-repeating-rows) to dynamically create or remove entire Rows (that can be filled with Panels), based on the Template variables selected.
+Utilize the [Repeating Rows functionality](/reference/templating/#repeating-rows) to dynamically create or remove entire Rows (that can be filled with Panels), based on the Template variables selected.
 
 Rows can be collapsed by clicking on the Row Title. If you save a Dashboard with a Row collapsed, it will save in that state and will not preload those graphs until the row is expanded.
 
@@ -66,13 +66,13 @@ There are a wide variety of styling and formatting options that each Panel expos
 
 Panels can be dragged and dropped and rearranged on the Dashboard. They can also be resized.
 
-There are currently four Panel types: [Graph](/reference/graph/), [Singlestat](/reference/singlestat/), [Dashlist](/reference/dashlist/), [Table](/reference/table_panel/),and [Text](/reference/text/).
+There are currently five Panel types: [Graph](/reference/graph/), [Singlestat](/reference/singlestat/), [Dashlist](/reference/dashlist/), [Table](/reference/table_panel/), and [Text](/reference/text/).
 
 Panels like the [Graph](/reference/graph/) panel allow you to graph as many metrics and series as you want. Other panels like [Singlestat](/reference/singlestat/) require a reduction of a single query into a single number. [Dashlist](/reference/dashlist/) and [Text](/reference/text/) are special panels that do not connect to any Data Source.
 
 Panels can be made more dynamic by utilizing [Dashboard Templating](/reference/templating/) variable strings within the panel configuration (including queries to your Data Source configured via the Query Editor).
 
-Utilize the [Repeating Panel](/reference/templating/#utilizing-template-variables-with-repeating-panels-and-repeating-rows) functionality to dynamically create or remove Panels based on the [Templating Variables](/reference/templating/#utilizing-template-variables-with-repeating-panels-and-repeating-rows) selected.
+Utilize the [Repeating Panel](/reference/templating/#repeating-panels) functionality to dynamically create or remove Panels based on the [Templating Variables](/reference/templating/#repeating-panels) selected.
 
 The time range on Panels is normally what is set in the [Dashboard time picker](/reference/timerange/) but this can be overridden by utilizes [Panel specific time overrides](/reference/timerange/#panel-time-overrides-timeshift).
 
