@@ -37,13 +37,13 @@ func TestGetMetricDataExecutorTest(t *testing.T) {
 	Convey("TestGetMetricDataExecutorTest", t, func() {
 		Convey("pagination works", func() {
 			executor := &CloudWatchExecutor{}
-			input := &cloudwatch.GetMetricDataInput{MetricDataQueries: []*cloudwatch.MetricDataQuery{}}
-			res, err := executor.executeRequest(context.Background(), &cloudWatchFakeClient{}, input)
+			inputs := &cloudwatch.GetMetricDataInput{MetricDataQueries: []*cloudwatch.MetricDataQuery{}}
+			res, err := executor.executeRequest(context.Background(), &cloudWatchFakeClient{}, inputs)
 			So(err, ShouldBeNil)
 			So(len(res), ShouldEqual, 2)
-			So(len(res[0].Values), ShouldEqual, 2)
-			So(*res[0].Values[1], ShouldEqual, 23.5)
-			So(*res[1].Values[0], ShouldEqual, 100)
+			So(len(res[0].MetricDataResults[0].Values), ShouldEqual, 2)
+			So(*res[0].MetricDataResults[0].Values[1], ShouldEqual, 23.5)
+			So(*res[1].MetricDataResults[0].Values[0], ShouldEqual, 100)
 		})
 	})
 

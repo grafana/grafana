@@ -86,10 +86,15 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 		Results: make(map[string]*tsdb.QueryResult),
 	}
 
+	queries, err := e.parseQueries(queryContext)
+	if err != nil {
+		return results, err
+	}
+
+	queriesByRegion := e.groupQueriesByRegion(queries)
 	metricDataInputsByRegion := make(map[string][]*cloudwatch.GetMetricDataInput)
-	queriesByRegion, err := e.parseQueriesByRegion(queryContext)
 	for region, queries := range queriesByRegion {
-		metricQueries, err := e.mdib.buildMetricDataInput(queryContext, queries)
+		metricQueries, err := e.mdib.buildMetricDataInputs(queryContext, queries)
 		if err != nil {
 			return results, err
 		}
@@ -111,8 +116,7 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 	eg, ectx := errgroup.WithContext(ctx)
 
 	if len(metricDataInputsByRegion) > 0 {
-		for region, metricDataQueries := range metricDataInputsByRegion {
-			queries := metricDataQueries
+		for region, metricDataInputs := range metricDataInputsByRegion {
 			eg.Go(func() error {
 				defer func() {
 					if err := recover(); err != nil {
@@ -131,8 +135,8 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 				}
 
 				metricDataOutputs := make([]*cloudwatch.GetMetricDataOutput, 0)
-				for _, query := range queries {
-					res, err := e.executeRequest(ectx, client, query)
+				for _, metricDataInput := range metricDataInputs {
+					mdo, err := e.executeRequest(ectx, client, metricDataInput)
 					if err != nil {
 						plog.Info("executeGetMetricDataQueryError", "", err)
 					}
@@ -148,10 +152,11 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 							return err
 						}
 					}
-					metricDataOutputs = append(metricDataOutputs, res...)
+
+					metricDataOutputs = append(metricDataOutputs, mdo...)
 				}
 
-				queryResponses, err := e.parseResponse(metricDataOutputs, queriesByRegion[region])
+				queryResponses, err := e.parseResponse(metricDataOutputs, queries)
 				if err != nil {
 					return err
 				}
@@ -176,4 +181,17 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 	}
 
 	return results, nil
+}
+
+func (e *CloudWatchExecutor) groupQueriesByRegion(queries map[string]*cloudWatchQuery) map[string][]*cloudWatchQuery {
+	queriesByRegion := make(map[string][]*cloudWatchQuery)
+
+	for _, query := range queries {
+		if _, ok := queriesByRegion[query.Region]; !ok {
+			queriesByRegion[query.Region] = make([]*cloudWatchQuery, 0)
+		}
+		queriesByRegion[query.Region] = append(queriesByRegion[query.Region], query)
+	}
+
+	return queriesByRegion
 }

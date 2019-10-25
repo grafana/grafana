@@ -27,7 +27,7 @@ func TestQueryBuilder(t *testing.T) {
 				"highResolution": false,
 			})
 
-			res, err := parseQuery(query, "ref1")
+			res, err := parseQueryEditorRow(query, "ref1")
 			So(err, ShouldBeNil)
 			So(res.Region, ShouldEqual, "us-east-1")
 			So(res.RefId, ShouldEqual, "ref1")
@@ -44,7 +44,6 @@ func TestQueryBuilder(t *testing.T) {
 			So(res.Dimensions["InstanceType"][1], ShouldEqual, "test3")
 			So(len(res.Statistics), ShouldEqual, 2)
 			So(*res.Statistics[1], ShouldEqual, "Sum")
-			So(res.Identifier, ShouldNotBeEmpty)
 		})
 
 		Convey("using old dimensions structure (backwards compatibility)", func() {
@@ -65,7 +64,7 @@ func TestQueryBuilder(t *testing.T) {
 				"highResolution": false,
 			})
 
-			res, err := parseQuery(query, "ref1")
+			res, err := parseQueryEditorRow(query, "ref1")
 			So(err, ShouldBeNil)
 			So(res.Region, ShouldEqual, "us-east-1")
 			So(res.RefId, ShouldEqual, "ref1")
@@ -82,7 +81,6 @@ func TestQueryBuilder(t *testing.T) {
 			So(res.Dimensions["InstanceType"][0], ShouldEqual, "test2")
 			So(len(res.Statistics), ShouldEqual, 2)
 			So(*res.Statistics[1], ShouldEqual, "Sum")
-			So(res.Identifier, ShouldNotBeEmpty)
 		})
 	})
 }

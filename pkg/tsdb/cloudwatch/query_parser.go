@@ -2,7 +2,7 @@ package cloudwatch
 
 import (
 	"errors"
-	"math/rand"
+	"fmt"
 	"regexp"
 	"sort"
 	"strconv"
@@ -13,8 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func (e *CloudWatchExecutor) parseQueriesByRegion(queryContext *tsdb.TsdbQuery) (map[string][]*cloudWatchQuery, error) {
-	metricQueriesByRegion := make(map[string][]*cloudWatchQuery)
+func (e *CloudWatchExecutor) parseQueries(queryContext *tsdb.TsdbQuery) (map[string]*cloudWatchQuery, error) {
+	cloudwatchQueries := make(map[string]*cloudWatchQuery, 0)
 
 	for i, model := range queryContext.Queries {
 		queryType := model.Model.Get("type").MustString()
@@ -23,20 +23,52 @@ func (e *CloudWatchExecutor) parseQueriesByRegion(queryContext *tsdb.TsdbQuery) 
 		}
 
 		RefID := queryContext.Queries[i].RefId
-		query, err := parseQuery(queryContext.Queries[i].Model, RefID)
+		queryEditorRow, err := parseQueryEditorRow(queryContext.Queries[i].Model, RefID)
 		if err != nil {
 			return nil, &queryBuilderError{err, RefID}
 		}
-		if _, ok := metricQueriesByRegion[query.Region]; !ok {
-			metricQueriesByRegion[query.Region] = make([]*cloudWatchQuery, 0)
+
+		for i, stat := range queryEditorRow.Statistics {
+			id := queryEditorRow.Id
+			if id == "" {
+				id = fmt.Sprintf("query%s", RefID)
+			}
+			if len(queryEditorRow.Statistics) > 1 {
+				id = fmt.Sprintf("%s_____%v", id, i)
+			}
+
+			query := &cloudWatchQuery{
+				Id:             id,
+				UserDefinedId:  queryEditorRow.Id,
+				RefId:          queryEditorRow.RefId,
+				Region:         queryEditorRow.Region,
+				Namespace:      queryEditorRow.Namespace,
+				MetricName:     queryEditorRow.MetricName,
+				Dimensions:     queryEditorRow.Dimensions,
+				Stats:          *stat,
+				Period:         queryEditorRow.Period,
+				Alias:          queryEditorRow.Alias,
+				Expression:     queryEditorRow.Expression,
+				ReturnData:     queryEditorRow.ReturnData,
+				HighResolution: queryEditorRow.HighResolution,
+				MatchExact:     queryEditorRow.MatchExact,
+			}
+
+			if _, ok := cloudwatchQueries[id]; !ok {
+				cloudwatchQueries[id] = query
+			} else {
+				return nil, &queryBuilderError{
+					err:   fmt.Errorf("Query id %s is not unique", query.Id),
+					RefID: query.RefId,
+				}
+			}
 		}
-		metricQueriesByRegion[query.Region] = append(metricQueriesByRegion[query.Region], query)
 	}
 
-	return metricQueriesByRegion, nil
+	return cloudwatchQueries, nil
 }
 
-func parseQuery(model *simplejson.Json, refId string) (*cloudWatchQuery, error) {
+func parseQueryEditorRow(model *simplejson.Json, refId string) (*queryEditorRow, error) {
 	region, err := model.Get("region").String()
 	if err != nil {
 		return nil, err
@@ -90,11 +122,6 @@ func parseQuery(model *simplejson.Json, refId string) (*cloudWatchQuery, error) 
 
 	alias := model.Get("alias").MustString()
 
-	identifier := id
-	if identifier == "" || len(statistics) > 1 {
-		identifier = generateUniqueString()
-	}
-
 	returnData := !model.Get("hide").MustBool(false)
 	queryType := model.Get("type").MustString()
 	if queryType == "" {
@@ -107,9 +134,8 @@ func parseQuery(model *simplejson.Json, refId string) (*cloudWatchQuery, error) 
 
 	matchExact := model.Get("matchExact").MustBool(true)
 
-	return &cloudWatchQuery{
+	return &queryEditorRow{
 		RefId:          refId,
-		Identifier:     identifier,
 		Region:         region,
 		Namespace:      namespace,
 		MetricName:     metricName,
@@ -187,22 +213,4 @@ func sortDimensions(dimensions map[string][]string) map[string][]string {
 		sortedDimensions[k] = dimensions[k]
 	}
 	return sortedDimensions
-}
-
-func generateUniqueString() string {
-	var letter = []rune("abcdefghijklmnopqrstuvwxyz")
-
-	b := make([]rune, 8)
-	for i := range b {
-		b[i] = letter[rand.Intn(len(letter))]
-	}
-	return string(b)
-}
-
-func getQueryID(query *cloudWatchQuery, statIndex int) string {
-	queryID := query.Identifier
-	if len(query.Statistics) > 1 {
-		queryID = query.Identifier + "_____" + strconv.Itoa(statIndex)
-	}
-	return queryID
 }

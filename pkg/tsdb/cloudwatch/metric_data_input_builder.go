@@ -15,7 +15,7 @@ type metricDataInputBuilder struct {
 	maxNoOfMetricDataQueries int
 }
 
-func (mdib *metricDataInputBuilder) buildMetricDataInput(queryContext *tsdb.TsdbQuery, queries []*cloudWatchQuery) ([]*cloudwatch.GetMetricDataInput, error) {
+func (mdib *metricDataInputBuilder) buildMetricDataInputs(queryContext *tsdb.TsdbQuery, queries []*cloudWatchQuery) ([]*cloudwatch.GetMetricDataInput, error) {
 	metricDataInputs := make([]*cloudwatch.GetMetricDataInput, 0)
 	startTime, err := queryContext.TimeRange.ParseFrom()
 	if err != nil {
@@ -31,86 +31,98 @@ func (mdib *metricDataInputBuilder) buildMetricDataInput(queryContext *tsdb.Tsdb
 		return nil, fmt.Errorf("Invalid time range: Start time must be before end time")
 	}
 
-	sortedQueries := sortQueries(queries)
+	metricStatQueries, nonMetricStatQueries := mdib.splitQueries(queries)
 
-	noOfSearchExpressions := 0
-	params := &cloudwatch.GetMetricDataInput{
+	if len(metricStatQueries) > 0 {
+		mdi := &cloudwatch.GetMetricDataInput{
+			StartTime: aws.Time(startTime),
+			EndTime:   aws.Time(endTime),
+			ScanBy:    aws.String("TimestampAscending"),
+		}
+		for _, metricStatQuery := range metricStatQueries {
+			// 1 minutes resolution metrics is stored for 15 days, 15 * 24 * 60 = 21600
+			if metricStatQuery.HighResolution && (((endTime.Unix() - startTime.Unix()) / int64(metricStatQuery.Period)) > 21600) {
+				return nil, &queryBuilderError{errors.New("too long query period"), metricStatQuery.RefId}
+			}
+
+			metricDataQuery, err := mdib.buildMetricDataQuery(metricStatQuery)
+			if err != nil {
+				return nil, &queryBuilderError{err, metricStatQuery.RefId}
+			}
+			mdi.MetricDataQueries = append(mdi.MetricDataQueries, metricDataQuery)
+		}
+		metricDataInputs = append(metricDataInputs, mdi)
+	}
+
+	if len(nonMetricStatQueries) == 0 {
+		return metricDataInputs, nil
+	}
+
+	mdib.sortQueries(nonMetricStatQueries)
+
+	mdi := &cloudwatch.GetMetricDataInput{
 		StartTime: aws.Time(startTime),
 		EndTime:   aws.Time(endTime),
 		ScanBy:    aws.String("TimestampAscending"),
 	}
 
-	for _, query := range sortedQueries {
-		// 1 minutes resolution metrics is stored for 15 days, 15 * 24 * 60 = 21600
+	noOfSearchExpressions := 0
+	for _, query := range nonMetricStatQueries {
 		if query.HighResolution && (((endTime.Unix() - startTime.Unix()) / int64(query.Period)) > 21600) {
 			return nil, &queryBuilderError{errors.New("too long query period"), query.RefId}
 		}
-
-		metricDataQueries, err := mdib.buildMetricDataQueries(query)
+		metricDataQuery, err := mdib.buildMetricDataQuery(query)
 		if err != nil {
 			return nil, &queryBuilderError{err, query.RefId}
 		}
 
-		if err != nil {
-			return nil, &queryBuilderError{err, query.RefId}
+		isSearchExpressions := query.isSearchExpression()
+		if isSearchExpressions && noOfSearchExpressions == mdib.maxNoOfSearchExpressions || len(mdi.MetricDataQueries) == mdib.maxNoOfMetricDataQueries {
+			metricDataInputs = append(metricDataInputs, mdi)
+			mdi = &cloudwatch.GetMetricDataInput{
+				StartTime: aws.Time(startTime),
+				EndTime:   aws.Time(endTime),
+				ScanBy:    aws.String("TimestampAscending"),
+			}
+			noOfSearchExpressions = 0
 		}
 
-		for _, metricDataQuery := range metricDataQueries {
-			isSearchExpressions := query.isSearchExpression()
-			if isSearchExpressions && noOfSearchExpressions == mdib.maxNoOfSearchExpressions || len(params.MetricDataQueries) == mdib.maxNoOfMetricDataQueries {
-				metricDataInputs = append(metricDataInputs, params)
-				params = &cloudwatch.GetMetricDataInput{
-					StartTime: aws.Time(startTime),
-					EndTime:   aws.Time(endTime),
-					ScanBy:    aws.String("TimestampAscending"),
-				}
-				noOfSearchExpressions = 0
-			}
-			params.MetricDataQueries = append(params.MetricDataQueries, metricDataQuery)
+		mdi.MetricDataQueries = append(mdi.MetricDataQueries, metricDataQuery)
 
-			if isSearchExpressions {
-				noOfSearchExpressions++
-			}
+		if isSearchExpressions {
+			noOfSearchExpressions++
 		}
 	}
 
-	metricDataInputs = append(metricDataInputs, params)
+	metricDataInputs = append(metricDataInputs, mdi)
 
 	return metricDataInputs, nil
 }
 
-func sortQueries(queries []*cloudWatchQuery) []*cloudWatchQuery {
-	sort.SliceStable(queries, func(i, j int) bool {
-		return getSortOrder(queries[i]) > getSortOrder(queries[j])
-	})
-	return queries
+func (mdib *metricDataInputBuilder) splitQueries(queries []*cloudWatchQuery) ([]*cloudWatchQuery, []*cloudWatchQuery) {
+	metricStatQueriesWithoutUserDefinedID, otherQueries := []*cloudWatchQuery{}, []*cloudWatchQuery{}
+	for _, query := range queries {
+		if query.UserDefinedId == "" && query.isMetricStat() {
+			metricStatQueriesWithoutUserDefinedID = append(metricStatQueriesWithoutUserDefinedID, query)
+		} else {
+			otherQueries = append(otherQueries, query)
+		}
+	}
+	return metricStatQueriesWithoutUserDefinedID, otherQueries
 }
 
-func getSortOrder(query *cloudWatchQuery) int {
-	if len(query.Statistics) > 1 {
-		if !query.isSearchExpression() {
-			return 1
-		}
-		return 0
-	}
+func (mdib *metricDataInputBuilder) sortQueries(queries []*cloudWatchQuery) {
+	sort.SliceStable(queries, func(i, j int) bool {
+		return mdib.getSortOrder(queries[i]) > mdib.getSortOrder(queries[j])
+	})
+}
 
-	if query.Id != "" {
-		// Give non search expressions with ids the higest priority
-		if !query.isSearchExpression() {
-			return 5
-		}
-
-		return 4
-	} else if query.isMathExpression() {
-		// Math expressions without ID can still reference other queries that have ids
+func (mdib *metricDataInputBuilder) getSortOrder(query *cloudWatchQuery) int {
+	if query.isMetricStat() {
 		return 3
+	} else if query.isMathExpression() {
+		return 2
 	}
 
-	// We know the query is not being referenced nor references other queries
-	// In this case, prioritize non search expressions so that the MetricDataInput is being filled to the extent possible
-	if !query.isSearchExpression() {
-		return 1
-	}
-
-	return 0
+	return 1
 }

@@ -3,8 +3,6 @@ package cloudwatch
 import (
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
-
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -14,33 +12,6 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			maxNoOfSearchExpressions = 2
 			maxNoOfMetricDataQueries = 10
 		)
-		mdib := &metricDataInputBuilder{maxNoOfSearchExpressions, maxNoOfMetricDataQueries}
-
-		Convey("buildMetricDataQueries", func() {
-			Convey("and one GetMetricDataInput is generated for each query statistic", func() {
-				dimensions := make(map[string][]string)
-				dimensions["InstanceId"] = []string{"i-12345678"}
-				query := &cloudWatchQuery{
-					RefId:      "A",
-					Region:     "us-east-1",
-					Namespace:  "AWS/EC2",
-					MetricName: "CPUUtilization",
-					Dimensions: dimensions,
-					Statistics: []*string{aws.String("Average"), aws.String("Sum")},
-					Period:     300,
-					Id:         "id1",
-					Identifier: "id1",
-					Expression: "",
-					MatchExact: true,
-				}
-
-				res, err := mdib.buildMetricDataQueries(query)
-				So(err, ShouldBeNil)
-				So(len(res), ShouldEqual, 2)
-				So(*res[0].Id, ShouldEqual, "id1_____0")
-				So(*res[1].Id, ShouldEqual, "id1_____1")
-			})
-		})
 
 		Convey("buildSearchExpression", func() {
 			Convey("and query should be matched exact", func() {

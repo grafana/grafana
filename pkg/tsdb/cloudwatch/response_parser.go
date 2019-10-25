@@ -13,11 +13,18 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMetricDataOutput, queries []*cloudWatchQuery) ([]*tsdb.QueryResult, error) {
-	queryResponses := make([]*tsdb.QueryResult, 0)
-
+func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMetricDataOutput, queries map[string]*cloudWatchQuery) (map[string]*tsdb.QueryResult, error) {
+	queryResponses := make(map[string]*tsdb.QueryResult, 0)
 	mdr := make(map[string]map[string]*cloudwatch.MetricDataResult)
+
 	for _, mdo := range metricDataOutputs {
+		requestExceededMaxLimit := false
+		for _, message := range mdo.Messages {
+			if *message.Code == "MaxMetricsExceeded" {
+				requestExceededMaxLimit = true
+			}
+		}
+
 		for _, r := range mdo.MetricDataResults {
 			if _, ok := mdr[*r.Id]; !ok {
 				mdr[*r.Id] = make(map[string]*cloudwatch.MetricDataResult)
@@ -28,48 +35,67 @@ func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 				mdr[*r.Id][*r.Label].Timestamps = append(mdr[*r.Id][*r.Label].Timestamps, r.Timestamps...)
 				mdr[*r.Id][*r.Label].Values = append(mdr[*r.Id][*r.Label].Values, r.Values...)
 			}
+
+			queries[*r.Id].RequestExceededMaxLimit = requestExceededMaxLimit
 		}
 	}
 
+	queriesByRefID := make(map[string][]*cloudWatchQuery, 0)
 	for _, query := range queries {
-		queryRes := tsdb.NewQueryResult()
-		queryRes.RefId = query.RefId
-		queryRes.Meta = simplejson.New()
-		queryMessages := []*cloudwatch.MessageData{}
+		if _, ok := queriesByRefID[query.RefId]; !ok {
+			queriesByRefID[query.RefId] = []*cloudWatchQuery{query}
+		} else {
+			queriesByRefID[query.RefId] = append(queriesByRefID[query.RefId], query)
+		}
+	}
+
+	for refID, queries := range queriesByRefID {
+		queryResponses[refID] = tsdb.NewQueryResult()
+		queryResponses[refID].RefId = refID
+		queryResponses[refID].Meta = simplejson.New()
+		queryResponses[refID].Series = tsdb.TimeSeriesSlice{}
 		timeSeries := make(tsdb.TimeSeriesSlice, 0)
-		for i, stat := range query.Statistics {
-			lr := mdr[getQueryID(query, i)]
-			series, messages, err := parseGetMetricDataTimeSeries(lr, query, *stat)
-			queryMessages = append(queryMessages, messages...)
+
+		searchExpressions := []string{}
+		requestExceededMaxLimit := false
+		for _, query := range queries {
+			series, err := parseGetMetricDataTimeSeries(mdr[query.Id], query)
 			if err != nil {
 				return queryResponses, err
 			}
+
 			timeSeries = append(timeSeries, *series...)
-			queryRes.Meta.Set("searchExpressions", query.SearchExpressions)
+			searchExpressions = append(searchExpressions, query.SearchExpression)
+			requestExceededMaxLimit = requestExceededMaxLimit || query.RequestExceededMaxLimit
 		}
+
+		if requestExceededMaxLimit {
+			queryResponses[refID].ErrorString = "Cloudwatch GetMetricData error: Maximum number of allowed metrics exceeded. Your search may have been limited."
+		}
+
 		sort.Slice(timeSeries, func(i, j int) bool {
 			return timeSeries[i].Name < timeSeries[j].Name
 		})
-		queryRes.Series = timeSeries
-		for _, message := range queryMessages {
-			plog.Info("QueryResponseMessage", "", message.Value)
-		}
-
-		queryResponses = append(queryResponses, queryRes)
+		queryResponses[refID].Series = timeSeries
+		queryResponses[refID].Meta.Set("searchExpressions", searchExpressions)
 	}
 
 	return queryResponses, nil
 }
 
-func parseGetMetricDataTimeSeries(lr map[string]*cloudwatch.MetricDataResult, query *cloudWatchQuery, stat string) (*tsdb.TimeSeriesSlice, []*cloudwatch.MessageData, error) {
+func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.MetricDataResult, query *cloudWatchQuery) (*tsdb.TimeSeriesSlice, error) {
 	result := tsdb.TimeSeriesSlice{}
-	messages := []*cloudwatch.MessageData{}
-	for label, r := range lr {
-		if *r.StatusCode != "Complete" {
-			return &result, messages, fmt.Errorf("Part of query is failed: %s", *r.StatusCode)
+	for label, metricDataResult := range metricDataResults {
+		if *metricDataResult.StatusCode != "Complete" {
+			return &result, fmt.Errorf("Part of query failed: %s", *metricDataResult.StatusCode)
 		}
 
-		messages = append(messages, r.Messages...)
+		for _, message := range metricDataResult.Messages {
+			plog.Info("ArithmeticError", *message.Code, *message.Value)
+			if *message.Code == "ArithmeticError" {
+				return &result, fmt.Errorf("ArithmeticError in query %s: %s", query.RefId, *message.Value)
+			}
+		}
 
 		series := tsdb.TimeSeries{
 			Tags:   map[string]string{},
@@ -77,27 +103,31 @@ func parseGetMetricDataTimeSeries(lr map[string]*cloudwatch.MetricDataResult, qu
 		}
 
 		for key, values := range query.Dimensions {
-			for _, value := range values {
-				if value == label || value == "*" {
-					series.Tags[key] = label
+			if len(values) == 1 && values[0] != "*" {
+				series.Tags[key] = values[0]
+			} else {
+				for _, value := range values {
+					if value == label || value == "*" {
+						series.Tags[key] = label
+					}
 				}
 			}
 		}
 
-		series.Name = formatAlias(query, stat, series.Tags, label)
+		series.Name = formatAlias(query, query.Stats, series.Tags, label)
 
-		for j, t := range r.Timestamps {
+		for j, t := range metricDataResult.Timestamps {
 			if j > 0 {
-				expectedTimestamp := r.Timestamps[j-1].Add(time.Duration(query.Period) * time.Second)
+				expectedTimestamp := metricDataResult.Timestamps[j-1].Add(time.Duration(query.Period) * time.Second)
 				if expectedTimestamp.Before(*t) {
 					series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), float64(expectedTimestamp.Unix()*1000)))
 				}
 			}
-			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(*r.Values[j]), float64((*t).Unix())*1000))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(*metricDataResult.Values[j]), float64((*t).Unix())*1000))
 		}
 		result = append(result, &series)
 	}
-	return &result, messages, nil
+	return &result, nil
 }
 
 func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]string, label string) string {
