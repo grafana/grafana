@@ -254,9 +254,10 @@ export class PanelChrome extends PureComponent<Props, State> {
     const PanelComponent = plugin.panel;
     const timeRange = data.timeRange || this.timeSrv.timeRange();
 
-    const headerHeight = this.hasOverlayHeader() ? 0 : theme.panelHeaderHeight;
+    const headerHeight = panel.hasTitle() ? theme.panelHeaderHeight : 0;
     const chromePadding = plugin.hasFullChromeControl ? 0 : theme.panelPadding;
-    const panelWidth = width - chromePadding * 2 - PANEL_BORDER;
+    const chromeBorder = plugin.hasFullChromeControl ? 0 : PANEL_BORDER;
+    const panelWidth = width - chromePadding * 2 - chromeBorder;
     const innerPanelHeight = height - headerHeight - chromePadding * 2;
 
     const panelContentClassNames = classNames({
@@ -313,15 +314,15 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isFullscreen, width, height, plugin } = this.props;
+    const { dashboard, panel, isFullscreen, width, height } = this.props;
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
     const containerClassNames = classNames({
       'panel-container': true,
       'panel-container--absolute': true,
-      'panel-container--overlay-header': this.hasOverlayHeader(),
-      'panel-transparent': transparent || plugin.hasFullChromeControl,
+      'panel-container--transparent': transparent,
+      'panel-container--no-title': !panel.hasTitle(),
     });
 
     return (

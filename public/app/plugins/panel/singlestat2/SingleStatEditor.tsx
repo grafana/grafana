@@ -95,7 +95,7 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
             <SparklineEditor options={options.sparkline} onChange={this.onSparklineChanged} />
           </PanelOptionsGroup>
 
-          <PanelOptionsGroup title="Field (default)">
+          <PanelOptionsGroup title="Field">
             <FieldPropertiesEditor showMinMax={true} onChange={this.onDefaultsChange} value={defaults} />
           </PanelOptionsGroup>
 

@@ -1,29 +1,18 @@
 $panel-header-no-title-zindex: 1;
 
 .panel-header {
-  border-radius: 3px;
-
   &:hover {
-    .panel-title {
-      opacity: 1 !important;
-      transition: opacity 0.2s ease-in;
-      background-color: $panel-header-hover-bg;
-    }
+    transition: background-color 0.1s ease-in-out;
+    background-color: $panel-header-hover-bg;
   }
 }
 
-.panel-container--overlay-header {
+.panel-container--no-title {
   .panel-header {
     position: absolute;
     width: 100%;
     z-index: $panel-header-z-index;
-
-    .panel-title {
-      top: -$panel-header-height/2;
-      opacity: 0;
-    }
   }
-
   .panel-content {
     height: 100%;
   }
