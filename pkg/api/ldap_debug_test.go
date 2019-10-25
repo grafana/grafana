@@ -183,6 +183,11 @@ func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
 				OrgId:   1,
 				OrgRole: models.ROLE_ADMIN,
 			},
+			{
+				GroupDN: "cn=admins2,ou=groups,dc=grafana,dc=org",
+				OrgId:   1,
+				OrgRole: models.ROLE_ADMIN,
+			},
 		},
 	}
 

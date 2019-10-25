@@ -278,13 +278,15 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 
 	orgRoles := []LDAPRoleDTO{}
 
-	// First, let's find the groupDN that we did match by inspecting the assigned user OrgRoles.
-	for _, group := range serverConfig.Groups {
-		orgRole, ok := user.OrgRoles[group.OrgId]
+	// First, let's find the groupDN that match the users groups
+	for _, configGroup := range serverConfig.Groups {
+		for _, userGroup := range user.Groups {
+			if configGroup.GroupDN == userGroup {
+				r := &LDAPRoleDTO{GroupDN: configGroup.GroupDN, OrgId: configGroup.OrgId, OrgRole: configGroup.OrgRole}
+				orgRoles = append(orgRoles, *r)
 
-		if ok && orgRole == group.OrgRole {
-			r := &LDAPRoleDTO{GroupDN: group.GroupDN, OrgId: group.OrgId, OrgRole: group.OrgRole}
-			orgRoles = append(orgRoles, *r)
+				break
+			}
 		}
 	}
 
