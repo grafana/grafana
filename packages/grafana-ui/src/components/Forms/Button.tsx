@@ -4,7 +4,8 @@ import tinycolor from 'tinycolor2';
 import { selectThemeVariant, stylesFactory, useTheme } from '../../themes';
 import { renderButton } from '../Button/AbstractButton';
 import { getFocusStyle } from './commonStyles';
-import { AbstractButtonProps, StyleDeps } from '../Button/types';
+import { AbstractButtonProps, ButtonSize, ButtonVariant, StyleDeps } from '../Button/types';
+import { GrafanaTheme } from '../../types';
 
 const buttonVariantStyles = (from: string, to: string, textColor: string) => css`
   background: linear-gradient(180deg, ${from} 0%, ${to} 100%);
@@ -20,46 +21,45 @@ const buttonVariantStyles = (from: string, to: string, textColor: string) => css
   }
 `;
 
-export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: StyleDeps) => {
-  let padding, background, fontSize, iconDistance, height, borderColor;
-
+const getPropertiesForSize = (theme: GrafanaTheme, size: ButtonSize) => {
   switch (size) {
     case 'sm':
-      padding = `0 ${theme.spacing.sm}`;
-      fontSize = theme.typography.size.sm;
-      iconDistance = theme.spacing.xs;
-      height = theme.height.sm;
-      break;
+      return {
+        padding: `0 ${theme.spacing.sm}`,
+        fontSize: theme.typography.size.sm,
+        iconDistance: theme.spacing.xs,
+        height: theme.height.sm,
+      };
 
     case 'md':
-      padding = `0 ${theme.spacing.md}`;
-      fontSize = theme.typography.size.md;
-      iconDistance = theme.spacing.sm;
-      height = `${theme.spacing.formButtonHeight}px`;
-      break;
+      return {
+        padding: `0 ${theme.spacing.md}`,
+        fontSize: theme.typography.size.md,
+        iconDistance: theme.spacing.sm,
+        height: `${theme.spacing.formButtonHeight}px`,
+      };
 
     case 'lg':
-      padding = `0 ${theme.spacing.lg}`;
-      fontSize = theme.typography.size.lg;
-      iconDistance = theme.spacing.sm;
-      height = theme.height.lg;
-      break;
+      return {
+        padding: `0 ${theme.spacing.lg}`,
+        fontSize: theme.typography.size.lg,
+        iconDistance: theme.spacing.sm,
+        height: theme.height.lg,
+      };
 
     default:
-      padding = `0 ${theme.spacing.md}`;
-      iconDistance = theme.spacing.sm;
-      fontSize = theme.typography.size.base;
-      height = theme.height.md;
+      return {
+        padding: `0 ${theme.spacing.md}`,
+        iconDistance: theme.spacing.sm,
+        fontSize: theme.typography.size.base,
+        height: theme.height.md,
+      };
   }
+};
 
+const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) => {
   switch (variant) {
-    case 'primary':
-      borderColor = theme.colors.blueShade;
-      background = buttonVariantStyles(theme.colors.blueBase, theme.colors.blueShade, theme.colors.white);
-      break;
-
     case 'secondary':
-      borderColor = selectThemeVariant({ light: theme.colors.gray70, dark: theme.colors.gray33 }, theme.type);
       const from = selectThemeVariant({ light: theme.colors.gray7, dark: theme.colors.gray15 }, theme.type) as string;
       const to = selectThemeVariant(
         {
@@ -72,18 +72,33 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }
         },
         theme.type
       ) as string;
-      background = buttonVariantStyles(from, to, selectThemeVariant(
-        { light: theme.colors.gray25, dark: theme.colors.gray4 },
-        theme.type
-      ) as string);
 
-      break;
+      return {
+        borderColor: selectThemeVariant({ light: theme.colors.gray70, dark: theme.colors.gray33 }, theme.type),
+        background: buttonVariantStyles(from, to, selectThemeVariant(
+          { light: theme.colors.gray25, dark: theme.colors.gray4 },
+          theme.type
+        ) as string),
+      };
 
     case 'destructive':
-      borderColor = theme.colors.redShade;
-      background = buttonVariantStyles(theme.colors.redBase, theme.colors.redShade, theme.colors.white);
-      break;
+      return {
+        borderColor: theme.colors.redShade,
+        background: buttonVariantStyles(theme.colors.redBase, theme.colors.redShade, theme.colors.white),
+      };
+
+    case 'primary':
+    default:
+      return {
+        borderColor: theme.colors.blueShade,
+        background: buttonVariantStyles(theme.colors.blueBase, theme.colors.blueShade, theme.colors.white),
+      };
   }
+};
+
+export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: StyleDeps) => {
+  const { padding, fontSize, iconDistance, height } = getPropertiesForSize(theme, size);
+  const { background, borderColor } = getPropertiesForVariant(theme, variant);
 
   return {
     button: cx(
