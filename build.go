@@ -52,7 +52,6 @@ var (
 	skipRpmGen            bool     = false
 	skipDebGen            bool     = false
 	printGenVersion       bool     = false
-	modVendor             bool     = true
 )
 
 func main() {
@@ -71,7 +70,6 @@ func main() {
 	flag.StringVar(&pkgArch, "pkg-arch", "", "PKG ARCH")
 	flag.StringVar(&phjsToRelease, "phjs", "", "PhantomJS binary")
 	flag.BoolVar(&race, "race", race, "Use race detector")
-	flag.BoolVar(&modVendor, "modVendor", modVendor, "Go modules use vendor folder")
 	flag.BoolVar(&includeBuildId, "includeBuildId", includeBuildId, "IncludeBuildId in package name")
 	flag.BoolVar(&enterprise, "enterprise", enterprise, "Build enterprise version of Grafana")
 	flag.StringVar(&buildIdRaw, "buildId", "0", "Build ID from CI system")
@@ -508,9 +506,6 @@ func build(binaryName, pkg string, tags []string) {
 	}
 	if race {
 		args = append(args, "-race")
-	}
-	if modVendor {
-		args = append(args, "-mod=vendor")
 	}
 
 	args = append(args, "-o", binary)

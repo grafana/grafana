@@ -1,1 +1,0 @@
-go test -db=sqlite3 -conn_str="./test.db?cache=shared&mode=rwc" -cache=true
