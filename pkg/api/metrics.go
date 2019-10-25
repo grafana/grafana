@@ -27,12 +27,21 @@ func (hs *HTTPServer) QueryMetricsV2(c *m.ReqContext, reqDto dtos.MetricRequest)
 		return Error(400, "No queries found in query", nil)
 	}
 
-	datasourceId, err := reqDto.Queries[0].Get("datasourceId").Int64()
-	if err != nil {
-		return Error(400, "Query missing datasourceId", nil)
+	var datasourceID int64
+	for _, query := range reqDto.Queries {
+		name, err := query.Get("datasource").String()
+		if err != nil {
+			return Error(500, "datasource missing name", err)
+		}
+		datasourceID, err = query.Get("datasourceId").Int64()
+		if err != nil {
+			return Error(400, "GEL datasource missing ID", nil)
+		}
+		if name == "-- GEL --" {
+			break
+		}
 	}
-
-	ds, err := hs.DatasourceCache.GetDatasource(datasourceId, c.SignedInUser, c.SkipCache)
+	ds, err := hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		if err == m.ErrDataSourceAccessDenied {
 			return Error(403, "Access denied to datasource", err)
