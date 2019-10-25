@@ -1,9 +1,10 @@
 import { FC } from 'react';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
 import { selectThemeVariant, stylesFactory, useTheme } from '../../themes';
-import { AbstractButtonProps, StyleDeps } from '../Button/types';
 import { renderButton } from '../Button/AbstractButton';
+import { getFocusStyle } from './commonStyles';
+import { AbstractButtonProps, StyleDeps } from '../Button/types';
 
 const buttonVariantStyles = (from: string, to: string, textColor: string) => css`
   background: linear-gradient(180deg, ${from} 0%, ${to} 100%);
@@ -85,47 +86,34 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }
   }
 
   return {
-    button: css`
-      position: relative;
-      label: button;
-      display: inline-flex;
-      align-items: center;
-      font-weight: ${theme.typography.weight.semibold};
-      font-size: ${fontSize};
-      font-family: ${theme.typography.fontFamily.sansSerif};
-      line-height: ${theme.typography.lineHeight.sm};
-      padding: ${padding};
-      text-align: ${withIcon ? 'left' : 'center'};
-      vertical-align: middle;
-      cursor: pointer;
-      border: 1px solid ${borderColor};
-      height: ${height};
-      border-radius: ${theme.border.radius.sm};
-      ${background};
+    button: cx(
+      css`
+        position: relative;
+        label: button;
+        display: inline-flex;
+        align-items: center;
+        font-weight: ${theme.typography.weight.semibold};
+        font-size: ${fontSize};
+        font-family: ${theme.typography.fontFamily.sansSerif};
+        line-height: ${theme.typography.lineHeight.sm};
+        padding: ${padding};
+        text-align: ${withIcon ? 'left' : 'center'};
+        vertical-align: middle;
+        cursor: pointer;
+        border: 1px solid ${borderColor};
+        height: ${height};
+        border-radius: ${theme.border.radius.sm};
+        ${background};
 
-      &[disabled],
-      &:disabled {
-        cursor: not-allowed;
-        opacity: 0.65;
-        box-shadow: none;
-      }
-
-      &[focus],
-      &:focus {
-        &:before {
-          content: '';
-          position: absolute;
-          border: 2px solid ${theme.colors.blueLight};
-          border-radius: ${theme.border.radius.lg};
-          background-color: ${theme.colors.bodyBg};
-          height: calc(100% + 8px);
-          width: calc(100% + 8px);
-          top: -4px;
-          left: -4px;
-          z-index: -1;
+        &[disabled],
+        &:disabled {
+          cursor: not-allowed;
+          opacity: 0.65;
+          box-shadow: none;
         }
-      }
-    `,
+      `,
+      getFocusStyle(theme)
+    ),
     iconWrap: css`
       label: button-icon-wrap;
       display: flex;
