@@ -45,21 +45,13 @@ type DataSourcePlugin struct {
 	client *plugin.Client
 }
 
-func isExpressionsEnabled() bool {
-	v, ok := setting.FeatureToggles["expressions"]
-	if !ok {
-		return false
-	}
-	return v
-}
-
 func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string) error {
 	if err := decoder.Decode(&p); err != nil {
 		return err
 	}
 
-	if !p.isVersionOne() && !isExpressionsEnabled() {
-		return errors.New("A plugin version 2 was found but expressions feature toggle are not enabled")
+	if !p.isVersionOne() && !setting.IsExpressionsEnabled() {
+		return errors.New("A plugin version 2 was found but expressions feature toggle is not enabled")
 	}
 
 	if err := p.registerPlugin(pluginDir); err != nil {
