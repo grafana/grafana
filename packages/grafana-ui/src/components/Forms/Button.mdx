@@ -1,13 +1,11 @@
-import { Meta, Story, Preview } from '@storybook/addon-docs/blocks';
+import { Meta, Story, Preview, Props } from '@storybook/addon-docs/blocks';
 import { Button } from './Button';
 
 <Meta title="MDX|Button" component={Button} />
 
 # Button
 
-## Variants
-
-### Primary
+## Primary
 
 Used for "call to action".
 
@@ -25,7 +23,7 @@ Used for "call to action".
   </div>
 </Preview>
 
-### Secondary
+## Secondary
 
 The secondary button, used for "cancel" or aborting.
 
@@ -43,7 +41,7 @@ The secondary button, used for "cancel" or aborting.
   </div>
 </Preview>
 
-### Destructive
+## Destructive
 
 Used for removing or deleting entities.
 
@@ -60,3 +58,6 @@ Used for removing or deleting entities.
     </Button>
   </div>
 </Preview>
+
+
+<Props of={Button} />
