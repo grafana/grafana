@@ -17,6 +17,8 @@ func (p Password) IsWeak() bool {
 	return len(p) <= 4
 }
 
+var Admin = &User{Id: 0, Name: "admin"}
+
 type User struct {
 	Id            int64
 	Version       int

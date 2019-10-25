@@ -25,8 +25,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/infra/serverlock"
 	_ "github.com/grafana/grafana/pkg/infra/tracing"
 	_ "github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware"
 	_ "github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
@@ -84,9 +82,6 @@ type Server struct {
 func (s *Server) Run() (err error) {
 	s.loadConfiguration()
 	s.writePIDFile()
-
-	login.Init()
-	social.NewOAuthService()
 
 	services := registry.GetServices()
 

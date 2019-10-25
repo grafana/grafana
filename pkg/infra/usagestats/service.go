@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -27,11 +26,7 @@ type UsageStatsService struct {
 	oauthProviders map[string]bool
 }
 
-func (uss *UsageStatsService) Init() error {
-
-	uss.oauthProviders = social.GetOAuthProviders(uss.Cfg)
-	return nil
-}
+func (uss *UsageStatsService) Init() error { return nil }
 
 func (uss *UsageStatsService) Run(ctx context.Context) error {
 	uss.updateTotalStats()
