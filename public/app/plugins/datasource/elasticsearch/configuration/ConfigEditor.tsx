@@ -34,17 +34,7 @@ export const ConfigEditor = (props: Props) => {
         onChange={onOptionsChange}
       />
 
-      <ElasticDetails
-        value={options}
-        onChange={value => {
-          // We need to do this as selecting no value would not overwrite the data during merge of objects. So we set
-          // explicit value which mean this field should be empty and then delete that value before saving.
-          if (value.jsonData.interval === 'none') {
-            delete value.jsonData.interval;
-          }
-          onOptionsChange(value);
-        }}
-      />
+      <ElasticDetails value={options} onChange={onOptionsChange} />
 
       <LogsConfig
         value={options.jsonData}

@@ -3,7 +3,7 @@ import { DataSourceSettings, EventsWithValidation, FormField, Input, regexValida
 import { ElasticsearchOptions } from '../types';
 
 const indexPatternTypes = [
-  { name: 'No pattern', value: 'none' },
+  { name: 'No pattern' },
   { name: 'Hourly', value: 'Hourly', example: '[logstash-]YYYY.MM.DD.HH' },
   { name: 'Daily', value: 'Daily', example: '[logstash-]YYYY.MM.DD' },
   { name: 'Weekly', value: 'Weekly', example: '[logstash-]GGGG.WW' },
@@ -56,7 +56,7 @@ export const ElasticDetails = (props: Props) => {
                   onChange={intervalHandler(value, onChange)}
                 >
                   {indexPatternTypes.map(pattern => (
-                    <option key={pattern.value} value={pattern.value}>
+                    <option key={pattern.value || 'undefined'} value={pattern.value || 'none'}>
                       {pattern.name}
                     </option>
                   ))}
@@ -171,11 +171,12 @@ const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => 
   event: React.SyntheticEvent<HTMLSelectElement>
 ) => {
   const { database } = value;
-  const newInterval = event.currentTarget.value;
+  // If option value is undefined it will send its label instead so we have to convert made up value to undefined here.
+  const newInterval = event.currentTarget.value === 'none' ? undefined : event.currentTarget.value;
 
   if (!database || database.length === 0 || database.startsWith('[logstash-]')) {
     let newDatabase = '';
-    if (newInterval !== 'none') {
+    if (newInterval !== undefined) {
       const pattern = indexPatternTypes.find(pattern => pattern.value === newInterval);
       if (pattern) {
         newDatabase = pattern.example;
