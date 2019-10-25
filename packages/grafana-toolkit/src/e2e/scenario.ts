@@ -1,6 +1,5 @@
 import { Browser, Page } from 'puppeteer-core';
 import { launchBrowser } from './launcher';
-import { ensureLoggedIn } from './login';
 
 export const e2eScenario = (
   title: string,
@@ -14,7 +13,6 @@ export const e2eScenario = (
     beforeAll(async () => {
       browser = await launchBrowser();
       page = await browser.newPage();
-      await ensureLoggedIn(page);
     });
 
     afterAll(async () => {

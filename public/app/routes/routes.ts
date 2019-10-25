@@ -10,7 +10,6 @@ import config from 'app/core/config';
 import { route, ILocationProvider } from 'angular';
 // Types
 import { DashboardRouteInfo } from 'app/types';
-import { LoginPage } from 'app/core/components/Login/LoginPage';
 import { SafeDynamicImport } from '../core/components/SafeDynamicImport';
 
 /** @ngInject */
@@ -320,14 +319,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
         component: () => LdapPage,
       },
     })
-    // LOGIN / SIGNUP
-    .when('/login', {
-      template: '<react-container/>',
-      resolve: {
-        component: () => LoginPage,
-      },
-      pageClass: 'login-page sidemenu-hidden',
-    })
+    // SIGNUP
     .when('/invite/:code', {
       templateUrl: 'public/app/partials/signup_invited.html',
       controller: 'InvitedCtrl',

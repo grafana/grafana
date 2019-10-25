@@ -6,10 +6,7 @@ import (
 	"net/url"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -98,48 +95,9 @@ func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) Response {
 }
 
 func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Response {
-	if setting.DisableLoginForm {
-		return Error(401, "Login is disabled", nil)
-	}
+	hs.loginUserWithUser(models.Admin, c)
 
-	authQuery := &models.LoginUserQuery{
-		ReqContext: c,
-		Username:   cmd.User,
-		Password:   cmd.Password,
-		IpAddress:  c.Req.RemoteAddr,
-	}
-
-	if err := bus.Dispatch(authQuery); err != nil {
-		e401 := Error(401, "Invalid username or password", err)
-		if err == login.ErrInvalidCredentials || err == login.ErrTooManyLoginAttempts {
-			return e401
-		}
-
-		// Do not expose disabled status,
-		// just show incorrect user credentials error (see #17947)
-		if err == login.ErrUserDisabled {
-			hs.log.Warn("User is disabled", "user", cmd.User)
-			return e401
-		}
-
-		return Error(500, "Error while trying to authenticate user", err)
-	}
-
-	user := authQuery.User
-
-	hs.loginUserWithUser(user, c)
-
-	result := map[string]interface{}{
-		"message": "Logged in",
-	}
-
-	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
-		result["redirectUrl"] = redirectTo
-		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
-	}
-
-	metrics.MApiLoginPost.Inc()
-	return JSON(200, result)
+	return JSON(200, []byte("OK"))
 }
 
 func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext) {
