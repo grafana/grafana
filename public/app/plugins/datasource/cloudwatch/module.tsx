@@ -1,7 +1,7 @@
 import { DataSourcePlugin } from '@grafana/ui';
 import { CloudWatchQueryCtrl } from './query_ctrl';
 import Datasource from './datasource';
-import { ConfigEditor } from './ConfigEditor';
+import { ConfigEditor } from './components/ConfigEditor';
 
 class CloudWatchAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';

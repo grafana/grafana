@@ -2,15 +2,15 @@ import React, { PureComponent, ChangeEvent } from 'react';
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings, FormLabel, Select, Input, Button } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import DatasourceSrv, { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import CloudWatchDatasource from './datasource';
-import { CloudWatchOptions } from './types';
+import CloudWatchDatasource from '../datasource';
+import { CloudWatchOptions } from '../types';
 
 export type Props = DataSourcePluginOptionsEditorProps<any>;
 
 export type CloudwatchSettings = DataSourceSettings<CloudWatchOptions>;
 
 export interface State {
-  config: CloudwatchSettings;
+  config: CloudWatchOptions;
   authProviderOptions: SelectableValue[];
   regions: SelectableValue[];
 }
@@ -24,7 +24,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     const { options } = this.props;
 
     this.state = {
-      config: ConfigEditor.keyFill(options),
+      config: ConfigEditor.defaults(options),
       authProviderOptions: [
         { label: 'Access & secret key', value: 'keys' },
         { label: 'Credentials file', value: 'credentials' },
@@ -41,33 +41,24 @@ export class ConfigEditor extends PureComponent<Props, State> {
   static getDerivedStateFromProps(props: Props, state: State) {
     return {
       ...state,
-      config: ConfigEditor.keyFill(props.options),
+      config: ConfigEditor.defaults(props.options),
     };
   }
 
-  static keyFill = (options: any) => {
+  static defaults = (options: any) => {
     options.jsonData.authType = options.jsonData.authType || 'credentials';
     options.jsonData.timeField = options.jsonData.timeField || '@timestamp';
 
-    if (!options.hasOwnProperty('editorSecureJsonData')) {
-      options.editorSecureJsonData = {
-        accessKey: '',
-        secretKey: '',
-      };
+    if (!options.hasOwnProperty('secureJsonData')) {
+      options.secureJsonData = {};
     }
 
-    if (!options.hasOwnProperty('editorJsonData')) {
-      options.editorJsonData = {
-        assumeRoleArn: '',
-        customMetricsNamespaces: '',
-      };
+    if (!options.hasOwnProperty('jsonData')) {
+      options.jsonData = {};
     }
 
     if (!options.hasOwnProperty('secureJsonFields')) {
-      options.secureJsonFields = {
-        accessKey: false,
-        secretKey: false,
-      };
+      options.secureJsonFields = {};
     }
 
     return options;
@@ -107,16 +98,16 @@ export class ConfigEditor extends PureComponent<Props, State> {
       }
     }
 
-    for (const m in config.editorJsonData) {
+    for (const m in config.jsonData) {
       if (!config.hasOwnProperty('jsonData')) {
         config.jsonData = {};
       }
-      if (config.editorJsonData[m].length === 0) {
+      if (config.jsonData[m].length === 0) {
         if (config.hasOwnProperty('jsonData') && config.jsonData.hasOwnProperty(m)) {
           delete config.jsonData[m];
         }
       } else {
-        config.jsonData[m] = config.editorJsonData[m];
+        config.jsonData[m] = config.jsonData[m];
       }
     }
 
@@ -126,16 +117,16 @@ export class ConfigEditor extends PureComponent<Props, State> {
       }
     }
 
-    for (const l in config.editorSecureJsonData) {
+    for (const l in config.secureJsonData) {
       if (!config.hasOwnProperty('secureJsonData')) {
         config.secureJsonData = {};
       }
-      if (config.editorSecureJsonData[l].length === 0) {
+      if (config.secureJsonData[l].length === 0) {
         if (config.hasOwnProperty('secureJsonData') && config.secureJsonData.hasOwnProperty(l)) {
           delete config.secureJsonData[l];
         }
       } else {
-        config.secureJsonData[l] = config.editorSecureJsonData[l];
+        config.secureJsonData[l] = config.secureJsonData[l];
       }
     }
 
@@ -147,8 +138,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
   onAuthProviderChange = (authType: SelectableValue<string>) => {
     this.updateDatasource({
       ...this.state.config,
-      editorJsonData: {
-        ...this.state.config.editorJsonData,
+      jsonData: {
+        ...this.state.config.jsonData,
         authType: authType.value,
       },
     });
@@ -157,8 +148,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
   onRegionChange = (defaultRegion: SelectableValue<string>) => {
     this.updateDatasource({
       ...this.state.config,
-      editorJsonData: {
-        ...this.state.config.editorJsonData,
+      jsonData: {
+        ...this.state.config.jsonData,
         defaultRegion: defaultRegion.value,
       },
     });
@@ -167,7 +158,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
   onResetAccessKey = () => {
     this.updateDatasource({
       ...this.state.config,
-      version: this.state.config.version + 1,
       secureJsonFields: {
         ...this.state.config.secureJsonFields,
         accessKey: false,
@@ -178,8 +168,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
   onAccessKeyChange = (accessKey: string) => {
     this.updateDatasource({
       ...this.state.config,
-      editorSecureJsonData: {
-        ...this.state.config.editorSecureJsonData,
+      secureJsonData: {
+        ...this.state.config.secureJsonData,
         accessKey,
       },
     });
@@ -188,7 +178,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
   onResetSecretKey = () => {
     this.updateDatasource({
       ...this.state.config,
-      version: this.state.config.version + 1,
       secureJsonFields: {
         ...this.state.config.secureJsonFields,
         secretKey: false,
@@ -199,8 +188,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
   onSecretKeyChange = (secretKey: string) => {
     this.updateDatasource({
       ...this.state.config,
-      editorSecureJsonData: {
-        ...this.state.config.editorSecureJsonData,
+      secureJsonData: {
+        ...this.state.config.secureJsonData,
         secretKey,
       },
     });
@@ -216,8 +205,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
   onArnAssumeRoleChange = (assumeRoleArn: string) => {
     this.updateDatasource({
       ...this.state.config,
-      editorJsonData: {
-        ...this.state.config.editorJsonData,
+      jsonData: {
+        ...this.state.config.jsonData,
         assumeRoleArn,
       },
     });
@@ -226,8 +215,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
   onCustomMetricsNamespacesChange = (customMetricsNamespaces: string) => {
     this.updateDatasource({
       ...this.state.config,
-      editorJsonData: {
-        ...this.state.config.editorJsonData,
+      jsonData: {
+        ...this.state.config.jsonData,
         customMetricsNamespaces,
       },
     });
@@ -242,9 +231,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         <div className="gf-form-group">
           <div className="gf-form-inline">
             <div className="gf-form">
-              <FormLabel className="width-14" tooltip="Choose an Azure Cloud.">
-                Auth Provider
-              </FormLabel>
+              <FormLabel className="width-14">Auth Provider</FormLabel>
               <Select
                 className="width-15"
                 value={authProviderOptions.find(authProvider => authProvider.value === config.jsonData.authType)}
@@ -267,7 +254,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                   <Input
                     className="width-30"
                     placeholder="default"
-                    value={config.editorJsonData.database}
+                    value={config.jsonData.database}
                     onChange={(event: ChangeEvent<HTMLInputElement>) =>
                       this.onCredentialProfileNameChange(event.target.value)
                     }
@@ -299,7 +286,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                     <div className="width-15">
                       <Input
                         className="width-30"
-                        value={config.editorSecureJsonData.accessKey}
+                        value={config.secureJsonData.accessKey || ''}
                         onChange={(event: ChangeEvent<HTMLInputElement>) => this.onAccessKeyChange(event.target.value)}
                       />
                     </div>
@@ -327,7 +314,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                     <div className="width-15">
                       <Input
                         className="width-30"
-                        value={config.editorSecureJsonData.secretKey}
+                        value={config.secureJsonData.secretKey || ''}
                         onChange={(event: ChangeEvent<HTMLInputElement>) => this.onSecretKeyChange(event.target.value)}
                       />
                     </div>
@@ -346,7 +333,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                   <Input
                     className="width-30"
                     placeholder="arn:aws:iam:*"
-                    value={config.editorJsonData.assumeRoleArn}
+                    value={config.jsonData.assumeRoleArn || ''}
                     onChange={(event: ChangeEvent<HTMLInputElement>) => this.onArnAssumeRoleChange(event.target.value)}
                   />
                 </div>
@@ -378,7 +365,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               <Input
                 className="width-30"
                 placeholder="Namespace1,Namespace2"
-                value={config.editorJsonData.customMetricsNamespaces}
+                value={config.jsonData.customMetricsNamespaces || ''}
                 onChange={(event: ChangeEvent<HTMLInputElement>) =>
                   this.onCustomMetricsNamespacesChange(event.target.value)
                 }

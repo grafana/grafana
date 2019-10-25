@@ -12,9 +12,21 @@ export interface CloudWatchQuery extends DataQuery {
 }
 
 export interface CloudWatchOptions extends DataSourceJsonData {
-  version: number;
-  jsonData: object;
-  editorJsonData?: object;
-  secureJsonData: object;
-  editorSecureJsonData?: object;
+  name: string;
+  jsonData: {
+    authType: string;
+    defaultRegion: string;
+    timeField: string;
+    assumeRoleArn: string;
+    database: string;
+    customMetricsNamespaces: string;
+  };
+  secureJsonData?: {
+    accessKey: string;
+    secretKey: string;
+  };
+  secureJsonFields: {
+    accessKey: boolean;
+    secretKey: boolean;
+  };
 }
