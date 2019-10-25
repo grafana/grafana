@@ -21,19 +21,14 @@ describe('ElasticDetails', () => {
   });
 
   it('should change database on interval change when not set explicitly', () => {
-    expect.assertions(2);
-    const wrapper = mount(
-      <ElasticDetails
-        onChange={value => {
-          expect(value.jsonData.interval).toBe('Daily');
-          expect(value.database).toBe('[logstash-]YYYY.MM.DD');
-        }}
-        value={createDefaultConfigOptions()}
-      />
-    );
+    const onChangeMock = jest.fn();
+    const wrapper = mount(<ElasticDetails onChange={onChangeMock} value={createDefaultConfigOptions()} />);
     const patternEl = wrapper.find('[aria-label="Pattern select"]');
     (patternEl.getDOMNode() as any).value = 'Daily';
     patternEl.simulate('change');
+
+    expect(onChangeMock.mock.calls[0][0].jsonData.interval).toBe('Daily');
+    expect(onChangeMock.mock.calls[0][0].database).toBe('[logstash-]YYYY.MM.DD');
   });
 
   it('should change database on interval change if pattern is from example', () => {
