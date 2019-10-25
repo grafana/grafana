@@ -168,7 +168,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
           appEvents.emit('ds-request-error', err.data.error);
         }
 
-        if (/^ThrottlingException:.*/.test(err.data.error)) {
+        if (/^Throttling:.*/.test(err.data.error)) {
           displayThrottlingError();
         }
         throw err;
