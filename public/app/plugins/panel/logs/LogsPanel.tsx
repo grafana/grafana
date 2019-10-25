@@ -1,5 +1,5 @@
 import React from 'react';
-import { PanelProps, LogRows, CustomScrollbar } from '@grafana/ui';
+import { PanelProps, LogRows, CustomScrollbar, DerivedField } from '@grafana/ui';
 import { Options } from './types';
 import { LogsDedupStrategy } from '@grafana/data';
 import { dataFrameToLogsModel } from 'app/core/logs_model';
@@ -11,7 +11,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   data,
   timeZone,
   options: { showTime, sortOrder },
-  width,
+  datasource,
 }) => {
   if (!data) {
     return (
@@ -19,6 +19,14 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
         <p>No data found in response</p>
       </div>
     );
+  }
+
+  async function getDerivedFields(rowData: Record<string, any>): Promise<DerivedField[]> {
+    if (datasource && datasource.getDerivedFields) {
+      return datasource.getDerivedFields(rowData);
+    }
+
+    return [];
   }
 
   const newResults = data ? dataFrameToLogsModel(data.series, data.request.intervalMs) : null;
@@ -33,7 +41,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
         showTime={showTime}
         showLabels={false}
         timeZone={timeZone}
-        getDerivedFields={async () => []}
+        getDerivedFields={getDerivedFields}
       />
     </CustomScrollbar>
   );

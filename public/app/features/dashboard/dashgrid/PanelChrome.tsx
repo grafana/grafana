@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import { Unsubscribable } from 'rxjs';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { ErrorBoundary, PanelData, PanelPlugin } from '@grafana/ui';
+import { DataSourceApi, ErrorBoundary, PanelData, PanelPlugin } from '@grafana/ui';
 // Utils & Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides, calculateInnerPanelHeight } from 'app/features/dashboard/utils/panel';
@@ -16,6 +16,7 @@ import config from 'app/core/config';
 import { DashboardModel, PanelModel } from '../state';
 import { LoadingState, ScopedVars, AbsoluteTimeRange, DefaultTimeRange, toUtc, toDataFrameDTO } from '@grafana/data';
 import { PanelEvents } from '@grafana/ui';
+import { getDatasourceSrv } from '../../plugins/datasource_srv';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -37,6 +38,7 @@ export interface State {
 
   // Current state of all events
   data: PanelData;
+  datasourceInstance?: DataSourceApi<any>;
 }
 
 export class PanelChrome extends PureComponent<Props, State> {
@@ -89,7 +91,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     }
   }
 
-  componentDidUpdate(prevProps: Props) {
+  async componentDidUpdate(prevProps: Props) {
     const { isInView } = this.props;
 
     // View state has changed
@@ -103,6 +105,11 @@ export class PanelChrome extends PureComponent<Props, State> {
         this.querySubscription.unsubscribe();
         this.querySubscription = null;
       }
+    }
+
+    const datasourceInstance = await getDatasourceSrv().get(this.props.panel.datasource, this.props.panel.scopedVars);
+    if (datasourceInstance.name === this.props.panel.datasource) {
+      this.setState({ datasourceInstance });
     }
   }
 
@@ -235,7 +242,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   renderPanel(width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
-    const { renderCounter, data, isFirstLoad } = this.state;
+    const { renderCounter, data, isFirstLoad, datasourceInstance } = this.state;
     const { theme } = config;
 
     // This is only done to increase a counter that is used by backend
@@ -246,7 +253,10 @@ export class PanelChrome extends PureComponent<Props, State> {
     }
 
     // do not render component until we have first data
-    if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
+    if (
+      (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) ||
+      !datasourceInstance
+    ) {
       return this.renderLoadingState();
     }
 
@@ -271,6 +281,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             replaceVariables={this.replaceVariables}
             onOptionsChange={this.onOptionsChange}
             onChangeTimeRange={this.onChangeTimeRange}
+            datasource={datasourceInstance}
           />
         </div>
       </>

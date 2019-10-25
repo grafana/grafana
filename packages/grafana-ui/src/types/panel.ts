@@ -1,6 +1,6 @@
 import { ComponentClass, ComponentType } from 'react';
 import { LoadingState, DataFrame, TimeRange, TimeZone, ScopedVars, AbsoluteTimeRange } from '@grafana/data';
-import { DataQueryRequest, DataQueryError } from './datasource';
+import { DataQueryRequest, DataQueryError, DataSourceApi } from './datasource';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
@@ -33,6 +33,7 @@ export interface PanelProps<T = any> {
   height: number;
   replaceVariables: InterpolateFunction;
   onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
+  datasource: DataSourceApi<any, any>;
 }
 
 export interface PanelEditorProps<T = any> {

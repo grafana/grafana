@@ -23,7 +23,7 @@ export interface Props extends Themeable {
   rowLimit?: number;
   onClickLabel?: (label: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
-  getDerivedFields: (row: LogRowModel) => Promise<DerivedField[]>;
+  getDerivedFields: (row: Record<string, any>) => Promise<DerivedField[]>;
 }
 
 interface State {

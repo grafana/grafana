@@ -80,11 +80,11 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     return [];
   };
 
-  getDerivedFields = async (row: LogRowModel): Promise<DerivedField[]> => {
+  getDerivedFields = async (rowData: Record<string, any>): Promise<DerivedField[]> => {
     const { datasourceInstance } = this.props;
 
     if (datasourceInstance && datasourceInstance.getDerivedFields) {
-      return datasourceInstance.getDerivedFields(row);
+      return datasourceInstance.getDerivedFields(rowData);
     }
 
     return [];

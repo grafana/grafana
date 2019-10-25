@@ -45,7 +45,7 @@ interface Props {
   onDedupStrategyChange: (dedupStrategy: LogsDedupStrategy) => void;
   onToggleLogLevel: (hiddenLogLevels: LogLevel[]) => void;
   getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
-  getDerivedFields: (row: LogRowModel) => Promise<DerivedField[]>;
+  getDerivedFields: (row: Record<string, any>) => Promise<DerivedField[]>;
 }
 
 interface State {

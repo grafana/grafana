@@ -25,7 +25,7 @@ interface Props extends Themeable {
   onClickLabel?: (label: string, value: string) => void;
   onContextClick?: () => void;
   getRowContext: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>;
-  getDerivedFields: (row: LogRowModel) => Promise<DerivedField[]>;
+  getDerivedFields: (row: Record<string, any>) => Promise<DerivedField[]>;
 }
 
 interface State {
