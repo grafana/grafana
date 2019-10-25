@@ -1,22 +1,23 @@
 import React from 'react';
-import { DataSourceSettings, EventsWithValidation, FormField, Input, regexValidation } from '@grafana/ui';
+import { DataSourceSettings, EventsWithValidation, FormField, Input, regexValidation, Select } from '@grafana/ui';
 import { ElasticsearchOptions } from '../types';
+import { SelectableValue } from '@grafana/data';
 
 const indexPatternTypes = [
-  { name: 'No pattern' },
-  { name: 'Hourly', value: 'Hourly', example: '[logstash-]YYYY.MM.DD.HH' },
-  { name: 'Daily', value: 'Daily', example: '[logstash-]YYYY.MM.DD' },
-  { name: 'Weekly', value: 'Weekly', example: '[logstash-]GGGG.WW' },
-  { name: 'Monthly', value: 'Monthly', example: '[logstash-]YYYY.MM' },
-  { name: 'Yearly', value: 'Yearly', example: '[logstash-]YYYY' },
+  { label: 'No pattern', value: 'none' },
+  { label: 'Hourly', value: 'Hourly', example: '[logstash-]YYYY.MM.DD.HH' },
+  { label: 'Daily', value: 'Daily', example: '[logstash-]YYYY.MM.DD' },
+  { label: 'Weekly', value: 'Weekly', example: '[logstash-]GGGG.WW' },
+  { label: 'Monthly', value: 'Monthly', example: '[logstash-]YYYY.MM' },
+  { label: 'Yearly', value: 'Yearly', example: '[logstash-]YYYY' },
 ];
 
 const esVersions = [
-  { name: '2.x', value: 2 },
-  { name: '5.x', value: 5 },
-  { name: '5.6+', value: 56 },
-  { name: '6.0+', value: 60 },
-  { name: '7.0+', value: 70 },
+  { label: '2.x', value: 2 },
+  { label: '5.x', value: 5 },
+  { label: '5.6+', value: 56 },
+  { label: '6.0+', value: 60 },
+  { label: '7.0+', value: 70 },
 ];
 
 type Props = {
@@ -49,18 +50,14 @@ export const ElasticDetails = (props: Props) => {
               labelWidth={10}
               label="Pattern"
               inputEl={
-                <select
-                  aria-label={'Pattern select'}
-                  className="gf-form-input gf-size-auto"
-                  value={value.jsonData.interval}
+                <Select
+                  options={indexPatternTypes}
                   onChange={intervalHandler(value, onChange)}
-                >
-                  {indexPatternTypes.map(pattern => (
-                    <option key={pattern.value || 'undefined'} value={pattern.value || 'none'}>
-                      {pattern.name}
-                    </option>
-                  ))}
-                </select>
+                  value={indexPatternTypes.find(
+                    pattern =>
+                      pattern.value === (value.jsonData.interval === undefined ? 'none' : value.jsonData.interval)
+                  )}
+                />
               }
             />
           </div>
@@ -83,17 +80,24 @@ export const ElasticDetails = (props: Props) => {
               labelWidth={10}
               label="Version"
               inputEl={
-                <select
-                  className="gf-form-input gf-size-auto"
-                  value={value.jsonData.esVersion}
-                  onChange={jsonDataChangeHandler('esVersion', value, onChange)}
-                >
-                  {esVersions.map(version => (
-                    <option key={version.value} value={version.value}>
-                      {version.name}
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  options={esVersions}
+                  onChange={option => {
+                    const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(
+                      value.jsonData.maxConcurrentShardRequests,
+                      option.value
+                    );
+                    onChange({
+                      ...value,
+                      jsonData: {
+                        ...value.jsonData,
+                        esVersion: option.value,
+                        maxConcurrentShardRequests,
+                      },
+                    });
+                  }}
+                  value={esVersions.find(version => version.value === value.jsonData.esVersion)}
+                />
               }
             />
           </span>
@@ -167,12 +171,10 @@ const jsonDataChangeHandler = (key: keyof ElasticsearchOptions, value: Props['va
   });
 };
 
-const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => (
-  event: React.SyntheticEvent<HTMLSelectElement>
-) => {
+const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => (option: SelectableValue<string>) => {
   const { database } = value;
   // If option value is undefined it will send its label instead so we have to convert made up value to undefined here.
-  const newInterval = event.currentTarget.value === 'none' ? undefined : event.currentTarget.value;
+  const newInterval = option.value === 'none' ? undefined : option.value;
 
   if (!database || database.length === 0 || database.startsWith('[logstash-]')) {
     let newDatabase = '';
@@ -201,3 +203,19 @@ const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => 
     });
   }
 };
+
+function getMaxConcurrenShardRequestOrDefault(maxConcurrentShardRequests: number, version: number): number {
+  if (maxConcurrentShardRequests === 5 && version < 70) {
+    return 256;
+  }
+
+  if (maxConcurrentShardRequests === 256 && version >= 70) {
+    return 5;
+  }
+
+  return maxConcurrentShardRequests || defaultMaxConcurrentShardRequests(version);
+}
+
+export function defaultMaxConcurrentShardRequests(version: number) {
+  return version >= 70 ? 5 : 256;
+}

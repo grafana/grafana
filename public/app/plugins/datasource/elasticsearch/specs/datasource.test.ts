@@ -646,27 +646,3 @@ describe('ElasticDatasource', function(this: any) {
     });
   });
 });
-
-describe('getMaxConcurrenShardRequestOrDefault', () => {
-  const testCases = [
-    { version: 50, expectedMaxConcurrentShardRequests: 256 },
-    { version: 50, maxConcurrentShardRequests: 50, expectedMaxConcurrentShardRequests: 50 },
-    { version: 56, expectedMaxConcurrentShardRequests: 256 },
-    { version: 56, maxConcurrentShardRequests: 256, expectedMaxConcurrentShardRequests: 256 },
-    { version: 56, maxConcurrentShardRequests: 5, expectedMaxConcurrentShardRequests: 256 },
-    { version: 56, maxConcurrentShardRequests: 200, expectedMaxConcurrentShardRequests: 200 },
-    { version: 70, expectedMaxConcurrentShardRequests: 5 },
-    { version: 70, maxConcurrentShardRequests: 256, expectedMaxConcurrentShardRequests: 5 },
-    { version: 70, maxConcurrentShardRequests: 5, expectedMaxConcurrentShardRequests: 5 },
-    { version: 70, maxConcurrentShardRequests: 6, expectedMaxConcurrentShardRequests: 6 },
-  ];
-
-  testCases.forEach(tc => {
-    it(`version = ${tc.version}, maxConcurrentShardRequests = ${tc.maxConcurrentShardRequests}`, () => {
-      const options = { esVersion: tc.version, maxConcurrentShardRequests: tc.maxConcurrentShardRequests };
-      expect(getMaxConcurrenShardRequestOrDefault(options as ElasticsearchOptions)).toBe(
-        tc.expectedMaxConcurrentShardRequests
-      );
-    });
-  });
-});
