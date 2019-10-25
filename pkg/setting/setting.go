@@ -1094,3 +1094,11 @@ func (cfg *Cfg) LogConfigSources() {
 	cfg.Logger.Info("Path Provisioning", "path", cfg.ProvisioningPath)
 	cfg.Logger.Info("App mode " + Env)
 }
+
+func IsExpressionsEnabled() bool {
+	v, ok := FeatureToggles["expressions"]
+	if !ok {
+		return false
+	}
+	return v
+}
