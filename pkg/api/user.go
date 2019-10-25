@@ -341,6 +341,8 @@ func GetAuthProviderLabel(authModule string) string {
 		return "GitHub"
 	case "oauth_google":
 		return "Google"
+	case "oauth_azuread":
+		return "AzureAD"
 	case "oauth_gitlab":
 		return "GitLab"
 	case "oauth_grafana_com", "oauth_grafananet":

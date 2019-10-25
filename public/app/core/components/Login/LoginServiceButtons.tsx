@@ -15,6 +15,10 @@ const loginServices: () => LoginServices = () => {
       enabled: oauthEnabled && config.oauth.google,
       name: 'Google',
     },
+    azuread: {
+      enabled: config.oauth.azuread,
+      name: 'Azure AD',
+    },
     github: {
       enabled: oauthEnabled && config.oauth.github,
       name: 'GitHub',

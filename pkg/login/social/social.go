@@ -55,7 +55,7 @@ const (
 var (
 	SocialBaseUrl = "/login/"
 	SocialMap     = make(map[string]SocialConnector)
-	allOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom}
+	allOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom, "azuread"}
 )
 
 func NewOAuthService() {
@@ -147,6 +147,20 @@ func NewOAuthService() {
 				},
 				allowedDomains: info.AllowedDomains,
 				hostedDomain:   info.HostedDomain,
+				apiUrl:         info.ApiUrl,
+				allowSignup:    info.AllowSignup,
+			}
+		}
+
+		// AzureAD.
+		if name == "azuread" {
+			SocialMap["azuread"] = &SocialAzureAD{
+				SocialBase: &SocialBase{
+					Config: &config,
+					log:    logger,
+				},
+				allowedDomains: info.AllowedDomains,
+				wellKnwonUrl:   info.WellKnownUrl,
 				apiUrl:         info.ApiUrl,
 				allowSignup:    info.AllowSignup,
 			}

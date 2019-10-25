@@ -219,6 +219,11 @@ $external-services: (
     borderColor: #b83e31,
     icon: '',
   ),
+  azuread: (
+    bgColor: #262628,
+    borderColor: #393939,
+    icon: '',
+  ),
   grafanacom: (
     bgColor: #262628,
     borderColor: #393939,
