@@ -13,7 +13,6 @@ export const global = () => {
   return (
     <UseState initialState={{ isOpen: false }}>
       {(state, updateValue) => {
-        console.log(state.isOpen);
         return (
           <>
             <div
@@ -26,7 +25,7 @@ export const global = () => {
               <Drawer
                 title="storybook"
                 onClose={() => {
-                  console.log('close');
+                  updateValue({ isOpen: !state.isOpen });
                 }}
               >
                 this is a drawer
