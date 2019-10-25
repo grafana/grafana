@@ -1,4 +1,4 @@
-import { colors, getFlotPairs, getColorFromHexRgbOrName, getDisplayProcessor } from '@grafana/ui';
+import { colors, getFlotPairs, getColorFromHexRgbOrName, getDisplayProcessor, FieldDisplayOptions } from '@grafana/ui';
 import {
   NullValueMode,
   reduceField,
@@ -16,7 +16,8 @@ export const getGraphSeriesModel = (
   dataFrames: DataFrame[],
   seriesOptions: SeriesOptions,
   graphOptions: GraphOptions,
-  legendOptions: GraphLegendEditorLegendOptions
+  legendOptions: GraphLegendEditorLegendOptions,
+  fieldOptions?: FieldDisplayOptions
 ) => {
   const graphs: GraphSeriesXY[] = [];
 
@@ -74,6 +75,14 @@ export const getGraphSeriesModel = (
           yAxis: {
             index: (seriesOptions[field.name] && seriesOptions[field.name].yAxis) || 1,
           },
+          yAxisDisplayProcessor:
+            fieldOptions &&
+            getDisplayProcessor({
+              config: {
+                decimals: fieldOptions.defaults.decimals,
+                unit: fieldOptions.defaults.unit,
+              },
+            }),
         });
       }
     }

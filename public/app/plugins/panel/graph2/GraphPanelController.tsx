@@ -41,7 +41,8 @@ export class GraphPanelController extends React.Component<GraphPanelControllerPr
         props.data.series,
         props.options.series,
         props.options.graph,
-        props.options.legend
+        props.options.legend,
+        props.options.fieldOptions
       ),
     };
   }
@@ -53,7 +54,8 @@ export class GraphPanelController extends React.Component<GraphPanelControllerPr
         props.data.series,
         props.options.series,
         props.options.graph,
-        props.options.legend
+        props.options.legend,
+        props.options.fieldOptions
       ),
     };
   }

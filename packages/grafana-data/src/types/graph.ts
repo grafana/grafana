@@ -1,4 +1,4 @@
-import { DisplayValue } from './displayValue';
+import { DisplayValue, DisplayProcessor } from './displayValue';
 
 export interface YAxis {
   index: number;
@@ -16,6 +16,7 @@ export interface GraphSeriesXY {
   info?: DisplayValue[]; // Legend info
   isVisible: boolean;
   yAxis: YAxis;
+  yAxisDisplayProcessor?: DisplayProcessor;
 }
 
 export interface CreatePlotOverlay {
