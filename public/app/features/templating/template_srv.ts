@@ -175,6 +175,9 @@ export class TemplateSrv {
         }
         return this.encodeURIComponentStrict(value);
       }
+      case 'ms': {
+        return kbn.interval_to_ms(value);
+      }
       default: {
         if (_.isArray(value) && value.length > 1) {
           return '{' + value.join(',') + '}';

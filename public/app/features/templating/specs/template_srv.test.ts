@@ -324,6 +324,13 @@ describe('templateSrv', () => {
     });
   });
 
+  describe('format interval variable to number', () => {
+    it('single interval value and ms format should render millisecond', () => {
+      const result = _templateSrv.formatValue('10s', 'ms');
+      expect(result).toBe(10000);
+    });
+  });
+
   describe('can check if variable exists', () => {
     beforeEach(() => {
       initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'oogle' } }]);

@@ -114,6 +114,15 @@ String to interpolate: '${servers:percentencode}'
 Interpolation result: 'foo%28%29bar%20BAZ%2Ctest2'
 ```
 
+### Milliseconds
+Format single valued variables in milliseconds.
+
+```bash
+interval = '10s'
+String to interpolate: '${interval:ms}'
+Interpolation result: '10000'
+```
+
 Test the formatting options on the [Grafana Play site](http://play.grafana.org/d/cJtIfcWiz/template-variable-formatting-options?orgId=1).
 
 If any invalid formatting option is specified, then `glob` is the default/fallback option.
