@@ -4,7 +4,8 @@ import { cx } from 'emotion';
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
-import { LogLabelStatsModel, LogsParser, getParser } from '@grafana/data';
+import { LogsParser, getParser } from '@grafana/data';
+import { LogDetailsRow } from './LogDetailsRow';
 
 interface Props extends Themeable {
   row: LogRowModel;
@@ -14,10 +15,6 @@ interface Props extends Themeable {
 }
 
 interface State {
-  fieldCount: number;
-  fieldLabel: string | null;
-  fieldStats: LogLabelStatsModel[] | null;
-  fieldValue: string | null;
   parsed: boolean;
   parser?: LogsParser;
   parsedFieldHighlights: string[];
@@ -26,36 +23,14 @@ interface State {
 
 class UnThemedLogDetails extends PureComponent<Props, State> {
   state: State = {
-    fieldCount: 0,
-    fieldLabel: null,
-    fieldStats: null,
-    fieldValue: null,
     parsed: false,
     parser: undefined,
     parsedFieldHighlights: [],
     showFieldStats: false,
   };
 
-  // const { getRows, onClickLabel } = props;
-  /* <LogLabels getRows={getRows} labels={row.uniqueLabels ? row.uniqueLabels : {}} onClickLabel={onClickLabel} /> */
-
-  filterLabel = (label: string, value: string) => {
-    const { onClickFilterLabel } = this.props;
-    if (onClickFilterLabel) {
-      onClickFilterLabel(label, value);
-    }
-  };
-
-  filterOutLabel = (label: string, value: string) => {
-    const { onClickFilterOutLabel } = this.props;
-    if (onClickFilterOutLabel) {
-      onClickFilterOutLabel(label, value);
-    }
-  };
-
   parseMessage = () => {
     const { row } = this.props;
-    console.log('row.entry', row.entry);
     const parser = getParser(row.entry);
     if (parser) {
       // Use parser to highlight detected fields
@@ -64,12 +39,12 @@ class UnThemedLogDetails extends PureComponent<Props, State> {
     }
   };
 
-  findKeyLabel = (field: string, idx: number) => {
-    const labelMatch = field.match(/^(.*?)=/);
-    const keyMatch = field.match(/=(.+)/);
-    const key: string = labelMatch ? labelMatch[1] : '';
-    const label: string = keyMatch ? keyMatch[1] : '';
-    return { key, label };
+  findKeyLabel = (field: string) => {
+    const keyMatch = field.match(/^(.*?)=/);
+    const valueMatch = field.match(/=(.+)/);
+    const value = valueMatch ? valueMatch[1] : '';
+    const key = keyMatch ? keyMatch[1] : '';
+    return { key, value };
   };
 
   componentDidMount() {
@@ -77,56 +52,42 @@ class UnThemedLogDetails extends PureComponent<Props, State> {
   }
 
   render() {
-    const { row, theme } = this.props;
+    const { row, theme, onClickFilterOutLabel, onClickFilterLabel } = this.props;
     const { parsedFieldHighlights } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
     const labels = row.labels ? row.labels : {};
     return (
-      <>
-        <div className={cx([style.logsRowDetailsTable])}>
-          {Object.keys(labels).map(key => {
-            const label = labels[key];
+      <div className={cx([style.logsRowDetailsTable])}>
+        {Object.keys(labels).map(key => {
+          const value = labels[key];
+          return (
+            <LogDetailsRow
+              keyDetail={key}
+              value={value}
+              canShowMetrics={false}
+              canFilter={true}
+              canFilterOut={true}
+              onClickFilterOutLabel={onClickFilterOutLabel}
+              onClickFilterLabel={onClickFilterLabel}
+            />
+          );
+        })}
+        {parsedFieldHighlights &&
+          parsedFieldHighlights.map(field => {
+            const { key, value } = this.findKeyLabel(field);
             return (
-              <div key={key} className={cx([style.logsRowDetailsRow])}>
-                <div onClick={() => alert('metrics')} className={cx([style.logsRowDetailsIcon])}>
-                  <i className={'fa fa-signal'} />
-                </div>
-                <div onClick={() => this.filterLabel(key, label)} className={cx([style.logsRowDetailsIcon])}>
-                  <i className={'fa fa-search-plus'} />
-                </div>
-                <div onClick={() => this.filterOutLabel(key, label)} className={cx([style.logsRowDetailsIcon])}>
-                  <i className={'fa fa-search-minus'} />
-                </div>
-                <div className={cx([style.logsRowDetailsLabel])}>{key}</div>
-                <div className={cx([style.logsRowCell])}>{label}</div>
-              </div>
+              <LogDetailsRow
+                keyDetail={key}
+                value={value}
+                canShowMetrics={true}
+                canFilter={false}
+                canFilterOut={false}
+                onClickFilterOutLabel={onClickFilterOutLabel}
+                onClickFilterLabel={onClickFilterLabel}
+              />
             );
           })}
-          {parsedFieldHighlights &&
-            parsedFieldHighlights.map((field, idx) => {
-              if (this.findKeyLabel(field, idx)) {
-                const { key, label } = this.findKeyLabel(field, idx);
-                return (
-                  <div key={key} className={cx([style.logsRowDetailsRow])}>
-                    <div onClick={() => alert('metrics')} className={cx([style.logsRowDetailsIcon])}>
-                      <i className={'fa fa-signal'} />
-                    </div>
-                    <div onClick={() => this.filterLabel(key, label)} className={cx([style.logsRowDetailsIcon])}>
-                      <i className={'fa fa-search-plus'} />
-                    </div>
-                    <div onClick={() => this.filterOutLabel(key, label)} className={cx([style.logsRowDetailsIcon])}>
-                      <i className={'fa fa-search-minus'} />
-                    </div>
-                    <div className={cx([style.logsRowDetailsLabel])}>{key}</div>
-                    <div className={cx([style.logsRowCell])}>{label}</div>
-                  </div>
-                );
-              } else {
-                return <div />;
-              }
-            })}
-        </div>
-      </>
+      </div>
     );
   }
 }
