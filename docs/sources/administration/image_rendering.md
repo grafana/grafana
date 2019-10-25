@@ -43,7 +43,33 @@ For further information and instructions refer to the [plugin details](https://g
 
 The [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) can also be run as a remote HTTP rendering service. In this setup Grafana will render an image by making a HTTP request to the remote rendering service, which in turn render the image and returns it back in the HTTP response to Grafana.
 
-To configure Grafana to use a remote HTTP rendering service, please refer to [rendering](/installation/configuration/#rendering) configuration section.
+As an alternative to installing and running the image renderer as a plugin you can run it as a remote image rendering service using Docker.
+
+For running grafana with remote image renderer create a `docker-compose.yml` with the following content.
+
+```yaml
+version: '2'
+
+services:
+  grafana:
+    image: grafana/grafana:master
+    ports:
+     - "3000:3000"
+    environment:
+      GF_RENDERING_SERVER_URL: http://renderer:8081/render
+      GF_RENDERING_CALLBACK_URL: http://grafana:3000/
+      GF_LOG_FILTERS: rendering:debug
+  renderer:
+    image: grafana/grafana-image-renderer:latest
+    ports:
+      - 8081
+```
+
+and finally run:
+
+```bash
+docker-compose up
+```
 
 ## Alerting and render limits
 
