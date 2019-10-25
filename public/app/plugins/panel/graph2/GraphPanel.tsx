@@ -27,12 +27,14 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
   const {
     graph: { showLines, showBars, showPoints },
     legend: legendOptions,
+    tooltipOptions,
   } = options;
 
   const graphProps = {
     showBars,
     showLines,
     showPoints,
+    tooltipOptions,
   };
   const { asTable, isVisible, ...legendProps } = legendOptions;
   return (
@@ -57,6 +59,7 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
             onHorizontalRegionSelected={onHorizontalRegionSelected}
             {...graphProps}
             {...legendProps}
+            tooltipOptions={tooltipOptions}
             {...controllerApi}
           />
         );

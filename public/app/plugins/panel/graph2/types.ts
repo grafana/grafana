@@ -1,4 +1,4 @@
-import { LegendOptions, FieldDisplayOptions } from '@grafana/ui';
+import { LegendOptions, FieldDisplayOptions, GraphTooltipOptions } from '@grafana/ui';
 import { YAxis } from '@grafana/data';
 
 import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
@@ -23,6 +23,7 @@ export interface Options {
     [alias: string]: SeriesOptions;
   };
   fieldOptions: FieldDisplayOptions;
+  tooltipOptions: GraphTooltipOptions;
 }
 
 export const defaults: Options = {
@@ -38,4 +39,5 @@ export const defaults: Options = {
   },
   series: {},
   fieldOptions: { ...standardFieldDisplayOptions },
+  tooltipOptions: { mode: 'single' },
 };

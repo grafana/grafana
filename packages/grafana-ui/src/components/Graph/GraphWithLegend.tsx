@@ -72,6 +72,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
     lineWidth,
     onHorizontalRegionSelected,
     timeZone,
+    tooltipOptions,
   } = props;
   const { graphContainer, wrapper, legendContainer } = getGraphWithLegendStyles(props);
 
@@ -105,6 +106,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
           isStacked={isStacked}
           lineWidth={lineWidth}
           onHorizontalRegionSelected={onHorizontalRegionSelected}
+          tooltipOptions={tooltipOptions}
         />
       </div>
 

@@ -3,7 +3,15 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Types
-import { PanelEditorProps, Switch, LegendOptions, PanelOptionsGroup, FieldPropertiesEditor } from '@grafana/ui';
+import {
+  PanelEditorProps,
+  Switch,
+  LegendOptions,
+  PanelOptionsGroup,
+  FieldPropertiesEditor,
+  Select,
+  GraphTooltipOptions,
+} from '@grafana/ui';
 import { Options, GraphOptions } from './types';
 import { GraphLegendEditor } from './GraphLegendEditor';
 import { FieldConfig } from '@grafana/data';
@@ -21,6 +29,10 @@ export class GraphPanelEditor extends PureComponent<PanelEditorProps<Options>> {
 
   onLegendOptionsChange = (options: LegendOptions) => {
     this.props.onOptionsChange({ ...this.props.options, legend: options });
+  };
+
+  onTooltipOptionsChange = (options: GraphTooltipOptions) => {
+    this.props.onOptionsChange({ ...this.props.options, tooltipOptions: options });
   };
 
   onToggleLines = () => {
@@ -48,6 +60,7 @@ export class GraphPanelEditor extends PureComponent<PanelEditorProps<Options>> {
   render() {
     const {
       graph: { showBars, showPoints, showLines },
+      tooltipOptions: { mode },
     } = this.props.options;
 
     return (
@@ -63,6 +76,15 @@ export class GraphPanelEditor extends PureComponent<PanelEditorProps<Options>> {
             showMinMax={true}
             onChange={this.onDefaultsChange}
             value={this.props.options.fieldOptions.defaults}
+          />
+        </PanelOptionsGroup>
+        <PanelOptionsGroup title="Tooltip">
+          <Select
+            value={{ value: mode, label: mode === 'single' ? 'Single' : 'All series' }}
+            onChange={value => {
+              this.onTooltipOptionsChange({ mode: value.value as any });
+            }}
+            options={[{ label: 'All series', value: 'multi' }, { label: 'Single', value: 'single' }]}
           />
         </PanelOptionsGroup>
         <GraphLegendEditor options={this.props.options.legend} onChange={this.onLegendOptionsChange} />

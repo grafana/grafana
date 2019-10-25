@@ -4,6 +4,7 @@ import React, { PureComponent } from 'react';
 import uniqBy from 'lodash/uniqBy';
 // Types
 import { TimeRange, GraphSeriesXY, TimeZone, DefaultTimeZone } from '@grafana/data';
+import { GraphTooltipOptions } from './GraphTooltip';
 
 export interface GraphProps {
   series: GraphSeriesXY[];
@@ -17,6 +18,7 @@ export interface GraphProps {
   isStacked?: boolean;
   lineWidth?: number;
   onHorizontalRegionSelected?: (from: number, to: number) => void;
+  tooltipOptions: GraphTooltipOptions;
 }
 
 export class Graph extends PureComponent<GraphProps> {
