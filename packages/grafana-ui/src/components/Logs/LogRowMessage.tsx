@@ -212,7 +212,6 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
       ? cx([style.logsRowMatchHighLight, style.logsRowMatchHighLightPreview])
       : cx([style.logsRowMatchHighLight]);
     const styles = getStyles(theme);
-
     return (
       <div
         className={cx([style.logsRowMessage])}

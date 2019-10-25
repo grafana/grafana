@@ -116,6 +116,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     logsRowCell: css`
       label: logs-row-cell;
       display: table-cell;
+      word-break: break-all;
     `,
     logsRowToggleDetails: css`
       label: logs-row-toggle-details__level;
@@ -168,6 +169,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       display: table-cell;
       padding: 0 15px 0 15px;
       width: 12.5em;
+      word-break: break-all;
     `,
     logsRowDetailsRow: css`
       label: logs-row-details__row;
