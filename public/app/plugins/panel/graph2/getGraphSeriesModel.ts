@@ -27,6 +27,7 @@ export const getGraphSeriesModel = (
     },
   });
 
+  let seriesIndex = 0;
   for (const series of dataFrames) {
     const { timeField } = getTimeField(series);
     if (!timeField) {
@@ -83,7 +84,9 @@ export const getGraphSeriesModel = (
                 unit: fieldOptions.defaults.unit,
               },
             }),
+          seriesIndex,
         });
+        seriesIndex++;
       }
     }
   }

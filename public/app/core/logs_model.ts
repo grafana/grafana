@@ -144,7 +144,7 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
     }
   }
 
-  return seriesList.map(series => {
+  return seriesList.map((series, i) => {
     series.datapoints.sort((a: number[], b: number[]) => {
       return a[1] - b[1];
     });
@@ -167,6 +167,7 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
         min: 0,
         tickDecimals: 0,
       },
+      seriesIndex: i,
     };
 
     return graphSeries;

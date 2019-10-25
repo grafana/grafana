@@ -17,6 +17,7 @@ export interface GraphSeriesXY {
   isVisible: boolean;
   yAxis: YAxis;
   yAxisDisplayProcessor?: DisplayProcessor;
+  seriesIndex: number;
 }
 
 export interface CreatePlotOverlay {
