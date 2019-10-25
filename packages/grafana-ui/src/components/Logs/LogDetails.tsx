@@ -1,10 +1,9 @@
 import React, { PureComponent } from 'react';
-import { LogRowModel } from '@grafana/data';
 import { cx } from 'emotion';
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
-import { LogsParser, getParser } from '@grafana/data';
+import { LogsParser, getParser, LogRowModel } from '@grafana/data';
 import { LogDetailsRow } from './LogDetailsRow';
 
 interface Props extends Themeable {
@@ -18,7 +17,6 @@ interface State {
   parsed: boolean;
   parser?: LogsParser;
   parsedFieldHighlights: string[];
-  showFieldStats: boolean;
 }
 
 class UnThemedLogDetails extends PureComponent<Props, State> {
@@ -26,7 +24,6 @@ class UnThemedLogDetails extends PureComponent<Props, State> {
     parsed: false,
     parser: undefined,
     parsedFieldHighlights: [],
-    showFieldStats: false,
   };
 
   parseMessage = () => {
@@ -39,21 +36,13 @@ class UnThemedLogDetails extends PureComponent<Props, State> {
     }
   };
 
-  findKeyLabel = (field: string) => {
-    const keyMatch = field.match(/^(.*?)=/);
-    const valueMatch = field.match(/=(.+)/);
-    const value = valueMatch ? valueMatch[1] : '';
-    const key = keyMatch ? keyMatch[1] : '';
-    return { key, value };
-  };
-
   componentDidMount() {
     this.parseMessage();
   }
 
   render() {
-    const { row, theme, onClickFilterOutLabel, onClickFilterLabel } = this.props;
-    const { parsedFieldHighlights } = this.state;
+    const { row, theme, onClickFilterOutLabel, onClickFilterLabel, getRows } = this.props;
+    const { parsedFieldHighlights, parser } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
     const labels = row.labels ? row.labels : {};
     return (
@@ -62,9 +51,9 @@ class UnThemedLogDetails extends PureComponent<Props, State> {
           const value = labels[key];
           return (
             <LogDetailsRow
+              key={value}
               keyDetail={key}
-              value={value}
-              canShowMetrics={false}
+              valueDetail={value}
               canFilter={true}
               canFilterOut={true}
               onClickFilterOutLabel={onClickFilterOutLabel}
@@ -74,16 +63,18 @@ class UnThemedLogDetails extends PureComponent<Props, State> {
         })}
         {parsedFieldHighlights &&
           parsedFieldHighlights.map(field => {
-            const { key, value } = this.findKeyLabel(field);
+            const key = parser!.getLabelFromField(field);
+            const value = parser!.getValueFromField(field);
             return (
               <LogDetailsRow
+                key={value}
                 keyDetail={key}
-                value={value}
+                valueDetail={value}
                 canShowMetrics={true}
-                canFilter={false}
-                canFilterOut={false}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                onClickFilterLabel={onClickFilterLabel}
+                field={field}
+                row={row}
+                getRows={getRows}
+                parser={parser}
               />
             );
           })}

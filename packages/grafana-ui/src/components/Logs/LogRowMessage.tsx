@@ -111,12 +111,14 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
   };
 
   onClickHighlight = (fieldText: string) => {
+    console.log(fieldText);
     const { getRows } = this.props;
     const { parser } = this.state;
     const allRows = getRows();
 
     // Build value-agnostic row matcher based on the field label
     const fieldLabel = parser!.getLabelFromField(fieldText);
+    console.log(fieldLabel);
     const fieldValue = parser!.getValueFromField(fieldText);
     const matcher = parser!.buildMatcher(fieldLabel);
     const fieldStats = calculateFieldStats(allRows, matcher);
@@ -212,6 +214,7 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
       ? cx([style.logsRowMatchHighLight, style.logsRowMatchHighLightPreview])
       : cx([style.logsRowMatchHighLight]);
     const styles = getStyles(theme);
+    console.log(row);
     return (
       <div
         className={cx([style.logsRowMessage])}
