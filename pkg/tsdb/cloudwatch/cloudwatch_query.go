@@ -25,16 +25,16 @@ type cloudWatchQuery struct {
 	RequestExceededMaxLimit bool
 }
 
-func (e *cloudWatchQuery) isMathExpression() bool {
-	return e.Expression != "" && !strings.Contains(e.Expression, "SEARCH(")
+func (q *cloudWatchQuery) isMathExpression() bool {
+	return q.Expression != "" && !strings.Contains(q.Expression, "SEARCH(")
 }
 
-func (e *cloudWatchQuery) isSearchExpression() bool {
-	if strings.Contains(e.Expression, "SEARCH(") {
+func (q *cloudWatchQuery) isSearchExpression() bool {
+	if q.isUserDefinedSearchExpression() {
 		return true
 	}
 
-	for _, values := range e.Dimensions {
+	for _, values := range q.Dimensions {
 		if len(values) > 1 {
 			return true
 		}
@@ -48,6 +48,10 @@ func (e *cloudWatchQuery) isSearchExpression() bool {
 	return false
 }
 
-func (e *cloudWatchQuery) isMetricStat() bool {
-	return !e.isSearchExpression() && !e.isMathExpression()
+func (q *cloudWatchQuery) isUserDefinedSearchExpression() bool {
+	return strings.Contains(q.Expression, "SEARCH(")
+}
+
+func (q *cloudWatchQuery) isMetricStat() bool {
+	return !q.isSearchExpression() && !q.isMathExpression()
 }

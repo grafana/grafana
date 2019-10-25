@@ -108,6 +108,7 @@ func (mdib *metricDataInputBuilder) splitQueries(queries []*cloudWatchQuery) ([]
 			otherQueries = append(otherQueries, query)
 		}
 	}
+
 	return metricStatQueriesWithoutUserDefinedID, otherQueries
 }
 

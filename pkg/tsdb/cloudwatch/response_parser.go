@@ -135,17 +135,16 @@ func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]stri
 	namespace := query.Namespace
 	metricName := query.MetricName
 	period := strconv.Itoa(query.Period)
-	if len(query.Id) > 0 && len(query.Expression) > 0 {
-		if strings.Index(query.Expression, "SEARCH(") == 0 {
-			pIndex := strings.LastIndex(query.Expression, ",")
-			period = strings.Trim(query.Expression[pIndex+1:], " )")
-			sIndex := strings.LastIndex(query.Expression[:pIndex], ",")
-			stat = strings.Trim(query.Expression[sIndex+1:pIndex], " '")
-		} else if len(query.Alias) > 0 {
-			// expand by Alias
-		} else {
-			return query.Id
-		}
+
+	if query.isUserDefinedSearchExpression() {
+		pIndex := strings.LastIndex(query.Expression, ",")
+		period = strings.Trim(query.Expression[pIndex+1:], " )")
+		sIndex := strings.LastIndex(query.Expression[:pIndex], ",")
+		stat = strings.Trim(query.Expression[sIndex+1:pIndex], " '")
+	}
+
+	if query.isMathExpression() && len(query.Alias) == 0 {
+		return query.Id
 	}
 
 	data := map[string]string{}
