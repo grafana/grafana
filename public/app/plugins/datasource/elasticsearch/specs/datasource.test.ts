@@ -1,7 +1,7 @@
 import angular, { IQService } from 'angular';
 import { dateMath } from '@grafana/data';
 import _ from 'lodash';
-import { ElasticDatasource, getMaxConcurrenShardRequestOrDefault } from '../datasource';
+import { ElasticDatasource } from '../datasource';
 import { toUtc, dateTime } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
