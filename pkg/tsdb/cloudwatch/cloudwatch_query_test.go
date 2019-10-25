@@ -19,16 +19,8 @@ func TestcloudWatchQuery(t *testing.T) {
 				Identifier: "id1",
 			}
 
-			Convey("it is a user defined search expression", func() {
-				So(query.isUserDefinedSearchExpression(), ShouldBeTrue)
-			})
-
 			Convey("it is a search expression", func() {
 				So(query.isSearchExpression(), ShouldBeTrue)
-			})
-
-			Convey("it is not an inferred search expression", func() {
-				So(query.isInferredSearchExpression(), ShouldBeFalse)
 			})
 
 			Convey("it is not math expressions", func() {
@@ -50,16 +42,8 @@ func TestcloudWatchQuery(t *testing.T) {
 				Dimensions: dimensions,
 			}
 
-			Convey("it is not a user defined search expression", func() {
-				So(query.isUserDefinedSearchExpression(), ShouldBeFalse)
-			})
-
 			Convey("it is not a search expression", func() {
 				So(query.isSearchExpression(), ShouldBeFalse)
-			})
-
-			Convey("it is not an inferred search expression", func() {
-				So(query.isInferredSearchExpression(), ShouldBeFalse)
 			})
 
 			Convey("it is not math expressions", func() {
@@ -81,16 +65,8 @@ func TestcloudWatchQuery(t *testing.T) {
 				Dimensions: dimensions,
 			}
 
-			Convey("it is not a user defined search expression", func() {
-				So(query.isUserDefinedSearchExpression(), ShouldBeFalse)
-			})
-
 			Convey("it is a search expression", func() {
 				So(query.isSearchExpression(), ShouldBeTrue)
-			})
-
-			Convey("it is an inferred search expression", func() {
-				So(query.isInferredSearchExpression(), ShouldBeTrue)
 			})
 
 			Convey("it is not math expressions", func() {
@@ -113,16 +89,8 @@ func TestcloudWatchQuery(t *testing.T) {
 				Dimensions: dimensions,
 			}
 
-			Convey("it is not a user defined search expression", func() {
-				So(query.isUserDefinedSearchExpression(), ShouldBeFalse)
-			})
-
 			Convey("it is not a search expression", func() {
 				So(query.isSearchExpression(), ShouldBeTrue)
-			})
-
-			Convey("it is an inferred search expression", func() {
-				So(query.isInferredSearchExpression(), ShouldBeTrue)
 			})
 
 			Convey("it is not math expressions", func() {

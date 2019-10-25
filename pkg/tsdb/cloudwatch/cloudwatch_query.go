@@ -29,11 +29,11 @@ func (e *cloudWatchQuery) isMathExpression() bool {
 	return e.Expression != "" && !strings.Contains(e.Expression, "SEARCH(")
 }
 
-func (e *cloudWatchQuery) isUserDefinedSearchExpression() bool {
-	return strings.Contains(e.Expression, "SEARCH(")
-}
+func (e *cloudWatchQuery) isSearchExpression() bool {
+	if strings.Contains(e.Expression, "SEARCH(") {
+		return true
+	}
 
-func (e *cloudWatchQuery) isInferredSearchExpression() bool {
 	for _, values := range e.Dimensions {
 		if len(values) > 1 {
 			return true
@@ -46,10 +46,6 @@ func (e *cloudWatchQuery) isInferredSearchExpression() bool {
 	}
 
 	return false
-}
-
-func (e *cloudWatchQuery) isSearchExpression() bool {
-	return e.isUserDefinedSearchExpression() || e.isInferredSearchExpression()
 }
 
 func (e *cloudWatchQuery) isMetricStat() bool {

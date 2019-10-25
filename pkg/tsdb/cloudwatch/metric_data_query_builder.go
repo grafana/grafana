@@ -64,8 +64,13 @@ func buildSearchExpression(query *cloudWatchQuery, stat string) string {
 	}
 
 	searchTerm := fmt.Sprintf(`MetricName="%s"`, query.MetricName)
-	for key, values := range knownDimensions {
-		keyFilter := fmt.Sprintf(`"%s"=%s`, key, join(values, " OR ", `"`, `"`, "(", ")"))
+	sortedKnownDimensions := sortDimensions(knownDimensions)
+	for key, values := range sortedKnownDimensions {
+		valueExpression := join(values, " OR ", `"`, `"`)
+		if len(values) > 1 {
+			valueExpression = fmt.Sprintf(`(%s)`, valueExpression)
+		}
+		keyFilter := fmt.Sprintf(`"%s"=%s`, key, valueExpression)
 		searchTerm = appendSearch(searchTerm, keyFilter)
 	}
 
@@ -73,28 +78,24 @@ func buildSearchExpression(query *cloudWatchQuery, stat string) string {
 		schema := query.Namespace
 		if len(dimensionNames) > 0 {
 			sort.Strings(dimensionNames)
-			schema += fmt.Sprintf(",%s", join(dimensionNames, ",", "", "", "", ""))
+			schema += fmt.Sprintf(",%s", join(dimensionNames, ",", "", ""))
 		}
 
 		return fmt.Sprintf("REMOVE_EMPTY(SEARCH('{%s} %s', '%s', %s))", schema, searchTerm, stat, strconv.Itoa(query.Period))
 	}
 
 	sort.Strings(dimensionNamesWithoutKnownValues)
-	searchTerm = appendSearch(searchTerm, join(dimensionNamesWithoutKnownValues, " ", `"`, `"`, "", ""))
+	searchTerm = appendSearch(searchTerm, join(dimensionNamesWithoutKnownValues, " ", `"`, `"`))
 	return fmt.Sprintf(`REMOVE_EMPTY(SEARCH('Namespace="%s" %s', '%s', %s))`, query.Namespace, searchTerm, stat, strconv.Itoa(query.Period))
 }
 
-func join(arr []string, delimiter string, valuePrefix string, valueSuffix string, resultPrefix string, resultSuffix string) string {
+func join(arr []string, delimiter string, valuePrefix string, valueSuffix string) string {
 	result := ""
 	for index, value := range arr {
 		result += valuePrefix + value + valueSuffix
 		if index+1 != len(arr) {
 			result += delimiter
 		}
-	}
-
-	if len(arr) > 1 {
-		result = resultPrefix + result + resultSuffix
 	}
 
 	return result
