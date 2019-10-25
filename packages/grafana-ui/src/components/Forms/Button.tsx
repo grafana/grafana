@@ -1,10 +1,9 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 import { css } from 'emotion';
 import tinycolor from 'tinycolor2';
 import { selectThemeVariant, stylesFactory, useTheme } from '../../themes';
 import { AbstractButtonProps, StyleDeps } from '../Button/types';
 import { renderButton } from '../Button/AbstractButton';
-import { GrafanaTheme } from '../../types';
 
 const buttonVariantStyles = (from: string, to: string, textColor: string) => css`
   background: linear-gradient(180deg, ${from} 0%, ${to} 100%);
