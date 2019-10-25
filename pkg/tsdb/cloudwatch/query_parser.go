@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -28,13 +29,13 @@ func (e *CloudWatchExecutor) parseQueries(queryContext *tsdb.TsdbQuery) (map[str
 			return nil, &queryBuilderError{err, RefID}
 		}
 
-		for i, stat := range queryEditorRow.Statistics {
+		for _, stat := range queryEditorRow.Statistics {
 			id := queryEditorRow.Id
 			if id == "" {
 				id = fmt.Sprintf("query%s", RefID)
 			}
 			if len(queryEditorRow.Statistics) > 1 {
-				id = fmt.Sprintf("%s_____%v", id, i)
+				id = fmt.Sprintf("%s_____%v", id, strings.ReplaceAll(*stat, ".", "_"))
 			}
 
 			query := &cloudWatchQuery{
