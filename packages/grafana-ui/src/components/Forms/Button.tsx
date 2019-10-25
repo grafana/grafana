@@ -116,7 +116,7 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }
           content: '';
           position: absolute;
           border: 2px solid ${theme.colors.blueLight};
-          border-radius: 2px;
+          border-radius: ${theme.border.radius.lg};
           background-color: ${theme.colors.bodyBg};
           height: calc(100% + 8px);
           width: calc(100% + 8px);
