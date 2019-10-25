@@ -63,15 +63,17 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 
   createStatsForLogs = () => {
     const { getRows, parser, field } = this.props;
-    const allRows = getRows();
+    if (field && getRows) {
+      const allRows = getRows();
 
-    // Build value-agnostic row matcher based on the field label
-    const fieldLabel = parser!.getLabelFromField(field);
-    const fieldValue = parser!.getValueFromField(field);
-    const matcher = parser!.buildMatcher(fieldLabel);
-    const fieldStats = calculateFieldStats(allRows, matcher);
-    const fieldCount = fieldStats.reduce((sum, stat) => sum + stat.count, 0);
-    this.setState({ fieldCount, fieldLabel, fieldStats, fieldValue });
+      // Build value-agnostic row matcher based on the field label
+      const fieldLabel = parser!.getLabelFromField(field);
+      const fieldValue = parser!.getValueFromField(field);
+      const matcher = parser!.buildMatcher(fieldLabel);
+      const fieldStats = calculateFieldStats(allRows, matcher);
+      const fieldCount = fieldStats.reduce((sum, stat) => sum + stat.count, 0);
+      this.setState({ fieldCount, fieldLabel, fieldStats, fieldValue });
+    }
   };
 
   showStats = () => {
@@ -106,11 +108,8 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
         ) : (
           <div className={cx([style.logsRowDetailsIcon])} />
         )}
-
-        <div className={cx([style.logsRowDetailsLabel])}>{keyDetail}</div>
-        <div className={cx([style.logsRowCell])}>
-          <span>{valueDetail}</span>
-
+        <div className={cx([style.logsRowDetailsLabel])}>
+          <span>{keyDetail}</span>
           {showFieldsStats && (
             <div className={cx([style.logsRowCell])}>
               <LogLabelStats
@@ -122,6 +121,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
               />
             </div>
           )}
+        </div>
+        <div className={cx([style.logsRowCell])}>
+          <span>{valueDetail}</span>
         </div>
       </div>
     );

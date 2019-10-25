@@ -12,6 +12,8 @@ const STATS_ROW_LIMIT = 5;
 const getStyles = (theme: GrafanaTheme) => ({
   logsStats: css`
     label: logs-stats;
+    display: table-cell;
+    column-span: 2;
     background-color: ${selectThemeVariant({ light: theme.colors.pageBg, dark: theme.colors.dark2 }, theme.type)};
     color: ${theme.colors.text};
     border: 1px solid ${selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.dark9 }, theme.type)};

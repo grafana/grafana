@@ -12,6 +12,7 @@ import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
 import { LogDetails } from './LogDetails';
+import { LogRowMessage } from './LogRowMessage';
 
 interface Props extends Themeable {
   highlighterExpressions?: string[];
@@ -70,13 +71,14 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       getRows,
       onClickFilterLabel,
       onClickFilterOutLabel,
+      highlighterExpressions,
       row,
       showDuplicates,
       timeZone,
       showTime,
       theme,
     } = this.props;
-    const { showDetails } = this.state;
+    const { showDetails, showContext } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
     const showUtc = timeZone === 'utc';
     return (
@@ -104,7 +106,19 @@ class UnThemedLogRow extends PureComponent<Props, State> {
                   {row.timeLocal}
                 </div>
               )}
-              <div className={cx([style.logsRowCell])}>{row.raw}</div>
+              <div className={cx([style.logsRowCell])}>
+                <LogRowMessage
+                  highlighterExpressions={highlighterExpressions}
+                  row={row}
+                  getRows={getRows}
+                  errors={errors}
+                  hasMoreContextRows={hasMoreContextRows}
+                  updateLimit={updateLimit}
+                  context={context}
+                  showContext={showContext}
+                  onToggleContext={this.toggleContext}
+                />
+              </div>
             </div>
             <div>
               {this.state.showDetails && (
