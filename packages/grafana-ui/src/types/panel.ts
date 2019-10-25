@@ -71,7 +71,7 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
   defaults?: TOptions;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
-  hasFullChromeControl: boolean;
+  hasFullChromeControl?: boolean;
 
   /**
    * Legacy angular ctrl.  If this exists it will be used instead of the panel
