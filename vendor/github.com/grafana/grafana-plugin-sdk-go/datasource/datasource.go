@@ -1,9 +1,8 @@
-package grafana
+package datasource
 
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/dataframe"
@@ -45,7 +44,7 @@ type QueryResult struct {
 
 // DataSourceHandler handles data source queries.
 type DataSourceHandler interface {
-	Query(ctx context.Context, tr TimeRange, ds DataSourceInfo, queries []Query, api GrafanaAPIHandler) ([]QueryResult, error)
+	Query(ctx context.Context, tr TimeRange, ds DataSourceInfo, queries []Query) ([]QueryResult, error)
 }
 
 // datasourcePluginWrapper converts to and from protobuf types.
@@ -55,7 +54,7 @@ type datasourcePluginWrapper struct {
 	handler DataSourceHandler
 }
 
-func (p *datasourcePluginWrapper) Query(ctx context.Context, req *datasource.DatasourceRequest, api GrafanaAPI) (*datasource.DatasourceResponse, error) {
+func (p *datasourcePluginWrapper) Query(ctx context.Context, req *datasource.DatasourceRequest) (*datasource.DatasourceResponse, error) {
 	tr := TimeRange{
 		From: time.Unix(0, req.TimeRange.FromEpochMs*int64(time.Millisecond)),
 		To:   time.Unix(0, req.TimeRange.ToEpochMs*int64(time.Millisecond)),
@@ -80,7 +79,7 @@ func (p *datasourcePluginWrapper) Query(ctx context.Context, req *datasource.Dat
 		})
 	}
 
-	results, err := p.handler.Query(ctx, tr, dsi, queries, &grafanaAPIWrapper{api: api})
+	results, err := p.handler.Query(ctx, tr, dsi, queries)
 	if err != nil {
 		return nil, err
 	}
@@ -126,60 +125,4 @@ type DatasourceQueryResult struct {
 	RefID      string
 	MetaJSON   string
 	DataFrames []*dataframe.Frame
-}
-
-// GrafanaAPIHandler handles data source queries.
-type GrafanaAPIHandler interface {
-	QueryDatasource(ctx context.Context, orgID int64, datasourceID int64, tr TimeRange, queries []Query) ([]DatasourceQueryResult, error)
-}
-
-// grafanaAPIWrapper converts to and from Grafana types for calls from a datasource.
-type grafanaAPIWrapper struct {
-	api GrafanaAPI
-}
-
-func (w *grafanaAPIWrapper) QueryDatasource(ctx context.Context, orgID int64, datasourceID int64, tr TimeRange, queries []Query) ([]DatasourceQueryResult, error) {
-	rawQueries := make([]*datasource.Query, 0, len(queries))
-
-	for _, q := range queries {
-		rawQueries = append(rawQueries, &datasource.Query{
-			RefId:         q.RefID,
-			MaxDataPoints: q.MaxDataPoints,
-			IntervalMs:    q.Interval.Milliseconds(),
-			ModelJson:     string(q.ModelJSON),
-		})
-	}
-
-	rawResp, err := w.api.QueryDatasource(ctx, &datasource.QueryDatasourceRequest{
-		OrgId:        orgID,
-		DatasourceId: datasourceID,
-		TimeRange: &datasource.TimeRange{
-			FromEpochMs: tr.From.UnixNano() / 1e6,
-			ToEpochMs:   tr.To.UnixNano() / 1e6,
-			FromRaw:     fmt.Sprintf("%v", tr.From.UnixNano()/1e6),
-			ToRaw:       fmt.Sprintf("%v", tr.To.UnixNano()/1e6),
-		},
-		Queries: rawQueries,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	results := make([]DatasourceQueryResult, len(rawResp.GetResults()))
-
-	for resIdx, rawRes := range rawResp.GetResults() {
-		// TODO Error property etc
-		dfs := make([]*dataframe.Frame, len(rawRes.Dataframes))
-		for dfIdx, b := range rawRes.Dataframes {
-			dfs[dfIdx], err = dataframe.UnMarshalArrow(b)
-			if err != nil {
-				return nil, err
-			}
-		}
-		results[resIdx] = DatasourceQueryResult{
-			DataFrames: dfs,
-		}
-	}
-
-	return results, nil
 }

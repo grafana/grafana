@@ -1,4 +1,4 @@
-package grafana
+package datasource
 
 import (
 	plugin "github.com/hashicorp/go-plugin"

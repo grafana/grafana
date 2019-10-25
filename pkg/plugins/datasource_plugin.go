@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 
 	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
-	sdk "github.com/grafana/grafana-plugin-sdk-go"
+	sdk "github.com/grafana/grafana-plugin-sdk-go/datasource"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
@@ -83,6 +83,7 @@ func (p *DataSourcePlugin) startBackendPlugin(ctx context.Context, log log.Logge
 
 	return nil
 }
+
 func (p *DataSourcePlugin) isVersionOne() bool {
 	return !p.SDK
 }

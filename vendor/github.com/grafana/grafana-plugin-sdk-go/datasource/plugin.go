@@ -1,4 +1,4 @@
-package grafana
+package datasource
 
 import (
 	"context"
@@ -17,12 +17,11 @@ type DatasourcePluginImpl struct {
 
 func (p *DatasourcePluginImpl) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
 	datasource.RegisterDatasourcePluginServer(s, &grpcServer{
-		Impl:   p.Impl,
-		broker: broker,
+		Impl: p.Impl,
 	})
 	return nil
 }
 
 func (p *DatasourcePluginImpl) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, c *grpc.ClientConn) (interface{}, error) {
-	return &GRPCClient{client: datasource.NewDatasourcePluginClient(c), broker: broker}, nil
+	return &GRPCClient{client: datasource.NewDatasourcePluginClient(c)}, nil
 }
