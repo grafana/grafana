@@ -5,31 +5,32 @@ import (
 )
 
 type cloudWatchQuery struct {
-	RefId              string
-	Region             string
-	Id                 string
-	Namespace          string
-	MetricName         string
-	Statistics         []*string
-	QueryType          string
-	Expression         string
-	ReturnData         bool
-	Dimensions         map[string][]string
-	ExtendedStatistics []*string
-	Period             int
-	Alias              string
-	Identifier         string
-	HighResolution     bool
-	MatchExact         bool
-	SearchExpressions  []string
+	RefId                   string
+	Region                  string
+	Id                      string
+	UserDefinedId           string
+	Namespace               string
+	MetricName              string
+	Stats                   string
+	QueryType               string
+	Expression              string
+	ReturnData              bool
+	Dimensions              map[string][]string
+	Period                  int
+	Alias                   string
+	Identifier              string
+	HighResolution          bool
+	MatchExact              bool
+	SearchExpression        string
+	RequestExceededMaxLimit bool
 }
 
 func (e *cloudWatchQuery) isMathExpression() bool {
-	return len(e.Statistics) == 1 && e.Expression != "" && !strings.Contains(e.Expression, "SEARCH(")
+	return e.Expression != "" && !strings.Contains(e.Expression, "SEARCH(")
 }
 
 func (e *cloudWatchQuery) isUserDefinedSearchExpression() bool {
-	return len(e.Statistics) == 1 && strings.Contains(e.Expression, "SEARCH(")
+	return strings.Contains(e.Expression, "SEARCH(")
 }
 
 func (e *cloudWatchQuery) isInferredSearchExpression() bool {
@@ -49,4 +50,8 @@ func (e *cloudWatchQuery) isInferredSearchExpression() bool {
 
 func (e *cloudWatchQuery) isSearchExpression() bool {
 	return e.isUserDefinedSearchExpression() || e.isInferredSearchExpression()
+}
+
+func (e *cloudWatchQuery) isMetricStat() bool {
+	return !e.isSearchExpression() && !e.isMathExpression()
 }

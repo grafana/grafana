@@ -3,7 +3,6 @@ package cloudwatch
 import (
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -14,7 +13,7 @@ func TestcloudWatchQuery(t *testing.T) {
 				RefId:      "A",
 				Region:     "us-east-1",
 				Expression: "SEARCH(someexpression)",
-				Statistics: []*string{aws.String("Average")},
+				Stats:      "Average",
 				Period:     300,
 				Id:         "id1",
 				Identifier: "id1",
@@ -44,7 +43,7 @@ func TestcloudWatchQuery(t *testing.T) {
 				RefId:      "A",
 				Region:     "us-east-1",
 				Expression: "",
-				Statistics: []*string{aws.String("Average")},
+				Stats:      "Average",
 				Period:     300,
 				Id:         "id1",
 				Identifier: "id1",
@@ -75,7 +74,7 @@ func TestcloudWatchQuery(t *testing.T) {
 				RefId:      "A",
 				Region:     "us-east-1",
 				Expression: "",
-				Statistics: []*string{aws.String("Average")},
+				Stats:      "Average",
 				Period:     300,
 				Id:         "id1",
 				Identifier: "id1",
@@ -107,7 +106,7 @@ func TestcloudWatchQuery(t *testing.T) {
 				RefId:      "A",
 				Region:     "us-east-1",
 				Expression: "",
-				Statistics: []*string{aws.String("Average")},
+				Stats:      "Average",
 				Period:     300,
 				Id:         "id1",
 				Identifier: "id1",

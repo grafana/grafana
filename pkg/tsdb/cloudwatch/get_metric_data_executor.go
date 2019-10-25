@@ -20,14 +20,9 @@ func (e *CloudWatchExecutor) executeRequest(ctx context.Context, client cloudWat
 		if err != nil {
 			return mdo, err
 		}
+
 		mdo = append(mdo, resp)
 		metrics.MAwsCloudWatchGetMetricData.Add(float64(len(metricDataInput.MetricDataQueries)))
-
-		// for _, message := range resp.Messages {
-		// 	if *message.Code == "MaxMetricsExceeded" {
-		// 		return mdo, fmt.Errorf(*message.Value)
-		// 	}
-		// }
 
 		if resp.NextToken == nil || *resp.NextToken == "" {
 			break

@@ -43,11 +43,11 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Namespace:  "AWS/ApplicationELB",
 				MetricName: "TargetResponseTime",
 				Dimensions: dimensions,
-				Statistics: []*string{aws.String("Average")},
+				Stats:      "Average",
 				Period:     60,
 				Alias:      "{{namespace}}_{{metric}}_{{stat}}",
 			}
-			series, _, err := parseGetMetricDataTimeSeries(resp, query, *query.Statistics[0])
+			series, err := parseGetMetricDataTimeSeries(resp, query)
 			timeSeries := (*series)[0]
 
 			So(err, ShouldBeNil)

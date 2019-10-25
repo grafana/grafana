@@ -9,43 +9,37 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 )
 
-func (mdib *metricDataInputBuilder) buildMetricDataQueries(query *cloudWatchQuery) ([]*cloudwatch.MetricDataQuery, error) {
-	metridDataQueries := make([]*cloudwatch.MetricDataQuery, 0)
-	query.SearchExpressions = []string{}
-
-	for i, stat := range query.Statistics {
-		mdq := &cloudwatch.MetricDataQuery{
-			Id:         aws.String(getQueryID(query, i)),
-			ReturnData: aws.Bool(query.ReturnData),
-		}
-		if query.Expression != "" {
-			mdq.Expression = aws.String(query.Expression)
-		} else {
-			if query.isSearchExpression() {
-				searchExpression := buildSearchExpression(query, *stat)
-				query.SearchExpressions = append(query.SearchExpressions, searchExpression)
-				mdq.Expression = aws.String(searchExpression)
-			} else {
-				mdq.MetricStat = &cloudwatch.MetricStat{
-					Metric: &cloudwatch.Metric{
-						Namespace:  aws.String(query.Namespace),
-						MetricName: aws.String(query.MetricName),
-					},
-					Period: aws.Int64(int64(query.Period)),
-				}
-				for key, values := range query.Dimensions {
-					mdq.MetricStat.Metric.Dimensions = append(mdq.MetricStat.Metric.Dimensions,
-						&cloudwatch.Dimension{
-							Name:  aws.String(key),
-							Value: aws.String(values[0]),
-						})
-				}
-				mdq.MetricStat.Stat = stat
-			}
-		}
-		metridDataQueries = append(metridDataQueries, mdq)
+func (mdib *metricDataInputBuilder) buildMetricDataQuery(query *cloudWatchQuery) (*cloudwatch.MetricDataQuery, error) {
+	mdq := &cloudwatch.MetricDataQuery{
+		Id:         aws.String(query.Id),
+		ReturnData: aws.Bool(query.ReturnData),
 	}
-	return metridDataQueries, nil
+	if query.Expression != "" {
+		mdq.Expression = aws.String(query.Expression)
+	} else {
+		if query.isSearchExpression() {
+			query.SearchExpression = buildSearchExpression(query, query.Stats)
+			mdq.Expression = aws.String(query.SearchExpression)
+		} else {
+			mdq.MetricStat = &cloudwatch.MetricStat{
+				Metric: &cloudwatch.Metric{
+					Namespace:  aws.String(query.Namespace),
+					MetricName: aws.String(query.MetricName),
+				},
+				Period: aws.Int64(int64(query.Period)),
+			}
+			for key, values := range query.Dimensions {
+				mdq.MetricStat.Metric.Dimensions = append(mdq.MetricStat.Metric.Dimensions,
+					&cloudwatch.Dimension{
+						Name:  aws.String(key),
+						Value: aws.String(values[0]),
+					})
+			}
+			mdq.MetricStat.Stat = aws.String(query.Stats)
+		}
+	}
+
+	return mdq, nil
 }
 
 func buildSearchExpression(query *cloudWatchQuery, stat string) string {
