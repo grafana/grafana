@@ -16835,6 +16835,16 @@ rc-cascader@0.17.5:
     shallow-equal "^1.0.0"
     warning "^4.0.1"
 
+rc-drawer@^3.0.2:
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/rc-drawer/-/rc-drawer-3.0.2.tgz#1c42b2b7790040344f8f05f1d132b1ef0e97b783"
+  integrity sha512-oPScGXB/8/ov9gEFLxPH8RBv/9jLTZboZtyF/GgrrnCAvbFwUxXdELH6n6XIowmuDKKvTGIMgZdnao0T46Yv3A==
+  dependencies:
+    babel-runtime "^6.26.0"
+    classnames "^2.2.6"
+    rc-util "^4.11.2"
+    react-lifecycles-compat "^3.0.4"
+
 rc-time-picker@^3.7.2:
   version "3.7.2"
   resolved "https://registry.yarnpkg.com/rc-time-picker/-/rc-time-picker-3.7.2.tgz#fabe5501adf1374d31a2d3b47f1ba89fc2dc2467"
@@ -16860,7 +16870,7 @@ rc-trigger@^2.2.0:
     rc-util "^4.4.0"
     react-lifecycles-compat "^3.0.4"
 
-rc-util@^4.0.4, rc-util@^4.4.0, rc-util@^4.8.0:
+rc-util@^4.0.4, rc-util@^4.11.2, rc-util@^4.4.0, rc-util@^4.8.0:
   version "4.13.0"
   resolved "https://registry.yarnpkg.com/rc-util/-/rc-util-4.13.0.tgz#75682e50a934e7d32ada7ee48fc9f5b20fc0143f"
   integrity sha512-rjfPy+afc2n40APHp6GYScXfgwHuUnYLz/4SCEWRaF8CHXKR8xw598LtPA36J3fEXENuMm6liO/CoKBoSrYCDw==
