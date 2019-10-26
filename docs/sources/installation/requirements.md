@@ -23,7 +23,7 @@ The following operating systems are supported for Grafana installation:
 - [Mac OS X](/installation/mac)
 - [Windows](/installation/windows)
 
-## Unsupported
+## Unsupported operating systems
 
 Installation of Grafana on other operating systems is possible, but not supported. Please see the [building from source](/project/building_from_source/#building-grafana-from-source) guide for more information.
 
