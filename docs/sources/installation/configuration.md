@@ -80,7 +80,7 @@ system calls to get the machine name.
 
 ### data
 
-Path to where Grafana stores the sqlite3 database (if used), file based sessions (if used), and other data.  This path is usually specified via command line in the init.d script or the systemd service file.
+Path to where Grafana stores the sqlite3 database (if used), file based sessions (if used), and other data. This path is usually specified via command line in the init.d script or the systemd service file.
 
 **Mac:** The default SQLite database is located at `/usr/local/var/lib/grafana`
 
@@ -91,8 +91,7 @@ How long temporary images in `data` directory should be kept. Defaults to: `24h`
 
 ### logs
 
-Path to where Grafana will store logs. This path is usually specified via command line in the init.d script or the systemd service file.  It can
-be overridden in the configuration file or in the default environment variable file.
+Path to where Grafana will store logs. This path is usually specified via command line in the init.d script or the systemd service file.  It can be overridden in the configuration file or in the default environment variable file.
 
 **Mac:** By default, the log file should be located at `/usr/local/var/log/grafana/grafana.log`.
 
