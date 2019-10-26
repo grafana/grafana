@@ -77,4 +77,4 @@ To configure Grafana add a configuration file named `custom.ini` to the
 
 ### Start Grafana
 
-Start Grafana by executing `./bin/grafana-server web`. The `grafana-server` binary needs the working directory to be the root install directory (where the binary and the `public` folder is located).
+Start Grafana by executing `./bin/grafana-server`. The `grafana-server` binary needs the working directory to be the root install directory (where the binary and the `public` folder is located).
