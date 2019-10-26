@@ -82,7 +82,7 @@ system calls to get the machine name.
 
 Path to where Grafana stores the sqlite3 database (if used), file based sessions (if used), and other data.  This path is usually specified via command line in the init.d script or the systemd service file.
 
-**Mac:** The default SQLite database is located at `/usr/local/var/lib/grafana`
+**macOS:** The default SQLite database is located at `/usr/local/var/lib/grafana`
 
 ### temp_data_lifetime
 
