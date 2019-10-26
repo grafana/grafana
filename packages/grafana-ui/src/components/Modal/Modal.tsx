@@ -1,10 +1,10 @@
 import React from 'react';
 import { Portal } from '../Portal/Portal';
 import { css, cx } from 'emotion';
-import { withTheme } from '../../themes';
+import { stylesFactory, withTheme } from '../../themes';
 import { GrafanaTheme } from '../../types';
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   modal: css`
     position: fixed;
     z-index: ${theme.zIndex.modal};
@@ -50,7 +50,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   modalContent: css`
     padding: calc(${theme.spacing.d} * 2);
   `,
-});
+}));
 
 interface Props {
   title: string | JSX.Element;
@@ -58,7 +58,8 @@ interface Props {
 
   isOpen?: boolean;
   onDismiss?: () => void;
-  // Can be customized, if not set will call onDismiss if that is set.
+
+  // If not set will call onDismiss if that is set.
   onClickBackdrop?: () => void;
 }
 

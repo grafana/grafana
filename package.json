@@ -9,11 +9,11 @@
     "url": "http://github.com/grafana/grafana.git"
   },
   "devDependencies": {
-    "@babel/core": "7.4.3",
+    "@babel/core": "7.6.4",
     "@babel/plugin-syntax-dynamic-import": "7.2.0",
-    "@babel/preset-env": "7.4.2",
-    "@babel/preset-react": "7.0.0",
-    "@babel/preset-typescript": "7.3.3",
+    "@babel/preset-env": "7.6.3",
+    "@babel/preset-react": "7.6.3",
+    "@babel/preset-typescript": "7.6.0",
     "@emotion/core": "10.0.10",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
     "@types/angular": "1.6.56",
@@ -161,7 +161,7 @@
     "jest": "jest --notify --watch",
     "e2e-tests": "jest --runInBand --config=jest.config.e2e.js",
     "api-tests": "jest --notify --watch --config=devenv/e2e-api-tests/jest.js",
-    "storybook": "cd packages/grafana-ui && yarn storybook",
+    "storybook": "cd packages/grafana-ui && yarn storybook --ci",
     "storybook:build": "cd packages/grafana-ui && yarn storybook:build",
     "prettier:check": "prettier --list-different \"**/*.{ts,tsx,scss}\"",
     "prettier:write": "prettier --list-different \"**/*.{ts,tsx,scss}\" --write",
@@ -195,7 +195,7 @@
     "printWidth": 120
   },
   "dependencies": {
-    "@babel/polyfill": "7.2.5",
+    "@babel/polyfill": "7.6.0",
     "@grafana/slate-react": "0.22.9-grafana",
     "@torkelo/react-select": "2.4.1",
     "angular": "1.6.9",
@@ -208,6 +208,7 @@
     "calculate-size": "1.1.1",
     "classnames": "2.2.6",
     "clipboard": "2.0.4",
+    "core-js": "2.6.9",
     "d3": "4.13.0",
     "d3-scale-chromatic": "1.5.0",
     "eventemitter3": "2.0.3",

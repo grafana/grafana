@@ -1,14 +1,6 @@
-import React, { useState } from 'react';
-import cx from 'classnames';
-import {
-  Button,
-  DataSourceHttpSettings,
-  DataSourcePluginOptionsEditorProps,
-  DataSourceSettings,
-  FormField,
-} from '@grafana/ui';
-import { DerivedFieldConfig, LokiOptions } from '../types';
-import { css } from 'emotion';
+import React from 'react';
+import { DataSourceHttpSettings, DataSourcePluginOptionsEditorProps, DataSourceSettings, FormField } from '@grafana/ui';
+import { LokiOptions } from '../types';
 
 export type Props = DataSourcePluginOptionsEditorProps<LokiOptions>;
 
@@ -26,7 +18,6 @@ const makeJsonUpdater = <T extends any>(field: keyof LokiOptions) => (
 };
 
 const setMaxLines = makeJsonUpdater('maxLines');
-const setDerivedFields = makeJsonUpdater('derivedFields');
 
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
@@ -41,10 +32,14 @@ export const ConfigEditor = (props: Props) => {
       />
 
       <div className="gf-form-group">
-        <MaxLinesField
-          value={options.jsonData.maxLines}
-          onChange={value => onOptionsChange(setMaxLines(options, value))}
-        />
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <MaxLinesField
+              value={options.jsonData.maxLines}
+              onChange={value => onOptionsChange(setMaxLines(options, value))}
+            />
+          </div>
+        </div>
       </div>
 
       <DerivedFields

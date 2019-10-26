@@ -1,5 +1,5 @@
 // Libraries
-import React, { ComponentClass } from 'react';
+import React, { ComponentType } from 'react';
 import { hot } from 'react-hot-loader';
 import { css } from 'emotion';
 import { connect } from 'react-redux';
@@ -63,7 +63,7 @@ const getStyles = memoizeOne(() => {
 });
 
 interface ExploreProps {
-  StartPage?: ComponentClass<ExploreStartPageProps>;
+  StartPage?: ComponentType<ExploreStartPageProps>;
   changeSize: typeof changeSize;
   datasourceError: string;
   datasourceInstance: DataSourceApi;

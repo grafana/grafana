@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
-import { AbstractButton, ButtonProps, LinkButtonProps } from './AbstractButton';
+import { AbstractButton } from './AbstractButton';
 import { ThemeContext } from '../../themes';
+import { ButtonProps, LinkButtonProps } from './types';
 
 export const Button: React.FunctionComponent<ButtonProps> = props => {
   const theme = useContext(ThemeContext);
