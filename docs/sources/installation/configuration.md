@@ -99,7 +99,7 @@ Path to where Grafana will store logs. This path is usually specified via comman
 
 Directory where grafana will automatically scan and look for plugins. Manually or automatically install any plugins here.
 
-**Mac:** By default, the Mac plugin location is: `/usr/local/var/lib/grafana/plugins`.
+**macOS:** By default, the Mac plugin location is: `/usr/local/var/lib/grafana/plugins`.
 
 ### provisioning
 
