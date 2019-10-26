@@ -205,6 +205,21 @@ describe('SingleStatCtrl', () => {
     });
   });
 
+  singleStatScenario('When mapping null values and no data', (ctx: TestContext) => {
+    ctx.setup(() => {
+      ctx.input = []; // No data
+      ctx.ctrl.panel.valueMaps = [{ value: 'null', text: 'XYZ' }];
+    });
+
+    it('value should be null', () => {
+      expect(ctx.data.value).toBe(null);
+    });
+
+    it('Should replace value with text', () => {
+      expect(ctx.data.display.text).toBe('XYZ');
+    });
+  });
+
   singleStatScenario('When range to text mapping is specified for first range', (ctx: TestContext) => {
     ctx.setup(() => {
       ctx.input = [{ target: 'test.cpu1', datapoints: [[41, 50]] }];

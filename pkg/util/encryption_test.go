@@ -10,10 +10,12 @@ func TestEncryption(t *testing.T) {
 
 	Convey("When getting encryption key", t, func() {
 
-		key := encryptionKeyToBytes("secret", "salt")
+		key, err := encryptionKeyToBytes("secret", "salt")
+		So(err, ShouldBeNil)
 		So(len(key), ShouldEqual, 32)
 
-		key = encryptionKeyToBytes("a very long secret key that is larger then 32bytes", "salt")
+		key, err = encryptionKeyToBytes("a very long secret key that is larger then 32bytes", "salt")
+		So(err, ShouldBeNil)
 		So(len(key), ShouldEqual, 32)
 	})
 
