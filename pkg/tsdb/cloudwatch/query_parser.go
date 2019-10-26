@@ -14,6 +14,10 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
+// Parses the json queries and returns map of queries with query id as key. In the case on query in the query editor
+// has more than more statistic defined, one cloudwatchQuery will be created for each statistic.
+// If the query doesn't have an Id defined by the user, we'll give it an with format `query[RefId]`. In the case
+// the incoming query had more than one stat, it will ge an id like `query[RefId]_[StatName]`, eg queryC_Average
 func (e *CloudWatchExecutor) parseQueries(queryContext *tsdb.TsdbQuery) (map[string]*cloudWatchQuery, error) {
 	cloudwatchQueries := make(map[string]*cloudWatchQuery, 0)
 
@@ -35,7 +39,7 @@ func (e *CloudWatchExecutor) parseQueries(queryContext *tsdb.TsdbQuery) (map[str
 				id = fmt.Sprintf("query%s", RefID)
 			}
 			if len(queryEditorRow.Statistics) > 1 {
-				id = fmt.Sprintf("%s_____%v", id, strings.ReplaceAll(*stat, ".", "_"))
+				id = fmt.Sprintf("%s_%v", id, strings.ReplaceAll(*stat, ".", "_"))
 			}
 
 			query := &cloudWatchQuery{
@@ -85,9 +89,6 @@ func parseQueryEditorRow(model *simplejson.Json, refId string) (*queryEditorRow,
 		return nil, err
 	}
 
-	id := model.Get("id").MustString("")
-	expression := model.Get("expression").MustString("")
-
 	dimensions, err := parseDimensions(model)
 	if err != nil {
 		return nil, err
@@ -121,8 +122,9 @@ func parseQueryEditorRow(model *simplejson.Json, refId string) (*queryEditorRow,
 		period = int(d.Seconds())
 	}
 
+	id := model.Get("id").MustString("")
+	expression := model.Get("expression").MustString("")
 	alias := model.Get("alias").MustString()
-
 	returnData := !model.Get("hide").MustBool(false)
 	queryType := model.Get("type").MustString()
 	if queryType == "" {
@@ -131,8 +133,8 @@ func parseQueryEditorRow(model *simplejson.Json, refId string) (*queryEditorRow,
 		// who (which service) called the TsdbQueryEndpoint.Query(...) function.
 		returnData = true
 	}
-	highResolution := model.Get("highResolution").MustBool(false)
 
+	highResolution := model.Get("highResolution").MustBool(false)
 	matchExact := model.Get("matchExact").MustBool(true)
 
 	return &queryEditorRow{
