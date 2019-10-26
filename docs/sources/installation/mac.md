@@ -9,7 +9,7 @@ weight = 500
 +++
 
 
-# Installing on Mac
+# Installing on macOS
 
 This page provides instructions to help you install Grafana on macOS. You can either install using homebrew or a binary tar file.
 
