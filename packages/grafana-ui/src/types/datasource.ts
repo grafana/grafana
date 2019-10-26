@@ -88,7 +88,6 @@ export class DataSourcePlugin<
   setComponentsFromLegacyExports(pluginExports: any) {
     this.angularConfigCtrl = pluginExports.ConfigCtrl;
 
-    this.components = omit(pluginExports, ['ConfigCtrl', 'Datasource']);
     this.components.QueryCtrl = pluginExports.QueryCtrl;
     this.components.AnnotationsQueryCtrl = pluginExports.AnnotationsQueryCtrl;
     this.components.ExploreQueryField = pluginExports.ExploreQueryField;
