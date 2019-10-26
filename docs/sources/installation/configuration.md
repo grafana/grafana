@@ -34,7 +34,7 @@ A common problem is forgetting to uncomment a line in the `custom.ini` (or `graf
 > `/etc/grafana/grafana.ini`. This path is specified in the Grafana
 > init.d script using `--config` file parameter.
 
-**Mac:** By default, the Configuration file is located at `/usr/local/etc/grafana/grafana.ini`.
+**macOS:** By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`.
 
 ## Using environment variables
 
