@@ -1,6 +1,12 @@
-import React from 'react';
-import { DataSourceHttpSettings, DataSourcePluginOptionsEditorProps, DataSourceSettings, FormField } from '@grafana/ui';
-import { LokiOptions } from '../types';
+import React, { useState } from 'react';
+import {
+  DataSourceHttpSettings,
+  DataSourcePluginOptionsEditorProps,
+  DataSourceSettings,
+  FormField,
+  Button,
+} from '@grafana/ui';
+import { DerivedFieldConfig, LokiOptions } from '../types';
 
 export type Props = DataSourcePluginOptionsEditorProps<LokiOptions>;
 
@@ -18,6 +24,7 @@ const makeJsonUpdater = <T extends any>(field: keyof LokiOptions) => (
 };
 
 const setMaxLines = makeJsonUpdater('maxLines');
+const setDerivedFields = makeJsonUpdater('derivedFields');
 
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
