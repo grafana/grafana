@@ -9,9 +9,9 @@ weight = 500
 +++
 
 
-# Installing on Mac
+# Installing on macOS
 
-This page provides instructions to help you install Grafana on your Mac system. You can either install using homebrew or a binary tar file.
+This page provides instructions to help you install Grafana on macOS. You can either install using homebrew or a binary tar file.
 
 ## Install using homebrew
 
@@ -77,4 +77,4 @@ To configure Grafana add a configuration file named `custom.ini` to the
 
 ### Start Grafana
 
-Start Grafana by executing `./bin/grafana-server web`. The `grafana-server` binary needs the working directory to be the root install directory (where the binary and the `public` folder is located).
+Start Grafana by executing `./bin/grafana-server`. The `grafana-server` binary needs the working directory to be the root install directory (where the binary and the `public` folder is located).
