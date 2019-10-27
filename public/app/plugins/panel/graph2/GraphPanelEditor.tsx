@@ -11,6 +11,7 @@ import {
   FieldPropertiesEditor,
   Select,
   GraphTooltipOptions,
+  PanelOptionsGrid,
 } from '@grafana/ui';
 import { Options, GraphOptions } from './types';
 import { GraphLegendEditor } from './GraphLegendEditor';
@@ -71,23 +72,25 @@ export class GraphPanelEditor extends PureComponent<PanelEditorProps<Options>> {
           <Switch label="Bars" labelClass="width-5" checked={showBars} onChange={this.onToggleBars} />
           <Switch label="Points" labelClass="width-5" checked={showPoints} onChange={this.onTogglePoints} />
         </div>
-        <PanelOptionsGroup title="Field">
-          <FieldPropertiesEditor
-            showMinMax={true}
-            onChange={this.onDefaultsChange}
-            value={this.props.options.fieldOptions.defaults}
-          />
-        </PanelOptionsGroup>
-        <PanelOptionsGroup title="Tooltip">
-          <Select
-            value={{ value: mode, label: mode === 'single' ? 'Single' : 'All series' }}
-            onChange={value => {
-              this.onTooltipOptionsChange({ mode: value.value as any });
-            }}
-            options={[{ label: 'All series', value: 'multi' }, { label: 'Single', value: 'single' }]}
-          />
-        </PanelOptionsGroup>
-        <GraphLegendEditor options={this.props.options.legend} onChange={this.onLegendOptionsChange} />
+        <PanelOptionsGrid>
+          <PanelOptionsGroup title="Field">
+            <FieldPropertiesEditor
+              showMinMax={false}
+              onChange={this.onDefaultsChange}
+              value={this.props.options.fieldOptions.defaults}
+            />
+          </PanelOptionsGroup>
+          <PanelOptionsGroup title="Tooltip">
+            <Select
+              value={{ value: mode, label: mode === 'single' ? 'Single' : 'All series' }}
+              onChange={value => {
+                this.onTooltipOptionsChange({ mode: value.value as any });
+              }}
+              options={[{ label: 'All series', value: 'multi' }, { label: 'Single', value: 'single' }]}
+            />
+          </PanelOptionsGroup>
+          <GraphLegendEditor options={this.props.options.legend} onChange={this.onLegendOptionsChange} />
+        </PanelOptionsGrid>
       </>
     );
   }
