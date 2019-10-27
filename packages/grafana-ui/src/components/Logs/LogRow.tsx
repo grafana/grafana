@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
-import { LogRowModel, TimeZone } from '@grafana/data';
+import { LinkModel, LogRowModel, TimeZone } from '@grafana/data';
 import { cx } from 'emotion';
-import { DataQueryResponse, DerivedField } from '../../index';
+import { DataQueryResponse } from '../../index';
 import {
   LogRowContextRows,
   LogRowContextQueryErrors,
@@ -25,14 +25,14 @@ interface Props extends Themeable {
   onClickLabel?: (label: string, value: string) => void;
   onContextClick?: () => void;
   getRowContext: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>;
-  getDerivedFields: (row: Record<string, any>) => Promise<DerivedField[]>;
+  getDerivedFields: (row: Record<string, any>) => Promise<Array<LinkModel<any>>>;
 }
 
 interface State {
   showContext: boolean;
   showDetails: boolean;
   loadingDerivedFields: boolean;
-  derivedFields: DerivedField[] | null;
+  linkModels: Array<LinkModel<any>> | null;
 }
 
 /**
@@ -49,7 +49,7 @@ class UnThemedLogRow extends Component<Props, State> {
     showContext: false,
     showDetails: false,
     loadingDerivedFields: false,
-    derivedFields: null,
+    linkModels: null,
   };
 
   componentWillUnmount(): void {
@@ -94,15 +94,15 @@ class UnThemedLogRow extends Component<Props, State> {
             this.setState({
               showDetails: !showDetails,
             });
-            if (this.state.derivedFields === null) {
+            if (this.state.linkModels === null) {
               this.setState({
                 loadingDerivedFields: true,
               });
-              const derivedFields = await getDerivedFields(row.dataFrameRow);
+              const linkModels = await getDerivedFields(row.dataFrameRow);
               if (this.mounted) {
                 this.setState({
                   loadingDerivedFields: false,
-                  derivedFields,
+                  linkModels,
                 });
               }
             }
@@ -151,22 +151,14 @@ class UnThemedLogRow extends Component<Props, State> {
               padding: 20,
             }}
           >
-            {!!this.state.derivedFields &&
-              !!this.state.derivedFields.length &&
-              this.state.derivedFields.map((field: DerivedField) => {
-                if (field.type === 'link') {
-                  return (
-                    <div>
-                      {field.label}=<a href={field.url}>{field.value}</a>
-                    </div>
-                  );
-                } else {
-                  return (
-                    <div>
-                      {field.label}={field.value}
-                    </div>
-                  );
-                }
+            {!!this.state.linkModels &&
+              !!this.state.linkModels.length &&
+              this.state.linkModels.map((link: LinkModel<any>) => {
+                return (
+                  <div>
+                    <a href={link.href}>{link.title}</a>
+                  </div>
+                );
               })}
           </div>
         )}

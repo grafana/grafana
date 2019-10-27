@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { DataSourceApi, Collapse, DerivedField } from '@grafana/ui';
+import { DataSourceApi, Collapse } from '@grafana/ui';
 
 import {
   RawTimeRange,
@@ -12,6 +12,7 @@ import {
   LogRowModel,
   LogsDedupStrategy,
   TimeRange,
+  LinkModel,
 } from '@grafana/data';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
@@ -25,6 +26,7 @@ import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 import { LiveTailControls } from './useLiveTailControls';
+import { getLinksFromDataSource } from '../panel/panellinks/link_srv';
 
 interface LogsContainerProps {
   datasourceInstance: DataSourceApi | null;
@@ -80,14 +82,8 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     return [];
   };
 
-  getDerivedFields = async (rowData: Record<string, any>): Promise<DerivedField[]> => {
-    const { datasourceInstance } = this.props;
-
-    if (datasourceInstance && datasourceInstance.getDerivedFields) {
-      return datasourceInstance.getDerivedFields(rowData);
-    }
-
-    return [];
+  getDerivedFields = async (rowData: Record<string, any>): Promise<Array<LinkModel<any>>> => {
+    return getLinksFromDataSource(this.props.datasourceInstance, rowData);
   };
 
   render() {

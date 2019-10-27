@@ -1,13 +1,12 @@
 import React, { PureComponent } from 'react';
 import { cx } from 'emotion';
-import { LogsModel, TimeZone, LogsDedupStrategy, LogRowModel } from '@grafana/data';
+import { LogsModel, TimeZone, LogsDedupStrategy, LogRowModel, LinkModel } from '@grafana/data';
 
 import { LogRow } from './LogRow';
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
 import memoizeOne from 'memoize-one';
-import { DerivedField } from '../../types';
 
 const PREVIEW_LIMIT = 100;
 const RENDER_LIMIT = 500;
@@ -23,7 +22,7 @@ export interface Props extends Themeable {
   rowLimit?: number;
   onClickLabel?: (label: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
-  getDerivedFields: (row: Record<string, any>) => Promise<DerivedField[]>;
+  getDerivedFields: (row: Record<string, any>) => Promise<Array<LinkModel<any>>>;
 }
 
 interface State {

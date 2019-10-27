@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
+import { css } from 'emotion';
+import cx from 'classnames';
 import {
+  Button,
+  DataLinksEditor,
   DataSourceHttpSettings,
   DataSourcePluginOptionsEditorProps,
   DataSourceSettings,
   FormField,
-  Button,
+  VariableOrigin,
 } from '@grafana/ui';
 import { DerivedFieldConfig, LokiOptions } from '../types';
 
@@ -25,6 +29,7 @@ const makeJsonUpdater = <T extends any>(field: keyof LokiOptions) => (
 
 const setMaxLines = makeJsonUpdater('maxLines');
 const setDerivedFields = makeJsonUpdater('derivedFields');
+const setDataLinks = makeJsonUpdater('dataLinks');
 
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
@@ -52,6 +57,18 @@ export const ConfigEditor = (props: Props) => {
       <DerivedFields
         value={options.jsonData.derivedFields}
         onChange={value => onOptionsChange(setDerivedFields(options, value))}
+      />
+
+      <DataLinksEditor
+        value={options.jsonData.dataLinks}
+        onChange={value => onOptionsChange(setDataLinks(options, value))}
+        suggestions={options.jsonData.derivedFields.map(field => {
+          return {
+            value: `field.${field.name}`,
+            label: field.name,
+            origin: VariableOrigin.Field,
+          };
+        })}
       />
     </>
   );
@@ -132,7 +149,7 @@ const DerivedFields = (props: DerivedFieldsProps) => {
             variant={'secondary'}
             onClick={event => {
               event.preventDefault();
-              const newDerivedFields = [...(value || []), { label: '', matcherRegex: '', template: '' }];
+              const newDerivedFields = [...(value || []), { name: '', matcherRegex: '' }];
               onChange(newDerivedFields);
             }}
           >
@@ -159,25 +176,13 @@ const DerivedField = (props: DerivedFieldProps) => {
         `}
       >
         <FormField
-          label="Label"
+          label="name"
           type="text"
-          value={value.label}
+          value={value.name}
           onChange={event =>
             onChange({
               ...value,
-              label: event.currentTarget.value,
-            })
-          }
-        />
-
-        <FormField
-          label="Value"
-          type="text"
-          value={value.label}
-          onChange={event =>
-            onChange({
-              ...value,
-              label: event.currentTarget.value,
+              name: event.currentTarget.value,
             })
           }
         />
@@ -207,18 +212,6 @@ const DerivedField = (props: DerivedFieldProps) => {
           'Use to parse and capture some part of the log message. You can use the captured groups in the template.'
         }
       />
-
-      <FormField
-        label="Template"
-        type="text"
-        value={value.template}
-        onChange={event =>
-          onChange({
-            ...value,
-            template: event.currentTarget.value,
-          })
-        }
-      />
     </>
   );
 };
@@ -235,24 +228,18 @@ const DebugSection = (props: DebugSectionProps) => {
 
   if (debugText) {
     results = derivedFields.reduce((acc, field) => {
-      if (field.label && field.matcherRegex && field.template) {
-        let testResult = '';
+      if (field.name && field.matcherRegex) {
         try {
           const testMatch = debugText.match(field.matcherRegex);
-          if (testMatch) {
-            testResult = field.template.replace(/\$(\d)+/, (match, p1) => {
-              return testMatch[parseInt(p1, 10) + 1];
-            });
-          }
 
           acc.push({
-            label: field.label,
-            result: testResult,
+            name: field.name,
+            result: (testMatch && testMatch[1]) || '<no match>',
           });
           return acc;
         } catch (error) {
           acc.push({
-            label: field.label,
+            label: field.name,
             error,
           });
           return acc;
@@ -284,7 +271,7 @@ const DebugSection = (props: DebugSectionProps) => {
         results.map(result => {
           return (
             <div>
-              {result.label} = {result.result || '<no match>'}
+              {result.name} = {result.result || '<no match>'}
             </div>
           );
         })}

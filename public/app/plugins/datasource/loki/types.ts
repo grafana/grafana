@@ -1,5 +1,5 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/ui';
-import { Labels } from '@grafana/data';
+import { DataLink, Labels } from '@grafana/data';
 
 export interface LokiQuery extends DataQuery {
   expr: string;
@@ -11,6 +11,7 @@ export interface LokiQuery extends DataQuery {
 export interface LokiOptions extends DataSourceJsonData {
   maxLines?: string;
   derivedFields?: DerivedFieldConfig[];
+  dataLinks?: DataLink[];
 }
 
 export interface LokiResponse {
@@ -39,8 +40,7 @@ export interface LokiExpression {
 
 export type DerivedFieldConfig = {
   matcherRegex: string;
-  template: string;
-  label: string;
+  name: string;
 };
 
 export type LokiRow = {

@@ -11,6 +11,7 @@ import {
   AnnotationEvent,
   ScopedVars,
   KeyValue,
+  DataLink,
 } from '@grafana/data';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 import { PanelData } from './panel';
@@ -269,7 +270,8 @@ export abstract class DataSourceApi<
    */
   annotationQuery?(options: AnnotationQueryRequest<TQuery>): Promise<AnnotationEvent[]>;
 
-  getDerivedFields?(data: { [key: string]: string | number | null }): Promise<DerivedField[]>;
+  async getDerivedFields?(data: { [key: string]: string | number | null }): Promise<ScopedVars>;
+  getDataLinks?(context: 'logs' | 'metrics'): DataLink[];
 }
 
 export interface QueryEditorProps<
@@ -560,17 +562,7 @@ export interface AnnotationQueryRequest<MoreOptions = {}> {
   } & MoreOptions;
 }
 
-export type DerivedField = DerivedTextField | DerivedLinkField;
-
-export type DerivedTextField = {
-  type: 'text';
-  label: string;
-  value?: string;
-};
-
-export type DerivedLinkField = {
-  type: 'link';
-  label: string;
-  value?: string;
-  url?: string;
+export type DerivedField = {
+  name: string;
+  value: string;
 };

@@ -3,7 +3,7 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import templateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
 import coreModule from 'app/core/core_module';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
-import { VariableSuggestion, VariableOrigin, DataLinkBuiltInVars } from '@grafana/ui';
+import { VariableSuggestion, VariableOrigin, DataLinkBuiltInVars, DataSourceApi } from '@grafana/ui';
 import { DataLink, KeyValue, deprecationWarning, LinkModel, DataFrame, ScopedVars } from '@grafana/data';
 
 const timeRangeVars = [
@@ -152,7 +152,10 @@ export class LinkSrv implements LinkService {
     return info;
   }
 
-  getDataLinkUIModel = <T>(link: DataLink, scopedVars: ScopedVars, origin: T) => {
+  /**
+   * Returns LinkModel which is basically a DataLink with all values interpolated through the templateSrv.
+   */
+  getDataLinkUIModel = <T>(link: DataLink, scopedVars: ScopedVars, origin: T): LinkModel<T> => {
     const params: KeyValue = {};
     const timeRangeUrl = toUrlParams(this.timeSrv.timeRangeForUrl());
 
@@ -202,3 +205,24 @@ export function getLinkSrv(): LinkService {
 }
 
 coreModule.service('linkSrv', LinkSrv);
+
+/**
+ * Helper to get all links from datasoure already interpolated.
+ * @param datasource
+ * @param rowData Some data that will be passed to the datasource to extract additional scoped vars. See
+ *  getDerivedFields
+ */
+export async function getLinksFromDataSource(
+  datasource: DataSourceApi,
+  rowData: Record<string, any>
+): Promise<Array<LinkModel<any>>> {
+  if (datasource && datasource.getDataLinks && datasource.getDerivedFields) {
+    const dataLinks = datasource.getDataLinks('logs');
+    if (dataLinks.length) {
+      const derivedFields = await datasource.getDerivedFields(rowData);
+      return dataLinks.map(link => getLinkSrv().getDataLinkUIModel(link, derivedFields, null));
+    }
+  }
+
+  return [];
+}

@@ -9,6 +9,8 @@ import {
   AnnotationEvent,
   DataFrameView,
   LoadingState,
+  DataLink,
+  ScopedVars,
 } from '@grafana/data';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
@@ -23,7 +25,6 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   AnnotationQueryRequest,
-  DerivedField,
 } from '@grafana/ui';
 
 import { LokiQuery, LokiOptions, LokiLogsStream, LokiResponse, LokiRow } from './types';
@@ -406,28 +407,23 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return annotations;
   }
 
-  async getDerivedFields(row: LokiRow): Promise<DerivedField[]> {
-    return (this.instanceSettings.jsonData.derivedFields || []).map(field => {
+  async getDerivedFields(row: LokiRow): Promise<ScopedVars> {
+    const fields = (this.instanceSettings.jsonData.derivedFields || []).reduce((acc: any, field) => {
       const logMatch = row.line.match(field.matcherRegex);
-      const interpolated = field.template
-        // Remove escaped $, negative look behind is not supported in every browser so supporting escaping this way.
-        .split('$$')
-        // Replace $n with stuff captured by the regex.
-        .map(part =>
-          part.replace(/\$(\d)+/, (match, p1) => {
-            return logMatch[parseInt(p1, 10) + 1];
-          })
-        )
-        // Get the escaped $ back.
-        .join('$$');
+      acc[field.name] = logMatch[1];
+      return acc;
+    }, {});
+    return {
+      field: {
+        value: fields,
+        // TODO not sure what to put here
+        text: '',
+      },
+    };
+  }
 
-      return {
-        type: 'link',
-        label: field.label,
-        value: logMatch[1],
-        url: interpolated,
-      };
-    });
+  getDataLinks(context: 'logs' | 'metrics'): DataLink[] {
+    return this.instanceSettings.jsonData.dataLinks || [];
   }
 }
 
