@@ -34,7 +34,7 @@ Before upgrading it can be a good idea to backup your Grafana database. This wil
 
 #### sqlite
 
-If you use sqlite you only need to make a backup of your `grafana.db` file. This is usually located at `/var/lib/grafana/grafana.db` on unix system.
+If you use sqlite you only need to make a backup of your `grafana.db` file. This is usually located at `/var/lib/grafana/grafana.db` on Unix systems.
 If you are unsure what database you use and where it is stored check you grafana configuration file. If you
 installed grafana to custom location using a binary tar/zip it is usually in `<grafana_install_dir>/data`.
 
@@ -100,7 +100,7 @@ docker run --name=my-grafana-container --restart=always -v /var/lib/grafana:/var
 
 ### Windows
 
-If you downloaded the windows binary package you can just download a newer package and extract
+If you downloaded the Windows binary package you can just download a newer package and extract
 to the same location (and overwrite the existing files). This might overwrite your config changes. We
 recommend you place your config changes in a file named  `<grafana_install_dir>/conf/custom.ini`
 as this will make upgrades easier without risking losing your config changes.

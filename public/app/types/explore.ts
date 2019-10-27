@@ -1,5 +1,5 @@
 import { Unsubscribable } from 'rxjs';
-import { ComponentClass } from 'react';
+import { ComponentType } from 'react';
 import {
   DataQuery,
   DataSourceSelectItem,
@@ -131,6 +131,10 @@ export interface ExploreState {
    */
   split: boolean;
   /**
+   * True if time interval for panels are synced. Only possible with split mode.
+   */
+  syncedTimes: boolean;
+  /**
    * Explore state of the left split (left is default in non-split view).
    */
   left: ExploreItemState;
@@ -144,7 +148,7 @@ export interface ExploreItemState {
   /**
    * React component to be shown when no queries have been run yet, e.g., for a query language cheat sheet.
    */
-  StartPage?: ComponentClass<ExploreStartPageProps>;
+  StartPage?: ComponentType<ExploreStartPageProps>;
   /**
    * Width used for calculating the graph interval (can't have more datapoints than pixels)
    */
@@ -305,6 +309,7 @@ export interface ExploreUrlState {
   range: RawTimeRange;
   ui: ExploreUIState;
   originPanelId?: number;
+  context?: string;
 }
 
 export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
@@ -345,7 +350,9 @@ export interface QueryIntervals {
 export interface QueryOptions {
   minInterval: string;
   maxDataPoints?: number;
-  live?: boolean;
+  liveStreaming?: boolean;
+  showingGraph?: boolean;
+  showingTable?: boolean;
 }
 
 export interface QueryTransaction {

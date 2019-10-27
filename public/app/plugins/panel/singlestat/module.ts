@@ -1,32 +1,36 @@
 import _ from 'lodash';
+import { auto } from 'angular';
 import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.gauge';
 import 'app/features/panel/panellinks/link_srv';
+
+import {
+  DataFrame,
+  DisplayValue,
+  Field,
+  fieldReducers,
+  FieldType,
+  GraphSeriesValue,
+  KeyValue,
+  LinkModel,
+  reduceField,
+  ReducerID,
+} from '@grafana/data';
+
 import {
   LegacyResponseData,
   getFlotPairs,
   getDisplayProcessor,
-  convertOldAngulrValueMapping,
+  convertOldAngularValueMapping,
   getColorFromHexRgbOrName,
+  PanelEvents,
 } from '@grafana/ui';
 
+import { CoreEvents } from 'app/types';
 import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
-import {
-  DataFrame,
-  FieldType,
-  reduceField,
-  ReducerID,
-  Field,
-  GraphSeriesValue,
-  DisplayValue,
-  fieldReducers,
-  KeyValue,
-  LinkModel,
-} from '@grafana/data';
-import { auto } from 'angular';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
 
@@ -118,10 +122,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
-    this.events.on('data-frames-received', this.onFramesReceived.bind(this));
-    this.events.on('data-error', this.onDataError.bind(this));
-    this.events.on('data-snapshot-load', this.onSnapshotLoad.bind(this));
-    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
+    this.events.on(CoreEvents.dataFramesReceived, this.onFramesReceived.bind(this));
+    this.events.on(PanelEvents.dataError, this.onDataError.bind(this));
+    this.events.on(PanelEvents.dataSnapshotLoad, this.onSnapshotLoad.bind(this));
+    this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
 
     this.useDataFrames = true;
 
@@ -182,13 +186,17 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     if (!fieldInfo) {
+      const processor = getDisplayProcessor({
+        config: {
+          mappings: convertOldAngularValueMapping(this.panel),
+          noValue: 'No Data',
+        },
+        theme: config.theme,
+      });
       // When we don't have any field
       this.data = {
-        value: 'No Data',
-        display: {
-          text: 'No Data',
-          numeric: NaN,
-        },
+        value: null,
+        display: processor(null),
       };
     } else {
       this.data = this.processField(fieldInfo);
@@ -242,7 +250,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         ...fieldInfo.field.config,
         unit: panel.format,
         decimals: panel.decimals,
-        mappings: convertOldAngulrValueMapping(panel),
+        mappings: convertOldAngularValueMapping(panel),
       },
       theme: config.theme,
       isUtc: dashboard.isTimezoneUtc && dashboard.isTimezoneUtc(),
@@ -257,7 +265,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       sparkline,
     };
 
-    data.scopedVars['__name'] = name;
+    data.scopedVars['__name'] = { value: name };
     panel.tableColumn = this.fieldNames.length > 1 ? name : '';
 
     // Get the fields for a sparkline
@@ -658,7 +666,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     hookupDrilldownLinkTooltip();
 
-    this.events.on('render', () => {
+    this.events.on(PanelEvents.render, () => {
       render();
       ctrl.renderingCompleted();
     });

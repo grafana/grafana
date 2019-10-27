@@ -31,7 +31,8 @@ A common problem is forgetting to uncomment a line in the `custom.ini` (or `graf
 
 > **Note.** If you have installed Grafana using the `deb` or `rpm`
 > packages, then your configuration file is located at
-> `/etc/grafana/grafana.ini`. This path is specified in the Grafana
+> `/etc/grafana/grafana.ini` and a separate `custom.ini` is not
+> used. This path is specified in the Grafana
 > init.d script using `--config` file parameter.
 
 **macOS:** By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`.
@@ -145,7 +146,7 @@ use GitHub or Google OAuth.
 ### enforce_domain
 
 Redirect to correct domain if host header does not match domain.
-Prevents DNS rebinding attacks. Default is false.
+Prevents DNS rebinding attacks. Default is `false`.
 
 ### root_url
 
@@ -190,7 +191,7 @@ Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 
 ### router_logging
 
-Set to true for Grafana to log all HTTP requests (not just errors). These are logged as Info level events
+Set to `true` for Grafana to log all HTTP requests (not just errors). These are logged as Info level events
 to grafana log.
 
 <hr />
@@ -217,9 +218,9 @@ will be stored.
 
 ### host
 
-Only applicable to MySQL or Postgres. Includes IP or hostname and port or in case of unix sockets the path to it.
+Only applicable to MySQL or Postgres. Includes IP or hostname and port or in case of Unix sockets the path to it.
 For example, for MySQL running on the same host as Grafana: `host =
-127.0.0.1:3306` or with unix sockets: `host = /var/run/mysqld/mysqld.sock`
+127.0.0.1:3306` or with Unix sockets: `host = /var/run/mysqld/mysqld.sock`
 
 ### name
 
@@ -232,7 +233,7 @@ The database user (not applicable for `sqlite3`).
 
 ### password
 
-The database user's password (not applicable for `sqlite3`). If the password contains `#` or `;` you have to wrap it with triple quotes. Ex `"""#password;"""`
+The database user's password (not applicable for `sqlite3`). If the password contains `#` or `;` you have to wrap it with triple quotes. For example `"""#password;"""`
 
 ### ssl_mode
 
@@ -241,7 +242,7 @@ For MySQL, use either `true`, `false`, or `skip-verify`.
 
 ### ca_cert_path
 
-The path to the CA certificate to use. On many linux systems, certs can be found in `/etc/ssl/certs`.
+The path to the CA certificate to use. On many Linux systems, certs can be found in `/etc/ssl/certs`.
 
 ### client_key_path
 
@@ -272,7 +273,7 @@ Set to `true` to log the sql calls and execution times.
 ### cache_mode
 
 For "sqlite3" only. [Shared cache](https://www.sqlite.org/sharedcache.html) setting used for connecting to the database. (private, shared)
-Defaults to private.
+Defaults to `private`.
 
 <hr />
 
@@ -280,7 +281,7 @@ Defaults to private.
 
 ### type
 
-Either `redis`, `memcached` or `database` default is `database`
+Either `redis`, `memcached` or `database`. Defaults to `database`
 
 ### connstr
 
@@ -332,7 +333,7 @@ Default is `false`.
 
 ### data_source_proxy_whitelist
 
-Define a white list of allowed ips/domains to use in data sources. Format: `ip_or_domain:port` separated by spaces
+Define a white list of allowed ips/domains to use in data sources. Format: `ip_or_domain:port` separated by spaces.
 
 ### cookie_secure
 
@@ -409,7 +410,7 @@ options are `Admin` and `Editor`. e.g. :
 
 ### viewers_can_edit
 
-Viewers can edit/inspect dashboard settings in the browser. But not save the dashboard.
+Viewers can edit/inspect dashboard settings in the browser, but not save the dashboard.
 Defaults to `false`.
 
 ### editors_can_admin
@@ -445,15 +446,15 @@ below.
 
 ### logging
 
-This enables data proxy logging, default is false.
+This enables data proxy logging, default is `false`.
 
 ### timeout
 
-How long the data proxy should wait before timing out default is 30 (seconds)
+How long the data proxy should wait before timing out. Default is `30` (seconds)
 
 ### send_user_header
 
-If enabled and user is not anonymous, data proxy will add X-Grafana-User header with username into the request, default is false.
+If enabled and user is not anonymous, data proxy will add X-Grafana-User header with username into the request. Default is `false`.
 
 <hr />
 
@@ -482,7 +483,7 @@ Set to false to disable all checks to https://grafana.com for new versions of in
 
 ### versions_to_keep
 
-Number dashboard versions to keep (per dashboard). Default: 20, Minimum: 1.
+Number dashboard versions to keep (per dashboard). Default: `20`, Minimum: `1`.
 
 ## [dashboards.json]
 
@@ -498,10 +499,10 @@ The full path to a directory containing your json dashboards.
 Email server settings.
 
 ### enabled
-defaults to false
+defaults to `false`
 
 ### host
-defaults to localhost:25
+defaults to `localhost:25`
 
 ### user
 In case of SMTP auth, defaults to `empty`
@@ -530,15 +531,15 @@ Name to be used as client identity for EHLO in SMTP dialog, defaults to instance
 ## [log]
 
 ### mode
-Either "console", "file", "syslog". Default is console and  file
-Use space to separate multiple modes, e.g. "console file"
+Either "console", "file", "syslog". Default is "console" and "file".
+Use spaces to separate multiple modes, e.g. `console file`
 
 ### level
-Either "debug", "info", "warn", "error", "critical", default is "info"
+Either "debug", "info", "warn", "error", "critical", default is `info`
 
 ### filters
 optional settings to set different levels for specific loggers.
-Ex `filters = sqlstore:debug`
+For example `filters = sqlstore:debug`
 
 ## [metrics]
 
@@ -570,10 +571,10 @@ Graphite metric prefix. Defaults to `prod.grafana.%(instance_name)s.`
 ## [snapshots]
 
 ### external_enabled
-Set to false to disable external snapshot publish endpoint (default true)
+Set to `false` to disable external snapshot publish endpoint (default `true`)
 
 ### external_snapshot_url
-Set root url to a Grafana instance where you want to publish external snapshots (defaults to https://snapshots-origin.raintank.io)
+Set root URL to a Grafana instance where you want to publish external snapshots (defaults to https://snapshots-origin.raintank.io)
 
 ### external_snapshot_name
 Set name for external snapshot button. Defaults to `Publish to snapshot.raintank.io`
@@ -654,7 +655,7 @@ Container name where to store "Blob" images with random names. Creating the blob
 ## [alerting]
 
 ### enabled
-Defaults to true. Set to false to disable alerting engine and hide Alerting from UI.
+Defaults to `true`. Set to `false` to disable alerting engine and hide Alerting from UI.
 
 ### execute_alerts
 
@@ -742,7 +743,7 @@ session provider you have configured.
 - **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
 - **postgres:** ex:  `user=a password=b host=localhost port=5432 dbname=c sslmode=verify-full`
 - **memcache:** ex:  `127.0.0.1:11211`
-- **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`. For unix socket, use for example: `network=unix,addr=/var/run/redis/redis.sock,pool_size=100,db=grafana`
+- **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`. For Unix socket, use for example: `network=unix,addr=/var/run/redis/redis.sock,pool_size=100,db=grafana`
 
 Postgres valid `sslmode` are `disable`, `require`, `verify-ca`, and `verify-full` (default).
 

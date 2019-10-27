@@ -11,7 +11,7 @@ import {
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
 import { LoadingState, toLegacyResponseData, DefaultTimeRange } from '@grafana/data';
-import { DataQuery, DataSourceApi, PanelData, DataQueryRequest, RefreshPicker } from '@grafana/ui';
+import { DataQuery, DataSourceApi, PanelData, DataQueryRequest, RefreshPicker, PanelEvents } from '@grafana/ui';
 import {
   HigherOrderAction,
   ActionTypes,
@@ -129,6 +129,7 @@ export const createEmptyQueryResponse = (): PanelData => ({
 export const initialExploreItemState = makeExploreItemState();
 export const initialExploreState: ExploreState = {
   split: null,
+  syncedTimes: false,
   left: initialExploreItemState,
   right: initialExploreItemState,
 };
@@ -203,7 +204,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         refreshInterval,
         queryResponse: {
           ...state.queryResponse,
-          state: live ? LoadingState.Streaming : LoadingState.NotStarted,
+          state: live ? LoadingState.Streaming : LoadingState.Done,
         },
         isLive: live,
         isPaused: live ? false : state.isPaused,
@@ -599,7 +600,7 @@ export const processQueryResponse = (
     }
 
     // For Angular editors
-    state.eventBridge.emit('data-error', error);
+    state.eventBridge.emit(PanelEvents.dataError, error);
 
     return {
       ...state,
@@ -623,7 +624,7 @@ export const processQueryResponse = (
   if (state.datasourceInstance.components.QueryCtrl) {
     const legacy = series.map(v => toLegacyResponseData(v));
 
-    state.eventBridge.emit('data-received', legacy);
+    state.eventBridge.emit(PanelEvents.dataReceived, legacy);
   }
 
   return {
@@ -726,6 +727,9 @@ export const exploreReducer = (state = initialExploreState, action: HigherOrderA
 
     case ActionTypes.SplitOpen: {
       return { ...state, split: true, right: { ...action.payload.itemState } };
+    }
+    case ActionTypes.SyncTimes: {
+      return { ...state, syncedTimes: action.payload.syncedTimes };
     }
 
     case ActionTypes.ResetExplore: {

@@ -37,7 +37,11 @@ export interface PanelProps<T = any> {
 
 export interface PanelEditorProps<T = any> {
   options: T;
-  onOptionsChange: (options: T) => void;
+  onOptionsChange: (
+    options: T,
+    // callback can be used to run something right after update.
+    callback?: () => void
+  ) => void;
   data: PanelData;
 }
 

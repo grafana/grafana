@@ -15,12 +15,11 @@ Grafana provides numerous ways to manage the time ranges of the data being visua
 
 <img class="no-shadow" src="/img/docs/v50/timepicker.png" width="700px">
 
-In the top right, you have the master Dashboard time picker (it's in between the 'Zoom out' and the 'Refresh' links).
+The two controls for time visualization are available in the top right:
 
-1. `Current time range & refresh interval`: This shows the current dashboard time and refresh interval. It also acts as the menu button to toggle the time range controls.
-2. `Quick ranges`: Quick ranges are preset values to choose a relative time. At this time, quick ranges are not configurable, and will appear on every dashboard.
-3. `Time range`: The time range section allows you to mix both explicit and relative ranges. The explicit time range format is `YYYY-MM-DD HH:MM:SS`
-4. `Refreshing every:` When enabled, auto-refresh will reload the dashboard at the specified time range. Auto-refresh is most commonly used with relative time ranges ending in `now`, so new data will appear when the dashboard refreshes.
+1. **Current time range**: This shows the current dashboard time. You can click on it to change it.
+2. **Refresh interval**: This shows the current refresh interval for the current dashboard. You can click on it to change
+   it. This feature is especially useful for always-on displays so that the most recent data is always shown.
 
 These settings apply to all Panels in the Dashboard (except those with Panel Time Overrides enabled)
 
@@ -70,4 +69,4 @@ When you zoom or change the Dashboard time to a custom absolute time range, all 
 The `Hide time override info` option allows you to hide the override info text that is by default shown in the
 upper right of a panel when overridden time range options.
 
-Note: You can only override the dashboard time with relative time ranges. Absolute time ranges are not available.
+**Note:** You can only override the dashboard time with relative time ranges. Absolute time ranges are not available.

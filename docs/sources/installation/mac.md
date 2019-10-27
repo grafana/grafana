@@ -1,6 +1,6 @@
 +++
-title = "Installing on Mac"
-description = "Installing Grafana on Mac"
+title = "Installing on macOS"
+description = "Installing Grafana on macOS"
 keywords = ["grafana", "configuration", "documentation", "mac", "homebrew", "osx"]
 type = "docs"
 [menu.docs]
@@ -12,6 +12,7 @@ weight = 500
 # Installing on macOS
 
 This page provides instructions to help you install Grafana on macOS. You can either install using homebrew or a binary tar file.
+
 
 ## Install using homebrew
 

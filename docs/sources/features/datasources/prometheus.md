@@ -35,7 +35,7 @@ Grafana includes built-in support for Prometheus.
 | _User_                  | Name of your Prometheus user                                                                                                          |
 | _Password_              | Database user's password                                                                                                              |
 | _Scrape interval_       | This will be used as a lower limit for the Prometheus step query parameter. Default value is 15s.                                     |
-| _CustomQueryParameters_ | Add Custom parameters to Prometheus query url. For example `timeout`, `partial_response`, `dedup` or `max_source_resolution`.         |
+| _Custom Query Parameters_ | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup` or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'. |
 
 ## Query editor
 

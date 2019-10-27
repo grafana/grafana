@@ -147,11 +147,15 @@ func (ns *NotificationService) sendEmailCommandHandler(cmd *m.SendEmailCommand) 
 }
 
 func (ns *NotificationService) sendResetPasswordEmail(cmd *m.SendResetPasswordEmailCommand) error {
+	code, err := createUserEmailCode(cmd.User, nil)
+	if err != nil {
+		return err
+	}
 	return ns.sendEmailCommandHandler(&m.SendEmailCommand{
 		To:       []string{cmd.User.Email},
 		Template: tmplResetPassword,
 		Data: map[string]interface{}{
-			"Code": createUserEmailCode(cmd.User, nil),
+			"Code": code,
 			"Name": cmd.User.NameOrFallback(),
 		},
 	})
@@ -168,7 +172,11 @@ func (ns *NotificationService) validateResetPasswordCode(query *m.ValidateResetP
 		return err
 	}
 
-	if !validateUserEmailCode(userQuery.Result, query.Code) {
+	validEmailCode, err := validateUserEmailCode(userQuery.Result, query.Code)
+	if err != nil {
+		return err
+	}
+	if !validEmailCode {
 		return m.ErrInvalidEmailCode
 	}
 

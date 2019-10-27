@@ -312,7 +312,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
             <QueryField
               additionalPlugins={this.plugins}
               cleanText={cleanText}
-              initialQuery={query.expr}
+              query={query.expr}
               onTypeahead={this.onTypeahead}
               onWillApplySuggestion={willApplySuggestion}
               onChange={this.onChangeQuery}

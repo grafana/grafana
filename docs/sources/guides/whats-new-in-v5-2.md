@@ -38,7 +38,7 @@ Grafana v5.2 brings an improved build pipeline with cross-platform support. This
 We've been longing for native ARM build support for ages. With the help from our amazing community this is now finally available.
 Please try it out and let us know what you think.
 
-Another great addition with the improved build pipeline is that binaries for MacOS/Darwin (x64) and Windows (x64) are now automatically built and
+Another great addition with the improved build pipeline is that binaries for macOS/Darwin (x64) and Windows (x64) are now automatically built and
 published for both stable and nightly builds.
 
 ## Improved Docker image
