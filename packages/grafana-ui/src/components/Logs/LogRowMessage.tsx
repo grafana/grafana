@@ -1,29 +1,32 @@
 import React, { PureComponent } from 'react';
 import _ from 'lodash';
-// @ts-ignore
-import Highlighter from 'react-highlight-words';
-import { LogRowModel, findHighlightChunksInText } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import { css, cx } from 'emotion';
-import { GrafanaTheme, selectThemeVariant } from '../../index';
+import { LogRowModel, findHighlightChunksInText } from '@grafana/data';
+
+// @ts-ignore
+import Highlighter from 'react-highlight-words';
 import { LogRowContextQueryErrors, HasMoreContextRows, LogRowContextRows } from './LogRowContextProvider';
-import { LogRowContext } from './LogRowContext';
-import { LogMessageAnsi } from './LogMessageAnsi';
+import { GrafanaTheme, selectThemeVariant } from '../../index';
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
 import { stylesFactory } from '../../themes/stylesFactory';
 
+//Components
+import { LogRowContext } from './LogRowContext';
+import { LogMessageAnsi } from './LogMessageAnsi';
+
 interface Props extends Themeable {
-  highlighterExpressions?: string[];
   row: LogRowModel;
-  getRows: () => LogRowModel[];
-  errors?: LogRowContextQueryErrors;
   hasMoreContextRows?: HasMoreContextRows;
-  updateLimit?: () => void;
-  context?: LogRowContextRows;
   showContext: boolean;
+  errors?: LogRowContextQueryErrors;
+  context?: LogRowContextRows;
+  highlighterExpressions?: string[];
+  getRows: () => LogRowModel[];
   onToggleContext: () => void;
+  updateLimit?: () => void;
 }
 
 interface State {}

@@ -81,6 +81,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       display: table-row;
 
       > div {
+        display: table-cell;
         padding-right: 10px;
         border-top: 1px solid transparent;
         border-bottom: 1px solid transparent;
@@ -93,13 +94,11 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     `,
     logsRowDuplicates: css`
       label: logs-row__duplicates;
-      display: table-cell;
       text-align: right;
       width: 4em;
     `,
     logsRowLevel: css`
       label: logs-row__level;
-      display: table-cell;
       position: relative;
       width: 10px;
 
@@ -121,7 +120,6 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     logsRowToggleDetails: css`
       label: logs-row-toggle-details__level;
       position: relative;
-      display: table-cell;
       width: 15px;
       padding-right: 10px;
       font-size: 9px;

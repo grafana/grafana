@@ -1,11 +1,11 @@
 import React, { PureComponent } from 'react';
 import { css } from 'emotion';
+import { LogLabelStatsModel } from '@grafana/data';
 
 import { stylesFactory } from '../../themes';
 import { Themeable, GrafanaTheme } from '../../types/theme';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import { withTheme } from '../../themes/index';
-import { LogLabelStatsModel } from '@grafana/data';
 
 //Components
 import { LogLabelStatsRow } from './LogLabelStatsRow';

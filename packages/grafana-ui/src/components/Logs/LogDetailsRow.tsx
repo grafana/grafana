@@ -1,10 +1,8 @@
 import React, { PureComponent } from 'react';
+import { LogRowModel, LogsParser, LogLabelStatsModel, calculateFieldStats } from '@grafana/data';
 
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
-import { LogRowModel, LogsParser, LogLabelStatsModel } from '@grafana/data';
-import { calculateFieldStats } from '@grafana/data';
-
 import { getLogRowStyles } from './getLogRowStyles';
 
 //Components

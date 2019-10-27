@@ -1,11 +1,13 @@
 import React, { PureComponent } from 'react';
+import memoizeOne from 'memoize-one';
 import { LogsModel, TimeZone, LogsDedupStrategy, LogRowModel } from '@grafana/data';
 
-import { LogRow } from './LogRow';
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
-import memoizeOne from 'memoize-one';
+
+//Components
+import { LogRow } from './LogRow';
 
 const PREVIEW_LIMIT = 100;
 const RENDER_LIMIT = 500;
@@ -85,7 +87,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const { deferLogs, renderAll } = this.state;
     const dedupedData = deduplicatedData ? deduplicatedData : data;
     const hasData = data && data.rows && data.rows.length > 0;
-    // const hasLabel = hasData && dedupedData && dedupedData.hasUniqueLabels ? true : false;
     const dedupCount = dedupedData
       ? dedupedData.rows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
       : 0;
