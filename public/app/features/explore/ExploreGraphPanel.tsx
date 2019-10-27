@@ -137,6 +137,7 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
               lineWidth={lineWidth}
               onSeriesToggle={onSeriesToggle}
               onHorizontalRegionSelected={this.onChangeTime}
+              tooltipOptions={{ mode: 'single' }}
             />
           );
         }}

@@ -5,12 +5,9 @@ import uniqBy from 'lodash/uniqBy';
 // Types
 import { TimeRange, GraphSeriesXY, TimeZone, DefaultTimeZone } from '@grafana/data';
 import _ from 'lodash';
-import { FlotPosition } from './types';
+import { FlotPosition, FlotItem } from './types';
 import { TooltipProps } from '../Chart/Tooltip';
 import { GraphTooltip, GraphTooltipOptions } from './GraphTooltip';
-
-// TODO define this type
-type FlotItem = any;
 
 export interface GraphProps {
   children?: JSX.Element | JSX.Element[];
@@ -31,7 +28,8 @@ export interface GraphProps {
 interface GraphState {
   pos?: FlotPosition;
   isTooltipVisible: boolean;
-  activeItem?: FlotItem;
+  activeSeriesIndex?: number;
+  activeDatapointIndex?: number;
   allSeriesMode?: boolean;
 }
 
@@ -77,11 +75,12 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     }
   };
 
-  onPlotHover = (event: JQueryEventObject, pos: FlotPosition, item: FlotItem) => {
+  onPlotHover = (event: JQueryEventObject, pos: FlotPosition, item?: FlotItem) => {
     this.setState({
       isTooltipVisible: true,
       allSeriesMode: !item,
-      activeItem: item,
+      activeSeriesIndex: item ? item.seriesIndex : undefined,
+      activeDatapointIndex: item ? item.dataIndex : undefined,
       pos,
     });
   };
@@ -109,7 +108,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
 
   renderTooltip = () => {
     const { children, series, timeZone, tooltipOptions } = this.props;
-    const { pos, activeItem, isTooltipVisible } = this.state;
+    const { pos, activeSeriesIndex, activeDatapointIndex, isTooltipVisible } = this.state;
     const tooltips: React.ReactNode[] = [];
 
     if (!isTooltipVisible || !pos) {
@@ -135,7 +134,8 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       content: (
         <GraphTooltip
           series={series}
-          activeItem={activeItem}
+          seriesIndex={activeSeriesIndex}
+          datapointIndex={activeDatapointIndex}
           pos={pos}
           mode={tooltipOptions.mode}
           timeZone={timeZone}
