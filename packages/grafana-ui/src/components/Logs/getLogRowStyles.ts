@@ -124,7 +124,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       display: table-cell;
       width: 15px;
       padding-right: 10px;
-      font-size: 10px;
+      font-size: 9px;
       cursor: pointer;
     `,
     logsRowLocalTime: css`

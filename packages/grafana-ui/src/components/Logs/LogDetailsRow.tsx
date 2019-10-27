@@ -1,14 +1,18 @@
 import React, { PureComponent } from 'react';
+
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
-import { getLogRowStyles } from './getLogRowStyles';
-import { LogLabelStats } from './LogLabelStats';
 import { LogRowModel, LogsParser, LogLabelStatsModel } from '@grafana/data';
 import { calculateFieldStats } from '@grafana/data';
 
+import { getLogRowStyles } from './getLogRowStyles';
+
+//Components
+import { LogLabelStats } from './LogLabelStats';
+
 interface Props extends Themeable {
-  valueDetail: string;
-  keyDetail: string;
+  parsedValue: string;
+  parsedKey: string;
   field?: string;
   row?: LogRowModel;
   canShowMetrics?: boolean;
@@ -39,28 +43,35 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   };
 
   filterLabel = () => {
-    const { onClickFilterLabel, keyDetail, valueDetail } = this.props;
+    const { onClickFilterLabel, parsedKey, parsedValue } = this.props;
     if (onClickFilterLabel) {
-      onClickFilterLabel(keyDetail, valueDetail);
+      onClickFilterLabel(parsedKey, parsedValue);
     }
   };
 
   filterOutLabel = () => {
-    const { onClickFilterOutLabel, keyDetail, valueDetail } = this.props;
+    const { onClickFilterOutLabel, parsedKey, parsedValue } = this.props;
     if (onClickFilterOutLabel) {
-      onClickFilterOutLabel(keyDetail, valueDetail);
+      onClickFilterOutLabel(parsedKey, parsedValue);
     }
   };
 
-  toggleFieldsStats = () => {
+  showStats = () => {
+    if (!this.state.showFieldsStats) {
+      this.createStatsForLogs();
+    }
+    this.toggleFieldsStats();
+  };
+
+  toggleFieldsStats() {
     this.setState(state => {
       return {
         showFieldsStats: !state.showFieldsStats,
       };
     });
-  };
+  }
 
-  createStatsForLogs = () => {
+  createStatsForLogs() {
     const { getRows, parser, field } = this.props;
     if (field && getRows) {
       const allRows = getRows();
@@ -73,19 +84,15 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       const fieldCount = fieldStats.reduce((sum, stat) => sum + stat.count, 0);
       this.setState({ fieldCount, fieldLabel, fieldStats, fieldValue });
     }
-  };
-
-  showStats = () => {
-    this.createStatsForLogs();
-    this.toggleFieldsStats();
-  };
+  }
 
   render() {
-    const { theme, keyDetail, valueDetail, canShowMetrics, canFilter, canFilterOut } = this.props;
+    const { theme, parsedKey, parsedValue, canShowMetrics, canFilter, canFilterOut } = this.props;
     const { showFieldsStats, fieldStats, fieldLabel, fieldValue, fieldCount } = this.state;
     const style = getLogRowStyles(theme);
     return (
-      <div key={keyDetail} className={style.logsRowDetailsRow}>
+      <div className={style.logsRowDetailsRow}>
+        {/* Action buttons - show stats/filter results */}
         {canShowMetrics ? (
           <div onClick={this.showStats} className={style.logsRowDetailsIcon}>
             <i className={'fa fa-signal'} />
@@ -107,20 +114,16 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
         ) : (
           <div className={style.logsRowDetailsIcon} />
         )}
+
+        {/* Key - value columns */}
         <div className={style.logsRowDetailsLabel}>
-          <span>{keyDetail}</span>
+          <span>{parsedKey}</span>
         </div>
         <div className={style.logsRowCell}>
-          <span>{valueDetail}</span>
+          <span>{parsedValue}</span>
           {showFieldsStats && (
             <div className={style.logsRowCell}>
-              <LogLabelStats
-                stats={fieldStats!}
-                label={fieldLabel!}
-                value={fieldValue!}
-                onClickClose={this.toggleFieldsStats}
-                rowCount={fieldCount}
-              />
+              <LogLabelStats stats={fieldStats!} label={fieldLabel!} value={fieldValue!} rowCount={fieldCount} />
             </div>
           )}
         </div>

@@ -1,44 +1,56 @@
 import React, { PureComponent } from 'react';
 import { css } from 'emotion';
-import { LogLabelStatsModel } from '@grafana/data';
 
-import { LogLabelStatsRow } from './LogLabelStatsRow';
+import { stylesFactory } from '../../themes';
 import { Themeable, GrafanaTheme } from '../../types/theme';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import { withTheme } from '../../themes/index';
+import { LogLabelStatsModel } from '@grafana/data';
+
+//Components
+import { LogLabelStatsRow } from './LogLabelStatsRow';
 
 const STATS_ROW_LIMIT = 5;
 
-const getStyles = (theme: GrafanaTheme) => ({
-  logsStats: css`
-    label: logs-stats;
-    display: table-cell;
-    column-span: 2;
-    background: inherit;
-    color: ${theme.colors.text};
-  `,
-  logsStatsHeader: css`
-    label: logs-stats__header;
-    border-bottom: 1px solid ${selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.dark9 }, theme.type)};
-    display: flex;
-  `,
-  logsStatsTitle: css`
-    label: logs-stats__title;
-    font-weight: ${theme.typography.weight.semibold};
-    padding-right: ${theme.spacing.d};
-    display: inline-block;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    flex-grow: 1;
-  `,
-  logsStatsClose: css`
-    label: logs-stats__close;
-    cursor: pointer;
-  `,
-  logsStatsBody: css`
-    label: logs-stats__body;
-    padding: 5px 0;
-  `,
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const borderColor = selectThemeVariant(
+    {
+      light: theme.colors.gray5,
+      dark: theme.colors.dark9,
+    },
+    theme.type
+  );
+  return {
+    logsStats: css`
+      label: logs-stats;
+      display: table-cell;
+      column-span: 2;
+      background: inherit;
+      color: ${theme.colors.text};
+    `,
+    logsStatsHeader: css`
+      label: logs-stats__header;
+      border-bottom: 1px solid ${borderColor};
+      display: flex;
+    `,
+    logsStatsTitle: css`
+      label: logs-stats__title;
+      font-weight: ${theme.typography.weight.semibold};
+      padding-right: ${theme.spacing.d};
+      display: inline-block;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      flex-grow: 1;
+    `,
+    logsStatsClose: css`
+      label: logs-stats__close;
+      cursor: pointer;
+    `,
+    logsStatsBody: css`
+      label: logs-stats__body;
+      padding: 5px 0;
+    `,
+  };
 });
 
 interface Props extends Themeable {
@@ -46,7 +58,6 @@ interface Props extends Themeable {
   label: string;
   value: string;
   rowCount: number;
-  onClickClose: () => void;
 }
 
 class UnThemedLogLabelStats extends PureComponent<Props> {

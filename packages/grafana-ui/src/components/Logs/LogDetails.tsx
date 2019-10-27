@@ -1,8 +1,11 @@
 import React, { PureComponent } from 'react';
+
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
 import { LogsParser, getParser, LogRowModel } from '@grafana/data';
+
+//Components
 import { LogDetailsRow } from './LogDetailsRow';
 
 interface Props extends Themeable {
@@ -14,8 +17,8 @@ interface Props extends Themeable {
 
 interface State {
   parsed: boolean;
-  parser?: LogsParser;
   parsedFieldHighlights: string[];
+  parser?: LogsParser;
 }
 
 class UnThemedLogDetails extends PureComponent<Props, State> {
@@ -25,7 +28,7 @@ class UnThemedLogDetails extends PureComponent<Props, State> {
     parsedFieldHighlights: [],
   };
 
-  parseMessage = () => {
+  parseMessage() {
     const { row } = this.props;
     const parser = getParser(row.entry);
     if (parser) {
@@ -33,7 +36,7 @@ class UnThemedLogDetails extends PureComponent<Props, State> {
       const parsedFieldHighlights = parser.getFields(row.entry);
       this.setState({ parsedFieldHighlights, parsed: true, parser });
     }
-  };
+  }
 
   componentDidMount() {
     this.parseMessage();
@@ -44,15 +47,17 @@ class UnThemedLogDetails extends PureComponent<Props, State> {
     const { parsedFieldHighlights, parser } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
     const labels = row.labels ? row.labels : {};
+    const noDetailsAvailable = Object.keys(labels).length === 0 && parsedFieldHighlights.length === 0;
+
     return (
       <div className={style.logsRowDetailsTable}>
         {Object.keys(labels).map(key => {
           const value = labels[key];
           return (
             <LogDetailsRow
-              key={value}
-              keyDetail={key}
-              valueDetail={value}
+              key={`${key}=${value}`}
+              parsedKey={key}
+              parsedValue={value}
               canFilter={true}
               canFilterOut={true}
               onClickFilterOutLabel={onClickFilterOutLabel}
@@ -66,9 +71,9 @@ class UnThemedLogDetails extends PureComponent<Props, State> {
             const value = parser!.getValueFromField(field);
             return (
               <LogDetailsRow
-                key={value}
-                keyDetail={key}
-                valueDetail={value}
+                key={`${key}=${value}`}
+                parsedKey={key}
+                parsedValue={value}
                 canShowMetrics={true}
                 field={field}
                 row={row}
@@ -77,6 +82,7 @@ class UnThemedLogDetails extends PureComponent<Props, State> {
               />
             );
           })}
+        {noDetailsAvailable && <div>No details available</div>}
       </div>
     );
   }

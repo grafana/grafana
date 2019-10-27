@@ -80,6 +80,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     const { showDetails, showContext } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
     const showUtc = timeZone === 'utc';
+
     return (
       <>
         <div className={style.logsRow}>
@@ -99,7 +100,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
                   {row.timeUtc}
                 </div>
               )}
-
               {showTime && !showUtc && (
                 <div className={style.logsRowLocalTime} title={`${row.timeUtc} (${row.timeFromNow})`}>
                   {row.timeLocal}
