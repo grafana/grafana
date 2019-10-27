@@ -50,39 +50,41 @@ class UnThemedLogDetails extends PureComponent<Props, State> {
     const noDetailsAvailable = Object.keys(labels).length === 0 && parsedFieldHighlights.length === 0;
 
     return (
-      <div className={style.logsRowDetailsTable}>
-        {Object.keys(labels).map(key => {
-          const value = labels[key];
-          return (
-            <LogDetailsRow
-              key={`${key}=${value}`}
-              parsedKey={key}
-              parsedValue={value}
-              canFilter={true}
-              canFilterOut={true}
-              onClickFilterOutLabel={onClickFilterOutLabel}
-              onClickFilterLabel={onClickFilterLabel}
-            />
-          );
-        })}
-        {parsedFieldHighlights &&
-          parsedFieldHighlights.map(field => {
-            const key = parser!.getLabelFromField(field);
-            const value = parser!.getValueFromField(field);
+      <div className={style.logsRowCell}>
+        <div className={style.logsRowDetailsTable}>
+          {Object.keys(labels).map(key => {
+            const value = labels[key];
             return (
               <LogDetailsRow
                 key={`${key}=${value}`}
                 parsedKey={key}
                 parsedValue={value}
-                canShowMetrics={true}
-                field={field}
-                row={row}
-                getRows={getRows}
-                parser={parser}
+                canFilter={true}
+                canFilterOut={true}
+                onClickFilterOutLabel={onClickFilterOutLabel}
+                onClickFilterLabel={onClickFilterLabel}
               />
             );
           })}
-        {noDetailsAvailable && <div>No details available</div>}
+          {parsedFieldHighlights &&
+            parsedFieldHighlights.map(field => {
+              const key = parser!.getLabelFromField(field);
+              const value = parser!.getValueFromField(field);
+              return (
+                <LogDetailsRow
+                  key={`${key}=${value}`}
+                  parsedKey={key}
+                  parsedValue={value}
+                  canShowMetrics={true}
+                  field={field}
+                  row={row}
+                  getRows={getRows}
+                  parser={parser}
+                />
+              );
+            })}
+          {noDetailsAvailable && <div>No details available</div>}
+        </div>
       </div>
     );
   }

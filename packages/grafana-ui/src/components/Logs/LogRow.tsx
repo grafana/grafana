@@ -85,58 +85,52 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     const showUtc = timeZone === 'utc';
 
     return (
-      <>
-        <div className={style.logsRow}>
-          {showDuplicates && (
-            <div className={style.logsRowDuplicates}>
-              {row.duplicates && row.duplicates > 0 ? `${row.duplicates + 1}x` : null}
-            </div>
-          )}
-          <div className={style.logsRowLevel} />
+      <div className={style.logsRow}>
+        {showDuplicates && (
+          <div className={style.logsRowDuplicates}>
+            {row.duplicates && row.duplicates > 0 ? `${row.duplicates + 1}x` : null}
+          </div>
+        )}
+        <div className={style.logsRowLevel} />
+        {
           <div onClick={this.toggleDetails} className={style.logsRowToggleDetails}>
             <i className={showDetails ? 'fa fa-chevron-up' : 'fa fa-chevron-down'} />
           </div>
+        }
+        <div>
           <div>
-            <div>
-              {showTime && showUtc && (
-                <div className={style.logsRowLocalTime} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
-                  {row.timeUtc}
-                </div>
-              )}
-              {showTime && !showUtc && (
-                <div className={style.logsRowLocalTime} title={`${row.timeUtc} (${row.timeFromNow})`}>
-                  {row.timeLocal}
-                </div>
-              )}
-              <div className={style.logsRowCell}>
-                <LogRowMessage
-                  highlighterExpressions={highlighterExpressions}
-                  row={row}
-                  getRows={getRows}
-                  errors={errors}
-                  hasMoreContextRows={hasMoreContextRows}
-                  updateLimit={updateLimit}
-                  context={context}
-                  showContext={showContext}
-                  onToggleContext={this.toggleContext}
-                />
+            {showTime && showUtc && (
+              <div className={style.logsRowLocalTime} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
+                {row.timeUtc}
               </div>
-            </div>
-            <div>
-              {this.state.showDetails && (
-                <div className={style.logsRowCell}>
-                  <LogDetails
-                    onClickFilterLabel={onClickFilterLabel}
-                    onClickFilterOutLabel={onClickFilterOutLabel}
-                    getRows={getRows}
-                    row={row}
-                  />
-                </div>
-              )}
-            </div>
+            )}
+            {showTime && !showUtc && (
+              <div className={style.logsRowLocalTime} title={`${row.timeUtc} (${row.timeFromNow})`}>
+                {row.timeLocal}
+              </div>
+            )}
+            <LogRowMessage
+              highlighterExpressions={highlighterExpressions}
+              row={row}
+              getRows={getRows}
+              errors={errors}
+              hasMoreContextRows={hasMoreContextRows}
+              updateLimit={updateLimit}
+              context={context}
+              showContext={showContext}
+              onToggleContext={this.toggleContext}
+            />
           </div>
+          {this.state.showDetails && (
+            <LogDetails
+              onClickFilterLabel={onClickFilterLabel}
+              onClickFilterOutLabel={onClickFilterOutLabel}
+              getRows={getRows}
+              row={row}
+            />
+          )}
         </div>
-      </>
+      </div>
     );
   }
 

@@ -134,6 +134,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     logsRowMessage: css`
       label: logs-row__message;
       word-break: break-all;
+      display: table-cell;
     `,
     logsRowStats: css`
       label: logs-row__stats;
