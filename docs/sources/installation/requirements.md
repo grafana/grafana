@@ -51,7 +51,7 @@ Per default Grafana ships with and uses SQLite, which is an embedded database st
 
 ## Supported web browsers
 
-Grafana is supported in the current version of the following browsers. Older versions of these browsers might not be supported.
+Grafana is supported in the current version of the following browsers. Older versions of these browsers might not be supported, so you should always upgrade to the latest version when using Grafana.
 
 - Chrome/Chromium
 - Firefox
@@ -59,13 +59,4 @@ Grafana is supported in the current version of the following browsers. Older ver
 - Microsoft Edge
 - Internet Explorer 11 is only fully supported in Grafana versions prior v6.0.
 
-> Note: Running Grafana without JavaScript enabled in the browser is not supported.
-
-### Known issue: Problem with logging in using Safari 12
-
-There is a known [iOS Safari 12 issue](https://bugs.webkit.org/show_bug.cgi?id=188165) that prevents the Grafana session cookie from being written after a successful login.
-
-A quick workaround for this problem would be to configure [cookie_samesite](/installation/configuration/#cookie-samesite) to `none`. However, there is another known [Safari 12 issue](https://bugs.webkit.org/show_bug.cgi?id=198181) that threats `SameSite=none` as `strict` which also
-prevents the Grafana session cookie from being written after a successful login.
-
-To resolve using `none` as `SameSite` cookie attribute in combination with Safari 12, please upgrade to at least Grafana v6.3.3, which includes a fix.
+> Note: Always enable JavaScript in your browser. Running Grafana without JavaScript enabled in the browser is not supported.
