@@ -109,6 +109,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
         )}
         <div className={style.logsRowDetailsLabel}>
           <span>{keyDetail}</span>
+        </div>
+        <div className={style.logsRowCell}>
+          <span>{valueDetail}</span>
           {showFieldsStats && (
             <div className={style.logsRowCell}>
               <LogLabelStats
@@ -120,9 +123,6 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
               />
             </div>
           )}
-        </div>
-        <div className={style.logsRowCell}>
-          <span>{valueDetail}</span>
         </div>
       </div>
     );
