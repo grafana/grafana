@@ -4,9 +4,16 @@ import React, { PureComponent } from 'react';
 import uniqBy from 'lodash/uniqBy';
 // Types
 import { TimeRange, GraphSeriesXY, TimeZone, DefaultTimeZone } from '@grafana/data';
-import { GraphTooltipOptions } from './GraphTooltip';
+import _ from 'lodash';
+import { FlotPosition } from './types';
+import { TooltipProps } from '../Chart/Tooltip';
+import { GraphTooltip, GraphTooltipOptions } from './GraphTooltip';
+
+// TODO define this type
+type FlotItem = any;
 
 export interface GraphProps {
+  children?: JSX.Element | JSX.Element[];
   series: GraphSeriesXY[];
   timeRange: TimeRange; // NOTE: we should aim to make `time` a property of the axis, not force it for all graphs
   timeZone: TimeZone; // NOTE: we should aim to make `time` a property of the axis, not force it for all graphs
@@ -21,7 +28,14 @@ export interface GraphProps {
   tooltipOptions: GraphTooltipOptions;
 }
 
-export class Graph extends PureComponent<GraphProps> {
+interface GraphState {
+  pos?: FlotPosition;
+  isTooltipVisible: boolean;
+  activeItem?: FlotItem;
+  allSeriesMode?: boolean;
+}
+
+export class Graph extends PureComponent<GraphProps, GraphState> {
   static defaultProps = {
     showLines: true,
     showPoints: false,
@@ -30,11 +44,17 @@ export class Graph extends PureComponent<GraphProps> {
     lineWidth: 1,
   };
 
+  state: GraphState = {
+    isTooltipVisible: true,
+  };
+
   element: HTMLElement | null = null;
   $element: any;
 
-  componentDidUpdate() {
-    this.draw();
+  componentDidUpdate(prevProps: GraphProps, prevState: GraphState) {
+    if (prevProps !== this.props) {
+      this.draw();
+    }
   }
 
   componentDidMount() {
@@ -42,6 +62,7 @@ export class Graph extends PureComponent<GraphProps> {
     if (this.element) {
       this.$element = $(this.element);
       this.$element.bind('plotselected', this.onPlotSelected);
+      this.$element.bind('plothover', this.onPlotHover);
     }
   }
 
@@ -54,6 +75,15 @@ export class Graph extends PureComponent<GraphProps> {
     if (onHorizontalRegionSelected) {
       onHorizontalRegionSelected(ranges.xaxis.from, ranges.xaxis.to);
     }
+  };
+
+  onPlotHover = (event: JQueryEventObject, pos: FlotPosition, item: FlotItem) => {
+    this.setState({
+      isTooltipVisible: true,
+      allSeriesMode: !item,
+      activeItem: item,
+      pos,
+    });
   };
 
   getYAxes(series: GraphSeriesXY[]) {
@@ -76,6 +106,45 @@ export class Graph extends PureComponent<GraphProps> {
       yAxisConfig => yAxisConfig.index
     );
   }
+
+  renderTooltip = () => {
+    const { children, series, timeZone, tooltipOptions } = this.props;
+    const { pos, activeItem, isTooltipVisible } = this.state;
+    const tooltips: React.ReactNode[] = [];
+
+    if (!isTooltipVisible || !pos) {
+      return null;
+    }
+    //  Extract to an util
+    React.Children.forEach(children, c => {
+      // @ts-ignore
+      const childType = c && c.type && (c.type.displayName || c.type.name);
+
+      if (childType === 'ChartTooltip') {
+        tooltips.push(c);
+      }
+    });
+
+    const tooltipElement = tooltips[0];
+
+    if (!tooltipElement) {
+      return null;
+    }
+
+    return React.cloneElement<TooltipProps>(tooltipElement as React.ReactElement<TooltipProps>, {
+      content: (
+        <GraphTooltip
+          series={series}
+          activeItem={activeItem}
+          pos={pos}
+          mode={tooltipOptions.mode}
+          timeZone={timeZone}
+        />
+      ),
+      position: { x: pos.pageX, y: pos.pageY },
+      offset: { x: 10, y: 10 },
+    });
+  };
 
   draw() {
     if (this.element === null) {
@@ -146,18 +215,23 @@ export class Graph extends PureComponent<GraphProps> {
         markings: [],
         backgroundColor: null,
         borderWidth: 0,
-        // hoverable: true,
+        hoverable: true,
         clickable: true,
         color: '#a1a1a1',
         margin: { left: 0, right: 0 },
         labelMarginX: 0,
+        mouseActiveRadius: 30,
       },
       selection: {
         mode: onHorizontalRegionSelected ? 'x' : null,
         color: '#666',
       },
+      crosshair: {
+        mode: 'x',
+      },
     };
 
+    // console.logg
     try {
       $.plot(this.element, series, flotOptions);
     } catch (err) {
@@ -171,8 +245,17 @@ export class Graph extends PureComponent<GraphProps> {
     const noDataToBeDisplayed = series.length === 0;
     return (
       <div className="graph-panel">
-        <div className="graph-panel__chart" ref={e => (this.element = e)} style={{ height }} />
+        <div
+          className="graph-panel__chart"
+          ref={e => (this.element = e)}
+          style={{ height }}
+          onMouseLeave={() => {
+            this.setState({ isTooltipVisible: true });
+          }}
+        />
+
         {noDataToBeDisplayed && <div className="datapoints-warning">No data</div>}
+        {this.renderTooltip()}
       </div>
     );
   }

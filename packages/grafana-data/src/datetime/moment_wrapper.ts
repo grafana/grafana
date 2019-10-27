@@ -37,6 +37,8 @@ export type DurationUnit =
   | 'quarters'
   | 'Q';
 
+export type DateFormatter = (date: DateTimeInput, format?: string) => string;
+
 export interface DateTimeLocale {
   firstDayOfWeek: () => number;
 }
@@ -112,4 +114,11 @@ export const dateTimeForTimeZone = (
   }
 
   return dateTime(input, formatInput);
+};
+
+export const getTimeZoneDateFormatter: (timezone?: TimeZone) => DateFormatter = timezone => (date, format) => {
+  date = isDateTime(date) ? date : dateTime(date);
+  format = format || 'YYYY-MM-DD HH:mm:ss';
+
+  return timezone === 'browser' ? dateTime(date).format(format) : toUtc(date).format(format);
 };

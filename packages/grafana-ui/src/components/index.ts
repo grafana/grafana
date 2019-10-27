@@ -93,6 +93,7 @@ export { Spinner } from './Spinner/Spinner';
 export { FadeTransition } from './transitions/FadeTransition';
 export { SlideOutTransition } from './transitions/SlideOutTransition';
 export { Segment, SegmentAsync, SegmentSelect } from './Segment/';
+export { default as Chart } from './Chart';
 
 // Next-gen forms
 export { default as Forms } from './Forms';

@@ -1,5 +1,5 @@
 import React from 'react';
-import { PanelProps, GraphWithLegend } from '@grafana/ui';
+import { PanelProps, GraphWithLegend, Chart } from '@grafana/ui';
 import { Options } from './types';
 import { GraphPanelController } from './GraphPanelController';
 import { LegendDisplayMode } from '@grafana/ui/src/components/Legend/Legend';
@@ -61,7 +61,9 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
             {...legendProps}
             tooltipOptions={tooltipOptions}
             {...controllerApi}
-          />
+          >
+            <Chart.Tooltip />
+          </GraphWithLegend>
         );
       }}
     </GraphPanelController>
