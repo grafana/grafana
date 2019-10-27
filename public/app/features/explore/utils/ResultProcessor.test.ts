@@ -112,6 +112,8 @@ describe('ResultProcessor', () => {
             yAxis: {
               index: 1,
             },
+            yAxisDisplayProcessor: undefined,
+            seriesIndex: 0,
           },
         ]);
       });
@@ -200,6 +202,8 @@ describe('ResultProcessor', () => {
               yAxis: {
                 index: 1,
               },
+              yAxisDisplayProcessor: undefined,
+              seriesIndex: 0,
             },
           ],
         });
