@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import { cx } from 'emotion';
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
@@ -46,7 +45,7 @@ class UnThemedLogDetails extends PureComponent<Props, State> {
     const style = getLogRowStyles(theme, row.logLevel);
     const labels = row.labels ? row.labels : {};
     return (
-      <div className={cx([style.logsRowDetailsTable])}>
+      <div className={style.logsRowDetailsTable}>
         {Object.keys(labels).map(key => {
           const value = labels[key];
           return (

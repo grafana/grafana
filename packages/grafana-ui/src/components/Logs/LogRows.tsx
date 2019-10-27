@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import { cx } from 'emotion';
 import { LogsModel, TimeZone, LogsDedupStrategy, LogRowModel } from '@grafana/data';
 
 import { LogRow } from './LogRow';
@@ -105,7 +104,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const { logsRows } = getLogRowStyles(theme);
 
     return (
-      <div className={cx([logsRows])}>
+      <div className={logsRows}>
         {hasData &&
         !deferLogs && // Only inject highlighterExpression in the first set for performance reasons
           firstRows.map((row, index) => (

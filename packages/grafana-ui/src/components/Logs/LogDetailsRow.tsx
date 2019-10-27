@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import { cx } from 'emotion';
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
@@ -86,32 +85,32 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     const { showFieldsStats, fieldStats, fieldLabel, fieldValue, fieldCount } = this.state;
     const style = getLogRowStyles(theme);
     return (
-      <div key={keyDetail} className={cx([style.logsRowDetailsRow])}>
+      <div key={keyDetail} className={style.logsRowDetailsRow}>
         {canShowMetrics ? (
-          <div onClick={this.showStats} className={cx([style.logsRowDetailsIcon])}>
+          <div onClick={this.showStats} className={style.logsRowDetailsIcon}>
             <i className={'fa fa-signal'} />
           </div>
         ) : (
-          <div className={cx([style.logsRowDetailsIcon])} />
+          <div className={style.logsRowDetailsIcon} />
         )}
         {canFilter ? (
-          <div onClick={() => this.filterLabel()} className={cx([style.logsRowDetailsIcon])}>
+          <div onClick={() => this.filterLabel()} className={style.logsRowDetailsIcon}>
             <i className={'fa fa-search-plus'} />
           </div>
         ) : (
-          <div className={cx([style.logsRowDetailsIcon])} />
+          <div className={style.logsRowDetailsIcon} />
         )}
         {canFilterOut ? (
-          <div onClick={() => this.filterOutLabel()} className={cx([style.logsRowDetailsIcon])}>
+          <div onClick={() => this.filterOutLabel()} className={style.logsRowDetailsIcon}>
             <i className={'fa fa-search-minus'} />
           </div>
         ) : (
-          <div className={cx([style.logsRowDetailsIcon])} />
+          <div className={style.logsRowDetailsIcon} />
         )}
-        <div className={cx([style.logsRowDetailsLabel])}>
+        <div className={style.logsRowDetailsLabel}>
           <span>{keyDetail}</span>
           {showFieldsStats && (
-            <div className={cx([style.logsRowCell])}>
+            <div className={style.logsRowCell}>
               <LogLabelStats
                 stats={fieldStats!}
                 label={fieldLabel!}
@@ -122,7 +121,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
             </div>
           )}
         </div>
-        <div className={cx([style.logsRowCell])}>
+        <div className={style.logsRowCell}>
           <span>{valueDetail}</span>
         </div>
       </div>

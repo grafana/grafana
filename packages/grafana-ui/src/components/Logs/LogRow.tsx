@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import { LogRowModel, TimeZone } from '@grafana/data';
-import { cx } from 'emotion';
 import { DataQueryResponse } from '../../index';
 import {
   LogRowContextRows,
@@ -83,30 +82,30 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     const showUtc = timeZone === 'utc';
     return (
       <>
-        <div className={cx([style.logsRow])}>
+        <div className={style.logsRow}>
           {showDuplicates && (
-            <div className={cx([style.logsRowDuplicates])}>
+            <div className={style.logsRowDuplicates}>
               {row.duplicates && row.duplicates > 0 ? `${row.duplicates + 1}x` : null}
             </div>
           )}
-          <div className={cx([style.logsRowLevel])} />
-          <div onClick={this.toggleDetails} className={cx([style.logsRowToggleDetails])}>
+          <div className={style.logsRowLevel} />
+          <div onClick={this.toggleDetails} className={style.logsRowToggleDetails}>
             <i className={showDetails ? 'fa fa-chevron-up' : 'fa fa-chevron-down'} />
           </div>
           <div>
             <div>
               {showTime && showUtc && (
-                <div className={cx([style.logsRowLocalTime])} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
+                <div className={style.logsRowLocalTime} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
                   {row.timeUtc}
                 </div>
               )}
 
               {showTime && !showUtc && (
-                <div className={cx([style.logsRowLocalTime])} title={`${row.timeUtc} (${row.timeFromNow})`}>
+                <div className={style.logsRowLocalTime} title={`${row.timeUtc} (${row.timeFromNow})`}>
                   {row.timeLocal}
                 </div>
               )}
-              <div className={cx([style.logsRowCell])}>
+              <div className={style.logsRowCell}>
                 <LogRowMessage
                   highlighterExpressions={highlighterExpressions}
                   row={row}
@@ -122,7 +121,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             </div>
             <div>
               {this.state.showDetails && (
-                <div className={cx([style.logsRowCell])}>
+                <div className={style.logsRowCell}>
                   <LogDetails
                     onClickFilterLabel={onClickFilterLabel}
                     onClickFilterOutLabel={onClickFilterOutLabel}
