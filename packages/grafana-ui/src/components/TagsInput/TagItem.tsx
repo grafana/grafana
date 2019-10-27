@@ -1,7 +1,8 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { getTagColorsFromName } from '../../utils';
-import { stylesFactory } from '../../themes';
+import { stylesFactory, useTheme } from '../../themes';
+import { GrafanaTheme } from '../../types';
 
 interface Props {
   name: string;
@@ -9,12 +10,13 @@ interface Props {
   onRemove: (tag: string) => void;
 }
 
-export const TagItem: FC<Props> = ({ name, onRemove }) => {
+const getStyles = stylesFactory(({ theme, name }: { theme: GrafanaTheme; name: string }) => {
   const { color, borderColor } = getTagColorsFromName(name);
 
-  const getStyles = stylesFactory(() => ({
+  return {
     itemStyle: css`
       background-color: ${color};
+      color: ${theme.colors.white};
       border: 1px solid ${borderColor};
       border-radius: 3px;
       padding: 3px 6px;
@@ -37,12 +39,17 @@ export const TagItem: FC<Props> = ({ name, onRemove }) => {
         cursor: pointer;
       `,
     ]),
-  }));
+  };
+});
+
+export const TagItem: FC<Props> = ({ name, onRemove }) => {
+  const theme = useTheme();
+  const styles = getStyles({ theme, name });
 
   return (
-    <div className={getStyles().itemStyle}>
-      <span className={getStyles().nameStyle}>{name}</span>
-      <i className={getStyles().removeStyle} onClick={() => onRemove(name)} />
+    <div className={styles.itemStyle}>
+      <span className={styles.nameStyle}>{name}</span>
+      <i className={styles.removeStyle} onClick={() => onRemove(name)} />
     </div>
   );
 };
