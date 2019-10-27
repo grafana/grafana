@@ -213,6 +213,9 @@ module.exports = {
 };
 ```
 
+### How do I add 3rd party dependencies that are not npm packages?
+You can add such dependencies by putting them in `static` directory in the root of your project. The `static` directory will be copied when building the plugin.
+
 ## Contribute to grafana-toolkit
 You can contribute to grafana-toolkit in the by helping develop it or by debugging it.
 
@@ -226,7 +229,7 @@ Typically plugins should be developed using the `@grafana/toolkit` installed fro
 
 
 ### Debug grafana-toolkit
-To debug grafana-toolkit you can use standard [NodeJS debugging methods](https://nodejs.org/de/docs/guides/debugging-getting-started/#enable-inspector) (`node --inspect`, `node --inspect-brk`). 
+To debug grafana-toolkit you can use standard [NodeJS debugging methods](https://nodejs.org/de/docs/guides/debugging-getting-started/#enable-inspector) (`node --inspect`, `node --inspect-brk`).
 
 To run grafana-toolkit in a debugging session use the following command in the toolkit's directory:
 

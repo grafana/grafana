@@ -22,3 +22,12 @@ export const validate = (value: string, validationRules: ValidationRule[]) => {
 export const hasValidationEvent = (event: EventsWithValidation, validationEvents: ValidationEvents | undefined) => {
   return validationEvents && validationEvents[event];
 };
+
+export const regexValidation = (pattern: string | RegExp, errorMessage?: string): ValidationRule => {
+  return {
+    rule: (valueToValidate: string) => {
+      return !!valueToValidate.match(pattern);
+    },
+    errorMessage: errorMessage || 'Value is not valid',
+  };
+};

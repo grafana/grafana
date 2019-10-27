@@ -50,6 +50,7 @@ const theme: GrafanaThemeCommons = {
       light: 300,
       regular: 400,
       semibold: 500,
+      bold: 600,
     },
     lineHeight: {
       xs: 1,
@@ -87,6 +88,7 @@ const theme: GrafanaThemeCommons = {
     formFieldsetMargin: `${SPACING_BASE * 2}px`,
     formLegendMargin: `0 0 ${SPACING_BASE * 2}px 0`,
     formInputHeight: `${SPACING_BASE * 4}px`,
+    formButtonHeight: SPACING_BASE * 4,
     formInputPaddingHorizontal: `${SPACING_BASE}px`,
 
     // Used for icons do define spacing between icon and input field
