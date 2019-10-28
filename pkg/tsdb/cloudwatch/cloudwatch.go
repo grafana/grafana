@@ -4,7 +4,6 @@ import (
 	"context"
 	"regexp"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
@@ -138,19 +137,7 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 				for _, metricDataInput := range metricDataInputs {
 					mdo, err := e.executeRequest(ectx, client, metricDataInput)
 					if err != nil {
-						plog.Info("executeGetMetricDataQueryError", "", err)
-					}
-
-					if ae, ok := err.(awserr.Error); ok {
-						plog.Info("errorcode", "", ae.Code())
-						switch ae.Code() {
-						case "InternalFailure":
-							return err
-						case "ValidationError":
-							return err
-						case "Throttling":
-							return err
-						}
+						return err
 					}
 
 					metricDataOutputs = append(metricDataOutputs, mdo...)
