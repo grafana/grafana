@@ -52,7 +52,7 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string) error {
 	}
 
 	if !p.isVersionOne() && !setting.IsExpressionsEnabled() {
-		return errors.New("A plugin version 2 was found but expressions feature toggle is not enabled")
+		return errors.New("A plugin version 2 was found, but expressions feature toggle is not enabled")
 	}
 
 	if err := p.registerPlugin(pluginDir); err != nil {

@@ -58,4 +58,15 @@ func TestLoadDatasourceVersion(t *testing.T) {
 		assert.False(t, datasourcePlugin.isVersionOne())
 		assert.True(t, datasourcePlugin.SDK)
 	})
+
+	t.Run("Plugin version two requires expressions feature to be toggled", func(t *testing.T) {
+		refPlug := DataSourcePlugin{SDK: true}
+		pluginJSON, err := json.Marshal(refPlug)
+		require.NoError(t, err)
+
+		require.Nil(t, setting.FeatureToggles, "setting.FeatureToggles shouldn't be set")
+		datasourcePlugin := DataSourcePlugin{}
+		err = datasourcePlugin.Load(json.NewDecoder(bytes.NewReader(pluginJSON)), "/tmp")
+		require.EqualError(t, err, "A plugin version 2 was found, but expressions feature toggle is not enabled")
+	})
 }
