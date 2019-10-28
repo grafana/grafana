@@ -14,7 +14,6 @@ import {
   sharePanel as sharePanelUtil,
   calculateInnerPanelHeight,
 } from 'app/features/dashboard/utils/panel';
-
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { auto } from 'angular';
 import { TemplateSrv } from '../templating/template_srv';

@@ -64,7 +64,7 @@ export interface State {
   updateScrollTop: number;
   rememberScrollTop: number;
   showLoadingState: boolean;
-  inspectPanel: number;
+  inspectPanel: PanelModel | null;
 }
 
 export class DashboardPage extends PureComponent<Props, State> {
@@ -77,7 +77,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     scrollTop: 0,
     updateScrollTop: null,
     rememberScrollTop: 0,
-    inspectPanel: 0,
+    inspectPanel: null,
   };
 
   async componentDidMount() {
@@ -140,12 +140,8 @@ export class DashboardPage extends PureComponent<Props, State> {
     }
   }
 
-  onPanelInspect = (panel: PanelModel | undefined) => {
-    let id = 0;
-    if (panel && this.props.dashboard.getPanelById(panel.id)) {
-      id = panel.id;
-    }
-    this.setState({ inspectPanel: id });
+  onPanelInspect = (panel: PanelModel | null) => {
+    this.setState({ inspectPanel: null });
   };
 
   onEnterFullscreen() {
@@ -323,7 +319,7 @@ export class DashboardPage extends PureComponent<Props, State> {
           </CustomScrollbar>
         </div>
 
-        {inspectPanel && <InspectModal dashboard={dashboard} panel={dashboard.getPanelById(inspectPanel)} />}
+        {inspectPanel && <InspectModal dashboard={dashboard} panel={inspectPanel} />}
       </div>
     );
   }
