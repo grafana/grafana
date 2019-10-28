@@ -2,6 +2,7 @@
 import React, { PureComponent } from 'react';
 
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { JSONFormatter } from '@grafana/ui';
 
 interface Props {
   panel: PanelModel;
@@ -13,12 +14,22 @@ export class InspectModal extends PureComponent<Props> {
   }
 
   componentDidMount = () => {
+    const { panel } = this.props;
     console.log('TODO, inspect', panel);
     console.log('DATA', panel.getQueryRunner());
   };
 
   render() {
     const { panel } = this.props;
+    // const data =panel.getQueryRunner();
+    const data = {
+      hello: 10,
+      world: 'xxx',
+      nested: {
+        element: ['aaa', 'bbb'],
+      },
+    };
+
     return (
       <div className="modal-body">
         <div className="modal-header">
@@ -40,8 +51,14 @@ export class InspectModal extends PureComponent<Props> {
             </div>
           </div>
 
-          <div className="grafana-info-box" style={{ border: 0 }}>
+          {/* <div className="grafana-info-box" style={{ border: 0 }}>
             TODO....
+          </div> */}
+
+          <div>
+            BEFORE
+            <JSONFormatter json={data} open={2} />
+            AFTER
           </div>
         </div>
       </div>
