@@ -6,7 +6,7 @@ import { ScopedVars } from './ScopedVars';
 export interface DataLinkClickEvent<T = any> {
   origin: T;
   scopedVars: ScopedVars;
-  e?: any; // mouse/react event?
+  e?: any; // mouse|react event
 }
 
 /**
@@ -40,8 +40,7 @@ export interface LinkModel<T> {
   target: LinkTarget;
   origin: T;
 
-  // If exists, call this when clicked
-  // with context it is: React.MouseEvent<HTMLAnchorElement>
+  // When a click callback exists, this is passed the raw mouse|react event
   onClick?: (e: any) => void;
 }
 
