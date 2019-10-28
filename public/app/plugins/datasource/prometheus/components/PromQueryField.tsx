@@ -24,9 +24,12 @@ const METRIC_MARK = 'metric';
 const PRISM_SYNTAX = 'promql';
 export const RECORDING_RULES_GROUP = '__recording_rules__';
 
-function getChooserText(hasSyntax: boolean) {
+function getChooserText(hasSyntax: boolean, metrics: string[]) {
   if (!hasSyntax) {
     return 'Loading metrics...';
+  }
+  if (metrics && metrics.length === 0) {
+    return '(No metrics found)';
   }
   return 'Metrics';
 }
@@ -276,8 +279,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     const { data, query } = this.props;
     const { metricsOptions, syntaxLoaded, hint } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
-    const chooserText = getChooserText(syntaxLoaded);
-    const buttonDisabled = !syntaxLoaded;
+    const chooserText = getChooserText(syntaxLoaded, metricsOptions);
+    const buttonDisabled = !(syntaxLoaded && metricsOptions && metricsOptions.length > 0);
     const showError = data && data.error && data.error.refId === query.refId;
 
     return (

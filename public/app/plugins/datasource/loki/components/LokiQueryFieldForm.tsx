@@ -154,7 +154,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
         <div className="gf-form-inline">
           <div className="gf-form">
             <Cascader
-              options={logLabelOptions}
+              options={logLabelOptions || []}
               onChange={this.onChangeLogLabels}
               loadData={onLoadOptions}
               expandIcon={null}
