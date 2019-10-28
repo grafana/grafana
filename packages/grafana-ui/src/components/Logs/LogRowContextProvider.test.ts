@@ -23,6 +23,7 @@ describe('getRowContexts', () => {
         ],
       });
       const row: LogRowModel = {
+        dataFrameRow: {},
         entry: '4',
         labels: (null as any) as Labels,
         hasAnsi: false,
@@ -56,6 +57,7 @@ describe('getRowContexts', () => {
       const firstError = new Error('Error 1');
       const secondError = new Error('Error 2');
       const row: LogRowModel = {
+        dataFrameRow: {},
         entry: '4',
         labels: (null as any) as Labels,
         hasAnsi: false,

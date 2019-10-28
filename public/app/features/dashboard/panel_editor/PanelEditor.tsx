@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { PanelPlugin, PanelPluginMeta, Tooltip } from '@grafana/ui';
+import { DataSourceApi, PanelPlugin, PanelPluginMeta, Tooltip } from '@grafana/ui';
 import { AngularComponent, config } from '@grafana/runtime';
 
 import { QueriesTab } from './QueriesTab';
@@ -27,6 +27,7 @@ interface PanelEditorProps {
   refreshPanelEditor: typeof refreshPanelEditor;
   panelEditorCleanUp: typeof panelEditorCleanUp;
   changePanelEditorTab: typeof changePanelEditorTab;
+  datasourceInstance: DataSourceApi;
 }
 
 class UnConnectedPanelEditor extends PureComponent<PanelEditorProps> {
@@ -69,7 +70,7 @@ class UnConnectedPanelEditor extends PureComponent<PanelEditorProps> {
   };
 
   renderCurrentTab(activeTab: string) {
-    const { panel, dashboard, plugin, angularPanel } = this.props;
+    const { panel, dashboard, plugin, angularPanel, datasourceInstance } = this.props;
 
     switch (activeTab) {
       case 'advanced':
@@ -86,6 +87,7 @@ class UnConnectedPanelEditor extends PureComponent<PanelEditorProps> {
             plugin={plugin}
             onPluginTypeChange={this.onPluginTypeChange}
             angularPanel={angularPanel}
+            datasource={datasourceInstance}
           />
         );
       default:

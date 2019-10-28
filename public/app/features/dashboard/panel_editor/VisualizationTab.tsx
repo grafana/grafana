@@ -14,7 +14,7 @@ import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { PanelModel, DashboardModel } from '../state';
 import { VizPickerSearch } from './VizPickerSearch';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
-import { PanelPlugin, PanelPluginMeta, PanelData } from '@grafana/ui';
+import { PanelPlugin, PanelPluginMeta, PanelData, DataSourceApi } from '@grafana/ui';
 import { PanelCtrl } from 'app/plugins/sdk';
 import { Unsubscribable } from 'rxjs';
 import { LoadingState, DefaultTimeRange } from '@grafana/data';
@@ -27,6 +27,7 @@ interface Props {
   onPluginTypeChange: (newType: PanelPluginMeta) => void;
   updateLocation: typeof updateLocation;
   urlOpenVizPicker: boolean;
+  datasource: DataSourceApi;
 }
 
 interface State {
@@ -64,7 +65,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
   };
 
   renderPanelOptions() {
-    const { plugin, angularPanel } = this.props;
+    const { plugin, angularPanel, datasource } = this.props;
 
     if (angularPanel) {
       return <div ref={element => (this.element = element)} />;
@@ -76,6 +77,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
           data={this.state.data}
           options={this.getReactPanelOptions()}
           onOptionsChange={this.onPanelOptionsChanged}
+          datasource={datasource}
         />
       );
     }

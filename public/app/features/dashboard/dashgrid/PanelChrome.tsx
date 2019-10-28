@@ -16,7 +16,6 @@ import config from 'app/core/config';
 import { DashboardModel, PanelModel } from '../state';
 import { LoadingState, ScopedVars, AbsoluteTimeRange, DefaultTimeRange, toUtc, toDataFrameDTO } from '@grafana/data';
 import { PanelEvents } from '@grafana/ui';
-import { getDatasourceSrv } from '../../plugins/datasource_srv';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -28,6 +27,7 @@ export interface Props {
   isInView: boolean;
   width: number;
   height: number;
+  datasourceInstance?: DataSourceApi;
 }
 
 export interface State {
@@ -38,7 +38,6 @@ export interface State {
 
   // Current state of all events
   data: PanelData;
-  datasourceInstance?: DataSourceApi<any>;
 }
 
 export class PanelChrome extends PureComponent<Props, State> {
@@ -105,11 +104,6 @@ export class PanelChrome extends PureComponent<Props, State> {
         this.querySubscription.unsubscribe();
         this.querySubscription = null;
       }
-    }
-
-    const datasourceInstance = await getDatasourceSrv().get(this.props.panel.datasource, this.props.panel.scopedVars);
-    if (datasourceInstance.name === this.props.panel.datasource) {
-      this.setState({ datasourceInstance });
     }
   }
 
@@ -241,8 +235,8 @@ export class PanelChrome extends PureComponent<Props, State> {
   };
 
   renderPanel(width: number, height: number): JSX.Element {
-    const { panel, plugin } = this.props;
-    const { renderCounter, data, isFirstLoad, datasourceInstance } = this.state;
+    const { panel, plugin, datasourceInstance } = this.props;
+    const { renderCounter, data, isFirstLoad } = this.state;
     const { theme } = config;
 
     // This is only done to increase a counter that is used by backend

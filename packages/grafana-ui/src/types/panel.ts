@@ -44,6 +44,7 @@ export interface PanelEditorProps<T = any> {
     callback?: () => void
   ) => void;
   data: PanelData;
+  datasource: DataSourceApi;
 }
 
 export interface PanelModel<TOptions = any> {

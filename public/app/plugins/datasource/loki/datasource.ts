@@ -409,8 +409,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
   async getDerivedFields(row: LokiRow): Promise<ScopedVars> {
     const fields = (this.instanceSettings.jsonData.derivedFields || []).reduce((acc: any, field) => {
-      const logMatch = row.line.match(field.matcherRegex);
-      acc[field.name] = logMatch[1];
+      const logMatch = row && row.line && row.line.match(field.matcherRegex);
+      acc[field.name] = logMatch && logMatch[1];
       return acc;
     }, {});
     return {
