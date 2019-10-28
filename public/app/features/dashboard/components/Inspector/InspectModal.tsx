@@ -13,11 +13,11 @@ export class InspectModal extends PureComponent<Props> {
     super(props);
   }
 
-  componentDidMount = () => {
+  componentDidMount() {
     const { panel } = this.props;
     console.log('TODO, inspect', panel);
     console.log('DATA', panel.getQueryRunner());
-  };
+  }
 
   render() {
     const { panel } = this.props;
@@ -44,21 +44,19 @@ export class InspectModal extends PureComponent<Props> {
         </div>
 
         <div className="modal-content">
-          <div className="gf-form-group">
+          {/* <div className="gf-form-group">
             <div className="gf-form">
               <span className="gf-form-label">Key</span>
               <span className="gf-form-label">{this.props.panel.id}</span>
             </div>
-          </div>
-
-          {/* <div className="grafana-info-box" style={{ border: 0 }}>
+          </div><div className="grafana-info-box" style={{ border: 0 }}>
             TODO....
           </div> */}
 
           <div>
-            BEFORE
+            BEFOREY
             <JSONFormatter json={data} open={2} />
-            AFTER
+            AFTERY ID: {panel.id}
           </div>
         </div>
       </div>
