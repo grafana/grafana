@@ -112,7 +112,11 @@ export class DashboardPage extends PureComponent<Props, State> {
       document.title = dashboard.title + ' - Grafana';
     }
 
+    // Listen for inspect events
     if (prevProps.dashboard !== this.props.dashboard) {
+      if (prevProps.dashboard) {
+        prevProps.dashboard.off(panelInspect, this.onPanelInspect);
+      }
       dashboard.on(panelInspect, this.onPanelInspect);
     }
 
@@ -141,7 +145,7 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   onPanelInspect = (panel: PanelModel | null) => {
-    this.setState({ inspectPanel: null });
+    this.setState({ inspectPanel: panel });
   };
 
   onEnterFullscreen() {

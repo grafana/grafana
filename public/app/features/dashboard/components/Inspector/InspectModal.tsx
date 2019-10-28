@@ -3,6 +3,7 @@ import React, { PureComponent } from 'react';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { JSONFormatter, Modal } from '@grafana/ui';
+import { css } from 'emotion';
 
 interface Props {
   dashboard: DashboardModel;
@@ -26,6 +27,10 @@ export class InspectModal extends PureComponent<Props, State> {
       this.onDismiss(); // Try to close the component
       return null;
     }
+    const bodyStyle = css`
+      max-height: 70vh;
+      overflow-y: scroll;
+    `;
 
     // TODO? should we get the result with an observable once?
     const data = (panel.getQueryRunner() as any).lastResult;
@@ -33,17 +38,15 @@ export class InspectModal extends PureComponent<Props, State> {
       <Modal
         title={
           <div className="modal-header-title">
-            <i className="fa fa-share-square-o" />
-            <span className="p-l-1">My Modal</span>
+            <i className="fa fa-info-circle" />
+            <span className="p-l-1">{panel.title ? panel.title : 'Panel'}</span>
           </div>
         }
         onDismiss={this.onDismiss}
         isOpen={true}
       >
-        <div>
-          BEFOREY
+        <div className={bodyStyle}>
           <JSONFormatter json={data} open={2} />
-          AFTERY ID: {panel.id}
         </div>
       </Modal>
     );
