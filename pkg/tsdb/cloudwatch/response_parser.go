@@ -55,7 +55,9 @@ func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 			}
 
 			timeSeries = append(timeSeries, *series...)
-			searchExpressions = append(searchExpressions, query.SearchExpression)
+			if len(query.SearchExpression) > 0 {
+				searchExpressions = append(searchExpressions, query.SearchExpression)
+			}
 		}
 
 		sort.Slice(timeSeries, func(i, j int) bool {
