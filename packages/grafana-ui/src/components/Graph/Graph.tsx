@@ -132,7 +132,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       return null;
     }
 
-    // If mode is All series and not hovering over item, skip rendering
+    // If mode is single series and user is not hovering over item, skip rendering
     if (!activeDatapointIndex && tooltipOptions.mode === 'single') {
       return null;
     }
@@ -245,7 +245,6 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       },
     };
 
-    // console.logg
     try {
       $.plot(this.element, series, flotOptions);
     } catch (err) {
@@ -264,7 +263,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
           ref={e => (this.element = e)}
           style={{ height }}
           onMouseLeave={() => {
-            this.setState({ isTooltipVisible: true });
+            this.setState({ isTooltipVisible: false });
           }}
         />
 
