@@ -53,6 +53,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
           .setAlpha(0.7)
           .toRgbString()};
     `,
+    whiteSpacePreWrap: css`
+      label: whiteSpacePreWrap;
+      white-space: 'pre-wrap';
+    `,
   };
 });
 
@@ -106,7 +110,7 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
           )}
           <span className={cx(styles.positionRelative, { [styles.rowWithContext]: showContext })}>
             <Highlighter
-              style={{ whiteSpace: 'pre-wrap' }}
+              style={styles.whiteSpacePreWrap}
               textToHighlight={entry}
               searchWords={highlights}
               findChunks={findHighlightChunksInText}
