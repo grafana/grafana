@@ -46,7 +46,7 @@ export class DataSourcePicker extends PureComponent<Props> {
     }));
 
     const value = current && {
-      label: current.name.substr(0, 31),
+      label: current.name.substr(0, 37),
       value: current.name,
       imgUrl: current.meta.info.logos.small,
       loading: showLoading,
