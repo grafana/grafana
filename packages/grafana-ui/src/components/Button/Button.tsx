@@ -39,8 +39,8 @@ Button.displayName = 'Button';
 
 type LinkButtonProps = CommonProps &
   AnchorHTMLAttributes<HTMLAnchorElement> & {
-    // We allow disabled here even though it is not standard for a link. We use it to style the link later on in
-    // AbstractButton.
+    // We allow disabled here even though it is not standard for a link. We use it as a selector to style it as
+    // disabled.
     disabled?: boolean;
   };
 export const LinkButton: React.FunctionComponent<LinkButtonProps> = props => {

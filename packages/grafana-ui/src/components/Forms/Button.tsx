@@ -1,4 +1,4 @@
-import React, { AnchorHTMLAttributes, useContext } from 'react';
+import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, useContext } from 'react';
 import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
 import { selectThemeVariant, stylesFactory, ThemeContext } from '../../themes';
@@ -6,7 +6,6 @@ import { Button as DefaultButton, LinkButton as DefaultLinkButton } from '../But
 import { getFocusStyle } from './commonStyles';
 import { ButtonSize, StyleDeps } from '../Button/types';
 import { GrafanaTheme } from '../../types';
-import { ButtonHTMLAttributes } from 'react';
 
 const buttonVariantStyles = (from: string, to: string, textColor: string) => css`
   background: linear-gradient(180deg, ${from} 0%, ${to} 100%);
@@ -145,7 +144,7 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }
   };
 });
 
-// There are but different from the standard button
+// These are different from the standard Button where there are 5 variants.
 export type ButtonVariant = 'primary' | 'secondary' | 'destructive';
 
 // These also needs to be different because the ButtonVariant is different
