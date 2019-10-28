@@ -1,5 +1,11 @@
 import React, { PureComponent } from 'react';
-import { LogRowModel, LogsParser, LogLabelStatsModel, calculateFieldStats } from '@grafana/data';
+import {
+  LogRowModel,
+  LogsParser,
+  LogLabelStatsModel,
+  calculateFieldStats,
+  calculateLogsLabelStats,
+} from '@grafana/data';
 
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
@@ -11,16 +17,12 @@ import { LogLabelStats } from './LogLabelStats';
 interface Props extends Themeable {
   parsedValue: string;
   parsedKey: string;
-  field?: string;
-  row?: LogRowModel;
-  canShowMetrics?: boolean;
-  canFilter?: boolean;
-  canFilterOut?: boolean;
+  field: string;
+  row: LogRowModel;
   parser?: LogsParser;
+  getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
-  createStatsForLogs?: (field: string) => void;
-  getRows?: () => LogRowModel[];
 }
 
 interface State {
@@ -55,8 +57,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   };
 
   showStats = () => {
-    if (!this.state.showFieldsStats) {
-      this.createStatsForLogs();
+    const { showFieldsStats } = this.state;
+    if (!showFieldsStats) {
+      this.createStatsForLabels();
     }
     this.toggleFieldsStats();
   };
@@ -69,43 +72,42 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     });
   }
 
-  createStatsForLogs() {
-    const { getRows, parser, field } = this.props;
-    if (field && getRows) {
-      const allRows = getRows();
-
-      // Build value-agnostic row matcher based on the field label
-      const fieldLabel = parser!.getLabelFromField(field);
-      const fieldValue = parser!.getValueFromField(field);
+  createStatsForLabels() {
+    const { getRows, parser, parsedKey, parsedValue } = this.props;
+    // If is filterable, then isLabel = true
+    const isLabel = this.props.onClickFilterLabel;
+    const allRows = getRows();
+    const fieldLabel = parsedKey;
+    const fieldValue = parsedValue;
+    let fieldStats = [];
+    if (isLabel) {
+      fieldStats = calculateLogsLabelStats(allRows, parsedKey);
+    } else {
       const matcher = parser!.buildMatcher(fieldLabel);
-      const fieldStats = calculateFieldStats(allRows, matcher);
-      const fieldCount = fieldStats.reduce((sum, stat) => sum + stat.count, 0);
-      this.setState({ fieldCount, fieldLabel, fieldStats, fieldValue });
+      fieldStats = calculateFieldStats(allRows, matcher);
     }
+    const fieldCount = fieldStats.reduce((sum, stat) => sum + stat.count, 0);
+    this.setState({ fieldCount, fieldLabel, fieldStats, fieldValue });
   }
 
   render() {
-    const { theme, parsedKey, parsedValue, canShowMetrics, canFilter, canFilterOut } = this.props;
+    const { theme, parsedKey, parsedValue, onClickFilterLabel, onClickFilterOutLabel } = this.props;
     const { showFieldsStats, fieldStats, fieldLabel, fieldValue, fieldCount } = this.state;
     const style = getLogRowStyles(theme);
     return (
       <div className={style.logsRowDetailsRow}>
         {/* Action buttons - show stats/filter results */}
-        {canShowMetrics ? (
-          <div onClick={this.showStats} className={style.logsRowDetailsIcon}>
-            <i className={'fa fa-signal'} />
-          </div>
-        ) : (
-          <div className={style.logsRowDetailsIcon} />
-        )}
-        {canFilter ? (
+        <div onClick={this.showStats} className={style.logsRowDetailsIcon}>
+          <i className={'fa fa-signal'} />
+        </div>
+        {onClickFilterLabel ? (
           <div onClick={() => this.filterLabel()} className={style.logsRowDetailsIcon}>
             <i className={'fa fa-search-plus'} />
           </div>
         ) : (
           <div className={style.logsRowDetailsIcon} />
         )}
-        {canFilterOut ? (
+        {onClickFilterOutLabel ? (
           <div onClick={() => this.filterOutLabel()} className={style.logsRowDetailsIcon}>
             <i className={'fa fa-search-minus'} />
           </div>

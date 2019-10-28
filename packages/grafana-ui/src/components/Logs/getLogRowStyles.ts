@@ -170,6 +170,12 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       width: 12.5em;
       word-break: break-all;
     `,
+    logsRowDetailsHeading: css`
+      label: logs-row-details__heading;
+      width: 150px;
+      margin: 10px 0 5px 0;
+      font-weight: ${theme.typography.weight.bold};
+    `,
     logsRowDetailsRow: css`
       label: logs-row-details__row;
       display: table-row;

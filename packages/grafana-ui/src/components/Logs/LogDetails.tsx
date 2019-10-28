@@ -54,18 +54,22 @@ class UnThemedLogDetails extends PureComponent<Props, State> {
         <div className={style.logsRowDetailsTable}>
           {Object.keys(labels).map(key => {
             const value = labels[key];
+            const field = `${key}=${value}`;
             return (
               <LogDetailsRow
                 key={`${key}=${value}`}
                 parsedKey={key}
                 parsedValue={value}
-                canFilter={true}
-                canFilterOut={true}
+                field={field}
+                row={row}
+                getRows={getRows}
+                parser={parser}
                 onClickFilterOutLabel={onClickFilterOutLabel}
                 onClickFilterLabel={onClickFilterLabel}
               />
             );
           })}
+          {parsedFieldHighlights && <div className={style.logsRowDetailsHeading}>Parsed fields:</div>}
           {parsedFieldHighlights &&
             parsedFieldHighlights.map(field => {
               const key = parser!.getLabelFromField(field);
@@ -75,7 +79,6 @@ class UnThemedLogDetails extends PureComponent<Props, State> {
                   key={`${key}=${value}`}
                   parsedKey={key}
                   parsedValue={value}
-                  canShowMetrics={true}
                   field={field}
                   row={row}
                   getRows={getRows}
