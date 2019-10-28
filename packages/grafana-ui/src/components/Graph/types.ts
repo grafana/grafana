@@ -1,5 +1,3 @@
-export type GraphTooltipMode = 'single' | 'multi';
-
 export interface FlotPosition {
   pageX: number;
   pageY: number;

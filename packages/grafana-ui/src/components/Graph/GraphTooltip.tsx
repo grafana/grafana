@@ -1,34 +1,17 @@
 import React from 'react';
-import { stylesFactory, useTheme, selectThemeVariant } from '../../themes';
+import { stylesFactory, useTheme } from '../../themes';
 import { GrafanaTheme } from '../../types/theme';
 import { css, cx } from 'emotion';
-import { GraphSeriesXY, getTimeZoneDateFormatter, TimeZone } from '@grafana/data';
+import { getTimeZoneDateFormatter } from '@grafana/data';
+import { TooltipContentProps, TooltipMode } from '../Chart/Tooltip';
 import { SeriesIcon } from '../Legend/SeriesIcon';
-import { FlotPosition, GraphTooltipMode } from './types';
-// import { findHoverIndexFromData } from './utils';
-
-export interface GraphTooltipProps {
-  series: GraphSeriesXY[];
-  seriesIndex?: number;
-  datapointIndex?: number;
-  timeZone: TimeZone;
-  pos: FlotPosition;
-  mode: GraphTooltipMode;
-}
 
 export interface GraphTooltipOptions {
-  mode: GraphTooltipMode;
+  mode: TooltipMode;
 }
 
 const getGraphTooltipStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.dark1 }, theme.type);
   return {
-    wrapper: css`
-      overflow: hidden;
-      background: ${bgColor};
-      padding: ${theme.spacing.sm};
-      border-radius: ${theme.border.radius.sm};
-    `,
     seriesTable: css`
       display: table;
     `,
@@ -44,7 +27,7 @@ const getGraphTooltipStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-export const GraphTooltip: React.FC<GraphTooltipProps> = ({
+export const GraphTooltip: React.FC<TooltipContentProps> = ({
   series,
   seriesIndex,
   datapointIndex,
@@ -63,8 +46,9 @@ export const GraphTooltip: React.FC<GraphTooltipProps> = ({
   }
 
   if (mode === 'single') {
-    if (seriesIndex && datapointIndex) {
+    if (seriesIndex !== undefined && datapointIndex !== undefined) {
       const activeSeries = series[seriesIndex];
+
       const activeDatapoint = activeSeries.data[datapointIndex];
       const timestamp = activeDatapoint[0];
       const processedValue = activeSeries.yAxisDisplayProcessor
@@ -118,7 +102,7 @@ export const GraphTooltip: React.FC<GraphTooltipProps> = ({
   // );
   // }
 
-  return <div className={styles.wrapper}>{content}</div>;
+  return content;
 };
 
 GraphTooltip.displayName = 'GraphTooltip';

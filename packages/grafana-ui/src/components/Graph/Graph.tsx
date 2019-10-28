@@ -6,7 +6,7 @@ import uniqBy from 'lodash/uniqBy';
 import { TimeRange, GraphSeriesXY, TimeZone, DefaultTimeZone } from '@grafana/data';
 import _ from 'lodash';
 import { FlotPosition, FlotItem } from './types';
-import { TooltipProps } from '../Chart/Tooltip';
+import { TooltipProps, TooltipContentProps } from '../Chart/Tooltip';
 import { GraphTooltip, GraphTooltipOptions } from './GraphTooltip';
 
 export interface GraphProps {
@@ -114,7 +114,8 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     if (!isTooltipVisible || !pos) {
       return null;
     }
-    //  Extract to an util
+
+    // Find children that indicate tooltip to be rendered
     React.Children.forEach(children, c => {
       // @ts-ignore
       const childType = c && c.type && (c.type.displayName || c.type.name);
@@ -126,21 +127,34 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
 
     const tooltipElement = tooltips[0];
 
+    // If no tooltip provided, skip rendering
     if (!tooltipElement) {
       return null;
     }
 
+    // If mode is All series and not hovering over item, skip rendering
+    if (!activeDatapointIndex && tooltipOptions.mode === 'single') {
+      return null;
+    }
+
+    const tooltipElementProps = (tooltipElement as React.ReactElement<TooltipProps>).props;
+
+    // Check if tooltip needs to be rendered with custom tooltip component, otherwise default to GraphTooltip
+    const tooltipContentRenderer = tooltipElementProps.tooltipComponent || GraphTooltip;
+
+    const tooltipContentProps: TooltipContentProps = {
+      series,
+      seriesIndex: activeSeriesIndex,
+      datapointIndex: activeDatapointIndex,
+      pos,
+      timeZone,
+      mode: tooltipOptions.mode || 'single',
+    };
+
+    const tooltipContent = React.createElement(tooltipContentRenderer, { ...tooltipContentProps });
+
     return React.cloneElement<TooltipProps>(tooltipElement as React.ReactElement<TooltipProps>, {
-      content: (
-        <GraphTooltip
-          series={series}
-          seriesIndex={activeSeriesIndex}
-          datapointIndex={activeDatapointIndex}
-          pos={pos}
-          mode={tooltipOptions.mode}
-          timeZone={timeZone}
-        />
-      ),
+      content: tooltipContent,
       position: { x: pos.pageX, y: pos.pageY },
       offset: { x: 10, y: 10 },
     });
