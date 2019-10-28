@@ -6,8 +6,8 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestcloudWatchQuery(t *testing.T) {
-	Convey("TestcloudWatchQuery", t, func() {
+func TestCloudWatchQuery(t *testing.T) {
+	Convey("TestCloudWatchQuery", t, func() {
 		Convey("and SEARCH(someexpression) was specified in the query editor", func() {
 			query := &cloudWatchQuery{
 				RefId:      "A",
