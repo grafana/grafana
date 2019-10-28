@@ -147,7 +147,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
     end: string,
     title: string
   ) {
-    const json_config = {
+    const conf = {
       view: 'timeSeries',
       stacked: false,
       title,
@@ -168,7 +168,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
     };
 
     return `https://${region}.console.aws.amazon.com/cloudwatch/deeplink.js?region=${region}#metricsV2:graph=${encodeURIComponent(
-      JSON.stringify(json_config)
+      JSON.stringify(conf)
     )}`;
   }
 
