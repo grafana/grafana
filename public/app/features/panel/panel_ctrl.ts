@@ -15,7 +15,6 @@ import {
   inspectPanel as inspectPanelUtil,
   calculateInnerPanelHeight,
 } from 'app/features/dashboard/utils/panel';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { auto } from 'angular';
