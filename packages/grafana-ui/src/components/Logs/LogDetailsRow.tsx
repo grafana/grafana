@@ -19,7 +19,7 @@ interface Props extends Themeable {
   parsedKey: string;
   field: string;
   row: LogRowModel;
-  parser?: LogsParser;
+  parser: LogsParser | undefined;
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
