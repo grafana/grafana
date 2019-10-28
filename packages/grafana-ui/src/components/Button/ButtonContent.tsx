@@ -15,6 +15,6 @@ export function ButtonContent(props: Props) {
       <span>{children}</span>
     </span>
   ) : (
-    <>children</>
+    <>{children}</>
   );
 }
