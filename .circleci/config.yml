@@ -195,7 +195,7 @@ jobs:
 
   build-all:
     docker:
-     - image: grafana/build-container:1.2.10
+     - image: grafana/build-container:1.2.11
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -239,7 +239,7 @@ jobs:
 
   build:
     docker:
-     - image: grafana/build-container:1.2.10
+     - image: grafana/build-container:1.2.11
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -268,7 +268,7 @@ jobs:
 
   build-fast-backend:
     docker:
-     - image: grafana/build-container:1.2.10
+     - image: grafana/build-container:1.2.11
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -285,7 +285,7 @@ jobs:
 
   build-fast-frontend:
     docker:
-     - image: grafana/build-container:1.2.10
+     - image: grafana/build-container:1.2.11
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -309,7 +309,7 @@ jobs:
 
   build-fast-package:
     docker:
-     - image: grafana/build-container:1.2.10
+     - image: grafana/build-container:1.2.11
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -336,7 +336,7 @@ jobs:
 
   build-fast-save:
     docker:
-     - image: grafana/build-container:1.2.10
+     - image: grafana/build-container:1.2.11
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -392,7 +392,7 @@ jobs:
       - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
       - run: cd packaging/docker && ./build-deploy.sh "master-${CIRCLE_SHA1}"
       - run: rm packaging/docker/grafana-latest.linux-*.tar.gz
-      - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64.tar.gz packaging/docker/grafana-latest.linux-x64.tar.gz
+      - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64-musl.tar.gz packaging/docker/grafana-latest.linux-x64-musl.tar.gz
       - run: cd packaging/docker && ./build-enterprise.sh "master"
 
 
@@ -420,12 +420,12 @@ jobs:
       - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
       - run: cd packaging/docker && ./build-deploy.sh "${CIRCLE_TAG}"
       - run: rm packaging/docker/grafana-latest.linux-*.tar.gz
-      - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64.tar.gz packaging/docker/grafana-latest.linux-x64.tar.gz
+      - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64-musl.tar.gz packaging/docker/grafana-latest.linux-x64-musl.tar.gz
       - run: cd packaging/docker && ./build-enterprise.sh "${CIRCLE_TAG}"
 
   build-enterprise:
     docker:
-     - image: grafana/build-container:1.2.10
+     - image: grafana/build-container:1.2.11
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -460,7 +460,7 @@ jobs:
 
   build-all-enterprise:
     docker:
-    - image: grafana/build-container:1.2.10
+    - image: grafana/build-container:1.2.11
     working_directory: /go/src/github.com/grafana/grafana
     steps:
     - checkout

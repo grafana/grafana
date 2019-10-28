@@ -1,11 +1,11 @@
 import { storiesOf } from '@storybook/react';
 import { Button, LinkButton } from './Button';
-import { CommonButtonProps } from './AbstractButton';
 // @ts-ignore
 import withPropsCombinations from 'react-storybook-addon-props-combinations';
 import { action } from '@storybook/addon-actions';
 import { ThemeableCombinationsRowRenderer } from '../../utils/storybook/CombinationsRowRenderer';
 import { select, boolean } from '@storybook/addon-knobs';
+import { CommonButtonProps } from './types';
 
 const ButtonStories = storiesOf('UI/Button', module);
 
@@ -15,7 +15,7 @@ const defaultProps = {
 };
 
 const variants = {
-  size: ['xs', 'sm', 'md', 'lg', 'xl'],
+  size: ['xs', 'sm', 'md', 'lg'],
   variant: ['primary', 'secondary', 'danger', 'inverse', 'transparent'],
 };
 const combinationOptions = {
