@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -19,6 +20,12 @@ func (e *CloudWatchExecutor) executeRequest(ctx context.Context, client cloudWat
 		resp, err := client.GetMetricDataWithContext(ctx, metricDataInput)
 		if err != nil {
 			return mdo, err
+		}
+
+		for _, message := range resp.Messages {
+			if *message.Code == "MaxMetricsExceeded" {
+				return mdo, fmt.Errorf("cloudwatch GetMetricData error: Maximum number of allowed metrics exceeded. Please provide a more narrow search")
+			}
 		}
 
 		mdo = append(mdo, resp)
