@@ -120,6 +120,9 @@ var (
 	// Dashboard history
 	DashboardVersionsToKeep int
 
+	// Annotations history
+	AnnotationsDaysToKeep int
+
 	// User settings
 	AllowUserSignUp         bool
 	AllowUserOrgCreate      bool
@@ -763,6 +766,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
 	DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
+
+	// read dashboard settings
+	annotations := iniFile.Section("annotations")
+	AnnotationsDaysToKeep = annotations.Key("days_to_keep").MustInt(60)
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)
