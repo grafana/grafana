@@ -84,7 +84,7 @@ func TestMetricDataInputBuilder(t *testing.T) {
 				So(queries[2].RefId, ShouldEqual, "userDefinedSearchExpression")
 			})
 
-			Convey("with four queries ", func() {
+			Convey("and there's two search expressions, one match expression and one metric stat ", func() {
 				queries := []*cloudWatchQuery{inferredSearchExpression, mathExpression, userDefinedSearchExpression, metricStatQueryWithoutID}
 				mdib.sortQueries(queries)
 				So(queries[0].RefId, ShouldEqual, "metricStatQueryWithoutID")
@@ -142,6 +142,26 @@ func TestMetricDataInputBuilder(t *testing.T) {
 			So(*res[3].MetricDataQueries[0].Id, ShouldBeIn, []string{"inferredSearchExpression", "userDefinedSearchExpression"})
 			So(*res[3].MetricDataQueries[1].Id, ShouldBeIn, []string{"inferredSearchExpression", "userDefinedSearchExpression"})
 
+		})
+
+		Convey("only one MetricDataInput is used when there's four metric stat queries", func() {
+			res, err := mdib.buildMetricDataInputs(ctx, []*cloudWatchQuery{
+				metricStatQueryWithoutID,
+				metricStatQueryWithoutID,
+				metricStatQueryWithoutID,
+				metricStatQueryWithoutID})
+
+			So(err, ShouldBeNil)
+			So(len(res), ShouldEqual, 1)
+		})
+
+		Convey("only one MetricDataInput is used when there's two search expression queries", func() {
+			res, err := mdib.buildMetricDataInputs(ctx, []*cloudWatchQuery{
+				userDefinedSearchExpression,
+				userDefinedSearchExpression})
+
+			So(err, ShouldBeNil)
+			So(len(res), ShouldEqual, 1)
 		})
 	})
 }
