@@ -1,1 +1,6 @@
 @import '../../node_modules/rc-drawer/assets/index.css';
+
+.drawer-content {
+  padding: $space-sm $space-md;
+  background-color: $body-bg;
+}
