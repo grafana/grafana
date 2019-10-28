@@ -12,6 +12,7 @@ export interface BuildInfo {
 
 interface FeatureToggles {
   transformations: boolean;
+  inspect: boolean;
 }
 export class GrafanaBootConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
@@ -46,6 +47,7 @@ export class GrafanaBootConfig {
   pluginsToPreload: string[] = [];
   featureToggles: FeatureToggles = {
     transformations: false,
+    inspect: false,
   };
 
   constructor(options: GrafanaBootConfig) {

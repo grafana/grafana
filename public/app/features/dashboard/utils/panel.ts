@@ -91,6 +91,12 @@ export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {
   });
 };
 
+export const inspectPanel = (panel: PanelModel) => {
+  console.log('TODO, inspect', panel);
+  console.log('DATA', panel.getQueryRunner());
+  alert('TODO... open modal/drawer with info');
+};
+
 export const refreshPanel = (panel: PanelModel) => {
   panel.refresh();
 };

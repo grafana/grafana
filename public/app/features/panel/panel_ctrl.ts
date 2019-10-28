@@ -12,8 +12,11 @@ import {
   copyPanel as copyPanelUtil,
   editPanelJson as editPanelJsonUtil,
   sharePanel as sharePanelUtil,
+  inspectPanel as inspectPanelUtil,
   calculateInnerPanelHeight,
 } from 'app/features/dashboard/utils/panel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { auto } from 'angular';
 import { TemplateSrv } from '../templating/template_srv';
@@ -147,6 +150,15 @@ export class PanelCtrl {
       shortcut: 'p s',
     });
 
+    if (config.featureToggles.inspect) {
+      menu.push({
+        text: 'Inspect',
+        icon: 'fa fa-fw fa-info-circle',
+        click: 'ctrl.inspectPanel();',
+        shortcut: 'p i',
+      });
+    }
+
     // Additional items from sub-class
     menu.push(...(await this.getAdditionalMenuItems()));
 
@@ -234,6 +246,10 @@ export class PanelCtrl {
 
   sharePanel() {
     sharePanelUtil(this.dashboard, this.panel);
+  }
+
+  inspectPanel() {
+    inspectPanelUtil(this.panel);
   }
 
   getInfoMode() {
