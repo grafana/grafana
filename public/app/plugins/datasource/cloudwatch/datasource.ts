@@ -1,7 +1,7 @@
 import angular, { IQService } from 'angular';
 import _ from 'lodash';
 import appEvents from 'app/core/app_events';
-import { dateMath, ScopedVars } from '@grafana/data';
+import { dateMath, ScopedVars, toDataFrame, TimeRange } from '@grafana/data';
 import kbn from 'app/core/utils/kbn';
 import { CloudWatchQuery } from './types';
 import { displayThrottlingError } from './errors';
@@ -92,7 +92,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
       queries: queries,
     };
 
-    return this.performTimeSeriesQuery(request);
+    return this.performTimeSeriesQuery(request, options.range);
   }
 
   getPeriod(target: any, options: any, now?: number) {
@@ -141,27 +141,79 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
     return period;
   }
 
-  performTimeSeriesQuery(request: any) {
+  buildCloudwatchConsoleUrl(
+    { region, namespace, metricName, dimensions, statistics, period }: CloudWatchQuery,
+    start: string,
+    end: string,
+    title: string,
+    searchExpressions: string[]
+  ) {
+    let conf = {
+      view: 'timeSeries',
+      stacked: false,
+      title,
+      start,
+      end,
+      region,
+    } as any;
+
+    if (searchExpressions.length) {
+      conf = { ...conf, metrics: [...searchExpressions.map(expression => ({ expression }))] };
+    } else {
+      conf = {
+        ...conf,
+        metrics: [
+          ...statistics.map(stat => [
+            namespace,
+            metricName,
+            ...Object.entries(dimensions).reduce((acc, [key, value]) => [...acc, key, value[0]], []),
+            {
+              stat,
+              period,
+            },
+          ]),
+        ],
+      };
+    }
+
+    return `https://${region}.console.aws.amazon.com/cloudwatch/deeplink.js?region=${region}#metricsV2:graph=${encodeURIComponent(
+      JSON.stringify(conf)
+    )}`;
+  }
+
+  performTimeSeriesQuery(request: any, { from, to }: TimeRange) {
     return this.awsRequest('/api/tsdb/query', request)
       .then((res: any) => {
-        const data = [];
+        const dataFrames = Object.values(request.queries).reduce((acc: any, queryRequest: any) => {
+          const queryResult = res.results[queryRequest.refId];
+          const link = this.buildCloudwatchConsoleUrl(
+            queryRequest,
+            from.toISOString(),
+            to.toISOString(),
+            queryRequest.refId,
+            queryResult.meta.searchExpressions
+          );
 
-        if (res.results) {
-          for (const query of request.queries) {
-            const queryRes = res.results[query.refId];
-            if (queryRes) {
-              for (const series of queryRes.series) {
-                const s = { target: series.name, datapoints: series.points } as any;
-                if (queryRes.meta.unit) {
-                  s.unit = queryRes.meta.unit;
-                }
-                data.push(s);
+          return [
+            ...acc,
+            ...queryResult.series.map(({ name, points, meta }: any) => {
+              const series = { target: name, datapoints: points };
+              const dataFrame = toDataFrame(meta && meta.unit ? { ...series, unit: meta.unit } : series);
+              for (const field of dataFrame.fields) {
+                field.config.links = [
+                  {
+                    url: link,
+                    title: 'View in Cloudwatch console',
+                    targetBlank: true,
+                  },
+                ];
               }
-            }
-          }
-        }
+              return dataFrame;
+            }),
+          ];
+        }, []);
 
-        return { data: data };
+        return { data: dataFrames };
       })
       .catch((err: any = { data: { error: '' } }) => {
         if (/^ValidationError:.*/.test(err.data.error)) {
