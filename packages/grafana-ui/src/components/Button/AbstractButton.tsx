@@ -1,33 +1,9 @@
-import React, { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
+import React, { ComponentType, ReactNode } from 'react';
 import tinycolor from 'tinycolor2';
 import { css, cx } from 'emotion';
-import { Themeable, GrafanaTheme } from '../../types';
-import { selectThemeVariant } from '../../themes/selectThemeVariant';
-import { stylesFactory } from '../../themes/stylesFactory';
-
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'inverse' | 'transparent';
-
-export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-
-export interface CommonButtonProps {
-  size?: ButtonSize;
-  variant?: ButtonVariant;
-  /**
-   * icon prop is a temporary solution. It accepts lefacy icon class names for the icon to be rendered.
-   * TODO: migrate to a component when we are going to migrate icons to @grafana/ui
-   */
-  icon?: string;
-  className?: string;
-}
-
-export interface LinkButtonProps extends CommonButtonProps, AnchorHTMLAttributes<HTMLAnchorElement> {
-  disabled?: boolean;
-}
-export interface ButtonProps extends CommonButtonProps, ButtonHTMLAttributes<HTMLButtonElement> {}
-
-interface AbstractButtonProps extends CommonButtonProps, Themeable {
-  renderAs: React.ComponentType<CommonButtonProps> | string;
-}
+import { selectThemeVariant, stylesFactory } from '../../themes';
+import { AbstractButtonProps, ButtonSize, ButtonStyles, ButtonVariant, CommonButtonProps, StyleDeps } from './types';
+import { GrafanaTheme } from '../../types';
 
 const buttonVariantStyles = (
   from: string,
@@ -50,12 +26,6 @@ const buttonVariantStyles = (
   }
 `;
 
-interface StyleDeps {
-  theme: GrafanaTheme;
-  size: ButtonSize;
-  variant: ButtonVariant;
-  withIcon: boolean;
-}
 const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: StyleDeps) => {
   const borderRadius = theme.border.radius.sm;
   let padding,
@@ -72,12 +42,14 @@ const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: Style
       iconDistance = theme.spacing.xs;
       height = theme.height.sm;
       break;
+
     case 'md':
       padding = `${theme.spacing.sm} ${theme.spacing.md}`;
       fontSize = theme.typography.size.md;
       iconDistance = theme.spacing.sm;
       height = theme.height.md;
       break;
+
     case 'lg':
       padding = `${theme.spacing.md} ${theme.spacing.lg}`;
       fontSize = theme.typography.size.lg;
@@ -85,6 +57,7 @@ const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: Style
       iconDistance = theme.spacing.sm;
       height = theme.height.lg;
       break;
+
     default:
       padding = `${theme.spacing.sm} ${theme.spacing.md}`;
       iconDistance = theme.spacing.sm;
@@ -96,12 +69,15 @@ const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: Style
     case 'primary':
       background = buttonVariantStyles(theme.colors.greenBase, theme.colors.greenShade, theme.colors.white);
       break;
+
     case 'secondary':
       background = buttonVariantStyles(theme.colors.blueBase, theme.colors.blueShade, theme.colors.white);
       break;
+
     case 'danger':
       background = buttonVariantStyles(theme.colors.redBase, theme.colors.redShade, theme.colors.white);
       break;
+
     case 'inverse':
       const from = selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.dark6 }, theme.type) as string;
       const to = selectThemeVariant(
@@ -118,6 +94,7 @@ const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: Style
 
       background = buttonVariantStyles(from, to, theme.colors.link, 'rgba(0, 0, 0, 0.1)', true);
       break;
+
     case 'transparent':
       background = css`
         ${buttonVariantStyles('', '', theme.colors.link, 'rgba(0, 0, 0, 0.1)', true)};
@@ -164,23 +141,22 @@ const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: Style
   };
 });
 
-export const AbstractButton: React.FunctionComponent<AbstractButtonProps> = ({
-  renderAs,
-  theme,
-  size = 'md',
-  variant = 'primary',
-  className,
-  icon,
-  children,
-  ...otherProps
-}) => {
-  const buttonStyles = getButtonStyles({ theme, size, variant, withIcon: !!icon });
+export const renderButton = (
+  theme: GrafanaTheme,
+  buttonStyles: ButtonStyles,
+  renderAs: ComponentType<CommonButtonProps> | string,
+  children: ReactNode,
+  size: ButtonSize,
+  variant: ButtonVariant,
+  icon?: string,
+  className?: string,
+  otherProps?: Partial<AbstractButtonProps>
+) => {
   const nonHtmlProps = {
     theme,
     size,
     variant,
   };
-
   const finalClassName = cx(buttonStyles.button, className);
   const finalChildren = icon ? (
     <span className={buttonStyles.iconWrap}>
@@ -206,6 +182,21 @@ export const AbstractButton: React.FunctionComponent<AbstractButtonProps> = ({
         };
 
   return React.createElement(renderAs, finalProps);
+};
+
+export const AbstractButton: React.FunctionComponent<AbstractButtonProps> = ({
+  renderAs,
+  theme,
+  size = 'md',
+  variant = 'primary',
+  className,
+  icon,
+  children,
+  ...otherProps
+}) => {
+  const buttonStyles = getButtonStyles({ theme, size, variant, withIcon: !!icon });
+
+  return renderButton(theme, buttonStyles, renderAs, children, size, variant, icon, className, otherProps);
 };
 
 AbstractButton.displayName = 'AbstractButton';
