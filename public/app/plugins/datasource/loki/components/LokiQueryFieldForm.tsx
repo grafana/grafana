@@ -15,11 +15,12 @@ import { Plugin, Node } from 'slate';
 // Types
 import { LokiQuery } from '../types';
 import { TypeaheadOutput } from 'app/types/explore';
-import { DataSourceApi, ExploreQueryFieldProps, DataSourceStatus, DOMUtil } from '@grafana/ui';
+import { ExploreQueryFieldProps, DataSourceStatus, DOMUtil } from '@grafana/ui';
 import { AbsoluteTimeRange } from '@grafana/data';
 import { Grammar } from 'prismjs';
 import LokiLanguageProvider, { LokiHistoryItem } from '../language_provider';
 import { SuggestionsState } from 'app/features/explore/slate-plugins/suggestions';
+import LokiDatasource from '../datasource';
 
 function getChooserText(hasSyntax: boolean, hasLogLabels: boolean, datasourceStatus: DataSourceStatus) {
   if (datasourceStatus === DataSourceStatus.Disconnected) {
@@ -68,7 +69,7 @@ export interface CascaderOption {
   disabled?: boolean;
 }
 
-export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<DataSourceApi<LokiQuery>, LokiQuery> {
+export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<LokiDatasource, LokiQuery> {
   history: LokiHistoryItem[];
   syntax: Grammar;
   logLabelOptions: any[];

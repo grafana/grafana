@@ -5,6 +5,18 @@ cloud.google.com/go/compute/metadata
 github.com/BurntSushi/toml
 # github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
 github.com/VividCortex/mysqlerr
+# github.com/apache/arrow/go/arrow v0.0.0-20190716210558-5f564424c71c
+github.com/apache/arrow/go/arrow
+github.com/apache/arrow/go/arrow/array
+github.com/apache/arrow/go/arrow/arrio
+github.com/apache/arrow/go/arrow/decimal128
+github.com/apache/arrow/go/arrow/float16
+github.com/apache/arrow/go/arrow/internal/bitutil
+github.com/apache/arrow/go/arrow/internal/cpu
+github.com/apache/arrow/go/arrow/internal/debug
+github.com/apache/arrow/go/arrow/internal/flatbuf
+github.com/apache/arrow/go/arrow/ipc
+github.com/apache/arrow/go/arrow/memory
 # github.com/aws/aws-sdk-go v1.25.6
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/awserr
@@ -108,6 +120,8 @@ github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
+# github.com/google/flatbuffers v1.11.0
+github.com/google/flatbuffers/go
 # github.com/gopherjs/gopherjs v0.0.0-20190430165422-3e4dfb77656c
 github.com/gopherjs/gopherjs/js
 # github.com/gorilla/websocket v1.4.0
@@ -117,6 +131,10 @@ github.com/gosimple/slug
 # github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 github.com/grafana/grafana-plugin-model/go/datasource
 github.com/grafana/grafana-plugin-model/go/renderer
+# github.com/grafana/grafana-plugin-sdk-go v0.0.0-20191024130641-6756418f682c
+github.com/grafana/grafana-plugin-sdk-go
+github.com/grafana/grafana-plugin-sdk-go/dataframe
+github.com/grafana/grafana-plugin-sdk-go/genproto/datasource
 # github.com/hashicorp/go-hclog v0.8.0
 github.com/hashicorp/go-hclog
 # github.com/hashicorp/go-plugin v1.0.1
@@ -145,6 +163,8 @@ github.com/klauspost/cpuid
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
+# github.com/mattetti/filebuffer v1.0.0
+github.com/mattetti/filebuffer
 # github.com/mattn/go-colorable v0.1.1
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.7
@@ -287,14 +307,16 @@ google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/urlfetch
 # google.golang.org/genproto v0.0.0-20180817151627-c66870c02cf8
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.14.0
+# google.golang.org/grpc v1.23.1
 google.golang.org/grpc
 google.golang.org/grpc/balancer
 google.golang.org/grpc/balancer/base
 google.golang.org/grpc/balancer/roundrobin
+google.golang.org/grpc/binarylog/grpc_binarylog_v1
 google.golang.org/grpc/codes
 google.golang.org/grpc/connectivity
 google.golang.org/grpc/credentials
+google.golang.org/grpc/credentials/internal
 google.golang.org/grpc/encoding
 google.golang.org/grpc/encoding/proto
 google.golang.org/grpc/grpclog
@@ -302,9 +324,13 @@ google.golang.org/grpc/health
 google.golang.org/grpc/health/grpc_health_v1
 google.golang.org/grpc/internal
 google.golang.org/grpc/internal/backoff
+google.golang.org/grpc/internal/balancerload
+google.golang.org/grpc/internal/binarylog
 google.golang.org/grpc/internal/channelz
 google.golang.org/grpc/internal/envconfig
 google.golang.org/grpc/internal/grpcrand
+google.golang.org/grpc/internal/grpcsync
+google.golang.org/grpc/internal/syscall
 google.golang.org/grpc/internal/transport
 google.golang.org/grpc/keepalive
 google.golang.org/grpc/metadata
@@ -313,6 +339,7 @@ google.golang.org/grpc/peer
 google.golang.org/grpc/resolver
 google.golang.org/grpc/resolver/dns
 google.golang.org/grpc/resolver/passthrough
+google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap

@@ -1,4 +1,4 @@
-import { ComponentType, ComponentClass } from 'react';
+import { ComponentType } from 'react';
 import {
   TimeRange,
   RawTimeRange,
@@ -16,10 +16,9 @@ import { PluginMeta, GrafanaPlugin } from './plugin';
 import { PanelData } from './panel';
 import { Observable } from 'rxjs';
 
-// NOTE: this seems more general than just DataSource
-export interface DataSourcePluginOptionsEditorProps<TOptions> {
-  options: TOptions;
-  onOptionsChange: (options: TOptions) => void;
+export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
+  options: DataSourceSettings<JSONData, SecureJSONData>;
+  onOptionsChange: (options: DataSourceSettings<JSONData, SecureJSONData>) => void;
 }
 
 export class DataSourcePlugin<
@@ -36,7 +35,7 @@ export class DataSourcePlugin<
     this.components = {};
   }
 
-  setConfigEditor(editor: ComponentType<DataSourcePluginOptionsEditorProps<DataSourceSettings<TOptions>>>) {
+  setConfigEditor(editor: ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>) {
     this.components.ConfigEditor = editor;
     return this;
   }
@@ -61,22 +60,22 @@ export class DataSourcePlugin<
     return this;
   }
 
-  setExploreQueryField(ExploreQueryField: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>) {
+  setExploreQueryField(ExploreQueryField: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>) {
     this.components.ExploreQueryField = ExploreQueryField;
     return this;
   }
 
-  setExploreMetricsQueryField(ExploreQueryField: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>) {
+  setExploreMetricsQueryField(ExploreQueryField: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>) {
     this.components.ExploreMetricsQueryField = ExploreQueryField;
     return this;
   }
 
-  setExploreLogsQueryField(ExploreQueryField: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>) {
+  setExploreLogsQueryField(ExploreQueryField: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>) {
     this.components.ExploreLogsQueryField = ExploreQueryField;
     return this;
   }
 
-  setExploreStartPage(ExploreStartPage: ComponentClass<ExploreStartPageProps>) {
+  setExploreStartPage(ExploreStartPage: ComponentType<ExploreStartPageProps>) {
     this.components.ExploreStartPage = ExploreStartPage;
     return this;
   }
@@ -134,11 +133,11 @@ export interface DataSourcePluginComponents<
   AnnotationsQueryCtrl?: any;
   VariableQueryEditor?: any;
   QueryEditor?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
-  ExploreQueryField?: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
-  ExploreMetricsQueryField?: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
-  ExploreLogsQueryField?: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
-  ExploreStartPage?: ComponentClass<ExploreStartPageProps>;
-  ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<DataSourceSettings<TOptions>>>;
+  ExploreQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
+  ExploreMetricsQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
+  ExploreLogsQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
+  ExploreStartPage?: ComponentType<ExploreStartPageProps>;
+  ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>;
 }
 
 // Only exported for tests
@@ -508,6 +507,7 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   secureJsonFields?: KeyValue<boolean>;
   readOnly: boolean;
   withCredentials: boolean;
+  version?: number;
 }
 
 /**
