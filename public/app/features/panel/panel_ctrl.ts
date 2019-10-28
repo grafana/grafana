@@ -12,7 +12,6 @@ import {
   copyPanel as copyPanelUtil,
   editPanelJson as editPanelJsonUtil,
   sharePanel as sharePanelUtil,
-  inspectPanel as inspectPanelUtil,
   calculateInnerPanelHeight,
 } from 'app/features/dashboard/utils/panel';
 
@@ -248,7 +247,7 @@ export class PanelCtrl {
   }
 
   inspectPanel() {
-    inspectPanelUtil(this.panel);
+    this.dashboard.inspect(this.panel);
   }
 
   getInfoMode() {

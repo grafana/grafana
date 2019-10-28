@@ -1,6 +1,3 @@
-import React from 'react';
-import ReactDOMServer from 'react-dom/server';
-
 // Store
 import store from 'app/core/store';
 
@@ -15,7 +12,6 @@ import { rangeUtil } from '@grafana/data';
 import { dateMath } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
-import { InspectModal } from 'app/features/dashboard/components/Inspector/InspectModal';
 
 // Services
 import templateSrv from 'app/features/templating/template_srv';
@@ -92,13 +88,6 @@ export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {
       dashboard: dashboard,
       panel: panel,
     },
-  });
-};
-
-export const inspectPanel = (panel: PanelModel) => {
-  const modalTemplate = ReactDOMServer.renderToString(<InspectModal panel={panel} />);
-  appEvents.emit(CoreEvents.showModal, {
-    templateHtml: modalTemplate,
   });
 };
 

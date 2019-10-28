@@ -11,7 +11,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import sortByKeys from 'app/core/utils/sort_by_keys';
 
 // Types
-import { PanelModel, GridPos, panelAdded, panelRemoved } from './PanelModel';
+import { PanelModel, GridPos, panelAdded, panelRemoved, panelInspect } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
 import { TimeRange, TimeZone, AppEvent } from '@grafana/data';
 import { UrlQueryValue } from '@grafana/runtime';
@@ -221,6 +221,10 @@ export class DashboardModel {
 
   timeRangeUpdated(timeRange: TimeRange) {
     this.events.emit(CoreEvents.timeRangeUpdated, timeRange);
+  }
+
+  inspect(panel: PanelModel) {
+    this.events.emit(panelInspect, panel);
   }
 
   startRefresh() {

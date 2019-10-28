@@ -15,6 +15,7 @@ import { DashNav } from '../components/DashNav';
 import { SubMenu } from '../components/SubMenu';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { CustomScrollbar, Alert } from '@grafana/ui';
+import { panelInspect } from '../state/PanelModel';
 
 // Redux
 import { initDashboard } from '../state/initDashboard';
@@ -31,6 +32,7 @@ import {
   AppNotificationSeverity,
 } from 'app/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { InspectModal } from '../components/Inspector/InspectModal';
 export interface Props {
   urlUid?: string;
   urlSlug?: string;
@@ -62,6 +64,7 @@ export interface State {
   updateScrollTop: number;
   rememberScrollTop: number;
   showLoadingState: boolean;
+  inspectPanel: number;
 }
 
 export class DashboardPage extends PureComponent<Props, State> {
@@ -74,6 +77,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     scrollTop: 0,
     updateScrollTop: null,
     rememberScrollTop: 0,
+    inspectPanel: 0,
   };
 
   async componentDidMount() {
@@ -108,6 +112,10 @@ export class DashboardPage extends PureComponent<Props, State> {
       document.title = dashboard.title + ' - Grafana';
     }
 
+    if (prevProps.dashboard !== this.props.dashboard) {
+      dashboard.on(panelInspect, this.onPanelInspect);
+    }
+
     // Due to the angular -> react url bridge we can ge an update here with new uid before the container unmounts
     // Can remove this condition after we switch to react router
     if (prevProps.urlUid !== urlUid) {
@@ -131,6 +139,14 @@ export class DashboardPage extends PureComponent<Props, State> {
       }
     }
   }
+
+  onPanelInspect = (panel: PanelModel | undefined) => {
+    let id = 0;
+    if (panel && this.props.dashboard.getPanelById(panel.id)) {
+      id = panel.id;
+    }
+    this.setState({ inspectPanel: id });
+  };
 
   onEnterFullscreen() {
     const { dashboard, urlEdit, urlFullscreen, urlPanelId } = this.props;
@@ -251,7 +267,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
   render() {
     const { dashboard, editview, $injector, isInitSlow, initError } = this.props;
-    const { isSettingsOpening, isEditing, isFullscreen, scrollTop, updateScrollTop } = this.state;
+    const { isSettingsOpening, isEditing, isFullscreen, scrollTop, updateScrollTop, inspectPanel } = this.state;
 
     if (!dashboard) {
       if (isInitSlow) {
@@ -306,6 +322,8 @@ export class DashboardPage extends PureComponent<Props, State> {
             </div>
           </CustomScrollbar>
         </div>
+
+        {inspectPanel && <InspectModal dashboard={dashboard} panel={dashboard.getPanelById(inspectPanel)} />}
       </div>
     );
   }

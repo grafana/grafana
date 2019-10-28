@@ -2,14 +2,7 @@ import { updateLocation } from 'app/core/actions';
 import { store } from 'app/store/store';
 import config from 'app/core/config';
 
-import {
-  removePanel,
-  duplicatePanel,
-  copyPanel,
-  editPanelJson,
-  sharePanel,
-  inspectPanel,
-} from 'app/features/dashboard/utils/panel';
+import { removePanel, duplicatePanel, copyPanel, editPanelJson, sharePanel } from 'app/features/dashboard/utils/panel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelMenuItem } from '@grafana/ui';
@@ -46,7 +39,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
   };
 
   const onInspectPanel = () => {
-    inspectPanel(panel);
+    dashboard.inspect(panel);
   };
 
   const onDuplicatePanel = () => {
