@@ -32,7 +32,7 @@ import {
   AppNotificationSeverity,
 } from 'app/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { InspectModal } from '../components/Inspector/InspectModal';
+import { PanelInspector } from '../components/Inspector/PanelInspector';
 export interface Props {
   urlUid?: string;
   urlSlug?: string;
@@ -323,7 +323,7 @@ export class DashboardPage extends PureComponent<Props, State> {
           </CustomScrollbar>
         </div>
 
-        {inspectPanel && <InspectModal dashboard={dashboard} panel={inspectPanel} />}
+        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
       </div>
     );
   }
