@@ -110,6 +110,10 @@ github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
 # github.com/gopherjs/gopherjs v0.0.0-20190430165422-3e4dfb77656c
 github.com/gopherjs/gopherjs/js
+# github.com/gorilla/csrf v1.6.1
+github.com/gorilla/csrf
+# github.com/gorilla/securecookie v1.1.1
+github.com/gorilla/securecookie
 # github.com/gorilla/websocket v1.4.0
 github.com/gorilla/websocket
 # github.com/gosimple/slug v1.4.2

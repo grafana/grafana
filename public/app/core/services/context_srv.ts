@@ -31,10 +31,11 @@ export class ContextSrv {
   isEditor: any;
   sidemenuSmallBreakpoint = false;
   hasEditPermissionInFolders: boolean;
+  csrfToken: string;
 
   constructor() {
     if (!config.bootData) {
-      config.bootData = { user: {}, settings: {} };
+      config.bootData = { user: {}, settings: {}, csrfToken: '' };
     }
 
     this.user = new User();
@@ -42,6 +43,7 @@ export class ContextSrv {
     this.isGrafanaAdmin = this.user.isGrafanaAdmin;
     this.isEditor = this.hasRole('Editor') || this.hasRole('Admin');
     this.hasEditPermissionInFolders = this.user.hasEditPermissionInFolders;
+    this.csrfToken = config.bootData.csrfToken;
   }
 
   hasRole(role: string) {

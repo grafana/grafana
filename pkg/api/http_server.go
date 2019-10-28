@@ -11,6 +11,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/gorilla/csrf"
 	"github.com/grafana/grafana/pkg/api/live"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
@@ -91,7 +92,9 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
 	hs.log.Info("HTTP Server Listen", "address", listenAddr, "protocol", setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
 
-	hs.httpSrv = &http.Server{Addr: listenAddr, Handler: hs.macaron}
+	protect := csrf.Protect([]byte("1534a988296abc5e987s2700709gffca"))
+
+	hs.httpSrv = &http.Server{Addr: listenAddr, Handler: protect(hs.macaron)}
 
 	// handle http shutdown on server context done
 	go func() {

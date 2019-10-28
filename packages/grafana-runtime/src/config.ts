@@ -77,6 +77,7 @@ export class GrafanaBootConfig {
 const bootData = (window as any).grafanaBootData || {
   settings: {},
   user: {},
+  csrfToken: '',
 };
 
 const options = bootData.settings;

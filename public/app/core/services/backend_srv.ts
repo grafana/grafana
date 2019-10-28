@@ -84,6 +84,11 @@ export class BackendSrv implements BackendService {
     const requestIsLocal = !options.url.match(/^http/);
     const firstAttempt = options.retry === 0;
 
+    if (options.method !== 'GET') {
+      options.headers = options.headers || {};
+      options.headers['X-CSRF-Token'] = this.contextSrv.csrfToken;
+    }
+
     if (requestIsLocal) {
       if (this.contextSrv.user && this.contextSrv.user.orgId) {
         options.headers = options.headers || {};

@@ -15,6 +15,7 @@ type IndexViewData struct {
 	NewGrafanaVersion       string
 	AppName                 string
 	AppNameBodyClass        string
+	CSRFToken               string
 }
 
 type PluginCss struct {
