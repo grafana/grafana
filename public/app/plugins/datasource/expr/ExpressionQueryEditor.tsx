@@ -6,7 +6,7 @@ import { SelectableValue, ReducerID } from '@grafana/data';
 
 // Types
 import { ExpressionQuery, GELQueryType } from './types';
-import { ExpressionDatasourceApi } from './datasource';
+import { ExpressionDatasourceApi } from './ExpressionDatasource';
 
 type Props = QueryEditorProps<ExpressionDatasourceApi, ExpressionQuery>;
 

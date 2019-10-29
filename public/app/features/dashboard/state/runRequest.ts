@@ -14,7 +14,7 @@ import {
   DataQueryError,
 } from '@grafana/ui';
 import { LoadingState, dateMath, toDataFrame, DataFrame, guessFieldTypes } from '@grafana/data';
-import { ExpressionDatasourceID, expressionDatasource } from 'app/plugins/datasource/expr/datasource';
+import { ExpressionDatasourceID, expressionDatasource } from 'app/plugins/datasource/expr/ExpressionDatasource';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
 

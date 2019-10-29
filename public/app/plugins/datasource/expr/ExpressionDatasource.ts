@@ -1,10 +1,12 @@
 import { DataSourceApi, DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/ui';
 import { ExpressionQuery, GELQueryType } from './types';
 import { ExpressionQueryEditor } from './ExpressionQueryEditor';
-import { Observable, of } from 'rxjs';
+import { Observable, from } from 'rxjs';
+import { getBackendSrv, config } from '@grafana/runtime';
+import { gelResponseToDataFrames } from './util';
 
 /**
- * This is a singleton that should not actually be instanciated
+ * This is a singleton that is not actually instanciated
  */
 export class ExpressionDatasourceApi extends DataSourceApi<ExpressionQuery> {
   constructor(instanceSettings: DataSourceInstanceSettings) {
@@ -15,9 +17,40 @@ export class ExpressionDatasourceApi extends DataSourceApi<ExpressionQuery> {
     return `Expression: ${query.type}`;
   }
 
-  query(options: DataQueryRequest<ExpressionQuery>): Observable<DataQueryResponse> {
-    const data: DataQueryResponse = { data: [] };
-    return of(data); // observable
+  query(request: DataQueryRequest): Observable<DataQueryResponse> {
+    const { targets, intervalMs, maxDataPoints, range } = request;
+
+    const orgId = (window as any).grafanaBootData.user.orgId;
+    const queries = targets.map(q => {
+      if (q.datasource === ExpressionDatasourceID) {
+        return {
+          ...q,
+          datasourceId: this.id,
+          orgId,
+        };
+      }
+      const ds = config.datasources[q.datasource || config.defaultDatasource];
+      return {
+        ...q,
+        datasourceId: ds.id,
+        intervalMs,
+        maxDataPoints,
+        orgId,
+        // ?? alias: templateSrv.replace(q.alias || ''),
+      };
+    });
+
+    return from(
+      getBackendSrv()
+        .post('/api/ds', {
+          from: range.from.valueOf().toString(),
+          to: range.to.valueOf().toString(),
+          queries: queries,
+        })
+        .then(res => {
+          return { data: gelResponseToDataFrames(res) };
+        })
+    );
   }
 
   testDatasource() {
