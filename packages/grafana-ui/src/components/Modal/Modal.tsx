@@ -1,10 +1,10 @@
 import React from 'react';
 import { Portal } from '../Portal/Portal';
 import { css, cx } from 'emotion';
-import { GrafanaTheme } from '../../types/theme';
-import { ThemeContext } from '../../themes/ThemeContext';
+import { stylesFactory, withTheme } from '../../themes';
+import { GrafanaTheme } from '../../types';
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   modal: css`
     position: fixed;
     z-index: ${theme.zIndex.modal};
@@ -27,8 +27,8 @@ const getStyles = (theme: GrafanaTheme) => ({
     right: 0;
     bottom: 0;
     left: 0;
-    z-index: ${theme.zIndex.modalBackdrop}
-    background-color: ${theme.colors.bodyBg}
+    z-index: ${theme.zIndex.modalBackdrop};
+    background-color: ${theme.colors.bodyBg};
     opacity: 0.8;
     backdrop-filter: blur(4px);
   `,
@@ -50,19 +50,20 @@ const getStyles = (theme: GrafanaTheme) => ({
   modalContent: css`
     padding: calc(${theme.spacing.d} * 2);
   `,
-});
+}));
 
 interface Props {
   title: string | JSX.Element;
+  theme: GrafanaTheme;
+
   isOpen?: boolean;
   onDismiss?: () => void;
+
+  // If not set will call onDismiss if that is set.
   onClickBackdrop?: () => void;
 }
 
-export class Modal extends React.PureComponent<Props> {
-  static contextType = ThemeContext;
-  context!: React.ContextType<typeof ThemeContext>;
-
+export class UnthemedModal extends React.PureComponent<Props> {
   onDismiss = () => {
     if (this.props.onDismiss) {
       this.props.onDismiss();
@@ -74,8 +75,8 @@ export class Modal extends React.PureComponent<Props> {
   };
 
   render() {
-    const { title, isOpen = false } = this.props;
-    const styles = getStyles(this.context);
+    const { title, isOpen = false, theme } = this.props;
+    const styles = getStyles(theme);
 
     if (!isOpen) {
       return null;
@@ -97,3 +98,5 @@ export class Modal extends React.PureComponent<Props> {
     );
   }
 }
+
+export const Modal = withTheme(UnthemedModal);

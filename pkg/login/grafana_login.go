@@ -9,7 +9,10 @@ import (
 )
 
 var validatePassword = func(providedPassword string, userPassword string, userSalt string) error {
-	passwordHashed := util.EncodePassword(providedPassword, userSalt)
+	passwordHashed, err := util.EncodePassword(providedPassword, userSalt)
+	if err != nil {
+		return err
+	}
 	if subtle.ConstantTimeCompare([]byte(passwordHashed), []byte(userPassword)) != 1 {
 		return ErrInvalidCredentials
 	}

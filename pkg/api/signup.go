@@ -34,7 +34,11 @@ func SignUp(c *m.ReqContext, form dtos.SignUpForm) Response {
 	cmd.Email = form.Email
 	cmd.Status = m.TmpUserSignUpStarted
 	cmd.InvitedByUserId = c.UserId
-	cmd.Code = util.GetRandomString(20)
+	var err error
+	cmd.Code, err = util.GetRandomString(20)
+	if err != nil {
+		return Error(500, "Failed to generate random string", err)
+	}
 	cmd.RemoteAddr = c.Req.RemoteAddr
 
 	if err := bus.Dispatch(&cmd); err != nil {

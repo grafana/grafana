@@ -4,7 +4,7 @@ module.exports = function(config) {
   var task = {
     release: {
       options: {
-        archive: '<%= destDir %>/<%= pkg.name %><%= enterprise ? "-enterprise" : ""  %>-<%= pkg.version %>.<%= platform %>-<%= arch %>.tar.gz'
+        archive: '<%= destDir %>/<%= pkg.name %><%= enterprise ? "-enterprise" : ""  %>-<%= pkg.version %>.<%= platform %>-<%= arch %><%= libc ? "-" + libc : "" %>.tar.gz'
       },
       files : [
         {

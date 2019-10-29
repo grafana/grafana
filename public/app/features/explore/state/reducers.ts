@@ -204,7 +204,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         refreshInterval,
         queryResponse: {
           ...state.queryResponse,
-          state: live ? LoadingState.Streaming : LoadingState.NotStarted,
+          state: live ? LoadingState.Streaming : LoadingState.Done,
         },
         isLive: live,
         isPaused: live ? false : state.isPaused,

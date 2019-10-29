@@ -161,7 +161,7 @@
     "jest": "jest --notify --watch",
     "e2e-tests": "jest --runInBand --config=jest.config.e2e.js",
     "api-tests": "jest --notify --watch --config=devenv/e2e-api-tests/jest.js",
-    "storybook": "cd packages/grafana-ui && yarn storybook",
+    "storybook": "cd packages/grafana-ui && yarn storybook --ci",
     "storybook:build": "cd packages/grafana-ui && yarn storybook:build",
     "prettier:check": "prettier --list-different \"**/*.{ts,tsx,scss}\"",
     "prettier:write": "prettier --list-different \"**/*.{ts,tsx,scss}\" --write",
