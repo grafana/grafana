@@ -29,6 +29,7 @@ import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { addQuery } from 'app/core/utils/query';
 import { Unsubscribable } from 'rxjs';
 import { isSharedDashboardQuery, DashboardQueryEditor } from 'app/plugins/datasource/dashboard';
+import { expressionDatasource } from 'app/plugins/datasource/expr/datasource';
 
 interface Props {
   panel: PanelModel;
@@ -150,6 +151,11 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.onScrollBottom();
   };
 
+  onAddExpressionClick = () => {
+    this.onUpdateQueries(addQuery(this.props.panel.targets, expressionDatasource.newQuery()));
+    this.onScrollBottom();
+  };
+
   onScrollBottom = () => {
     this.setState({ scrollTop: this.state.scrollTop + 10000 });
   };
@@ -168,6 +174,11 @@ export class QueriesTab extends PureComponent<Props, State> {
           </button>
         )}
         {isAddingMixed && this.renderMixedPicker()}
+        {config.featureToggles.expressions && (
+          <button className="btn navbar-button" onClick={this.onAddExpressionClick}>
+            Add Expression
+          </button>
+        )}
       </>
     );
   };
