@@ -1,5 +1,5 @@
 // Libraries
-import { isEmpty, isString } from 'lodash';
+import { isEmpty, isString, fromPairs } from 'lodash';
 // Services & Utils
 import {
   dateMath,
@@ -9,8 +9,9 @@ import {
   AnnotationEvent,
   DataFrameView,
   LoadingState,
-  DataLink,
-  ScopedVars,
+  ArrayVector,
+  FieldType,
+  FieldConfig,
 } from '@grafana/data';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
@@ -27,7 +28,7 @@ import {
   AnnotationQueryRequest,
 } from '@grafana/ui';
 
-import { LokiQuery, LokiOptions, LokiLogsStream, LokiResponse, LokiRow } from './types';
+import { LokiQuery, LokiOptions, LokiLogsStream, LokiResponse } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
@@ -159,6 +160,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     data = data as LokiResponse;
     for (const stream of data.streams || []) {
       const dataFrame = logStreamToDataFrame(stream);
+      this.enhanceDataFrame(dataFrame);
       dataFrame.refId = target.refId;
       dataFrame.meta = {
         searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.query, target.regexp)),
@@ -407,23 +409,62 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return annotations;
   }
 
-  async getDerivedFields(row: LokiRow): Promise<ScopedVars> {
-    const fields = (this.instanceSettings.jsonData.derivedFields || []).reduce((acc: any, field) => {
-      const logMatch = row && row.line && row.line.match(field.matcherRegex);
-      acc[field.name] = logMatch && logMatch[1];
-      return acc;
-    }, {});
-    return {
-      field: {
-        value: fields,
-        // TODO not sure what to put here
-        text: '',
-      },
-    };
-  }
+  // async getDerivedFields(row: LokiRow): Promise<ScopedVars> {
+  //   const fields = (this.instanceSettings.jsonData.derivedFields || []).reduce((acc: any, field) => {
+  //     const logMatch = row && row.line && row.line.match(field.matcherRegex);
+  //     acc[field.name] = logMatch && logMatch[1];
+  //     return acc;
+  //   }, {});
+  //   return {
+  //     field: {
+  //       value: fields,
+  //       // TODO not sure what to put here
+  //       text: '',
+  //     },
+  //   };
+  // }
+  //
+  // getDataLinks(context: 'logs' | 'metrics'): DataLink[] {
+  //   return this.instanceSettings.jsonData.dataLinks || [];
+  // }
 
-  getDataLinks(context: 'logs' | 'metrics'): DataLink[] {
-    return this.instanceSettings.jsonData.dataLinks || [];
+  enhanceDataFrame(dataFrame: DataFrame) {
+    const derivedFields = this.instanceSettings.jsonData.derivedFields || [];
+    if (derivedFields.length) {
+      const fields = fromPairs(
+        derivedFields.map(field => {
+          const config: FieldConfig = {};
+          if (field.url) {
+            config.links = [
+              {
+                url: field.url,
+                title: '',
+              },
+            ];
+          }
+          const dataFrameField = {
+            name: field.name,
+            type: FieldType.string,
+            config,
+            values: new ArrayVector<string>([]),
+          };
+
+          return [field.name, dataFrameField];
+        })
+      );
+
+      const view = new DataFrameView(dataFrame);
+      view.forEachRow((row: { line: string }) => {
+        for (const field of derivedFields) {
+          const logMatch = row.line.match(field.matcherRegex);
+          fields[field.name].values.add(logMatch && logMatch[1]);
+        }
+      });
+
+      dataFrame.fields = [...dataFrame.fields, ...Object.values(fields)];
+      return dataFrame;
+    }
+    return dataFrame;
   }
 }
 

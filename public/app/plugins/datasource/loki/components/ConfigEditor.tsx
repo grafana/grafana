@@ -3,14 +3,17 @@ import { css } from 'emotion';
 import cx from 'classnames';
 import {
   Button,
-  DataLinksEditor,
+  DataLinkBuiltInVars,
   DataSourceHttpSettings,
   DataSourcePluginOptionsEditorProps,
   DataSourceSettings,
   FormField,
   VariableOrigin,
+  VariableSuggestion,
 } from '@grafana/ui';
 import { DerivedFieldConfig, LokiOptions } from '../types';
+// TODO: fix import
+import { DataLinkInput } from '@grafana/ui/src/components/DataLinks/DataLinkInput';
 
 export type Props = DataSourcePluginOptionsEditorProps<LokiOptions>;
 
@@ -29,7 +32,6 @@ const makeJsonUpdater = <T extends any>(field: keyof LokiOptions) => (
 
 const setMaxLines = makeJsonUpdater('maxLines');
 const setDerivedFields = makeJsonUpdater('derivedFields');
-const setDataLinks = makeJsonUpdater('dataLinks');
 
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
@@ -57,18 +59,6 @@ export const ConfigEditor = (props: Props) => {
       <DerivedFields
         value={options.jsonData.derivedFields}
         onChange={value => onOptionsChange(setDerivedFields(options, value))}
-      />
-
-      <DataLinksEditor
-        value={options.jsonData.dataLinks}
-        onChange={value => onOptionsChange(setDataLinks(options, value))}
-        suggestions={options.jsonData.derivedFields.map(field => {
-          return {
-            value: `field.${field.name}`,
-            label: field.name,
-            origin: VariableOrigin.Field,
-          };
-        })}
       />
     </>
   );
@@ -141,6 +131,14 @@ const DerivedFields = (props: DerivedFieldsProps) => {
                   newDerivedFields.splice(index, 1);
                   onChange(newDerivedFields);
                 }}
+                suggestions={[
+                  {
+                    value: `${DataLinkBuiltInVars.valueText}`,
+                    label: 'Text',
+                    documentation: 'Text representation of selected value',
+                    origin: VariableOrigin.Value,
+                  },
+                ]}
               />
             );
           })}
@@ -165,9 +163,18 @@ type DerivedFieldProps = {
   value: DerivedFieldConfig;
   onChange: (value: DerivedFieldConfig) => void;
   onDelete: () => void;
+  suggestions: VariableSuggestion[];
 };
 const DerivedField = (props: DerivedFieldProps) => {
-  const { value, onChange, onDelete } = props;
+  const { value, onChange, onDelete, suggestions } = props;
+
+  const handleChange = (field: keyof typeof value) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    onChange({
+      ...value,
+      [field]: event.currentTarget.value,
+    });
+  };
+
   return (
     <>
       <div
@@ -175,17 +182,7 @@ const DerivedField = (props: DerivedFieldProps) => {
           display: flex;
         `}
       >
-        <FormField
-          label="name"
-          type="text"
-          value={value.name}
-          onChange={event =>
-            onChange({
-              ...value,
-              name: event.currentTarget.value,
-            })
-          }
-        />
+        <FormField label="name" type="text" value={value.name} onChange={handleChange('name')} />
 
         <Button
           variant={'danger'}
@@ -202,15 +199,30 @@ const DerivedField = (props: DerivedFieldProps) => {
         label="Regex"
         type="text"
         value={value.matcherRegex}
-        onChange={event =>
-          onChange({
-            ...value,
-            matcherRegex: event.currentTarget.value,
-          })
-        }
+        onChange={handleChange('matcherRegex')}
         tooltip={
           'Use to parse and capture some part of the log message. You can use the captured groups in the template.'
         }
+      />
+
+      <FormField
+        label="URL"
+        labelWidth={5}
+        inputEl={
+          <DataLinkInput
+            value={value.url || ''}
+            onChange={newValue =>
+              onChange({
+                ...value,
+                url: newValue,
+              })
+            }
+            suggestions={suggestions}
+          />
+        }
+        className={css`
+          width: 100%;
+        `}
       />
     </>
   );

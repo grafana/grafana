@@ -26,7 +26,7 @@ import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 import { LiveTailControls } from './useLiveTailControls';
-import { getLinksFromDataSource } from '../panel/panellinks/link_srv';
+import { getLinksFromDataSource, getLinkSrv } from '../panel/panellinks/link_srv';
 
 interface LogsContainerProps {
   datasourceInstance: DataSourceApi | null;
@@ -82,8 +82,28 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     return [];
   };
 
-  getDerivedFields = async (rowData: Record<string, any>): Promise<Array<LinkModel<any>>> => {
-    return getLinksFromDataSource(this.props.datasourceInstance, rowData);
+  getDerivedFields = (row: LogRowModel) => {
+    return row.dataFrame.fields.reduce((acc, field) => {
+      if (!['ts', 'line', 'id'].includes(field.name)) {
+        // TODO can be more links
+        const link = field.config.links[0];
+        const scopedVars: any = {};
+        scopedVars['__value'] = {
+          value: {
+            text: row.dataFrameRow[field.name],
+          },
+          text: 'Value',
+        };
+
+        const linkModel = getLinkSrv().getDataLinkUIModel(link, scopedVars, null);
+        acc.push({
+          field: field.name,
+          href: linkModel.href,
+          value: row.dataFrameRow[field.name],
+        });
+      }
+      return acc;
+    }, []);
   };
 
   render() {

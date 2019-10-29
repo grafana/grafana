@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { LinkModel, LogRowModel, TimeZone } from '@grafana/data';
+import { DerivedLogField, LinkModel, LogRowModel, TimeZone } from '@grafana/data';
 import { cx } from 'emotion';
 import { DataQueryResponse } from '../../index';
 import {
@@ -25,7 +25,7 @@ interface Props extends Themeable {
   onClickLabel?: (label: string, value: string) => void;
   onContextClick?: () => void;
   getRowContext: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>;
-  getDerivedFields: (row: Record<string, any>) => Promise<Array<LinkModel<any>>>;
+  getDerivedFields: (row: LogRowModel) => DerivedLogField[];
 }
 
 interface State {
@@ -94,18 +94,6 @@ class UnThemedLogRow extends Component<Props, State> {
             this.setState({
               showDetails: !showDetails,
             });
-            if (this.state.linkModels === null) {
-              this.setState({
-                loadingDerivedFields: true,
-              });
-              const linkModels = await getDerivedFields(row.dataFrameRow);
-              if (this.mounted) {
-                this.setState({
-                  loadingDerivedFields: false,
-                  linkModels,
-                });
-              }
-            }
           }}
         >
           {showDuplicates && (
@@ -151,15 +139,13 @@ class UnThemedLogRow extends Component<Props, State> {
               padding: 20,
             }}
           >
-            {!!this.state.linkModels &&
-              !!this.state.linkModels.length &&
-              this.state.linkModels.map((link: LinkModel<any>) => {
-                return (
-                  <div>
-                    <a href={link.href}>{link.title}</a>
-                  </div>
-                );
-              })}
+            {getDerivedFields(row).map(f => {
+              return (
+                <div>
+                  {f.field} = <a href={f.href}>{f.value}</a>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

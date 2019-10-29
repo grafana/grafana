@@ -291,6 +291,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
 
       rows.push({
         dataFrameRow: { ...dfView.get(j) },
+        dataFrame: series,
         logLevel,
         timeFromNow: time.fromNow(),
         timeEpochMs: time.valueOf(),

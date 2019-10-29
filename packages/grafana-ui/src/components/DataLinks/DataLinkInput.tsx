@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useContext, useRef, RefObject, memo } from 'react';
+import React, { useState, useMemo, useContext, useRef, RefObject, memo, useEffect } from 'react';
+
 import { VariableSuggestion, VariableOrigin, DataLinkSuggestions } from './DataLinkSuggestions';
 import { ThemeContext, DataLinkBuiltInVars, makeValue } from '../../index';
 import { SelectionReference } from './SelectionReference';
@@ -9,6 +10,7 @@ import { Value, Editor as CoreEditor } from 'slate';
 import Plain from 'slate-plain-serializer';
 import { Popper as ReactPopper } from 'react-popper';
 import { css, cx } from 'emotion';
+import usePrevious from 'react-use/lib/usePrevious';
 
 import { SlatePrism } from '../../slate-plugins';
 import { SCHEMA } from '../../utils/slate';
@@ -50,6 +52,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(({ value, onChan
   const [showingSuggestions, setShowingSuggestions] = useState(false);
   const [suggestionsIndex, setSuggestionsIndex] = useState(0);
   const [linkUrl, setLinkUrl] = useState<Value>(makeValue(value));
+  const prevLinkUrl = usePrevious<Value>(linkUrl);
 
   // Workaround for https://github.com/ianstormtaylor/slate/issues/2927
   const stateRef = useRef({ showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange });
@@ -90,13 +93,11 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(({ value, onChan
     setLinkUrl(value);
   }, []);
 
-  const onUrlBlur = React.useCallback((event: Event, editor: CoreEditor, next: () => any) => {
-    // Callback needed for blur to work correctly
-    stateRef.current.onChange(Plain.serialize(stateRef.current.linkUrl), () => {
-      // This needs to be called after state is updated.
-      editorRef.current!.blur();
-    });
-  }, []);
+  useEffect(() => {
+    if (prevLinkUrl && prevLinkUrl.selection.isFocused && !linkUrl.selection.isFocused) {
+      stateRef.current.onChange(Plain.serialize(linkUrl));
+    }
+  }, [linkUrl, prevLinkUrl]);
 
   const onVariableSelect = (item: VariableSuggestion, editor = editorRef.current!) => {
     const includeDollarSign = Plain.serialize(editor.value).slice(-1) !== '$';
@@ -156,7 +157,6 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(({ value, onChan
           placeholder="http://your-grafana.com/d/000000010/annotations"
           value={stateRef.current.linkUrl}
           onChange={onUrlChange}
-          onBlur={onUrlBlur}
           onKeyDown={(event, _editor, next) => onKeyDown(event as KeyboardEvent, next)}
           plugins={plugins}
           className={styles.editor}

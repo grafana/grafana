@@ -12,6 +12,7 @@ import {
   LogRowModel,
   LogsDedupDescription,
   LinkModel,
+  DerivedLogField,
 } from '@grafana/data';
 import { Switch, LogLabels, ToggleButtonGroup, ToggleButton, LogRows, DerivedField } from '@grafana/ui';
 
@@ -46,7 +47,7 @@ interface Props {
   onDedupStrategyChange: (dedupStrategy: LogsDedupStrategy) => void;
   onToggleLogLevel: (hiddenLogLevels: LogLevel[]) => void;
   getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
-  getDerivedFields: (row: Record<string, any>) => Promise<Array<LinkModel<any>>>;
+  getDerivedFields: (row: LogRowModel) => DerivedLogField[];
 }
 
 interface State {
