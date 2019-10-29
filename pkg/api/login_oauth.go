@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"time"
 
 	"golang.org/x/oauth2"
 
@@ -30,7 +31,8 @@ var (
 )
 
 func GenStateString() (string, error) {
-	rnd := make([]byte, 32)
+	// increase size since the first 8 bytes will be used for retrieving the hashed key
+	rnd := make([]byte, 40)
 	if _, err := rand.Read(rnd); err != nil {
 		oauthLogger.Error("failed to generate state string", "err", err)
 		return "", err
@@ -69,7 +71,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		}
 
 		hashedState := hashStatecode(state, setting.OAuthService.OAuthInfos[name].ClientSecret)
-		hs.writeCookie(ctx.Resp, OauthStateCookieName, hashedState, 60, hs.Cfg.CookieSameSite)
+		hs.RemoteCacheService.Set(fmt.Sprintf("%v_%v", OauthStateCookieName, state[:8]), hashedState, 60*time.Second)
 		if setting.OAuthService.OAuthInfos[name].HostedDomain == "" {
 			ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
 		} else {
@@ -78,20 +80,29 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		return
 	}
 
-	cookieState := ctx.GetCookie(OauthStateCookieName)
-
-	// delete cookie
-	ctx.Resp.Header().Del("Set-Cookie")
-	hs.deleteCookie(ctx.Resp, OauthStateCookieName, hs.Cfg.CookieSameSite)
-
-	if cookieState == "" {
-		ctx.Handle(500, "login.OAuthLogin(missing saved state)", nil)
+	state := ctx.Query("state")
+	cacheKey := fmt.Sprintf("%v_%v", OauthStateCookieName, state[:8])
+	cacheValue, err := hs.RemoteCacheService.Get(cacheKey)
+	if err != nil {
+		ctx.Handle(500, "login.OAuthLogin(unable to get saved state)", nil)
 		return
 	}
 
-	queryState := hashStatecode(ctx.Query("state"), setting.OAuthService.OAuthInfos[name].ClientSecret)
-	oauthLogger.Info("state check", "queryState", queryState, "cookieState", cookieState)
-	if cookieState != queryState {
+	// delete state from remote cache
+	err = hs.RemoteCacheService.Delete(cacheKey)
+	if err != nil {
+		oauthLogger.Warn("State could not be deleted from remote cache")
+	}
+
+	if cacheValue == "" {
+		ctx.Handle(500, "login.OAuthLogin(missing saved state)", nil)
+		return
+	}
+	storedState := cacheValue.(string)
+
+	queryState := hashStatecode(state, setting.OAuthService.OAuthInfos[name].ClientSecret)
+	oauthLogger.Info("state check", "queryState", queryState, "cookieState", storedState)
+	if storedState != queryState {
 		ctx.Handle(500, "login.OAuthLogin(state mismatch)", nil)
 		return
 	}
