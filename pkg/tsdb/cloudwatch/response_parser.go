@@ -13,8 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMetricDataOutput, queries map[string]*cloudWatchQuery) (map[string]*tsdb.QueryResult, error) {
-	queryResponses := make(map[string]*tsdb.QueryResult, 0)
+func (e *CloudWatchExecutor) parseResponse(queryResponses map[string]*tsdb.QueryResult, metricDataOutputs []*cloudwatch.GetMetricDataOutput, queries map[string]*cloudWatchQuery) (map[string]*tsdb.QueryResult, error) {
+	// queryResponses := make(map[string]*tsdb.QueryResult, 0)<
 	mdr := make(map[string]map[string]*cloudwatch.MetricDataResult)
 
 	for _, mdo := range metricDataOutputs {
@@ -35,7 +35,6 @@ func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 				mdr[*r.Id][*r.Label].Timestamps = append(mdr[*r.Id][*r.Label].Timestamps, r.Timestamps...)
 				mdr[*r.Id][*r.Label].Values = append(mdr[*r.Id][*r.Label].Values, r.Values...)
 			}
-
 			queries[*r.Id].RequestExceededMaxLimit = requestExceededMaxLimit
 		}
 	}
@@ -50,10 +49,13 @@ func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 	}
 
 	for refID, queries := range queriesByRefID {
-		queryResponses[refID] = tsdb.NewQueryResult()
-		queryResponses[refID].RefId = refID
-		queryResponses[refID].Meta = simplejson.New()
-		queryResponses[refID].Series = tsdb.TimeSeriesSlice{}
+		if _, ok := queryResponses[refID]; !ok {
+			queryResponses[refID] = tsdb.NewQueryResult()
+			queryResponses[refID].RefId = refID
+			queryResponses[refID].Meta = simplejson.New()
+			queryResponses[refID].Series = tsdb.TimeSeriesSlice{}
+		}
+
 		timeSeries := make(tsdb.TimeSeriesSlice, 0)
 
 		searchExpressions := []string{}
@@ -78,7 +80,7 @@ func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 		if requestExceededMaxLimit {
 			queryResponses[refID].ErrorString = "Cloudwatch GetMetricData error: Maximum number of allowed metrics exceeded. Your search may have been limited."
 		}
-		queryResponses[refID].Series = timeSeries
+		queryResponses[refID].Series = append(queryResponses[refID].Series, timeSeries...)
 		queryResponses[refID].Meta.Set("searchExpressions", searchExpressions)
 	}
 
