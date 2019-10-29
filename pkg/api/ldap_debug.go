@@ -287,6 +287,7 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 					r := &LDAPRoleDTO{GroupDN: configGroup.GroupDN, OrgId: configGroup.OrgId, OrgRole: configGroup.OrgRole}
 					orgRoles = append(orgRoles, *r)
 					matchedOrgIds[configGroup.OrgId] = true
+					break
 				}
 			}
 		}
