@@ -233,7 +233,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             <div className="gf-form">
               <FormLabel className="width-14">Auth Provider</FormLabel>
               <Select
-                className="width-15"
+                className="width-30"
                 value={authProviderOptions.find(authProvider => authProvider.value === config.jsonData.authType)}
                 options={authProviderOptions}
                 defaultValue={config.jsonData.authType}
@@ -250,7 +250,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 >
                   Credentials Profile Name
                 </FormLabel>
-                <div className="width-15">
+                <div className="width-30">
                   <Input
                     className="width-30"
                     placeholder="default"
@@ -283,7 +283,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 <div className="gf-form-inline">
                   <div className="gf-form">
                     <FormLabel className="width-14">Access Key ID</FormLabel>
-                    <div className="width-15">
+                    <div className="width-30">
                       <Input
                         className="width-30"
                         value={config.secureJsonData.accessKey || ''}
@@ -311,7 +311,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 <div className="gf-form-inline">
                   <div className="gf-form">
                     <FormLabel className="width-14">Secret Access Key</FormLabel>
-                    <div className="width-15">
+                    <div className="width-30">
                       <Input
                         className="width-30"
                         value={config.secureJsonData.secretKey || ''}
@@ -329,7 +329,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 <FormLabel className="width-14" tooltip="ARN of Assume Role">
                   Assume Role ARN
                 </FormLabel>
-                <div className="width-15">
+                <div className="width-30">
                   <Input
                     className="width-30"
                     placeholder="arn:aws:iam:*"
@@ -349,7 +349,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 Default Region
               </FormLabel>
               <Select
-                className="width-15"
+                className="width-30"
                 value={regions.find(region => region.value === config.jsonData.defaultRegion)}
                 options={regions}
                 defaultValue={config.jsonData.defaultRegion}
