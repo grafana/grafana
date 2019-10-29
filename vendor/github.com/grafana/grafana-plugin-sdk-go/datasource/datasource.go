@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/dataframe"
-	"github.com/grafana/grafana-plugin-sdk-go/genproto/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	plugin "github.com/hashicorp/go-plugin"
 )
 
@@ -54,7 +54,7 @@ type datasourcePluginWrapper struct {
 	handler DataSourceHandler
 }
 
-func (p *datasourcePluginWrapper) Query(ctx context.Context, req *datasource.DatasourceRequest) (*datasource.DatasourceResponse, error) {
+func (p *datasourcePluginWrapper) Query(ctx context.Context, req *pluginv2.DatasourceRequest) (*pluginv2.DatasourceResponse, error) {
 	tr := TimeRange{
 		From: time.Unix(0, req.TimeRange.FromEpochMs*int64(time.Millisecond)),
 		To:   time.Unix(0, req.TimeRange.ToEpochMs*int64(time.Millisecond)),
@@ -85,12 +85,12 @@ func (p *datasourcePluginWrapper) Query(ctx context.Context, req *datasource.Dat
 	}
 
 	if len(results) == 0 {
-		return &datasource.DatasourceResponse{
-			Results: []*datasource.QueryResult{},
+		return &pluginv2.DatasourceResponse{
+			Results: []*pluginv2.DatasourceQueryResult{},
 		}, nil
 	}
 
-	var respResults []*datasource.QueryResult
+	var respResults []*pluginv2.DatasourceQueryResult
 
 	for _, res := range results {
 		encodedFrames := make([][]byte, len(res.DataFrames))
@@ -104,7 +104,7 @@ func (p *datasourcePluginWrapper) Query(ctx context.Context, req *datasource.Dat
 			}
 		}
 
-		queryResult := &datasource.QueryResult{
+		queryResult := &pluginv2.DatasourceQueryResult{
 			Error:      res.Error,
 			RefId:      res.RefID,
 			MetaJson:   res.MetaJSON,
@@ -114,7 +114,7 @@ func (p *datasourcePluginWrapper) Query(ctx context.Context, req *datasource.Dat
 		respResults = append(respResults, queryResult)
 	}
 
-	return &datasource.DatasourceResponse{
+	return &pluginv2.DatasourceResponse{
 		Results: respResults,
 	}, nil
 }

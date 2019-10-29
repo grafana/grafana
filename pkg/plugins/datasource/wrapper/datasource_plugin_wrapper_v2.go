@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	sdk "github.com/grafana/grafana-plugin-sdk-go/datasource"
-	"github.com/grafana/grafana-plugin-sdk-go/genproto/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -16,7 +16,7 @@ import (
 // 	logger log.Logger
 // }
 
-// func (s *grafanaAPI) QueryDatasource(ctx context.Context, req *datasource.QueryDatasourceRequest) (*datasource.QueryDatasourceResponse, error) {
+// func (s *grafanaAPI) QueryDatasource(ctx context.Context, req *pluginv2.QueryDatasourceRequest) (*pluginv2.QueryDatasourceResponse, error) {
 // 	if len(req.Queries) == 0 {
 // 		return nil, fmt.Errorf("zero queries found in datasource request")
 // 	}
@@ -58,10 +58,10 @@ import (
 // 	}
 // 	// Convert tsdb results (map) to plugin-model/datasource (slice) results
 // 	// Only error and Series responses mapped.
-// 	results := make([]*datasource.QueryResult, len(tsdbRes.Results))
+// 	results := make([]*pluginv2.QueryResult, len(tsdbRes.Results))
 // 	resIdx := 0
 // 	for refID, res := range tsdbRes.Results {
-// 		qr := &datasource.QueryResult{
+// 		qr := &pluginv2.QueryResult{
 // 			RefId: refID,
 // 		}
 // 		if res.Error != nil {
@@ -87,7 +87,7 @@ import (
 
 // 		resIdx++
 // 	}
-// 	return &datasource.QueryDatasourceResponse{Results: results}, nil
+// 	return &pluginv2.QueryDatasourceResponse{Results: results}, nil
 // }
 
 func NewDatasourcePluginWrapperV2(log log.Logger, plugin sdk.DatasourcePlugin) *DatasourcePluginWrapperV2 {
@@ -105,8 +105,8 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 		return nil, err
 	}
 
-	pbQuery := &datasource.DatasourceRequest{
-		Datasource: &datasource.DatasourceInfo{
+	pbQuery := &pluginv2.DatasourceRequest{
+		Datasource: &pluginv2.DatasourceInfo{
 			Name:                    ds.Name,
 			Type:                    ds.Type,
 			Url:                     ds.Url,
@@ -115,13 +115,13 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 			JsonData:                string(jsonData),
 			DecryptedSecureJsonData: ds.SecureJsonData.Decrypt(),
 		},
-		TimeRange: &datasource.TimeRange{
+		TimeRange: &pluginv2.TimeRange{
 			FromRaw:     query.TimeRange.From,
 			ToRaw:       query.TimeRange.To,
 			ToEpochMs:   query.TimeRange.GetToAsMsEpoch(),
 			FromEpochMs: query.TimeRange.GetFromAsMsEpoch(),
 		},
-		Queries: []*datasource.Query{},
+		Queries: []*pluginv2.DatasourceQuery{},
 	}
 
 	for _, q := range query.Queries {
@@ -129,7 +129,7 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 		if err != nil {
 			return nil, err
 		}
-		pbQuery.Queries = append(pbQuery.Queries, &datasource.Query{
+		pbQuery.Queries = append(pbQuery.Queries, &pluginv2.DatasourceQuery{
 			ModelJson:     string(modelJSON),
 			IntervalMs:    q.IntervalMs,
 			RefId:         q.RefId,
