@@ -25,7 +25,14 @@ export const Button: React.FunctionComponent<ButtonProps> = props => {
   // Default this to 'button', otherwise html defaults to 'submit' which then submits any form it is in.
   buttonProps.type = buttonProps.type || 'button';
   const styles =
-    stylesProp || getButtonStyles({ theme, size: size || 'md', variant: variant || 'primary', withIcon: !!icon });
+    stylesProp ||
+    getButtonStyles({
+      theme,
+      size: size || 'md',
+      variant: variant || 'primary',
+      withIcon: !!icon,
+      withText: !!children,
+    });
 
   return (
     <button className={cx(styles.button, className)} {...buttonProps}>
@@ -47,7 +54,14 @@ export const LinkButton: React.FunctionComponent<LinkButtonProps> = props => {
   const theme = useContext(ThemeContext);
   const { size, variant, icon, children, className, styles: stylesProp, ...anchorProps } = props;
   const styles =
-    stylesProp || getButtonStyles({ theme, size: size || 'md', variant: variant || 'primary', withIcon: !!icon });
+    stylesProp ||
+    getButtonStyles({
+      theme,
+      size: size || 'md',
+      variant: variant || 'primary',
+      withIcon: !!icon,
+      withText: !!children,
+    });
 
   return (
     <a className={cx(styles.button, className)} {...anchorProps}>
