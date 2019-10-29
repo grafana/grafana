@@ -146,7 +146,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
     const cleanText = datasource.languageProvider ? lokiLanguageProvider.cleanText : undefined;
     const hasLogLabels = logLabelOptions && logLabelOptions.length > 0;
     const chooserText = getChooserText(syntaxLoaded, hasLogLabels);
-    const buttonDisabled = !syntaxLoaded;
+    const buttonDisabled = !(syntaxLoaded && hasLogLabels);
     const showError = data && data.error && data.error.refId === query.refId;
 
     return (
