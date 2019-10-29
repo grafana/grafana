@@ -1,5 +1,5 @@
-import { DisplayValue, DisplayProcessor } from './displayValue';
-
+import { DisplayValue } from './displayValue';
+import { Field } from './dataFrame';
 export interface YAxis {
   index: number;
   min?: number;
@@ -16,7 +16,10 @@ export interface GraphSeriesXY {
   info?: DisplayValue[]; // Legend info
   isVisible: boolean;
   yAxis: YAxis;
-  yAxisDisplayProcessor?: DisplayProcessor;
+  // Field corresponding to time
+  timeDimmension: Field;
+  // Field corresponding to value
+  valueDimmension: Field;
   seriesIndex: number;
 }
 
