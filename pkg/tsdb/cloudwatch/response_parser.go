@@ -2,19 +2,16 @@ package cloudwatch
 
 import (
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana/pkg/components/null"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func (e *CloudWatchExecutor) parseResponse(queryResponses map[string]*tsdb.QueryResult, metricDataOutputs []*cloudwatch.GetMetricDataOutput, queries map[string]*cloudWatchQuery) (map[string]*tsdb.QueryResult, error) {
-	// queryResponses := make(map[string]*tsdb.QueryResult, 0)<
+func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMetricDataOutput, queries map[string]*cloudWatchQuery) ([]*cloudwatchResponse, error) {
 	mdr := make(map[string]map[string]*cloudwatch.MetricDataResult)
 
 	for _, mdo := range metricDataOutputs {
@@ -39,52 +36,24 @@ func (e *CloudWatchExecutor) parseResponse(queryResponses map[string]*tsdb.Query
 		}
 	}
 
-	queriesByRefID := make(map[string][]*cloudWatchQuery, 0)
-	for _, query := range queries {
-		if _, ok := queriesByRefID[query.RefId]; !ok {
-			queriesByRefID[query.RefId] = []*cloudWatchQuery{query}
-		} else {
-			queriesByRefID[query.RefId] = append(queriesByRefID[query.RefId], query)
+	cloudWatchResponses := make([]*cloudwatchResponse, 0)
+	for id, lr := range mdr {
+		response := &cloudwatchResponse{}
+		series, err := parseGetMetricDataTimeSeries(lr, queries[id])
+		if err != nil {
+			return cloudWatchResponses, err
 		}
+
+		response.series = series
+		response.SearchExpression = queries[id].SearchExpression
+		response.RefId = queries[id].RefId
+		response.Id = queries[id].Id
+		response.RequestExceededMaxLimit = queries[id].RequestExceededMaxLimit
+
+		cloudWatchResponses = append(cloudWatchResponses, response)
 	}
 
-	for refID, queries := range queriesByRefID {
-		if _, ok := queryResponses[refID]; !ok {
-			queryResponses[refID] = tsdb.NewQueryResult()
-			queryResponses[refID].RefId = refID
-			queryResponses[refID].Meta = simplejson.New()
-			queryResponses[refID].Series = tsdb.TimeSeriesSlice{}
-		}
-
-		timeSeries := make(tsdb.TimeSeriesSlice, 0)
-
-		searchExpressions := []string{}
-		requestExceededMaxLimit := false
-		for _, query := range queries {
-			series, err := parseGetMetricDataTimeSeries(mdr[query.Id], query)
-			if err != nil {
-				return queryResponses, err
-			}
-
-			timeSeries = append(timeSeries, *series...)
-			requestExceededMaxLimit = requestExceededMaxLimit || query.RequestExceededMaxLimit
-			if len(query.SearchExpression) > 0 {
-				searchExpressions = append(searchExpressions, query.SearchExpression)
-			}
-		}
-
-		sort.Slice(timeSeries, func(i, j int) bool {
-			return timeSeries[i].Name < timeSeries[j].Name
-		})
-
-		if requestExceededMaxLimit {
-			queryResponses[refID].ErrorString = "Cloudwatch GetMetricData error: Maximum number of allowed metrics exceeded. Your search may have been limited."
-		}
-		queryResponses[refID].Series = append(queryResponses[refID].Series, timeSeries...)
-		queryResponses[refID].Meta.Set("searchExpressions", searchExpressions)
-	}
-
-	return queryResponses, nil
+	return cloudWatchResponses, nil
 }
 
 func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.MetricDataResult, query *cloudWatchQuery) (*tsdb.TimeSeriesSlice, error) {

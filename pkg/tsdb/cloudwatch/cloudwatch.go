@@ -32,7 +32,7 @@ type DatasourceInfo struct {
 }
 
 const (
-	maxNoOfSearchExpressions = 1
+	maxNoOfSearchExpressions = 5
 	maxNoOfMetricDataQueries = 100
 )
 
@@ -85,34 +85,35 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 		Results: make(map[string]*tsdb.QueryResult),
 	}
 
-	queries, err := e.parseQueries(queryContext)
+	requestQueries, err := e.parseQueries(queryContext)
+	if err != nil {
+		return results, err
+	}
+
+	queries, err := e.transformRequestQueriesToCloudWatchQueries(requestQueries)
 	if err != nil {
 		return results, err
 	}
 
 	queriesByRegion := e.groupQueriesByRegion(queries)
+
 	metricDataParamsByRegion := make(map[string][]*metricDataParam)
 	for region, queries := range queriesByRegion {
 		metricDataParams, err := e.mdpb.build(queryContext, queries)
 		if err != nil {
-			return results, err
+			if e, ok := err.(*queryBuilderError); ok {
+				results.Results[e.RefID] = &tsdb.QueryResult{
+					Error: err,
+				}
+				return results, nil
+			} else {
+				return results, err
+			}
 		}
 		metricDataParamsByRegion[region] = metricDataParams
 	}
 
-	if err != nil {
-		if e, ok := err.(*queryBuilderError); ok {
-			results.Results[e.RefID] = &tsdb.QueryResult{
-				Error: err,
-			}
-			return results, nil
-		} else {
-			return results, err
-		}
-	}
-
 	resultChan := make(chan *tsdb.QueryResult, len(queryContext.Queries))
-	// resultChan := make(chan *tsdb.QueryResult, len(queryContext.Queries)*50)
 	eg, ectx := errgroup.WithContext(ctx)
 
 	if len(metricDataParamsByRegion) > 0 {
@@ -132,19 +133,17 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 					}
 				}()
 
-				queryResponses := make(map[string]*tsdb.QueryResult, 0)
 				client, err := e.getClient(r)
 				if err != nil {
 					return err
 				}
 
-				// metricDataOutputs := make([]*cloudwatch.GetMetricDataOutput, 0)
+				cloudwatchResponses := make([]*cloudwatchResponse, 0)
 				for _, mdp := range mdps {
-					plog.Info("executeRequest", "", r)
 					mdo, err := e.executeRequest(ectx, client, mdp.MetricDataInput)
 					if err != nil {
 						if ae, ok := err.(awserr.Error); ok && ae.Code() == "Throttling" {
-							for refID := range mdp.getUniqueRefIDs() {
+							for _, refID := range mdp.getUniqueRefIDs() {
 								resultChan <- &tsdb.QueryResult{
 									RefId: refID,
 									Error: ae,
@@ -154,20 +153,21 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 						}
 						return err
 					}
-					queryResponses, err = e.parseResponse(queryResponses, mdo, mdp.groupQueriesByID())
-
-					// metricDataOutputs = append(metricDataOutputs, mdo...)
-				}
-
-				// regionQueriesByID := e.groupQueriesByID(queriesByRegion[r])
-				if err != nil {
-					return err
-				}
-
-				for _, queryRes := range queryResponses {
+					responses, err := e.parseResponse(mdo, mdp.groupQueriesByID())
 					if err != nil {
-						queryRes.Error = err
+						for _, refID := range mdp.getUniqueRefIDs() {
+							resultChan <- &tsdb.QueryResult{
+								RefId: refID,
+								Error: err,
+							}
+						}
 					}
+					cloudwatchResponses = append(cloudwatchResponses, responses...)
+				}
+
+				res := e.transformQueryResponseToQueryResult(cloudwatchResponses)
+
+				for _, queryRes := range res {
 					resultChan <- queryRes
 				}
 				return nil

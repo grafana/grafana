@@ -23,11 +23,17 @@ func newMetricDataParam(startTime time.Time, endTime time.Time) *metricDataParam
 	}
 }
 
-func (mdp *metricDataParam) getUniqueRefIDs() map[string]*cloudWatchQuery {
-	refIds := make(map[string]*cloudWatchQuery)
+func (mdp *metricDataParam) getUniqueRefIDs() []string {
+	refIds := []string{}
 	for _, query := range mdp.CloudwatchQueries {
-		if _, ok := refIds[query.RefId]; !ok {
-			refIds[query.RefId] = query
+		hasID := false
+		for _, refID := range refIds {
+			if refID == query.RefId {
+				hasID = true
+			}
+		}
+		if !hasID {
+			refIds = append(refIds, query.RefId)
 		}
 	}
 
