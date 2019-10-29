@@ -15,7 +15,6 @@ import { DashNav } from '../components/DashNav';
 import { SubMenu } from '../components/SubMenu';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { CustomScrollbar, Alert } from '@grafana/ui';
-import { panelInspect } from '../state/PanelModel';
 
 // Redux
 import { initDashboard } from '../state/initDashboard';
@@ -40,6 +39,7 @@ export interface Props {
   editview?: string;
   urlPanelId?: string;
   urlFolderId?: string;
+  inspectPanelId?: string;
   $scope: any;
   $injector: any;
   routeInfo: DashboardRouteInfo;
@@ -101,7 +101,7 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { dashboard, editview, urlEdit, urlFullscreen, urlPanelId, urlUid } = this.props;
+    const { dashboard, editview, urlEdit, urlFullscreen, urlPanelId, urlUid, inspectPanelId } = this.props;
 
     if (!dashboard) {
       return;
@@ -113,11 +113,14 @@ export class DashboardPage extends PureComponent<Props, State> {
     }
 
     // Listen for inspect events
-    if (prevProps.dashboard !== this.props.dashboard) {
-      if (prevProps.dashboard) {
-        prevProps.dashboard.off(panelInspect, this.onPanelInspect);
+    if ((inspectPanelId && !this.state.inspectPanel) || prevProps.inspectPanelId !== inspectPanelId) {
+      let inspectPanel: PanelModel | null = null;
+      const id = parseInt(inspectPanelId, 10);
+      if (id) {
+        inspectPanel = dashboard.getPanelById(id);
       }
-      dashboard.on(panelInspect, this.onPanelInspect);
+      console.log('INSPECT:', id, inspectPanel);
+      this.setState({ inspectPanel });
     }
 
     // Due to the angular -> react url bridge we can ge an update here with new uid before the container unmounts
@@ -143,10 +146,6 @@ export class DashboardPage extends PureComponent<Props, State> {
       }
     }
   }
-
-  onPanelInspect = (panel: PanelModel | null) => {
-    this.setState({ inspectPanel: panel });
-  };
 
   onEnterFullscreen() {
     const { dashboard, urlEdit, urlFullscreen, urlPanelId } = this.props;
@@ -338,6 +337,7 @@ export const mapStateToProps = (state: StoreState) => ({
   urlFolderId: state.location.query.folderId,
   urlFullscreen: !!state.location.query.fullscreen,
   urlEdit: !!state.location.query.edit,
+  inspectPanelId: state.location.query.inspect,
   initPhase: state.dashboard.initPhase,
   isInitSlow: state.dashboard.isInitSlow,
   initError: state.dashboard.initError,
