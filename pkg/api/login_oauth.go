@@ -26,8 +26,8 @@ import (
 )
 
 var (
-	oauthLogger          = log.New("oauth")
-	OauthStateCookieName = "oauth_state"
+	oauthLogger       = log.New("oauth")
+	OauthStateKeyName = "oauth_state"
 )
 
 func GenStateString() (string, error) {
@@ -71,7 +71,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		}
 
 		hashedState := hashStatecode(state, setting.OAuthService.OAuthInfos[name].ClientSecret)
-		hs.RemoteCacheService.Set(fmt.Sprintf("%v_%v", OauthStateCookieName, state[:8]), hashedState, 60*time.Second)
+		hs.RemoteCacheService.Set(fmt.Sprintf("%v_%v", OauthStateKeyName, state[:8]), hashedState, 60*time.Second)
 		if setting.OAuthService.OAuthInfos[name].HostedDomain == "" {
 			ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
 		} else {
@@ -81,7 +81,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	}
 
 	state := ctx.Query("state")
-	cacheKey := fmt.Sprintf("%v_%v", OauthStateCookieName, state[:8])
+	cacheKey := fmt.Sprintf("%v_%v", OauthStateKeyName, state[:8])
 	cacheValue, err := hs.RemoteCacheService.Get(cacheKey)
 	if err != nil {
 		ctx.Handle(500, "login.OAuthLogin(unable to get saved state)", nil)
