@@ -31,7 +31,6 @@ type DataSourcePlugin struct {
 	Alerting      bool              `json:"alerting"`
 	Explore       bool              `json:"explore"`
 	Table         bool              `json:"tables"`
-	HiddenQueries bool              `json:"hiddenQueries"`
 	Logs          bool              `json:"logs"`
 	QueryOptions  map[string]bool   `json:"queryOptions,omitempty"`
 	BuiltIn       bool              `json:"builtIn,omitempty"`
