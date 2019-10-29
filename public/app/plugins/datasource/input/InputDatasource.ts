@@ -49,6 +49,9 @@ export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
   query(options: DataQueryRequest<InputQuery>): Promise<DataQueryResponse> {
     const results: DataFrame[] = [];
     for (const query of options.targets) {
+      if (query.hide) {
+        continue;
+      }
       let data = this.data;
       if (query.data) {
         data = query.data.map(v => toDataFrame(v));

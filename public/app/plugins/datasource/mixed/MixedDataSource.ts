@@ -37,13 +37,6 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
         mergeMap((dataSourceApi: DataSourceApi) => {
           const datasourceRequest = cloneDeep(request);
 
-          // Remove any unused hidden queries
-          let newTargets = targets.slice();
-          if (!dataSourceApi.meta.hiddenQueries) {
-            newTargets = newTargets.filter((t: DataQuery) => !t.hide);
-          }
-
-          datasourceRequest.targets = newTargets;
           datasourceRequest.requestId = `${dsName}${datasourceRequest.requestId || ''}`;
 
           // all queries hidden return empty result for for this requestId
