@@ -174,8 +174,15 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
 
   performTimeSeriesQuery(request: any, { from, to }: TimeRange) {
     return this.awsRequest('/api/tsdb/query', request).then((res: any) => {
+      if (!res.results) {
+        return { data: [] };
+      }
       const dataFrames = Object.values(request.queries).reduce((acc: any, queryRequest: any) => {
         const queryResult = res.results[queryRequest.refId];
+        if (!queryResult) {
+          return acc;
+        }
+
         const link = this.buildCloudwatchConsoleUrl(
           queryRequest,
           from.toISOString(),
