@@ -6,9 +6,11 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
 import Page from 'app/core/components/Page/Page';
 import { UserProfile } from './UserProfile';
+import { UserPermissions } from './UserPermissions';
 import { UserSessions } from './UserSessions';
 import { StoreState, UserDTO, UserOrg, UserSession } from 'app/types';
 import { loadUserProfile, loadUserOrgs, loadUserSessions, revokeSession, revokeAllSessions } from './state/actions';
+import { UserOrgs } from './UserOrgs';
 
 interface Props {
   navModel: NavModel;
@@ -48,6 +50,22 @@ export class UserAdminPage extends PureComponent<Props, State> {
     console.log('delete user', userId);
   };
 
+  handleGrafanaAdminChange = (isGrafanaAdmin: boolean) => {
+    console.log('handleGrafanaAdminChange', isGrafanaAdmin);
+  };
+
+  handleUserStatusChange = (isDisabled: boolean) => {
+    console.log('handleStatusChange', isDisabled);
+  };
+
+  handleOrgRemove = (orgId: number) => () => {
+    console.log('handleOrgRemove', orgId);
+  };
+
+  handleOrgRoleChange = (orgId: number, newRole: string) => () => {
+    console.log('handleOrgRoleChange', orgId, newRole);
+  };
+
   handleSessionRevoke = (tokenId: number) => {
     const { userId, revokeSession } = this.props;
     revokeSession(tokenId, userId);
@@ -65,7 +83,21 @@ export class UserAdminPage extends PureComponent<Props, State> {
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
-          <UserProfile user={user} orgs={orgs} onUserDelete={this.handleUserDelete} />
+          {user && (
+            <>
+              <UserProfile user={user} onUserDelete={this.handleUserDelete} />
+              <UserPermissions
+                isGrafanaAdmin={user.isGrafanaAdmin}
+                isDisabled={user.isDisabled}
+                onGrafanaAdminChange={this.handleGrafanaAdminChange}
+                onStatusChange={this.handleUserStatusChange}
+              />
+            </>
+          )}
+
+          {orgs && (
+            <UserOrgs orgs={orgs} onOrgRemove={this.handleOrgRemove} onOrgRoleChange={this.handleOrgRoleChange} />
+          )}
 
           {sessions && (
             <UserSessions
