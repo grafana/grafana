@@ -1,8 +1,15 @@
-import { DataSourceApi, DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/ui';
+import {
+  DataSourceApi,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceInstanceSettings,
+  DataSourcePluginMeta,
+} from '@grafana/ui';
 import { ExpressionQuery, GELQueryType } from './types';
 import { ExpressionQueryEditor } from './ExpressionQueryEditor';
 import { Observable, from } from 'rxjs';
-import { getBackendSrv, config } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 import { gelResponseToDataFrames } from './util';
 
 /**
@@ -39,17 +46,18 @@ export class ExpressionDatasourceApi extends DataSourceApi<ExpressionQuery> {
         // ?? alias: templateSrv.replace(q.alias || ''),
       };
     });
-
     return from(
-      getBackendSrv()
-        .post('/api/tsdb/query/v2', {
+      (getBackendSrv().datasourceRequest({
+        method: 'POST',
+        url: '/api/tsdb/query/v2',
+        data: {
           from: range.from.valueOf().toString(),
           to: range.to.valueOf().toString(),
           queries: queries,
-        })
-        .then(res => {
-          return { data: gelResponseToDataFrames(res) };
-        })
+        },
+      }) as Promise<any>).then(res => {
+        return { data: gelResponseToDataFrames(res) };
+      })
     );
   }
 
@@ -71,7 +79,9 @@ export const expressionDatasource = new ExpressionDatasourceApi({
   id: -100,
   name: ExpressionDatasourceID,
 } as DataSourceInstanceSettings);
-
+expressionDatasource.meta = {
+  id: ExpressionDatasourceID,
+} as DataSourcePluginMeta;
 expressionDatasource.components = {
   QueryEditor: ExpressionQueryEditor,
 };
