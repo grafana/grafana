@@ -38,7 +38,7 @@ func (m *GRPCClient) Transform(ctx context.Context, req *pluginv2.TransformReque
 // GRPCServer is the gRPC server that GRPCClient talks to.
 type GRPCServer struct {
 	broker *plugin.GRPCBroker
-	Impl   TransformPlugin
+	Impl   transformPluginWrapper
 }
 
 func (m *GRPCServer) Transform(ctx context.Context, req *pluginv2.TransformRequest) (*pluginv2.TransformResponse, error) {

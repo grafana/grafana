@@ -21,7 +21,7 @@ type TransformPlugin interface {
 // TransformPluginImpl implements the plugin interface from github.com/hashicorp/go-plugin.
 type TransformPluginImpl struct {
 	plugin.NetRPCUnsupportedPlugin
-	Impl TransformPlugin
+	Impl transformPluginWrapper
 }
 
 // GRPCServer implements the server for a TransformPlugin
