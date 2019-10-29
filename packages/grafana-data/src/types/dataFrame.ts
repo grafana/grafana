@@ -43,6 +43,8 @@ export interface FieldConfig {
 
   // Alternative to empty string
   noValue?: string;
+  // Visual options
+  color?: string;
 }
 
 export interface Field<T = any, V = Vector<T>> {
