@@ -199,12 +199,3 @@ func (e *CloudWatchExecutor) groupQueriesByRegion(queries map[string]*cloudWatch
 
 	return queriesByRegion
 }
-
-func (e *CloudWatchExecutor) groupQueriesByID(queries []*cloudWatchQuery) map[string]*cloudWatchQuery {
-	queriesByID := make(map[string]*cloudWatchQuery)
-	for _, query := range queries {
-		queriesByID[query.Id] = query
-	}
-
-	return queriesByID
-}

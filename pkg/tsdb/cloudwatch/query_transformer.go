@@ -14,7 +14,7 @@ import (
 // If the query doesn't have an Id defined by the user, we'll give it an with format `query[RefId]`. In the case
 // the incoming query had more than one stat, it will ge an id like `query[RefId]_[StatName]`, eg queryC_Average
 func (e *CloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQueries []*requestQuery) (map[string]*cloudWatchQuery, error) {
-	cloudwatchQueries := make(map[string]*cloudWatchQuery, 0)
+	cloudwatchQueries := make(map[string]*cloudWatchQuery)
 	for _, requestQuery := range requestQueries {
 		for _, stat := range requestQuery.Statistics {
 			id := requestQuery.Id
@@ -57,9 +57,9 @@ func (e *CloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQ
 }
 
 func (e *CloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchResponses []*cloudwatchResponse) map[string]*tsdb.QueryResult {
-	results := make(map[string]*tsdb.QueryResult, 0)
+	results := make(map[string]*tsdb.QueryResult)
+	responsesByRefID := make(map[string][]*cloudwatchResponse)
 
-	responsesByRefID := make(map[string][]*cloudwatchResponse, 0)
 	for _, res := range cloudwatchResponses {
 		if _, ok := responsesByRefID[res.RefId]; !ok {
 			responsesByRefID[res.RefId] = []*cloudwatchResponse{res}
