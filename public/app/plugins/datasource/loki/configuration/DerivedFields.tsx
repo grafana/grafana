@@ -10,6 +10,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     padding-bottom: ${theme.spacing.md};
     color: ${theme.colors.textWeak};
   `,
+  derivedField: css`
+    margin-bottom: ${theme.spacing.sm};
+  `,
 }));
 
 type Props = {
@@ -53,6 +56,7 @@ export const DerivedFields = (props: Props) => {
           value.map((field, index) => {
             return (
               <DerivedField
+                className={styles.derivedField}
                 key={index}
                 value={field}
                 onChange={newField => {

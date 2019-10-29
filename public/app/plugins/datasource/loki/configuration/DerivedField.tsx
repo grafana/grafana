@@ -1,18 +1,30 @@
 import React from 'react';
 import { css } from 'emotion';
-import { Button, FormField, VariableSuggestion } from '@grafana/ui';
+import { Button, FormField, VariableSuggestion, DataLinkInput, stylesFactory } from '@grafana/ui';
 import { DerivedFieldConfig } from '../types';
-// TODO: fix import
-import { DataLinkInput } from '@grafana/ui/src/components/DataLinks/DataLinkInput';
+
+const getStyles = stylesFactory(() => ({
+  firstRow: css`
+    display: flex;
+  `,
+  nameField: css`
+    flex: 2;
+  `,
+  regexField: css`
+    flex: 3;
+  `,
+}));
 
 type Props = {
   value: DerivedFieldConfig;
   onChange: (value: DerivedFieldConfig) => void;
   onDelete: () => void;
   suggestions: VariableSuggestion[];
+  className?: string;
 };
 export const DerivedField = (props: Props) => {
-  const { value, onChange, onDelete, suggestions } = props;
+  const { value, onChange, onDelete, suggestions, className } = props;
+  const styles = getStyles();
 
   const handleChange = (field: keyof typeof value) => (event: React.ChangeEvent<HTMLInputElement>) => {
     onChange({
@@ -22,14 +34,18 @@ export const DerivedField = (props: Props) => {
   };
 
   return (
-    <>
-      <div
-        className={css`
-          display: flex;
-        `}
-      >
-        <FormField label="name" type="text" value={value.name} onChange={handleChange('name')} />
+    <div className={className}>
+      <div className={styles.firstRow}>
         <FormField
+          className={styles.nameField}
+          labelWidth={5}
+          label="Name"
+          type="text"
+          value={value.name}
+          onChange={handleChange('name')}
+        />
+        <FormField
+          className={styles.regexField}
           label="Regex"
           type="text"
           value={value.matcherRegex}
@@ -68,6 +84,6 @@ export const DerivedField = (props: Props) => {
           width: 100%;
         `}
       />
-    </>
+    </div>
   );
 };

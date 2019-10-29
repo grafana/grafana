@@ -13,28 +13,8 @@ export const DebugSection = (props: Props) => {
   const [debugText, setDebugText] = useState('');
 
   let results: any[] = [];
-
-  if (debugText) {
-    results = derivedFields.reduce((acc, field) => {
-      if (field.name && field.matcherRegex) {
-        try {
-          const testMatch = debugText.match(field.matcherRegex);
-
-          acc.push({
-            name: field.name,
-            result: (testMatch && testMatch[1]) || '<no match>',
-          });
-          return acc;
-        } catch (error) {
-          acc.push({
-            label: field.name,
-            error,
-          });
-          return acc;
-        }
-      }
-      return acc;
-    }, []);
+  if (debugText && derivedFields) {
+    results = makeDebugFields(derivedFields, debugText);
   }
 
   return (
@@ -45,7 +25,7 @@ export const DebugSection = (props: Props) => {
         inputEl={
           <textarea
             className={cx(
-              'gf-form-textarea',
+              'gf-form-input gf-form-textarea',
               css`
                 width: 100%;
               `
@@ -58,7 +38,7 @@ export const DebugSection = (props: Props) => {
       {!!results.length &&
         results.map(result => {
           return (
-            <div>
+            <div key={result.name}>
               {result.name} = {result.result || '<no match>'}
             </div>
           );
@@ -66,3 +46,27 @@ export const DebugSection = (props: Props) => {
     </div>
   );
 };
+
+// TODO: this should also interpolate url but for that we need the link service here somehow
+function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string) {
+  return derivedFields.reduce((acc, field) => {
+    if (field.name && field.matcherRegex) {
+      try {
+        const testMatch = debugText.match(field.matcherRegex);
+
+        acc.push({
+          name: field.name,
+          result: (testMatch && testMatch[1]) || '<no match>',
+        });
+        return acc;
+      } catch (error) {
+        acc.push({
+          label: field.name,
+          error,
+        });
+        return acc;
+      }
+    }
+    return acc;
+  }, []);
+}
