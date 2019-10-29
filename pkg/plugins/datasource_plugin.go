@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os/exec"
 	"path"
 	"time"
+
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -62,12 +63,6 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string) error {
 	return nil
 }
 
-var handshakeConfig = plugin.HandshakeConfig{
-	ProtocolVersion:  1,
-	MagicCookieKey:   "grafana_plugin_type",
-	MagicCookieValue: "datasource",
-}
-
 func (p *DataSourcePlugin) startBackendPlugin(ctx context.Context, log log.Logger) error {
 	p.log = log.New("plugin-id", p.Id)
 
@@ -92,27 +87,7 @@ func (p *DataSourcePlugin) spawnSubProcess() error {
 	cmd := ComposePluginStartCommmand(p.Executable)
 	fullpath := path.Join(p.PluginDir, cmd)
 
-	var newClient *plugin.Client
-	if p.isVersionOne() {
-		newClient = plugin.NewClient(&plugin.ClientConfig{
-			HandshakeConfig:  handshakeConfig,
-			Plugins:          map[string]plugin.Plugin{p.Id: &datasourceV1.DatasourcePluginImpl{}},
-			Cmd:              exec.Command(fullpath),
-			AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
-			Logger:           LogWrapper{Logger: p.log},
-		})
-
-	} else {
-		newClient = plugin.NewClient(&plugin.ClientConfig{
-			HandshakeConfig:  handshakeConfig,
-			Plugins:          map[string]plugin.Plugin{p.Id: &sdk.DatasourcePluginImpl{}},
-			Cmd:              exec.Command(fullpath),
-			AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
-			Logger:           LogWrapper{Logger: p.log},
-		})
-	}
-
-	p.client = newClient
+	p.client = backendplugin.NewDatasourceClient(p.Id, fullpath, p.log)
 
 	rpcClient, err := p.client.Client()
 	if err != nil {
@@ -124,7 +99,7 @@ func (p *DataSourcePlugin) spawnSubProcess() error {
 		return err
 	}
 
-	if p.isVersionOne() {
+	if p.client.NegotiatedVersion() == 1 {
 		plugin := raw.(datasourceV1.DatasourcePlugin)
 
 		tsdb.RegisterTsdbQueryEndpoint(p.Id, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {

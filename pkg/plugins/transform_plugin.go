@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os/exec"
 	"path"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/transform"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	plugin "github.com/hashicorp/go-plugin"
 	"golang.org/x/xerrors"
 )
@@ -57,15 +57,7 @@ func (p *TransformPlugin) spawnSubProcess() error {
 	cmd := ComposePluginStartCommmand(p.Executable)
 	fullpath := path.Join(p.PluginDir, cmd)
 
-	newClient := plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig:  handshakeConfig,
-		Plugins:          map[string]plugin.Plugin{p.Id: &transform.TransformPluginImpl{}},
-		Cmd:              exec.Command(fullpath),
-		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
-		Logger:           LogWrapper{Logger: p.log},
-	})
-
-	p.client = newClient
+	p.client = backendplugin.NewTransformClient(p.Id, fullpath, p.log)
 
 	rpcClient, err := p.client.Client()
 	if err != nil {
@@ -81,10 +73,6 @@ func (p *TransformPlugin) spawnSubProcess() error {
 	if !ok {
 		return fmt.Errorf("unxpected type %T, expeced sdk.DatasourcePlugin", raw)
 	}
-
-	// tsdb.RegisterTsdbQueryEndpoint(p.Id, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	// 	return wrapper.NewDatasourcePluginWrapperV2(p.log, plugin), nil
-	// })
 
 	_ = plugin
 
