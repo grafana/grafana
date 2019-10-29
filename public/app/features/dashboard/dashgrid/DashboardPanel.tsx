@@ -17,8 +17,6 @@ import { PanelResizer } from './PanelResizer';
 import { PanelModel, DashboardModel } from '../state';
 import { PanelPluginMeta, PanelPlugin } from '@grafana/ui/src/types/panel';
 import { AutoSizer } from 'react-virtualized';
-import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { DataSourceApi } from '@grafana/ui';
 
 export interface Props {
   panel: PanelModel;
@@ -32,7 +30,6 @@ export interface State {
   plugin: PanelPlugin;
   angularPanel: AngularComponent;
   isLazy: boolean;
-  datasourceInstance?: DataSourceApi;
 }
 
 export class DashboardPanel extends PureComponent<Props, State> {
@@ -94,7 +91,6 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
   async componentDidMount() {
     this.loadPlugin(this.props.panel.type);
-    this.loadDataSource();
   }
 
   async componentDidUpdate(prevProps: Props, prevState: State) {
@@ -112,16 +108,6 @@ export class DashboardPanel extends PureComponent<Props, State> {
     const angularPanel = loader.load(this.element, scopeProps, template);
 
     this.setState({ angularPanel });
-
-    this.loadDataSource();
-  }
-
-  async loadDataSource() {
-    const datasourceInstance = await getDatasourceSrv().get(this.props.panel.datasource, this.props.panel.scopedVars);
-    // TODO check if mounted
-    if (datasourceInstance.name === this.props.panel.datasource) {
-      this.setState({ datasourceInstance });
-    }
   }
 
   cleanUpAngularPanel() {
@@ -145,7 +131,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
   renderPanel() {
     const { dashboard, panel, isFullscreen, isInView } = this.props;
-    const { plugin, datasourceInstance } = this.state;
+    const { plugin } = this.state;
 
     if (plugin.angularPanelCtrl) {
       return <div ref={element => (this.element = element)} className="panel-height-helper" />;
@@ -167,7 +153,6 @@ export class DashboardPanel extends PureComponent<Props, State> {
               isInView={isInView}
               width={width}
               height={height}
-              datasourceInstance={datasourceInstance}
             />
           );
         }}
@@ -177,14 +162,14 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
   render() {
     const { panel, dashboard, isFullscreen, isEditing } = this.props;
-    const { plugin, angularPanel, isLazy, datasourceInstance } = this.state;
+    const { plugin, angularPanel, isLazy } = this.state;
 
     if (this.isSpecial(panel.type)) {
       return this.specialPanels[panel.type]();
     }
 
     // if we have not loaded plugin exports yet, wait
-    if (!(plugin && datasourceInstance)) {
+    if (!plugin) {
       return null;
     }
 
@@ -227,7 +212,6 @@ export class DashboardPanel extends PureComponent<Props, State> {
             dashboard={dashboard}
             angularPanel={angularPanel}
             onPluginTypeChange={this.onPluginTypeChange}
-            datasourceInstance={datasourceInstance}
           />
         )}
       </div>

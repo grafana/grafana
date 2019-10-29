@@ -12,9 +12,9 @@ import {
   LogRowModel,
   LogsDedupDescription,
   LinkModel,
-  DerivedLogField,
+  Field,
 } from '@grafana/data';
-import { Switch, LogLabels, ToggleButtonGroup, ToggleButton, LogRows, DerivedField } from '@grafana/ui';
+import { Switch, LogLabels, ToggleButtonGroup, ToggleButton, LogRows } from '@grafana/ui';
 
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 
@@ -47,7 +47,7 @@ interface Props {
   onDedupStrategyChange: (dedupStrategy: LogsDedupStrategy) => void;
   onToggleLogLevel: (hiddenLogLevels: LogLevel[]) => void;
   getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
-  getDerivedFields: (row: LogRowModel) => DerivedLogField[];
+  getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 
 interface State {
@@ -119,7 +119,7 @@ export class Logs extends PureComponent<Props, State> {
       dedupedData,
       absoluteRange,
       onChangeTime,
-      getDerivedFields,
+      getFieldLinks,
     } = this.props;
 
     if (!data) {
@@ -207,7 +207,7 @@ export class Logs extends PureComponent<Props, State> {
           showLabels={showLabels}
           showTime={showTime}
           timeZone={timeZone}
-          getDerivedFields={getDerivedFields}
+          getFieldLinks={getFieldLinks}
         />
 
         {!loading && !hasData && !scanning && (

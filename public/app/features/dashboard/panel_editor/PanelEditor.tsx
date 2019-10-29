@@ -27,7 +27,6 @@ interface PanelEditorProps {
   refreshPanelEditor: typeof refreshPanelEditor;
   panelEditorCleanUp: typeof panelEditorCleanUp;
   changePanelEditorTab: typeof changePanelEditorTab;
-  datasourceInstance: DataSourceApi;
 }
 
 class UnConnectedPanelEditor extends PureComponent<PanelEditorProps> {
@@ -70,7 +69,7 @@ class UnConnectedPanelEditor extends PureComponent<PanelEditorProps> {
   };
 
   renderCurrentTab(activeTab: string) {
-    const { panel, dashboard, plugin, angularPanel, datasourceInstance } = this.props;
+    const { panel, dashboard, plugin, angularPanel } = this.props;
 
     switch (activeTab) {
       case 'advanced':
@@ -87,7 +86,6 @@ class UnConnectedPanelEditor extends PureComponent<PanelEditorProps> {
             plugin={plugin}
             onPluginTypeChange={this.onPluginTypeChange}
             angularPanel={angularPanel}
-            datasource={datasourceInstance}
           />
         );
       default:

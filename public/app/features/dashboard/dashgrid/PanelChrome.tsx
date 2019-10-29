@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import { Unsubscribable } from 'rxjs';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { DataSourceApi, ErrorBoundary, PanelData, PanelPlugin } from '@grafana/ui';
+import { ErrorBoundary, PanelData, PanelPlugin } from '@grafana/ui';
 // Utils & Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides, calculateInnerPanelHeight } from 'app/features/dashboard/utils/panel';
@@ -27,7 +27,6 @@ export interface Props {
   isInView: boolean;
   width: number;
   height: number;
-  datasourceInstance?: DataSourceApi;
 }
 
 export interface State {
@@ -235,7 +234,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   };
 
   renderPanel(width: number, height: number): JSX.Element {
-    const { panel, plugin, datasourceInstance } = this.props;
+    const { panel, plugin } = this.props;
     const { renderCounter, data, isFirstLoad } = this.state;
     const { theme } = config;
 
@@ -247,10 +246,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     }
 
     // do not render component until we have first data
-    if (
-      (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) ||
-      !datasourceInstance
-    ) {
+    if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
       return this.renderLoadingState();
     }
 
@@ -275,7 +271,6 @@ export class PanelChrome extends PureComponent<Props, State> {
             replaceVariables={this.replaceVariables}
             onOptionsChange={this.onOptionsChange}
             onChangeTimeRange={this.onChangeTimeRange}
-            datasource={datasourceInstance}
           />
         </div>
       </>

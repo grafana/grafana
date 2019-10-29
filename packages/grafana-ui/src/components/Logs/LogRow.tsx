@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { DerivedLogField, LinkModel, LogRowModel, TimeZone } from '@grafana/data';
+import { Field, LinkModel, LogRowModel, TimeZone } from '@grafana/data';
 import { cx } from 'emotion';
 import { DataQueryResponse } from '../../index';
 import {
@@ -25,7 +25,7 @@ interface Props extends Themeable {
   onClickLabel?: (label: string, value: string) => void;
   onContextClick?: () => void;
   getRowContext: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>;
-  getDerivedFields: (row: LogRowModel) => DerivedLogField[];
+  getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 
 interface State {
@@ -80,7 +80,7 @@ class UnThemedLogRow extends Component<Props, State> {
       timeZone,
       showTime,
       theme,
-      getDerivedFields,
+      getFieldLinks,
     } = this.props;
     const { showContext, showDetails } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
@@ -139,13 +139,23 @@ class UnThemedLogRow extends Component<Props, State> {
               padding: 20,
             }}
           >
-            {getDerivedFields(row).map(f => {
-              return (
-                <div>
-                  {f.field} = <a href={f.href}>{f.value}</a>
-                </div>
-              );
-            })}
+            {row.dataFrame.fields
+              .filter(field => !['id', 'line'].includes(field.name))
+              .map(field => {
+                const links = getFieldLinks ? getFieldLinks(field, row.rowIndex) : [];
+                if (links.length) {
+                  return (
+                    <div key={field.name}>
+                      {field.name} = <a href={links[0].href}>{field.values.get(row.rowIndex)}</a>
+                    </div>
+                  );
+                }
+                return (
+                  <div key={field.name}>
+                    {field.name} = {field.values.get(row.rowIndex)}
+                  </div>
+                );
+              })}
           </div>
         )}
       </div>

@@ -22,7 +22,6 @@ import {
   toDataFrame,
   FieldCache,
   FieldWithIndex,
-  DataFrameView,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
@@ -268,7 +267,6 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       seriesLogLevel = getLogLevelFromKey(series.labels['level']);
     }
 
-    const dfView = new DataFrameView(series);
     for (let j = 0; j < series.length; j++) {
       const ts = timeField.values.get(j);
       const time = dateTime(ts);
@@ -290,7 +288,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       }
 
       rows.push({
-        dataFrameRow: { ...dfView.get(j) },
+        rowIndex: j,
         dataFrame: series,
         logLevel,
         timeFromNow: time.fromNow(),

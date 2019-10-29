@@ -4,7 +4,6 @@ import { Options } from './types';
 import { LogsDedupStrategy } from '@grafana/data';
 import { dataFrameToLogsModel } from 'app/core/logs_model';
 import { sortLogsResult } from 'app/core/utils/explore';
-import { getLinksFromDataSource } from '../../../features/panel/panellinks/link_srv';
 
 interface LogsPanelProps extends PanelProps<Options> {}
 
@@ -12,7 +11,6 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   data,
   timeZone,
   options: { showTime, sortOrder },
-  datasource,
 }) => {
   if (!data) {
     return (
@@ -34,7 +32,6 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
         showTime={showTime}
         showLabels={false}
         timeZone={timeZone}
-        getDerivedFields={(rowData: Record<string, any>) => getLinksFromDataSource(datasource, rowData)}
       />
     </CustomScrollbar>
   );

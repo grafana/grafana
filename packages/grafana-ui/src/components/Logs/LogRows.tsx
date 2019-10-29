@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { cx } from 'emotion';
-import { LogsModel, TimeZone, LogsDedupStrategy, LogRowModel, DerivedLogField } from '@grafana/data';
+import { LogsModel, TimeZone, LogsDedupStrategy, LogRowModel, Field, LinkModel } from '@grafana/data';
 
 import { LogRow } from './LogRow';
 import { Themeable } from '../../types/theme';
@@ -22,7 +22,7 @@ export interface Props extends Themeable {
   rowLimit?: number;
   onClickLabel?: (label: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
-  getDerivedFields: (row: LogRowModel) => DerivedLogField[];
+  getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 
 interface State {
@@ -83,7 +83,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       onClickLabel,
       rowLimit,
       theme,
-      getDerivedFields,
+      getFieldLinks,
     } = this.props;
     const { deferLogs, renderAll } = this.state;
     const dedupedData = deduplicatedData ? deduplicatedData : data;
@@ -122,7 +122,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
               showTime={showTime}
               timeZone={timeZone}
               onClickLabel={onClickLabel}
-              getDerivedFields={getDerivedFields}
+              getFieldLinks={getFieldLinks}
             />
           ))}
         {hasData &&
@@ -139,7 +139,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
               showTime={showTime}
               timeZone={timeZone}
               onClickLabel={onClickLabel}
-              getDerivedFields={getDerivedFields}
+              getFieldLinks={getFieldLinks}
             />
           ))}
         {hasData && deferLogs && <span>Rendering {rowCount} rows...</span>}

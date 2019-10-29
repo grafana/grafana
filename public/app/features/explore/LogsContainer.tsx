@@ -13,6 +13,7 @@ import {
   LogsDedupStrategy,
   TimeRange,
   LinkModel,
+  Field,
 } from '@grafana/data';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
@@ -26,7 +27,7 @@ import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 import { LiveTailControls } from './useLiveTailControls';
-import { getLinksFromDataSource, getLinkSrv } from '../panel/panellinks/link_srv';
+import { getLinkSrv } from '../panel/panellinks/link_srv';
 
 interface LogsContainerProps {
   datasourceInstance: DataSourceApi | null;
@@ -82,28 +83,18 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     return [];
   };
 
-  getDerivedFields = (row: LogRowModel) => {
-    return row.dataFrame.fields.reduce((acc, field) => {
-      if (!['ts', 'line', 'id'].includes(field.name)) {
-        // TODO can be more links
-        const link = field.config.links[0];
-        const scopedVars: any = {};
-        scopedVars['__value'] = {
-          value: {
-            text: row.dataFrameRow[field.name],
-          },
-          text: 'Value',
-        };
+  getFieldLinks = (field: Field, rowIndex: number): Array<LinkModel<Field>> => {
+    const scopedVars: any = {};
+    scopedVars['__value'] = {
+      value: {
+        text: field.values.get(rowIndex),
+      },
+      text: 'Value',
+    };
 
-        const linkModel = getLinkSrv().getDataLinkUIModel(link, scopedVars, null);
-        acc.push({
-          field: field.name,
-          href: linkModel.href,
-          value: row.dataFrameRow[field.name],
-        });
-      }
-      return acc;
-    }, []);
+    return field.config.links
+      ? field.config.links.map(link => getLinkSrv().getDataLinkUIModel(link, scopedVars, field))
+      : [];
   };
 
   render() {
@@ -162,7 +153,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               scanRange={range.raw}
               width={width}
               getRowContext={this.getLogRowContext}
-              getDerivedFields={this.getDerivedFields}
+              getFieldLinks={this.getFieldLinks}
             />
           </Collapse>
         </LogsCrossFadeTransition>
