@@ -1,5 +1,5 @@
 // Libraries
-import React, { ComponentClass } from 'react';
+import React, { ComponentType } from 'react';
 import { hot } from 'react-hot-loader';
 import { css } from 'emotion';
 import { connect } from 'react-redux';
@@ -9,7 +9,7 @@ import memoizeOne from 'memoize-one';
 // Services & Utils
 import store from 'app/core/store';
 // Components
-import { Alert, ErrorBoundaryAlert, DataQuery, ExploreStartPageProps, DataSourceApi, PanelData } from '@grafana/ui';
+import { ErrorBoundaryAlert, DataQuery, ExploreStartPageProps, DataSourceApi, PanelData } from '@grafana/ui';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
@@ -21,7 +21,6 @@ import {
   scanStart,
   setQueries,
   refreshExplore,
-  reconnectDatasource,
   updateTimeRange,
   toggleGraph,
 } from './state/actions';
@@ -46,7 +45,6 @@ import {
 import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
-import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
 import { scanStopAction } from './state/actionTypes';
@@ -63,9 +61,8 @@ const getStyles = memoizeOne(() => {
 });
 
 interface ExploreProps {
-  StartPage?: ComponentClass<ExploreStartPageProps>;
+  StartPage?: ComponentType<ExploreStartPageProps>;
   changeSize: typeof changeSize;
-  datasourceError: string;
   datasourceInstance: DataSourceApi;
   datasourceMissing: boolean;
   exploreId: ExploreId;
@@ -73,7 +70,6 @@ interface ExploreProps {
   initialized: boolean;
   modifyQueries: typeof modifyQueries;
   update: ExploreUpdateState;
-  reconnectDatasource: typeof reconnectDatasource;
   refreshExplore: typeof refreshExplore;
   scanning?: boolean;
   scanRange?: RawTimeRange;
@@ -238,18 +234,10 @@ export class Explore extends React.PureComponent<ExploreProps> {
     );
   };
 
-  onReconnect = (event: React.MouseEvent<HTMLButtonElement>) => {
-    const { exploreId, reconnectDatasource } = this.props;
-
-    event.preventDefault();
-    reconnectDatasource(exploreId);
-  };
-
   render() {
     const {
       StartPage,
       datasourceInstance,
-      datasourceError,
       datasourceMissing,
       exploreId,
       showingStartPage,
@@ -272,17 +260,6 @@ export class Explore extends React.PureComponent<ExploreProps> {
       <div className={exploreClass} ref={this.getRef}>
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
         {datasourceMissing ? this.renderEmptyState() : null}
-
-        <FadeIn duration={datasourceError ? 150 : 5} in={datasourceError ? true : false}>
-          <div className="explore-container">
-            <Alert
-              title={`Error connecting to datasource: ${datasourceError}`}
-              buttonText={'Reconnect'}
-              onButtonClick={this.onReconnect}
-            />
-          </div>
-        </FadeIn>
-
         {datasourceInstance && (
           <div className="explore-container">
             <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
@@ -357,7 +334,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
   const timeZone = getTimeZone(state.user);
   const {
     StartPage,
-    datasourceError,
     datasourceInstance,
     datasourceMissing,
     initialized,
@@ -402,7 +378,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
 
   return {
     StartPage,
-    datasourceError,
     datasourceInstance,
     datasourceMissing,
     initialized,
@@ -431,7 +406,6 @@ const mapDispatchToProps: Partial<ExploreProps> = {
   changeSize,
   initializeExplore,
   modifyQueries,
-  reconnectDatasource,
   refreshExplore,
   scanStart,
   scanStopAction,

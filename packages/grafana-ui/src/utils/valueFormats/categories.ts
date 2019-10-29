@@ -283,7 +283,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     name: 'Temperature',
     formats: [
       { name: 'Celsius (°C)', id: 'celsius', fn: toFixedUnit('°C') },
-      { name: 'Farenheit (°F)', id: 'farenheit', fn: toFixedUnit('°F') },
+      { name: 'Fahrenheit (°F)', id: 'fahrenheit', fn: toFixedUnit('°F') },
       { name: 'Kelvin (K)', id: 'kelvin', fn: toFixedUnit('K') },
     ],
   },

@@ -202,6 +202,7 @@ exports[`Render should render with base threshold 1`] = `
                             },
                             "spacing": Object {
                               "d": "14px",
+                              "formButtonHeight": 32,
                               "formFieldsetMargin": "16px",
                               "formInputAffixPaddingHorizontal": "4px",
                               "formInputHeight": "32px",
@@ -255,6 +256,7 @@ exports[`Render should render with base threshold 1`] = `
                                 "xs": "10px",
                               },
                               "weight": Object {
+                                "bold": 600,
                                 "light": 300,
                                 "regular": 400,
                                 "semibold": 500,
@@ -410,6 +412,7 @@ exports[`Render should render with base threshold 1`] = `
                                   },
                                   "spacing": Object {
                                     "d": "14px",
+                                    "formButtonHeight": 32,
                                     "formFieldsetMargin": "16px",
                                     "formInputAffixPaddingHorizontal": "4px",
                                     "formInputHeight": "32px",
@@ -463,6 +466,7 @@ exports[`Render should render with base threshold 1`] = `
                                       "xs": "10px",
                                     },
                                     "weight": Object {
+                                      "bold": 600,
                                       "light": 300,
                                       "regular": 400,
                                       "semibold": 500,
