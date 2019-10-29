@@ -9,6 +9,7 @@ export interface StyleDeps {
   size: ButtonSize;
   variant: ButtonVariant;
   withIcon: boolean;
+  withText: boolean;
 }
 
 export interface ButtonStyles {

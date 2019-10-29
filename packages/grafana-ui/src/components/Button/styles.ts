@@ -24,7 +24,7 @@ const buttonVariantStyles = (
   }
 `;
 
-export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: StyleDeps) => {
+export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon, withText }: StyleDeps) => {
   const borderRadius = theme.border.radius.sm;
   let padding,
     background,
@@ -133,8 +133,7 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }
     `,
     icon: css`
       label: button-icon;
-      margin-right: ${iconDistance};
-      filter: brightness(100);
+      margin-right: ${withText ? iconDistance : 0};
     `,
   };
 });
