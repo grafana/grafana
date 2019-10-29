@@ -409,25 +409,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return annotations;
   }
 
-  // async getDerivedFields(row: LokiRow): Promise<ScopedVars> {
-  //   const fields = (this.instanceSettings.jsonData.derivedFields || []).reduce((acc: any, field) => {
-  //     const logMatch = row && row.line && row.line.match(field.matcherRegex);
-  //     acc[field.name] = logMatch && logMatch[1];
-  //     return acc;
-  //   }, {});
-  //   return {
-  //     field: {
-  //       value: fields,
-  //       // TODO not sure what to put here
-  //       text: '',
-  //     },
-  //   };
-  // }
-  //
-  // getDataLinks(context: 'logs' | 'metrics'): DataLink[] {
-  //   return this.instanceSettings.jsonData.dataLinks || [];
-  // }
-
   enhanceDataFrame(dataFrame: DataFrame) {
     const derivedFields = this.instanceSettings.jsonData.derivedFields || [];
     if (derivedFields.length) {
