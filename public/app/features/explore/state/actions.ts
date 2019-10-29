@@ -59,9 +59,6 @@ import {
   ToggleGraphPayload,
   ToggleTablePayload,
   updateUIStateAction,
-  testDataSourcePendingAction,
-  testDataSourceSuccessAction,
-  testDataSourceFailureAction,
   loadExploreDatasources,
   changeModeAction,
   scanStopAction,
@@ -341,41 +338,6 @@ export function importQueries(
 }
 
 /**
- * Tests datasource.
- */
-export const testDatasource = (exploreId: ExploreId, instance: DataSourceApi): ThunkResult<void> => {
-  return async dispatch => {
-    let datasourceError = null;
-
-    dispatch(testDataSourcePendingAction({ exploreId }));
-
-    try {
-      const testResult = await instance.testDatasource();
-      datasourceError = testResult.status === 'success' ? null : testResult.message;
-    } catch (error) {
-      datasourceError = (error && error.statusText) || 'Network error';
-    }
-
-    if (datasourceError) {
-      dispatch(testDataSourceFailureAction({ exploreId, error: datasourceError }));
-      return;
-    }
-
-    dispatch(testDataSourceSuccessAction({ exploreId }));
-  };
-};
-
-/**
- * Reconnects datasource when there is a connection failure.
- */
-export const reconnectDatasource = (exploreId: ExploreId): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    const instance = getState().explore[exploreId].datasourceInstance;
-    dispatch(changeDatasource(exploreId, instance.name));
-  };
-};
-
-/**
  * Main action to asynchronously load a datasource. Dispatches lots of smaller actions for feedback.
  */
 export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi, orgId: number): ThunkResult<void> {
@@ -384,13 +346,6 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi, or
 
     // Keep ID to track selection
     dispatch(loadDatasourcePendingAction({ exploreId, requestedDatasourceName: datasourceName }));
-
-    await dispatch(testDatasource(exploreId, instance));
-
-    if (datasourceName !== getState().explore[exploreId].requestedDatasourceName) {
-      // User already changed datasource again, discard results
-      return;
-    }
 
     if (instance.init) {
       try {
@@ -401,7 +356,7 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi, or
     }
 
     if (datasourceName !== getState().explore[exploreId].requestedDatasourceName) {
-      // User already changed datasource again, discard results
+      // User already changed datasource, discard results
       return;
     }
 
@@ -441,7 +396,6 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
     const {
       datasourceInstance,
       queries,
-      datasourceError,
       containerWidth,
       isLive: live,
       range,
@@ -453,11 +407,6 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
       showingGraph,
       showingTable,
     } = exploreItemState;
-
-    if (datasourceError) {
-      // let's not run any queries if data source is in a faulty state
-      return;
-    }
 
     if (!hasNonEmptyQuery(queries)) {
       dispatch(clearQueriesAction({ exploreId }));

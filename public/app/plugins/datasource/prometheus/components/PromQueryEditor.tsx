@@ -2,7 +2,7 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Types
-import { FormLabel, Select, Switch, QueryEditorProps, DataSourceStatus } from '@grafana/ui';
+import { FormLabel, Select, Switch, QueryEditorProps } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { PrometheusDatasource } from '../datasource';
@@ -104,7 +104,6 @@ export class PromQueryEditor extends PureComponent<Props, State> {
           onChange={this.onFieldChange}
           history={[]}
           data={data}
-          datasourceStatus={DataSourceStatus.Connected} // TODO: replace with real DataSourceStatus
         />
 
         <div className="gf-form-inline">

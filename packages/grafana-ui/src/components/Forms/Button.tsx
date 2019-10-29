@@ -1,10 +1,10 @@
-import { FC } from 'react';
+import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, useContext } from 'react';
 import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
-import { selectThemeVariant, stylesFactory, useTheme } from '../../themes';
-import { renderButton } from '../Button/AbstractButton';
+import { selectThemeVariant, stylesFactory, ThemeContext } from '../../themes';
+import { Button as DefaultButton, LinkButton as DefaultLinkButton } from '../Button/Button';
 import { getFocusStyle } from './commonStyles';
-import { AbstractButtonProps, ButtonSize, ButtonVariant, StyleDeps } from '../Button/types';
+import { ButtonSize, StyleDeps } from '../Button/types';
 import { GrafanaTheme } from '../../types';
 
 const buttonVariantStyles = (from: string, to: string, textColor: string) => css`
@@ -96,7 +96,9 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
   }
 };
 
-export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: StyleDeps) => {
+// Need to do this because of mismatch between variants in standard buttons and here
+type StyleProps = Omit<StyleDeps, 'variant'> & { variant: ButtonVariant };
+export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: StyleProps) => {
   const { padding, fontSize, iconDistance, height } = getPropertiesForSize(theme, size);
   const { background, borderColor } = getPropertiesForVariant(theme, variant);
 
@@ -142,17 +144,38 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }
   };
 });
 
-export const Button: FC<Omit<AbstractButtonProps, 'theme'>> = ({
-  renderAs,
-  size = 'md',
-  variant = 'primary',
-  className,
-  icon,
-  children,
-  ...otherProps
-}) => {
-  const theme = useTheme();
-  const buttonStyles = getButtonStyles({ theme, size, variant, withIcon: !!icon });
+// These are different from the standard Button where there are 5 variants.
+export type ButtonVariant = 'primary' | 'secondary' | 'destructive';
 
-  return renderButton(theme, buttonStyles, renderAs, children, size, variant, icon, className, otherProps);
+// These also needs to be different because the ButtonVariant is different
+type CommonProps = {
+  size?: ButtonSize;
+  variant?: ButtonVariant;
+  icon?: string;
+  className?: string;
+};
+
+type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
+
+export const Button = (props: ButtonProps) => {
+  const theme = useContext(ThemeContext);
+  const styles = getButtonStyles({
+    theme,
+    size: props.size || 'md',
+    variant: props.variant || 'primary',
+    withIcon: !!props.icon,
+  });
+  return <DefaultButton {...props} styles={styles} />;
+};
+
+type ButtonLinkProps = CommonProps & AnchorHTMLAttributes<HTMLAnchorElement>;
+export const LinkButton = (props: ButtonLinkProps) => {
+  const theme = useContext(ThemeContext);
+  const styles = getButtonStyles({
+    theme,
+    size: props.size || 'md',
+    variant: props.variant || 'primary',
+    withIcon: !!props.icon,
+  });
+  return <DefaultLinkButton {...props} styles={styles} />;
 };
