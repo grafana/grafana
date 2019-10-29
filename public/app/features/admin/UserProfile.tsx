@@ -1,13 +1,16 @@
-import React, { PureComponent, FC } from 'react';
+import React, { PureComponent, FC, useContext } from 'react';
 import { css } from 'emotion';
-import { dateTime } from '@grafana/data';
+import { ThemeContext } from '@grafana/ui';
+// import { dateTime } from '@grafana/data';
 import { UserDTO, UserOrg } from 'app/types';
 
-const defaultTimeFormat = 'dddd YYYY-MM-DD HH:mm:ss';
+// const defaultTimeFormat = 'dddd YYYY-MM-DD HH:mm:ss';
 
 interface Props {
   user: UserDTO;
   orgs: UserOrg[];
+
+  onUserDelete: (userId: number) => void;
 }
 
 interface State {
@@ -15,30 +18,33 @@ interface State {
 }
 
 export class UserProfile extends PureComponent<Props, State> {
+  handleUserDelete = () => {
+    const { user, onUserDelete } = this.props;
+    onUserDelete(user.id);
+  };
+
   render() {
     const { user, orgs } = this.props;
-    const updateTime = dateTime(user.updatedAt).format(defaultTimeFormat);
+    // const updateTime = dateTime(user.updatedAt).format(defaultTimeFormat);
 
     return (
       <>
+        <h3 className="page-heading">User information</h3>
         <div className="gf-form-group">
           <div className="gf-form">
             <table className="filter-table form-inline">
               <tbody>
-                <UserProfileRow label="Username" value={user.login} />
-                <UserProfileRow label="Name" value={user.name} />
-                <EditableRow label="Email" value={user.email} editButton />
-                <UserProfileRow label="Profile Picture">
-                  <>
-                    <td colSpan={2}>
-                      <img className="filter-table__avatar" src={user.avatarUrl} />
-                    </td>
-                    <td>Visit user's preferences page to change avatar</td>
-                  </>
-                </UserProfileRow>
-                <UserProfileRow label="Updated" value={updateTime} />
+                <EditableRow label="Name" value={user.name} />
+                <EditableRow label="Email" value={user.email} />
+                <EditableRow label="Username" value={user.login} />
+                <EditableRow label="Password" value="******" />
               </tbody>
             </table>
+          </div>
+          <div className="gf-form-button-row">
+            <button className="btn btn-danger" onClick={this.handleUserDelete}>
+              Delete User
+            </button>
           </div>
         </div>
 
@@ -47,6 +53,17 @@ export class UserProfile extends PureComponent<Props, State> {
           <div className="gf-form">
             <table className="filter-table form-inline">
               <tbody>
+                <UserProfileRow label="Grafana Admin">
+                  <td colSpan={2}>
+                    {user.isGrafanaAdmin ? (
+                      <>
+                        <i className="gicon gicon-shield" /> Yes
+                      </>
+                    ) : (
+                      <>No</>
+                    )}
+                  </td>
+                </UserProfileRow>
                 <UserProfileRow label="Status">
                   <td colSpan={2}>
                     {user.isDisabled ? (
@@ -57,17 +74,6 @@ export class UserProfile extends PureComponent<Props, State> {
                       <>
                         <i className="fa fa-fw fa-check" /> Active
                       </>
-                    )}
-                  </td>
-                </UserProfileRow>
-                <UserProfileRow label="Grafana Admin">
-                  <td colSpan={2}>
-                    {user.isGrafanaAdmin ? (
-                      <>
-                        <i className="gicon gicon-shield" /> Yes
-                      </>
-                    ) : (
-                      <>No</>
                     )}
                   </td>
                 </UserProfileRow>
@@ -140,7 +146,7 @@ export class EditableRow extends PureComponent<EditableRowProps, EditableRowStat
     this.setState({ editing: true }, this.focusInput);
   };
 
-  handleEditButtonClick = (event: React.MouseEvent) => {
+  handleEditClick = (event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
     if (this.state.editing) {
@@ -162,7 +168,7 @@ export class EditableRow extends PureComponent<EditableRowProps, EditableRowStat
   };
 
   render() {
-    const { label, value, editButton } = this.props;
+    const { label, value } = this.props;
 
     return (
       <tr>
@@ -180,14 +186,33 @@ export class EditableRow extends PureComponent<EditableRowProps, EditableRowStat
             <span onClick={this.handleEdit}>{value}</span>
           )}
         </td>
-        {editButton && (
-          <td>
-            <button className="btn btn-primary btn-small" onMouseDown={this.handleEditButtonClick}>
-              <i className="fa fa-pencil" />
-            </button>
-          </td>
-        )}
+        <td>
+          <RowAction text="Edit" onClick={this.handleEditClick} />
+        </td>
       </tr>
     );
   }
 }
+
+export interface RowActionProps {
+  text: string;
+  onClick: (event: React.MouseEvent) => void;
+}
+
+export const RowAction: FC<RowActionProps> = (props: RowActionProps) => {
+  const { onClick, text } = props;
+  const theme = useContext(ThemeContext);
+
+  return (
+    <a
+      type="button"
+      onMouseDown={onClick}
+      className={css`
+        text-decoration: underline;
+        color: ${theme.colors.blue95};
+      `}
+    >
+      {text}
+    </a>
+  );
+};

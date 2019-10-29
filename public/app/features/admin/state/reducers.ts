@@ -152,6 +152,13 @@ export const userAdminReducer = reducerFactory(initialUserAdminState)
       orgs: action.payload,
     }),
   })
+  .addMapper({
+    filter: userSessionsLoadedAction,
+    mapper: (state, action) => ({
+      ...state,
+      sessions: action.payload,
+    }),
+  })
   .create();
 
 export default {
