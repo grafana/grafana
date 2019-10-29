@@ -13,7 +13,6 @@ import 'mousetrap-global-bind';
 import { ContextSrv } from './context_srv';
 import { ILocationService, ITimeoutService, IRootScopeService } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { panelInspect } from 'app/features/dashboard/state/PanelModel';
 
 export class KeybindingSrv {
   helpModal: boolean;
