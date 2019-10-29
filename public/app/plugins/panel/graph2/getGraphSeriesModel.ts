@@ -27,9 +27,10 @@ export const getGraphSeriesModel = (
     },
   });
 
-  let seriesIndex = 0;
+  let fieldColumnIndex = -1;
   for (const series of dataFrames) {
     const { timeField } = getTimeField(series);
+
     if (!timeField) {
       continue;
     }
@@ -38,6 +39,8 @@ export const getGraphSeriesModel = (
       if (field.type !== FieldType.number) {
         continue;
       }
+      // Storing index of series field for future inspection
+      fieldColumnIndex++;
 
       // Use external calculator just to make sure it works :)
       const points = getFlotPairs({
@@ -67,6 +70,17 @@ export const getGraphSeriesModel = (
             ? getColorFromHexRgbOrName(seriesOptions[field.name].color)
             : colors[graphs.length % colors.length];
 
+        field.config = fieldOptions
+          ? {
+              ...field.config,
+              unit: fieldOptions.defaults.unit,
+              decimals: fieldOptions.defaults.decimals,
+              color: seriesColor,
+            }
+          : { ...field.config };
+
+        field.display = getDisplayProcessor({ config: field.config });
+
         graphs.push({
           label: field.name,
           data: points,
@@ -76,17 +90,11 @@ export const getGraphSeriesModel = (
           yAxis: {
             index: (seriesOptions[field.name] && seriesOptions[field.name].yAxis) || 1,
           },
-          yAxisDisplayProcessor:
-            fieldOptions &&
-            getDisplayProcessor({
-              config: {
-                decimals: fieldOptions.defaults.decimals,
-                unit: fieldOptions.defaults.unit,
-              },
-            }),
-          seriesIndex,
+          // This index is used later on to retrieve appropriate series/time for X and Y axes
+          seriesIndex: fieldColumnIndex,
+          timeDimmension: { ...timeField },
+          valueDimmension: { ...field },
         });
-        seriesIndex++;
       }
     }
   }

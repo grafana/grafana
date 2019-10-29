@@ -168,6 +168,11 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
         tickDecimals: 0,
       },
       seriesIndex: i,
+      // Not relevant for now
+      // @ts-ignore
+      timeDimmension: {},
+      // @ts-ignore
+      seriesDimmension: {},
     };
 
     return graphSeries;

@@ -1,4 +1,4 @@
-import { GraphSeriesXY, GraphSeriesValue } from '@grafana/data';
+import { GraphSeriesValue, Field } from '@grafana/data';
 
 /**
  * Returns index of the closest datapoint BEFORE hover position
@@ -6,16 +6,17 @@ import { GraphSeriesXY, GraphSeriesValue } from '@grafana/data';
  * @param posX
  * @param series
  */
-export const findHoverIndexFromData = (series: GraphSeriesXY, xPos: number) => {
+export const findHoverIndexFromData = (xAxisDimension: Field, xPos: number) => {
   let lower = 0;
-  let upper = series.data.length - 1;
+  let upper = xAxisDimension.values.length - 1;
   let middle;
+
   while (true) {
     if (lower > upper) {
       return Math.max(upper, 0);
     }
     middle = Math.floor((lower + upper) / 2);
-    const xPosition = series.data[middle][0];
+    const xPosition = xAxisDimension.values.get(middle);
 
     if (xPosition === xPos) {
       return middle;
@@ -32,8 +33,8 @@ interface MultiSeriesHoverInfo {
   time: GraphSeriesValue;
   datapointIndex: number;
   seriesIndex: number;
-  label: string;
-  color: string;
+  label?: string;
+  color?: string;
 }
 
 /**
@@ -43,8 +44,11 @@ interface MultiSeriesHoverInfo {
  * @param pos mouse cursor position, based on jQuery.flot position
  */
 export const getMultiSeriesGraphHoverInfo = (
-  seriesList: GraphSeriesXY[],
-  pos: { x: number }
+  // x and y axis dimmensions order is aligned
+  yAxisDimensions: Field[],
+  xAxisDimensions: Field[],
+  /** Well, time basically */
+  xAxisPosition: number
 ): {
   results: MultiSeriesHoverInfo[];
   time?: GraphSeriesValue;
@@ -55,13 +59,12 @@ export const getMultiSeriesGraphHoverInfo = (
 
   let minDistance, minTime;
 
-  for (i = 0; i < seriesList.length; i++) {
-    series = seriesList[i];
-
-    hoverIndex = findHoverIndexFromData(series, pos.x);
-    // @ts-ignore
-    hoverDistance = pos.x - series.data[hoverIndex][0];
-    pointTime = series.data[hoverIndex][0];
+  for (i = 0; i < yAxisDimensions.length; i++) {
+    series = yAxisDimensions[i];
+    const time = xAxisDimensions[i];
+    hoverIndex = findHoverIndexFromData(time, xAxisPosition);
+    hoverDistance = xAxisPosition - time.values.get(hoverIndex);
+    pointTime = time.values.get(hoverIndex);
 
     // Take the closest point before the cursor, or if it does not exist, the closest after
     if (
@@ -73,14 +76,14 @@ export const getMultiSeriesGraphHoverInfo = (
       minTime = pointTime;
     }
 
-    value = series.data[hoverIndex][1];
+    value = series.values.get(hoverIndex);
 
     results.push({
-      value,
+      value: series.display ? series.display(value).text : value,
       datapointIndex: hoverIndex,
       seriesIndex: i,
-      color: series.color,
-      label: series.label,
+      color: series.config.color,
+      label: series.name,
       time: pointTime,
     });
   }

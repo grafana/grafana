@@ -52,7 +52,6 @@ export interface Field<T = any, V = Vector<T>> {
   type: FieldType;
   config: FieldConfig;
   values: V; // The raw field values
-
   /**
    * Cache of reduced values
    */

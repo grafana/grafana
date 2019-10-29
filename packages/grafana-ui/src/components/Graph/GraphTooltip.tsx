@@ -32,11 +32,10 @@ const getGraphTooltipStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 export const GraphTooltip: React.FC<TooltipContentProps> = ({
-  series,
-  seriesIndex,
-  datapointIndex,
   pos,
   mode = 'single',
+  dimmensions,
+  activeDimmensions,
   timeZone,
 }) => {
   const theme = useTheme();
@@ -45,46 +44,45 @@ export const GraphTooltip: React.FC<TooltipContentProps> = ({
 
   let content;
 
-  if (!series) {
-    return null;
-  }
-
   if (mode === 'single') {
-    if (seriesIndex !== undefined && datapointIndex !== undefined) {
-      const activeSeries = series[seriesIndex];
-
-      const activeDatapoint = activeSeries.data[datapointIndex];
-      const timestamp = activeDatapoint[0];
-      const processedValue = activeSeries.yAxisDisplayProcessor
-        ? activeSeries.yAxisDisplayProcessor(activeDatapoint[1]).text
-        : activeDatapoint[1];
-
-      content = (
-        <>
-          {timestamp && <div>{dateFormatter(timestamp)}</div>}
-          <div className={styles.seriesTableRow}>
-            <div className={styles.seriesTableCell}>
-              <SeriesIcon color={activeSeries.color} /> {activeSeries.label}
-            </div>
-            <div className={cx(styles.seriesTableCell, styles.value)}>{processedValue}</div>
-          </div>
-        </>
-      );
-    } else {
+    // not hovering over a point, skip rendering
+    if (activeDimmensions.yAxis === undefined) {
       return null;
     }
-  } else {
-    const hoverInfo = getMultiSeriesGraphHoverInfo(series, pos);
-    const timestamp = hoverInfo.time && dateTime(hoverInfo.time);
-    const seriesTable = hoverInfo.results.map(s => {
-      const displayProcessor = series[s.seriesIndex].yAxisDisplayProcessor;
-      const processedValue = displayProcessor ? displayProcessor(s.value).text : s.value;
-      return (
+
+    // Assuming single x-axis, time
+    // Active dimension x-axis indicates a time field corresponding to y-axis value
+    const timeField = dimmensions['xAxis'][activeDimmensions.xAxis[0]];
+    const time = timeField.values.get(activeDimmensions.xAxis[1]);
+
+    const activeField = dimmensions['yAxis'][activeDimmensions.yAxis[0]];
+    const value = activeField.values.get(activeDimmensions.yAxis[1]);
+    const processedValue = activeField.display ? activeField.display(value).text : value;
+
+    content = (
+      <>
+        {<div>{dateFormatter(time)}</div>}
         <div className={styles.seriesTableRow}>
-          <div className={cx(styles.seriesTableCell, seriesIndex === s.seriesIndex && styles.activeSeries)}>
-            <SeriesIcon color={s.color} /> {s.label}
+          <div className={styles.seriesTableCell}>
+            {activeField.config.color && <SeriesIcon color={activeField.config.color} />} {activeField.name}
           </div>
           <div className={cx(styles.seriesTableCell, styles.value)}>{processedValue}</div>
+        </div>
+      </>
+    );
+  } else {
+    // In multi mode active dimmentiosn
+    const time = activeDimmensions.xAxis[1];
+    const hoverInfo = getMultiSeriesGraphHoverInfo(dimmensions['yAxis'], dimmensions['xAxis'], time);
+    const timestamp = hoverInfo.time && dateTime(hoverInfo.time);
+
+    const seriesTable = hoverInfo.results.map(s => {
+      return (
+        <div className={styles.seriesTableRow} key={s.label}>
+          <div className={cx(styles.seriesTableCell)}>
+            {s.color && <SeriesIcon color={s.color} />} {s.label}
+          </div>
+          <div className={cx(styles.seriesTableCell, styles.value)}>{s.value}</div>
         </div>
       );
     });

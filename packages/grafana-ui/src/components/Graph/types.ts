@@ -7,19 +7,10 @@ export interface FlotPosition {
   y1: number;
 }
 
-export interface FlotItem {
+export interface FlotItem<T> {
   datapoint: [number, number];
   dataIndex: number;
-  series: {
-    points: any;
-    lines: any;
-    bars: any;
-    data: Array<[number, number]>;
-    seriesIndex: number;
-    label: string;
-    color: string;
-    isVisble: boolean;
-  };
+  series: T;
   seriesIndex: number;
   pageX: number;
   pageY: number;

@@ -3,7 +3,7 @@ import $ from 'jquery';
 import React, { PureComponent } from 'react';
 import uniqBy from 'lodash/uniqBy';
 // Types
-import { TimeRange, GraphSeriesXY, TimeZone, DefaultTimeZone } from '@grafana/data';
+import { TimeRange, GraphSeriesXY, TimeZone, DefaultTimeZone, KeyValue } from '@grafana/data';
 import _ from 'lodash';
 import { FlotPosition, FlotItem } from './types';
 import { TooltipProps, TooltipContentProps } from '../Chart/Tooltip';
@@ -28,8 +28,9 @@ export interface GraphProps {
 interface GraphState {
   pos?: FlotPosition;
   isTooltipVisible: boolean;
-  activeSeriesIndex?: number;
-  activeDatapointIndex?: number;
+  // activeSeriesIndex?: number;
+  // activeDatapointIndex?: number;
+  activeItem?: FlotItem<GraphSeriesXY>;
   allSeriesMode?: boolean;
 }
 
@@ -75,12 +76,11 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     }
   };
 
-  onPlotHover = (event: JQueryEventObject, pos: FlotPosition, item?: FlotItem) => {
+  onPlotHover = (event: JQueryEventObject, pos: FlotPosition, item?: FlotItem<GraphSeriesXY>) => {
     this.setState({
       isTooltipVisible: true,
       allSeriesMode: !item,
-      activeSeriesIndex: item ? item.seriesIndex : undefined,
-      activeDatapointIndex: item ? item.dataIndex : undefined,
+      activeItem: item,
       pos,
     });
   };
@@ -108,10 +108,10 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
 
   renderTooltip = () => {
     const { children, series, timeZone, tooltipOptions } = this.props;
-    const { pos, activeSeriesIndex, activeDatapointIndex, isTooltipVisible } = this.state;
+    const { pos, activeItem, isTooltipVisible } = this.state;
     const tooltips: React.ReactNode[] = [];
 
-    if (!isTooltipVisible || !pos) {
+    if (!isTooltipVisible || !pos || series.length < 0) {
       return null;
     }
 
@@ -133,7 +133,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     }
 
     // If mode is single series and user is not hovering over item, skip rendering
-    if (!activeDatapointIndex && tooltipOptions.mode === 'single') {
+    if (!activeItem && tooltipOptions.mode === 'single') {
       return null;
     }
 
@@ -142,10 +142,32 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     // Check if tooltip needs to be rendered with custom tooltip component, otherwise default to GraphTooltip
     const tooltipContentRenderer = tooltipElementProps.tooltipComponent || GraphTooltip;
 
+    const seriesIndex = activeItem ? activeItem.series.seriesIndex : 0;
+    const rowIndex = activeItem ? activeItem.dataIndex : 0;
+
+    // Indicates x-axis dimmension's active item
+    // When hovering over an item - let's take it's dataIndex, otherwise let's assume flot position
+    // based on witch tooltip needs to figure out correct datapoint display information about
+    let activeDimmensions: KeyValue<[number, number]> = {
+      // first- index of active field, second- index of field value or flots xaxis position
+      xAxis: [seriesIndex, tooltipOptions.mode === 'single' ? rowIndex : pos.x],
+    };
+
+    if (activeItem) {
+      // When hovering over a datapoint, we can now describe what't the "address" of it,
+      // meaning dimmension's index and row index within dimmension's values
+      activeDimmensions = {
+        ...activeDimmensions,
+        yAxis: [activeItem!.series.seriesIndex, activeItem!.dataIndex],
+      };
+    }
+
     const tooltipContentProps: TooltipContentProps = {
-      series,
-      seriesIndex: activeSeriesIndex,
-      datapointIndex: activeDatapointIndex,
+      dimmensions: {
+        xAxis: series.map(s => s.timeDimmension),
+        yAxis: series.map(s => s.valueDimmension),
+      },
+      activeDimmensions,
       pos,
       timeZone,
       mode: tooltipOptions.mode || 'single',
