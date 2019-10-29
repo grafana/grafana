@@ -1,6 +1,6 @@
 import angular, { IQService } from 'angular';
 import _ from 'lodash';
-import { dateMath, ScopedVars, toDataFrame, DataLinkClickEvent, TimeRange } from '@grafana/data';
+import { dateMath, ScopedVars, toDataFrame, TimeRange } from '@grafana/data';
 import kbn from 'app/core/utils/kbn';
 import { CloudWatchQuery } from './types';
 import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui';
@@ -192,7 +192,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
               field.config.links = [
                 {
                   url: link,
-                  title: 'View in Cloudwatch console',
+                  title: 'View in CloudWatch console',
                   targetBlank: true,
                 },
               ];
