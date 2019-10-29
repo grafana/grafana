@@ -116,6 +116,8 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 
 	if len(metricDataInputsByRegion) > 0 {
 		for region, metricDataInputs := range metricDataInputsByRegion {
+			mdi := metricDataInputs
+			r := region
 			eg.Go(func() error {
 				defer func() {
 					if err := recover(); err != nil {
@@ -128,13 +130,14 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 					}
 				}()
 
-				client, err := e.getClient(region)
+				client, err := e.getClient(r)
 				if err != nil {
 					return err
 				}
 
 				metricDataOutputs := make([]*cloudwatch.GetMetricDataOutput, 0)
-				for _, metricDataInput := range metricDataInputs {
+				for _, metricDataInput := range mdi {
+
 					mdo, err := e.executeRequest(ectx, client, metricDataInput)
 					if err != nil {
 						return err
@@ -143,7 +146,8 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 					metricDataOutputs = append(metricDataOutputs, mdo...)
 				}
 
-				queryResponses, err := e.parseResponse(metricDataOutputs, queries)
+				regionQueriesByID := e.groupQueriesByID(queriesByRegion[r])
+				queryResponses, err := e.parseResponse(metricDataOutputs, regionQueriesByID)
 				if err != nil {
 					return err
 				}
@@ -181,4 +185,13 @@ func (e *CloudWatchExecutor) groupQueriesByRegion(queries map[string]*cloudWatch
 	}
 
 	return queriesByRegion
+}
+
+func (e *CloudWatchExecutor) groupQueriesByID(queries []*cloudWatchQuery) map[string]*cloudWatchQuery {
+	queriesByID := make(map[string]*cloudWatchQuery)
+	for _, query := range queries {
+		queriesByID[query.Id] = query
+	}
+
+	return queriesByID
 }
