@@ -171,6 +171,24 @@ func TestMultiLDAP(t *testing.T) {
 				teardown()
 			})
 
+			Convey("Should still try to auth with the second server after receiving a dial error from the first", func() {
+				mock := setup()
+
+				expectedError := errors.New("Dial error")
+				mock.dialErrReturn = expectedError
+
+				multi := New([]*ldap.ServerConfig{
+					{}, {},
+				})
+				_, err := multi.Login(&models.LoginUserQuery{})
+
+				So(mock.dialCalledTimes, ShouldEqual, 2)
+
+				So(err, ShouldEqual, expectedError)
+
+				teardown()
+			})
+
 			Convey("Should return unknown error", func() {
 				mock := setup()
 

@@ -109,11 +109,23 @@ func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 		return nil, ErrNoLDAPServers
 	}
 
-	for _, config := range multiples.configs {
+	for index, config := range multiples.configs {
 		server := newLDAP(config)
 
 		if err := server.Dial(); err != nil {
-			return nil, err
+
+			logger.Debug(
+				"unable to dial LDAP server",
+				"host", config.Host,
+				"port", config.Port,
+				"error", err,
+			)
+
+			// Only return an error if it is the last server so we can try next server
+			if index == len(multiples.configs)-1 {
+				return nil, err
+			}
+			continue
 		}
 
 		defer server.Close()
