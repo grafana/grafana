@@ -8,11 +8,6 @@ import (
 
 func TestMetricDataQueryBuilder(t *testing.T) {
 	Convey("TestMetricDataQueryBuilder", t, func() {
-		const (
-			maxNoOfSearchExpressions = 2
-			maxNoOfMetricDataQueries = 10
-		)
-
 		Convey("buildSearchExpression", func() {
 			Convey("and query should be matched exact", func() {
 				matchExact := true
