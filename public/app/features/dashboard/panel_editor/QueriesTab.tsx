@@ -29,7 +29,7 @@ import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { addQuery } from 'app/core/utils/query';
 import { Unsubscribable } from 'rxjs';
 import { isSharedDashboardQuery, DashboardQueryEditor } from 'app/plugins/datasource/dashboard';
-import { expressionDatasource } from 'app/plugins/datasource/expr/ExpressionDatasource';
+import { expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 
 interface Props {
   panel: PanelModel;

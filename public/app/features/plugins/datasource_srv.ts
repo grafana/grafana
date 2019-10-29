@@ -15,7 +15,7 @@ import { TemplateSrv } from '../templating/template_srv';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 // Pretend Datasource
-import { expressionDatasource } from 'app/plugins/datasource/expr/ExpressionDatasource';
+import { expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 
 export class DatasourceSrv implements DataSourceService {
   datasources: { [name: string]: DataSourceApi };
