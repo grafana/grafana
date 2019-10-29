@@ -20,6 +20,7 @@ import { TemplateSrv } from '../templating/template_srv';
 import { PanelPluginMeta } from '@grafana/ui/src/types/panel';
 import { getPanelLinksSupplier } from './panellinks/linkSuppliers';
 import { PanelEvents } from '@grafana/ui';
+import { getLocationSrv } from '@grafana/runtime';
 
 export class PanelCtrl {
   panel: any;
@@ -246,7 +247,12 @@ export class PanelCtrl {
   }
 
   inspectPanel() {
-    this.dashboard.inspect(this.panel);
+    getLocationSrv().update({
+      query: {
+        inspect: this.panel.id,
+      },
+      partial: true,
+    });
   }
 
   getInfoMode() {

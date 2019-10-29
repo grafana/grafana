@@ -13,6 +13,7 @@ import 'mousetrap-global-bind';
 import { ContextSrv } from './context_srv';
 import { ILocationService, ITimeoutService, IRootScopeService } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { getLocationSrv } from '@grafana/runtime';
 
 export class KeybindingSrv {
   helpModal: boolean;
@@ -267,7 +268,7 @@ export class KeybindingSrv {
     // inspect panel
     this.bind('p i', () => {
       if (dashboard.meta.focusPanelId) {
-        dashboard.inspect(dashboard.getPanelById(dashboard.meta.focusPanelId));
+        getLocationSrv().update({ partial: true, query: { inspect: dashboard.meta.focusPanelId } });
       }
     });
 

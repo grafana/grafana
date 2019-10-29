@@ -4,6 +4,7 @@ import React, { PureComponent } from 'react';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { JSONFormatter, Modal } from '@grafana/ui';
 import { css } from 'emotion';
+import { getLocationSrv } from '@grafana/runtime';
 
 interface Props {
   dashboard: DashboardModel;
@@ -18,7 +19,10 @@ export class PanelInspector extends PureComponent<Props, State> {
   }
 
   onDismiss = () => {
-    this.props.dashboard.inspect(null);
+    getLocationSrv().update({
+      query: { inspect: null },
+      partial: true,
+    });
   };
 
   render() {

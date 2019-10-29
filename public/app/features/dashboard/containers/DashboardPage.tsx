@@ -114,13 +114,8 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     // Listen for inspect events
     if ((inspectPanelId && !this.state.inspectPanel) || prevProps.inspectPanelId !== inspectPanelId) {
-      let inspectPanel: PanelModel | null = null;
       const id = parseInt(inspectPanelId, 10);
-      if (id) {
-        inspectPanel = dashboard.getPanelById(id);
-      }
-      console.log('INSPECT:', id, inspectPanel);
-      this.setState({ inspectPanel });
+      this.setState({ inspectPanel: dashboard.getPanelById(id) });
     }
 
     // Due to the angular -> react url bridge we can ge an update here with new uid before the container unmounts

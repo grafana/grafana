@@ -6,6 +6,7 @@ import { removePanel, duplicatePanel, copyPanel, editPanelJson, sharePanel } fro
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelMenuItem } from '@grafana/ui';
+import { getLocationSrv } from '@grafana/runtime';
 
 export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
   const onViewPanel = () => {
@@ -39,7 +40,12 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
   };
 
   const onInspectPanel = () => {
-    dashboard.inspect(panel);
+    getLocationSrv().update({
+      partial: true,
+      query: {
+        inspect: panel.id,
+      },
+    });
   };
 
   const onDuplicatePanel = () => {

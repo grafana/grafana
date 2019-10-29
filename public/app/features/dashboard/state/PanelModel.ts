@@ -14,7 +14,6 @@ import { eventFactory } from '@grafana/data';
 
 export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
 export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
-export const panelInspect = eventFactory<PanelModel | undefined>('panel-inspect');
 
 export interface GridPos {
   x: number;
