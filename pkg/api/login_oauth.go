@@ -71,7 +71,12 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		}
 
 		hashedState := hashStatecode(state, setting.OAuthService.OAuthInfos[name].ClientSecret)
-		hs.RemoteCacheService.Set(fmt.Sprintf("%v_%v", OauthStateKeyName, state[:8]), hashedState, 60*time.Second)
+		err = hs.RemoteCacheService.Set(fmt.Sprintf("%v_%v", OauthStateKeyName, state[:8]), hashedState, 60*time.Second)
+		if err != nil {
+			ctx.Logger.Error("Saving state string failed", "err", err)
+			ctx.Handle(500, "An internal error occurred", nil)
+			return
+		}
 		if setting.OAuthService.OAuthInfos[name].HostedDomain == "" {
 			ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
 		} else {
@@ -91,7 +96,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	// delete state from remote cache
 	err = hs.RemoteCacheService.Delete(cacheKey)
 	if err != nil {
-		oauthLogger.Warn("State could not be deleted from remote cache")
+		oauthLogger.Warn("State could not be deleted from remote cache", "err", err)
 	}
 
 	if cacheValue == "" {
@@ -231,25 +236,6 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	}
 
 	ctx.Redirect(setting.AppSubUrl + "/")
-}
-
-func (hs *HTTPServer) deleteCookie(w http.ResponseWriter, name string, sameSite http.SameSite) {
-	hs.writeCookie(w, name, "", -1, sameSite)
-}
-
-func (hs *HTTPServer) writeCookie(w http.ResponseWriter, name string, value string, maxAge int, sameSite http.SameSite) {
-	cookie := http.Cookie{
-		Name:     name,
-		MaxAge:   maxAge,
-		Value:    value,
-		HttpOnly: true,
-		Path:     setting.AppSubUrl + "/",
-		Secure:   hs.Cfg.CookieSecure,
-	}
-	if sameSite != http.SameSiteDefaultMode {
-		cookie.SameSite = sameSite
-	}
-	http.SetCookie(w, &cookie)
 }
 
 func hashStatecode(code, seed string) string {
