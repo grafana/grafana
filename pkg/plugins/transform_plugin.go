@@ -137,21 +137,9 @@ type TransformWrapper struct {
 }
 
 func (tw *TransformWrapper) Transform(ctx context.Context, ds *models.DataSource, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	jsonData, err := ds.JsonData.MarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-
 	pbQuery := &pluginv2.TransformRequest{
-		Datasource: &pluginv2.DatasourceInfo{
-			Name:                    ds.Name,
-			Type:                    ds.Type,
-			Url:                     ds.Url,
-			Id:                      ds.Id,
-			OrgId:                   ds.OrgId,
-			JsonData:                string(jsonData),
-			DecryptedSecureJsonData: ds.SecureJsonData.Decrypt(),
-		},
+		// TODO Not sure Datasource property needs be on this?
+		Datasource: &pluginv2.DatasourceInfo{},
 		TimeRange: &pluginv2.TimeRange{
 			FromRaw:     query.TimeRange.From,
 			ToRaw:       query.TimeRange.To,

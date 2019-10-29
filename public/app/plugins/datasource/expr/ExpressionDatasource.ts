@@ -42,7 +42,7 @@ export class ExpressionDatasourceApi extends DataSourceApi<ExpressionQuery> {
 
     return from(
       getBackendSrv()
-        .post('/api/ds', {
+        .post('/api/tsdb/query/v2', {
           from: range.from.valueOf().toString(),
           to: range.to.valueOf().toString(),
           queries: queries,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"sort"
 
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -28,6 +29,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *m.ReqContext, reqDto dtos.MetricRequest)
 	}
 
 	var datasourceID int64
+	expr := false
 	for _, query := range reqDto.Queries {
 		name, err := query.Get("datasource").String()
 		if err != nil {
@@ -37,18 +39,22 @@ func (hs *HTTPServer) QueryMetricsV2(c *m.ReqContext, reqDto dtos.MetricRequest)
 		if err != nil {
 			return Error(400, "GEL datasource missing ID", nil)
 		}
-		if name == "-- GEL --" {
+		if name == "__expr__" {
+			expr = true
 			break
 		}
 	}
-	ds, err := hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
-	if err != nil {
-		if err == m.ErrDataSourceAccessDenied {
-			return Error(403, "Access denied to datasource", err)
+	var ds *m.DataSource
+	if !expr {
+		var err error
+		ds, err = hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
+		if err != nil {
+			if err == m.ErrDataSourceAccessDenied {
+				return Error(403, "Access denied to datasource", err)
+			}
+			return Error(500, "Unable to load datasource meta data", err)
 		}
-		return Error(500, "Unable to load datasource meta data", err)
 	}
-
 	request := &tsdb.TsdbQuery{TimeRange: timeRange, Debug: reqDto.Debug}
 
 	for _, query := range reqDto.Queries {
@@ -61,9 +67,26 @@ func (hs *HTTPServer) QueryMetricsV2(c *m.ReqContext, reqDto dtos.MetricRequest)
 		})
 	}
 
-	resp, err := tsdb.HandleRequest(c.Req.Context(), ds, request)
+	if !expr {
+		resp, err := tsdb.HandleRequest(c.Req.Context(), ds, request)
+		if err != nil {
+			return Error(500, "Metric request error", err)
+		}
+		statusCode := 200
+		for _, res := range resp.Results {
+			if res.Error != nil {
+				res.ErrorString = res.Error.Error()
+				resp.Message = res.ErrorString
+				statusCode = 400
+			}
+		}
+
+		return JSON(statusCode, &resp)
+	}
+
+	resp, err := plugins.Transform.Transform(c.Req.Context(), ds, request)
 	if err != nil {
-		return Error(500, "Metric request error", err)
+		return Error(500, "Transform request error", err)
 	}
 
 	statusCode := 200
@@ -76,6 +99,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *m.ReqContext, reqDto dtos.MetricRequest)
 	}
 
 	return JSON(statusCode, &resp)
+
 }
 
 // POST /api/tsdb/query
