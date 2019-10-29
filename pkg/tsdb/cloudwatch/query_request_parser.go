@@ -2,11 +2,9 @@ package cloudwatch
 
 import (
 	"errors"
-	"fmt"
 	"regexp"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -14,12 +12,9 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-// Parses the json queries and returns map of queries with query id as key. In the case on query in the query editor
-// has more than more statistic defined, one cloudwatchQuery will be created for each statistic.
-// If the query doesn't have an Id defined by the user, we'll give it an with format `query[RefId]`. In the case
-// the incoming query had more than one stat, it will ge an id like `query[RefId]_[StatName]`, eg queryC_Average
-func (e *CloudWatchExecutor) parseQueries(queryContext *tsdb.TsdbQuery) (map[string]*cloudWatchQuery, error) {
-	cloudwatchQueries := make(map[string]*cloudWatchQuery, 0)
+// Parses the json queries and returns a requestQuery. The requstQuery has a 1 to 1 mapping to a query editor row
+func (e *CloudWatchExecutor) parseQueries(queryContext *tsdb.TsdbQuery) ([]*requestQuery, error) {
+	requestQueries := make([]*requestQuery, 0)
 
 	for i, model := range queryContext.Queries {
 		queryType := model.Model.Get("type").MustString()
@@ -28,52 +23,17 @@ func (e *CloudWatchExecutor) parseQueries(queryContext *tsdb.TsdbQuery) (map[str
 		}
 
 		RefID := queryContext.Queries[i].RefId
-		queryEditorRow, err := parseQueryEditorRow(queryContext.Queries[i].Model, RefID)
+		requestQuery, err := parseRequestQuery(queryContext.Queries[i].Model, RefID)
 		if err != nil {
 			return nil, &queryBuilderError{err, RefID}
 		}
-
-		for _, stat := range queryEditorRow.Statistics {
-			id := queryEditorRow.Id
-			if id == "" {
-				id = fmt.Sprintf("query%s", RefID)
-			}
-			if len(queryEditorRow.Statistics) > 1 {
-				id = fmt.Sprintf("%s_%v", id, strings.ReplaceAll(*stat, ".", "_"))
-			}
-
-			query := &cloudWatchQuery{
-				Id:             id,
-				UserDefinedId:  queryEditorRow.Id,
-				RefId:          queryEditorRow.RefId,
-				Region:         queryEditorRow.Region,
-				Namespace:      queryEditorRow.Namespace,
-				MetricName:     queryEditorRow.MetricName,
-				Dimensions:     queryEditorRow.Dimensions,
-				Stats:          *stat,
-				Period:         queryEditorRow.Period,
-				Alias:          queryEditorRow.Alias,
-				Expression:     queryEditorRow.Expression,
-				ReturnData:     queryEditorRow.ReturnData,
-				HighResolution: queryEditorRow.HighResolution,
-				MatchExact:     queryEditorRow.MatchExact,
-			}
-
-			if _, ok := cloudwatchQueries[id]; !ok {
-				cloudwatchQueries[id] = query
-			} else {
-				return nil, &queryBuilderError{
-					err:   fmt.Errorf("Query id %s is not unique", query.Id),
-					RefID: query.RefId,
-				}
-			}
-		}
+		requestQueries = append(requestQueries, requestQuery)
 	}
 
-	return cloudwatchQueries, nil
+	return requestQueries, nil
 }
 
-func parseQueryEditorRow(model *simplejson.Json, refId string) (*queryEditorRow, error) {
+func parseRequestQuery(model *simplejson.Json, refId string) (*requestQuery, error) {
 	region, err := model.Get("region").String()
 	if err != nil {
 		return nil, err
@@ -137,7 +97,7 @@ func parseQueryEditorRow(model *simplejson.Json, refId string) (*queryEditorRow,
 	highResolution := model.Get("highResolution").MustBool(false)
 	matchExact := model.Get("matchExact").MustBool(true)
 
-	return &queryEditorRow{
+	return &requestQuery{
 		RefId:          refId,
 		Region:         region,
 		Namespace:      namespace,
