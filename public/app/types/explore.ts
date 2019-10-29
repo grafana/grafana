@@ -1,5 +1,5 @@
 import { Unsubscribable } from 'rxjs';
-import { ComponentClass } from 'react';
+import { ComponentType } from 'react';
 import {
   DataQuery,
   DataSourceSelectItem,
@@ -148,7 +148,7 @@ export interface ExploreItemState {
   /**
    * React component to be shown when no queries have been run yet, e.g., for a query language cheat sheet.
    */
-  StartPage?: ComponentClass<ExploreStartPageProps>;
+  StartPage?: ComponentType<ExploreStartPageProps>;
   /**
    * Width used for calculating the graph interval (can't have more datapoints than pixels)
    */

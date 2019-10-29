@@ -6,7 +6,6 @@ export { Portal } from './Portal/Portal';
 export { CustomScrollbar } from './CustomScrollbar/CustomScrollbar';
 
 export * from './Button/Button';
-export { ButtonVariant } from './Button/AbstractButton';
 
 // Select
 export { Select, AsyncSelect } from './Select/Select';
@@ -93,3 +92,6 @@ export { Spinner } from './Spinner/Spinner';
 export { FadeTransition } from './transitions/FadeTransition';
 export { SlideOutTransition } from './transitions/SlideOutTransition';
 export { Segment, SegmentAsync, SegmentSelect } from './Segment/';
+
+// Next-gen forms
+export { default as Forms } from './Forms';

@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 
-// import { storiesOf } from '@storybook/react';
-// import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Switch } from './Switch';
 import { text } from '@storybook/addon-knobs';
+import mdx from './Switch.mdx';
 
 const getStory = (title: string, component: any) => ({
   title,
   parameters: {
     component,
+    docs: {
+      page: mdx,
+    },
   },
 });
 
