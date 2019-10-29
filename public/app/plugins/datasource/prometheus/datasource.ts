@@ -447,7 +447,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   handleErrors = (err: any, target: PromQuery) => {
     const error: DataQueryError = {
-      message: 'Unknown error during query transaction. Please check JS console logs.',
+      message: (err && err.statusText) || 'Unknown error during query transaction. Please check JS console logs.',
       refId: target.refId,
     };
 
