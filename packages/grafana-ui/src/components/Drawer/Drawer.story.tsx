@@ -2,11 +2,17 @@ import React from 'react';
 import { Drawer } from './Drawer';
 import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import mdx from './Drawer.mdx';
 
 export default {
   title: 'UI/Drawer',
   component: Drawer,
   decorators: [withCenteredStory],
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
 };
 
 export const global = () => {
@@ -39,15 +45,19 @@ export const global = () => {
 };
 
 export const inLine = () => {
-  let parentElement: HTMLDivElement | null;
   return (
     <UseState initialState={{ isOpen: false }}>
       {(state, updateValue) => {
         return (
           <>
             <div
-              style={{ height: '300px', width: '500px', border: '1px solid white' }}
-              ref={element => (parentElement = element)}
+              style={{
+                height: '300px',
+                width: '500px',
+                border: '1px solid white',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
             >
               <div
                 style={{ border: '1px solid gray', borderRadius: '4px', padding: '10px', cursor: 'pointer' }}
@@ -55,18 +65,18 @@ export const inLine = () => {
               >
                 Open drawer
               </div>
+              {state.isOpen && (
+                <Drawer
+                  inline={true}
+                  title="storybook"
+                  onClose={() => {
+                    updateValue({ isOpen: !state.isOpen });
+                  }}
+                >
+                  this is a drawer
+                </Drawer>
+              )}
             </div>
-            {state.isOpen && (
-              <Drawer
-                parentContainer={parentElement as HTMLElement}
-                title="storybook"
-                onClose={() => {
-                  updateValue({ isOpen: !state.isOpen });
-                }}
-              >
-                this is a drawer
-              </Drawer>
-            )}
           </>
         );
       }}
