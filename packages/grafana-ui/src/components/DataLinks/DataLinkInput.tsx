@@ -1,16 +1,15 @@
 import React, { useState, useMemo, useContext, useRef, RefObject, memo, useEffect } from 'react';
-
+import usePrevious from 'react-use/lib/usePrevious';
 import { VariableSuggestion, VariableOrigin, DataLinkSuggestions } from './DataLinkSuggestions';
 import { ThemeContext, DataLinkBuiltInVars, makeValue } from '../../index';
 import { SelectionReference } from './SelectionReference';
 import { Portal } from '../index';
 
 import { Editor } from '@grafana/slate-react';
-import { Value, Editor as CoreEditor } from 'slate';
+import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
 import { Popper as ReactPopper } from 'react-popper';
 import { css, cx } from 'emotion';
-import usePrevious from 'react-use/lib/usePrevious';
 
 import { SlatePrism } from '../../slate-plugins';
 import { SCHEMA } from '../../utils/slate';
@@ -89,15 +88,18 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(({ value, onChan
     }
   }, []);
 
-  const onUrlChange = React.useCallback(({ value }: { value: Value }) => {
-    setLinkUrl(value);
-  }, []);
-
   useEffect(() => {
+    // Update the state of the link in the parent. This is basically done on blur but we need to do it after
+    // our state have been updated. The duplicity of state is done for perf reasons and also because local
+    // state also contains things like selection and formating.
     if (prevLinkUrl && prevLinkUrl.selection.isFocused && !linkUrl.selection.isFocused) {
       stateRef.current.onChange(Plain.serialize(linkUrl));
     }
   }, [linkUrl, prevLinkUrl]);
+
+  const onUrlChange = React.useCallback(({ value }: { value: Value }) => {
+    setLinkUrl(value);
+  }, []);
 
   const onVariableSelect = (item: VariableSuggestion, editor = editorRef.current!) => {
     const includeDollarSign = Plain.serialize(editor.value).slice(-1) !== '$';

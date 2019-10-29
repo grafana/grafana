@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 
 	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
 	sdk "github.com/grafana/grafana-plugin-sdk-go"
@@ -46,16 +47,16 @@ type DataSourcePlugin struct {
 }
 
 func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string) error {
-	if err := decoder.Decode(&p); err != nil {
-		return err
+	if err := decoder.Decode(p); err != nil {
+		return errutil.Wrapf(err, "Failed to decode datasource plugin")
 	}
 
 	if !p.isVersionOne() && !setting.IsExpressionsEnabled() {
-		return errors.New("A plugin version 2 was found but expressions feature toggle is not enabled")
+		return errors.New("A plugin version 2 was found, but expressions feature toggle is not enabled")
 	}
 
 	if err := p.registerPlugin(pluginDir); err != nil {
-		return err
+		return errutil.Wrapf(err, "Failed to register plugin")
 	}
 
 	DataSources[p.Id] = p

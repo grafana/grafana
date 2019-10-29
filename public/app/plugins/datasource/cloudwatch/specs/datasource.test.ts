@@ -15,6 +15,8 @@ describe('CloudWatchDatasource', () => {
   } as DataSourceInstanceSettings;
 
   const templateSrv = new TemplateSrv();
+  const start = 1483196400 * 1000;
+  const defaultTimeRange = { from: new Date(start), to: new Date(start + 3600 * 1000) };
 
   const timeSrv = {
     time: { from: 'now-1h', to: 'now' },
@@ -39,7 +41,7 @@ describe('CloudWatchDatasource', () => {
     let requestParams: { queries: CloudWatchQuery[] };
 
     const query = {
-      range: { from: 'now-1h', to: 'now' },
+      range: defaultTimeRange,
       rangeRaw: { from: 1483228800, to: 1483232400 },
       targets: [
         {
@@ -110,7 +112,7 @@ describe('CloudWatchDatasource', () => {
       ]);
 
       const query = {
-        range: { from: 'now-1h', to: 'now' },
+        range: defaultTimeRange,
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
@@ -136,7 +138,7 @@ describe('CloudWatchDatasource', () => {
 
     it.each(['pNN.NN', 'p9', 'p99.', 'p99.999'])('should cancel query for invalid extended statistics (%s)', stat => {
       const query = {
-        range: { from: 'now-1h', to: 'now' },
+        range: defaultTimeRange,
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
@@ -157,8 +159,8 @@ describe('CloudWatchDatasource', () => {
 
     it('should return series list', done => {
       ctx.ds.query(query).then((result: any) => {
-        expect(result.data[0].target).toBe(response.results.A.series[0].name);
-        expect(result.data[0].datapoints[0][0]).toBe(response.results.A.series[0].points[0][0]);
+        expect(result.data[0].name).toBe(response.results.A.series[0].name);
+        expect(result.data[0].fields[0].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
         done();
       });
     });
@@ -187,7 +189,7 @@ describe('CloudWatchDatasource', () => {
 
     it('should query for the datasource region if empty or "default"', done => {
       const query = {
-        range: { from: 'now-1h', to: 'now' },
+        range: defaultTimeRange,
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
@@ -213,7 +215,7 @@ describe('CloudWatchDatasource', () => {
 
   describe('When performing CloudWatch query for extended statistics', () => {
     const query = {
-      range: { from: 'now-1h', to: 'now' },
+      range: defaultTimeRange,
       rangeRaw: { from: 1483228800, to: 1483232400 },
       targets: [
         {
@@ -260,8 +262,8 @@ describe('CloudWatchDatasource', () => {
 
     it('should return series list', done => {
       ctx.ds.query(query).then((result: any) => {
-        expect(result.data[0].target).toBe(response.results.A.series[0].name);
-        expect(result.data[0].datapoints[0][0]).toBe(response.results.A.series[0].points[0][0]);
+        expect(result.data[0].name).toBe(response.results.A.series[0].name);
+        expect(result.data[0].fields[0].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
         done();
       });
     });
@@ -316,7 +318,7 @@ describe('CloudWatchDatasource', () => {
 
     it('should generate the correct query for single template variable', done => {
       const query = {
-        range: { from: 'now-1h', to: 'now' },
+        range: defaultTimeRange,
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
@@ -341,7 +343,7 @@ describe('CloudWatchDatasource', () => {
 
     it('should generate the correct query for multilple template variables', done => {
       const query = {
-        range: { from: 'now-1h', to: 'now' },
+        range: defaultTimeRange,
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
@@ -377,7 +379,7 @@ describe('CloudWatchDatasource', () => {
 
     it('should generate the correct query for multilple template variables, lack scopedVars', done => {
       const query = {
-        range: { from: 'now-1h', to: 'now' },
+        range: defaultTimeRange,
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
@@ -412,7 +414,7 @@ describe('CloudWatchDatasource', () => {
 
     it('should generate the correct query for multilple template variables with expression', done => {
       const query: any = {
-        range: { from: 'now-1h', to: 'now' },
+        range: defaultTimeRange,
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
