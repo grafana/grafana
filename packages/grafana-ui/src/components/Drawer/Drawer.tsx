@@ -1,6 +1,6 @@
 import React, { CSSProperties, FC, ReactNode } from 'react';
 import RcDrawer from 'rc-drawer';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import { stylesFactory, useTheme } from '../../themes';
 import { GrafanaTheme } from '../../types';
 
@@ -18,23 +18,40 @@ interface Props {
   onClose: () => void;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
-  titleContainer: css`
-    font-size: ${theme.typography.size.lg};
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  `,
-  close: css`
-    cursor: pointer;
-  `,
-  drawer: css`
-    .drawer-content {
-      padding: ${theme.spacing.sm} ${theme.spacing.md};
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const closeButtonWidth = '50px';
+
+  return {
+    drawer: css`
+      .drawer-content {
+        background-color: ${theme.colors.bodyBg};
+      }
+    `,
+    titleWrapper: css`
+      font-size: ${theme.typography.size.lg};
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid ${theme.colors.white};
+      padding: ${theme.spacing.md} ${theme.spacing.sm};
       background-color: ${theme.colors.bodyBg};
-    }
-  `,
-}));
+      position: sticky;
+      top: 0;
+    `,
+    title: css`
+      width: calc(100% - ${closeButtonWidth});
+    `,
+    close: css`
+      cursor: pointer;
+      width: ${closeButtonWidth};
+      height: 100%;
+      display: flex;
+      justify-content: center;
+    `,
+    content: css`
+      padding: ${theme.spacing.md};
+    `,
+  };
+});
 
 export const Drawer: FC<Props> = ({
   children,
@@ -42,7 +59,7 @@ export const Drawer: FC<Props> = ({
   onClose,
   closeOnMaskClick = false,
   title,
-  width = 30,
+  width = 40,
 }) => {
   const theme = useTheme();
   const drawerStyles = getStyles(theme);
@@ -60,10 +77,13 @@ export const Drawer: FC<Props> = ({
       style={{ position: `${inline && 'absolute'}` } as CSSProperties}
       className={drawerStyles.drawer}
     >
-      <div className={drawerStyles.titleContainer}>
-        {title} <i className={cx('fa fa-close', drawerStyles.close)} onClick={onClose} />
+      <div className={drawerStyles.titleWrapper}>
+        <div className={drawerStyles.title}>{title}</div>
+        <div className={drawerStyles.close} onClick={onClose}>
+          <i className="fa fa-close" />
+        </div>
       </div>
-      {children}
+      <div className={drawerStyles.content}>{children}</div>
     </RcDrawer>
   );
 };
