@@ -1,9 +1,9 @@
 import React, { PureComponent } from 'react';
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
-import { LoadingPlaceholder, JSONFormatter, PanelEvents } from '@grafana/ui';
+import { LoadingPlaceholder, JSONFormatter } from '@grafana/ui';
 import { CoreEvents } from 'app/types';
-import { AppEvents } from '@grafana/data';
+import { AppEvents, PanelEvents } from '@grafana/data';
 
 interface DsQuery {
   isLoading: boolean;

@@ -9,7 +9,7 @@ import memoizeOne from 'memoize-one';
 // Services & Utils
 import store from 'app/core/store';
 // Components
-import { ErrorBoundaryAlert, DataQuery, ExploreStartPageProps, DataSourceApi, PanelData } from '@grafana/ui';
+import { ErrorBoundaryAlert } from '@grafana/ui';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
@@ -25,7 +25,16 @@ import {
   toggleGraph,
 } from './state/actions';
 // Types
-import { RawTimeRange, GraphSeriesXY, TimeZone, AbsoluteTimeRange } from '@grafana/data';
+import {
+  DataQuery,
+  ExploreStartPageProps,
+  DataSourceApi,
+  PanelData,
+  RawTimeRange,
+  GraphSeriesXY,
+  TimeZone,
+  AbsoluteTimeRange,
+} from '@grafana/data';
 import {
   ExploreItemState,
   ExploreUrlState,

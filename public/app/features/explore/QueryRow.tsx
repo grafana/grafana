@@ -12,8 +12,15 @@ import { QueryRowActions } from './QueryRowActions';
 import { changeQuery, modifyQueries, runQueries, addQueryRow } from './state/actions';
 // Types
 import { StoreState } from 'app/types';
-import { TimeRange, AbsoluteTimeRange, LoadingState } from '@grafana/data';
-import { DataQuery, DataSourceApi, QueryFixAction, PanelData } from '@grafana/ui';
+import {
+  TimeRange,
+  AbsoluteTimeRange,
+  LoadingState,
+  DataQuery,
+  DataSourceApi,
+  QueryFixAction,
+  PanelData,
+} from '@grafana/data';
 import { HistoryItem, ExploreItemState, ExploreId, ExploreMode } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';

@@ -4,8 +4,15 @@ import _ from 'lodash';
 import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
 // Types
-import { DataQuery, DataQueryResponseData, PanelPlugin, PanelEvents } from '@grafana/ui';
-import { DataLink, DataTransformerConfig, ScopedVars } from '@grafana/data';
+import {
+  DataQuery,
+  DataQueryResponseData,
+  PanelPlugin,
+  PanelEvents,
+  DataLink,
+  DataTransformerConfig,
+  ScopedVars,
+} from '@grafana/data';
 
 import config from 'app/core/config';
 

@@ -12,8 +12,12 @@ import {
   DataQueryResponse,
   DataQueryResponseData,
   DataQueryError,
-} from '@grafana/ui';
-import { LoadingState, dateMath, toDataFrame, DataFrame, guessFieldTypes } from '@grafana/data';
+  LoadingState,
+  dateMath,
+  toDataFrame,
+  DataFrame,
+  guessFieldTypes,
+} from '@grafana/data';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
 

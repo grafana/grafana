@@ -1,6 +1,6 @@
 import React from 'react';
 import _ from 'lodash';
-import { DataSourceApi, DataQuery, DataSourceJsonData } from '@grafana/ui';
+import { DataSourceApi, DataQuery, DataSourceJsonData } from '@grafana/data';
 import { AdHocFilter } from './AdHocFilter';
 export const DEFAULT_REMOVE_FILTER_VALUE = '-- remove filter --';
 

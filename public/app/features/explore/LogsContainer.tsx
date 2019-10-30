@@ -1,9 +1,10 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { DataSourceApi, Collapse } from '@grafana/ui';
+import { Collapse } from '@grafana/ui';
 
 import {
+  DataSourceApi,
   RawTimeRange,
   LogLevel,
   TimeZone,

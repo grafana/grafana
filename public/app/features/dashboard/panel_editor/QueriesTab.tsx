@@ -7,15 +7,7 @@ import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
-import {
-  PanelOptionsGroup,
-  TransformationsEditor,
-  DataQuery,
-  DataSourceSelectItem,
-  PanelData,
-  AlphaNotice,
-  PluginState,
-} from '@grafana/ui';
+import { PanelOptionsGroup, TransformationsEditor, AlphaNotice } from '@grafana/ui';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -24,7 +16,15 @@ import config from 'app/core/config';
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import { LoadingState, DataTransformerConfig, DefaultTimeRange } from '@grafana/data';
+import {
+  LoadingState,
+  DataTransformerConfig,
+  DefaultTimeRange,
+  DataSourceSelectItem,
+  DataQuery,
+  PanelData,
+  PluginState,
+} from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { addQuery } from 'app/core/utils/query';
 import { Unsubscribable } from 'rxjs';
