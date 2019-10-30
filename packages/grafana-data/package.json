@@ -40,5 +40,9 @@
     "sinon": "1.17.6",
     "typescript": "3.6.3"
   },
-  "types": "src/index.ts"
+  "types": "src/index.ts",
+  "dependencies": {
+    "@types/react": "16.8.16",
+    "rxjs": "6.4.0"
+  }
 }
