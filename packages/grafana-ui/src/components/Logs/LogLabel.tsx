@@ -109,7 +109,7 @@ class UnThemedLogLabel extends PureComponent<Props, State> {
         )}
         {showStats && (
           <span className={cx([styles.logsLabelStats])}>
-            <LogLabelStats stats={stats} rowCount={getRows().length} label={label} value={value} />
+            <LogLabelStats stats={stats} rowCount={getRows().length} label={label} value={value} isLabel={true} />
           </span>
         )}
       </span>

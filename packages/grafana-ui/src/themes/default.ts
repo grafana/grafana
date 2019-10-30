@@ -57,6 +57,7 @@ const theme: GrafanaThemeCommons = {
       sm: 1.1,
       md: 4 / 3,
       lg: 1.5,
+      xl: 2,
     },
     link: {
       decoration: 'none',

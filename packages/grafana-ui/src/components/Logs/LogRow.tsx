@@ -92,7 +92,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           </div>
         )}
         <div className={style.logsRowLevel} />
-        <div onClick={this.toggleDetails} className={style.logsRowToggleDetails}>
+        <div title="See log details" onClick={this.toggleDetails} className={style.logsRowToggleDetails}>
           <i className={showDetails ? 'fa fa-chevron-up' : 'fa fa-chevron-down'} />
         </div>
         <div>

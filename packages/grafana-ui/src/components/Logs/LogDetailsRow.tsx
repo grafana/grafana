@@ -19,6 +19,7 @@ interface Props extends Themeable {
   parsedKey: string;
   field: string;
   row: LogRowModel;
+  isLabel: boolean;
   parser: LogsParser | undefined;
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
@@ -73,9 +74,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   }
 
   createStatsForLabels() {
-    const { getRows, parser, parsedKey, parsedValue } = this.props;
-    // If is filterable, then isLabel = true
-    const isLabel = this.props.onClickFilterLabel;
+    const { getRows, parser, parsedKey, parsedValue, isLabel } = this.props;
     const allRows = getRows();
     const fieldLabel = parsedKey;
     const fieldValue = parsedValue;
@@ -91,23 +90,23 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   }
 
   render() {
-    const { theme, parsedKey, parsedValue, onClickFilterLabel, onClickFilterOutLabel } = this.props;
+    const { theme, parsedKey, parsedValue, isLabel } = this.props;
     const { showFieldsStats, fieldStats, fieldLabel, fieldValue, fieldCount } = this.state;
     const style = getLogRowStyles(theme);
     return (
-      <div className={style.logsRowDetailsRow}>
+      <div className={style.logsRowDetailsValue}>
         {/* Action buttons - show stats/filter results */}
         <div onClick={this.showStats} className={style.logsRowDetailsIcon}>
           <i className={'fa fa-signal'} />
         </div>
-        {onClickFilterLabel ? (
+        {isLabel ? (
           <div onClick={() => this.filterLabel()} className={style.logsRowDetailsIcon}>
             <i className={'fa fa-search-plus'} />
           </div>
         ) : (
           <div className={style.logsRowDetailsIcon} />
         )}
-        {onClickFilterOutLabel ? (
+        {isLabel ? (
           <div onClick={() => this.filterOutLabel()} className={style.logsRowDetailsIcon}>
             <i className={'fa fa-search-minus'} />
           </div>
@@ -123,7 +122,13 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           <span>{parsedValue}</span>
           {showFieldsStats && (
             <div className={style.logsRowCell}>
-              <LogLabelStats stats={fieldStats!} label={fieldLabel!} value={fieldValue!} rowCount={fieldCount} />
+              <LogLabelStats
+                stats={fieldStats!}
+                label={fieldLabel!}
+                value={fieldValue!}
+                rowCount={fieldCount}
+                isLabel={isLabel}
+              />
             </div>
           )}
         </div>

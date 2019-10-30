@@ -37,6 +37,7 @@ export interface GrafanaThemeCommons {
       sm: number; //1.1
       md: number; // 4/3
       lg: number; // 1.5
+      xl: number; // 2
     };
     // TODO: Refactor to use size instead of custom defs
     heading: {

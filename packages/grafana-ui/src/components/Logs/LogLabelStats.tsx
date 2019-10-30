@@ -58,11 +58,12 @@ interface Props extends Themeable {
   label: string;
   value: string;
   rowCount: number;
+  isLabel: boolean;
 }
 
 class UnThemedLogLabelStats extends PureComponent<Props> {
   render() {
-    const { label, rowCount, stats, value, theme } = this.props;
+    const { label, rowCount, stats, value, theme, isLabel } = this.props;
     const style = getStyles(theme);
     const topRows = stats.slice(0, STATS_ROW_LIMIT);
     let activeRow = topRows.find(row => row.value === value);
@@ -84,7 +85,7 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
       <div className={style.logsStats}>
         <div className={style.logsStatsHeader}>
           <div className={style.logsStatsTitle}>
-            {label}: {total} of {rowCount} rows have that label
+            {label}: {total} of {rowCount} rows have that {isLabel ? 'label' : 'field'}
           </div>
         </div>
         <div className={style.logsStatsBody}>

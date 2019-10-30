@@ -241,6 +241,7 @@ exports[`Render should render with base threshold 1`] = `
                                 "lg": 1.5,
                                 "md": 1.3333333333333333,
                                 "sm": 1.1,
+                                "xl": 2,
                                 "xs": 1,
                               },
                               "link": Object {
@@ -451,6 +452,7 @@ exports[`Render should render with base threshold 1`] = `
                                       "lg": 1.5,
                                       "md": 1.3333333333333333,
                                       "sm": 1.1,
+                                      "xl": 2,
                                       "xs": 1,
                                     },
                                     "link": Object {
