@@ -32,11 +32,11 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 					dimensions := make(map[string][]string)
 					dimensions["LoadBalancer"] = []string{"lb1", "lb2", "lb3"}
 					dimensions["InstanceId"] = []string{"i-123", "i-456", "i-789"}
-					sortedDimensions := sortDimensions(dimensions)
+
 					query := &cloudWatchQuery{
 						Namespace:  "AWS/EC2",
 						MetricName: "CPUUtilization",
-						Dimensions: sortedDimensions,
+						Dimensions: dimensions,
 						Period:     300,
 						Identifier: "id1",
 						Expression: "",
@@ -85,11 +85,11 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 					dimensions := make(map[string][]string)
 					dimensions["LoadBalancer"] = []string{"lb1", "lb2", "lb3"}
 					dimensions["InstanceId"] = []string{"i-123", "*", "i-789"}
-					sortedDimensions := sortDimensions(dimensions)
+
 					query := &cloudWatchQuery{
 						Namespace:  "AWS/EC2",
 						MetricName: "CPUUtilization",
-						Dimensions: sortedDimensions,
+						Dimensions: dimensions,
 						Period:     300,
 						Identifier: "id1",
 						Expression: "",
@@ -124,11 +124,11 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 					dimensions := make(map[string][]string)
 					dimensions["LoadBalancer"] = []string{"lb1", "lb2", "lb3"}
 					dimensions["InstanceId"] = []string{"i-123", "i-456", "i-789"}
-					sortedDimensions := sortDimensions(dimensions)
+
 					query := &cloudWatchQuery{
 						Namespace:  "AWS/EC2",
 						MetricName: "CPUUtilization",
-						Dimensions: sortedDimensions,
+						Dimensions: dimensions,
 						Period:     300,
 						Identifier: "id1",
 						Expression: "",
@@ -160,11 +160,11 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 					dimensions := make(map[string][]string)
 					dimensions["LoadBalancer"] = []string{"lb1", "lb2", "lb3"}
 					dimensions["InstanceId"] = []string{"i-123", "*", "i-789"}
-					sortedDimensions := sortDimensions(dimensions)
+
 					query := &cloudWatchQuery{
 						Namespace:  "AWS/EC2",
 						MetricName: "CPUUtilization",
-						Dimensions: sortedDimensions,
+						Dimensions: dimensions,
 						Period:     300,
 						Identifier: "id1",
 						Expression: "",

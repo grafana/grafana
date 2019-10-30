@@ -64,10 +64,14 @@ func buildSearchExpression(query *cloudWatchQuery, stat string) string {
 	}
 
 	searchTerm := fmt.Sprintf(`MetricName="%s"`, query.MetricName)
-	sortedKnownDimensions := sortDimensions(knownDimensions)
-	for key, values := range sortedKnownDimensions {
-		valueExpression := join(values, " OR ", `"`, `"`)
-		if len(values) > 1 {
+	keys := make([]string, 0)
+	for k := range knownDimensions {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		valueExpression := join(knownDimensions[key], " OR ", `"`, `"`)
+		if len(knownDimensions[key]) > 1 {
 			valueExpression = fmt.Sprintf(`(%s)`, valueExpression)
 		}
 		keyFilter := fmt.Sprintf(`"%s"=%s`, key, valueExpression)
