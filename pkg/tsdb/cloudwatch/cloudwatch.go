@@ -106,9 +106,9 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 					Error: err,
 				}
 				return results, nil
-			} else {
-				return results, err
 			}
+
+			return results, err
 		}
 		metricDataParamsByRegion[region] = metricDataParams
 	}
