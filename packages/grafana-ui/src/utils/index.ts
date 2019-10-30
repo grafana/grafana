@@ -1,4 +1,3 @@
-export * from './valueFormats/valueFormats';
 export * from './colors';
 export * from './namedColorsPalette';
 export * from './displayProcessor';
