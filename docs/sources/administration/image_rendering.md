@@ -47,31 +47,6 @@ The [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-
 
 You can run the remote HTTP rendering service using Docker or as a standalone Node.js application.
 
-**Running as standalone Node.js application:**
-
-The following example describes how to build and run the remote HTTP rendering service as a standalone node.js application and configure Grafana appropriately.
-
-1. Git clone the [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) repository.
-2. Install dependencies and build:
-
-```bash
-yarn install --pure-lockfile
-yarn run build
-```
-3. Run the server
-
-```bash
-node build/app.js server --port=8081
-```
-3. Update Grafana configuration:
-
-```
-[rendering]
-server_url = http://localhost:8081/render
-callback_url = http://localhost:3000/
-```
-4. Restart Grafana
-
 **Using Docker:**
 
 The following example describes how to run Grafana and the remote HTTP rendering service in two separate docker containers using Docker Compose.
@@ -101,6 +76,31 @@ and finally run:
 ```bash
 docker-compose up
 ```
+
+**Running as standalone Node.js application:**
+
+The following example describes how to build and run the remote HTTP rendering service as a standalone node.js application and configure Grafana appropriately.
+
+1. Git clone the [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) repository.
+2. Install dependencies and build:
+
+```bash
+yarn install --pure-lockfile
+yarn run build
+```
+3. Run the server
+
+```bash
+node build/app.js server --port=8081
+```
+3. Update Grafana configuration:
+
+```
+[rendering]
+server_url = http://localhost:8081/render
+callback_url = http://localhost:3000/
+```
+4. Restart Grafana
 
 ## Alerting and render limits
 
