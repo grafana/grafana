@@ -15,17 +15,14 @@ import { Plugin, Node } from 'slate';
 // Types
 import { LokiQuery } from '../types';
 import { TypeaheadOutput } from 'app/types/explore';
-import { ExploreQueryFieldProps, DataSourceStatus, DOMUtil } from '@grafana/ui';
+import { ExploreQueryFieldProps, DOMUtil } from '@grafana/ui';
 import { AbsoluteTimeRange } from '@grafana/data';
 import { Grammar } from 'prismjs';
 import LokiLanguageProvider, { LokiHistoryItem } from '../language_provider';
 import { SuggestionsState } from 'app/features/explore/slate-plugins/suggestions';
 import LokiDatasource from '../datasource';
 
-function getChooserText(hasSyntax: boolean, hasLogLabels: boolean, datasourceStatus: DataSourceStatus) {
-  if (datasourceStatus === DataSourceStatus.Disconnected) {
-    return '(Disconnected)';
-  }
+function getChooserText(hasSyntax: boolean, hasLogLabels: boolean) {
   if (!hasSyntax) {
     return 'Loading labels...';
   }
@@ -144,21 +141,12 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
   };
 
   render() {
-    const {
-      data,
-      query,
-      syntaxLoaded,
-      logLabelOptions,
-      onLoadOptions,
-      onLabelsRefresh,
-      datasource,
-      datasourceStatus,
-    } = this.props;
+    const { data, query, syntaxLoaded, logLabelOptions, onLoadOptions, onLabelsRefresh, datasource } = this.props;
     const lokiLanguageProvider = datasource.languageProvider as LokiLanguageProvider;
     const cleanText = datasource.languageProvider ? lokiLanguageProvider.cleanText : undefined;
     const hasLogLabels = logLabelOptions && logLabelOptions.length > 0;
-    const chooserText = getChooserText(syntaxLoaded, hasLogLabels, datasourceStatus);
-    const buttonDisabled = !syntaxLoaded || datasourceStatus === DataSourceStatus.Disconnected;
+    const chooserText = getChooserText(syntaxLoaded, hasLogLabels);
+    const buttonDisabled = !(syntaxLoaded && hasLogLabels);
     const showError = data && data.error && data.error.refId === query.refId;
 
     return (
@@ -166,7 +154,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
         <div className="gf-form-inline">
           <div className="gf-form">
             <Cascader
-              options={logLabelOptions}
+              options={logLabelOptions || []}
               onChange={this.onChangeLogLabels}
               loadData={onLoadOptions}
               expandIcon={null}

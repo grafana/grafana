@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { ChangeEvent, PureComponent } from 'react';
 import { VariableQueryProps } from 'app/types/plugins';
 import SimpleSelect from './SimpleSelect';
 import { getMetricTypes, getLabelKeys, extractServicesFromMetricDescriptors } from '../functions';
@@ -63,7 +63,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     this.setState(state);
   }
 
-  async onQueryTypeChange(event: any) {
+  async onQueryTypeChange(event: ChangeEvent<HTMLSelectElement>) {
     const state: any = {
       selectedQueryType: event.target.value,
       ...(await this.getLabels(this.state.selectedMetricType, event.target.value)),
@@ -71,7 +71,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     this.setState(state);
   }
 
-  async onServiceChange(event: any) {
+  async onServiceChange(event: ChangeEvent<HTMLSelectElement>) {
     const { metricTypes, selectedMetricType } = getMetricTypes(
       this.state.metricDescriptors,
       this.state.selectedMetricType,
@@ -87,12 +87,12 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     this.setState(state);
   }
 
-  async onMetricTypeChange(event: any) {
+  async onMetricTypeChange(event: ChangeEvent<HTMLSelectElement>) {
     const state: any = { selectedMetricType: event.target.value, ...(await this.getLabels(event.target.value)) };
     this.setState(state);
   }
 
-  onLabelKeyChange(event: any) {
+  onLabelKeyChange(event: ChangeEvent<HTMLSelectElement>) {
     this.setState({ labelKey: event.target.value });
   }
 

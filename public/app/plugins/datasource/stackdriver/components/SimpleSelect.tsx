@@ -1,7 +1,7 @@
-import React, { FC } from 'react';
+import React, { ChangeEvent, FC } from 'react';
 
 interface Props {
-  onValueChange: (e: any) => void;
+  onValueChange: (e: ChangeEvent<HTMLSelectElement>) => void;
   options: any[];
   value: string;
   label: string;

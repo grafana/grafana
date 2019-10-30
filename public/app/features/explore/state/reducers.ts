@@ -15,9 +15,6 @@ import { DataQuery, DataSourceApi, PanelData, DataQueryRequest, RefreshPicker, P
 import {
   HigherOrderAction,
   ActionTypes,
-  testDataSourcePendingAction,
-  testDataSourceSuccessAction,
-  testDataSourceFailureAction,
   splitCloseAction,
   SplitCloseActionPayload,
   loadExploreDatasources,
@@ -82,7 +79,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
   containerWidth: 0,
   datasourceInstance: null,
   requestedDatasourceName: null,
-  datasourceError: null,
   datasourceLoading: null,
   datasourceMissing: false,
   exploreDatasources: [],
@@ -472,37 +468,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         hiddenLogLevels: Array.from(hiddenLogLevels),
-      };
-    },
-  })
-  .addMapper({
-    filter: testDataSourcePendingAction,
-    mapper: (state): ExploreItemState => {
-      return {
-        ...state,
-        datasourceError: null,
-      };
-    },
-  })
-  .addMapper({
-    filter: testDataSourceSuccessAction,
-    mapper: (state): ExploreItemState => {
-      return {
-        ...state,
-        datasourceError: null,
-      };
-    },
-  })
-  .addMapper({
-    filter: testDataSourceFailureAction,
-    mapper: (state, action): ExploreItemState => {
-      return {
-        ...state,
-        datasourceError: action.payload.error,
-        graphResult: undefined,
-        tableResult: undefined,
-        logsResult: undefined,
-        update: makeInitialUpdateState(),
       };
     },
   })
