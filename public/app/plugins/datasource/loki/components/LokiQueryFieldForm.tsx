@@ -15,8 +15,8 @@ import { Plugin, Node } from 'slate';
 // Types
 import { LokiQuery } from '../types';
 import { TypeaheadOutput } from 'app/types/explore';
-import { ExploreQueryFieldProps, DOMUtil } from '@grafana/ui';
-import { AbsoluteTimeRange } from '@grafana/data';
+import { DOMUtil } from '@grafana/ui';
+import { AbsoluteTimeRange, ExploreQueryFieldProps } from '@grafana/data';
 import { Grammar } from 'prismjs';
 import LokiLanguageProvider, { LokiHistoryItem } from '../language_provider';
 import { SuggestionsState } from 'app/features/explore/slate-plugins/suggestions';

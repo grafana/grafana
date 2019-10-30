@@ -1,9 +1,7 @@
-import { DataSourceApi } from '@grafana/ui/src/types/datasource';
-
 import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 import { makeExploreItemState } from 'app/features/explore/state/reducers';
 import { StoreState, UserState } from 'app/types';
-import { TimeRange, dateTime } from '@grafana/data';
+import { TimeRange, dateTime, DataSourceApi } from '@grafana/data';
 
 export const mockExploreState = (options: any = {}) => {
   const isLive = options.isLive || false;
