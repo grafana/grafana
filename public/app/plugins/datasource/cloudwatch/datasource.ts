@@ -149,7 +149,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
   }
 
   buildCloudwatchConsoleUrl(
-    { region, namespace, metricName, dimensions, statistics, period }: CloudWatchQuery,
+    { region, namespace, metricName, dimensions, statistics, period, expression }: CloudWatchQuery,
     start: string,
     end: string,
     title: string,
@@ -164,8 +164,20 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
       region,
     } as any;
 
-    if (searchExpressions && searchExpressions.length) {
-      conf = { ...conf, metrics: [...searchExpressions.map(expression => ({ expression }))] };
+    const isSearchExpression =
+      (searchExpressions && searchExpressions.length) || (statistics.length <= 1 && /SEARCH().*/.test(expression));
+    const isMathExpression = !isSearchExpression && expression;
+
+    if (isMathExpression) {
+      return '';
+    }
+
+    if (isSearchExpression) {
+      const metrics: any =
+        searchExpressions && searchExpressions.length
+          ? searchExpressions.map(expression => ({ expression }))
+          : [{ expression }];
+      conf = { ...conf, metrics };
     } else {
       conf = {
         ...conf,
@@ -212,14 +224,16 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
             ...acc,
             ...queryResult.series.map(({ name, points }: any) => {
               const dataFrame = toDataFrame({ target: name, datapoints: points });
-              for (const field of dataFrame.fields) {
-                field.config.links = [
-                  {
-                    url: link,
-                    title: 'View in CloudWatch console',
-                    targetBlank: true,
-                  },
-                ];
+              if (link) {
+                for (const field of dataFrame.fields) {
+                  field.config.links = [
+                    {
+                      url: link,
+                      title: 'View in CloudWatch console',
+                      targetBlank: true,
+                    },
+                  ];
+                }
               }
               return dataFrame;
             }),

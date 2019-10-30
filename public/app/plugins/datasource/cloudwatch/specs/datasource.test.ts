@@ -45,6 +45,7 @@ describe('CloudWatchDatasource', () => {
       rangeRaw: { from: 1483228800, to: 1483232400 },
       targets: [
         {
+          expression: '',
           refId: 'A',
           region: 'us-east-1',
           namespace: 'AWS/EC2',
@@ -162,6 +163,63 @@ describe('CloudWatchDatasource', () => {
         expect(result.data[0].name).toBe(response.results.A.series[0].name);
         expect(result.data[0].fields[0].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
         done();
+      });
+    });
+
+    describe('a correct cloudwatch url should be built for each time series in the response', () => {
+      beforeEach(() => {
+        ctx.backendSrv.datasourceRequest = jest.fn(params => {
+          requestParams = params.data;
+          return Promise.resolve({ data: response });
+        });
+      });
+
+      it('should be built correctly if theres one search expressions returned in meta for a given query row', done => {
+        response.results['A'].meta.searchExpressions = [`REMOVE_EMPTY(SEARCH('some expression'))`];
+        ctx.ds.query(query).then((result: any) => {
+          expect(result.data[0].name).toBe(response.results.A.series[0].name);
+          expect(result.data[0].fields[0].config.links[0].title).toBe('View in CloudWatch console');
+          expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
+            `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'some expression\'))"}]}`
+          );
+          done();
+        });
+      });
+
+      it('should be built correctly if theres two search expressions returned in meta for a given query row', done => {
+        response.results['A'].meta.searchExpressions = [
+          `REMOVE_EMPTY(SEARCH('first expression'))`,
+          `REMOVE_EMPTY(SEARCH('second expression'))`,
+        ];
+        ctx.ds.query(query).then((result: any) => {
+          expect(result.data[0].name).toBe(response.results.A.series[0].name);
+          expect(result.data[0].fields[0].config.links[0].title).toBe('View in CloudWatch console');
+          expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
+            `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'first expression\'))"},{"expression":"REMOVE_EMPTY(SEARCH(\'second expression\'))"}]}`
+          );
+          done();
+        });
+      });
+
+      it('should be built correctly if the query is a metric stat query', done => {
+        response.results['A'].meta.searchExpressions = [];
+        ctx.ds.query(query).then((result: any) => {
+          expect(result.data[0].name).toBe(response.results.A.series[0].name);
+          expect(result.data[0].fields[0].config.links[0].title).toBe('View in CloudWatch console');
+          expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
+            `region=us-east-1#metricsV2:graph={\"view\":\"timeSeries\",\"stacked\":false,\"title\":\"A\",\"start\":\"2016-12-31T15:00:00.000Z\",\"end\":\"2016-12-31T16:00:00.000Z\",\"region\":\"us-east-1\",\"metrics\":[[\"AWS/EC2\",\"CPUUtilization\",\"InstanceId\",\"i-12345678\",{\"stat\":\"Average\",\"period\":\"300\"}]]}`
+          );
+          done();
+        });
+      });
+
+      it('should not be added at all if query is a math expression', done => {
+        query.targets[0].expression = 'a * 2';
+        response.results['A'].meta.searchExpressions = [];
+        ctx.ds.query(query).then((result: any) => {
+          expect(result.data[0].fields[0].config.links).toBeUndefined();
+          done();
+        });
       });
     });
   });
