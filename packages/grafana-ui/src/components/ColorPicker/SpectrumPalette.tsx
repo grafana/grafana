@@ -2,12 +2,11 @@ import React from 'react';
 import { CustomPicker, ColorResult } from 'react-color';
 
 import { Saturation, Hue, Alpha } from 'react-color/lib/components/common';
-import { getColorFromHexRgbOrName } from '@grafana/data/src/utils/namedColorsPalette';
 import tinycolor from 'tinycolor2';
 import ColorInput from './ColorInput';
 import { Themeable } from '../../types';
 import SpectrumPalettePointer, { SpectrumPalettePointerProps } from './SpectrumPalettePointer';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme, getColorFromHexRgbOrName } from '@grafana/data';
 
 export interface SpectrumPaletteProps extends Themeable {
   color: string;

@@ -1,7 +1,7 @@
 // Angular pages
 import { ExampleConfigCtrl } from './legacy/config';
 import { AngularExamplePageCtrl } from './legacy/angular_example_page';
-import { AppPlugin } from '@grafana/ui';
+import { AppPlugin } from '@grafana/data';
 import { ExamplePage1 } from './config/ExamplePage1';
 import { ExamplePage2 } from './config/ExamplePage2';
 import { ExampleRootPage } from './ExampleRootPage';

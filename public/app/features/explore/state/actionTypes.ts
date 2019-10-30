@@ -1,9 +1,17 @@
 // Types
 import { Unsubscribable } from 'rxjs';
 import { Emitter } from 'app/core/core';
-import { DataQuery, DataSourceSelectItem, DataSourceApi, QueryFixAction, PanelData } from '@grafana/ui';
-
-import { LogLevel, TimeRange, LoadingState, AbsoluteTimeRange } from '@grafana/data';
+import {
+  DataQuery,
+  DataSourceSelectItem,
+  DataSourceApi,
+  QueryFixAction,
+  PanelData,
+  LogLevel,
+  TimeRange,
+  LoadingState,
+  AbsoluteTimeRange,
+} from '@grafana/data';
 import { ExploreId, ExploreItemState, HistoryItem, ExploreUIState, ExploreMode } from 'app/types/explore';
 import { actionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
 

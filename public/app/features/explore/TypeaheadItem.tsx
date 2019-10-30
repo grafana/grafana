@@ -3,7 +3,8 @@ import React, { FunctionComponent, useContext } from 'react';
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
 import { css, cx } from 'emotion';
-import { GrafanaTheme, ThemeContext, selectThemeVariant } from '@grafana/ui';
+import { ThemeContext, selectThemeVariant } from '@grafana/ui';
+import { GrafanaTheme } from '@grafana/data';
 
 import { CompletionItem, CompletionItemKind } from 'app/types/explore';
 
