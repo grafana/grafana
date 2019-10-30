@@ -3,7 +3,7 @@ import React, { memo } from 'react';
 
 // Types
 import { AbsoluteTimeRange } from '@grafana/data';
-import { QueryEditorProps, DataSourceStatus } from '@grafana/ui';
+import { QueryEditorProps } from '@grafana/ui';
 import { LokiDatasource } from '../datasource';
 import { LokiQuery } from '../types';
 import { LokiQueryField } from './LokiQueryField';
@@ -30,8 +30,6 @@ export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
 
   const { isSyntaxReady, setActiveOption, refreshLabels, ...syntaxProps } = useLokiSyntax(
     datasource.languageProvider,
-    // TODO maybe use real status
-    DataSourceStatus.Connected,
     absolute
   );
 
@@ -39,7 +37,6 @@ export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
     <div>
       <LokiQueryField
         datasource={datasource}
-        datasourceStatus={DataSourceStatus.Connected}
         query={query}
         onChange={onChange}
         onRunQuery={onRunQuery}

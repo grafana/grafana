@@ -1,4 +1,4 @@
-import { refreshExplore, testDatasource, loadDatasource } from './actions';
+import { refreshExplore, loadDatasource } from './actions';
 import { ExploreId, ExploreUrlState, ExploreUpdateState, ExploreMode } from 'app/types';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import {
@@ -6,9 +6,6 @@ import {
   InitializeExplorePayload,
   updateUIStateAction,
   setQueriesAction,
-  testDataSourcePendingAction,
-  testDataSourceSuccessAction,
-  testDataSourceFailureAction,
   loadDatasourcePendingAction,
   loadDatasourceReadyAction,
 } from './actionTypes';
@@ -164,72 +161,6 @@ describe('refreshExplore', () => {
   });
 });
 
-describe('test datasource', () => {
-  describe('when testDatasource thunk is dispatched', () => {
-    describe('and testDatasource call on instance is successful', () => {
-      it('then it should dispatch testDataSourceSuccessAction', async () => {
-        const exploreId = ExploreId.left;
-        const mockDatasourceInstance = {
-          testDatasource: () => {
-            return Promise.resolve({ status: 'success' });
-          },
-        };
-
-        const dispatchedActions = await thunkTester({})
-          .givenThunk(testDatasource)
-          .whenThunkIsDispatched(exploreId, mockDatasourceInstance);
-
-        expect(dispatchedActions).toEqual([
-          testDataSourcePendingAction({ exploreId }),
-          testDataSourceSuccessAction({ exploreId }),
-        ]);
-      });
-    });
-
-    describe('and testDatasource call on instance is not successful', () => {
-      it('then it should dispatch testDataSourceFailureAction', async () => {
-        const exploreId = ExploreId.left;
-        const error = 'something went wrong';
-        const mockDatasourceInstance = {
-          testDatasource: () => {
-            return Promise.resolve({ status: 'fail', message: error });
-          },
-        };
-
-        const dispatchedActions = await thunkTester({})
-          .givenThunk(testDatasource)
-          .whenThunkIsDispatched(exploreId, mockDatasourceInstance);
-
-        expect(dispatchedActions).toEqual([
-          testDataSourcePendingAction({ exploreId }),
-          testDataSourceFailureAction({ exploreId, error }),
-        ]);
-      });
-    });
-
-    describe('and testDatasource call on instance throws', () => {
-      it('then it should dispatch testDataSourceFailureAction', async () => {
-        const exploreId = ExploreId.left;
-        const error = 'something went wrong';
-        const mockDatasourceInstance = {
-          testDatasource: () => {
-            throw { statusText: error };
-          },
-        };
-
-        const dispatchedActions = await thunkTester({})
-          .givenThunk(testDatasource)
-          .whenThunkIsDispatched(exploreId, mockDatasourceInstance);
-
-        expect(dispatchedActions).toEqual([
-          testDataSourcePendingAction({ exploreId }),
-          testDataSourceFailureAction({ exploreId, error }),
-        ]);
-      });
-    });
-  });
-});
-
 describe('loading datasource', () => {
   describe('when loadDatasource thunk is dispatched', () => {
     describe('and all goes fine', () => {
@@ -255,8 +186,6 @@ describe('loading datasource', () => {
             exploreId,
             requestedDatasourceName: mockDatasourceInstance.name,
           }),
-          testDataSourcePendingAction({ exploreId }),
-          testDataSourceSuccessAction({ exploreId }),
           loadDatasourceReadyAction({ exploreId, history: [] }),
         ]);
       });
@@ -285,8 +214,6 @@ describe('loading datasource', () => {
             exploreId,
             requestedDatasourceName: mockDatasourceInstance.name,
           }),
-          testDataSourcePendingAction({ exploreId }),
-          testDataSourceSuccessAction({ exploreId }),
         ]);
       });
     });
