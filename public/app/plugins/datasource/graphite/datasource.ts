@@ -68,6 +68,9 @@ export class GraphiteDatasource {
     if (params.length === 0) {
       return this.$q.when({ data: [] });
     }
+    if (true) {
+      params.push('meta=true');
+    }
 
     const httpOptions: any = {
       method: 'POST',
@@ -543,7 +546,7 @@ export class GraphiteDatasource {
     return this.backendSrv.datasourceRequest(options);
   }
 
-  buildGraphiteParams(options: any, scopedVars: ScopedVars) {
+  buildGraphiteParams(options: any, scopedVars: ScopedVars): string[] {
     const graphiteOptions = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
     const cleanOptions = [],
       targets: any = {};
