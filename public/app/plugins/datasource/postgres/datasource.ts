@@ -127,7 +127,7 @@ export class PostgresDatasource {
       .then((data: any) => this.responseParser.transformAnnotationResponse(options, data));
   }
 
-  metricFindQuery(query: string, optionalOptions: { variable?: any }) {
+  metricFindQuery(query: string, optionalOptions: { variable?: any; searchFilter?: string }) {
     let refId = 'tempvar';
     if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
       refId = optionalOptions.variable.name;

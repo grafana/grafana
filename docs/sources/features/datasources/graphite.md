@@ -118,7 +118,7 @@ You can also create nested variables that use other variables in their definitio
 > Available from Grafana 6.5 and above
 
 Using `$__searchFilter` in the query field will filter the query result based on what the user types in the dropdown select box.
-When nothing has been entered by the user the default value for `$__searchFilter` is `*`.
+When nothing has been entered by the user the default value for `$__searchFilter` is `*` or `(.*)` when used as part of a regular expression.
 
 The example below shows how to use `$__searchFilter` as part of the query field to enable searching for `server` while the user types in the dropdown select box.
 
@@ -126,6 +126,12 @@ Query
 ```bash
 apps.$app.servers.$__searchFilter
 ```
+
+TagValues
+```bash
+tag_values(server, server=~$__searchFilter)
+```
+
 
 ### Variable Usage
 

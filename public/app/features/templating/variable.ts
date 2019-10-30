@@ -16,27 +16,68 @@ export const variableRegexExec = (variableString: string) => {
 };
 
 export const SEARCH_FILTER_VARIABLE = '$__searchFilter';
+interface SearchFilterInterpolationHandler<T> {
+  canHandle: (args: InterpolateSearchFilterArgs) => boolean;
+  handle: (args: InterpolateSearchFilterArgs) => T;
+}
+
+const defaultWildcardCharHandler: SearchFilterInterpolationHandler<string> = {
+  canHandle: (args: InterpolateSearchFilterArgs) => !isSearchFilterPartOfRegexExpression(args.query),
+  handle: (args: InterpolateSearchFilterArgs) => args.wildcardChar,
+};
+
+const regexWildcardCharHandler: SearchFilterInterpolationHandler<string> = {
+  canHandle: (args: InterpolateSearchFilterArgs) => isSearchFilterPartOfRegexExpression(args.query),
+  handle: (args: InterpolateSearchFilterArgs) => (args.options.searchFilter ? '' : '(.*)'),
+};
+
+const defaultQuoteLiteralHandler: SearchFilterInterpolationHandler<boolean> = {
+  canHandle: (args: InterpolateSearchFilterArgs) => !isSearchFilterPartOfRegexExpression(args.query),
+  handle: (args: InterpolateSearchFilterArgs) => args.quoteLiteral,
+};
+
+const regexQuoteLiteralHandler: SearchFilterInterpolationHandler<boolean> = {
+  canHandle: (args: InterpolateSearchFilterArgs) => isSearchFilterPartOfRegexExpression(args.query),
+  handle: (args: InterpolateSearchFilterArgs) => false,
+};
+
+const wildCardHandlers = [defaultWildcardCharHandler, regexWildcardCharHandler];
+const quoteLiteralHandlers = [defaultQuoteLiteralHandler, regexQuoteLiteralHandler];
+
 export const containsSearchFilter = (query: string): boolean =>
   query ? query.indexOf(SEARCH_FILTER_VARIABLE) !== -1 : false;
+export const isSearchFilterPartOfRegexExpression = (query: string): boolean => {
+  if (!query) {
+    return false;
+  }
 
-export interface InterpolateSearchFilterOptions {
+  const matches = query.match(/=~(.*?)\$__searchFilter/);
+  if (!matches) {
+    return false;
+  }
+
+  return true;
+};
+
+export interface InterpolateSearchFilterArgs {
   query: string;
-  options: any;
+  options: { searchFilter?: string };
   wildcardChar: string;
   quoteLiteral: boolean;
 }
 
-export const interpolateSearchFilter = (args: InterpolateSearchFilterOptions): string => {
-  const { query, wildcardChar, quoteLiteral } = args;
-  let { options } = args;
+export const interpolateSearchFilter = (args: InterpolateSearchFilterArgs): string => {
+  const { query } = args;
 
   if (!containsSearchFilter(query)) {
     return query;
   }
 
-  options = options || {};
+  args.options = args.options || { searchFilter: '' };
+  const wildcardChar = wildCardHandlers.find(handler => handler.canHandle(args)).handle(args);
+  const quoteLiteral = quoteLiteralHandlers.find(handler => handler.canHandle(args)).handle(args);
 
-  const filter = options.searchFilter ? `${options.searchFilter}${wildcardChar}` : `${wildcardChar}`;
+  const filter = args.options.searchFilter ? `${args.options.searchFilter}${wildcardChar}` : `${wildcardChar}`;
   const replaceValue = quoteLiteral ? `'${filter}'` : filter;
 
   return query.replace(SEARCH_FILTER_VARIABLE, replaceValue);

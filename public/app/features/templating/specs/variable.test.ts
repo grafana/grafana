@@ -3,6 +3,7 @@ import {
   containsSearchFilter,
   containsVariable,
   interpolateSearchFilter,
+  isSearchFilterPartOfRegexExpression,
   SEARCH_FILTER_VARIABLE,
 } from '../variable';
 
@@ -101,6 +102,48 @@ describe('containsSearchFilter', () => {
   });
 });
 
+describe('isSearchFilterPartOfRegexExpression', () => {
+  describe('when called without query', () => {
+    it('then it should return false', () => {
+      const result = isSearchFilterPartOfRegexExpression(null);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe(`when called with a query containing regex without ${SEARCH_FILTER_VARIABLE}`, () => {
+    it('then it should return false', () => {
+      const result = isSearchFilterPartOfRegexExpression('=~^(.*?)');
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe(`when called with a query missing regex but with ${SEARCH_FILTER_VARIABLE}`, () => {
+    it('then it should return false', () => {
+      const result = isSearchFilterPartOfRegexExpression('^(.*?)$__searchFilter');
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe(`when called with a query containing regex and ${SEARCH_FILTER_VARIABLE}`, () => {
+    it('then it should return true', () => {
+      const result = isSearchFilterPartOfRegexExpression('=~(.*?)$__searchFilter');
+
+      expect(result).toBe(true);
+    });
+  });
+
+  describe(`when called with a query containing a negative regex and ${SEARCH_FILTER_VARIABLE}`, () => {
+    it('then it should return true', () => {
+      const result = isSearchFilterPartOfRegexExpression('!=~(.*?)$__searchFilter');
+
+      expect(result).toBe(true);
+    });
+  });
+});
+
 describe('interpolateSearchFilter', () => {
   describe('when called with a query without ${SEARCH_FILTER_VARIABLE}', () => {
     it('then it should return query', () => {
@@ -121,46 +164,14 @@ describe('interpolateSearchFilter', () => {
   });
 
   describe(`when called with a query with ${SEARCH_FILTER_VARIABLE}`, () => {
-    const query = `$app.${SEARCH_FILTER_VARIABLE}`;
+    describe('and searchfilter is not part of a regular expression', () => {
+      const query = `$app.${SEARCH_FILTER_VARIABLE}`;
 
-    describe('and no searchFilter is given', () => {
-      it(`then ${SEARCH_FILTER_VARIABLE} should be replaced by wildchar character`, () => {
-        const options = {};
-        const wildcardChar = '*';
-        const quoteLiteral = false;
-
-        const result = interpolateSearchFilter({
-          query,
-          options,
-          wildcardChar,
-          quoteLiteral,
-        });
-
-        expect(result).toEqual(`$app.*`);
-      });
-    });
-
-    describe('and searchFilter is given', () => {
-      const options = { searchFilter: 'filter' };
-
-      it(`then ${SEARCH_FILTER_VARIABLE} should be replaced with searchfilter and wildchar character`, () => {
-        const wildcardChar = '*';
-        const quoteLiteral = false;
-
-        const result = interpolateSearchFilter({
-          query,
-          options,
-          wildcardChar,
-          quoteLiteral,
-        });
-
-        expect(result).toEqual(`$app.filter*`);
-      });
-
-      describe(`and quoteLiteral is used`, () => {
-        it(`then the literal should be quoted`, () => {
+      describe('and no searchFilter is given', () => {
+        it(`then ${SEARCH_FILTER_VARIABLE} should be replaced by wildcard character`, () => {
+          const options = {};
           const wildcardChar = '*';
-          const quoteLiteral = true;
+          const quoteLiteral = false;
 
           const result = interpolateSearchFilter({
             query,
@@ -169,7 +180,96 @@ describe('interpolateSearchFilter', () => {
             quoteLiteral,
           });
 
-          expect(result).toEqual(`$app.'filter*'`);
+          expect(result).toEqual(`$app.*`);
+        });
+      });
+
+      describe('and searchFilter is given', () => {
+        const options = { searchFilter: 'filter' };
+
+        it(`then ${SEARCH_FILTER_VARIABLE} should be replaced with searchfilter and wildchar character`, () => {
+          const wildcardChar = '*';
+          const quoteLiteral = false;
+
+          const result = interpolateSearchFilter({
+            query,
+            options,
+            wildcardChar,
+            quoteLiteral,
+          });
+
+          expect(result).toEqual(`$app.filter*`);
+        });
+
+        describe(`and quoteLiteral is used`, () => {
+          it(`then the literal should be quoted`, () => {
+            const wildcardChar = '*';
+            const quoteLiteral = true;
+
+            const result = interpolateSearchFilter({
+              query,
+              options,
+              wildcardChar,
+              quoteLiteral,
+            });
+
+            expect(result).toEqual(`$app.'filter*'`);
+          });
+        });
+      });
+    });
+
+    describe('and searchfilter is part of a regular expression', () => {
+      const query = `=~^${SEARCH_FILTER_VARIABLE}`;
+
+      describe('and no searchFilter is given', () => {
+        it(`then ${SEARCH_FILTER_VARIABLE} should be replaced by (.*)`, () => {
+          const options = {};
+          const wildcardChar = '*';
+          const quoteLiteral = false;
+
+          const result = interpolateSearchFilter({
+            query,
+            options,
+            wildcardChar,
+            quoteLiteral,
+          });
+
+          expect(result).toEqual(`=~^(.*)`);
+        });
+      });
+
+      describe('and searchFilter is given', () => {
+        const options = { searchFilter: 'filter' };
+
+        it(`then ${SEARCH_FILTER_VARIABLE} should be replaced with searchfilter`, () => {
+          const wildcardChar = '*';
+          const quoteLiteral = false;
+
+          const result = interpolateSearchFilter({
+            query,
+            options,
+            wildcardChar,
+            quoteLiteral,
+          });
+
+          expect(result).toEqual(`=~^filter`);
+        });
+
+        describe(`and quoteLiteral is used`, () => {
+          it(`then the literal should not be quoted`, () => {
+            const wildcardChar = '*';
+            const quoteLiteral = true;
+
+            const result = interpolateSearchFilter({
+              query,
+              options,
+              wildcardChar,
+              quoteLiteral,
+            });
+
+            expect(result).toEqual(`=~^filter`);
+          });
         });
       });
     });
