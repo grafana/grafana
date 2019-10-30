@@ -27,6 +27,9 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
 
     // Start streams and prepare queries
     for (const target of options.targets) {
+      if (target.hide) {
+        continue;
+      }
       if (target.scenarioId === 'streaming_client') {
         streams.push(runStream(target, options));
       } else {
