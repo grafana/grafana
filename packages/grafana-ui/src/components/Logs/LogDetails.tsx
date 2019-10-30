@@ -54,7 +54,7 @@ class UnThemedLogDetails extends PureComponent<Props, State> {
       <div className={style.logsRowDetailsTable}>
         {labelsAvailable && (
           <div className={style.logsRowDetailsSectionTable}>
-            <div className={style.logsRowDetailsHeading}>Labels:</div>
+            <div className={style.logsRowDetailsHeading}>Log Labels:</div>
             {Object.keys(labels).map(key => {
               const value = labels[key];
               const field = `${key}=${value}`;
