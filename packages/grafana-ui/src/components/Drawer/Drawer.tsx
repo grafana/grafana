@@ -8,8 +8,11 @@ interface Props {
   children: ReactNode;
   /** Title shown at the top of the drawer */
   title?: string;
+  /** Should the Drawer be closable by clicking on the mask */
   maskClosable?: boolean;
+  /** Render the drawer inside a container on the page */
   inline?: boolean;
+  /** width in percentage of the container */
   width?: number;
 
   onClose: () => void;
@@ -33,6 +36,7 @@ export const Drawer: FC<Props> = ({ children, inline = false, onClose, maskClosa
 
   return (
     <RcDrawer
+      level={null}
       onClose={onClose}
       handler={false}
       open={true}
@@ -41,7 +45,6 @@ export const Drawer: FC<Props> = ({ children, inline = false, onClose, maskClosa
       width={`${width}%`}
       getContainer={inline ? false : 'body'}
       style={{ position: `${inline && 'absolute'}` } as CSSProperties}
-      maskStyle={{ opacity: 0 }}
     >
       <div className={drawerStyles.titleContainer}>
         {title} <i className={cx('fa fa-close', drawerStyles.close)} onClick={onClose} />
