@@ -46,31 +46,16 @@ export class ExpressionDatasourceApi extends DataSourceApi<ExpressionQuery> {
         // ?? alias: templateSrv.replace(q.alias || ''),
       };
     });
-    // return from(
-    //   (getBackendSrv().datasourceRequest({
-    //     method: 'POST',
-    //     url: '/api/tsdb/query/v2',
-    //     data: {
-    //       from: range.from.valueOf().toString(),
-    //       to: range.to.valueOf().toString(),
-    //       queries: queries,
-    //     },
-    //   }) as Promise<any>).then(res => {
-    //     return { data: gelResponseToDataFrames(res) };
-    //   })
-    // );
-
-    return from(
-      getBackendSrv()
-        .post('/api/tsdb/query/v2', {
-          from: range.from.valueOf().toString(),
-          to: range.to.valueOf().toString(),
-          queries: queries,
-        })
-        .then(res => {
-          return { data: gelResponseToDataFrames(res) } as DataQueryResponse;
-        })
-    );
+    const req: Promise<DataQueryResponse> = getBackendSrv()
+      .post('/api/tsdb/query/v2', {
+        from: range.from.valueOf().toString(),
+        to: range.to.valueOf().toString(),
+        queries: queries,
+      })
+      .then((rsp: any) => {
+        return { data: gelResponseToDataFrames(rsp) } as DataQueryResponse;
+      });
+    return from(req);
   }
 
   testDatasource() {
