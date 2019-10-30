@@ -162,10 +162,6 @@ export interface ExploreItemState {
    */
   requestedDatasourceName: string | null;
   /**
-   * Error to be shown when datasource loading or testing failed.
-   */
-  datasourceError: string;
-  /**
    * True if the datasource is loading. `null` if the loading has not started yet.
    */
   datasourceLoading: boolean | null;

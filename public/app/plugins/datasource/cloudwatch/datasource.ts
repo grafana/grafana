@@ -157,7 +157,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
       region,
     } as any;
 
-    if (searchExpressions.length) {
+    if (searchExpressions && searchExpressions.length) {
       conf = { ...conf, metrics: [...searchExpressions.map(expression => ({ expression }))] };
     } else {
       conf = {
@@ -184,8 +184,15 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
   performTimeSeriesQuery(request: any, { from, to }: TimeRange) {
     return this.awsRequest('/api/tsdb/query', request)
       .then((res: any) => {
+        if (!res.results) {
+          return { data: [] };
+        }
         const dataFrames = Object.values(request.queries).reduce((acc: any, queryRequest: any) => {
           const queryResult = res.results[queryRequest.refId];
+          if (!queryResult) {
+            return acc;
+          }
+
           const link = this.buildCloudwatchConsoleUrl(
             queryRequest,
             from.toISOString(),
@@ -196,14 +203,13 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
 
           return [
             ...acc,
-            ...queryResult.series.map(({ name, points, meta }: any) => {
-              const series = { target: name, datapoints: points };
-              const dataFrame = toDataFrame(meta && meta.unit ? { ...series, unit: meta.unit } : series);
+            ...queryResult.series.map(({ name, points }: any) => {
+              const dataFrame = toDataFrame({ target: name, datapoints: points });
               for (const field of dataFrame.fields) {
                 field.config.links = [
                   {
                     url: link,
-                    title: 'View in Cloudwatch console',
+                    title: 'View in CloudWatch console',
                     targetBlank: true,
                   },
                 ];
@@ -216,6 +222,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
         return { data: dataFrames };
       })
       .catch((err: any = { data: { error: '' } }) => {
+        console.log({ supererror: err });
         if (/^ValidationError:.*/.test(err.data.error)) {
           appEvents.emit('ds-request-error', err.data.error);
         }
