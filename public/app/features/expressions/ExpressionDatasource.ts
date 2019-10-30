@@ -13,7 +13,7 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 import { gelResponseToDataFrames } from './util';
 
 /**
- * This is a singleton that is not actually instanciated
+ * This is a singleton instance that just pretends to be a DataSource
  */
 export class ExpressionDatasourceApi extends DataSourceApi<ExpressionQuery> {
   constructor(instanceSettings: DataSourceInstanceSettings) {
@@ -27,23 +27,27 @@ export class ExpressionDatasourceApi extends DataSourceApi<ExpressionQuery> {
   query(request: DataQueryRequest): Observable<DataQueryResponse> {
     const { targets, intervalMs, maxDataPoints, range } = request;
 
+    let expressionCount = 0;
     const orgId = (window as any).grafanaBootData.user.orgId;
     const queries = targets.map(q => {
       if (q.datasource === ExpressionDatasourceID) {
+        expressionCount++;
         return {
           ...q,
           datasourceId: this.id,
           orgId,
         };
       }
-      const ds = config.datasources[q.datasource || config.defaultDatasource];
+      let ds = config.datasources[q.datasource || config.defaultDatasource];
+      if (!ds && q.datasource === 'default') {
+        ds = config.datasources[config.defaultDatasource];
+      }
       return {
         ...q,
         datasourceId: ds.id,
         intervalMs,
         maxDataPoints,
         orgId,
-        // ?? alias: templateSrv.replace(q.alias || ''),
       };
     });
     const req: Promise<DataQueryResponse> = getBackendSrv()
@@ -51,6 +55,10 @@ export class ExpressionDatasourceApi extends DataSourceApi<ExpressionQuery> {
         from: range.from.valueOf().toString(),
         to: range.to.valueOf().toString(),
         queries: queries,
+        intervalMs,
+        maxDataPoints,
+        range,
+        expressionCount,
       })
       .then((rsp: any) => {
         return { data: gelResponseToDataFrames(rsp) } as DataQueryResponse;
