@@ -47,7 +47,7 @@ The [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-
 
 As an alternative to installing and running the image renderer as a plugin you can run it as a remote image rendering service running as a node.js application or inside a Docker container.
 
-**Running as standalone node.js application:**
+**Running as standalone Node.js application:**
 
 The following example describes how to build and run the remote HTTP rendering service as a standalone node.js application and configure Grafana appropriately.
 
