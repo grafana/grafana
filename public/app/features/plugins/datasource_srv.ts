@@ -14,6 +14,9 @@ import { auto } from 'angular';
 import { TemplateSrv } from '../templating/template_srv';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
+// Pretend Datasource
+import { expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
+
 export class DatasourceSrv implements DataSourceService {
   datasources: { [name: string]: DataSourceApi };
 
@@ -56,6 +59,12 @@ export class DatasourceSrv implements DataSourceService {
   }
 
   loadDatasource(name: string): Promise<DataSourceApi> {
+    // Expression Datasource (not a real datasource)
+    if (name === expressionDatasource.name) {
+      this.datasources[name] = expressionDatasource;
+      return this.$q.when(expressionDatasource);
+    }
+
     const dsConfig = config.datasources[name];
     if (!dsConfig) {
       return this.$q.reject({ message: 'Datasource named ' + name + ' was not found' });
