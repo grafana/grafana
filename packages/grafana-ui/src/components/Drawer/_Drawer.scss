@@ -1,6 +1,2 @@
+// Need to import this to get default styles from rc-drawer
 @import '../../node_modules/rc-drawer/assets/index.css';
-
-.drawer-content {
-  padding: $space-sm $space-md;
-  background-color: $body-bg;
-}

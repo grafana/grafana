@@ -28,6 +28,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   close: css`
     cursor: pointer;
   `,
+  drawer: css`
+    .drawer-content {
+      padding: ${theme.spacing.sm} ${theme.spacing.md};
+      background-color: ${theme.colors.bodyBg};
+    }
+  `,
 }));
 
 export const Drawer: FC<Props> = ({
@@ -44,14 +50,15 @@ export const Drawer: FC<Props> = ({
   return (
     <RcDrawer
       level={null}
-      onClose={onClose}
       handler={false}
       open={true}
+      onClose={onClose}
       maskClosable={closeOnMaskClick}
       placement="right"
       width={`${width}%`}
       getContainer={inline ? false : 'body'}
       style={{ position: `${inline && 'absolute'}` } as CSSProperties}
+      className={drawerStyles.drawer}
     >
       <div className={drawerStyles.titleContainer}>
         {title} <i className={cx('fa fa-close', drawerStyles.close)} onClick={onClose} />
