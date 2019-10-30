@@ -90,7 +90,7 @@ describe('CloudWatchDatasource', () => {
         const params = requestParams.queries[0];
         expect(params.namespace).toBe(query.targets[0].namespace);
         expect(params.metricName).toBe(query.targets[0].metricName);
-        expect(params.dimensions['InstanceId']).toBe('i-12345678');
+        expect(params.dimensions['InstanceId']).toStrictEqual(['i-12345678']);
         expect(params.statistics).toEqual(query.targets[0].statistics);
         expect(params.period).toBe(query.targets[0].period);
         done();
@@ -308,6 +308,21 @@ describe('CloudWatchDatasource', () => {
           },
           {} as any
         ),
+        new CustomVariable(
+          {
+            name: 'var4',
+            options: [
+              { selected: true, value: 'var4-foo' },
+              { selected: false, value: 'var4-bar' },
+              { selected: true, value: 'var4-baz' },
+            ],
+            current: {
+              value: ['var4-foo', 'var4-baz'],
+            },
+            multi: true,
+          },
+          {} as any
+        ),
       ]);
 
       ctx.backendSrv.datasourceRequest = jest.fn(params => {
@@ -336,12 +351,12 @@ describe('CloudWatchDatasource', () => {
       };
 
       ctx.ds.query(query).then(() => {
-        expect(requestParams.queries[0].dimensions['dim2']).toBe('var2-foo');
+        expect(requestParams.queries[0].dimensions['dim2']).toStrictEqual(['var2-foo']);
         done();
       });
     });
 
-    it('should generate the correct query for multilple template variables', done => {
+    it('should generate the correct query in the case of one multilple template variables', done => {
       const query = {
         range: defaultTimeRange,
         rangeRaw: { from: 1483228800, to: 1483232400 },
@@ -367,12 +382,38 @@ describe('CloudWatchDatasource', () => {
       };
 
       ctx.ds.query(query).then(() => {
-        expect(requestParams.queries[0].dimensions['dim1']).toBe('var1-foo');
-        expect(requestParams.queries[0].dimensions['dim2']).toBe('var2-foo');
-        expect(requestParams.queries[0].dimensions['dim3']).toBe('var3-foo');
-        expect(requestParams.queries[1].dimensions['dim1']).toBe('var1-foo');
-        expect(requestParams.queries[1].dimensions['dim2']).toBe('var2-foo');
-        expect(requestParams.queries[1].dimensions['dim3']).toBe('var3-baz');
+        expect(requestParams.queries[0].dimensions['dim1']).toStrictEqual(['var1-foo']);
+        expect(requestParams.queries[0].dimensions['dim2']).toStrictEqual(['var2-foo']);
+        expect(requestParams.queries[0].dimensions['dim3']).toStrictEqual(['var3-foo', 'var3-baz']);
+        done();
+      });
+    });
+
+    it('should generate the correct query in the case of multilple multi template variables', done => {
+      const query = {
+        range: defaultTimeRange,
+        rangeRaw: { from: 1483228800, to: 1483232400 },
+        targets: [
+          {
+            refId: 'A',
+            region: 'us-east-1',
+            namespace: 'TestNamespace',
+            metricName: 'TestMetricName',
+            dimensions: {
+              dim1: '[[var1]]',
+              dim3: '[[var3]]',
+              dim4: '[[var4]]',
+            },
+            statistics: ['Average'],
+            period: 300,
+          },
+        ],
+      };
+
+      ctx.ds.query(query).then(() => {
+        expect(requestParams.queries[0].dimensions['dim1']).toStrictEqual(['var1-foo']);
+        expect(requestParams.queries[0].dimensions['dim3']).toStrictEqual(['var3-foo', 'var3-baz']);
+        expect(requestParams.queries[0].dimensions['dim4']).toStrictEqual(['var4-foo', 'var4-baz']);
         done();
       });
     });
@@ -402,67 +443,9 @@ describe('CloudWatchDatasource', () => {
       };
 
       ctx.ds.query(query).then(() => {
-        expect(requestParams.queries[0].dimensions['dim1']).toBe('var1-foo');
-        expect(requestParams.queries[0].dimensions['dim2']).toBe('var2-foo');
-        expect(requestParams.queries[0].dimensions['dim3']).toBe('var3-foo');
-        expect(requestParams.queries[1].dimensions['dim1']).toBe('var1-foo');
-        expect(requestParams.queries[1].dimensions['dim2']).toBe('var2-foo');
-        expect(requestParams.queries[1].dimensions['dim3']).toBe('var3-baz');
-        done();
-      });
-    });
-
-    it('should generate the correct query for multilple template variables with expression', done => {
-      const query: any = {
-        range: defaultTimeRange,
-        rangeRaw: { from: 1483228800, to: 1483232400 },
-        targets: [
-          {
-            refId: 'A',
-            id: 'id1',
-            region: 'us-east-1',
-            namespace: 'TestNamespace',
-            metricName: 'TestMetricName',
-            dimensions: {
-              dim1: '[[var1]]',
-              dim2: '[[var2]]',
-              dim3: '[[var3]]',
-            },
-            statistics: ['Average'],
-            period: 300,
-            expression: '',
-          },
-          {
-            refId: 'B',
-            id: 'id2',
-            expression: 'METRICS("id1") * 2',
-            dimensions: {
-              // garbage data for fail test
-              dim1: '[[var1]]',
-              dim2: '[[var2]]',
-              dim3: '[[var3]]',
-            },
-            statistics: [], // dummy
-          },
-        ],
-        scopedVars: {
-          var1: { selected: true, value: 'var1-foo' },
-          var2: { selected: true, value: 'var2-foo' },
-        },
-      };
-
-      ctx.ds.query(query).then(() => {
-        expect(requestParams.queries.length).toBe(3);
-        expect(requestParams.queries[0].id).toMatch(/^id1.*/);
-        expect(requestParams.queries[0].dimensions['dim1']).toBe('var1-foo');
-        expect(requestParams.queries[0].dimensions['dim2']).toBe('var2-foo');
-        expect(requestParams.queries[0].dimensions['dim3']).toBe('var3-foo');
-        expect(requestParams.queries[1].id).toMatch(/^id1.*/);
-        expect(requestParams.queries[1].dimensions['dim1']).toBe('var1-foo');
-        expect(requestParams.queries[1].dimensions['dim2']).toBe('var2-foo');
-        expect(requestParams.queries[1].dimensions['dim3']).toBe('var3-baz');
-        expect(requestParams.queries[2].id).toMatch(/^id2.*/);
-        expect(requestParams.queries[2].expression).toBe('METRICS("id1") * 2');
+        expect(requestParams.queries[0].dimensions['dim1']).toStrictEqual(['var1-foo']);
+        expect(requestParams.queries[0].dimensions['dim2']).toStrictEqual(['var2-foo']);
+        expect(requestParams.queries[0].dimensions['dim3']).toStrictEqual(['var3-foo', 'var3-baz']);
         done();
       });
     });
