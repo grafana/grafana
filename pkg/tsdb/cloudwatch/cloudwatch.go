@@ -118,7 +118,6 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 
 	if len(metricDataParamsByRegion) > 0 {
 		for region, metricDataParams := range metricDataParamsByRegion {
-			// for index := 0; index < 50; index++ {
 			mdps := metricDataParams
 			r := region
 			eg.Go(func() error {
@@ -143,26 +142,28 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 					mdo, err := e.executeRequest(ectx, client, mdp.MetricDataInput)
 					if err != nil {
 						if ae, ok := err.(awserr.Error); ok && ae.Code() == "Throttling" {
-							for _, refID := range mdp.getUniqueRefIDs() {
+							refIds := mdp.getUniqueRefIDs()
+							for _, refID := range refIds {
 								resultChan <- &tsdb.QueryResult{
 									RefId: refID,
 									Error: ae,
 								}
 							}
-							return nil
+						} else {
+							return err
 						}
-						return err
-					}
-					responses, err := e.parseResponse(mdo, mdp.groupQueriesByID())
-					if err != nil {
-						for _, refID := range mdp.getUniqueRefIDs() {
-							resultChan <- &tsdb.QueryResult{
-								RefId: refID,
-								Error: err,
+					} else {
+						responses, err := e.parseResponse(mdo, mdp.groupQueriesByID())
+						if err != nil {
+							for _, refID := range mdp.getUniqueRefIDs() {
+								resultChan <- &tsdb.QueryResult{
+									RefId: refID,
+									Error: err,
+								}
 							}
 						}
+						cloudwatchResponses = append(cloudwatchResponses, responses...)
 					}
-					cloudwatchResponses = append(cloudwatchResponses, responses...)
 				}
 
 				res := e.transformQueryResponseToQueryResult(cloudwatchResponses)
@@ -172,7 +173,6 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 				}
 				return nil
 			})
-			// }
 		}
 	}
 
