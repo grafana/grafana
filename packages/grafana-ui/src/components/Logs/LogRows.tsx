@@ -20,6 +20,7 @@ export interface Props extends Themeable {
   timeZone: TimeZone;
   deduplicatedData?: LogsModel;
   rowLimit?: number;
+  isLogsPanel?: boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
@@ -83,6 +84,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       onClickFilterOutLabel,
       rowLimit,
       theme,
+      isLogsPanel,
     } = this.props;
     const { deferLogs, renderAll } = this.state;
     const dedupedData = deduplicatedData ? deduplicatedData : data;
@@ -118,6 +120,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
               showDuplicates={showDuplicates}
               showTime={showTime}
               timeZone={timeZone}
+              isLogsPanel={isLogsPanel}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
             />
@@ -134,6 +137,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
               showDuplicates={showDuplicates}
               showTime={showTime}
               timeZone={timeZone}
+              isLogsPanel={isLogsPanel}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
             />
