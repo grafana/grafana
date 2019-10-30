@@ -38,9 +38,10 @@ export class ExpressionDatasourceApi extends DataSourceApi<ExpressionQuery> {
           orgId,
         };
       }
-      let ds = config.datasources[q.datasource || config.defaultDatasource];
-      if (!ds && q.datasource === 'default') {
-        ds = config.datasources[config.defaultDatasource];
+      const dsName = q.datasource && q.datasource !== 'default' ? q.datasource : config.defaultDatasource;
+      const ds = config.datasources[dsName];
+      if (!ds) {
+        throw new Error('Unknown Datasource: ' + q.datasource);
       }
       return {
         ...q,
@@ -51,7 +52,7 @@ export class ExpressionDatasourceApi extends DataSourceApi<ExpressionQuery> {
       };
     });
     const req: Promise<DataQueryResponse> = getBackendSrv()
-      .post('/api/tsdb/query/v2', {
+      .post('/api/ds/query', {
         from: range.from.valueOf().toString(),
         to: range.to.valueOf().toString(),
         queries: queries,
