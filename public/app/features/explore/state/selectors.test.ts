@@ -1,4 +1,4 @@
-import { deduplicatedLogsSelector } from './selectors';
+import { deduplicatedRowsSelector } from './selectors';
 import { LogsDedupStrategy } from '@grafana/data';
 import { ExploreItemState } from 'app/types';
 
@@ -49,60 +49,60 @@ describe('Deduplication selector', () => {
     // Problem was caused by mutating the log results entries in redux state. The memoisation hash for deduplicatedLogsSelector
     // was changing depending on duplicates information from log row state, while should be dependand on log row only.
 
-    let dedups = deduplicatedLogsSelector(state as ExploreItemState);
-    expect(dedups.rows.length).toBe(10);
+    let dedups = deduplicatedRowsSelector(state as ExploreItemState);
+    expect(dedups.length).toBe(10);
 
-    deduplicatedLogsSelector({
+    deduplicatedRowsSelector({
       ...state,
       dedupStrategy: LogsDedupStrategy.none,
     } as ExploreItemState);
 
-    deduplicatedLogsSelector({
+    deduplicatedRowsSelector({
       ...state,
       dedupStrategy: LogsDedupStrategy.exact,
     } as ExploreItemState);
 
-    deduplicatedLogsSelector({
+    deduplicatedRowsSelector({
       ...state,
       dedupStrategy: LogsDedupStrategy.numbers,
     } as ExploreItemState);
 
-    deduplicatedLogsSelector({
+    deduplicatedRowsSelector({
       ...state,
       dedupStrategy: LogsDedupStrategy.signature,
     } as ExploreItemState);
 
-    deduplicatedLogsSelector({
+    deduplicatedRowsSelector({
       ...state,
       dedupStrategy: LogsDedupStrategy.none,
     } as ExploreItemState);
 
-    deduplicatedLogsSelector({
+    deduplicatedRowsSelector({
       ...state,
       dedupStrategy: LogsDedupStrategy.exact,
     } as ExploreItemState);
 
-    deduplicatedLogsSelector({
+    deduplicatedRowsSelector({
       ...state,
       dedupStrategy: LogsDedupStrategy.numbers,
     } as ExploreItemState);
 
-    deduplicatedLogsSelector({
+    deduplicatedRowsSelector({
       ...state,
       dedupStrategy: LogsDedupStrategy.signature,
     } as ExploreItemState);
 
-    deduplicatedLogsSelector({
+    deduplicatedRowsSelector({
       ...state,
       dedupStrategy: LogsDedupStrategy.none,
     } as ExploreItemState);
 
-    dedups = deduplicatedLogsSelector({
+    dedups = deduplicatedRowsSelector({
       ...state,
       dedupStrategy: LogsDedupStrategy.exact,
     } as ExploreItemState);
 
     // Expecting that no row has duplicates now
-    expect(dedups.rows.reduce((acc, row) => acc + row.duplicates, 0)).toBe(0);
+    expect(dedups.reduce((acc, row) => acc + row.duplicates, 0)).toBe(0);
   });
 });

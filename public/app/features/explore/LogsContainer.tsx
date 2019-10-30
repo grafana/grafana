@@ -8,10 +8,11 @@ import {
   LogLevel,
   TimeZone,
   AbsoluteTimeRange,
-  LogsModel,
   LogRowModel,
   LogsDedupStrategy,
   TimeRange,
+  LogsMetaItem,
+  GraphSeriesXY,
 } from '@grafana/data';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
@@ -19,7 +20,7 @@ import { StoreState } from 'app/types';
 
 import { changeDedupStrategy, updateTimeRange } from './state/actions';
 import { toggleLogLevelAction } from 'app/features/explore/state/actionTypes';
-import { deduplicatedLogsSelector, exploreItemUIStateSelector } from 'app/features/explore/state/selectors';
+import { deduplicatedRowsSelector } from 'app/features/explore/state/selectors';
 import { getTimeZone } from '../profile/state/selectors';
 import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
@@ -32,8 +33,12 @@ interface LogsContainerProps {
   loading: boolean;
 
   logsHighlighterExpressions?: string[];
-  logsResult?: LogsModel;
-  dedupedResult?: LogsModel;
+  logRows?: LogRowModel[];
+  logsMeta?: LogsMetaItem[];
+  logsSeries?: GraphSeriesXY[];
+  dedupedRows?: LogRowModel[];
+  hasUniqueLabels: boolean;
+
   onClickLabel: (key: string, value: string) => void;
   onStartScanning: () => void;
   onStopScanning: () => void;
@@ -84,8 +89,10 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     const {
       loading,
       logsHighlighterExpressions,
-      logsResult,
-      dedupedResult,
+      logRows,
+      logsMeta,
+      logsSeries,
+      dedupedRows,
       onClickLabel,
       onStartScanning,
       onStopScanning,
@@ -96,6 +103,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       width,
       isLive,
       exploreId,
+      hasUniqueLabels,
     } = this.props;
 
     return (
@@ -105,7 +113,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
             <LiveTailControls exploreId={exploreId}>
               {controls => (
                 <LiveLogsWithTheme
-                  logsResult={logsResult}
+                  logRows={logRows}
                   timeZone={timeZone}
                   stopLive={controls.stop}
                   isPaused={this.props.isPaused}
@@ -119,9 +127,12 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
         <LogsCrossFadeTransition visible={!isLive}>
           <Collapse label="Logs" loading={loading} isOpen>
             <Logs
+              hasUniqueLabels={hasUniqueLabels}
               dedupStrategy={this.props.dedupStrategy || LogsDedupStrategy.none}
-              data={logsResult}
-              dedupedData={dedupedResult}
+              logRows={logRows}
+              logsMeta={logsMeta}
+              logsSeries={logsSeries}
+              dedupedRows={dedupedRows}
               highlighterExpressions={logsHighlighterExpressions}
               loading={loading}
               onChangeTime={this.onChangeTime}
@@ -158,19 +169,22 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
+    dedupStrategy,
   } = item;
-  const { dedupStrategy } = exploreItemUIStateSelector(item);
-  const dedupedResult = deduplicatedLogsSelector(item);
+  const dedupedRows = deduplicatedRowsSelector(item);
   const timeZone = getTimeZone(state.user);
 
   return {
     loading,
     logsHighlighterExpressions,
-    logsResult,
+    logRows: logsResult && logsResult.rows,
+    logsMeta: logsResult && logsResult.meta,
+    logsSeries: logsResult && logsResult.series,
+    hasUniqueLabels: logsResult && logsResult.hasUniqueLabels,
     scanning,
     timeZone,
     dedupStrategy,
-    dedupedResult,
+    dedupedRows,
     datasourceInstance,
     isLive,
     isPaused,
