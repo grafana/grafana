@@ -25,7 +25,7 @@ export class IntervalVariable implements IntervalVariableModel, VariableActions 
   options: VariableOption[];
   auto: boolean;
   query: string;
-  refresh: number;
+  refresh: VariableRefresh;
   current: VariableOption;
 
   defaults: IntervalVariableModel = {
