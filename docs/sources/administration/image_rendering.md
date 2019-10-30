@@ -29,6 +29,8 @@ Please note that for macOS and Windows, you will need to ensure that a phantomjs
 
 ### Grafana image renderer plugin
 
+> This plugin currently does not work if it is installed in Grafana docker image.
+
 The [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) is a plugin that runs on the backend and handles rendering panels and dashboards as PNG-images using headless chrome.
 
 You can install it using grafana-cli:
@@ -42,8 +44,6 @@ For further information and instructions refer to the [plugin details](https://g
 ### Remote rendering service
 
 The [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) can also be run as a remote HTTP rendering service. In this setup Grafana will render an image by making a HTTP request to the remote rendering service, which in turn render the image and returns it back in the HTTP response to Grafana.
-
-> This plugin currently does not work if it is installed in Grafana docker image.
 
 As an alternative to installing and running the image renderer as a plugin you can run it as a remote image rendering service running as a node.js application or inside a Docker container.
 
