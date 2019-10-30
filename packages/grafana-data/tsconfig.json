@@ -6,7 +6,6 @@
     "rootDirs": ["."],
     "typeRoots": ["./node_modules/@types", "types"],
     "declarationDir": "dist",
-    "outDir": "compiled",
-    "allowSyntheticDefaultImports": true
+    "outDir": "compiled"
   }
 }
