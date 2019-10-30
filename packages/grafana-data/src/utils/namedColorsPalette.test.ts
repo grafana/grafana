@@ -5,7 +5,7 @@ import {
   getColorFromHexRgbOrName,
   getColorDefinitionByName,
 } from './namedColorsPalette';
-import { GrafanaThemeType } from '../types/index';
+import { GrafanaThemeType } from '../types/theme';
 
 describe('colors', () => {
   const SemiDarkBlue = getColorDefinitionByName('semi-dark-blue');

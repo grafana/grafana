@@ -1,21 +1,17 @@
 // Libraries
 import _ from 'lodash';
-import {
-  Threshold,
-  getMappedValue,
-  FieldConfig,
-  DisplayProcessor,
-  DecimalInfo,
-  DisplayValue,
-  DecimalCount,
-} from '@grafana/data';
 
 // Utils
-import { getValueFormat } from './valueFormats/valueFormats';
-import { getColorFromHexRgbOrName } from './namedColorsPalette';
+import { getColorFromHexRgbOrName } from '../utils/namedColorsPalette';
 
 // Types
-import { GrafanaTheme, GrafanaThemeType } from '../types/index';
+import { FieldConfig } from '../types/dataFrame';
+import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
+import { DisplayProcessor, DisplayValue, DecimalCount, DecimalInfo } from '../types/displayValue';
+import { getValueFormat } from '../valueFormats/valueFormats';
+import { getMappedValue } from '../utils/valueMappings';
+import { Threshold } from '../types/threshold';
+// import { GrafanaTheme, GrafanaThemeType, FieldConfig } from '../types/index';
 
 interface DisplayProcessorOptions {
   config?: FieldConfig;

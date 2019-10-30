@@ -6,3 +6,4 @@ export * from './transformations';
 export * from './datetime';
 export * from './text';
 export * from './valueFormats';
+export * from './field';
