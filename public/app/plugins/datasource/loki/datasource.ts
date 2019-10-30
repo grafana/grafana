@@ -409,7 +409,15 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return annotations;
   }
 
-  enhanceDataFrame(dataFrame: DataFrame) {
+  /**
+   * Adds new fields and DataLinks to DataFrame based on DataSource instance config.
+   * @param dataFrame
+   */
+  enhanceDataFrame(dataFrame: DataFrame): void {
+    if (!this.instanceSettings.jsonData) {
+      return;
+    }
+
     const derivedFields = this.instanceSettings.jsonData.derivedFields || [];
     if (derivedFields.length) {
       const fields = fromPairs(
@@ -443,9 +451,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       });
 
       dataFrame.fields = [...dataFrame.fields, ...Object.values(fields)];
-      return dataFrame;
     }
-    return dataFrame;
   }
 }
 

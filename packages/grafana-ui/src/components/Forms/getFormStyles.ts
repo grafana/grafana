@@ -10,6 +10,12 @@ export const getFormStyles = stylesFactory((theme: GrafanaTheme, options?: any) 
     ...getLabelStyles(theme),
     ...getLegendStyles(theme),
     ...getFieldValidationMessageStyles(theme),
-    ...getButtonStyles({ theme, variant: options.variant, size: options.size, withIcon: options.withIcon }),
+    ...getButtonStyles({
+      theme,
+      variant: options.variant,
+      size: options.size,
+      withIcon: options.withIcon,
+      withText: true,
+    }),
   };
 });

@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { DataSourceApi, PanelPlugin, PanelPluginMeta, Tooltip } from '@grafana/ui';
+import { PanelPlugin, PanelPluginMeta, Tooltip } from '@grafana/ui';
 import { AngularComponent, config } from '@grafana/runtime';
 
 import { QueriesTab } from './QueriesTab';

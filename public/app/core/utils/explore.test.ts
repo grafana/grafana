@@ -15,7 +15,7 @@ import {
 } from './explore';
 import { ExploreUrlState, ExploreMode } from 'app/types/explore';
 import store from 'app/core/store';
-import { LogsDedupStrategy, LogsModel, LogLevel, dateTime } from '@grafana/data';
+import { LogsDedupStrategy, LogsModel, LogLevel, dateTime, MutableDataFrame } from '@grafana/data';
 import { DataQueryError, RefreshPicker } from '@grafana/ui';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
@@ -373,6 +373,8 @@ describe('refreshIntervalToSortOrder', () => {
 
 describe('sortLogsResult', () => {
   const firstRow = {
+    rowIndex: 0,
+    dataFrame: new MutableDataFrame(),
     timestamp: '2019-01-01T21:00:0.0000000Z',
     entry: '',
     hasAnsi: false,
@@ -387,6 +389,8 @@ describe('sortLogsResult', () => {
   };
   const sameAsFirstRow = firstRow;
   const secondRow = {
+    rowIndex: 1,
+    dataFrame: new MutableDataFrame(),
     timestamp: '2019-01-01T22:00:0.0000000Z',
     entry: '',
     hasAnsi: false,

@@ -137,7 +137,8 @@ describe('ResultProcessor', () => {
 
     describe('when calling getLogsResult', () => {
       it('then it should return correct logs result', () => {
-        const { resultProcessor } = testContext({ mode: ExploreMode.Logs });
+        const { resultProcessor, dataFrames } = testContext({ mode: ExploreMode.Logs });
+        const logsDataFrame = dataFrames[1];
         const theResult = resultProcessor.getLogsResult();
 
         expect(theResult).toEqual({
@@ -145,6 +146,8 @@ describe('ResultProcessor', () => {
           meta: [],
           rows: [
             {
+              rowIndex: 2,
+              dataFrame: logsDataFrame,
               entry: 'third',
               hasAnsi: false,
               labels: undefined,
@@ -160,6 +163,8 @@ describe('ResultProcessor', () => {
               uniqueLabels: {},
             },
             {
+              rowIndex: 1,
+              dataFrame: logsDataFrame,
               entry: 'second message',
               hasAnsi: false,
               labels: undefined,
@@ -175,6 +180,8 @@ describe('ResultProcessor', () => {
               uniqueLabels: {},
             },
             {
+              rowIndex: 0,
+              dataFrame: logsDataFrame,
               entry: 'this is a message',
               hasAnsi: false,
               labels: undefined,

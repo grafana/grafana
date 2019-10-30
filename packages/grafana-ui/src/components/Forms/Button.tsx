@@ -164,6 +164,7 @@ export const Button = (props: ButtonProps) => {
     size: props.size || 'md',
     variant: props.variant || 'primary',
     withIcon: !!props.icon,
+    withText: !!props.children,
   });
   return <DefaultButton {...props} styles={styles} />;
 };
@@ -176,6 +177,7 @@ export const LinkButton = (props: ButtonLinkProps) => {
     size: props.size || 'md',
     variant: props.variant || 'primary',
     withIcon: !!props.icon,
+    withText: !!props.children,
   });
   return <DefaultLinkButton {...props} styles={styles} />;
 };
