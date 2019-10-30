@@ -7,8 +7,8 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestQueryBuilder(t *testing.T) {
-	Convey("QueryBuilder", t, func() {
+func TestRequestParser(t *testing.T) {
+	Convey("TestRequestParser", t, func() {
 		Convey("when parsing query editor row json", func() {
 			Convey("using new dimensions structure", func() {
 				query := simplejson.NewFromAny(map[string]interface{}{
