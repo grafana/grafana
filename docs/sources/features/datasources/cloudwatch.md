@@ -25,15 +25,15 @@ Grafana ships with built in support for CloudWatch. You just have to add it as a
 > NOTE: If at any moment you have issues with getting this data source to work and Grafana is giving you undescriptive errors then don't
 forget to check your log file (try looking in /var/log/grafana/grafana.log).
 
-Name | Description
------------- | -------------
-*Name* | The data source name. This is how you refer to the data source in panels and queries.
-*Default* | Default data source means that it will be pre-selected for new panels.
-*Default Region* | Used in query editor to set region (can be changed on per query basis)
-*Custom Metrics namespace* | Specify the CloudWatch namespace of Custom metrics
-*Auth Provider* | Specify the provider to get credentials.
-*Credentials* profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default.
-*Assume Role Arn* | Specify the ARN of the role to assume
+| Name                       | Description                                                                                             |
+| -------------------------- | ------------------------------------------------------------------------------------------------------- |
+| *Name*                     | The data source name. This is how you refer to the data source in panels and queries.                   |
+| *Default*                  | Default data source means that it will be pre-selected for new panels.                                  |
+| *Default Region*           | Used in query editor to set region (can be changed on per query basis)                                  |
+| *Custom Metrics namespace* | Specify the CloudWatch namespace of Custom metrics                                                      |
+| *Auth Provider*            | Specify the provider to get credentials.                                                                |
+| *Credentials* profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default. |
+| *Assume Role Arn*          | Specify the ARN of the role to assume                                                                   |
 
 ## Authentication
 
@@ -148,16 +148,16 @@ e.g. `metrics(AWS/DynamoDB, default)` or `dimension_values(default, ..., ..., ..
 
 Read more about the available dimensions in the [CloudWatch  Metrics and Dimensions Reference](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CW_Support_For_AWS.html).
 
-Name | Description
-------- | --------
-*regions()* | Returns a list of regions AWS provides their service.
-*namespaces()* | Returns a list of namespaces CloudWatch support.
-*metrics(namespace, [region])* | Returns a list of metrics in the namespace. (specify region or use "default" for custom metrics)
-*dimension_keys(namespace)* | Returns a list of dimension keys in the namespace.
-*dimension_values(region, namespace, metric, dimension_key, [filters])* | Returns a list of dimension values matching the specified `region`, `namespace`, `metric`, `dimension_key` or you can use dimension `filters` to get more specific result as well.
-*ebs_volume_ids(region, instance_id)* | Returns a list of volume ids matching the specified `region`, `instance_id`.
-*ec2_instance_attribute(region, attribute_name, filters)* | Returns a list of attributes matching the specified `region`, `attribute_name`, `filters`.
-*resource_arns(region, resource_type, tags)* | Returns a list of ARNs matching the specified `region`, `resource_type` and `tags`.
+| Name                                                                    | Description                                                                                                                                                                        |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| *regions()*                                                             | Returns a list of regions AWS provides their service.                                                                                                                              |
+| *namespaces()*                                                          | Returns a list of namespaces CloudWatch support.                                                                                                                                   |
+| *metrics(namespace, [region])*                                          | Returns a list of metrics in the namespace. (specify region or use "default" for custom metrics)                                                                                   |
+| *dimension_keys(namespace)*                                             | Returns a list of dimension keys in the namespace.                                                                                                                                 |
+| *dimension_values(region, namespace, metric, dimension_key, [filters])* | Returns a list of dimension values matching the specified `region`, `namespace`, `metric`, `dimension_key` or you can use dimension `filters` to get more specific result as well. |
+| *ebs_volume_ids(region, instance_id)*                                   | Returns a list of volume ids matching the specified `region`, `instance_id`.                                                                                                       |
+| *ec2_instance_attribute(region, attribute_name, filters)*               | Returns a list of attributes matching the specified `region`, `attribute_name`, `filters`.                                                                                         |
+| *resource_arns(region, resource_type, tags)*                            | Returns a list of ARNs matching the specified `region`, `resource_type` and `tags`.                                                                                                |
 
 For details about the metrics CloudWatch provides, please refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html).
 
@@ -165,16 +165,16 @@ For details about the metrics CloudWatch provides, please refer to the [CloudWat
 
 Example dimension queries which will return list of resources for individual AWS Services:
 
-Query | Service
-------- | -----
-*dimension_values(us-east-1,AWS/ELB,RequestCount,LoadBalancerName)* | ELB
-*dimension_values(us-east-1,AWS/ElastiCache,CPUUtilization,CacheClusterId)* | ElastiCache
-*dimension_values(us-east-1,AWS/Redshift,CPUUtilization,ClusterIdentifier)* | RedShift
-*dimension_values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)* | RDS
-*dimension_values(us-east-1,AWS/S3,BucketSizeBytes,BucketName)* | S3
-*dimension_values(us-east-1,CWAgent,disk_used_percent,device,{"InstanceId":"$instance_id"})* | CloudWatch Agent
-*resource_arns(eu-west-1,elasticloadbalancing:loadbalancer,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})* | ELB
-*resource_arns(eu-west-1,ec2:instance,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})* | EC2
+| Query                                                                                                                         | Service          |
+| ----------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| *dimension_values(us-east-1,AWS/ELB,RequestCount,LoadBalancerName)*                                                           | ELB              |
+| *dimension_values(us-east-1,AWS/ElastiCache,CPUUtilization,CacheClusterId)*                                                   | ElastiCache      |
+| *dimension_values(us-east-1,AWS/Redshift,CPUUtilization,ClusterIdentifier)*                                                   | RedShift         |
+| *dimension_values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)*                                                     | RDS              |
+| *dimension_values(us-east-1,AWS/S3,BucketSizeBytes,BucketName)*                                                               | S3               |
+| *dimension_values(us-east-1,CWAgent,disk_used_percent,device,{"InstanceId":"$instance_id"})*                                  | CloudWatch Agent |
+| *resource_arns(eu-west-1,elasticloadbalancing:loadbalancer,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})* | ELB              |
+| *resource_arns(eu-west-1,ec2:instance,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})*                      | EC2              |
 
 ## ec2_instance_attribute examples
 
@@ -253,6 +253,17 @@ Amazon provides 1 million CloudWatch API requests each month at no additional ch
 it costs $0.01 per 1,000 GetMetricStatistics or ListMetrics requests. For each query Grafana will
 issue a GetMetricStatistics request and every time you pick a dimension in the query editor
 Grafana will issue a ListMetrics request.
+
+## Service Quota
+
+AWS defines quotas, or limits, for resources, actions, and items in your AWS account. Depending on the number of queries in your dashboard and the amount of users accessing the dashboard, you may reach the limit for the allowed number of CloudWatch GetMetricData requests per second. Note that quotas are defined per account and per region. If you are using multiple regions or have set up more than one CloudWatch data source to query against multiple accounts, you need to request a quota increase for each account and each region.
+ 
+
+To request a quota increase, visit the [AWS Service Quotas console](https://console.aws.amazon.com/servicequotas/home?r#!/services/monitoring/quotas/L-5E141212).
+
+ 
+
+Please see the AWS documentation for [Service Quotas](https://docs.aws.amazon.com/servicequotas/latest/userguide/intro.html) and [CloudWatch limits](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_limits.html) for more information.
 
 ## Configure the data source with provisioning
 
