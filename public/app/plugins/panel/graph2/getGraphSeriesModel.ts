@@ -92,8 +92,8 @@ export const getGraphSeriesModel = (
           },
           // This index is used later on to retrieve appropriate series/time for X and Y axes
           seriesIndex: fieldColumnIndex,
-          timeDimmension: { ...timeField },
-          valueDimmension: { ...field },
+          timeField: { ...timeField },
+          valueField: { ...field },
         });
       }
     }

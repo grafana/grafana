@@ -16,10 +16,10 @@ export interface GraphSeriesXY {
   info?: DisplayValue[]; // Legend info
   isVisible: boolean;
   yAxis: YAxis;
-  // Field corresponding to time
-  timeDimmension: Field;
-  // Field corresponding to value
-  valueDimmension: Field;
+  // Field with series' time values
+  timeField: Field;
+  // Field with series' values
+  valueField: Field;
   seriesIndex: number;
 }
 

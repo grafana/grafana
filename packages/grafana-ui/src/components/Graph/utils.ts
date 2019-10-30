@@ -44,7 +44,7 @@ interface MultiSeriesHoverInfo {
  * @param pos mouse cursor position, based on jQuery.flot position
  */
 export const getMultiSeriesGraphHoverInfo = (
-  // x and y axis dimmensions order is aligned
+  // x and y axis dimensions order is aligned
   yAxisDimensions: Field[],
   xAxisDimensions: Field[],
   /** Well, time basically */

@@ -3,7 +3,7 @@ import { css } from 'emotion';
 import useMeasure from 'react-use/lib/useMeasure';
 import useWindowSize from 'react-use/lib/useWindowSize';
 import { Portal } from '../Portal/Portal';
-import { TimeZone, Field, KeyValue } from '@grafana/data';
+import { TimeZone, Dimensions } from '@grafana/data';
 import { FlotPosition } from '../Graph/types';
 import { stylesFactory, selectThemeVariant, useTheme } from '../../themes';
 import { GrafanaTheme } from '../../types';
@@ -72,17 +72,19 @@ const TooltipContainer: React.FC<TooltipContainerProps> = ({ position, offset, c
   );
 };
 
-export interface TooltipContentProps {
-  // Each dimmension is described by array of fields representing it
+// Describes active dimensions user interacts with
+// It's a key-value pair where:
+// - key is the name of the dimension
+// - value is a tuple addresing which column and row from given dimension is active
+export type ActiveDimensions<T extends Dimensions = any> = { [key in keyof T]: [number, number] | null };
+
+export interface TooltipContentProps<T extends Dimensions = any> {
+  // Each dimension is described by array of fields representing it
   // I.e. for graph there are two dimensions: x and y axis:
   // { xAxis: [<array of time fields>], yAxis: [<array of value fields>]}
   // TODO: type this better, no good idea how yet
-  dimmensions: KeyValue<Field[]>;
-
-  // at [0] stores indexes of active field  available at from dimmensions property,
-  // at [1] stores row index of the value from this field
-  activeDimmensions: KeyValue<[number, number]>;
-
+  dimensions: T; // Dimension[]
+  activeDimensions?: ActiveDimensions<T>;
   timeZone: TimeZone;
   pos: FlotPosition;
   mode: TooltipMode;

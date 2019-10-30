@@ -3,11 +3,11 @@ import $ from 'jquery';
 import React, { PureComponent } from 'react';
 import uniqBy from 'lodash/uniqBy';
 // Types
-import { TimeRange, GraphSeriesXY, TimeZone, DefaultTimeZone, KeyValue } from '@grafana/data';
+import { TimeRange, GraphSeriesXY, TimeZone, DefaultTimeZone, createDimension } from '@grafana/data';
 import _ from 'lodash';
 import { FlotPosition, FlotItem } from './types';
-import { TooltipProps, TooltipContentProps } from '../Chart/Tooltip';
-import { GraphTooltip, GraphTooltipOptions } from './GraphTooltip';
+import { TooltipProps, TooltipContentProps, ActiveDimensions } from '../Chart/Tooltip';
+import { GraphTooltip, GraphTooltipOptions, GraphDimensions } from './GraphTooltip';
 
 export interface GraphProps {
   children?: JSX.Element | JSX.Element[];
@@ -28,8 +28,6 @@ export interface GraphProps {
 interface GraphState {
   pos?: FlotPosition;
   isTooltipVisible: boolean;
-  // activeSeriesIndex?: number;
-  // activeDatapointIndex?: number;
   activeItem?: FlotItem<GraphSeriesXY>;
   allSeriesMode?: boolean;
 }
@@ -111,7 +109,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     const { pos, activeItem, isTooltipVisible } = this.state;
     const tooltips: React.ReactNode[] = [];
 
-    if (!isTooltipVisible || !pos || series.length < 0) {
+    if (!isTooltipVisible || !pos || series.length === 0) {
       return null;
     }
 
@@ -124,14 +122,11 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         tooltips.push(c);
       }
     });
-
     const tooltipElement = tooltips[0];
-
     // If no tooltip provided, skip rendering
     if (!tooltipElement) {
       return null;
     }
-
     // If mode is single series and user is not hovering over item, skip rendering
     if (!activeItem && tooltipOptions.mode === 'single') {
       return null;
@@ -142,34 +137,29 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     // Check if tooltip needs to be rendered with custom tooltip component, otherwise default to GraphTooltip
     const tooltipContentRenderer = tooltipElementProps.tooltipComponent || GraphTooltip;
 
+    // Indicates column(field) index in y-axis dimension
     const seriesIndex = activeItem ? activeItem.series.seriesIndex : 0;
+    // Indicates row index in active field values
     const rowIndex = activeItem ? activeItem.dataIndex : 0;
 
-    // Indicates x-axis dimmension's active item
-    // When hovering over an item - let's take it's dataIndex, otherwise let's assume flot position
-    // based on witch tooltip needs to figure out correct datapoint display information about
-    let activeDimmensions: KeyValue<[number, number]> = {
-      // first- index of active field, second- index of field value or flots xaxis position
+    const activeDimensions: ActiveDimensions<GraphDimensions> = {
+      // Described x-axis active item
+      // When hovering over an item - let's take it's dataIndex, otherwise let's assume flot position
+      // based on witch tooltip needs to figure out correct datapoint display information about
       xAxis: [seriesIndex, tooltipOptions.mode === 'single' ? rowIndex : pos.x],
+      // Describes y-axis active item
+      yAxis: activeItem ? [activeItem.series.seriesIndex, activeItem.dataIndex] : null,
     };
 
-    if (activeItem) {
-      // When hovering over a datapoint, we can now describe what't the "address" of it,
-      // meaning dimmension's index and row index within dimmension's values
-      activeDimmensions = {
-        ...activeDimmensions,
-        yAxis: [activeItem!.series.seriesIndex, activeItem!.dataIndex],
-      };
-    }
-
-    const tooltipContentProps: TooltipContentProps = {
-      dimmensions: {
-        xAxis: series.map(s => s.timeDimmension),
-        yAxis: series.map(s => s.valueDimmension),
+    const tooltipContentProps: TooltipContentProps<GraphDimensions> = {
+      dimensions: {
+        // time/value dimension columns are index-aligned - see getGraphSeriesModel
+        xAxis: createDimension('xAxis', series.map(s => s.timeField)),
+        yAxis: createDimension('yAxis', series.map(s => s.valueField)),
       },
-      activeDimmensions,
+      activeDimensions,
       pos,
-      timeZone,
+      timeZone, // maybe a time formatter(function) instead?
       mode: tooltipOptions.mode || 'single',
     };
 

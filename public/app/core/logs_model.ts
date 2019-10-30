@@ -170,9 +170,9 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
       seriesIndex: i,
       // Not relevant for now
       // @ts-ignore
-      timeDimmension: {},
+      timeField: {},
       // @ts-ignore
-      seriesDimmension: {},
+      seriesField: {},
     };
 
     return graphSeries;
