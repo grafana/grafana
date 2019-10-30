@@ -1,7 +1,7 @@
 import React, { CSSProperties, FC, ReactNode } from 'react';
 import RcDrawer from 'rc-drawer';
 import { css, cx } from 'emotion';
-import { getTheme, stylesFactory } from '../../themes';
+import { stylesFactory, useTheme } from '../../themes';
 import { GrafanaTheme } from '../../types';
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
   /** Title shown at the top of the drawer */
   title?: string;
   /** Should the Drawer be closable by clicking on the mask */
-  maskClosable?: boolean;
+  closeOnMaskClick?: boolean;
   /** Render the drawer inside a container on the page */
   inline?: boolean;
   /** width in percentage of the container */
@@ -30,8 +30,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
 }));
 
-export const Drawer: FC<Props> = ({ children, inline = false, onClose, maskClosable = false, title, width = 30 }) => {
-  const theme = getTheme();
+export const Drawer: FC<Props> = ({
+  children,
+  inline = false,
+  onClose,
+  closeOnMaskClick = false,
+  title,
+  width = 30,
+}) => {
+  const theme = useTheme();
   const drawerStyles = getStyles(theme);
 
   return (
@@ -40,7 +47,7 @@ export const Drawer: FC<Props> = ({ children, inline = false, onClose, maskClosa
       onClose={onClose}
       handler={false}
       open={true}
-      maskClosable={maskClosable}
+      maskClosable={closeOnMaskClick}
       placement="right"
       width={`${width}%`}
       getContainer={inline ? false : 'body'}
