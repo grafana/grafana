@@ -31,8 +31,6 @@ interface Props extends Themeable {
 interface State {
   showContext: boolean;
   showDetails: boolean;
-  loadingDerivedFields: boolean;
-  linkModels: Array<LinkModel<any>> | null;
 }
 
 /**
@@ -43,18 +41,10 @@ interface State {
  * When the user requests stats for a field, they will be calculated and rendered below the row.
  */
 class UnThemedLogRow extends Component<Props, State> {
-  mounted = true;
-
   state: State = {
     showContext: false,
     showDetails: false,
-    loadingDerivedFields: false,
-    linkModels: null,
   };
-
-  componentWillUnmount(): void {
-    this.mounted = false;
-  }
 
   toggleContext = () => {
     this.setState(state => {

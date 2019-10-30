@@ -11,6 +11,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   data,
   timeZone,
   options: { showTime, sortOrder },
+  width,
 }) => {
   if (!data) {
     return (

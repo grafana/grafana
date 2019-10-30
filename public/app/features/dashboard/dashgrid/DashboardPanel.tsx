@@ -89,11 +89,11 @@ export class DashboardPanel extends PureComponent<Props, State> {
     }
   }
 
-  async componentDidMount() {
+  componentDidMount() {
     this.loadPlugin(this.props.panel.type);
   }
 
-  async componentDidUpdate(prevProps: Props, prevState: State) {
+  componentDidUpdate(prevProps: Props, prevState: State) {
     if (this.state.isLazy && this.props.isInView) {
       this.setState({ isLazy: false });
     }

@@ -89,7 +89,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     }
   }
 
-  async componentDidUpdate(prevProps: Props) {
+  componentDidUpdate(prevProps: Props) {
     const { isInView } = this.props;
 
     // View state has changed

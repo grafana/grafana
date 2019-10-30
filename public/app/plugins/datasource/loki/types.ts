@@ -42,9 +42,3 @@ export type DerivedFieldConfig = {
   name: string;
   url?: string;
 };
-
-export type LokiRow = {
-  id: string;
-  line: string;
-  ts: string;
-};

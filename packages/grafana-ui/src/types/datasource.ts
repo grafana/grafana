@@ -11,7 +11,6 @@ import {
   AnnotationEvent,
   ScopedVars,
   KeyValue,
-  DataLink,
 } from '@grafana/data';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 import { PanelData } from './panel';
@@ -262,9 +261,6 @@ export abstract class DataSourceApi<
    * in the annotation editor `annotations` capability also needs to be enabled in plugin.json.
    */
   annotationQuery?(options: AnnotationQueryRequest<TQuery>): Promise<AnnotationEvent[]>;
-
-  async getDerivedFields?(data: { [key: string]: string | number | null }): Promise<ScopedVars>;
-  getDataLinks?(context: 'logs' | 'metrics'): DataLink[];
 }
 
 export interface QueryEditorProps<
@@ -553,8 +549,3 @@ export interface AnnotationQueryRequest<MoreOptions = {}> {
     name: string;
   } & MoreOptions;
 }
-
-export type DerivedField = {
-  name: string;
-  value: string;
-};

@@ -1,14 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import {
-  PanelEditorProps,
-  Switch,
-  PanelOptionsGrid,
-  PanelOptionsGroup,
-  FormLabel,
-  Select,
-  VariableSuggestion,
-} from '@grafana/ui';
+import { PanelEditorProps, Switch, PanelOptionsGrid, PanelOptionsGroup, FormLabel, Select } from '@grafana/ui';
 
 // Types
 import { Options } from './types';
@@ -20,11 +12,7 @@ const sortOrderOptions = [
   { value: SortOrder.Ascending, label: 'Ascending' },
 ];
 
-type Props = PanelEditorProps<Options>;
-type State = {
-  suggestions: VariableSuggestion[];
-};
-export class LogsPanelEditor extends PureComponent<Props, State> {
+export class LogsPanelEditor extends PureComponent<PanelEditorProps<Options>> {
   onToggleTime = () => {
     const { options, onOptionsChange } = this.props;
     const { showTime } = options;
