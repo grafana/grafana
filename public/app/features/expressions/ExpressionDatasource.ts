@@ -56,8 +56,6 @@ export class ExpressionDatasourceApi extends DataSourceApi<ExpressionQuery> {
         from: range.from.valueOf().toString(),
         to: range.to.valueOf().toString(),
         queries: queries,
-        intervalMs,
-        maxDataPoints,
         range,
         expressionCount,
       })
