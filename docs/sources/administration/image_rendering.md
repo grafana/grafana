@@ -43,9 +43,40 @@ For further information and instructions refer to the [plugin details](https://g
 
 The [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) can also be run as a remote HTTP rendering service. In this setup Grafana will render an image by making a HTTP request to the remote rendering service, which in turn render the image and returns it back in the HTTP response to Grafana.
 
-As an alternative to installing and running the image renderer as a plugin you can run it as a remote image rendering service using Docker.
+> This plugin currently does not work if it is installed in Grafana docker image.
 
-For running grafana with remote image renderer create a `docker-compose.yml` with the following content.
+As an alternative to installing and running the image renderer as a plugin you can run it as a remote image rendering service running as a node.js application or inside a Docker container.
+
+**Running as standalone node.js application:**
+
+The following example describes how to build and run the remote HTTP rendering service as a standalone node.js application and configure Grafana appropriately.
+
+1. Git clone the [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) repository.
+2. Install dependencies and build:
+
+```bash
+yarn install --pure-lockfile
+yarn run build
+```
+3. Run the server
+
+```bash
+node build/app.js server --port=8081
+```
+3. Update Grafana configuration:
+
+```
+[rendering]
+server_url = http://localhost:8081/render
+callback_url = http://localhost:3000/
+```
+4. Restart Grafana
+
+**Using Docker:**
+
+The following example describes how to run Grafana and the remote HTTP rendering service in two separate docker containers using Docker Compose.
+
+Create a `docker-compose.yml` with the following content.
 
 ```yaml
 version: '2'
