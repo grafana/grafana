@@ -1,4 +1,4 @@
-import { GrafanaTheme } from '@grafana/ui';
+import { GrafanaTheme } from '@grafana/data';
 import { default as calculateSize } from 'calculate-size';
 
 import { CompletionItemGroup, CompletionItem, CompletionItemKind } from 'app/types';

@@ -8,9 +8,6 @@ import {
   ExploreStartPageProps,
   PanelData,
   DataQueryRequest,
-} from '@grafana/ui';
-
-import {
   RawTimeRange,
   LogLevel,
   TimeRange,

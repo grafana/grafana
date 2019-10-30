@@ -9,7 +9,7 @@ import { BarGauge, VizRepeater, getFieldDisplayValues, FieldDisplay, DataLinksCo
 
 // Types
 import { BarGaugeOptions } from './types';
-import { PanelProps } from '@grafana/ui';
+import { PanelProps } from '@grafana/data';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {

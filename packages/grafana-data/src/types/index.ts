@@ -20,7 +20,8 @@ export * from './plugin';
 export * from './theme';
 
 import * as AppEvents from './appEvents';
-export { AppEvents };
+import { AppEvent } from './appEvents';
+export { AppEvent, AppEvents };
 
 import * as PanelEvents from './panelEvents';
 export { PanelEvents };

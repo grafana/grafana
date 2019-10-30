@@ -10,11 +10,10 @@ import {
   FieldPropertiesEditor,
   PanelOptionsGroup,
   FormLabel,
-  PanelEditorProps,
   Select,
   DataLinksEditor,
 } from '@grafana/ui';
-import { FieldConfig, DataLink } from '@grafana/data';
+import { FieldConfig, DataLink, PanelEditorProps } from '@grafana/data';
 
 import { Threshold, ValueMapping } from '@grafana/data';
 import { BarGaugeOptions, orientationOptions, displayModes } from './types';
