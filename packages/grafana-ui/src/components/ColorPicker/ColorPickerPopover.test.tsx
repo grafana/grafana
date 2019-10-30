@@ -1,11 +1,11 @@
 import React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
 import { ColorPickerPopover } from './ColorPickerPopover';
-import { getColorDefinitionByName, getNamedColorPalette } from '../../utils/namedColorsPalette';
+import { getColorDefinitionByName, getNamedColorPalette } from '@grafana/data/src/utils/namedColorsPalette';
 import { ColorSwatch } from './NamedColorsGroup';
 import flatten from 'lodash/flatten';
-import { GrafanaThemeType } from '../../types';
 import { getTheme } from '../../themes';
+import { GrafanaThemeType } from '@grafana/data';
 
 const allColors = flatten(Array.from(getNamedColorPalette().values()));
 

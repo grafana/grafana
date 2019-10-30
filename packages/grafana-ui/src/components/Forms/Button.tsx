@@ -5,7 +5,7 @@ import { selectThemeVariant, stylesFactory, ThemeContext } from '../../themes';
 import { Button as DefaultButton, LinkButton as DefaultLinkButton } from '../Button/Button';
 import { getFocusStyle } from './commonStyles';
 import { ButtonSize, StyleDeps } from '../Button/types';
-import { GrafanaTheme } from '../../types';
+import { GrafanaTheme } from '@grafana/data';
 
 const buttonVariantStyles = (from: string, to: string, textColor: string) => css`
   background: linear-gradient(180deg, ${from} 0%, ${to} 100%);

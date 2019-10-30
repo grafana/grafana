@@ -1,8 +1,8 @@
 import cloneDeep from 'lodash/cloneDeep';
 import omit from 'lodash/omit';
 
-import { VizOrientation, PanelModel } from '../../types/panel';
-import { FieldDisplayOptions } from '../../utils/fieldDisplay';
+import { VizOrientation, PanelModel } from '@grafana/data/src/types/panel';
+import { FieldDisplayOptions } from '@grafana/data/src/field/fieldDisplay';
 import {
   fieldReducers,
   Threshold,

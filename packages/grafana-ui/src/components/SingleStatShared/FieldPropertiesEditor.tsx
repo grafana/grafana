@@ -9,7 +9,7 @@ import { UnitPicker } from '../UnitPicker/UnitPicker';
 // Types
 import { toIntegerOrUndefined, SelectableValue, FieldConfig, toFloatOrUndefined, toNumberString } from '@grafana/data';
 
-import { VAR_SERIES_NAME, VAR_FIELD_NAME, VAR_CALC, VAR_CELL_PREFIX } from '../../utils/fieldDisplay';
+import { VAR_SERIES_NAME, VAR_FIELD_NAME, VAR_CALC, VAR_CELL_PREFIX } from '@grafana/data/src/field/fieldDisplay';
 
 const labelWidth = 6;
 

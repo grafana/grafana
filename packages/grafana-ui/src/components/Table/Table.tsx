@@ -21,7 +21,7 @@ import {
   TableCellBuilderOptions,
   simpleCellBuilder,
 } from './TableCellBuilder';
-import { InterpolateFunction } from '../../types/panel';
+import { InterpolateFunction } from '@grafana/data/src/types/panel';
 
 export interface Props extends Themeable {
   data: DataFrame;

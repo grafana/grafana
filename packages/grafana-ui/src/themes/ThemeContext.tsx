@@ -2,7 +2,8 @@ import React, { useContext } from 'react';
 import hoistNonReactStatics from 'hoist-non-react-statics';
 
 import { getTheme } from './getTheme';
-import { GrafanaThemeType, Themeable } from '../types/theme';
+import { Themeable } from '../types/theme';
+import { GrafanaThemeType } from '@grafana/data';
 
 type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
 type Subtract<T, K> = Omit<T, keyof K>;
