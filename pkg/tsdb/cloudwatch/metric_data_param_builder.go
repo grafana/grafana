@@ -46,7 +46,6 @@ func (mdpb *metricDataParamBuilder) build(queryContext *tsdb.TsdbQuery, queries 
 			mdp.MetricDataInput.MetricDataQueries = append(mdp.MetricDataInput.MetricDataQueries, metricDataQuery)
 			mdp.CloudwatchQueries = append(mdp.CloudwatchQueries, metricStatQuery)
 		}
-		// metricDataInputs = append(metricDataInputs, mdi)
 		metricDataParams = append(metricDataParams, mdp)
 	}
 
@@ -57,12 +56,6 @@ func (mdpb *metricDataParamBuilder) build(queryContext *tsdb.TsdbQuery, queries 
 	mdpb.sortQueries(nonMetricStatQueries)
 
 	mdp := newMetricDataParam(startTime, endTime)
-	// mdi := &cloudwatch.GetMetricDataInput{
-	// 	StartTime: aws.Time(startTime),
-	// 	EndTime:   aws.Time(endTime),
-	// 	ScanBy:    aws.String("TimestampAscending"),
-	// }
-
 	noOfSearchExpressions := 0
 	for _, query := range nonMetricStatQueries {
 		if query.HighResolution && (((endTime.Unix() - startTime.Unix()) / int64(query.Period)) > 21600) {
@@ -77,11 +70,6 @@ func (mdpb *metricDataParamBuilder) build(queryContext *tsdb.TsdbQuery, queries 
 		if isSearchExpressions && noOfSearchExpressions == mdpb.maxNoOfSearchExpressions || len(mdp.MetricDataInput.MetricDataQueries) == mdpb.maxNoOfMetricDataQueries {
 			metricDataParams = append(metricDataParams, mdp)
 			mdp = newMetricDataParam(startTime, endTime)
-			// mdi = &cloudwatch.GetMetricDataInput{
-			// 	StartTime: aws.Time(startTime),
-			// 	EndTime:   aws.Time(endTime),
-			// 	ScanBy:    aws.String("TimestampAscending"),
-			// }
 			noOfSearchExpressions = 0
 		}
 
@@ -93,7 +81,6 @@ func (mdpb *metricDataParamBuilder) build(queryContext *tsdb.TsdbQuery, queries 
 		}
 	}
 
-	// metricDataInputs = append(metricDataInputs, mdi)
 	metricDataParams = append(metricDataParams, mdp)
 
 	return metricDataParams, nil
