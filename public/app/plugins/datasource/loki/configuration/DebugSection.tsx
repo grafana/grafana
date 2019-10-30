@@ -3,6 +3,8 @@ import { css } from 'emotion';
 import cx from 'classnames';
 import { FormField } from '@grafana/ui';
 import { DerivedFieldConfig } from '../types';
+import { getLinksFromLogsField } from '../../../../features/panel/panellinks/linkSuppliers';
+import { ArrayVector, FieldType } from '@grafana/data';
 
 type Props = {
   derivedFields: DerivedFieldConfig[];
@@ -12,16 +14,16 @@ export const DebugSection = (props: Props) => {
   const { derivedFields, className } = props;
   const [debugText, setDebugText] = useState('');
 
-  let results: any[] = [];
+  let debugFields: DebugField[] = [];
   if (debugText && derivedFields) {
-    results = makeDebugFields(derivedFields, debugText);
+    debugFields = makeDebugFields(derivedFields, debugText);
   }
 
   return (
     <div className={className}>
       <FormField
         labelWidth={12}
-        label={'Debug input'}
+        label={'Debug log message'}
         inputEl={
           <textarea
             className={cx(
@@ -35,38 +37,70 @@ export const DebugSection = (props: Props) => {
           />
         }
       />
-      {!!results.length &&
-        results.map(result => {
-          return (
-            <div key={result.name}>
-              {result.name} = {result.result || '<no match>'}
-            </div>
-          );
-        })}
+      {debugFields.map(field => {
+        return <DebugFieldItem key={field.name} field={field} />;
+      })}
     </div>
   );
 };
 
-// TODO: this should also interpolate url but for that we need the link service here somehow
-function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string) {
-  return derivedFields.reduce((acc, field) => {
-    if (field.name && field.matcherRegex) {
+type DebugFieldItemProps = {
+  field: DebugField;
+};
+const DebugFieldItem = ({ field }: DebugFieldItemProps) => {
+  let value: any = field.value;
+  if (field.error) {
+    value = field.error.message;
+  } else if (field.href) {
+    value = <a href={field.href}>{value}</a>;
+  }
+
+  return (
+    <div key={field.name}>
+      {field.name} = {value}
+    </div>
+  );
+};
+
+type DebugField = {
+  name: string;
+  error?: any;
+  value?: string;
+  href?: string;
+};
+function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string): DebugField[] {
+  return derivedFields
+    .filter(field => field.name && field.matcherRegex)
+    .map(field => {
       try {
         const testMatch = debugText.match(field.matcherRegex);
+        const value = testMatch && testMatch[1];
+        let link;
 
-        acc.push({
+        if (field.url && value) {
+          link = getLinksFromLogsField(
+            {
+              name: '',
+              type: FieldType.string,
+              values: new ArrayVector([value]),
+              config: {
+                links: [{ title: '', url: field.url }],
+              },
+            },
+            0
+          )[0];
+        }
+
+        return {
           name: field.name,
-          result: (testMatch && testMatch[1]) || '<no match>',
-        });
-        return acc;
+          value: value || '<no match>',
+          href: link && link.href,
+        } as DebugField;
       } catch (error) {
-        acc.push({
-          label: field.name,
+        return {
+          name: field.name,
           error,
-        });
-        return acc;
+        } as DebugField;
       }
-    }
-    return acc;
-  }, []);
+    });
 }

@@ -12,8 +12,6 @@ import {
   LogRowModel,
   LogsDedupStrategy,
   TimeRange,
-  LinkModel,
-  Field,
 } from '@grafana/data';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
@@ -27,7 +25,7 @@ import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 import { LiveTailControls } from './useLiveTailControls';
-import { getLinkSrv } from '../panel/panellinks/link_srv';
+import { getLinksFromLogsField } from '../panel/panellinks/linkSuppliers';
 
 interface LogsContainerProps {
   datasourceInstance: DataSourceApi | null;
@@ -81,20 +79,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     }
 
     return [];
-  };
-
-  getFieldLinks = (field: Field, rowIndex: number): Array<LinkModel<Field>> => {
-    const scopedVars: any = {};
-    scopedVars['__value'] = {
-      value: {
-        text: field.values.get(rowIndex),
-      },
-      text: 'Value',
-    };
-
-    return field.config.links
-      ? field.config.links.map(link => getLinkSrv().getDataLinkUIModel(link, scopedVars, field))
-      : [];
   };
 
   render() {
@@ -153,7 +137,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               scanRange={range.raw}
               width={width}
               getRowContext={this.getLogRowContext}
-              getFieldLinks={this.getFieldLinks}
+              getFieldLinks={getLinksFromLogsField}
             />
           </Collapse>
         </LogsCrossFadeTransition>

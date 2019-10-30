@@ -35,23 +35,6 @@ export const DerivedFields = (props: Props) => {
       </div>
 
       <div className="gf-form-group">
-        <Button variant="inverse" onClick={() => setShowDebug(!showDebug)}>
-          {showDebug ? 'Hide debug' : 'Debug'}
-        </Button>
-      </div>
-
-      {showDebug && (
-        <div className="gf-form-group">
-          <DebugSection
-            className={css`
-              margin-bottom: 10px;
-            `}
-            derivedFields={value}
-          />
-        </div>
-      )}
-
-      <div className="gf-form-group">
         {value &&
           value.map((field, index) => {
             return (
@@ -83,6 +66,9 @@ export const DerivedFields = (props: Props) => {
         <div>
           <Button
             variant={'inverse'}
+            className={css`
+              margin-right: 10px;
+            `}
             icon="fa fa-plus"
             onClick={event => {
               event.preventDefault();
@@ -92,8 +78,23 @@ export const DerivedFields = (props: Props) => {
           >
             Add
           </Button>
+
+          <Button variant="inverse" onClick={() => setShowDebug(!showDebug)}>
+            {showDebug ? 'Hide debug' : 'Debug'}
+          </Button>
         </div>
       </div>
+
+      {showDebug && (
+        <div className="gf-form-group">
+          <DebugSection
+            className={css`
+              margin-bottom: 10px;
+            `}
+            derivedFields={value}
+          />
+        </div>
+      )}
     </>
   );
 };
