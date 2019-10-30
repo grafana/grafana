@@ -78,7 +78,7 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
  * It will
  *  * Merge multiple responses into a single DataFrame array based on the packet key
  *  * Will emit a loading state if no response after 50ms
- *  * Cancel any still runnning network requests on unsubscribe (using request.requestId)
+ *  * Cancel any still running network requests on unsubscribe (using request.requestId)
  */
 export function runRequest(datasource: DataSourceApi, request: DataQueryRequest): Observable<PanelData> {
   let state: RunningQueryState = {

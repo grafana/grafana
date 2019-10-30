@@ -23,20 +23,33 @@ import (
 	"golang.org/x/xerrors"
 )
 
+// Subset of metadata allowed as a value in the Versions map of datasource plugin metadata
+type SubMetaData struct {
+	Annotations  bool            `json:"annotations,omitempty"`
+	Metrics      bool            `json:"metrics"`
+	Alerting     bool            `json:"alerting,omitempty"`
+	Logs         bool            `json:"logs,omitempty"`
+	QueryOptions map[string]bool `json:"queryOptions,omitempty"`
+	BuiltIn      bool            `json:"builtIn,omitempty"`
+	Mixed        bool            `json:"mixed,omitempty"`
+	Streaming    map[string]bool `json:"streaming,omitempty"`
+}
+
 // DataSourcePlugin contains all metadata about a datasource plugin
 type DataSourcePlugin struct {
 	FrontendPluginBase
-	Annotations  bool              `json:"annotations"`
-	Metrics      bool              `json:"metrics"`
-	Alerting     bool              `json:"alerting"`
-	Explore      bool              `json:"explore"`
-	Table        bool              `json:"tables"`
-	Logs         bool              `json:"logs"`
-	QueryOptions map[string]bool   `json:"queryOptions,omitempty"`
-	BuiltIn      bool              `json:"builtIn,omitempty"`
-	Mixed        bool              `json:"mixed,omitempty"`
-	Routes       []*AppPluginRoute `json:"routes"`
-	Streaming    bool              `json:"streaming"`
+	Annotations  bool                   `json:"annotations"`
+	Metrics      bool                   `json:"metrics"`
+	Alerting     bool                   `json:"alerting"`
+	Explore      bool                   `json:"explore"`
+	Table        bool                   `json:"tables"`
+	Logs         bool                   `json:"logs"`
+	QueryOptions map[string]bool        `json:"queryOptions,omitempty"`
+	BuiltIn      bool                   `json:"builtIn,omitempty"`
+	Mixed        bool                   `json:"mixed,omitempty"`
+	Routes       []*AppPluginRoute      `json:"routes"`
+	Streaming    map[string]bool        `json:"streaming"`
+	Versions     map[string]SubMetaData `json:"versions,omitempty"`
 
 	Backend    bool   `json:"backend,omitempty"`
 	Executable string `json:"executable,omitempty"`

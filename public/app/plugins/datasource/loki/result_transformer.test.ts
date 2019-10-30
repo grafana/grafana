@@ -1,8 +1,8 @@
 import { logStreamToDataFrame, appendResponseToBufferedData } from './result_transformer';
 import { FieldType, MutableDataFrame } from '@grafana/data';
-import { LokiLogsStream } from './types';
+import { LokiStreamResult } from './types';
 
-const streams: LokiLogsStream[] = [
+const streams: LokiStreamResult[] = [
   {
     labels: '{foo="bar"}',
     entries: [

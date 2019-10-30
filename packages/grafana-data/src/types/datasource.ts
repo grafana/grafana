@@ -100,7 +100,8 @@ export interface DataSourcePluginMeta extends PluginMeta {
   category?: string;
   queryOptions?: PluginMetaQueryOptions;
   sort?: number;
-  streaming?: boolean;
+  streaming?: Record<string, boolean>;
+  versions?: Record<string, Partial<Omit<DataSourcePluginMeta, (keyof PluginMeta) | 'versions'>>>;
 }
 
 interface PluginMetaQueryOptions {
@@ -248,6 +249,8 @@ export abstract class DataSourceApi<
    */
   languageProvider?: any;
 
+  getVersion?(): Promise<string>;
+
   /**
    * Can be optionally implemented to allow datasource to be a source of annotations for dashboard. To be visible
    * in the annotation editor `annotations` capability also needs to be enabled in plugin.json.
@@ -288,6 +291,7 @@ export interface ExploreQueryFieldProps<
 
 export interface ExploreStartPageProps {
   datasource?: DataSourceApi;
+  exploreMode: 'Logs' | 'Metrics';
   onClickExample: (query: DataQuery) => void;
 }
 
@@ -429,18 +433,21 @@ export interface DataQueryError {
 
 export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   requestId: string; // Used to identify results and optionally cancel the request in backendSrv
-  timezone: string;
-  range: TimeRange;
-  rangeRaw?: RawTimeRange;
-  timeInfo?: string; // The query time description (blue text in the upper right)
-  targets: TQuery[];
-  panelId: number;
+
   dashboardId: number;
-  cacheTimeout?: string;
   interval: string;
   intervalMs: number;
   maxDataPoints: number;
+  panelId: number;
+  range: TimeRange;
   scopedVars: ScopedVars;
+  targets: TQuery[];
+  timezone: string;
+
+  cacheTimeout?: string;
+  exploreMode?: 'Logs' | 'Metrics';
+  rangeRaw?: RawTimeRange;
+  timeInfo?: string; // The query time description (blue text in the upper right)
 
   // Request Timing
   startTime: number;

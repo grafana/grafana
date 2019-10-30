@@ -20,6 +20,7 @@ describe('LokiDatasource', () => {
         },
       ],
     },
+    status: 404, // for simulating legacy endpoint
   };
 
   const backendSrvMock = { datasourceRequest: jest.fn() };

@@ -1,5 +1,9 @@
-export let store: any;
+import { ActionOf } from 'app/core/redux';
+import { StoreState } from 'app/types';
+import { Store } from 'redux';
 
-export function setStore(newStore: any) {
+export let store: Store<StoreState, ActionOf<any>>;
+
+export function setStore(newStore: Store<StoreState, ActionOf<any>>) {
   store = newStore;
 }
