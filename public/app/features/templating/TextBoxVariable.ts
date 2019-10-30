@@ -1,7 +1,7 @@
-import { Variable, assignModelProperties, variableTypes } from './variable';
+import { assignModelProperties, VariableActions, variableTypes } from './variable';
 import { VariableSrv } from './variable_srv';
 
-export class TextBoxVariable implements Variable {
+export class TextBoxVariable implements VariableActions {
   query: string;
   current: any;
   options: any[];

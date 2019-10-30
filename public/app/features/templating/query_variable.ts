@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { assignModelProperties, containsVariable, Variable, variableTypes } from './variable';
+import { assignModelProperties, containsVariable, VariableActions, variableTypes } from './variable';
 import { stringToJsRegex } from '@grafana/data';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { TemplateSrv } from './template_srv';
@@ -10,7 +10,7 @@ function getNoneOption() {
   return { text: 'None', value: '', isNone: true };
 }
 
-export class QueryVariable implements Variable {
+export class QueryVariable implements VariableActions {
   datasource: any;
   query: any;
   regex: any;

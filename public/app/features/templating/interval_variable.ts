@@ -1,11 +1,11 @@
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
-import { Variable, assignModelProperties, variableTypes } from './variable';
+import { assignModelProperties, VariableActions, variableTypes } from './variable';
 import { TimeSrv } from '../dashboard/services/TimeSrv';
 import { TemplateSrv } from './template_srv';
 import { VariableSrv } from './variable_srv';
 
-export class IntervalVariable implements Variable {
+export class IntervalVariable implements VariableActions {
   name: string;
   auto_count: number; // tslint:disable-line variable-name
   auto_min: number; // tslint:disable-line variable-name

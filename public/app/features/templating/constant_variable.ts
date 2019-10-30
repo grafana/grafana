@@ -1,7 +1,7 @@
-import { Variable, assignModelProperties, variableTypes } from './variable';
+import { assignModelProperties, VariableActions, variableTypes } from './variable';
 import { VariableSrv } from './all';
 
-export class ConstantVariable implements Variable {
+export class ConstantVariable implements VariableActions {
   query: string;
   options: any[];
   current: any;
