@@ -7,7 +7,7 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 //Types
 import { GraphiteQuery } from './types';
-import { interpolateSearchFilter } from '../../../features/templating/variable';
+import { getSearchFilterScopedVar } from '../../../features/templating/variable';
 
 export class GraphiteDatasource {
   basicAuth: string;
@@ -251,12 +251,10 @@ export class GraphiteDatasource {
 
   metricFindQuery(query: string, optionalOptions: any) {
     const options: any = optionalOptions || {};
-    const interpolatedQuery = interpolateSearchFilter({
-      query: this.templateSrv.replace(query),
-      options: optionalOptions,
-      wildcardChar: '*',
-      quoteLiteral: false,
-    });
+    let interpolatedQuery = this.templateSrv.replace(
+      query,
+      getSearchFilterScopedVar({ query, wildcardChar: '', options: optionalOptions })
+    );
 
     // special handling for tag_values(<tag>[,<expression>]*), this is used for template variables
     let matches = interpolatedQuery.match(/^tag_values\(([^,]+)((, *[^,]+)*)\)$/);
@@ -288,6 +286,11 @@ export class GraphiteDatasource {
       options.limit = 10000;
       return this.getTagsAutoComplete(expressions, undefined, options);
     }
+
+    interpolatedQuery = this.templateSrv.replace(
+      query,
+      getSearchFilterScopedVar({ query, wildcardChar: '*', options: optionalOptions })
+    );
 
     const httpOptions: any = {
       method: 'POST',
