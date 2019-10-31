@@ -4,8 +4,9 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   MetricFindValue,
-} from '@grafana/ui';
-import { TableData, TimeSeries } from '@grafana/data';
+  TableData,
+  TimeSeries,
+} from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { queryMetricTree } from './metricTree';

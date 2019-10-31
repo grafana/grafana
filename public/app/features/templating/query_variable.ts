@@ -1,54 +1,69 @@
 import _ from 'lodash';
-import { assignModelProperties, containsVariable, Variable, variableTypes } from './variable';
+import {
+  assignModelProperties,
+  containsVariable,
+  QueryVariableModel,
+  VariableActions,
+  VariableHide,
+  VariableOption,
+  VariableRefresh,
+  VariableSort,
+  VariableTag,
+  VariableType,
+  variableTypes,
+} from './variable';
 import { stringToJsRegex } from '@grafana/data';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { TemplateSrv } from './template_srv';
 import { VariableSrv } from './variable_srv';
 import { TimeSrv } from '../dashboard/services/TimeSrv';
 
-function getNoneOption() {
-  return { text: 'None', value: '', isNone: true };
+function getNoneOption(): VariableOption {
+  return { text: 'None', value: '', isNone: true, selected: false };
 }
 
-export class QueryVariable implements Variable {
-  datasource: any;
-  query: any;
-  regex: any;
-  sort: any;
-  options: any;
-  current: any;
-  refresh: number;
-  hide: number;
+export class QueryVariable implements QueryVariableModel, VariableActions {
+  type: VariableType;
   name: string;
+  label: string;
+  hide: VariableHide;
+  skipUrlSync: boolean;
+  datasource: string;
+  query: string;
+  regex: string;
+  sort: VariableSort;
+  options: VariableOption[];
+  current: VariableOption;
+  refresh: VariableRefresh;
   multi: boolean;
   includeAll: boolean;
   useTags: boolean;
   tagsQuery: string;
   tagValuesQuery: string;
-  tags: any[];
-  skipUrlSync: boolean;
+  tags: VariableTag[];
   definition: string;
+  allValue: string;
 
-  defaults: any = {
+  defaults: QueryVariableModel = {
     type: 'query',
+    name: '',
     label: null,
+    hide: VariableHide.dontHide,
+    skipUrlSync: false,
+    datasource: null,
     query: '',
     regex: '',
-    sort: 0,
-    datasource: null,
-    refresh: 0,
-    hide: 0,
-    name: '',
+    sort: VariableSort.disabled,
+    refresh: VariableRefresh.never,
     multi: false,
     includeAll: false,
     allValue: null,
     options: [],
-    current: {},
+    current: {} as VariableOption,
     tags: [],
     useTags: false,
     tagsQuery: '',
     tagValuesQuery: '',
-    skipUrlSync: false,
     definition: '',
   };
 
@@ -151,7 +166,7 @@ export class QueryVariable implements Variable {
   }
 
   addAllOption() {
-    this.options.unshift({ text: 'All', value: '$__all' });
+    this.options.unshift({ text: 'All', value: '$__all', selected: false });
   }
 
   metricNamesToVariableValues(metricNames: any[]) {

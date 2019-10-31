@@ -1,8 +1,7 @@
 import LokiDatasource from './datasource';
 import { LokiQuery } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import { AnnotationQueryRequest, DataSourceApi } from '@grafana/ui';
-import { DataFrame, dateTime } from '@grafana/data';
+import { AnnotationQueryRequest, DataSourceApi, DataFrame, dateTime } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 

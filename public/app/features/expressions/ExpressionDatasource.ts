@@ -4,7 +4,7 @@ import {
   DataQueryResponse,
   DataSourceInstanceSettings,
   DataSourcePluginMeta,
-} from '@grafana/ui';
+} from '@grafana/data';
 import { ExpressionQuery, GELQueryType } from './types';
 import { ExpressionQueryEditor } from './ExpressionQueryEditor';
 import { Observable, from } from 'rxjs';

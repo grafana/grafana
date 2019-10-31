@@ -3,23 +3,18 @@ import React from 'react';
 // @ts-ignore
 import Cascader from 'rc-cascader';
 
-import { SlatePrism } from '@grafana/ui';
+import { SlatePrism, TypeaheadOutput, SuggestionsState, QueryField, TypeaheadInput, BracesPlugin } from '@grafana/ui';
 
-// Components
-import QueryField, { TypeaheadInput } from 'app/features/explore/QueryField';
 // Utils & Services
 // dom also includes Element polyfills
-import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import { Plugin, Node } from 'slate';
 
 // Types
 import { LokiQuery } from '../types';
-import { TypeaheadOutput } from 'app/types/explore';
-import { ExploreQueryFieldProps, DOMUtil } from '@grafana/ui';
-import { AbsoluteTimeRange } from '@grafana/data';
+import { DOMUtil } from '@grafana/ui';
+import { ExploreQueryFieldProps, AbsoluteTimeRange } from '@grafana/data';
 import { Grammar } from 'prismjs';
 import LokiLanguageProvider, { LokiHistoryItem } from '../language_provider';
-import { SuggestionsState } from 'app/features/explore/slate-plugins/suggestions';
 import LokiDatasource from '../datasource';
 
 function getChooserText(hasSyntax: boolean, hasLogLabels: boolean) {

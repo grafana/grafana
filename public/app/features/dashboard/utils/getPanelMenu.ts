@@ -4,7 +4,7 @@ import { store } from 'app/store/store';
 import { removePanel, duplicatePanel, copyPanel, editPanelJson, sharePanel } from 'app/features/dashboard/utils/panel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelMenuItem } from '@grafana/ui';
+import { PanelMenuItem } from '@grafana/data';
 
 export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
   const onViewPanel = () => {

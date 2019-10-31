@@ -3,7 +3,7 @@ import React from 'react';
 import { readCSV } from '@grafana/data';
 import { Table, Props } from './Table';
 import { getTheme } from '../../themes/index';
-import { GrafanaThemeType } from '../../types/theme';
+import { GrafanaThemeType } from '@grafana/data';
 import renderer from 'react-test-renderer';
 
 const series = readCSV('a,b,c\n1,2,3\n4,5,6')[0];
