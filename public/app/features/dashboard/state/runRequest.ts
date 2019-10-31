@@ -137,8 +137,6 @@ function cancelNetworkRequestsOnUnsubscribe(req: DataQueryRequest) {
 }
 
 export function callQueryMethod(datasource: DataSourceApi, request: DataQueryRequest) {
-  console.log('CALL', request.targets);
-
   // If any query has an expression, use the expression endpoint
   for (const target of request.targets) {
     if (target.datasource === ExpressionDatasourceID) {
