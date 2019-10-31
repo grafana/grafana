@@ -1,5 +1,6 @@
 import React, { PureComponent, ChangeEvent } from 'react';
-import { DataSourcePluginOptionsEditorProps, DataSourceSettings, FormLabel, Select, Input, Button } from '@grafana/ui';
+import { FormLabel, Select, Input, Button } from '@grafana/ui';
+import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
 import { SelectableValue } from '@grafana/data';
 import DatasourceSrv, { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import CloudWatchDatasource from '../datasource';

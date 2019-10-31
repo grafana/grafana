@@ -1,4 +1,4 @@
-import { DataSourcePlugin } from '@grafana/ui';
+import { DataSourcePlugin } from '@grafana/data';
 import { CloudWatchQueryCtrl } from './query_ctrl';
 import Datasource from './datasource';
 import { ConfigEditor } from './components/ConfigEditor';
