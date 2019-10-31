@@ -1,4 +1,4 @@
-import { DataQuery } from '@grafana/ui';
+import { DataQuery } from '@grafana/data';
 
 export enum GELQueryType {
   math = 'math',

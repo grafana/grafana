@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { VizOrientation } from '../../types';
+import { VizOrientation } from '@grafana/data';
 
 interface Props<T> {
   renderValue: (value: T, width: number, height: number) => JSX.Element;

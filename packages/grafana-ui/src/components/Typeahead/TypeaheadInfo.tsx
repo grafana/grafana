@@ -1,7 +1,8 @@
 import React, { useContext } from 'react';
 import { css, cx } from 'emotion';
 
-import { CompletionItem, selectThemeVariant, ThemeContext, GrafanaTheme } from '../..';
+import { CompletionItem, selectThemeVariant, ThemeContext } from '../..';
+import { GrafanaTheme } from '@grafana/data';
 
 const getStyles = (theme: GrafanaTheme, height: number, visible: boolean) => {
   return {

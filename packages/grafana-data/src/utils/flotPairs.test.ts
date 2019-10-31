@@ -1,5 +1,7 @@
+import { MutableDataFrame } from '../dataframe/MutableDataFrame';
 import { getFlotPairs, getFlotPairsConstant } from './flotPairs';
-import { MutableDataFrame, TimeRange, dateTime } from '@grafana/data';
+import { TimeRange } from '../types/time';
+import { dateTime } from '../datetime/moment_wrapper';
 
 describe('getFlotPairs', () => {
   const series = new MutableDataFrame({

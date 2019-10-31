@@ -1,7 +1,8 @@
 import { getFieldProperties, getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
-import { ReducerID, Threshold, toDataFrame } from '@grafana/data';
-import { GrafanaThemeType } from '../types/theme';
-import { getTheme } from '../themes/index';
+import { toDataFrame } from '../dataframe/processDataFrame';
+import { ReducerID } from '../transformations/fieldReducer';
+import { Threshold } from '../types/threshold';
+import { GrafanaTheme } from '../types/theme';
 
 describe('FieldDisplay', () => {
   it('Construct simple field properties', () => {
@@ -32,6 +33,7 @@ describe('FieldDisplay', () => {
   });
 
   // Simple test dataset
+
   const options: GetFieldDisplayValuesOptions = {
     data: [
       toDataFrame({
@@ -51,7 +53,7 @@ describe('FieldDisplay', () => {
       override: {},
       defaults: {},
     },
-    theme: getTheme(GrafanaThemeType.Dark),
+    theme: {} as GrafanaTheme,
   };
 
   it('show first numeric values', () => {
@@ -148,7 +150,7 @@ describe('FieldDisplay', () => {
           thresholds: [{ color: '#F2495C', value: 50 }],
         },
       },
-      theme: getTheme(GrafanaThemeType.Dark),
+      theme: {} as GrafanaTheme,
     };
 
     const display = getFieldDisplayValues(options);

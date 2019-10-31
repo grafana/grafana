@@ -4,16 +4,15 @@ import React from 'react';
 import Cascader from 'rc-cascader';
 
 import { Plugin } from 'slate';
-import { SlatePrism, TypeaheadInput, TypeaheadOutput, QueryField, BracesPlugin, HistoryItem } from '@grafana/ui';
+import { SlatePrism, TypeaheadInput, TypeaheadOutput, QueryField, BracesPlugin } from '@grafana/ui';
 
 import Prism from 'prismjs';
 
 // dom also includes Element polyfills
 import { PromQuery, PromContext, PromOptions } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
-import { ExploreQueryFieldProps, QueryHint, DOMUtil } from '@grafana/ui';
-import { isDataFrame, toLegacyResponseData } from '@grafana/data';
-import { SuggestionsState } from '@grafana/ui';
+import { ExploreQueryFieldProps, QueryHint, isDataFrame, toLegacyResponseData, HistoryItem } from '@grafana/data';
+import { DOMUtil, SuggestionsState } from '@grafana/ui';
 import { PrometheusDatasource } from '../datasource';
 import PromQlLanguageProvider from '../language_provider';
 

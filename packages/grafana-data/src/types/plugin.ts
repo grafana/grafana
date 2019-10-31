@@ -1,5 +1,5 @@
 import { ComponentClass } from 'react';
-import { KeyValue } from '@grafana/data';
+import { KeyValue } from './data';
 
 export enum PluginState {
   alpha = 'alpha', // Only included it `enable_alpha` is true

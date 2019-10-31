@@ -1,22 +1,17 @@
-import {
-  ReducerID,
-  reduceField,
-  FieldType,
-  DataFrame,
-  FieldConfig,
-  DisplayValue,
-  GraphSeriesValue,
-  DataFrameView,
-  getTimeField,
-  ScopedVars,
-} from '@grafana/data';
-
 import toNumber from 'lodash/toNumber';
 import toString from 'lodash/toString';
 
-import { GrafanaTheme, InterpolateFunction } from '../types/index';
 import { getDisplayProcessor } from './displayProcessor';
-import { getFlotPairs } from './flotPairs';
+import { getFlotPairs } from '../utils/flotPairs';
+import { FieldConfig, DataFrame, FieldType } from '../types/dataFrame';
+import { InterpolateFunction } from '../types/panel';
+import { DataFrameView } from '../dataframe/DataFrameView';
+import { GraphSeriesValue } from '../types/graph';
+import { DisplayValue } from '../types/displayValue';
+import { GrafanaTheme } from '../types/theme';
+import { ReducerID, reduceField } from '../transformations/fieldReducer';
+import { ScopedVars } from '../types/ScopedVars';
+import { getTimeField } from '../dataframe/processDataFrame';
 
 export interface FieldDisplayOptions {
   values?: boolean; // If true show each row value

@@ -5,8 +5,10 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   MetricFindValue,
-} from '@grafana/ui';
-import { DataFrame, DataFrameDTO, toDataFrame } from '@grafana/data';
+  DataFrame,
+  DataFrameDTO,
+  toDataFrame,
+} from '@grafana/data';
 
 import { InputQuery, InputOptions } from './types';
 

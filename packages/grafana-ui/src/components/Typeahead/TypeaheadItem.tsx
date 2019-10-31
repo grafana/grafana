@@ -3,8 +3,10 @@ import React, { useContext } from 'react';
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
 import { css, cx } from 'emotion';
-
-import { CompletionItem, CompletionItemKind, GrafanaTheme, ThemeContext, selectThemeVariant } from '../..';
+import { GrafanaTheme } from '@grafana/data';
+import { selectThemeVariant } from '../../themes/selectThemeVariant';
+import { CompletionItem, CompletionItemKind } from '../../types/completion';
+import { ThemeContext } from '../../themes/ThemeContext';
 
 interface Props {
   isSelected: boolean;

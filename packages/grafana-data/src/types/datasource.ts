@@ -1,20 +1,12 @@
+import { Observable } from 'rxjs';
 import { ComponentType } from 'react';
-import {
-  TimeRange,
-  RawTimeRange,
-  TableData,
-  TimeSeries,
-  DataFrame,
-  LogRowModel,
-  LoadingState,
-  DataFrameDTO,
-  AnnotationEvent,
-  ScopedVars,
-  KeyValue,
-} from '@grafana/data';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 import { PanelData } from './panel';
-import { Observable } from 'rxjs';
+import { LogRowModel } from './logs';
+import { AnnotationEvent, TimeSeries, TableData, LoadingState, KeyValue } from './data';
+import { DataFrame, DataFrameDTO } from './dataFrame';
+import { TimeRange, RawTimeRange } from './time';
+import { ScopedVars } from './ScopedVars';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
   options: DataSourceSettings<JSONData, SecureJSONData>;

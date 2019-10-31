@@ -1,7 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { DataSourcesListPage, Props } from './DataSourcesListPage';
-import { DataSourceSettings } from '@grafana/ui';
+import { DataSourceSettings } from '@grafana/data';
 import { NavModel } from '@grafana/data';
 import { LayoutModes } from '../../core/components/LayoutSelector/LayoutSelector';
 import { getMockDataSources } from './__mocks__/dataSourcesMocks';

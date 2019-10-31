@@ -12,7 +12,8 @@ import {
 } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import { css, cx } from 'emotion';
-import { GrafanaTheme, selectThemeVariant, ThemeContext } from '../../index';
+import { selectThemeVariant, ThemeContext } from '../../index';
+import { GrafanaTheme } from '@grafana/data';
 import { LogRowContextQueryErrors, HasMoreContextRows, LogRowContextRows } from './LogRowContextProvider';
 import { LogRowContext } from './LogRowContext';
 import { LogMessageAnsi } from './LogMessageAnsi';

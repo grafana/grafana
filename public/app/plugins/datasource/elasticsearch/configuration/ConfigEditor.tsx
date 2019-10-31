@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { DataSourceHttpSettings, DataSourcePluginOptionsEditorProps } from '@grafana/ui';
+import { DataSourceHttpSettings } from '@grafana/ui';
+import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { ElasticsearchOptions } from '../types';
 import { defaultMaxConcurrentShardRequests, ElasticDetails } from './ElasticDetails';
 import { LogsConfig } from './LogsConfig';

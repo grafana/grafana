@@ -3,7 +3,7 @@ import alertDef from '../../../features/alerting/state/alertDef';
 import { PanelCtrl } from 'app/plugins/sdk';
 
 import { dateMath, dateTime } from '@grafana/data';
-import { PanelEvents } from '@grafana/ui';
+import { PanelEvents } from '@grafana/data';
 import { auto } from 'angular';
 import { BackendSrv } from '@grafana/runtime';
 

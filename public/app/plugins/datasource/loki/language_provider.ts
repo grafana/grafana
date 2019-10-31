@@ -7,11 +7,11 @@ import syntax from './syntax';
 
 // Types
 import { LokiQuery } from './types';
-import { dateTime, AbsoluteTimeRange } from '@grafana/data';
+import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem } from '@grafana/data';
 import { PromQuery } from '../prometheus/types';
 
 import LokiDatasource from './datasource';
-import { CompletionItem, TypeaheadInput, TypeaheadOutput, LanguageProvider, HistoryItem } from '@grafana/ui';
+import { CompletionItem, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';

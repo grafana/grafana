@@ -5,7 +5,7 @@ import { useTheme } from '../../themes';
 import { BasicAuthSettings } from './BasicAuthSettings';
 import { HttpProxySettings } from './HttpProxySettings';
 import { TLSAuthSettings } from './TLSAuthSettings';
-import { DataSourceSettings } from '../../types';
+import { DataSourceSettings } from '@grafana/data';
 import { HttpSettingsProps } from './types';
 import { Select } from '../Select/Select';
 import { Input } from '../Input/Input';

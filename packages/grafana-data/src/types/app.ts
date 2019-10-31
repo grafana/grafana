@@ -1,6 +1,7 @@
 import { ComponentClass } from 'react';
-import { NavModel, KeyValue } from '@grafana/data';
-import { PluginMeta, PluginIncludeType, GrafanaPlugin } from './plugin';
+import { KeyValue } from './data';
+import { NavModel } from './navModel';
+import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
 
 export interface AppRootProps<T = KeyValue> {
   meta: AppPluginMeta<T>;

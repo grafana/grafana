@@ -1,8 +1,7 @@
-import { eventFactory } from '@grafana/data';
-import { DataQueryResponseData, DataQueryError } from '.';
+import { eventFactory } from './utils';
+import { DataQueryError, DataQueryResponseData } from './datasource';
 
 /** Payloads */
-
 export interface PanelChangeViewPayload {
   fullscreen?: boolean;
   edit?: boolean;
