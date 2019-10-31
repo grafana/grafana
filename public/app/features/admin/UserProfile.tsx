@@ -9,6 +9,7 @@ interface Props {
   user: UserDTO;
 
   onUserDelete: (userId: number) => void;
+  onUserDisable: (userId: number) => void;
 }
 
 interface State {
@@ -19,6 +20,11 @@ export class UserProfile extends PureComponent<Props, State> {
   handleUserDelete = () => {
     const { user, onUserDelete } = this.props;
     onUserDelete(user.id);
+  };
+
+  handleUserDisable = () => {
+    const { user, onUserDisable } = this.props;
+    onUserDisable(user.id);
   };
 
   render() {
@@ -42,6 +48,9 @@ export class UserProfile extends PureComponent<Props, State> {
           <div className="gf-form-button-row">
             <button className="btn btn-danger" onClick={this.handleUserDelete}>
               Delete User
+            </button>
+            <button className="btn btn-danger" onClick={this.handleUserDisable}>
+              Disable User
             </button>
           </div>
         </div>
