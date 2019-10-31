@@ -19,9 +19,9 @@ export interface Props extends Themeable {
   showLabels: boolean;
   timeZone: TimeZone;
   deduplicatedData?: LogsModel;
-  rowLimit?: number;
   onClickLabel?: (label: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
+  rowLimit?: number;
   previewLimit?: number;
 }
 
@@ -46,7 +46,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const { data, previewLimit } = this.props;
     const rowCount = data ? data.rows.length : 0;
     // Render all right away if not too far over the limit
-    const renderAll = rowCount <= previewLimit * 2;
+    const renderAll = rowCount <= previewLimit! * 2;
     if (renderAll) {
       this.setState({ renderAll });
     } else {
@@ -89,9 +89,9 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
     // Staged rendering
     const processedRows = dedupedData ? dedupedData.rows : [];
-    const firstRows = processedRows.slice(0, previewLimit);
-    const rowCount = Math.min(processedRows.length, rowLimit);
-    const lastRows = processedRows.slice(previewLimit, rowCount);
+    const firstRows = processedRows.slice(0, previewLimit!);
+    const rowCount = Math.min(processedRows.length, rowLimit!);
+    const lastRows = processedRows.slice(previewLimit!, rowCount);
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = this.makeGetRows(processedRows);
@@ -130,7 +130,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
               onClickLabel={onClickLabel}
             />
           ))}
-        {hasData && !renderAll && <span>Rendering {rowCount - previewLimit} rows...</span>}
+        {hasData && !renderAll && <span>Rendering {rowCount - previewLimit!} rows...</span>}
       </div>
     );
   }
