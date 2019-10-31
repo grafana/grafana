@@ -8,7 +8,7 @@ interface Props<V, D> {
    * 1) Calculate raw values like font size etc and pass them to each vis
    * 2) find the maximum input values and pass that to the vis
    */
-  calculateInternalDimensions?: (values: V[], width: number, height: number) => D;
+  getAlignmentFactors?: (values: V[], width: number, height: number) => D;
 
   /**
    * Render a single value
@@ -68,10 +68,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
   }
 
   render() {
-    const { renderValue, height, width, itemSpacing, calculateInternalDimensions } = this.props as PropsWithDefaults<
-      V,
-      D
-    >;
+    const { renderValue, height, width, itemSpacing, getAlignmentFactors } = this.props as PropsWithDefaults<V, D>;
     const { values } = this.state;
     const orientation = this.getOrientation();
 
@@ -101,7 +98,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
     itemStyles.width = `${vizWidth}px`;
     itemStyles.height = `${vizHeight}px`;
 
-    const dims = calculateInternalDimensions ? calculateInternalDimensions(values, vizWidth, vizHeight) : ({} as D);
+    const dims = getAlignmentFactors ? getAlignmentFactors(values, vizWidth, vizHeight) : ({} as D);
     return (
       <div style={repeaterStyle}>
         {values.map((value, index) => {

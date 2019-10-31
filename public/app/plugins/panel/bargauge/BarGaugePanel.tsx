@@ -4,22 +4,14 @@ import React, { PureComponent } from 'react';
 // Services & Utils
 import { config } from 'app/core/config';
 
-import {
-  BarGauge,
-  BarGaugeDimensionInput,
-  VizRepeater,
-  DataLinksContextMenu,
-  BarGauge,
-  VizRepeater,
-  DataLinksContextMenu,
-} from '@grafana/ui';
+import { BarGauge, BarGaugeAlignmentFactors, VizRepeater, DataLinksContextMenu } from '@grafana/ui';
 import { BarGaugeOptions } from './types';
 import { getFieldDisplayValues, FieldDisplay, PanelProps } from '@grafana/data';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
-  findMaximumInput = (values: FieldDisplay[], width: number, height: number): BarGaugeDimensionInput => {
-    const info: BarGaugeDimensionInput = {
+  findMaximumInput = (values: FieldDisplay[], width: number, height: number): BarGaugeAlignmentFactors => {
+    const info: BarGaugeAlignmentFactors = {
       title: '',
       text: '',
     };
@@ -35,7 +27,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     return info;
   };
 
-  renderValue = (value: FieldDisplay, width: number, height: number, info: BarGaugeDimensionInput): JSX.Element => {
+  renderValue = (value: FieldDisplay, width: number, height: number, info: BarGaugeAlignmentFactors): JSX.Element => {
     const { options } = this.props;
     const { field, display } = value;
 
@@ -88,7 +80,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     return (
       <VizRepeater
         source={data}
-        calculateInternalDimensions={this.findMaximumInput}
+        getAlignmentFactors={this.findMaximumInput}
         getValues={this.getValues}
         renderValue={this.renderValue}
         renderCounter={renderCounter}

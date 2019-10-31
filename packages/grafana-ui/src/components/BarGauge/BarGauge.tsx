@@ -24,7 +24,7 @@ const VALUE_LINE_HEIGHT = 1;
  *
  * If performace becomes a problem, we can cache the results
  */
-export interface BarGaugeDimensionInput {
+export interface BarGaugeAlignmentFactors {
   title: string;
   text: string;
 }
@@ -41,7 +41,7 @@ export interface Props extends Themeable {
   displayMode: 'basic' | 'lcd' | 'gradient';
   onClick?: React.MouseEventHandler<HTMLElement>;
   className?: string;
-  maxDimensionInput?: BarGaugeDimensionInput;
+  maxDimensionInput?: BarGaugeAlignmentFactors;
 }
 
 export class BarGauge extends PureComponent<Props> {
