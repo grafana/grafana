@@ -62,11 +62,11 @@ export class UserAdminPage extends PureComponent<Props, State> {
     console.log('handleStatusChange', isDisabled);
   };
 
-  handleOrgRemove = (orgId: number) => () => {
+  handleOrgRemove = (orgId: number) => {
     console.log('handleOrgRemove', orgId);
   };
 
-  handleOrgRoleChange = (orgId: number, newRole: string) => () => {
+  handleOrgRoleChange = (orgId: number, newRole: string) => {
     console.log('handleOrgRoleChange', orgId, newRole);
   };
 
