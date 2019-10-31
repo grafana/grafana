@@ -1,10 +1,20 @@
 // Types
 import { Unsubscribable } from 'rxjs';
 import { Emitter } from 'app/core/core';
-import { DataQuery, DataSourceSelectItem, DataSourceApi, QueryFixAction, PanelData } from '@grafana/ui';
 
-import { LogLevel, TimeRange, LoadingState, AbsoluteTimeRange } from '@grafana/data';
-import { ExploreId, ExploreItemState, HistoryItem, ExploreUIState, ExploreMode } from 'app/types/explore';
+import {
+  DataQuery,
+  DataSourceSelectItem,
+  DataSourceApi,
+  QueryFixAction,
+  PanelData,
+  HistoryItem,
+  LogLevel,
+  TimeRange,
+  LoadingState,
+  AbsoluteTimeRange,
+} from '@grafana/data';
+import { ExploreId, ExploreItemState, ExploreUIState, ExploreMode } from 'app/types/explore';
 import { actionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
 
 /**  Higher order actions
@@ -103,19 +113,6 @@ export interface LoadDatasourcePendingPayload {
 export interface LoadDatasourceReadyPayload {
   exploreId: ExploreId;
   history: HistoryItem[];
-}
-
-export interface TestDatasourcePendingPayload {
-  exploreId: ExploreId;
-}
-
-export interface TestDatasourceFailurePayload {
-  exploreId: ExploreId;
-  error: string;
-}
-
-export interface TestDatasourceSuccessPayload {
-  exploreId: ExploreId;
 }
 
 export interface ModifyQueriesPayload {
@@ -391,15 +388,6 @@ export const toggleLogLevelAction = actionCreatorFactory<ToggleLogLevelPayload>(
  */
 export const resetExploreAction = actionCreatorFactory<ResetExplorePayload>('explore/RESET_EXPLORE').create();
 export const queriesImportedAction = actionCreatorFactory<QueriesImportedPayload>('explore/QueriesImported').create();
-export const testDataSourcePendingAction = actionCreatorFactory<TestDatasourcePendingPayload>(
-  'explore/TEST_DATASOURCE_PENDING'
-).create();
-export const testDataSourceSuccessAction = actionCreatorFactory<TestDatasourceSuccessPayload>(
-  'explore/TEST_DATASOURCE_SUCCESS'
-).create();
-export const testDataSourceFailureAction = actionCreatorFactory<TestDatasourceFailurePayload>(
-  'explore/TEST_DATASOURCE_FAILURE'
-).create();
 export const loadExploreDatasources = actionCreatorFactory<LoadExploreDataSourcesPayload>(
   'explore/LOAD_EXPLORE_DATASOURCES'
 ).create();

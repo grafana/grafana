@@ -8,7 +8,7 @@ import { store } from 'app/store/store';
 import { CoreEvents, AppEventEmitter } from 'app/types';
 
 import Mousetrap from 'mousetrap';
-import { PanelEvents } from '@grafana/ui';
+import { PanelEvents } from '@grafana/data';
 import 'mousetrap-global-bind';
 import { ContextSrv } from './context_srv';
 import { ILocationService, ITimeoutService, IRootScopeService } from 'angular';
