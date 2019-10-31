@@ -5,7 +5,7 @@ import { sanitize, escapeHtml } from 'app/core/utils/text';
 import config from 'app/core/config';
 import { auto, ISCEService } from 'angular';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { PanelEvents } from '@grafana/ui';
+import { PanelEvents } from '@grafana/data';
 import { renderMarkdown } from '@grafana/data';
 
 const defaultContent = `

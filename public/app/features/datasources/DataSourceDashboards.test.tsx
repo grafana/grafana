@@ -1,7 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { DataSourceDashboards, Props } from './DataSourceDashboards';
-import { DataSourceSettings } from '@grafana/ui';
+import { DataSourceSettings } from '@grafana/data';
 import { NavModel } from '@grafana/data';
 import { PluginDashboard } from 'app/types';
 

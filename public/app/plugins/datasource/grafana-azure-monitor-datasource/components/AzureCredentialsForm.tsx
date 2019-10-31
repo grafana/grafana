@@ -111,7 +111,7 @@ export class AzureCredentialsForm extends PureComponent<Props, State> {
                 <Input
                   className="width-30"
                   placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                  value={tenantId}
+                  value={tenantId || ''}
                   onChange={(event: ChangeEvent<HTMLInputElement>) => onTenantIdChange(event.target.value)}
                 />
               </div>
@@ -124,7 +124,7 @@ export class AzureCredentialsForm extends PureComponent<Props, State> {
                 <Input
                   className="width-30"
                   placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                  value={clientId}
+                  value={clientId || ''}
                   onChange={(event: ChangeEvent<HTMLInputElement>) => onClientIdChange(event.target.value)}
                 />
               </div>
@@ -152,7 +152,7 @@ export class AzureCredentialsForm extends PureComponent<Props, State> {
                   <Input
                     className="width-30"
                     placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                    value={clientSecret}
+                    value={clientSecret || ''}
                     onChange={(event: ChangeEvent<HTMLInputElement>) => onClientSecretChange(event.target.value)}
                   />
                 </div>

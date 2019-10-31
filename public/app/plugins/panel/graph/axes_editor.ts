@@ -1,4 +1,4 @@
-import { getValueFormats } from '@grafana/ui';
+import { getValueFormats } from '@grafana/data';
 import { GraphCtrl } from './module';
 
 export class AxesEditorCtrl {
