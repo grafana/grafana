@@ -66,7 +66,16 @@ There are a wide variety of styling and formatting options that each Panel expos
 
 Panels can be dragged and dropped and rearranged on the Dashboard. They can also be resized.
 
-There are currently eight Panel types: [Graph](/reference/graph/), [Logs](/reference/logs/), [Singlestat](/reference/singlestat/), [Table](/reference/table_panel/), [Heatmap](/reference/heatmap/), [Alert list](/reference/alertlist/), [Dashboard list](/reference/dashlist/), and [Text](/reference/text/).
+These are the available Panel types: 
+
+- [Alert list](/reference/alertlist/)
+- [Dashboard list](/reference/dashlist/)
+- [Graph](/reference/graph/)
+- [Heatmap](/reference/heatmap/)
+- [Logs](/reference/logs/)
+- [Singlestat](/reference/singlestat/)
+- [Table](/reference/table_panel/)
+- [Text](/reference/text/)
 
 Panels like the [Graph](/reference/graph/) panel allow you to graph as many metrics and series as you want. Other panels like [Singlestat](/reference/singlestat/) require a reduction of a single query into a single number. [Dashlist](/reference/dashlist/) and [Text](/reference/text/) are special panels that do not connect to any Data Source.
 
