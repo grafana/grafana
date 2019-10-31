@@ -21,6 +21,7 @@ interface Props extends Themeable {
   row: LogRowModel;
   hasMoreContextRows?: HasMoreContextRows;
   showContext: boolean;
+  parsed: boolean;
   errors?: LogRowContextQueryErrors;
   context?: LogRowContextRows;
   highlighterExpressions?: string[];
@@ -74,6 +75,7 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
       row,
       theme,
       errors,
+      parsed,
       hasMoreContextRows,
       updateLimit,
       context,
@@ -116,8 +118,8 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
               findChunks={findHighlightChunksInText}
               highlightClassName={highlightClassName}
             />
-            {hasAnsi && !needsHighlighter && <LogMessageAnsi value={raw} />}
-            {!hasAnsi && !needsHighlighter && entry}
+            {hasAnsi && !parsed && !needsHighlighter && <LogMessageAnsi value={raw} />}
+            {!hasAnsi && !parsed && !needsHighlighter && entry}
           </span>
           {row.searchWords && row.searchWords.length > 0 && (
             <span
