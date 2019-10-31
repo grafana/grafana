@@ -8,7 +8,7 @@ import { getLogRowStyles } from './getLogRowStyles';
 //Components
 import { LogDetailsRow } from './LogDetailsRow';
 
-interface Props extends Themeable {
+export interface Props extends Themeable {
   row: LogRowModel;
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
