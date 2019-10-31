@@ -3,7 +3,7 @@ import { importDataSourcePlugin } from './plugin_loader';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import DefaultVariableQueryEditor from '../templating/DefaultVariableQueryEditor';
-import { DataSourcePluginMeta } from '@grafana/ui';
+import { DataSourcePluginMeta } from '@grafana/data';
 import { TemplateSrv } from '../templating/template_srv';
 
 async function loadComponent(meta: DataSourcePluginMeta) {

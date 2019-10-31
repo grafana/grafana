@@ -1,5 +1,8 @@
-import { colors, getFlotPairs, getColorFromHexRgbOrName, getDisplayProcessor, FieldDisplayOptions } from '@grafana/ui';
+import { colors } from '@grafana/ui';
 import {
+  getFlotPairs,
+  getColorFromHexRgbOrName,
+  getDisplayProcessor,
   NullValueMode,
   reduceField,
   FieldType,
@@ -7,6 +10,7 @@ import {
   GraphSeriesXY,
   getTimeField,
   DataFrame,
+  FieldDisplayOptions,
 } from '@grafana/data';
 
 import { SeriesOptions, GraphOptions } from './types';

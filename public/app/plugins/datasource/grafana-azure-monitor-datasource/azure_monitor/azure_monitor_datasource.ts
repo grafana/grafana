@@ -9,7 +9,7 @@ import {
   AzureMonitorMetricDefinitionsResponse,
   AzureMonitorResourceGroupsResponse,
 } from '../types';
-import { DataQueryRequest, DataQueryResponseData, DataSourceInstanceSettings } from '@grafana/ui';
+import { DataQueryRequest, DataQueryResponseData, DataSourceInstanceSettings } from '@grafana/data';
 
 import { TimeSeries, toDataFrame } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';

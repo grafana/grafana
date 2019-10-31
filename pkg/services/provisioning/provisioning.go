@@ -19,6 +19,7 @@ type DashboardProvisioner interface {
 	Provision() error
 	PollChanges(ctx context.Context)
 	GetProvisionerResolvedPath(name string) string
+	GetAllowUiUpdatesFromConfig(name string) bool
 }
 
 type DashboardProvisionerFactory func(string) (DashboardProvisioner, error)
@@ -135,6 +136,10 @@ func (ps *provisioningServiceImpl) ProvisionDashboards() error {
 
 func (ps *provisioningServiceImpl) GetDashboardProvisionerResolvedPath(name string) string {
 	return ps.dashboardProvisioner.GetProvisionerResolvedPath(name)
+}
+
+func (ps *provisioningServiceImpl) GetAllowUiUpdatesFromConfig(name string) bool {
+	return ps.dashboardProvisioner.GetAllowUiUpdatesFromConfig(name)
 }
 
 func (ps *provisioningServiceImpl) cancelPolling() {

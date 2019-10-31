@@ -203,6 +203,7 @@
     "angular-native-dragdrop": "1.2.2",
     "angular-route": "1.6.6",
     "angular-sanitize": "1.6.6",
+    "apache-arrow": "0.15.0",
     "baron": "3.0.3",
     "brace": "0.10.0",
     "calculate-size": "1.1.1",
