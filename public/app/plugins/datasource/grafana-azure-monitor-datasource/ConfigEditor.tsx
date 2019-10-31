@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
-import { SelectableValue } from '@grafana/data';
-import { DataSourcePluginOptionsEditorProps } from '@grafana/ui';
+import { SelectableValue, DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { MonitorConfig } from './components/MonitorConfig';
 import { AnalyticsConfig } from './components/AnalyticsConfig';
 import { TemplateSrv } from 'app/features/templating/template_srv';

@@ -12,6 +12,7 @@ import (
 type DashboardProvisionerImpl struct {
 	log         log.Logger
 	fileReaders []*fileReader
+	configs     []*DashboardsAsConfig
 }
 
 func NewDashboardProvisionerImpl(configDirectory string) (*DashboardProvisionerImpl, error) {
@@ -32,6 +33,7 @@ func NewDashboardProvisionerImpl(configDirectory string) (*DashboardProvisionerI
 	d := &DashboardProvisionerImpl{
 		log:         logger,
 		fileReaders: fileReaders,
+		configs:     configs,
 	}
 
 	return d, nil
@@ -70,6 +72,15 @@ func (provider *DashboardProvisionerImpl) GetProvisionerResolvedPath(name string
 		}
 	}
 	return ""
+}
+
+func (provider *DashboardProvisionerImpl) GetAllowUiUpdatesFromConfig(name string) bool {
+	for _, config := range provider.configs {
+		if config.Name == name {
+			return config.AllowUiUpdates
+		}
+	}
+	return false
 }
 
 func getFileReaders(configs []*DashboardsAsConfig, logger log.Logger) ([]*fileReader, error) {

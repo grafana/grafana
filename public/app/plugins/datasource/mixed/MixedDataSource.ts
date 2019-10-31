@@ -3,8 +3,14 @@ import groupBy from 'lodash/groupBy';
 import { from, of, Observable, merge } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
-import { LoadingState } from '@grafana/data';
-import { DataSourceApi, DataQuery, DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/ui';
+import {
+  LoadingState,
+  DataSourceApi,
+  DataQuery,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceInstanceSettings,
+} from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { mergeMap, map } from 'rxjs/operators';
 

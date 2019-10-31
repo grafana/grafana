@@ -1,5 +1,6 @@
 import React from 'react';
-import { PanelProps, GraphWithLegend } from '@grafana/ui';
+import { GraphWithLegend } from '@grafana/ui';
+import { PanelProps } from '@grafana/data';
 import { Options } from './types';
 import { GraphPanelController } from './GraphPanelController';
 import { LegendDisplayMode } from '@grafana/ui/src/components/Legend/Legend';

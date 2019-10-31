@@ -1,5 +1,5 @@
 import { css } from 'emotion';
-import { GrafanaTheme } from '../../types';
+import { GrafanaTheme } from '@grafana/data';
 
 export const getFocusStyle = (theme: GrafanaTheme) => css`
   &[focus],

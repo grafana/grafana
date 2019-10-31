@@ -9,13 +9,6 @@ import {
   AnnotationEvent,
   DataFrameView,
   LoadingState,
-} from '@grafana/data';
-import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
-import LanguageProvider from './language_provider';
-import { logStreamToDataFrame } from './result_transformer';
-import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
-// Types
-import {
   PluginMeta,
   DataSourceApi,
   DataSourceInstanceSettings,
@@ -23,7 +16,11 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   AnnotationQueryRequest,
-} from '@grafana/ui';
+} from '@grafana/data';
+import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
+import LanguageProvider from './language_provider';
+import { logStreamToDataFrame } from './result_transformer';
+import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 
 import { LokiQuery, LokiOptions, LokiLogsStream, LokiResponse } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';

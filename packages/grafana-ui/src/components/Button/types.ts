@@ -1,4 +1,4 @@
-import { GrafanaTheme } from '../../types';
+import { GrafanaTheme } from '@grafana/data';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'inverse' | 'transparent' | 'destructive';
 

@@ -22,9 +22,14 @@ import {
 } from 'app/core/utils/explore';
 // Types
 import { ThunkResult, ExploreUrlState, ExploreItemState } from 'app/types';
-import { DataSourceApi, DataQuery, DataSourceSelectItem, QueryFixAction, PanelData, RefreshPicker } from '@grafana/ui';
+import { RefreshPicker } from '@grafana/ui';
 
 import {
+  DataSourceApi,
+  DataQuery,
+  DataSourceSelectItem,
+  QueryFixAction,
+  PanelData,
   RawTimeRange,
   LogsDedupStrategy,
   AbsoluteTimeRange,

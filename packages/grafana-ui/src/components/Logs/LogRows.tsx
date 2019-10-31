@@ -8,8 +8,8 @@ import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
 import memoizeOne from 'memoize-one';
 
-const PREVIEW_LIMIT = 100;
-const RENDER_LIMIT = 500;
+export const PREVIEW_LIMIT = 100;
+export const RENDER_LIMIT = 500;
 
 export interface Props extends Themeable {
   data: LogsModel;
@@ -19,48 +19,42 @@ export interface Props extends Themeable {
   showLabels: boolean;
   timeZone: TimeZone;
   deduplicatedData?: LogsModel;
-  rowLimit?: number;
   onClickLabel?: (label: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
+  rowLimit?: number;
+  previewLimit?: number;
 }
 
 interface State {
-  deferLogs: boolean;
   renderAll: boolean;
 }
 
 class UnThemedLogRows extends PureComponent<Props, State> {
-  deferLogsTimer: number | null = null;
   renderAllTimer: number | null = null;
 
+  static defaultProps = {
+    previewLimit: PREVIEW_LIMIT,
+    rowLimit: RENDER_LIMIT,
+  };
+
   state: State = {
-    deferLogs: true,
     renderAll: false,
   };
 
   componentDidMount() {
     // Staged rendering
-    if (this.state.deferLogs) {
-      const { data } = this.props;
-      const rowCount = data && data.rows ? data.rows.length : 0;
-      // Render all right away if not too far over the limit
-      const renderAll = rowCount <= PREVIEW_LIMIT * 2;
-      this.deferLogsTimer = window.setTimeout(() => this.setState({ deferLogs: false, renderAll }), rowCount);
-    }
-  }
-
-  componentDidUpdate(prevProps: Props, prevState: State) {
-    // Staged rendering
-    if (prevState.deferLogs && !this.state.deferLogs && !this.state.renderAll) {
+    const { data, previewLimit } = this.props;
+    const rowCount = data ? data.rows.length : 0;
+    // Render all right away if not too far over the limit
+    const renderAll = rowCount <= previewLimit! * 2;
+    if (renderAll) {
+      this.setState({ renderAll });
+    } else {
       this.renderAllTimer = window.setTimeout(() => this.setState({ renderAll: true }), 2000);
     }
   }
 
   componentWillUnmount() {
-    if (this.deferLogsTimer) {
-      clearTimeout(this.deferLogsTimer);
-    }
-
     if (this.renderAllTimer) {
       clearTimeout(this.renderAllTimer);
     }
@@ -82,8 +76,9 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       onClickLabel,
       rowLimit,
       theme,
+      previewLimit,
     } = this.props;
-    const { deferLogs, renderAll } = this.state;
+    const { renderAll } = this.state;
     const dedupedData = deduplicatedData ? deduplicatedData : data;
     const hasData = data && data.rows && data.rows.length > 0;
     const hasLabel = hasData && dedupedData && dedupedData.hasUniqueLabels ? true : false;
@@ -94,10 +89,9 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
     // Staged rendering
     const processedRows = dedupedData ? dedupedData.rows : [];
-    const firstRows = processedRows.slice(0, PREVIEW_LIMIT);
-    const renderLimit = rowLimit || RENDER_LIMIT;
-    const rowCount = Math.min(processedRows.length, renderLimit);
-    const lastRows = processedRows.slice(PREVIEW_LIMIT, rowCount);
+    const firstRows = processedRows.slice(0, previewLimit!);
+    const rowCount = Math.min(processedRows.length, rowLimit!);
+    const lastRows = processedRows.slice(previewLimit!, rowCount);
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = this.makeGetRows(processedRows);
@@ -107,7 +101,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     return (
       <div className={cx([logsRows])}>
         {hasData &&
-        !deferLogs && // Only inject highlighterExpression in the first set for performance reasons
           firstRows.map((row, index) => (
             <LogRow
               key={row.uid}
@@ -123,7 +116,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
             />
           ))}
         {hasData &&
-          !deferLogs &&
           renderAll &&
           lastRows.map((row, index) => (
             <LogRow
@@ -138,7 +130,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
               onClickLabel={onClickLabel}
             />
           ))}
-        {hasData && deferLogs && <span>Rendering {rowCount} rows...</span>}
+        {hasData && !renderAll && <span>Rendering {rowCount - previewLimit!} rows...</span>}
       </div>
     );
   }

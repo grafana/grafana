@@ -1,9 +1,5 @@
 import PluginPrism from 'app/features/explore/slate-plugins/prism';
-import BracesPlugin from 'app/features/explore/slate-plugins/braces';
-import ClearPlugin from 'app/features/explore/slate-plugins/clear';
-import NewlinePlugin from 'app/features/explore/slate-plugins/newline';
-import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
-
+import { BracesPlugin, ClearPlugin, RunnerPlugin, NewlinePlugin } from '@grafana/ui';
 import Typeahead from './typeahead';
 import { getKeybindingSrv, KeybindingSrv } from 'app/core/services/keybindingSrv';
 

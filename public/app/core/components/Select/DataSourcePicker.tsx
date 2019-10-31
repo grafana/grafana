@@ -3,10 +3,7 @@ import React, { PureComponent } from 'react';
 
 // Components
 import { Select } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
-
-// Types
-import { DataSourceSelectItem } from '@grafana/ui';
+import { SelectableValue, DataSourceSelectItem } from '@grafana/data';
 
 export interface Props {
   onChange: (ds: DataSourceSelectItem) => void;

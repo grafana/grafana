@@ -3,7 +3,7 @@ import { pluginBuildRunner } from './plugin.build';
 import { restoreCwd } from '../utils/cwd';
 import { S3Client } from '../../plugins/aws';
 import { getPluginJson } from '../../config/utils/pluginValidation';
-import { PluginMeta } from '@grafana/ui';
+import { PluginMeta } from '@grafana/data';
 
 // @ts-ignore
 import execa = require('execa');
