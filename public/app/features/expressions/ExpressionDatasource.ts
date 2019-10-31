@@ -12,7 +12,7 @@ import { config } from '@grafana/runtime';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 
 /**
- * This is a singleton that is not actually instanciated
+ * This is a singleton that is not actually instantiated
  */
 export class ExpressionDatasourceApi extends DataSourceApi<ExpressionQuery> {
   constructor(instanceSettings: DataSourceInstanceSettings) {
