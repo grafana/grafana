@@ -156,11 +156,11 @@ allowed_organizations =
 
 5.  Note down the "Application ID", this will be the OAuth client id.
 
-6.  Click "Settings", then click "Keys" and add a new entry under Passwords
-    - Key Description: Grafana OAuth
-    - Duration: Never Expires
+6.  Click "Certificates & secrets" and add a new entry under Client secrets
+    - Description: Grafana OAuth
+    - Expires: Never
 
-7.  Click Save then copy the key value, this will be the OAuth client secret.
+7.  Click Add then copy the key value, this will be the OAuth client secret.
 
 8.  Configure Grafana as follows:
 
