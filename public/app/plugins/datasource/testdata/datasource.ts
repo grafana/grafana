@@ -4,8 +4,9 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   MetricFindValue,
-} from '@grafana/ui';
-import { TableData, TimeSeries } from '@grafana/data';
+  TableData,
+  TimeSeries,
+} from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { queryMetricTree } from './metricTree';
@@ -27,6 +28,9 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
 
     // Start streams and prepare queries
     for (const target of options.targets) {
+      if (target.hide) {
+        continue;
+      }
       if (target.scenarioId === 'streaming_client') {
         streams.push(runStream(target, options));
       } else {

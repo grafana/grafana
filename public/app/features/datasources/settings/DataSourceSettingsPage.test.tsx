@@ -1,8 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { DataSourceSettingsPage, Props } from './DataSourceSettingsPage';
-import { DataSourceSettings, DataSourcePlugin, DataSourceConstructor } from '@grafana/ui';
-import { NavModel } from '@grafana/data';
+import { DataSourceSettings, DataSourcePlugin, DataSourceConstructor, NavModel } from '@grafana/data';
 import { getMockDataSource } from '../__mocks__/dataSourcesMocks';
 import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
 import { setDataSourceName, setIsDefault, dataSourceLoaded } from '../state/actions';

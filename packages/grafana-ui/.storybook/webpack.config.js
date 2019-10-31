@@ -9,13 +9,13 @@ module.exports = ({ config, mode }) => {
           loader: require.resolve('ts-loader'),
           options: {
             // transpileOnly: true,
-            configFile: path.resolve(__dirname, '../tsconfig.json'),
+            configFile: path.resolve(__dirname, 'tsconfig.json'),
           },
         },
         {
           loader: require.resolve('react-docgen-typescript-loader'),
           options: {
-            tsconfigPath: path.resolve(__dirname, '../tsconfig.json'),
+            tsconfigPath: path.resolve(__dirname, 'tsconfig.json'),
             // https://github.com/styleguidist/react-docgen-typescript#parseroptions
             // @ts-ignore
             propFilter: prop => {

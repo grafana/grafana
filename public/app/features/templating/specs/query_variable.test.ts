@@ -16,7 +16,7 @@ describe('QueryVariable', () => {
 
     it('get model should copy changes back to model', () => {
       const variable = new QueryVariable({}, null, null, null, null);
-      variable.options = [{ text: 'test' }];
+      variable.options = [{ text: 'test', value: '', selected: false }];
       variable.datasource = 'google';
       variable.regex = 'asd';
       variable.sort = 50;
@@ -31,7 +31,7 @@ describe('QueryVariable', () => {
 
     it('if refresh != 0 then remove options in presisted mode', () => {
       const variable = new QueryVariable({}, null, null, null, null);
-      variable.options = [{ text: 'test' }];
+      variable.options = [{ text: 'test', value: '', selected: false }];
       variable.refresh = 1;
 
       const model = variable.getSaveModel();

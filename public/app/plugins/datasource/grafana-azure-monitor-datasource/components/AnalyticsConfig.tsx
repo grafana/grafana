@@ -43,8 +43,8 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
   onLogAnalyticsTenantIdChange = (logAnalyticsTenantId: string) => {
     this.props.onDatasourceUpdate({
       ...this.state.config,
-      editorJsonData: {
-        ...this.state.config.editorJsonData,
+      jsonData: {
+        ...this.state.config.jsonData,
         logAnalyticsTenantId,
       },
     });
@@ -53,8 +53,8 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
   onLogAnalyticsClientIdChange = (logAnalyticsClientId: string) => {
     this.props.onDatasourceUpdate({
       ...this.state.config,
-      editorJsonData: {
-        ...this.state.config.editorJsonData,
+      jsonData: {
+        ...this.state.config.jsonData,
         logAnalyticsClientId,
       },
     });
@@ -63,8 +63,8 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
   onLogAnalyticsClientSecretChange = (logAnalyticsClientSecret: string) => {
     this.props.onDatasourceUpdate({
       ...this.state.config,
-      editorSecureJsonData: {
-        ...this.state.config.editorSecureJsonData,
+      secureJsonData: {
+        ...this.state.config.secureJsonData,
         logAnalyticsClientSecret,
       },
     });
@@ -81,8 +81,8 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
   onLogAnalyticsSubscriptionSelect = (logAnalyticsSubscription: SelectableValue<string>) => {
     this.props.onDatasourceUpdate({
       ...this.state.config,
-      editorJsonData: {
-        ...this.state.config.editorJsonData,
+      jsonData: {
+        ...this.state.config.jsonData,
         logAnalyticsSubscriptionId: logAnalyticsSubscription.value,
       },
     });
@@ -91,8 +91,8 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
   onWorkspaceSelectChange = (logAnalyticsDefaultWorkspace: SelectableValue<string>) => {
     this.props.onDatasourceUpdate({
       ...this.state.config,
-      editorJsonData: {
-        ...this.state.config.editorJsonData,
+      jsonData: {
+        ...this.state.config.jsonData,
         logAnalyticsDefaultWorkspace: logAnalyticsDefaultWorkspace.value,
       },
     });
@@ -110,29 +110,30 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
 
   hasWorkspaceRequiredFields = () => {
     const {
-      config: { editorJsonData, editorSecureJsonData, jsonData, secureJsonFields },
+      config: { jsonData, secureJsonData, secureJsonFields },
     } = this.state;
 
     if (jsonData.azureLogAnalyticsSameAs) {
       return (
-        editorJsonData.tenantId &&
-        editorJsonData.clientId &&
-        editorJsonData.subscriptionId &&
-        (editorSecureJsonData.clientSecret || secureJsonFields.clientSecret)
+        jsonData.tenantId &&
+        jsonData.clientId &&
+        jsonData.subscriptionId &&
+        (secureJsonData.clientSecret || secureJsonFields.clientSecret)
       );
     }
 
     return (
-      editorJsonData.logAnalyticsTenantId.length &&
-      editorJsonData.logAnalyticsClientId.length &&
-      editorJsonData.logAnalyticsSubscriptionId &&
-      (secureJsonFields.logAnalyticsClientSecret || editorSecureJsonData.logAnalyticsClientSecret)
+      jsonData.logAnalyticsTenantId &&
+      jsonData.logAnalyticsTenantId.length &&
+      (jsonData.logAnalyticsClientId && jsonData.logAnalyticsClientId.length) &&
+      jsonData.logAnalyticsSubscriptionId &&
+      (secureJsonFields.logAnalyticsClientSecret || secureJsonData.logAnalyticsClientSecret)
     );
   };
 
   render() {
     const {
-      config: { editorJsonData, editorSecureJsonData, jsonData, secureJsonFields },
+      config: { jsonData, secureJsonData, secureJsonFields },
       logAnalyticsSubscriptions,
       logAnalyticsWorkspaces,
     } = this.state;
@@ -154,10 +155,10 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
         {!jsonData.azureLogAnalyticsSameAs && (
           <AzureCredentialsForm
             subscriptionOptions={logAnalyticsSubscriptions}
-            selectedSubscription={editorJsonData.logAnalyticsSubscriptionId}
-            tenantId={editorJsonData.logAnalyticsTenantId}
-            clientId={editorJsonData.logAnalyticsClientId}
-            clientSecret={editorSecureJsonData.logAnalyticsClientSecret}
+            selectedSubscription={jsonData.logAnalyticsSubscriptionId}
+            tenantId={jsonData.logAnalyticsTenantId}
+            clientId={jsonData.logAnalyticsClientId}
+            clientSecret={secureJsonData.logAnalyticsClientSecret}
             clientSecretConfigured={secureJsonFields.logAnalyticsClientSecret}
             onSubscriptionSelectChange={this.onLogAnalyticsSubscriptionSelect}
             onTenantIdChange={this.onLogAnalyticsTenantIdChange}
@@ -179,10 +180,10 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
               <div className="width-25">
                 <Select
                   value={logAnalyticsWorkspaces.find(
-                    workspace => workspace.value === editorJsonData.logAnalyticsDefaultWorkspace
+                    workspace => workspace.value === jsonData.logAnalyticsDefaultWorkspace
                   )}
                   options={logAnalyticsWorkspaces}
-                  defaultValue={editorJsonData.logAnalyticsDefaultWorkspace}
+                  defaultValue={jsonData.logAnalyticsDefaultWorkspace}
                   onChange={this.onWorkspaceSelectChange}
                 />
               </div>

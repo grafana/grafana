@@ -6,7 +6,6 @@ export { Portal } from './Portal/Portal';
 export { CustomScrollbar } from './CustomScrollbar/CustomScrollbar';
 
 export * from './Button/Button';
-export { ButtonVariant } from './Button/AbstractButton';
 
 // Select
 export { Select, AsyncSelect } from './Select/Select';
@@ -39,6 +38,7 @@ export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
 export { Modal } from './Modal/Modal';
+export { QueryField } from './QueryField/QueryField';
 
 // Renderless
 export { SetInterval } from './SetInterval/SetInterval';
@@ -47,7 +47,7 @@ export { Table } from './Table/Table';
 export { TableInputCSV } from './Table/TableInputCSV';
 
 // Visualizations
-export { BigValue, SingleStatDisplayMode } from './BigValue/BigValue';
+export { BigValue, SingleStatDisplayMode, BigValueSparkline } from './BigValue/BigValue';
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { GraphLegend } from './Graph/GraphLegend';

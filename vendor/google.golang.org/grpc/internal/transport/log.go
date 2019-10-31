@@ -42,9 +42,3 @@ func errorf(format string, args ...interface{}) {
 		grpclog.Errorf(format, args...)
 	}
 }
-
-func fatalf(format string, args ...interface{}) {
-	if grpclog.V(logLevel) {
-		grpclog.Fatalf(format, args...)
-	}
-}

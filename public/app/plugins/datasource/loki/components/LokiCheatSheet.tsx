@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { shuffle } from 'lodash';
-import { ExploreStartPageProps, DataQuery } from '@grafana/ui';
+import { ExploreStartPageProps, DataQuery } from '@grafana/data';
 import LokiLanguageProvider from '../language_provider';
 
 const DEFAULT_EXAMPLES = ['{job="default/prometheus"}'];

@@ -1,5 +1,6 @@
 import extend from 'lodash/extend';
-import { GrafanaTheme, getTheme, GrafanaThemeType, PanelPluginMeta, DataSourceInstanceSettings } from '@grafana/ui';
+import { getTheme } from '@grafana/ui';
+import { GrafanaTheme, GrafanaThemeType, PanelPluginMeta, DataSourceInstanceSettings } from '@grafana/data';
 
 export interface BuildInfo {
   version: string;
@@ -12,6 +13,7 @@ export interface BuildInfo {
 
 interface FeatureToggles {
   transformations: boolean;
+  expressions: boolean;
 }
 export class GrafanaBootConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
@@ -46,6 +48,7 @@ export class GrafanaBootConfig {
   pluginsToPreload: string[] = [];
   featureToggles: FeatureToggles = {
     transformations: false,
+    expressions: false,
   };
 
   constructor(options: GrafanaBootConfig) {
