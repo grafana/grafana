@@ -1,8 +1,7 @@
 import { DataFrame, FieldType, Field, Vector } from '@grafana/data';
+import { Table, ArrowType } from 'apache-arrow';
 
-const { Table, ArrowType } = async () => await import(/* webpackChunkName: "apache-arrow" */ 'apache-arrow');
-
-export function base64StringToArrowTable(text: string) {
+export function base64StringToArrowTable(text: string): Table {
   const b64 = atob(text);
   const arr = Uint8Array.from(b64, c => {
     return c.charCodeAt(0);
