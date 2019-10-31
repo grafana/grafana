@@ -17,11 +17,18 @@ export default {
 
 export const simple = () => {
   const disabled = boolean('Disabled', false);
-  return <Input disabled={disabled} />;
-};
-
-export const withLabel = () => {
+  const invalid = boolean('Invalid', false);
+  const invalidMessage = text('Invalid message', "There's an error");
   const label = text('Label', 'This is a Label');
   const description = text('Description', '');
-  return <Input description={description} label={label} />;
+
+  return (
+    <Input
+      description={description}
+      disabled={disabled}
+      invalid={invalid}
+      invalidMessage={invalidMessage}
+      label={label}
+    />
+  );
 };
