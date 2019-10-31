@@ -86,7 +86,7 @@ We could even take it a step further, by calculating the deltas of these deltas:
 1572524345, +30, -1, +1, +0
 ```
 
-If measurements are taken at regular intervals, most of these delta-of-deltas will be 0, which enables further optimizations, such as [Run-length encoding](https://en.wikipedia.org/wiki/Run-length_encoding). Because of optimizations like these, TSDBs uses drastically less space than other databases.
+If measurements are taken at regular intervals, most of these delta-of-deltas will be 0. Because of optimizations like these, TSDBs uses drastically less space than other databases.
 
 Another feature of a TSDB is the ability to filter measurements using _tags_. Each data point is labeled with a tag that adds context information, such as where the measurement was taken. Here's an example of the [InfluxDB data format](https://docs.influxdata.com/influxdb/v1.7/write_protocols/line_protocol_tutorial/#syntax) that demonstrates how each measurement is stored.
 
