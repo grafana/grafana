@@ -39,6 +39,7 @@ const getInputStyle = stylesFactory(
 
           &:disabled {
             background-color: ${selectThemeVariant({ light: colors.gray6, dark: colors.gray10 }, theme.type)};
+            color: ${selectThemeVariant({ light: colors.gray33, dark: colors.gray70 }, theme.type)};
           }
         `,
         getFocusStyle(theme)
