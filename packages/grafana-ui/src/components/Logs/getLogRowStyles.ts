@@ -164,7 +164,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     logsRowDetailsValue: css`
       label: logs-row-details__row;
       display: table-row;
-      line-height: ${theme.typography.lineHeight.xl};
+      line-height: 2;
       padding: 0 ${theme.spacing.xl} 0 ${theme.spacing.md};
       position: relative;
       cursor: default;
