@@ -17,7 +17,7 @@ import { getDataSource } from './state/selectors';
 
 // Types
 import { PluginDashboard, StoreState } from 'app/types';
-import { DataSourceSettings } from '@grafana/ui';
+import { DataSourceSettings } from '@grafana/data';
 import { NavModel } from '@grafana/data';
 
 export interface Props {

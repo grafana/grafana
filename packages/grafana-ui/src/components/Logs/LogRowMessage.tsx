@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import _ from 'lodash';
 import tinycolor from 'tinycolor2';
 import { css, cx } from 'emotion';
-import { LogRowModel, findHighlightChunksInText } from '@grafana/data';
+import { LogRowModel, findHighlightChunksInText, GrafanaTheme } from '@grafana/data';
 
 // @ts-ignore
 import Highlighter from 'react-highlight-words';

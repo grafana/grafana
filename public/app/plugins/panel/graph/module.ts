@@ -11,9 +11,9 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { getColorFromHexRgbOrName, VariableSuggestion, PanelEvents } from '@grafana/ui';
+import { VariableSuggestion } from '@grafana/ui';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
-import { DataFrame, DataLink, DateTimeInput } from '@grafana/data';
+import { getColorFromHexRgbOrName, PanelEvents, DataFrame, DataLink, DateTimeInput } from '@grafana/data';
 
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';

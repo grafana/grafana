@@ -3,7 +3,8 @@ import { css, cx } from 'emotion';
 import { LogRowModel, LogLabelStatsModel, calculateLogsLabelStats } from '@grafana/data';
 
 import { LogLabelStats } from './LogLabelStats';
-import { GrafanaTheme, Themeable } from '../../types/theme';
+import { Themeable } from '../../types/theme';
+import { GrafanaTheme } from '@grafana/data';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import { withTheme } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes';

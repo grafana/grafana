@@ -2,8 +2,12 @@ import React, { PureComponent } from 'react';
 import { css } from 'emotion';
 import { LogLabelStatsModel } from '@grafana/data';
 
+
 import { stylesFactory } from '../../themes';
+import { Themeable } from '../../types/theme';
+import { GrafanaTheme } from '@grafana/data';
 import { Themeable, GrafanaTheme } from '../../types/theme';
+
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import { withTheme } from '../../themes/index';
 
