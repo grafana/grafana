@@ -36,9 +36,10 @@ describe('GEL Utils', () => {
   test('should parse output with dataframe', () => {
     const frames = gelResponseToDataFrames(resp);
     for (const frame of frames) {
-      console.log('Frame', frame.refId + ' // ' + frame.labels);
+      console.log('Frame', frame.refId);
       for (const field of frame.fields) {
-        console.log(' > ', field.name, field.values.toArray());
+        console.log(' > ', field.name, field.labels);
+        console.log(' (values)= ', field.values.toArray());
       }
     }
 

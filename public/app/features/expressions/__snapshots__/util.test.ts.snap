@@ -6,6 +6,7 @@ Array [
     "fields": Array [
       Object {
         "config": Object {},
+        "labels": undefined,
         "name": "Time",
         "type": "time",
         "values": Int32Array [
@@ -39,6 +40,7 @@ Array [
       },
       Object {
         "config": Object {},
+        "labels": undefined,
         "name": "",
         "type": "number",
         "values": Float64Array [
@@ -58,7 +60,6 @@ Array [
         ],
       },
     ],
-    "labels": undefined,
     "meta": undefined,
     "name": undefined,
     "refId": undefined,
@@ -67,6 +68,7 @@ Array [
     "fields": Array [
       Object {
         "config": Object {},
+        "labels": undefined,
         "name": "Time",
         "type": "time",
         "values": Int32Array [
@@ -100,6 +102,7 @@ Array [
       },
       Object {
         "config": Object {},
+        "labels": undefined,
         "name": "GB-series",
         "type": "number",
         "values": Float64Array [
@@ -119,7 +122,6 @@ Array [
         ],
       },
     ],
-    "labels": undefined,
     "meta": undefined,
     "name": undefined,
     "refId": undefined,
