@@ -3,16 +3,15 @@ import ReactDOM from 'react-dom';
 import _ from 'lodash';
 import { FixedSizeList } from 'react-window';
 
-import { Themeable, withTheme } from '@grafana/ui';
-
-import { CompletionItem, CompletionItemKind, CompletionItemGroup } from 'app/types/explore';
-import { TypeaheadItem } from './TypeaheadItem';
 import { TypeaheadInfo } from './TypeaheadInfo';
-import { flattenGroupItems, calculateLongestLabel, calculateListSizes } from './utils/typeahead';
+import { TypeaheadItem } from './TypeaheadItem';
+import { flattenGroupItems, calculateLongestLabel, calculateListSizes } from '../../utils/typeahead';
+import { ThemeContext } from '../../themes/ThemeContext';
+import { CompletionItem, CompletionItemGroup, CompletionItemKind } from '../../types/completion';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 
-interface Props extends Themeable {
+interface Props {
   origin: string;
   groupedItems: CompletionItemGroup[];
   prefix?: string;
@@ -26,26 +25,33 @@ interface State {
   listWidth: number;
   listHeight: number;
   itemHeight: number;
-  hoveredItem: number;
+  hoveredItem: number | null;
   typeaheadIndex: number;
 }
 
 export class Typeahead extends React.PureComponent<Props, State> {
+  static contextType = ThemeContext;
+  context!: React.ContextType<typeof ThemeContext>;
   listRef = createRef<FixedSizeList>();
 
-  constructor(props: Props) {
-    super(props);
-
-    const allItems = flattenGroupItems(props.groupedItems);
-    const longestLabel = calculateLongestLabel(allItems);
-    const { listWidth, listHeight, itemHeight } = calculateListSizes(props.theme, allItems, longestLabel);
-    this.state = { listWidth, listHeight, itemHeight, hoveredItem: null, typeaheadIndex: 1, allItems };
-  }
+  state: State = { hoveredItem: null, typeaheadIndex: 1, allItems: [], listWidth: -1, listHeight: -1, itemHeight: -1 };
 
   componentDidMount = () => {
-    this.props.menuRef(this);
+    if (this.props.menuRef) {
+      this.props.menuRef(this);
+    }
 
     document.addEventListener('selectionchange', this.handleSelectionChange);
+
+    const allItems = flattenGroupItems(this.props.groupedItems);
+    const longestLabel = calculateLongestLabel(allItems);
+    const { listWidth, listHeight, itemHeight } = calculateListSizes(this.context, allItems, longestLabel);
+    this.setState({
+      listWidth,
+      listHeight,
+      itemHeight,
+      allItems,
+    });
   };
 
   componentWillUnmount = () => {
@@ -68,7 +74,7 @@ export class Typeahead extends React.PureComponent<Props, State> {
     if (_.isEqual(prevProps.groupedItems, this.props.groupedItems) === false) {
       const allItems = flattenGroupItems(this.props.groupedItems);
       const longestLabel = calculateLongestLabel(allItems);
-      const { listWidth, listHeight, itemHeight } = calculateListSizes(this.props.theme, allItems, longestLabel);
+      const { listWidth, listHeight, itemHeight } = calculateListSizes(this.context, allItems, longestLabel);
       this.setState({ listWidth, listHeight, itemHeight, allItems });
     }
   };
@@ -89,7 +95,6 @@ export class Typeahead extends React.PureComponent<Props, State> {
     const itemCount = this.state.allItems.length;
     if (itemCount) {
       // Select next suggestion
-      event.preventDefault();
       let newTypeaheadIndex = modulo(this.state.typeaheadIndex + moveAmount, itemCount);
 
       if (this.state.allItems[newTypeaheadIndex].kind === CompletionItemKind.GroupTitle) {
@@ -105,7 +110,9 @@ export class Typeahead extends React.PureComponent<Props, State> {
   };
 
   insertSuggestion = () => {
-    this.props.onSelectSuggestion(this.state.allItems[this.state.typeaheadIndex]);
+    if (this.props.onSelectSuggestion) {
+      this.props.onSelectSuggestion(this.state.allItems[this.state.typeaheadIndex]);
+    }
   };
 
   get menuPosition(): string {
@@ -115,10 +122,10 @@ export class Typeahead extends React.PureComponent<Props, State> {
     }
 
     const selection = window.getSelection();
-    const node = selection.anchorNode;
+    const node = selection && selection.anchorNode;
 
     // Align menu overlay to editor node
-    if (node) {
+    if (node && node.parentElement) {
       // Read from DOM
       const rect = node.parentElement.getBoundingClientRect();
       const scrollX = window.scrollX;
@@ -133,7 +140,7 @@ export class Typeahead extends React.PureComponent<Props, State> {
   }
 
   render() {
-    const { prefix, theme, isOpen, origin } = this.props;
+    const { prefix, isOpen = false, origin } = this.props;
     const { allItems, listWidth, listHeight, itemHeight, hoveredItem, typeaheadIndex } = this.state;
 
     const showDocumentation = hoveredItem || typeaheadIndex;
@@ -161,7 +168,7 @@ export class Typeahead extends React.PureComponent<Props, State> {
 
               return (
                 <TypeaheadItem
-                  onClickItem={() => this.props.onSelectSuggestion(item)}
+                  onClickItem={() => (this.props.onSelectSuggestion ? this.props.onSelectSuggestion(item) : {})}
                   isSelected={allItems[typeaheadIndex] === item}
                   item={item}
                   prefix={prefix}
@@ -175,19 +182,12 @@ export class Typeahead extends React.PureComponent<Props, State> {
         </ul>
 
         {showDocumentation && (
-          <TypeaheadInfo
-            width={listWidth}
-            height={listHeight}
-            theme={theme}
-            item={allItems[hoveredItem ? hoveredItem : typeaheadIndex]}
-          />
+          <TypeaheadInfo height={listHeight} item={allItems[hoveredItem ? hoveredItem : typeaheadIndex]} />
         )}
       </Portal>
     );
   }
 }
-
-export const TypeaheadWithTheme = withTheme(Typeahead);
 
 interface PortalProps {
   index?: number;

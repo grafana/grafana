@@ -13,17 +13,18 @@ function getIndent(text: string) {
   return '';
 }
 
-export default function NewlinePlugin(): Plugin {
+export function NewlinePlugin(): Plugin {
   return {
-    onKeyDown(event: KeyboardEvent, editor: CoreEditor, next: Function) {
+    onKeyDown(event: Event, editor: CoreEditor, next: Function) {
+      const keyEvent = event as KeyboardEvent;
       const value = editor.value;
 
       if (value.selection.isExpanded) {
         return next();
       }
 
-      if (event.key === 'Enter' && event.shiftKey) {
-        event.preventDefault();
+      if (keyEvent.key === 'Enter' && keyEvent.shiftKey) {
+        keyEvent.preventDefault();
 
         const { startBlock } = value;
         const currentLineText = startBlock.text;
