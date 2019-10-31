@@ -1,5 +1,6 @@
 import React from 'react';
-import { LogRows } from './LogRows';
+import { range } from 'lodash';
+import { LogRows, PREVIEW_LIMIT } from './LogRows';
 import { mount } from 'enzyme';
 import { LogLevel, LogRowModel, LogsDedupStrategy } from '@grafana/data';
 import { LogRow } from './LogRow';
@@ -82,6 +83,26 @@ describe('LogRows', () => {
     expect(wrapper.find(LogRow).length).toBe(2);
     expect(wrapper.contains('log message 4')).toBeTruthy();
     expect(wrapper.contains('log message 5')).toBeTruthy();
+  });
+
+  it('renders with default preview limit', () => {
+    // PREVIEW_LIMIT * 2 is there because otherwise we just render all rows
+    const rows: LogRowModel[] = range(PREVIEW_LIMIT * 2 + 1).map(num => makeLog({ uid: num.toString() }));
+    const wrapper = mount(
+      <LogRows
+        data={{
+          rows,
+          hasUniqueLabels: false,
+        }}
+        dedupStrategy={LogsDedupStrategy.none}
+        highlighterExpressions={[]}
+        showTime={false}
+        showLabels={false}
+        timeZone={'utc'}
+      />
+    );
+
+    expect(wrapper.find(LogRow).length).toBe(100);
   });
 });
 
