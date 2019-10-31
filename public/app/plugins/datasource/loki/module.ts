@@ -1,4 +1,4 @@
-import { DataSourcePlugin } from '@grafana/ui';
+import { DataSourcePlugin } from '@grafana/data';
 import Datasource from './datasource';
 
 import LokiCheatSheet from './components/LokiCheatSheet';

@@ -18,7 +18,7 @@ import { withTheme } from '../../themes/ThemeContext';
 
 // Types
 import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue, dateMath } from '@grafana/data';
-import { GrafanaTheme } from '../../types/theme';
+import { GrafanaTheme } from '@grafana/data';
 import { Themeable } from '../../types';
 
 const getStyles = memoizeOne((theme: GrafanaTheme) => {

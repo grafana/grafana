@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { colors, getFlotPairs, ansicolor } from '@grafana/ui';
+import { colors, ansicolor } from '@grafana/ui';
 
 import {
   Labels,
@@ -22,6 +22,7 @@ import {
   toDataFrame,
   FieldCache,
   FieldWithIndex,
+  getFlotPairs,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';

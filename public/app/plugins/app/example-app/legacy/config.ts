@@ -1,4 +1,4 @@
-import { PluginMeta } from '@grafana/ui';
+import { PluginMeta } from '@grafana/data';
 
 export class ExampleConfigCtrl {
   static templateUrl = 'legacy/config.html';

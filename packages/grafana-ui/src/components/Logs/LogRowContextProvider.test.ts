@@ -1,7 +1,5 @@
-import { FieldType, LogRowModel, MutableDataFrame } from '@grafana/data';
+import { FieldType, LogRowModel, MutableDataFrame, Labels, LogLevel, DataQueryResponse } from '@grafana/data';
 import { getRowContexts } from './LogRowContextProvider';
-import { Labels, LogLevel } from '@grafana/data/src';
-import { DataQueryResponse } from '../../types';
 
 describe('getRowContexts', () => {
   describe('when called with a DataFrame and results are returned', () => {

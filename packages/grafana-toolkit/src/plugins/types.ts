@@ -1,5 +1,4 @@
-import { PluginMeta, PluginBuildInfo } from '@grafana/ui';
-import { DataFrame, KeyValue } from '@grafana/data';
+import { PluginMeta, PluginBuildInfo, DataFrame, KeyValue } from '@grafana/data';
 
 export interface PluginPackageDetails {
   plugin: ZipFileInfo;

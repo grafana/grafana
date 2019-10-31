@@ -4,7 +4,7 @@ import {
   DataQueryResponse,
   DataSourceInstanceSettings,
   DataSourcePluginMeta,
-} from '@grafana/ui';
+} from '@grafana/data';
 
 export class DatasourceSrvMock {
   constructor(private defaultDS: DataSourceApi, private datasources: { [name: string]: DataSourceApi }) {

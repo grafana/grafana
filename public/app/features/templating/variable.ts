@@ -42,7 +42,107 @@ export const interpolateSearchFilter = (args: InterpolateSearchFilterOptions): s
   return query.replace(SEARCH_FILTER_VARIABLE, replaceValue);
 };
 
-export interface Variable {
+export enum VariableRefresh {
+  never,
+  onDashboardLoad,
+  onTimeRangeChanged,
+}
+
+export enum VariableHide {
+  dontHide,
+  hideVariable,
+  hideLabel,
+}
+
+export enum VariableSort {
+  disabled,
+  alphabeticalAsc,
+  alphabeticalDesc,
+  numericalAsc,
+  numericalDesc,
+  alphabeticalCaseInsensitiveAsc,
+  alphabeticalCaseInsensitiveDesc,
+}
+
+export interface VariableTag {
+  text: string | string[];
+}
+
+export interface VariableOption {
+  selected: boolean;
+  text: string | string[];
+  value: string | string[];
+  isNone?: boolean;
+}
+
+export type VariableType = 'query' | 'adhoc' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom';
+
+export interface AdHocVariableFilter {
+  key: string;
+  operator: string;
+  value: string;
+  condition: string;
+}
+
+export interface AdHocVariableModel extends VariableModel {
+  datasource: string;
+  filters: AdHocVariableFilter[];
+}
+
+export interface CustomVariableModel extends VariableWithOptions {
+  allValue: string;
+  includeAll: boolean;
+  multi: boolean;
+}
+
+export interface DataSourceVariableModel extends VariableWithOptions {
+  includeAll: boolean;
+  multi: boolean;
+  refresh: VariableRefresh;
+  regex: string;
+}
+
+export interface IntervalVariableModel extends VariableWithOptions {
+  auto: boolean;
+  auto_min: string;
+  auto_count: number;
+  refresh: VariableRefresh;
+}
+
+export interface QueryVariableModel extends VariableWithOptions {
+  allValue: string;
+  datasource: string;
+  definition: string;
+  includeAll: boolean;
+  multi: boolean;
+  refresh: VariableRefresh;
+  regex: string;
+  sort: VariableSort;
+  tags: VariableTag[];
+  tagsQuery: string;
+  tagValuesQuery: string;
+  useTags: boolean;
+}
+
+export interface TextBoxVariableModel extends VariableWithOptions {}
+
+export interface ConstantVariableModel extends VariableWithOptions {}
+
+export interface VariableWithOptions extends VariableModel {
+  current: VariableOption;
+  options: VariableOption[];
+  query: string;
+}
+
+export interface VariableModel {
+  type: VariableType;
+  name: string;
+  label: string;
+  hide: VariableHide;
+  skipUrlSync: boolean;
+}
+
+export interface VariableActions {
   setValue(option: any): any;
   updateOptions(searchFilter?: string): any;
   dependsOn(variable: any): any;
