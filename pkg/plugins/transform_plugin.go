@@ -27,7 +27,6 @@ type TransformPlugin struct {
 
 	Executable string `json:"executable,omitempty"`
 
-	//transform.TransformPlugin
 	*TransformWrapper
 
 	client *plugin.Client
@@ -136,22 +135,10 @@ type TransformWrapper struct {
 	api    *grafanaAPI
 }
 
-func (tw *TransformWrapper) Transform(ctx context.Context, ds *models.DataSource, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	jsonData, err := ds.JsonData.MarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-
+func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	pbQuery := &pluginv2.TransformRequest{
-		Datasource: &pluginv2.DatasourceInfo{
-			Name:                    ds.Name,
-			Type:                    ds.Type,
-			Url:                     ds.Url,
-			Id:                      ds.Id,
-			OrgId:                   ds.OrgId,
-			JsonData:                string(jsonData),
-			DecryptedSecureJsonData: ds.SecureJsonData.Decrypt(),
-		},
+		// TODO Not sure Datasource property needs be on this?
+		Datasource: &pluginv2.DatasourceInfo{},
 		TimeRange: &pluginv2.TimeRange{
 			FromRaw:     query.TimeRange.From,
 			ToRaw:       query.TimeRange.To,
@@ -217,6 +204,7 @@ func (s *grafanaAPI) QueryDatasource(ctx context.Context, req *pluginv2.QueryDat
 	if len(req.Queries) == 0 {
 		return nil, fmt.Errorf("zero queries found in datasource request")
 	}
+
 	getDsInfo := &models.GetDataSourceByIdQuery{
 		Id:    req.DatasourceId,
 		OrgId: req.OrgId,
