@@ -44,14 +44,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       position: sticky;
       top: 0;
     `,
-    title: css`
-      width: calc(100% - ${closeButtonWidth});
-    `,
     close: css`
       cursor: pointer;
       width: ${closeButtonWidth};
       height: 100%;
       display: flex;
+      flex-shrink: 0;
       justify-content: center;
     `,
     content: css`
@@ -85,7 +83,7 @@ export const Drawer: FC<Props> = ({
       className={drawerStyles.drawer}
     >
       <div className={drawerStyles.titleWrapper}>
-        <div className={drawerStyles.title}>{title}</div>
+        <div>{title}</div>
         <div className={drawerStyles.close} onClick={onClose}>
           <i className="fa fa-close" />
         </div>
