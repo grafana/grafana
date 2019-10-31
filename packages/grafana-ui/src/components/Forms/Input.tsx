@@ -12,6 +12,7 @@ interface Props extends HTMLProps<HTMLInputElement> {
   description?: string;
   invalid?: boolean;
   invalidMessage?: string;
+  icon?: string;
 }
 
 const getInputStyle = stylesFactory(
@@ -23,7 +24,7 @@ const getInputStyle = stylesFactory(
         css`
           background-color: ${selectThemeVariant({ light: colors.white, dark: colors.gray15 }, theme.type)};
           border: ${theme.border.width.sm} solid
-            ${selectThemeVariant({ light: colors.gray4, dark: colors.gray25 }, theme.type)};
+            ${invalid ? colors.redBase : selectThemeVariant({ light: colors.gray4, dark: colors.gray25 }, theme.type)};
           border-radius: ${theme.border.radius.sm};
           height: ${theme.spacing.formInputHeight};
           padding: 0 ${theme.spacing.formInputPaddingHorizontal};
