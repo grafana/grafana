@@ -10,10 +10,9 @@ import { ExpressionQueryEditor } from './ExpressionQueryEditor';
 import { Observable, from } from 'rxjs';
 import { config } from '@grafana/runtime';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { gelResponseToDataFrames } from './util';
 
 /**
- * This is a singleton that is not actually instanciated
+ * This is a singleton that is not actually instantiated
  */
 export class ExpressionDatasourceApi extends DataSourceApi<ExpressionQuery> {
   constructor(instanceSettings: DataSourceInstanceSettings) {
@@ -53,9 +52,17 @@ export class ExpressionDatasourceApi extends DataSourceApi<ExpressionQuery> {
         queries: queries,
       })
       .then((rsp: any) => {
-        return { data: gelResponseToDataFrames(rsp) } as DataQueryResponse;
+        return this.toDataQueryResponse(rsp);
       });
     return from(req);
+  }
+
+  /**
+   * This makes the arrow libary loading async.
+   */
+  async toDataQueryResponse(rsp: any): Promise<DataQueryResponse> {
+    const { gelResponseToDataFrames } = await import(/* webpackChunkName: "apache-arrow-util" */ './util');
+    return { data: gelResponseToDataFrames(rsp) };
   }
 
   testDatasource() {
