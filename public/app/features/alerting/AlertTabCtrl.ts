@@ -8,7 +8,7 @@ import appEvents from 'app/core/app_events';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../dashboard/services/DashboardSrv';
 import DatasourceSrv from '../plugins/datasource_srv';
-import { DataQuery } from '@grafana/ui/src/types/datasource';
+import { DataQuery } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getDefaultCondition } from './getAlertingValidationMessage';
 import { CoreEvents } from 'app/types';

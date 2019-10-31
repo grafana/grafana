@@ -2,8 +2,7 @@
 import React, { memo } from 'react';
 
 // Types
-import { AbsoluteTimeRange } from '@grafana/data';
-import { QueryEditorProps } from '@grafana/ui';
+import { AbsoluteTimeRange, QueryEditorProps } from '@grafana/data';
 import { LokiDatasource } from '../datasource';
 import { LokiQuery } from '../types';
 import { LokiQueryField } from './LokiQueryField';

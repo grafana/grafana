@@ -1,11 +1,10 @@
 import _ from 'lodash';
 
-import { dateMath } from '@grafana/data';
+import { dateMath, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
 import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
 import { InfluxQueryBuilder } from './query_builder';
-import { DataSourceApi, DataSourceInstanceSettings } from '@grafana/ui';
 import { InfluxQuery, InfluxOptions } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';

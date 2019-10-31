@@ -2,8 +2,8 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { Select, DataQuery, DataQueryError, PanelData } from '@grafana/ui';
-import { DataFrame, SelectableValue } from '@grafana/data';
+import { Select } from '@grafana/ui';
+import { DataQuery, DataQueryError, PanelData, DataFrame, SelectableValue } from '@grafana/data';
 import { DashboardQuery } from './types';
 import config from 'app/core/config';
 import { css } from 'emotion';

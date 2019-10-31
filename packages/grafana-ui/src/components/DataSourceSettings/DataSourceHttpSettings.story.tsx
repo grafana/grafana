@@ -1,7 +1,7 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { DataSourceHttpSettings } from './DataSourceHttpSettings';
-import { DataSourceSettings } from '../../types';
+import { DataSourceSettings } from '@grafana/data';
 import { UseState } from '../../utils/storybook/UseState';
 
 const settingsMock: DataSourceSettings<any, any> = {

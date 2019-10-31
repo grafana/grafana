@@ -7,16 +7,8 @@ import classNames from 'classnames';
 import { css } from 'emotion';
 
 import { ExploreId, ExploreItemState, ExploreMode } from 'app/types/explore';
-import {
-  DataSourceSelectItem,
-  ToggleButtonGroup,
-  ToggleButton,
-  DataQuery,
-  Tooltip,
-  ButtonSelect,
-  SetInterval,
-} from '@grafana/ui';
-import { RawTimeRange, TimeZone, TimeRange } from '@grafana/data';
+import { ToggleButtonGroup, ToggleButton, Tooltip, ButtonSelect, SetInterval } from '@grafana/ui';
+import { RawTimeRange, TimeZone, TimeRange, DataSourceSelectItem, DataQuery } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import {

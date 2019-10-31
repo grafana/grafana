@@ -1,5 +1,6 @@
 import React from 'react';
-import { DataSourceHttpSettings, DataSourcePluginOptionsEditorProps, DataSourceSettings, FormField } from '@grafana/ui';
+import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
+import { FormField, DataSourceHttpSettings } from '@grafana/ui';
 import { LokiOptions } from '../types';
 
 export type Props = DataSourcePluginOptionsEditorProps<LokiOptions>;
