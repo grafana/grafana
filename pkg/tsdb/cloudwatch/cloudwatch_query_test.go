@@ -97,5 +97,30 @@ func TestCloudWatchQuery(t *testing.T) {
 				So(query.isMathExpression(), ShouldBeFalse)
 			})
 		})
+
+		Convey("and no dimensions were added", func() {
+			query := &cloudWatchQuery{
+				RefId:      "A",
+				Region:     "us-east-1",
+				Expression: "",
+				Stats:      "Average",
+				Period:     300,
+				Id:         "id1",
+				Identifier: "id1",
+				Dimensions: make(map[string][]string),
+			}
+
+			Convey("it is a search expression", func() {
+				So(query.isSearchExpression(), ShouldBeTrue)
+			})
+
+			Convey("it is not math expressions", func() {
+				So(query.isMathExpression(), ShouldBeFalse)
+			})
+
+			Convey("it is not metric stat", func() {
+				So(query.isMetricStat(), ShouldBeFalse)
+			})
+		})
 	})
 }

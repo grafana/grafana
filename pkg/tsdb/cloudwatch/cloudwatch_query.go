@@ -34,6 +34,10 @@ func (q *cloudWatchQuery) isSearchExpression() bool {
 		return true
 	}
 
+	if len(q.Dimensions) == 0 {
+		return true
+	}
+
 	for _, values := range q.Dimensions {
 		if len(values) > 1 {
 			return true
