@@ -1,7 +1,7 @@
 import React, { CSSProperties, FC, ReactNode } from 'react';
 import RcDrawer from 'rc-drawer';
 import { css } from 'emotion';
-import { stylesFactory, useTheme } from '../../themes';
+import { stylesFactory, useTheme, selectThemeVariant } from '../../themes';
 import { GrafanaTheme } from '../../types';
 
 interface Props {
@@ -20,7 +20,13 @@ interface Props {
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const closeButtonWidth = '50px';
-
+  const borderColor = selectThemeVariant(
+    {
+      light: theme.colors.gray4,
+      dark: theme.colors.dark9,
+    },
+    theme.type
+  );
   return {
     drawer: css`
       .drawer-content {
@@ -31,8 +37,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       font-size: ${theme.typography.size.lg};
       display: flex;
       align-items: center;
-      border-bottom: 1px solid ${theme.colors.white};
-      padding: ${theme.spacing.md} ${theme.spacing.sm};
+      justify-content: space-between;
+      border-bottom: 1px solid ${borderColor};
+      padding: ${theme.spacing.sm} 0 ${theme.spacing.sm} ${theme.spacing.md};
       background-color: ${theme.colors.bodyBg};
       position: sticky;
       top: 0;
