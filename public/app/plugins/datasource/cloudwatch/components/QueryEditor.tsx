@@ -168,7 +168,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
           </>
         )}
 
-        {query.statistics.length === 1 && (
+        {query.statistics.length <= 1 && (
           <div className="gf-form-inline">
             <div className="gf-form">
               <FormField

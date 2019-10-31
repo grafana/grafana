@@ -27,8 +27,9 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
     }
   }, [data]);
 
-  const excludeUsedKeys = (options: Array<SelectableValue<string>>) =>
-    options.filter(({ value }) => !Object.keys(data).includes(value));
+  const excludeUsedKeys = (options: Array<SelectableValue<string>>) => {
+    return options.filter(({ value }) => !Object.keys(data).includes(value));
+  };
 
   return (
     <>
@@ -66,7 +67,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
               <i className="fa fa-plus" />
             </a>
           }
-          loadOptions={loadKeys}
+          loadOptions={() => loadKeys().then(excludeUsedKeys)}
           onChange={(newKey: string) => setData({ ...data, [newKey]: '' })}
         />
       )}
