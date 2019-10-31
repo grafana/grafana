@@ -27,9 +27,9 @@ Name | Description
 ------------ | -------------
 *Name* | The data source name. This is how you refer to the data source in panels and queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
-*Url* | The HTTP protocol, ip and port of you influxdb api (influxdb api port is by default 8086)
+*Url* | The HTTP protocol, IP address and port of your InfluxDB API (InfluxDB API port is by default 8086)
 *Access* | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
-*Database* | Name of your influxdb database
+*Database* | Name of your InfluxDB database
 *User* | Name of your database user
 *Password* | Database user's password
 *HTTP mode* | How to query the database (`GET` or `POST` HTTP verb). The `POST` verb allows heavy queries that would return an error using the `GET` verb. Default is `GET`.
