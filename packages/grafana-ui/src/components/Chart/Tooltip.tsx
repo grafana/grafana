@@ -3,10 +3,9 @@ import { css } from 'emotion';
 import useMeasure from 'react-use/lib/useMeasure';
 import useWindowSize from 'react-use/lib/useWindowSize';
 import { Portal } from '../Portal/Portal';
-import { TimeZone, Dimensions } from '@grafana/data';
+import { TimeZone, Dimensions, GrafanaTheme } from '@grafana/data';
 import { FlotPosition } from '../Graph/types';
 import { stylesFactory, selectThemeVariant, useTheme } from '../../themes';
-import { GrafanaTheme } from '../../types';
 
 export type TooltipMode = 'single' | 'multi';
 interface TooltipContainerProps {

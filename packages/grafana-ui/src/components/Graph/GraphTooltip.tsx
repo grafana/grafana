@@ -1,6 +1,5 @@
 import React from 'react';
 import { stylesFactory, useTheme } from '../../themes';
-import { GrafanaTheme } from '../../types/theme';
 import { css, cx } from 'emotion';
 import {
   getTimeZoneDateFormatter,
@@ -9,6 +8,7 @@ import {
   Dimension,
   getValueFromDimension,
   getColumnFromDimension,
+  GrafanaTheme,
 } from '@grafana/data';
 import { TooltipContentProps, TooltipMode } from '../Chart/Tooltip';
 import { SeriesIcon } from '../Legend/SeriesIcon';
