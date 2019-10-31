@@ -95,32 +95,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
       }
     }
 
-    // for (const m in config.jsonData) {
-    //   if (!config.hasOwnProperty('jsonData')) {
-    //     config.jsonData = {};
-    //   }
-    //   if (config.jsonData[m].length === 0) {
-    //     if (config.hasOwnProperty('jsonData') && config.jsonData.hasOwnProperty(m)) {
-    //       delete config.jsonData[m];
-    //     }
-    //   } else {
-    //     config.jsonData[m] = config.jsonData[m];
-    //   }
-    // }
-
-    // for (const l in config.secureJsonData) {
-    //   if (!config.hasOwnProperty('secureJsonData')) {
-    //     config.secureJsonData = {};
-    //   }
-    //   if (config.secureJsonData[l].length === 0) {
-    //     if (config.hasOwnProperty('secureJsonData') && config.secureJsonData.hasOwnProperty(l)) {
-    //       delete config.secureJsonData[l];
-    //     }
-    //   } else {
-    //     config.secureJsonData[l] = config.secureJsonData[l];
-    //   }
-    // }
-
     this.props.onOptionsChange({
       ...config,
     });
