@@ -48,6 +48,14 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
     if (!query.hasOwnProperty('dimensions')) {
       query.dimensions = {};
     }
+
+    if (!query.region) {
+      query.region = 'default';
+    }
+
+    if (!query.statistics.length) {
+      query.statistics = ['Average'];
+    }
   }
 
   componentDidMount() {
