@@ -7,10 +7,10 @@ export interface Props {
   value: string;
 }
 
-export const Alias: FunctionComponent<Props> = ({ value, onChange }) => {
+export const Alias: FunctionComponent<Props> = ({ value = '', onChange }) => {
   const [alias, setAlias] = useState(value);
 
-  const propagateOnChange = debounce(onChange, 500);
+  const propagateOnChange = debounce(onChange, 1500);
 
   onChange = (e: any) => {
     setAlias(e.target.value);
