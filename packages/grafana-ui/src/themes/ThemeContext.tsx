@@ -9,6 +9,7 @@ type Subtract<T, K> = Omit<T, keyof K>;
 
 // Use Grafana Dark theme by default
 export const ThemeContext = React.createContext(getTheme(GrafanaThemeType.Dark));
+ThemeContext.displayName = 'ThemeContext';
 
 export const withTheme = <P extends Themeable, S extends {} = {}>(Component: React.ComponentType<P>) => {
   const WithTheme: React.FunctionComponent<Subtract<P, Themeable>> = props => {

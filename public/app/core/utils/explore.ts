@@ -19,9 +19,18 @@ import { renderUrl } from 'app/core/utils/url';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
 import { getNextRefIdChar } from './query';
+
 // Types
-import { DataQuery, DataSourceApi, DataQueryError, DataQueryRequest, PanelModel, RefreshPicker } from '@grafana/ui';
-import { ExploreUrlState, HistoryItem, QueryTransaction, QueryOptions, ExploreMode } from 'app/types/explore';
+import {
+  DataQuery,
+  DataSourceApi,
+  DataQueryError,
+  DataQueryRequest,
+  PanelModel,
+  RefreshPicker,
+  HistoryItem,
+} from '@grafana/ui';
+import { ExploreUrlState, QueryTransaction, QueryOptions, ExploreMode } from 'app/types/explore';
 import { config } from '../config';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 

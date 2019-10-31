@@ -2,10 +2,10 @@ import Plain from 'slate-plain-serializer';
 import React from 'react';
 import { Editor } from '@grafana/slate-react';
 import { shallow } from 'enzyme';
-import ClearPlugin from './clear';
+import { ClearPlugin } from './clear';
 
 describe('clear', () => {
-  const handler = ClearPlugin().onKeyDown;
+  const handler = ClearPlugin().onKeyDown!;
 
   it('does not change the empty value', () => {
     const value = Plain.deserialize('');

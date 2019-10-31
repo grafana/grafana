@@ -4,8 +4,7 @@ import React from 'react';
 import { SlatePrism } from '@grafana/ui';
 
 // dom also includes Element polyfills
-import QueryField from 'app/features/explore/QueryField';
-import { ExploreQueryFieldProps } from '@grafana/ui';
+import { QueryField, ExploreQueryFieldProps } from '@grafana/ui';
 import { ElasticDatasource } from '../datasource';
 import { ElasticsearchOptions, ElasticsearchQuery } from '../types';
 
