@@ -21,11 +21,10 @@ export interface Props extends Themeable {
   deduplicatedData?: LogsModel;
   rowLimit?: number;
   isLogsPanel?: boolean;
+  previewLimit?: number;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
-  rowLimit?: number;
-  previewLimit?: number;
 }
 
 interface State {

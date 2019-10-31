@@ -14,7 +14,7 @@ import { getLogRowStyles } from './getLogRowStyles';
 //Components
 import { LogLabelStats } from './LogLabelStats';
 
-interface Props extends Themeable {
+export interface Props extends Themeable {
   parsedValue: string;
   parsedKey: string;
   field: string;

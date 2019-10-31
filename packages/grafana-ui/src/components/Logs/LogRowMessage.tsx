@@ -7,7 +7,7 @@ import { LogRowModel, findHighlightChunksInText, GrafanaTheme } from '@grafana/d
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
 import { LogRowContextQueryErrors, HasMoreContextRows, LogRowContextRows } from './LogRowContextProvider';
-import { GrafanaTheme, selectThemeVariant } from '../../index';
+import { selectThemeVariant } from '../../index';
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';

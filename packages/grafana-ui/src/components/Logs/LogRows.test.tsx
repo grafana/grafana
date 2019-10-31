@@ -17,7 +17,6 @@ describe('LogRows', () => {
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
         showTime={false}
-        showLabels={false}
         timeZone={'utc'}
       />
     );
@@ -40,7 +39,6 @@ describe('LogRows', () => {
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
         showTime={false}
-        showLabels={false}
         timeZone={'utc'}
         previewLimit={1}
       />
@@ -75,7 +73,6 @@ describe('LogRows', () => {
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
         showTime={false}
-        showLabels={false}
         timeZone={'utc'}
       />
     );
@@ -97,7 +94,6 @@ describe('LogRows', () => {
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
         showTime={false}
-        showLabels={false}
         timeZone={'utc'}
       />
     );
@@ -121,6 +117,7 @@ const makeLog = (overides: Partial<LogRowModel>): LogRowModel => {
     timeEpochMs: 1,
     timeLocal: '',
     timeUtc: '',
+    searchWords: [],
     ...overides,
   };
 };
