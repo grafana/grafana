@@ -1,4 +1,4 @@
-import { PanelPlugin } from '@grafana/ui';
+import { PanelPlugin } from '@grafana/data';
 import { GraphPanelEditor } from './GraphPanelEditor';
 import { GraphPanel } from './GraphPanel';
 import { Options, defaults } from './types';

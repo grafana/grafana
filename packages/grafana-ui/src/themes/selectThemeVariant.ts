@@ -1,4 +1,4 @@
-import { GrafanaThemeType } from '../types/theme';
+import { GrafanaThemeType } from '@grafana/data';
 
 type VariantDescriptor = { [key in GrafanaThemeType]: string | number };
 

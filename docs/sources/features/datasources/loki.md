@@ -102,7 +102,7 @@ The following filter types are currently supported:
 * `|~` line matches regular expression.
 * `!~` line does not match regular expression.
 
-> Note: For more details about LogQL, Loki's query language, refer to the [documentation](https://github.com/grafana/loki/blob/master/docs/querying.md)
+> Note: For more details about LogQL, Loki's query language, refer to the [documentation](https://github.com/grafana/loki/blob/master/docs/logql.md)
 
 ## Live tailing
 

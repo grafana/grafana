@@ -1,4 +1,4 @@
-import { DataQuery } from '@grafana/ui';
+import { DataQuery } from '@grafana/data';
 import { DataSourceSrv } from '@grafana/runtime';
 import { DataTransformerConfig } from '@grafana/data';
 

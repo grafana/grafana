@@ -31,7 +31,7 @@ import { getRouteParamsId } from 'app/core/selectors/location';
 // Types
 import { StoreState, CoreEvents } from 'app/types/';
 import { UrlQueryMap } from '@grafana/runtime';
-import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/ui';
+import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/data';
 import { NavModel } from '@grafana/data';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';

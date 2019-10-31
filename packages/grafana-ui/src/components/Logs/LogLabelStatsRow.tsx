@@ -2,7 +2,7 @@ import React, { FunctionComponent, useContext } from 'react';
 import { css, cx } from 'emotion';
 
 import { ThemeContext } from '../../themes/ThemeContext';
-import { GrafanaTheme } from '../../types/theme';
+import { GrafanaTheme } from '@grafana/data';
 
 const getStyles = (theme: GrafanaTheme) => ({
   logsStatsRow: css`

@@ -1,5 +1,5 @@
 import { PrometheusDatasource } from './datasource';
-import { DataSourceInstanceSettings } from '@grafana/ui';
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { PromContext, PromOptions } from './types';
 import { dateTime, LoadingState } from '@grafana/data';
 

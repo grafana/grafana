@@ -1,7 +1,7 @@
 import { css } from 'emotion';
 import { LogLevel } from '@grafana/data';
 
-import { GrafanaTheme } from '../../types/theme';
+import { GrafanaTheme } from '@grafana/data';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import { stylesFactory } from '../../themes';
 
