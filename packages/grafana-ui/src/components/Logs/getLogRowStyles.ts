@@ -61,7 +61,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
 
       > div {
         display: table-cell;
-        padding-right: ${theme.panelPadding};
+        padding-right: ${theme.spacing.sm};
         border-top: ${theme.border.width.sm} solid transparent;
         border-bottom: ${theme.border.width.sm} solid transparent;
         height: 100%;
@@ -100,7 +100,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       label: logs-row-toggle-details__level;
       position: relative;
       width: 15px;
-      padding-right: ${theme.panelPadding};
+      padding-right: ${theme.spacing.sm};
       font-size: 9px;
       cursor: pointer;
     `,
