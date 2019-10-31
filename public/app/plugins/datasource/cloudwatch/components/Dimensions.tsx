@@ -58,6 +58,13 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
             loadOptions={() => loadValues(key)}
             onChange={newValue => setData({ ...data, [key]: newValue })}
           />
+          {Object.values(data).length > 1 && index + 1 !== Object.values(data).length && (
+            <Segment
+              Component={<a className="gf-form-label query-keyword">AND</a>}
+              onChange={() => {}}
+              options={operators}
+            />
+          )}
         </Fragment>
       ))}
       {Object.values(data).every(v => v) && (
