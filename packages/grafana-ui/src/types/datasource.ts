@@ -109,13 +109,6 @@ export interface DataSourcePluginMeta extends PluginMeta {
   queryOptions?: PluginMetaQueryOptions;
   sort?: number;
   streaming?: boolean;
-
-  /**
-   * By default, hidden queries are not passed to the datasource
-   * Set this to true in plugin.json to have hidden queries passed to the
-   * DataSource query method
-   */
-  hiddenQueries?: boolean;
 }
 
 interface PluginMetaQueryOptions {
@@ -555,4 +548,20 @@ export interface AnnotationQueryRequest<MoreOptions = {}> {
     enable: boolean;
     name: string;
   } & MoreOptions;
+}
+
+export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
+  ts: number;
+  query: TQuery;
+}
+
+export abstract class LanguageProvider {
+  datasource!: DataSourceApi;
+  request!: (url: string, params?: any) => Promise<any>;
+  /**
+   * Returns startTask that resolves with a task list when main syntax is loaded.
+   * Task list consists of secondary promises that load more detailed language features.
+   */
+  start!: () => Promise<any[]>;
+  startTask?: Promise<any[]>;
 }

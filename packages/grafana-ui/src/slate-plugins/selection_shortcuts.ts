@@ -6,11 +6,12 @@ import { isKeyHotkey } from 'is-hotkey';
 const isSelectLineHotkey = isKeyHotkey('mod+l');
 
 // Clears the rest of the line after the caret
-export default function SelectionShortcutsPlugin(): Plugin {
+export function SelectionShortcutsPlugin(): Plugin {
   return {
-    onKeyDown(event: KeyboardEvent, editor: CoreEditor, next: Function) {
-      if (isSelectLineHotkey(event)) {
-        event.preventDefault();
+    onKeyDown(event: Event, editor: CoreEditor, next: () => any) {
+      const keyEvent = event as KeyboardEvent;
+      if (isSelectLineHotkey(keyEvent)) {
+        keyEvent.preventDefault();
         const { focusBlock, document } = editor.value;
 
         editor.moveAnchorToStartOfBlock();

@@ -14,6 +14,7 @@ import {
   DataQueryError,
 } from '@grafana/ui';
 import { LoadingState, dateMath, toDataFrame, DataFrame, guessFieldTypes } from '@grafana/data';
+import { ExpressionDatasourceID, expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
 
@@ -132,6 +133,16 @@ function cancelNetworkRequestsOnUnsubscribe(req: DataQueryRequest) {
 }
 
 export function callQueryMethod(datasource: DataSourceApi, request: DataQueryRequest) {
+  console.log('CALL', request.targets);
+
+  // If any query has an expression, use the expression endpoint
+  for (const target of request.targets) {
+    if (target.datasource === ExpressionDatasourceID) {
+      return expressionDatasource.query(request);
+    }
+  }
+
+  // Otherwise it is a standard datasource request
   const returnVal = datasource.query(request);
   return from(returnVal);
 }
