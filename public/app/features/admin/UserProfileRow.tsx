@@ -1,5 +1,5 @@
 import React, { PureComponent, FC, useContext } from 'react';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { ThemeContext } from '@grafana/ui';
 
 const labelStyle = css`
@@ -105,16 +105,17 @@ export interface RowActionProps {
 export const RowAction: FC<RowActionProps> = (props: RowActionProps) => {
   const { onClick, text } = props;
   const theme = useContext(ThemeContext);
+  const actionClass = cx(
+    'pull-right',
+    css`
+      margin-right: 0.6rem;
+      text-decoration: underline;
+      color: ${theme.colors.blue95};
+    `
+  );
 
   return (
-    <a
-      type="button"
-      onMouseDown={onClick}
-      className={css`
-        text-decoration: underline;
-        color: ${theme.colors.blue95};
-      `}
-    >
+    <a type="button" onMouseDown={onClick} className={actionClass}>
       {text}
     </a>
   );

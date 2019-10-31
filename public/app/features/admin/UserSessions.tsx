@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+import { RowAction } from './UserProfileRow';
 import { UserSession } from 'app/types';
 
 interface Props {
@@ -45,9 +46,7 @@ export class UserSessions extends PureComponent<Props> {
                       <td>{session.clientIp}</td>
                       <td>{`${session.browser} on ${session.os} ${session.osVersion}`}</td>
                       <td>
-                        <button className="btn btn-danger btn-small" onClick={this.handleSessionRevoke(session.id)}>
-                          <i className="fa fa-power-off" />
-                        </button>
+                        <RowAction text="Force logout" onClick={this.handleSessionRevoke(session.id)} />
                       </td>
                     </tr>
                   ))}
@@ -56,9 +55,7 @@ export class UserSessions extends PureComponent<Props> {
           </div>
           <div className="gf-form-button-row">
             {sessions.length > 0 && (
-              <button className="btn btn-danger" onClick={this.handleAllSessionsRevoke}>
-                Logout user from all devices
-              </button>
+              <RowAction text="Force logout from all devices" onClick={this.handleAllSessionsRevoke} />
             )}
           </div>
         </div>
