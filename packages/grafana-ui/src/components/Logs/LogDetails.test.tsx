@@ -1,6 +1,6 @@
 import React from 'react';
 import { LogDetails, Props } from './LogDetails';
-import { LogRowModel, LogLevel, GrafanaTheme, LogsParser } from '@grafana/data';
+import { LogRowModel, LogLevel, GrafanaTheme } from '@grafana/data';
 import { mount } from 'enzyme';
 
 const setup = (propOverrides?: object) => {
