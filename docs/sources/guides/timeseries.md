@@ -22,7 +22,7 @@ Imagine you wanted to know how the temperature outside changes throughout the da
 
 Temperature data like this is one example of what we call a *time series*—a sequence of measurements, ordered in time. Every row in the table represents one individual measurement at a specific time.
 
-Tables are useful when you want to identify individual measurements but make it difficult to see the big picture. A more common visualization for time series is the *graph*, which instead places each measurement along a time axis. Visual representations like the graph make it easier to discover patterns and features of the data that otherwise would be difficult to see.
+Tables are useful when you want to identify individual measurements but make it difficult to see the big picture. A more common visualization for time series is the _graph_, which instead places each measurement along a time axis. Visual representations like the graph make it easier to discover patterns and features of the data that otherwise would be difficult to see.
 
 ![Time series](graph.png)
 
@@ -64,15 +64,37 @@ In the IT industry, time series data is often collected to monitor things like i
 
 ### Time series databases
 
-A time series database (TSDB) is a database explicitly designed for time series data. While it's possible to use any regular database to store measurements, a TSDB comes with some useful optimizations. For example, modern time series databases take advantage of the fact that measurements are only ever appended, and rarely updated or removed.
+A time series database (TSDB) is a database explicitly designed for time series data. While it's possible to use any regular database to store measurements, a TSDB comes with some useful optimizations. 
+
+Modern time series databases take advantage of the fact that measurements are only ever appended, and rarely updated or removed. For example, the timestamps for each measurement change very little over time, which results in redundant data being stored. 
+
+Look at this sequence of Unix timestamps:
+
+```
+1572524345, 1572524375, 1572524404, 1572524434, 1572524464
+```
+
+Looking at these timestamp, they all start with `1572524`, leading to poor use of disk space. Instead, we could store each subsequent timestamp as the difference, or _delta_, from the first one:
+
+```
+1572524345, +30, +29, +30, +30
+```
+
+We could even take it a step further, by calculating the deltas of these deltas:
+
+```
+1572524345, +30, -1, +1, +0
+```
+
+If measurements are taken at regular intervals, most of these delta-of-deltas will be 0, which enables further optimizations, such as [Run-length encoding](https://en.wikipedia.org/wiki/Run-length_encoding). Because of optimizations like these, TSDBs uses drastically less space than other databases.
+
+Another feature of a TSDB is the ability to filter measurements using _tags_. Each data point is labeled with a tag that adds context information, such as where the measurement was taken. Here's an example of the [InfluxDB data format](https://docs.influxdata.com/influxdb/v1.7/write_protocols/line_protocol_tutorial/#syntax) that demonstrates how each measurement is stored.
 
 Here are some of the TSDBs supported by Grafana:
 
 - [Graphite](https://graphiteapp.org/)
 - [InfluxDB](https://www.influxdata.com/products/influxdb-overview/)
 - [Prometheus](https://prometheus.io/)
-
-Another feature of a TSDB is the ability to filter measurements using _tags_. Each data point is labeled with a tag that adds context information, such as where the measurement was taken. Here's an example of the [InfluxDB data format](https://docs.influxdata.com/influxdb/v1.7/write_protocols/line_protocol_tutorial/#syntax) that demonstrates how each measurement is stored.
 
 ```
 weather,location=us-midwest temperature=82 1465839830100400200
