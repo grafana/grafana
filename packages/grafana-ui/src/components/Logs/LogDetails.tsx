@@ -54,7 +54,9 @@ class UnThemedLogDetails extends PureComponent<Props, State> {
       <div className={style.logsRowDetailsTable}>
         {labelsAvailable && (
           <div className={style.logsRowDetailsSectionTable}>
-            <div className={style.logsRowDetailsHeading}>Log Labels:</div>
+            <div className={style.logsRowDetailsHeading} aria-label="Log labels">
+              Log Labels:
+            </div>
             {Object.keys(labels).map(key => {
               const value = labels[key];
               const field = `${key}=${value}`;
@@ -78,7 +80,9 @@ class UnThemedLogDetails extends PureComponent<Props, State> {
 
         {parsedFieldsAvailable && (
           <div className={style.logsRowDetailsSectionTable}>
-            <div className={style.logsRowDetailsHeading}>Parsed fields:</div>
+            <div className={style.logsRowDetailsHeading} aria-label="Parsed fields">
+              Parsed fields:
+            </div>
             {parsedFields.map(field => {
               const key = parser!.getLabelFromField(field);
               const value = parser!.getValueFromField(field);
@@ -97,7 +101,7 @@ class UnThemedLogDetails extends PureComponent<Props, State> {
             })}
           </div>
         )}
-        {!parsedFieldsAvailable && !labelsAvailable && <div>No details available</div>}
+        {!parsedFieldsAvailable && !labelsAvailable && <div aria-label="No details">No details available</div>}
       </div>
     );
   }
