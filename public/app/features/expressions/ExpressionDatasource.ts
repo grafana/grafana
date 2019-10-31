@@ -57,9 +57,10 @@ export class ExpressionDatasourceApi extends DataSourceApi<ExpressionQuery> {
     return from(req);
   }
 
+  /**
+   * This makes the arrow libary loading async.
+   */
   async toDataQueryResponse(rsp: any): Promise<DataQueryResponse> {
-    // const util = async () => import(/* webpackChunkName: "" */ './util');
-    // @ts-ignore
     const { gelResponseToDataFrames } = await import(/* webpackChunkName: "apache-arrow-util" */ './util');
     return { data: gelResponseToDataFrames(rsp) };
   }
