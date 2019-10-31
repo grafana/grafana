@@ -45,7 +45,7 @@ func (e *CloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQ
 			if _, ok := cloudwatchQueries[id]; !ok {
 				cloudwatchQueries[id] = query
 			} else {
-				return nil, &queryBuilderError{
+				return nil, &queryError{
 					err:   fmt.Errorf("Query id %s is not unique", query.Id),
 					RefID: query.RefId,
 				}

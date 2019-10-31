@@ -39,11 +39,11 @@ type cloudwatchResponse struct {
 	RequestExceededMaxLimit bool
 }
 
-type queryBuilderError struct {
+type queryError struct {
 	err   error
 	RefID string
 }
 
-func (e *queryBuilderError) Error() string {
+func (e *queryError) Error() string {
 	return fmt.Sprintf("Error parsing query %s, %s", e.RefID, e.err)
 }

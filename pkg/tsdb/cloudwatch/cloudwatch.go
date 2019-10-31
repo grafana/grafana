@@ -101,7 +101,7 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 	for region, queries := range queriesByRegion {
 		metricDataParams, err := e.mdpb.build(queryContext, queries)
 		if err != nil {
-			if e, ok := err.(*queryBuilderError); ok {
+			if e, ok := err.(*queryError); ok {
 				results.Results[e.RefID] = &tsdb.QueryResult{
 					Error: err,
 				}
@@ -161,8 +161,9 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 									Error: err,
 								}
 							}
+						} else {
+							cloudwatchResponses = append(cloudwatchResponses, responses...)
 						}
-						cloudwatchResponses = append(cloudwatchResponses, responses...)
 					}
 				}
 

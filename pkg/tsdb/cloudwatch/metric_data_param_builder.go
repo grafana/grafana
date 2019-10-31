@@ -36,12 +36,12 @@ func (mdpb *metricDataParamBuilder) build(queryContext *tsdb.TsdbQuery, queries 
 		for _, metricStatQuery := range metricStatQueries {
 			// 1 minutes resolution metrics is stored for 15 days, 15 * 24 * 60 = 21600
 			if metricStatQuery.HighResolution && (((endTime.Unix() - startTime.Unix()) / int64(metricStatQuery.Period)) > 21600) {
-				return nil, &queryBuilderError{errors.New("too long query period"), metricStatQuery.RefId}
+				return nil, &queryError{errors.New("too long query period"), metricStatQuery.RefId}
 			}
 
 			metricDataQuery, err := mdpb.buildMetricDataQuery(metricStatQuery)
 			if err != nil {
-				return nil, &queryBuilderError{err, metricStatQuery.RefId}
+				return nil, &queryError{err, metricStatQuery.RefId}
 			}
 			mdp.MetricDataInput.MetricDataQueries = append(mdp.MetricDataInput.MetricDataQueries, metricDataQuery)
 			mdp.CloudwatchQueries = append(mdp.CloudwatchQueries, metricStatQuery)
@@ -59,11 +59,11 @@ func (mdpb *metricDataParamBuilder) build(queryContext *tsdb.TsdbQuery, queries 
 	noOfSearchExpressions := 0
 	for _, query := range nonMetricStatQueries {
 		if query.HighResolution && (((endTime.Unix() - startTime.Unix()) / int64(query.Period)) > 21600) {
-			return nil, &queryBuilderError{errors.New("too long query period"), query.RefId}
+			return nil, &queryError{errors.New("too long query period"), query.RefId}
 		}
 		metricDataQuery, err := mdpb.buildMetricDataQuery(query)
 		if err != nil {
-			return nil, &queryBuilderError{err, query.RefId}
+			return nil, &queryError{err, query.RefId}
 		}
 
 		isSearchExpressions := query.isSearchExpression()

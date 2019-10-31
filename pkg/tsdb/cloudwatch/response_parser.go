@@ -64,9 +64,8 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 		}
 
 		for _, message := range metricDataResult.Messages {
-			plog.Info("ArithmeticError", *message.Code, *message.Value)
 			if *message.Code == "ArithmeticError" {
-				return &result, fmt.Errorf("ArithmeticError in query %s: %s", query.RefId, *message.Value)
+				return &result, &queryError{fmt.Errorf("ArithmeticError in query %s: %s", query.RefId, *message.Value), query.RefId}
 			}
 		}
 

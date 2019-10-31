@@ -25,7 +25,7 @@ func (e *CloudWatchExecutor) parseQueries(queryContext *tsdb.TsdbQuery) ([]*requ
 		RefID := queryContext.Queries[i].RefId
 		requestQuery, err := parseRequestQuery(queryContext.Queries[i].Model, RefID)
 		if err != nil {
-			return nil, &queryBuilderError{err, RefID}
+			return nil, &queryError{err, RefID}
 		}
 		requestQueries = append(requestQueries, requestQuery)
 	}
