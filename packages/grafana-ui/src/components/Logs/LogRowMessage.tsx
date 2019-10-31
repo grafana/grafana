@@ -21,7 +21,6 @@ interface Props extends Themeable {
   row: LogRowModel;
   hasMoreContextRows?: HasMoreContextRows;
   showContext: boolean;
-  parsed: boolean;
   errors?: LogRowContextQueryErrors;
   context?: LogRowContextRows;
   highlighterExpressions?: string[];
@@ -56,14 +55,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     whiteSpacePreWrap: css`
       label: whiteSpacePreWrap;
-      white-space: 'pre-wrap';
+      white-space: pre-wrap;
     `,
   };
 });
 
 class UnThemedLogRowMessage extends PureComponent<Props, State> {
-  mouseMessageTimer: number | null = null;
-
   onContextToggle = (e: React.SyntheticEvent<HTMLElement>) => {
     e.stopPropagation();
     this.props.onToggleContext();
@@ -75,7 +72,6 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
       row,
       theme,
       errors,
-      parsed,
       hasMoreContextRows,
       updateLimit,
       context,
@@ -111,15 +107,19 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
             />
           )}
           <span className={cx(styles.positionRelative, { [styles.rowWithContext]: showContext })}>
-            <Highlighter
-              style={styles.whiteSpacePreWrap}
-              textToHighlight={entry}
-              searchWords={highlights}
-              findChunks={findHighlightChunksInText}
-              highlightClassName={highlightClassName}
-            />
-            {hasAnsi && !parsed && !needsHighlighter && <LogMessageAnsi value={raw} />}
-            {!hasAnsi && !parsed && !needsHighlighter && entry}
+            {needsHighlighter ? (
+              <Highlighter
+                style={styles.whiteSpacePreWrap}
+                textToHighlight={entry}
+                searchWords={highlights}
+                findChunks={findHighlightChunksInText}
+                highlightClassName={highlightClassName}
+              />
+            ) : hasAnsi ? (
+              <LogMessageAnsi value={raw} />
+            ) : (
+              entry
+            )}
           </span>
           {row.searchWords && row.searchWords.length > 0 && (
             <span

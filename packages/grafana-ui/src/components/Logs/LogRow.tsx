@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
-import memoizeOne from 'memoize-one';
-import { LogRowModel, TimeZone, DataQueryResponse, getParser } from '@grafana/data';
+import { LogRowModel, TimeZone, DataQueryResponse } from '@grafana/data';
 
 import {
   LogRowContextRows,
@@ -64,16 +63,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     });
   };
 
-  parseMessage = memoizeOne(rowEntry => {
-    const parser = getParser(rowEntry);
-    if (!parser) {
-      return { parsedFields: [], parsed: false };
-    }
-    // Use parser to highlight detected fields
-    const parsedFields = parser.getFields(rowEntry);
-    return { parsedFields, parsed: true, parser };
-  });
-
   renderLogRow(
     context?: LogRowContextRows,
     errors?: LogRowContextQueryErrors,
@@ -95,7 +84,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     const { showDetails, showContext } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
     const showUtc = timeZone === 'utc';
-    const { parsedFields, parser, parsed } = this.parseMessage(row.entry);
 
     return (
       <div className={style.logsRow}>
@@ -125,7 +113,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             <LogRowMessage
               highlighterExpressions={highlighterExpressions}
               row={row}
-              parsed={parsed}
               getRows={getRows}
               errors={errors}
               hasMoreContextRows={hasMoreContextRows}
@@ -141,8 +128,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               onClickFilterOutLabel={onClickFilterOutLabel}
               getRows={getRows}
               row={row}
-              parser={parser}
-              parsedFields={parsedFields}
             />
           )}
         </div>

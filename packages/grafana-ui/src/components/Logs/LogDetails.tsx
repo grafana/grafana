@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
-import { LogRowModel, LogsParser } from '@grafana/data';
+import memoizeOne from 'memoize-one';
+import { getParser, LogRowModel, LogsParser } from '@grafana/data';
 
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
@@ -10,19 +11,30 @@ import { LogDetailsRow } from './LogDetailsRow';
 
 export interface Props extends Themeable {
   row: LogRowModel;
-  parser: LogsParser | undefined;
-  parsedFields: string[];
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
 }
 
 class UnThemedLogDetails extends PureComponent<Props> {
+  parseMessage = memoizeOne(
+    (rowEntry): { parsedFields: string[]; parser?: LogsParser } => {
+      const parser = getParser(rowEntry);
+      if (!parser) {
+        return { parsedFields: [] };
+      }
+      // Use parser to highlight detected fields
+      const parsedFields = parser.getFields(rowEntry);
+      return { parsedFields, parser };
+    }
+  );
+
   render() {
-    const { row, theme, onClickFilterOutLabel, onClickFilterLabel, getRows, parser, parsedFields } = this.props;
+    const { row, theme, onClickFilterOutLabel, onClickFilterLabel, getRows } = this.props;
     const style = getLogRowStyles(theme, row.logLevel);
     const labels = row.labels ? row.labels : {};
     const labelsAvailable = Object.keys(labels).length > 0;
+    const { parsedFields, parser } = this.parseMessage(row.entry);
     const parsedFieldsAvailable = parsedFields && parsedFields.length > 0;
 
     return (
@@ -43,7 +55,6 @@ class UnThemedLogDetails extends PureComponent<Props> {
                   field={field}
                   row={row}
                   getRows={getRows}
-                  parser={parser}
                   isLabel={true}
                   onClickFilterOutLabel={onClickFilterOutLabel}
                   onClickFilterLabel={onClickFilterLabel}

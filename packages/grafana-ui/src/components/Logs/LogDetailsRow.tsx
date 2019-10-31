@@ -20,7 +20,7 @@ export interface Props extends Themeable {
   field: string;
   row: LogRowModel;
   isLabel: boolean;
-  parser: LogsParser | undefined;
+  parser?: LogsParser;
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;

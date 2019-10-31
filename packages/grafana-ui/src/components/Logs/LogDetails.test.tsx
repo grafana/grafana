@@ -18,11 +18,6 @@ const setup = (propOverrides?: object) => {
       timestamp: '',
       uid: '0',
     } as LogRowModel,
-    parser: {
-      getValueFromField: () => '',
-      getLabelFromField: () => '',
-    } as any,
-    parsedFields: [''],
     getRows: () => [],
     onClickFilterLabel: () => {},
     onClickFilterOutLabel: () => {},
