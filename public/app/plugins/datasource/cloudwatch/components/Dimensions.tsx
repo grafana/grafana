@@ -62,7 +62,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
             <Segment
               Component={<a className="gf-form-label query-keyword">AND</a>}
               onChange={() => {}}
-              options={operators}
+              options={[{ label: 'AND', value: 'AND' }]}
             />
           )}
         </Fragment>
