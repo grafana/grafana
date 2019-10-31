@@ -256,12 +256,9 @@ Grafana will issue a ListMetrics request.
 
 ## Service Quota
 
-AWS defines quotas, or limits, for resources, actions, and items in your AWS account. Depending on the number of queries in your dashboard and the amount of users accessing the dashboard, you may reach the limit for the allowed number of CloudWatch GetMetricData requests per second. Note that quotas are defined per account and per region. If you are using multiple regions or have set up more than one CloudWatch data source to query against multiple accounts, you need to request a quota increase for each account and each region.
+AWS defines quotas, or limits, for resources, actions, and items in your AWS account. Depending on the number of queries in your dashboard and the amount of users accessing the dashboard, you may reach the limit for the allowed number of CloudWatch GetMetricData requests per second. Note that quotas are defined per account and per region. If you're using multiple regions or have set up more than one CloudWatch data source to query against multiple accounts, you need to request a quota increase for each account and each region.
  
-
 To request a quota increase, visit the [AWS Service Quotas console](https://console.aws.amazon.com/servicequotas/home?r#!/services/monitoring/quotas/L-5E141212).
-
- 
 
 Please see the AWS documentation for [Service Quotas](https://docs.aws.amazon.com/servicequotas/latest/userguide/intro.html) and [CloudWatch limits](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_limits.html) for more information.
 
