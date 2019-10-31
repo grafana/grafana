@@ -1,7 +1,7 @@
 import React from 'react';
-import { DataSourceSettings, EventsWithValidation, FormField, Input, regexValidation, Select } from '@grafana/ui';
+import { EventsWithValidation, FormField, Input, regexValidation, Select } from '@grafana/ui';
 import { ElasticsearchOptions } from '../types';
-import { SelectableValue } from '@grafana/data';
+import { DataSourceSettings, SelectableValue } from '@grafana/data';
 
 const indexPatternTypes = [
   { label: 'No pattern', value: 'none' },

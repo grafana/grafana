@@ -1,7 +1,7 @@
 import { AnnoListPanel } from './AnnoListPanel';
 import { AnnoOptions, defaults } from './types';
 import { AnnoListEditor } from './AnnoListEditor';
-import { PanelPlugin } from '@grafana/ui';
+import { PanelPlugin } from '@grafana/data';
 
 export const plugin = new PanelPlugin<AnnoOptions>(AnnoListPanel)
   .setDefaults(defaults)

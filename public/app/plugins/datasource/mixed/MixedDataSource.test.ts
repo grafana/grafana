@@ -1,8 +1,7 @@
 import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import { DataSourceInstanceSettings } from '@grafana/ui';
-import { LoadingState } from '@grafana/data';
+import { LoadingState, DataSourceInstanceSettings } from '@grafana/data';
 import { MixedDatasource } from './module';
 import { from } from 'rxjs';
 

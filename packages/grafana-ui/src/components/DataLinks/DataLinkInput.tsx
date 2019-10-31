@@ -14,7 +14,7 @@ import { css, cx } from 'emotion';
 import { SlatePrism } from '../../slate-plugins';
 import { SCHEMA } from '../../utils/slate';
 import { stylesFactory } from '../../themes';
-import { GrafanaTheme } from '../../types';
+import { GrafanaTheme } from '@grafana/data';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 

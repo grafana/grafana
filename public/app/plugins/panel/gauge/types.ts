@@ -1,4 +1,4 @@
-import { VizOrientation, FieldDisplayOptions } from '@grafana/ui';
+import { VizOrientation, FieldDisplayOptions } from '@grafana/data';
 import { SingleStatBaseOptions } from '@grafana/ui/src/components/SingleStatShared/SingleStatBaseOptions';
 import { standardFieldDisplayOptions } from '../singlestat2/types';
 

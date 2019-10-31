@@ -3,21 +3,18 @@ import React from 'react';
 // @ts-ignore
 import Cascader from 'rc-cascader';
 
-import { SlatePrism } from '@grafana/ui';
+import { Plugin } from 'slate';
+import { SlatePrism, TypeaheadInput, TypeaheadOutput, QueryField, BracesPlugin } from '@grafana/ui';
 
 import Prism from 'prismjs';
 
-import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
 // dom also includes Element polyfills
-import BracesPlugin from 'app/features/explore/slate-plugins/braces';
-import QueryField, { TypeaheadInput } from 'app/features/explore/QueryField';
 import { PromQuery, PromContext, PromOptions } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
-import { ExploreQueryFieldProps, QueryHint, DOMUtil } from '@grafana/ui';
-import { isDataFrame, toLegacyResponseData } from '@grafana/data';
+import { ExploreQueryFieldProps, QueryHint, isDataFrame, toLegacyResponseData, HistoryItem } from '@grafana/data';
+import { DOMUtil, SuggestionsState } from '@grafana/ui';
 import { PrometheusDatasource } from '../datasource';
 import PromQlLanguageProvider from '../language_provider';
-import { SuggestionsState } from 'app/features/explore/slate-plugins/suggestions';
 
 const HISTOGRAM_GROUP = '__histograms__';
 const METRIC_MARK = 'metric';
@@ -114,7 +111,7 @@ interface PromQueryFieldState {
 }
 
 class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
-  plugins: any[];
+  plugins: Plugin[];
   languageProvider: PromQlLanguageProvider;
   languageProviderInitializationPromise: CancelablePromise<any>;
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"sort"
 
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -21,37 +22,40 @@ func (hs *HTTPServer) QueryMetricsV2(c *m.ReqContext, reqDto dtos.MetricRequest)
 		return Error(404, "Expressions feature toggle is not enabled", nil)
 	}
 
-	timeRange := tsdb.NewTimeRange(reqDto.From, reqDto.To)
-
 	if len(reqDto.Queries) == 0 {
-		return Error(400, "No queries found in query", nil)
+		return Error(500, "No queries found in query", nil)
 	}
 
-	var datasourceID int64
-	for _, query := range reqDto.Queries {
+	request := &tsdb.TsdbQuery{
+		TimeRange: tsdb.NewTimeRange(reqDto.From, reqDto.To),
+		Debug:     reqDto.Debug,
+	}
+
+	expr := false
+	var ds *m.DataSource
+	for i, query := range reqDto.Queries {
 		name, err := query.Get("datasource").String()
 		if err != nil {
 			return Error(500, "datasource missing name", err)
 		}
-		datasourceID, err = query.Get("datasourceId").Int64()
+		if name == "__expr__" {
+			expr = true
+		}
+
+		datasourceID, err := query.Get("datasourceId").Int64()
 		if err != nil {
-			return Error(400, "GEL datasource missing ID", nil)
+			return Error(500, "datasource missing ID", nil)
 		}
-		if name == "-- GEL --" {
-			break
-		}
-	}
-	ds, err := hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
-	if err != nil {
-		if err == m.ErrDataSourceAccessDenied {
-			return Error(403, "Access denied to datasource", err)
-		}
-		return Error(500, "Unable to load datasource meta data", err)
-	}
 
-	request := &tsdb.TsdbQuery{TimeRange: timeRange, Debug: reqDto.Debug}
-
-	for _, query := range reqDto.Queries {
+		if i == 0 && !expr {
+			ds, err = hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
+			if err != nil {
+				if err == m.ErrDataSourceAccessDenied {
+					return Error(403, "Access denied to datasource", err)
+				}
+				return Error(500, "Unable to load datasource meta data", err)
+			}
+		}
 		request.Queries = append(request.Queries, &tsdb.Query{
 			RefId:         query.Get("refId").MustString("A"),
 			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
@@ -59,11 +63,21 @@ func (hs *HTTPServer) QueryMetricsV2(c *m.ReqContext, reqDto dtos.MetricRequest)
 			Model:         query,
 			DataSource:    ds,
 		})
+
 	}
 
-	resp, err := tsdb.HandleRequest(c.Req.Context(), ds, request)
-	if err != nil {
-		return Error(500, "Metric request error", err)
+	var resp *tsdb.Response
+	var err error
+	if !expr {
+		resp, err = tsdb.HandleRequest(c.Req.Context(), ds, request)
+		if err != nil {
+			return Error(500, "Metric request error", err)
+		}
+	} else {
+		resp, err = plugins.Transform.Transform(c.Req.Context(), request)
+		if err != nil {
+			return Error(500, "Transform request error", err)
+		}
 	}
 
 	statusCode := 200

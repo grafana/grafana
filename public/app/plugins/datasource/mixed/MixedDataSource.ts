@@ -3,8 +3,14 @@ import groupBy from 'lodash/groupBy';
 import { from, of, Observable, merge } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
-import { LoadingState } from '@grafana/data';
-import { DataSourceApi, DataQuery, DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/ui';
+import {
+  LoadingState,
+  DataSourceApi,
+  DataQuery,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceInstanceSettings,
+} from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { mergeMap, map } from 'rxjs/operators';
 
@@ -37,13 +43,6 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
         mergeMap((dataSourceApi: DataSourceApi) => {
           const datasourceRequest = cloneDeep(request);
 
-          // Remove any unused hidden queries
-          let newTargets = targets.slice();
-          if (!dataSourceApi.meta.hiddenQueries) {
-            newTargets = newTargets.filter((t: DataQuery) => !t.hide);
-          }
-
-          datasourceRequest.targets = newTargets;
           datasourceRequest.requestId = `${dsName}${datasourceRequest.requestId || ''}`;
 
           // all queries hidden return empty result for for this requestId

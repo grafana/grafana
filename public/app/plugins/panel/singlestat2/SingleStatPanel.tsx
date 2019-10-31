@@ -6,15 +6,8 @@ import { config } from 'app/core/config';
 
 // Types
 import { SingleStatOptions } from './types';
-import {
-  PanelProps,
-  getFieldDisplayValues,
-  VizRepeater,
-  FieldDisplay,
-  BigValue,
-  DataLinksContextMenu,
-} from '@grafana/ui';
-import { BigValueSparkline } from '@grafana/ui/src/components/BigValue/BigValue';
+import { VizRepeater, BigValue, DataLinksContextMenu, BigValueSparkline } from '@grafana/ui';
+import { PanelProps, getFieldDisplayValues, FieldDisplay } from '@grafana/data';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>> {

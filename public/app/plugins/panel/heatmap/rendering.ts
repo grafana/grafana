@@ -6,8 +6,7 @@ import * as ticksUtils from 'app/core/utils/ticks';
 import { HeatmapTooltip } from './heatmap_tooltip';
 import { mergeZeroBuckets } from './heatmap_data_converter';
 import { getColorScale, getOpacityScale } from './color_scale';
-import { PanelEvents, GrafanaThemeType, getColorFromHexRgbOrName, getValueFormat } from '@grafana/ui';
-import { toUtc } from '@grafana/data';
+import { toUtc, PanelEvents, GrafanaThemeType, getColorFromHexRgbOrName, getValueFormat } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 
 const MIN_CARD_SIZE = 1,

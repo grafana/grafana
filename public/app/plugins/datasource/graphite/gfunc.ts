@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { isVersionGtOrEq } from 'app/core/utils/version';
-import { InterpolateFunction } from '@grafana/ui';
+import { InterpolateFunction } from '@grafana/data';
 
 const index: any = {};
 

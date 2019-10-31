@@ -8,7 +8,7 @@ import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { ILocationService } from 'angular';
 import { AppEvents } from '@grafana/data';
-import { PanelEvents } from '@grafana/ui';
+import { PanelEvents } from '@grafana/data';
 
 interface DashboardSaveOptions {
   folderId?: number;

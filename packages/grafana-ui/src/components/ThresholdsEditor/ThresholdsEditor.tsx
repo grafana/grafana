@@ -2,7 +2,7 @@ import React, { PureComponent, ChangeEvent } from 'react';
 import { Threshold, sortThresholds } from '@grafana/data';
 import { colors } from '../../utils';
 import { ThemeContext } from '../../themes';
-import { getColorFromHexRgbOrName } from '../../utils';
+import { getColorFromHexRgbOrName } from '@grafana/data';
 import { Input } from '../Input/Input';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
