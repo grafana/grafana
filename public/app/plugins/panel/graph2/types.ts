@@ -1,5 +1,5 @@
-import { LegendOptions, FieldDisplayOptions, GraphTooltipOptions } from '@grafana/ui';
-import { YAxis } from '@grafana/data';
+import { LegendOptions, GraphTooltipOptions } from '@grafana/ui';
+import { YAxis, FieldDisplayOptions } from '@grafana/data';
 
 import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
 // TODO move out from single stat
