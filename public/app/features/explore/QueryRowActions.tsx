@@ -35,17 +35,22 @@ export function QueryRowActions(props: Props) {
         </div>
       )}
       <div className="gf-form">
-        <button disabled={!canHide} className="gf-form-label gf-form-label--btn" onClick={onClickToggleHiddenQuery}>
+        <button
+          disabled={!canHide}
+          className="gf-form-label gf-form-label--btn"
+          onClick={onClickToggleHiddenQuery}
+          title="Disable/enable query"
+        >
           <i className={hideQuery ? 'fa fa-eye-slash' : 'fa fa-eye'} />
         </button>
       </div>
       <div className="gf-form">
-        <button className="gf-form-label gf-form-label--btn" onClick={onClickAddButton}>
+        <button className="gf-form-label gf-form-label--btn" onClick={onClickAddButton} title="Add query">
           <i className="fa fa-plus" />
         </button>
       </div>
       <div className="gf-form">
-        <button className="gf-form-label gf-form-label--btn" onClick={onClickRemoveButton}>
+        <button className="gf-form-label gf-form-label--btn" onClick={onClickRemoveButton} title="Remove query">
           <i className="fa fa-minus" />
         </button>
       </div>
