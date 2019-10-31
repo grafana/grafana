@@ -10,8 +10,17 @@ import {
   refreshIntervalToSortOrder,
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
-import { LoadingState, toLegacyResponseData, DefaultTimeRange } from '@grafana/data';
-import { DataQuery, DataSourceApi, PanelData, DataQueryRequest, RefreshPicker, PanelEvents } from '@grafana/ui';
+import {
+  LoadingState,
+  toLegacyResponseData,
+  DefaultTimeRange,
+  DataQuery,
+  DataSourceApi,
+  PanelData,
+  DataQueryRequest,
+  PanelEvents,
+} from '@grafana/data';
+import { RefreshPicker } from '@grafana/ui';
 import {
   HigherOrderAction,
   ActionTypes,

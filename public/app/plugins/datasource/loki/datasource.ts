@@ -26,8 +26,7 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   AnnotationQueryRequest,
-} from '@grafana/ui';
-
+} from '@grafana/data';
 import { LokiQuery, LokiOptions, LokiLogsStream, LokiResponse } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';

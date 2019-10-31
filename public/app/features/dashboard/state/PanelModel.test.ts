@@ -1,6 +1,6 @@
 import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
-import { PanelEvents } from '@grafana/ui';
+import { PanelEvents } from '@grafana/data';
 
 class TablePanelCtrl {}
 

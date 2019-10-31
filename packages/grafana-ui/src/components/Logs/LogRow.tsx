@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
-import { Field, LinkModel, LogRowModel, TimeZone } from '@grafana/data';
+import { Field, LinkModel, LogRowModel, TimeZone, DataQueryResponse } from '@grafana/data';
 import { cx } from 'emotion';
-import { DataQueryResponse } from '../../index';
 import {
   LogRowContextRows,
   LogRowContextQueryErrors,

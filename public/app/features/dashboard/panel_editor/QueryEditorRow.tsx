@@ -9,8 +9,17 @@ import { Emitter } from 'app/core/utils/emitter';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { DataQuery, DataSourceApi, PanelData, DataQueryRequest, ErrorBoundaryAlert, PanelEvents } from '@grafana/ui';
-import { TimeRange, LoadingState, toLegacyResponseData } from '@grafana/data';
+import { ErrorBoundaryAlert } from '@grafana/ui';
+import {
+  DataQuery,
+  DataSourceApi,
+  PanelData,
+  DataQueryRequest,
+  PanelEvents,
+  TimeRange,
+  LoadingState,
+  toLegacyResponseData,
+} from '@grafana/data';
 import { DashboardModel } from '../state/DashboardModel';
 
 interface Props {
