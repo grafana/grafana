@@ -130,7 +130,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   const start = Date.now();
   const ciDir = getCiFolder();
   const packagesDir = path.resolve(ciDir, 'packages');
-  let distDir = path.resolve(ciDir, 'dist');
+  const distDir = path.resolve(ciDir, 'dist');
   const docsDir = path.resolve(ciDir, 'docs');
   const grafanaEnvDir = path.resolve(ciDir, 'grafana-test-env');
   await execa('rimraf', [packagesDir, distDir, grafanaEnvDir]);
@@ -139,7 +139,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
 
   // Updating the dist dir to have a pluginId named directory in it
   // The zip needs to contain the plugin code wrapped in directory with a pluginId name
-  distDir = path.resolve(ciDir, `dist/${getPluginId()}`);
+  const distContentDir = path.resolve(distDir, getPluginId());
   fs.mkdirSync(grafanaEnvDir);
 
   console.log('Build Dist Folder');
@@ -147,7 +147,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   // 1. Check for a local 'dist' folder
   const d = path.resolve(process.cwd(), 'dist');
   if (fs.existsSync(d)) {
-    await execa('cp', ['-rn', d + '/.', distDir]);
+    await execa('cp', ['-rn', d + '/.', distContentDir]);
   }
 
   // 2. Look for any 'dist' folders under ci/job/XXX/dist
@@ -156,7 +156,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
     const contents = path.resolve(ciDir, 'jobs', j, 'dist');
     if (fs.existsSync(contents)) {
       try {
-        await execa('cp', ['-rn', contents + '/.', distDir]);
+        await execa('cp', ['-rn', contents + '/.', distContentDir]);
       } catch (er) {
         throw new Error('Duplicate files found in dist folders');
       }
@@ -164,7 +164,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   }
 
   console.log('Save the source info in plugin.json');
-  const pluginJsonFile = path.resolve(distDir, 'plugin.json');
+  const pluginJsonFile = path.resolve(distContentDir, 'plugin.json');
   const pluginInfo = getPluginJson(pluginJsonFile);
   pluginInfo.info.build = await getPluginBuildInfo();
   fs.writeFile(pluginJsonFile, JSON.stringify(pluginInfo, null, 2), err => {
