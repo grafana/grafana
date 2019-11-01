@@ -10,10 +10,7 @@ describe('LogRows', () => {
     const rows: LogRowModel[] = [makeLog({ uid: '1' }), makeLog({ uid: '2' }), makeLog({ uid: '3' })];
     const wrapper = mount(
       <LogRows
-        data={{
-          rows,
-          hasUniqueLabels: false,
-        }}
+        logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
         showTime={false}
@@ -32,10 +29,7 @@ describe('LogRows', () => {
     jest.useFakeTimers();
     const wrapper = mount(
       <LogRows
-        data={{
-          rows,
-          hasUniqueLabels: false,
-        }}
+        logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
         showTime={false}
@@ -62,14 +56,8 @@ describe('LogRows', () => {
     const dedupedRows: LogRowModel[] = [makeLog({ uid: '4' }), makeLog({ uid: '5' })];
     const wrapper = mount(
       <LogRows
-        data={{
-          rows,
-          hasUniqueLabels: false,
-        }}
-        deduplicatedData={{
-          rows: dedupedRows,
-          hasUniqueLabels: false,
-        }}
+        logRows={rows}
+        deduplicatedRows={dedupedRows}
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
         showTime={false}
@@ -87,10 +75,7 @@ describe('LogRows', () => {
     const rows: LogRowModel[] = range(PREVIEW_LIMIT * 2 + 1).map(num => makeLog({ uid: num.toString() }));
     const wrapper = mount(
       <LogRows
-        data={{
-          rows,
-          hasUniqueLabels: false,
-        }}
+        logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
         showTime={false}

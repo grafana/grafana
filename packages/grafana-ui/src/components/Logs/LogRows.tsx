@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import memoizeOne from 'memoize-one';
-import { LogsModel, TimeZone, LogsDedupStrategy, LogRowModel } from '@grafana/data';
+import { TimeZone, LogsDedupStrategy, LogRowModel } from '@grafana/data';
 
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
@@ -13,12 +13,12 @@ export const PREVIEW_LIMIT = 100;
 export const RENDER_LIMIT = 500;
 
 export interface Props extends Themeable {
-  data: LogsModel;
+  logRows?: LogRowModel[];
+  deduplicatedRows?: LogRowModel[];
   dedupStrategy: LogsDedupStrategy;
   highlighterExpressions: string[];
   showTime: boolean;
   timeZone: TimeZone;
-  deduplicatedData?: LogsModel;
   rowLimit?: number;
   isLogsPanel?: boolean;
   previewLimit?: number;
@@ -45,8 +45,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
   componentDidMount() {
     // Staged rendering
-    const { data, previewLimit } = this.props;
-    const rowCount = data ? data.rows.length : 0;
+    const { logRows, previewLimit } = this.props;
+    const rowCount = logRows ? logRows.length : 0;
     // Render all right away if not too far over the limit
     const renderAll = rowCount <= previewLimit! * 2;
     if (renderAll) {
@@ -70,8 +70,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const {
       dedupStrategy,
       showTime,
-      data,
-      deduplicatedData,
+      logRows,
+      deduplicatedRows,
       highlighterExpressions,
       timeZone,
       onClickFilterLabel,
@@ -82,15 +82,15 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       previewLimit,
     } = this.props;
     const { renderAll } = this.state;
-    const dedupedData = deduplicatedData ? deduplicatedData : data;
-    const hasData = data && data.rows && data.rows.length > 0;
-    const dedupCount = dedupedData
-      ? dedupedData.rows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
+    const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
+    const hasData = logRows && logRows.length > 0;
+    const dedupCount = dedupedRows
+      ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
       : 0;
     const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
 
     // Staged rendering
-    const processedRows = dedupedData ? dedupedData.rows : [];
+    const processedRows = dedupedRows ? dedupedRows : [];
     const firstRows = processedRows.slice(0, previewLimit!);
     const rowCount = Math.min(processedRows.length, rowLimit!);
     const lastRows = processedRows.slice(previewLimit!, rowCount);

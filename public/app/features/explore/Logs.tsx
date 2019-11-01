@@ -7,10 +7,11 @@ import {
   TimeZone,
   AbsoluteTimeRange,
   LogsMetaKind,
-  LogsModel,
   LogsDedupStrategy,
   LogRowModel,
   LogsDedupDescription,
+  LogsMetaItem,
+  GraphSeriesXY,
 } from '@grafana/data';
 import { Switch, LogLabels, ToggleButtonGroup, ToggleButton, LogRows } from '@grafana/ui';
 
@@ -28,8 +29,11 @@ function renderMetaItem(value: any, kind: LogsMetaKind) {
 }
 
 interface Props {
-  data?: LogsModel;
-  dedupedData?: LogsModel;
+  logRows?: LogRowModel[];
+  logsMeta?: LogsMetaItem[];
+  logsSeries?: GraphSeriesXY[];
+  dedupedRows?: LogRowModel[];
+
   width: number;
   highlighterExpressions: string[];
   loading: boolean;
@@ -95,7 +99,9 @@ export class Logs extends PureComponent<Props, State> {
 
   render() {
     const {
-      data,
+      logRows,
+      logsMeta,
+      logsSeries,
       highlighterExpressions,
       loading = false,
       onClickFilterLabel,
@@ -104,22 +110,22 @@ export class Logs extends PureComponent<Props, State> {
       scanning,
       scanRange,
       width,
-      dedupedData,
+      dedupedRows,
       absoluteRange,
       onChangeTime,
     } = this.props;
 
-    if (!data) {
+    if (!logRows) {
       return null;
     }
 
     const { showTime } = this.state;
     const { dedupStrategy } = this.props;
-    const hasData = data && data.rows && data.rows.length > 0;
-    const dedupCount = dedupedData
-      ? dedupedData.rows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
+    const hasData = logRows && logRows.length > 0;
+    const dedupCount = dedupedRows
+      ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
       : 0;
-    const meta = data && data.meta ? [...data.meta] : [];
+    const meta = logsMeta ? [...logsMeta] : [];
 
     if (dedupStrategy !== LogsDedupStrategy.none) {
       meta.push({
@@ -130,7 +136,7 @@ export class Logs extends PureComponent<Props, State> {
     }
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
-    const series = data && data.series ? data.series : [];
+    const series = logsSeries ? logsSeries : [];
 
     return (
       <div className="logs-panel">
@@ -183,14 +189,14 @@ export class Logs extends PureComponent<Props, State> {
         )}
 
         <LogRows
-          data={data}
-          deduplicatedData={dedupedData}
+          logRows={logRows}
+          deduplicatedRows={dedupedRows}
           dedupStrategy={dedupStrategy}
           getRowContext={this.props.getRowContext}
           highlighterExpressions={highlighterExpressions}
+          rowLimit={logRows ? logRows.length : undefined}
           onClickFilterLabel={onClickFilterLabel}
           onClickFilterOutLabel={onClickFilterOutLabel}
-          rowLimit={data ? data.rows.length : undefined}
           showTime={showTime}
           timeZone={timeZone}
         />
