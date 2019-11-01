@@ -60,7 +60,8 @@ func TestLoginErrorCookieApiEndpoint(t *testing.T) {
 
 	sc := setupScenarioContext("/login")
 	hs := &HTTPServer{
-		Cfg: setting.NewCfg(),
+		Cfg:     setting.NewCfg(),
+		License: models.OSSLicensingService{},
 	}
 
 	sc.defaultHandler = Wrap(func(w http.ResponseWriter, c *models.ReqContext) {
@@ -109,7 +110,8 @@ func TestLoginOAuthRedirect(t *testing.T) {
 
 	sc := setupScenarioContext("/login")
 	hs := &HTTPServer{
-		Cfg: setting.NewCfg(),
+		Cfg:     setting.NewCfg(),
+		License: models.OSSLicensingService{},
 	}
 
 	sc.defaultHandler = Wrap(func(c *models.ReqContext) {
