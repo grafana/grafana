@@ -21,6 +21,7 @@ export const simple = () => {
   const invalidMessage = text('Invalid message', "There's an error");
   const label = text('Label', 'This is a Label');
   const description = text('Description', '');
+  const icon = text('Icon', 'fa fa-check');
 
   return (
     <Input
@@ -29,6 +30,7 @@ export const simple = () => {
       invalid={invalid}
       invalidMessage={invalidMessage}
       label={label}
+      icon={icon}
     />
   );
 };
