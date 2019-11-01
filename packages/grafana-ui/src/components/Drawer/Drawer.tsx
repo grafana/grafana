@@ -12,8 +12,8 @@ interface Props {
   closeOnMaskClick?: boolean;
   /** Render the drawer inside a container on the page */
   inline?: boolean;
-  /** width in percentage of the container */
-  width?: number;
+  /** Either a number in px or a string with unit postfix */
+  width?: number | string;
 
   onClose: () => void;
 }
@@ -64,7 +64,7 @@ export const Drawer: FC<Props> = ({
   onClose,
   closeOnMaskClick = false,
   title,
-  width = 40,
+  width = '40%',
 }) => {
   const theme = useTheme();
   const drawerStyles = getStyles(theme);
@@ -77,7 +77,7 @@ export const Drawer: FC<Props> = ({
       onClose={onClose}
       maskClosable={closeOnMaskClick}
       placement="right"
-      width={`${width}%`}
+      width={width}
       getContainer={inline ? false : 'body'}
       style={{ position: `${inline && 'absolute'}` } as CSSProperties}
       className={drawerStyles.drawer}
