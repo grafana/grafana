@@ -94,7 +94,7 @@ describe('containsSearchFilter', () => {
   });
 
   describe(`when called with a query with $${SEARCH_FILTER_VARIABLE}`, () => {
-    it('then it should return false', () => {
+    it('then it should return true', () => {
       const result = containsSearchFilter(`$app.$${SEARCH_FILTER_VARIABLE}`);
 
       expect(result).toBe(true);
@@ -102,7 +102,7 @@ describe('containsSearchFilter', () => {
   });
 
   describe(`when called with a query with [[${SEARCH_FILTER_VARIABLE}]]`, () => {
-    it('then it should return false', () => {
+    it('then it should return true', () => {
       const result = containsSearchFilter(`$app.[[${SEARCH_FILTER_VARIABLE}]]`);
 
       expect(result).toBe(true);
@@ -110,7 +110,7 @@ describe('containsSearchFilter', () => {
   });
 
   describe(`when called with a query with \$\{${SEARCH_FILTER_VARIABLE}:regex\}`, () => {
-    it('then it should return false', () => {
+    it('then it should return true', () => {
       const result = containsSearchFilter(`$app.\$\{${SEARCH_FILTER_VARIABLE}:regex\}`);
 
       expect(result).toBe(true);
