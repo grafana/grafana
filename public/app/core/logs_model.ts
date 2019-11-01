@@ -276,6 +276,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       }
 
       rows.push({
+        entryField: stringField.name,
         rowIndex: j,
         dataFrame: series,
         logLevel,

@@ -126,6 +126,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           </div>
           {this.state.showDetails && (
             <LogDetails
+              getFieldLinks={getFieldLinks}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
               getRows={getRows}

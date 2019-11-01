@@ -17,13 +17,12 @@ import { LogLabelStats } from './LogLabelStats';
 export interface Props extends Themeable {
   parsedValue: string;
   parsedKey: string;
-  field: string;
-  row: LogRowModel;
   isLabel: boolean;
   parser?: LogsParser;
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
+  links?: string[];
 }
 
 interface State {
@@ -90,7 +89,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   }
 
   render() {
-    const { theme, parsedKey, parsedValue, isLabel } = this.props;
+    const { theme, parsedKey, parsedValue, isLabel, links } = this.props;
     const { showFieldsStats, fieldStats, fieldLabel, fieldValue, fieldCount } = this.state;
     const style = getLogRowStyles(theme);
     return (
@@ -120,6 +119,17 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
         </div>
         <div className={style.logsRowCell}>
           <span>{parsedValue}</span>
+          {links &&
+            links.map(link => {
+              return (
+                <span key={link}>
+                  &nbsp;
+                  <a href={link}>
+                    <i className={'fa fa-external-link'} />
+                  </a>
+                </span>
+              );
+            })}
           {showFieldsStats && (
             <div className={style.logsRowCell}>
               <LogLabelStats
