@@ -126,25 +126,24 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 								Error: ae,
 							}
 						}
-					} else {
-						return err
+						return nil
 					}
-				} else {
-					responses, err := e.parseResponse(mdo, queries)
-					if err != nil {
-						for _, query := range requestQueries {
-							resultChan <- &tsdb.QueryResult{
-								RefId: query.RefId,
-								Error: err,
-							}
-						}
-					} else {
-						cloudwatchResponses = append(cloudwatchResponses, responses...)
-					}
+
+					return err
 				}
 
+				responses, err := e.parseResponse(mdo, queries)
+				if err != nil {
+					for _, query := range requestQueries {
+						resultChan <- &tsdb.QueryResult{
+							RefId: query.RefId,
+							Error: err,
+						}
+					}
+					return nil
+				}
+				cloudwatchResponses = append(cloudwatchResponses, responses...)
 				res := e.transformQueryResponseToQueryResult(cloudwatchResponses)
-
 				for _, queryRes := range res {
 					resultChan <- queryRes
 				}
