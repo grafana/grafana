@@ -1,8 +1,8 @@
 import React, { CSSProperties, FC, ReactNode } from 'react';
+import { GrafanaTheme } from '@grafana/data';
 import RcDrawer from 'rc-drawer';
 import { css } from 'emotion';
 import { stylesFactory, useTheme, selectThemeVariant } from '../../themes';
-import { GrafanaTheme } from '../../types';
 
 interface Props {
   children: ReactNode;
