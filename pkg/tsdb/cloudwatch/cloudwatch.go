@@ -5,7 +5,6 @@ import (
 	"regexp"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -84,33 +83,17 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 		return results, err
 	}
 
-	queries, err := e.transformRequestQueriesToCloudWatchQueries(requestQueries)
+	queriesByRegion, err := e.transformRequestQueriesToCloudWatchQueries(requestQueries)
 	if err != nil {
 		return results, err
-	}
-
-	metricDataInputByRegion := make(map[string]*cloudwatch.GetMetricDataInput)
-	for region, queries := range queries {
-		metricDataInput, err := e.buildMetricDataInput(queryContext, queries)
-		if err != nil {
-			if e, ok := err.(*queryError); ok {
-				results.Results[e.RefID] = &tsdb.QueryResult{
-					Error: err,
-				}
-				return results, nil
-			}
-
-			return results, err
-		}
-		metricDataInputByRegion[region] = metricDataInput
 	}
 
 	resultChan := make(chan *tsdb.QueryResult, len(queryContext.Queries))
 	eg, ectx := errgroup.WithContext(ctx)
 
-	if len(metricDataInputByRegion) > 0 {
-		for r, mdi := range metricDataInputByRegion {
-			metricDataInput := mdi
+	if len(queriesByRegion) > 0 {
+		for r, q := range queriesByRegion {
+			queries := q
 			region := r
 			eg.Go(func() error {
 				defer func() {
@@ -129,6 +112,11 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 					return err
 				}
 
+				metricDataInput, err := e.buildMetricDataInput(queryContext, queries)
+				if err != nil {
+					return err
+				}
+
 				cloudwatchResponses := make([]*cloudwatchResponse, 0)
 				mdo, err := e.executeRequest(ectx, client, metricDataInput)
 				if err != nil {
@@ -143,7 +131,7 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 						return err
 					}
 				} else {
-					responses, err := e.parseResponse(mdo, queries[region])
+					responses, err := e.parseResponse(mdo, queries)
 					if err != nil {
 						for _, query := range requestQueries[region] {
 							resultChan <- &tsdb.QueryResult{
