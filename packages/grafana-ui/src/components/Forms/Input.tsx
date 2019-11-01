@@ -1,11 +1,11 @@
 import React, { FC, HTMLProps } from 'react';
+import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
-import { selectThemeVariant, stylesFactory, useTheme } from '../../themes';
-import { GrafanaTheme } from '../../types';
 import { Label } from './Label';
-import { InputStyles } from './types';
 import { FieldValidationMessage } from './FieldValidationMessage';
+import { selectThemeVariant, stylesFactory, useTheme } from '../../themes';
 import { getFocusStyle } from './commonStyles';
+import { InputStyles } from './types';
 
 interface Props extends HTMLProps<HTMLInputElement> {
   label?: string;
@@ -50,7 +50,7 @@ const getInputStyle = stylesFactory(
 );
 
 export const Input: FC<Props> = props => {
-  const { description, invalid, invalidMessage, label } = props;
+  const { description, icon, invalid, invalidMessage, label, ...restProps } = props;
 
   const theme = useTheme();
   const styles = getInputStyle(theme, invalid);
@@ -58,7 +58,7 @@ export const Input: FC<Props> = props => {
   return (
     <div>
       {!!label && <Label description={description}>{label}</Label>}
-      <input className={styles.input} {...props} />
+      <input className={styles.input} {...restProps} />
       {invalid && invalidMessage && <FieldValidationMessage>{invalidMessage}</FieldValidationMessage>}
     </div>
   );
