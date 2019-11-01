@@ -13,44 +13,41 @@ import (
 // has more than one statistic defined, one cloudwatchQuery will be created for each statistic.
 // If the query doesn't have an Id defined by the user, we'll give it an with format `query[RefId]`. In the case
 // the incoming query had more than one stat, it will ge an id like `query[RefId]_[StatName]`, eg queryC_Average
-func (e *CloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQueriesByRegion map[string][]*requestQuery) (map[string]map[string]*cloudWatchQuery, error) {
-	cloudwatchQueries := make(map[string]map[string]*cloudWatchQuery)
-	for region, requestQueries := range requestQueriesByRegion {
-		cloudwatchQueries[region] = make(map[string]*cloudWatchQuery, 0)
-		for _, requestQuery := range requestQueries {
-			for _, stat := range requestQuery.Statistics {
-				id := requestQuery.Id
-				if id == "" {
-					id = fmt.Sprintf("query%s", requestQuery.RefId)
-				}
-				if len(requestQuery.Statistics) > 1 {
-					id = fmt.Sprintf("%s_%v", id, strings.ReplaceAll(*stat, ".", "_"))
-				}
+func (e *CloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQueries []*requestQuery) (map[string]*cloudWatchQuery, error) {
+	cloudwatchQueries := make(map[string]*cloudWatchQuery)
+	for _, requestQuery := range requestQueries {
+		for _, stat := range requestQuery.Statistics {
+			id := requestQuery.Id
+			if id == "" {
+				id = fmt.Sprintf("query%s", requestQuery.RefId)
+			}
+			if len(requestQuery.Statistics) > 1 {
+				id = fmt.Sprintf("%s_%v", id, strings.ReplaceAll(*stat, ".", "_"))
+			}
 
-				query := &cloudWatchQuery{
-					Id:             id,
-					UserDefinedId:  requestQuery.Id,
-					RefId:          requestQuery.RefId,
-					Region:         requestQuery.Region,
-					Namespace:      requestQuery.Namespace,
-					MetricName:     requestQuery.MetricName,
-					Dimensions:     requestQuery.Dimensions,
-					Stats:          *stat,
-					Period:         requestQuery.Period,
-					Alias:          requestQuery.Alias,
-					Expression:     requestQuery.Expression,
-					ReturnData:     requestQuery.ReturnData,
-					HighResolution: requestQuery.HighResolution,
-					MatchExact:     requestQuery.MatchExact,
-				}
+			query := &cloudWatchQuery{
+				Id:             id,
+				UserDefinedId:  requestQuery.Id,
+				RefId:          requestQuery.RefId,
+				Region:         requestQuery.Region,
+				Namespace:      requestQuery.Namespace,
+				MetricName:     requestQuery.MetricName,
+				Dimensions:     requestQuery.Dimensions,
+				Stats:          *stat,
+				Period:         requestQuery.Period,
+				Alias:          requestQuery.Alias,
+				Expression:     requestQuery.Expression,
+				ReturnData:     requestQuery.ReturnData,
+				HighResolution: requestQuery.HighResolution,
+				MatchExact:     requestQuery.MatchExact,
+			}
 
-				if _, ok := cloudwatchQueries[region][id]; !ok {
-					cloudwatchQueries[region][id] = query
-				} else {
-					return nil, &queryError{
-						err:   fmt.Errorf("Query id %s is not unique", query.Id),
-						RefID: query.RefId,
-					}
+			if _, ok := cloudwatchQueries[id]; !ok {
+				cloudwatchQueries[id] = query
+			} else {
+				return nil, &queryError{
+					err:   fmt.Errorf("Query id %s is not unique", query.Id),
+					RefID: query.RefId,
 				}
 			}
 		}

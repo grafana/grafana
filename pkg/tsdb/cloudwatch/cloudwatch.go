@@ -78,22 +78,16 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 		Results: make(map[string]*tsdb.QueryResult),
 	}
 
-	requestQueries, err := e.parseQueries(queryContext)
+	requestQueriesByRegion, err := e.parseQueries(queryContext)
 	if err != nil {
 		return results, err
 	}
-
-	queriesByRegion, err := e.transformRequestQueriesToCloudWatchQueries(requestQueries)
-	if err != nil {
-		return results, err
-	}
-
 	resultChan := make(chan *tsdb.QueryResult, len(queryContext.Queries))
 	eg, ectx := errgroup.WithContext(ctx)
 
-	if len(queriesByRegion) > 0 {
-		for r, q := range queriesByRegion {
-			queries := q
+	if len(requestQueriesByRegion) > 0 {
+		for r, q := range requestQueriesByRegion {
+			requestQueries := q
 			region := r
 			eg.Go(func() error {
 				defer func() {
@@ -107,7 +101,12 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 					}
 				}()
 
-				client, err := e.getClient(r)
+				client, err := e.getClient(region)
+				if err != nil {
+					return err
+				}
+
+				queries, err := e.transformRequestQueriesToCloudWatchQueries(requestQueries)
 				if err != nil {
 					return err
 				}
@@ -121,7 +120,7 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 				mdo, err := e.executeRequest(ectx, client, metricDataInput)
 				if err != nil {
 					if ae, ok := err.(awserr.Error); ok && ae.Code() == "Throttling" {
-						for _, query := range requestQueries[region] {
+						for _, query := range requestQueries {
 							resultChan <- &tsdb.QueryResult{
 								RefId: query.RefId,
 								Error: ae,
@@ -133,7 +132,7 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 				} else {
 					responses, err := e.parseResponse(mdo, queries)
 					if err != nil {
-						for _, query := range requestQueries[region] {
+						for _, query := range requestQueries {
 							resultChan <- &tsdb.QueryResult{
 								RefId: query.RefId,
 								Error: err,
