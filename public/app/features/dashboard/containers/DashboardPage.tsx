@@ -99,7 +99,7 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { dashboard, editview, urlEdit, urlFullscreen, urlPanelId, urlUid, inspectPanelId } = this.props;
+    const { dashboard, editview, urlEdit, urlFullscreen, urlPanelId, urlUid } = this.props;
 
     if (!dashboard) {
       return;
