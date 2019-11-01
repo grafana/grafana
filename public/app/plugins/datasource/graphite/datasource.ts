@@ -15,6 +15,7 @@ export class GraphiteDatasource {
   name: string;
   graphiteVersion: any;
   supportsTags: boolean;
+  metrictank: boolean;
   cacheTimeout: any;
   withCredentials: boolean;
   funcDefs: any = null;
@@ -32,6 +33,7 @@ export class GraphiteDatasource {
     this.url = instanceSettings.url;
     this.name = instanceSettings.name;
     this.graphiteVersion = instanceSettings.jsonData.graphiteVersion || '0.9';
+    this.metrictank = instanceSettings.jsonData.metrictank || false;
     this.supportsTags = supportsTags(this.graphiteVersion);
     this.cacheTimeout = instanceSettings.cacheTimeout;
     this.withCredentials = instanceSettings.withCredentials;
@@ -68,7 +70,7 @@ export class GraphiteDatasource {
     if (params.length === 0) {
       return this.$q.when({ data: [] });
     }
-    if (true) {
+    if (this.metrictank) {
       params.push('meta=true');
     }
 

@@ -16,5 +16,22 @@
     <span class="gf-form-select-wrapper">
         <select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.graphiteVersion" ng-options="f.value as f.name for f in ctrl.graphiteVersions"></select>
     </span>
+  </div>
+	<div class="gf-form">
+		<gf-form-switch class="gf-form" label="Metrictank" label-class="width-8" checked="ctrl.current.jsonData.metrictank" switch-class="max-width-6"></gf-form-switch>
+    <label class="gf-form-label query-keyword pointer" ng-click="ctrl.showMetrictankHelp = !ctrl.showMetrictankHelp">
+      Help&nbsp;
+      <i class="fa fa-caret-down" ng-show="ctrl.showMetrictankHelp"></i>
+      <i class="fa fa-caret-right" ng-hide="ctrl.showMetrictankHelp">&nbsp;</i>
+    </label>
 	</div>
+  <div ng-if="ctrl.showMetrictankHelp" class="grafana-info-box alert alert-info">
+    <div class="alert-body">
+      <p>
+        <a href="https://github.com/grafana/metrictank" class="pointer" target="_blank">Metrictank</a> 
+        is a multi-tenant timeseries engine for Graphite and friends. Enabling this feature will include
+        extra metadata in the query response
+      </p>
+    </div>
+  </div>
 </div>
