@@ -35,7 +35,8 @@ interface LogsContainerProps {
   logsHighlighterExpressions?: string[];
   logsResult?: LogsModel;
   dedupedResult?: LogsModel;
-  onClickLabel: (key: string, value: string) => void;
+  onClickFilterLabel?: (key: string, value: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string) => void;
   onStartScanning: () => void;
   onStopScanning: () => void;
   timeZone: TimeZone;
@@ -87,7 +88,8 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       logsHighlighterExpressions,
       logsResult,
       dedupedResult,
-      onClickLabel,
+      onClickFilterLabel,
+      onClickFilterOutLabel,
       onStartScanning,
       onStopScanning,
       absoluteRange,
@@ -126,7 +128,8 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               highlighterExpressions={logsHighlighterExpressions}
               loading={loading}
               onChangeTime={this.onChangeTime}
-              onClickLabel={onClickLabel}
+              onClickFilterLabel={onClickFilterLabel}
+              onClickFilterOutLabel={onClickFilterOutLabel}
               onStartScanning={onStartScanning}
               onStopScanning={onStopScanning}
               onDedupStrategyChange={this.handleDedupStrategyChange}
