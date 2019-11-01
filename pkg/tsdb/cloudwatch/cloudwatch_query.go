@@ -8,7 +8,6 @@ type cloudWatchQuery struct {
 	RefId                   string
 	Region                  string
 	Id                      string
-	UserDefinedId           string
 	Namespace               string
 	MetricName              string
 	Stats                   string

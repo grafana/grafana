@@ -72,12 +72,124 @@ func TestQueryTransformer(t *testing.T) {
 			})
 
 			Convey("and id is not given by user", func() {
-				Convey("id will be generated based on ref id if query only has one stat", func() {
+				Convey("and queries is just one search expression", func() {
+					Convey("id will be e1 if query has only 1 stat", func() {
+						requestQueries := []*requestQuery{
+							{
+								RefId:          "D",
+								Region:         "us-east-1",
+								Namespace:      "ec2",
+								MetricName:     "CPUUtilization",
+								Statistics:     aws.StringSlice([]string{"Average"}),
+								Period:         600,
+								Id:             "",
+								HighResolution: false,
+							},
+						}
+
+						res, err := executor.transformRequestQueriesToCloudWatchQueries(requestQueries)
+						So(err, ShouldBeNil)
+						So(len(res), ShouldEqual, 1)
+						So(res, ShouldContainKey, "e1")
+					})
+
+					Convey("id will be e1 if query has two stats", func() {
+						requestQueries := []*requestQuery{
+							{
+								RefId:          "D",
+								Region:         "us-east-1",
+								Namespace:      "ec2",
+								MetricName:     "CPUUtilization",
+								Statistics:     aws.StringSlice([]string{"Average", "Sum"}),
+								Period:         600,
+								Id:             "",
+								HighResolution: false,
+							},
+						}
+
+						res, err := executor.transformRequestQueriesToCloudWatchQueries(requestQueries)
+						So(err, ShouldBeNil)
+						So(len(res), ShouldEqual, 2)
+						So(res, ShouldContainKey, "e1")
+						So(res, ShouldContainKey, "e2")
+					})
+
+					Convey("dot should be removed when query has more than one stat and one of them is a percentile", func() {
+						requestQueries := []*requestQuery{
+							{
+								RefId:          "D",
+								Region:         "us-east-1",
+								Namespace:      "ec2",
+								MetricName:     "CPUUtilization",
+								Statistics:     aws.StringSlice([]string{"Average", "p46.32"}),
+								Period:         600,
+								Id:             "",
+								HighResolution: false,
+							},
+						}
+
+						res, err := executor.transformRequestQueriesToCloudWatchQueries(requestQueries)
+						So(err, ShouldBeNil)
+						So(len(res), ShouldEqual, 2)
+						So(res, ShouldContainKey, "e2")
+					})
+				})
+
+				Convey("and queries is multiple request queries", func() {
+					dimensions := make(map[string][]string)
+					dimensions["LoadBalancer"] = []string{"lb"}
 					requestQueries := []*requestQuery{
+						{
+							RefId:          "A",
+							Region:         "us-east-1",
+							Namespace:      "ec2",
+							MetricName:     "CPUUtilization",
+							Statistics:     aws.StringSlice([]string{"Average"}),
+							Dimensions:     dimensions,
+							Period:         600,
+							Id:             "",
+							HighResolution: false,
+						},
+						{
+							RefId:          "B",
+							Region:         "us-east-1",
+							Namespace:      "ec2",
+							MetricName:     "CPUUtilization",
+							Dimensions:     dimensions,
+							Expression:     "SEARCH(expression)",
+							Statistics:     aws.StringSlice([]string{"Average"}),
+							Period:         600,
+							Id:             "",
+							HighResolution: false,
+						},
+						{
+							RefId:          "C",
+							Region:         "us-east-1",
+							Namespace:      "ec2",
+							Dimensions:     dimensions,
+							MetricName:     "CPUUtilization",
+							Expression:     "B * 2",
+							Statistics:     aws.StringSlice([]string{"Average"}),
+							Period:         600,
+							Id:             "",
+							HighResolution: false,
+						},
 						{
 							RefId:          "D",
 							Region:         "us-east-1",
 							Namespace:      "ec2",
+							Dimensions:     dimensions,
+							MetricName:     "CPUUtilization",
+							Statistics:     aws.StringSlice([]string{"Average", "Sum"}),
+							Period:         600,
+							Id:             "",
+							HighResolution: false,
+						},
+						{
+							RefId:          "E",
+							Region:         "us-east-1",
+							Namespace:      "ec2",
+							Dimensions:     dimensions,
 							MetricName:     "CPUUtilization",
 							Statistics:     aws.StringSlice([]string{"Average"}),
 							Period:         600,
@@ -85,53 +197,19 @@ func TestQueryTransformer(t *testing.T) {
 							HighResolution: false,
 						},
 					}
+					Convey("id will be e1 if query has only 1 stat", func() {
 
-					res, err := executor.transformRequestQueriesToCloudWatchQueries(requestQueries)
-					So(err, ShouldBeNil)
-					So(len(res), ShouldEqual, 1)
-					So(res, ShouldContainKey, "queryD")
+						res, err := executor.transformRequestQueriesToCloudWatchQueries(requestQueries)
+						So(err, ShouldBeNil)
+						So(len(res), ShouldEqual, 6)
+						So(res["m1"].RefId, ShouldEqual, "A")
+						So(res["e1"].RefId, ShouldEqual, "B")
+						So(res["e2"].RefId, ShouldEqual, "C")
+						So(res["m2"].RefId, ShouldEqual, "D")
+						So(res["m3"].RefId, ShouldEqual, "D")
+						So(res["m4"].RefId, ShouldEqual, "E")
+					})
 				})
-
-				Convey("id will be generated based on ref and stat name if query has two stats", func() {
-					requestQueries := []*requestQuery{
-						{
-							RefId:          "D",
-							Region:         "us-east-1",
-							Namespace:      "ec2",
-							MetricName:     "CPUUtilization",
-							Statistics:     aws.StringSlice([]string{"Average", "Sum"}),
-							Period:         600,
-							Id:             "",
-							HighResolution: false,
-						},
-					}
-
-					res, err := executor.transformRequestQueriesToCloudWatchQueries(requestQueries)
-					So(err, ShouldBeNil)
-					So(len(res), ShouldEqual, 2)
-					So(res, ShouldContainKey, "queryD_Sum")
-					So(res, ShouldContainKey, "queryD_Average")
-				})
-			})
-
-			Convey("dot should be removed when query has more than one stat and one of them is a percentile", func() {
-				requestQueries := []*requestQuery{
-					{
-						RefId:          "D",
-						Region:         "us-east-1",
-						Namespace:      "ec2",
-						MetricName:     "CPUUtilization",
-						Statistics:     aws.StringSlice([]string{"Average", "p46.32"}),
-						Period:         600,
-						Id:             "",
-						HighResolution: false,
-					},
-				}
-
-				res, err := executor.transformRequestQueriesToCloudWatchQueries(requestQueries)
-				So(err, ShouldBeNil)
-				So(len(res), ShouldEqual, 2)
-				So(res, ShouldContainKey, "queryD_p46_32")
 			})
 
 			Convey("should return an error if two queries have the same id", func() {
