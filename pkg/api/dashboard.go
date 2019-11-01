@@ -230,7 +230,10 @@ func (hs *HTTPServer) PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand)
 		return Error(500, "Error while checking if dashboard is provisioned", err)
 	}
 
-	allowUiUpdate := hs.ProvisioningService.GetAllowUiUpdatesFromConfig(provisioningData.Name)
+	allowUiUpdate := true
+	if provisioningData != nil {
+		allowUiUpdate = hs.ProvisioningService.GetAllowUiUpdatesFromConfig(provisioningData.Name)
+	}
 
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,

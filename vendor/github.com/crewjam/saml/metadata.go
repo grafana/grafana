@@ -133,7 +133,7 @@ type ContactPerson struct {
 // See http://docs.oasis-open.org/security/saml/v2.0/saml-metadata-2.0-os.pdf §2.4.1
 type RoleDescriptor struct {
 	ID                         string        `xml:",attr,omitempty"`
-	ValidUntil                 time.Time     `xml:"validUntil,attr,omitempty"`
+	ValidUntil                 *time.Time    `xml:"validUntil,attr,omitempty"`
 	CacheDuration              time.Duration `xml:"cacheDuration,attr,omitempty"`
 	ProtocolSupportEnumeration string        `xml:"protocolSupportEnumeration,attr"`
 	ErrorURL                   string        `xml:"errorURL,attr,omitempty"`

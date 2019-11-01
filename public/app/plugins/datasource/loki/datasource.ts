@@ -268,6 +268,10 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         selector = addLabelToSelector(selector, action.key, action.value);
         break;
       }
+      case 'ADD_FILTER_OUT': {
+        selector = addLabelToSelector(selector, action.key, action.value, '!=');
+        break;
+      }
       default:
         break;
     }

@@ -1,27 +1,30 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import { Field, LinkModel, LogRowModel, TimeZone, DataQueryResponse } from '@grafana/data';
-import { cx } from 'emotion';
+
 import {
   LogRowContextRows,
   LogRowContextQueryErrors,
   HasMoreContextRows,
   LogRowContextProvider,
 } from './LogRowContextProvider';
-import { LogLabels } from './LogLabels';
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
+
+//Components
+import { LogDetails } from './LogDetails';
 import { LogRowMessage } from './LogRowMessage';
 
 interface Props extends Themeable {
   highlighterExpressions?: string[];
   row: LogRowModel;
   showDuplicates: boolean;
-  showLabels: boolean;
   showTime: boolean;
   timeZone: TimeZone;
+  isLogsPanel?: boolean;
   getRows: () => LogRowModel[];
-  onClickLabel?: (label: string, value: string) => void;
+  onClickFilterLabel?: (key: string, value: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string) => void;
   onContextClick?: () => void;
   getRowContext: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
@@ -39,7 +42,7 @@ interface State {
  * Once a parser is found, it will determine fields, that will be highlighted.
  * When the user requests stats for a field, they will be calculated and rendered below the row.
  */
-class UnThemedLogRow extends Component<Props, State> {
+class UnThemedLogRow extends PureComponent<Props, State> {
   state: State = {
     showContext: false,
     showDetails: false,
@@ -53,6 +56,14 @@ class UnThemedLogRow extends Component<Props, State> {
     });
   };
 
+  toggleDetails = () => {
+    this.setState(state => {
+      return {
+        showDetails: !state.showDetails,
+      };
+    });
+  };
+
   renderLogRow(
     context?: LogRowContextRows,
     errors?: LogRowContextQueryErrors,
@@ -61,92 +72,67 @@ class UnThemedLogRow extends Component<Props, State> {
   ) {
     const {
       getRows,
+      onClickFilterLabel,
+      onClickFilterOutLabel,
       highlighterExpressions,
-      onClickLabel,
+      isLogsPanel,
       row,
       showDuplicates,
-      showLabels,
       timeZone,
       showTime,
       theme,
       getFieldLinks,
     } = this.props;
-    const { showContext, showDetails } = this.state;
+    const { showDetails, showContext } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
     const showUtc = timeZone === 'utc';
 
     return (
-      <div>
-        <div
-          className={cx([style.logsRow])}
-          onClick={async () => {
-            this.setState({
-              showDetails: !showDetails,
-            });
-          }}
-        >
-          {showDuplicates && (
-            <div className={cx([style.logsRowDuplicates])}>
-              {row.duplicates && row.duplicates > 0 ? `${row.duplicates + 1}x` : null}
-            </div>
-          )}
-          <div className={cx([style.logsRowLevel])} />
-          {showTime && showUtc && (
-            <div className={cx([style.logsRowLocalTime])} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
-              {row.timeUtc}
-            </div>
-          )}
-          {showTime && !showUtc && (
-            <div className={cx([style.logsRowLocalTime])} title={`${row.timeUtc} (${row.timeFromNow})`}>
-              {row.timeLocal}
-            </div>
-          )}
-          {showLabels && (
-            <div className={cx([style.logsRowLabels])}>
-              <LogLabels
-                getRows={getRows}
-                labels={row.uniqueLabels ? row.uniqueLabels : {}}
-                onClickLabel={onClickLabel}
-              />
-            </div>
-          )}
-          <LogRowMessage
-            highlighterExpressions={highlighterExpressions}
-            row={row}
-            getRows={getRows}
-            errors={errors}
-            hasMoreContextRows={hasMoreContextRows}
-            updateLimit={updateLimit}
-            context={context}
-            showContext={showContext}
-            onToggleContext={this.toggleContext}
-          />
-        </div>
-        {showDetails && (
-          <div
-            style={{
-              padding: 20,
-            }}
-          >
-            {row.dataFrame.fields
-              .filter(field => !['id', 'line'].includes(field.name))
-              .map(field => {
-                const links = getFieldLinks ? getFieldLinks(field, row.rowIndex) : [];
-                if (links.length) {
-                  return (
-                    <div key={field.name}>
-                      {field.name} = <a href={links[0].href}>{field.values.get(row.rowIndex)}</a>
-                    </div>
-                  );
-                }
-                return (
-                  <div key={field.name}>
-                    {field.name} = {field.values.get(row.rowIndex)}
-                  </div>
-                );
-              })}
+      <div className={style.logsRow}>
+        {showDuplicates && (
+          <div className={style.logsRowDuplicates}>
+            {row.duplicates && row.duplicates > 0 ? `${row.duplicates + 1}x` : null}
           </div>
         )}
+        <div className={style.logsRowLevel} />
+        {!isLogsPanel && (
+          <div title="See log details" onClick={this.toggleDetails} className={style.logsRowToggleDetails}>
+            <i className={showDetails ? 'fa fa-chevron-up' : 'fa fa-chevron-down'} />
+          </div>
+        )}
+        <div>
+          <div>
+            {showTime && showUtc && (
+              <div className={style.logsRowLocalTime} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
+                {row.timeUtc}
+              </div>
+            )}
+            {showTime && !showUtc && (
+              <div className={style.logsRowLocalTime} title={`${row.timeUtc} (${row.timeFromNow})`}>
+                {row.timeLocal}
+              </div>
+            )}
+            <LogRowMessage
+              highlighterExpressions={highlighterExpressions}
+              row={row}
+              getRows={getRows}
+              errors={errors}
+              hasMoreContextRows={hasMoreContextRows}
+              updateLimit={updateLimit}
+              context={context}
+              showContext={showContext}
+              onToggleContext={this.toggleContext}
+            />
+          </div>
+          {this.state.showDetails && (
+            <LogDetails
+              onClickFilterLabel={onClickFilterLabel}
+              onClickFilterOutLabel={onClickFilterOutLabel}
+              getRows={getRows}
+              row={row}
+            />
+          )}
+        </div>
       </div>
     );
   }
