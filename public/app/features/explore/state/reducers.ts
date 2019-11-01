@@ -10,14 +10,20 @@ import {
   refreshIntervalToSortOrder,
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
-import { LoadingState, toLegacyResponseData, DefaultTimeRange } from '@grafana/data';
-import { DataQuery, DataSourceApi, PanelData, DataQueryRequest, RefreshPicker, PanelEvents } from '@grafana/ui';
+import {
+  LoadingState,
+  toLegacyResponseData,
+  DefaultTimeRange,
+  DataQuery,
+  DataSourceApi,
+  PanelData,
+  DataQueryRequest,
+  PanelEvents,
+} from '@grafana/data';
+import { RefreshPicker } from '@grafana/ui';
 import {
   HigherOrderAction,
   ActionTypes,
-  testDataSourcePendingAction,
-  testDataSourceSuccessAction,
-  testDataSourceFailureAction,
   splitCloseAction,
   SplitCloseActionPayload,
   loadExploreDatasources,
@@ -82,7 +88,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
   containerWidth: 0,
   datasourceInstance: null,
   requestedDatasourceName: null,
-  datasourceError: null,
   datasourceLoading: null,
   datasourceMissing: false,
   exploreDatasources: [],
@@ -204,7 +209,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         refreshInterval,
         queryResponse: {
           ...state.queryResponse,
-          state: live ? LoadingState.Streaming : LoadingState.NotStarted,
+          state: live ? LoadingState.Streaming : LoadingState.Done,
         },
         isLive: live,
         isPaused: live ? false : state.isPaused,
@@ -472,37 +477,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         hiddenLogLevels: Array.from(hiddenLogLevels),
-      };
-    },
-  })
-  .addMapper({
-    filter: testDataSourcePendingAction,
-    mapper: (state): ExploreItemState => {
-      return {
-        ...state,
-        datasourceError: null,
-      };
-    },
-  })
-  .addMapper({
-    filter: testDataSourceSuccessAction,
-    mapper: (state): ExploreItemState => {
-      return {
-        ...state,
-        datasourceError: null,
-      };
-    },
-  })
-  .addMapper({
-    filter: testDataSourceFailureAction,
-    mapper: (state, action): ExploreItemState => {
-      return {
-        ...state,
-        datasourceError: action.payload.error,
-        graphResult: undefined,
-        tableResult: undefined,
-        logsResult: undefined,
-        update: makeInitialUpdateState(),
       };
     },
   })

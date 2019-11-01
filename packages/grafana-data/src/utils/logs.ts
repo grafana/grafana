@@ -1,10 +1,14 @@
-import { countBy, chain, map, escapeRegExp } from 'lodash';
+import { countBy, chain } from 'lodash';
 
 import { LogLevel, LogRowModel, LogLabelStatsModel, LogsParser } from '../types/logs';
 import { DataFrame, FieldType } from '../types/index';
 import { ArrayVector } from '../vector/ArrayVector';
 
-const LOGFMT_REGEXP = /(?:^|\s)(\w+)=("[^"]*"|\S+)/;
+// This matches:
+// first a label from start of the string or first white space, then any word chars until "="
+// second either an empty quotes, or anything that starts with quote and ends with unescaped quote,
+// or any non whitespace chars that do not start with qoute
+const LOGFMT_REGEXP = /(?:^|\s)(\w+)=(""|(?:".*?[^\\]"|[^"\s]\S*))/;
 
 /**
  * Returns the log level of a log line.
@@ -79,21 +83,15 @@ export const LogsParsers: { [name: string]: LogsParser } = {
   JSON: {
     buildMatcher: label => new RegExp(`(?:{|,)\\s*"${label}"\\s*:\\s*"?([\\d\\.]+|[^"]*)"?`),
     getFields: line => {
-      const fields: string[] = [];
       try {
         const parsed = JSON.parse(line);
-        map(parsed, (value, key) => {
-          const fieldMatcher = new RegExp(`"${key}"\\s*:\\s*"?${escapeRegExp(JSON.stringify(value))}"?`);
-
-          const match = line.match(fieldMatcher);
-          if (match) {
-            fields.push(match[0]);
-          }
+        return Object.keys(parsed).map(key => {
+          return `"${key}":${JSON.stringify(parsed[key])}`;
         });
       } catch {}
-      return fields;
+      return [];
     },
-    getLabelFromField: field => (field.match(/^"(\w+)"\s*:/) || [])[1],
+    getLabelFromField: field => (field.match(/^"([^"]+)"\s*:/) || [])[1],
     getValueFromField: field => (field.match(/:\s*(.*)$/) || [])[1],
     test: line => {
       try {

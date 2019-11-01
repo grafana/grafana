@@ -4,7 +4,7 @@ import { iconMap } from './DashLinksEditorCtrl';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../../services/DashboardSrv';
-import { PanelEvents } from '@grafana/ui';
+import { PanelEvents } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 

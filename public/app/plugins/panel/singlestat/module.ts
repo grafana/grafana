@@ -16,16 +16,14 @@ import {
   LinkModel,
   reduceField,
   ReducerID,
-} from '@grafana/data';
-
-import {
   LegacyResponseData,
   getFlotPairs,
   getDisplayProcessor,
-  convertOldAngulrValueMapping,
   getColorFromHexRgbOrName,
   PanelEvents,
-} from '@grafana/ui';
+} from '@grafana/data';
+
+import { convertOldAngularValueMapping } from '@grafana/ui';
 
 import { CoreEvents } from 'app/types';
 import kbn from 'app/core/utils/kbn';
@@ -186,13 +184,17 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     if (!fieldInfo) {
+      const processor = getDisplayProcessor({
+        config: {
+          mappings: convertOldAngularValueMapping(this.panel),
+          noValue: 'No Data',
+        },
+        theme: config.theme,
+      });
       // When we don't have any field
       this.data = {
-        value: 'No Data',
-        display: {
-          text: 'No Data',
-          numeric: NaN,
-        },
+        value: null,
+        display: processor(null),
       };
     } else {
       this.data = this.processField(fieldInfo);
@@ -246,7 +248,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         ...fieldInfo.field.config,
         unit: panel.format,
         decimals: panel.decimals,
-        mappings: convertOldAngulrValueMapping(panel),
+        mappings: convertOldAngularValueMapping(panel),
       },
       theme: config.theme,
       isUtc: dashboard.isTimezoneUtc && dashboard.isTimezoneUtc(),

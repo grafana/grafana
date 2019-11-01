@@ -5,7 +5,7 @@ import { List } from '../List/List';
 import { css, cx } from 'emotion';
 import { ThemeContext } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes';
-import { GrafanaTheme } from '../../types';
+import { GrafanaTheme } from '@grafana/data';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   item: css`

@@ -27,7 +27,7 @@ export const findModuleFiles = (base: string, files?: string[], result?: string[
         result = findModuleFiles(newbase, fs.readdirSync(newbase), result);
       } else {
         const filename = path.basename(file);
-        if (/^module.tsx?$/.exec(filename)) {
+        if (/^module.(t|j)sx?$/.exec(filename)) {
           // @ts-ignore
           result.push(newbase);
         }
@@ -42,7 +42,7 @@ const getModuleFiles = () => {
 };
 
 const getManualChunk = (id: string) => {
-  if (id.endsWith('module.ts') || id.endsWith('module.tsx')) {
+  if (id.endsWith('module.ts') || id.endsWith('module.js') || id.endsWith('module.tsx')) {
     const idx = id.lastIndexOf(path.sep + 'src' + path.sep);
     if (idx > 0) {
       const name = id.substring(idx + 5, id.lastIndexOf('.'));
@@ -84,11 +84,13 @@ const getCommonPlugins = (options: WebpackConfigurationOptions) => {
         { from: 'plugin.json', to: '.' },
         { from: '../README.md', to: '.' },
         { from: '../LICENSE', to: '.' },
-        { from: 'img/*', to: '.' },
         { from: '**/*.json', to: '.' },
         { from: '**/*.svg', to: '.' },
         { from: '**/*.png', to: '.' },
         { from: '**/*.html', to: '.' },
+        { from: 'img/**/*', to: '.' },
+        { from: 'libs/**/*', to: '.' },
+        { from: 'static/**/*', to: '.' },
       ],
       { logLevel: options.watch ? 'silent' : 'warn' }
     ),
@@ -191,6 +193,19 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
             {
               loader: 'ts-loader',
               options: { onlyCompileBundledFiles: true },
+            },
+          ],
+          exclude: /(node_modules)/,
+        },
+        {
+          test: /\.jsx?$/,
+          loaders: [
+            {
+              loader: 'babel-loader',
+              options: {
+                presets: [['@babel/preset-env', { modules: false }]],
+                plugins: ['angularjs-annotate'],
+              },
             },
           ],
           exclude: /(node_modules)/,

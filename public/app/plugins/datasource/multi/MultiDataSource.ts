@@ -1,6 +1,12 @@
 import { Observable } from 'rxjs';
 
-import { DataSourceApi, DataQuery, DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/ui';
+import {
+  DataSourceApi,
+  DataQuery,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceInstanceSettings,
+} from '@grafana/data';
 import { MixedDatasource } from '../mixed/module';
 import { MultiResolutionQuery, ResolutionSelection, QueriesForResolution } from './types';
 import defaults from 'lodash/defaults';

@@ -180,7 +180,7 @@ func init() {
 		"AWS/OpsWorks":          {"InstanceId", "LayerId", "StackId"},
 		"AWS/Polly":             {"Operation"},
 		"AWS/RDS":               {"DBClusterIdentifier", "DBInstanceIdentifier", "DatabaseClass", "DbClusterIdentifier", "EngineName", "Role", "SourceRegion"},
-		"AWS/Redshift":          {"ClusterIdentifier", "NodeID", "Service class", "Stage", "latency", "wlmid"},
+		"AWS/Redshift":          {"ClusterIdentifier", "NodeID", "service class", "stage", "latency", "wlmid"},
 		"AWS/Route53":           {"HealthCheckId", "Region"},
 		"AWS/S3":                {"BucketName", "FilterId", "StorageType"},
 		"AWS/SES":               {},

@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import { sanitize, escapeHtml } from 'app/core/utils/text';
-import { renderMarkdown, AppEvent } from '@grafana/data';
 
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';
@@ -17,9 +16,8 @@ import {
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { auto } from 'angular';
 import { TemplateSrv } from '../templating/template_srv';
-import { PanelPluginMeta } from '@grafana/ui/src/types/panel';
 import { getPanelLinksSupplier } from './panellinks/linkSuppliers';
-import { PanelEvents } from '@grafana/ui';
+import { renderMarkdown, AppEvent, PanelEvents, PanelPluginMeta } from '@grafana/data';
 
 export class PanelCtrl {
   panel: any;

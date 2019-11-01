@@ -11,9 +11,9 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { getColorFromHexRgbOrName, VariableSuggestion, PanelEvents } from '@grafana/ui';
+import { VariableSuggestion } from '@grafana/ui';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
-import { DataFrame, DataLink, DateTimeInput } from '@grafana/data';
+import { getColorFromHexRgbOrName, PanelEvents, DataFrame, DataLink, DateTimeInput } from '@grafana/data';
 
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
@@ -27,6 +27,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   renderError: boolean;
   hiddenSeries: any = {};
+  hiddenSeriesTainted = false;
   seriesList: TimeSeries[] = [];
   dataList: DataFrame[] = [];
   annotations: any = [];
@@ -84,6 +85,8 @@ class GraphCtrl extends MetricsPanelCtrl {
     linewidth: 1,
     // show/hide dashed line
     dashes: false,
+    // show/hide line
+    hiddenSeries: false,
     // length of a dash
     dashLength: 10,
     // length of space between two dashes
@@ -165,6 +168,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Thresholds & Time Regions', 'public/app/plugins/panel/graph/tab_thresholds_time_regions.html');
     this.addEditorTab('Data links', 'public/app/plugins/panel/graph/tab_drilldown_links.html');
     this.subTabIndex = 0;
+    this.hiddenSeriesTainted = false;
   }
 
   onInitPanelActions(actions: any[]) {
@@ -267,6 +271,9 @@ class GraphCtrl extends MetricsPanelCtrl {
       if (series.unit) {
         this.panel.yaxes[series.yaxis - 1].format = series.unit;
       }
+      if (this.hiddenSeriesTainted === false && series.hiddenSeries === true) {
+        this.hiddenSeries[series.alias] = true;
+      }
     }
   }
 
@@ -277,6 +284,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   };
 
   onToggleSeries = (hiddenSeries: any) => {
+    this.hiddenSeriesTainted = true;
     this.hiddenSeries = hiddenSeries;
     this.render();
   };

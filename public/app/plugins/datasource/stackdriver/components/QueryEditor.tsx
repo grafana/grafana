@@ -14,7 +14,7 @@ import { StackdriverQuery, MetricDescriptor } from '../types';
 import { getAlignmentPickerData } from '../functions';
 import StackdriverDatasource from '../datasource';
 import { TimeSeries, SelectableValue } from '@grafana/data';
-import { PanelEvents } from '@grafana/ui';
+import { PanelEvents } from '@grafana/data';
 
 export interface Props {
   onQueryChange: (target: StackdriverQuery) => void;

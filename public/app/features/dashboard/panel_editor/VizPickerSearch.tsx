@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
-import { PanelPluginMeta } from '@grafana/ui';
+import { PanelPluginMeta } from '@grafana/data';
 
 interface Props {
   plugin: PanelPluginMeta;

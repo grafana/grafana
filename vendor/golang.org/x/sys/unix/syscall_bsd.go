@@ -413,8 +413,6 @@ func Kevent(kq int, changes, events []Kevent_t, timeout *Timespec) (n int, err e
 	return kevent(kq, change, len(changes), event, len(events), timeout)
 }
 
-//sys	sysctl(mib []_C_int, old *byte, oldlen *uintptr, new *byte, newlen uintptr) (err error) = SYS___SYSCTL
-
 // sysctlmib translates name to mib number and appends any additional args.
 func sysctlmib(name string, args ...int) ([]_C_int, error) {
 	// Translate name to mib number.

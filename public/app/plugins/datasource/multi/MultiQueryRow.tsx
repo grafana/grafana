@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { PanelData, DataQuery, DataSourceSelectItem } from '@grafana/ui';
+import { PanelData, DataQuery, DataSourceSelectItem } from '@grafana/data';
 import { QueriesForResolution } from './types';
 import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
 import { QueryEditorRows } from 'app/features/dashboard/panel_editor/QueryEditorRows';

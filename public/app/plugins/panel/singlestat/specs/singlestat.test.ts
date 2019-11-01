@@ -1,7 +1,7 @@
 import { SingleStatCtrl, ShowData } from '../module';
 import { dateTime, ReducerID } from '@grafana/data';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
-import { LegacyResponseData } from '@grafana/ui';
+import { LegacyResponseData } from '@grafana/data';
 
 interface TestContext {
   ctrl: SingleStatCtrl;
@@ -202,6 +202,21 @@ describe('SingleStatCtrl', () => {
 
     it('Should replace value with text', () => {
       expect(ctx.data.display.text).toBe('OK');
+    });
+  });
+
+  singleStatScenario('When mapping null values and no data', (ctx: TestContext) => {
+    ctx.setup(() => {
+      ctx.input = []; // No data
+      ctx.ctrl.panel.valueMaps = [{ value: 'null', text: 'XYZ' }];
+    });
+
+    it('value should be null', () => {
+      expect(ctx.data.value).toBe(null);
+    });
+
+    it('Should replace value with text', () => {
+      expect(ctx.data.display.text).toBe('XYZ');
     });
   });
 

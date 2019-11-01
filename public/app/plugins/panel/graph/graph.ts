@@ -24,17 +24,18 @@ import ReactDOM from 'react-dom';
 import { GraphLegendProps, Legend } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
+import { ContextMenuGroup, ContextMenuItem } from '@grafana/ui';
+import { provideTheme, getCurrentTheme } from 'app/core/utils/ConfigProvider';
 import {
+  toUtc,
+  LinkModelSupplier,
+  DataFrameView,
   getValueFormat,
-  ContextMenuGroup,
   FieldDisplay,
-  ContextMenuItem,
   getDisplayProcessor,
   getFlotPairsConstant,
   PanelEvents,
-} from '@grafana/ui';
-import { provideTheme, getCurrentTheme } from 'app/core/utils/ConfigProvider';
-import { toUtc, LinkModelSupplier, DataFrameView } from '@grafana/data';
+} from '@grafana/data';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ContextSrv } from 'app/core/services/context_srv';
@@ -214,6 +215,7 @@ class GraphElement {
               url: link.href,
               target: link.target,
               icon: `fa ${link.target === '_self' ? 'fa-link' : 'fa-external-link'}`,
+              onClick: link.onClick,
             };
           }),
         },
@@ -248,19 +250,23 @@ class GraphElement {
       if (item) {
         // pickup y-axis index to know which field's config to apply
         const yAxisConfig = this.panel.yaxes[item.series.yaxis.n === 2 ? 1 : 0];
-        const fieldConfig = {
-          decimals: yAxisConfig.decimals,
-          links: this.panel.options.dataLinks || [],
-        };
         const dataFrame = this.ctrl.dataList[item.series.dataFrameIndex];
         const field = dataFrame.fields[item.series.fieldIndex];
 
+        let links = this.panel.options.dataLinks || [];
+        if (field.config.links && field.config.links.length) {
+          // Append the configured links to the panel datalinks
+          links = [...links, ...field.config.links];
+        }
+        const fieldConfig = {
+          decimals: yAxisConfig.decimals,
+          links,
+        };
         const fieldDisplay = getDisplayProcessor({
           config: fieldConfig,
           theme: getCurrentTheme(),
         })(field.values.get(item.dataIndex));
-
-        linksSupplier = this.panel.options.dataLinks
+        linksSupplier = links.length
           ? getFieldLinksSupplier({
               display: fieldDisplay,
               name: field.name,

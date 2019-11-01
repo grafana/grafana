@@ -7,16 +7,7 @@ import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
-import {
-  PanelOptionsGroup,
-  TransformationsEditor,
-  DataQuery,
-  DataSourceSelectItem,
-  PanelData,
-  AlphaNotice,
-  PluginState,
-  Select,
-} from '@grafana/ui';
+import { PanelOptionsGroup, TransformationsEditor, AlphaNotice } from '@grafana/ui';
 import { QueryEditorRows } from './QueryEditorRows';
 
 // Services
@@ -26,7 +17,15 @@ import config from 'app/core/config';
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import { LoadingState, DataTransformerConfig, DefaultTimeRange, SelectableValue } from '@grafana/data';
+import {
+  LoadingState,
+  DataTransformerConfig,
+  DefaultTimeRange,
+  DataSourceSelectItem,
+  DataQuery,
+  PanelData,
+  PluginState,
+} from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { Unsubscribable } from 'rxjs';
 import { isSharedDashboardQuery, DashboardQueryEditor } from 'app/plugins/datasource/dashboard';
@@ -35,6 +34,7 @@ import { addQuery } from 'app/core/utils/query';
 import { MultiQueryEditor } from 'app/plugins/datasource/multi/MultiQueryEditor';
 import { getMultiResolutionQuery } from 'app/plugins/datasource/multi/MultiDataSource';
 import { ResolutionSelection } from 'app/plugins/datasource/multi/types';
+import { expressionDatasource, ExpressionDatasourceID } from 'app/features/expressions/ExpressionDatasource';
 
 interface Props {
   panel: PanelModel;
@@ -106,9 +106,11 @@ export class QueriesTab extends PureComponent<Props, State> {
     if (datasource.meta.mixed) {
       // Set the datasource on all targets
       panel.targets.forEach(target => {
-        target.datasource = panel.datasource;
-        if (!target.datasource) {
-          target.datasource = config.defaultDatasource;
+        if (target.datasource !== ExpressionDatasourceID) {
+          target.datasource = panel.datasource;
+          if (!target.datasource) {
+            target.datasource = config.defaultDatasource;
+          }
         }
       });
 
@@ -129,7 +131,9 @@ export class QueriesTab extends PureComponent<Props, State> {
 
         // Remove the explicit datasource
         for (const target of panel.targets) {
-          delete target.datasource;
+          if (target.datasource !== ExpressionDatasourceID) {
+            delete target.datasource;
+          }
         }
       } else if (currentDS.meta.id !== datasource.meta.id) {
         // we are changing data source type, clear queries
@@ -171,6 +175,11 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.onScrollBottom();
   };
 
+  onAddExpressionClick = () => {
+    this.onUpdateQueries(addQuery(this.props.panel.targets, expressionDatasource.newQuery()));
+    this.onScrollBottom();
+  };
+
   onScrollBottom = () => {
     this.setState({ scrollTop: this.state.scrollTop + 10000 });
   };
@@ -193,6 +202,11 @@ export class QueriesTab extends PureComponent<Props, State> {
           </button>
         )}
         {isAddingMixed && this.renderMixedPicker()}
+        {config.featureToggles.expressions && (
+          <button className="btn navbar-button" onClick={this.onAddExpressionClick}>
+            Add Expression
+          </button>
+        )}
       </>
     );
   };

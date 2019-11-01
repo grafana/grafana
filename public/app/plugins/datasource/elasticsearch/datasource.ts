@@ -1,6 +1,6 @@
 import angular, { IQService } from 'angular';
 import _ from 'lodash';
-import { DataSourceApi, DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse } from '@grafana/ui';
+import { DataSourceApi, DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse } from '@grafana/data';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
@@ -582,17 +582,4 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
     return false;
   }
-}
-
-export function getMaxConcurrenShardRequestOrDefault(options: ElasticsearchOptions): number {
-  if (options.maxConcurrentShardRequests === 5 && options.esVersion < 70) {
-    return 256;
-  }
-
-  if (options.maxConcurrentShardRequests === 256 && options.esVersion >= 70) {
-    return 5;
-  }
-
-  const defaultMaxConcurrentShardRequests = options.esVersion >= 70 ? 5 : 256;
-  return options.maxConcurrentShardRequests || defaultMaxConcurrentShardRequests;
 }

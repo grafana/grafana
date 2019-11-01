@@ -31,8 +31,8 @@ export class InsightsConfig extends PureComponent<Props, State> {
   onAppInsightsAppIdChange = (appInsightsAppId: string) => {
     this.props.onDatasourceUpdate({
       ...this.state.config,
-      editorJsonData: {
-        ...this.state.config.editorJsonData,
+      jsonData: {
+        ...this.state.config.jsonData,
         appInsightsAppId,
       },
     });
@@ -41,8 +41,8 @@ export class InsightsConfig extends PureComponent<Props, State> {
   onAppInsightsApiKeyChange = (appInsightsApiKey: string) => {
     this.props.onDatasourceUpdate({
       ...this.state.config,
-      editorSecureJsonData: {
-        ...this.state.config.editorSecureJsonData,
+      secureJsonData: {
+        ...this.state.config.secureJsonData,
         appInsightsApiKey,
       },
     });
@@ -87,7 +87,7 @@ export class InsightsConfig extends PureComponent<Props, State> {
                   <Input
                     className="width-30"
                     placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                    value={config.editorSecureJsonData.appInsightsApiKey}
+                    value={config.secureJsonData.appInsightsApiKey || ''}
                     onChange={event => this.onAppInsightsApiKeyChange(event.target.value)}
                   />
                 </div>
@@ -100,7 +100,7 @@ export class InsightsConfig extends PureComponent<Props, State> {
               <div className="width-15">
                 <Input
                   className="width-30"
-                  value={config.editorJsonData.appInsightsAppId}
+                  value={config.jsonData.appInsightsAppId || ''}
                   onChange={event => this.onAppInsightsAppIdChange(event.target.value)}
                 />
               </div>

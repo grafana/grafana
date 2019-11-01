@@ -15,15 +15,14 @@ import slateReact from '@grafana/slate-react';
 import slatePlain from 'slate-plain-serializer';
 import react from 'react';
 import reactDom from 'react-dom';
-import reactRedux from 'react-redux';
-import redux from 'redux';
+import * as reactRedux from 'react-redux';
+import * as redux from 'redux';
 
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
 import { coreModule, appEvents, contextSrv } from 'app/core/core';
-import { DataSourcePlugin, AppPlugin, PanelPlugin, PluginMeta, DataSourcePluginMeta } from '@grafana/ui';
-import { dateMath } from '@grafana/data';
+import { DataSourcePlugin, AppPlugin, PanelPlugin, PluginMeta, DataSourcePluginMeta, dateMath } from '@grafana/data';
 import * as fileExport from 'app/core/utils/file_export';
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
