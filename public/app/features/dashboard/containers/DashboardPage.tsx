@@ -64,7 +64,6 @@ export interface State {
   updateScrollTop: number;
   rememberScrollTop: number;
   showLoadingState: boolean;
-  inspectPanel: PanelModel | null;
 }
 
 export class DashboardPage extends PureComponent<Props, State> {
@@ -77,7 +76,6 @@ export class DashboardPage extends PureComponent<Props, State> {
     scrollTop: 0,
     updateScrollTop: null,
     rememberScrollTop: 0,
-    inspectPanel: null,
   };
 
   async componentDidMount() {
@@ -110,12 +108,6 @@ export class DashboardPage extends PureComponent<Props, State> {
     // if we just got dashboard update title
     if (!prevProps.dashboard) {
       document.title = dashboard.title + ' - Grafana';
-    }
-
-    // Listen for inspect events
-    if ((inspectPanelId && !this.state.inspectPanel) || prevProps.inspectPanelId !== inspectPanelId) {
-      const id = parseInt(inspectPanelId, 10);
-      this.setState({ inspectPanel: dashboard.getPanelById(id) });
     }
 
     // Due to the angular -> react url bridge we can ge an update here with new uid before the container unmounts
@@ -260,8 +252,8 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, editview, $injector, isInitSlow, initError } = this.props;
-    const { isSettingsOpening, isEditing, isFullscreen, scrollTop, updateScrollTop, inspectPanel } = this.state;
+    const { dashboard, editview, $injector, isInitSlow, initError, inspectPanelId } = this.props;
+    const { isSettingsOpening, isEditing, isFullscreen, scrollTop, updateScrollTop } = this.state;
 
     if (!dashboard) {
       if (isInitSlow) {
@@ -279,6 +271,9 @@ export class DashboardPage extends PureComponent<Props, State> {
       'dashboard-container': true,
       'dashboard-container--has-submenu': dashboard.meta.submenuEnabled,
     });
+
+    // Find the panel to inspect
+    const inspectPanel = inspectPanelId ? dashboard.getPanelById(parseInt(inspectPanelId, 10)) : null;
 
     // Only trigger render when the scroll has moved by 25
     const approximateScrollTop = Math.round(scrollTop / 25) * 25;
