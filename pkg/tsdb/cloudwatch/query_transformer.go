@@ -82,6 +82,7 @@ func (e *CloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchRespo
 		timeSeries := make(tsdb.TimeSeriesSlice, 0)
 
 		searchExpressions := []string{}
+		ids := []string{}
 		requestExceededMaxLimit := false
 		for _, response := range responses {
 			timeSeries = append(timeSeries, *response.series...)
@@ -89,6 +90,7 @@ func (e *CloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchRespo
 			if len(response.SearchExpression) > 0 {
 				searchExpressions = append(searchExpressions, response.SearchExpression)
 			}
+			ids = append(ids, response.Id)
 		}
 
 		sort.Slice(timeSeries, func(i, j int) bool {
@@ -100,6 +102,7 @@ func (e *CloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchRespo
 		}
 		results[refID].Series = append(results[refID].Series, timeSeries...)
 		results[refID].Meta.Set("searchExpressions", searchExpressions)
+		results[refID].Meta.Set("Ids", ids)
 	}
 
 	return results
