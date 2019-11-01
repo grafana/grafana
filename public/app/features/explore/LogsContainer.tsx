@@ -38,9 +38,9 @@ interface LogsContainerProps {
   logsMeta?: LogsMetaItem[];
   logsSeries?: GraphSeriesXY[];
   dedupedRows?: LogRowModel[];
-  hasUniqueLabels: boolean;
 
-  onClickLabel: (key: string, value: string) => void;
+  onClickFilterLabel?: (key: string, value: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string) => void;
   onStartScanning: () => void;
   onStopScanning: () => void;
   timeZone: TimeZone;
@@ -94,7 +94,8 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       logsMeta,
       logsSeries,
       dedupedRows,
-      onClickLabel,
+      onClickFilterLabel,
+      onClickFilterOutLabel,
       onStartScanning,
       onStopScanning,
       absoluteRange,
@@ -104,7 +105,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       width,
       isLive,
       exploreId,
-      hasUniqueLabels,
     } = this.props;
 
     return (
@@ -128,7 +128,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
         <LogsCrossFadeTransition visible={!isLive}>
           <Collapse label="Logs" loading={loading} isOpen>
             <Logs
-              hasUniqueLabels={hasUniqueLabels}
               dedupStrategy={this.props.dedupStrategy || LogsDedupStrategy.none}
               logRows={logRows}
               logsMeta={logsMeta}
@@ -137,7 +136,8 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               highlighterExpressions={logsHighlighterExpressions}
               loading={loading}
               onChangeTime={this.onChangeTime}
-              onClickLabel={onClickLabel}
+              onClickFilterLabel={onClickFilterLabel}
+              onClickFilterOutLabel={onClickFilterOutLabel}
               onStartScanning={onStartScanning}
               onStopScanning={onStopScanning}
               onDedupStrategyChange={this.handleDedupStrategyChange}
@@ -181,7 +181,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     logRows: logsResult && logsResult.rows,
     logsMeta: logsResult && logsResult.meta,
     logsSeries: logsResult && logsResult.series,
-    hasUniqueLabels: logsResult && logsResult.hasUniqueLabels,
     scanning,
     timeZone,
     dedupStrategy,

@@ -47,6 +47,7 @@ type ProvisioningService interface {
 	ProvisionNotifications() error
 	ProvisionDashboards() error
 	GetDashboardProvisionerResolvedPath(name string) string
+	GetAllowUiUpdatesFromConfig(name string) bool
 }
 
 type HTTPServer struct {
@@ -68,6 +69,7 @@ type HTTPServer struct {
 	RemoteCacheService  *remotecache.RemoteCache `inject:""`
 	ProvisioningService ProvisioningService      `inject:""`
 	Login               *login.LoginService      `inject:""`
+	License             models.Licensing         `inject:""`
 }
 
 func (hs *HTTPServer) Init() error {

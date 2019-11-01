@@ -28,12 +28,11 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
     <CustomScrollbar autoHide>
       <LogRows
         logRows={sortedNewResults.rows}
-        hasUniqueLabels={sortedNewResults.hasUniqueLabels}
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
         showTime={showTime}
-        showLabels={false}
         timeZone={timeZone}
+        isLogsPanel={true}
       />
     </CustomScrollbar>
   );

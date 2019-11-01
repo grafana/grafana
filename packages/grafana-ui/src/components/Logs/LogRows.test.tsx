@@ -11,11 +11,9 @@ describe('LogRows', () => {
     const wrapper = mount(
       <LogRows
         logRows={rows}
-        hasUniqueLabels={false}
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
         showTime={false}
-        showLabels={false}
         timeZone={'utc'}
       />
     );
@@ -32,11 +30,9 @@ describe('LogRows', () => {
     const wrapper = mount(
       <LogRows
         logRows={rows}
-        hasUniqueLabels={false}
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
         showTime={false}
-        showLabels={false}
         timeZone={'utc'}
         previewLimit={1}
       />
@@ -62,11 +58,9 @@ describe('LogRows', () => {
       <LogRows
         logRows={rows}
         deduplicatedRows={dedupedRows}
-        hasUniqueLabels={false}
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
         showTime={false}
-        showLabels={false}
         timeZone={'utc'}
       />
     );
@@ -82,11 +76,9 @@ describe('LogRows', () => {
     const wrapper = mount(
       <LogRows
         logRows={rows}
-        hasUniqueLabels={false}
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
         showTime={false}
-        showLabels={false}
         timeZone={'utc'}
       />
     );
@@ -110,6 +102,7 @@ const makeLog = (overides: Partial<LogRowModel>): LogRowModel => {
     timeEpochMs: 1,
     timeLocal: '',
     timeUtc: '',
+    searchWords: [],
     ...overides,
   };
 };

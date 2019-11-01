@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// POST /api/tsdb/query/v2
+// POST /api/ds/query   DataSource query w/ expressions
 func (hs *HTTPServer) QueryMetricsV2(c *m.ReqContext, reqDto dtos.MetricRequest) Response {
 	if !setting.IsExpressionsEnabled() {
 		return Error(404, "Expressions feature toggle is not enabled", nil)

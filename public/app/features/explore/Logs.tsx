@@ -33,7 +33,6 @@ interface Props {
   logsMeta?: LogsMetaItem[];
   logsSeries?: GraphSeriesXY[];
   dedupedRows?: LogRowModel[];
-  hasUniqueLabels: boolean;
 
   width: number;
   highlighterExpressions: string[];
@@ -44,7 +43,8 @@ interface Props {
   scanRange?: RawTimeRange;
   dedupStrategy: LogsDedupStrategy;
   onChangeTime: (range: AbsoluteTimeRange) => void;
-  onClickLabel?: (label: string, value: string) => void;
+  onClickFilterLabel?: (key: string, value: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string) => void;
   onStartScanning?: () => void;
   onStopScanning?: () => void;
   onDedupStrategyChange: (dedupStrategy: LogsDedupStrategy) => void;
@@ -53,13 +53,11 @@ interface Props {
 }
 
 interface State {
-  showLabels: boolean;
   showTime: boolean;
 }
 
 export class Logs extends PureComponent<Props, State> {
   state = {
-    showLabels: false,
     showTime: true,
   };
 
@@ -69,15 +67,6 @@ export class Logs extends PureComponent<Props, State> {
       return onDedupStrategyChange(LogsDedupStrategy.none);
     }
     return onDedupStrategyChange(dedup);
-  };
-
-  onChangeLabels = (event?: React.SyntheticEvent) => {
-    const target = event && (event.target as HTMLInputElement);
-    if (target) {
-      this.setState({
-        showLabels: target.checked,
-      });
-    }
   };
 
   onChangeTime = (event?: React.SyntheticEvent) => {
@@ -115,7 +104,8 @@ export class Logs extends PureComponent<Props, State> {
       logsSeries,
       highlighterExpressions,
       loading = false,
-      onClickLabel,
+      onClickFilterLabel,
+      onClickFilterOutLabel,
       timeZone,
       scanning,
       scanRange,
@@ -123,14 +113,13 @@ export class Logs extends PureComponent<Props, State> {
       dedupedRows,
       absoluteRange,
       onChangeTime,
-      hasUniqueLabels,
     } = this.props;
 
     if (!logRows) {
       return null;
     }
 
-    const { showLabels, showTime } = this.state;
+    const { showTime } = this.state;
     const { dedupStrategy } = this.props;
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
@@ -171,7 +160,6 @@ export class Logs extends PureComponent<Props, State> {
         <div className="logs-panel-options">
           <div className="logs-panel-controls">
             <Switch label="Time" checked={showTime} onChange={this.onChangeTime} transparent />
-            <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
             <ToggleButtonGroup label="Dedup" transparent={true}>
               {Object.keys(LogsDedupStrategy).map((dedupType: string, i) => (
                 <ToggleButton
@@ -201,15 +189,14 @@ export class Logs extends PureComponent<Props, State> {
         )}
 
         <LogRows
-          hasUniqueLabels={hasUniqueLabels}
           logRows={logRows}
           deduplicatedRows={dedupedRows}
           dedupStrategy={dedupStrategy}
           getRowContext={this.props.getRowContext}
           highlighterExpressions={highlighterExpressions}
-          onClickLabel={onClickLabel}
           rowLimit={logRows ? logRows.length : undefined}
-          showLabels={showLabels}
+          onClickFilterLabel={onClickFilterLabel}
+          onClickFilterOutLabel={onClickFilterOutLabel}
           showTime={showTime}
           timeZone={timeZone}
         />

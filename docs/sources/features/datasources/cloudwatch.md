@@ -15,7 +15,7 @@ weight = 5
 
 Grafana ships with built in support for CloudWatch. You just have to add it as a data source and you will be ready to build dashboards for your CloudWatch metrics.
 
-## Adding the data source to Grafana
+## Adding the data source
 
 1. Open the side menu by clicking the Grafana icon in the top header.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
