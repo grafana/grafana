@@ -13,8 +13,8 @@ import (
 )
 
 // Parses the json queries and returns a requestQuery. The requstQuery has a 1 to 1 mapping to a query editor row
-func (e *CloudWatchExecutor) parseQueries(queryContext *tsdb.TsdbQuery) ([]*requestQuery, error) {
-	requestQueries := make([]*requestQuery, 0)
+func (e *CloudWatchExecutor) parseQueries(queryContext *tsdb.TsdbQuery) (map[string][]*requestQuery, error) {
+	requestQueries := make(map[string][]*requestQuery)
 
 	for i, model := range queryContext.Queries {
 		queryType := model.Model.Get("type").MustString()
@@ -23,11 +23,15 @@ func (e *CloudWatchExecutor) parseQueries(queryContext *tsdb.TsdbQuery) ([]*requ
 		}
 
 		RefID := queryContext.Queries[i].RefId
-		requestQuery, err := parseRequestQuery(queryContext.Queries[i].Model, RefID)
+		query, err := parseRequestQuery(queryContext.Queries[i].Model, RefID)
 		if err != nil {
 			return nil, &queryError{err, RefID}
 		}
-		requestQueries = append(requestQueries, requestQuery)
+		if _, ok := requestQueries[query.Region]; !ok {
+			requestQueries[query.Region] = make([]*requestQuery, 0)
+		}
+		requestQueries[query.Region] = append(requestQueries[query.Region], query)
+
 	}
 
 	return requestQueries, nil
