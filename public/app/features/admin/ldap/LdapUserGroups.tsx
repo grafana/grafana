@@ -18,7 +18,7 @@ export const LdapUserGroups: FC<Props> = ({ groups, showAttributeMapping }) => {
             <tr>
               {showAttributeMapping && <th>LDAP Group</th>}
               <th>
-                Organisation
+                Organization
                 <Tooltip placement="top" content="Only the first match for an Organisation will be used" theme={'info'}>
                   <span className="gf-form-help-icon">
                     <i className="fa fa-info-circle" />
