@@ -82,7 +82,7 @@ func (s *SocialGenericOAuth) IsOrganizationMember(client *http.Client) bool {
 }
 
 // searchJSONForAttr searches the provided JSON response for the given attribute
-// using the configured e-mail attribute path associated with the generic OAuth
+// using the configured attribute path associated with the generic OAuth
 // provider.
 // Returns an empty string if an e-mail address is not found.
 func (s *SocialGenericOAuth) searchJSONForAttr(attribute string, data []byte) string {
