@@ -2,7 +2,7 @@ import React, { PureComponent, ChangeEvent } from 'react';
 import { FormLabel, Select, Input, Button } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
 import { SelectableValue } from '@grafana/data';
-import DatasourceSrv, { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import CloudWatchDatasource from '../datasource';
 import { CloudWatchOptions } from '../types';
 
@@ -17,8 +17,6 @@ export interface State {
 }
 
 export class ConfigEditor extends PureComponent<Props, State> {
-  datasourceSrv: DatasourceSrv = null;
-
   constructor(props: Props) {
     super(props);
 
@@ -33,8 +31,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
       ],
       regions: [],
     };
-
-    this.datasourceSrv = getDatasourceSrv();
 
     this.updateDatasource(this.state.config);
   }
@@ -65,12 +61,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
     return options;
   };
 
-  componentDidMount() {
-    this.getRegions();
+  async componentDidMount() {
+    this.loadRegions();
   }
 
-  getRegions() {
-    this.datasourceSrv
+  loadRegions() {
+    getDatasourceSrv()
       .loadDatasource(this.state.config.name)
       .then((ds: CloudWatchDatasource) => {
         return ds.getRegions();
@@ -87,7 +83,45 @@ export class ConfigEditor extends PureComponent<Props, State> {
           });
         },
         (err: any) => {
-          console.error('failed to get latest regions');
+          const regions = [
+            'ap-east-1',
+            'ap-northeast-1',
+            'ap-northeast-2',
+            'ap-northeast-3',
+            'ap-south-1',
+            'ap-southeast-1',
+            'ap-southeast-2',
+            'ca-central-1',
+            'cn-north-1',
+            'cn-northwest-1',
+            'eu-central-1',
+            'eu-north-1',
+            'eu-west-1',
+            'eu-west-2',
+            'eu-west-3',
+            'me-south-1',
+            'sa-east-1',
+            'us-east-1',
+            'us-east-2',
+            'us-gov-east-1',
+            'us-gov-west-1',
+            'us-iso-east-1',
+            'us-isob-east-1',
+            'us-west-1',
+            'us-west-2',
+          ];
+
+          this.setState({
+            regions: regions.map((region: string) => {
+              return {
+                value: region,
+                label: region,
+              };
+            }),
+          });
+
+          // expected to fail when creating new datasource
+          // console.error('failed to get latest regions', err);
         }
       );
   }
@@ -99,35 +133,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
       }
     }
 
-    for (const m in config.jsonData) {
-      if (!config.hasOwnProperty('jsonData')) {
-        config.jsonData = {};
-      }
-      if (config.jsonData[m].length === 0) {
-        if (config.hasOwnProperty('jsonData') && config.jsonData.hasOwnProperty(m)) {
-          delete config.jsonData[m];
-        }
-      } else {
-        config.jsonData[m] = config.jsonData[m];
-      }
-    }
-
     for (const k in config.secureJsonData) {
       if (config.secureJsonData[k].length === 0) {
         delete config.secureJsonData[k];
-      }
-    }
-
-    for (const l in config.secureJsonData) {
-      if (!config.hasOwnProperty('secureJsonData')) {
-        config.secureJsonData = {};
-      }
-      if (config.secureJsonData[l].length === 0) {
-        if (config.hasOwnProperty('secureJsonData') && config.secureJsonData.hasOwnProperty(l)) {
-          delete config.secureJsonData[l];
-        }
-      } else {
-        config.secureJsonData[l] = config.secureJsonData[l];
       }
     }
 
