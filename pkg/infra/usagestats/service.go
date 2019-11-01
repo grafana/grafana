@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -23,6 +24,7 @@ type UsageStatsService struct {
 	Cfg      *setting.Cfg       `inject:""`
 	Bus      bus.Bus            `inject:""`
 	SQLStore *sqlstore.SqlStore `inject:""`
+	License  models.Licensing   `inject:""`
 
 	oauthProviders map[string]bool
 }
