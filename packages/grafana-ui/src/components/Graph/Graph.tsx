@@ -6,7 +6,7 @@ import uniqBy from 'lodash/uniqBy';
 import { TimeRange, GraphSeriesXY, TimeZone, DefaultTimeZone, createDimension } from '@grafana/data';
 import _ from 'lodash';
 import { FlotPosition, FlotItem } from './types';
-import { TooltipProps, TooltipContentProps, ActiveDimensions } from '../Chart/Tooltip';
+import { TooltipProps, TooltipContentProps, ActiveDimensions, Tooltip } from '../Chart/Tooltip';
 import { GraphTooltip, GraphTooltipOptions, GraphDimensions } from './GraphTooltip';
 
 export interface GraphProps {
@@ -118,7 +118,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       // @ts-ignore
       const childType = c && c.type && (c.type.displayName || c.type.name);
 
-      if (childType === 'ChartTooltip') {
+      if (childType === Tooltip.displayName) {
         tooltips.push(c);
       }
     });

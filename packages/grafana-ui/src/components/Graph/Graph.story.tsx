@@ -3,7 +3,6 @@ import { Graph } from './Graph';
 import { mockGraphData } from './mockGraphWithLegendData';
 import Chart from '../Chart';
 import { select } from '@storybook/addon-knobs';
-import { GraphTooltipMode } from './types';
 
 export default {
   title: 'Visualizations/Graph/Graph',
@@ -14,7 +13,7 @@ const props = mockGraphData();
 
 const getKnobs = () => {
   return {
-    tooltipMode: select<GraphTooltipMode>(
+    tooltipMode: select(
       'Tooltip mode',
       {
         multi: 'multi',

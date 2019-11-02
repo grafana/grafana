@@ -3,11 +3,18 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Types
-import { PanelEditorProps } from '@grafana/data';
-import { Switch, LegendOptions } from '@grafana/ui';
+import { PanelEditorProps, FieldConfig } from '@grafana/data';
+import {
+  Switch,
+  LegendOptions,
+  GraphTooltipOptions,
+  PanelOptionsGrid,
+  PanelOptionsGroup,
+  FieldPropertiesEditor,
+  Select,
+} from '@grafana/ui';
 import { Options, GraphOptions } from './types';
 import { GraphLegendEditor } from './GraphLegendEditor';
-import { FieldConfig } from '@grafana/data';
 
 export class GraphPanelEditor extends PureComponent<PanelEditorProps<Options>> {
   onGraphOptionsChange = (options: Partial<GraphOptions>) => {
