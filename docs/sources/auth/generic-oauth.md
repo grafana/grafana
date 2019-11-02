@@ -161,11 +161,11 @@ allowed_organizations =
 
 5.  Note down the "Application ID", this will be the OAuth client id.
 
-6.  Click "Settings", then click "Keys" and add a new entry under Passwords
-    - Key Description: Grafana OAuth
-    - Duration: Never Expires
+6.  Click "Certificates & secrets" and add a new entry under Client secrets
+    - Description: Grafana OAuth
+    - Expires: Never
 
-7.  Click Save then copy the key value, this will be the OAuth client secret.
+7.  Click Add then copy the key value, this will be the OAuth client secret.
 
 8.  Configure Grafana as follows:
 
@@ -211,9 +211,10 @@ allowed_organizations =
     allow_sign_up = true
     client_id = <OpenID Connect Client ID from Centrify>
     client_secret = <your generated OpenID Connect Client Sercret"
-    scopes = openid email name
+    scopes = openid profile email
     auth_url = https://<your domain>.my.centrify.com/OAuth2/Authorize/<Application ID>
     token_url = https://<your domain>.my.centrify.com/OAuth2/Token/<Application ID>
+    api_url = https://<your domain>.my.centrify.com/OAuth2/UserInfo/<Application ID>
     ```
 
 ## Set up OAuth2 with non-compliant providers

@@ -151,10 +151,16 @@ func HandleAlertsQuery(query *m.GetAlertsQuery) error {
 
 func deleteAlertDefinition(dashboardId int64, sess *DBSession) error {
 	alerts := make([]*m.Alert, 0)
-	sess.Where("dashboard_id = ?", dashboardId).Find(&alerts)
+	if err := sess.Where("dashboard_id = ?", dashboardId).Find(&alerts); err != nil {
+		return err
+	}
 
 	for _, alert := range alerts {
-		deleteAlertByIdInternal(alert.Id, "Dashboard deleted", sess)
+		if err := deleteAlertByIdInternal(alert.Id, "Dashboard deleted", sess); err != nil {
+			// If we return an error, the current transaction gets rolled back, so no use
+			// trying to delete more
+			return err
+		}
 	}
 
 	return nil
@@ -251,7 +257,11 @@ func deleteMissingAlerts(alerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *DBSe
 		}
 
 		if missing {
-			deleteAlertByIdInternal(missingAlert.Id, "Removed from dashboard", sess)
+			if err := deleteAlertByIdInternal(missingAlert.Id, "Removed from dashboard", sess); err != nil {
+				// No use trying to delete more, since we're in a transaction and it will be
+				// rolled back on error.
+				return err
+			}
 		}
 	}
 
@@ -320,10 +330,10 @@ func PauseAlert(cmd *m.PauseAlertCommand) error {
 		buffer.WriteString(`UPDATE alert SET state = ?, new_state_date = ?`)
 		if cmd.Paused {
 			params = append(params, string(m.AlertStatePaused))
-			params = append(params, timeNow())
+			params = append(params, timeNow().UTC())
 		} else {
 			params = append(params, string(m.AlertStateUnknown))
-			params = append(params, timeNow())
+			params = append(params, timeNow().UTC())
 		}
 
 		buffer.WriteString(` WHERE id IN (?` + strings.Repeat(",?", len(cmd.AlertIds)-1) + `)`)
@@ -351,7 +361,7 @@ func PauseAllAlerts(cmd *m.PauseAllAlertCommand) error {
 			newState = string(m.AlertStateUnknown)
 		}
 
-		res, err := sess.Exec(`UPDATE alert SET state = ?, new_state_date = ?`, newState, timeNow())
+		res, err := sess.Exec(`UPDATE alert SET state = ?, new_state_date = ?`, newState, timeNow().UTC())
 		if err != nil {
 			return err
 		}

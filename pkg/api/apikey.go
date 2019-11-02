@@ -1,11 +1,12 @@
 package api
 
 import (
+	"time"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/models"
-	"time"
 )
 
 func GetAPIKeys(c *models.ReqContext) Response {
@@ -61,7 +62,11 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 	}
 	cmd.OrgId = c.OrgId
 
-	newKeyInfo := apikeygen.New(cmd.OrgId, cmd.Name)
+	newKeyInfo, err := apikeygen.New(cmd.OrgId, cmd.Name)
+	if err != nil {
+		return Error(500, "Generating API key failed", err)
+	}
+
 	cmd.Key = newKeyInfo.HashedKey
 
 	if err := bus.Dispatch(&cmd); err != nil {

@@ -1,5 +1,6 @@
 import extend from 'lodash/extend';
-import { GrafanaTheme, getTheme, GrafanaThemeType, PanelPluginMeta, DataSourceInstanceSettings } from '@grafana/ui';
+import { getTheme } from '@grafana/ui';
+import { GrafanaTheme, GrafanaThemeType, PanelPluginMeta, DataSourceInstanceSettings } from '@grafana/data';
 
 export interface BuildInfo {
   version: string;
@@ -10,6 +11,10 @@ export interface BuildInfo {
   hasUpdate: boolean;
 }
 
+interface FeatureToggles {
+  transformations: boolean;
+  expressions: boolean;
+}
 export class GrafanaBootConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
@@ -41,6 +46,10 @@ export class GrafanaBootConfig {
   disableSanitizeHtml = false;
   theme: GrafanaTheme;
   pluginsToPreload: string[] = [];
+  featureToggles: FeatureToggles = {
+    transformations: false,
+    expressions: false,
+  };
 
   constructor(options: GrafanaBootConfig) {
     this.theme = options.bootData.user.lightTheme ? getTheme(GrafanaThemeType.Light) : getTheme(GrafanaThemeType.Dark);

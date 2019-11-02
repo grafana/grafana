@@ -1,5 +1,8 @@
-import { colors, getFlotPairs, getColorFromHexRgbOrName, getDisplayProcessor } from '@grafana/ui';
+import { colors } from '@grafana/ui';
 import {
+  getFlotPairs,
+  getColorFromHexRgbOrName,
+  getDisplayProcessor,
   NullValueMode,
   reduceField,
   FieldType,
@@ -21,7 +24,7 @@ export const getGraphSeriesModel = (
   const graphs: GraphSeriesXY[] = [];
 
   const displayProcessor = getDisplayProcessor({
-    field: {
+    config: {
       decimals: legendOptions.decimals,
     },
   });

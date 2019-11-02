@@ -11,4 +11,5 @@ require('ts-node').register({
   transpileOnly: true
 });
 
+
 require('../src/cli/index.ts').run(true);

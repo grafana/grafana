@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFoldernameReplacement(t *testing.T) {
+func TestFolderNameReplacement(t *testing.T) {
 	Convey("path containing git commit path", t, func() {
 		pluginName := "datasource-plugin-kairosdb"
 
@@ -48,6 +48,7 @@ func TestFoldernameReplacement(t *testing.T) {
 
 func TestExtractFiles(t *testing.T) {
 	t.Run("Should preserve file permissions for plugin backend binaries for linux and darwin", func(t *testing.T) {
+		skipWindows(t)
 		pluginDir, del := setupFakePluginsDir(t)
 		defer del()
 
@@ -95,6 +96,7 @@ func TestExtractFiles(t *testing.T) {
 	})
 
 	t.Run("Should extract symlinks if allowed", func(t *testing.T) {
+		skipWindows(t)
 		pluginDir, del := setupFakePluginsDir(t)
 		defer del()
 
@@ -119,18 +121,81 @@ func TestInstallPluginCommand(t *testing.T) {
 }
 
 func TestIsPathSafe(t *testing.T) {
+	dest := fmt.Sprintf("%stest%spath", string(os.PathSeparator), string(os.PathSeparator))
+
 	t.Run("Should be true on nested destinations", func(t *testing.T) {
-		assert.True(t, isPathSafe("dest", "/test/path"))
-		assert.True(t, isPathSafe("dest/one", "/test/path"))
-		assert.True(t, isPathSafe("../path/dest/one", "/test/path"))
+		assert.True(t, isPathSafe("dest", dest))
+		assert.True(t, isPathSafe("dest/one", dest))
+		assert.True(t, isPathSafe("../path/dest/one", dest))
 	})
 
 	t.Run("Should be false on destinations outside of path", func(t *testing.T) {
-		assert.False(t, isPathSafe("../dest", "/test/path"))
-		assert.False(t, isPathSafe("../../", "/test/path"))
-		assert.False(t, isPathSafe("../../test", "/test/path"))
+		assert.False(t, isPathSafe("../dest", dest))
+		assert.False(t, isPathSafe("../../", dest))
+		assert.False(t, isPathSafe("../../test", dest))
+	})
+}
+
+func TestSelectVersion(t *testing.T) {
+	t.Run("Should return error when requested version does not exist", func(t *testing.T) {
+		_, err := SelectVersion(
+			makePluginWithVersions(versionArg{Version: "version"}),
+			"1.1.1",
+		)
+		assert.NotNil(t, err)
 	})
 
+	t.Run("Should return error when no version supports current arch", func(t *testing.T) {
+		_, err := SelectVersion(
+			makePluginWithVersions(versionArg{Version: "version", Arch: []string{"non-existent"}}),
+			"",
+		)
+		assert.NotNil(t, err)
+	})
+
+	t.Run("Should return error when requested version does not support current arch", func(t *testing.T) {
+		_, err := SelectVersion(
+			makePluginWithVersions(
+				versionArg{Version: "2.0.0"},
+				versionArg{Version: "1.1.1", Arch: []string{"non-existent"}},
+			),
+			"1.1.1",
+		)
+		assert.NotNil(t, err)
+	})
+
+	t.Run("Should return latest available for arch when no version specified", func(t *testing.T) {
+		ver, err := SelectVersion(
+			makePluginWithVersions(
+				versionArg{Version: "2.0.0", Arch: []string{"non-existent"}},
+				versionArg{Version: "1.0.0"},
+			),
+			"",
+		)
+		assert.Nil(t, err)
+		assert.Equal(t, "1.0.0", ver.Version)
+	})
+
+	t.Run("Should return latest version when no version specified", func(t *testing.T) {
+		ver, err := SelectVersion(
+			makePluginWithVersions(versionArg{Version: "2.0.0"}, versionArg{Version: "1.0.0"}),
+			"",
+		)
+		assert.Nil(t, err)
+		assert.Equal(t, "2.0.0", ver.Version)
+	})
+
+	t.Run("Should return requested version", func(t *testing.T) {
+		ver, err := SelectVersion(
+			makePluginWithVersions(
+				versionArg{Version: "2.0.0"},
+				versionArg{Version: "1.0.0"},
+			),
+			"1.0.0",
+		)
+		assert.Nil(t, err)
+		assert.Equal(t, "1.0.0", ver.Version)
+	})
 }
 
 func setupPluginInstallCmd(t *testing.T, pluginDir string) utils.CommandLine {
@@ -188,4 +253,42 @@ func setupFakePluginsDir(t *testing.T) (string, func()) {
 		err = os.RemoveAll(dirname)
 		assert.Nil(t, err)
 	}
+}
+
+func skipWindows(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping test on Windows")
+	}
+}
+
+type versionArg struct {
+	Version string
+	Arch    []string
+}
+
+func makePluginWithVersions(versions ...versionArg) *models.Plugin {
+	plugin := &models.Plugin{
+		Id:       "",
+		Category: "",
+		Versions: []models.Version{},
+	}
+
+	for _, version := range versions {
+		ver := models.Version{
+			Version: version.Version,
+			Commit:  fmt.Sprintf("commit_%s", version.Version),
+			Url:     fmt.Sprintf("url_%s", version.Version),
+		}
+		if version.Arch != nil {
+			ver.Arch = map[string]models.ArchMeta{}
+			for _, arch := range version.Arch {
+				ver.Arch[arch] = models.ArchMeta{
+					Md5: fmt.Sprintf("md5_%s", arch),
+				}
+			}
+		}
+		plugin.Versions = append(plugin.Versions, ver)
+	}
+
+	return plugin
 }

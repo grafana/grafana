@@ -20,18 +20,16 @@ const setup = (propOverrides?: object) => {
       basicAuthPassword: '',
       withCredentials: false,
       isDefault: false,
-      jsonData: {
-        azureLogAnalyticsSameAs: false,
-      },
       secureJsonFields: {
         logAnalyticsClientSecret: false,
       },
-      editorJsonData: {
+      jsonData: {
+        azureLogAnalyticsSameAs: false,
         logAnalyticsDefaultWorkspace: '',
         logAnalyticsClientSecret: '',
         logAnalyticsTenantId: '',
       },
-      editorSecureJsonData: {
+      secureJsonData: {
         logAnalyticsClientSecret: '',
       },
       version: 1,
@@ -67,7 +65,7 @@ describe('Render', () => {
 
   it('should enable azure log analytics load workspaces button', () => {
     const wrapper = setup({
-      editorJsonData: {
+      jsonData: {
         logAnalyticsDefaultWorkspace: '',
         logAnalyticsTenantId: 'e7f3f661-a933-4b3f-8176-51c4f982ec48',
         logAnalyticsClientId: '44693801-6ee6-49de-9b2d-9106972f9572',

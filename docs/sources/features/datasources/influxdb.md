@@ -25,11 +25,11 @@ Grafana ships with very feature rich data source plugin for InfluxDB. Supporting
 
 Name | Description
 ------------ | -------------
-*Name* | The data source name. This is how you refer to the data source in panels & queries.
+*Name* | The data source name. This is how you refer to the data source in panels and queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
-*Url* | The http protocol, ip and port of you influxdb api (influxdb api port is by default 8086)
+*Url* | The HTTP protocol, IP address and port of your InfluxDB API (InfluxDB API port is by default 8086)
 *Access* | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
-*Database* | Name of your influxdb database
+*Database* | Name of your InfluxDB database
 *User* | Name of your database user
 *Password* | Database user's password
 *HTTP mode* | How to query the database (`GET` or `POST` HTTP verb). The `POST` verb allows heavy queries that would return an error using the `GET` verb. Default is `GET`.
@@ -76,7 +76,7 @@ the tag key and select `--remove tag filter--`.
 You can type in regex patterns for metric names or tag filter values, be sure to wrap the regex pattern in forward slashes (`/`). Grafana
 will automatically adjust the filter tag condition to use the InfluxDB regex match condition operator (`=~`).
 
-### Field & Aggregation functions
+### Field and Aggregation functions
 In the `SELECT` row you can specify what fields and functions you want to use. If you have a
 group by time you need an aggregation function. Some functions like derivative require an aggregation function. The editor tries simplify and unify this part of the query. For example:<br>
 ![](/img/docs/influxdb/select_editor.png)<br>
@@ -216,11 +216,11 @@ For InfluxDB you need to enter a query like in the above example. You need to ha
 part. If you only select one column you will not need to enter anything in the column mapping fields. The
 Tags field can be a comma separated string.
 
-## Configure the Datasource with Provisioning
+## Configure the data source with provisioning
 
-It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources)
 
-Here are some provisioning examples for this datasource.
+Here are some provisioning examples for this dat asource.
 
 ```yaml
 apiVersion: 1

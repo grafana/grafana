@@ -179,6 +179,9 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		"exploreEnabled":             setting.ExploreEnabled,
 		"googleAnalyticsId":          setting.GoogleAnalyticsId,
 		"disableLoginForm":           setting.DisableLoginForm,
+		"disableUserSignUp":          !setting.AllowUserSignUp,
+		"loginHint":                  setting.LoginHint,
+		"passwordHint":               setting.PasswordHint,
 		"externalUserMngInfo":        setting.ExternalUserMngInfo,
 		"externalUserMngLinkUrl":     setting.ExternalUserMngLinkUrl,
 		"externalUserMngLinkName":    setting.ExternalUserMngLinkName,
@@ -193,8 +196,13 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 			"latestVersion": plugins.GrafanaLatestVersion,
 			"hasUpdate":     plugins.GrafanaHasUpdate,
 			"env":           setting.Env,
-			"isEnterprise":  setting.IsEnterprise,
+			"isEnterprise":  hs.License.HasValidLicense(),
 		},
+		"licenseInfo": map[string]interface{}{
+			"hasLicense": hs.License.HasLicense(),
+			"expiry":     hs.License.Expiry(),
+		},
+		"featureToggles": hs.Cfg.FeatureToggles,
 	}
 
 	return jsonObj, nil

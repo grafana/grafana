@@ -1,5 +1,5 @@
 # Golang build container
-FROM golang:1.12.9-alpine
+FROM golang:1.13.1-alpine
 
 RUN apk add --no-cache gcc g++
 
@@ -62,7 +62,8 @@ ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bi
 
 WORKDIR $GF_PATHS_HOME
 
-RUN apk add --no-cache ca-certificates bash
+RUN apk add --no-cache ca-certificates bash tzdata && \
+    apk add --no-cache --upgrade --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main openssl musl-utils
 
 COPY conf ./conf
 

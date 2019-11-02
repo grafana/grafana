@@ -1,13 +1,17 @@
 .icon-margin-right {
   margin-right: 0.25em;
+
+  @media only screen and (max-width: 1320px) {
+    margin-right: 0;
+  }
 }
 
 .icon-margin-left {
   margin-left: 0.25em;
-}
 
-.run-icon {
-  transform: rotate(90deg);
+  @media only screen and (max-width: 1320px) {
+    margin-left: 0;
+  }
 }
 
 .datasource-picker {
@@ -104,6 +108,18 @@
   }
 }
 
+@media only screen and (max-width: 1400px) {
+  .explore-toolbar.splitted {
+    .explore-toolbar-content-item {
+      .navbar-button {
+        span {
+          display: none;
+        }
+      }
+    }
+  }
+}
+
 @media only screen and (max-width: 1070px) {
   .timepicker {
     .timepicker-rangestring {
@@ -118,7 +134,16 @@
   .explore-toolbar.splitted {
     .explore-toolbar-content-item {
       padding: 2px 0;
-      margin: 0;
+    }
+  }
+}
+
+@media only screen and (max-width: 788px) {
+  .explore-toolbar {
+    .explore-toolbar-content-item {
+      .navbar-button span {
+        display: none;
+      }
     }
   }
 }
@@ -127,6 +152,29 @@
   .explore-toolbar-content-item:first-child {
     padding-left: 2px;
     margin-right: 0;
+  }
+}
+
+.explore-icon-align {
+  .navbar-button {
+    i {
+      position: relative;
+      top: -1px;
+
+      @media only screen and (max-width: 1320px) {
+        margin: 0 -3px;
+      }
+    }
+  }
+}
+
+.explore-toolbar.splitted {
+  .explore-icon-align {
+    .navbar-button {
+      i {
+        margin: 0 -3px;
+      }
+    }
   }
 }
 
@@ -225,6 +273,7 @@
   from {
     color: $text-color-faint;
   }
+
   to {
     color: $blue;
   }
@@ -270,64 +319,80 @@
   border-bottom: 2px solid $body-bg;
   height: 2em;
 }
+
 .ReactTable .rt-thead.-header .rt-th {
   text-align: left;
   color: $blue;
   font-weight: $font-weight-semi-bold;
 }
+
 .ReactTable .rt-thead .rt-td,
 .ReactTable .rt-thead .rt-th {
   padding: 0.45em 0 0.45em 1.1em;
   border-right: none;
   box-shadow: none;
 }
+
 .ReactTable .rt-tbody .rt-td {
   padding: 0.45em 0 0.45em 1.1em;
   border-bottom: 2px solid $body-bg;
   border-right: 2px solid $body-bg;
 }
+
 .ReactTable .rt-tbody .rt-td:last-child {
   border-right: none;
 }
+
 .ReactTable .-pagination {
   border-top: none;
   box-shadow: none;
   margin-top: $space-sm;
 }
+
 .ReactTable .-pagination .-btn {
   color: $blue;
   background: $list-item-bg;
 }
+
 .ReactTable .-pagination input,
 .ReactTable .-pagination select {
   color: $input-color;
   background-color: $input-bg;
 }
+
 .ReactTable .-loading {
   background: $input-bg;
 }
+
 .ReactTable .-loading.-active {
   opacity: 0.8;
 }
+
 .ReactTable .-loading > div {
   color: $input-color;
 }
+
 .ReactTable .rt-tr .rt-td:last-child {
   text-align: right;
 }
+
 .ReactTable .rt-noData {
   top: 60px;
   z-index: inherit;
 }
 
-// React-component cascade fix: show "loading" even though item can expand
-
+// React-component cascade fix: show "loading" when loading children
 .rc-cascader-menu-item-loading:after {
   position: absolute;
   right: 12px;
   content: 'loading';
   color: #767980;
   font-style: italic;
+}
+
+// React-component cascade fix: vertical alignment issue with Safari
+.rc-cascader-menu {
+  vertical-align: top;
 }
 
 // TODO Experimental
@@ -341,17 +406,13 @@
   font-size: $font-size-h3;
 }
 
-.cheat-sheet-item__expression {
+.cheat-sheet-item__example {
   margin: $space-xs 0;
   cursor: pointer;
 }
 
 .query-type-toggle {
   margin-left: 5px;
-
-  .toggle-button-group {
-    padding-top: 2px;
-  }
 
   .btn.active {
     background-color: $input-bg;

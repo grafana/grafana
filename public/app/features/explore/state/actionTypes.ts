@@ -1,10 +1,21 @@
 // Types
+import { Unsubscribable } from 'rxjs';
 import { Emitter } from 'app/core/core';
-import { DataQuery, DataSourceSelectItem, DataSourceApi, QueryFixAction, PanelData } from '@grafana/ui';
 
-import { LogLevel, TimeRange, LoadingState, AbsoluteTimeRange } from '@grafana/data';
-import { ExploreId, ExploreItemState, HistoryItem, ExploreUIState, ExploreMode } from 'app/types/explore';
-import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
+import {
+  DataQuery,
+  DataSourceSelectItem,
+  DataSourceApi,
+  QueryFixAction,
+  PanelData,
+  HistoryItem,
+  LogLevel,
+  TimeRange,
+  LoadingState,
+  AbsoluteTimeRange,
+} from '@grafana/data';
+import { ExploreId, ExploreItemState, ExploreUIState, ExploreMode } from 'app/types/explore';
+import { actionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
 
 /**  Higher order actions
  *
@@ -12,6 +23,7 @@ import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'a
 export enum ActionTypes {
   SplitOpen = 'explore/SPLIT_OPEN',
   ResetExplore = 'explore/RESET_EXPLORE',
+  SyncTimes = 'explore/SYNC_TIMES',
 }
 export interface SplitOpenAction {
   type: ActionTypes.SplitOpen;
@@ -25,6 +37,10 @@ export interface ResetExploreAction {
   payload: {};
 }
 
+export interface SyncTimesAction {
+  type: ActionTypes.SyncTimes;
+  payload: { syncedTimes: boolean };
+}
 /**  Lower order actions
  *
  */
@@ -61,6 +77,14 @@ export interface ClearQueriesPayload {
   exploreId: ExploreId;
 }
 
+export interface ClearOriginPayload {
+  exploreId: ExploreId;
+}
+
+export interface ClearRefreshIntervalPayload {
+  exploreId: ExploreId;
+}
+
 export interface HighlightLogsExpressionPayload {
   exploreId: ExploreId;
   expressions: string[];
@@ -74,6 +98,7 @@ export interface InitializeExplorePayload {
   range: TimeRange;
   mode: ExploreMode;
   ui: ExploreUIState;
+  originPanelId: number;
 }
 
 export interface LoadDatasourceMissingPayload {
@@ -90,19 +115,6 @@ export interface LoadDatasourceReadyPayload {
   history: HistoryItem[];
 }
 
-export interface TestDatasourcePendingPayload {
-  exploreId: ExploreId;
-}
-
-export interface TestDatasourceFailurePayload {
-  exploreId: ExploreId;
-  error: string;
-}
-
-export interface TestDatasourceSuccessPayload {
-  exploreId: ExploreId;
-}
-
 export interface ModifyQueriesPayload {
   exploreId: ExploreId;
   modification: QueryFixAction;
@@ -117,6 +129,11 @@ export interface QueryStartPayload {
 export interface QueryEndedPayload {
   exploreId: ExploreId;
   response: PanelData;
+}
+
+export interface QueryStoreSubscriptionPayload {
+  exploreId: ExploreId;
+  querySubscription: Unsubscribable;
 }
 
 export interface HistoryUpdatedPayload {
@@ -148,6 +165,10 @@ export interface SplitCloseActionPayload {
 
 export interface SplitOpenPayload {
   itemState: ExploreItemState;
+}
+
+export interface SyncTimesPayload {
+  syncedTimes: boolean;
 }
 
 export interface ToggleTablePayload {
@@ -202,6 +223,10 @@ export interface SetPausedStatePayload {
   isPaused: boolean;
 }
 
+export interface ResetExplorePayload {
+  force?: boolean;
+}
+
 /**
  * Adds a query row after the row with the given index.
  */
@@ -235,6 +260,11 @@ export const changeRefreshIntervalAction = actionCreatorFactory<ChangeRefreshInt
  * Clear all queries and results.
  */
 export const clearQueriesAction = actionCreatorFactory<ClearQueriesPayload>('explore/CLEAR_QUERIES').create();
+
+/**
+ * Clear origin panel id.
+ */
+export const clearOriginAction = actionCreatorFactory<ClearOriginPayload>('explore/CLEAR_ORIGIN').create();
 
 /**
  * Highlight expressions in the log results
@@ -289,6 +319,10 @@ export const queryStreamUpdatedAction = actionCreatorFactory<QueryEndedPayload>(
   'explore/QUERY_STREAM_UPDATED'
 ).create();
 
+export const queryStoreSubscriptionAction = actionCreatorFactory<QueryStoreSubscriptionPayload>(
+  'explore/QUERY_STORE_SUBSCRIPTION'
+).create();
+
 /**
  * Remove query row of the given index, as well as associated query results.
  */
@@ -324,6 +358,7 @@ export const splitCloseAction = actionCreatorFactory<SplitCloseActionPayload>('e
  */
 export const splitOpenAction = actionCreatorFactory<SplitOpenPayload>('explore/SPLIT_OPEN').create();
 
+export const syncTimesAction = actionCreatorFactory<SyncTimesPayload>('explore/SYNC_TIMES').create();
 /**
  * Update state of Explores UI elements (panels visiblity and deduplication  strategy)
  */
@@ -351,17 +386,8 @@ export const toggleLogLevelAction = actionCreatorFactory<ToggleLogLevelPayload>(
 /**
  * Resets state for explore.
  */
-export const resetExploreAction = noPayloadActionCreatorFactory('explore/RESET_EXPLORE').create();
+export const resetExploreAction = actionCreatorFactory<ResetExplorePayload>('explore/RESET_EXPLORE').create();
 export const queriesImportedAction = actionCreatorFactory<QueriesImportedPayload>('explore/QueriesImported').create();
-export const testDataSourcePendingAction = actionCreatorFactory<TestDatasourcePendingPayload>(
-  'explore/TEST_DATASOURCE_PENDING'
-).create();
-export const testDataSourceSuccessAction = actionCreatorFactory<TestDatasourceSuccessPayload>(
-  'explore/TEST_DATASOURCE_SUCCESS'
-).create();
-export const testDataSourceFailureAction = actionCreatorFactory<TestDatasourceFailurePayload>(
-  'explore/TEST_DATASOURCE_FAILURE'
-).create();
 export const loadExploreDatasources = actionCreatorFactory<LoadExploreDataSourcesPayload>(
   'explore/LOAD_EXPLORE_DATASOURCES'
 ).create();
@@ -382,4 +408,5 @@ export type HigherOrderAction =
   | ActionOf<SplitCloseActionPayload>
   | SplitOpenAction
   | ResetExploreAction
+  | SyncTimesAction
   | ActionOf<any>;

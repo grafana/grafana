@@ -5,6 +5,9 @@ import { IQService } from 'angular';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+//Types
+import { PostgresQueryForInterpolation } from './types';
+import { interpolateSearchFilter } from '../../../features/templating/variable';
 
 export class PostgresDatasource {
   id: any;
@@ -48,6 +51,21 @@ export class PostgresDatasource {
     });
     return quotedValues.join(',');
   };
+
+  interpolateVariablesInQueries(queries: PostgresQueryForInterpolation[]): PostgresQueryForInterpolation[] {
+    let expandedQueries = queries;
+    if (queries && queries.length > 0) {
+      expandedQueries = queries.map(query => {
+        const expandedQuery = {
+          ...query,
+          datasource: this.name,
+          rawSql: this.templateSrv.replace(query.rawSql, {}, this.interpolateVariable),
+        };
+        return expandedQuery;
+      });
+    }
+    return expandedQueries;
+  }
 
   query(options: any) {
     const queries = _.filter(options.targets, target => {
@@ -115,10 +133,17 @@ export class PostgresDatasource {
       refId = optionalOptions.variable.name;
     }
 
+    const rawSql = interpolateSearchFilter({
+      query: this.templateSrv.replace(query, {}, this.interpolateVariable),
+      options: optionalOptions,
+      wildcardChar: '%',
+      quoteLiteral: true,
+    });
+
     const interpolatedQuery = {
       refId: refId,
       datasourceId: this.id,
-      rawSql: this.templateSrv.replace(query, {}, this.interpolateVariable),
+      rawSql,
       format: 'table',
     };
 
@@ -159,5 +184,20 @@ export class PostgresDatasource {
           return { status: 'error', message: err.status };
         }
       });
+  }
+
+  targetContainsTemplate(target: any) {
+    let rawSql = '';
+
+    if (target.rawQuery) {
+      rawSql = target.rawSql;
+    } else {
+      const query = new PostgresQuery(target);
+      rawSql = query.buildQuery();
+    }
+
+    rawSql = rawSql.replace('$__', '');
+
+    return this.templateSrv.variableExists(rawSql);
   }
 }

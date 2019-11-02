@@ -206,6 +206,7 @@ var (
 	S3TempImageStoreSecretKey string
 
 	ImageUploadProvider string
+	FeatureToggles      map[string]bool
 )
 
 // TODO move all global vars to this struct
@@ -243,6 +244,7 @@ type Cfg struct {
 	MetricsEndpointEnabled           bool
 	MetricsEndpointBasicAuthUsername string
 	MetricsEndpointBasicAuthPassword string
+	MetricsEndpointDisableTotalStats bool
 	PluginsEnableAlpha               bool
 	PluginsAppsSkipVerifyTLS         bool
 	DisableSanitizeHtml              bool
@@ -266,6 +268,8 @@ type Cfg struct {
 	EditorsCanAdmin bool
 
 	ApiKeyMaxSecondsToLive int64
+
+	FeatureToggles map[string]bool
 }
 
 type CommandLineArgs struct {
@@ -367,7 +371,7 @@ func applyCommandLineDefaultProperties(props map[string]string, file *ini.File) 
 func applyCommandLineProperties(props map[string]string, file *ini.File) {
 	for _, section := range file.Sections() {
 		sectionName := section.Name() + "."
-		if section.Name() == ini.DEFAULT_SECTION {
+		if section.Name() == ini.DefaultSection {
 			sectionName = ""
 		}
 		for _, key := range section.Keys() {
@@ -905,6 +909,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
+	cfg.MetricsEndpointDisableTotalStats = iniFile.Section("metrics").Key("disable_total_stats").MustBool(false)
 
 	analytics := iniFile.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
@@ -940,6 +945,18 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	pluginsSection := iniFile.Section("plugins")
 	cfg.PluginsEnableAlpha = pluginsSection.Key("enable_alpha").MustBool(false)
 	cfg.PluginsAppsSkipVerifyTLS = pluginsSection.Key("app_tls_skip_verify_insecure").MustBool(false)
+
+	// Read and populate feature toggles list
+	featureTogglesSection := iniFile.Section("feature_toggles")
+	cfg.FeatureToggles = make(map[string]bool)
+	featuresTogglesStr, err := valueAsString(featureTogglesSection, "enable", "")
+	if err != nil {
+		return err
+	}
+	for _, feature := range util.SplitString(featuresTogglesStr) {
+		cfg.FeatureToggles[feature] = true
+	}
+	FeatureToggles = cfg.FeatureToggles
 
 	// check old location for this option
 	if panelsSection.Key("enable_alpha").MustBool(false) {
@@ -1076,4 +1093,12 @@ func (cfg *Cfg) LogConfigSources() {
 	cfg.Logger.Info("Path Plugins", "path", PluginsPath)
 	cfg.Logger.Info("Path Provisioning", "path", cfg.ProvisioningPath)
 	cfg.Logger.Info("App mode " + Env)
+}
+
+func IsExpressionsEnabled() bool {
+	v, ok := FeatureToggles["expressions"]
+	if !ok {
+		return false
+	}
+	return v
 }

@@ -32,10 +32,12 @@ func TestDatabaseStorageGarbageCollection(t *testing.T) {
 	assert.Equal(t, err, nil)
 
 	// insert object that should never expire
-	db.Set("key4", obj, 0)
+	err = db.Set("key4", obj, 0)
+	assert.Equal(t, err, nil)
 
 	getTime = time.Now
-	db.Set("key5", obj, 1000*time.Second)
+	err = db.Set("key5", obj, 1000*time.Second)
+	assert.Equal(t, err, nil)
 
 	//run GC
 	db.internalRunGC()

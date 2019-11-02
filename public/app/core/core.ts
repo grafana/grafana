@@ -16,7 +16,7 @@ import './utils/outline';
 import './components/colorpicker/spectrum_picker';
 import './services/search_srv';
 import './services/ng_react';
-import { colors } from '@grafana/ui/';
+import { colors, JsonExplorer } from '@grafana/ui/';
 
 import { searchDirective } from './components/search/search';
 import { infoPopover } from './components/info_popover';
@@ -37,8 +37,6 @@ import appEvents from './app_events';
 import { assignModelProperties } from './utils/model_utils';
 import { contextSrv } from './services/context_srv';
 import { KeybindingSrv } from './services/keybindingSrv';
-import { helpModal } from './components/help/help';
-import { JsonExplorer } from './components/json_explorer/json_explorer';
 import { NavModelSrv } from './nav_model_srv';
 import { geminiScrollbar } from './components/scroll/scroll';
 import { orgSwitcher } from './components/org_switcher';
@@ -70,7 +68,6 @@ export {
   assignModelProperties,
   contextSrv,
   KeybindingSrv,
-  helpModal,
   JsonExplorer,
   NavModelSrv,
   NavModel,

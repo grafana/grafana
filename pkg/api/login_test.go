@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -52,18 +51,6 @@ func getBody(resp *httptest.ResponseRecorder) (string, error) {
 	return string(responseData), nil
 }
 
-func getJSONbody(resp *httptest.ResponseRecorder) (interface{}, error) {
-	var j interface{}
-
-	err := json.Unmarshal(resp.Body.Bytes(), &j)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return j, nil
-}
-
 func TestLoginErrorCookieApiEndpoint(t *testing.T) {
 	mockSetIndexViewData()
 	defer resetSetIndexViewData()
@@ -73,7 +60,8 @@ func TestLoginErrorCookieApiEndpoint(t *testing.T) {
 
 	sc := setupScenarioContext("/login")
 	hs := &HTTPServer{
-		Cfg: setting.NewCfg(),
+		Cfg:     setting.NewCfg(),
+		License: models.OSSLicensingService{},
 	}
 
 	sc.defaultHandler = Wrap(func(w http.ResponseWriter, c *models.ReqContext) {
@@ -122,7 +110,8 @@ func TestLoginOAuthRedirect(t *testing.T) {
 
 	sc := setupScenarioContext("/login")
 	hs := &HTTPServer{
-		Cfg: setting.NewCfg(),
+		Cfg:     setting.NewCfg(),
+		License: models.OSSLicensingService{},
 	}
 
 	sc.defaultHandler = Wrap(func(c *models.ReqContext) {

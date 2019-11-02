@@ -1,14 +1,12 @@
 import React, { PureComponent } from 'react';
 import {
-  PanelEditorProps,
   PanelOptionsGrid,
   ValueMappingsEditor,
   FieldDisplayEditor,
-  FieldDisplayOptions,
   FieldPropertiesEditor,
   PanelOptionsGroup,
 } from '@grafana/ui';
-import { ValueMapping, FieldConfig } from '@grafana/data';
+import { ValueMapping, FieldConfig, PanelEditorProps, FieldDisplayOptions } from '@grafana/data';
 
 import { PieChartOptionsBox } from './PieChartOptionsBox';
 import { PieChartOptions } from './types';
@@ -36,7 +34,7 @@ export class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChart
   };
 
   render() {
-    const { onOptionsChange, options } = this.props;
+    const { onOptionsChange, options, data } = this.props;
     const { fieldOptions } = options;
     const { defaults } = fieldOptions;
 
@@ -51,7 +49,7 @@ export class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChart
             <FieldPropertiesEditor showMinMax={true} onChange={this.onDefaultsChange} value={defaults} />
           </PanelOptionsGroup>
 
-          <PieChartOptionsBox onOptionsChange={onOptionsChange} options={options} />
+          <PieChartOptionsBox data={data} onOptionsChange={onOptionsChange} options={options} />
         </PanelOptionsGrid>
 
         <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />

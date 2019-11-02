@@ -10,8 +10,7 @@ import { UrlQueryMap } from '@grafana/runtime';
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
 import { importAppPlugin } from './plugin_loader';
-import { AppPlugin, AppPluginMeta, PluginType } from '@grafana/ui';
-import { NavModel } from '@grafana/data';
+import { AppPlugin, AppPluginMeta, PluginType, NavModel, AppEvents } from '@grafana/data';
 import { getLoadingNav } from './PluginPage';
 import { getNotFoundNav, getWarningNav } from 'app/core/nav_model_srv';
 import { appEvents } from 'app/core/core';
@@ -58,7 +57,7 @@ class AppRootPage extends Component<Props, State> {
       const app = await getPluginSettings(pluginId).then(info => {
         const error = getAppPluginPageError(info);
         if (error) {
-          appEvents.emit('alert-error', [error]);
+          appEvents.emit(AppEvents.alertError, [error]);
           this.setState({ nav: getWarningNav(error) });
           return null;
         }

@@ -1,4 +1,4 @@
-import { DataSourcePlugin } from '@grafana/ui';
+import { DataSourcePlugin } from '@grafana/data';
 import { TestDataDataSource } from './datasource';
 import { TestDataQueryCtrl } from './query_ctrl';
 import { TestInfoTab } from './TestInfoTab';

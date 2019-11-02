@@ -8,17 +8,27 @@ import coreModule from 'app/core/core_module';
 import { store } from 'app/store/store';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
+import { ErrorBoundaryAlert } from '@grafana/ui';
+import { GrafanaRootScope } from './GrafanaCtrl';
 
 function WrapInProvider(store: any, Component: any, props: any) {
   return (
     <Provider store={store}>
-      <Component {...props} />
+      <ErrorBoundaryAlert style="page">
+        <Component {...props} />
+      </ErrorBoundaryAlert>
     </Provider>
   );
 }
 
 /** @ngInject */
-export function reactContainer($route: any, $location: any, $injector: any, $rootScope: any, contextSrv: ContextSrv) {
+export function reactContainer(
+  $route: any,
+  $location: any,
+  $injector: any,
+  $rootScope: GrafanaRootScope,
+  contextSrv: ContextSrv
+) {
   return {
     restrict: 'E',
     template: '',

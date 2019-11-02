@@ -73,6 +73,13 @@ func TestLDAPLogin(t *testing.T) {
 type mockAuth struct {
 	validLogin  bool
 	loginCalled bool
+	pingCalled  bool
+}
+
+func (auth *mockAuth) Ping() ([]*multildap.ServerStatus, error) {
+	auth.pingCalled = true
+
+	return nil, nil
 }
 
 func (auth *mockAuth) Login(query *models.LoginUserQuery) (

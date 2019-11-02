@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { colors, getFlotPairs, ansicolor } from '@grafana/ui';
+import { colors, ansicolor } from '@grafana/ui';
 
 import {
   Labels,
@@ -21,9 +21,12 @@ import {
   NullValueMode,
   toDataFrame,
   FieldCache,
+  FieldWithIndex,
+  getFlotPairs,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
+import { sortInAscendingOrder } from 'app/core/utils/explore';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 
 export const LogLevelColor = {
@@ -54,12 +57,12 @@ function isDuplicateRow(row: LogRowModel, other: LogRowModel, strategy: LogsDedu
   }
 }
 
-export function dedupLogRows(logs: LogsModel, strategy: LogsDedupStrategy): LogsModel {
+export function dedupLogRows(rows: LogRowModel[], strategy: LogsDedupStrategy): LogRowModel[] {
   if (strategy === LogsDedupStrategy.none) {
-    return logs;
+    return rows;
   }
 
-  const dedupedRows = logs.rows.reduce((result: LogRowModel[], row: LogRowModel, index, list) => {
+  return rows.reduce((result: LogRowModel[], row: LogRowModel, index) => {
     const rowCopy = { ...row };
     const previous = result[result.length - 1];
     if (index > 0 && isDuplicateRow(row, previous, strategy)) {
@@ -70,29 +73,16 @@ export function dedupLogRows(logs: LogsModel, strategy: LogsDedupStrategy): Logs
     }
     return result;
   }, []);
-
-  return {
-    ...logs,
-    rows: dedupedRows,
-  };
 }
 
-export function filterLogLevels(logs: LogsModel, hiddenLogLevels: Set<LogLevel>): LogsModel {
+export function filterLogLevels(logRows: LogRowModel[], hiddenLogLevels: Set<LogLevel>): LogRowModel[] {
   if (hiddenLogLevels.size === 0) {
-    return logs;
+    return logRows;
   }
 
-  const filteredRows = logs.rows.reduce((result: LogRowModel[], row: LogRowModel, index, list) => {
-    if (!hiddenLogLevels.has(row.logLevel)) {
-      result.push(row);
-    }
-    return result;
-  }, []);
-
-  return {
-    ...logs,
-    rows: filteredRows,
-  };
+  return logRows.filter((row: LogRowModel) => {
+    return !hiddenLogLevels.has(row.logLevel);
+  });
 }
 
 export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): GraphSeriesXY[] {
@@ -106,7 +96,8 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
   const bucketSize = intervalMs * 10;
   const seriesList: any[] = [];
 
-  for (const row of rows) {
+  const sortedRows = rows.sort(sortInAscendingOrder);
+  for (const row of sortedRows) {
     let series = seriesByLevel[row.logLevel];
 
     if (!series) {
@@ -120,8 +111,9 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
       seriesList.push(series);
     }
 
-    // align time to bucket size
-    const time = Math.round(row.timeEpochMs / bucketSize) * bucketSize;
+    // align time to bucket size - used Math.floor for calculation as time of the bucket
+    // must be in the past (before Date.now()) to be displayed on the graph
+    const time = Math.floor(row.timeEpochMs / bucketSize) * bucketSize;
 
     // Entry for time
     if (time === series.lastTs) {
@@ -243,9 +235,10 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
       hasUniqueLabels = true;
     }
 
-    const timeFieldIndex = fieldCache.getFirstFieldOfType(FieldType.time);
+    const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
     const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
     const logLevelField = fieldCache.getFieldByName('level');
+    const idField = getIdField(fieldCache);
 
     let seriesLogLevel: LogLevel | undefined = undefined;
     if (series.labels && Object.keys(series.labels).indexOf('level') !== -1) {
@@ -253,14 +246,16 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
     }
 
     for (let j = 0; j < series.length; j++) {
-      const ts = timeFieldIndex.values.get(j);
+      const ts = timeField.values.get(j);
       const time = dateTime(ts);
       const timeEpochMs = time.valueOf();
       const timeFromNow = time.fromNow();
       const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
       const timeUtc = toUtc(ts).format('YYYY-MM-DD HH:mm:ss');
 
-      const message = stringField.values.get(j);
+      let message = stringField.values.get(j);
+      // This should be string but sometimes isn't (eg elastic) because the dataFrame is not strongly typed.
+      message = typeof message === 'string' ? message : JSON.stringify(message);
 
       let logLevel = LogLevel.unknown;
       if (logLevelField) {
@@ -286,6 +281,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
         raw: message,
         labels: series.labels,
         timestamp: ts,
+        uid: idField ? idField.values.get(j) : j.toString(),
       });
     }
   }
@@ -315,4 +311,15 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
     meta,
     rows,
   };
+}
+
+function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {
+  const idFieldNames = ['id'];
+  for (const fieldName of idFieldNames) {
+    const idField = fieldCache.getFieldByName(fieldName);
+    if (idField) {
+      return idField;
+    }
+  }
+  return undefined;
 }

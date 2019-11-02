@@ -1,32 +1,58 @@
 import React, { FC, ReactNode } from 'react';
+import classNames from 'classnames';
 
-interface Props {
+export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
+
+interface AlertProps {
   title: string;
-  button?: {
-    text: string;
-    onClick: (event: React.MouseEvent) => void;
-  };
+  buttonText?: string;
+  onButtonClick?: (event: React.MouseEvent) => void;
+  onRemove?: (event: React.MouseEvent) => void;
+  severity?: AlertVariant;
   children?: ReactNode;
 }
 
-export const Alert: FC<Props> = props => {
-  const { title, button, children } = props;
+function getIconFromSeverity(severity: AlertVariant): string {
+  switch (severity) {
+    case 'error': {
+      return 'fa fa-exclamation-triangle';
+    }
+    case 'warning': {
+      return 'fa fa-exclamation-triangle';
+    }
+    case 'info': {
+      return 'fa fa-info-circle';
+    }
+    case 'success': {
+      return 'fa fa-check';
+    }
+    default:
+      return '';
+  }
+}
+
+export const Alert: FC<AlertProps> = ({ title, buttonText, onButtonClick, onRemove, children, severity = 'error' }) => {
+  const alertClass = classNames('alert', `alert-${severity}`);
   return (
     <div className="alert-container">
-      <div className="alert-error alert">
+      <div className={alertClass}>
         <div className="alert-icon">
-          <i className="fa fa-exclamation-triangle" />
+          <i className={getIconFromSeverity(severity)} />
         </div>
         <div className="alert-body">
           <div className="alert-title">{title}</div>
           {children && <div className="alert-text">{children}</div>}
         </div>
-        {button && (
-          <div className="alert-button">
-            <button className="btn btn-outline-danger" onClick={button.onClick}>
-              {button.text}
-            </button>
-          </div>
+        {/* If onRemove is specified , giving preference to onRemove */}
+        {onRemove && (
+          <button type="button" className="alert-close" onClick={onRemove}>
+            <i className="fa fa fa-remove" />
+          </button>
+        )}
+        {onButtonClick && (
+          <button type="button" className="btn btn-outline-danger" onClick={onButtonClick}>
+            {buttonText}
+          </button>
         )}
       </div>
     </div>

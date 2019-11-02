@@ -1,11 +1,11 @@
 import angular from 'angular';
+import { getTagColorsFromName } from '@grafana/ui';
 import $ from 'jquery';
 import coreModule from '../core_module';
-import tags from 'app/core/utils/tags';
 import 'vendor/tagsinput/bootstrap-tagsinput.js';
 
 function setColor(name: string, element: JQuery) {
-  const { color, borderColor } = tags.getTagColorsFromName(name);
+  const { color, borderColor } = getTagColorsFromName(name);
   element.css('background-color', color);
   element.css('border-color', borderColor);
 }

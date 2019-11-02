@@ -57,6 +57,8 @@ func GetUserByLoginOrEmail(c *m.ReqContext) Response {
 		Theme:          user.Theme,
 		IsGrafanaAdmin: user.IsAdmin,
 		OrgId:          user.OrgId,
+		UpdatedAt:      user.Updated,
+		CreatedAt:      user.Created,
 	}
 	return JSON(200, &result)
 }
@@ -220,7 +222,10 @@ func ChangeUserPassword(c *m.ReqContext, cmd m.ChangeUserPasswordCommand) Respon
 		return Error(500, "Could not read user from database", err)
 	}
 
-	passwordHashed := util.EncodePassword(cmd.OldPassword, userQuery.Result.Salt)
+	passwordHashed, err := util.EncodePassword(cmd.OldPassword, userQuery.Result.Salt)
+	if err != nil {
+		return Error(500, "Failed to encode password", err)
+	}
 	if passwordHashed != userQuery.Result.Password {
 		return Error(401, "Invalid old password", nil)
 	}
@@ -231,7 +236,10 @@ func ChangeUserPassword(c *m.ReqContext, cmd m.ChangeUserPasswordCommand) Respon
 	}
 
 	cmd.UserId = c.UserId
-	cmd.NewPassword = util.EncodePassword(cmd.NewPassword, userQuery.Result.Salt)
+	cmd.NewPassword, err = util.EncodePassword(cmd.NewPassword, userQuery.Result.Salt)
+	if err != nil {
+		return Error(500, "Failed to encode password", err)
+	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		return Error(500, "Failed to change user password", err)

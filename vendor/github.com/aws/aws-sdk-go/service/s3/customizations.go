@@ -17,7 +17,8 @@ func defaultInitClientFn(c *client.Client) {
 
 	// Require SSL when using SSE keys
 	c.Handlers.Validate.PushBack(validateSSERequiresSSL)
-	c.Handlers.Build.PushBack(computeSSEKeys)
+	c.Handlers.Build.PushBack(computeSSEKeyMD5)
+	c.Handlers.Build.PushBack(computeCopySourceSSEKeyMD5)
 
 	// S3 uses custom error unmarshaling logic
 	c.Handlers.UnmarshalError.Clear()

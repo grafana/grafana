@@ -10,20 +10,19 @@ import jquery from 'jquery';
 import prismjs from 'prismjs';
 import slate from 'slate';
 // @ts-ignore
-import slateReact from 'slate-react';
+import slateReact from '@grafana/slate-react';
 // @ts-ignore
 import slatePlain from 'slate-plain-serializer';
 import react from 'react';
 import reactDom from 'react-dom';
-import reactRedux from 'react-redux';
-import redux from 'redux';
+import * as reactRedux from 'react-redux';
+import * as redux from 'redux';
 
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
 import { coreModule, appEvents, contextSrv } from 'app/core/core';
-import { DataSourcePlugin, AppPlugin, PanelPlugin, PluginMeta, DataSourcePluginMeta } from '@grafana/ui';
-import { dateMath } from '@grafana/data';
+import { DataSourcePlugin, AppPlugin, PanelPlugin, PluginMeta, DataSourcePluginMeta, dateMath } from '@grafana/data';
 import * as fileExport from 'app/core/utils/file_export';
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
@@ -37,7 +36,8 @@ import * as grafanaUI from '@grafana/ui';
 import * as grafanaRuntime from '@grafana/runtime';
 
 // rxjs
-import { Observable, Subject } from 'rxjs';
+import * as rxjs from 'rxjs';
+import * as rxjsOperators from 'rxjs/operators';
 
 // add cache busting
 const bust = `?_cache=${Date.now()}`;
@@ -81,17 +81,13 @@ exposeToPlugin('moment', moment);
 exposeToPlugin('jquery', jquery);
 exposeToPlugin('angular', angular);
 exposeToPlugin('d3', d3);
-exposeToPlugin('rxjs/Subject', Subject);
-exposeToPlugin('rxjs/Observable', Observable);
-exposeToPlugin('rxjs', {
-  Subject: Subject,
-  Observable: Observable,
-});
+exposeToPlugin('rxjs', rxjs);
+exposeToPlugin('rxjs/operators', rxjsOperators);
 
 // Experimental modules
 exposeToPlugin('prismjs', prismjs);
 exposeToPlugin('slate', slate);
-exposeToPlugin('slate-react', slateReact);
+exposeToPlugin('@grafana/slate-react', slateReact);
 exposeToPlugin('slate-plain-serializer', slatePlain);
 exposeToPlugin('react', react);
 exposeToPlugin('react-dom', reactDom);

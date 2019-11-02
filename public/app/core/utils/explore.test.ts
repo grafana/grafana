@@ -5,19 +5,18 @@ import {
   updateHistory,
   clearHistory,
   hasNonEmptyQuery,
-  instanceOfDataQueryError,
   getValueWithRefId,
   getFirstQueryErrorWithoutRefId,
   getRefIds,
   refreshIntervalToSortOrder,
   SortOrder,
   sortLogsResult,
+  buildQueryTransaction,
 } from './explore';
 import { ExploreUrlState, ExploreMode } from 'app/types/explore';
 import store from 'app/core/store';
-import { LogsDedupStrategy, LogsModel, LogLevel } from '@grafana/data';
-import { DataQueryError } from '@grafana/ui';
-import { liveOption, offOption } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
+import { DataQueryError, LogsDedupStrategy, LogsModel, LogLevel, dateTime } from '@grafana/data';
+import { RefreshPicker } from '@grafana/ui';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: null,
@@ -30,6 +29,7 @@ const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
     showingLogs: true,
     dedupStrategy: LogsDedupStrategy.none,
   },
+  originPanelId: undefined,
 };
 
 describe('state functions', () => {
@@ -200,30 +200,6 @@ describe('hasNonEmptyQuery', () => {
   });
 });
 
-describe('instanceOfDataQueryError', () => {
-  describe('when called with a DataQueryError', () => {
-    it('then it should return true', () => {
-      const error: DataQueryError = {
-        message: 'A message',
-        status: '200',
-        statusText: 'Ok',
-      };
-      const result = instanceOfDataQueryError(error);
-
-      expect(result).toBe(true);
-    });
-  });
-
-  describe('when called with a non DataQueryError', () => {
-    it('then it should return false', () => {
-      const error = {};
-      const result = instanceOfDataQueryError(error);
-
-      expect(result).toBe(false);
-    });
-  });
-});
-
 describe('hasRefId', () => {
   describe('when called with a null value', () => {
     it('then it should return null', () => {
@@ -364,7 +340,7 @@ describe('getRefIds', () => {
 describe('refreshIntervalToSortOrder', () => {
   describe('when called with live option', () => {
     it('then it should return ascending', () => {
-      const result = refreshIntervalToSortOrder(liveOption.value);
+      const result = refreshIntervalToSortOrder(RefreshPicker.liveOption.value);
 
       expect(result).toBe(SortOrder.Ascending);
     });
@@ -372,7 +348,7 @@ describe('refreshIntervalToSortOrder', () => {
 
   describe('when called with off option', () => {
     it('then it should return descending', () => {
-      const result = refreshIntervalToSortOrder(offOption.value);
+      const result = refreshIntervalToSortOrder(RefreshPicker.offOption.value);
 
       expect(result).toBe(SortOrder.Descending);
     });
@@ -407,6 +383,7 @@ describe('sortLogsResult', () => {
     timeFromNow: '',
     timeLocal: '',
     timeUtc: '',
+    uid: '1',
   };
   const sameAsFirstRow = firstRow;
   const secondRow = {
@@ -420,6 +397,7 @@ describe('sortLogsResult', () => {
     timeFromNow: '',
     timeLocal: '',
     timeUtc: '',
+    uid: '2',
   };
 
   describe('when called with SortOrder.Descending', () => {
@@ -449,6 +427,35 @@ describe('sortLogsResult', () => {
         rows: [firstRow, sameAsFirstRow, secondRow],
         hasUniqueLabels: false,
       });
+    });
+  });
+
+  describe('when buildQueryTransaction', () => {
+    it('it should calculate interval based on time range', () => {
+      const queries = [{ refId: 'A' }];
+      const queryOptions = { maxDataPoints: 1000, minInterval: '15s' };
+      const range = { from: dateTime().subtract(1, 'd'), to: dateTime(), raw: { from: '1h', to: '1h' } };
+      const transaction = buildQueryTransaction(queries, queryOptions, range, false);
+
+      expect(transaction.request.intervalMs).toEqual(60000);
+    });
+
+    it('it should calculate interval taking minInterval into account', () => {
+      const queries = [{ refId: 'A' }];
+      const queryOptions = { maxDataPoints: 1000, minInterval: '15s' };
+      const range = { from: dateTime().subtract(1, 'm'), to: dateTime(), raw: { from: '1h', to: '1h' } };
+      const transaction = buildQueryTransaction(queries, queryOptions, range, false);
+
+      expect(transaction.request.intervalMs).toEqual(15000);
+    });
+
+    it('it should calculate interval taking maxDataPoints into account', () => {
+      const queries = [{ refId: 'A' }];
+      const queryOptions = { maxDataPoints: 10, minInterval: '15s' };
+      const range = { from: dateTime().subtract(1, 'd'), to: dateTime(), raw: { from: '1h', to: '1h' } };
+      const transaction = buildQueryTransaction(queries, queryOptions, range, false);
+
+      expect(transaction.request.interval).toEqual('2h');
     });
   });
 });

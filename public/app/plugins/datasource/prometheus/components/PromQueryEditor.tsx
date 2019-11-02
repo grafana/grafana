@@ -2,8 +2,8 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Types
-import { FormLabel, Select, Switch, QueryEditorProps, DataSourceStatus } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
+import { FormLabel, Select, Switch } from '@grafana/ui';
+import { SelectableValue, QueryEditorProps } from '@grafana/data';
 
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery, PromOptions } from '../types';
@@ -92,7 +92,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const { datasource, query, panelData, queryResponse } = this.props;
+    const { datasource, query, data } = this.props;
     const { formatOption, instant, interval, intervalFactorOption, legendFormat } = this.state;
 
     return (
@@ -103,9 +103,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
           onRunQuery={this.onRunQuery}
           onChange={this.onFieldChange}
           history={[]}
-          panelData={panelData}
-          queryResponse={queryResponse}
-          datasourceStatus={DataSourceStatus.Connected} // TODO: replace with real DataSourceStatus
+          data={data}
         />
 
         <div className="gf-form-inline">
@@ -165,7 +163,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
               <PromLink
                 datasource={datasource}
                 query={this.query} // Use modified query
-                panelData={panelData}
+                panelData={data}
               />
             </FormLabel>
           </div>

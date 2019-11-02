@@ -39,10 +39,13 @@ Supported auth providers:
 * [GitHub OAuth]({{< relref "auth/github.md#team-sync-enterprise-only" >}})
 * [Auth Proxy]({{< relref "auth/auth-proxy.md#team-sync-enterprise-only">}})
 
-### Datasource Permissions
+### Data source permissions
 
-Datasource permissions allow you to restrict query access to only specific Teams and Users. [Learn More]({{< relref "permissions/datasource_permissions.md" >}}).
+Data source permissions allow you to restrict query access to only specific Teams and Users. [Learn More]({{< relref "permissions/datasource_permissions.md" >}}).
 
+### Reporting
+
+Reporting make it possible to take any Dashboard and generate a PDF report and setup a schedule to have it delivered. [Learn More]({{< relref "features/reporting.md" >}}).
 
 ### Premium Plugins
 
@@ -67,7 +70,7 @@ To download your Grafana Enterprise license log in to your [Grafana.com](https:/
 Profile**. In the side menu there is a section for Grafana Enterprise licenses. At the bottom of the license
 details page there is **Download Token** link that will download the *license.jwt* file containing your license.
 
-Place the *license.jwt* file in Grafana's data folder. This is usually located at `/var/lib/grafana/data` on linux systems.
+Place the *license.jwt* file in Grafana's data folder. This is usually located at `/var/lib/grafana/data` on Linux systems.
 
 You can also configure a custom location for the license file via the ini setting:
 

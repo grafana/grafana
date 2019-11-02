@@ -1,6 +1,6 @@
 +++
 title = "Migrating from older versions"
-description = "Upgrading & Migrating Grafana from older versions"
+description = "Upgrading and Migrating Grafana from older versions"
 keywords = ["grafana", "configuration", "documentation", "migration"]
 type = "docs"
 +++

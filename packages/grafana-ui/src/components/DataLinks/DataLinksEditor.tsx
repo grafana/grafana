@@ -1,5 +1,5 @@
 // Libraries
-import React, { FC, useContext } from 'react';
+import React, { FC, useContext, useEffect } from 'react';
 // @ts-ignore
 import Prism from 'prismjs';
 // Components
@@ -12,32 +12,39 @@ import { VariableSuggestion } from './DataLinkSuggestions';
 
 interface DataLinksEditorProps {
   value: DataLink[];
-  onChange: (links: DataLink[]) => void;
+  onChange: (links: DataLink[], callback?: () => void) => void;
   suggestions: VariableSuggestion[];
   maxLinks?: number;
 }
 
-Prism.languages['links'] = {
-  builtInVariable: {
-    pattern: /(\${\w+})/,
-  },
+export const enableDatalinksPrismSyntax = () => {
+  Prism.languages['links'] = {
+    builtInVariable: {
+      pattern: /(\${\S+?})/,
+    },
+  };
 };
 
 export const DataLinksEditor: FC<DataLinksEditorProps> = React.memo(({ value, onChange, suggestions, maxLinks }) => {
   const theme = useContext(ThemeContext);
 
+  useEffect(() => {
+    enableDatalinksPrismSyntax();
+  });
+
   const onAdd = () => {
     onChange(value ? [...value, { url: '', title: '' }] : [{ url: '', title: '' }]);
   };
 
-  const onLinkChanged = (linkIndex: number, newLink: DataLink) => {
+  const onLinkChanged = (linkIndex: number, newLink: DataLink, callback?: () => void) => {
     onChange(
       value.map((item, listIndex) => {
         if (linkIndex === listIndex) {
           return newLink;
         }
         return item;
-      })
+      }),
+      callback
     );
   };
 
@@ -57,6 +64,7 @@ export const DataLinksEditor: FC<DataLinksEditorProps> = React.memo(({ value, on
             <DataLinkEditor
               key={index.toString()}
               index={index}
+              isLast={index === value.length - 1}
               value={link}
               onChange={onLinkChanged}
               onRemove={onRemove}

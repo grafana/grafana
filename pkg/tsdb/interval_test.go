@@ -11,9 +11,10 @@ import (
 func TestInterval(t *testing.T) {
 	Convey("Default interval ", t, func() {
 		cfg := setting.NewCfg()
-		cfg.Load(&setting.CommandLineArgs{
+		err := cfg.Load(&setting.CommandLineArgs{
 			HomePath: "../../",
 		})
+		So(err, ShouldBeNil)
 
 		calculator := NewIntervalCalculator(&IntervalOptions{})
 

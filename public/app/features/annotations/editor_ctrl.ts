@@ -4,6 +4,8 @@ import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 import { DashboardModel } from 'app/features/dashboard/state';
 import DatasourceSrv from '../plugins/datasource_srv';
+import appEvents from 'app/core/app_events';
+import { AppEvents } from '@grafana/data';
 
 export class AnnotationsEditorCtrl {
   mode: any;
@@ -45,7 +47,7 @@ export class AnnotationsEditorCtrl {
   showOptions: any = [{ text: 'All Panels', value: 0 }, { text: 'Specific Panels', value: 1 }];
 
   /** @ngInject */
-  constructor($scope: any, private datasourceSrv: DatasourceSrv) {
+  constructor(private $scope: any, private datasourceSrv: DatasourceSrv) {
     $scope.ctrl = this;
 
     this.dashboard = $scope.dashboard;
@@ -58,7 +60,10 @@ export class AnnotationsEditorCtrl {
   }
 
   async datasourceChanged() {
-    return (this.currentDatasource = await this.datasourceSrv.get(this.currentAnnotation.datasource));
+    const newDatasource = await this.datasourceSrv.get(this.currentAnnotation.datasource);
+    this.$scope.$apply(() => {
+      this.currentDatasource = newDatasource;
+    });
   }
 
   edit(annotation: any) {
@@ -97,6 +102,11 @@ export class AnnotationsEditorCtrl {
   }
 
   add() {
+    const sameName: any = _.find(this.annotations, { name: this.currentAnnotation.name });
+    if (sameName) {
+      appEvents.emit(AppEvents.alertWarning, ['Validation', 'Annotations with the same name already exists']);
+      return;
+    }
     this.annotations.push(this.currentAnnotation);
     this.reset();
     this.mode = 'list';
