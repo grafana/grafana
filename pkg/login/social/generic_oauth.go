@@ -22,7 +22,6 @@ type SocialGenericOAuth struct {
 	allowSignup          bool
 	emailAttributeName   string
 	emailAttributePath   string
-	roleAttributeName    string
 	roleAttributePath    string
 	teamIds              []int
 }
