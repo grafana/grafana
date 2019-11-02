@@ -82,12 +82,12 @@ func (s *SocialGenericOAuth) IsOrganizationMember(client *http.Client) bool {
 }
 
 // searchJSONForAttr searches the provided JSON response for the given attribute
-// using the configured attribute path associated with the generic OAuth
+// using the configured  attribute path associated with the generic OAuth
 // provider.
-// Returns an empty string if an e-mail address is not found.
+// Returns an empty string if an attribute is not found.
 func (s *SocialGenericOAuth) searchJSONForAttr(attribute string, data []byte) string {
 	if attribute == "" {
-		s.log.Error("No attribute path specified")
+		s.log.Error("No attribute path specified", "attributePath", attribute)
 		return ""
 	}
 	if len(data) == 0 {
@@ -210,31 +210,29 @@ type UserInfoJson struct {
 	Username    string              `json:"username"`
 	Email       string              `json:"email"`
 	Upn         string              `json:"upn"`
-	Roles       []string            `json:"roles"`
 	Attributes  map[string][]string `json:"attributes"`
 }
 
 func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	var data UserInfoJson
+	var rawUserInfoResponse HttpGetResponse
 	var err error
-	var tokenPayload []byte
-	var ok bool
 
-	if tokenPayload, ok = s.extractToken(&data, token); !ok {
-		rawUserInfoResponse, err := HttpGet(client, s.apiUrl)
+	if !s.extractToken(&data, token) {
+		rawUserInfoResponse, err = HttpGet(client, s.apiUrl)
 		if err != nil {
 			return nil, fmt.Errorf("Error getting user info: %s", err)
 		}
-		tokenPayload = rawUserInfoResponse.Body
 
-		err = json.Unmarshal(tokenPayload, &data)
+		err = json.Unmarshal(rawUserInfoResponse.Body, &data)
 		if err != nil {
 			return nil, fmt.Errorf("Error decoding user info JSON: %s", err)
 		}
 	}
+
 	name := s.extractName(&data)
 
-	email := s.extractEmail(&data, tokenPayload)
+	email := s.extractEmail(&data, rawUserInfoResponse.Body)
 	if email == "" {
 		email, err = s.FetchPrivateEmail(client)
 		if err != nil {
@@ -242,7 +240,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		}
 	}
 
-	role := s.extractRole(&data, tokenPayload)
+	role := s.extractRole(&data, rawUserInfoResponse.Body)
 
 	login := s.extractLogin(&data, email)
 
@@ -264,39 +262,39 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	return userInfo, nil
 }
 
-func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Token) ([]byte, bool) {
+func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Token) bool {
 	idToken := token.Extra("id_token")
 	if idToken == nil {
 		s.log.Debug("No id_token found", "token", token)
-		return []byte{}, false
+		return false
 	}
 
 	jwtRegexp := regexp.MustCompile("^([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)$")
 	matched := jwtRegexp.FindStringSubmatch(idToken.(string))
 	if matched == nil {
 		s.log.Debug("id_token is not in JWT format", "id_token", idToken.(string))
-		return []byte{}, false
+		return false
 	}
 
 	payload, err := base64.RawURLEncoding.DecodeString(matched[2])
 	if err != nil {
 		s.log.Error("Error base64 decoding id_token", "raw_payload", matched[2], "err", err)
-		return []byte{}, false
+		return false
 	}
 
 	err = json.Unmarshal(payload, data)
 	if err != nil {
 		s.log.Error("Error decoding id_token JSON", "payload", string(payload), "err", err)
-		return []byte{}, false
+		return false
 	}
 
 	if email := s.extractEmail(data, payload); email == "" {
 		s.log.Debug("No email found in id_token", "json", string(payload), "data", data)
-		return []byte{}, false
+		return false
 	}
 
 	s.log.Debug("Received id_token", "json", string(payload), "data", data)
-	return payload, true
+	return true
 }
 
 func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson, userInfoResp []byte) string {
@@ -328,23 +326,13 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson, userInfoResp []byt
 }
 
 func (s *SocialGenericOAuth) extractRole(data *UserInfoJson, userInfoResp []byte) string {
+
 	if s.roleAttributePath != "" {
 		role := s.searchJSONForAttr(s.roleAttributePath, userInfoResp)
 		if role != "" {
 			return role
 		}
 	}
-
-	var roles []string
-	if len(data.Roles) > 0 {
-		return data.Roles[0]
-	}
-
-	roles, ok := data.Attributes[s.roleAttributeName]
-	if ok && len(roles) != 0 {
-		return roles[0]
-	}
-
 	return ""
 }
 
