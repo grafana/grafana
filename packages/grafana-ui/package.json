@@ -39,6 +39,7 @@
     "lodash": "4.17.15",
     "moment": "2.24.0",
     "papaparse": "4.6.3",
+    "rc-drawer": "3.0.2",
     "rc-time-picker": "^3.7.2",
     "react": "16.8.6",
     "react-calendar": "2.18.1",
