@@ -7,7 +7,7 @@ import { TimeRange, GraphSeriesXY, TimeZone, DefaultTimeZone, createDimension } 
 import _ from 'lodash';
 import { FlotPosition, FlotItem } from './types';
 import { TooltipProps, TooltipContentProps, ActiveDimensions, Tooltip } from '../Chart/Tooltip';
-import { GraphTooltip, GraphTooltipOptions, GraphDimensions } from './GraphTooltip';
+import { GraphTooltip, GraphDimensions } from './GraphTooltip';
 
 export interface GraphProps {
   children?: JSX.Element | JSX.Element[];
@@ -22,14 +22,12 @@ export interface GraphProps {
   isStacked?: boolean;
   lineWidth?: number;
   onHorizontalRegionSelected?: (from: number, to: number) => void;
-  tooltipOptions: GraphTooltipOptions;
 }
 
 interface GraphState {
   pos?: FlotPosition;
   isTooltipVisible: boolean;
   activeItem?: FlotItem<GraphSeriesXY>;
-  allSeriesMode?: boolean;
 }
 
 export class Graph extends PureComponent<GraphProps, GraphState> {
@@ -42,7 +40,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   };
 
   state: GraphState = {
-    isTooltipVisible: true,
+    isTooltipVisible: false,
   };
 
   element: HTMLElement | null = null;
@@ -77,7 +75,6 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   onPlotHover = (event: JQueryEventObject, pos: FlotPosition, item?: FlotItem<GraphSeriesXY>) => {
     this.setState({
       isTooltipVisible: true,
-      allSeriesMode: !item,
       activeItem: item,
       pos,
     });
@@ -105,7 +102,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   }
 
   renderTooltip = () => {
-    const { children, series, timeZone, tooltipOptions } = this.props;
+    const { children, series, timeZone } = this.props;
     const { pos, activeItem, isTooltipVisible } = this.state;
     const tooltips: React.ReactNode[] = [];
 
@@ -127,12 +124,14 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     if (!tooltipElement) {
       return null;
     }
+    const tooltipElementProps = (tooltipElement as React.ReactElement<TooltipProps>).props;
+
+    const tooltipMode = tooltipElementProps.mode || 'single';
+
     // If mode is single series and user is not hovering over item, skip rendering
-    if (!activeItem && tooltipOptions.mode === 'single') {
+    if (!activeItem && tooltipMode === 'single') {
       return null;
     }
-
-    const tooltipElementProps = (tooltipElement as React.ReactElement<TooltipProps>).props;
 
     // Check if tooltip needs to be rendered with custom tooltip component, otherwise default to GraphTooltip
     const tooltipContentRenderer = tooltipElementProps.tooltipComponent || GraphTooltip;
@@ -146,7 +145,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       // Described x-axis active item
       // When hovering over an item - let's take it's dataIndex, otherwise let's assume flot position
       // based on witch tooltip needs to figure out correct datapoint display information about
-      xAxis: [seriesIndex, tooltipOptions.mode === 'single' ? rowIndex : pos.x],
+      xAxis: [seriesIndex, tooltipMode === 'single' ? rowIndex : pos.x],
       // Describes y-axis active item
       yAxis: activeItem ? [activeItem.series.seriesIndex, activeItem.dataIndex] : null,
     };
@@ -160,7 +159,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       activeDimensions,
       pos,
       timeZone, // maybe a time formatter(function) instead?
-      mode: tooltipOptions.mode || 'single',
+      mode: tooltipElementProps.mode || 'single',
     };
 
     const tooltipContent = React.createElement(tooltipContentRenderer, { ...tooltipContentProps });
@@ -258,6 +257,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     };
 
     try {
+      // console.log(this.element)
       $.plot(this.element, series, flotOptions);
     } catch (err) {
       console.log('Graph rendering error', err, flotOptions, series);
@@ -266,14 +266,14 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   }
 
   render() {
-    const { height, series } = this.props;
+    const { height, width, series } = this.props;
     const noDataToBeDisplayed = series.length === 0;
     return (
       <div className="graph-panel">
         <div
           className="graph-panel__chart"
           ref={e => (this.element = e)}
-          style={{ height }}
+          style={{ height, width }}
           onMouseLeave={() => {
             this.setState({ isTooltipVisible: false });
           }}

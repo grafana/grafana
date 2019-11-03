@@ -60,10 +60,9 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
             onHorizontalRegionSelected={onHorizontalRegionSelected}
             {...graphProps}
             {...legendProps}
-            tooltipOptions={tooltipOptions}
             {...controllerApi}
           >
-            <Chart.Tooltip />
+            <Chart.Tooltip mode={tooltipOptions.mode} />
           </GraphWithLegend>
         );
       }}

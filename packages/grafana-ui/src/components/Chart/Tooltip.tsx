@@ -92,12 +92,20 @@ export interface TooltipContentProps<T extends Dimensions = any> {
 export interface TooltipProps {
   /** Element used as tooltips content */
   content?: React.ReactElement<any>;
+
   /** Optional component to be used as a tooltip content */
   tooltipComponent?: React.ComponentType<TooltipContentProps>;
+
   /** x/y position relative to the window */
   position?: { x: number; y: number };
+
   /** x/y offset relative to tooltip origin element, i.e. graph's datapoint */
   offset?: { x: number; y: number };
+
+  // Mode in which tooltip works
+  // - single - display single series info
+  // - multi - display all series info
+  mode?: TooltipMode;
 }
 
 export const Tooltip: React.FC<TooltipProps> = ({ content, position, offset }) => {
