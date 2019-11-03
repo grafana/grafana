@@ -37,8 +37,8 @@ export interface LogsMetaItem {
 }
 
 export interface LogRowModel {
-  // Name of the filed from which the entry has been created so that we do not show it later in log row details.
-  entryField: string;
+  // Index of the filed from which the entry has been created so that we do not show it later in log row details.
+  entryFieldIndex: number;
 
   // Index of the row in the dataframe. As log rows can be stitched from multiple dataFrames, this does not have to be
   // the same as rows final index when rendered.

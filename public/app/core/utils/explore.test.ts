@@ -374,6 +374,7 @@ describe('refreshIntervalToSortOrder', () => {
 describe('sortLogsResult', () => {
   const firstRow = {
     rowIndex: 0,
+    entryFieldIndex: 0,
     dataFrame: new MutableDataFrame(),
     timestamp: '2019-01-01T21:00:0.0000000Z',
     entry: '',
@@ -390,6 +391,7 @@ describe('sortLogsResult', () => {
   const sameAsFirstRow = firstRow;
   const secondRow = {
     rowIndex: 1,
+    entryFieldIndex: 0,
     dataFrame: new MutableDataFrame(),
     timestamp: '2019-01-01T22:00:0.0000000Z',
     entry: '',

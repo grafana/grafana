@@ -1,6 +1,6 @@
 import React from 'react';
 import { LogDetailsRow, Props } from './LogDetailsRow';
-import { LogRowModel, LogsParser, GrafanaTheme } from '@grafana/data';
+import { LogsParser, GrafanaTheme } from '@grafana/data';
 import { mount } from 'enzyme';
 
 const setup = (propOverrides?: object) => {
@@ -8,10 +8,8 @@ const setup = (propOverrides?: object) => {
     theme: {} as GrafanaTheme,
     parsedValue: '',
     parsedKey: '',
-    field: '',
     isLabel: true,
     parser: {} as LogsParser,
-    row: {} as LogRowModel,
     getRows: () => [],
     onClickFilterLabel: () => {},
     onClickFilterOutLabel: () => {},

@@ -47,7 +47,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
       return (
         row.dataFrame.fields
           // Remove Id which we use for react key and entry field which we are showing as the log message.
-          .filter(field => !['id', row.entryField].includes(field.name))
+          .filter((field, index) => 'id' !== field.name && row.entryFieldIndex !== index)
           // Filter out fields without values. For example in elastic the fields are parsed from the document which can
           // have different structure per row and so the dataframe is pretty sparse.
           .filter(field => {
@@ -57,7 +57,8 @@ class UnThemedLogDetails extends PureComponent<Props> {
             return value !== null && value !== undefined;
           })
           .map(field => {
-            const links = this.props.getFieldLinks(field, row.rowIndex);
+            const { getFieldLinks } = this.props;
+            const links = getFieldLinks ? getFieldLinks(field, row.rowIndex) : [];
             return {
               key: field.name,
               value: field.values.get(row.rowIndex).toString(),

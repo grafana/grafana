@@ -62,6 +62,7 @@ const makeLog = (overides: Partial<LogRowModel>): LogRowModel => {
   const entry = `log message ${uid}`;
   return {
     uid,
+    entryFieldIndex: 0,
     rowIndex: 0,
     dataFrame: new MutableDataFrame(),
     logLevel: LogLevel.debug,

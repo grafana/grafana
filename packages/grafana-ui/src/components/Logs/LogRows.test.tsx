@@ -91,7 +91,8 @@ const makeLog = (overides: Partial<LogRowModel>): LogRowModel => {
   const uid = overides.uid || '1';
   const entry = `log message ${uid}`;
   return {
-    rowIndex: 1,
+    entryFieldIndex: 0,
+    rowIndex: 0,
     // Does not need to be filled with current tests
     dataFrame: new MutableDataFrame(),
     uid,
