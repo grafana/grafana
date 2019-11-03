@@ -63,22 +63,6 @@ export function addLogLevelToSeries(series: DataFrame, lineIndex: number): DataF
   };
 }
 
-export function calculateLogsLabelStats(rows: LogRowModel[], label: string): LogLabelStatsModel[] {
-  // Consider only rows that have the given label
-  const rowsWithLabel = rows.filter(row => row.labels[label] !== undefined);
-  const rowCount = rowsWithLabel.length;
-
-  // Get label value counts for eligible rows
-  const countsByValue = countBy(rowsWithLabel, row => (row as LogRowModel).labels[label]);
-  const sortedCounts = chain(countsByValue)
-    .map((count, value) => ({ count, value, proportion: count / rowCount }))
-    .sortBy('count')
-    .reverse()
-    .value();
-
-  return sortedCounts;
-}
-
 export const LogsParsers: { [name: string]: LogsParser } = {
   JSON: {
     buildMatcher: label => new RegExp(`(?:{|,)\\s*"${label}"\\s*:\\s*"?([\\d\\.]+|[^"]*)"?`),
@@ -128,14 +112,32 @@ export function calculateFieldStats(rows: LogRowModel[], extractor: RegExp): Log
 
     return match ? match[1] : null;
   });
-  const sortedCounts = chain(countsByValue)
+  return getSortedCounts(countsByValue, rowCount);
+}
+
+export function calculateLogsLabelStats(rows: LogRowModel[], label: string): LogLabelStatsModel[] {
+  // Consider only rows that have the given label
+  const rowsWithLabel = rows.filter(row => row.labels[label] !== undefined);
+  const rowCount = rowsWithLabel.length;
+
+  // Get label value counts for eligible rows
+  const countsByValue = countBy(rowsWithLabel, row => (row as LogRowModel).labels[label]);
+  return getSortedCounts(countsByValue, rowCount);
+}
+
+export function calculateStats(values: any[]): LogLabelStatsModel[] {
+  const nonEmptyValues = values.filter(value => value !== undefined && value !== null);
+  const countsByValue = countBy(nonEmptyValues);
+  return getSortedCounts(countsByValue, nonEmptyValues.length);
+}
+
+const getSortedCounts = (countsByValue: { [value: string]: number }, rowCount: number) => {
+  return chain(countsByValue)
     .map((count, value) => ({ count, value, proportion: count / rowCount }))
     .sortBy('count')
     .reverse()
     .value();
-
-  return sortedCounts;
-}
+};
 
 export function getParser(line: string): LogsParser | undefined {
   let parser;

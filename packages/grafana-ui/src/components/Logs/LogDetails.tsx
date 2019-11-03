@@ -13,6 +13,8 @@ type FieldDef = {
   key: string;
   value: string;
   links?: string[];
+  isDerived?: boolean;
+  fieldIndex?: number;
 };
 
 export interface Props extends Themeable {
@@ -46,6 +48,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
     (row: LogRowModel): FieldDef[] => {
       return (
         row.dataFrame.fields
+          .map((field, index) => ({ ...field, index }))
           // Remove Id which we use for react key and entry field which we are showing as the log message.
           .filter((field, index) => 'id' !== field.name && row.entryFieldIndex !== index)
           // Filter out fields without values. For example in elastic the fields are parsed from the document which can
@@ -63,6 +66,8 @@ class UnThemedLogDetails extends PureComponent<Props> {
               key: field.name,
               value: field.values.get(row.rowIndex).toString(),
               links: links.map(link => link.href),
+              isDerived: true,
+              fieldIndex: field.index,
             };
           })
       );
@@ -133,14 +138,15 @@ class UnThemedLogDetails extends PureComponent<Props> {
               Parsed fields:
             </div>
             {fields.map(field => {
-              const { key, value, links } = field;
+              const { key, value, links, isDerived, fieldIndex } = field;
               return (
                 <LogDetailsRow
                   key={`${key}=${value}`}
                   parsedKey={key}
                   parsedValue={value}
                   links={links}
-                  isLabel={false}
+                  isField={!!isDerived}
+                  fieldIndex={fieldIndex}
                   getRows={getRows}
                   parser={parser}
                 />

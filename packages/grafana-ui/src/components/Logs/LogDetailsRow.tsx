@@ -5,6 +5,7 @@ import {
   LogLabelStatsModel,
   calculateFieldStats,
   calculateLogsLabelStats,
+  calculateStats,
 } from '@grafana/data';
 
 import { Themeable } from '../../types/theme';
@@ -17,7 +18,9 @@ import { LogLabelStats } from './LogLabelStats';
 export interface Props extends Themeable {
   parsedValue: string;
   parsedKey: string;
-  isLabel: boolean;
+  isLabel?: boolean;
+  isField?: boolean;
+  fieldIndex?: number;
   parser?: LogsParser;
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
@@ -73,13 +76,15 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   }
 
   createStatsForLabels() {
-    const { getRows, parser, parsedKey, parsedValue, isLabel } = this.props;
+    const { getRows, parser, parsedKey, parsedValue, isLabel, isField, fieldIndex } = this.props;
     const allRows = getRows();
     const fieldLabel = parsedKey;
     const fieldValue = parsedValue;
     let fieldStats = [];
     if (isLabel) {
       fieldStats = calculateLogsLabelStats(allRows, parsedKey);
+    } else if (isField) {
+      fieldStats = calculateStats(allRows[0].dataFrame.fields[fieldIndex!].values.toArray());
     } else {
       const matcher = parser!.buildMatcher(fieldLabel);
       fieldStats = calculateFieldStats(allRows, matcher);
