@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"strings"
 	"sync"
 
 	"github.com/BurntSushi/toml"
