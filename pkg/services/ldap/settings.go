@@ -148,16 +148,15 @@ func readConfig(configFile string) (*Config, error) {
 
 func evalEnvVar(value string) string {
 	regex := regexp.MustCompile(`\${(\w+)}`)
-	if regex != nil {
-		return regex.ReplaceAllStringFunc(value, func(envVar string) string {
-			envVar = strings.TrimPrefix(envVar, "${")
-			envVar = strings.TrimSuffix(envVar, "}")
-			envValue := os.Getenv(envVar)
-			return envValue
-		})
-	}
-	return value
 
+	if regex != nil {
+		submatch := regex.FindSubmatch([]byte(value))
+
+		match := string(submatch[0])
+	  envValue := os.Getenv(match)
+		return envValue
+  }
+	return value
 }
 
 func assertNotEmptyCfg(val interface{}, propName string) error {
