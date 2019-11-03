@@ -78,7 +78,7 @@ export const GraphTooltip: React.FC<TooltipContentProps<GraphDimensions>> = ({
 
     content = (
       <>
-        {<div>{dateFormatter(time)}</div>}
+        {<div aria-label="Timestamp">{dateFormatter(time)}</div>}
         <div className={styles.seriesTableRow}>
           <div className={styles.seriesTableCell}>
             {valueField.config.color && <SeriesIcon color={valueField.config.color} />} {valueField.name}
@@ -104,7 +104,7 @@ export const GraphTooltip: React.FC<TooltipContentProps<GraphDimensions>> = ({
     });
     content = (
       <>
-        {timestamp && <div>{dateFormatter(timestamp)}</div>}
+        {timestamp && <div aria-label="Timestamp">{dateFormatter(timestamp)}</div>}
         {seriesTable}
       </>
     );
