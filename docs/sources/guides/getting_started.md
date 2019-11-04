@@ -41,7 +41,7 @@ First, give the data source a Name and then select which Type of data source you
 
 {{< docs-imagebox img="/img/docs/v52/datasource-settings.png" max-width="700px" class="docs-image--no-shadow">}}
 
-After you have configuered your data source you are ready to save and test.
+After you have configured your data source you are ready to save and test.
 
 ## Beginner guides
 

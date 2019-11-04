@@ -6,7 +6,7 @@ aliases = ["/reference/logs/"]
 [menu.docs]
 name = "Logs"
 parent = "panels"
-weight = 2
+weight = 4
 +++
 
 # Logs Panel
