@@ -259,11 +259,11 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
 
         if (/^Throttling:.*/.test(err.data.message)) {
           const failedRedIds = Object.keys(err.data.results);
-          const regionsAffected: string[] = Object.values(request.queries).reduce(
+          const regionsAffected = Object.values(request.queries).reduce(
             (res: string[], { refId, region }: CloudWatchQuery) =>
               !failedRedIds.includes(refId) || res.includes(region) ? res : [...res, region],
             []
-          );
+          ) as string[];
 
           regionsAffected.forEach(region => this.debouncedAlert(this.instanceSettings.name, region));
         }
