@@ -31,7 +31,6 @@ func (e *CloudWatchExecutor) parseQueries(queryContext *tsdb.TsdbQuery) (map[str
 			requestQueries[query.Region] = make([]*requestQuery, 0)
 		}
 		requestQueries[query.Region] = append(requestQueries[query.Region], query)
-
 	}
 
 	return requestQueries, nil
@@ -116,25 +115,6 @@ func parseRequestQuery(model *simplejson.Json, refId string) (*requestQuery, err
 		HighResolution: highResolution,
 		MatchExact:     matchExact,
 	}, nil
-}
-
-func parseStatisticsAndExtendedStatistics(model *simplejson.Json) ([]string, []string, error) {
-	var statistics []string
-	var extendedStatistics []string
-
-	for _, s := range model.Get("statistics").MustArray() {
-		if ss, ok := s.(string); ok {
-			if _, isStandard := standardStatistics[ss]; isStandard {
-				statistics = append(statistics, ss)
-			} else {
-				extendedStatistics = append(extendedStatistics, ss)
-			}
-		} else {
-			return nil, nil, errors.New("failed to parse")
-		}
-	}
-
-	return statistics, extendedStatistics, nil
 }
 
 func parseStatistics(model *simplejson.Json) ([]string, error) {
