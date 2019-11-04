@@ -76,7 +76,7 @@ export class VariableEditorCtrl {
     $scope.add = () => {
       if ($scope.isValid()) {
         variableSrv.addVariable($scope.current);
-        $scope.update();
+        $scope.update(false);
       }
     };
 
@@ -94,7 +94,7 @@ export class VariableEditorCtrl {
       }
 
       const sameName: any = _.find($scope.variables, { name: $scope.current.name });
-      if (sameName /*&& sameName !== $scope.current*/) {
+      if (sameName && sameName !== $scope.current) {
         appEvents.emit(AppEvents.alertWarning, ['Validation', 'Variable with the same name already exists']);
         return false;
       }
@@ -162,12 +162,15 @@ export class VariableEditorCtrl {
       variableSrv.addVariable($scope.current);
     };
 
-    $scope.update = () => {
-      $scope.runQuery().then(() => {
-        $scope.reset();
-        $scope.mode = 'list';
-        templateSrv.updateIndex();
-      });
+    $scope.update = (validate: boolean) => {
+      const validated = validate ? $scope.isValid() : true;
+      if (validated) {
+        $scope.runQuery().then(() => {
+          $scope.reset();
+          $scope.mode = 'list';
+          templateSrv.updateIndex();
+        });
+      }
     };
 
     $scope.reset = () => {

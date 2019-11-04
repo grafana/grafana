@@ -179,6 +179,18 @@ export const setVariablePropInState = <T>(id: number, temporary: VariableModel, 
   store.dispatch(updateVariableProp({ id, propName, value }));
 };
 
+const stripIdFromVariable = <T extends VariableModel = VariableModel>(variable: T): Omit<T, 'id'> => {
+  const { id, ...rest } = variable;
+  return rest;
+};
+
+export const getVariableModel = <T extends VariableModel = VariableModel>(id: number, temporary: T): Omit<T, 'id'> => {
+  if (temporary) {
+    return stripIdFromVariable(temporary);
+  }
+  return stripIdFromVariable(store.getState().templating.variables[id] as T);
+};
+
 export type CtorType = new (...args: any[]) => {};
 
 export interface VariableTypes {

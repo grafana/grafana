@@ -1,6 +1,7 @@
 import { assignModelProperties, VariableModel } from '../variable';
 import { reducerFactory } from '../../../core/redux';
 import { createVariable, removeVariable, updateVariableProp } from './actions';
+import { cleanUpDashboard } from '../../dashboard/state/actions';
 
 const reorganizeIds = (varibles: VariableModel[]): VariableModel[] =>
   varibles.map((variable, index) => ({ ...variable, id: index }));
@@ -77,6 +78,10 @@ export const templatingReducer = reducerFactory<TemplatingState>(initialState)
         nextId,
       };
     },
+  })
+  .addMapper({
+    filter: cleanUpDashboard,
+    mapper: (state, action): TemplatingState => initialState,
   })
   .create();
 

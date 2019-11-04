@@ -3,6 +3,7 @@ import {
   assignModelProperties,
   containsVariable,
   createVariableInState,
+  getVariableModel,
   getVariablePropFromState,
   QueryVariableModel,
   setVariablePropInState,
@@ -195,7 +196,7 @@ export class QueryVariable implements QueryVariableModel, VariableActions {
 
   getSaveModel() {
     // copy back model properties to model
-    assignModelProperties(this.model, this, this.defaults);
+    this.model = getVariableModel(this.id, this.temporary);
 
     // remove options
     if (this.refresh !== 0) {
