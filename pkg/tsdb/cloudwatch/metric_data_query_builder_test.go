@@ -171,7 +171,45 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 					res := buildSearchExpression(query, "Average")
 					So(res, ShouldEqual, `REMOVE_EMPTY(SEARCH('Namespace="AWS/EC2" MetricName="CPUUtilization" "LoadBalancer"=("lb1" OR "lb2" OR "lb3") "InstanceId"', 'Average', 300))`)
 				})
+
 			})
+		})
+
+		Convey("and query has has invalid characters in dimension values", func() {
+			query := &cloudWatchQuery{
+				Namespace:  "AWS/EC2",
+				MetricName: "CPUUtilization",
+				Dimensions: map[string][]string{
+					"lb1": {`lb\1\`},
+					"lb2": {`)lb2`},
+					"lb3": {`l(b3`},
+					"lb4": {`lb4""`},
+					"lb5": {`l\(b5"`},
+					"lb6": {`l\\(b5"`},
+				},
+				Period:     300,
+				Identifier: "id1",
+				Expression: "",
+				MatchExact: true,
+			}
+			res := buildSearchExpression(query, "Average")
+
+			Convey("it should escape backslash", func() {
+				So(res, ShouldContainSubstring, `"lb1"="lb\\1\\"`)
+			})
+
+			Convey("it should escape closing parenthesis", func() {
+				So(res, ShouldContainSubstring, `"lb2"="\)lb2"`)
+			})
+
+			Convey("it should escape open parenthesis", func() {
+				So(res, ShouldContainSubstring, `"lb3"="l\(b3"`)
+			})
+
+			Convey("it should escape double quotes", func() {
+				So(res, ShouldContainSubstring, `"lb6"="l\\\\\(b5\""`)
+			})
+
 		})
 	})
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -71,7 +72,8 @@ func buildSearchExpression(query *cloudWatchQuery, stat string) string {
 	}
 	sort.Strings(keys)
 	for _, key := range keys {
-		valueExpression := join(knownDimensions[key], " OR ", `"`, `"`)
+		values := escape(knownDimensions[key])
+		valueExpression := join(values, " OR ", `"`, `"`)
 		if len(knownDimensions[key]) > 1 {
 			valueExpression = fmt.Sprintf(`(%s)`, valueExpression)
 		}
@@ -92,6 +94,19 @@ func buildSearchExpression(query *cloudWatchQuery, stat string) string {
 	sort.Strings(dimensionNamesWithoutKnownValues)
 	searchTerm = appendSearch(searchTerm, join(dimensionNamesWithoutKnownValues, " ", `"`, `"`))
 	return fmt.Sprintf(`REMOVE_EMPTY(SEARCH('Namespace="%s" %s', '%s', %s))`, query.Namespace, searchTerm, stat, strconv.Itoa(query.Period))
+}
+
+func escape(arr []string) []string {
+	result := []string{}
+	for _, value := range arr {
+		value = strings.ReplaceAll(value, `\`, `\\`)
+		value = strings.ReplaceAll(value, ")", `\)`)
+		value = strings.ReplaceAll(value, "(", `\(`)
+		value = strings.ReplaceAll(value, `"`, `\"`)
+		result = append(result, value)
+	}
+
+	return result
 }
 
 func join(arr []string, delimiter string, valuePrefix string, valueSuffix string) string {
