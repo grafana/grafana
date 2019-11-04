@@ -62,12 +62,13 @@ export class QueryVariable implements QueryVariableModel, VariableActions {
     private timeSrv: TimeSrv
   ) {
     // copy model properties to this instance
-    if (model.isTemporary) {
+    if (!model.useState) {
       this.temporary = {} as QueryVariableModel;
       assignModelProperties(this.temporary, model, this.defaults);
     } else {
       this.temporary = null;
       this.id = createVariableInState(model, this.defaults);
+      assignModelProperties(this, model, this.defaults);
     }
     this.updateOptionsFromMetricFindQuery.bind(this);
   }

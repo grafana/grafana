@@ -175,7 +175,7 @@ export class VariableEditorCtrl {
 
     $scope.reset = () => {
       $scope.currentIsNew = true;
-      $scope.current = variableSrv.createVariableFromModel({ type: 'query', isTemporary: true });
+      $scope.current = variableSrv.createVariableFromModel({ type: 'query', useState: false });
 
       // this is done here in case a new data source type variable was added
       $scope.datasources = _.filter(datasourceSrv.getMetricSources(), ds => {
