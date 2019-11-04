@@ -17,3 +17,9 @@ export interface UpdateVariableProp<T> {
 export const updateVariableProp = actionCreatorFactory<UpdateVariableProp<any>>(
   'CORE_TEMPLATING_UPDATE_VARIABLE_PROP'
 ).create();
+
+export interface RemoveVariable {
+  id: number;
+}
+
+export const removeVariable = actionCreatorFactory<RemoveVariable>('CORE_TEMPLATING_REMOVE_VARIABLE').create();

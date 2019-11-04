@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { assignModelProperties } from 'app/core/utils/model_utils';
 import { store } from '../../store/store';
-import { createVariable, updateVariableProp } from './state/actions';
+import { createVariable, removeVariable, updateVariableProp } from './state/actions';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
@@ -157,6 +157,10 @@ export interface VariableActions {
 export const createVariableInState = <T extends VariableModel = VariableModel>(model: T, defaults: T): number => {
   store.dispatch(createVariable({ model, defaults }));
   return store.getState().templating.lastId;
+};
+
+export const removeVariableFromState = (id: number) => {
+  store.dispatch(removeVariable({ id }));
 };
 
 export const getVariablePropFromState = <T>(id: number, temporary: VariableModel, propName: string): T => {

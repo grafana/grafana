@@ -3,7 +3,7 @@ import angular, { auto, ILocationService, IPromise, IQService } from 'angular';
 import _ from 'lodash';
 // Utils & Services
 import coreModule from 'app/core/core_module';
-import { variableTypes } from './variable';
+import { removeVariableFromState, variableTypes } from './variable';
 import { Graph } from 'app/core/utils/dag';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -123,8 +123,13 @@ export class VariableSrv {
   }
 
   removeVariable(variable: any) {
+    removeVariableFromState(variable.id);
     const index = _.indexOf(this.variables, variable);
     this.variables.splice(index, 1);
+    this.variables = this.variables.map((v, index) => {
+      v.id = index;
+      return v;
+    });
     this.templateSrv.updateIndex();
     this.dashboard.updateSubmenuVisibility();
   }
