@@ -21,6 +21,7 @@ export interface GraphSeriesXY {
   // Field with series' values
   valueField: Field;
   seriesIndex: number;
+  timeStep: number;
 }
 
 export interface CreatePlotOverlay {
