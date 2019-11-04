@@ -156,11 +156,11 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
         tickDecimals: 0,
       },
       seriesIndex: i,
-      // Not relevant for now
-      // @ts-ignore
-      timeField: {},
-      // @ts-ignore
-      seriesField: {},
+      timeField: data.fields[1],
+      valueField: data.fields[0],
+      // for now setting the time step to be 0,
+      // and handle the bar width by setting lineWidth instead of barWidth in flot options
+      timeStep: 0,
     };
 
     return graphSeries;

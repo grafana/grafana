@@ -117,6 +117,7 @@ describe('ResultProcessor', () => {
             seriesIndex: 0,
             timeField,
             valueField,
+            timeStep: 100,
           },
         ]);
       });
@@ -210,6 +211,7 @@ describe('ResultProcessor', () => {
               seriesIndex: 0,
               timeField,
               valueField,
+              timeStep: 100,
             },
           ],
         });

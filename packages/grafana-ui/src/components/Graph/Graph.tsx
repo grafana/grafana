@@ -171,6 +171,11 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     });
   };
 
+  getBarWidth = () => {
+    const { series } = this.props;
+    return Math.min(...series.map(s => s.timeStep));
+  };
+
   draw() {
     if (this.element === null) {
       return;
@@ -183,7 +188,6 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       showLines,
       showBars,
       showPoints,
-      isStacked,
       lineWidth,
       timeZone,
       onHorizontalRegionSelected,
@@ -203,7 +207,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         show: false,
       },
       series: {
-        stack: isStacked,
+        stack: true,
         lines: {
           show: showLines,
           linewidth: lineWidth,
@@ -218,7 +222,8 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         bars: {
           show: showBars,
           fill: 1,
-          barWidth: 1,
+          // Dividig the width by 1.5 to make the bars not touch each other
+          barWidth: showBars ? this.getBarWidth() / 1.5 : 1,
           zero: false,
           lineWidth: lineWidth,
         },
@@ -257,7 +262,6 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     };
 
     try {
-      // console.log(this.element)
       $.plot(this.element, series, flotOptions);
     } catch (err) {
       console.log('Graph rendering error', err, flotOptions, series);

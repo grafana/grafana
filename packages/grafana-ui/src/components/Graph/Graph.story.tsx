@@ -45,6 +45,7 @@ const series: GraphSeriesXY[] = [
       values: new ArrayVector([10, 20, 10]),
       config: { color: 'red' },
     },
+    timeStep: 3600000,
     yAxis: {
       index: 0,
     },
@@ -67,6 +68,7 @@ const series: GraphSeriesXY[] = [
       values: new ArrayVector([20, 30, 40]),
       config: { color: 'blue' },
     },
+    timeStep: 3600000,
     yAxis: {
       index: 0,
     },

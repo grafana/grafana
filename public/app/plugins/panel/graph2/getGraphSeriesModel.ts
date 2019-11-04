@@ -11,6 +11,7 @@ import {
   getTimeField,
   DataFrame,
   FieldDisplayOptions,
+  getSeriesTimeStep,
 } from '@grafana/data';
 
 import { SeriesOptions, GraphOptions } from './types';
@@ -84,6 +85,7 @@ export const getGraphSeriesModel = (
           : { ...field.config };
 
         field.display = getDisplayProcessor({ config: field.config });
+        const timeStep = getSeriesTimeStep(timeField);
 
         graphs.push({
           label: field.name,
@@ -98,6 +100,7 @@ export const getGraphSeriesModel = (
           seriesIndex: fieldColumnIndex,
           timeField: { ...timeField },
           valueField: { ...field },
+          timeStep,
         });
       }
     }
