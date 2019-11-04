@@ -17,6 +17,7 @@ import { ApplicationState } from './application';
 import { LdapState, LdapUserState } from './ldap';
 import { PanelEditorState } from '../features/dashboard/panel_editor/state/reducers';
 import { ApiKeysState } from './apiKeys';
+import { TemplatingState } from '../features/templating/state/reducers';
 
 export interface StoreState {
   navIndex: NavIndex;
@@ -38,6 +39,7 @@ export interface StoreState {
   ldap: LdapState;
   ldapUser: LdapUserState;
   apiKeys: ApiKeysState;
+  templating: TemplatingState;
 }
 
 /*

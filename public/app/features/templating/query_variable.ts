@@ -2,7 +2,10 @@ import _ from 'lodash';
 import {
   assignModelProperties,
   containsVariable,
+  createVariableInState,
+  getVariablePropFromState,
   QueryVariableModel,
+  setVariablePropInState,
   VariableActions,
   VariableHide,
   VariableOption,
@@ -23,28 +26,9 @@ function getNoneOption(): VariableOption {
 }
 
 export class QueryVariable implements QueryVariableModel, VariableActions {
-  type: VariableType;
-  name: string;
-  label: string;
-  hide: VariableHide;
-  skipUrlSync: boolean;
-  datasource: string;
-  query: string;
-  regex: string;
-  sort: VariableSort;
-  options: VariableOption[];
-  current: VariableOption;
-  refresh: VariableRefresh;
-  multi: boolean;
-  includeAll: boolean;
-  useTags: boolean;
-  tagsQuery: string;
-  tagValuesQuery: string;
-  tags: VariableTag[];
-  definition: string;
-  allValue: string;
-
+  id: number;
   defaults: QueryVariableModel = {
+    id: -1,
     type: 'query',
     name: '',
     label: null,
@@ -66,6 +50,7 @@ export class QueryVariable implements QueryVariableModel, VariableActions {
     tagValuesQuery: '',
     definition: '',
   };
+  temporary: QueryVariableModel = null;
 
   /** @ngInject */
   constructor(
@@ -76,8 +61,136 @@ export class QueryVariable implements QueryVariableModel, VariableActions {
     private timeSrv: TimeSrv
   ) {
     // copy model properties to this instance
-    assignModelProperties(this, model, this.defaults);
+    if (model.isTemporary) {
+      this.temporary = {} as QueryVariableModel;
+      assignModelProperties(this.temporary, model, this.defaults);
+    } else {
+      this.temporary = null;
+      this.id = createVariableInState(model, this.defaults);
+    }
     this.updateOptionsFromMetricFindQuery.bind(this);
+  }
+
+  get type(): VariableType {
+    return getVariablePropFromState<VariableType>(this.id, this.temporary, 'type');
+  }
+  get name(): string {
+    return getVariablePropFromState<string>(this.id, this.temporary, 'name');
+  }
+  get label(): string {
+    return getVariablePropFromState<string>(this.id, this.temporary, 'label');
+  }
+  get hide(): VariableHide {
+    return getVariablePropFromState<VariableHide>(this.id, this.temporary, 'hide');
+  }
+  get skipUrlSync(): boolean {
+    return getVariablePropFromState<boolean>(this.id, this.temporary, 'skipUrlSync');
+  }
+  get datasource(): string {
+    return getVariablePropFromState<string>(this.id, this.temporary, 'datasource');
+  }
+  get query(): string {
+    return getVariablePropFromState<string>(this.id, this.temporary, 'query');
+  }
+  get regex(): string {
+    return getVariablePropFromState<string>(this.id, this.temporary, 'regex');
+  }
+  get sort(): VariableSort {
+    return getVariablePropFromState<VariableSort>(this.id, this.temporary, 'sort');
+  }
+  get options(): VariableOption[] {
+    return getVariablePropFromState<VariableOption[]>(this.id, this.temporary, 'options');
+  }
+  get current(): VariableOption {
+    return getVariablePropFromState<VariableOption>(this.id, this.temporary, 'current');
+  }
+  get refresh(): VariableRefresh {
+    return getVariablePropFromState<VariableRefresh>(this.id, this.temporary, 'refresh');
+  }
+  get multi(): boolean {
+    return getVariablePropFromState<boolean>(this.id, this.temporary, 'multi');
+  }
+  get includeAll(): boolean {
+    return getVariablePropFromState<boolean>(this.id, this.temporary, 'includeAll');
+  }
+  get useTags(): boolean {
+    return getVariablePropFromState<boolean>(this.id, this.temporary, 'useTags');
+  }
+  get tagsQuery(): string {
+    return getVariablePropFromState<string>(this.id, this.temporary, 'tagsQuery');
+  }
+  get tagValuesQuery(): string {
+    return getVariablePropFromState<string>(this.id, this.temporary, 'tagValuesQuery');
+  }
+  get tags(): VariableTag[] {
+    return getVariablePropFromState<VariableTag[]>(this.id, this.temporary, 'tags');
+  }
+  get definition(): string {
+    return getVariablePropFromState<string>(this.id, this.temporary, 'definition');
+  }
+  get allValue(): string {
+    return getVariablePropFromState<string>(this.id, this.temporary, 'allValue');
+  }
+
+  set type(type) {
+    setVariablePropInState(this.id, this.temporary, 'type', type);
+  }
+  set name(name) {
+    setVariablePropInState(this.id, this.temporary, 'name', name);
+  }
+  set label(label) {
+    setVariablePropInState(this.id, this.temporary, 'label', label);
+  }
+  set hide(hide) {
+    setVariablePropInState(this.id, this.temporary, 'hide', hide);
+  }
+  set skipUrlSync(skipUrlSync) {
+    setVariablePropInState(this.id, this.temporary, 'skipUrlSync', skipUrlSync);
+  }
+  set datasource(datasource) {
+    setVariablePropInState(this.id, this.temporary, 'datasource', datasource);
+  }
+  set query(query) {
+    setVariablePropInState(this.id, this.temporary, 'query', query);
+  }
+  set regex(regex) {
+    setVariablePropInState(this.id, this.temporary, 'regex', regex);
+  }
+  set sort(sort) {
+    setVariablePropInState(this.id, this.temporary, 'sort', sort);
+  }
+  set options(options) {
+    setVariablePropInState(this.id, this.temporary, 'options', options);
+  }
+  set current(current) {
+    setVariablePropInState(this.id, this.temporary, 'current', current);
+  }
+  set refresh(refresh) {
+    setVariablePropInState(this.id, this.temporary, 'refresh', refresh);
+  }
+  set multi(multi) {
+    setVariablePropInState(this.id, this.temporary, 'multi', multi);
+  }
+  set includeAll(includeAll) {
+    setVariablePropInState(this.id, this.temporary, 'includeAll', includeAll);
+  }
+  set useTags(useTags) {
+    setVariablePropInState(this.id, this.temporary, 'useTags', useTags);
+  }
+  set tagsQuery(tagsQuery) {
+    setVariablePropInState(this.id, this.temporary, 'tagsQuery', tagsQuery);
+  }
+  set tagValuesQuery(tagValuesQuery) {
+    setVariablePropInState(this.id, this.temporary, 'tagValuesQuery', tagValuesQuery);
+  }
+  set tags(tags) {
+    setVariablePropInState(this.id, this.temporary, 'tags', tags);
+  }
+  set definition(definition) {
+    setVariablePropInState(this.id, this.temporary, 'definition', definition);
+  }
+  set allValue(allValue) {
+    setVariablePropInState(this.id, this.temporary, 'allValue', allValue);
   }
 
   getSaveModel() {

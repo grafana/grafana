@@ -1,5 +1,7 @@
 import _ from 'lodash';
 import { assignModelProperties } from 'app/core/utils/model_utils';
+import { store } from '../../store/store';
+import { createVariable, updateVariableProp } from './state/actions';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
@@ -135,6 +137,7 @@ export interface VariableWithOptions extends VariableModel {
 }
 
 export interface VariableModel {
+  id?: number;
   type: VariableType;
   name: string;
   label: string;
@@ -150,6 +153,27 @@ export interface VariableActions {
   getValueForUrl(): any;
   getSaveModel(): any;
 }
+
+export const createVariableInState = <T extends VariableModel = VariableModel>(model: T, defaults: T): number => {
+  store.dispatch(createVariable({ model, defaults }));
+  return store.getState().templating.lastId;
+};
+
+export const getVariablePropFromState = <T>(id: number, temporary: VariableModel, propName: string): T => {
+  if (temporary) {
+    return (temporary as any)[propName] as T;
+  }
+  const model: any = store.getState().templating.variables[id];
+  return model[propName];
+};
+
+export const setVariablePropInState = <T>(id: number, temporary: VariableModel, propName: string, value: T) => {
+  if (temporary) {
+    (temporary as any)[propName] = value;
+    return;
+  }
+  store.dispatch(updateVariableProp({ id, propName, value }));
+};
 
 export type CtorType = new (...args: any[]) => {};
 

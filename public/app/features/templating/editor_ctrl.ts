@@ -94,7 +94,7 @@ export class VariableEditorCtrl {
       }
 
       const sameName: any = _.find($scope.variables, { name: $scope.current.name });
-      if (sameName && sameName !== $scope.current) {
+      if (sameName /*&& sameName !== $scope.current*/) {
         appEvents.emit(AppEvents.alertWarning, ['Validation', 'Variable with the same name already exists']);
         return false;
       }
@@ -163,18 +163,16 @@ export class VariableEditorCtrl {
     };
 
     $scope.update = () => {
-      if ($scope.isValid()) {
-        $scope.runQuery().then(() => {
-          $scope.reset();
-          $scope.mode = 'list';
-          templateSrv.updateIndex();
-        });
-      }
+      $scope.runQuery().then(() => {
+        $scope.reset();
+        $scope.mode = 'list';
+        templateSrv.updateIndex();
+      });
     };
 
     $scope.reset = () => {
       $scope.currentIsNew = true;
-      $scope.current = variableSrv.createVariableFromModel({ type: 'query' });
+      $scope.current = variableSrv.createVariableFromModel({ type: 'query', isTemporary: true });
 
       // this is done here in case a new data source type variable was added
       $scope.datasources = _.filter(datasourceSrv.getMetricSources(), ds => {

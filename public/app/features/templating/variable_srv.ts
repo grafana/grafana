@@ -1,7 +1,6 @@
 // Libaries
-import angular, { IQService, ILocationService, auto, IPromise } from 'angular';
+import angular, { auto, ILocationService, IPromise, IQService } from 'angular';
 import _ from 'lodash';
-
 // Utils & Services
 import coreModule from 'app/core/core_module';
 import { variableTypes } from './variable';
@@ -9,7 +8,6 @@ import { Graph } from 'app/core/utils/dag';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-
 // Types
 import { TimeRange } from '@grafana/data';
 import { CoreEvents } from 'app/types';
@@ -117,7 +115,8 @@ export class VariableSrv {
     return variable;
   }
 
-  addVariable(variable: any) {
+  addVariable(model: any) {
+    const variable = this.createVariableFromModel(model);
     this.variables.push(variable);
     this.templateSrv.updateIndex();
     this.dashboard.updateSubmenuVisibility();
