@@ -7,7 +7,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 //Types
 import { PostgresQueryForInterpolation } from './types';
-import { interpolateSearchFilter } from '../../../features/templating/variable';
+import { getSearchFilterScopedVar } from '../../../features/templating/variable';
 
 export class PostgresDatasource {
   id: any;
@@ -127,18 +127,17 @@ export class PostgresDatasource {
       .then((data: any) => this.responseParser.transformAnnotationResponse(options, data));
   }
 
-  metricFindQuery(query: string, optionalOptions: { variable?: any }) {
+  metricFindQuery(query: string, optionalOptions: { variable?: any; searchFilter?: string }) {
     let refId = 'tempvar';
     if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
       refId = optionalOptions.variable.name;
     }
 
-    const rawSql = interpolateSearchFilter({
-      query: this.templateSrv.replace(query, {}, this.interpolateVariable),
-      options: optionalOptions,
-      wildcardChar: '%',
-      quoteLiteral: true,
-    });
+    const rawSql = this.templateSrv.replace(
+      query,
+      getSearchFilterScopedVar({ query, wildcardChar: '%', options: optionalOptions }),
+      this.interpolateVariable
+    );
 
     const interpolatedQuery = {
       refId: refId,

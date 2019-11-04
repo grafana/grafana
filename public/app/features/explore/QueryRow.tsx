@@ -85,7 +85,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     this.props.addQueryRow(exploreId, index);
   };
 
-  onClickToggleHiddenQuery = () => {
+  onClickToggleDisabled = () => {
     const { exploreId, index, query } = this.props;
     const newQuery = {
       ...query,
@@ -136,7 +136,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
 
     const canToggleEditorModes =
       mode === ExploreMode.Metrics && has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
-    const canHide = queryResponse.state !== LoadingState.NotStarted;
+    const isNotStarted = queryResponse.state === LoadingState.NotStarted;
     const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
     let QueryField;
 
@@ -181,10 +181,10 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
         </div>
         <QueryRowActions
           canToggleEditorModes={canToggleEditorModes}
-          hideQuery={query.hide}
-          canHide={canHide}
+          isDisabled={query.hide}
+          isNotStarted={isNotStarted}
           onClickToggleEditorMode={this.onClickToggleEditorMode}
-          onClickToggleHiddenQuery={this.onClickToggleHiddenQuery}
+          onClickToggleDisabled={this.onClickToggleDisabled}
           onClickAddButton={this.onClickAddButton}
           onClickRemoveButton={this.onClickRemoveButton}
         />

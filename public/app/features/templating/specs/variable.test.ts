@@ -2,9 +2,10 @@ import {
   assignModelProperties,
   containsSearchFilter,
   containsVariable,
-  interpolateSearchFilter,
+  getSearchFilterScopedVar,
   SEARCH_FILTER_VARIABLE,
 } from '../variable';
+import { ScopedVars } from '@grafana/data';
 
 describe('containsVariable', () => {
   describe('when checking if a string contains a variable', () => {
@@ -92,84 +93,164 @@ describe('containsSearchFilter', () => {
     });
   });
 
-  describe(`when called with a query with ${SEARCH_FILTER_VARIABLE}`, () => {
-    it('then it should return false', () => {
-      const result = containsSearchFilter(`$app.${SEARCH_FILTER_VARIABLE}`);
+  describe(`when called with a query with $${SEARCH_FILTER_VARIABLE}`, () => {
+    it('then it should return true', () => {
+      const result = containsSearchFilter(`$app.$${SEARCH_FILTER_VARIABLE}`);
+
+      expect(result).toBe(true);
+    });
+  });
+
+  describe(`when called with a query with [[${SEARCH_FILTER_VARIABLE}]]`, () => {
+    it('then it should return true', () => {
+      const result = containsSearchFilter(`$app.[[${SEARCH_FILTER_VARIABLE}]]`);
+
+      expect(result).toBe(true);
+    });
+  });
+
+  describe(`when called with a query with \$\{${SEARCH_FILTER_VARIABLE}:regex\}`, () => {
+    it('then it should return true', () => {
+      const result = containsSearchFilter(`$app.\$\{${SEARCH_FILTER_VARIABLE}:regex\}`);
 
       expect(result).toBe(true);
     });
   });
 });
 
-describe('interpolateSearchFilter', () => {
-  describe('when called with a query without ${SEARCH_FILTER_VARIABLE}', () => {
-    it('then it should return query', () => {
-      const query = '$app.*';
-      const options = { searchFilter: 'filter' };
-      const wildcardChar = '*';
-      const quoteLiteral = false;
+interface GetSearchFilterScopedVarScenario {
+  query: string;
+  wildcardChar: string;
+  options: { searchFilter?: string };
+  expected: ScopedVars;
+}
 
-      const result = interpolateSearchFilter({
-        query,
-        options,
-        wildcardChar,
-        quoteLiteral,
-      });
+const scenarios: GetSearchFilterScopedVarScenario[] = [
+  // testing the $__searchFilter notation
+  {
+    query: 'abc.$__searchFilter',
+    wildcardChar: '',
+    options: { searchFilter: '' },
+    expected: { __searchFilter: { value: '', text: '' } },
+  },
+  {
+    query: 'abc.$__searchFilter',
+    wildcardChar: '*',
+    options: { searchFilter: '' },
+    expected: { __searchFilter: { value: '*', text: '' } },
+  },
+  {
+    query: 'abc.$__searchFilter',
+    wildcardChar: '',
+    options: { searchFilter: 'a' },
+    expected: { __searchFilter: { value: 'a', text: '' } },
+  },
+  {
+    query: 'abc.$__searchFilter',
+    wildcardChar: '*',
+    options: { searchFilter: 'a' },
+    expected: { __searchFilter: { value: 'a*', text: '' } },
+  },
+  // testing the [[__searchFilter]] notation
+  {
+    query: 'abc.[[__searchFilter]]',
+    wildcardChar: '',
+    options: { searchFilter: '' },
+    expected: { __searchFilter: { value: '', text: '' } },
+  },
+  {
+    query: 'abc.[[__searchFilter]]',
+    wildcardChar: '*',
+    options: { searchFilter: '' },
+    expected: { __searchFilter: { value: '*', text: '' } },
+  },
+  {
+    query: 'abc.[[__searchFilter]]',
+    wildcardChar: '',
+    options: { searchFilter: 'a' },
+    expected: { __searchFilter: { value: 'a', text: '' } },
+  },
+  {
+    query: 'abc.[[__searchFilter]]',
+    wildcardChar: '*',
+    options: { searchFilter: 'a' },
+    expected: { __searchFilter: { value: 'a*', text: '' } },
+  },
+  // testing the ${__searchFilter:fmt} notation
+  {
+    query: 'abc.${__searchFilter:regex}',
+    wildcardChar: '',
+    options: { searchFilter: '' },
+    expected: { __searchFilter: { value: '', text: '' } },
+  },
+  {
+    query: 'abc.${__searchFilter:regex}',
+    wildcardChar: '*',
+    options: { searchFilter: '' },
+    expected: { __searchFilter: { value: '*', text: '' } },
+  },
+  {
+    query: 'abc.${__searchFilter:regex}',
+    wildcardChar: '',
+    options: { searchFilter: 'a' },
+    expected: { __searchFilter: { value: 'a', text: '' } },
+  },
+  {
+    query: 'abc.${__searchFilter:regex}',
+    wildcardChar: '*',
+    options: { searchFilter: 'a' },
+    expected: { __searchFilter: { value: 'a*', text: '' } },
+  },
+  // testing the no options
+  {
+    query: 'abc.$__searchFilter',
+    wildcardChar: '',
+    options: null,
+    expected: { __searchFilter: { value: '', text: '' } },
+  },
+  {
+    query: 'abc.$__searchFilter',
+    wildcardChar: '*',
+    options: null,
+    expected: { __searchFilter: { value: '*', text: '' } },
+  },
+  // testing the no search filter at all
+  {
+    query: 'abc.$def',
+    wildcardChar: '',
+    options: { searchFilter: '' },
+    expected: {},
+  },
+  {
+    query: 'abc.$def',
+    wildcardChar: '*',
+    options: { searchFilter: '' },
+    expected: {},
+  },
+  {
+    query: 'abc.$def',
+    wildcardChar: '',
+    options: { searchFilter: 'a' },
+    expected: {},
+  },
+  {
+    query: 'abc.$def',
+    wildcardChar: '*',
+    options: { searchFilter: 'a' },
+    expected: {},
+  },
+];
 
-      expect(result).toEqual(query);
-    });
-  });
+scenarios.map(scenario => {
+  describe('getSearchFilterScopedVar', () => {
+    describe(`when called with query:'${scenario.query}'`, () => {
+      describe(`and wildcardChar:'${scenario.wildcardChar}'`, () => {
+        describe(`and options:'${JSON.stringify(scenario.options, null, 0)}'`, () => {
+          it(`then the result should be ${JSON.stringify(scenario.expected, null, 0)}`, () => {
+            const { expected, ...args } = scenario;
 
-  describe(`when called with a query with ${SEARCH_FILTER_VARIABLE}`, () => {
-    const query = `$app.${SEARCH_FILTER_VARIABLE}`;
-
-    describe('and no searchFilter is given', () => {
-      it(`then ${SEARCH_FILTER_VARIABLE} should be replaced by wildchar character`, () => {
-        const options = {};
-        const wildcardChar = '*';
-        const quoteLiteral = false;
-
-        const result = interpolateSearchFilter({
-          query,
-          options,
-          wildcardChar,
-          quoteLiteral,
-        });
-
-        expect(result).toEqual(`$app.*`);
-      });
-    });
-
-    describe('and searchFilter is given', () => {
-      const options = { searchFilter: 'filter' };
-
-      it(`then ${SEARCH_FILTER_VARIABLE} should be replaced with searchfilter and wildchar character`, () => {
-        const wildcardChar = '*';
-        const quoteLiteral = false;
-
-        const result = interpolateSearchFilter({
-          query,
-          options,
-          wildcardChar,
-          quoteLiteral,
-        });
-
-        expect(result).toEqual(`$app.filter*`);
-      });
-
-      describe(`and quoteLiteral is used`, () => {
-        it(`then the literal should be quoted`, () => {
-          const wildcardChar = '*';
-          const quoteLiteral = true;
-
-          const result = interpolateSearchFilter({
-            query,
-            options,
-            wildcardChar,
-            quoteLiteral,
+            expect(getSearchFilterScopedVar(args)).toEqual(expected);
           });
-
-          expect(result).toEqual(`$app.'filter*'`);
         });
       });
     });

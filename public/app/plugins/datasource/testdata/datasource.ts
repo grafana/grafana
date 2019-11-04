@@ -13,7 +13,7 @@ import { queryMetricTree } from './metricTree';
 import { from, merge, Observable } from 'rxjs';
 import { runStream } from './runStreams';
 import templateSrv from 'app/features/templating/template_srv';
-import { interpolateSearchFilter } from '../../../features/templating/variable';
+import { getSearchFilterScopedVar } from '../../../features/templating/variable';
 
 type TestData = TimeSeries | TableData;
 
@@ -126,12 +126,10 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
   metricFindQuery(query: string, options: any) {
     return new Promise<MetricFindValue[]>((resolve, reject) => {
       setTimeout(() => {
-        const interpolatedQuery = interpolateSearchFilter({
-          query: templateSrv.replace(query),
-          options,
-          wildcardChar: '*',
-          quoteLiteral: false,
-        });
+        const interpolatedQuery = templateSrv.replace(
+          query,
+          getSearchFilterScopedVar({ query, wildcardChar: '*', options })
+        );
         const children = queryMetricTree(interpolatedQuery);
         const items = children.map(item => ({ value: item.name, text: item.name }));
         resolve(items);
