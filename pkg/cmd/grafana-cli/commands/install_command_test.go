@@ -228,8 +228,6 @@ func setupPluginInstallCmd(t *testing.T, pluginDir string) utils.CommandLine {
 		assert.Nil(t, err)
 		_, err = io.Copy(tmpFile, f)
 		assert.Nil(t, err)
-		err = tmpFile.Close()
-		assert.Nil(t, err)
 		return nil
 	}
 

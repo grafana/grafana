@@ -25,7 +25,7 @@ type GrafanaComClient struct {
 
 func (client *GrafanaComClient) GetPlugin(pluginId, repoUrl string) (models.Plugin, error) {
 	logger.Debugf("getting plugin metadata from: %v pluginId: %v \n", repoUrl, pluginId)
-	body, err := sendRequest(HttpClient, repoUrl, "repo", pluginId)
+	body, err := sendRequestGetBytes(HttpClient, repoUrl, "repo", pluginId)
 
 	if err != nil {
 		if err == ErrNotFoundError {
@@ -55,10 +55,6 @@ func (client *GrafanaComClient) DownloadFile(pluginName string, tmpFile *os.File
 		if err != nil {
 			return errutil.Wrap("Failed to copy plugin archive", err)
 		}
-		err = tmpFile.Close()
-		if err != nil {
-			return errutil.Wrap("Failed to close file", err)
-		}
 		return nil
 	}
 
@@ -86,7 +82,7 @@ func (client *GrafanaComClient) DownloadFile(pluginName string, tmpFile *os.File
 
 	// Using no timeout here as some plugins can be bigger and smaller timeout would prevent to download a plugin on
 	// slow network. As this is CLI operation hanging is not a big of an issue as user can just abort.
-	bodyReader, err := executeRequestReader(HttpClientNoTimeout, url)
+	bodyReader, err := sendRequest(HttpClientNoTimeout, url)
 	if err != nil {
 		return errutil.Wrap("Failed to send request", err)
 	}
@@ -98,9 +94,6 @@ func (client *GrafanaComClient) DownloadFile(pluginName string, tmpFile *os.File
 		return errutil.Wrap("Failed to compute MD5 checksum", err)
 	}
 	w.Flush()
-	if err := tmpFile.Close(); err != nil {
-		return errutil.Wrap("Failed to close tmp file", err)
-	}
 	if len(checksum) > 0 && checksum != fmt.Sprintf("%x", h.Sum(nil)) {
 		return xerrors.New("Expected MD5 checksum does not match the downloaded archive. Please contact security@grafana.com.")
 	}
@@ -108,7 +101,7 @@ func (client *GrafanaComClient) DownloadFile(pluginName string, tmpFile *os.File
 }
 
 func (client *GrafanaComClient) ListAllPlugins(repoUrl string) (models.PluginRepo, error) {
-	body, err := sendRequest(HttpClient, repoUrl, "repo")
+	body, err := sendRequestGetBytes(HttpClient, repoUrl, "repo")
 
 	if err != nil {
 		logger.Info("Failed to send request", "error", err)
@@ -125,25 +118,16 @@ func (client *GrafanaComClient) ListAllPlugins(repoUrl string) (models.PluginRep
 	return data, nil
 }
 
-func sendRequest(client http.Client, repoUrl string, subPaths ...string) ([]byte, error) {
-	req, err := createRequest(repoUrl, subPaths...)
+func sendRequestGetBytes(client http.Client, repoUrl string, subPaths ...string) ([]byte, error) {
+	bodyReader, err := sendRequest(client, repoUrl, subPaths...)
 	if err != nil {
 		return []byte{}, err
 	}
-
-	res, err := client.Do(req)
-	if err != nil {
-		return []byte{}, err
-	}
-	resBodyReader, err := handleResponse(res)
-	if err != nil {
-		return []byte{}, err
-	}
-	defer resBodyReader.Close()
-	return ioutil.ReadAll(resBodyReader)
+	defer bodyReader.Close()
+	return ioutil.ReadAll(bodyReader)
 }
 
-func executeRequestReader(client http.Client, repoUrl string, subPaths ...string) (io.ReadCloser, error) {
+func sendRequest(client http.Client, repoUrl string, subPaths ...string) (io.ReadCloser, error) {
 	req, err := createRequest(repoUrl, subPaths...)
 	if err != nil {
 		return nil, err

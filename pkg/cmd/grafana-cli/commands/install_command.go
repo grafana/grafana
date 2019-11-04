@@ -111,13 +111,18 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
 	// Create temp file for downloading zip file
 	tmpFile, err := ioutil.TempFile("", "*.zip")
 	if err != nil {
-		errutil.Wrap("Failed to create temporary file", err)
+		return errutil.Wrap("Failed to create temporary file", err)
 	}
 	defer os.Remove(tmpFile.Name())
+	defer tmpFile.Close()
 
 	err = c.ApiClient().DownloadFile(pluginName, tmpFile, downloadURL, checksum)
 	if err != nil {
 		return errutil.Wrap("Failed to download plugin archive", err)
+	}
+	err = tmpFile.Close()
+	if err != nil {
+		return errutil.Wrap("Failed to close tmp file", err)
 	}
 
 	err = extractFiles(tmpFile.Name(), pluginName, pluginFolder, isInternal)
