@@ -25,7 +25,7 @@ type cloudWatchQuery struct {
 }
 
 func (q *cloudWatchQuery) isMathExpression() bool {
-	return q.Expression != "" && !strings.Contains(q.Expression, "SEARCH(")
+	return q.Expression != "" && !q.isUserDefinedSearchExpression()
 }
 
 func (q *cloudWatchQuery) isSearchExpression() bool {
