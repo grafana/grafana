@@ -25,6 +25,7 @@ func (e *CloudWatchExecutor) buildMetricDataQuery(query *cloudWatchQuery) (*clou
 				Metric: &cloudwatch.Metric{
 					Namespace:  aws.String(query.Namespace),
 					MetricName: aws.String(query.MetricName),
+					Dimensions: make([]*cloudwatch.Dimension, 0),
 				},
 				Period: aws.Int64(int64(query.Period)),
 			}
@@ -64,7 +65,7 @@ func buildSearchExpression(query *cloudWatchQuery, stat string) string {
 	}
 
 	searchTerm := fmt.Sprintf(`MetricName="%s"`, query.MetricName)
-	keys := make([]string, 0)
+	keys := []string{}
 	for k := range knownDimensions {
 		keys = append(keys, k)
 	}

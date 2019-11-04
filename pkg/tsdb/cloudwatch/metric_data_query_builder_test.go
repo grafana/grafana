@@ -12,12 +12,12 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			Convey("and query should be matched exact", func() {
 				matchExact := true
 				Convey("and query has three dimension values for a given dimension key", func() {
-					dimensions := make(map[string][]string)
-					dimensions["LoadBalancer"] = []string{"lb1", "lb2", "lb3"}
 					query := &cloudWatchQuery{
 						Namespace:  "AWS/EC2",
 						MetricName: "CPUUtilization",
-						Dimensions: dimensions,
+						Dimensions: map[string][]string{
+							"LoadBalancer": {"lb1", "lb2", "lb3"},
+						},
 						Period:     300,
 						Identifier: "id1",
 						Expression: "",
@@ -29,14 +29,14 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 				})
 
 				Convey("and query has three dimension values for two given dimension keys", func() {
-					dimensions := make(map[string][]string)
-					dimensions["LoadBalancer"] = []string{"lb1", "lb2", "lb3"}
-					dimensions["InstanceId"] = []string{"i-123", "i-456", "i-789"}
 
 					query := &cloudWatchQuery{
 						Namespace:  "AWS/EC2",
 						MetricName: "CPUUtilization",
-						Dimensions: dimensions,
+						Dimensions: map[string][]string{
+							"LoadBalancer": {"lb1", "lb2", "lb3"},
+							"InstanceId":   {"i-123", "i-456", "i-789"},
+						},
 						Period:     300,
 						Identifier: "id1",
 						Expression: "",
@@ -48,12 +48,12 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 				})
 
 				Convey("and no OR operator was added if a star was used for dimension value", func() {
-					dimensions := make(map[string][]string)
-					dimensions["LoadBalancer"] = []string{"*"}
 					query := &cloudWatchQuery{
 						Namespace:  "AWS/EC2",
 						MetricName: "CPUUtilization",
-						Dimensions: dimensions,
+						Dimensions: map[string][]string{
+							"LoadBalancer": {"*"},
+						},
 						Period:     300,
 						Identifier: "id1",
 						Expression: "",
@@ -65,12 +65,12 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 				})
 
 				Convey("and query has one dimension key with a * value", func() {
-					dimensions := make(map[string][]string)
-					dimensions["LoadBalancer"] = []string{"*"}
 					query := &cloudWatchQuery{
 						Namespace:  "AWS/EC2",
 						MetricName: "CPUUtilization",
-						Dimensions: dimensions,
+						Dimensions: map[string][]string{
+							"LoadBalancer": {"*"},
+						},
 						Period:     300,
 						Identifier: "id1",
 						Expression: "",
@@ -82,14 +82,13 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 				})
 
 				Convey("and query has three dimension values for two given dimension keys, and one value is a star", func() {
-					dimensions := make(map[string][]string)
-					dimensions["LoadBalancer"] = []string{"lb1", "lb2", "lb3"}
-					dimensions["InstanceId"] = []string{"i-123", "*", "i-789"}
-
 					query := &cloudWatchQuery{
 						Namespace:  "AWS/EC2",
 						MetricName: "CPUUtilization",
-						Dimensions: dimensions,
+						Dimensions: map[string][]string{
+							"LoadBalancer": {"lb1", "lb2", "lb3"},
+							"InstanceId":   {"i-123", "*", "i-789"},
+						},
 						Period:     300,
 						Identifier: "id1",
 						Expression: "",
@@ -104,12 +103,12 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			Convey("and query should not be matched exact", func() {
 				matchExact := false
 				Convey("and query has three dimension values for a given dimension key", func() {
-					dimensions := make(map[string][]string)
-					dimensions["LoadBalancer"] = []string{"lb1", "lb2", "lb3"}
 					query := &cloudWatchQuery{
 						Namespace:  "AWS/EC2",
 						MetricName: "CPUUtilization",
-						Dimensions: dimensions,
+						Dimensions: map[string][]string{
+							"LoadBalancer": {"lb1", "lb2", "lb3"},
+						},
 						Period:     300,
 						Identifier: "id1",
 						Expression: "",
@@ -121,14 +120,13 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 				})
 
 				Convey("and query has three dimension values for two given dimension keys", func() {
-					dimensions := make(map[string][]string)
-					dimensions["LoadBalancer"] = []string{"lb1", "lb2", "lb3"}
-					dimensions["InstanceId"] = []string{"i-123", "i-456", "i-789"}
-
 					query := &cloudWatchQuery{
 						Namespace:  "AWS/EC2",
 						MetricName: "CPUUtilization",
-						Dimensions: dimensions,
+						Dimensions: map[string][]string{
+							"LoadBalancer": {"lb1", "lb2", "lb3"},
+							"InstanceId":   {"i-123", "i-456", "i-789"},
+						},
 						Period:     300,
 						Identifier: "id1",
 						Expression: "",
@@ -140,12 +138,12 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 				})
 
 				Convey("and query has one dimension key with a * value", func() {
-					dimensions := make(map[string][]string)
-					dimensions["LoadBalancer"] = []string{"*"}
 					query := &cloudWatchQuery{
 						Namespace:  "AWS/EC2",
 						MetricName: "CPUUtilization",
-						Dimensions: dimensions,
+						Dimensions: map[string][]string{
+							"LoadBalancer": {"*"},
+						},
 						Period:     300,
 						Identifier: "id1",
 						Expression: "",
@@ -157,14 +155,13 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 				})
 
 				Convey("and query has three dimension values for two given dimension keys, and one value is a star", func() {
-					dimensions := make(map[string][]string)
-					dimensions["LoadBalancer"] = []string{"lb1", "lb2", "lb3"}
-					dimensions["InstanceId"] = []string{"i-123", "*", "i-789"}
-
 					query := &cloudWatchQuery{
 						Namespace:  "AWS/EC2",
 						MetricName: "CPUUtilization",
-						Dimensions: dimensions,
+						Dimensions: map[string][]string{
+							"LoadBalancer": {"lb1", "lb2", "lb3"},
+							"InstanceId":   {"i-123", "*", "i-789"},
+						},
 						Period:     300,
 						Identifier: "id1",
 						Expression: "",

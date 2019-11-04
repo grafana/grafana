@@ -33,19 +33,18 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				},
 			}
 
-			dimensions := make(map[string][]string)
-			dimensions["LoadBalancer"] = []string{"lb"}
-			dimensions["TargetGroup"] = []string{"tg"}
-
 			query := &cloudWatchQuery{
 				RefId:      "refId1",
 				Region:     "us-east-1",
 				Namespace:  "AWS/ApplicationELB",
 				MetricName: "TargetResponseTime",
-				Dimensions: dimensions,
-				Stats:      "Average",
-				Period:     60,
-				Alias:      "{{namespace}}_{{metric}}_{{stat}}",
+				Dimensions: map[string][]string{
+					"LoadBalancer": {"lb"},
+					"TargetGroup":  {"tg"},
+				},
+				Stats:  "Average",
+				Period: 60,
+				Alias:  "{{namespace}}_{{metric}}_{{stat}}",
 			}
 			series, err := parseGetMetricDataTimeSeries(resp, query)
 			timeSeries := (*series)[0]
