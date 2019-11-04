@@ -84,9 +84,9 @@ func (s *SocialGenericOAuth) IsOrganizationMember(client *http.Client) bool {
 // using the configured  attribute path associated with the generic OAuth
 // provider.
 // Returns an empty string if an attribute is not found.
-func (s *SocialGenericOAuth) searchJSONForAttr(attribute string, data []byte) string {
-	if attribute == "" {
-		s.log.Error("No attribute path specified", "attributePath", attribute)
+func (s *SocialGenericOAuth) searchJSONForAttr(attributePath string, data []byte) string {
+	if attributePath == "" {
+		s.log.Error("No attribute path specified")
 		return ""
 	}
 	if len(data) == 0 {
@@ -98,16 +98,16 @@ func (s *SocialGenericOAuth) searchJSONForAttr(attribute string, data []byte) st
 		s.log.Error("Failed to unmarshal user info JSON response", "err", err.Error())
 		return ""
 	}
-	val, err := jmespath.Search(attribute, buf)
+	val, err := jmespath.Search(attributePath, buf)
 	if err != nil {
-		s.log.Error("Failed to search user info JSON response with provided path", "attributePath", attribute, "err", err.Error())
+		s.log.Error("Failed to search user info JSON response with provided path", "attributePath", attributePath, "err", err.Error())
 		return ""
 	}
 	strVal, ok := val.(string)
 	if ok {
 		return strVal
 	}
-	s.log.Error("Attribute not found when searching JSON with provided path", "attributePath", attribute)
+	s.log.Error("Attribute not found when searching JSON with provided path", "attributePath", attributePath)
 	return ""
 }
 
@@ -325,7 +325,6 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson, userInfoResp []byt
 }
 
 func (s *SocialGenericOAuth) extractRole(data *UserInfoJson, userInfoResp []byte) string {
-
 	if s.roleAttributePath != "" {
 		role := s.searchJSONForAttr(s.roleAttributePath, userInfoResp)
 		if role != "" {
