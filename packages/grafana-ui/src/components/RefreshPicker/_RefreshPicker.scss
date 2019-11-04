@@ -1,5 +1,6 @@
 .refresh-picker {
   position: relative;
+  display: none;
 
   .refresh-picker-buttons {
     display: flex;
@@ -29,6 +30,10 @@
     .select-button-value {
       animation: liveText 2s infinite;
     }
+  }
+
+  @include media-breakpoint-up(xs) {
+    display: block;
   }
 }
 
