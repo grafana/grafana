@@ -17,7 +17,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 }));
 
 type Props = {
-  value: DerivedFieldConfig[] | undefined;
+  value?: DerivedFieldConfig[];
   onChange: (value: DerivedFieldConfig[]) => void;
 };
 export const DerivedFields = (props: Props) => {
@@ -80,9 +80,11 @@ export const DerivedFields = (props: Props) => {
             Add
           </Button>
 
-          <Button variant="inverse" onClick={() => setShowDebug(!showDebug)}>
-            {showDebug ? 'Hide debug' : 'Debug'}
-          </Button>
+          {value && value.length > 0 && (
+            <Button variant="inverse" onClick={() => setShowDebug(!showDebug)}>
+              {showDebug ? 'Hide debug' : 'Debug'}
+            </Button>
+          )}
         </div>
       </div>
 
