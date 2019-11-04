@@ -66,6 +66,13 @@ func TestMacroEngine(t *testing.T) {
 				So(sql, ShouldEqual, fmt.Sprintf("WHERE time_column BETWEEN FROM_UNIXTIME(%d) AND FROM_UNIXTIME(%d)", from.Unix(), to.Unix()))
 			})
 
+			Convey("interpolate __timeFilter function with a nested mysql function call", func() {
+				sql, err := engine.Interpolate(query, timeRange, "WHERE $__timeFilter(TIME(time_column))")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, fmt.Sprintf("WHERE TIME(time_column) BETWEEN FROM_UNIXTIME(%d) AND FROM_UNIXTIME(%d)", from.Unix(), to.Unix()))
+			})
+
 			Convey("interpolate __timeFrom function", func() {
 				sql, err := engine.Interpolate(query, timeRange, "select $__timeFrom()")
 				So(err, ShouldBeNil)

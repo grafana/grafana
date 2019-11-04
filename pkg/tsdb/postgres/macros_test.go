@@ -44,6 +44,13 @@ func TestMacroEngine(t *testing.T) {
 				So(sql, ShouldEqual, fmt.Sprintf("WHERE time_column BETWEEN '%s' AND '%s'", from.Format(time.RFC3339Nano), to.Format(time.RFC3339Nano)))
 			})
 
+			Convey("interpolate __timeFilter function with a nested postgres function call", func() {
+				sql, err := engine.Interpolate(query, timeRange, "WHERE $__timeFilter(to_timestamp(time_column))")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, fmt.Sprintf("WHERE to_timestamp(time_column) BETWEEN '%s' AND '%s'", from.Format(time.RFC3339Nano), to.Format(time.RFC3339Nano)))
+			})
+
 			Convey("interpolate __timeFrom function", func() {
 				sql, err := engine.Interpolate(query, timeRange, "select $__timeFrom()")
 				So(err, ShouldBeNil)
