@@ -22,15 +22,21 @@ export const simple = () => {
   const label = text('Label', 'This is a Label');
   const description = text('Description', '');
   const icon = text('Icon', 'fa fa-check');
+  const loading = boolean('Loading', true);
+  const buttonText = text('Button text', 'Fetch');
 
   return (
-    <Input
-      description={description}
-      disabled={disabled}
-      invalid={invalid}
-      invalidMessage={invalidMessage}
-      label={label}
-      icon={icon}
-    />
+    <div style={{ width: '300px' }}>
+      <Input
+        description={description}
+        disabled={disabled}
+        invalid={invalid}
+        invalidMessage={invalidMessage}
+        label={label}
+        icon={icon}
+        loading={loading}
+        buttonText={buttonText}
+      />
+    </div>
   );
 };
