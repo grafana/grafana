@@ -94,6 +94,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
     // Transform response packets into PanelData with merged results
     map((packet: DataQueryResponse) => {
       if (!isArray(packet.data)) {
+        console.log('XXXX', packet);
         throw new Error(`Expected response data to be array, got ${typeof packet.data}.`);
       }
 

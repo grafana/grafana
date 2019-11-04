@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { dateMath, ScopedVars } from '@grafana/data';
+import { DataFrame, dateMath, ScopedVars, DataQueryResponse, DataQueryRequest, toDataFrame } from '@grafana/data';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import gfunc from './gfunc';
 import { IQService } from 'angular';
@@ -56,12 +56,12 @@ export class GraphiteDatasource {
     };
   }
 
-  query(options: any) {
+  async query(options: DataQueryRequest<GraphiteQuery>): Promise<DataQueryResponse> {
     const graphOptions = {
       from: this.translateTime(options.rangeRaw.from, false, options.timezone),
       until: this.translateTime(options.rangeRaw.to, true, options.timezone),
       targets: options.targets,
-      format: options.format,
+      format: (options as any).format,
       cacheTimeout: options.cacheTimeout || this.cacheTimeout,
       maxDataPoints: options.maxDataPoints,
     };
@@ -89,7 +89,7 @@ export class GraphiteDatasource {
       httpOptions.requestId = this.name + '.panelId.' + options.panelId;
     }
 
-    return this.doGraphiteRequest(httpOptions).then(this.convertDataPointsToMs);
+    return this.doGraphiteRequest(httpOptions).then(this.convertResponseToDataFrames);
   }
 
   addTracingHeaders(httpOptions: { headers: any }, options: { dashboardId: any; panelId: any }) {
@@ -100,17 +100,31 @@ export class GraphiteDatasource {
     }
   }
 
-  convertDataPointsToMs(result: any) {
+  convertResponseToDataFrames(result: any): DataQueryResponse {
+    const data: DataFrame[] = [];
     if (!result || !result.data) {
-      return [];
+      return { data };
     }
-    for (let i = 0; i < result.data.length; i++) {
-      const series = result.data[i];
-      for (let y = 0; y < series.datapoints.length; y++) {
-        series.datapoints[y][1] *= 1000;
+    // Series are either at the root or under a node called 'series'
+    const series = result.data.series || result.data;
+    if (!_.isArray(series)) {
+      throw { message: 'Missing series in result', data: result };
+    }
+
+    for (let i = 0; i < series.length; i++) {
+      const s = result.data[i];
+      for (let y = 0; y < s.datapoints.length; y++) {
+        s.datapoints[y][1] *= 1000;
       }
+      const frame = toDataFrame(s);
+      if (result.meta != null) {
+        frame.meta = {
+          metrictank: result.meta,
+        };
+      }
+      data.push(frame);
     }
-    return result;
+    return { data };
   }
 
   parseTags(tagString: string) {
@@ -144,12 +158,12 @@ export class GraphiteDatasource {
     // Graphite metric as annotation
     if (options.annotation.target) {
       const target = this.templateSrv.replace(options.annotation.target, {}, 'glob');
-      const graphiteQuery = {
+      const graphiteQuery = ({
         rangeRaw: options.rangeRaw,
         targets: [{ target: target }],
         format: 'json',
         maxDataPoints: 100,
-      };
+      } as unknown) as DataQueryRequest<GraphiteQuery>;
 
       return this.query(graphiteQuery).then((result: { data: any[] }) => {
         const list = [];
@@ -518,12 +532,12 @@ export class GraphiteDatasource {
   }
 
   testDatasource() {
-    const query = {
+    const query = ({
       panelId: 3,
       rangeRaw: { from: 'now-1h', to: 'now' },
       targets: [{ target: 'constantLine(100)' }],
       maxDataPoints: 300,
-    };
+    } as unknown) as DataQueryRequest<GraphiteQuery>;
     return this.query(query).then(() => {
       return { status: 'success', message: 'Data source is working' };
     });
