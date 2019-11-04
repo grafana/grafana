@@ -130,16 +130,15 @@ func parseStatistics(model *simplejson.Json) ([]string, error) {
 func parseDimensions(model *simplejson.Json) (map[string][]string, error) {
 	parsedDimensions := make(map[string][]string)
 	for k, v := range model.Get("dimensions").MustMap() {
-		kk := k
 		// This is for backwards compatibility. Before 6.5 dimensions values were stored as strings and not arrays
 		if value, ok := v.(string); ok {
-			parsedDimensions[kk] = []string{value}
+			parsedDimensions[k] = []string{value}
 		} else if values, ok := v.([]interface{}); ok {
 			for _, value := range values {
-				parsedDimensions[kk] = append(parsedDimensions[kk], value.(string))
+				parsedDimensions[k] = append(parsedDimensions[k], value.(string))
 			}
 		} else {
-			return nil, errors.New("failed to parse")
+			return nil, errors.New("failed to parse dimensions")
 		}
 	}
 

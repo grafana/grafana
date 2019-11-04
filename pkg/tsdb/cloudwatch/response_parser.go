@@ -60,17 +60,17 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 	result := tsdb.TimeSeriesSlice{}
 	for label, metricDataResult := range metricDataResults {
 		if *metricDataResult.StatusCode != "Complete" {
-			return &result, fmt.Errorf("Part of query failed: %s", *metricDataResult.StatusCode)
+			return nil, fmt.Errorf("Part of query failed: %s", *metricDataResult.StatusCode)
 		}
 
 		for _, message := range metricDataResult.Messages {
 			if *message.Code == "ArithmeticError" {
-				return &result, &queryError{fmt.Errorf("ArithmeticError in query %s: %s", query.RefId, *message.Value), query.RefId}
+				return nil, fmt.Errorf("ArithmeticError in query %s: %s", query.RefId, *message.Value)
 			}
 		}
 
 		series := tsdb.TimeSeries{
-			Tags:   map[string]string{},
+			Tags:   make(map[string]string{}, 0),
 			Points: make([]tsdb.TimePoint, 0),
 		}
 

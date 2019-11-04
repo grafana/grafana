@@ -48,14 +48,14 @@ func (e *CloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQ
 
 			query.Id = id
 
-			if _, ok := cloudwatchQueries[id]; !ok {
-				cloudwatchQueries[id] = query
-			} else {
+			if _, ok := cloudwatchQueries[id]; ok {
 				return nil, &queryError{
 					err:   fmt.Errorf("Query id %s is not unique", query.Id),
 					RefID: query.RefId,
 				}
 			}
+
+			cloudwatchQueries[id] = query
 		}
 	}
 
@@ -67,18 +67,18 @@ func (e *CloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchRespo
 	responsesByRefID := make(map[string][]*cloudwatchResponse)
 
 	for _, res := range cloudwatchResponses {
-		if _, ok := responsesByRefID[res.RefId]; !ok {
-			responsesByRefID[res.RefId] = []*cloudwatchResponse{res}
-		} else {
+		if _, ok := responsesByRefID[res.RefId]; ok {
 			responsesByRefID[res.RefId] = append(responsesByRefID[res.RefId], res)
+		} else {
+			responsesByRefID[res.RefId] = []*cloudwatchResponse{res}
 		}
 	}
 
 	for refID, responses := range responsesByRefID {
-		results[refID] = tsdb.NewQueryResult()
-		results[refID].RefId = refID
-		results[refID].Meta = simplejson.New()
-		results[refID].Series = tsdb.TimeSeriesSlice{}
+		queryResult := tsdb.NewQueryResult()
+		queryResult.RefId = refID
+		queryResult.Meta = simplejson.New()
+		queryResult.Series = tsdb.TimeSeriesSlice{}
 		timeSeries := make(tsdb.TimeSeriesSlice, 0)
 
 		searchExpressions := []string{}
@@ -98,11 +98,12 @@ func (e *CloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchRespo
 		})
 
 		if requestExceededMaxLimit {
-			results[refID].ErrorString = "Cloudwatch GetMetricData error: Maximum number of allowed metrics exceeded. Your search may have been limited."
+			queryResult.ErrorString = "Cloudwatch GetMetricData error: Maximum number of allowed metrics exceeded. Your search may have been limited."
 		}
-		results[refID].Series = append(results[refID].Series, timeSeries...)
-		results[refID].Meta.Set("searchExpressions", searchExpressions)
-		results[refID].Meta.Set("Ids", ids)
+		queryResult.Series = append(queryResult.Series, timeSeries...)
+		queryResult.Meta.Set("searchExpressions", searchExpressions)
+		queryResult.Meta.Set("Ids", ids)
+		results[refID] = queryResult
 	}
 
 	return results

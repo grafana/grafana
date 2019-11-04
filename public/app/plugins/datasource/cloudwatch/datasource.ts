@@ -37,7 +37,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
     private instanceSettings: DataSourceInstanceSettings,
     private $q: IQService,
     private backendSrv: BackendSrv,
-    public templateSrv: TemplateSrv,
+    private templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
   ) {
     super(instanceSettings);
