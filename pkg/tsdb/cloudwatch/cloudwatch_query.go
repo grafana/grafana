@@ -45,6 +45,10 @@ func (q *cloudWatchQuery) isInferredSearchExpression() bool {
 		return true
 	}
 
+	if !q.MatchExact {
+		return true
+	}
+
 	for _, values := range q.Dimensions {
 		if len(values) > 1 {
 			return true

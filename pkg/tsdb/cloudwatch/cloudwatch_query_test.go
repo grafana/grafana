@@ -37,6 +37,7 @@ func TestCloudWatchQuery(t *testing.T) {
 				Period:     300,
 				Id:         "id1",
 				Identifier: "id1",
+				MatchExact: true,
 				Dimensions: map[string][]string{
 					"InstanceId": {"i-12345678"},
 				},
@@ -108,6 +109,34 @@ func TestCloudWatchQuery(t *testing.T) {
 				Id:         "id1",
 				Identifier: "id1",
 				Dimensions: make(map[string][]string),
+			}
+
+			Convey("it is a search expression", func() {
+				So(query.isSearchExpression(), ShouldBeTrue)
+			})
+
+			Convey("it is not math expressions", func() {
+				So(query.isMathExpression(), ShouldBeFalse)
+			})
+
+			Convey("it is not metric stat", func() {
+				So(query.isMetricStat(), ShouldBeFalse)
+			})
+		})
+
+		Convey("and match exact is", func() {
+			query := &cloudWatchQuery{
+				RefId:      "A",
+				Region:     "us-east-1",
+				Expression: "",
+				Stats:      "Average",
+				Period:     300,
+				Id:         "id1",
+				Identifier: "id1",
+				MatchExact: false,
+				Dimensions: map[string][]string{
+					"InstanceId": {"i-12345678"},
+				},
 			}
 
 			Convey("it is a search expression", func() {
