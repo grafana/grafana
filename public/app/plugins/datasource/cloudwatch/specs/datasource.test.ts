@@ -12,6 +12,7 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 describe('CloudWatchDatasource', () => {
   const instanceSettings = {
     jsonData: { defaultRegion: 'us-east-1' },
+    name: 'TestDatasource',
   } as DataSourceInstanceSettings;
 
   const templateSrv = new TemplateSrv();
@@ -218,6 +219,81 @@ describe('CloudWatchDatasource', () => {
         response.results['A'].meta.searchExpressions = [];
         ctx.ds.query(query).then((result: any) => {
           expect(result.data[0].fields[0].config.links).toBeUndefined();
+          done();
+        });
+      });
+    });
+
+    describe('and throttling exception is thrown', () => {
+      const partialQuery = {
+        namespace: 'AWS/EC2',
+        metricName: 'CPUUtilization',
+        dimensions: {
+          InstanceId: 'i-12345678',
+        },
+        statistics: ['Average'],
+        period: '300',
+        expression: '',
+      };
+
+      const query = {
+        range: defaultTimeRange,
+        rangeRaw: { from: 1483228800, to: 1483232400 },
+        targets: [
+          { ...partialQuery, refId: 'A', region: 'us-east-1' },
+          { ...partialQuery, refId: 'B', region: 'us-east-2' },
+          { ...partialQuery, refId: 'C', region: 'us-east-1' },
+          { ...partialQuery, refId: 'D', region: 'us-east-2' },
+          { ...partialQuery, refId: 'E', region: 'eu-north-1' },
+        ],
+      };
+
+      const backendErrorResponse = {
+        data: {
+          message: 'Throttling: exception',
+          results: {
+            A: {
+              error: 'Throttling: exception',
+              refId: 'A',
+              meta: {},
+            },
+            B: {
+              error: 'Throttling: exception',
+              refId: 'B',
+              meta: {},
+            },
+            C: {
+              error: 'Throttling: exception',
+              refId: 'C',
+              meta: {},
+            },
+            D: {
+              error: 'Throttling: exception',
+              refId: 'D',
+              meta: {},
+            },
+            E: {
+              error: 'Throttling: exception',
+              refId: 'E',
+              meta: {},
+            },
+          },
+        },
+      };
+
+      beforeEach(() => {
+        ctx.backendSrv.datasourceRequest = jest.fn(() => {
+          return Promise.reject(backendErrorResponse);
+        });
+      });
+
+      it('should display one alert error message per region+datasource combination', done => {
+        const memoizedDebounceSpy = jest.spyOn(ctx.ds, 'debouncedAlert');
+        ctx.ds.query(query).catch(() => {
+          expect(memoizedDebounceSpy).toBeCalledTimes(3);
+          expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'us-east-2');
+          expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'us-east-2');
+          expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'eu-north-1');
           done();
         });
       });

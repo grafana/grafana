@@ -1,27 +1,36 @@
 import angular, { IQService } from 'angular';
 import _ from 'lodash';
 import appEvents from 'app/core/app_events';
+import { AppNotificationTimeout } from 'app/types';
+import kbn from 'app/core/utils/kbn';
+import { CloudWatchQuery } from './types';
 import {
   dateMath,
   ScopedVars,
+  toDataFrame,
+  TimeRange,
   DataSourceApi,
   DataQueryRequest,
   DataSourceInstanceSettings,
-  TimeRange,
-  toDataFrame,
 } from '@grafana/data';
-import kbn from 'app/core/utils/kbn';
-import { CloudWatchQuery } from './types';
-import { displayThrottlingError } from './errors';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import memoizedDebounce from './memoizedDebounce';
+
+const displayAlert = (datasourceName: string, region: string) =>
+  appEvents.emit('alert-error', [
+    `CloudWatch request limit reached in ${region} for data source ${datasourceName}`,
+    `Please visit the [AWS Service Quotas console](
+        https://${region}.console.aws.amazon.com/servicequotas/home?region=${region}#!/services/monitoring/quotas/L-5E141212) to request a quota increase or see our documentation to learn more.`,
+  ]);
 
 export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery> {
   type: any;
   proxyUrl: any;
   defaultRegion: any;
   standardStatistics: any;
+  debouncedAlert: (datasourceName: string, region: string) => void;
 
   /** @ngInject */
   constructor(
@@ -37,6 +46,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
     this.instanceSettings = instanceSettings;
     this.standardStatistics = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'];
+    this.debouncedAlert = memoizedDebounce(displayAlert, AppNotificationTimeout.Error);
   }
 
   query(options: DataQueryRequest<CloudWatchQuery>) {
@@ -243,13 +253,19 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
         return { data: dataFrames };
       })
       .catch((err: any = { data: { error: '' } }) => {
-        console.log({ supererror: err });
         if (/^ValidationError:.*/.test(err.data.error)) {
           appEvents.emit('ds-request-error', err.data.error);
         }
 
-        if (/^Throttling:.*/.test(err.data.error)) {
-          displayThrottlingError();
+        if (/^Throttling:.*/.test(err.data.message)) {
+          const failedRedIds = Object.keys(err.data.results);
+          const regionsAffected: string[] = Object.values(request.queries).reduce(
+            (res: string[], { refId, region }: CloudWatchQuery) =>
+              !failedRedIds.includes(refId) || res.includes(region) ? res : [...res, region],
+            []
+          );
+
+          regionsAffected.forEach(region => this.debouncedAlert(this.instanceSettings.name, region));
         }
         throw err;
       });
