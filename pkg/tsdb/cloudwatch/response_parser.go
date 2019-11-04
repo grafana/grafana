@@ -70,7 +70,7 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 		}
 
 		series := tsdb.TimeSeries{
-			Tags:   make(map[string]string, 0),
+			Tags:   make(map[string]string),
 			Points: make([]tsdb.TimePoint, 0),
 		}
 

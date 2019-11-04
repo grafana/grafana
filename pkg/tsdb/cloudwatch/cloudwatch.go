@@ -33,21 +33,13 @@ func NewCloudWatchExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, e
 }
 
 var (
-	plog               log.Logger
-	standardStatistics map[string]bool
-	aliasFormat        *regexp.Regexp
+	plog        log.Logger
+	aliasFormat *regexp.Regexp
 )
 
 func init() {
 	plog = log.New("tsdb.cloudwatch")
 	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", NewCloudWatchExecutor)
-	standardStatistics = map[string]bool{
-		"Average":     true,
-		"Maximum":     true,
-		"Minimum":     true,
-		"Sum":         true,
-		"SampleCount": true,
-	}
 	aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 }
 
