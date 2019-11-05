@@ -78,10 +78,18 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
         const qData = filterPanelDataToQuery(panelData, query.refId);
         const queryData = qData ? qData : panelData;
 
+        // Make sure there is a valid image.
+        // When we migrate to Typescript 3.7, this should use optional chaining:
+        // http://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#optional-chaining
+        let img: string | undefined = undefined;
+        if (ds.meta && ds.meta.info && ds.meta.info.logos) {
+          img = ds.meta.info.logos.small;
+        }
+
         info.push({
           refId: query.refId,
           query: fmt(query),
-          img: ds.meta.info.logos.small,
+          img,
           data: queryData.series,
           error: queryData.error,
         });
