@@ -116,7 +116,7 @@ export class OrgRow extends PureComponent<OrgRowProps, OrgRowState> {
               <RowAction text="Cancel" onClick={this.handleCancelClick} />
             </td>
             <td>
-              <button className="btn btn-outline-primary pull-right" onClick={this.handleOrgRoleSave}>
+              <button className="btn btn-small btn-inverse pull-right" onClick={this.handleOrgRoleSave}>
                 Save
               </button>
             </td>
