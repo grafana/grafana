@@ -6,7 +6,7 @@ aliases = ["/reference/graph/"]
 [menu.docs]
 name = "Graph"
 parent = "panels"
-weight = 1
+weight = 4
 +++
 
 # Graph Panel

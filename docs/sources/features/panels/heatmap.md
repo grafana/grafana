@@ -6,7 +6,7 @@ type = "docs"
 [menu.docs]
 name = "Heatmap"
 parent = "panels"
-weight = 3
+weight = 4
 +++
 
 # Heatmap Panel
