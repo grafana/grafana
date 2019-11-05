@@ -87,7 +87,7 @@ export class ErrorBoundaryAlert extends PureComponent<WithAlertBoxProps> {
             );
           }
 
-          return <ShowErrorWithStack className={getStyles()} title={title} error={error} errorInfo={errorInfo} />;
+          return <ShowErrorWithStack className={getStyles()} title={title || ''} error={error} errorInfo={errorInfo} />;
         }}
       </ErrorBoundary>
     );
