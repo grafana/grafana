@@ -39,7 +39,6 @@ func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 		datasource.Database,
 	)
 
-	logger.Error("asd", "info", cnnstr)
 	tlsConfig, err := datasource.GetTLSConfig()
 	if err != nil {
 		return nil, err
