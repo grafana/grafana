@@ -1,6 +1,7 @@
 import { TimeZone } from '../types/time';
 /* tslint:disable:import-blacklist ban ban-types */
 import moment, { Moment, MomentInput, DurationInputArg1 } from 'moment';
+import { DEFAULT_DATE_TIME_FORMAT } from './formats';
 export interface DateTimeBuiltinFormat {
   __momentBuiltinFormatBrand: any;
 }
@@ -118,7 +119,7 @@ export const dateTimeForTimeZone = (
 
 export const getTimeZoneDateFormatter: (timezone?: TimeZone) => DateFormatter = timezone => (date, format) => {
   date = isDateTime(date) ? date : dateTime(date);
-  format = format || 'YYYY-MM-DD HH:mm:ss';
+  format = format || DEFAULT_DATE_TIME_FORMAT;
 
   return timezone === 'browser' ? dateTime(date).format(format) : toUtc(date).format(format);
 };
