@@ -57,18 +57,27 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		return
 	}
 
-	if !c.IsSignedIn {
-		c.HTML(200, ViewIndex, viewData)
+	// If we already are signed in (Via auth proxy for example)
+	if c.IsSignedIn {
+		// Create login token
+		hs.loginUserWithUser(&models.User{
+			Id:    c.SignedInUser.UserId,
+			Email: c.SignedInUser.Email,
+			Login: c.SignedInUser.Login,
+		}, c)
+
+		if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
+			c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
+			c.Redirect(redirectTo)
+			return
+		}
+
+		c.Redirect(setting.AppSubUrl + "/")
 		return
 	}
 
-	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
-		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
-		c.Redirect(redirectTo)
-		return
-	}
-
-	c.Redirect(setting.AppSubUrl + "/")
+	// show login pageq
+	c.HTML(200, ViewIndex, viewData)
 }
 
 func tryOAuthAutoLogin(c *models.ReqContext) bool {
