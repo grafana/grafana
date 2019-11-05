@@ -295,6 +295,15 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
+		Id:   "server_error_500",
+		Name: "Server Error (500)",
+
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			panic("Test Data Panic!")
+		},
+	})
+
+	registerScenario(&Scenario{
 		Id:   "logs",
 		Name: "Logs",
 
