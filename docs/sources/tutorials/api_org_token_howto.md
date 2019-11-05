@@ -1,5 +1,5 @@
 +++
-title = "API Tutorial: How To Create API Tokens And Dashboards For A Specific Organization"
+title = "API Tutorial: Create API tokens and dashboards for an organization"
 type = "docs"
 keywords = ["grafana", "tutorials", "API", "Token", "Org", "Organization"]
 [menu.docs]
@@ -7,7 +7,7 @@ parent = "tutorials"
 weight = 10
 +++
 
-# API Tutorial: How To Create API Tokens And Dashboards For A Specific Organization
+# API Tutorial: Create API tokens and dashboards for an organization
 
 Use the Grafana API to setup new Grafana organizations or to add dynamically generated dashboards to an existing organization.
 
@@ -18,7 +18,7 @@ There are two authentication methods to access the API:
 - Basic authentication: A Grafana Admin user can access some parts of the Grafana API through basic authentication. 
 - API Tokens: All organization actions are accessed through an API Token. An API Token is associated with an organization. It can be used to create dashboards and other components specific for that organization.
 
-## How To Create A New Organization and an API Token
+## How to create a new organization and an API Token
 
 The task is to create a new organization and then add a Token that can be used by other users. In the examples below which use basic auth, the user is `admin` and the password is `admin`.
 
@@ -48,7 +48,7 @@ The task is to create a new organization and then add a Token that can be used b
 
     Save the key returned here in your password manager as it is not possible to fetch again it in the future.
 
-## How To Add A Dashboard
+## How to add a dashboard
 
 Using the Token that was created in the previous step, you can create a dashboard or carry out other actions without having to switch organizations.
 
