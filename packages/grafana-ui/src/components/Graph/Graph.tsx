@@ -190,6 +190,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       showLines,
       showBars,
       showPoints,
+      isStacked,
       lineWidth,
       timeZone,
       onHorizontalRegionSelected,
@@ -209,7 +210,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         show: false,
       },
       series: {
-        stack: true,
+        stack: isStacked,
         lines: {
           show: showLines,
           linewidth: lineWidth,
