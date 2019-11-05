@@ -1,6 +1,12 @@
 import angular, { IQService } from 'angular';
 import _ from 'lodash';
-import { DataSourceApi, DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse } from '@grafana/data';
+import {
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataFrame,
+} from '@grafana/data';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
@@ -9,7 +15,7 @@ import * as queryDef from './query_def';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { ElasticsearchOptions, ElasticsearchQuery } from './types';
+import { DerivedFieldConfig, ElasticsearchOptions, ElasticsearchQuery } from './types';
 
 export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, ElasticsearchOptions> {
   basicAuth: string;
@@ -25,6 +31,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   indexPattern: IndexPattern;
   logMessageField?: string;
   logLevelField?: string;
+  derivedFields: DerivedFieldConfig[];
 
   /** @ngInject */
   constructor(
@@ -53,6 +60,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     });
     this.logMessageField = settingsData.logMessageField || '';
     this.logLevelField = settingsData.logLevelField || '';
+    this.derivedFields = settingsData.derivedFields || [];
 
     if (this.logMessageField === '') {
       this.logMessageField = null;
@@ -368,7 +376,11 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return this.post(url, payload).then((res: any) => {
       const er = new ElasticResponse(sentTargets, res);
       if (sentTargets.some(target => target.isLogsQuery)) {
-        return er.getLogs(this.logMessageField, this.logLevelField);
+        const response = er.getLogs(this.logMessageField, this.logLevelField);
+        for (const dataFrame of response.data) {
+          this.enhanceDataFrame(dataFrame);
+        }
+        return response;
       }
 
       return er.getTimeSeries();
@@ -544,6 +556,26 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     }
 
     return false;
+  }
+
+  enhanceDataFrame(dataFrame: DataFrame) {
+    if (this.derivedFields.length) {
+      for (const field of dataFrame.fields) {
+        const derivedField = this.derivedFields.find(
+          derivedField => field.name && field.name.match(derivedField.pattern)
+        );
+        if (derivedField) {
+          field.config = field.config || {};
+          field.config.links = [
+            ...(field.config.links || []),
+            {
+              url: derivedField.url,
+              title: '',
+            },
+          ];
+        }
+      }
+    }
   }
 
   private isPrimitive(obj: any) {
