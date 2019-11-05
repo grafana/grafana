@@ -418,7 +418,6 @@ func EvalEnvVarExpression(value string) string {
 		envVar = strings.TrimPrefix(envVar, "${")
 		envVar = strings.TrimSuffix(envVar, "}")
 		envValue := os.Getenv(envVar)
-		fmt.Println(fmt.Sprintf("envVar %s value %s", envVar, envValue))
 
 		// if env variable is hostname and it is empty use os.Hostname as default
 		if envVar == "HOSTNAME" && envValue == "" {
