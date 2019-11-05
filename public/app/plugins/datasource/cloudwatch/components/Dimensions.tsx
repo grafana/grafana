@@ -1,7 +1,7 @@
 import React, { FunctionComponent, Fragment, useState, useEffect } from 'react';
 import isEqual from 'lodash/isEqual';
 import { SelectableValue } from '@grafana/data';
-import { Segment, SegmentAsync } from '@grafana/ui';
+import { SegmentAsync } from '@grafana/ui';
 
 export interface Props {
   dimensions: { [key: string]: string | string[] };
@@ -10,7 +10,6 @@ export interface Props {
   loadKeys: () => Promise<Array<SelectableValue<string>>>;
 }
 
-const operators: Array<SelectableValue<string>> = ['='].map(v => ({ label: v, value: v }));
 const removeText = '-- remove dimension --';
 const removeOption: SelectableValue<string> = { label: removeText, value: removeText };
 
@@ -50,11 +49,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
               }
             }}
           />
-          <Segment
-            Component={<a className="gf-form-label query-segment-operator">=</a>}
-            onChange={() => {}}
-            options={operators}
-          />
+          <label className="gf-form-label query-segment-operator">=</label>
           <SegmentAsync
             allowCustomValue
             value={value || 'select dimension value'}
@@ -62,11 +57,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
             onChange={newValue => setData({ ...data, [key]: newValue })}
           />
           {Object.values(data).length > 1 && index + 1 !== Object.values(data).length && (
-            <Segment
-              Component={<a className="gf-form-label query-keyword">AND</a>}
-              onChange={() => {}}
-              options={[{ label: 'AND', value: 'AND' }]}
-            />
+            <label className="gf-form-label query-keyword">AND</label>
           )}
         </Fragment>
       ))}
