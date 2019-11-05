@@ -14,11 +14,17 @@ import (
 
 const rsIdentifier = `([_a-zA-Z0-9]+)`
 
-// The below regex is for matching content within parantheses, with the
-// possibility of nested parathesis. For example given $__timeFilter(to_timestamp(time_column)),
-// this expression would match the part to_timestamp(time_column)
-// For more details, refer: https://stackoverflow.com/a/35271017
-// For playing around more with this regex, refer: https://regex101.com/r/eBtSTM/26
+/*
+	The below regex is for matching content within parantheses, with the
+	possibility of nested parathesis. For example given $__timeFilter(TIME(time_column)),
+	this expression would match the part TIME(time_column)
+
+	Currently, because of the lack of recursive capture groups, capturing such cases with unlimited
+	levels of nesting is not trivial using regular expressions. Below regex only supports 2 levels of nesting.
+
+	For more details, refer: https://stackoverflow.com/a/35271017
+	For playing around more with this regex, refer: https://regex101.com/r/eBtSTM/26
+*/
 const sExpr = `\$` + rsIdentifier + `\(((?:[^)(]+|\((?:[^)(]+|\([^)(]*\))*\))*)\)`
 
 var restrictedRegExp = regexp.MustCompile(`(?im)([\s]*show[\s]+grants|[\s,]session_user\([^\)]*\)|[\s,]current_user(\([^\)]*\))?|[\s,]system_user\([^\)]*\)|[\s,]user\([^\)]*\))([\s,;]|$)`)
