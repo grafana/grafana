@@ -67,11 +67,11 @@ func (client *GrafanaComClient) DownloadFile(pluginName string, tmpFile *os.File
 				logger.Info("Failed downloading. Will retry once.")
 				err = tmpFile.Truncate(0)
 				if err != nil {
-					panic(err)
+					return
 				}
 				_, err = tmpFile.Seek(0, 0)
 				if err != nil {
-					panic(err)
+					return
 				}
 				err = client.DownloadFile(pluginName, tmpFile, url, checksum)
 			} else {
