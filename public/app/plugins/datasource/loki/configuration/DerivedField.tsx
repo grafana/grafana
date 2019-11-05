@@ -39,6 +39,8 @@ export const DerivedField = (props: Props) => {
         <FormField
           className={styles.nameField}
           labelWidth={5}
+          // A bit of a hack to prevent using default value for the width from FormField
+          inputWidth={null}
           label="Name"
           type="text"
           value={value.name}
@@ -46,6 +48,7 @@ export const DerivedField = (props: Props) => {
         />
         <FormField
           className={styles.regexField}
+          inputWidth={null}
           label="Regex"
           type="text"
           value={value.matcherRegex}
