@@ -38,6 +38,9 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
 
   packets[packet.key || 'A'] = packet;
 
+  let loadingState = packet.state || LoadingState.Done;
+  let error: DataQueryError | undefined = undefined;
+
   // Update the time range
   const range = { ...request.range };
   const timeRange = isString(range.raw.from)
@@ -50,13 +53,18 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
 
   const combinedData = flatten(
     lodashMap(packets, (packet: DataQueryResponse) => {
+      if (packet.error) {
+        loadingState = LoadingState.Error;
+        error = packet.error;
+      }
       return packet.data;
     })
   );
 
   const panelData = {
-    state: packet.state || LoadingState.Done,
+    state: loadingState,
     series: combinedData,
+    error,
     request,
     timeRange,
   };
