@@ -1,9 +1,10 @@
 package middleware
 
 import (
+	"github.com/dgrijalva/jwt-go"
 	"testing"
 
-	macaron "gopkg.in/macaron.v1"
+	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -53,22 +54,24 @@ func TestAuthJWT(t *testing.T) {
 		So(1, ShouldEqual, 1)
 
 		// // A simple key
-		// mySigningKey := []byte("AllYourBase")
-		// setting.AuthJwtEnabled = true
-		// setting.AuthJwtHeader = "X-MyJWT"
-		// setting.AuthJwtSigningKey = base64.StdEncoding.EncodeToString(mySigningKey)
-		// setting.AuthJwtEmailClaim = "email"
-		// InitAuthJwtKey()
+		pathToGoogleJwk := filepath.Clean(pwd + "/jwt_test_data.google.json")
+		setting.AuthJwtEnabled = true
+		setting.AuthJwtHeader = "X-MyJWT"
+		//setting.AuthJwtSigningKey = base64.StdEncoding.EncodeToString(mySigningKey)
+		setting.AuthJwtVerification = pathToGoogleJwk
+		setting.AuthJwtEmailClaim = "email"
+		setting.AuthJwtLoginClaim = "email"
+		InitAuthJwtKey()
 
-		// // Create the Claims
-		// claims := &jwt.MapClaims{
-		// 	"sub":   "name",
-		// 	"email": "test@grafana.com",
-		// }
+		// Create the Claims
+		claims := &jwt.MapClaims{
+			"sub":   "name",
+			"email": "test@grafana.com",
+		}
 
-		// token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-		// signed, err := token.SignedString(mySigningKey)
-		// So(err, ShouldEqual, nil)
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+		signed, err := token.SignedString()
+		So(err, ShouldEqual, nil)
 
 		// Convey("Should be able to decode JWT directly", func() {
 		// 	token, err := jwt.Parse(signed, keyFunc)
