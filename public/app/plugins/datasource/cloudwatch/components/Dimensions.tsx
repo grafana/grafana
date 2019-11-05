@@ -2,12 +2,13 @@ import React, { FunctionComponent, Fragment, useState, useEffect } from 'react';
 import isEqual from 'lodash/isEqual';
 import { SelectableValue } from '@grafana/data';
 import { SegmentAsync } from '@grafana/ui';
+import { SelectableStrings } from '../types';
 
 export interface Props {
   dimensions: { [key: string]: string | string[] };
   onChange: (dimensions: { [key: string]: string }) => void;
-  loadValues: (key: string) => Promise<Array<SelectableValue<string>>>;
-  loadKeys: () => Promise<Array<SelectableValue<string>>>;
+  loadValues: (key: string) => Promise<SelectableStrings>;
+  loadKeys: () => Promise<SelectableStrings>;
 }
 
 const removeText = '-- remove dimension --';
@@ -29,7 +30,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
     }
   }, [data]);
 
-  const excludeUsedKeys = (options: Array<SelectableValue<string>>) => {
+  const excludeUsedKeys = (options: SelectableStrings) => {
     return options.filter(({ value }) => !Object.keys(data).includes(value));
   };
 

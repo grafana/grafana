@@ -3,14 +3,15 @@ import { SelectableValue, QueryEditorProps } from '@grafana/data';
 import { Input, Segment, SegmentAsync, ValidationEvents, EventsWithValidation, Switch } from '@grafana/ui';
 import { CloudWatchQuery } from '../types';
 import CloudWatchDatasource from '../datasource';
+import { SelectableStrings } from '../types';
 import { Stats, Dimensions, InlineFormField, FormField, Alias } from './';
 
 type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery>;
 
 interface State {
-  regions: Array<SelectableValue<string>>;
-  namespaces: Array<SelectableValue<string>>;
-  metricNames: Array<SelectableValue<string>>;
+  regions: SelectableStrings;
+  namespaces: SelectableStrings;
+  metricNames: SelectableStrings;
   variableOptionGroup: SelectableValue<string>;
 }
 

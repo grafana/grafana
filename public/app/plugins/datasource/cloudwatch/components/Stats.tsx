@@ -1,4 +1,5 @@
 import React, { SFC } from 'react';
+import { SelectableStrings } from '../types';
 import { SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';
 
@@ -8,7 +9,7 @@ export interface Props {
   variableOptionGroup: SelectableValue<string>;
 }
 
-const options: Array<SelectableValue<string>> = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'].map(value => ({
+const options: SelectableStrings = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'].map(value => ({
   label: value,
   value: value,
 }));

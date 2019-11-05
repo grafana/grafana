@@ -1,4 +1,4 @@
-import { DataQuery } from '@grafana/data';
+import { DataQuery, SelectableValue } from '@grafana/data';
 
 export interface CloudWatchQuery extends DataQuery {
   id: string;
@@ -12,3 +12,5 @@ export interface CloudWatchQuery extends DataQuery {
   alias: string;
   highResolution: boolean;
 }
+
+export type SelectableStrings = Array<SelectableValue<string>>;
