@@ -1,12 +1,12 @@
 import React, { PureComponent } from 'react';
 import { SelectableValue, DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { MonitorConfig } from './components/MonitorConfig';
-import { AnalyticsConfig } from './components/AnalyticsConfig';
+import { MonitorConfig } from './MonitorConfig';
+import { AnalyticsConfig } from './AnalyticsConfig';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { getBackendSrv, BackendSrv } from 'app/core/services/backend_srv';
-import { InsightsConfig } from './components/InsightsConfig';
-import ResponseParser from './azure_monitor/response_parser';
-import { AzureDataSourceJsonData } from './types';
+import { InsightsConfig } from './InsightsConfig';
+import ResponseParser from '../azure_monitor/response_parser';
+import { AzureDataSourceJsonData } from '../types';
 
 export type Props = DataSourcePluginOptionsEditorProps<AzureDataSourceJsonData>;
 
@@ -154,7 +154,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         method: 'GET',
       })
       .then((result: any) => {
-        return ResponseParser.parseSubscriptions(result);
+        return ResponseParser.parseSubscriptionsForSelect(result);
       })
       .catch((error: any) => {
         throw error;

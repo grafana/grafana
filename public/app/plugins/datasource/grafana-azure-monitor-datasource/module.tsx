@@ -1,7 +1,7 @@
 import { DataSourcePlugin } from '@grafana/data';
 import { AzureMonitorQueryCtrl } from './query_ctrl';
 import Datasource from './datasource';
-import { ConfigEditor } from './ConfigEditor';
+import { ConfigEditor } from './components/ConfigEditor';
 import { AzureMonitorAnnotationsQueryCtrl } from './annotations_query_ctrl';
 
 export const plugin = new DataSourcePlugin(Datasource)
