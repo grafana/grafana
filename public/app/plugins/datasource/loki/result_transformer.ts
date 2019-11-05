@@ -9,23 +9,29 @@ import {
   ArrayVector,
   MutableDataFrame,
   findUniqueLabels,
+  dateTime,
 } from '@grafana/data';
 import templateSrv from 'app/features/templating/template_srv';
 import TableModel from 'app/core/table_model';
 import {
-  LokiStreamResult,
+  LokiLegacyStreamResult,
   LokiResponse,
   LokiMatrixResult,
   LokiVectorResult,
   TransformerOptions,
-  LokiLegacyResponse,
+  LokiLegacyStreamResponse,
   LokiResultType,
+  LokiStreamResult,
 } from './types';
 
 /**
  * Transforms LokiLogStream structure into a dataFrame. Used when doing standard queries.
  */
-export function logStreamToDataFrame(stream: LokiStreamResult, reverse?: boolean, refId?: string): DataFrame {
+export function legacyLogStreamToDataFrame(
+  stream: LokiLegacyStreamResult,
+  reverse?: boolean,
+  refId?: string
+): DataFrame {
   let labels: Labels = stream.parsedLabels;
   if (!labels && stream.labels) {
     labels = parseLabels(stream.labels);
@@ -57,6 +63,40 @@ export function logStreamToDataFrame(stream: LokiStreamResult, reverse?: boolean
   };
 }
 
+export function lokiStreamResultToDataFrame(stream: LokiStreamResult, reverse?: boolean, refId?: string): DataFrame {
+  const labels: Labels = stream.stream;
+
+  const times = new ArrayVector<string>([]);
+  const lines = new ArrayVector<string>([]);
+  const uids = new ArrayVector<string>([]);
+
+  for (const [ts, line] of stream.values) {
+    times.add(dateTime(Number.parseFloat(ts) / 1e6).format('YYYY-MM-DD HH:mm:ss'));
+    lines.add(line);
+    uids.add(
+      `${ts}_${Object.entries(labels)
+        .map(([key, val]) => `${key}=${val}`)
+        .join('')}`
+    );
+  }
+
+  if (reverse) {
+    times.buffer = times.buffer.reverse();
+    lines.buffer = lines.buffer.reverse();
+  }
+
+  return {
+    refId,
+    labels,
+    fields: [
+      { name: 'ts', type: FieldType.time, config: { title: 'Time' }, values: times }, // Time
+      { name: 'line', type: FieldType.string, config: {}, values: lines }, // Line
+      { name: 'id', type: FieldType.string, config: {}, values: uids },
+    ],
+    length: times.length,
+  };
+}
+
 /**
  * Transform LokiResponse data and appends it to MutableDataFrame. Used for streaming where the dataFrame can be
  * a CircularDataFrame creating a fixed size rolling buffer.
@@ -64,10 +104,10 @@ export function logStreamToDataFrame(stream: LokiStreamResult, reverse?: boolean
  * @param response
  * @param data Needs to have ts, line, labels, id as fields
  */
-export function appendResponseToBufferedData(response: LokiLegacyResponse, data: MutableDataFrame) {
+export function appendResponseToBufferedData(response: LokiLegacyStreamResponse, data: MutableDataFrame) {
   // Should we do anything with: response.dropped_entries?
 
-  const streams: LokiStreamResult[] = response.streams;
+  const streams: LokiLegacyStreamResult[] = response.streams;
   if (!streams || !streams.length) {
     return;
   }
@@ -99,13 +139,13 @@ export function appendResponseToBufferedData(response: LokiLegacyResponse, data:
 }
 
 export function rangeQueryResponseToTimeSeries(response: LokiResponse, options: TransformerOptions): TimeSeries[] {
-  switch (response.resultType) {
+  switch (response.data.resultType) {
     case LokiResultType.Vector:
-      return response.result.map(vecResult =>
+      return response.data.result.map(vecResult =>
         lokiMatrixToTimeSeries({ metric: vecResult.metric, values: [vecResult.value] }, options)
       );
     case LokiResultType.Matrix:
-      return response.result.map(matrixResult => lokiMatrixToTimeSeries(matrixResult, options));
+      return response.data.result.map(matrixResult => lokiMatrixToTimeSeries(matrixResult, options));
     default:
       return [];
   }

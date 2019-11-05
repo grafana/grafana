@@ -1,8 +1,8 @@
-import { logStreamToDataFrame, appendResponseToBufferedData } from './result_transformer';
+import { legacyLogStreamToDataFrame, appendResponseToBufferedData } from './result_transformer';
 import { FieldType, MutableDataFrame } from '@grafana/data';
-import { LokiStreamResult } from './types';
+import { LokiLegacyStreamResult } from './types';
 
-const streams: LokiStreamResult[] = [
+const streams: LokiLegacyStreamResult[] = [
   {
     labels: '{foo="bar"}',
     entries: [
@@ -25,7 +25,7 @@ const streams: LokiStreamResult[] = [
 
 describe('logStreamToDataFrame', () => {
   it('converts streams to series', () => {
-    const data = streams.map(stream => logStreamToDataFrame(stream));
+    const data = streams.map(stream => legacyLogStreamToDataFrame(stream));
 
     expect(data.length).toBe(2);
     expect(data[0].fields[1].labels['foo']).toEqual('bar');

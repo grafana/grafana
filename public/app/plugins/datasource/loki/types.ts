@@ -48,13 +48,17 @@ export interface LokiOptions extends DataSourceJsonData {
   derivedFields?: DerivedFieldConfig[];
 }
 
-export interface LokiLegacyResponse {
-  streams: LokiStreamResult[];
-}
-
 export interface LokiVectorResult {
   metric: { [label: string]: string };
   value: [number, string];
+}
+
+export interface LokiVectorResponse {
+  status: string;
+  data: {
+    resultType: LokiResultType.Vector;
+    result: LokiVectorResult[];
+  };
 }
 
 export interface LokiMatrixResult {
@@ -62,32 +66,41 @@ export interface LokiMatrixResult {
   values: Array<[number, string]>;
 }
 
-export type LokiResult = LokiMatrixResult | LokiVectorResult | LokiStreamResult;
-
-export interface LokiVectorResponse {
-  resultType: LokiResultType.Vector;
-  result: LokiVectorResult[];
+export interface LokiMatrixResponse {
+  status: string;
+  data: {
+    resultType: LokiResultType.Matrix;
+    result: LokiMatrixResult[];
+  };
 }
 
-export interface LokiMatrixResponse {
-  resultType: LokiResultType.Matrix;
-  result: LokiMatrixResult[];
+export interface LokiStreamResult {
+  stream: Record<string, string>;
+  values: Array<[string, string]>;
 }
 
 export interface LokiStreamResponse {
-  resultType: LokiResultType.Stream;
-  result: LokiStreamResult[];
+  status: string;
+  data: {
+    resultType: LokiResultType.Stream;
+    result: LokiStreamResult[];
+  };
 }
 
-export type LokiResponse = LokiVectorResponse | LokiMatrixResponse | LokiStreamResponse;
-
-export interface LokiStreamResult {
+export interface LokiLegacyStreamResult {
   labels: string;
   entries: LokiLogsStreamEntry[];
   search?: string;
   parsedLabels?: Labels;
   uniqueLabels?: Labels;
 }
+
+export interface LokiLegacyStreamResponse {
+  streams: LokiLegacyStreamResult[];
+}
+
+export type LokiResult = LokiVectorResult | LokiMatrixResult | LokiStreamResult | LokiLegacyStreamResult;
+export type LokiResponse = LokiVectorResponse | LokiMatrixResponse | LokiStreamResponse;
 
 export interface LokiLogsStreamEntry {
   line: string;

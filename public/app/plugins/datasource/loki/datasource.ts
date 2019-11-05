@@ -20,7 +20,12 @@ import {
 } from '@grafana/data';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
-import { logStreamToDataFrame, rangeQueryResponseToTimeSeries, lokiResultsToTableModel } from './result_transformer';
+import {
+  legacyLogStreamToDataFrame,
+  rangeQueryResponseToTimeSeries,
+  lokiResultsToTableModel,
+  lokiStreamResultToDataFrame,
+} from './result_transformer';
 import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 import { BackendSrv, DatasourceRequestOptions } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -40,13 +45,14 @@ import {
 import {
   LokiQuery,
   LokiOptions,
-  LokiStreamResult,
+  LokiLegacyStreamResult,
   LokiLegacyQueryRequest,
-  LokiLegacyResponse,
+  LokiLegacyStreamResponse,
   LokiResponse,
   TransformerOptions,
   LokiResultType,
   LokiQueryRangeRequest as LokiRangeQueryRequest,
+  LokiStreamResult,
 } from './types';
 import { ExploreMode } from 'app/types';
 import { LiveTarget, LiveStreams } from './live_streams';
@@ -172,15 +178,31 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       })
     ).pipe(
       filter((response: any) => (response.cancelled ? false : true)),
-      map((response: { data: LokiLegacyResponse }) => {
-        const data = this.lokiStreamsToDataframes(response.data, query);
+      map((response: { data: LokiLegacyStreamResponse }) => {
+        const data = this.lokiLegacyStreamsToDataframes(response.data, query);
         return { data, key: `${target.refId}_log` };
       })
     );
   };
 
   lokiStreamsToDataframes = (
-    data: LokiStreamResult | LokiLegacyResponse,
+    data: LokiStreamResult[],
+    target: { refId: string; query?: string; regexp?: string }
+  ): DataFrame[] => {
+    const series: DataFrame[] = data.map(stream => ({
+      ...lokiStreamResultToDataFrame(stream),
+      refId: target.refId,
+      meta: {
+        searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.query, target.regexp)),
+        limit: this.maxLines,
+      },
+    }));
+
+    return series;
+  };
+
+  lokiLegacyStreamsToDataframes = (
+    data: LokiLegacyStreamResult | LokiLegacyStreamResponse,
     target: { refId: string; query?: string; regexp?: string }
   ): DataFrame[] => {
     if (Object.keys(data).length === 0) {
@@ -188,11 +210,11 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     }
 
     if (isLokiLogsStream(data)) {
-      return [logStreamToDataFrame(data, false, target.refId)];
+      return [legacyLogStreamToDataFrame(data, false, target.refId)];
     }
 
     const series: DataFrame[] = data.streams.map(stream => {
-      const dataFrame = logStreamToDataFrame(stream);
+      const dataFrame = legacyLogStreamToDataFrame(stream);
       this.enhanceDataFrame(dataFrame);
 
       return {
@@ -222,7 +244,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     };
 
     return from(
-      this._request('/api/v1/query', query).catch((err: any) => {
+      this._request('/loki/api/v1/query', query).catch((err: any) => {
         if (err.cancelled) {
           return err;
         }
@@ -233,12 +255,12 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     ).pipe(
       filter((response: any) => (response.cancelled ? false : true)),
       map((response: { data: LokiResponse }) => {
-        if (response.data.resultType === LokiResultType.Stream) {
+        if (response.data.data.resultType === LokiResultType.Stream) {
           throw new Error('Metrics mode does not support logs. Use an aggregation or switch to Logs mode.');
         }
 
         return {
-          data: [lokiResultsToTableModel(response.data.result, responseListLength, target.refId, true)],
+          data: [lokiResultsToTableModel(response.data.data.result, responseListLength, target.refId, true)],
           key: `${target.refId}_instant`,
         };
       })
@@ -277,7 +299,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   /**
-   * Attempts to send a query to /api/v1/query_range but falls back to the legacy endpoint if necessary.
+   * Attempts to send a query to /loki/api/v1/query_range but falls back to the legacy endpoint if necessary.
    */
   runRangeQueryWithFallback = (
     target: LokiQuery,
@@ -286,7 +308,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   ): Observable<DataQueryResponse> => {
     const query = this.createRangeQuery(target, options);
 
-    return from(this._request('/api/v1/query_range', query)).pipe(
+    return from(this._request('/loki/api/v1/query_range', query)).pipe(
       catchError((err: any) => {
         if (err.cancelled || err.status === 404) {
           return of(err);
@@ -300,28 +322,28 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         iif<DataQueryResponse, DataQueryResponse>(
           () => response.status === 404,
           defer(() => this.runLegacyQuery(target, options)),
-          defer(() => this.processRangeQueryResponse(response, target, query, responseListLength))
+          defer(() => this.processRangeQueryResponse(response.data, target, query, responseListLength))
         )
       )
     );
   };
 
   processRangeQueryResponse = (
-    response: { data: LokiResponse },
+    response: LokiResponse,
     target: LokiQuery,
     query: LokiRangeQueryRequest,
     responseListLength: number
   ) => {
     switch (response.data.resultType) {
       case LokiResultType.Stream:
-        const data = this.lokiStreamsToDataframes({ streams: response.data.result }, target);
+        const data = this.lokiStreamsToDataframes(response.data.result, target);
         return of({ data, key: `${target.refId}_log` });
 
       case LokiResultType.Vector:
       case LokiResultType.Matrix:
         return of({
           data: this.rangeQueryResponseToTimeSeries(
-            response.data,
+            response,
             query,
             {
               ...target,
@@ -497,7 +519,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       const result = await this._request('/api/prom/query', target);
 
       return {
-        data: result.data ? result.data.streams.map((stream: any) => logStreamToDataFrame(stream, reverse)) : [],
+        data: result.data ? result.data.streams.map((stream: any) => legacyLogStreamToDataFrame(stream, reverse)) : [],
       };
     } catch (e) {
       const error: DataQueryError = {
@@ -510,7 +532,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   };
 
   getVersion() {
-    return this._request('/api/v1/query_range')
+    return this._request('/loki/api/v1/query_range')
       .then(() => 'v1')
       .catch(err => (err.status !== 404 ? 'v1' : 'v0'));
   }
@@ -655,7 +677,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 }
 
-function isLokiLogsStream(data: LokiStreamResult | LokiLegacyResponse): data is LokiStreamResult {
+function isLokiLogsStream(data: LokiLegacyStreamResult | LokiLegacyStreamResponse): data is LokiLegacyStreamResult {
   return !data.hasOwnProperty('streams');
 }
 

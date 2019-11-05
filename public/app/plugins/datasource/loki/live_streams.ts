@@ -1,7 +1,7 @@
 import { DataFrame, FieldType, parseLabels, KeyValue, CircularDataFrame } from '@grafana/data';
 import { Observable } from 'rxjs';
 import { webSocket } from 'rxjs/webSocket';
-import { LokiLegacyResponse } from './types';
+import { LokiLegacyStreamResponse } from './types';
 import { finalize, map } from 'rxjs/operators';
 import { appendResponseToBufferedData } from './result_transformer';
 
@@ -40,7 +40,7 @@ export class LiveStreams {
       finalize(() => {
         delete this.streams[target.url];
       }),
-      map((response: LokiLegacyResponse) => {
+      map((response: LokiLegacyStreamResponse) => {
         appendResponseToBufferedData(response, data);
         return [data];
       })
