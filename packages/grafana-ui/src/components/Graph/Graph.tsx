@@ -7,7 +7,8 @@ import { TimeRange, GraphSeriesXY, TimeZone, DefaultTimeZone, createDimension } 
 import _ from 'lodash';
 import { FlotPosition, FlotItem } from './types';
 import { TooltipProps, TooltipContentProps, ActiveDimensions, Tooltip } from '../Chart/Tooltip';
-import { GraphTooltip, GraphDimensions } from './GraphTooltip';
+import { GraphTooltip } from './GraphTooltip/GraphTooltip';
+import { GraphDimensions } from './GraphTooltip/types';
 
 export interface GraphProps {
   children?: JSX.Element | JSX.Element[];
@@ -142,13 +143,13 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     // Indicates column(field) index in y-axis dimension
     const seriesIndex = activeItem ? activeItem.series.seriesIndex : 0;
     // Indicates row index in active field values
-    const rowIndex = activeItem ? activeItem.dataIndex : 0;
+    const rowIndex = activeItem ? activeItem.dataIndex : undefined;
 
     const activeDimensions: ActiveDimensions<GraphDimensions> = {
       // Described x-axis active item
-      // When hovering over an item - let's take it's dataIndex, otherwise let's assume flot position
-      // based on witch tooltip needs to figure out correct datapoint display information about
-      xAxis: [seriesIndex, tooltipMode === 'single' ? rowIndex : pos.x],
+      // When hovering over an item - let's take it's dataIndex, otherwise undefined
+      // Tooltip itself needs to figure out correct datapoint display information based on pos passed to it
+      xAxis: [seriesIndex, rowIndex],
       // Describes y-axis active item
       yAxis: activeItem ? [activeItem.series.seriesIndex, activeItem.dataIndex] : null,
     };

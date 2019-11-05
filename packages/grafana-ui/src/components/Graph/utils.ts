@@ -29,8 +29,8 @@ export const findHoverIndexFromData = (xAxisDimension: Field, xPos: number) => {
 };
 
 interface MultiSeriesHoverInfo {
-  value: GraphSeriesValue;
-  time: GraphSeriesValue;
+  value: string;
+  time: string;
   datapointIndex: number;
   seriesIndex: number;
   label?: string;
@@ -65,7 +65,6 @@ export const getMultiSeriesGraphHoverInfo = (
     hoverIndex = findHoverIndexFromData(time, xAxisPosition);
     hoverDistance = xAxisPosition - time.values.get(hoverIndex);
     pointTime = time.values.get(hoverIndex);
-
     // Take the closest point before the cursor, or if it does not exist, the closest after
     if (
       minDistance === undefined ||
@@ -73,7 +72,7 @@ export const getMultiSeriesGraphHoverInfo = (
       (hoverDistance < 0 && hoverDistance > minDistance)
     ) {
       minDistance = hoverDistance;
-      minTime = pointTime;
+      minTime = time.display ? time.display(pointTime).text : pointTime;
     }
 
     value = series.values.get(hoverIndex);
@@ -84,7 +83,7 @@ export const getMultiSeriesGraphHoverInfo = (
       seriesIndex: i,
       color: series.config.color,
       label: series.name,
-      time: pointTime,
+      time: time.display ? time.display(pointTime).text : pointTime,
     });
   }
 
