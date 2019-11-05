@@ -12,8 +12,10 @@ function getAlertPageStyle(): string {
   `;
 }
 
+export const GRAFANA_CHUNK_LOAD_ERROR = 'GRAFANA_CHUNK_LOAD_ERROR';
+
 export const isChunkError = (error: Error): boolean => {
-  if (error && error.message && error.message.match(/Loading chunk \w+ failed/)) {
+  if (error && error.message && error.message.indexOf(GRAFANA_CHUNK_LOAD_ERROR) !== -1) {
     return true;
   }
 
@@ -21,7 +23,12 @@ export const isChunkError = (error: Error): boolean => {
 };
 
 export const SafeDynamicImport = (importStatement: Promise<any>) => ({ ...props }) => {
-  const LazyComponent = lazy(() => importStatement);
+  const LazyComponent = lazy(() =>
+    importStatement.catch(error => {
+      throw new Error(`${GRAFANA_CHUNK_LOAD_ERROR}:${error.message}`);
+    })
+  );
+
   return (
     <ErrorBoundary>
       {({ error, errorInfo }) => {
