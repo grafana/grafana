@@ -104,7 +104,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   renderTooltip = () => {
     const { children, series } = this.props;
     const { pos, activeItem, isTooltipVisible } = this.state;
-    const tooltips: React.ReactNode[] = [];
+    let tooltipElement: React.ReactElement<TooltipProps> | null = null;
 
     if (!isTooltipVisible || !pos || series.length === 0) {
       return null;
@@ -112,14 +112,17 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
 
     // Find children that indicate tooltip to be rendered
     React.Children.forEach(children, c => {
+      // We have already found tooltip
+      if (tooltipElement) {
+        return;
+      }
       // @ts-ignore
       const childType = c && c.type && (c.type.displayName || c.type.name);
 
       if (childType === Tooltip.displayName) {
-        tooltips.push(c);
+        tooltipElement = c as React.ReactElement<TooltipProps>;
       }
     });
-    const tooltipElement = tooltips[0];
     // If no tooltip provided, skip rendering
     if (!tooltipElement) {
       return null;
