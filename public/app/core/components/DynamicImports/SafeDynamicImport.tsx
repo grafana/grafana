@@ -1,9 +1,8 @@
 import React, { lazy, Suspense } from 'react';
 import { css } from 'emotion';
-import { ErrorBoundary } from '@grafana/ui';
+import { ErrorBoundary, ErrorWithStack } from '@grafana/ui';
 import { LoadingChunkPlaceHolder } from './LoadingChunkPlaceHolder';
-import { ShowLoadingChunkError } from './ShowLoadingChunkError';
-import { ShowErrorWithStack } from '@grafana/ui/src/components/ErrorBoundary/ShowErrorWithStack';
+import { ErrorLoadingChunk } from './ErrorLoadingChunk';
 
 function getAlertPageStyle(): string {
   return css`
@@ -41,11 +40,11 @@ export const SafeDynamicImport = (importStatement: Promise<any>) => ({ ...props 
         }
 
         if (isChunkError(error)) {
-          return <ShowLoadingChunkError error={error} errorInfo={errorInfo} className={getAlertPageStyle()} />;
+          return <ErrorLoadingChunk error={error} errorInfo={errorInfo} className={getAlertPageStyle()} />;
         }
 
         return (
-          <ShowErrorWithStack
+          <ErrorWithStack
             className={getAlertPageStyle()}
             error={error}
             errorInfo={errorInfo}

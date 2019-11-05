@@ -6,7 +6,7 @@ export interface Props extends ErrorBoundaryApi {
   title: string;
 }
 
-export const ShowErrorWithStack: FunctionComponent<Props> = ({ error, errorInfo, className, title }) => (
+export const ErrorWithStack: FunctionComponent<Props> = ({ error, errorInfo, className, title }) => (
   <div className={className}>
     <h2>{title}</h2>
     <details style={{ whiteSpace: 'pre-wrap' }}>
@@ -17,4 +17,4 @@ export const ShowErrorWithStack: FunctionComponent<Props> = ({ error, errorInfo,
   </div>
 );
 
-ShowErrorWithStack.displayName = 'ShowErrorWithStack';
+ErrorWithStack.displayName = 'ErrorWithStack';

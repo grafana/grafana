@@ -1,6 +1,5 @@
-import { ErrorInfo } from '@grafana/ui/src/components/ErrorBoundary/ErrorBoundary';
 import React, { FunctionComponent } from 'react';
-import { Button } from '@grafana/ui';
+import { Button, ErrorInfo } from '@grafana/ui';
 
 interface Props {
   error: Error | null;
@@ -8,7 +7,7 @@ interface Props {
   className: string;
 }
 
-export const ShowLoadingChunkError: FunctionComponent<Props> = ({ error, errorInfo, className }) => (
+export const ErrorLoadingChunk: FunctionComponent<Props> = ({ error, errorInfo, className }) => (
   <div className={className}>
     <h2>Unable to find application file</h2>
     <br />
@@ -27,4 +26,4 @@ export const ShowLoadingChunkError: FunctionComponent<Props> = ({ error, errorIn
   </div>
 );
 
-ShowLoadingChunkError.displayName = 'ShowLoadingChunkError';
+ErrorLoadingChunk.displayName = 'ErrorLoadingChunk';
