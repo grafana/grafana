@@ -26,14 +26,12 @@ const getTooltipContainerStyles = stylesFactory((theme: GrafanaTheme) => {
 
 export const TooltipContainer: React.FC<TooltipContainerProps> = ({ position, offset, children }) => {
   const theme = useTheme();
-  // const [tooltipRef, measurement] = useMeasure();
   const tooltipRef = useRef<HTMLDivElement>(null);
   const { width, height } = useWindowSize();
   const [placement, setPlacement] = useState({
     x: position.x + offset.x,
     y: position.y + offset.y,
   });
-  const styles = getTooltipContainerStyles(theme);
 
   // Make sure tooltip does not overflow window
   useLayoutEffect(() => {
@@ -57,6 +55,8 @@ export const TooltipContainer: React.FC<TooltipContainerProps> = ({ position, of
       y: position.y - yO,
     });
   }, [tooltipRef, position]);
+
+  const styles = getTooltipContainerStyles(theme);
 
   return (
     <div
