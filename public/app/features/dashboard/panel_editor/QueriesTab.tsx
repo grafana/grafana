@@ -7,7 +7,7 @@ import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
-import { PanelOptionsGroup, TransformationsEditor, AlphaNotice } from '@grafana/ui';
+import { PanelOptionsGroup, TransformationsEditor, AlphaNotice, Select } from '@grafana/ui';
 import { QueryEditorRows } from './QueryEditorRows';
 
 // Services
@@ -25,6 +25,7 @@ import {
   DataQuery,
   PanelData,
   PluginState,
+  SelectableValue,
 } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { Unsubscribable } from 'rxjs';

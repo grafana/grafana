@@ -3,10 +3,9 @@ import React, { PureComponent } from 'react';
 import cloneDeep from 'lodash/cloneDeep';
 
 // Types
-import { PanelData, DataSourceSelectItem } from '@grafana/ui';
+import { PanelData, DataSourceSelectItem, SelectableValue } from '@grafana/data';
 import { MultiResolutionQuery, ResolutionSelection, QueriesForResolution } from './types';
 import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
-import { SelectableValue } from '@grafana/data';
 import { MultiQueryRow } from './MultiQueryRow';
 import { getMultiResolutionQuery, getQueriesForResolution, nextId } from './MultiDataSource';
 
