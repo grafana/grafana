@@ -6,8 +6,9 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { getBackendSrv, BackendSrv } from 'app/core/services/backend_srv';
 import { InsightsConfig } from './components/InsightsConfig';
 import ResponseParser from './azure_monitor/response_parser';
+import { AzureDataSourceJsonData } from './types';
 
-export type Props = DataSourcePluginOptionsEditorProps<any>;
+export type Props = DataSourcePluginOptionsEditorProps<AzureDataSourceJsonData>;
 
 export interface State {
   config: any;
