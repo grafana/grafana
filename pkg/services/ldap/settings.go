@@ -2,6 +2,7 @@ package ldap
 
 import (
 	"fmt"
+	"io/ioutil"
 	"sync"
 
 	"github.com/BurntSushi/toml"
@@ -118,7 +119,15 @@ func readConfig(configFile string) (*Config, error) {
 
 	logger.Info("LDAP enabled, reading config file", "file", configFile)
 
-	_, err := toml.DecodeFile(configFile, result)
+	fileBytes, err := ioutil.ReadFile(configFile)
+	if err != nil {
+		return nil, errutil.Wrap("Failed to load LDAP config file", err)
+	}
+
+	// interpolate full toml string (it can contain ENV variables)
+	stringContent := setting.EvalEnvVarExpression(string(fileBytes))
+
+	_, err = toml.Decode(stringContent, result)
 	if err != nil {
 		return nil, errutil.Wrap("Failed to load LDAP config file", err)
 	}

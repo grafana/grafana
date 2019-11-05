@@ -412,12 +412,13 @@ func makeAbsolute(path string, root string) string {
 	return filepath.Join(root, path)
 }
 
-func evalEnvVarExpression(value string) string {
+func EvalEnvVarExpression(value string) string {
 	regex := regexp.MustCompile(`\${(\w+)}`)
 	return regex.ReplaceAllStringFunc(value, func(envVar string) string {
 		envVar = strings.TrimPrefix(envVar, "${")
 		envVar = strings.TrimSuffix(envVar, "}")
 		envValue := os.Getenv(envVar)
+		fmt.Println(fmt.Sprintf("envVar %s value %s", envVar, envValue))
 
 		// if env variable is hostname and it is empty use os.Hostname as default
 		if envVar == "HOSTNAME" && envValue == "" {
@@ -431,7 +432,7 @@ func evalEnvVarExpression(value string) string {
 func evalConfigValues(file *ini.File) {
 	for _, section := range file.Sections() {
 		for _, key := range section.Keys() {
-			key.SetValue(evalEnvVarExpression(key.Value()))
+			key.SetValue(EvalEnvVarExpression(key.Value()))
 		}
 	}
 }
