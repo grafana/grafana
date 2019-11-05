@@ -23,6 +23,7 @@ import {
   FieldCache,
   FieldWithIndex,
   getFlotPairs,
+  TimeZone,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
@@ -171,7 +172,7 @@ function isLogsData(series: DataFrame) {
   return series.fields.some(f => f.type === FieldType.time) && series.fields.some(f => f.type === FieldType.string);
 }
 
-export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number): LogsModel {
+export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number, timeZone: TimeZone): LogsModel {
   const metricSeries: DataFrame[] = [];
   const logSeries: DataFrame[] = [];
 
@@ -191,6 +192,7 @@ export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number)
     } else {
       logsModel.series = getGraphSeriesModel(
         metricSeries,
+        timeZone,
         {},
         { showBars: true, showLines: false, showPoints: false },
         {

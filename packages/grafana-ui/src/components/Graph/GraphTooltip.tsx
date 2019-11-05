@@ -2,8 +2,8 @@ import React from 'react';
 import { stylesFactory, useTheme } from '../../themes';
 import { css, cx } from 'emotion';
 import {
-  getTimeZoneDateFormatter,
-  dateTime,
+  // getTimeZoneDateFormatter,
+  // dateTime,
   Dimensions,
   Dimension,
   getValueFromDimension,
@@ -47,11 +47,11 @@ export const GraphTooltip: React.FC<TooltipContentProps<GraphDimensions>> = ({
   mode = 'single',
   dimensions,
   activeDimensions,
-  timeZone,
+  // timeZone,
 }) => {
   const theme = useTheme();
   const styles = getGraphTooltipStyles(theme);
-  const dateFormatter = getTimeZoneDateFormatter(timeZone);
+  // const dateFormatter = getTimeZoneDateFormatter(timeZone);
 
   let content = null;
 
@@ -72,13 +72,16 @@ export const GraphTooltip: React.FC<TooltipContentProps<GraphDimensions>> = ({
     // Assuming single x-axis, time
     // Active dimension x-axis indicates a time field corresponding to y-axis value
     const time = getValueFromDimension(dimensions.xAxis, activeDimensions.xAxis[0], activeDimensions.xAxis[1]);
+    const timeField = getColumnFromDimension(dimensions.xAxis, activeDimensions.xAxis[0]);
+    const processedTime = timeField.display ? timeField.display(time).text : time;
+
     const valueField = getColumnFromDimension(dimensions.yAxis, activeDimensions.yAxis[0]);
     const value = getValueFromDimension(dimensions.yAxis, activeDimensions.yAxis[0], activeDimensions.yAxis[1]);
     const processedValue = valueField.display ? valueField.display(value).text : value;
 
     content = (
       <>
-        {<div aria-label="Timestamp">{dateFormatter(time)}</div>}
+        {<div aria-label="Timestamp">{processedTime}</div>}
         <div className={styles.seriesTableRow}>
           <div className={styles.seriesTableCell}>
             {valueField.config.color && <SeriesIcon color={valueField.config.color} />} {valueField.name}
@@ -89,8 +92,10 @@ export const GraphTooltip: React.FC<TooltipContentProps<GraphDimensions>> = ({
     );
   } else {
     const time = activeDimensions.xAxis[1];
+    const timeField = getColumnFromDimension(dimensions.xAxis, activeDimensions.xAxis[0]);
     const hoverInfo = getMultiSeriesGraphHoverInfo(dimensions.yAxis.columns, dimensions.xAxis.columns, time);
-    const timestamp = hoverInfo.time && dateTime(hoverInfo.time);
+    const timestamp = hoverInfo.time;
+    const processedTime = timestamp && timeField.display ? timeField.display(timestamp).text : timestamp;
 
     const seriesTable = hoverInfo.results.map(s => {
       return (
@@ -104,7 +109,7 @@ export const GraphTooltip: React.FC<TooltipContentProps<GraphDimensions>> = ({
     });
     content = (
       <>
-        {timestamp && <div aria-label="Timestamp">{dateFormatter(timestamp)}</div>}
+        {timestamp && <div aria-label="Timestamp">{processedTime}</div>}
         {seriesTable}
       </>
     );

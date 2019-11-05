@@ -41,6 +41,7 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
   return (
     <GraphPanelController
       data={data}
+      timeZone={timeZone}
       options={options}
       onOptionsChange={onOptionsChange}
       onChangeTimeRange={onChangeTimeRange}

@@ -12,6 +12,10 @@ import {
   DataFrame,
   FieldDisplayOptions,
   getSeriesTimeStep,
+  TimeZone,
+  hasMsResolution,
+  MS_DATE_TIME_FORMAT,
+  DEFAULT_DATE_TIME_FORMAT,
 } from '@grafana/data';
 
 import { SeriesOptions, GraphOptions } from './types';
@@ -19,6 +23,7 @@ import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
 
 export const getGraphSeriesModel = (
   dataFrames: DataFrame[],
+  timeZone: TimeZone,
   seriesOptions: SeriesOptions,
   graphOptions: GraphOptions,
   legendOptions: GraphLegendEditorLegendOptions,
@@ -35,7 +40,6 @@ export const getGraphSeriesModel = (
   let fieldColumnIndex = -1;
   for (const series of dataFrames) {
     const { timeField } = getTimeField(series);
-
     if (!timeField) {
       continue;
     }
@@ -84,8 +88,17 @@ export const getGraphSeriesModel = (
             }
           : { ...field.config };
 
-        field.display = getDisplayProcessor({ config: field.config });
+        field.display = getDisplayProcessor({ config: { ...field.config }, type: field.type });
+
+        // Time step is used to determine bars width when graph is rendered as bar chart
         const timeStep = getSeriesTimeStep(timeField);
+        const useMsDateFormat = hasMsResolution(timeField);
+
+        timeField.display = getDisplayProcessor({
+          isUtc: timeZone === 'utc',
+          dateFormat: useMsDateFormat ? MS_DATE_TIME_FORMAT : DEFAULT_DATE_TIME_FORMAT,
+          type: timeField.type,
+        });
 
         graphs.push({
           label: field.name,

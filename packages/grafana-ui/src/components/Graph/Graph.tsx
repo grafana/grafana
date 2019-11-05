@@ -102,7 +102,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   }
 
   renderTooltip = () => {
-    const { children, series, timeZone } = this.props;
+    const { children, series } = this.props;
     const { pos, activeItem, isTooltipVisible } = this.state;
     const tooltips: React.ReactNode[] = [];
 
@@ -158,7 +158,6 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       },
       activeDimensions,
       pos,
-      timeZone, // maybe a time formatter(function) instead?
       mode: tooltipElementProps.mode || 'single',
     };
 
