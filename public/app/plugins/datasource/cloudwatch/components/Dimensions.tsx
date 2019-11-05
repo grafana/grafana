@@ -14,6 +14,9 @@ const operators: Array<SelectableValue<string>> = ['='].map(v => ({ label: v, va
 const removeText = '-- remove dimension --';
 const removeOption: SelectableValue<string> = { label: removeText, value: removeText };
 
+// The idea of this component is that is should only trigger the onChange event in the case
+// there is a complete dimension object. E.g, when a new key is added is doesn't have a value.
+// That should not trigger onChange.
 export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, loadKeys, onChange }) => {
   const [data, setData] = useState(dimensions);
 
