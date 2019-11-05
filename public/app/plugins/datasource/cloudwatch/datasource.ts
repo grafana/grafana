@@ -10,13 +10,13 @@ import {
   DataSourceInstanceSettings,
 } from '@grafana/data';
 import kbn from 'app/core/utils/kbn';
-import { CloudWatchQuery } from './types';
+import { CloudWatchQuery, CloudWatchJsonData } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 // import * as moment from 'moment';
 
-export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery> {
+export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWatchJsonData> {
   type: any;
   proxyUrl: any;
   defaultRegion: any;
