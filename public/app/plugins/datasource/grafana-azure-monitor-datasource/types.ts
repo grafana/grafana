@@ -28,6 +28,11 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
   appInsightsAppId?: string;
 }
 
+export interface AzureDataSourceSecureJsonData {
+  clientSecret: string;
+  logAnalyticsClientSecret: string;
+}
+
 export interface AzureMetricQuery {
   resourceGroup: string;
   resourceName: string;
