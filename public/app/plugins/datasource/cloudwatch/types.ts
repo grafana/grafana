@@ -11,6 +11,20 @@ export interface CloudWatchQuery extends DataQuery {
   expression: string;
 }
 
+export interface CloudWatchJsonData extends DataSourceJsonData {
+  authType: string;
+  defaultRegion: string;
+  timeField: string;
+  assumeRoleArn: string;
+  database: string;
+  customMetricsNamespaces: string;
+}
+
+export interface CloudWatchSecureJsonData {
+  accessKey: string;
+  secretKey: string;
+}
+
 export interface CloudWatchOptions extends DataSourceJsonData {
   name: string;
   jsonData: {

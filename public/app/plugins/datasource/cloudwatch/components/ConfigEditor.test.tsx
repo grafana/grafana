@@ -41,6 +41,9 @@ const setup = (propOverrides?: object) => {
         secretKey: false,
       },
       jsonData: {
+        assumeRoleArn: '',
+        database: '',
+        customMetricsNamespaces: '',
         authType: 'keys',
         defaultRegion: 'us-east-2',
         timeField: '@timestamp',

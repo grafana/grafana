@@ -4,14 +4,14 @@ import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana
 import { SelectableValue } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import CloudWatchDatasource from '../datasource';
-import { CloudWatchOptions } from '../types';
+import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../types';
 
-export type Props = DataSourcePluginOptionsEditorProps<any>;
+export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData>;
 
-export type CloudwatchSettings = DataSourceSettings<CloudWatchOptions>;
+type CloudwatchSettings = DataSourceSettings<CloudWatchJsonData, CloudWatchSecureJsonData>;
 
 export interface State {
-  config: CloudWatchOptions;
+  config: CloudwatchSettings;
   authProviderOptions: SelectableValue[];
   regions: SelectableValue[];
 }
