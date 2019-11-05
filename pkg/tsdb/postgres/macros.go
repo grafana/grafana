@@ -14,12 +14,13 @@ import (
 const rsIdentifier = `([_a-zA-Z0-9]+)`
 
 /*
-	The below regex is for matching content within parantheses, with the
+	The below regex is for matching content within parentheses, with the
 	possibility of nested parathesis. For example given $__timeFilter(to_timestamp(time_column)),
 	this expression would match the part to_timestamp(time_column)
 
-	Currently, because of the lack of recursive capture groups, capturing such cases with unlimited
-	levels of nesting is not trivial using regular expressions. Below regex only supports 2 levels of nesting.
+	Currently, since golang's regex uses the RE2 library, it lacks the support for recursive expressions.
+	Therefore capturing such cases with unlimited levels of nesting is not trivial.
+	Below regex only supports 2 levels of nesting, which might be good enough for simple use cases.
 
 	For more details, refer: https://stackoverflow.com/a/35271017
 	For playing around more with this regex, refer: https://regex101.com/r/eBtSTM/26
