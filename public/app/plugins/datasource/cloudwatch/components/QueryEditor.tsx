@@ -2,10 +2,10 @@ import React, { PureComponent, ChangeEvent } from 'react';
 import { SelectableValue, QueryEditorProps } from '@grafana/data';
 import { CloudWatchQuery } from '../types';
 import { Input, Segment, SegmentAsync, ValidationEvents, EventsWithValidation, Switch } from '@grafana/ui';
-import CloudWatchDatasource, { Options } from '../datasource';
+import CloudWatchDatasource from '../datasource';
 import { Stats, Dimensions, InlineFormField, FormField, Alias } from './';
 
-type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, Options>;
+type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery>;
 
 interface State {
   regions: Array<SelectableValue<string>>;

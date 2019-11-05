@@ -16,10 +16,6 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-export interface Options extends DataSourceJsonData {
-  apiKey?: string;
-}
-
 export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery> {
   type: any;
   proxyUrl: any;
