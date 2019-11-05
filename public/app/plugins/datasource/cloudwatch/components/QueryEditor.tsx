@@ -169,7 +169,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
                 tooltip="Id can include numbers, letters, and underscore, and must start with a lowercase letter."
                 inputEl={
                   <Input
-                    className={`gf-form-input width-${8}`}
+                    className="gf-form-input width-8"
                     onBlur={onRunQuery}
                     onChange={(event: ChangeEvent<HTMLInputElement>) => onChange({ ...query, id: event.target.value })}
                     validationEvents={idValidationEvents}
@@ -182,9 +182,10 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
               <FormField
                 className="gf-form--grow"
                 label="Expression"
+                tooltip="Add custom expression here. Please note that if a math expression is being used, it will not be possible to create an alert rule based on this query"
                 inputEl={
                   <Input
-                    className={`gf-form-input`}
+                    className="gf-form-input"
                     onBlur={onRunQuery}
                     value={query.expression}
                     onChange={(event: ChangeEvent<HTMLInputElement>) =>
@@ -205,7 +206,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
               tooltip="Minimum interval between points in seconds"
               inputEl={
                 <Input
-                  className={`gf-form-input width-${16}`}
+                  className="gf-form-input width-8"
                   value={query.period}
                   placeholder="auto"
                   onBlur={onRunQuery}
@@ -227,6 +228,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
             />
             <Switch
               label="HighRes"
+              labelClass="query-keyword"
               checked={query.highResolution}
               onChange={() => this.onChange({ ...query, highResolution: !query.highResolution })}
             />
