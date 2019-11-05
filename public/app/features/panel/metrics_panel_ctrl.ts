@@ -119,7 +119,6 @@ class MetricsPanelCtrl extends PanelCtrl {
       }
     }
 
-    console.log('Panel data error:', err);
     return this.$timeout(() => {
       this.events.emit(PanelEvents.dataError, err);
     });
@@ -132,6 +131,7 @@ class MetricsPanelCtrl extends PanelCtrl {
         this.loading = false;
         this.processDataError(data.error);
         if (!data.series) {
+          // keep current data if the response is empty
           return;
         }
       }

@@ -6,6 +6,7 @@ import { Tooltip, PopoverContent } from '@grafana/ui';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getLocationSrv } from '@grafana/runtime';
 
 enum InfoMode {
   Error = 'Error',
@@ -68,8 +69,11 @@ export class PanelHeaderCorner extends Component<Props> {
     );
   };
 
+  /**
+   * Open the Panel Inspector when we click on an error
+   */
   onClickError = () => {
-    console.log('TODO, inspect', this.props.panel.id);
+    getLocationSrv().update({ partial: true, query: { inspect: this.props.panel.id } });
   };
 
   renderCornerType(infoMode: InfoMode, content: PopoverContent, onClick?: () => void) {
