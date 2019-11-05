@@ -2,18 +2,19 @@ import React, { PureComponent, ReactNode } from 'react';
 import { Alert } from '../Alert/Alert';
 import { css } from 'emotion';
 import { stylesFactory } from '../../themes';
+import { ShowErrorWithStack } from './ShowErrorWithStack';
 
-interface ErrorInfo {
+export interface ErrorInfo {
   componentStack: string;
 }
 
-interface RenderProps {
+export interface ErrorBoundaryApi {
   error: Error | null;
   errorInfo: ErrorInfo | null;
 }
 
 interface Props {
-  children: (r: RenderProps) => ReactNode;
+  children: (r: ErrorBoundaryApi) => ReactNode;
 }
 
 interface State {
@@ -84,18 +85,9 @@ export class ErrorBoundaryAlert extends PureComponent<WithAlertBoxProps> {
                 </details>
               </Alert>
             );
-          } else {
-            return (
-              <div className={getStyles()}>
-                <h2>{title}</h2>
-                <details style={{ whiteSpace: 'pre-wrap' }}>
-                  {error && error.toString()}
-                  <br />
-                  {errorInfo.componentStack}
-                </details>
-              </div>
-            );
           }
+
+          return <ShowErrorWithStack className={getStyles()} title={title} error={error} errorInfo={errorInfo} />;
         }}
       </ErrorBoundary>
     );
