@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import appEvents from 'app/core/app_events';
 // import { dateTime } from '@grafana/data';
-import { EditableRow } from './UserProfileRow';
+import { EditableRow, LockedRow } from './UserProfileRow';
 import { UserDTO, CoreEvents } from 'app/types';
 
 // const defaultTimeFormat = 'dddd YYYY-MM-DD HH:mm:ss';
@@ -55,17 +55,30 @@ export class UserProfile extends PureComponent<Props, State> {
           <div className="gf-form">
             <table className="filter-table form-inline">
               <tbody>
-                <EditableRow label="Name" value={user.name} />
-                <EditableRow label="Email" value={user.email} />
-                <EditableRow label="Username" value={user.login} />
-                <EditableRow label="Password" value="******" />
+                {user.isExternal ? (
+                  <>
+                    <LockedRow label="Name" value={user.name} />
+                    <LockedRow label="Email" value={user.email} />
+                    <LockedRow label="Username" value={user.login} />
+                    <LockedRow label="Password" value="******" />
+                  </>
+                ) : (
+                  <>
+                    <EditableRow label="Name" value={user.name} />
+                    <EditableRow label="Email" value={user.email} />
+                    <EditableRow label="Username" value={user.login} />
+                    <EditableRow label="Password" value="******" />
+                  </>
+                )}
               </tbody>
             </table>
           </div>
           <div className="gf-form-button-row">
-            <button className="btn btn-danger" onClick={this.handleUserDelete}>
-              Delete User
-            </button>
+            {!user.isExternal && (
+              <button className="btn btn-danger" onClick={this.handleUserDelete}>
+                Delete User
+              </button>
+            )}
             <button className="btn btn-danger" onClick={this.handleUserDisable}>
               Disable User
             </button>

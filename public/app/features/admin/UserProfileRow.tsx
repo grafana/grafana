@@ -97,6 +97,27 @@ export class EditableRow extends PureComponent<EditableRowProps, EditableRowStat
   }
 }
 
+interface LockedRowProps {
+  label: string;
+  value?: any;
+}
+
+export const LockedRow: FC<LockedRowProps> = ({ label, value }) => {
+  return (
+    <tr>
+      <td className={`width-16 ${labelStyle}`}>{label}</td>
+      <td className="width-25" colSpan={2}>
+        {value}
+      </td>
+      <td>
+        <span>
+          <i className="fa fa-lock" />
+        </span>
+      </td>
+    </tr>
+  );
+};
+
 export interface RowActionProps {
   text: string;
   onClick: (event: React.MouseEvent) => void;
