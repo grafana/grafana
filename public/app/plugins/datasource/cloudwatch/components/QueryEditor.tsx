@@ -1,7 +1,7 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 import { SelectableValue, QueryEditorProps } from '@grafana/data';
-import { CloudWatchQuery } from '../types';
 import { Input, Segment, SegmentAsync, ValidationEvents, EventsWithValidation, Switch } from '@grafana/ui';
+import { CloudWatchQuery } from '../types';
 import CloudWatchDatasource from '../datasource';
 import { Stats, Dimensions, InlineFormField, FormField, Alias } from './';
 

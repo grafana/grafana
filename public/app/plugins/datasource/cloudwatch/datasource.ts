@@ -1,5 +1,9 @@
 import angular, { IQService } from 'angular';
 import _ from 'lodash';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import kbn from 'app/core/utils/kbn';
 import {
   dateMath,
   ScopedVars,
@@ -9,11 +13,7 @@ import {
   DataQueryRequest,
   DataSourceInstanceSettings,
 } from '@grafana/data';
-import kbn from 'app/core/utils/kbn';
 import { CloudWatchQuery } from './types';
-import { BackendSrv } from 'app/core/services/backend_srv';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery> {
   type: any;
