@@ -3,6 +3,7 @@ import React, { PureComponent, SyntheticEvent } from 'react';
 interface Props {
   onConfirm(): void;
   disabled?: boolean;
+  confirmText?: string;
 }
 
 interface State {
@@ -10,6 +11,11 @@ interface State {
 }
 
 export class DeleteButton extends PureComponent<Props, State> {
+  static defaultProps: Partial<Props> = {
+    disabled: false,
+    confirmText: 'Confirm Delete',
+  };
+
   state: State = {
     showConfirm: false,
   };
@@ -34,7 +40,7 @@ export class DeleteButton extends PureComponent<Props, State> {
   };
 
   render() {
-    const { onConfirm, disabled } = this.props;
+    const { onConfirm, disabled, confirmText } = this.props;
     const showConfirmClass = this.state.showConfirm ? 'show' : 'hide';
     const showDeleteButtonClass = this.state.showConfirm ? 'hide' : 'show';
     const disabledClass = disabled ? 'disabled btn-inverse' : '';
@@ -54,7 +60,7 @@ export class DeleteButton extends PureComponent<Props, State> {
               Cancel
             </a>
             <a className="btn btn-danger btn-small" onClick={onConfirm}>
-              Confirm Delete
+              {confirmText}
             </a>
           </span>
         </span>
