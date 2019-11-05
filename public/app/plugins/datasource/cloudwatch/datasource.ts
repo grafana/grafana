@@ -8,7 +8,6 @@ import {
   DataSourceApi,
   DataQueryRequest,
   DataSourceInstanceSettings,
-  DataSourceJsonData,
 } from '@grafana/data';
 import kbn from 'app/core/utils/kbn';
 import { CloudWatchQuery } from './types';
