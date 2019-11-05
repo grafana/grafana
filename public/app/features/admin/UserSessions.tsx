@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
+import appEvents from 'app/core/app_events';
 import { RowAction } from './UserProfileRow';
-import { UserSession } from 'app/types';
+import { UserSession, CoreEvents } from 'app/types';
 import { DeleteButton } from '@grafana/ui';
 
 interface Props {
@@ -18,7 +19,15 @@ export class UserSessions extends PureComponent<Props> {
   };
 
   handleAllSessionsRevoke = () => {
-    this.props.onAllSessionsRevoke();
+    appEvents.emit(CoreEvents.showConfirmModal, {
+      title: 'Force logout from all devices',
+      text: 'Are you sure you want to force logout from all devices?',
+      yesText: 'Force logout',
+      icon: 'fa-warning',
+      onConfirm: () => {
+        this.props.onAllSessionsRevoke();
+      },
+    });
   };
 
   render() {

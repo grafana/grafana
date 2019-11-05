@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
+import appEvents from 'app/core/app_events';
 // import { dateTime } from '@grafana/data';
 import { EditableRow } from './UserProfileRow';
-import { UserDTO } from 'app/types';
+import { UserDTO, CoreEvents } from 'app/types';
 
 // const defaultTimeFormat = 'dddd YYYY-MM-DD HH:mm:ss';
 
@@ -19,12 +20,28 @@ interface State {
 export class UserProfile extends PureComponent<Props, State> {
   handleUserDelete = () => {
     const { user, onUserDelete } = this.props;
-    onUserDelete(user.id);
+    appEvents.emit(CoreEvents.showConfirmModal, {
+      title: 'Delete user',
+      text: 'Are you sure you want to delete this user?',
+      yesText: 'Delete user',
+      icon: 'fa-warning',
+      onConfirm: () => {
+        onUserDelete(user.id);
+      },
+    });
   };
 
   handleUserDisable = () => {
     const { user, onUserDisable } = this.props;
-    onUserDisable(user.id);
+    appEvents.emit(CoreEvents.showConfirmModal, {
+      title: 'Disable user',
+      text: 'Are you sure you want to disable this user?',
+      yesText: 'Disable user',
+      icon: 'fa-warning',
+      onConfirm: () => {
+        onUserDisable(user.id);
+      },
+    });
   };
 
   render() {

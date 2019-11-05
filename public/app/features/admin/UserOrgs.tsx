@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
+import appEvents from 'app/core/app_events';
 import { RowAction } from './UserProfileRow';
-import { UserOrg } from 'app/types';
+import { UserOrg, CoreEvents } from 'app/types';
 
 interface Props {
   orgs: UserOrg[];
@@ -63,7 +64,16 @@ export class OrgRow extends PureComponent<OrgRowProps, OrgRowState> {
   };
 
   handleOrgRemove = () => {
-    this.props.onOrgRemove(this.props.org.orgId);
+    const { org } = this.props;
+    appEvents.emit(CoreEvents.showConfirmModal, {
+      title: 'Remove from organisation',
+      text: `Are you sure you want to remove user from organisation: ${org.name}?`,
+      yesText: 'Remove from organisation',
+      icon: 'fa-warning',
+      onConfirm: () => {
+        this.props.onOrgRemove(org.orgId);
+      },
+    });
   };
 
   handleChangeRoleClick = () => {
