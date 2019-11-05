@@ -68,11 +68,15 @@ export class PanelHeaderCorner extends Component<Props> {
     );
   };
 
-  renderCornerType(infoMode: InfoMode, content: PopoverContent) {
+  onClickError = () => {
+    console.log('TODO, inspect', this.props.panel.id);
+  };
+
+  renderCornerType(infoMode: InfoMode, content: PopoverContent, onClick?: () => void) {
     const theme = infoMode === InfoMode.Error ? 'error' : 'info';
     return (
       <Tooltip content={content} placement="top-start" theme={theme}>
-        <div className={`panel-info-corner panel-info-corner--${infoMode.toLowerCase()}`}>
+        <div className={`panel-info-corner panel-info-corner--${infoMode.toLowerCase()}`} onClick={onClick}>
           <i className="fa" />
           <span className="panel-info-corner-inner" />
         </div>
@@ -88,7 +92,7 @@ export class PanelHeaderCorner extends Component<Props> {
     }
 
     if (infoMode === InfoMode.Error) {
-      return this.renderCornerType(infoMode, this.props.error);
+      return this.renderCornerType(infoMode, this.props.error, this.onClickError);
     }
 
     if (infoMode === InfoMode.Info || infoMode === InfoMode.Links) {

@@ -284,6 +284,17 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
+		Id:   "random_walk_with_error",
+		Name: "Random Walk (with error)",
+
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			queryRes := getRandomWalk(query, context)
+			queryRes.ErrorString = "This is an error.  It can include URLs http://grafana.com/"
+			return queryRes
+		},
+	})
+
+	registerScenario(&Scenario{
 		Id:   "logs",
 		Name: "Logs",
 

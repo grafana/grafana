@@ -131,7 +131,9 @@ class MetricsPanelCtrl extends PanelCtrl {
       if (data.state === LoadingState.Error) {
         this.loading = false;
         this.processDataError(data.error);
-        return;
+        if (!data.series) {
+          return;
+        }
       }
 
       // Ignore data in loading state
