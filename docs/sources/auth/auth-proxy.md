@@ -36,6 +36,9 @@ whitelist =
 # Optionally define more headers to sync other user attributes
 # Example `headers = Name:X-WEBAUTH-NAME Email:X-WEBAUTH-EMAIL Groups:X-WEBAUTH-GROUPS`
 headers =
+# If you want to combine auth proxy with the normal login session token & cookie enable setting defined below.
+# It will grant a login token if you supply auth proxy headers on /login request
+grant_login_token = false
 ```
 
 ## Interacting with Grafana’s AuthProxy via curl
@@ -294,3 +297,12 @@ curl -H "X-WEBAUTH-USER: leonard" -H "X-WEBAUTH-GROUPS: lokiteamOnExternalSystem
 With this, the user `leonard` will be automatically placed into the Loki team as part of Grafana authentication.
 
 [Learn more about Team Sync]({{< relref "auth/team-sync.md" >}})
+
+
+## Login token & session cookie
+
+If you want to combine auth proxy with the normal login session token & cookie enable the setting `grant_login_token`.
+With that option enabled requests to `/login` that have auth proxy headers added will create a new session token for the
+user (and redirect user). This means that only /login route needs to go through auth proxy. Use settings `login_maximum_inactive_lifetime_days`
+and `login_maximum_lifetime_days` under `[auth]` to control session lifetime.
+

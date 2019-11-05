@@ -143,13 +143,14 @@ var (
 	AnonymousOrgRole string
 
 	// Auth proxy settings
-	AuthProxyEnabled        bool
-	AuthProxyHeaderName     string
-	AuthProxyHeaderProperty string
-	AuthProxyAutoSignUp     bool
-	AuthProxyLDAPSyncTtl    int
-	AuthProxyWhitelist      string
-	AuthProxyHeaders        map[string]string
+	AuthProxyEnabled         bool
+	AuthProxyHeaderName      string
+	AuthProxyHeaderProperty  string
+	AuthProxyAutoSignUp      bool
+	AuthProxyGrantLoginToken bool
+	AuthProxyLDAPSyncTtl     int
+	AuthProxyWhitelist       string
+	AuthProxyHeaders         map[string]string
 
 	// Basic Auth
 	BasicAuthEnabled bool
@@ -854,6 +855,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
+	AuthProxyGrantLoginToken = authProxy.Key("grant_login_token").MustBool(true)
 	AuthProxyLDAPSyncTtl = authProxy.Key("ldap_sync_ttl").MustInt()
 	AuthProxyWhitelist, err = valueAsString(authProxy, "whitelist", "")
 	if err != nil {
