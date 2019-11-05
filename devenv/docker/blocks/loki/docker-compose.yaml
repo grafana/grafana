@@ -1,3 +1,4 @@
+  # datasource URL: http://localhost:3100/
   loki:
     image: grafana/loki:master
     ports:
