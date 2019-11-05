@@ -112,14 +112,17 @@ export class GraphiteDatasource {
     }
 
     for (let i = 0; i < series.length; i++) {
-      const s = result.data[i];
+      const s = series[i];
       for (let y = 0; y < s.datapoints.length; y++) {
         s.datapoints[y][1] *= 1000;
       }
       const frame = toDataFrame(s);
-      if (result.meta != null) {
+
+      // Metrictank metadata
+      if (s.meta) {
         frame.meta = {
-          metrictank: result.meta,
+          metrictank: s.meta, // array of metadata
+          metrictank_req: result.data.meta, // info on the request
         };
       }
       data.push(frame);
