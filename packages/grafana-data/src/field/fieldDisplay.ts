@@ -124,6 +124,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         const display = getDisplayProcessor({
           config,
           theme: options.theme,
+          type: field.type,
         });
 
         const title = config.title ? config.title : defaultTitle;
