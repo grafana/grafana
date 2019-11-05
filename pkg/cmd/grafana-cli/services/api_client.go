@@ -65,8 +65,14 @@ func (client *GrafanaComClient) DownloadFile(pluginName string, tmpFile *os.File
 			client.retryCount++
 			if client.retryCount < 3 {
 				logger.Info("Failed downloading. Will retry once.")
-				tmpFile.Truncate(0)
-				tmpFile.Seek(0, 0)
+				err = tmpFile.Truncate(0)
+				if err != nil {
+					panic(err)
+				}
+				_, err = tmpFile.Seek(0, 0)
+				if err != nil {
+					panic(err)
+				}
 				err = client.DownloadFile(pluginName, tmpFile, url, checksum)
 			} else {
 				client.retryCount = 0
@@ -147,6 +153,9 @@ func createRequest(repoUrl string, subPaths ...string) (*http.Request, error) {
 	}
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	req.Header.Set("grafana-version", grafanaVersion)
 	req.Header.Set("grafana-os", runtime.GOOS)

@@ -114,10 +114,10 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
 		return errutil.Wrap("Failed to create temporary file", err)
 	}
 	defer os.Remove(tmpFile.Name())
-	defer tmpFile.Close()
 
 	err = c.ApiClient().DownloadFile(pluginName, tmpFile, downloadURL, checksum)
 	if err != nil {
+		tmpFile.Close()
 		return errutil.Wrap("Failed to download plugin archive", err)
 	}
 	err = tmpFile.Close()
