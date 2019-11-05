@@ -1,7 +1,8 @@
 import React from 'react';
 import { boolean, text } from '@storybook/addon-knobs';
-import { Input } from './Input';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { Input } from './Input';
+import { Button } from './Button';
 import mdx from './Input.mdx';
 
 export default {
@@ -17,25 +18,21 @@ export default {
 
 export const simple = () => {
   const disabled = boolean('Disabled', false);
-  const invalid = boolean('Invalid', false);
-  const invalidMessage = text('Invalid message', "There's an error");
-  const label = text('Label', 'This is a Label');
-  const description = text('Description', '');
-  const icon = text('Icon', 'fa fa-check');
-  const loading = boolean('Loading', true);
-  const buttonText = text('Button text', 'Fetch');
+  const icon = text('Prefix', 'fa fa-check');
+  const loading = boolean('Suffix', true);
+  const before = boolean('Addon before', false);
+  const after = boolean('Addon after', false);
+  const addonBefore = <span>Input</span>;
+  const addonAfter = <Button variant="secondary">Load</Button>;
 
   return (
     <div style={{ width: '300px' }}>
       <Input
-        description={description}
         disabled={disabled}
-        invalid={invalid}
-        invalidMessage={invalidMessage}
-        label={label}
         icon={icon}
         loading={loading}
-        buttonText={buttonText}
+        addonBefore={before && addonBefore}
+        addonAfter={after && addonAfter}
       />
     </div>
   );
