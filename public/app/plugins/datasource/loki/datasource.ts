@@ -425,7 +425,9 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     if (derivedFields.length) {
       const fields = fromPairs(
         derivedFields.map(field => {
-          const config: FieldConfig = {};
+          const config: FieldConfig = {
+            isDerived: true,
+          };
           if (field.url) {
             config.links = [
               {

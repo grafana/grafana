@@ -43,6 +43,9 @@ export interface FieldConfig {
 
   // Alternative to empty string
   noValue?: string;
+
+  // Whether the field was created by some operation on other field.
+  isDerived?: boolean;
 }
 
 export interface Field<T = any, V = Vector<T>> {

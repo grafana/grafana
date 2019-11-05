@@ -19,7 +19,7 @@ export interface Props extends Themeable {
   parsedValue: string;
   parsedKey: string;
   isLabel?: boolean;
-  isField?: boolean;
+  isDataFrameField?: boolean;
   fieldIndex?: number;
   parser?: LogsParser;
   getRows: () => LogRowModel[];
@@ -76,14 +76,14 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   }
 
   createStatsForLabels() {
-    const { getRows, parser, parsedKey, parsedValue, isLabel, isField, fieldIndex } = this.props;
+    const { getRows, parser, parsedKey, parsedValue, isLabel, isDataFrameField, fieldIndex } = this.props;
     const allRows = getRows();
     const fieldLabel = parsedKey;
     const fieldValue = parsedValue;
     let fieldStats = [];
     if (isLabel) {
       fieldStats = calculateLogsLabelStats(allRows, parsedKey);
-    } else if (isField) {
+    } else if (isDataFrameField) {
       fieldStats = calculateStats(allRows[0].dataFrame.fields[fieldIndex!].values.toArray());
     } else {
       const matcher = parser!.buildMatcher(fieldLabel);
