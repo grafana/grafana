@@ -26,6 +26,7 @@ export const DebugSection = (props: Props) => {
         label={'Debug log message'}
         inputEl={
           <textarea
+            placeholder={'Paste an example log line here to test the regular expressions of your derived fields'}
             className={cx(
               'gf-form-input gf-form-textarea',
               css`
@@ -37,28 +38,42 @@ export const DebugSection = (props: Props) => {
           />
         }
       />
-      {debugFields.map(field => {
-        return <DebugFieldItem key={field.name} field={field} />;
-      })}
+      {!!debugFields.length && <DebugFields fields={debugFields} />}
     </div>
   );
 };
 
 type DebugFieldItemProps = {
-  field: DebugField;
+  fields: DebugField[];
 };
-const DebugFieldItem = ({ field }: DebugFieldItemProps) => {
-  let value: any = field.value;
-  if (field.error) {
-    value = field.error.message;
-  } else if (field.href) {
-    value = <a href={field.href}>{value}</a>;
-  }
-
+const DebugFields = ({ fields }: DebugFieldItemProps) => {
   return (
-    <div key={field.name}>
-      {field.name} = {value}
-    </div>
+    <table className={'filter-table'}>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Value</th>
+          <th>Url</th>
+        </tr>
+      </thead>
+      <tbody>
+        {fields.map(field => {
+          let value: any = field.value;
+          if (field.error) {
+            value = field.error.message;
+          } else if (field.href) {
+            value = <a href={field.href}>{value}</a>;
+          }
+          return (
+            <tr key={`${field.name}=${field.value}`}>
+              <td>{field.name}</td>
+              <td>{value}</td>
+              <td>{field.href ? <a href={field.href}>{field.href}</a> : ''}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
   );
 };
 

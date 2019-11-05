@@ -26,7 +26,7 @@ describe('DerivedFields', () => {
     const wrapper = mount(<DerivedFields value={testValue} onChange={() => {}} />);
 
     expect(wrapper.find(Button).filterWhere(button => button.contains('Add')).length).toBe(1);
-    expect(wrapper.find(Button).filterWhere(button => button.contains('Debug')).length).toBe(1);
+    expect(wrapper.find(Button).filterWhere(button => button.contains('Show example log message')).length).toBe(1);
     expect(wrapper.find(DerivedField).length).toBe(2);
   });
 

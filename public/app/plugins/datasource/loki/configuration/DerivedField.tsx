@@ -73,6 +73,7 @@ export const DerivedField = (props: Props) => {
         labelWidth={5}
         inputEl={
           <DataLinkInput
+            placeholder={'http://example.com/${__value.raw}'}
             value={value.url || ''}
             onChange={newValue =>
               onChange({

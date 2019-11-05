@@ -32,7 +32,7 @@ export const DerivedFields = (props: Props) => {
       <h3 className="page-heading">Derived fields</h3>
 
       <div className={styles.infoText}>
-        Derived fields can be used to extract new fields from the log message and create Data Link from it's value.
+        Derived fields can be used to extract new fields from the log message and create link from it's value.
       </div>
 
       <div className="gf-form-group">
@@ -55,9 +55,9 @@ export const DerivedFields = (props: Props) => {
                 }}
                 suggestions={[
                   {
-                    value: `${DataLinkBuiltInVars.valueText}`,
-                    label: 'Text',
-                    documentation: 'Text representation of selected value',
+                    value: DataLinkBuiltInVars.valueRaw,
+                    label: 'Raw value',
+                    documentation: 'Exact string captured by the regular expression',
                     origin: VariableOrigin.Value,
                   },
                 ]}
@@ -82,7 +82,7 @@ export const DerivedFields = (props: Props) => {
 
           {value && value.length > 0 && (
             <Button variant="inverse" onClick={() => setShowDebug(!showDebug)}>
-              {showDebug ? 'Hide debug' : 'Debug'}
+              {showDebug ? 'Hide example log message' : 'Show example log message'}
             </Button>
           )}
         </div>

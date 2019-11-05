@@ -32,11 +32,11 @@ describe('getLinksFromLogsField', () => {
         links: [
           {
             title: 'title1',
-            url: 'domain.com/${__value.text}',
+            url: 'domain.com/${__value.raw}',
           },
           {
             title: 'title2',
-            url: 'anotherdomain.sk/${__value.text}',
+            url: 'anotherdomain.sk/${__value.raw}',
           },
         ],
       },

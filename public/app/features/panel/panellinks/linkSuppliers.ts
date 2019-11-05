@@ -125,9 +125,9 @@ export const getLinksFromLogsField = (field: Field, rowIndex: number): Array<Lin
   const scopedVars: any = {};
   scopedVars['__value'] = {
     value: {
-      text: field.values.get(rowIndex),
+      raw: field.values.get(rowIndex),
     },
-    text: 'Value',
+    text: 'Raw value',
   };
 
   return field.config.links

@@ -129,7 +129,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
               return (
                 <span key={link}>
                   &nbsp;
-                  <a href={link}>
+                  <a href={link} target={'_blank'}>
                     <i className={'fa fa-external-link'} />
                   </a>
                 </span>
