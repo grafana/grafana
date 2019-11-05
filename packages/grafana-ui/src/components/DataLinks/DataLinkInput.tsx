@@ -113,7 +113,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(({ value, onChan
     setShowingSuggestions(false);
 
     setSuggestionsIndex(0);
-    onChange(Plain.serialize(editor.value));
+    stateRef.current.onChange(Plain.serialize(editor.value));
   };
 
   return (
