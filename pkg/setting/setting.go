@@ -412,7 +412,7 @@ func makeAbsolute(path string, root string) string {
 	return filepath.Join(root, path)
 }
 
-func evalEnvVarExpression(value string) string {
+func EvalEnvVarExpression(value string) string {
 	regex := regexp.MustCompile(`\${(\w+)}`)
 	return regex.ReplaceAllStringFunc(value, func(envVar string) string {
 		envVar = strings.TrimPrefix(envVar, "${")
@@ -431,7 +431,7 @@ func evalEnvVarExpression(value string) string {
 func evalConfigValues(file *ini.File) {
 	for _, section := range file.Sections() {
 		for _, key := range section.Keys() {
-			key.SetValue(evalEnvVarExpression(key.Value()))
+			key.SetValue(EvalEnvVarExpression(key.Value()))
 		}
 	}
 }

@@ -8,7 +8,7 @@ import {
   toDataFrame,
   LogRowModel,
 } from '@grafana/data';
-import { dedupLogRows, dataFrameToLogsModel } from '../logs_model';
+import { dedupLogRows, dataFrameToLogsModel } from './logs_model';
 
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {

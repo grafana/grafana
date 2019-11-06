@@ -57,6 +57,16 @@ describe('Apending DataFrame', () => {
       { time: null, name: null, value: null, value2: 'XXX' }, // 4
     ]);
 
+    // Add a time value that has an array type
+    frame.add({ time: [300] });
+    expect(frame.toArray()).toEqual([
+      { time: 100, name: 'a', value: 1, value2: null }, // 1
+      { time: 200, name: 'BB', value: 20, value2: null }, // 2
+      { time: null, name: null, value: 3, value2: null }, // 3
+      { time: null, name: null, value: null, value2: 'XXX' }, // 4
+      { time: 300, name: null, value: null, value2: null }, // 5
+    ]);
+
     // Make sure length survives a spread operator
     const keys = Object.keys(frame);
     const copy = { ...frame } as any;
