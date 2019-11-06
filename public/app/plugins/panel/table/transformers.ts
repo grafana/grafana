@@ -6,7 +6,7 @@ import { TableTransform } from './types';
 import { Column, TableData } from '@grafana/data';
 
 const transformers: { [key: string]: TableTransform } = {};
-const timeSeriesReducer = (data: any): any[] => {
+export const timeSeriesReducer = (data: any): any[] => {
   if (!Array.isArray(data)) {
     return data.datapoints ? [data] : [];
   }
@@ -20,7 +20,7 @@ const timeSeriesReducer = (data: any): any[] => {
   }, []);
 };
 
-const tableReducer = (data: any): any[] => {
+export const tableReducer = (data: any): any[] => {
   if (!Array.isArray(data)) {
     return data.columns ? [data] : [];
   }

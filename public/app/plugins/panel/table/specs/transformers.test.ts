@@ -1,4 +1,4 @@
-import { transformDataToTable, transformers } from '../transformers';
+import { tableReducer, timeSeriesReducer, transformDataToTable, transformers } from '../transformers';
 
 describe('when transforming time series table', () => {
   let table: any;
@@ -397,6 +397,127 @@ describe('when transforming time series table', () => {
         expect(table.columns[1].text).toBe('Max');
         expect(table.columns[2].text).toBe('Min');
       });
+    });
+  });
+});
+
+describe('timeSeriesReducer', () => {
+  describe('when called with an object that contains datapoints property', () => {
+    it('then it should return same object in array', () => {
+      const data: any = { datapoints: [] };
+
+      const result = timeSeriesReducer(data);
+
+      expect(result).toEqual([data]);
+    });
+  });
+
+  describe('when called with an object that does not contain datapoints property', () => {
+    it('then it should return empty array', () => {
+      const data: any = { prop: [] };
+
+      const result = timeSeriesReducer(data);
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('when called with an array of series with both timeseries and table data', () => {
+    it('then it should return an array with timeseries', () => {
+      const time = new Date().getTime();
+      const data: any[] = [
+        {
+          target: 'series1',
+          datapoints: [[12.12, time], [14.44, time + 1]],
+        },
+        {
+          columns: [
+            {
+              type: 'time',
+              text: 'Time',
+            },
+            {
+              text: 'mean',
+            },
+          ],
+          type: 'table',
+          rows: [[time, 13.13], [time + 1, 26.26]],
+        },
+      ];
+
+      const result = timeSeriesReducer(data);
+
+      expect(result).toEqual([
+        {
+          target: 'series1',
+          datapoints: [[12.12, time], [14.44, time + 1]],
+        },
+      ]);
+    });
+  });
+});
+
+describe('tableReducer', () => {
+  describe('when called with an object that contains columns property', () => {
+    it('then it should return same object in array', () => {
+      const data: any = { columns: [] };
+
+      const result = tableReducer(data);
+
+      expect(result).toEqual([data]);
+    });
+  });
+
+  describe('when called with an object that does not contain columns property', () => {
+    it('then it should return empty array', () => {
+      const data: any = { prop: [] };
+
+      const result = tableReducer(data);
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('when called with an array of series with both timeseries and table data', () => {
+    it('then it should return an array with table data', () => {
+      const time = new Date().getTime();
+      const data: any[] = [
+        {
+          target: 'series1',
+          datapoints: [[12.12, time], [14.44, time + 1]],
+        },
+        {
+          columns: [
+            {
+              type: 'time',
+              text: 'Time',
+            },
+            {
+              text: 'mean',
+            },
+          ],
+          type: 'table',
+          rows: [[time, 13.13], [time + 1, 26.26]],
+        },
+      ];
+
+      const result = tableReducer(data);
+
+      expect(result).toEqual([
+        {
+          columns: [
+            {
+              type: 'time',
+              text: 'Time',
+            },
+            {
+              text: 'mean',
+            },
+          ],
+          type: 'table',
+          rows: [[time, 13.13], [time + 1, 26.26]],
+        },
+      ]);
     });
   });
 });
