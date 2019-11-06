@@ -16,10 +16,10 @@ import { mergeMap, map } from 'rxjs/operators';
 
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
 
-/**
- * Key is the datasource name, DataQuery[] lets you run
- */
-export type MixedQuerySets = { [key: string]: DataQuery[] };
+export interface BatchedQueries {
+  datasource: Promise<DataSourceApi>;
+  targets: DataQuery[];
+}
 
 export class MixedDatasource extends DataSourceApi<DataQuery> {
   constructor(instanceSettings: DataSourceInstanceSettings) {
@@ -36,27 +36,35 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
       return of({ data: [] } as DataQueryResponse); // nothing
     }
 
-    return this.querySets(groupBy(queries, 'datasource'), request);
-  }
-
-  querySets(sets: MixedQuerySets, request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
-    const observables: Array<Observable<DataQueryResponse>> = [];
-    let runningSubRequests = 0;
-
+    // Build groups of queries to run in parallel
+    const sets: { [key: string]: DataQuery[] } = groupBy(queries, 'datasource');
+    const mixed: BatchedQueries[] = [];
     for (const key in sets) {
       const targets = sets[key];
       const dsName = targets[0].datasource;
+      mixed.push({
+        datasource: getDataSourceSrv().get(dsName),
+        targets,
+      });
+    }
+    return this.batchQueries(mixed, request);
+  }
 
-      const observable = from(getDataSourceSrv().get(dsName)).pipe(
+  batchQueries(mixed: BatchedQueries[], request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
+    const observables: Array<Observable<DataQueryResponse>> = [];
+    let runningSubRequests = 0;
+
+    for (let i = 0; i < mixed.length; i++) {
+      const query = mixed[i];
+      if (!query.targets || !query.targets.length) {
+        continue;
+      }
+      const observable = from(query.datasource).pipe(
         mergeMap((dataSourceApi: DataSourceApi) => {
           const datasourceRequest = cloneDeep(request);
 
-          datasourceRequest.requestId = `${dsName}${datasourceRequest.requestId || ''}`;
-
-          // all queries hidden return empty result for for this requestId
-          if (datasourceRequest.targets.length === 0) {
-            return of({ data: [], key: datasourceRequest.requestId });
-          }
+          datasourceRequest.requestId = `mixed-${i}-${datasourceRequest.requestId || ''}`;
+          datasourceRequest.targets = query.targets;
 
           runningSubRequests++;
           let hasCountedAsDone = false;
@@ -87,7 +95,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
                 ...response,
                 data: response.data || [],
                 state: runningSubRequests === 0 ? LoadingState.Done : LoadingState.Loading,
-                key: `${dsName}${response.key || ''}`,
+                key: `mixed-${i}-${response.key || ''}`,
               } as DataQueryResponse;
             })
           );
