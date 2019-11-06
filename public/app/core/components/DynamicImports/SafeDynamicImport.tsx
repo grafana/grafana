@@ -1,6 +1,6 @@
-import React, { lazy, Suspense } from 'react';
+import React from 'react';
+import Loadable from 'react-loadable';
 import { css } from 'emotion';
-import { ErrorBoundary, ErrorWithStack } from '@grafana/ui';
 import { LoadingChunkPlaceHolder } from './LoadingChunkPlaceHolder';
 import { ErrorLoadingChunk } from './ErrorLoadingChunk';
 
@@ -11,47 +11,25 @@ function getAlertPageStyle(): string {
   `;
 }
 
-export const GRAFANA_CHUNK_LOAD_ERROR = 'GRAFANA_CHUNK_LOAD_ERROR';
+export const Loading = (props: { error: Error; pastDelay: boolean }) => {
+  const { error, pastDelay } = props;
 
-export const isChunkError = (error: Error): boolean => {
-  if (error && error.message && error.message.indexOf(GRAFANA_CHUNK_LOAD_ERROR) !== -1) {
-    return true;
+  if (error) {
+    return <ErrorLoadingChunk className={getAlertPageStyle()} error={error} />;
   }
 
-  return false;
+  if (pastDelay) {
+    return <LoadingChunkPlaceHolder />;
+  }
+
+  return null;
 };
 
 export const SafeDynamicImport = (importStatement: Promise<any>) => ({ ...props }) => {
-  const LazyComponent = lazy(() =>
-    importStatement.catch(error => {
-      throw new Error(`${GRAFANA_CHUNK_LOAD_ERROR}:${error.message}`);
-    })
-  );
+  const LoadableComponent = Loadable({
+    loader: () => importStatement,
+    loading: Loading,
+  });
 
-  return (
-    <ErrorBoundary>
-      {({ error, errorInfo }) => {
-        if (!errorInfo) {
-          return (
-            <Suspense fallback={<LoadingChunkPlaceHolder />}>
-              <LazyComponent {...props} />
-            </Suspense>
-          );
-        }
-
-        if (isChunkError(error)) {
-          return <ErrorLoadingChunk error={error} errorInfo={errorInfo} className={getAlertPageStyle()} />;
-        }
-
-        return (
-          <ErrorWithStack
-            className={getAlertPageStyle()}
-            error={error}
-            errorInfo={errorInfo}
-            title="An unexpected error happened"
-          />
-        );
-      }}
-    </ErrorBoundary>
-  );
+  return <LoadableComponent {...props} />;
 };

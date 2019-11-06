@@ -1,13 +1,12 @@
 import React, { FunctionComponent } from 'react';
-import { Button, ErrorInfo } from '@grafana/ui';
+import { Button } from '@grafana/ui';
 
 interface Props {
   error: Error | null;
-  errorInfo: ErrorInfo | null;
   className: string;
 }
 
-export const ErrorLoadingChunk: FunctionComponent<Props> = ({ error, errorInfo, className }) => (
+export const ErrorLoadingChunk: FunctionComponent<Props> = ({ error, className }) => (
   <div className={className}>
     <h2>Unable to find application file</h2>
     <br />
@@ -19,9 +18,9 @@ export const ErrorLoadingChunk: FunctionComponent<Props> = ({ error, errorInfo, 
       </Button>
     </div>
     <details style={{ whiteSpace: 'pre-wrap' }}>
-      {error && error.toString()}
+      {error && error.message ? error.message : 'Unexpected error occurred'}
       <br />
-      {errorInfo.componentStack}
+      {error && error.stack ? error.stack : null}
     </details>
   </div>
 );
