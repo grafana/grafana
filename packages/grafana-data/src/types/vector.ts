@@ -7,7 +7,7 @@ export interface Vector<T = any> {
   get(index: number): T;
 
   /**
-   * Get the resutls as an array.
+   * Get the results as an array.
    */
   toArray(): T[];
 }

@@ -1,28 +1,30 @@
 import _ from 'lodash';
-import { colors, ansicolor } from '@grafana/ui';
+import { ansicolor, colors } from '@grafana/ui';
 
 import {
-  Labels,
-  LogLevel,
+  ArrayVector,
   DataFrame,
+  dateTime,
+  Field,
+  FieldCache,
+  FieldType,
+  FieldWithIndex,
   findCommonLabels,
   findUniqueLabels,
+  getFlotPairs,
   getLogLevel,
-  FieldType,
   getLogLevelFromKey,
+  GraphSeriesXY,
+  Labels,
+  LogLevel,
   LogRowModel,
-  LogsModel,
+  LogsDedupStrategy,
   LogsMetaItem,
   LogsMetaKind,
-  LogsDedupStrategy,
-  GraphSeriesXY,
-  dateTime,
-  toUtc,
+  LogsModel,
   NullValueMode,
   toDataFrame,
-  FieldCache,
-  FieldWithIndex,
-  getFlotPairs,
+  toUtc,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
@@ -162,7 +164,11 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
 }
 
 function isLogsData(series: DataFrame) {
-  return series.fields.some(f => f.type === FieldType.time) && series.fields.some(f => f.type === FieldType.string);
+  return (
+    (series.fields.some(f => f.type === FieldType.time) && series.fields.some(f => f.type === FieldType.string)) ||
+    // Temp fix for Elastic in dashboards
+    series.fields.some(f => f.type === FieldType.other && f.name === 'docs')
+  );
 }
 
 /**
@@ -243,10 +249,8 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       hasUniqueLabels = true;
     }
 
-    const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
-    // Assume the first string field in the dataFrame is the message. This was right so far but probably needs some
-    // more explicit checks.
-    const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
+    const timeField = getTimeField(fieldCache);
+    const stringField = getMessageField(fieldCache);
     const logLevelField = fieldCache.getFieldByName('level');
     const idField = getIdField(fieldCache);
 
@@ -347,4 +351,58 @@ function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {
     }
   }
   return undefined;
+}
+
+function getTimeField(fieldCache: FieldCache): Field {
+  const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
+  if (timeField) {
+    return timeField;
+  }
+  // So there is no time field, this probably means we have a raw docs response from elastic.
+  // This is temp fix for that case
+  const docsField = fieldCache.getFieldByName('docs');
+  if (!docsField) {
+    // Should not happen but just to be sure lets have a nice error message.
+    throw new Error('Failed to find "docs" filed in logs dataframe');
+  }
+
+  const timestampValues = docsField.values.toArray().map(doc => {
+    // Should be already parsed json but try to parse in case it isn't
+    if (typeof doc === 'string') {
+      try {
+        doc = JSON.parse(doc);
+      } catch (error) {
+        return '';
+      }
+    }
+    if (Array.isArray(doc['@timestamp'])) {
+      // Not sure why but I have seen this being an array
+      return doc['@timestamp'][0];
+    }
+    return doc['@timestamp'];
+  });
+
+  return {
+    name: 'timestamp',
+    config: {},
+    type: FieldType.time,
+    values: new ArrayVector(timestampValues),
+  };
+}
+
+function getMessageField(fieldCache: FieldCache): Field {
+  // Assume the first string field in the dataFrame is the message. This was right so far but probably needs some
+  // more explicit checks.
+  const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
+  if (stringField) {
+    return stringField;
+  }
+  // So there is no string field, this probably means we have a raw docs response from elastic.
+  // This is temp fix for that case
+  const docsField = fieldCache.getFieldByName('docs');
+  if (!docsField) {
+    // Should not happen but just to be sure lets have a nice error message.
+    throw new Error('Failed to find "docs" filed in logs dataframe');
+  }
+  return docsField;
 }
