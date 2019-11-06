@@ -58,10 +58,6 @@ export class UserAdminPage extends PureComponent<Props, State> {
     console.log('handleGrafanaAdminChange', isGrafanaAdmin);
   };
 
-  handleUserStatusChange = (isDisabled: boolean) => {
-    console.log('handleStatusChange', isDisabled);
-  };
-
   handleOrgRemove = (orgId: number) => {
     console.log('handleOrgRemove', orgId);
   };
@@ -92,9 +88,7 @@ export class UserAdminPage extends PureComponent<Props, State> {
               <UserProfile user={user} onUserDelete={this.handleUserDelete} onUserDisable={this.handleUserDisable} />
               <UserPermissions
                 isGrafanaAdmin={user.isGrafanaAdmin}
-                isDisabled={user.isDisabled}
                 onGrafanaAdminChange={this.handleGrafanaAdminChange}
-                onStatusChange={this.handleUserStatusChange}
               />
             </>
           )}

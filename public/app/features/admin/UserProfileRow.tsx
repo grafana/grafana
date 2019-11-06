@@ -97,12 +97,20 @@ export class EditableRow extends PureComponent<EditableRowProps, EditableRowStat
   }
 }
 
-interface LockedRowProps {
+interface LockedLDAPRowProps {
   label: string;
   value?: any;
 }
 
-export const LockedRow: FC<LockedRowProps> = ({ label, value }) => {
+export const LockedLDAPRow: FC<LockedLDAPRowProps> = ({ label, value }) => {
+  const lockMessageClass = cx(
+    'pull-right',
+    css`
+      font-style: italic;
+      margin-right: 0.6rem;
+    `
+  );
+
   return (
     <tr>
       <td className={`width-16 ${labelStyle}`}>{label}</td>
@@ -110,9 +118,7 @@ export const LockedRow: FC<LockedRowProps> = ({ label, value }) => {
         {value}
       </td>
       <td>
-        <span>
-          <i className="fa fa-lock" />
-        </span>
+        <span className={lockMessageClass}>Synced via LDAP</span>
       </td>
     </tr>
   );
@@ -121,13 +127,14 @@ export const LockedRow: FC<LockedRowProps> = ({ label, value }) => {
 export interface RowActionProps {
   text: string;
   onClick: (event: React.MouseEvent) => void;
+  align?: 'left' | 'right';
 }
 
 export const RowAction: FC<RowActionProps> = (props: RowActionProps) => {
-  const { onClick, text } = props;
+  const { onClick, text, align } = props;
   const theme = useContext(ThemeContext);
   const actionClass = cx(
-    'pull-right',
+    { 'pull-right': align !== 'left' },
     css`
       margin-right: 0.6rem;
       text-decoration: underline;

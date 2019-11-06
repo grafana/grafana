@@ -37,7 +37,7 @@ export class UserOrgs extends PureComponent<Props> {
               </tbody>
             </table>
           </div>
-          <RowAction text="Add this user to another organisation" onClick={this.handleOrgAdd} />
+          <RowAction text="Add this user to another organisation" onClick={this.handleOrgAdd} align="left" />
         </div>
       </>
     );

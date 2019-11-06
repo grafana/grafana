@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import appEvents from 'app/core/app_events';
 // import { dateTime } from '@grafana/data';
-import { EditableRow, LockedRow } from './UserProfileRow';
+import { EditableRow, LockedLDAPRow } from './UserProfileRow';
 import { UserDTO, CoreEvents } from 'app/types';
 
 // const defaultTimeFormat = 'dddd YYYY-MM-DD HH:mm:ss';
@@ -57,10 +57,10 @@ export class UserProfile extends PureComponent<Props, State> {
               <tbody>
                 {user.isExternal ? (
                   <>
-                    <LockedRow label="Name" value={user.name} />
-                    <LockedRow label="Email" value={user.email} />
-                    <LockedRow label="Username" value={user.login} />
-                    <LockedRow label="Password" value="******" />
+                    <LockedLDAPRow label="Name" value={user.name} />
+                    <LockedLDAPRow label="Email" value={user.email} />
+                    <LockedLDAPRow label="Username" value={user.login} />
+                    <LockedLDAPRow label="Password" value="******" />
                   </>
                 ) : (
                   <>
@@ -74,12 +74,10 @@ export class UserProfile extends PureComponent<Props, State> {
             </table>
           </div>
           <div className="gf-form-button-row">
-            {!user.isExternal && (
-              <button className="btn btn-danger" onClick={this.handleUserDelete}>
-                Delete User
-              </button>
-            )}
-            <button className="btn btn-danger" onClick={this.handleUserDisable}>
+            <button className="btn btn-danger" onClick={this.handleUserDelete}>
+              Delete User
+            </button>
+            <button className="btn btn-inverse" onClick={this.handleUserDisable}>
               Disable User
             </button>
           </div>
