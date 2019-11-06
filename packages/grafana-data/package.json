@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/data",
-  "version": "6.4.3",
+  "version": "6.4.4",
   "description": "Grafana Data Library",
   "keywords": [
     "typescript"

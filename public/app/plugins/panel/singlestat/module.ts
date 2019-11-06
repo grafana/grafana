@@ -4,7 +4,7 @@ import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.gauge';
 import 'app/features/panel/panellinks/link_srv';
 import {
-  convertOldAngulrValueMapping,
+  convertOldAngularValueMapping,
   getColorFromHexRgbOrName,
   getDisplayProcessor,
   getFlotPairs,
@@ -182,13 +182,17 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     if (!fieldInfo) {
+      const processor = getDisplayProcessor({
+        config: {
+          mappings: convertOldAngularValueMapping(this.panel),
+          noValue: 'No Data',
+        },
+        theme: config.theme,
+      });
       // When we don't have any field
       this.data = {
-        value: 'No Data',
-        display: {
-          text: 'No Data',
-          numeric: NaN,
-        },
+        value: null,
+        display: processor(null),
       };
     } else {
       this.data = this.processField(fieldInfo);
@@ -242,7 +246,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         ...fieldInfo.field.config,
         unit: panel.format,
         decimals: panel.decimals,
-        mappings: convertOldAngulrValueMapping(panel),
+        mappings: convertOldAngularValueMapping(panel),
       },
       theme: config.theme,
       isUtc: dashboard.isTimezoneUtc && dashboard.isTimezoneUtc(),

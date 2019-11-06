@@ -370,7 +370,7 @@ func applyCommandLineDefaultProperties(props map[string]string, file *ini.File) 
 func applyCommandLineProperties(props map[string]string, file *ini.File) {
 	for _, section := range file.Sections() {
 		sectionName := section.Name() + "."
-		if section.Name() == ini.DEFAULT_SECTION {
+		if section.Name() == ini.DefaultSection {
 			sectionName = ""
 		}
 		for _, key := range section.Keys() {

@@ -278,28 +278,33 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 
 	orgRoles := []LDAPRoleDTO{}
 
-	// First, let's find the groupDN that we did match by inspecting the assigned user OrgRoles.
-	for _, group := range serverConfig.Groups {
-		orgRole, ok := user.OrgRoles[group.OrgId]
-
-		if ok && orgRole == group.OrgRole {
-			r := &LDAPRoleDTO{GroupDN: group.GroupDN, OrgId: group.OrgId, OrgRole: group.OrgRole}
-			orgRoles = append(orgRoles, *r)
+	// Need to iterate based on the config groups as only the first match for an org is used
+	// We are showing all matches as that should help in understanding why one match wins out
+	// over another.
+	for _, configGroup := range serverConfig.Groups {
+		for _, userGroup := range user.Groups {
+			if configGroup.GroupDN == userGroup {
+				r := &LDAPRoleDTO{GroupDN: configGroup.GroupDN, OrgId: configGroup.OrgId, OrgRole: configGroup.OrgRole}
+				orgRoles = append(orgRoles, *r)
+				break
+			}
 		}
+		//}
 	}
 
 	// Then, we find what we did not match by inspecting the list of groups returned from
 	// LDAP against what we have already matched above.
 	for _, userGroup := range user.Groups {
-		var matches int
+		var matched bool
 
 		for _, orgRole := range orgRoles {
 			if orgRole.GroupDN == userGroup { // we already matched it
-				matches++
+				matched = true
+				break
 			}
 		}
 
-		if matches < 1 {
+		if !matched {
 			r := &LDAPRoleDTO{GroupDN: userGroup}
 			orgRoles = append(orgRoles, *r)
 		}
