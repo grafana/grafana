@@ -26,11 +26,9 @@ export const DerivedFields = (props: Props) => {
 
   return (
     <>
-      <h3 className="page-heading">Derived fields</h3>
+      <h3 className="page-heading">Field enhancement</h3>
 
-      <div className={styles.infoText}>
-        Derived fields can be used to extract new fields from the log message and create link from it's value.
-      </div>
+      <div className={styles.infoText}>You can add links to existing fields.</div>
 
       <div className="gf-form-group">
         {value &&
