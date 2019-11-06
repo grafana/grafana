@@ -66,7 +66,7 @@ export class PromExploreQueryEditor extends PureComponent<Props, State> {
             <FormLabel width={4}>Step</FormLabel>
             <input
               type="text"
-              className="gf-form-input width-8"
+              className="gf-form-input width-6"
               placeholder={'Enter step'}
               onChange={this.onIntervalChange}
               onBlur={this.onRunQuery}
