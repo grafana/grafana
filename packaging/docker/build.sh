@@ -34,6 +34,7 @@ docker_build () {
 	base_image=$1
 	grafana_tgz=$2
 	tag=$3
+  dockerfile=${4:-Dockerfile}
 
   docker build \
 		--build-arg BASE_IMAGE=${base_image} \
@@ -60,6 +61,8 @@ docker_tag_all () {
 }
 
 docker_build "alpine:3.10" "grafana-latest.linux-x64-musl.tar.gz" "${_docker_repo}:${_grafana_version}"
+docker_build "ubuntu:18.10" "grafana-latest.linux-x64-glibc.tar.gz" "${_docker_repo}:${_grafana_version}-ubuntu"
+Dockerfile.ubuntu
 if [ $BUILD_FAST = "0" ]; then
 	docker_build "arm32v7/alpine:3.10" "grafana-latest.linux-armv7-musl.tar.gz" "${_docker_repo}-arm32v7-linux:${_grafana_version}"
 	docker_build "arm64v8/alpine:3.10" "grafana-latest.linux-arm64-musl.tar.gz" "${_docker_repo}-arm64v8-linux:${_grafana_version}"
