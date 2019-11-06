@@ -55,7 +55,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
     const { datasource } = this.props;
     const variableOptionGroup = {
       label: 'Template Variables',
-      options: this.props.datasource.variables.map(v => ({ label: v, value: v })),
+      options: this.props.datasource.variables.map(this.toOption),
     };
     Promise.all([datasource.metricFindQuery('regions()'), datasource.metricFindQuery('namespaces()')]).then(
       ([regions, namespaces]) => {
@@ -76,8 +76,10 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
 
   appendTemplateVariables = (values: SelectableValue[]) => [
     ...values,
-    { label: 'Template Variables', options: this.props.datasource.variables.map(v => ({ label: v, value: v })) },
+    { label: 'Template Variables', options: this.props.datasource.variables.map(this.toOption) },
   ];
+
+  toOption = (value: any) => ({ label: value, value });
 
   onChange(query: CloudWatchQuery) {
     const { onChange, onRunQuery } = this.props;
@@ -121,6 +123,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
 
             <QueryInlineField label="Stats">
               <Stats
+                stats={datasource.standardStatistics.map(this.toOption)}
                 values={query.statistics}
                 onChange={statistics => this.onChange({ ...query, statistics })}
                 variableOptionGroup={variableOptionGroup}

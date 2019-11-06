@@ -7,24 +7,20 @@ export interface Props {
   values: string[];
   onChange: (values: string[]) => void;
   variableOptionGroup: SelectableValue<string>;
+  stats: SelectableStrings;
 }
-
-const options: SelectableStrings = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'].map(value => ({
-  label: value,
-  value: value,
-}));
 
 const removeText = '-- remove stat --';
 const removeOption: SelectableValue<string> = { label: removeText, value: removeText };
 
-export const Stats: FunctionComponent<Props> = ({ values, onChange, variableOptionGroup }) => (
+export const Stats: FunctionComponent<Props> = ({ stats, values, onChange, variableOptionGroup }) => (
   <>
     {values &&
       values.map((value, index) => (
         <Segment
           key={value + index}
           value={value}
-          options={[removeOption, ...options, variableOptionGroup]}
+          options={[removeOption, ...stats, variableOptionGroup]}
           onChange={value =>
             onChange(
               value === removeText
@@ -34,7 +30,7 @@ export const Stats: FunctionComponent<Props> = ({ values, onChange, variableOpti
           }
         />
       ))}
-    {values.length !== options.length && (
+    {values.length !== stats.length && (
       <Segment
         Component={
           <a className="gf-form-label query-part">
@@ -43,7 +39,7 @@ export const Stats: FunctionComponent<Props> = ({ values, onChange, variableOpti
         }
         allowCustomValue={true}
         onChange={(value: string) => onChange([...values, value])}
-        options={options.filter(({ value }) => !values.includes(value))}
+        options={stats.filter(({ value }) => !values.includes(value))}
       />
     )}
   </>
