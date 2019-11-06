@@ -1,11 +1,5 @@
 import React, { PureComponent } from 'react';
-import {
-  LogRowModel,
-  LogsParser,
-  LogLabelStatsModel,
-  calculateFieldStats,
-  calculateLogsLabelStats,
-} from '@grafana/data';
+import { LogLabelStatsModel } from '@grafana/data';
 
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
@@ -17,30 +11,24 @@ import { LogLabelStats } from './LogLabelStats';
 export interface Props extends Themeable {
   parsedValue: string;
   parsedKey: string;
-  field: string;
-  row: LogRowModel;
-  isLabel: boolean;
-  parser?: LogsParser;
-  getRows: () => LogRowModel[];
+  isLabel?: boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
+  links?: string[];
+  getStats: () => LogLabelStatsModel[] | null;
 }
 
 interface State {
   showFieldsStats: boolean;
   fieldCount: number;
-  fieldLabel: string | null;
   fieldStats: LogLabelStatsModel[] | null;
-  fieldValue: string | null;
 }
 
 class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   state: State = {
     showFieldsStats: false,
     fieldCount: 0,
-    fieldLabel: null,
     fieldStats: null,
-    fieldValue: null,
   };
 
   filterLabel = () => {
@@ -60,7 +48,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   showStats = () => {
     const { showFieldsStats } = this.state;
     if (!showFieldsStats) {
-      this.createStatsForLabels();
+      const fieldStats = this.props.getStats();
+      const fieldCount = fieldStats ? fieldStats.reduce((sum, stat) => sum + stat.count, 0) : 0;
+      this.setState({ fieldStats, fieldCount });
     }
     this.toggleFieldsStats();
   };
@@ -73,30 +63,14 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     });
   }
 
-  createStatsForLabels() {
-    const { getRows, parser, parsedKey, parsedValue, isLabel } = this.props;
-    const allRows = getRows();
-    const fieldLabel = parsedKey;
-    const fieldValue = parsedValue;
-    let fieldStats = [];
-    if (isLabel) {
-      fieldStats = calculateLogsLabelStats(allRows, parsedKey);
-    } else {
-      const matcher = parser!.buildMatcher(fieldLabel);
-      fieldStats = calculateFieldStats(allRows, matcher);
-    }
-    const fieldCount = fieldStats.reduce((sum, stat) => sum + stat.count, 0);
-    this.setState({ fieldCount, fieldLabel, fieldStats, fieldValue });
-  }
-
   render() {
-    const { theme, parsedKey, parsedValue, isLabel } = this.props;
-    const { showFieldsStats, fieldStats, fieldLabel, fieldValue, fieldCount } = this.state;
+    const { theme, parsedKey, parsedValue, isLabel, links } = this.props;
+    const { showFieldsStats, fieldStats, fieldCount } = this.state;
     const style = getLogRowStyles(theme);
     return (
       <div className={style.logsRowDetailsValue}>
         {/* Action buttons - show stats/filter results */}
-        <div onClick={this.showStats} className={style.logsRowDetailsIcon}>
+        <div onClick={this.showStats} aria-label={'Field stats'} className={style.logsRowDetailsIcon}>
           <i className={'fa fa-signal'} />
         </div>
         {isLabel ? (
@@ -120,12 +94,23 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
         </div>
         <div className={style.logsRowCell}>
           <span>{parsedValue}</span>
+          {links &&
+            links.map(link => {
+              return (
+                <span key={link}>
+                  &nbsp;
+                  <a href={link} target={'_blank'}>
+                    <i className={'fa fa-external-link'} />
+                  </a>
+                </span>
+              );
+            })}
           {showFieldsStats && (
             <div className={style.logsRowCell}>
               <LogLabelStats
                 stats={fieldStats!}
-                label={fieldLabel!}
-                value={fieldValue!}
+                label={parsedKey}
+                value={parsedValue}
                 rowCount={fieldCount}
                 isLabel={isLabel}
               />

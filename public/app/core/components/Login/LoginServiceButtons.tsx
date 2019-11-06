@@ -28,7 +28,7 @@ const loginServices: () => LoginServices = () => ({
   },
   oauth: {
     enabled: config.oauth.generic_oauth,
-    name: 'OAuth',
+    name: config.oauth.generic_oauth ? config.oauth.generic_oauth.name : 'OAuth',
     icon: 'sign-in',
     hrefName: 'generic_oauth',
   },

@@ -128,4 +128,25 @@ export default class ResponseParser {
 
     return list;
   }
+
+  static parseSubscriptionsForSelect(result: any): Array<{ label: string; value: string }> {
+    const list: Array<{ label: string; value: string }> = [];
+
+    if (!result) {
+      return list;
+    }
+
+    const valueFieldName = 'subscriptionId';
+    const textFieldName = 'displayName';
+    for (let i = 0; i < result.data.value.length; i++) {
+      if (!_.find(list, ['value', _.get(result.data.value[i], valueFieldName)])) {
+        list.push({
+          label: `${_.get(result.data.value[i], textFieldName)} - ${_.get(result.data.value[i], valueFieldName)}`,
+          value: _.get(result.data.value[i], valueFieldName),
+        });
+      }
+    }
+
+    return list;
+  }
 }

@@ -46,7 +46,7 @@ export class MonitorConfig extends PureComponent<Props, State> {
       ...this.state.config,
       jsonData: {
         ...this.state.config.jsonData,
-        cloudName,
+        cloudName: cloudName.value,
       },
     });
   };
