@@ -284,7 +284,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     return (
       <>
-        <div className="gf-form-inline gf-form-inline--nowrap">
+        <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
           <div className="gf-form flex-shrink-0">
             <Cascader
               options={metricsOptions}
