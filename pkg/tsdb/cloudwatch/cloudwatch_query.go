@@ -42,7 +42,7 @@ func (q *cloudWatchQuery) isUserDefinedSearchExpression() bool {
 
 func (q *cloudWatchQuery) isInferredSearchExpression() bool {
 	if len(q.Dimensions) == 0 {
-		return true
+		return !q.MatchExact
 	}
 
 	if !q.MatchExact {

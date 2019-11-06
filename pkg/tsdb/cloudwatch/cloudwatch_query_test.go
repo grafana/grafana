@@ -107,20 +107,40 @@ func TestCloudWatchQuery(t *testing.T) {
 				Stats:      "Average",
 				Period:     300,
 				Id:         "id1",
+				MatchExact: false,
 				Identifier: "id1",
 				Dimensions: make(map[string][]string),
 			}
+			Convey("and match exact is false", func() {
+				query.MatchExact = false
+				Convey("it is a search expression", func() {
+					So(query.isSearchExpression(), ShouldBeTrue)
+				})
 
-			Convey("it is a search expression", func() {
-				So(query.isSearchExpression(), ShouldBeTrue)
+				Convey("it is not math expressions", func() {
+					So(query.isMathExpression(), ShouldBeFalse)
+				})
+
+				Convey("it is not metric stat", func() {
+					So(query.isMetricStat(), ShouldBeFalse)
+				})
+
 			})
 
-			Convey("it is not math expressions", func() {
-				So(query.isMathExpression(), ShouldBeFalse)
-			})
+			Convey("and match exact is true", func() {
+				query.MatchExact = true
+				Convey("it is a search expression", func() {
+					So(query.isSearchExpression(), ShouldBeFalse)
+				})
 
-			Convey("it is not metric stat", func() {
-				So(query.isMetricStat(), ShouldBeFalse)
+				Convey("it is not math expressions", func() {
+					So(query.isMathExpression(), ShouldBeFalse)
+				})
+
+				Convey("it is a metric stat", func() {
+					So(query.isMetricStat(), ShouldBeTrue)
+				})
+
 			})
 		})
 
