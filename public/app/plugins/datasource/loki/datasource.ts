@@ -253,7 +253,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     });
   }
 
-  interpolateQueryExpr(value: any, variable: any, defaultFormatFn: any) {
+  interpolateQueryExpr(value: any, variable: any) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
       return lokiRegularEscape(value);
