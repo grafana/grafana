@@ -4,12 +4,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
 
 	"github.com/VividCortex/mysqlerr"
-
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/go-sql-driver/mysql"
@@ -24,6 +24,10 @@ func init() {
 	tsdb.RegisterTsdbQueryEndpoint("mysql", newMysqlQueryEndpoint)
 }
 
+func characterEscape(s string, escapeChar string) string {
+	return strings.Replace(s, escapeChar, url.QueryEscape(escapeChar), -1)
+}
+
 func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	logger := log.New("tsdb.mysql")
 
@@ -31,12 +35,13 @@ func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 	if strings.HasPrefix(datasource.Url, "/") {
 		protocol = "unix"
 	}
+
 	cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC&allowNativePasswords=true",
-		datasource.User,
-		datasource.DecryptedPassword(),
+		characterEscape(datasource.User, ":"),
+		characterEscape(datasource.DecryptedPassword(), "@"),
 		protocol,
-		datasource.Url,
-		datasource.Database,
+		characterEscape(datasource.Url, ")"),
+		characterEscape(datasource.Database, "?"),
 	)
 
 	tlsConfig, err := datasource.GetTLSConfig()
