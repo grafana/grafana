@@ -410,11 +410,11 @@ jobs:
       - run:
           name: Archive Docker image
           command: |
-            pwd
-            docker save -o packaging/docker/docker-image-${CIRCLE_SHA1}.tar grafana/grafana:${CIRCLE_SHA1}
-            ls -al packaging/docker
+            mkdir -p artifacts
+            docker save -o artifacts/docker-image-${CIRCLE_SHA1}.tar grafana/grafana:${CIRCLE_SHA1}
+            ls -al artifacts
       - store_artifacts:
-          path: packaging/docker/docker-image-${CIRCLE_SHA1}.tar
+          path: artifacts
           destination: generated-docker-image
 
   grafana-docker-release:
