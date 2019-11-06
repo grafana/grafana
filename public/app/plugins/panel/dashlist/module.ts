@@ -4,6 +4,7 @@ import impressionSrv from 'app/core/services/impression_srv';
 import { auto } from 'angular';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { PanelEvents } from '@grafana/data';
 
 class DashListCtrl extends PanelCtrl {
   static templateUrl = 'module.html';
@@ -38,8 +39,8 @@ class DashListCtrl extends PanelCtrl {
       delete this.panel.tag;
     }
 
-    this.events.on('refresh', this.onRefresh.bind(this));
-    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
+    this.events.on(PanelEvents.refresh, this.onRefresh.bind(this));
+    this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
 
     this.groups = [
       { list: [], show: false, header: 'Starred dashboards' },

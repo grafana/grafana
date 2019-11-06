@@ -10,9 +10,6 @@ import { ExploreId, ExploreItemState, ExploreUrlState, ExploreState, ExploreMode
 import { reducerTester } from 'test/core/redux/reducerTester';
 import {
   scanStartAction,
-  testDataSourcePendingAction,
-  testDataSourceSuccessAction,
-  testDataSourceFailureAction,
   updateDatasourceInstanceAction,
   splitOpenAction,
   splitCloseAction,
@@ -21,14 +18,14 @@ import {
   toggleGraphAction,
   toggleTableAction,
   changeRangeAction,
+  changeRefreshIntervalAction,
 } from './actionTypes';
 import { Reducer } from 'redux';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { updateLocation } from 'app/core/actions/location';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import TableModel from 'app/core/table_model';
-import { DataSourceApi, DataQuery } from '@grafana/ui';
-import { LogsModel, LogsDedupStrategy, dateTime } from '@grafana/data';
+import { DataSourceApi, DataQuery, LogsDedupStrategy, dateTime, LoadingState } from '@grafana/data';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
@@ -64,56 +61,7 @@ describe('Explore item reducer', () => {
     });
   });
 
-  describe('testing datasource', () => {
-    describe('when testDataSourcePendingAction is dispatched', () => {
-      it('then it should set datasourceError', () => {
-        reducerTester()
-          .givenReducer(itemReducer, { datasourceError: {} })
-          .whenActionIsDispatched(testDataSourcePendingAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual({ datasourceError: null });
-      });
-    });
-
-    describe('when testDataSourceSuccessAction is dispatched', () => {
-      it('then it should set datasourceError', () => {
-        reducerTester()
-          .givenReducer(itemReducer, { datasourceError: {} })
-          .whenActionIsDispatched(testDataSourceSuccessAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual({ datasourceError: null });
-      });
-    });
-
-    describe('when testDataSourceFailureAction is dispatched', () => {
-      it('then it should set correct state', () => {
-        const error = 'some error';
-        const initalState: Partial<ExploreItemState> = {
-          datasourceError: null,
-          graphResult: [],
-          tableResult: {} as TableModel,
-          logsResult: {} as LogsModel,
-          update: {
-            datasource: true,
-            queries: true,
-            range: true,
-            mode: true,
-            ui: true,
-          },
-        };
-        const expectedState = {
-          datasourceError: error,
-          graphResult: undefined as any[],
-          tableResult: undefined as TableModel,
-          logsResult: undefined as LogsModel,
-          update: makeInitialUpdateState(),
-        };
-
-        reducerTester()
-          .givenReducer(itemReducer, initalState)
-          .whenActionIsDispatched(testDataSourceFailureAction({ exploreId: ExploreId.left, error }))
-          .thenStateShouldEqual(expectedState);
-      });
-    });
-
+  describe('changing datasource', () => {
     describe('when changeDataType is dispatched', () => {
       it('then it should set correct state', () => {
         reducerTester()
@@ -124,9 +72,7 @@ describe('Explore item reducer', () => {
           });
       });
     });
-  });
 
-  describe('changing datasource', () => {
     describe('when updateDatasourceInstanceAction is dispatched', () => {
       describe('and datasourceInstance supports graph, logs, table and has a startpage', () => {
         it('then it should set correct state', () => {
@@ -171,6 +117,50 @@ describe('Explore item reducer', () => {
             .thenStateShouldEqual(expectedState);
         });
       });
+    });
+  });
+
+  describe('changing refresh intervals', () => {
+    it("should result in 'streaming' state, when live-tailing is active", () => {
+      const initalState = makeExploreItemState();
+      const expectedState = {
+        ...makeExploreItemState(),
+        refreshInterval: 'LIVE',
+        isLive: true,
+        loading: true,
+        logsResult: {
+          hasUniqueLabels: false,
+          rows: [] as any[],
+        },
+        queryResponse: {
+          ...makeExploreItemState().queryResponse,
+          state: LoadingState.Streaming,
+        },
+      };
+      reducerTester()
+        .givenReducer(itemReducer, initalState)
+        .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId: ExploreId.left, refreshInterval: 'LIVE' }))
+        .thenStateShouldEqual(expectedState);
+    });
+
+    it("should result in 'done' state, when live-tailing is stopped", () => {
+      const initalState = makeExploreItemState();
+      const expectedState = {
+        ...makeExploreItemState(),
+        refreshInterval: '',
+        logsResult: {
+          hasUniqueLabels: false,
+          rows: [] as any[],
+        },
+        queryResponse: {
+          ...makeExploreItemState().queryResponse,
+          state: LoadingState.Done,
+        },
+      };
+      reducerTester()
+        .givenReducer(itemReducer, initalState)
+        .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId: ExploreId.left, refreshInterval: '' }))
+        .thenStateShouldEqual(expectedState);
     });
   });
 

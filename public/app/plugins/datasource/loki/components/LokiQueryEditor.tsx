@@ -2,8 +2,7 @@
 import React, { memo } from 'react';
 
 // Types
-import { AbsoluteTimeRange } from '@grafana/data';
-import { QueryEditorProps, Switch, DataSourceStatus } from '@grafana/ui';
+import { AbsoluteTimeRange, QueryEditorProps } from '@grafana/data';
 import { LokiDatasource } from '../datasource';
 import { LokiQuery } from '../types';
 import { LokiQueryField } from './LokiQueryField';
@@ -30,8 +29,6 @@ export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
 
   const { isSyntaxReady, setActiveOption, refreshLabels, ...syntaxProps } = useLokiSyntax(
     datasource.languageProvider,
-    // TODO maybe use real status
-    DataSourceStatus.Connected,
     absolute
   );
 
@@ -39,7 +36,6 @@ export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
     <div>
       <LokiQueryField
         datasource={datasource}
-        datasourceStatus={DataSourceStatus.Connected}
         query={query}
         onChange={onChange}
         onRunQuery={onRunQuery}
@@ -51,14 +47,6 @@ export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
         absoluteRange={absolute}
         {...syntaxProps}
       />
-      <div className="gf-form-inline">
-        <div className="gf-form">
-          <Switch label="Live" checked={!!query.live} onChange={() => onChange({ ...query, live: !query.live })} />
-        </div>
-        <div className="gf-form gf-form--grow">
-          <div className="gf-form-label gf-form-label--grow" />
-        </div>
-      </div>
     </div>
   );
 });

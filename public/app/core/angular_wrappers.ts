@@ -7,14 +7,22 @@ import { TagFilter } from './components/TagFilter/TagFilter';
 import { SideMenu } from './components/sidemenu/SideMenu';
 import { MetricSelect } from './components/Select/MetricSelect';
 import AppNotificationList from './components/AppNotifications/AppNotificationList';
-import { ColorPicker, SeriesColorPickerPopoverWithTheme, SecretFormField, DataLinksEditor } from '@grafana/ui';
+import {
+  ColorPicker,
+  SeriesColorPickerPopoverWithTheme,
+  SecretFormField,
+  DataLinksEditor,
+  DataSourceHttpSettings,
+} from '@grafana/ui';
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import { SearchField } from './components/search/SearchField';
 import { GraphContextMenu } from 'app/plugins/panel/graph/GraphContextMenu';
 import ReactProfileWrapper from 'app/features/profile/ReactProfileWrapper';
 import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';
+import { HelpModal } from './components/help/HelpModal';
 
 export function registerAngularDirectives() {
+  react2AngularDirective('helpModal', HelpModal, []);
   react2AngularDirective('sidemenu', SideMenu, []);
   react2AngularDirective('functionEditor', FunctionEditor, ['func', 'onRemove', 'onMoveLeft', 'onMoveRight']);
   react2AngularDirective('appNotificationsList', AppNotificationList, []);
@@ -108,5 +116,11 @@ export function registerAngularDirectives() {
     'expr',
     'onChange',
     ['datasource', { watchDepth: 'reference' }],
+  ]);
+  react2AngularDirective('datasourceHttpSettingsNext', DataSourceHttpSettings, [
+    'defaultUrl',
+    'showAccessOptions',
+    'dataSourceConfig',
+    ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
 }

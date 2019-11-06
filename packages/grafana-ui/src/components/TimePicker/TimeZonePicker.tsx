@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { getTimeZoneGroups, SelectableValue } from '@grafana/data';
-import { Select } from '..';
+import { Select } from '../Select/Select';
 
 interface Props {
   value: string;
@@ -16,7 +16,7 @@ export const TimeZonePicker: FC<Props> = ({ onChange, value, width }) => {
     const options = group.options.map(timeZone => {
       return {
         label: timeZone,
-        value: timeZone.toLowerCase(),
+        value: timeZone,
       };
     });
 

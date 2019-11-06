@@ -77,6 +77,7 @@ func (k *Key) addNestedValue(val string) error {
 	return nil
 }
 
+// AddNestedValue adds a nested value to the key.
 func (k *Key) AddNestedValue(val string) error {
 	if !k.s.f.options.AllowNestedValues {
 		return errors.New("nested value is not allowed")
@@ -126,7 +127,7 @@ func (k *Key) transformValue(val string) string {
 	if !strings.Contains(val, "%") {
 		return val
 	}
-	for i := 0; i < _DEPTH_VALUES; i++ {
+	for i := 0; i < depthValues; i++ {
 		vr := varPattern.FindString(val)
 		if len(vr) == 0 {
 			break
@@ -186,8 +187,8 @@ func (k *Key) Float64() (float64, error) {
 
 // Int returns int type value.
 func (k *Key) Int() (int, error) {
-    v, err := strconv.ParseInt(k.String(), 0, 64)
-    return int(v), err
+	v, err := strconv.ParseInt(k.String(), 0, 64)
+	return int(v), err
 }
 
 // Int64 returns int64 type value.
@@ -491,7 +492,7 @@ func (k *Key) Strings(delim string) []string {
 				buf.WriteRune(runes[idx])
 			}
 		}
-		idx += 1
+		idx++
 		if idx == len(runes) {
 			break
 		}
@@ -669,7 +670,7 @@ func (k *Key) parseInts(strs []string, addInvalid, returnOnInvalid bool) ([]int,
 	vals := make([]int, 0, len(strs))
 	for _, str := range strs {
 		valInt64, err := strconv.ParseInt(str, 0, 64)
-		val := int(valInt64)        
+		val := int(valInt64)
 		if err != nil && returnOnInvalid {
 			return nil, err
 		}

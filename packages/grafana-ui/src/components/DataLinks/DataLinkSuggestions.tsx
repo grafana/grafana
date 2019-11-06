@@ -1,10 +1,12 @@
-import { GrafanaTheme, selectThemeVariant, ThemeContext } from '../../index';
+import { selectThemeVariant, ThemeContext } from '../../index';
+import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
 import _ from 'lodash';
 import React, { useRef, useContext, useMemo } from 'react';
 import useClickAway from 'react-use/lib/useClickAway';
 import { List } from '../index';
 import tinycolor from 'tinycolor2';
+import { stylesFactory } from '../../themes';
 
 export enum VariableOrigin {
   Series = 'series',
@@ -28,7 +30,7 @@ interface DataLinkSuggestionsProps {
   onClose?: () => void;
 }
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const wrapperBg = selectThemeVariant(
     {
       light: theme.colors.white,
@@ -129,7 +131,7 @@ const getStyles = (theme: GrafanaTheme) => {
       color: ${itemDocsColor};
     `,
   };
-};
+});
 
 export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ suggestions, ...otherProps }) => {
   const ref = useRef(null);

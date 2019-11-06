@@ -11,11 +11,11 @@ import { dedupAnnotations } from './events_processing';
 
 // Types
 import { DashboardModel } from '../dashboard/state/DashboardModel';
-import { AnnotationEvent } from '@grafana/data';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv } from '../dashboard/services/TimeSrv';
-import { DataSourceApi } from '@grafana/ui';
+import { DataSourceApi, PanelEvents, AnnotationEvent, AppEvents } from '@grafana/data';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { TemplateSrv } from '../templating/template_srv';
 
 export class AnnotationsSrv {
@@ -25,7 +25,7 @@ export class AnnotationsSrv {
 
   /** @ngInject */
   constructor(
-    private $rootScope: any,
+    private $rootScope: GrafanaRootScope,
     private $q: IQService,
     private datasourceSrv: DatasourceSrv,
     private backendSrv: BackendSrv,
@@ -37,7 +37,7 @@ export class AnnotationsSrv {
     // always clearPromiseCaches when loading new dashboard
     this.clearPromiseCaches();
     // clear promises on refresh events
-    dashboard.on('refresh', this.clearPromiseCaches.bind(this));
+    dashboard.on(PanelEvents.refresh, this.clearPromiseCaches.bind(this));
   }
 
   clearPromiseCaches() {
@@ -76,7 +76,7 @@ export class AnnotationsSrv {
           err.message = err.data.message;
         }
         console.log('AnnotationSrv.query error', err);
-        this.$rootScope.appEvent('alert-error', ['Annotation Query Failed', err.message || err]);
+        this.$rootScope.appEvent(AppEvents.alertError, ['Annotation Query Failed', err.message || err]);
         return [];
       });
   }

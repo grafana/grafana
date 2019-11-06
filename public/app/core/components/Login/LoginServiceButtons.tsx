@@ -46,11 +46,39 @@ export interface LoginServices {
   [key: string]: LoginService;
 }
 
+const LoginDivider = () => {
+  return (
+    <>
+      <div className="text-center login-divider">
+        <div>
+          <div className="login-divider-line" />
+        </div>
+        <div>
+          <span className="login-divider-text">{config.disableLoginForm ? null : <span>or</span>}</span>
+        </div>
+        <div>
+          <div className="login-divider-line" />
+        </div>
+      </div>
+      <div className="clearfix" />
+    </>
+  );
+};
+
 export const LoginServiceButtons = () => {
   const keyNames = Object.keys(loginServices());
-  const serviceElements = keyNames.map(key => {
+  const serviceElementsEnabled = keyNames.filter(key => {
     const service: LoginService = loginServices()[key];
-    return service.enabled ? (
+    return service.enabled;
+  });
+
+  if (serviceElementsEnabled.length === 0) {
+    return null;
+  }
+
+  const serviceElements = serviceElementsEnabled.map(key => {
+    const service: LoginService = loginServices()[key];
+    return (
       <a
         key={key}
         className={`btn btn-medium btn-service btn-service--${service.className || key} login-btn`}
@@ -60,8 +88,14 @@ export const LoginServiceButtons = () => {
         <i className={`btn-service-icon fa fa-${service.icon ? service.icon : key}`} />
         Sign in with {service.name}
       </a>
-    ) : null;
+    );
   });
 
-  return <div className="login-oauth text-center">{serviceElements}</div>;
+  const divider = LoginDivider();
+  return (
+    <>
+      {divider}
+      <div className="login-oauth text-center">{serviceElements}</div>
+    </>
+  );
 };

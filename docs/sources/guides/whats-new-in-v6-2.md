@@ -1,6 +1,6 @@
 +++
 title = "What's New in Grafana v6.2"
-description = "Feature & improvement highlights for Grafana v6.2"
+description = "Feature and improvement highlights for Grafana v6.2"
 keywords = ["grafana", "new", "documentation", "6.2"]
 type = "docs"
 [menu.docs]
@@ -46,7 +46,7 @@ Gauge panel and shares almost all it's options. The main difference is that the 
 vertical space much better and can be more efficiently stacked both vertically and horizontally. The Bar Gauge also
 comes with 3 unique display modes, Basic, Gradient, and Retro LED. Read the
 [preview article](https://grafana.com/blog/2019/04/11/sneak-preview-of-new-visualizations-coming-to-grafana/) to learn
-more about the design & features of this new panel.
+more about the design and features of this new panel.
 
 Retro LED display mode
 {{< docs-imagebox img="/assets/img/blog/bargauge/bar_gauge_retro_led.jpg" max-width="800px" caption="Bar Gauge LED mode" >}}
@@ -56,8 +56,8 @@ Gradient mode
 
 ## Improved table data support
 
-We have been working on improving table support in our new react panels (Gauge & Bar Gauge) and this is ongoing work
-that will eventually come to the new Graph & Singlestat & Table panels we are working on. But you can see it already in
+We have been working on improving table support in our new react panels (Gauge and Bar Gauge) and this is ongoing work
+that will eventually come to the new Graph and Singlestat and Table panels we are working on. But you can see it already in
 the Gauge and Bar Gauge panels. Without any config, you can visualize any number of columns or choose to visualize each
 row as its own gauge.
 

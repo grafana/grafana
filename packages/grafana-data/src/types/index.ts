@@ -13,3 +13,15 @@ export * from './graph';
 export * from './ScopedVars';
 export * from './transformations';
 export * from './vector';
+export * from './app';
+export * from './datasource';
+export * from './panel';
+export * from './plugin';
+export * from './theme';
+
+import * as AppEvents from './appEvents';
+import { AppEvent } from './appEvents';
+export { AppEvent, AppEvents };
+
+import * as PanelEvents from './panelEvents';
+export { PanelEvents };

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { DataSourceStatus } from '@grafana/ui/src/types/datasource';
 import { AbsoluteTimeRange } from '@grafana/data';
 
 import LokiLanguageProvider from 'app/plugins/datasource/loki/language_provider';
@@ -18,18 +17,13 @@ export const useLokiLabels = (
   languageProvider: LokiLanguageProvider,
   languageProviderInitialised: boolean,
   activeOption: CascaderOption[],
-  absoluteRange: AbsoluteTimeRange,
-  datasourceStatus: DataSourceStatus,
-  initialDatasourceStatus?: DataSourceStatus // used for test purposes
+  absoluteRange: AbsoluteTimeRange
 ) => {
   const mounted = useRefMounted();
 
   // State
   const [logLabelOptions, setLogLabelOptions] = useState([]);
   const [shouldTryRefreshLabels, setRefreshLabels] = useState(false);
-  const [prevDatasourceStatus, setPrevDatasourceStatus] = useState(
-    initialDatasourceStatus || DataSourceStatus.Connected
-  );
   const [shouldForceRefreshLabels, setForceRefreshLabels] = useState(false);
 
   // Async
@@ -82,15 +76,6 @@ export const useLokiLabels = (
       tryLabelsRefresh();
     }
   }, [shouldTryRefreshLabels, shouldForceRefreshLabels]);
-
-  // This effect is performed on datasourceStatus state change only.
-  // We want to make sure to only force refresh AFTER a disconnected state thats why we store the previous datasourceStatus in state
-  useEffect(() => {
-    if (datasourceStatus === DataSourceStatus.Connected && prevDatasourceStatus === DataSourceStatus.Disconnected) {
-      setForceRefreshLabels(true);
-    }
-    setPrevDatasourceStatus(datasourceStatus);
-  }, [datasourceStatus]);
 
   return {
     logLabelOptions,

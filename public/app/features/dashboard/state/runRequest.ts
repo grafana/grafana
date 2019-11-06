@@ -12,8 +12,13 @@ import {
   DataQueryResponse,
   DataQueryResponseData,
   DataQueryError,
-} from '@grafana/ui';
-import { LoadingState, dateMath, toDataFrame, DataFrame, guessFieldTypes } from '@grafana/data';
+  LoadingState,
+  dateMath,
+  toDataFrame,
+  DataFrame,
+  guessFieldTypes,
+} from '@grafana/data';
+import { ExpressionDatasourceID, expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
 
@@ -34,14 +39,14 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
   packets[packet.key || 'A'] = packet;
 
   // Update the time range
-  let timeRange = request.range;
-  if (isString(timeRange.raw.from)) {
-    timeRange = {
-      from: dateMath.parse(timeRange.raw.from, false),
-      to: dateMath.parse(timeRange.raw.to, true),
-      raw: timeRange.raw,
-    };
-  }
+  const range = { ...request.range };
+  const timeRange = isString(range.raw.from)
+    ? {
+        from: dateMath.parse(range.raw.from, false),
+        to: dateMath.parse(range.raw.to, true),
+        raw: range.raw,
+      }
+    : range;
 
   const combinedData = flatten(
     lodashMap(packets, (packet: DataQueryResponse) => {
@@ -52,10 +57,8 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
   const panelData = {
     state: packet.state || LoadingState.Done,
     series: combinedData,
-    request: {
-      ...request,
-      range: timeRange,
-    },
+    request,
+    timeRange,
   };
 
   return { packets, panelData };
@@ -75,6 +78,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
       state: LoadingState.Loading,
       series: [],
       request: request,
+      timeRange: request.range,
     },
     packets: {},
   };
@@ -96,6 +100,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
       request.endTime = Date.now();
 
       state = processResponsePacket(packet, state);
+
       return state.panelData;
     }),
     // handle errors
@@ -132,6 +137,14 @@ function cancelNetworkRequestsOnUnsubscribe(req: DataQueryRequest) {
 }
 
 export function callQueryMethod(datasource: DataSourceApi, request: DataQueryRequest) {
+  // If any query has an expression, use the expression endpoint
+  for (const target of request.targets) {
+    if (target.datasource === ExpressionDatasourceID) {
+      return expressionDatasource.query(request);
+    }
+  }
+
+  // Otherwise it is a standard datasource request
   const returnVal = datasource.query(request);
   return from(returnVal);
 }

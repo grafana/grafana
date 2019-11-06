@@ -155,6 +155,6 @@ func (m *AddMakeRegionSingleRowMigration) Exec(sess *xorm.Session, mg *Migrator)
 		}
 	}
 
-	sess.Exec("DELETE FROM annotation WHERE region_id > 0 AND id <> region_id")
-	return nil
+	_, err = sess.Exec("DELETE FROM annotation WHERE region_id > 0 AND id <> region_id")
+	return err
 }

@@ -77,7 +77,10 @@ export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
 ];
 
 const getSeriesVars = (dataFrames: DataFrame[]) => {
-  const labels = _.flatten(dataFrames.map(df => Object.keys(df.labels || {})));
+  const labels = _.chain(dataFrames.map(df => Object.keys(df.labels || {})))
+    .flatten()
+    .uniq()
+    .value();
 
   return [
     {
@@ -153,11 +156,31 @@ export class LinkSrv implements LinkService {
     const params: KeyValue = {};
     const timeRangeUrl = toUrlParams(this.timeSrv.timeRangeForUrl());
 
+    let href = link.url;
+    if (link.onBuildUrl) {
+      href = link.onBuildUrl({
+        origin,
+        scopedVars,
+      });
+    }
+
+    let onClick: (e: any) => void = undefined;
+    if (link.onClick) {
+      onClick = (e: any) => {
+        link.onClick({
+          origin,
+          scopedVars,
+          e,
+        });
+      };
+    }
+
     const info: LinkModel<T> = {
-      href: link.url.replace(/\s|\n/g, ''),
+      href: href.replace(/\s|\n/g, ''),
       title: this.templateSrv.replace(link.title || '', scopedVars),
       target: link.targetBlank ? '_blank' : '_self',
       origin,
+      onClick,
     };
     this.templateSrv.fillVariableValuesForUrl(params, scopedVars);
 

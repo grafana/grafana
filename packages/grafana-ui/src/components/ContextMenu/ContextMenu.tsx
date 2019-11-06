@@ -1,7 +1,9 @@
-import React, { useContext, useRef } from 'react';
+import React, { useContext, useRef, useState, useLayoutEffect } from 'react';
 import { css, cx } from 'emotion';
 import useClickAway from 'react-use/lib/useClickAway';
-import { GrafanaTheme, selectThemeVariant, ThemeContext } from '../../index';
+import { selectThemeVariant, ThemeContext } from '../../index';
+import { GrafanaTheme } from '@grafana/data';
+import { stylesFactory } from '../../themes/stylesFactory';
 import { Portal, List } from '../index';
 import { LinkTarget } from '@grafana/data';
 
@@ -26,7 +28,7 @@ export interface ContextMenuProps {
   renderHeader?: () => JSX.Element;
 }
 
-const getContextMenuStyles = (theme: GrafanaTheme) => {
+const getContextMenuStyles = stylesFactory((theme: GrafanaTheme) => {
   const linkColor = selectThemeVariant(
     {
       light: theme.colors.dark2,
@@ -106,6 +108,7 @@ const getContextMenuStyles = (theme: GrafanaTheme) => {
       z-index: 1;
       box-shadow: 0 2px 5px 0 ${wrapperShadow};
       min-width: 200px;
+      display: inline-block;
       border-radius: ${theme.border.radius.sm};
     `,
     link: css`
@@ -146,11 +149,31 @@ const getContextMenuStyles = (theme: GrafanaTheme) => {
       top: 4px;
     `,
   };
-};
+});
 
 export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClose, items, renderHeader }) => {
   const theme = useContext(ThemeContext);
-  const menuRef = useRef(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [positionStyles, setPositionStyles] = useState({});
+
+  useLayoutEffect(() => {
+    const menuElement = menuRef.current;
+    if (menuElement) {
+      const rect = menuElement.getBoundingClientRect();
+      const OFFSET = 5;
+      const collisions = {
+        right: window.innerWidth < x + rect.width,
+        bottom: window.innerHeight < rect.bottom + rect.height + OFFSET,
+      };
+
+      setPositionStyles({
+        position: 'fixed',
+        left: collisions.right ? x - rect.width - OFFSET : x - OFFSET,
+        top: collisions.bottom ? y - rect.height - OFFSET : y + OFFSET,
+      });
+    }
+  }, [menuRef.current]);
+
   useClickAway(menuRef, () => {
     if (onClose) {
       onClose();
@@ -158,25 +181,16 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
   });
 
   const styles = getContextMenuStyles(theme);
-
   return (
     <Portal>
-      <div
-        ref={menuRef}
-        style={{
-          position: 'fixed',
-          left: x - 5,
-          top: y + 5,
-        }}
-        className={styles.wrapper}
-      >
+      <div ref={menuRef} style={positionStyles} className={styles.wrapper}>
         {renderHeader && <div className={styles.header}>{renderHeader()}</div>}
         <List
           items={items || []}
           renderItem={(item, index) => {
             return (
               <>
-                <ContextMenuGroup group={item} onItemClick={onClose} />
+                <ContextMenuGroup group={item} onClick={onClose} />
               </>
             );
           }}
@@ -202,7 +216,7 @@ const ContextMenuItem: React.FC<ContextMenuItemProps> = React.memo(
     return (
       <div className={styles.item}>
         <a
-          href={url}
+          href={url ? url : undefined}
           target={target || '_self'}
           className={cx(className, styles.link)}
           onClick={e => {
@@ -220,10 +234,10 @@ const ContextMenuItem: React.FC<ContextMenuItemProps> = React.memo(
 
 interface ContextMenuGroupProps {
   group: ContextMenuGroup;
-  onItemClick?: () => void;
+  onClick?: () => void; // Used with 'onClose'
 }
 
-const ContextMenuGroup: React.FC<ContextMenuGroupProps> = ({ group, onItemClick }) => {
+const ContextMenuGroup: React.FC<ContextMenuGroupProps> = ({ group, onClick }) => {
   const theme = useContext(ThemeContext);
   const styles = getContextMenuStyles(theme);
 
@@ -248,8 +262,9 @@ const ContextMenuGroup: React.FC<ContextMenuGroupProps> = ({ group, onItemClick 
                   item.onClick(e);
                 }
 
-                if (onItemClick) {
-                  onItemClick();
+                // Typically closes the context menu
+                if (onClick) {
+                  onClick();
                 }
               }}
             />

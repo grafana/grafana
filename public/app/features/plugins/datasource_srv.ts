@@ -8,10 +8,13 @@ import { importDataSourcePlugin } from './plugin_loader';
 import { DataSourceSrv as DataSourceService, getDataSourceSrv as getDataSourceService } from '@grafana/runtime';
 
 // Types
-import { DataSourceApi, DataSourceSelectItem } from '@grafana/ui';
-import { ScopedVars } from '@grafana/data';
+import { DataSourceApi, DataSourceSelectItem, ScopedVars, AppEvents } from '@grafana/data';
 import { auto } from 'angular';
 import { TemplateSrv } from '../templating/template_srv';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+
+// Pretend Datasource
+import { expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 
 export class DatasourceSrv implements DataSourceService {
   datasources: { [name: string]: DataSourceApi };
@@ -20,7 +23,7 @@ export class DatasourceSrv implements DataSourceService {
   constructor(
     private $q: any,
     private $injector: auto.IInjectorService,
-    private $rootScope: any,
+    private $rootScope: GrafanaRootScope,
     private templateSrv: TemplateSrv
   ) {
     this.init();
@@ -55,6 +58,12 @@ export class DatasourceSrv implements DataSourceService {
   }
 
   loadDatasource(name: string): Promise<DataSourceApi> {
+    // Expression Datasource (not a real datasource)
+    if (name === expressionDatasource.name) {
+      this.datasources[name] = expressionDatasource;
+      return this.$q.when(expressionDatasource);
+    }
+
     const dsConfig = config.datasources[name];
     if (!dsConfig) {
       return this.$q.reject({ message: 'Datasource named ' + name + ' was not found' });
@@ -86,7 +95,7 @@ export class DatasourceSrv implements DataSourceService {
         deferred.resolve(instance);
       })
       .catch(err => {
-        this.$rootScope.appEvent('alert-error', [dsConfig.name + ' plugin failed', err.toString()]);
+        this.$rootScope.appEvent(AppEvents.alertError, [dsConfig.name + ' plugin failed', err.toString()]);
       });
 
     return deferred.promise;

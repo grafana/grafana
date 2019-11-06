@@ -11,20 +11,23 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { DataFrame, DataLink, DateTimeInput } from '@grafana/data';
-import { getColorFromHexRgbOrName, VariableSuggestion } from '@grafana/ui';
+import { VariableSuggestion } from '@grafana/ui';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
+import { getColorFromHexRgbOrName, PanelEvents, DataFrame, DataLink, DateTimeInput } from '@grafana/data';
+
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { auto } from 'angular';
 import { AnnotationsSrv } from 'app/features/annotations/all';
+import { CoreEvents } from 'app/types';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
 
   renderError: boolean;
   hiddenSeries: any = {};
+  hiddenSeriesTainted = false;
   seriesList: TimeSeries[] = [];
   dataList: DataFrame[] = [];
   annotations: any = [];
@@ -82,6 +85,8 @@ class GraphCtrl extends MetricsPanelCtrl {
     linewidth: 1,
     // show/hide dashed line
     dashes: false,
+    // show/hide line
+    hiddenSeries: false,
     // length of a dash
     dashLength: 10,
     // length of space between two dashes
@@ -146,12 +151,12 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.processor = new DataProcessor(this.panel);
     this.contextMenuCtrl = new GraphContextMenuCtrl($scope);
 
-    this.events.on('render', this.onRender.bind(this));
-    this.events.on('data-frames-received', this.onDataFramesReceived.bind(this));
-    this.events.on('data-error', this.onDataError.bind(this));
-    this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
-    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
-    this.events.on('init-panel-actions', this.onInitPanelActions.bind(this));
+    this.events.on(PanelEvents.render, this.onRender.bind(this));
+    this.events.on(CoreEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
+    this.events.on(PanelEvents.dataReceived, this.onDataError.bind(this));
+    this.events.on(PanelEvents.dataSnapshotLoad, this.onDataSnapshotLoad.bind(this));
+    this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
+    this.events.on(PanelEvents.initPanelActions, this.onInitPanelActions.bind(this));
 
     this.onDataLinksChange = this.onDataLinksChange.bind(this);
   }
@@ -164,6 +169,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Thresholds & Time Regions', 'public/app/plugins/panel/graph/tab_thresholds_time_regions.html');
     this.addEditorTab('Data links', 'public/app/plugins/panel/graph/tab_drilldown_links.html');
     this.subTabIndex = 0;
+    this.hiddenSeriesTainted = false;
   }
 
   onInitPanelActions(actions: any[]) {
@@ -190,7 +196,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   zoomOut(evt: any) {
-    this.publishAppEvent('zoom-out', 2);
+    this.publishAppEvent(CoreEvents.zoomOut, 2);
   }
 
   onDataSnapshotLoad(snapshotData: any) {
@@ -266,6 +272,9 @@ class GraphCtrl extends MetricsPanelCtrl {
       if (series.unit) {
         this.panel.yaxes[series.yaxis - 1].format = series.unit;
       }
+      if (this.hiddenSeriesTainted === false && series.hiddenSeries === true) {
+        this.hiddenSeries[series.alias] = true;
+      }
     }
   }
 
@@ -276,6 +285,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   };
 
   onToggleSeries = (hiddenSeries: any) => {
+    this.hiddenSeriesTainted = true;
     this.hiddenSeries = hiddenSeries;
     this.render();
   };
@@ -326,7 +336,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   exportCsv() {
     const scope = this.$scope.$new(true);
     scope.seriesList = this.seriesList;
-    this.publishAppEvent('show-modal', {
+    this.publishAppEvent(CoreEvents.showModal, {
       templateHtml: '<export-data-modal data="seriesList"></export-data-modal>',
       scope,
       modalClass: 'modal--narrow',

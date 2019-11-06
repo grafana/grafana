@@ -22,9 +22,14 @@ import {
 } from 'app/core/utils/explore';
 // Types
 import { ThunkResult, ExploreUrlState, ExploreItemState } from 'app/types';
-import { DataSourceApi, DataQuery, DataSourceSelectItem, QueryFixAction, PanelData } from '@grafana/ui';
+import { RefreshPicker } from '@grafana/ui';
 
 import {
+  DataSourceApi,
+  DataQuery,
+  DataSourceSelectItem,
+  QueryFixAction,
+  PanelData,
   RawTimeRange,
   LogsDedupStrategy,
   AbsoluteTimeRange,
@@ -33,7 +38,7 @@ import {
   isDateTime,
   dateTimeForTimeZone,
 } from '@grafana/data';
-import { ExploreId, ExploreUIState, ExploreMode } from 'app/types/explore';
+import { ExploreId, ExploreUIState, ExploreMode, QueryOptions } from 'app/types/explore';
 import {
   updateDatasourceInstanceAction,
   changeQueryAction,
@@ -59,9 +64,6 @@ import {
   ToggleGraphPayload,
   ToggleTablePayload,
   updateUIStateAction,
-  testDataSourcePendingAction,
-  testDataSourceSuccessAction,
-  testDataSourceFailureAction,
   loadExploreDatasources,
   changeModeAction,
   scanStopAction,
@@ -71,10 +73,10 @@ import {
   queryStreamUpdatedAction,
   queryStoreSubscriptionAction,
   clearOriginAction,
+  syncTimesAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { offOption } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { updateLocation } from '../../../core/actions';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
@@ -124,7 +126,7 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
     await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, newDataSourceInstance));
 
     if (getState().explore[exploreId].isLive) {
-      dispatch(changeRefreshInterval(exploreId, offOption.value));
+      dispatch(changeRefreshInterval(exploreId, RefreshPicker.offOption.value));
     }
 
     await dispatch(loadDatasource(exploreId, newDataSourceInstance, orgId));
@@ -183,12 +185,19 @@ export const updateTimeRange = (options: {
   rawRange?: RawTimeRange;
   absoluteRange?: AbsoluteTimeRange;
 }): ThunkResult<void> => {
-  return dispatch => {
-    dispatch(updateTime({ ...options }));
-    dispatch(runQueries(options.exploreId));
+  return (dispatch, getState) => {
+    const { syncedTimes } = getState().explore;
+    if (syncedTimes) {
+      dispatch(updateTime({ ...options, exploreId: ExploreId.left }));
+      dispatch(runQueries(ExploreId.left));
+      dispatch(updateTime({ ...options, exploreId: ExploreId.right }));
+      dispatch(runQueries(ExploreId.right));
+    } else {
+      dispatch(updateTime({ ...options }));
+      dispatch(runQueries(options.exploreId));
+    }
   };
 };
-
 /**
  * Change the refresh interval of Explore. Called from the Refresh picker.
  */
@@ -334,41 +343,6 @@ export function importQueries(
 }
 
 /**
- * Tests datasource.
- */
-export const testDatasource = (exploreId: ExploreId, instance: DataSourceApi): ThunkResult<void> => {
-  return async dispatch => {
-    let datasourceError = null;
-
-    dispatch(testDataSourcePendingAction({ exploreId }));
-
-    try {
-      const testResult = await instance.testDatasource();
-      datasourceError = testResult.status === 'success' ? null : testResult.message;
-    } catch (error) {
-      datasourceError = (error && error.statusText) || 'Network error';
-    }
-
-    if (datasourceError) {
-      dispatch(testDataSourceFailureAction({ exploreId, error: datasourceError }));
-      return;
-    }
-
-    dispatch(testDataSourceSuccessAction({ exploreId }));
-  };
-};
-
-/**
- * Reconnects datasource when there is a connection failure.
- */
-export const reconnectDatasource = (exploreId: ExploreId): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    const instance = getState().explore[exploreId].datasourceInstance;
-    dispatch(changeDatasource(exploreId, instance.name));
-  };
-};
-
-/**
  * Main action to asynchronously load a datasource. Dispatches lots of smaller actions for feedback.
  */
 export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi, orgId: number): ThunkResult<void> {
@@ -377,13 +351,6 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi, or
 
     // Keep ID to track selection
     dispatch(loadDatasourcePendingAction({ exploreId, requestedDatasourceName: datasourceName }));
-
-    await dispatch(testDatasource(exploreId, instance));
-
-    if (datasourceName !== getState().explore[exploreId].requestedDatasourceName) {
-      // User already changed datasource again, discard results
-      return;
-    }
 
     if (instance.init) {
       try {
@@ -394,7 +361,7 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi, or
     }
 
     if (datasourceName !== getState().explore[exploreId].requestedDatasourceName) {
-      // User already changed datasource again, discard results
+      // User already changed datasource, discard results
       return;
     }
 
@@ -434,7 +401,6 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
     const {
       datasourceInstance,
       queries,
-      datasourceError,
       containerWidth,
       isLive: live,
       range,
@@ -446,11 +412,6 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
       showingGraph,
       showingTable,
     } = exploreItemState;
-
-    if (datasourceError) {
-      // let's not run any queries if data source is in a faulty state
-      return;
-    }
 
     if (!hasNonEmptyQuery(queries)) {
       dispatch(clearQueriesAction({ exploreId }));
@@ -464,11 +425,12 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
 
     stopQueryState(querySubscription);
 
-    const queryOptions = {
+    const queryOptions: QueryOptions = {
       minInterval,
-      // This is used for logs streaming for buffer size.
-      maxDataPoints: mode === ExploreMode.Logs ? 1000 : containerWidth,
-      live,
+      // This is used for logs streaming for buffer size, with undefined it falls back to datasource config if it
+      // supports that.
+      maxDataPoints: mode === ExploreMode.Logs ? undefined : containerWidth,
+      liveStreaming: live,
       showingGraph,
       showingTable,
     };
@@ -670,6 +632,25 @@ export function splitOpen(): ThunkResult<void> {
       urlState,
     };
     dispatch(splitOpenAction({ itemState }));
+    dispatch(stateSave());
+  };
+}
+
+/**
+ * Syncs time interval, if they are not synced on both panels in a split mode.
+ * Unsyncs time interval, if they are synced on both panels in a split mode.
+ */
+export function syncTimes(exploreId: ExploreId): ThunkResult<void> {
+  return (dispatch, getState) => {
+    if (exploreId === ExploreId.left) {
+      const leftState = getState().explore.left;
+      dispatch(updateTimeRange({ exploreId: ExploreId.right, rawRange: leftState.range.raw }));
+    } else {
+      const rightState = getState().explore.right;
+      dispatch(updateTimeRange({ exploreId: ExploreId.left, rawRange: rightState.range.raw }));
+    }
+    const isTimeSynced = getState().explore.syncedTimes;
+    dispatch(syncTimesAction({ syncedTimes: !isTimeSynced }));
     dispatch(stateSave());
   };
 }

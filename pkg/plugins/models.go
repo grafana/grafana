@@ -2,7 +2,6 @@ package plugins
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -61,7 +60,7 @@ type PluginBase struct {
 
 func (pb *PluginBase) registerPlugin(pluginDir string) error {
 	if _, exists := Plugins[pb.Id]; exists {
-		return errors.New("Plugin with same id already exists")
+		return fmt.Errorf("Plugin with ID %q already exists", pb.Id)
 	}
 
 	if !strings.HasPrefix(pluginDir, setting.StaticRootPath) {

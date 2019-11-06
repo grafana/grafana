@@ -1,7 +1,7 @@
 package xmlenc
 
 import (
-	"crypto/sha1"
+	"crypto/sha1" //nolint:gosec // required for protocol support
 	"crypto/sha256"
 	"crypto/sha512"
 	"hash"

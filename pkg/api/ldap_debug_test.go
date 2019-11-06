@@ -122,7 +122,7 @@ func TestGetUserFromLDAPApiEndpoint_OrgNotfound(t *testing.T) {
 				OrgRole: models.ROLE_ADMIN,
 			},
 			{
-				GroupDN: "cn=admins,ou=groups,dc=grafana2,dc=org",
+				GroupDN: "cn=admins,ou=groups,dc=grafana,dc=org",
 				OrgId:   2,
 				OrgRole: models.ROLE_VIEWER,
 			},
@@ -148,7 +148,7 @@ func TestGetUserFromLDAPApiEndpoint_OrgNotfound(t *testing.T) {
 
 	sc := getUserFromLDAPContext(t, "/api/admin/ldap/johndoe")
 
-	require.Equal(t, sc.resp.Code, http.StatusBadRequest)
+	require.Equal(t, http.StatusBadRequest, sc.resp.Code)
 
 	expected := `
 	{
@@ -180,6 +180,11 @@ func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
 		Groups: []*ldap.GroupToOrgRole{
 			{
 				GroupDN: "cn=admins,ou=groups,dc=grafana,dc=org",
+				OrgId:   1,
+				OrgRole: models.ROLE_ADMIN,
+			},
+			{
+				GroupDN: "cn=admins2,ou=groups,dc=grafana,dc=org",
 				OrgId:   1,
 				OrgRole: models.ROLE_ADMIN,
 			},
@@ -240,6 +245,7 @@ func TestGetUserFromLDAPApiEndpoint_WithTeamHandler(t *testing.T) {
 		Name:           "John Doe",
 		Email:          "john.doe@example.com",
 		Login:          "johndoe",
+		Groups:         []string{"cn=admins,ou=groups,dc=grafana,dc=org"},
 		OrgRoles:       map[int64]models.RoleType{1: models.ROLE_ADMIN},
 		IsGrafanaAdmin: &isAdmin,
 	}

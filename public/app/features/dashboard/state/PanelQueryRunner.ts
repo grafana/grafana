@@ -12,8 +12,17 @@ import { runRequest, preProcessPanelData } from './runRequest';
 import { runSharedRequest, isSharedDashboardQuery } from '../../../plugins/datasource/dashboard';
 
 // Types
-import { PanelData, DataQuery, DataQueryRequest, DataSourceApi, DataSourceJsonData } from '@grafana/ui';
-import { TimeRange, DataTransformerConfig, transformDataFrame, ScopedVars } from '@grafana/data';
+import {
+  PanelData,
+  DataQuery,
+  DataQueryRequest,
+  DataSourceApi,
+  DataSourceJsonData,
+  TimeRange,
+  DataTransformerConfig,
+  transformDataFrame,
+  ScopedVars,
+} from '@grafana/data';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -117,10 +126,6 @@ export class PanelQueryRunner {
 
     try {
       const ds = await getDataSource(datasource, request.scopedVars);
-
-      if (ds.meta && !ds.meta.hiddenQueries) {
-        request.targets = request.targets.filter(q => !q.hide);
-      }
 
       // Attach the datasource name to each query
       request.targets = request.targets.map(query => {

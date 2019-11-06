@@ -68,9 +68,10 @@ export const run = (includeInternalScripts = false) => {
 
     program
       .command('cherrypick')
+      .option('-e, --enterprise', 'Run task for grafana-enterprise')
       .description('Helps find commits to cherry pick')
       .action(async cmd => {
-        await execTask(cherryPickTask)({});
+        await execTask(cherryPickTask)({ enterprise: !!cmd.enterprise });
       });
 
     program

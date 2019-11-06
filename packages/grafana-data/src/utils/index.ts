@@ -6,5 +6,7 @@ export * from './labels';
 export * from './labels';
 export * from './object';
 export * from './thresholds';
+export * from './namedColorsPalette';
 
 export { getMappedValue } from './valueMappings';
+export { getFlotPairs, getFlotPairsConstant } from './flotPairs';

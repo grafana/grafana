@@ -6,8 +6,8 @@ import * as ticksUtils from 'app/core/utils/ticks';
 import { HeatmapTooltip } from './heatmap_tooltip';
 import { mergeZeroBuckets } from './heatmap_data_converter';
 import { getColorScale, getOpacityScale } from './color_scale';
-import { GrafanaThemeType, getColorFromHexRgbOrName, getValueFormat } from '@grafana/ui';
-import { toUtc } from '@grafana/data';
+import { toUtc, PanelEvents, GrafanaThemeType, getColorFromHexRgbOrName, getValueFormat } from '@grafana/data';
+import { CoreEvents } from 'app/types';
 
 const MIN_CARD_SIZE = 1,
   CARD_PADDING = 1,
@@ -66,7 +66,7 @@ export class HeatmapRenderer {
     this.margin = { left: 25, right: 15, top: 10, bottom: 20 };
     this.dataRangeWidingFactor = DATA_RANGE_WIDING_FACTOR;
 
-    this.ctrl.events.on('render', this.onRender.bind(this));
+    this.ctrl.events.on(PanelEvents.render, this.onRender.bind(this));
 
     this.ctrl.tickValueFormatter = this.tickValueFormatter.bind(this);
 
@@ -75,9 +75,9 @@ export class HeatmapRenderer {
     /////////////////////////////
 
     // Shared crosshair and tooltip
-    appEvents.on('graph-hover', this.onGraphHover.bind(this), this.scope);
+    appEvents.on(CoreEvents.graphHover, this.onGraphHover.bind(this), this.scope);
 
-    appEvents.on('graph-hover-clear', this.onGraphHoverClear.bind(this), this.scope);
+    appEvents.on(CoreEvents.graphHoverClear, this.onGraphHoverClear.bind(this), this.scope);
 
     // Register selection listeners
     this.$heatmap.on('mousedown', this.onMouseDown.bind(this));
@@ -722,7 +722,7 @@ export class HeatmapRenderer {
   }
 
   onMouseLeave() {
-    appEvents.emit('graph-hover-clear');
+    appEvents.emit(CoreEvents.graphHoverClear);
     this.clearCrosshair();
   }
 
@@ -768,7 +768,7 @@ export class HeatmapRenderer {
     // Set minimum offset to prevent showing legend from another panel
     pos.panelRelY = Math.max(pos.offset.y / this.height, 0.001);
     // broadcast to other graph panels that we are hovering
-    appEvents.emit('graph-hover', { pos: pos, panel: this.panel });
+    appEvents.emit(CoreEvents.graphHover, { pos: pos, panel: this.panel });
   }
 
   limitSelection(x2: number) {

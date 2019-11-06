@@ -1,6 +1,6 @@
 /* tslint:disable:max-line-length */
 
-import { GrafanaTheme } from '../types';
+import { GrafanaTheme } from '@grafana/data';
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
 
 export const darkThemeVarsTemplate = (theme: GrafanaTheme) =>
@@ -20,6 +20,7 @@ $red-base: ${theme.colors.redBase};
 $red-shade: ${theme.colors.redShade};
 $green-base: ${theme.colors.greenBase};
 $green-shade: ${theme.colors.greenShade};
+$orange-dark: ${theme.colors.orangeDark};
 
 // Grays
 // -------------------------
