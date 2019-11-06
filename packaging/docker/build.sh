@@ -11,7 +11,7 @@ while [ "$1" != "" ]; do
       ;;
     "--ubuntu")
       UBUNTU_BASE=1
-      echo "Ubuntu base image"
+      echo "Ubuntu base image enabled"
       shift
       ;;
     * )
