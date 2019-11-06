@@ -1,5 +1,5 @@
 // Libraries
-import { isEmpty, isString, fromPairs } from 'lodash';
+import { isEmpty, isString, fromPairs, map as lodashMap } from 'lodash';
 // Services & Utils
 import {
   dateMath,
@@ -88,7 +88,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   prepareLiveTarget(target: LokiQuery, options: DataQueryRequest<LokiQuery>): LiveTarget {
-    const interpolated = this.templateSrv.replace(target.expr);
+    const interpolated = this.templateSrv.replace(target.expr, {}, this.interpolateQueryExpr);
     const { query, regexp } = parseQuery(interpolated);
     const refId = target.refId;
     const baseUrl = this.instanceSettings.url;
@@ -105,7 +105,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   prepareQueryTarget(target: LokiQuery, options: DataQueryRequest<LokiQuery>) {
-    const interpolated = this.templateSrv.replace(target.expr);
+    const interpolated = this.templateSrv.replace(target.expr, {}, this.interpolateQueryExpr);
     const { query, regexp } = parseQuery(interpolated);
     const start = this.getTime(options.range.from, false);
     const end = this.getTime(options.range.to, true);
@@ -126,7 +126,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       message: (err && err.statusText) || 'Unknown error during query transaction. Please check JS console logs.',
       refId: target.refId,
     };
-
     if (err.data) {
       if (typeof err.data === 'string') {
         error.message = err.data;
@@ -239,7 +238,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          expr: this.templateSrv.replace(query.expr),
+          expr: this.templateSrv.replace(query.expr, {}, this.interpolateQueryExpr),
         };
         return expandedQuery;
       });
@@ -258,6 +257,20 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       const data: any = { data: { data: res.data.values || [] } };
       return data;
     });
+  }
+
+  interpolateQueryExpr(value: any, variable: any) {
+    // if no multi or include all do not regexEscape
+    if (!variable.multi && !variable.includeAll) {
+      return lokiRegularEscape(value);
+    }
+
+    if (typeof value === 'string') {
+      return lokiSpecialRegexEscape(value);
+    }
+
+    const escapedValues = lodashMap(value, lokiSpecialRegexEscape);
+    return escapedValues.join('|');
   }
 
   modifyQuery(query: LokiQuery, action: any): LokiQuery {
@@ -479,6 +492,20 @@ function queryRequestFromAnnotationOptions(options: AnnotationQueryRequest<LokiQ
     interval: '',
     intervalMs: 0,
   };
+}
+
+export function lokiRegularEscape(value: any) {
+  if (typeof value === 'string') {
+    return value.replace(/'/g, "\\\\'");
+  }
+  return value;
+}
+
+export function lokiSpecialRegexEscape(value: any) {
+  if (typeof value === 'string') {
+    return lokiRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&'));
+  }
+  return value;
 }
 
 export default LokiDatasource;
