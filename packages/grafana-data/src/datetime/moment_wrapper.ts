@@ -1,6 +1,7 @@
 import { TimeZone } from '../types/time';
 /* tslint:disable:import-blacklist ban ban-types */
 import moment, { Moment, MomentInput, DurationInputArg1 } from 'moment';
+import { DEFAULT_DATE_TIME_FORMAT } from './formats';
 export interface DateTimeBuiltinFormat {
   __momentBuiltinFormatBrand: any;
 }
@@ -37,6 +38,7 @@ export type DurationUnit =
   | 'quarters'
   | 'Q';
 
+export type DateFormatter = (date: DateTimeInput, format?: string) => string;
 export interface DateTimeLocale {
   firstDayOfWeek: () => number;
 }
@@ -112,4 +114,11 @@ export const dateTimeForTimeZone = (
   }
 
   return dateTime(input, formatInput);
+};
+
+export const getTimeZoneDateFormatter: (timezone?: TimeZone) => DateFormatter = timezone => (date, format) => {
+  date = isDateTime(date) ? date : dateTime(date);
+  format = format || DEFAULT_DATE_TIME_FORMAT;
+
+  return timezone === 'browser' ? dateTime(date).format(format) : toUtc(date).format(format);
 };

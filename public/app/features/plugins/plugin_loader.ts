@@ -32,8 +32,17 @@ import builtInPlugins from './built_in_plugins';
 import * as d3 from 'd3';
 import * as emotion from 'emotion';
 import * as grafanaData from '@grafana/data';
-import * as grafanaUI from '@grafana/ui';
+import * as grafanaUIraw from '@grafana/ui';
 import * as grafanaRuntime from '@grafana/runtime';
+
+// Help the 6.4 to 6.5 migration
+// The base classes were moved from @grafana/ui to @grafana/data
+// This exposes the same classes on both import paths
+const grafanaUI = grafanaUIraw as any;
+grafanaUI.PanelPlugin = grafanaData.PanelPlugin;
+grafanaUI.DataSourcePlugin = grafanaData.DataSourcePlugin;
+grafanaUI.AppPlugin = grafanaData.AppPlugin;
+grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
 
 // rxjs
 import * as rxjs from 'rxjs';
