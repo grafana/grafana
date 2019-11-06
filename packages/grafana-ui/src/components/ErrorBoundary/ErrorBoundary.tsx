@@ -1,7 +1,5 @@
 import React, { PureComponent, ReactNode } from 'react';
 import { Alert } from '../Alert/Alert';
-import { css } from 'emotion';
-import { stylesFactory } from '../../themes';
 import { ErrorWithStack } from './ErrorWithStack';
 
 export interface ErrorInfo {
@@ -46,13 +44,6 @@ export class ErrorBoundary extends PureComponent<Props, State> {
   }
 }
 
-const getStyles = stylesFactory(() => {
-  return css`
-    width: 500px;
-    margin: 64px auto;
-  `;
-});
-
 interface WithAlertBoxProps {
   title?: string;
   children: ReactNode;
@@ -87,7 +78,7 @@ export class ErrorBoundaryAlert extends PureComponent<WithAlertBoxProps> {
             );
           }
 
-          return <ErrorWithStack className={getStyles()} title={title || ''} error={error} errorInfo={errorInfo} />;
+          return <ErrorWithStack title={title || ''} error={error} errorInfo={errorInfo} />;
         }}
       </ErrorBoundary>
     );
