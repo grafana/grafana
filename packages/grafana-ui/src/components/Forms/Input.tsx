@@ -6,11 +6,15 @@ import { getFocusStyle } from './commonStyles';
 import { Spinner } from '..';
 
 interface Props extends HTMLProps<HTMLInputElement> {
+  /** Show an invalid state around the input */
   invalid?: boolean;
+  /** Show an icon as a prefix in the input */
   icon?: string;
-  buttonText?: string;
+  /** Show a loading indicator as a suffix in the input */
   loading?: boolean;
+  /** Add a component as an addon before the input  */
   addonBefore?: ReactNode;
+  /** Add a component as an addon after the input */
   addonAfter?: ReactNode;
 }
 
@@ -52,6 +56,26 @@ const getInputStyle = stylesFactory(
     `;
 
     return {
+      inputWrapper: cx(
+        css`
+          width: 100%;
+          display: flex;
+          height: ${height};
+          border: 1px solid ${borderColor};
+          border-radius: ${borderRadius};
+        `,
+        getFocusStyle(theme)
+      ),
+      prefix: cx(
+        prefixSuffix,
+        css`
+          &:first-child {
+            border-left: 1px solid ${borderColor};
+            border-top-left-radius: ${borderRadius};
+            border-bottom-left-radius: ${borderRadius};
+          }
+        `
+      ),
       input: cx(
         css`
           background-color: ${backgroundColor};
@@ -114,26 +138,6 @@ const getInputStyle = stylesFactory(
           box-shadow: none;
         }
       `,
-      inputWrapper: cx(
-        css`
-          width: 100%;
-          display: flex;
-          height: ${height};
-          border: 1px solid ${borderColor};
-          border-radius: ${borderRadius};
-        `,
-        getFocusStyle(theme)
-      ),
-      prefix: cx(
-        prefixSuffix,
-        css`
-          &:first-child {
-            border-left: 1px solid ${borderColor};
-            border-top-left-radius: ${borderRadius};
-            border-bottom-left-radius: ${borderRadius};
-          }
-        `
-      ),
       suffix: cx(
         prefixSuffix,
         css`

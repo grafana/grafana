@@ -18,6 +18,7 @@ export default {
 
 export const simple = () => {
   const disabled = boolean('Disabled', false);
+  const invalid = boolean('Invalid input', false);
   const icon = text('Prefix', 'fa fa-check');
   const loading = boolean('Suffix', true);
   const before = boolean('Addon before', true);
@@ -29,6 +30,7 @@ export const simple = () => {
     <div style={{ width: '300px' }}>
       <Input
         disabled={disabled}
+        invalid={invalid}
         icon={icon}
         loading={loading}
         addonBefore={before && addonBefore}
