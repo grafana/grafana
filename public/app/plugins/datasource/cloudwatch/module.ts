@@ -1,3 +1,5 @@
+import './query_parameter_ctrl';
+
 import CloudWatchDatasource from './datasource';
 import { CloudWatchQueryEditor } from './components/QueryEditor';
 import { CloudWatchConfigCtrl } from './config_ctrl';
