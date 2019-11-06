@@ -55,7 +55,7 @@ WORKDIR $GF_PATHS_HOME
 COPY conf conf
 
 # We need font libs for phantomjs, and curl should be part of the image
-RUN apt-get update && apt-get upgrade -y && apt-get install -y libfreetype6 libfontconfig1 curl
+RUN apt-get update && apt-get upgrade -y && apt-get install -y ca-certificates libfreetype6 libfontconfig1 curl
 
 RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
   addgroup --system --gid $GF_GID grafana && \
