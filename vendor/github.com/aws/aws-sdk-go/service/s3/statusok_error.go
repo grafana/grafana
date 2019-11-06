@@ -14,7 +14,7 @@ func copyMultipartStatusOKUnmarhsalError(r *request.Request) {
 	b, err := ioutil.ReadAll(r.HTTPResponse.Body)
 	if err != nil {
 		r.Error = awserr.NewRequestFailure(
-			awserr.New("SerializationError", "unable to read response body", err),
+			awserr.New(request.ErrCodeSerialization, "unable to read response body", err),
 			r.HTTPResponse.StatusCode,
 			r.RequestID,
 		)
@@ -31,7 +31,7 @@ func copyMultipartStatusOKUnmarhsalError(r *request.Request) {
 
 	unmarshalError(r)
 	if err, ok := r.Error.(awserr.Error); ok && err != nil {
-		if err.Code() == "SerializationError" {
+		if err.Code() == request.ErrCodeSerialization {
 			r.Error = nil
 			return
 		}

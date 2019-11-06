@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	_ "github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	_ "github.com/lib/pq"
 )
 
@@ -179,20 +180,27 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 			if err != nil {
 				return "", err
 			}
-			mysql.RegisterTLSConfig("custom", tlsCert)
+			if err := mysql.RegisterTLSConfig("custom", tlsCert); err != nil {
+				return "", err
+			}
+
 			cnnstr += "&tls=custom"
 		}
 
 		cnnstr += ss.buildExtraConnectionString('&')
 	case migrator.POSTGRES:
-		host, port := util.SplitHostPortDefault(ss.dbCfg.Host, "127.0.0.1", "5432")
+		addr, err := util.SplitHostPortDefault(ss.dbCfg.Host, "127.0.0.1", "5432")
+		if err != nil {
+			return "", errutil.Wrapf(err, "Invalid host specifier '%s'", ss.dbCfg.Host)
+		}
+
 		if ss.dbCfg.Pwd == "" {
 			ss.dbCfg.Pwd = "''"
 		}
 		if ss.dbCfg.User == "" {
 			ss.dbCfg.User = "''"
 		}
-		cnnstr = fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", ss.dbCfg.User, ss.dbCfg.Pwd, host, port, ss.dbCfg.Name, ss.dbCfg.SslMode, ss.dbCfg.ClientCertPath, ss.dbCfg.ClientKeyPath, ss.dbCfg.CaCertPath)
+		cnnstr = fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", ss.dbCfg.User, ss.dbCfg.Pwd, addr.Host, addr.Port, ss.dbCfg.Name, ss.dbCfg.SslMode, ss.dbCfg.ClientCertPath, ss.dbCfg.ClientKeyPath, ss.dbCfg.CaCertPath)
 
 		cnnstr += ss.buildExtraConnectionString(' ')
 	case migrator.SQLITE:
@@ -200,7 +208,10 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 		if !filepath.IsAbs(ss.dbCfg.Path) {
 			ss.dbCfg.Path = filepath.Join(ss.Cfg.DataPath, ss.dbCfg.Path)
 		}
-		os.MkdirAll(path.Dir(ss.dbCfg.Path), os.ModePerm)
+		if err := os.MkdirAll(path.Dir(ss.dbCfg.Path), os.ModePerm); err != nil {
+			return "", err
+		}
+
 		cnnstr = fmt.Sprintf("file:%s?cache=%s&mode=rwc", ss.dbCfg.Path, ss.dbCfg.CacheMode)
 		cnnstr += ss.buildExtraConnectionString('&')
 	default:
@@ -307,16 +318,27 @@ func InitTestDB(t ITestDB) *SqlStore {
 
 	// set test db config
 	sqlstore.Cfg = setting.NewCfg()
-	sec, _ := sqlstore.Cfg.Raw.NewSection("database")
-	sec.NewKey("type", dbType)
+	sec, err := sqlstore.Cfg.Raw.NewSection("database")
+	if err != nil {
+		t.Fatalf("Failed to create section: %s", err)
+	}
+	if _, err := sec.NewKey("type", dbType); err != nil {
+		t.Fatalf("Failed to create key: %s", err)
+	}
 
 	switch dbType {
 	case "mysql":
-		sec.NewKey("connection_string", sqlutil.TestDB_Mysql.ConnStr)
+		if _, err := sec.NewKey("connection_string", sqlutil.TestDB_Mysql.ConnStr); err != nil {
+			t.Fatalf("Failed to create key: %s", err)
+		}
 	case "postgres":
-		sec.NewKey("connection_string", sqlutil.TestDB_Postgres.ConnStr)
+		if _, err := sec.NewKey("connection_string", sqlutil.TestDB_Postgres.ConnStr); err != nil {
+			t.Fatalf("Failed to create key: %s", err)
+		}
 	default:
-		sec.NewKey("connection_string", sqlutil.TestDB_Sqlite3.ConnStr)
+		if _, err := sec.NewKey("connection_string", sqlutil.TestDB_Sqlite3.ConnStr); err != nil {
+			t.Fatalf("Failed to create key: %s", err)
+		}
 	}
 
 	// need to get engine to clean db before we init

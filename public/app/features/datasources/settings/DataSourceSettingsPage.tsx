@@ -29,9 +29,9 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
 
 // Types
-import { StoreState } from 'app/types/';
+import { StoreState, CoreEvents } from 'app/types/';
 import { UrlQueryMap } from '@grafana/runtime';
-import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/ui';
+import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/data';
 import { NavModel } from '@grafana/data';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
@@ -114,7 +114,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   };
 
   onDelete = () => {
-    appEvents.emit('confirm-modal', {
+    appEvents.emit(CoreEvents.showConfirmModal, {
       title: 'Delete',
       text: 'Are you sure you want to delete this data source?',
       yesText: 'Delete',

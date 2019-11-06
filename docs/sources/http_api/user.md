@@ -116,12 +116,18 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {
-  "email": "user@mygraf.com"
+  "id": "1",
+  "email": "user@mygraf.com",
   "name": "admin",
   "login": "admin",
   "theme": "light",
   "orgId": 1,
-  "isGrafanaAdmin": true
+  "isGrafanaAdmin": true,
+  "isDisabled": true,
+  "isExternal": false,
+  "authLabels": [],
+  "updatedAt": "2019-09-09T11:31:26+01:00",
+  "createdAt": "2019-09-09T11:31:26+01:00"
 }
 ```
 
@@ -162,7 +168,12 @@ Content-Type: application/json
   "login": "admin",
   "theme": "light",
   "orgId": 1,
-  "isGrafanaAdmin": true
+  "isGrafanaAdmin": true,
+  "isDisabled": false,
+  "isExternal": false,
+  "authLabels": null,
+  "updatedAt": "2019-09-25T14:44:37+01:00",
+  "createdAt": "2019-09-25T14:44:37+01:00"
 }
 ```
 

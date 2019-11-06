@@ -1,24 +1,33 @@
-import { VizOrientation, SingleStatBaseOptions, FieldDisplayOptions } from '@grafana/ui';
-import { ReducerID } from '@grafana/data';
+import { SingleStatBaseOptions, SingleStatDisplayMode } from '@grafana/ui';
+import { VizOrientation, ReducerID, FieldDisplayOptions, SelectableValue } from '@grafana/data';
 
 export interface SparklineOptions {
   show: boolean;
-  full: boolean; // full height
-  fillColor: string;
-  lineColor: string;
 }
 
 // Structure copied from angular
 export interface SingleStatOptions extends SingleStatBaseOptions {
-  prefixFontSize?: string;
-  valueFontSize?: string;
-  postfixFontSize?: string;
-  colorBackground: boolean;
-  colorValue: boolean;
-  colorPrefix: boolean;
-  colorPostfix: boolean;
   sparkline: SparklineOptions;
+  colorMode: ColorMode;
+  displayMode: SingleStatDisplayMode;
 }
+
+export const displayModes: Array<SelectableValue<SingleStatDisplayMode>> = [
+  { value: SingleStatDisplayMode.Classic, label: 'Classic' },
+  { value: SingleStatDisplayMode.Classic2, label: 'Classic 2' },
+  { value: SingleStatDisplayMode.Vibrant, label: 'Vibrant' },
+  { value: SingleStatDisplayMode.Vibrant2, label: 'Vibrant 2' },
+];
+
+export enum ColorMode {
+  Thresholds,
+  Series,
+}
+
+export const colorModes: Array<SelectableValue<ColorMode>> = [
+  { value: ColorMode.Thresholds, label: 'Thresholds' },
+  { value: ColorMode.Series, label: 'Series' },
+];
 
 export const standardFieldDisplayOptions: FieldDisplayOptions = {
   values: false,
@@ -38,14 +47,9 @@ export const standardFieldDisplayOptions: FieldDisplayOptions = {
 export const defaults: SingleStatOptions = {
   sparkline: {
     show: true,
-    full: false,
-    lineColor: 'rgb(31, 120, 193)',
-    fillColor: 'rgba(31, 118, 189, 0.18)',
   },
+  colorMode: ColorMode.Thresholds,
+  displayMode: SingleStatDisplayMode.Vibrant,
   fieldOptions: standardFieldDisplayOptions,
   orientation: VizOrientation.Auto,
-  colorBackground: false,
-  colorValue: false,
-  colorPrefix: false,
-  colorPostfix: false,
 };

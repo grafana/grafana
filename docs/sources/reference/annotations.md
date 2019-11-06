@@ -21,14 +21,14 @@ Grafana v4.6+ comes with a native annotation store and the ability to add annota
 
 ## Adding annotations
 
-By holding down **CTRL** or **CMD** + Click. Add tags to the annotation will make it searchable from other dashboards.
+By holding down Ctrl/Cmd+Click. Add tags to the annotation will make it searchable from other dashboards.
 
 {{< docs-imagebox img="/img/docs/annotations/annotation-still.png"
 max-width="600px" animated-gif="/img/docs/annotations/annotation.gif" >}}
 
 ### Adding regions events
 
-You can also hold down **CTRL** or **CMD** and select region to create a region annotation.
+You can also hold down Ctrl/Cmd and select region to create a region annotation.
 
 {{< docs-imagebox img="/img/docs/annotations/region-annotation-still.png"
 max-width="600px" animated-gif="/img/docs/annotations/region-annotation.gif" >}}
@@ -37,7 +37,7 @@ max-width="600px" animated-gif="/img/docs/annotations/region-annotation.gif" >}}
 
 After you added an annotation they will still be visible. This is due to the built in annotation query that exists on all dashboards. This annotation query will
 fetch all annotation events that originate from the current dashboard and show them on the panel where they where created. This includes alert state history annotations. You can
-stop annotations from being fetched & drawn by opening the **Annotations** settings (via Dashboard cogs menu) and modifying the query named `Annotations & Alerts (Built-in)`.
+stop annotations from being fetched and drawn by opening the **Annotations** settings (via Dashboard cogs menu) and modifying the query named `Annotations & Alerts (Built-in)`.
 
 When you copy a dashboard using the **Save As** feature it will get a new dashboard id so annotations created on source dashboard will no longer be visible on the copy. You
 can still show them if you add a new **Annotation Query** and filter by tags. But this only works if the annotations on the source dashboard had tags to filter by.
@@ -75,3 +75,4 @@ The annotation query options are different for each data source.
 - [Prometheus annotation queries]({{< relref "features/datasources/prometheus.md#annotations" >}})
 - [MySQL annotation queries]({{< relref "features/datasources/mysql.md#annotations" >}})
 - [Postgres annotation queries]({{< relref "features/datasources/postgres.md#annotations" >}})
+- [Loki annotation queries]({{< relref "features/datasources/loki.md#annotations" >}})

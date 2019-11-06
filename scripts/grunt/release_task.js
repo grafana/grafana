@@ -25,7 +25,7 @@ module.exports = function(grunt) {
       dest: '<%= tempDir %>/public/',
     });
     grunt.config('copy.backend_bin', {
-      cwd: 'bin/<%= platform %>-<%= arch %>',
+      cwd: 'bin/<%= platform %>-<%= arch %><%= libc ? "-" + libc : "" %>',
       expand: true,
       src: ['*'],
       options: { mode: true},

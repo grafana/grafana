@@ -112,9 +112,17 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 	return nil, fmt.Errorf("No renderer found")
 }
 
-func (rs *RenderingService) getFilePathForNewImage() string {
-	pngPath, _ := filepath.Abs(filepath.Join(rs.Cfg.ImagesDir, util.GetRandomString(20)))
-	return pngPath + ".png"
+func (rs *RenderingService) getFilePathForNewImage() (string, error) {
+	rand, err := util.GetRandomString(20)
+	if err != nil {
+		return "", err
+	}
+	pngPath, err := filepath.Abs(filepath.Join(rs.Cfg.ImagesDir, rand))
+	if err != nil {
+		return "", err
+	}
+
+	return pngPath + ".png", nil
 }
 
 func (rs *RenderingService) getURL(path string) string {
@@ -131,6 +139,6 @@ func (rs *RenderingService) getURL(path string) string {
 	return fmt.Sprintf("%s://%s:%s/%s&render=1", setting.Protocol, rs.domain, setting.HttpPort, path)
 }
 
-func (rs *RenderingService) getRenderKey(orgId, userId int64, orgRole models.RoleType) string {
+func (rs *RenderingService) getRenderKey(orgId, userId int64, orgRole models.RoleType) (string, error) {
 	return middleware.AddRenderAuthKey(orgId, userId, orgRole)
 }

@@ -1,7 +1,7 @@
 ARG BASE_IMAGE=alpine:3.10
 FROM ${BASE_IMAGE}
 
-ARG GRAFANA_TGZ="grafana-latest.linux-x64.tar.gz"
+ARG GRAFANA_TGZ="grafana-latest.linux-x64-musl.tar.gz"
 
 COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
@@ -23,7 +23,7 @@ ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bi
 
 WORKDIR $GF_PATHS_HOME
 
-RUN apk add --no-cache ca-certificates bash && \
+RUN apk add --no-cache ca-certificates bash tzdata && \
     apk add --no-cache --upgrade --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main openssl musl-utils
 
 # PhantomJS

@@ -1,6 +1,8 @@
-# Triaging issues
+# Triage issues
 
 The main goal of issue triage is to categorize all incoming Grafana issues and make sure each issue has all basic information needed for anyone else to understand and be able to start working on it.
+
+**Note:** This information is for Grafana project Maintainers, Owners, and Admins. If you are a Contributor, then you will not be able to perform most of the tasks in this topic.
 
 The core maintainers of the Grafana project are responsible for categorizing all incoming issues and delegating any critical or important issue to other maintainers. Currently one maintainer each week is responsible. Besides that part, triage provides an important way to contribute to an open source project. 
 
@@ -10,7 +12,8 @@ Triage helps ensure issues resolve quickly by:
 * Giving a contributor the information they need before they commit to resolving an issue.
 * Lowering the issue count by preventing duplicate issues.
 * Streamlining the development process by preventing duplicate discussions.
-* If you don't have the knowledge or time to code, consider helping with triage. The community will thank you for saving them time by spending some of yours.
+
+If you don't have the knowledge or time to code, consider helping with triage. The community will thank you for saving them time by spending some of yours.
 
 ## Simplified flowchart diagram of the issue triage process
 
@@ -54,66 +57,6 @@ Triage helps ensure issues resolve quickly by:
                                                      |                  |          |              |
                                                      +------------------+          +--------------+
 ```
-
-## How you can help
-
-There are multiple ways that you can help with the Grafana project, especially without writing a single line of code. Everyone in the Grafana community will be thankful to you for helping out with any of the below tasks.
-
-### Answer/ask questions
-
-The [community site](https://community.grafana.com/) is the main channel to be used for asking and answering questions related to the Grafana project. This may be the first place a new or existing Grafana user look/ask for help after they found that the [documentation](https://grafana.com/docs) wasn't answering their questions. It's very important to help new and existing users so that these new users can find proper answers and eventually help out other users and by that keep growing the Grafana community.
-
-Please sign up to the Grafana [community site](https://community.grafana.com/) and start help other Grafana users by answering their questions and/or ask for help.
-
-### Report documentation enhancements
-
-If you visit the [documentation site](https://grafana.com/docs) and find typos/error/lack of information please report these by clicking on the `Request doc changes` link found on every page and/or contribute the changes yourself by clicking on `Edit this page` and open a pull request. Everyone in the community will greatly thank you for.
-
-Please read about how documentation issues is triaged [below](#documentation-issue) to understand what kind of documentation may be suitable to request/add.
-
-### Report a security vulnerability
-
-Please review the [security policy](https://github.com/grafana/grafana/security/policy) for more details.
-
-### Report bugs
-
-Report a bug you found when using Grafana by [opening a new bug report](https://github.com/grafana/grafana/issues/new?labels=type%3A+bug&template=1-bug_report.md).
-
-### Request enhancements/new features
-
-Suggest an enhancement or new feature for the Grafana project by [opening a new enhancement issue](https://github.com/grafana/grafana/issues/new?labels=type%3A+feature+request&template=2-feature_request.md).
-
-Alternatively, help make Grafana be better at being accessible to all by [opening a new accessibility issue](https://github.com/grafana/grafana/issues/new?labels=type%3A+accessibility&template=3-accessibility.md).
-
-### Report inaccurate issue information
-
-If you find an issue that have a badly formatted title and/or description, bad language/grammar and/or wrong labels it's important to let the issue author or maintainers know so it can be fixed. See [good practices](#good-practices) regarding basic information for issues below.
-
-### Request closing of issues
-
-The Grafana project have a lot of open issues and the main goal is to only have issues open if their still relevant. If you find an issue that you think already have been resolved or no longer is relevant please report by adding a comment and explain why you think it should be closed including related issues (`#<issue number>`), if applicable, and optionally mention one of the maintainers.
-
-### Investigate issues
-
-See [investigation of issues](#investigation-of-issues).
-
-### Vote on enhancements/bugs
-
-Helping the Grafana project to know which issues are most important by users and the community is crucial for the success of the project. Read more about [prioritizing issues](#4-prioritization-of-issues) for details about how issues are being prioritized. The Grafana project use GitGub issues and reactions for collecting votes on enhancement and bugs.
-
-**Please don't add `+1` issue comments or similar since that will notify everyone that have subscribed to an issue and it doesn't add any useful update, rather it creates a bad habit.**
-
-If you want to show your interest or importance of an issue, please use [GitHub's reactions](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments).
-
-### Report duplicates
-
-If you find two issues describing the same bug/enhancement/feature please add a comment in one of the issue and explain which issues (`#<issue number>`) you think is a duplicate of another issue (`#<issue number>`).
-
-### Suggest ideas for resolving bugs/enhancements
-
-Related to how [issues are being prioritized](#4-prioritization-of-issues) it's important to help anyone that's interested in contributing code for resolving a bug or enhancement. This can be anything from getting started and setup the development environment to reference code and files where changes probably needs to be made and/or suggest ideas on how enhancements may function/be implemented.
-
-Please read about how [help from the community](#5-requesting-help-from-the-community) may be requested when issues being triaged.
 
 ## 1. Find uncategorized issues
 

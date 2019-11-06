@@ -1,6 +1,7 @@
 import { Unsubscribable } from 'rxjs';
-import { ComponentClass } from 'react';
+import { ComponentType } from 'react';
 import {
+  HistoryItem,
   DataQuery,
   DataSourceSelectItem,
   DataSourceApi,
@@ -8,9 +9,6 @@ import {
   ExploreStartPageProps,
   PanelData,
   DataQueryRequest,
-} from '@grafana/ui';
-
-import {
   RawTimeRange,
   LogLevel,
   TimeRange,
@@ -23,98 +21,9 @@ import {
 import { Emitter } from 'app/core/core';
 import TableModel from 'app/core/table_model';
 
-import { Value } from 'slate';
-
-import { Editor } from '@grafana/slate-react';
 export enum ExploreMode {
   Metrics = 'Metrics',
   Logs = 'Logs',
-}
-
-export enum CompletionItemKind {
-  GroupTitle = 'GroupTitle',
-}
-
-export interface CompletionItem {
-  /**
-   * The label of this completion item. By default
-   * this is also the text that is inserted when selecting
-   * this completion.
-   */
-  label: string;
-
-  /**
-   * The kind of this completion item. An icon is chosen
-   * by the editor based on the kind.
-   */
-  kind?: CompletionItemKind | string;
-
-  /**
-   * A human-readable string with additional information
-   * about this item, like type or symbol information.
-   */
-  detail?: string;
-
-  /**
-   * A human-readable string, can be Markdown, that represents a doc-comment.
-   */
-  documentation?: string;
-
-  /**
-   * A string that should be used when comparing this item
-   * with other items. When `falsy` the `label` is used.
-   */
-  sortText?: string;
-
-  /**
-   * A string that should be used when filtering a set of
-   * completion items. When `falsy` the `label` is used.
-   */
-  filterText?: string;
-
-  /**
-   * A string or snippet that should be inserted in a document when selecting
-   * this completion. When `falsy` the `label` is used.
-   */
-  insertText?: string;
-
-  /**
-   * Delete number of characters before the caret position,
-   * by default the letters from the beginning of the word.
-   */
-  deleteBackwards?: number;
-
-  /**
-   * Number of steps to move after the insertion, can be negative.
-   */
-  move?: number;
-}
-
-export interface CompletionItemGroup {
-  /**
-   * Label that will be displayed for all entries of this group.
-   */
-  label: string;
-
-  /**
-   * List of suggestions of this group.
-   */
-  items: CompletionItem[];
-
-  /**
-   * If true, match only by prefix (and not mid-word).
-   */
-  prefixMatch?: boolean;
-
-  /**
-   * If true, do not filter items in this group based on the search.
-   */
-  skipFilter?: boolean;
-
-  /**
-   * If true, do not sort items.
-   */
-  skipSort?: boolean;
 }
 
 export enum ExploreId {
@@ -131,6 +40,10 @@ export interface ExploreState {
    */
   split: boolean;
   /**
+   * True if time interval for panels are synced. Only possible with split mode.
+   */
+  syncedTimes: boolean;
+  /**
    * Explore state of the left split (left is default in non-split view).
    */
   left: ExploreItemState;
@@ -144,7 +57,7 @@ export interface ExploreItemState {
   /**
    * React component to be shown when no queries have been run yet, e.g., for a query language cheat sheet.
    */
-  StartPage?: ComponentClass<ExploreStartPageProps>;
+  StartPage?: ComponentType<ExploreStartPageProps>;
   /**
    * Width used for calculating the graph interval (can't have more datapoints than pixels)
    */
@@ -157,10 +70,6 @@ export interface ExploreItemState {
    * Current data source name or null if default
    */
   requestedDatasourceName: string | null;
-  /**
-   * Error to be shown when datasource loading or testing failed.
-   */
-  datasourceError: string;
   /**
    * True if the datasource is loading. `null` if the loading has not started yet.
    */
@@ -305,36 +214,7 @@ export interface ExploreUrlState {
   range: RawTimeRange;
   ui: ExploreUIState;
   originPanelId?: number;
-}
-
-export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
-  ts: number;
-  query: TQuery;
-}
-
-export abstract class LanguageProvider {
-  datasource: DataSourceApi;
-  request: (url: string, params?: any) => Promise<any>;
-  /**
-   * Returns startTask that resolves with a task list when main syntax is loaded.
-   * Task list consists of secondary promises that load more detailed language features.
-   */
-  start: () => Promise<any[]>;
-  startTask?: Promise<any[]>;
-}
-
-export interface TypeaheadInput {
-  text: string;
-  prefix: string;
-  wrapperClasses: string[];
-  labelKey?: string;
-  value?: Value;
-  editor?: Editor;
-}
-
-export interface TypeaheadOutput {
   context?: string;
-  suggestions: CompletionItemGroup[];
 }
 
 export interface QueryIntervals {
@@ -345,7 +225,9 @@ export interface QueryIntervals {
 export interface QueryOptions {
   minInterval: string;
   maxDataPoints?: number;
-  live?: boolean;
+  liveStreaming?: boolean;
+  showingGraph?: boolean;
+  showingTable?: boolean;
 }
 
 export interface QueryTransaction {

@@ -116,11 +116,11 @@ describe('Stats Calculators', () => {
       },
       {
         data: [null, null, null], // All null
-        result: undefined,
+        result: null,
       },
       {
         data: [undefined, undefined, undefined], // Empty row
-        result: undefined,
+        result: null,
       },
     ];
 

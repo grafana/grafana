@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { colors, getFlotPairs, ansicolor } from '@grafana/ui';
+import { colors, ansicolor } from '@grafana/ui';
 
 import {
   Labels,
@@ -21,6 +21,8 @@ import {
   NullValueMode,
   toDataFrame,
   FieldCache,
+  FieldWithIndex,
+  getFlotPairs,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
@@ -55,12 +57,12 @@ function isDuplicateRow(row: LogRowModel, other: LogRowModel, strategy: LogsDedu
   }
 }
 
-export function dedupLogRows(logs: LogsModel, strategy: LogsDedupStrategy): LogsModel {
+export function dedupLogRows(rows: LogRowModel[], strategy: LogsDedupStrategy): LogRowModel[] {
   if (strategy === LogsDedupStrategy.none) {
-    return logs;
+    return rows;
   }
 
-  const dedupedRows = logs.rows.reduce((result: LogRowModel[], row: LogRowModel, index, list) => {
+  return rows.reduce((result: LogRowModel[], row: LogRowModel, index) => {
     const rowCopy = { ...row };
     const previous = result[result.length - 1];
     if (index > 0 && isDuplicateRow(row, previous, strategy)) {
@@ -71,29 +73,16 @@ export function dedupLogRows(logs: LogsModel, strategy: LogsDedupStrategy): Logs
     }
     return result;
   }, []);
-
-  return {
-    ...logs,
-    rows: dedupedRows,
-  };
 }
 
-export function filterLogLevels(logs: LogsModel, hiddenLogLevels: Set<LogLevel>): LogsModel {
+export function filterLogLevels(logRows: LogRowModel[], hiddenLogLevels: Set<LogLevel>): LogRowModel[] {
   if (hiddenLogLevels.size === 0) {
-    return logs;
+    return logRows;
   }
 
-  const filteredRows = logs.rows.reduce((result: LogRowModel[], row: LogRowModel, index, list) => {
-    if (!hiddenLogLevels.has(row.logLevel)) {
-      result.push(row);
-    }
-    return result;
-  }, []);
-
-  return {
-    ...logs,
-    rows: filteredRows,
-  };
+  return logRows.filter((row: LogRowModel) => {
+    return !hiddenLogLevels.has(row.logLevel);
+  });
 }
 
 export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): GraphSeriesXY[] {
@@ -249,6 +238,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
     const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
     const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
     const logLevelField = fieldCache.getFieldByName('level');
+    const idField = getIdField(fieldCache);
 
     let seriesLogLevel: LogLevel | undefined = undefined;
     if (series.labels && Object.keys(series.labels).indexOf('level') !== -1) {
@@ -291,6 +281,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
         raw: message,
         labels: series.labels,
         timestamp: ts,
+        uid: idField ? idField.values.get(j) : j.toString(),
       });
     }
   }
@@ -320,4 +311,15 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
     meta,
     rows,
   };
+}
+
+function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {
+  const idFieldNames = ['id'];
+  for (const fieldName of idFieldNames) {
+    const idField = fieldCache.getFieldByName(fieldName);
+    if (idField) {
+      return idField;
+    }
+  }
+  return undefined;
 }

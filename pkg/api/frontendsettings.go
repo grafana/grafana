@@ -196,7 +196,11 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 			"latestVersion": plugins.GrafanaLatestVersion,
 			"hasUpdate":     plugins.GrafanaHasUpdate,
 			"env":           setting.Env,
-			"isEnterprise":  setting.IsEnterprise,
+			"isEnterprise":  hs.License.HasValidLicense(),
+		},
+		"licenseInfo": map[string]interface{}{
+			"hasLicense": hs.License.HasLicense(),
+			"expiry":     hs.License.Expiry(),
 		},
 		"featureToggles": hs.Cfg.FeatureToggles,
 	}

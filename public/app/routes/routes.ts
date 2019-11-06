@@ -82,6 +82,18 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
           ),
       },
     })
+    .when('/d-solo/:uid', {
+      template: '<react-container />',
+      pageClass: 'dashboard-solo',
+      routeInfo: DashboardRouteInfo.Normal,
+      reloadOnSearch: false,
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
+          ),
+      },
+    })
     .when('/dashboard-solo/:type/:slug', {
       template: '<react-container />',
       pageClass: 'dashboard-solo',
@@ -266,9 +278,11 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       controllerAs: 'ctrl',
     })
     .when('/admin/settings', {
-      templateUrl: 'public/app/features/admin/partials/settings.html',
-      controller: 'AdminSettingsCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "AdminSettings" */ 'app/features/admin/AdminSettings')),
+      },
     })
     .when('/admin/users', {
       templateUrl: 'public/app/features/admin/partials/users.html',

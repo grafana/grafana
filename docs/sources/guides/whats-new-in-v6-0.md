@@ -1,6 +1,6 @@
 +++
 title = "What's New in Grafana v6.0"
-description = "Feature & improvement highlights for Grafana v6.0"
+description = "Feature and improvement highlights for Grafana v6.0"
 keywords = ["grafana", "new", "documentation", "6.0"]
 type = "docs"
 [menu.docs]
@@ -48,7 +48,7 @@ enabled jumping between metrics query and logs query with preserved label filter
 
 ### Explore splits
 
-Explore supports splitting the view so you can compare different queries, different data sources and metrics & logs side by side!
+Explore supports splitting the view so you can compare different queries, different data sources and metrics and logs side by side!
 
 {{< docs-imagebox img="/img/docs/v60/explore_split.png" max-width="800px" caption="Screenshot of the new Explore option in the panel menu" >}}
 
@@ -56,7 +56,7 @@ Explore supports splitting the view so you can compare different queries, differ
 
 ### Explore and Grafana Loki
 
-The log exploration & visualization features in Explore are available to any data source but are currently only implemented by the new open source log
+The log exploration and visualization features in Explore are available to any data source but are currently only implemented by the new open source log
 aggregation system from Grafana Lab called [Grafana Loki](https://github.com/grafana/loki).
 
 Loki is a horizontally-scalable, highly-available, multi-tenant log aggregation system inspired by Prometheus. It is designed to be very cost effective, as it does not index the contents of the logs, but rather a set of labels for each log stream. The logs from Loki are queried in a similar way to querying with label selectors in Prometheus. It uses labels to group log streams which can be made to match up with your Prometheus labels.
@@ -102,7 +102,7 @@ continue to refine and start using in other panels.
 
 <br>
 
-### React Panels & Query Editors
+### React Panels and Query Editors
 
 A major part of all the work that has gone into Grafana v6.0 has been on the migration to React. This investment
 is part of the future-proofing of Grafana's code base and ecosystem. Starting in v6.0 **Panels** and **Data
@@ -130,7 +130,7 @@ Please read [Using Azure Monitor in Grafana documentation](/features/datasources
 
 Grafana now has support for provisioning alert notifiers from configuration files, allowing operators to provision notifiers without using the UI or the API. A new field called `uid` has been introduced which is a string identifier that the administrator can set themselves. This is the same kind of identifier used for dashboards since v5.0. This feature makes it possible to use the same notifier configuration in multiple environments and refer to notifiers in dashboard json by a string identifier instead of the numeric id which depends on insert order and how many notifiers exist in the instance.
 
-## Easier to deploy & improved security
+## Easier to deploy and improved security
 
 Grafana 6.0 removes the need to configure and set up additional storage for [user sessions](/tutorials/ha_setup/#user-sessions). This should make it easier to deploy and operate Grafana in a
 high availability setup and/or if you're using a stateless user session store like Redis, Memcache, Postgres or MySQL.

@@ -15,8 +15,8 @@ import {
 } from './explore';
 import { ExploreUrlState, ExploreMode } from 'app/types/explore';
 import store from 'app/core/store';
-import { LogsDedupStrategy, LogsModel, LogLevel, dateTime } from '@grafana/data';
-import { DataQueryError, RefreshPicker } from '@grafana/ui';
+import { DataQueryError, LogsDedupStrategy, LogsModel, LogLevel, dateTime } from '@grafana/data';
+import { RefreshPicker } from '@grafana/ui';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: null,
@@ -383,6 +383,7 @@ describe('sortLogsResult', () => {
     timeFromNow: '',
     timeLocal: '',
     timeUtc: '',
+    uid: '1',
   };
   const sameAsFirstRow = firstRow;
   const secondRow = {
@@ -396,6 +397,7 @@ describe('sortLogsResult', () => {
     timeFromNow: '',
     timeLocal: '',
     timeUtc: '',
+    uid: '2',
   };
 
   describe('when called with SortOrder.Descending', () => {

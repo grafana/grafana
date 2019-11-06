@@ -156,6 +156,7 @@ describe('ResultProcessor', () => {
               timeLocal: 'format() jest mocked',
               timeUtc: 'format() jest mocked',
               timestamp: 300,
+              uid: '2',
               uniqueLabels: {},
             },
             {
@@ -170,6 +171,7 @@ describe('ResultProcessor', () => {
               timeLocal: 'format() jest mocked',
               timeUtc: 'format() jest mocked',
               timestamp: 200,
+              uid: '1',
               uniqueLabels: {},
             },
             {
@@ -184,6 +186,7 @@ describe('ResultProcessor', () => {
               timeLocal: 'format() jest mocked',
               timeUtc: 'format() jest mocked',
               timestamp: 100,
+              uid: '0',
               uniqueLabels: {},
             },
           ],
