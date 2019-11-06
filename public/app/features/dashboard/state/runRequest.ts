@@ -12,8 +12,13 @@ import {
   DataQueryResponse,
   DataQueryResponseData,
   DataQueryError,
-} from '@grafana/ui';
-import { LoadingState, dateMath, toDataFrame, DataFrame, guessFieldTypes } from '@grafana/data';
+  LoadingState,
+  dateMath,
+  toDataFrame,
+  DataFrame,
+  guessFieldTypes,
+} from '@grafana/data';
+import { ExpressionDatasourceID, expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
 
@@ -33,6 +38,9 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
 
   packets[packet.key || 'A'] = packet;
 
+  let loadingState = packet.state || LoadingState.Done;
+  let error: DataQueryError | undefined = undefined;
+
   // Update the time range
   const range = { ...request.range };
   const timeRange = isString(range.raw.from)
@@ -45,13 +53,18 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
 
   const combinedData = flatten(
     lodashMap(packets, (packet: DataQueryResponse) => {
+      if (packet.error) {
+        loadingState = LoadingState.Error;
+        error = packet.error;
+      }
       return packet.data;
     })
   );
 
   const panelData = {
-    state: packet.state || LoadingState.Done,
+    state: loadingState,
     series: combinedData,
+    error,
     request,
     timeRange,
   };
@@ -132,6 +145,14 @@ function cancelNetworkRequestsOnUnsubscribe(req: DataQueryRequest) {
 }
 
 export function callQueryMethod(datasource: DataSourceApi, request: DataQueryRequest) {
+  // If any query has an expression, use the expression endpoint
+  for (const target of request.targets) {
+    if (target.datasource === ExpressionDatasourceID) {
+      return expressionDatasource.query(request);
+    }
+  }
+
+  // Otherwise it is a standard datasource request
   const returnVal = datasource.query(request);
   return from(returnVal);
 }

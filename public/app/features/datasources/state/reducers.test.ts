@@ -15,7 +15,7 @@ import {
 import { getMockDataSources, getMockDataSource } from '../__mocks__/dataSourcesMocks';
 import { LayoutModes } from 'app/core/components/LayoutSelector/LayoutSelector';
 import { DataSourcesState } from 'app/types';
-import { PluginMetaInfo, PluginType, PluginMeta } from '@grafana/ui';
+import { PluginMetaInfo, PluginType, PluginMeta } from '@grafana/data';
 
 const mockPlugin = () =>
   ({

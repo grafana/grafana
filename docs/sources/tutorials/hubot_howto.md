@@ -1,5 +1,5 @@
 +++
-title = "How To integrate Hubot and Grafana"
+title = "How to integrate Hubot and Grafana"
 type = "docs"
 keywords = ["grafana", "tutorials", "hubot", "slack", "hipchat", "setup", "install", "config"]
 [menu.docs]
@@ -69,7 +69,7 @@ export HUBOT_GRAFANA_S3_REGION=us-standard
 ### Grafana server side rendering
 
 The hubot plugin will take advantage of the Grafana server side rendering feature that can
-render any panel on the server using phantomjs. Grafana ships with a phantomjs binary (linux only).
+render any panel on the server using phantomjs. Grafana ships with a phantomjs binary (Linux only).
 
 To verify that this feature works try the `Direct link to rendered image` link in the panel share dialog.
 If you do not get an image when opening this link verify that the required font packages are installed for phantomjs to work.

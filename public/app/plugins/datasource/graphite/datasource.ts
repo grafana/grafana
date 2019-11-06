@@ -5,6 +5,9 @@ import gfunc from './gfunc';
 import { IQService } from 'angular';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+//Types
+import { GraphiteQuery } from './types';
+import { getSearchFilterScopedVar } from '../../../features/templating/variable';
 
 export class GraphiteDatasource {
   basicAuth: string;
@@ -115,6 +118,21 @@ export class GraphiteDatasource {
       }
     }
     return tags;
+  }
+
+  interpolateVariablesInQueries(queries: GraphiteQuery[]): GraphiteQuery[] {
+    let expandedQueries = queries;
+    if (queries && queries.length > 0) {
+      expandedQueries = queries.map(query => {
+        const expandedQuery = {
+          ...query,
+          datasource: this.name,
+          target: this.templateSrv.replace(query.target),
+        };
+        return expandedQuery;
+      });
+    }
+    return expandedQueries;
   }
 
   annotationQuery(options: { annotation: { target: string; tags: string }; rangeRaw: any }) {
@@ -233,7 +251,10 @@ export class GraphiteDatasource {
 
   metricFindQuery(query: string, optionalOptions: any) {
     const options: any = optionalOptions || {};
-    const interpolatedQuery = this.templateSrv.replace(query);
+    let interpolatedQuery = this.templateSrv.replace(
+      query,
+      getSearchFilterScopedVar({ query, wildcardChar: '', options: optionalOptions })
+    );
 
     // special handling for tag_values(<tag>[,<expression>]*), this is used for template variables
     let matches = interpolatedQuery.match(/^tag_values\(([^,]+)((, *[^,]+)*)\)$/);
@@ -265,6 +286,11 @@ export class GraphiteDatasource {
       options.limit = 10000;
       return this.getTagsAutoComplete(expressions, undefined, options);
     }
+
+    interpolatedQuery = this.templateSrv.replace(
+      query,
+      getSearchFilterScopedVar({ query, wildcardChar: '*', options: optionalOptions })
+    );
 
     const httpOptions: any = {
       method: 'POST',

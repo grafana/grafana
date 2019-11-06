@@ -1,9 +1,5 @@
 import PluginPrism from 'app/features/explore/slate-plugins/prism';
-import BracesPlugin from 'app/features/explore/slate-plugins/braces';
-import ClearPlugin from 'app/features/explore/slate-plugins/clear';
-import NewlinePlugin from 'app/features/explore/slate-plugins/newline';
-import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
-
+import { BracesPlugin, ClearPlugin, RunnerPlugin, NewlinePlugin } from '@grafana/ui';
 import Typeahead from './typeahead';
 import { getKeybindingSrv, KeybindingSrv } from 'app/core/services/keybindingSrv';
 
@@ -215,7 +211,7 @@ class QueryField extends React.Component<any, any> {
     );
   };
 
-  handleBlur = () => {
+  handleBlur = (event: Event, editor: CoreEditor, next: Function) => {
     const { onBlur } = this.props;
     // If we dont wait here, menu clicks wont work because the menu
     // will be gone.
@@ -224,15 +220,17 @@ class QueryField extends React.Component<any, any> {
       onBlur();
     }
     this.restoreEscapeKeyBinding();
+    return next();
   };
 
-  handleFocus = () => {
+  handleFocus = (event: Event, editor: CoreEditor, next: Function) => {
     const { onFocus } = this.props;
     if (onFocus) {
       onFocus();
     }
     // Don't go back to dashboard if Escape pressed inside the editor.
     this.removeEscapeKeyBinding();
+    return next();
   };
 
   removeEscapeKeyBinding() {

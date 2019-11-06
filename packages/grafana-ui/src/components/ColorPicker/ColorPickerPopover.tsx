@@ -1,10 +1,10 @@
 import React from 'react';
 import { NamedColorsPalette } from './NamedColorsPalette';
-import { getColorName, getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
 import { PopoverContentProps } from '../Tooltip/Tooltip';
 import SpectrumPalette from './SpectrumPalette';
-import { GrafanaThemeType, Themeable } from '../../types/theme';
+import { Themeable } from '../../types/theme';
 import { warnAboutColorPickerPropsDeprecation } from './warnAboutColorPickerPropsDeprecation';
+import { GrafanaThemeType, getColorName, getColorFromHexRgbOrName } from '@grafana/data';
 
 export type ColorPickerChangeHandler = (color: string) => void;
 

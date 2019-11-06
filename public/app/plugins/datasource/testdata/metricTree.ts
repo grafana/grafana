@@ -35,6 +35,10 @@ function buildMetricTree(parent: string, depth: number): TreeNode[] {
 }
 
 function queryTree(children: TreeNode[], query: string[], queryIndex: number): TreeNode[] {
+  if (queryIndex >= query.length) {
+    return children;
+  }
+
   if (query[queryIndex] === '*') {
     return children;
   }
@@ -50,7 +54,13 @@ function queryTree(children: TreeNode[], query: string[], queryIndex: number): T
 
   for (const node of children) {
     for (const nameToMatch of namesToMatch) {
-      if (node.name === nameToMatch) {
+      if (nameToMatch.indexOf('*') !== -1) {
+        const pattern = nameToMatch.replace('*', '');
+        const regex = new RegExp(`^${pattern}.*`, 'gi');
+        if (regex.test(node.name)) {
+          result = result.concat(queryTree([node], query, queryIndex + 1));
+        }
+      } else if (node.name === nameToMatch) {
         result = result.concat(queryTree(node.children, query, queryIndex + 1));
       }
     }

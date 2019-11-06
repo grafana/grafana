@@ -24,20 +24,23 @@ import ReactDOM from 'react-dom';
 import { GraphLegendProps, Legend } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
+import { ContextMenuGroup, ContextMenuItem } from '@grafana/ui';
+import { provideTheme, getCurrentTheme } from 'app/core/utils/ConfigProvider';
 import {
+  toUtc,
+  LinkModelSupplier,
+  DataFrameView,
   getValueFormat,
-  ContextMenuGroup,
   FieldDisplay,
-  ContextMenuItem,
   getDisplayProcessor,
   getFlotPairsConstant,
-} from '@grafana/ui';
-import { provideTheme, getCurrentTheme } from 'app/core/utils/ConfigProvider';
-import { toUtc, LinkModelSupplier, DataFrameView } from '@grafana/data';
+  PanelEvents,
+} from '@grafana/data';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { CoreEvents } from 'app/types';
 
 const LegendWithThemeProvider = provideTheme(Legend);
 
@@ -74,12 +77,12 @@ class GraphElement {
     });
 
     // panel events
-    this.ctrl.events.on('panel-teardown', this.onPanelTeardown.bind(this));
-    this.ctrl.events.on('render', this.onRender.bind(this));
+    this.ctrl.events.on(PanelEvents.panelTeardown, this.onPanelTeardown.bind(this));
+    this.ctrl.events.on(PanelEvents.render, this.onRender.bind(this));
 
     // global events
-    appEvents.on('graph-hover', this.onGraphHover.bind(this), scope);
-    appEvents.on('graph-hover-clear', this.onGraphHoverClear.bind(this), scope);
+    appEvents.on(CoreEvents.graphHover, this.onGraphHover.bind(this), scope);
+    appEvents.on(CoreEvents.graphHoverClear, this.onGraphHoverClear.bind(this), scope);
     this.elem.bind('plotselected', this.onPlotSelected.bind(this));
     this.elem.bind('plotclick', this.onPlotClick.bind(this));
 
@@ -212,6 +215,7 @@ class GraphElement {
               url: link.href,
               target: link.target,
               icon: `fa ${link.target === '_self' ? 'fa-link' : 'fa-external-link'}`,
+              onClick: link.onClick,
             };
           }),
         },
@@ -246,19 +250,23 @@ class GraphElement {
       if (item) {
         // pickup y-axis index to know which field's config to apply
         const yAxisConfig = this.panel.yaxes[item.series.yaxis.n === 2 ? 1 : 0];
-        const fieldConfig = {
-          decimals: yAxisConfig.decimals,
-          links: this.panel.options.dataLinks || [],
-        };
         const dataFrame = this.ctrl.dataList[item.series.dataFrameIndex];
         const field = dataFrame.fields[item.series.fieldIndex];
 
+        let links = this.panel.options.dataLinks || [];
+        if (field.config.links && field.config.links.length) {
+          // Append the configured links to the panel datalinks
+          links = [...links, ...field.config.links];
+        }
+        const fieldConfig = {
+          decimals: yAxisConfig.decimals,
+          links,
+        };
         const fieldDisplay = getDisplayProcessor({
           config: fieldConfig,
           theme: getCurrentTheme(),
         })(field.values.get(item.dataIndex));
-
-        linksSupplier = this.panel.options.dataLinks
+        linksSupplier = links.length
           ? getFieldLinksSupplier({
               display: fieldDisplay,
               name: field.name,
@@ -472,13 +480,11 @@ class GraphElement {
       this.plot = $.plot(this.elem, this.sortedSeries, options);
       if (this.ctrl.renderError) {
         delete this.ctrl.error;
-        delete this.ctrl.inspector;
       }
     } catch (e) {
       console.log('flotcharts error', e);
       this.ctrl.error = e.message || 'Render Error';
       this.ctrl.renderError = true;
-      this.ctrl.inspector = { error: e };
     }
 
     if (incrementRenderCounter) {

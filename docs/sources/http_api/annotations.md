@@ -127,7 +127,7 @@ Content-Type: application/json
 ```
 
 > The response for this HTTP request is slightly different in versions prior to v6.4. In prior versions you would
-also get an endId if you where creating a region. But in 6.4 regions are represented using a single event with time &
+also get an endId if you where creating a region. But in 6.4 regions are represented using a single event with time and
 timeEnd properties.
 
 ## Create Annotation in Graphite format

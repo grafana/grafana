@@ -1,7 +1,6 @@
 import { getFlotTickDecimals } from 'app/core/utils/ticks';
 import _ from 'lodash';
-import { getValueFormat, ValueFormatter } from '@grafana/ui';
-import { stringToJsRegex, DecimalCount } from '@grafana/data';
+import { getValueFormat, ValueFormatter, stringToJsRegex, DecimalCount } from '@grafana/data';
 
 function matchSeriesOverride(aliasOrRegex: string, seriesAlias: string) {
   if (!aliasOrRegex) {
@@ -95,6 +94,7 @@ export default class TimeSeries {
   isOutsideRange: boolean;
 
   lines: any;
+  hiddenSeries: boolean;
   dashes: any;
   bars: any;
   points: any;
@@ -200,6 +200,9 @@ export default class TimeSeries {
 
       if (override.yaxis !== void 0) {
         this.yaxis = override.yaxis;
+      }
+      if (override.hiddenSeries !== void 0) {
+        this.hiddenSeries = override.hiddenSeries;
       }
     }
   }

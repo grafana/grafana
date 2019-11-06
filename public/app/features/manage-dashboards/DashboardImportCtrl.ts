@@ -141,6 +141,10 @@ export class DashboardImportCtrl {
       this.autoGenerateUidValue = 'value set';
     }
 
+    if (!this.dash.uid) {
+      return;
+    }
+
     this.backendSrv
       // @ts-ignore
       .getDashboardByUid(this.dash.uid)
