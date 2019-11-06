@@ -108,18 +108,15 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     this.loading = false;
     this.error = err.message || 'Request Error';
-    this.inspector = { error: err };
 
     if (err.data) {
       if (err.data.message) {
         this.error = err.data.message;
-      }
-      if (err.data.error) {
+      } else if (err.data.error) {
         this.error = err.data.error;
       }
     }
 
-    console.log('Panel data error:', err);
     return this.$timeout(() => {
       this.events.emit(PanelEvents.dataError, err);
     });
@@ -131,7 +128,10 @@ class MetricsPanelCtrl extends PanelCtrl {
       if (data.state === LoadingState.Error) {
         this.loading = false;
         this.processDataError(data.error);
-        return;
+        if (!data.series) {
+          // keep current data if the response is empty
+          return;
+        }
       }
 
       // Ignore data in loading state

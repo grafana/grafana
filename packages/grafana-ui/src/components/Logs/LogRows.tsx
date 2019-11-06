@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import memoizeOne from 'memoize-one';
-import { TimeZone, LogsDedupStrategy, LogRowModel } from '@grafana/data';
+import { TimeZone, LogsDedupStrategy, LogRowModel, Field, LinkModel } from '@grafana/data';
 
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
@@ -25,6 +25,7 @@ export interface Props extends Themeable {
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
+  getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 
 interface State {
@@ -80,6 +81,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       theme,
       isLogsPanel,
       previewLimit,
+      getFieldLinks,
     } = this.props;
     const { renderAll } = this.state;
     const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
@@ -116,6 +118,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
               isLogsPanel={isLogsPanel}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
+              getFieldLinks={getFieldLinks}
             />
           ))}
         {hasData &&
@@ -132,6 +135,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
               isLogsPanel={isLogsPanel}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
+              getFieldLinks={getFieldLinks}
             />
           ))}
         {hasData && !renderAll && <span>Rendering {rowCount - previewLimit!} rows...</span>}

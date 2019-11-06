@@ -5,15 +5,17 @@ import _ from 'lodash';
 import { getColorFromHexRgbOrName } from '../utils/namedColorsPalette';
 
 // Types
-import { FieldConfig } from '../types/dataFrame';
+import { FieldConfig, FieldType } from '../types/dataFrame';
 import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
 import { DisplayProcessor, DisplayValue, DecimalCount, DecimalInfo } from '../types/displayValue';
 import { getValueFormat } from '../valueFormats/valueFormats';
 import { getMappedValue } from '../utils/valueMappings';
 import { Threshold } from '../types/threshold';
-// import { GrafanaTheme, GrafanaThemeType, FieldConfig } from '../types/index';
+import { getTimeZoneDateFormatter } from '../datetime/moment_wrapper';
+import { DEFAULT_DATE_TIME_FORMAT } from '../datetime';
 
 interface DisplayProcessorOptions {
+  type?: FieldType;
   config?: FieldConfig;
 
   // Context
@@ -23,6 +25,19 @@ interface DisplayProcessorOptions {
 
 export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayProcessor {
   if (options && !_.isEmpty(options)) {
+    if (options.type && options.type === FieldType.time) {
+      return (value: any) => {
+        let dateFormat = DEFAULT_DATE_TIME_FORMAT;
+        if (options.config && options.config.dateDisplayFormat) {
+          dateFormat = options.config.dateDisplayFormat;
+        }
+        const formatedDate = getTimeZoneDateFormatter(options.isUtc ? 'utc' : 'browser')(value, dateFormat);
+        return {
+          numeric: value,
+          text: formatedDate,
+        };
+      };
+    }
     const field = options.config ? options.config : {};
     const formatFunc = getValueFormat(field.unit || 'none');
 

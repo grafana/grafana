@@ -17,7 +17,7 @@ export enum FieldType {
 /**
  * Every property is optional
  *
- * Plugins may extend this with additional properties.  Somethign like series overrides
+ * Plugins may extend this with additional properties. Something like series overrides
  */
 export interface FieldConfig {
   title?: string; // The display value for this field.  This supports template variables blank is auto
@@ -43,6 +43,9 @@ export interface FieldConfig {
 
   // Alternative to empty string
   noValue?: string;
+
+  // Used for time field formatting
+  dateDisplayFormat?: string;
 }
 
 export interface Field<T = any, V = Vector<T>> {

@@ -281,6 +281,7 @@ export interface ExploreQueryFieldProps<
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > extends QueryEditorProps<DSType, TQuery, TOptions> {
   history: any[];
+  onBlur?: () => void;
   onHint?: (action: QueryFixAction) => void;
 }
 
@@ -375,6 +376,11 @@ export interface DataQueryResponse {
    * Multiple responses with same key are replaced (latest used)
    */
   key?: string;
+
+  /**
+   * Optionally include error info along with the response data
+   */
+  error?: DataQueryError;
 
   /**
    * Use this to control which state the response should have

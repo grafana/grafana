@@ -165,24 +165,22 @@ function isLogsData(series: DataFrame) {
   return series.fields.some(f => f.type === FieldType.time) && series.fields.some(f => f.type === FieldType.string);
 }
 
+/**
+ * Convert dataFrame into LogsModel which consists of creating separate array of log rows and metrics series. Metrics
+ * series can be either already included in the dataFrame or will be computed from the log rows.
+ * @param dataFrame
+ * @param intervalMs In case there are no metrics series, we use this for computing it from log rows.
+ */
 export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number): LogsModel {
-  const metricSeries: DataFrame[] = [];
-  const logSeries: DataFrame[] = [];
-
-  for (const series of dataFrame) {
-    if (isLogsData(series)) {
-      logSeries.push(series);
-      continue;
-    }
-
-    metricSeries.push(series);
-  }
-
+  const { logSeries, metricSeries } = separateLogsAndMetrics(dataFrame);
   const logsModel = logSeriesToLogsModel(logSeries);
+
   if (logsModel) {
     if (metricSeries.length === 0) {
+      // Create metrics from logs
       logsModel.series = makeSeriesForLogs(logsModel.rows, intervalMs);
     } else {
+      // We got metrics in the dataFrame so process those
       logsModel.series = getGraphSeriesModel(
         metricSeries,
         {},
@@ -206,23 +204,33 @@ export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number)
   };
 }
 
-export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
+function separateLogsAndMetrics(dataFrame: DataFrame[]) {
+  const metricSeries: DataFrame[] = [];
+  const logSeries: DataFrame[] = [];
+
+  for (const series of dataFrame) {
+    if (isLogsData(series)) {
+      logSeries.push(series);
+      continue;
+    }
+
+    metricSeries.push(series);
+  }
+
+  return { logSeries, metricSeries };
+}
+
+const logTimeFormat = 'YYYY-MM-DD HH:mm:ss';
+
+/**
+ * Converts dataFrames into LogsModel. This involves merging them into one list, sorting them and computing metadata
+ * like common labels.
+ */
+export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefined {
   if (logSeries.length === 0) {
     return undefined;
   }
-
-  const allLabels: Labels[] = [];
-  for (let n = 0; n < logSeries.length; n++) {
-    const series = logSeries[n];
-    if (series.labels) {
-      allLabels.push(series.labels);
-    }
-  }
-
-  let commonLabels: Labels = {};
-  if (allLabels.length > 0) {
-    commonLabels = findCommonLabels(allLabels);
-  }
+  const commonLabels = findCommonLabelsFromDataFrames(logSeries);
 
   const rows: LogRowModel[] = [];
   let hasUniqueLabels = false;
@@ -236,6 +244,8 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
     }
 
     const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
+    // Assume the first string field in the dataFrame is the message. This was right so far but probably needs some
+    // more explicit checks.
     const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
     const logLevelField = fieldCache.getFieldByName('level');
     const idField = getIdField(fieldCache);
@@ -248,14 +258,13 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
     for (let j = 0; j < series.length; j++) {
       const ts = timeField.values.get(j);
       const time = dateTime(ts);
-      const timeEpochMs = time.valueOf();
-      const timeFromNow = time.fromNow();
-      const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
-      const timeUtc = toUtc(ts).format('YYYY-MM-DD HH:mm:ss');
 
-      let message = stringField.values.get(j);
+      const messageValue: unknown = stringField.values.get(j);
       // This should be string but sometimes isn't (eg elastic) because the dataFrame is not strongly typed.
-      message = typeof message === 'string' ? message : JSON.stringify(message);
+      const message: string = typeof messageValue === 'string' ? messageValue : JSON.stringify(messageValue);
+
+      const hasAnsi = hasAnsiCodes(message);
+      const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
 
       let logLevel = LogLevel.unknown;
       if (logLevelField) {
@@ -265,15 +274,16 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
       } else {
         logLevel = getLogLevel(message);
       }
-      const hasAnsi = hasAnsiCodes(message);
-      const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
 
       rows.push({
+        entryFieldIndex: stringField.index,
+        rowIndex: j,
+        dataFrame: series,
         logLevel,
-        timeFromNow,
-        timeEpochMs,
-        timeLocal,
-        timeUtc,
+        timeFromNow: time.fromNow(),
+        timeEpochMs: time.valueOf(),
+        timeLocal: time.format(logTimeFormat),
+        timeUtc: toUtc(ts).format(logTimeFormat),
         uniqueLabels,
         hasAnsi,
         searchWords,
@@ -311,6 +321,21 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
     meta,
     rows,
   };
+}
+
+function findCommonLabelsFromDataFrames(logSeries: DataFrame[]): Labels {
+  const allLabels: Labels[] = [];
+  for (let n = 0; n < logSeries.length; n++) {
+    const series = logSeries[n];
+    if (series.labels) {
+      allLabels.push(series.labels);
+    }
+  }
+
+  if (allLabels.length > 0) {
+    return findCommonLabels(allLabels);
+  }
+  return {};
 }
 
 function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {

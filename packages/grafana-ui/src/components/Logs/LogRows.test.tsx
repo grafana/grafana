@@ -2,7 +2,7 @@ import React from 'react';
 import { range } from 'lodash';
 import { LogRows, PREVIEW_LIMIT } from './LogRows';
 import { mount } from 'enzyme';
-import { LogLevel, LogRowModel, LogsDedupStrategy } from '@grafana/data';
+import { LogLevel, LogRowModel, LogsDedupStrategy, MutableDataFrame } from '@grafana/data';
 import { LogRow } from './LogRow';
 
 describe('LogRows', () => {
@@ -87,10 +87,14 @@ describe('LogRows', () => {
   });
 });
 
-const makeLog = (overides: Partial<LogRowModel>): LogRowModel => {
-  const uid = overides.uid || '1';
+const makeLog = (overrides: Partial<LogRowModel>): LogRowModel => {
+  const uid = overrides.uid || '1';
   const entry = `log message ${uid}`;
   return {
+    entryFieldIndex: 0,
+    rowIndex: 0,
+    // Does not need to be filled with current tests
+    dataFrame: new MutableDataFrame(),
     uid,
     logLevel: LogLevel.debug,
     entry,
@@ -103,6 +107,6 @@ const makeLog = (overides: Partial<LogRowModel>): LogRowModel => {
     timeLocal: '',
     timeUtc: '',
     searchWords: [],
-    ...overides,
+    ...overrides,
   };
 };

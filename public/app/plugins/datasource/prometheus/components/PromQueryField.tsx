@@ -297,6 +297,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
               query={query.expr}
               onTypeahead={this.onTypeahead}
               onWillApplySuggestion={willApplySuggestion}
+              onBlur={this.props.onBlur}
               onChange={this.onChangeQuery}
               onRunQuery={this.props.onRunQuery}
               placeholder="Enter a PromQL query"
