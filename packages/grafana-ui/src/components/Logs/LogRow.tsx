@@ -1,33 +1,37 @@
 import React, { PureComponent } from 'react';
 import { LogRowModel, TimeZone, DataQueryResponse } from '@grafana/data';
-import { cx } from 'emotion';
+
 import {
   LogRowContextRows,
   LogRowContextQueryErrors,
   HasMoreContextRows,
   LogRowContextProvider,
 } from './LogRowContextProvider';
-import { LogLabels } from './LogLabels';
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
+
+//Components
+import { LogDetails } from './LogDetails';
 import { LogRowMessage } from './LogRowMessage';
 
 interface Props extends Themeable {
   highlighterExpressions?: string[];
   row: LogRowModel;
   showDuplicates: boolean;
-  showLabels: boolean;
   showTime: boolean;
   timeZone: TimeZone;
+  isLogsPanel?: boolean;
   getRows: () => LogRowModel[];
-  onClickLabel?: (label: string, value: string) => void;
+  onClickFilterLabel?: (key: string, value: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string) => void;
   onContextClick?: () => void;
   getRowContext: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>;
 }
 
 interface State {
   showContext: boolean;
+  showDetails: boolean;
 }
 
 /**
@@ -40,12 +44,21 @@ interface State {
 class UnThemedLogRow extends PureComponent<Props, State> {
   state: State = {
     showContext: false,
+    showDetails: false,
   };
 
   toggleContext = () => {
     this.setState(state => {
       return {
         showContext: !state.showContext,
+      };
+    });
+  };
+
+  toggleDetails = () => {
+    this.setState(state => {
+      return {
+        showDetails: !state.showDetails,
       };
     });
   };
@@ -58,57 +71,66 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   ) {
     const {
       getRows,
+      onClickFilterLabel,
+      onClickFilterOutLabel,
       highlighterExpressions,
-      onClickLabel,
+      isLogsPanel,
       row,
       showDuplicates,
-      showLabels,
       timeZone,
       showTime,
       theme,
     } = this.props;
-    const { showContext } = this.state;
+    const { showDetails, showContext } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
     const showUtc = timeZone === 'utc';
 
     return (
-      <div className={cx([style.logsRow])}>
+      <div className={style.logsRow}>
         {showDuplicates && (
-          <div className={cx([style.logsRowDuplicates])}>
+          <div className={style.logsRowDuplicates}>
             {row.duplicates && row.duplicates > 0 ? `${row.duplicates + 1}x` : null}
           </div>
         )}
-        <div className={cx([style.logsRowLevel])} />
-        {showTime && showUtc && (
-          <div className={cx([style.logsRowLocalTime])} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
-            {row.timeUtc}
+        <div className={style.logsRowLevel} />
+        {!isLogsPanel && (
+          <div title="See log details" onClick={this.toggleDetails} className={style.logsRowToggleDetails}>
+            <i className={showDetails ? 'fa fa-chevron-up' : 'fa fa-chevron-down'} />
           </div>
         )}
-        {showTime && !showUtc && (
-          <div className={cx([style.logsRowLocalTime])} title={`${row.timeUtc} (${row.timeFromNow})`}>
-            {row.timeLocal}
-          </div>
-        )}
-        {showLabels && (
-          <div className={cx([style.logsRowLabels])}>
-            <LogLabels
+        <div>
+          <div>
+            {showTime && showUtc && (
+              <div className={style.logsRowLocalTime} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
+                {row.timeUtc}
+              </div>
+            )}
+            {showTime && !showUtc && (
+              <div className={style.logsRowLocalTime} title={`${row.timeUtc} (${row.timeFromNow})`}>
+                {row.timeLocal}
+              </div>
+            )}
+            <LogRowMessage
+              highlighterExpressions={highlighterExpressions}
+              row={row}
               getRows={getRows}
-              labels={row.uniqueLabels ? row.uniqueLabels : {}}
-              onClickLabel={onClickLabel}
+              errors={errors}
+              hasMoreContextRows={hasMoreContextRows}
+              updateLimit={updateLimit}
+              context={context}
+              showContext={showContext}
+              onToggleContext={this.toggleContext}
             />
           </div>
-        )}
-        <LogRowMessage
-          highlighterExpressions={highlighterExpressions}
-          row={row}
-          getRows={getRows}
-          errors={errors}
-          hasMoreContextRows={hasMoreContextRows}
-          updateLimit={updateLimit}
-          context={context}
-          showContext={showContext}
-          onToggleContext={this.toggleContext}
-        />
+          {this.state.showDetails && (
+            <LogDetails
+              onClickFilterLabel={onClickFilterLabel}
+              onClickFilterOutLabel={onClickFilterOutLabel}
+              getRows={getRows}
+              row={row}
+            />
+          )}
+        </div>
       </div>
     );
   }

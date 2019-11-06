@@ -13,6 +13,7 @@ export interface BuildInfo {
 
 interface FeatureToggles {
   transformations: boolean;
+  inspect: boolean;
   expressions: boolean;
 }
 export class GrafanaBootConfig {
@@ -48,6 +49,7 @@ export class GrafanaBootConfig {
   pluginsToPreload: string[] = [];
   featureToggles: FeatureToggles = {
     transformations: false,
+    inspect: false,
     expressions: false,
   };
 

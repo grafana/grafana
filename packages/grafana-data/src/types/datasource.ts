@@ -377,6 +377,11 @@ export interface DataQueryResponse {
   key?: string;
 
   /**
+   * Optionally include error info along with the response data
+   */
+  error?: DataQueryError;
+
+  /**
    * Use this to control which state the response should have
    * Defaults to LoadingState.Done if state is not defined
    */
