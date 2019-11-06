@@ -32,7 +32,7 @@ RUN apk add --no-cache ca-certificates bash tzdata && \
     wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.30-r0/glibc-bin-2.30-r0.apk \
       -O /tmp/glibc-bin-2.30-r0.apk && \
     apk add --allow-untrusted /tmp/glibc-2.30-r0.apk /tmp/glibc-bin-2.30-r0.apk && \
-    rn -f /tmp/glibc-2.30-r0.apk && \
+    rm -f /tmp/glibc-2.30-r0.apk && \
     rm -f /tmp/glibc-bin-2.30-r0.apk
 
 # PhantomJS
