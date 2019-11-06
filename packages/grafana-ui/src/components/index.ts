@@ -79,6 +79,7 @@ export { CallToActionCard } from './CallToActionCard/CallToActionCard';
 export { ContextMenu, ContextMenuItem, ContextMenuGroup, ContextMenuProps } from './ContextMenu/ContextMenu';
 export { VariableSuggestion, VariableOrigin } from './DataLinks/DataLinkSuggestions';
 export { DataLinksEditor } from './DataLinks/DataLinksEditor';
+export { DataLinkInput } from './DataLinks/DataLinkInput';
 export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './Legend/SeriesIcon';
 export { transformersUIRegistry } from './TransformersUI/transformers';

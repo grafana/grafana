@@ -1,7 +1,9 @@
 import React from 'react';
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
-import { FormField, DataSourceHttpSettings } from '@grafana/ui';
+import { DataSourceHttpSettings } from '@grafana/ui';
 import { LokiOptions } from '../types';
+import { MaxLinesField } from './MaxLinesField';
+import { DerivedFields } from './DerivedFields';
 
 export type Props = DataSourcePluginOptionsEditorProps<LokiOptions>;
 
@@ -19,6 +21,7 @@ const makeJsonUpdater = <T extends any>(field: keyof LokiOptions) => (
 };
 
 const setMaxLines = makeJsonUpdater('maxLines');
+const setDerivedFields = makeJsonUpdater('derivedFields');
 
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
@@ -42,39 +45,11 @@ export const ConfigEditor = (props: Props) => {
           </div>
         </div>
       </div>
+
+      <DerivedFields
+        value={options.jsonData.derivedFields}
+        onChange={value => onOptionsChange(setDerivedFields(options, value))}
+      />
     </>
-  );
-};
-
-type MaxLinesFieldProps = {
-  value: string;
-  onChange: (value: string) => void;
-};
-
-const MaxLinesField = (props: MaxLinesFieldProps) => {
-  const { value, onChange } = props;
-  return (
-    <FormField
-      label="Maximum lines"
-      labelWidth={11}
-      inputWidth={20}
-      inputEl={
-        <input
-          type="number"
-          className="gf-form-input width-8 gf-form-input--has-help-icon"
-          value={value}
-          onChange={event => onChange(event.currentTarget.value)}
-          spellCheck={false}
-          placeholder="1000"
-        />
-      }
-      tooltip={
-        <>
-          Loki queries must contain a limit of the maximum number of lines returned (default: 1000). Increase this limit
-          to have a bigger result set for ad-hoc analysis. Decrease this limit if your browser becomes sluggish when
-          displaying the log results.
-        </>
-      }
-    />
   );
 };
