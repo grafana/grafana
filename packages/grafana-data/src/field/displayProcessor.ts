@@ -12,6 +12,7 @@ import { getValueFormat } from '../valueFormats/valueFormats';
 import { getMappedValue } from '../utils/valueMappings';
 import { Threshold } from '../types/threshold';
 import { getTimeZoneDateFormatter } from '../datetime/moment_wrapper';
+import { DEFAULT_DATE_TIME_FORMAT } from '../datetime';
 
 interface DisplayProcessorOptions {
   type?: FieldType;
@@ -19,7 +20,6 @@ interface DisplayProcessorOptions {
 
   // Context
   isUtc?: boolean;
-  dateFormat?: string;
   theme?: GrafanaTheme; // Will pick 'dark' if not defined
 }
 
@@ -27,7 +27,11 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   if (options && !_.isEmpty(options)) {
     if (options.type && options.type === FieldType.time) {
       return (value: any) => {
-        const formatedDate = getTimeZoneDateFormatter(options.isUtc ? 'utc' : 'browser')(value, options.dateFormat);
+        let dateFormat = DEFAULT_DATE_TIME_FORMAT;
+        if (options.config && options.config.dateDisplayFormat) {
+          dateFormat = options.config.dateDisplayFormat;
+        }
+        const formatedDate = getTimeZoneDateFormatter(options.isUtc ? 'utc' : 'browser')(value, dateFormat);
         return {
           numeric: value,
           text: formatedDate,
