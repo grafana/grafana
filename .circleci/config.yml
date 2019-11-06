@@ -405,7 +405,7 @@ jobs:
       - run: docker info
       - run: docker run --privileged linuxkit/binfmt:v0.6
       - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
-      - run: cd packaging/docker && ./build-deploy.sh "master-${CIRCLE_SHA1}" --ubuntu
+      - run: cd packaging/docker && ./build-deploy.sh --ubuntu "master-${CIRCLE_SHA1}"
       - run: rm packaging/docker/grafana-latest.linux-*.tar.gz
       - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64-glibc.tar.gz packaging/docker/grafana-latest.linux-x64-glibc.tar.gz
       - run: cd packaging/docker && ./build-enterprise.sh --ubuntu "master"
