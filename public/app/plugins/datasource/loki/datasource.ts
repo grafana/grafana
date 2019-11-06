@@ -1,5 +1,5 @@
 // Libraries
-import { isEmpty, isString } from 'lodash';
+import _ from 'lodash';
 // Services & Utils
 import {
   dateMath,
@@ -216,7 +216,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       });
 
     // No valid targets, return the empty result to save a round trip.
-    if (isEmpty(subQueries)) {
+    if (_.isEmpty(subQueries)) {
       return of({
         data: [],
         state: LoadingState.Done,
@@ -233,7 +233,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          expr: this.templateSrv.replace(query.expr),
+          expr: this.templateSrv.replace(query.expr, {}, this.interpolateQueryExpr),
         };
         return expandedQuery;
       });
@@ -252,6 +252,20 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       const data: any = { data: { data: res.data.values || [] } };
       return data;
     });
+  }
+
+  interpolateQueryExpr(value: any, variable: any, defaultFormatFn: any) {
+    // if no multi or include all do not regexEscape
+    if (!variable.multi && !variable.includeAll) {
+      return lokiRegularEscape(value);
+    }
+
+    if (typeof value === 'string') {
+      return lokiSpecialRegexEscape(value);
+    }
+
+    const escapedValues = _.map(value, lokiSpecialRegexEscape);
+    return escapedValues.join('|');
   }
 
   modifyQuery(query: LokiQuery, action: any): LokiQuery {
@@ -278,7 +292,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   getTime(date: string | DateTime, roundUp: boolean) {
-    if (isString(date)) {
+    if (_.isString(date)) {
       date = dateMath.parse(date, roundUp);
     }
     return Math.ceil(date.valueOf() * 1e6);
@@ -428,6 +442,20 @@ function queryRequestFromAnnotationOptions(options: AnnotationQueryRequest<LokiQ
     interval: '',
     intervalMs: 0,
   };
+}
+
+export function lokiRegularEscape(value: any) {
+  if (typeof value === 'string') {
+    return value.replace(/'/g, "\\\\'");
+  }
+  return value;
+}
+
+export function lokiSpecialRegexEscape(value: any) {
+  if (typeof value === 'string') {
+    return lokiRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&'));
+  }
+  return value;
 }
 
 export default LokiDatasource;
