@@ -83,7 +83,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   prepareLiveTarget(target: LokiQuery, options: DataQueryRequest<LokiQuery>): LiveTarget {
-    const interpolated = this.templateSrv.replace(target.expr);
+    const interpolated = this.templateSrv.replace(target.expr, {}, this.interpolateQueryExpr);
     const { query, regexp } = parseQuery(interpolated);
     const refId = target.refId;
     const baseUrl = this.instanceSettings.url;
@@ -100,7 +100,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   prepareQueryTarget(target: LokiQuery, options: DataQueryRequest<LokiQuery>) {
-    const interpolated = this.templateSrv.replace(target.expr);
+    const interpolated = this.templateSrv.replace(target.expr, {}, this.interpolateQueryExpr);
     const { query, regexp } = parseQuery(interpolated);
     const start = this.getTime(options.range.from, false);
     const end = this.getTime(options.range.to, true);
@@ -121,7 +121,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       message: (err && err.statusText) || 'Unknown error during query transaction. Please check JS console logs.',
       refId: target.refId,
     };
-
     if (err.data) {
       if (typeof err.data === 'string') {
         error.message = err.data;
