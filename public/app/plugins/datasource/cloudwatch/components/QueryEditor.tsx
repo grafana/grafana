@@ -6,7 +6,7 @@ import CloudWatchDatasource from '../datasource';
 import { SelectableStrings } from '../types';
 import { Stats, Dimensions, QueryInlineField, QueryField, Alias } from './';
 
-type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery>;
+export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery>;
 
 interface State {
   regions: SelectableStrings;
