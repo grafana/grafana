@@ -92,7 +92,8 @@ def remove_long_paths():
         '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/components/InsightsConfig.test.tsx',
         '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/components/__snapshots__/AnalyticsConfig.test.tsx.snap',
         '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/components/__snapshots__/AzureCredentialsForm.test.tsx.snap',
-        '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/components/__snapshots__/InsightsConfig.test.tsx.snap'
+        '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/components/__snapshots__/InsightsConfig.test.tsx.snap',
+        '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/components/__snapshots__/ConfigEditor.test.tsx.snap'
     ]
     for file in long_files:
         if os.path.isfile(file):
