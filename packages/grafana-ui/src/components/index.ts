@@ -87,6 +87,7 @@ export { TransformationsEditor } from './TransformersUI/TransformationsEditor';
 export { JSONFormatter } from './JSONFormatter/JSONFormatter';
 export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
 export { ErrorBoundary, ErrorBoundaryAlert } from './ErrorBoundary/ErrorBoundary';
+export { ErrorWithStack } from './ErrorBoundary/ErrorWithStack';
 export { AlphaNotice } from './AlphaNotice/AlphaNotice';
 export { DataSourceHttpSettings } from './DataSourceSettings/DataSourceHttpSettings';
 export { Spinner } from './Spinner/Spinner';
