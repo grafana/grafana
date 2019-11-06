@@ -1,4 +1,4 @@
-import { transformers, transformDataToTable } from '../transformers';
+import { transformDataToTable, transformers } from '../transformers';
 
 describe('when transforming time series table', () => {
   let table: any;
@@ -297,6 +297,105 @@ describe('when transforming time series table', () => {
       it('should return 1 rows', () => {
         expect(table.rows.length).toBe(1);
         expect(table.rows[0][0]).toBe(1000);
+      });
+    });
+  });
+
+  describe('given time series and table data', () => {
+    const time = new Date().getTime();
+    const data = [
+      {
+        target: 'series1',
+        datapoints: [[12.12, time], [14.44, time + 1]],
+      },
+      {
+        columns: [
+          {
+            type: 'time',
+            text: 'Time',
+          },
+          {
+            text: 'mean',
+          },
+        ],
+        type: 'table',
+        rows: [[time, 13.13], [time + 1, 26.26]],
+      },
+    ];
+
+    describe('timeseries_to_rows', () => {
+      const panel = {
+        transform: 'timeseries_to_rows',
+        sort: { col: 0, desc: true },
+      };
+
+      beforeEach(() => {
+        table = transformDataToTable(data, panel);
+      });
+
+      it('should return 2 rows', () => {
+        expect(table.rows.length).toBe(2);
+        expect(table.rows[0][1]).toBe('series1');
+        expect(table.rows[1][1]).toBe('series1');
+        expect(table.rows[0][2]).toBe(12.12);
+      });
+
+      it('should return 3 columns', () => {
+        expect(table.columns.length).toBe(3);
+        expect(table.columns[0].text).toBe('Time');
+        expect(table.columns[1].text).toBe('Metric');
+        expect(table.columns[2].text).toBe('Value');
+      });
+    });
+
+    describe('timeseries_to_columns', () => {
+      const panel = {
+        transform: 'timeseries_to_columns',
+      };
+
+      beforeEach(() => {
+        table = transformDataToTable(data, panel);
+      });
+
+      it('should return 2 columns', () => {
+        expect(table.columns.length).toBe(2);
+        expect(table.columns[0].text).toBe('Time');
+        expect(table.columns[1].text).toBe('series1');
+      });
+
+      it('should return 2 rows', () => {
+        expect(table.rows.length).toBe(2);
+        expect(table.rows[0][1]).toBe(12.12);
+      });
+
+      it('should be undefined when no value for timestamp', () => {
+        expect(table.rows[1][2]).toBe(undefined);
+      });
+    });
+
+    describe('timeseries_aggregations', () => {
+      const panel = {
+        transform: 'timeseries_aggregations',
+        sort: { col: 0, desc: true },
+        columns: [{ text: 'Max', value: 'max' }, { text: 'Min', value: 'min' }],
+      };
+
+      beforeEach(() => {
+        table = transformDataToTable(data, panel);
+      });
+
+      it('should return 1 row', () => {
+        expect(table.rows.length).toBe(1);
+        expect(table.rows[0][0]).toBe('series1');
+        expect(table.rows[0][1]).toBe(14.44);
+        expect(table.rows[0][2]).toBe(12.12);
+      });
+
+      it('should return 2 columns', () => {
+        expect(table.columns.length).toBe(3);
+        expect(table.columns[0].text).toBe('Metric');
+        expect(table.columns[1].text).toBe('Max');
+        expect(table.columns[2].text).toBe('Min');
       });
     });
   });

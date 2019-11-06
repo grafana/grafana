@@ -6,6 +6,33 @@ import { TableTransform } from './types';
 import { Column, TableData } from '@grafana/data';
 
 const transformers: { [key: string]: TableTransform } = {};
+const timeSeriesReducer = (data: any): any[] => {
+  if (!Array.isArray(data)) {
+    return data.datapoints ? [data] : [];
+  }
+
+  return data.reduce((acc, series) => {
+    if (!series.datapoints) {
+      return acc;
+    }
+
+    return acc.concat(series);
+  }, []);
+};
+
+const tableReducer = (data: any): any[] => {
+  if (!Array.isArray(data)) {
+    return data.columns ? [data] : [];
+  }
+
+  return data.reduce((acc, series) => {
+    if (!series.columns) {
+      return acc;
+    }
+
+    return acc.concat(series);
+  }, []);
+};
 
 transformers['timeseries_to_rows'] = {
   description: 'Time series to rows',
@@ -23,6 +50,7 @@ transformers['timeseries_to_rows'] = {
       }
     }
   },
+  dataFormatReducer: timeSeriesReducer,
 };
 
 transformers['timeseries_to_columns'] = {
@@ -65,6 +93,7 @@ transformers['timeseries_to_columns'] = {
       model.rows.push(values);
     }
   },
+  dataFormatReducer: timeSeriesReducer,
 };
 
 transformers['timeseries_aggregations'] = {
@@ -103,6 +132,7 @@ transformers['timeseries_aggregations'] = {
       model.rows.push(cells);
     }
   },
+  dataFormatReducer: timeSeriesReducer,
 };
 
 transformers['annotations'] = {
@@ -171,6 +201,7 @@ transformers['table'] = {
 
     mergeTablesIntoModel(model, ...data);
   },
+  dataFormatReducer: tableReducer,
 };
 
 transformers['json'] = {
@@ -254,7 +285,8 @@ function transformDataToTable(data: any, panel: any) {
     throw { message: 'Transformer ' + panel.transform + ' not found' };
   }
 
-  transformer.transform(data, panel, model);
+  const reducedData = transformer.dataFormatReducer ? transformer.dataFormatReducer(data) : data;
+  transformer.transform(reducedData, panel, model);
   return model;
 }
 

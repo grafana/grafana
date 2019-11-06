@@ -6,6 +6,7 @@ export interface TableTransform {
   description: string;
   getColumns(data?: any): any[];
   transform(data: any, panel: any, model: TableModel): void;
+  dataFormatReducer?(data: any): any[];
 }
 
 export interface ColumnRender extends Column {
