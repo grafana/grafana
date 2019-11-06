@@ -1,5 +1,5 @@
 // Libraries
-import _ from 'lodash';
+import { isEmpty, isString, map as lodashMap } from 'lodash';
 // Services & Utils
 import {
   dateMath,
@@ -215,7 +215,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       });
 
     // No valid targets, return the empty result to save a round trip.
-    if (_.isEmpty(subQueries)) {
+    if (isEmpty(subQueries)) {
       return of({
         data: [],
         state: LoadingState.Done,
@@ -263,7 +263,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       return lokiSpecialRegexEscape(value);
     }
 
-    const escapedValues = _.map(value, lokiSpecialRegexEscape);
+    const escapedValues = lodashMap(value, lokiSpecialRegexEscape);
     return escapedValues.join('|');
   }
 
@@ -291,7 +291,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   getTime(date: string | DateTime, roundUp: boolean) {
-    if (_.isString(date)) {
+    if (isString(date)) {
       date = dateMath.parse(date, roundUp);
     }
     return Math.ceil(date.valueOf() * 1e6);
