@@ -1,4 +1,4 @@
-import React, { SFC } from 'react';
+import React, { FunctionComponent } from 'react';
 import { SelectableStrings } from '../types';
 import { SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';
@@ -17,7 +17,7 @@ const options: SelectableStrings = ['Average', 'Maximum', 'Minimum', 'Sum', 'Sam
 const removeText = '-- remove stat --';
 const removeOption: SelectableValue<string> = { label: removeText, value: removeText };
 
-export const Stats: SFC<Props> = ({ values, onChange, variableOptionGroup }) => (
+export const Stats: FunctionComponent<Props> = ({ values, onChange, variableOptionGroup }) => (
   <>
     {values &&
       values.map((value, index) => (
