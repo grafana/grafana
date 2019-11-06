@@ -1,8 +1,6 @@
 import cloneDeep from 'lodash/cloneDeep';
 import omit from 'lodash/omit';
 
-import { VizOrientation, PanelModel } from '../../types/panel';
-import { FieldDisplayOptions } from '../../utils/fieldDisplay';
 import {
   fieldReducers,
   Threshold,
@@ -11,6 +9,9 @@ import {
   ReducerID,
   ValueMapping,
   MappingType,
+  VizOrientation,
+  PanelModel,
+  FieldDisplayOptions,
 } from '@grafana/data';
 
 export interface SingleStatBaseOptions {
@@ -72,7 +73,7 @@ export function sharedSingleStatPanelChangedHandler(
     }
 
     // Convert value mappings
-    const mappings = convertOldAngulrValueMapping(panel);
+    const mappings = convertOldAngularValueMapping(panel);
     if (mappings && mappings.length) {
       defaults.mappings = mappings;
     }
@@ -192,7 +193,7 @@ export function migrateOldThresholds(thresholds?: any[]): Threshold[] | undefine
 /**
  * Convert the angular single stat mapping to new react style
  */
-export function convertOldAngulrValueMapping(panel: any): ValueMapping[] {
+export function convertOldAngularValueMapping(panel: any): ValueMapping[] {
   const mappings: ValueMapping[] = [];
 
   // Guess the right type based on options

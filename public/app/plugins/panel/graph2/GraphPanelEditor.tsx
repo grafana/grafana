@@ -3,7 +3,8 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Types
-import { PanelEditorProps, Switch, LegendOptions } from '@grafana/ui';
+import { PanelEditorProps } from '@grafana/data';
+import { Switch, LegendOptions } from '@grafana/ui';
 import { Options, GraphOptions } from './types';
 import { GraphLegendEditor } from './GraphLegendEditor';
 

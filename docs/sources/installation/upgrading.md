@@ -13,7 +13,7 @@ weight = 10
 # Upgrading Grafana
 
 We recommend everyone to upgrade Grafana often to stay up to date with the latest fixes and enhancements.
-In order make this a reality Grafana upgrades are backward compatible and the upgrade process is simple & quick.
+In order make this a reality Grafana upgrades are backward compatible and the upgrade process is simple and quick.
 
 Upgrading is generally always safe (between many minor and one major version) and dashboards and graphs will look the same. There can be minor breaking changes in some edge cases which are usually outlined in the [Release Notes](https://community.grafana.com/c/releases) and [Changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
 
@@ -28,13 +28,13 @@ You can update all plugins using
 grafana-cli plugins update-all
 ```
 
-## Database Backup
+## Database backup
 
 Before upgrading it can be a good idea to backup your Grafana database. This will ensure that you can always rollback to your previous version. During startup, Grafana will automatically migrate the database schema (if there are changes or new tables). Sometimes this can cause issues if you later want to downgrade.
 
 #### sqlite
 
-If you use sqlite you only need to make a backup of your `grafana.db` file. This is usually located at `/var/lib/grafana/grafana.db` on unix system.
+If you use sqlite you only need to make a backup of your `grafana.db` file. This is usually located at `/var/lib/grafana/grafana.db` on Unix systems.
 If you are unsure what database you use and where it is stored check you grafana configuration file. If you
 installed grafana to custom location using a binary tar/zip it is usually in `<grafana_install_dir>/data`.
 
@@ -100,7 +100,7 @@ docker run --name=my-grafana-container --restart=always -v /var/lib/grafana:/var
 
 ### Windows
 
-If you downloaded the windows binary package you can just download a newer package and extract
+If you downloaded the Windows binary package you can just download a newer package and extract
 to the same location (and overwrite the existing files). This might overwrite your config changes. We
 recommend you place your config changes in a file named  `<grafana_install_dir>/conf/custom.ini`
 as this will make upgrades easier without risking losing your config changes.
@@ -197,3 +197,10 @@ is `7.0+` and `max concurrent shard requests` properly configured. 256 was the d
 ## Upgrading to v6.4
 
 One of the database migrations included in this release will merge multiple rows used to represent an annotation range into a single row.  If you have a large number of region annotations the database migration may take a long time to complete.  See [Upgrading to v5.2](#upgrading-to-v5-2) for tips on how to manage this process.
+
+Plugins that need updating:
+
+* [Splunk](https://grafana.com/grafana/plugins/grafana-splunk-datasource)
+
+
+

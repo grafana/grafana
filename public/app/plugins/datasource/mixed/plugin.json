@@ -6,7 +6,6 @@
   "builtIn": true,
   "mixed": true,
   "metrics": true,
-  "hiddenQueries": true,
 
   "queryOptions": {
     "minInterval": true

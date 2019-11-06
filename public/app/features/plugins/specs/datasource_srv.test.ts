@@ -1,7 +1,7 @@
 import config from 'app/core/config';
 import 'app/features/plugins/datasource_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { PluginMeta, DataSourcePluginMeta } from '@grafana/ui';
+import { PluginMeta, DataSourcePluginMeta } from '@grafana/data';
 
 // Datasource variable $datasource with current value 'BBB'
 const templateSrv: any = {
@@ -17,7 +17,7 @@ const templateSrv: any = {
 };
 
 describe('datasource_srv', () => {
-  const _datasourceSrv = new DatasourceSrv({}, {} as any, {}, templateSrv);
+  const _datasourceSrv = new DatasourceSrv({}, {} as any, {} as any, templateSrv);
 
   describe('when loading external datasources', () => {
     beforeEach(() => {

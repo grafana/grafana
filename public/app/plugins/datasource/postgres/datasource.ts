@@ -5,6 +5,9 @@ import { IQService } from 'angular';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+//Types
+import { PostgresQueryForInterpolation } from './types';
+import { getSearchFilterScopedVar } from '../../../features/templating/variable';
 
 export class PostgresDatasource {
   id: any;
@@ -48,6 +51,21 @@ export class PostgresDatasource {
     });
     return quotedValues.join(',');
   };
+
+  interpolateVariablesInQueries(queries: PostgresQueryForInterpolation[]): PostgresQueryForInterpolation[] {
+    let expandedQueries = queries;
+    if (queries && queries.length > 0) {
+      expandedQueries = queries.map(query => {
+        const expandedQuery = {
+          ...query,
+          datasource: this.name,
+          rawSql: this.templateSrv.replace(query.rawSql, {}, this.interpolateVariable),
+        };
+        return expandedQuery;
+      });
+    }
+    return expandedQueries;
+  }
 
   query(options: any) {
     const queries = _.filter(options.targets, target => {
@@ -109,16 +127,22 @@ export class PostgresDatasource {
       .then((data: any) => this.responseParser.transformAnnotationResponse(options, data));
   }
 
-  metricFindQuery(query: string, optionalOptions: { variable?: any }) {
+  metricFindQuery(query: string, optionalOptions: { variable?: any; searchFilter?: string }) {
     let refId = 'tempvar';
     if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
       refId = optionalOptions.variable.name;
     }
 
+    const rawSql = this.templateSrv.replace(
+      query,
+      getSearchFilterScopedVar({ query, wildcardChar: '%', options: optionalOptions }),
+      this.interpolateVariable
+    );
+
     const interpolatedQuery = {
       refId: refId,
       datasourceId: this.id,
-      rawSql: this.templateSrv.replace(query, {}, this.interpolateVariable),
+      rawSql,
       format: 'table',
     };
 

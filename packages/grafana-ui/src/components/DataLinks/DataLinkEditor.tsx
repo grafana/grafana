@@ -5,7 +5,7 @@ import { VariableSuggestion } from './DataLinkSuggestions';
 import { css } from 'emotion';
 import { ThemeContext, stylesFactory } from '../../themes/index';
 import { DataLinkInput } from './DataLinkInput';
-import { GrafanaTheme } from '../../types';
+import { GrafanaTheme } from '@grafana/data';
 
 interface DataLinkEditorProps {
   index: number;

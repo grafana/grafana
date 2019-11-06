@@ -16,7 +16,7 @@ import { PanelResizer } from './PanelResizer';
 // Types
 import { PanelModel, DashboardModel } from '../state';
 import { loadPanelRef, copyReference } from '../state/PanelReference';
-import { PanelPluginMeta, PanelPlugin } from '@grafana/ui/src/types/panel';
+import { PanelPluginMeta, PanelPlugin } from '@grafana/data';
 import { AutoSizer } from 'react-virtualized';
 import { getPanelPluginNotFound } from './PanelPluginError';
 

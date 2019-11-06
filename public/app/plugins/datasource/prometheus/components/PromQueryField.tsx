@@ -3,33 +3,30 @@ import React from 'react';
 // @ts-ignore
 import Cascader from 'rc-cascader';
 
-import { SlatePrism } from '@grafana/ui';
+import { Plugin } from 'slate';
+import { SlatePrism, TypeaheadInput, TypeaheadOutput, QueryField, BracesPlugin } from '@grafana/ui';
 
 import Prism from 'prismjs';
 
-import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
 // dom also includes Element polyfills
-import BracesPlugin from 'app/features/explore/slate-plugins/braces';
-import QueryField, { TypeaheadInput } from 'app/features/explore/QueryField';
 import { PromQuery, PromContext, PromOptions } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
-import { ExploreQueryFieldProps, DataSourceStatus, QueryHint, DOMUtil } from '@grafana/ui';
-import { isDataFrame, toLegacyResponseData } from '@grafana/data';
+import { ExploreQueryFieldProps, QueryHint, isDataFrame, toLegacyResponseData, HistoryItem } from '@grafana/data';
+import { DOMUtil, SuggestionsState } from '@grafana/ui';
 import { PrometheusDatasource } from '../datasource';
 import PromQlLanguageProvider from '../language_provider';
-import { SuggestionsState } from 'app/features/explore/slate-plugins/suggestions';
 
 const HISTOGRAM_GROUP = '__histograms__';
 const METRIC_MARK = 'metric';
 const PRISM_SYNTAX = 'promql';
 export const RECORDING_RULES_GROUP = '__recording_rules__';
 
-function getChooserText(hasSyntax: boolean, datasourceStatus: DataSourceStatus) {
-  if (datasourceStatus === DataSourceStatus.Disconnected) {
-    return '(Disconnected)';
-  }
+function getChooserText(hasSyntax: boolean, metrics: string[]) {
   if (!hasSyntax) {
     return 'Loading metrics...';
+  }
+  if (metrics && metrics.length === 0) {
+    return '(No metrics found)';
   }
   return 'Metrics';
 }
@@ -114,7 +111,7 @@ interface PromQueryFieldState {
 }
 
 class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
-  plugins: any[];
+  plugins: Plugin[];
   languageProvider: PromQlLanguageProvider;
   languageProviderInitializationPromise: CancelablePromise<any>;
 
@@ -158,21 +155,6 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     if (data && prevProps.data && prevProps.data.series !== data.series) {
       this.refreshHint();
-    }
-
-    const reconnected =
-      prevProps.datasourceStatus === DataSourceStatus.Disconnected &&
-      this.props.datasourceStatus === DataSourceStatus.Connected;
-    if (!reconnected) {
-      return;
-    }
-
-    if (this.languageProviderInitializationPromise) {
-      this.languageProviderInitializationPromise.cancel();
-    }
-
-    if (this.languageProvider) {
-      this.refreshMetrics(makePromiseCancelable(this.languageProvider.fetchMetrics()));
     }
   }
 
@@ -291,11 +273,11 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   render() {
-    const { data, query, datasourceStatus } = this.props;
+    const { data, query } = this.props;
     const { metricsOptions, syntaxLoaded, hint } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
-    const chooserText = getChooserText(syntaxLoaded, datasourceStatus);
-    const buttonDisabled = !syntaxLoaded || datasourceStatus === DataSourceStatus.Disconnected;
+    const chooserText = getChooserText(syntaxLoaded, metricsOptions);
+    const buttonDisabled = !(syntaxLoaded && metricsOptions && metricsOptions.length > 0);
     const showError = data && data.error && data.error.refId === query.refId;
 
     return (
@@ -312,7 +294,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
             <QueryField
               additionalPlugins={this.plugins}
               cleanText={cleanText}
-              initialQuery={query.expr}
+              query={query.expr}
               onTypeahead={this.onTypeahead}
               onWillApplySuggestion={willApplySuggestion}
               onChange={this.onChangeQuery}

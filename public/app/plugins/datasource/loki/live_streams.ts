@@ -31,6 +31,7 @@ export class LiveStreams {
       data.addField({ name: 'ts', type: FieldType.time, config: { title: 'Time' } });
       data.addField({ name: 'line', type: FieldType.string });
       data.addField({ name: 'labels', type: FieldType.other });
+      data.addField({ name: 'id', type: FieldType.string });
 
       stream = webSocket(target.url).pipe(
         finalize(() => {

@@ -3,8 +3,8 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { AnnoOptions } from './types';
-import { dateTime, DurationUnit, AnnotationEvent } from '@grafana/data';
-import { PanelProps, Tooltip } from '@grafana/ui';
+import { PanelProps, dateTime, DurationUnit, AnnotationEvent, AppEvents } from '@grafana/data';
+import { Tooltip } from '@grafana/ui';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { AbstractList } from '@grafana/ui/src/components/List/AbstractList';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
@@ -145,7 +145,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
           );
           return;
         }
-        appEvents.emit('alert-warning', ['Unknown Dashboard: ' + anno.dashboardId]);
+        appEvents.emit(AppEvents.alertWarning, ['Unknown Dashboard: ' + anno.dashboardId]);
       });
   };
 

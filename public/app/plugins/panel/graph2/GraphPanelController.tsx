@@ -1,6 +1,6 @@
 import React from 'react';
-import { PanelData, GraphSeriesToggler } from '@grafana/ui';
-import { GraphSeriesXY, AbsoluteTimeRange } from '@grafana/data';
+import { GraphSeriesToggler } from '@grafana/ui';
+import { PanelData, GraphSeriesXY, AbsoluteTimeRange } from '@grafana/data';
 
 import { getGraphSeriesModel } from './getGraphSeriesModel';
 import { Options, SeriesOptions } from './types';
