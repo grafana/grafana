@@ -57,6 +57,9 @@ interface QueryRowState {
   textEditModeEnabled: boolean;
 }
 
+// Empty function to override blur execution on query field
+const noopOnBlur = () => {};
+
 export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
   state: QueryRowState = {
     textEditModeEnabled: false,
@@ -159,6 +162,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
               history={history}
               onRunQuery={this.onRunQuery}
               onHint={this.onClickHintFix}
+              onBlur={noopOnBlur}
               onChange={this.onChange}
               data={queryResponse}
               absoluteRange={absoluteRange}

@@ -1,17 +1,19 @@
 import React, { PureComponent } from 'react';
-import { SelectableValue, DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { MonitorConfig } from './components/MonitorConfig';
-import { AnalyticsConfig } from './components/AnalyticsConfig';
+import { SelectableValue, DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
+import { MonitorConfig } from './MonitorConfig';
+import { AnalyticsConfig } from './AnalyticsConfig';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { getBackendSrv, BackendSrv } from 'app/core/services/backend_srv';
-import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
-import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
-import { InsightsConfig } from './components/InsightsConfig';
+import { InsightsConfig } from './InsightsConfig';
+import ResponseParser from '../azure_monitor/response_parser';
+import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData } from '../types';
 
-export type Props = DataSourcePluginOptionsEditorProps<any>;
+export type Props = DataSourcePluginOptionsEditorProps<AzureDataSourceJsonData>;
+
+type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 
 export interface State {
-  config: any;
+  config: AzureDataSourceSettings;
   subscriptions: SelectableValue[];
   logAnalyticsSubscriptions: SelectableValue[];
   logAnalyticsWorkspaces: SelectableValue[];
@@ -145,20 +147,63 @@ export class ConfigEditor extends PureComponent<Props, State> {
     }
   };
 
+  loadSubscriptions = async (route?: string) => {
+    const url = `/${route || this.state.config.jsonData.cloudName}/subscriptions?api-version=2019-03-01`;
+
+    return this.backendSrv
+      .datasourceRequest({
+        url: this.state.config.url + url,
+        method: 'GET',
+      })
+      .then((result: any) => {
+        return ResponseParser.parseSubscriptionsForSelect(result);
+      })
+      .catch((error: any) => {
+        throw error;
+      });
+  };
+
+  loadWorkspaces = async (subscription: string) => {
+    const { azureLogAnalyticsSameAs, cloudName, logAnalyticsSubscriptionId } = this.state.config.jsonData;
+    let azureMonitorUrl = '',
+      subscriptionId = this.templateSrv.replace(subscription || this.state.config.jsonData.subscriptionId);
+
+    if (!!subscriptionId || !!azureLogAnalyticsSameAs) {
+      const azureCloud = cloudName || 'azuremonitor';
+      azureMonitorUrl = `/${azureCloud}/subscriptions`;
+    } else {
+      subscriptionId = logAnalyticsSubscriptionId;
+      azureMonitorUrl = `/workspacesloganalytics/subscriptions`;
+    }
+
+    const workspaceListUrl =
+      azureMonitorUrl +
+      `/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
+
+    return this.backendSrv
+      .datasourceRequest({
+        url: this.state.config.url + workspaceListUrl,
+        method: 'GET',
+      })
+      .then((result: any) => {
+        return result.data.value.map((val: any) => {
+          return {
+            value: val.properties.customerId,
+            label: val.name,
+          };
+        });
+      })
+      .catch((error: any) => {
+        throw error;
+      });
+  };
+
   getSubscriptions = async () => {
     if (!this.hasNecessaryCredentials()) {
       return;
     }
 
-    const azureMonitorDatasource = new AzureMonitorDatasource(this.state.config, this.backendSrv, this.templateSrv);
-
-    let subscriptions = (await azureMonitorDatasource.getSubscriptions()) || [];
-    subscriptions = subscriptions.map((subscription: any) => {
-      return {
-        value: subscription.value,
-        label: subscription.text,
-      };
-    });
+    const subscriptions = (await this.loadSubscriptions()) || [];
 
     if (subscriptions && subscriptions.length > 0) {
       this.setState({ subscriptions });
@@ -176,15 +221,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
       return;
     }
 
-    const azureMonitorDatasource = new AzureMonitorDatasource(this.state.config, this.backendSrv, this.templateSrv);
-
-    let logAnalyticsSubscriptions = (await azureMonitorDatasource.getSubscriptions('workspacesloganalytics')) || [];
-    logAnalyticsSubscriptions = logAnalyticsSubscriptions.map((subscription: any) => {
-      return {
-        value: subscription.value,
-        label: subscription.text,
-      };
-    });
+    const logAnalyticsSubscriptions = (await this.loadSubscriptions('workspacesloganalytics')) || [];
 
     if (logAnalyticsSubscriptions && logAnalyticsSubscriptions.length > 0) {
       this.setState({ logAnalyticsSubscriptions });
@@ -204,21 +241,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
       return;
     }
 
-    const azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(
-      this.state.config,
-      this.backendSrv,
-      this.templateSrv
-    );
-
-    let logAnalyticsWorkspaces = await azureLogAnalyticsDatasource.getWorkspaces(
+    const logAnalyticsWorkspaces = await this.loadWorkspaces(
       sameAs ? this.state.config.jsonData.subscriptionId : this.state.config.jsonData.logAnalyticsSubscriptionId
     );
-    logAnalyticsWorkspaces = logAnalyticsWorkspaces.map((workspace: any) => {
-      return {
-        value: workspace.value,
-        label: workspace.text,
-      };
-    });
 
     if (logAnalyticsWorkspaces.length > 0) {
       this.setState({ logAnalyticsWorkspaces });

@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { LogRowModel, TimeZone, DataQueryResponse } from '@grafana/data';
+import { Field, LinkModel, LogRowModel, TimeZone, DataQueryResponse } from '@grafana/data';
 
 import {
   LogRowContextRows,
@@ -27,6 +27,7 @@ interface Props extends Themeable {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onContextClick?: () => void;
   getRowContext: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>;
+  getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 
 interface State {
@@ -80,6 +81,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       timeZone,
       showTime,
       theme,
+      getFieldLinks,
     } = this.props;
     const { showDetails, showContext } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
@@ -124,6 +126,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           </div>
           {this.state.showDetails && (
             <LogDetails
+              getFieldLinks={getFieldLinks}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
               getRows={getRows}

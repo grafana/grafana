@@ -1,5 +1,5 @@
 // Libraries
-import { isEmpty, isString } from 'lodash';
+import { isEmpty, isString, fromPairs } from 'lodash';
 // Services & Utils
 import {
   dateMath,
@@ -9,6 +9,16 @@ import {
   AnnotationEvent,
   DataFrameView,
   LoadingState,
+  ArrayVector,
+  FieldType,
+  FieldConfig,
+} from '@grafana/data';
+import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
+import LanguageProvider from './language_provider';
+import { logStreamToDataFrame } from './result_transformer';
+import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
+// Types
+import {
   PluginMeta,
   DataSourceApi,
   DataSourceInstanceSettings,
@@ -17,11 +27,6 @@ import {
   DataQueryResponse,
   AnnotationQueryRequest,
 } from '@grafana/data';
-import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
-import LanguageProvider from './language_provider';
-import { logStreamToDataFrame } from './result_transformer';
-import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
-
 import { LokiQuery, LokiOptions, LokiLogsStream, LokiResponse } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -154,6 +159,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     data = data as LokiResponse;
     for (const stream of data.streams || []) {
       const dataFrame = logStreamToDataFrame(stream);
+      this.enhanceDataFrame(dataFrame);
       dataFrame.refId = target.refId;
       dataFrame.meta = {
         searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.query, target.regexp)),
@@ -404,6 +410,51 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     }
 
     return annotations;
+  }
+
+  /**
+   * Adds new fields and DataLinks to DataFrame based on DataSource instance config.
+   * @param dataFrame
+   */
+  enhanceDataFrame(dataFrame: DataFrame): void {
+    if (!this.instanceSettings.jsonData) {
+      return;
+    }
+
+    const derivedFields = this.instanceSettings.jsonData.derivedFields || [];
+    if (derivedFields.length) {
+      const fields = fromPairs(
+        derivedFields.map(field => {
+          const config: FieldConfig = {};
+          if (field.url) {
+            config.links = [
+              {
+                url: field.url,
+                title: '',
+              },
+            ];
+          }
+          const dataFrameField = {
+            name: field.name,
+            type: FieldType.string,
+            config,
+            values: new ArrayVector<string>([]),
+          };
+
+          return [field.name, dataFrameField];
+        })
+      );
+
+      const view = new DataFrameView(dataFrame);
+      view.forEachRow((row: { line: string }) => {
+        for (const field of derivedFields) {
+          const logMatch = row.line.match(field.matcherRegex);
+          fields[field.name].values.add(logMatch && logMatch[1]);
+        }
+      });
+
+      dataFrame.fields = [...dataFrame.fields, ...Object.values(fields)];
+    }
   }
 }
 
