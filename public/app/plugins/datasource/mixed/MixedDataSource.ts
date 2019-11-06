@@ -16,6 +16,9 @@ import { mergeMap, map } from 'rxjs/operators';
 
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
 
+/**
+ * Key is the datasource name, DataQuery[] lets you run
+ */
 export type MixedQuerySets = { [key: string]: DataQuery[] };
 
 export class MixedDatasource extends DataSourceApi<DataQuery> {
@@ -33,10 +36,10 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
       return of({ data: [] } as DataQueryResponse); // nothing
     }
 
-    return groupBy(queries, 'datasource');
+    return this.querySets(groupBy(queries, 'datasource'), request);
   }
 
-  querySets(sets: MixedQuerySets): Observable<DataQueryResponse> {
+  querySets(sets: MixedQuerySets, request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
     const observables: Array<Observable<DataQueryResponse>> = [];
     let runningSubRequests = 0;
 
