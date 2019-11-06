@@ -1,19 +1,22 @@
 package middleware
 
 import (
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	"gopkg.in/square/go-jose.v2"
+	"io/ioutil"
+	"net/http"
 	"testing"
 
 	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 
-	"fmt"
-	"net/http"
+	"encoding/json"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"os"
 	"path/filepath"
 )
@@ -51,16 +54,20 @@ func TestAuthJWT(t *testing.T) {
 			return nil
 		})
 
-		So(1, ShouldEqual, 1)
+		eck1Bytes, errorLoadingEk1 := ioutil.ReadFile(filepath.Clean(pwd + "/jwkPriv1.json"))
+		So(errorLoadingEk1, ShouldBeNil)
 
-		// // A simple key
-		pathToGoogleJwk := filepath.Clean(pwd + "/jwt_test_data.google.json")
+		eck1 := &jose.JSONWebKey{}
+		err := json.Unmarshal(eck1Bytes, eck1)
+		So(err, ShouldBeNil)
+
+		// chain of two public EC keys
+		pathToGoogleJwk := filepath.Clean(pwd + "/jwkPubs.json")
 		setting.AuthJwtEnabled = true
 		setting.AuthJwtHeader = "X-MyJWT"
-		//setting.AuthJwtSigningKey = base64.StdEncoding.EncodeToString(mySigningKey)
 		setting.AuthJwtVerification = pathToGoogleJwk
 		setting.AuthJwtEmailClaim = "email"
-		setting.AuthJwtLoginClaim = "email"
+		//setting.AuthJwtLoginClaim = "email"
 		InitAuthJwtKey()
 
 		// Create the Claims
@@ -69,60 +76,123 @@ func TestAuthJWT(t *testing.T) {
 			"email": "test@grafana.com",
 		}
 
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-		signed, err := token.SignedString()
+		rawToken := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+		rawToken.Header["kid"] = "theveryfirstkey"
+		signed, err := rawToken.SignedString(eck1.Key)
 		So(err, ShouldEqual, nil)
 
-		// Convey("Should be able to decode JWT directly", func() {
-		// 	token, err := jwt.Parse(signed, keyFunc)
-		// 	So(err, ShouldEqual, nil)
-		// 	So(token.Valid, ShouldEqual, true)
+		Convey("Should be able to decode JWT directly", func() {
+			parsedToken, err := jwt.Parse(signed, func(token *jwt.Token) (interface{}, error) {
+				return eck1.Public().Key, nil
+			})
 
-		// 	parsed := token.Claims.(jwt.MapClaims)
-		// 	So(parsed["email"], ShouldEqual, "test@grafana.com")
-		// 	So(parsed["sub"], ShouldEqual, "name")
-		// })
+			So(err, ShouldEqual, nil)
+			So(parsedToken.Valid, ShouldEqual, true)
 
-		// Convey("Context should read it from header and find a user", func() {
-		// 	httpreq := &http.Request{Header: make(http.Header)}
-		// 	httpreq.Header.Add(setting.AuthJwtHeader, signed)
-		// 	render := &CaptureRender{}
+			parsedClaims := parsedToken.Claims.(jwt.MapClaims)
+			So(parsedClaims["email"], ShouldEqual, "test@grafana.com")
+			So(parsedClaims["sub"], ShouldEqual, "name")
+		})
 
-		// 	ctx := &m.ReqContext{Context: &macaron.Context{
-		// 		Req:    macaron.Request{Request: httpreq},
-		// 		Render: render,
-		// 	},
-		// 		Logger: log.New("fakelogger"),
-		// 	}
+		Convey("Context should read it from header and find a user", func() {
+			httpreq := &http.Request{Header: make(http.Header)}
+			httpreq.Header.Add(setting.AuthJwtHeader, signed)
+			render := &CaptureRender{}
 
-		// 	initContextWithJwtAuth(ctx, orgId)
-		// 	So(ctx.SignedInUser, ShouldNotBeNil)
-		// })
+			ctx := &m.ReqContext{Context: &macaron.Context{
+				Req:    macaron.Request{Request: httpreq},
+				Render: render,
+			},
+				Logger: log.New("fakelogger"),
+			}
 
-		// Convey("Context should throw an error with invalid JWTs", func() {
-		// 	httpreq := &http.Request{Header: make(http.Header)}
-		// 	httpreq.Header.Add(setting.AuthJwtHeader, "NOT-A-JWT")
-		// 	render := &CaptureRender{}
-		// 	ctx := &m.ReqContext{Context: &macaron.Context{
-		// 		Req:    macaron.Request{Request: httpreq},
-		// 		Render: render,
-		// 	},
-		// 		Logger: log.New("fakelogger"),
-		// 	}
+			initContextWithJwtAuth(ctx, orgId)
+			So(ctx.SignedInUser, ShouldNotBeNil)
+			So(ctx.SignedInUser.Email, ShouldEqual, "test@grafana.com")
+		})
 
-		// 	initContextWithJwtAuth(ctx, orgId)
-		// 	So(ctx.SignedInUser, ShouldBeNil)
-		// 	So(render.status, ShouldEqual, 400)
-		// })
+		Convey("Context should throw an error with invalid JWTs", func() {
+			httpreq := &http.Request{Header: make(http.Header)}
+			httpreq.Header.Add(setting.AuthJwtHeader, "NOT-A-JWT")
+			render := &CaptureRender{}
+			ctx := &m.ReqContext{Context: &macaron.Context{
+				Req:    macaron.Request{Request: httpreq},
+				Render: render,
+			},
+				Logger: log.New("fakelogger"),
+			}
 
-		// Check Firebase Support
+			initContextWithJwtAuth(ctx, orgId)
+			So(ctx.SignedInUser, ShouldBeNil)
+			So(render.status, ShouldEqual, 400)
+		})
+
+		Convey("A jwt not signed by the id indicated by 'kid'", func() {
+			rawToken := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+			rawToken.Header["kid"] = "thesecondkey"
+			signed, err := rawToken.SignedString(eck1.Key)
+
+			So(err, ShouldBeNil)
+			So(signed, ShouldNotBeNil)
+
+			Convey("When an http request is made using the key with non-expected signer", func() {
+				httpreq := &http.Request{Header: make(http.Header)}
+				httpreq.Header.Add(setting.AuthJwtHeader, signed)
+				render := &CaptureRender{}
+				ctx := &m.ReqContext{Context: &macaron.Context{
+					Req:    macaron.Request{Request: httpreq},
+					Render: render,
+				},
+					Logger: log.New("fakelogger"),
+				}
+
+				initContextWithJwtAuth(ctx, orgId)
+				So(ctx.SignedInUser, ShouldBeNil)
+				So(render.status, ShouldEqual, 401)
+			})
+		})
+
+		Convey("A context having expected claims settings", func() {
+			setting.AuthJwtExpectClaims = make(map[string]string)
+			setting.AuthJwtExpectClaims["aud"] = "quietaudience"
+			InitAuthJwtKey()
+
+			So(decoder.CheckReady(), ShouldBeTrue)
+
+			Convey("A request is made with a JWT having unexpected claims", func() {
+				newClaims := make(jwt.MapClaims)
+				for k, v := range *claims {
+					newClaims[k] = v
+				}
+				newClaims["aud"] = "rowdyaudience"
+
+				rawToken := jwt.NewWithClaims(jwt.SigningMethodES256, newClaims)
+				rawToken.Header["kid"] = "theveryfirstkey"
+				signed, _ := rawToken.SignedString(eck1.Key)
+
+				httpreq := &http.Request{Header: make(http.Header)}
+				httpreq.Header.Add(setting.AuthJwtHeader, signed)
+				render := &CaptureRender{}
+				ctx := &m.ReqContext{Context: &macaron.Context{
+					Req:    macaron.Request{Request: httpreq},
+					Render: render,
+				},
+					Logger: log.New("fakelogger"),
+				}
+
+				initContextWithJwtAuth(ctx, orgId)
+				So(ctx.SignedInUser, ShouldBeNil)
+				So(render.status, ShouldEqual, 401)
+			})
+		})
+
 		Convey("Should fail to parse invalid key sets", func() {
 			setting.AuthJwtVerification = "NOT A KEY"
 			InitAuthJwtKey()
 			So(decoder.CheckReady(), ShouldBeFalse)
 		})
 
-		// Check Firebase Support
+		//Check Firebase Support
 		Convey("Should parse firebase tokens", func() {
 			setting.AuthJwtLoginClaim = "email"
 			setting.AuthJwtVerification = pwd + "/jwt_test_data.firebase.json" //https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com"
@@ -147,7 +217,7 @@ func TestAuthJWT(t *testing.T) {
 			}
 			initContextWithJwtAuth(ctx, orgId)
 			So(ctx.SignedInUser, ShouldBeNil)
-			So(render.status, ShouldEqual, 0) // TODO!!! 400)
+			So(render.status, ShouldEqual, 401)
 		})
 
 		// Check Google JWK/IAP Support
