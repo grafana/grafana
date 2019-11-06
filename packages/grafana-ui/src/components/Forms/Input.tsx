@@ -83,7 +83,6 @@ const getInputStyle = stylesFactory(
         inputBorders
       ),
       addon: css`
-        height: ${height};
         display: flex;
         justify-content: center;
         align-items: center;
@@ -106,6 +105,7 @@ const getInputStyle = stylesFactory(
         }
       `,
       addonElement: css`
+        label: addon-override;
         border: 0;
         width: 100%;
         height: 100%;
@@ -116,7 +116,6 @@ const getInputStyle = stylesFactory(
       `,
       inputWrapper: cx(
         css`
-          label: wrapper;
           width: 100%;
           display: flex;
           height: ${height};
