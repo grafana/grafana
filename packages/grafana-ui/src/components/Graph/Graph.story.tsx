@@ -54,7 +54,8 @@ const series: GraphSeriesXY[] = [
     data: [[1546372800000, 20], [1546376400000, 30], [1546380000000, 40]],
     color: 'blue',
     isVisible: true,
-    label: 'B-series',
+    label:
+      "B-series with an ultra wide label that probably gonna make the tooltip to overflow window. This situation happens, so let's better make sure it behaves nicely :)",
     seriesIndex: 1,
     timeField: {
       type: FieldType.time,
@@ -64,7 +65,8 @@ const series: GraphSeriesXY[] = [
     },
     valueField: {
       type: FieldType.number,
-      name: 'b-series',
+      name:
+        "B-series with an ultra wide label that is probably going go make the tooltip overflow window. This situation happens, so let's better make sure it behaves nicely :)",
       values: new ArrayVector([20, 30, 40]),
       config: { color: 'blue' },
     },

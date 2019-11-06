@@ -18,6 +18,8 @@ const getTooltipContainerStyles = stylesFactory((theme: GrafanaTheme) => {
     wrapper: css`
       overflow: hidden;
       background: ${bgColor};
+      /* 30% is an arbitrary choice. We can be more clever about calculating tooltip\'s width */
+      max-width: 30%;
       padding: ${theme.spacing.sm};
       border-radius: ${theme.border.radius.sm};
     `,

@@ -11,26 +11,12 @@ interface SeriesTableRowProps {
   value: string | GraphSeriesValue;
   isActive?: boolean;
 }
-const SeriesTableRow: React.FC<SeriesTableRowProps> = ({ color, label, value, isActive }) => {
-  const theme = useTheme();
-  const styles = getSeriesTableStyles(theme);
-  return (
-    <div className={cx(styles.seriesTableRow, isActive && styles.activeSeries)}>
-      <div className={styles.seriesTableCell}>
-        {color && <SeriesIcon color={color} />} {label}
-      </div>
-      <div className={cx(styles.seriesTableCell, styles.value)}>{value}</div>
-    </div>
-  );
-};
 
-interface SeriesTableProps {
-  timestamp?: string | GraphSeriesValue;
-  series: SeriesTableRowProps[];
-}
-
-const getSeriesTableStyles = stylesFactory((theme: GrafanaTheme) => {
+const getSeriesTableRowStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
+    icon: css`
+      margin-right: ${theme.spacing.xs};
+    `,
     seriesTable: css`
       display: table;
     `,
@@ -48,6 +34,27 @@ const getSeriesTableStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
   };
 });
+
+const SeriesTableRow: React.FC<SeriesTableRowProps> = ({ color, label, value, isActive }) => {
+  const theme = useTheme();
+  const styles = getSeriesTableRowStyles(theme);
+  return (
+    <div className={cx(styles.seriesTableRow, isActive && styles.activeSeries)}>
+      {color && (
+        <div className={styles.seriesTableCell}>
+          <SeriesIcon color={color} className={styles.icon} />
+        </div>
+      )}
+      <div className={styles.seriesTableCell}>{label}</div>
+      <div className={cx(styles.seriesTableCell, styles.value)}>{value}</div>
+    </div>
+  );
+};
+
+interface SeriesTableProps {
+  timestamp?: string | GraphSeriesValue;
+  series: SeriesTableRowProps[];
+}
 
 export const SeriesTable: React.FC<SeriesTableProps> = ({ timestamp, series }) => {
   return (
