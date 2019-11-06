@@ -4,12 +4,21 @@ import { connect } from 'react-redux';
 import { NavModel } from '@grafana/data';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
+import config from 'app/core/config';
 import Page from 'app/core/components/Page/Page';
 import { UserProfile } from './UserProfile';
 import { UserPermissions } from './UserPermissions';
 import { UserSessions } from './UserSessions';
-import { StoreState, UserDTO, UserOrg, UserSession } from 'app/types';
-import { loadUserProfile, loadUserOrgs, loadUserSessions, revokeSession, revokeAllSessions } from './state/actions';
+import { UserLdapSyncInfo } from './UserLdapSyncInfo';
+import { StoreState, UserDTO, UserOrg, UserSession, SyncInfo } from 'app/types';
+import {
+  loadUserProfile,
+  loadUserOrgs,
+  loadUserSessions,
+  revokeSession,
+  revokeAllSessions,
+  loadLdapSyncStatus,
+} from './state/actions';
 import { UserOrgs } from './UserOrgs';
 
 interface Props {
@@ -18,10 +27,12 @@ interface Props {
   user: UserDTO;
   orgs: UserOrg[];
   sessions: UserSession[];
+  ldapSyncInfo: SyncInfo;
 
   loadUserProfile: typeof loadUserProfile;
   loadUserOrgs: typeof loadUserOrgs;
   loadUserSessions: typeof loadUserSessions;
+  loadLdapSyncStatus: typeof loadLdapSyncStatus;
   revokeSession: typeof revokeSession;
   revokeAllSessions: typeof revokeAllSessions;
 }
@@ -36,11 +47,12 @@ export class UserAdminPage extends PureComponent<Props, State> {
   };
 
   async componentDidMount() {
-    const { userId, loadUserProfile, loadUserOrgs, loadUserSessions } = this.props;
+    const { userId, loadUserProfile, loadUserOrgs, loadUserSessions, loadLdapSyncStatus } = this.props;
     try {
       await loadUserProfile(userId);
       await loadUserOrgs(userId);
       await loadUserSessions(userId);
+      await loadLdapSyncStatus();
     } finally {
       this.setState({ isLoading: false });
     }
@@ -76,8 +88,12 @@ export class UserAdminPage extends PureComponent<Props, State> {
     revokeAllSessions(userId);
   };
 
+  handleUserSync = () => {
+    console.log('sync user', this.props.user.login);
+  };
+
   render() {
-    const { navModel, user, orgs, sessions } = this.props;
+    const { navModel, user, orgs, sessions, ldapSyncInfo } = this.props;
     const { isLoading } = this.state;
 
     return (
@@ -86,6 +102,9 @@ export class UserAdminPage extends PureComponent<Props, State> {
           {user && (
             <>
               <UserProfile user={user} onUserDelete={this.handleUserDelete} onUserDisable={this.handleUserDisable} />
+              {config.buildInfo.isEnterprise && ldapSyncInfo && (
+                <UserLdapSyncInfo ldapSyncInfo={ldapSyncInfo} onUserSync={this.handleUserSync} />
+              )}
               <UserPermissions
                 isGrafanaAdmin={user.isGrafanaAdmin}
                 onGrafanaAdminChange={this.handleGrafanaAdminChange}
@@ -116,12 +135,14 @@ const mapStateToProps = (state: StoreState) => ({
   user: state.userAdmin.user,
   sessions: state.userAdmin.sessions,
   orgs: state.userAdmin.orgs,
+  ldapSyncInfo: state.ldap.syncInfo,
 });
 
 const mapDispatchToProps = {
   loadUserProfile,
   loadUserOrgs,
   loadUserSessions,
+  loadLdapSyncStatus,
 };
 
 export default hot(module)(
