@@ -195,7 +195,7 @@ jobs:
 
   build-all:
     docker:
-     - image: grafana/build-container:1.2.11
+      - image: grafana/build-container:1.2.11
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -239,7 +239,7 @@ jobs:
 
   build:
     docker:
-     - image: grafana/build-container:1.2.11
+      - image: grafana/build-container:1.2.11
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -268,7 +268,7 @@ jobs:
 
   build-fast-backend:
     docker:
-     - image: grafana/build-container:1.2.11
+      - image: grafana/build-container:1.2.11
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -285,7 +285,7 @@ jobs:
 
   build-fast-frontend:
     docker:
-     - image: grafana/build-container:1.2.11
+      - image: grafana/build-container:1.2.11
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -309,7 +309,7 @@ jobs:
 
   build-fast-package:
     docker:
-     - image: grafana/build-container:1.2.11
+      - image: grafana/build-container:1.2.11
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -336,7 +336,7 @@ jobs:
 
   build-fast-save:
     docker:
-     - image: grafana/build-container:1.2.11
+      - image: grafana/build-container:1.2.11
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -407,6 +407,12 @@ jobs:
       - run: docker run --privileged linuxkit/binfmt:v0.6
       - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
       - run: cd packaging/docker && ./build.sh --fast "${CIRCLE_SHA1}"
+      - run:
+          name: Archive Docker image
+          command: docker save -o "docker-image-${CIRCLE_SHA1}.tar" "grafana/grafana:${CIRCLE_SHA1}"
+      - store_artifacts:
+          path: "docker-image-${CIRCLE_SHA1}.tar"
+          destination: generated-docker-image
 
   grafana-docker-release:
     machine:
@@ -425,7 +431,7 @@ jobs:
 
   build-enterprise:
     docker:
-     - image: grafana/build-container:1.2.11
+      - image: grafana/build-container:1.2.11
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -533,7 +539,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-         at: .
+          at: .
       - run:
           name: gcp credentials
           command: 'echo ${GCP_GRAFANA_UPLOAD_KEY} > /tmp/gcpkey.json'
