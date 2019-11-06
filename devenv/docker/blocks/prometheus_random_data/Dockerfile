@@ -1,7 +1,7 @@
 # This Dockerfile builds an image for a client_golang example.
 
 # Builder image, where we build the example.
-FROM golang:1.9.0 AS builder
+FROM golang:1.13.0 AS builder
 # Download prometheus/client_golang/examples/random first
 RUN go get github.com/prometheus/client_golang/examples/random
 WORKDIR /go/src/github.com/prometheus/client_golang
