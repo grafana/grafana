@@ -22,6 +22,7 @@ type SocialGenericOAuth struct {
 	allowSignup          bool
 	emailAttributeName   string
 	emailAttributePath   string
+	roleAttributePath    string
 	teamIds              []int
 }
 
@@ -79,13 +80,13 @@ func (s *SocialGenericOAuth) IsOrganizationMember(client *http.Client) bool {
 	return false
 }
 
-// searchJSONForEmail searches the provided JSON response for an e-mail address
-// using the configured e-mail attribute path associated with the generic OAuth
+// searchJSONForAttr searches the provided JSON response for the given attribute
+// using the configured  attribute path associated with the generic OAuth
 // provider.
-// Returns an empty string if an e-mail address is not found.
-func (s *SocialGenericOAuth) searchJSONForEmail(data []byte) string {
-	if s.emailAttributePath == "" {
-		s.log.Error("No e-mail attribute path specified")
+// Returns an empty string if an attribute is not found.
+func (s *SocialGenericOAuth) searchJSONForAttr(attributePath string, data []byte) string {
+	if attributePath == "" {
+		s.log.Error("No attribute path specified")
 		return ""
 	}
 	if len(data) == 0 {
@@ -97,16 +98,16 @@ func (s *SocialGenericOAuth) searchJSONForEmail(data []byte) string {
 		s.log.Error("Failed to unmarshal user info JSON response", "err", err.Error())
 		return ""
 	}
-	val, err := jmespath.Search(s.emailAttributePath, buf)
+	val, err := jmespath.Search(attributePath, buf)
 	if err != nil {
-		s.log.Error("Failed to search user info JSON response with provided path", "emailAttributePath", s.emailAttributePath, "err", err.Error())
+		s.log.Error("Failed to search user info JSON response with provided path", "attributePath", attributePath, "err", err.Error())
 		return ""
 	}
 	strVal, ok := val.(string)
 	if ok {
 		return strVal
 	}
-	s.log.Error("E-mail not found when searching JSON with provided path", "emailAttributePath", s.emailAttributePath)
+	s.log.Error("Attribute not found when searching JSON with provided path", "attributePath", attributePath)
 	return ""
 }
 
@@ -238,12 +239,15 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		}
 	}
 
+	role := s.extractRole(&data, rawUserInfoResponse.Body)
+
 	login := s.extractLogin(&data, email)
 
 	userInfo := &BasicUserInfo{
 		Name:  name,
 		Login: login,
 		Email: email,
+		Role:  role,
 	}
 
 	if !s.IsTeamMember(client) {
@@ -298,7 +302,7 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson, userInfoResp []byt
 	}
 
 	if s.emailAttributePath != "" {
-		email := s.searchJSONForEmail(userInfoResp)
+		email := s.searchJSONForAttr(s.emailAttributePath, userInfoResp)
 		if email != "" {
 			return email
 		}
@@ -317,6 +321,16 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson, userInfoResp []byt
 		s.log.Debug("Failed to parse e-mail address", "err", emailErr.Error())
 	}
 
+	return ""
+}
+
+func (s *SocialGenericOAuth) extractRole(data *UserInfoJson, userInfoResp []byte) string {
+	if s.roleAttributePath != "" {
+		role := s.searchJSONForAttr(s.roleAttributePath, userInfoResp)
+		if role != "" {
+			return role
+		}
+	}
 	return ""
 }
 

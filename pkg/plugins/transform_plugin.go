@@ -137,8 +137,6 @@ type TransformWrapper struct {
 
 func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	pbQuery := &pluginv2.TransformRequest{
-		// TODO Not sure Datasource property needs be on this?
-		Datasource: &pluginv2.DatasourceInfo{},
 		TimeRange: &pluginv2.TimeRange{
 			FromRaw:     query.TimeRange.From,
 			ToRaw:       query.TimeRange.To,
