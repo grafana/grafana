@@ -31,7 +31,7 @@ type QueryResult struct {
 // TransformHandler handles data source queries.
 // Note: Arguments are sdk.Datasource objects
 type TransformHandler interface {
-	Transform(ctx context.Context, tr datasource.TimeRange, ds datasource.DataSourceInfo, queries []Query, api GrafanaAPIHandler) ([]QueryResult, error)
+	Transform(ctx context.Context, tr datasource.TimeRange, queries []Query, api GrafanaAPIHandler) ([]QueryResult, error)
 }
 
 // transformPluginWrapper converts protobuf types to sdk go types.
@@ -52,15 +52,6 @@ func (p *transformPluginWrapper) Transform(ctx context.Context, req *pluginv2.Tr
 		To:   time.Unix(0, req.TimeRange.ToEpochMs*int64(time.Millisecond)),
 	}
 
-	dsi := datasource.DataSourceInfo{
-		ID:       req.Datasource.Id,
-		OrgID:    req.Datasource.OrgId,
-		Name:     req.Datasource.Name,
-		Type:     req.Datasource.Type,
-		URL:      req.Datasource.Url,
-		JSONData: json.RawMessage(req.Datasource.JsonData),
-	}
-
 	var queries []Query
 	for _, q := range req.Queries {
 		queries = append(queries, Query{
@@ -72,7 +63,7 @@ func (p *transformPluginWrapper) Transform(ctx context.Context, req *pluginv2.Tr
 	}
 
 	// Makes SDK request, get SDK response
-	results, err := p.handler.Transform(ctx, tr, dsi, queries, &grafanaAPIWrapper{api: api})
+	results, err := p.handler.Transform(ctx, tr, queries, &grafanaAPIWrapper{api: api})
 	if err != nil {
 		return nil, err
 	}

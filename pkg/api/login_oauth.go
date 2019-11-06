@@ -184,7 +184,10 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	}
 
 	if userInfo.Role != "" {
-		extUser.OrgRoles[1] = m.RoleType(userInfo.Role)
+		rt := m.RoleType(userInfo.Role)
+		if rt.IsValid() {
+			extUser.OrgRoles[1] = rt
+		}
 	}
 
 	// add/update user in grafana
