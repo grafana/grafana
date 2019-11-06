@@ -395,6 +395,20 @@ jobs:
       - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64-musl.tar.gz packaging/docker/grafana-latest.linux-x64-musl.tar.gz
       - run: cd packaging/docker && ./build-enterprise.sh "master"
 
+  grafana-docker-ubuntu-master:
+    machine:
+      image: circleci/classic:201808-01
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: docker info
+      - run: docker run --privileged linuxkit/binfmt:v0.6
+      - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
+      - run: cd packaging/docker && ./build-deploy.sh "master-${CIRCLE_SHA1}" --ubuntu
+      - run: rm packaging/docker/grafana-latest.linux-*.tar.gz
+      - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64-glibc.tar.gz packaging/docker/grafana-latest.linux-x64-glibc.tar.gz
+      - run: cd packaging/docker && ./build-enterprise.sh --ubuntu "master"
 
   grafana-docker-pr:
     machine:
@@ -419,6 +433,21 @@ jobs:
       - run: docker run --privileged linuxkit/binfmt:v0.6
       - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
       - run: cd packaging/docker && ./build.sh --fast --ubuntu "${CIRCLE_SHA1}"
+
+  grafana-docker-release:
+    machine:
+      image: circleci/classic:201808-01
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: docker info
+      - run: docker run --privileged linuxkit/binfmt:v0.6
+      - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
+      - run: cd packaging/docker && ./build-deploy.sh --ubuntu "${CIRCLE_TAG}"
+      - run: rm packaging/docker/grafana-latest.linux-*.tar.gz
+      - run: cp enterprise-dist/grafana-enterprise-*.linux-amd64-glibc.tar.gz packaging/docker/grafana-latest.linux-x64-glibc.tar.gz
+      - run: cd packaging/docker && ./build-enterprise.sh --ubuntu "${CIRCLE_TAG}"
 
   grafana-docker-release:
     machine:
@@ -799,6 +828,18 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-master
+      - grafana-docker-ubuntu-master:
+          requires:
+            - build-all
+            - build-all-enterprise
+            - test-backend
+            - test-frontend
+            - codespell
+            - lint-go
+            - shellcheck
+            - mysql-integration-test
+            - postgres-integration-test
+          filters: *filter-only-master
       - deploy-enterprise-master:
           requires:
             - build-all
@@ -881,6 +922,18 @@ workflows:
             - postgres-integration-test
           filters: *filter-only-release
       - grafana-docker-release:
+          requires:
+            - build-all
+            - build-all-enterprise
+            - test-backend
+            - test-frontend
+            - codespell
+            - lint-go
+            - shellcheck
+            - mysql-integration-test
+            - postgres-integration-test
+          filters: *filter-only-release
+      - grafana-docker-ubuntu-release:
           requires:
             - build-all
             - build-all-enterprise

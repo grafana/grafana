@@ -1,7 +1,7 @@
 ARG BASE_IMAGE=ubuntu:18.10
 FROM ${BASE_IMAGE} AS grafana-builder
 
-ARG GRAFANA_TGZ="grafana-latest.linux-x64-glibc.tar.gz"
+ARG GRAFANA_TGZ="grafana-latest.linux-x64.tar.gz"
 
 COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 

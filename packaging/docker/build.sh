@@ -89,7 +89,7 @@ if [ $UBUNTU_BASE = "0" ]; then
     docker tag "${_docker_repo}:${_grafana_version}" "grafana/grafana-dev:${_grafana_version}"
   fi
 else
-  docker_build "ubuntu:18.10" "grafana-latest.linux-x64-glibc.tar.gz" "${_docker_repo}:${_grafana_version}-ubuntu" Dockerfile.ubuntu
+  docker_build "ubuntu:18.10" "grafana-latest.linux-x64.tar.gz" "${_docker_repo}:${_grafana_version}-ubuntu" Dockerfile.ubuntu
 
   # Tag as 'latest-ubuntu' for official release; otherwise tag as grafana/grafana:master-ubuntu
   if echo "$_grafana_tag" | grep -q "^v"; then
