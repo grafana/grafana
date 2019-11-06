@@ -3,6 +3,7 @@ import { SeriesTable } from './SeriesTable';
 import { GraphTooltipContentProps } from './types';
 import { getMultiSeriesGraphHoverInfo } from '../utils';
 import { FlotPosition } from '../types';
+import { getValueFromDimension } from '@grafana/data';
 
 export const MultiModeGraphTooltip: React.FC<
   GraphTooltipContentProps & {
@@ -21,7 +22,9 @@ export const MultiModeGraphTooltip: React.FC<
   }
 
   // when not hovering over a point, time is undefined, and we use pos.x as time
-  const time = activeDimensions.xAxis[1] || pos.x;
+  const time = activeDimensions.xAxis[1]
+    ? getValueFromDimension(dimensions.xAxis, activeDimensions.xAxis[0], activeDimensions.xAxis[1])
+    : pos.x;
 
   const hoverInfo = getMultiSeriesGraphHoverInfo(dimensions.yAxis.columns, dimensions.xAxis.columns, time);
   const timestamp = hoverInfo.time;
