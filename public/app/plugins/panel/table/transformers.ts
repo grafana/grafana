@@ -170,11 +170,13 @@ transformers['table'] = {
       return [...data[0].columns];
     }
 
+    const filteredData = tableDataFormatFilterer(data);
+
     // Track column indexes: name -> index
     const columnNames: any = {};
 
     // Union of all columns
-    const columns = data.reduce((acc: Column[], series: TableData) => {
+    const columns = filteredData.reduce((acc: Column[], series: TableData) => {
       series.columns.forEach(col => {
         const { text } = col;
         if (columnNames[text] === undefined) {
@@ -192,7 +194,7 @@ transformers['table'] = {
       return;
     }
     const filteredData = tableDataFormatFilterer(data);
-    const noTableIndex = _.findIndex(data, d => 'columns' in d && 'rows' in d);
+    const noTableIndex = _.findIndex(filteredData, d => 'columns' in d && 'rows' in d);
     if (noTableIndex < 0) {
       throw {
         message: `Result of query #${String.fromCharCode(
