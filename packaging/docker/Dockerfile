@@ -33,7 +33,9 @@ RUN apk add --no-cache ca-certificates bash tzdata && \
       -O /tmp/glibc-bin-2.30-r0.apk && \
     apk add --allow-untrusted /tmp/glibc-2.30-r0.apk /tmp/glibc-bin-2.30-r0.apk && \
     rm -f /tmp/glibc-2.30-r0.apk && \
-    rm -f /tmp/glibc-bin-2.30-r0.apk
+    rm -f /tmp/glibc-bin-2.30-r0.apk && \
+    rm -f /lib/ld-linux-x86-64.so.2 && \
+    rm -f /etc/ld.so.cache
 
 # PhantomJS
 RUN if [ `arch` = "x86_64" ]; then \
