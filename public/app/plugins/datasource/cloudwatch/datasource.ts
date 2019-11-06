@@ -216,41 +216,45 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
         if (!res.results) {
           return { data: [] };
         }
-        const dataFrames = Object.values(request.queries).reduce((acc: any, queryRequest: any) => {
-          const queryResult = res.results[queryRequest.refId];
-          if (!queryResult) {
-            return acc;
-          }
+        return Object.values(request.queries).reduce(
+          ({ data, error }: any, queryRequest: any) => {
+            const queryResult = res.results[queryRequest.refId];
+            if (!queryResult) {
+              return { data, error };
+            }
 
-          const link = this.buildCloudwatchConsoleUrl(
-            queryRequest,
-            from.toISOString(),
-            to.toISOString(),
-            queryRequest.refId,
-            queryResult.meta.searchExpressions
-          );
+            const link = this.buildCloudwatchConsoleUrl(
+              queryRequest,
+              from.toISOString(),
+              to.toISOString(),
+              queryRequest.refId,
+              queryResult.meta.searchExpressions
+            );
 
-          return [
-            ...acc,
-            ...queryResult.series.map(({ name, points }: any) => {
-              const dataFrame = toDataFrame({ target: name, datapoints: points });
-              if (link) {
-                for (const field of dataFrame.fields) {
-                  field.config.links = [
-                    {
-                      url: link,
-                      title: 'View in CloudWatch console',
-                      targetBlank: true,
-                    },
-                  ];
-                }
-              }
-              return dataFrame;
-            }),
-          ];
-        }, []);
-
-        return { data: dataFrames };
+            return {
+              error: error || queryResult.error ? { message: queryResult.error } : null,
+              data: [
+                ...data,
+                ...queryResult.series.map(({ name, points }: any) => {
+                  const dataFrame = toDataFrame({ target: name, datapoints: points });
+                  if (link) {
+                    for (const field of dataFrame.fields) {
+                      field.config.links = [
+                        {
+                          url: link,
+                          title: 'View in CloudWatch console',
+                          targetBlank: true,
+                        },
+                      ];
+                    }
+                  }
+                  return dataFrame;
+                }),
+              ],
+            };
+          },
+          { data: [], error: null }
+        );
       })
       .catch((err: any = { data: { error: '' } }) => {
         if (/^ValidationError:.*/.test(err.data.error)) {

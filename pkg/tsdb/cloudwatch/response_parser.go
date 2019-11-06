@@ -60,7 +60,7 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 	result := tsdb.TimeSeriesSlice{}
 	for label, metricDataResult := range metricDataResults {
 		if *metricDataResult.StatusCode != "Complete" {
-			return nil, fmt.Errorf("Part of query failed: %s", *metricDataResult.StatusCode)
+			return nil, fmt.Errorf("too many datapoint requested in query %s. Please try to reduce the time range", query.RefId)
 		}
 
 		for _, message := range metricDataResult.Messages {
