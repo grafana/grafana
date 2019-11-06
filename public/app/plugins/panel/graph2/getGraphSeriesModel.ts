@@ -95,9 +95,11 @@ export const getGraphSeriesModel = (
         const useMsDateFormat = hasMsResolution(timeField);
 
         timeField.display = getDisplayProcessor({
-          isUtc: timeZone === 'utc',
-          dateFormat: useMsDateFormat ? MS_DATE_TIME_FORMAT : DEFAULT_DATE_TIME_FORMAT,
           type: timeField.type,
+          isUtc: timeZone === 'utc',
+          config: {
+            dateDisplayFormat: useMsDateFormat ? MS_DATE_TIME_FORMAT : DEFAULT_DATE_TIME_FORMAT,
+          },
         });
 
         graphs.push({
