@@ -12,8 +12,10 @@ import (
 
 func TestHandleResponse(t *testing.T) {
 	t.Run("Returns body if status == 200", func(t *testing.T) {
-		body, err := handleResponse(makeResponse(200, "test"))
-		assert.Nil(t, err)
+		bodyReader, err := handleResponse(makeResponse(200, "test"))
+		assert.NoError(t, err)
+		body, err := ioutil.ReadAll(bodyReader)
+		assert.NoError(t, err)
 		assert.Equal(t, "test", string(body))
 	})
 
@@ -24,25 +26,25 @@ func TestHandleResponse(t *testing.T) {
 
 	t.Run("Returns message from body if status == 400", func(t *testing.T) {
 		_, err := handleResponse(makeResponse(400, "{ \"message\": \"error_message\" }"))
-		assert.NotNil(t, err)
+		assert.Error(t, err)
 		assert.Equal(t, "error_message", asBadRequestError(t, err).Message)
 	})
 
 	t.Run("Returns body if status == 400 and no message key", func(t *testing.T) {
 		_, err := handleResponse(makeResponse(400, "{ \"test\": \"test_message\"}"))
-		assert.NotNil(t, err)
+		assert.Error(t, err)
 		assert.Equal(t, "{ \"test\": \"test_message\"}", asBadRequestError(t, err).Message)
 	})
 
 	t.Run("Returns Bad request error if status == 400 and no body", func(t *testing.T) {
 		_, err := handleResponse(makeResponse(400, ""))
-		assert.NotNil(t, err)
+		assert.Error(t, err)
 		_ = asBadRequestError(t, err)
 	})
 
 	t.Run("Returns error with invalid status if status == 500", func(t *testing.T) {
 		_, err := handleResponse(makeResponse(500, ""))
-		assert.NotNil(t, err)
+		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid status")
 	})
 }

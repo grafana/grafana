@@ -27,6 +27,7 @@ import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 import { LiveTailControls } from './useLiveTailControls';
+import { getLinksFromLogsField } from '../panel/panellinks/linkSuppliers';
 
 interface LogsContainerProps {
   datasourceInstance: DataSourceApi | null;
@@ -148,6 +149,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               scanRange={range.raw}
               width={width}
               getRowContext={this.getLogRowContext}
+              getFieldLinks={getLinksFromLogsField}
             />
           </Collapse>
         </LogsCrossFadeTransition>

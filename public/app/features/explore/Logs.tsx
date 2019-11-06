@@ -12,6 +12,8 @@ import {
   LogsDedupDescription,
   LogsMetaItem,
   GraphSeriesXY,
+  LinkModel,
+  Field,
 } from '@grafana/data';
 import { Switch, LogLabels, ToggleButtonGroup, ToggleButton, LogRows } from '@grafana/ui';
 
@@ -50,6 +52,7 @@ interface Props {
   onDedupStrategyChange: (dedupStrategy: LogsDedupStrategy) => void;
   onToggleLogLevel: (hiddenLogLevels: LogLevel[]) => void;
   getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
+  getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 
 interface State {
@@ -113,6 +116,7 @@ export class Logs extends PureComponent<Props, State> {
       dedupedRows,
       absoluteRange,
       onChangeTime,
+      getFieldLinks,
     } = this.props;
 
     if (!logRows) {
@@ -199,6 +203,7 @@ export class Logs extends PureComponent<Props, State> {
           onClickFilterOutLabel={onClickFilterOutLabel}
           showTime={showTime}
           timeZone={timeZone}
+          getFieldLinks={getFieldLinks}
         />
 
         {!loading && !hasData && !scanning && (

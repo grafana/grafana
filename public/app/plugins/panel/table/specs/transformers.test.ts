@@ -1,4 +1,4 @@
-import { transformers, transformDataToTable } from '../transformers';
+import { tableDataFormatFilterer, timeSeriesFormatFilterer, transformDataToTable, transformers } from '../transformers';
 
 describe('when transforming time series table', () => {
   let table: any;
@@ -298,6 +298,226 @@ describe('when transforming time series table', () => {
         expect(table.rows.length).toBe(1);
         expect(table.rows[0][0]).toBe(1000);
       });
+    });
+  });
+
+  describe('given time series and table data', () => {
+    const time = new Date().getTime();
+    const data = [
+      {
+        target: 'series1',
+        datapoints: [[12.12, time], [14.44, time + 1]],
+      },
+      {
+        columns: [
+          {
+            type: 'time',
+            text: 'Time',
+          },
+          {
+            text: 'mean',
+          },
+        ],
+        type: 'table',
+        rows: [[time, 13.13], [time + 1, 26.26]],
+      },
+    ];
+
+    describe('timeseries_to_rows', () => {
+      const panel = {
+        transform: 'timeseries_to_rows',
+        sort: { col: 0, desc: true },
+      };
+
+      beforeEach(() => {
+        table = transformDataToTable(data, panel);
+      });
+
+      it('should return 2 rows', () => {
+        expect(table.rows.length).toBe(2);
+        expect(table.rows[0][1]).toBe('series1');
+        expect(table.rows[1][1]).toBe('series1');
+        expect(table.rows[0][2]).toBe(12.12);
+      });
+
+      it('should return 3 columns', () => {
+        expect(table.columns.length).toBe(3);
+        expect(table.columns[0].text).toBe('Time');
+        expect(table.columns[1].text).toBe('Metric');
+        expect(table.columns[2].text).toBe('Value');
+      });
+    });
+
+    describe('timeseries_to_columns', () => {
+      const panel = {
+        transform: 'timeseries_to_columns',
+      };
+
+      beforeEach(() => {
+        table = transformDataToTable(data, panel);
+      });
+
+      it('should return 2 columns', () => {
+        expect(table.columns.length).toBe(2);
+        expect(table.columns[0].text).toBe('Time');
+        expect(table.columns[1].text).toBe('series1');
+      });
+
+      it('should return 2 rows', () => {
+        expect(table.rows.length).toBe(2);
+        expect(table.rows[0][1]).toBe(12.12);
+      });
+
+      it('should be undefined when no value for timestamp', () => {
+        expect(table.rows[1][2]).toBe(undefined);
+      });
+    });
+
+    describe('timeseries_aggregations', () => {
+      const panel = {
+        transform: 'timeseries_aggregations',
+        sort: { col: 0, desc: true },
+        columns: [{ text: 'Max', value: 'max' }, { text: 'Min', value: 'min' }],
+      };
+
+      beforeEach(() => {
+        table = transformDataToTable(data, panel);
+      });
+
+      it('should return 1 row', () => {
+        expect(table.rows.length).toBe(1);
+        expect(table.rows[0][0]).toBe('series1');
+        expect(table.rows[0][1]).toBe(14.44);
+        expect(table.rows[0][2]).toBe(12.12);
+      });
+
+      it('should return 2 columns', () => {
+        expect(table.columns.length).toBe(3);
+        expect(table.columns[0].text).toBe('Metric');
+        expect(table.columns[1].text).toBe('Max');
+        expect(table.columns[2].text).toBe('Min');
+      });
+    });
+  });
+});
+
+describe('timeSeriesFormatFilterer', () => {
+  describe('when called with an object that contains datapoints property', () => {
+    it('then it should return same object in array', () => {
+      const data: any = { datapoints: [] };
+
+      const result = timeSeriesFormatFilterer(data);
+
+      expect(result).toEqual([data]);
+    });
+  });
+
+  describe('when called with an object that does not contain datapoints property', () => {
+    it('then it should return empty array', () => {
+      const data: any = { prop: [] };
+
+      const result = timeSeriesFormatFilterer(data);
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('when called with an array of series with both timeseries and table data', () => {
+    it('then it should return an array with timeseries', () => {
+      const time = new Date().getTime();
+      const data: any[] = [
+        {
+          target: 'series1',
+          datapoints: [[12.12, time], [14.44, time + 1]],
+        },
+        {
+          columns: [
+            {
+              type: 'time',
+              text: 'Time',
+            },
+            {
+              text: 'mean',
+            },
+          ],
+          type: 'table',
+          rows: [[time, 13.13], [time + 1, 26.26]],
+        },
+      ];
+
+      const result = timeSeriesFormatFilterer(data);
+
+      expect(result).toEqual([
+        {
+          target: 'series1',
+          datapoints: [[12.12, time], [14.44, time + 1]],
+        },
+      ]);
+    });
+  });
+});
+
+describe('tableDataFormatFilterer', () => {
+  describe('when called with an object that contains columns property', () => {
+    it('then it should return same object in array', () => {
+      const data: any = { columns: [] };
+
+      const result = tableDataFormatFilterer(data);
+
+      expect(result).toEqual([data]);
+    });
+  });
+
+  describe('when called with an object that does not contain columns property', () => {
+    it('then it should return empty array', () => {
+      const data: any = { prop: [] };
+
+      const result = tableDataFormatFilterer(data);
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('when called with an array of series with both timeseries and table data', () => {
+    it('then it should return an array with table data', () => {
+      const time = new Date().getTime();
+      const data: any[] = [
+        {
+          target: 'series1',
+          datapoints: [[12.12, time], [14.44, time + 1]],
+        },
+        {
+          columns: [
+            {
+              type: 'time',
+              text: 'Time',
+            },
+            {
+              text: 'mean',
+            },
+          ],
+          type: 'table',
+          rows: [[time, 13.13], [time + 1, 26.26]],
+        },
+      ];
+
+      const result = tableDataFormatFilterer(data);
+
+      expect(result).toEqual([
+        {
+          columns: [
+            {
+              type: 'time',
+              text: 'Time',
+            },
+            {
+              text: 'mean',
+            },
+          ],
+          type: 'table',
+          rows: [[time, 13.13], [time + 1, 26.26]],
+        },
+      ]);
     });
   });
 });
