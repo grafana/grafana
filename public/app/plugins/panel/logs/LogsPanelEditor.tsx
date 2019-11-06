@@ -1,11 +1,11 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import { PanelEditorProps, Switch, PanelOptionsGrid, PanelOptionsGroup, FormLabel, Select } from '@grafana/ui';
+import { Switch, PanelOptionsGrid, PanelOptionsGroup, FormLabel, Select } from '@grafana/ui';
 
 // Types
 import { Options } from './types';
 import { SortOrder } from 'app/core/utils/explore';
-import { SelectableValue } from '@grafana/data';
+import { PanelEditorProps, SelectableValue } from '@grafana/data';
 
 const sortOrderOptions = [
   { value: SortOrder.Descending, label: 'Descending' },

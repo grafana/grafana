@@ -18,7 +18,7 @@ aliases = ["/v1.1", "/guides/reference/admin", "/v3.1"]
     <a href="{{< relref "installation/mac.md" >}}" class="nav-cards__item nav-cards__item--install">
         <div class="nav-cards__icon fa fa-apple">
         </div>
-        <h5>Installing on Mac OS X</h5>
+        <h5>Installing on macOS</h5>
     </a>
       <a href="{{< relref "installation/windows.md" >}}" class="nav-cards__item nav-cards__item--install">
         <div class="nav-cards__icon fa fa-windows">

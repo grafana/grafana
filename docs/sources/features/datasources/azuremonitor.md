@@ -23,7 +23,7 @@ The Azure Monitor data source supports multiple services in the Azure cloud:
 - **[Azure Log Analytics]({{< relref "#querying-the-azure-log-analytics-service" >}})** (or Azure Logs) gives you access to log data collected by Azure Monitor.
 - **[Application Insights Analytics]({{< relref "#writing-analytics-queries-for-the-application-insights-service" >}})** allows you to query [Application Insights data](https://docs.microsoft.com/en-us/azure/azure-monitor/app/analytics) using the same query language used for Azure Log Analytics.
 
-## Adding the data source to Grafana
+## Adding the data source
 
 The data source can access metrics from four different services. You can configure access to the services that you use. It is also possible to use the same credentials for multiple services if that is how you have set it up in Azure AD.
 
@@ -216,7 +216,9 @@ Examples:
 
 ### Application Insights Alerting
 
-Not implemented yet.
+Grafana alerting is supported for Application Insights. This is not Azure Alerts support. Read more about how alerting in Grafana works [here]({{< relref "alerting/rules.md" >}}).
+
+{{< docs-imagebox img="/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
 
 ## Querying the Azure Log Analytics Service
 

@@ -6,7 +6,7 @@ import AlertRuleItem from './AlertRuleItem';
 import appEvents from 'app/core/app_events';
 import { updateLocation } from 'app/core/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { StoreState, AlertRule } from 'app/types';
+import { StoreState, AlertRule, CoreEvents } from 'app/types';
 import { getAlertRulesAsync, setSearchQuery, togglePauseAlertRule } from './state/actions';
 import { getAlertRuleItems, getSearchQuery } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
@@ -64,7 +64,7 @@ export class AlertRuleList extends PureComponent<Props, any> {
   };
 
   onOpenHowTo = () => {
-    appEvents.emit('show-modal', {
+    appEvents.emit(CoreEvents.showModal, {
       src: 'public/app/features/alerting/partials/alert_howto.html',
       modalClass: 'confirm-modal',
       model: {},

@@ -1,27 +1,40 @@
 import _ from 'lodash';
-import { Variable, assignModelProperties, variableTypes } from './variable';
+import {
+  assignModelProperties,
+  CustomVariableModel,
+  VariableActions,
+  VariableHide,
+  VariableOption,
+  VariableType,
+  variableTypes,
+} from './variable';
 import { VariableSrv } from './variable_srv';
 
-export class CustomVariable implements Variable {
+export class CustomVariable implements CustomVariableModel, VariableActions {
+  type: VariableType;
+  name: string;
+  label: string;
+  hide: VariableHide;
+  skipUrlSync: boolean;
   query: string;
-  options: any;
+  options: VariableOption[];
   includeAll: boolean;
   multi: boolean;
-  current: any;
-  skipUrlSync: boolean;
+  current: VariableOption;
+  allValue: string;
 
-  defaults: any = {
+  defaults: CustomVariableModel = {
     type: 'custom',
     name: '',
     label: '',
-    hide: 0,
-    options: [],
-    current: {},
+    hide: VariableHide.dontHide,
+    skipUrlSync: false,
     query: '',
+    options: [],
     includeAll: false,
     multi: false,
+    current: {} as VariableOption,
     allValue: null,
-    skipUrlSync: false,
   };
 
   /** @ngInject */
@@ -42,7 +55,7 @@ export class CustomVariable implements Variable {
     // extract options in comma separated string (use backslash to escape wanted commas)
     this.options = _.map(this.query.match(/(?:\\,|[^,])+/g), text => {
       text = text.replace(/\\,/g, ',');
-      return { text: text.trim(), value: text.trim() };
+      return { text: text.trim(), value: text.trim(), selected: false };
     });
 
     if (this.includeAll) {
@@ -53,7 +66,7 @@ export class CustomVariable implements Variable {
   }
 
   addAllOption() {
-    this.options.unshift({ text: 'All', value: '$__all' });
+    this.options.unshift({ text: 'All', value: '$__all', selected: false });
   }
 
   dependsOn(variable: any) {

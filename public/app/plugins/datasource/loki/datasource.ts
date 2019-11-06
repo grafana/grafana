@@ -1,5 +1,5 @@
 // Libraries
-import _ from 'lodash';
+import { isEmpty, isString } from 'lodash';
 // Services & Utils
 import {
   dateMath,
@@ -9,13 +9,6 @@ import {
   AnnotationEvent,
   DataFrameView,
   LoadingState,
-} from '@grafana/data';
-import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
-import LanguageProvider from './language_provider';
-import { logStreamToDataFrame } from './result_transformer';
-import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
-// Types
-import {
   PluginMeta,
   DataSourceApi,
   DataSourceInstanceSettings,
@@ -23,14 +16,18 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   AnnotationQueryRequest,
-} from '@grafana/ui';
+} from '@grafana/data';
+import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
+import LanguageProvider from './language_provider';
+import { logStreamToDataFrame } from './result_transformer';
+import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 
 import { LokiQuery, LokiOptions, LokiLogsStream, LokiResponse } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
 import { LiveTarget, LiveStreams } from './live_streams';
-import { Observable, from, merge } from 'rxjs';
+import { Observable, from, merge, of } from 'rxjs';
 import { map, filter } from 'rxjs/operators';
 
 export const DEFAULT_MAX_LINES = 1000;
@@ -121,7 +118,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
   processError = (err: any, target: any): DataQueryError => {
     const error: DataQueryError = {
-      message: 'Unknown error during query transaction. Please check JS console logs.',
+      message: (err && err.statusText) || 'Unknown error during query transaction. Please check JS console logs.',
       refId: target.refId,
     };
 
@@ -173,10 +170,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
    * This returns a bit different dataFrame than runQueries as it returns single dataframe even if there are multiple
    * Loki streams, sets only common labels on dataframe.labels and has additional dataframe.fields.labels for unique
    * labels per row.
-   *
-   * @param options
-   * @param observer Callback that will be called with new data. Is optional but only because we run this function
-   * even if there are no live targets defined in the options which would mean this is noop and observer is not called.
    */
   runLiveQuery = (options: DataQueryRequest<LokiQuery>, target: LokiQuery): Observable<DataQueryResponse> => {
     const liveTarget = this.prepareLiveTarget(target, options);
@@ -216,13 +209,36 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const subQueries = options.targets
       .filter(target => target.expr && !target.hide)
       .map(target => {
-        if (target.live) {
+        if (target.liveStreaming) {
           return this.runLiveQuery(options, target);
         }
         return this.runQuery(options, target);
       });
 
+    // No valid targets, return the empty result to save a round trip.
+    if (isEmpty(subQueries)) {
+      return of({
+        data: [],
+        state: LoadingState.Done,
+      });
+    }
+
     return merge(...subQueries);
+  }
+
+  interpolateVariablesInQueries(queries: LokiQuery[]): LokiQuery[] {
+    let expandedQueries = queries;
+    if (queries && queries.length > 0) {
+      expandedQueries = queries.map(query => {
+        const expandedQuery = {
+          ...query,
+          datasource: this.name,
+          expr: this.templateSrv.replace(query.expr),
+        };
+        return expandedQuery;
+      });
+    }
+    return expandedQueries;
   }
 
   async importQueries(queries: LokiQuery[], originMeta: PluginMeta): Promise<LokiQuery[]> {
@@ -246,6 +262,10 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         selector = addLabelToSelector(selector, action.key, action.value);
         break;
       }
+      case 'ADD_FILTER_OUT': {
+        selector = addLabelToSelector(selector, action.key, action.value, '!=');
+        break;
+      }
       default:
         break;
     }
@@ -258,7 +278,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   getTime(date: string | DateTime, roundUp: boolean) {
-    if (_.isString(date)) {
+    if (isString(date)) {
       date = dateMath.parse(date, roundUp);
     }
     return Math.ceil(date.valueOf() * 1e6);

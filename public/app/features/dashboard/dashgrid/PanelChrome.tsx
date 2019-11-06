@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import { Unsubscribable } from 'rxjs';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { ErrorBoundary, PanelData, PanelPlugin } from '@grafana/ui';
+import { ErrorBoundary } from '@grafana/ui';
 // Utils & Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides, calculateInnerPanelHeight } from 'app/features/dashboard/utils/panel';
@@ -14,7 +14,17 @@ import templateSrv from 'app/features/templating/template_srv';
 import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
-import { LoadingState, ScopedVars, AbsoluteTimeRange, toUtc, toDataFrameDTO, DefaultTimeRange } from '@grafana/data';
+import {
+  LoadingState,
+  ScopedVars,
+  AbsoluteTimeRange,
+  DefaultTimeRange,
+  toUtc,
+  toDataFrameDTO,
+  PanelEvents,
+  PanelData,
+  PanelPlugin,
+} from '@grafana/data';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -59,8 +69,8 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   componentDidMount() {
     const { panel, dashboard } = this.props;
-    panel.events.on('refresh', this.onRefresh);
-    panel.events.on('render', this.onRender);
+    panel.events.on(PanelEvents.refresh, this.onRefresh);
+    panel.events.on(PanelEvents.render, this.onRender);
     dashboard.panelInitialized(this.props.panel);
 
     // Move snapshot data into the query response
@@ -79,7 +89,8 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
-    this.props.panel.events.off('refresh', this.onRefresh);
+    this.props.panel.events.off(PanelEvents.refresh, this.onRefresh);
+    this.props.panel.events.off(PanelEvents.render, this.onRender);
 
     if (this.querySubscription) {
       this.querySubscription.unsubscribe();

@@ -1,5 +1,5 @@
 # Golang build container
-FROM golang:1.12.10-alpine
+FROM golang:1.13.1-alpine
 
 RUN apk add --no-cache gcc g++
 
@@ -11,8 +11,7 @@ COPY vendor vendor
 RUN go mod verify
 
 COPY pkg pkg
-COPY build.go build.go
-COPY package.json package.json
+COPY build.go package.json ./
 
 RUN go run build.go build
 
@@ -52,7 +51,7 @@ LABEL maintainer="Grafana team <hello@grafana.com>"
 ARG GF_UID="472"
 ARG GF_GID="472"
 
-ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+ENV PATH="/usr/share/grafana/bin:$PATH" \
     GF_PATHS_CONFIG="/etc/grafana/grafana.ini" \
     GF_PATHS_DATA="/var/lib/grafana" \
     GF_PATHS_HOME="/usr/share/grafana" \
@@ -62,7 +61,7 @@ ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bi
 
 WORKDIR $GF_PATHS_HOME
 
-RUN apk add --no-cache ca-certificates bash && \
+RUN apk add --no-cache ca-certificates bash tzdata && \
     apk add --no-cache --upgrade --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main openssl musl-utils
 
 COPY conf ./conf

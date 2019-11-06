@@ -1,48 +1,44 @@
 import {
   DataFrame,
   FieldType,
-  LogsModel,
   LogsMetaKind,
   LogsDedupStrategy,
   LogLevel,
   MutableDataFrame,
   toDataFrame,
+  LogRowModel,
 } from '@grafana/data';
 import { dedupLogRows, dataFrameToLogsModel } from '../logs_model';
 
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {
-    const logs = {
-      rows: [
-        {
-          entry: 'WARN test 1.23 on [xxx]',
-        },
-        {
-          entry: 'WARN test 1.23 on [xxx]',
-        },
-      ],
-    };
-    expect(dedupLogRows(logs as LogsModel, LogsDedupStrategy.none).rows).toMatchObject(logs.rows);
+    const rows: LogRowModel[] = [
+      {
+        entry: 'WARN test 1.23 on [xxx]',
+      },
+      {
+        entry: 'WARN test 1.23 on [xxx]',
+      },
+    ] as any;
+    expect(dedupLogRows(rows, LogsDedupStrategy.none)).toMatchObject(rows);
   });
 
   test('should dedup on exact matches', () => {
-    const logs = {
-      rows: [
-        {
-          entry: 'WARN test 1.23 on [xxx]',
-        },
-        {
-          entry: 'WARN test 1.23 on [xxx]',
-        },
-        {
-          entry: 'INFO test 2.44 on [xxx]',
-        },
-        {
-          entry: 'WARN test 1.23 on [xxx]',
-        },
-      ],
-    };
-    expect(dedupLogRows(logs as LogsModel, LogsDedupStrategy.exact).rows).toEqual([
+    const rows: LogRowModel[] = [
+      {
+        entry: 'WARN test 1.23 on [xxx]',
+      },
+      {
+        entry: 'WARN test 1.23 on [xxx]',
+      },
+      {
+        entry: 'INFO test 2.44 on [xxx]',
+      },
+      {
+        entry: 'WARN test 1.23 on [xxx]',
+      },
+    ] as any;
+    expect(dedupLogRows(rows, LogsDedupStrategy.exact)).toEqual([
       {
         duplicates: 1,
         entry: 'WARN test 1.23 on [xxx]',
@@ -59,23 +55,21 @@ describe('dedupLogRows()', () => {
   });
 
   test('should dedup on number matches', () => {
-    const logs = {
-      rows: [
-        {
-          entry: 'WARN test 1.2323423 on [xxx]',
-        },
-        {
-          entry: 'WARN test 1.23 on [xxx]',
-        },
-        {
-          entry: 'INFO test 2.44 on [xxx]',
-        },
-        {
-          entry: 'WARN test 1.23 on [xxx]',
-        },
-      ],
-    };
-    expect(dedupLogRows(logs as LogsModel, LogsDedupStrategy.numbers).rows).toEqual([
+    const rows: LogRowModel[] = [
+      {
+        entry: 'WARN test 1.2323423 on [xxx]',
+      },
+      {
+        entry: 'WARN test 1.23 on [xxx]',
+      },
+      {
+        entry: 'INFO test 2.44 on [xxx]',
+      },
+      {
+        entry: 'WARN test 1.23 on [xxx]',
+      },
+    ] as any;
+    expect(dedupLogRows(rows, LogsDedupStrategy.numbers)).toEqual([
       {
         duplicates: 1,
         entry: 'WARN test 1.2323423 on [xxx]',
@@ -92,23 +86,21 @@ describe('dedupLogRows()', () => {
   });
 
   test('should dedup on signature matches', () => {
-    const logs = {
-      rows: [
-        {
-          entry: 'WARN test 1.2323423 on [xxx]',
-        },
-        {
-          entry: 'WARN test 1.23 on [xxx]',
-        },
-        {
-          entry: 'INFO test 2.44 on [xxx]',
-        },
-        {
-          entry: 'WARN test 1.23 on [xxx]',
-        },
-      ],
-    };
-    expect(dedupLogRows(logs as LogsModel, LogsDedupStrategy.signature).rows).toEqual([
+    const rows: LogRowModel[] = [
+      {
+        entry: 'WARN test 1.2323423 on [xxx]',
+      },
+      {
+        entry: 'WARN test 1.23 on [xxx]',
+      },
+      {
+        entry: 'INFO test 2.44 on [xxx]',
+      },
+      {
+        entry: 'WARN test 1.23 on [xxx]',
+      },
+    ] as any;
+    expect(dedupLogRows(rows, LogsDedupStrategy.signature)).toEqual([
       {
         duplicates: 3,
         entry: 'WARN test 1.2323423 on [xxx]',
@@ -117,20 +109,18 @@ describe('dedupLogRows()', () => {
   });
 
   test('should return to non-deduped state on same log result', () => {
-    const logs = {
-      rows: [
-        {
-          entry: 'INFO 123',
-        },
-        {
-          entry: 'WARN 123',
-        },
-        {
-          entry: 'WARN 123',
-        },
-      ],
-    };
-    expect(dedupLogRows(logs as LogsModel, LogsDedupStrategy.exact).rows).toEqual([
+    const rows: LogRowModel[] = [
+      {
+        entry: 'INFO 123',
+      },
+      {
+        entry: 'WARN 123',
+      },
+      {
+        entry: 'WARN 123',
+      },
+    ] as any;
+    expect(dedupLogRows(rows, LogsDedupStrategy.exact)).toEqual([
       {
         duplicates: 0,
         entry: 'INFO 123',
@@ -141,7 +131,7 @@ describe('dedupLogRows()', () => {
       },
     ]);
 
-    expect(dedupLogRows(logs as LogsModel, LogsDedupStrategy.none).rows).toEqual(logs.rows);
+    expect(dedupLogRows(rows, LogsDedupStrategy.none)).toEqual(rows);
   });
 });
 

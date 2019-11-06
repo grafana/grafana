@@ -8,9 +8,10 @@ import appEvents from 'app/core/app_events';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../dashboard/services/DashboardSrv';
 import DatasourceSrv from '../plugins/datasource_srv';
-import { DataQuery } from '@grafana/ui/src/types/datasource';
+import { DataQuery } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getDefaultCondition } from './getAlertingValidationMessage';
+import { CoreEvents } from 'app/types';
 
 export class AlertTabCtrl {
   panel: PanelModel;
@@ -58,11 +59,11 @@ export class AlertTabCtrl {
 
     // subscribe to graph threshold handle changes
     const thresholdChangedEventHandler = this.graphThresholdChanged.bind(this);
-    this.panelCtrl.events.on('threshold-changed', thresholdChangedEventHandler);
+    this.panelCtrl.events.on(CoreEvents.thresholdChanged, thresholdChangedEventHandler);
 
     // set panel alert edit mode
     this.$scope.$on('$destroy', () => {
-      this.panelCtrl.events.off('threshold-changed', thresholdChangedEventHandler);
+      this.panelCtrl.events.off(CoreEvents.thresholdChanged, thresholdChangedEventHandler);
       this.panelCtrl.editingThresholds = false;
       this.panelCtrl.render();
     });
@@ -352,7 +353,7 @@ export class AlertTabCtrl {
   }
 
   delete() {
-    appEvents.emit('confirm-modal', {
+    appEvents.emit(CoreEvents.showConfirmModal, {
       title: 'Delete Alert',
       text: 'Are you sure you want to delete this alert rule?',
       text2: 'You need to save dashboard for the delete to take effect',
@@ -402,7 +403,7 @@ export class AlertTabCtrl {
   }
 
   clearHistory() {
-    appEvents.emit('confirm-modal', {
+    appEvents.emit(CoreEvents.showConfirmModal, {
       title: 'Delete Alert History',
       text: 'Are you sure you want to remove all history & annotations for this alert?',
       icon: 'fa-trash',

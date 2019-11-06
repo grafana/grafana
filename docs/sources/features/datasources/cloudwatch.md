@@ -15,7 +15,7 @@ weight = 5
 
 Grafana ships with built in support for CloudWatch. You just have to add it as a data source and you will be ready to build dashboards for your CloudWatch metrics.
 
-## Adding the data source to Grafana
+## Adding the data source
 
 1. Open the side menu by clicking the Grafana icon in the top header.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
@@ -43,6 +43,9 @@ Currently all access to CloudWatch is done server side by the Grafana backend us
 server is running on AWS you can use IAM Roles and authentication will be handled automatically.
 
 Checkout AWS docs on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
+
+
+> NOTE: AWS Role Switching as described [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-cli.html) it not supported at the moment. 
 
 ## IAM Policies
 

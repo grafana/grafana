@@ -4,6 +4,7 @@ import coreModule from 'app/core/core_module';
 import { DashboardModel } from 'app/features/dashboard/state';
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
 import { VariableSrv } from 'app/features/templating/all';
+import { CoreEvents } from 'app/types';
 
 export class AdHocFiltersCtrl {
   segments: any;
@@ -24,7 +25,7 @@ export class AdHocFiltersCtrl {
       value: '-- remove filter --',
     });
     this.buildSegmentModel();
-    this.dashboard.events.on('template-variable-value-updated', this.buildSegmentModel.bind(this), $scope);
+    this.dashboard.events.on(CoreEvents.templateVariableValueUpdated, this.buildSegmentModel.bind(this), $scope);
   }
 
   buildSegmentModel() {

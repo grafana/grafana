@@ -2,7 +2,6 @@ package util
 
 import (
 	"crypto/hmac"
-	"crypto/md5"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
@@ -14,10 +13,13 @@ import (
 
 // GetRandomString generate random string by specify chars.
 // source: https://github.com/gogits/gogs/blob/9ee80e3e5426821f03a4e99fad34418f5c736413/modules/base/tool.go#L58
-func GetRandomString(n int, alphabets ...byte) string {
+func GetRandomString(n int, alphabets ...byte) (string, error) {
 	const alphanum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 	var bytes = make([]byte, n)
-	rand.Read(bytes)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+
 	for i, b := range bytes {
 		if len(alphabets) == 0 {
 			bytes[i] = alphanum[b%byte(len(alphanum))]
@@ -25,26 +27,22 @@ func GetRandomString(n int, alphabets ...byte) string {
 			bytes[i] = alphabets[b%byte(len(alphabets))]
 		}
 	}
-	return string(bytes)
+	return string(bytes), nil
 }
 
 // EncodePassword encodes a password using PBKDF2.
-func EncodePassword(password string, salt string) string {
-	newPasswd := PBKDF2([]byte(password), []byte(salt), 10000, 50, sha256.New)
-	return hex.EncodeToString(newPasswd)
-}
-
-// EncodeMd5 encodes a string to md5 hex value.
-func EncodeMd5(str string) string {
-	m := md5.New()
-	m.Write([]byte(str))
-	return hex.EncodeToString(m.Sum(nil))
+func EncodePassword(password string, salt string) (string, error) {
+	newPasswd, err := PBKDF2([]byte(password), []byte(salt), 10000, 50, sha256.New)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(newPasswd), nil
 }
 
 // PBKDF2 implements Password-Based Key Derivation Function 2), aimed to reduce
 // the vulnerability of encrypted keys to brute force attacks.
 // http://code.google.com/p/go/source/browse/pbkdf2/pbkdf2.go?repo=crypto
-func PBKDF2(password, salt []byte, iter, keyLen int, h func() hash.Hash) []byte {
+func PBKDF2(password, salt []byte, iter, keyLen int, h func() hash.Hash) ([]byte, error) {
 	prf := hmac.New(h, password)
 	hashLen := prf.Size()
 	numBlocks := (keyLen + hashLen - 1) / hashLen
@@ -57,12 +55,17 @@ func PBKDF2(password, salt []byte, iter, keyLen int, h func() hash.Hash) []byte 
 		// for each block T_i = U_1 ^ U_2 ^ ... ^ U_iter
 		// U_1 = PRF(password, salt || uint(i))
 		prf.Reset()
-		prf.Write(salt)
+		if _, err := prf.Write(salt); err != nil {
+			return nil, err
+		}
 		buf[0] = byte(block >> 24)
 		buf[1] = byte(block >> 16)
 		buf[2] = byte(block >> 8)
 		buf[3] = byte(block)
-		prf.Write(buf[:4])
+		if _, err := prf.Write(buf[:4]); err != nil {
+			return nil, err
+		}
+
 		dk = prf.Sum(dk)
 		T := dk[len(dk)-hashLen:]
 		copy(U, T)
@@ -70,7 +73,9 @@ func PBKDF2(password, salt []byte, iter, keyLen int, h func() hash.Hash) []byte 
 		// U_n = PRF(password, U_(n-1))
 		for n := 2; n <= iter; n++ {
 			prf.Reset()
-			prf.Write(U)
+			if _, err := prf.Write(U); err != nil {
+				return nil, err
+			}
 			U = U[:0]
 			U = prf.Sum(U)
 			for x := range U {
@@ -78,7 +83,7 @@ func PBKDF2(password, salt []byte, iter, keyLen int, h func() hash.Hash) []byte 
 			}
 		}
 	}
-	return dk[:keyLen]
+	return dk[:keyLen], nil
 }
 
 // GetBasicAuthHeader returns a base64 encoded string from user and password.

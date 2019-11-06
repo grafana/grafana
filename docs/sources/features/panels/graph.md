@@ -6,7 +6,7 @@ aliases = ["/reference/graph/"]
 [menu.docs]
 name = "Graph"
 parent = "panels"
-weight = 1
+weight = 4
 +++
 
 # Graph Panel
@@ -18,7 +18,7 @@ The main panel in Grafana is simply named Graph. It provides a very rich set of 
 1. Clicking the title for a panel exposes a menu.  The `edit` option opens additional configuration
 options for the panel.
 2. Click to open color and axis selection.
-3. Click to only show this series. Shift/Ctrl + click to hide series.
+3. Click to only show this series. Shift/Ctrl+Click to hide series.
 
 ## General
 
@@ -137,6 +137,7 @@ Display styles control visual properties of the graph.
 - **Line Width** - The width of the line for a series (default 1).
 - **Staircase** - Draws adjacent points as staircase
 - **Points Radius** - Adjust the size of points when *Points* are selected as *Draw Mode*.
+- **Hidden Series** - Hide series by default in graph.
 
 #### Hover tooltip
 

@@ -1,11 +1,12 @@
-import React, { useState, useMemo, useContext, useRef, RefObject } from 'react';
+import React, { useState, useMemo, useContext, useRef, RefObject, memo, useEffect } from 'react';
+import usePrevious from 'react-use/lib/usePrevious';
 import { VariableSuggestion, VariableOrigin, DataLinkSuggestions } from './DataLinkSuggestions';
 import { ThemeContext, DataLinkBuiltInVars, makeValue } from '../../index';
 import { SelectionReference } from './SelectionReference';
 import { Portal } from '../index';
 
 import { Editor } from '@grafana/slate-react';
-import { Value, Editor as CoreEditor } from 'slate';
+import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
 import { Popper as ReactPopper } from 'react-popper';
 import { css, cx } from 'emotion';
@@ -13,7 +14,7 @@ import { css, cx } from 'emotion';
 import { SlatePrism } from '../../slate-plugins';
 import { SCHEMA } from '../../utils/slate';
 import { stylesFactory } from '../../themes';
-import { GrafanaTheme } from '../../types';
+import { GrafanaTheme } from '@grafana/data';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 
@@ -41,13 +42,16 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
 }));
 
-export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, suggestions }) => {
+// This memoised also because rerendering the slate editor grabs focus which created problem in some cases this
+// was used and changes to different state were propagated here.
+export const DataLinkInput: React.FC<DataLinkInputProps> = memo(({ value, onChange, suggestions }) => {
   const editorRef = useRef<Editor>() as RefObject<Editor>;
   const theme = useContext(ThemeContext);
   const styles = getStyles(theme);
   const [showingSuggestions, setShowingSuggestions] = useState(false);
   const [suggestionsIndex, setSuggestionsIndex] = useState(0);
   const [linkUrl, setLinkUrl] = useState<Value>(makeValue(value));
+  const prevLinkUrl = usePrevious<Value>(linkUrl);
 
   // Workaround for https://github.com/ianstormtaylor/slate/issues/2927
   const stateRef = useRef({ showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange });
@@ -84,15 +88,17 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
     }
   }, []);
 
+  useEffect(() => {
+    // Update the state of the link in the parent. This is basically done on blur but we need to do it after
+    // our state have been updated. The duplicity of state is done for perf reasons and also because local
+    // state also contains things like selection and formating.
+    if (prevLinkUrl && prevLinkUrl.selection.isFocused && !linkUrl.selection.isFocused) {
+      stateRef.current.onChange(Plain.serialize(linkUrl));
+    }
+  }, [linkUrl, prevLinkUrl]);
+
   const onUrlChange = React.useCallback(({ value }: { value: Value }) => {
     setLinkUrl(value);
-  }, []);
-
-  const onUrlBlur = React.useCallback((event: Event, editor: CoreEditor, next: () => any) => {
-    // Callback needed for blur to work correctly
-    stateRef.current.onChange(Plain.serialize(stateRef.current.linkUrl), () => {
-      editorRef.current!.blur();
-    });
   }, []);
 
   const onVariableSelect = (item: VariableSuggestion, editor = editorRef.current!) => {
@@ -153,7 +159,6 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
           placeholder="http://your-grafana.com/d/000000010/annotations"
           value={stateRef.current.linkUrl}
           onChange={onUrlChange}
-          onBlur={onUrlBlur}
           onKeyDown={(event, _editor, next) => onKeyDown(event as KeyboardEvent, next)}
           plugins={plugins}
           className={styles.editor}
@@ -161,6 +166,6 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
       </div>
     </div>
   );
-};
+});
 
 DataLinkInput.displayName = 'DataLinkInput';

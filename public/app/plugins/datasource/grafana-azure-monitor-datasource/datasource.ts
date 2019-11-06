@@ -3,7 +3,7 @@ import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AppInsightsDatasource from './app_insights/app_insights_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
 import { AzureMonitorQuery, AzureDataSourceJsonData } from './types';
-import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui';
+import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { IQService } from 'angular';
@@ -22,12 +22,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   ) {
     super(instanceSettings);
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings, this.backendSrv, this.templateSrv);
-    this.appInsightsDatasource = new AppInsightsDatasource(
-      instanceSettings,
-      this.backendSrv,
-      this.templateSrv,
-      this.$q
-    );
+    this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings, this.backendSrv, this.templateSrv);
 
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(
       instanceSettings,
