@@ -1,3 +1,13 @@
+# 6.4.4 (2019-11-06)
+
+### Features / Enhancements
+* **Depedency**: Bump crewjam/saml to the latest master. [#20126](https://github.com/grafana/grafana/pull/20126), [@gotjosh](https://github.com/gotjosh)
+* **LDAP Debug**: No longer shows incorrectly matching groups based on role. [#20018](https://github.com/grafana/grafana/pull/20018), [@xlson](https://github.com/xlson)
+* **LDAP**: All LDAP servers should be tried even if one of them returns a connection error. [#20077](https://github.com/grafana/grafana/pull/20077), [@jongyllen](https://github.com/jongyllen)
+
+### Bug Fixes
+* **Singlestat**: Fix no data / null value mapping . [#19951](https://github.com/grafana/grafana/pull/19951), [@ryantxu](https://github.com/ryantxu)
+
 # 6.4.3 (2019-10-16)
 
 ### Bug Fixes
