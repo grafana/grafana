@@ -6,7 +6,7 @@ import { TableTransform } from './types';
 import { Column, TableData } from '@grafana/data';
 
 const transformers: { [key: string]: TableTransform } = {};
-export const timeSeriesReducer = (data: any): any[] => {
+export const timeSeriesFormatFilterer = (data: any): any[] => {
   if (!Array.isArray(data)) {
     return data.datapoints ? [data] : [];
   }
@@ -20,7 +20,7 @@ export const timeSeriesReducer = (data: any): any[] => {
   }, []);
 };
 
-export const tableReducer = (data: any): any[] => {
+export const tableDataFormatFilterer = (data: any): any[] => {
   if (!Array.isArray(data)) {
     return data.columns ? [data] : [];
   }
@@ -41,16 +41,16 @@ transformers['timeseries_to_rows'] = {
   },
   transform: (data, panel, model) => {
     model.columns = [{ text: 'Time', type: 'date' }, { text: 'Metric' }, { text: 'Value' }];
+    const filteredData = timeSeriesFormatFilterer(data);
 
-    for (let i = 0; i < data.length; i++) {
-      const series = data[i];
+    for (let i = 0; i < filteredData.length; i++) {
+      const series = filteredData[i];
       for (let y = 0; y < series.datapoints.length; y++) {
         const dp = series.datapoints[y];
         model.rows.push([dp[1], series.target, dp[0]]);
       }
     }
   },
-  dataFormatReducer: timeSeriesReducer,
 };
 
 transformers['timeseries_to_columns'] = {
@@ -63,9 +63,10 @@ transformers['timeseries_to_columns'] = {
 
     // group by time
     const points: any = {};
+    const filteredData = timeSeriesFormatFilterer(data);
 
-    for (let i = 0; i < data.length; i++) {
-      const series = data[i];
+    for (let i = 0; i < filteredData.length; i++) {
+      const series = filteredData[i];
       model.columns.push({ text: series.target });
 
       for (let y = 0; y < series.datapoints.length; y++) {
@@ -85,7 +86,7 @@ transformers['timeseries_to_columns'] = {
       const point = points[time];
       const values = [point.time];
 
-      for (let i = 0; i < data.length; i++) {
+      for (let i = 0; i < filteredData.length; i++) {
         const value = point[i];
         values.push(value);
       }
@@ -93,7 +94,6 @@ transformers['timeseries_to_columns'] = {
       model.rows.push(values);
     }
   },
-  dataFormatReducer: timeSeriesReducer,
 };
 
 transformers['timeseries_aggregations'] = {
@@ -116,10 +116,12 @@ transformers['timeseries_aggregations'] = {
       model.columns.push({ text: panel.columns[i].text });
     }
 
-    for (i = 0; i < data.length; i++) {
+    const filteredData = timeSeriesFormatFilterer(data);
+
+    for (i = 0; i < filteredData.length; i++) {
       const series = new TimeSeries({
-        datapoints: data[i].datapoints,
-        alias: data[i].target,
+        datapoints: filteredData[i].datapoints,
+        alias: filteredData[i].target,
       });
 
       series.getFlotPairs('connected');
@@ -132,7 +134,6 @@ transformers['timeseries_aggregations'] = {
       model.rows.push(cells);
     }
   },
-  dataFormatReducer: timeSeriesReducer,
 };
 
 transformers['annotations'] = {
@@ -190,6 +191,7 @@ transformers['table'] = {
     if (!data || data.length === 0) {
       return;
     }
+    const filteredData = tableDataFormatFilterer(data);
     const noTableIndex = _.findIndex(data, d => 'columns' in d && 'rows' in d);
     if (noTableIndex < 0) {
       throw {
@@ -199,9 +201,8 @@ transformers['table'] = {
       };
     }
 
-    mergeTablesIntoModel(model, ...data);
+    mergeTablesIntoModel(model, ...filteredData);
   },
-  dataFormatReducer: tableReducer,
 };
 
 transformers['json'] = {
@@ -285,8 +286,7 @@ function transformDataToTable(data: any, panel: any) {
     throw { message: 'Transformer ' + panel.transform + ' not found' };
   }
 
-  const reducedData = transformer.dataFormatReducer ? transformer.dataFormatReducer(data) : data;
-  transformer.transform(reducedData, panel, model);
+  transformer.transform(data, panel, model);
   return model;
 }
 

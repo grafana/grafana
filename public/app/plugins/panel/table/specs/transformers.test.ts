@@ -1,4 +1,4 @@
-import { tableReducer, timeSeriesReducer, transformDataToTable, transformers } from '../transformers';
+import { tableDataFormatFilterer, timeSeriesFormatFilterer, transformDataToTable, transformers } from '../transformers';
 
 describe('when transforming time series table', () => {
   let table: any;
@@ -401,12 +401,12 @@ describe('when transforming time series table', () => {
   });
 });
 
-describe('timeSeriesReducer', () => {
+describe('timeSeriesFormatFilterer', () => {
   describe('when called with an object that contains datapoints property', () => {
     it('then it should return same object in array', () => {
       const data: any = { datapoints: [] };
 
-      const result = timeSeriesReducer(data);
+      const result = timeSeriesFormatFilterer(data);
 
       expect(result).toEqual([data]);
     });
@@ -416,7 +416,7 @@ describe('timeSeriesReducer', () => {
     it('then it should return empty array', () => {
       const data: any = { prop: [] };
 
-      const result = timeSeriesReducer(data);
+      const result = timeSeriesFormatFilterer(data);
 
       expect(result).toEqual([]);
     });
@@ -445,7 +445,7 @@ describe('timeSeriesReducer', () => {
         },
       ];
 
-      const result = timeSeriesReducer(data);
+      const result = timeSeriesFormatFilterer(data);
 
       expect(result).toEqual([
         {
@@ -457,12 +457,12 @@ describe('timeSeriesReducer', () => {
   });
 });
 
-describe('tableReducer', () => {
+describe('tableDataFormatFilterer', () => {
   describe('when called with an object that contains columns property', () => {
     it('then it should return same object in array', () => {
       const data: any = { columns: [] };
 
-      const result = tableReducer(data);
+      const result = tableDataFormatFilterer(data);
 
       expect(result).toEqual([data]);
     });
@@ -472,7 +472,7 @@ describe('tableReducer', () => {
     it('then it should return empty array', () => {
       const data: any = { prop: [] };
 
-      const result = tableReducer(data);
+      const result = tableDataFormatFilterer(data);
 
       expect(result).toEqual([]);
     });
@@ -501,7 +501,7 @@ describe('tableReducer', () => {
         },
       ];
 
-      const result = tableReducer(data);
+      const result = tableDataFormatFilterer(data);
 
       expect(result).toEqual([
         {
