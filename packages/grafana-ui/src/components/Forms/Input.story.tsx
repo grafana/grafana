@@ -20,9 +20,9 @@ export const simple = () => {
   const disabled = boolean('Disabled', false);
   const icon = text('Prefix', 'fa fa-check');
   const loading = boolean('Suffix', true);
-  const before = boolean('Addon before', false);
-  const after = boolean('Addon after', false);
-  const addonBefore = <span>Input</span>;
+  const before = boolean('Addon before', true);
+  const after = boolean('Addon after', true);
+  const addonBefore = <div style={{ display: 'flex', alignItems: 'center', padding: '5px' }}>Input</div>;
   const addonAfter = <Button variant="secondary">Load</Button>;
 
   return (
