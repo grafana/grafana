@@ -1,5 +1,5 @@
 // Libraries
-import React, { FC, useContext, useEffect } from 'react';
+import React, { FC, useContext } from 'react';
 // @ts-ignore
 import Prism from 'prismjs';
 // Components
@@ -27,10 +27,7 @@ export const enableDatalinksPrismSyntax = () => {
 
 export const DataLinksEditor: FC<DataLinksEditorProps> = React.memo(({ value, onChange, suggestions, maxLinks }) => {
   const theme = useContext(ThemeContext);
-
-  useEffect(() => {
-    enableDatalinksPrismSyntax();
-  });
+  enableDatalinksPrismSyntax();
 
   const onAdd = () => {
     onChange(value ? [...value, { url: '', title: '' }] : [{ url: '', title: '' }]);
