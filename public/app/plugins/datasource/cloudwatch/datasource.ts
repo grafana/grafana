@@ -257,10 +257,6 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
         );
       })
       .catch((err: any = { data: { error: '' } }) => {
-        if (/^ValidationError:.*/.test(err.data.error)) {
-          appEvents.emit('ds-request-error', err.data.error);
-        }
-
         if (/^Throttling:.*/.test(err.data.message)) {
           const failedRedIds = Object.keys(err.data.results);
           const regionsAffected = Object.values(request.queries).reduce(
