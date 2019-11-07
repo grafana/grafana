@@ -147,7 +147,7 @@ var (
 	AuthProxyHeaderName     string
 	AuthProxyHeaderProperty string
 	AuthProxyAutoSignUp     bool
-	AuthProxyLDAPSyncTtl    int
+	AuthProxySyncTtl        int
 	AuthProxyWhitelist      string
 	AuthProxyHeaders        map[string]string
 
@@ -854,7 +854,17 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
-	AuthProxyLDAPSyncTtl = authProxy.Key("ldap_sync_ttl").MustInt()
+
+	ldapSyncVal := authProxy.Key("ldap_sync_ttl").MustInt()
+	syncVal := authProxy.Key("sync_ttl").MustInt()
+
+	if ldapSyncVal != 60 {
+		AuthProxySyncTtl = ldapSyncVal
+		cfg.Logger.Warn("[Deprecated] the configuration setting 'ldap_sync_ttl' is deprecated, please use 'sync_ttl' instead")
+	} else {
+		AuthProxySyncTtl = syncVal
+	}
+
 	AuthProxyWhitelist, err = valueAsString(authProxy, "whitelist", "")
 	if err != nil {
 		return err
