@@ -14,7 +14,6 @@ import { CloudWatchQuery, CloudWatchJsonData } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-// import * as moment from 'moment';
 
 export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWatchJsonData> {
   type: any;
@@ -445,7 +444,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
   }
 
   testDatasource() {
-    /* use billing metrics for test */
+    // use billing metrics for test
     const region = this.defaultRegion;
     const namespace = 'AWS/Billing';
     const metricName = 'EstimatedCharges';
@@ -480,7 +479,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
   }
 
   getExpandedVariables(target: any, dimensionKey: any, variable: any, templateSrv: TemplateSrv) {
-    /* if the all checkbox is marked we should add all values to the targets */
+    // if the all checkbox is marked we should add all values to the targets
     const allSelected: any = _.find(variable.options, { selected: true, text: 'All' });
     const selectedVariables = _.filter(variable.options, v => {
       if (allSelected) {
