@@ -1,6 +1,7 @@
 import { getDisplayProcessor, getColorFromThreshold } from './displayProcessor';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { ValueMapping, MappingType } from '../types/valueMapping';
+import { FieldType } from '../types';
 
 function assertSame(input: any, processors: DisplayProcessor[], match: DisplayValue) {
   processors.forEach(processor => {
@@ -190,5 +191,40 @@ describe('Format value', () => {
     const value = 1000000;
     const instance = getDisplayProcessor({ config: { decimals: null, unit: 'short' } });
     expect(instance(value).text).toEqual('1.000 Mil');
+  });
+});
+
+describe('Date display options', () => {
+  it('should format UTC dates', () => {
+    const processor = getDisplayProcessor({
+      type: FieldType.time,
+      isUtc: true,
+      config: {
+        unit: 'xyz', // ignore non-date formats
+      },
+    });
+    expect(processor(0).text).toEqual('1970-01-01 00:00:00');
+  });
+
+  it('should pick configured time format', () => {
+    const processor = getDisplayProcessor({
+      type: FieldType.time,
+      isUtc: true,
+      config: {
+        unit: 'dateTimeAsUS', // A configurable date format
+      },
+    });
+    expect(processor(0).text).toEqual('01/01/1970 12:00:00 am');
+  });
+
+  it('respect the configured date format', () => {
+    const processor = getDisplayProcessor({
+      type: FieldType.time,
+      isUtc: true,
+      config: {
+        dateDisplayFormat: 'YYYY',
+      },
+    });
+    expect(processor(0).text).toEqual('1970');
   });
 });
