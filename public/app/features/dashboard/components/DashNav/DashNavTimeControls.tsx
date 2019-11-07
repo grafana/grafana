@@ -4,7 +4,7 @@ import { dateMath } from '@grafana/data';
 
 // Types
 import { DashboardModel } from '../../state';
-import { LocationState } from 'app/types';
+import { LocationState, CoreEvents } from 'app/types';
 import { TimeRange, TimeOption, RawTimeRange } from '@grafana/data';
 
 // State
@@ -43,10 +43,10 @@ export class DashNavTimeControls extends Component<Props> {
   };
 
   onMoveBack = () => {
-    this.$rootScope.appEvent('shift-time', -1);
+    this.$rootScope.appEvent(CoreEvents.shiftTime, -1);
   };
   onMoveForward = () => {
-    this.$rootScope.appEvent('shift-time', 1);
+    this.$rootScope.appEvent(CoreEvents.shiftTime, 1);
   };
 
   onChangeTimePicker = (timeRange: TimeRange) => {
@@ -65,7 +65,7 @@ export class DashNavTimeControls extends Component<Props> {
   };
 
   onZoom = () => {
-    this.$rootScope.appEvent('zoom-out', 2);
+    this.$rootScope.appEvent(CoreEvents.zoomOut, 2);
   };
 
   setActiveTimeOption = (timeOptions: TimeOption[], rawTimeRange: RawTimeRange): TimeOption[] => {

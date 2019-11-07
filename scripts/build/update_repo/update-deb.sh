@@ -5,7 +5,6 @@ GPG_PASS="${2:-}"
 RELEASE_TAG="${3:-}"
 DIST_PATH="${4:-}"
 GCP_DB_BUCKET="${5:-grafana-aptly-db}"
-GCP_REPO_BUCKET="${6:-grafana-repo}"
 
 REPO="grafana"
 
@@ -53,15 +52,6 @@ rm /tmp/sign-this /tmp/sign-this.asc
 
 aptly publish update stable filesystem:repo:grafana
 aptly publish update beta filesystem:repo:grafana
-
-# Update the repo and db on gcp
-
-gsutil -m rsync -r -d /deb-repo/db "gs://$GCP_DB_BUCKET/$RELEASE_TYPE"
-
-# Uploads the binaries before the metadata (to prevent 404's for debs)
-gsutil -m rsync -r /deb-repo/repo/grafana/pool "gs://$GCP_REPO_BUCKET/$RELEASE_TYPE/deb/pool"
-
-gsutil -m rsync -r -d /deb-repo/repo/grafana "gs://$GCP_REPO_BUCKET/$RELEASE_TYPE/deb"
 
 # usage:
 #

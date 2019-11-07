@@ -1,35 +1,36 @@
 import _ from 'lodash';
+import { auto } from 'angular';
 import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.gauge';
 import 'app/features/panel/panellinks/link_srv';
+
 import {
+  DataFrame,
+  DisplayValue,
+  Field,
+  fieldReducers,
+  FieldType,
+  GraphSeriesValue,
+  KeyValue,
+  LinkModel,
+  reduceField,
+  ReducerID,
   LegacyResponseData,
   getFlotPairs,
   getDisplayProcessor,
-  convertOldAngulrValueMapping,
   getColorFromHexRgbOrName,
-} from '@grafana/ui';
+  PanelEvents,
+} from '@grafana/data';
 
+import { convertOldAngularValueMapping } from '@grafana/ui';
+
+import { CoreEvents } from 'app/types';
 import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
-import {
-  DataFrame,
-  FieldType,
-  reduceField,
-  ReducerID,
-  Field,
-  GraphSeriesValue,
-  DisplayValue,
-  fieldReducers,
-  KeyValue,
-  LinkModel,
-} from '@grafana/data';
-import { auto } from 'angular';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
-import { PanelQueryRunnerFormat } from 'app/features/dashboard/state/PanelQueryRunner';
-import { getProcessedDataFrames } from 'app/features/dashboard/state/PanelQueryState';
+import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
 
 const BASE_FONT_SIZE = 38;
 
@@ -119,12 +120,12 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
-    this.events.on('data-frames-received', this.onFramesReceived.bind(this));
-    this.events.on('data-error', this.onDataError.bind(this));
-    this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
-    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
+    this.events.on(CoreEvents.dataFramesReceived, this.onFramesReceived.bind(this));
+    this.events.on(PanelEvents.dataError, this.onDataError.bind(this));
+    this.events.on(PanelEvents.dataSnapshotLoad, this.onSnapshotLoad.bind(this));
+    this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
 
-    this.dataFormat = PanelQueryRunnerFormat.frames;
+    this.useDataFrames = true;
 
     this.onSparklineColorChange = this.onSparklineColorChange.bind(this);
     this.onSparklineFillChange = this.onSparklineFillChange.bind(this);
@@ -155,8 +156,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.handleDataFrames([]);
   }
 
-  // This should only be called from the snapshot callback
-  onDataReceived(dataList: LegacyResponseData[]) {
+  onSnapshotLoad(dataList: LegacyResponseData[]) {
     this.onFramesReceived(getProcessedDataFrames(dataList));
   }
 
@@ -184,13 +184,17 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     if (!fieldInfo) {
+      const processor = getDisplayProcessor({
+        config: {
+          mappings: convertOldAngularValueMapping(this.panel),
+          noValue: 'No Data',
+        },
+        theme: config.theme,
+      });
       // When we don't have any field
       this.data = {
-        value: 'No Data',
-        display: {
-          text: 'No Data',
-          numeric: NaN,
-        },
+        value: null,
+        display: processor(null),
       };
     } else {
       this.data = this.processField(fieldInfo);
@@ -240,29 +244,31 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     const processor = getDisplayProcessor({
-      field: {
+      config: {
         ...fieldInfo.field.config,
         unit: panel.format,
         decimals: panel.decimals,
-        mappings: convertOldAngulrValueMapping(panel),
+        mappings: convertOldAngularValueMapping(panel),
       },
       theme: config.theme,
       isUtc: dashboard.isTimezoneUtc && dashboard.isTimezoneUtc(),
     });
 
+    const sparkline: any[] = [];
     const data = {
       field: fieldInfo.field,
       value: val,
       display: processor(val),
       scopedVars: _.extend({}, panel.scopedVars),
+      sparkline,
     };
 
-    data.scopedVars['__name'] = name;
+    data.scopedVars['__name'] = { value: name };
     panel.tableColumn = this.fieldNames.length > 1 ? name : '';
 
     // Get the fields for a sparkline
     if (panel.sparkline && panel.sparkline.show && fieldInfo.frame.firstTimeField) {
-      this.data.sparkline = getFlotPairs({
+      data.sparkline = getFlotPairs({
         xField: fieldInfo.frame.firstTimeField,
         yField: fieldInfo.field,
         nullValueMode: panel.nullPointMode,
@@ -658,7 +664,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     hookupDrilldownLinkTooltip();
 
-    this.events.on('render', () => {
+    this.events.on(PanelEvents.render, () => {
       render();
       ctrl.renderingCompleted();
     });

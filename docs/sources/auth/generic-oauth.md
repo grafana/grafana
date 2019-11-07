@@ -40,17 +40,26 @@ Set `api_url` to the resource that returns [OpenID UserInfo](https://connect2id.
 Grafana will attempt to determine the user's e-mail address by querying the OAuth provider as described below in the following order until an e-mail address is found:
 
 1. Check for the presence of an e-mail address via the `email` field encoded in the OAuth `id_token` parameter.
-2. Check for the presence of an e-mail address using the [JMES path](http://jmespath.org/examples.html) specified via the `email_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option.
+2. Check for the presence of an e-mail address using the [JMESPath](http://jmespath.org/examples.html) specified via the `email_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option.
 **Note**: Only available in Grafana v6.4+.
 3. Check for the presence of an e-mail address in the `attributes` map encoded in the OAuth `id_token` parameter. By default Grafana will perform a lookup into the attributes map using the `email:primary` key, however, this is configurable and can be adjusted by using the `email_attribute_name` configuration option.
 4. Query the `/emails` endpoint of the OAuth provider's API (configured with `api_url`) and check for the presence of an e-mail address marked as a primary address.
 5. If no e-mail address is found in steps (1-4), then the e-mail address of the user is set to the empty string.
+
+Grafana will also attempt to do role mapping through OAuth as described below.
+
+> Only available in Grafana v6.5+.
+
+Check for the presence of an role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
+
+See [JMESPath examples](#jmespath-examples) for more information.
 
 ## Set up OAuth2 with Okta
 
 First set up Grafana as an OpenId client "webapplication" in Okta. Then set the Base URIs to `https://<grafana domain>/` and set the Login redirect URIs to `https://<grafana domain>/login/generic_oauth`.
 
 Finally set up the generic oauth module like this:
+
 ```bash
 [auth.generic_oauth]
 name = Okta
@@ -156,11 +165,11 @@ allowed_organizations =
 
 5.  Note down the "Application ID", this will be the OAuth client id.
 
-6.  Click "Settings", then click "Keys" and add a new entry under Passwords
-    - Key Description: Grafana OAuth
-    - Duration: Never Expires
+6.  Click "Certificates & secrets" and add a new entry under Client secrets
+    - Description: Grafana OAuth
+    - Expires: Never
 
-7.  Click Save then copy the key value, this will be the OAuth client secret.
+7.  Click Add then copy the key value, this will be the OAuth client secret.
 
 8.  Configure Grafana as follows:
 
@@ -206,9 +215,10 @@ allowed_organizations =
     allow_sign_up = true
     client_id = <OpenID Connect Client ID from Centrify>
     client_secret = <your generated OpenID Connect Client Sercret"
-    scopes = openid email name
+    scopes = openid profile email
     auth_url = https://<your domain>.my.centrify.com/OAuth2/Authorize/<Application ID>
     token_url = https://<your domain>.my.centrify.com/OAuth2/Token/<Application ID>
+    api_url = https://<your domain>.my.centrify.com/OAuth2/UserInfo/<Application ID>
     ```
 
 ## Set up OAuth2 with non-compliant providers
@@ -224,6 +234,51 @@ send via POST body, which can be enabled via the following settings:
 send_client_credentials_via_post = true
 ```
 
-<hr>
+## JMESPath examples
 
+To ease configuring a proper JMESPath expression you can test/evaluate expression with a custom payload at http://jmespath.org/.
 
+### Role mapping
+
+**Basic example:**
+
+In the following example user will get `Editor` as role when authenticating. The value of the property `role` will be the resulting role if the role is a proper Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
+
+Payload:
+```json
+{
+    ...
+    "role": "Editor",
+    ...
+}
+```
+
+Config:
+```bash
+role_attribute_path = role
+```
+
+**Advanced example:**
+
+In the following example user will get `Admin` as role when authenticating since it has a group `admin`. If a user has a group `editor` it will get `Editor` as role, otherwise `Viewer`.
+
+Payload:
+```json
+{
+    ...
+    "info": {
+        ...
+        "groups": [
+            "engineer",
+            "admin",
+        ],
+        ...
+    },
+    ...
+}
+```
+
+Config:
+```bash
+role_attribute_path = contains(info.groups[*], 'admin') && 'Admin' || contains(info.groups[*], 'editor') && 'Editor' || 'Viewer'
+```

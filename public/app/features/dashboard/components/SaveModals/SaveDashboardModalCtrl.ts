@@ -1,5 +1,6 @@
 import coreModule from 'app/core/core_module';
 import { DashboardSrv } from '../../services/DashboardSrv';
+import { CloneOptions } from '../../state/DashboardModel';
 
 const template = `
 <div class="modal-body">
@@ -95,7 +96,7 @@ export class SaveDashboardModalCtrl {
       return;
     }
 
-    const options: any = {
+    const options: CloneOptions = {
       saveVariables: this.saveVariables,
       saveTimerange: this.saveTimerange,
       message: this.message,
@@ -105,11 +106,10 @@ export class SaveDashboardModalCtrl {
     const saveModel = dashboard.getSaveModelClone(options);
 
     this.isSaving = true;
-
     return this.dashboardSrv.save(saveModel, options).then(this.postSave.bind(this, options));
   }
 
-  postSave(options: any) {
+  postSave(options?: { saveVariables?: boolean; saveTimerange?: boolean }) {
     if (options.saveVariables) {
       this.dashboardSrv.getCurrent().resetOriginalVariables();
     }

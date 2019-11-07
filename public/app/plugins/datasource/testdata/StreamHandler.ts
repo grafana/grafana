@@ -1,13 +1,16 @@
 import defaults from 'lodash/defaults';
-import { DataQueryRequest, DataQueryResponse, DataQueryError, DataStreamObserver, DataStreamState } from '@grafana/ui';
-
 import {
+  DataQueryRequest,
+  DataQueryResponse,
+  DataQueryError,
+  DataStreamObserver,
+  DataStreamState,
   FieldType,
   Field,
   LoadingState,
   LogLevel,
   CSVReader,
-  DataFrameHelper,
+  MutableDataFrame,
   CircularVector,
   DataFrame,
 } from '@grafana/data';
@@ -175,14 +178,14 @@ export class SignalWorker extends StreamWorker {
   };
 
   initBuffer(refId: string) {
-    const { speed, buffer } = this.query;
+    const { speed } = this.query;
     const request = this.stream.request;
-    const maxRows = buffer ? buffer : request.maxDataPoints;
+    const maxRows = request.maxDataPoints || 1000;
     const times = new CircularVector({ capacity: maxRows });
     const vals = new CircularVector({ capacity: maxRows });
     this.values = [times, vals];
 
-    const data = new DataFrameHelper({
+    const data = new MutableDataFrame({
       fields: [
         { name: 'Time', type: FieldType.time, values: times }, // The time field
         { name: 'Value', type: FieldType.number, values: vals },
@@ -341,17 +344,17 @@ export class LogsWorker extends StreamWorker {
   };
 
   initBuffer(refId: string) {
-    const { speed, buffer } = this.query;
+    const { speed } = this.query;
 
     const request = this.stream.request;
 
-    const maxRows = buffer ? buffer : request.maxDataPoints;
+    const maxRows = request.maxDataPoints || 1000;
 
     const times = new CircularVector({ capacity: maxRows });
     const lines = new CircularVector({ capacity: maxRows });
 
     this.values = [times, lines];
-    this.data = new DataFrameHelper({
+    this.data = new MutableDataFrame({
       fields: [
         { name: 'Time', type: FieldType.time, values: times },
         { name: 'Line', type: FieldType.string, values: lines },

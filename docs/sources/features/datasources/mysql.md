@@ -29,7 +29,7 @@ data from a MySQL compatible database.
 
 Name | Description
 ------------ | -------------
-*Name* | The data source name. This is how you refer to the data source in panels & queries.
+*Name* | The data source name. This is how you refer to the data source in panels and queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
 *Host* | The IP address/hostname and optional port of your MySQL instance.
 *Database* | Name of your MySQL database.
@@ -60,7 +60,7 @@ Identifier | Description
 ### Database User Permissions (Important!)
 
 The database user you specify when you add the data source should only be granted SELECT permissions on
-the specified database & tables you want to query. Grafana does not validate that the query is safe. The query
+the specified database and tables you want to query. Grafana does not validate that the query is safe. The query
 could include any SQL statement. For example, statements like `USE otherdb;` and `DROP TABLE user;` would be
 executed. To protect against this we **Highly** recommend you create a specific mysql user with restricted permissions.
 
@@ -141,13 +141,13 @@ Macro example | Description
 *$__timeGroup(dateColumn,'5m', NULL)* | Same as above but NULL will be used as value for missing points.
 *$__timeGroup(dateColumn,'5m', previous)* | Same as above but the previous value in that series will be used as fill value if no value has been seen yet NULL will be used (only available in Grafana 5.3+).
 *$__timeGroupAlias(dateColumn,'5m')* | Will be replaced identical to $__timeGroup but with an added column alias (only available in Grafana 5.3+).
-*$__unixEpochFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as unix timestamp. For example, *dateColumn > 1494410783 AND dateColumn < 1494497183*
-*$__unixEpochFrom()* | Will be replaced by the start of the currently active time selection as unix timestamp. For example, *1494410783*
-*$__unixEpochTo()* | Will be replaced by the end of the currently active time selection as unix timestamp. For example, *1494497183*
+*$__unixEpochFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as Unix timestamp. For example, *dateColumn > 1494410783 AND dateColumn < 1494497183*
+*$__unixEpochFrom()* | Will be replaced by the start of the currently active time selection as Unix timestamp. For example, *1494410783*
+*$__unixEpochTo()* | Will be replaced by the end of the currently active time selection as Unix timestamp. For example, *1494497183*
 *$__unixEpochNanoFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as nanosecond timestamp. For example, *dateColumn > 1494410783152415214 AND dateColumn < 1494497183142514872*
 *$__unixEpochNanoFrom()* | Will be replaced by the start of the currently active time selection as nanosecond timestamp. For example, *1494410783152415214*
 *$__unixEpochNanoTo()* | Will be replaced by the end of the currently active time selection as nanosecond timestamp. For example, *1494497183142514872*
-*$__unixEpochGroup(dateColumn,'5m', [fillmode])* | Same as $__timeGroup but for times stored as unix timestamp (only available in Grafana 5.3+).
+*$__unixEpochGroup(dateColumn,'5m', [fillmode])* | Same as $__timeGroup but for times stored as Unix timestamp (only available in Grafana 5.3+).
 *$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])* | Same as above but also adds a column alias (only available in Grafana 5.3+).
 
 We plan to add many more macros. If you have suggestions for what macros you would like to see, please [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
@@ -156,7 +156,7 @@ The query editor has a link named `Generated SQL` that show up after a query as 
 
 ## Table queries
 
-If the `Format as` query option is set to `Table` then you can basically do any type of SQL query. The table panel will automatically show the results of whatever columns & rows your query returns.
+If the `Format as` query option is set to `Table` then you can basically do any type of SQL query. The table panel will automatically show the results of whatever columns and rows your query returns.
 
 Query editor with example query:
 
@@ -182,7 +182,7 @@ The resulting table panel:
 
 ## Time series queries
 
-If you set `Format as` to `Time series`, for use in Graph panel for example, then the query must return a column named `time` that returns either a sql datetime or any numeric datatype representing unix epoch.
+If you set `Format as` to `Time series`, for use in Graph panel for example, then the query must return a column named `time` that returns either a sql datetime or any numeric datatype representing Unix epoch.
 Any column except `time` and `metric` is treated as a value column.
 You may return a column named `metric` that is used as metric name for the value column.
 If you return multiple value columns and a column named `metric` then this column is used as prefix for the series name (only available in Grafana 5.3+).
@@ -229,7 +229,7 @@ GROUP BY time
 ORDER BY time
 ```
 
-Currently, there is no support for a dynamic group by time based on time range & panel width.
+Currently, there is no support for a dynamic group by time based on time range and panel width.
 This is something we plan to add.
 
 ## Templating
@@ -274,6 +274,21 @@ the hosts variable only show hosts from the current selected region with a query
 
 ```sql
 SELECT hostname FROM my_host  WHERE region IN($region)
+```
+
+#### Using `__searchFilter` to filter results in Query Variable
+> Available from Grafana 6.5 and above
+
+Using `__searchFilter` in the query field will filter the query result based on what the user types in the dropdown select box.
+When nothing has been entered by the user the default value for `__searchFilter` is `%`.
+
+> Important that you surround the `__searchFilter` expression with quotes as Grafana does not do this for you.
+
+The example below shows how to use `__searchFilter` as part of the query field to enable searching for `hostname` while the user types in the dropdown select box.
+
+Query
+```sql
+SELECT hostname FROM my_host  WHERE hostname LIKE '$__searchFilter'
 ```
 
 ### Using Variables in Queries
@@ -358,11 +373,11 @@ tags | Optional field name to use for event tags as a comma separated string.
 
 Time series queries should work in alerting conditions. Table formatted queries is not yet supported in alert rule conditions.
 
-## Configure the Datasource with Provisioning
+## Configure the data source with provisioning
 
-It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources)
 
-Here are some provisioning examples for this datasource.
+Here are some provisioning examples for this data source.
 
 ```yaml
 apiVersion: 1

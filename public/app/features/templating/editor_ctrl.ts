@@ -5,6 +5,7 @@ import appEvents from 'app/core/app_events';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { VariableSrv } from './all';
 import { TemplateSrv } from './template_srv';
+import { AppEvents } from '@grafana/data';
 
 export class VariableEditorCtrl {
   /** @ngInject */
@@ -85,13 +86,16 @@ export class VariableEditorCtrl {
       }
 
       if (!$scope.current.name.match(/^\w+$/)) {
-        appEvents.emit('alert-warning', ['Validation', 'Only word and digit characters are allowed in variable names']);
+        appEvents.emit(AppEvents.alertWarning, [
+          'Validation',
+          'Only word and digit characters are allowed in variable names',
+        ]);
         return false;
       }
 
       const sameName: any = _.find($scope.variables, { name: $scope.current.name });
       if (sameName && sameName !== $scope.current) {
-        appEvents.emit('alert-warning', ['Validation', 'Variable with the same name already exists']);
+        appEvents.emit(AppEvents.alertWarning, ['Validation', 'Variable with the same name already exists']);
         return false;
       }
 
@@ -100,7 +104,7 @@ export class VariableEditorCtrl {
         _.isString($scope.current.query) &&
         $scope.current.query.match(new RegExp('\\$' + $scope.current.name + '(/| |$)'))
       ) {
-        appEvents.emit('alert-warning', [
+        appEvents.emit(AppEvents.alertWarning, [
           'Validation',
           'Query cannot contain a reference to itself. Variable: $' + $scope.current.name,
         ]);
@@ -128,7 +132,10 @@ export class VariableEditorCtrl {
         if (err.data && err.data.message) {
           err.message = err.data.message;
         }
-        appEvents.emit('alert-error', ['Templating', 'Template variables could not be initialized: ' + err.message]);
+        appEvents.emit(AppEvents.alertError, [
+          'Templating',
+          'Template variables could not be initialized: ' + err.message,
+        ]);
       });
     };
 

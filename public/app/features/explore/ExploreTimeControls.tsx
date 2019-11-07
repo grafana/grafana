@@ -8,7 +8,8 @@ import { TimeRange, TimeOption, TimeZone, RawTimeRange, dateTimeForTimeZone } fr
 // State
 
 // Components
-import { TimePicker, RefreshPicker, SetInterval } from '@grafana/ui';
+import { TimePicker } from '@grafana/ui';
+import { TimeSyncButton } from './TimeSyncButton';
 
 // Utils & Services
 import { defaultSelectOptions } from '@grafana/ui/src/components/TimePicker/TimePicker';
@@ -16,14 +17,11 @@ import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePick
 
 export interface Props {
   exploreId: ExploreId;
-  hasLiveOption: boolean;
-  isLive: boolean;
-  loading: boolean;
   range: TimeRange;
-  refreshInterval: string;
   timeZone: TimeZone;
-  onRunQuery: () => void;
-  onChangeRefreshInterval: (interval: string) => void;
+  splitted: boolean;
+  syncedTimes: boolean;
+  onChangeTimeSync: () => void;
   onChangeTime: (range: RawTimeRange) => void;
 }
 
@@ -73,40 +71,18 @@ export class ExploreTimeControls extends Component<Props> {
   };
 
   render() {
-    const {
-      hasLiveOption,
-      isLive,
-      loading,
-      range,
-      refreshInterval,
+    const { range, timeZone, splitted, syncedTimes, onChangeTimeSync } = this.props;
+    const timeSyncButton = splitted ? <TimeSyncButton onClick={onChangeTimeSync} isSynced={syncedTimes} /> : null;
+    const timePickerCommonProps = {
+      value: range,
+      onChange: this.onChangeTimePicker,
       timeZone,
-      onRunQuery,
-      onChangeRefreshInterval,
-    } = this.props;
+      onMoveBackward: this.onMoveBack,
+      onMoveForward: this.onMoveForward,
+      onZoom: this.onZoom,
+      selectOptions: this.setActiveTimeOption(defaultSelectOptions, range.raw),
+    };
 
-    return (
-      <>
-        {!isLive && (
-          <TimePicker
-            value={range}
-            onChange={this.onChangeTimePicker}
-            timeZone={timeZone}
-            onMoveBackward={this.onMoveBack}
-            onMoveForward={this.onMoveForward}
-            onZoom={this.onZoom}
-            selectOptions={this.setActiveTimeOption(defaultSelectOptions, range.raw)}
-          />
-        )}
-
-        <RefreshPicker
-          onIntervalChanged={onChangeRefreshInterval}
-          onRefresh={onRunQuery}
-          value={refreshInterval}
-          tooltip="Refresh"
-          hasLiveOption={hasLiveOption}
-        />
-        {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
-      </>
-    );
+    return <TimePicker {...timePickerCommonProps} timeSyncButton={timeSyncButton} isSynced={syncedTimes} />;
   }
 }

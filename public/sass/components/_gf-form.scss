@@ -20,6 +20,10 @@ $input-border: 1px solid $input-border-color;
     justify-content: flex-end;
   }
 
+  &--align-center {
+    align-content: center;
+  }
+
   &--alt {
     flex-direction: column;
     align-items: flex-start;

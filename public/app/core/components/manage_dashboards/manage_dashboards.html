@@ -114,14 +114,14 @@
 </div>
 
 <div ng-if="ctrl.canSave && ctrl.folderId && !ctrl.hasFilters && ctrl.sections.length === 0">
-  <empty-list-cta model="{
-    title: 'This folder doesn\'t have any dashboards yet',
-    buttonIcon: 'gicon gicon-dashboard-new',
-    buttonLink: 'dashboard/new?folderId={{ctrl.folderId}}',
-    buttonTitle: 'Create Dashboard',
-    proTip: 'Add/move dashboards to your folder at ->',
-    proTipLink: 'dashboards',
-    proTipLinkTitle: 'Manage dashboards',
-    proTipTarget: ''
-  }" />
+  <empty-list-cta 
+    title="'This folder doesn\'t have any dashboards yet'"
+    buttonIcon="'gicon gicon-dashboard-new'" 
+    buttonLink="'dashboard/new?folderId={{ctrl.folderId}}'"
+    buttonTitle="'Create Dashboard'"  
+    proTip="'Add/move dashboards to your folder at ->'" 
+    proTipLink="'dashboards'" 
+    proTipLinkTitle="'Manage dashboards'" 
+    proTipTarget=""
+  />
 </div>

@@ -1,5 +1,5 @@
 import { DataProcessor } from '../data_processor';
-import { getProcessedDataFrames } from 'app/features/dashboard/state/PanelQueryState';
+import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
 
 describe('Graph DataProcessor', () => {
   const panel: any = {

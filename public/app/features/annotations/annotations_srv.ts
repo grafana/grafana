@@ -11,10 +11,11 @@ import { dedupAnnotations } from './events_processing';
 
 // Types
 import { DashboardModel } from '../dashboard/state/DashboardModel';
-import { AnnotationEvent } from '@grafana/data';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv } from '../dashboard/services/TimeSrv';
+import { DataSourceApi, PanelEvents, AnnotationEvent, AppEvents } from '@grafana/data';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
@@ -23,7 +24,7 @@ export class AnnotationsSrv {
 
   /** @ngInject */
   constructor(
-    private $rootScope: any,
+    private $rootScope: GrafanaRootScope,
     private $q: IQService,
     private datasourceSrv: DatasourceSrv,
     private backendSrv: BackendSrv,
@@ -34,7 +35,7 @@ export class AnnotationsSrv {
     // always clearPromiseCaches when loading new dashboard
     this.clearPromiseCaches();
     // clear promises on refresh events
-    dashboard.on('refresh', this.clearPromiseCaches.bind(this));
+    dashboard.on(PanelEvents.refresh, this.clearPromiseCaches.bind(this));
   }
 
   clearPromiseCaches() {
@@ -60,10 +61,6 @@ export class AnnotationsSrv {
         });
 
         annotations = dedupAnnotations(annotations);
-        for (let i = 0; i < annotations.length; i++) {
-          const a = annotations[i];
-          a.isRegion = a.time !== a.timeEnd;
-        }
 
         // look for alert state for this panel
         const alertState: any = _.find(results[1], { panelId: options.panel.id });
@@ -78,7 +75,7 @@ export class AnnotationsSrv {
           err.message = err.data.message;
         }
         console.log('AnnotationSrv.query error', err);
-        this.$rootScope.appEvent('alert-error', ['Annotation Query Failed', err.message || err]);
+        this.$rootScope.appEvent(AppEvents.alertError, ['Annotation Query Failed', err.message || err]);
         return [];
       });
   }
@@ -130,7 +127,7 @@ export class AnnotationsSrv {
       dsPromises.push(datasourcePromise);
       promises.push(
         datasourcePromise
-          .then((datasource: any) => {
+          .then((datasource: DataSourceApi) => {
             // issue query against data source
             return datasource.annotationQuery({
               range: range,
@@ -181,7 +178,9 @@ export class AnnotationsSrv {
 
     for (const item of results) {
       item.source = annotation;
+      item.isRegion = item.timeEnd && item.time !== item.timeEnd;
     }
+
     return results;
   }
 }

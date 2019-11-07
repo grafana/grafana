@@ -9,7 +9,6 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         "getPrometheusTime": [MockFunction],
       }
     }
-    datasourceStatus={0}
     history={Array []}
     onChange={[Function]}
     onRunQuery={[Function]}
@@ -68,6 +67,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         Resolution
       </div>
       <Select
+        allowCustomValue={false}
         autoFocus={false}
         backspaceRemovesValue={true}
         className=""
@@ -134,6 +134,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         Format
       </div>
       <Select
+        allowCustomValue={false}
         autoFocus={false}
         backspaceRemovesValue={true}
         className=""

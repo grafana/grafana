@@ -1,18 +1,19 @@
 import React, { FunctionComponent, useContext } from 'react';
 import { css, cx } from 'emotion';
 
-import { GrafanaTheme } from '../../types/theme';
+import { GrafanaTheme } from '@grafana/data';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
-import { ThemeContext } from '../../themes/index';
+import { ThemeContext } from '../../themes/ThemeContext';
+import { stylesFactory } from '../../themes/stylesFactory';
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   collapse: css`
     label: collapse;
     margin-top: ${theme.spacing.sm};
   `,
   collapseBody: css`
     label: collapse__body;
-    padding: ${theme.panelPadding};
+    padding: ${theme.panelPadding}px;
   `,
   loader: css`
     label: collapse__loader;
@@ -59,6 +60,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   headerCollapsed: css`
     label: collapse__header--collapsed;
     cursor: pointer;
+    padding: ${theme.spacing.sm} ${theme.spacing.md} 0 ${theme.spacing.md};
   `,
   headerButtons: css`
     label: collapse__header-buttons;
@@ -78,7 +80,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     font-size: ${theme.typography.heading.h6};
     box-shadow: ${selectThemeVariant({ light: 'none', dark: '1px 1px 4px rgb(45, 45, 45)' }, theme.type)};
   `,
-});
+}));
 
 interface Props {
   isOpen: boolean;

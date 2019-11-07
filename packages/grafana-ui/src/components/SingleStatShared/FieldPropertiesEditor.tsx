@@ -7,9 +7,17 @@ import { FormLabel } from '../FormLabel/FormLabel';
 import { UnitPicker } from '../UnitPicker/UnitPicker';
 
 // Types
-import { toIntegerOrUndefined, SelectableValue, FieldConfig, toFloatOrUndefined, toNumberString } from '@grafana/data';
-
-import { VAR_SERIES_NAME, VAR_FIELD_NAME, VAR_CALC, VAR_CELL_PREFIX } from '../../utils/fieldDisplay';
+import {
+  VAR_SERIES_NAME,
+  VAR_FIELD_NAME,
+  VAR_CALC,
+  VAR_CELL_PREFIX,
+  toIntegerOrUndefined,
+  SelectableValue,
+  FieldConfig,
+  toFloatOrUndefined,
+  toNumberString,
+} from '@grafana/data';
 
 const labelWidth = 6;
 
@@ -70,9 +78,9 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
     <div>
       Template Variables:
       <br />
-      {'$' + VAR_SERIES_NAME}
+      {'${' + VAR_SERIES_NAME + '}'}
       <br />
-      {'$' + VAR_FIELD_NAME}
+      {'${' + VAR_FIELD_NAME + '}'}
       <br />
       {'$' + VAR_CELL_PREFIX + '{N}'} / {'$' + VAR_CALC}
     </div>

@@ -18,7 +18,14 @@ This document is a “bottom up” introduction to basic concepts in Grafana, an
 
 Grafana supports many different storage backends for your time series data (Data Source). Each Data Source has a specific Query Editor that is customized for the features and capabilities that the particular Data Source exposes.
 
-The following datasources are officially supported: [Graphite]({{< relref "features/datasources/graphite.md" >}}), [InfluxDB]({{< relref "features/datasources/influxdb.md" >}}), [OpenTSDB]({{< relref "features/datasources/opentsdb.md" >}}), [Prometheus]({{< relref "features/datasources/prometheus.md" >}}), [Elasticsearch]({{< relref "features/datasources/elasticsearch.md" >}}), [CloudWatch]({{< relref "features/datasources/cloudwatch.md" >}}).
+The following data sources are officially supported:
+
+* [CloudWatch]({{< relref "features/datasources/cloudwatch.md" >}})
+* [Elasticsearch]({{< relref "features/datasources/elasticsearch.md" >}})
+* [Graphite]({{< relref "features/datasources/graphite.md" >}})
+* [InfluxDB]({{< relref "features/datasources/influxdb.md" >}})
+* [OpenTSDB]({{< relref "features/datasources/opentsdb.md" >}})
+* [Prometheus]({{< relref "features/datasources/prometheus.md" >}})
 
 The query language and capabilities of each Data Source are obviously very different. You can combine data from multiple Data Sources onto a single Dashboard, but each Panel is tied to a specific Data Source that belongs to a particular Organization.
 
@@ -66,7 +73,16 @@ There are a wide variety of styling and formatting options that each Panel expos
 
 Panels can be dragged and dropped and rearranged on the Dashboard. They can also be resized.
 
-There are currently five Panel types: [Graph](/reference/graph/), [Singlestat](/reference/singlestat/), [Dashlist](/reference/dashlist/), [Table](/reference/table_panel/), and [Text](/reference/text/).
+These are the available Panel types: 
+
+- [Alert list](/reference/alertlist/)
+- [Dashboard list](/reference/dashlist/)
+- [Graph](/reference/graph/)
+- [Heatmap](/reference/heatmap/)
+- [Logs](/reference/logs/)
+- [Singlestat](/reference/singlestat/)
+- [Table](/reference/table_panel/)
+- [Text](/reference/text/)
 
 Panels like the [Graph](/reference/graph/) panel allow you to graph as many metrics and series as you want. Other panels like [Singlestat](/reference/singlestat/) require a reduction of a single query into a single number. [Dashlist](/reference/dashlist/) and [Text](/reference/text/) are special panels that do not connect to any Data Source.
 

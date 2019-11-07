@@ -1,12 +1,10 @@
-import { DataFrameHelper, FieldType, LogRowModel } from '@grafana/data';
+import { FieldType, LogRowModel, MutableDataFrame, Labels, LogLevel, DataQueryResponse } from '@grafana/data';
 import { getRowContexts } from './LogRowContextProvider';
-import { Labels, LogLevel } from '@grafana/data/src';
-import { DataQueryResponse } from '../../types';
 
 describe('getRowContexts', () => {
   describe('when called with a DataFrame and results are returned', () => {
     it('then the result should be in correct format', async () => {
-      const firstResult = new DataFrameHelper({
+      const firstResult = new MutableDataFrame({
         refId: 'B',
         labels: {},
         fields: [
@@ -14,7 +12,7 @@ describe('getRowContexts', () => {
           { name: 'line', type: FieldType.string, values: ['3', '2', '1'] },
         ],
       });
-      const secondResult = new DataFrameHelper({
+      const secondResult = new MutableDataFrame({
         refId: 'B',
         labels: {},
         fields: [
@@ -33,6 +31,7 @@ describe('getRowContexts', () => {
         timeLocal: '',
         timeUtc: '',
         timestamp: '4',
+        uid: '1',
       };
 
       let called = false;
@@ -65,6 +64,7 @@ describe('getRowContexts', () => {
         timeLocal: '',
         timeUtc: '',
         timestamp: '4',
+        uid: '1',
       };
 
       let called = false;

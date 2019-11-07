@@ -1,5 +1,7 @@
 # Grafana UI components library
 
+> **@grafana/toolkit is currently in ALPHA**. Core API is unstable and can be a subject of breaking changes!
+
 @grafana/ui is a collection of components used by [Grafana](https://github.com/grafana/grafana)
 
 Our goal is to deliver Grafana's common UI elements for plugins developers and contributors.

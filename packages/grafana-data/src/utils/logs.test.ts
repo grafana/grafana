@@ -89,7 +89,15 @@ describe('LogsParsers', () => {
     });
 
     test('should return parsed fields', () => {
-      expect(parser.getFields('foo=bar baz="42 + 1"')).toEqual(['foo=bar', 'baz="42 + 1"']);
+      expect(
+        parser.getFields(
+          'foo=bar baz="42 + 1" msg="[resolver] received A record \\"127.0.0.1\\" for \\"localhost.\\" from udp:192.168.65.1"'
+        )
+      ).toEqual([
+        'foo=bar',
+        'baz="42 + 1"',
+        'msg="[resolver] received A record \\"127.0.0.1\\" for \\"localhost.\\" from udp:192.168.65.1"',
+      ]);
     });
 
     test('should return label for field', () => {
@@ -98,6 +106,11 @@ describe('LogsParsers', () => {
 
     test('should return value for field', () => {
       expect(parser.getValueFromField('foo=bar')).toBe('bar');
+      expect(
+        parser.getValueFromField(
+          'msg="[resolver] received A record \\"127.0.0.1\\" for \\"localhost.\\" from udp:192.168.65.1"'
+        )
+      ).toBe('"[resolver] received A record \\"127.0.0.1\\" for \\"localhost.\\" from udp:192.168.65.1"');
     });
 
     test('should build a valid value matcher', () => {
@@ -117,7 +130,7 @@ describe('LogsParsers', () => {
     });
 
     test('should return parsed fields', () => {
-      expect(parser.getFields('{ "foo" : "bar", "baz" : 42 }')).toEqual(['"foo" : "bar"', '"baz" : 42']);
+      expect(parser.getFields('{ "foo" : "bar", "baz" : 42 }')).toEqual(['"foo":"bar"', '"baz":42']);
     });
 
     test('should return parsed fields for nested quotes', () => {
@@ -126,6 +139,7 @@ describe('LogsParsers', () => {
 
     test('should return label for field', () => {
       expect(parser.getLabelFromField('"foo" : "bar"')).toBe('foo');
+      expect(parser.getLabelFromField('"docker.memory.fail.count":0')).toBe('docker.memory.fail.count');
     });
 
     test('should return value for field', () => {

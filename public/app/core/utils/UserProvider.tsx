@@ -1,19 +1,24 @@
 import React, { PureComponent } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
 import { User, Team } from 'app/types';
+import { config } from 'app/core/config';
 
 export interface UserAPI {
   changePassword: (changePassword: ChangePasswordFields) => void;
   updateUserProfile: (profile: ProfileUpdateFields) => void;
   loadUser: () => void;
   loadTeams: () => void;
+  loadOrgs: () => void;
+  setUserOrg: (org: UserOrg) => void;
 }
 
 interface LoadingStates {
   changePassword: boolean;
   loadUser: boolean;
   loadTeams: boolean;
+  loadOrgs: boolean;
   updateUserProfile: boolean;
+  updateUserOrg: boolean;
 }
 
 export interface ChangePasswordFields {
@@ -28,25 +33,35 @@ export interface ProfileUpdateFields {
   login: string;
 }
 
+export interface UserOrg {
+  orgId: number;
+  name: string;
+  role: string;
+}
+
 export interface Props {
   userId?: number; // passed, will load user on mount
-  children: (api: UserAPI, states: LoadingStates, teams: Team[], user?: User) => JSX.Element;
+  children: (api: UserAPI, states: LoadingStates, teams: Team[], orgs: UserOrg[], user?: User) => JSX.Element;
 }
 
 export interface State {
   user?: User;
   teams: Team[];
+  orgs: UserOrg[];
   loadingStates: LoadingStates;
 }
 
 export class UserProvider extends PureComponent<Props, State> {
   state: State = {
     teams: [] as Team[],
+    orgs: [] as UserOrg[],
     loadingStates: {
       changePassword: false,
       loadUser: true,
       loadTeams: false,
+      loadOrgs: false,
       updateUserProfile: false,
+      updateUserOrg: false,
     },
   };
 
@@ -78,6 +93,28 @@ export class UserProvider extends PureComponent<Props, State> {
     this.setState({ teams, loadingStates: { ...this.state.loadingStates, loadTeams: false } });
   };
 
+  loadOrgs = async () => {
+    this.setState({
+      loadingStates: { ...this.state.loadingStates, loadOrgs: true },
+    });
+    const orgs = await getBackendSrv().get('/api/user/orgs');
+    this.setState({ orgs, loadingStates: { ...this.state.loadingStates, loadOrgs: false } });
+  };
+
+  setUserOrg = async (org: UserOrg) => {
+    this.setState({
+      loadingStates: { ...this.state.loadingStates, updateUserOrg: true },
+    });
+    await getBackendSrv()
+      .post('/api/user/using/' + org.orgId, {})
+      .then(() => {
+        window.location.href = config.appSubUrl + '/profile';
+      })
+      .finally(() => {
+        this.setState({ loadingStates: { ...this.state.loadingStates, updateUserOrg: false } });
+      });
+  };
+
   updateUserProfile = async (payload: ProfileUpdateFields) => {
     this.setState({ loadingStates: { ...this.state.loadingStates, updateUserProfile: true } });
     await getBackendSrv()
@@ -93,16 +130,18 @@ export class UserProvider extends PureComponent<Props, State> {
 
   render() {
     const { children } = this.props;
-    const { loadingStates, teams, user } = this.state;
+    const { loadingStates, teams, orgs, user } = this.state;
 
     const api = {
       changePassword: this.changePassword,
       loadUser: this.loadUser,
       loadTeams: this.loadTeams,
+      loadOrgs: this.loadOrgs,
       updateUserProfile: this.updateUserProfile,
+      setUserOrg: this.setUserOrg,
     };
 
-    return <>{children(api, loadingStates, teams, user)}</>;
+    return <>{children(api, loadingStates, teams, orgs, user)}</>;
   }
 }
 

@@ -2,14 +2,14 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { Select, DataQuery, DataQueryError, PanelData } from '@grafana/ui';
-import { DataFrame, SelectableValue } from '@grafana/data';
+import { Select } from '@grafana/ui';
+import { DataQuery, DataQueryError, PanelData, DataFrame, SelectableValue } from '@grafana/data';
 import { DashboardQuery } from './types';
 import config from 'app/core/config';
 import { css } from 'emotion';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PanelModel } from 'app/features/dashboard/state';
-import { SHARED_DASHBODARD_QUERY } from './SharedQueryRunner';
+import { SHARED_DASHBODARD_QUERY } from './types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { filterPanelDataToQuery } from 'app/features/dashboard/panel_editor/QueryEditorRow';
 
@@ -146,8 +146,12 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
     const panels: Array<SelectableValue<number>> = [];
 
     for (const panel of dashboard.panels) {
+      const plugin = config.panels[panel.type];
+      if (!plugin) {
+        continue;
+      }
+
       if (panel.targets && panel.datasource !== SHARED_DASHBODARD_QUERY) {
-        const plugin = config.panels[panel.type];
         const item = {
           value: panel.id,
           label: panel.title ? panel.title : 'Panel ' + panel.id,

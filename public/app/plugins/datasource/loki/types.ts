@@ -1,15 +1,18 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/ui';
-import { Labels } from '@grafana/data';
+import { Labels, DataQuery, DataSourceJsonData } from '@grafana/data';
 
 export interface LokiQuery extends DataQuery {
   expr: string;
-  live?: boolean;
+  liveStreaming?: boolean;
   query?: string;
   regexp?: string;
 }
 
 export interface LokiOptions extends DataSourceJsonData {
   maxLines?: string;
+}
+
+export interface LokiResponse {
+  streams: LokiLogsStream[];
 }
 
 export interface LokiLogsStream {

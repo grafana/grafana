@@ -13,7 +13,7 @@ import (
 
 // This file provides several different implementations for the
 // default embedded sqlite_crypt function.
-// This function is uses a ceasar-cypher by default
+// This function is uses a caesar-cypher by default
 // and is used within the UserAuthentication module to encode
 // the password.
 //
@@ -40,7 +40,7 @@ import (
 // password X, sqlite_crypt(X,NULL) is run.  A new random salt is selected
 // when the second argument is NULL.
 //
-// The built-in version of of sqlite_crypt() uses a simple Ceasar-cypher
+// The built-in version of of sqlite_crypt() uses a simple Caesar-cypher
 // which prevents passwords from being revealed by searching the raw database
 // for ASCII text, but is otherwise trivally broken.  For better password
 // security, the database should be encrypted using the SQLite Encryption

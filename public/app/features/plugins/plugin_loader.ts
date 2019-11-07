@@ -10,20 +10,19 @@ import jquery from 'jquery';
 import prismjs from 'prismjs';
 import slate from 'slate';
 // @ts-ignore
-import slateReact from 'slate-react';
+import slateReact from '@grafana/slate-react';
 // @ts-ignore
 import slatePlain from 'slate-plain-serializer';
 import react from 'react';
 import reactDom from 'react-dom';
-import reactRedux from 'react-redux';
-import redux from 'redux';
+import * as reactRedux from 'react-redux';
+import * as redux from 'redux';
 
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
 import { coreModule, appEvents, contextSrv } from 'app/core/core';
-import { DataSourcePlugin, AppPlugin, PanelPlugin, PluginMeta, DataSourcePluginMeta } from '@grafana/ui';
-import { dateMath } from '@grafana/data';
+import { DataSourcePlugin, AppPlugin, PanelPlugin, PluginMeta, DataSourcePluginMeta, dateMath } from '@grafana/data';
 import * as fileExport from 'app/core/utils/file_export';
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
@@ -33,11 +32,21 @@ import builtInPlugins from './built_in_plugins';
 import * as d3 from 'd3';
 import * as emotion from 'emotion';
 import * as grafanaData from '@grafana/data';
-import * as grafanaUI from '@grafana/ui';
+import * as grafanaUIraw from '@grafana/ui';
 import * as grafanaRuntime from '@grafana/runtime';
 
+// Help the 6.4 to 6.5 migration
+// The base classes were moved from @grafana/ui to @grafana/data
+// This exposes the same classes on both import paths
+const grafanaUI = grafanaUIraw as any;
+grafanaUI.PanelPlugin = grafanaData.PanelPlugin;
+grafanaUI.DataSourcePlugin = grafanaData.DataSourcePlugin;
+grafanaUI.AppPlugin = grafanaData.AppPlugin;
+grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
+
 // rxjs
-import { Observable, Subject } from 'rxjs';
+import * as rxjs from 'rxjs';
+import * as rxjsOperators from 'rxjs/operators';
 
 // add cache busting
 const bust = `?_cache=${Date.now()}`;
@@ -81,17 +90,13 @@ exposeToPlugin('moment', moment);
 exposeToPlugin('jquery', jquery);
 exposeToPlugin('angular', angular);
 exposeToPlugin('d3', d3);
-exposeToPlugin('rxjs/Subject', Subject);
-exposeToPlugin('rxjs/Observable', Observable);
-exposeToPlugin('rxjs', {
-  Subject: Subject,
-  Observable: Observable,
-});
+exposeToPlugin('rxjs', rxjs);
+exposeToPlugin('rxjs/operators', rxjsOperators);
 
 // Experimental modules
 exposeToPlugin('prismjs', prismjs);
 exposeToPlugin('slate', slate);
-exposeToPlugin('slate-react', slateReact);
+exposeToPlugin('@grafana/slate-react', slateReact);
 exposeToPlugin('slate-plain-serializer', slatePlain);
 exposeToPlugin('react', react);
 exposeToPlugin('react-dom', reactDom);
@@ -162,10 +167,15 @@ for (const flotDep of flotDeps) {
   exposeToPlugin(flotDep, { fakeDep: 1 });
 }
 
-export function importPluginModule(path: string): Promise<any> {
+export async function importPluginModule(path: string): Promise<any> {
   const builtIn = builtInPlugins[path];
   if (builtIn) {
-    return Promise.resolve(builtIn);
+    // for handling dynamic imports
+    if (typeof builtIn === 'function') {
+      return await builtIn();
+    } else {
+      return Promise.resolve(builtIn);
+    }
   }
   return grafanaRuntime.SystemJS.import(path);
 }

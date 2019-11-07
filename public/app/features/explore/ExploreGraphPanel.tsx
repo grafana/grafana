@@ -1,9 +1,8 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
-import { TimeZone, AbsoluteTimeRange, GraphSeriesXY, dateTimeForTimeZone } from '@grafana/data';
+import { GrafanaTheme, TimeZone, AbsoluteTimeRange, GraphSeriesXY, dateTimeForTimeZone } from '@grafana/data';
 
 import {
-  GrafanaTheme,
   selectThemeVariant,
   Themeable,
   GraphWithLegend,
@@ -79,9 +78,9 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
     }
   };
 
-  onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
+  onChangeTime = (from: number, to: number) => {
     const { onUpdateTimeRange } = this.props;
-    onUpdateTimeRange(absoluteRange);
+    onUpdateTimeRange({ from, to });
   };
 
   renderGraph = () => {
@@ -136,7 +135,7 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
               isStacked={isStacked}
               lineWidth={lineWidth}
               onSeriesToggle={onSeriesToggle}
-              onSelectionChanged={this.onChangeTime}
+              onHorizontalRegionSelected={this.onChangeTime}
             />
           );
         }}

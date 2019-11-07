@@ -13,13 +13,13 @@ import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { DeleteButton, EventsWithValidation, FormLabel, Input, ValidationEvents } from '@grafana/ui';
-import { NavModel } from '@grafana/data';
+import { NavModel, dateTime, isDateTime } from '@grafana/data';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { store } from 'app/store/store';
 import kbn from 'app/core/utils/kbn';
 
 // Utils
-import { dateTime, isDateTime } from '@grafana/data';
+import { CoreEvents } from 'app/types';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 
 const timeRangeValidationEvents: ValidationEvents = {
@@ -106,7 +106,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
       const rootPath = window.location.origin + config.appSubUrl;
       const modalTemplate = ReactDOMServer.renderToString(<ApiKeysAddedModal apiKey={apiKey} rootPath={rootPath} />);
 
-      appEvents.emit('show-modal', {
+      appEvents.emit(CoreEvents.showModal, {
         templateHtml: modalTemplate,
       });
     };

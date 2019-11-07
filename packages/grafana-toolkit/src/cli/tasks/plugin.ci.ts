@@ -3,7 +3,8 @@ import { pluginBuildRunner } from './plugin.build';
 import { restoreCwd } from '../utils/cwd';
 import { S3Client } from '../../plugins/aws';
 import { getPluginJson } from '../../config/utils/pluginValidation';
-import { PluginMeta } from '@grafana/ui';
+import { getPluginId } from '../../config/utils/getPluginId';
+import { PluginMeta } from '@grafana/data';
 
 // @ts-ignore
 import execa = require('execa');
@@ -35,7 +36,7 @@ import { runEndToEndTests } from '../../plugins/e2e/launcher';
 import { getEndToEndSettings } from '../../plugins/index';
 
 export interface PluginCIOptions {
-  backend?: string;
+  backend?: boolean;
   full?: boolean;
   upload?: boolean;
 }
@@ -58,14 +59,13 @@ const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ backend }) => {
   fs.mkdirSync(workDir);
 
   if (backend) {
-    console.log('TODO, backend support?');
-    fs.mkdirSync(path.resolve(process.cwd(), 'dist'));
-    const file = path.resolve(process.cwd(), 'dist', `README_${backend}.txt`);
-    fs.writeFile(file, `TODO... build bakend plugin: ${backend}!`, err => {
-      if (err) {
-        throw new Error('Unable to write: ' + file);
-      }
-    });
+    const makefile = path.resolve(process.cwd(), 'Makefile');
+    if (!fs.existsSync(makefile)) {
+      throw new Error(`Missing: ${makefile}. A Makefile is required for backend plugins.`);
+    }
+
+    // Run plugin-ci task
+    execa('make', ['backend-plugin-ci']).stdout!.pipe(process.stdout);
   } else {
     // Do regular build process with coverage
     await pluginBuildRunner({ coverage: true });
@@ -136,6 +136,10 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   await execa('rimraf', [packagesDir, distDir, grafanaEnvDir]);
   fs.mkdirSync(packagesDir);
   fs.mkdirSync(distDir);
+
+  // Updating the dist dir to have a pluginId named directory in it
+  // The zip needs to contain the plugin code wrapped in directory with a pluginId name
+  const distContentDir = path.resolve(distDir, getPluginId());
   fs.mkdirSync(grafanaEnvDir);
 
   console.log('Build Dist Folder');
@@ -143,7 +147,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   // 1. Check for a local 'dist' folder
   const d = path.resolve(process.cwd(), 'dist');
   if (fs.existsSync(d)) {
-    await execa('cp', ['-rn', d + '/.', distDir]);
+    await execa('cp', ['-rn', d + '/.', distContentDir]);
   }
 
   // 2. Look for any 'dist' folders under ci/job/XXX/dist
@@ -152,7 +156,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
     const contents = path.resolve(ciDir, 'jobs', j, 'dist');
     if (fs.existsSync(contents)) {
       try {
-        await execa('cp', ['-rn', contents + '/.', distDir]);
+        await execa('cp', ['-rn', contents + '/.', distContentDir]);
       } catch (er) {
         throw new Error('Duplicate files found in dist folders');
       }
@@ -160,7 +164,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   }
 
   console.log('Save the source info in plugin.json');
-  const pluginJsonFile = path.resolve(distDir, 'plugin.json');
+  const pluginJsonFile = path.resolve(distContentDir, 'plugin.json');
   const pluginInfo = getPluginJson(pluginJsonFile);
   pluginInfo.info.build = await getPluginBuildInfo();
   fs.writeFile(pluginJsonFile, JSON.stringify(pluginInfo, null, 2), err => {
@@ -185,7 +189,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
     plugin: await getPackageDetails(zipFile, distDir),
   };
 
-  console.log('Setup Grafan Environment');
+  console.log('Setup Grafana Environment');
   let p = path.resolve(grafanaEnvDir, 'plugins', pluginInfo.id);
   fs.mkdirSync(p, { recursive: true });
   await execa('unzip', [zipFile, '-d', p]);

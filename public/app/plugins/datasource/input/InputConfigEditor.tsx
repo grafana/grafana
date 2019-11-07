@@ -4,13 +4,11 @@ import React, { PureComponent } from 'react';
 // Types
 import { InputOptions } from './types';
 
-import { DataSourcePluginOptionsEditorProps, DataSourceSettings, TableInputCSV } from '@grafana/ui';
-import { DataFrame, DataFrameHelper } from '@grafana/data';
+import { TableInputCSV } from '@grafana/ui';
+import { DataSourcePluginOptionsEditorProps, DataFrame, MutableDataFrame } from '@grafana/data';
 import { dataFrameToCSV } from './utils';
 
-type InputSettings = DataSourceSettings<InputOptions>;
-
-interface Props extends DataSourcePluginOptionsEditorProps<InputSettings> {}
+interface Props extends DataSourcePluginOptionsEditorProps<InputOptions> {}
 
 interface State {
   text: string;
@@ -32,7 +30,7 @@ export class InputConfigEditor extends PureComponent<Props, State> {
   onSeriesParsed = (data: DataFrame[], text: string) => {
     const { options, onOptionsChange } = this.props;
     if (!data) {
-      data = [new DataFrameHelper()];
+      data = [new MutableDataFrame()];
     }
     // data is a property on 'jsonData'
     const jsonData = {

@@ -27,7 +27,7 @@ this folder to anywhere you want Grafana to run from.  Go into the
 `custom.ini`, never `defaults.ini`.
 
 The default Grafana port is `3000`, this port requires extra permissions
-on windows. Edit `custom.ini` and uncomment the `http_port`
+on Windows. Edit `custom.ini` and uncomment the `http_port`
 configuration option (`;` is the comment character in ini files) and change it to something like `8080` or similar.
 That port should not require extra Windows privileges.
 
@@ -35,7 +35,7 @@ Default login and password `admin`/ `admin`
 
 
 Start Grafana by executing `grafana-server.exe`, located in the `bin` directory, preferably from the
-command line. If you want to run Grafana as windows service, download
+command line. If you want to run Grafana as Windows service, download
 [NSSM](https://nssm.cc/). It is very easy to add Grafana as a Windows
 service using that tool.
 

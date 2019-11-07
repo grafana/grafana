@@ -190,7 +190,7 @@ func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.Fil
 		CheckSum:   jsonFile.checkSum,
 	}
 
-	_, err = fr.dashboardProvisioningService.SaveProvisionedDashboard(dash, dp)
+	_, err = fr.dashboardProvisioningService.SaveProvisionedDashboard(dash, dp, fr.Cfg.AllowUiUpdates)
 	return provisioningMetadata, err
 }
 

@@ -1,17 +1,22 @@
-Triaging of issues
-------------------
+# Triage issues
 
-Grafana being a popular open source project there are a lot of incoming issues. The main goal of issue triage is to categorize all incoming issues and make sure it has all basic information needed for anyone else to understand and/or being able to start working with it.
+The main goal of issue triage is to categorize all incoming Grafana issues and make sure each issue has all basic information needed for anyone else to understand and be able to start working on it.
 
-The core maintainers of the Grafana project is responsible for categorizing all incoming issues and delegate any critical and/or important issue to other maintainers. Currently there's one maintainer each week responsible. Besides that part, triage provides an important way to contribute to an open source project. Triage helps ensure issues resolve quickly by:
+**Note:** This information is for Grafana project Maintainers, Owners, and Admins. If you are a Contributor, then you will not be able to perform most of the tasks in this topic.
 
-* Describing the issue's intent and purpose is conveyed precisely. This is necessary because it can be difficult for an issue to explain how an end user experiences a problem and what actions they took.
+The core maintainers of the Grafana project are responsible for categorizing all incoming issues and delegating any critical or important issue to other maintainers. Currently one maintainer each week is responsible. Besides that part, triage provides an important way to contribute to an open source project. 
+
+Triage helps ensure issues resolve quickly by:
+
+* Ensuring the issue's intent and purpose is conveyed precisely. This is necessary because it can be difficult for an issue to explain how an end user experiences a problem and what actions they took.
 * Giving a contributor the information they need before they commit to resolving an issue.
 * Lowering the issue count by preventing duplicate issues.
 * Streamlining the development process by preventing duplicate discussions.
-* If you don't have the knowledge or time to code, consider helping with triage. The community will thank you for saving them time by spending some of yours.
 
-**Simplified flowchart diagram of the issue triage process:**
+If you don't have the knowledge or time to code, consider helping with triage. The community will thank you for saving them time by spending some of yours.
+
+## Simplified flowchart diagram of the issue triage process
+
 <!-- https://textik.com/#610afa78553def29 -->
 ```
                         +--------------------------+
@@ -52,66 +57,6 @@ The core maintainers of the Grafana project is responsible for categorizing all 
                                                      |                  |          |              |
                                                      +------------------+          +--------------+
 ```
-
-## How you can help
-
-There are multiple ways that you can help with the Grafana project, especially without writing a single line of code. Everyone in the Grafana community will be greatly thankful you for helping out with any of the below tasks.
-
-### Answer/ask questions
-
-The [community site](https://community.grafana.com/) is the main channel to be used for asking and answering questions related to the Grafana project. This may be the first place a new or existing Grafana user look/ask for help after they found that the [documentation](https://grafana.com/docs) wasn't answering their questions. It's very important to help new and existing users so that these new users can find proper answers and eventually help out other users and by that keep growing the Grafana community.
-
-Please signup to the Grafana [community site](https://community.grafana.com/) and start help other Grafana users by answering their questions and/or ask for help.
-
-### Report documentation enhancements
-
-If you visit the [documentation site](https://grafana.com/docs) and find typos/error/lack of information please report these by clicking on the `Request doc changes` link found on every page and/or contribute the changes yourself by clicking on `Edit this page` and open a pull request. Everyone in the community will greatly thank you for.
-
-Please read about how documentation issues is triaged [below](#documentation-issue) to understand what kind of documentation may be suitable to request/add.
-
-### Report a security vulnerability
-
-Please review the [security policy](https://github.com/grafana/grafana/security/policy) for more details.
-
-### Report bugs
-
-Report a bug you found when using Grafana by [opening a new bug report](https://github.com/grafana/grafana/issues/new?labels=type%3A+bug&template=1-bug_report.md).
-
-### Request enhancements/new features
-
-Suggest an enhancement or new feature for the Grafana project by [opening a new enhancement issue](https://github.com/grafana/grafana/issues/new?labels=type%3A+feature+request&template=2-feature_request.md).
-
-Alternatively, help make Grafana be better at being accessible to all by [opening a new accessibility issue](https://github.com/grafana/grafana/issues/new?labels=type%3A+accessibility&template=3-accessibility.md).
-
-### Report inaccurate issue information
-
-If you find an issue that have a badly formatted title and/or description, bad language/grammar and/or wrong labels it's important to let the issue author or maintainers know so it can be fixed. See [good practices](#good-practices) regarding basic information for issues below.
-
-### Request closing of issues
-
-The Grafana project have a lot of open issues and the main goal is to only have issues open if their still relevant. If you find an issue that you think already have been resolved or no longer is relevant please report by adding a comment and explain why you think it should be closed including related issues (`#<issue number>`), if applicable, and optionally mention one of the maintainers.
-
-### Investigate issues
-
-See [investigation of issues](#investigation-of-issues).
-
-### Vote on enhancements/bugs
-
-Helping the Grafana project to know which issues are most important by users and the community is crucial for the success of the project. Read more about [prioritizing issues](#4-prioritization-of-issues) for details about how issues are being prioritized. The Grafana project use GitGub issues and reactions for collecting votes on enhancement and bugs.
-
-**Please don't add `+1` issue comments or similar since that will notify everyone that have subscribed to an issue and it doesn't add any useful update, rather it creates a bad habit.**
-
-If you want to show your interest or importance of an issue, please use [GitHub's reactions](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments).
-
-### Report duplicates
-
-If you find two issues describing the same bug/enhancement/feature please add a comment in one of the issue and explain which issues (`#<issue number>`) you think is a duplicate of another issue (`#<issue number>`).
-
-### Suggest ideas for resolving bugs/enhancements
-
-Related to how [issues are being prioritized](#4-prioritization-of-issues) it's important to help anyone that's interested in contributing code for resolving a bug or enhancement. This can be anything from getting started and setup the development environment to reference code and files where changes probably needs to be made and/or suggest ideas on how enhancements may function/be implemented.
-
-Please read about how [help from the community](#5-requesting-help-from-the-community) may be requested when issues being triaged.
 
 ## 1. Find uncategorized issues
 
@@ -183,12 +128,14 @@ If the author does not respond to the requested information within the timespan 
 
 When you feel you have all the information needed you're ready to [categorizing the issue](#3-categorizing-an-issue).
 
+If you receive a notification with additional information provided but you are not anymore on issue triage and you feel you do not have time to handle it, you should delegate it to the current person on issue triage.
+
 ## 3. Categorizing an issue
 
 An issue can have multiple of the following labels. Typically, a properly categorized issue should at least have:
 
 - One label identifying its type (`type/*`).
-- One or multiple labels identifying the functional areas of interest or component (`area/*`) and/or datasource (`datasource/*`), if applicable.
+- One or multiple labels identifying the functional areas of interest or component (`area/*`) and/or data source (`datasource/*`), if applicable.
 
 Label | Description
 ------- | --------
@@ -201,7 +148,7 @@ Label | Description
 `type/works-as-intended` | A reported bug works as intended/by design.
 `type/build-packaging` | Build or packaging problem or enhancement.
 `area/*` | Subject is related to a functional area of interest or component.
-`datasource/*` | Subject is related to a core datasource plugin.
+`datasource/*` | Subject is related to a core data source plugin.
 
 ### Duplicate issue?
 
@@ -347,7 +294,7 @@ In many cases the issue author or community as a whole is more suitable to contr
 
 When an issue has all basic information provided, but the triage responsible haven't been able to reproduce the reported problem at a first glance, the issue is labeled [Needs investigation](https://github.com/grafana/grafana/labels/needs%20investigation). Depending of the perceived severity and/or number of [upvotes](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments), the investigation will either be delegated to another maintainer for further investigation or either put on hold until someone else (maintainer or contributor) picks it up and eventually start investigating it.
 
-Investigating issues can be a very time consuming task, especially for the maintainers given the huge number of combinations of plugins, datasources, platforms, databases, browsers, tools, hardware, integrations, versions and cloud services etc that are being used with Grafana. There are a certain amount of combinations that are more common than others and these are in general easier for maintainers to investigate.
+Investigating issues can be a very time consuming task, especially for the maintainers given the huge number of combinations of plugins, data sources, platforms, databases, browsers, tools, hardware, integrations, versions and cloud services etc that are being used with Grafana. There are a certain amount of combinations that are more common than others and these are in general easier for maintainers to investigate.
 
 For some other combinations there may not be possible at all for a maintainer to setup a proper test environment for being able to investigate. In these cases we really appreciate any help we can get from the community. Otherwise the issue is highly likely to be closed.
 

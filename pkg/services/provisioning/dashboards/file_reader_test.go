@@ -368,7 +368,7 @@ func (s *fakeDashboardProvisioningService) GetProvisionedDashboardData(name stri
 	return s.provisioned[name], nil
 }
 
-func (s *fakeDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
+func (s *fakeDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO, provisioning *models.DashboardProvisioning, allowUiUpdates bool) (*models.Dashboard, error) {
 	// Copy the structs as we need to change them but do not want to alter outside world.
 	var copyProvisioning = &models.DashboardProvisioning{}
 	*copyProvisioning = *provisioning

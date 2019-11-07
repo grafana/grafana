@@ -1,9 +1,10 @@
 import { Threshold } from './threshold';
 import { ValueMapping } from './valueMapping';
 import { QueryResultBase, Labels, NullValueMode } from './data';
-import { FieldCalcs } from '../utils/index';
 import { DisplayProcessor } from './displayValue';
 import { DataLink } from './dataLink';
+import { Vector } from './vector';
+import { FieldCalcs } from '../transformations/fieldReducer';
 
 export enum FieldType {
   time = 'time', // or date
@@ -42,32 +43,16 @@ export interface FieldConfig {
 
   // Alternative to empty string
   noValue?: string;
+
+  // Used for time field formatting
+  dateDisplayFormat?: string;
 }
 
-export interface Vector<T = any> {
-  length: number;
-
-  /**
-   * Access the value by index (Like an array)
-   */
-  get(index: number): T;
-
-  /**
-   * Get the resutls as an array.
-   */
-  toArray(): T[];
-
-  /**
-   * Return the values as a simple array for json serialization
-   */
-  toJSON(): any; // same results as toArray()
-}
-
-export interface Field<T = any> {
+export interface Field<T = any, V = Vector<T>> {
   name: string; // The column name
   type: FieldType;
   config: FieldConfig;
-  values: Vector<T>; // `buffer` when JSON
+  values: V; // The raw field values
 
   /**
    * Cache of reduced values

@@ -1,8 +1,6 @@
 import _ from 'lodash';
 import $ from 'jquery';
 // @ts-ignore
-import rst2html from 'rst2html';
-// @ts-ignore
 import Drop from 'tether-drop';
 import coreModule from 'app/core/core_module';
 import { FuncDef } from './gfunc';
@@ -93,7 +91,7 @@ export function graphiteAddFunc($compile: any) {
       };
 
       $(elem)
-        .on('mouseenter', 'ul.dropdown-menu li', () => {
+        .on('mouseenter', 'ul.dropdown-menu li', async () => {
           cleanUpDrop();
 
           let funcDef;
@@ -110,6 +108,8 @@ export function graphiteAddFunc($compile: any) {
             }
 
             const contentElement = document.createElement('div');
+            // @ts-ignore
+            const { default: rst2html } = await import(/* webpackChunkName: "rst2html" */ 'rst2html');
             contentElement.innerHTML = '<h4>' + funcDef.name + '</h4>' + rst2html(shortDesc);
 
             drop = new Drop({

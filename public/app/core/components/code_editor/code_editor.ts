@@ -30,20 +30,6 @@
 
 import coreModule from 'app/core/core_module';
 import config from 'app/core/config';
-import ace from 'brace';
-import './theme-grafana-dark';
-import 'brace/ext/language_tools';
-import 'brace/theme/textmate';
-import 'brace/mode/text';
-import 'brace/snippets/text';
-import 'brace/mode/sql';
-import 'brace/snippets/sql';
-import 'brace/mode/sqlserver';
-import 'brace/snippets/sqlserver';
-import 'brace/mode/markdown';
-import 'brace/snippets/markdown';
-import 'brace/mode/json';
-import 'brace/snippets/json';
 
 const DEFAULT_THEME_DARK = 'ace/theme/grafana-dark';
 const DEFAULT_THEME_LIGHT = 'ace/theme/textmate';
@@ -55,7 +41,7 @@ const DEFAULT_SNIPPETS = true;
 
 const editorTemplate = `<div></div>`;
 
-function link(scope: any, elem: any, attrs: any) {
+async function link(scope: any, elem: any, attrs: any) {
   // Options
   const langMode = attrs.mode || DEFAULT_MODE;
   const maxLines = attrs.maxLines || DEFAULT_MAX_LINES;
@@ -66,6 +52,23 @@ function link(scope: any, elem: any, attrs: any) {
 
   // Initialize editor
   const aceElem = elem.get(0);
+  const { default: ace } = await import(/* webpackChunkName: "brace" */ 'brace');
+  await import('brace/ext/language_tools');
+  await import('brace/theme/textmate');
+  await import('brace/mode/text');
+  await import('brace/snippets/text');
+  await import('brace/mode/sql');
+  await import('brace/snippets/sql');
+  await import('brace/mode/sqlserver');
+  await import('brace/snippets/sqlserver');
+  await import('brace/mode/markdown');
+  await import('brace/snippets/markdown');
+  await import('brace/mode/json');
+  await import('brace/snippets/json');
+
+  // @ts-ignore
+  await import('./theme-grafana-dark');
+
   const codeEditor = ace.edit(aceElem);
   const editorSession = codeEditor.getSession();
 

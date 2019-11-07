@@ -41,7 +41,7 @@ const getStoriesKnobs = () => {
     },
     'under'
   );
-  const renderLegendAsTable = select(
+  const renderLegendAsTable = select<any>(
     'Render legend as',
     {
       list: false,

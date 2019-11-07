@@ -35,7 +35,7 @@ describe('HeatmapCtrl', () => {
       ];
 
       ctx.ctrl.range = { from: dateTime().valueOf(), to: dateTime().valueOf() };
-      ctx.ctrl.onDataReceived(data);
+      ctx.ctrl.onSnapshotLoad(data);
     });
 
     it('should set datapointsOutside', () => {
@@ -60,7 +60,7 @@ describe('HeatmapCtrl', () => {
       ];
 
       ctx.ctrl.range = range;
-      ctx.ctrl.onDataReceived(data);
+      ctx.ctrl.onSnapshotLoad(data);
     });
 
     it('should set datapointsOutside', () => {
@@ -71,7 +71,7 @@ describe('HeatmapCtrl', () => {
   describe('datapointsCount given 2 series', () => {
     beforeEach(() => {
       const data: any = [{ target: 'test.cpu1', datapoints: [] }, { target: 'test.cpu2', datapoints: [] }];
-      ctx.ctrl.onDataReceived(data);
+      ctx.ctrl.onSnapshotLoad(data);
     });
 
     it('should set datapointsCount warning', () => {

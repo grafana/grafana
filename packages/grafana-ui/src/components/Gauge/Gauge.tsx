@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import $ from 'jquery';
 import { Threshold, DisplayValue } from '@grafana/data';
 
-import { getColorFromHexRgbOrName } from '../../utils';
+import { getColorFromHexRgbOrName } from '@grafana/data';
 import { Themeable } from '../../types';
 import { selectThemeVariant } from '../../themes';
 

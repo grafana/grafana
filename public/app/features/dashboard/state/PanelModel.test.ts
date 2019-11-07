@@ -1,5 +1,6 @@
 import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
+import { PanelEvents } from '@grafana/data';
 
 class TablePanelCtrl {}
 
@@ -93,6 +94,11 @@ describe('PanelModel', () => {
       expect(saveModel.gridPos).toBe(undefined);
     });
 
+    it('getSaveModel should not remove datasource default', () => {
+      const saveModel = model.getSaveModel();
+      expect(saveModel.datasource).toBe(null);
+    });
+
     it('getSaveModel should remove nonPersistedProperties', () => {
       const saveModel = model.getSaveModel();
       expect(saveModel.events).toBe(undefined);
@@ -139,7 +145,7 @@ describe('PanelModel', () => {
       let tearDownPublished = false;
 
       beforeEach(() => {
-        model.events.on('panel-teardown', () => {
+        model.events.on(PanelEvents.panelTeardown, () => {
           tearDownPublished = true;
         });
         model.changePlugin(getPanelPlugin({ id: 'graph' }));

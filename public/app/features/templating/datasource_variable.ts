@@ -1,10 +1,10 @@
-import { Variable, containsVariable, assignModelProperties, variableTypes } from './variable';
+import { assignModelProperties, containsVariable, VariableActions, variableTypes } from './variable';
 import { stringToJsRegex } from '@grafana/data';
 import { VariableSrv } from './variable_srv';
 import { TemplateSrv } from './template_srv';
 import { DatasourceSrv } from '../plugins/datasource_srv';
 
-export class DatasourceVariable implements Variable {
+export class DatasourceVariable implements VariableActions {
   regex: any;
   query: string;
   options: any;

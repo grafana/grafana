@@ -1,20 +1,36 @@
-import * as graphitePlugin from 'app/plugins/datasource/graphite/module';
-import * as cloudwatchPlugin from 'app/plugins/datasource/cloudwatch/module';
-import * as dashboardDSPlugin from 'app/plugins/datasource/dashboard/module';
-import * as elasticsearchPlugin from 'app/plugins/datasource/elasticsearch/module';
-import * as opentsdbPlugin from 'app/plugins/datasource/opentsdb/module';
-import * as grafanaPlugin from 'app/plugins/datasource/grafana/module';
-import * as influxdbPlugin from 'app/plugins/datasource/influxdb/module';
-import * as lokiPlugin from 'app/plugins/datasource/loki/module';
-import * as mixedPlugin from 'app/plugins/datasource/mixed/module';
-import * as mysqlPlugin from 'app/plugins/datasource/mysql/module';
-import * as postgresPlugin from 'app/plugins/datasource/postgres/module';
-import * as prometheusPlugin from 'app/plugins/datasource/prometheus/module';
-import * as mssqlPlugin from 'app/plugins/datasource/mssql/module';
-import * as testDataDSPlugin from 'app/plugins/datasource/testdata/module';
-import * as inputDatasourcePlugin from 'app/plugins/datasource/input/module';
-import * as stackdriverPlugin from 'app/plugins/datasource/stackdriver/module';
-import * as azureMonitorPlugin from 'app/plugins/datasource/grafana-azure-monitor-datasource/module';
+const graphitePlugin = async () =>
+  await import(/* webpackChunkName: "graphitePlugin" */ 'app/plugins/datasource/graphite/module');
+const cloudwatchPlugin = async () =>
+  await import(/* webpackChunkName: "cloudwatchPlugin" */ 'app/plugins/datasource/cloudwatch/module');
+const dashboardDSPlugin = async () =>
+  await import(/* webpackChunkName "dashboardDSPlugin" */ 'app/plugins/datasource/dashboard/module');
+const elasticsearchPlugin = async () =>
+  await import(/* webpackChunkName: "elasticsearchPlugin" */ 'app/plugins/datasource/elasticsearch/module');
+const opentsdbPlugin = async () =>
+  await import(/* webpackChunkName: "opentsdbPlugin" */ 'app/plugins/datasource/opentsdb/module');
+const grafanaPlugin = async () =>
+  await import(/* webpackChunkName: "grafanaPlugin" */ 'app/plugins/datasource/grafana/module');
+const influxdbPlugin = async () =>
+  await import(/* webpackChunkName: "influxdbPlugin" */ 'app/plugins/datasource/influxdb/module');
+const lokiPlugin = async () => await import(/* webpackChunkName: "lokiPlugin" */ 'app/plugins/datasource/loki/module');
+const mixedPlugin = async () =>
+  await import(/* webpackChunkName: "mixedPlugin" */ 'app/plugins/datasource/mixed/module');
+const mysqlPlugin = async () =>
+  await import(/* webpackChunkName: "mysqlPlugin" */ 'app/plugins/datasource/mysql/module');
+const postgresPlugin = async () =>
+  await import(/* webpackChunkName: "postgresPlugin" */ 'app/plugins/datasource/postgres/module');
+const prometheusPlugin = async () =>
+  await import(/* webpackChunkName: "prometheusPlugin" */ 'app/plugins/datasource/prometheus/module');
+const mssqlPlugin = async () =>
+  await import(/* webpackChunkName: "mssqlPlugin" */ 'app/plugins/datasource/mssql/module');
+const testDataDSPlugin = async () =>
+  await import(/* webpackChunkName: "testDataDSPlugin" */ 'app/plugins/datasource/testdata/module');
+const inputDatasourcePlugin = async () =>
+  await import(/* webpackChunkName: "inputDatasourcePlugin" */ 'app/plugins/datasource/input/module');
+const stackdriverPlugin = async () =>
+  await import(/* webpackChunkName: "stackdriverPlugin" */ 'app/plugins/datasource/stackdriver/module');
+const azureMonitorPlugin = async () =>
+  await import(/* webpackChunkName: "azureMonitorPlugin" */ 'app/plugins/datasource/grafana-azure-monitor-datasource/module');
 
 import * as textPanel from 'app/plugins/panel/text/module';
 import * as text2Panel from 'app/plugins/panel/text2/module';
@@ -35,7 +51,7 @@ import * as pieChartPanel from 'app/plugins/panel/piechart/module';
 import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
 import * as logsPanel from 'app/plugins/panel/logs/module';
 
-import * as exampleApp from 'app/plugins/app/example-app/module';
+const exampleApp = async () => await import(/* webpackChunkName: "exampleApp" */ 'app/plugins/app/example-app/module');
 
 const builtInPlugins: any = {
   'app/plugins/datasource/graphite/module': graphitePlugin,

@@ -81,6 +81,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned off should not ren
         className="gf-form"
       >
         <Select
+          allowCustomValue={false}
           autoFocus={false}
           backspaceRemovesValue={true}
           className="gf-form-select-box__control--menu-right"
@@ -166,6 +167,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
         className="gf-form"
       >
         <Select
+          allowCustomValue={false}
           autoFocus={false}
           backspaceRemovesValue={true}
           className="gf-form-select-box__control--menu-right"

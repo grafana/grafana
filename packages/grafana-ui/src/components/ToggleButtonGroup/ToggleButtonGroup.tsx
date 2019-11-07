@@ -12,7 +12,7 @@ export class ToggleButtonGroup extends PureComponent<ToggleButtonGroupProps> {
     const { children, label, transparent } = this.props;
 
     return (
-      <div className="gf-form">
+      <div className="gf-form gf-form--align-center">
         {label && <label className={`gf-form-label ${transparent ? 'gf-form-label--transparent' : ''}`}>{label}</label>}
         <div className={`toggle-button-group ${transparent ? 'toggle-button-group--transparent' : ''}`}>{children}</div>
       </div>
@@ -44,7 +44,7 @@ export const ToggleButton: FC<ToggleButtonProps> = ({
     }
   };
 
-  const btnClassName = `btn ${className} ${selected ? 'active' : ''}`;
+  const btnClassName = `btn ${className}${selected ? ' active' : ''}`;
   const button = (
     <button className={btnClassName} onClick={onClick}>
       <span>{children}</span>

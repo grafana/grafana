@@ -12,9 +12,10 @@ weight = 1
 
 ## Installing Grafana
 
+- [Requirements](requirements)
 - [Installing on Debian / Ubuntu](debian)
 - [Installing on RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)](rpm)
-- [Installing on Mac OS X](mac)
+- [Installing on macOS](mac)
 - [Installing on Windows](windows)
 - [Installing on Docker](docker)
 - [Installing using Provisioning (Chef, Puppet, Salt, Ansible, etc)](provisioning)

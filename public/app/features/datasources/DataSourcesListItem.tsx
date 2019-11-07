@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { DataSourceSettings } from '@grafana/ui';
+import { DataSourceSettings } from '@grafana/data';
 
 export interface Props {
   dataSource: DataSourceSettings;

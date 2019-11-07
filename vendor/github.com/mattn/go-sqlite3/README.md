@@ -10,9 +10,7 @@ go-sqlite3
 
 sqlite3 driver conforming to the built-in database/sql interface
 
-Supported Golang version:
-- 1.9.x
-- 1.10.x
+Supported Golang version: See .travis.yml
 
 [This package follows the official Golang Release Policy.](https://golang.org/doc/devel/release.html#policy)
 
@@ -249,7 +247,7 @@ Required dependency
 brew install sqlite3
 ```
 
-For OSX there is an additional package install which is required if you whish to build the `icu` extension.
+For OSX there is an additional package install which is required if you wish to build the `icu` extension.
 
 This additional package can be installed with `homebrew`.
 
@@ -282,7 +280,7 @@ To compile this package on Windows OS you must have the `gcc` compiler installed
 3) Open a terminal for the TDM-GCC toolchain, can be found in the Windows Start menu.
 4) Navigate to your project folder and run the `go build ...` command for this package.
 
-For example the TDM-GCC Toolchain can be found [here](ttps://sourceforge.net/projects/tdm-gcc/).
+For example the TDM-GCC Toolchain can be found [here](https://sourceforge.net/projects/tdm-gcc/).
 
 ## Errors
 
@@ -458,15 +456,19 @@ For an example see [shaxbee/go-spatialite](https://github.com/shaxbee/go-spatial
 
     Why is it racy if I use a `sql.Open("sqlite3", ":memory:")` database?
 
-    Each connection to :memory: opens a brand new in-memory sql database, so if
+    Each connection to `":memory:"` opens a brand new in-memory sql database, so if
     the stdlib's sql engine happens to open another connection and you've only
-    specified ":memory:", that connection will see a brand new database. A
-    workaround is to use "file::memory:?mode=memory&cache=shared". Every
-    connection to this string will point to the same in-memory database. 
+    specified `":memory:"`, that connection will see a brand new database. A
+    workaround is to use `"file::memory:?cache=shared"` (or `"file:foobar?mode=memory&cache=shared"`). Every
+    connection to this string will point to the same in-memory database.
+    
+    Note that if the last database connection in the pool closes, the in-memory database is deleted. Make sure the [max idle connection limit](https://golang.org/pkg/database/sql/#DB.SetMaxIdleConns) is > 0, and the [connection lifetime](https://golang.org/pkg/database/sql/#DB.SetConnMaxLifetime) is infinite.
     
     For more information see
     * [#204](https://github.com/mattn/go-sqlite3/issues/204)
     * [#511](https://github.com/mattn/go-sqlite3/issues/511)
+    * https://www.sqlite.org/sharedcache.html#shared_cache_and_in_memory_databases
+    * https://www.sqlite.org/inmemorydb.html#sharedmemdb
 
 - Reading from database with large amount of goroutines fails on OSX.
 
@@ -481,11 +483,11 @@ For an example see [shaxbee/go-spatialite](https://github.com/shaxbee/go-spatial
 
     You need to implement the feature or call the sqlite3 cli.
 
-    More infomation see [#305](https://github.com/mattn/go-sqlite3/issues/305)
+    More information see [#305](https://github.com/mattn/go-sqlite3/issues/305)
 
 - Error: `database is locked`
 
-    When you get an database is locked. Please use the following options.
+    When you get a database is locked. Please use the following options.
 
     Add to DSN: `cache=shared`
 
@@ -497,7 +499,7 @@ For an example see [shaxbee/go-spatialite](https://github.com/shaxbee/go-spatial
     Second please set the database connections of the SQL package to 1.
     
     ```go
-    db.SetMaxOpenConn(1)
+    db.SetMaxOpenConns(1)
     ```
 
     More information see [#209](https://github.com/mattn/go-sqlite3/issues/209)

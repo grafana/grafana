@@ -356,6 +356,28 @@ describe('graphiteDatasource', () => {
       expect(requestOptions.data).toMatch(`query=bar`);
       expect(requestOptions).toHaveProperty('params');
     });
+
+    it('should interpolate $__searchFilter with searchFilter', () => {
+      ctx.ds.metricFindQuery('app.$__searchFilter', { searchFilter: 'backend' }).then((data: any) => {
+        results = data;
+      });
+
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/metrics/find');
+      expect(requestOptions.params).toEqual({});
+      expect(requestOptions.data).toEqual('query=app.backend*');
+      expect(results).not.toBe(null);
+    });
+
+    it('should interpolate $__searchFilter with default when searchFilter is missing', () => {
+      ctx.ds.metricFindQuery('app.$__searchFilter', {}).then((data: any) => {
+        results = data;
+      });
+
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/metrics/find');
+      expect(requestOptions.params).toEqual({});
+      expect(requestOptions.data).toEqual('query=app.*');
+      expect(results).not.toBe(null);
+    });
   });
 });
 

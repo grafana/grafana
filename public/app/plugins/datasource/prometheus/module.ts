@@ -2,7 +2,7 @@ import { PrometheusDatasource } from './datasource';
 import { PromQueryEditor } from './components/PromQueryEditor';
 import { PrometheusConfigCtrl } from './config_ctrl';
 
-import PrometheusStartPage from './components/PromStart';
+import PromCheatSheet from './components/PromCheatSheet';
 import PromQueryField from './components/PromQueryField';
 
 class PrometheusAnnotationsQueryCtrl {
@@ -15,5 +15,5 @@ export {
   PrometheusConfigCtrl as ConfigCtrl,
   PrometheusAnnotationsQueryCtrl as AnnotationsQueryCtrl,
   PromQueryField as ExploreQueryField,
-  PrometheusStartPage as ExploreStartPage,
+  PromCheatSheet as ExploreStartPage,
 };

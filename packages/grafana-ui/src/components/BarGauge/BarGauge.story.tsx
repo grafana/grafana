@@ -1,7 +1,7 @@
 import { storiesOf } from '@storybook/react';
 import { number, text } from '@storybook/addon-knobs';
 import { BarGauge, Props } from './BarGauge';
-import { VizOrientation } from '../../types';
+import { VizOrientation } from '@grafana/data';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 

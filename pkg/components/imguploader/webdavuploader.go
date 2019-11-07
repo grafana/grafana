@@ -47,7 +47,12 @@ func (u *WebdavUploader) PublicURL(filename string) string {
 
 func (u *WebdavUploader) Upload(ctx context.Context, pa string) (string, error) {
 	url, _ := url.Parse(u.url)
-	filename := util.GetRandomString(20) + ".png"
+	filename, err := util.GetRandomString(20)
+	if err != nil {
+		return "", err
+	}
+
+	filename += pngExt
 	url.Path = path.Join(url.Path, filename)
 
 	imgData, err := ioutil.ReadFile(pa)

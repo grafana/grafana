@@ -9,7 +9,7 @@ import {
   AzureMonitorMetricDefinitionsResponse,
   AzureMonitorResourceGroupsResponse,
 } from '../types';
-import { DataQueryRequest, DataQueryResponseData, DataSourceInstanceSettings } from '@grafana/ui';
+import { DataQueryRequest, DataQueryResponseData, DataSourceInstanceSettings } from '@grafana/data';
 
 import { TimeSeries, toDataFrame } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
@@ -75,6 +75,7 @@ export default class AzureMonitorDatasource {
       const metricDefinition = this.templateSrv.replace(item.metricDefinition, options.scopedVars);
       const timeGrain = this.templateSrv.replace((item.timeGrain || '').toString(), options.scopedVars);
       const aggregation = this.templateSrv.replace(item.aggregation, options.scopedVars);
+      const top = this.templateSrv.replace(item.top || '', options.scopedVars);
 
       return {
         refId: target.refId,
@@ -95,6 +96,7 @@ export default class AzureMonitorDatasource {
             metricNamespace && metricNamespace !== this.defaultDropdownValue ? metricNamespace : metricDefinition,
           aggregation: aggregation,
           dimension: this.templateSrv.replace(item.dimension, options.scopedVars),
+          top: top || '10',
           dimensionFilter: this.templateSrv.replace(item.dimensionFilter, options.scopedVars),
           alias: item.alias,
           format: target.format,
@@ -202,7 +204,6 @@ export default class AzureMonitorDatasource {
       const resourceGroup = this.toVariable(metricNamespaceQueryWithSub[2]);
       const metricDefinition = this.toVariable(metricNamespaceQueryWithSub[3]);
       const resourceName = this.toVariable(metricNamespaceQueryWithSub[4]);
-      console.log(metricNamespaceQueryWithSub);
       return this.getMetricNamespaces(subscription, resourceGroup, metricDefinition, resourceName);
     }
 

@@ -83,7 +83,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		NewGrafanaVersion:       plugins.GrafanaLatestVersion,
 		NewGrafanaVersionExists: plugins.GrafanaHasUpdate,
 		AppName:                 setting.ApplicationName,
-		AppNameBodyClass:        getAppNameBodyClass(setting.ApplicationName),
+		AppNameBodyClass:        getAppNameBodyClass(hs.License.HasValidLicense()),
 	}
 
 	if setting.DisableGravatar {
@@ -306,6 +306,19 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 	})
 
 	if c.IsGrafanaAdmin {
+		adminNavLinks := []*dtos.NavLink{
+			{Text: "Users", Id: "global-users", Url: setting.AppSubUrl + "/admin/users", Icon: "gicon gicon-user"},
+			{Text: "Orgs", Id: "global-orgs", Url: setting.AppSubUrl + "/admin/orgs", Icon: "gicon gicon-org"},
+			{Text: "Settings", Id: "server-settings", Url: setting.AppSubUrl + "/admin/settings", Icon: "gicon gicon-preferences"},
+			{Text: "Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats", Icon: "fa fa-fw fa-bar-chart"},
+		}
+
+		if setting.LDAPEnabled {
+			adminNavLinks = append(adminNavLinks, &dtos.NavLink{
+				Text: "LDAP", Id: "ldap", Url: setting.AppSubUrl + "/admin/ldap", Icon: "fa fa-fw fa-address-book-o",
+			})
+		}
+
 		data.NavTree = append(data.NavTree, &dtos.NavLink{
 			Text:         "Server Admin",
 			SubTitle:     "Manage all users & orgs",
@@ -313,12 +326,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 			Id:           "admin",
 			Icon:         "gicon gicon-shield",
 			Url:          setting.AppSubUrl + "/admin/users",
-			Children: []*dtos.NavLink{
-				{Text: "Users", Id: "global-users", Url: setting.AppSubUrl + "/admin/users", Icon: "gicon gicon-user"},
-				{Text: "Orgs", Id: "global-orgs", Url: setting.AppSubUrl + "/admin/orgs", Icon: "gicon gicon-org"},
-				{Text: "Settings", Id: "server-settings", Url: setting.AppSubUrl + "/admin/settings", Icon: "gicon gicon-preferences"},
-				{Text: "Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats", Icon: "fa fa-fw fa-bar-chart"},
-			},
+			Children:     adminNavLinks,
 		})
 	}
 
@@ -364,13 +372,10 @@ func (hs *HTTPServer) NotFoundHandler(c *m.ReqContext) {
 	c.HTML(404, "index", data)
 }
 
-func getAppNameBodyClass(name string) string {
-	switch name {
-	case setting.APP_NAME:
-		return "app-grafana"
-	case setting.APP_NAME_ENTERPRISE:
+func getAppNameBodyClass(validLicense bool) string {
+	if validLicense {
 		return "app-enterprise"
-	default:
-		return ""
 	}
+
+	return "app-grafana"
 }

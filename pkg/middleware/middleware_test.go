@@ -142,7 +142,8 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Valid api key", func(sc *scenarioContext) {
-			keyhash := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
+			keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
+			So(err, ShouldBeNil)
 
 			bus.AddHandler("test", func(query *models.GetApiKeyByNameQuery) error {
 				query.Result = &models.ApiKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash}
@@ -182,10 +183,10 @@ func TestMiddlewareContext(t *testing.T) {
 			mockGetTime()
 			defer resetGetTime()
 
-			keyhash := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
+			keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
+			So(err, ShouldBeNil)
 
 			bus.AddHandler("test", func(query *models.GetApiKeyByNameQuery) error {
-
 				// api key expired one second before
 				expires := getTime().Add(-1 * time.Second).Unix()
 				query.Result = &models.ApiKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash,
@@ -346,7 +347,8 @@ func TestMiddlewareContext(t *testing.T) {
 				})
 
 				key := fmt.Sprintf(cachePrefix, base32.StdEncoding.EncodeToString([]byte(name+"-"+group)))
-				sc.remoteCacheService.Set(key, int64(33), 0)
+				err := sc.remoteCacheService.Set(key, int64(33), 0)
+				So(err, ShouldBeNil)
 				sc.fakeReq("GET", "/")
 
 				sc.req.Header.Add(setting.AuthProxyHeaderName, name)

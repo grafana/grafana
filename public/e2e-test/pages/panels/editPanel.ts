@@ -5,7 +5,7 @@ import {
   Selector,
   ClickablePageObjectType,
   ClickablePageObject,
-} from '@grafana/toolkit';
+} from '@grafana/toolkit/src/e2e';
 
 export interface EditPanelPage {
   queriesTab: ClickablePageObjectType;
