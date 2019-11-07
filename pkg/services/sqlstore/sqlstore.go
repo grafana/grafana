@@ -109,18 +109,18 @@ func (ss *SqlStore) Init() error {
 
 func (ss *SqlStore) ensureMainOrgAndAdminUser() error {
 	err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
+		systemUserCountQuery := m.GetSystemUserCountStatsQuery{}
+		err := bus.DispatchCtx(ctx, &systemUserCountQuery)
+		if err != nil {
+			return fmt.Errorf("Could not determine if admin user exists: %v", err)
+		}
+
+		if systemUserCountQuery.Result.Count > 0 {
+			return nil
+		}
+
 		// ensure admin user
 		if !ss.Cfg.DisableInitAdminCreation {
-			systemUserCountQuery := m.GetSystemUserCountStatsQuery{}
-			err := bus.DispatchCtx(ctx, &systemUserCountQuery)
-			if err != nil {
-				return fmt.Errorf("Could not determine if admin user exists: %v", err)
-			}
-
-			if systemUserCountQuery.Result.Count > 0 {
-				return nil
-			}
-
 			cmd := m.CreateUserCommand{}
 			cmd.Login = setting.AdminUser
 			cmd.Email = setting.AdminUser + "@localhost"
