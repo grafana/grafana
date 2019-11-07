@@ -59,7 +59,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 
 	if c.IsSignedIn {
 		// Assign login token to auth proxy users if grant_login_token = true
-		if setting.AuthProxyEnabled && setting.AuthProxyGrantLoginToken {
+		if setting.AuthProxyEnabled && setting.AuthProxyEnableLoginToken {
 			hs.loginAuthProxyUser(c)
 		}
 
