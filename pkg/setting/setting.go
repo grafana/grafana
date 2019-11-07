@@ -856,7 +856,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
-	AuthProxyEnableLoginToken = authProxy.Key("enable_login_token").MustBool(true)
+	AuthProxyEnableLoginToken = authProxy.Key("enable_login_token").MustBool(false)
 	AuthProxyLDAPSyncTtl = authProxy.Key("ldap_sync_ttl").MustInt()
 
 	ldapSyncVal := authProxy.Key("ldap_sync_ttl").MustInt()
