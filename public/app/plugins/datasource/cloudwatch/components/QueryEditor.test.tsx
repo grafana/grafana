@@ -63,17 +63,39 @@ describe('QueryEditor', () => {
     expect(tree).toMatchSnapshot();
   });
 
-  it('should use region default in none was given', () => {
-    const props = setup();
-    props.query.region = '';
-    const wrapper = mount(<CloudWatchQueryEditor {...props} />);
-    expect(
-      wrapper
-        .find('.gf-form-inline')
-        .first()
-        .find('.gf-form-label.query-part')
-        .first()
-        .text()
-    ).toEqual('default');
+  describe('should use correct default values', () => {
+    it('when region is null is display default in the label', () => {
+      const props = setup();
+      props.query.region = null;
+      const wrapper = mount(<CloudWatchQueryEditor {...props} />);
+      expect(
+        wrapper
+          .find('.gf-form-inline')
+          .first()
+          .find('.gf-form-label.query-part')
+          .first()
+          .text()
+      ).toEqual('default');
+    });
+
+    it('should init props correctly', () => {
+      const props = setup();
+      props.query.namespace = null;
+      props.query.metricName = null;
+      props.query.expression = null;
+      props.query.dimensions = null;
+      props.query.region = null;
+      props.query.statistics = null;
+      const wrapper = mount(<CloudWatchQueryEditor {...props} />);
+      const {
+        query: { namespace, region, metricName, dimensions, statistics, expression },
+      } = wrapper.props();
+      expect(namespace).toEqual('');
+      expect(metricName).toEqual('');
+      expect(expression).toEqual('');
+      expect(region).toEqual('default');
+      expect(statistics).toEqual(['Average']);
+      expect(dimensions).toEqual({});
+    });
   });
 });

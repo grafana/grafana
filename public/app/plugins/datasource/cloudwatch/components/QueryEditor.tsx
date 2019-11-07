@@ -30,15 +30,19 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
   componentWillMount() {
     const { query } = this.props;
 
-    if (!query.hasOwnProperty('statistics')) {
-      query.statistics = [];
+    if (!query.namespace) {
+      query.namespace = '';
     }
 
-    if (!query.hasOwnProperty('expression')) {
+    if (!query.metricName) {
+      query.metricName = '';
+    }
+
+    if (!query.expression) {
       query.expression = '';
     }
 
-    if (!query.hasOwnProperty('dimensions')) {
+    if (!query.dimensions) {
       query.dimensions = {};
     }
 
@@ -46,7 +50,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
       query.region = 'default';
     }
 
-    if (!query.statistics.length) {
+    if (!query.statistics || !query.statistics.length) {
       query.statistics = ['Average'];
     }
   }
@@ -160,7 +164,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
                   onBlur={onRunQuery}
                   onChange={(event: ChangeEvent<HTMLInputElement>) => onChange({ ...query, id: event.target.value })}
                   validationEvents={idValidationEvents}
-                  value={query.id}
+                  value={query.id || ''}
                 />
               </QueryField>
             </div>
@@ -173,7 +177,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
                 <Input
                   className="gf-form-input"
                   onBlur={onRunQuery}
-                  value={query.expression}
+                  value={query.expression || ''}
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
                     onChange({ ...query, expression: event.target.value })
                   }
@@ -191,7 +195,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
             >
               <Input
                 className="gf-form-input width-8"
-                value={query.period}
+                value={query.period || ''}
                 placeholder="auto"
                 onBlur={onRunQuery}
                 onChange={(event: ChangeEvent<HTMLInputElement>) => onChange({ ...query, period: event.target.value })}
