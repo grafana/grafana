@@ -118,17 +118,21 @@ transformers['annotations'] = {
     if (!data || !data.annotations || data.annotations.length === 0) {
       return;
     }
-    const dataKeys: Set<string> = new Set(
-      [].concat.apply(
-        [],
-        data.annotations.map((a: AnnotationEvent) => (a.data instanceof Object ? Object.keys(a.data) : []))
-      )
+
+    const annotationTagKeyValues: string[][][] = data.annotations.map((a: AnnotationEvent) =>
+      a.tags ? a.tags.map(t => t.split(':', 2)).filter(t => t.length === 2) : []
     );
-    model.columns.push(...Array.from(dataKeys, k => ({ text: k })));
+    const tagKeys: string[] = []
+      .concat(...annotationTagKeyValues)
+      .map(kv => kv[0])
+      .filter((v, i, a) => a.indexOf(v) === i);
+    model.columns.push(...Array.from(tagKeys, k => ({ text: k })));
     for (let i = 0; i < data.annotations.length; i++) {
       const evt = data.annotations[i];
-      const annotationData = [...dataKeys].map(k => (evt.data instanceof Object ? evt.data[k] : undefined));
-      model.rows.push([evt.time, evt.title, evt.text, evt.tags].concat(annotationData));
+      const annotationTagValues = [...tagKeys].map(k =>
+        annotationTagKeyValues[i].filter(kv => kv[0] === k).map(kv => kv[1])
+      );
+      model.rows.push([evt.time, evt.title, evt.text, evt.tags].concat(annotationTagValues));
     }
   },
 };

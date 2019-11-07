@@ -282,22 +282,25 @@ describe('when transforming time series table', () => {
           {
             time: 1001,
             text: 'text1',
-            tags: ['aze'],
             title: 'title1',
-            data: { any: 'thing1', other: 'other' },
           },
           {
             time: 1002,
             text: 'text2',
-            tags: ['tags', 'aze'],
+            tags: ['aze', 'any:thing1', 'other:other'],
             title: 'title2',
-            data: { any: 'thing2', other2: 'other2' },
           },
           {
             time: 1003,
             text: 'text3',
+            tags: ['tags', 'aze', 'any:thing2', 'other2:other2'],
             title: 'title3',
-            data: 'whatever',
+          },
+          {
+            time: 1004,
+            text: 'text4',
+            tags: ['sameKey:one', 'sameKey:two'],
+            title: 'title4',
           },
         ],
       };
@@ -306,23 +309,51 @@ describe('when transforming time series table', () => {
         table = transformDataToTable(rawData, panel);
       });
 
-      it('should return 4 columns', () => {
-        expect(table.columns.length).toBe(7);
+      it('should return 8 columns', () => {
+        expect(table.columns.length).toBe(8);
         expect(table.columns[0].text).toBe('Time');
         expect(table.columns[1].text).toBe('Title');
         expect(table.columns[2].text).toBe('Text');
         expect(table.columns[3].text).toBe('Tags');
         expect(table.columns[4].text).toBe('any');
         expect(table.columns[5].text).toBe('other');
-        expect(table.columns[6].text).toBe('other2');
+        expect(table.columns[6].text).toBe('other2'), expect(table.columns[7].text).toBe('sameKey');
       });
 
-      it('should return 4 rows', () => {
-        expect(table.rows.length).toBe(4);
-        expect(table.rows[0]).toEqual([1000, 'title', 'hej', ['tags', 'asd'], undefined, undefined, undefined]);
-        expect(table.rows[1]).toEqual([1001, 'title1', 'text1', ['aze'], 'thing1', 'other', undefined]);
-        expect(table.rows[2]).toEqual([1002, 'title2', 'text2', ['tags', 'aze'], 'thing2', undefined, 'other2']);
-        expect(table.rows[3]).toEqual([1003, 'title3', 'text3', undefined, undefined, undefined, undefined]);
+      it('should return 5 rows', () => {
+        expect(table.rows.length).toBe(5);
+        expect(table.rows[0]).toEqual([1000, 'title', 'hej', ['tags', 'asd'], [], [], [], []]);
+        expect(table.rows[1]).toEqual([1001, 'title1', 'text1', undefined, [], [], [], []]);
+        expect(table.rows[2]).toEqual([
+          1002,
+          'title2',
+          'text2',
+          ['aze', 'any:thing1', 'other:other'],
+          ['thing1'],
+          ['other'],
+          [],
+          [],
+        ]);
+        expect(table.rows[3]).toEqual([
+          1003,
+          'title3',
+          'text3',
+          ['tags', 'aze', 'any:thing2', 'other2:other2'],
+          ['thing2'],
+          [],
+          ['other2'],
+          [],
+        ]);
+        expect(table.rows[4]).toEqual([
+          1004,
+          'title4',
+          'text4',
+          ['sameKey:one', 'sameKey:two'],
+          [],
+          [],
+          [],
+          ['one', 'two'],
+        ]);
       });
     });
   });
