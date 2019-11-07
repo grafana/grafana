@@ -300,7 +300,7 @@ With this, the user `leonard` will be automatically placed into the Loki team as
 
 ## Login token and session cookie
 
-With `enable_login_token` set to `true` Grafana will, after successfull auth proxy header validation, assign the user
+With `enable_login_token` set to `true` Grafana will, after successful auth proxy header validation, assign the user
 a login token and cookie. You only have to configure your auth proxy to provide headers for the /login route.
 Requests via other routes will be authenticated using the cookie.
 
