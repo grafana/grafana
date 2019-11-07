@@ -84,6 +84,27 @@ export const PromSettings = (props: Props) => {
           />
         </div>
       </div>
+      <h3 className="page-heading">Misc</h3>
+      <div className="gf-form-group">
+        <div className="gf-form-inline">
+          <div className="gf-form max-width-30">
+            <FormField
+              label="Custom query parameters"
+              labelWidth={14}
+              tooltip="Add Custom parameters to Prometheus or Thanos queries."
+              inputEl={
+                <Input
+                  className="width-25"
+                  value={value.jsonData.customQueryParameters}
+                  onChange={onChangeHandler('customQueryParameters', value, onChange)}
+                  spellCheck={false}
+                  placeholder="Example: max_source_resolution=5m&timeout=10"
+                />
+              }
+            />
+          </div>
+        </div>
+      </div>
     </>
   );
 };
