@@ -92,6 +92,12 @@ export const expressionDatasource = new ExpressionDatasourceApi({
 } as DataSourceInstanceSettings);
 expressionDatasource.meta = {
   id: ExpressionDatasourceID,
+  info: {
+    logos: {
+      small: 'public/img/icn-datasource.svg',
+      large: 'public/img/icn-datasource.svg',
+    },
+  },
 } as DataSourcePluginMeta;
 expressionDatasource.components = {
   QueryEditor: ExpressionQueryEditor,

@@ -47,5 +47,6 @@ describe('MixedDatasource', () => {
     expect(results[1].data).toEqual(['BBBB']);
     expect(results[2].data).toEqual(['CCCC']);
     expect(results[2].state).toEqual(LoadingState.Done);
+    expect(results.length).toBe(3);
   });
 });

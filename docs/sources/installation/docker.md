@@ -85,6 +85,8 @@ docker run \
   grafana/grafana
 ```
 
+> If you need to specify the version of a plugin, you can add it to the `GF_INSTALL_PLUGINS` environment variable. Otherwise, the latest will be assumed. For example: `-e "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1,grafana-simple-json-datasource 1.3.5"`
+
 ## Building a custom Grafana image with pre-installed plugins
 
 In the [grafana-docker](https://github.com/grafana/grafana/tree/master/packaging/docker)  there is a folder called `custom/` which includes a `Dockerfile` that can be used to build a custom Grafana image.  It accepts `GRAFANA_VERSION` and `GF_INSTALL_PLUGINS` as build arguments.
@@ -102,6 +104,8 @@ docker run \
   --name=grafana \
   grafana:latest-with-plugins
 ```
+
+> If you need to specify the version of a plugin, you can add it to the `GF_INSTALL_PLUGINS` build argument. Otherwise, the latest will be assumed. For example: `--build-arg "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1,grafana-simple-json-datasource 1.3.5"`
 
 ## Installing Plugins from other sources
 
