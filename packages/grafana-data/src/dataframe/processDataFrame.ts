@@ -70,19 +70,16 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
       type: FieldType.number,
       config: {
         unit: timeSeries.unit,
-        color: timeSeries.color,
       },
       values: new ArrayVector<TimeSeriesValue>(values),
       labels: timeSeries.tags,
-    } as Field<TimeSeriesValue, ArrayVector<TimeSeriesValue>>,
+    },
     {
       name: 'Time',
       type: FieldType.time,
-      config: {
-        unit: 'dateTimeAsIso',
-      },
+      config: {},
       values: new ArrayVector<number>(times),
-    } as Field<number, ArrayVector<number>>,
+    },
   ];
 
   return {
