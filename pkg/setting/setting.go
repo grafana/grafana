@@ -148,7 +148,6 @@ var (
 	AuthProxyHeaderProperty   string
 	AuthProxyAutoSignUp       bool
 	AuthProxyEnableLoginToken bool
-	AuthProxyLDAPSyncTtl      int
 	AuthProxySyncTtl          int
 	AuthProxyWhitelist        string
 	AuthProxyHeaders          map[string]string
@@ -857,7 +856,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
 	AuthProxyEnableLoginToken = authProxy.Key("enable_login_token").MustBool(false)
-	AuthProxyLDAPSyncTtl = authProxy.Key("ldap_sync_ttl").MustInt()
 
 	ldapSyncVal := authProxy.Key("ldap_sync_ttl").MustInt()
 	syncVal := authProxy.Key("sync_ttl").MustInt()
