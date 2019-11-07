@@ -1,9 +1,10 @@
+import { DataSourcePlugin } from '@grafana/data';
 import { PrometheusDatasource } from './datasource';
-import { PromQueryEditor } from './components/PromQueryEditor';
 
+import { PromQueryEditor } from './components/PromQueryEditor';
 import PromCheatSheet from './components/PromCheatSheet';
 import PromQueryField from './components/PromQueryField';
-import { DataSourcePlugin } from '@grafana/data';
+
 import { ConfigEditor } from './configuration/ConfigEditor';
 
 class PrometheusAnnotationsQueryCtrl {
