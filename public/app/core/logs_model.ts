@@ -23,6 +23,8 @@ import {
   FieldCache,
   FieldWithIndex,
   getFlotPairs,
+  TimeZone,
+  getDisplayProcessor,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
@@ -85,7 +87,7 @@ export function filterLogLevels(logRows: LogRowModel[], hiddenLogLevels: Set<Log
   });
 }
 
-export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): GraphSeriesXY[] {
+export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number, timeZone: TimeZone): GraphSeriesXY[] {
   // currently interval is rangeMs / resolution, which is too low for showing series as bars.
   // need at least 10px per bucket, so we multiply interval by 10. Should be solved higher up the chain
   // when executing queries & interval calculated and not here but this is a temporary fix.
@@ -105,6 +107,7 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
         lastTs: null,
         datapoints: [],
         alias: row.logLevel,
+        target: row.logLevel,
         color: LogLevelColor[row.logLevel],
       };
 
@@ -132,7 +135,7 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
     }
   }
 
-  return seriesList.map(series => {
+  return seriesList.map((series, i) => {
     series.datapoints.sort((a: number[], b: number[]) => {
       return a[1] - b[1];
     });
@@ -145,6 +148,19 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
       nullValueMode: NullValueMode.Null,
     });
 
+    const timeField = data.fields[1];
+    timeField.display = getDisplayProcessor({
+      config: timeField.config,
+      type: timeField.type,
+      isUtc: timeZone === 'utc',
+    });
+
+    const valueField = data.fields[0];
+    valueField.config = {
+      ...valueField.config,
+      color: series.color,
+    };
+
     const graphSeries: GraphSeriesXY = {
       color: series.color,
       label: series.alias,
@@ -155,6 +171,12 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
         min: 0,
         tickDecimals: 0,
       },
+      seriesIndex: i,
+      timeField,
+      valueField,
+      // for now setting the time step to be 0,
+      // and handle the bar width by setting lineWidth instead of barWidth in flot options
+      timeStep: 0,
     };
 
     return graphSeries;
@@ -165,26 +187,24 @@ function isLogsData(series: DataFrame) {
   return series.fields.some(f => f.type === FieldType.time) && series.fields.some(f => f.type === FieldType.string);
 }
 
-export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number): LogsModel {
-  const metricSeries: DataFrame[] = [];
-  const logSeries: DataFrame[] = [];
-
-  for (const series of dataFrame) {
-    if (isLogsData(series)) {
-      logSeries.push(series);
-      continue;
-    }
-
-    metricSeries.push(series);
-  }
-
+/**
+ * Convert dataFrame into LogsModel which consists of creating separate array of log rows and metrics series. Metrics
+ * series can be either already included in the dataFrame or will be computed from the log rows.
+ * @param dataFrame
+ * @param intervalMs In case there are no metrics series, we use this for computing it from log rows.
+ */
+export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number, timeZone: TimeZone): LogsModel {
+  const { logSeries, metricSeries } = separateLogsAndMetrics(dataFrame);
   const logsModel = logSeriesToLogsModel(logSeries);
+
   if (logsModel) {
     if (metricSeries.length === 0) {
-      logsModel.series = makeSeriesForLogs(logsModel.rows, intervalMs);
+      // Create metrics from logs
+      logsModel.series = makeSeriesForLogs(logsModel.rows, intervalMs, timeZone);
     } else {
       logsModel.series = getGraphSeriesModel(
         metricSeries,
+        timeZone,
         {},
         { showBars: true, showLines: false, showPoints: false },
         {
@@ -206,23 +226,33 @@ export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number)
   };
 }
 
-export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
+function separateLogsAndMetrics(dataFrame: DataFrame[]) {
+  const metricSeries: DataFrame[] = [];
+  const logSeries: DataFrame[] = [];
+
+  for (const series of dataFrame) {
+    if (isLogsData(series)) {
+      logSeries.push(series);
+      continue;
+    }
+
+    metricSeries.push(series);
+  }
+
+  return { logSeries, metricSeries };
+}
+
+const logTimeFormat = 'YYYY-MM-DD HH:mm:ss';
+
+/**
+ * Converts dataFrames into LogsModel. This involves merging them into one list, sorting them and computing metadata
+ * like common labels.
+ */
+export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefined {
   if (logSeries.length === 0) {
     return undefined;
   }
-
-  const allLabels: Labels[] = [];
-  for (let n = 0; n < logSeries.length; n++) {
-    const series = logSeries[n];
-    if (series.labels) {
-      allLabels.push(series.labels);
-    }
-  }
-
-  let commonLabels: Labels = {};
-  if (allLabels.length > 0) {
-    commonLabels = findCommonLabels(allLabels);
-  }
+  const commonLabels = findCommonLabelsFromDataFrames(logSeries);
 
   const rows: LogRowModel[] = [];
   let hasUniqueLabels = false;
@@ -236,6 +266,8 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
     }
 
     const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
+    // Assume the first string field in the dataFrame is the message. This was right so far but probably needs some
+    // more explicit checks.
     const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
     const logLevelField = fieldCache.getFieldByName('level');
     const idField = getIdField(fieldCache);
@@ -248,14 +280,13 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
     for (let j = 0; j < series.length; j++) {
       const ts = timeField.values.get(j);
       const time = dateTime(ts);
-      const timeEpochMs = time.valueOf();
-      const timeFromNow = time.fromNow();
-      const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
-      const timeUtc = toUtc(ts).format('YYYY-MM-DD HH:mm:ss');
 
-      let message = stringField.values.get(j);
+      const messageValue: unknown = stringField.values.get(j);
       // This should be string but sometimes isn't (eg elastic) because the dataFrame is not strongly typed.
-      message = typeof message === 'string' ? message : JSON.stringify(message);
+      const message: string = typeof messageValue === 'string' ? messageValue : JSON.stringify(messageValue);
+
+      const hasAnsi = hasAnsiCodes(message);
+      const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
 
       let logLevel = LogLevel.unknown;
       if (logLevelField) {
@@ -265,15 +296,16 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
       } else {
         logLevel = getLogLevel(message);
       }
-      const hasAnsi = hasAnsiCodes(message);
-      const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
 
       rows.push({
+        entryFieldIndex: stringField.index,
+        rowIndex: j,
+        dataFrame: series,
         logLevel,
-        timeFromNow,
-        timeEpochMs,
-        timeLocal,
-        timeUtc,
+        timeFromNow: time.fromNow(),
+        timeEpochMs: time.valueOf(),
+        timeLocal: time.format(logTimeFormat),
+        timeUtc: toUtc(ts).format(logTimeFormat),
         uniqueLabels,
         hasAnsi,
         searchWords,
@@ -311,6 +343,21 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
     meta,
     rows,
   };
+}
+
+function findCommonLabelsFromDataFrames(logSeries: DataFrame[]): Labels {
+  const allLabels: Labels[] = [];
+  for (let n = 0; n < logSeries.length; n++) {
+    const series = logSeries[n];
+    if (series.labels) {
+      allLabels.push(series.labels);
+    }
+  }
+
+  if (allLabels.length > 0) {
+    return findCommonLabels(allLabels);
+  }
+  return {};
 }
 
 function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {

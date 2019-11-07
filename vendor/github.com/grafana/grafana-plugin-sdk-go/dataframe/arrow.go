@@ -241,15 +241,13 @@ func UnMarshalArrow(b []byte) (*Frame, error) {
 				v := array.NewFloat64Data(col.Data())
 				for _, f := range v.Float64Values() {
 					vF := f
-					vec := append(*frame.Fields[i].Vector.(*floatVector), &vF)
-					frame.Fields[i].Vector = &vec
+					frame.Fields[i].Vector.Append(&vF)
 				}
 			case arrow.TIMESTAMP:
 				v := array.NewTimestampData(col.Data())
 				for _, ts := range v.TimestampValues() {
 					t := time.Unix(0, int64(ts)) // nanosecond assumption
-					vec := append(*frame.Fields[i].Vector.(*timeVector), &t)
-					frame.Fields[i].Vector = &vec
+					frame.Fields[i].Vector.Append(&t)
 				}
 			default:
 				return nil, fmt.Errorf("unsupported arrow type %s for conversion", col.DataType().ID())

@@ -78,7 +78,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
 
   for (const point of timeSeries.datapoints) {
     fields[0].values.buffer.push(point[0]);
-    fields[1].values.buffer.push(point[1]);
+    fields[1].values.buffer.push(point[1] as number);
   }
 
   return {
