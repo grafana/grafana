@@ -271,20 +271,28 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
     });
   }
 
-  getDimensionKeys(namespace: string, region: string) {
+  async getDimensionKeys(namespace: string, region: string) {
+    if (!namespace) {
+      return [];
+    }
+
     return this.doMetricQueryRequest('dimension_keys', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
     });
   }
 
-  getDimensionValues(
+  async getDimensionValues(
     region: string,
     namespace: string,
     metricName: string,
     dimensionKey: string,
     filterDimensions: {}
   ) {
+    if (!namespace || !metricName) {
+      return [];
+    }
+
     return this.doMetricQueryRequest('dimension_values', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
