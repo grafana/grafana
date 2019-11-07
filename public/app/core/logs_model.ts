@@ -149,12 +149,17 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number, timeZ
     });
 
     const timeField = data.fields[1];
-
     timeField.display = getDisplayProcessor({
       config: timeField.config,
       type: timeField.type,
       isUtc: timeZone === 'utc',
     });
+
+    const valueField = data.fields[0];
+    valueField.config = {
+      ...valueField.config,
+      color: series.color,
+    };
 
     const graphSeries: GraphSeriesXY = {
       color: series.color,
@@ -168,7 +173,7 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number, timeZ
       },
       seriesIndex: i,
       timeField,
-      valueField: data.fields[0],
+      valueField,
       // for now setting the time step to be 0,
       // and handle the bar width by setting lineWidth instead of barWidth in flot options
       timeStep: 0,
@@ -197,7 +202,6 @@ export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number,
       // Create metrics from logs
       logsModel.series = makeSeriesForLogs(logsModel.rows, intervalMs, timeZone);
     } else {
-      // We got metrics in the dataFrame so process those
       logsModel.series = getGraphSeriesModel(
         metricSeries,
         timeZone,
