@@ -250,7 +250,7 @@ func TestLoadingSettings(t *testing.T) {
 			So(AuthProxySyncTtl, ShouldEqual, 5)
 		})
 
-		Convey("ldap_sync should override ldap_sync_ttl that is -1", func() {
+		Convey("ldap_sync should override ldap_sync_ttl that is default value", func() {
 			cfg := NewCfg()
 			err := cfg.Load(&CommandLineArgs{
 				HomePath: "../../",
@@ -261,7 +261,7 @@ func TestLoadingSettings(t *testing.T) {
 			So(AuthProxySyncTtl, ShouldEqual, 5)
 		})
 
-		Convey("ldap_sync should not override ldap_sync_ttl that is larger then -1", func() {
+		Convey("ldap_sync should not override ldap_sync_ttl that is different from default value", func() {
 			cfg := NewCfg()
 			err := cfg.Load(&CommandLineArgs{
 				HomePath: "../../",
