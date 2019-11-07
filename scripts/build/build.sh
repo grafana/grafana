@@ -27,6 +27,7 @@ BUILD_PACKAGE=1
 function reportFrontEndBuildTime() {
   targetTag=";target=oss"
   gitTag=""
+  gitBranch=""
 
   if `echo "$EXTRA_OPTS" | grep -q enterprise` ; then
     targetTag=";target=enterprise"
@@ -35,10 +36,10 @@ function reportFrontEndBuildTime() {
     gitTag=";gitTag=${CIRCLE_TAG}"
   fi
   if [ "$CIRCLE_BRANCH" != "" ]; then
-    gitTag=";branch=${CIRCLE_BRANCH}"
+    gitBranch=";branch=${CIRCLE_BRANCH}"
   fi
 
-  exit_if_fail ./scripts/ci-metrics-publisher.sh "grafana.ci-performance.frontend-build\${CIRCLE_BRANCH}\${gitTag}\${targetTag}=$1"
+  exit_if_fail ./scripts/ci-metrics-publisher.sh "grafana.ci-performance.frontend-build\${gitBranch}\${gitTag}\${targetTag}=$1"
 }
 
 
