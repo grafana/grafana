@@ -1,4 +1,6 @@
 #!/bin/sh
+set -e
+
 BUILD_FAST=0
 UBUNTU_BASE=0
 

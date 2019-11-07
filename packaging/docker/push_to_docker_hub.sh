@@ -1,9 +1,6 @@
 #!/bin/sh
 set -e
 
-_grafana_tag=${1:-}
-_docker_repo=${2:-grafana/grafana}
-
 UBUNTU_BASE=0
 
 while [ "$1" != "" ]; do
@@ -19,6 +16,9 @@ while [ "$1" != "" ]; do
       ;;
   esac
 done
+
+_grafana_tag=${1:-}
+_docker_repo=${2:-grafana/grafana}
 
 # If the tag starts with v, treat this as an official release
 if echo "$_grafana_tag" | grep -q "^v"; then
