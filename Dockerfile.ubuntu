@@ -81,5 +81,7 @@ COPY --from=js-builder /usr/src/app/tools tools
 COPY tools/phantomjs/render.js tools/phantomjs/
 COPY packaging/docker/run.sh /
 
-USER grafana
+# UID 472 is the grafana user added abov
+USER 472
+
 ENTRYPOINT [ "/run.sh" ]

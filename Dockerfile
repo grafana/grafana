@@ -97,5 +97,7 @@ EXPOSE 3000
 
 COPY ./packaging/docker/run.sh /run.sh
 
-USER grafana
+# UID 472 is the grafana user added abov
+USER 472
+
 ENTRYPOINT [ "/run.sh" ]
