@@ -22,12 +22,13 @@ import {
 const labelWidth = 6;
 
 export interface Props {
-  showMinMax: boolean;
+  showMinMax?: boolean;
+  showTitle?: boolean;
   value: FieldConfig;
   onChange: (value: FieldConfig, event?: React.SyntheticEvent<HTMLElement>) => void;
 }
 
-export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMinMax }) => {
+export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMinMax, showTitle }) => {
   const { unit, title } = value;
 
   const [decimals, setDecimals] = useState(
@@ -88,14 +89,16 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
 
   return (
     <>
-      <FormField
-        label="Title"
-        labelWidth={labelWidth}
-        onChange={onTitleChange}
-        value={title}
-        tooltip={titleTooltip}
-        placeholder="Auto"
-      />
+      {showTitle && (
+        <FormField
+          label="Title"
+          labelWidth={labelWidth}
+          onChange={onTitleChange}
+          value={title}
+          tooltip={titleTooltip}
+          placeholder="Auto"
+        />
+      )}
 
       <div className="gf-form">
         <FormLabel width={labelWidth}>Unit</FormLabel>

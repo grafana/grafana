@@ -23,6 +23,8 @@ import {
   FieldCache,
   FieldWithIndex,
   getFlotPairs,
+  TimeZone,
+  getDisplayProcessor,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
@@ -85,7 +87,7 @@ export function filterLogLevels(logRows: LogRowModel[], hiddenLogLevels: Set<Log
   });
 }
 
-export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): GraphSeriesXY[] {
+export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number, timeZone: TimeZone): GraphSeriesXY[] {
   // currently interval is rangeMs / resolution, which is too low for showing series as bars.
   // need at least 10px per bucket, so we multiply interval by 10. Should be solved higher up the chain
   // when executing queries & interval calculated and not here but this is a temporary fix.
@@ -105,6 +107,7 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
         lastTs: null,
         datapoints: [],
         alias: row.logLevel,
+        target: row.logLevel,
         color: LogLevelColor[row.logLevel],
       };
 
@@ -132,7 +135,7 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
     }
   }
 
-  return seriesList.map(series => {
+  return seriesList.map((series, i) => {
     series.datapoints.sort((a: number[], b: number[]) => {
       return a[1] - b[1];
     });
@@ -145,6 +148,14 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
       nullValueMode: NullValueMode.Null,
     });
 
+    const timeField = data.fields[1];
+
+    timeField.display = getDisplayProcessor({
+      config: timeField.config,
+      type: timeField.type,
+      isUtc: timeZone === 'utc',
+    });
+
     const graphSeries: GraphSeriesXY = {
       color: series.color,
       label: series.alias,
@@ -155,6 +166,12 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
         min: 0,
         tickDecimals: 0,
       },
+      seriesIndex: i,
+      timeField,
+      valueField: data.fields[0],
+      // for now setting the time step to be 0,
+      // and handle the bar width by setting lineWidth instead of barWidth in flot options
+      timeStep: 0,
     };
 
     return graphSeries;
@@ -171,18 +188,19 @@ function isLogsData(series: DataFrame) {
  * @param dataFrame
  * @param intervalMs In case there are no metrics series, we use this for computing it from log rows.
  */
-export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number): LogsModel {
+export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number, timeZone: TimeZone): LogsModel {
   const { logSeries, metricSeries } = separateLogsAndMetrics(dataFrame);
   const logsModel = logSeriesToLogsModel(logSeries);
 
   if (logsModel) {
     if (metricSeries.length === 0) {
       // Create metrics from logs
-      logsModel.series = makeSeriesForLogs(logsModel.rows, intervalMs);
+      logsModel.series = makeSeriesForLogs(logsModel.rows, intervalMs, timeZone);
     } else {
       // We got metrics in the dataFrame so process those
       logsModel.series = getGraphSeriesModel(
         metricSeries,
+        timeZone,
         {},
         { showBars: true, showLines: false, showPoints: false },
         {

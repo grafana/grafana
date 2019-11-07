@@ -44,6 +44,9 @@ export interface FieldConfig {
   // Alternative to empty string
   noValue?: string;
 
+  // Visual options
+  color?: string;
+
   // Used for time field formatting
   dateDisplayFormat?: string;
 }
@@ -53,7 +56,6 @@ export interface Field<T = any, V = Vector<T>> {
   type: FieldType;
   config: FieldConfig;
   values: V; // The raw field values
-
   /**
    * Cache of reduced values
    */

@@ -58,6 +58,7 @@ export interface TimeSeries extends QueryResultBase {
   target: string;
   datapoints: TimeSeriesPoints;
   unit?: string;
+  color?: string;
   tags?: Labels;
 }
 
