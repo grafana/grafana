@@ -2,6 +2,8 @@
 
 # shellcheck disable=SC2086
 
+# shellcheck source=./scripts/helpers/exit-if-fail.sh
+source "$(dirname "$0")/../helpers/exit-if-fail.sh"
 #
 #   This script is executed from within the container.
 #
@@ -23,6 +25,23 @@ CCX64_MUSL=/tmp/x86_64-linux-musl-cross/bin/x86_64-linux-musl-gcc
 
 cd /go/src/github.com/grafana/grafana
 echo "current dir: $(pwd)"
+
+function reportFrontEndBuildTime() {
+  targetTag=";target=oss"
+  gitTag=""
+  if echo "$EXTRA_OPTS" | grep -q enterprise ; then
+    targetTag=";target=enterprise"
+  fi
+  if [ "$CIRCLE_TAG" != "" ]; then
+    gitTag=";gitTag=${CIRCLE_TAG}"
+  fi
+  if [ "$CIRCLE_BRANCH" != "" ]; then
+    gitTag=";branch=${CIRCLE_BRANCH}"
+  fi
+
+  exit_if_fail ./scripts/ci-metrics-publisher.sh "grafana.ci-performance.frontend-build\${CIRCLE_BRANCH}\${gitTag}\${targetTag}=$1"
+}
+
 
 if [ "$CIRCLE_TAG" != "" ]; then
   echo "Building releases from tag $CIRCLE_TAG"
@@ -60,7 +79,11 @@ else
   echo "Building frontend and packaging incremental build for $CIRCLE_BRANCH"
 fi
 echo "Building frontend"
+start=$(date +%s%N)
 go run build.go ${OPT} build-frontend
+runtime=$((($(date +%s%N) - $start)/1000000))
+echo "Frontent build took $runtime"
+reportFrontEndBuildTime $runtime
 
 if [ -d "dist" ]; then
   rm -rf dist
