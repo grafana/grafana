@@ -22,7 +22,7 @@ for ((i = 1; i <= $#; i++ )); do
 done
 
 echo "Publishing metrics:"
-echo $data
+echo "$data"
 curl "https://6371:$GRAFANA_MISC_STATS_API_KEY@graphite-us-central1.grafana.net/metrics" \
   -H 'Content-type: application/json' \
   -d "[$data]"

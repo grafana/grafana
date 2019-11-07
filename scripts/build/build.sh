@@ -103,7 +103,7 @@ function build_frontend() {
 
   start=$(date +%s%N)
   go run build.go ${OPT} build-frontend
-  runtime=$((($(date +%s%N) - $start)/1000000))
+  runtime=$((($(date +%s%N) - start)/1000000))
   echo "Frontent build took: $runtime ms"
   echo "FRONTEND: finished"
 }
