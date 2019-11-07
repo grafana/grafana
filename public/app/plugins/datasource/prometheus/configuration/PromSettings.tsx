@@ -1,5 +1,5 @@
-import React from 'react';
-import { FormField, FormLabel, Select } from '@grafana/ui';
+import React, { SyntheticEvent } from 'react';
+import { EventsWithValidation, FormField, FormLabel, Input, regexValidation, Select } from '@grafana/ui';
 import { DataSourceSettings } from '@grafana/data';
 import { PromOptions } from '../types';
 
@@ -21,9 +21,23 @@ export const PromSettings = (props: Props) => {
             <FormField
               label="Scrape interval"
               labelWidth={13}
-              value={value.jsonData.timeInterval}
               placeholder="15s"
-              spellCheck={false}
+              inputEl={
+                <Input
+                  className="width-6"
+                  value={value.jsonData.timeInterval}
+                  spellCheck={false}
+                  onChange={onChangeHandler('timeInterval', value, onChange)}
+                  validationEvents={{
+                    [EventsWithValidation.onBlur]: [
+                      regexValidation(
+                        /^\d+(ms|[Mwdhmsy])$/,
+                        'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s'
+                      ),
+                    ],
+                  }}
+                />
+              }
               tooltip="Set this to your global scrape interval defined in your Prometheus config file. This will be used as a lower limit for the
         Prometheus step query parameter."
             />
@@ -34,9 +48,23 @@ export const PromSettings = (props: Props) => {
             <FormField
               label="Query timeout"
               labelWidth={13}
-              value={value.jsonData.queryTimeout}
-              spellCheck={false}
-              placeholder="60s"
+              inputEl={
+                <Input
+                  className="width-6"
+                  value={value.jsonData.queryTimeout}
+                  onChange={onChangeHandler('queryTimeout', value, onChange)}
+                  spellCheck={false}
+                  placeholder="60s"
+                  validationEvents={{
+                    [EventsWithValidation.onBlur]: [
+                      regexValidation(
+                        /^\d+(ms|[Mwdhmsy])$/,
+                        'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s'
+                      ),
+                    ],
+                  }}
+                />
+              }
               tooltip="Set the Prometheus query timeout."
             />
           </div>
@@ -51,10 +79,23 @@ export const PromSettings = (props: Props) => {
           <Select
             options={httpOptions}
             value={httpOptions.find(o => o.value === value.jsonData.httpMethod)}
+            onChange={onChangeHandler('httpMethod', value, onChange)}
             width={7}
           />
         </div>
       </div>
     </>
   );
+};
+
+const onChangeHandler = (key: keyof PromOptions, value: Props['value'], onChange: Props['onChange']) => (
+  event: SyntheticEvent<HTMLInputElement | HTMLSelectElement>
+) => {
+  onChange({
+    ...value,
+    jsonData: {
+      ...value.jsonData,
+      [key]: event.currentTarget.value,
+    },
+  });
 };
