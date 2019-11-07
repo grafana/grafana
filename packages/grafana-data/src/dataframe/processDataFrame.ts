@@ -66,7 +66,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
         color: timeSeries.color,
       },
       values: new ArrayVector<TimeSeriesValue>(),
-    },
+    } as Field<TimeSeriesValue, ArrayVector<TimeSeriesValue>>,
     {
       name: 'Time',
       type: FieldType.time,
@@ -74,12 +74,12 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
         unit: 'dateTimeAsIso',
       },
       values: new ArrayVector<number>(),
-    },
+    } as Field<number, ArrayVector<number>>,
   ];
 
   for (const point of timeSeries.datapoints) {
     fields[0].values.buffer.push(point[0]);
-    fields[1].values.buffer.push(point[1]);
+    fields[1].values.buffer.push(point[1] as number);
   }
 
   return {
