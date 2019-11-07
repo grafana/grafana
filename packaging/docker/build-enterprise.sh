@@ -27,32 +27,24 @@ else
 fi
 
 if [ ${UBUNTU_BASE} = "0" ]; then
-  echo "Building and deploying ${_docker_repo}:${_grafana_tag}"
-
-  docker build \
-    --tag "${_docker_repo}:${_grafana_tag}"\
-    --no-cache=true \
-    .
-
-  docker push "${_docker_repo}:${_grafana_tag}"
-
-  if echo "$_raw_grafana_tag" | grep -q "^v" && echo "$_raw_grafana_tag" | grep -qv "beta"; then
-    docker tag "${_docker_repo}:${_grafana_tag}" "${_docker_repo}:latest"
-    docker push "${_docker_repo}:latest"
-  fi
+  TAG_SUFFIX=""
+  DOCKERFILE="Dockerfile"
 else
-  echo "Building and deploying ${_docker_repo}:${_grafana_tag}-ubuntu"
+  TAG_SUFFIX="-ubuntu"
+  DOCKERFILE="Dockerfile.ubuntu"
+fi
 
-  docker build \
-    --tag "${_docker_repo}:${_grafana_tag}-ubuntu"\
-    --no-cache=true \
-    -f Dockerfile.ubuntu \
-    .
+echo "Building and deploying ${_docker_repo}:${_grafana_tag}${TAG_SUFFIX}"
 
-  docker push "${_docker_repo}:${_grafana_tag}-ubuntu"
+docker build \
+  --tag "${_docker_repo}:${_grafana_tag}${TAG_SUFFIX}" \
+  --no-cache=true \
+  -f ${DOCKERFILE} \
+  .
 
-  if echo "$_raw_grafana_tag" | grep -q "^v" && echo "$_raw_grafana_tag" | grep -qv "beta"; then
-    docker tag "${_docker_repo}:${_grafana_tag}-ubuntu" "${_docker_repo}:latest-ubuntu"
-    docker push "${_docker_repo}:latest-ubuntu"
-  fi
+docker push "${_docker_repo}:${_grafana_tag}${TAG_SUFFIX}"
+
+if echo "$_raw_grafana_tag" | grep -q "^v" && echo "$_raw_grafana_tag" | grep -qv "beta"; then
+  docker tag "${_docker_repo}:${_grafana_tag}${TAG_SUFFIX}" "${_docker_repo}:latest${TAG_SUFFIX}"
+  docker push "${_docker_repo}:latest${TAG_SUFFIX}"
 fi
