@@ -12,12 +12,10 @@ export interface CloudWatchQuery extends DataQuery {
 }
 
 export interface CloudWatchJsonData extends DataSourceJsonData {
-  authType: string;
-  defaultRegion: string;
-  timeField: string;
-  assumeRoleArn: string;
-  database: string;
-  customMetricsNamespaces: string;
+  timeField?: string;
+  assumeRoleArn?: string;
+  database?: string;
+  customMetricsNamespaces?: string;
 }
 
 export interface CloudWatchSecureJsonData {

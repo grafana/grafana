@@ -23,7 +23,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
 
   /** @ngInject */
   constructor(
-    private instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
+    instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
     private $q: IQService,
     private backendSrv: BackendSrv,
     private templateSrv: TemplateSrv,
@@ -33,7 +33,6 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
     this.type = 'cloudwatch';
     this.proxyUrl = instanceSettings.url;
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
-    this.instanceSettings = instanceSettings;
     this.standardStatistics = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'];
   }
 
@@ -78,7 +77,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
           refId: item.refId,
           intervalMs: options.intervalMs,
           maxDataPoints: options.maxDataPoints,
-          datasourceId: this.instanceSettings.id,
+          datasourceId: this.id,
           type: 'timeSeriesQuery',
         },
         item
@@ -239,7 +238,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
             refId: 'metricFindQuery',
             intervalMs: 1, // dummy
             maxDataPoints: 1, // dummy
-            datasourceId: this.instanceSettings.id,
+            datasourceId: this.id,
             type: 'metricFindQuery',
             subtype: subtype,
           },
@@ -413,7 +412,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
             refId: 'annotationQuery',
             intervalMs: 1, // dummy
             maxDataPoints: 1, // dummy
-            datasourceId: this.instanceSettings.id,
+            datasourceId: this.id,
             type: 'annotationQuery',
           },
           parameters
