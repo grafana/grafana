@@ -40,7 +40,7 @@ function reportFrontEndBuildTime() {
     gitBranch=";branch=${CIRCLE_BRANCH}"
   fi
 
-  exit_if_fail ./scripts/ci-metrics-publisher.sh "grafana.ci-performance.frontend-build\${gitBranch}\${gitTag}\${targetTag}=$1"
+  exit_if_fail ./scripts/ci-metrics-publisher.sh "grafana.ci-performance.frontend-build\${targetTag}=$1"
 }
 
 
