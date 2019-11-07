@@ -1,9 +1,11 @@
+import React from 'react';
 import angular, { IQService } from 'angular';
 import _ from 'lodash';
-import appEvents from 'app/core/app_events';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification } from 'app/core/copy/appNotification';
 import { AppNotificationTimeout } from 'app/types';
+import { store } from 'app/store/store';
 import kbn from 'app/core/utils/kbn';
-import { CloudWatchQuery } from './types';
 import {
   dateMath,
   ScopedVars,
@@ -16,14 +18,20 @@ import {
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { ThrottlingErrorMessage } from './components/ThrottlingErrorMessage';
 import memoizedDebounce from './memoizedDebounce';
+import { CloudWatchQuery } from './types';
 
 const displayAlert = (datasourceName: string, region: string) =>
-  appEvents.emit('alert-error', [
-    `CloudWatch request limit reached in ${region} for data source ${datasourceName}`,
-    `Please visit the [AWS Service Quotas console](
-        https://${region}.console.aws.amazon.com/servicequotas/home?region=${region}#!/services/monitoring/quotas/L-5E141212) to request a quota increase or see our documentation to learn more.`,
-  ]);
+  store.dispatch(
+    notifyApp(
+      createErrorNotification(
+        `CloudWatch request limit reached in ${region} for data source ${datasourceName}`,
+        '',
+        React.createElement(ThrottlingErrorMessage, { region }, null)
+      )
+    )
+  );
 
 export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery> {
   type: any;
