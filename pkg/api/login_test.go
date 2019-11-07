@@ -137,7 +137,7 @@ func TestLoginOAuthRedirect(t *testing.T) {
 	assert.Equal(t, location[0], "/login/github")
 }
 
-func TestAuthProxyLoginGrantLoginDisabled(t *testing.T) {
+func TestAuthProxyLoginEnableLoginTokenDisabled(t *testing.T) {
 	sc := setupAuthProxyLoginTest(false)
 
 	assert.Equal(t, sc.resp.Code, 302)
@@ -149,7 +149,7 @@ func TestAuthProxyLoginGrantLoginDisabled(t *testing.T) {
 	assert.False(t, ok, "Set-Cookie does not exist")
 }
 
-func TestAuthProxyLoginWithGrantEnabled(t *testing.T) {
+func TestAuthProxyLoginWithEnableLoginToken(t *testing.T) {
 	sc := setupAuthProxyLoginTest(true)
 
 	assert.Equal(t, sc.resp.Code, 302)
@@ -162,7 +162,7 @@ func TestAuthProxyLoginWithGrantEnabled(t *testing.T) {
 	assert.Equal(t, "grafana_session=; Path=/; Max-Age=0; HttpOnly", setCookie[0])
 }
 
-func setupAuthProxyLoginTest(grantLoginToken bool) *scenarioContext {
+func setupAuthProxyLoginTest(enableLoginToken bool) *scenarioContext {
 	mockSetIndexViewData()
 	defer resetSetIndexViewData()
 
@@ -185,7 +185,7 @@ func setupAuthProxyLoginTest(grantLoginToken bool) *scenarioContext {
 	setting.OAuthService = &setting.OAuther{}
 	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
 	setting.AuthProxyEnabled = true
-	setting.AuthProxyGrantLoginToken = grantLoginToken
+	setting.AuthProxyEnableLoginToken = enableLoginToken
 
 	sc.m.Get(sc.url, sc.defaultHandler)
 	sc.fakeReqNoAssertions("GET", sc.url).exec()
