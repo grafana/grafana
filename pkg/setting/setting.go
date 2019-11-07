@@ -133,11 +133,10 @@ var (
 	ViewersCanEdit          bool
 
 	// Http auth
-	DisableInitAdminCreation bool
-	AdminUser                string
-	AdminPassword            string
-	LoginCookieName          string
-	LoginMaxLifetimeDays     int
+	AdminUser            string
+	AdminPassword        string
+	LoginCookieName      string
+	LoginMaxLifetimeDays int
 
 	AnonymousEnabled bool
 	AnonymousOrgName string
