@@ -2,8 +2,6 @@
 
 # shellcheck disable=SC2086
 
-# shellcheck source=./scripts/helpers/exit-if-fail.sh
-source "$(dirname "$0")/../helpers/exit-if-fail.sh"
 #
 #   This script is executed from within the container.
 #
