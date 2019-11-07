@@ -11,8 +11,8 @@ import { DisplayProcessor, DisplayValue, DecimalCount, DecimalInfo } from '../ty
 import { getValueFormat } from '../valueFormats/valueFormats';
 import { getMappedValue } from '../utils/valueMappings';
 import { Threshold } from '../types/threshold';
-import { getTimeZoneDateFormatter } from '../datetime/moment_wrapper';
-import { DEFAULT_DATE_TIME_FORMAT } from '../datetime';
+import { DateTime, DEFAULT_DATE_TIME_FORMAT, isDateTime, dateTime, toUtc } from '../datetime';
+import { KeyValue } from '../types';
 
 interface DisplayProcessorOptions {
   type?: FieldType;
@@ -23,22 +23,39 @@ interface DisplayProcessorOptions {
   theme?: GrafanaTheme; // Will pick 'dark' if not defined
 }
 
+// Reasonable units for time
+const timeFormats: KeyValue<boolean> = {
+  dateTimeAsIso: true,
+  dateTimeAsUS: true,
+  dateTimeFromNow: true,
+};
+
 export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayProcessor {
   if (options && !_.isEmpty(options)) {
-    if (options.type && options.type === FieldType.time) {
-      return (value: any) => {
-        let dateFormat = DEFAULT_DATE_TIME_FORMAT;
-        if (options.config && options.config.dateDisplayFormat) {
-          dateFormat = options.config.dateDisplayFormat;
-        }
-        const formatedDate = getTimeZoneDateFormatter(options.isUtc ? 'utc' : 'browser')(value, dateFormat);
-        return {
-          numeric: value,
-          text: formatedDate,
-        };
-      };
-    }
     const field = options.config ? options.config : {};
+
+    if (options.type === FieldType.time) {
+      if (field.unit && timeFormats[field.unit]) {
+        // Currently selected unit is valid for time fields
+      } else {
+        const dateFormat = field.dateDisplayFormat || DEFAULT_DATE_TIME_FORMAT;
+
+        // UTC or browser based timezone
+        let fmt = (date: DateTime) => date.format(dateFormat);
+        if (options.isUtc) {
+          fmt = (date: DateTime) => toUtc(date).format(dateFormat);
+        }
+
+        return (value: any) => {
+          const date: DateTime = isDateTime(value) ? value : dateTime(value);
+          return {
+            numeric: isNaN(value) ? date.valueOf() : value,
+            text: fmt(date),
+          };
+        };
+      }
+    }
+
     const formatFunc = getValueFormat(field.unit || 'none');
 
     return (value: any) => {
