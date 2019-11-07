@@ -24,7 +24,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
 
   /** @ngInject */
   constructor(
-    private instanceSettings: DataSourceInstanceSettings,
+    private instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
     private $q: IQService,
     private backendSrv: BackendSrv,
     private templateSrv: TemplateSrv,
