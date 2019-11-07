@@ -176,7 +176,7 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
               <QueryField
                 className="gf-form--grow"
                 label="Expression"
-                tooltip="Add custom expression here. Please note that if a math expression is being used, it will not be possible to create an alert rule based on this query"
+                tooltip="Optionally you can add an expression here. Please note that if a math expression that is referencing other queries is being used, it will not be possible to create an alert rule based on this query"
               >
                 <Input
                   className="gf-form-input"
