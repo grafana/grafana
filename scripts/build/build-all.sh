@@ -27,20 +27,12 @@ cd /go/src/github.com/grafana/grafana
 echo "current dir: $(pwd)"
 
 function reportFrontEndBuildTime() {
-  targetTag=";target=oss"
-  gitTag=""
-  gitBranch=""
-  if echo "$EXTRA_OPTS" | grep -q enterprise ; then
-    targetTag=";target=enterprise"
+  if echo "$EXTRA_OPTS" | grep -vq enterprise ; then
+    # Only report for build job
+    # build-enterprise happens right after build on master
+    # so there is no need for reporting the same metric again
+    exit_if_fail ./scripts/ci-metrics-publisher.sh "grafana.ci-performance.frontend-build=$1"
   fi
-  if [ "$CIRCLE_TAG" != "" ]; then
-    gitTag=";gitTag=${CIRCLE_TAG}"
-  fi
-  if [ "$CIRCLE_BRANCH" != "" ]; then
-    gitBranch=";branch=${CIRCLE_BRANCH}"
-  fi
-
-  exit_if_fail ./scripts/ci-metrics-publisher.sh "grafana.ci-performance.frontend-build\${targetTag}=$1"
 }
 
 

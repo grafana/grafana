@@ -23,26 +23,6 @@ BUILD_BACKEND=1
 BUILD_FRONTEND=1
 BUILD_PACKAGE=1
 
-
-function reportFrontEndBuildTime() {
-  targetTag=";target=oss"
-  gitTag=""
-  gitBranch=""
-
-  if `echo "$EXTRA_OPTS" | grep -q enterprise` ; then
-    targetTag=";target=enterprise"
-  fi
-  if [ "$CIRCLE_TAG" != "" ]; then
-    gitTag=";gitTag=${CIRCLE_TAG}"
-  fi
-  if [ "$CIRCLE_BRANCH" != "" ]; then
-    gitBranch=";branch=${CIRCLE_BRANCH}"
-  fi
-
-  exit_if_fail ./scripts/ci-metrics-publisher.sh "grafana.ci-performance.frontend-build\${targetTag}=$1"
-}
-
-
 while [ "$1" != "" ]; do
   case "$1" in
     "--fast")
@@ -124,9 +104,7 @@ function build_frontend() {
   start=$(date +%s%N)
   go run build.go ${OPT} build-frontend
   runtime=$((($(date +%s%N) - $start)/1000000))
-  echo "Frontent build took $runtime"
-  reportFrontEndBuildTime $runtime
-
+  echo "Frontent build took: $runtime ms"
   echo "FRONTEND: finished"
 }
 
