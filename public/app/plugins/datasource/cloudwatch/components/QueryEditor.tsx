@@ -53,6 +53,10 @@ export class CloudWatchQueryEditor extends PureComponent<Props, State> {
     if (!query.statistics || !query.statistics.length) {
       query.statistics = ['Average'];
     }
+
+    if (!query.hasOwnProperty('highResolution')) {
+      query.highResolution = false;
+    }
   }
 
   componentDidMount() {

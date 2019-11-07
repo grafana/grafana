@@ -264,7 +264,11 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
     return this.doMetricQueryRequest('namespaces', null);
   }
 
-  getMetrics(namespace: string, region: string) {
+  async getMetrics(namespace: string, region: string) {
+    if (!namespace || !region) {
+      return [];
+    }
+
     return this.doMetricQueryRequest('metrics', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
