@@ -10,8 +10,9 @@ RUN mkdir /tmp/grafana && tar xfz /tmp/grafana.tar.gz --strip-components=1 -C /t
 FROM ${BASE_IMAGE}
 
 EXPOSE 3000
-ENV DEBIAN_FRONTEND=noninteractive
 
+# Set DEBIAN_FRONTEND=noninteractive in environment at build-time
+ARG DEBIAN_FRONTEND=noninteractive
 ARG GF_UID="472"
 ARG GF_GID="472"
 
