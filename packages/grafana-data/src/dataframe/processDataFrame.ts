@@ -63,6 +63,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
       type: FieldType.number,
       config: {
         unit: timeSeries.unit,
+        color: timeSeries.color,
       },
       values: new ArrayVector<TimeSeriesValue>(),
     },
