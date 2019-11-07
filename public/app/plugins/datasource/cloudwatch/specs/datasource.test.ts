@@ -1,5 +1,6 @@
 import '../datasource';
 import CloudWatchDatasource from '../datasource';
+import * as redux from 'app/store/store';
 import { dateMath } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
@@ -282,6 +283,10 @@ describe('CloudWatchDatasource', () => {
       };
 
       beforeEach(() => {
+        redux.setStore({
+          dispatch: jest.fn(),
+        });
+
         ctx.backendSrv.datasourceRequest = jest.fn(() => {
           return Promise.reject(backendErrorResponse);
         });
@@ -290,10 +295,10 @@ describe('CloudWatchDatasource', () => {
       it('should display one alert error message per region+datasource combination', done => {
         const memoizedDebounceSpy = jest.spyOn(ctx.ds, 'debouncedAlert');
         ctx.ds.query(query).catch(() => {
-          expect(memoizedDebounceSpy).toBeCalledTimes(3);
-          expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'us-east-2');
+          expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'us-east-1');
           expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'us-east-2');
           expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'eu-north-1');
+          expect(memoizedDebounceSpy).toBeCalledTimes(3);
           done();
         });
       });
