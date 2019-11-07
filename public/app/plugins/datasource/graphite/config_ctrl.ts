@@ -1,16 +1,23 @@
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
+import { GraphiteType } from './types';
 
 export class GraphiteConfigCtrl {
   static templateUrl = 'public/app/plugins/datasource/graphite/partials/config.html';
   datasourceSrv: any;
   current: any;
+  graphiteTypes: any;
 
   /** @ngInject */
   constructor($scope: any, datasourceSrv: DatasourceSrv) {
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData = this.current.jsonData || {};
     this.current.jsonData.graphiteVersion = this.current.jsonData.graphiteVersion || '0.9';
+    this.current.jsonData.graphiteType = this.current.jsonData.graphiteType || GraphiteType.Default;
     this.autoDetectGraphiteVersion();
+    this.graphiteTypes = Object.keys(GraphiteType).map((key: string) => ({
+      name: key,
+      value: (GraphiteType as any)[key],
+    }));
   }
 
   autoDetectGraphiteVersion() {
