@@ -55,10 +55,11 @@ type SqlStore struct {
 	Bus          bus.Bus                  `inject:""`
 	CacheService *localcache.CacheService `inject:""`
 
-	dbCfg   DatabaseConfig
-	engine  *xorm.Engine
-	log     log.Logger
-	Dialect migrator.Dialect
+	dbCfg                       DatabaseConfig
+	engine                      *xorm.Engine
+	log                         log.Logger
+	Dialect                     migrator.Dialect
+	skipEnsureDefaultOrgAndUser bool
 }
 
 func (ss *SqlStore) Init() error {
@@ -99,33 +100,18 @@ func (ss *SqlStore) Init() error {
 	// Register handlers
 	ss.addUserQueryAndCommandHandlers()
 
-	return ss.ensureDefaults()
+	if ss.skipEnsureDefaultOrgAndUser {
+		return nil
+	}
+
+	return ss.ensureMainOrgAndAdminUser()
 }
 
-func (ss *SqlStore) ensureDefaults() error {
-	systemUserCountQuery := m.GetSystemUserCountStatsQuery{}
-
+func (ss *SqlStore) ensureMainOrgAndAdminUser() error {
 	err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
-
-		adminStatsQuery := m.GetAdminStatsQuery{}
-		err := bus.Dispatch(&adminStatsQuery)
-		if err != nil {
-			return fmt.Errorf("Could not determine if default org exists: %v", err)
-		}
-
-		if adminStatsQuery.Result.Orgs == 0 {
-			orgCmd := m.CreateOrgCommand{}
-			orgCmd.Name = "Main Org."
-
-			if err := bus.Dispatch(&orgCmd); err != nil {
-				return fmt.Errorf("Failed to create default org: %v", err)
-			}
-
-			ss.log.Info("Created default org", "org", orgCmd.Name)
-		}
-
 		// ensure admin user
 		if !ss.Cfg.DisableInitAdminCreation {
+			systemUserCountQuery := m.GetSystemUserCountStatsQuery{}
 			err := bus.DispatchCtx(ctx, &systemUserCountQuery)
 			if err != nil {
 				return fmt.Errorf("Could not determine if admin user exists: %v", err)
@@ -146,8 +132,15 @@ func (ss *SqlStore) ensureDefaults() error {
 			}
 
 			ss.log.Info("Created default admin", "user", setting.AdminUser)
+			return nil
 		}
 
+		// ensure default org if default admin user is disabled
+		if err := createDefaultOrg(ctx); err != nil {
+			return errutil.Wrap("Failed to create default organization", err)
+		}
+
+		ss.log.Info("Created default organization")
 		return nil
 	})
 
@@ -321,6 +314,7 @@ func InitTestDB(t ITestDB) *SqlStore {
 	sqlstore := &SqlStore{}
 	sqlstore.Bus = bus.New()
 	sqlstore.CacheService = localcache.New(5*time.Minute, 10*time.Minute)
+	sqlstore.skipEnsureDefaultOrgAndUser = true
 
 	dbType := migrator.SQLITE
 
@@ -331,8 +325,6 @@ func InitTestDB(t ITestDB) *SqlStore {
 
 	// set test db config
 	sqlstore.Cfg = setting.NewCfg()
-	sqlstore.Cfg.DisableInitAdminCreation = true
-
 	sec, err := sqlstore.Cfg.Raw.NewSection("database")
 	if err != nil {
 		t.Fatalf("Failed to create section: %s", err)

@@ -35,53 +35,22 @@ func (ss *SqlStore) addUserQueryAndCommandHandlers() {
 	bus.AddHandlerCtx("sql", CreateUser)
 }
 
-func getOrgIdForNewUser(cmd *models.CreateUserCommand, sess *DBSession) (int64, error) {
+func getOrgIdForNewUser(sess *DBSession, cmd *models.CreateUserCommand) (int64, error) {
 	if cmd.SkipOrgSetup {
 		return -1, nil
 	}
 
-	var org models.Org
-
-	if setting.AutoAssignOrg {
-		has, err := sess.Where("id=?", setting.AutoAssignOrgId).Get(&org)
-		if err != nil {
-			return 0, err
-		}
-		if has {
-			return org.Id, nil
-		}
-	} else {
-		org.Name = cmd.OrgName
-		if len(org.Name) == 0 {
-			org.Name = util.StringsFallback2(cmd.Email, cmd.Login)
-		}
+	orgName := cmd.OrgName
+	if len(orgName) == 0 {
+		orgName = util.StringsFallback2(cmd.Email, cmd.Login)
 	}
 
-	org.Created = time.Now()
-	org.Updated = time.Now()
-
-	if org.Id != 0 {
-		if _, err := sess.InsertId(&org); err != nil {
-			return 0, err
-		}
-	} else {
-		if _, err := sess.InsertOne(&org); err != nil {
-			return 0, err
-		}
-	}
-
-	sess.publishAfterCommit(&events.OrgCreated{
-		Timestamp: org.Created,
-		Id:        org.Id,
-		Name:      org.Name,
-	})
-
-	return org.Id, nil
+	return getOrCreateOrg(sess, orgName)
 }
 
 func CreateUser(ctx context.Context, cmd *models.CreateUserCommand) error {
 	return inTransactionCtx(ctx, func(sess *DBSession) error {
-		orgId, err := getOrgIdForNewUser(cmd, sess)
+		orgId, err := getOrgIdForNewUser(sess, cmd)
 		if err != nil {
 			return err
 		}
