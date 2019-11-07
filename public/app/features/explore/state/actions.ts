@@ -768,14 +768,20 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
   };
 }
 
+export interface NavigateToExploreDependencies {
+  getDataSourceSrv: () => DataSourceSrv;
+  getTimeSrv: () => TimeSrv;
+  getExploreUrl: (args: GetExploreUrlArguments) => Promise<string>;
+  openInNewWindow?: (url: string) => void;
+}
+
 export const navigateToExplore = (
   panel: PanelModel,
-  getDatasourceSrv: () => DataSourceSrv,
-  getTimeSrv: () => TimeSrv,
-  getExploreUrl: (args: GetExploreUrlArguments) => Promise<string>
+  dependencies: NavigateToExploreDependencies
 ): ThunkResult<void> => {
   return async dispatch => {
-    const datasourceSrv = getDatasourceSrv();
+    const { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow } = dependencies;
+    const datasourceSrv = getDataSourceSrv();
     const datasource = await datasourceSrv.get(panel.datasource);
     const path = await getExploreUrl({
       panel,
@@ -784,6 +790,12 @@ export const navigateToExplore = (
       datasourceSrv,
       timeSrv: getTimeSrv(),
     });
+
+    if (openInNewWindow) {
+      openInNewWindow(path);
+      return;
+    }
+
     const query = {}; // strips any angular query param
     dispatch(updateLocation({ path, query }));
   };
