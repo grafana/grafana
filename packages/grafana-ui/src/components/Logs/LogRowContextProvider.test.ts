@@ -6,18 +6,16 @@ describe('getRowContexts', () => {
     it('then the result should be in correct format', async () => {
       const firstResult = new MutableDataFrame({
         refId: 'B',
-        labels: {},
         fields: [
           { name: 'ts', type: FieldType.time, values: [3, 2, 1] },
-          { name: 'line', type: FieldType.string, values: ['3', '2', '1'] },
+          { name: 'line', type: FieldType.string, values: ['3', '2', '1'], labels: {} },
         ],
       });
       const secondResult = new MutableDataFrame({
         refId: 'B',
-        labels: {},
         fields: [
           { name: 'ts', type: FieldType.time, values: [6, 5, 4] },
-          { name: 'line', type: FieldType.string, values: ['6', '5', '4'] },
+          { name: 'line', type: FieldType.string, values: ['6', '5', '4'], labels: {} },
         ],
       });
       const row: LogRowModel = {

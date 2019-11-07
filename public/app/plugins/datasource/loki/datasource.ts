@@ -410,7 +410,12 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const annotations: AnnotationEvent[] = [];
 
     for (const frame of data) {
-      const tags = Object.values(frame.labels) as string[];
+      const tags: string[] = [];
+      for (const field of frame.fields) {
+        if (field.labels) {
+          tags.push.apply(tags, Object.values(field.labels));
+        }
+      }
       const view = new DataFrameView<{ ts: string; line: string }>(frame);
 
       view.forEachRow(row => {

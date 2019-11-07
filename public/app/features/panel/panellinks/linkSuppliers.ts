@@ -13,12 +13,12 @@ import { getLinkSrv } from './link_srv';
 
 interface SeriesVars {
   name?: string;
-  labels?: Labels;
   refId?: string;
 }
 
 interface FieldVars {
   name: string;
+  labels?: Labels;
 }
 
 interface ValueVars {
@@ -54,7 +54,6 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
         scopedVars['__series'] = {
           value: {
             name: dataFrame.name,
-            labels: dataFrame.labels,
             refId: dataFrame.refId,
           },
           text: 'Series',
@@ -66,6 +65,7 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
           scopedVars['__field'] = {
             value: {
               name: field.name,
+              labels: field.labels,
             },
             text: 'Field',
           };

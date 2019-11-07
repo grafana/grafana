@@ -244,6 +244,15 @@ function separateLogsAndMetrics(dataFrame: DataFrame[]) {
 
 const logTimeFormat = 'YYYY-MM-DD HH:mm:ss';
 
+interface LogFields {
+  series: DataFrame;
+
+  timeField: FieldWithIndex;
+  stringField: FieldWithIndex;
+  logLevelField?: FieldWithIndex;
+  idField?: FieldWithIndex;
+}
+
 /**
  * Converts dataFrames into LogsModel. This involves merging them into one list, sorting them and computing metadata
  * like common labels.
@@ -252,29 +261,43 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   if (logSeries.length === 0) {
     return undefined;
   }
-  const commonLabels = findCommonLabelsFromDataFrames(logSeries);
+  const allLabels: Labels[] = [];
+
+  // Find the fields we care about and collect all labels
+  const allSeries: LogFields[] = logSeries.map(series => {
+    const fieldCache = new FieldCache(series);
+
+    // Assume the first string field in the dataFrame is the message. This was right so far but probably needs some
+    // more explicit checks.
+    const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
+    if (stringField.labels) {
+      allLabels.push(stringField.labels);
+    }
+    return {
+      series,
+      timeField: fieldCache.getFirstFieldOfType(FieldType.time),
+      stringField,
+      logLevelField: fieldCache.getFieldByName('level'),
+      idField: getIdField(fieldCache),
+    };
+  });
+
+  const commonLabels = allLabels.length > 0 ? findCommonLabels(allLabels) : {};
 
   const rows: LogRowModel[] = [];
   let hasUniqueLabels = false;
 
-  for (let i = 0; i < logSeries.length; i++) {
-    const series = logSeries[i];
-    const fieldCache = new FieldCache(series);
-    const uniqueLabels = findUniqueLabels(series.labels, commonLabels);
+  for (const info of allSeries) {
+    const { timeField, stringField, logLevelField, idField, series } = info;
+    const labels = stringField.labels;
+    const uniqueLabels = findUniqueLabels(labels, commonLabels);
     if (Object.keys(uniqueLabels).length > 0) {
       hasUniqueLabels = true;
     }
 
-    const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
-    // Assume the first string field in the dataFrame is the message. This was right so far but probably needs some
-    // more explicit checks.
-    const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
-    const logLevelField = fieldCache.getFieldByName('level');
-    const idField = getIdField(fieldCache);
-
     let seriesLogLevel: LogLevel | undefined = undefined;
-    if (series.labels && Object.keys(series.labels).indexOf('level') !== -1) {
-      seriesLogLevel = getLogLevelFromKey(series.labels['level']);
+    if (labels && Object.keys(labels).indexOf('level') !== -1) {
+      seriesLogLevel = getLogLevelFromKey(labels['level']);
     }
 
     for (let j = 0; j < series.length; j++) {
@@ -311,7 +334,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
         searchWords,
         entry: hasAnsi ? ansicolor.strip(message) : message,
         raw: message,
-        labels: series.labels,
+        labels: stringField.labels,
         timestamp: ts,
         uid: idField ? idField.values.get(j) : j.toString(),
       });
@@ -343,21 +366,6 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     meta,
     rows,
   };
-}
-
-function findCommonLabelsFromDataFrames(logSeries: DataFrame[]): Labels {
-  const allLabels: Labels[] = [];
-  for (let n = 0; n < logSeries.length; n++) {
-    const series = logSeries[n];
-    if (series.labels) {
-      allLabels.push(series.labels);
-    }
-  }
-
-  if (allLabels.length > 0) {
-    return findCommonLabels(allLabels);
-  }
-  return {};
 }
 
 function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {
