@@ -524,7 +524,7 @@ describe('CloudWatchDatasource', () => {
     });
   });
 
-  describeMetricFindQuery('metrics(AWS/EC2)', (scenario: any) => {
+  describeMetricFindQuery('metrics(AWS/EC2, us-east-2)', (scenario: any) => {
     scenario.setup(() => {
       scenario.requestResponse = {
         results: {
