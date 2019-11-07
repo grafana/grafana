@@ -255,7 +255,6 @@ export class PanelModel {
     if (plugin.angularConfigCtrl) {
       return;
     }
-
     this.options = _.mergeWith(
       {},
       plugin.defaults,
