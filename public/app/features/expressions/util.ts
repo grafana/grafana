@@ -9,6 +9,10 @@ export function base64StringToArrowTable(text: string): Table {
   return Table.from(arr);
 }
 
+function valueOrUndefined(val?: string) {
+  return val ? val : undefined;
+}
+
 export function arrowTableToDataFrame(table: Table): DataFrame {
   const fields: Field[] = [];
 
@@ -50,8 +54,8 @@ export function arrowTableToDataFrame(table: Table): DataFrame {
   return {
     fields,
     length: table.length,
-    refId: meta.get('refId'),
-    name: meta.get('name'),
+    refId: valueOrUndefined(meta.get('refId')),
+    name: valueOrUndefined(meta.get('name')),
   };
 }
 

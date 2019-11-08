@@ -62,7 +62,7 @@ Array [
     ],
     "meta": undefined,
     "name": undefined,
-    "refId": undefined,
+    "refId": "GC",
   },
   Object {
     "fields": Array [
@@ -124,7 +124,7 @@ Array [
     ],
     "meta": undefined,
     "name": undefined,
-    "refId": undefined,
+    "refId": "GB",
   },
 ]
 `;
