@@ -12,7 +12,7 @@ class PrometheusAnnotationsQueryCtrl {
 }
 
 export const plugin = new DataSourcePlugin(PrometheusDatasource)
-  .setQueryCtrl(PromQueryEditor)
+  .setQueryEditor(PromQueryEditor)
   .setConfigEditor(ConfigEditor)
   .setExploreMetricsQueryField(PromQueryField)
   .setAnnotationQueryCtrl(PrometheusAnnotationsQueryCtrl)
