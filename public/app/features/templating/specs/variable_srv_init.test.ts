@@ -83,7 +83,7 @@ describe('VariableSrv init', function(this: any) {
             type: type,
             current: { text: 'Test', value: 'test' },
             options: [{ text: 'Test', value: 'test' }],
-            useState: false,
+            useTemporary: true,
           },
         ];
         scenario.urlParams['var-apps'] = 'new';
@@ -105,7 +105,7 @@ describe('VariableSrv init', function(this: any) {
         query: '',
         current: { text: 'app1', value: 'app1' },
         options: [{ text: 'app1', value: 'app1' }],
-        useState: false,
+        useTemporary: true,
       },
       {
         name: 'server',
@@ -114,7 +114,7 @@ describe('VariableSrv init', function(this: any) {
         query: '$app.*',
         current: { text: 'server1', value: 'server1' },
         options: [{ text: 'server1', value: 'server1' }],
-        useState: false,
+        useTemporary: true,
       },
     ];
 
@@ -145,7 +145,7 @@ describe('VariableSrv init', function(this: any) {
           name: 'test',
           current: { value: 'backend4_pee', text: 'backend4_pee' },
           regex: '/pee$/',
-          useState: false,
+          useTemporary: true,
         },
       ];
       scenario.metricSources = [
@@ -175,7 +175,7 @@ describe('VariableSrv init', function(this: any) {
             { text: 'Val2', value: 'val2' },
             { text: 'Val3', value: 'val3', selected: true },
           ],
-          useState: false,
+          useTemporary: true,
         },
       ];
       scenario.urlParams['var-apps'] = ['val2', 'val1'];
@@ -206,7 +206,7 @@ describe('VariableSrv init', function(this: any) {
             name: 'apps',
             type: 'query',
             multi: true,
-            useState: false,
+            useTemporary: true,
           },
         ];
         scenario.urlParams['var-apps'] = ['val1', 'val2'];
@@ -235,7 +235,7 @@ describe('VariableSrv init', function(this: any) {
             { text: 'Val2', value: 'val2' },
             { text: 'Val3', value: 'val3', selected: true },
           ],
-          useState: false,
+          useTemporary: true,
         },
       ];
       scenario.urlParams['var-apps'] = ['val2', 'val1'];

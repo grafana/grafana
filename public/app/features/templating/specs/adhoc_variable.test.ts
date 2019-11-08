@@ -9,6 +9,7 @@ describe('AdhocVariable', () => {
           { key: 'key2', operator: '!=', value: 'value2' },
           { key: 'key3', operator: '=', value: 'value3a|value3b|value3c' },
         ],
+        useTemporary: true,
       });
       const urlValue = variable.getValueForUrl();
       expect(urlValue).toMatchObject(['key1|=|value1', 'key2|!=|value2', 'key3|=|value3a__gfp__value3b__gfp__value3c']);
@@ -17,7 +18,7 @@ describe('AdhocVariable', () => {
 
   describe('when deserializing from url', () => {
     it('should restore filters', () => {
-      const variable = new AdhocVariable({});
+      const variable = new AdhocVariable({ useTemporary: true });
       variable.setValueFromUrl(['key1|=|value1', 'key2|!=|value2', 'key3|=|value3a__gfp__value3b__gfp__value3c']);
 
       expect(variable.filters[0].key).toBe('key1');

@@ -84,7 +84,7 @@ describe('VariableSrv', function(this: any) {
         type: 'interval',
         query: '1s,2h,5h,1d',
         name: 'test',
-        useState: false,
+        useTemporary: true,
       };
     });
 
@@ -106,7 +106,7 @@ describe('VariableSrv', function(this: any) {
         name: 'test',
         auto: true,
         auto_count: 10,
-        useState: false,
+        useTemporary: true,
       };
 
       const range = {
@@ -151,7 +151,7 @@ describe('VariableSrv', function(this: any) {
         query: '',
         name: 'test',
         current: {},
-        useState: false,
+        useTemporary: true,
       };
       scenario.queryResult = [{ text: 'backend1' }, { text: 'backend2' }];
     });
@@ -174,7 +174,7 @@ describe('VariableSrv', function(this: any) {
             value: ['val1', 'val2', 'val3'],
             text: 'val1 + val2 + val3',
           },
-          useState: false,
+          useTemporary: true,
         };
         scenario.queryResult = [{ text: 'val2' }, { text: 'val3' }];
       });
@@ -198,7 +198,7 @@ describe('VariableSrv', function(this: any) {
             value: ['val1', 'val2', 'val3'],
             text: 'val1 + val2 + val3',
           },
-          useState: false,
+          useTemporary: true,
         };
         scenario.queryResult = [{ text: 'val5' }, { text: 'val6' }];
       });
@@ -221,7 +221,7 @@ describe('VariableSrv', function(this: any) {
           value: ['$__all'],
           text: 'All',
         },
-        useState: false,
+        useTemporary: true,
       };
       scenario.queryResult = [{ text: 'val5' }, { text: 'val6' }];
     });
@@ -239,7 +239,7 @@ describe('VariableSrv', function(this: any) {
         query: '',
         name: 'test',
         current: {},
-        useState: false,
+        useTemporary: true,
       };
       scenario.queryResult = [{ text: 12, value: 12 }];
     });
@@ -253,7 +253,7 @@ describe('VariableSrv', function(this: any) {
 
   describeUpdateVariable('basic query variable', (scenario: any) => {
     scenario.setup(() => {
-      scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test', useState: false };
+      scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test', useTemporary: true };
       scenario.queryResult = [{ text: 'backend1' }, { text: 'backend2' }];
     });
 
@@ -271,7 +271,7 @@ describe('VariableSrv', function(this: any) {
 
   describeUpdateVariable('and existing value still exists in options', (scenario: any) => {
     scenario.setup(() => {
-      scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test', useState: false };
+      scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test', useTemporary: true };
       scenario.variableModel.current = { value: 'backend2', text: 'backend2' };
       scenario.queryResult = [{ text: 'backend1' }, { text: 'backend2' }];
     });
@@ -283,7 +283,7 @@ describe('VariableSrv', function(this: any) {
 
   describeUpdateVariable('and regex pattern exists', (scenario: any) => {
     scenario.setup(() => {
-      scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test', useState: false };
+      scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test', useTemporary: true };
       scenario.variableModel.regex = '/apps.*(backend_[0-9]+)/';
       scenario.queryResult = [
         { text: 'apps.backend.backend_01.counters.req' },
@@ -298,7 +298,7 @@ describe('VariableSrv', function(this: any) {
 
   describeUpdateVariable('and regex pattern exists and no match', (scenario: any) => {
     scenario.setup(() => {
-      scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test', useState: false };
+      scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test', useTemporary: true };
       scenario.variableModel.regex = '/apps.*(backendasd[0-9]+)/';
       scenario.queryResult = [
         { text: 'apps.backend.backend_01.counters.req' },
@@ -314,7 +314,7 @@ describe('VariableSrv', function(this: any) {
 
   describeUpdateVariable('regex pattern without slashes', (scenario: any) => {
     scenario.setup(() => {
-      scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test', useState: false };
+      scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test', useTemporary: true };
       scenario.variableModel.regex = 'backend_01';
       scenario.queryResult = [
         { text: 'apps.backend.backend_01.counters.req' },
@@ -329,7 +329,7 @@ describe('VariableSrv', function(this: any) {
 
   describeUpdateVariable('regex pattern remove duplicates', (scenario: any) => {
     scenario.setup(() => {
-      scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test', useState: false };
+      scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test', useTemporary: true };
       scenario.variableModel.regex = '/backend_01/';
       scenario.queryResult = [
         { text: 'apps.backend.backend_01.counters.req' },
@@ -349,7 +349,7 @@ describe('VariableSrv', function(this: any) {
         query: 'apps.*',
         name: 'test',
         includeAll: true,
-        useState: false,
+        useTemporary: true,
       };
       scenario.queryResult = [{ text: 'backend1' }, { text: 'backend2' }, { text: 'backend3' }];
     });
@@ -368,7 +368,7 @@ describe('VariableSrv', function(this: any) {
         name: 'test',
         includeAll: true,
         allValue: '*',
-        useState: false,
+        useTemporary: true,
       };
       scenario.queryResult = [{ text: 'backend1' }, { text: 'backend2' }, { text: 'backend3' }];
     });
@@ -385,7 +385,7 @@ describe('VariableSrv', function(this: any) {
         query: 'apps.*',
         name: 'test',
         sort: 0,
-        useState: false,
+        useTemporary: true,
       };
       scenario.queryResult = [{ text: 'bbb2' }, { text: 'aaa10' }, { text: 'ccc3' }];
     });
@@ -404,7 +404,7 @@ describe('VariableSrv', function(this: any) {
         query: 'apps.*',
         name: 'test',
         sort: 1,
-        useState: false,
+        useTemporary: true,
       };
       scenario.queryResult = [{ text: 'bbb2' }, { text: 'aaa10' }, { text: 'ccc3' }];
     });
@@ -423,7 +423,7 @@ describe('VariableSrv', function(this: any) {
         query: 'apps.*',
         name: 'test',
         sort: 2,
-        useState: false,
+        useTemporary: true,
       };
       scenario.queryResult = [{ text: 'bbb2' }, { text: 'aaa10' }, { text: 'ccc3' }];
     });
@@ -442,7 +442,7 @@ describe('VariableSrv', function(this: any) {
         query: 'apps.*',
         name: 'test',
         sort: 3,
-        useState: false,
+        useTemporary: true,
       };
       scenario.queryResult = [{ text: 'bbb2' }, { text: 'aaa10' }, { text: 'ccc3' }];
     });
@@ -461,7 +461,7 @@ describe('VariableSrv', function(this: any) {
         query: 'apps.*',
         name: 'test',
         sort: 4,
-        useState: false,
+        useTemporary: true,
       };
       scenario.queryResult = [{ text: 'bbb2' }, { text: 'aaa10' }, { text: 'ccc3' }];
     });
@@ -484,7 +484,7 @@ describe('VariableSrv', function(this: any) {
         name: 'test',
         current: { value: 'backend4_pee', text: 'backend4_pee' },
         regex: '/pee$/',
-        useState: false,
+        useTemporary: true,
       };
       scenario.metricSources = [
         { name: 'backend1', meta: { id: 'influx' } },
@@ -514,7 +514,7 @@ describe('VariableSrv', function(this: any) {
         type: 'custom',
         query: 'hej, hop, asd, escaped\\,var',
         name: 'test',
-        useState: false,
+        useTemporary: true,
       };
     });
 
@@ -546,7 +546,7 @@ describe('VariableSrv', function(this: any) {
         name: 'variable1',
         auto: true,
         auto_count: 10,
-        useState: false,
+        useTemporary: true,
       };
       variable1 = ctx.variableSrv.createVariableFromModel(variableModel1);
       ctx.variableSrv.addVariable(variable1);
@@ -557,7 +557,7 @@ describe('VariableSrv', function(this: any) {
         name: 'variable2',
         auto: true,
         auto_count: 1000,
-        useState: false,
+        useTemporary: true,
       };
       variable2 = ctx.variableSrv.createVariableFromModel(variableModel2);
       ctx.variableSrv.addVariable(variable2);
@@ -650,7 +650,7 @@ function setupSetFromUrlTest(ctx: any, model = {}) {
     options: ['one', 'two', 'three'].map(v => ({ text: v, value: v })),
     name: 'test',
     ...model,
-    useState: false,
+    useTemporary: true,
   };
   const variable = new CustomVariable(finalModel, variableSrv);
   // We are mocking the setValue here instead of just checking the final variable.current value because there is lots

@@ -143,6 +143,8 @@ export interface VariableModel {
   label: string;
   hide: VariableHide;
   skipUrlSync: boolean;
+  useTemporary?: boolean;
+  temporary?: VariableModel;
 }
 
 export interface VariableActions {

@@ -3,6 +3,9 @@ import {
   AdHocVariableFilter,
   AdHocVariableModel,
   assignModelProperties,
+  createVariableInState,
+  getVariablePropFromState,
+  setVariablePropInState,
   VariableActions,
   VariableHide,
   VariableType,
@@ -10,14 +13,7 @@ import {
 } from './variable';
 
 export class AdhocVariable implements AdHocVariableModel, VariableActions {
-  type: VariableType;
-  name: string;
-  label: string;
-  hide: VariableHide;
-  skipUrlSync: boolean;
-  filters: AdHocVariableFilter[];
-  datasource: string;
-
+  id: number;
   defaults: AdHocVariableModel = {
     type: 'adhoc',
     name: '',
@@ -27,10 +23,61 @@ export class AdhocVariable implements AdHocVariableModel, VariableActions {
     datasource: null,
     filters: [],
   };
+  temporary: AdHocVariableModel = null;
 
   /** @ngInject */
   constructor(private model: any) {
-    assignModelProperties(this, model, this.defaults);
+    if (model.useTemporary) {
+      this.temporary = {} as AdHocVariableModel;
+      assignModelProperties(this.temporary, model, this.defaults);
+    } else {
+      this.temporary = null;
+      this.id = createVariableInState(model, this.defaults);
+    }
+  }
+
+  get type(): VariableType {
+    return getVariablePropFromState<VariableType>(this.id, this.temporary, 'type');
+  }
+  get name(): string {
+    return getVariablePropFromState<string>(this.id, this.temporary, 'name');
+  }
+  get label(): string {
+    return getVariablePropFromState<string>(this.id, this.temporary, 'label');
+  }
+  get hide(): VariableHide {
+    return getVariablePropFromState<VariableHide>(this.id, this.temporary, 'hide');
+  }
+  get skipUrlSync(): boolean {
+    return getVariablePropFromState<boolean>(this.id, this.temporary, 'skipUrlSync');
+  }
+  get filters(): AdHocVariableFilter[] {
+    return getVariablePropFromState<AdHocVariableFilter[]>(this.id, this.temporary, 'filters');
+  }
+  get datasource(): string {
+    return getVariablePropFromState<string>(this.id, this.temporary, 'datasource');
+  }
+
+  set type(type: VariableType) {
+    setVariablePropInState(this.id, this.temporary, 'type', type);
+  }
+  set name(name: string) {
+    setVariablePropInState(this.id, this.temporary, 'name', name);
+  }
+  set label(label: string) {
+    setVariablePropInState(this.id, this.temporary, 'label', label);
+  }
+  set hide(hide: VariableHide) {
+    setVariablePropInState(this.id, this.temporary, 'hide', hide);
+  }
+  set skipUrlSync(skipUrlSync: boolean) {
+    setVariablePropInState(this.id, this.temporary, 'skipUrlSync', skipUrlSync);
+  }
+  set filters(filters: AdHocVariableFilter[]) {
+    setVariablePropInState(this.id, this.temporary, 'filters', filters);
+  }
+  set datasource(datasource: string) {
+    setVariablePropInState(this.id, this.temporary, 'datasource', datasource);
   }
 
   setValue(option: any) {

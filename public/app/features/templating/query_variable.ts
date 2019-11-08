@@ -62,13 +62,12 @@ export class QueryVariable implements QueryVariableModel, VariableActions {
     private timeSrv: TimeSrv
   ) {
     // copy model properties to this instance
-    if (!model.useState) {
+    if (model.useTemporary) {
       this.temporary = {} as QueryVariableModel;
       assignModelProperties(this.temporary, model, this.defaults);
     } else {
       this.temporary = null;
       this.id = createVariableInState(model, this.defaults);
-      assignModelProperties(this, model, this.defaults);
     }
     this.updateOptionsFromMetricFindQuery.bind(this);
   }
@@ -134,64 +133,64 @@ export class QueryVariable implements QueryVariableModel, VariableActions {
     return getVariablePropFromState<string>(this.id, this.temporary, 'allValue');
   }
 
-  set type(type) {
+  set type(type: VariableType) {
     setVariablePropInState(this.id, this.temporary, 'type', type);
   }
-  set name(name) {
+  set name(name: string) {
     setVariablePropInState(this.id, this.temporary, 'name', name);
   }
-  set label(label) {
+  set label(label: string) {
     setVariablePropInState(this.id, this.temporary, 'label', label);
   }
-  set hide(hide) {
+  set hide(hide: VariableHide) {
     setVariablePropInState(this.id, this.temporary, 'hide', hide);
   }
-  set skipUrlSync(skipUrlSync) {
+  set skipUrlSync(skipUrlSync: boolean) {
     setVariablePropInState(this.id, this.temporary, 'skipUrlSync', skipUrlSync);
   }
-  set datasource(datasource) {
+  set datasource(datasource: string) {
     setVariablePropInState(this.id, this.temporary, 'datasource', datasource);
   }
-  set query(query) {
+  set query(query: string) {
     setVariablePropInState(this.id, this.temporary, 'query', query);
   }
-  set regex(regex) {
+  set regex(regex: string) {
     setVariablePropInState(this.id, this.temporary, 'regex', regex);
   }
-  set sort(sort) {
+  set sort(sort: VariableSort) {
     setVariablePropInState(this.id, this.temporary, 'sort', sort);
   }
-  set options(options) {
+  set options(options: VariableOption[]) {
     setVariablePropInState(this.id, this.temporary, 'options', options);
   }
-  set current(current) {
+  set current(current: VariableOption) {
     setVariablePropInState(this.id, this.temporary, 'current', current);
   }
-  set refresh(refresh) {
+  set refresh(refresh: VariableRefresh) {
     setVariablePropInState(this.id, this.temporary, 'refresh', refresh);
   }
-  set multi(multi) {
+  set multi(multi: boolean) {
     setVariablePropInState(this.id, this.temporary, 'multi', multi);
   }
-  set includeAll(includeAll) {
+  set includeAll(includeAll: boolean) {
     setVariablePropInState(this.id, this.temporary, 'includeAll', includeAll);
   }
-  set useTags(useTags) {
+  set useTags(useTags: boolean) {
     setVariablePropInState(this.id, this.temporary, 'useTags', useTags);
   }
-  set tagsQuery(tagsQuery) {
+  set tagsQuery(tagsQuery: string) {
     setVariablePropInState(this.id, this.temporary, 'tagsQuery', tagsQuery);
   }
-  set tagValuesQuery(tagValuesQuery) {
+  set tagValuesQuery(tagValuesQuery: string) {
     setVariablePropInState(this.id, this.temporary, 'tagValuesQuery', tagValuesQuery);
   }
-  set tags(tags) {
+  set tags(tags: VariableTag[]) {
     setVariablePropInState(this.id, this.temporary, 'tags', tags);
   }
-  set definition(definition) {
+  set definition(definition: string) {
     setVariablePropInState(this.id, this.temporary, 'definition', definition);
   }
-  set allValue(allValue) {
+  set allValue(allValue: string) {
     setVariablePropInState(this.id, this.temporary, 'allValue', allValue);
   }
 
