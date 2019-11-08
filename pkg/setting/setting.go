@@ -243,6 +243,7 @@ type Cfg struct {
 	RendererLimitAlerting int
 
 	// Security
+	DisableInitAdminCreation         bool
 	DisableBruteForceLoginProtection bool
 	CookieSecure                     bool
 	CookieSameSite                   http.SameSite
@@ -763,6 +764,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	// admin
+	cfg.DisableInitAdminCreation = security.Key("disable_initial_admin_creation").MustBool(false)
 	AdminUser, err = valueAsString(security, "admin_user", "")
 	if err != nil {
 		return err

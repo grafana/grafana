@@ -305,6 +305,12 @@ Example connstr: `127.0.0.1:11211`
 
 ## [security]
 
+### disable_initial_admin_creation
+
+> Only available in Grafana v6.5+.
+
+Disable creation of admin user on first start of grafana.
+
 ### admin_user
 
 The name of the default Grafana admin user (who has full permissions).
