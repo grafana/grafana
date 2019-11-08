@@ -25,20 +25,10 @@ export const ResponsiveButton = forwardRef<HTMLDivElement, Props>((props, ref) =
   };
 
   props = { ...defaultProps, ...props };
-  const {
-    title,
-    onClick,
-    buttonClassName,
-    iconClassName,
-    splitted,
-    iconSide,
-    disabled,
-    onMouseEnter,
-    onMouseLeave,
-  } = props;
+  const { title, onClick, buttonClassName, iconClassName, splitted, iconSide, disabled, ...divElementProps } = props;
 
   return (
-    <div ref={ref} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+    <div ref={ref} {...divElementProps}>
       <button
         className={`btn navbar-button ${buttonClassName ? buttonClassName : ''}`}
         onClick={onClick}
