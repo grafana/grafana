@@ -237,7 +237,7 @@ describe('MSSQLDatasource', () => {
 
   describe('When interpolating variables', () => {
     beforeEach(() => {
-      ctx.variable = new CustomVariable({}, {} as any);
+      ctx.variable = new CustomVariable({ useTemporary: true }, {} as any);
     });
 
     describe('and value is a string', () => {

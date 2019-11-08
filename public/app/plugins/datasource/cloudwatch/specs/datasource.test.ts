@@ -1,11 +1,9 @@
 import '../datasource';
 import CloudWatchDatasource from '../datasource';
-import { dateMath } from '@grafana/data';
+import { DataSourceInstanceSettings, dateMath } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
-import _ from 'lodash';
 import { CloudWatchQuery } from '../types';
-import { DataSourceInstanceSettings } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
@@ -106,6 +104,7 @@ describe('CloudWatchDatasource', () => {
               value: '10m',
             },
             multi: false,
+            useTemporary: true,
           },
           {} as any
         ),
@@ -280,6 +279,7 @@ describe('CloudWatchDatasource', () => {
               value: 'var1-foo',
             },
             multi: false,
+            useTemporary: true,
           },
           {} as any
         ),
@@ -290,6 +290,7 @@ describe('CloudWatchDatasource', () => {
               value: 'var2-foo',
             },
             multi: false,
+            useTemporary: true,
           },
           {} as any
         ),
@@ -305,6 +306,7 @@ describe('CloudWatchDatasource', () => {
               value: ['var3-foo', 'var3-baz'],
             },
             multi: true,
+            useTemporary: true,
           },
           {} as any
         ),

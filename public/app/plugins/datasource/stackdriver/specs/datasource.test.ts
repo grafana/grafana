@@ -287,6 +287,7 @@ function initTemplateSrv(values: any, multi = false) {
           value: values,
         },
         multi: multi,
+        useTemporary: true,
       },
       {} as any
     ),

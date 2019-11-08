@@ -70,7 +70,7 @@ export class QueryVariable implements QueryVariableModel, VariableActions {
       this.temporary = null;
       this.id = createVariableInState(model, this.defaults);
     }
-    this.updateOptionsFromMetricFindQuery.bind(this);
+    this.updateOptionsFromMetricFindQuery = this.updateOptionsFromMetricFindQuery.bind(this);
   }
 
   get type(): VariableType {
