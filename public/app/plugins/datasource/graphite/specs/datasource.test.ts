@@ -73,11 +73,11 @@ describe('graphiteDatasource', () => {
 
     it('should return series list', () => {
       expect(results.data.length).toBe(1);
-      expect(results.data[0].target).toBe('prod1.count');
+      expect(results.data[0].name).toBe('prod1.count');
     });
 
     it('should convert to millisecond resolution', () => {
-      expect(results.data[0].datapoints[0][0]).toBe(10);
+      expect(results.data[0].fields[0].values.get(0)).toBe(10);
     });
   });
 
