@@ -106,7 +106,6 @@ class MetricsPanelCtrl extends PanelCtrl {
       return;
     }
 
-    this.loading = false;
     this.error = err.message || 'Request Error';
 
     if (err.data) {
@@ -116,10 +115,6 @@ class MetricsPanelCtrl extends PanelCtrl {
         this.error = err.data.error;
       }
     }
-
-    return this.$timeout(() => {
-      this.events.emit(PanelEvents.dataError, err);
-    });
   }
 
   // Updates the response with information from the stream
@@ -128,10 +123,6 @@ class MetricsPanelCtrl extends PanelCtrl {
       if (data.state === LoadingState.Error) {
         this.loading = false;
         this.processDataError(data.error);
-        if (!data.series) {
-          // keep current data if the response is empty
-          return;
-        }
       }
 
       // Ignore data in loading state
