@@ -11,6 +11,7 @@ export function base64StringToArrowTable(text: string): Table {
 
 export function arrowTableToDataFrame(table: Table): DataFrame {
   const fields: Field[] = [];
+
   for (let i = 0; i < table.numCols; i++) {
     const col = table.getColumnAt(i);
     if (col) {
@@ -35,6 +36,7 @@ export function arrowTableToDataFrame(table: Table): DataFrame {
         default:
           console.log('UNKNOWN Type:', schema);
       }
+      // console.log(' field>', schema.metadata);
 
       fields.push({
         name: col.name,
@@ -44,9 +46,12 @@ export function arrowTableToDataFrame(table: Table): DataFrame {
       });
     }
   }
+  const meta = table.schema.metadata;
   return {
     fields,
     length: table.length,
+    refId: meta.get('refId'),
+    name: meta.get('name'),
   };
 }
 
