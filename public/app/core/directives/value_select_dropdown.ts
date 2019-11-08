@@ -279,7 +279,7 @@ export class ValueSelectDropdownCtrl {
   }
 
   updateUIBoundOptions($scope: IScope, options: any[]) {
-    this.highlightIndex = -1;
+    this.highlightIndex = 0;
     this.search.options = options.slice(0, Math.min(options.length, 1000));
     $scope.$apply();
   }
