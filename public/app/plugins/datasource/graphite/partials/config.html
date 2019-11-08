@@ -16,5 +16,30 @@
     <span class="gf-form-select-wrapper">
         <select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.graphiteVersion" ng-options="f.value as f.name for f in ctrl.graphiteVersions"></select>
     </span>
-	</div>
+  </div>
+  <div class="gf-form-inline">
+    <span class="gf-form-label width-8">Type</span>
+    <span class="gf-form-select-wrapper">
+       <select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.graphiteType" ng-options="f.value as f.name
+         for f in ctrl.graphiteTypes"></select>
+    </span>
+    <div class="gf-form">
+      <label class="gf-form-label query-keyword pointer" ng-click="ctrl.showMetrictankHelp = !ctrl.showMetrictankHelp">
+        Help&nbsp;
+        <i class="fa fa-caret-down" ng-show="ctrl.showMetrictankHelp"></i>
+        <i class="fa fa-caret-right" ng-hide="ctrl.showMetrictankHelp">&nbsp;</i>
+      </label>
+    </div>
+    <div ng-if="ctrl.showMetrictankHelp" class="grafana-info-box m-t-2">
+      <div class="alert-body">
+        <p>
+          There are different types of Graphite compatible backends. Here you can specify the type you are using.
+          If you are using <a href="https://github.com/grafana/metrictank" class="pointer" target="_blank">Metrictank</a>
+          then select that here. This will enable Metrictank specific features like query processing meta data.
+
+          Metrictank is a multi-tenant timeseries engine for Graphite and friends.
+        </p>
+      </div>
+    </div>
+  </div>
 </div>

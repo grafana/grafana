@@ -1,12 +1,17 @@
 package sqlstore
 
 import (
+	"context"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
+
+const mainOrgName = "Main Org."
 
 func init() {
 	bus.AddHandler("sql", GetOrgById)
@@ -209,6 +214,63 @@ func DeleteOrg(cmd *m.DeleteOrgCommand) error {
 			if err != nil {
 				return err
 			}
+		}
+
+		return nil
+	})
+}
+
+func getOrCreateOrg(sess *DBSession, orgName string) (int64, error) {
+	var org m.Org
+
+	if setting.AutoAssignOrg {
+		has, err := sess.Where("id=?", setting.AutoAssignOrgId).Get(&org)
+		if err != nil {
+			return 0, err
+		}
+		if has {
+			return org.Id, nil
+		}
+		if setting.AutoAssignOrgId == 1 {
+			org.Name = mainOrgName
+			org.Id = int64(setting.AutoAssignOrgId)
+		} else {
+			sqlog.Info("Could not create user: organization id %v does not exist",
+				setting.AutoAssignOrgId)
+			return 0, fmt.Errorf("Could not create user: organization id %v does not exist",
+				setting.AutoAssignOrgId)
+		}
+	} else {
+		org.Name = orgName
+	}
+
+	org.Created = time.Now()
+	org.Updated = time.Now()
+
+	if org.Id != 0 {
+		if _, err := sess.InsertId(&org); err != nil {
+			return 0, err
+		}
+	} else {
+		if _, err := sess.InsertOne(&org); err != nil {
+			return 0, err
+		}
+	}
+
+	sess.publishAfterCommit(&events.OrgCreated{
+		Timestamp: org.Created,
+		Id:        org.Id,
+		Name:      org.Name,
+	})
+
+	return org.Id, nil
+}
+
+func createDefaultOrg(ctx context.Context) error {
+	return inTransactionCtx(ctx, func(sess *DBSession) error {
+		_, err := getOrCreateOrg(sess, mainOrgName)
+		if err != nil {
+			return err
 		}
 
 		return nil
