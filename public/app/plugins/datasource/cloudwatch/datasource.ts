@@ -80,6 +80,9 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
       item.statistics = item.statistics.map(stat => this.replace(stat, options.scopedVars, true, 'statistics'));
       item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
       item.id = this.replace(item.id, options.scopedVars, true, 'id');
+      const scopedVars = Object.assign({}, options.scopedVars, {
+        __interval_s: { text: options.intervalMs / 1000, value: options.intervalMs / 1000 },
+      });
       item.expression = this.replace(item.expression, options.scopedVars, true, 'expression');
 
       // valid ExtendedStatistics is like p90.00, check the pattern
