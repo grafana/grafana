@@ -1,11 +1,11 @@
 import React, { cloneElement, FC, HTMLProps, isValidElement, ReactNode } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
-import { selectThemeVariant, stylesFactory, useTheme } from '../../themes';
-import { getFocusStyle } from './commonStyles';
-import { Spinner } from '..';
+import { Spinner } from '../..';
+import { getFocusStyle } from '../commonStyles';
+import { selectThemeVariant, stylesFactory, useTheme } from '../../../themes';
 
-interface Props extends HTMLProps<HTMLInputElement> {
+export interface Props extends HTMLProps<HTMLInputElement> {
   /** Show an invalid state around the input */
   invalid?: boolean;
   /** Show an icon as a prefix in the input */
@@ -19,40 +19,58 @@ interface Props extends HTMLProps<HTMLInputElement> {
 }
 
 const getInputStyle = stylesFactory(
-  (theme: GrafanaTheme, invalid = false, prefix = false, suffix = false, addonBefore = false, addonAfter = false) => {
+  (
+    theme: GrafanaTheme,
+    invalid = false,
+    disabled = false,
+    prefix = false,
+    suffix = false,
+    addonBefore = false,
+    addonAfter = false
+  ) => {
     const colors = theme.colors;
     const backgroundColor = selectThemeVariant({ light: colors.white, dark: colors.gray15 }, theme.type);
     const borderColor = selectThemeVariant({ light: colors.gray4, dark: colors.gray25 }, theme.type);
+    const inputBorderColor = invalid ? colors.redBase : borderColor;
     const borderRadius = theme.border.radius.sm;
     const height = theme.spacing.formInputHeight;
+    const disabledBackground = selectThemeVariant({ light: colors.gray6, dark: colors.gray10 }, theme.type);
+    const disabledColor = selectThemeVariant({ light: colors.gray33, dark: colors.gray70 }, theme.type);
     const inputBorders = cx(
-      invalid &&
+      css`
+        border: 1px solid ${inputBorderColor};
+        border-radius: ${borderRadius};
+      `,
+      prefix &&
         css`
-          border: ${theme.border.width.sm} solid ${colors.redBase};
+          border-left: none;
         `,
-      (prefix || addonBefore) &&
+      (prefix || (!prefix && addonBefore)) &&
         css`
-          border-left: 0;
           border-top-left-radius: 0;
           border-bottom-left-radius: 0;
         `,
-      (suffix || addonAfter) &&
+      suffix &&
         css`
-          border-right: 0;
+          border-right: none;
+        `,
+      (suffix || (!suffix && addonAfter)) &&
+        css`
           border-top-right-radius: 0;
           border-bottom-right-radius: 0;
         `
     );
 
     const prefixSuffix = css`
-      background-color: ${backgroundColor};
+      background-color: ${disabled ? disabledBackground : backgroundColor};
       display: flex;
       align-items: center;
       justify-content: center;
       flex-grow: 0;
       flex-shrink: 0;
-      width: 30px;
+      width: 24px;
       z-index: 0;
+      border: 1px solid ${inputBorderColor};
     `;
 
     return {
@@ -61,7 +79,6 @@ const getInputStyle = stylesFactory(
           width: 100%;
           display: flex;
           height: ${height};
-          border: 1px solid ${borderColor};
           border-radius: ${borderRadius};
         `,
         getFocusStyle(theme)
@@ -69,11 +86,11 @@ const getInputStyle = stylesFactory(
       prefix: cx(
         prefixSuffix,
         css`
-          &:first-child {
-            border-left: 1px solid ${borderColor};
-            border-top-left-radius: ${borderRadius};
-            border-bottom-left-radius: ${borderRadius};
-          }
+          border-right: none;
+          border-top-right-radius: 0;
+          border-bottom-right-radius: 0;
+          border-top-left-radius: ${addonBefore ? 0 : borderRadius};
+          border-bottom-left-radius: ${addonBefore ? 0 : borderRadius};
         `
       ),
       input: cx(
@@ -82,7 +99,7 @@ const getInputStyle = stylesFactory(
           height: 100%;
           width: 100%;
           flex-grow: 1;
-          padding: 0 ${theme.spacing.formInputPaddingHorizontal};
+          padding: 0 ${suffix ? theme.spacing.xs : theme.spacing.sm} 0 ${prefix ? theme.spacing.xs : theme.spacing.sm};
           margin-bottom: ${invalid ? theme.spacing.formSpacingBase / 2 : theme.spacing.formSpacingBase * 2}px;
           position: relative;
           z-index: 1;
@@ -92,7 +109,9 @@ const getInputStyle = stylesFactory(
           color: ${selectThemeVariant({ light: colors.gray25, dark: colors.gray85 }, theme.type)};
 
           &:hover {
-            border-color: ${selectThemeVariant({ light: colors.gray70, dark: colors.gray33 }, theme.type)};
+            border-color: ${invalid
+              ? colors.redBase
+              : selectThemeVariant({ light: colors.gray70, dark: colors.gray33 }, theme.type)};
           }
 
           &:focus {
@@ -100,8 +119,8 @@ const getInputStyle = stylesFactory(
           }
 
           &:disabled {
-            background-color: ${selectThemeVariant({ light: colors.gray6, dark: colors.gray10 }, theme.type)};
-            color: ${selectThemeVariant({ light: colors.gray33, dark: colors.gray70 }, theme.type)};
+            background-color: ${disabledBackground};
+            color: ${disabledColor};
           }
         `,
         inputBorders
@@ -115,17 +134,19 @@ const getInputStyle = stylesFactory(
         flex-shrink: 0;
         z-index: 0;
         position: relative;
+        border: 1px solid ${borderColor};
+        border-radius: ${borderRadius};
 
         &:first-child {
+          border-right: none;
           border-top-right-radius: 0;
           border-bottom-right-radius: 0;
-          border-right: 1px solid ${borderColor};
         }
 
         &:last-child {
+          border-left: none;
           border-top-left-radius: 0;
           border-bottom-left-radius: 0;
-          border-left: 1px solid ${borderColor};
         }
       `,
       addonElement: css`
@@ -141,11 +162,11 @@ const getInputStyle = stylesFactory(
       suffix: cx(
         prefixSuffix,
         css`
-          &:last-child {
-            border-right: 1px solid ${borderColor};
-            border-top-right-radius: ${borderRadius};
-            border-bottom-right-radius: ${borderRadius};
-          }
+          border-left: none;
+          border-top-left-radius: 0;
+          border-bottom-left-radius: 0;
+          border-top-right-radius: ${addonAfter ? 0 : borderRadius};
+          border-bottom-right-radius: ${addonAfter ? 0 : borderRadius};
         `
       ),
     };
@@ -156,7 +177,7 @@ export const Input: FC<Props> = props => {
   const { addonAfter, addonBefore, icon, invalid, loading, ...restProps } = props;
 
   const theme = useTheme();
-  const styles = getInputStyle(theme, invalid, !!icon, !!loading, !!addonBefore, !!addonAfter);
+  const styles = getInputStyle(theme, invalid, restProps.disabled, !!icon, !!loading, !!addonBefore, !!addonAfter);
 
   return (
     <div className={styles.inputWrapper} tabIndex={0}>
