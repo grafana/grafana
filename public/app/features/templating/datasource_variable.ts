@@ -1,33 +1,41 @@
-import { assignModelProperties, containsVariable, VariableActions, variableTypes } from './variable';
+import {
+  assignModelProperties,
+  containsVariable,
+  createVariableInState,
+  DataSourceVariableModel,
+  getVariableModel,
+  getVariablePropFromState,
+  QueryVariableModel,
+  setVariablePropInState,
+  VariableActions,
+  VariableHide,
+  VariableOption,
+  VariableRefresh,
+  VariableType,
+  variableTypes,
+} from './variable';
 import { stringToJsRegex } from '@grafana/data';
 import { VariableSrv } from './variable_srv';
 import { TemplateSrv } from './template_srv';
 import { DatasourceSrv } from '../plugins/datasource_srv';
 
 export class DatasourceVariable implements VariableActions {
-  regex: any;
-  query: string;
-  options: any;
-  current: any;
-  multi: boolean;
-  includeAll: boolean;
-  refresh: any;
-  skipUrlSync: boolean;
-
-  defaults: any = {
+  id: number;
+  defaults: DataSourceVariableModel = {
     type: 'datasource',
     name: '',
-    hide: 0,
+    hide: VariableHide.dontHide,
     label: '',
-    current: {},
+    current: {} as VariableOption,
     regex: '',
     options: [],
     query: '',
     multi: false,
     includeAll: false,
-    refresh: 1,
+    refresh: VariableRefresh.onDashboardLoad,
     skipUrlSync: false,
   };
+  temporary: DataSourceVariableModel = null;
 
   /** @ngInject */
   constructor(
@@ -36,12 +44,93 @@ export class DatasourceVariable implements VariableActions {
     private variableSrv: VariableSrv,
     private templateSrv: TemplateSrv
   ) {
-    assignModelProperties(this, model, this.defaults);
+    if (model.useTemporary) {
+      this.temporary = {} as QueryVariableModel;
+      assignModelProperties(this.temporary, model, this.defaults);
+      this.id = -1;
+    } else {
+      this.temporary = null;
+      this.id = createVariableInState(model, this.defaults);
+    }
     this.refresh = 1;
   }
 
+  get type(): VariableType {
+    return getVariablePropFromState<VariableType>(this.id, this.temporary, 'type');
+  }
+  get name(): string {
+    return getVariablePropFromState<string>(this.id, this.temporary, 'name');
+  }
+  get label(): string {
+    return getVariablePropFromState<string>(this.id, this.temporary, 'label');
+  }
+  get hide(): VariableHide {
+    return getVariablePropFromState<VariableHide>(this.id, this.temporary, 'hide');
+  }
+  get skipUrlSync(): boolean {
+    return getVariablePropFromState<boolean>(this.id, this.temporary, 'skipUrlSync');
+  }
+  get regex(): string {
+    return getVariablePropFromState<string>(this.id, this.temporary, 'regex');
+  }
+  get query(): string {
+    return getVariablePropFromState<string>(this.id, this.temporary, 'query');
+  }
+  get options(): VariableOption[] {
+    return getVariablePropFromState<VariableOption[]>(this.id, this.temporary, 'options');
+  }
+  get current(): VariableOption {
+    return getVariablePropFromState<VariableOption>(this.id, this.temporary, 'current');
+  }
+  get multi(): boolean {
+    return getVariablePropFromState<boolean>(this.id, this.temporary, 'multi');
+  }
+  get includeAll(): boolean {
+    return getVariablePropFromState<boolean>(this.id, this.temporary, 'includeAll');
+  }
+  get refresh(): VariableRefresh {
+    return getVariablePropFromState<VariableRefresh>(this.id, this.temporary, 'refresh');
+  }
+
+  set type(type: VariableType) {
+    setVariablePropInState(this.id, this.temporary, 'type', type);
+  }
+  set name(name: string) {
+    setVariablePropInState(this.id, this.temporary, 'name', name);
+  }
+  set label(label: string) {
+    setVariablePropInState(this.id, this.temporary, 'label', label);
+  }
+  set hide(hide: VariableHide) {
+    setVariablePropInState(this.id, this.temporary, 'hide', hide);
+  }
+  set skipUrlSync(skipUrlSync: boolean) {
+    setVariablePropInState(this.id, this.temporary, 'skipUrlSync', skipUrlSync);
+  }
+  set regex(regex: string) {
+    setVariablePropInState(this.id, this.temporary, 'regex', regex);
+  }
+  set query(query: string) {
+    setVariablePropInState(this.id, this.temporary, 'query', query);
+  }
+  set options(options: VariableOption[]) {
+    setVariablePropInState(this.id, this.temporary, 'options', options);
+  }
+  set current(current: VariableOption) {
+    setVariablePropInState(this.id, this.temporary, 'current', current);
+  }
+  set multi(multi: boolean) {
+    setVariablePropInState(this.id, this.temporary, 'multi', multi);
+  }
+  set includeAll(includeAll: boolean) {
+    setVariablePropInState(this.id, this.temporary, 'includeAll', includeAll);
+  }
+  set refresh(refresh: VariableRefresh) {
+    setVariablePropInState(this.id, this.temporary, 'refresh', refresh);
+  }
+
   getSaveModel() {
-    assignModelProperties(this.model, this, this.defaults);
+    this.model = getVariableModel(this.id, this.temporary);
 
     // don't persist options
     this.model.options = [];
@@ -53,7 +142,7 @@ export class DatasourceVariable implements VariableActions {
   }
 
   updateOptions() {
-    const options = [];
+    const options: VariableOption[] = [];
     const sources = this.datasourceSrv.getMetricSources({ skipVariables: true });
     let regex;
 
@@ -73,11 +162,11 @@ export class DatasourceVariable implements VariableActions {
         continue;
       }
 
-      options.push({ text: source.name, value: source.name });
+      options.push({ text: source.name, value: source.name, selected: false });
     }
 
     if (options.length === 0) {
-      options.push({ text: 'No data sources found', value: '' });
+      options.push({ text: 'No data sources found', value: '', selected: false });
     }
 
     this.options = options;
@@ -88,7 +177,7 @@ export class DatasourceVariable implements VariableActions {
   }
 
   addAllOption() {
-    this.options.unshift({ text: 'All', value: '$__all' });
+    this.options.unshift({ text: 'All', value: '$__all', selected: false });
   }
 
   dependsOn(variable: any) {
