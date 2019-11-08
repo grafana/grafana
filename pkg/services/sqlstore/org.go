@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const mainOrgName = "Main Org."
+
 func init() {
 	bus.AddHandler("sql", GetOrgById)
 	bus.AddHandler("sql", CreateOrg)
@@ -230,7 +232,7 @@ func getOrCreateOrg(sess *DBSession, orgName string) (int64, error) {
 			return org.Id, nil
 		}
 		if setting.AutoAssignOrgId == 1 {
-			org.Name = "Main Org."
+			org.Name = mainOrgName
 			org.Id = int64(setting.AutoAssignOrgId)
 		} else {
 			sqlog.Info("Could not create user: organization id %v does not exist",
@@ -266,7 +268,7 @@ func getOrCreateOrg(sess *DBSession, orgName string) (int64, error) {
 
 func createDefaultOrg(ctx context.Context) error {
 	return inTransactionCtx(ctx, func(sess *DBSession) error {
-		_, err := getOrCreateOrg(sess, "Main Org.")
+		_, err := getOrCreateOrg(sess, mainOrgName)
 		if err != nil {
 			return err
 		}
