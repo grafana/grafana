@@ -31,7 +31,7 @@ describe('filterByRefId transformer', () => {
   describe('respects', () => {
     it('inclusion', () => {
       const cfg = {
-        id: DataTransformerID.filterFieldsByName,
+        id: DataTransformerID.filterByRefId,
         options: {
           include: 'A|B',
         },
