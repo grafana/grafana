@@ -33,7 +33,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 20;
+    this.dashboard.schemaVersion = 21;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -458,6 +458,28 @@ export class DashboardMigrator {
             panel.options.fieldOptions.defaults.title = updateVariablesSyntax(
               panel.options.fieldOptions.defaults.title
             );
+          }
+        }
+      });
+    }
+
+    if (oldVersion < 21) {
+      const updateLinks = (link: DataLink) => {
+        return {
+          ...link,
+          url: link.url.replace(/__series.labels/g, '__field.labels'),
+        };
+      };
+      panelUpgrades.push((panel: any) => {
+        // For graph panel
+        if (panel.options && panel.options.dataLinks && _.isArray(panel.options.dataLinks)) {
+          panel.options.dataLinks = panel.options.dataLinks.map(updateLinks);
+        }
+
+        // For panel with fieldOptions
+        if (panel.options && panel.options.fieldOptions && panel.options.fieldOptions.defaults) {
+          if (panel.options.fieldOptions.defaults.links && _.isArray(panel.options.fieldOptions.defaults.links)) {
+            panel.options.fieldOptions.defaults.links = panel.options.fieldOptions.defaults.links.map(updateLinks);
           }
         }
       });

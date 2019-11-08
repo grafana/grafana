@@ -35,10 +35,9 @@ export function logStreamToDataFrame(stream: LokiLogsStream, reverse?: boolean, 
 
   return {
     refId,
-    labels,
     fields: [
       { name: 'ts', type: FieldType.time, config: { title: 'Time' }, values: times }, // Time
-      { name: 'line', type: FieldType.string, config: {}, values: lines }, // Line
+      { name: 'line', type: FieldType.string, config: {}, values: lines, labels }, // Line
       { name: 'id', type: FieldType.string, config: {}, values: uids },
     ],
     length: times.length,
@@ -57,18 +56,29 @@ export function appendResponseToBufferedData(response: LokiResponse, data: Mutab
 
   const streams: LokiLogsStream[] = response.streams;
   if (streams && streams.length) {
+    const { values } = data;
+    let baseLabels: Labels = {};
+    for (const f of data.fields) {
+      if (f.type === FieldType.string) {
+        if (f.labels) {
+          baseLabels = f.labels;
+        }
+        break;
+      }
+    }
+
     for (const stream of streams) {
       // Find unique labels
       const labels = parseLabels(stream.labels);
-      const unique = findUniqueLabels(labels, data.labels || {});
+      const unique = findUniqueLabels(labels, baseLabels);
 
       // Add each line
       for (const entry of stream.entries) {
         const ts = entry.ts || entry.timestamp;
-        data.values.ts.add(ts);
-        data.values.line.add(entry.line);
-        data.values.labels.add(unique);
-        data.values.id.add(`${ts}_${stream.labels}`);
+        values.ts.add(ts);
+        values.line.add(entry.line);
+        values.labels.add(unique);
+        values.id.add(`${ts}_${stream.labels}`);
       }
     }
   }

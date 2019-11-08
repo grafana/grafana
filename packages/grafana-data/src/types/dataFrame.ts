@@ -44,6 +44,9 @@ export interface FieldConfig {
   // Alternative to empty string
   noValue?: string;
 
+  // Visual options
+  color?: string;
+
   // Used for time field formatting
   dateDisplayFormat?: string;
 }
@@ -53,6 +56,7 @@ export interface Field<T = any, V = Vector<T>> {
   type: FieldType;
   config: FieldConfig;
   values: V; // The raw field values
+  labels?: Labels;
 
   /**
    * Cache of reduced values
@@ -73,7 +77,6 @@ export interface Field<T = any, V = Vector<T>> {
 export interface DataFrame extends QueryResultBase {
   name?: string;
   fields: Field[]; // All fields of equal length
-  labels?: Labels;
 
   // The number of rows
   length: number;
@@ -87,6 +90,7 @@ export interface FieldDTO<T = any> {
   type?: FieldType;
   config?: FieldConfig;
   values?: Vector<T> | T[]; // toJSON will always be T[], input could be either
+  labels?: Labels;
 }
 
 /**
@@ -94,6 +98,5 @@ export interface FieldDTO<T = any> {
  */
 export interface DataFrameDTO extends QueryResultBase {
   name?: string;
-  labels?: Labels;
   fields: Array<FieldDTO | Field>;
 }

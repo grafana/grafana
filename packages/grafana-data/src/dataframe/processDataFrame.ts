@@ -57,6 +57,13 @@ function convertTableToDataFrame(table: TableData): DataFrame {
 }
 
 function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
+  const times: number[] = [];
+  const values: TimeSeriesValue[] = [];
+  for (const point of timeSeries.datapoints) {
+    values.push(point[0]);
+    times.push(point[1] as number);
+  }
+
   const fields = [
     {
       name: timeSeries.target || 'Value',
@@ -64,30 +71,23 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
       config: {
         unit: timeSeries.unit,
       },
-      values: new ArrayVector<TimeSeriesValue>(),
+      values: new ArrayVector<TimeSeriesValue>(values),
+      labels: timeSeries.tags,
     },
     {
       name: 'Time',
       type: FieldType.time,
-      config: {
-        unit: 'dateTimeAsIso',
-      },
-      values: new ArrayVector<number>(),
+      config: {},
+      values: new ArrayVector<number>(times),
     },
   ];
 
-  for (const point of timeSeries.datapoints) {
-    fields[0].values.buffer.push(point[0]);
-    fields[1].values.buffer.push(point[1]);
-  }
-
   return {
     name: timeSeries.target,
-    labels: timeSeries.tags,
     refId: timeSeries.refId,
     meta: timeSeries.meta,
     fields,
-    length: timeSeries.datapoints.length,
+    length: values.length,
   };
 }
 
@@ -132,6 +132,7 @@ function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
     {
       name: timeSeries.target,
       type: FieldType.other,
+      labels: timeSeries.tags,
       config: {
         unit: timeSeries.unit,
         filterable: (timeSeries as any).filterable,
@@ -146,7 +147,6 @@ function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
 
   return {
     name: timeSeries.target,
-    labels: timeSeries.tags,
     refId: timeSeries.target,
     meta: { json: true },
     fields,
@@ -445,6 +445,7 @@ export function toDataFrameDTO(data: DataFrame): DataFrameDTO {
       type: f.type,
       config: f.config,
       values: f.values.toArray(),
+      labels: f.labels,
     };
   });
 
@@ -453,6 +454,5 @@ export function toDataFrameDTO(data: DataFrame): DataFrameDTO {
     refId: data.refId,
     meta: data.meta,
     name: data.name,
-    labels: data.labels,
   };
 }

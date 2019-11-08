@@ -128,7 +128,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(20);
+      expect(model.schemaVersion).toBe(21);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -502,6 +502,51 @@ describe('DashboardModel', () => {
       it('should replace __series_name and __field_name variables with new syntax', () => {
         expect(model.panels[1].options.fieldOptions.defaults.title).toBe(
           '$__cell_0 * ${__field.name} * ${__series.name}'
+        );
+      });
+    });
+  });
+
+  describe('when migrating labels from DataFrame to Field', () => {
+    let model: any;
+    beforeEach(() => {
+      model = new DashboardModel({
+        panels: [
+          {
+            //graph panel
+            options: {
+              dataLinks: [
+                {
+                  url: 'http://mylink.com?series=${__series.labels}&${__series.labels.a}',
+                },
+              ],
+            },
+          },
+          {
+            //  panel with field options
+            options: {
+              fieldOptions: {
+                defaults: {
+                  links: [
+                    {
+                      url: 'http://mylink.com?series=${__series.labels}&${__series.labels.x}',
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        ],
+      });
+    });
+
+    describe('data links', () => {
+      it('should replace __series.label variable with __field.label', () => {
+        expect(model.panels[0].options.dataLinks[0].url).toBe(
+          'http://mylink.com?series=${__field.labels}&${__field.labels.a}'
+        );
+        expect(model.panels[1].options.fieldOptions.defaults.links[0].url).toBe(
+          'http://mylink.com?series=${__field.labels}&${__field.labels.x}'
         );
       });
     });

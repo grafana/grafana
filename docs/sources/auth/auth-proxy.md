@@ -36,6 +36,8 @@ whitelist =
 # Optionally define more headers to sync other user attributes
 # Example `headers = Name:X-WEBAUTH-NAME Email:X-WEBAUTH-EMAIL Groups:X-WEBAUTH-GROUPS`
 headers =
+# Checkout docs on this for more details on the below setting
+enable_login_token = false
 ```
 
 ## Interacting with Grafana’s AuthProxy via curl
@@ -294,3 +296,13 @@ curl -H "X-WEBAUTH-USER: leonard" -H "X-WEBAUTH-GROUPS: lokiteamOnExternalSystem
 With this, the user `leonard` will be automatically placed into the Loki team as part of Grafana authentication.
 
 [Learn more about Team Sync]({{< relref "auth/team-sync.md" >}})
+
+
+## Login token and session cookie
+
+With `enable_login_token` set to `true` Grafana will, after successful auth proxy header validation, assign the user
+a login token and cookie. You only have to configure your auth proxy to provide headers for the /login route.
+Requests via other routes will be authenticated using the cookie.
+
+Use settings `login_maximum_inactive_lifetime_days` and `login_maximum_lifetime_days` under `[auth]` to control session
+lifetime. [Read more about login tokens]({{< relref "auth/overview/#login-and-short-lived-tokens" >}})
