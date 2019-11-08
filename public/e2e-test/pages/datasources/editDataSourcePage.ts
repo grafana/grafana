@@ -11,7 +11,6 @@ import {
 
 export interface EditDataSourcePage {
   name: InputPageObjectType;
-  default: ClickablePageObjectType;
   delete: ClickablePageObjectType;
   saveAndTest: ClickablePageObjectType;
   alert: PageObjectType;
@@ -21,9 +20,6 @@ export interface EditDataSourcePage {
 export const editDataSourcePage = new TestPage<EditDataSourcePage>({
   pageObjects: {
     name: new InputPageObject(Selector.fromAriaLabel('Datasource settings page name input field')),
-    default: new ClickablePageObject(
-      Selector.fromSelector('[aria-label="Datasource settings page basic settings"] .gf-form-switch')
-    ),
     delete: new ClickablePageObject(Selector.fromAriaLabel('Delete button')),
     saveAndTest: new ClickablePageObject(Selector.fromAriaLabel('Save and Test button')),
     alert: new PageObject(Selector.fromAriaLabel('Datasource settings page Alert')),
