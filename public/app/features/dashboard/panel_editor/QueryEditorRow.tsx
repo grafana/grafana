@@ -14,7 +14,6 @@ import {
   DataQuery,
   DataSourceApi,
   PanelData,
-  DataQueryRequest,
   PanelEvents,
   TimeRange,
   LoadingState,
