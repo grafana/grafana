@@ -4,6 +4,7 @@ import {
   AdHocVariableModel,
   assignModelProperties,
   createVariableInState,
+  getVariableModel,
   getVariablePropFromState,
   setVariablePropInState,
   VariableActions,
@@ -86,7 +87,7 @@ export class AdhocVariable implements AdHocVariableModel, VariableActions {
   }
 
   getSaveModel() {
-    assignModelProperties(this.model, this, this.defaults);
+    this.model = getVariableModel(this.id, this.temporary);
     return this.model;
   }
 
