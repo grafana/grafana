@@ -18,7 +18,7 @@ for ((i = 1; i <= $#; i++ )); do
   if [ -n "$data" ]; then
     data="$data,"
   fi
-  data=''$data'{"name": "'${metricName}'", "value": '${value}', "interval": 60, "time": '$(date +%s)'}'
+  data=''$data'{"name": "'${metricName}'", "value": '${value}', "interval": 60, "mtype": "gauge", "time": '$(date +%s)'}'
 done
 
 echo "Publishing metrics:"
