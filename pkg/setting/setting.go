@@ -46,6 +46,12 @@ var (
 	ERR_TEMPLATE_NAME = "error"
 )
 
+// This constant corresponds to the default value for ldap_sync_ttl in .ini files
+// it is used for comparision and has to be kept in sync
+const (
+	AUTH_PROXY_SYNC_TTL = 60
+)
+
 var (
 	// App settings.
 	Env              = DEV
@@ -860,7 +866,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	ldapSyncVal := authProxy.Key("ldap_sync_ttl").MustInt()
 	syncVal := authProxy.Key("sync_ttl").MustInt()
 
-	if ldapSyncVal != 60 {
+	if ldapSyncVal != AUTH_PROXY_SYNC_TTL {
 		AuthProxySyncTtl = ldapSyncVal
 		cfg.Logger.Warn("[Deprecated] the configuration setting 'ldap_sync_ttl' is deprecated, please use 'sync_ttl' instead")
 	} else {
