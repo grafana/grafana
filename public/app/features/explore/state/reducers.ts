@@ -10,8 +10,18 @@ import {
   refreshIntervalToSortOrder,
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
-import { LoadingState, toLegacyResponseData, DefaultTimeRange } from '@grafana/data';
-import { DataQuery, DataSourceApi, PanelData, DataQueryRequest, RefreshPicker, PanelEvents } from '@grafana/ui';
+import {
+  LoadingState,
+  toLegacyResponseData,
+  DefaultTimeRange,
+  DataQuery,
+  DataSourceApi,
+  PanelData,
+  DataQueryRequest,
+  PanelEvents,
+  TimeZone,
+} from '@grafana/data';
+import { RefreshPicker } from '@grafana/ui';
 import {
   HigherOrderAction,
   ActionTypes,
@@ -580,7 +590,7 @@ export const processQueryResponse = (
   }
 
   const latency = request.endTime ? request.endTime - request.startTime : 0;
-  const processor = new ResultProcessor(state, series, request.intervalMs);
+  const processor = new ResultProcessor(state, series, request.intervalMs, request.timezone as TimeZone);
   const graphResult = processor.getGraphResult();
   const tableResult = processor.getTableResult();
   const logsResult = processor.getLogsResult();

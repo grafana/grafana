@@ -1,9 +1,8 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
-import { TimeZone, AbsoluteTimeRange, GraphSeriesXY, dateTimeForTimeZone } from '@grafana/data';
+import { GrafanaTheme, TimeZone, AbsoluteTimeRange, GraphSeriesXY, dateTimeForTimeZone } from '@grafana/data';
 
 import {
-  GrafanaTheme,
   selectThemeVariant,
   Themeable,
   GraphWithLegend,
@@ -12,6 +11,7 @@ import {
   Collapse,
   GraphSeriesToggler,
   GraphSeriesTogglerAPI,
+  Chart,
 } from '@grafana/ui';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
@@ -137,7 +137,10 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
               lineWidth={lineWidth}
               onSeriesToggle={onSeriesToggle}
               onHorizontalRegionSelected={this.onChangeTime}
-            />
+            >
+              {/* For logs we are using mulit mode until we refactor logs histogram to use barWidth instead of lineWidth to render bars */}
+              <Chart.Tooltip mode={showBars ? 'multi' : 'single'} />
+            </GraphWithLegend>
           );
         }}
       </GraphSeriesToggler>

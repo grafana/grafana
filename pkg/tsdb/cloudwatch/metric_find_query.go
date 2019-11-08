@@ -162,7 +162,7 @@ func init() {
 		"AWS/IoT":               {"ActionType", "BehaviorName", "CheckName", "JobId", "Protocol", "RuleName", "ScheduledAuditName", "SecurityProfileName"},
 		"AWS/IoTAnalytics":      {"ActionType", "ChannelName", "DatasetName", "DatastoreName", "PipelineActivityName", "PipelineActivityType", "PipelineName"},
 		"AWS/KMS":               {"KeyId"},
-		"AWS/Kafka":             {"Broker", "Cluster", "Topic"},
+		"AWS/Kafka":             {"Broker ID", "Cluster Name", "Topic"},
 		"AWS/Kinesis":           {"ShardId", "StreamName"},
 		"AWS/KinesisAnalytics":  {"Application", "Flow", "Id"},
 		"AWS/KinesisVideo":      {},

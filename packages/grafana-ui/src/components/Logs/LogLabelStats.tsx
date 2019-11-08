@@ -1,47 +1,56 @@
 import React, { PureComponent } from 'react';
-import { css, cx } from 'emotion';
-import { LogLabelStatsModel } from '@grafana/data';
+import { css } from 'emotion';
+import { LogLabelStatsModel, GrafanaTheme } from '@grafana/data';
 
-import { LogLabelStatsRow } from './LogLabelStatsRow';
-import { Themeable, GrafanaTheme } from '../../types/theme';
+import { Themeable } from '../../types/theme';
+import { stylesFactory } from '../../themes';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import { withTheme } from '../../themes/index';
 
+//Components
+import { LogLabelStatsRow } from './LogLabelStatsRow';
+
 const STATS_ROW_LIMIT = 5;
 
-const getStyles = (theme: GrafanaTheme) => ({
-  logsStats: css`
-    label: logs-stats;
-    background-color: ${selectThemeVariant({ light: theme.colors.pageBg, dark: theme.colors.dark2 }, theme.type)};
-    color: ${theme.colors.text};
-    border: 1px solid ${selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.dark9 }, theme.type)};
-    border-radius: ${theme.border.radius.md};
-    max-width: 500px;
-  `,
-  logsStatsHeader: css`
-    label: logs-stats__header;
-    background: ${selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.dark9 }, theme.type)};
-    padding: 6px 10px;
-    display: flex;
-  `,
-  logsStatsTitle: css`
-    label: logs-stats__title;
-    font-weight: ${theme.typography.weight.semibold};
-    padding-right: ${theme.spacing.d};
-    overflow: hidden;
-    display: inline-block;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    flex-grow: 1;
-  `,
-  logsStatsClose: css`
-    label: logs-stats__close;
-    cursor: pointer;
-  `,
-  logsStatsBody: css`
-    label: logs-stats__body;
-    padding: 20px 10px 10px 10px;
-  `,
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const borderColor = selectThemeVariant(
+    {
+      light: theme.colors.gray5,
+      dark: theme.colors.dark9,
+    },
+    theme.type
+  );
+  return {
+    logsStats: css`
+      label: logs-stats;
+      display: table-cell;
+      column-span: 2;
+      background: inherit;
+      color: ${theme.colors.text};
+    `,
+    logsStatsHeader: css`
+      label: logs-stats__header;
+      border-bottom: 1px solid ${borderColor};
+      display: flex;
+    `,
+    logsStatsTitle: css`
+      label: logs-stats__title;
+      font-weight: ${theme.typography.weight.semibold};
+      padding-right: ${theme.spacing.d};
+      display: inline-block;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      flex-grow: 1;
+    `,
+    logsStatsClose: css`
+      label: logs-stats__close;
+      cursor: pointer;
+    `,
+    logsStatsBody: css`
+      label: logs-stats__body;
+      padding: 5px 0;
+    `,
+  };
 });
 
 interface Props extends Themeable {
@@ -49,12 +58,12 @@ interface Props extends Themeable {
   label: string;
   value: string;
   rowCount: number;
-  onClickClose: () => void;
+  isLabel?: boolean;
 }
 
 class UnThemedLogLabelStats extends PureComponent<Props> {
   render() {
-    const { label, rowCount, stats, value, onClickClose, theme } = this.props;
+    const { label, rowCount, stats, value, theme, isLabel } = this.props;
     const style = getStyles(theme);
     const topRows = stats.slice(0, STATS_ROW_LIMIT);
     let activeRow = topRows.find(row => row.value === value);
@@ -73,14 +82,13 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
     const otherProportion = otherCount / total;
 
     return (
-      <div className={cx([style.logsStats])}>
-        <div className={cx([style.logsStatsHeader])}>
-          <span className={cx([style.logsStatsTitle])}>
-            {label}: {total} of {rowCount} rows have that label
-          </span>
-          <span className={cx([style.logsStatsClose, 'fa fa-remove'])} onClick={onClickClose} />
+      <div className={style.logsStats}>
+        <div className={style.logsStatsHeader}>
+          <div className={style.logsStatsTitle}>
+            {label}: {total} of {rowCount} rows have that {isLabel ? 'label' : 'field'}
+          </div>
         </div>
-        <div className={cx([style.logsStatsBody])}>
+        <div className={style.logsStatsBody}>
           {topRows.map(stat => (
             <LogLabelStatsRow key={stat.value} {...stat} active={stat.value === value} />
           ))}

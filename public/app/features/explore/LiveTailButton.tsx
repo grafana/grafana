@@ -6,7 +6,8 @@ import tinycolor from 'tinycolor2';
 import { CSSTransition } from 'react-transition-group';
 import { ResponsiveButton } from './ResponsiveButton';
 
-import { GrafanaTheme, useTheme, Tooltip } from '@grafana/ui';
+import { useTheme, Tooltip } from '@grafana/ui';
+import { GrafanaTheme } from '@grafana/data';
 
 const getStyles = memoizeOne((theme: GrafanaTheme) => {
   const orangeLighter = tinycolor(theme.colors.orangeDark)

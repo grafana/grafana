@@ -1,6 +1,6 @@
 import angular, { IQService } from 'angular';
 import _ from 'lodash';
-import { DataSourceApi, DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse } from '@grafana/ui';
+import { DataSourceApi, DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse } from '@grafana/data';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
@@ -332,9 +332,11 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       }
 
       let queryObj;
-      if (target.isLogsQuery) {
+      if (target.isLogsQuery || queryDef.hasMetricOfType(target, 'logs')) {
         target.bucketAggs = [queryDef.defaultBucketAgg()];
         target.metrics = [queryDef.defaultMetricAgg()];
+        // Setting this for metrics queries that are typed as logs
+        target.isLogsQuery = true;
         queryObj = this.queryBuilder.getLogsQuery(target, queryString);
       } else {
         if (target.alias) {

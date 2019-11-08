@@ -12,8 +12,17 @@ import { QueryRowActions } from './QueryRowActions';
 import { changeQuery, modifyQueries, runQueries, addQueryRow } from './state/actions';
 // Types
 import { StoreState } from 'app/types';
-import { TimeRange, AbsoluteTimeRange, LoadingState } from '@grafana/data';
-import { DataQuery, DataSourceApi, QueryFixAction, PanelData, HistoryItem } from '@grafana/ui';
+import {
+  DataQuery,
+  DataSourceApi,
+  QueryFixAction,
+  PanelData,
+  HistoryItem,
+  TimeRange,
+  AbsoluteTimeRange,
+  LoadingState,
+} from '@grafana/data';
+
 import { ExploreItemState, ExploreId, ExploreMode } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
@@ -48,6 +57,9 @@ interface QueryRowState {
   textEditModeEnabled: boolean;
 }
 
+// Empty function to override blur execution on query field
+const noopOnBlur = () => {};
+
 export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
   state: QueryRowState = {
     textEditModeEnabled: false,
@@ -76,7 +88,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     this.props.addQueryRow(exploreId, index);
   };
 
-  onClickToggleHiddenQuery = () => {
+  onClickToggleDisabled = () => {
     const { exploreId, index, query } = this.props;
     const newQuery = {
       ...query,
@@ -127,7 +139,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
 
     const canToggleEditorModes =
       mode === ExploreMode.Metrics && has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
-    const canHide = queryResponse.state !== LoadingState.NotStarted;
+    const isNotStarted = queryResponse.state === LoadingState.NotStarted;
     const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
     let QueryField;
 
@@ -150,6 +162,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
               history={history}
               onRunQuery={this.onRunQuery}
               onHint={this.onClickHintFix}
+              onBlur={noopOnBlur}
               onChange={this.onChange}
               data={queryResponse}
               absoluteRange={absoluteRange}
@@ -172,10 +185,10 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
         </div>
         <QueryRowActions
           canToggleEditorModes={canToggleEditorModes}
-          hideQuery={query.hide}
-          canHide={canHide}
+          isDisabled={query.hide}
+          isNotStarted={isNotStarted}
           onClickToggleEditorMode={this.onClickToggleEditorMode}
-          onClickToggleHiddenQuery={this.onClickToggleHiddenQuery}
+          onClickToggleDisabled={this.onClickToggleDisabled}
           onClickAddButton={this.onClickAddButton}
           onClickRemoveButton={this.onClickRemoveButton}
         />

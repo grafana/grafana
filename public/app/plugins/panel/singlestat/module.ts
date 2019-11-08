@@ -16,16 +16,14 @@ import {
   LinkModel,
   reduceField,
   ReducerID,
-} from '@grafana/data';
-
-import {
   LegacyResponseData,
   getFlotPairs,
   getDisplayProcessor,
-  convertOldAngularValueMapping,
   getColorFromHexRgbOrName,
   PanelEvents,
-} from '@grafana/ui';
+} from '@grafana/data';
+
+import { convertOldAngularValueMapping } from '@grafana/ui';
 
 import { CoreEvents } from 'app/types';
 import kbn from 'app/core/utils/kbn';

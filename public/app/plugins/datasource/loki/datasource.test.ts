@@ -1,10 +1,10 @@
 import LokiDatasource from './datasource';
 import { LokiQuery } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import { AnnotationQueryRequest, DataSourceApi } from '@grafana/ui';
-import { DataFrame, dateTime } from '@grafana/data';
+import { AnnotationQueryRequest, DataSourceApi, DataFrame, dateTime } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { CustomVariable } from 'app/features/templating/custom_variable';
 
 describe('LokiDatasource', () => {
   const instanceSettings: any = {
@@ -78,6 +78,54 @@ describe('LokiDatasource', () => {
       expect(dataFrame.meta.limit).toBe(20);
       expect(dataFrame.meta.searchWords).toEqual(['(?i)foo']);
       done();
+    });
+  });
+
+  describe('When interpolating variables', () => {
+    let ds: any = {};
+    let variable: any = {};
+
+    beforeEach(() => {
+      const customData = { ...(instanceSettings.jsonData || {}), maxLines: 20 };
+      const customSettings = { ...instanceSettings, jsonData: customData };
+      ds = new LokiDatasource(customSettings, backendSrv, templateSrvMock);
+      variable = new CustomVariable({}, {} as any);
+    });
+
+    it('should only escape single quotes', () => {
+      expect(ds.interpolateQueryExpr("abc'$^*{}[]+?.()|", variable)).toEqual("abc\\\\'$^*{}[]+?.()|");
+    });
+
+    it('should return a number', () => {
+      expect(ds.interpolateQueryExpr(1000, variable)).toEqual(1000);
+    });
+
+    describe('and variable allows multi-value', () => {
+      beforeEach(() => {
+        variable.multi = true;
+      });
+
+      it('should regex escape values if the value is a string', () => {
+        expect(ds.interpolateQueryExpr('looking*glass', variable)).toEqual('looking\\\\*glass');
+      });
+
+      it('should return pipe separated values if the value is an array of strings', () => {
+        expect(ds.interpolateQueryExpr(['a|bc', 'de|f'], variable)).toEqual('a\\\\|bc|de\\\\|f');
+      });
+    });
+
+    describe('and variable allows all', () => {
+      beforeEach(() => {
+        variable.includeAll = true;
+      });
+
+      it('should regex escape values if the array is a string', () => {
+        expect(ds.interpolateQueryExpr('looking*glass', variable)).toEqual('looking\\\\*glass');
+      });
+
+      it('should return pipe separated values if the value is an array of strings', () => {
+        expect(ds.interpolateQueryExpr(['a|bc', 'de|f'], variable)).toEqual('a\\\\|bc|de\\\\|f');
+      });
     });
   });
 

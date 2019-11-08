@@ -1,10 +1,8 @@
 import _ from 'lodash';
 import React from 'react';
 
-import { SlatePrism } from '@grafana/ui';
-
-// dom also includes Element polyfills
-import { QueryField, ExploreQueryFieldProps } from '@grafana/ui';
+import { QueryField, SlatePrism } from '@grafana/ui';
+import { ExploreQueryFieldProps } from '@grafana/data';
 import { ElasticDatasource } from '../datasource';
 import { ElasticsearchOptions, ElasticsearchQuery } from '../types';
 

@@ -3,7 +3,20 @@ import _ from 'lodash';
 import $ from 'jquery';
 // Services & Utils
 import kbn from 'app/core/utils/kbn';
-import { AnnotationEvent, dateMath, DateTime, LoadingState, TimeRange, TimeSeries } from '@grafana/data';
+import {
+  AnnotationEvent,
+  dateMath,
+  DateTime,
+  LoadingState,
+  TimeRange,
+  TimeSeries,
+  DataQueryError,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataQueryResponseData,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+} from '@grafana/data';
 import { from, merge, Observable, of, forkJoin } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 
@@ -16,14 +29,6 @@ import { getQueryHints } from './query_hints';
 import { expandRecordingRules } from './language_utils';
 // Types
 import { PromContext, PromOptions, PromQuery, PromQueryRequest } from './types';
-import {
-  DataQueryError,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataQueryResponseData,
-  DataSourceApi,
-  DataSourceInstanceSettings,
-} from '@grafana/ui';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';

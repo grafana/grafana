@@ -6,9 +6,18 @@ import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/utils/panel';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { toLegacyResponseData, toDataFrameDTO, TimeRange, LoadingState, DataFrame } from '@grafana/data';
-
-import { LegacyResponseData, DataSourceApi, PanelData, DataQueryResponse, PanelEvents } from '@grafana/ui';
+import {
+  DataFrame,
+  DataQueryResponse,
+  DataSourceApi,
+  LegacyResponseData,
+  LoadingState,
+  PanelData,
+  PanelEvents,
+  TimeRange,
+  toDataFrameDTO,
+  toLegacyResponseData,
+} from '@grafana/data';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
 import { CoreEvents } from 'app/types';
@@ -99,18 +108,15 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     this.loading = false;
     this.error = err.message || 'Request Error';
-    this.inspector = { error: err };
 
     if (err.data) {
       if (err.data.message) {
         this.error = err.data.message;
-      }
-      if (err.data.error) {
+      } else if (err.data.error) {
         this.error = err.data.error;
       }
     }
 
-    console.log('Panel data error:', err);
     return this.$timeout(() => {
       this.events.emit(PanelEvents.dataError, err);
     });
@@ -122,7 +128,10 @@ class MetricsPanelCtrl extends PanelCtrl {
       if (data.state === LoadingState.Error) {
         this.loading = false;
         this.processDataError(data.error);
-        return;
+        if (!data.series) {
+          // keep current data if the response is empty
+          return;
+        }
       }
 
       // Ignore data in loading state
@@ -247,7 +256,13 @@ class MetricsPanelCtrl extends PanelCtrl {
         text: 'Explore',
         icon: 'gicon gicon-explore',
         shortcut: 'x',
-        href: await getExploreUrl(this.panel, this.panel.targets, this.datasource, this.datasourceSrv, this.timeSrv),
+        href: await getExploreUrl({
+          panel: this.panel,
+          panelTargets: this.panel.targets,
+          panelDatasource: this.datasource,
+          datasourceSrv: this.datasourceSrv,
+          timeSrv: this.timeSrv,
+        }),
       });
     }
     return items;

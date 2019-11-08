@@ -1,5 +1,5 @@
 import defaultTheme, { commonColorsPalette } from './default';
-import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
+import { GrafanaThemeType, GrafanaTheme } from '@grafana/data';
 
 const basicColors = {
   ...commonColorsPalette,

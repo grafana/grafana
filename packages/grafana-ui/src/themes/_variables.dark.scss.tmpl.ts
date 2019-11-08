@@ -1,6 +1,6 @@
 /* tslint:disable:max-line-length */
 
-import { GrafanaTheme } from '../types';
+import { GrafanaTheme } from '@grafana/data';
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
 
 export const darkThemeVarsTemplate = (theme: GrafanaTheme) =>

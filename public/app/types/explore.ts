@@ -1,6 +1,7 @@
 import { Unsubscribable } from 'rxjs';
 import { ComponentType } from 'react';
 import {
+  HistoryItem,
   DataQuery,
   DataSourceSelectItem,
   DataSourceApi,
@@ -8,10 +9,6 @@ import {
   ExploreStartPageProps,
   PanelData,
   DataQueryRequest,
-  HistoryItem,
-} from '@grafana/ui';
-
-import {
   RawTimeRange,
   LogLevel,
   TimeRange,

@@ -1,6 +1,6 @@
-import { VizOrientation, SingleStatBaseOptions } from '@grafana/ui';
+import { SingleStatBaseOptions } from '@grafana/ui';
 import { standardGaugeFieldOptions } from '../gauge/types';
-import { SelectableValue } from '@grafana/data';
+import { VizOrientation, SelectableValue } from '@grafana/data';
 
 export interface BarGaugeOptions extends SingleStatBaseOptions {
   displayMode: 'basic' | 'lcd' | 'gradient';

@@ -5,7 +5,7 @@ import { selectThemeVariant, stylesFactory, ThemeContext } from '../../themes';
 import { Button as DefaultButton, LinkButton as DefaultLinkButton } from '../Button/Button';
 import { getFocusStyle } from './commonStyles';
 import { ButtonSize, StyleDeps } from '../Button/types';
-import { GrafanaTheme } from '../../types';
+import { GrafanaTheme } from '@grafana/data';
 
 const buttonVariantStyles = (from: string, to: string, textColor: string) => css`
   background: linear-gradient(180deg, ${from} 0%, ${to} 100%);
@@ -27,7 +27,6 @@ const getPropertiesForSize = (theme: GrafanaTheme, size: ButtonSize) => {
       return {
         padding: `0 ${theme.spacing.sm}`,
         fontSize: theme.typography.size.sm,
-        iconDistance: theme.spacing.xs,
         height: theme.height.sm,
       };
 
@@ -35,7 +34,6 @@ const getPropertiesForSize = (theme: GrafanaTheme, size: ButtonSize) => {
       return {
         padding: `0 ${theme.spacing.md}`,
         fontSize: theme.typography.size.md,
-        iconDistance: theme.spacing.sm,
         height: `${theme.spacing.formButtonHeight}px`,
       };
 
@@ -43,14 +41,12 @@ const getPropertiesForSize = (theme: GrafanaTheme, size: ButtonSize) => {
       return {
         padding: `0 ${theme.spacing.lg}`,
         fontSize: theme.typography.size.lg,
-        iconDistance: theme.spacing.sm,
         height: theme.height.lg,
       };
 
     default:
       return {
         padding: `0 ${theme.spacing.md}`,
-        iconDistance: theme.spacing.sm,
         fontSize: theme.typography.size.base,
         height: theme.height.md,
       };
@@ -98,8 +94,8 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
 
 // Need to do this because of mismatch between variants in standard buttons and here
 type StyleProps = Omit<StyleDeps, 'variant'> & { variant: ButtonVariant };
-export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: StyleProps) => {
-  const { padding, fontSize, iconDistance, height } = getPropertiesForSize(theme, size);
+export const getButtonStyles = stylesFactory(({ theme, size, variant }: StyleProps) => {
+  const { padding, fontSize, height } = getPropertiesForSize(theme, size);
   const { background, borderColor } = getPropertiesForVariant(theme, variant);
 
   return {
@@ -114,7 +110,6 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }
         font-family: ${theme.typography.fontFamily.sansSerif};
         line-height: ${theme.typography.lineHeight.sm};
         padding: ${padding};
-        text-align: ${withIcon ? 'left' : 'center'};
         vertical-align: middle;
         cursor: pointer;
         border: 1px solid ${borderColor};
@@ -135,11 +130,6 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }
       label: button-icon-wrap;
       display: flex;
       align-items: center;
-    `,
-    icon: css`
-      label: button-icon;
-      margin-right: ${iconDistance};
-      filter: brightness(100);
     `,
   };
 });
@@ -163,7 +153,6 @@ export const Button = (props: ButtonProps) => {
     theme,
     size: props.size || 'md',
     variant: props.variant || 'primary',
-    withIcon: !!props.icon,
   });
   return <DefaultButton {...props} styles={styles} />;
 };
@@ -175,7 +164,6 @@ export const LinkButton = (props: ButtonLinkProps) => {
     theme,
     size: props.size || 'md',
     variant: props.variant || 'primary',
-    withIcon: !!props.icon,
   });
   return <DefaultLinkButton {...props} styles={styles} />;
 };

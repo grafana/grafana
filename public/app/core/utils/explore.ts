@@ -3,36 +3,34 @@ import _ from 'lodash';
 import { Unsubscribable } from 'rxjs';
 // Services & Utils
 import {
+  DataQuery,
+  DataQueryError,
+  DataQueryRequest,
+  DataSourceApi,
   dateMath,
-  toUtc,
-  TimeRange,
-  RawTimeRange,
-  TimeZone,
-  TimeFragment,
-  LogRowModel,
-  LogsModel,
-  LogsDedupStrategy,
-  IntervalValues,
   DefaultTimeZone,
+  HistoryItem,
+  IntervalValues,
+  LogRowModel,
+  LogsDedupStrategy,
+  LogsModel,
+  PanelModel,
+  RawTimeRange,
+  TimeFragment,
+  TimeRange,
+  TimeZone,
+  toUtc,
 } from '@grafana/data';
 import { renderUrl } from 'app/core/utils/url';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
 import { getNextRefIdChar } from './query';
-
 // Types
-import {
-  DataQuery,
-  DataSourceApi,
-  DataQueryError,
-  DataQueryRequest,
-  PanelModel,
-  RefreshPicker,
-  HistoryItem,
-} from '@grafana/ui';
-import { ExploreUrlState, QueryTransaction, QueryOptions, ExploreMode } from 'app/types/explore';
+import { RefreshPicker } from '@grafana/ui';
+import { ExploreMode, ExploreUrlState, QueryOptions, QueryTransaction } from 'app/types/explore';
 import { config } from '../config';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { DataSourceSrv } from '@grafana/runtime';
 
 export const DEFAULT_RANGE = {
   from: 'now-1h',
@@ -59,13 +57,15 @@ export const lastUsedDatasourceKeyForOrgId = (orgId: number) => `${LAST_USED_DAT
  * @param datasourceSrv Datasource service to query other datasources in case the panel datasource is mixed
  * @param timeSrv Time service to get the current dashboard range from
  */
-export async function getExploreUrl(
-  panel: PanelModel,
-  panelTargets: DataQuery[],
-  panelDatasource: any,
-  datasourceSrv: any,
-  timeSrv: TimeSrv
-) {
+export interface GetExploreUrlArguments {
+  panel: PanelModel;
+  panelTargets: DataQuery[];
+  panelDatasource: DataSourceApi;
+  datasourceSrv: DataSourceSrv;
+  timeSrv: TimeSrv;
+}
+export async function getExploreUrl(args: GetExploreUrlArguments) {
+  const { panel, panelTargets, panelDatasource, datasourceSrv, timeSrv } = args;
   let exploreDatasource = panelDatasource;
   let exploreTargets: DataQuery[] = panelTargets;
   let url: string;

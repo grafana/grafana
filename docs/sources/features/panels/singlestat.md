@@ -6,7 +6,7 @@ aliases = ["/reference/singlestat/"]
 [menu.docs]
 name = "Singlestat"
 parent = "panels"
-weight = 2
+weight = 4
 +++
 
 

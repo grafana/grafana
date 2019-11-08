@@ -29,6 +29,8 @@ Please note that for macOS and Windows, you will need to ensure that a phantomjs
 
 ### Grafana image renderer plugin
 
+> This plugin currently does not work if it is installed in Grafana docker image.
+
 The [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) is a plugin that runs on the backend and handles rendering panels and dashboards as PNG-images using headless chrome.
 
 You can install it using grafana-cli:
@@ -43,7 +45,62 @@ For further information and instructions refer to the [plugin details](https://g
 
 The [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) can also be run as a remote HTTP rendering service. In this setup Grafana will render an image by making a HTTP request to the remote rendering service, which in turn render the image and returns it back in the HTTP response to Grafana.
 
-To configure Grafana to use a remote HTTP rendering service, please refer to [rendering](/installation/configuration/#rendering) configuration section.
+You can run the remote HTTP rendering service using Docker or as a standalone Node.js application.
+
+**Using Docker:**
+
+The following example describes how to run Grafana and the remote HTTP rendering service in two separate docker containers using Docker Compose.
+
+Create a `docker-compose.yml` with the following content.
+
+```yaml
+version: '2'
+
+services:
+  grafana:
+    image: grafana/grafana:master
+    ports:
+     - "3000:3000"
+    environment:
+      GF_RENDERING_SERVER_URL: http://renderer:8081/render
+      GF_RENDERING_CALLBACK_URL: http://grafana:3000/
+      GF_LOG_FILTERS: rendering:debug
+  renderer:
+    image: grafana/grafana-image-renderer:latest
+    ports:
+      - 8081
+```
+
+and finally run:
+
+```bash
+docker-compose up
+```
+
+**Running as standalone Node.js application:**
+
+The following example describes how to build and run the remote HTTP rendering service as a standalone node.js application and configure Grafana appropriately.
+
+1. Git clone the [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) repository.
+2. Install dependencies and build:
+
+```bash
+yarn install --pure-lockfile
+yarn run build
+```
+3. Run the server
+
+```bash
+node build/app.js server --port=8081
+```
+3. Update Grafana configuration:
+
+```
+[rendering]
+server_url = http://localhost:8081/render
+callback_url = http://localhost:3000/
+```
+4. Restart Grafana
 
 ## Alerting and render limits
 

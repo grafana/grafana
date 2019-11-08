@@ -3,36 +3,31 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import isString from 'lodash/isString';
-
 // Components
 import Page from 'app/core/components/Page/Page';
-import { PluginSettings, GenericDataSourcePlugin } from './PluginSettings';
+import { GenericDataSourcePlugin, PluginSettings } from './PluginSettings';
 import BasicSettings from './BasicSettings';
 import ButtonRow from './ButtonRow';
-
 // Services & Utils
 import appEvents from 'app/core/app_events';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-
 // Actions & selectors
 import { getDataSource, getDataSourceMeta } from '../state/selectors';
 import {
+  dataSourceLoaded,
   deleteDataSource,
   loadDataSource,
   setDataSourceName,
   setIsDefault,
   updateDataSource,
-  dataSourceLoaded,
 } from '../state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
-
 // Types
-import { StoreState, CoreEvents } from 'app/types/';
+import { CoreEvents, StoreState } from 'app/types/';
 import { UrlQueryMap } from '@grafana/runtime';
-import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/ui';
-import { NavModel } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSettings, NavModel } from '@grafana/data';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';

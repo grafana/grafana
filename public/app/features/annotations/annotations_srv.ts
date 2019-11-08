@@ -14,8 +14,7 @@ import { DashboardModel } from '../dashboard/state/DashboardModel';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv } from '../dashboard/services/TimeSrv';
-import { DataSourceApi, PanelEvents } from '@grafana/ui';
-import { AnnotationEvent, AppEvents } from '@grafana/data';
+import { DataSourceApi, PanelEvents, AnnotationEvent, AppEvents } from '@grafana/data';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export class AnnotationsSrv {

@@ -2,10 +2,10 @@ import React from 'react';
 
 export type Props = {
   canToggleEditorModes: boolean;
-  hideQuery: boolean;
-  canHide: boolean;
+  isDisabled: boolean;
+  isNotStarted: boolean;
   onClickToggleEditorMode: () => void;
-  onClickToggleHiddenQuery: () => void;
+  onClickToggleDisabled: () => void;
   onClickAddButton: () => void;
   onClickRemoveButton: () => void;
 };
@@ -14,11 +14,11 @@ export function QueryRowActions(props: Props) {
   const {
     canToggleEditorModes,
     onClickToggleEditorMode,
-    onClickToggleHiddenQuery,
+    onClickToggleDisabled,
     onClickAddButton,
     onClickRemoveButton,
-    hideQuery,
-    canHide,
+    isDisabled,
+    isNotStarted,
   } = props;
 
   return (
@@ -35,17 +35,22 @@ export function QueryRowActions(props: Props) {
         </div>
       )}
       <div className="gf-form">
-        <button disabled={!canHide} className="gf-form-label gf-form-label--btn" onClick={onClickToggleHiddenQuery}>
-          <i className={hideQuery ? 'fa fa-eye-slash' : 'fa fa-eye'} />
+        <button
+          disabled={isNotStarted}
+          className="gf-form-label gf-form-label--btn"
+          onClick={onClickToggleDisabled}
+          title="Disable/enable query"
+        >
+          <i className={isDisabled ? 'fa fa-eye-slash' : 'fa fa-eye'} />
         </button>
       </div>
       <div className="gf-form">
-        <button className="gf-form-label gf-form-label--btn" onClick={onClickAddButton}>
+        <button className="gf-form-label gf-form-label--btn" onClick={onClickAddButton} title="Add query">
           <i className="fa fa-plus" />
         </button>
       </div>
       <div className="gf-form">
-        <button className="gf-form-label gf-form-label--btn" onClick={onClickRemoveButton}>
+        <button className="gf-form-label gf-form-label--btn" onClick={onClickRemoveButton} title="Remove query">
           <i className="fa fa-minus" />
         </button>
       </div>

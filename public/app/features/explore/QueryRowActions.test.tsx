@@ -4,11 +4,11 @@ import { shallow } from 'enzyme';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
-    hideQuery: false,
-    canHide: true,
+    isDisabled: false,
+    isNotStarted: true,
     canToggleEditorModes: true,
     onClickToggleEditorMode: () => {},
-    onClickToggleHiddenQuery: () => {},
+    onClickToggleDisabled: () => {},
     onClickAddButton: () => {},
     onClickRemoveButton: () => {},
   };
@@ -29,11 +29,11 @@ describe('QueryRowActions', () => {
     expect(wrapper.find({ 'aria-label': 'Edit mode button' })).toHaveLength(0);
   });
   it('should change icon to fa-eye-slash when query row result is hidden', () => {
-    const wrapper = setup({ hideQuery: true });
+    const wrapper = setup({ isDisabled: true });
     expect(wrapper.find('i.fa-eye-slash')).toHaveLength(1);
   });
   it('should change icon to fa-eye when query row result is not hidden', () => {
-    const wrapper = setup({ hideQuery: false });
+    const wrapper = setup({ isDisabled: false });
     expect(wrapper.find('i.fa-eye')).toHaveLength(1);
   });
 });

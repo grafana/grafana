@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import { sanitize, escapeHtml } from 'app/core/utils/text';
-import { renderMarkdown, AppEvent } from '@grafana/data';
 
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';
@@ -17,9 +16,9 @@ import {
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { auto } from 'angular';
 import { TemplateSrv } from '../templating/template_srv';
-import { PanelPluginMeta } from '@grafana/ui/src/types/panel';
 import { getPanelLinksSupplier } from './panellinks/linkSuppliers';
-import { PanelEvents } from '@grafana/ui';
+import { renderMarkdown, AppEvent, PanelEvents, PanelPluginMeta } from '@grafana/data';
+import { getLocationSrv } from '@grafana/runtime';
 
 export class PanelCtrl {
   panel: any;
@@ -32,7 +31,6 @@ export class PanelCtrl {
   $injector: auto.IInjectorService;
   $location: any;
   $timeout: any;
-  inspector: any;
   editModeInitiated: boolean;
   height: any;
   containerHeight: any;
@@ -147,6 +145,15 @@ export class PanelCtrl {
       shortcut: 'p s',
     });
 
+    if (config.featureToggles.inspect) {
+      menu.push({
+        text: 'Inspect',
+        icon: 'fa fa-fw fa-info-circle',
+        click: 'ctrl.inspectPanel();',
+        shortcut: 'p i',
+      });
+    }
+
     // Additional items from sub-class
     menu.push(...(await this.getAdditionalMenuItems()));
 
@@ -234,6 +241,15 @@ export class PanelCtrl {
 
   sharePanel() {
     sharePanelUtil(this.dashboard, this.panel);
+  }
+
+  inspectPanel() {
+    getLocationSrv().update({
+      query: {
+        inspect: this.panel.id,
+      },
+      partial: true,
+    });
   }
 
   getInfoMode() {

@@ -11,7 +11,7 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core
 import { DashboardPanel } from './DashboardPanel';
 import { DashboardModel, PanelModel } from '../state';
 import { CoreEvents } from 'app/types';
-import { PanelEvents } from '@grafana/ui';
+import { PanelEvents } from '@grafana/data';
 import { panelAdded, panelRemoved } from '../state/PanelModel';
 
 let lastGridWidth = 1200;

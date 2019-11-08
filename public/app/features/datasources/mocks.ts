@@ -1,4 +1,4 @@
-import { DataSourceSettings } from '@grafana/ui';
+import { DataSourceSettings } from '@grafana/data';
 
 export function createDatasourceSettings<T>(jsonData: T): DataSourceSettings<T> {
   return {

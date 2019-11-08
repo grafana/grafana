@@ -1,6 +1,5 @@
 import { PanelQueryRunner } from './PanelQueryRunner';
-import { PanelData, DataQueryRequest } from '@grafana/ui';
-import { dateTime, ScopedVars } from '@grafana/data';
+import { PanelData, DataQueryRequest, dateTime, ScopedVars } from '@grafana/data';
 import { PanelModel } from './PanelModel';
 
 jest.mock('app/core/services/backend_srv');

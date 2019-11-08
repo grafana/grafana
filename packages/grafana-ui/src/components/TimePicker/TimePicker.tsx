@@ -18,7 +18,7 @@ import { withTheme } from '../../themes/ThemeContext';
 
 // Types
 import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue, dateMath } from '@grafana/data';
-import { GrafanaTheme } from '../../types/theme';
+import { GrafanaTheme } from '@grafana/data';
 import { Themeable } from '../../types';
 
 const getStyles = memoizeOne((theme: GrafanaTheme) => {
@@ -44,6 +44,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
 });
 
 export interface Props extends Themeable {
+  hideText?: boolean;
   value: TimeRange;
   selectOptions: TimeOption[];
   timeZone?: TimeZone;
@@ -159,6 +160,7 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
       timeSyncButton,
       isSynced,
       theme,
+      hideText,
     } = this.props;
 
     const styles = getStyles(theme);
@@ -175,19 +177,21 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
     };
     const rangeString = rangeUtil.describeTimeRange(adjustedTimeRange);
 
-    const label = (
+    const label = !hideText ? (
       <>
         {isCustomOpen && <span>Custom time range</span>}
         {!isCustomOpen && <span>{rangeString}</span>}
         {isUTC && <span className="time-picker-utc">UTC</span>}
       </>
+    ) : (
+      ''
     );
-    const isAbsolute = isDateTime(value.raw.to);
+    const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
 
     return (
       <div className="time-picker" ref={this.pickerTriggerRef}>
         <div className="time-picker-buttons">
-          {isAbsolute && (
+          {hasAbsolute && (
             <button className="btn navbar-button navbar-button--tight" onClick={onMoveBackward}>
               <i className="fa fa-chevron-left" />
             </button>
@@ -208,7 +212,7 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
 
           {timeSyncButton}
 
-          {isAbsolute && (
+          {hasAbsolute && (
             <button className="btn navbar-button navbar-button--tight" onClick={onMoveForward}>
               <i className="fa fa-chevron-right" />
             </button>

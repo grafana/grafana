@@ -8,8 +8,7 @@ import { importDataSourcePlugin } from './plugin_loader';
 import { DataSourceSrv as DataSourceService, getDataSourceSrv as getDataSourceService } from '@grafana/runtime';
 
 // Types
-import { DataSourceApi, DataSourceSelectItem } from '@grafana/ui';
-import { ScopedVars, AppEvents } from '@grafana/data';
+import { DataSourceApi, DataSourceSelectItem, ScopedVars, AppEvents } from '@grafana/data';
 import { auto } from 'angular';
 import { TemplateSrv } from '../templating/template_srv';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';

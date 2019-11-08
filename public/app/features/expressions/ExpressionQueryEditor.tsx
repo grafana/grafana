@@ -1,8 +1,8 @@
 // Libraries
 import React, { PureComponent, ChangeEvent } from 'react';
 
-import { FormLabel, QueryEditorProps, Select, FormField } from '@grafana/ui';
-import { SelectableValue, ReducerID } from '@grafana/data';
+import { FormLabel, Select, FormField } from '@grafana/ui';
+import { SelectableValue, ReducerID, QueryEditorProps } from '@grafana/data';
 
 // Types
 import { ExpressionQuery, GELQueryType } from './types';

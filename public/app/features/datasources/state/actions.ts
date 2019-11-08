@@ -5,7 +5,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
 import { updateLocation, updateNavIndex, UpdateNavIndexAction } from 'app/core/actions';
 import { buildNavModel } from './navModel';
-import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/ui';
+import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/data';
 import { StoreState } from 'app/types';
 import { LocationUpdate } from '@grafana/runtime';
 import { actionCreatorFactory } from 'app/core/redux';

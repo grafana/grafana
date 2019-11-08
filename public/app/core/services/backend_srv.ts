@@ -143,7 +143,7 @@ export class BackendSrv implements BackendService {
     }
   }
 
-  datasourceRequest(options: any) {
+  datasourceRequest(options: BackendSrvRequest) {
     let canceler: angular.IDeferred<any> = null;
     options.retry = options.retry || 0;
 

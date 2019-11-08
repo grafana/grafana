@@ -72,7 +72,7 @@ github.com/beorn7/perks/quantile
 github.com/bradfitz/gomemcache/memcache
 # github.com/codegangsta/cli v1.20.0
 github.com/codegangsta/cli
-# github.com/crewjam/saml v0.0.0-20190521120225-344d075952c9
+# github.com/crewjam/saml v0.0.0-20191031171751-c42136edf9b1
 github.com/crewjam/saml
 github.com/crewjam/saml/logger
 github.com/crewjam/saml/xmlenc
@@ -131,7 +131,7 @@ github.com/gosimple/slug
 # github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 github.com/grafana/grafana-plugin-model/go/datasource
 github.com/grafana/grafana-plugin-model/go/renderer
-# github.com/grafana/grafana-plugin-sdk-go v0.0.0-20191029155514-4d93894a3f7a
+# github.com/grafana/grafana-plugin-sdk-go v0.0.0-20191105165811-c4e9ecfec89f
 github.com/grafana/grafana-plugin-sdk-go/common
 github.com/grafana/grafana-plugin-sdk-go/dataframe
 github.com/grafana/grafana-plugin-sdk-go/datasource
@@ -262,7 +262,7 @@ github.com/yudai/gojsondiff
 github.com/yudai/gojsondiff/formatter
 # github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82
 github.com/yudai/golcs
-# golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4
+# golang.org/x/crypto v0.0.0-20190923035154-9ee001bba392
 golang.org/x/crypto/ed25519
 golang.org/x/crypto/ed25519/internal/edwards25519
 golang.org/x/crypto/md4
@@ -285,7 +285,7 @@ golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
 # golang.org/x/sync v0.0.0-20190423024810-112230192c58
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.0.0-20190804053845-51ab0e2deafa
+# golang.org/x/sys v0.0.0-20190922100055-0a153f010e69
 golang.org/x/sys/unix
 # golang.org/x/text v0.3.2
 golang.org/x/text/secure/bidirule
@@ -368,5 +368,5 @@ gopkg.in/redis.v5/internal/proto
 gopkg.in/square/go-jose.v2
 gopkg.in/square/go-jose.v2/cipher
 gopkg.in/square/go-jose.v2/json
-# gopkg.in/yaml.v2 v2.2.2
+# gopkg.in/yaml.v2 v2.2.4
 gopkg.in/yaml.v2

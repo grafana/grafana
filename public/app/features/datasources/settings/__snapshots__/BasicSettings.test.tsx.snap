@@ -2,6 +2,7 @@
 
 exports[`Render should render component 1`] = `
 <div
+  aria-label="Datasource settings page basic settings"
   className="gf-form-group"
 >
   <div
@@ -21,6 +22,7 @@ exports[`Render should render component 1`] = `
         Name
       </Component>
       <Input
+        aria-label="Datasource settings page name input field"
         className="gf-form-input max-width-23"
         onChange={[Function]}
         placeholder="Name"

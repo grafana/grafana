@@ -13,10 +13,9 @@ import {
   sortSeriesByLabel,
 } from './heatmap_data_converter';
 import { auto } from 'angular';
-import { LegacyResponseData, PanelEvents } from '@grafana/ui';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
 import { DataProcessor } from '../graph/data_processor';
-import { DataFrame } from '@grafana/data';
+import { LegacyResponseData, PanelEvents, DataFrame } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 
 const X_BUCKET_NUMBER_DEFAULT = 30;

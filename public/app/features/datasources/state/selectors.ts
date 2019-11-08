@@ -1,4 +1,4 @@
-import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/ui';
+import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/data';
 import { DataSourcesState } from '../../../types/datasources';
 import { UrlQueryValue } from '@grafana/runtime';
 

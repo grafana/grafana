@@ -20,7 +20,7 @@ weight = 6
 Grafana ships with built-in support for Loki, Grafana's log aggregation system.
 Just add it as a data source and you are ready to query your log data in [Explore](/features/explore).
 
-## Adding the data source to Grafana
+## Adding the data source
 
 1. Open Grafana and make sure you are logged in.
 2. In the side menu under the `Configuration` link you should find a link named `Data Sources`.
@@ -102,7 +102,7 @@ The following filter types are currently supported:
 * `|~` line matches regular expression.
 * `!~` line does not match regular expression.
 
-> Note: For more details about LogQL, Loki's query language, refer to the [documentation](https://github.com/grafana/loki/blob/master/docs/querying.md)
+> Note: For more details about LogQL, Loki's query language, refer to the [documentation](https://github.com/grafana/loki/blob/master/docs/logql.md)
 
 ## Live tailing
 

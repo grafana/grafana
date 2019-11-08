@@ -28,7 +28,7 @@ and the conditions that need to be met for the alert to change state and trigger
 
 The alert rules are evaluated in the Grafana backend in a scheduler and query execution engine that is part
 of core Grafana. Only some data sources are supported right now. They include `Graphite`, `Prometheus`, `InfluxDB`, `Elasticsearch`,
-`Stackdriver`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL` and `OpenTSDB`.
+`Stackdriver`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle` and `Azure Data Explorer`.
 
 > Alerting support for Azure Monitor is only available in Grafana v6.0 and above.
 

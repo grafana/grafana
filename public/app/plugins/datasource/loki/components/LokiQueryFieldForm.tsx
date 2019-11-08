@@ -11,8 +11,8 @@ import { Plugin, Node } from 'slate';
 
 // Types
 import { LokiQuery } from '../types';
-import { ExploreQueryFieldProps, DOMUtil } from '@grafana/ui';
-import { AbsoluteTimeRange } from '@grafana/data';
+import { DOMUtil } from '@grafana/ui';
+import { ExploreQueryFieldProps, AbsoluteTimeRange } from '@grafana/data';
 import { Grammar } from 'prismjs';
 import LokiLanguageProvider, { LokiHistoryItem } from '../language_provider';
 import LokiDatasource from '../datasource';
@@ -172,6 +172,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
               onTypeahead={this.onTypeahead}
               onWillApplySuggestion={willApplySuggestion}
               onChange={this.onChangeQuery}
+              onBlur={this.props.onBlur}
               onRunQuery={this.props.onRunQuery}
               placeholder="Enter a Loki query"
               portalOrigin="loki"

@@ -27,6 +27,7 @@ export interface QueryFieldProps {
   // creating a two way binding.
   query: string | null;
   onRunQuery?: () => void;
+  onBlur?: () => void;
   onChange?: (value: string) => void;
   onTypeahead?: (typeahead: TypeaheadInput) => Promise<TypeaheadOutput>;
   onWillApplySuggestion?: (suggestion: string, state: SuggestionsState) => string;
@@ -171,11 +172,17 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
    * We need to handle blur events here mainly because of dashboard panels which expect to have query executed on blur.
    */
   handleBlur = (event: Event, editor: CoreEditor, next: Function) => {
-    const previousValue = this.lastExecutedValue ? Plain.serialize(this.lastExecutedValue) : null;
-    const currentValue = Plain.serialize(editor.value);
+    const { onBlur } = this.props;
+    if (onBlur) {
+      onBlur();
+    } else {
+      // Run query by default on blur
+      const previousValue = this.lastExecutedValue ? Plain.serialize(this.lastExecutedValue) : null;
+      const currentValue = Plain.serialize(editor.value);
 
-    if (previousValue !== currentValue) {
-      this.runOnChangeAndRunQuery();
+      if (previousValue !== currentValue) {
+        this.runOnChangeAndRunQuery();
+      }
     }
     return next();
   };

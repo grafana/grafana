@@ -1,5 +1,5 @@
 import { ResultTransformer } from '../result_transformer';
-import { DataQueryResponseData } from '@grafana/ui';
+import { DataQueryResponseData } from '@grafana/data';
 
 describe('Prometheus Result Transformer', () => {
   const ctx: any = {};

@@ -32,7 +32,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 		"metrics":   metrics,
 		"os":        runtime.GOOS,
 		"arch":      runtime.GOARCH,
-		"edition":   getEdition(),
+		"edition":   getEdition(uss.License.HasValidLicense()),
 		"packaging": setting.Packaging,
 	}
 
@@ -182,8 +182,8 @@ func (uss *UsageStatsService) updateTotalStats() {
 	metrics.StatsTotalActiveAdmins.Set(float64(statsQuery.Result.ActiveAdmins))
 }
 
-func getEdition() string {
-	if setting.IsEnterprise {
+func getEdition(validLicense bool) string {
+	if validLicense {
 		return "enterprise"
 	}
 	return "oss"

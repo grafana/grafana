@@ -141,7 +141,7 @@ export class ResultTransformer {
     let metricLabel = null;
     metricLabel = this.createMetricLabel(md.metric, options);
     dps.push([parseFloat(md.value[1]), md.value[0] * 1000]);
-    return { target: metricLabel, datapoints: dps, labels: md.metric };
+    return { target: metricLabel, datapoints: dps, tags: md.metric };
   }
 
   createMetricLabel(labelData: { [key: string]: string }, options: any) {
