@@ -27,7 +27,7 @@ func (e *CloudWatchExecutor) parseQueries(queryContext *tsdb.TsdbQuery) (map[str
 		if err != nil {
 			return nil, &queryError{err, RefID}
 		}
-		if _, ok := requestQueries[query.Region]; !ok {
+		if _, exist := requestQueries[query.Region]; !exist {
 			requestQueries[query.Region] = make([]*requestQuery, 0)
 		}
 		requestQueries[query.Region] = append(requestQueries[query.Region], query)

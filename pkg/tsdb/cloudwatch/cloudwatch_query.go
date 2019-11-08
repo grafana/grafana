@@ -29,11 +29,7 @@ func (q *cloudWatchQuery) isMathExpression() bool {
 }
 
 func (q *cloudWatchQuery) isSearchExpression() bool {
-	if q.isUserDefinedSearchExpression() {
-		return true
-	}
-
-	return q.isInferredSearchExpression()
+	return q.isUserDefinedSearchExpression() || q.isInferredSearchExpression()
 }
 
 func (q *cloudWatchQuery) isUserDefinedSearchExpression() bool {

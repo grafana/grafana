@@ -23,10 +23,10 @@ func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 		}
 
 		for _, r := range mdo.MetricDataResults {
-			if _, ok := mdr[*r.Id]; !ok {
+			if _, exists := mdr[*r.Id]; !exists {
 				mdr[*r.Id] = make(map[string]*cloudwatch.MetricDataResult)
 				mdr[*r.Id][*r.Label] = r
-			} else if _, ok := mdr[*r.Id][*r.Label]; !ok {
+			} else if _, exists := mdr[*r.Id][*r.Label]; !exists {
 				mdr[*r.Id][*r.Label] = r
 			} else {
 				mdr[*r.Id][*r.Label].Timestamps = append(mdr[*r.Id][*r.Label].Timestamps, r.Timestamps...)
