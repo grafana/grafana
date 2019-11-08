@@ -5877,6 +5877,11 @@ caniuse-api@^3.0.0:
     lodash.memoize "^4.1.2"
     lodash.uniq "^4.5.0"
 
+caniuse-db@1.0.30000772:
+  version "1.0.30000772"
+  resolved "https://registry.yarnpkg.com/caniuse-db/-/caniuse-db-1.0.30000772.tgz#51aae891768286eade4a3d8319ea76d6a01b512b"
+  integrity sha1-UarokXaChureSj2DGep21qAbUSs=
+
 caniuse-lite@^1.0.0, caniuse-lite@^1.0.30000939, caniuse-lite@^1.0.30000947, caniuse-lite@^1.0.30000989, caniuse-lite@^1.0.30000999:
   version "1.0.30000999"
   resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30000999.tgz#427253a69ad7bea4aa8d8345687b8eec51ca0e43"
@@ -16849,17 +16854,7 @@ rc-align@^2.4.0:
     prop-types "^15.5.8"
     rc-util "^4.0.4"
 
-rc-align@^3.0.0-alpha.3:
-  version "3.0.0-alpha.6"
-  resolved "https://registry.yarnpkg.com/rc-align/-/rc-align-3.0.0-alpha.6.tgz#2ef82c45776c5db33ef2525a9fc0f186c68de475"
-  integrity sha512-lowJva+jwft5T1aMy0JNvpMcY40hDCQXaWFE+K/IQLLm5c3bRpw5Mj0k5e3JvgVRAC+lma0a7tM1GirA5KiGrg==
-  dependencies:
-    classnames "2.x"
-    dom-align "^1.7.0"
-    rc-util "^4.12.0"
-    resize-observer-polyfill "^1.5.1"
-
-rc-animate@2.x, rc-animate@^2.10.1:
+rc-animate@2.x:
   version "2.10.1"
   resolved "https://registry.yarnpkg.com/rc-animate/-/rc-animate-2.10.1.tgz#c0c4faab50e55535e903e66f207e49891ba86d94"
   integrity sha512-yfP3g5fNf8wB5eh85nim2IGrqNu5u7TKrrSh710+1vlUqZvnI2R5YHK99IBCQNgkLCAWjT0sHtkcYdynjly39w==
@@ -16872,7 +16867,7 @@ rc-animate@2.x, rc-animate@^2.10.1:
     rc-util "^4.8.0"
     react-lifecycles-compat "^3.0.4"
 
-rc-cascader@0.17.5, rc-cascader@^0.17.5:
+rc-cascader@0.17.5:
   version "0.17.5"
   resolved "https://registry.yarnpkg.com/rc-cascader/-/rc-cascader-0.17.5.tgz#4fde91d23b7608c420263c38eee9c0687f80f7dc"
   integrity sha512-WYMVcxU0+Lj+xLr4YYH0+yXODumvNXDcVEs5i7L1mtpWwYkubPV/zbQpn+jGKFCIW/hOhjkU4J1db8/P/UKE7A==
@@ -16920,33 +16915,10 @@ rc-trigger@^2.2.0:
     rc-util "^4.4.0"
     react-lifecycles-compat "^3.0.4"
 
-rc-trigger@^4.0.0-alpha.5:
-  version "4.0.0-alpha.5"
-  resolved "https://registry.yarnpkg.com/rc-trigger/-/rc-trigger-4.0.0-alpha.5.tgz#38d7eec5a43ac83797297a2206c1bc9d1c75c295"
-  integrity sha512-X9uoezcydoqvBF8bI+xw27rjXy5mU/FttFxyub/kuk2QHq/HS45XJRHem8mB586k65COVxlvuDKdpAnRH7KOMg==
-  dependencies:
-    classnames "^2.2.6"
-    prop-types "15.x"
-    raf "^3.4.1"
-    rc-align "^3.0.0-alpha.3"
-    rc-animate "^2.10.1"
-    rc-util "^4.13.0"
-
 rc-util@^4.0.4, rc-util@^4.11.2, rc-util@^4.4.0, rc-util@^4.8.0:
   version "4.13.0"
   resolved "https://registry.yarnpkg.com/rc-util/-/rc-util-4.13.0.tgz#75682e50a934e7d32ada7ee48fc9f5b20fc0143f"
   integrity sha512-rjfPy+afc2n40APHp6GYScXfgwHuUnYLz/4SCEWRaF8CHXKR8xw598LtPA36J3fEXENuMm6liO/CoKBoSrYCDw==
-  dependencies:
-    add-dom-event-listener "^1.1.0"
-    babel-runtime "6.x"
-    prop-types "^15.5.10"
-    react-lifecycles-compat "^3.0.4"
-    shallowequal "^0.2.2"
-
-rc-util@^4.12.0, rc-util@^4.13.0:
-  version "4.14.4"
-  resolved "https://registry.yarnpkg.com/rc-util/-/rc-util-4.14.4.tgz#e7e009559e93bba022c49b0d0aec62665d6a0e7f"
-  integrity sha512-GQgEn6ywJYZq1NEoZ6NZzeaE2U6mT6DhdqrtRV5IBNM3yTZZW8HRjIiMOpXOhTEUj10bnHnKWKZpC36RoNmS9Q==
   dependencies:
     add-dom-event-listener "^1.1.0"
     babel-runtime "6.x"

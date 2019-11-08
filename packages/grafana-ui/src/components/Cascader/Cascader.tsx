@@ -2,7 +2,23 @@ import React from 'react';
 
 // @ts-ignore
 import RCCascader from 'rc-cascader';
-import { BuildInPlacements as BuiltInPlacements } from 'rc-trigger';
+
+export interface AlignType {
+  points?: string[];
+  offset?: number[];
+  targetOffset?: number[];
+  overflow?: {
+    adjustX?: boolean | number;
+    adjustY?: boolean | number;
+  };
+  useCssRight?: boolean;
+  useCssBottom?: boolean;
+  useCssTransform?: boolean;
+}
+
+export interface BuiltInPlacements {
+  [placement: string]: AlignType;
+}
 
 export interface CascaderOption {
   label: string;
@@ -23,13 +39,8 @@ export interface CascaderProps {
   dropdownMenuColumnStyle?: React.CSSProperties;
   expandIcon?: React.ReactNode;
   expandTrigger?: string;
-  fieldNames?: { label: string; value: string; children: string };
-  loadingIcon?: React.ReactNode;
-  popupClassName?: string;
   popupPlacement?: string;
   popupVisible?: boolean;
-  prefixCls?: string;
-  transitionName?: string;
   value?: string[];
 
   getPopupContainer?: (trigger: React.ReactNode) => React.ReactNode;
