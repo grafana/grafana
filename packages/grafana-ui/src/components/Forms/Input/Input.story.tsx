@@ -1,8 +1,8 @@
 import React from 'react';
 import { boolean, text, select, number } from '@storybook/addon-knobs';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
 import { Input } from './Input';
-import { Button } from './Button';
+import { Button } from '../Button';
 import mdx from './Input.mdx';
 
 export default {
@@ -18,12 +18,12 @@ export default {
 
 export const simple = () => {
   const disabled = boolean('Disabled', false);
-  const invalid = boolean('Invalid input', false);
+  const invalid = boolean('Invalid input', true);
   const icon = text('Prefix', 'fa fa-check');
   const placeholder = text('Placeholder', 'Enter your name here...');
-  const loading = boolean('Suffix', true);
-  const before = boolean('Addon before', true);
-  const after = boolean('Addon after', true);
+  const loading = boolean('Suffix', false);
+  const before = boolean('Addon before', false);
+  const after = boolean('Addon after', false);
   const type = select(
     'Input type',
     {
