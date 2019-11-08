@@ -25,7 +25,6 @@ const addTestDataSourceAndVerify = async (page: Page) => {
   await editDataSourcePage.init(page);
   await editDataSourcePage.waitForNavigation();
   await editDataSourcePage.pageObjects.name.enter(testDataSourceName);
-  await editDataSourcePage.pageObjects.default.click();
   await editDataSourcePage.pageObjects.saveAndTest.click();
   await editDataSourcePage.pageObjects.alert.exists();
   await editDataSourcePage.pageObjects.alertMessage.containsText('Data source is working');
