@@ -2,7 +2,7 @@ import React, { cloneElement, FC, HTMLProps, isValidElement, ReactNode } from 'r
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
 import { Spinner } from '../..';
-import { getFocusStyle } from '../commonStyles';
+import { getFocusStyle, sharedInputStyle } from '../commonStyles';
 import { selectThemeVariant, stylesFactory, useTheme } from '../../../themes';
 
 export interface Props extends HTMLProps<HTMLInputElement> {
@@ -95,7 +95,6 @@ const getInputStyle = stylesFactory(
       ),
       input: cx(
         css`
-          background-color: ${backgroundColor};
           height: 100%;
           width: 100%;
           flex-grow: 1;
@@ -123,6 +122,7 @@ const getInputStyle = stylesFactory(
             color: ${disabledColor};
           }
         `,
+        sharedInputStyle(theme),
         inputBorders
       ),
       addon: css`
