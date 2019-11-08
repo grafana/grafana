@@ -192,11 +192,7 @@ export class VariableEditorCtrl {
 
     $scope.typeChanged = function() {
       const old = $scope.current;
-      $scope.current = variableSrv.createVariableFromModel({
-        type: $scope.current.type,
-      });
-      $scope.current.name = old.name;
-      $scope.current.label = old.label;
+      $scope.current = variableSrv.changeVariableType($scope.current, $scope.current.type);
 
       const oldIndex = _.indexOf(this.variables, old);
       if (oldIndex !== -1) {

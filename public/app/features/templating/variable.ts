@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { assignModelProperties } from 'app/core/utils/model_utils';
 import { store } from '../../store/store';
-import { createVariable, removeVariable, updateVariableProp } from './state/actions';
+import { changeVariableType, createVariable, removeVariable, updateVariableProp } from './state/actions';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
@@ -191,6 +191,10 @@ export const getVariableModel = <T extends VariableModel = VariableModel>(id: nu
     return stripIdFromVariable(temporary);
   }
   return stripIdFromVariable(store.getState().templating.variables[id] as T);
+};
+
+export const changeType = <T extends VariableModel = VariableModel>(id: number, defaults: T) => {
+  store.dispatch(changeVariableType({ id, defaults }));
 };
 
 export type CtorType = new (...args: any[]) => {};

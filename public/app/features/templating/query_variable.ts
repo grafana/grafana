@@ -65,6 +65,7 @@ export class QueryVariable implements QueryVariableModel, VariableActions {
     if (model.useTemporary) {
       this.temporary = {} as QueryVariableModel;
       assignModelProperties(this.temporary, model, this.defaults);
+      this.id = -1;
     } else {
       this.temporary = null;
       this.id = createVariableInState(model, this.defaults);

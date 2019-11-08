@@ -23,3 +23,12 @@ export interface RemoveVariable {
 }
 
 export const removeVariable = actionCreatorFactory<RemoveVariable>('CORE_TEMPLATING_REMOVE_VARIABLE').create();
+
+export interface ChangeVariableType<T extends VariableModel = VariableModel> {
+  id: number;
+  defaults: T;
+}
+
+export const changeVariableType = actionCreatorFactory<ChangeVariableType>(
+  'CORE_TEMPLATING_CHANGE_VARIABLE_TYPE'
+).create();

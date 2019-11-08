@@ -30,6 +30,7 @@ export class AdhocVariable implements AdHocVariableModel, VariableActions {
     if (model.useTemporary) {
       this.temporary = {} as AdHocVariableModel;
       assignModelProperties(this.temporary, model, this.defaults);
+      this.id = -1;
     } else {
       this.temporary = null;
       this.id = createVariableInState(model, this.defaults);
