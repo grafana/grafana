@@ -31,6 +31,10 @@ export class GraphiteConfigCtrl {
         return ds.getVersion();
       })
       .then((version: any) => {
+        if (!version) {
+          return;
+        }
+
         this.graphiteVersions.push({ name: version, value: version });
         this.current.jsonData.graphiteVersion = version;
       });

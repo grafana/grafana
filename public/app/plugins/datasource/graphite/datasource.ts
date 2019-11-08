@@ -122,7 +122,7 @@ export class GraphiteDatasource {
       if (s.meta) {
         frame.meta = {
           metrictank: s.meta, // array of metadata
-          metrictank_req: result.data.meta, // info on the request
+          metrictankReq: result.data.meta, // info on the request
         };
       }
       data.push(frame);
