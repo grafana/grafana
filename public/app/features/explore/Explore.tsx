@@ -5,11 +5,10 @@ import { css } from 'emotion';
 import { connect } from 'react-redux';
 import { AutoSizer } from 'react-virtualized';
 import memoizeOne from 'memoize-one';
-
 // Services & Utils
 import store from 'app/core/store';
 // Components
-import { ErrorBoundaryAlert } from '@grafana/ui';
+import { ErrorBoundaryAlert, OpenDetailContext, OpenDetailOptions } from '@grafana/ui';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
@@ -18,37 +17,39 @@ import {
   changeSize,
   initializeExplore,
   modifyQueries,
+  refreshExplore,
   scanStart,
   setQueries,
-  refreshExplore,
-  updateTimeRange,
+  splitOpen,
+  splitOpenWithUrl,
   toggleGraph,
+  updateTimeRange,
 } from './state/actions';
 // Types
 import {
+  AbsoluteTimeRange,
   DataQuery,
-  ExploreStartPageProps,
   DataSourceApi,
+  ExploreStartPageProps,
+  GraphSeriesXY,
   PanelData,
   RawTimeRange,
-  GraphSeriesXY,
   TimeZone,
-  AbsoluteTimeRange,
 } from '@grafana/data';
 
 import {
-  ExploreItemState,
-  ExploreUrlState,
   ExploreId,
-  ExploreUpdateState,
-  ExploreUIState,
+  ExploreItemState,
   ExploreMode,
+  ExploreUIState,
+  ExploreUpdateState,
+  ExploreUrlState,
 } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import {
-  ensureQueries,
   DEFAULT_RANGE,
   DEFAULT_UI_STATE,
+  ensureQueries,
   getTimeRangeFromUrl,
   lastUsedDatasourceKeyForOrgId,
 } from 'app/core/utils/explore';
@@ -107,6 +108,8 @@ interface ExploreProps {
   toggleGraph: typeof toggleGraph;
   queryResponse: PanelData;
   originPanelId: number;
+  splitOpenWithUrl: typeof splitOpenWithUrl;
+  splitOpen: typeof splitOpen;
 }
 
 /**
@@ -266,79 +269,103 @@ export class Explore extends React.PureComponent<ExploreProps> {
       timeZone,
       queryResponse,
       syncedTimes,
+      splitOpenWithUrl,
+      splitOpen,
     } = this.props;
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const styles = getStyles();
 
     return (
-      <div className={exploreClass} ref={this.getRef}>
-        <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
-        {datasourceMissing ? this.renderEmptyState() : null}
-        {datasourceInstance && (
-          <div className="explore-container">
-            <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
-            <ErrorContainer queryErrors={[queryResponse.error]} />
-            <AutoSizer onResize={this.onResize} disableHeight>
-              {({ width }) => {
-                if (width === 0) {
-                  return null;
-                }
+      <OpenDetailContext.Provider
+        value={(options: OpenDetailOptions) => {
+          if (options.url) {
+            splitOpenWithUrl(options.url);
+          } else {
+            splitOpen(options.datasourceId, options.query);
+          }
+        }}
+      >
+        <div style={{ height: '100%', overflow: 'hidden' }} className={exploreClass} ref={this.getRef}>
+          <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
+          {datasourceMissing ? this.renderEmptyState() : null}
+          {datasourceInstance && (
+            <div className="explore-container">
+              <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
+              <ErrorContainer queryErrors={[queryResponse.error]} />
+              <AutoSizer onResize={this.onResize} disableHeight>
+                {({ width }) => {
+                  if (width === 0) {
+                    return null;
+                  }
 
-                return (
-                  <main className={`m-t-2 ${styles.logsMain}`} style={{ width }}>
-                    <ErrorBoundaryAlert>
-                      {showingStartPage && (
-                        <div className="grafana-info-box grafana-info-box--max-lg">
-                          <StartPage
-                            onClickExample={this.onClickExample}
-                            datasource={datasourceInstance}
-                            exploreMode={mode}
-                          />
-                        </div>
-                      )}
-                      {!showingStartPage && (
-                        <>
-                          {mode === ExploreMode.Metrics && (
-                            <ExploreGraphPanel
-                              series={graphResult}
-                              width={width}
-                              loading={loading}
-                              absoluteRange={absoluteRange}
-                              isStacked={false}
-                              showPanel={true}
-                              showingGraph={showingGraph}
-                              showingTable={showingTable}
-                              timeZone={timeZone}
-                              onToggleGraph={this.onToggleGraph}
-                              onUpdateTimeRange={this.onUpdateTimeRange}
-                              showBars={false}
-                              showLines={true}
+                  return (
+                    <main className={`m-t-2 ${styles.logsMain}`} style={{ width }}>
+                      <ErrorBoundaryAlert>
+                        {showingStartPage && (
+                          <div className="grafana-info-box grafana-info-box--max-lg">
+                            <StartPage
+                              onClickExample={this.onClickExample}
+                              datasource={datasourceInstance}
+                              exploreMode={mode}
                             />
-                          )}
-                          {mode === ExploreMode.Metrics && (
-                            <TableContainer exploreId={exploreId} onClickCell={this.onClickFilterLabel} />
-                          )}
-                          {mode === ExploreMode.Logs && (
-                            <LogsContainer
-                              width={width}
-                              exploreId={exploreId}
-                              syncedTimes={syncedTimes}
-                              onClickFilterLabel={this.onClickFilterLabel}
-                              onClickFilterOutLabel={this.onClickFilterOutLabel}
-                              onStartScanning={this.onStartScanning}
-                              onStopScanning={this.onStopScanning}
-                            />
-                          )}
-                        </>
-                      )}
-                    </ErrorBoundaryAlert>
-                  </main>
-                );
-              }}
-            </AutoSizer>
-          </div>
-        )}
-      </div>
+                          </div>
+                        )}
+                        {!showingStartPage && (
+                          <>
+                            {mode === ExploreMode.Metrics && (
+                              <ExploreGraphPanel
+                                series={graphResult}
+                                width={width}
+                                loading={loading}
+                                absoluteRange={absoluteRange}
+                                isStacked={false}
+                                showPanel={true}
+                                showingGraph={showingGraph}
+                                showingTable={showingTable}
+                                timeZone={timeZone}
+                                onToggleGraph={this.onToggleGraph}
+                                onUpdateTimeRange={this.onUpdateTimeRange}
+                                showBars={false}
+                                showLines={true}
+                              />
+                            )}
+                            {mode === ExploreMode.Metrics && (
+                              <TableContainer exploreId={exploreId} onClickCell={this.onClickFilterLabel} />
+                            )}
+                            {mode === ExploreMode.Logs && (
+                              <LogsContainer
+                                width={width}
+                                exploreId={exploreId}
+                                syncedTimes={syncedTimes}
+                                onClickFilterLabel={this.onClickFilterLabel}
+                                onClickFilterOutLabel={this.onClickFilterOutLabel}
+                                onStartScanning={this.onStartScanning}
+                                onStopScanning={this.onStopScanning}
+                              />
+                            )}
+                            {mode === ExploreMode.Tracing && (
+                              <div style={{ height: '100%' }}>
+                                {queryResponse &&
+                                  !!queryResponse.series.length &&
+                                  queryResponse.series[0].fields[0].values.get(0) && (
+                                    <iframe
+                                      style={{ border: 'none', width: '100%', height: '100%' }}
+                                      src={queryResponse.series[0].fields[0].values.get(0)}
+                                    />
+                                  )}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </ErrorBoundaryAlert>
+                    </main>
+                  );
+                }}
+              </AutoSizer>
+            </div>
+          )}
+        </div>
+      </OpenDetailContext.Provider>
     );
   }
 }
@@ -391,7 +418,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
       newMode = supportedModes[0];
     }
   } else {
-    newMode = [ExploreMode.Metrics, ExploreMode.Logs].includes(urlMode) ? urlMode : null;
+    newMode = [ExploreMode.Metrics, ExploreMode.Logs, ExploreMode.Tracing].includes(urlMode) ? urlMode : null;
   }
 
   const initialUI = ui || DEFAULT_UI_STATE;
@@ -432,6 +459,8 @@ const mapDispatchToProps: Partial<ExploreProps> = {
   setQueries,
   updateTimeRange,
   toggleGraph,
+  splitOpenWithUrl,
+  splitOpen,
 };
 
 export default hot(module)(

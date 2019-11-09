@@ -24,6 +24,7 @@ import TableModel from 'app/core/table_model';
 export enum ExploreMode {
   Metrics = 'Metrics',
   Logs = 'Logs',
+  Tracing = 'Tracing',
 }
 
 export enum ExploreId {
@@ -190,6 +191,11 @@ export interface ExploreItemState {
 
   queryResponse: PanelData;
   originPanelId?: number;
+
+  /**
+   * If set shows this url in an iframe
+   */
+  externalUrl?: string;
 }
 
 export interface ExploreUpdateState {

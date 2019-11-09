@@ -418,6 +418,7 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
+            - public/views/*
             - public/build/*
             - tools/phantomjs/*
       - run:
@@ -621,6 +622,14 @@ jobs:
           name: ci job succeeded
           command: './scripts/ci-job-succeeded.sh'
           when: on_success
+      - run:
+          name: Archive Docker image
+          command: |
+            mkdir -p artifacts
+            docker save -o artifacts/docker-image-${CIRCLE_SHA1}.tar grafana/grafana:${CIRCLE_SHA1}-ubuntu
+      - store_artifacts:
+          path: artifacts
+          destination: generated-docker-image
 
   grafana-docker-release:
     machine:

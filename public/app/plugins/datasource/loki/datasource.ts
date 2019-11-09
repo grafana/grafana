@@ -30,6 +30,7 @@ import {
   ArrayVector,
   FieldType,
   DataFrame,
+  DataLink,
   TimeSeries,
   PluginMeta,
   DataSourceApi,
@@ -615,13 +616,15 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       const fields = fromPairs(
         derivedFields.map(field => {
           const config: FieldConfig = {};
-          if (field.url) {
-            config.links = [
-              {
-                url: field.url,
-                title: '',
+          if (field.url || field.datasourceName) {
+            const link: DataLink = {
+              url: field.url,
+              title: '',
+              meta: {
+                datasourceName: field.datasourceName,
               },
-            ];
+            };
+            config.links = [link];
           }
           const dataFrameField = {
             name: field.name,

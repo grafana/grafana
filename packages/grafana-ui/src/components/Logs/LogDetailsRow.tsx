@@ -1,12 +1,14 @@
 import React, { PureComponent } from 'react';
-import { LogLabelStatsModel } from '@grafana/data';
+import { Field, LinkModel, LogLabelStatsModel } from '@grafana/data';
 
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
+import { OpenDetailContext } from '../../utils/ui';
 
 //Components
 import { LogLabelStats } from './LogLabelStats';
+import { LinkButton } from '../Button/Button';
 
 export interface Props extends Themeable {
   parsedValue: string;
@@ -14,7 +16,7 @@ export interface Props extends Themeable {
   isLabel?: boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
-  links?: string[];
+  links?: Array<LinkModel<Field>>;
   getStats: () => LogLabelStatsModel[] | null;
 }
 
@@ -97,11 +99,29 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           {links &&
             links.map(link => {
               return (
-                <span key={link}>
-                  &nbsp;
-                  <a href={link} target={'_blank'}>
-                    <i className={'fa fa-external-link'} />
-                  </a>
+                <span key={link.href}>
+                  <OpenDetailContext.Consumer>
+                    {openDetail => {
+                      return (
+                        <>
+                          &nbsp;
+                          <LinkButton
+                            variant={'transparent'}
+                            size={'sm'}
+                            icon={'fa fa-list'}
+                            href={link.href}
+                            onClick={event => {
+                              if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
+                                event.preventDefault();
+                                link.onClick(event);
+                                // openDetail({ datasourceId: 'Jaeger', query: parsedValue });
+                              }
+                            }}
+                          />
+                        </>
+                      );
+                    }}
+                  </OpenDetailContext.Consumer>
                 </span>
               );
             })}

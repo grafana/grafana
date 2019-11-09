@@ -33,6 +33,7 @@ class NewDataSourcePage extends PureComponent<Props> {
   categoryInfoList: DataSourceCategoryInfo[] = [
     { id: 'tsdb', title: 'Time series databases' },
     { id: 'logging', title: 'Logging & document databases' },
+    { id: 'tracing', title: 'Distributed tracing' },
     { id: 'sql', title: 'SQL' },
     { id: 'cloud', title: 'Cloud' },
     { id: 'other', title: 'Others' },

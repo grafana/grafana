@@ -675,6 +675,7 @@ export const updateChildRefreshState = (
 const getModesForDatasource = (dataSource: DataSourceApi, currentMode: ExploreMode): [ExploreMode[], ExploreMode] => {
   const supportsGraph = dataSource.meta.metrics;
   const supportsLogs = dataSource.meta.logs;
+  const supportsTracing = dataSource.meta.tracing;
 
   let mode = currentMode || ExploreMode.Metrics;
   const supportedModes: ExploreMode[] = [];
@@ -685,6 +686,10 @@ const getModesForDatasource = (dataSource: DataSourceApi, currentMode: ExploreMo
 
   if (supportsLogs) {
     supportedModes.push(ExploreMode.Logs);
+  }
+
+  if (supportsTracing) {
+    supportedModes.push(ExploreMode.Tracing);
   }
 
   if (supportedModes.length === 1) {

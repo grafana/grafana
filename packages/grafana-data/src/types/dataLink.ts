@@ -27,6 +27,9 @@ export interface DataLink {
   // 1: If exists, handle click directly
   // Not saved in JSON/DTO
   onClick?: (event: DataLinkClickEvent) => void;
+
+  // At the moment this is used for derived fields for metadata about internal linking.
+  meta?: any;
 }
 
 export type LinkTarget = '_blank' | '_self';

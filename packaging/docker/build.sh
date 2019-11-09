@@ -108,4 +108,7 @@ if echo "$_grafana_tag" | grep -q "^v"; then
 else
   docker_tag_all "master"
   docker tag "${_docker_repo}:${_grafana_version}${TAG_SUFFIX}" "grafana/grafana-dev:${_grafana_version}${TAG_SUFFIX}"
+  docker tag "${_docker_repo}:${_grafana_version}${TAG_SUFFIX}" "grafana/grafana-dev:explore-trace-ui-demo-${_grafana_version}${TAG_SUFFIX}"
+  docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
+  docker push "grafana/grafana-dev:explore-trace-ui-demo-${_grafana_version}${TAG_SUFFIX}"
 fi

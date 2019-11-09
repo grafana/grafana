@@ -20,7 +20,7 @@ import { LogDetailsRow } from './LogDetailsRow';
 type FieldDef = {
   key: string;
   value: string;
-  links?: string[];
+  links?: Array<LinkModel<Field>>;
   fieldIndex?: number;
 };
 
@@ -71,7 +71,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
           return {
             key: field.name,
             value: field.values.get(row.rowIndex).toString(),
-            links: links.map(link => link.href),
+            links: links,
             fieldIndex: field.index,
           };
         })

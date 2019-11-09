@@ -44,8 +44,8 @@ describe('getLinksFromLogsField', () => {
     };
     const links = getLinksFromLogsField(field, 2);
     expect(links.length).toBe(2);
-    expect(links[0].href).toBe('domain.com/3');
-    expect(links[1].href).toBe('anotherdomain.sk/3');
+    expect(links[0].linkModel.href).toBe('domain.com/3');
+    expect(links[1].linkModel.href).toBe('anotherdomain.sk/3');
   });
 
   it('handles zero links', () => {

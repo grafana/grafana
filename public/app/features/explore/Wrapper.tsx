@@ -5,9 +5,9 @@ import { connect } from 'react-redux';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
-import Explore from './Explore';
 import { CustomScrollbar, ErrorBoundaryAlert } from '@grafana/ui';
 import { resetExploreAction } from './state/actionTypes';
+import { SplitPane } from './SplitPane';
 
 interface WrapperProps {
   split: boolean;
@@ -25,13 +25,13 @@ export class Wrapper extends Component<WrapperProps> {
     return (
       <div className="page-scrollbar-wrapper">
         <CustomScrollbar autoHeightMin={'100%'} autoHeightMax={''} className="custom-scrollbar--page">
-          <div className="explore-wrapper">
+          <div style={{ height: '100%' }} className="explore-wrapper">
             <ErrorBoundaryAlert style="page">
-              <Explore exploreId={ExploreId.left} />
+              <SplitPane exploreId={ExploreId.left} />
             </ErrorBoundaryAlert>
             {split && (
               <ErrorBoundaryAlert style="page">
-                <Explore exploreId={ExploreId.right} />
+                <SplitPane exploreId={ExploreId.right} />
               </ErrorBoundaryAlert>
             )}
           </div>

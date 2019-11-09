@@ -84,6 +84,7 @@ import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
 import { PanelModel } from 'app/features/dashboard/state';
 import { DataSourceSrv } from '@grafana/runtime';
+import { makeExploreItemState } from './reducers';
 
 /**
  * Updates UI state and save it to the URL
@@ -524,7 +525,7 @@ export const stateSave = (): ThunkResult<void> => {
       },
     };
     urlStates.left = serializeStateToUrlParam(leftUrlState, true);
-    if (split) {
+    if (split && !right.externalUrl) {
       const rightUrlState: ExploreUrlState = {
         datasource: right.datasourceInstance.name,
         queries: right.queries.map(clearQueryKeys),
@@ -631,20 +632,62 @@ export function splitClose(itemId: ExploreId): ThunkResult<void> {
  * The right state is automatically initialized.
  * The copy keeps all query modifications but wipes the query results.
  */
-export function splitOpen(): ThunkResult<void> {
-  return (dispatch, getState) => {
+export function splitOpen(dataSourceName?: string, query?: string): ThunkResult<void> {
+  return async (dispatch, getState) => {
     // Clone left state to become the right state
-    const leftState = getState().explore[ExploreId.left];
-    const queryState = getState().location.query[ExploreId.left] as string;
-    const urlState = parseUrlState(queryState);
-    const itemState: ExploreItemState = {
-      ...leftState,
-      queries: leftState.queries.slice(),
-      urlState,
-    };
-    dispatch(splitOpenAction({ itemState }));
+    if (dataSourceName && query) {
+      const itemState = makeExploreItemState();
+      itemState.datasourceInstance = await getDatasourceSrv().get(dataSourceName);
+      // This is hardcoded for Jaeger right now
+      itemState.queries = [
+        {
+          query,
+          refId: 'A',
+        } as DataQuery,
+      ];
+
+      // This needs to be here otherwise, the new split state is overridden. This sets the new state
+      // split happens but the right split Explore component then checks the urlState and overwrites the item state
+      // by it. But we save the url state later on separate dispatch in this function so in the delay between we render
+      // with empty urlState for the right item.
+      const rightUrlState: ExploreUrlState = {
+        datasource: itemState.datasourceInstance.name,
+        queries: itemState.queries.map(clearQueryKeys),
+        range: toRawTimeRange(itemState.range),
+        mode: itemState.mode,
+        ui: {
+          showingGraph: itemState.showingGraph,
+          showingLogs: true,
+          showingTable: itemState.showingTable,
+          dedupStrategy: itemState.dedupStrategy,
+        },
+      };
+      itemState.urlState = rightUrlState;
+      dispatch(splitOpenAction({ itemState }));
+    } else {
+      const leftState: ExploreItemState = getState().explore[ExploreId.left];
+      const rightState: ExploreItemState = {
+        ...leftState,
+      };
+      const queryState = getState().location.query[ExploreId.left] as string;
+      const urlState = parseUrlState(queryState);
+      rightState.queries = leftState.queries.slice();
+      rightState.urlState = urlState;
+      dispatch(splitOpenAction({ itemState: rightState }));
+    }
+
     dispatch(stateSave());
   };
+}
+
+export function splitOpenWithUrl(url: string) {
+  const itemState = makeExploreItemState();
+  return splitOpenAction({
+    itemState: {
+      ...itemState,
+      externalUrl: url,
+    },
+  });
 }
 
 /**

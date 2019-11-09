@@ -14,12 +14,13 @@ import {
   TimeRange,
   LogsMetaItem,
   GraphSeriesXY,
+  Field,
 } from '@grafana/data';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 
-import { changeDedupStrategy, updateTimeRange } from './state/actions';
+import { changeDedupStrategy, updateTimeRange, splitOpen } from './state/actions';
 import { toggleLogLevelAction } from 'app/features/explore/state/actionTypes';
 import { deduplicatedRowsSelector } from 'app/features/explore/state/selectors';
 import { getTimeZone } from '../profile/state/selectors';
@@ -57,6 +58,7 @@ interface LogsContainerProps {
   syncedTimes: boolean;
   absoluteRange: AbsoluteTimeRange;
   isPaused: boolean;
+  splitOpen: typeof splitOpen;
 }
 
 export class LogsContainer extends PureComponent<LogsContainerProps> {
@@ -106,6 +108,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       width,
       isLive,
       exploreId,
+      splitOpen,
     } = this.props;
 
     return (
@@ -149,7 +152,20 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               scanRange={range.raw}
               width={width}
               getRowContext={this.getLogRowContext}
-              getFieldLinks={getLinksFromLogsField}
+              getFieldLinks={(field: Field, rowIndex: number) => {
+                const data = getLinksFromLogsField(field, rowIndex);
+                return data.map(d => {
+                  if (d.link.meta && d.link.meta.datasourceName) {
+                    return {
+                      ...d.linkModel,
+                      onClick: () => {
+                        splitOpen(d.link.meta.datasourceName, field.values.get(rowIndex));
+                      },
+                    };
+                  }
+                  return d.linkModel;
+                });
+              }}
             />
           </Collapse>
         </LogsCrossFadeTransition>
@@ -199,6 +215,7 @@ const mapDispatchToProps = {
   changeDedupStrategy,
   toggleLogLevelAction,
   updateTimeRange,
+  splitOpen,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(LogsContainer));
