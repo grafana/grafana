@@ -59,5 +59,7 @@ EXPOSE 3000
 
 COPY ./run.sh /run.sh
 
-USER grafana
+# UID 472 is the grafana user added above
+USER $GF_UID
+
 ENTRYPOINT [ "/run.sh" ]
