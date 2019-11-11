@@ -1,5 +1,4 @@
 import React from 'react';
-import memoizeOne from 'memoize-one';
 import { ExploreQueryFieldProps } from '@grafana/data';
 // @ts-ignore
 import Cascader from 'rc-cascader';
@@ -130,13 +129,11 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
     }
   };
 
-  makeHasMeasurement = memoizeOne((measurements: CascaderOption[]) => measurements && measurements.length > 0);
-
   render() {
     const { datasource } = this.props;
     const { measurements, measurement, field, error } = this.state;
     const cascadeText = getChooserText({ measurement, field, error });
-    const hasMeasurement = this.makeHasMeasurement(measurements);
+    const hasMeasurement = measurements && measurements.length > 0;
 
     return (
       <div className="gf-form-inline gf-form-inline--nowrap">
