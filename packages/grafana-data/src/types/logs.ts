@@ -1,5 +1,6 @@
 import { Labels } from './data';
 import { GraphSeriesXY } from './graph';
+import { DataFrame } from './dataFrame';
 
 /**
  * Mapping of log level abbreviation to canonical log level.
@@ -36,7 +37,19 @@ export interface LogsMetaItem {
 }
 
 export interface LogRowModel {
+  // Index of the field from which the entry has been created so that we do not show it later in log row details.
+  entryFieldIndex: number;
+
+  // Index of the row in the dataframe. As log rows can be stitched from multiple dataFrames, this does not have to be
+  // the same as rows final index when rendered.
+  rowIndex: number;
+
+  // Full DataFrame from which we parsed this log.
+  // TODO: refactor this so we do not need to pass whole dataframes in addition to also parsed data.
+  dataFrame: DataFrame;
   duplicates?: number;
+
+  // Actual log line
   entry: string;
   hasAnsi: boolean;
   labels: Labels;
@@ -48,6 +61,7 @@ export interface LogRowModel {
   timeEpochMs: number;
   timeLocal: string;
   timeUtc: string;
+  uid: string;
   uniqueLabels?: Labels;
 }
 
@@ -104,4 +118,11 @@ export interface LogsParser {
    * The parser accepts the line unless it returns undefined.
    */
   test: (line: string) => any;
+}
+
+export enum LogsDedupDescription {
+  none = 'No de-duplication',
+  exact = 'De-duplication of successive lines that are identical, ignoring ISO datetimes.',
+  numbers = 'De-duplication of successive lines that are identical when ignoring numbers, e.g., IP addresses, latencies.',
+  signature = 'De-duplication of successive lines that have identical punctuation and whitespace.',
 }

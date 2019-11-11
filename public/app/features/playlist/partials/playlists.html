@@ -53,15 +53,14 @@
     </table>
   </div>
   <div ng-if="ctrl.playlists.length === 0">
-    <empty-list-cta model="{
-      title: 'There are no playlists created yet',
-      buttonIcon: 'fa fa-plus',
-      buttonLink: 'playlists/create',
-      buttonTitle: ' Create Playlist',
-      proTip: 'You can use playlists to cycle dashboards on TVs without user control',
-      proTipLink: 'http://docs.grafana.org/reference/playlist/',
-      proTipLinkTitle: 'Learn more',
-      proTipTarget: '_blank'
-    }" />
+    <empty-list-cta
+      title="'There are no playlists created yet'"
+      buttonIcon="'fa fa-plus'"
+      buttonLink="'playlists/create'"
+      buttonTitle="'Create Playlist'" 
+      proTip="'You can use playlists to cycle dashboards on TVs without user control'"
+      proTipLink="'http://docs.grafana.org/reference/playlist/'" 
+      proTipLinkTitle="'Learn more'"
+      proTipTarget="'_blank'" />
   </div>
 </div>

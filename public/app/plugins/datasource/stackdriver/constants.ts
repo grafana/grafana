@@ -233,11 +233,15 @@ export const alignmentPeriods = [
   { text: 'grafana auto', value: 'grafana-auto' },
   { text: 'stackdriver auto', value: 'stackdriver-auto' },
   { text: '1m', value: '+60s' },
+  { text: '2m', value: '+120s' },
   { text: '5m', value: '+300s' },
+  { text: '10m', value: '+600s' },
   { text: '30m', value: '+1800s' },
   { text: '1h', value: '+3600s' },
+  { text: '3h', value: '+7200s' },
   { text: '6h', value: '+21600s' },
   { text: '1d', value: '+86400s' },
+  { text: '3d', value: '+259200s' },
   { text: '1w', value: '+604800s' },
 ];
 

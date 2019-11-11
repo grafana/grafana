@@ -1,6 +1,8 @@
 import angular from 'angular';
 import _ from 'lodash';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { CoreEvents } from 'app/types';
 
 export let iconMap = {
   'external link': 'fa-external-link',
@@ -18,14 +20,27 @@ export class DashLinksEditorCtrl {
   mode: any;
   link: any;
 
+  emptyListCta = {
+    title: 'There are no dashboard links added yet',
+    buttonIcon: 'gicon gicon-link',
+    buttonTitle: 'Add Dashboard Link',
+    infoBox: {
+      __html: `<p>
+      Dashboard Links allow you to place links to other dashboards and web sites directly in below the dashboard
+      header.
+    </p>`,
+    },
+    infoBoxTitle: 'What are Dashboard Links?',
+  };
+
   /** @ngInject */
-  constructor($scope: any, $rootScope: any) {
+  constructor($scope: any, $rootScope: GrafanaRootScope) {
     this.iconMap = iconMap;
     this.dashboard.links = this.dashboard.links || [];
     this.mode = 'list';
 
     $scope.$on('$destroy', () => {
-      $rootScope.appEvent('dash-links-updated');
+      $rootScope.appEvent(CoreEvents.dashLinksUpdated);
     });
   }
 
@@ -33,10 +48,10 @@ export class DashLinksEditorCtrl {
     this.mode = 'list';
   }
 
-  setupNew() {
+  setupNew = () => {
     this.mode = 'new';
     this.link = { type: 'dashboards', icon: 'external link' };
-  }
+  };
 
   addLink() {
     this.dashboard.links.push(this.link);

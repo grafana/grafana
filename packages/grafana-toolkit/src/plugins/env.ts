@@ -1,7 +1,7 @@
 import execa from 'execa';
 import path from 'path';
 import fs from 'fs';
-import { PluginBuildInfo } from '@grafana/ui';
+import { PluginBuildInfo } from '@grafana/data';
 import { JobInfo } from './types';
 
 const getJobFromProcessArgv = () => {
@@ -23,12 +23,21 @@ export const job = process.env.CIRCLE_JOB || getJobFromProcessArgv();
 
 export const getPluginBuildInfo = async (): Promise<PluginBuildInfo> => {
   if (process.env.CIRCLE_SHA1) {
-    return Promise.resolve({
+    const info: PluginBuildInfo = {
       time: Date.now(),
       repo: process.env.CIRCLE_REPOSITORY_URL,
       branch: process.env.CIRCLE_BRANCH,
       hash: process.env.CIRCLE_SHA1,
-    });
+    };
+    const pr = getPullRequestNumber();
+    const build = getBuildNumber();
+    if (pr) {
+      info.pr = pr;
+    }
+    if (build) {
+      info.number = build;
+    }
+    return Promise.resolve(info);
   }
   const branch = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
   const hash = await execa('git', ['rev-parse', 'HEAD']);

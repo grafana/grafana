@@ -1,43 +1,47 @@
 // Libraries
-import React, { FC, useContext } from 'react';
+import React, { FC } from 'react';
 // @ts-ignore
 import Prism from 'prismjs';
 // Components
 import { css } from 'emotion';
 import { DataLink } from '@grafana/data';
-import { ThemeContext } from '../../index';
 import { Button } from '../index';
 import { DataLinkEditor } from './DataLinkEditor';
 import { VariableSuggestion } from './DataLinkSuggestions';
+import { useTheme } from '../../themes/ThemeContext';
 
 interface DataLinksEditorProps {
   value: DataLink[];
-  onChange: (links: DataLink[]) => void;
+  onChange: (links: DataLink[], callback?: () => void) => void;
   suggestions: VariableSuggestion[];
   maxLinks?: number;
 }
 
-Prism.languages['links'] = {
-  builtInVariable: {
-    pattern: /(\${\w+})/,
-  },
+export const enableDatalinksPrismSyntax = () => {
+  Prism.languages['links'] = {
+    builtInVariable: {
+      pattern: /(\${\S+?})/,
+    },
+  };
 };
 
 export const DataLinksEditor: FC<DataLinksEditorProps> = React.memo(({ value, onChange, suggestions, maxLinks }) => {
-  const theme = useContext(ThemeContext);
+  const theme = useTheme();
+  enableDatalinksPrismSyntax();
 
   const onAdd = () => {
     onChange(value ? [...value, { url: '', title: '' }] : [{ url: '', title: '' }]);
   };
 
-  const onLinkChanged = (linkIndex: number, newLink: DataLink) => {
+  const onLinkChanged = (linkIndex: number, newLink: DataLink, callback?: () => void) => {
     onChange(
       value.map((item, listIndex) => {
         if (linkIndex === listIndex) {
           return newLink;
         }
         return item;
-      })
+      }),
+      callback
     );
   };
 
@@ -57,6 +61,7 @@ export const DataLinksEditor: FC<DataLinksEditorProps> = React.memo(({ value, on
             <DataLinkEditor
               key={index.toString()}
               index={index}
+              isLast={index === value.length - 1}
               value={link}
               onChange={onLinkChanged}
               onRemove={onRemove}
@@ -68,7 +73,7 @@ export const DataLinksEditor: FC<DataLinksEditorProps> = React.memo(({ value, on
 
       {(!value || (value && value.length < (maxLinks || Infinity))) && (
         <Button variant="inverse" icon="fa fa-plus" onClick={() => onAdd()}>
-          Create link
+          Add link
         </Button>
       )}
     </>

@@ -1,5 +1,4 @@
-import { PluginMeta, PluginBuildInfo } from '@grafana/ui';
-import { DataFrame } from '@grafana/data';
+import { PluginMeta, PluginBuildInfo, DataFrame, KeyValue } from '@grafana/data';
 
 export interface PluginPackageDetails {
   plugin: ZipFileInfo;
@@ -14,6 +13,7 @@ export interface PluginBuildReport {
   tests: TestResultsInfo[];
   pullRequest?: number;
   artifactsBaseURL?: string;
+  grafanaVersion?: KeyValue<string>;
 }
 
 export interface JobInfo {

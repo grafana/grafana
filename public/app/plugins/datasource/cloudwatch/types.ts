@@ -1,4 +1,4 @@
-import { DataQuery } from '@grafana/ui';
+import { DataQuery } from '@grafana/data';
 
 export interface CloudWatchQuery extends DataQuery {
   id: string;

@@ -28,7 +28,7 @@ export interface QueryResultBase {
   refId?: string;
 
   /**
-   * Used by some backend datasources to communicate back info about the execution (generated sql, timing)
+   * Used by some backend data sources to communicate back info about the execution (generated sql, timing)
    */
   meta?: QueryResultMeta;
 }
@@ -47,6 +47,7 @@ export interface TableData extends QueryResultBase {
   name?: string;
   columns: Column[];
   rows: any[][];
+  type?: string;
 }
 
 export type TimeSeriesValue = number | null;

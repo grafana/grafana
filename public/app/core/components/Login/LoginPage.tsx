@@ -41,24 +41,7 @@ export const LoginPage: FC = () => {
                   />
                 ) : null}
 
-                {isOauthEnabled ? (
-                  <>
-                    <div className="text-center login-divider">
-                      <div>
-                        <div className="login-divider-line" />
-                      </div>
-                      <div>
-                        <span className="login-divider-text">{disableLoginForm ? null : <span>or</span>}</span>
-                      </div>
-                      <div>
-                        <div className="login-divider-line" />
-                      </div>
-                    </div>
-                    <div className="clearfix" />
-
-                    <LoginServiceButtons />
-                  </>
-                ) : null}
+                <LoginServiceButtons />
                 {!disableUserSignUp ? <UserSignup /> : null}
               </div>
               <CSSTransition

@@ -7,19 +7,28 @@ import { FormLabel } from '../FormLabel/FormLabel';
 import { UnitPicker } from '../UnitPicker/UnitPicker';
 
 // Types
-import { toIntegerOrUndefined, SelectableValue, FieldConfig, toFloatOrUndefined, toNumberString } from '@grafana/data';
-
-import { VAR_SERIES_NAME, VAR_FIELD_NAME, VAR_CALC, VAR_CELL_PREFIX } from '../../utils/fieldDisplay';
+import {
+  VAR_SERIES_NAME,
+  VAR_FIELD_NAME,
+  VAR_CALC,
+  VAR_CELL_PREFIX,
+  toIntegerOrUndefined,
+  SelectableValue,
+  FieldConfig,
+  toFloatOrUndefined,
+  toNumberString,
+} from '@grafana/data';
 
 const labelWidth = 6;
 
 export interface Props {
-  showMinMax: boolean;
+  showMinMax?: boolean;
+  showTitle?: boolean;
   value: FieldConfig;
   onChange: (value: FieldConfig, event?: React.SyntheticEvent<HTMLElement>) => void;
 }
 
-export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMinMax }) => {
+export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMinMax, showTitle }) => {
   const { unit, title } = value;
 
   const [decimals, setDecimals] = useState(
@@ -70,9 +79,9 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
     <div>
       Template Variables:
       <br />
-      {'$' + VAR_SERIES_NAME}
+      {'${' + VAR_SERIES_NAME + '}'}
       <br />
-      {'$' + VAR_FIELD_NAME}
+      {'${' + VAR_FIELD_NAME + '}'}
       <br />
       {'$' + VAR_CELL_PREFIX + '{N}'} / {'$' + VAR_CALC}
     </div>
@@ -80,14 +89,16 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
 
   return (
     <>
-      <FormField
-        label="Title"
-        labelWidth={labelWidth}
-        onChange={onTitleChange}
-        value={title}
-        tooltip={titleTooltip}
-        placeholder="Auto"
-      />
+      {showTitle && (
+        <FormField
+          label="Title"
+          labelWidth={labelWidth}
+          onChange={onTitleChange}
+          value={title}
+          tooltip={titleTooltip}
+          placeholder="Auto"
+        />
+      )}
 
       <div className="gf-form">
         <FormLabel width={labelWidth}>Unit</FormLabel>

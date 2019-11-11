@@ -17,4 +17,4 @@ const RightAlignedStory: React.FunctionComponent<{}> = ({ children }) => {
   );
 };
 
-export const withRighAlignedStory = (story: RenderFunction) => <RightAlignedStory>{story()}</RightAlignedStory>;
+export const withRightAlignedStory = (story: RenderFunction) => <RightAlignedStory>{story()}</RightAlignedStory>;

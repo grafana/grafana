@@ -4,7 +4,6 @@
   "id": "cloudwatch",
   "category": "cloud",
 
-  "hiddenQueries": true,
   "metrics": true,
   "alerting": true,
   "annotations": true,

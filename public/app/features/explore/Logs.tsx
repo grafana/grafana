@@ -1,34 +1,29 @@
-import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
-import { rangeUtil } from '@grafana/data';
-import { Switch } from '@grafana/ui';
 import {
+  rangeUtil,
   RawTimeRange,
   LogLevel,
   TimeZone,
   AbsoluteTimeRange,
   LogsMetaKind,
-  LogsModel,
   LogsDedupStrategy,
   LogRowModel,
+  LogsDedupDescription,
+  LogsMetaItem,
+  GraphSeriesXY,
+  LinkModel,
+  Field,
 } from '@grafana/data';
+import { Switch, LogLabels, ToggleButtonGroup, ToggleButton, LogRows } from '@grafana/ui';
 
-import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
-
-import { LogLabels } from './LogLabels';
-import { LogRow } from './LogRow';
-import { LogsDedupDescription } from 'app/core/logs_model';
-import ExploreGraphPanel from './ExploreGraphPanel';
-import { ExploreId } from 'app/types';
-
-const PREVIEW_LIMIT = 100;
+import { ExploreGraphPanel } from './ExploreGraphPanel';
 
 function renderMetaItem(value: any, kind: LogsMetaKind) {
   if (kind === LogsMetaKind.LabelsMap) {
     return (
       <span className="logs-meta-item__labels">
-        <LogLabels labels={value} plain />
+        <LogLabels labels={value} plain getRows={() => []} />
       </span>
     );
   }
@@ -36,10 +31,12 @@ function renderMetaItem(value: any, kind: LogsMetaKind) {
 }
 
 interface Props {
-  data?: LogsModel;
-  dedupedData?: LogsModel;
+  logRows?: LogRowModel[];
+  logsMeta?: LogsMetaItem[];
+  logsSeries?: GraphSeriesXY[];
+  dedupedRows?: LogRowModel[];
+
   width: number;
-  exploreId: ExploreId;
   highlighterExpressions: string[];
   loading: boolean;
   absoluteRange: AbsoluteTimeRange;
@@ -47,56 +44,25 @@ interface Props {
   scanning?: boolean;
   scanRange?: RawTimeRange;
   dedupStrategy: LogsDedupStrategy;
-  hiddenLogLevels: Set<LogLevel>;
-  onChangeTime?: (range: AbsoluteTimeRange) => void;
-  onClickLabel?: (label: string, value: string) => void;
+  onChangeTime: (range: AbsoluteTimeRange) => void;
+  onClickFilterLabel?: (key: string, value: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string) => void;
   onStartScanning?: () => void;
   onStopScanning?: () => void;
   onDedupStrategyChange: (dedupStrategy: LogsDedupStrategy) => void;
   onToggleLogLevel: (hiddenLogLevels: LogLevel[]) => void;
   getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
+  getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 
 interface State {
-  deferLogs: boolean;
-  renderAll: boolean;
-  showLabels: boolean;
   showTime: boolean;
 }
 
-export default class Logs extends PureComponent<Props, State> {
-  deferLogsTimer: NodeJS.Timer;
-  renderAllTimer: NodeJS.Timer;
-
+export class Logs extends PureComponent<Props, State> {
   state = {
-    deferLogs: true,
-    renderAll: false,
-    showLabels: false,
     showTime: true,
   };
-
-  componentDidMount() {
-    // Staged rendering
-    if (this.state.deferLogs) {
-      const { data } = this.props;
-      const rowCount = data && data.rows ? data.rows.length : 0;
-      // Render all right away if not too far over the limit
-      const renderAll = rowCount <= PREVIEW_LIMIT * 2;
-      this.deferLogsTimer = setTimeout(() => this.setState({ deferLogs: false, renderAll }), rowCount);
-    }
-  }
-
-  componentDidUpdate(prevProps: Props, prevState: State) {
-    // Staged rendering
-    if (prevState.deferLogs && !this.state.deferLogs && !this.state.renderAll) {
-      this.renderAllTimer = setTimeout(() => this.setState({ renderAll: true }), 2000);
-    }
-  }
-
-  componentWillUnmount() {
-    clearTimeout(this.deferLogsTimer);
-    clearTimeout(this.renderAllTimer);
-  }
 
   onChangeDedup = (dedup: LogsDedupStrategy) => {
     const { onDedupStrategyChange } = this.props;
@@ -106,60 +72,64 @@ export default class Logs extends PureComponent<Props, State> {
     return onDedupStrategyChange(dedup);
   };
 
-  onChangeLabels = (event: React.SyntheticEvent) => {
-    const target = event.target as HTMLInputElement;
-    this.setState({
-      showLabels: target.checked,
-    });
-  };
-
-  onChangeTime = (event: React.SyntheticEvent) => {
-    const target = event.target as HTMLInputElement;
-    this.setState({
-      showTime: target.checked,
-    });
+  onChangeTime = (event?: React.SyntheticEvent) => {
+    const target = event && (event.target as HTMLInputElement);
+    if (target) {
+      this.setState({
+        showTime: target.checked,
+      });
+    }
   };
 
   onToggleLogLevel = (hiddenRawLevels: string[]) => {
-    const hiddenLogLevels: LogLevel[] = hiddenRawLevels.map((level: LogLevel) => LogLevel[level]);
+    const hiddenLogLevels: LogLevel[] = hiddenRawLevels.map(level => LogLevel[level as LogLevel]);
     this.props.onToggleLogLevel(hiddenLogLevels);
   };
 
   onClickScan = (event: React.SyntheticEvent) => {
     event.preventDefault();
-    this.props.onStartScanning();
+    if (this.props.onStartScanning) {
+      this.props.onStartScanning();
+    }
   };
 
   onClickStopScan = (event: React.SyntheticEvent) => {
     event.preventDefault();
-    this.props.onStopScanning();
+    if (this.props.onStopScanning) {
+      this.props.onStopScanning();
+    }
   };
 
   render() {
     const {
-      data,
-      exploreId,
+      logRows,
+      logsMeta,
+      logsSeries,
       highlighterExpressions,
       loading = false,
-      onClickLabel,
+      onClickFilterLabel,
+      onClickFilterOutLabel,
       timeZone,
       scanning,
       scanRange,
       width,
-      dedupedData,
+      dedupedRows,
+      absoluteRange,
+      onChangeTime,
+      getFieldLinks,
     } = this.props;
 
-    if (!data) {
+    if (!logRows) {
       return null;
     }
 
-    const { deferLogs, renderAll, showLabels, showTime } = this.state;
+    const { showTime } = this.state;
     const { dedupStrategy } = this.props;
-    const hasData = data && data.rows && data.rows.length > 0;
-    const hasLabel = hasData && dedupedData.hasUniqueLabels;
-    const dedupCount = dedupedData.rows.reduce((sum, row) => sum + row.duplicates, 0);
-    const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
-    const meta = data.meta ? [...data.meta] : [];
+    const hasData = logRows && logRows.length > 0;
+    const dedupCount = dedupedRows
+      ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
+      : 0;
+    const meta = logsMeta ? [...logsMeta] : [];
 
     if (dedupStrategy !== LogsDedupStrategy.none) {
       meta.push({
@@ -169,29 +139,31 @@ export default class Logs extends PureComponent<Props, State> {
       });
     }
 
-    // Staged rendering
-    const processedRows = dedupedData.rows;
-    const firstRows = processedRows.slice(0, PREVIEW_LIMIT);
-    const lastRows = processedRows.slice(PREVIEW_LIMIT);
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
-
-    // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
-    const getRows = () => processedRows;
+    const series = logsSeries ? logsSeries : [];
 
     return (
       <div className="logs-panel">
         <div className="logs-panel-graph">
           <ExploreGraphPanel
-            exploreId={exploreId}
-            series={data.series}
+            series={series}
             width={width}
             onHiddenSeriesChanged={this.onToggleLogLevel}
+            loading={loading}
+            absoluteRange={absoluteRange}
+            isStacked={true}
+            showPanel={false}
+            showingGraph={true}
+            showingTable={true}
+            timeZone={timeZone}
+            showBars={true}
+            showLines={false}
+            onUpdateTimeRange={onChangeTime}
           />
         </div>
         <div className="logs-panel-options">
           <div className="logs-panel-controls">
             <Switch label="Time" checked={showTime} onChange={this.onChangeTime} transparent />
-            <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
             <ToggleButtonGroup label="Dedup" transparent={true}>
               {Object.keys(LogsDedupStrategy).map((dedupType: string, i) => (
                 <ToggleButton
@@ -220,41 +192,20 @@ export default class Logs extends PureComponent<Props, State> {
           </div>
         )}
 
-        <div className="logs-rows">
-          {hasData &&
-          !deferLogs && // Only inject highlighterExpression in the first set for performance reasons
-            firstRows.map((row, index) => (
-              <LogRow
-                key={index}
-                getRows={getRows}
-                getRowContext={this.props.getRowContext}
-                highlighterExpressions={highlighterExpressions}
-                row={row}
-                showDuplicates={showDuplicates}
-                showLabels={showLabels && hasLabel}
-                showTime={showTime}
-                timeZone={timeZone}
-                onClickLabel={onClickLabel}
-              />
-            ))}
-          {hasData &&
-            !deferLogs &&
-            renderAll &&
-            lastRows.map((row, index) => (
-              <LogRow
-                key={PREVIEW_LIMIT + index}
-                getRows={getRows}
-                getRowContext={this.props.getRowContext}
-                row={row}
-                showDuplicates={showDuplicates}
-                showLabels={showLabels && hasLabel}
-                showTime={showTime}
-                timeZone={timeZone}
-                onClickLabel={onClickLabel}
-              />
-            ))}
-          {hasData && deferLogs && <span>Rendering {dedupedData.rows.length} rows...</span>}
-        </div>
+        <LogRows
+          logRows={logRows}
+          deduplicatedRows={dedupedRows}
+          dedupStrategy={dedupStrategy}
+          getRowContext={this.props.getRowContext}
+          highlighterExpressions={highlighterExpressions}
+          rowLimit={logRows ? logRows.length : undefined}
+          onClickFilterLabel={onClickFilterLabel}
+          onClickFilterOutLabel={onClickFilterOutLabel}
+          showTime={showTime}
+          timeZone={timeZone}
+          getFieldLinks={getFieldLinks}
+        />
+
         {!loading && !hasData && !scanning && (
           <div className="logs-panel-nodata">
             No logs found.

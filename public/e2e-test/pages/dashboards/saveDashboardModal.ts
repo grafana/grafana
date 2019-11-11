@@ -6,7 +6,7 @@ import {
   InputPageObjectType,
   InputPageObject,
   PageObject,
-} from '@grafana/toolkit';
+} from '@grafana/toolkit/src/e2e';
 
 export interface SaveDashboardModal {
   name: InputPageObjectType;

@@ -155,7 +155,13 @@ func (val *StringMapValue) Value() map[string]string {
 // slices and the actual interpolation is done on all simple string values in the structure. It returns a copy of any
 // map or slice value instead of modifying them in place.
 func tranformInterface(i interface{}) interface{} {
-	switch reflect.TypeOf(i).Kind() {
+	typeOf := reflect.TypeOf(i)
+
+	if typeOf == nil {
+		return nil
+	}
+
+	switch typeOf.Kind() {
 	case reflect.Slice:
 		return transformSlice(i.([]interface{}))
 	case reflect.Map:

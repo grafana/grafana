@@ -2,66 +2,83 @@
 import * as _ from 'lodash';
 import { Task, TaskRunner } from './task';
 import GithubClient from '../utils/githubClient';
+import difference from 'lodash/difference';
+import chalk from 'chalk';
+import { useSpinner } from '../utils/useSpinner';
 
 interface ChangelogOptions {
   milestone: string;
 }
 
-const changelogTaskRunner: TaskRunner<ChangelogOptions> = async ({ milestone }) => {
-  const githubClient = new GithubClient();
-  const client = githubClient.client;
+const filterBugs = (item: any) => {
+  if (item.title.match(/fix|fixes/i)) {
+    return true;
+  }
+  if (item.labels.find((label: any) => label.name === 'type/bug')) {
+    return true;
+  }
+  return false;
+};
 
-  if (!/^\d+$/.test(milestone)) {
-    console.log('Use milestone number not title, find number in milestone url');
-    return;
+const getPackageChangelog = (packageName: string, issues: any[]) => {
+  if (issues.length === 0) {
+    return '';
   }
 
-  const res = await client.get('/issues', {
-    params: {
-      state: 'closed',
-      per_page: 100,
-      labels: 'add to changelog',
-      milestone: milestone,
-    },
-  });
-
-  const issues = res.data;
-
-  const bugs = _.sortBy(
-    issues.filter((item: any) => {
-      if (item.title.match(/fix|fixes/i)) {
-        return true;
-      }
-      if (item.labels.find((label: any) => label.name === 'type/bug')) {
-        return true;
-      }
-      return false;
-    }),
-    'title'
-  );
-
-  const notBugs = _.sortBy(issues.filter((item: any) => !bugs.find((bug: any) => bug === item)), 'title');
-
-  let markdown = '';
+  let markdown = chalk.bold.yellow(`\n\n/*** ${packageName} changelog  ***/\n\n`);
+  const bugs = _.sortBy(issues.filter(filterBugs), 'title');
+  const notBugs = _.sortBy(difference(issues, bugs), 'title');
 
   if (notBugs.length > 0) {
-    markdown = '### Features / Enhancements\n';
-  }
-
-  for (const item of notBugs) {
-    markdown += getMarkdownLineForIssue(item);
+    markdown += '### Features / Enhancements\n';
+    for (const item of notBugs) {
+      markdown += getMarkdownLineForIssue(item);
+    }
   }
 
   if (bugs.length > 0) {
     markdown += '\n### Bug Fixes\n';
+    for (const item of bugs) {
+      markdown += getMarkdownLineForIssue(item);
+    }
   }
 
-  for (const item of bugs) {
-    markdown += getMarkdownLineForIssue(item);
-  }
-
-  console.log(markdown);
+  return markdown;
 };
+
+const changelogTaskRunner: TaskRunner<ChangelogOptions> = useSpinner<ChangelogOptions>(
+  'Generating changelog',
+  async ({ milestone }) => {
+    const githubClient = new GithubClient();
+    const client = githubClient.client;
+
+    if (!/^\d+$/.test(milestone)) {
+      console.log('Use milestone number not title, find number in milestone url');
+      return;
+    }
+
+    const res = await client.get('/issues', {
+      params: {
+        state: 'closed',
+        per_page: 100,
+        labels: 'add to changelog',
+        milestone: milestone,
+      },
+    });
+
+    const issues = res.data;
+    const toolkitIssues = issues.filter((item: any) =>
+      item.labels.find((label: any) => label.name === 'area/grafana/toolkit')
+    );
+
+    let markdown = '';
+
+    markdown += getPackageChangelog('Grafana', issues);
+    markdown += getPackageChangelog('grafana-toolkit', toolkitIssues);
+
+    console.log(markdown);
+  }
+);
 
 function getMarkdownLineForIssue(item: any) {
   const githubGrafanaUrl = 'https://github.com/grafana/grafana';

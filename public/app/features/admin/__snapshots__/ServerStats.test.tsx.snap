@@ -160,6 +160,7 @@ exports[`ServerStats Should render table with stats 1`] = `
               <li>
                 <a
                   href="http://docs.grafana.org"
+                  rel="noopener"
                   target="_blank"
                 >
                   <i
@@ -171,6 +172,7 @@ exports[`ServerStats Should render table with stats 1`] = `
               <li>
                 <a
                   href="https://grafana.com/services/support"
+                  rel="noopener"
                   target="_blank"
                 >
                   <i
@@ -182,6 +184,7 @@ exports[`ServerStats Should render table with stats 1`] = `
               <li>
                 <a
                   href="https://community.grafana.com/"
+                  rel="noopener"
                   target="_blank"
                 >
                   <i
@@ -193,6 +196,7 @@ exports[`ServerStats Should render table with stats 1`] = `
               <li>
                 <a
                   href="https://grafana.com"
+                  rel="noopener"
                   target="_blank"
                 >
                   Grafana

@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"encoding/base32"
+	"errors"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	authproxy "github.com/grafana/grafana/pkg/middleware/auth_proxy"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -141,7 +143,8 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Valid api key", func(sc *scenarioContext) {
-			keyhash := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
+			keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
+			So(err, ShouldBeNil)
 
 			bus.AddHandler("test", func(query *models.GetApiKeyByNameQuery) error {
 				query.Result = &models.ApiKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash}
@@ -181,10 +184,10 @@ func TestMiddlewareContext(t *testing.T) {
 			mockGetTime()
 			defer resetGetTime()
 
-			keyhash := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
+			keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
+			So(err, ShouldBeNil)
 
 			bus.AddHandler("test", func(query *models.GetApiKeyByNameQuery) error {
-
 				// api key expired one second before
 				expires := getTime().Add(-1 * time.Second).Unix()
 				query.Result = &models.ApiKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash,
@@ -344,8 +347,9 @@ func TestMiddlewareContext(t *testing.T) {
 					return nil
 				})
 
-				key := fmt.Sprintf(cachePrefix, base32.StdEncoding.EncodeToString([]byte(name+"-"+group)))
-				sc.remoteCacheService.Set(key, int64(33), 0)
+				key := fmt.Sprintf(authproxy.CachePrefix, base32.StdEncoding.EncodeToString([]byte(name+"-"+group)))
+				err := sc.remoteCacheService.Set(key, int64(33), 0)
+				So(err, ShouldBeNil)
 				sc.fakeReq("GET", "/")
 
 				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
@@ -374,7 +378,7 @@ func TestMiddlewareContext(t *testing.T) {
 				sc.exec()
 
 				assert.False(t, *actualAuthProxyAutoSignUp)
-				assert.Equal(t, sc.resp.Code, 500)
+				assert.Equal(t, sc.resp.Code, 407)
 				assert.Nil(t, sc.context)
 			})
 
@@ -473,6 +477,36 @@ func TestMiddlewareContext(t *testing.T) {
 				sc.fakeReq("GET", "/")
 				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
 				sc.req.RemoteAddr = "[2001::23]:12345"
+				sc.exec()
+
+				Convey("Should return 407 status code", func() {
+					So(sc.resp.Code, ShouldEqual, 407)
+					So(sc.context, ShouldBeNil)
+				})
+			})
+
+			middlewareScenario(t, "Should return 407 status code if LDAP says no", func(sc *scenarioContext) {
+				bus.AddHandler("LDAP", func(cmd *models.UpsertUserCommand) error {
+					return errors.New("Do not add user")
+				})
+
+				sc.fakeReq("GET", "/")
+				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
+				sc.exec()
+
+				Convey("Should return 407 status code", func() {
+					So(sc.resp.Code, ShouldEqual, 407)
+					So(sc.context, ShouldBeNil)
+				})
+			})
+
+			middlewareScenario(t, "Should return 407 status code if there is cache mishap", func(sc *scenarioContext) {
+				bus.AddHandler("Do not have the user", func(query *models.GetSignedInUserQuery) error {
+					return errors.New("Do not add user")
+				})
+
+				sc.fakeReq("GET", "/")
+				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
 				sc.exec()
 
 				Convey("Should return 407 status code", func() {

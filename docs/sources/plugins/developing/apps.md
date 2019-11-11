@@ -10,15 +10,15 @@ weight = 4
 
 # Grafana Apps
 
-App plugins are a new kind of grafana plugin that can bundle datasource and panel plugins within one package. It also enable the plugin author to create custom pages within grafana. The custom pages enable the plugin author to include things like documentation, sign up forms or controlling other services using HTTP requests.
+App plugins are a new kind of grafana plugin that can bundle data source and panel plugins within one package. It also enable the plugin author to create custom pages within grafana. The custom pages enable the plugin author to include things like documentation, sign up forms or controlling other services using HTTP requests.
 
-Datasource and panel plugins will show up like normal plugins. The app pages will be available in the main menu.
+Data source and panel plugins will show up like normal plugins. The app pages will be available in the main menu.
 
 {{< imgbox img="/img/docs/v3/app-in-main-menu.png" caption="App in Main Menu" >}}
 
 ## Enabling app plugins
 
-After installing an app, it has to be enabled before it shows up as a datasource or panel. You can do that on the app page in the config tab.
+After installing an app, it has to be enabled before it shows up as a data source or panel. You can do that on the app page in the config tab.
 
 ## Developing an App Plugin
 

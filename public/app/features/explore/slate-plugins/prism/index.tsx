@@ -1,5 +1,7 @@
 import React from 'react';
 import Prism from 'prismjs';
+import { Decoration } from 'slate';
+import { Editor } from '@grafana/slate-react';
 
 const TOKEN_MARK = 'prism-token';
 
@@ -31,13 +33,13 @@ export default function PrismPlugin({ definition, language }: { definition: any;
      * @return {Element}
      */
 
-    renderMark(props: any): JSX.Element {
-      const { children, mark } = props;
+    renderDecoration(props: any, editor: Editor, next: () => any): JSX.Element {
+      const { children, decoration } = props;
       // Only apply spans to marks identified by this plugin
-      if (mark.type !== TOKEN_MARK) {
-        return undefined;
+      if (decoration.type !== TOKEN_MARK) {
+        return next();
       }
-      const className = `token ${mark.data.get('types')}`;
+      const className = `token ${decoration.data.get('types')}`;
       return <span className={className}>{children}</span>;
     },
 
@@ -48,7 +50,7 @@ export default function PrismPlugin({ definition, language }: { definition: any;
      * @return {Array}
      */
 
-    decorateNode(node: any): any[] {
+    decorateNode(node: any, editor: Editor, next: () => any): any[] {
       if (node.type !== 'paragraph') {
         return [];
       }
@@ -57,7 +59,7 @@ export default function PrismPlugin({ definition, language }: { definition: any;
       const tstring = texts.map((t: { text: any }) => t.text).join('\n');
       const grammar = Prism.languages[language];
       const tokens = Prism.tokenize(tstring, grammar);
-      const decorations: any[] = [];
+      const decorations: Decoration[] = [];
       let startText = texts.shift();
       let endText = startText;
       let startOffset = 0;
@@ -92,13 +94,18 @@ export default function PrismPlugin({ definition, language }: { definition: any;
 
           // Inject marks from up the tree (acc) as well
           if (typeof token !== 'string' || acc) {
-            const range = {
-              anchorKey: startText.key,
-              anchorOffset: startOffset,
-              focusKey: endText.key,
-              focusOffset: endOffset,
-              marks: [{ type: TOKEN_MARK, data: { types } }],
-            };
+            const range = node.createDecoration({
+              anchor: {
+                key: startText.key,
+                offset: startOffset,
+              },
+              focus: {
+                key: endText.key,
+                offset: endOffset,
+              },
+              type: TOKEN_MARK,
+              data: { types },
+            });
 
             decorations.push(range);
           }

@@ -10,10 +10,9 @@ import (
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
-	"gopkg.in/ldap.v3"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"gopkg.in/ldap.v3"
 )
 
 // IConnection is interface for LDAP connection manipulation
@@ -47,6 +46,9 @@ type Server struct {
 // Bind authenticates the connection with the LDAP server
 // - with the username and password setup in the config
 // - or, anonymously
+//
+// Dial() sets the connection with the server for this Struct. Therefore, we require a
+// call to Dial() before being able to execute this function.
 func (server *Server) Bind() error {
 	if server.shouldAdminBind() {
 		if err := server.AdminBind(); err != nil {
@@ -140,6 +142,8 @@ func (server *Server) Dial() error {
 }
 
 // Close closes the LDAP connection
+// Dial() sets the connection with the server for this Struct. Therefore, we require a
+// call to Dial() before being able to execute this function.
 func (server *Server) Close() {
 	server.Connection.Close()
 }
@@ -159,6 +163,9 @@ func (server *Server) Close() {
 // user without login/password binding with LDAP server, in such case
 // we will perform "unauthenticated bind", then search for the
 // targeted user and then perform the bind with passed login/password.
+//
+// Dial() sets the connection with the server for this Struct. Therefore, we require a
+// call to Dial() before being able to execute this function.
 func (server *Server) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
@@ -232,6 +239,8 @@ func (server *Server) shouldSingleBind() bool {
 }
 
 // Users gets LDAP users by logins
+// Dial() sets the connection with the server for this Struct. Therefore, we require a
+// call to Dial() before being able to execute this function.
 func (server *Server) Users(logins []string) (
 	[]*models.ExternalUserInfo,
 	error,
@@ -399,12 +408,12 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 
 	for _, group := range server.Config.Groups {
 		// only use the first match for each org
-		if extUser.OrgRoles[group.OrgID] != "" {
+		if extUser.OrgRoles[group.OrgId] != "" {
 			continue
 		}
 
 		if isMemberOf(memberOf, group.GroupDN) {
-			extUser.OrgRoles[group.OrgID] = group.OrgRole
+			extUser.OrgRoles[group.OrgId] = group.OrgRole
 			if extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin {
 				extUser.IsGrafanaAdmin = group.IsGrafanaAdmin
 			}
@@ -415,6 +424,8 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 }
 
 // UserBind binds the user with the LDAP server
+// Dial() sets the connection with the server for this Struct. Therefore, we require a
+// call to Dial() before being able to execute this function.
 func (server *Server) UserBind(username, password string) error {
 	err := server.userBind(username, password)
 	if err != nil {
@@ -430,6 +441,8 @@ func (server *Server) UserBind(username, password string) error {
 }
 
 // AdminBind binds "admin" user with LDAP
+// Dial() sets the connection with the server for this Struct. Therefore, we require a
+// call to Dial() before being able to execute this function.
 func (server *Server) AdminBind() error {
 	err := server.userBind(server.Config.BindDN, server.Config.BindPassword)
 	if err != nil {

@@ -20,7 +20,7 @@ import {
   MIN_PANEL_HEIGHT,
   DEFAULT_PANEL_SPAN,
 } from 'app/core/constants';
-import { DataLinkBuiltInVars } from 'app/features/panel/panellinks/link_srv';
+import { DataLinkBuiltInVars } from '@grafana/ui';
 
 export class DashboardMigrator {
   dashboard: DashboardModel;
@@ -33,7 +33,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 19;
+    this.dashboard.schemaVersion = 21;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -436,6 +436,55 @@ export class DashboardMigrator {
       });
     }
 
+    if (oldVersion < 20) {
+      const updateLinks = (link: DataLink) => {
+        return {
+          ...link,
+          url: updateVariablesSyntax(link.url),
+        };
+      };
+      panelUpgrades.push((panel: any) => {
+        // For graph panel
+        if (panel.options && panel.options.dataLinks && _.isArray(panel.options.dataLinks)) {
+          panel.options.dataLinks = panel.options.dataLinks.map(updateLinks);
+        }
+
+        // For panel with fieldOptions
+        if (panel.options && panel.options.fieldOptions && panel.options.fieldOptions.defaults) {
+          if (panel.options.fieldOptions.defaults.links && _.isArray(panel.options.fieldOptions.defaults.links)) {
+            panel.options.fieldOptions.defaults.links = panel.options.fieldOptions.defaults.links.map(updateLinks);
+          }
+          if (panel.options.fieldOptions.defaults.title) {
+            panel.options.fieldOptions.defaults.title = updateVariablesSyntax(
+              panel.options.fieldOptions.defaults.title
+            );
+          }
+        }
+      });
+    }
+
+    if (oldVersion < 21) {
+      const updateLinks = (link: DataLink) => {
+        return {
+          ...link,
+          url: link.url.replace(/__series.labels/g, '__field.labels'),
+        };
+      };
+      panelUpgrades.push((panel: any) => {
+        // For graph panel
+        if (panel.options && panel.options.dataLinks && _.isArray(panel.options.dataLinks)) {
+          panel.options.dataLinks = panel.options.dataLinks.map(updateLinks);
+        }
+
+        // For panel with fieldOptions
+        if (panel.options && panel.options.fieldOptions && panel.options.fieldOptions.defaults) {
+          if (panel.options.fieldOptions.defaults.links && _.isArray(panel.options.fieldOptions.defaults.links)) {
+            panel.options.fieldOptions.defaults.links = panel.options.fieldOptions.defaults.links.map(updateLinks);
+          }
+        }
+      });
+    }
+
     if (panelUpgrades.length === 0) {
       return;
     }
@@ -636,11 +685,16 @@ function upgradePanelLink(link: any): DataLink {
   let url = link.url;
 
   if (!url && link.dashboard) {
-    url = `/dashboard/db/${kbn.slugifyForUrl(link.dashboard)}`;
+    url = `dashboard/db/${kbn.slugifyForUrl(link.dashboard)}`;
   }
 
   if (!url && link.dashUri) {
-    url = `/dashboard/${link.dashUri}`;
+    url = `dashboard/${link.dashUri}`;
+  }
+
+  // some models are incomplete and have no dashboard or dashUri
+  if (!url) {
+    url = '/';
   }
 
   if (link.keepTime) {
@@ -660,4 +714,27 @@ function upgradePanelLink(link: any): DataLink {
     title: link.title,
     targetBlank: link.targetBlank,
   };
+}
+
+function updateVariablesSyntax(text: string) {
+  const legacyVariableNamesRegex = /(__series_name)|(\$__series_name)|(__value_time)|(__field_name)|(\$__field_name)/g;
+
+  return text.replace(legacyVariableNamesRegex, (match, seriesName, seriesName1, valueTime, fieldName, fieldName1) => {
+    if (seriesName) {
+      return '__series.name';
+    }
+    if (seriesName1) {
+      return '${__series.name}';
+    }
+    if (valueTime) {
+      return '__value.time';
+    }
+    if (fieldName) {
+      return '__field.name';
+    }
+    if (fieldName1) {
+      return '${__field.name}';
+    }
+    return match;
+  });
 }

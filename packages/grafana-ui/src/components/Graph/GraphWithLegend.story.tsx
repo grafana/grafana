@@ -3,34 +3,63 @@ import { storiesOf } from '@storybook/react';
 
 import { select, text } from '@storybook/addon-knobs';
 import { withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { GraphWithLegend } from './GraphWithLegend';
+import { GraphWithLegend, GraphWithLegendProps } from './GraphWithLegend';
 
-import { mockGraphWithLegendData } from './mockGraphWithLegendData';
-import { action } from '@storybook/addon-actions';
 import { LegendPlacement, LegendDisplayMode } from '../Legend/Legend';
+import { GraphSeriesXY, FieldType, ArrayVector, dateTime } from '@grafana/data';
 const GraphWithLegendStories = storiesOf('Visualizations/Graph/GraphWithLegend', module);
 GraphWithLegendStories.addDecorator(withHorizontallyCenteredStory);
 
-const getStoriesKnobs = () => {
-  const containerWidth = select(
-    'Container width',
-    {
-      Small: '200px',
-      Medium: '500px',
-      'Full width': '100%',
+const series: GraphSeriesXY[] = [
+  {
+    data: [[1546372800000, 10], [1546376400000, 20], [1546380000000, 10]],
+    color: 'red',
+    isVisible: true,
+    label: 'A-series',
+    seriesIndex: 0,
+    timeField: {
+      type: FieldType.time,
+      name: 'time',
+      values: new ArrayVector([1546372800000, 1546376400000, 1546380000000]),
+      config: {},
     },
-    '100%'
-  );
-  const containerHeight = select(
-    'Container height',
-    {
-      Small: '200px',
-      Medium: '400px',
-      'Full height': '100%',
+    valueField: {
+      type: FieldType.number,
+      name: 'a-series',
+      values: new ArrayVector([10, 20, 10]),
+      config: { color: 'red' },
     },
-    '400px'
-  );
+    timeStep: 3600000,
+    yAxis: {
+      index: 1,
+    },
+  },
+  {
+    data: [[1546372800000, 20], [1546376400000, 30], [1546380000000, 40]],
+    color: 'blue',
+    isVisible: true,
+    label: 'B-series',
+    seriesIndex: 1,
+    timeField: {
+      type: FieldType.time,
+      name: 'time',
+      values: new ArrayVector([1546372800000, 1546376400000, 1546380000000]),
+      config: {},
+    },
+    valueField: {
+      type: FieldType.number,
+      name: 'b-series',
+      values: new ArrayVector([20, 30, 40]),
+      config: { color: 'blue' },
+    },
+    timeStep: 3600000,
+    yAxis: {
+      index: 1,
+    },
+  },
+];
 
+const getStoriesKnobs = () => {
   const rightAxisSeries = text('Right y-axis series, i.e. A,C', '');
 
   const legendPlacement = select<LegendPlacement>(
@@ -41,7 +70,7 @@ const getStoriesKnobs = () => {
     },
     'under'
   );
-  const renderLegendAsTable = select(
+  const renderLegendAsTable = select<any>(
     'Render legend as',
     {
       list: false,
@@ -51,8 +80,6 @@ const getStoriesKnobs = () => {
   );
 
   return {
-    containerWidth,
-    containerHeight,
     rightAxisSeries,
     legendPlacement,
     renderLegendAsTable,
@@ -60,28 +87,37 @@ const getStoriesKnobs = () => {
 };
 
 GraphWithLegendStories.add('default', () => {
-  const { containerWidth, containerHeight, rightAxisSeries, legendPlacement, renderLegendAsTable } = getStoriesKnobs();
-
-  const props = mockGraphWithLegendData({
-    onSeriesColorChange: action('Series color changed'),
-    onSeriesAxisToggle: action('Series y-axis changed'),
+  const { legendPlacement, rightAxisSeries, renderLegendAsTable } = getStoriesKnobs();
+  const props: GraphWithLegendProps = {
+    series: series.map(s => {
+      if (
+        rightAxisSeries
+          .split(',')
+          .map(s => s.trim())
+          .indexOf(s.label.split('-')[0]) > -1
+      ) {
+        s.yAxis = { index: 2 };
+      } else {
+        s.yAxis = { index: 1 };
+      }
+      return s;
+    }),
     displayMode: renderLegendAsTable ? LegendDisplayMode.Table : LegendDisplayMode.List,
-  });
-  const series = props.series.map(s => {
-    if (
-      rightAxisSeries
-        .split(',')
-        .map(s => s.trim())
-        .indexOf(s.label.split('-')[0]) > -1
-    ) {
-      s.yAxis = { index: 2 };
-    }
+    isLegendVisible: true,
+    onToggleSort: () => {},
+    timeRange: {
+      from: dateTime(1546372800000),
+      to: dateTime(1546380000000),
+      raw: {
+        from: dateTime(1546372800000),
+        to: dateTime(1546380000000),
+      },
+    },
+    timeZone: 'browser',
+    width: 600,
+    height: 300,
+    placement: legendPlacement,
+  };
 
-    return s;
-  });
-  return (
-    <div style={{ width: containerWidth, height: containerHeight }}>
-      <GraphWithLegend {...props} placement={legendPlacement} series={series} />,
-    </div>
-  );
+  return <GraphWithLegend {...props} />;
 });

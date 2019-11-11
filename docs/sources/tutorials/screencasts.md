@@ -17,7 +17,7 @@ weight = 10
     </a>
     <figcaption>
        <a href="https://youtu.be/iUj6DwfBh88?list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2" target="_blank" rel="noopener noreferrer">
-        #10 Dashboard Discovery & Sharing
+        #10 Dashboard Discovery and Sharing
        </a>
     </figcaption>
   </figure>
@@ -61,7 +61,7 @@ weight = 10
     </a>
     <figcaption>
        <a href="https://youtu.be/9ZCMVNxUf6s?list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2" target="_blank" rel="noopener noreferrer">
-        #6 Adding data sources, users & orgs.
+        #6 Adding data sources, users and orgs.
        </a>
     </figcaption>
   </figure>
@@ -72,7 +72,7 @@ weight = 10
     </a>
     <figcaption>
        <a href="https://youtu.be/E-gMFv84FE8?list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2" target="_blank" rel="noopener noreferrer">
-       #5 Install & Setup on Redhat / Centos
+       #5 Install and Setup on Redhat / Centos
        </a>
     </figcaption>
   </figure>
@@ -83,7 +83,7 @@ weight = 10
     </a>
     <figcaption>
        <a href="https://youtu.be/JY22EBOR9hQ?list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2" target="_blank" rel="noopener noreferrer">
-       #4 Install & Setup on Ubuntu / Debian
+       #4 Install and Setup on Ubuntu / Debian
        </a>
     </figcaption>
   </figure>

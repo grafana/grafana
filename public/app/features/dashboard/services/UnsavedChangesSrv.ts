@@ -2,11 +2,12 @@ import angular, { IQService, ILocationService } from 'angular';
 import { ChangeTracker } from './ChangeTracker';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardSrv } from './DashboardSrv';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 /** @ngInject */
 export function unsavedChangesSrv(
   this: any,
-  $rootScope: any,
+  $rootScope: GrafanaRootScope,
   $q: IQService,
   $location: ILocationService,
   $timeout: any,

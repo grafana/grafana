@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery } from '../types';
-import { DataQueryRequest, PanelData } from '@grafana/ui';
+import { DataQueryRequest, PanelData } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 interface Props {
@@ -60,7 +60,7 @@ export default class PromLink extends Component<Props, State> {
   render() {
     const { href } = this.state;
     return (
-      <a href={href} target="_blank">
+      <a href={href} target="_blank" rel="noopener">
         <i className="fa fa-share-square-o" /> Prometheus
       </a>
     );

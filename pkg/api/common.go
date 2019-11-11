@@ -55,7 +55,9 @@ func (r *NormalResponse) WriteTo(ctx *m.ReqContext) {
 		header[k] = v
 	}
 	ctx.Resp.WriteHeader(r.status)
-	ctx.Resp.Write(r.body)
+	if _, err := ctx.Resp.Write(r.body); err != nil {
+		ctx.Logger.Error("Error writing to response", "err", err)
+	}
 }
 
 func (r *NormalResponse) Cache(ttl string) *NormalResponse {
@@ -134,4 +136,16 @@ func Respond(status int, body interface{}) *NormalResponse {
 		status: status,
 		header: make(http.Header),
 	}
+}
+
+type RedirectResponse struct {
+	location string
+}
+
+func (r *RedirectResponse) WriteTo(ctx *m.ReqContext) {
+	ctx.Redirect(r.location)
+}
+
+func Redirect(location string) *RedirectResponse {
+	return &RedirectResponse{location: location}
 }

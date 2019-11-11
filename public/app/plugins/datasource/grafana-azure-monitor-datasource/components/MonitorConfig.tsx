@@ -46,7 +46,7 @@ export class MonitorConfig extends PureComponent<Props, State> {
       ...this.state.config,
       jsonData: {
         ...this.state.config.jsonData,
-        cloudName,
+        cloudName: cloudName.value,
       },
     });
   };
@@ -54,8 +54,8 @@ export class MonitorConfig extends PureComponent<Props, State> {
   onTenantIdChange = (tenantId: string) => {
     this.props.onDatasourceUpdate({
       ...this.state.config,
-      editorJsonData: {
-        ...this.state.config.editorJsonData,
+      jsonData: {
+        ...this.state.config.jsonData,
         tenantId,
       },
     });
@@ -64,8 +64,8 @@ export class MonitorConfig extends PureComponent<Props, State> {
   onClientIdChange = (clientId: string) => {
     this.props.onDatasourceUpdate({
       ...this.state.config,
-      editorJsonData: {
-        ...this.state.config.editorJsonData,
+      jsonData: {
+        ...this.state.config.jsonData,
         clientId,
       },
     });
@@ -74,8 +74,8 @@ export class MonitorConfig extends PureComponent<Props, State> {
   onClientSecretChange = (clientSecret: string) => {
     this.props.onDatasourceUpdate({
       ...this.state.config,
-      editorSecureJsonData: {
-        ...this.state.config.editorSecureJsonData,
+      secureJsonData: {
+        ...this.state.config.secureJsonData,
         clientSecret,
       },
     });
@@ -95,8 +95,8 @@ export class MonitorConfig extends PureComponent<Props, State> {
   onSubscriptionSelect = (subscription: SelectableValue<string>) => {
     this.props.onDatasourceUpdate({
       ...this.state.config,
-      editorJsonData: {
-        ...this.state.config.editorJsonData,
+      jsonData: {
+        ...this.state.config.jsonData,
         subscriptionId: subscription.value,
       },
     });
@@ -111,10 +111,10 @@ export class MonitorConfig extends PureComponent<Props, State> {
           selectedAzureCloud={config.jsonData.cloudName}
           azureCloudOptions={azureClouds}
           subscriptionOptions={subscriptions}
-          selectedSubscription={config.editorJsonData.subscriptionId}
-          tenantId={config.editorJsonData.tenantId}
-          clientId={config.editorJsonData.clientId}
-          clientSecret={config.editorSecureJsonData.clientSecret}
+          selectedSubscription={config.jsonData.subscriptionId}
+          tenantId={config.jsonData.tenantId}
+          clientId={config.jsonData.clientId}
+          clientSecret={config.secureJsonData.clientSecret}
           clientSecretConfigured={config.secureJsonFields.clientSecret}
           onAzureCloudChange={this.onAzureCloudSelect}
           onSubscriptionSelectChange={this.onSubscriptionSelect}

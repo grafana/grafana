@@ -2,17 +2,23 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import _ from 'lodash';
-
 // Utils & Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { Emitter } from 'app/core/utils/emitter';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { DataQuery, DataSourceApi, PanelData, DataQueryRequest } from '@grafana/ui';
-import { TimeRange, LoadingState } from '@grafana/data';
+import { ErrorBoundaryAlert } from '@grafana/ui';
+import {
+  DataQuery,
+  DataSourceApi,
+  PanelData,
+  PanelEvents,
+  TimeRange,
+  LoadingState,
+  toLegacyResponseData,
+} from '@grafana/data';
 import { DashboardModel } from '../state/DashboardModel';
 
 interface Props {
@@ -33,7 +39,7 @@ interface State {
   datasource: DataSourceApi | null;
   isCollapsed: boolean;
   hasTextEditMode: boolean;
-  queryResponse?: PanelData;
+  data?: PanelData;
 }
 
 export class QueryEditorRow extends PureComponent<Props, State> {
@@ -46,7 +52,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     isCollapsed: false,
     loadedDataSourceValue: undefined,
     hasTextEditMode: false,
-    queryResponse: null,
+    data: null,
   };
 
   componentDidMount() {
@@ -89,19 +95,17 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   componentDidUpdate(prevProps: Props) {
     const { loadedDataSourceValue } = this.state;
-    const { data, query } = this.props;
+    const { data, query, panel } = this.props;
 
     if (data !== prevProps.data) {
-      this.setState({ queryResponse: filterPanelDataToQuery(data, query.refId) });
+      this.setState({ data: filterPanelDataToQuery(data, query.refId) });
 
       if (this.angularScope) {
         this.angularScope.range = getTimeSrv().timeRange();
       }
 
       if (this.angularQueryEditor) {
-        // Some query controllers listen to data error events and need a digest
-        // for some reason this needs to be done in next tick
-        setTimeout(this.angularQueryEditor.digest);
+        notifyAngularQueryEditorsOfData(panel, data, this.angularQueryEditor);
       }
     }
 
@@ -135,8 +139,8 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   renderPluginEditor() {
-    const { query, data, onChange } = this.props;
-    const { datasource, queryResponse } = this.state;
+    const { query, onChange } = this.props;
+    const { datasource, data } = this.state;
 
     if (datasource.components.QueryCtrl) {
       return <div ref={element => (this.element = element)} />;
@@ -151,8 +155,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
           datasource={datasource}
           onChange={onChange}
           onRunQuery={this.onRunQuery}
-          queryResponse={queryResponse}
-          panelData={data}
+          data={data}
         />
       );
     }
@@ -257,10 +260,35 @@ export class QueryEditorRow extends PureComponent<Props, State> {
             </button>
           </div>
         </div>
-        <div className={bodyClasses}>{this.renderPluginEditor()}</div>
+        <div className={bodyClasses}>
+          <ErrorBoundaryAlert>{this.renderPluginEditor()}</ErrorBoundaryAlert>
+        </div>
       </div>
     );
   }
+}
+
+// To avoid sending duplicate events for each row we have this global cached object here
+// So we can check if we already emitted this legacy data event
+let globalLastPanelDataCache: PanelData = null;
+
+function notifyAngularQueryEditorsOfData(panel: PanelModel, data: PanelData, editor: AngularComponent) {
+  if (data === globalLastPanelDataCache) {
+    return;
+  }
+
+  globalLastPanelDataCache = data;
+
+  if (data.state === LoadingState.Done) {
+    const legacy = data.series.map(v => toLegacyResponseData(v));
+    panel.events.emit(PanelEvents.dataReceived, legacy);
+  } else if (data.state === LoadingState.Error) {
+    panel.events.emit(PanelEvents.dataError, data.error);
+  }
+
+  // Some query controllers listen to data error events and need a digest
+  // for some reason this needs to be done in next tick
+  setTimeout(editor.digest);
 }
 
 export interface AngularQueryComponentScope {
@@ -287,10 +315,6 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
     return undefined;
   }
 
-  // Don't pass the request if all requests are the same
-  const request: DataQueryRequest = undefined;
-  // TODO: look in sub-requets to match the info
-
   // Only say this is an error if the error links to the query
   let state = LoadingState.Done;
   const error = data.error && data.error.refId === refId ? data.error : undefined;
@@ -298,10 +322,13 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
     state = LoadingState.Error;
   }
 
+  const timeRange = data.timeRange;
+
   return {
+    ...data,
     state,
     series,
-    request,
     error,
+    timeRange,
   };
 }

@@ -1,9 +1,9 @@
 import { readCSV, toCSV, CSVHeaderStyle } from './csv';
-import { getDataFrameRow } from './processDataFrame';
+import { getDataFrameRow } from '../dataframe/processDataFrame';
 
 // Test with local CSV files
 import fs from 'fs';
-import { toDataFrameDTO } from './processDataFrame';
+import { toDataFrameDTO } from '../dataframe/processDataFrame';
 
 describe('read csv', () => {
   it('should get X and y', () => {

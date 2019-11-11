@@ -1,16 +1,22 @@
 // Libraries
-import _ from 'lodash';
-import { Subscription, of } from 'rxjs';
-import { webSocket } from 'rxjs/webSocket';
-import { catchError, map } from 'rxjs/operators';
-
+import { isEmpty, isString, fromPairs, map as lodashMap } from 'lodash';
 // Services & Utils
-import { dateMath } from '@grafana/data';
+import {
+  dateMath,
+  DataFrame,
+  LogRowModel,
+  DateTime,
+  AnnotationEvent,
+  DataFrameView,
+  LoadingState,
+  ArrayVector,
+  FieldType,
+  FieldConfig,
+} from '@grafana/data';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
 import { logStreamToDataFrame } from './result_transformer';
 import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
-
 // Types
 import {
   PluginMeta,
@@ -18,16 +24,16 @@ import {
   DataSourceInstanceSettings,
   DataQueryError,
   DataQueryRequest,
-  DataStreamObserver,
-  DataStreamState,
   DataQueryResponse,
-} from '@grafana/ui';
-
-import { DataFrame, LogRowModel, LoadingState, DateTime } from '@grafana/data';
-import { LokiQuery, LokiOptions } from './types';
+  AnnotationQueryRequest,
+} from '@grafana/data';
+import { LokiQuery, LokiOptions, LokiLogsStream, LokiResponse } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
+import { LiveTarget, LiveStreams } from './live_streams';
+import { Observable, from, merge, of } from 'rxjs';
+import { map, filter } from 'rxjs/operators';
 
 export const DEFAULT_MAX_LINES = 1000;
 
@@ -53,7 +59,7 @@ interface LokiContextQueryOptions {
 }
 
 export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
-  private subscriptions: { [key: string]: Subscription } = null;
+  private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;
 
@@ -67,7 +73,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines, 10) || DEFAULT_MAX_LINES;
-    this.subscriptions = {};
   }
 
   _request(apiUrl: string, data?: any, options?: any) {
@@ -82,23 +87,25 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return this.backendSrv.datasourceRequest(req);
   }
 
-  prepareLiveTarget(target: LokiQuery, options: DataQueryRequest<LokiQuery>) {
-    const interpolated = this.templateSrv.replace(target.expr);
+  prepareLiveTarget(target: LokiQuery, options: DataQueryRequest<LokiQuery>): LiveTarget {
+    const interpolated = this.templateSrv.replace(target.expr, {}, this.interpolateQueryExpr);
     const { query, regexp } = parseQuery(interpolated);
     const refId = target.refId;
     const baseUrl = this.instanceSettings.url;
     const params = serializeParams({ query, regexp });
     const url = convertToWebSocketUrl(`${baseUrl}/api/prom/tail?${params}`);
+
     return {
       query,
       regexp,
       url,
       refId,
+      size: Math.min(options.maxDataPoints || Infinity, this.maxLines),
     };
   }
 
   prepareQueryTarget(target: LokiQuery, options: DataQueryRequest<LokiQuery>) {
-    const interpolated = this.templateSrv.replace(target.expr);
+    const interpolated = this.templateSrv.replace(target.expr, {}, this.interpolateQueryExpr);
     const { query, regexp } = parseQuery(interpolated);
     const start = this.getTime(options.range.from, false);
     const end = this.getTime(options.range.to, true);
@@ -109,25 +116,16 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       regexp,
       start,
       end,
-      limit: this.maxLines,
+      limit: Math.min(options.maxDataPoints || Infinity, this.maxLines),
       refId,
     };
   }
 
-  unsubscribe = (refId: string) => {
-    const subscription = this.subscriptions[refId];
-    if (subscription && !subscription.closed) {
-      subscription.unsubscribe();
-      delete this.subscriptions[refId];
-    }
-  };
-
   processError = (err: any, target: any): DataQueryError => {
     const error: DataQueryError = {
-      message: 'Unknown error during query transaction. Please check JS console logs.',
+      message: (err && err.statusText) || 'Unknown error during query transaction. Please check JS console logs.',
       refId: target.refId,
     };
-
     if (err.data) {
       if (typeof err.data === 'string') {
         error.message = err.data;
@@ -146,19 +144,21 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return error;
   };
 
-  processResult = (data: any, target: any): DataFrame[] => {
+  processResult = (data: LokiLogsStream | LokiResponse, target: any): DataFrame[] => {
     const series: DataFrame[] = [];
 
     if (Object.keys(data).length === 0) {
       return series;
     }
 
-    if (!data.streams) {
-      return [logStreamToDataFrame(data, target.refId)];
+    if (!(data as any).streams) {
+      return [logStreamToDataFrame(data as LokiLogsStream, false, target.refId)];
     }
 
+    data = data as LokiResponse;
     for (const stream of data.streams || []) {
       const dataFrame = logStreamToDataFrame(stream);
+      this.enhanceDataFrame(dataFrame);
       dataFrame.refId = target.refId;
       dataFrame.meta = {
         searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.query, target.regexp)),
@@ -170,85 +170,80 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return series;
   };
 
-  runLiveQueries = (options: DataQueryRequest<LokiQuery>, observer?: DataStreamObserver) => {
-    const liveTargets = options.targets
-      .filter(target => target.expr && !target.hide && target.live)
-      .map(target => this.prepareLiveTarget(target, options));
-
-    for (const liveTarget of liveTargets) {
-      const subscription = webSocket(liveTarget.url)
-        .pipe(
-          map((results: any[]) => {
-            const delta = this.processResult(results, liveTarget);
-            const state: DataStreamState = {
-              key: `loki-${liveTarget.refId}`,
-              request: options,
-              state: LoadingState.Streaming,
-              delta,
-              unsubscribe: () => this.unsubscribe(liveTarget.refId),
-            };
-
-            return state;
-          }),
-          catchError(err => {
-            const error = this.processError(err, liveTarget);
-            const state: DataStreamState = {
-              key: `loki-${liveTarget.refId}`,
-              request: options,
-              state: LoadingState.Error,
-              error,
-              unsubscribe: () => this.unsubscribe(liveTarget.refId),
-            };
-
-            return of(state);
-          })
-        )
-        .subscribe({
-          next: state => observer(state),
-        });
-
-      this.subscriptions[liveTarget.refId] = subscription;
-    }
+  /**
+   * Runs live queries which in this case means creating a websocket and listening on it for new logs.
+   * This returns a bit different dataFrame than runQueries as it returns single dataframe even if there are multiple
+   * Loki streams, sets only common labels on dataframe.labels and has additional dataframe.fields.labels for unique
+   * labels per row.
+   */
+  runLiveQuery = (options: DataQueryRequest<LokiQuery>, target: LokiQuery): Observable<DataQueryResponse> => {
+    const liveTarget = this.prepareLiveTarget(target, options);
+    const stream = this.streams.getStream(liveTarget);
+    return stream.pipe(
+      map(data => {
+        return {
+          data,
+          key: `loki-${liveTarget.refId}`,
+          state: LoadingState.Streaming,
+        };
+      })
+    );
   };
 
-  runQueries = async (options: DataQueryRequest<LokiQuery>) => {
-    const queryTargets = options.targets
-      .filter(target => target.expr && !target.hide && !target.live)
-      .map(target => this.prepareQueryTarget(target, options));
-
-    if (queryTargets.length === 0) {
-      return Promise.resolve({ data: [] });
-    }
-
-    const queries = queryTargets.map(target =>
-      this._request('/api/prom/query', target).catch((err: any) => {
+  runQuery = (options: DataQueryRequest<LokiQuery>, target: LokiQuery): Observable<DataQueryResponse> => {
+    const query = this.prepareQueryTarget(target, options);
+    return from(
+      this._request('/api/prom/query', query).catch((err: any) => {
         if (err.cancelled) {
           return err;
         }
 
-        const error: DataQueryError = this.processError(err, target);
+        const error: DataQueryError = this.processError(err, query);
         throw error;
       })
+    ).pipe(
+      filter((response: any) => (response.cancelled ? false : true)),
+      map((response: any) => {
+        const data = this.processResult(response.data, query);
+        return { data, key: query.refId };
+      })
     );
-
-    return Promise.all(queries).then((results: any[]) => {
-      let series: DataFrame[] = [];
-
-      for (let i = 0; i < results.length; i++) {
-        const result = results[i];
-        if (result.data) {
-          series = series.concat(this.processResult(result.data, queryTargets[i]));
-        }
-      }
-
-      return { data: series };
-    });
   };
 
-  async query(options: DataQueryRequest<LokiQuery>, observer?: DataStreamObserver) {
-    this.runLiveQueries(options, observer);
+  query(options: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
+    const subQueries = options.targets
+      .filter(target => target.expr && !target.hide)
+      .map(target => {
+        if (target.liveStreaming) {
+          return this.runLiveQuery(options, target);
+        }
+        return this.runQuery(options, target);
+      });
 
-    return this.runQueries(options);
+    // No valid targets, return the empty result to save a round trip.
+    if (isEmpty(subQueries)) {
+      return of({
+        data: [],
+        state: LoadingState.Done,
+      });
+    }
+
+    return merge(...subQueries);
+  }
+
+  interpolateVariablesInQueries(queries: LokiQuery[]): LokiQuery[] {
+    let expandedQueries = queries;
+    if (queries && queries.length > 0) {
+      expandedQueries = queries.map(query => {
+        const expandedQuery = {
+          ...query,
+          datasource: this.name,
+          expr: this.templateSrv.replace(query.expr, {}, this.interpolateQueryExpr),
+        };
+        return expandedQuery;
+      });
+    }
+    return expandedQueries;
   }
 
   async importQueries(queries: LokiQuery[], originMeta: PluginMeta): Promise<LokiQuery[]> {
@@ -264,12 +259,30 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     });
   }
 
+  interpolateQueryExpr(value: any, variable: any) {
+    // if no multi or include all do not regexEscape
+    if (!variable.multi && !variable.includeAll) {
+      return lokiRegularEscape(value);
+    }
+
+    if (typeof value === 'string') {
+      return lokiSpecialRegexEscape(value);
+    }
+
+    const escapedValues = lodashMap(value, lokiSpecialRegexEscape);
+    return escapedValues.join('|');
+  }
+
   modifyQuery(query: LokiQuery, action: any): LokiQuery {
     const parsed = parseQuery(query.expr || '');
     let { query: selector } = parsed;
     switch (action.type) {
       case 'ADD_FILTER': {
         selector = addLabelToSelector(selector, action.key, action.value);
+        break;
+      }
+      case 'ADD_FILTER_OUT': {
+        selector = addLabelToSelector(selector, action.key, action.value, '!=');
         break;
       }
       default:
@@ -284,7 +297,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   getTime(date: string | DateTime, roundUp: boolean) {
-    if (_.isString(date)) {
+    if (isString(date)) {
       date = dateMath.parse(date, roundUp);
     }
     return Math.ceil(date.valueOf() * 1e6);
@@ -334,11 +347,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       const result = await this._request('/api/prom/query', target);
       if (result.data) {
         for (const stream of result.data.streams || []) {
-          const dataFrame = logStreamToDataFrame(stream);
-          if (reverse) {
-            dataFrame.reverse();
-          }
-          series.push(dataFrame);
+          series.push(logStreamToDataFrame(stream, reverse));
         }
       }
 
@@ -390,6 +399,118 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         return { status: 'error', message: message };
       });
   }
+
+  async annotationQuery(options: AnnotationQueryRequest<LokiQuery>): Promise<AnnotationEvent[]> {
+    if (!options.annotation.expr) {
+      return [];
+    }
+
+    const request = queryRequestFromAnnotationOptions(options);
+    const { data } = await this.runQuery(request, request.targets[0]).toPromise();
+    const annotations: AnnotationEvent[] = [];
+
+    for (const frame of data) {
+      const tags: string[] = [];
+      for (const field of frame.fields) {
+        if (field.labels) {
+          tags.push.apply(tags, Object.values(field.labels));
+        }
+      }
+      const view = new DataFrameView<{ ts: string; line: string }>(frame);
+
+      view.forEachRow(row => {
+        annotations.push({
+          time: new Date(row.ts).valueOf(),
+          text: row.line,
+          tags,
+        });
+      });
+    }
+
+    return annotations;
+  }
+
+  /**
+   * Adds new fields and DataLinks to DataFrame based on DataSource instance config.
+   * @param dataFrame
+   */
+  enhanceDataFrame(dataFrame: DataFrame): void {
+    if (!this.instanceSettings.jsonData) {
+      return;
+    }
+
+    const derivedFields = this.instanceSettings.jsonData.derivedFields || [];
+    if (derivedFields.length) {
+      const fields = fromPairs(
+        derivedFields.map(field => {
+          const config: FieldConfig = {};
+          if (field.url) {
+            config.links = [
+              {
+                url: field.url,
+                title: '',
+              },
+            ];
+          }
+          const dataFrameField = {
+            name: field.name,
+            type: FieldType.string,
+            config,
+            values: new ArrayVector<string>([]),
+          };
+
+          return [field.name, dataFrameField];
+        })
+      );
+
+      const view = new DataFrameView(dataFrame);
+      view.forEachRow((row: { line: string }) => {
+        for (const field of derivedFields) {
+          const logMatch = row.line.match(field.matcherRegex);
+          fields[field.name].values.add(logMatch && logMatch[1]);
+        }
+      });
+
+      dataFrame.fields = [...dataFrame.fields, ...Object.values(fields)];
+    }
+  }
+}
+
+function queryRequestFromAnnotationOptions(options: AnnotationQueryRequest<LokiQuery>): DataQueryRequest<LokiQuery> {
+  const refId = `annotation-${options.annotation.name}`;
+  const target: LokiQuery = { refId, expr: options.annotation.expr };
+
+  return {
+    requestId: refId,
+    range: options.range,
+    targets: [target],
+    dashboardId: options.dashboard.id,
+    scopedVars: null,
+    startTime: Date.now(),
+
+    // This should mean the default defined on datasource is used.
+    maxDataPoints: 0,
+
+    // Dummy values, are required in type but not used here.
+    timezone: 'utc',
+    panelId: 0,
+    interval: '',
+    intervalMs: 0,
+  };
+}
+
+export function lokiRegularEscape(value: any) {
+  if (typeof value === 'string') {
+    return value.replace(/'/g, "\\\\'");
+  }
+  return value;
+}
+
+export function lokiSpecialRegexEscape(value: any) {
+  if (typeof value === 'string') {
+    return lokiRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&'));
+  }
+  return value;
 }
 
 export default LokiDatasource;

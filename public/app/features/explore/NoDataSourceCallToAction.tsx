@@ -14,6 +14,7 @@ export const NoDataSourceCallToAction = () => {
       <a
         href="http://docs.grafana.org/administration/provisioning/#datasources?utm_source=explore"
         target="_blank"
+        rel="noopener"
         className="text-link"
       >
         Learn more
@@ -29,6 +30,8 @@ export const NoDataSourceCallToAction = () => {
 
   const cardClassName = css`
     max-width: ${theme.breakpoints.lg};
+    margin-top: ${theme.spacing.md};
+    align-self: center;
   `;
 
   return (

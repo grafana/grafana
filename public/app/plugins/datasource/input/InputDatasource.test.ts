@@ -1,7 +1,7 @@
 import InputDatasource, { describeDataFrame } from './InputDatasource';
 import { InputQuery, InputOptions } from './types';
-import { readCSV, DataFrame, DataFrameHelper } from '@grafana/data';
-import { DataSourceInstanceSettings, PluginMeta } from '@grafana/ui';
+import { readCSV, DataFrame, MutableDataFrame, DataSourceInstanceSettings, PluginMeta } from '@grafana/data';
+
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 describe('InputDatasource', () => {
@@ -38,7 +38,7 @@ describe('InputDatasource', () => {
     expect(describeDataFrame(null)).toEqual('');
     expect(
       describeDataFrame([
-        new DataFrameHelper({
+        new MutableDataFrame({
           name: 'x',
           fields: [{ name: 'a' }],
         }),

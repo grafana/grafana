@@ -3,22 +3,22 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import find from 'lodash/find';
-
 // Types
 import { UrlQueryMap } from '@grafana/runtime';
-import { StoreState } from 'app/types';
+import { StoreState, AppNotificationSeverity, CoreEvents } from 'app/types';
+import { Alert, Tooltip } from '@grafana/ui';
 import {
-  PluginType,
+  AppPlugin,
   GrafanaPlugin,
-  PluginInclude,
   PluginDependencies,
+  PluginInclude,
+  PluginIncludeType,
   PluginMeta,
   PluginMetaInfo,
-  Tooltip,
-  AppPlugin,
-  PluginIncludeType,
-} from '@grafana/ui';
-import { NavModel, NavModelItem } from '@grafana/data';
+  PluginType,
+  NavModel,
+  NavModelItem,
+} from '@grafana/data';
 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
@@ -61,6 +61,9 @@ function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
           return plugin;
         });
       });
+    }
+    if (info.type === PluginType.renderer) {
+      return Promise.resolve({ meta: info } as GrafanaPlugin);
     }
     return Promise.reject('Unknown Plugin type: ' + info.type);
   });
@@ -140,7 +143,7 @@ class PluginPage extends PureComponent<Props, State> {
     const { plugin, nav } = this.state;
 
     if (!plugin) {
-      return <div>Plugin not found.</div>;
+      return <Alert severity={AppNotificationSeverity.Error} title="Plugin Not Found" />;
     }
 
     const active = nav.main.children.find(tab => tab.active);
@@ -170,7 +173,7 @@ class PluginPage extends PureComponent<Props, State> {
   }
 
   showUpdateInfo = () => {
-    appEvents.emit('show-modal', {
+    appEvents.emit(CoreEvents.showModal, {
       src: 'public/app/features/plugins/partials/update_instructions.html',
       model: this.state.plugin.meta,
     });
@@ -277,7 +280,7 @@ class PluginPage extends PureComponent<Props, State> {
           {info.links.map(link => {
             return (
               <li key={link.url}>
-                <a href={link.url} className="external-link" target="_blank">
+                <a href={link.url} className="external-link" target="_blank" rel="noopener">
                   {link.name}
                 </a>
               </li>
@@ -297,7 +300,21 @@ class PluginPage extends PureComponent<Props, State> {
         <Page.Contents isLoading={loading}>
           {!loading && (
             <div className="sidebar-container">
-              <div className="sidebar-content">{this.renderBody()}</div>
+              <div className="sidebar-content">
+                {plugin.loadError && (
+                  <Alert
+                    severity={AppNotificationSeverity.Error}
+                    title="Error Loading Plugin"
+                    children={
+                      <>
+                        Check the server startup logs for more information. <br />
+                        If this plugin was loaded from git, make sure it was compiled.
+                      </>
+                    }
+                  />
+                )}
+                {this.renderBody()}
+              </div>
               <aside className="page-sidebar">
                 {plugin && (
                   <section className="page-sidebar-section">
@@ -386,7 +403,7 @@ function getPluginTabsNav(
     text: meta.name,
     img: meta.info.logos.large,
     subTitle: meta.info.author.name,
-    breadcrumbs: [{ title: 'Plugins', url: '/plugins' }],
+    breadcrumbs: [{ title: 'Plugins', url: 'plugins' }],
     url: `${appSubUrl}${path}`,
     children: setActivePage(query.page as string, pages, defaultPage),
   };

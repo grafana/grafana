@@ -353,17 +353,32 @@ export class ElasticQueryBuilder {
         terms: {
           field: queryDef.field,
           size: size,
-          order: {
-            _term: 'asc',
-          },
+          order: {},
         },
       },
     };
 
-    if (this.esVersion >= 60) {
-      query.aggs['1'].terms.order = {
-        _key: 'asc',
-      };
+    // Default behaviour is to order results by { _key: asc }
+    // queryDef.order allows selection of asc/desc
+    // queryDef.orderBy allows selection of doc_count ordering (defaults desc)
+
+    const { orderBy = 'key', order = orderBy === 'doc_count' ? 'desc' : 'asc' } = queryDef;
+
+    if (['asc', 'desc'].indexOf(order) < 0) {
+      throw { message: `Invalid query sort order ${order}` };
+    }
+
+    switch (orderBy) {
+      case 'key':
+      case 'term':
+        const keyname = this.esVersion >= 60 ? '_key' : '_term';
+        query.aggs['1'].terms.order[keyname] = order;
+        break;
+      case 'doc_count':
+        query.aggs['1'].terms.order['_count'] = order;
+        break;
+      default:
+        throw { message: `Invalid query sort type ${orderBy}` };
     }
 
     return query;

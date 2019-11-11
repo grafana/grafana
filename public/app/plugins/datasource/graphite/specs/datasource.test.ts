@@ -73,11 +73,11 @@ describe('graphiteDatasource', () => {
 
     it('should return series list', () => {
       expect(results.data.length).toBe(1);
-      expect(results.data[0].target).toBe('prod1.count');
+      expect(results.data[0].name).toBe('prod1.count');
     });
 
     it('should convert to millisecond resolution', () => {
-      expect(results.data[0].datapoints[0][0]).toBe(10);
+      expect(results.data[0].fields[0].values.get(0)).toBe(10);
     });
   });
 
@@ -355,6 +355,28 @@ describe('graphiteDatasource', () => {
       expect(requestOptions.headers).toHaveProperty('Content-Type', 'application/x-www-form-urlencoded');
       expect(requestOptions.data).toMatch(`query=bar`);
       expect(requestOptions).toHaveProperty('params');
+    });
+
+    it('should interpolate $__searchFilter with searchFilter', () => {
+      ctx.ds.metricFindQuery('app.$__searchFilter', { searchFilter: 'backend' }).then((data: any) => {
+        results = data;
+      });
+
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/metrics/find');
+      expect(requestOptions.params).toEqual({});
+      expect(requestOptions.data).toEqual('query=app.backend*');
+      expect(results).not.toBe(null);
+    });
+
+    it('should interpolate $__searchFilter with default when searchFilter is missing', () => {
+      ctx.ds.metricFindQuery('app.$__searchFilter', {}).then((data: any) => {
+        results = data;
+      });
+
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/metrics/find');
+      expect(requestOptions.params).toEqual({});
+      expect(requestOptions.data).toEqual('query=app.*');
+      expect(results).not.toBe(null);
     });
   });
 });

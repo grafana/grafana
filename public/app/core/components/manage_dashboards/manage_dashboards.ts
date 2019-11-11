@@ -5,6 +5,7 @@ import { SearchSrv } from 'app/core/services/search_srv';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/nav_model_srv';
 import { ContextSrv } from 'app/core/services/context_srv';
+import { CoreEvents } from 'app/types';
 
 export interface Section {
   id: number;
@@ -200,7 +201,7 @@ export class ManageDashboardsCtrl {
       text += `selected dashboard${dashCount === 1 ? '' : 's'}?`;
     }
 
-    appEvents.emit('confirm-modal', {
+    appEvents.emit(CoreEvents.showConfirmModal, {
       title: 'Delete',
       text: text,
       text2: text2,
@@ -236,7 +237,7 @@ export class ManageDashboardsCtrl {
       '<move-to-folder-modal dismiss="dismiss()" ' +
       'dashboards="model.dashboards" after-save="model.afterSave()">' +
       '</move-to-folder-modal>';
-    appEvents.emit('show-modal', {
+    appEvents.emit(CoreEvents.showModal, {
       templateHtml: template,
       modalClass: 'modal--narrow',
       model: {

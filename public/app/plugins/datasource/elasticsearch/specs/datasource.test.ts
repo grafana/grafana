@@ -1,12 +1,12 @@
 import angular, { IQService } from 'angular';
 import { dateMath } from '@grafana/data';
 import _ from 'lodash';
-import { ElasticDatasource, getMaxConcurrenShardRequestOrDefault } from '../datasource';
+import { ElasticDatasource } from '../datasource';
 import { toUtc, dateTime } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { DataSourceInstanceSettings } from '@grafana/ui';
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { ElasticsearchOptions } from '../types';
 
 describe('ElasticDatasource', function(this: any) {
@@ -14,7 +14,7 @@ describe('ElasticDatasource', function(this: any) {
     datasourceRequest: jest.fn(),
   };
 
-  const $rootScope: any = {
+  const $rootScope = {
     $on: jest.fn(),
     appEvent: jest.fn(),
   };
@@ -643,30 +643,6 @@ describe('ElasticDatasource', function(this: any) {
 
     it('should not set terms aggregation size to 0', () => {
       expect(body['aggs']['1']['terms'].size).not.toBe(0);
-    });
-  });
-});
-
-describe('getMaxConcurrenShardRequestOrDefault', () => {
-  const testCases = [
-    { version: 50, expectedMaxConcurrentShardRequests: 256 },
-    { version: 50, maxConcurrentShardRequests: 50, expectedMaxConcurrentShardRequests: 50 },
-    { version: 56, expectedMaxConcurrentShardRequests: 256 },
-    { version: 56, maxConcurrentShardRequests: 256, expectedMaxConcurrentShardRequests: 256 },
-    { version: 56, maxConcurrentShardRequests: 5, expectedMaxConcurrentShardRequests: 256 },
-    { version: 56, maxConcurrentShardRequests: 200, expectedMaxConcurrentShardRequests: 200 },
-    { version: 70, expectedMaxConcurrentShardRequests: 5 },
-    { version: 70, maxConcurrentShardRequests: 256, expectedMaxConcurrentShardRequests: 5 },
-    { version: 70, maxConcurrentShardRequests: 5, expectedMaxConcurrentShardRequests: 5 },
-    { version: 70, maxConcurrentShardRequests: 6, expectedMaxConcurrentShardRequests: 6 },
-  ];
-
-  testCases.forEach(tc => {
-    it(`version = ${tc.version}, maxConcurrentShardRequests = ${tc.maxConcurrentShardRequests}`, () => {
-      const options = { esVersion: tc.version, maxConcurrentShardRequests: tc.maxConcurrentShardRequests };
-      expect(getMaxConcurrenShardRequestOrDefault(options as ElasticsearchOptions)).toBe(
-        tc.expectedMaxConcurrentShardRequests
-      );
     });
   });
 });

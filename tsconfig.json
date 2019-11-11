@@ -31,10 +31,10 @@
     "typeRoots": ["node_modules/@types", "public/app/types"],
     "paths": {
       "app": ["app"],
-      "sass": ["sass"]
+      "sass": ["sass"],
+      "@grafana/slate-react": ["../node_modules/@types/slate-react"]
     },
-    "skipLibCheck": true,
-    "preserveSymlinks": true
+    "skipLibCheck": true
   },
   "include": [
     "public/app/**/*.ts",

@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -8,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	"golang.org/x/xerrors"
 
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -46,7 +48,7 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 
 	metrics.MAlertingResultState.WithLabelValues(string(evalContext.Rule.State)).Inc()
 	if evalContext.shouldUpdateAlertState() {
-		handler.log.Info("New state change", "alertId", evalContext.Rule.ID, "newState", evalContext.Rule.State, "prev state", evalContext.PrevAlertState)
+		handler.log.Info("New state change", "ruleId", evalContext.Rule.ID, "newState", evalContext.Rule.State, "prev state", evalContext.PrevAlertState)
 
 		cmd := &models.SetAlertStateCommand{
 			AlertId:  evalContext.Rule.ID,
@@ -98,6 +100,15 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 		}
 	}
 
-	handler.notifier.SendIfNeeded(evalContext)
+	if err := handler.notifier.SendIfNeeded(evalContext); err != nil {
+		if xerrors.Is(err, context.Canceled) {
+			handler.log.Debug("handler.notifier.SendIfNeeded returned context.Canceled")
+		} else if xerrors.Is(err, context.DeadlineExceeded) {
+			handler.log.Debug("handler.notifier.SendIfNeeded returned context.DeadlineExceeded")
+		} else {
+			handler.log.Error("handler.notifier.SendIfNeeded failed", "err", err)
+		}
+	}
+
 	return nil
 }

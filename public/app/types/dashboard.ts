@@ -22,6 +22,7 @@ export interface DashboardMeta {
   url?: string;
   folderId?: number;
   fullscreen?: boolean;
+  fromExplore?: boolean;
   isEditing?: boolean;
   canMakeEditable?: boolean;
   submenuEnabled?: boolean;

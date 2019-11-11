@@ -3,9 +3,13 @@ package multildap
 import (
 	"errors"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 )
+
+// logger to log
+var logger = log.New("ldap")
 
 // GetConfig gets LDAP config
 var GetConfig = ldap.GetConfig
@@ -28,8 +32,17 @@ var ErrNoLDAPServers = errors.New("No LDAP servers are configured")
 // ErrDidNotFindUser if request for user is unsuccessful
 var ErrDidNotFindUser = errors.New("Did not find a user")
 
+// ServerStatus holds the LDAP server status
+type ServerStatus struct {
+	Host      string
+	Port      int
+	Available bool
+	Error     error
+}
+
 // IMultiLDAP is interface for MultiLDAP
 type IMultiLDAP interface {
+	Ping() ([]*ServerStatus, error)
 	Login(query *models.LoginUserQuery) (
 		*models.ExternalUserInfo, error,
 	)
@@ -39,7 +52,7 @@ type IMultiLDAP interface {
 	)
 
 	User(login string) (
-		*models.ExternalUserInfo, error,
+		*models.ExternalUserInfo, ldap.ServerConfig, error,
 	)
 }
 
@@ -55,6 +68,38 @@ func New(configs []*ldap.ServerConfig) IMultiLDAP {
 	}
 }
 
+// Ping dials each of the LDAP servers and returns their status. If the server is unavailable, it also returns the error.
+func (multiples *MultiLDAP) Ping() ([]*ServerStatus, error) {
+
+	if len(multiples.configs) == 0 {
+		return nil, ErrNoLDAPServers
+	}
+
+	serverStatuses := []*ServerStatus{}
+	for _, config := range multiples.configs {
+
+		status := &ServerStatus{}
+
+		status.Host = config.Host
+		status.Port = config.Port
+
+		server := newLDAP(config)
+		err := server.Dial()
+
+		if err == nil {
+			status.Available = true
+			serverStatuses = append(serverStatuses, status)
+			server.Close()
+		} else {
+			status.Available = false
+			status.Error = err
+			serverStatuses = append(serverStatuses, status)
+		}
+	}
+
+	return serverStatuses, nil
+}
+
 // Login tries to log in the user in multiples LDAP
 func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
@@ -64,11 +109,17 @@ func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 		return nil, ErrNoLDAPServers
 	}
 
-	for _, config := range multiples.configs {
+	for index, config := range multiples.configs {
 		server := newLDAP(config)
 
 		if err := server.Dial(); err != nil {
-			return nil, err
+			logDialFailure(err, config)
+
+			// Only return an error if it is the last server so we can try next server
+			if index == len(multiples.configs)-1 {
+				return nil, err
+			}
+			continue
 		}
 
 		defer server.Close()
@@ -78,12 +129,18 @@ func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 			return user, nil
 		}
 
-		// Continue if we couldn't find the user
-		if err == ErrCouldNotFindUser {
-			continue
-		}
-
 		if err != nil {
+
+			if isSilentError(err) {
+				logger.Debug(
+					"unable to login with LDAP - skipping server",
+					"host", config.Host,
+					"port", config.Port,
+					"error", err,
+				)
+				continue
+			}
+
 			return nil, err
 		}
 	}
@@ -92,41 +149,48 @@ func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 	return nil, ErrInvalidCredentials
 }
 
-// User gets a user by login
+// User attempts to find an user by login/username by searching into all of the configured LDAP servers. Then, if the user is found it returns the user alongisde the server it was found.
 func (multiples *MultiLDAP) User(login string) (
 	*models.ExternalUserInfo,
+	ldap.ServerConfig,
 	error,
 ) {
 
 	if len(multiples.configs) == 0 {
-		return nil, ErrNoLDAPServers
+		return nil, ldap.ServerConfig{}, ErrNoLDAPServers
 	}
 
 	search := []string{login}
-	for _, config := range multiples.configs {
+	for index, config := range multiples.configs {
 		server := newLDAP(config)
 
 		if err := server.Dial(); err != nil {
-			return nil, err
+			logDialFailure(err, config)
+
+			// Only return an error if it is the last server so we can try next server
+			if index == len(multiples.configs)-1 {
+				return nil, *config, err
+			}
+			continue
 		}
 
 		defer server.Close()
 
 		if err := server.Bind(); err != nil {
-			return nil, err
+			return nil, *config, err
 		}
 
 		users, err := server.Users(search)
 		if err != nil {
-			return nil, err
+			return nil, *config, err
 		}
 
 		if len(users) != 0 {
-			return users[0], nil
+			return users[0], *config, nil
 		}
 	}
 
-	return nil, ErrDidNotFindUser
+	return nil, ldap.ServerConfig{}, ErrDidNotFindUser
 }
 
 // Users gets users from multiple LDAP servers
@@ -140,11 +204,17 @@ func (multiples *MultiLDAP) Users(logins []string) (
 		return nil, ErrNoLDAPServers
 	}
 
-	for _, config := range multiples.configs {
+	for index, config := range multiples.configs {
 		server := newLDAP(config)
 
 		if err := server.Dial(); err != nil {
-			return nil, err
+			logDialFailure(err, config)
+
+			// Only return an error if it is the last server so we can try next server
+			if index == len(multiples.configs)-1 {
+				return nil, err
+			}
+			continue
 		}
 
 		defer server.Close()
@@ -161,4 +231,27 @@ func (multiples *MultiLDAP) Users(logins []string) (
 	}
 
 	return result, nil
+}
+
+// isSilentError evaluates an error and tells whenever we should fail the LDAP request
+// immediately or if we should continue into other LDAP servers
+func isSilentError(err error) bool {
+	continueErrs := []error{ErrInvalidCredentials, ErrCouldNotFindUser}
+
+	for _, cerr := range continueErrs {
+		if err == cerr {
+			return true
+		}
+	}
+
+	return false
+}
+
+func logDialFailure(err error, config *ldap.ServerConfig) {
+	logger.Debug(
+		"unable to dial LDAP server",
+		"host", config.Host,
+		"port", config.Port,
+		"error", err,
+	)
 }

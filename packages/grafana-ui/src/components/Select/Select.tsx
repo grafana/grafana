@@ -4,14 +4,17 @@ import React, { PureComponent } from 'react';
 
 // Ignoring because I couldn't get @types/react-select work wih Torkel's fork
 // @ts-ignore
-import { default as ReactSelect } from '@torkelo/react-select';
+import { default as ReactSelect, Creatable } from '@torkelo/react-select';
+// @ts-ignore
+import { Creatable } from '@torkelo/react-select/lib/creatable';
 // @ts-ignore
 import { default as ReactAsyncSelect } from '@torkelo/react-select/lib/Async';
 // @ts-ignore
 import { components } from '@torkelo/react-select';
 
 // Components
-import { SelectOption, SingleValue } from './SelectOption';
+import { SelectOption } from './SelectOption';
+import { SingleValue } from './SingleValue';
 import SelectOptionGroup from './SelectOptionGroup';
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
@@ -47,6 +50,7 @@ export interface CommonProps<T> {
   onOpenMenu?: () => void;
   onCloseMenu?: () => void;
   tabSelectsValue?: boolean;
+  allowCustomValue: boolean;
 }
 
 export interface SelectProps<T> extends CommonProps<T> {
@@ -82,6 +86,7 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
     backspaceRemovesValue: true,
     maxMenuHeight: 300,
     tabSelectsValue: true,
+    allowCustomValue: false,
     components: {
       Option: SelectOption,
       SingleValue,
@@ -119,11 +124,20 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
       tabSelectsValue,
       onCloseMenu,
       onOpenMenu,
+      allowCustomValue,
     } = this.props;
 
     let widthClass = '';
     if (width) {
       widthClass = 'width-' + width;
+    }
+
+    let SelectComponent: ReactSelect | Creatable = ReactSelect;
+    const creatableOptions: any = {};
+
+    if (allowCustomValue) {
+      SelectComponent = Creatable;
+      creatableOptions.formatCreateLabel = (input: string) => input;
     }
 
     const selectClassNames = classNames('gf-form-input', 'gf-form-input--form-dropdown', widthClass, className);
@@ -133,7 +147,7 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
       <WrapInTooltip onCloseMenu={onCloseMenu} onOpenMenu={onOpenMenu} tooltipContent={tooltipContent} isOpen={isOpen}>
         {(onOpenMenuInternal, onCloseMenuInternal) => {
           return (
-            <ReactSelect
+            <SelectComponent
               classNamePrefix="gf-form-select-box"
               className={selectClassNames}
               components={selectComponents}
@@ -161,6 +175,7 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
               onMenuOpen={onOpenMenuInternal}
               onMenuClose={onCloseMenuInternal}
               tabSelectsValue={tabSelectsValue}
+              {...creatableOptions}
             />
           );
         }}

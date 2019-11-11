@@ -1783,7 +1783,7 @@ Licensed under the MIT license.
 
             // grafana addition
             if (opts.tickDecimals === null || opts.tickDecimals === undefined) {
-              axis.scaledDecimals = axis.tickDecimals - Math.ceil((1 / getSignificantDigitCount(axis.tickSize)) * 3);
+              axis.scaledDecimals = axis.tickDecimals + dec;
             }
 
             // Time mode was moved to a plug-in in 0.8, and since so many people use it

@@ -6,7 +6,7 @@ import Page from 'app/core/components/Page/Page';
 import UsersActionBar from './UsersActionBar';
 import UsersTable from './UsersTable';
 import InviteesTable from './InviteesTable';
-import { Invitee, OrgUser } from 'app/types';
+import { Invitee, OrgUser, CoreEvents } from 'app/types';
 import appEvents from 'app/core/app_events';
 import { loadUsers, loadInvitees, setUsersSearchQuery, updateUser, removeUser } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -66,7 +66,7 @@ export class UsersListPage extends PureComponent<Props, State> {
   };
 
   onRemoveUser = (user: OrgUser) => {
-    appEvents.emit('confirm-modal', {
+    appEvents.emit(CoreEvents.showConfirmModal, {
       title: 'Delete',
       text: 'Are you sure you want to delete user ' + user.login + '?',
       yesText: 'Delete',

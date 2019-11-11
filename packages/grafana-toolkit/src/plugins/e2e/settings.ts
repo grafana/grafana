@@ -1,4 +1,4 @@
-import { PluginMeta } from '@grafana/ui';
+import { PluginMeta } from '@grafana/data';
 
 import path from 'path';
 import fs from 'fs';
