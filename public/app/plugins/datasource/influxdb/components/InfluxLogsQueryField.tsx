@@ -133,6 +133,7 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
     const { datasource } = this.props;
     const { measurements, measurement, field, error } = this.state;
     const cascadeText = getChooserText({ measurement, field, error });
+    const hasMeasurement = measurements && measurements.length > 0;
 
     return (
       <div className="gf-form-inline gf-form-inline--nowrap">
@@ -143,7 +144,7 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
             onChange={this.onMeasurementsChange}
             expandIcon={null}
           >
-            <button className="gf-form-label gf-form-label--btn" disabled={!measurement}>
+            <button className="gf-form-label gf-form-label--btn" disabled={!hasMeasurement}>
               {cascadeText} <i className="fa fa-caret-down" />
             </button>
           </Cascader>
