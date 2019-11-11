@@ -17,6 +17,7 @@ export default class TableModel implements TableData {
   rows: any[];
   type: string;
   columnMap: any;
+  refId: string;
 
   constructor(table?: any) {
     this.columns = [];

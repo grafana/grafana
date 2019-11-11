@@ -14,7 +14,6 @@ import {
   DataQuery,
   DataSourceApi,
   PanelData,
-  DataQueryRequest,
   PanelEvents,
   TimeRange,
   LoadingState,
@@ -316,10 +315,6 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
     return undefined;
   }
 
-  // Don't pass the request if all requests are the same
-  const request: DataQueryRequest = undefined;
-  // TODO: look in sub-requets to match the info
-
   // Only say this is an error if the error links to the query
   let state = LoadingState.Done;
   const error = data.error && data.error.refId === refId ? data.error : undefined;
@@ -330,9 +325,9 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
   const timeRange = data.timeRange;
 
   return {
+    ...data,
     state,
     series,
-    request,
     error,
     timeRange,
   };
