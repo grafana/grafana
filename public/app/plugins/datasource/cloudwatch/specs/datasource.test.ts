@@ -177,7 +177,7 @@ describe('CloudWatchDatasource', () => {
       });
 
       it('should be built correctly if theres one search expressions returned in meta for a given query row', done => {
-        response.results['A'].meta.searchExpressions = [`REMOVE_EMPTY(SEARCH('some expression'))`];
+        response.results['A'].meta.gmdMeta = [{ Expression: `REMOVE_EMPTY(SEARCH('some expression'))` }];
         ctx.ds.query(query).then((result: any) => {
           expect(result.data[0].name).toBe(response.results.A.series[0].name);
           expect(result.data[0].fields[0].config.links[0].title).toBe('View in CloudWatch console');
@@ -189,9 +189,9 @@ describe('CloudWatchDatasource', () => {
       });
 
       it('should be built correctly if theres two search expressions returned in meta for a given query row', done => {
-        response.results['A'].meta.searchExpressions = [
-          `REMOVE_EMPTY(SEARCH('first expression'))`,
-          `REMOVE_EMPTY(SEARCH('second expression'))`,
+        response.results['A'].meta.gmdMeta = [
+          { Expression: `REMOVE_EMPTY(SEARCH('first expression'))` },
+          { Expression: `REMOVE_EMPTY(SEARCH('second expression'))` },
         ];
         ctx.ds.query(query).then((result: any) => {
           expect(result.data[0].name).toBe(response.results.A.series[0].name);
@@ -204,7 +204,7 @@ describe('CloudWatchDatasource', () => {
       });
 
       it('should be built correctly if the query is a metric stat query', done => {
-        response.results['A'].meta.searchExpressions = [];
+        response.results['A'].meta.gmdMeta = [];
         ctx.ds.query(query).then((result: any) => {
           expect(result.data[0].name).toBe(response.results.A.series[0].name);
           expect(result.data[0].fields[0].config.links[0].title).toBe('View in CloudWatch console');
@@ -593,9 +593,9 @@ describe('CloudWatchDatasource', () => {
   function describeMetricFindQuery(query: any, func: any) {
     describe('metricFindQuery ' + query, () => {
       const scenario: any = {};
-      scenario.setup = (setupCallback: any) => {
-        beforeEach(() => {
-          setupCallback();
+      scenario.setup = async (setupCallback: any) => {
+        beforeEach(async () => {
+          await setupCallback();
           ctx.backendSrv.datasourceRequest = jest.fn(args => {
             scenario.request = args.data;
             return Promise.resolve({ data: scenario.requestResponse });
@@ -610,8 +610,8 @@ describe('CloudWatchDatasource', () => {
     });
   }
 
-  describeMetricFindQuery('regions()', (scenario: any) => {
-    scenario.setup(() => {
+  describeMetricFindQuery('regions()', async (scenario: any) => {
+    await scenario.setup(() => {
       scenario.requestResponse = {
         results: {
           metricFindQuery: {
@@ -628,8 +628,8 @@ describe('CloudWatchDatasource', () => {
     });
   });
 
-  describeMetricFindQuery('namespaces()', (scenario: any) => {
-    scenario.setup(() => {
+  describeMetricFindQuery('namespaces()', async (scenario: any) => {
+    await scenario.setup(() => {
       scenario.requestResponse = {
         results: {
           metricFindQuery: {
@@ -646,8 +646,8 @@ describe('CloudWatchDatasource', () => {
     });
   });
 
-  describeMetricFindQuery('metrics(AWS/EC2, us-east-2)', (scenario: any) => {
-    scenario.setup(() => {
+  describeMetricFindQuery('metrics(AWS/EC2, us-east-2)', async (scenario: any) => {
+    await scenario.setup(() => {
       scenario.requestResponse = {
         results: {
           metricFindQuery: {
@@ -664,8 +664,8 @@ describe('CloudWatchDatasource', () => {
     });
   });
 
-  describeMetricFindQuery('dimension_keys(AWS/EC2)', (scenario: any) => {
-    scenario.setup(() => {
+  describeMetricFindQuery('dimension_keys(AWS/EC2)', async (scenario: any) => {
+    await scenario.setup(() => {
       scenario.requestResponse = {
         results: {
           metricFindQuery: {
@@ -676,14 +676,15 @@ describe('CloudWatchDatasource', () => {
     });
 
     it('should call __GetDimensions and return result', () => {
+      console.log({ a: scenario.requestResponse.results });
       expect(scenario.result[0].text).toBe('InstanceId');
       expect(scenario.request.queries[0].type).toBe('metricFindQuery');
       expect(scenario.request.queries[0].subtype).toBe('dimension_keys');
     });
   });
 
-  describeMetricFindQuery('dimension_values(us-east-1,AWS/EC2,CPUUtilization,InstanceId)', (scenario: any) => {
-    scenario.setup(() => {
+  describeMetricFindQuery('dimension_values(us-east-1,AWS/EC2,CPUUtilization,InstanceId)', async (scenario: any) => {
+    await scenario.setup(() => {
       scenario.requestResponse = {
         results: {
           metricFindQuery: {
@@ -700,8 +701,8 @@ describe('CloudWatchDatasource', () => {
     });
   });
 
-  describeMetricFindQuery('dimension_values(default,AWS/EC2,CPUUtilization,InstanceId)', (scenario: any) => {
-    scenario.setup(() => {
+  describeMetricFindQuery('dimension_values(default,AWS/EC2,CPUUtilization,InstanceId)', async (scenario: any) => {
+    await scenario.setup(() => {
       scenario.requestResponse = {
         results: {
           metricFindQuery: {
@@ -718,32 +719,35 @@ describe('CloudWatchDatasource', () => {
     });
   });
 
-  describeMetricFindQuery('resource_arns(default,ec2:instance,{"environment":["production"]})', (scenario: any) => {
-    scenario.setup(() => {
-      scenario.requestResponse = {
-        results: {
-          metricFindQuery: {
-            tables: [
-              {
-                rows: [
-                  [
-                    'arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567',
-                    'arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321',
+  describeMetricFindQuery(
+    'resource_arns(default,ec2:instance,{"environment":["production"]})',
+    async (scenario: any) => {
+      await scenario.setup(() => {
+        scenario.requestResponse = {
+          results: {
+            metricFindQuery: {
+              tables: [
+                {
+                  rows: [
+                    [
+                      'arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567',
+                      'arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321',
+                    ],
                   ],
-                ],
-              },
-            ],
+                },
+              ],
+            },
           },
-        },
-      };
-    });
+        };
+      });
 
-    it('should call __ListMetrics and return result', () => {
-      expect(scenario.result[0].text).toContain('arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567');
-      expect(scenario.request.queries[0].type).toBe('metricFindQuery');
-      expect(scenario.request.queries[0].subtype).toBe('resource_arns');
-    });
-  });
+      it('should call __ListMetrics and return result', () => {
+        expect(scenario.result[0].text).toContain('arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567');
+        expect(scenario.request.queries[0].type).toBe('metricFindQuery');
+        expect(scenario.request.queries[0].subtype).toBe('resource_arns');
+      });
+    }
+  );
 
   it('should caclculate the correct period', () => {
     const hourSec = 60 * 60;

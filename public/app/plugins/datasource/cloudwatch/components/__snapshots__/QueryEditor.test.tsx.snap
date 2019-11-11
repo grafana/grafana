@@ -369,6 +369,20 @@ Array [
           </div>
         </label>
       </div>
+      <label
+        className="gf-form-label"
+      >
+        <a
+          onClick={[Function]}
+        >
+          <i
+            className="fa fa-caret-right"
+          />
+           
+          Show
+           meta
+        </a>
+      </label>
     </div>
     <div
       className="gf-form gf-form--grow"

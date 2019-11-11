@@ -407,11 +407,6 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
       return this.getRegions();
     }
 
-    const statsQuery = query.match(/^statistics\(\)/);
-    if (statsQuery) {
-      return this.standardStatistics.map((s: string) => ({ value: s, label: s, text: s }));
-    }
-
     const namespaceQuery = query.match(/^namespaces\(\)/);
     if (namespaceQuery) {
       return this.getNamespaces();
@@ -468,6 +463,11 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
       const resourceType = resourceARNsQuery[2];
       const tagsJSON = JSON.parse(this.templateSrv.replace(resourceARNsQuery[3]));
       return this.getResourceARNs(region, resourceType, tagsJSON);
+    }
+
+    const statsQuery = query.match(/^statistics\(\)/);
+    if (statsQuery) {
+      return this.standardStatistics.map((s: string) => ({ value: s, label: s, text: s }));
     }
 
     return this.$q.when([]);
