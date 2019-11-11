@@ -130,9 +130,7 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
     }
   };
 
-  makeHasMeasurement = memoizeOne((measurements: CascaderOption[]) => {
-    return () => measurements && measurements.length > 0;
-  });
+  makeHasMeasurement = memoizeOne((measurements: CascaderOption[]) => measurements && measurements.length > 0);
 
   render() {
     const { datasource } = this.props;
