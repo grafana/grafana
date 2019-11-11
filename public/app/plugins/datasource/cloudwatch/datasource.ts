@@ -571,6 +571,8 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
 
   convertDimensionFormat(dimensions: { [key: string]: string | string[] }, scopedVars: ScopedVars) {
     return Object.entries(dimensions).reduce((result, [key, value]) => {
+      key = this.templateSrv.replace(key, scopedVars);
+
       if (Array.isArray(value)) {
         return { ...result, [key]: value };
       }
