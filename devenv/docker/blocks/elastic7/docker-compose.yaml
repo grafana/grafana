@@ -37,5 +37,7 @@
     image: docker.elastic.co/kibana/kibana-oss:7.0.0
     ports:
       - "5601:5601"
+    links:
+      - elasticsearch7
     environment:
       ELASTICSEARCH_HOSTS: http://elasticsearch7:9200
