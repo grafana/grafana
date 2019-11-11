@@ -26,7 +26,6 @@
 
   metricbeat7:
     image: docker.elastic.co/beats/metricbeat-oss:7.0.0
-    network_mode: host
     command: metricbeat -e -strict.perms=false
     user: root
     volumes:
