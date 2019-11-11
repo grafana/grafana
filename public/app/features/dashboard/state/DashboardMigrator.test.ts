@@ -438,7 +438,7 @@ describe('DashboardModel', () => {
     });
 
     it('should slugify dashboard name', () => {
-      expect(model.panels[0].links[3].url).toBe(`/dashboard/db/my-other-dashboard`);
+      expect(model.panels[0].links[3].url).toBe(`dashboard/db/my-other-dashboard`);
     });
   });
 
