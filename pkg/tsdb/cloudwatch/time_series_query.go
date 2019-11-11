@@ -43,7 +43,13 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 
 				queries, err := e.transformRequestQueriesToCloudWatchQueries(requestQueries)
 				if err != nil {
-					return err
+					for _, query := range requestQueries {
+						resultChan <- &tsdb.QueryResult{
+							RefId: query.RefId,
+							Error: err,
+						}
+					}
+					return nil
 				}
 
 				metricDataInput, err := e.buildMetricDataInput(queryContext, queries)
