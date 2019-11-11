@@ -358,13 +358,14 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
       return [];
     }
 
-    return this.doMetricQueryRequest('dimension_values', {
+    const values = await this.doMetricQueryRequest('dimension_values', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
       metricName: this.templateSrv.replace(metricName),
       dimensionKey: this.templateSrv.replace(dimensionKey),
       dimensions: this.convertDimensionFormat(filterDimensions, {}),
     });
+    return values.length ? [{ value: '*', text: '*', label: '*' }, ...values] : values;
   }
 
   getEbsVolumeIds(region: string, instanceId: string) {
