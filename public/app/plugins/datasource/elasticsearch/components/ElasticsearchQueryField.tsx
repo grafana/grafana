@@ -77,7 +77,7 @@ class ElasticsearchQueryField extends React.PureComponent<Props, State> {
             />
           </div>
         </div>
-        {data && data.error ? <div className="prom-query-field-info text-error"> data.error.message}</div> : null}
+        {data && data.error ? <div className="prom-query-field-info text-error">{data.error.message}</div> : null}
       </>
     );
   }
