@@ -42,10 +42,7 @@ func (e *CloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQ
 			}
 
 			if _, ok := cloudwatchQueries[id]; ok {
-				return nil, &queryError{
-					err:   fmt.Errorf("Query id %s is not unique", query.Id),
-					RefID: query.RefId,
-				}
+				return nil, fmt.Errorf("Error in query %s. Query id %s is not unique", query.RefId, query.Id)
 			}
 
 			cloudwatchQueries[id] = query
@@ -74,16 +71,20 @@ func (e *CloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchRespo
 		queryResult.Series = tsdb.TimeSeriesSlice{}
 		timeSeries := make(tsdb.TimeSeriesSlice, 0)
 
-		searchExpressions := []string{}
-		ids := []string{}
 		requestExceededMaxLimit := false
+		queryMeta := []struct {
+			Expression, ID string
+		}{}
+
 		for _, response := range responses {
 			timeSeries = append(timeSeries, *response.series...)
 			requestExceededMaxLimit = requestExceededMaxLimit || response.RequestExceededMaxLimit
-			if len(response.SearchExpression) > 0 {
-				searchExpressions = append(searchExpressions, response.SearchExpression)
-			}
-			ids = append(ids, response.Id)
+			queryMeta = append(queryMeta, struct {
+				Expression, ID string
+			}{
+				Expression: response.Expression,
+				ID:         response.Id,
+			})
 		}
 
 		sort.Slice(timeSeries, func(i, j int) bool {
@@ -94,8 +95,7 @@ func (e *CloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchRespo
 			queryResult.ErrorString = "Cloudwatch GetMetricData error: Maximum number of allowed metrics exceeded. Your search may have been limited."
 		}
 		queryResult.Series = append(queryResult.Series, timeSeries...)
-		queryResult.Meta.Set("searchExpressions", searchExpressions)
-		queryResult.Meta.Set("Ids", ids)
+		queryResult.Meta.Set("gmdMeta", queryMeta)
 		results[refID] = queryResult
 	}
 

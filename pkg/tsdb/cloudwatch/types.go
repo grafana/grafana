@@ -35,7 +35,7 @@ type cloudwatchResponse struct {
 	series                  *tsdb.TimeSeriesSlice
 	Id                      string
 	RefId                   string
-	SearchExpression        string
+	Expression              string
 	RequestExceededMaxLimit bool
 }
 

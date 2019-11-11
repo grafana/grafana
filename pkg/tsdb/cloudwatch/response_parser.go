@@ -45,7 +45,7 @@ func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 		}
 
 		response.series = series
-		response.SearchExpression = queries[id].SearchExpression
+		response.Expression = queries[id].UsedExpression
 		response.RefId = queries[id].RefId
 		response.Id = queries[id].Id
 		response.RequestExceededMaxLimit = queries[id].RequestExceededMaxLimit

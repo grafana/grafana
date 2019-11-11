@@ -13,6 +13,7 @@ interface State {
   namespaces: SelectableStrings;
   metricNames: SelectableStrings;
   variableOptionGroup: SelectableValue<string>;
+  showMeta: boolean;
 }
 
 const idValidationEvents: ValidationEvents = {
@@ -25,7 +26,7 @@ const idValidationEvents: ValidationEvents = {
 };
 
 export class QueryEditor extends PureComponent<Props, State> {
-  state: State = { regions: [], namespaces: [], metricNames: [], variableOptionGroup: {} };
+  state: State = { regions: [], namespaces: [], metricNames: [], variableOptionGroup: {}, showMeta: false };
 
   componentWillMount() {
     const { query } = this.props;
@@ -100,8 +101,9 @@ export class QueryEditor extends PureComponent<Props, State> {
   }
 
   render() {
-    const { query, datasource, onChange, onRunQuery } = this.props;
-    const { regions, namespaces, variableOptionGroup: variableOptionGroup } = this.state;
+    const { query, datasource, onChange, onRunQuery, data } = this.props;
+    const { regions, namespaces, variableOptionGroup: variableOptionGroup, showMeta } = this.state;
+    const metaDataExist = data && Object.values(data).length && data.state === 'Done';
     return (
       <>
         <QueryInlineField label="Region">
@@ -231,10 +233,42 @@ export class QueryEditor extends PureComponent<Props, State> {
               checked={query.matchExact}
               onChange={() => this.onChange({ ...query, matchExact: !query.matchExact })}
             />
+            <label className="gf-form-label">
+              <a
+                onClick={() =>
+                  metaDataExist &&
+                  this.setState({
+                    ...this.state,
+                    showMeta: !showMeta,
+                  })
+                }
+              >
+                <i className={`fa fa-caret-${showMeta ? 'down' : 'right'}`} /> {showMeta ? 'Hide' : 'Show'} meta
+              </a>
+            </label>
           </div>
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--grow" />
           </div>
+          {showMeta && metaDataExist && (
+            <table className="filter-table form-inline">
+              <thead>
+                <tr>
+                  <th>Metric Data Query ID</th>
+                  <th>Metric Data Query Expression</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {data.series[0].meta.gmdMeta.map(({ ID, Expression }: any) => (
+                  <tr key={ID}>
+                    <td>{ID}</td>
+                    <td>{Expression}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </>
     );

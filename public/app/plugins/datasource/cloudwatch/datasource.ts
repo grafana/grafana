@@ -176,7 +176,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
     start: string,
     end: string,
     title: string,
-    searchExpressions: string[]
+    gmdMeta: Array<{ Expression: string }>
   ) {
     let conf = {
       view: 'timeSeries',
@@ -188,7 +188,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
     } as any;
 
     const isSearchExpression =
-      (searchExpressions && searchExpressions.length) || (statistics.length <= 1 && /SEARCH().*/.test(expression));
+      gmdMeta && gmdMeta.length && gmdMeta.every(({ Expression: expression }) => /SEARCH().*/.test(expression));
     const isMathExpression = !isSearchExpression && expression;
 
     if (isMathExpression) {
@@ -197,9 +197,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
 
     if (isSearchExpression) {
       const metrics: any =
-        searchExpressions && searchExpressions.length
-          ? searchExpressions.map(expression => ({ expression }))
-          : [{ expression }];
+        gmdMeta && gmdMeta.length ? gmdMeta.map(({ Expression: expression }) => ({ expression })) : [{ expression }];
       conf = { ...conf, metrics };
     } else {
       conf = {
@@ -241,7 +239,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
               from.toISOString(),
               to.toISOString(),
               queryRequest.refId,
-              queryResult.meta.searchExpressions
+              queryResult.meta.gmdMeta
             );
 
             return {
@@ -249,7 +247,12 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
               data: [
                 ...data,
                 ...queryResult.series.map(({ name, points }: any) => {
-                  const dataFrame = toDataFrame({ target: name, datapoints: points });
+                  const dataFrame = toDataFrame({
+                    target: name,
+                    datapoints: points,
+                    refId: queryRequest.refId,
+                    meta: queryResult.meta,
+                  });
                   if (link) {
                     for (const field of dataFrame.fields) {
                       field.config.links = [
@@ -280,6 +283,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
 
           regionsAffected.forEach(region => this.debouncedAlert(this.datasourceName, region));
         }
+
         throw err;
       });
   }
@@ -365,6 +369,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
       dimensionKey: this.templateSrv.replace(dimensionKey),
       dimensions: this.convertDimensionFormat(filterDimensions, {}),
     });
+
     return values.length ? [{ value: '*', text: '*', label: '*' }, ...values] : values;
   }
 

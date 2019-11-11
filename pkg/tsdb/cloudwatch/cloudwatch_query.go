@@ -11,7 +11,6 @@ type cloudWatchQuery struct {
 	Namespace               string
 	MetricName              string
 	Stats                   string
-	QueryType               string
 	Expression              string
 	ReturnData              bool
 	Dimensions              map[string][]string
@@ -20,7 +19,7 @@ type cloudWatchQuery struct {
 	Identifier              string
 	HighResolution          bool
 	MatchExact              bool
-	SearchExpression        string
+	UsedExpression          string
 	RequestExceededMaxLimit bool
 }
 

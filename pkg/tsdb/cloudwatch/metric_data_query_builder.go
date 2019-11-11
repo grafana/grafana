@@ -15,12 +15,12 @@ func (e *CloudWatchExecutor) buildMetricDataQuery(query *cloudWatchQuery) (*clou
 		Id:         aws.String(query.Id),
 		ReturnData: aws.Bool(query.ReturnData),
 	}
+
 	if query.Expression != "" {
 		mdq.Expression = aws.String(query.Expression)
 	} else {
 		if query.isSearchExpression() {
-			query.SearchExpression = buildSearchExpression(query, query.Stats)
-			mdq.Expression = aws.String(query.SearchExpression)
+			mdq.Expression = aws.String(buildSearchExpression(query, query.Stats))
 		} else {
 			mdq.MetricStat = &cloudwatch.MetricStat{
 				Metric: &cloudwatch.Metric{
@@ -39,6 +39,12 @@ func (e *CloudWatchExecutor) buildMetricDataQuery(query *cloudWatchQuery) (*clou
 			}
 			mdq.MetricStat.Stat = aws.String(query.Stats)
 		}
+	}
+
+	if mdq.Expression != nil {
+		query.UsedExpression = *mdq.Expression
+	} else {
+		query.UsedExpression = ""
 	}
 
 	return mdq, nil
