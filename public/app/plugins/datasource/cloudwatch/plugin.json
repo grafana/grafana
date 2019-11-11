@@ -7,6 +7,7 @@
   "metrics": true,
   "alerting": true,
   "annotations": true,
+  "includes": [{ "type": "dashboard", "name": "CloudWatch EC2", "path": "dashboards/EC2.json" }],
 
   "info": {
     "description": "Data source for Amazon AWS monitoring service",
