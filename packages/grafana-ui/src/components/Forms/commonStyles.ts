@@ -15,7 +15,6 @@ export const sharedInputStyle = (theme: GrafanaTheme) => {
 
   return css`
     background-color: ${backgroundColor};
-    padding: 0 ${theme.spacing.formInputPaddingHorizontal};
     line-height: ${theme.typography.lineHeight.lg};
     font-size: ${theme.typography.size.md};
     color: ${selectThemeVariant({ light: colors.gray25, dark: colors.gray85 }, theme.type)};
