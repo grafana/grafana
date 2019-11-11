@@ -89,10 +89,8 @@ docker_tag_all () {
   tag=$1
   docker_tag_linux_amd64 $1
   if [ $BUILD_FAST = "0" ]; then
-    docker tag "${_docker_repo}-arm32v7-linux:${_grafana_version}${TAG_SUFFIX}"
-    "${_docker_repo}-arm32v7-linux:${tag}${TAG_SUFFIX}"
-    docker tag "${_docker_repo}-arm64v8-linux:${_grafana_version}${TAG_SUFFIX}"
-    "${_docker_repo}-arm64v8-linux:${tag}${TAG_SUFFIX}"
+    docker tag "${_docker_repo}-arm32v7-linux:${_grafana_version}${TAG_SUFFIX}" "${_docker_repo}-arm32v7-linux:${tag}${TAG_SUFFIX}"
+    docker tag "${_docker_repo}-arm64v8-linux:${_grafana_version}${TAG_SUFFIX}" "${_docker_repo}-arm64v8-linux:${tag}${TAG_SUFFIX}"
   fi
 }
 
