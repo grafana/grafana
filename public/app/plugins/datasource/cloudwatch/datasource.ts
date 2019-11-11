@@ -390,7 +390,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
     });
   }
 
-  metricFindQuery(query: string) {
+  async metricFindQuery(query: string) {
     let region;
     let namespace;
     let metricName;
@@ -399,6 +399,11 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
     const regionQuery = query.match(/^regions\(\)/);
     if (regionQuery) {
       return this.getRegions();
+    }
+
+    const statsQuery = query.match(/^statistics\(\)/);
+    if (statsQuery) {
+      return this.standardStatistics.map((s: string) => ({ value: s, label: s, text: s }));
     }
 
     const namespaceQuery = query.match(/^namespaces\(\)/);
