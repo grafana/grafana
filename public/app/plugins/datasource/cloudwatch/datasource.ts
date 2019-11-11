@@ -365,7 +365,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
     const values = await this.doMetricQueryRequest('dimension_values', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
-      metricName: this.templateSrv.replace(metricName),
+      metricName: this.templateSrv.replace(metricName.trim()),
       dimensionKey: this.templateSrv.replace(dimensionKey),
       dimensions: this.convertDimensionFormat(filterDimensions, {}),
     });
