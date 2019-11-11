@@ -4,7 +4,7 @@ import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
 import mdx from './TextArea.mdx';
 
 export default {
-  title: 'UI/Forms/Textarea',
+  title: 'UI/Forms/TextArea',
   component: TextArea,
   decorators: [withCenteredStory],
   parameters: {
