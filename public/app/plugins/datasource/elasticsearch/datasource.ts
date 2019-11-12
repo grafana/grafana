@@ -258,13 +258,14 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   interpolateVariablesInQueries(queries: ElasticsearchQuery[]): ElasticsearchQuery[] {
+    console.log(queries);
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          query: this.templateSrv.replace(query.query),
+          query: this.templateSrv.replace(query.query, {}, 'lucene'),
         };
         return expandedQuery;
       });
