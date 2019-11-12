@@ -18,6 +18,7 @@ export const Stats: FunctionComponent<Props> = ({ stats, values, onChange, varia
     {values &&
       values.map((value, index) => (
         <Segment
+          allowCustomValue
           key={value + index}
           value={value}
           options={[removeOption, ...stats, variableOptionGroup]}
@@ -37,9 +38,9 @@ export const Stats: FunctionComponent<Props> = ({ stats, values, onChange, varia
             <i className="fa fa-plus" />
           </a>
         }
-        allowCustomValue={true}
+        allowCustomValue
         onChange={(value: string) => onChange([...values, value])}
-        options={stats.filter(({ value }) => !values.includes(value))}
+        options={[...stats.filter(({ value }) => !values.includes(value)), variableOptionGroup]}
       />
     )}
   </>

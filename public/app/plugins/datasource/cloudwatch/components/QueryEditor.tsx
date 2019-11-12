@@ -243,7 +243,8 @@ export class QueryEditor extends PureComponent<Props, State> {
                   })
                 }
               >
-                <i className={`fa fa-caret-${showMeta ? 'down' : 'right'}`} /> {showMeta ? 'Hide' : 'Show'} meta
+                <i className={`fa fa-caret-${showMeta ? 'down' : 'right'}`} /> {showMeta ? 'Hide' : 'Show'} Query
+                Preview
               </a>
             </label>
           </div>

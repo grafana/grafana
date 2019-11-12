@@ -39,6 +39,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
       {Object.entries(data).map(([key, value], index) => (
         <Fragment key={index}>
           <SegmentAsync
+            allowCustomValue
             value={key}
             loadOptions={() => loadKeys().then(keys => [removeOption, ...excludeUsedKeys(keys)])}
             onChange={newKey => {
@@ -64,6 +65,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
       ))}
       {Object.values(data).every(v => v) && (
         <SegmentAsync
+          allowCustomValue
           Component={
             <a className="gf-form-label query-part">
               <i className="fa fa-plus" />
