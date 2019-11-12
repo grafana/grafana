@@ -26,7 +26,6 @@
 
   metricbeat7:
     image: docker.elastic.co/beats/metricbeat-oss:7.0.0
-    network_mode: host
     command: metricbeat -e -strict.perms=false
     user: root
     volumes:
@@ -37,5 +36,7 @@
     image: docker.elastic.co/kibana/kibana-oss:7.0.0
     ports:
       - "5601:5601"
+    links:
+      - elasticsearch7
     environment:
       ELASTICSEARCH_HOSTS: http://elasticsearch7:9200
