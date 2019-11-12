@@ -46,7 +46,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1573479546367,
+  "iteration": 1573552849046,
   "links": [],
   "panels": [
     {
@@ -54,7 +54,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -108,7 +108,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "CPU Utilization",
+      "title": "CPU Utilization $statistic",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -204,7 +204,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Disk Read Bytes",
+      "title": "Disk Read Bytes $statistic",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -300,7 +300,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Disk Read Ops",
+      "title": "Disk Read Ops $statistic",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -396,7 +396,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Disk Write Bytes",
+      "title": "Disk Write Bytes $statistic",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -492,7 +492,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Disk Write Ops",
+      "title": "Disk Write Ops $statistic",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -588,7 +588,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Network In",
+      "title": "Network In $statistic",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -684,7 +684,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Network Out",
+      "title": "Network Out $statistic",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -780,7 +780,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Network Packets In",
+      "title": "Network Packets In $statistic",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -870,14 +870,14 @@
           "namespace": "AWS/EC2",
           "refId": "A",
           "region": "$region",
-          "statistics": ["$statistic"]
+          "statistics": ["Sum"]
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Status Check Failed sum",
+      "title": "Status Check Failed Sum",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -967,14 +967,14 @@
           "namespace": "AWS/EC2",
           "refId": "A",
           "region": "$region",
-          "statistics": ["$statistic"]
+          "statistics": ["Sum"]
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Status Check Failed Instance sum",
+      "title": "Status Check Failed Instance Sum",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -1064,14 +1064,14 @@
           "namespace": "AWS/EC2",
           "refId": "A",
           "region": "$region",
-          "statistics": ["$statistic"]
+          "statistics": ["Sum"]
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Status Check Failed System sum",
+      "title": "Status Check Failed System Sum",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -1115,13 +1115,34 @@
   "templating": {
     "list": [
       {
+        "current": {
+          "selected": true,
+          "text": "CloudWatch",
+          "value": "CloudWatch"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Datasource",
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "cloudwatch",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
         "allValue": null,
-        "current": {},
-        "datasource": "${DS_CLOUDWATCH}",
+        "current": {
+          "text": "default",
+          "value": "default"
+        },
+        "datasource": "CloudWatch",
         "definition": "regions()",
         "hide": 0,
         "includeAll": false,
-        "label": null,
+        "label": "Region",
         "multi": false,
         "name": "region",
         "options": [],
@@ -1138,12 +1159,16 @@
       },
       {
         "allValue": null,
-        "current": {},
+        "current": {
+          "selected": true,
+          "text": "Average",
+          "value": "Average"
+        },
         "datasource": "${DS_CLOUDWATCH}",
         "definition": "statistics()",
         "hide": 0,
         "includeAll": false,
-        "label": null,
+        "label": "Statistic",
         "multi": false,
         "name": "statistic",
         "options": [],
@@ -1160,13 +1185,17 @@
       },
       {
         "allValue": null,
-        "current": {},
+        "current": {
+          "tags": [],
+          "text": "*",
+          "value": ["*"]
+        },
         "datasource": "${DS_CLOUDWATCH}",
         "definition": "dimension_values($region, AWS/EC2, , InstanceId)",
         "hide": 0,
-        "includeAll": false,
-        "label": null,
-        "multi": false,
+        "includeAll": true,
+        "label": "Instance",
+        "multi": true,
         "name": "instance",
         "options": [],
         "query": "dimension_values($region, AWS/EC2, , InstanceId)",
@@ -1191,6 +1220,6 @@
   },
   "timezone": "",
   "title": "EC2",
-  "uid": "MmoTpoJZk",
-  "version": 35
+  "uid": "VgpJGb1Zk",
+  "version": 12
 }
