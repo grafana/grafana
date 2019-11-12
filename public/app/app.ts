@@ -140,6 +140,7 @@ export class GrafanaApp {
     // disable tool tip animation
     $.fn.tooltip.defaults.animation = false;
 
+    // debugger
     // bootstrap the app
     angular.bootstrap(document, this.ngModuleDependencies).invoke(() => {
       _.each(this.preBootModules, (module: angular.IModule) => {
@@ -162,6 +163,7 @@ export class GrafanaApp {
     for (const modulePath of config.pluginsToPreload) {
       importPluginModule(modulePath);
     }
+    // debugger
   }
 }
 
