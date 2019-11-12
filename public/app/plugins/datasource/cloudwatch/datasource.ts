@@ -33,6 +33,9 @@ const displayAlert = (datasourceName: string, region: string) =>
     )
   );
 
+const displayCustomError = (title: string, message: string) =>
+  store.dispatch(notifyApp(createErrorNotification(title, message)));
+
 export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWatchJsonData> {
   type: any;
   proxyUrl: any;
@@ -40,6 +43,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
   standardStatistics: any;
   datasourceName: string;
   debouncedAlert: (datasourceName: string, region: string) => void;
+  debouncedCustomAlert: (title: string, message: string) => void;
 
   /** @ngInject */
   constructor(
@@ -56,6 +60,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
     this.datasourceName = instanceSettings.name;
     this.standardStatistics = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'];
     this.debouncedAlert = memoizedDebounce(displayAlert, AppNotificationTimeout.Error);
+    this.debouncedCustomAlert = memoizedDebounce(displayCustomError, AppNotificationTimeout.Error);
   }
 
   query(options: DataQueryRequest<CloudWatchQuery>) {
@@ -68,16 +73,14 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
           item.expression.length > 0)
       );
     }).map(item => {
-      item.region = this.templateSrv.replace(this.getActualRegion(item.region), options.scopedVars);
-      item.namespace = this.templateSrv.replace(item.namespace, options.scopedVars);
-      item.metricName = this.templateSrv.replace(item.metricName, options.scopedVars);
+      item.region = this.replace(this.getActualRegion(item.region), options.scopedVars, true, 'region');
+      item.namespace = this.replace(item.namespace, options.scopedVars, true, 'namespace');
+      item.metricName = this.replace(item.metricName, options.scopedVars, true, 'metric name');
       item.dimensions = this.convertDimensionFormat(item.dimensions, options.scopedVars);
-      item.statistics = item.statistics.map(s => {
-        return this.templateSrv.replace(s, options.scopedVars);
-      });
+      item.statistics = item.statistics.map(stat => this.replace(stat, options.scopedVars, true, 'statistics'));
       item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
-      item.id = this.templateSrv.replace(item.id, options.scopedVars);
-      item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
+      item.id = this.replace(item.id, options.scopedVars, true, 'id');
+      item.expression = this.replace(item.expression, options.scopedVars, true, 'expression');
 
       // valid ExtendedStatistics is like p90.00, check the pattern
       const hasInvalidStatistics = item.statistics.some(s => {
@@ -576,17 +579,15 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
 
   convertDimensionFormat(dimensions: { [key: string]: string | string[] }, scopedVars: ScopedVars) {
     return Object.entries(dimensions).reduce((result, [key, value]) => {
-      key = this.templateSrv.replace(key, scopedVars);
+      key = this.replace(key, scopedVars, true, 'dimension keys');
 
       if (Array.isArray(value)) {
         return { ...result, [key]: value };
       }
 
-      const variable = this.templateSrv.variables.find(
-        variable => variable.name === this.templateSrv.getVariableName(value)
-      );
-      if (variable) {
-        if (variable.multi) {
+      const valueVar = this.templateSrv.variables.find(({ name }) => name === this.templateSrv.getVariableName(value));
+      if (valueVar) {
+        if (valueVar.multi) {
           const values = this.templateSrv.replace(value, scopedVars, 'pipe').split('|');
           return { ...result, [key]: values };
         }
@@ -595,5 +596,19 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
 
       return { ...result, [key]: [value] };
     }, {});
+  }
+
+  replace(target: string, scopedVars: ScopedVars, displayErrorIfIsMultiTemplateVariable?: boolean, fieldName?: string) {
+    if (displayErrorIfIsMultiTemplateVariable) {
+      const variable = this.templateSrv.variables.find(({ name }) => name === this.templateSrv.getVariableName(target));
+      if (variable && variable.multi) {
+        this.debouncedCustomAlert(
+          'CloudWatch templating error',
+          `Multi template variables are not supported for ${fieldName || target}`
+        );
+      }
+    }
+
+    return this.templateSrv.replace(target, scopedVars);
   }
 }
