@@ -15,7 +15,6 @@ import { StoreState } from 'app/types';
 import {
   DataQuery,
   DataSourceApi,
-  QueryFixAction,
   PanelData,
   HistoryItem,
   TimeRange,
@@ -97,14 +96,6 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     this.props.changeQuery(exploreId, newQuery, index, true);
   };
 
-  onClickHintFix = (action: QueryFixAction) => {
-    const { datasourceInstance, exploreId, index } = this.props;
-    if (datasourceInstance && datasourceInstance.modifyQuery) {
-      const modifier = (queries: DataQuery, action: QueryFixAction) => datasourceInstance.modifyQuery(queries, action);
-      this.props.modifyQueries(exploreId, action, index, modifier);
-    }
-  };
-
   onClickRemoveButton = () => {
     const { exploreId, index } = this.props;
     this.props.removeQueryRowAction({ exploreId, index });
@@ -161,7 +152,6 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
               query={query}
               history={history}
               onRunQuery={this.onRunQuery}
-              onHint={this.onClickHintFix}
               onBlur={noopOnBlur}
               onChange={this.onChange}
               data={queryResponse}
