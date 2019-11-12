@@ -38,6 +38,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'hexadecimal', id: 'hex', fn: toHex },
       { name: 'scientific notation', id: 'sci', fn: sci },
       { name: 'locale format', id: 'locale', fn: locale },
+      { name: 'Pixels', id: 'pixel', fn: toFixedUnit('px') },
     ],
   },
   {
@@ -273,10 +274,14 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Gray (Gy)', id: 'radgy', fn: decimalSIPrefix('Gy') },
       { name: 'rad', id: 'radrad', fn: decimalSIPrefix('rad') },
       { name: 'Sievert (Sv)', id: 'radsv', fn: decimalSIPrefix('Sv') },
+      { name: 'milliSievert (mSv)', id: 'radmsv', fn: decimalSIPrefix('mSv', -1) },
+      { name: 'microSievert (µSv)', id: 'radusv', fn: decimalSIPrefix('µSv', -2) },
       { name: 'rem', id: 'radrem', fn: decimalSIPrefix('rem') },
       { name: 'Exposure (C/kg)', id: 'radexpckg', fn: decimalSIPrefix('C/kg') },
       { name: 'roentgen (R)', id: 'radr', fn: decimalSIPrefix('R') },
       { name: 'Sievert/hour (Sv/h)', id: 'radsvh', fn: decimalSIPrefix('Sv/h') },
+      { name: 'milliSievert/hour (mSv/h)', id: 'radmsvh', fn: decimalSIPrefix('mSv/h', -1) },
+      { name: 'microSievert/hour (µSv/h)', id: 'radusvh', fn: decimalSIPrefix('µSv/h', -2) },
     ],
   },
   {

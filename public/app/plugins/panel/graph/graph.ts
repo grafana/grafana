@@ -480,13 +480,11 @@ class GraphElement {
       this.plot = $.plot(this.elem, this.sortedSeries, options);
       if (this.ctrl.renderError) {
         delete this.ctrl.error;
-        delete this.ctrl.inspector;
       }
     } catch (e) {
       console.log('flotcharts error', e);
       this.ctrl.error = e.message || 'Render Error';
       this.ctrl.renderError = true;
-      this.ctrl.inspector = { error: e };
     }
 
     if (incrementRenderCounter) {

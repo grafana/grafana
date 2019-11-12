@@ -1183,7 +1183,7 @@ func (sc *scenarioContext) ToJSON() *simplejson.Json {
 type mockDashboardProvisioningService struct {
 }
 
-func (m mockDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO, provisioning *m.DashboardProvisioning, allowUiUpdates bool) (*m.Dashboard, error) {
+func (m mockDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO, provisioning *m.DashboardProvisioning) (*m.Dashboard, error) {
 	panic("implement me")
 }
 

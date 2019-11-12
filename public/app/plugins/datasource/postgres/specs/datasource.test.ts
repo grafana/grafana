@@ -131,7 +131,7 @@ describe('PostgreSQLDatasource', () => {
   describe('When performing metricFindQuery with $__searchFilter and a searchFilter is given', () => {
     let results: any;
     let calledWith: any = {};
-    const query = 'select title from atable where title LIKE $__searchFilter';
+    const query = "select title from atable where title LIKE '$__searchFilter'";
     const response = {
       results: {
         tempvar: {
@@ -169,7 +169,7 @@ describe('PostgreSQLDatasource', () => {
   describe('When performing metricFindQuery with $__searchFilter but no searchFilter is given', () => {
     let results: any;
     let calledWith: any = {};
-    const query = 'select title from atable where title LIKE $__searchFilter';
+    const query = "select title from atable where title LIKE '$__searchFilter'";
     const response = {
       results: {
         tempvar: {

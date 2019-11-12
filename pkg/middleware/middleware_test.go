@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	authproxy "github.com/grafana/grafana/pkg/middleware/auth_proxy"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -346,7 +347,7 @@ func TestMiddlewareContext(t *testing.T) {
 					return nil
 				})
 
-				key := fmt.Sprintf(cachePrefix, base32.StdEncoding.EncodeToString([]byte(name+"-"+group)))
+				key := fmt.Sprintf(authproxy.CachePrefix, base32.StdEncoding.EncodeToString([]byte(name+"-"+group)))
 				err := sc.remoteCacheService.Set(key, int64(33), 0)
 				So(err, ShouldBeNil)
 				sc.fakeReq("GET", "/")

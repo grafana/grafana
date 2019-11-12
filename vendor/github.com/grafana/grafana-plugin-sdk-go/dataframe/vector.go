@@ -3,6 +3,7 @@ package dataframe
 // Vector represents a collection of Elements.
 type Vector interface {
 	Set(idx int, i interface{})
+	Append(i interface{})
 	At(i int) interface{}
 	Len() int
 }

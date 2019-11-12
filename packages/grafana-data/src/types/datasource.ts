@@ -1,11 +1,11 @@
 import { Observable } from 'rxjs';
 import { ComponentType } from 'react';
-import { PluginMeta, GrafanaPlugin } from './plugin';
+import { GrafanaPlugin, PluginMeta } from './plugin';
 import { PanelData } from './panel';
 import { LogRowModel } from './logs';
-import { AnnotationEvent, TimeSeries, TableData, LoadingState, KeyValue } from './data';
+import { AnnotationEvent, KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
-import { TimeRange, RawTimeRange } from './time';
+import { RawTimeRange, TimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
@@ -253,6 +253,8 @@ export abstract class DataSourceApi<
    * in the annotation editor `annotations` capability also needs to be enabled in plugin.json.
    */
   annotationQuery?(options: AnnotationQueryRequest<TQuery>): Promise<AnnotationEvent[]>;
+
+  interpolateVariablesInQueries?(queries: TQuery[]): TQuery[];
 }
 
 export interface QueryEditorProps<
@@ -281,6 +283,7 @@ export interface ExploreQueryFieldProps<
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > extends QueryEditorProps<DSType, TQuery, TOptions> {
   history: any[];
+  onBlur?: () => void;
   onHint?: (action: QueryFixAction) => void;
 }
 
@@ -375,6 +378,11 @@ export interface DataQueryResponse {
    * Multiple responses with same key are replaced (latest used)
    */
   key?: string;
+
+  /**
+   * Optionally include error info along with the response data
+   */
+  error?: DataQueryError;
 
   /**
    * Use this to control which state the response should have

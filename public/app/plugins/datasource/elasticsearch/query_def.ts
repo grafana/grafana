@@ -73,6 +73,7 @@ export const metricAggTypes = [
     minVersion: 2,
   },
   { text: 'Raw Document', value: 'raw_document', requiresField: false },
+  { text: 'Logs', value: 'logs', requiresField: false },
 ];
 
 export const bucketAggTypes = [
@@ -260,3 +261,7 @@ export function defaultBucketAgg() {
 export const findMetricById = (metrics: any[], id: any) => {
   return _.find(metrics, { id: id });
 };
+
+export function hasMetricOfType(target: any, type: string): boolean {
+  return target && target.metrics && target.metrics.some((m: any) => m.type === type);
+}

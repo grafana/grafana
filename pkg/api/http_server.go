@@ -69,6 +69,7 @@ type HTTPServer struct {
 	RemoteCacheService  *remotecache.RemoteCache `inject:""`
 	ProvisioningService ProvisioningService      `inject:""`
 	Login               *login.LoginService      `inject:""`
+	License             models.Licensing         `inject:""`
 }
 
 func (hs *HTTPServer) Init() error {

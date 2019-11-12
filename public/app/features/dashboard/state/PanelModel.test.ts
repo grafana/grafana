@@ -24,6 +24,7 @@ describe('PanelModel', () => {
           },
         ],
       },
+      arrayWith2Values: [{ value: 'name' }, { value: 'name2' }],
       showThresholds: true,
     };
 
@@ -43,6 +44,7 @@ describe('PanelModel', () => {
             },
           ],
         },
+        arrayWith2Values: [{ name: 'changed to only one value' }],
       };
 
       modelJson = {
@@ -70,6 +72,10 @@ describe('PanelModel', () => {
 
     it('should apply option defaults', () => {
       expect(model.getOptions().showThresholds).toBeTruthy();
+    });
+
+    it('should apply option defaults but not override if array is changed', () => {
+      expect(model.getOptions().arrayWith2Values.length).toBe(1);
     });
 
     it('should set model props on instance', () => {

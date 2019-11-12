@@ -1,48 +1,44 @@
 import {
   DataFrame,
   FieldType,
-  LogsModel,
   LogsMetaKind,
   LogsDedupStrategy,
   LogLevel,
   MutableDataFrame,
   toDataFrame,
+  LogRowModel,
 } from '@grafana/data';
-import { dedupLogRows, dataFrameToLogsModel } from '../logs_model';
+import { dedupLogRows, dataFrameToLogsModel } from './logs_model';
 
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {
-    const logs = {
-      rows: [
-        {
-          entry: 'WARN test 1.23 on [xxx]',
-        },
-        {
-          entry: 'WARN test 1.23 on [xxx]',
-        },
-      ],
-    };
-    expect(dedupLogRows(logs as LogsModel, LogsDedupStrategy.none).rows).toMatchObject(logs.rows);
+    const rows: LogRowModel[] = [
+      {
+        entry: 'WARN test 1.23 on [xxx]',
+      },
+      {
+        entry: 'WARN test 1.23 on [xxx]',
+      },
+    ] as any;
+    expect(dedupLogRows(rows, LogsDedupStrategy.none)).toMatchObject(rows);
   });
 
   test('should dedup on exact matches', () => {
-    const logs = {
-      rows: [
-        {
-          entry: 'WARN test 1.23 on [xxx]',
-        },
-        {
-          entry: 'WARN test 1.23 on [xxx]',
-        },
-        {
-          entry: 'INFO test 2.44 on [xxx]',
-        },
-        {
-          entry: 'WARN test 1.23 on [xxx]',
-        },
-      ],
-    };
-    expect(dedupLogRows(logs as LogsModel, LogsDedupStrategy.exact).rows).toEqual([
+    const rows: LogRowModel[] = [
+      {
+        entry: 'WARN test 1.23 on [xxx]',
+      },
+      {
+        entry: 'WARN test 1.23 on [xxx]',
+      },
+      {
+        entry: 'INFO test 2.44 on [xxx]',
+      },
+      {
+        entry: 'WARN test 1.23 on [xxx]',
+      },
+    ] as any;
+    expect(dedupLogRows(rows, LogsDedupStrategy.exact)).toEqual([
       {
         duplicates: 1,
         entry: 'WARN test 1.23 on [xxx]',
@@ -59,23 +55,21 @@ describe('dedupLogRows()', () => {
   });
 
   test('should dedup on number matches', () => {
-    const logs = {
-      rows: [
-        {
-          entry: 'WARN test 1.2323423 on [xxx]',
-        },
-        {
-          entry: 'WARN test 1.23 on [xxx]',
-        },
-        {
-          entry: 'INFO test 2.44 on [xxx]',
-        },
-        {
-          entry: 'WARN test 1.23 on [xxx]',
-        },
-      ],
-    };
-    expect(dedupLogRows(logs as LogsModel, LogsDedupStrategy.numbers).rows).toEqual([
+    const rows: LogRowModel[] = [
+      {
+        entry: 'WARN test 1.2323423 on [xxx]',
+      },
+      {
+        entry: 'WARN test 1.23 on [xxx]',
+      },
+      {
+        entry: 'INFO test 2.44 on [xxx]',
+      },
+      {
+        entry: 'WARN test 1.23 on [xxx]',
+      },
+    ] as any;
+    expect(dedupLogRows(rows, LogsDedupStrategy.numbers)).toEqual([
       {
         duplicates: 1,
         entry: 'WARN test 1.2323423 on [xxx]',
@@ -92,23 +86,21 @@ describe('dedupLogRows()', () => {
   });
 
   test('should dedup on signature matches', () => {
-    const logs = {
-      rows: [
-        {
-          entry: 'WARN test 1.2323423 on [xxx]',
-        },
-        {
-          entry: 'WARN test 1.23 on [xxx]',
-        },
-        {
-          entry: 'INFO test 2.44 on [xxx]',
-        },
-        {
-          entry: 'WARN test 1.23 on [xxx]',
-        },
-      ],
-    };
-    expect(dedupLogRows(logs as LogsModel, LogsDedupStrategy.signature).rows).toEqual([
+    const rows: LogRowModel[] = [
+      {
+        entry: 'WARN test 1.2323423 on [xxx]',
+      },
+      {
+        entry: 'WARN test 1.23 on [xxx]',
+      },
+      {
+        entry: 'INFO test 2.44 on [xxx]',
+      },
+      {
+        entry: 'WARN test 1.23 on [xxx]',
+      },
+    ] as any;
+    expect(dedupLogRows(rows, LogsDedupStrategy.signature)).toEqual([
       {
         duplicates: 3,
         entry: 'WARN test 1.2323423 on [xxx]',
@@ -117,20 +109,18 @@ describe('dedupLogRows()', () => {
   });
 
   test('should return to non-deduped state on same log result', () => {
-    const logs = {
-      rows: [
-        {
-          entry: 'INFO 123',
-        },
-        {
-          entry: 'WARN 123',
-        },
-        {
-          entry: 'WARN 123',
-        },
-      ],
-    };
-    expect(dedupLogRows(logs as LogsModel, LogsDedupStrategy.exact).rows).toEqual([
+    const rows: LogRowModel[] = [
+      {
+        entry: 'INFO 123',
+      },
+      {
+        entry: 'WARN 123',
+      },
+      {
+        entry: 'WARN 123',
+      },
+    ] as any;
+    expect(dedupLogRows(rows, LogsDedupStrategy.exact)).toEqual([
       {
         duplicates: 0,
         entry: 'INFO 123',
@@ -141,7 +131,7 @@ describe('dedupLogRows()', () => {
       },
     ]);
 
-    expect(dedupLogRows(logs as LogsModel, LogsDedupStrategy.none).rows).toEqual(logs.rows);
+    expect(dedupLogRows(rows, LogsDedupStrategy.none)).toEqual(rows);
   });
 });
 
@@ -154,7 +144,7 @@ const emptyLogsModel: any = {
 
 describe('dataFrameToLogsModel', () => {
   it('given empty series should return empty logs model', () => {
-    expect(dataFrameToLogsModel([] as DataFrame[], 0)).toMatchObject(emptyLogsModel);
+    expect(dataFrameToLogsModel([] as DataFrame[], 0, 'utc')).toMatchObject(emptyLogsModel);
   });
 
   it('given series without correct series name should return empty logs model', () => {
@@ -163,7 +153,7 @@ describe('dataFrameToLogsModel', () => {
         fields: [],
       }),
     ];
-    expect(dataFrameToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
+    expect(dataFrameToLogsModel(series, 0, 'utc')).toMatchObject(emptyLogsModel);
   });
 
   it('given series without a time field should return empty logs model', () => {
@@ -178,7 +168,7 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    expect(dataFrameToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
+    expect(dataFrameToLogsModel(series, 0, 'utc')).toMatchObject(emptyLogsModel);
   });
 
   it('given series without a string field should return empty logs model', () => {
@@ -193,16 +183,12 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    expect(dataFrameToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
+    expect(dataFrameToLogsModel(series, 0, 'utc')).toMatchObject(emptyLogsModel);
   });
 
   it('given one series should return expected logs model', () => {
     const series: DataFrame[] = [
       new MutableDataFrame({
-        labels: {
-          filename: '/var/log/grafana/grafana.log',
-          job: 'grafana',
-        },
         fields: [
           {
             name: 'time',
@@ -216,6 +202,10 @@ describe('dataFrameToLogsModel', () => {
               't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
               't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
             ],
+            labels: {
+              filename: '/var/log/grafana/grafana.log',
+              job: 'grafana',
+            },
           },
           {
             name: 'id',
@@ -228,7 +218,7 @@ describe('dataFrameToLogsModel', () => {
         },
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 0);
+    const logsModel = dataFrameToLogsModel(series, 0, 'utc');
     expect(logsModel.hasUniqueLabels).toBeFalsy();
     expect(logsModel.rows).toHaveLength(2);
     expect(logsModel.rows).toMatchObject([
@@ -254,7 +244,7 @@ describe('dataFrameToLogsModel', () => {
     expect(logsModel.meta).toHaveLength(2);
     expect(logsModel.meta[0]).toMatchObject({
       label: 'Common labels',
-      value: series[0].labels,
+      value: series[0].fields[1].labels,
       kind: LogsMetaKind.LabelsMap,
     });
     expect(logsModel.meta[1]).toMatchObject({
@@ -286,7 +276,7 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 0);
+    const logsModel = dataFrameToLogsModel(series, 0, 'utc');
     expect(logsModel.rows).toHaveLength(1);
     expect(logsModel.rows).toMatchObject([
       {
@@ -301,11 +291,6 @@ describe('dataFrameToLogsModel', () => {
   it('given multiple series with unique times should return expected logs model', () => {
     const series: DataFrame[] = [
       toDataFrame({
-        labels: {
-          foo: 'bar',
-          baz: '1',
-          level: 'dbug',
-        },
         fields: [
           {
             name: 'ts',
@@ -316,16 +301,16 @@ describe('dataFrameToLogsModel', () => {
             name: 'line',
             type: FieldType.string,
             values: ['WARN boooo'],
+            labels: {
+              foo: 'bar',
+              baz: '1',
+              level: 'dbug',
+            },
           },
         ],
       }),
       toDataFrame({
         name: 'logs',
-        labels: {
-          foo: 'bar',
-          baz: '2',
-          level: 'err',
-        },
         fields: [
           {
             name: 'time',
@@ -336,11 +321,16 @@ describe('dataFrameToLogsModel', () => {
             name: 'message',
             type: FieldType.string,
             values: ['INFO 1', 'INFO 2'],
+            labels: {
+              foo: 'bar',
+              baz: '2',
+              level: 'err',
+            },
           },
         ],
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 0);
+    const logsModel = dataFrameToLogsModel(series, 0, 'utc');
     expect(logsModel.hasUniqueLabels).toBeTruthy();
     expect(logsModel.rows).toHaveLength(3);
     expect(logsModel.rows).toMatchObject([
@@ -377,11 +367,6 @@ describe('dataFrameToLogsModel', () => {
   it('given multiple series with equal times should return expected logs model', () => {
     const series: DataFrame[] = [
       toDataFrame({
-        labels: {
-          foo: 'bar',
-          baz: '1',
-          level: 'dbug',
-        },
         fields: [
           {
             name: 'ts',
@@ -392,15 +377,15 @@ describe('dataFrameToLogsModel', () => {
             name: 'line',
             type: FieldType.string,
             values: ['WARN boooo 1'],
+            labels: {
+              foo: 'bar',
+              baz: '1',
+              level: 'dbug',
+            },
           },
         ],
       }),
       toDataFrame({
-        labels: {
-          foo: 'bar',
-          baz: '2',
-          level: 'dbug',
-        },
         fields: [
           {
             name: 'ts',
@@ -411,16 +396,16 @@ describe('dataFrameToLogsModel', () => {
             name: 'line',
             type: FieldType.string,
             values: ['WARN boooo 2'],
+            labels: {
+              foo: 'bar',
+              baz: '2',
+              level: 'dbug',
+            },
           },
         ],
       }),
       toDataFrame({
         name: 'logs',
-        labels: {
-          foo: 'bar',
-          baz: '2',
-          level: 'err',
-        },
         fields: [
           {
             name: 'time',
@@ -431,11 +416,16 @@ describe('dataFrameToLogsModel', () => {
             name: 'message',
             type: FieldType.string,
             values: ['INFO 1', 'INFO 2'],
+            labels: {
+              foo: 'bar',
+              baz: '2',
+              level: 'err',
+            },
           },
         ],
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 0);
+    const logsModel = dataFrameToLogsModel(series, 0, 'utc');
     expect(logsModel.hasUniqueLabels).toBeTruthy();
     expect(logsModel.rows).toHaveLength(4);
     expect(logsModel.rows).toMatchObject([
@@ -484,7 +474,7 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 0);
+    const logsModel = dataFrameToLogsModel(series, 0, 'utc');
     expect(logsModel.rows[0].uid).toBe('0');
   });
 });

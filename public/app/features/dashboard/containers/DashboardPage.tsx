@@ -31,6 +31,7 @@ import {
   AppNotificationSeverity,
 } from 'app/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { PanelInspector } from '../components/Inspector/PanelInspector';
 export interface Props {
   urlUid?: string;
   urlSlug?: string;
@@ -38,6 +39,7 @@ export interface Props {
   editview?: string;
   urlPanelId?: string;
   urlFolderId?: string;
+  inspectPanelId?: string;
   $scope: any;
   $injector: any;
   routeInfo: DashboardRouteInfo;
@@ -250,7 +252,7 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, editview, $injector, isInitSlow, initError } = this.props;
+    const { dashboard, editview, $injector, isInitSlow, initError, inspectPanelId } = this.props;
     const { isSettingsOpening, isEditing, isFullscreen, scrollTop, updateScrollTop } = this.state;
 
     if (!dashboard) {
@@ -269,6 +271,9 @@ export class DashboardPage extends PureComponent<Props, State> {
       'dashboard-container': true,
       'dashboard-container--has-submenu': dashboard.meta.submenuEnabled,
     });
+
+    // Find the panel to inspect
+    const inspectPanel = inspectPanelId ? dashboard.getPanelById(parseInt(inspectPanelId, 10)) : null;
 
     // Only trigger render when the scroll has moved by 25
     const approximateScrollTop = Math.round(scrollTop / 25) * 25;
@@ -306,6 +311,8 @@ export class DashboardPage extends PureComponent<Props, State> {
             </div>
           </CustomScrollbar>
         </div>
+
+        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
       </div>
     );
   }
@@ -320,6 +327,7 @@ export const mapStateToProps = (state: StoreState) => ({
   urlFolderId: state.location.query.folderId,
   urlFullscreen: !!state.location.query.fullscreen,
   urlEdit: !!state.location.query.edit,
+  inspectPanelId: state.location.query.inspect,
   initPhase: state.dashboard.initPhase,
   isInitSlow: state.dashboard.isInitSlow,
   initError: state.dashboard.initError,
