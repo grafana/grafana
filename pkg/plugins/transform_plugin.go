@@ -239,18 +239,23 @@ func (s *grafanaAPI) QueryDatasource(ctx context.Context, req *pluginv2.QueryDat
 	if err != nil {
 		return nil, err
 	}
-	// Convert tsdb results (map) to plugin-model/datasource (slice) results
-	// Only error and Series responses mapped.
-	results := make([]*pluginv2.DatasourceQueryResult, len(tsdbRes.Results))
-	resIdx := 0
+	// Convert tsdb results (map) to plugin-model/datasource (slice) results.
+	// Only error, tsdb.Series, and encoded Dataframes responses are mapped.
+	results := make([]*pluginv2.DatasourceQueryResult, 0, len(tsdbRes.Results))
 	for refID, res := range tsdbRes.Results {
 		qr := &pluginv2.DatasourceQueryResult{
 			RefId: refID,
 		}
+
 		if res.Error != nil {
 			qr.Error = res.ErrorString
-			results[resIdx] = qr
-			resIdx++
+			results = append(results, qr)
+			continue
+		}
+
+		if res.Dataframes != nil {
+			qr.Dataframes = append(qr.Dataframes, res.Dataframes...)
+			results = append(results, qr)
 			continue
 		}
 
@@ -266,9 +271,7 @@ func (s *grafanaAPI) QueryDatasource(ctx context.Context, req *pluginv2.QueryDat
 			}
 		}
 		qr.Dataframes = encodedFrames
-		results[resIdx] = qr
-
-		resIdx++
+		results = append(results, qr)
 	}
 	return &pluginv2.QueryDatasourceResponse{Results: results}, nil
 }
