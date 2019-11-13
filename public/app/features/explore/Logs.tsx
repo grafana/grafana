@@ -57,13 +57,13 @@ interface Props {
 
 interface State {
   showTime: boolean;
-  wrapLogs: boolean;
+  wrapLogMessage: boolean;
 }
 
 export class Logs extends PureComponent<Props, State> {
   state = {
     showTime: true,
-    wrapLogs: false,
+    wrapLogMessage: true,
   };
 
   onChangeDedup = (dedup: LogsDedupStrategy) => {
@@ -83,11 +83,11 @@ export class Logs extends PureComponent<Props, State> {
     }
   };
 
-  onChangeWrapLogs = (event?: React.SyntheticEvent) => {
+  onChangewrapLogMessage = (event?: React.SyntheticEvent) => {
     const target = event && (event.target as HTMLInputElement);
     if (target) {
       this.setState({
-        wrapLogs: target.checked,
+        wrapLogMessage: target.checked,
       });
     }
   };
@@ -134,7 +134,7 @@ export class Logs extends PureComponent<Props, State> {
       return null;
     }
 
-    const { showTime, wrapLogs } = this.state;
+    const { showTime, wrapLogMessage } = this.state;
     const { dedupStrategy } = this.props;
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
@@ -175,7 +175,7 @@ export class Logs extends PureComponent<Props, State> {
         <div className="logs-panel-options">
           <div className="logs-panel-controls">
             <Switch label="Time" checked={showTime} onChange={this.onChangeTime} transparent />
-            <Switch label="Wrap logs" checked={wrapLogs} onChange={this.onChangeWrapLogs} transparent />
+            <Switch label="Wrap lines" checked={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
             <ToggleButtonGroup label="Dedup" transparent={true}>
               {Object.keys(LogsDedupStrategy).map((dedupType: string, i) => (
                 <ToggleButton
@@ -214,7 +214,7 @@ export class Logs extends PureComponent<Props, State> {
           onClickFilterLabel={onClickFilterLabel}
           onClickFilterOutLabel={onClickFilterOutLabel}
           showTime={showTime}
-          wrapLogs={wrapLogs}
+          wrapLogMessage={wrapLogMessage}
           timeZone={timeZone}
           getFieldLinks={getFieldLinks}
         />

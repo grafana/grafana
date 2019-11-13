@@ -20,7 +20,7 @@ interface Props extends Themeable {
   row: LogRowModel;
   showDuplicates: boolean;
   showTime: boolean;
-  wrapLogs: boolean;
+  wrapLogMessage: boolean;
   timeZone: TimeZone;
   isLogsPanel?: boolean;
   getRows: () => LogRowModel[];
@@ -81,13 +81,14 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       showDuplicates,
       timeZone,
       showTime,
-      wrapLogs,
+      wrapLogMessage,
       theme,
       getFieldLinks,
     } = this.props;
     const { showDetails, showContext } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
     const showUtc = timeZone === 'utc';
+    const showWrappedLines = wrapLogMessage || showDetails;
 
     return (
       <div className={style.logsRow}>
@@ -123,7 +124,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               updateLimit={updateLimit}
               context={context}
               showContext={showContext}
-              wrapLogs={wrapLogs}
+              wrapLogMessage={showWrappedLines}
               onToggleContext={this.toggleContext}
             />
           </div>
