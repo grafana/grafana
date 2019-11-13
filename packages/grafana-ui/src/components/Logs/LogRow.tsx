@@ -88,7 +88,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     const { showDetails, showContext } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
     const showUtc = timeZone === 'utc';
-    const showWrappedLines = wrapLogMessage || showDetails;
+    const showWrappedLogMessage = wrapLogMessage || showDetails;
 
     return (
       <div className={style.logsRow}>
@@ -124,7 +124,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               updateLimit={updateLimit}
               context={context}
               showContext={showContext}
-              wrapLogMessage={showWrappedLines}
+              wrapLogMessage={showWrappedLogMessage}
               onToggleContext={this.toggleContext}
             />
           </div>
