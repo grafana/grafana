@@ -328,6 +328,15 @@ export function dateTimeAsUS(value: number, decimals: DecimalCount, scaledDecima
   return time.format('MM/DD/YYYY h:mm:ss a');
 }
 
+export function dateTimeAsBR(value: number, decimals: DecimalCount, scaledDecimals: DecimalCount, isUtc?: boolean) {
+  const time = isUtc ? toUtc(value) : dateTime(value);
+
+  if (dateTime().isSame(value, 'day')) {
+    return time.format('HH:mm:ss');
+  }
+  return time.format('DD/MM/YYYY HH:mm:ss');
+}
+
 export function dateTimeFromNow(value: number, decimals: DecimalCount, scaledDecimals: DecimalCount, isUtc?: boolean) {
   const time = isUtc ? toUtc(value) : dateTime(value);
   return time.fromNow();
