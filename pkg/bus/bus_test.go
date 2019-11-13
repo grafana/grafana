@@ -24,7 +24,7 @@ func TestDispatch(t *testing.T) {
 	})
 
 	err := bus.Dispatch(&testQuery{})
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.True(t, invoked, "expected handler to be called")
 }
@@ -48,7 +48,7 @@ func TestDispatch_ContextHandler(t *testing.T) {
 	})
 
 	err := bus.Dispatch(&testQuery{})
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.True(t, invoked, "expected handler to be called")
 }
@@ -64,7 +64,7 @@ func TestDispatchCtx(t *testing.T) {
 	})
 
 	err := bus.DispatchCtx(context.Background(), &testQuery{})
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.True(t, invoked, "expected handler to be called")
 }
@@ -90,7 +90,7 @@ func TestQuery(t *testing.T) {
 	q := &testQuery{}
 
 	err := bus.Dispatch(q)
-	require.Nil(t, err, "unable to dispatch query")
+	require.NoError(t, err, "unable to dispatch query")
 
 	require.Equal(t, want, q.Resp)
 }
@@ -117,7 +117,7 @@ func TestEvent(t *testing.T) {
 	})
 
 	err := bus.Publish(&testQuery{})
-	require.Nil(t, err, "unable to publish event")
+	require.NoError(t, err, "unable to publish event")
 
 	require.True(t, invoked)
 }
@@ -126,5 +126,5 @@ func TestEvent_NoRegisteredListener(t *testing.T) {
 	bus := New()
 
 	err := bus.Publish(&testQuery{})
-	require.Nil(t, err, "unable to publish event")
+	require.NoError(t, err, "unable to publish event")
 }
