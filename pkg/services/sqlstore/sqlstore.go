@@ -196,7 +196,7 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 
 		cnnstr += ss.buildExtraConnectionString('&')
 	case migrator.POSTGRES:
-		addr, err := util.SplitHostPortDefault(ss.dbCfg.Host, "127.0.0.1", "5432")
+		addr, err := util.SplitHostPortDefault(ss.dbCfg.Host, "127.0.0.1", "5432", false)
 		if err != nil {
 			return "", errutil.Wrapf(err, "Invalid host specifier '%s'", ss.dbCfg.Host)
 		}
