@@ -169,7 +169,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
       'navbar-button navbar-button--border-right-0': originDashboardIsEditable,
     });
 
-    const showSmallDataSourcePicker = (splitted ? containerWidth < 690 : containerWidth < 800) || false;
+    const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
     const showSmallTimePicker = splitted || containerWidth < 1210;
 
     return (
