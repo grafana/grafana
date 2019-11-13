@@ -1,13 +1,13 @@
 package social
 
 import (
-	"time"
 	"net/http"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	. "github.com/smartystreets/goconvey/convey"
-	"testing"
 	"golang.org/x/oauth2"
+	"testing"
 )
 
 func TestSearchJSONForEmail(t *testing.T) {
@@ -159,8 +159,8 @@ func TestUserInfoUsesIDTokenForRole(t *testing.T) {
 			ExpectedResult    string
 		}{
 			{
-				Name:             "Given a simple OAuth2 id_token response and valid JMES path",
-				OAuth2Token: 	  oauth2.Token{
+				Name: "Given a simple OAuth2 id_token response and valid JMES path",
+				OAuth2Token: oauth2.Token{
 					AccessToken:  "",
 					TokenType:    "",
 					RefreshToken: "",
