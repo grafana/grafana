@@ -74,7 +74,7 @@ sudo apt-get install grafana
 
 If you downloaded the binary tar package you can just download and extract a new package
 and overwrite all your existing files. But this might overwrite your config changes. We
-recommend you place your config changes in a file named  `<grafana_install_dir>/conf/custom.ini`
+recommend you place your config changes in a file named `<grafana_install_dir>/conf/custom.ini`
 as this will make upgrades easier without risking losing your config changes.
 
 ### Centos / RHEL
@@ -91,6 +91,7 @@ sudo yum update grafana
 ### Docker
 
 This just an example, details depend on how you configured your grafana container.
+
 ```bash
 docker pull grafana
 docker stop my-grafana-container
@@ -102,7 +103,7 @@ docker run --name=my-grafana-container --restart=always -v /var/lib/grafana:/var
 
 If you downloaded the Windows binary package you can just download a newer package and extract
 to the same location (and overwrite the existing files). This might overwrite your config changes. We
-recommend you place your config changes in a file named  `<grafana_install_dir>/conf/custom.ini`
+recommend you place your config changes in a file named `<grafana_install_dir>/conf/custom.ini`
 as this will make upgrades easier without risking losing your config changes.
 
 ## Upgrading from 1.x
@@ -133,7 +134,6 @@ If you're using systemd and have a large amount of annotations consider temporar
 
 If you have text panels with script tags they will no longer work due to a new setting that per default disallow unsanitized HTML.
 Read more [here](/installation/configuration/#disable-sanitize-html) about this new setting.
-
 
 ### Authentication and security
 
@@ -170,10 +170,10 @@ will keep working with unencrypted passwords. If you want to migrate to encrypte
 you can do that by:
 
 - For data sources created through UI, you need to go to data source config, re enter the password or basic auth
-password and save the data source.
+  password and save the data source.
 - For data sources created by provisioning, you need to update your config file and use secureJsonData.password or
-secureJsonData.basicAuthPassword field. See [provisioning docs](/administration/provisioning) for example of current
-configuration.
+  secureJsonData.basicAuthPassword field. See [provisioning docs](/administration/provisioning) for example of current
+  configuration.
 
 ### Embedding Grafana
 
@@ -196,11 +196,12 @@ is `7.0+` and `max concurrent shard requests` properly configured. 256 was the d
 
 ## Upgrading to v6.4
 
-One of the database migrations included in this release will merge multiple rows used to represent an annotation range into a single row.  If you have a large number of region annotations the database migration may take a long time to complete.  See [Upgrading to v5.2](#upgrading-to-v5-2) for tips on how to manage this process.
+One of the database migrations included in this release will merge multiple rows used to represent an annotation range into a single row. If you have a large number of region annotations the database migration may take a long time to complete. See [Upgrading to v5.2](#upgrading-to-v5-2) for tips on how to manage this process.
 
 Plugins that need updating:
 
-* [Splunk](https://grafana.com/grafana/plugins/grafana-splunk-datasource)
+- [Splunk](https://grafana.com/grafana/plugins/grafana-splunk-datasource)
 
+## Upgrading to v6.5
 
-
+Pre Grafana 6.5.0, the CloudWatch datasource used the GetMetricStatistics API for all queries that did not have both an ID and an Expression defined in the query editor. The GetMetricStatistics API has a limit of 400 transactions per second (TPS). In this release, all queries use the GetMetricData API which has a limit of 50 TPS. We expect this transition to be smooth for most of our users, but in case you do face throttling issues we suggest you increase the TPS quota. To do that, please visit the [AWS Service Quotas console](https://console.aws.amazon.com/servicequotas/home?r#!/services/monitoring/quotas/L-5E141212).
