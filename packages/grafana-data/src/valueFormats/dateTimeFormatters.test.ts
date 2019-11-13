@@ -1,6 +1,7 @@
 import {
   dateTimeAsIso,
   dateTimeAsUS,
+  dateTimeAsBR,
   dateTimeFromNow,
   Interval,
   toClock,
@@ -65,6 +66,32 @@ describe('date time formats', () => {
     const now = toUtc();
     const expected = now.format('h:mm:ss a');
     const actual = dateTimeAsUS(now.valueOf(), 0, 0, true);
+    expect(actual).toBe(expected);
+  });
+
+  it('should format as BR date', () => {
+    const expected = browserTime.format('DD/MM/YYYY HH:mm:ss');
+    const actual = dateTimeAsBR(epoch, 0, 0, false);
+    expect(actual).toBe(expected);
+  });
+
+  it('should format as BR date (in UTC)', () => {
+    const expected = utcTime.format('DD/MM/YYYY HH:mm:ss');
+    const actual = dateTimeAsBR(epoch, 0, 0, true);
+    expect(actual).toBe(expected);
+  });
+
+  it('should format as BR date and skip date when today', () => {
+    const now = dateTime();
+    const expected = now.format('HH:mm:ss');
+    const actual = dateTimeAsBR(now.valueOf(), 0, 0, false);
+    expect(actual).toBe(expected);
+  });
+
+  it('should format as BR date (in UTC) and skip date when today', () => {
+    const now = toUtc();
+    const expected = now.format('HH:mm:ss');
+    const actual = dateTimeAsBR(now.valueOf(), 0, 0, true);
     expect(actual).toBe(expected);
   });
 
