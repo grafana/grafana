@@ -33,6 +33,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       },
       {
         unit: 'short',
+        useSeriesUnit: true,
         type: 'number',
         alias: '',
         decimals: 2,

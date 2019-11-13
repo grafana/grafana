@@ -42,10 +42,16 @@
     </div>
 
     <div ng-if="style.type === 'number'">
-      <div class="gf-form">
-        <label class="gf-form-label width-10">Unit</label>
-        <div class="gf-form-dropdown-typeahead width-16" ng-model="style.unit" dropdown-typeahead2="editor.unitFormats" dropdown-typeahead-on-select="editor.setUnitFormat(style, $subItem)"></div>
-      </div>
+		  <div class="gf-form-inline">
+		  	<gf-form-switch class="gf-form" label="Auto Unit" label-class="width-6" checked="style.useSeriesUnit" on-change="editor.render()"></gf-form-switch>
+		  	<div class="gf-form">
+		  		<label ng-if="style.useSeriesUnit"class="gf-form-label width-15">{{editor.getValueFormatName(style.unit)}}</label>
+		  	</div>
+		  </div>
+		  <div class="gf-form" ng-if="!style.useSeriesUnit">
+		  	<label class="gf-form-label width-10">Unit</label>
+		  	<div class="gf-form-dropdown-typeahead max-width-16" ng-model="style.unit" dropdown-typeahead2="editor.unitFormats" dropdown-typeahead-on-select="editor.setUnitFormat(style, $subItem)"></div>
+		  </div>
       <div class="gf-form">
         <label class="gf-form-label width-10">Decimals</label>
         <input type="number" class="gf-form-input width-4" data-placement="right" ng-model="style.decimals" ng-change="editor.render()"

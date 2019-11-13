@@ -67,7 +67,7 @@ transformers['timeseries_to_columns'] = {
 
     for (let i = 0; i < filteredData.length; i++) {
       const series = filteredData[i];
-      model.columns.push({ text: series.target });
+      model.columns.push({ text: series.target, unit: series.unit });
 
       for (let y = 0; y < series.datapoints.length; y++) {
         const dp = series.datapoints[y];

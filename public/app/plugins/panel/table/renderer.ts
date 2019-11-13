@@ -7,9 +7,8 @@ import {
   stringToJsRegex,
   ScopedVars,
 } from '@grafana/data';
-import { ColumnStyle } from '@grafana/ui/src/components/Table/TableCellBuilder';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { TableRenderModel, ColumnRender } from './types';
+import { TableRenderModel, ColumnRender, TableColumnStyle as ColumnStyle } from './types';
 
 export class TableRenderer {
   formatters: any[];
@@ -176,7 +175,8 @@ export class TableRenderer {
     }
 
     if (column.style.type === 'number') {
-      const valueFormatter = getValueFormat(column.unit || column.style.unit);
+      column.style.unit = column.style.useSeriesUnit ? column.unit || 'none' : column.style.unit;
+      const valueFormatter = getValueFormat(column.style.unit);
 
       return (v: any): any => {
         if (v === null || v === void 0) {

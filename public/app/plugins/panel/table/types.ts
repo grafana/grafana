@@ -2,6 +2,10 @@ import TableModel from 'app/core/table_model';
 import { Column } from '@grafana/data';
 import { ColumnStyle } from '@grafana/ui/src/components/Table/TableCellBuilder';
 
+export interface TableColumnStyle extends ColumnStyle {
+  useSeriesUnit: boolean;
+}
+
 export interface TableTransform {
   description: string;
   getColumns(data?: any): any[];
@@ -10,8 +14,9 @@ export interface TableTransform {
 
 export interface ColumnRender extends Column {
   title: string;
-  style: ColumnStyle;
+  style: TableColumnStyle;
   hidden: boolean;
+  unit: string;
 }
 
 export interface TableRenderModel {

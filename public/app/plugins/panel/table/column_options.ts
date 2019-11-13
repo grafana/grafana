@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { getValueFormats } from '@grafana/data';
+import { getValueFormats, getValueFormatName } from '@grafana/data';
 
 export class ColumnOptionsCtrl {
   panel: any;
@@ -139,6 +139,10 @@ export class ColumnOptionsCtrl {
   removeRangeMap(style: any, index: number) {
     style.rangeMaps.splice(index, 1);
     this.panelCtrl.render();
+  }
+
+  getValueFormatName(id: string) {
+    return getValueFormatName(id);
   }
 }
 
