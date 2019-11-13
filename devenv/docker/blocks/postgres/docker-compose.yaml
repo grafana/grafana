@@ -1,4 +1,4 @@
-  postgrestest:
+  postgres:
     image: postgres:${postgres_version}
     environment:
       POSTGRES_USER: grafana
@@ -8,7 +8,7 @@
       - "5432:5432"
     command: postgres -c log_connections=on -c logging_collector=on -c log_destination=stderr -c log_directory=/var/log/postgresql
     healthcheck:
-      test: [ "CMD", "pg_isready", "-q", "-p", "5432",  "-d", "$$POSTGRES_DATABASE", "-U", "$$POSTGRES_USER" ]
+      test: [ "CMD", "pg_isready", "-q", "-d", "$$POSTGRES_DATABASE", "-U", "$$POSTGRES_USER" ]
       timeout: 45s
       interval: 10s
       retries: 10
@@ -20,5 +20,5 @@
       FD_DATASOURCE: postgres
       FD_PORT: 5432
     depends_on:
-      postgrestest:
+      postgres:
         condition: service_healthy
