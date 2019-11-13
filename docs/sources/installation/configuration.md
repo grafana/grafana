@@ -587,6 +587,12 @@ You can choose between (s3, webdav, gcs, azure_blob, local). If left empty Grafa
 
 ## [external_image_storage.s3]
 
+### host
+Hostname to upload to, leave empty for default Amazon S3. e.g. s3.example.com
+
+## path_style_access
+Use path style access instead of virtual hosted style access. Default false
+
 ### bucket
 Bucket name for S3. e.g. grafana.snapshot
 
