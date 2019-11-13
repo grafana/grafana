@@ -198,7 +198,7 @@ const getInputStyle = stylesFactory((theme: GrafanaTheme, invalid = false) => {
 export const Input: FC<Props> = props => {
   const { addonAfter, addonBefore, prefix, invalid, loading, ...restProps } = props;
   /**
-   * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects beow to apply correct padding
+   * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects below to apply correct padding
    * when prefix/suffix is larger than default (28px = 16px(icon) + 12px(left/right paddings))
    */
   const [prefixRect, prefixRef] = useClientRect<HTMLDivElement>();
