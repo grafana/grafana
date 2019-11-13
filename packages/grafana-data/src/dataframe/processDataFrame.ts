@@ -1,7 +1,5 @@
 // Libraries
-import isNumber from 'lodash/isNumber';
-import isString from 'lodash/isString';
-import isBoolean from 'lodash/isBoolean';
+import { isArray, isBoolean, isNumber, isString } from 'lodash';
 
 // Types
 import {
@@ -33,6 +31,10 @@ function convertTableToDataFrame(table: TableData): DataFrame {
       type: FieldType.other,
     };
   });
+
+  if (!isArray(table.rows)) {
+    throw new Error(`Expected table rows to be array, got ${typeof table.rows}.`);
+  }
 
   for (const row of table.rows) {
     for (let i = 0; i < fields.length; i++) {

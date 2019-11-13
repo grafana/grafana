@@ -59,6 +59,15 @@ describe('toDataFrame', () => {
     expect(again).toBe(input);
   });
 
+  it('throws when table rows is not array', () => {
+    expect(() =>
+      toDataFrame({
+        columns: [],
+        rows: {},
+      })
+    ).toThrowError('Expected table rows to be array, got object.');
+  });
+
   it('migrate from 6.3 style rows', () => {
     const oldDataFrame = {
       fields: [{ name: 'A' }, { name: 'B' }, { name: 'C' }],
