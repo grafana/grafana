@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { PanelCtrl } from '../../../features/panel/panel_ctrl';
 import { auto } from 'angular';
 import { BackendSrv } from '@grafana/runtime';
+import { ContextSrv } from '../../../core/services/context_srv';
 
 class PluginListCtrl extends PanelCtrl {
   static templateUrl = 'module.html';
@@ -9,16 +10,18 @@ class PluginListCtrl extends PanelCtrl {
 
   pluginList: any[];
   viewModel: any;
+  isAdmin: boolean;
 
   // Set and populate defaults
   panelDefaults = {};
 
   /** @ngInject */
-  constructor($scope: any, $injector: auto.IInjectorService, private backendSrv: BackendSrv) {
+  constructor($scope: any, $injector: auto.IInjectorService, private backendSrv: BackendSrv, contextSrv: ContextSrv) {
     super($scope, $injector);
 
     _.defaults(this.panel, this.panelDefaults);
 
+    this.isAdmin = contextSrv.hasRole('Admin');
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.pluginList = [];
     this.viewModel = [

@@ -82,6 +82,8 @@ export interface PluginBuildInfo {
   repo?: string;
   branch?: string;
   hash?: string;
+  number?: number;
+  pr?: string;
 }
 
 export interface PluginMetaInfo {
