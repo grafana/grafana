@@ -31,21 +31,26 @@ export class ConfigEditor extends PureComponent<Props, State> {
     };
   }
 
-  static defaults = (options: any) => {
+  static defaults = (options: InfluxDataSourceSettings) => {
     options.secureJsonData = options.secureJsonData || {};
     options.secureJsonData.password = options.secureJsonData.password || '';
     return options;
   };
 
+  // using type any here because a string can't be used to index
+  // type InfluxOptions in InfluxDataSourceSettings (ie secureJsonFields[k])
   updateDatasource = async (config: any) => {
-    for (const j in config.jsonData) {
-      if (config.jsonData[j].length === 0) {
-        delete config.jsonData[j];
-      }
-    }
-
     for (const k in config.secureJsonData) {
-      if (config.secureJsonData[k].length === 0) {
+      // if the secret field is empty and the secureJsonFields
+      // for that secret is true, don't save an empty string to the field
+      // this will allow an empty string to be saved if the field has
+      // been reset because the secureJsonFields value will be set false
+      if (
+        config.secureJsonData[k].length === 0 &&
+        config.hasOwnProperty('secureJsonFields') &&
+        config.secureJsonFields.hasOwnProperty(k) &&
+        config.secureJsonFields[k] === true
+      ) {
         delete config.secureJsonData[k];
       }
     }
@@ -100,7 +105,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   onHttpModeSelect = (httpMode: SelectableValue<string>) => {
-    console.log('httpMode', httpMode);
     this.updateDatasource({
       ...this.state.config,
       jsonData: {
@@ -112,7 +116,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
   render() {
     const { config, httpModes } = this.state;
-
     return (
       <>
         <DataSourceHttpSettings
@@ -152,7 +155,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             <div className="gf-form">
               <SecretFormField
                 isConfigured={config.secureJsonFields.password || false}
-                value={config.secureJsonData.password || ''}
+                value={config.secureJsonData.password}
                 label="Password"
                 labelWidth={10}
                 inputWidth={20}
