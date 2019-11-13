@@ -67,7 +67,7 @@ const getInputStyle = stylesFactory((theme: GrafanaTheme, invalid = false) => {
         }
       `
     ),
-    // Wraps input and prefix/suffiz
+    // Wraps input and prefix/suffix
     inputWrapper: css`
       label: input-inputWrapper;
       position: relative;
