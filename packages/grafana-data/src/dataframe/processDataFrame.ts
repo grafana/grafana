@@ -33,7 +33,7 @@ function convertTableToDataFrame(table: TableData): DataFrame {
   });
 
   if (!isArray(table.rows)) {
-    throw new Error(`Expected xtable rows to be array, got ${typeof table.rows}.`);
+    throw new Error(`Expected table rows to be array, got ${typeof table.rows}.`);
   }
 
   for (const row of table.rows) {
