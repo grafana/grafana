@@ -283,7 +283,6 @@ class GraphElement {
         this.contextMenu.setScrollContextElement(scrollContextElement);
         this.contextMenu.setSource(contextMenuSourceItem);
         this.contextMenu.setMenuItemsSupplier(this.getContextMenuItemsSupplier(pos, linksSupplier) as any);
-        this.contextMenu.toggleMenu(pos);
       });
     }
   }

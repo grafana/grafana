@@ -105,7 +105,7 @@ $hr-border-color: $gray-4 !default;
 // -------------------------
 $panel-bg: $white;
 $panel-border: solid 1px $gray-5;
-$panel-header-hover-bg: $gray-6;
+$panel-header-hover-bg: $white;
 $panel-corner: $gray-4;
 
 // Page header
@@ -287,9 +287,9 @@ $popover-error-bg: $btn-danger-bg;
 $tooltipColor: $popover-help-color;
 $tooltipArrowWidth: 5px;
 $tooltipLinkColor: lighten($popover-help-color, 5%);
-$graph-tooltip-bg: $gray-5;
+$graph-tooltip-bg: $white;
 
-$tooltipBackground: $gray-1;
+$tooltipBackground: $white;
 $tooltipColor: $gray-7;
 $tooltipArrowColor: $tooltipBackground; // Used by Angular tooltip
 $tooltipBackgroundError: $brand-danger;

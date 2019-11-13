@@ -5,11 +5,6 @@ const template = `
 <span class="panel-title">
   <span class="icon-gf panel-alert-icon"></span>
   <span class="panel-title-text">{{ctrl.panel.title | interpolateTemplateVars:this}}</span>
-  <span class="panel-menu-container dropdown">
-    <span class="fa fa-caret-down panel-menu-toggle" data-toggle="dropdown"></span>
-    <ul class="dropdown-menu dropdown-menu--menu panel-menu" role="menu">
-    </ul>
-  </span>
   <span class="panel-time-info" ng-if="ctrl.timeInfo"><i class="fa fa-clock-o"></i> {{ctrl.timeInfo}}</span>
 </span>`;
 

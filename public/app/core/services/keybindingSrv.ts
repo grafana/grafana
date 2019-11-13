@@ -134,16 +134,7 @@ export class KeybindingSrv {
   }
 
   bind(keyArg: string | string[], fn: () => void) {
-    Mousetrap.bind(
-      keyArg,
-      (evt: any) => {
-        evt.preventDefault();
-        evt.stopPropagation();
-        evt.returnValue = false;
-        return this.$rootScope.$apply(fn.bind(this));
-      },
-      'keydown'
-    );
+      // Disabled key bindings
   }
 
   bindGlobal(keyArg: string, fn: () => void) {
