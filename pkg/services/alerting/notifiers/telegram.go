@@ -137,16 +137,16 @@ func (tn *TelegramNotifier) buildMessageInlineImage(evalContext *alerting.EvalCo
 	var err error
 
 	imageFile, err = os.Open(evalContext.ImageOnDiskPath)
+	if err != nil {
+		return nil, err
+	}
+
 	defer func() {
 		err := imageFile.Close()
 		if err != nil {
 			tn.log.Error("Could not close Telegram inline image.", "err", err)
 		}
 	}()
-
-	if err != nil {
-		return nil, err
-	}
 
 	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
