@@ -46,7 +46,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1573628451316,
+  "iteration": 1573630293215,
   "links": [],
   "panels": [
     {
@@ -92,13 +92,13 @@
       "targets": [
         {
           "dimensions": {
-            "InstanceId": "$instance"
+            "VolumeId": "$volume"
           },
           "expression": "",
           "highResolution": false,
           "matchExact": true,
-          "metricName": "CPUUtilization",
-          "namespace": "AWS/EC2",
+          "metricName": "VolumeReadBytes",
+          "namespace": "AWS/EBS",
           "refId": "A",
           "region": "$region",
           "statistics": ["$statistic"]
@@ -108,7 +108,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "CPU Utilization $statistic",
+      "title": "Volume Read Bytes $statistic",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -150,7 +150,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -188,13 +188,13 @@
       "targets": [
         {
           "dimensions": {
-            "InstanceId": "$instance"
+            "VolumeId": "$volume"
           },
           "expression": "",
           "highResolution": false,
           "matchExact": true,
-          "metricName": "DiskReadBytes",
-          "namespace": "AWS/EC2",
+          "metricName": "VolumeWriteBytes",
+          "namespace": "AWS/EBS",
           "refId": "A",
           "region": "$region",
           "statistics": ["$statistic"]
@@ -204,7 +204,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Disk Read Bytes $statistic",
+      "title": "Volume Write Bytes $statistic",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -246,7 +246,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -254,198 +254,6 @@
         "w": 12,
         "x": 0,
         "y": 9
-      },
-      "hiddenSeries": false,
-      "id": 4,
-      "legend": {
-        "alignAsTable": false,
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
-      "options": {
-        "dataLinks": []
-      },
-      "percentage": false,
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "dimensions": {
-            "InstanceId": "$instance"
-          },
-          "expression": "",
-          "highResolution": false,
-          "matchExact": true,
-          "metricName": "DiskReadOps",
-          "namespace": "AWS/EC2",
-          "refId": "A",
-          "region": "$region",
-          "statistics": ["$statistic"]
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Disk Read Ops $statistic",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "${DS_CLOUDWATCH}",
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 9
-      },
-      "hiddenSeries": false,
-      "id": 5,
-      "legend": {
-        "alignAsTable": false,
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
-      "options": {
-        "dataLinks": []
-      },
-      "percentage": false,
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "dimensions": {
-            "InstanceId": "$instance"
-          },
-          "expression": "",
-          "highResolution": false,
-          "matchExact": true,
-          "metricName": "DiskWriteOps",
-          "namespace": "AWS/EC2",
-          "refId": "A",
-          "region": "$region",
-          "statistics": ["$statistic"]
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Disk Write Bytes $statistic",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "${DS_CLOUDWATCH}",
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 18
       },
       "hiddenSeries": false,
       "id": 6,
@@ -476,13 +284,13 @@
       "targets": [
         {
           "dimensions": {
-            "InstanceId": "$instance"
+            "VolumeId": "$volume"
           },
           "expression": "",
           "highResolution": false,
           "matchExact": true,
-          "metricName": "DiskWriteOps",
-          "namespace": "AWS/EC2",
+          "metricName": "VolumeTotalReadTime",
+          "namespace": "AWS/EBS",
           "refId": "A",
           "region": "$region",
           "statistics": ["$statistic"]
@@ -492,7 +300,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Disk Write Ops $statistic",
+      "title": "Volume Total Read Time $statistic",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -534,14 +342,14 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 18
+        "y": 9
       },
       "hiddenSeries": false,
       "id": 7,
@@ -572,13 +380,13 @@
       "targets": [
         {
           "dimensions": {
-            "InstanceId": "$instance"
+            "VolumeId": "$volume"
           },
           "expression": "",
           "highResolution": false,
           "matchExact": true,
-          "metricName": "Network In",
-          "namespace": "AWS/EC2",
+          "metricName": "VolumeTotalWriteTime",
+          "namespace": "AWS/EBS",
           "refId": "A",
           "region": "$region",
           "statistics": ["$statistic"]
@@ -588,7 +396,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Network In $statistic",
+      "title": "Volume Total Write Time $statistic",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -630,7 +438,199 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "hiddenSeries": false,
+      "id": 4,
+      "legend": {
+        "alignAsTable": false,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "dimensions": {
+            "VolumeId": "$volume"
+          },
+          "expression": "",
+          "highResolution": false,
+          "matchExact": true,
+          "metricName": "VolumeReadOps",
+          "namespace": "AWS/EBS",
+          "refId": "A",
+          "region": "$region",
+          "statistics": ["$statistic"]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Volume Read Ops $statistic",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "$datasource",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "hiddenSeries": false,
+      "id": 5,
+      "legend": {
+        "alignAsTable": false,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "dimensions": {
+            "VolumeId": "$volume"
+          },
+          "expression": "",
+          "highResolution": false,
+          "matchExact": true,
+          "metricName": "VolumeWriteOps",
+          "namespace": "AWS/EBS",
+          "refId": "A",
+          "region": "$region",
+          "statistics": ["$statistic"]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Volume Write Ops $statistic",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "$datasource",
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -668,13 +668,13 @@
       "targets": [
         {
           "dimensions": {
-            "InstanceId": "$instance"
+            "VolumeId": "$volume"
           },
           "expression": "",
           "highResolution": false,
           "matchExact": true,
-          "metricName": "NetworkOut",
-          "namespace": "AWS/EC2",
+          "metricName": "VolumeIdleTime",
+          "namespace": "AWS/EBS",
           "refId": "A",
           "region": "$region",
           "statistics": ["$statistic"]
@@ -684,7 +684,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Network Out $statistic",
+      "title": "Volume Idle Time $statistic",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -726,7 +726,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -764,13 +764,13 @@
       "targets": [
         {
           "dimensions": {
-            "InstanceId": "$instance"
+            "VolumeId": "$volume"
           },
           "expression": "",
           "highResolution": false,
           "matchExact": true,
-          "metricName": "NetworkPacketsIn",
-          "namespace": "AWS/EC2",
+          "metricName": "VolumeQueueLength",
+          "namespace": "AWS/EBS",
           "refId": "A",
           "region": "$region",
           "statistics": ["$statistic"]
@@ -780,7 +780,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Network Packets In $statistic",
+      "title": "Volume Queue Length $statistic",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -822,8 +822,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_CLOUDWATCH}",
-      "description": "",
+      "datasource": "$datasource",
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -861,217 +860,23 @@
       "targets": [
         {
           "dimensions": {
-            "InstanceId": "$instance"
+            "VolumeId": "$volume"
           },
           "expression": "",
           "highResolution": false,
           "matchExact": true,
-          "metricName": "StatusCheckFailed",
-          "namespace": "AWS/EC2",
+          "metricName": "BurstBalance",
+          "namespace": "AWS/EBS",
           "refId": "A",
           "region": "$region",
-          "statistics": ["Sum"]
+          "statistics": ["Average"]
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Status Check Failed Sum",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "${DS_CLOUDWATCH}",
-      "description": "",
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 36
-      },
-      "hiddenSeries": false,
-      "id": 11,
-      "legend": {
-        "alignAsTable": false,
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
-      "options": {
-        "dataLinks": []
-      },
-      "percentage": false,
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "dimensions": {
-            "InstanceId": "$instance"
-          },
-          "expression": "",
-          "highResolution": false,
-          "matchExact": true,
-          "metricName": "StatusCheckFailed_Instance",
-          "namespace": "AWS/EC2",
-          "refId": "A",
-          "region": "$region",
-          "statistics": ["Sum"]
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Status Check Failed Instance Sum",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "${DS_CLOUDWATCH}",
-      "description": "",
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 45
-      },
-      "hiddenSeries": false,
-      "id": 12,
-      "legend": {
-        "alignAsTable": false,
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
-      "options": {
-        "dataLinks": []
-      },
-      "percentage": false,
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "dimensions": {
-            "InstanceId": "$instance"
-          },
-          "expression": "",
-          "highResolution": false,
-          "matchExact": true,
-          "metricName": "StatusCheckFailed_System",
-          "namespace": "AWS/EC2",
-          "refId": "A",
-          "region": "$region",
-          "statistics": ["Sum"]
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Status Check Failed System Sum",
+      "title": "Burst Balance Average",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -1116,7 +921,6 @@
     "list": [
       {
         "current": {
-          "tags": [],
           "text": "CloudWatch",
           "value": "CloudWatch"
         },
@@ -1186,14 +990,14 @@
           "value": ["*"]
         },
         "datasource": "${DS_CLOUDWATCH}",
-        "definition": "dimension_values($region, AWS/EC2, , InstanceId)",
+        "definition": "dimension_values($region, AWS/EBS, , VolumeId)",
         "hide": 0,
         "includeAll": true,
-        "label": "Instance",
+        "label": "Volume",
         "multi": true,
-        "name": "instance",
+        "name": "volume",
         "options": [],
-        "query": "dimension_values($region, AWS/EC2, , InstanceId)",
+        "query": "dimension_values($region, AWS/EBS, , VolumeId)",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -1214,7 +1018,7 @@
     "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
   },
   "timezone": "",
-  "title": "EC2",
-  "uid": "VgpJGb1Zk",
-  "version": 1
+  "title": "EBS",
+  "uid": "VgpJGb1Za",
+  "version": 10
 }
