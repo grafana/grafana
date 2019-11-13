@@ -86,10 +86,16 @@
         </div>
       </div>
     </div>
-    <div class="gf-form">
-      <label class="gf-form-label width-6">Unit</label>
-      <div class="gf-form-dropdown-typeahead width-18" ng-model="ctrl.panel.format" dropdown-typeahead2="ctrl.unitFormats" dropdown-typeahead-on-select="ctrl.setUnitFormat($subItem)"></div>
-    </div>
+		<div class="gf-form-inline">
+			<gf-form-switch class="gf-form" label="Auto Unit" label-class="width-6" checked="ctrl.panel.useSeriesUnit" on-change="ctrl.refresh()"></gf-form-switch>
+			<div class="gf-form">
+				<label ng-if="ctrl.panel.useSeriesUnit"class="gf-form-label width-13">{{ctrl.getValueFormatName(ctrl.panel.format)}}</label>
+			</div>
+		</div>
+		<div class="gf-form" ng-if="!ctrl.panel.useSeriesUnit">
+			<label class="gf-form-label width-6">Unit</label>
+			<div class="gf-form-dropdown-typeahead max-width-18" ng-model="ctrl.panel.format" dropdown-typeahead2="ctrl.unitFormats" dropdown-typeahead-on-select="ctrl.setUnitFormat($subItem)"></div>
+		</div>
     <div class="gf-form">
       <label class="gf-form-label width-6">Decimals</label>
       <input type="number" class="gf-form-input width-18" placeholder="auto" data-placement="right" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" ng-model="ctrl.panel.decimals" ng-change="ctrl.refresh()" ng-model-onblur>

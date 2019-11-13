@@ -21,6 +21,7 @@ import {
   getDisplayProcessor,
   getColorFromHexRgbOrName,
   PanelEvents,
+  getValueFormatName,
 } from '@grafana/data';
 
 import { convertOldAngularValueMapping } from '@grafana/ui';
@@ -81,6 +82,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     targets: [{}],
     cacheTimeout: null,
     format: 'none',
+    useSeriesUnit: true,
     prefix: '',
     postfix: '',
     nullText: null,
@@ -237,6 +239,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         reducers: [calc],
       })[calc];
     }
+
+    panel.format = panel.useSeriesUnit ? fieldInfo.field.config.unit || 'none' : panel.format;
 
     const processor = getDisplayProcessor({
       config: {
@@ -663,6 +667,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       render();
       ctrl.renderingCompleted();
     });
+  }
+
+  getValueFormatName(id: string) {
+    return getValueFormatName(id);
   }
 }
 
