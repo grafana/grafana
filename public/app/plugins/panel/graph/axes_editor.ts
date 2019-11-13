@@ -1,4 +1,4 @@
-import { getValueFormats } from '@grafana/data';
+import { getValueFormats, getValueFormatName } from '@grafana/data';
 import { GraphCtrl } from './module';
 
 export class AxesEditorCtrl {
@@ -52,6 +52,10 @@ export class AxesEditorCtrl {
   setUnitFormat(axis: { format: any }, subItem: { value: any }) {
     axis.format = subItem.value;
     this.panelCtrl.render();
+  }
+
+  getValueFormatName(id: string) {
+    return getValueFormatName(id);
   }
 
   render() {

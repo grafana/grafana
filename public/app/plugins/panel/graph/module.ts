@@ -54,6 +54,7 @@ class GraphCtrl extends MetricsPanelCtrl {
         min: null,
         max: null,
         format: 'short',
+        useSeriesUnit: true,
       },
       {
         label: null,
@@ -62,6 +63,7 @@ class GraphCtrl extends MetricsPanelCtrl {
         min: null,
         max: null,
         format: 'short',
+        useSeriesUnit: true,
       },
     ],
     xaxis: {
@@ -261,13 +263,22 @@ class GraphCtrl extends MetricsPanelCtrl {
     for (const series of this.seriesList) {
       series.applySeriesOverrides(this.panel.seriesOverrides);
 
-      if (series.unit) {
-        this.panel.yaxes[series.yaxis - 1].format = series.unit;
-      }
       if (this.hiddenSeriesTainted === false && series.hiddenSeries === true) {
         this.hiddenSeries[series.alias] = true;
       }
     }
+    this.panel.yaxes.map((axes: any, index: number) => {
+      if (!axes.useSeriesUnit) {
+        return;
+      }
+      axes.format =
+        this.seriesList.reduce((prev, current) => {
+          if (current.unit && current.yaxis === index + 1) {
+            return prev === '' || prev === current.unit ? current.unit : 'short';
+          }
+          return prev;
+        }, '') || 'short';
+    });
   }
 
   onColorChange = (series: any, color: string) => {

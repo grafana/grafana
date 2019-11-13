@@ -7,7 +7,13 @@
 		<gf-form-switch class="gf-form" label="Show" label-class="width-6" checked="yaxis.show" on-change="ctrl.render()"></gf-form-switch>
 
 		<div ng-if="yaxis.show">
-			<div class="gf-form">
+			<div class="gf-form-inline">
+				<gf-form-switch class="gf-form" label="Auto Unit" label-class="width-6" checked="yaxis.useSeriesUnit" on-change="ctrl.render()"></gf-form-switch>
+				<div class="gf-form">
+					<label ng-if="yaxis.useSeriesUnit"class="gf-form-label width-12">{{ctrl.getValueFormatName(yaxis.format)}}</label>
+				</div>
+			</div>
+			<div class="gf-form" ng-if="!yaxis.useSeriesUnit">
 				<label class="gf-form-label width-6">Unit</label>
 				<div class="gf-form-dropdown-typeahead max-width-20" ng-model="yaxis.format" dropdown-typeahead2="ctrl.unitFormats" dropdown-typeahead-on-select="ctrl.setUnitFormat(yaxis, $subItem)"></div>
 			</div>
