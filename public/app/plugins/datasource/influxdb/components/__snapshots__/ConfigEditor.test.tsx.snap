@@ -33,7 +33,7 @@ exports[`Render should disable basic auth password input 1`] = `
       }
     }
     defaultUrl="http://localhost:8086"
-    onChange={[Function]}
+    onChange={[MockFunction]}
     showAccessOptions={true}
   />
   <h3
@@ -255,7 +255,7 @@ exports[`Render should hide basic auth fields when switch off 1`] = `
       }
     }
     defaultUrl="http://localhost:8086"
-    onChange={[Function]}
+    onChange={[MockFunction]}
     showAccessOptions={true}
   />
   <h3
@@ -477,7 +477,7 @@ exports[`Render should hide white listed cookies input when browser access chose
       }
     }
     defaultUrl="http://localhost:8086"
-    onChange={[Function]}
+    onChange={[MockFunction]}
     showAccessOptions={true}
   />
   <h3
@@ -699,7 +699,7 @@ exports[`Render should render component 1`] = `
       }
     }
     defaultUrl="http://localhost:8086"
-    onChange={[Function]}
+    onChange={[MockFunction]}
     showAccessOptions={true}
   />
   <h3

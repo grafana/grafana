@@ -3,13 +3,14 @@ import { DataSourcePluginOptionsEditorProps, DataSourceSettings, SelectableValue
 import { DataSourceHttpSettings, FormLabel, Input, SecretFormField, Select } from '@grafana/ui';
 import { InfluxOptions, InfluxSecureJsonData } from '../types';
 
+const httpModes = [{ label: 'GET', value: 'GET' }, { label: 'POST', value: 'POST' }];
+
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 
 type InfluxDataSourceSettings = DataSourceSettings<InfluxOptions, InfluxSecureJsonData>;
 
 export interface State {
   config: InfluxDataSourceSettings;
-  httpModes: SelectableValue[];
 }
 
 export class ConfigEditor extends PureComponent<Props, State> {
@@ -20,7 +21,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
     this.state = {
       config: ConfigEditor.defaults(options),
-      httpModes: [{ label: 'GET', value: 'GET' }, { label: 'POST', value: 'POST' }],
     };
   }
 
@@ -37,45 +37,22 @@ export class ConfigEditor extends PureComponent<Props, State> {
     return options;
   };
 
-  // using type any here because a string can't be used to index
-  // type InfluxOptions in InfluxDataSourceSettings (ie secureJsonFields[k])
-  updateDatasource = async (config: any) => {
-    for (const k in config.secureJsonData) {
-      // if the secret field is empty and the secureJsonFields
-      // for that secret is true, don't save an empty string to the field
-      // this will allow an empty string to be saved if the field has
-      // been reset because the secureJsonFields value will be set false
-      if (
-        config.secureJsonData[k].length === 0 &&
-        config.hasOwnProperty('secureJsonFields') &&
-        config.secureJsonFields.hasOwnProperty(k) &&
-        config.secureJsonFields[k] === true
-      ) {
-        delete config.secureJsonData[k];
-      }
-    }
-
-    this.props.onOptionsChange({
-      ...config,
-    });
-  };
-
   onDatabaseChange = (database: string) => {
-    this.updateDatasource({
+    this.props.onOptionsChange({
       ...this.state.config,
       database,
     });
   };
 
   onUserChange = (user: string) => {
-    this.updateDatasource({
+    this.props.onOptionsChange({
       ...this.state.config,
       user,
     });
   };
 
   onPasswordChange = (password: string) => {
-    this.updateDatasource({
+    this.props.onOptionsChange({
       ...this.state.config,
       secureJsonData: {
         ...this.state.config.secureJsonData,
@@ -85,7 +62,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   onTimeIntervalChange = (timeInterval: string) => {
-    this.updateDatasource({
+    this.props.onOptionsChange({
       ...this.state.config,
       jsonData: {
         ...this.state.config.jsonData,
@@ -95,7 +72,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   onResetPassword = () => {
-    this.updateDatasource({
+    this.props.onOptionsChange({
       ...this.state.config,
       secureJsonFields: {
         ...this.state.config.secureJsonFields,
@@ -105,7 +82,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   onHttpModeSelect = (httpMode: SelectableValue<string>) => {
-    this.updateDatasource({
+    this.props.onOptionsChange({
       ...this.state.config,
       jsonData: {
         ...this.state.config.jsonData,
@@ -115,14 +92,14 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const { config, httpModes } = this.state;
+    const { config } = this.state;
     return (
       <>
         <DataSourceHttpSettings
           showAccessOptions={true}
           dataSourceConfig={config}
           defaultUrl="http://localhost:8086"
-          onChange={this.updateDatasource}
+          onChange={this.props.onOptionsChange}
         />
 
         <h3 className="page-heading">InfluxDB Details</h3>
