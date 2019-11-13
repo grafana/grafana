@@ -324,6 +324,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'ops/min (opm)', id: 'opm', fn: simpleCountUnit('opm') },
       { name: 'reads/min (rpm)', id: 'rpm', fn: simpleCountUnit('rpm') },
       { name: 'writes/min (wpm)', id: 'wpm', fn: simpleCountUnit('wpm') },
+      { name: 'frames/sec (fps)', id: 'fps', fn: simpleCountUnit('fps') }
     ],
   },
   {
