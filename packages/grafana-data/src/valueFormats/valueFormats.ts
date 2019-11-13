@@ -150,7 +150,22 @@ export function getValueFormat(id: string): ValueFormatter {
     buildFormats();
   }
 
-  return index[id];
+  return index[id] || toFixedUnit(id);
+}
+
+export function getValueFormatName(id: string): string {
+  if (!hasBuiltIndex) {
+    buildFormats();
+  }
+
+  for (const cat of categories) {
+    for (const format of cat.formats) {
+      if (format.id === id) {
+        return format.name;
+      }
+    }
+  }
+  return id;
 }
 
 export function getValueFormatterIndex(): ValueFormatterIndex {
