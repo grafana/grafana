@@ -27,7 +27,13 @@ const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest }) => {
           Test
         </button>
       )}
-      <button type="submit" className="btn btn-danger" disabled={isReadOnly} onClick={onDelete}>
+      <button
+        type="submit"
+        className="btn btn-danger"
+        disabled={isReadOnly}
+        onClick={onDelete}
+        aria-label="Delete button"
+      >
         Delete
       </button>
       <a className="btn btn-inverse" href={`${config.appSubUrl}/datasources`}>

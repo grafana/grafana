@@ -264,7 +264,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          query: this.templateSrv.replace(query.query),
+          query: this.templateSrv.replace(query.query, {}, 'lucene'),
         };
         return expandedQuery;
       });
