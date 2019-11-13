@@ -224,7 +224,7 @@ function getGrafanaCloudPhantomPlugin(): DataSourcePluginMeta {
       author: { name: 'Grafana Labs' },
       links: [
         {
-          url: 'https://grafana.com/cloud',
+          url: 'https://grafana.com/products/cloud/',
           name: 'Learn more',
         },
       ],

@@ -1,32 +1,63 @@
 import React from 'react';
+import { css } from 'emotion';
 
 import { Icon } from './Icon';
 import { getAvailableIcons, IconType } from './types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { useTheme } from '../../themes';
+import { useTheme, selectThemeVariant } from '../../themes';
+import mdx from './Icon.mdx';
 
 export default {
   title: 'UI/Icon',
   component: Icon,
   decorators: [withCenteredStory],
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
 };
 
 const IconWrapper: React.FC<{ name: IconType }> = ({ name }) => {
   const theme = useTheme();
+  const borderColor = selectThemeVariant(
+    {
+      light: theme.colors.gray5,
+      dark: theme.colors.dark6,
+    },
+    theme.type
+  );
+
   return (
     <div
-      style={{
-        width: '60px',
-        height: '60px',
-        display: 'table-cell',
-        padding: '12px',
-        border: `1px solid ${theme.colors.dark6}`,
-        textAlign: 'center',
-      }}
+      className={css`
+        width: 150px;
+        height: 60px;
+        display: table-cell;
+        padding: 12px;
+        border: 1px solid ${borderColor};
+        text-align: center;
+
+        &:hover {
+          background: ${borderColor};
+        }
+      `}
     >
-      <Icon name={name} />
-      <div style={{ paddingTop: '16px' }}>
-        <code>{name}</code>
+      <Icon
+        name={name}
+        className={css`
+          font-size: 18px;
+        `}
+      />
+      <div
+        className={css`
+          padding-top: 16px;
+          word-break: break-all;
+          font-family: ${theme.typography.fontFamily.monospace};
+          font-size: ${theme.typography.size.xs};
+        `}
+      >
+        {name}
       </div>
     </div>
   );
@@ -34,11 +65,11 @@ const IconWrapper: React.FC<{ name: IconType }> = ({ name }) => {
 
 export const simple = () => {
   const icons = getAvailableIcons();
-  const iconsPerRow = 6;
+  const iconsPerRow = 10;
   const rows: IconType[][] = [[]];
   let rowIdx = 0;
 
-  icons.forEach((i, idx) => {
+  icons.forEach((i: IconType, idx: number) => {
     if (idx % iconsPerRow === 0) {
       rows.push([]);
       rowIdx++;
@@ -46,19 +77,21 @@ export const simple = () => {
     rows[rowIdx].push(i);
   });
 
-  console.log(rows);
-
   return (
     <div
-      style={{
-        display: 'table',
-        tableLayout: 'fixed',
-        borderCollapse: 'collapse',
-      }}
+      className={css`
+        display: table;
+        table-layout: fixed;
+        border-collapse: collapse;
+      `}
     >
       {rows.map(r => {
         return (
-          <div style={{ display: 'table-row' }}>
+          <div
+            className={css`
+              display: table-row;
+            `}
+          >
             {r.map((i, index) => {
               return <IconWrapper name={i} />;
             })}

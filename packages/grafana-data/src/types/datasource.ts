@@ -284,7 +284,6 @@ export interface ExploreQueryFieldProps<
 > extends QueryEditorProps<DSType, TQuery, TOptions> {
   history: any[];
   onBlur?: () => void;
-  onHint?: (action: QueryFixAction) => void;
 }
 
 export interface ExploreStartPageProps {
