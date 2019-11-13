@@ -375,12 +375,10 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     });
   }
 
-  getTagValues(tag: string, optionalOptions: any) {
-    const options = optionalOptions || {};
-
+  getTagValues(options: any = {}) {
     const httpOptions: any = {
       method: 'GET',
-      url: '/tags/' + this.templateSrv.replace(tag),
+      url: '/tags/' + this.templateSrv.replace(options.key),
       // for cancellations
       requestId: options.requestId,
     };

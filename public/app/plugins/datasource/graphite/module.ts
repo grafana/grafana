@@ -16,6 +16,6 @@ export {
 };
 
 export const plugin = new DataSourcePlugin(GraphiteDatasource)
-  .setQueryEditor(GraphiteQueryCtrl)
+  .setQueryCtrl(GraphiteQueryCtrl)
   .setConfigEditor(ConfigEditor)
   .setAnnotationQueryCtrl(AnnotationsQueryCtrl);
