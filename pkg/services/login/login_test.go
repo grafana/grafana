@@ -70,7 +70,8 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 		return nil
 	})
 
-	syncOrgRoles(&user, &externalUser)
+	err := syncOrgRoles(&user, &externalUser)
+	require.NoError(t, err)
 	require.Equal(t, models.ErrLastOrgAdmin.Error(), logOutput)
 }
 
