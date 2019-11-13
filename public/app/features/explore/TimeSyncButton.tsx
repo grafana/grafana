@@ -2,10 +2,8 @@ import React from 'react';
 import classNames from 'classnames';
 import { css } from 'emotion';
 
-import { GrafanaTheme, useTheme, stylesFactory } from '@grafana/ui';
-
-//Components
-import { Tooltip } from '@grafana/ui';
+import { Tooltip, useTheme, stylesFactory } from '@grafana/ui';
+import { GrafanaTheme } from '@grafana/data';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {

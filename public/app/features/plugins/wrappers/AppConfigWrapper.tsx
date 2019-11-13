@@ -3,8 +3,8 @@ import React, { PureComponent } from 'react';
 import cloneDeep from 'lodash/cloneDeep';
 import extend from 'lodash/extend';
 
-import { PluginMeta, AppPlugin, Button } from '@grafana/ui';
-import { deprecationWarning } from '@grafana/data';
+import { Button } from '@grafana/ui';
+import { PluginMeta, AppPlugin, deprecationWarning } from '@grafana/data';
 
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { getBackendSrv } from 'app/core/services/backend_srv';

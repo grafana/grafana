@@ -1,5 +1,5 @@
 import { ResultTransformer } from '../result_transformer';
-import { DataQueryResponseData } from '@grafana/ui';
+import { DataQueryResponseData } from '@grafana/data';
 
 describe('Prometheus Result Transformer', () => {
   const ctx: any = {};
@@ -59,7 +59,7 @@ describe('Prometheus Result Transformer', () => {
     };
 
     it('should return table model', () => {
-      const table = ctx.resultTransformer.transformMetricDataToTable(response.data.result);
+      const table = ctx.resultTransformer.transformMetricDataToTable(response.data.result, 0, 'A');
       expect(table.type).toBe('table');
       expect(table.rows).toEqual([
         [1443454528000, 'test', '', 'testjob', 3846],
@@ -73,6 +73,7 @@ describe('Prometheus Result Transformer', () => {
         { text: 'Value' },
       ]);
       expect(table.columns[4].filterable).toBeUndefined();
+      expect(table.refId).toBe('A');
     });
 
     it('should column title include refId if response count is more than 2', () => {
@@ -217,6 +218,7 @@ describe('Prometheus Result Transformer', () => {
         format: 'timeseries',
         start: 0,
         end: 2,
+        refId: 'B',
       };
 
       const result = ctx.resultTransformer.transform({ data: response }, options);
@@ -226,6 +228,7 @@ describe('Prometheus Result Transformer', () => {
           query: undefined,
           datapoints: [[10, 0], [10, 1000], [0, 2000]],
           tags: { job: 'testjob' },
+          refId: 'B',
         },
       ]);
     });

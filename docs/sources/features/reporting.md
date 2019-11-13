@@ -3,6 +3,7 @@ title = "Reporting"
 description = ""
 keywords = ["grafana", "reporting"]
 type = "docs"
+aliases = ["/administration/reports"]
 [menu.docs]
 parent = "features"
 weight = 8
@@ -20,7 +21,7 @@ Reporting allows you to generate PDFs from any of your Dashboards and have them 
 
 ## Dashboard as a Report
 
-With Reports there are a few things to keep in mind, most importantly, any changes you make to the Dashboard used in a report will be reflected in the report. If you change the time range in the Dashboard the time range will be the same in the report as well. 
+With Reports there are a few things to keep in mind, most importantly, any changes you make to the Dashboard used in a report will be reflected in the report. If you change the time range in the Dashboard the time range will be the same in the report as well.
 
 ## Setup
 
@@ -32,13 +33,13 @@ We recommend using the new image rendering plugin with reporting as it supports 
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
 
-Currently only Organisation Admins can create reports. To get to report click on the reports icon in the side menu. This will allow you to list, create and update your reports. 
+Currently only Organisation Admins can create reports. To get to report click on the reports icon in the side menu. This will allow you to list, create and update your reports.
 
 | Setting       | Description                                                       |
 | --------------|------------------------------------------------------------------ |
 | Name          | name of the Report                                                |
 | Dashboard     | what dashboard to generate the report from                        |
-| Recipients    | emails of the people who will receive this report                 | 
+| Recipients    | emails of the people who will receive this report                 |
 | ReplyTo       | your email address, so that the recipient can respond             |
 | Message       | message body in the email with the report                         |
 | Schedule      | how often do you want the report generated and sent               |

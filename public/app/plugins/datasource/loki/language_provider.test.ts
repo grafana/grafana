@@ -3,10 +3,10 @@ import { Editor as SlateEditor } from 'slate';
 
 import LanguageProvider, { LABEL_REFRESH_INTERVAL, LokiHistoryItem, rangeToParams } from './language_provider';
 import { AbsoluteTimeRange } from '@grafana/data';
+import { TypeaheadInput } from '@grafana/ui';
 import { advanceTo, clear, advanceBy } from 'jest-date-mock';
 import { beforeEach } from 'test/lib/common';
 
-import { TypeaheadInput } from '../../../types';
 import { makeMockLokiDatasource } from './mocks';
 import LokiDatasource from './datasource';
 

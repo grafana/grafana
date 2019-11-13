@@ -28,7 +28,7 @@ You can update all plugins using
 grafana-cli plugins update-all
 ```
 
-## Database Backup
+## Database backup
 
 Before upgrading it can be a good idea to backup your Grafana database. This will ensure that you can always rollback to your previous version. During startup, Grafana will automatically migrate the database schema (if there are changes or new tables). Sometimes this can cause issues if you later want to downgrade.
 

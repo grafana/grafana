@@ -1,4 +1,4 @@
-import { DataQuery } from '@grafana/ui/src/types';
+import { DataQuery } from '@grafana/data';
 
 export const SHARED_DASHBODARD_QUERY = '-- Dashboard --';
 

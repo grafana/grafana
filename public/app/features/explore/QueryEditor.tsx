@@ -7,7 +7,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
 import { Emitter } from 'app/core/utils/emitter';
-import { DataQuery } from '@grafana/ui';
+import { DataQuery } from '@grafana/data';
 import { TimeRange } from '@grafana/data';
 import 'app/features/plugins/plugin_loader';
 import { dateTime } from '@grafana/data';

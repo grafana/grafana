@@ -12,7 +12,15 @@ import {
 } from 'react-virtualized';
 import { Themeable } from '../../types/theme';
 
-import { stringToJsRegex, DataFrame, sortDataFrame, getDataFrameRow, ArrayVector, FieldType } from '@grafana/data';
+import {
+  stringToJsRegex,
+  DataFrame,
+  sortDataFrame,
+  getDataFrameRow,
+  ArrayVector,
+  FieldType,
+  InterpolateFunction,
+} from '@grafana/data';
 
 import {
   TableCellBuilder,
@@ -21,7 +29,6 @@ import {
   TableCellBuilderOptions,
   simpleCellBuilder,
 } from './TableCellBuilder';
-import { InterpolateFunction } from '../../types/panel';
 
 export interface Props extends Themeable {
   data: DataFrame;

@@ -71,6 +71,17 @@ func Fchmodat(dirfd int, path string, mode uint32, flags int) (err error) {
 // ioctl itself should not be exposed directly, but additional get/set
 // functions for specific types are permissible.
 
+// IoctlRetInt performs an ioctl operation specified by req on a device
+// associated with opened file descriptor fd, and returns a non-negative
+// integer that is returned by the ioctl syscall.
+func IoctlRetInt(fd int, req uint) (int, error) {
+	ret, _, err := Syscall(SYS_IOCTL, uintptr(fd), uintptr(req), 0)
+	if err != 0 {
+		return 0, err
+	}
+	return int(ret), nil
+}
+
 // IoctlSetPointerInt performs an ioctl operation which sets an
 // integer value on fd, using the specified request number. The ioctl
 // argument is called with a pointer to the integer value, rather than
@@ -80,50 +91,16 @@ func IoctlSetPointerInt(fd int, req uint, value int) error {
 	return ioctl(fd, req, uintptr(unsafe.Pointer(&v)))
 }
 
-// IoctlSetInt performs an ioctl operation which sets an integer value
-// on fd, using the specified request number.
-func IoctlSetInt(fd int, req uint, value int) error {
-	return ioctl(fd, req, uintptr(value))
-}
-
-func ioctlSetWinsize(fd int, req uint, value *Winsize) error {
-	return ioctl(fd, req, uintptr(unsafe.Pointer(value)))
-}
-
-func ioctlSetTermios(fd int, req uint, value *Termios) error {
-	return ioctl(fd, req, uintptr(unsafe.Pointer(value)))
-}
-
 func IoctlSetRTCTime(fd int, value *RTCTime) error {
 	err := ioctl(fd, RTC_SET_TIME, uintptr(unsafe.Pointer(value)))
 	runtime.KeepAlive(value)
 	return err
 }
 
-// IoctlGetInt performs an ioctl operation which gets an integer value
-// from fd, using the specified request number.
-func IoctlGetInt(fd int, req uint) (int, error) {
-	var value int
-	err := ioctl(fd, req, uintptr(unsafe.Pointer(&value)))
-	return value, err
-}
-
 func IoctlGetUint32(fd int, req uint) (uint32, error) {
 	var value uint32
 	err := ioctl(fd, req, uintptr(unsafe.Pointer(&value)))
 	return value, err
-}
-
-func IoctlGetWinsize(fd int, req uint) (*Winsize, error) {
-	var value Winsize
-	err := ioctl(fd, req, uintptr(unsafe.Pointer(&value)))
-	return &value, err
-}
-
-func IoctlGetTermios(fd int, req uint) (*Termios, error) {
-	var value Termios
-	err := ioctl(fd, req, uintptr(unsafe.Pointer(&value)))
-	return &value, err
 }
 
 func IoctlGetRTCTime(fd int) (*RTCTime, error) {
@@ -798,6 +775,70 @@ func (sa *SockaddrPPPoE) sockaddr() (unsafe.Pointer, _Socklen, error) {
 	return unsafe.Pointer(&sa.raw), SizeofSockaddrPPPoX, nil
 }
 
+// SockaddrTIPC implements the Sockaddr interface for AF_TIPC type sockets.
+// For more information on TIPC, see: http://tipc.sourceforge.net/.
+type SockaddrTIPC struct {
+	// Scope is the publication scopes when binding service/service range.
+	// Should be set to TIPC_CLUSTER_SCOPE or TIPC_NODE_SCOPE.
+	Scope int
+
+	// Addr is the type of address used to manipulate a socket. Addr must be
+	// one of:
+	//  - *TIPCSocketAddr: "id" variant in the C addr union
+	//  - *TIPCServiceRange: "nameseq" variant in the C addr union
+	//  - *TIPCServiceName: "name" variant in the C addr union
+	//
+	// If nil, EINVAL will be returned when the structure is used.
+	Addr TIPCAddr
+
+	raw RawSockaddrTIPC
+}
+
+// TIPCAddr is implemented by types that can be used as an address for
+// SockaddrTIPC. It is only implemented by *TIPCSocketAddr, *TIPCServiceRange,
+// and *TIPCServiceName.
+type TIPCAddr interface {
+	tipcAddrtype() uint8
+	tipcAddr() [12]byte
+}
+
+func (sa *TIPCSocketAddr) tipcAddr() [12]byte {
+	var out [12]byte
+	copy(out[:], (*(*[unsafe.Sizeof(TIPCSocketAddr{})]byte)(unsafe.Pointer(sa)))[:])
+	return out
+}
+
+func (sa *TIPCSocketAddr) tipcAddrtype() uint8 { return TIPC_SOCKET_ADDR }
+
+func (sa *TIPCServiceRange) tipcAddr() [12]byte {
+	var out [12]byte
+	copy(out[:], (*(*[unsafe.Sizeof(TIPCServiceRange{})]byte)(unsafe.Pointer(sa)))[:])
+	return out
+}
+
+func (sa *TIPCServiceRange) tipcAddrtype() uint8 { return TIPC_SERVICE_RANGE }
+
+func (sa *TIPCServiceName) tipcAddr() [12]byte {
+	var out [12]byte
+	copy(out[:], (*(*[unsafe.Sizeof(TIPCServiceName{})]byte)(unsafe.Pointer(sa)))[:])
+	return out
+}
+
+func (sa *TIPCServiceName) tipcAddrtype() uint8 { return TIPC_SERVICE_ADDR }
+
+func (sa *SockaddrTIPC) sockaddr() (unsafe.Pointer, _Socklen, error) {
+	if sa.Addr == nil {
+		return nil, 0, EINVAL
+	}
+
+	sa.raw.Family = AF_TIPC
+	sa.raw.Scope = int8(sa.Scope)
+	sa.raw.Addrtype = sa.Addr.tipcAddrtype()
+	sa.raw.Addr = sa.Addr.tipcAddr()
+
+	return unsafe.Pointer(&sa.raw), SizeofSockaddrTIPC, nil
+}
+
 func anyToSockaddr(fd int, rsa *RawSockaddrAny) (Sockaddr, error) {
 	switch rsa.Addr.Family {
 	case AF_NETLINK:
@@ -923,6 +964,27 @@ func anyToSockaddr(fd int, rsa *RawSockaddrAny) (Sockaddr, error) {
 				break
 			}
 		}
+		return sa, nil
+	case AF_TIPC:
+		pp := (*RawSockaddrTIPC)(unsafe.Pointer(rsa))
+
+		sa := &SockaddrTIPC{
+			Scope: int(pp.Scope),
+		}
+
+		// Determine which union variant is present in pp.Addr by checking
+		// pp.Addrtype.
+		switch pp.Addrtype {
+		case TIPC_SERVICE_RANGE:
+			sa.Addr = (*TIPCServiceRange)(unsafe.Pointer(&pp.Addr))
+		case TIPC_SERVICE_ADDR:
+			sa.Addr = (*TIPCServiceName)(unsafe.Pointer(&pp.Addr))
+		case TIPC_SOCKET_ADDR:
+			sa.Addr = (*TIPCSocketAddr)(unsafe.Pointer(&pp.Addr))
+		default:
+			return nil, EINVAL
+		}
+
 		return sa, nil
 	}
 	return nil, EAFNOSUPPORT
@@ -1159,6 +1221,34 @@ func KeyctlInstantiateIOV(id int, payload []Iovec, ringid int) error {
 func KeyctlDHCompute(params *KeyctlDHParams, buffer []byte) (size int, err error) {
 	return keyctlDH(KEYCTL_DH_COMPUTE, params, buffer)
 }
+
+// KeyctlRestrictKeyring implements the KEYCTL_RESTRICT_KEYRING command. This
+// command limits the set of keys that can be linked to the keyring, regardless
+// of keyring permissions. The command requires the "setattr" permission.
+//
+// When called with an empty keyType the command locks the keyring, preventing
+// any further keys from being linked to the keyring.
+//
+// The "asymmetric" keyType defines restrictions requiring key payloads to be
+// DER encoded X.509 certificates signed by keys in another keyring. Restrictions
+// for "asymmetric" include "builtin_trusted", "builtin_and_secondary_trusted",
+// "key_or_keyring:<key>", and "key_or_keyring:<key>:chain".
+//
+// As of Linux 4.12, only the "asymmetric" keyType defines type-specific
+// restrictions.
+//
+// See the full documentation at:
+// http://man7.org/linux/man-pages/man3/keyctl_restrict_keyring.3.html
+// http://man7.org/linux/man-pages/man2/keyctl.2.html
+func KeyctlRestrictKeyring(ringid int, keyType string, restriction string) error {
+	if keyType == "" {
+		return keyctlRestrictKeyring(KEYCTL_RESTRICT_KEYRING, ringid)
+	}
+	return keyctlRestrictKeyringByType(KEYCTL_RESTRICT_KEYRING, ringid, keyType, restriction)
+}
+
+//sys keyctlRestrictKeyringByType(cmd int, arg2 int, keyType string, restriction string) (err error) = SYS_KEYCTL
+//sys keyctlRestrictKeyring(cmd int, arg2 int) (err error) = SYS_KEYCTL
 
 func Recvmsg(fd int, p, oob []byte, flags int) (n, oobn int, recvflags int, from Sockaddr, err error) {
 	var msg Msghdr

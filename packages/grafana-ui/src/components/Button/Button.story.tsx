@@ -5,7 +5,6 @@ import withPropsCombinations from 'react-storybook-addon-props-combinations';
 import { action } from '@storybook/addon-actions';
 import { ThemeableCombinationsRowRenderer } from '../../utils/storybook/CombinationsRowRenderer';
 import { select, boolean } from '@storybook/addon-knobs';
-import { CommonButtonProps } from './types';
 
 const ButtonStories = storiesOf('UI/Button', module);
 
@@ -22,7 +21,7 @@ const combinationOptions = {
   CombinationRenderer: ThemeableCombinationsRowRenderer,
 };
 
-const renderButtonStory = (buttonComponent: React.ComponentType<CommonButtonProps>) => {
+const renderButtonStory = (buttonComponent: typeof Button | typeof LinkButton) => {
   const isDisabled = boolean('Disable button', false);
   return withPropsCombinations(
     buttonComponent,

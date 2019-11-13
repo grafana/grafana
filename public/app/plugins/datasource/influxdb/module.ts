@@ -8,7 +8,7 @@ import {
   createResetHandler,
   PasswordFieldEnum,
 } from '../../../features/datasources/utils/passwordHandlers';
-import { DataSourcePlugin } from '@grafana/ui';
+import { DataSourcePlugin } from '@grafana/data';
 
 class InfluxConfigCtrl {
   static templateUrl = 'partials/config.html';

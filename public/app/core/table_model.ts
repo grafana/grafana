@@ -17,6 +17,7 @@ export default class TableModel implements TableData {
   rows: any[];
   type: string;
   columnMap: any;
+  refId: string;
 
   constructor(table?: any) {
     this.columns = [];
@@ -99,11 +100,14 @@ export function mergeTablesIntoModel(dst?: TableModel, ...tables: TableModel[]):
     return model;
   }
 
+  // Filter out any tables that are not of TableData format
+  const tableDataTables = tables.filter(table => !!table.columns);
+
   // Track column indexes of union: name -> index
   const columnNames: { [key: string]: any } = {};
 
   // Union of all non-value columns
-  const columnsUnion = tables.slice().reduce(
+  const columnsUnion = tableDataTables.slice().reduce(
     (acc, series) => {
       series.columns.forEach(col => {
         const { text } = col;
@@ -120,10 +124,10 @@ export function mergeTablesIntoModel(dst?: TableModel, ...tables: TableModel[]):
   // Map old column index to union index per series, e.g.,
   // given columnNames {A: 0, B: 1} and
   // data [{columns: [{ text: 'A' }]}, {columns: [{ text: 'B' }]}] => [[0], [1]]
-  const columnIndexMapper = tables.map(series => series.columns.map(col => columnNames[col.text]));
+  const columnIndexMapper = tableDataTables.map(series => series.columns.map(col => columnNames[col.text]));
 
   // Flatten rows of all series and adjust new column indexes
-  const flattenedRows = tables.reduce(
+  const flattenedRows = tableDataTables.reduce(
     (acc, series, seriesIndex) => {
       const mapper = columnIndexMapper[seriesIndex];
       series.rows.forEach(row => {

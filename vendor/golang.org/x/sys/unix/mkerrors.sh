@@ -183,20 +183,26 @@ struct ltchars {
 #include <sys/socket.h>
 #include <sys/xattr.h>
 #include <linux/bpf.h>
+#include <linux/can.h>
 #include <linux/capability.h>
+#include <linux/cryptouser.h>
 #include <linux/errqueue.h>
+#include <linux/falloc.h>
+#include <linux/fanotify.h>
+#include <linux/filter.h>
+#include <linux/fs.h>
+#include <linux/genetlink.h>
+#include <linux/hdreg.h>
+#include <linux/icmpv6.h>
 #include <linux/if.h>
+#include <linux/if_addr.h>
 #include <linux/if_alg.h>
 #include <linux/if_arp.h>
 #include <linux/if_ether.h>
 #include <linux/if_ppp.h>
 #include <linux/if_tun.h>
 #include <linux/if_packet.h>
-#include <linux/if_addr.h>
-#include <linux/falloc.h>
-#include <linux/fanotify.h>
-#include <linux/filter.h>
-#include <linux/fs.h>
+#include <linux/if_xdp.h>
 #include <linux/kexec.h>
 #include <linux/keyctl.h>
 #include <linux/loop.h>
@@ -206,26 +212,23 @@ struct ltchars {
 #include <linux/netfilter/nfnetlink.h>
 #include <linux/netlink.h>
 #include <linux/net_namespace.h>
+#include <linux/nsfs.h>
 #include <linux/perf_event.h>
+#include <linux/ptrace.h>
 #include <linux/random.h>
 #include <linux/reboot.h>
+#include <linux/rtc.h>
 #include <linux/rtnetlink.h>
-#include <linux/ptrace.h>
 #include <linux/sched.h>
 #include <linux/seccomp.h>
-#include <linux/sockios.h>
-#include <linux/wait.h>
-#include <linux/icmpv6.h>
 #include <linux/serial.h>
-#include <linux/can.h>
-#include <linux/vm_sockets.h>
+#include <linux/sockios.h>
 #include <linux/taskstats.h>
-#include <linux/genetlink.h>
+#include <linux/tipc.h>
+#include <linux/vm_sockets.h>
+#include <linux/wait.h>
 #include <linux/watchdog.h>
-#include <linux/hdreg.h>
-#include <linux/rtc.h>
-#include <linux/if_xdp.h>
-#include <linux/cryptouser.h>
+
 #include <mtd/ubi-user.h>
 #include <net/route.h>
 
@@ -264,6 +267,11 @@ struct ltchars {
 #define FS_KEY_DESC_PREFIX              "fscrypt:"
 #define FS_KEY_DESC_PREFIX_SIZE         8
 #define FS_MAX_KEY_SIZE                 64
+
+// The code generator produces -0x1 for (~0), but an unsigned value is necessary
+// for the tipc_subscr timeout __u32 field.
+#undef TIPC_WAIT_FOREVER
+#define TIPC_WAIT_FOREVER 0xffffffff
 '
 
 includes_NetBSD='
@@ -451,6 +459,7 @@ ccflags="$@"
 		$2 ~ /^SYSCTL_VERS/ ||
 		$2 !~ "MNT_BITS" &&
 		$2 ~ /^(MS|MNT|UMOUNT)_/ ||
+		$2 ~ /^NS_GET_/ ||
 		$2 ~ /^TUN(SET|GET|ATTACH|DETACH)/ ||
 		$2 ~ /^(O|F|[ES]?FD|NAME|S|PTRACE|PT)_/ ||
 		$2 ~ /^KEXEC_/ ||
@@ -506,6 +515,7 @@ ccflags="$@"
 		$2 ~ /^XDP_/ ||
 		$2 ~ /^(HDIO|WIN|SMART)_/ ||
 		$2 ~ /^CRYPTO_/ ||
+		$2 ~ /^TIPC_/ ||
 		$2 !~ "WMESGLEN" &&
 		$2 ~ /^W[A-Z0-9]+$/ ||
 		$2 ~/^PPPIOC/ ||

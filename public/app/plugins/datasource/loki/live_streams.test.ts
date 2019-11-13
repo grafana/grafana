@@ -42,7 +42,7 @@ describe('Live Stream Tests', () => {
     const tests = [
       (val: DataFrame[]) => {
         expect(val[0].length).toEqual(7);
-        expect(val[0].labels).toEqual(labels);
+        expect(val[0].fields[1].labels).toEqual(labels);
       },
       (val: DataFrame[]) => {
         expect(val[0].length).toEqual(8);

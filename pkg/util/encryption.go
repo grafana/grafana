@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"errors"
+	"golang.org/x/crypto/pbkdf2"
 	"io"
 )
 
@@ -73,5 +74,5 @@ func Encrypt(payload []byte, secret string) ([]byte, error) {
 
 // Key needs to be 32bytes
 func encryptionKeyToBytes(secret, salt string) ([]byte, error) {
-	return PBKDF2([]byte(secret), []byte(salt), 10000, 32, sha256.New)
+	return pbkdf2.Key([]byte(secret), []byte(salt), 10000, 32, sha256.New), nil
 }

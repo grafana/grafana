@@ -6,8 +6,8 @@ import find from 'lodash/find';
 // Types
 import { UrlQueryMap } from '@grafana/runtime';
 import { StoreState, AppNotificationSeverity, CoreEvents } from 'app/types';
+import { Alert, Tooltip } from '@grafana/ui';
 import {
-  Alert,
   AppPlugin,
   GrafanaPlugin,
   PluginDependencies,
@@ -16,9 +16,9 @@ import {
   PluginMeta,
   PluginMetaInfo,
   PluginType,
-  Tooltip,
-} from '@grafana/ui';
-import { NavModel, NavModelItem } from '@grafana/data';
+  NavModel,
+  NavModelItem,
+} from '@grafana/data';
 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';

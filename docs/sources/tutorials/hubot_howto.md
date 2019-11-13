@@ -1,5 +1,5 @@
 +++
-title = "How To integrate Hubot and Grafana"
+title = "How to integrate Hubot and Grafana"
 type = "docs"
 keywords = ["grafana", "tutorials", "hubot", "slack", "hipchat", "setup", "install", "config"]
 [menu.docs]

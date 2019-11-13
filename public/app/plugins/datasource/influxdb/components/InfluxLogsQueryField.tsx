@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExploreQueryFieldProps } from '@grafana/ui';
+import { ExploreQueryFieldProps } from '@grafana/data';
 // @ts-ignore
 import Cascader from 'rc-cascader';
 
@@ -17,6 +17,13 @@ export interface State {
   measurements: CascaderOption[];
   measurement: string;
   field: string;
+  error: string;
+}
+
+interface ChooserOptions {
+  measurement: string;
+  field: string;
+  error: string;
 }
 
 // Helper function for determining if a collection of pairs are valid
@@ -32,37 +39,54 @@ export function pairsAreValid(pairs: KeyValuePair[]) {
   );
 }
 
+function getChooserText({ measurement, field, error }: ChooserOptions): string {
+  if (error) {
+    return '(No measurement found)';
+  }
+  if (measurement) {
+    return `Measurements (${measurement}/${field})`;
+  }
+  return 'Measurements';
+}
+
 export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
   templateSrv: TemplateSrv = new TemplateSrv();
-  state: State = { measurements: [], measurement: null, field: null };
+  state: State = { measurements: [], measurement: null, field: null, error: null };
 
   async componentDidMount() {
     const { datasource } = this.props;
-    const queryBuilder = new InfluxQueryBuilder({ measurement: '', tags: [] }, datasource.database);
-    const measureMentsQuery = queryBuilder.buildExploreQuery('MEASUREMENTS');
-    const influxMeasurements = await datasource.metricFindQuery(measureMentsQuery);
+    try {
+      const queryBuilder = new InfluxQueryBuilder({ measurement: '', tags: [] }, datasource.database);
+      const measureMentsQuery = queryBuilder.buildExploreQuery('MEASUREMENTS');
+      const influxMeasurements = await datasource.metricFindQuery(measureMentsQuery);
 
-    const measurements = [];
-    for (let index = 0; index < influxMeasurements.length; index++) {
-      const measurementObj = influxMeasurements[index];
-      const queryBuilder = new InfluxQueryBuilder({ measurement: measurementObj.text, tags: [] }, datasource.database);
-      const fieldsQuery = queryBuilder.buildExploreQuery('FIELDS');
-      const influxFields = await datasource.metricFindQuery(fieldsQuery);
-      const fields: any[] = influxFields.map(
-        (field: any): any => ({
-          label: field.text,
-          value: field.text,
-          children: [],
-        })
-      );
-      measurements.push({
-        label: measurementObj.text,
-        value: measurementObj.text,
-        children: fields,
-      });
+      const measurements = [];
+      for (let index = 0; index < influxMeasurements.length; index++) {
+        const measurementObj = influxMeasurements[index];
+        const queryBuilder = new InfluxQueryBuilder(
+          { measurement: measurementObj.text, tags: [] },
+          datasource.database
+        );
+        const fieldsQuery = queryBuilder.buildExploreQuery('FIELDS');
+        const influxFields = await datasource.metricFindQuery(fieldsQuery);
+        const fields: any[] = influxFields.map(
+          (field: any): any => ({
+            label: field.text,
+            value: field.text,
+            children: [],
+          })
+        );
+        measurements.push({
+          label: measurementObj.text,
+          value: measurementObj.text,
+          children: fields,
+        });
+      }
+      this.setState({ measurements });
+    } catch (error) {
+      const message = error && error.message ? error.message : error;
+      this.setState({ error: message });
     }
-
-    this.setState({ measurements });
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -107,8 +131,9 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
 
   render() {
     const { datasource } = this.props;
-    const { measurements, measurement, field } = this.state;
-    const cascadeText = measurement ? `Measurements (${measurement}/${field})` : 'Measurements';
+    const { measurements, measurement, field, error } = this.state;
+    const cascadeText = getChooserText({ measurement, field, error });
+    const hasMeasurement = measurements && measurements.length > 0;
 
     return (
       <div className="gf-form-inline gf-form-inline--nowrap">
@@ -119,7 +144,7 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
             onChange={this.onMeasurementsChange}
             expandIcon={null}
           >
-            <button className="gf-form-label gf-form-label--btn">
+            <button className="gf-form-label gf-form-label--btn" disabled={!hasMeasurement}>
               {cascadeText} <i className="fa fa-caret-down" />
             </button>
           </Cascader>
@@ -132,6 +157,9 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
               extendedOptions={{ measurement }}
             />
           )}
+          {error ? (
+            <span className="gf-form-label gf-form-label--transparent gf-form-label--error m-l-2">{error}</span>
+          ) : null}
         </div>
       </div>
     );

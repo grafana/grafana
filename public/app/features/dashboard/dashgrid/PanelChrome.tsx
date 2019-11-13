@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import { Unsubscribable } from 'rxjs';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { ErrorBoundary, PanelData, PanelPlugin } from '@grafana/ui';
+import { ErrorBoundary } from '@grafana/ui';
 // Utils & Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides, calculateInnerPanelHeight } from 'app/features/dashboard/utils/panel';
@@ -14,8 +14,17 @@ import templateSrv from 'app/features/templating/template_srv';
 import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
-import { LoadingState, ScopedVars, AbsoluteTimeRange, DefaultTimeRange, toUtc, toDataFrameDTO } from '@grafana/data';
-import { PanelEvents } from '@grafana/ui';
+import {
+  LoadingState,
+  ScopedVars,
+  AbsoluteTimeRange,
+  DefaultTimeRange,
+  toUtc,
+  toDataFrameDTO,
+  PanelEvents,
+  PanelData,
+  PanelPlugin,
+} from '@grafana/data';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 

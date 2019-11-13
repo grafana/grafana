@@ -2,11 +2,9 @@
 import React, { PureComponent } from 'react';
 
 import {
-  PanelEditorProps,
   ThresholdsEditor,
   PanelOptionsGrid,
   ValueMappingsEditor,
-  FieldDisplayOptions,
   FieldDisplayEditor,
   FieldPropertiesEditor,
   PanelOptionsGroup,
@@ -15,7 +13,7 @@ import {
   Select,
 } from '@grafana/ui';
 
-import { Threshold, ValueMapping, FieldConfig, DataLink } from '@grafana/data';
+import { Threshold, ValueMapping, FieldConfig, DataLink, PanelEditorProps, FieldDisplayOptions } from '@grafana/data';
 
 import { SingleStatOptions, SparklineOptions, displayModes, colorModes } from './types';
 import { SparklineEditor } from './SparklineEditor';

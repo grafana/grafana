@@ -1,7 +1,7 @@
 import { SingleStatCtrl, ShowData } from '../module';
 import { dateTime, ReducerID } from '@grafana/data';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
-import { LegacyResponseData } from '@grafana/ui';
+import { LegacyResponseData } from '@grafana/data';
 
 interface TestContext {
   ctrl: SingleStatCtrl;

@@ -16,16 +16,14 @@ import {
   LinkModel,
   reduceField,
   ReducerID,
-} from '@grafana/data';
-
-import {
   LegacyResponseData,
   getFlotPairs,
   getDisplayProcessor,
-  convertOldAngularValueMapping,
   getColorFromHexRgbOrName,
   PanelEvents,
-} from '@grafana/ui';
+} from '@grafana/data';
+
+import { convertOldAngularValueMapping } from '@grafana/ui';
 
 import { CoreEvents } from 'app/types';
 import kbn from 'app/core/utils/kbn';
@@ -123,7 +121,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     _.defaults(this.panel, this.panelDefaults);
 
     this.events.on(CoreEvents.dataFramesReceived, this.onFramesReceived.bind(this));
-    this.events.on(PanelEvents.dataError, this.onDataError.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onSnapshotLoad.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
 
@@ -152,10 +149,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   setUnitFormat(subItem: { value: any }) {
     this.panel.format = subItem.value;
     this.refresh();
-  }
-
-  onDataError(err: any) {
-    this.handleDataFrames([]);
   }
 
   onSnapshotLoad(dataList: LegacyResponseData[]) {

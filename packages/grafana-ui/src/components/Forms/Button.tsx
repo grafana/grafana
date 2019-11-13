@@ -1,11 +1,11 @@
-import { FC } from 'react';
+import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, useContext } from 'react';
 import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
-import { selectThemeVariant, stylesFactory, useTheme } from '../../themes';
-import { renderButton } from '../Button/AbstractButton';
+import { selectThemeVariant, stylesFactory, ThemeContext } from '../../themes';
+import { Button as DefaultButton, LinkButton as DefaultLinkButton } from '../Button/Button';
 import { getFocusStyle } from './commonStyles';
-import { AbstractButtonProps, ButtonSize, ButtonVariant, StyleDeps } from '../Button/types';
-import { GrafanaTheme } from '../../types';
+import { ButtonSize, StyleDeps } from '../Button/types';
+import { GrafanaTheme } from '@grafana/data';
 
 const buttonVariantStyles = (from: string, to: string, textColor: string) => css`
   background: linear-gradient(180deg, ${from} 0%, ${to} 100%);
@@ -27,7 +27,6 @@ const getPropertiesForSize = (theme: GrafanaTheme, size: ButtonSize) => {
       return {
         padding: `0 ${theme.spacing.sm}`,
         fontSize: theme.typography.size.sm,
-        iconDistance: theme.spacing.xs,
         height: theme.height.sm,
       };
 
@@ -35,7 +34,6 @@ const getPropertiesForSize = (theme: GrafanaTheme, size: ButtonSize) => {
       return {
         padding: `0 ${theme.spacing.md}`,
         fontSize: theme.typography.size.md,
-        iconDistance: theme.spacing.sm,
         height: `${theme.spacing.formButtonHeight}px`,
       };
 
@@ -43,14 +41,12 @@ const getPropertiesForSize = (theme: GrafanaTheme, size: ButtonSize) => {
       return {
         padding: `0 ${theme.spacing.lg}`,
         fontSize: theme.typography.size.lg,
-        iconDistance: theme.spacing.sm,
         height: theme.height.lg,
       };
 
     default:
       return {
         padding: `0 ${theme.spacing.md}`,
-        iconDistance: theme.spacing.sm,
         fontSize: theme.typography.size.base,
         height: theme.height.md,
       };
@@ -96,8 +92,10 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
   }
 };
 
-export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: StyleDeps) => {
-  const { padding, fontSize, iconDistance, height } = getPropertiesForSize(theme, size);
+// Need to do this because of mismatch between variants in standard buttons and here
+type StyleProps = Omit<StyleDeps, 'variant'> & { variant: ButtonVariant };
+export const getButtonStyles = stylesFactory(({ theme, size, variant }: StyleProps) => {
+  const { padding, fontSize, height } = getPropertiesForSize(theme, size);
   const { background, borderColor } = getPropertiesForVariant(theme, variant);
 
   return {
@@ -112,7 +110,6 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }
         font-family: ${theme.typography.fontFamily.sansSerif};
         line-height: ${theme.typography.lineHeight.sm};
         padding: ${padding};
-        text-align: ${withIcon ? 'left' : 'center'};
         vertical-align: middle;
         cursor: pointer;
         border: 1px solid ${borderColor};
@@ -134,25 +131,39 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }
       display: flex;
       align-items: center;
     `,
-    icon: css`
-      label: button-icon;
-      margin-right: ${iconDistance};
-      filter: brightness(100);
-    `,
   };
 });
 
-export const Button: FC<Omit<AbstractButtonProps, 'theme'>> = ({
-  renderAs,
-  size = 'md',
-  variant = 'primary',
-  className,
-  icon,
-  children,
-  ...otherProps
-}) => {
-  const theme = useTheme();
-  const buttonStyles = getButtonStyles({ theme, size, variant, withIcon: !!icon });
+// These are different from the standard Button where there are 5 variants.
+export type ButtonVariant = 'primary' | 'secondary' | 'destructive';
 
-  return renderButton(theme, buttonStyles, renderAs, children, size, variant, icon, className, otherProps);
+// These also needs to be different because the ButtonVariant is different
+type CommonProps = {
+  size?: ButtonSize;
+  variant?: ButtonVariant;
+  icon?: string;
+  className?: string;
+};
+
+type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
+
+export const Button = (props: ButtonProps) => {
+  const theme = useContext(ThemeContext);
+  const styles = getButtonStyles({
+    theme,
+    size: props.size || 'md',
+    variant: props.variant || 'primary',
+  });
+  return <DefaultButton {...props} styles={styles} />;
+};
+
+type ButtonLinkProps = CommonProps & AnchorHTMLAttributes<HTMLAnchorElement>;
+export const LinkButton = (props: ButtonLinkProps) => {
+  const theme = useContext(ThemeContext);
+  const styles = getButtonStyles({
+    theme,
+    size: props.size || 'md',
+    variant: props.variant || 'primary',
+  });
+  return <DefaultLinkButton {...props} styles={styles} />;
 };

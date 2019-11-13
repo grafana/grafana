@@ -5,14 +5,15 @@ import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 import locationUtil from 'app/core/utils/location_util';
 import { store } from 'app/store/store';
-import { CoreEvents, AppEventEmitter } from 'app/types';
+import { AppEventEmitter, CoreEvents } from 'app/types';
 
 import Mousetrap from 'mousetrap';
-import { PanelEvents } from '@grafana/ui';
+import { PanelEvents } from '@grafana/data';
 import 'mousetrap-global-bind';
 import { ContextSrv } from './context_srv';
-import { ILocationService, ITimeoutService, IRootScopeService } from 'angular';
+import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { getLocationSrv } from '@grafana/runtime';
 
 export class KeybindingSrv {
   helpModal: boolean;
@@ -223,7 +224,13 @@ export class KeybindingSrv {
         if (dashboard.meta.focusPanelId) {
           const panel = dashboard.getPanelById(dashboard.meta.focusPanelId);
           const datasource = await this.datasourceSrv.get(panel.datasource);
-          const url = await getExploreUrl(panel, panel.targets, datasource, this.datasourceSrv, this.timeSrv);
+          const url = await getExploreUrl({
+            panel,
+            panelTargets: panel.targets,
+            panelDatasource: datasource,
+            datasourceSrv: this.datasourceSrv,
+            timeSrv: this.timeSrv,
+          });
           const urlWithoutBase = locationUtil.stripBaseFromUrl(url);
 
           if (urlWithoutBase) {
@@ -261,6 +268,13 @@ export class KeybindingSrv {
           src: 'public/app/features/dashboard/components/ShareModal/template.html',
           scope: shareScope,
         });
+      }
+    });
+
+    // inspect panel
+    this.bind('p i', () => {
+      if (dashboard.meta.focusPanelId) {
+        getLocationSrv().update({ partial: true, query: { inspect: dashboard.meta.focusPanelId } });
       }
     });
 

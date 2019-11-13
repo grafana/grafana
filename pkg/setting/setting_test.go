@@ -227,6 +227,50 @@ func TestLoadingSettings(t *testing.T) {
 
 			So(cfg.RendererCallbackUrl, ShouldEqual, "http://myserver/renderer/")
 		})
+
+		Convey("Only sync_ttl should return the value sync_ttl", func() {
+			cfg := NewCfg()
+			err := cfg.Load(&CommandLineArgs{
+				HomePath: "../../",
+				Args:     []string{"cfg:auth.proxy.sync_ttl=2"},
+			})
+			So(err, ShouldBeNil)
+
+			So(AuthProxySyncTtl, ShouldEqual, 2)
+		})
+
+		Convey("Only ldap_sync_ttl should return the value ldap_sync_ttl", func() {
+			cfg := NewCfg()
+			err := cfg.Load(&CommandLineArgs{
+				HomePath: "../../",
+				Args:     []string{"cfg:auth.proxy.ldap_sync_ttl=5"},
+			})
+			So(err, ShouldBeNil)
+
+			So(AuthProxySyncTtl, ShouldEqual, 5)
+		})
+
+		Convey("ldap_sync should override ldap_sync_ttl that is default value", func() {
+			cfg := NewCfg()
+			err := cfg.Load(&CommandLineArgs{
+				HomePath: "../../",
+				Args:     []string{"cfg:auth.proxy.sync_ttl=5"},
+			})
+			So(err, ShouldBeNil)
+
+			So(AuthProxySyncTtl, ShouldEqual, 5)
+		})
+
+		Convey("ldap_sync should not override ldap_sync_ttl that is different from default value", func() {
+			cfg := NewCfg()
+			err := cfg.Load(&CommandLineArgs{
+				HomePath: "../../",
+				Args:     []string{"cfg:auth.proxy.ldap_sync_ttl=12", "cfg:auth.proxy.sync_ttl=5"},
+			})
+			So(err, ShouldBeNil)
+
+			So(AuthProxySyncTtl, ShouldEqual, 12)
+		})
 	})
 
 	Convey("Test reading string values from .ini file", t, func() {

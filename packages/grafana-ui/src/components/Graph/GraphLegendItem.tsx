@@ -6,7 +6,7 @@ import { SeriesColorChangeHandler } from './GraphWithLegend';
 import { LegendStatsList } from '../Legend/LegendStatsList';
 import { ThemeContext } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes';
-import { GrafanaTheme } from '../../types';
+import { GrafanaTheme } from '@grafana/data';
 
 export interface GraphLegendItemProps {
   key?: React.Key;
