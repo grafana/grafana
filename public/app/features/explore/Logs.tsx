@@ -214,6 +214,7 @@ export class Logs extends PureComponent<Props, State> {
           onClickFilterLabel={onClickFilterLabel}
           onClickFilterOutLabel={onClickFilterOutLabel}
           showTime={showTime}
+          wrapLogs={wrapLogs}
           timeZone={timeZone}
           getFieldLinks={getFieldLinks}
         />
