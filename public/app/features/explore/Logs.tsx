@@ -57,11 +57,13 @@ interface Props {
 
 interface State {
   showTime: boolean;
+  wrapLogs: boolean;
 }
 
 export class Logs extends PureComponent<Props, State> {
   state = {
     showTime: true,
+    wrapLogs: false,
   };
 
   onChangeDedup = (dedup: LogsDedupStrategy) => {
@@ -77,6 +79,15 @@ export class Logs extends PureComponent<Props, State> {
     if (target) {
       this.setState({
         showTime: target.checked,
+      });
+    }
+  };
+
+  onChangeWrapLogs = (event?: React.SyntheticEvent) => {
+    const target = event && (event.target as HTMLInputElement);
+    if (target) {
+      this.setState({
+        wrapLogs: target.checked,
       });
     }
   };
@@ -123,7 +134,7 @@ export class Logs extends PureComponent<Props, State> {
       return null;
     }
 
-    const { showTime } = this.state;
+    const { showTime, wrapLogs } = this.state;
     const { dedupStrategy } = this.props;
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
@@ -164,6 +175,7 @@ export class Logs extends PureComponent<Props, State> {
         <div className="logs-panel-options">
           <div className="logs-panel-controls">
             <Switch label="Time" checked={showTime} onChange={this.onChangeTime} transparent />
+            <Switch label="Wrap logs" checked={wrapLogs} onChange={this.onChangeWrapLogs} transparent />
             <ToggleButtonGroup label="Dedup" transparent={true}>
               {Object.keys(LogsDedupStrategy).map((dedupType: string, i) => (
                 <ToggleButton
