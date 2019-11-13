@@ -181,6 +181,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
     title: string,
     gmdMeta: Array<{ Expression: string }>
   ) {
+    region = this.getActualRegion(region);
     let conf = {
       view: 'timeSeries',
       stacked: false,
