@@ -15,7 +15,11 @@
 * **CloudWatch**: Variables' values surrounded with braces in request sent to AWS [#14451](https://github.com/grafana/grafana/issues/14451), [@sunker](https://github.com/sunker)
 
 ## Breaking changes
-* **CloudWatch**: Pre Grafana 6.5.0, the CloudWatch datasource used the GetMetricStatistics API for all queries that did not have both an ID and an Expression defined in the query editor. The GetMetricStatistics API has a limit of 400 transactions per second. In this release, all queries use the GetMetricData API. The GetMetricData API has a limit of 50 transaction per second, so there might be a higher risk of receiving throttling errors from the API.
+* **CloudWatch**: Pre Grafana 6.5.0, the CloudWatch datasource used the GetMetricStatistics API for all queries that did not have an ´id´ and did not have an ´expression´ defined in the query editor. The GetMetricStatistics API has a limit of 400 transactions per second. In this release, all queries use the GetMetricData API. The GetMetricData API has a limit of 50 transactions per second and 100 metrics per transaction. Also the GetMetricData API pricing is different from GetMetricStatistics. While GetMetricStatistics qualified for the CloudWatch API free tier, this is not the case for GetMetricData calls. For more information, please refer to the CloudWatch pricing page (https://aws.amazon.com/cloudwatch/pricing/).
+
+In previous versions of Grafana, there were partial support for using multi template variables as dimension values. When a multi template variables is being used for dimension values in Grafana 6.5, a [search expression](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-search-expressions.html) will be generated. In the GetMetricData API, expressions are limited to 1024 characters, so it might be the case that this limit is reached when a multi template variable is being used. 
+
+Read more about this in [upgrading to 6.5](https://grafana.com/docs/installation/upgrading/#upgrading-to-v6-5). 
 
 # 6.4.4 (2019-11-06)
 
@@ -158,7 +162,7 @@
 * **Provisioning**: Allow escaping literal '$' with '$$' in configs to avoid interpolation. [#18045](https://github.com/grafana/grafana/pull/18045), [@kylebrandt](https://github.com/kylebrandt)
 * **TimePicker**: Fixes hiding time picker dropdown in FireFox. [#19154](https://github.com/grafana/grafana/pull/19154), [@hugohaggmark](https://github.com/hugohaggmark)
 
-## Breaking changes
+##  ing changes
 
 ### Annotations
 
