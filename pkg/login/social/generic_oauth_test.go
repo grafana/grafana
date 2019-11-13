@@ -1,9 +1,13 @@
 package social
 
 import (
+	"time"
+	"net/http"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+	"golang.org/x/oauth2"
 )
 
 func TestSearchJSONForEmail(t *testing.T) {
@@ -134,6 +138,49 @@ func TestSearchJSONForRole(t *testing.T) {
 			Convey(test.Name, func() {
 				actualResult := provider.searchJSONForAttr(test.RoleAttributePath, test.UserInfoJSONResponse)
 				So(actualResult, ShouldEqual, test.ExpectedResult)
+			})
+		}
+	})
+}
+
+func TestUserInfoUsesIDTokenForRole(t *testing.T) {
+	Convey("Given a generic OAuth provider", t, func() {
+		provider := SocialGenericOAuth{
+			SocialBase: &SocialBase{
+				log: log.New("generic_oauth_test"),
+			},
+		}
+
+		tests := []struct {
+			Name              string
+			OAuth2Token       oauth2.Token
+			OAuth2Extra       interface{}
+			RoleAttributePath string
+			ExpectedResult    string
+		}{
+			{
+				Name:             "Given a simple OAuth2 id_token response and valid JMES path",
+				OAuth2Token: 	  oauth2.Token{
+					AccessToken:  "",
+					TokenType:    "",
+					RefreshToken: "",
+					Expiry:       time.Now(),
+				},
+				OAuth2Extra: map[string]interface{}{
+					// { "role": "Admin", "email": "john.doe@example.com" }
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
+				},
+				RoleAttributePath: "role",
+				ExpectedResult:    "Admin",
+			},
+		}
+
+		for _, test := range tests {
+			provider.roleAttributePath = test.RoleAttributePath
+			Convey(test.Name, func() {
+				token := test.OAuth2Token.WithExtra(test.OAuth2Extra)
+				actualResult, _ := provider.UserInfo(&http.Client{}, token)
+				So(actualResult.Role, ShouldEqual, test.ExpectedResult)
 			})
 		}
 	})
