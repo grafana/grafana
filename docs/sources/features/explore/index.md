@@ -47,7 +47,7 @@ The Split feature is an easy way to compare graphs and tables side-by-side or to
 
 {{< docs-imagebox img="/img/docs/v60/explore_split.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
-In split view, timepickers for both panel can be linked (if you change one, the other gets changed as well) by clicking on one of the time-sync buttons attached to the timepickers. Linking timepickers helps with keeping start and end times of the split view queries in sync and will ensure that you’re looking at the same time interval in both split panes.
+In split view, timepickers for both panel can be linked (if you change one, the other gets changed as well) by clicking on one of the time-sync buttons attached to the timepickers. Linking timepickers helps with keeping start and end times of the split view queries in sync and will ensure that you’re looking at the same time interval in both split panels.
 
 You can close the newly created query by clicking on the Close Split button.
 
