@@ -149,6 +149,10 @@ func (pm *PluginManager) Run(ctx context.Context) error {
 		p.Kill()
 	}
 
+	if Transform != nil {
+		Transform.Kill()
+	}
+
 	return ctx.Err()
 }
 
