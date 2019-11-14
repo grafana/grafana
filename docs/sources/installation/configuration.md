@@ -17,7 +17,7 @@ specified in a `.ini` configuration file or specified using environment variable
 
 > **Note.** Grafana needs to be restarted for any configuration changes to take effect.
 
-## Comments In .ini Files
+## Comments in .ini Files
 
 Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` file.
 
@@ -34,6 +34,8 @@ A common problem is forgetting to uncomment a line in the `custom.ini` (or `graf
 > `/etc/grafana/grafana.ini` and a separate `custom.ini` is not
 > used. This path is specified in the Grafana
 > init.d script using `--config` file parameter.
+
+**macOS:** By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`.
 
 ## Using environment variables
 
@@ -79,9 +81,9 @@ system calls to get the machine name.
 
 ### data
 
-Path to where Grafana stores the sqlite3 database (if used), file based
-sessions (if used), and other data.  This path is usually specified via
-command line in the init.d script or the systemd service file.
+Path to where Grafana stores the sqlite3 database (if used), file based sessions (if used), and other data. This path is usually specified via command line in the init.d script or the systemd service file.
+
+**macOS:** The default SQLite database is located at `/usr/local/var/lib/grafana`
 
 ### temp_data_lifetime
 
@@ -90,14 +92,15 @@ How long temporary images in `data` directory should be kept. Defaults to: `24h`
 
 ### logs
 
-Path to where Grafana will store logs. This path is usually specified via
-command line in the init.d script or the systemd service file.  It can
-be overridden in the configuration file or in the default environment variable
-file.
+Path to where Grafana will store logs. This path is usually specified via command line in the init.d script or the systemd service file.  It can be overridden in the configuration file or in the default environment variable file.
+
+**macOS:** By default, the log file should be located at `/usr/local/var/log/grafana/grafana.log`.
 
 ### plugins
 
-Directory where grafana will automatically scan and look for plugins
+Directory where Grafana will automatically scan and look for plugins. Manually or automatically install any plugins here.
+
+**macOS:** By default, the Mac plugin location is: `/usr/local/var/lib/grafana/plugins`.
 
 ### provisioning
 
