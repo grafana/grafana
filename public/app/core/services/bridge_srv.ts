@@ -6,7 +6,6 @@ import { updateLocation } from 'app/core/actions';
 import { ITimeoutService, ILocationService, IWindowService } from 'angular';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-
 // Services that handles angular -> redux store sync & other react <-> angular sync
 export class BridgeSrv {
   private fullPageReloadRoutes: string[];
@@ -38,6 +37,8 @@ export class BridgeSrv {
     });
 
     this.$rootScope.$on('$routeChangeSuccess', (evt, data) => {
+      // @ts-ignore
+      window.navMonitor.startMonitoringLocation(window.location.href);
       store.dispatch(
         updateLocation({
           path: this.$location.path(),
