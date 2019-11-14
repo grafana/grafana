@@ -92,13 +92,16 @@ Log data can be very repetitive and Explore can help by hiding duplicate log lin
 * `numbers` Matches on the line after stripping out numbers (durations, IP addresses etc.).
 * `signature` The most aggressive deduping - strips all letters and numbers, and matches on the remaining whitespace and punctuation.
 
-### Timestamp, Local time and Labels
+### Timestamp and Local time
 
 There are some other check boxes under the logging graph apart from the Deduping options.
 
 * Timestamp: shows/hides the Timestamp column
 * Local time: shows/hides the Local time column
-* Labels: shows/hides the label filters column
+
+### Labels and Parsed fields
+
+Each log row has extendable area with log row labels and parsed fields for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected label. Each parsed field, as well as label has also metrics button to display stats for each label/field in relation to all displayed logs. 
 
 ### Loki-specific Features
 
