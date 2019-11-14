@@ -19,7 +19,10 @@ For all details please read the full [CHANGELOG.md](https://github.com/grafana/g
 Grafana 6.5 comes with a lot of new features and enhancements.
 
 - [**Docker:** Ubuntu-based images and more]({{< relref "#ubuntu-based-docker-images" >}})
-- **CloudWatch:** Dynamic queries using dimension wildcards and more
+- **CloudWatch:** Use GetMetricData API instead of GetMetricStatistics API
+- **CloudWatch:** Dynamic queries using wildcards for dimension values
+- **CloudWatch:** Deep linking from Grafana panels to the CloudWatch console
+- **CloudWatch:** Improved feedback when throttling occurs
 - [**Templating:** Dynamic typeahead queries using $__searchFilter]({{< relref "#dynamic-typeahead-support-in-query-variables" >}})
 - [**Explore:** New log row details view]({{< relref "#explore-logs-log-row-details" >}})
 - [**Explore:** Turn parts of log message into a link using derived fields]({{< relref "#loki-explore-derived-fields" >}})
@@ -78,9 +81,13 @@ This allows you to turn an occurrence of e.g., `traceId=624f706351956b81` in you
 
 This release starts with support for Loki, but we will bring this concept to other datasources soon.
 
-### Explore time-sync of split views
+### Time-sync of split views in Explore
 
 In Explore's split view, the two timepickers can now be linked so that if you change one, the other gets changed as well. This helps with keeping start and end times of the split view queries in sync and will ensure that you're looking at the same time interval in both split panes.
+
+## Upgrading
+
+See [upgrade notes](/installation/upgrading/#upgrading-to-v6-5).
 
 ## Changelog
 
