@@ -25,7 +25,7 @@ export class Echo implements EchoSrv {
     debug: false,
   };
   private consumers: EchoConsumer[] = [];
-  // metadata added to every metric consumed
+  // meta data added to every metric consumed
   private meta: EchoMeta;
 
   constructor(config?: Partial<EchoConfig>) {
