@@ -132,7 +132,7 @@ reducerTester()
   .thenStateShouldEqual({ ...initialState, data: 'reducer tests' });
 ```
 
-#### Complex Example
+#### Complex example
 Sometimes you encounter a `resulting state` that contains properties that are hard to compare like `Dates` but you still 
 want to compare that other props in state are correct.
 
