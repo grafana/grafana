@@ -38,7 +38,7 @@ func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 
 	cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC&allowNativePasswords=true",
 		characterEscape(datasource.User, ":"),
-		characterEscape(datasource.DecryptedPassword(), "@"),
+		datasource.DecryptedPassword(),
 		protocol,
 		characterEscape(datasource.Url, ")"),
 		characterEscape(datasource.Database, "?"),
