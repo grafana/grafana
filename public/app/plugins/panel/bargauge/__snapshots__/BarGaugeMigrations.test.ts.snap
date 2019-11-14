@@ -1,0 +1,36 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`BarGauge Panel Migrations from 6.2 1`] = `
+Object {
+  "displayMode": "lcd",
+  "fieldOptions": Object {
+    "calcs": Array [
+      "mean",
+    ],
+    "defaults": Object {
+      "decimals": null,
+      "mappings": Array [],
+      "max": -22,
+      "min": 33,
+      "thresholds": Array [
+        Object {
+          "color": "green",
+          "value": -Infinity,
+        },
+        Object {
+          "color": "orange",
+          "value": 40,
+        },
+        Object {
+          "color": "red",
+          "value": 80,
+        },
+      ],
+      "unit": "watt",
+    },
+    "override": Object {},
+    "values": false,
+  },
+  "orientation": "vertical",
+}
+`;

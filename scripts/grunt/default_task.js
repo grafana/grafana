@@ -6,7 +6,6 @@ module.exports = function(grunt) {
   grunt.registerTask('default', [
     'clean:build',
     'phantomjs',
-    'webpack:dev'
   ]);
 
   // prettier-ignore

@@ -1,10 +1,10 @@
 // Libaries
 import React, { Component } from 'react';
-import { toUtc } from '@grafana/data';
+import { dateMath } from '@grafana/data';
 
 // Types
 import { DashboardModel } from '../../state';
-import { LocationState } from 'app/types';
+import { LocationState, CoreEvents } from 'app/types';
 import { TimeRange, TimeOption, RawTimeRange } from '@grafana/data';
 
 // State
@@ -16,7 +16,6 @@ import { TimePicker, RefreshPicker } from '@grafana/ui';
 // Utils & Services
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { defaultSelectOptions } from '@grafana/ui/src/components/TimePicker/TimePicker';
-import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 
 export interface Props {
   $injector: any;
@@ -43,34 +42,30 @@ export class DashNavTimeControls extends Component<Props> {
     return Promise.resolve();
   };
 
-  onMoveTimePicker = (direction: number) => {
-    const range = this.timeSrv.timeRange();
-    const { from, to } = getShiftedTimeRange(direction, range);
-
-    this.timeSrv.setTime({
-      from: toUtc(from),
-      to: toUtc(to),
-    });
+  onMoveBack = () => {
+    this.$rootScope.appEvent(CoreEvents.shiftTime, -1);
   };
-
-  onMoveForward = () => this.onMoveTimePicker(1);
-  onMoveBack = () => this.onMoveTimePicker(-1);
+  onMoveForward = () => {
+    this.$rootScope.appEvent(CoreEvents.shiftTime, 1);
+  };
 
   onChangeTimePicker = (timeRange: TimeRange) => {
     const { dashboard } = this.props;
     const panel = dashboard.timepicker;
     const hasDelay = panel.nowDelay && timeRange.raw.to === 'now';
 
+    const adjustedFrom = dateMath.isMathString(timeRange.raw.from) ? timeRange.raw.from : timeRange.from;
+    const adjustedTo = dateMath.isMathString(timeRange.raw.to) ? timeRange.raw.to : timeRange.to;
     const nextRange = {
-      from: timeRange.raw.from,
-      to: hasDelay ? 'now-' + panel.nowDelay : timeRange.raw.to,
+      from: adjustedFrom,
+      to: hasDelay ? 'now-' + panel.nowDelay : adjustedTo,
     };
 
     this.timeSrv.setTime(nextRange);
   };
 
   onZoom = () => {
-    this.$rootScope.appEvent('zoom-out', 2);
+    this.$rootScope.appEvent(CoreEvents.zoomOut, 2);
   };
 
   setActiveTimeOption = (timeOptions: TimeOption[], rawTimeRange: RawTimeRange): TimeOption[] => {

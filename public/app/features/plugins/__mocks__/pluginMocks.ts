@@ -1,4 +1,4 @@
-import { PanelPluginMeta, PluginMeta, PluginType, PanelPlugin, PanelProps } from '@grafana/ui';
+import { PanelPluginMeta, PluginMeta, PluginType, PanelPlugin, PanelProps } from '@grafana/data';
 import { ComponentType } from 'enzyme';
 
 export const getMockPlugins = (amount: number): PluginMeta[] => {
@@ -31,7 +31,7 @@ export const getMockPlugins = (amount: number): PluginMeta[] => {
     });
   }
 
-  return plugins;
+  return plugins as any;
 };
 
 export const getPanelPlugin = (

@@ -88,3 +88,8 @@ type SearchTeamQueryResult struct {
 	Page       int        `json:"page"`
 	PerPage    int        `json:"perPage"`
 }
+
+type IsAdminOfTeamsQuery struct {
+	SignedInUser *SignedInUser
+	Result       bool
+}

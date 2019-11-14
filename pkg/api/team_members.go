@@ -5,12 +5,11 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // GET /api/teams/:teamId/members
-func GetTeamMembers(c *m.ReqContext) Response {
+func (hs *HTTPServer) GetTeamMembers(c *m.ReqContext) Response {
 	query := m.GetTeamMembersQuery{OrgId: c.OrgId, TeamId: c.ParamsInt64(":teamId")}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -21,30 +20,13 @@ func GetTeamMembers(c *m.ReqContext) Response {
 		member.AvatarUrl = dtos.GetGravatarUrl(member.Email)
 		member.Labels = []string{}
 
-		if setting.IsEnterprise && member.External {
+		if hs.License.HasValidLicense() && member.External {
 			authProvider := GetAuthProviderLabel(member.AuthModule)
 			member.Labels = append(member.Labels, authProvider)
 		}
 	}
 
 	return JSON(200, query.Result)
-}
-
-func GetAuthProviderLabel(authModule string) string {
-	switch authModule {
-	case "oauth_github":
-		return "GitHub"
-	case "oauth_google":
-		return "Google"
-	case "oauth_gitlab":
-		return "GitLab"
-	case "oauth_grafana_com", "oauth_grafananet":
-		return "grafana.com"
-	case "ldap", "":
-		return "LDAP"
-	default:
-		return "OAuth"
-	}
 }
 
 // POST /api/teams/:teamId/members

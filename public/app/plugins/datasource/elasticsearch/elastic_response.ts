@@ -2,16 +2,16 @@ import _ from 'lodash';
 import flatten from 'app/core/utils/flatten';
 import * as queryDef from './query_def';
 import TableModel from 'app/core/table_model';
-import { DataFrame, toDataFrame, FieldType } from '@grafana/data';
-import { DataQueryResponse } from '@grafana/ui';
+import { DataQueryResponse, DataFrame, toDataFrame, FieldType, MutableDataFrame } from '@grafana/data';
+import { ElasticsearchAggregation } from './types';
 
 export class ElasticResponse {
-  constructor(private targets, private response) {
+  constructor(private targets: any, private response: any) {
     this.targets = targets;
     this.response = response;
   }
 
-  processMetrics(esAgg, target, seriesList, props) {
+  processMetrics(esAgg: any, target: any, seriesList: any, props: any) {
     let metric, y, i, newSeries, bucket, value;
 
     for (y = 0; y < target.metrics.length; y++) {
@@ -113,7 +113,7 @@ export class ElasticResponse {
     }
   }
 
-  processAggregationDocs(esAgg, aggDef, target, table, props) {
+  processAggregationDocs(esAgg: any, aggDef: ElasticsearchAggregation, target: any, table: any, props: any) {
     // add columns
     if (table.columns.length === 0) {
       for (const propKey of _.keys(props)) {
@@ -123,7 +123,7 @@ export class ElasticResponse {
     }
 
     // helper func to add values to value array
-    const addMetricValue = (values, metricName, value) => {
+    const addMetricValue = (values: any[], metricName: string, value: any) => {
       table.addColumn({ text: metricName });
       values.push(value);
     };
@@ -188,8 +188,8 @@ export class ElasticResponse {
 
   // This is quite complex
   // need to recurse down the nested buckets to build series
-  processBuckets(aggs, target, seriesList, table, props, depth) {
-    let bucket, aggDef, esAgg, aggId;
+  processBuckets(aggs: any, target: any, seriesList: any, table: any, props: any, depth: any) {
+    let bucket, aggDef: any, esAgg, aggId;
     const maxDepth = target.bucketAggs.length - 1;
 
     for (aggId in aggs) {
@@ -224,7 +224,7 @@ export class ElasticResponse {
     }
   }
 
-  private getMetricName(metric) {
+  private getMetricName(metric: any) {
     let metricDef: any = _.find(queryDef.metricAggTypes, { value: metric });
     if (!metricDef) {
       metricDef = _.find(queryDef.extendedStats, { value: metric });
@@ -233,13 +233,13 @@ export class ElasticResponse {
     return metricDef ? metricDef.text : metric;
   }
 
-  private getSeriesName(series, target, metricTypeCount) {
+  private getSeriesName(series: any, target: any, metricTypeCount: any) {
     let metricName = this.getMetricName(series.metric);
 
     if (target.alias) {
       const regex = /\{\{([\s\S]+?)\}\}/g;
 
-      return target.alias.replace(regex, (match, g1, g2) => {
+      return target.alias.replace(regex, (match: any, g1: any, g2: any) => {
         const group = g1 || g2;
 
         if (group.indexOf('term ') === 0) {
@@ -303,7 +303,7 @@ export class ElasticResponse {
     return name.trim() + ' ' + metricName;
   }
 
-  nameSeries(seriesList, target) {
+  nameSeries(seriesList: any, target: any) {
     const metricTypeCount = _.uniq(_.map(seriesList, 'metric')).length;
 
     for (let i = 0; i < seriesList.length; i++) {
@@ -312,17 +312,17 @@ export class ElasticResponse {
     }
   }
 
-  processHits(hits, seriesList) {
+  processHits(hits: { total: { value: any }; hits: any[] }, seriesList: any[]) {
     const hitsTotal = typeof hits.total === 'number' ? hits.total : hits.total.value; // <- Works with Elasticsearch 7.0+
 
-    const series = {
+    const series: any = {
       target: 'docs',
       type: 'docs',
       datapoints: [],
       total: hitsTotal,
       filterable: true,
     };
-    let propName, hit, doc, i;
+    let propName, hit, doc: any, i;
 
     for (i = 0; i < hits.hits.length; i++) {
       hit = hits.hits[i];
@@ -347,7 +347,7 @@ export class ElasticResponse {
     seriesList.push(series);
   }
 
-  trimDatapoints(aggregations, target) {
+  trimDatapoints(aggregations: any, target: any) {
     const histogram: any = _.find(target.bucketAggs, { type: 'date_histogram' });
 
     const shouldDropFirstAndLast = histogram && histogram.settings && histogram.settings.trimEdges;
@@ -362,7 +362,7 @@ export class ElasticResponse {
     }
   }
 
-  getErrorFromElasticResponse(response, err) {
+  getErrorFromElasticResponse(response: any, err: any) {
     const result: any = {};
     result.data = JSON.stringify(err, null, 4);
     if (err.root_cause && err.root_cause.length > 0 && err.root_cause[0].reason) {
@@ -394,7 +394,7 @@ export class ElasticResponse {
       if (response.aggregations) {
         const aggregations = response.aggregations;
         const target = this.targets[i];
-        const tmpSeriesList = [];
+        const tmpSeriesList: any[] = [];
         const table = new TableModel();
 
         this.processBuckets(aggregations, target, tmpSeriesList, table, {}, 0);
@@ -426,7 +426,7 @@ export class ElasticResponse {
 
       const hits = response.hits;
       let propNames: string[] = [];
-      let propName, hit, doc, i;
+      let propName, hit, doc: any, i;
 
       for (i = 0; i < hits.hits.length; i++) {
         hit = hits.hits[i];
@@ -463,33 +463,38 @@ export class ElasticResponse {
 
       if (docs.length > 0) {
         propNames = propNames.sort();
-        const series: DataFrame = {
-          fields: [
-            {
-              name: this.targets[0].timeField,
-              type: FieldType.time,
-            },
-          ],
-          rows: [],
+        const series = new MutableDataFrame({ fields: [] });
+
+        series.addField({
+          name: this.targets[0].timeField,
+          type: FieldType.time,
+        }).parse = (v: any) => {
+          return v[0] || '';
         };
 
         if (logMessageField) {
-          series.fields.push({
+          series.addField({
             name: logMessageField,
             type: FieldType.string,
-          });
+          }).parse = (v: any) => {
+            return v || '';
+          };
         } else {
-          series.fields.push({
+          series.addField({
             name: '_source',
             type: FieldType.string,
-          });
+          }).parse = (v: any) => {
+            return JSON.stringify(v, null, 2);
+          };
         }
 
         if (logLevelField) {
-          series.fields.push({
+          series.addField({
             name: 'level',
             type: FieldType.string,
-          });
+          }).parse = (v: any) => {
+            return v || '';
+          };
         }
 
         for (const propName of propNames) {
@@ -497,35 +502,17 @@ export class ElasticResponse {
             continue;
           }
 
-          series.fields.push({
+          series.addField({
             name: propName,
             type: FieldType.string,
-          });
+          }).parse = (v: any) => {
+            return v || '';
+          };
         }
 
+        // Add a row for each document
         for (const doc of docs) {
-          const row: any[] = [];
-          row.push(doc[this.targets[0].timeField][0]);
-
-          if (logMessageField) {
-            row.push(doc[logMessageField] || '');
-          } else {
-            row.push(JSON.stringify(doc._source, null, 2));
-          }
-
-          if (logLevelField) {
-            row.push(doc[logLevelField] || '');
-          }
-
-          for (const propName of propNames) {
-            if (doc.hasOwnProperty(propName)) {
-              row.push(doc[propName]);
-            } else {
-              row.push(null);
-            }
-          }
-
-          series.rows.push(row);
+          series.add(doc);
         }
 
         dataFrame.push(series);
@@ -534,7 +521,7 @@ export class ElasticResponse {
       if (response.aggregations) {
         const aggregations = response.aggregations;
         const target = this.targets[n];
-        const tmpSeriesList = [];
+        const tmpSeriesList: any[] = [];
         const table = new TableModel();
 
         this.processBuckets(aggregations, target, tmpSeriesList, table, {}, 0);
@@ -543,7 +530,6 @@ export class ElasticResponse {
 
         for (let y = 0; y < tmpSeriesList.length; y++) {
           const series = toDataFrame(tmpSeriesList[y]);
-          series.labels = {};
           dataFrame.push(series);
         }
       }

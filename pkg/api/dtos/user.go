@@ -50,3 +50,9 @@ type ResetUserPasswordForm struct {
 	NewPassword     string `json:"newPassword"`
 	ConfirmPassword string `json:"confirmPassword"`
 }
+
+type UserLookupDTO struct {
+	UserID    int64  `json:"userId"`
+	Login     string `json:"login"`
+	AvatarURL string `json:"avatarUrl"`
+}

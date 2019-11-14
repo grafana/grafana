@@ -1,7 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 
-import { PanelProps } from '@grafana/ui';
+import { PanelProps } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/core';
@@ -79,7 +79,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
         href: 'org/users?gettingstarted',
         check: () => {
           return getBackendSrv()
-            .get('/api/org/users')
+            .get('/api/org/users/lookup')
             .then((res: any) => {
               return res.length > 1;
             });

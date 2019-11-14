@@ -1,7 +1,7 @@
-import { getPluginJson } from '../utils/pluginValidation';
+import fs from 'fs';
+import path from 'path';
+import { getPluginId } from '../utils/getPluginId';
 
-const path = require('path');
-const fs = require('fs');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const supportedExtensions = ['css', 'scss'];
@@ -66,16 +66,12 @@ export const hasThemeStylesheets = (root: string = process.cwd()) => {
 };
 
 export const getStyleLoaders = () => {
-  const shouldExtractCss = hasThemeStylesheets();
-
-  const executiveLoader = shouldExtractCss
-    ? {
-        loader: MiniCssExtractPlugin.loader,
-        options: {
-          publicPath: '../',
-        },
-      }
-    : 'style-loader';
+  const extractionLoader = {
+    loader: MiniCssExtractPlugin.loader,
+    options: {
+      publicPath: '../',
+    },
+  };
 
   const cssLoaders = [
     {
@@ -98,21 +94,33 @@ export const getStyleLoaders = () => {
     },
   ];
 
-  return [
+  const styleDir = path.resolve(process.cwd(), 'src', 'styles') + path.sep;
+  const rules = [
+    {
+      test: /(dark|light)\.css$/,
+      use: [extractionLoader, ...cssLoaders],
+    },
+    {
+      test: /(dark|light)\.scss$/,
+      use: [extractionLoader, ...cssLoaders, 'sass-loader'],
+    },
     {
       test: /\.css$/,
-      use: [executiveLoader, ...cssLoaders],
+      use: ['style-loader', ...cssLoaders, 'sass-loader'],
+      exclude: [`${styleDir}light.css`, `${styleDir}dark.css`],
     },
     {
       test: /\.scss$/,
-      use: [executiveLoader, ...cssLoaders, 'sass-loader'],
+      use: ['style-loader', ...cssLoaders, 'sass-loader'],
+      exclude: [`${styleDir}light.scss`, `${styleDir}dark.scss`],
     },
   ];
+
+  return rules;
 };
 
 export const getFileLoaders = () => {
   const shouldExtractCss = hasThemeStylesheets();
-  // const pluginJson = getPluginJson();
 
   return [
     {
@@ -122,8 +130,8 @@ export const getFileLoaders = () => {
           ? {
               loader: 'file-loader',
               options: {
-                outputPath: 'static',
-                name: '[name].[hash:8].[ext]',
+                outputPath: '/',
+                name: '[path][name].[ext]',
               },
             }
           : // When using single css import images are inlined as base64 URIs in the result bundle
@@ -131,6 +139,15 @@ export const getFileLoaders = () => {
               loader: 'url-loader',
             },
       ],
+    },
+    {
+      test: /\.(woff|woff2|eot|ttf|otf)(\?v=\d+\.\d+\.\d+)?$/,
+      loader: 'file-loader',
+      options: {
+        publicPath: `/public/plugins/${getPluginId()}/fonts`,
+        outputPath: 'fonts',
+        name: '[name].[ext]',
+      },
     },
   ];
 };

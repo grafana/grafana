@@ -1,4 +1,6 @@
-export const getPlugins = state => {
+import { PluginsState } from 'app/types/plugins';
+
+export const getPlugins = (state: PluginsState) => {
   const regex = new RegExp(state.searchQuery, 'i');
 
   return state.plugins.filter(item => {
@@ -6,5 +8,5 @@ export const getPlugins = state => {
   });
 };
 
-export const getPluginsSearchQuery = state => state.searchQuery;
-export const getLayoutMode = state => state.layoutMode;
+export const getPluginsSearchQuery = (state: PluginsState) => state.searchQuery;
+export const getLayoutMode = (state: PluginsState) => state.layoutMode;

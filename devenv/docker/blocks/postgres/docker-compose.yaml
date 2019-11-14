@@ -1,5 +1,5 @@
   postgrestest:
-    image: postgres:9.3
+    image: postgres:${postgres_version}
     environment:
       POSTGRES_USER: grafana
       POSTGRES_PASSWORD: password

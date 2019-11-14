@@ -9,8 +9,6 @@ package avatar
 import (
 	"bufio"
 	"bytes"
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -41,18 +39,6 @@ func UpdateGravatarSource() {
 		!strings.HasPrefix(gravatarSource, "https://") {
 		gravatarSource = "http://" + gravatarSource
 	}
-}
-
-// hash email to md5 string
-// keep this func in order to make this package independent
-func HashEmail(email string) string {
-	// https://en.gravatar.com/site/implement/hash/
-	email = strings.TrimSpace(email)
-	email = strings.ToLower(email)
-
-	h := md5.New()
-	h.Write([]byte(email))
-	return hex.EncodeToString(h.Sum(nil))
 }
 
 // Avatar represents the avatar object.
@@ -102,14 +88,15 @@ func (this *CacheServer) Handler(ctx *macaron.Context) {
 	hash := urlPath[strings.LastIndex(urlPath, "/")+1:]
 
 	var avatar *Avatar
-
-	if obj, exist := this.cache.Get(hash); exist {
+	obj, exists := this.cache.Get(hash)
+	if exists {
 		avatar = obj.(*Avatar)
 	} else {
 		avatar = New(hash)
 	}
 
 	if avatar.Expired() {
+		// The cache item is either expired or newly created, update it from the server
 		if err := avatar.Update(); err != nil {
 			log.Trace("avatar update error: %v", err)
 			avatar = this.notFound
@@ -118,8 +105,10 @@ func (this *CacheServer) Handler(ctx *macaron.Context) {
 
 	if avatar.notFound {
 		avatar = this.notFound
-	} else {
-		this.cache.Add(hash, avatar, gocache.DefaultExpiration)
+	} else if !exists {
+		if err := this.cache.Add(hash, avatar, gocache.DefaultExpiration); err != nil {
+			log.Trace("Error adding avatar to cache: %s", err)
+		}
 	}
 
 	ctx.Resp.Header().Add("Content-Type", "image/jpeg")
@@ -233,7 +222,6 @@ func (this *thunderTask) fetch() error {
 	req.Header.Set("Cache-Control", "no-cache")
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.154 Safari/537.36")
 	resp, err := client.Do(req)
-
 	if err != nil {
 		this.Avatar.notFound = true
 		return fmt.Errorf("gravatar unreachable, %v", err)

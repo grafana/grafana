@@ -22,7 +22,7 @@ export function encodeURIComponentAsAngularJS(val: string, pctEncodeSpaces?: boo
 }
 
 export function toUrlParams(a: any) {
-  const s = [];
+  const s: any[] = [];
   const rbracket = /\[\]$/;
 
   const isArray = (obj: any) => {
@@ -72,7 +72,7 @@ export function toUrlParams(a: any) {
   return buildParams('', a).join('&');
 }
 
-export function appendQueryToUrl(url, stringToAppend) {
+export function appendQueryToUrl(url: string, stringToAppend: string) {
   if (stringToAppend !== undefined && stringToAppend !== null && stringToAppend !== '') {
     const pos = url.indexOf('?');
     if (pos !== -1) {

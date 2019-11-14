@@ -1,4 +1,6 @@
 import coreModule from 'app/core/core_module';
+import { DashboardSrv } from '../../services/DashboardSrv';
+import { PanelModel } from '../../state/PanelModel';
 
 const template = `
 <div class="modal-body">
@@ -56,7 +58,7 @@ export class SaveDashboardAsModalCtrl {
   copyTags: boolean;
 
   /** @ngInject */
-  constructor(private dashboardSrv) {
+  constructor(private dashboardSrv: DashboardSrv) {
     const dashboard = this.dashboardSrv.getCurrent();
     this.clone = dashboard.getSaveModelClone();
     this.clone.id = null;
@@ -70,7 +72,7 @@ export class SaveDashboardAsModalCtrl {
     // remove alerts if source dashboard is already persisted
     // do not want to create alert dupes
     if (dashboard.id > 0) {
-      this.clone.panels.forEach(panel => {
+      this.clone.panels.forEach((panel: PanelModel) => {
         if (panel.type === 'graph' && panel.alert) {
           delete panel.thresholds;
         }
@@ -89,13 +91,13 @@ export class SaveDashboardAsModalCtrl {
     return this.dashboardSrv.save(this.clone, { folderId: this.folderId }).then(this.dismiss);
   }
 
-  keyDown(evt) {
+  keyDown(evt: KeyboardEvent) {
     if (evt.keyCode === 13) {
       this.save();
     }
   }
 
-  onFolderChange(folder) {
+  onFolderChange(folder: { id: any }) {
     this.folderId = folder.id;
   }
 

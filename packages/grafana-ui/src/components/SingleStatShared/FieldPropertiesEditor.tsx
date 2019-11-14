@@ -7,27 +7,35 @@ import { FormLabel } from '../FormLabel/FormLabel';
 import { UnitPicker } from '../UnitPicker/UnitPicker';
 
 // Types
-import { toIntegerOrUndefined, Field } from '@grafana/data';
-import { SelectOptionItem } from '../Select/Select';
-
-import { VAR_SERIES_NAME, VAR_FIELD_NAME, VAR_CALC, VAR_CELL_PREFIX } from '../../utils/fieldDisplay';
+import {
+  VAR_SERIES_NAME,
+  VAR_FIELD_NAME,
+  VAR_CALC,
+  VAR_CELL_PREFIX,
+  toIntegerOrUndefined,
+  SelectableValue,
+  FieldConfig,
+  toFloatOrUndefined,
+  toNumberString,
+} from '@grafana/data';
 
 const labelWidth = 6;
 
 export interface Props {
-  showMinMax: boolean;
-  value: Partial<Field>;
-  onChange: (value: Partial<Field>, event?: React.SyntheticEvent<HTMLElement>) => void;
+  showMinMax?: boolean;
+  showTitle?: boolean;
+  value: FieldConfig;
+  onChange: (value: FieldConfig, event?: React.SyntheticEvent<HTMLElement>) => void;
 }
 
-export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMinMax }) => {
+export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMinMax, showTitle }) => {
   const { unit, title } = value;
 
   const [decimals, setDecimals] = useState(
     value.decimals !== undefined && value.decimals !== null ? value.decimals.toString() : ''
   );
-  const [min, setMin] = useState(value.min !== undefined && value.min !== null ? value.min.toString() : '');
-  const [max, setMax] = useState(value.max !== undefined && value.max !== null ? value.max.toString() : '');
+  const [min, setMin] = useState(toNumberString(value.min));
+  const [max, setMax] = useState(toNumberString(value.max));
 
   const onTitleChange = (event: ChangeEvent<HTMLInputElement>) => {
     onChange({ ...value, title: event.target.value });
@@ -54,7 +62,7 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
     [value.max, onChange]
   );
 
-  const onUnitChange = (unit: SelectOptionItem<string>) => {
+  const onUnitChange = (unit: SelectableValue<string>) => {
     onChange({ ...value, unit: unit.value });
   };
 
@@ -62,8 +70,8 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
     onChange({
       ...value,
       decimals: toIntegerOrUndefined(decimals),
-      min: toIntegerOrUndefined(min),
-      max: toIntegerOrUndefined(max),
+      min: toFloatOrUndefined(min),
+      max: toFloatOrUndefined(max),
     });
   }, [min, max, decimals]);
 
@@ -71,9 +79,9 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
     <div>
       Template Variables:
       <br />
-      {'$' + VAR_SERIES_NAME}
+      {'${' + VAR_SERIES_NAME + '}'}
       <br />
-      {'$' + VAR_FIELD_NAME}
+      {'${' + VAR_FIELD_NAME + '}'}
       <br />
       {'$' + VAR_CELL_PREFIX + '{N}'} / {'$' + VAR_CALC}
     </div>
@@ -81,14 +89,16 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
 
   return (
     <>
-      <FormField
-        label="Title"
-        labelWidth={labelWidth}
-        onChange={onTitleChange}
-        value={title}
-        tooltip={titleTooltip}
-        placeholder="Auto"
-      />
+      {showTitle && (
+        <FormField
+          label="Title"
+          labelWidth={labelWidth}
+          onChange={onTitleChange}
+          value={title}
+          tooltip={titleTooltip}
+          placeholder="Auto"
+        />
+      )}
 
       <div className="gf-form">
         <FormLabel width={labelWidth}>Unit</FormLabel>

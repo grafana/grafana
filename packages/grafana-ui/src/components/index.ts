@@ -1,15 +1,14 @@
 export { DeleteButton } from './DeleteButton/DeleteButton';
-export { Tooltip } from './Tooltip/Tooltip';
-export { PopperController } from './Tooltip/PopperController';
-export { Popper } from './Tooltip/Popper';
+export { Tooltip, PopoverContent } from './Tooltip/Tooltip';
+export { PopoverController } from './Tooltip/PopoverController';
+export { Popover } from './Tooltip/Popover';
 export { Portal } from './Portal/Portal';
 export { CustomScrollbar } from './CustomScrollbar/CustomScrollbar';
 
 export * from './Button/Button';
-export { ButtonVariant } from './Button/AbstractButton';
 
 // Select
-export { Select, AsyncSelect, SelectOptionItem } from './Select/Select';
+export { Select, AsyncSelect } from './Select/Select';
 export { IndicatorsContainer } from './Select/IndicatorsContainer';
 export { NoOptionsMessage } from './Select/NoOptionsMessage';
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
@@ -35,7 +34,11 @@ export { StatsPicker } from './StatsPicker/StatsPicker';
 export { Input, InputStatus } from './Input/Input';
 export { RefreshPicker } from './RefreshPicker/RefreshPicker';
 export { TimePicker } from './TimePicker/TimePicker';
+export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
 export { List } from './List/List';
+export { TagsInput } from './TagsInput/TagsInput';
+export { Modal } from './Modal/Modal';
+export { QueryField } from './QueryField/QueryField';
 
 // Renderless
 export { SetInterval } from './SetInterval/SetInterval';
@@ -44,11 +47,12 @@ export { Table } from './Table/Table';
 export { TableInputCSV } from './Table/TableInputCSV';
 
 // Visualizations
-export { BigValue } from './BigValue/BigValue';
+export { BigValue, SingleStatDisplayMode, BigValueSparkline } from './BigValue/BigValue';
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { GraphLegend } from './Graph/GraphLegend';
 export { GraphWithLegend } from './Graph/GraphWithLegend';
+export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { BarGauge } from './BarGauge/BarGauge';
 export { VizRepeater } from './VizRepeater/VizRepeater';
 export {
@@ -61,6 +65,13 @@ export {
   LegendPlacement,
   LegendDisplayMode,
 } from './Legend/Legend';
+export { Alert, AlertVariant } from './Alert/Alert';
+export { GraphSeriesToggler, GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
+export { Collapse } from './Collapse/Collapse';
+export { LogLabels } from './Logs/LogLabels';
+export { LogRows } from './Logs/LogRows';
+export { getLogRowStyles } from './Logs/getLogRowStyles';
+export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';
 // Panel editors
 export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
@@ -69,4 +80,23 @@ export { CallToActionCard } from './CallToActionCard/CallToActionCard';
 export { ContextMenu, ContextMenuItem, ContextMenuGroup, ContextMenuProps } from './ContextMenu/ContextMenu';
 export { VariableSuggestion, VariableOrigin } from './DataLinks/DataLinkSuggestions';
 export { DataLinksEditor } from './DataLinks/DataLinksEditor';
+export { DataLinkInput } from './DataLinks/DataLinkInput';
+export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './Legend/SeriesIcon';
+export { transformersUIRegistry } from './TransformersUI/transformers';
+export { TransformationRow } from './TransformersUI/TransformationRow';
+export { TransformationsEditor } from './TransformersUI/TransformationsEditor';
+export { JSONFormatter } from './JSONFormatter/JSONFormatter';
+export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
+export { ErrorBoundary, ErrorBoundaryAlert } from './ErrorBoundary/ErrorBoundary';
+export { ErrorWithStack } from './ErrorBoundary/ErrorWithStack';
+export { AlphaNotice } from './AlphaNotice/AlphaNotice';
+export { DataSourceHttpSettings } from './DataSourceSettings/DataSourceHttpSettings';
+export { Spinner } from './Spinner/Spinner';
+export { FadeTransition } from './transitions/FadeTransition';
+export { SlideOutTransition } from './transitions/SlideOutTransition';
+export { Segment, SegmentAsync, SegmentSelect } from './Segment/';
+export { default as Chart } from './Chart';
+
+// Next-gen forms
+export { default as Forms } from './Forms';

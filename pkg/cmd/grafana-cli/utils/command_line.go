@@ -1,11 +1,15 @@
 package utils
 
 import (
+	"os"
+
 	"github.com/codegangsta/cli"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 )
 
 type CommandLine interface {
-	ShowHelp()
+	ShowHelp() error
 	ShowVersion()
 	Application() *cli.App
 	Args() cli.Args
@@ -20,14 +24,21 @@ type CommandLine interface {
 	PluginDirectory() string
 	RepoDirectory() string
 	PluginURL() string
+	ApiClient() ApiClient
+}
+
+type ApiClient interface {
+	GetPlugin(pluginId, repoUrl string) (models.Plugin, error)
+	DownloadFile(pluginName string, tmpFile *os.File, url string, checksum string) (err error)
+	ListAllPlugins(repoUrl string) (models.PluginRepo, error)
 }
 
 type ContextCommandLine struct {
 	*cli.Context
 }
 
-func (c *ContextCommandLine) ShowHelp() {
-	cli.ShowCommandHelp(c.Context, c.Command.Name)
+func (c *ContextCommandLine) ShowHelp() error {
+	return cli.ShowCommandHelp(c.Context, c.Command.Name)
 }
 
 func (c *ContextCommandLine) ShowVersion() {
@@ -56,4 +67,8 @@ func (c *ContextCommandLine) PluginURL() string {
 
 func (c *ContextCommandLine) OptionsString() string {
 	return c.GlobalString("configOverrides")
+}
+
+func (c *ContextCommandLine) ApiClient() ApiClient {
+	return &services.GrafanaComClient{}
 }

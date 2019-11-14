@@ -46,7 +46,6 @@ export async function getTeam(team: any): Promise<any> {
 }
 
 export async function addToTeam(team: any, user: any): Promise<any> {
-  const members = await client.get(`/teams/${team.id}/members`);
   console.log(`Adding user ${user.name} to team ${team.name}`);
   await client.post(`/teams/${team.id}/members`, { userId: user.id });
 }

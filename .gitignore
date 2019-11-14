@@ -10,6 +10,11 @@ awsconfig
 /public/views/index.html
 /public/views/error.html
 /emails/dist
+
+# Enterprise emails
+/emails/templates/enterprise_*
+/public/emails/enterprise_*
+
 /public_gen
 /public/vendor/npm
 /tmp
@@ -39,10 +44,11 @@ public/css/*.min.css
 /data/*
 /bin/*
 
+# devenv
+/devenv/docker-compose.yaml
+/devenv/.env
+
 conf/custom.ini
-fig.yml
-devenv/docker-compose.yml
-devenv/docker-compose.yaml
 /conf/provisioning/**/custom.yaml
 /conf/provisioning/**/dev.yaml
 /conf/ldap_dev.toml
@@ -88,3 +94,6 @@ theOutput/
 
 # Ignore go local build dependencies
 /scripts/go/bin/**
+
+# Ignore compilation stats from `yarn stats`
+compilation-stats.json

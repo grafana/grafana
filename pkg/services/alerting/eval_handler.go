@@ -70,5 +70,5 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 	context.EndTime = time.Now()
 
 	elapsedTime := context.EndTime.Sub(context.StartTime).Nanoseconds() / int64(time.Millisecond)
-	metrics.M_Alerting_Execution_Time.Observe(float64(elapsedTime))
+	metrics.MAlertingExecutionTime.Observe(float64(elapsedTime))
 }

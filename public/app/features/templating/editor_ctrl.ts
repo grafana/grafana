@@ -2,15 +2,37 @@ import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import { variableTypes } from './variable';
 import appEvents from 'app/core/app_events';
+import DatasourceSrv from '../plugins/datasource_srv';
+import { VariableSrv } from './all';
+import { TemplateSrv } from './template_srv';
+import { AppEvents } from '@grafana/data';
 
 export class VariableEditorCtrl {
   /** @ngInject */
-  constructor($scope, datasourceSrv, variableSrv, templateSrv) {
+  constructor($scope: any, datasourceSrv: DatasourceSrv, variableSrv: VariableSrv, templateSrv: TemplateSrv) {
     $scope.variableTypes = variableTypes;
     $scope.ctrl = {};
     $scope.namePattern = /^(?!__).*$/;
     $scope._ = _;
     $scope.optionsLimit = 20;
+    $scope.emptyListCta = {
+      title: 'There are no variables yet',
+      buttonTitle: 'Add variable',
+      buttonIcon: 'gicon gicon-variable',
+      infoBox: {
+        __html: ` <p>
+      Variables enable more interactive and dynamic dashboards. Instead of hard-coding things like server or
+      sensor names in your metric queries you can use variables in their place. Variables are shown as dropdown
+      select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in
+      your dashboard. Check out the
+      <a class="external-link" href="http://docs.grafana.org/reference/templating/" target="_blank">
+        Templating documentation
+      </a>
+      for more information.
+    </p>`,
+        infoBoxTitle: 'What do variables do?',
+      },
+    };
 
     $scope.refreshOptions = [
       { value: 0, text: 'Never' },
@@ -36,15 +58,19 @@ export class VariableEditorCtrl {
       $scope.variables = variableSrv.variables;
       $scope.reset();
 
-      $scope.$watch('mode', val => {
+      $scope.$watch('mode', (val: string) => {
         if (val === 'new') {
           $scope.reset();
         }
       });
     };
 
-    $scope.setMode = mode => {
+    $scope.setMode = (mode: any) => {
       $scope.mode = mode;
+    };
+
+    $scope.setNewMode = () => {
+      $scope.setMode('new');
     };
 
     $scope.add = () => {
@@ -60,13 +86,16 @@ export class VariableEditorCtrl {
       }
 
       if (!$scope.current.name.match(/^\w+$/)) {
-        appEvents.emit('alert-warning', ['Validation', 'Only word and digit characters are allowed in variable names']);
+        appEvents.emit(AppEvents.alertWarning, [
+          'Validation',
+          'Only word and digit characters are allowed in variable names',
+        ]);
         return false;
       }
 
       const sameName: any = _.find($scope.variables, { name: $scope.current.name });
       if (sameName && sameName !== $scope.current) {
-        appEvents.emit('alert-warning', ['Validation', 'Variable with the same name already exists']);
+        appEvents.emit(AppEvents.alertWarning, ['Validation', 'Variable with the same name already exists']);
         return false;
       }
 
@@ -75,7 +104,7 @@ export class VariableEditorCtrl {
         _.isString($scope.current.query) &&
         $scope.current.query.match(new RegExp('\\$' + $scope.current.name + '(/| |$)'))
       ) {
-        appEvents.emit('alert-warning', [
+        appEvents.emit(AppEvents.alertWarning, [
           'Validation',
           'Query cannot contain a reference to itself. Variable: $' + $scope.current.name,
         ]);
@@ -99,21 +128,24 @@ export class VariableEditorCtrl {
 
     $scope.runQuery = () => {
       $scope.optionsLimit = 20;
-      return variableSrv.updateOptions($scope.current).catch(err => {
+      return variableSrv.updateOptions($scope.current).catch((err: { data: { message: any }; message: string }) => {
         if (err.data && err.data.message) {
           err.message = err.data.message;
         }
-        appEvents.emit('alert-error', ['Templating', 'Template variables could not be initialized: ' + err.message]);
+        appEvents.emit(AppEvents.alertError, [
+          'Templating',
+          'Template variables could not be initialized: ' + err.message,
+        ]);
       });
     };
 
-    $scope.onQueryChange = (query, definition) => {
+    $scope.onQueryChange = (query: any, definition: any) => {
       $scope.current.query = query;
       $scope.current.definition = definition;
       $scope.runQuery();
     };
 
-    $scope.edit = variable => {
+    $scope.edit = (variable: any) => {
       $scope.current = variable;
       $scope.currentIsNew = false;
       $scope.mode = 'edit';
@@ -123,7 +155,7 @@ export class VariableEditorCtrl {
       });
     };
 
-    $scope.duplicate = variable => {
+    $scope.duplicate = (variable: { getSaveModel: () => void; name: string }) => {
       const clone = _.cloneDeep(variable.getSaveModel());
       $scope.current = variableSrv.createVariableFromModel(clone);
       $scope.current.name = 'copy_of_' + variable.name;
@@ -173,7 +205,7 @@ export class VariableEditorCtrl {
       $scope.validate();
     };
 
-    $scope.removeVariable = variable => {
+    $scope.removeVariable = (variable: any) => {
       variableSrv.removeVariable(variable);
     };
 

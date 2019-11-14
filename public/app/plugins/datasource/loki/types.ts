@@ -1,15 +1,19 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/ui';
-import { Labels } from '@grafana/data';
+import { Labels, DataQuery, DataSourceJsonData } from '@grafana/data';
 
 export interface LokiQuery extends DataQuery {
   expr: string;
-  live?: boolean;
+  liveStreaming?: boolean;
   query?: string;
   regexp?: string;
 }
 
 export interface LokiOptions extends DataSourceJsonData {
   maxLines?: string;
+  derivedFields?: DerivedFieldConfig[];
+}
+
+export interface LokiResponse {
+  streams: LokiLogsStream[];
 }
 
 export interface LokiLogsStream {
@@ -31,3 +35,9 @@ export interface LokiExpression {
   regexp: string;
   query: string;
 }
+
+export type DerivedFieldConfig = {
+  matcherRegex: string;
+  name: string;
+  url?: string;
+};

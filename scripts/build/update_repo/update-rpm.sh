@@ -8,7 +8,7 @@ GCP_REPO_BUCKET="${5:-grafana-repo}"
 
 REPO="rpm"
 
-if [ -z "$RELEASE_TYPE" -o -z "$GPG_PASS" -o -z "$DIST_PATH" ]; then
+if [ -z "$RELEASE_TYPE" ] || [ -z "$GPG_PASS" ] || [ -z "$DIST_PATH" ]; then
     echo "Both RELEASE_TYPE (arg 1), GPG_PASS (arg 2) and DIST_PATH (arg 4) has to be set"
     exit 1
 fi
@@ -33,7 +33,7 @@ mkdir -p /rpm-repo
 gsutil -m rsync -r "$BUCKET" /rpm-repo
 
 # Add the new release to the repo
-cp $DIST_PATH/*.rpm /rpm-repo # adds to many files for enterprise
+cp "$DIST_PATH"/*.rpm /rpm-repo # adds to many files for enterprise
 rm /rpm-repo/grafana-latest-1*.rpm || true
 createrepo /rpm-repo
 
@@ -45,10 +45,6 @@ echo "pinentry-mode loopback" > ~/.gnupg/gpg.conf
 rm /rpm-repo/repodata/repomd.xml.asc || true
 pkill gpg-agent || true
 ./scripts/build/update_repo/sign-rpm-repo.sh "$GPG_PASS"
-
-# Update the repo and db on gcp
-gsutil -m cp /rpm-repo/*.rpm "$BUCKET" # sync binaries first to avoid cache misses
-gsutil -m rsync -r -d /rpm-repo "$BUCKET"
 
 # usage:
 # [grafana]

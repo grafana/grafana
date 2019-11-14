@@ -22,7 +22,7 @@ export class OrgDetailsPage extends PureComponent<Props> {
     await this.props.loadOrganization();
   }
 
-  onOrgNameChange = name => {
+  onOrgNameChange = (name: string) => {
     this.props.setOrganizationName(name);
   };
 

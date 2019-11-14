@@ -6,7 +6,7 @@
     display: flex;
   }
 
-  .navbar-button--refresh {
+  .navbar-button--border-right-0 {
     border-right: 0;
   }
 
@@ -18,10 +18,6 @@
     position: absolute;
     left: 0;
     width: 100%;
-  }
-
-  .select-button-value {
-    color: $orange;
   }
 
   &--off {
@@ -36,7 +32,7 @@
     }
   }
 
-  @include media-breakpoint-up(sm) {
+  @include media-breakpoint-up(xs) {
     display: block;
   }
 }

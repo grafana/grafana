@@ -1,21 +1,21 @@
-import { ComponentClass } from 'react';
+import { Unsubscribable } from 'rxjs';
+import { ComponentType } from 'react';
 import {
+  HistoryItem,
   DataQuery,
   DataSourceSelectItem,
   DataSourceApi,
   QueryHint,
   ExploreStartPageProps,
-  DataQueryError,
-} from '@grafana/ui';
-
-import {
+  PanelData,
+  DataQueryRequest,
   RawTimeRange,
   LogLevel,
   TimeRange,
   LogsModel,
   LogsDedupStrategy,
-  LoadingState,
   AbsoluteTimeRange,
+  GraphSeriesXY,
 } from '@grafana/data';
 
 import { Emitter } from 'app/core/core';
@@ -24,76 +24,6 @@ import TableModel from 'app/core/table_model';
 export enum ExploreMode {
   Metrics = 'Metrics',
   Logs = 'Logs',
-}
-
-export interface CompletionItem {
-  /**
-   * The label of this completion item. By default
-   * this is also the text that is inserted when selecting
-   * this completion.
-   */
-  label: string;
-  /**
-   * The kind of this completion item. Based on the kind
-   * an icon is chosen by the editor.
-   */
-  kind?: string;
-  /**
-   * A human-readable string with additional information
-   * about this item, like type or symbol information.
-   */
-  detail?: string;
-  /**
-   * A human-readable string, can be Markdown, that represents a doc-comment.
-   */
-  documentation?: string;
-  /**
-   * A string that should be used when comparing this item
-   * with other items. When `falsy` the `label` is used.
-   */
-  sortText?: string;
-  /**
-   * A string that should be used when filtering a set of
-   * completion items. When `falsy` the `label` is used.
-   */
-  filterText?: string;
-  /**
-   * A string or snippet that should be inserted in a document when selecting
-   * this completion. When `falsy` the `label` is used.
-   */
-  insertText?: string;
-  /**
-   * Delete number of characters before the caret position,
-   * by default the letters from the beginning of the word.
-   */
-  deleteBackwards?: number;
-  /**
-   * Number of steps to move after the insertion, can be negative.
-   */
-  move?: number;
-}
-
-export interface CompletionItemGroup {
-  /**
-   * Label that will be displayed for all entries of this group.
-   */
-  label: string;
-  /**
-   * List of suggestions of this group.
-   */
-  items: CompletionItem[];
-  /**
-   * If true, match only by prefix (and not mid-word).
-   */
-  prefixMatch?: boolean;
-  /**
-   * If true, do not filter items in this group based on the search.
-   */
-  skipFilter?: boolean;
-  /**
-   * If true, do not sort items.
-   */
-  skipSort?: boolean;
 }
 
 export enum ExploreId {
@@ -110,6 +40,10 @@ export interface ExploreState {
    */
   split: boolean;
   /**
+   * True if time interval for panels are synced. Only possible with split mode.
+   */
+  syncedTimes: boolean;
+  /**
    * Explore state of the left split (left is default in non-split view).
    */
   left: ExploreItemState;
@@ -123,7 +57,7 @@ export interface ExploreItemState {
   /**
    * React component to be shown when no queries have been run yet, e.g., for a query language cheat sheet.
    */
-  StartPage?: ComponentClass<ExploreStartPageProps>;
+  StartPage?: ComponentType<ExploreStartPageProps>;
   /**
    * Width used for calculating the graph interval (can't have more datapoints than pixels)
    */
@@ -136,10 +70,6 @@ export interface ExploreItemState {
    * Current data source name or null if default
    */
   requestedDatasourceName: string | null;
-  /**
-   * Error to be shown when datasource loading or testing failed.
-   */
-  datasourceError: string;
   /**
    * True if the datasource is loading. `null` if the loading has not started yet.
    */
@@ -159,7 +89,7 @@ export interface ExploreItemState {
   /**
    * List of timeseries to be shown in the Explore graph result viewer.
    */
-  graphResult?: any[];
+  graphResult?: GraphSeriesXY[];
   /**
    * History of recent queries. Datasource-specific and initialized via localStorage.
    */
@@ -184,11 +114,6 @@ export interface ExploreItemState {
    */
   logsResult?: LogsModel;
 
-  /**
-   * Query intervals for graph queries to determine how many datapoints to return.
-   * Needs to be updated when `datasourceInstance` or `containerWidth` is changed.
-   */
-  queryIntervals: QueryIntervals;
   /**
    * Time range for this Explore. Managed by the time picker and used by all query runs.
    */
@@ -216,7 +141,7 @@ export interface ExploreItemState {
    */
   showingTable: boolean;
 
-  loadingState: LoadingState;
+  loading: boolean;
   /**
    * Table model that combines all query table results into a single table.
    */
@@ -246,14 +171,25 @@ export interface ExploreItemState {
 
   update: ExploreUpdateState;
 
-  queryErrors: DataQueryError[];
-
   latency: number;
   supportedModes: ExploreMode[];
   mode: ExploreMode;
 
+  /**
+   * If true, the view is in live tailing mode.
+   */
   isLive: boolean;
+
+  /**
+   * If true, the live tailing view is paused.
+   */
+  isPaused: boolean;
   urlReplaced: boolean;
+
+  querySubscription?: Unsubscribable;
+
+  queryResponse: PanelData;
+  originPanelId?: number;
 }
 
 export interface ExploreUpdateState {
@@ -277,37 +213,8 @@ export interface ExploreUrlState {
   mode: ExploreMode;
   range: RawTimeRange;
   ui: ExploreUIState;
-}
-
-export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
-  ts: number;
-  query: TQuery;
-}
-
-export abstract class LanguageProvider {
-  datasource: any;
-  request: (url: string, params?: any) => Promise<any>;
-  /**
-   * Returns startTask that resolves with a task list when main syntax is loaded.
-   * Task list consists of secondary promises that load more detailed language features.
-   */
-  start: () => Promise<any[]>;
-  startTask?: Promise<any[]>;
-}
-
-export interface TypeaheadInput {
-  text: string;
-  prefix: string;
-  wrapperClasses: string[];
-  labelKey?: string;
-  //Should be Value from slate
-  value?: any;
-}
-
-export interface TypeaheadOutput {
+  originPanelId?: number;
   context?: string;
-  refresher?: Promise<{}>;
-  suggestions: CompletionItemGroup[];
 }
 
 export interface QueryIntervals {
@@ -316,9 +223,11 @@ export interface QueryIntervals {
 }
 
 export interface QueryOptions {
-  interval: string;
+  minInterval: string;
   maxDataPoints?: number;
-  live?: boolean;
+  liveStreaming?: boolean;
+  showingGraph?: boolean;
+  showingTable?: boolean;
 }
 
 export interface QueryTransaction {
@@ -327,15 +236,8 @@ export interface QueryTransaction {
   error?: string | JSX.Element;
   hints?: QueryHint[];
   latency: number;
-  options: any;
+  request: DataQueryRequest;
   queries: DataQuery[];
   result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;
-}
-
-export interface TextMatch {
-  text: string;
-  start: number;
-  length: number;
-  end: number;
 }

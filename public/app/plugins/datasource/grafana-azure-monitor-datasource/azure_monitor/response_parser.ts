@@ -14,9 +14,12 @@ export default class ResponseParser {
 
     for (let i = 0; i < result.data.value.length; i++) {
       if (!_.find(list, ['value', _.get(result.data.value[i], valueFieldName)])) {
+        const value = _.get(result.data.value[i], valueFieldName);
+        const text = _.get(result.data.value[i], textFieldName, value);
+
         list.push({
-          text: _.get(result.data.value[i], textFieldName),
-          value: _.get(result.data.value[i], valueFieldName),
+          text: text,
+          value: value,
         });
       }
     }
@@ -94,9 +97,12 @@ export default class ResponseParser {
     }
 
     for (let i = 0; i < metricData.dimensions.length; i++) {
+      const text = metricData.dimensions[i].localizedValue;
+      const value = metricData.dimensions[i].value;
+
       dimensions.push({
-        text: metricData.dimensions[i].localizedValue,
-        value: metricData.dimensions[i].value,
+        text: !text ? value : text,
+        value: value,
       });
     }
     return dimensions;
@@ -115,6 +121,27 @@ export default class ResponseParser {
       if (!_.find(list, ['value', _.get(result.data.value[i], valueFieldName)])) {
         list.push({
           text: `${_.get(result.data.value[i], textFieldName)} - ${_.get(result.data.value[i], valueFieldName)}`,
+          value: _.get(result.data.value[i], valueFieldName),
+        });
+      }
+    }
+
+    return list;
+  }
+
+  static parseSubscriptionsForSelect(result: any): Array<{ label: string; value: string }> {
+    const list: Array<{ label: string; value: string }> = [];
+
+    if (!result) {
+      return list;
+    }
+
+    const valueFieldName = 'subscriptionId';
+    const textFieldName = 'displayName';
+    for (let i = 0; i < result.data.value.length; i++) {
+      if (!_.find(list, ['value', _.get(result.data.value[i], valueFieldName)])) {
+        list.push({
+          label: `${_.get(result.data.value[i], textFieldName)} - ${_.get(result.data.value[i], valueFieldName)}`,
           value: _.get(result.data.value[i], valueFieldName),
         });
       }

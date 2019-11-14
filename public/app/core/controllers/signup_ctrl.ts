@@ -34,7 +34,7 @@ export class SignUpCtrl {
       },
     };
 
-    backendSrv.get('/api/user/signup/options').then(options => {
+    backendSrv.get('/api/user/signup/options').then((options: any) => {
       $scope.verifyEmailEnabled = options.verifyEmailEnabled;
       $scope.autoAssignOrg = options.autoAssignOrg;
     });
@@ -45,7 +45,7 @@ export class SignUpCtrl {
       return;
     }
 
-    this.backendSrv.post('/api/user/signup/step2', this.$scope.formModel).then(rsp => {
+    this.backendSrv.post('/api/user/signup/step2', this.$scope.formModel).then((rsp: any) => {
       if (rsp.code === 'redirect-to-select-org') {
         window.location.href = config.appSubUrl + '/profile/select-org?signup=1';
       } else {

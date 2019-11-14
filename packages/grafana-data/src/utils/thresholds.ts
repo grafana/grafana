@@ -1,23 +1,22 @@
 import { Threshold } from '../types';
 
-export function getThresholdForValue(
-  thresholds: Threshold[],
-  value: number | null | string | undefined
-): Threshold | null {
-  if (thresholds.length === 1) {
-    return thresholds[0];
+export function getActiveThreshold(value: number, thresholds: Threshold[]): Threshold {
+  let active = thresholds[0];
+  for (const threshold of thresholds) {
+    if (value >= threshold.value) {
+      active = threshold;
+    } else {
+      break;
+    }
   }
+  return active;
+}
 
-  const atThreshold = thresholds.filter(threshold => (value as number) === threshold.value)[0];
-  if (atThreshold) {
-    return atThreshold;
-  }
-
-  const belowThreshold = thresholds.filter(threshold => (value as number) > threshold.value);
-  if (belowThreshold.length > 0) {
-    const nearestThreshold = belowThreshold.sort((t1: Threshold, t2: Threshold) => t2.value - t1.value)[0];
-    return nearestThreshold;
-  }
-
-  return null;
+/**
+ * Sorts the thresholds
+ */
+export function sortThresholds(thresholds: Threshold[]) {
+  return thresholds.sort((t1, t2) => {
+    return t1.value - t2.value;
+  });
 }

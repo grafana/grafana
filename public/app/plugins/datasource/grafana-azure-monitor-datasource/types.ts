@@ -1,11 +1,12 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/ui';
+import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
 export interface AzureMonitorQuery extends DataQuery {
+  refId: string;
   format: string;
   subscription: string;
   azureMonitor: AzureMetricQuery;
   azureLogAnalytics: AzureLogsQuery;
-  //   appInsights: any;
+  appInsights: ApplicationInsightsQuery;
 }
 
 export interface AzureDataSourceJsonData extends DataSourceJsonData {
@@ -20,32 +21,51 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
   logAnalyticsSubscriptionId?: string;
   logAnalyticsTenantId?: string;
   logAnalyticsClientId?: string;
-  azureLogAnalyticsSameAs?: string;
+  azureLogAnalyticsSameAs?: boolean;
   logAnalyticsDefaultWorkspace?: string;
 
   // App Insights
   appInsightsAppId?: string;
 }
 
+export interface AzureDataSourceSecureJsonData {
+  clientSecret: string;
+  logAnalyticsClientSecret: string;
+}
+
 export interface AzureMetricQuery {
   resourceGroup: string;
   resourceName: string;
   metricDefinition: string;
+  metricNamespace: string;
   metricName: string;
   timeGrainUnit: string;
   timeGrain: string;
-  timeGrains: string[];
   allowedTimeGrainsMs: number[];
   aggregation: string;
   dimension: string;
   dimensionFilter: string;
   alias: string;
+  top: string;
 }
 
 export interface AzureLogsQuery {
   query: string;
   resultFormat: string;
   workspace: string;
+}
+
+export interface ApplicationInsightsQuery {
+  rawQuery: boolean;
+  rawQueryString: any;
+  metricName: string;
+  timeGrainUnit: string;
+  timeGrain: string;
+  allowedTimeGrainsMs: number[];
+  aggregation: string;
+  dimension: string;
+  dimensionFilter: string;
+  alias: string;
 }
 
 // Azure Monitor API Types

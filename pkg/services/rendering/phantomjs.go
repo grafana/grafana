@@ -30,9 +30,15 @@ func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (
 	}
 
 	scriptPath, _ := filepath.Abs(filepath.Join(rs.Cfg.PhantomDir, "render.js"))
-	pngPath := rs.getFilePathForNewImage()
+	pngPath, err := rs.getFilePathForNewImage()
+	if err != nil {
+		return nil, err
+	}
 
-	renderKey := middleware.AddRenderAuthKey(opts.OrgId, opts.UserId, opts.OrgRole)
+	renderKey, err := middleware.AddRenderAuthKey(opts.OrgId, opts.UserId, opts.OrgRole)
+	if err != nil {
+		return nil, err
+	}
 	defer middleware.RemoveRenderAuthKey(renderKey)
 
 	phantomDebugArg := "--debug=false"
@@ -67,10 +73,18 @@ func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (
 
 	timezone := ""
 
+	cmd.Env = os.Environ()
+
 	if opts.Timezone != "" {
 		timezone = isoTimeOffsetToPosixTz(opts.Timezone)
-		baseEnviron := os.Environ()
-		cmd.Env = appendEnviron(baseEnviron, "TZ", timezone)
+		cmd.Env = appendEnviron(cmd.Env, "TZ", timezone)
+	}
+
+	// Added to disable usage of newer version of OPENSSL
+	// that seem to be incompatible with PhantomJS (used in Debian Buster)
+	if runtime.GOOS == "linux" {
+		disableNewOpenssl := "/etc/ssl"
+		cmd.Env = appendEnviron(cmd.Env, "OPENSSL_CONF", disableNewOpenssl)
 	}
 
 	rs.log.Debug("executing Phantomjs", "binPath", binPath, "cmdArgs", cmdArgs, "timezone", timezone)

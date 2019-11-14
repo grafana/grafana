@@ -1,6 +1,5 @@
 import execa = require('execa');
 import * as fs from 'fs';
-import { changeCwdToGrafanaUi, restoreCwd, changeCwdToGrafanaToolkit } from '../utils/cwd';
 import chalk from 'chalk';
 import { useSpinner } from '../utils/useSpinner';
 import { Task, TaskRunner } from './task';
@@ -50,7 +49,7 @@ const preparePackage = async (pkg: any) => {
   });
 };
 
-const moveFiles = () => {
+const copyFiles = () => {
   const files = [
     'README.md',
     'CHANGELOG.md',
@@ -60,6 +59,10 @@ const moveFiles = () => {
     'src/config/tsconfig.plugin.json',
     'src/config/tsconfig.plugin.local.json',
     'src/config/tslint.plugin.json',
+    'src/config/styles.mock.js',
+
+    // plugin test file
+    'src/plugins/e2e/commonPluginTests.ts',
   ];
   // @ts-ignore
   return useSpinner<void>(`Moving ${files.join(', ')} files`, async () => {
@@ -101,8 +104,10 @@ const copySassFiles = () => {
   })();
 };
 
-const toolkitBuildTaskRunner: TaskRunner<void> = async () => {
-  cwd = changeCwdToGrafanaToolkit();
+interface ToolkitBuildOptions {}
+
+const toolkitBuildTaskRunner: TaskRunner<ToolkitBuildOptions> = async () => {
+  cwd = path.resolve(__dirname, '../../../');
   distDir = `${cwd}/dist`;
   const pkg = require(`${cwd}/package.json`);
   console.log(chalk.yellow(`Building ${pkg.name} (package.json version: ${pkg.version})`));
@@ -112,9 +117,8 @@ const toolkitBuildTaskRunner: TaskRunner<void> = async () => {
   await preparePackage(pkg);
   fs.mkdirSync('./dist/bin');
   fs.mkdirSync('./dist/sass');
-  await moveFiles();
+  await copyFiles();
   await copySassFiles();
-  restoreCwd();
 };
 
-export const toolkitBuildTask = new Task<void>('@grafana/toolkit build', toolkitBuildTaskRunner);
+export const toolkitBuildTask = new Task<ToolkitBuildOptions>('@grafana/toolkit build', toolkitBuildTaskRunner);

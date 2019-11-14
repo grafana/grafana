@@ -42,10 +42,10 @@ describe('ShareModalCtrl', () => {
         orgId: 1,
       },
     };
-
+    // @ts-ignore
     ctx.ctrl = new ShareModalCtrl(
       ctx.scope,
-      {},
+      {} as any,
       ctx.$location,
       {},
       ctx.timeSrv,
@@ -136,7 +136,7 @@ describe('ShareModalCtrl', () => {
       ctx.$location.absUrl = () => 'http://server/#!/test';
       ctx.scope.options.includeTemplateVars = true;
 
-      ctx.templateSrv.fillVariableValuesForUrl = params => {
+      ctx.templateSrv.fillVariableValuesForUrl = (params: any) => {
         params['var-app'] = 'mupp';
         params['var-server'] = 'srv-01';
       };

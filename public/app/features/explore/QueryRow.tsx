@@ -1,21 +1,28 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import _ from 'lodash';
+import debounce from 'lodash/debounce';
+import has from 'lodash/has';
 import { hot } from 'react-hot-loader';
 // @ts-ignore
 import { connect } from 'react-redux';
-
 // Components
 import QueryEditor from './QueryEditor';
-
+import { QueryRowActions } from './QueryRowActions';
 // Actions
 import { changeQuery, modifyQueries, runQueries, addQueryRow } from './state/actions';
-
 // Types
 import { StoreState } from 'app/types';
-import { TimeRange, AbsoluteTimeRange } from '@grafana/data';
-import { DataQuery, DataSourceApi, QueryFixAction, DataSourceStatus, PanelData, DataQueryError } from '@grafana/ui';
-import { HistoryItem, ExploreItemState, ExploreId, ExploreMode } from 'app/types/explore';
+import {
+  DataQuery,
+  DataSourceApi,
+  PanelData,
+  HistoryItem,
+  TimeRange,
+  AbsoluteTimeRange,
+  LoadingState,
+} from '@grafana/data';
+
+import { ExploreItemState, ExploreId, ExploreMode } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
 import QueryStatus from './QueryStatus';
@@ -32,7 +39,6 @@ interface QueryRowProps extends PropsFromParent {
   className?: string;
   exploreId: ExploreId;
   datasourceInstance: DataSourceApi;
-  datasourceStatus: DataSourceStatus;
   highlightLogsExpressionAction: typeof highlightLogsExpressionAction;
   history: HistoryItem[];
   query: DataQuery;
@@ -43,13 +49,15 @@ interface QueryRowProps extends PropsFromParent {
   runQueries: typeof runQueries;
   queryResponse: PanelData;
   latency: number;
-  queryErrors: DataQueryError[];
   mode: ExploreMode;
 }
 
 interface QueryRowState {
   textEditModeEnabled: boolean;
 }
+
+// Empty function to override blur execution on query field
+const noopOnBlur = () => {};
 
 export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
   state: QueryRowState = {
@@ -79,16 +87,13 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     this.props.addQueryRow(exploreId, index);
   };
 
-  onClickClearButton = () => {
-    this.onChange(null, true);
-  };
-
-  onClickHintFix = (action: QueryFixAction) => {
-    const { datasourceInstance, exploreId, index } = this.props;
-    if (datasourceInstance && datasourceInstance.modifyQuery) {
-      const modifier = (queries: DataQuery, action: QueryFixAction) => datasourceInstance.modifyQuery(queries, action);
-      this.props.modifyQueries(exploreId, action, index, modifier);
-    }
+  onClickToggleDisabled = () => {
+    const { exploreId, index, query } = this.props;
+    const newQuery = {
+      ...query,
+      hide: !query.hide,
+    };
+    this.props.changeQuery(exploreId, newQuery, index, true);
   };
 
   onClickRemoveButton = () => {
@@ -101,7 +106,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     this.setState({ textEditModeEnabled: !this.state.textEditModeEnabled });
   };
 
-  updateLogsHighlights = _.debounce((value: DataQuery) => {
+  updateLogsHighlights = debounce((value: DataQuery) => {
     const { datasourceInstance } = this.props;
     if (datasourceInstance.getHighlighterExpression) {
       const { exploreId } = this.props;
@@ -118,14 +123,15 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       exploreEvents,
       range,
       absoluteRange,
-      datasourceStatus,
       queryResponse,
       latency,
-      queryErrors,
       mode,
     } = this.props;
+
     const canToggleEditorModes =
-      mode === ExploreMode.Metrics && _.has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
+      mode === ExploreMode.Metrics && has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
+    const isNotStarted = queryResponse.state === LoadingState.NotStarted;
+    const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
     let QueryField;
 
     if (mode === ExploreMode.Metrics && datasourceInstance.components.ExploreMetricsQueryField) {
@@ -140,16 +146,15 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       <div className="query-row">
         <div className="query-row-field flex-shrink-1">
           {QueryField ? (
+            //@ts-ignore
             <QueryField
               datasource={datasourceInstance}
-              datasourceStatus={datasourceStatus}
               query={query}
               history={history}
               onRunQuery={this.onRunQuery}
-              onHint={this.onClickHintFix}
+              onBlur={noopOnBlur}
               onChange={this.onChange}
-              panelData={null}
-              queryResponse={queryResponse}
+              data={queryResponse}
               absoluteRange={absoluteRange}
             />
           ) : (
@@ -166,32 +171,17 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
           )}
         </div>
         <div className="query-row-status">
-          <QueryStatus queryResponse={queryResponse} latency={latency} />
+          <QueryStatus queryResponse={queryResponse} latency={query.hide ? 0 : latency} />
         </div>
-        <div className="gf-form-inline flex-shrink-0">
-          {canToggleEditorModes && (
-            <div className="gf-form">
-              <button className="gf-form-label gf-form-label--btn" onClick={this.onClickToggleEditorMode}>
-                <i className="fa fa-pencil" />
-              </button>
-            </div>
-          )}
-          <div className="gf-form">
-            <button className="gf-form-label gf-form-label--btn" onClick={this.onClickClearButton}>
-              <i className="fa fa-times" />
-            </button>
-          </div>
-          <div className="gf-form">
-            <button className="gf-form-label gf-form-label--btn" onClick={this.onClickAddButton}>
-              <i className="fa fa-plus" />
-            </button>
-          </div>
-          <div className="gf-form">
-            <button className="gf-form-label gf-form-label--btn" onClick={this.onClickRemoveButton}>
-              <i className="fa fa-minus" />
-            </button>
-          </div>
-        </div>
+        <QueryRowActions
+          canToggleEditorModes={canToggleEditorModes}
+          isDisabled={query.hide}
+          isNotStarted={isNotStarted}
+          onClickToggleEditorMode={this.onClickToggleEditorMode}
+          onClickToggleDisabled={this.onClickToggleDisabled}
+          onClickAddButton={this.onClickAddButton}
+          onClickRemoveButton={this.onClickRemoveButton}
+        />
       </div>
     );
   }
@@ -200,28 +190,8 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
 function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
-  const {
-    datasourceInstance,
-    history,
-    queries,
-    range,
-    absoluteRange,
-    datasourceError,
-    graphResult,
-    loadingState,
-    latency,
-    queryErrors,
-    mode,
-  } = item;
+  const { datasourceInstance, history, queries, range, absoluteRange, latency, mode, queryResponse } = item;
   const query = queries[index];
-  const datasourceStatus = datasourceError ? DataSourceStatus.Disconnected : DataSourceStatus.Connected;
-  const error = queryErrors.filter(queryError => queryError.refId === query.refId)[0];
-  const series = graphResult ? graphResult : []; // TODO: use DataFrame
-  const queryResponse: PanelData = {
-    series,
-    state: loadingState,
-    error,
-  };
 
   return {
     datasourceInstance,
@@ -229,10 +199,8 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     query,
     range,
     absoluteRange,
-    datasourceStatus,
     queryResponse,
     latency,
-    queryErrors,
     mode,
   };
 }

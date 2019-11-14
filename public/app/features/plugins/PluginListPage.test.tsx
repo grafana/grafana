@@ -3,7 +3,7 @@ import { shallow } from 'enzyme';
 import { PluginListPage, Props } from './PluginListPage';
 import { LayoutModes } from '../../core/components/LayoutSelector/LayoutSelector';
 import { NavModel } from '@grafana/data';
-import { PluginMeta } from '@grafana/ui';
+import { PluginMeta } from '@grafana/data';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {

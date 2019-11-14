@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { ScopedVars } from '@grafana/ui';
+import { ScopedVars } from '@grafana/data';
 
 export default class PostgresQuery {
   target: any;

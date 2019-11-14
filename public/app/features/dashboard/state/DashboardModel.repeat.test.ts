@@ -5,7 +5,7 @@ import { expect } from 'test/lib/common';
 jest.mock('app/core/services/context_srv', () => ({}));
 
 describe('given dashboard with panel repeat', () => {
-  let dashboard;
+  let dashboard: DashboardModel;
 
   beforeEach(() => {
     const dashboardJSON = {
@@ -56,7 +56,7 @@ describe('given dashboard with panel repeat', () => {
 });
 
 describe('given dashboard with panel repeat in horizontal direction', () => {
-  let dashboard;
+  let dashboard: any;
 
   beforeEach(() => {
     dashboard = new DashboardModel({
@@ -188,7 +188,7 @@ describe('given dashboard with panel repeat in horizontal direction', () => {
 });
 
 describe('given dashboard with panel repeat in vertical direction', () => {
-  let dashboard;
+  let dashboard: any;
 
   beforeEach(() => {
     dashboard = new DashboardModel({
@@ -230,7 +230,7 @@ describe('given dashboard with panel repeat in vertical direction', () => {
 });
 
 describe('given dashboard with row repeat and panel repeat in horizontal direction', () => {
-  let dashboard, dashboardJSON;
+  let dashboard: any, dashboardJSON;
 
   beforeEach(() => {
     dashboardJSON = {
@@ -312,7 +312,7 @@ describe('given dashboard with row repeat and panel repeat in horizontal directi
 });
 
 describe('given dashboard with row repeat', () => {
-  let dashboard, dashboardJSON;
+  let dashboard: any, dashboardJSON: any;
 
   beforeEach(() => {
     dashboardJSON = {
@@ -519,7 +519,7 @@ describe('given dashboard with row repeat', () => {
 });
 
 describe('given dashboard with row and panel repeat', () => {
-  let dashboard, dashboardJSON;
+  let dashboard: any, dashboardJSON: any;
 
   beforeEach(() => {
     dashboardJSON = {

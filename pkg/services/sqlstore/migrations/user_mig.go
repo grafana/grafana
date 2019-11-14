@@ -146,8 +146,16 @@ func (m *AddMissingUserSaltAndRandsMigration) Exec(sess *xorm.Session, mg *Migra
 	}
 
 	for _, user := range users {
-		_, err := sess.Exec("UPDATE "+mg.Dialect.Quote("user")+" SET salt = ?, rands = ? WHERE id = ?", util.GetRandomString(10), util.GetRandomString(10), user.Id)
+		salt, err := util.GetRandomString(10)
 		if err != nil {
+			return err
+		}
+		rands, err := util.GetRandomString(10)
+		if err != nil {
+			return err
+		}
+		if _, err := sess.Exec("UPDATE "+mg.Dialect.Quote("user")+
+			" SET salt = ?, rands = ? WHERE id = ?", salt, rands, user.Id); err != nil {
 			return err
 		}
 	}

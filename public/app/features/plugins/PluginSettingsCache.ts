@@ -1,5 +1,5 @@
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { PluginMeta } from '@grafana/ui';
+import { PluginMeta } from '@grafana/data';
 
 type PluginCache = {
   [key: string]: PluginMeta;
@@ -14,11 +14,11 @@ export function getPluginSettings(pluginId: string): Promise<PluginMeta> {
   }
   return getBackendSrv()
     .get(`/api/plugins/${pluginId}/settings`)
-    .then(settings => {
+    .then((settings: any) => {
       pluginInfoCache[pluginId] = settings;
       return settings;
     })
-    .catch(err => {
+    .catch((err: any) => {
       // err.isHandled = true;
       return Promise.reject('Unknown Plugin');
     });

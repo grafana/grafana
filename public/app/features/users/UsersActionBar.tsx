@@ -68,7 +68,7 @@ export class UsersActionBar extends PureComponent<Props> {
             </a>
           )}
           {externalUserMngLinkUrl && (
-            <a className="btn btn-primary" href={externalUserMngLinkUrl} target="_blank">
+            <a className="btn btn-primary" href={externalUserMngLinkUrl} target="_blank" rel="noopener">
               <i className="fa fa-external-link-square" /> {externalUserMngLinkName}
             </a>
           )}
@@ -78,7 +78,7 @@ export class UsersActionBar extends PureComponent<Props> {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: any) {
   return {
     searchQuery: getUsersSearchQuery(state.users),
     pendingInvitesCount: getInviteesCount(state.users),

@@ -1,9 +1,13 @@
-import { LegendOptions } from '@grafana/ui';
+import { LegendOptions, GraphTooltipOptions } from '@grafana/ui';
+import { YAxis, FieldDisplayOptions } from '@grafana/data';
+
 import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
+// TODO move out from single stat
+import { standardFieldDisplayOptions } from '../singlestat2/types';
 
 export interface SeriesOptions {
   color?: string;
-  yAxis?: number;
+  yAxis?: YAxis;
   [key: string]: any;
 }
 export interface GraphOptions {
@@ -18,6 +22,8 @@ export interface Options {
   series: {
     [alias: string]: SeriesOptions;
   };
+  fieldOptions: FieldDisplayOptions;
+  tooltipOptions: GraphTooltipOptions;
 }
 
 export const defaults: Options = {
@@ -32,4 +38,6 @@ export const defaults: Options = {
     placement: 'under',
   },
   series: {},
+  fieldOptions: { ...standardFieldDisplayOptions },
+  tooltipOptions: { mode: 'single' },
 };

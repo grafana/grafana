@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
@@ -402,13 +403,13 @@ func httpClientScenario(t *testing.T, desc string, ds *models.DataSource, fn sce
 		ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 			sc.request = r
 			buf, err := ioutil.ReadAll(r.Body)
-			if err != nil {
-				t.Fatalf("Failed to read request body, err=%v", err)
-			}
+			require.Nil(t, err)
+
 			sc.requestBody = bytes.NewBuffer(buf)
 
 			rw.Header().Add("Content-Type", "application/json")
-			rw.Write([]byte(sc.responseBody))
+			_, err = rw.Write([]byte(sc.responseBody))
+			require.Nil(t, err)
 			rw.WriteHeader(sc.responseStatus)
 		}))
 		ds.Url = ts.URL

@@ -6,15 +6,16 @@ import { config } from 'app/core/config';
 
 // Types
 import { SingleStatOptions } from './types';
-import { PanelProps, getFieldDisplayValues, VizRepeater, FieldDisplay, BigValue } from '@grafana/ui';
-import { BigValueSparkline } from '@grafana/ui/src/components/BigValue/BigValue';
+import { VizRepeater, BigValue, DataLinksContextMenu, BigValueSparkline } from '@grafana/ui';
+import { PanelProps, getFieldDisplayValues, FieldDisplay } from '@grafana/data';
+import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>> {
   renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
-    let sparkline: BigValueSparkline;
-    if (value.sparkline) {
-      const { timeRange, options } = this.props;
+    const { timeRange, options } = this.props;
+    let sparkline: BigValueSparkline | undefined;
 
+    if (value.sparkline) {
       sparkline = {
         ...options.sparkline,
         data: value.sparkline,
@@ -23,11 +24,29 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
       };
     }
 
-    return <BigValue value={value.display} sparkline={sparkline} width={width} height={height} theme={config.theme} />;
+    return (
+      <DataLinksContextMenu links={getFieldLinksSupplier(value)}>
+        {({ openMenu, targetClassName }) => {
+          return (
+            <BigValue
+              value={value.display}
+              sparkline={sparkline}
+              displayMode={options.displayMode}
+              width={width}
+              height={height}
+              theme={config.theme}
+              onClick={openMenu}
+              className={targetClassName}
+            />
+          );
+        }}
+      </DataLinksContextMenu>
+    );
   };
 
   getValues = (): FieldDisplay[] => {
     const { data, options, replaceVariables } = this.props;
+
     return getFieldDisplayValues({
       ...options,
       replaceVariables,

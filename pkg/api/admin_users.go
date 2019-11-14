@@ -34,7 +34,7 @@ func AdminCreateUser(c *models.ReqContext, form dtos.AdminCreateUserForm) {
 		return
 	}
 
-	metrics.M_Api_Admin_User_Create.Inc()
+	metrics.MApiAdminUserCreate.Inc()
 
 	user := cmd.Result
 
@@ -61,7 +61,11 @@ func AdminUpdateUserPassword(c *models.ReqContext, form dtos.AdminUpdateUserPass
 		return
 	}
 
-	passwordHashed := util.EncodePassword(form.Password, userQuery.Result.Salt)
+	passwordHashed, err := util.EncodePassword(form.Password, userQuery.Result.Salt)
+	if err != nil {
+		c.JsonApiErr(500, "Could not encode password", err)
+		return
+	}
 
 	cmd := models.ChangeUserPasswordCommand{
 		UserId:      userID,

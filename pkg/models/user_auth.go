@@ -100,6 +100,17 @@ type GetAuthInfoQuery struct {
 	Result *UserAuth
 }
 
+type TeamOrgGroupDTO struct {
+	TeamName string `json:"teamName"`
+	OrgName  string `json:"orgName"`
+	GroupDN  string `json:"groupDN"`
+}
+
+type GetTeamsForLDAPGroupCommand struct {
+	Groups []string
+	Result []TeamOrgGroupDTO
+}
+
 type SyncTeamsCommand struct {
 	ExternalUser *ExternalUserInfo
 	User         *User

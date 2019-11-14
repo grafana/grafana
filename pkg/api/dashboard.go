@@ -113,7 +113,11 @@ func (hs *HTTPServer) GetDashboard(c *m.ReqContext) Response {
 	}
 
 	if provisioningData != nil {
-		meta.Provisioned = true
+		allowUiUpdate := hs.ProvisioningService.GetAllowUiUpdatesFromConfig(provisioningData.Name)
+		if !allowUiUpdate {
+			meta.Provisioned = true
+		}
+
 		meta.ProvisionedExternalId, err = filepath.Rel(
 			hs.ProvisioningService.GetDashboardProvisionerResolvedPath(provisioningData.Name),
 			provisioningData.ExternalId,
@@ -133,7 +137,7 @@ func (hs *HTTPServer) GetDashboard(c *m.ReqContext) Response {
 		Meta:      meta,
 	}
 
-	c.TimeRequest(metrics.M_Api_Dashboard_Get)
+	c.TimeRequest(metrics.MApiDashboardGet)
 	return JSON(200, dto)
 }
 
@@ -221,6 +225,16 @@ func (hs *HTTPServer) PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand)
 		}
 	}
 
+	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardId(dash.Id)
+	if err != nil {
+		return Error(500, "Error while checking if dashboard is provisioned", err)
+	}
+
+	allowUiUpdate := true
+	if provisioningData != nil {
+		allowUiUpdate = hs.ProvisioningService.GetAllowUiUpdatesFromConfig(provisioningData.Name)
+	}
+
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   cmd.Message,
@@ -229,7 +243,7 @@ func (hs *HTTPServer) PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand)
 		Overwrite: cmd.Overwrite,
 	}
 
-	dashboard, err := dashboards.NewService().SaveDashboard(dashItem)
+	dashboard, err := dashboards.NewService().SaveDashboard(dashItem, allowUiUpdate)
 
 	if err == m.ErrDashboardTitleEmpty ||
 		err == m.ErrDashboardWithSameNameAsFolder ||
@@ -278,12 +292,11 @@ func (hs *HTTPServer) PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand)
 		inFolder := cmd.FolderId > 0
 		err := dashboards.MakeUserAdmin(hs.Bus, cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
 		if err != nil {
-			hs.log.Error("Could not make user admin", "dashboard", cmd.Result.Title, "user", c.SignedInUser.UserId, "error", err)
-			return Error(500, "Failed to make user admin of dashboard", err)
+			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
 		}
 	}
 
-	c.TimeRequest(metrics.M_Api_Dashboard_Save)
+	c.TimeRequest(metrics.MApiDashboardSave)
 	return JSON(200, util.DynMap{
 		"status":  "success",
 		"slug":    dashboard.Slug,

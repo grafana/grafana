@@ -14,7 +14,7 @@ jest.mock('app/core/core', () => {
 });
 
 import { SystemJS } from '@grafana/runtime';
-import { AppPluginMeta, PluginMetaInfo, PluginType, PluginIncludeType, AppPlugin } from '@grafana/ui';
+import { AppPluginMeta, PluginMetaInfo, PluginType, PluginIncludeType, AppPlugin } from '@grafana/data';
 import { importAppPlugin } from './plugin_loader';
 
 class MyCustomApp extends AppPlugin {

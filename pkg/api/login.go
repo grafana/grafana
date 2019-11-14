@@ -40,11 +40,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	}
 
 	viewData.Settings["oauth"] = enabledOAuths
-	viewData.Settings["disableUserSignUp"] = !setting.AllowUserSignUp
-	viewData.Settings["loginHint"] = setting.LoginHint
-	viewData.Settings["passwordHint"] = setting.PasswordHint
-	viewData.Settings["disableLoginForm"] = setting.DisableLoginForm
-	viewData.Settings["samlEnabled"] = hs.Cfg.SAMLEnabled
+	viewData.Settings["samlEnabled"] = hs.License.HasValidLicense() && hs.Cfg.SAMLEnabled
 
 	if loginError, ok := tryGetEncryptedCookie(c, LoginErrorCookieName); ok {
 		//this cookie is only set whenever an OAuth login fails
@@ -61,18 +57,31 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		return
 	}
 
-	if !c.IsSignedIn {
-		c.HTML(200, ViewIndex, viewData)
+	if c.IsSignedIn {
+		// Assign login token to auth proxy users if enable_login_token = true
+		if setting.AuthProxyEnabled && setting.AuthProxyEnableLoginToken {
+			hs.loginAuthProxyUser(c)
+		}
+
+		if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
+			c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
+			c.Redirect(redirectTo)
+			return
+		}
+
+		c.Redirect(setting.AppSubUrl + "/")
 		return
 	}
 
-	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
-		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
-		c.Redirect(redirectTo)
-		return
-	}
+	c.HTML(200, ViewIndex, viewData)
+}
 
-	c.Redirect(setting.AppSubUrl + "/")
+func (hs *HTTPServer) loginAuthProxyUser(c *models.ReqContext) {
+	hs.loginUserWithUser(&models.User{
+		Id:    c.SignedInUser.UserId,
+		Email: c.SignedInUser.Email,
+		Login: c.SignedInUser.Login,
+	}, c)
 }
 
 func tryOAuthAutoLogin(c *models.ReqContext) bool {
@@ -81,7 +90,7 @@ func tryOAuthAutoLogin(c *models.ReqContext) bool {
 	}
 	oauthInfos := setting.OAuthService.OAuthInfos
 	if len(oauthInfos) != 1 {
-		log.Warn("Skipping OAuth auto login because multiple OAuth providers are configured.")
+		log.Warn("Skipping OAuth auto login because multiple OAuth providers are configured")
 		return false
 	}
 	for key := range setting.OAuthService.OAuthInfos {
@@ -114,12 +123,16 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 	}
 
 	if err := bus.Dispatch(authQuery); err != nil {
+		e401 := Error(401, "Invalid username or password", err)
 		if err == login.ErrInvalidCredentials || err == login.ErrTooManyLoginAttempts {
-			return Error(401, "Invalid username or password", err)
+			return e401
 		}
 
+		// Do not expose disabled status,
+		// just show incorrect user credentials error (see #17947)
 		if err == login.ErrUserDisabled {
-			return Error(401, "User is disabled", err)
+			hs.log.Warn("User is disabled", "user", cmd.User)
+			return e401
 		}
 
 		return Error(500, "Error while trying to authenticate user", err)
@@ -138,7 +151,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
 	}
 
-	metrics.M_Api_Login_Post.Inc()
+	metrics.MApiLoginPost.Inc()
 	return JSON(200, result)
 }
 
@@ -195,15 +208,18 @@ func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName s
 		return err
 	}
 
-	http.SetCookie(ctx.Resp, &http.Cookie{
+	cookie := http.Cookie{
 		Name:     cookieName,
 		MaxAge:   60,
 		Value:    hex.EncodeToString(encryptedError),
 		HttpOnly: true,
 		Path:     setting.AppSubUrl + "/",
 		Secure:   hs.Cfg.CookieSecure,
-		SameSite: hs.Cfg.CookieSameSite,
-	})
+	}
+	if hs.Cfg.CookieSameSite != http.SameSiteDefaultMode {
+		cookie.SameSite = hs.Cfg.CookieSameSite
+	}
+	http.SetCookie(ctx.Resp, &cookie)
 
 	return nil
 }

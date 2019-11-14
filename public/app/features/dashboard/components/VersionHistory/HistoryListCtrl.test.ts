@@ -1,7 +1,9 @@
 import _ from 'lodash';
 import { HistoryListCtrl } from './HistoryListCtrl';
 import { versions, compare, restore } from './__mocks__/history';
+// @ts-ignore
 import $q from 'q';
+import { CoreEvents } from 'app/types';
 
 describe('HistoryListCtrl', () => {
   const RESTORE_ID = 4;
@@ -10,9 +12,9 @@ describe('HistoryListCtrl', () => {
 
   restore(7, RESTORE_ID);
 
-  let historySrv;
-  let $rootScope;
-  let historyListCtrl;
+  let historySrv: any;
+  let $rootScope: any;
+  let historyListCtrl: any;
   beforeEach(() => {
     historySrv = {
       calculateDiff: jest.fn(),
@@ -25,13 +27,13 @@ describe('HistoryListCtrl', () => {
   });
 
   describe('when the history list component is loaded', () => {
-    let deferred;
+    let deferred: any;
 
     beforeEach(() => {
       deferred = $q.defer({});
       historySrv.getHistoryList = jest.fn(() => deferred.promise);
 
-      historyListCtrl = new HistoryListCtrl({}, $rootScope, {}, $q, historySrv, {});
+      historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, $q, historySrv, {});
 
       historyListCtrl.dashboard = {
         id: 2,
@@ -89,7 +91,7 @@ describe('HistoryListCtrl', () => {
 
         historySrv.getHistoryList = jest.fn(() => deferred.promise);
 
-        historyListCtrl = new HistoryListCtrl({}, $rootScope, {}, $q, historySrv, {});
+        historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, $q, historySrv, {});
 
         deferred.reject(new Error('HistoryListError'));
 
@@ -117,9 +119,9 @@ describe('HistoryListCtrl', () => {
         historyListCtrl.resetFromSource = jest.fn();
       });
 
-      it('should listen for the `dashboard-saved` appEvent', () => {
+      it('should listen for the `dashboardSaved` appEvent', () => {
         expect($rootScope.onAppEvent).toHaveBeenCalledTimes(1);
-        expect($rootScope.onAppEvent.mock.calls[0][0]).toBe('dashboard-saved');
+        expect($rootScope.onAppEvent.mock.calls[0][0]).toBe(CoreEvents.dashboardSaved);
       });
 
       it('should call `onDashboardSaved` when the appEvent is received', () => {
@@ -130,14 +132,14 @@ describe('HistoryListCtrl', () => {
   });
 
   describe('when the user wants to compare two revisions', () => {
-    let deferred;
+    let deferred: any;
 
     beforeEach(async () => {
       deferred = $q.defer({});
       historySrv.getHistoryList = jest.fn(() => $q.when(versionsResponse));
       historySrv.calculateDiff = jest.fn(() => deferred.promise);
 
-      historyListCtrl = new HistoryListCtrl({}, $rootScope, {}, $q, historySrv, {});
+      historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, $q, historySrv, {});
 
       historyListCtrl.dashboard = {
         id: 2,
@@ -272,14 +274,14 @@ describe('HistoryListCtrl', () => {
   });
 
   describe('when the user wants to restore a revision', () => {
-    let deferred;
+    let deferred: any;
 
     beforeEach(async () => {
       deferred = $q.defer();
       historySrv.getHistoryList = jest.fn(() => $q.when(versionsResponse));
       historySrv.restoreDashboard = jest.fn(() => deferred.promise);
 
-      historyListCtrl = new HistoryListCtrl({}, $rootScope, {}, $q, historySrv, {});
+      historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, $q, historySrv, {});
 
       historyListCtrl.dashboard = {
         id: 1,
@@ -291,7 +293,7 @@ describe('HistoryListCtrl', () => {
 
     it('should display a modal allowing the user to restore or cancel', () => {
       expect($rootScope.appEvent).toHaveBeenCalledTimes(1);
-      expect($rootScope.appEvent.mock.calls[0][0]).toBe('confirm-modal');
+      expect($rootScope.appEvent.mock.calls[0][0]).toBe(CoreEvents.showConfirmModal);
     });
 
     describe('and restore fails to fetch', () => {
@@ -299,7 +301,7 @@ describe('HistoryListCtrl', () => {
         deferred = $q.defer();
         historySrv.getHistoryList = jest.fn(() => $q.when(versionsResponse));
         historySrv.restoreDashboard = jest.fn(() => deferred.promise);
-        historyListCtrl = new HistoryListCtrl({}, $rootScope, {}, $q, historySrv, {});
+        historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, $q, historySrv, {});
         deferred.reject(new Error('RestoreError'));
         historyListCtrl.restoreConfirm(RESTORE_ID);
         await historyListCtrl.getLog();

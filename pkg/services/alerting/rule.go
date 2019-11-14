@@ -141,7 +141,7 @@ func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 		} else {
 			uid, err := jsonModel.Get("uid").String()
 			if err != nil {
-				return nil, ValidationError{Reason: "Neither id nor uid is specified, " + err.Error(), DashboardID: model.DashboardID, AlertID: model.ID, PanelID: model.PanelID}
+				return nil, ValidationError{Reason: "Neither id nor uid is specified in 'notifications' block, " + err.Error(), DashboardID: model.DashboardID, AlertID: model.ID, PanelID: model.PanelID}
 			}
 			model.Notifications = append(model.Notifications, uid)
 		}

@@ -6,7 +6,7 @@ export const getSearchMemberQuery = (state: TeamState) => state.searchMemberQuer
 export const getTeamGroups = (state: TeamState) => state.groups;
 export const getTeamsCount = (state: TeamsState) => state.teams.length;
 
-export const getTeam = (state: TeamState, currentTeamId): Team | null => {
+export const getTeam = (state: TeamState, currentTeamId: any): Team | null => {
   if (state.team.id === parseInt(currentTeamId, 10)) {
     return state.team;
   }

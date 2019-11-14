@@ -96,22 +96,13 @@ func roleCounterSQL(role, alias string) string {
 	return `
 		(
 			SELECT COUNT(*)
-			FROM ` + dialect.Quote("user") + ` as u
-			WHERE
-			(SELECT COUNT(*)
-				FROM org_user
-				WHERE org_user.user_id=u.id
-				AND org_user.role='` + role + `')>0
+			FROM ` + dialect.Quote("user") + ` as u, org_user
+			WHERE ( org_user.user_id=u.id AND org_user.role='` + role + `' )
 		) as ` + alias + `,
 		(
 			SELECT COUNT(*)
-			FROM ` + dialect.Quote("user") + ` as u
-			WHERE
-			(SELECT COUNT(*)
-				FROM org_user
-				WHERE org_user.user_id=u.id
-				AND org_user.role='` + role + `')>0
-			AND u.last_seen_at>?
+			FROM ` + dialect.Quote("user") + ` as u, org_user
+			WHERE u.last_seen_at>? AND ( org_user.user_id=u.id AND org_user.role='` + role + `' )
 		) as active_` + alias
 }
 

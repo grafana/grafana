@@ -1,15 +1,25 @@
-import angular from 'angular';
+import angular, { IQService } from 'angular';
 import _ from 'lodash';
 
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 
-import { DataSourceApi } from '@grafana/ui';
+import { DataSourceApi } from '@grafana/data';
 import { importPanelPlugin, importDataSourcePlugin, importAppPlugin } from './plugin_loader';
+import DatasourceSrv from './datasource_srv';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 /** @ngInject */
-function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $templateCache, $timeout) {
-  function getTemplate(component) {
+function pluginDirectiveLoader(
+  $compile: any,
+  datasourceSrv: DatasourceSrv,
+  $rootScope: GrafanaRootScope,
+  $q: IQService,
+  $http: any,
+  $templateCache: any,
+  $timeout: any
+) {
+  function getTemplate(component: { template: any; templateUrl: any }) {
     if (component.template) {
       return $q.when(component.template);
     }
@@ -17,7 +27,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     if (cached) {
       return $q.when(cached);
     }
-    return $http.get(component.templateUrl).then(res => {
+    return $http.get(component.templateUrl).then((res: any) => {
       return res.data;
     });
   }
@@ -32,7 +42,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     return baseUrl + '/' + templateUrl;
   }
 
-  function getPluginComponentDirective(options) {
+  function getPluginComponentDirective(options: any) {
     // handle relative template urls for plugin templates
     options.Component.templateUrl = relativeTemplateUrlToAbs(options.Component.templateUrl, options.baseUrl);
 
@@ -45,7 +55,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
         controllerAs: 'ctrl',
         bindToController: true,
         scope: options.bindings,
-        link: (scope, elem, attrs, ctrl) => {
+        link: (scope: any, elem: any, attrs: any, ctrl: any) => {
           if (ctrl.link) {
             ctrl.link(scope, elem, attrs, ctrl);
           }
@@ -57,7 +67,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     };
   }
 
-  function loadPanelComponentInfo(scope, attrs) {
+  function loadPanelComponentInfo(scope: any, attrs: any) {
     const componentInfo: any = {
       name: 'panel-plugin-' + scope.panel.type,
       bindings: { dashboard: '=', panel: '=', row: '=' },
@@ -78,7 +88,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       }
 
       if (PanelCtrl.templatePromise) {
-        return PanelCtrl.templatePromise.then(res => {
+        return PanelCtrl.templatePromise.then((res: any) => {
           return componentInfo;
         });
       }
@@ -87,7 +97,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
         PanelCtrl.templateUrl = relativeTemplateUrlToAbs(PanelCtrl.templateUrl, panelInfo.baseUrl);
       }
 
-      PanelCtrl.templatePromise = getTemplate(PanelCtrl).then(template => {
+      PanelCtrl.templatePromise = getTemplate(PanelCtrl).then((template: any) => {
         PanelCtrl.templateUrl = null;
         PanelCtrl.template = `<grafana-panel ctrl="ctrl" class="panel-height-helper">${template}</grafana-panel>`;
         return componentInfo;
@@ -97,7 +107,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     });
   }
 
-  function getModule(scope: any, attrs: any) {
+  function getModule(scope: any, attrs: any): any {
     switch (attrs.type) {
       // QueryCtrl
       case 'query-ctrl': {
@@ -189,7 +199,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     }
   }
 
-  function appendAndCompile(scope, elem, componentInfo) {
+  function appendAndCompile(scope: any, elem: JQuery, componentInfo: any) {
     const child = angular.element(document.createElement(componentInfo.name));
     _.each(componentInfo.attrs, (value, key) => {
       child.attr(key, value);
@@ -211,7 +221,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     });
   }
 
-  function registerPluginComponent(scope, elem, attrs, componentInfo) {
+  function registerPluginComponent(scope: any, elem: JQuery, attrs: any, componentInfo: any) {
     if (componentInfo.notFound) {
       elem.empty();
       return;
@@ -235,12 +245,12 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
 
   return {
     restrict: 'E',
-    link: (scope, elem, attrs) => {
+    link: (scope: any, elem: JQuery, attrs: any) => {
       getModule(scope, attrs)
-        .then(componentInfo => {
+        .then((componentInfo: any) => {
           registerPluginComponent(scope, elem, attrs, componentInfo);
         })
-        .catch(err => {
+        .catch((err: any) => {
           console.log('Plugin component error', err);
         });
     },

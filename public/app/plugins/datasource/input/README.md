@@ -1,3 +1,3 @@
-# Direct Input Datasource -  Native Plugin
+# Direct Input Data Source -  Native Plugin
 
-This datasource lets you define results directly in CSV.  The values are stored either in a shared datasource, or directly in panels.
+This data source lets you define results directly in CSV.  The values are stored either in a shared data source, or directly in panels.

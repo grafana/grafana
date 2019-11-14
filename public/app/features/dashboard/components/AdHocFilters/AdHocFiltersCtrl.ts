@@ -1,7 +1,10 @@
 import _ from 'lodash';
-import angular from 'angular';
+import angular, { IQService } from 'angular';
 import coreModule from 'app/core/core_module';
 import { DashboardModel } from 'app/features/dashboard/state';
+import DatasourceSrv from 'app/features/plugins/datasource_srv';
+import { VariableSrv } from 'app/features/templating/all';
+import { CoreEvents } from 'app/types';
 
 export class AdHocFiltersCtrl {
   segments: any;
@@ -10,13 +13,19 @@ export class AdHocFiltersCtrl {
   removeTagFilterSegment: any;
 
   /** @ngInject */
-  constructor(private uiSegmentSrv, private datasourceSrv, private $q, private variableSrv, $scope) {
+  constructor(
+    private uiSegmentSrv: any,
+    private datasourceSrv: DatasourceSrv,
+    private $q: IQService,
+    private variableSrv: VariableSrv,
+    $scope: any
+  ) {
     this.removeTagFilterSegment = uiSegmentSrv.newSegment({
       fake: true,
       value: '-- remove filter --',
     });
     this.buildSegmentModel();
-    this.dashboard.events.on('template-variable-value-updated', this.buildSegmentModel.bind(this), $scope);
+    this.dashboard.events.on(CoreEvents.templateVariableValueUpdated, this.buildSegmentModel.bind(this), $scope);
   }
 
   buildSegmentModel() {
@@ -40,7 +49,7 @@ export class AdHocFiltersCtrl {
     this.segments.push(this.uiSegmentSrv.newPlusButton());
   }
 
-  getOptions(segment, index) {
+  getOptions(segment: { type: string }, index: number) {
     if (segment.type === 'operator') {
       return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<', '>', '=~', '!~']));
     }
@@ -60,7 +69,7 @@ export class AdHocFiltersCtrl {
         promise = ds.getTagValues ? ds.getTagValues(options) : Promise.resolve([]);
       }
 
-      return promise.then(results => {
+      return promise.then((results: any) => {
         results = _.map(results, segment => {
           return this.uiSegmentSrv.newSegment({ value: segment.text });
         });
@@ -74,7 +83,7 @@ export class AdHocFiltersCtrl {
     });
   }
 
-  segmentChanged(segment, index) {
+  segmentChanged(segment: { value: any; type: string; cssClass: string }, index: number) {
     this.segments[index] = segment;
 
     // handle remove tag condition
@@ -108,11 +117,11 @@ export class AdHocFiltersCtrl {
   }
 
   updateVariableModel() {
-    const filters = [];
+    const filters: any[] = [];
     let filterIndex = -1;
     let hasFakes = false;
 
-    this.segments.forEach(segment => {
+    this.segments.forEach((segment: any) => {
       if (segment.type === 'value' && segment.fake) {
         hasFakes = true;
         return;

@@ -5,8 +5,8 @@ import React, { PureComponent } from 'react';
 import { Select, FormLabel, PanelOptionsGroup } from '@grafana/ui';
 
 // Types
-import { FormField, PanelEditorProps } from '@grafana/ui';
-import { PieChartType } from '@grafana/ui';
+import { PanelEditorProps } from '@grafana/data';
+import { FormField, PieChartType } from '@grafana/ui';
 import { PieChartOptions } from './types';
 
 const labelWidth = 8;

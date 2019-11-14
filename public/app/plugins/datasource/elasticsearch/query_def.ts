@@ -73,6 +73,7 @@ export const metricAggTypes = [
     minVersion: 2,
   },
   { text: 'Raw Document', value: 'raw_document', requiresField: false },
+  { text: 'Logs', value: 'logs', requiresField: false },
 ];
 
 export const bucketAggTypes = [
@@ -128,7 +129,7 @@ export const movingAvgModelOptions = [
   { text: 'Holt Winters', value: 'holt_winters' },
 ];
 
-export const pipelineOptions = {
+export const pipelineOptions: any = {
   moving_avg: [
     { text: 'window', default: 5 },
     { text: 'model', default: 'simple' },
@@ -139,7 +140,7 @@ export const pipelineOptions = {
   bucket_script: [],
 };
 
-export const movingAvgModelSettings = {
+export const movingAvgModelSettings: any = {
   simple: [],
   linear: [],
   ewma: [{ text: 'Alpha', value: 'alpha', default: undefined }],
@@ -153,7 +154,7 @@ export const movingAvgModelSettings = {
   ],
 };
 
-export function getMetricAggTypes(esVersion) {
+export function getMetricAggTypes(esVersion: any) {
   return _.filter(metricAggTypes, f => {
     if (f.minVersion) {
       return f.minVersion <= esVersion;
@@ -163,7 +164,7 @@ export function getMetricAggTypes(esVersion) {
   });
 }
 
-export function getPipelineOptions(metric) {
+export function getPipelineOptions(metric: any) {
   if (!isPipelineAgg(metric.type)) {
     return [];
   }
@@ -171,7 +172,7 @@ export function getPipelineOptions(metric) {
   return pipelineOptions[metric.type];
 }
 
-export function isPipelineAgg(metricType) {
+export function isPipelineAgg(metricType: any) {
   if (metricType) {
     const po = pipelineOptions[metricType];
     return po !== null && po !== undefined;
@@ -180,7 +181,7 @@ export function isPipelineAgg(metricType) {
   return false;
 }
 
-export function isPipelineAggWithMultipleBucketPaths(metricType) {
+export function isPipelineAggWithMultipleBucketPaths(metricType: any) {
   if (metricType) {
     return metricAggTypes.find(t => t.value === metricType && t.supportsMultipleBucketPaths) !== undefined;
   }
@@ -188,8 +189,8 @@ export function isPipelineAggWithMultipleBucketPaths(metricType) {
   return false;
 }
 
-export function getPipelineAggOptions(targets) {
-  const result = [];
+export function getPipelineAggOptions(targets: any) {
+  const result: any[] = [];
   _.each(targets.metrics, metric => {
     if (!isPipelineAgg(metric.type)) {
       result.push({ text: describeMetric(metric), value: metric.id });
@@ -199,8 +200,8 @@ export function getPipelineAggOptions(targets) {
   return result;
 }
 
-export function getMovingAvgSettings(model, filtered) {
-  const filteredResult = [];
+export function getMovingAvgSettings(model: any, filtered: boolean) {
+  const filteredResult: any[] = [];
   if (filtered) {
     _.each(movingAvgModelSettings[model], setting => {
       if (!setting.isCheckbox) {
@@ -212,8 +213,8 @@ export function getMovingAvgSettings(model, filtered) {
   return movingAvgModelSettings[model];
 }
 
-export function getOrderByOptions(target) {
-  const metricRefs = [];
+export function getOrderByOptions(target: any) {
+  const metricRefs: any[] = [];
   _.each(target.metrics, metric => {
     if (metric.type !== 'count') {
       metricRefs.push({ text: describeMetric(metric), value: metric.id });
@@ -223,12 +224,12 @@ export function getOrderByOptions(target) {
   return orderByOptions.concat(metricRefs);
 }
 
-export function describeOrder(order) {
+export function describeOrder(order: string) {
   const def: any = _.find(orderOptions, { value: order });
   return def.text;
 }
 
-export function describeMetric(metric) {
+export function describeMetric(metric: { type: string; field: string }) {
   const def: any = _.find(metricAggTypes, { value: metric.type });
   if (!def.requiresField && !isPipelineAgg(metric.type)) {
     return def.text;
@@ -236,7 +237,7 @@ export function describeMetric(metric) {
   return def.text + ' ' + metric.field;
 }
 
-export function describeOrderBy(orderBy, target) {
+export function describeOrderBy(orderBy: any, target: any) {
   const def: any = _.find(orderByOptions, { value: orderBy });
   if (def) {
     return def.text;
@@ -260,3 +261,7 @@ export function defaultBucketAgg() {
 export const findMetricById = (metrics: any[], id: any) => {
   return _.find(metrics, { id: id });
 };
+
+export function hasMetricOfType(target: any, type: string): boolean {
+  return target && target.metrics && target.metrics.some((m: any) => m.type === type);
+}

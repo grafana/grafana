@@ -46,7 +46,7 @@ func (im *InternalMetricsService) Run(ctx context.Context) error {
 		}
 	}
 
-	M_Instance_Start.Inc()
+	MInstanceStart.Inc()
 
 	<-ctx.Done()
 	return ctx.Err()

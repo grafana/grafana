@@ -2,8 +2,8 @@
   <div class="page-action-bar">
     <h3 class="dashboard-settings__header">
       <a ng-click="setMode('list')">Variables</a>
-      <span ng-show="mode === 'new'">&gt; New</span>
-      <span ng-show="mode === 'edit'">&gt; Edit</span>
+      <span ng-show="mode === 'new'"><i class="fa fa-fw fa-chevron-right"></i> New</span>
+      <span ng-show="mode === 'edit'"><i class="fa fa-fw fa-chevron-right"></i> Edit</span>
     </h3>
 
     <div class="page-action-bar__spacer"></div>
@@ -19,26 +19,14 @@
 
   <div ng-if="mode === 'list'">
     <div ng-if="variables.length === 0">
-      <div class="empty-list-cta">
-        <div class="empty-list-cta__title">There are no variables added yet</div>
-        <a ng-click="setMode('new')" class="empty-list-cta__button btn btn-large btn-primary">
-          <i class="gicon gicon-variable"></i>
-          Add variable
-        </a>
-        <div class="grafana-info-box">
-          <h5>What do variables do?</h5>
-          <p>
-            Variables enable more interactive and dynamic dashboards. Instead of hard-coding things like server or
-            sensor names in your metric queries you can use variables in their place. Variables are shown as dropdown
-            select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in
-            your dashboard. Check out the
-            <a class="external-link" href="http://docs.grafana.org/reference/templating/" target="_blank">
-              Templating documentation
-            </a>
-            for more information.
-          </p>
-        </div>
-      </div>
+        <empty-list-cta
+        on-click="setNewMode"
+        title="emptyListCta.title"
+        infoBox="emptyListCta.infoBox"
+        infoBoxTitle="emptyListCta.infoBoxTitle"
+        buttonTitle="emptyListCta.buttonTitle"
+        buttonIcon="emptyListCta.buttonIcon"
+        />
     </div>
 
     <div ng-if="variables.length">

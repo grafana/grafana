@@ -28,7 +28,7 @@ export interface State {
 }
 
 export class TeamMembers extends PureComponent<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     this.state = { isAdding: false, newTeamMember: null };
   }
@@ -143,7 +143,7 @@ export class TeamMembers extends PureComponent<Props, State> {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: any) {
   return {
     searchMemberQuery: getSearchMemberQuery(state.team),
     editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,

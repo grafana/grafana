@@ -1,0 +1,188 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should disable insights api key input 1`] = `
+<Fragment>
+  <h3
+    className="page-heading"
+  >
+    Application Insights Details
+  </h3>
+  <div
+    className="gf-form-group"
+  >
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-12"
+        >
+          API Key
+        </Component>
+        <Input
+          className="width-25"
+          disabled={true}
+          placeholder="configured"
+        />
+      </div>
+      <div
+        className="gf-form"
+      >
+        <div
+          className="max-width-30 gf-form-inline"
+        >
+          <Button
+            onClick={[Function]}
+            type="button"
+            variant="secondary"
+          >
+            reset
+          </Button>
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-12"
+        >
+          Application ID
+        </Component>
+        <div
+          className="width-15"
+        >
+          <Input
+            className="width-30"
+            onChange={[Function]}
+            value="cddcc020-2c94-460a-a3d0-df3147ffa792"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</Fragment>
+`;
+
+exports[`Render should enable insights api key input 1`] = `
+<Fragment>
+  <h3
+    className="page-heading"
+  >
+    Application Insights Details
+  </h3>
+  <div
+    className="gf-form-group"
+  >
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-12"
+        >
+          API Key
+        </Component>
+        <div
+          className="width-15"
+        >
+          <Input
+            className="width-30"
+            onChange={[Function]}
+            placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+            value="e7f3f661-a933-4b3f-8176-51c4f982ec48"
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-12"
+        >
+          Application ID
+        </Component>
+        <div
+          className="width-15"
+        >
+          <Input
+            className="width-30"
+            onChange={[Function]}
+            value="cddcc020-2c94-460a-a3d0-df3147ffa792"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</Fragment>
+`;
+
+exports[`Render should render component 1`] = `
+<Fragment>
+  <h3
+    className="page-heading"
+  >
+    Application Insights Details
+  </h3>
+  <div
+    className="gf-form-group"
+  >
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-12"
+        >
+          API Key
+        </Component>
+        <div
+          className="width-15"
+        >
+          <Input
+            className="width-30"
+            onChange={[Function]}
+            placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+            value="e7f3f661-a933-4b3f-8176-51c4f982ec48"
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-12"
+        >
+          Application ID
+        </Component>
+        <div
+          className="width-15"
+        >
+          <Input
+            className="width-30"
+            onChange={[Function]}
+            value="cddcc020-2c94-460a-a3d0-df3147ffa792"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</Fragment>
+`;
