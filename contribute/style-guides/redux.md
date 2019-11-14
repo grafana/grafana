@@ -123,7 +123,7 @@ Type '{ nonExistingProperty: string; data: string[]; }' is not assignable to typ
 
 Fluent API that simplifies the testing of reducers
 
-#### Simple Example
+#### Simple example
 
 ```typescript
 reducerTester()
