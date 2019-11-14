@@ -133,7 +133,7 @@ reducerTester()
 ```
 
 #### Complex example
-Sometimes you encounter a `resulting state` that contains properties that are hard to compare like `Dates` but you still 
+Sometimes you encounter a `resulting state` that contains properties that are hard to compare, such as `Dates`, but you still 
 want to compare that other props in state are correct.
 
 Then you can use `thenStatePredicateShouldEqual` function on `reducerTester` that will return the `resulting state` that
