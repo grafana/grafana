@@ -285,7 +285,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
             []
           ) as string[];
 
-          regionsAffected.forEach(region => this.debouncedAlert(this.datasourceName, region));
+          regionsAffected.forEach(region => this.debouncedAlert(this.datasourceName, this.getActualRegion(region)));
         }
 
         throw err;
