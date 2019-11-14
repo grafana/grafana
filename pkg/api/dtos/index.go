@@ -32,7 +32,7 @@ const (
 	// These weights may be used by an extension to reliably place
 	// itself below a particular item in the menu.
 
-	WeightCreate = iota + defaultNavLinkOffset
+	WeightCreate = (iota - 20) * 100
 	WeightDashboard
 	WeightExplore
 	WeightProfile
