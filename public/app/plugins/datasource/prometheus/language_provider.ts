@@ -7,7 +7,7 @@ import { parseSelector, processLabels, processHistogramLabels } from './language
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 
 import { PrometheusDatasource } from './datasource';
-import { PromQuery } from './types';
+import { PromQuery, PromOptions } from './types';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
@@ -39,7 +39,7 @@ export function addHistoryMetadata(item: CompletionItem, history: any[]): Comple
   };
 }
 
-export default class PromQlLanguageProvider extends LanguageProvider {
+export default class PromQlLanguageProvider extends LanguageProvider<PromQuery, PromOptions> {
   histogramMetrics?: string[];
   timeRange?: { start: number; end: number };
   labelKeys?: { [index: string]: string[] }; // metric -> [labelKey,...]

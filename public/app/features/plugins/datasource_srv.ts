@@ -17,7 +17,7 @@ import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 
 export class DatasourceSrv implements DataSourceService {
-  datasources: { [name: string]: DataSourceApi };
+  datasources: Record<string, DataSourceApi>;
 
   /** @ngInject */
   constructor(
@@ -60,7 +60,7 @@ export class DatasourceSrv implements DataSourceService {
   loadDatasource(name: string): Promise<DataSourceApi> {
     // Expression Datasource (not a real datasource)
     if (name === expressionDatasource.name) {
-      this.datasources[name] = expressionDatasource;
+      this.datasources[name] = expressionDatasource as any;
       return this.$q.when(expressionDatasource);
     }
 
