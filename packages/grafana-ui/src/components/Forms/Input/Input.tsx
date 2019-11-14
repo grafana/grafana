@@ -138,7 +138,7 @@ const getInputStyle = stylesFactory((theme: GrafanaTheme, invalid = false) => {
 
         /*
          Restoring increase/decrease spinner on number inputs. Overwriting rules implemented in
-         https://github.com/grafana/grafana/commit/488fe62f158a9e0a0bced2b678ada5d43cf3998e 
+         https://github.com/grafana/grafana/commit/488fe62f158a9e0a0bced2b678ada5d43cf3998e.
          */
 
         &[type='number']::-webkit-outer-spin-button,
