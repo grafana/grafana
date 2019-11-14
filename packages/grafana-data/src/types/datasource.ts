@@ -13,14 +13,16 @@ export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonDat
   onOptionsChange: (options: DataSourceSettings<JSONData, SecureJSONData>) => void;
 }
 
-export type DataSourceQuery<DSType extends DataSourceApi<any, any>> = DSType extends DataSourceApi<
+// Utility type to extract the query type TQuery from a class extending DataSourceApi<TQuery, TOptions>
+export type DataSourceQueryType<DSType extends DataSourceApi<any, any>> = DSType extends DataSourceApi<
   infer TQuery,
   infer _TOptions
 >
   ? TQuery
   : never;
 
-export type DataSourceOptions<DSType extends DataSourceApi<any, any>> = DSType extends DataSourceApi<
+// Utility type to extract the options type TOptions from a class extending DataSourceApi<TQuery, TOptions>
+export type DataSourceOptionsType<DSType extends DataSourceApi<any, any>> = DSType extends DataSourceApi<
   infer _TQuery,
   infer TOptions
 >
@@ -29,16 +31,13 @@ export type DataSourceOptions<DSType extends DataSourceApi<any, any>> = DSType e
 
 export class DataSourcePlugin<
   DSType extends DataSourceApi<TQuery, TOptions>,
-  TQuery extends DataQuery = DataSourceQuery<DSType>,
-  TOptions extends DataSourceJsonData = DataSourceOptions<DSType>
+  TQuery extends DataQuery = DataSourceQueryType<DSType>,
+  TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>
 > extends GrafanaPlugin<DataSourcePluginMeta> {
-  DataSourceClass: DataSourceConstructor<DSType, TQuery, TOptions>;
-  components: DataSourcePluginComponents<DSType, TQuery, TOptions>;
+  components: DataSourcePluginComponents<DSType, TQuery, TOptions> = {};
 
-  constructor(DataSourceClass: DataSourceConstructor<DSType, TQuery, TOptions>) {
+  constructor(public DataSourceClass: DataSourceConstructor<DSType, TQuery, TOptions>) {
     super();
-    this.DataSourceClass = DataSourceClass;
-    this.components = {};
   }
 
   setConfigEditor(editor: ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>) {
@@ -569,8 +568,8 @@ export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
   query: TQuery;
 }
 
-export abstract class LanguageProvider<TQuery extends DataQuery, TOptions extends DataSourceJsonData> {
-  abstract datasource: DataSourceApi<TQuery, TOptions>;
+export abstract class LanguageProvider {
+  abstract datasource: DataSourceApi<any, any>;
   abstract request: (url: string, params?: any) => Promise<any>;
 
   /**

@@ -6,7 +6,7 @@ import { parseSelector, labelRegexp, selectorRegexp } from 'app/plugins/datasour
 import syntax from './syntax';
 
 // Types
-import { LokiQuery, LokiOptions } from './types';
+import { LokiQuery } from './types';
 import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem } from '@grafana/data';
 import { PromQuery } from '../prometheus/types';
 
@@ -46,7 +46,7 @@ export function addHistoryMetadata(item: CompletionItem, history: LokiHistoryIte
   };
 }
 
-export default class LokiLanguageProvider extends LanguageProvider<LokiQuery, LokiOptions> {
+export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys?: { [index: string]: string[] }; // metric -> [labelKey,...]
   labelValues?: { [index: string]: { [index: string]: string[] } }; // metric -> labelKey -> [labelValue,...]
   logLabelOptions: any[];
