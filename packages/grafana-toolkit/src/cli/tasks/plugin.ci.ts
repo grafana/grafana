@@ -9,28 +9,18 @@ import { PluginMeta } from '@grafana/data';
 import execa = require('execa');
 import path = require('path');
 import fs from 'fs';
-import { getPackageDetails, findImagesInFolder, appendPluginHistory, getGrafanaVersions } from '../../plugins/utils';
+import { getPackageDetails, findImagesInFolder, getGrafanaVersions } from '../../plugins/utils';
 import {
   job,
   getJobFolder,
   writeJobStats,
   getCiFolder,
   getPluginBuildInfo,
-  getBuildNumber,
   getPullRequestNumber,
   getCircleDownloadBaseURL,
 } from '../../plugins/env';
 import { agregateWorkflowInfo, agregateCoverageInfo, agregateTestInfo } from '../../plugins/workflow';
-import {
-  PluginPackageDetails,
-  PluginBuildReport,
-  PluginHistory,
-  defaultPluginHistory,
-  TestResultsInfo,
-  PluginDevInfo,
-  PluginDevSummary,
-  DevSummary,
-} from '../../plugins/types';
+import { PluginPackageDetails, PluginBuildReport, TestResultsInfo } from '../../plugins/types';
 import { runEndToEndTests } from '../../plugins/e2e/launcher';
 import { getEndToEndSettings } from '../../plugins/index';
 
