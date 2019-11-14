@@ -51,7 +51,7 @@ If you have a query variable that has many thousands of values it can be quite s
 
 Using `__searchFilter` in the template variable query field you can filter the query results based on what the user types in the variable dropdown input.
 
-When nothing has been entered by the user the default value for `__searchFilter` is `*` ,  `.*` or  ‘%’  depending on data source and formatting option.
+When nothing has been entered by the user the default value for `__searchFilter` is `*` ,  `.*` or  `%`  depending on data source and formatting option.
 
 The example below shows how to use `__searchFilter` as part of the query field to enable searching for `server` while the user types in the dropdown select box.
 
