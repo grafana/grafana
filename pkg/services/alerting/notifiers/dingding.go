@@ -70,6 +70,26 @@ func (dd *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 		messageURL = ""
 	}
 
+	body, err := dd.genBody(evalContext, messageURL)
+	if err != nil {
+		return err
+	}
+
+	cmd := &models.SendWebhookSync{
+		Url:  dd.URL,
+		Body: string(body),
+	}
+
+	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+		dd.log.Error("Failed to send DingDing", "error", err, "dingding", dd.Name)
+		return err
+	}
+
+	return nil
+}
+
+func (dd *DingDingNotifier) genBody(evalContext *alerting.EvalContext, messageURL string) ([]byte, error) {
+
 	q := url.Values{
 		"pc_slide": {"false"},
 		"url":      {messageURL},
@@ -124,22 +144,8 @@ func (dd *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	if err != nil {
 		dd.log.Error("Failed to create Json data", "error", err, "dingding", dd.Name)
+		return nil, err
 	}
 
-	body, err := bodyJSON.MarshalJSON()
-	if err != nil {
-		return err
-	}
-
-	cmd := &models.SendWebhookSync{
-		Url:  dd.URL,
-		Body: string(body),
-	}
-
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
-		dd.log.Error("Failed to send DingDing", "error", err, "dingding", dd.Name)
-		return err
-	}
-
-	return nil
+	return bodyJSON.MarshalJSON()
 }
