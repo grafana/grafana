@@ -101,7 +101,7 @@ There are some other check boxes under the logging graph apart from the Deduping
 
 ### Labels and Parsed fields
 
-Each log row has extendable area with its labels and parsed fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected label. Each field, as well as the label has also metrics button to display its stats in relation to all displayed logs. 
+Each log row has an extendable area with its labels and parsed fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs. 
 
 ### Loki-specific Features
 
