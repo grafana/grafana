@@ -294,6 +294,11 @@ func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Toke
 		return []byte{}, false
 	}
 
+	if role := s.extractRole(data, payload); s.roleAttributePath != "" && role == "" {
+		s.log.Debug("No role found in id_token when role_attribute_path was configured", "json", string(payload), "data", data)
+		return []byte{}, false
+	}
+
 	s.log.Debug("Received id_token", "json", string(payload), "data", data)
 	return payload, true
 }
