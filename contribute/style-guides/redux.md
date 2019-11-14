@@ -151,7 +151,7 @@ reducerTester()
 
 ### thunkTester
 
-Fluent API that simplifies the testing of thunks
+Fluent API that simplifies the testing of thunks.
 
 #### Example
 
