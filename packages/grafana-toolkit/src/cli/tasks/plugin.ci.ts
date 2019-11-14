@@ -1,7 +1,6 @@
 import { Task, TaskRunner } from './task';
 import { pluginBuildRunner } from './plugin.build';
 import { restoreCwd } from '../utils/cwd';
-import { S3Client } from '../../plugins/aws';
 import { getPluginJson } from '../../config/utils/pluginValidation';
 import { getPluginId } from '../../config/utils/getPluginId';
 import { PluginMeta } from '@grafana/data';
@@ -346,88 +345,18 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
     }
   });
 
-  console.log('Initalizing S3 Client');
-  const s3 = new S3Client();
-
-  const build = pluginMeta.info.build;
-  if (!build) {
-    throw new Error('Metadata missing build info');
+  const GRAFANA_API_KEY = process.env.GRAFANA_API_KEY;
+  if (!GRAFANA_API_KEY) {
+    console.log('Enter a GRAFANA_API_KEY to upload the plugin report');
+    return;
   }
+  const url = `https://grafana.com/api/plugins/${report.plugin.id}/ci`;
 
-  const version = pluginMeta.info.version || 'unknown';
-  const branch = build.branch || 'unknown';
-  const buildNumber = getBuildNumber();
-  const root = `dev/${pluginMeta.id}`;
-  const dirKey = pr ? `${root}/pr/${pr}/${buildNumber}` : `${root}/branch/${branch}/${buildNumber}`;
-
-  const jobKey = `${dirKey}/index.json`;
-  if (await s3.exists(jobKey)) {
-    throw new Error('Job already registered: ' + jobKey);
-  }
-
-  console.log('Write Job', jobKey);
-  await s3.writeJSON(jobKey, report, {
-    Tagging: `version=${version}&type=${pluginMeta.type}`,
+  const axios = require('axios');
+  const info = await axios.post(url, report, {
+    headers: { Authorization: 'bearer ' + GRAFANA_API_KEY },
   });
-
-  // Upload logo
-  const logo = await s3.uploadLogo(report.plugin.info, {
-    local: path.resolve(ciDir, 'dist'),
-    remote: root,
-  });
-
-  const latest: PluginDevInfo = {
-    pluginId: pluginMeta.id,
-    name: pluginMeta.name,
-    logo,
-    build: pluginMeta.info.build!,
-    version,
-  };
-
-  let base = `${root}/branch/${branch}/`;
-  latest.build.number = buildNumber;
-  if (pr) {
-    latest.build.pr = pr;
-    base = `${root}/pr/${pr}/`;
-  }
-
-  const historyKey = base + `history.json`;
-  console.log('Read', historyKey);
-  const history: PluginHistory = await s3.readJSON(historyKey, defaultPluginHistory);
-  appendPluginHistory(report, latest, history);
-
-  await s3.writeJSON(historyKey, history);
-  console.log('wrote history');
-
-  // Private things may want to upload
-  if (upload) {
-    s3.uploadPackages(packageInfo, {
-      local: packageDir,
-      remote: dirKey + '/packages',
-    });
-
-    s3.uploadTestFiles(report.tests, {
-      local: ciDir,
-      remote: dirKey,
-    });
-  }
-
-  console.log('Update Directory Indexes');
-
-  let indexKey = `${root}/index.json`;
-  const index: PluginDevSummary = await s3.readJSON(indexKey, { branch: {}, pr: {} });
-  if (pr) {
-    index.pr[pr] = latest;
-  } else {
-    index.branch[branch] = latest;
-  }
-  await s3.writeJSON(indexKey, index);
-
-  indexKey = `dev/index.json`;
-  const pluginIndex: DevSummary = await s3.readJSON(indexKey, {});
-  pluginIndex[pluginMeta.id] = latest;
-  await s3.writeJSON(indexKey, pluginIndex);
-  console.log('wrote index');
+  console.log('RESULT: ', info);
 };
 
 export const ciPluginReportTask = new Task<PluginCIOptions>('Generate Plugin Report', pluginReportRunner);
