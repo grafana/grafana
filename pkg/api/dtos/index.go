@@ -24,13 +24,11 @@ type PluginCss struct {
 
 type NavLinkWeight int64
 
-// A sufficiently large negative offset to make it unlikely for
-// plugins to end up placed above either of the default navlinks.
-const defaultNavLinkOffset = -64
-
 const (
 	// These weights may be used by an extension to reliably place
-	// itself below a particular item in the menu.
+	// itself in relation to a particular item in the menu. The weights
+	// are negative to ensure that the default items are placed above
+	// any items with default weight.
 
 	WeightCreate = (iota - 20) * 100
 	WeightDashboard
