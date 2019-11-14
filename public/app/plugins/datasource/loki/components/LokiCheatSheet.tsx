@@ -16,7 +16,7 @@ const LOGQL_EXAMPLES = [
   },
   {
     title: 'Rate',
-    expression: 'rate(({job="mysql"} |= "error" != "timeout)[10s]))',
+    expression: 'rate(({job="mysql"} |= "error" != "timeout")[10s])',
     label:
       'This query gets the per-second rate of all non-timeout errors within the last ten seconds for the MySQL job.',
   },

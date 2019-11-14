@@ -436,10 +436,11 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
 
   dashboardId: number;
   interval: string;
-  intervalMs: number;
-  maxDataPoints: number;
+  intervalMs?: number;
+  maxDataPoints?: number;
   panelId: number;
-  range: TimeRange;
+  range?: TimeRange;
+  reverse?: boolean;
   scopedVars: ScopedVars;
   targets: TQuery[];
   timezone: string;

@@ -34,7 +34,6 @@ import {
   GraphSeriesXY,
   TimeZone,
   AbsoluteTimeRange,
-  LogsModel,
 } from '@grafana/data';
 
 import {
@@ -99,7 +98,6 @@ interface ExploreProps {
   syncedTimes: boolean;
   updateTimeRange: typeof updateTimeRange;
   graphResult?: GraphSeriesXY[];
-  logsResult?: LogsModel;
   loading?: boolean;
   absoluteRange: AbsoluteTimeRange;
   showingGraph?: boolean;
@@ -366,7 +364,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     supportedModes,
     mode,
     graphResult,
-    logsResult,
     loading,
     showingGraph,
     showingTable,
@@ -394,7 +391,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
       newMode = supportedModes[0];
     }
   } else {
-    newMode = [ExploreMode.Metrics, ExploreMode.Logs].includes(urlMode) ? urlMode : ExploreMode.Metrics;
+    newMode = [ExploreMode.Metrics, ExploreMode.Logs].includes(urlMode) ? urlMode : null;
   }
 
   const initialUI = ui || DEFAULT_UI_STATE;
@@ -415,7 +412,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     initialUI,
     isLive,
     graphResult,
-    logsResult,
     loading,
     showingGraph,
     showingTable,

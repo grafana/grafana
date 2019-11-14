@@ -1,4 +1,4 @@
-import { legacyLogStreamToDataFrame, appendResponseToBufferedData } from './result_transformer';
+import { legacyLogStreamToDataFrame, appendLegacyResponseToBufferedData } from './result_transformer';
 import { FieldType, MutableDataFrame } from '@grafana/data';
 import { LokiLegacyStreamResult } from './types';
 
@@ -46,7 +46,7 @@ describe('appendResponseToBufferedData', () => {
     data.addField({ name: 'labels', type: FieldType.other });
     data.addField({ name: 'id', type: FieldType.string });
 
-    appendResponseToBufferedData({ streams }, data);
+    appendLegacyResponseToBufferedData({ streams }, data);
     expect(data.get(0)).toEqual({
       ts: '1970-01-01T00:00:00Z',
       line: "foo: [32m'bar'[39m",

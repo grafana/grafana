@@ -3,8 +3,8 @@ import { Labels, DataQuery, DataSourceJsonData } from '@grafana/data';
 export interface LokiLegacyQueryRequest {
   query: string;
   limit?: number;
-  start?: number | string;
-  end?: number | string;
+  start?: number;
+  end?: number;
   direction?: 'BACKWARD' | 'FORWARD';
   regexp?: string;
 
@@ -18,7 +18,7 @@ export interface LokiInstantQueryRequest {
   direction?: 'BACKWARD' | 'FORWARD';
 }
 
-export interface LokiQueryRangeRequest {
+export interface LokiRangeQueryRequest {
   query: string;
   limit?: number;
   start?: number;
@@ -39,6 +39,7 @@ export interface LokiQuery extends DataQuery {
   query?: string;
   regexp?: string;
   format?: string;
+  reverse?: boolean;
   legendFormat?: string;
   valueWithRefId?: boolean;
 }
@@ -97,6 +98,14 @@ export interface LokiLegacyStreamResult {
 
 export interface LokiLegacyStreamResponse {
   streams: LokiLegacyStreamResult[];
+}
+
+export interface LokiTailResponse {
+  streams: LokiStreamResult[];
+  dropped_entries?: Array<{
+    labels: Record<string, string>;
+    timestamp: string;
+  }>;
 }
 
 export type LokiResult = LokiVectorResult | LokiMatrixResult | LokiStreamResult | LokiLegacyStreamResult;

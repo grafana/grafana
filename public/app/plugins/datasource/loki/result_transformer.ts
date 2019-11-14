@@ -15,6 +15,7 @@ import templateSrv from 'app/features/templating/template_srv';
 import TableModel from 'app/core/table_model';
 import {
   LokiLegacyStreamResult,
+  LokiRangeQueryRequest,
   LokiResponse,
   LokiMatrixResult,
   LokiVectorResult,
@@ -22,7 +23,12 @@ import {
   LokiLegacyStreamResponse,
   LokiResultType,
   LokiStreamResult,
+  LokiTailResponse,
+  LokiQuery,
 } from './types';
+
+import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
+import { of } from 'rxjs';
 
 /**
  * Transforms LokiLogStream structure into a dataFrame. Used when doing standard queries.
@@ -87,10 +93,9 @@ export function lokiStreamResultToDataFrame(stream: LokiStreamResult, reverse?: 
 
   return {
     refId,
-    labels,
     fields: [
       { name: 'ts', type: FieldType.time, config: { title: 'Time' }, values: times }, // Time
-      { name: 'line', type: FieldType.string, config: {}, values: lines }, // Line
+      { name: 'line', type: FieldType.string, config: {}, values: lines, labels }, // Line
       { name: 'id', type: FieldType.string, config: {}, values: uids },
     ],
     length: times.length,
@@ -104,7 +109,7 @@ export function lokiStreamResultToDataFrame(stream: LokiStreamResult, reverse?: 
  * @param response
  * @param data Needs to have ts, line, labels, id as fields
  */
-export function appendResponseToBufferedData(response: LokiLegacyStreamResponse, data: MutableDataFrame) {
+export function appendLegacyResponseToBufferedData(response: LokiLegacyStreamResponse, data: MutableDataFrame) {
   // Should we do anything with: response.dropped_entries?
 
   const streams: LokiLegacyStreamResult[] = response.streams;
@@ -138,16 +143,39 @@ export function appendResponseToBufferedData(response: LokiLegacyStreamResponse,
   }
 }
 
-export function rangeQueryResponseToTimeSeries(response: LokiResponse, options: TransformerOptions): TimeSeries[] {
-  switch (response.data.resultType) {
-    case LokiResultType.Vector:
-      return response.data.result.map(vecResult =>
-        lokiMatrixToTimeSeries({ metric: vecResult.metric, values: [vecResult.value] }, options)
+export function appendResponseToBufferedData(response: LokiTailResponse, data: MutableDataFrame) {
+  // Should we do anything with: response.dropped_entries?
+
+  const streams: LokiStreamResult[] = response.streams;
+  if (!streams || !streams.length) {
+    return;
+  }
+
+  let baseLabels: Labels = {};
+  for (const f of data.fields) {
+    if (f.type === FieldType.string) {
+      if (f.labels) {
+        baseLabels = f.labels;
+      }
+      break;
+    }
+  }
+
+  for (const stream of streams) {
+    // Find unique labels
+    const unique = findUniqueLabels(stream.stream, baseLabels);
+
+    // Add each line
+    for (const [ts, line] of stream.values) {
+      data.values.ts.add(parseInt(ts, 10) / 1e6);
+      data.values.line.add(line);
+      data.values.labels.add(unique);
+      data.values.id.add(
+        `${ts}_${Object.entries(unique)
+          .map(([key, val]) => `${key}=${val}`)
+          .join('')}`
       );
-    case LokiResultType.Matrix:
-      return response.data.result.map(matrixResult => lokiMatrixToTimeSeries(matrixResult, options));
-    default:
-      return [];
+    }
   }
 }
 
@@ -230,12 +258,13 @@ export function lokiResultsToTableModel(
     if (!newSeries.metric) {
       table.rows.concat(newSeries.values.map(([a, b]) => [a * 1000, parseFloat(b)]));
     } else {
-      const coolRows = newSeries.values.map(([a, b]) => [
-        a * 1000,
-        ...sortedLabels.map(label => newSeries.metric[label] || ''),
-        parseFloat(b),
-      ]);
-      table.rows.push(...coolRows);
+      table.rows.push(
+        ...newSeries.values.map(([a, b]) => [
+          a * 1000,
+          ...sortedLabels.map(label => newSeries.metric[label] || ''),
+          parseFloat(b),
+        ])
+      );
     }
   });
 
@@ -266,4 +295,118 @@ function getOriginalMetricName(labelData: { [key: string]: string }) {
     .map(label => `${label[0]}="${label[1]}"`)
     .join(',');
   return `${metricName}{${labelPart}}`;
+}
+
+export function lokiStreamsToDataframes(
+  data: LokiStreamResult[],
+  target: { refId: string; expr?: string; regexp?: string },
+  limit: number,
+  reverse = false
+): DataFrame[] {
+  const series: DataFrame[] = data.map(stream => ({
+    ...lokiStreamResultToDataFrame(stream, reverse),
+    refId: target.refId,
+    meta: {
+      searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.expr, target.regexp)),
+      limit,
+    },
+  }));
+
+  return series;
+}
+
+export function lokiLegacyStreamsToDataframes(
+  data: LokiLegacyStreamResult | LokiLegacyStreamResponse,
+  target: { refId: string; query?: string; regexp?: string },
+  limit: number,
+  reverse = false
+): DataFrame[] {
+  if (Object.keys(data).length === 0) {
+    return [];
+  }
+
+  if (isLokiLogsStream(data)) {
+    return [legacyLogStreamToDataFrame(data, reverse, target.refId)];
+  }
+
+  const series: DataFrame[] = data.streams.map(stream => ({
+    ...legacyLogStreamToDataFrame(stream, reverse),
+    refId: target.refId,
+    meta: {
+      searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.query, target.regexp)),
+      limit,
+    },
+  }));
+
+  return series;
+}
+
+export function rangeQueryResponseToTimeSeries(
+  response: LokiResponse,
+  query: LokiRangeQueryRequest,
+  target: LokiQuery,
+  responseListLength: number
+): TimeSeries[] {
+  const transformerOptions: TransformerOptions = {
+    format: target.format,
+    legendFormat: target.legendFormat,
+    start: query.start,
+    end: query.end,
+    step: query.step,
+    query: query.query,
+    responseListLength,
+    refId: target.refId,
+    valueWithRefId: target.valueWithRefId,
+  };
+
+  switch (response.data.resultType) {
+    case LokiResultType.Vector:
+      return response.data.result.map(vecResult =>
+        lokiMatrixToTimeSeries({ metric: vecResult.metric, values: [vecResult.value] }, transformerOptions)
+      );
+    case LokiResultType.Matrix:
+      return response.data.result.map(matrixResult => lokiMatrixToTimeSeries(matrixResult, transformerOptions));
+    default:
+      return [];
+  }
+}
+
+export function processRangeQueryResponse(
+  response: LokiResponse,
+  target: LokiQuery,
+  query: LokiRangeQueryRequest,
+  responseListLength: number,
+  limit: number,
+  reverse = false
+) {
+  switch (response.data.resultType) {
+    case LokiResultType.Stream:
+      return of({
+        data: lokiStreamsToDataframes(response.data.result, target, limit, reverse),
+        key: `${target.refId}_log`,
+      });
+
+    case LokiResultType.Vector:
+    case LokiResultType.Matrix:
+      return of({
+        data: rangeQueryResponseToTimeSeries(
+          response,
+          query,
+          {
+            ...target,
+            format: 'time_series',
+          },
+          responseListLength
+        ),
+        key: target.refId,
+      });
+    default:
+      throw new Error(`Unknown result type "${(response.data as any).resultType}".`);
+  }
+}
+
+export function isLokiLogsStream(
+  data: LokiLegacyStreamResult | LokiLegacyStreamResponse
+): data is LokiLegacyStreamResult {
+  return !data.hasOwnProperty('streams');
 }
