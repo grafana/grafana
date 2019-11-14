@@ -130,9 +130,25 @@ const getInputStyle = stylesFactory((theme: GrafanaTheme, invalid = false) => {
         width: 100%;
         padding: 0 ${theme.spacing.sm} 0 ${theme.spacing.sm};
         font-size: ${theme.typography.size.md};
+
         &:disabled {
           background-color: ${disabledBackground};
           color: ${disabledColor};
+        }
+
+        /*
+         Restoring increase/decrease spinner on number inputs. Overwriting rules implemented in
+         https://github.com/grafana/grafana/commit/488fe62f158a9e0a0bced2b678ada5d43cf3998e 
+         */
+
+        &[type='number']::-webkit-outer-spin-button,
+        &[type='number']::-webkit-inner-spin-button {
+          -webkit-appearance: inner-spin-button !important;
+          opacity: 1;
+        }
+
+        &[type='number'] {
+          -moz-appearance: number-input;
         }
       `
     ),
