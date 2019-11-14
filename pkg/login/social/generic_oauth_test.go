@@ -1,7 +1,10 @@
 package social
 
 import (
+	"encoding/json"
+	"io"
 	"net/http"
+	"net/http/httptest"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -180,6 +183,70 @@ func TestUserInfoUsesIDTokenForRole(t *testing.T) {
 			Convey(test.Name, func() {
 				token := test.OAuth2Token.WithExtra(test.OAuth2Extra)
 				actualResult, _ := provider.UserInfo(&http.Client{}, token)
+				So(actualResult.Role, ShouldEqual, test.ExpectedResult)
+			})
+		}
+	})
+}
+
+func TestUserInfoUsesApiUrlForRole(t *testing.T) {
+	Convey("Given a generic OAuth provider", t, func() {
+		provider := SocialGenericOAuth{
+			SocialBase: &SocialBase{
+				log: log.New("generic_oauth_test"),
+			},
+		}
+
+		tests := []struct {
+			Name              string
+			OAuth2Token       oauth2.Token
+			APIURLReponse     interface{}
+			RoleAttributePath string
+			ExpectedResult    string
+		}{
+			{
+				Name: "Given a valid user token with an email, no id_token and a valid api url",
+				OAuth2Token: oauth2.Token{
+					// { "email": "john.doe@example.com" }
+					AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
+					TokenType:    "",
+					RefreshToken: "",
+					Expiry:       time.Now(),
+				},
+				APIURLReponse: map[string]interface{}{
+					"role": "Admin",
+				},
+				RoleAttributePath: "role",
+				ExpectedResult:    "Admin",
+			},
+			{
+				Name: "Given a valid user token with an email, no id_token and a misconfigured api response",
+				OAuth2Token: oauth2.Token{
+					// { "email": "john.doe@example.com" }
+					AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
+					TokenType:    "",
+					RefreshToken: "",
+					Expiry:       time.Now(),
+				},
+				APIURLReponse: map[string]interface{}{
+					"incorrect_key": "Admin",
+				},
+				RoleAttributePath: "role",
+				ExpectedResult:    "",
+			},
+		}
+
+		for _, test := range tests {
+			provider.roleAttributePath = test.RoleAttributePath
+			Convey(test.Name, func() {
+				response, _ := json.Marshal(test.APIURLReponse)
+				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					w.Header().Set("Content-Type", "application/json")
+					_, _ = io.WriteString(w, string(response))
+				}))
+				provider.apiUrl = ts.URL
+				actualResult, _ := provider.UserInfo(ts.Client(), &test.OAuth2Token)
 				So(actualResult.Role, ShouldEqual, test.ExpectedResult)
 			})
 		}
