@@ -47,7 +47,7 @@ The Split feature is an easy way to compare graphs and tables side-by-side or to
 
 {{< docs-imagebox img="/img/docs/v60/explore_split.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
-In split view, the two timepickers can be linked so that if you change one, the other gets changed as well. This is be done by clicking on one of the time-sync buttons attached to the timepickers. Linking timepickers helps with keeping start and end times of the split view queries in sync and will ensure that you’re looking at the same time interval in both split panes.
+In split view, timepickers for both panel can be linked (if you change one, the other gets changed as well) by clicking on one of the time-sync buttons attached to the timepickers. Linking timepickers helps with keeping start and end times of the split view queries in sync and will ensure that you’re looking at the same time interval in both split panes.
 
 You can close the newly created query by clicking on the Close Split button.
 
@@ -101,7 +101,7 @@ There are some other check boxes under the logging graph apart from the Deduping
 
 ### Labels and Parsed fields
 
-Each log row has extendable area with log row labels and parsed fields for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected label. Each parsed field, as well as label has also metrics button to display stats for each label/field in relation to all displayed logs. 
+Each log row has extendable area with log row labels and parsed fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected label. Each parsed field, as well as label has also metrics button to display stats for each label/field in relation to all displayed logs. 
 
 ### Loki-specific Features
 
