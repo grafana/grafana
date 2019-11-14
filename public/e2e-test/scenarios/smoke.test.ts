@@ -128,14 +128,15 @@ const cleanDashboard = async (page: Page, dashboardTitle: string) => {
   await confirmModal.pageObjects.success.exists();
 };
 
-e2eScenario(
-  'Login scenario, create test data source, dashboard, panel, and export scenario',
-  'should pass',
-  async (browser: Browser, page: Page) => {
+e2eScenario({
+  describeName: 'Smoke tests',
+  itName: 'Login scenario, create test data source, dashboard, panel, and export scenario',
+  runScenario: false,
+  scenario: async (browser: Browser, page: Page) => {
     const testDataSourceName = await addTestDataSourceAndVerify(page);
     const dashboardTitle = await addDashboardAndSetupTestDataGraph(page);
     await clickOnSharePanelImageLinkAndCompareImages(browser, page, dashboardTitle);
     await cleanUpTestDataSource(page, testDataSourceName);
     await cleanDashboard(page, dashboardTitle);
-  }
-);
+  },
+});

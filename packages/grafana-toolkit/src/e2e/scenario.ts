@@ -2,29 +2,38 @@ import { Browser, Page } from 'puppeteer-core';
 import { launchBrowser } from './launcher';
 import { ensureLoggedIn } from './login';
 
-export const e2eScenario = (
-  title: string,
-  testDescription: string,
-  callback: (browser: Browser, page: Page) => void
-) => {
-  describe(title, () => {
-    let browser: Browser;
-    let page: Page;
+export interface ScenarioArguments {
+  describeName: string;
+  itName: string;
+  scenario: (browser: Browser, page: Page) => void;
+  runScenario?: boolean;
+}
 
-    beforeAll(async () => {
-      browser = await launchBrowser();
-      page = await browser.newPage();
-      await ensureLoggedIn(page);
-    });
+export const e2eScenario = ({ describeName, itName, scenario, runScenario = true }: ScenarioArguments) => {
+  describe(describeName, () => {
+    if (runScenario) {
+      let browser: Browser;
+      let page: Page;
 
-    afterAll(async () => {
-      if (browser) {
-        await browser.close();
-      }
-    });
+      beforeAll(async () => {
+        browser = await launchBrowser();
+        page = await browser.newPage();
+        await ensureLoggedIn(page);
+      });
 
-    it(testDescription, async () => {
-      await callback(browser, page);
-    });
+      afterAll(async () => {
+        if (browser) {
+          await browser.close();
+        }
+      });
+
+      it(itName, async () => {
+        await scenario(browser, page);
+      });
+    } else {
+      it.skip(itName, async () => {
+        expect(false).toBe(true);
+      });
+    }
   });
 };
