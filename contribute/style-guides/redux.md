@@ -123,7 +123,7 @@ Type '{ nonExistingProperty: string; data: string[]; }' is not assignable to typ
 
 Fluent API that simplifies the testing of reducers
 
-#### Simple example
+#### Usage
 
 ```typescript
 reducerTester()
@@ -132,12 +132,10 @@ reducerTester()
   .thenStateShouldEqual({ ...initialState, data: 'reducer tests' });
 ```
 
-#### Complex example
-Sometimes you encounter a `resulting state` that contains properties that are hard to compare, such as `Dates`, but you still 
-want to compare that other props in state are correct.
+#### Complex usage
+Sometimes you encounter a `resulting state` that contains properties that are hard to compare, such as `Dates`, but you still want to compare that other props in state are correct.
 
-Then you can use `thenStatePredicateShouldEqual` function on `reducerTester` that will return the `resulting state` that
-you can expect upon.
+Then you can use `thenStatePredicateShouldEqual` function on `reducerTester` that will return the `resulting state` thatyou can expect upon.
 
 ```typescript
 reducerTester()
@@ -153,7 +151,7 @@ reducerTester()
 
 Fluent API that simplifies the testing of thunks.
 
-#### Example
+#### Usage
 
 ```typescript
 const dispatchedActions = await thunkTester(initialState)
