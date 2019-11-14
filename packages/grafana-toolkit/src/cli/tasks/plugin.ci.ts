@@ -174,6 +174,9 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
     throw new Error('Invalid zip file: ' + zipFile);
   }
 
+  // Make a copy so it is easy for report to read
+  await execa('cp', [pluginJsonFile, distDir]);
+
   const info: PluginPackageDetails = {
     plugin: await getPackageDetails(zipFile, distDir),
   };
@@ -342,6 +345,7 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
   }
   const url = `https://grafana.com/api/plugins/${report.plugin.id}/ci`;
 
+  console.log('Sending report to:', url);
   const axios = require('axios');
   const info = await axios.post(url, report, {
     headers: { Authorization: 'bearer ' + GRAFANA_API_KEY },
