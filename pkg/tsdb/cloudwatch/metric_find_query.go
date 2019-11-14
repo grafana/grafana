@@ -637,8 +637,11 @@ func (e *CloudWatchExecutor) cloudwatchListMetrics(region string, namespace stri
 
 	params := &cloudwatch.ListMetricsInput{
 		Namespace:  aws.String(namespace),
-		MetricName: aws.String(metricName),
 		Dimensions: dimensions,
+	}
+
+	if metricName != "" {
+		params.MetricName = aws.String(metricName)
 	}
 
 	var resp cloudwatch.ListMetricsOutput
