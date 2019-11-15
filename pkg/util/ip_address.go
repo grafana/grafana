@@ -82,5 +82,11 @@ func SplitHostPortDefault(input, defaultHost, defaultPort string) (NetworkAddres
 
 // SplitHostPort splits ip address/hostname string by host and port
 func SplitHostPort(input string) (NetworkAddress, error) {
+	if len(input) == 0 {
+		return NetworkAddress{
+			Host: "",
+			Port: "",
+		}, fmt.Errorf("Input is empty")
+	}
 	return SplitHostPortDefault(input, "", "")
 }
