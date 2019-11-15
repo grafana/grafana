@@ -1,9 +1,9 @@
-FROM ubuntu:14.04 as toolchain
+FROM ubuntu:18.04 as toolchain
 
 ENV OSX_SDK_URL=https://s3.dockerproject.org/darwin/v2/ \
-    OSX_SDK=MacOSX10.10.sdk \
+    OSX_SDK=MacOSX10.11.sdk \
     OSX_MIN=10.10 \
-    CTNG=1.23.0
+    CTNG=1.24.0
 
 # FIRST PART
 # build osx64 toolchain (stripped of man documentation)
@@ -30,38 +30,37 @@ ENV OSX_SDK_URL=https://s3.dockerproject.org/darwin/v2/ \
 
 RUN apt-get update   && \
     apt-get install -y  \
-        clang-3.8 patch libxml2-dev \
+        clang patch libxml2-dev \
         ca-certificates \
         curl            \
         git             \
         make            \
         cmake           \
         libssl-dev      \
-        xz-utils     && \
-    git clone https://github.com/tpoechtrager/osxcross.git  /tmp/osxcross  && \
+        xz-utils        \
+        lzma-dev
+RUN git clone https://github.com/tpoechtrager/osxcross.git  /tmp/osxcross  && \
     curl -L ${OSX_SDK_URL}/${OSX_SDK}.tar.xz -o /tmp/osxcross/tarballs/${OSX_SDK}.tar.xz && \
-    ln -s /usr/bin/clang-3.8 /usr/bin/clang              && \
-    ln -s /usr/bin/clang++-3.8 /usr/bin/clang++          && \
-    ln -s /usr/bin/llvm-dsymutil-3.8 /usr/bin/dsymutil   && \
-    UNATTENDED=yes OSX_VERSION_MIN=${OSX_MIN} /tmp/osxcross/build.sh && \
-    rm -rf /tmp/osxcross/target/SDK/${OSX_SDK}/usr/share && \
+    ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil
+RUN UNATTENDED=yes OSX_VERSION_MIN=${OSX_MIN} /tmp/osxcross/build.sh
+RUN rm -rf /tmp/osxcross/target/SDK/${OSX_SDK}/usr/share && \
     cd /tmp                                              && \
     tar cfJ osxcross.tar.xz osxcross/target              && \
-    rm -rf /tmp/osxcross                                 && \
-    apt-get install -y                     \
+    rm -rf /tmp/osxcross
+RUN apt-get install -y                     \
         bison curl flex gawk gcc g++ gperf help2man libncurses5-dev make patch python-dev texinfo xz-utils && \
     curl -L http://crosstool-ng.org/download/crosstool-ng/crosstool-ng-${CTNG}.tar.xz  \
          | tar -xJ -C /tmp/             && \
     cd /tmp/crosstool-ng-${CTNG}        && \
     ./configure --enable-local          && \
-    make                                && \
-    ./ct-ng x86_64-centos6-linux-gnu    && \
+    make
+RUN ./ct-ng x86_64-centos6-linux-gnu    && \
     sed -i '/CT_PREFIX_DIR=/d' .config  && \
     echo 'CT_PREFIX_DIR="/tmp/${CT_HOST:+HOST-${CT_HOST}/}${CT_TARGET}"' >> .config && \
     echo 'CT_EXPERIMENTAL=y' >> .config && \
     echo 'CT_ALLOW_BUILD_AS_ROOT=y' >> .config && \
-    echo 'CT_ALLOW_BUILD_AS_ROOT_SURE=y' >> .config && \
-    ./ct-ng build                       && \
+    echo 'CT_ALLOW_BUILD_AS_ROOT_SURE=y' >> .config
+RUN ./ct-ng build                       && \
     cd /tmp                             && \
     rm /tmp/x86_64-centos6-linux-gnu/build.log.bz2 && \
     tar cfJ x86_64-centos6-linux-gnu.tar.xz x86_64-centos6-linux-gnu/ && \
@@ -69,7 +68,7 @@ RUN apt-get update   && \
     rm -rf /tmp/crosstool-ng-${CTNG}
 
 # base image to crossbuild grafana
-FROM ubuntu:14.04
+FROM ubuntu:18.04
 
 ENV GOVERSION=1.13.1 \
     PATH=/usr/local/go/bin:$PATH \
@@ -84,7 +83,7 @@ COPY --from=toolchain /tmp/osxcross.tar.xz /tmp/
 
 RUN apt-get update   && \
     apt-get install -y  \
-        clang-3.8 gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-mingw-w64-x86-64 \
+        clang gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-mingw-w64-x86-64 \
         apt-transport-https \
         ca-certificates \
         curl            \
@@ -98,9 +97,7 @@ RUN apt-get update   && \
         expect          \
         gnupg2          \
         unzip        && \
-    ln -s /usr/bin/clang-3.8 /usr/bin/clang                             && \
-    ln -s /usr/bin/clang++-3.8 /usr/bin/clang++                         && \
-    ln -s /usr/bin/llvm-dsymutil-3.8 /usr/bin/dsymutil                  && \
+    ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil                  && \
     curl -L https://nodejs.org/dist/v${NODEVERSION}/node-v${NODEVERSION}-linux-x64.tar.xz \
       | tar -xJ --strip-components=1 -C /usr/local                      && \
     curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -   && \
