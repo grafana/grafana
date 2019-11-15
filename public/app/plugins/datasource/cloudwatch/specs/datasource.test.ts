@@ -285,7 +285,7 @@ describe('CloudWatchDatasource', () => {
       beforeEach(() => {
         redux.setStore({
           dispatch: jest.fn(),
-        });
+        } as any);
 
         ctx.backendSrv.datasourceRequest = jest.fn(() => {
           return Promise.reject(backendErrorResponse);
