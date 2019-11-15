@@ -1,9 +1,10 @@
 FROM ubuntu:18.04 as toolchain
 
 ENV OSX_SDK_URL=https://s3.dockerproject.org/darwin/v2/ \
-    OSX_SDK=MacOSX10.11.sdk \
+    OSX_SDK=MacOSX10.10.sdk \
     OSX_MIN=10.10 \
-    CTNG=1.24.0
+    CTNG=1.24.0 \
+    OSX_CROSS_REV=542acc2ef6c21aeb3f109c03748b1015a71fed63
 
 # FIRST PART
 # build osx64 toolchain (stripped of man documentation)
@@ -39,7 +40,8 @@ RUN apt-get update   && \
         libssl-dev      \
         xz-utils        \
         lzma-dev
-RUN git clone https://github.com/tpoechtrager/osxcross.git  /tmp/osxcross  && \
+RUN git clone https://github.com/tpoechtrager/osxcross.git /tmp/osxcross && \
+    cd /tmp/osxcross && git reset --hard $OSX_CROSS_REV && \
     curl -L ${OSX_SDK_URL}/${OSX_SDK}.tar.xz -o /tmp/osxcross/tarballs/${OSX_SDK}.tar.xz && \
     ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil
 RUN UNATTENDED=yes OSX_VERSION_MIN=${OSX_MIN} /tmp/osxcross/build.sh
@@ -48,7 +50,7 @@ RUN rm -rf /tmp/osxcross/target/SDK/${OSX_SDK}/usr/share && \
     tar cfJ osxcross.tar.xz osxcross/target              && \
     rm -rf /tmp/osxcross
 RUN apt-get install -y                     \
-        bison curl flex gawk gcc g++ gperf help2man libncurses5-dev make patch python-dev texinfo xz-utils && \
+        unzip bison curl flex gawk gcc g++ gperf help2man libncurses5-dev make patch python-dev texinfo xz-utils && \
     curl -L http://crosstool-ng.org/download/crosstool-ng/crosstool-ng-${CTNG}.tar.xz  \
          | tar -xJ -C /tmp/             && \
     cd /tmp/crosstool-ng-${CTNG}        && \
