@@ -47,6 +47,6 @@ if [ $RELEASE_CHANNEL == "latest" ]; then
   for i in "${PACKAGES[@]}"
   do
     :
-    npm dist-tag add $i@$PACKAGE_VERSION next
+    npm dist-tag add "$i"@"$PACKAGE_VERSION" next
   done
 fi
