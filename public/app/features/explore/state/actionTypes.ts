@@ -186,6 +186,7 @@ export interface UpdateUIStatePayload extends Partial<ExploreUIState> {
 export interface UpdateDatasourceInstancePayload {
   exploreId: ExploreId;
   datasourceInstance: DataSourceApi;
+  version?: string;
 }
 
 export interface ToggleLogLevelPayload {

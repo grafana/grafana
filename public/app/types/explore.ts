@@ -228,6 +228,7 @@ export interface QueryOptions {
   liveStreaming?: boolean;
   showingGraph?: boolean;
   showingTable?: boolean;
+  mode?: ExploreMode;
 }
 
 export interface QueryTransaction {
