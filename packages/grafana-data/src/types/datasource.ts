@@ -5,7 +5,7 @@ import { PanelData } from './panel';
 import { LogRowModel } from './logs';
 import { AnnotationEvent, KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
-import { RawTimeRange, TimeRange } from './time';
+import { RawTimeRange, TimeRange, AbsoluteTimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
@@ -13,18 +13,31 @@ export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonDat
   onOptionsChange: (options: DataSourceSettings<JSONData, SecureJSONData>) => void;
 }
 
+// Utility type to extract the query type TQuery from a class extending DataSourceApi<TQuery, TOptions>
+export type DataSourceQueryType<DSType extends DataSourceApi<any, any>> = DSType extends DataSourceApi<
+  infer TQuery,
+  infer _TOptions
+>
+  ? TQuery
+  : never;
+
+// Utility type to extract the options type TOptions from a class extending DataSourceApi<TQuery, TOptions>
+export type DataSourceOptionsType<DSType extends DataSourceApi<any, any>> = DSType extends DataSourceApi<
+  infer _TQuery,
+  infer TOptions
+>
+  ? TOptions
+  : never;
+
 export class DataSourcePlugin<
   DSType extends DataSourceApi<TQuery, TOptions>,
-  TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TQuery extends DataQuery = DataSourceQueryType<DSType>,
+  TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>
 > extends GrafanaPlugin<DataSourcePluginMeta> {
-  DataSourceClass: DataSourceConstructor<DSType, TQuery, TOptions>;
-  components: DataSourcePluginComponents<DSType, TQuery, TOptions>;
+  components: DataSourcePluginComponents<DSType, TQuery, TOptions> = {};
 
-  constructor(DataSourceClass: DataSourceConstructor<DSType, TQuery, TOptions>) {
+  constructor(public DataSourceClass: DataSourceConstructor<DSType, TQuery, TOptions>) {
     super();
-    this.DataSourceClass = DataSourceClass;
-    this.components = {};
   }
 
   setConfigEditor(editor: ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>) {
@@ -284,6 +297,7 @@ export interface ExploreQueryFieldProps<
 > extends QueryEditorProps<DSType, TQuery, TOptions> {
   history: any[];
   onBlur?: () => void;
+  absoluteRange?: AbsoluteTimeRange;
 }
 
 export interface ExploreStartPageProps {
@@ -555,12 +569,13 @@ export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
 }
 
 export abstract class LanguageProvider {
-  datasource!: DataSourceApi;
-  request!: (url: string, params?: any) => Promise<any>;
+  abstract datasource: DataSourceApi<any, any>;
+  abstract request: (url: string, params?: any) => Promise<any>;
+
   /**
    * Returns startTask that resolves with a task list when main syntax is loaded.
    * Task list consists of secondary promises that load more detailed language features.
    */
-  start!: () => Promise<any[]>;
+  abstract start: () => Promise<any[]>;
   startTask?: Promise<any[]>;
 }
