@@ -136,9 +136,9 @@ func (s *Server) Run() (err error) {
 			}
 
 			// Mark that we are in shutdown mode
-			// So more services are not started
+			// So no more services are started
 			s.shutdownInProgress = true
-			return nil
+			return err
 		})
 	}
 
