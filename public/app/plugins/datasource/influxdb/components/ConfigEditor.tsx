@@ -1,5 +1,5 @@
 import React, { PureComponent, ChangeEvent } from 'react';
-import { DataSourcePluginOptionsEditorProps, DataSourceSettings, SelectableValue } from '@grafana/data';
+import { DataSourcePluginOptionsEditorProps, SelectableValue } from '@grafana/data';
 import { DataSourceHttpSettings, FormLabel, Input, SecretFormField, Select } from '@grafana/ui';
 import { InfluxOptions, InfluxSecureJsonData } from '../types';
 
@@ -7,13 +7,7 @@ const httpModes = [{ label: 'GET', value: 'GET' }, { label: 'POST', value: 'POST
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 
-type InfluxDataSourceSettings = DataSourceSettings<InfluxOptions, InfluxSecureJsonData>;
-
-export interface State {
-  config: InfluxDataSourceSettings;
-}
-
-export class ConfigEditor extends PureComponent<Props, State> {
+export class ConfigEditor extends PureComponent<Props> {
   onDatabaseChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { onOptionsChange, options } = this.props;
     onOptionsChange({
