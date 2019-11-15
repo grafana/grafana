@@ -40,7 +40,7 @@ export class TestPage<T> implements TestPageType<T> {
     }
 
     this.pageObjects = {} as PageObjects<T>;
-    Object.keys(config.pageObjects).map(key => {
+    Object.keys(config.pageObjects).map(async key => {
       const selector = (config.pageObjects as any)[key];
       if (typeof selector === 'function') {
         (this.pageObjects as any)[key] = new PageObject(selector());

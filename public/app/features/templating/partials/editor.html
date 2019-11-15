@@ -2,8 +2,12 @@
   <div class="page-action-bar">
     <h3 class="dashboard-settings__header">
       <a ng-click="setMode('list')" aria-label="Variable editor Header link">Variables</a>
-      <span ng-show="mode === 'new'"><i class="fa fa-fw fa-chevron-right" aria-label="Variable editor Header mode New"></i> New</span>
-      <span ng-show="mode === 'edit'"><i class="fa fa-fw fa-chevron-right" aria-label="Variable editor Header mode Edit"></i> Edit</span>
+      <span ng-show="mode === 'new'"
+        ><i class="fa fa-fw fa-chevron-right" aria-label="Variable editor Header mode New"></i> New</span
+      >
+      <span ng-show="mode === 'edit'"
+        ><i class="fa fa-fw fa-chevron-right" aria-label="Variable editor Header mode Edit"></i> Edit</span
+      >
     </h3>
 
     <div class="page-action-bar__spacer"></div>
@@ -12,23 +16,23 @@
       class="btn btn-primary"
       ng-click="setMode('new');"
       ng-if="variables.length > 0"
-			ng-hide="mode === 'edit' || mode === 'new'"
+      ng-hide="mode === 'edit' || mode === 'new'"
       aria-label="Variable editor New variable button"
     >
-			New
-	  </a>
+      New
+    </a>
   </div>
 
   <div ng-if="mode === 'list'">
     <div ng-if="variables.length === 0">
-        <empty-list-cta
+      <empty-list-cta
         on-click="setNewMode"
         title="emptyListCta.title"
         infoBox="emptyListCta.infoBox"
         infoBoxTitle="emptyListCta.infoBoxTitle"
         buttonTitle="emptyListCta.buttonTitle"
         buttonIcon="emptyListCta.buttonIcon"
-        />
+      />
     </div>
 
     <div ng-if="variables.length">
@@ -43,24 +47,53 @@
         <tbody>
           <tr ng-repeat="variable in variables">
             <td style="width: 1%">
-              <span ng-click="edit(variable)" class="pointer template-variable" aria-label="Variable editor Table Name field"> ${{ variable.name }} </span>
+              <span
+                ng-click="edit(variable)"
+                class="pointer template-variable"
+                aria-label="Variable editor Table Name field"
+              >
+                ${{ variable.name }}
+              </span>
             </td>
-            <td style="max-width: 200px;" ng-click="edit(variable)" class="pointer max-width" aria-label="Variable editor Table Definition field">
+            <td
+              style="max-width: 200px;"
+              ng-click="edit(variable)"
+              class="pointer max-width"
+              aria-label="Variable editor Table Definition field"
+            >
               {{ variable.definition ? variable.definition : variable.query }}
             </td>
             <td style="width: 1%">
-              <i ng-click="_.move(variables,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up" aria-label="Variable editor Table ArrowUp button"></i>
+              <i
+                ng-click="_.move(variables,$index,$index-1)"
+                ng-hide="$first"
+                class="pointer fa fa-arrow-up"
+                aria-label="Variable editor Table ArrowUp button"
+              ></i>
             </td>
             <td style="width: 1%">
-              <i ng-click="_.move(variables,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down" aria-label="Variable editor Table ArrowDown button"></i>
+              <i
+                ng-click="_.move(variables,$index,$index+1)"
+                ng-hide="$last"
+                class="pointer fa fa-arrow-down"
+                aria-label="Variable editor Table ArrowDown button"
+              ></i>
             </td>
             <td style="width: 1%">
-              <a ng-click="duplicate(variable)" class="btn btn-inverse btn-small" aria-label="Variable editor Table Duplicate button">
+              <a
+                ng-click="duplicate(variable)"
+                class="btn btn-inverse btn-small"
+                aria-label="Variable editor Table Duplicate button"
+              >
                 Duplicate
               </a>
             </td>
             <td style="width: 1%">
-              <a ng-click="removeVariable(variable)" class="btn btn-danger btn-small" aria-label="Variable editor Table Remove button">
+              <a
+                ng-click="removeVariable(variable)"
+                class="btn btn-danger btn-small"
+                aria-label="Variable editor Table Remove button"
+              >
                 <i class="fa fa-remove"></i>
               </a>
             </td>
@@ -115,7 +148,13 @@
       <div class="gf-form-inline">
         <div class="gf-form max-width-19">
           <span class="gf-form-label width-6">Label</span>
-          <input type="text" class="gf-form-input" ng-model="current.label" placeholder="optional display name" aria-label="Variable editor Form Label field"/>
+          <input
+            type="text"
+            class="gf-form-input"
+            ng-model="current.label"
+            placeholder="optional display name"
+            aria-label="Variable editor Form Label field"
+          />
         </div>
         <div class="gf-form max-width-19">
           <span class="gf-form-label width-6">Hide</span>
@@ -445,10 +484,16 @@
       <h5>Preview of values</h5>
       <div class="gf-form-inline">
         <div class="gf-form" ng-repeat="option in current.options | limitTo: optionsLimit">
-          <span class="gf-form-label">{{ option.text }}</span>
+          <span class="gf-form-label" aria-label="Variable editor Preview of Values option">{{ option.text }}</span>
         </div>
         <div class="gf-form" ng-if="current.options.length > optionsLimit">
-          <a class="gf-form-label btn-secondary" ng-click="showMoreOptions()">Show more</a>
+          <a
+            class="gf-form-label btn-secondary"
+            ng-click="showMoreOptions()"
+            aria-label="Variable editor Preview of Values Show More link"
+          >
+            Show more
+          </a>
         </div>
       </div>
     </div>
@@ -458,8 +503,24 @@
     </div>
 
     <div class="gf-form-button-row p-y-0">
-      <button type="submit" class="btn btn-primary" ng-show="mode === 'edit'" ng-click="update();" aria-label="Variable editor Update button">Update</button>
-      <button type="submit" class="btn btn-primary" ng-show="mode === 'new'" ng-click="add();" aria-label="Variable editor Add button">Add</button>
+      <button
+        type="submit"
+        class="btn btn-primary"
+        ng-show="mode === 'edit'"
+        ng-click="update();"
+        aria-label="Variable editor Update button"
+      >
+        Update
+      </button>
+      <button
+        type="submit"
+        class="btn btn-primary"
+        ng-show="mode === 'new'"
+        ng-click="add();"
+        aria-label="Variable editor Add button"
+      >
+        Add
+      </button>
     </div>
   </form>
 </div>
