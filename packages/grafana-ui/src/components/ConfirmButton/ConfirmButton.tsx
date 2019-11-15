@@ -3,6 +3,7 @@ import React, { PureComponent, SyntheticEvent } from 'react';
 interface Props {
   onConfirm(): void;
   onClick?(): void;
+  onCancel?(): void;
   buttonText: string;
   confirmText?: string;
   disabled?: boolean;
@@ -43,6 +44,9 @@ export class ConfirmButton extends PureComponent<Props, State> {
     this.setState({
       showConfirm: false,
     });
+    if (this.props.onCancel) {
+      this.props.onCancel();
+    }
   };
 
   render() {
