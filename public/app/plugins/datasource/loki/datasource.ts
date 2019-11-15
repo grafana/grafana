@@ -302,6 +302,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     }
 
     const query = this.createRangeQuery(target, options);
+    const logFieldEnhancer = (df: DataFrame) => this.enhanceDataFrame(df);
     return this._request(RANGE_QUERY_ENDPOINT, query).pipe(
       catchError((err: any) => this.throwUnless(err, err.cancelled || err.status === 404, target)),
       filter((response: any) => (response.cancelled ? false : true)),
@@ -310,7 +311,15 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           () => response.status === 404,
           defer(() => this.runLegacyQuery(target, options)),
           defer(() =>
-            processRangeQueryResponse(response.data, target, query, responseListLength, this.maxLines, options.reverse)
+            processRangeQueryResponse(
+              response.data,
+              target,
+              query,
+              responseListLength,
+              this.maxLines,
+              options.reverse,
+              logFieldEnhancer
+            )
           )
         )
       )
@@ -606,9 +615,9 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
    * Adds new fields and DataLinks to DataFrame based on DataSource instance config.
    * @param dataFrame
    */
-  enhanceDataFrame(dataFrame: DataFrame): void {
+  enhanceDataFrame(dataFrame: DataFrame): DataFrame {
     if (!this.instanceSettings.jsonData) {
-      return;
+      return dataFrame;
     }
 
     const derivedFields = this.instanceSettings.jsonData.derivedFields || [];
@@ -647,6 +656,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
       dataFrame.fields = [...dataFrame.fields, ...Object.values(fields)];
     }
+    return dataFrame;
   }
 
   throwUnless = (err: any, condition: boolean, target: LokiQuery) => {

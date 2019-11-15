@@ -289,17 +289,17 @@ export class Explore extends React.PureComponent<ExploreProps> {
           <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
           {datasourceMissing ? this.renderEmptyState() : null}
           {datasourceInstance && (
-            <div className="explore-container">
+            <div className="explore-container" style={{ height: '100%' }}>
               <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
               <ErrorContainer queryErrors={[queryResponse.error]} />
-              <AutoSizer onResize={this.onResize} disableHeight>
+              <AutoSizer style={{ height: '100%' }} onResize={this.onResize} disableHeight>
                 {({ width }) => {
                   if (width === 0) {
                     return null;
                   }
 
                   return (
-                    <main className={`m-t-2 ${styles.logsMain}`} style={{ width }}>
+                    <main className={`m-t-2 ${styles.logsMain}`} style={{ width, height: '100%' }}>
                       <ErrorBoundaryAlert>
                         {showingStartPage && (
                           <div className="grafana-info-box grafana-info-box--max-lg">

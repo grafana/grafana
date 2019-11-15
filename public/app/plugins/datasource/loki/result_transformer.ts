@@ -377,12 +377,13 @@ export function processRangeQueryResponse(
   query: LokiRangeQueryRequest,
   responseListLength: number,
   limit: number,
-  reverse = false
+  reverse = false,
+  logFieldEnhancer: (df: DataFrame) => void
 ) {
   switch (response.data.resultType) {
     case LokiResultType.Stream:
       return of({
-        data: lokiStreamsToDataframes(response.data.result, target, limit, reverse),
+        data: lokiStreamsToDataframes(response.data.result, target, limit, reverse).map(logFieldEnhancer),
         key: `${target.refId}_log`,
       });
 

@@ -305,7 +305,7 @@ export interface ExploreQueryFieldProps<
 
 export interface ExploreStartPageProps {
   datasource?: DataSourceApi;
-  exploreMode: 'Logs' | 'Metrics';
+  exploreMode: 'Logs' | 'Metrics' | 'Tracing';
   onClickExample: (query: DataQuery) => void;
 }
 
@@ -460,7 +460,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   timezone: string;
 
   cacheTimeout?: string;
-  exploreMode?: 'Logs' | 'Metrics';
+  exploreMode?: 'Logs' | 'Metrics' | 'Tracing';
   rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
 
