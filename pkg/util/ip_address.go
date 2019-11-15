@@ -44,7 +44,7 @@ func SplitHostPortDefault(input, defaultHost, defaultPort string) (NetworkAddres
 		Port: defaultPort,
 	}
 	if len(input) == 0 {
-		return addr, fmt.Errorf("Input is empty")
+		return addr, nil
 	}
 
 	start := 0
