@@ -50,19 +50,19 @@ RUN rm -rf /tmp/osxcross/target/SDK/${OSX_SDK}/usr/share && \
     tar cfJ osxcross.tar.xz osxcross/target              && \
     rm -rf /tmp/osxcross
 RUN apt-get install -y                     \
-        unzip bison curl flex gawk gcc g++ gperf help2man libncurses5-dev make patch python-dev texinfo xz-utils && \
+        unzip libtool-bin bison curl flex gawk gcc g++ gperf help2man libncurses5-dev make patch python-dev texinfo xz-utils && \
     curl -L http://crosstool-ng.org/download/crosstool-ng/crosstool-ng-${CTNG}.tar.xz  \
          | tar -xJ -C /tmp/             && \
     cd /tmp/crosstool-ng-${CTNG}        && \
     ./configure --enable-local          && \
-    make
-RUN ./ct-ng x86_64-centos6-linux-gnu    && \
+    make && \
+    ./ct-ng x86_64-centos6-linux-gnu    && \
     sed -i '/CT_PREFIX_DIR=/d' .config  && \
     echo 'CT_PREFIX_DIR="/tmp/${CT_HOST:+HOST-${CT_HOST}/}${CT_TARGET}"' >> .config && \
     echo 'CT_EXPERIMENTAL=y' >> .config && \
     echo 'CT_ALLOW_BUILD_AS_ROOT=y' >> .config && \
-    echo 'CT_ALLOW_BUILD_AS_ROOT_SURE=y' >> .config
-RUN ./ct-ng build                       && \
+    echo 'CT_ALLOW_BUILD_AS_ROOT_SURE=y' >> .config && \
+    ./ct-ng build                       && \
     cd /tmp                             && \
     rm /tmp/x86_64-centos6-linux-gnu/build.log.bz2 && \
     tar cfJ x86_64-centos6-linux-gnu.tar.xz x86_64-centos6-linux-gnu/ && \
