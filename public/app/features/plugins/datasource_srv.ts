@@ -66,7 +66,7 @@ export class DatasourceSrv implements DataSourceService {
 
     const dsConfig = config.datasources[name];
     if (!dsConfig) {
-      return this.$q.reject({ message: 'Datasource named ' + name + ' was not found' });
+      return this.$q.reject({ message: `Datasource named ${name} was not found` });
     }
 
     const deferred = this.$q.defer();
