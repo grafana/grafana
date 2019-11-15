@@ -71,10 +71,10 @@ RUN apt-get update   && \
 # base image to crossbuild grafana
 FROM ubuntu:14.04
 
-ENV GOVERSION=1.13.1 \
+ENV GOVERSION=1.13.4 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=10.14.2 \
+    NODEVERSION=12.13.0 \
     CHKSUM_ARMV7_MUSL=3043bd16a0287b02f3f1045ec5f7fa42bd47bd8329183fc52b179dbb80a56d5f \
     CHKSUM_ARMV8_MUSL=1a935561ebe3155bfd02b1b25cd7533c81906dd47b1de1fa43b74209130b941c \
     CHKSUM_AMD64_MUSL=0fada482750176671d24c31b944fae7c3bf0a826011b3decc12d47b21c3cb5c2
