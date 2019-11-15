@@ -1,10 +1,10 @@
 import { renderHook, act } from 'react-hooks-testing-library';
 import { AbsoluteTimeRange } from '@grafana/data';
+import { CascaderOption } from '@grafana/ui';
 
 import LanguageProvider from 'app/plugins/datasource/loki/language_provider';
 
 import { useLokiSyntax } from './useLokiSyntax';
-import { CascaderOption } from 'app/plugins/datasource/loki/components/LokiQueryFieldForm';
 import { makeMockLokiDatasource } from '../mocks';
 
 describe('useLokiSyntax hook', () => {

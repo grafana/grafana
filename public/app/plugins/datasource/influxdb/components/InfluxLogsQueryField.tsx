@@ -1,7 +1,6 @@
 import React from 'react';
 import { ExploreQueryFieldProps } from '@grafana/data';
-// @ts-ignore
-import Cascader from 'rc-cascader';
+import { Cascader, CascaderOption } from '@grafana/ui';
 
 import InfluxQueryModel from '../influx_query_model';
 import { AdHocFilterField, KeyValuePair } from 'app/features/explore/AdHocFilterField';
@@ -9,7 +8,6 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import InfluxDatasource from '../datasource';
 import { InfluxQueryBuilder } from '../query_builder';
 import { InfluxQuery, InfluxOptions } from '../types';
-import { CascaderOption } from '../../loki/components/LokiQueryFieldForm';
 
 export interface Props extends ExploreQueryFieldProps<InfluxDatasource, InfluxQuery, InfluxOptions> {}
 
@@ -139,15 +137,13 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
       <div className="gf-form-inline gf-form-inline--nowrap">
         <div className="gf-form flex-shrink-0">
           <Cascader
+            buttonText={cascadeText}
             options={measurements}
+            disabled={!hasMeasurement}
             value={[measurement, field]}
             onChange={this.onMeasurementsChange}
             expandIcon={null}
-          >
-            <button className="gf-form-label gf-form-label--btn" disabled={!hasMeasurement}>
-              {cascadeText} <i className="fa fa-caret-down" />
-            </button>
-          </Cascader>
+          />
         </div>
         <div className="flex-shrink-1 flex-flow-column-nowrap">
           {measurement && (
