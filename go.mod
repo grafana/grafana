@@ -1,5 +1,7 @@
 module github.com/grafana/grafana
 
+replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.1.1-0.20191115194829-9bfc5937b406
+
 go 1.13
 
 require (
@@ -31,7 +33,7 @@ require (
 	github.com/gorilla/websocket v1.4.0
 	github.com/gosimple/slug v1.4.2
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
-	github.com/grafana/grafana-plugin-sdk-go v0.1.0
+	github.com/grafana/grafana-plugin-sdk-go v0.1.1-0.20191115194829-9bfc5937b406
 	github.com/hashicorp/go-hclog v0.8.0
 	github.com/hashicorp/go-plugin v1.0.1
 	github.com/hashicorp/go-version v1.1.0
