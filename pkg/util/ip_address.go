@@ -38,12 +38,12 @@ type NetworkAddress struct {
 }
 
 // SplitHostPortDefault splits ip address/hostname string by host and port. Defaults used if no match found
-func SplitHostPortDefault(input, defaultHost, defaultPort string, allowEmpty bool) (NetworkAddress, error) {
+func SplitHostPortDefault(input, defaultHost, defaultPort string) (NetworkAddress, error) {
 	addr := NetworkAddress{
 		Host: defaultHost,
 		Port: defaultPort,
 	}
-	if len(input) == 0 && !allowEmpty {
+	if len(input) == 0 {
 		return addr, fmt.Errorf("Input is empty")
 	}
 
@@ -82,5 +82,5 @@ func SplitHostPortDefault(input, defaultHost, defaultPort string, allowEmpty boo
 
 // SplitHostPort splits ip address/hostname string by host and port
 func SplitHostPort(input string) (NetworkAddress, error) {
-	return SplitHostPortDefault(input, "", "", false)
+	return SplitHostPortDefault(input, "", "")
 }

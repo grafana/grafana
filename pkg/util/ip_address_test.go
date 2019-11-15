@@ -53,48 +53,40 @@ func TestParseIPAddress(t *testing.T) {
 
 func TestSplitHostPortDefault(t *testing.T) {
 	Convey("Test split ip address to host and port", t, func() {
-		addr, err := SplitHostPortDefault("192.168.0.140:456", "", "", false)
+		addr, err := SplitHostPortDefault("192.168.0.140:456", "", "")
 		So(err, ShouldBeNil)
 		So(addr.Host, ShouldEqual, "192.168.0.140")
 		So(addr.Port, ShouldEqual, "456")
 
-		addr, err = SplitHostPortDefault("192.168.0.140", "", "123", false)
+		addr, err = SplitHostPortDefault("192.168.0.140", "", "123")
 		So(err, ShouldBeNil)
 		So(addr.Host, ShouldEqual, "192.168.0.140")
 		So(addr.Port, ShouldEqual, "123")
 
-		addr, err = SplitHostPortDefault("[::1]:456", "", "", false)
+		addr, err = SplitHostPortDefault("[::1]:456", "", "")
 		So(err, ShouldBeNil)
 		So(addr.Host, ShouldEqual, "::1")
 		So(addr.Port, ShouldEqual, "456")
 
-		addr, err = SplitHostPortDefault("[::1]", "", "123", false)
+		addr, err = SplitHostPortDefault("[::1]", "", "123")
 		So(err, ShouldBeNil)
 		So(addr.Host, ShouldEqual, "::1")
 		So(addr.Port, ShouldEqual, "123")
 
-		addr, err = SplitHostPortDefault(":456", "1.2.3.4", "", false)
+		addr, err = SplitHostPortDefault(":456", "1.2.3.4", "")
 		So(err, ShouldBeNil)
 		So(addr.Host, ShouldEqual, "1.2.3.4")
 		So(addr.Port, ShouldEqual, "456")
 
-		addr, err = SplitHostPortDefault("xyz.rds.amazonaws.com", "", "123", false)
+		addr, err = SplitHostPortDefault("xyz.rds.amazonaws.com", "", "123")
 		So(err, ShouldBeNil)
 		So(addr.Host, ShouldEqual, "xyz.rds.amazonaws.com")
 		So(addr.Port, ShouldEqual, "123")
 
-		addr, err = SplitHostPortDefault("xyz.rds.amazonaws.com:123", "", "", false)
+		addr, err = SplitHostPortDefault("xyz.rds.amazonaws.com:123", "", "")
 		So(err, ShouldBeNil)
 		So(addr.Host, ShouldEqual, "xyz.rds.amazonaws.com")
 		So(addr.Port, ShouldEqual, "123")
-
-		_, err = SplitHostPortDefault("", "localhost", "1433", false)
-		So(err, ShouldBeError)
-
-		addr, err = SplitHostPortDefault("", "localhost", "1433", true)
-		So(err, ShouldBeNil)
-		So(addr.Host, ShouldEqual, "localhost")
-		So(addr.Port, ShouldEqual, "1433")
 	})
 }
 
