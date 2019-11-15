@@ -1,27 +1,45 @@
-version: "2"
+# All services will log to Loki via the loki docker logging plugin.
+# To install run this on the host once:
+# docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions
+version: '2'
 services:
   grafana:
     image: grafana/grafana-dev:explore-trace-ui-demo-b56f2a8ae23d399f6e170f439c058f4bdb08f0da-ubuntu
     ports:
-      - "3000:3000"
+      - '3000:3000'
     volumes:
       - ./datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
       - ./grafana.ini:/etc/grafana/grafana.ini
+    # logging directly to loki, see file header for details
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
 
   loki:
     image: grafana/loki:master
     ports:
-      - "3100:3100"
+      - '3100:3100'
     command: -config.file=/etc/loki/local-config.yaml
-    # Optional jaeger tracing
+    # Sending loki's own traces to jaeger
     environment:
       - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
       - JAEGER_SAMPLER_TYPE=const
       - JAEGER_SAMPLER_PARAM=1
+    # logging directly to loki, see file header for details
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
 
   jaeger:
     image: jaegertracing/all-in-one:latest
     ports:
-      - "6831:6831"
-      - "16686:16686"
+      - '6831:6831'
+      - '16686:16686'
+    # logging directly to loki, see file header for details
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
