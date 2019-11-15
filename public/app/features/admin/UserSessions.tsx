@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import appEvents from 'app/core/app_events';
 import { RowAction } from './UserProfileRow';
 import { UserSession, CoreEvents } from 'app/types';
-import { DeleteButton } from '@grafana/ui';
+import { ConfirmButton } from '@grafana/ui';
 
 interface Props {
   sessions: UserSession[];
@@ -57,7 +57,11 @@ export class UserSessions extends PureComponent<Props> {
                       <td>{`${session.browser} on ${session.os} ${session.osVersion}`}</td>
                       <td>
                         <div className="pull-right">
-                          <DeleteButton onConfirm={this.handleSessionRevoke(session.id)} confirmText="Confirm logout" />
+                          <ConfirmButton
+                            buttonText="Force logout"
+                            confirmText="Confirm logout"
+                            onConfirm={this.handleSessionRevoke(session.id)}
+                          />
                         </div>
                         {/* <RowAction text="Force logout" onClick={this.handleSessionRevoke(session.id)} /> */}
                       </td>

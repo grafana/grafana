@@ -1,6 +1,6 @@
 import React, { PureComponent, FC, useContext } from 'react';
 import { css, cx } from 'emotion';
-import { ThemeContext } from '@grafana/ui';
+import { ThemeContext, ConfirmButton } from '@grafana/ui';
 
 const labelStyle = css`
   font-weight: 500;
@@ -49,9 +49,7 @@ export class EditableRow extends PureComponent<EditableRowProps, EditableRowStat
     this.setState({ editing: true }, this.focusInput);
   };
 
-  handleEditClick = (event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
+  handleEditClick = () => {
     if (this.state.editing) {
       return;
     }
@@ -68,6 +66,10 @@ export class EditableRow extends PureComponent<EditableRowProps, EditableRowStat
 
   focusInput = () => {
     this.inputElem.focus();
+  };
+
+  handleSave = () => {
+    console.log('save', this.props.value);
   };
 
   render() {
@@ -90,7 +92,14 @@ export class EditableRow extends PureComponent<EditableRowProps, EditableRowStat
           )}
         </td>
         <td>
-          <RowAction text="Edit" onClick={this.handleEditClick} />
+          <div className="pull-right">
+            <ConfirmButton
+              onClick={this.handleEditClick}
+              onConfirm={this.handleSave}
+              buttonText="Edit"
+              confirmText="Save"
+            />
+          </div>
         </td>
       </tr>
     );
