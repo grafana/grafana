@@ -126,19 +126,22 @@ func (s *Server) Run() (err error) {
 				return nil
 			}
 
-			if err := service.Run(s.context); err != nil {
+			err := service.Run(s.context)
+			// Mark that we are in shutdown mode
+			// So no more services are started
+			s.shutdownInProgress = true
+			if err != nil {
 				if err != context.Canceled {
 					// Server has crashed.
 					s.log.Error("Stopped "+descriptor.Name, "reason", err)
 				} else {
 					s.log.Info("Stopped "+descriptor.Name, "reason", err)
 				}
+
+				return err
 			}
 
-			// Mark that we are in shutdown mode
-			// So no more services are started
-			s.shutdownInProgress = true
-			return err
+			return nil
 		})
 	}
 
