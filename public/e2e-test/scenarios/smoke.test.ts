@@ -131,7 +131,6 @@ const cleanDashboard = async (page: Page, dashboardTitle: string) => {
 e2eScenario({
   describeName: 'Smoke tests',
   itName: 'Login scenario, create test data source, dashboard, panel, and export scenario',
-  runScenario: false,
   scenario: async (browser: Browser, page: Page) => {
     const testDataSourceName = await addTestDataSourceAndVerify(page);
     const dashboardTitle = await addDashboardAndSetupTestDataGraph(page);

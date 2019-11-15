@@ -1,13 +1,4 @@
-import {
-  ClickablePageObject,
-  ClickablePageObjectType,
-  InputPageObject,
-  InputPageObjectType,
-  PageObject,
-  PageObjectType,
-  Selector,
-  TestPage,
-} from '@grafana/toolkit/src/e2e';
+import { ClickablePageObjectType, InputPageObjectType, PageObjectType, TestPage } from '@grafana/toolkit/src/e2e';
 
 export interface EditDataSourcePage {
   name: InputPageObjectType;
@@ -19,10 +10,10 @@ export interface EditDataSourcePage {
 
 export const editDataSourcePage = new TestPage<EditDataSourcePage>({
   pageObjects: {
-    name: new InputPageObject(Selector.fromAriaLabel('Datasource settings page name input field')),
-    delete: new ClickablePageObject(Selector.fromAriaLabel('Delete button')),
-    saveAndTest: new ClickablePageObject(Selector.fromAriaLabel('Save and Test button')),
-    alert: new PageObject(Selector.fromAriaLabel('Datasource settings page Alert')),
-    alertMessage: new PageObject(Selector.fromAriaLabel('Datasource settings page Alert message')),
+    name: 'Datasource settings page name input field',
+    delete: 'Delete button',
+    saveAndTest: 'Save and Test button',
+    alert: 'Datasource settings page Alert',
+    alertMessage: 'Datasource settings page Alert message',
   },
 });

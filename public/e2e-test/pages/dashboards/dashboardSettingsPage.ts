@@ -1,4 +1,4 @@
-import { ClickablePageObject, ClickablePageObjectType, Selector, TestPage } from '@grafana/toolkit/src/e2e';
+import { ClickablePageObjectType, TestPage } from '@grafana/toolkit/src/e2e';
 
 export interface DashboardSettingsPage {
   deleteDashBoard: ClickablePageObjectType;
@@ -7,7 +7,7 @@ export interface DashboardSettingsPage {
 
 export const dashboardSettingsPage = new TestPage<DashboardSettingsPage>({
   pageObjects: {
-    deleteDashBoard: new ClickablePageObject(Selector.fromAriaLabel('Dashboard settings page delete dashboard button')),
-    variablesSection: new ClickablePageObject(Selector.fromAriaLabel('Dashboard settings section Variables')),
+    deleteDashBoard: 'Dashboard settings page delete dashboard button',
+    variablesSection: 'Dashboard settings section Variables',
   },
 });

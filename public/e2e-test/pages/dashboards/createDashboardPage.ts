@@ -1,4 +1,4 @@
-import { TestPage, ClickablePageObjectType, ClickablePageObject, Selector } from '@grafana/toolkit/src/e2e';
+import { ClickablePageObjectType, TestPage } from '@grafana/toolkit/src/e2e';
 
 export interface CreateDashboardPage {
   addQuery: ClickablePageObjectType;
@@ -7,6 +7,6 @@ export interface CreateDashboardPage {
 export const createDashboardPage = new TestPage<CreateDashboardPage>({
   url: '/dashboard/new',
   pageObjects: {
-    addQuery: new ClickablePageObject(Selector.fromAriaLabel('Add Query CTA button')),
+    addQuery: 'Add Query CTA button',
   },
 });

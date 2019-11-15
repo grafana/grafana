@@ -1,4 +1,4 @@
-import { ClickablePageObject, ClickablePageObjectType, Selector, TestPage } from '@grafana/toolkit/src/e2e';
+import { ClickablePageObjectType, TestPage } from '@grafana/toolkit/src/e2e';
 
 export interface DashboardPage {
   settings: ClickablePageObjectType;
@@ -6,6 +6,6 @@ export interface DashboardPage {
 
 export const dashboardPage = new TestPage<DashboardPage>({
   pageObjects: {
-    settings: new ClickablePageObject(Selector.fromAriaLabel('Dashboard settings navbar button')),
+    settings: 'Dashboard settings navbar button',
   },
 });

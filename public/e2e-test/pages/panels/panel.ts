@@ -1,4 +1,4 @@
-import { TestPage, ClickablePageObjectType, ClickablePageObject, Selector } from '@grafana/toolkit/src/e2e';
+import { ClickablePageObjectType, TestPage } from '@grafana/toolkit/src/e2e';
 
 export interface Panel {
   panelTitle: ClickablePageObjectType;
@@ -7,7 +7,7 @@ export interface Panel {
 
 export const panel = new TestPage<Panel>({
   pageObjects: {
-    panelTitle: new ClickablePageObject(Selector.fromAriaLabel('Panel Title')),
-    share: new ClickablePageObject(Selector.fromAriaLabel('Share panel menu item')),
+    panelTitle: 'Panel Title',
+    share: 'Share panel menu item',
   },
 });

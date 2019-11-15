@@ -48,36 +48,18 @@ export class PageObject implements PageObjectType {
     await expect(this.page).not.toBeNull();
     await expect(this.page).toMatchElement(this.selector, options);
   };
-}
-
-export class ClickablePageObject extends PageObject implements ClickablePageObjectType {
-  constructor(selector: string) {
-    super(selector);
-  }
 
   click = async (): Promise<void> => {
     console.log('Trying to click on:', this.selector);
     await expect(this.page).not.toBeNull();
     await expect(this.page).toClick(this.selector);
   };
-}
-
-export class InputPageObject extends PageObject implements InputPageObjectType {
-  constructor(selector: string) {
-    super(selector);
-  }
 
   enter = async (text: string): Promise<void> => {
     console.log(`Trying to enter text:${text} into:`, this.selector);
     await expect(this.page).not.toBeNull();
     await expect(this.page).toFill(this.selector, text);
   };
-}
-
-export class SelectPageObject extends PageObject implements SelectPageObjectType {
-  constructor(selector: string) {
-    super(selector);
-  }
 
   select = async (text: string): Promise<void> => {
     console.log(`Trying to select text:${text} in dropdown:`, this.selector);
