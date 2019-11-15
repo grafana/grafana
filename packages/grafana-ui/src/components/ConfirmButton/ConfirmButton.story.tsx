@@ -9,8 +9,10 @@ storiesOf('UI/ConfirmButton', module)
   .add('default', () => {
     return (
       <ConfirmButton
+        buttonText="Edit"
+        confirmText="Save"
         onConfirm={() => {
-          action('Delete Confirmed')('delete!');
+          action('Saved')('save!');
         }}
       />
     );
