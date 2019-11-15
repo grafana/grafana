@@ -283,13 +283,18 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
 
       let newMetadata = datasourceInstance.meta;
 
-      if (
-        version &&
-        version.length &&
-        datasourceInstance.meta.versions &&
-        datasourceInstance.meta.versions.hasOwnProperty(version)
-      ) {
-        newMetadata = { ...newMetadata, ...datasourceInstance.meta.versions[version] };
+      // HACK: Temporary hack for Loki datasource. Can remove when plugin.json structure is changed.
+      if (version && version.length && datasourceInstance.meta.name === 'Loki') {
+        const lokiVersionMetadata: Record<string, { metrics: boolean }> = {
+          v0: {
+            metrics: false,
+          },
+
+          v1: {
+            metrics: true,
+          },
+        };
+        newMetadata = { ...newMetadata, ...lokiVersionMetadata[version] };
       }
 
       const updatedDatasourceInstance = Object.assign(datasourceInstance, { meta: newMetadata });

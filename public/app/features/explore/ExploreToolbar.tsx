@@ -347,10 +347,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     ? exploreDatasources.find(datasource => datasource.name === datasourceInstance.name)
     : undefined;
   const hasLiveOption =
-    datasourceInstance &&
-    datasourceInstance.meta &&
-    datasourceInstance.meta.streaming &&
-    datasourceInstance.meta.streaming[mode.toLowerCase()]
+    datasourceInstance && datasourceInstance.meta && datasourceInstance.meta.streaming && mode === ExploreMode.Logs
       ? true
       : false;
 

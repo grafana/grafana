@@ -8,20 +8,7 @@
   "metrics": true,
   "alerting": false,
   "annotations": true,
-
-  "streaming": {
-    "logs": true,
-    "metrics": false
-  },
-
-  "versions": {
-    "v0": {
-      "metrics": false
-    },
-    "v1": {
-      "metrics": true
-    }
-  },
+  "streaming": true,
 
   "queryOptions": {
     "maxDataPoints": true
@@ -37,7 +24,8 @@
       "small": "img/loki_icon.svg",
       "large": "img/loki_icon.svg"
     },
-    "links": [{
+    "links": [
+      {
         "name": "Learn more",
         "url": "https://grafana.com/loki"
       },

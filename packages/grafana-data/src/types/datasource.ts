@@ -100,8 +100,7 @@ export interface DataSourcePluginMeta extends PluginMeta {
   category?: string;
   queryOptions?: PluginMetaQueryOptions;
   sort?: number;
-  streaming?: Record<string, boolean>;
-  versions?: Record<string, Partial<Omit<DataSourcePluginMeta, (keyof PluginMeta) | 'versions'>>>;
+  streaming?: boolean;
 }
 
 interface PluginMetaQueryOptions {
