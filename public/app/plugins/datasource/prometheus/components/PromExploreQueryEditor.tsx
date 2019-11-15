@@ -3,13 +3,13 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { FormLabel } from '@grafana/ui';
-import { QueryEditorProps } from '@grafana/data';
+import { ExploreQueryFieldProps } from '@grafana/data';
 
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery, PromOptions } from '../types';
 
 import PromQueryField from './PromQueryField';
-export type Props = QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions>;
+export type Props = ExploreQueryFieldProps<PrometheusDatasource, PromQuery, PromOptions>;
 
 interface State {
   interval: string;
@@ -47,7 +47,7 @@ export class PromExploreQueryEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const { datasource, query, data } = this.props;
+    const { datasource, query, data, history } = this.props;
     const { interval } = this.state;
 
     return (
@@ -57,7 +57,7 @@ export class PromExploreQueryEditor extends PureComponent<Props, State> {
           query={query}
           onRunQuery={this.onRunQuery}
           onChange={this.onFieldChange}
-          history={[]}
+          history={history}
           data={data}
         />
 
