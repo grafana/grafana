@@ -43,6 +43,7 @@ class NewDataSourcePage extends PureComponent<Props> {
     prometheus: 100,
     graphite: 95,
     loki: 90,
+    jaeger: 100,
     mysql: 80,
     postgres: 79,
     gcloud: -1,
