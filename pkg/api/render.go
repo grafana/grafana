@@ -50,7 +50,7 @@ func (hs *HTTPServer) RenderToPng(c *m.ReqContext) {
 		Path:            c.Params("*") + queryParams,
 		Timezone:        queryReader.Get("tz", ""),
 		Encoding:        queryReader.Get("encoding", ""),
-		ConcurrentLimit: 30,
+		ConcurrentLimit: rendering.DefaultConcurrencyLimit,
 	})
 
 	if err != nil && err == rendering.ErrTimeout {

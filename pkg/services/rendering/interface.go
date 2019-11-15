@@ -12,6 +12,8 @@ var ErrTimeout = errors.New("Timeout error. You can set timeout in seconds with 
 var ErrNoRenderer = errors.New("No renderer plugin found nor is an external render server configured")
 var ErrPhantomJSNotInstalled = errors.New("PhantomJS executable not found")
 
+const DefaultConcurrencyLimit = 3
+
 type Opts struct {
 	Width           int
 	Height          int
@@ -26,11 +28,13 @@ type Opts struct {
 }
 
 type RenderResult struct {
-	FilePath string
+	FilePath            string
+	KeepFileAfterRender bool
 }
 
 type renderFunc func(ctx context.Context, options Opts) (*RenderResult, error)
 
 type Service interface {
 	Render(ctx context.Context, opts Opts) (*RenderResult, error)
+	RenderErrorImage(error error) (*RenderResult, error)
 }
