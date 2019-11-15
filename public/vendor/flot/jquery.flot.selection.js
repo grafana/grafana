@@ -323,7 +323,6 @@ The plugin allso adds the following methods to the plot object:
             }
         });
 
-
         plot.hooks.drawOverlay.push(function (plot, ctx) {
             // draw selection
             if (selection.show && selectionIsSane()) {
@@ -356,8 +355,23 @@ The plugin allso adds the following methods to the plot object:
             eventHolder.unbind("mousemove", onMouseMove);
             eventHolder.unbind("mousedown", onMouseDown);
 
-            if (mouseUpHandler)
+            if (mouseUpHandler) {
                 $(document).unbind("mouseup", mouseUpHandler);
+                // grafana addition
+                // In L114 this plugin is overrinding document.onselectstart handler to prevent default or custom behaviour
+                // Then this patch is being restored during mouseup event. But, mouseup handler is unbound when this plugin is destroyed
+                // and the overriden onselectstart handler is not restored.  The problematic behaviour surfaces when flot is re-rendered
+                // as a consequence of panel's model update. When i.e. options are applied via onBlur
+                // event on some input which results in flot re-render. The mouseup handler should be called to resture the original handlers
+                //  but by the time the document mouseup event occurs, the event handler is no longer there, so onselectstart is permanently overriden.
+                // To fix that we are making sure that the overrides are reverted when this plugin is destroyed, the same way as they would
+                // via mouseup event handler (L138)
+
+                if (document.onselectstart !== undefined)
+                    document.onselectstart = savedhandlers.onselectstart;
+                if (document.ondrag !== undefined)
+                    document.ondrag = savedhandlers.ondrag;
+            }
         });
 
     }
