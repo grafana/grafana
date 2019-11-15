@@ -57,7 +57,7 @@ export class DatasourceSrv implements DataSourceService {
     return this.loadDatasource(name);
   }
 
-  loadDatasource(name: string): Promise<DataSourceApi> {
+  loadDatasource(name: string): Promise<DataSourceApi<any, any>> {
     // Expression Datasource (not a real datasource)
     if (name === expressionDatasource.name) {
       this.datasources[name] = expressionDatasource as any;
