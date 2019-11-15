@@ -3,7 +3,7 @@ import { DataSourcePluginOptionsEditorProps, DataSourceSettings, SelectableValue
 import { DataSourceHttpSettings, FormLabel, Input, SecretFormField, Select } from '@grafana/ui';
 import { InfluxOptions, InfluxSecureJsonData } from '../types';
 
-const httpModes = [{ label: 'GET', value: 'GET' }, { label: 'POST', value: 'POST' }];
+const httpModes = [{ label: 'GET', value: 'GET' }, { label: 'POST', value: 'POST' }] as SelectableValue[];
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 
@@ -14,92 +14,81 @@ export interface State {
 }
 
 export class ConfigEditor extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
-
-    const { options } = this.props;
-
-    this.state = {
-      config: ConfigEditor.defaults(options),
-    };
-  }
-
-  static getDerivedStateFromProps(props: Props, state: State) {
-    return {
-      ...state,
-      config: ConfigEditor.defaults(props.options),
-    };
-  }
-
-  static defaults = (options: InfluxDataSourceSettings) => {
-    options.secureJsonData = options.secureJsonData || {};
-    options.secureJsonData.password = options.secureJsonData.password || '';
-    return options;
-  };
-
-  onDatabaseChange = (database: string) => {
-    this.props.onOptionsChange({
-      ...this.state.config,
-      database,
+  onDatabaseChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { onOptionsChange, options } = this.props;
+    onOptionsChange({
+      ...options,
+      database: event.target.value,
     });
   };
 
-  onUserChange = (user: string) => {
-    this.props.onOptionsChange({
-      ...this.state.config,
-      user,
+  onUserChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { onOptionsChange, options } = this.props;
+    onOptionsChange({
+      ...options,
+      user: event.target.value,
     });
   };
 
-  onPasswordChange = (password: string) => {
-    this.props.onOptionsChange({
-      ...this.state.config,
+  onPasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { onOptionsChange, options } = this.props;
+    onOptionsChange({
+      ...options,
       secureJsonData: {
-        ...this.state.config.secureJsonData,
-        password,
+        ...options.secureJsonData,
+        password: event.target.value,
       },
     });
   };
 
-  onTimeIntervalChange = (timeInterval: string) => {
-    this.props.onOptionsChange({
-      ...this.state.config,
+  onTimeIntervalChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { onOptionsChange, options } = this.props;
+    onOptionsChange({
+      ...options,
       jsonData: {
-        ...this.state.config.jsonData,
-        timeInterval,
+        ...options.jsonData,
+        timeInterval: event.target.value,
       },
     });
   };
 
   onResetPassword = () => {
-    this.props.onOptionsChange({
-      ...this.state.config,
+    const { onOptionsChange, options } = this.props;
+    onOptionsChange({
+      ...options,
       secureJsonFields: {
-        ...this.state.config.secureJsonFields,
+        ...options.secureJsonFields,
         password: false,
+      },
+      secureJsonData: {
+        ...options.secureJsonData,
+        password: '',
       },
     });
   };
 
-  onHttpModeSelect = (httpMode: SelectableValue<string>) => {
-    this.props.onOptionsChange({
-      ...this.state.config,
+  onHttpModeSelect = (httpMode: SelectableValue) => {
+    const { onOptionsChange, options } = this.props;
+    onOptionsChange({
+      ...options,
       jsonData: {
-        ...this.state.config.jsonData,
+        ...options.jsonData,
         httpMode: httpMode.value,
       },
     });
   };
 
   render() {
-    const { config } = this.state;
+    const { options, onOptionsChange } = this.props;
+    const { secureJsonFields } = options;
+    const secureJsonData = (options.secureJsonData || {}) as InfluxSecureJsonData;
     return (
       <>
         <DataSourceHttpSettings
           showAccessOptions={true}
-          dataSourceConfig={config}
+          dataSourceConfig={options}
           defaultUrl="http://localhost:8086"
-          onChange={this.props.onOptionsChange}
+          onChange={onOptionsChange}
         />
 
         <h3 className="page-heading">InfluxDB Details</h3>
@@ -108,11 +97,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             <div className="gf-form">
               <FormLabel className="width-10">Database</FormLabel>
               <div className="width-20">
-                <Input
-                  className="width-20"
-                  value={config.database || ''}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => this.onDatabaseChange(event.target.value)}
-                />
+                <Input className="width-20" value={options.database || ''} onChange={this.onDatabaseChange} />
               </div>
             </div>
           </div>
@@ -120,24 +105,20 @@ export class ConfigEditor extends PureComponent<Props, State> {
             <div className="gf-form">
               <FormLabel className="width-10">User</FormLabel>
               <div className="width-10">
-                <Input
-                  className="width-20"
-                  value={config.user || ''}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => this.onUserChange(event.target.value)}
-                />
+                <Input className="width-20" value={options.user || ''} onChange={this.onUserChange} />
               </div>
             </div>
           </div>
           <div className="gf-form-inline">
             <div className="gf-form">
               <SecretFormField
-                isConfigured={config.secureJsonFields.password || false}
-                value={config.secureJsonData.password}
+                isConfigured={(secureJsonFields && secureJsonFields.password) as boolean}
+                value={secureJsonData.password || ''}
                 label="Password"
                 labelWidth={10}
                 inputWidth={20}
                 onReset={this.onResetPassword}
-                onChange={(event: ChangeEvent<HTMLInputElement>) => this.onPasswordChange(event.target.value)}
+                onChange={this.onPasswordChange}
               />
             </div>
           </div>
@@ -153,9 +134,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
               </FormLabel>
               <Select
                 className="width-10"
-                value={httpModes.find(httpMode => httpMode.value === config.jsonData.httpMode)}
+                value={httpModes.find(httpMode => httpMode.value === options.jsonData.httpMode)}
                 options={httpModes}
-                defaultValue={config.jsonData.httpMode}
+                defaultValue={options.jsonData.httpMode}
                 onChange={this.onHttpModeSelect}
               />
             </div>
@@ -188,8 +169,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 <Input
                   className="width-10"
                   placeholder="10s"
-                  value={config.jsonData.timeInterval || ''}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => this.onTimeIntervalChange(event.target.value)}
+                  value={options.jsonData.timeInterval || ''}
+                  onChange={this.onTimeIntervalChange}
                 />
               </div>
             </div>
