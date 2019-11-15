@@ -60,8 +60,8 @@ describe('LokiDatasource', () => {
 
     test('should try latest endpoint but fall back to legacy endpoint if it cannot be reached', async () => {
       const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr: 'rate({job="grafana"}[5m])', refId: 'B' }],
-        exploreMode: ExploreMode.Metrics,
+        targets: [{ expr: '{job="grafana"}', refId: 'B' }],
+        exploreMode: ExploreMode.Logs,
       });
 
       ds.runLegacyQuery = jest.fn();
@@ -88,10 +88,12 @@ describe('LokiDatasource', () => {
       });
 
       ds.runInstantQuery = jest.fn(() => of({ data: [] }));
+      ds.runLegacyQuery = jest.fn();
       ds.runRangeQueryWithFallback = jest.fn(() => of({ data: [] }));
       await ds.query(options).toPromise();
 
       expect(ds.runInstantQuery).toBeCalled();
+      expect(ds.runLegacyQuery).not.toBeCalled();
       expect(ds.runRangeQueryWithFallback).toBeCalled();
     });
 

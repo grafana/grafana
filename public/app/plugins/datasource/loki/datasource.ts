@@ -1,7 +1,7 @@
 // Libraries
 import { isEmpty, map as lodashMap, fromPairs } from 'lodash';
 import { Observable, from, merge, of, iif, defer } from 'rxjs';
-import { map, filter, catchError, switchMap } from 'rxjs/operators';
+import { map, filter, catchError, switchMap, mergeMap } from 'rxjs/operators';
 
 // Services & Utils
 import { dateMath } from '@grafana/data';
@@ -83,6 +83,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;
+  version: string;
 
   /** @ngInject */
   constructor(
@@ -98,10 +99,20 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   getVersion() {
+    if (this.version) {
+      return Promise.resolve(this.version);
+    }
+
     return this._request(RANGE_QUERY_ENDPOINT)
       .toPromise()
-      .then(() => 'v1')
-      .catch(err => (err.status !== 404 ? 'v1' : 'v0'));
+      .then(() => {
+        this.version = 'v1';
+        return this.version;
+      })
+      .catch((err: any) => {
+        this.version = err.status !== 404 ? 'v1' : 'v0';
+        return this.version;
+      });
   }
 
   _request(apiUrl: string, data?: any, options?: DatasourceRequestOptions): Observable<Record<string, any>> {
@@ -341,17 +352,18 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
    */
   runLiveQuery = (target: LokiQuery, options: { maxDataPoints?: number }): Observable<DataQueryResponse> => {
     const liveTarget = this.createLiveTarget(target, options);
-    const stream = this.streams.getStream(liveTarget);
 
-    return stream.pipe(
-      catchError((err: any) => {
-        if (err.status === 404) {
-          const legacyLiveTarget = this.createLegacyLiveTarget(target, options);
-          return this.streams.getLegacyStream(legacyLiveTarget);
-        }
-
-        throw err;
-      }),
+    return from(this.getVersion()).pipe(
+      mergeMap(version =>
+        iif(
+          () => version === 'v1',
+          defer(() => this.streams.getStream(liveTarget)),
+          defer(() => {
+            const legacyTarget = this.createLegacyLiveTarget(target, options);
+            return this.streams.getLegacyStream(legacyTarget);
+          })
+        )
+      ),
       map(data => ({
         data,
         key: `loki-${liveTarget.refId}`,
