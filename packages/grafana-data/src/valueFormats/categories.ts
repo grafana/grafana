@@ -117,6 +117,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Bitcoin (฿)', id: 'currencyBTC', fn: currency('฿') },
       { name: 'South African Rand (R)', id: 'currencyZAR', fn: currency('R') },
       { name: 'Indian Rupee (₹)', id: 'currencyINR', fn: currency('₹') },
+      { name: 'South Korean Won (₩)', id: 'currencyKRW', fn: currency('₩') },
     ],
   },
   {
