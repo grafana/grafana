@@ -1,8 +1,8 @@
-import { logStreamToDataFrame, appendResponseToBufferedData } from './result_transformer';
+import { legacyLogStreamToDataFrame, appendLegacyResponseToBufferedData } from './result_transformer';
 import { FieldType, MutableDataFrame } from '@grafana/data';
-import { LokiLogsStream } from './types';
+import { LokiLegacyStreamResult } from './types';
 
-const streams: LokiLogsStream[] = [
+const streams: LokiLegacyStreamResult[] = [
   {
     labels: '{foo="bar"}',
     entries: [
@@ -25,7 +25,7 @@ const streams: LokiLogsStream[] = [
 
 describe('logStreamToDataFrame', () => {
   it('converts streams to series', () => {
-    const data = streams.map(stream => logStreamToDataFrame(stream));
+    const data = streams.map(stream => legacyLogStreamToDataFrame(stream));
 
     expect(data.length).toBe(2);
     expect(data[0].fields[1].labels['foo']).toEqual('bar');
@@ -46,7 +46,7 @@ describe('appendResponseToBufferedData', () => {
     data.addField({ name: 'labels', type: FieldType.other });
     data.addField({ name: 'id', type: FieldType.string });
 
-    appendResponseToBufferedData({ streams }, data);
+    appendLegacyResponseToBufferedData({ streams }, data);
     expect(data.get(0)).toEqual({
       ts: '1970-01-01T00:00:00Z',
       line: "foo: [32m'bar'[39m",
