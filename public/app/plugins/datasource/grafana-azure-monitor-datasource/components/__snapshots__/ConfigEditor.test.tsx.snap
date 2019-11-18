@@ -17,6 +17,7 @@ exports[`Render should render component 1`] = `
         "jsonData": Object {
           "azureLogAnalyticsSameAs": true,
           "cloudName": "azuremonitor",
+          "subscriptionId": "44693801-6ee6-49de-9b2d-9106972f9572",
         },
         "name": "Azure Monitor-10-10",
         "orgId": 1,
@@ -50,6 +51,7 @@ exports[`Render should render component 1`] = `
         "jsonData": Object {
           "azureLogAnalyticsSameAs": true,
           "cloudName": "azuremonitor",
+          "subscriptionId": "44693801-6ee6-49de-9b2d-9106972f9572",
         },
         "name": "Azure Monitor-10-10",
         "orgId": 1,
@@ -82,6 +84,7 @@ exports[`Render should render component 1`] = `
         "jsonData": Object {
           "azureLogAnalyticsSameAs": true,
           "cloudName": "azuremonitor",
+          "subscriptionId": "44693801-6ee6-49de-9b2d-9106972f9572",
         },
         "name": "Azure Monitor-10-10",
         "orgId": 1,
