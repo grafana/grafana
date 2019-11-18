@@ -2,7 +2,7 @@ import React, { FC, HTMLProps, ReactNode } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
 import { getFocusStyle } from '../commonStyles';
-import { selectThemeVariant, stylesFactory, useTheme } from '../../../themes';
+import { stylesFactory, useTheme } from '../../../themes';
 import { Icon } from '../../Icon/Icon';
 import { useClientRect } from '../../../utils/useClientRect';
 
@@ -21,14 +21,9 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix'> {
 
 const getInputStyle = stylesFactory((theme: GrafanaTheme, invalid = false) => {
   const colors = theme.colors;
-  const backgroundColor = selectThemeVariant({ light: colors.white, dark: colors.gray15 }, theme.type);
-  const borderColor = selectThemeVariant({ light: colors.gray4, dark: colors.gray25 }, theme.type);
-  const inputBorderColor = invalid ? colors.redBase : borderColor;
+  const inputBorderColor = invalid ? colors.redBase : colors.formInputBorder;
   const borderRadius = theme.border.radius.sm;
   const height = theme.spacing.formInputHeight;
-  const disabledBackground = selectThemeVariant({ light: colors.gray6, dark: colors.gray10 }, theme.type);
-  const disabledColor = selectThemeVariant({ light: colors.gray33, dark: colors.gray70 }, theme.type);
-  const inputTextColor = selectThemeVariant({ light: colors.gray25, dark: colors.gray85 }, theme.type);
 
   const prefixSuffixStaticWidth = '28px';
   const prefixSuffix = css`
@@ -60,9 +55,7 @@ const getInputStyle = stylesFactory((theme: GrafanaTheme, invalid = false) => {
           > .prefix,
           .suffix,
           .input {
-            border-color: ${invalid
-              ? colors.redBase
-              : selectThemeVariant({ light: colors.gray70, dark: colors.gray33 }, theme.type)};
+            border-color: ${invalid ? colors.redBase : colors.formInputBorder};
           }
         }
       `
@@ -122,8 +115,8 @@ const getInputStyle = stylesFactory((theme: GrafanaTheme, invalid = false) => {
         position: relative;
         z-index: 0;
         flex-grow: 1;
-        color: ${inputTextColor};
-        background-color: ${backgroundColor};
+        color: ${colors.formInputText};
+        background-color: ${colors.formInputBg};
         border: 1px solid ${inputBorderColor};
         border-radius: ${borderRadius};
         height: 100%;
@@ -132,8 +125,8 @@ const getInputStyle = stylesFactory((theme: GrafanaTheme, invalid = false) => {
         font-size: ${theme.typography.size.md};
 
         &:disabled {
-          background-color: ${disabledBackground};
-          color: ${disabledColor};
+          background-color: ${colors.formInputBgDisabled};
+          color: ${colors.formInputDisabledText};
         }
 
         /*
