@@ -14,7 +14,7 @@ if [ -z "$GPG_KEY_PASSWORD" ]; then
     exit 1
 fi
 
-gpg --allow-secret-key-import --import ~/private-repo/signing/private.key
+gpg --batch --allow-secret-key-import --import ~/private-repo/signing/private.key
 
 cp ./scripts/build/rpmmacros ~/.rpmmacros
 
