@@ -293,13 +293,13 @@ describe('when transforming time series table', () => {
           {
             time: 1003,
             text: 'text3',
-            tags: ['tags', 'aze', 'any:thing2', 'other2:other2'],
+            tags: ['tags', 'aze', 'any:2', 'other2:other2'],
             title: 'title3',
           },
           {
             time: 1004,
             text: 'text4',
-            tags: ['sameKey:one', 'sameKey:two'],
+            tags: ['sameKey:1', 'sameKey:2'],
             title: 'title4',
           },
         ],
@@ -322,37 +322,46 @@ describe('when transforming time series table', () => {
 
       it('should return 5 rows', () => {
         expect(table.rows.length).toBe(5);
-        expect(table.rows[0]).toEqual([1000, 'title', 'hej', ['tags', 'asd'], [], [], [], []]);
-        expect(table.rows[1]).toEqual([1001, 'title1', 'text1', undefined, [], [], [], []]);
+        expect(table.rows[0]).toEqual([
+          1000,
+          'title',
+          'hej',
+          ['tags', 'asd'],
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+        ]);
+        expect(table.rows[1]).toEqual([1001, 'title1', 'text1', undefined, undefined, undefined, undefined, undefined]);
         expect(table.rows[2]).toEqual([
           1002,
           'title2',
           'text2',
           ['aze', 'any:thing1', 'other:other'],
-          ['thing1'],
-          ['other'],
-          [],
-          [],
+          'thing1',
+          'other',
+          undefined,
+          undefined,
         ]);
         expect(table.rows[3]).toEqual([
           1003,
           'title3',
           'text3',
-          ['tags', 'aze', 'any:thing2', 'other2:other2'],
-          ['thing2'],
-          [],
-          ['other2'],
-          [],
+          ['tags', 'aze', 'any:2', 'other2:other2'],
+          2,
+          undefined,
+          'other2',
+          undefined,
         ]);
         expect(table.rows[4]).toEqual([
           1004,
           'title4',
           'text4',
-          ['sameKey:one', 'sameKey:two'],
-          [],
-          [],
-          [],
-          ['one', 'two'],
+          ['sameKey:1', 'sameKey:2'],
+          undefined,
+          undefined,
+          undefined,
+          [1, 2],
         ]);
       });
     });

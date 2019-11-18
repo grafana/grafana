@@ -129,9 +129,16 @@ transformers['annotations'] = {
     model.columns.push(...Array.from(tagKeys, k => ({ text: k })));
     for (let i = 0; i < data.annotations.length; i++) {
       const evt = data.annotations[i];
-      const annotationTagValues = [...tagKeys].map(k =>
-        annotationTagKeyValues[i].filter(kv => kv[0] === k).map(kv => kv[1])
-      );
+      const annotationTagValues = [...tagKeys]
+        .map(k =>
+          annotationTagKeyValues[i]
+            .filter(kv => kv[0] === k)
+            .map(kv => {
+              const num = Number(kv[1]);
+              return isNaN(num) ? kv[1] : num;
+            })
+        )
+        .map(v => (v.length > 1 ? v : v[0]));
       model.rows.push([evt.time, evt.title, evt.text, evt.tags].concat(annotationTagValues));
     }
   },
