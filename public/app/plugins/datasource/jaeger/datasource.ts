@@ -1,4 +1,6 @@
 import {
+  dateMath,
+  DateTime,
   MutableDataFrame,
   DataSourceApi,
   DataSourceInstanceSettings,
@@ -6,7 +8,16 @@ import {
   DataQueryResponse,
   DataQuery,
 } from '@grafana/data';
-import { Observable, of } from 'rxjs';
+import { BackendSrv, DatasourceRequestOptions } from 'app/core/services/backend_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+
+import { Observable, from, of } from 'rxjs';
+
+function serializeParams(data: Record<string, any>) {
+  return Object.keys(data)
+    .map(k => `${encodeURIComponent(k)}=${encodeURIComponent(data[k])}`)
+    .join('&');
+}
 
 export type JaegerQuery = {
   query: string;
@@ -14,8 +25,30 @@ export type JaegerQuery = {
 
 export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
   /** @ngInject */
-  constructor(private instanceSettings: DataSourceInstanceSettings) {
+  constructor(
+    private instanceSettings: DataSourceInstanceSettings,
+    private backendSrv: BackendSrv,
+    private timeSrv: TimeSrv
+  ) {
     super(instanceSettings);
+  }
+
+  _request(apiUrl: string, data?: any, options?: DatasourceRequestOptions): Observable<Record<string, any>> {
+    // Hack for proxying metadata requests
+    const baseUrl = `/api/datasources/proxy/${this.instanceSettings.id}`;
+    const params = data ? serializeParams(data) : '';
+    const url = `${baseUrl}${apiUrl}${params.length ? `?${params}` : ''}`;
+    const req = {
+      ...options,
+      url,
+    };
+
+    return from(this.backendSrv.datasourceRequest(req));
+  }
+
+  async metadataRequest(url: string, params?: Record<string, any>) {
+    const res = await this._request(url, params, { silent: true }).toPromise();
+    return res.data.data;
   }
 
   query(options: DataQueryRequest<JaegerQuery>): Observable<DataQueryResponse> {
@@ -41,5 +74,20 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
 
   async testDatasource(): Promise<any> {
     return true;
+  }
+
+  getTime(date: string | DateTime, roundUp: boolean) {
+    if (typeof date === 'string') {
+      date = dateMath.parse(date, roundUp);
+    }
+    return date.valueOf() * 1000;
+  }
+
+  getTimeRange(): { start: number; end: number } {
+    const range = this.timeSrv.timeRange();
+    return {
+      start: this.getTime(range.from, false),
+      end: this.getTime(range.to, true),
+    };
   }
 }

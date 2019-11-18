@@ -6,7 +6,7 @@ import RCCascader from 'rc-cascader';
 export interface CascaderOption {
   label: string;
   value: string;
-
+  isLeaf?: boolean;
   children?: CascaderOption[];
   disabled?: boolean;
 }
