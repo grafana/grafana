@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	macaron "gopkg.in/macaron.v1"
@@ -93,8 +94,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
 	listener, err := net.Listen("tcp", listenAddr)
 	if err != nil {
-		hs.log.Debug("server was shutdown gracefully")
-		return nil
+		return errutil.Wrapf(err, "failed to open listener on address %s", listenAddr)
 	}
 
 	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol", setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
