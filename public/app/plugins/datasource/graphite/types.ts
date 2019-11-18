@@ -4,7 +4,7 @@ export interface GraphiteQuery extends DataQuery {
   target?: string;
 }
 
-export interface GraphiteOptions extends DataSourceJsonData{
+export interface GraphiteOptions extends DataSourceJsonData {
   graphiteVersion: string;
   graphiteType: GraphiteType;
 }
