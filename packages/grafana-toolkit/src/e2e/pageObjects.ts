@@ -44,6 +44,7 @@ export interface SwitchPageObjectType extends PageObjectType {
 
 export interface ArrayPageObjectType {
   hasLength: (length: number) => Promise<void>;
+  clickAtPos: (index: number) => Promise<void>;
   containsTextAtPos: (text: string, index: number) => Promise<void>;
   waitForSelector: (timeoutInMs?: number) => Promise<void>;
 }
@@ -95,13 +96,21 @@ export class PageObject
     console.log(`Checking for text ${text} at position ${index} of`, this.selector);
     await expect(this.page).not.toBeNull();
     const result = await this.page!.$$eval(this.selector, elements => elements.map((el: any) => el.innerText));
-    await expect(result[index]).toEqual(text);
+    await expect(result[index]!.trim()).toEqual(text);
   };
 
   click = async (): Promise<void> => {
     console.log('Trying to click on:', this.selector);
     await expect(this.page).not.toBeNull();
     await expect(this.page).toClick(this.selector);
+  };
+
+  clickAtPos = async (index: number): Promise<void> => {
+    console.log(`Trying to clicking at position:${index} on:`, this.selector);
+    await expect(this.page).not.toBeNull();
+    const elements = await this.page!.$$(this.selector);
+    const element = await elements[index];
+    await element.click();
   };
 
   toggle = async (): Promise<void> => {

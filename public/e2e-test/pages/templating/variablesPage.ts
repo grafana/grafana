@@ -8,6 +8,8 @@ export interface VariablesPage {
   variableTableArrowDownButton: ArrayPageObjectType;
   variableTableDuplicateButton: ArrayPageObjectType;
   variableTableRemoveButton: ArrayPageObjectType;
+  newVariableButton: ClickablePageObjectType;
+  goBackButton: ClickablePageObjectType;
 }
 
 export const variablesPage = new TestPage<VariablesPage>({
@@ -19,5 +21,29 @@ export const variablesPage = new TestPage<VariablesPage>({
     variableTableArrowDownButton: 'Variable editor Table ArrowDown button',
     variableTableDuplicateButton: 'Variable editor Table Duplicate button',
     variableTableRemoveButton: 'Variable editor Table Remove button',
+    newVariableButton: 'Variable editor New variable button',
+    goBackButton: 'Dashboard settings Go Back button',
   },
 });
+
+export interface AssertVariableTableArguments {
+  name: string;
+  query: string;
+}
+
+export const assertVariableTable = async (page: TestPage<VariablesPage>, args: AssertVariableTableArguments[]) => {
+  console.log('Asserting variable table');
+  await page.pageObjects.variableTableNameField.waitForSelector();
+  await page.pageObjects.variableTableNameField.hasLength(args.length);
+  await page.pageObjects.variableTableDefinitionField.hasLength(args.length);
+  await page.pageObjects.variableTableArrowUpButton.hasLength(args.length);
+  await page.pageObjects.variableTableArrowDownButton.hasLength(args.length);
+  await page.pageObjects.variableTableDuplicateButton.hasLength(args.length);
+  await page.pageObjects.variableTableRemoveButton.hasLength(args.length);
+  for (let index = 0; index < args.length; index++) {
+    const { name, query } = args[index];
+    await page.pageObjects.variableTableNameField.containsTextAtPos(`$${name}`, index);
+    await page.pageObjects.variableTableDefinitionField.containsTextAtPos(query, index);
+  }
+  console.log('Asserting variable table, Ok');
+};
