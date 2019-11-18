@@ -30,7 +30,8 @@ ENV OSX_SDK_URL=https://s3.dockerproject.org/darwin/v2/ \
 # might also wanna put them as their own layer to not have to unpack them every time?
 
 RUN apt-get update   && \
-    apt-get install -y  \
+    apt-get upgrade -yq && \
+    apt-get install -yq \
         clang patch libxml2-dev \
         ca-certificates \
         curl            \
@@ -48,8 +49,8 @@ RUN UNATTENDED=yes OSX_VERSION_MIN=${OSX_MIN} /tmp/osxcross/build.sh
 RUN rm -rf /tmp/osxcross/target/SDK/${OSX_SDK}/usr/share && \
     cd /tmp                                              && \
     tar cfJ osxcross.tar.xz osxcross/target              && \
-    rm -rf /tmp/osxcross
-RUN apt-get install -y                     \
+    rm -rf /tmp/osxcross && \
+    apt-get install -y                     \
         unzip libtool-bin bison curl flex gawk gcc g++ gperf help2man libncurses5-dev make patch python-dev texinfo xz-utils && \
     curl -L http://crosstool-ng.org/download/crosstool-ng/crosstool-ng-${CTNG}.tar.xz  \
          | tar -xJ -C /tmp/             && \
@@ -72,19 +73,18 @@ RUN apt-get install -y                     \
 # base image to crossbuild grafana
 FROM ubuntu:18.04
 
-ENV GOVERSION=1.13.1 \
+ENV GOVERSION=1.13.4 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=10.14.2 \
-    CHKSUM_ARMV7_MUSL=3043bd16a0287b02f3f1045ec5f7fa42bd47bd8329183fc52b179dbb80a56d5f \
-    CHKSUM_ARMV8_MUSL=1a935561ebe3155bfd02b1b25cd7533c81906dd47b1de1fa43b74209130b941c \
-    CHKSUM_AMD64_MUSL=0fada482750176671d24c31b944fae7c3bf0a826011b3decc12d47b21c3cb5c2
+    NODEVERSION=10.17.0
 
-COPY --from=toolchain /tmp/x86_64-centos6-linux-gnu.tar.xz /tmp/
-COPY --from=toolchain /tmp/osxcross.tar.xz /tmp/
+ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update   && \
-    apt-get install -y  \
+COPY --from=toolchain /tmp/x86_64-centos6-linux-gnu.tar.xz /tmp/osxcross.tar.xz /tmp/
+
+RUN apt-get update && \
+    apt-get upgrade -yq && \
+    apt-get install -yq  \
         clang gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-mingw-w64-x86-64 \
         apt-transport-https \
         ca-certificates \
@@ -98,37 +98,40 @@ RUN apt-get update   && \
         xz-utils        \
         expect          \
         gnupg2          \
-        unzip        && \
+        unzip &&        \
     ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil                  && \
     curl -L https://nodejs.org/dist/v${NODEVERSION}/node-v${NODEVERSION}-linux-x64.tar.xz \
       | tar -xJ --strip-components=1 -C /usr/local                      && \
     curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -   && \
     echo "deb [arch=amd64] https://dl.yarnpkg.com/debian/ stable main"     \
       | tee /etc/apt/sources.list.d/yarn.list                           && \
-    apt-get update && apt-get install --no-install-recommends yarn      && \
+    apt-get update && apt-get install -yq --no-install-recommends yarn      && \
     curl -L https://storage.googleapis.com/golang/go${GOVERSION}.linux-amd64.tar.gz \
       | tar -xz -C /usr/local && \
     git clone https://github.com/raspberrypi/tools.git /opt/rpi-tools --depth=1
 
+ARG CHKSUM_ARMV7_MUSL=76c5539aed3d46d61c66d60757dd4083ab05420e4252aca04eaeb791e3342dac
+ARG CHKSUM_ARMV8_MUSL=6d4f7249e067ef6d054bcebe9eaf0c581972767f86ad78d2b53d832d1126c52e
+ARG CHKSUM_AMD64_MUSL=8c487b0f56bf600008e8f37041cbce37f6fe1e001acd3eca8bb16e30e16e8ae7
+
 # Install musl cross compilers
 RUN cd /tmp && \
-curl -O https://musl.cc/arm-linux-musleabihf-cross.tgz && \
-[ "$(sha256sum arm-linux-musleabihf-cross.tgz|cut -f1 -d ' ')" = "$CHKSUM_ARMV7_MUSL" ] && \
-tar xf arm-linux-musleabihf-cross.tgz && \
-rm arm-linux-musleabihf-cross.tgz && \
-curl -O https://musl.cc/aarch64-linux-musl-cross.tgz && \
-[ "$(sha256sum aarch64-linux-musl-cross.tgz|cut -f1 -d ' ')" = "$CHKSUM_ARMV8_MUSL" ] && \
-tar xf aarch64-linux-musl-cross.tgz && \
-rm aarch64-linux-musl-cross.tgz && \
-curl -O https://musl.cc/x86_64-linux-musl-cross.tgz && \
-[ "$(sha256sum x86_64-linux-musl-cross.tgz|cut -f1 -d ' ')" = "$CHKSUM_AMD64_MUSL" ] && \
-tar xf x86_64-linux-musl-cross.tgz && \
-rm x86_64-linux-musl-cross.tgz
+    curl -fO https://musl.cc/arm-linux-musleabihf-cross.tgz && \
+    ([ "$(sha256sum arm-linux-musleabihf-cross.tgz|cut -f1 -d ' ')" = "$CHKSUM_ARMV7_MUSL" ] || (echo "Mismatching checksums armv7"; exit 1)) && \
+    tar xf arm-linux-musleabihf-cross.tgz && \
+    rm arm-linux-musleabihf-cross.tgz && \
+    curl -fO https://musl.cc/aarch64-linux-musl-cross.tgz && \
+    ([ "$(sha256sum aarch64-linux-musl-cross.tgz|cut -f1 -d ' ')" = "$CHKSUM_ARMV8_MUSL" ] || (echo "Mismatching checksums armv8"; exit 1)) && \
+    tar xf aarch64-linux-musl-cross.tgz && \
+    rm aarch64-linux-musl-cross.tgz && \
+    curl -fO https://musl.cc/x86_64-linux-musl-cross.tgz && \
+    ([ "$(sha256sum x86_64-linux-musl-cross.tgz|cut -f1 -d ' ')" = "$CHKSUM_AMD64_MUSL" ] || (echo "Mismatching checksums amd64"; exit 1)) && \
+    tar xf x86_64-linux-musl-cross.tgz && \
+    rm x86_64-linux-musl-cross.tgz
 
-RUN apt-get install -y                           \
-        gcc libc-dev make && \
+RUN apt-get install -yq gcc libc-dev make && \
     gpg2 --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB && \
     curl -sSL https://get.rvm.io | bash -s stable && \
     /bin/bash -l -c "rvm requirements && rvm install 2.2 && gem install -N fpm"
 
-ADD ./bootstrap.sh /tmp/bootstrap.sh
+COPY ./bootstrap.sh /tmp/bootstrap.sh
