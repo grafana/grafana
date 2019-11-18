@@ -12,8 +12,6 @@ var ErrTimeout = errors.New("Timeout error. You can set timeout in seconds with 
 var ErrNoRenderer = errors.New("No renderer plugin found nor is an external render server configured")
 var ErrPhantomJSNotInstalled = errors.New("PhantomJS executable not found")
 
-const DefaultConcurrencyLimit = 3
-
 type Opts struct {
 	Width           int
 	Height          int
