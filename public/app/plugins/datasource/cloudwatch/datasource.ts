@@ -168,7 +168,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
     if (period < 1) {
       period = 1;
     }
-    if (!target.highResolution && range / period >= 1440) {
+    if (range / period >= 1440) {
       period = Math.ceil(range / 1440 / periodUnit) * periodUnit;
     }
 
@@ -287,6 +287,10 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
           ) as string[];
 
           regionsAffected.forEach(region => this.debouncedAlert(this.datasourceName, this.getActualRegion(region)));
+        }
+
+        if (err.data && err.data.message === 'Metric request error' && err.data.error) {
+          err.data.message = err.data.error;
         }
 
         throw err;

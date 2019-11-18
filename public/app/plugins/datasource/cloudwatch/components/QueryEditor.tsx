@@ -55,10 +55,6 @@ export class QueryEditor extends PureComponent<Props, State> {
       query.statistics = ['Average'];
     }
 
-    if (!query.hasOwnProperty('highResolution')) {
-      query.highResolution = false;
-    }
-
     if (!query.hasOwnProperty('matchExact')) {
       query.matchExact = true;
     }
@@ -220,12 +216,6 @@ export class QueryEditor extends PureComponent<Props, State> {
             >
               <Alias value={query.alias} onChange={(value: string) => this.onChange({ ...query, alias: value })} />
             </QueryField>
-            <Switch
-              label="HighRes"
-              labelClass="query-keyword"
-              checked={query.highResolution}
-              onChange={() => this.onChange({ ...query, highResolution: !query.highResolution })}
-            />
             <Switch
               label="Match Exact"
               labelClass="query-keyword"
