@@ -18,6 +18,7 @@ export interface PageObjectType {
   init: (page: Page) => Promise<void>;
   exists: () => Promise<void>;
   containsText: (text: string) => Promise<void>;
+  waitForSelector: (timeoutInMs?: number) => Promise<void>;
 }
 
 export interface ClickablePageObjectType extends PageObjectType {
@@ -41,8 +42,20 @@ export interface SwitchPageObjectType extends PageObjectType {
   isSwitchedOff: () => Promise<void>;
 }
 
+export interface ArrayPageObjectType {
+  hasLength: (length: number) => Promise<void>;
+  containsTextAtPos: (text: string, index: number) => Promise<void>;
+  waitForSelector: (timeoutInMs?: number) => Promise<void>;
+}
+
 export class PageObject
-  implements PageObjectType, ClickablePageObjectType, InputPageObjectType, SelectPageObjectType, SwitchPageObjectType {
+  implements
+    PageObjectType,
+    ClickablePageObjectType,
+    InputPageObjectType,
+    SelectPageObjectType,
+    SwitchPageObjectType,
+    ArrayPageObjectType {
   protected page?: Page;
 
   constructor(protected selector: string) {}
@@ -69,7 +82,20 @@ export class PageObject
     console.log(`Checking for placeholder '${expectedPlaceholder}' in:`, this.selector);
     await expect(this.page).not.toBeNull();
     const placeholder = await this.page!.$eval(this.selector, (input: HTMLInputElement) => input.placeholder);
-    expect(placeholder).toEqual(expectedPlaceholder);
+    await expect(placeholder).toEqual(expectedPlaceholder);
+  };
+
+  hasLength = async (length: number): Promise<void> => {
+    console.log('Checking for length of', this.selector);
+    const result = await this.page!.$$eval(this.selector, elements => elements.length);
+    await expect(result).toEqual(length);
+  };
+
+  containsTextAtPos = async (text: string, index: number): Promise<void> => {
+    console.log(`Checking for text ${text} at position ${index} of`, this.selector);
+    await expect(this.page).not.toBeNull();
+    const result = await this.page!.$$eval(this.selector, elements => elements.map((el: any) => el.innerText));
+    await expect(result[index]).toEqual(text);
   };
 
   click = async (): Promise<void> => {
@@ -106,17 +132,23 @@ export class PageObject
       }
       return select.options[select.selectedIndex].innerText;
     });
-    expect(selectedText).toEqual(text);
+    await expect(selectedText).toEqual(text);
+  };
+
+  waitForSelector = async (timeoutInMs?: number): Promise<void> => {
+    console.log('Waiting for', this.selector);
+    await expect(this.page).not.toBeNull();
+    await this.page!.waitForSelector(this.selector, { timeout: timeoutInMs || 1000 });
   };
 
   isSwitchedOn = async (): Promise<void> => {
     const checked = await this.getChecked();
-    expect(checked).toBe(true);
+    await expect(checked).toBe(true);
   };
 
   isSwitchedOff = async (): Promise<void> => {
     const checked = await this.getChecked();
-    expect(checked).toBe(false);
+    await expect(checked).toBe(false);
   };
 
   blur = async (): Promise<void> => {

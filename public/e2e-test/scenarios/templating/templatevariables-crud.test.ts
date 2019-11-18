@@ -1,11 +1,11 @@
 import { e2eScenario } from '@grafana/toolkit/src/e2e';
 import { Browser, Page } from 'puppeteer-core';
-import { createDashboardPage } from '../../pages/dashboards/createDashboardPage';
 import { dashboardPage } from '../../pages/dashboards/dashboardPage';
-import { dashboardSettingsPage } from '../../pages/dashboards/dashboardSettingsPage';
-import { variablePage } from '../../pages/templating/variablePage';
 import { addTestDataSourceAndVerify, cleanUpTestDataSource } from '../smoke.test';
+import { createDashboardPage } from '../../pages/dashboards/createDashboardPage';
+import { dashboardSettingsPage } from '../../pages/dashboards/dashboardSettingsPage';
 import { variablesPage } from '../../pages/templating/variablesPage';
+import { variablePage } from '../../pages/templating/variablePage';
 import { saveDashboardModal } from '../../pages/dashboards/saveDashboardModal';
 
 e2eScenario({
@@ -87,10 +87,16 @@ e2eScenario({
     await saveDashboardModal.pageObjects.save.click();
     await saveDashboardModal.pageObjects.success.exists();
 
-    await dashboardPage.pageObjects.submenuItemLabel.containsText('query-label');
+    await dashboardPage.pageObjects.submenuItemLabel.waitForSelector();
+    await dashboardPage.pageObjects.submenuItemLabel.hasLength(1);
+    await dashboardPage.pageObjects.submenuItemLabel.containsTextAtPos('query-label', 0);
     await dashboardPage.pageObjects.submenuItemValueDropDownValueLink.exists();
     await dashboardPage.pageObjects.submenuItemValueDropDownValueLink.click();
-    await dashboardPage.pageObjects.submenuItemValueDropDownOptionText.exists();
+    await dashboardPage.pageObjects.submenuItemValueDropDownOptionText.hasLength(4);
+    await dashboardPage.pageObjects.submenuItemValueDropDownOptionText.containsTextAtPos('All', 0);
+    await dashboardPage.pageObjects.submenuItemValueDropDownOptionText.containsTextAtPos('A', 1);
+    await dashboardPage.pageObjects.submenuItemValueDropDownOptionText.containsTextAtPos('B', 2);
+    await dashboardPage.pageObjects.submenuItemValueDropDownOptionText.containsTextAtPos('C', 3);
 
     await cleanUpTestDataSource(page, testDataSourceName);
   },

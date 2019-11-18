@@ -1,12 +1,12 @@
-import { ClickablePageObjectType, PageObjectType, TestPage } from '@grafana/toolkit/src/e2e';
+import { ArrayPageObjectType, ClickablePageObjectType, PageObjectType, TestPage } from '@grafana/toolkit/src/e2e';
 
 export interface DashboardPage {
   settings: ClickablePageObjectType;
-  submenuItemLabel: PageObjectType;
+  submenuItemLabel: ArrayPageObjectType;
   submenuItemValueDropDownValueLink: ClickablePageObjectType;
   submenuItemValueDropDownDropDown: PageObjectType;
   submenuItemValueDropDownSelectedLink: PageObjectType;
-  submenuItemValueDropDownOptionText: PageObjectType;
+  submenuItemValueDropDownOptionText: ArrayPageObjectType;
 }
 
 export const dashboardPage = new TestPage<DashboardPage>({
