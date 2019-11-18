@@ -87,7 +87,7 @@ This release starts with support for Loki, but we will bring this concept to oth
 
 In Explore's split view, the two timepickers can now be linked so that if you change one, the other gets changed as well. This helps with keeping start and end times of the split view queries in sync and will ensure that you're looking at the same time interval in both split panes.
 
-<img src="/img/docs/v65/explore_time_sync.gif	" />
+<img src="/img/docs/v65/explore_time_sync.gif" />
 
 ## Upgrading
 
