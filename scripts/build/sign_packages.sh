@@ -21,5 +21,5 @@ echo "$GPG_KEY_PASSWORD" > /tmp/gpg-passphrase
 
 for package in $_files; do
     [ -e "$package" ] || continue
-    rpm --addsign $package
+    rpm --addsign "$package"
 done
