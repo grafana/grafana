@@ -1,88 +1,68 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ChangeEvent } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 import { Switch, FormLabel, Select, Button } from '@grafana/ui';
+import { AzureDataSourceSettings } from '../types';
 
 export interface Props {
-  datasourceConfig: any;
-  logAnalyticsSubscriptions: SelectableValue[];
-  logAnalyticsWorkspaces: SelectableValue[];
+  options: AzureDataSourceSettings;
+  subscriptions: SelectableValue[];
+  workspaces: SelectableValue[];
   onDatasourceUpdate: (config: any) => void;
   onLoadSubscriptions: (type?: string) => void;
   onLoadWorkspaces: (type?: string) => void;
 }
-
-export interface State {
-  config: any;
-  logAnalyticsSubscriptions: SelectableValue[];
-  logAnalyticsWorkspaces: SelectableValue[];
-}
-
-export class AnalyticsConfig extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
-
-    const { datasourceConfig } = this.props;
-
-    this.state = {
-      config: datasourceConfig,
-      logAnalyticsSubscriptions: [],
-      logAnalyticsWorkspaces: [],
-    };
-  }
-
-  static getDerivedStateFromProps(props: Props, state: State) {
-    return {
-      ...state,
-      config: props.datasourceConfig,
-      logAnalyticsSubscriptions: props.logAnalyticsSubscriptions,
-      logAnalyticsWorkspaces: props.logAnalyticsWorkspaces,
-    };
-  }
-
-  onLogAnalyticsTenantIdChange = (logAnalyticsTenantId: string) => {
+export class AnalyticsConfig extends PureComponent<Props> {
+  onLogAnalyticsTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.props.onDatasourceUpdate({
-      ...this.state.config,
+      ...this.props.options,
       jsonData: {
-        ...this.state.config.jsonData,
-        logAnalyticsTenantId,
+        ...this.props.options.jsonData,
+        logAnalyticsTenantId: event.target.value,
       },
     });
   };
 
-  onLogAnalyticsClientIdChange = (logAnalyticsClientId: string) => {
+  onLogAnalyticsClientIdChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.props.onDatasourceUpdate({
-      ...this.state.config,
+      ...this.props.options,
       jsonData: {
-        ...this.state.config.jsonData,
-        logAnalyticsClientId,
+        ...this.props.options.jsonData,
+        logAnalyticsClientId: event.target.value,
       },
     });
   };
 
-  onLogAnalyticsClientSecretChange = (logAnalyticsClientSecret: string) => {
+  onLogAnalyticsClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.props.onDatasourceUpdate({
-      ...this.state.config,
+      ...this.props.options,
       secureJsonData: {
-        ...this.state.config.secureJsonData,
-        logAnalyticsClientSecret,
+        ...this.props.options.secureJsonData,
+        logAnalyticsClientSecret: event.target.value,
       },
     });
   };
 
   onLogAnalyticsResetClientSecret = () => {
     this.props.onDatasourceUpdate({
-      ...this.state.config,
-      version: this.state.config.version + 1,
-      secureJsonFields: { ...this.state.config.secureJsonFields, logAnalyticsClientSecret: false },
+      ...this.props.options,
+      version: this.props.options.version + 1,
+      secureJsonData: {
+        ...this.props.options.secureJsonData,
+        logAnalyticsClientSecret: '',
+      },
+      secureJsonFields: {
+        ...this.props.options.secureJsonFields,
+        logAnalyticsClientSecret: false,
+      },
     });
   };
 
   onLogAnalyticsSubscriptionSelect = (logAnalyticsSubscription: SelectableValue<string>) => {
     this.props.onDatasourceUpdate({
-      ...this.state.config,
+      ...this.props.options,
       jsonData: {
-        ...this.state.config.jsonData,
+        ...this.props.options.jsonData,
         logAnalyticsSubscriptionId: logAnalyticsSubscription.value,
       },
     });
@@ -90,9 +70,9 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
 
   onWorkspaceSelectChange = (logAnalyticsDefaultWorkspace: SelectableValue<string>) => {
     this.props.onDatasourceUpdate({
-      ...this.state.config,
+      ...this.props.options,
       jsonData: {
-        ...this.state.config.jsonData,
+        ...this.props.options.jsonData,
         logAnalyticsDefaultWorkspace: logAnalyticsDefaultWorkspace.value,
       },
     });
@@ -100,9 +80,9 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
 
   onAzureLogAnalyticsSameAsChange = (azureLogAnalyticsSameAs: boolean) => {
     this.props.onDatasourceUpdate({
-      ...this.state.config,
+      ...this.props.options,
       jsonData: {
-        ...this.state.config.jsonData,
+        ...this.props.options.jsonData,
         azureLogAnalyticsSameAs,
       },
     });
@@ -110,8 +90,8 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
 
   hasWorkspaceRequiredFields = () => {
     const {
-      config: { jsonData, secureJsonData, secureJsonFields },
-    } = this.state;
+      options: { jsonData, secureJsonData, secureJsonFields },
+    } = this.props;
 
     if (jsonData.azureLogAnalyticsSameAs) {
       return (
@@ -133,10 +113,14 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
 
   render() {
     const {
-      config: { jsonData, secureJsonData, secureJsonFields },
-      logAnalyticsSubscriptions,
-      logAnalyticsWorkspaces,
-    } = this.state;
+      options: { jsonData, secureJsonData, secureJsonFields },
+      subscriptions,
+      workspaces,
+    } = this.props;
+
+    if (!jsonData.hasOwnProperty('azureLogAnalyticsSameAs')) {
+      jsonData.azureLogAnalyticsSameAs = true;
+    }
 
     const addtlAttrs = {
       ...(jsonData.azureLogAnalyticsSameAs && {
@@ -149,12 +133,12 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
         <Switch
           label="Same details as Azure Monitor API"
           checked={jsonData.azureLogAnalyticsSameAs}
-          onChange={event => this.onAzureLogAnalyticsSameAsChange(!jsonData.azureLogAnalyticsSameAs)}
+          onChange={() => this.onAzureLogAnalyticsSameAsChange(!jsonData.azureLogAnalyticsSameAs)}
           {...addtlAttrs}
         />
         {!jsonData.azureLogAnalyticsSameAs && (
           <AzureCredentialsForm
-            subscriptionOptions={logAnalyticsSubscriptions}
+            subscriptionOptions={subscriptions}
             selectedSubscription={jsonData.logAnalyticsSubscriptionId}
             tenantId={jsonData.logAnalyticsTenantId}
             clientId={jsonData.logAnalyticsClientId}
@@ -179,10 +163,8 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
               </FormLabel>
               <div className="width-25">
                 <Select
-                  value={logAnalyticsWorkspaces.find(
-                    workspace => workspace.value === jsonData.logAnalyticsDefaultWorkspace
-                  )}
-                  options={logAnalyticsWorkspaces}
+                  value={workspaces.find(workspace => workspace.value === jsonData.logAnalyticsDefaultWorkspace)}
+                  options={workspaces}
                   defaultValue={jsonData.logAnalyticsDefaultWorkspace}
                   onChange={this.onWorkspaceSelectChange}
                 />

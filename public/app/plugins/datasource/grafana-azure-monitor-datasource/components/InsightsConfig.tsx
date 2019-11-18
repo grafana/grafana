@@ -1,71 +1,54 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ChangeEvent } from 'react';
 import { FormLabel, Button, Input } from '@grafana/ui';
+import { AzureDataSourceSettings } from '../types';
 
 export interface Props {
-  datasourceConfig: any;
+  options: AzureDataSourceSettings;
   onDatasourceUpdate: (config: any) => void;
 }
-
-export interface State {
-  config: any;
-}
-
-export class InsightsConfig extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
-
-    const { datasourceConfig } = this.props;
-
-    this.state = {
-      config: datasourceConfig,
-    };
-  }
-
-  static getDerivedStateFromProps(props: Props, state: State) {
-    return {
-      ...state,
-      config: props.datasourceConfig,
-    };
-  }
-
-  onAppInsightsAppIdChange = (appInsightsAppId: string) => {
+export class InsightsConfig extends PureComponent<Props> {
+  onAppInsightsAppIdChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.props.onDatasourceUpdate({
-      ...this.state.config,
+      ...this.props.options,
       jsonData: {
-        ...this.state.config.jsonData,
-        appInsightsAppId,
+        ...this.props.options.jsonData,
+        appInsightsAppId: event.target.value,
       },
     });
   };
 
-  onAppInsightsApiKeyChange = (appInsightsApiKey: string) => {
+  onAppInsightsApiKeyChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.props.onDatasourceUpdate({
-      ...this.state.config,
+      ...this.props.options,
       secureJsonData: {
-        ...this.state.config.secureJsonData,
-        appInsightsApiKey,
+        ...this.props.options.secureJsonData,
+        appInsightsApiKey: event.target.value,
       },
     });
   };
 
   onAppInsightsResetApiKey = () => {
     this.props.onDatasourceUpdate({
-      ...this.state.config,
-      version: this.state.config.version + 1,
+      ...this.props.options,
+      version: this.props.options.version + 1,
+      secureJsonData: {
+        ...this.props.options.secureJsonData,
+        appInsightsApiKey: '',
+      },
       secureJsonFields: {
-        ...this.state.config.secureJsonFields,
+        ...this.props.options.secureJsonFields,
         appInsightsApiKey: false,
       },
     });
   };
 
   render() {
-    const { config } = this.state;
+    const { options } = this.props;
     return (
       <>
         <h3 className="page-heading">Application Insights Details</h3>
         <div className="gf-form-group">
-          {config.secureJsonFields.appInsightsApiKey ? (
+          {options.secureJsonFields.appInsightsApiKey ? (
             <div className="gf-form-inline">
               <div className="gf-form">
                 <FormLabel className="width-12">API Key</FormLabel>
@@ -87,8 +70,8 @@ export class InsightsConfig extends PureComponent<Props, State> {
                   <Input
                     className="width-30"
                     placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                    value={config.secureJsonData.appInsightsApiKey || ''}
-                    onChange={event => this.onAppInsightsApiKeyChange(event.target.value)}
+                    value={options.secureJsonData.appInsightsApiKey || ''}
+                    onChange={this.onAppInsightsApiKeyChange}
                   />
                 </div>
               </div>
@@ -100,8 +83,8 @@ export class InsightsConfig extends PureComponent<Props, State> {
               <div className="width-15">
                 <Input
                   className="width-30"
-                  value={config.jsonData.appInsightsAppId || ''}
-                  onChange={event => this.onAppInsightsAppIdChange(event.target.value)}
+                  value={options.jsonData.appInsightsAppId || ''}
+                  onChange={this.onAppInsightsAppIdChange}
                 />
               </div>
             </div>

@@ -4,7 +4,7 @@ import InsightsConfig, { Props } from './InsightsConfig';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
-    datasourceConfig: {
+    options: {
       id: 21,
       orgId: 1,
       name: 'Azure Monitor-10-10',
@@ -24,6 +24,8 @@ const setup = (propOverrides?: object) => {
         appInsightsApiKey: false,
       },
       jsonData: {
+        cloudName: '',
+        subscriptionId: '',
         appInsightsAppId: 'cddcc020-2c94-460a-a3d0-df3147ffa792',
       },
       secureJsonData: {
