@@ -17,7 +17,7 @@ fi
 gpg --batch --allow-secret-key-import --import ~/private-repo/signing/private.key
 
 cp ./scripts/build/rpmmacros ~/.rpmmacros
-echo $GPG_KEY_PASSWORD > /tmp/gpg-passphrase
+echo "$GPG_KEY_PASSWORD" > /tmp/gpg-passphrase
 
 for package in $_files; do
     [ -e "$package" ] || continue
