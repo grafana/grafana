@@ -87,6 +87,11 @@ func TestSplitHostPortDefault(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(addr.Host, ShouldEqual, "xyz.rds.amazonaws.com")
 		So(addr.Port, ShouldEqual, "123")
+
+		addr, err = SplitHostPortDefault("", "localhost", "1433")
+		So(err, ShouldBeNil)
+		So(addr.Host, ShouldEqual, "localhost")
+		So(addr.Port, ShouldEqual, "1433")
 	})
 }
 

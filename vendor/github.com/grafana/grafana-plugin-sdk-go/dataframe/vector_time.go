@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type timeVector []*time.Time
+type timeVector []time.Time
 
 func newTimeVector(l int) *timeVector {
 	v := make(timeVector, l)
@@ -12,11 +12,11 @@ func newTimeVector(l int) *timeVector {
 }
 
 func (v *timeVector) Set(i int, val interface{}) {
-	(*v)[i] = val.(*time.Time)
+	(*v)[i] = val.(time.Time)
 }
 
 func (v *timeVector) Append(val interface{}) {
-	*v = append(*v, val.(*time.Time))
+	*v = append(*v, val.(time.Time))
 }
 
 func (v *timeVector) At(i int) interface{} {
@@ -26,3 +26,4 @@ func (v *timeVector) At(i int) interface{} {
 func (v *timeVector) Len() int {
 	return len(*v)
 }
+	

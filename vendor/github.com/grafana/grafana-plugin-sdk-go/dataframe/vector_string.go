@@ -1,6 +1,6 @@
 package dataframe
 
-type stringVector []*string
+type stringVector []string
 
 func newStringVector(l int) *stringVector {
 	v := make(stringVector, l)
@@ -8,11 +8,11 @@ func newStringVector(l int) *stringVector {
 }
 
 func (v *stringVector) Set(i int, val interface{}) {
-	(*v)[i] = val.(*string)
+	(*v)[i] = val.(string)
 }
 
 func (v *stringVector) Append(val interface{}) {
-	*v = append(*v, val.(*string))
+	*v = append(*v, val.(string))
 }
 
 func (v *stringVector) At(i int) interface{} {
