@@ -1,5 +1,5 @@
-import React, { PureComponent, SyntheticEvent } from 'react';
-import { DataSourceSettings } from '@grafana/data';
+import React, { PureComponent } from 'react';
+import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { Button, FormLabel, Select } from '@grafana/ui';
 import { GraphiteOptions, GraphiteType } from '../types';
 
@@ -32,13 +32,13 @@ export class GraphiteDetails extends PureComponent<Props, State> {
     };
   }
 
-  onChangeHandler = (key: keyof GraphiteOptions) => (event: SyntheticEvent<HTMLSelectElement>) => {
+  onChangeHandler = (key: keyof GraphiteOptions) => (newValue: SelectableValue) => {
     const { value, onChange } = this.props;
     onChange({
       ...value,
       jsonData: {
         ...value.jsonData,
-        [key]: event.currentTarget.value,
+        [key]: newValue.value,
       },
     });
   };
@@ -58,7 +58,7 @@ export class GraphiteDetails extends PureComponent<Props, State> {
             <Select
               value={graphiteVersions.find(version => version.value === value.jsonData.graphiteVersion)}
               options={graphiteVersions}
-              width={7}
+              width={8}
               onChange={this.onChangeHandler('graphiteVersion')}
             />
           </div>
@@ -67,7 +67,7 @@ export class GraphiteDetails extends PureComponent<Props, State> {
             <Select
               options={graphiteTypes}
               value={graphiteTypes.find(type => type.value === value.jsonData.graphiteType)}
-              width={7}
+              width={8}
               onChange={this.onChangeHandler('graphiteType')}
             />
 
