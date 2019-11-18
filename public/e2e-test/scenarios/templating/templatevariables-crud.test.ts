@@ -1,24 +1,17 @@
-import { e2eScenario } from '@grafana/toolkit/src/e2e';
+import { e2eScenario, TestPage } from '@grafana/toolkit/src/e2e';
 import { Browser, Page } from 'puppeteer-core';
-import { assertVariableLabelsAndComponents, dashboardPage } from '../../pages/dashboards/dashboardPage';
-import { addTestDataSourceAndVerify, cleanUpTestDataSource } from '../smoke.test';
-import { createDashboardPage } from '../../pages/dashboards/createDashboardPage';
+import { assertVariableLabelsAndComponents, DashboardPage } from '../../pages/dashboards/dashboardPage';
 import { dashboardSettingsPage } from '../../pages/dashboards/dashboardSettingsPage';
 import { assertVariableTable, variablesPage } from '../../pages/templating/variablesPage';
 import { createQueryVariable, variablePage } from '../../pages/templating/variablePage';
-import { saveDashboardModal } from '../../pages/dashboards/saveDashboardModal';
 import { saveChangesDashboardModal } from '../../pages/dashboards/saveChangesDashboardModal';
 
 e2eScenario({
   describeName: 'Template Variables tests',
   itName: 'Template Variables QueryVariable CRUD',
-  scenario: async (browser: Browser, page: Page) => {
-    const testDataSourceName = await addTestDataSourceAndVerify(page);
-    const dashboardTitle = `e2e - QueryVariable CRUD - ${new Date().getTime()}`;
-    await createDashboardPage.init(page);
-    await createDashboardPage.navigateTo();
-
-    await dashboardPage.init(page);
+  createTestDataSource: true,
+  createTestDashboard: true,
+  scenario: async (browser: Browser, page: Page, datasourceName?: string, dashboardPage?: TestPage<DashboardPage>) => {
     await dashboardPage.pageObjects.settings.click();
 
     await dashboardSettingsPage.init(page);
@@ -57,13 +50,7 @@ e2eScenario({
     await variablePage.pageObjects.valueGroupsTagsEnabledSwitch.isSwitchedOff();
     console.log('Asserting defaults for new variable, OK!');
 
-    await dashboardSettingsPage.pageObjects.saveDashBoard.click();
-
-    await saveDashboardModal.init(page);
-    await saveDashboardModal.expectSelector({ selector: 'save-dashboard-as-modal' });
-    await saveDashboardModal.pageObjects.name.enter(dashboardTitle);
-    await saveDashboardModal.pageObjects.save.click();
-    await saveDashboardModal.pageObjects.success.exists();
+    await variablesPage.pageObjects.goBackButton.click();
 
     await dashboardPage.pageObjects.settings.click();
 
@@ -84,7 +71,7 @@ e2eScenario({
       const asserts = queryVariables.slice(0, queryVariableIndex + 1);
       await createQueryVariable({
         page: variablePage,
-        dataSourceName: testDataSourceName,
+        datasourceName,
         name,
         label,
         query,
@@ -108,7 +95,5 @@ e2eScenario({
 
       await variablesPage.pageObjects.newVariableButton.click();
     }
-
-    await cleanUpTestDataSource(page, testDataSourceName);
   },
 });

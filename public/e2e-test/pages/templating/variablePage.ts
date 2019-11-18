@@ -60,7 +60,7 @@ export interface CreateQueryVariableArguments {
   page: TestPage<VariablePage>;
   name: string;
   label: string;
-  dataSourceName: string;
+  datasourceName: string;
   query: string;
 }
 
@@ -68,13 +68,13 @@ export const createQueryVariable = async ({
   page,
   name,
   label,
-  dataSourceName,
+  datasourceName,
   query,
 }: CreateQueryVariableArguments) => {
   console.log('Creating a Query Variable with required');
   await page.pageObjects.generalNameInput.enter(name);
   await page.pageObjects.generalLabelInput.enter(label);
-  await page.pageObjects.queryOptionsDataSourceSelect.select(`string:${dataSourceName}`);
+  await page.pageObjects.queryOptionsDataSourceSelect.select(`string:${datasourceName}`);
   await page.pageObjects.queryOptionsQueryInput.exists();
   await page.pageObjects.queryOptionsQueryInput.containsPlaceholder('metric name or tags query');
   await page.pageObjects.queryOptionsQueryInput.enter(query);
