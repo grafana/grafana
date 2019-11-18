@@ -5,7 +5,7 @@ import { addTestDataSourceAndVerify, cleanUpTestDataSource } from '../smoke.test
 import { createDashboardPage } from '../../pages/dashboards/createDashboardPage';
 import { dashboardSettingsPage } from '../../pages/dashboards/dashboardSettingsPage';
 import { variablesPage } from '../../pages/templating/variablesPage';
-import { variablePage } from '../../pages/templating/variablePage';
+import { createQueryVariable, variablePage } from '../../pages/templating/variablePage';
 import { saveDashboardModal } from '../../pages/dashboards/saveDashboardModal';
 
 e2eScenario({
@@ -56,28 +56,26 @@ e2eScenario({
     await variablePage.pageObjects.valueGroupsTagsEnabledSwitch.isSwitchedOff();
     console.log('Asserting defaults for new variable, OK!');
 
-    console.log('Creating a Query Variable with required');
-    await variablePage.pageObjects.generalNameInput.enter('query');
-    await variablePage.pageObjects.generalLabelInput.enter('query-label');
-    await variablePage.pageObjects.queryOptionsDataSourceSelect.select(`string:${testDataSourceName}`);
-    await variablePage.pageObjects.queryOptionsQueryInput.exists();
-    await variablePage.pageObjects.queryOptionsQueryInput.containsPlaceholder('metric name or tags query');
-    await variablePage.pageObjects.queryOptionsQueryInput.enter('*');
-    await variablePage.pageObjects.queryOptionsQueryInput.blur();
-    await variablePage.pageObjects.previewOfValuesOption.exists();
-    await variablePage.pageObjects.selectionOptionsMultiSwitch.toggle();
-    await variablePage.pageObjects.selectionOptionsMultiSwitch.isSwitchedOn();
-    await variablePage.pageObjects.selectionOptionsIncludeAllSwitch.toggle();
-    await variablePage.pageObjects.selectionOptionsIncludeAllSwitch.isSwitchedOn();
-    await variablePage.pageObjects.selectionOptionsCustomAllInput.exists();
-    await variablePage.pageObjects.selectionOptionsCustomAllInput.containsText('');
-    await variablePage.pageObjects.selectionOptionsCustomAllInput.containsPlaceholder('blank = auto');
-    await variablePage.pageObjects.addButton.click();
-    console.log('Creating a Query Variable with required, OK!');
+    const queryVariable1Name = 'query';
+    const queryVariable1Label = 'query-label';
+    const queryVariable1Query = '*';
+    await createQueryVariable({
+      page: variablePage,
+      dataSourceName: testDataSourceName,
+      name: queryVariable1Name,
+      label: queryVariable1Label,
+      query: queryVariable1Query,
+    });
 
-    await variablesPage.pageObjects.variableTableNameField.containsText('query');
-    await variablesPage.pageObjects.variableTableDuplicateButton.exists();
-    await variablesPage.pageObjects.variableTableRemoveButton.exists();
+    await variablesPage.pageObjects.variableTableNameField.waitForSelector();
+    await variablesPage.pageObjects.variableTableNameField.hasLength(1);
+    await variablesPage.pageObjects.variableTableNameField.containsTextAtPos(`$${queryVariable1Name}`, 0);
+    await variablesPage.pageObjects.variableTableDefinitionField.hasLength(1);
+    await variablesPage.pageObjects.variableTableDefinitionField.containsTextAtPos(queryVariable1Query, 0);
+    await variablesPage.pageObjects.variableTableArrowUpButton.hasLength(1);
+    await variablesPage.pageObjects.variableTableArrowDownButton.hasLength(1);
+    await variablesPage.pageObjects.variableTableDuplicateButton.hasLength(1);
+    await variablesPage.pageObjects.variableTableRemoveButton.hasLength(1);
 
     await dashboardSettingsPage.pageObjects.saveDashBoard.click();
 
@@ -89,7 +87,7 @@ e2eScenario({
 
     await dashboardPage.pageObjects.submenuItemLabel.waitForSelector();
     await dashboardPage.pageObjects.submenuItemLabel.hasLength(1);
-    await dashboardPage.pageObjects.submenuItemLabel.containsTextAtPos('query-label', 0);
+    await dashboardPage.pageObjects.submenuItemLabel.containsTextAtPos(queryVariable1Label, 0);
     await dashboardPage.pageObjects.submenuItemValueDropDownValueLink.exists();
     await dashboardPage.pageObjects.submenuItemValueDropDownValueLink.click();
     await dashboardPage.pageObjects.submenuItemValueDropDownOptionText.hasLength(4);

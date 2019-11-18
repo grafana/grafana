@@ -1,13 +1,13 @@
-import { ClickablePageObjectType, PageObjectType, TestPage } from '@grafana/toolkit/src/e2e';
+import { ArrayPageObjectType, ClickablePageObjectType, TestPage } from '@grafana/toolkit/src/e2e';
 
 export interface VariablesPage {
   callToActionButton: ClickablePageObjectType;
-  variableTableNameField: PageObjectType;
-  variableTableDefinitionField: PageObjectType;
-  variableTableArrowUpButton: ClickablePageObjectType;
-  variableTableArrowDownButton: ClickablePageObjectType;
-  variableTableDuplicateButton: ClickablePageObjectType;
-  variableTableRemoveButton: ClickablePageObjectType;
+  variableTableNameField: ArrayPageObjectType;
+  variableTableDefinitionField: ArrayPageObjectType;
+  variableTableArrowUpButton: ArrayPageObjectType;
+  variableTableArrowDownButton: ArrayPageObjectType;
+  variableTableDuplicateButton: ArrayPageObjectType;
+  variableTableRemoveButton: ArrayPageObjectType;
 }
 
 export const variablesPage = new TestPage<VariablesPage>({

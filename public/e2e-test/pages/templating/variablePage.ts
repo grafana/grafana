@@ -55,3 +55,38 @@ export const variablePage = new TestPage<VariablePage>({
     updateButton: 'Variable editor Update button',
   },
 });
+
+export interface CreateQueryVariableArguments {
+  page: TestPage<VariablePage>;
+  name: string;
+  label: string;
+  dataSourceName: string;
+  query: string;
+}
+
+export const createQueryVariable = async ({
+  page,
+  name,
+  label,
+  dataSourceName,
+  query,
+}: CreateQueryVariableArguments) => {
+  console.log('Creating a Query Variable with required');
+  await page.pageObjects.generalNameInput.enter(name);
+  await page.pageObjects.generalLabelInput.enter(label);
+  await page.pageObjects.queryOptionsDataSourceSelect.select(`string:${dataSourceName}`);
+  await page.pageObjects.queryOptionsQueryInput.exists();
+  await page.pageObjects.queryOptionsQueryInput.containsPlaceholder('metric name or tags query');
+  await page.pageObjects.queryOptionsQueryInput.enter(query);
+  await page.pageObjects.queryOptionsQueryInput.blur();
+  await page.pageObjects.previewOfValuesOption.exists();
+  await page.pageObjects.selectionOptionsMultiSwitch.toggle();
+  await page.pageObjects.selectionOptionsMultiSwitch.isSwitchedOn();
+  await page.pageObjects.selectionOptionsIncludeAllSwitch.toggle();
+  await page.pageObjects.selectionOptionsIncludeAllSwitch.isSwitchedOn();
+  await page.pageObjects.selectionOptionsCustomAllInput.exists();
+  await page.pageObjects.selectionOptionsCustomAllInput.containsText('');
+  await page.pageObjects.selectionOptionsCustomAllInput.containsPlaceholder('blank = auto');
+  await page.pageObjects.addButton.click();
+  console.log('Creating a Query Variable with required, OK!');
+};
