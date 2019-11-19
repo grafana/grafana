@@ -1,9 +1,10 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
 import appEvents from 'app/core/app_events';
-import { RowAction } from './UserProfileRow';
+import { Modal, Themeable, stylesFactory, withTheme, ConfirmButton } from '@grafana/ui';
+import { GrafanaTheme } from '@grafana/data';
 import { UserOrg, CoreEvents } from 'app/types';
-import { Modal } from '@grafana/ui';
+import { ActionButton } from './ActionButton';
 
 interface Props {
   orgs: UserOrg[];
@@ -32,6 +33,9 @@ export class UserOrgs extends PureComponent<Props, State> {
   render() {
     const { orgs, onOrgRoleChange, onOrgRemove } = this.props;
     const { showAddOrgModal } = this.state;
+    const addToOrgContainerClass = cx(css`
+      margin-top: 0.8rem;
+    `);
 
     return (
       <>
@@ -51,7 +55,9 @@ export class UserOrgs extends PureComponent<Props, State> {
               </tbody>
             </table>
           </div>
-          <RowAction text="Add this user to another organisation" onClick={this.handleAddOrg} align="left" />
+          <div className={addToOrgContainerClass}>
+            <ActionButton text="Add this user to another organisation" onClick={this.handleAddOrg} />
+          </div>
           <AddToOrgModal isOpen={showAddOrgModal} onDismiss={this.handleAddOrgModalDismiss} />
         </div>
       </>
@@ -61,18 +67,31 @@ export class UserOrgs extends PureComponent<Props, State> {
 
 const ORG_ROLES = ['Viewer', 'Editor', 'Admin'];
 
-export interface OrgRowProps {
+const getOrgRowStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    removeButton: css`
+      margin-right: 0.6rem;
+      text-decoration: underline;
+      color: ${theme.colors.blue95};
+    `,
+    label: css`
+      font-weight: 500;
+    `,
+  };
+});
+
+interface OrgRowProps extends Themeable {
   org: UserOrg;
   onOrgRemove: (orgId: number) => void;
   onOrgRoleChange: (orgId: number, newRole: string) => void;
 }
 
-export interface OrgRowState {
+interface OrgRowState {
   isEditing: boolean;
   currentRole: string;
 }
 
-export class OrgRow extends PureComponent<OrgRowProps, OrgRowState> {
+class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
   state = {
     isEditing: false,
     currentRole: this.props.org.role,
@@ -110,59 +129,56 @@ export class OrgRow extends PureComponent<OrgRowProps, OrgRowState> {
   };
 
   render() {
-    const { org } = this.props;
+    const { org, theme } = this.props;
     const { isEditing, currentRole } = this.state;
-    const labelClass = cx(
-      'width-16',
-      css`
-        font-weight: 500;
-      `
-    );
+    const styles = getOrgRowStyles(theme);
+    const labelClass = cx('width-16', styles.label);
+    const removeOrgClass = cx('pull-right', styles.removeButton);
 
     return (
       <tr>
         <td className={labelClass}>{org.name}</td>
         {isEditing ? (
-          <>
-            <td colSpan={2}>
-              <div className="gf-form-select-wrapper width-8">
-                <select value={currentRole} className="gf-form-input" onChange={this.handleOrgRoleChange}>
-                  {ORG_ROLES.map((option, index) => {
-                    return (
-                      <option value={option} key={`${option}-${index}`}>
-                        {option}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-            </td>
-            <td>
-              <RowAction text="Cancel" onClick={this.handleCancelClick} />
-            </td>
-            <td>
-              <button className="btn btn-small btn-inverse pull-right" onClick={this.handleOrgRoleSave}>
-                Save
-              </button>
-            </td>
-          </>
+          <td>
+            <div className="gf-form-select-wrapper width-8">
+              <select value={currentRole} className="gf-form-input" onChange={this.handleOrgRoleChange}>
+                {ORG_ROLES.map((option, index) => {
+                  return (
+                    <option value={option} key={`${option}-${index}`}>
+                      {option}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+          </td>
         ) : (
-          <>
-            <td className="width-25" colSpan={2}>
-              {org.role}
-            </td>
-            <td>
-              <RowAction text="Change role" onClick={this.handleChangeRoleClick} />
-            </td>
-            <td>
-              <RowAction text="Remove from organisation" onClick={this.handleOrgRemove} />
-            </td>
-          </>
+          <td className="width-25">{org.role}</td>
+        )}
+        <td colSpan={isEditing ? 2 : 1}>
+          <div className="pull-right">
+            <ConfirmButton
+              buttonText="Change role"
+              confirmText="Save"
+              onClick={this.handleChangeRoleClick}
+              onCancel={this.handleCancelClick}
+              onConfirm={this.handleOrgRoleSave}
+            />
+          </div>
+        </td>
+        {!isEditing && (
+          <td>
+            <a type="button" onMouseDown={this.handleOrgRemove} className={removeOrgClass}>
+              Remove from organisation
+            </a>
+          </td>
         )}
       </tr>
     );
   }
 }
+
+const OrgRow = withTheme(UnThemedOrgRow);
 
 interface AddToOrgModalProps {
   isOpen: boolean;

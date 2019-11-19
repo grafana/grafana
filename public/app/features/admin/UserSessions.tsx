@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
+import { css, cx } from 'emotion';
 import appEvents from 'app/core/app_events';
-import { RowAction } from './UserProfileRow';
+import { ActionButton } from './ActionButton';
 import { UserSession, CoreEvents } from 'app/types';
 import { ConfirmButton } from '@grafana/ui';
 
@@ -32,6 +33,12 @@ export class UserSessions extends PureComponent<Props> {
 
   render() {
     const { sessions } = this.props;
+    const logoutFromAllDevicesClass = cx(
+      'pull-right',
+      css`
+        margin-top: 0.8rem;
+      `
+    );
 
     return (
       <>
@@ -63,16 +70,15 @@ export class UserSessions extends PureComponent<Props> {
                             onConfirm={this.handleSessionRevoke(session.id)}
                           />
                         </div>
-                        {/* <RowAction text="Force logout" onClick={this.handleSessionRevoke(session.id)} /> */}
                       </td>
                     </tr>
                   ))}
               </tbody>
             </table>
           </div>
-          <div className="gf-form-button-row">
+          <div className={logoutFromAllDevicesClass}>
             {sessions.length > 0 && (
-              <RowAction text="Force logout from all devices" onClick={this.handleAllSessionsRevoke} />
+              <ActionButton text="Force logout from all devices" onClick={this.handleAllSessionsRevoke} />
             )}
           </div>
         </div>

@@ -77,7 +77,7 @@ interface State {
 class UnThemedConfirmButton extends PureComponent<Props, State> {
   static defaultProps: Partial<Props> = {
     buttonText: 'Edit',
-    confirmText: 'Confirm Delete',
+    confirmText: 'Save',
     disabled: false,
   };
 
