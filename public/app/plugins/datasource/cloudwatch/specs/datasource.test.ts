@@ -340,7 +340,7 @@ describe('CloudWatchDatasource', () => {
               InstanceId: 'i-12345678',
             },
             statistics: ['Average'],
-            period: 300,
+            period: '300s',
           },
         ],
       };
@@ -367,7 +367,7 @@ describe('CloudWatchDatasource', () => {
             TargetGroup: 'tg',
           },
           statistics: ['p90.00'],
-          period: 300,
+          period: '300s',
         },
       ],
     };
@@ -484,7 +484,7 @@ describe('CloudWatchDatasource', () => {
               dim2: '[[var2]]',
             },
             statistics: ['Average'],
-            period: 300,
+            period: '300s',
           },
         ],
       };
@@ -511,7 +511,7 @@ describe('CloudWatchDatasource', () => {
               dim3: '[[var3]]',
             },
             statistics: ['Average'],
-            period: 300,
+            period: '300s',
           },
         ],
         scopedVars: {
@@ -544,7 +544,7 @@ describe('CloudWatchDatasource', () => {
               dim4: '[[var4]]',
             },
             statistics: ['Average'],
-            period: 300,
+            period: '300s',
           },
         ],
       };
@@ -573,7 +573,7 @@ describe('CloudWatchDatasource', () => {
               dim3: '[[var3]]',
             },
             statistics: ['Average'],
-            period: 300,
+            period: '300',
           },
         ],
         scopedVars: {
@@ -755,7 +755,7 @@ describe('CloudWatchDatasource', () => {
     const start = 1483196400 * 1000;
     const testData: any[] = [
       [
-        { period: 60, namespace: 'AWS/EC2' },
+        { period: '60s', namespace: 'AWS/EC2' },
         { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
         hourSec * 3,
         60,
@@ -767,7 +767,7 @@ describe('CloudWatchDatasource', () => {
         300,
       ],
       [
-        { period: 60, namespace: 'AWS/ELB' },
+        { period: '60s', namespace: 'AWS/ELB' },
         { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
         hourSec * 3,
         60,
@@ -779,7 +779,7 @@ describe('CloudWatchDatasource', () => {
         60,
       ],
       [
-        { period: 1, namespace: 'CustomMetricsNamespace' },
+        { period: '1', namespace: 'CustomMetricsNamespace' },
         {
           range: {
             from: new Date(start),
@@ -790,13 +790,13 @@ describe('CloudWatchDatasource', () => {
         1,
       ],
       [
-        { period: 1, namespace: 'CustomMetricsNamespace' },
+        { period: '1', namespace: 'CustomMetricsNamespace' },
         { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
         hourSec * 3 - 1,
         60,
       ],
       [
-        { period: 60, namespace: 'CustomMetricsNamespace' },
+        { period: '60s', namespace: 'CustomMetricsNamespace' },
         { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
         hourSec * 3,
         60,
