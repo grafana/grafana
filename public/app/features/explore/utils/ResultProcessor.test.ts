@@ -108,7 +108,11 @@ describe('ResultProcessor', () => {
           {
             label: 'A-series',
             color: '#7EB26D',
-            data: [[100, 4], [200, 5], [300, 6]],
+            data: [
+              [100, 4],
+              [200, 5],
+              [300, 6],
+            ],
             info: undefined,
             isVisible: true,
             yAxis: {
@@ -135,7 +139,11 @@ describe('ResultProcessor', () => {
             { text: 'time', type: 'time', filterable: undefined },
             { text: 'message', type: 'string', filterable: undefined },
           ],
-          rows: [[4, 100, 'this is a message'], [5, 200, 'second message'], [6, 300, 'third']],
+          rows: [
+            [4, 100, 'this is a message'],
+            [5, 200, 'second message'],
+            [6, 300, 'third'],
+          ],
           type: 'table',
         });
       });
@@ -212,7 +220,11 @@ describe('ResultProcessor', () => {
             {
               label: 'A-series',
               color: '#7EB26D',
-              data: [[100, 4], [200, 5], [300, 6]],
+              data: [
+                [100, 4],
+                [200, 5],
+                [300, 6],
+              ],
               info: undefined,
               isVisible: true,
               yAxis: {

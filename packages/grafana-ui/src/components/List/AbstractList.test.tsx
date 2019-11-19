@@ -4,7 +4,11 @@ import { AbstractList } from './AbstractList';
 
 describe('AbstractList', () => {
   it('renders items using renderItem prop function', () => {
-    const items = [{ name: 'Item 1', id: 'item1' }, { name: 'Item 2', id: 'item2' }, { name: 'Item 3', id: 'item3' }];
+    const items = [
+      { name: 'Item 1', id: 'item1' },
+      { name: 'Item 2', id: 'item2' },
+      { name: 'Item 3', id: 'item3' },
+    ];
 
     const list = shallow(
       <AbstractList
@@ -22,7 +26,11 @@ describe('AbstractList', () => {
   });
 
   it('allows custom item key', () => {
-    const items = [{ name: 'Item 1', id: 'item1' }, { name: 'Item 2', id: 'item2' }, { name: 'Item 3', id: 'item3' }];
+    const items = [
+      { name: 'Item 1', id: 'item1' },
+      { name: 'Item 2', id: 'item2' },
+      { name: 'Item 3', id: 'item3' },
+    ];
 
     const list = shallow(
       <AbstractList
