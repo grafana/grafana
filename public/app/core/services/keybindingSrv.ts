@@ -43,16 +43,7 @@ export class KeybindingSrv {
   }
 
   setupGlobal() {
-    if (!(this.$location.path() === '/login')) {
-      this.bind(['?', 'h'], this.showHelpModal);
-      this.bind('g h', this.goToHome);
-      this.bind('g a', this.openAlerting);
-      this.bind('g p', this.goToProfile);
-      this.bind('s o', this.openSearch);
-      this.bind('f', this.openSearch);
-      this.bind('esc', this.exit);
-      this.bindGlobal('esc', this.globalEsc);
-    }
+      // Disabled global keybinds
   }
 
   globalEsc() {
@@ -138,16 +129,7 @@ export class KeybindingSrv {
   }
 
   bindGlobal(keyArg: string, fn: () => void) {
-    Mousetrap.bindGlobal(
-      keyArg,
-      (evt: any) => {
-        evt.preventDefault();
-        evt.stopPropagation();
-        evt.returnValue = false;
-        return this.$rootScope.$apply(fn.bind(this));
-      },
-      'keydown'
-    );
+      // Disabled key bindings
   }
 
   unbind(keyArg: string, keyType?: string) {
