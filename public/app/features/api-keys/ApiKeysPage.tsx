@@ -12,7 +12,7 @@ import ApiKeysAddedModal from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { DeleteButton, EventsWithValidation, FormLabel, Input, ValidationEvents } from '@grafana/ui';
+import { DeleteButton, EventsWithValidation, FormLabel, Input, Switch, ValidationEvents } from '@grafana/ui';
 import { NavModel, dateTime, isDateTime } from '@grafana/data';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { store } from 'app/store/store';
@@ -51,6 +51,7 @@ export interface Props {
   setSearchQuery: typeof setSearchQuery;
   addApiKey: typeof addApiKey;
   apiKeysCount: number;
+  includeInvalid: boolean;
 }
 
 export interface State {
@@ -76,7 +77,7 @@ const tooltipText =
 export class ApiKeysPage extends PureComponent<Props, any> {
   constructor(props: Props) {
     super(props);
-    this.state = { isAdding: false, newApiKey: initialApiKeyState };
+    this.state = { isAdding: false, newApiKey: initialApiKeyState, includeInvalid: false };
   }
 
   componentDidMount() {
@@ -84,15 +85,19 @@ export class ApiKeysPage extends PureComponent<Props, any> {
   }
 
   async fetchApiKeys() {
-    await this.props.loadApiKeys();
+    await this.props.loadApiKeys(this.state.includeInvalid);
   }
 
   onDeleteApiKey(key: ApiKey) {
-    this.props.deleteApiKey(key.id);
+    this.props.deleteApiKey(key.id, this.props.includeInvalid);
   }
 
   onSearchQueryChange = (value: string) => {
     this.props.setSearchQuery(value);
+  };
+
+  onIncludeInvalidChange = (value: boolean) => {
+    this.setState({ hasFetched: false, includeInvalid: value }, this.fetchApiKeys);
   };
 
   onToggleAdding = () => {
@@ -114,7 +119,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     // make sure that secondsToLive is number or null
     const secondsToLive = this.state.newApiKey['secondsToLive'];
     this.state.newApiKey['secondsToLive'] = secondsToLive ? kbn.interval_to_seconds(secondsToLive) : null;
-    this.props.addApiKey(this.state.newApiKey, openModal);
+    this.props.addApiKey(this.state.newApiKey, openModal, this.props.includeInvalid);
     this.setState((prevState: State) => {
       return {
         ...prevState,
@@ -232,7 +237,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
 
   renderApiKeyList() {
     const { isAdding } = this.state;
-    const { apiKeys, searchQuery } = this.props;
+    const { apiKeys, searchQuery, includeInvalid } = this.props;
 
     return (
       <>
@@ -256,6 +261,14 @@ export class ApiKeysPage extends PureComponent<Props, any> {
         {this.renderAddApiKeyForm()}
 
         <h3 className="page-heading">Existing Keys</h3>
+        <Switch
+          label="Show expired"
+          checked={includeInvalid}
+          onChange={event => {
+            // @ts-ignore
+            this.onIncludeInvalidChange(event.target.checked);
+          }}
+        />
         <table className="filter-table">
           <thead>
             <tr>
@@ -304,6 +317,7 @@ function mapStateToProps(state: any) {
     navModel: getNavModel(state.navIndex, 'apikeys'),
     apiKeys: getApiKeys(state.apiKeys),
     searchQuery: state.apiKeys.searchQuery,
+    includeInvalid: state.includeInvalid,
     apiKeysCount: getApiKeysCount(state.apiKeys),
     hasFetched: state.apiKeys.hasFetched,
   };

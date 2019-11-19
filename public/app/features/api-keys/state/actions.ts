@@ -26,27 +26,31 @@ const apiKeysLoaded = (apiKeys: ApiKey[]): LoadApiKeysAction => ({
   payload: apiKeys,
 });
 
-export function addApiKey(apiKey: ApiKey, openModal: (key: string) => void): ThunkResult<void> {
+export function addApiKey(
+  apiKey: ApiKey,
+  openModal: (key: string) => void,
+  includeInvalid: boolean
+): ThunkResult<void> {
   return async dispatch => {
     const result = await getBackendSrv().post('/api/auth/keys', apiKey);
     dispatch(setSearchQuery(''));
-    dispatch(loadApiKeys());
+    dispatch(loadApiKeys(includeInvalid));
     openModal(result.key);
   };
 }
 
-export function loadApiKeys(): ThunkResult<void> {
+export function loadApiKeys(includeInvalid: boolean): ThunkResult<void> {
   return async dispatch => {
-    const response = await getBackendSrv().get('/api/auth/keys');
+    const response = await getBackendSrv().get('/api/auth/keys?include_invalid=' + includeInvalid);
     dispatch(apiKeysLoaded(response));
   };
 }
 
-export function deleteApiKey(id: number): ThunkResult<void> {
+export function deleteApiKey(id: number, includeInvalid: boolean): ThunkResult<void> {
   return async dispatch => {
     getBackendSrv()
       .delete('/api/auth/keys/' + id)
-      .then(dispatch(loadApiKeys()));
+      .then(dispatch(loadApiKeys(includeInvalid)));
   };
 }
 
