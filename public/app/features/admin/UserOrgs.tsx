@@ -1,9 +1,8 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
-import appEvents from 'app/core/app_events';
 import { Modal, Themeable, stylesFactory, withTheme, ConfirmButton } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { UserOrg, CoreEvents } from 'app/types';
+import { UserOrg } from 'app/types';
 import { ActionButton } from './ActionButton';
 
 interface Props {
@@ -87,32 +86,30 @@ interface OrgRowProps extends Themeable {
 }
 
 interface OrgRowState {
-  isEditing: boolean;
   currentRole: string;
+  isChangingRole: boolean;
+  isRemovingFromOrg: boolean;
 }
 
 class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
   state = {
-    isEditing: false,
     currentRole: this.props.org.role,
+    isChangingRole: false,
+    isRemovingFromOrg: false,
   };
 
   handleOrgRemove = () => {
     const { org } = this.props;
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Remove from organisation',
-      text: `Are you sure you want to remove user from organisation: ${org.name}?`,
-      yesText: 'Remove from organisation',
-      icon: 'fa-warning',
-      onConfirm: () => {
-        this.props.onOrgRemove(org.orgId);
-      },
-    });
+    this.props.onOrgRemove(org.orgId);
   };
 
   handleChangeRoleClick = () => {
     const { org } = this.props;
-    this.setState({ isEditing: true, currentRole: org.role });
+    this.setState({ isChangingRole: true, currentRole: org.role });
+  };
+
+  handleOrgRemoveClick = () => {
+    this.setState({ isRemovingFromOrg: true });
   };
 
   handleOrgRoleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -125,20 +122,19 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
   };
 
   handleCancelClick = () => {
-    this.setState({ isEditing: false });
+    this.setState({ isChangingRole: false, isRemovingFromOrg: false });
   };
 
   render() {
     const { org, theme } = this.props;
-    const { isEditing, currentRole } = this.state;
+    const { currentRole, isChangingRole, isRemovingFromOrg } = this.state;
     const styles = getOrgRowStyles(theme);
     const labelClass = cx('width-16', styles.label);
-    const removeOrgClass = cx('pull-right', styles.removeButton);
 
     return (
       <tr>
         <td className={labelClass}>{org.name}</td>
-        {isEditing ? (
+        {isChangingRole ? (
           <td>
             <div className="gf-form-select-wrapper width-8">
               <select value={currentRole} className="gf-form-input" onChange={this.handleOrgRoleChange}>
@@ -155,22 +151,32 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
         ) : (
           <td className="width-25">{org.role}</td>
         )}
-        <td colSpan={isEditing ? 2 : 1}>
-          <div className="pull-right">
-            <ConfirmButton
-              buttonText="Change role"
-              confirmText="Save"
-              onClick={this.handleChangeRoleClick}
-              onCancel={this.handleCancelClick}
-              onConfirm={this.handleOrgRoleSave}
-            />
-          </div>
-        </td>
-        {!isEditing && (
-          <td>
-            <a type="button" onMouseDown={this.handleOrgRemove} className={removeOrgClass}>
-              Remove from organisation
-            </a>
+        {!isRemovingFromOrg && (
+          <td colSpan={isChangingRole ? 2 : 1}>
+            <div className="pull-right">
+              <ConfirmButton
+                buttonText="Change role"
+                confirmText="Save"
+                onClick={this.handleChangeRoleClick}
+                onCancel={this.handleCancelClick}
+                onConfirm={this.handleOrgRoleSave}
+              />
+            </div>
+          </td>
+        )}
+        {!isChangingRole && (
+          <td colSpan={isRemovingFromOrg ? 2 : 1}>
+            <div className="pull-right">
+              <ConfirmButton
+                buttonText="Remove from organisation"
+                confirmText="Confirmn removal"
+                confirmButtonVariant="danger"
+                confirmWidth={13}
+                onClick={this.handleOrgRemoveClick}
+                onCancel={this.handleCancelClick}
+                onConfirm={this.handleOrgRemove}
+              />
+            </div>
           </td>
         )}
       </tr>
