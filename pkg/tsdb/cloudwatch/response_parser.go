@@ -31,6 +31,9 @@ func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 			} else {
 				mdr[*r.Id][*r.Label].Timestamps = append(mdr[*r.Id][*r.Label].Timestamps, r.Timestamps...)
 				mdr[*r.Id][*r.Label].Values = append(mdr[*r.Id][*r.Label].Values, r.Values...)
+				if *r.StatusCode == "Complete" {
+					mdr[*r.Id][*r.Label].StatusCode = r.StatusCode
+				}
 			}
 			queries[*r.Id].RequestExceededMaxLimit = requestExceededMaxLimit
 		}
