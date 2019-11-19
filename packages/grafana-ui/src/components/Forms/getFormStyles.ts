@@ -5,9 +5,10 @@ import { getLegendStyles } from './Legend';
 import { getFieldValidationMessageStyles } from './FieldValidationMessage';
 import { getButtonStyles, ButtonVariant } from './Button';
 import { ButtonSize } from '../Button/types';
+import { getInputStyles } from './Input/Input';
 
 export const getFormStyles = stylesFactory(
-  (theme: GrafanaTheme, options: { variant: ButtonVariant; size: ButtonSize }) => {
+  (theme: GrafanaTheme, options: { variant: ButtonVariant; size: ButtonSize; invalid: boolean }) => {
     return {
       ...getLabelStyles(theme),
       ...getLegendStyles(theme),
@@ -17,6 +18,7 @@ export const getFormStyles = stylesFactory(
         variant: options.variant,
         size: options.size,
       }),
+      ...getInputStyles({ theme, invalid: options.invalid }),
     };
   }
 );

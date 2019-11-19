@@ -24,12 +24,12 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
         content: '';
         position: absolute;
         left: 9px;
-        top: -5px;
+        top: -4px;
         width: 0;
         height: 0;
-        border-left: 5px solid transparent;
-        border-right: 5px solid transparent;
-        border-bottom: 5px solid ${theme.colors.formValidationMessageBg};
+        border-left: 4px solid transparent;
+        border-right: 4px solid transparent;
+        border-bottom: 4px solid ${theme.colors.formValidationMessageBg};
       }
     `,
     fieldValidationMessageIcon: css`
