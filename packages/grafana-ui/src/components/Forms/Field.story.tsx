@@ -1,7 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { boolean, number, text } from '@storybook/addon-knobs';
-import { action } from '@storybook/addon-actions';
-import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Field } from './Field';
 import { Input } from './Input/Input';
 import { Switch } from './Switch';
