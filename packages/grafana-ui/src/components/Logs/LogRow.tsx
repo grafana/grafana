@@ -96,7 +96,11 @@ class UnThemedLogRow extends PureComponent<Props, State> {
         )}
         <div className={style.logsRowLevel} />
         {!isLogsPanel && (
-          <div title="See log details" onClick={this.toggleDetails} className={style.logsRowToggleDetails}>
+          <div
+            title={showDetails ? 'Hide log details' : 'See log details'}
+            onClick={this.toggleDetails}
+            className={style.logsRowToggleDetails}
+          >
             <i className={showDetails ? 'fa fa-chevron-up' : 'fa fa-chevron-down'} />
           </div>
         )}

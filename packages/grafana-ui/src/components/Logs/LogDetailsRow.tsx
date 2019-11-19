@@ -70,18 +70,23 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     return (
       <div className={style.logsRowDetailsValue}>
         {/* Action buttons - show stats/filter results */}
-        <div onClick={this.showStats} aria-label={'Field stats'} className={style.logsRowDetailsIcon}>
+        <div
+          title="Ad-hoc statistics"
+          onClick={this.showStats}
+          aria-label={'Field stats'}
+          className={style.logsRowDetailsIcon}
+        >
           <i className={'fa fa-signal'} />
         </div>
         {isLabel ? (
-          <div onClick={() => this.filterLabel()} className={style.logsRowDetailsIcon}>
+          <div title="Filter for value" onClick={() => this.filterLabel()} className={style.logsRowDetailsIcon}>
             <i className={'fa fa-search-plus'} />
           </div>
         ) : (
           <div className={style.logsRowDetailsIcon} />
         )}
         {isLabel ? (
-          <div onClick={() => this.filterOutLabel()} className={style.logsRowDetailsIcon}>
+          <div title="Filter out value" onClick={() => this.filterOutLabel()} className={style.logsRowDetailsIcon}>
             <i className={'fa fa-search-minus'} />
           </div>
         ) : (
