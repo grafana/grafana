@@ -59,6 +59,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     logsRow: css`
       label: logs-row;
       display: table-row;
+      cursor: pointer;
 
       > div {
         display: table-cell;
@@ -76,11 +77,13 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       label: logs-row__duplicates;
       text-align: right;
       width: 4em;
+      cursor: default;
     `,
     logsRowLevel: css`
       label: logs-row__level;
       position: relative;
       width: 10px;
+      cursor: default;
 
       &::after {
         content: '';
@@ -103,7 +106,6 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       width: 15px;
       padding-right: ${theme.spacing.sm};
       font-size: 9px;
-      cursor: pointer;
     `,
     logsRowLocalTime: css`
       label: logs-row__localtime;
@@ -129,6 +131,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       margin: 20px 0;
       padding: ${theme.spacing.sm};
       width: 100%;
+      cursor: default;
     `,
     logsRowDetailsSectionTable: css`
       label: logs-row-details-table__section;

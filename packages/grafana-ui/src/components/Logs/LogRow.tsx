@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Field, LinkModel, LogRowModel, TimeZone, DataQueryResponse } from '@grafana/data';
+import { Field, LinkModel, LogRowModel, TimeZone, DataQueryResponse, GrafanaTheme } from '@grafana/data';
 import { cx, css } from 'emotion';
 
 import {
@@ -9,8 +9,10 @@ import {
   LogRowContextProvider,
 } from './LogRowContextProvider';
 import { Themeable } from '../../types/theme';
+import { selectThemeVariant } from '../../index';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
+import { stylesFactory } from '../../themes/stylesFactory';
 
 //Components
 import { LogDetails } from './LogDetails';
@@ -36,6 +38,14 @@ interface State {
   showDetails: boolean;
 }
 
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    topVerticalAlign: css`
+      label: topVerticalAlign;
+      vertical-align: top;
+    `,
+  };
+});
 /**
  * Renders a log line.
  *
@@ -58,6 +68,9 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   };
 
   toggleDetails = () => {
+    if (this.props.isLogsPanel) {
+      return;
+    }
     this.setState(state => {
       return {
         showDetails: !state.showDetails,
@@ -86,21 +99,11 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     } = this.props;
     const { showDetails, showContext } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
+    const styles = getStyles(theme);
     const showUtc = timeZone === 'utc';
     const showDetailsClassName = showDetails
-      ? cx([
-          'fa fa-chevron-up',
-          css`
-            vertical-align: top;
-          `,
-        ])
-      : cx([
-          'fa fa-chevron-down',
-          css`
-            vertical-align: top;
-          `,
-        ]);
-
+      ? cx(['fa fa-chevron-up', styles.topVerticalAlign])
+      : cx(['fa fa-chevron-down', styles.topVerticalAlign]);
     return (
       <div className={style.logsRow}>
         {showDuplicates && (
@@ -119,7 +122,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           </div>
         )}
         <div>
-          <div>
+          <div onClick={this.toggleDetails}>
             {showTime && showUtc && (
               <div className={style.logsRowLocalTime} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
                 {row.timeUtc}
