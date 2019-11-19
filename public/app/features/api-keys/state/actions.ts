@@ -41,7 +41,7 @@ export function addApiKey(
 
 export function loadApiKeys(includeExpired: boolean): ThunkResult<void> {
   return async dispatch => {
-    const response = await getBackendSrv().get('/api/auth/keys?IncludeExpired=' + includeExpired);
+    const response = await getBackendSrv().get('/api/auth/keys?includeExpired=' + includeExpired);
     dispatch(apiKeysLoaded(response));
   };
 }

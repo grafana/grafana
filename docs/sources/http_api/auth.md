@@ -69,7 +69,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 Query Parameters:
 
-- `IncludeExpired`: boolean. enable listing of expired keys. Optional.
+- `includeExpired`: boolean. enable listing of expired keys. Optional.
 
 **Example Response**:
 
