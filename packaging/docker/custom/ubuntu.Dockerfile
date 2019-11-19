@@ -1,19 +1,16 @@
-ARG GRAFANA_VERSION="latest"
+ARG GRAFANA_VERSION="latest-ubuntu"
 
-FROM grafana/grafana:${GRAFANA_VERSION}
+FROM grafana/grafana:${GRAFANA_VERSION}-ubuntu
 
 USER root
 
 ARG GF_INSTALL_IMAGE_RENDERER_PLUGIN="false"
 
 RUN if [ $GF_INSTALL_IMAGE_RENDERER_PLUGIN = "true" ]; then \
-    echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories && \
-    echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories && \
-    echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && \
-    apk --no-cache update && \
-    apk --no-cache  upgrade && \
-    apk add --no-cache --virtual .build-deps udev ttf-opensans chromium && \
-    rm -rf /var/cache/apk/* /tmp/* && \
+    apt-get update && \
+    apt-get install -y chromium-browser && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/* && \
     rm -rf /usr/share/grafana/tools/phantomjs; \
 fi
 
