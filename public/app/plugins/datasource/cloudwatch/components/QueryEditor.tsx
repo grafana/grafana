@@ -51,6 +51,14 @@ export class QueryEditor extends PureComponent<Props, State> {
       query.region = 'default';
     }
 
+    if (!query.id) {
+      query.id = '';
+    }
+
+    if (!query.alias) {
+      query.alias = '';
+    }
+
     if (!query.statistics || !query.statistics.length) {
       query.statistics = ['Average'];
     }

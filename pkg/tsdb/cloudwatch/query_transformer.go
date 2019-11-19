@@ -37,6 +37,7 @@ func (e *CloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQ
 				Alias:      requestQuery.Alias,
 				Expression: requestQuery.Expression,
 				ReturnData: requestQuery.ReturnData,
+				MatchExact: requestQuery.MatchExact,
 			}
 
 			if _, ok := cloudwatchQueries[id]; ok {
