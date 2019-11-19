@@ -4,6 +4,7 @@ import { stylesFactory, withTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { Themeable } from '../../types';
 import { Button } from '../Button/Button';
+import { ButtonVariant } from '../Button/types';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -37,7 +38,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     confirmButtonContainer: css`
       overflow: hidden;
-      width: 145px;
+      width: 150px;
       position: absolute;
       z-index: 1;
     `,
@@ -64,6 +65,7 @@ interface Props extends Themeable {
   buttonText?: string;
   confirmText?: string;
   disabled?: boolean;
+  confirmButtonVariant?: ButtonVariant;
 
   onConfirm(): void;
   onClick?(): void;
@@ -79,6 +81,7 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
     buttonText: 'Edit',
     confirmText: 'Save',
     disabled: false,
+    confirmButtonVariant: 'inverse',
   };
 
   state: State = {
@@ -112,7 +115,7 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
   };
 
   render() {
-    const { onConfirm, buttonText, disabled, confirmText, className, style, theme } = this.props;
+    const { onConfirm, buttonText, disabled, confirmText, confirmButtonVariant, className, style, theme } = this.props;
     const styles = getStyles(theme);
     const buttonClass = cx(
       styles.button,
@@ -136,7 +139,7 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
             <Button size="sm" variant="transparent" onClick={this.onClickCancel}>
               Cancel
             </Button>
-            <Button size="sm" variant="inverse" onClick={onConfirm}>
+            <Button size="sm" variant={confirmButtonVariant} onClick={onConfirm}>
               {confirmText}
             </Button>
           </span>

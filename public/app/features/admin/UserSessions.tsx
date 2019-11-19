@@ -67,6 +67,7 @@ export class UserSessions extends PureComponent<Props> {
                           <ConfirmButton
                             buttonText="Force logout"
                             confirmText="Confirm logout"
+                            confirmButtonVariant="danger"
                             onConfirm={this.handleSessionRevoke(session.id)}
                           />
                         </div>
