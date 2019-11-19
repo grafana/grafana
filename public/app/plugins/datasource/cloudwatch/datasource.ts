@@ -158,10 +158,11 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
         periodUnit = period = 60 * 60;
       }
     } else {
-      if (/^\d+$/.test(target.period)) {
-        period = parseInt(target.period, 10);
+      period = this.templateSrv.replace(target.period, options.scopedVars);
+      if (/^\d+$/.test(period)) {
+        period = parseInt(period, 10);
       } else {
-        period = kbn.interval_to_seconds(this.templateSrv.replace(target.period, options.scopedVars));
+        period = kbn.interval_to_seconds(period);
       }
     }
     if (period < 1) {
