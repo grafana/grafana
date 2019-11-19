@@ -169,7 +169,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
       'navbar-button navbar-button--border-right-0': originDashboardIsEditable,
     });
 
-    const showSmallDataSourcePicker = (splitted ? containerWidth < 690 : containerWidth < 800) || false;
+    const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
     const showSmallTimePicker = splitted || containerWidth < 1210;
 
     return (
@@ -347,7 +347,9 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     ? exploreDatasources.find(datasource => datasource.name === datasourceInstance.name)
     : undefined;
   const hasLiveOption =
-    datasourceInstance && datasourceInstance.meta && datasourceInstance.meta.streaming ? true : false;
+    datasourceInstance && datasourceInstance.meta && datasourceInstance.meta.streaming && mode === ExploreMode.Logs
+      ? true
+      : false;
 
   return {
     datasourceMissing,

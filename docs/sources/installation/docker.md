@@ -7,12 +7,12 @@ type = "docs"
 name = "Installing using Docker"
 identifier = "docker"
 parent = "installation"
-weight = 4
+weight = 600
 +++
 
 # Installing using Docker
 
-Grafana is very easy to install and run using the official docker container.
+Grafana is very easy to install and run using the official Docker container.
 
 ```bash
 $ docker run -d -p 3000:3000 grafana/grafana
@@ -40,7 +40,7 @@ those options.
 
 > For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect you need to restart Grafana by restarting the Docker container.
 
-### Default Paths
+### Default paths
 
 The following settings are hard-coded when launching the Grafana Docker container and can only be overridden using environment variables, not in `conf/grafana.ini`.
 
@@ -53,7 +53,7 @@ GF_PATHS_LOGS         | /var/log/grafana
 GF_PATHS_PLUGINS      | /var/lib/grafana/plugins
 GF_PATHS_PROVISIONING | /etc/grafana/provisioning
 
-## Running a Specific Version of Grafana
+## Running a specific version of Grafana
 
 ```bash
 # specify right tag, e.g. 5.1.0 - see Docker Hub for available tags
@@ -72,7 +72,7 @@ When running Grafana master in production we **strongly** recommend that you use
 
 For a list of available tags, check out [grafana/grafana](https://hub.docker.com/r/grafana/grafana/tags/) and [grafana/grafana-dev](https://hub.docker.com/r/grafana/grafana-dev/tags/). 
 
-## Installing Plugins for Grafana
+## Installing Grafana plugins
 
 Pass the plugins you want installed to docker with the `GF_INSTALL_PLUGINS` environment variable as a comma separated list. This will pass each plugin name to `grafana-cli plugins install ${plugin}` and install them when Grafana starts.
 
@@ -107,7 +107,7 @@ docker run \
 
 > If you need to specify the version of a plugin, you can add it to the `GF_INSTALL_PLUGINS` build argument. Otherwise, the latest will be assumed. For example: `--build-arg "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1,grafana-simple-json-datasource 1.3.5"`
 
-## Installing Plugins from other sources
+## Installing plugins from other sources
 
 > Only available in Grafana v5.3.1+
 
@@ -122,7 +122,7 @@ docker run \
   grafana/grafana
 ```
 
-## Configuring AWS Credentials for CloudWatch Support
+## Configuring AWS credentials for CloudWatch Support
 
 ```bash
 $ docker run \
@@ -180,15 +180,14 @@ It's possible to supply Grafana with configuration through files. This works wel
 
 You can do this with any of the configuration options in conf/grafana.ini by setting `GF_<SectionName>_<KeyName>__FILE` to the path of the file holding the secret.
 
-Let's say you want to set the admin password this way.
+Let's say you want to set the admin password this way:
 
 - Admin password secret: `/run/secrets/admin_password`
 - Environment variable: `GF_SECURITY_ADMIN_PASSWORD__FILE=/run/secrets/admin_password`
 
-
 ## Migration from a previous version of the docker container to 5.1 or later
 
-The docker container for Grafana has seen a major rewrite for 5.1.
+The Docker container for Grafana has seen a major rewrite for 5.1.
 
 **Important changes**
 
