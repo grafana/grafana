@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import { Field, LinkModel, LogRowModel, TimeZone, DataQueryResponse } from '@grafana/data';
+import { cx, css } from 'emotion';
 
 import {
   LogRowContextRows,
@@ -86,6 +87,19 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     const { showDetails, showContext } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
     const showUtc = timeZone === 'utc';
+    const showDetailsClassName = showDetails
+      ? cx([
+          'fa fa-chevron-up',
+          css`
+            vertical-align: top;
+          `,
+        ])
+      : cx([
+          'fa fa-chevron-down',
+          css`
+            vertical-align: top;
+          `,
+        ]);
 
     return (
       <div className={style.logsRow}>
@@ -101,7 +115,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             onClick={this.toggleDetails}
             className={style.logsRowToggleDetails}
           >
-            <i className={showDetails ? 'fa fa-chevron-up' : 'fa fa-chevron-down'} />
+            <i className={showDetailsClassName} />
           </div>
         )}
         <div>
