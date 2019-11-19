@@ -17,10 +17,10 @@ export const sharedInputStyle = (theme: GrafanaTheme) => {
     background-color: ${backgroundColor};
     line-height: ${theme.typography.lineHeight.lg};
     font-size: ${theme.typography.size.md};
-    color: ${selectThemeVariant({ light: colors.gray25, dark: colors.gray85 }, theme.type)};
+    color: ${colors.formInputText};
 
     &:hover {
-      border-color: ${selectThemeVariant({ light: colors.gray70, dark: colors.gray33 }, theme.type)};
+      border-color: ${colors.formInputBorder};
     }
 
     &:focus {
