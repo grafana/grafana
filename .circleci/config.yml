@@ -486,10 +486,10 @@ jobs:
             name: ci job failed
             command: './scripts/ci-job-failed.sh'
             when: on_fail
-        - run:
-            name: ci job succeeded
-            command: './scripts/ci-job-succeeded.sh'
-            when: on_success
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
 
   grafana-docker-master:
     machine:
