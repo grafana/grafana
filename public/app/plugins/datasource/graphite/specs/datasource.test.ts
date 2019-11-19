@@ -36,7 +36,15 @@ describe('graphiteDatasource', () => {
       ctx.backendSrv.datasourceRequest = (options: any) => {
         requestOptions = options;
         return ctx.$q.when({
-          data: [{ target: 'prod1.count', datapoints: [[10, 1], [12, 1]] }],
+          data: [
+            {
+              target: 'prod1.count',
+              datapoints: [
+                [10, 1],
+                [12, 1],
+              ],
+            },
+          ],
         });
       };
 

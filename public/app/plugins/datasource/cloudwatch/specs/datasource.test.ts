@@ -71,7 +71,11 @@ describe('CloudWatchDatasource', () => {
           series: [
             {
               name: 'CPUUtilization_Average',
-              points: [[1, 1483228800000], [2, 1483229100000], [5, 1483229700000]],
+              points: [
+                [1, 1483228800000],
+                [2, 1483229100000],
+                [5, 1483229700000],
+              ],
               tags: {
                 InstanceId: 'i-12345678',
               },
@@ -382,7 +386,11 @@ describe('CloudWatchDatasource', () => {
           series: [
             {
               name: 'TargetResponseTime_p90.00',
-              points: [[1, 1483228800000], [2, 1483229100000], [5, 1483229700000]],
+              points: [
+                [1, 1483228800000],
+                [2, 1483229100000],
+                [5, 1483229700000],
+              ],
               tags: {
                 LoadBalancer: 'lb',
                 TargetGroup: 'tg',
