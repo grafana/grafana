@@ -10,7 +10,6 @@ import config from 'app/core/config';
 // Types
 import { TextOptions } from './types';
 import { PanelProps } from '@grafana/data';
-import { getLocationSrv } from '@grafana/runtime';
 
 interface Props extends PanelProps<TextOptions> {}
 interface State {
@@ -78,24 +77,9 @@ export class TextPanel extends PureComponent<Props, State> {
     return this.prepareText(content);
   }
 
-  onClick = () => {
-    getLocationSrv().update({
-      partial: true,
-      query: {
-        from: 100,
-        to: new Date().valueOf(),
-      },
-    });
-  };
-
   render() {
     const { html } = this.state;
 
-    return (
-      <div>
-        <button onClick={this.onClick}>OnClick</button>
-        <div className="markdown-html panel-text-content" dangerouslySetInnerHTML={{ __html: html }} />;
-      </div>
-    );
+    return <div className="markdown-html panel-text-content" dangerouslySetInnerHTML={{ __html: html }} />;
   }
 }
