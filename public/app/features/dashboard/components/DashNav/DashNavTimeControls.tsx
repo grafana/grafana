@@ -30,7 +30,7 @@ export class DashNavTimeControls extends Component<Props> {
 
   componentDidMount() {
     // Only reason for this is that sometimes time updates can happen via redux location changes
-    // and this happends before timeSrv has had chance to update state (as it listens to angular route-updated)
+    // and this happens before timeSrv has had chance to update state (as it listens to angular route-updated)
     // This can be removed after timeSrv listens redux location
     this.props.dashboard.on(CoreEvents.timeRangeUpdated, this.triggerForceUpdate);
   }
