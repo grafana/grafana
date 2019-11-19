@@ -7,7 +7,8 @@ import { stylesFactory } from '../../themes';
 
 export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: LogLevel) => {
   let logColor = selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.gray2 }, theme.type);
-  const bgColor = selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.gray2 }, theme.type);
+  const borderColor = selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.gray2 }, theme.type);
+  const bgColor = selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.dark4 }, theme.type);
   switch (logLevel) {
     case LogLevel.crit:
     case LogLevel.critical:
@@ -123,7 +124,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     logsRowDetailsTable: css`
       label: logs-row-details-table;
       display: table;
-      border: 1px solid ${bgColor};
+      border: 1px solid ${borderColor};
       border-radius: 3px;
       margin: 20px 0;
       padding: ${theme.spacing.sm};
@@ -133,7 +134,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       label: logs-row-details-table__section;
       display: table;
       table-layout: fixed;
-      margin: 5px 0;
+      margin: 0;
       width: 100%;
     `,
     logsRowDetailsIcon: css`
@@ -145,14 +146,13 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       color: ${theme.colors.gray3};
       &:hover {
         cursor: pointer;
-        color: ${theme.colors.yellow};
       }
     `,
     logsRowDetailsLabel: css`
       label: logs-row-details__label;
       display: table-cell;
       padding: 0 ${theme.spacing.md} 0 ${theme.spacing.md};
-      width: 12.5em;
+      width: 14em;
       word-break: break-all;
     `,
     logsRowDetailsHeading: css`
@@ -170,7 +170,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       cursor: default;
 
       &:hover {
-        color: ${theme.colors.yellow};
+        background-color: ${bgColor};
       }
     `,
   };
