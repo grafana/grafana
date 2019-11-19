@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { Button, FormLabel, Select } from '@grafana/ui';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { GraphiteOptions, GraphiteType } from '../types';
 
 const graphiteVersions = [
@@ -21,6 +22,7 @@ interface Props {
 
 interface State {
   showMetricTankHelp: boolean;
+  graphiteVersion: string;
 }
 
 export class GraphiteDetails extends PureComponent<Props, State> {
@@ -29,7 +31,27 @@ export class GraphiteDetails extends PureComponent<Props, State> {
 
     this.state = {
       showMetricTankHelp: false,
+      graphiteVersion: '',
     };
+  }
+
+  componentDidMount() {
+    const { value } = this.props;
+    if (!value.id) {
+      this.setState({ graphiteVersion: '' });
+    }
+
+    getDatasourceSrv()
+      .loadDatasource(value.name)
+      .then((dataSource: any) => {
+        return dataSource.getVersion();
+      })
+      .then((version: any) => {
+        if (!version) {
+          return;
+        }
+        this.setState({ graphiteVersion: version });
+      });
   }
 
   onChangeHandler = (key: keyof GraphiteOptions) => (newValue: SelectableValue) => {
@@ -45,7 +67,11 @@ export class GraphiteDetails extends PureComponent<Props, State> {
 
   render() {
     const { value } = this.props;
-    const { showMetricTankHelp } = this.state;
+    const { graphiteVersion, showMetricTankHelp } = this.state;
+
+    const versions = graphiteVersion
+      ? [...graphiteVersions, { value: graphiteVersion, label: graphiteVersion }]
+      : graphiteVersions;
 
     return (
       <>
@@ -56,8 +82,12 @@ export class GraphiteDetails extends PureComponent<Props, State> {
               Version
             </FormLabel>
             <Select
-              value={graphiteVersions.find(version => version.value === value.jsonData.graphiteVersion)}
-              options={graphiteVersions}
+              value={versions.find(version =>
+                !value.jsonData.graphiteVersion
+                  ? version.value === graphiteVersion
+                  : version.value === value.jsonData.graphiteVersion
+              )}
+              options={versions}
               width={8}
               onChange={this.onChangeHandler('graphiteVersion')}
             />
