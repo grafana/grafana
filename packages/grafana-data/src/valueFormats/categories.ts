@@ -218,6 +218,8 @@ export const getCategories = (): ValueFormatCategory[] => [
     name: 'Force',
     formats: [
       { name: 'Newton-meters (Nm)', id: 'forceNm', fn: decimalSIPrefix('Nm') },
+      { name: 'Newton-meters per Ampere (Nm/A)', id: 'forceNmperA', fn: decimalSIPrefix('Nm/A') },
+      { name: 'Millinewton-meters per Ampere (mNm/A)', id: 'forcemNmperA', fn: decimalSIPrefix('Nm/A', -1) },
       { name: 'Kilonewton-meters (kNm)', id: 'forcekNm', fn: decimalSIPrefix('Nm', 1) },
       { name: 'Newtons (N)', id: 'forceN', fn: decimalSIPrefix('N') },
       { name: 'Kilonewtons (kN)', id: 'forcekN', fn: decimalSIPrefix('N', 1) },
