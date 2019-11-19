@@ -3,6 +3,7 @@ import { cx, css } from 'emotion';
 import { stylesFactory, withTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { Themeable } from '../../types';
+import { Button } from '../Button/Button';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -20,6 +21,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     buttonDisabled: css`
       text-decoration: none;
       color: ${theme.colors.text};
+      opacity: 0.65;
+      cursor: not-allowed;
+      pointer-events: none;
     `,
     buttonShow: css`
       opacity: 1;
@@ -110,12 +114,11 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
   render() {
     const { onConfirm, buttonText, disabled, confirmText, className, style, theme } = this.props;
     const styles = getStyles(theme);
-    const disabledClass = disabled ? cx('disabled btn-inverse', styles.buttonDisabled) : '';
     const buttonClass = cx(
       styles.button,
       className,
-      disabledClass,
-      this.state.showConfirm ? styles.buttonHide : styles.buttonShow
+      this.state.showConfirm ? styles.buttonHide : styles.buttonShow,
+      disabled && styles.buttonDisabled
     );
     const confirmButtonClass = cx(
       styles.confirmButton,
@@ -130,12 +133,12 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
         </a>
         <span className={cx(styles.confirmButtonContainer)}>
           <span className={confirmButtonClass}>
-            <a className="btn btn-small" onClick={this.onClickCancel}>
+            <Button size="sm" variant="transparent" onClick={this.onClickCancel}>
               Cancel
-            </a>
-            <a className="btn btn-inverse btn-small" onClick={onConfirm}>
+            </Button>
+            <Button size="sm" variant="inverse" onClick={onConfirm}>
               {confirmText}
-            </a>
+            </Button>
           </span>
         </span>
       </span>
