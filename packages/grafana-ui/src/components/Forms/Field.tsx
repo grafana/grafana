@@ -22,6 +22,7 @@ export interface FieldProps {
   error?: string;
   /** Indicates horizontal layout of the field */
   horizontal?: boolean;
+  className?: string;
 }
 
 export const getFieldStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -54,6 +55,7 @@ export const Field: React.FC<FieldProps> = ({
   disabled,
   error,
   children,
+  className,
 }) => {
   const theme = useTheme();
   let inputId;
@@ -68,7 +70,7 @@ export const Field: React.FC<FieldProps> = ({
   }
 
   return (
-    <div className={cx(styles.field, horizontal && styles.fieldHorizontal)}>
+    <div className={cx(styles.field, horizontal && styles.fieldHorizontal, className)}>
       {label && (
         <Label htmlFor={inputId} description={description}>
           {label}
