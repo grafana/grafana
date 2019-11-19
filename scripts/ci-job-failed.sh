@@ -5,9 +5,9 @@ source "$(dirname "$0")/helpers/exit-if-fail.sh"
 
 echo -e "Report build times and build outcome"
 
-echo "$GF_JOB_START"
-echo "$CIRCLE_JOB"
+start=$GF_JOB_START
+runtime=$((($(date +%s%N) - start)/1000000))
 
-exit_if_fail ./scripts/ci-metrics-publisher.sh "grafana.ci-buildtimes.$CIRCLE_JOB=$GF_JOB_START"
+exit_if_fail ./scripts/ci-metrics-publisher.sh "grafana.ci-buildtimes.$CIRCLE_JOB=$runtime"
 exit_if_fail ./scripts/ci-metrics-publisher.sh "grafana.ci-buildoutcome.$CIRCLE_JOB=0"
 
