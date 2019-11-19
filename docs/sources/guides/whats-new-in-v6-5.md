@@ -73,7 +73,7 @@ We have massively simplified the way we display both log row labels/fields as we
 
 So far labels had been squashed into their own column, making long label values difficult to read or interact with. Similarly, the parsed fields (available for logfmt and JSON structured logs) were too fiddly for mouse interaction. To solve this we took both and put them into a collapsed area below each row for more robust interaction. We have also added the ability to filter out labels, i.e., turn them into a negative filter on click (in addition to a positive filter).
 
-<img src="/img/docs/v65/explore_log_details.gif" />
+{{< docs-imagebox img="/img/docs/v65/explore_log_details.gif" caption="Explore Log row details" >}}
 
 ### Loki/Explore: Derived fields
 
@@ -87,7 +87,7 @@ This release starts with support for Loki, but we will bring this concept to oth
 
 In Explore's split view, the two timepickers can now be linked so that if you change one, the other gets changed as well. This helps with keeping start and end times of the split view queries in sync and will ensure that you're looking at the same time interval in both split panes.
 
-<img src="/img/docs/v65/explore_time_sync.gif" />
+{{< docs-imagebox img="/img/docs/v65/explore_time_sync.gif" caption="Time-sync of split views in Explore" >}}
 
 ## Upgrading
 
