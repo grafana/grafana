@@ -29,28 +29,28 @@ const apiKeysLoaded = (apiKeys: ApiKey[]): LoadApiKeysAction => ({
 export function addApiKey(
   apiKey: ApiKey,
   openModal: (key: string) => void,
-  includeInvalid: boolean
+  includeExpired: boolean
 ): ThunkResult<void> {
   return async dispatch => {
     const result = await getBackendSrv().post('/api/auth/keys', apiKey);
     dispatch(setSearchQuery(''));
-    dispatch(loadApiKeys(includeInvalid));
+    dispatch(loadApiKeys(includeExpired));
     openModal(result.key);
   };
 }
 
-export function loadApiKeys(includeInvalid: boolean): ThunkResult<void> {
+export function loadApiKeys(includeExpired: boolean): ThunkResult<void> {
   return async dispatch => {
-    const response = await getBackendSrv().get('/api/auth/keys?include_invalid=' + includeInvalid);
+    const response = await getBackendSrv().get('/api/auth/keys?IncludeExpired=' + includeExpired);
     dispatch(apiKeysLoaded(response));
   };
 }
 
-export function deleteApiKey(id: number, includeInvalid: boolean): ThunkResult<void> {
+export function deleteApiKey(id: number, includeExpired: boolean): ThunkResult<void> {
   return async dispatch => {
     getBackendSrv()
       .delete('/api/auth/keys/' + id)
-      .then(dispatch(loadApiKeys(includeInvalid)));
+      .then(dispatch(loadApiKeys(includeExpired)));
   };
 }
 

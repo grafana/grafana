@@ -23,7 +23,7 @@ const setup = (propOverrides?: object) => {
     setSearchQuery: jest.fn(),
     addApiKey: jest.fn(),
     apiKeysCount: 0,
-    includeInvalid: false,
+    includeExpired: false,
   };
 
   Object.assign(props, propOverrides);

@@ -51,7 +51,7 @@ export interface Props {
   setSearchQuery: typeof setSearchQuery;
   addApiKey: typeof addApiKey;
   apiKeysCount: number;
-  includeInvalid: boolean;
+  includeExpired: boolean;
 }
 
 export interface State {
@@ -77,7 +77,7 @@ const tooltipText =
 export class ApiKeysPage extends PureComponent<Props, any> {
   constructor(props: Props) {
     super(props);
-    this.state = { isAdding: false, newApiKey: initialApiKeyState, includeInvalid: false };
+    this.state = { isAdding: false, newApiKey: initialApiKeyState, includeExpired: false };
   }
 
   componentDidMount() {
@@ -85,19 +85,19 @@ export class ApiKeysPage extends PureComponent<Props, any> {
   }
 
   async fetchApiKeys() {
-    await this.props.loadApiKeys(this.state.includeInvalid);
+    await this.props.loadApiKeys(this.state.includeExpired);
   }
 
   onDeleteApiKey(key: ApiKey) {
-    this.props.deleteApiKey(key.id, this.props.includeInvalid);
+    this.props.deleteApiKey(key.id, this.props.includeExpired);
   }
 
   onSearchQueryChange = (value: string) => {
     this.props.setSearchQuery(value);
   };
 
-  onIncludeInvalidChange = (value: boolean) => {
-    this.setState({ hasFetched: false, includeInvalid: value }, this.fetchApiKeys);
+  onIncludeExpiredChange = (value: boolean) => {
+    this.setState({ hasFetched: false, includeExpired: value }, this.fetchApiKeys);
   };
 
   onToggleAdding = () => {
@@ -119,7 +119,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     // make sure that secondsToLive is number or null
     const secondsToLive = this.state.newApiKey['secondsToLive'];
     this.state.newApiKey['secondsToLive'] = secondsToLive ? kbn.interval_to_seconds(secondsToLive) : null;
-    this.props.addApiKey(this.state.newApiKey, openModal, this.props.includeInvalid);
+    this.props.addApiKey(this.state.newApiKey, openModal, this.props.includeExpired);
     this.setState((prevState: State) => {
       return {
         ...prevState,
@@ -237,7 +237,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
 
   renderApiKeyList() {
     const { isAdding } = this.state;
-    const { apiKeys, searchQuery, includeInvalid } = this.props;
+    const { apiKeys, searchQuery, includeExpired } = this.props;
 
     return (
       <>
@@ -263,10 +263,10 @@ export class ApiKeysPage extends PureComponent<Props, any> {
         <h3 className="page-heading">Existing Keys</h3>
         <Switch
           label="Show expired"
-          checked={includeInvalid}
+          checked={includeExpired}
           onChange={event => {
             // @ts-ignore
-            this.onIncludeInvalidChange(event.target.checked);
+            this.onIncludeExpiredChange(event.target.checked);
           }}
         />
         <table className="filter-table">
@@ -317,7 +317,7 @@ function mapStateToProps(state: any) {
     navModel: getNavModel(state.navIndex, 'apikeys'),
     apiKeys: getApiKeys(state.apiKeys),
     searchQuery: state.apiKeys.searchQuery,
-    includeInvalid: state.includeInvalid,
+    includeExpired: state.includeExpired,
     apiKeysCount: getApiKeysCount(state.apiKeys),
     hasFetched: state.apiKeys.hasFetched,
   };
