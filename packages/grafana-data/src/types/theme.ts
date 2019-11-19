@@ -230,6 +230,10 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     formInputTextWhite: string;
     formValidationMessageText: string;
     formValidationMessageBg: string;
+    formSwitchBg: string;
+    formSwitchBgHover: string;
+    formSwitchBgDisabled: string;
+    formSwitchDot: string;
   };
   shadow: {
     pageHeader: string;

@@ -93,6 +93,10 @@ const darkTheme: GrafanaTheme = {
     formInputTextWhite: basicColors.white,
     formValidationMessageText: basicColors.white,
     formValidationMessageBg: basicColors.red88,
+    formSwitchBg: basicColors.blueLight,
+    formSwitchBgHover: basicColors.blueBase,
+    formSwitchBgDisabled: basicColors.gray25,
+    formSwitchDot: basicColors.gray15,
   },
   background: {
     dropdown: basicColors.dark3,
