@@ -202,11 +202,7 @@ export class QueryEditor extends PureComponent<Props, State> {
         )}
         <div className="gf-form-inline">
           <div className="gf-form">
-            <QueryField
-              className="query-keyword"
-              label="Min Period"
-              tooltip="Minimum interval between points in seconds"
-            >
+            <QueryField className="query-keyword" label="Period" tooltip="Minimum interval between points in seconds">
               <Input
                 className="gf-form-input width-8"
                 value={query.period || ''}
