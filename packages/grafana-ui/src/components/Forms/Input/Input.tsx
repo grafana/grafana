@@ -19,7 +19,12 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix'> {
   addonAfter?: ReactNode;
 }
 
-const getInputStyle = stylesFactory((theme: GrafanaTheme, invalid = false) => {
+interface StyleDeps {
+  theme: GrafanaTheme;
+  invalid: boolean;
+}
+
+export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDeps) => {
   const colors = theme.colors;
   const inputBorderColor = invalid ? colors.redBase : colors.formInputBorder;
   const borderRadius = theme.border.radius.sm;
@@ -215,7 +220,7 @@ export const Input: FC<Props> = props => {
   const [suffixRect, suffixRef] = useClientRect<HTMLDivElement>();
   const theme = useTheme();
 
-  const styles = getInputStyle(theme, invalid);
+  const styles = getInputStyles({ theme, invalid: !!invalid });
 
   return (
     <div className={styles.wrapper}>
