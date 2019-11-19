@@ -55,7 +55,6 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
         width: 100%;
         height: ${height};
         border-radius: ${borderRadius};
-        margin-bottom: ${invalid ? theme.spacing.formSpacingBase / 2 : theme.spacing.formSpacingBase * 2}px;
         &:hover {
           > .prefix,
           .suffix,
