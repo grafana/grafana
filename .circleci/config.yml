@@ -29,6 +29,9 @@ jobs:
     working_directory: /go/src/github.com/grafana/grafana
     steps:
         - checkout
+        - run:
+            name: ci job started
+            command: './scripts/ci-job-started.sh'
         - run: sudo apt update
         - run: sudo apt install -y default-mysql-client
         - run: dockerize -wait tcp://127.0.0.1:3306 -timeout 120s
@@ -36,6 +39,14 @@ jobs:
         - run:
             name: mysql integration tests
             command: './scripts/circle-test-mysql.sh'
+        - run:
+            name: ci job failed
+            command: './scripts/ci-job-failed.sh'
+            when: on_fail
+        - run:
+            name: ci job succeeded
+            command: './scripts/ci-job-succeeded.sh'
+            when: on_success
 
   postgres-integration-test:
     docker:
@@ -48,6 +59,9 @@ jobs:
     working_directory: /go/src/github.com/grafana/grafana
     steps:
         - checkout
+        - run:
+            name: ci job started
+            command: './scripts/ci-job-started.sh'
         - run: sudo apt update
         - run: sudo apt install -y postgresql-client
         - run: dockerize -wait tcp://127.0.0.1:5432 -timeout 120s
@@ -55,6 +69,14 @@ jobs:
         - run:
             name: postgres integration tests
             command: './scripts/circle-test-postgres.sh'
+        - run:
+            name: ci job failed
+            command: './scripts/ci-job-failed.sh'
+            when: on_fail
+        - run:
+            name: ci job succeeded
+            command: './scripts/ci-job-succeeded.sh'
+            when: on_success
 
   cache-server-test:
     docker:
@@ -64,11 +86,22 @@ jobs:
     working_directory: /go/src/github.com/grafana/grafana
     steps:
         - checkout
+        - run:
+            name: ci job started
+            command: './scripts/ci-job-started.sh'
         - run: dockerize -wait tcp://127.0.0.1:11211 -timeout 120s
         - run: dockerize -wait tcp://127.0.0.1:6379 -timeout 120s
         - run:
             name: cache server tests
             command: './scripts/circle-test-cache-servers.sh'
+        - run:
+            name: ci job failed
+            command: './scripts/ci-job-failed.sh'
+            when: on_fail
+        - run:
+            name: ci job succeeded
+            command: './scripts/ci-job-succeeded.sh'
+            when: on_success
 
   end-to-end-test:
       docker:
