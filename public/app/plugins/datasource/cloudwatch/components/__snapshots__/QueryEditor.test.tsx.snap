@@ -248,7 +248,7 @@ Array [
       <label
         className="gf-form-label width-8 query-keyword"
       >
-        Min Period
+        Period
         <div
           className="gf-form-help-icon gf-form-help-icon--right-normal"
           onMouseEnter={[Function]}
