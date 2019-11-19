@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { boolean } from '@storybook/addon-knobs';
+import { action } from '@storybook/addon-actions';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Switch } from './Switch';
 import mdx from './Switch.mdx';
@@ -25,6 +26,7 @@ export const simple = () => {
       disabled={disabled}
       onChange={(e, checked) => {
         setChecked(checked);
+        action('onChange')(e, checked);
       }}
     />
   );

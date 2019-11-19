@@ -17,7 +17,6 @@ export const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
         width: 32px;
         height: 16px;
         background: ${theme.colors.formSwitchBg};
-        transition: all 0.30s ease;
         border-radius: 50px;
         position: relative;
         border: none;
@@ -28,7 +27,7 @@ export const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
         }
         &:after {
           content: '';
-          transition: transform 0.2s cubic-bezier(0.19, 1, 0.22, 1);
+          transition: all 0.3s cubic-bezier(1, 0, 0, 1);
           position: absolute;
           top: 50%;
           display: block;
@@ -48,10 +47,6 @@ export const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
       getFocusStyle(theme)
     ),
     sliderActive: css`
-      background: ${theme.colors.formSwitchBgActive};
-      &:hover {
-        background: ${theme.colors.formSwitchBgActiveHover};
-      }
       &:after {
         transform: translate3d(16px, -50%, 0);
       }
