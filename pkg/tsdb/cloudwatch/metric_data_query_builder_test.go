@@ -179,7 +179,6 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 					"lb6": {`l\\(b5"`},
 				},
 				Period:     300,
-				Identifier: "id1",
 				Expression: "",
 				MatchExact: true,
 			}
