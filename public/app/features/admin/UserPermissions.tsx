@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
-import { UserProfileRow } from './UserProfileRow';
 import { ConfirmButton } from '@grafana/ui';
+import { cx, css } from 'emotion';
 
 interface Props {
   isGrafanaAdmin: boolean;
@@ -43,6 +43,12 @@ export class UserPermissions extends PureComponent<Props, State> {
   render() {
     const { isGrafanaAdmin } = this.props;
     const { isEditing, currentAdminOption } = this.state;
+    const changeButtonContainerClass = cx(
+      'pull-right',
+      css`
+        margin-right: 0.6rem;
+      `
+    );
 
     return (
       <>
@@ -51,50 +57,50 @@ export class UserPermissions extends PureComponent<Props, State> {
           <div className="gf-form">
             <table className="filter-table form-inline">
               <tbody>
-                <UserProfileRow label="Grafana Admin">
-                  <>
-                    {isEditing ? (
-                      <td colSpan={2}>
-                        <div className="gf-form-select-wrapper width-8">
-                          <select
-                            value={currentAdminOption}
-                            className="gf-form-input"
-                            onChange={this.handleAdminOptionSelect}
-                          >
-                            {['YES', 'NO'].map((option, index) => {
-                              return (
-                                <option value={option} key={`${option}-${index}`}>
-                                  {option}
-                                </option>
-                              );
-                            })}
-                          </select>
-                        </div>
-                      </td>
-                    ) : (
-                      <td colSpan={2}>
-                        {isGrafanaAdmin ? (
-                          <>
-                            <i className="gicon gicon-shield" /> Yes
-                          </>
-                        ) : (
-                          <>No</>
-                        )}
-                      </td>
-                    )}
-                    <td>
-                      <div className="pull-right">
-                        <ConfirmButton
-                          onClick={this.handleChangeClick}
-                          onConfirm={this.handleGrafanaAdminChange}
-                          onCancel={this.handleCancelClick}
-                          buttonText="Change"
-                          confirmText="Change"
-                        />
+                <tr>
+                  <td className="width-16">Grafana Admin</td>
+                  {isEditing ? (
+                    <td colSpan={2}>
+                      <div className="gf-form-select-wrapper width-8">
+                        <select
+                          value={currentAdminOption}
+                          className="gf-form-input"
+                          onChange={this.handleAdminOptionSelect}
+                        >
+                          {['YES', 'NO'].map((option, index) => {
+                            return (
+                              <option value={option} key={`${option}-${index}`}>
+                                {option}
+                              </option>
+                            );
+                          })}
+                        </select>
                       </div>
                     </td>
-                  </>
-                </UserProfileRow>
+                  ) : (
+                    <td colSpan={2}>
+                      {isGrafanaAdmin ? (
+                        <>
+                          <i className="gicon gicon-shield" /> Yes
+                        </>
+                      ) : (
+                        <>No</>
+                      )}
+                    </td>
+                  )}
+                  <td>
+                    <div className={changeButtonContainerClass}>
+                      <ConfirmButton
+                        className="pull-right"
+                        onClick={this.handleChangeClick}
+                        onConfirm={this.handleGrafanaAdminChange}
+                        onCancel={this.handleCancelClick}
+                        buttonText="Change"
+                        confirmText="Change"
+                      />
+                    </div>
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
