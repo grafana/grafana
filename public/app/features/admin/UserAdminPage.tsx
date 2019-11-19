@@ -58,6 +58,10 @@ export class UserAdminPage extends PureComponent<Props, State> {
     }
   }
 
+  handleUserUpdate = (user: UserDTO) => {
+    console.log('update user', user);
+  };
+
   handleUserDelete = (userId: number) => {
     console.log('delete user', userId);
   };
@@ -102,7 +106,12 @@ export class UserAdminPage extends PureComponent<Props, State> {
         <Page.Contents isLoading={isLoading}>
           {user && (
             <>
-              <UserProfile user={user} onUserDelete={this.handleUserDelete} onUserDisable={this.handleUserDisable} />
+              <UserProfile
+                user={user}
+                onUserUpdate={this.handleUserUpdate}
+                onUserDelete={this.handleUserDelete}
+                onUserDisable={this.handleUserDisable}
+              />
               {isLDAPUser && config.buildInfo.isEnterprise && ldapSyncInfo && (
                 <UserLdapSyncInfo ldapSyncInfo={ldapSyncInfo} onUserSync={this.handleUserSync} />
               )}
