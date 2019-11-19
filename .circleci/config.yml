@@ -125,23 +125,6 @@ jobs:
           - store_artifacts:
                 path: public/e2e-test/screenShots/theOutput
                 destination: output-screenshots
-  build-job-start:
-    docker:
-      - image: circleci/node:10-browsers
-    steps:
-      - checkout
-      - run:
-          name: "Setup GF_START environment variable"
-          command: |
-            echo 'export GF_START=$(date +%s%N)' >> $BASH_ENV
-  build-job-stop:
-    docker:
-      - image: circleci/node:10-browsers
-    steps:
-      - checkout
-      - run:
-          name: "Get Start environment variable"
-          command: echo ${GF_START}
   codespell:
     docker:
       - image: circleci/python
@@ -292,8 +275,14 @@ jobs:
           name: prepare build tools
           command: '/tmp/bootstrap.sh'
       - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
+      - run:
           name: build grafana backend
           command: './scripts/build/build.sh --fast --backend-only'
+      - run:
+          name: ci job ended
+          command: './scripts/ci-job-ended.sh'
       - persist_to_workspace:
           root: .
           paths:
@@ -991,8 +980,6 @@ workflows:
 
   build-branches-and-prs:
       jobs:
-        - build-job-start:
-            filters: *filter-not-release-or-master
         - build-fast-backend:
             filters: *filter-not-release-or-master
         - build-fast-backend:
@@ -1057,12 +1044,6 @@ workflows:
               - mysql-integration-test
               - postgres-integration-test
               - cache-server-test
-            filters: *filter-not-release-or-master
-        - build-job-stop:
-            requires:
-              - grafana-docker-pr
-              - grafana-docker-ubuntu-pr
-              - store-build-artifacts
             filters: *filter-not-release-or-master
   nightly:
     triggers:
