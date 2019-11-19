@@ -280,6 +280,10 @@ jobs:
       - run:
           name: build grafana backend
           command: './scripts/build/build.sh --fast --backend-only'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - bin/*
       - run:
           name: ci job failed
           command: './scripts/ci-job-failed.sh'
@@ -288,10 +292,6 @@ jobs:
           name: ci job succeeded
           command: './scripts/ci-job-succeeded.sh'
           when: on_success
-      - persist_to_workspace:
-          root: .
-          paths:
-            - bin/*
 
   build-fast-frontend:
     docker:
@@ -302,6 +302,9 @@ jobs:
       - run:
           name: prepare build tools
           command: '/tmp/bootstrap.sh'
+      - run:
+          name: ci job started
+          command: './scripts/ci-job-started.sh'
       - restore_cache:
           key: frontend-dependency-cache-{{ checksum "yarn.lock" }}
       - run:
@@ -316,6 +319,14 @@ jobs:
           paths:
             - public/build/*
             - tools/phantomjs/*
+      - run:
+          name: ci job failed
+          command: './scripts/ci-job-failed.sh'
+          when: on_fail
+      - run:
+          name: ci job succeeded
+          command: './scripts/ci-job-succeeded.sh'
+          when: on_success
 
   build-fast-package:
     docker:
@@ -985,8 +996,6 @@ workflows:
 
   build-branches-and-prs:
       jobs:
-        - build-fast-backend:
-            filters: *filter-not-release-or-master
         - build-fast-backend:
             filters: *filter-not-release-or-master
         - build-fast-frontend:
