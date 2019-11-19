@@ -333,6 +333,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'kilometers/hour (km/h)', id: 'velocitykmh', fn: toFixedUnit('km/h') },
       { name: 'miles/hour (mph)', id: 'velocitymph', fn: toFixedUnit('mph') },
       { name: 'knot (kn)', id: 'velocityknot', fn: toFixedUnit('kn') },
+      { name: '1/min (1/min)', id: 'velocity1permin', fn: toFixedUnit('1/min') }
     ],
   },
   {
