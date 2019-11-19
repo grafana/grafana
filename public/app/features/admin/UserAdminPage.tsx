@@ -95,6 +95,7 @@ export class UserAdminPage extends PureComponent<Props, State> {
   render() {
     const { navModel, user, orgs, sessions, ldapSyncInfo } = this.props;
     const { isLoading } = this.state;
+    const isLDAPUser = user && user.isExternal && user.authLabels && user.authLabels.includes('LDAP');
 
     return (
       <Page navModel={navModel}>
@@ -102,7 +103,7 @@ export class UserAdminPage extends PureComponent<Props, State> {
           {user && (
             <>
               <UserProfile user={user} onUserDelete={this.handleUserDelete} onUserDisable={this.handleUserDisable} />
-              {config.buildInfo.isEnterprise && ldapSyncInfo && (
+              {isLDAPUser && config.buildInfo.isEnterprise && ldapSyncInfo && (
                 <UserLdapSyncInfo ldapSyncInfo={ldapSyncInfo} onUserSync={this.handleUserSync} />
               )}
               <UserPermissions
