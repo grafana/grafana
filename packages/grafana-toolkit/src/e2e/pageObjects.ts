@@ -82,7 +82,7 @@ export class PageObject
   containsPlaceholder = async (expectedPlaceholder: string): Promise<void> => {
     console.log(`Checking for placeholder '${expectedPlaceholder}' in:`, this.selector);
     await expect(this.page).not.toBeNull();
-    const placeholder = await this.page!.$eval(this.selector, (input: HTMLInputElement) => input.placeholder);
+    const placeholder = await this.page!.$eval(this.selector, (input: any) => input.placeholder);
     await expect(placeholder).toEqual(expectedPlaceholder);
   };
 
@@ -135,7 +135,7 @@ export class PageObject
   selectedTextIs = async (text: string): Promise<void> => {
     console.log(`Trying to get selected text from dropdown:`, this.selector);
     await expect(this.page).not.toBeNull();
-    const selectedText = await this.page!.$eval(this.selector, (select: HTMLSelectElement) => {
+    const selectedText = await this.page!.$eval(this.selector, (select: any) => {
       if (select.selectedIndex === -1) {
         return '';
       }
@@ -163,12 +163,12 @@ export class PageObject
   blur = async (): Promise<void> => {
     console.log('Trying to blur:', this.selector);
     await expect(this.page).not.toBeNull();
-    await this.page!.$eval(this.selector, (input: HTMLInputElement) => input.blur());
+    await this.page!.$eval(this.selector, (input: any) => input.blur());
   };
 
   private getChecked = async (): Promise<boolean> => {
     console.log('Trying get switch status for:', this.selector);
     await expect(this.page).not.toBeNull();
-    return await this.page!.$eval(this.selector, (input: HTMLInputElement) => input.checked);
+    return await this.page!.$eval(this.selector, (input: any) => input.checked);
   };
 }

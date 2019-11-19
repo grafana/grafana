@@ -39,9 +39,9 @@ export const e2eScenario = ({
 
     let browser: Browser;
     let page: Page;
-    let testDataSourceName: string = null;
-    let testDashboardTitle: string = null;
-    let dashboardPage: TestPage<DashboardPage> = null;
+    let testDataSourceName: string;
+    let testDashboardTitle: string;
+    let dashboardPage: TestPage<DashboardPage>;
 
     beforeAll(async () => {
       browser = await launchBrowser();
