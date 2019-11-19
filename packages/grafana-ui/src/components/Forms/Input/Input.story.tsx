@@ -40,7 +40,6 @@ export const simple = () => {
       password: 'password',
       number: 'number',
     },
-
     'text',
     BEHAVIOUR_GROUP
   );
