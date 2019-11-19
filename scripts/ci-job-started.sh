@@ -3,4 +3,4 @@
 echo -e "Collecting job start date"
 
 start=$(date +%s%N)
-export GF_JOB_START=$start >> "$BASH_ENV"
+echo "export GF_JOB_START=$start" >> "$BASH_ENV"
