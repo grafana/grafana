@@ -9,7 +9,6 @@ import {
   LogRowContextProvider,
 } from './LogRowContextProvider';
 import { Themeable } from '../../types/theme';
-import { selectThemeVariant } from '../../index';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
 import { stylesFactory } from '../../themes/stylesFactory';
