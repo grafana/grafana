@@ -43,6 +43,36 @@ const Foo: React.FunctionComponent<FooProps> = () => ...
 export default withTheme(Foo);
 ```
 
+### Testing components that use ThemeContext
+
+When implementing snapshot tests of components that use theme (i.e. component that uses `withTheme` HOC), the snapshot will contain the entire theme object. This makes working with such snapshot hard as any change to the theme will result in the snapshot being outdated.
+
+To make your snapshot theme independent use `mockThemeContext` helper function:
+
+```tsx
+import { mockThemeContext } from '@grafana/ui';
+import { MyComponent } from './MyComponent';
+
+describe('MyComponent', () => {
+  let restoreThemeContext;
+
+  beforeAll(() => {
+    // Create ThemeContext mock before any snapshot test is executed
+    restoreThemeContext = mockThemeContext({ type: GrafanaThemeType.Dark });
+  });
+
+  afterAll(() => {
+    // Make sure the theme is restored after snapshot tests are performed
+    restoreThemeContext();
+  });
+
+  it('renders correctyl', () => {
+    const wrapper = mount(<MyComponent />)
+    expect(wrapper).toMatchSnapshot();
+  });
+});
+```
+
 ### Using themes in Storybook
 
 All stories are wrapped with `ThemeContext.Provider` using global decorator. To render `Themeable` component that's not wrapped by `withTheme` HOC you either create a new component in your story:
