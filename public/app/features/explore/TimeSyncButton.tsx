@@ -57,7 +57,7 @@ export function TimeSyncButton(props: TimeSyncButtonProps) {
         aria-label={isSynced ? 'Synced times' : 'Unsynced times'}
         onClick={() => onClick()}
       >
-        <i className="fa fa-link" />
+        <i className={classNames('fa fa-link', isSynced && 'icon-brand-gradient')} />
       </button>
     </Tooltip>
   );

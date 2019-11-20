@@ -285,7 +285,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                   title="Clear All"
                   onClick={this.onClearAll}
                   iconClassName="fa fa-fw fa-trash icon-margin-right"
-                  disabled={isLive}
                 />
               </div>
             )}

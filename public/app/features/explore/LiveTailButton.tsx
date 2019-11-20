@@ -128,7 +128,11 @@ export function LiveTailButton(props: LiveTailButtonProps) {
             [styles.isLive]: isLive && !isPaused,
             [styles.isPaused]: isLive && isPaused,
           })}
-          iconClassName={classNames('fa', isPaused || !isLive ? 'fa-play' : 'fa-pause')}
+          iconClassName={classNames(
+            'fa',
+            isPaused || !isLive ? 'fa-play' : 'fa-pause',
+            isLive && 'icon-brand-gradient'
+          )}
           onClick={onClickMain}
           title={'\xa0Live'}
         />
@@ -147,7 +151,7 @@ export function LiveTailButton(props: LiveTailButtonProps) {
       >
         <div>
           <button className={`btn navbar-button navbar-button--attached ${styles.isLive}`} onClick={stop}>
-            <i className={'fa fa-stop'} />
+            <i className={classNames('fa fa-stop icon-brand-gradient')} />
           </button>
         </div>
       </CSSTransition>
