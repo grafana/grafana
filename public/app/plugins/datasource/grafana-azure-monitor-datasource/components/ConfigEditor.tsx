@@ -7,6 +7,7 @@ import { getBackendSrv, BackendSrv } from 'app/core/services/backend_srv';
 import { InsightsConfig } from './InsightsConfig';
 import ResponseParser from '../azure_monitor/response_parser';
 import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData, AzureDataSourceSettings } from '../types';
+import { makePromiseCancelable, CancelablePromise } from 'app/core/utils/CancelablePromise';
 
 export type Props = DataSourcePluginOptionsEditorProps<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 
@@ -38,14 +39,28 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
   backendSrv: BackendSrv = null;
   templateSrv: TemplateSrv = null;
+  initPromise: CancelablePromise<any> = null;
 
-  async componentDidMount() {
+  componentDidMount() {
+    this.initPromise = makePromiseCancelable(this.init());
+    this.initPromise.promise.catch(({ isCanceled }) => {
+      if (isCanceled) {
+        console.warn('Azure Monitor ConfigEditor has unmounted, intialization was canceled');
+      }
+    });
+  }
+
+  componentWillUnmount() {
+    this.initPromise.cancel();
+  }
+
+  init = async () => {
     await this.getSubscriptions();
 
     if (!this.props.options.jsonData.azureLogAnalyticsSameAs) {
       await this.getLogAnalyticsSubscriptions();
     }
-  }
+  };
 
   onOptionsUpdate = async (options: AzureDataSourceSettings) => {
     if (options.hasOwnProperty('secureJsonData')) {
@@ -118,17 +133,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
   loadSubscriptions = async (route?: string) => {
     const url = `/${route || this.props.options.jsonData.cloudName}/subscriptions?api-version=2019-03-01`;
 
-    return this.backendSrv
-      .datasourceRequest({
-        url: this.props.options.url + url,
-        method: 'GET',
-      })
-      .then((result: any) => {
-        return ResponseParser.parseSubscriptionsForSelect(result);
-      })
-      .catch((error: any) => {
-        throw error;
-      });
+    const result = await this.backendSrv.datasourceRequest({
+      url: this.props.options.url + url,
+      method: 'GET',
+    });
+
+    return ResponseParser.parseSubscriptionsForSelect(result);
   };
 
   loadWorkspaces = async (subscription: string) => {
@@ -171,7 +181,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
       return;
     }
 
-    const subscriptions = (await this.loadSubscriptions()) || [];
+    const subscriptions = ((await this.loadSubscriptions()) || []) as SelectableValue[];
 
     if (subscriptions && subscriptions.length > 0) {
       this.setState({ subscriptions });
@@ -189,7 +199,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
       return;
     }
 
-    const logAnalyticsSubscriptions = (await this.loadSubscriptions('workspacesloganalytics')) || [];
+    const logAnalyticsSubscriptions = ((await this.loadSubscriptions('workspacesloganalytics')) ||
+      []) as SelectableValue[];
 
     if (logAnalyticsSubscriptions && logAnalyticsSubscriptions.length > 0) {
       this.setState({ logAnalyticsSubscriptions });

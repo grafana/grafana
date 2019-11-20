@@ -19,65 +19,71 @@ export interface Props {
 
 export class MonitorConfig extends PureComponent<Props> {
   onAzureCloudSelect = (cloudName: SelectableValue<string>) => {
-    this.props.onDatasourceUpdate({
-      ...this.props.options,
+    const { onDatasourceUpdate, options } = this.props;
+    onDatasourceUpdate({
+      ...options,
       jsonData: {
-        ...this.props.options.jsonData,
+        ...options.jsonData,
         cloudName: cloudName.value,
       },
     });
   };
 
   onTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onDatasourceUpdate({
-      ...this.props.options,
+    const { onDatasourceUpdate, options } = this.props;
+    onDatasourceUpdate({
+      ...options,
       jsonData: {
-        ...this.props.options.jsonData,
+        ...options.jsonData,
         tenantId: event.target.value,
       },
     });
   };
 
   onClientIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onDatasourceUpdate({
-      ...this.props.options,
+    const { onDatasourceUpdate, options } = this.props;
+    onDatasourceUpdate({
+      ...options,
       jsonData: {
-        ...this.props.options.jsonData,
+        ...options.jsonData,
         clientId: event.target.value,
       },
     });
   };
 
   onClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onDatasourceUpdate({
-      ...this.props.options,
+    const { onDatasourceUpdate, options } = this.props;
+    onDatasourceUpdate({
+      ...options,
       secureJsonData: {
-        ...this.props.options.secureJsonData,
+        ...options.secureJsonData,
         clientSecret: event.target.value,
       },
     });
   };
 
   onResetClientSecret = () => {
-    this.props.onDatasourceUpdate({
-      ...this.props.options,
-      version: this.props.options.version + 1,
+    const { onDatasourceUpdate, options } = this.props;
+    onDatasourceUpdate({
+      ...options,
+      version: options.version + 1,
       secureJsonData: {
-        ...this.props.options.secureJsonData,
+        ...options.secureJsonData,
         clientSecret: '',
       },
       secureJsonFields: {
-        ...this.props.options.secureJsonFields,
+        ...options.secureJsonFields,
         clientSecret: false,
       },
     });
   };
 
   onSubscriptionSelect = (subscription: SelectableValue<string>) => {
-    this.props.onDatasourceUpdate({
-      ...this.props.options,
+    const { onDatasourceUpdate, options } = this.props;
+    onDatasourceUpdate({
+      ...options,
       jsonData: {
-        ...this.props.options.jsonData,
+        ...options.jsonData,
         subscriptionId: subscription.value,
       },
     });

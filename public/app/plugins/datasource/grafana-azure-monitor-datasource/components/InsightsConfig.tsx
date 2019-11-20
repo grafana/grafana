@@ -8,35 +8,38 @@ export interface Props {
 }
 export class InsightsConfig extends PureComponent<Props> {
   onAppInsightsAppIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onDatasourceUpdate({
-      ...this.props.options,
+    const { onDatasourceUpdate, options } = this.props;
+    onDatasourceUpdate({
+      ...options,
       jsonData: {
-        ...this.props.options.jsonData,
+        ...options.jsonData,
         appInsightsAppId: event.target.value,
       },
     });
   };
 
   onAppInsightsApiKeyChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onDatasourceUpdate({
-      ...this.props.options,
+    const { onDatasourceUpdate, options } = this.props;
+    onDatasourceUpdate({
+      ...options,
       secureJsonData: {
-        ...this.props.options.secureJsonData,
+        ...options.secureJsonData,
         appInsightsApiKey: event.target.value,
       },
     });
   };
 
   onAppInsightsResetApiKey = () => {
-    this.props.onDatasourceUpdate({
-      ...this.props.options,
-      version: this.props.options.version + 1,
+    const { onDatasourceUpdate, options } = this.props;
+    onDatasourceUpdate({
+      ...options,
+      version: options.version + 1,
       secureJsonData: {
-        ...this.props.options.secureJsonData,
+        ...options.secureJsonData,
         appInsightsApiKey: '',
       },
       secureJsonFields: {
-        ...this.props.options.secureJsonFields,
+        ...options.secureJsonFields,
         appInsightsApiKey: false,
       },
     });

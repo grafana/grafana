@@ -14,76 +14,83 @@ export interface Props {
 }
 export class AnalyticsConfig extends PureComponent<Props> {
   onLogAnalyticsTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onDatasourceUpdate({
-      ...this.props.options,
+    const { onDatasourceUpdate, options } = this.props;
+    onDatasourceUpdate({
+      ...options,
       jsonData: {
-        ...this.props.options.jsonData,
+        ...options.jsonData,
         logAnalyticsTenantId: event.target.value,
       },
     });
   };
 
   onLogAnalyticsClientIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onDatasourceUpdate({
-      ...this.props.options,
+    const { onDatasourceUpdate, options } = this.props;
+    onDatasourceUpdate({
+      ...options,
       jsonData: {
-        ...this.props.options.jsonData,
+        ...options.jsonData,
         logAnalyticsClientId: event.target.value,
       },
     });
   };
 
   onLogAnalyticsClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onDatasourceUpdate({
-      ...this.props.options,
+    const { onDatasourceUpdate, options } = this.props;
+    onDatasourceUpdate({
+      ...options,
       secureJsonData: {
-        ...this.props.options.secureJsonData,
+        ...options.secureJsonData,
         logAnalyticsClientSecret: event.target.value,
       },
     });
   };
 
   onLogAnalyticsResetClientSecret = () => {
-    this.props.onDatasourceUpdate({
-      ...this.props.options,
-      version: this.props.options.version + 1,
+    const { onDatasourceUpdate, options } = this.props;
+    onDatasourceUpdate({
+      ...options,
+      version: options.version + 1,
       secureJsonData: {
-        ...this.props.options.secureJsonData,
+        ...options.secureJsonData,
         logAnalyticsClientSecret: '',
       },
       secureJsonFields: {
-        ...this.props.options.secureJsonFields,
+        ...options.secureJsonFields,
         logAnalyticsClientSecret: false,
       },
     });
   };
 
   onLogAnalyticsSubscriptionSelect = (logAnalyticsSubscription: SelectableValue<string>) => {
-    this.props.onDatasourceUpdate({
-      ...this.props.options,
+    const { onDatasourceUpdate, options } = this.props;
+    onDatasourceUpdate({
+      ...options,
       jsonData: {
-        ...this.props.options.jsonData,
+        ...options.jsonData,
         logAnalyticsSubscriptionId: logAnalyticsSubscription.value,
       },
     });
   };
 
   onWorkspaceSelectChange = (logAnalyticsDefaultWorkspace: SelectableValue<string>) => {
-    this.props.onDatasourceUpdate({
-      ...this.props.options,
+    const { onDatasourceUpdate, options } = this.props;
+    onDatasourceUpdate({
+      ...options,
       jsonData: {
-        ...this.props.options.jsonData,
+        ...options.jsonData,
         logAnalyticsDefaultWorkspace: logAnalyticsDefaultWorkspace.value,
       },
     });
   };
 
-  onAzureLogAnalyticsSameAsChange = (azureLogAnalyticsSameAs: boolean) => {
-    this.props.onDatasourceUpdate({
-      ...this.props.options,
+  onAzureLogAnalyticsSameAsChange = () => {
+    const { onDatasourceUpdate, options } = this.props;
+    onDatasourceUpdate({
+      ...options,
       jsonData: {
-        ...this.props.options.jsonData,
-        azureLogAnalyticsSameAs,
+        ...options.jsonData,
+        azureLogAnalyticsSameAs: !options.jsonData.azureLogAnalyticsSameAs,
       },
     });
   };
@@ -105,7 +112,7 @@ export class AnalyticsConfig extends PureComponent<Props> {
     return (
       jsonData.logAnalyticsTenantId &&
       jsonData.logAnalyticsTenantId.length &&
-      (jsonData.logAnalyticsClientId && jsonData.logAnalyticsClientId.length) &&
+      jsonData.logAnalyticsClientId && jsonData.logAnalyticsClientId.length &&
       jsonData.logAnalyticsSubscriptionId &&
       (secureJsonFields.logAnalyticsClientSecret || secureJsonData.logAnalyticsClientSecret)
     );
@@ -133,7 +140,7 @@ export class AnalyticsConfig extends PureComponent<Props> {
         <Switch
           label="Same details as Azure Monitor API"
           checked={jsonData.azureLogAnalyticsSameAs}
-          onChange={() => this.onAzureLogAnalyticsSameAsChange(!jsonData.azureLogAnalyticsSameAs)}
+          onChange={this.onAzureLogAnalyticsSameAsChange}
           {...addtlAttrs}
         />
         {!jsonData.azureLogAnalyticsSameAs && (

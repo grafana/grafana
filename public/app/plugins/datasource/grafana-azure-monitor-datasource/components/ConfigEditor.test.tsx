@@ -21,7 +21,7 @@ const setup = () => {
       withCredentials: false,
       isDefault: false,
       jsonData: {
-        subscriptionId: '44693801-6ee6-49de-9b2d-9106972f9572',
+        subscriptionId: '44987801-6nn6-49he-9b2d-9106972f9789',
         azureLogAnalyticsSameAs: true,
         cloudName: 'azuremonitor',
       },
