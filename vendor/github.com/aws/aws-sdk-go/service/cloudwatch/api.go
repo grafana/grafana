@@ -402,10 +402,12 @@ func (c *CloudWatch) DescribeAlarmHistoryPagesWithContext(ctx aws.Context, input
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*DescribeAlarmHistoryOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*DescribeAlarmHistoryOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -539,10 +541,12 @@ func (c *CloudWatch) DescribeAlarmsPagesWithContext(ctx aws.Context, input *Desc
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*DescribeAlarmsOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*DescribeAlarmsOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -1117,10 +1121,12 @@ func (c *CloudWatch) GetMetricDataPagesWithContext(ctx aws.Context, input *GetMe
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*GetMetricDataOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*GetMetricDataOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -1490,10 +1496,12 @@ func (c *CloudWatch) ListDashboardsPagesWithContext(ctx aws.Context, input *List
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*ListDashboardsOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*ListDashboardsOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -1636,10 +1644,12 @@ func (c *CloudWatch) ListMetricsPagesWithContext(ctx aws.Context, input *ListMet
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*ListMetricsOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*ListMetricsOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -2304,19 +2314,20 @@ func (c *CloudWatch) TagResourceRequest(input *TagResourceInput) (req *request.R
 // TagResource API operation for Amazon CloudWatch.
 //
 // Assigns one or more tags (key-value pairs) to the specified CloudWatch resource.
+// Currently, the only CloudWatch resources that can be tagged are alarms.
+//
 // Tags can help you organize and categorize your resources. You can also use
 // them to scope user permissions, by granting a user permission to access or
-// change only resources with certain tag values. In CloudWatch, alarms can
-// be tagged.
+// change only resources with certain tag values.
 //
 // Tags don't have any semantic meaning to AWS and are interpreted strictly
 // as strings of characters.
 //
-// You can use the TagResource action with a resource that already has tags.
-// If you specify a new tag key for the resource, this tag is appended to the
-// list of tags associated with the resource. If you specify a tag key that
-// is already associated with the resource, the new tag value that you specify
-// replaces the previous value for that tag.
+// You can use the TagResource action with an alarm that already has tags. If
+// you specify a new tag key for the alarm, this tag is appended to the list
+// of tags associated with the alarm. If you specify a tag key that is already
+// associated with the alarm, the new tag value that you specify replaces the
+// previous value for that tag.
 //
 // You can associate as many as 50 tags with a resource.
 //
@@ -5068,6 +5079,19 @@ type MetricDataQuery struct {
 	// MetricStat but not both.
 	MetricStat *MetricStat `type:"structure"`
 
+	// The granularity, in seconds, of the returned data points. For metrics with
+	// regular resolution, a period can be as short as one minute (60 seconds) and
+	// must be a multiple of 60. For high-resolution metrics that are collected
+	// at intervals of less than one minute, the period can be 1, 5, 10, 30, 60,
+	// or any multiple of 60. High-resolution metrics are those metrics stored by
+	// a PutMetricData operation that includes a StorageResolution of 1 second.
+	//
+	// Use this field only when you are performing a GetMetricData operation, and
+	// only when you are specifying the Expression field. Do not use this field
+	// with a PutMetricAlarm operation or when you are specifying a MetricStat in
+	// a GetMetricData operation.
+	Period *int64 `min:"1" type:"integer"`
+
 	// When used in GetMetricData, this option indicates whether to return the timestamps
 	// and raw data values of this metric. If you are performing this call just
 	// to do math expressions and do not also need the raw data returned, you can
@@ -5100,6 +5124,9 @@ func (s *MetricDataQuery) Validate() error {
 	}
 	if s.Id != nil && len(*s.Id) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Id", 1))
+	}
+	if s.Period != nil && *s.Period < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("Period", 1))
 	}
 	if s.MetricStat != nil {
 		if err := s.MetricStat.Validate(); err != nil {
@@ -5134,6 +5161,12 @@ func (s *MetricDataQuery) SetLabel(v string) *MetricDataQuery {
 // SetMetricStat sets the MetricStat field's value.
 func (s *MetricDataQuery) SetMetricStat(v *MetricStat) *MetricDataQuery {
 	s.MetricStat = v
+	return s
+}
+
+// SetPeriod sets the Period field's value.
+func (s *MetricDataQuery) SetPeriod(v int64) *MetricDataQuery {
+	s.Period = &v
 	return s
 }
 
@@ -5400,7 +5433,25 @@ type MetricStat struct {
 	// Metric is a required field
 	Metric *Metric `type:"structure" required:"true"`
 
-	// The period, in seconds, to use when retrieving the metric.
+	// The granularity, in seconds, of the returned data points. For metrics with
+	// regular resolution, a period can be as short as one minute (60 seconds) and
+	// must be a multiple of 60. For high-resolution metrics that are collected
+	// at intervals of less than one minute, the period can be 1, 5, 10, 30, 60,
+	// or any multiple of 60. High-resolution metrics are those metrics stored by
+	// a PutMetricData call that includes a StorageResolution of 1 second.
+	//
+	// If the StartTime parameter specifies a time stamp that is greater than 3
+	// hours ago, you must specify the period as follows or no data points in that
+	// time range is returned:
+	//
+	//    * Start time between 3 hours and 15 days ago - Use a multiple of 60 seconds
+	//    (1 minute).
+	//
+	//    * Start time between 15 and 63 days ago - Use a multiple of 300 seconds
+	//    (5 minutes).
+	//
+	//    * Start time greater than 63 days ago - Use a multiple of 3600 seconds
+	//    (1 hour).
 	//
 	// Period is a required field
 	Period *int64 `min:"1" type:"integer" required:"true"`
@@ -6509,14 +6560,13 @@ func (s *Tag) SetValue(v string) *Tag {
 type TagResourceInput struct {
 	_ struct{} `type:"structure"`
 
-	// The ARN of the CloudWatch resource that you're adding tags to. For more information
-	// on ARN format, see Example ARNs (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html#arn-syntax-cloudwatch)
-	// in the Amazon Web Services General Reference.
+	// The ARN of the CloudWatch alarm that you're adding tags to. The ARN format
+	// is arn:aws:cloudwatch:Region:account-id:alarm:alarm-name
 	//
 	// ResourceARN is a required field
 	ResourceARN *string `min:"1" type:"string" required:"true"`
 
-	// The list of key-value pairs to associate with the resource.
+	// The list of key-value pairs to associate with the alarm.
 	//
 	// Tags is a required field
 	Tags []*Tag `type:"list" required:"true"`
