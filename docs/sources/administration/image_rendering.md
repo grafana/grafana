@@ -20,11 +20,11 @@ A background job runs each 10 minutes and will remove temporary images. You can 
 ## Requirements
 
 Rendering images may require quite a lot of memory, mainly because there are "browser instances" started in the
-background responsible for the actual rendering. Further, if multiple images being rendered in parallel it most
-certainly have a bigger memory footprint. Minimum free memory recommendation is 1GB.
+background responsible for the actual rendering. Further, if multiple images are being rendered in parallel it most
+certainly has a bigger memory footprint. Minimum free memory recommendation is 1GB.
 
 Depending on [rendering method](#rendering-methods) you would need that memory available in the system where the
-rendering process are running. For [Grafana Iimage renderer plugin](#grafana-image-renderer-plugin) and [PhantomJS](#phantomjs)
+rendering process is running. For [Grafana Image renderer plugin](#grafana-image-renderer-plugin) and [PhantomJS](#phantomjs)
 it's the system which Grafana is installed on. For [Remote rendering service](#remote-rendering-service) it is the system where
 that's installed.
 
@@ -46,9 +46,9 @@ For further information and instructions refer to [troubleshooting](#troubleshoo
 
 #### Install in Grafana docker image
 
-This plugin does not currently work if it is installed in Grafana docker image. Since you are already running Grafana in a container it's suggested you run the image renderer in a container as well, see [Remote rendering service](#remote-rendering-service) for reference.
+This plugin does not currently work if it is installed in the Grafana Docker image. Since you are already running Grafana in a container it's suggested you run the image renderer in a container as well, see [Remote rendering service](#remote-rendering-service) for reference.
 
-If you still want to install the plugin in the Grafana docker image we provide instruction for how to build a custom Grafana image, see [Installing using Docker](/installation/docker/#custom-image-with-grafana-image-renderer-plugin-pre-installed).
+If you still want to install the plugin in the Grafana docker image we provide instructions for how to build a custom Grafana image, see [Installing using Docker](/installation/docker/#custom-image-with-grafana-image-renderer-plugin-pre-installed).
 
 ### Remote rendering service
 
@@ -180,11 +180,11 @@ libXcomposite libXdamage libXtst cups libXScrnSaver pango atk adwaita-cursor-the
 #### Using custom Chrome/Chromium
 
 As a last resort, if you already have [Chrome](https://www.google.com/chrome/) or [Chromium](https://www.chromium.org/)
-installed on your system you can configure [Grafana Iimage renderer plugin](#grafana-image-renderer-plugin) to use this
+installed on your system you can configure [Grafana Image renderer plugin](#grafana-image-renderer-plugin) to use this
 instead of the pre-packaged version of Chromium.
 
-> Please note that this is not recommended since you may encounter problems if the installed version of Chrome/Chromium not
-> is compatible with the [Grafana Iimage renderer plugin](#grafana-image-renderer-plugin).
+> Please note that this not is recommended since you may encounter problems if the installed version of Chrome/Chromium not
+> is compatible with the [Grafana Image renderer plugin](#grafana-image-renderer-plugin).
 
 To override the path to the Chrome/Chromium executable you can set an environment variable and make sure that
 it's available for the Grafana process, e.g.
