@@ -62,13 +62,13 @@ By default, the search expression is defined in such a way that the queried metr
 
 You can untoggle `Match Exact` to include metrics that have other dimensions defined. Disabling ‘Match Exact’ also creates a search expression even if you don’t use wildcards. We simply search for any metric that match at least the namespace, metric name, and all defined dimensions.
 
-!!image
+{{< docs-imagebox img="/img/docs/v65/dimension-wildcard.png" caption="CloudWatch dimension wildcard" >}}
 
 #### Deep linking from Grafana panels to the CloudWatch console
 
 Left clicking a time series in the panel shows a context menu with a link to `View in CloudWatch console`. Clicking that link will open a new tab that will take you to the CloudWatch console and display all the metrics for that query. If you are not currently logged in to the CloudWatch console, the link will forward you to the login page. The provided link is valid for any account but will only display the right metrics if you are logged in to the account that corresponds to the selected data source in Grafana.
 
-!!image
+{{< docs-imagebox img="/img/docs/v65/deep-linking.png" caption="CloudWatch deep linking" >}}
 
 This feature is not available for metrics that are based on math expressions.
 
@@ -99,7 +99,8 @@ The updated CloudWatch data source is shipped with pre-configured dashboards for
 - Amazon Relational Database Service `Amazon RDS`.
 
 To import the pre-configured dashboards, go to the configuration page of your CloudWatch data source and click on the `Dashboards` tab. Click `Import` for the dashboard you would like to use. To customize the dashboard, we recommend to save the dashboard under a different name, because otherwise the dashboard will be overwritten when a new version of the dashboard is released.
-!!image
+
+{{< docs-imagebox img="/img/docs/v65/dashboard-import.png" caption="CloudWatch dashboard import" >}}
 
 ### Dynamic typeahead support in query variables
 
