@@ -4,10 +4,14 @@ FROM grafana/grafana:${GRAFANA_VERSION}-ubuntu
 
 USER root
 
+# Set DEBIAN_FRONTEND=noninteractive in environment at build-time
+ARG DEBIAN_FRONTEND=noninteractive
+
 ARG GF_INSTALL_IMAGE_RENDERER_PLUGIN="false"
 
 RUN if [ $GF_INSTALL_IMAGE_RENDERER_PLUGIN = "true" ]; then \
     apt-get update && \
+    apt-get upgrade -y && \
     apt-get install -y chromium-browser && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* && \
