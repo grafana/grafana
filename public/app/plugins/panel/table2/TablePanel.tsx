@@ -2,12 +2,11 @@
 import React, { Component } from 'react';
 
 // Types
-import { ThemeContext } from '@grafana/ui';
-import { PanelProps } from '@grafana/data';
-import { Options } from './types';
-import Table from '@grafana/ui/src/components/Table/Table';
+import { getTheme, Table } from '@grafana/ui';
+import { PanelProps, getFieldProperties, getDisplayProcessor, FieldType } from '@grafana/data';
+import { TablePanelOptions } from './types';
 
-interface Props extends PanelProps<Options> {}
+interface Props extends PanelProps<TablePanelOptions> {}
 
 export class TablePanel extends Component<Props> {
   constructor(props: Props) {
@@ -16,15 +15,35 @@ export class TablePanel extends Component<Props> {
 
   render() {
     const { data, options } = this.props;
+    const { defaults, override } = options.fieldOptions;
 
     if (data.series.length < 1) {
       return <div>No Table Data...</div>;
     }
 
-    return (
-      <ThemeContext.Consumer>
-        {theme => <Table {...this.props} {...options} theme={theme} data={data.series[0]} />}
-      </ThemeContext.Consumer>
-    );
+    const theme = getTheme();
+    const fields = data.series[0].fields.map(f => {
+      if (f.type === FieldType.number) {
+        const config = getFieldProperties(defaults, f.config || {}, override);
+        const display = getDisplayProcessor({
+          config,
+          theme,
+          type: f.type,
+        });
+        return {
+          ...f,
+          config,
+          display,
+        };
+      }
+      return f;
+    });
+
+    const frame = {
+      ...data.series[0],
+      fields,
+    };
+
+    return <Table {...this.props} {...options} theme={theme} data={frame} />;
   }
 }
