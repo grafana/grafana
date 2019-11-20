@@ -84,20 +84,6 @@ Search expressions are currently limited to 1024 characters, so your query may f
 
 The use of multi-valued template variables is only supported for dimension values. Using multi-valued template variables for `Region`, `Namespace`, or `Metric Name` is not supported.
 
-#### Curated Dashboards
-
-The updated CloudWatch data source is shipped with pre-configured dashboards for five of the most popular AWS services:
-
-- Amazon Elastic Compute Cloud `Amazon EC2`,
-- Amazon Elastic Block Store `Amazon EBS`,
-- AWS Lambda `AWS Lambda`,
-- Amazon CloudWatch Logs `Amazon CloudWatch Logs`, and
-- Amazon Relational Database Service `Amazon RDS`.
-
-To import the pre-configured dashboards, go to the configuration page of your CloudWatch data source and click on the `Dashboards` tab. Click `Import` for the dashboard you would like to use. To customize the dashboard, we recommend to save the dashboard under a different name, because otherwise the dashboard will be overwritten when a new version of the dashboard is released.
-
-{{< docs-imagebox img="/img/docs/v65/cloudwatch-dashboard-import.png" caption="CloudWatch dashboard import" >}}
-
 ### Dynamic typeahead support in query variables
 
 If you have a query variable that has many thousands of values it can be quite slow to search for a specific value in the dropdown. This is due to the fact that all that search filtering is happening in the browser.
