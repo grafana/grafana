@@ -6,6 +6,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import appEvents from 'app/core/app_events';
 import { parse, SearchParserOptions, SearchParserResult } from 'search-query-parser';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { CoreEvents } from 'app/types';
 
 export interface SearchQuery {
   query: string;
@@ -60,9 +61,9 @@ export class SearchCtrl {
 
   /** @ngInject */
   constructor($scope: any, private $location: any, private $timeout: any, private searchSrv: SearchSrv) {
-    appEvents.on('show-dash-search', this.openSearch.bind(this), $scope);
-    appEvents.on('hide-dash-search', this.closeSearch.bind(this), $scope);
-    appEvents.on('search-query', debounce(this.search.bind(this), 500), $scope);
+    appEvents.on(CoreEvents.showDashSearch, this.openSearch.bind(this), $scope);
+    appEvents.on(CoreEvents.hideDashSearch, this.closeSearch.bind(this), $scope);
+    appEvents.on(CoreEvents.searchQuery, debounce(this.search.bind(this), 500), $scope);
 
     this.initialFolderFilterTitle = 'All';
     this.isEditor = contextSrv.isEditor;
@@ -95,7 +96,7 @@ export class SearchCtrl {
     } else {
       this.query = query;
     }
-    appEvents.emit('search-query');
+    appEvents.emit(CoreEvents.searchQuery);
   }
 
   openSearch(payload: OpenSearchParams = {}) {

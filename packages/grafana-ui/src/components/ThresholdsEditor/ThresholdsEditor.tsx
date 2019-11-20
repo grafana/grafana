@@ -2,13 +2,13 @@ import React, { PureComponent, ChangeEvent } from 'react';
 import { Threshold, sortThresholds } from '@grafana/data';
 import { colors } from '../../utils';
 import { ThemeContext } from '../../themes';
-import { getColorFromHexRgbOrName } from '../../utils';
+import { getColorFromHexRgbOrName } from '@grafana/data';
 import { Input } from '../Input/Input';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 
 export interface Props {
-  thresholds: Threshold[];
+  thresholds?: Threshold[];
   onChange: (thresholds: Threshold[]) => void;
 }
 
@@ -22,35 +22,28 @@ interface ThresholdWithKey extends Threshold {
 
 let counter = 100;
 
+function toThresholdsWithKey(thresholds?: Threshold[]): ThresholdWithKey[] {
+  if (!thresholds || thresholds.length === 0) {
+    thresholds = [{ value: -Infinity, color: 'green' }];
+  }
+
+  return thresholds.map(t => {
+    return {
+      color: t.color,
+      value: t.value === null ? -Infinity : t.value,
+      key: counter++,
+    };
+  });
+}
+
 export class ThresholdsEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    const thresholds = props.thresholds
-      ? props.thresholds.map(t => {
-          return {
-            color: t.color,
-            value: t.value === null ? -Infinity : t.value,
-            key: counter++,
-          };
-        })
-      : ([] as ThresholdWithKey[]);
+    const thresholds = toThresholdsWithKey(props.thresholds);
+    thresholds[0].value = -Infinity;
 
-    let needsCallback = false;
-    if (!thresholds.length) {
-      thresholds.push({ value: -Infinity, color: colors[0], key: counter++ });
-      needsCallback = true;
-    } else {
-      // First value is always base
-      thresholds[0].value = -Infinity;
-    }
-
-    // Update the state
     this.state = { thresholds };
-
-    if (needsCallback) {
-      this.onChange();
-    }
   }
 
   onAddThresholdAfter = (threshold: ThresholdWithKey) => {

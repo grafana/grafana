@@ -15,7 +15,7 @@
 // under the License.
 
 // Package macaron is a high productive and modular web framework in Go.
-package macaron
+package macaron // import "gopkg.in/macaron.v1"
 
 import (
 	"io"
@@ -26,13 +26,13 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Unknwon/com"
+	"github.com/unknwon/com"
 	"gopkg.in/ini.v1"
 
 	"github.com/go-macaron/inject"
 )
 
-const _VERSION = "1.3.2.1216"
+const _VERSION = "1.3.4.0805"
 
 func Version() string {
 	return _VERSION

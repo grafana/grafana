@@ -1,5 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
+import { DisplayValue } from '@grafana/data';
 import {
   BarGauge,
   Props,
@@ -9,7 +10,7 @@ import {
   getTitleStyles,
   getValuePercent,
 } from './BarGauge';
-import { VizOrientation, DisplayValue } from '../../types';
+import { VizOrientation } from '@grafana/data';
 import { getTheme } from '../../themes';
 
 // jest.mock('jquery', () => ({
@@ -25,7 +26,11 @@ function getProps(propOverrides?: Partial<Props>): Props {
     maxValue: 100,
     minValue: 0,
     displayMode: 'basic',
-    thresholds: [{ value: -Infinity, color: 'green' }, { value: 70, color: 'orange' }, { value: 90, color: 'red' }],
+    thresholds: [
+      { value: -Infinity, color: 'green' },
+      { value: 70, color: 'orange' },
+      { value: 90, color: 'red' },
+    ],
     height: 300,
     width: 300,
     value: {

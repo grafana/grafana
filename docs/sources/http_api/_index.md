@@ -2,6 +2,7 @@
 title = "HTTP API"
 description = "Grafana HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "overview"]
+aliases = ["/http_api/overview"]
 type = "docs"
 [menu.docs]
 name = "HTTP API"

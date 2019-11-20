@@ -141,15 +141,17 @@ export class DashboardImportCtrl {
       this.autoGenerateUidValue = 'value set';
     }
 
+    if (!this.dash.uid) {
+      return;
+    }
+
     this.backendSrv
       // @ts-ignore
       .getDashboardByUid(this.dash.uid)
       .then((res: any) => {
         this.uidExists = true;
         this.hasUidValidationError = true;
-        this.uidValidationError = `Dashboard named '${res.dashboard.title}' in folder '${
-          res.meta.folderTitle
-        }' has the same uid`;
+        this.uidValidationError = `Dashboard named '${res.dashboard.title}' in folder '${res.meta.folderTitle}' has the same uid`;
       })
       .catch((err: any) => {
         err.isHandled = true;

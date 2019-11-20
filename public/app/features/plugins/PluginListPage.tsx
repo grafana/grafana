@@ -9,7 +9,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { getLayoutMode, getPlugins, getPluginsSearchQuery } from './state/selectors';
 import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
 import { NavModel } from '@grafana/data';
-import { PluginMeta } from '@grafana/ui';
+import { PluginMeta } from '@grafana/data';
 import { StoreState } from 'app/types';
 
 export interface Props {
@@ -59,7 +59,7 @@ export class PluginListPage extends PureComponent<Props> {
               setSearchQuery={query => setPluginsSearchQuery(query)}
               linkButton={linkButton}
             />
-            {hasFetched && plugins && (plugins && <PluginList plugins={plugins} layoutMode={layoutMode} />)}
+            {hasFetched && plugins && plugins && <PluginList plugins={plugins} layoutMode={layoutMode} />}
           </>
         </Page.Contents>
       </Page>
@@ -83,9 +83,4 @@ const mapDispatchToProps = {
   setPluginsSearchQuery,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(PluginListPage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(PluginListPage));

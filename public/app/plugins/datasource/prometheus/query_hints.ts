@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { QueryHint, QueryFix } from '@grafana/ui';
+import { QueryHint, QueryFix } from '@grafana/data';
 
 /**
  * Number of time series results needed before starting to suggest sum aggregation hints
@@ -29,7 +29,7 @@ export function getQueryHints(query: string, series?: any[], datasource?: any): 
   // Check for monotonicity on series (table results are being ignored here)
   if (series && series.length > 0) {
     series.forEach(s => {
-      const datapoints: number[][] = s.datapoints;
+      const datapoints: number[][] = s.datapoints || s.rows || [];
       if (query.indexOf('rate(') === -1 && datapoints.length > 1) {
         let increasing = false;
         const nonNullData = datapoints.filter(dp => dp[0] !== null);

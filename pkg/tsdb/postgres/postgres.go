@@ -2,14 +2,16 @@ package postgres
 
 import (
 	"database/sql"
-	"github.com/grafana/grafana/pkg/setting"
 	"net/url"
 	"strconv"
+
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/go-xorm/core"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
 func init() {
@@ -24,20 +26,20 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 		logger.Debug("getEngine", "connection", cnnstr)
 	}
 
-	config := tsdb.SqlQueryEndpointConfiguration{
+	config := sqleng.SqlQueryEndpointConfiguration{
 		DriverName:        "postgres",
 		ConnectionString:  cnnstr,
 		Datasource:        datasource,
 		MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
 	}
 
-	rowTransformer := postgresRowTransformer{
+	queryResultTransformer := postgresQueryResultTransformer{
 		log: logger,
 	}
 
 	timescaledb := datasource.JsonData.Get("timescaledb").MustBool(false)
 
-	return tsdb.NewSqlQueryEndpoint(&config, &rowTransformer, newPostgresMacroEngine(timescaledb), logger)
+	return sqleng.NewSqlQueryEndpoint(&config, &queryResultTransformer, newPostgresMacroEngine(timescaledb), logger)
 }
 
 func generateConnectionString(datasource *models.DataSource) string {
@@ -52,11 +54,11 @@ func generateConnectionString(datasource *models.DataSource) string {
 	return u.String()
 }
 
-type postgresRowTransformer struct {
+type postgresQueryResultTransformer struct {
 	log log.Logger
 }
 
-func (t *postgresRowTransformer) Transform(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
+func (t *postgresQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
 	values := make([]interface{}, len(columnTypes))
 	valuePtrs := make([]interface{}, len(columnTypes))
 
@@ -90,4 +92,8 @@ func (t *postgresRowTransformer) Transform(columnTypes []*sql.ColumnType, rows *
 	}
 
 	return values, nil
+}
+
+func (t *postgresQueryResultTransformer) TransformQueryError(err error) error {
+	return err
 }

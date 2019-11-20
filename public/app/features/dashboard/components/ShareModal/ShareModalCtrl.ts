@@ -1,10 +1,22 @@
-import angular from 'angular';
+import angular, { ILocationService } from 'angular';
 import config from 'app/core/config';
 import { dateTime } from '@grafana/data';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
+import { TimeSrv } from '../../services/TimeSrv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 /** @ngInject */
-export function ShareModalCtrl($scope, $rootScope, $location, $timeout, timeSrv, templateSrv, linkSrv) {
+export function ShareModalCtrl(
+  $scope: any,
+  $rootScope: GrafanaRootScope,
+  $location: ILocationService,
+  $timeout: any,
+  timeSrv: TimeSrv,
+  templateSrv: TemplateSrv,
+  linkSrv: LinkSrv
+) {
   $scope.options = {
     forCurrent: true,
     includeTemplateVars: true,

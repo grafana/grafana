@@ -144,9 +144,9 @@ type AddDataSourceCommand struct {
 	IsDefault         bool              `json:"isDefault"`
 	JsonData          *simplejson.Json  `json:"jsonData"`
 	SecureJsonData    map[string]string `json:"secureJsonData"`
-	ReadOnly          bool              `json:"readOnly"`
 
-	OrgId int64 `json:"-"`
+	OrgId    int64 `json:"-"`
+	ReadOnly bool  `json:"-"`
 
 	Result *DataSource
 }
@@ -168,10 +168,10 @@ type UpdateDataSourceCommand struct {
 	JsonData          *simplejson.Json  `json:"jsonData"`
 	SecureJsonData    map[string]string `json:"secureJsonData"`
 	Version           int               `json:"version"`
-	ReadOnly          bool              `json:"readOnly"`
 
-	OrgId int64 `json:"-"`
-	Id    int64 `json:"-"`
+	OrgId    int64 `json:"-"`
+	Id       int64 `json:"-"`
+	ReadOnly bool  `json:"-"`
 
 	Result *DataSource
 }

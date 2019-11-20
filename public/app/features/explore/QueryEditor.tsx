@@ -7,7 +7,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
 import { Emitter } from 'app/core/utils/emitter';
-import { DataQuery } from '@grafana/ui';
+import { DataQuery } from '@grafana/data';
 import { TimeRange } from '@grafana/data';
 import 'app/features/plugins/plugin_loader';
 import { dateTime } from '@grafana/data';
@@ -62,6 +62,7 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
 
     this.component = loader.load(this.element, scopeProps, template);
     this.angularScope = scopeProps.ctrl;
+
     setTimeout(() => {
       this.props.onQueryChange(target);
       this.props.onExecuteQuery();
@@ -73,7 +74,7 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
     const hasNewError = prevProps.error !== this.props.error;
 
     if (this.component) {
-      if (hasToggledEditorMode) {
+      if (hasToggledEditorMode && this.angularScope && this.angularScope.toggleEditorMode) {
         this.angularScope.toggleEditorMode();
       }
 

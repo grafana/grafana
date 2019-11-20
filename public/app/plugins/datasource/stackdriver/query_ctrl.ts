@@ -1,5 +1,3 @@
-import _ from 'lodash';
-
 import { QueryCtrl } from 'app/plugins/sdk';
 import { StackdriverQuery } from './types';
 import { TemplateSrv } from 'app/features/templating/template_srv';

@@ -3,6 +3,8 @@ import coreModule from '../../core/core_module';
 import { ILocationService } from 'angular';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/nav_model_srv';
+import { AppEventEmitter } from 'app/types';
+import { AppEvents } from '@grafana/data';
 
 export interface PlaylistItem {
   value: any;
@@ -27,7 +29,7 @@ export class PlaylistEditCtrl {
 
   /** @ngInject */
   constructor(
-    private $scope: any,
+    private $scope: AppEventEmitter,
     private backendSrv: BackendSrv,
     private $location: ILocationService,
     $route: any,
@@ -102,11 +104,11 @@ export class PlaylistEditCtrl {
 
     savePromise.then(
       () => {
-        this.$scope.appEvent('alert-success', ['Playlist saved', '']);
+        this.$scope.appEvent(AppEvents.alertSuccess, ['Playlist saved']);
         this.$location.path('/playlists');
       },
       () => {
-        this.$scope.appEvent('alert-error', ['Unable to save playlist', '']);
+        this.$scope.appEvent(AppEvents.alertError, ['Unable to save playlist']);
       }
     );
   }

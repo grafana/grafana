@@ -10,7 +10,7 @@ import (
 	"regexp"
 
 	"github.com/grafana/grafana/pkg/models"
-
+	"github.com/jmespath/go-jmespath"
 	"golang.org/x/oauth2"
 )
 
@@ -21,6 +21,8 @@ type SocialGenericOAuth struct {
 	apiUrl               string
 	allowSignup          bool
 	emailAttributeName   string
+	emailAttributePath   string
+	roleAttributePath    string
 	teamIds              []int
 }
 
@@ -76,6 +78,37 @@ func (s *SocialGenericOAuth) IsOrganizationMember(client *http.Client) bool {
 	}
 
 	return false
+}
+
+// searchJSONForAttr searches the provided JSON response for the given attribute
+// using the configured  attribute path associated with the generic OAuth
+// provider.
+// Returns an empty string if an attribute is not found.
+func (s *SocialGenericOAuth) searchJSONForAttr(attributePath string, data []byte) string {
+	if attributePath == "" {
+		s.log.Error("No attribute path specified")
+		return ""
+	}
+	if len(data) == 0 {
+		s.log.Error("Empty user info JSON response provided")
+		return ""
+	}
+	var buf interface{}
+	if err := json.Unmarshal(data, &buf); err != nil {
+		s.log.Error("Failed to unmarshal user info JSON response", "err", err.Error())
+		return ""
+	}
+	val, err := jmespath.Search(attributePath, buf)
+	if err != nil {
+		s.log.Error("Failed to search user info JSON response with provided path", "attributePath", attributePath, "err", err.Error())
+		return ""
+	}
+	strVal, ok := val.(string)
+	if ok {
+		return strVal
+	}
+	s.log.Error("Attribute not found when searching JSON with provided path", "attributePath", attributePath)
+	return ""
 }
 
 func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, error) {
@@ -181,15 +214,16 @@ type UserInfoJson struct {
 
 func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	var data UserInfoJson
+	var rawUserInfoResponse HttpGetResponse
 	var err error
 
 	if !s.extractToken(&data, token) {
-		response, err := HttpGet(client, s.apiUrl)
+		rawUserInfoResponse, err = HttpGet(client, s.apiUrl)
 		if err != nil {
 			return nil, fmt.Errorf("Error getting user info: %s", err)
 		}
 
-		err = json.Unmarshal(response.Body, &data)
+		err = json.Unmarshal(rawUserInfoResponse.Body, &data)
 		if err != nil {
 			return nil, fmt.Errorf("Error decoding user info JSON: %s", err)
 		}
@@ -197,7 +231,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 
 	name := s.extractName(&data)
 
-	email := s.extractEmail(&data)
+	email := s.extractEmail(&data, rawUserInfoResponse.Body)
 	if email == "" {
 		email, err = s.FetchPrivateEmail(client)
 		if err != nil {
@@ -205,12 +239,15 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		}
 	}
 
+	role := s.extractRole(&data, rawUserInfoResponse.Body)
+
 	login := s.extractLogin(&data, email)
 
 	userInfo := &BasicUserInfo{
 		Name:  name,
 		Login: login,
 		Email: email,
+		Role:  role,
 	}
 
 	if !s.IsTeamMember(client) {
@@ -250,8 +287,7 @@ func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Toke
 		return false
 	}
 
-	email := s.extractEmail(data)
-	if email == "" {
+	if email := s.extractEmail(data, payload); email == "" {
 		s.log.Debug("No email found in id_token", "json", string(payload), "data", data)
 		return false
 	}
@@ -260,9 +296,16 @@ func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Toke
 	return true
 }
 
-func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
+func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson, userInfoResp []byte) string {
 	if data.Email != "" {
 		return data.Email
+	}
+
+	if s.emailAttributePath != "" {
+		email := s.searchJSONForAttr(s.emailAttributePath, userInfoResp)
+		if email != "" {
+			return email
+		}
 	}
 
 	emails, ok := data.Attributes[s.emailAttributeName]
@@ -275,8 +318,19 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 		if emailErr == nil {
 			return emailAddr.Address
 		}
+		s.log.Debug("Failed to parse e-mail address", "err", emailErr.Error())
 	}
 
+	return ""
+}
+
+func (s *SocialGenericOAuth) extractRole(data *UserInfoJson, userInfoResp []byte) string {
+	if s.roleAttributePath != "" {
+		role := s.searchJSONForAttr(s.roleAttributePath, userInfoResp)
+		if role != "" {
+			return role
+		}
+	}
 	return ""
 }
 

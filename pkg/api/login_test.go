@@ -3,16 +3,19 @@ package api
 import (
 	"encoding/hex"
 	"errors"
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/stretchr/testify/assert"
 )
 
 func mockSetIndexViewData() {
@@ -59,15 +62,14 @@ func TestLoginErrorCookieApiEndpoint(t *testing.T) {
 
 	sc := setupScenarioContext("/login")
 	hs := &HTTPServer{
-		Cfg: setting.NewCfg(),
+		Cfg:     setting.NewCfg(),
+		License: models.OSSLicensingService{},
 	}
 
 	sc.defaultHandler = Wrap(func(w http.ResponseWriter, c *models.ReqContext) {
 		hs.LoginView(c)
 	})
 
-	setting.OAuthService = &setting.OAuther{}
-	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
 	setting.LoginCookieName = "grafana_session"
 	setting.SecretKey = "login_testing"
 
@@ -108,7 +110,8 @@ func TestLoginOAuthRedirect(t *testing.T) {
 
 	sc := setupScenarioContext("/login")
 	hs := &HTTPServer{
-		Cfg: setting.NewCfg(),
+		Cfg:     setting.NewCfg(),
+		License: models.OSSLicensingService{},
 	}
 
 	sc.defaultHandler = Wrap(func(c *models.ReqContext) {
@@ -132,4 +135,60 @@ func TestLoginOAuthRedirect(t *testing.T) {
 	location, ok := sc.resp.Header()["Location"]
 	assert.True(t, ok)
 	assert.Equal(t, location[0], "/login/github")
+}
+
+func TestAuthProxyLoginEnableLoginTokenDisabled(t *testing.T) {
+	sc := setupAuthProxyLoginTest(false)
+
+	assert.Equal(t, sc.resp.Code, 302)
+	location, ok := sc.resp.Header()["Location"]
+	assert.True(t, ok)
+	assert.Equal(t, location[0], "/")
+
+	_, ok = sc.resp.Header()["Set-Cookie"]
+	assert.False(t, ok, "Set-Cookie does not exist")
+}
+
+func TestAuthProxyLoginWithEnableLoginToken(t *testing.T) {
+	sc := setupAuthProxyLoginTest(true)
+
+	assert.Equal(t, sc.resp.Code, 302)
+	location, ok := sc.resp.Header()["Location"]
+	assert.True(t, ok)
+	assert.Equal(t, location[0], "/")
+
+	setCookie, ok := sc.resp.Header()["Set-Cookie"]
+	assert.True(t, ok, "Set-Cookie exists")
+	assert.Equal(t, "grafana_session=; Path=/; Max-Age=0; HttpOnly", setCookie[0])
+}
+
+func setupAuthProxyLoginTest(enableLoginToken bool) *scenarioContext {
+	mockSetIndexViewData()
+	defer resetSetIndexViewData()
+
+	sc := setupScenarioContext("/login")
+	hs := &HTTPServer{
+		Cfg:              setting.NewCfg(),
+		License:          models.OSSLicensingService{},
+		AuthTokenService: auth.NewFakeUserAuthTokenService(),
+		log:              log.New("hello"),
+	}
+
+	sc.defaultHandler = Wrap(func(c *models.ReqContext) {
+		c.IsSignedIn = true
+		c.SignedInUser = &models.SignedInUser{
+			UserId: 10,
+		}
+		hs.LoginView(c)
+	})
+
+	setting.OAuthService = &setting.OAuther{}
+	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
+	setting.AuthProxyEnabled = true
+	setting.AuthProxyEnableLoginToken = enableLoginToken
+
+	sc.m.Get(sc.url, sc.defaultHandler)
+	sc.fakeReqNoAssertions("GET", sc.url).exec()
+
+	return sc
 }

@@ -46,10 +46,10 @@ func init() {
 // executes the queries against the API and parses the response into
 // the right format
 func (e *AzureMonitorExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	var result *tsdb.Response
 	var err error
 
 	var azureMonitorQueries []*tsdb.Query
+	var applicationInsightsQueries []*tsdb.Query
 
 	for _, query := range tsdbQuery.Queries {
 		queryType := query.Model.Get("queryType").MustString("")
@@ -57,6 +57,8 @@ func (e *AzureMonitorExecutor) Query(ctx context.Context, dsInfo *models.DataSou
 		switch queryType {
 		case "Azure Monitor":
 			azureMonitorQueries = append(azureMonitorQueries, query)
+		case "Application Insights":
+			applicationInsightsQueries = append(applicationInsightsQueries, query)
 		default:
 			return nil, fmt.Errorf("Alerting not supported for %s", queryType)
 		}
@@ -67,7 +69,24 @@ func (e *AzureMonitorExecutor) Query(ctx context.Context, dsInfo *models.DataSou
 		dsInfo:     e.dsInfo,
 	}
 
-	result, err = azDatasource.executeTimeSeriesQuery(ctx, azureMonitorQueries, tsdbQuery.TimeRange)
+	aiDatasource := &ApplicationInsightsDatasource{
+		httpClient: e.httpClient,
+		dsInfo:     e.dsInfo,
+	}
 
-	return result, err
+	azResult, err := azDatasource.executeTimeSeriesQuery(ctx, azureMonitorQueries, tsdbQuery.TimeRange)
+	if err != nil {
+		return nil, err
+	}
+
+	aiResult, err := aiDatasource.executeTimeSeriesQuery(ctx, applicationInsightsQueries, tsdbQuery.TimeRange)
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range aiResult.Results {
+		azResult.Results[k] = v
+	}
+
+	return azResult, nil
 }

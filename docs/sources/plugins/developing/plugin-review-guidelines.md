@@ -155,7 +155,7 @@ A basic guide for data sources can be found [here](http://docs.grafana.org/plugi
 
 If possible, any passwords or secrets should be be saved in the `secureJsonData` blob. To encrypt sensitive data, the Grafana server's proxy feature must be used. The Grafana server has support for token authentication (OAuth) and HTTP Header authentication. If the calls have to be sent directly from the browser to a third-party API then this will not be possible and sensitive data will not be encrypted.
 
-Read more here about how [Authentication for Datasources]({{< relref "auth-for-datasources.md" >}}) works.
+Read more here about how [authentication for data sources]({{< relref "auth-for-datasources.md" >}}) works.
 
 If using the proxy feature then the Config page should use the `secureJsonData` blob like this:
 
@@ -168,7 +168,7 @@ Each query editor is unique and can have a unique style. It should be adapted to
 
 - Should use the Grafana CSS `gf-form` classes.
 - Should be neat and tidy. Labels and fields in columns should be aligned and should be the same width if possible.
-- The datasource should be able to handle when a user toggles a query (by clicking on the eye icon) and not execute the query. This is done by checking the `hide` property - an [example](https://github.com/grafana/grafana/blob/master/public/app/plugins/datasource/postgres/datasource.ts#L35-L38).
+- The data source should be able to handle when a user toggles a query (by clicking on the eye icon) and not execute the query. This is done by checking the `hide` property - an [example](https://github.com/grafana/grafana/blob/master/public/app/plugins/datasource/postgres/datasource.ts#L35-L38).
 - Should not execute queries if fields in the Query Editor are empty and the query will throw an exception (defensive programming).
 - Should handle errors. There are two main ways to do this:
   - use the notification system in Grafana to show a toaster popup with the error message. Example [here](https://github.com/alexanderzobnin/grafana-zabbix/blob/fdbbba2fb03f5f2a4b3b0715415e09d5a4cf6cde/src/panel-triggers/triggers_panel_ctrl.js#L467-L471).

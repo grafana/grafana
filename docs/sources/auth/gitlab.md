@@ -116,3 +116,14 @@ api_url = https://gitlab.com/api/v4
 allowed_groups = example, foo/bar
 ```
 
+### Team Sync (Enterprise only)
+
+> Only available in Grafana Enterprise v6.4+
+
+With Team Sync you can map your GitLab groups to teams in Grafana so that your users will automatically be added to
+the correct teams. 
+
+Your GitLab groups can be referenced in the same way as `allowed_groups`, like `example` or `foo/bar`.
+
+[Learn more about Team Sync]({{< relref "auth/enhanced_ldap.md" >}})
+

@@ -1,3 +1,4 @@
+import { DataFrameView, KeyValue, MutableDataFrame } from '@grafana/data';
 import { ElasticResponse } from '../elastic_response';
 
 describe('ElasticResponse', () => {
@@ -54,7 +55,10 @@ describe('ElasticResponse', () => {
       targets = [
         {
           refId: 'A',
-          metrics: [{ type: 'count', id: '1' }, { type: 'avg', field: 'value', id: '2' }],
+          metrics: [
+            { type: 'count', id: '1' },
+            { type: 'avg', field: 'value', id: '2' },
+          ],
           bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '3' }],
         },
       ];
@@ -118,14 +122,20 @@ describe('ElasticResponse', () => {
                 buckets: [
                   {
                     '3': {
-                      buckets: [{ doc_count: 1, key: 1000 }, { doc_count: 3, key: 2000 }],
+                      buckets: [
+                        { doc_count: 1, key: 1000 },
+                        { doc_count: 3, key: 2000 },
+                      ],
                     },
                     doc_count: 4,
                     key: 'server1',
                   },
                   {
                     '3': {
-                      buckets: [{ doc_count: 2, key: 1000 }, { doc_count: 8, key: 2000 }],
+                      buckets: [
+                        { doc_count: 2, key: 1000 },
+                        { doc_count: 8, key: 2000 },
+                      ],
                     },
                     doc_count: 10,
                     key: 'server2',
@@ -155,7 +165,10 @@ describe('ElasticResponse', () => {
       targets = [
         {
           refId: 'A',
-          metrics: [{ type: 'count', id: '1' }, { type: 'avg', field: '@value', id: '4' }],
+          metrics: [
+            { type: 'count', id: '1' },
+            { type: 'avg', field: '@value', id: '4' },
+          ],
           bucketAggs: [
             { type: 'terms', field: 'host', id: '2' },
             { type: 'date_histogram', field: '@timestamp', id: '3' },
@@ -270,7 +283,10 @@ describe('ElasticResponse', () => {
               id: '1',
             },
           ],
-          bucketAggs: [{ type: 'terms', field: 'host', id: '3' }, { type: 'date_histogram', id: '4' }],
+          bucketAggs: [
+            { type: 'terms', field: 'host', id: '3' },
+            { type: 'date_histogram', id: '4' },
+          ],
         },
       ];
       response = {
@@ -355,21 +371,30 @@ describe('ElasticResponse', () => {
                 buckets: [
                   {
                     '3': {
-                      buckets: [{ doc_count: 1, key: 1000 }, { doc_count: 3, key: 2000 }],
+                      buckets: [
+                        { doc_count: 1, key: 1000 },
+                        { doc_count: 3, key: 2000 },
+                      ],
                     },
                     doc_count: 4,
                     key: 'server1',
                   },
                   {
                     '3': {
-                      buckets: [{ doc_count: 2, key: 1000 }, { doc_count: 8, key: 2000 }],
+                      buckets: [
+                        { doc_count: 2, key: 1000 },
+                        { doc_count: 8, key: 2000 },
+                      ],
                     },
                     doc_count: 10,
                     key: 'server2',
                   },
                   {
                     '3': {
-                      buckets: [{ doc_count: 2, key: 1000 }, { doc_count: 8, key: 2000 }],
+                      buckets: [
+                        { doc_count: 2, key: 1000 },
+                        { doc_count: 8, key: 2000 },
+                      ],
                     },
                     doc_count: 10,
                     key: 0,
@@ -409,7 +434,11 @@ describe('ElasticResponse', () => {
           {
             aggregations: {
               '3': {
-                buckets: [{ doc_count: 1, key: 1000 }, { doc_count: 3, key: 2000 }, { doc_count: 2, key: 1000 }],
+                buckets: [
+                  { doc_count: 1, key: 1000 },
+                  { doc_count: 3, key: 2000 },
+                  { doc_count: 2, key: 1000 },
+                ],
               },
             },
           },
@@ -453,12 +482,18 @@ describe('ElasticResponse', () => {
                 buckets: {
                   '@metric:cpu': {
                     '3': {
-                      buckets: [{ doc_count: 1, key: 1000 }, { doc_count: 3, key: 2000 }],
+                      buckets: [
+                        { doc_count: 1, key: 1000 },
+                        { doc_count: 3, key: 2000 },
+                      ],
                     },
                   },
                   '@metric:logins.count': {
                     '3': {
-                      buckets: [{ doc_count: 2, key: 1000 }, { doc_count: 8, key: 2000 }],
+                      buckets: [
+                        { doc_count: 2, key: 1000 },
+                        { doc_count: 8, key: 2000 },
+                      ],
                     },
                   },
                 },
@@ -640,7 +675,10 @@ describe('ElasticResponse', () => {
       targets = [
         {
           refId: 'A',
-          metrics: [{ type: 'avg', id: '1', field: 'test' }, { type: 'avg', id: '2', field: 'test2' }],
+          metrics: [
+            { type: 'avg', id: '1', field: 'test' },
+            { type: 'avg', id: '2', field: 'test2' },
+          ],
           bucketAggs: [{ id: '2', type: 'terms', field: 'host' }],
         },
       ];
@@ -732,7 +770,10 @@ describe('ElasticResponse', () => {
             {
               id: '4',
               field: 'select field',
-              pipelineVariables: [{ name: 'var1', pipelineAgg: '1' }, { name: 'var2', pipelineAgg: '3' }],
+              pipelineVariables: [
+                { name: 'var1', pipelineAgg: '1' },
+                { name: 'var2', pipelineAgg: '3' },
+              ],
               settings: { script: 'params.var1 * params.var2' },
               type: 'bucket_script',
             },
@@ -796,7 +837,7 @@ describe('ElasticResponse', () => {
           interval: '10s',
           isLogsQuery: true,
           key: 'Q-1561369883389-0.7611823271062786-0',
-          live: false,
+          liveStreaming: false,
           maxDataPoints: 1620,
           query: '',
           timeField: '@timestamp',
@@ -858,19 +899,38 @@ describe('ElasticResponse', () => {
 
     it('should return histogram aggregation and documents', () => {
       expect(result.data.length).toBe(2);
-      expect(result.data[0].fields).toContainEqual({ name: '@timestamp', type: 'time' });
-      expect(result.data[0].fields).toContainEqual({ name: 'host', type: 'string' });
-      expect(result.data[0].fields).toContainEqual({ name: 'message', type: 'string' });
-      result.data[0].rows.forEach((row: any, i: number) => {
-        expect(row).toContain(response.responses[0].hits.hits[i]._id);
-        expect(row).toContain(response.responses[0].hits.hits[i]._type);
-        expect(row).toContain(response.responses[0].hits.hits[i]._index);
-        expect(row).toContain(JSON.stringify(response.responses[0].hits.hits[i]._source, undefined, 2));
+      const logResults = result.data[0] as MutableDataFrame;
+      const fields = logResults.fields.map(f => {
+        return {
+          name: f.name,
+          type: f.type,
+        };
       });
 
-      expect(result.data[1]).toHaveProperty('name', 'Count');
+      expect(fields).toContainEqual({ name: '@timestamp', type: 'time' });
+      expect(fields).toContainEqual({ name: 'host', type: 'string' });
+      expect(fields).toContainEqual({ name: 'message', type: 'string' });
+
+      let rows = new DataFrameView(logResults);
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows.get(i);
+        expect(r._id).toEqual(response.responses[0].hits.hits[i]._id);
+        expect(r._type).toEqual(response.responses[0].hits.hits[i]._type);
+        expect(r._index).toEqual(response.responses[0].hits.hits[i]._index);
+        expect(r._source).toEqual(response.responses[0].hits.hits[i]._source);
+      }
+
+      // Make a map from the histogram results
+      const hist: KeyValue<number> = {};
+      const histogramResults = new MutableDataFrame(result.data[1]);
+      rows = new DataFrameView(histogramResults);
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows.get(i);
+        hist[row.Time] = row.Count;
+      }
+
       response.responses[0].aggregations['2'].buckets.forEach((bucket: any) => {
-        expect(result.data[1].rows).toContainEqual([bucket.doc_count, bucket.key]);
+        expect(hist[bucket.key]).toEqual(bucket.doc_count);
       });
     });
   });

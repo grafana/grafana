@@ -10,7 +10,7 @@ export interface Props {
 
 const BasicSettings: FC<Props> = ({ dataSourceName, isDefault, onDefaultChange, onNameChange }) => {
   return (
-    <div className="gf-form-group">
+    <div className="gf-form-group" aria-label="Datasource settings page basic settings">
       <div className="gf-form-inline">
         <div className="gf-form max-width-30" style={{ marginRight: '3px' }}>
           <FormLabel
@@ -28,11 +28,17 @@ const BasicSettings: FC<Props> = ({ dataSourceName, isDefault, onDefaultChange, 
             placeholder="Name"
             onChange={event => onNameChange(event.target.value)}
             required
+            aria-label="Datasource settings page name input field"
           />
         </div>
-        {/*
-        //@ts-ignore */}
-        <Switch label="Default" checked={isDefault} onChange={event => onDefaultChange(event.target.checked)} />
+        <Switch
+          label="Default"
+          checked={isDefault}
+          onChange={event => {
+            // @ts-ignore
+            onDefaultChange(event.target.checked);
+          }}
+        />
       </div>
     </div>
   );

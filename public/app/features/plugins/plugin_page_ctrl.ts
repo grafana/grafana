@@ -2,8 +2,10 @@ import angular, { IQService } from 'angular';
 import _ from 'lodash';
 
 import { getPluginSettings } from './PluginSettingsCache';
-import { PluginMeta } from '@grafana/ui';
+import { PluginMeta } from '@grafana/data';
 import { NavModelSrv } from 'app/core/core';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { AppEvents } from '@grafana/data';
 
 export class AppPageCtrl {
   page: any;
@@ -14,7 +16,7 @@ export class AppPageCtrl {
   /** @ngInject */
   constructor(
     private $routeParams: any,
-    private $rootScope: any,
+    private $rootScope: GrafanaRootScope,
     private navModelSrv: NavModelSrv,
     private $q: IQService
   ) {
@@ -26,7 +28,7 @@ export class AppPageCtrl {
         this.initPage(settings);
       })
       .catch(err => {
-        this.$rootScope.appEvent('alert-error', ['Unknown Plugin', '']);
+        this.$rootScope.appEvent(AppEvents.alertError, ['Unknown Plugin']);
         this.navModel = this.navModelSrv.getNotFoundNav();
       });
   }
@@ -36,12 +38,12 @@ export class AppPageCtrl {
     this.page = _.find(app.includes, { slug: this.$routeParams.slug });
 
     if (!this.page) {
-      this.$rootScope.appEvent('alert-error', ['App Page Not Found', '']);
+      this.$rootScope.appEvent(AppEvents.alertError, ['App Page Not Found']);
       this.navModel = this.navModelSrv.getNotFoundNav();
       return;
     }
     if (app.type !== 'app' || !app.enabled) {
-      this.$rootScope.appEvent('alert-error', ['Application Not Enabled', '']);
+      this.$rootScope.appEvent(AppEvents.alertError, ['Application Not Enabled']);
       this.navModel = this.navModelSrv.getNotFoundNav();
       return;
     }

@@ -1,15 +1,15 @@
 +++
-title = "Alerting Engine & Rules Guide"
+title = "Alerting Engine and Rules Guide"
 description = "Configuring Alert Rules"
 keywords = ["grafana", "alerting", "guide", "rules"]
 type = "docs"
 [menu.docs]
-name = "Engine & Rules"
+name = "Engine and Rules"
 parent = "alerting"
 weight = 1
 +++
 
-# Alerting Engine & Rules Guide
+# Alerting Engine and Rules Guide
 
 > Alerting is only available in Grafana v4.0 and above.
 
@@ -28,7 +28,7 @@ and the conditions that need to be met for the alert to change state and trigger
 
 The alert rules are evaluated in the Grafana backend in a scheduler and query execution engine that is part
 of core Grafana. Only some data sources are supported right now. They include `Graphite`, `Prometheus`, `InfluxDB`, `Elasticsearch`,
-`Stackdriver`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL` and `OpenTSDB`.
+`Stackdriver`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle` and `Azure Data Explorer`.
 
 > Alerting support for Azure Monitor is only available in Grafana v6.0 and above.
 
@@ -45,13 +45,15 @@ Currently alerting supports a limited form of high availability. Since v4.2.0 of
 Currently only the graph panel supports alert rules but this will be added to the **Singlestat** and **Table**
 panels as well in a future release.
 
-### Name & Evaluation interval
+### Name and Evaluation interval
 
 Here you can specify the name of the alert rule and how often the scheduler should evaluate the alert rule.
 
 ### For
 
-> This setting is available in Grafana 5.4 and above.
+> **Important note regarding No Data:**
+>
+> Do not use `For` with the `If no data or all values are null` setting set to `No Data`. The triggering of `No Data` will trigger instantly and not take `For` into consideration. This may also result in that an OK notification not being sent if alert transitions from `No Data -> Pending -> OK`.
 
 If an alert rule has a configured `For` and the query violates the configured threshold it will first go from `OK` to `Pending`. Going from `OK` to `Pending` Grafana will not send any notifications. Once the alert rule has been firing for more than `For` duration, it will change to `Alerting` and send alert notifications.
 
@@ -137,11 +139,11 @@ The message can contain anything, information about how you might solve the issu
 The actual notifications are configured and shared between multiple alerts. Read the
 [notifications]({{< relref "notifications.md" >}}) guide for how to configure and setup notifications.
 
-## Alert State History & Annotations
+## Alert State History and Annotations
 
 Alert state changes are recorded in the internal annotation table in Grafana's database. The state changes
 are visualized as annotations in the alert rule's graph panel. You can also go into the `State history`
-submenu in the alert tab to view & clear state history.
+submenu in the alert tab to view and clear state history.
 
 ## Troubleshooting
 

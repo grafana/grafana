@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	macaron "gopkg.in/macaron.v1"
@@ -47,6 +48,7 @@ type ProvisioningService interface {
 	ProvisionNotifications() error
 	ProvisionDashboards() error
 	GetDashboardProvisionerResolvedPath(name string) string
+	GetAllowUiUpdatesFromConfig(name string) bool
 }
 
 type HTTPServer struct {
@@ -68,6 +70,7 @@ type HTTPServer struct {
 	RemoteCacheService  *remotecache.RemoteCache `inject:""`
 	ProvisioningService ProvisioningService      `inject:""`
 	Login               *login.LoginService      `inject:""`
+	License             models.Licensing         `inject:""`
 }
 
 func (hs *HTTPServer) Init() error {
@@ -89,7 +92,12 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.streamManager.Run(ctx)
 
 	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
-	hs.log.Info("HTTP Server Listen", "address", listenAddr, "protocol", setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
+	listener, err := net.Listen("tcp", listenAddr)
+	if err != nil {
+		return errutil.Wrapf(err, "failed to open listener on address %s", listenAddr)
+	}
+
+	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol", setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
 
 	hs.httpSrv = &http.Server{Addr: listenAddr, Handler: hs.macaron}
 
@@ -105,13 +113,19 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 
 	switch setting.Protocol {
 	case setting.HTTP:
-		err = hs.httpSrv.ListenAndServe()
+		err = hs.httpSrv.Serve(listener)
+		if err == http.ErrServerClosed {
+			hs.log.Debug("server was shutdown gracefully")
+			return nil
+		}
+	case setting.HTTP2:
+		err = hs.listenAndServeH2TLS(listener, setting.CertFile, setting.KeyFile)
 		if err == http.ErrServerClosed {
 			hs.log.Debug("server was shutdown gracefully")
 			return nil
 		}
 	case setting.HTTPS:
-		err = hs.listenAndServeTLS(setting.CertFile, setting.KeyFile)
+		err = hs.listenAndServeTLS(listener, setting.CertFile, setting.KeyFile)
 		if err == http.ErrServerClosed {
 			hs.log.Debug("server was shutdown gracefully")
 			return nil
@@ -119,16 +133,19 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	case setting.SOCKET:
 		ln, err := net.ListenUnix("unix", &net.UnixAddr{Name: setting.SocketPath, Net: "unix"})
 		if err != nil {
-			hs.log.Debug("server was shutdown gracefully")
+			hs.log.Debug("server was shutdown gracefully", "err", err)
 			return nil
 		}
 
 		// Make socket writable by group
-		os.Chmod(setting.SocketPath, 0660)
+		if err := os.Chmod(setting.SocketPath, 0660); err != nil {
+			hs.log.Debug("server was shutdown gracefully", "err", err)
+			return nil
+		}
 
 		err = hs.httpSrv.Serve(ln)
 		if err != nil {
-			hs.log.Debug("server was shutdown gracefully")
+			hs.log.Debug("server was shutdown gracefully", "err", err)
 			return nil
 		}
 	default:
@@ -139,7 +156,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	return err
 }
 
-func (hs *HTTPServer) listenAndServeTLS(certfile, keyfile string) error {
+func (hs *HTTPServer) listenAndServeTLS(listener net.Listener, certfile, keyfile string) error {
 	if certfile == "" {
 		return fmt.Errorf("cert_file cannot be empty when using HTTPS")
 	}
@@ -178,7 +195,46 @@ func (hs *HTTPServer) listenAndServeTLS(certfile, keyfile string) error {
 	hs.httpSrv.TLSConfig = tlsCfg
 	hs.httpSrv.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler))
 
-	return hs.httpSrv.ListenAndServeTLS(setting.CertFile, setting.KeyFile)
+	return hs.httpSrv.ServeTLS(listener, setting.CertFile, setting.KeyFile)
+}
+
+func (hs *HTTPServer) listenAndServeH2TLS(listener net.Listener, certfile, keyfile string) error {
+	if certfile == "" {
+		return fmt.Errorf("cert_file cannot be empty when using HTTP2")
+	}
+
+	if keyfile == "" {
+		return fmt.Errorf("cert_key cannot be empty when using HTTP2")
+	}
+
+	if _, err := os.Stat(setting.CertFile); os.IsNotExist(err) {
+		return fmt.Errorf(`Cannot find SSL cert_file at %v`, setting.CertFile)
+	}
+
+	if _, err := os.Stat(setting.KeyFile); os.IsNotExist(err) {
+		return fmt.Errorf(`Cannot find SSL key_file at %v`, setting.KeyFile)
+	}
+
+	tlsCfg := &tls.Config{
+		MinVersion:               tls.VersionTLS12,
+		PreferServerCipherSuites: false,
+		CipherSuites: []uint16{
+			tls.TLS_CHACHA20_POLY1305_SHA256,
+			tls.TLS_AES_128_GCM_SHA256,
+			tls.TLS_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		},
+		NextProtos: []string{"h2", "http/1.1"},
+	}
+
+	hs.httpSrv.TLSConfig = tlsCfg
+
+	return hs.httpSrv.ServeTLS(listener, setting.CertFile, setting.KeyFile)
 }
 
 func (hs *HTTPServer) newMacaron() *macaron.Macaron {
@@ -295,7 +351,9 @@ func (hs *HTTPServer) healthHandler(ctx *macaron.Context) {
 	}
 
 	dataBytes, _ := data.EncodePretty()
-	ctx.Resp.Write(dataBytes)
+	if _, err := ctx.Resp.Write(dataBytes); err != nil {
+		hs.log.Error("Failed to write to response", "err", err)
+	}
 }
 
 func (hs *HTTPServer) mapStatic(m *macaron.Macaron, rootDir string, dir string, prefix string) {

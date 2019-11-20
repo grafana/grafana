@@ -1,9 +1,10 @@
 export interface AppNotification {
-  id?: number;
+  id: number;
   severity: AppNotificationSeverity;
   icon: string;
   title: string;
   text: string;
+  component?: React.ReactElement;
   timeout: AppNotificationTimeout;
 }
 

@@ -77,7 +77,9 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 
 	if resp.StatusCode/100 == 2 {
 		// flushing the body enables the transport to reuse the same connection
-		io.Copy(ioutil.Discard, resp.Body)
+		if _, err := io.Copy(ioutil.Discard, resp.Body); err != nil {
+			ns.log.Error("Failed to copy resp.Body to ioutil.Discard", "err", err)
+		}
 		return nil
 	}
 

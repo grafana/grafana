@@ -72,40 +72,16 @@ exports[`Render should render component 1`] = `
       </form>
     </div>
   </Component>
-  <div
-    className="empty-list-cta"
-  >
-    <div
-      className="empty-list-cta__title"
-    >
-      There are no external groups to sync with
-    </div>
-    <button
-      className="empty-list-cta__button btn btn-large btn-primary"
-      onClick={[Function]}
-    >
-      <i
-        className="gicon gicon-team"
-      />
-      Add Group
-    </button>
-    <div
-      className="empty-list-cta__pro-tip"
-    >
-      <i
-        className="fa fa-rocket"
-      />
-       
-      Sync LDAP or OAuth groups with your Grafana teams.
-      <a
-        className="text-link empty-list-cta__pro-tip-link"
-        href="http://docs.grafana.org/auth/enhanced_ldap/"
-        target="_blank"
-      >
-        Learn more
-      </a>
-    </div>
-  </div>
+  <EmptyListCTA
+    buttonIcon="gicon gicon-team"
+    buttonTitle="Add Group"
+    onClick={[Function]}
+    proTip="Sync LDAP or OAuth groups with your Grafana teams."
+    proTipLink="http://docs.grafana.org/auth/enhanced_ldap/"
+    proTipLinkTitle="Learn more"
+    proTipTarget="_blank"
+    title="There are no external groups to sync with"
+  />
 </div>
 `;
 

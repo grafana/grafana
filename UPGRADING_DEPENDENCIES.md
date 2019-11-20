@@ -1,4 +1,4 @@
-# Guide to Upgrading Dependencies
+# Guide to upgrading dependencies
 
 Upgrading Go or Node.js requires making changes in many different files. See below for a list and explanation for each.
 
@@ -16,7 +16,7 @@ Upgrading Go or Node.js requires making changes in many different files. See bel
 - Appveyor
 - Dockerfile
 
-## Go Dependencies
+## Go dependencies
 
 The Grafana project uses [Go modules](https://golang.org/cmd/go/#hdr-Modules__module_versions__and_more) to manage dependencies on external packages. This requires a working Go environment with version 1.11 or greater installed.
 
@@ -46,7 +46,7 @@ GO111MODULE=on go mod vendor
 
 You have to commit the changes to `go.mod`, `go.sum` and the `vendor/` directory before submitting the pull request.
 
-## Node.js Dependencies
+## Node.js dependencies
 
 Updated using `yarn`.
 

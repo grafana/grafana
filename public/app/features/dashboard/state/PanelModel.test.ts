@@ -1,12 +1,13 @@
 import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
+import { PanelEvents } from '@grafana/data';
 
 class TablePanelCtrl {}
 
 describe('PanelModel', () => {
   describe('when creating new panel model', () => {
-    let model;
-    let modelJson;
+    let model: any;
+    let modelJson: any;
     let persistedOptionsMock;
     const defaultOptionsMock = {
       fieldOptions: {
@@ -23,6 +24,7 @@ describe('PanelModel', () => {
           },
         ],
       },
+      arrayWith2Values: [{ value: 'name' }, { value: 'name2' }],
       showThresholds: true,
     };
 
@@ -42,6 +44,7 @@ describe('PanelModel', () => {
             },
           ],
         },
+        arrayWith2Values: [{ name: 'changed to only one value' }],
       };
 
       modelJson = {
@@ -71,6 +74,10 @@ describe('PanelModel', () => {
       expect(model.getOptions().showThresholds).toBeTruthy();
     });
 
+    it('should apply option defaults but not override if array is changed', () => {
+      expect(model.getOptions().arrayWith2Values.length).toBe(1);
+    });
+
     it('should set model props on instance', () => {
       expect(model.showColumns).toBe(true);
     });
@@ -91,6 +98,11 @@ describe('PanelModel', () => {
     it('getSaveModel should remove defaults', () => {
       const saveModel = model.getSaveModel();
       expect(saveModel.gridPos).toBe(undefined);
+    });
+
+    it('getSaveModel should not remove datasource default', () => {
+      const saveModel = model.getSaveModel();
+      expect(saveModel.datasource).toBe(null);
     });
 
     it('getSaveModel should remove nonPersistedProperties', () => {
@@ -139,7 +151,7 @@ describe('PanelModel', () => {
       let tearDownPublished = false;
 
       beforeEach(() => {
-        model.events.on('panel-teardown', () => {
+        model.events.on(PanelEvents.panelTeardown, () => {
           tearDownPublished = true;
         });
         model.changePlugin(getPanelPlugin({ id: 'graph' }));
@@ -165,7 +177,7 @@ describe('PanelModel', () => {
       it('should call react onPanelTypeChanged', () => {
         expect(onPanelTypeChanged.mock.calls.length).toBe(1);
         expect(onPanelTypeChanged.mock.calls[0][1]).toBe('table');
-        expect(onPanelTypeChanged.mock.calls[0][2].fieldOptions).toBeDefined();
+        expect(onPanelTypeChanged.mock.calls[0][2].angular).toBeDefined();
       });
 
       it('getQueryRunner() should return same instance after changing to another react panel', () => {

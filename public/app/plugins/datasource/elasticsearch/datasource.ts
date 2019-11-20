@@ -1,6 +1,6 @@
 import angular, { IQService } from 'angular';
 import _ from 'lodash';
-import { DataSourceApi, DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse } from '@grafana/ui';
+import { DataSourceApi, DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse } from '@grafana/data';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
@@ -119,22 +119,40 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   annotationQuery(options: any) {
     const annotation = options.annotation;
     const timeField = annotation.timeField || '@timestamp';
+    const timeEndField = annotation.timeEndField || null;
     const queryString = annotation.query || '*';
     const tagsField = annotation.tagsField || 'tags';
     const textField = annotation.textField || null;
 
-    const range: any = {};
-    range[timeField] = {
+    const dateRanges = [];
+    const rangeStart: any = {};
+    rangeStart[timeField] = {
       from: options.range.from.valueOf(),
       to: options.range.to.valueOf(),
       format: 'epoch_millis',
     };
+    dateRanges.push({ range: rangeStart });
+
+    if (timeEndField) {
+      const rangeEnd: any = {};
+      rangeEnd[timeEndField] = {
+        from: options.range.from.valueOf(),
+        to: options.range.to.valueOf(),
+        format: 'epoch_millis',
+      };
+      dateRanges.push({ range: rangeEnd });
+    }
 
     const queryInterpolated = this.templateSrv.replace(queryString, {}, 'lucene');
     const query = {
       bool: {
         filter: [
-          { range: range },
+          {
+            bool: {
+              should: dateRanges,
+              minimum_should_match: 1,
+            },
+          },
           {
             query_string: {
               query: queryInterpolated,
@@ -201,12 +219,25 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
           }
         }
 
-        const event = {
+        const event: {
+          annotation: any;
+          time: number;
+          timeEnd?: number;
+          text: string;
+          tags: string | string[];
+        } = {
           annotation: annotation,
           time: toUtc(time).valueOf(),
           text: getFieldFromSource(source, textField),
           tags: getFieldFromSource(source, tagsField),
         };
+
+        if (timeEndField) {
+          const timeEnd = getFieldFromSource(source, timeEndField);
+          if (timeEnd) {
+            event.timeEnd = toUtc(timeEnd).valueOf();
+          }
+        }
 
         // legacy support for title tield
         if (annotation.titleField) {
@@ -224,6 +255,21 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       }
       return list;
     });
+  }
+
+  interpolateVariablesInQueries(queries: ElasticsearchQuery[]): ElasticsearchQuery[] {
+    let expandedQueries = queries;
+    if (queries && queries.length > 0) {
+      expandedQueries = queries.map(query => {
+        const expandedQuery = {
+          ...query,
+          datasource: this.name,
+          query: this.templateSrv.replace(query.query, {}, 'lucene'),
+        };
+        return expandedQuery;
+      });
+    }
+    return expandedQueries;
   }
 
   testDatasource() {
@@ -286,9 +332,11 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       }
 
       let queryObj;
-      if (target.isLogsQuery) {
+      if (target.isLogsQuery || queryDef.hasMetricOfType(target, 'logs')) {
         target.bucketAggs = [queryDef.defaultBucketAgg()];
         target.metrics = [queryDef.defaultMetricAgg()];
+        // Setting this for metrics queries that are typed as logs
+        target.isLogsQuery = true;
         queryObj = this.queryBuilder.getLogsQuery(target, queryString);
       } else {
         if (target.alias) {
@@ -536,17 +584,4 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
     return false;
   }
-}
-
-export function getMaxConcurrenShardRequestOrDefault(options: ElasticsearchOptions): number {
-  if (options.maxConcurrentShardRequests === 5 && options.esVersion < 70) {
-    return 256;
-  }
-
-  if (options.maxConcurrentShardRequests === 256 && options.esVersion >= 70) {
-    return 5;
-  }
-
-  const defaultMaxConcurrentShardRequests = options.esVersion >= 70 ? 5 : 256;
-  return options.maxConcurrentShardRequests || defaultMaxConcurrentShardRequests;
 }

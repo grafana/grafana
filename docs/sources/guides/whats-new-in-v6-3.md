@@ -1,6 +1,6 @@
 +++
 title = "What's New in Grafana v6.3"
-description = "Feature & improvement highlights for Grafana v6.3"
+description = "Feature and improvement highlights for Grafana v6.3"
 keywords = ["grafana", "new", "documentation", "6.3"]
 type = "docs"
 [menu.docs]
@@ -45,7 +45,7 @@ allows you to view lines before and after the line of interest.
 
 ### Elasticsearch logs support
 
-This release adds support for searching & visualizing logs stored in Elasticsearch in the Explore mode. With a special
+This release adds support for searching and visualizing logs stored in Elasticsearch in the Explore mode. With a special
 simplified query interface specifically designed for logs search.
 
 {{< docs-imagebox img="/img/docs/v63/elasticsearch_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
@@ -54,7 +54,7 @@ Please read [Using Elasticsearch in Grafana](/features/datasources/elasticsearch
 
 ### InfluxDB logs support
 
-This release adds support for searching & visualizing logs stored in InfluxDB in the Explore mode. With a special
+This release adds support for searching and visualizing logs stored in InfluxDB in the Explore mode. With a special
 simplified query interface specifically designed for logs search.
 
 {{< docs-imagebox img="/img/docs/v63/influxdb_explore_logs.png" max-width="600px" caption="New Time Picker" >}}

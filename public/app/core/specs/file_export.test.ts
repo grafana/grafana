@@ -1,5 +1,6 @@
 import * as fileExport from '../utils/file_export';
 import { beforeEach, expect } from 'test/lib/common';
+import { TableData } from '@grafana/data';
 
 describe('file_export', () => {
   const ctx: any = {};
@@ -19,7 +20,12 @@ describe('file_export', () => {
       },
       {
         alias: 'series_2',
-        datapoints: [[11, 1500026100000], [12, 1500026200000], [13, 1500026300000], [15, 1500026500000]],
+        datapoints: [
+          [11, 1500026100000],
+          [12, 1500026200000],
+          [13, 1500026300000],
+          [15, 1500026500000],
+        ],
       },
     ];
 
@@ -74,7 +80,7 @@ describe('file_export', () => {
 
   describe('when exporting table data to csv', () => {
     it('should properly escape special characters and quote all string values', () => {
-      const inputTable = {
+      const inputTable: any = {
         columns: [
           { title: 'integer_value' },
           { text: 'string_value' },
@@ -116,7 +122,7 @@ describe('file_export', () => {
     });
 
     it('should decode HTML encoded characters', () => {
-      const inputTable = {
+      const inputTable: TableData = {
         columns: [{ text: 'string_value' }],
         rows: [
           ['&quot;&amp;&auml;'],

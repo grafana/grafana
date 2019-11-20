@@ -2,7 +2,7 @@ import _ from 'lodash';
 import queryPart from './query_part';
 import kbn from 'app/core/utils/kbn';
 import { InfluxQuery, InfluxQueryTag } from './types';
-import { ScopedVars } from '@grafana/ui';
+import { ScopedVars } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export default class InfluxQueryModel {
@@ -24,8 +24,16 @@ export default class InfluxQueryModel {
     target.resultFormat = target.resultFormat || 'time_series';
     target.orderByTime = target.orderByTime || 'ASC';
     target.tags = target.tags || [];
-    target.groupBy = target.groupBy || [{ type: 'time', params: ['$__interval'] }, { type: 'fill', params: ['null'] }];
-    target.select = target.select || [[{ type: 'field', params: ['value'] }, { type: 'mean', params: [] }]];
+    target.groupBy = target.groupBy || [
+      { type: 'time', params: ['$__interval'] },
+      { type: 'fill', params: ['null'] },
+    ];
+    target.select = target.select || [
+      [
+        { type: 'field', params: ['value'] },
+        { type: 'mean', params: [] },
+      ],
+    ];
 
     this.updateProjection();
   }

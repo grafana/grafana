@@ -209,20 +209,23 @@ func (w *FileLogWriter) DoRotate() error {
 
 func (w *FileLogWriter) deleteOldLog() {
 	dir := filepath.Dir(w.Filename)
-	filepath.Walk(dir, func(path string, info os.FileInfo, err error) (returnErr error) {
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) (returnErr error) {
 		defer func() {
 			if r := recover(); r != nil {
 				returnErr = fmt.Errorf("Unable to delete old log '%s', error: %+v", path, r)
 			}
 		}()
 
-		if !info.IsDir() && info.ModTime().Unix() < (time.Now().Unix()-60*60*24*w.Maxdays) {
-			if strings.HasPrefix(filepath.Base(path), filepath.Base(w.Filename)) {
-				os.Remove(path)
-			}
+		if !info.IsDir() && info.ModTime().Unix() < (time.Now().Unix()-60*60*24*w.Maxdays) &&
+			strings.HasPrefix(filepath.Base(path), filepath.Base(w.Filename)) {
+			returnErr = os.Remove(path)
+			return
 		}
-		return returnErr
+		return
 	})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "FileLogWriter(%q): %s\n", w.Filename, err)
+	}
 }
 
 // destroy file logger, close file writer.
@@ -234,7 +237,9 @@ func (w *FileLogWriter) Close() {
 // there are no buffering messages in file logger in memory.
 // flush file means sync file from disk.
 func (w *FileLogWriter) Flush() {
-	w.mw.fd.Sync()
+	if err := w.mw.fd.Sync(); err != nil {
+		fmt.Fprintf(os.Stderr, "FileLogWriter(%q): %s\n", w.Filename, err)
+	}
 }
 
 // Reload file logger

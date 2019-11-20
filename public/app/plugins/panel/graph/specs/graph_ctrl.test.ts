@@ -37,6 +37,9 @@ describe('GraphCtrl', () => {
     ctx.ctrl.events = {
       emit: () => {},
     };
+    ctx.ctrl.annotationsSrv = {
+      getAnnotations: () => Promise.resolve({}),
+    };
     ctx.ctrl.annotationsPromise = Promise.resolve({});
     ctx.ctrl.updateTimeRange();
   });
@@ -46,16 +49,19 @@ describe('GraphCtrl', () => {
       const data = [
         {
           target: 'test.cpu1',
-          datapoints: [[45, 1234567890], [60, 1234567899]],
+          datapoints: [
+            [45, 1234567890],
+            [60, 1234567899],
+          ],
         },
       ];
 
       ctx.ctrl.range = { from: dateTime().valueOf(), to: dateTime().valueOf() };
-      ctx.ctrl.onDataReceived(data);
+      ctx.ctrl.onDataSnapshotLoad(data);
     });
 
     it('should set datapointsOutside', () => {
-      expect(ctx.ctrl.dataWarning.title).toBe('Data points outside time range');
+      expect(ctx.ctrl.dataWarning.title).toBe('Data outside time range');
     });
   });
 
@@ -71,12 +77,15 @@ describe('GraphCtrl', () => {
       const data = [
         {
           target: 'test.cpu1',
-          datapoints: [[45, range.from + 1000], [60, range.from + 10000]],
+          datapoints: [
+            [45, range.from + 1000],
+            [60, range.from + 10000],
+          ],
         },
       ];
 
       ctx.ctrl.range = range;
-      ctx.ctrl.onDataReceived(data);
+      ctx.ctrl.onDataSnapshotLoad(data);
     });
 
     it('should set datapointsOutside', () => {
@@ -86,12 +95,15 @@ describe('GraphCtrl', () => {
 
   describe('datapointsCount given 2 series', () => {
     beforeEach(() => {
-      const data: any = [{ target: 'test.cpu1', datapoints: [] }, { target: 'test.cpu2', datapoints: [] }];
-      ctx.ctrl.onDataReceived(data);
+      const data: any = [
+        { target: 'test.cpu1', datapoints: [] },
+        { target: 'test.cpu2', datapoints: [] },
+      ];
+      ctx.ctrl.onDataSnapshotLoad(data);
     });
 
     it('should set datapointsCount warning', () => {
-      expect(ctx.ctrl.dataWarning.title).toBe('No data points');
+      expect(ctx.ctrl.dataWarning.title).toBe('No data');
     });
   });
 });

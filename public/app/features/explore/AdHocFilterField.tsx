@@ -1,6 +1,6 @@
 import React from 'react';
 import _ from 'lodash';
-import { DataSourceApi, DataQuery, DataSourceJsonData } from '@grafana/ui';
+import { DataSourceApi, DataQuery, DataSourceJsonData } from '@grafana/data';
 import { AdHocFilter } from './AdHocFilter';
 export const DEFAULT_REMOVE_FILTER_VALUE = '-- remove filter --';
 
@@ -34,9 +34,9 @@ export class AdHocFilterField<
 > extends React.PureComponent<Props<TQuery, TOptions>, State> {
   state: State = { pairs: [] };
 
-  componentDidUpdate(prevProps: Props) {
+  componentDidUpdate(prevProps: Props<TQuery, TOptions>) {
     if (_.isEqual(prevProps.extendedOptions, this.props.extendedOptions) === false) {
-      const pairs = [];
+      const pairs: any[] = [];
 
       this.setState({ pairs }, () => this.props.onPairsChanged(pairs));
     }

@@ -1,4 +1,4 @@
-import { DataQueryRequest, DataQuery } from '@grafana/ui';
+import { DataQueryRequest, DataQuery } from '@grafana/data';
 import { dateTime } from '@grafana/data';
 
 export function getQueryOptions<TQuery extends DataQuery>(

@@ -1,6 +1,6 @@
 +++
 title = "Grafana documentation"
-description = "Guides, Installation & Feature Documentation"
+description = "Guides, Installation and Feature Documentation"
 keywords = ["grafana", "installation", "documentation"]
 type = "docs"
 aliases = ["/v1.1", "/guides/reference/admin", "/v3.1"]
@@ -18,7 +18,7 @@ aliases = ["/v1.1", "/guides/reference/admin", "/v3.1"]
     <a href="{{< relref "installation/mac.md" >}}" class="nav-cards__item nav-cards__item--install">
         <div class="nav-cards__icon fa fa-apple">
         </div>
-        <h5>Installing on Mac OS X</h5>
+        <h5>Installing on macOS</h5>
     </a>
       <a href="{{< relref "installation/windows.md" >}}" class="nav-cards__item nav-cards__item--install">
         <div class="nav-cards__icon fa fa-windows">
@@ -36,7 +36,7 @@ aliases = ["/v1.1", "/guides/reference/admin", "/v3.1"]
         <h5>Nightly Builds</h5>
     </a>
     <div class="nav-cards__item nav-cards__item--install">
-        <h5>For other platforms Read the <a href="{{< relref "project/building_from_source.md" >}}">build from source</a>
+        <h5>For other platforms read the <a href="{{< relref "project/building_from_source.md" >}}">build from source</a>
         instructions for more information.</h5>
     </div>
 </div>
@@ -46,27 +46,27 @@ aliases = ["/v1.1", "/guides/reference/admin", "/v3.1"]
 <div class="nav-cards">
     <a href="https://grafana.com/grafana" class="nav-cards__item nav-cards__item--guide">
         <h4>What is Grafana?</h4>
-        <p>Grafana feature highlights.</p>
+        <p>Get an overview of Grafana's key features.</p>
     </a>
     <a href="{{< relref "installation/configuration.md" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>Configure Grafana</h4>
-        <p>Article on all the Grafana configuration and setup options.</p>
+        <p>Review the configuration and setup options.</p>
     </a>
     <a href="{{< relref "guides/getting_started.md" >}}" class="nav-cards__item nav-cards__item--guide">
-        <h4>Getting Started</h4>
-        <p>A guide that walks you through the basics of using Grafana</p>
+        <h4>Getting started</h4>
+        <p>Learn the basics of using Grafana.</p>
     </a>
     <a href="{{< relref "administration/provisioning.md" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>Provisioning</h4>
-        <p>A guide to help you automate your Grafana setup & configuration.</p>
+        <p>Learn how to automate your Grafana configuration.</p>
     </a>
-    <a href="{{< relref "guides/whats-new-in-v6-3.md" >}}" class="nav-cards__item nav-cards__item--guide">
-        <h4>What's new in v6.3</h4>
-        <p>Article on all the new cool features and enhancements in v6.3</p>
+    <a href="{{< relref "guides/whats-new-in-v6-4.md" >}}" class="nav-cards__item nav-cards__item--guide">
+        <h4>What's new in v6.4</h4>
+        <p>Explore the features and enhancements in the latest release.</p>
     </a>
     <a href="{{< relref "tutorials/screencasts.md" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>Screencasts</h4>
-        <p>Video tutorials & guides</p>
+        <p>Watch Grafana video tutorials and guides.</p>
     </a>
 </div>
 

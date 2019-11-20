@@ -31,7 +31,7 @@ class InviteeRow extends PureComponent<Props> {
             <textarea
               readOnly={true}
               value={invitee.url}
-              style={{ position: 'absolute', right: -1000 }}
+              style={{ position: 'absolute', bottom: 0, right: 0, opacity: 0, zIndex: -10 }}
               ref={this.copyUrlRef}
             />
             Copy Invite
@@ -52,9 +52,6 @@ const mapDispatchToProps = {
   revokeInvite,
 };
 
-export default connect(
-  () => {
-    return {};
-  },
-  mapDispatchToProps
-)(InviteeRow);
+export default connect(() => {
+  return {};
+}, mapDispatchToProps)(InviteeRow);

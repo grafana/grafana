@@ -24,13 +24,13 @@ export class AliasBy extends Component<Props, State> {
     this.setState({ value: this.props.value });
   }
 
-  componentWillReceiveProps(nextProps: Props) {
+  UNSAFE_componentWillReceiveProps(nextProps: Props) {
     if (nextProps.value !== this.props.value) {
       this.setState({ value: nextProps.value });
     }
   }
 
-  onChange = (e: any) => {
+  onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({ value: e.target.value });
     this.propagateOnChange(e.target.value);
   };

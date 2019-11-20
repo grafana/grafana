@@ -8,18 +8,22 @@ import { importDataSourcePlugin } from './plugin_loader';
 import { DataSourceSrv as DataSourceService, getDataSourceSrv as getDataSourceService } from '@grafana/runtime';
 
 // Types
-import { DataSourceApi, DataSourceSelectItem, ScopedVars } from '@grafana/ui';
+import { DataSourceApi, DataSourceSelectItem, ScopedVars, AppEvents } from '@grafana/data';
 import { auto } from 'angular';
 import { TemplateSrv } from '../templating/template_srv';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+
+// Pretend Datasource
+import { expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 
 export class DatasourceSrv implements DataSourceService {
-  datasources: { [name: string]: DataSourceApi };
+  datasources: Record<string, DataSourceApi>;
 
   /** @ngInject */
   constructor(
     private $q: any,
     private $injector: auto.IInjectorService,
-    private $rootScope: any,
+    private $rootScope: GrafanaRootScope,
     private templateSrv: TemplateSrv
   ) {
     this.init();
@@ -53,10 +57,16 @@ export class DatasourceSrv implements DataSourceService {
     return this.loadDatasource(name);
   }
 
-  loadDatasource(name: string): Promise<DataSourceApi> {
+  loadDatasource(name: string): Promise<DataSourceApi<any, any>> {
+    // Expression Datasource (not a real datasource)
+    if (name === expressionDatasource.name) {
+      this.datasources[name] = expressionDatasource as any;
+      return this.$q.when(expressionDatasource);
+    }
+
     const dsConfig = config.datasources[name];
     if (!dsConfig) {
-      return this.$q.reject({ message: 'Datasource named ' + name + ' was not found' });
+      return this.$q.reject({ message: `Datasource named ${name} was not found` });
     }
 
     const deferred = this.$q.defer();
@@ -85,7 +95,7 @@ export class DatasourceSrv implements DataSourceService {
         deferred.resolve(instance);
       })
       .catch(err => {
-        this.$rootScope.appEvent('alert-error', [dsConfig.name + ' plugin failed', err.toString()]);
+        this.$rootScope.appEvent(AppEvents.alertError, [dsConfig.name + ' plugin failed', err.toString()]);
       });
 
     return deferred.promise;
@@ -125,8 +135,10 @@ export class DatasourceSrv implements DataSourceService {
         //Make sure grafana and mixed are sorted at the bottom
         if (value.meta.id === 'grafana') {
           metricSource.sort = String.fromCharCode(253);
-        } else if (value.meta.id === 'mixed') {
+        } else if (value.meta.id === 'dashboard') {
           metricSource.sort = String.fromCharCode(254);
+        } else if (value.meta.id === 'mixed') {
+          metricSource.sort = String.fromCharCode(255);
         }
 
         metricSources.push(metricSource);

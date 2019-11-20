@@ -32,7 +32,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 		"metrics":   metrics,
 		"os":        runtime.GOOS,
 		"arch":      runtime.GOARCH,
-		"edition":   getEdition(),
+		"edition":   getEdition(uss.License.HasValidLicense()),
 		"packaging": setting.Packaging,
 	}
 
@@ -151,10 +151,18 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	data := bytes.NewBuffer(out)
 
 	client := http.Client{Timeout: 5 * time.Second}
-	go client.Post(usageStatsURL, "application/json", data)
+	go func() {
+		if _, err := client.Post(usageStatsURL, "application/json", data); err != nil {
+			metricsLogger.Error("Failed to send usage stats", "err", err)
+		}
+	}()
 }
 
 func (uss *UsageStatsService) updateTotalStats() {
+	if !uss.Cfg.MetricsEndpointEnabled || uss.Cfg.MetricsEndpointDisableTotalStats {
+		return
+	}
+
 	statsQuery := models.GetSystemStatsQuery{}
 	if err := uss.Bus.Dispatch(&statsQuery); err != nil {
 		metricsLogger.Error("Failed to get system stats", "error", err)
@@ -174,8 +182,8 @@ func (uss *UsageStatsService) updateTotalStats() {
 	metrics.StatsTotalActiveAdmins.Set(float64(statsQuery.Result.ActiveAdmins))
 }
 
-func getEdition() string {
-	if setting.IsEnterprise {
+func getEdition(validLicense bool) string {
+	if validLicense {
 		return "enterprise"
 	}
 	return "oss"

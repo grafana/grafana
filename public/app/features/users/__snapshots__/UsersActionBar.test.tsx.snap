@@ -86,13 +86,9 @@ exports[`Render should show external user management button 1`] = `
     <a
       className="btn btn-primary"
       href="some/url"
+      rel="noopener"
       target="_blank"
-    >
-      <i
-        className="fa fa-external-link-square"
-      />
-       
-    </a>
+    />
   </div>
 </div>
 `;

@@ -6,28 +6,26 @@ type PostAnnotationsCmd struct {
 	DashboardId int64            `json:"dashboardId"`
 	PanelId     int64            `json:"panelId"`
 	Time        int64            `json:"time"`
+	TimeEnd     int64            `json:"timeEnd,omitempty"` // Optional
 	Text        string           `json:"text"`
 	Tags        []string         `json:"tags"`
 	Data        *simplejson.Json `json:"data"`
-	IsRegion    bool             `json:"isRegion"`
-	TimeEnd     int64            `json:"timeEnd"`
 }
 
 type UpdateAnnotationsCmd struct {
-	Id       int64    `json:"id"`
-	Time     int64    `json:"time"`
-	Text     string   `json:"text"`
-	Tags     []string `json:"tags"`
-	IsRegion bool     `json:"isRegion"`
-	TimeEnd  int64    `json:"timeEnd"`
+	Id      int64    `json:"id"`
+	Time    int64    `json:"time"`
+	TimeEnd int64    `json:"timeEnd,omitempty"` // Optional
+	Text    string   `json:"text"`
+	Tags    []string `json:"tags"`
 }
 
 type PatchAnnotationsCmd struct {
 	Id      int64    `json:"id"`
 	Time    int64    `json:"time"`
+	TimeEnd int64    `json:"timeEnd,omitempty"` // Optional
 	Text    string   `json:"text"`
 	Tags    []string `json:"tags"`
-	TimeEnd int64    `json:"timeEnd"`
 }
 
 type DeleteAnnotationsCmd struct {
@@ -35,7 +33,6 @@ type DeleteAnnotationsCmd struct {
 	DashboardId  int64 `json:"dashboardId"`
 	PanelId      int64 `json:"panelId"`
 	AnnotationId int64 `json:"annotationId"`
-	RegionId     int64 `json:"regionId"`
 }
 
 type PostGraphiteAnnotationsCmd struct {

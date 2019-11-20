@@ -1,6 +1,6 @@
 +++
 title = "What's New in Grafana v5.0"
-description = "Feature & improvement highlights for Grafana v5.0"
+description = "Feature and improvement highlights for Grafana v5.0"
 keywords = ["grafana", "new", "documentation", "5.0"]
 type = "docs"
 [menu.docs]
@@ -20,10 +20,10 @@ This is the most substantial update that Grafana has ever seen. This article wil
 - [Dashboard Folders]({{< relref "#dashboard-folders" >}}) helps you keep your dashboards organized.
 - [Permissions]({{< relref "#dashboard-folders" >}}) on folders and dashboards helps manage larger Grafana installations.
 - [Group users into teams]({{< relref "#teams" >}}) and use them in the new permission system.
-- [Datasource provisioning]({{< relref "#data-sources" >}}) makes it possible to setup datasources via config files.
+- [Data source provisioning]({{< relref "#data-sources" >}}) makes it possible to setup data sources via config files.
 - [Dashboard provisioning]({{< relref "#dashboards" >}}) makes it possible to setup dashboards via config files.
 - [Persistent dashboard url's]({{< relref "#dashboard-model-persistent-url-s-and-api-changes" >}}) makes it possible to rename dashboards without breaking links.
-- [Graphite Tags & Integrated Function Docs]({{< relref "#graphite-tags-integrated-function-docs" >}}).
+- [Graphite Tags and Integrated Function Docs]({{< relref "#graphite-tags-integrated-function-docs" >}}).
 
 ### Video showing new features
 
@@ -90,7 +90,7 @@ We hope to do more with teams in future releases like integration with LDAP and 
 You can assign permissions to folders and dashboards. The default user role-based permissions can be removed and
 replaced with specific teams or users enabling more control over what a user can see and edit.
 
-Dashboard permissions only limits what dashboards & folders a user can view & edit not which
+Dashboard permissions only limits what dashboards and folders a user can view and edit not which
 data sources a user can access nor what queries a user can issue.
 
 <div class="clearfix"></div>
@@ -118,7 +118,7 @@ which makes it possible to star them, use one as the home dashboard, set permiss
 expects the dashboards to exist in the database. More info in the [dashboard provisioning docs](/administration/provisioning/#dashboards)
 
 
-## Graphite Tags & Integrated Function Docs
+## Graphite Tags and Integrated Function Docs
 
 {{< docs-imagebox img="/img/docs/v50/graphite_tags.png" max-width="1000px" class="docs-image--right" >}}
 

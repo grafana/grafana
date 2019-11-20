@@ -1,8 +1,9 @@
 import { Task, TaskRunner } from './task';
+import fs from 'fs';
+
 // @ts-ignore
 import execa = require('execa');
 import path = require('path');
-import fs = require('fs');
 import glob = require('glob');
 import { Linter, Configuration, RuleFailure } from 'tslint';
 import * as prettier from 'prettier';
@@ -151,9 +152,11 @@ export const lintPlugin = useSpinner<Fixable>('Linting', async ({ fix }) => {
     failures.forEach(f => {
       // tslint:disable-next-line
       console.log(
-        `${f.getRuleSeverity() === 'warning' ? 'WARNING' : 'ERROR'}: ${f.getFileName().split('src')[1]}[${
-          f.getStartPosition().getLineAndCharacter().line
-        }:${f.getStartPosition().getLineAndCharacter().character}]: ${f.getFailure()}`
+        `${f.getRuleSeverity() === 'warning' ? 'WARNING' : 'ERROR'}: ${
+          f.getFileName().split('src')[1]
+        }[${f.getStartPosition().getLineAndCharacter().line + 1}:${
+          f.getStartPosition().getLineAndCharacter().character
+        }]: ${f.getFailure()}`
       );
     });
     console.log('\n');

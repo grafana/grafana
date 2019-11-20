@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -83,7 +84,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		NewGrafanaVersion:       plugins.GrafanaLatestVersion,
 		NewGrafanaVersionExists: plugins.GrafanaHasUpdate,
 		AppName:                 setting.ApplicationName,
-		AppNameBodyClass:        getAppNameBodyClass(setting.ApplicationName),
+		AppNameBodyClass:        getAppNameBodyClass(hs.License.HasValidLicense()),
 	}
 
 	if setting.DisableGravatar {
@@ -115,11 +116,12 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		children = append(children, &dtos.NavLink{Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "import", Icon: "gicon gicon-dashboard-import", Url: setting.AppSubUrl + "/dashboard/import"})
 
 		data.NavTree = append(data.NavTree, &dtos.NavLink{
-			Text:     "Create",
-			Id:       "create",
-			Icon:     "fa fa-fw fa-plus",
-			Url:      setting.AppSubUrl + "/dashboard/new",
-			Children: children,
+			Text:       "Create",
+			Id:         "create",
+			Icon:       "fa fa-fw fa-plus",
+			Url:        setting.AppSubUrl + "/dashboard/new",
+			Children:   children,
+			SortWeight: dtos.WeightCreate,
 		})
 	}
 
@@ -132,21 +134,23 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 	}
 
 	data.NavTree = append(data.NavTree, &dtos.NavLink{
-		Text:     "Dashboards",
-		Id:       "dashboards",
-		SubTitle: "Manage dashboards & folders",
-		Icon:     "gicon gicon-dashboard",
-		Url:      setting.AppSubUrl + "/",
-		Children: dashboardChildNavs,
+		Text:       "Dashboards",
+		Id:         "dashboards",
+		SubTitle:   "Manage dashboards & folders",
+		Icon:       "gicon gicon-dashboard",
+		Url:        setting.AppSubUrl + "/",
+		SortWeight: dtos.WeightDashboard,
+		Children:   dashboardChildNavs,
 	})
 
 	if setting.ExploreEnabled && (c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR || setting.ViewersCanEdit) {
 		data.NavTree = append(data.NavTree, &dtos.NavLink{
-			Text:     "Explore",
-			Id:       "explore",
-			SubTitle: "Explore your data",
-			Icon:     "gicon gicon-explore",
-			Url:      setting.AppSubUrl + "/explore",
+			Text:       "Explore",
+			Id:         "explore",
+			SubTitle:   "Explore your data",
+			Icon:       "gicon gicon-explore",
+			SortWeight: dtos.WeightExplore,
+			Url:        setting.AppSubUrl + "/explore",
 		})
 	}
 
@@ -163,6 +167,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 			Img:          data.User.GravatarUrl,
 			Url:          setting.AppSubUrl + "/profile",
 			HideFromMenu: true,
+			SortWeight:   dtos.WeightProfile,
 			Children: []*dtos.NavLink{
 				{Text: "Preferences", Id: "profile-settings", Url: setting.AppSubUrl + "/profile", Icon: "gicon gicon-preferences"},
 				{Text: "Change Password", Id: "change-password", Url: setting.AppSubUrl + "/profile/password", Icon: "fa fa-fw fa-lock", HideFromMenu: true},
@@ -186,12 +191,13 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		}
 
 		data.NavTree = append(data.NavTree, &dtos.NavLink{
-			Text:     "Alerting",
-			SubTitle: "Alert rules & notifications",
-			Id:       "alerting",
-			Icon:     "gicon gicon-alert",
-			Url:      setting.AppSubUrl + "/alerting/list",
-			Children: alertChildNavs,
+			Text:       "Alerting",
+			SubTitle:   "Alert rules & notifications",
+			Id:         "alerting",
+			Icon:       "gicon gicon-alert",
+			Url:        setting.AppSubUrl + "/alerting/list",
+			Children:   alertChildNavs,
+			SortWeight: dtos.WeightAlerting,
 		})
 	}
 
@@ -203,10 +209,11 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 	for _, plugin := range enabledPlugins.Apps {
 		if plugin.Pinned {
 			appLink := &dtos.NavLink{
-				Text: plugin.Name,
-				Id:   "plugin-page-" + plugin.Id,
-				Url:  plugin.DefaultNavUrl,
-				Img:  plugin.Info.Logos.Small,
+				Text:       plugin.Name,
+				Id:         "plugin-page-" + plugin.Id,
+				Url:        plugin.DefaultNavUrl,
+				Img:        plugin.Info.Logos.Small,
+				SortWeight: dtos.WeightPlugin,
 			}
 
 			for _, include := range plugin.Includes {
@@ -242,94 +249,84 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		}
 	}
 
-	if c.IsGrafanaAdmin || c.OrgRole == m.ROLE_ADMIN {
-		cfgNode := &dtos.NavLink{
-			Id:       "cfg",
-			Text:     "Configuration",
-			SubTitle: "Organization: " + c.OrgName,
-			Icon:     "gicon gicon-cog",
-			Url:      setting.AppSubUrl + "/datasources",
-			Children: []*dtos.NavLink{
-				{
-					Text:        "Data Sources",
-					Icon:        "gicon gicon-datasources",
-					Description: "Add and configure data sources",
-					Id:          "datasources",
-					Url:         setting.AppSubUrl + "/datasources",
-				},
-				{
-					Text:        "Users",
-					Id:          "users",
-					Description: "Manage org members",
-					Icon:        "gicon gicon-user",
-					Url:         setting.AppSubUrl + "/org/users",
-				},
-				{
-					Text:        "Teams",
-					Id:          "teams",
-					Description: "Manage org groups",
-					Icon:        "gicon gicon-team",
-					Url:         setting.AppSubUrl + "/org/teams",
-				},
-				{
-					Text:        "Plugins",
-					Id:          "plugins",
-					Description: "View and configure plugins",
-					Icon:        "gicon gicon-plugins",
-					Url:         setting.AppSubUrl + "/plugins",
-				},
-				{
-					Text:        "Preferences",
-					Id:          "org-settings",
-					Description: "Organization preferences",
-					Icon:        "gicon gicon-preferences",
-					Url:         setting.AppSubUrl + "/org",
-				},
+	configNodes := []*dtos.NavLink{}
 
-				{
-					Text:        "API Keys",
-					Id:          "apikeys",
-					Description: "Create & manage API keys",
-					Icon:        "gicon gicon-apikeys",
-					Url:         setting.AppSubUrl + "/org/apikeys",
-				},
-			},
-		}
-
-		if c.OrgRole != m.ROLE_ADMIN {
-			cfgNode = &dtos.NavLink{
-				Id:       "cfg",
-				Text:     "Configuration",
-				SubTitle: "Organization: " + c.OrgName,
-				Icon:     "gicon gicon-cog",
-				Url:      setting.AppSubUrl + "/admin/users",
-				Children: make([]*dtos.NavLink, 0),
-			}
-		}
-
-		data.NavTree = append(data.NavTree, cfgNode)
-	} else {
-		cfgNode := &dtos.NavLink{
-			Id:       "cfg",
-			Text:     "Configuration",
-			SubTitle: "Organization: " + c.OrgName,
-			Icon:     "gicon gicon-cog",
-			Url:      setting.AppSubUrl + "/plugins",
-			Children: []*dtos.NavLink{
-				{
-					Text:        "Plugins",
-					Id:          "plugins",
-					Description: "View and configure plugins",
-					Icon:        "gicon gicon-plugins",
-					Url:         setting.AppSubUrl + "/plugins",
-				},
-			},
-		}
-
-		data.NavTree = append(data.NavTree, cfgNode)
+	if c.OrgRole == m.ROLE_ADMIN {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Data Sources",
+			Icon:        "gicon gicon-datasources",
+			Description: "Add and configure data sources",
+			Id:          "datasources",
+			Url:         setting.AppSubUrl + "/datasources",
+		})
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Users",
+			Id:          "users",
+			Description: "Manage org members",
+			Icon:        "gicon gicon-user",
+			Url:         setting.AppSubUrl + "/org/users",
+		})
 	}
 
+	if c.OrgRole == m.ROLE_ADMIN || hs.Cfg.EditorsCanAdmin {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Teams",
+			Id:          "teams",
+			Description: "Manage org groups",
+			Icon:        "gicon gicon-team",
+			Url:         setting.AppSubUrl + "/org/teams",
+		})
+	}
+
+	configNodes = append(configNodes, &dtos.NavLink{
+		Text:        "Plugins",
+		Id:          "plugins",
+		Description: "View and configure plugins",
+		Icon:        "gicon gicon-plugins",
+		Url:         setting.AppSubUrl + "/plugins",
+	})
+
+	if c.OrgRole == m.ROLE_ADMIN {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Preferences",
+			Id:          "org-settings",
+			Description: "Organization preferences",
+			Icon:        "gicon gicon-preferences",
+			Url:         setting.AppSubUrl + "/org",
+		})
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "API Keys",
+			Id:          "apikeys",
+			Description: "Create & manage API keys",
+			Icon:        "gicon gicon-apikeys",
+			Url:         setting.AppSubUrl + "/org/apikeys",
+		})
+	}
+
+	data.NavTree = append(data.NavTree, &dtos.NavLink{
+		Id:         "cfg",
+		Text:       "Configuration",
+		SubTitle:   "Organization: " + c.OrgName,
+		Icon:       "gicon gicon-cog",
+		Url:        configNodes[0].Url,
+		SortWeight: dtos.WeightConfig,
+		Children:   configNodes,
+	})
+
 	if c.IsGrafanaAdmin {
+		adminNavLinks := []*dtos.NavLink{
+			{Text: "Users", Id: "global-users", Url: setting.AppSubUrl + "/admin/users", Icon: "gicon gicon-user"},
+			{Text: "Orgs", Id: "global-orgs", Url: setting.AppSubUrl + "/admin/orgs", Icon: "gicon gicon-org"},
+			{Text: "Settings", Id: "server-settings", Url: setting.AppSubUrl + "/admin/settings", Icon: "gicon gicon-preferences"},
+			{Text: "Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats", Icon: "fa fa-fw fa-bar-chart"},
+		}
+
+		if setting.LDAPEnabled {
+			adminNavLinks = append(adminNavLinks, &dtos.NavLink{
+				Text: "LDAP", Id: "ldap", Url: setting.AppSubUrl + "/admin/ldap", Icon: "fa fa-fw fa-address-book-o",
+			})
+		}
+
 		data.NavTree = append(data.NavTree, &dtos.NavLink{
 			Text:         "Server Admin",
 			SubTitle:     "Manage all users & orgs",
@@ -337,34 +334,9 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 			Id:           "admin",
 			Icon:         "gicon gicon-shield",
 			Url:          setting.AppSubUrl + "/admin/users",
-			Children: []*dtos.NavLink{
-				{Text: "Users", Id: "global-users", Url: setting.AppSubUrl + "/admin/users", Icon: "gicon gicon-user"},
-				{Text: "Orgs", Id: "global-orgs", Url: setting.AppSubUrl + "/admin/orgs", Icon: "gicon gicon-org"},
-				{Text: "Settings", Id: "server-settings", Url: setting.AppSubUrl + "/admin/settings", Icon: "gicon gicon-preferences"},
-				{Text: "Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats", Icon: "fa fa-fw fa-bar-chart"},
-			},
+			SortWeight:   dtos.WeightAdmin,
+			Children:     adminNavLinks,
 		})
-	}
-
-	if (c.OrgRole == m.ROLE_EDITOR || c.OrgRole == m.ROLE_VIEWER) && hs.Cfg.EditorsCanAdmin {
-		cfgNode := &dtos.NavLink{
-			Id:       "cfg",
-			Text:     "Configuration",
-			SubTitle: "Organization: " + c.OrgName,
-			Icon:     "gicon gicon-cog",
-			Url:      setting.AppSubUrl + "/org/teams",
-			Children: []*dtos.NavLink{
-				{
-					Text:        "Teams",
-					Id:          "teams",
-					Description: "Manage org groups",
-					Icon:        "gicon gicon-team",
-					Url:         setting.AppSubUrl + "/org/teams",
-				},
-			},
-		}
-
-		data.NavTree = append(data.NavTree, cfgNode)
 	}
 
 	data.NavTree = append(data.NavTree, &dtos.NavLink{
@@ -374,6 +346,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		Url:          "#",
 		Icon:         "gicon gicon-question",
 		HideFromMenu: true,
+		SortWeight:   dtos.WeightHelp,
 		Children: []*dtos.NavLink{
 			{Text: "Keyboard shortcuts", Url: "/shortcuts", Icon: "fa fa-fw fa-keyboard-o", Target: "_self"},
 			{Text: "Community site", Url: "http://community.grafana.com", Icon: "fa fa-fw fa-comment", Target: "_blank"},
@@ -382,6 +355,10 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 	})
 
 	hs.HooksService.RunIndexDataHooks(&data)
+
+	sort.SliceStable(data.NavTree, func(i, j int) bool {
+		return data.NavTree[i].SortWeight < data.NavTree[j].SortWeight
+	})
 	return &data, nil
 }
 
@@ -409,13 +386,10 @@ func (hs *HTTPServer) NotFoundHandler(c *m.ReqContext) {
 	c.HTML(404, "index", data)
 }
 
-func getAppNameBodyClass(name string) string {
-	switch name {
-	case setting.APP_NAME:
-		return "app-grafana"
-	case setting.APP_NAME_ENTERPRISE:
+func getAppNameBodyClass(validLicense bool) string {
+	if validLicense {
 		return "app-enterprise"
-	default:
-		return ""
 	}
+
+	return "app-grafana"
 }

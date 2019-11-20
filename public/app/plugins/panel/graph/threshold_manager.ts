@@ -1,7 +1,8 @@
 import 'vendor/flot/jquery.flot';
 import $ from 'jquery';
 import _ from 'lodash';
-import { getColorFromHexRgbOrName } from '@grafana/ui';
+import { getColorFromHexRgbOrName } from '@grafana/data';
+import { CoreEvents } from 'app/types';
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 
 export class ThresholdManager {
@@ -35,7 +36,7 @@ export class ThresholdManager {
     const handleElem = $(evt.currentTarget).parents('.alert-handle-wrapper');
     const handleIndex = $(evt.currentTarget).data('handleIndex');
 
-    let lastY: number = null;
+    let lastY: number | null = null;
     let posTop: number;
     const plot = this.plot;
     const panelCtrl = this.panelCtrl;
@@ -65,7 +66,7 @@ export class ThresholdManager {
       // trigger digest and render
       panelCtrl.$scope.$apply(() => {
         panelCtrl.render();
-        panelCtrl.events.emit('threshold-changed', {
+        panelCtrl.events.emit(CoreEvents.thresholdChanged, {
           threshold: model,
           handleIndex: handleIndex,
         });

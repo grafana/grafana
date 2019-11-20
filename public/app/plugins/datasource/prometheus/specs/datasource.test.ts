@@ -8,9 +8,8 @@ import {
   prometheusRegularEscape,
   prometheusSpecialRegexEscape,
 } from '../datasource';
-import { dateTime } from '@grafana/data';
-import { DataSourceInstanceSettings, DataQueryResponseData } from '@grafana/ui';
-import { PromOptions } from '../types';
+import { DataSourceInstanceSettings, DataQueryResponseData, DataQueryRequest, dateTime } from '@grafana/data';
+import { PromOptions, PromQuery, PromContext } from '../types';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { CustomVariable } from 'app/features/templating/custom_variable';
@@ -151,15 +150,24 @@ describe('PrometheusDatasource', () => {
       const resultMock = [
         {
           metric: { __name__: 'metric', job: 'testjob', le: '10' },
-          values: [[1443454528.0, '10'], [1443454528.0, '10']],
+          values: [
+            [1443454528.0, '10'],
+            [1443454528.0, '10'],
+          ],
         },
         {
           metric: { __name__: 'metric', job: 'testjob', le: '20' },
-          values: [[1443454528.0, '20'], [1443454528.0, '10']],
+          values: [
+            [1443454528.0, '20'],
+            [1443454528.0, '10'],
+          ],
         },
         {
           metric: { __name__: 'metric', job: 'testjob', le: '30' },
-          values: [[1443454528.0, '25'], [1443454528.0, '10']],
+          values: [
+            [1443454528.0, '25'],
+            [1443454528.0, '10'],
+          ],
         },
       ];
       const responseMock = { data: { data: { result: resultMock } } };
@@ -167,20 +175,29 @@ describe('PrometheusDatasource', () => {
       const expected = [
         {
           target: '10',
-          datapoints: [[10, 1443454528000], [10, 1443454528000]],
+          datapoints: [
+            [10, 1443454528000],
+            [10, 1443454528000],
+          ],
         },
         {
           target: '20',
-          datapoints: [[10, 1443454528000], [0, 1443454528000]],
+          datapoints: [
+            [10, 1443454528000],
+            [0, 1443454528000],
+          ],
         },
         {
           target: '30',
-          datapoints: [[5, 1443454528000], [0, 1443454528000]],
+          datapoints: [
+            [5, 1443454528000],
+            [0, 1443454528000],
+          ],
         },
       ];
 
-      ctx.ds.performTimeSeriesQuery = jest.fn().mockReturnValue(responseMock);
-      return ctx.ds.query(ctx.query).then((result: any) => {
+      ctx.ds.performTimeSeriesQuery = jest.fn().mockReturnValue([responseMock]);
+      ctx.ds.query(ctx.query).subscribe((result: any) => {
         const results = result.data;
         return expect(results).toMatchObject(expected);
       });
@@ -190,27 +207,39 @@ describe('PrometheusDatasource', () => {
       const resultMock = [
         {
           metric: { __name__: 'metric', job: 'testjob', le: '2' },
-          values: [[1443454528.0, '10'], [1443454528.0, '10']],
+          values: [
+            [1443454528.0, '10'],
+            [1443454528.0, '10'],
+          ],
         },
         {
           metric: { __name__: 'metric', job: 'testjob', le: '4' },
-          values: [[1443454528.0, '20'], [1443454528.0, '10']],
+          values: [
+            [1443454528.0, '20'],
+            [1443454528.0, '10'],
+          ],
         },
         {
           metric: { __name__: 'metric', job: 'testjob', le: '+Inf' },
-          values: [[1443454528.0, '25'], [1443454528.0, '10']],
+          values: [
+            [1443454528.0, '25'],
+            [1443454528.0, '10'],
+          ],
         },
         {
           metric: { __name__: 'metric', job: 'testjob', le: '1' },
-          values: [[1443454528.0, '25'], [1443454528.0, '10']],
+          values: [
+            [1443454528.0, '25'],
+            [1443454528.0, '10'],
+          ],
         },
       ];
       const responseMock = { data: { data: { result: resultMock } } };
 
       const expected = ['1', '2', '4', '+Inf'];
 
-      ctx.ds.performTimeSeriesQuery = jest.fn().mockReturnValue(responseMock);
-      return ctx.ds.query(ctx.query).then((result: any) => {
+      ctx.ds.performTimeSeriesQuery = jest.fn().mockReturnValue([responseMock]);
+      ctx.ds.query(ctx.query).subscribe((result: any) => {
         const seriesLabels = _.map(result.data, 'target');
         return expect(seriesLabels).toEqual(expected);
       });
@@ -469,7 +498,7 @@ describe('PrometheusDatasource', () => {
         backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
         ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
 
-        await ctx.ds.query(query).then((data: any) => {
+        ctx.ds.query(query).subscribe((data: any) => {
           results = data;
         });
       });
@@ -503,17 +532,13 @@ describe('PrometheusDatasource', () => {
         },
       };
 
-      beforeEach(async () => {
+      it('should generate an error', () => {
         backendSrv.datasourceRequest = jest.fn(() => Promise.reject(response));
         ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
-
-        await ctx.ds.query(query).catch((e: any) => {
+        ctx.ds.query(query).subscribe((e: any) => {
           results = e.message;
+          expect(results).toBe(`"${errMessage}"`);
         });
-      });
-
-      it('should generate an error', () => {
-        expect(results).toBe(`"${errMessage}"`);
       });
     });
   });
@@ -539,7 +564,11 @@ describe('PrometheusDatasource', () => {
             result: [
               {
                 metric: { __name__: 'test', job: 'testjob', series: 'series 1' },
-                values: [[start + step * 1, '3846'], [start + step * 3, '3847'], [end - step * 1, '3848']],
+                values: [
+                  [start + step * 1, '3846'],
+                  [start + step * 3, '3847'],
+                  [end - step * 1, '3848'],
+                ],
               },
               {
                 metric: { __name__: 'test', job: 'testjob', series: 'series 2' },
@@ -553,7 +582,7 @@ describe('PrometheusDatasource', () => {
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
 
-      await ctx.ds.query(query).then((data: any) => {
+      ctx.ds.query(query).subscribe((data: any) => {
         results = data;
       });
     });
@@ -614,8 +643,7 @@ describe('PrometheusDatasource', () => {
 
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
-
-      await ctx.ds.query(query).then((data: any) => {
+      ctx.ds.query(query).subscribe((data: any) => {
         results = data;
       });
     });
@@ -666,6 +694,19 @@ describe('PrometheusDatasource', () => {
         },
       },
     };
+
+    describe('when time series query is cancelled', () => {
+      it('should return empty results', async () => {
+        backendSrv.datasourceRequest = jest.fn(() => Promise.resolve({ cancelled: true }));
+        ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
+
+        await ctx.ds.annotationQuery(options).then((data: any) => {
+          results = data;
+        });
+
+        expect(results).toEqual([]);
+      });
+    });
 
     describe('not use useValueForTime', () => {
       beforeEach(async () => {
@@ -803,7 +844,7 @@ describe('PrometheusDatasource', () => {
 
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
-      await ctx.ds.query(query).then((data: any) => {
+      ctx.ds.query(query).subscribe((data: any) => {
         results = data;
       });
     });
@@ -840,7 +881,7 @@ describe('PrometheusDatasource', () => {
 
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
-      await ctx.ds.query(query);
+      ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
@@ -856,7 +897,7 @@ describe('PrometheusDatasource', () => {
       const urlExpected = 'proxied/api/v1/query_range?query=test&start=60&end=420&step=1';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
-      await ctx.ds.query(query);
+      ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
@@ -877,7 +918,7 @@ describe('PrometheusDatasource', () => {
       const urlExpected = 'proxied/api/v1/query_range?query=test&start=60&end=420&step=10';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
-      await ctx.ds.query(query);
+      ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
@@ -894,7 +935,7 @@ describe('PrometheusDatasource', () => {
       const urlExpected = 'proxied/api/v1/query_range?query=test&start=' + start + '&end=' + end + '&step=2';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
-      await ctx.ds.query(query);
+      ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
@@ -916,7 +957,7 @@ describe('PrometheusDatasource', () => {
       const urlExpected = 'proxied/api/v1/query_range?query=test&start=50&end=400&step=50';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
-      await ctx.ds.query(query);
+      ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
@@ -937,7 +978,7 @@ describe('PrometheusDatasource', () => {
       const urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=60&end=420&step=15';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
-      await ctx.ds.query(query);
+      ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
@@ -959,7 +1000,7 @@ describe('PrometheusDatasource', () => {
       const urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=0&end=400&step=100';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
-      await ctx.ds.query(query);
+      ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
@@ -981,7 +1022,7 @@ describe('PrometheusDatasource', () => {
       const urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=' + start + '&end=' + end + '&step=100';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
-      await ctx.ds.query(query);
+      ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
@@ -1003,7 +1044,7 @@ describe('PrometheusDatasource', () => {
       const urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=' + start + '&end=' + end + '&step=60';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
-      await ctx.ds.query(query);
+      ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
@@ -1046,7 +1087,7 @@ describe('PrometheusDatasource', () => {
       templateSrv.replace = jest.fn(str => str);
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
-      await ctx.ds.query(query);
+      ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
@@ -1086,7 +1127,7 @@ describe('PrometheusDatasource', () => {
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       templateSrv.replace = jest.fn(str => str);
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
-      await ctx.ds.query(query);
+      ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
@@ -1127,7 +1168,7 @@ describe('PrometheusDatasource', () => {
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       templateSrv.replace = jest.fn(str => str);
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
-      await ctx.ds.query(query);
+      ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
@@ -1174,7 +1215,7 @@ describe('PrometheusDatasource', () => {
       templateSrv.replace = jest.fn(str => str);
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
-      await ctx.ds.query(query);
+      ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
@@ -1215,7 +1256,7 @@ describe('PrometheusDatasource', () => {
 
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
-      await ctx.ds.query(query);
+      ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
@@ -1261,7 +1302,7 @@ describe('PrometheusDatasource', () => {
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       templateSrv.replace = jest.fn(str => str);
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
-      await ctx.ds.query(query);
+      ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
@@ -1313,7 +1354,7 @@ describe('PrometheusDatasource', () => {
       templateSrv.replace = jest.fn(str => str);
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
-      await ctx.ds.query(query);
+      ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.url).toBe(urlExpected);
 
@@ -1378,7 +1419,7 @@ describe('PrometheusDatasource for POST', () => {
       };
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
-      await ctx.ds.query(query).then((data: any) => {
+      ctx.ds.query(query).subscribe((data: any) => {
         results = data;
       });
     });
@@ -1416,6 +1457,214 @@ describe('PrometheusDatasource for POST', () => {
       ctx.ds._addTracingHeaders(httpOptions, options);
       expect(httpOptions.headers['X-Dashboard-Id']).toBe(undefined);
       expect(httpOptions.headers['X-Panel-Id']).toBe(undefined);
+    });
+  });
+});
+
+const getPrepareTargetsContext = (target: PromQuery) => {
+  const instanceSettings = ({
+    url: 'proxied',
+    directUrl: 'direct',
+    user: 'test',
+    password: 'mupp',
+    jsonData: { httpMethod: 'POST' },
+  } as unknown) as DataSourceInstanceSettings<PromOptions>;
+  const start = 0;
+  const end = 1;
+  const panelId = '2';
+  const options = ({ targets: [target], interval: '1s', panelId } as any) as DataQueryRequest<PromQuery>;
+
+  const ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
+  const { queries, activeTargets } = ds.prepareTargets(options, start, end);
+
+  return {
+    queries,
+    activeTargets,
+    start,
+    end,
+    panelId,
+  };
+};
+
+describe('prepareTargets', () => {
+  describe('when run from a Panel', () => {
+    it('then it should just add targets', () => {
+      const target: PromQuery = {
+        refId: 'A',
+        expr: 'up',
+        context: PromContext.Panel,
+      };
+
+      const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target);
+
+      expect(queries.length).toBe(1);
+      expect(activeTargets.length).toBe(1);
+      expect(queries[0]).toEqual({
+        end,
+        expr: 'up',
+        headers: {
+          'X-Dashboard-Id': undefined,
+          'X-Panel-Id': panelId,
+        },
+        hinting: undefined,
+        instant: undefined,
+        refId: target.refId,
+        requestId: panelId + target.refId,
+        start,
+        step: 1,
+      });
+      expect(activeTargets[0]).toEqual(target);
+    });
+  });
+
+  describe('when run from Explore', () => {
+    describe('and both Graph and Table are shown', () => {
+      it('then it should return both instant and time series related objects', () => {
+        const target: PromQuery = {
+          refId: 'A',
+          expr: 'up',
+          context: PromContext.Explore,
+          showingGraph: true,
+          showingTable: true,
+        };
+
+        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target);
+
+        expect(queries.length).toBe(2);
+        expect(activeTargets.length).toBe(2);
+        expect(queries[0]).toEqual({
+          end,
+          expr: 'up',
+          headers: {
+            'X-Dashboard-Id': undefined,
+            'X-Panel-Id': panelId,
+          },
+          hinting: undefined,
+          instant: true,
+          refId: target.refId,
+          requestId: panelId + target.refId + '_instant',
+          start,
+          step: 1,
+        });
+        expect(activeTargets[0]).toEqual({
+          ...target,
+          format: 'table',
+          instant: true,
+          requestId: panelId + target.refId + '_instant',
+          valueWithRefId: true,
+        });
+        expect(queries[1]).toEqual({
+          end,
+          expr: 'up',
+          headers: {
+            'X-Dashboard-Id': undefined,
+            'X-Panel-Id': panelId,
+          },
+          hinting: undefined,
+          instant: false,
+          refId: target.refId,
+          requestId: panelId + target.refId,
+          start,
+          step: 1,
+        });
+        expect(activeTargets[1]).toEqual({
+          ...target,
+          format: 'time_series',
+          instant: false,
+          requestId: panelId + target.refId,
+        });
+      });
+    });
+    describe('and both Graph and Table are hidden', () => {
+      it('then it should return empty arrays', () => {
+        const target: PromQuery = {
+          refId: 'A',
+          expr: 'up',
+          context: PromContext.Explore,
+          showingGraph: false,
+          showingTable: false,
+        };
+
+        const { queries, activeTargets } = getPrepareTargetsContext(target);
+
+        expect(queries.length).toBe(0);
+        expect(activeTargets.length).toBe(0);
+      });
+    });
+
+    describe('and Graph is hidden', () => {
+      it('then it should return only intant related objects', () => {
+        const target: PromQuery = {
+          refId: 'A',
+          expr: 'up',
+          context: PromContext.Explore,
+          showingGraph: false,
+          showingTable: true,
+        };
+
+        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target);
+
+        expect(queries.length).toBe(1);
+        expect(activeTargets.length).toBe(1);
+        expect(queries[0]).toEqual({
+          end,
+          expr: 'up',
+          headers: {
+            'X-Dashboard-Id': undefined,
+            'X-Panel-Id': panelId,
+          },
+          hinting: undefined,
+          instant: true,
+          refId: target.refId,
+          requestId: panelId + target.refId + '_instant',
+          start,
+          step: 1,
+        });
+        expect(activeTargets[0]).toEqual({
+          ...target,
+          format: 'table',
+          instant: true,
+          requestId: panelId + target.refId + '_instant',
+          valueWithRefId: true,
+        });
+      });
+    });
+
+    describe('and Table is hidden', () => {
+      it('then it should return only time series related objects', () => {
+        const target: PromQuery = {
+          refId: 'A',
+          expr: 'up',
+          context: PromContext.Explore,
+          showingGraph: true,
+          showingTable: false,
+        };
+
+        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target);
+
+        expect(queries.length).toBe(1);
+        expect(activeTargets.length).toBe(1);
+        expect(queries[0]).toEqual({
+          end,
+          expr: 'up',
+          headers: {
+            'X-Dashboard-Id': undefined,
+            'X-Panel-Id': panelId,
+          },
+          hinting: undefined,
+          instant: false,
+          refId: target.refId,
+          requestId: panelId + target.refId,
+          start,
+          step: 1,
+        });
+        expect(activeTargets[0]).toEqual({
+          ...target,
+          format: 'time_series',
+          instant: false,
+          requestId: panelId + target.refId,
+        });
+      });
     });
   });
 });

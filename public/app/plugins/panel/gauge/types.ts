@@ -1,4 +1,4 @@
-import { VizOrientation, FieldDisplayOptions } from '@grafana/ui';
+import { VizOrientation, FieldDisplayOptions } from '@grafana/data';
 import { SingleStatBaseOptions } from '@grafana/ui/src/components/SingleStatShared/SingleStatBaseOptions';
 import { standardFieldDisplayOptions } from '../singlestat2/types';
 
@@ -9,10 +9,6 @@ export interface GaugeOptions extends SingleStatBaseOptions {
 
 export const standardGaugeFieldOptions: FieldDisplayOptions = {
   ...standardFieldDisplayOptions,
-  defaults: {
-    min: 0,
-    max: 100,
-  },
 };
 
 export const defaults: GaugeOptions = {

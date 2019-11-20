@@ -11,6 +11,7 @@ import {
 import { reducerFactory } from 'app/core/redux';
 import { processAclItems } from 'app/core/utils/acl';
 import { DashboardModel } from './DashboardModel';
+import { panelEditorReducer } from '../panel_editor/state/reducers';
 
 export const initialState: DashboardState = {
   initPhase: DashboardInitPhase.NotStarted,
@@ -87,4 +88,5 @@ export const dashboardReducer = reducerFactory(initialState)
 
 export default {
   dashboard: dashboardReducer,
+  panelEditor: panelEditorReducer,
 };

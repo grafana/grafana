@@ -4,11 +4,9 @@
   "id": "cloudwatch",
   "category": "cloud",
 
-  "hiddenQueries": true,
   "metrics": true,
   "alerting": true,
   "annotations": true,
-
   "info": {
     "description": "Data source for Amazon AWS monitoring service",
     "author": {

@@ -2,27 +2,32 @@ import { Task, TaskRunner } from './task';
 import { pluginBuildRunner } from './plugin.build';
 import { restoreCwd } from '../utils/cwd';
 import { getPluginJson } from '../../config/utils/pluginValidation';
+import { getPluginId } from '../../config/utils/getPluginId';
+import { PluginMeta } from '@grafana/data';
 
 // @ts-ignore
 import execa = require('execa');
 import path = require('path');
-import fs = require('fs');
-import { getPackageDetails } from '../utils/fileHelper';
+import fs from 'fs';
+import { getPackageDetails, findImagesInFolder, getGrafanaVersions } from '../../plugins/utils';
 import {
   job,
   getJobFolder,
   writeJobStats,
   getCiFolder,
-  agregateWorkflowInfo,
-  agregateCoverageInfo,
-  getPluginSourceInfo,
-  TestResultInfo,
-  agregateTestInfo,
-} from './plugin/ci';
+  getPluginBuildInfo,
+  getPullRequestNumber,
+  getCircleDownloadBaseURL,
+} from '../../plugins/env';
+import { agregateWorkflowInfo, agregateCoverageInfo, agregateTestInfo } from '../../plugins/workflow';
+import { PluginPackageDetails, PluginBuildReport, TestResultsInfo } from '../../plugins/types';
+import { runEndToEndTests } from '../../plugins/e2e/launcher';
+import { getEndToEndSettings } from '../../plugins/index';
 
 export interface PluginCIOptions {
-  backend?: string;
+  backend?: boolean;
   full?: boolean;
+  upload?: boolean;
 }
 
 /**
@@ -43,14 +48,13 @@ const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ backend }) => {
   fs.mkdirSync(workDir);
 
   if (backend) {
-    console.log('TODO, backend support?');
-    fs.mkdirSync(path.resolve(process.cwd(), 'dist'));
-    const file = path.resolve(process.cwd(), 'dist', `README_${backend}.txt`);
-    fs.writeFile(file, `TODO... build bakend plugin: ${backend}!`, err => {
-      if (err) {
-        throw new Error('Unable to write: ' + file);
-      }
-    });
+    const makefile = path.resolve(process.cwd(), 'Makefile');
+    if (!fs.existsSync(makefile)) {
+      throw new Error(`Missing: ${makefile}. A Makefile is required for backend plugins.`);
+    }
+
+    // Run plugin-ci task
+    execa('make', ['backend-plugin-ci']).stdout!.pipe(process.stdout);
   } else {
     // Do regular build process with coverage
     await pluginBuildRunner({ coverage: true });
@@ -77,7 +81,8 @@ export const ciBuildPluginTask = new Task<PluginCIOptions>('Build Plugin', build
 const buildPluginDocsRunner: TaskRunner<PluginCIOptions> = async () => {
   const docsSrc = path.resolve(process.cwd(), 'docs');
   if (!fs.existsSync(docsSrc)) {
-    throw new Error('Docs folder does not exist!');
+    console.log('No docs src');
+    return;
   }
 
   const start = Date.now();
@@ -120,6 +125,10 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   await execa('rimraf', [packagesDir, distDir, grafanaEnvDir]);
   fs.mkdirSync(packagesDir);
   fs.mkdirSync(distDir);
+
+  // Updating the dist dir to have a pluginId named directory in it
+  // The zip needs to contain the plugin code wrapped in directory with a pluginId name
+  const distContentDir = path.resolve(distDir, getPluginId());
   fs.mkdirSync(grafanaEnvDir);
 
   console.log('Build Dist Folder');
@@ -127,7 +136,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   // 1. Check for a local 'dist' folder
   const d = path.resolve(process.cwd(), 'dist');
   if (fs.existsSync(d)) {
-    await execa('cp', ['-rn', d + '/.', distDir]);
+    await execa('cp', ['-rn', d + '/.', distContentDir]);
   }
 
   // 2. Look for any 'dist' folders under ci/job/XXX/dist
@@ -136,7 +145,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
     const contents = path.resolve(ciDir, 'jobs', j, 'dist');
     if (fs.existsSync(contents)) {
       try {
-        await execa('cp', ['-rn', contents + '/.', distDir]);
+        await execa('cp', ['-rn', contents + '/.', distContentDir]);
       } catch (er) {
         throw new Error('Duplicate files found in dist folders');
       }
@@ -144,9 +153,9 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   }
 
   console.log('Save the source info in plugin.json');
-  const pluginJsonFile = path.resolve(distDir, 'plugin.json');
+  const pluginJsonFile = path.resolve(distContentDir, 'plugin.json');
   const pluginInfo = getPluginJson(pluginJsonFile);
-  (pluginInfo.info as any).source = await getPluginSourceInfo();
+  pluginInfo.info.build = await getPluginBuildInfo();
   fs.writeFile(pluginJsonFile, JSON.stringify(pluginInfo, null, 2), err => {
     if (err) {
       throw new Error('Error writing: ' + pluginJsonFile);
@@ -165,11 +174,14 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
     throw new Error('Invalid zip file: ' + zipFile);
   }
 
-  const info: any = {
+  // Make a copy so it is easy for report to read
+  await execa('cp', [pluginJsonFile, distDir]);
+
+  const info: PluginPackageDetails = {
     plugin: await getPackageDetails(zipFile, distDir),
   };
 
-  console.log('Setup Grafan Environment');
+  console.log('Setup Grafana Environment');
   let p = path.resolve(grafanaEnvDir, 'plugins', pluginInfo.id);
   fs.mkdirSync(p, { recursive: true });
   await execa('unzip', [zipFile, '-d', p]);
@@ -220,8 +232,7 @@ export const ciPackagePluginTask = new Task<PluginCIOptions>('Bundle Plugin', pa
 const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
   const start = Date.now();
   const workDir = getJobFolder();
-  const pluginInfo = getPluginJson(`${process.cwd()}/ci/dist/plugin.json`);
-  const results: TestResultInfo = { job };
+  const results: TestResultsInfo = { job, passed: 0, failed: 0, screenshots: [] };
   const args = {
     withCredentials: true,
     baseURL: process.env.BASE_URL || 'http://localhost:3000/',
@@ -232,6 +243,14 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
     },
   };
 
+  const settings = getEndToEndSettings();
+  await execa('rimraf', [settings.outputFolder]);
+  fs.mkdirSync(settings.outputFolder);
+
+  const tempDir = path.resolve(process.cwd(), 'e2e-temp');
+  await execa('rimraf', [tempDir]);
+  fs.mkdirSync(tempDir);
+
   try {
     const axios = require('axios');
     const frontendSettings = await axios.get('api/frontend/settings', args);
@@ -239,17 +258,37 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
 
     console.log('Grafana: ' + JSON.stringify(results.grafana, null, 2));
 
-    const pluginSettings = await axios.get(`api/plugins/${pluginInfo.id}/settings`, args);
-    console.log('Plugin Info: ' + JSON.stringify(pluginSettings.data, null, 2));
+    const loadedMetaRsp = await axios.get(`api/plugins/${settings.plugin.id}/settings`, args);
+    const loadedMeta: PluginMeta = loadedMetaRsp.data;
+    console.log('Plugin Info: ' + JSON.stringify(loadedMeta, null, 2));
+    if (loadedMeta.info.build) {
+      const currentHash = settings.plugin.info.build!.hash;
+      console.log('Check version: ', settings.plugin.info.build);
+      if (loadedMeta.info.build.hash !== currentHash) {
+        console.warn(`Testing wrong plugin version.  Expected: ${currentHash}, found: ${loadedMeta.info.build.hash}`);
+        throw new Error('Wrong plugin version');
+      }
+    }
 
-    console.log('TODO Puppeteer Tests', workDir);
+    if (!fs.existsSync('e2e-temp')) {
+      fs.mkdirSync(tempDir);
+    }
 
-    results.status = 'TODO... puppeteer';
+    await execa('cp', [
+      'node_modules/@grafana/toolkit/src/plugins/e2e/commonPluginTests.ts',
+      path.resolve(tempDir, 'common.test.ts'),
+    ]);
+
+    await runEndToEndTests(settings.outputFolder, results);
   } catch (err) {
     results.error = err;
-    results.status = 'EXCEPTION Thrown';
     console.log('Test Error', err);
   }
+  await execa('rimraf', [tempDir]);
+
+  // Now copy everything to work folder
+  await execa('cp', ['-rv', settings.outputFolder + '/.', workDir]);
+  results.screenshots = findImagesInFolder(workDir);
 
   const f = path.resolve(workDir, 'results.json');
   fs.writeFile(f, JSON.stringify(results, null, 2), err => {
@@ -267,31 +306,51 @@ export const ciTestPluginTask = new Task<PluginCIOptions>('Test Plugin (e2e)', t
  * 4. Report
  *
  *  Create a report from all the previous steps
- *
  */
-const pluginReportRunner: TaskRunner<PluginCIOptions> = async () => {
+const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
   const ciDir = path.resolve(process.cwd(), 'ci');
-  const packageInfo = require(path.resolve(ciDir, 'packages', 'info.json'));
+  const packageDir = path.resolve(ciDir, 'packages');
+  const packageInfo = require(path.resolve(packageDir, 'info.json')) as PluginPackageDetails;
 
-  console.log('Save the source info in plugin.json');
   const pluginJsonFile = path.resolve(ciDir, 'dist', 'plugin.json');
-  const report = {
-    plugin: getPluginJson(pluginJsonFile),
+  console.log('Load info from: ' + pluginJsonFile);
+
+  const pluginMeta = getPluginJson(pluginJsonFile);
+  const report: PluginBuildReport = {
+    plugin: pluginMeta,
     packages: packageInfo,
     workflow: agregateWorkflowInfo(),
     coverage: agregateCoverageInfo(),
     tests: agregateTestInfo(),
+    artifactsBaseURL: await getCircleDownloadBaseURL(),
+    grafanaVersion: getGrafanaVersions(),
   };
+  const pr = getPullRequestNumber();
+  if (pr) {
+    report.pullRequest = pr;
+  }
 
-  console.log('REPORT', report);
-
+  // Save the report to disk
   const file = path.resolve(ciDir, 'report.json');
   fs.writeFile(file, JSON.stringify(report, null, 2), err => {
     if (err) {
       throw new Error('Unable to write: ' + file);
     }
   });
-  console.log('TODO... notify some service');
+
+  const GRAFANA_API_KEY = process.env.GRAFANA_API_KEY;
+  if (!GRAFANA_API_KEY) {
+    console.log('Enter a GRAFANA_API_KEY to upload the plugin report');
+    return;
+  }
+  const url = `https://grafana.com/api/plugins/${report.plugin.id}/ci`;
+
+  console.log('Sending report to:', url);
+  const axios = require('axios');
+  const info = await axios.post(url, report, {
+    headers: { Authorization: 'bearer ' + GRAFANA_API_KEY },
+  });
+  console.log('RESULT: ', info);
 };
 
 export const ciPluginReportTask = new Task<PluginCIOptions>('Generate Plugin Report', pluginReportRunner);

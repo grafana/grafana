@@ -7,6 +7,8 @@ import PostgresQuery from './postgres_query';
 import sqlPart from './sql_part';
 import { auto, IQService } from 'angular';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { CoreEvents } from 'app/types';
+import { PanelEvents } from '@grafana/data';
 
 export interface QueryMeta {
   sql: string;
@@ -55,7 +57,10 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.metaBuilder = new PostgresMetaQuery(this.target, this.queryModel);
     this.updateProjection();
 
-    this.formats = [{ text: 'Time series', value: 'time_series' }, { text: 'Table', value: 'table' }];
+    this.formats = [
+      { text: 'Time series', value: 'time_series' },
+      { text: 'Table', value: 'table' },
+    ];
 
     if (!this.target.rawSql) {
       // special handling when in table panel
@@ -80,7 +85,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
             this.target.timeColumnType = 'timestamp';
             this.target.select = [[{ type: 'column', params: [result[2].text] }]];
             this.updateProjection();
-            this.panelCtrl.refresh();
+            this.updateRawSqlAndRefresh();
           }
         });
       }
@@ -99,8 +104,16 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.whereAdd = this.uiSegmentSrv.newPlusButton();
     this.groupAdd = this.uiSegmentSrv.newPlusButton();
 
-    this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
-    this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
+    this.panelCtrl.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this), $scope);
+    this.panelCtrl.events.on(PanelEvents.dataError, this.onDataError.bind(this), $scope);
+  }
+
+  updateRawSqlAndRefresh() {
+    if (!this.target.rawQuery) {
+      this.target.rawSql = this.queryModel.buildQuery();
+    }
+
+    this.panelCtrl.refresh();
   }
 
   updateProjection() {
@@ -181,7 +194,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   toggleEditorMode() {
     if (this.target.rawQuery) {
-      appEvents.emit('confirm-modal', {
+      appEvents.emit(CoreEvents.showConfirmModal, {
         title: 'Warning',
         text2: 'Switching to query builder may overwrite your raw SQL.',
         icon: 'fa-exclamation',
@@ -236,7 +249,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
     });
 
     this.$q.all([task1, task2]).then(() => {
-      this.panelCtrl.refresh();
+      this.updateRawSqlAndRefresh();
     });
   }
 
@@ -273,7 +286,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
         this.updatePersistedParts();
         if (refresh !== false) {
-          this.panelCtrl.refresh();
+          this.updateRawSqlAndRefresh();
         }
       });
   }
@@ -287,12 +300,13 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   metricColumnChanged() {
     this.target.metricColumn = this.metricColumnSegment.value;
-    this.panelCtrl.refresh();
+    this.updateRawSqlAndRefresh();
   }
 
   onDataReceived(dataList: any) {
     this.lastQueryMeta = null;
     this.lastQueryError = null;
+    console.log('postgres query data received', dataList);
 
     const anySeriesFromQuery: any = _.find(dataList, { refId: this.target.refId });
     if (anySeriesFromQuery) {
@@ -422,7 +436,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
     }
 
     this.updatePersistedParts();
-    this.panelCtrl.refresh();
+    this.updateRawSqlAndRefresh();
   }
 
   removeSelectPart(selectParts: any, part: { def: { type: string } }) {
@@ -458,12 +472,12 @@ export class PostgresQueryCtrl extends QueryCtrl {
       }
       case 'part-param-changed': {
         this.updatePersistedParts();
-        this.panelCtrl.refresh();
+        this.updateRawSqlAndRefresh();
         break;
       }
       case 'action': {
         this.removeSelectPart(selectParts, part);
-        this.panelCtrl.refresh();
+        this.updateRawSqlAndRefresh();
         break;
       }
       case 'get-part-actions': {
@@ -482,12 +496,12 @@ export class PostgresQueryCtrl extends QueryCtrl {
       }
       case 'part-param-changed': {
         this.updatePersistedParts();
-        this.panelCtrl.refresh();
+        this.updateRawSqlAndRefresh();
         break;
       }
       case 'action': {
         this.removeGroup(part, index);
-        this.panelCtrl.refresh();
+        this.updateRawSqlAndRefresh();
         break;
       }
       case 'get-part-actions': {
@@ -581,14 +595,14 @@ export class PostgresQueryCtrl extends QueryCtrl {
             part.datatype = d[0].text;
           }
         });
-        this.panelCtrl.refresh();
+        this.updateRawSqlAndRefresh();
         break;
       }
       case 'action': {
         // remove element
         whereParts.splice(index, 1);
         this.updatePersistedParts();
-        this.panelCtrl.refresh();
+        this.updateRawSqlAndRefresh();
         break;
       }
       case 'get-part-actions': {
@@ -627,7 +641,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
     this.updatePersistedParts();
     this.resetPlusButton(this.whereAdd);
-    this.panelCtrl.refresh();
+    this.updateRawSqlAndRefresh();
   }
 
   getGroupOptions() {
@@ -654,7 +668,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
     }
 
     this.resetPlusButton(this.groupAdd);
-    this.panelCtrl.refresh();
+    this.updateRawSqlAndRefresh();
   }
 
   handleQueryError(err: any): any[] {
