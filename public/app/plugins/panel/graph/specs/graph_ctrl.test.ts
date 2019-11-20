@@ -49,7 +49,10 @@ describe('GraphCtrl', () => {
       const data = [
         {
           target: 'test.cpu1',
-          datapoints: [[45, 1234567890], [60, 1234567899]],
+          datapoints: [
+            [45, 1234567890],
+            [60, 1234567899],
+          ],
         },
       ];
 
@@ -74,7 +77,10 @@ describe('GraphCtrl', () => {
       const data = [
         {
           target: 'test.cpu1',
-          datapoints: [[45, range.from + 1000], [60, range.from + 10000]],
+          datapoints: [
+            [45, range.from + 1000],
+            [60, range.from + 10000],
+          ],
         },
       ];
 
@@ -89,7 +95,10 @@ describe('GraphCtrl', () => {
 
   describe('datapointsCount given 2 series', () => {
     beforeEach(() => {
-      const data: any = [{ target: 'test.cpu1', datapoints: [] }, { target: 'test.cpu2', datapoints: [] }];
+      const data: any = [
+        { target: 'test.cpu1', datapoints: [] },
+        { target: 'test.cpu2', datapoints: [] },
+      ];
       ctx.ctrl.onDataSnapshotLoad(data);
     });
 

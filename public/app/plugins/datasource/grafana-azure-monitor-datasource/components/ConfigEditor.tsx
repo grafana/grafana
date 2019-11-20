@@ -29,7 +29,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
     this.backendSrv = getBackendSrv();
     this.templateSrv = new TemplateSrv();
-
     if (this.props.options.id) {
       this.props.options.url = '/api/datasources/proxy/' + this.props.options.id;
     }
@@ -37,9 +36,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
     this.onOptionsUpdate(this.props.options);
   }
 
+  initPromise: CancelablePromise<any> = null;
   backendSrv: BackendSrv = null;
   templateSrv: TemplateSrv = null;
-  initPromise: CancelablePromise<any> = null;
 
   componentDidMount() {
     this.initPromise = makePromiseCancelable(this.init());

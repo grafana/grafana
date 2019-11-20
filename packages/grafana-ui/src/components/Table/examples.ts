@@ -161,5 +161,9 @@ export const migratedTestStyles: ColumnStyle[] = [
 export const simpleTable = {
   type: 'table',
   fields: [{ name: 'First' }, { name: 'Second' }, { name: 'Third' }],
-  rows: [[701, 205, 305], [702, 206, 301], [703, 207, 304]],
+  rows: [
+    [701, 205, 305],
+    [702, 206, 301],
+    [703, 207, 304],
+  ],
 };

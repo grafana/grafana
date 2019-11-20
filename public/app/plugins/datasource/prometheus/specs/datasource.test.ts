@@ -150,15 +150,24 @@ describe('PrometheusDatasource', () => {
       const resultMock = [
         {
           metric: { __name__: 'metric', job: 'testjob', le: '10' },
-          values: [[1443454528.0, '10'], [1443454528.0, '10']],
+          values: [
+            [1443454528.0, '10'],
+            [1443454528.0, '10'],
+          ],
         },
         {
           metric: { __name__: 'metric', job: 'testjob', le: '20' },
-          values: [[1443454528.0, '20'], [1443454528.0, '10']],
+          values: [
+            [1443454528.0, '20'],
+            [1443454528.0, '10'],
+          ],
         },
         {
           metric: { __name__: 'metric', job: 'testjob', le: '30' },
-          values: [[1443454528.0, '25'], [1443454528.0, '10']],
+          values: [
+            [1443454528.0, '25'],
+            [1443454528.0, '10'],
+          ],
         },
       ];
       const responseMock = { data: { data: { result: resultMock } } };
@@ -166,15 +175,24 @@ describe('PrometheusDatasource', () => {
       const expected = [
         {
           target: '10',
-          datapoints: [[10, 1443454528000], [10, 1443454528000]],
+          datapoints: [
+            [10, 1443454528000],
+            [10, 1443454528000],
+          ],
         },
         {
           target: '20',
-          datapoints: [[10, 1443454528000], [0, 1443454528000]],
+          datapoints: [
+            [10, 1443454528000],
+            [0, 1443454528000],
+          ],
         },
         {
           target: '30',
-          datapoints: [[5, 1443454528000], [0, 1443454528000]],
+          datapoints: [
+            [5, 1443454528000],
+            [0, 1443454528000],
+          ],
         },
       ];
 
@@ -189,19 +207,31 @@ describe('PrometheusDatasource', () => {
       const resultMock = [
         {
           metric: { __name__: 'metric', job: 'testjob', le: '2' },
-          values: [[1443454528.0, '10'], [1443454528.0, '10']],
+          values: [
+            [1443454528.0, '10'],
+            [1443454528.0, '10'],
+          ],
         },
         {
           metric: { __name__: 'metric', job: 'testjob', le: '4' },
-          values: [[1443454528.0, '20'], [1443454528.0, '10']],
+          values: [
+            [1443454528.0, '20'],
+            [1443454528.0, '10'],
+          ],
         },
         {
           metric: { __name__: 'metric', job: 'testjob', le: '+Inf' },
-          values: [[1443454528.0, '25'], [1443454528.0, '10']],
+          values: [
+            [1443454528.0, '25'],
+            [1443454528.0, '10'],
+          ],
         },
         {
           metric: { __name__: 'metric', job: 'testjob', le: '1' },
-          values: [[1443454528.0, '25'], [1443454528.0, '10']],
+          values: [
+            [1443454528.0, '25'],
+            [1443454528.0, '10'],
+          ],
         },
       ];
       const responseMock = { data: { data: { result: resultMock } } };
@@ -534,7 +564,11 @@ describe('PrometheusDatasource', () => {
             result: [
               {
                 metric: { __name__: 'test', job: 'testjob', series: 'series 1' },
-                values: [[start + step * 1, '3846'], [start + step * 3, '3847'], [end - step * 1, '3848']],
+                values: [
+                  [start + step * 1, '3846'],
+                  [start + step * 3, '3847'],
+                  [end - step * 1, '3848'],
+                ],
               },
               {
                 metric: { __name__: 'test', job: 'testjob', series: 'series 2' },

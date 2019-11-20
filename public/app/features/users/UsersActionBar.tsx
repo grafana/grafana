@@ -69,7 +69,7 @@ export class UsersActionBar extends PureComponent<Props> {
           )}
           {externalUserMngLinkUrl && (
             <a className="btn btn-primary" href={externalUserMngLinkUrl} target="_blank" rel="noopener">
-              <i className="fa fa-external-link-square" /> {externalUserMngLinkName}
+              {externalUserMngLinkName}
             </a>
           )}
         </div>
@@ -92,7 +92,4 @@ const mapDispatchToProps = {
   setUsersSearchQuery,
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(UsersActionBar);
+export default connect(mapStateToProps, mapDispatchToProps)(UsersActionBar);

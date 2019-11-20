@@ -158,9 +158,10 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
           <div className={cx([style.timeSeriesDisclaimer])}>
             <i className={cx(['fa fa-fw fa-warning', style.disclaimerIcon])} />
             {`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series. `}
-            <span className={cx([style.showAllTimeSeries])} onClick={this.onShowAllTimeSeries}>{`Show all ${
-              series.length
-            }`}</span>
+            <span
+              className={cx([style.showAllTimeSeries])}
+              onClick={this.onShowAllTimeSeries}
+            >{`Show all ${series.length}`}</span>
           </div>
         )}
 

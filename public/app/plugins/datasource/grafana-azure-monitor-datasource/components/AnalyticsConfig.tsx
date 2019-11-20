@@ -112,7 +112,8 @@ export class AnalyticsConfig extends PureComponent<Props> {
     return (
       jsonData.logAnalyticsTenantId &&
       jsonData.logAnalyticsTenantId.length &&
-      jsonData.logAnalyticsClientId && jsonData.logAnalyticsClientId.length &&
+      jsonData.logAnalyticsClientId &&
+      jsonData.logAnalyticsClientId.length &&
       jsonData.logAnalyticsSubscriptionId &&
       (secureJsonFields.logAnalyticsClientSecret || secureJsonData.logAnalyticsClientSecret)
     );

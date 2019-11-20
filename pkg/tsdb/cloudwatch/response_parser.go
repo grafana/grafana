@@ -31,6 +31,9 @@ func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 			} else {
 				mdr[*r.Id][*r.Label].Timestamps = append(mdr[*r.Id][*r.Label].Timestamps, r.Timestamps...)
 				mdr[*r.Id][*r.Label].Values = append(mdr[*r.Id][*r.Label].Values, r.Values...)
+				if *r.StatusCode == "Complete" {
+					mdr[*r.Id][*r.Label].StatusCode = r.StatusCode
+				}
 			}
 			queries[*r.Id].RequestExceededMaxLimit = requestExceededMaxLimit
 		}
@@ -60,7 +63,7 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 	result := tsdb.TimeSeriesSlice{}
 	for label, metricDataResult := range metricDataResults {
 		if *metricDataResult.StatusCode != "Complete" {
-			return nil, fmt.Errorf("too many datapoint requested in query %s. Please try to reduce the time range", query.RefId)
+			return nil, fmt.Errorf("too many datapoints requested in query %s. Please try to reduce the time range", query.RefId)
 		}
 
 		for _, message := range metricDataResult.Messages {

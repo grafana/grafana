@@ -39,7 +39,14 @@ function addStoryForMode(options: StoryOptions) {
       sparkline: {
         minX: 0,
         maxX: 5,
-        data: [[0, 10], [1, 20], [2, 15], [3, 25], [4, 5], [5, 10]],
+        data: [
+          [0, 10],
+          [1, 20],
+          [2, 15],
+          [3, 25],
+          [4, 5],
+          [5, 10],
+        ],
       },
     });
   });

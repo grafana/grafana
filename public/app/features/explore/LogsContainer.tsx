@@ -201,9 +201,4 @@ const mapDispatchToProps = {
   updateTimeRange,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(LogsContainer)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(LogsContainer));

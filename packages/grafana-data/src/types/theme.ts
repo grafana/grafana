@@ -225,6 +225,7 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     formInputBorderInvalid: string;
     formInputFocusOutline: string;
     formInputText: string;
+    formInputDisabledText: string;
     formInputTextStrong: string;
     formInputTextWhite: string;
     formValidationMessageText: string;

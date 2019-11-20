@@ -10,19 +10,42 @@ describe('getQueryHints()', () => {
   });
 
   it('returns no hint for a monotonically decreasing series', () => {
-    const series = [{ datapoints: [[23, 1000], [22, 1001]] }];
+    const series = [
+      {
+        datapoints: [
+          [23, 1000],
+          [22, 1001],
+        ],
+      },
+    ];
     const hints = getQueryHints('metric', series);
     expect(hints).toEqual(null);
   });
 
   it('returns no hint for a flat series', () => {
-    const series = [{ datapoints: [[null, 1000], [23, 1001], [null, 1002], [23, 1003]] }];
+    const series = [
+      {
+        datapoints: [
+          [null, 1000],
+          [23, 1001],
+          [null, 1002],
+          [23, 1003],
+        ],
+      },
+    ];
     const hints = getQueryHints('metric', series);
     expect(hints).toEqual(null);
   });
 
   it('returns a rate hint for a monotonically increasing series', () => {
-    const series = [{ datapoints: [[23, 1000], [24, 1001]] }];
+    const series = [
+      {
+        datapoints: [
+          [23, 1000],
+          [24, 1001],
+        ],
+      },
+    ];
     const hints = getQueryHints('metric', series);
 
     expect(hints!.length).toBe(1);
@@ -38,13 +61,27 @@ describe('getQueryHints()', () => {
   });
 
   it('returns no rate hint for a monotonically increasing series that already has a rate', () => {
-    const series = [{ datapoints: [[23, 1000], [24, 1001]] }];
+    const series = [
+      {
+        datapoints: [
+          [23, 1000],
+          [24, 1001],
+        ],
+      },
+    ];
     const hints = getQueryHints('rate(metric[1m])', series);
     expect(hints).toEqual(null);
   });
 
   it('returns a rate hint w/o action for a complex monotonically increasing series', () => {
-    const series = [{ datapoints: [[23, 1000], [24, 1001]] }];
+    const series = [
+      {
+        datapoints: [
+          [23, 1000],
+          [24, 1001],
+        ],
+      },
+    ];
     const hints = getQueryHints('sum(metric)', series);
     expect(hints!.length).toBe(1);
     expect(hints![0].label).toContain('rate()');
@@ -52,7 +89,15 @@ describe('getQueryHints()', () => {
   });
 
   it('returns a rate hint for a monotonically increasing series with missing data', () => {
-    const series = [{ datapoints: [[23, 1000], [null, 1001], [24, 1002]] }];
+    const series = [
+      {
+        datapoints: [
+          [23, 1000],
+          [null, 1001],
+          [24, 1002],
+        ],
+      },
+    ];
     const hints = getQueryHints('metric', series);
     expect(hints!.length).toBe(1);
     expect(hints![0]).toMatchObject({
@@ -84,7 +129,10 @@ describe('getQueryHints()', () => {
   it('returns a sum hint when many time series results are returned for a simple metric', () => {
     const seriesCount = SUM_HINT_THRESHOLD_COUNT;
     const series = Array.from({ length: seriesCount }, _ => ({
-      datapoints: [[0, 0], [0, 0]],
+      datapoints: [
+        [0, 0],
+        [0, 0],
+      ],
     }));
     const hints = getQueryHints('metric', series);
     expect(hints!.length).toBe(1);
