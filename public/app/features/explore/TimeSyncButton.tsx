@@ -1,15 +1,11 @@
 import React from 'react';
 import classNames from 'classnames';
 import { css } from 'emotion';
-import tinycolor from 'tinycolor2';
 
 import { Tooltip, useTheme, stylesFactory } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const yellowLight = tinycolor(theme.colors.yellow)
-    .lighten(20)
-    .toString();
   return {
     timePickerSynced: css`
       label: timePickerSynced;
@@ -17,7 +13,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       background-image: none;
       background-color: transparent;
       color: ${theme.colors.orangeDark};
-      box-shadow: 0px 0px 4px ${yellowLight};
       &:focus,
       :hover {
         color: ${theme.colors.orangeDark};
@@ -52,7 +47,7 @@ export function TimeSyncButton(props: TimeSyncButtonProps) {
     <Tooltip content={syncTimesTooltip} placement="bottom">
       <button
         className={classNames('btn navbar-button navbar-button--attached', {
-          [styles.timePickerSynced]: isSynced,
+          [`explore-active-button-glow ${styles.timePickerSynced}`]: isSynced,
         })}
         aria-label={isSynced ? 'Synced times' : 'Unsynced times'}
         onClick={() => onClick()}

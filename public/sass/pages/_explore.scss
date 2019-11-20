@@ -22,6 +22,9 @@
   }
 }
 
+.explore-active-button-glow {
+  box-shadow: $btn-active-box-shadow;
+}
 .explore-ds-picker {
   min-width: 200px;
   max-width: 300px;

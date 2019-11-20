@@ -2,7 +2,6 @@
 import React, { PureComponent, createRef } from 'react';
 import { css } from 'emotion';
 import classNames from 'classnames';
-import tinycolor from 'tinycolor2';
 
 // Components
 import { ButtonSelect } from '../Select/ButtonSelect';
@@ -21,9 +20,6 @@ import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue, dateMath
 import { Themeable } from '../../types';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const yellowLight = tinycolor(theme.colors.yellow)
-    .lighten(20)
-    .toString();
   return {
     timePickerSynced: css`
       label: timePickerSynced;
@@ -31,7 +27,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       background-image: none;
       background-color: transparent;
       color: ${theme.colors.orangeDark};
-      box-shadow: 0px 0px 4px ${yellowLight};
       &:focus,
       :hover {
         color: ${theme.colors.orangeDark};
@@ -201,6 +196,7 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
           )}
           <ButtonSelect
             className={classNames('time-picker-button-select', {
+              ['explore-active-button-glow']: timeSyncButton && isSynced,
               [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: timeSyncButton,
               [styles.timePickerSynced]: timeSyncButton ? isSynced : null,
             })}
