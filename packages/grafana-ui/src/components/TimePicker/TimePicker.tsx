@@ -1,8 +1,8 @@
 // Libraries
 import React, { PureComponent, createRef } from 'react';
 import { css } from 'emotion';
-import memoizeOne from 'memoize-one';
 import classNames from 'classnames';
+import tinycolor from 'tinycolor2';
 
 // Components
 import { ButtonSelect } from '../Select/ButtonSelect';
@@ -11,17 +11,19 @@ import { TimePickerPopover } from './TimePickerPopover';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 
 // Utils & Services
-import { isDateTime, DateTime } from '@grafana/data';
-import { rangeUtil } from '@grafana/data';
+import { isDateTime, DateTime, rangeUtil } from '@grafana/data';
 import { rawToTimeRange } from './time';
+import { stylesFactory } from '../../themes/stylesFactory';
 import { withTheme } from '../../themes/ThemeContext';
 
 // Types
-import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue, dateMath } from '@grafana/data';
-import { GrafanaTheme } from '@grafana/data';
+import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue, dateMath, GrafanaTheme } from '@grafana/data';
 import { Themeable } from '../../types';
 
-const getStyles = memoizeOne((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const yellowLight = tinycolor(theme.colors.yellow)
+    .lighten(20)
+    .toString();
   return {
     timePickerSynced: css`
       label: timePickerSynced;
@@ -29,6 +31,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
       background-image: none;
       background-color: transparent;
       color: ${theme.colors.orangeDark};
+      box-shadow: 0px 0px 4px ${yellowLight};
       &:focus,
       :hover {
         color: ${theme.colors.orangeDark};

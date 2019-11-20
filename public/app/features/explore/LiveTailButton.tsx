@@ -1,15 +1,15 @@
 import React from 'react';
 import classNames from 'classnames';
-import { css } from 'emotion';
-import memoizeOne from 'memoize-one';
 import tinycolor from 'tinycolor2';
+import { css } from 'emotion';
 import { CSSTransition } from 'react-transition-group';
-import { ResponsiveButton } from './ResponsiveButton';
-
-import { useTheme, Tooltip } from '@grafana/ui';
+import { useTheme, Tooltip, stylesFactory } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 
-const getStyles = memoizeOne((theme: GrafanaTheme) => {
+//Components
+import { ResponsiveButton } from './ResponsiveButton';
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const orangeLighter = tinycolor(theme.colors.orangeDark)
     .lighten(10)
     .toString();
