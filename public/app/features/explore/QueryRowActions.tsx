@@ -43,7 +43,7 @@ export function QueryRowActions(props: Props) {
         </div>
       )}
       <div className="gf-form">
-        <button className="gf-form-label gf-form-label--btn">
+        <button className="gf-form-label gf-form-label--btn" disabled>
           {queryResponse.state === LoadingState.Done || LoadingState.Error ? formatLatency(latency) : <ElapsedTime />}
         </button>
       </div>
