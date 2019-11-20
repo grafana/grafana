@@ -5,6 +5,7 @@ import { SelectableValue } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import CloudWatchDatasource from '../datasource';
 import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../types';
+import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
 
 const authProviderOptions = [
   { label: 'Access & secret key', value: 'keys' },
@@ -27,12 +28,19 @@ export class ConfigEditor extends PureComponent<Props, State> {
     };
   }
 
-  async componentDidMount() {
-    this.loadRegions();
+  loadRegionsPromise: CancelablePromise<any> = null;
+
+  componentDidMount() {
+    this.loadRegionsPromise = makePromiseCancelable(this.loadRegions());
+    this.loadRegionsPromise.promise.catch(({ isCanceled }) => {
+      if (isCanceled) {
+        console.warn('Cloud Watch ConfigEditor has unmounted, intialization was canceled');
+      }
+    });
   }
 
-  loadRegions() {
-    getDatasourceSrv()
+  async loadRegions() {
+    await getDatasourceSrv()
       .loadDatasource(this.props.options.name)
       .then((ds: CloudWatchDatasource) => {
         return ds.getRegions();
