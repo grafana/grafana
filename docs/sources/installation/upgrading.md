@@ -196,9 +196,15 @@ is `7.0+` and `max concurrent shard requests` properly configured. 256 was the d
 
 ## Upgrading to v6.4
 
+### Annotations database migration
+
 One of the database migrations included in this release will merge multiple rows used to represent an annotation range into a single row. If you have a large number of region annotations the database migration may take a long time to complete. See [Upgrading to v5.2](#upgrading-to-v5-2) for tips on how to manage this process.
 
-Plugins that need updating:
+### Docker
+
+Grafana’s docker image is now based on [Alpine](http://alpinelinux.org) instead of [Ubuntu](https://ubuntu.com/).
+
+### Plugins that need updating
 
 - [Splunk](https://grafana.com/grafana/plugins/grafana-splunk-datasource)
 
