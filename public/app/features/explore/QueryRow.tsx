@@ -146,7 +146,6 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       <div className="query-row">
         <div className="query-row-field flex-shrink-1">
           {QueryField ? (
-            //@ts-ignore
             <QueryField
               datasource={datasourceInstance}
               query={query}
@@ -214,7 +213,6 @@ const mapDispatchToProps = {
   runQueries,
 };
 
-export default hot(module)(connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(QueryRow) as React.ComponentType<PropsFromParent>);
+export default hot(module)(
+  connect(mapStateToProps, mapDispatchToProps)(QueryRow) as React.ComponentType<PropsFromParent>
+);

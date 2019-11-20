@@ -5,12 +5,10 @@ import { getMultiSeriesGraphHoverInfo } from '../utils';
 import { FlotPosition } from '../types';
 import { getValueFromDimension } from '@grafana/data';
 
-export const MultiModeGraphTooltip: React.FC<
-  GraphTooltipContentProps & {
-    // We expect position to figure out correct values when not hovering over a datapoint
-    pos: FlotPosition;
-  }
-> = ({ dimensions, activeDimensions, pos }) => {
+export const MultiModeGraphTooltip: React.FC<GraphTooltipContentProps & {
+  // We expect position to figure out correct values when not hovering over a datapoint
+  pos: FlotPosition;
+}> = ({ dimensions, activeDimensions, pos }) => {
   let activeSeriesIndex: number | null = null;
   // when no x-axis provided, skip rendering
   if (activeDimensions.xAxis === null) {

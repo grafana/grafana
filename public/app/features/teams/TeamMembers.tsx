@@ -156,7 +156,4 @@ const mapDispatchToProps = {
   setSearchMemberQuery,
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(TeamMembers);
+export default connect(mapStateToProps, mapDispatchToProps)(TeamMembers);

@@ -148,6 +148,7 @@ export function buildQueryTransaction(
       __interval_ms: { text: intervalMs, value: intervalMs },
     },
     maxDataPoints: queryOptions.maxDataPoints,
+    exploreMode: queryOptions.mode,
   };
 
   return {
@@ -517,7 +518,7 @@ export const convertToWebSocketUrl = (url: string) => {
   const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
   let backend = `${protocol}${window.location.host}${config.appSubUrl}`;
   if (backend.endsWith('/')) {
-    backend = backend.slice(0, backend.length - 1);
+    backend = backend.slice(0, -1);
   }
   return `${backend}${url}`;
 };

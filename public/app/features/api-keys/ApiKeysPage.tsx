@@ -316,9 +316,4 @@ const mapDispatchToProps = {
   addApiKey,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(ApiKeysPage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(ApiKeysPage));

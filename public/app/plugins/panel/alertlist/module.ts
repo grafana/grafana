@@ -11,7 +11,10 @@ class AlertListPanel extends PanelCtrl {
   static templateUrl = 'module.html';
   static scrollable = true;
 
-  showOptions = [{ text: 'Current state', value: 'current' }, { text: 'Recent state changes', value: 'changes' }];
+  showOptions = [
+    { text: 'Current state', value: 'current' },
+    { text: 'Recent state changes', value: 'changes' },
+  ];
 
   sortOrderOptions = [
     { text: 'Alphabetical (asc)', value: 1 },

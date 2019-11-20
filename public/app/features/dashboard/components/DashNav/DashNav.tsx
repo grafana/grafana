@@ -284,7 +284,4 @@ const mapDispatchToProps = {
   updateLocation,
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(DashNav);
+export default connect(mapStateToProps, mapDispatchToProps)(DashNav);

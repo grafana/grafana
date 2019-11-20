@@ -341,9 +341,4 @@ const mapDispatchToProps = {
   updateLocation,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(DashboardPage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardPage));

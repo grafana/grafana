@@ -347,7 +347,9 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     ? exploreDatasources.find(datasource => datasource.name === datasourceInstance.name)
     : undefined;
   const hasLiveOption =
-    datasourceInstance && datasourceInstance.meta && datasourceInstance.meta.streaming ? true : false;
+    datasourceInstance && datasourceInstance.meta && datasourceInstance.meta.streaming && mode === ExploreMode.Logs
+      ? true
+      : false;
 
   return {
     datasourceMissing,
@@ -384,9 +386,4 @@ const mapDispatchToProps: DispatchProps = {
   clearOrigin,
 };
 
-export const ExploreToolbar = hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(UnConnectedExploreToolbar)
-);
+export const ExploreToolbar = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedExploreToolbar));
