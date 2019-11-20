@@ -57,6 +57,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: whiteSpacePreWrap;
       white-space: pre-wrap;
     `,
+    hoverColor: css`
+      label: hoverColor;
+      &:hover {
+        color: ${theme.colors.yellow};
+      }
+    `,
   };
 });
 
@@ -124,18 +130,21 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
           {row.searchWords && row.searchWords.length > 0 && (
             <span
               onClick={this.onContextToggle}
-              className={css`
-                visibility: hidden;
-                white-space: nowrap;
-                position: relative;
-                z-index: ${showContext ? 1 : 0};
-                cursor: pointer;
-                .${style.logsRow}:hover & {
-                  visibility: visible;
-                  margin-left: 10px;
-                  text-decoration: underline;
-                }
-              `}
+              className={cx(
+                styles.hoverColor,
+                css`
+                  visibility: hidden;
+                  white-space: nowrap;
+                  position: relative;
+                  z-index: ${showContext ? 1 : 0};
+                  cursor: pointer;
+                  .${style.logsRow}:hover & {
+                    visibility: visible;
+                    margin-left: 10px;
+                    text-decoration: underline;
+                  }
+                `
+              )}
             >
               {showContext ? 'Hide' : 'Show'} context
             </span>

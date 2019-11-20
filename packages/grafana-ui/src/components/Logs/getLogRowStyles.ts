@@ -40,7 +40,6 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       padding: inherit;
 
       color: ${theme.colors.yellow};
-      border-bottom: ${theme.border.width.sm} solid ${theme.colors.yellow};
       background-color: rgba(${theme.colors.yellow}, 0.1);
     `,
     logsRowMatchHighLightPreview: css`
