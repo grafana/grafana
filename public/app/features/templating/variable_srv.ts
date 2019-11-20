@@ -14,9 +14,11 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { TimeRange } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { UrlQueryMap } from '@grafana/runtime';
+import { User } from '../../core/services/context_srv';
 
 export class VariableSrv {
   dashboard: DashboardModel;
+  user: User;
   variables: any[];
 
   /** @ngInject */
@@ -28,8 +30,9 @@ export class VariableSrv {
     private timeSrv: TimeSrv
   ) {}
 
-  init(dashboard: DashboardModel) {
+  init(dashboard: DashboardModel, user: User) {
     this.dashboard = dashboard;
+    this.user = user;
     this.dashboard.events.on(CoreEvents.timeRangeUpdated, this.onTimeRangeUpdated.bind(this));
     this.dashboard.events.on(
       CoreEvents.templateVariableValueUpdated,
@@ -54,6 +57,8 @@ export class VariableSrv {
       )
       .then(() => {
         this.templateSrv.updateIndex();
+        this.templateSrv.setGlobalVariable('__dashboardName', { value: dashboard.title, text: dashboard.title });
+        this.templateSrv.setGlobalVariable('__orgName', { value: user.orgName, text: user.orgName });
       });
   }
 
