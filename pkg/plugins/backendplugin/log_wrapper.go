@@ -14,7 +14,7 @@ type logWrapper struct {
 }
 
 func formatArgs(args ...interface{}) []interface{} {
-	if args == nil || len(args) == 0 || len(args)%2 != 0 {
+	if len(args) == 0 || len(args)%2 != 0 {
 		return args
 	}
 
