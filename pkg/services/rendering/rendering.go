@@ -96,16 +96,14 @@ func (rs *RenderingService) RenderErrorImage(err error) (*RenderResult, error) {
 	imgUrl := "public/img/rendering_error.png"
 
 	return &RenderResult{
-		FilePath:            filepath.Join(setting.HomePath, imgUrl),
-		KeepFileAfterRender: true,
+		FilePath: filepath.Join(setting.HomePath, imgUrl),
 	}, nil
 }
 
 func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResult, error) {
 	if rs.inProgressCount > opts.ConcurrentLimit {
 		return &RenderResult{
-			FilePath:            filepath.Join(setting.HomePath, "public/img/rendering_limit.png"),
-			KeepFileAfterRender: true,
+			FilePath: filepath.Join(setting.HomePath, "public/img/rendering_limit.png"),
 		}, nil
 	}
 
