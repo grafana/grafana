@@ -19,13 +19,7 @@ For all details please read the full [CHANGELOG.md](https://github.com/grafana/g
 Grafana 6.5 comes with a lot of new features and enhancements.
 
 - [**Docker:** Ubuntu-based images and more]({{< relref "#ubuntu-based-docker-images" >}})
-- [**CloudWatch:** GetMetricData API]({{< relref "#getmetricdata-api" >}})
-- [**CloudWatch:** Dynamic queries using dimension wildcards]({{< relref "#dynamic queries-using-dimension-wildcards" >}})
-- [**CloudWatch:** Deep linking from Grafana panels to the CloudWatch console]({{< relref "#deep-linking-from-grafana-panels-to-the-cloudwatch-console" >}})
-- [**CloudWatch:** Improved feedback when throttling occurs]({{< relref "#improved-feedback-when-throttling-occurs" >}})
-- [**CloudWatch:** Angular to React migration]({{< relref "#angular-to-react-migration" >}})
-- [**CloudWatch:** Multi-value template variables now use search expressions]({{< relref "#multi-value-template-variables-now-use-search-expressions" >}})
-- [**CloudWatch:** Curated Dashboards]({{< relref "#curated-dashboards" >}})
+- [**CloudWatch:** Major rewrite and lots of enhancements]({{< relref "#cloudWatch-data-source-improvements" >}})
 - [**Templating:** Dynamic typeahead queries using $__searchFilter]({{< relref "#dynamic-typeahead-support-in-query-variables" >}})
 - [**Explore:** New log row details view]({{< relref "#explore-logs-log-row-details" >}})
 - [**Explore:** Turn parts of log message into a link using derived fields]({{< relref "#loki-explore-derived-fields" >}})
@@ -37,6 +31,16 @@ Grafana 6.5 comes with a lot of new features and enhancements.
 - **OAuth:** Generic OAuth now supports role mapping
 
 More details of above and highlights will be added as we're getting closer to the stable release.
+
+### Ubuntu-based docker images
+
+In Grafana [v6.4](/guides/whats-new-in-v6-4/#alpine-based-docker-image) we switched the Grafana docker image from Ubuntu to Alpine. The main reason for this change was to be able to provide a more secure and lightweight docker image.
+
+This change has received both negative and positive feedback as well as some bug reports. Based on this, one of the conclusions and learnings is that switching to an Alpine based docker image was a big breaking change for a lot of users and this change should have been more clearly highlighted in blog post, release notes, changelog and the [Docker Hub readme](https://hub.docker.com/r/grafana/grafana).
+
+One additional mistake we did was to break the Docker images for ARM. Good news, in Grafana v6.5 this have been fixed.
+
+Grafana docker images should be as secure as possible by default and that’s why the Alpine based docker images will continue to be provided as Grafana’s default (`grafana/grafana:<version>`). With that said, it’s good to give users options and that’s why starting from Grafana v6.5 there’re also Ubuntu based docker images (`grafana/grafana:<version>-ubuntu`) available.
 
 ### CloudWatch data source improvements
 
@@ -50,9 +54,9 @@ While GetMetricStatistics qualified for the CloudWatch API free tier, this is no
 
 #### Dynamic queries using dimension wildcards
 
-In Grafana 6.5 or higher, you’re able to monitor a dynamic list of metrics by using the asterisk (\*) wildcard for any one or multiple dimension values.
+In Grafana 6.5 or higher, you’re able to monitor a dynamic list of metrics by using the asterisk (\*) wildcard for one or more dimension values.
 
-In the example below, all metrics in the namespace `AWS/EC2` with a metric name of `CPUUtilization` and ANY value for the `InstanceId` dimension are queried. This can help you monitor metrics for AWS resources, like EC2 instances or containers. For example, when new instances get created as part of an auto scaling event, they will automatically appear in the graph without you having to track the new instance IDs. This capability is currently limited to retrieving up to 100 metrics. You can click on `Show Query Preview` to see the search expression that is automatically built to support wildcards. To learn more about search expressions, visit the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html).
+In the example below, all metrics in the namespace `AWS/EC2` with a metric name of `CPUUtilization` and ANY value for the `InstanceId` dimension are queried. This can help you monitor metrics for AWS resources, like EC2 instances or containers. For example, when new instances get created as part of an auto scaling event, they will automatically appear in the graph without you having to track the new instance IDs. You can click on `Show Query Preview` to see the search expression that is automatically built to support wildcards. To learn more about search expressions, visit the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html).
 
 By default, the search expression is defined in such a way that the queried metrics must match the defined dimension names exactly. This means that in the example below only metrics with exactly one dimension with name ‘InstanceId’ will be returned.
 
@@ -96,16 +100,6 @@ The updated CloudWatch data source is shipped with pre-configured dashboards for
 
 To import the pre-configured dashboards, go to the configuration page of your CloudWatch data source and click on the `Dashboards` tab. Click `Import` for the dashboard you would like to use. To customize the dashboard, we recommend to save the dashboard under a different name, because otherwise the dashboard will be overwritten when a new version of the dashboard is released.
 !!image
-
-### Ubuntu-based docker images
-
-In Grafana [v6.4](/guides/whats-new-in-v6-4/#alpine-based-docker-image) we switched the Grafana docker image from Ubuntu to Alpine. The main reason for this change was to be able to provide a more secure and lightweight docker image.
-
-This change has received both negative and positive feedback as well as some bug reports. Based on this, one of the conclusions and learnings is that switching to an Alpine based docker image was a big breaking change for a lot of users and this change should have been more clearly highlighted in blog post, release notes, changelog and the [Docker Hub readme](https://hub.docker.com/r/grafana/grafana).
-
-One additional mistake we did was to break the Docker images for ARM. Good news, in Grafana v6.5 this have been fixed.
-
-Grafana docker images should be as secure as possible by default and that’s why the Alpine based docker images will continue to be provided as Grafana’s default (`grafana/grafana:<version>`). With that said, it’s good to give users options and that’s why starting from Grafana v6.5 there’re also Ubuntu based docker images (`grafana/grafana:<version>-ubuntu`) available.
 
 ### Dynamic typeahead support in query variables
 
