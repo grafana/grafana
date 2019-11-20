@@ -151,6 +151,9 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       table-layout: fixed;
       margin: 0;
       width: 100%;
+      &:first-of-type {
+        margin-bottom: ${theme.spacing.xs};
+      }
     `,
     logsRowDetailsIcon: css`
       label: logs-row-details__icon;
@@ -173,7 +176,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     logsRowDetailsHeading: css`
       label: logs-row-details__heading;
       display: table-caption;
-      margin: 12px 0 7px;
+      margin: ${theme.spacing.sm} 0 ${theme.spacing.xs};
       font-weight: ${theme.typography.weight.bold};
     `,
     logsRowDetailsValue: css`
