@@ -635,45 +635,26 @@ export function splitClose(itemId: ExploreId): ThunkResult<void> {
 export function splitOpen(dataSourceName?: string, query?: string): ThunkResult<void> {
   return async (dispatch, getState) => {
     // Clone left state to become the right state
+    const leftState: ExploreItemState = getState().explore[ExploreId.left];
+    const rightState: ExploreItemState = {
+      ...leftState,
+    };
+    const queryState = getState().location.query[ExploreId.left] as string;
+    const urlState = parseUrlState(queryState);
+    rightState.queries = leftState.queries.slice();
+    rightState.urlState = urlState;
+    dispatch(splitOpenAction({ itemState: rightState }));
+
     if (dataSourceName && query) {
-      const itemState = makeExploreItemState();
-      itemState.datasourceInstance = await getDatasourceSrv().get(dataSourceName);
       // This is hardcoded for Jaeger right now
-      itemState.queries = [
+      const queries = [
         {
           query,
           refId: 'A',
         } as DataQuery,
       ];
-
-      // This needs to be here otherwise, the new split state is overridden. This sets the new state
-      // split happens but the right split Explore component then checks the urlState and overwrites the item state
-      // by it. But we save the url state later on separate dispatch in this function so in the delay between we render
-      // with empty urlState for the right item.
-      const rightUrlState: ExploreUrlState = {
-        datasource: itemState.datasourceInstance.name,
-        queries: itemState.queries.map(clearQueryKeys),
-        range: toRawTimeRange(itemState.range),
-        mode: itemState.mode,
-        ui: {
-          showingGraph: itemState.showingGraph,
-          showingLogs: true,
-          showingTable: itemState.showingTable,
-          dedupStrategy: itemState.dedupStrategy,
-        },
-      };
-      itemState.urlState = rightUrlState;
-      dispatch(splitOpenAction({ itemState }));
-    } else {
-      const leftState: ExploreItemState = getState().explore[ExploreId.left];
-      const rightState: ExploreItemState = {
-        ...leftState,
-      };
-      const queryState = getState().location.query[ExploreId.left] as string;
-      const urlState = parseUrlState(queryState);
-      rightState.queries = leftState.queries.slice();
-      rightState.urlState = urlState;
-      dispatch(splitOpenAction({ itemState: rightState }));
+      await dispatch(changeDatasource(ExploreId.right, dataSourceName));
+      await dispatch(setQueriesAction({ exploreId: ExploreId.right, queries }));
     }
 
     dispatch(stateSave());

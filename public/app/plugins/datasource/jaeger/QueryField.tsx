@@ -158,10 +158,11 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
   };
 
   onSelectTrace = (values: string[], selectedOptions: CascaderOption[]) => {
-    const { query, onChange } = this.props;
+    const { query, onChange, onRunQuery } = this.props;
     if (selectedOptions.length === 3) {
       const traceID = selectedOptions[2].value;
       onChange({ ...query, query: traceID });
+      onRunQuery();
     }
   };
 
