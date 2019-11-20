@@ -30,7 +30,9 @@ const inputDatasourcePlugin = async () =>
 const stackdriverPlugin = async () =>
   await import(/* webpackChunkName: "stackdriverPlugin" */ 'app/plugins/datasource/stackdriver/module');
 const azureMonitorPlugin = async () =>
-  await import(/* webpackChunkName: "azureMonitorPlugin" */ 'app/plugins/datasource/grafana-azure-monitor-datasource/module');
+  await import(
+    /* webpackChunkName: "azureMonitorPlugin" */ 'app/plugins/datasource/grafana-azure-monitor-datasource/module'
+  );
 
 import * as textPanel from 'app/plugins/panel/text/module';
 import * as text2Panel from 'app/plugins/panel/text2/module';

@@ -56,7 +56,15 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
     };
 
     const response: any = {
-      data: [{ target: 'hello', datapoints: [[1, 1000], [2, 2000]] }],
+      data: [
+        {
+          target: 'hello',
+          datapoints: [
+            [1, 1000],
+            [2, 2000],
+          ],
+        },
+      ],
     };
 
     beforeEach(async () => {

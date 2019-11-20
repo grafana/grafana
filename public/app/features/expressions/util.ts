@@ -9,8 +9,13 @@ export function base64StringToArrowTable(text: string): Table {
   return Table.from(arr);
 }
 
+function valueOrUndefined(val?: string) {
+  return val ? val : undefined;
+}
+
 export function arrowTableToDataFrame(table: Table): DataFrame {
   const fields: Field[] = [];
+
   for (let i = 0; i < table.numCols; i++) {
     const col = table.getColumnAt(i);
     if (col) {
@@ -35,6 +40,7 @@ export function arrowTableToDataFrame(table: Table): DataFrame {
         default:
           console.log('UNKNOWN Type:', schema);
       }
+      // console.log(' field>', schema.metadata);
 
       fields.push({
         name: col.name,
@@ -44,9 +50,12 @@ export function arrowTableToDataFrame(table: Table): DataFrame {
       });
     }
   }
+  const meta = table.schema.metadata;
   return {
     fields,
     length: table.length,
+    refId: valueOrUndefined(meta.get('refId')),
+    name: valueOrUndefined(meta.get('name')),
   };
 }
 

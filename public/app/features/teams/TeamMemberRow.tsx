@@ -101,7 +101,4 @@ const mapDispatchToProps = {
   updateTeamMember,
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(TeamMemberRow);
+export default connect(mapStateToProps, mapDispatchToProps)(TeamMemberRow);

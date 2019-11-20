@@ -306,4 +306,4 @@ a login token and cookie. You only have to configure your auth proxy to provide 
 Requests via other routes will be authenticated using the cookie.
 
 Use settings `login_maximum_inactive_lifetime_days` and `login_maximum_lifetime_days` under `[auth]` to control session
-lifetime. [Read more about login tokens]({{< relref "auth/overview/#login-and-short-lived-tokens" >}})
+lifetime. [Read more about login tokens](/auth/overview/#login-and-short-lived-tokens)

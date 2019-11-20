@@ -22,7 +22,17 @@ import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
 import { coreModule, appEvents, contextSrv } from 'app/core/core';
-import { DataSourcePlugin, AppPlugin, PanelPlugin, PluginMeta, DataSourcePluginMeta, dateMath } from '@grafana/data';
+import {
+  DataSourcePlugin,
+  AppPlugin,
+  PanelPlugin,
+  PluginMeta,
+  DataSourcePluginMeta,
+  dateMath,
+  DataSourceApi,
+  DataSourceJsonData,
+  DataQuery,
+} from '@grafana/data';
 import * as fileExport from 'app/core/utils/file_export';
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
@@ -180,16 +190,20 @@ export async function importPluginModule(path: string): Promise<any> {
   return grafanaRuntime.SystemJS.import(path);
 }
 
-export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<DataSourcePlugin<any>> {
+export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
   return importPluginModule(meta.module).then(pluginExports => {
     if (pluginExports.plugin) {
-      const dsPlugin = pluginExports.plugin as DataSourcePlugin<any>;
+      const dsPlugin = pluginExports.plugin as GenericDataSourcePlugin;
       dsPlugin.meta = meta;
       return dsPlugin;
     }
 
     if (pluginExports.Datasource) {
-      const dsPlugin = new DataSourcePlugin(pluginExports.Datasource);
+      const dsPlugin = new DataSourcePlugin<
+        DataSourceApi<DataQuery, DataSourceJsonData>,
+        DataQuery,
+        DataSourceJsonData
+      >(pluginExports.Datasource);
       dsPlugin.setComponentsFromLegacyExports(pluginExports);
       dsPlugin.meta = meta;
       return dsPlugin;
@@ -210,6 +224,7 @@ export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
 }
 
 import { getPanelPluginNotFound, getPanelPluginLoadError } from '../dashboard/dashgrid/PanelPluginError';
+import { GenericDataSourcePlugin } from '../datasources/settings/PluginSettings';
 
 interface PanelCache {
   [key: string]: PanelPlugin;

@@ -157,8 +157,14 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     const tooltipContentProps: TooltipContentProps<GraphDimensions> = {
       dimensions: {
         // time/value dimension columns are index-aligned - see getGraphSeriesModel
-        xAxis: createDimension('xAxis', series.map(s => s.timeField)),
-        yAxis: createDimension('yAxis', series.map(s => s.valueField)),
+        xAxis: createDimension(
+          'xAxis',
+          series.map(s => s.timeField)
+        ),
+        yAxis: createDimension(
+          'yAxis',
+          series.map(s => s.valueField)
+        ),
       },
       activeDimensions,
       pos,

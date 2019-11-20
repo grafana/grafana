@@ -28,6 +28,21 @@ export class DashNavTimeControls extends Component<Props> {
   timeSrv: TimeSrv = getTimeSrv();
   $rootScope = this.props.$injector.get('$rootScope');
 
+  componentDidMount() {
+    // Only reason for this is that sometimes time updates can happen via redux location changes
+    // and this happens before timeSrv has had chance to update state (as it listens to angular route-updated)
+    // This can be removed after timeSrv listens redux location
+    this.props.dashboard.on(CoreEvents.timeRangeUpdated, this.triggerForceUpdate);
+  }
+
+  componentWillUnmount() {
+    this.props.dashboard.off(CoreEvents.timeRangeUpdated, this.triggerForceUpdate);
+  }
+
+  triggerForceUpdate = () => {
+    this.forceUpdate();
+  };
+
   get refreshParamInUrl(): string {
     return this.props.location.query.refresh as string;
   }

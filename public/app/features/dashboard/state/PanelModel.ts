@@ -255,16 +255,11 @@ export class PanelModel {
     if (plugin.angularConfigCtrl) {
       return;
     }
-    this.options = _.mergeWith(
-      {},
-      plugin.defaults,
-      this.options || {},
-      (objValue: any, srcValue: any): any => {
-        if (_.isArray(srcValue)) {
-          return srcValue;
-        }
+    this.options = _.mergeWith({}, plugin.defaults, this.options || {}, (objValue: any, srcValue: any): any => {
+      if (_.isArray(srcValue)) {
+        return srcValue;
       }
-    );
+    });
   }
 
   pluginLoaded(plugin: PanelPlugin) {

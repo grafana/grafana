@@ -15,10 +15,12 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
+  "iteration": 1573479899663,
   "links": [],
   "panels": [
     {
       "alert": {
+        "alertRuleTags": {},
         "conditions": [
           {
             "evaluator": {
@@ -52,12 +54,14 @@
       "editable": true,
       "error": false,
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 10,
         "x": 0,
         "y": 0
       },
+      "hiddenSeries": false,
       "id": 4,
       "isNew": true,
       "legend": {
@@ -73,6 +77,9 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "connected",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -142,6 +149,7 @@
     },
     {
       "alert": {
+        "alertRuleTags": {},
         "conditions": [
           {
             "evaluator": {
@@ -165,7 +173,7 @@
         "for": "900000h",
         "frequency": "1m",
         "handler": 1,
-        "name": "Always Pending",
+        "name": "TestData - Always Pending",
         "noDataState": "no_data",
         "notifications": []
       },
@@ -177,12 +185,14 @@
       "editable": true,
       "error": false,
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 10,
         "x": 10,
         "y": 0
       },
+      "hiddenSeries": false,
       "id": 7,
       "isNew": true,
       "legend": {
@@ -198,6 +208,9 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "connected",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -227,7 +240,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Always Alerting with For",
+      "title": "Always Pending with For",
       "tooltip": {
         "msResolution": false,
         "shared": true,
@@ -268,6 +281,7 @@
     {
       "dashboardFilter": "",
       "dashboardTags": [],
+      "datasource": null,
       "folderId": null,
       "gridPos": {
         "h": 20,
@@ -280,6 +294,7 @@
       "links": [],
       "nameFilter": "$namefilter",
       "onlyAlertsOnDashboard": false,
+      "options": {},
       "show": "current",
       "sortOrder": 1,
       "stateFilter": [],
@@ -290,6 +305,7 @@
     },
     {
       "alert": {
+        "alertRuleTags": {},
         "conditions": [
           {
             "evaluator": {
@@ -313,7 +329,7 @@
         "for": "1m",
         "frequency": "1m",
         "handler": 1,
-        "name": "TestData - Always Pending",
+        "name": "TestData - Always Alerting For",
         "noDataState": "no_data",
         "notifications": []
       },
@@ -325,12 +341,14 @@
       "editable": true,
       "error": false,
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 6,
         "w": 10,
         "x": 0,
         "y": 7
       },
+      "hiddenSeries": false,
       "id": 6,
       "isNew": true,
       "legend": {
@@ -346,6 +364,9 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "connected",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -446,12 +467,14 @@
       "editable": true,
       "error": false,
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 6,
         "w": 10,
         "x": 10,
         "y": 7
       },
+      "hiddenSeries": false,
       "id": 3,
       "isNew": true,
       "legend": {
@@ -467,6 +490,9 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "connected",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -571,12 +597,14 @@
       "editable": true,
       "error": false,
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 10,
         "x": 0,
         "y": 13
       },
+      "hiddenSeries": false,
       "id": 5,
       "isNew": true,
       "legend": {
@@ -592,6 +620,9 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "connected",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -661,7 +692,7 @@
     }
   ],
   "revision": 2,
-  "schemaVersion": 18,
+  "schemaVersion": 21,
   "style": "dark",
   "tags": ["gdev", "alerting"],
   "templating": {
@@ -711,5 +742,5 @@
   "timezone": "browser",
   "title": "Alerting with TestData",
   "uid": "7MeksYbmk",
-  "version": 1
+  "version": 3
 }
