@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { boolean, number, text } from '@storybook/addon-knobs';
 import { Field } from './Field';
 import { Input } from './Input/Input';
@@ -51,11 +51,17 @@ export const simple = () => {
 };
 
 export const horizontalLayout = () => {
+  const [checked, setChecked] = useState(false);
   const { containerWidth, ...otherProps } = getKnobs();
   return (
     <div style={{ width: containerWidth }}>
       <Field horizontal label="Show labels" description="Display thresholds's labels" {...otherProps}>
-        <Switch />
+        <Switch
+          checked={checked}
+          onChange={(e, checked) => {
+            setChecked(checked);
+          }}
+        />
       </Field>
     </div>
   );
