@@ -130,32 +130,28 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
 
   getPeriod(target: any, options: any, now?: number) {
     const start = this.convertToCloudWatchTime(options.range.from, false);
-    const end = this.convertToCloudWatchTime(options.range.to, true);
     now = Math.round((now || Date.now()) / 1000);
 
     let period;
-    const range = end - start;
-
     const hourSec = 60 * 60;
     const daySec = hourSec * 24;
-    let periodUnit = 60;
     if (!target.period) {
       if (now - start <= daySec * 15) {
         // until 15 days ago
         if (target.namespace === 'AWS/EC2') {
-          periodUnit = period = 300;
+          period = 300;
         } else {
-          periodUnit = period = 60;
+          period = 60;
         }
       } else if (now - start <= daySec * 63) {
         // until 63 days ago
-        periodUnit = period = 60 * 5;
+        period = 60 * 5;
       } else if (now - start <= daySec * 455) {
         // until 455 days ago
-        periodUnit = period = 60 * 60;
+        period = 60 * 60;
       } else {
         // over 455 days, should return error, but try to long period
-        periodUnit = period = 60 * 60;
+        period = 60 * 60;
       }
     } else {
       period = this.templateSrv.replace(target.period, options.scopedVars);
@@ -167,9 +163,6 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
     }
     if (period < 1) {
       period = 1;
-    }
-    if (!target.highResolution && range / period >= 1440) {
-      period = Math.ceil(range / 1440 / periodUnit) * periodUnit;
     }
 
     return period;
@@ -287,6 +280,10 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
           ) as string[];
 
           regionsAffected.forEach(region => this.debouncedAlert(this.datasourceName, this.getActualRegion(region)));
+        }
+
+        if (err.data && err.data.message === 'Metric request error' && err.data.error) {
+          err.data.message = err.data.error;
         }
 
         throw err;

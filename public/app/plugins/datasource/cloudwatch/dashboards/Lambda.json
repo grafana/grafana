@@ -95,7 +95,6 @@
             "FunctionName": "$function"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "Invocations",
           "namespace": "AWS/Lambda",
@@ -191,7 +190,6 @@
             "FunctionName": "$function"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "Duration",
           "namespace": "AWS/Lambda",
@@ -287,7 +285,6 @@
             "FunctionName": "$function"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "Errors",
           "namespace": "AWS/Lambda",
@@ -383,7 +380,6 @@
             "FunctionName": "$function"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "Throttles",
           "namespace": "AWS/Lambda",

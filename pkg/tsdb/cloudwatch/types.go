@@ -27,7 +27,6 @@ type requestQuery struct {
 	ExtendedStatistics []*string
 	Period             int
 	Alias              string
-	HighResolution     bool
 	MatchExact         bool
 }
 

@@ -19,7 +19,6 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 							"LoadBalancer": {"lb1", "lb2", "lb3"},
 						},
 						Period:     300,
-						Identifier: "id1",
 						Expression: "",
 						MatchExact: matchExact,
 					}
@@ -38,7 +37,6 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 							"InstanceId":   {"i-123", "i-456", "i-789"},
 						},
 						Period:     300,
-						Identifier: "id1",
 						Expression: "",
 						MatchExact: matchExact,
 					}
@@ -55,7 +53,6 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 							"LoadBalancer": {"*"},
 						},
 						Period:     300,
-						Identifier: "id1",
 						Expression: "",
 						MatchExact: matchExact,
 					}
@@ -72,7 +69,6 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 							"LoadBalancer": {"*"},
 						},
 						Period:     300,
-						Identifier: "id1",
 						Expression: "",
 						MatchExact: matchExact,
 					}
@@ -90,7 +86,6 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 							"InstanceId":   {"i-123", "*", "i-789"},
 						},
 						Period:     300,
-						Identifier: "id1",
 						Expression: "",
 						MatchExact: matchExact,
 					}
@@ -110,7 +105,6 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 							"LoadBalancer": {"lb1", "lb2", "lb3"},
 						},
 						Period:     300,
-						Identifier: "id1",
 						Expression: "",
 						MatchExact: matchExact,
 					}
@@ -128,7 +122,6 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 							"InstanceId":   {"i-123", "i-456", "i-789"},
 						},
 						Period:     300,
-						Identifier: "id1",
 						Expression: "",
 						MatchExact: matchExact,
 					}
@@ -145,7 +138,6 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 							"LoadBalancer": {"*"},
 						},
 						Period:     300,
-						Identifier: "id1",
 						Expression: "",
 						MatchExact: matchExact,
 					}
@@ -163,7 +155,6 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 							"InstanceId":   {"i-123", "*", "i-789"},
 						},
 						Period:     300,
-						Identifier: "id1",
 						Expression: "",
 						MatchExact: matchExact,
 					}
@@ -188,7 +179,6 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 					"lb6": {`l\\(b5"`},
 				},
 				Period:     300,
-				Identifier: "id1",
 				Expression: "",
 				MatchExact: true,
 			}
