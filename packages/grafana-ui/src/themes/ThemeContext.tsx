@@ -41,8 +41,8 @@ export function useTheme() {
 /**
  * Enables theme context  mocking
  */
-export const mockThemeContext = (value: Partial<GrafanaTheme>) => {
-  ThemeContextMock = React.createContext(value as GrafanaTheme);
+export const mockThemeContext = (theme: Partial<GrafanaTheme>) => {
+  ThemeContextMock = React.createContext(theme as GrafanaTheme);
   return () => {
     ThemeContextMock = null;
   };
