@@ -95,7 +95,6 @@
             "InstanceId": "$instance"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "CPUUtilization",
           "namespace": "AWS/EC2",
@@ -191,7 +190,6 @@
             "InstanceId": "$instance"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "DiskReadBytes",
           "namespace": "AWS/EC2",
@@ -287,7 +285,6 @@
             "InstanceId": "$instance"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "DiskReadOps",
           "namespace": "AWS/EC2",
@@ -383,7 +380,6 @@
             "InstanceId": "$instance"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "DiskWriteOps",
           "namespace": "AWS/EC2",
@@ -479,7 +475,6 @@
             "InstanceId": "$instance"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "DiskWriteOps",
           "namespace": "AWS/EC2",
@@ -575,7 +570,6 @@
             "InstanceId": "$instance"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "Network In",
           "namespace": "AWS/EC2",
@@ -671,7 +665,6 @@
             "InstanceId": "$instance"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "NetworkOut",
           "namespace": "AWS/EC2",
@@ -767,7 +760,6 @@
             "InstanceId": "$instance"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "NetworkPacketsIn",
           "namespace": "AWS/EC2",
@@ -864,7 +856,6 @@
             "InstanceId": "$instance"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "StatusCheckFailed",
           "namespace": "AWS/EC2",
@@ -961,7 +952,6 @@
             "InstanceId": "$instance"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "StatusCheckFailed_Instance",
           "namespace": "AWS/EC2",
@@ -1058,7 +1048,6 @@
             "InstanceId": "$instance"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "StatusCheckFailed_System",
           "namespace": "AWS/EC2",
