@@ -16,8 +16,6 @@ type cloudWatchQuery struct {
 	Dimensions              map[string][]string
 	Period                  int
 	Alias                   string
-	Identifier              string
-	HighResolution          bool
 	MatchExact              bool
 	UsedExpression          string
 	RequestExceededMaxLimit bool

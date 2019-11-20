@@ -95,7 +95,6 @@
             "VolumeId": "$volume"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "VolumeReadBytes",
           "namespace": "AWS/EBS",
@@ -191,7 +190,6 @@
             "VolumeId": "$volume"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "VolumeWriteBytes",
           "namespace": "AWS/EBS",
@@ -287,7 +285,6 @@
             "VolumeId": "$volume"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "VolumeTotalReadTime",
           "namespace": "AWS/EBS",
@@ -383,7 +380,6 @@
             "VolumeId": "$volume"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "VolumeTotalWriteTime",
           "namespace": "AWS/EBS",
@@ -479,7 +475,6 @@
             "VolumeId": "$volume"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "VolumeReadOps",
           "namespace": "AWS/EBS",
@@ -575,7 +570,6 @@
             "VolumeId": "$volume"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "VolumeWriteOps",
           "namespace": "AWS/EBS",
@@ -671,7 +665,6 @@
             "VolumeId": "$volume"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "VolumeIdleTime",
           "namespace": "AWS/EBS",
@@ -767,7 +760,6 @@
             "VolumeId": "$volume"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "VolumeQueueLength",
           "namespace": "AWS/EBS",
@@ -863,7 +855,6 @@
             "VolumeId": "$volume"
           },
           "expression": "",
-          "highResolution": false,
           "matchExact": true,
           "metricName": "BurstBalance",
           "namespace": "AWS/EBS",

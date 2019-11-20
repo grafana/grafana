@@ -316,7 +316,9 @@ export class DashboardMigrator {
           return;
         }
 
-        panel.thresholds = [];
+        if (!panel.thresholds) {
+          panel.thresholds = [];
+        }
         const t1: any = {},
           t2: any = {};
 
