@@ -272,7 +272,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
 
     return (
       <div className={exploreClass} ref={this.getRef}>
-        <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
+        <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} queryRowIndex={queryKeys.length} />
         {datasourceMissing ? this.renderEmptyState() : null}
         {datasourceInstance && (
           <div className="explore-container">
