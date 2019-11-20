@@ -142,6 +142,7 @@ export class PanelQueryRunner {
       // and add built in variables interval and interval_ms
       request.scopedVars = Object.assign({}, request.scopedVars, {
         __interval: { text: norm.interval, value: norm.interval },
+        __interval_s: { text: (norm.intervalMs / 1000).toString(), value: norm.intervalMs / 1000 },
         __interval_ms: { text: norm.intervalMs.toString(), value: norm.intervalMs },
       });
 
