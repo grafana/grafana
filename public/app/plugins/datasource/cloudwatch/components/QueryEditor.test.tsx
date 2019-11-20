@@ -46,7 +46,6 @@ const setup = () => {
       period: '',
       expression: '',
       alias: '',
-      highResolution: false,
       matchExact: true,
     },
     datasource,
