@@ -801,7 +801,7 @@ describe('CloudWatchDatasource', () => {
         { period: '1', namespace: 'CustomMetricsNamespace' },
         { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
         hourSec * 3 - 1,
-        60,
+        1,
       ],
       [
         { period: '60s', namespace: 'CustomMetricsNamespace' },
