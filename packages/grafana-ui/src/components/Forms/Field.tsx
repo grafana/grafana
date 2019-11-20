@@ -61,7 +61,7 @@ export const Field: React.FC<FieldProps> = ({
   let inputId;
   const styles = getFieldStyles(theme);
 
-  // Get the firs, and only, child to retrieve form input's id
+  // Get the first, and only, child to retrieve form input's id
   const child = React.Children.map(children, c => c)[0];
 
   if (child) {
