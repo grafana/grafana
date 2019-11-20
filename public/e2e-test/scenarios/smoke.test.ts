@@ -1,9 +1,12 @@
 import { Browser, Page, Target } from 'puppeteer-core';
 
 import { compareScreenShots, constants, e2eScenario, takeScreenShot } from '@grafana/toolkit/src/e2e';
-import { cleanDashboard, createDashboardPage } from 'e2e-test/pages/dashboards/createDashboardPage';
-import { saveDashboardModal } from 'e2e-test/pages/dashboards/saveDashboardModal';
-import { dashboardsPageFactory } from 'e2e-test/pages/dashboards/dashboardsPage';
+import {
+  cleanDashboard,
+  createDashboardPage,
+  dashboardsPageFactory,
+  saveDashboardModal,
+} from '@grafana/toolkit/src/e2e/pages';
 import { panel } from 'e2e-test/pages/panels/panel';
 import { editPanelPage } from 'e2e-test/pages/panels/editPanel';
 import { sharePanelModal } from 'e2e-test/pages/panels/sharePanelModal';

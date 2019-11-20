@@ -1,4 +1,5 @@
-import { ArrayPageObjectType, ClickablePageObjectType, PageObjectType, TestPage } from '@grafana/toolkit/src/e2e';
+import { ArrayPageObjectType, ClickablePageObjectType, PageObjectType } from '../../pageObjects';
+import { TestPage } from '../../pageInfo';
 
 export interface DashboardPage {
   settings: ClickablePageObjectType;

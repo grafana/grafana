@@ -1,9 +1,10 @@
 import { Page } from 'puppeteer-core';
-import { ClickablePageObjectType, TestPage } from '@grafana/toolkit/src/e2e';
 
+import { ClickablePageObjectType } from '../../pageObjects';
+import { TestPage } from '../../pageInfo';
 import { editDataSourcePage } from './editDataSourcePage';
-import { confirmModal } from '../modals/confirmModal';
 import { addDataSourcePage } from './addDataSourcePage';
+import { confirmModal } from '../modals/confirmModal';
 
 export interface DataSourcesPage {
   testData: ClickablePageObjectType;

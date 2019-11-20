@@ -1,4 +1,5 @@
-import { ClickablePageObjectType, InputPageObjectType, PageObjectType, TestPage } from '@grafana/toolkit/src/e2e';
+import { ClickablePageObjectType, InputPageObjectType, PageObjectType } from '../../pageObjects';
+import { TestPage } from '../../pageInfo';
 
 export interface EditDataSourcePage {
   name: InputPageObjectType;

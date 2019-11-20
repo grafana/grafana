@@ -1,10 +1,14 @@
 import { e2eScenario, TestPage } from '@grafana/toolkit/src/e2e';
 import { Browser, Page } from 'puppeteer-core';
-import { assertVariableLabelsAndComponents, DashboardPage } from '../../pages/dashboards/dashboardPage';
-import { dashboardSettingsPage } from '../../pages/dashboards/dashboardSettingsPage';
+import {
+  assertVariableLabelsAndComponents,
+  DashboardPage,
+  dashboardSettingsPage,
+  saveChangesDashboardModal,
+} from '@grafana/toolkit/src/e2e/pages';
+
 import { assertVariableTable, variablesPage } from '../../pages/templating/variablesPage';
 import { createQueryVariable, variablePage } from '../../pages/templating/variablePage';
-import { saveChangesDashboardModal } from '../../pages/dashboards/saveChangesDashboardModal';
 
 e2eScenario({
   describeName: 'Template Variables tests',

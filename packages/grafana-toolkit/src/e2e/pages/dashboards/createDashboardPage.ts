@@ -1,5 +1,7 @@
 import { Page } from 'puppeteer-core';
-import { ClickablePageObjectType, TestPage } from '@grafana/toolkit/src/e2e';
+
+import { ClickablePageObjectType } from '../../pageObjects';
+import { TestPage } from '../../pageInfo';
 import { dashboardPage } from './dashboardPage';
 import { dashboardSettingsPage } from './dashboardSettingsPage';
 import { saveDashboardModal } from './saveDashboardModal';

@@ -1,16 +1,10 @@
 import { Browser, Page } from 'puppeteer-core';
 import { launchBrowser } from './launcher';
 import { ensureLoggedIn } from './login';
-import {
-  cleanDashboard,
-  createEmptyDashboardPage,
-} from '../../../../public/e2e-test/pages/dashboards/createDashboardPage';
-import { DashboardPage } from '../../../../public/e2e-test/pages/dashboards/dashboardPage';
+import { cleanDashboard, createEmptyDashboardPage } from './pages/dashboards/createDashboardPage';
+import { DashboardPage } from './pages/dashboards/dashboardPage';
 import { TestPage } from './pageInfo';
-import {
-  addTestDataSourceAndVerify,
-  cleanUpTestDataSource,
-} from '../../../../public/e2e-test/pages/datasources/dataSources';
+import { addTestDataSourceAndVerify, cleanUpTestDataSource } from './pages/datasources/dataSources';
 
 export interface ScenarioArguments {
   describeName: string;

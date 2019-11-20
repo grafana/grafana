@@ -1,4 +1,5 @@
-import { ClickablePageObjectType, PageObject, Selector, TestPage } from '@grafana/toolkit/src/e2e';
+import { ClickablePageObjectType, PageObject, Selector } from '../../pageObjects';
+import { TestPage } from '../../pageInfo';
 
 export interface SaveChangesDashboardModal {
   save: ClickablePageObjectType;
