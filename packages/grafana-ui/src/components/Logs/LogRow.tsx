@@ -23,7 +23,7 @@ interface Props extends Themeable {
   showDuplicates: boolean;
   showTime: boolean;
   timeZone: TimeZone;
-  isLogsPanel?: boolean;
+  allowDetails?: boolean;
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -67,7 +67,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   };
 
   toggleDetails = () => {
-    if (this.props.isLogsPanel) {
+    if (this.props.allowDetails) {
       return;
     }
     this.setState(state => {
@@ -88,7 +88,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       onClickFilterLabel,
       onClickFilterOutLabel,
       highlighterExpressions,
-      isLogsPanel,
+      allowDetails,
       row,
       showDuplicates,
       timeZone,
@@ -111,7 +111,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           </div>
         )}
         <div className={style.logsRowLevel} />
-        {!isLogsPanel && (
+        {!allowDetails && (
           <div
             title={showDetails ? 'Hide log details' : 'See log details'}
             onClick={this.toggleDetails}
