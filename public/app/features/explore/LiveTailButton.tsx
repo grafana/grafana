@@ -13,6 +13,9 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
   const orangeLighter = tinycolor(theme.colors.orangeDark)
     .lighten(10)
     .toString();
+  const yellowLight = tinycolor(theme.colors.yellow)
+    .lighten(20)
+    .toString();
   const pulseTextColor = tinycolor(theme.colors.orangeDark)
     .desaturate(90)
     .toString();
@@ -32,6 +35,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
       border-color: ${theme.colors.orangeDark};
       color: ${theme.colors.orangeDark};
       background: transparent;
+      box-shadow: 0px 0px 4px ${yellowLight};
       &:focus {
         border-color: ${theme.colors.orangeDark};
         color: ${theme.colors.orangeDark};
@@ -47,6 +51,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
       border-color: ${theme.colors.orangeDark};
       background: transparent;
       animation: pulse 3s ease-out 0s infinite normal forwards;
+      box-shadow: 0px 0px 4px ${yellowLight};
       &:focus {
         border-color: ${theme.colors.orangeDark};
       }
