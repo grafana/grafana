@@ -25,6 +25,7 @@ import { DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult, DashboardDT
 import { DashboardModel } from './DashboardModel';
 import { resetExploreAction } from 'app/features/explore/state/actionTypes';
 import { DataQuery } from '@grafana/data';
+import { ContextSrv } from '../../../core/services/context_srv';
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -169,6 +170,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     const keybindingSrv: KeybindingSrv = args.$injector.get('keybindingSrv');
     const unsavedChangesSrv = args.$injector.get('unsavedChangesSrv');
     const dashboardSrv: DashboardSrv = args.$injector.get('dashboardSrv');
+    const contextSrv: ContextSrv = args.$injector.get('contextSrv');
 
     timeSrv.init(dashboard);
     annotationsSrv.init(dashboard);
@@ -179,7 +181,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // template values service needs to initialize completely before
     // the rest of the dashboard can load
     try {
-      await variableSrv.init(dashboard);
+      await variableSrv.init(dashboard, contextSrv.user);
     } catch (err) {
       dispatch(notifyApp(createErrorNotification('Templating init failed', err)));
       console.log(err);
