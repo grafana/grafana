@@ -398,11 +398,7 @@ func GetTeamMembers(query *models.GetTeamMembersQuery) error {
 		"team_member.permission",
 		"user_auth.auth_module",
 	)
-	sess.Asc(
-		"user.login",
-		"user.email",
-		"user.name",
-	)
+	sess.Asc("user.email", "user.login")
 
 	err := sess.Find(&query.Result)
 	return err
