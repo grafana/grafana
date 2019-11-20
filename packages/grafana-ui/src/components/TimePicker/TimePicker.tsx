@@ -209,7 +209,7 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
             options={options}
             maxMenuHeight={600}
             onChange={this.onSelectChanged}
-            iconClass={classNames('fa fa-clock-o fa-fw', isSynced && 'icon-brand-gradient')}
+            iconClass={classNames('fa fa-clock-o fa-fw', isSynced && timeSyncButton && 'icon-brand-gradient')}
             tooltipContent={<TimePickerTooltipContent timeRange={value} />}
           />
 
