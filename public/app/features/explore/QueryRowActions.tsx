@@ -1,12 +1,19 @@
 import React from 'react';
+import ElapsedTime from './ElapsedTime';
+import { PanelData, LoadingState } from '@grafana/data';
+
+function formatLatency(value: number) {
+  return `${(value / 1000).toFixed(1)}s`;
+}
 
 export type Props = {
+  queryResponse: PanelData;
+  latency: number;
   canToggleEditorModes: boolean;
   isDisabled: boolean;
   isNotStarted: boolean;
   onClickToggleEditorMode: () => void;
   onClickToggleDisabled: () => void;
-  onClickAddButton: () => void;
   onClickRemoveButton: () => void;
 };
 
@@ -15,10 +22,11 @@ export function QueryRowActions(props: Props) {
     canToggleEditorModes,
     onClickToggleEditorMode,
     onClickToggleDisabled,
-    onClickAddButton,
     onClickRemoveButton,
     isDisabled,
     isNotStarted,
+    queryResponse,
+    latency,
   } = props;
 
   return (
@@ -35,6 +43,11 @@ export function QueryRowActions(props: Props) {
         </div>
       )}
       <div className="gf-form">
+        <button className="gf-form-label gf-form-label--btn">
+          {queryResponse.state === LoadingState.Done || LoadingState.Error ? formatLatency(latency) : <ElapsedTime />}
+        </button>
+      </div>
+      <div className="gf-form">
         <button
           disabled={isNotStarted}
           className="gf-form-label gf-form-label--btn"
@@ -42,11 +55,6 @@ export function QueryRowActions(props: Props) {
           title="Disable/enable query"
         >
           <i className={isDisabled ? 'fa fa-eye-slash' : 'fa fa-eye'} />
-        </button>
-      </div>
-      <div className="gf-form">
-        <button className="gf-form-label gf-form-label--btn" onClick={onClickAddButton} title="Add query">
-          <i className="fa fa-plus" />
         </button>
       </div>
       <div className="gf-form">

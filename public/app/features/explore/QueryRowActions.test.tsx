@@ -1,15 +1,21 @@
 import React from 'react';
 import { QueryRowActions, Props } from './QueryRowActions';
 import { shallow } from 'enzyme';
+import { LoadingState, DefaultTimeRange } from '@grafana/data';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
+    queryResponse: {
+      state: LoadingState.Done,
+      series: [],
+      timeRange: DefaultTimeRange,
+    },
+    latency: 0,
     isDisabled: false,
     isNotStarted: true,
     canToggleEditorModes: true,
     onClickToggleEditorMode: () => {},
     onClickToggleDisabled: () => {},
-    onClickAddButton: () => {},
     onClickRemoveButton: () => {},
   };
 
