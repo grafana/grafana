@@ -263,7 +263,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
             <div className="explore-toolbar-content-item explore-icon-align">
               <ResponsiveButton
                 splitted={splitted}
-                title="Add row"
+                title="Add query"
                 onClick={this.onClickAddButton}
                 iconClassName="fa fa-fw fa-plus icon-margin-right"
                 disabled={isLive}
