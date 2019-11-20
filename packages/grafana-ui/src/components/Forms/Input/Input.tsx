@@ -6,7 +6,9 @@ import { stylesFactory, useTheme } from '../../../themes';
 import { Icon } from '../../Icon/Icon';
 import { useClientRect } from '../../../utils/useClientRect';
 
-export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix'> {
+export type FormInputSize = 'sm' | 'md' | 'lg' | 'auto';
+
+export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'size'> {
   /** Show an invalid state around the input */
   invalid?: boolean;
   /** Show an icon as a prefix in the input */
@@ -17,6 +19,7 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix'> {
   addonBefore?: ReactNode;
   /** Add a component as an addon after the input */
   addonAfter?: ReactNode;
+  size?: FormInputSize;
 }
 
 interface StyleDeps {
@@ -205,11 +208,25 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
         right: 0;
       `
     ),
+    inputSize: {
+      sm: css`
+        width: 200px;
+      `,
+      md: css`
+        width: 300px;
+      `,
+      lg: css`
+        width: 400px;
+      `,
+      auto: css`
+        width: 100%;
+      `,
+    },
   };
 });
 
 export const Input: FC<Props> = props => {
-  const { addonAfter, addonBefore, prefix, invalid, loading, ...restProps } = props;
+  const { addonAfter, addonBefore, prefix, invalid, loading, size = 'auto', ...restProps } = props;
   /**
    * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects below to apply correct padding to the input
    * when prefix/suffix is larger than default (28px = 16px(icon) + 12px(left/right paddings)).
@@ -222,7 +239,7 @@ export const Input: FC<Props> = props => {
   const styles = getInputStyles({ theme, invalid: !!invalid });
 
   return (
-    <div className={styles.wrapper}>
+    <div className={cx(styles.wrapper, styles.inputSize[size])}>
       {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
 
       <div className={styles.inputWrapper}>
