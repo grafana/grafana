@@ -60,6 +60,18 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       display: table-row;
       cursor: pointer;
 
+      &:hover {
+        .show-context {
+          visibility: visible;
+          z-index: 1;
+          margin-left: 10px;
+          text-decoration: underline;
+          &:hover {
+            color: ${theme.colors.yellow};
+          }
+        }
+      }
+
       > div {
         display: table-cell;
         padding-right: ${theme.spacing.sm};
