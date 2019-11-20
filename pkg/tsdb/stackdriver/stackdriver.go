@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/opentracing/opentracing-go"
+	"github.com/sony/gobreaker"
 )
 
 var (
@@ -44,6 +45,7 @@ const (
 type StackdriverExecutor struct {
 	httpClient *http.Client
 	dsInfo     *models.DataSource
+	breaker    *gobreaker.CircuitBreaker
 }
 
 // NewStackdriverExecutor initializes a http client
@@ -53,9 +55,19 @@ func NewStackdriverExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, 
 		return nil, err
 	}
 
+	breaker := gobreaker.NewCircuitBreaker(gobreaker.Settings{
+		Name:    "stackdriver",
+		Timeout: 3 * time.Second,
+		ReadyToTrip: func(counts gobreaker.Counts) bool {
+			failureRatio := float64(counts.TotalFailures) / float64(counts.Requests)
+			return counts.Requests >= 3 && failureRatio >= 0.6
+		},
+	})
+
 	return &StackdriverExecutor{
 		httpClient: httpClient,
 		dsInfo:     dsInfo,
+		breaker:    breaker,
 	}, nil
 }
 
@@ -109,15 +121,22 @@ func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQu
 	}
 
 	for _, query := range queries {
-		queryRes, resp, err := e.executeQuery(ctx, query, tsdbQuery)
+		res, err := e.breaker.Execute(func() (interface{}, error) {
+			queryRes, resp, err := e.executeQuery(ctx, query, tsdbQuery)
+			if err != nil {
+				return nil, err
+			}
+			err = e.parseResponse(queryRes, resp, query)
+			if err != nil {
+				queryRes.Error = err
+			}
+			return queryRes, nil
+		})
 		if err != nil {
 			return nil, err
 		}
-		err = e.parseResponse(queryRes, resp, query)
-		if err != nil {
-			queryRes.Error = err
-		}
-		result.Results[query.RefID] = queryRes
+
+		result.Results[query.RefID] = res.(*tsdb.QueryResult)
 	}
 
 	return result, nil
