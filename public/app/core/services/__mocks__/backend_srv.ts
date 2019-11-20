@@ -1,12 +1,11 @@
-const backendSrv = {
+export const backendSrv = {
   get: jest.fn(),
   getDashboard: jest.fn(),
   getDashboardByUid: jest.fn(),
   getFolderByUid: jest.fn(),
   post: jest.fn(),
   resolveCancelerIfExists: jest.fn(),
+  datasourceRequest: jest.fn(),
 };
 
-export function getBackendSrv() {
-  return backendSrv;
-}
+export const getBackendSrv = jest.fn().mockReturnValue(backendSrv);
