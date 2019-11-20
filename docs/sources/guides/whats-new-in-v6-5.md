@@ -19,7 +19,7 @@ For all details please read the full [CHANGELOG.md](https://github.com/grafana/g
 Grafana 6.5 comes with a lot of new features and enhancements.
 
 - [**Docker:** Ubuntu-based images and more]({{< relref "#ubuntu-based-docker-images" >}})
-- [**CloudWatch:** Major rewrite and lots of enhancements]({{< relref "#cloudWatch-data-source-improvements" >}})
+- [**CloudWatch:** Major rewrite and lots of enhancements]({{< relref "#cloudwatch-data-source-improvements" >}})
 - [**Templating:** Dynamic typeahead queries using $__searchFilter]({{< relref "#dynamic-typeahead-support-in-query-variables" >}})
 - [**Explore:** New log row details view]({{< relref "#explore-logs-log-row-details" >}})
 - [**Explore:** Turn parts of log message into a link using derived fields]({{< relref "#loki-explore-derived-fields" >}})
@@ -56,21 +56,25 @@ While GetMetricStatistics qualified for the CloudWatch API free tier, this is no
 
 In Grafana 6.5 or higher, you’re able to monitor a dynamic list of metrics by using the asterisk (\*) wildcard for one or more dimension values.
 
-In the example below, all metrics in the namespace `AWS/EC2` with a metric name of `CPUUtilization` and ANY value for the `InstanceId` dimension are queried. This can help you monitor metrics for AWS resources, like EC2 instances or containers. For example, when new instances get created as part of an auto scaling event, they will automatically appear in the graph without you having to track the new instance IDs. You can click on `Show Query Preview` to see the search expression that is automatically built to support wildcards. To learn more about search expressions, visit the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html).
+{{< docs-imagebox img="/img/docs/v65/cloudwatch-dimension-wildcard.png" max-width="800px" class="docs-image--right" caption="CloudWatch dimension wildcard" >}}
+
+In the example, all metrics in the namespace `AWS/EC2` with a metric name of `CPUUtilization` and ANY value for the `InstanceId` dimension are queried. This can help you monitor metrics for AWS resources, like EC2 instances or containers. For example, when new instances get created as part of an auto scaling event, they will automatically appear in the graph without you having to track the new instance IDs. You can click on `Show Query Preview` to see the search expression that is automatically built to support wildcards. To learn more about search expressions, visit the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html).
 
 By default, the search expression is defined in such a way that the queried metrics must match the defined dimension names exactly. This means that in the example below only metrics with exactly one dimension with name ‘InstanceId’ will be returned.
 
 You can untoggle `Match Exact` to include metrics that have other dimensions defined. Disabling ‘Match Exact’ also creates a search expression even if you don’t use wildcards. We simply search for any metric that match at least the namespace, metric name, and all defined dimensions.
 
-{{< docs-imagebox img="/img/docs/v65/cloudwatch-dimension-wildcard.png" caption="CloudWatch dimension wildcard" >}}
+<br/>
 
 #### Deep linking from Grafana panels to the CloudWatch console
 
+{{< docs-imagebox img="/img/docs/v65/cloudwatch-deep-linking.png" max-width="500px" class="docs-image--right" caption="CloudWatch deep linking" >}}
+
 Left clicking a time series in the panel shows a context menu with a link to `View in CloudWatch console`. Clicking that link will open a new tab that will take you to the CloudWatch console and display all the metrics for that query. If you are not currently logged in to the CloudWatch console, the link will forward you to the login page. The provided link is valid for any account but will only display the right metrics if you are logged in to the account that corresponds to the selected data source in Grafana.
 
-{{< docs-imagebox img="/img/docs/v65/cloudwatch-deep-linking.png" caption="CloudWatch deep linking" >}}
-
 This feature is not available for metrics that are based on math expressions.
+
+<br/>
 
 #### Improved feedback when throttling occurs
 
@@ -88,9 +92,7 @@ The use of multi-valued template variables is only supported for dimension value
 
 If you have a query variable that has many thousands of values it can be quite slow to search for a specific value in the dropdown. This is due to the fact that all that search filtering is happening in the browser.
 
-Using `__searchFilter` in the template variable query field you can filter the query results based on what the user types in the variable dropdown input.
-
-When nothing has been entered by the user the default value for `__searchFilter` is `*` , `.*` or `%` depending on data source and formatting option.
+Using `__searchFilter` in the template variable query field you can filter the query results based on what the user types in the variable dropdown input. When nothing has been entered by the user the default value for `__searchFilter` is `*` , `.*` or `%` depending on data source and formatting option.
 
 The example below shows how to use `__searchFilter` as part of the query field to enable searching for `server` while the user types in the dropdown select box.
 
