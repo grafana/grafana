@@ -334,12 +334,14 @@ func DeleteDashboard(cmd *models.DeleteDashboardCommand) error {
 
 			for _, id := range dashIds {
 				if err := deleteAlertDefinition(id.Id, sess); err != nil {
+					sqlog.Error("Failed to delete alerts", "err", err)
 					return nil
 				}
 			}
 		}
 
 		if err := deleteAlertDefinition(dashboard.Id, sess); err != nil {
+			sqlog.Error("Failed to delete alerts", "err", err)
 			return nil
 		}
 
