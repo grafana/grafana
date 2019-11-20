@@ -20,7 +20,7 @@ A background job runs each 10 minutes and will remove temporary images. You can 
 ## Requirements
 
 Rendering images may require quite a lot of memory, mainly because there are "browser instances" started in the
-background responsible for the actual rendering. Further, if multiple images being rendered in parallell it most
+background responsible for the actual rendering. Further, if multiple images being rendered in parallel it most
 certainly have a bigger memory footprint. Minimum free memory recommendation is 1GB.
 
 Depending on [rendering method](#rendering-methods) you would need that memory available in the system where the
