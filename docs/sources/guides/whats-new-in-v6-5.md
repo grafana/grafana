@@ -76,10 +76,6 @@ This feature is not available for metrics that are based on math expressions.
 
 If the [limit of the GetMetricData API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_limits.html) is reached (either the transactions per second limit or the data points per second limit), a throttling error will be returned by the CloudWatch API. Throttling limits are defined per account and region, so the alert modal will indicate which data source got throttled in which region. A link to request a limit increase will be provided for the affected region, but you will have to log in to the correct account. For example, for us-east-1, a limit increase can be requested [here](https://console.aws.amazon.com/servicequotas/home?region=us-east-1#!/services/monitoring/quotas/L-5E141212).
 
-#### Angular to React migration
-
-In this release, the datasource config editor and the query editor has been completely rewritten in react. The functionality is basically the same as before, but it has a new look and feel to it.
-
 #### Multi-value template variables now use search expressions
 
 When defining dimension values based on multi-valued template variables, we now use search expressions to query for the matching metrics. This enables the use of multiple template variables in one query and also allows you to use template variables for queries that have the `Match Exact` option disabled.
