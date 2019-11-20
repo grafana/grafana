@@ -26,8 +26,7 @@ type Opts struct {
 }
 
 type RenderResult struct {
-	FilePath            string
-	KeepFileAfterRender bool
+	FilePath string
 }
 
 type renderFunc func(ctx context.Context, options Opts) (*RenderResult, error)
