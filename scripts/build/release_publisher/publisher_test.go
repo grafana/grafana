@@ -153,18 +153,28 @@ func TestFilterBuildArtifacts(t *testing.T) {
 		{os: "rhel", arch: "amd64"},
 		{os: "linux", arch: "amd64"},
 		{os: "win", arch: "amd64"},
-	})
+	}, Add)
 
 	if len(buildArtifacts) != 4 {
 		t.Errorf("Expected 4 build artifacts after filtering, but was %v", len(buildArtifacts))
 	}
 
-	_, err := filterBuildArtifacts([]artifactFilter{
-		{os: "foobar", arch: "amd64"},
-	})
+	buildArtifacts, err := filterBuildArtifacts([]artifactFilter{
+		{os: "win-installer", arch: "amd64"},
+	}, Remove)
 
-	if err == nil {
-		t.Errorf("Expected an error as a we tried to filter on a nonexiststant os.")
+	if err != nil {
+		t.Errorf("Expected all artifacts except win-msi, not error=%v", err)
+	}
+
+	if len(buildArtifacts) != len(completeBuildArtifactConfigurations)-1 {
+		t.Errorf("Expected %v artifacts but was %v", completeBuildArtifactConfigurations, buildArtifacts)
+	}
+
+	for _, ba := range buildArtifacts {
+		if ba.arch == "amd64" && ba.os == "win-installer" {
+			t.Errorf("win-installer/amd64 should be gone due to filtering")
+		}
 	}
 
 }
