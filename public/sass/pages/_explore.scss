@@ -66,6 +66,15 @@
   }
 }
 
+.explore-container-content-item {
+  margin-top: 1em;
+
+  .navbar-button {
+    height: 35px;
+    margin-left: 0;
+  }
+}
+
 .explore-toolbar-item:last-child {
   flex: auto;
 }
