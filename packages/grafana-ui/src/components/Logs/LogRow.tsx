@@ -101,8 +101,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     const styles = getStyles(theme);
     const showUtc = timeZone === 'utc';
     const showDetailsClassName = showDetails
-      ? cx(['fa fa-chevron-up', styles.topVerticalAlign])
-      : cx(['fa fa-chevron-down', styles.topVerticalAlign]);
+      ? cx(['fa fa-chevron-down', styles.topVerticalAlign])
+      : cx(['fa fa-chevron-right', styles.topVerticalAlign]);
     return (
       <div className={style.logsRow}>
         {showDuplicates && (

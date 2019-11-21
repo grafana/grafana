@@ -9,6 +9,13 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
   let logColor = selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.gray2 }, theme.type);
   const borderColor = selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.gray2 }, theme.type);
   const bgColor = selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.dark4 }, theme.type);
+  const context = css`
+    label: context;
+    visibility: hidden;
+    white-space: nowrap;
+    position: relative;
+  `;
+
   switch (logLevel) {
     case LogLevel.crit:
     case LogLevel.critical:
@@ -55,13 +62,15 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       table-layout: fixed;
       width: 100%;
     `,
+    context: css`
+      ${context}
+    `,
     logsRow: css`
       label: logs-row;
       display: table-row;
       cursor: pointer;
-
       &:hover {
-        .show-context {
+        .${context} {
           visibility: visible;
           z-index: 1;
           margin-left: 10px;

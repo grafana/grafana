@@ -57,12 +57,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: whiteSpacePreWrap;
       white-space: pre-wrap;
     `,
-    context: css`
-      label: context;
-      visibility: hidden;
-      white-space: nowrap;
-      position: relative;
-    `,
   };
 });
 
@@ -128,7 +122,7 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
             )}
           </span>
           {row.searchWords && row.searchWords.length > 0 && (
-            <span onClick={this.onContextToggle} className={cx('show-context', styles.context)}>
+            <span onClick={this.onContextToggle} className={cx(style.context)}>
               {showContext ? 'Hide' : 'Show'} context
             </span>
           )}
