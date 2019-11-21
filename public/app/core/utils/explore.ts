@@ -10,7 +10,6 @@ import {
   dateMath,
   DefaultTimeZone,
   HistoryItem,
-  IntervalValues,
   LogRowModel,
   LogsDedupStrategy,
   LogsModel,
@@ -23,7 +22,7 @@ import {
 } from '@grafana/data';
 import { renderUrl } from 'app/core/utils/url';
 import store from 'app/core/store';
-import kbn from 'app/core/utils/kbn';
+import { populateInterval } from 'app/core/utils/interval';
 import { getNextRefIdChar } from './query';
 // Types
 import { RefreshPicker } from '@grafana/ui';
@@ -121,8 +120,6 @@ export function buildQueryTransaction(
     return combinedKey;
   }, '');
 
-  const { interval, intervalMs } = getIntervals(range, queryOptions.minInterval, queryOptions.maxDataPoints);
-
   // Most datasource is using `panelId + query.refId` for cancellation logic.
   // Using `format` here because it relates to the view panel that the request is for.
   // However, some datasources don't use `panelId + query.refId`, but only `panelId`.
@@ -134,8 +131,6 @@ export function buildQueryTransaction(
     // TODO probably should be taken from preferences but does not seem to be used anyway.
     timezone: DefaultTimeZone,
     startTime: Date.now(),
-    interval,
-    intervalMs,
     // TODO: the query request expects number and we are using string here. Seems like it works so far but can create
     // issues down the road.
     panelId: panelId as any,
@@ -143,17 +138,15 @@ export function buildQueryTransaction(
     range,
     requestId: 'explore',
     rangeRaw: range.raw,
-    scopedVars: {
-      __interval: { text: interval, value: interval },
-      __interval_ms: { text: intervalMs, value: intervalMs },
-    },
     maxDataPoints: queryOptions.maxDataPoints,
     exploreMode: queryOptions.mode,
   };
 
+  const requestWithInterval = populateInterval(request, range, queryOptions.maxDataPoints, queryOptions.minInterval);
+
   return {
     queries,
-    request,
+    requestWithInterval,
     scanning,
     id: generateKey(), // reusing for unique ID
     done: false,
@@ -528,11 +521,3 @@ export const stopQueryState = (querySubscription: Unsubscribable) => {
     querySubscription.unsubscribe();
   }
 };
-
-export function getIntervals(range: TimeRange, lowLimit: string, resolution: number): IntervalValues {
-  if (!resolution) {
-    return { interval: '1s', intervalMs: 1000 };
-  }
-
-  return kbn.calculateInterval(range, resolution, lowLimit);
-}

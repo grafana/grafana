@@ -6,7 +6,7 @@ import { map } from 'rxjs/operators';
 // Services & Utils
 import { config } from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import kbn from 'app/core/utils/kbn';
+import { populateInterval } from 'app/core/utils/interval';
 import templateSrv from 'app/features/templating/template_srv';
 import { runRequest, preProcessPanelData } from './runRequest';
 import { runSharedRequest, isSharedDashboardQuery } from '../../../plugins/datasource/dashboard';
@@ -136,20 +136,9 @@ export class PanelQueryRunner {
       });
 
       const lowerIntervalLimit = minInterval ? templateSrv.replace(minInterval, request.scopedVars) : ds.interval;
-      const norm = kbn.calculateInterval(timeRange, widthPixels, lowerIntervalLimit);
+      const requestWithInterval = populateInterval(request, timeRange, widthPixels, lowerIntervalLimit);
 
-      // make shallow copy of scoped vars,
-      // and add built in variables interval and interval_ms
-      request.scopedVars = Object.assign({}, request.scopedVars, {
-        __interval: { text: norm.interval, value: norm.interval },
-        __interval_s: { text: (norm.intervalMs / 1000).toString(), value: norm.intervalMs / 1000 },
-        __interval_ms: { text: norm.intervalMs.toString(), value: norm.intervalMs },
-      });
-
-      request.interval = norm.interval;
-      request.intervalMs = norm.intervalMs;
-
-      this.pipeToSubject(runRequest(ds, request));
+      this.pipeToSubject(runRequest(ds, requestWithInterval));
     } catch (err) {
       console.log('PanelQueryRunner Error', err);
     }
