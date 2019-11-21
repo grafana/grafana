@@ -63,7 +63,7 @@ docker_build () {
     base_image="${base_arch}alpine:3.10"
   else
     libc=""
-    dockerfile="Dockerfile.ubuntu"
+    dockerfile="ubuntu.Dockerfile"
     base_image="${base_arch}ubuntu:18.10"
   fi
 
