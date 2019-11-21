@@ -45,7 +45,7 @@ export default withTheme(Foo);
 
 ### Test components that use ThemeContext
 
-When implementing snapshot tests of components that use theme (i.e. component that uses `withTheme` HOC), the snapshot will contain the entire theme object. This makes working with such snapshot hard as any change to the theme will result in the snapshot being outdated.
+When implementing snapshot tests for components that use the `withTheme` HOC, the snapshot will contain the entire theme object. Any change to the theme renders the snapshot outdated.
 
 To make your snapshot theme independent, use the `mockThemeContext` helper function:
 
