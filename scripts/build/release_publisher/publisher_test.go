@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestPreparingReleaseFromRemote(t *testing.T) {
 
@@ -148,33 +151,60 @@ func (mockHTTPGetter) getContents(url string) (string, error) {
 }
 
 func TestFilterBuildArtifacts(t *testing.T) {
-	buildArtifacts, _ := filterBuildArtifacts([]artifactFilter{
+	buildArtifacts, _ := filterBuildArtifacts(completeBuildArtifactConfigurations, Add, []artifactFilter{
 		{os: "deb", arch: "amd64"},
 		{os: "rhel", arch: "amd64"},
 		{os: "linux", arch: "amd64"},
 		{os: "win", arch: "amd64"},
-	}, Add)
+	})
 
 	if len(buildArtifacts) != 4 {
 		t.Errorf("Expected 4 build artifacts after filtering, but was %v", len(buildArtifacts))
 	}
 
-	buildArtifacts, err := filterBuildArtifacts([]artifactFilter{
-		{os: "win-installer", arch: "amd64"},
-	}, Remove)
+	buildArtifacts, err := filterBuildArtifacts([]buildArtifact{
+		{
+			os:   "linux",
+			arch: "amd64",
+		},
+		{
+			os:   "arm",
+			arch: "amd64",
+		},
+		{
+			os:   "darwin",
+			arch: "amd64",
+		},
+	}, Remove, []artifactFilter{
+		{os: "darwin", arch: "amd64"},
+	})
 
 	if err != nil {
-		t.Errorf("Expected all artifacts except win-msi, not error=%v", err)
+		t.Error()
 	}
 
-	if len(buildArtifacts) != len(completeBuildArtifactConfigurations)-1 {
-		t.Errorf("Expected %v artifacts but was %v", completeBuildArtifactConfigurations, buildArtifacts)
+	if len(buildArtifacts) != 2 {
+		t.Errorf("Expected 2 artifacts, was %v", len(buildArtifacts))
 	}
 
 	for _, ba := range buildArtifacts {
-		if ba.arch == "amd64" && ba.os == "win-installer" {
-			t.Errorf("win-installer/amd64 should be gone due to filtering")
+		if ba.arch == "amd64" && ba.os == "darwin" {
+			t.Errorf("darwin/amd64 should be gone due to filtering")
 		}
 	}
 
+	left := []buildArtifact{
+		{
+			os:   "linux",
+			arch: "amd64",
+		},
+		{
+			os:   "arm",
+			arch: "amd64",
+		},
+	}
+
+	if !reflect.DeepEqual(left, buildArtifacts) {
+		t.Errorf("Lists should have been equal but was, expected=%v, actual=%v", left, buildArtifacts)
+	}
 }
