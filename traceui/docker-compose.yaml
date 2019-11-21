@@ -4,7 +4,7 @@
 version: '2'
 services:
   grafana:
-    image: grafana/grafana-dev:explore-trace-ui-demo-b56f2a8ae23d399f6e170f439c058f4bdb08f0da-ubuntu
+    image: grafana/grafana-dev:explore-trace-ui-demo-42c1bbf43edd8471c102df72f927a50d96eac2e6
     ports:
       - '3000:3000'
     volumes:
