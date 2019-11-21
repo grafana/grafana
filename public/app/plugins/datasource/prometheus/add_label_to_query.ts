@@ -65,6 +65,7 @@ const labelRegexp = /(\w+)\s*(=|!=|=~|!~)\s*("[^"]*")/g;
 
 export function addLabelToSelector(selector: string, labelKey: string, labelValue: string, labelOperator?: string) {
   const parsedLabels = [];
+  const parsedFilters = [];
 
   // Split selector into labels
   if (selector) {
@@ -80,7 +81,7 @@ export function addLabelToSelector(selector: string, labelKey: string, labelValu
   parsedLabels.push({ key: labelKey, operator: operatorForLabelKey, value: `"${labelValue}"` });
 
   // Sort labels by key and put them together
-  const formatted = _.chain(parsedLabels)
+  const formattedLabels = _.chain(parsedLabels)
     .uniqWith(_.isEqual)
     .compact()
     .sortBy('key')
@@ -88,7 +89,20 @@ export function addLabelToSelector(selector: string, labelKey: string, labelValu
     .value()
     .join(',');
 
-  return `{${formatted}}`;
+  // Add filters
+  const filterRegexp = /(\|=|\|~|!=|!~)\s*("[^"]*")/g;
+
+  if (selector) {
+    let match = filterRegexp.exec(selector);
+    while (match) {
+      parsedFilters.push(match[0]);
+      match = filterRegexp.exec(selector);
+    }
+  }
+  const formattedFilter = parsedFilters.join(' ');
+
+  // Return logQL with labels and filters
+  return `{${formattedLabels}} ${formattedFilter}`;
 }
 
 function isPositionInsideChars(text: string, position: number, openChar: string, closeChar: string) {
