@@ -46,11 +46,8 @@ func main() {
 		baseURL = createBaseURL(archiveProviderRoot, "enterprise", product, nightly)
 		var err error
 		buildArtifacts, err = filterBuildArtifacts([]artifactFilter{
-			{os: "deb", arch: "amd64"},
-			{os: "rhel", arch: "amd64"},
-			{os: "linux", arch: "amd64"},
-			{os: "win", arch: "amd64"},
-		})
+			{os: "win-installer", arch: "amd64"},
+		}, Remove)
 
 		if err != nil {
 			log.Fatalf("Could not filter to the selected build artifacts, err=%v", err)
