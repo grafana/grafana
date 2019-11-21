@@ -1,10 +1,11 @@
-#!/bin/bash -e
+#!/bin/bash
+set -eo pipefail
 
 if [ ! -d '/tmp/phantomjs' ]; then
   _version="2.1.1"
 
-  curl -L https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-$_version-windows.zip > /tmp/phantomjs-win.zip
-  curl -L https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-$_version-macosx.zip > /tmp/phantomjs-mac.zip
+  curl -fL https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-$_version-windows.zip -o /tmp/phantomjs-win.zip
+  curl -fL https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-$_version-macosx.zip -o /tmp/phantomjs-mac.zip
 
   cd /tmp
   unzip /tmp/phantomjs-win.zip
