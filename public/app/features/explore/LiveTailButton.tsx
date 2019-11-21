@@ -3,13 +3,14 @@ import classNames from 'classnames';
 import tinycolor from 'tinycolor2';
 import { css } from 'emotion';
 import { CSSTransition } from 'react-transition-group';
-import { useTheme, Tooltip, stylesFactory } from '@grafana/ui';
+import { useTheme, Tooltip, stylesFactory, selectThemeVariant } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 
 //Components
 import { ResponsiveButton } from './ResponsiveButton';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const bgColor = selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.dark1 }, theme.type);
   const orangeLighter = tinycolor(theme.colors.orangeDark)
     .lighten(10)
     .toString();
@@ -32,8 +33,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       color: ${theme.colors.orangeDark};
       background: transparent;
       &:focus {
+        background: transparent;
         border-color: ${theme.colors.orangeDark};
         color: ${theme.colors.orangeDark};
+      }
+      &:hover {
+        background-color: ${bgColor};
       }
       &:active,
       &:hover {
@@ -47,7 +52,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       background: transparent;
       animation: pulse 3s ease-out 0s infinite normal forwards;
       &:focus {
+        background: transparent;
         border-color: ${theme.colors.orangeDark};
+      }
+      &:hover {
+        background-color: ${bgColor};
       }
       &:active,
       &:hover {
