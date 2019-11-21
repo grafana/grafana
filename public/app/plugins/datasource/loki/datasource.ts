@@ -5,7 +5,7 @@ import { map, filter, catchError, switchMap, mergeMap } from 'rxjs/operators';
 
 // Services & Utils
 import { dateMath } from '@grafana/data';
-import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
+import { addLabelToSelector, keepSelectorFilters } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import { BackendSrv, DatasourceRequestOptions } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
@@ -413,13 +413,18 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   modifyQuery(query: LokiQuery, action: any): LokiQuery {
     const parsed = parseQuery(query.expr || '');
     let { query: selector } = parsed;
+    let selectorLabels, selectorFilters;
     switch (action.type) {
       case 'ADD_FILTER': {
-        selector = addLabelToSelector(selector, action.key, action.value);
+        selectorLabels = addLabelToSelector(selector, action.key, action.value);
+        selectorFilters = keepSelectorFilters(selector);
+        selector = `${selectorLabels} ${selectorFilters}`;
         break;
       }
       case 'ADD_FILTER_OUT': {
-        selector = addLabelToSelector(selector, action.key, action.value, '!=');
+        selectorLabels = addLabelToSelector(selector, action.key, action.value, '!=');
+        selectorFilters = keepSelectorFilters(selector);
+        selector = `${selectorLabels} ${selectorFilters}`;
         break;
       }
       default:
