@@ -109,11 +109,11 @@ aws_secret_access_key = dasdasdsadasdasdasdsa
 region = us-west-2
 ```
 
-## Using the Metric Query Editor
+## Using the M  etric Query Editor
 
 You need to specify a namespace, metric, at least one stat, and at least one dimension as long as `Match Exact` is activated. In the case `Match Exact` is not activated, no dimension needs to be specified.
 
-## Dynamic queries using dimension wildcards
+### Dynamic queries using dimension wildcards
 
 In Grafana 6.5 or higher, you’re able to monitor a dynamic list of metrics by using the asterisk (\*) wildcard for one or more dimension values.
 
@@ -125,7 +125,7 @@ By default, the search expression is defined in such a way that the queried metr
 
 You can untoggle `Match Exact` to include metrics that have other dimensions defined. Disabling ‘Match Exact’ also creates a search expression even if you don’t use wildcards. We simply search for any metric that match at least the namespace, metric name, and all defined dimensions.
 
-## Multi-value template variables now use search expressions
+### Multi-value template variables now use search expressions
 
 When defining dimension values based on multi-valued template variables,a search expressions is used to query for the matching metrics. This enables the use of multiple template variables in one query and also allows you to use template variables for queries that have the `Match Exact` option disabled.
 
@@ -133,7 +133,7 @@ Search expressions are currently limited to 1024 characters, so your query may f
 
 The use of multi-valued template variables is only supported for dimension values. Using multi-valued template variables for `Region`, `Namespace`, or `Metric Name` is not supported.
 
-## Metric Math Expressions
+### Metric Math Expressions
 
 You can now create new time series metrics by operating on top of Cloudwatch metrics using mathematical functions. Arithmetic operators, unary subtraction and other functions are supported to be applied on cloudwatch metrics. More details on the available functions can be found on [AWS Metric Math](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html)
 
@@ -143,7 +143,7 @@ Please note that in the case you use the expression field to reference another q
 
 ![](/img/docs/v60/cloudwatch_metric_math.png)
 
-## Deep linking from Grafana panels to the CloudWatch console
+### Deep linking from Grafana panels to the CloudWatch console
 
 {{< docs-imagebox img="/img/docs/v65/cloudwatch-deep-linking.png" max-width="500px" class="docs-image--right" caption="CloudWatch deep linking" >}}
 
