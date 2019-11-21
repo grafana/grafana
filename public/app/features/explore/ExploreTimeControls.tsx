@@ -73,7 +73,7 @@ export class ExploreTimeControls extends Component<Props> {
 
   render() {
     const { range, timeZone, splitted, syncedTimes, onChangeTimeSync, hideText } = this.props;
-    const timeSyncButton = splitted ? <TimeSyncButton onClick={onChangeTimeSync} isSynced={syncedTimes} /> : null;
+    const timeSyncButton = splitted ? <TimeSyncButton onClick={onChangeTimeSync} isSynced={syncedTimes} /> : undefined;
     const timePickerCommonProps = {
       value: range,
       onChange: this.onChangeTimePicker,

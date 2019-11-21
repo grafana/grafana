@@ -42,7 +42,7 @@ export const LogLevelColor = {
 };
 
 const isoDateRegexp = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-6]\d[,\.]\d+([+-][0-2]\d:[0-5]\d|Z)/g;
-function isDuplicateRow(row: LogRowModel, other: LogRowModel, strategy: LogsDedupStrategy): boolean {
+function isDuplicateRow(row: LogRowModel, other: LogRowModel, strategy?: LogsDedupStrategy): boolean {
   switch (strategy) {
     case LogsDedupStrategy.exact:
       // Exact still strips dates
@@ -59,7 +59,7 @@ function isDuplicateRow(row: LogRowModel, other: LogRowModel, strategy: LogsDedu
   }
 }
 
-export function dedupLogRows(rows: LogRowModel[], strategy: LogsDedupStrategy): LogRowModel[] {
+export function dedupLogRows(rows: LogRowModel[], strategy?: LogsDedupStrategy): LogRowModel[] {
   if (strategy === LogsDedupStrategy.none) {
     return rows;
   }
@@ -68,7 +68,7 @@ export function dedupLogRows(rows: LogRowModel[], strategy: LogsDedupStrategy): 
     const rowCopy = { ...row };
     const previous = result[result.length - 1];
     if (index > 0 && isDuplicateRow(row, previous, strategy)) {
-      previous.duplicates++;
+      previous.duplicates!++;
     } else {
       rowCopy.duplicates = 0;
       result.push(rowCopy);
