@@ -20,7 +20,7 @@ export interface Props extends Themeable {
   showTime: boolean;
   timeZone: TimeZone;
   rowLimit?: number;
-  isLogsPanel?: boolean;
+  allowDetails?: boolean;
   previewLimit?: number;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -79,7 +79,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       onClickFilterOutLabel,
       rowLimit,
       theme,
-      isLogsPanel,
+      allowDetails,
       previewLimit,
       getFieldLinks,
     } = this.props;
@@ -115,7 +115,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
               showDuplicates={showDuplicates}
               showTime={showTime}
               timeZone={timeZone}
-              isLogsPanel={isLogsPanel}
+              allowDetails={allowDetails}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
               getFieldLinks={getFieldLinks}
@@ -132,7 +132,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
               showDuplicates={showDuplicates}
               showTime={showTime}
               timeZone={timeZone}
-              isLogsPanel={isLogsPanel}
+              allowDetails={allowDetails}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
               getFieldLinks={getFieldLinks}
