@@ -131,6 +131,9 @@ export function buildQueryTransaction(
     // TODO probably should be taken from preferences but does not seem to be used anyway.
     timezone: DefaultTimeZone,
     startTime: Date.now(),
+    interval: '',
+    intervalS: 0,
+    intervalMs: 0,
     // TODO: the query request expects number and we are using string here. Seems like it works so far but can create
     // issues down the road.
     panelId: panelId as any,
@@ -138,15 +141,14 @@ export function buildQueryTransaction(
     range,
     requestId: 'explore',
     rangeRaw: range.raw,
+    scopedVars: {},
     maxDataPoints: queryOptions.maxDataPoints,
     exploreMode: queryOptions.mode,
   };
 
-  const requestWithInterval = populateInterval(request, range, queryOptions.maxDataPoints, queryOptions.minInterval);
-
   return {
     queries,
-    requestWithInterval,
+    request: populateInterval(request, range, queryOptions.maxDataPoints, queryOptions.minInterval),
     scanning,
     id: generateKey(), // reusing for unique ID
     done: false,

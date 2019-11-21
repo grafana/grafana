@@ -113,6 +113,7 @@ export class PanelQueryRunner {
       range: timeRange,
       timeInfo,
       interval: '',
+      intervalS: 0,
       intervalMs: 0,
       targets: cloneDeep(queries),
       maxDataPoints: maxDataPoints || widthPixels,
