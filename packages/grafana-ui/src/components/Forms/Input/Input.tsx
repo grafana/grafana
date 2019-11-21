@@ -1,7 +1,7 @@
 import React, { FC, HTMLProps, ReactNode } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
-import { getFocusStyle } from '../commonStyles';
+import { getFocusStyle, sharedInputStyle } from '../commonStyles';
 import { stylesFactory, useTheme } from '../../../themes';
 import { Icon } from '../../Icon/Icon';
 import { useClientRect } from '../../../utils/useClientRect';
@@ -115,24 +115,18 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
 
     input: cx(
       getFocusStyle(theme),
+      sharedInputStyle(theme),
       css`
         label: input-input;
         position: relative;
         z-index: 0;
         flex-grow: 1;
-        color: ${colors.formInputText};
-        background-color: ${colors.formInputBg};
         border: 1px solid ${inputBorderColor};
         border-radius: ${borderRadius};
         height: 100%;
         width: 100%;
         padding: 0 ${theme.spacing.sm} 0 ${theme.spacing.sm};
         font-size: ${theme.typography.size.md};
-
-        &:disabled {
-          background-color: ${colors.formInputBgDisabled};
-          color: ${colors.formInputDisabledText};
-        }
 
         /*
          Restoring increase/decrease spinner on number inputs. Overwriting rules implemented in

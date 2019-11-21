@@ -1,6 +1,5 @@
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { selectThemeVariant } from '../../themes';
 
 export const getFocusStyle = (theme: GrafanaTheme) => css`
   &:focus {
@@ -11,10 +10,9 @@ export const getFocusStyle = (theme: GrafanaTheme) => css`
 
 export const sharedInputStyle = (theme: GrafanaTheme) => {
   const colors = theme.colors;
-  const backgroundColor = selectThemeVariant({ light: colors.white, dark: colors.gray15 }, theme.type);
 
   return css`
-    background-color: ${backgroundColor};
+    background-color: ${colors.formInputBg};
     line-height: ${theme.typography.lineHeight.lg};
     font-size: ${theme.typography.size.md};
     color: ${colors.formInputText};
@@ -28,8 +26,8 @@ export const sharedInputStyle = (theme: GrafanaTheme) => {
     }
 
     &:disabled {
-      background-color: ${selectThemeVariant({ light: colors.gray6, dark: colors.gray10 }, theme.type)};
-      color: ${selectThemeVariant({ light: colors.gray33, dark: colors.gray70 }, theme.type)};
+      background-color: ${colors.formInputBgDisabled};
+      color: ${colors.formInputDisabledText};
     }
   `;
 };
