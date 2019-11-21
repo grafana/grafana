@@ -1,14 +1,6 @@
 import React from 'react';
-import ElapsedTime from './ElapsedTime';
-import { PanelData, LoadingState } from '@grafana/data';
-
-function formatLatency(value: number) {
-  return `${(value / 1000).toFixed(1)}s`;
-}
 
 export type Props = {
-  queryResponse: PanelData;
-  latency: number;
   canToggleEditorModes: boolean;
   isDisabled: boolean;
   isNotStarted: boolean;
@@ -25,8 +17,6 @@ export function QueryRowActions(props: Props) {
     onClickRemoveButton,
     isDisabled,
     isNotStarted,
-    queryResponse,
-    latency,
   } = props;
 
   return (
@@ -42,11 +32,6 @@ export function QueryRowActions(props: Props) {
           </button>
         </div>
       )}
-      <div className="gf-form">
-        <button className="gf-form-label gf-form-label--btn" disabled>
-          {queryResponse.state === LoadingState.Done || LoadingState.Error ? formatLatency(latency) : <ElapsedTime />}
-        </button>
-      </div>
       <div className="gf-form">
         <button
           disabled={isNotStarted}
