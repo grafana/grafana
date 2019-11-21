@@ -275,6 +275,11 @@ export const toDataFrame = (data: any): DataFrame => {
     return convertJSONDocumentDataToDataFrame(data);
   }
 
+  // Handle custom json type
+  if (data.hasOwnProperty('type') && data.type === 'json') {
+    return { ...data.data, fields: []};
+  }
+
   if (data.hasOwnProperty('datapoints')) {
     return convertTimeSeriesToDataFrame(data);
   }
