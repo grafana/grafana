@@ -286,6 +286,10 @@ chown -R root:root /etc/grafana && \
 
 Grafana’s docker image was changed to be based on [Alpine](http://alpinelinux.org) instead of [Ubuntu](https://ubuntu.com/).
 
+## Migration from a previous version of the docker container to 6.5 or later
+
+Grafana Docker image now comes in two variants, one [Alpine](http://alpinelinux.org) based and one [Ubuntu](https://ubuntu.com/) based, see [Image Variants](#image-variants) for details.
+
 ## Logging in for the first time
 
 To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default HTTP port that Grafana listens to if you haven't [configured a different port](/installation/configuration/#http-port).

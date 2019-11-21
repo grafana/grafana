@@ -119,7 +119,9 @@ For further information and instructions refer to [troubleshooting](#troubleshoo
 
 [PhantomJS](https://phantomjs.org/) have been the only supported and default image renderer since Grafana v2.x and is shipped with Grafana.
 
-Please note that for macOS and Windows, you will need to ensure that a phantomjs binary is available under tools/phantomjs/phantomjs. For Linux, a phantomjs binary is included - however, you should ensure that any required libraries, e.g. libfontconfig1, are available.
+PhantomJS binaries are included for Linux (x64), Windows (x64) and Darwin (x64). For Linux you should ensure that any required libraries, e.g. libfontconfig1, are available.
+
+Please note that PhantomJS binaries are not included for ARM. To support this you will need to ensure that a phantomjs binary is available under tools/phantomjs/phantomjs.
 
 ## Alerting and render limits
 
