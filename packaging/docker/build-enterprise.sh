@@ -31,7 +31,7 @@ if [ ${UBUNTU_BASE} = "0" ]; then
   DOCKERFILE="Dockerfile"
 else
   TAG_SUFFIX="-ubuntu"
-  DOCKERFILE="Dockerfile.ubuntu"
+  DOCKERFILE="ubuntu.Dockerfile"
 fi
 
 echo "Building and deploying ${_docker_repo}:${_grafana_tag}${TAG_SUFFIX}"
