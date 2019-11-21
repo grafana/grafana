@@ -245,6 +245,19 @@ export default class AzureMonitorDatasource {
     });
   }
 
+  getDefaultOrFirstSubscription() {
+    if (this.subscriptionId) {
+      return Promise.resolve(this.subscriptionId);
+    }
+
+    return this.getSubscriptions(this.subscriptionId).then((subscriptions: any[]) => {
+      if (subscriptions.length > 0) {
+        this.subscriptionId = subscriptions[0].value;
+      }
+      return this.subscriptionId;
+    });
+  }
+
   getResourceGroups(subscriptionId: string) {
     const url = `${this.baseUrl}/${subscriptionId}/resourceGroups?api-version=${this.apiVersion}`;
     return this.doRequest(url).then((result: AzureMonitorResourceGroupsResponse) => {

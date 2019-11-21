@@ -33,9 +33,35 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
 
   async query(options: DataQueryRequest<AzureMonitorQuery>) {
     const promises: any[] = [];
-    const azureMonitorOptions = _.cloneDeep(options);
-    const appInsightsOptions = _.cloneDeep(options);
-    const azureLogAnalyticsOptions = _.cloneDeep(options);
+    console.log('init options', options);
+    const relevantOptions = _.cloneDeep(options);
+
+    // get queries relevant to this datasource and add defaults
+    relevantOptions.targets = _.filter(relevantOptions.targets, (target: AzureMonitorQuery) => {
+      const type = target.queryType;
+      return type === 'Azure Monitor' || type === 'Application Insights' || type === 'Azure Log Analytics';
+    });
+
+    relevantOptions.targets = relevantOptions.targets.map(target => {
+      console.log('before', target);
+      if (target.azureLogAnalytics && !target.azureLogAnalytics.workspace) {
+        this.azureLogAnalyticsDatasource.getDefaultOrFirstWorkspace().then((workspace: any) => {
+          target.azureLogAnalytics.workspace = workspace;
+        });
+      }
+
+      if (!target.subscription) {
+        target.subscription = this.azureMonitorDatasource.getDefaultOrFirstSubscription().then((subscription: any) => {
+          target.subscription = subscription;
+        });
+      }
+      console.log('after', target);
+      return target;
+    });
+
+    const azureMonitorOptions = _.cloneDeep(relevantOptions);
+    const appInsightsOptions = _.cloneDeep(relevantOptions);
+    const azureLogAnalyticsOptions = _.cloneDeep(relevantOptions);
 
     azureMonitorOptions.targets = _.filter(azureMonitorOptions.targets, ['queryType', 'Azure Monitor']);
     appInsightsOptions.targets = _.filter(appInsightsOptions.targets, ['queryType', 'Application Insights']);
