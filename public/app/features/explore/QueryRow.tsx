@@ -46,7 +46,6 @@ interface QueryRowProps extends PropsFromParent {
   removeQueryRowAction: typeof removeQueryRowAction;
   runQueries: typeof runQueries;
   queryResponse: PanelData;
-  latency: number;
   mode: ExploreMode;
 }
 
@@ -109,17 +108,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
   }, 500);
 
   render() {
-    const {
-      datasourceInstance,
-      history,
-      query,
-      exploreEvents,
-      range,
-      absoluteRange,
-      queryResponse,
-      latency,
-      mode,
-    } = this.props;
+    const { datasourceInstance, history, query, exploreEvents, range, absoluteRange, queryResponse, mode } = this.props;
 
     const canToggleEditorModes =
       mode === ExploreMode.Metrics && has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
@@ -169,8 +158,6 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
           onClickToggleEditorMode={this.onClickToggleEditorMode}
           onClickToggleDisabled={this.onClickToggleDisabled}
           onClickRemoveButton={this.onClickRemoveButton}
-          queryResponse={queryResponse}
-          latency={query.hide ? 0 : latency}
         />
       </div>
     );
@@ -180,7 +167,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
 function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
-  const { datasourceInstance, history, queries, range, absoluteRange, latency, mode, queryResponse } = item;
+  const { datasourceInstance, history, queries, range, absoluteRange, mode, queryResponse } = item;
   const query = queries[index];
 
   return {
@@ -190,7 +177,6 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     range,
     absoluteRange,
     queryResponse,
-    latency,
     mode,
   };
 }
