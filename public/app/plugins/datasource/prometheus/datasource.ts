@@ -346,7 +346,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     const minInterval = kbn.interval_to_seconds(
       templateSrv.replace(target.interval, options.scopedVars) || options.interval
     );
-    const intervalFactor = target.intervalFactor ?? 1;
+    const intervalFactor = target.intervalFactor || 1;
     // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
     const adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
     let scopedVars = { ...options.scopedVars, ...this.getRangeScopedVars(options.range) };
@@ -597,22 +597,21 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   async getTagKeys() {
     const result = await this.metadataRequest('/api/v1/labels');
-    return result?.data?.data?.map((value: any) => ({ text: value }));
+    return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
   }
 
   async getTagValues(options: any = {}) {
     const result = await this.metadataRequest(`/api/v1/label/${options.key}/values`);
-    return result?.data?.data?.map((value: any) => ({ text: value }));
+    return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
   }
 
-  testDatasource() {
+  async testDatasource() {
     const now = new Date().getTime();
     const query = { expr: '1+1' } as PromQueryRequest;
-    return this.performInstantQuery(query, now / 1000).then((response: any) =>
-      response.data.status === 'success'
-        ? { status: 'success', message: 'Data source is working' }
-        : { status: 'error', message: response.error }
-    );
+    const response = await this.performInstantQuery(query, now / 1000);
+    return response.data.status === 'success'
+      ? { status: 'success', message: 'Data source is working' }
+      : { status: 'error', message: response.error };
   }
 
   interpolateVariablesInQueries(queries: PromQuery[]): PromQuery[] {
