@@ -93,7 +93,7 @@ export function addLabelToSelector(selector: string, labelKey: string, labelValu
 
 export function keepSelectorFilters(selector: string) {
   // Remove all label-key between {} and return filters. If first character is space, remove it.
-  let filters = selector.replace(/\{(.*?)\}/g, '').replace(/^ /, '');
+  const filters = selector.replace(/\{(.*?)\}/g, '').replace(/^ /, '');
   return filters;
 }
 
