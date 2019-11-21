@@ -81,6 +81,6 @@ describe('keepSelectorFilters()', () => {
     expect(keepSelectorFilters('{foo="bar"} |="baz"')).toBe('|="baz"');
   });
   test('should return multiple filters if multiple filters are in selector', () => {
-    expect(keepSelectorFilters('{foo="bar"} |="baz" |~"yy" !~"xx"')).toBe('|="baz" |~"yy" !~"xx"');
+    expect(keepSelectorFilters('{foo!="bar"} |="baz" |~"yy" !~"xx"')).toBe('|="baz" |~"yy" !~"xx"');
   });
 });
