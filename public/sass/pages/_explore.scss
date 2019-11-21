@@ -68,10 +68,13 @@
 
 .explore-container-content-item {
   margin-top: 1em;
+  background: transparent;
+  border: none;
 
   .navbar-button {
     height: 35px;
     margin-left: 0;
+    margin-right: 0.5em;
   }
 }
 

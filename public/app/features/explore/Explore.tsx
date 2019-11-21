@@ -296,12 +296,12 @@ export class Explore extends React.PureComponent<ExploreProps> {
             <div className="query-row">
               <div className="query-row-field align-items-center flex-shrink-1">
                 <div className="explore-container-content-item explore-icon-align">
-                  <button className={'btn btn-primary'} onClick={this.onClickAddQueryRowButton} disabled={isLive}>
+                  <button className={'btn navbar-button'} onClick={this.onClickAddQueryRowButton} disabled={isLive}>
                     <i className={'fa fa-fw fa-plus icon-margin-right'} />
                     <span className="btn-title">{'\xA0' + 'Add query'}</span>
                   </button>
                 </div>
-                <button className="explore-container-content-item gf-form-label gf-form-label--btn" disabled>
+                <button className="explore-container-content-item" disabled>
                   {`Overall latency: ${
                     queryResponse.state === LoadingState.Done || LoadingState.Error ? (
                       formatLatency(latency)
