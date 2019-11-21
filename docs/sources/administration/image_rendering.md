@@ -32,7 +32,7 @@ that's installed.
 
 ### Grafana image renderer plugin
 
-> This plugin currently does not work if it is installed in Grafana docker image. See [Install in Grafana docker image](#install-in-grafana-docker-image).
+> This plugin currently does not work if it is installed in the Grafana docker image. See [Install in Grafana docker image](#install-in-grafana-docker-image).
 
 The [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) is a plugin that runs on the backend and handles rendering panels and dashboards as PNG-images using headless chrome.
 
@@ -46,7 +46,7 @@ For further information and instructions refer to [troubleshooting](#troubleshoo
 
 #### Install in Grafana docker image
 
-This plugin does not currently work if it is installed in the Grafana Docker image. Since you are already running Grafana in a container it's suggested you run the image renderer in a container as well, see [Remote rendering service](#remote-rendering-service) for reference.
+This plugin is not compatible with the current Grafana Docker image without installing further system-level dependencies. We recommend setting up another Docker container for rendering and using remote rendering, see [Remote rendering service](#remote-rendering-service) for reference.
 
 If you still want to install the plugin in the Grafana docker image we provide instructions for how to build a custom Grafana image, see [Installing using Docker](/installation/docker/#custom-image-with-grafana-image-renderer-plugin-pre-installed).
 
@@ -183,7 +183,7 @@ As a last resort, if you already have [Chrome](https://www.google.com/chrome/) o
 installed on your system you can configure [Grafana Image renderer plugin](#grafana-image-renderer-plugin) to use this
 instead of the pre-packaged version of Chromium.
 
-> Please note that this not is recommended since you may encounter problems if the installed version of Chrome/Chromium not
+> Please note that this is not recommended since you may encounter problems if the installed version of Chrome/Chromium is not
 > is compatible with the [Grafana Image renderer plugin](#grafana-image-renderer-plugin).
 
 To override the path to the Chrome/Chromium executable you can set an environment variable and make sure that
