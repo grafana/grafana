@@ -155,12 +155,13 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
           <td colSpan={isChangingRole ? 2 : 1}>
             <div className="pull-right">
               <ConfirmButton
-                buttonText="Change role"
                 confirmText="Save"
                 onClick={this.handleChangeRoleClick}
                 onCancel={this.handleCancelClick}
                 onConfirm={this.handleOrgRoleSave}
-              />
+              >
+                Change role
+              </ConfirmButton>
             </div>
           </td>
         )}
@@ -168,14 +169,14 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
           <td colSpan={isRemovingFromOrg ? 2 : 1}>
             <div className="pull-right">
               <ConfirmButton
-                buttonText="Remove from organisation"
                 confirmText="Confirmn removal"
                 confirmButtonVariant="danger"
-                confirmWidth={13}
                 onClick={this.handleOrgRemoveClick}
                 onCancel={this.handleCancelClick}
                 onConfirm={this.handleOrgRemove}
-              />
+              >
+                Remove from organisation
+              </ConfirmButton>
             </div>
           </td>
         )}

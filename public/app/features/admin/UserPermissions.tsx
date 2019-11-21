@@ -95,9 +95,10 @@ export class UserPermissions extends PureComponent<Props, State> {
                         onClick={this.handleChangeClick}
                         onConfirm={this.handleGrafanaAdminChange}
                         onCancel={this.handleCancelClick}
-                        buttonText="Change"
                         confirmText="Change"
-                      />
+                      >
+                        Change
+                      </ConfirmButton>
                     </div>
                   </td>
                 </tr>

@@ -215,12 +215,13 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
         <td>
           <div className={editButtonContainerClass}>
             <ConfirmButton
-              buttonText="Edit"
               confirmText="Save"
               onClick={this.handleEditClick}
               onConfirm={this.handleSave}
               onCancel={this.handleCancelClick}
-            />
+            >
+              Edit
+            </ConfirmButton>
           </div>
         </td>
       </tr>

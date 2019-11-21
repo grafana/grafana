@@ -9,7 +9,6 @@ import { ButtonVariant } from '../Button/types';
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     buttonContainer: css`
-      width: 24px;
       direction: rtl;
       display: flex;
       align-items: center;
@@ -61,11 +60,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 interface Props extends Themeable {
   className?: string;
   style?: React.CSSProperties;
-  buttonText?: string;
   confirmText?: string;
   disabled?: boolean;
   confirmButtonVariant?: ButtonVariant;
-  confirmWidth?: number;
 
   onConfirm(): void;
   onClick?(): void;
@@ -78,11 +75,9 @@ interface State {
 
 class UnThemedConfirmButton extends PureComponent<Props, State> {
   static defaultProps: Partial<Props> = {
-    buttonText: 'Edit',
     confirmText: 'Save',
     disabled: false,
     confirmButtonVariant: 'inverse',
-    confirmWidth: 10,
   };
 
   state: State = {
@@ -116,17 +111,7 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
   };
 
   render() {
-    const {
-      onConfirm,
-      buttonText,
-      disabled,
-      confirmText,
-      confirmButtonVariant,
-      confirmWidth,
-      className,
-      style,
-      theme,
-    } = this.props;
+    const { onConfirm, disabled, confirmText, confirmButtonVariant, className, style, theme, children } = this.props;
     const styles = getStyles(theme);
     const buttonClass = cx(
       styles.button,
@@ -141,11 +126,11 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
     const onClick = disabled ? () => {} : this.onClickButton;
 
     return (
-      <span className={cx(styles.buttonContainer)}>
+      <span className={styles.buttonContainer}>
         <a className={buttonClass} style={style} onClick={onClick}>
-          {buttonText}
+          {children}
         </a>
-        <span className={cx(`width-${confirmWidth}`, styles.confirmButtonContainer)}>
+        <span className={styles.confirmButtonContainer}>
           <span className={confirmButtonClass}>
             <Button size="sm" variant="transparent" onClick={this.onClickCancel}>
               Cancel
