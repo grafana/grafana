@@ -62,9 +62,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       table-layout: fixed;
       width: 100%;
     `,
-    context: css`
-      ${context}
-    `,
+    context: context,
     logsRow: css`
       label: logs-row;
       display: table-row;
