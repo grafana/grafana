@@ -324,7 +324,10 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
   }
 
   getRegions() {
-    return this.doMetricQueryRequest('regions', null);
+    return this.doMetricQueryRequest('regions', null).then((regions: any) => [
+      { label: 'default', value: 'default', text: 'default' },
+      ...regions,
+    ]);
   }
 
   getNamespaces() {
