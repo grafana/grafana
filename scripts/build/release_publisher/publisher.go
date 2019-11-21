@@ -193,10 +193,10 @@ const (
 	Remove filterType = "remove"
 )
 
-func filterBuildArtifacts(filters []artifactFilter, ft filterType) ([]buildArtifact, error) {
+func filterBuildArtifacts(filterFrom []buildArtifact, ft filterType, filters []artifactFilter) ([]buildArtifact, error) {
 	var artifacts []buildArtifact
 
-	for _, a := range completeBuildArtifactConfigurations {
+	for _, a := range filterFrom {
 		matched := false
 		var match buildArtifact
 
@@ -211,7 +211,7 @@ func filterBuildArtifacts(filters []artifactFilter, ft filterType) ([]buildArtif
 		if matched && ft == Add {
 			artifacts = append(artifacts, match)
 		} else if !matched && ft == Remove {
-			artifacts = append(artifacts, match)
+			artifacts = append(artifacts, a)
 		}
 	}
 	return artifacts, nil
