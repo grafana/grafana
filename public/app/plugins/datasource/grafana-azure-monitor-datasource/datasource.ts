@@ -38,8 +38,10 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
 
     // get queries relevant to this datasource and add defaults
     relevantOptions.targets = _.filter(relevantOptions.targets, (target: AzureMonitorQuery) => {
-      const type = target.queryType;
-      return type === 'Azure Monitor' || type === 'Application Insights' || type === 'Azure Log Analytics';
+      const { queryType } = target;
+      return (
+        queryType === 'Azure Monitor' || queryType === 'Application Insights' || queryType === 'Azure Log Analytics'
+      );
     });
 
     relevantOptions.targets = relevantOptions.targets.map(target => {
