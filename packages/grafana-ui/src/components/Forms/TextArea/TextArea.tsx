@@ -5,6 +5,7 @@ import { selectThemeVariant, stylesFactory, useTheme } from '../../../themes';
 import { getFocusStyle, sharedInputStyle } from '../commonStyles';
 
 export interface Props extends HTMLProps<HTMLTextAreaElement> {
+  /** Show an invalid state around the input */
   invalid?: boolean;
 }
 
