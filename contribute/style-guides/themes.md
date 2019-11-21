@@ -29,7 +29,7 @@ const Foo: React.FunctionComponent<FooProps> = () => {
 
 ```
 
-#### Using `withTheme` HOC
+#### Using `withTheme` higher-order component (HOC)
 
 With this method your component will be automatically wrapped in `ThemeContext.Consumer` and provided with current theme via `theme` prop. Component used with `withTheme` must implement `Themeable` interface.
 
