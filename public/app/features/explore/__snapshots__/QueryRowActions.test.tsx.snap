@@ -23,16 +23,6 @@ exports[`QueryRowActions should render component 1`] = `
     <button
       className="gf-form-label gf-form-label--btn"
       disabled={true}
-    >
-      0.0s
-    </button>
-  </div>
-  <div
-    className="gf-form"
-  >
-    <button
-      className="gf-form-label gf-form-label--btn"
-      disabled={true}
       onClick={[Function]}
       title="Disable/enable query"
     >
