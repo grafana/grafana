@@ -58,14 +58,26 @@ export function addLabelToQuery(query: string, key: string, value: string, opera
   }
 
   parts.push(suffix);
+  console.log(parts);
   return parts.join('');
 }
 
 const labelRegexp = /(\w+)\s*(=|!=|=~|!~)\s*("[^"]*")/g;
+const filterRegexp = /(\|=|\|~|!=|!~)\s*("[^"]*")/g;
 
 export function addLabelToSelector(selector: string, labelKey: string, labelValue: string, labelOperator?: string) {
-  const parsedLabels = [];
   const parsedFilters = [];
+  const parsedLabels = [];
+
+  // Keep filters
+  if (selector) {
+    let match = filterRegexp.exec(selector);
+    while (match) {
+      parsedFilters.push(match[0]);
+      match = filterRegexp.exec(selector);
+    }
+  }
+  const formattedFilters = parsedFilters.join(' ');
 
   // Split selector into labels
   if (selector) {
@@ -89,20 +101,8 @@ export function addLabelToSelector(selector: string, labelKey: string, labelValu
     .value()
     .join(',');
 
-  // Add filters
-  const filterRegexp = /(\|=|\|~|!=|!~)\s*("[^"]*")/g;
-
-  if (selector) {
-    let match = filterRegexp.exec(selector);
-    while (match) {
-      parsedFilters.push(match[0]);
-      match = filterRegexp.exec(selector);
-    }
-  }
-  const formattedFilter = parsedFilters.join(' ');
-
-  // Return logQL with labels and filters
-  return `{${formattedLabels}} ${formattedFilter}`;
+  // Return valid logQL with labels and filters
+  return `{${formattedLabels}} ${formattedFilters}`;
 }
 
 function isPositionInsideChars(text: string, position: number, openChar: string, closeChar: string) {
