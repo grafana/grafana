@@ -43,7 +43,7 @@ const Foo: React.FunctionComponent<FooProps> = () => ...
 export default withTheme(Foo);
 ```
 
-### Testing components that use ThemeContext
+### Test components that use ThemeContext
 
 When implementing snapshot tests of components that use theme (i.e. component that uses `withTheme` HOC), the snapshot will contain the entire theme object. This makes working with such snapshot hard as any change to the theme will result in the snapshot being outdated.
 
