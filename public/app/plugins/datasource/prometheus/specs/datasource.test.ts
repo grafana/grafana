@@ -693,165 +693,160 @@ describe('PrometheusDatasource', () => {
     });
   });
 
-  // describe('When performing annotationQuery', () => {
-  //   let results: any;
-  //   let ds: PrometheusDatasource;
-  //   const options: any = {
-  //     annotation: {
-  //       expr: 'ALERTS{alertstate="firing"}',
-  //       tagKeys: 'job',
-  //       titleFormat: '{{alertname}}',
-  //       textFormat: '{{instance}}',
-  //     },
-  //     range: {
-  //       from: time({ seconds: 63 }),
-  //       to: time({ seconds: 123 }),
-  //     },
-  //   };
+  describe('When performing annotationQuery', () => {
+    let results: any;
+    const options: any = {
+      annotation: {
+        expr: 'ALERTS{alertstate="firing"}',
+        tagKeys: 'job',
+        titleFormat: '{{alertname}}',
+        textFormat: '{{instance}}',
+      },
+      range: {
+        from: time({ seconds: 63 }),
+        to: time({ seconds: 123 }),
+      },
+    };
 
-  //   const response = {
-  //     status: 'success',
-  //     data: {
-  //       data: {
-  //         resultType: 'matrix',
-  //         result: [
-  //           {
-  //             metric: {
-  //               __name__: 'ALERTS',
-  //               alertname: 'InstanceDown',
-  //               alertstate: 'firing',
-  //               instance: 'testinstance',
-  //               job: 'testjob',
-  //             },
-  //             values: [[123, '1']],
-  //           },
-  //         ],
-  //       },
-  //     },
-  //   };
+    const response = {
+      status: 'success',
+      data: {
+        data: {
+          resultType: 'matrix',
+          result: [
+            {
+              metric: {
+                __name__: 'ALERTS',
+                alertname: 'InstanceDown',
+                alertstate: 'firing',
+                instance: 'testinstance',
+                job: 'testjob',
+              },
+              values: [[123, '1']],
+            },
+          ],
+        },
+      },
+    };
 
-  //   describe('when time series query is cancelled', () => {
-  //     it('should return empty results', async () => {
-  //       getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve({ cancelled: true }));
-  //       ds = new PrometheusDatasource(instanceSettings);
+    describe('when time series query is cancelled', () => {
+      it('should return empty results', async () => {
+        getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve({ cancelled: true }));
 
-  //       await ds.annotationQuery(options).then((data: any) => {
-  //         results = data;
-  //       });
+        await ds.annotationQuery(options).then((data: any) => {
+          results = data;
+        });
 
-  //       expect(results).toEqual([]);
-  //     });
-  //   });
+        expect(results).toEqual([]);
+      });
+    });
 
-  //   describe('not use useValueForTime', () => {
-  //     beforeEach(async () => {
-  //       options.annotation.useValueForTime = false;
-  //       getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
-  //       ds = new PrometheusDatasource(instanceSettings);
+    describe('not use useValueForTime', () => {
+      beforeEach(async () => {
+        options.annotation.useValueForTime = false;
+        getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
 
-  //       await ds.annotationQuery(options).then((data: any) => {
-  //         results = data;
-  //       });
-  //     });
+        await ds.annotationQuery(options).then((data: any) => {
+          results = data;
+        });
+      });
 
-  //     it('should return annotation list', () => {
-  //       expect(results.length).toBe(1);
-  //       expect(results[0].tags).toContain('testjob');
-  //       expect(results[0].title).toBe('InstanceDown');
-  //       expect(results[0].text).toBe('testinstance');
-  //       expect(results[0].time).toBe(123 * 1000);
-  //     });
-  //   });
+      it('should return annotation list', () => {
+        expect(results.length).toBe(1);
+        expect(results[0].tags).toContain('testjob');
+        expect(results[0].title).toBe('InstanceDown');
+        expect(results[0].text).toBe('testinstance');
+        expect(results[0].time).toBe(123 * 1000);
+      });
+    });
 
-  //   describe('use useValueForTime', () => {
-  //     beforeEach(async () => {
-  //       options.annotation.useValueForTime = true;
-  //       getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
-  //       ds = new PrometheusDatasource(instanceSettings);
+    describe('use useValueForTime', () => {
+      beforeEach(async () => {
+        options.annotation.useValueForTime = true;
+        getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
 
-  //       await ds.annotationQuery(options).then((data: any) => {
-  //         results = data;
-  //       });
-  //     });
+        await ds.annotationQuery(options).then((data: any) => {
+          results = data;
+        });
+      });
 
-  //     it('should return annotation list', () => {
-  //       expect(results[0].time).toEqual(1);
-  //     });
-  //   });
+      it('should return annotation list', () => {
+        expect(results[0].time).toEqual(1);
+      });
+    });
 
-  //   describe('step parameter', () => {
-  //     beforeEach(() => {
-  //       getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
-  //       ds = new PrometheusDatasource(instanceSettings);
-  //     });
+    describe('step parameter', () => {
+      beforeEach(() => {
+        getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
+      });
 
-  //     it('should use default step for short range if no interval is given', () => {
-  //       const query = {
-  //         ...options,
-  //         range: {
-  //           from: time({ seconds: 63 }),
-  //           to: time({ seconds: 123 }),
-  //         },
-  //       };
-  //       ds.annotationQuery(query);
-  //       const req = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
-  //       expect(req.url).toContain('step=60');
-  //     });
+      it('should use default step for short range if no interval is given', () => {
+        const query = {
+          ...options,
+          range: {
+            from: time({ seconds: 63 }),
+            to: time({ seconds: 123 }),
+          },
+        };
+        ds.annotationQuery(query);
+        const req = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+        expect(req.url).toContain('step=60');
+      });
 
-  //     it('should use custom step for short range', () => {
-  //       const annotation = {
-  //         ...options.annotation,
-  //         step: '10s',
-  //       };
-  //       const query = {
-  //         ...options,
-  //         annotation,
-  //         range: {
-  //           from: time({ seconds: 63 }),
-  //           to: time({ seconds: 123 }),
-  //         },
-  //       };
-  //       ds.annotationQuery(query);
-  //       const req = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
-  //       expect(req.url).toContain('step=10');
-  //     });
+      it('should use custom step for short range', () => {
+        const annotation = {
+          ...options.annotation,
+          step: '10s',
+        };
+        const query = {
+          ...options,
+          annotation,
+          range: {
+            from: time({ seconds: 63 }),
+            to: time({ seconds: 123 }),
+          },
+        };
+        ds.annotationQuery(query);
+        const req = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+        expect(req.url).toContain('step=10');
+      });
 
-  //     it('should use custom step for short range', () => {
-  //       const annotation = {
-  //         ...options.annotation,
-  //         step: '10s',
-  //       };
-  //       const query = {
-  //         ...options,
-  //         annotation,
-  //         range: {
-  //           from: time({ seconds: 63 }),
-  //           to: time({ seconds: 123 }),
-  //         },
-  //       };
-  //       ds.annotationQuery(query);
-  //       const req = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
-  //       expect(req.url).toContain('step=10');
-  //     });
+      it('should use custom step for short range', () => {
+        const annotation = {
+          ...options.annotation,
+          step: '10s',
+        };
+        const query = {
+          ...options,
+          annotation,
+          range: {
+            from: time({ seconds: 63 }),
+            to: time({ seconds: 123 }),
+          },
+        };
+        ds.annotationQuery(query);
+        const req = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+        expect(req.url).toContain('step=10');
+      });
 
-  //     it('should use dynamic step on long ranges if no option was given', () => {
-  //       const query = {
-  //         ...options,
-  //         range: {
-  //           from: time({ seconds: 63 }),
-  //           to: time({ hours: 24 * 30, seconds: 63 }),
-  //         },
-  //       };
-  //       ds.annotationQuery(query);
-  //       const req = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
-  //       // Range in seconds: (to - from) / 1000
-  //       // Max_datapoints: 11000
-  //       // Step: range / max_datapoints
-  //       const step = 236;
-  //       expect(req.url).toContain(`step=${step}`);
-  //     });
-  //   });
-  // });
+      it('should use dynamic step on long ranges if no option was given', () => {
+        const query = {
+          ...options,
+          range: {
+            from: time({ seconds: 63 }),
+            to: time({ hours: 24 * 30, seconds: 63 }),
+          },
+        };
+        ds.annotationQuery(query);
+        const req = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
+        // Range in seconds: (to - from) / 1000
+        // Max_datapoints: 11000
+        // Step: range / max_datapoints
+        const step = 236;
+        expect(req.url).toContain(`step=${step}`);
+      });
+    });
+  });
 
   describe('When resultFormat is table and instant = true', () => {
     let results: any;

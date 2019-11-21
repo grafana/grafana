@@ -1,6 +1,6 @@
 // Libraries
 import cloneDeep from 'lodash/cloneDeep';
-import chain from 'lodash/chain';
+import defaults from 'lodash/defaults';
 import $ from 'jquery';
 // Services & Utils
 import kbn from 'app/core/utils/kbn';
@@ -34,7 +34,6 @@ import { safeStringifyValue } from 'app/core/utils/explore';
 import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import TableModel from 'app/core/table_model';
-import _ from 'lodash';
 
 interface RequestOptions {
   method?: string;
@@ -119,7 +118,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   }
 
   _request(url: string, data: Record<string, string> = {}, options?: RequestOptions) {
-    options = _.defaults(options || {}, {
+    options = defaults(options || {}, {
       url: this.url + url,
       method: this.httpMethod,
       headers: {},
@@ -156,7 +155,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return this._request(url, null, { method: 'GET', silent: true });
   }
 
-  interpolateQueryExpr(value: string | string[], variable: any) {
+  interpolateQueryExpr(value: string | string[] = [], variable: any) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
       return prometheusRegularEscape(value);
@@ -561,12 +560,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       return [];
     }
 
-    response.data.data.result.forEach(series => {
-      const tags = chain(series.metric)
-        .filter((v, k) => {
-          return splitKeys.includes(k);
-        })
-        .value();
+    response?.data?.data?.result?.forEach(series => {
+      const tags = Object.entries(series.metric)
+        .filter(([k]) => splitKeys.includes(k))
+        .map(([_k, v]: [string, string]) => v);
 
       const dupCheck: Record<number, boolean> = {};
       for (const value of series.values) {
@@ -600,12 +597,12 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   async getTagKeys() {
     const result = await this.metadataRequest('/api/v1/labels');
-    return result.data.data.map((value: any) => ({ text: value }));
+    return result?.data?.data?.map((value: any) => ({ text: value }));
   }
 
   async getTagValues(options: any = {}) {
     const result = await this.metadataRequest(`/api/v1/label/${options.key}/values`);
-    return result.data.data.map((value: any) => ({ text: value }));
+    return result?.data?.data?.map((value: any) => ({ text: value }));
   }
 
   testDatasource() {
