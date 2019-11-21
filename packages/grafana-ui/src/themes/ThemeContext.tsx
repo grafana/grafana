@@ -9,7 +9,7 @@ type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
 type Subtract<T, K> = Omit<T, keyof K>;
 
 /**
- * Mock used in tests tests
+ * Mock used in tests
  */
 let ThemeContextMock: React.Context<GrafanaTheme> | null = null;
 
