@@ -15,6 +15,7 @@ import { TimeRange } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { UrlQueryMap } from '@grafana/runtime';
 import { User } from '../../core/services/context_srv';
+import { ContextSrv } from '../../core/services/context_srv';
 
 export class VariableSrv {
   dashboard: DashboardModel;
@@ -58,7 +59,13 @@ export class VariableSrv {
       .then(() => {
         this.templateSrv.updateIndex();
         this.templateSrv.setGlobalVariable('__dashboardName', { value: dashboard.title, text: dashboard.title });
-        this.templateSrv.setGlobalVariable('__orgName', { value: user.orgName, text: user.orgName });
+        if (this.$injector.get) {
+          const contextSrv: ContextSrv = this.$injector.get('contextSrv');
+          this.templateSrv.setGlobalVariable('__orgName', {
+            value: contextSrv.user.orgName,
+            text: contextSrv.user.orgName,
+          });
+        }
       });
   }
 

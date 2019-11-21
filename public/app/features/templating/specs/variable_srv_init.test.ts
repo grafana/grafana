@@ -13,6 +13,7 @@ describe('VariableSrv init', function(this: any) {
     },
     variableInitialized: () => {},
     updateIndex: () => {},
+    setGlobalVariable: (name: string, variable: any) => {},
     replace: (str: string) =>
       str.replace(this.regex, match => {
         return match;

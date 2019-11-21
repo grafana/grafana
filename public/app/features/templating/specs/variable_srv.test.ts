@@ -26,6 +26,7 @@ describe('VariableSrv', function(this: any) {
         this.variables = vars;
       },
       updateIndex: () => {},
+      setGlobalVariable: (name: string, variable: any) => {},
       replace: (str: any) =>
         str.replace(this.regex, (match: string) => {
           return match;
