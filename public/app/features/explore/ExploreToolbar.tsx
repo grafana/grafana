@@ -21,7 +21,6 @@ import {
   changeRefreshInterval,
   changeMode,
   clearOrigin,
-  addQueryRow,
 } from './state/actions';
 import { updateLocation } from 'app/core/actions';
 import { getTimeZone } from '../profile/state/selectors';
@@ -46,7 +45,6 @@ const getStyles = memoizeOne(() => {
 
 interface OwnProps {
   exploreId: ExploreId;
-  queryRowIndex: number;
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
 }
 
@@ -82,7 +80,6 @@ interface DispatchProps {
   changeMode: typeof changeMode;
   clearOrigin: typeof clearOrigin;
   updateLocation: typeof updateLocation;
-  addQueryRow: typeof addQueryRow;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -113,11 +110,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
   onChangeTimeSync = () => {
     const { syncTimes, exploreId } = this.props;
     syncTimes(exploreId);
-  };
-
-  onClickAddButton = () => {
-    const { exploreId, queryRowIndex } = this.props;
-    this.props.addQueryRow(exploreId, queryRowIndex);
   };
 
   returnToPanel = async ({ withChanges = false } = {}) => {
@@ -260,16 +252,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
               </div>
             )}
 
-            <div className="explore-toolbar-content-item explore-icon-align">
-              <ResponsiveButton
-                splitted={splitted}
-                title="Add query"
-                onClick={this.onClickAddButton}
-                iconClassName="fa fa-fw fa-plus icon-margin-right"
-                disabled={isLive}
-              />
-            </div>
-
             {exploreId === 'left' && !splitted ? (
               <div className="explore-toolbar-content-item explore-icon-align">
                 <ResponsiveButton
@@ -402,7 +384,6 @@ const mapDispatchToProps: DispatchProps = {
   syncTimes,
   changeMode: changeMode,
   clearOrigin,
-  addQueryRow,
 };
 
 export const ExploreToolbar = hot(module)(

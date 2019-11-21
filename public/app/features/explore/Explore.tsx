@@ -23,6 +23,7 @@ import {
   refreshExplore,
   updateTimeRange,
   toggleGraph,
+  addQueryRow,
 } from './state/actions';
 // Types
 import {
@@ -34,6 +35,7 @@ import {
   GraphSeriesXY,
   TimeZone,
   AbsoluteTimeRange,
+  LoadingState,
 } from '@grafana/data';
 
 import {
@@ -59,6 +61,11 @@ import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
 import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
+import ElapsedTime from './ElapsedTime';
+
+function formatLatency(value: number) {
+  return `${(value / 1000).toFixed(1)}s`;
+}
 
 const getStyles = memoizeOne(() => {
   return {
@@ -107,6 +114,8 @@ interface ExploreProps {
   toggleGraph: typeof toggleGraph;
   queryResponse: PanelData;
   originPanelId: number;
+  latency: number;
+  addQueryRow: typeof addQueryRow;
 }
 
 /**
@@ -201,6 +210,11 @@ export class Explore extends React.PureComponent<ExploreProps> {
     this.onModifyQueries({ type: 'ADD_FILTER_OUT', key, value });
   };
 
+  onClickAddQueryRowButton = () => {
+    const { exploreId, queryKeys } = this.props;
+    this.props.addQueryRow(exploreId, queryKeys.length);
+  };
+
   onModifyQueries = (action: any, index?: number) => {
     const { datasourceInstance } = this.props;
     if (datasourceInstance && datasourceInstance.modifyQuery) {
@@ -266,17 +280,38 @@ export class Explore extends React.PureComponent<ExploreProps> {
       timeZone,
       queryResponse,
       syncedTimes,
+      latency,
+      isLive,
     } = this.props;
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const styles = getStyles();
 
     return (
       <div className={exploreClass} ref={this.getRef}>
-        <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} queryRowIndex={queryKeys.length} />
+        <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
         {datasourceMissing ? this.renderEmptyState() : null}
         {datasourceInstance && (
           <div className="explore-container">
             <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
+            <div className="query-row">
+              <div className="query-row-field align-items-center flex-shrink-1">
+                <div className="explore-container-content-item explore-icon-align">
+                  <button className={'btn btn-primary'} onClick={this.onClickAddQueryRowButton} disabled={isLive}>
+                    <i className={'fa fa-fw fa-plus icon-margin-right'} />
+                    <span className="btn-title">{'\xA0' + 'Add query'}</span>
+                  </button>
+                </div>
+                <button className="explore-container-content-item gf-form-label gf-form-label--btn" disabled>
+                  {`Overall latency: ${
+                    queryResponse.state === LoadingState.Done || LoadingState.Error ? (
+                      formatLatency(latency)
+                    ) : (
+                      <ElapsedTime />
+                    )
+                  }`}
+                </button>
+              </div>
+            </div>
             <ErrorContainer queryErrors={[queryResponse.error]} />
             <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
@@ -369,6 +404,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     showingTable,
     absoluteRange,
     queryResponse,
+    latency,
   } = item;
 
   const { datasource, queries, range: urlRange, mode: urlMode, ui, originPanelId } = (urlState ||
@@ -419,6 +455,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     queryResponse,
     originPanelId,
     syncedTimes,
+    latency,
   };
 }
 
@@ -432,6 +469,7 @@ const mapDispatchToProps: Partial<ExploreProps> = {
   setQueries,
   updateTimeRange,
   toggleGraph,
+  addQueryRow,
 };
 
 export default hot(module)(
