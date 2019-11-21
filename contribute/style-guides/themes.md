@@ -47,7 +47,7 @@ export default withTheme(Foo);
 
 When implementing snapshot tests of components that use theme (i.e. component that uses `withTheme` HOC), the snapshot will contain the entire theme object. This makes working with such snapshot hard as any change to the theme will result in the snapshot being outdated.
 
-To make your snapshot theme independent use `mockThemeContext` helper function:
+To make your snapshot theme independent, use the `mockThemeContext` helper function:
 
 ```tsx
 import { mockThemeContext } from '@grafana/ui';
