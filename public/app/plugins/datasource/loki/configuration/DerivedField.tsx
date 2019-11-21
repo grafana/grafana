@@ -67,7 +67,7 @@ export const DerivedField = (props: Props) => {
             onDelete();
           }}
           className={css`
-            margin: 2px 0 0 8px;
+            margin-left: 8px;
           `}
         />
       </div>
