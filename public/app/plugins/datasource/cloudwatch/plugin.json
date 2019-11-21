@@ -13,6 +13,11 @@
     { "type": "dashboard", "name": "Logs", "path": "dashboards/Logs.json" },
     { "type": "dashboard", "name": "RDS", "path": "dashboards/RDS.json" }
   ],
+
+  "queryOptions": {
+    "minInterval": true
+  },
+
   "info": {
     "description": "Data source for Amazon AWS monitoring service",
     "author": {
