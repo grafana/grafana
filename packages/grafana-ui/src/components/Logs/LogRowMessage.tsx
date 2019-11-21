@@ -122,21 +122,7 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
             )}
           </span>
           {row.searchWords && row.searchWords.length > 0 && (
-            <span
-              onClick={this.onContextToggle}
-              className={css`
-                visibility: hidden;
-                white-space: nowrap;
-                position: relative;
-                z-index: ${showContext ? 1 : 0};
-                cursor: pointer;
-                .${style.logsRow}:hover & {
-                  visibility: visible;
-                  margin-left: 10px;
-                  text-decoration: underline;
-                }
-              `}
-            >
+            <span onClick={this.onContextToggle} className={cx(style.context)}>
               {showContext ? 'Hide' : 'Show'} context
             </span>
           )}
