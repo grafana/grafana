@@ -139,7 +139,6 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
 
     // Check if tooltip needs to be rendered with custom tooltip component, otherwise default to GraphTooltip
     const tooltipContentRenderer = tooltipElementProps.tooltipComponent || GraphTooltip;
-
     // Indicates column(field) index in y-axis dimension
     const seriesIndex = activeItem ? activeItem.series.seriesIndex : 0;
     // Indicates row index in active field values
@@ -272,7 +271,11 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     };
 
     try {
-      $.plot(this.element, series, flotOptions);
+      $.plot(
+        this.element,
+        series.filter(s => s.isVisible),
+        flotOptions
+      );
     } catch (err) {
       console.log('Graph rendering error', err, flotOptions, series);
       throw new Error('Error rendering panel');
