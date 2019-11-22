@@ -79,7 +79,7 @@ func main() {
 		}
 	}
 
-	ultimateTracingEnabled := *tracing || ultimateProfileEnabled
+	ultimateTracingEnabled := *tracing
 	tracingEnv, exists := os.LookupEnv("GF_PROCESS_TRACING")
 	if exists {
 		enabled, parseErr := strconv.ParseBool(tracingEnv)
@@ -98,26 +98,26 @@ func main() {
 				panic(err)
 			}
 		}()
+	}
 
-		if ultimateTracingEnabled {
-			ultimateTracingFile := *tracingFile
-			tracingFileEnv, exists := os.LookupEnv("GF_PROCESS_TRACING_OUTPUT")
-			if exists {
-				ultimateTracingFile = tracingFileEnv
-			}
-
-			f, err := os.Create(ultimateTracingFile)
-			if err != nil {
-				panic(err)
-			}
-			defer f.Close()
-
-			err = trace.Start(f)
-			if err != nil {
-				panic(err)
-			}
-			defer trace.Stop()
+	if ultimateTracingEnabled {
+		ultimateTracingFile := *tracingFile
+		tracingFileEnv, exists := os.LookupEnv("GF_PROCESS_TRACING_OUTPUT")
+		if exists {
+			ultimateTracingFile = tracingFileEnv
 		}
+
+		f, err := os.Create(ultimateTracingFile)
+		if err != nil {
+			panic(err)
+		}
+		defer f.Close()
+
+		err = trace.Start(f)
+		if err != nil {
+			panic(err)
+		}
+		defer trace.Stop()
 	}
 
 	buildstampInt64, _ := strconv.ParseInt(buildstamp, 10, 64)
