@@ -1,18 +1,20 @@
-ARG GRAFANA_VERSION="latest"
+ARG GRAFANA_VERSION="latest-ubuntu"
 
-FROM grafana/grafana:${GRAFANA_VERSION}
+FROM grafana/grafana:${GRAFANA_VERSION}-ubuntu
 
 USER root
+
+# Set DEBIAN_FRONTEND=noninteractive in environment at build-time
+ARG DEBIAN_FRONTEND=noninteractive
 
 ARG GF_INSTALL_IMAGE_RENDERER_PLUGIN="false"
 
 RUN if [ $GF_INSTALL_IMAGE_RENDERER_PLUGIN = "true" ]; then \
-    echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories && \
-    echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories && \
-    echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && \
-    apk --no-cache  upgrade && \
-    apk add --no-cache udev ttf-opensans chromium && \
-    rm -rf /tmp/* && \
+    apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y chromium-browser && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/* && \
     rm -rf /usr/share/grafana/tools/phantomjs; \
 fi
 

@@ -19,7 +19,7 @@ version: 2
 jobs:
   mysql-integration-test:
     docker:
-      - image: circleci/golang:1.13.1
+      - image: circleci/golang:1.13.4
       - image: circleci/mysql:5.6-ram
         environment:
           MYSQL_ROOT_PASSWORD: rootpass
@@ -50,7 +50,7 @@ jobs:
 
   postgres-integration-test:
     docker:
-      - image: circleci/golang:1.13.1
+      - image: circleci/golang:1.13.4
       - image: circleci/postgres:9.3-ram
         environment:
           POSTGRES_USER: grafanatest
@@ -80,7 +80,7 @@ jobs:
 
   cache-server-test:
     docker:
-      - image: circleci/golang:1.13.1
+      - image: circleci/golang:1.13.4
       - image: circleci/redis:4-alpine
       - image: memcached
     working_directory: /go/src/github.com/grafana/grafana
@@ -105,7 +105,7 @@ jobs:
 
   end-to-end-test:
       docker:
-        - image: circleci/node:10-browsers
+        - image: circleci/node:12-browsers
         - image: grafana/grafana-dev:master-$CIRCLE_SHA1
       steps:
           - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
@@ -144,7 +144,7 @@ jobs:
 
   end-to-end-test-release:
       docker:
-        - image: circleci/node:10-browsers
+        - image: circleci/node:12-browsers
         - image: grafana/grafana-dev:$CIRCLE_TAG
       steps:
           - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
@@ -199,7 +199,7 @@ jobs:
 
   lint-go:
     docker:
-      - image: circleci/golang:1.13.1
+      - image: circleci/golang:1.13.4
         environment:
           # we need CGO because of go-sqlite3
           CGO_ENABLED: 1
@@ -221,7 +221,7 @@ jobs:
 
   test-frontend:
     docker:
-      - image: circleci/node:10
+      - image: circleci/node:12
     steps:
       - checkout
       - run:
@@ -251,7 +251,7 @@ jobs:
 
   test-backend:
     docker:
-      - image: circleci/golang:1.13.1
+      - image: circleci/golang:1.13.4
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -273,7 +273,7 @@ jobs:
 
   build-all:
     docker:
-      - image: grafana/build-container:1.2.12
+      - image: grafana/build-container:1.2.13
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -328,7 +328,7 @@ jobs:
 
   build:
     docker:
-      - image: grafana/build-container:1.2.12
+      - image: grafana/build-container:1.2.13
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -368,7 +368,7 @@ jobs:
 
   build-fast-backend:
     docker:
-      - image: grafana/build-container:1.2.12
+      - image: grafana/build-container:1.2.13
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -396,7 +396,7 @@ jobs:
 
   build-fast-frontend:
     docker:
-      - image: grafana/build-container:1.2.12
+      - image: grafana/build-container:1.2.13
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -431,7 +431,7 @@ jobs:
 
   build-fast-package:
     docker:
-      - image: grafana/build-container:1.2.12
+      - image: grafana/build-container:1.2.13
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -469,7 +469,7 @@ jobs:
 
   build-fast-save:
     docker:
-      - image: grafana/build-container:1.2.12
+      - image: grafana/build-container:1.2.13
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -676,7 +676,7 @@ jobs:
 
   build-enterprise:
     docker:
-      - image: grafana/build-container:1.2.12
+      - image: grafana/build-container:1.2.13
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -722,7 +722,7 @@ jobs:
 
   build-all-enterprise:
     docker:
-    - image: grafana/build-container:1.2.12
+    - image: grafana/build-container:1.2.13
     working_directory: /go/src/github.com/grafana/grafana
     steps:
     - checkout
@@ -780,7 +780,7 @@ jobs:
 
   deploy-enterprise-master:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.2
+      - image: grafana/grafana-ci-deploy:1.2.3
     steps:
       - attach_workspace:
           at: .
@@ -802,7 +802,7 @@ jobs:
 
   deploy-enterprise-release:
     docker:
-    - image: grafana/grafana-ci-deploy:1.2.2
+    - image: grafana/grafana-ci-deploy:1.2.3
     steps:
       - checkout
       - run:
@@ -852,7 +852,7 @@ jobs:
 
   deploy-master:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.2
+      - image: grafana/grafana-ci-deploy:1.2.3
     steps:
       - attach_workspace:
           at: .
@@ -876,7 +876,7 @@ jobs:
 
   deploy-release:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.2
+      - image: grafana/grafana-ci-deploy:1.2.3
     steps:
       - checkout
       - run:
@@ -952,7 +952,7 @@ jobs:
 
   store-build-artifacts:
     docker:
-      - image: circleci/node:10
+      - image: circleci/node:12
     steps:
       - attach_workspace:
           at: .
@@ -990,7 +990,7 @@ jobs:
 
   build-grafana-packages:
     docker:
-      - image: circleci/node:10
+      - image: circleci/node:12
     steps:
       - checkout
       - run:
@@ -1014,7 +1014,7 @@ jobs:
 
   release-next-packages:
     docker:
-      - image: circleci/node:10
+      - image: circleci/node:12
     steps:
       - checkout
       - run:
@@ -1040,7 +1040,7 @@ jobs:
 
   release-packages:
     docker:
-      - image: circleci/node:10
+      - image: circleci/node:12
     steps:
       - checkout
       - run:
