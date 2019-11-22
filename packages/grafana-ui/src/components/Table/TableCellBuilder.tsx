@@ -315,7 +315,7 @@ export function getFieldCellBuilder(field: Field, style: ColumnStyle | null, p: 
     }
 
     return (
-      <div style={style} className={clazz}>
+      <div style={style} className={clazz} title={disp.title}>
         {disp.text}
       </div>
     );

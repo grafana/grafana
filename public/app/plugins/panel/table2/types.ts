@@ -1,25 +1,15 @@
 import { ColumnStyle } from '@grafana/ui/src/components/Table/TableCellBuilder';
-import { SingleStatBaseOptions } from '@grafana/ui';
-import { standardFieldDisplayOptions } from '../singlestat2/types';
-import { FieldDisplayOptions, VizOrientation } from '@grafana/data';
 
-export interface TablePanelOptions extends SingleStatBaseOptions {
+export interface Options {
   showHeader: boolean;
   fixedHeader: boolean;
   fixedColumns: number;
   rotate: boolean;
 
-  styles: ColumnStyle[]; // matcher + config?
+  styles: ColumnStyle[];
 }
 
-export const standardTableFieldOptions: FieldDisplayOptions = {
-  ...standardFieldDisplayOptions,
-};
-
-export const defaults: TablePanelOptions = {
-  fieldOptions: standardTableFieldOptions,
-  orientation: VizOrientation.Auto, // :(
-
+export const defaults: Options = {
   showHeader: true,
   fixedHeader: true,
   fixedColumns: 0,
