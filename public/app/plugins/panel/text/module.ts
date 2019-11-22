@@ -90,10 +90,11 @@ export class TextPanelCtrl extends PanelCtrl {
 
   updateContent(html: string) {
     try {
-      html = this.templateSrv.replace(html, this.panel.scopedVars);
+      html = this.templateSrv.replace(html, this.panel.scopedVars, 'html');
     } catch (e) {
       console.log('Text panel error: ', e);
     }
+
     this.content = this.$sce.trustAsHtml(config.disableSanitizeHtml ? html : sanitize(html));
   }
 }

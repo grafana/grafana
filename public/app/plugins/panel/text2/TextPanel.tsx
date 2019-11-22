@@ -41,7 +41,7 @@ export class TextPanel extends PureComponent<Props, State> {
   prepareHTML(html: string): string {
     const { replaceVariables } = this.props;
 
-    html = replaceVariables(html);
+    html = replaceVariables(html, {}, 'html');
 
     return config.disableSanitizeHtml ? html : sanitize(html);
   }
