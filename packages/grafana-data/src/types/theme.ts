@@ -231,6 +231,8 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     formValidationMessageText: string;
     formValidationMessageBg: string;
     formSwitchBg: string;
+    formSwitchBgActive: string;
+    formSwitchBgActiveHover: string;
     formSwitchBgHover: string;
     formSwitchBgDisabled: string;
     formSwitchDot: string;
