@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# shellcheck source=./scripts/helpers/exit-if-fail.sh
+source "$(dirname "$0")/helpers/exit-if-fail.sh"
+
 function parse_git_hash() {
   git rev-parse --short HEAD 2> /dev/null | sed "s/\(.*\)/\1/"
 }
@@ -48,7 +51,16 @@ else
 
 
   echo $'\nBuilding packages'
-  yarn packages:build
+
+  for PACKAGE in ui data toolkit runtime
+  do
+    start=$(date +%s%N)
+    yarn workspace @grafana/$PACKAGE run build
+    runtime=$((($(date +%s%N) - start)/1000000))
+    if [ "${CIRCLE_BRANCH}" == "master" ]; then
+    exit_if_fail ./ci-metrics-publisher.sh "grafana.ci-buildtimes.$CIRCLE_JOB.$PACKAGE=$runtime"
+    fi
+  done
 
   exit_status=$?
   if [ $exit_status -eq 1 ]; then
