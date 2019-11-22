@@ -37,6 +37,8 @@ Grafana ships with built in support for CloudWatch. You just have to add it as a
 
 ### Min time interval
 
+> Only available in Grafana v6.5+.
+
 A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example `1m` if your data is written every minute.
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
 number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
@@ -134,6 +136,8 @@ You need to specify the namespace, metric name and at least one statistic. If `M
 
 ### Dynamic queries using dimension wildcards
 
+> Only available in Grafana v6.5+.
+
 In Grafana 6.5 or higher, you’re able to monitor a dynamic list of metrics by using the asterisk (\*) wildcard for one or more dimension values.
 
 {{< docs-imagebox img="/img/docs/v65/cloudwatch-dimension-wildcard.png" max-width="800px" class="docs-image--right" caption="CloudWatch dimension wildcard" >}}
@@ -142,13 +146,15 @@ In the example, all metrics in the namespace `AWS/EC2` with a metric name of `CP
 
 By default, the search expression is defined in such a way that the queried metrics must match the defined dimension names exactly. This means that in the example only metrics with exactly one dimension with name ‘InstanceId’ will be returned.
 
-You can untoggle `Match Exact` to include metrics that have other dimensions defined. Disabling ‘Match Exact’ also creates a search expression even if you don’t use wildcards. We simply search for any metric that matches at least the namespace, metric name, and all defined dimensions.
+You can untoggle `Match Exact` to include metrics that have other dimensions defined. Disabling `Match Exact` also creates a search expression even if you don’t use wildcards. We simply search for any metric that matches at least the namespace, metric name, and all defined dimensions.
 
-### Multi-value template variables now use search expressions
+### Multi-value template variables
 
-When defining dimension values based on multi-valued template variables,a search expressions is used to query for the matching metrics. This enables the use of multiple template variables in one query and also allows you to use template variables for queries that have the `Match Exact` option disabled.
+> Only available in Grafana v6.5+.
 
-Search expressions are currently limited to 1024 characters, so your query may fail if you have a long list of values. We recommend using the asterisk (\*) wildcard instead of the `All` option if you want to query all metrics that have any value for a certain dimension name.
+When defining dimension values based on multi-valued template variables, a search expressions is used to query for the matching metrics. This enables the use of multiple template variables in one query and also allows you to use template variables for queries that have the `Match Exact` option disabled.
+
+Search expressions are currently limited to 1024 characters, so your query may fail if you have a long list of values. We recommend using the asterisk (`*`) wildcard instead of the `All` option if you want to query all metrics that have any value for a certain dimension name.
 
 The use of multi-valued template variables is only supported for dimension values. Using multi-valued template variables for `Region`, `Namespace`, or `Metric Name` is not supported.
 
@@ -162,6 +168,8 @@ Please note that in the case you use the expression field to reference another q
 
 ### Deep linking from Grafana panels to the CloudWatch console
 
+> Only available in Grafana v6.5+.
+
 {{< docs-imagebox img="/img/docs/v65/cloudwatch-deep-linking.png" max-width="500px" class="docs-image--right" caption="CloudWatch deep linking" >}}
 
 Left clicking a time series in the panel shows a context menu with a link to `View in CloudWatch console`. Clicking that link will open a new tab that will take you to the CloudWatch console and display all the metrics for that query. If you are not currently logged in to the CloudWatch console, the link will forward you to the login page. The provided link is valid for any account but will only display the right metrics if you are logged in to the account that corresponds to the selected data source in Grafana.
@@ -169,6 +177,8 @@ Left clicking a time series in the panel shows a context menu with a link to `Vi
 This feature is not available for metrics that are based on math expressions.
 
 ## Curated Dashboards
+
+> Only available in Grafana v6.5+.
 
 The updated CloudWatch data source is shipped with pre-configured dashboards for five of the most popular AWS services:
 
