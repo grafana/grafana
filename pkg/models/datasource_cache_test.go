@@ -41,7 +41,7 @@ func TestDataSourceCache(t *testing.T) {
 		Convey("Should have no TLS client certificate configured", func() {
 			So(len(t1.transport.TLSClientConfig.Certificates), ShouldEqual, 0)
 		})
-		Convey("Should have no user-supplied TLS CA onfigured", func() {
+		Convey("Should have no user-supplied TLS CA configured", func() {
 			So(t1.transport.TLSClientConfig.RootCAs, ShouldBeNil)
 		})
 	})
