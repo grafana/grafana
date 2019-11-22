@@ -495,6 +495,7 @@ func TestDSRouteRule(t *testing.T) {
 				createAuthTest(m.DS_ES, AUTHTYPE_BASIC, AUTHCHECK_HEADER, true),
 			}
 			for _, test := range tests {
+				m.ClearDSDecryptionCache()
 				runDatasourceAuthTest(test)
 			}
 		})
