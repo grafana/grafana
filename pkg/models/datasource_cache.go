@@ -162,3 +162,43 @@ func (ds *DataSource) getCustomHeaders() map[string]string {
 
 	return headers
 }
+
+type cachedDecryptedJSON struct {
+	updated time.Time
+	json    map[string]string
+}
+
+type secureJSONDecryptionCache struct {
+	cache map[int64]cachedDecryptedJSON
+	sync.Mutex
+}
+
+var dsDecryptionCache = secureJSONDecryptionCache{
+	cache: make(map[int64]cachedDecryptedJSON),
+}
+
+// DecryptedValues returns cached decrypted values from secureJsonData.
+//
+// Caches decrypted values.
+func (ds *DataSource) DecryptedValues() map[string]string {
+	ptc.Lock()
+	defer ptc.Unlock()
+
+	if item, present := dsDecryptionCache.cache[ds.Id]; present && ds.Updated.Equal(item.updated) {
+		return item.json
+	}
+
+	json := ds.SecureJsonData.Decrypt()
+	dsDecryptionCache.cache[ds.Id] = cachedDecryptedJSON{
+		updated: ds.Updated,
+		json:    json,
+	}
+
+	return json
+}
+
+// DecryptedValue returns cached decrypted value from cached secureJsonData.
+func (ds *DataSource) DecryptedValue(key string) (string, bool) {
+	value, exists := ds.DecryptedValues()[key]
+	return value, exists
+}
