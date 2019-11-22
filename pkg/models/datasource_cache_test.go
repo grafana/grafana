@@ -20,7 +20,7 @@ import (
 //nolint:goconst
 func TestDataSourceProxyCache(t *testing.T) {
 	Convey("When caching a datasource proxy", t, func() {
-		clearPTCCache()
+		clearDSProxyCache()
 		ds := DataSource{
 			Id:   1,
 			Url:  "http://k8s:8001",
@@ -48,7 +48,7 @@ func TestDataSourceProxyCache(t *testing.T) {
 	})
 
 	Convey("When caching a datasource proxy then updating it", t, func() {
-		clearPTCCache()
+		clearDSProxyCache()
 		setting.SecretKey = "password"
 
 		json := simplejson.New()
@@ -90,7 +90,7 @@ func TestDataSourceProxyCache(t *testing.T) {
 	})
 
 	Convey("When caching a datasource proxy with TLS client authentication enabled", t, func() {
-		clearPTCCache()
+		clearDSProxyCache()
 		setting.SecretKey = "password"
 
 		json := simplejson.New()
@@ -124,7 +124,7 @@ func TestDataSourceProxyCache(t *testing.T) {
 	})
 
 	Convey("When caching a datasource proxy with a user-supplied TLS CA", t, func() {
-		clearPTCCache()
+		clearDSProxyCache()
 		setting.SecretKey = "password"
 
 		json := simplejson.New()
@@ -153,7 +153,7 @@ func TestDataSourceProxyCache(t *testing.T) {
 	})
 
 	Convey("When caching a datasource proxy when user skips TLS verification", t, func() {
-		clearPTCCache()
+		clearDSProxyCache()
 
 		json := simplejson.New()
 		json.Set("tlsSkipVerify", true)
@@ -174,7 +174,7 @@ func TestDataSourceProxyCache(t *testing.T) {
 	})
 
 	Convey("When caching a datasource proxy with custom headers specified", t, func() {
-		clearPTCCache()
+		clearDSProxyCache()
 
 		json := simplejson.NewFromAny(map[string]interface{}{
 			"httpHeaderName1": "Authorization",
@@ -292,7 +292,7 @@ func TestDataSourceDecryptionCache(t *testing.T) {
 	})
 }
 
-func clearPTCCache() {
+func clearDSProxyCache() {
 	ptc.Lock()
 	defer ptc.Unlock()
 
