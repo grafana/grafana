@@ -56,10 +56,31 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *profile {
+	ultimateProfileEnabled := *profile
+	ultimateProfilePort := *profilePort
+	profileEnv, exists := os.LookupEnv("GF_PROCESS_PROFILE")
+	if exists {
+		enabled, parseErr := strconv.ParseBool(profileEnv)
+		if parseErr != nil {
+			panic(parseErr)
+		} else {
+			ultimateProfileEnabled = enabled
+			profilePortEnv, exists := os.LookupEnv("GF_PROCESS_PROFILE_PORT")
+			if exists {
+				port, parseErr := strconv.ParseInt(profilePortEnv, 0, 64)
+				if parseErr != nil {
+					panic(parseErr)
+				} else {
+					ultimateProfilePort = int(port)
+				}
+			}
+		}
+	}
+
+	if ultimateProfileEnabled {
 		runtime.SetBlockProfileRate(1)
 		go func() {
-			err := http.ListenAndServe(fmt.Sprintf("localhost:%d", *profilePort), nil)
+			err := http.ListenAndServe(fmt.Sprintf("localhost:%d", ultimateProfilePort), nil)
 			if err != nil {
 				panic(err)
 			}
