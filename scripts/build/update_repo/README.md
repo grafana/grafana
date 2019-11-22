@@ -7,7 +7,7 @@
 It's possible to test the repo updates for rpm and deb by running the test scripts within a docker container like this. Tests are being executed by using two buckets on gcp setup for testing.
 
 ```bash
-docker run -ti --rm -u 0:0 grafana/grafana-ci-deploy:1.2.2 bash # 1.2.2 is the newest image at the time of writing
+docker run -ti --rm -u 0:0 grafana/grafana-ci-deploy:1.2.3 bash # 1.2.3 is the newest image at the time of writing
 # in the container:
 mkdir -p /dist
 

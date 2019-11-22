@@ -97,23 +97,21 @@ func parseRequestQuery(model *simplejson.Json, refId string) (*requestQuery, err
 		returnData = true
 	}
 
-	highResolution := model.Get("highResolution").MustBool(false)
 	matchExact := model.Get("matchExact").MustBool(true)
 
 	return &requestQuery{
-		RefId:          refId,
-		Region:         region,
-		Namespace:      namespace,
-		MetricName:     metricName,
-		Dimensions:     dimensions,
-		Statistics:     aws.StringSlice(statistics),
-		Period:         period,
-		Alias:          alias,
-		Id:             id,
-		Expression:     expression,
-		ReturnData:     returnData,
-		HighResolution: highResolution,
-		MatchExact:     matchExact,
+		RefId:      refId,
+		Region:     region,
+		Namespace:  namespace,
+		MetricName: metricName,
+		Dimensions: dimensions,
+		Statistics: aws.StringSlice(statistics),
+		Period:     period,
+		Alias:      alias,
+		Id:         id,
+		Expression: expression,
+		ReturnData: returnData,
+		MatchExact: matchExact,
 	}, nil
 }
 

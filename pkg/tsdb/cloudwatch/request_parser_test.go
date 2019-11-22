@@ -22,10 +22,9 @@ func TestRequestParser(t *testing.T) {
 						"InstanceId":   []interface{}{"test"},
 						"InstanceType": []interface{}{"test2", "test3"},
 					},
-					"statistics":     []interface{}{"Average"},
-					"period":         "600",
-					"hide":           false,
-					"highResolution": false,
+					"statistics": []interface{}{"Average"},
+					"period":     "600",
+					"hide":       false,
 				})
 
 				res, err := parseRequestQuery(query, "ref1")
@@ -38,7 +37,6 @@ func TestRequestParser(t *testing.T) {
 				So(res.Expression, ShouldEqual, "")
 				So(res.Period, ShouldEqual, 600)
 				So(res.ReturnData, ShouldEqual, true)
-				So(res.HighResolution, ShouldEqual, false)
 				So(len(res.Dimensions), ShouldEqual, 2)
 				So(len(res.Dimensions["InstanceId"]), ShouldEqual, 1)
 				So(len(res.Dimensions["InstanceType"]), ShouldEqual, 2)
@@ -59,10 +57,9 @@ func TestRequestParser(t *testing.T) {
 						"InstanceId":   "test",
 						"InstanceType": "test2",
 					},
-					"statistics":     []interface{}{"Average"},
-					"period":         "600",
-					"hide":           false,
-					"highResolution": false,
+					"statistics": []interface{}{"Average"},
+					"period":     "600",
+					"hide":       false,
 				})
 
 				res, err := parseRequestQuery(query, "ref1")
@@ -75,7 +72,6 @@ func TestRequestParser(t *testing.T) {
 				So(res.Expression, ShouldEqual, "")
 				So(res.Period, ShouldEqual, 600)
 				So(res.ReturnData, ShouldEqual, true)
-				So(res.HighResolution, ShouldEqual, false)
 				So(len(res.Dimensions), ShouldEqual, 2)
 				So(len(res.Dimensions["InstanceId"]), ShouldEqual, 1)
 				So(len(res.Dimensions["InstanceType"]), ShouldEqual, 1)
