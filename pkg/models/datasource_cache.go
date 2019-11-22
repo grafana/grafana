@@ -181,8 +181,8 @@ var dsDecryptionCache = secureJSONDecryptionCache{
 //
 // Caches decrypted values.
 func (ds *DataSource) DecryptedValues() map[string]string {
-	ptc.Lock()
-	defer ptc.Unlock()
+	dsDecryptionCache.Lock()
+	defer dsDecryptionCache.Unlock()
 
 	if item, present := dsDecryptionCache.cache[ds.Id]; present && ds.Updated.Equal(item.updated) {
 		return item.json
@@ -201,4 +201,12 @@ func (ds *DataSource) DecryptedValues() map[string]string {
 func (ds *DataSource) DecryptedValue(key string) (string, bool) {
 	value, exists := ds.DecryptedValues()[key]
 	return value, exists
+}
+
+// ClearDSDecryptionCache clears the datasource decryption cache.
+func ClearDSDecryptionCache() {
+	dsDecryptionCache.Lock()
+	defer dsDecryptionCache.Unlock()
+
+	dsDecryptionCache.cache = make(map[int64]cachedDecryptedJSON)
 }
