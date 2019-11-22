@@ -149,8 +149,9 @@ func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
 
 	authType := e.DataSource.JsonData.Get("authType").MustString()
 	assumeRoleArn := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
-	accessKey, _ := e.DataSource.DecryptedValue("accessKey")
-	secretKey, _ := e.DataSource.DecryptedValue("secretKey")
+	decrypted := e.DataSource.DecryptedValues()
+	accessKey := decrypted["accessKey"]
+	secretKey := decrypted["secretKey"]
 
 	datasourceInfo := &DatasourceInfo{
 		Region:        region,
