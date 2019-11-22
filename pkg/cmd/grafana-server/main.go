@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"net/http"
@@ -37,6 +38,46 @@ var commit = "NA"
 var buildBranch = "master"
 var buildstamp string
 
+func getProfilingProps(profileFlag bool, profilePortFlag int) (bool, int, error) {
+	profileEnabled := profileFlag
+	profilePort := profilePortFlag
+	profileEnv := os.Getenv("GF_PROCESS_PROFILE")
+	if profileEnv != "" {
+		enabled, parseErr := strconv.ParseBool(profileEnv)
+		if parseErr != nil {
+			return false, 0, errors.New("Failed to parse GF_PROCESS_PROFILE environment variable")
+		}
+		profileEnabled = enabled
+		profilePortEnv := os.Getenv("GF_PROCESS_PROFILE_PORT")
+		if profilePortEnv != "" {
+			port, parseErr := strconv.ParseInt(profilePortEnv, 0, 64)
+			if parseErr != nil {
+				return false, 0, errors.New("Failed to parse GF_PROCESS_PROFILE_PORT enviroment variable")
+			}
+			profilePort = int(port)
+		}
+	}
+	return profileEnabled, profilePort, nil
+}
+
+func getTracingProps(tracingFlag bool, tracingFileFlag string) (bool, string, error) {
+	tracingEnabled := tracingFlag
+	tracingFile := tracingFileFlag
+	tracingEnv := os.Getenv("GF_PROCESS_TRACING")
+	if tracingEnv != "" {
+		enabled, parseErr := strconv.ParseBool(tracingEnv)
+		if parseErr != nil {
+			return false, "", errors.New("Failed to parse GF_PROCESS_TRACING environment variable")
+		}
+		tracingEnabled = enabled
+		tracingFileEnv := os.Getenv("GF_PROCESS_TRACING_FILE")
+		if tracingFileEnv != "" {
+			tracingFile = tracingFileEnv
+		}
+	}
+	return tracingEnabled, tracingFile, nil
+}
+
 func main() {
 	var (
 		configFile = flag.String("config", "", "path to config file")
@@ -48,7 +89,7 @@ func main() {
 		profile     = flag.Bool("profile", false, "Turn on pprof profiling")
 		profilePort = flag.Int("profile-port", 6060, "Define custom port for profiling")
 		tracing     = flag.Bool("tracing", false, "Turn on tracing")
-		tracingFile = flag.String("tracing-out", "trace.out", "Define tracing output file")
+		tracingFile = flag.String("tracing-file", "trace.out", "Define tracing output file")
 	)
 
 	flag.Parse()
@@ -58,56 +99,30 @@ func main() {
 		os.Exit(0)
 	}
 
-	ultimateProfileEnabled := *profile
-	ultimateProfilePort := *profilePort
-	profileEnv, exists := os.LookupEnv("GF_PROCESS_PROFILE")
-	if exists {
-		enabled, parseErr := strconv.ParseBool(profileEnv)
-		if parseErr != nil {
-			panic(parseErr)
-		} else {
-			ultimateProfileEnabled = enabled
-			profilePortEnv, exists := os.LookupEnv("GF_PROCESS_PROFILE_PORT")
-			if exists {
-				port, parseErr := strconv.ParseInt(profilePortEnv, 0, 64)
-				if parseErr != nil {
-					panic(parseErr)
-				} else {
-					ultimateProfilePort = int(port)
-				}
-			}
-		}
+	finalProfileEnabled, finalProfilePort, err := getProfilingProps(*profile, *profilePort)
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
 	}
 
-	ultimateTracingEnabled := *tracing
-	tracingEnv, exists := os.LookupEnv("GF_PROCESS_TRACING")
-	if exists {
-		enabled, parseErr := strconv.ParseBool(tracingEnv)
-		if parseErr != nil {
-			panic(parseErr)
-		} else {
-			ultimateTracingEnabled = enabled
-		}
+	finalTracingEnabled, finalTracingFile, err := getTracingProps(*tracing, *tracingFile)
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
 	}
 
-	if ultimateProfileEnabled {
+	if finalProfileEnabled {
 		runtime.SetBlockProfileRate(1)
 		go func() {
-			err := http.ListenAndServe(fmt.Sprintf("localhost:%d", ultimateProfilePort), nil)
+			err := http.ListenAndServe(fmt.Sprintf("localhost:%d", finalProfilePort), nil)
 			if err != nil {
 				panic(err)
 			}
 		}()
 	}
 
-	if ultimateTracingEnabled {
-		ultimateTracingFile := *tracingFile
-		tracingFileEnv, exists := os.LookupEnv("GF_PROCESS_TRACING_OUTPUT")
-		if exists {
-			ultimateTracingFile = tracingFileEnv
-		}
-
-		f, err := os.Create(ultimateTracingFile)
+	if finalTracingEnabled {
+		f, err := os.Create(finalTracingFile)
 		if err != nil {
 			panic(err)
 		}
@@ -138,7 +153,7 @@ func main() {
 
 	go listenToSystemSignals(server)
 
-	err := server.Run()
+	err = server.Run()
 
 	code := server.ExitCode(err)
 	trace.Stop()
