@@ -47,6 +47,8 @@ func main() {
 		v           = flag.Bool("v", false, "prints current version and exits")
 		profile     = flag.Bool("profile", false, "Turn on pprof profiling")
 		profilePort = flag.Int("profile-port", 6060, "Define custom port for profiling")
+		tracing     = flag.Bool("tracing", false, "Turn on tracing")
+		tracingFile = flag.String("tracing-out", "trace.out", "Define tracing output file")
 	)
 
 	flag.Parse()
@@ -77,6 +79,17 @@ func main() {
 		}
 	}
 
+	ultimateTracingEnabled := *tracing || ultimateProfileEnabled
+	tracingEnv, exists := os.LookupEnv("GF_PROCESS_TRACING")
+	if exists {
+		enabled, parseErr := strconv.ParseBool(tracingEnv)
+		if parseErr != nil {
+			panic(parseErr)
+		} else {
+			ultimateTracingEnabled = enabled
+		}
+	}
+
 	if ultimateProfileEnabled {
 		runtime.SetBlockProfileRate(1)
 		go func() {
@@ -86,17 +99,25 @@ func main() {
 			}
 		}()
 
-		f, err := os.Create("trace.out")
-		if err != nil {
-			panic(err)
-		}
-		defer f.Close()
+		if ultimateTracingEnabled {
+			ultimateTracingFile := *tracingFile
+			tracingFileEnv, exists := os.LookupEnv("GF_PROCESS_TRACING_OUTPUT")
+			if exists {
+				ultimateTracingFile = tracingFileEnv
+			}
 
-		err = trace.Start(f)
-		if err != nil {
-			panic(err)
+			f, err := os.Create(ultimateTracingFile)
+			if err != nil {
+				panic(err)
+			}
+			defer f.Close()
+
+			err = trace.Start(f)
+			if err != nil {
+				panic(err)
+			}
+			defer trace.Stop()
 		}
-		defer trace.Stop()
 	}
 
 	buildstampInt64, _ := strconv.ParseInt(buildstamp, 10, 64)
