@@ -17,7 +17,7 @@ export const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
         width: 32px;
         height: 16px;
         background: ${theme.colors.formSwitchBg};
-        transition: background-color 0.30s ease;
+        transition: all 0.30s ease;
         border-radius: 50px;
         position: relative;
         border: none;
@@ -48,6 +48,10 @@ export const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
       getFocusStyle(theme)
     ),
     sliderActive: css`
+      background: ${theme.colors.formSwitchBgActive};
+      &:hover {
+        background: ${theme.colors.formSwitchBgActiveHover};
+      }
       &:after {
         transform: translate3d(16px, -50%, 0);
       }
