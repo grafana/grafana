@@ -213,10 +213,10 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
         width: 200px;
       `,
       md: css`
-        width: 300px;
+        width: 320px;
       `,
       lg: css`
-        width: 400px;
+        width: 580px;
       `,
       auto: css`
         width: 100%;

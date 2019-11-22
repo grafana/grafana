@@ -17,6 +17,7 @@ export const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
       margin: ${theme.spacing.formLabelMargin};
       padding: ${theme.spacing.formLabelPadding};
       color: ${theme.colors.formLabel};
+      max-width: 480px;
     `,
     description: css`
       font-weight: ${theme.typography.weight.regular};
