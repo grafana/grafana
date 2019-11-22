@@ -101,13 +101,13 @@ func main() {
 
 	finalProfileEnabled, finalProfilePort, err := getProfilingProps(*profile, *profilePort)
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
 
 	finalTracingEnabled, finalTracingFile, err := getTracingProps(*tracing, *tracingFile)
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
 
