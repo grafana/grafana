@@ -3,7 +3,10 @@ import { DataSourcePluginOptionsEditorProps, SelectableValue } from '@grafana/da
 import { DataSourceHttpSettings, FormLabel, Input, SecretFormField, Select } from '@grafana/ui';
 import { InfluxOptions, InfluxSecureJsonData } from '../types';
 
-const httpModes = [{ label: 'GET', value: 'GET' }, { label: 'POST', value: 'POST' }] as SelectableValue[];
+const httpModes = [
+  { label: 'GET', value: 'GET' },
+  { label: 'POST', value: 'POST' },
+] as SelectableValue[];
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 

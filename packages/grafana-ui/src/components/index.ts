@@ -98,6 +98,7 @@ export { FadeTransition } from './transitions/FadeTransition';
 export { SlideOutTransition } from './transitions/SlideOutTransition';
 export { Segment, SegmentAsync, SegmentSelect } from './Segment/';
 export { default as Chart } from './Chart';
+export { Icon } from './Icon/Icon';
 
 // Next-gen forms
 export { default as Forms } from './Forms';

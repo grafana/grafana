@@ -278,15 +278,16 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
               </div>
             )}
 
-            <div className="explore-toolbar-content-item explore-icon-align">
-              <ResponsiveButton
-                splitted={splitted}
-                title="Clear All"
-                onClick={this.onClearAll}
-                iconClassName="fa fa-fw fa-trash icon-margin-right"
-                disabled={isLive}
-              />
-            </div>
+            {!isLive && (
+              <div className="explore-toolbar-content-item explore-icon-align">
+                <ResponsiveButton
+                  splitted={splitted}
+                  title="Clear All"
+                  onClick={this.onClearAll}
+                  iconClassName="fa fa-fw fa-trash icon-margin-right"
+                />
+              </div>
+            )}
             <div className="explore-toolbar-content-item">
               <RunButton
                 refreshInterval={refreshInterval}
@@ -386,9 +387,4 @@ const mapDispatchToProps: DispatchProps = {
   clearOrigin,
 };
 
-export const ExploreToolbar = hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(UnConnectedExploreToolbar)
-);
+export const ExploreToolbar = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedExploreToolbar));

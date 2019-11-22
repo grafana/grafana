@@ -5,9 +5,11 @@ import { setStore } from 'app/store/store';
 
 const mockStore = configureMockStore<any, any>();
 
-setStore(mockStore({
-  location: {},
-}) as any);
+setStore(
+  mockStore({
+    location: {},
+  }) as any
+);
 
 const dashboards = [{ url: 'dash1' }, { url: 'dash2' }];
 
@@ -120,11 +122,13 @@ describe('PlaylistSrv', () => {
 
     srv.next();
 
-    setStore(mockStore({
-      location: {
-        path: 'dash2',
-      },
-    }) as any);
+    setStore(
+      mockStore({
+        location: {
+          path: 'dash2',
+        },
+      }) as any
+    );
 
     expect((srv as any).validPlaylistUrl).toBe('dash2');
 

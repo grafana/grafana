@@ -248,7 +248,7 @@ Array [
       <label
         className="gf-form-label width-8 query-keyword"
       >
-        Min Period
+        Period
         <div
           className="gf-form-help-icon gf-form-help-icon--right-normal"
           onMouseEnter={[Function]}
@@ -316,33 +316,6 @@ Array [
           <div
             className="gf-form-label query-keyword  pointer"
           >
-            HighRes
-          </div>
-          <div
-            className="gf-form-switch  "
-          >
-            <input
-              checked={false}
-              id="1"
-              onChange={[Function]}
-              type="checkbox"
-            />
-            <span
-              className="gf-form-switch__slider"
-            />
-          </div>
-        </label>
-      </div>
-      <div
-        className="gf-form-switch-container-react"
-      >
-        <label
-          className="gf-form gf-form-switch-container "
-          htmlFor="2"
-        >
-          <div
-            className="gf-form-label query-keyword  pointer"
-          >
             Match Exact
             <div
               className="gf-form-help-icon gf-form-help-icon--right-normal"
@@ -359,7 +332,7 @@ Array [
           >
             <input
               checked={true}
-              id="2"
+              id="1"
               onChange={[Function]}
               type="checkbox"
             />

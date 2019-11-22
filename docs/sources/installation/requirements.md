@@ -33,7 +33,7 @@ Grafana does not use a lot of resources and is very lightweight in use of memory
 
 Depending on what features are being used and to what extent the requirements varies. Features that consume and requires more resources:
 
-- Server side rendering of images
+- [Server side rendering of images](/administration/image_rendering/#requirements)
 - [Alerting](/alerting/rules/)
 - Data source proxy
 
