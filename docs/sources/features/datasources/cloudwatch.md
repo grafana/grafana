@@ -109,9 +109,9 @@ aws_secret_access_key = dasdasdsadasdasdasdsa
 region = us-west-2
 ```
 
-## Using the M  etric Query Editor
+## Using the Metric Query Editor
 
-You need to specify a namespace, metric, at least one stat, and at least one dimension as long as `Match Exact` is activated. In the case `Match Exact` is not activated, no dimension needs to be specified.
+You need to specify the namespace, metric name and at least one statistic. If `Match Exact` is enabled, you also need to specify all dimensions of the metric you’re querying, so that the [metric schema](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) matches exactly. If `Match Exact` is off, you can specify any number of dimensions by which you’d like to filter. Up to 100 metrics matching your filter criteria will be returned.
 
 ### Dynamic queries using dimension wildcards
 
@@ -121,9 +121,9 @@ In Grafana 6.5 or higher, you’re able to monitor a dynamic list of metrics by 
 
 In the example, all metrics in the namespace `AWS/EC2` with a metric name of `CPUUtilization` and ANY value for the `InstanceId` dimension are queried. This can help you monitor metrics for AWS resources, like EC2 instances or containers. For example, when new instances get created as part of an auto scaling event, they will automatically appear in the graph without you having to track the new instance IDs. This capability is currently limited to retrieving up to 100 metrics. You can click on `Show Query Preview` to see the search expression that is automatically built to support wildcards. To learn more about search expressions, visit the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html).
 
-By default, the search expression is defined in such a way that the queried metrics must match the defined dimension names exactly. This means that in the example below only metrics with exactly one dimension with name ‘InstanceId’ will be returned.
+By default, the search expression is defined in such a way that the queried metrics must match the defined dimension names exactly. This means that in the example above only metrics with exactly one dimension with name ‘InstanceId’ will be returned.
 
-You can untoggle `Match Exact` to include metrics that have other dimensions defined. Disabling ‘Match Exact’ also creates a search expression even if you don’t use wildcards. We simply search for any metric that match at least the namespace, metric name, and all defined dimensions.
+You can untoggle `Match Exact` to include metrics that have other dimensions defined. Disabling ‘Match Exact’ also creates a search expression even if you don’t use wildcards. We simply search for any metric that matches at least the namespace, metric name, and all defined dimensions.
 
 ### Multi-value template variables now use search expressions
 
@@ -135,13 +135,11 @@ The use of multi-valued template variables is only supported for dimension value
 
 ### Metric Math Expressions
 
-You can now create new time series metrics by operating on top of Cloudwatch metrics using mathematical functions. Arithmetic operators, unary subtraction and other functions are supported to be applied on cloudwatch metrics. More details on the available functions can be found on [AWS Metric Math](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html)
+You can create new time series metrics by operating on top of CloudWatch metrics using mathematical functions. Arithmetic operators, unary subtraction and other functions are supported to be applied on CloudWatch metrics. More details on the available functions can be found on [AWS Metric Math](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html)
 
-As an example, if you want to apply arithmetic operator on a metric, you can do it by giving an alias(a unique string) to the raw metric as shown below. Then you can use this alias and apply arithmetic operator to it in the Expression field of created metric.
+As an example, if you want to apply arithmetic operations on a metric, you can do it by giving an id (a unique string) to the raw metric as shown below. Then you can use this id and apply arithmetic operations to it in the Expression field of the new metric.
 
 Please note that in the case you use the expression field to reference another query, like `queryA * 2`, it will not be possible to create an alert rule based on that query.
-
-![](/img/docs/v60/cloudwatch_metric_math.png)
 
 ### Deep linking from Grafana panels to the CloudWatch console
 
@@ -171,12 +169,12 @@ Instead of hard-coding things like server, application and sensor name in you me
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
 being displayed in your dashboard.
 
-Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+See the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
 
-CloudWatch data source plugin provides the following queries you can specify in the `Query` field in the Variable
+The CloudWatch data source provides the following queries that you can specify in the `Query` field in the Variable
 edit view. They allow you to fill a variable's options list with things like `region`, `namespaces`, `metric names`
 and `dimension keys/values`.
 
@@ -187,7 +185,7 @@ Read more about the available dimensions in the [CloudWatch Metrics and Dimensio
 
 | Name                                                                    | Description                                                                                                                                                                        |
 | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| _regions()_                                                             | Returns a list of regions AWS provides their service.                                                                                                                              |
+| _regions()_                                                             | Returns a list of all AWS regions                                                                                                                                                  |
 | _namespaces()_                                                          | Returns a list of namespaces CloudWatch support.                                                                                                                                   |
 | _metrics(namespace, [region])_                                          | Returns a list of metrics in the namespace. (specify region or use "default" for custom metrics)                                                                                   |
 | _dimension_keys(namespace)_                                             | Returns a list of dimension keys in the namespace.                                                                                                                                 |
@@ -277,7 +275,7 @@ ec2_instance_attribute(us - east - 1, Tags.Name, { 'tag:Team': ['sysops'] });
 
 ## Using json format template variables
 
-Some of query takes JSON format filter. Grafana support to interpolate template variable to JSON format string, it can use as filter string.
+Some queries accept filters in JSON format and Grafana supports the conversion of template variables to JSON.
 
 If `env = 'production', 'staging'`, following query will return ARNs of EC2 instances which `Environment` tag is `production` or `staging`.
 
@@ -287,19 +285,16 @@ resource_arns(us-east-1, ec2:instance, {"Environment":${env:json}})
 
 ## Pricing
 
-The Amazon CloudWatch data source for Grafana uses the following CloudWatch API calls to list and retrieve metrics:
-ListMetrics
-GetMetricData
-Please see the [CloudWatch pricing page](https://aws.amazon.com/cloudwatch/pricing/) for pricing information about these API calls.
+The Amazon CloudWatch data source for Grafana uses the `ListMetrics` and `GetMetricData` CloudWatch API calls to list and retrieve metrics. Please see the [CloudWatch pricing page](https://aws.amazon.com/cloudwatch/pricing/) for pricing information about these API calls.
 
 Every time you pick a dimension in the query editor Grafana will issue a ListMetrics request.
 Whenever you make a change to the queries in the query editor, one new request to GetMetricData will be issued.
 
 Please note that for Grafana version 6.5 or higher, all API requests to GetMetricStatistics have been replaced with calls to GetMetricData. This change enables better support for CloudWatch metric math and enables the use of search expressions. While GetMetricStatistics qualified for the CloudWatch API free tier, this is not the case for GetMetricData calls. For more information, please refer to the [CloudWatch pricing page](https://aws.amazon.com/cloudwatch/pricing/).
 
-## Service Quota
+## Service Quotas
 
-AWS defines quotas, or limits, for resources, actions, and items in your AWS account. Depending on the number of queries in your dashboard and the amount of users accessing the dashboard, you may reach the limit for the allowed number of CloudWatch GetMetricData requests per second. Note that quotas are defined per account and per region. If you're using multiple regions or have set up more than one CloudWatch data source to query against multiple accounts, you need to request a quota increase for each account and each region.
+AWS defines quotas, or limits, for resources, actions, and items in your AWS account. Depending on the number of queries in your dashboard and the amount of users accessing the dashboard, you may reach the limit for the allowed number of CloudWatch GetMetricData requests per second. Note that quotas are defined per account and per region. If you're using multiple regions or have set up more than one CloudWatch data source to query against multiple accounts, you need to request a quota increase for each account and each region in which you hit the limit.
 
 To request a quota increase, visit the [AWS Service Quotas console](https://console.aws.amazon.com/servicequotas/home?r#!/services/monitoring/quotas/L-5E141212).
 
