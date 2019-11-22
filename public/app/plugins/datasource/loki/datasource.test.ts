@@ -1,7 +1,7 @@
-import LokiDatasource from './datasource';
+import LokiDatasource, { RangeQueryOptions } from './datasource';
 import { LokiQuery, LokiResultType, LokiResponse, LokiLegacyStreamResponse } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import { AnnotationQueryRequest, DataSourceApi, DataFrame, dateTime } from '@grafana/data';
+import { AnnotationQueryRequest, DataSourceApi, DataFrame, dateTime, TimeRange } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/custom_variable';
@@ -299,6 +299,23 @@ describe('LokiDatasource', () => {
         expect(result.status).toEqual('error');
         expect(result.message).toBe('Loki: Bad Gateway. 502');
       });
+    });
+  });
+
+  describe('when creating a range query', () => {
+    const ds = new LokiDatasource(instanceSettings, backendSrv, templateSrvMock);
+    const query: LokiQuery = { expr: 'foo', refId: 'bar' };
+
+    // Loki v1 API has an issue with float step parameters, can be removed when API is fixed
+    it('should produce an integer step parameter', () => {
+      const range: TimeRange = {
+        from: dateTime(0),
+        to: dateTime(1e9 + 1),
+        raw: { from: '0', to: '1000000001' },
+      };
+      // Odd timerange/interval combination that would lead to a float step
+      const options: RangeQueryOptions = { range, intervalMs: 2000 };
+      expect(Number.isInteger(ds.createRangeQuery(query, options).step)).toBeTruthy();
     });
   });
 
