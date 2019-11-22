@@ -1,4 +1,5 @@
 import { TemplateSrv } from '../template_srv';
+import { dateTime } from '@grafana/data';
 
 describe('templateSrv', () => {
   let _templateSrv: any;
@@ -321,6 +322,16 @@ describe('templateSrv', () => {
     it('slash should be properly escaped in regex format', () => {
       const result = _templateSrv.formatValue('Gi3/14', 'regex');
       expect(result).toBe('Gi3\\/14');
+    });
+
+    it('datetime value should return value', () => {
+      const result = _templateSrv.formatValue(
+        dateTime('2019-11-22 13:44:55')
+          .valueOf()
+          .toString(),
+        'datetime'
+      );
+      expect(result).toBe('2019-11-22 13:44:55');
     });
   });
 
