@@ -61,8 +61,9 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	metrics["stats.snapshots.count"] = statsQuery.Result.Snapshots
 	metrics["stats.teams.count"] = statsQuery.Result.Teams
 	metrics["stats.total_auth_token.count"] = statsQuery.Result.AuthTokens
-	metrics["stats.hasValidLicense.count"] = getValidLicenseCount(uss.License.HasValidLicense())
-	metrics["stats.enterpriseEdition.count"] = getEnterpriseEditionCount()
+	metrics["stats.valid_license.count"] = getValidLicenseCount(uss.License.HasValidLicense())
+	metrics["stats.edition.oss.count"] = getOssEditionCount()
+	metrics["stats.edition.enterprise.count"] = getEnterpriseEditionCount()
 
 	userCount := statsQuery.Result.Users
 	avgAuthTokensPerUser := statsQuery.Result.AuthTokens
@@ -199,6 +200,13 @@ func getEnterpriseEditionCount() int {
 		return 1
 	}
 	return 0
+}
+
+func getOssEditionCount() int {
+	if setting.IsEnterprise {
+		return 0
+	}
+	return 1
 }
 
 func getValidLicenseCount(validLicense bool) int {
