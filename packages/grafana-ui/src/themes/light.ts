@@ -3,7 +3,7 @@ import { GrafanaThemeType, GrafanaTheme } from '@grafana/data';
 
 const basicColors = {
   ...commonColorsPalette,
-  version: '#000001',
+  version: '#000002',
   black: '#000000',
   white: '#ffffff',
   dark1: '#1e2028',
