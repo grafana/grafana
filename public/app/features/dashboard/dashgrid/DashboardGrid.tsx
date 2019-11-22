@@ -58,11 +58,14 @@ function GridWrapper({
     }
   }
 
+  // Disable draggable if mobile device
+  const draggable = width <= 420 ? false : isDraggable;
+
   return (
     <ReactGridLayout
       width={lastGridWidth}
       className={className}
-      isDraggable={isDraggable}
+      isDraggable={draggable}
       isResizable={isResizable}
       containerPadding={[0, 0]}
       useCSSTransforms={false}
