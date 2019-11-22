@@ -1,7 +1,6 @@
 // Libraries
 import React, { PureComponent, createRef } from 'react';
 import { css } from 'emotion';
-import memoizeOne from 'memoize-one';
 import classNames from 'classnames';
 
 // Components
@@ -11,17 +10,16 @@ import { TimePickerPopover } from './TimePickerPopover';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 
 // Utils & Services
-import { isDateTime, DateTime } from '@grafana/data';
-import { rangeUtil } from '@grafana/data';
+import { isDateTime, DateTime, rangeUtil } from '@grafana/data';
 import { rawToTimeRange } from './time';
+import { stylesFactory } from '../../themes/stylesFactory';
 import { withTheme } from '../../themes/ThemeContext';
 
 // Types
-import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue, dateMath } from '@grafana/data';
-import { GrafanaTheme } from '@grafana/data';
+import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue, dateMath, GrafanaTheme } from '@grafana/data';
 import { Themeable } from '../../types';
 
-const getStyles = memoizeOne((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     timePickerSynced: css`
       label: timePickerSynced;
@@ -198,6 +196,7 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
           )}
           <ButtonSelect
             className={classNames('time-picker-button-select', {
+              ['explore-active-button-glow']: timeSyncButton && isSynced,
               [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: timeSyncButton,
               [styles.timePickerSynced]: timeSyncButton ? isSynced : null,
             })}
@@ -206,7 +205,7 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
             options={options}
             maxMenuHeight={600}
             onChange={this.onSelectChanged}
-            iconClass={'fa fa-clock-o fa-fw'}
+            iconClass={classNames('fa fa-clock-o fa-fw', isSynced && timeSyncButton && 'icon-brand-gradient')}
             tooltipContent={<TimePickerTooltipContent timeRange={value} />}
           />
 

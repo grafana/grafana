@@ -1,22 +1,22 @@
 import React from 'react';
 import classNames from 'classnames';
-import { css } from 'emotion';
-import memoizeOne from 'memoize-one';
 import tinycolor from 'tinycolor2';
+import { css } from 'emotion';
 import { CSSTransition } from 'react-transition-group';
-import { ResponsiveButton } from './ResponsiveButton';
-
-import { useTheme, Tooltip } from '@grafana/ui';
+import { useTheme, Tooltip, stylesFactory, selectThemeVariant } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 
-const getStyles = memoizeOne((theme: GrafanaTheme) => {
+//Components
+import { ResponsiveButton } from './ResponsiveButton';
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const bgColor = selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.dark1 }, theme.type);
   const orangeLighter = tinycolor(theme.colors.orangeDark)
     .lighten(10)
     .toString();
   const pulseTextColor = tinycolor(theme.colors.orangeDark)
     .desaturate(90)
     .toString();
-
   return {
     noRightBorderStyle: css`
       label: noRightBorderStyle;
@@ -33,8 +33,12 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
       color: ${theme.colors.orangeDark};
       background: transparent;
       &:focus {
+        background: transparent;
         border-color: ${theme.colors.orangeDark};
         color: ${theme.colors.orangeDark};
+      }
+      &:hover {
+        background-color: ${bgColor};
       }
       &:active,
       &:hover {
@@ -48,7 +52,11 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
       background: transparent;
       animation: pulse 3s ease-out 0s infinite normal forwards;
       &:focus {
+        background: transparent;
         border-color: ${theme.colors.orangeDark};
+      }
+      &:hover {
+        background-color: ${bgColor};
       }
       &:active,
       &:hover {
@@ -119,11 +127,15 @@ export function LiveTailButton(props: LiveTailButtonProps) {
         <ResponsiveButton
           splitted={splitted}
           buttonClassName={classNames('btn navbar-button', styles.liveButton, {
-            [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: isLive,
+            [`btn--radius-right-0 explore-active-button-glow ${styles.noRightBorderStyle}`]: isLive,
             [styles.isLive]: isLive && !isPaused,
             [styles.isPaused]: isLive && isPaused,
           })}
-          iconClassName={classNames('fa', isPaused || !isLive ? 'fa-play' : 'fa-pause')}
+          iconClassName={classNames(
+            'fa',
+            isPaused || !isLive ? 'fa-play' : 'fa-pause',
+            isLive && 'icon-brand-gradient'
+          )}
           onClick={onClickMain}
           title={'\xa0Live'}
         />
@@ -141,8 +153,11 @@ export function LiveTailButton(props: LiveTailButtonProps) {
         }}
       >
         <div>
-          <button className={`btn navbar-button navbar-button--attached ${styles.isLive}`} onClick={stop}>
-            <i className={'fa fa-stop'} />
+          <button
+            className={`btn navbar-button navbar-button--attached explore-active-button-glow ${styles.isLive}`}
+            onClick={stop}
+          >
+            <i className={classNames('fa fa-stop icon-brand-gradient')} />
           </button>
         </div>
       </CSSTransition>
