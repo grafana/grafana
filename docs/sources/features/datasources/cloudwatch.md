@@ -43,16 +43,16 @@ A lower limit for the auto group by time interval. Recommended to be set to writ
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
 number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
 
-Identifier | Description
------------- | -------------
-`y`   | year
-`M`   | month
-`w`   | week
-`d`   | day
-`h`   | hour
-`m`   | minute
-`s`   | second
-`ms`  | millisecond
+| Identifier | Description |
+| ---------- | ----------- |
+| `y`        | year        |
+| `M`        | month       |
+| `w`        | week        |
+| `d`        | day         |
+| `h`        | hour        |
+| `m`        | minute      |
+| `s`        | second      |
+| `ms`       | millisecond |
 
 ## Authentication
 
@@ -132,7 +132,7 @@ region = us-west-2
 
 ## Using the Metric Query Editor
 
-You need to specify the namespace, metric name and at least one statistic. If `Match Exact` is enabled, you also need to specify all dimensions of the metric you’re querying, so that the [metric schema](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) matches exactly. If `Match Exact` is off, you can specify any number of dimensions by which you’d like to filter. Up to 100 metrics matching your filter criteria will be returned.
+To create a valid query, you need to specify the namespace, metric name and at least one statistic. If `Match Exact` is enabled, you also need to specify all the dimensions of the metric you’re querying, so that the [metric schema](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) matches exactly. If `Match Exact` is off, you can specify any number of dimensions by which you’d like to filter. Up to 100 metrics matching your filter criteria will be returned.
 
 ### Dynamic queries using dimension wildcards
 
@@ -152,7 +152,7 @@ You can untoggle `Match Exact` to include metrics that have other dimensions def
 
 > Only available in Grafana v6.5+.
 
-When defining dimension values based on multi-valued template variables, a search expressions is used to query for the matching metrics. This enables the use of multiple template variables in one query and also allows you to use template variables for queries that have the `Match Exact` option disabled.
+When defining dimension values based on multi-valued template variables, a search expression is used to query for the matching metrics. This enables the use of multiple template variables in one query and also allows you to use template variables for queries that have the `Match Exact` option disabled.
 
 Search expressions are currently limited to 1024 characters, so your query may fail if you have a long list of values. We recommend using the asterisk (`*`) wildcard instead of the `All` option if you want to query all metrics that have any value for a certain dimension name.
 
@@ -160,9 +160,9 @@ The use of multi-valued template variables is only supported for dimension value
 
 ### Metric Math Expressions
 
-You can create new time series metrics by operating on top of CloudWatch metrics using mathematical functions. Arithmetic operators, unary subtraction and other functions are supported to be applied on CloudWatch metrics. More details on the available functions can be found on [AWS Metric Math](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html)
+You can create new time series metrics by operating on top of CloudWatch metrics using mathematical functions. Arithmetic operators, unary subtraction and other functions are supported and can be applied to CloudWatch metrics. More details on the available functions can be found on [AWS Metric Math](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html)
 
-As an example, if you want to apply arithmetic operations on a metric, you can do it by giving an id (a unique string) to the raw metric as shown below. Then you can use this id and apply arithmetic operations to it in the Expression field of the new metric.
+As an example, if you want to apply arithmetic operations on a metric, you can do it by giving an id (a unique string) to the raw metric as shown below. You can then use this id and apply arithmetic operations to it in the Expression field of the new metric.
 
 Please note that in the case you use the expression field to reference another query, like `queryA * 2`, it will not be possible to create an alert rule based on that query.
 
@@ -180,7 +180,7 @@ This feature is not available for metrics that are based on math expressions.
 
 > Only available in Grafana v6.5+.
 
-The updated CloudWatch data source is shipped with pre-configured dashboards for five of the most popular AWS services:
+The updated CloudWatch data source ships with pre-configured dashboards for five of the most popular AWS services:
 
 - Amazon Elastic Compute Cloud `Amazon EC2`,
 - Amazon Elastic Block Store `Amazon EBS`,
@@ -188,41 +188,36 @@ The updated CloudWatch data source is shipped with pre-configured dashboards for
 - Amazon CloudWatch Logs `Amazon CloudWatch Logs`, and
 - Amazon Relational Database Service `Amazon RDS`.
 
-To import the pre-configured dashboards, go to the configuration page of your CloudWatch data source and click on the `Dashboards` tab. Click `Import` for the dashboard you would like to use. To customize the dashboard, we recommend to save the dashboard under a different name, because otherwise the dashboard will be overwritten when a new version of the dashboard is released.
+To import the pre-configured dashboards, go to the configuration page of your CloudWatch data source and click on the `Dashboards` tab. Click `Import` for the dashboard you would like to use. To customize the dashboard, we recommend saving the dashboard under a different name, because otherwise the dashboard will be overwritten when a new version of the dashboard is released.
 
 {{< docs-imagebox img="/img/docs/v65/cloudwatch-dashboard-import.png" caption="CloudWatch dashboard import" >}}
 
 ## Templated queries
 
-Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place.
-Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
-being displayed in your dashboard.
+Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data being displayed in your dashboard.
 
-See the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
-types of template variables.
+See the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ### Query variable
 
-The CloudWatch data source provides the following queries that you can specify in the `Query` field in the Variable
-edit view. They allow you to fill a variable's options list with things like `region`, `namespaces`, `metric names`
-and `dimension keys/values`.
+The CloudWatch data source provides the following queries that you can specify in the `Query` field in the Variable edit view. They allow you to fill a variable's options list with things like `region`, `namespaces`, `metric names` and `dimension keys/values`.
 
 In place of `region` you can specify `default` to use the default region configured in the data source for the query,
 e.g. `metrics(AWS/DynamoDB, default)` or `dimension_values(default, ..., ..., ...)`.
 
 Read more about the available dimensions in the [CloudWatch Metrics and Dimensions Reference](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CW_Support_For_AWS.html).
 
-| Name                                                                    | Description                                                                                                                                                                        |
-| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| _regions()_                                                             | Returns a list of all AWS regions                                                                                                                                                  |
-| _namespaces()_                                                          | Returns a list of namespaces CloudWatch support.                                                                                                                                   |
-| _metrics(namespace, [region])_                                          | Returns a list of metrics in the namespace. (specify region or use "default" for custom metrics)                                                                                   |
-| _dimension_keys(namespace)_                                             | Returns a list of dimension keys in the namespace.                                                                                                                                 |
-| _dimension_values(region, namespace, metric, dimension_key, [filters])_ | Returns a list of dimension values matching the specified `region`, `namespace`, `metric`, `dimension_key` or you can use dimension `filters` to get more specific result as well. |
-| _ebs_volume_ids(region, instance_id)_                                   | Returns a list of volume ids matching the specified `region`, `instance_id`.                                                                                                       |
-| _ec2_instance_attribute(region, attribute_name, filters)_               | Returns a list of attributes matching the specified `region`, `attribute_name`, `filters`.                                                                                         |
-| _resource_arns(region, resource_type, tags)_                            | Returns a list of ARNs matching the specified `region`, `resource_type` and `tags`.                                                                                                |
-| _statistics()_                                                          | Returns a list of all the standard statistics                                                                                                                                      |
+| Name                                                                          | Description                                                                                                                                                                        |
+| ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| _regions()_                                                                   | Returns a list of all AWS regions                                                                                                                                                  |
+| _namespaces()_                                                                | Returns a list of namespaces CloudWatch support.                                                                                                                                   |
+| _metrics(namespace, [region])_                                                | Returns a list of metrics in the namespace. (specify region or use "default" for custom metrics)                                                                                   |
+| _dimension_\__keys(namespace)_                                                | Returns a list of dimension keys in the namespace.                                                                                                                                 |
+| _dimension_\__values(region, namespace, metric, dimension_\__key, [filters])_ | Returns a list of dimension values matching the specified `region`, `namespace`, `metric`, `dimension_key` or you can use dimension `filters` to get more specific result as well. |
+| _ebs_\__volume_\__ids(region, instance_\__id)_                                | Returns a list of volume ids matching the specified `region`, `instance_id`.                                                                                                       |
+| _ec2_\__instance_\__attribute(region, attribute_\__name, filters)_            | Returns a list of attributes matching the specified `region`, `attribute_name`, `filters`.                                                                                         |
+| _resource_\__arns(region, resource_\__type, tags)_                            | Returns a list of ARNs matching the specified `region`, `resource_type` and `tags`.                                                                                                |
+| _statistics()_                                                                | Returns a list of all the standard statistics                                                                                                                                      |
 
 For details about the metrics CloudWatch provides, please refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html).
 
@@ -230,16 +225,16 @@ For details about the metrics CloudWatch provides, please refer to the [CloudWat
 
 Example dimension queries which will return list of resources for individual AWS Services:
 
-| Query                                                                                                                         | Service          |
-| ----------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| _dimension_values(us-east-1,AWS/ELB,RequestCount,LoadBalancerName)_                                                           | ELB              |
-| _dimension_values(us-east-1,AWS/ElastiCache,CPUUtilization,CacheClusterId)_                                                   | ElastiCache      |
-| _dimension_values(us-east-1,AWS/Redshift,CPUUtilization,ClusterIdentifier)_                                                   | RedShift         |
-| _dimension_values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)_                                                     | RDS              |
-| _dimension_values(us-east-1,AWS/S3,BucketSizeBytes,BucketName)_                                                               | S3               |
-| _dimension_values(us-east-1,CWAgent,disk_used_percent,device,{"InstanceId":"\$instance_id"})_                                 | CloudWatch Agent |
-| _resource_arns(eu-west-1,elasticloadbalancing:loadbalancer,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})_ | ELB              |
-| _resource_arns(eu-west-1,ec2:instance,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})_                      | EC2              |
+| Query                                                                                                                            | Service          |
+| -------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| _dimension_\__values(us-east-1,AWS/ELB,RequestCount,LoadBalancerName)_                                                           | ELB              |
+| _dimension_\__values(us-east-1,AWS/ElastiCache,CPUUtilization,CacheClusterId)_                                                   | ElastiCache      |
+| _dimension_\__values(us-east-1,AWS/Redshift,CPUUtilization,ClusterIdentifier)_                                                   | RedShift         |
+| _dimension_\__values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)_                                                     | RDS              |
+| _dimension_\__values(us-east-1,AWS/S3,BucketSizeBytes,BucketName)_                                                               | S3               |
+| _dimension_\__values(us-east-1,CWAgent,disk_\__used_\__percent,device,{"InstanceId":"\$instance_\__id"})_                        | CloudWatch Agent |
+| _resource_\__arns(eu-west-1,elasticloadbalancing:loadbalancer,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})_ | ELB              |
+| _resource_\__arns(eu-west-1,ec2:instance,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})_                      | EC2              |
 
 ## ec2_instance_attribute examples
 
@@ -335,7 +330,7 @@ It's now possible to configure data sources using config files with Grafana's pr
 
 Here are some provisioning examples for this data source.
 
-Using a credentials file
+### Using a credentials file
 
 ```yaml
 apiVersion: 1
@@ -348,7 +343,7 @@ datasources:
       defaultRegion: eu-west-2
 ```
 
-Using `accessKey` and `secretKey`
+### Using `accessKey` and `secretKey`
 
 ```yaml
 apiVersion: 1
