@@ -247,6 +247,11 @@ Grafana is now using Alpine 3.10 as docker base image.
 
 Please consider migrating from PhantomJS to the [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer).
 
+# 6.3.7 (2019-11-22)
+
+### Bug Fixes
+* **CloudWatch**: Fix high CPU load [#20579](https://github.com/grafana/grafana/pull/20579)
+
 # 6.3.6 (2019-09-23)
 
 ### Features / Enhancements
