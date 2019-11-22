@@ -55,7 +55,7 @@ import { ExploreMode } from 'app/types';
 import { LegacyTarget, LiveStreams } from './live_streams';
 import LanguageProvider from './language_provider';
 
-type RangeQueryOptions = Pick<DataQueryRequest<LokiQuery>, 'range' | 'intervalMs' | 'maxDataPoints' | 'reverse'>;
+export type RangeQueryOptions = Pick<DataQueryRequest<LokiQuery>, 'range' | 'intervalMs' | 'maxDataPoints' | 'reverse'>;
 export const DEFAULT_MAX_LINES = 1000;
 const LEGACY_QUERY_ENDPOINT = '/api/prom/query';
 const RANGE_QUERY_ENDPOINT = '/loki/api/v1/query_range';
