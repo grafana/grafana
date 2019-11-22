@@ -38,7 +38,7 @@ var commit = "NA"
 var buildBranch = "master"
 var buildstamp string
 
-func getProfilingProps(profileFlag bool, profilePortFlag int) (bool, int, error) {
+func getProfilingProps(profileFlag bool, profilePortFlag uint) (bool, uint, error) {
 	profileEnabled := profileFlag
 	profilePort := profilePortFlag
 	profileEnv := os.Getenv("GF_PROCESS_PROFILE")
@@ -50,11 +50,11 @@ func getProfilingProps(profileFlag bool, profilePortFlag int) (bool, int, error)
 		profileEnabled = enabled
 		profilePortEnv := os.Getenv("GF_PROCESS_PROFILE_PORT")
 		if profilePortEnv != "" {
-			port, parseErr := strconv.ParseInt(profilePortEnv, 0, 64)
+			port, parseErr := strconv.ParseUint(profilePortEnv, 0, 64)
 			if parseErr != nil {
 				return false, 0, errors.New("Failed to parse GF_PROCESS_PROFILE_PORT enviroment variable")
 			}
-			profilePort = int(port)
+			profilePort = uint(port)
 		}
 	}
 	return profileEnabled, profilePort, nil
@@ -87,7 +87,7 @@ func main() {
 
 		v           = flag.Bool("v", false, "prints current version and exits")
 		profile     = flag.Bool("profile", false, "Turn on pprof profiling")
-		profilePort = flag.Int("profile-port", 6060, "Define custom port for profiling")
+		profilePort = flag.Uint("profile-port", 6060, "Define custom port for profiling")
 		tracing     = flag.Bool("tracing", false, "Turn on tracing")
 		tracingFile = flag.String("tracing-file", "trace.out", "Define tracing output file")
 	)
