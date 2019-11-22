@@ -65,7 +65,10 @@ describe('ElasticQueryBuilder', () => {
   it('with term agg and order by term', () => {
     const query = builder.build(
       {
-        metrics: [{ type: 'count', id: '1' }, { type: 'avg', field: '@value', id: '5' }],
+        metrics: [
+          { type: 'count', id: '1' },
+          { type: 'avg', field: '@value', id: '5' },
+        ],
         bucketAggs: [
           {
             type: 'terms',
@@ -91,7 +94,10 @@ describe('ElasticQueryBuilder', () => {
     });
     const query = builder6x.build(
       {
-        metrics: [{ type: 'count', id: '1' }, { type: 'avg', field: '@value', id: '5' }],
+        metrics: [
+          { type: 'count', id: '1' },
+          { type: 'avg', field: '@value', id: '5' },
+        ],
         bucketAggs: [
           {
             type: 'terms',
@@ -114,7 +120,10 @@ describe('ElasticQueryBuilder', () => {
   it('with term agg and order by metric agg', () => {
     const query = builder.build(
       {
-        metrics: [{ type: 'count', id: '1' }, { type: 'avg', field: '@value', id: '5' }],
+        metrics: [
+          { type: 'count', id: '1' },
+          { type: 'avg', field: '@value', id: '5' },
+        ],
         bucketAggs: [
           {
             type: 'terms',

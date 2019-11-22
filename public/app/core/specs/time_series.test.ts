@@ -9,7 +9,12 @@ describe('TimeSeries', () => {
   beforeEach(() => {
     testData = {
       alias: 'test',
-      datapoints: [[1, 2], [null, 3], [10, 4], [8, 5]],
+      datapoints: [
+        [1, 2],
+        [null, 3],
+        [10, 4],
+        [8, 5],
+      ],
     };
   });
 
@@ -29,7 +34,10 @@ describe('TimeSeries', () => {
 
     it('if last is null current should pick next to last', () => {
       series = new TimeSeries({
-        datapoints: [[10, 1], [null, 2]],
+        datapoints: [
+          [10, 1],
+          [null, 2],
+        ],
       });
       series.getFlotPairs('null', yAxisFormats);
       expect(series.stats.current).toBe(10);
@@ -37,7 +45,10 @@ describe('TimeSeries', () => {
 
     it('max value should work for negative values', () => {
       series = new TimeSeries({
-        datapoints: [[-10, 1], [-4, 2]],
+        datapoints: [
+          [-10, 1],
+          [-4, 2],
+        ],
       });
       series.getFlotPairs('null', yAxisFormats);
       expect(series.stats.max).toBe(-4);
@@ -51,7 +62,13 @@ describe('TimeSeries', () => {
 
     it('the delta value should account for nulls', () => {
       series = new TimeSeries({
-        datapoints: [[1, 2], [3, 3], [null, 4], [10, 5], [15, 6]],
+        datapoints: [
+          [1, 2],
+          [3, 3],
+          [null, 4],
+          [10, 5],
+          [15, 6],
+        ],
       });
       series.getFlotPairs('null', yAxisFormats);
       expect(series.stats.delta).toBe(14);
@@ -59,7 +76,12 @@ describe('TimeSeries', () => {
 
     it('the delta value should account for nulls on first', () => {
       series = new TimeSeries({
-        datapoints: [[null, 2], [1, 3], [10, 4], [15, 5]],
+        datapoints: [
+          [null, 2],
+          [1, 3],
+          [10, 4],
+          [15, 5],
+        ],
       });
       series.getFlotPairs('null', yAxisFormats);
       expect(series.stats.delta).toBe(14);
@@ -67,7 +89,12 @@ describe('TimeSeries', () => {
 
     it('the delta value should account for nulls on last', () => {
       series = new TimeSeries({
-        datapoints: [[1, 2], [5, 3], [10, 4], [null, 5]],
+        datapoints: [
+          [1, 2],
+          [5, 3],
+          [10, 4],
+          [null, 5],
+        ],
       });
       series.getFlotPairs('null', yAxisFormats);
       expect(series.stats.delta).toBe(9);
@@ -75,7 +102,13 @@ describe('TimeSeries', () => {
 
     it('the delta value should account for resets', () => {
       series = new TimeSeries({
-        datapoints: [[1, 2], [5, 3], [10, 4], [0, 5], [10, 6]],
+        datapoints: [
+          [1, 2],
+          [5, 3],
+          [10, 4],
+          [0, 5],
+          [10, 6],
+        ],
       });
       series.getFlotPairs('null', yAxisFormats);
       expect(series.stats.delta).toBe(19);
@@ -83,7 +116,12 @@ describe('TimeSeries', () => {
 
     it('the delta value should account for resets on last', () => {
       series = new TimeSeries({
-        datapoints: [[1, 2], [2, 3], [10, 4], [8, 5]],
+        datapoints: [
+          [1, 2],
+          [2, 3],
+          [10, 4],
+          [8, 5],
+        ],
       });
       series.getFlotPairs('null', yAxisFormats);
       expect(series.stats.delta).toBe(17);
@@ -100,7 +138,12 @@ describe('TimeSeries', () => {
       series.getFlotPairs('null', yAxisFormats);
       expect(series.stats.first).toBe(1);
       series = new TimeSeries({
-        datapoints: [[null, 2], [1, 3], [10, 4], [8, 5]],
+        datapoints: [
+          [null, 2],
+          [1, 3],
+          [10, 4],
+          [8, 5],
+        ],
       });
       series.getFlotPairs('null', yAxisFormats);
       expect(series.stats.first).toBe(1);
@@ -114,7 +157,12 @@ describe('TimeSeries', () => {
 
     it('average value should be null if all values is null', () => {
       series = new TimeSeries({
-        datapoints: [[null, 2], [null, 3], [null, 4], [null, 5]],
+        datapoints: [
+          [null, 2],
+          [null, 3],
+          [null, 4],
+          [null, 5],
+        ],
       });
       series.getFlotPairs('null');
       expect(series.stats.avg).toBe(null);
@@ -122,13 +170,21 @@ describe('TimeSeries', () => {
 
     it('calculates timeStep', () => {
       series = new TimeSeries({
-        datapoints: [[null, 1], [null, 2], [null, 3]],
+        datapoints: [
+          [null, 1],
+          [null, 2],
+          [null, 3],
+        ],
       });
       series.getFlotPairs('null');
       expect(series.stats.timeStep).toBe(1);
 
       series = new TimeSeries({
-        datapoints: [[0, 1530529290], [0, 1530529305], [0, 1530529320]],
+        datapoints: [
+          [0, 1530529290],
+          [0, 1530529305],
+          [0, 1530529320],
+        ],
       });
       series.getFlotPairs('null');
       expect(series.stats.timeStep).toBe(15);
@@ -139,7 +195,10 @@ describe('TimeSeries', () => {
     describe('msResolution with second resolution timestamps', () => {
       beforeEach(() => {
         series = new TimeSeries({
-          datapoints: [[45, 1234567890], [60, 1234567899]],
+          datapoints: [
+            [45, 1234567890],
+            [60, 1234567899],
+          ],
         });
       });
 
@@ -151,7 +210,10 @@ describe('TimeSeries', () => {
     describe('msResolution with millisecond resolution timestamps', () => {
       beforeEach(() => {
         series = new TimeSeries({
-          datapoints: [[55, 1236547890001], [90, 1234456709000]],
+          datapoints: [
+            [55, 1236547890001],
+            [90, 1234456709000],
+          ],
         });
       });
 
@@ -163,7 +225,10 @@ describe('TimeSeries', () => {
     describe('msResolution with millisecond resolution timestamps but with trailing zeroes', () => {
       beforeEach(() => {
         series = new TimeSeries({
-          datapoints: [[45, 1234567890000], [60, 1234567899000]],
+          datapoints: [
+            [45, 1234567890000],
+            [60, 1234567899000],
+          ],
         });
       });
 
@@ -333,7 +398,12 @@ describe('TimeSeries', () => {
     beforeEach(() => {
       testData = {
         alias: 'test',
-        datapoints: [[1, 2], [0, 3], [10, 4], [8, 5]],
+        datapoints: [
+          [1, 2],
+          [0, 3],
+          [10, 4],
+          [8, 5],
+        ],
       };
       series = new TimeSeries(testData);
       series.getFlotPairs();
@@ -355,7 +425,12 @@ describe('TimeSeries', () => {
     });
 
     it('should set decimals based on Y axis to 0 if calculated decimals = 0)', () => {
-      testData.datapoints = [[10, 2], [0, 3], [100, 4], [80, 5]];
+      testData.datapoints = [
+        [10, 2],
+        [0, 3],
+        [100, 4],
+        [80, 5],
+      ];
       series = new TimeSeries(testData);
       series.getFlotPairs();
       const data = [series];

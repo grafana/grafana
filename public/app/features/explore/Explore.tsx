@@ -436,8 +436,5 @@ const mapDispatchToProps: Partial<ExploreProps> = {
 
 export default hot(module)(
   // @ts-ignore
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Explore)
+  connect(mapStateToProps, mapDispatchToProps)(Explore)
 ) as React.ComponentType<{ exploreId: ExploreId }>;

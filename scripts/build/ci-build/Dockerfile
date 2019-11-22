@@ -76,7 +76,7 @@ FROM ubuntu:18.04
 ENV GOVERSION=1.13.4 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=10.17.0
+    NODEVERSION=12.13.0
 
 ARG DEBIAN_FRONTEND=noninteractive
 

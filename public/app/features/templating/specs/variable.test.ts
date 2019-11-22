@@ -85,6 +85,14 @@ describe('containsSearchFilter', () => {
     });
   });
 
+  describe('when called with an object', () => {
+    it('then it should return false', () => {
+      const result = containsSearchFilter({});
+
+      expect(result).toBe(false);
+    });
+  });
+
   describe(`when called with a query without ${SEARCH_FILTER_VARIABLE}`, () => {
     it('then it should return false', () => {
       const result = containsSearchFilter('$app.*');

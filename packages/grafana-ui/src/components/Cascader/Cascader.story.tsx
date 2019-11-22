@@ -9,7 +9,14 @@ const getKnobs = () => {
     disabled: boolean('Disabled', false),
     text: text('Button Text', 'Click me!'),
     options: object('Options', [
-      { label: 'A', value: 'A', children: [{ label: 'B', value: 'B' }, { label: 'C', value: 'C' }] },
+      {
+        label: 'A',
+        value: 'A',
+        children: [
+          { label: 'B', value: 'B' },
+          { label: 'C', value: 'C' },
+        ],
+      },
       { label: 'D', value: 'D' },
     ]),
   };

@@ -344,9 +344,4 @@ const mapDispatchToProps = {
   dataSourceLoaded,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(DataSourceSettingsPage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DataSourceSettingsPage));
