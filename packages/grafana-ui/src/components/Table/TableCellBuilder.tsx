@@ -298,17 +298,24 @@ export function getFieldCellBuilder(field: Field, style: ColumnStyle | null, p: 
   }
 
   return (cell: TableCellBuilderOptions) => {
-    const { props, className } = cell;
-    const disp = field.display(cell.value);
+    const { props } = cell;
+    const disp = field.display!(cell.value);
 
-    const style = {
-      ...props.style,
-      background: disp.color,
-      // color: 'white',
-    };
+    let style = props.style;
+    if (disp.color) {
+      style = {
+        ...props.style,
+        background: disp.color,
+      };
+    }
+
+    let clazz = 'gf-table-cell';
+    if (cell.className) {
+      clazz += ' ' + cell.className;
+    }
 
     return (
-      <div style={style} className={'gf-table-cell ' + className}>
+      <div style={style} className={clazz}>
         {disp.text}
       </div>
     );
