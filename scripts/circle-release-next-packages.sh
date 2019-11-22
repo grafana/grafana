@@ -57,8 +57,9 @@ else
     start=$(date +%s%N)
     yarn workspace @grafana/$PACKAGE run build
     runtime=$((($(date +%s%N) - start)/1000000))
-
+    if [ "${CIRCLE_BRANCH}" == "master" ]; then
     exit_if_fail ./ci-metrics-publisher.sh "grafana.ci-buildtimes.$CIRCLE_JOB.$PACKAGE=$runtime"
+    fi
   done
 
   exit_status=$?
