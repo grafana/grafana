@@ -242,7 +242,7 @@ func TestDataSourceDecryptionCache(t *testing.T) {
 		ClearDSDecryptionCache()
 
 		ds := DataSource{
-			ID:       1,
+			Id:       1,
 			Type:     DS_INFLUXDB_08,
 			JsonData: simplejson.New(),
 			User:     "user",
@@ -269,7 +269,7 @@ func TestDataSourceDecryptionCache(t *testing.T) {
 		ClearDSDecryptionCache()
 
 		ds := DataSource{
-			ID:       1,
+			Id:       1,
 			Type:     DS_INFLUXDB_08,
 			JsonData: simplejson.New(),
 			User:     "user",

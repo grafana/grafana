@@ -178,8 +178,6 @@ var dsDecryptionCache = secureJSONDecryptionCache{
 }
 
 // DecryptedValues returns cached decrypted values from secureJsonData.
-//
-// Caches decrypted values.
 func (ds *DataSource) DecryptedValues() map[string]string {
 	dsDecryptionCache.Lock()
 	defer dsDecryptionCache.Unlock()
