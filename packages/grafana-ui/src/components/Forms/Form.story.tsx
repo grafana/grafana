@@ -7,6 +7,7 @@ import { Field } from './Field';
 import { Input } from './Input/Input';
 import { Button } from './Button';
 import { Form } from './Form';
+import { Switch } from './Switch';
 import { Icon } from '../Icon/Icon';
 
 export default {
@@ -19,6 +20,7 @@ export const users = () => {
   const [email, setEmail] = useState();
   const [username, setUsername] = useState();
   const [password, setPassword] = useState();
+  const [disabledUser, setDisabledUser] = useState(false);
 
   return (
     <>
@@ -52,6 +54,9 @@ export const users = () => {
             size="md"
           />
         </Field>
+        <Field label="Disable" description="Added for testing purposes">
+          <Switch checked={disabledUser} onChange={(_e, checked) => setDisabledUser(checked)} />
+        </Field>
         <Button>Update</Button>
       </Form>
       <Form>
@@ -67,6 +72,24 @@ export const users = () => {
             prefix={<Icon name="lock" />}
           />
         </Field>
+        <Button>Update</Button>
+      </Form>
+
+      <Form>
+        <fieldset>
+          <Legend>CERT validation</Legend>
+          <Field
+            label="Path to client cert"
+            description="Authentication against LDAP servers requiring client certificates if not required leave empty "
+          >
+            <Input
+              id="clientCert"
+              value={''}
+              // onChange={e => setPassword(e.currentTarget.value)}
+              size="lg"
+            />
+          </Field>
+        </fieldset>
         <Button>Update</Button>
       </Form>
     </>
