@@ -35,6 +35,23 @@ Grafana ships with built in support for CloudWatch. You just have to add it as a
 | _Credentials_ profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default. |
 | _Assume Role Arn_          | Specify the ARN of the role to assume                                                                   |
 
+### Min time interval
+
+A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example `1m` if your data is written every minute.
+This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
+number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
+
+Identifier | Description
+------------ | -------------
+`y`   | year
+`M`   | month
+`w`   | week
+`d`   | day
+`h`   | hour
+`m`   | minute
+`s`   | second
+`ms`  | millisecond
+
 ## Authentication
 
 ### IAM Roles
@@ -98,7 +115,9 @@ Checkout AWS docs on [Configuring the AWS SDK for Go](https://docs.aws.amazon.co
 
 ### AWS credentials file
 
-Create a file at `~/.aws/credentials`. That is the `HOME` path for user running grafana-server. > NOTE: If you think you have the credentials file in the right place but it is still not working then you might try moving your .aws file to '/usr/share/grafana/' and make sure your credentials file has at most 0644 permissions.
+Create a file at `~/.aws/credentials`. That is the `HOME` path for user running grafana-server.
+
+> NOTE: If you think you have the credentials file in the right place but it is still not working then you might try moving your .aws file to '/usr/share/grafana/' and make sure your credentials file has at most 0644 permissions.
 
 Example content:
 
@@ -108,23 +127,6 @@ aws_access_key_id = asdsadasdasdasd
 aws_secret_access_key = dasdasdsadasdasdasdsa
 region = us-west-2
 ```
-
-### Min time interval
-
-A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example `1m` if your data is written every minute.
-This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
-number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
-
-Identifier | Description
------------- | -------------
-`y`   | year
-`M`   | month
-`w`   | week
-`d`   | day
-`h`   | hour
-`m`   | minute
-`s`   | second
-`ms`  | millisecond
 
 ## Using the Metric Query Editor
 
