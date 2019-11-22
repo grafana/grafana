@@ -348,9 +348,13 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
   console.log('Sending report to:', url);
   const axios = require('axios');
   const info = await axios.post(url, report, {
-    headers: { Authorization: 'bearer ' + GRAFANA_API_KEY },
+    headers: { Authorization: 'Bearer ' + GRAFANA_API_KEY },
   });
-  console.log('RESULT: ', info);
+  if (info.status === 200) {
+    console.log('OK: ', info.data);
+  } else {
+    console.warn('Error: ', info);
+  }
 };
 
 export const ciPluginReportTask = new Task<PluginCIOptions>('Generate Plugin Report', pluginReportRunner);
