@@ -157,7 +157,7 @@ describe('BarGauge', () => {
         value: getValue(100, 'AA'),
         alignmentFactors: {
           title: 'Super duper long title',
-          value: '1000',
+          text: '1000',
         },
         orientation: VizOrientation.Horizontal,
       });
