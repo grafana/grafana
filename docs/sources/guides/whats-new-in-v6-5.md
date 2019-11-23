@@ -84,8 +84,6 @@ Search expressions are currently limited to 1024 characters, so your query may f
 
 The use of multi-valued template variables is only supported for dimension values. Using multi-valued template variables for `Region`, `Namespace`, or `Metric Name` is not supported.
 
-<br/>
-
 ### Dynamic typeahead support in query variables
 
 If you have a query variable that has many thousands of values it can be quite slow to search for a specific value in the dropdown. This is due to the fact that all that search filtering is happening in the browser.
