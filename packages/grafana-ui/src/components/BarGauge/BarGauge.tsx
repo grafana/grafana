@@ -525,6 +525,7 @@ function getValueStyles(
     lineHeight: VALUE_LINE_HEIGHT,
   };
 
+  // how many pixels in wide can the text be?
   let textWidth = width;
 
   if (isVertical(orientation)) {
@@ -532,6 +533,7 @@ function getValueStyles(
   } else {
     valueStyles.justifyContent = `flex-end`;
     valueStyles.paddingLeft = `${VALUE_LEFT_PADDING}px`;
+    // Need to remove the left padding from the text width constraints
     textWidth -= VALUE_LEFT_PADDING;
   }
 
