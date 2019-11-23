@@ -176,6 +176,7 @@ export function getValueStyles(layout: LayoutResult) {
     fontSize: `${layout.valueFontSize}px`,
     color: '#EEE',
     textShadow: '#333 0px 0px 1px',
+    fontWeight: 500,
     lineHeight: LINE_HEIGHT,
   };
 
