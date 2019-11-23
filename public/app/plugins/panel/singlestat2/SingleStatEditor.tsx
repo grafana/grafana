@@ -94,7 +94,12 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
           </PanelOptionsGroup>
 
           <PanelOptionsGroup title="Field">
-            <FieldPropertiesEditor showMinMax={true} onChange={this.onDefaultsChange} value={defaults} />
+            <FieldPropertiesEditor
+              showMinMax={true}
+              onChange={this.onDefaultsChange}
+              value={defaults}
+              showTitle={true}
+            />
           </PanelOptionsGroup>
 
           <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
