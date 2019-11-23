@@ -11,6 +11,7 @@ import {
   Collapse,
   GraphSeriesToggler,
   GraphSeriesTogglerAPI,
+  Chart,
 } from '@grafana/ui';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
@@ -136,7 +137,10 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
               lineWidth={lineWidth}
               onSeriesToggle={onSeriesToggle}
               onHorizontalRegionSelected={this.onChangeTime}
-            />
+            >
+              {/* For logs we are using mulit mode until we refactor logs histogram to use barWidth instead of lineWidth to render bars */}
+              <Chart.Tooltip mode={showBars ? 'multi' : 'single'} />
+            </GraphWithLegend>
           );
         }}
       </GraphSeriesToggler>
@@ -154,9 +158,10 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
           <div className={cx([style.timeSeriesDisclaimer])}>
             <i className={cx(['fa fa-fw fa-warning', style.disclaimerIcon])} />
             {`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series. `}
-            <span className={cx([style.showAllTimeSeries])} onClick={this.onShowAllTimeSeries}>{`Show all ${
-              series.length
-            }`}</span>
+            <span
+              className={cx([style.showAllTimeSeries])}
+              onClick={this.onShowAllTimeSeries}
+            >{`Show all ${series.length}`}</span>
           </div>
         )}
 

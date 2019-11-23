@@ -16,7 +16,8 @@ const ThemableStory: React.FunctionComponent<{ handleSassThemeChange: SassThemeC
       Light: GrafanaThemeType.Light,
       Dark: GrafanaThemeType.Dark,
     },
-    GrafanaThemeType.Dark
+    GrafanaThemeType.Dark,
+    'Theme'
   );
 
   handleSassThemeChange(themeKnob);

@@ -35,6 +35,7 @@ import {
   TimeZone,
   AbsoluteTimeRange,
 } from '@grafana/data';
+
 import {
   ExploreItemState,
   ExploreUrlState,
@@ -192,8 +193,12 @@ export class Explore extends React.PureComponent<ExploreProps> {
     this.props.setQueries(this.props.exploreId, [query]);
   };
 
-  onClickLabel = (key: string, value: string) => {
+  onClickFilterLabel = (key: string, value: string) => {
     this.onModifyQueries({ type: 'ADD_FILTER', key, value });
+  };
+
+  onClickFilterOutLabel = (key: string, value: string) => {
+    this.onModifyQueries({ type: 'ADD_FILTER_OUT', key, value });
   };
 
   onModifyQueries = (action: any, index?: number) => {
@@ -284,7 +289,11 @@ export class Explore extends React.PureComponent<ExploreProps> {
                     <ErrorBoundaryAlert>
                       {showingStartPage && (
                         <div className="grafana-info-box grafana-info-box--max-lg">
-                          <StartPage onClickExample={this.onClickExample} datasource={datasourceInstance} />
+                          <StartPage
+                            onClickExample={this.onClickExample}
+                            datasource={datasourceInstance}
+                            exploreMode={mode}
+                          />
                         </div>
                       )}
                       {!showingStartPage && (
@@ -307,14 +316,15 @@ export class Explore extends React.PureComponent<ExploreProps> {
                             />
                           )}
                           {mode === ExploreMode.Metrics && (
-                            <TableContainer exploreId={exploreId} onClickCell={this.onClickLabel} />
+                            <TableContainer exploreId={exploreId} onClickCell={this.onClickFilterLabel} />
                           )}
                           {mode === ExploreMode.Logs && (
                             <LogsContainer
                               width={width}
                               exploreId={exploreId}
                               syncedTimes={syncedTimes}
-                              onClickLabel={this.onClickLabel}
+                              onClickFilterLabel={this.onClickFilterLabel}
+                              onClickFilterOutLabel={this.onClickFilterOutLabel}
                               onStartScanning={this.onStartScanning}
                               onStopScanning={this.onStopScanning}
                             />
@@ -368,6 +378,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
   const initialRange = urlRange ? getTimeRangeFromUrlMemoized(urlRange, timeZone).raw : DEFAULT_RANGE;
 
   let newMode: ExploreMode;
+
   if (supportedModes.length) {
     const urlModeIsValid = supportedModes.includes(urlMode);
     const modeStateIsValid = supportedModes.includes(mode);
@@ -380,7 +391,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
       newMode = supportedModes[0];
     }
   } else {
-    newMode = [ExploreMode.Metrics, ExploreMode.Logs].includes(mode) ? mode : ExploreMode.Metrics;
+    newMode = [ExploreMode.Metrics, ExploreMode.Logs].includes(urlMode) ? urlMode : null;
   }
 
   const initialUI = ui || DEFAULT_UI_STATE;
@@ -425,8 +436,5 @@ const mapDispatchToProps: Partial<ExploreProps> = {
 
 export default hot(module)(
   // @ts-ignore
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(Explore)
+  connect(mapStateToProps, mapDispatchToProps)(Explore)
 ) as React.ComponentType<{ exploreId: ExploreId }>;

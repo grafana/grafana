@@ -530,7 +530,6 @@ export class ElasticResponse {
 
         for (let y = 0; y < tmpSeriesList.length; y++) {
           const series = toDataFrame(tmpSeriesList[y]);
-          series.labels = {};
           dataFrame.push(series);
         }
       }

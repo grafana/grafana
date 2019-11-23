@@ -224,7 +224,7 @@ export class ElasticQueryBuilder {
     nestedAggs = query;
 
     for (i = 0; i < target.bucketAggs.length; i++) {
-      const aggDef = target.bucketAggs[i];
+      const aggDef: any = target.bucketAggs[i];
       const esAgg: any = {};
 
       switch (aggDef.type) {

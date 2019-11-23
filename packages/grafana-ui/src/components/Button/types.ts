@@ -8,11 +8,10 @@ export interface StyleDeps {
   theme: GrafanaTheme;
   size: ButtonSize;
   variant: ButtonVariant;
-  withIcon: boolean;
 }
 
 export interface ButtonStyles {
   button: string;
   iconWrap: string;
-  icon: string;
+  icon?: string;
 }

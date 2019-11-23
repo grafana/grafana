@@ -14,8 +14,8 @@ func SeriesToFrame(series *TimeSeries) (*dataframe.Frame, error) {
 		timeVec[idx], floatVec[idx] = convertTSDBTimePoint(point)
 	}
 	frame := dataframe.New(series.Name, dataframe.Labels(series.Tags),
-		dataframe.NewField("time", dataframe.FieldTypeTime, timeVec),
-		dataframe.NewField("value", dataframe.FieldTypeNumber, floatVec),
+		dataframe.NewField("time", timeVec),
+		dataframe.NewField("value", floatVec),
 	)
 
 	return frame, nil

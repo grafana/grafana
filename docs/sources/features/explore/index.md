@@ -47,6 +47,8 @@ The Split feature is an easy way to compare graphs and tables side-by-side or to
 
 {{< docs-imagebox img="/img/docs/v60/explore_split.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
+In split view, timepickers for both panels can be linked (if you change one, the other gets changed as well) by clicking on one of the time-sync buttons attached to the timepickers. Linking of timepickers helps with keeping the start and the end times of the split view queries in sync and it will ensure that you’re looking at the same time interval in both split panels.
+
 You can close the newly created query by clicking on the Close Split button.
 
 ## Prometheus-specific Features
@@ -90,13 +92,16 @@ Log data can be very repetitive and Explore can help by hiding duplicate log lin
 * `numbers` Matches on the line after stripping out numbers (durations, IP addresses etc.).
 * `signature` The most aggressive deduping - strips all letters and numbers, and matches on the remaining whitespace and punctuation.
 
-### Timestamp, Local time and Labels
+### Timestamp and Local time
 
 There are some other check boxes under the logging graph apart from the Deduping options.
 
 * Timestamp: shows/hides the Timestamp column
 * Local time: shows/hides the Local time column
-* Labels: shows/hides the label filters column
+
+### Labels and Parsed fields
+
+Each log row has an extendable area with its labels and parsed fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs. 
 
 ### Loki-specific Features
 

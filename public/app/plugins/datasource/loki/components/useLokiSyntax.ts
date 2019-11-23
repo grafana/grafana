@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import Prism from 'prismjs';
 import { AbsoluteTimeRange } from '@grafana/data';
+import { CascaderOption } from '@grafana/ui';
 import LokiLanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import { useLokiLabels } from 'app/plugins/datasource/loki/components/useLokiLabels';
-import { CascaderOption } from 'app/plugins/datasource/loki/components/LokiQueryFieldForm';
 import { useRefMounted } from 'app/core/hooks/useRefMounted';
 
 const PRISM_SYNTAX = 'promql';

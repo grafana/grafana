@@ -9,7 +9,10 @@ describe('when generating timeseries from influxdb response', () => {
           name: 'cpu',
           tags: { app: 'test', server: 'server1' },
           columns: ['time', 'mean', 'max', 'min'],
-          values: [[1431946625000, 10, 11, 9], [1431946626000, 20, 21, 19]],
+          values: [
+            [1431946625000, 10, 11, 9],
+            [1431946626000, 20, 21, 19],
+          ],
         },
       ],
     };
@@ -71,13 +74,19 @@ describe('when generating timeseries from influxdb response', () => {
           name: 'cpu',
           tags: { app: 'test', server: 'server1' },
           columns: ['time', 'value'],
-          values: [['2015-05-18T10:57:05Z', 10], ['2015-05-18T10:57:06Z', 12]],
+          values: [
+            ['2015-05-18T10:57:05Z', 10],
+            ['2015-05-18T10:57:06Z', 12],
+          ],
         },
         {
           name: 'cpu',
           tags: { app: 'test2', server: 'server2' },
           columns: ['time', 'value'],
-          values: [['2015-05-18T10:57:05Z', 15], ['2015-05-18T10:57:06Z', 16]],
+          values: [
+            ['2015-05-18T10:57:05Z', 15],
+            ['2015-05-18T10:57:06Z', 16],
+          ],
         },
       ],
     };
@@ -101,13 +110,19 @@ describe('when generating timeseries from influxdb response', () => {
           name: 'cpu',
           tags: { app: 'test', server: 'server1' },
           columns: ['time', 'mean'],
-          values: [[1431946625000, 10], [1431946626000, 12]],
+          values: [
+            [1431946625000, 10],
+            [1431946626000, 12],
+          ],
         },
         {
           name: 'cpu',
           tags: { app: 'test2', server: 'server2' },
           columns: ['time', 'mean'],
-          values: [[1431946625000, 15], [1431946626000, 16]],
+          values: [
+            [1431946625000, 15],
+            [1431946626000, 16],
+          ],
         },
       ],
     };
@@ -162,7 +177,10 @@ describe('when generating timeseries from influxdb response', () => {
           name: 'app.prod.server1.count',
           tags: {},
           columns: ['time', 'mean'],
-          values: [[1431946625000, 10], [1431946626000, 12]],
+          values: [
+            [1431946625000, 10],
+            [1431946626000, 12],
+          ],
         },
       ],
     };
@@ -184,7 +202,10 @@ describe('when generating timeseries from influxdb response', () => {
           name: 'app.prod.server1.count',
           tags: { datacenter: 'Africa', server: 'server2' },
           columns: ['time', 'value2', 'value'],
-          values: [[1431946625000, 23, 10], [1431946626000, 25, 12]],
+          values: [
+            [1431946625000, 23, 10],
+            [1431946626000, 25, 12],
+          ],
         },
       ],
     };

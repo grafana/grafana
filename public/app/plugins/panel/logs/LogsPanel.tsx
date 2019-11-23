@@ -21,18 +21,18 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
     );
   }
 
-  const newResults = data ? dataFrameToLogsModel(data.series, data.request.intervalMs) : null;
+  const newResults = data ? dataFrameToLogsModel(data.series, data.request.intervalMs, timeZone) : null;
   const sortedNewResults = sortLogsResult(newResults, sortOrder);
 
   return (
     <CustomScrollbar autoHide>
       <LogRows
-        data={sortedNewResults}
+        logRows={sortedNewResults.rows}
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
         showTime={showTime}
-        showLabels={false}
         timeZone={timeZone}
+        allowDetails={true}
       />
     </CustomScrollbar>
   );

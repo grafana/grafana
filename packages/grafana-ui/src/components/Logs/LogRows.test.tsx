@@ -2,7 +2,7 @@ import React from 'react';
 import { range } from 'lodash';
 import { LogRows, PREVIEW_LIMIT } from './LogRows';
 import { mount } from 'enzyme';
-import { LogLevel, LogRowModel, LogsDedupStrategy } from '@grafana/data';
+import { LogLevel, LogRowModel, LogsDedupStrategy, MutableDataFrame } from '@grafana/data';
 import { LogRow } from './LogRow';
 
 describe('LogRows', () => {
@@ -10,14 +10,10 @@ describe('LogRows', () => {
     const rows: LogRowModel[] = [makeLog({ uid: '1' }), makeLog({ uid: '2' }), makeLog({ uid: '3' })];
     const wrapper = mount(
       <LogRows
-        data={{
-          rows,
-          hasUniqueLabels: false,
-        }}
+        logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
         showTime={false}
-        showLabels={false}
         timeZone={'utc'}
       />
     );
@@ -33,14 +29,10 @@ describe('LogRows', () => {
     jest.useFakeTimers();
     const wrapper = mount(
       <LogRows
-        data={{
-          rows,
-          hasUniqueLabels: false,
-        }}
+        logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
         showTime={false}
-        showLabels={false}
         timeZone={'utc'}
         previewLimit={1}
       />
@@ -64,18 +56,11 @@ describe('LogRows', () => {
     const dedupedRows: LogRowModel[] = [makeLog({ uid: '4' }), makeLog({ uid: '5' })];
     const wrapper = mount(
       <LogRows
-        data={{
-          rows,
-          hasUniqueLabels: false,
-        }}
-        deduplicatedData={{
-          rows: dedupedRows,
-          hasUniqueLabels: false,
-        }}
+        logRows={rows}
+        deduplicatedRows={dedupedRows}
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
         showTime={false}
-        showLabels={false}
         timeZone={'utc'}
       />
     );
@@ -90,14 +75,10 @@ describe('LogRows', () => {
     const rows: LogRowModel[] = range(PREVIEW_LIMIT * 2 + 1).map(num => makeLog({ uid: num.toString() }));
     const wrapper = mount(
       <LogRows
-        data={{
-          rows,
-          hasUniqueLabels: false,
-        }}
+        logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
         showTime={false}
-        showLabels={false}
         timeZone={'utc'}
       />
     );
@@ -106,10 +87,14 @@ describe('LogRows', () => {
   });
 });
 
-const makeLog = (overides: Partial<LogRowModel>): LogRowModel => {
-  const uid = overides.uid || '1';
+const makeLog = (overrides: Partial<LogRowModel>): LogRowModel => {
+  const uid = overrides.uid || '1';
   const entry = `log message ${uid}`;
   return {
+    entryFieldIndex: 0,
+    rowIndex: 0,
+    // Does not need to be filled with current tests
+    dataFrame: new MutableDataFrame(),
     uid,
     logLevel: LogLevel.debug,
     entry,
@@ -121,6 +106,7 @@ const makeLog = (overides: Partial<LogRowModel>): LogRowModel => {
     timeEpochMs: 1,
     timeLocal: '',
     timeUtc: '',
-    ...overides,
+    searchWords: [],
+    ...overrides,
   };
 };

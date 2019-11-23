@@ -18,6 +18,7 @@ import { auto } from 'angular';
 import { TemplateSrv } from '../templating/template_srv';
 import { getPanelLinksSupplier } from './panellinks/linkSuppliers';
 import { renderMarkdown, AppEvent, PanelEvents, PanelPluginMeta } from '@grafana/data';
+import { getLocationSrv } from '@grafana/runtime';
 
 export class PanelCtrl {
   panel: any;
@@ -30,7 +31,6 @@ export class PanelCtrl {
   $injector: auto.IInjectorService;
   $location: any;
   $timeout: any;
-  inspector: any;
   editModeInitiated: boolean;
   height: any;
   containerHeight: any;
@@ -145,6 +145,15 @@ export class PanelCtrl {
       shortcut: 'p s',
     });
 
+    if (config.featureToggles.inspect) {
+      menu.push({
+        text: 'Inspect',
+        icon: 'fa fa-fw fa-info-circle',
+        click: 'ctrl.inspectPanel();',
+        shortcut: 'p i',
+      });
+    }
+
     // Additional items from sub-class
     menu.push(...(await this.getAdditionalMenuItems()));
 
@@ -232,6 +241,15 @@ export class PanelCtrl {
 
   sharePanel() {
     sharePanelUtil(this.dashboard, this.panel);
+  }
+
+  inspectPanel() {
+    getLocationSrv().update({
+      query: {
+        inspect: this.panel.id,
+      },
+      partial: true,
+    });
   }
 
   getInfoMode() {
