@@ -519,7 +519,6 @@ export function getValueColor(props: Props): string {
  * Only exported to for unit test
  */
 function getValueStyles(value: string, color: string, width: number, height: number): CSSProperties {
-  const heightFont = height / VALUE_LINE_HEIGHT;
   // calculate width in 14px
   const realWidthIn14 = getTextWidth(value, 14) + 10;
   // how much bigger than 14px can we make it while staying within our width constraints
