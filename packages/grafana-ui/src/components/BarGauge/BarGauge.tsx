@@ -5,6 +5,7 @@ import { Threshold, TimeSeriesValue, getActiveThreshold, DisplayValue } from '@g
 
 // Utils
 import { getColorFromHexRgbOrName } from '@grafana/data';
+import { getTextWidth } from '../../utils/getTextWidth';
 
 // Types
 import { VizOrientation } from '@grafana/data';
@@ -41,7 +42,7 @@ export interface Props extends Themeable {
   displayMode: 'basic' | 'lcd' | 'gradient';
   onClick?: React.MouseEventHandler<HTMLElement>;
   className?: string;
-  maxDimensionInput?: BarGaugeAlignmentFactors;
+  alignmentFactors?: BarGaugeAlignmentFactors;
 }
 
 export class BarGauge extends PureComponent<Props> {
@@ -244,8 +245,8 @@ function isVertical(props: Props) {
 }
 
 function calculateTitleDimensions(props: Props): TitleDimensions {
-  const { height, width, maxDimensionInput } = props;
-  const title = maxDimensionInput ? maxDimensionInput.title : props.value.text;
+  const { height, width, alignmentFactors } = props;
+  const title = alignmentFactors ? alignmentFactors.title : props.value.text;
 
   if (!title) {
     return { fontSize: 0, width: 0, height: 0, placement: 'above' };
@@ -275,13 +276,14 @@ function calculateTitleDimensions(props: Props): TitleDimensions {
 
   // title to left of bar scenario
   const maxTitleHeightRatio = 0.6;
-  const maxTitleWidthRatio = 0.2;
   const titleHeight = Math.max(height * maxTitleHeightRatio, MIN_VALUE_HEIGHT);
+  const titleFontSize = titleHeight / TITLE_LINE_HEIGHT;
+  const titleWidth = getTextWidth(title, titleFontSize);
 
   return {
-    fontSize: titleHeight / TITLE_LINE_HEIGHT,
+    fontSize: titleFontSize,
     height: 0,
-    width: Math.min(Math.max(width * maxTitleWidthRatio, 50), 200),
+    width: titleWidth,
     placement: 'left',
   };
 }
@@ -527,11 +529,3 @@ function getValueStyles(value: string, color: string, width: number, height: num
     fontSize: fontSize.toFixed(4) + 'px',
   };
 }
-
-// function getTextWidth(text: string): number {
-//   const canvas = getTextWidth.canvas || (getTextWidth.canvas = document.createElement("canvas"));
-//   var context = canvas.getContext("2d");
-//   context.font = "'Roboto', 'Helvetica Neue', Arial, sans-serif";
-//   var metrics = context.measureText(text);
-//   return metrics.width;
-// }

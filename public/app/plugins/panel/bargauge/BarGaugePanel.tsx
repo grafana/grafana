@@ -15,19 +15,26 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
       title: '',
       text: '',
     };
+
     for (let i = 0; i < values.length; i++) {
       const v = values[i].display;
       if (v.text && v.text.length > info.text.length) {
         info.text = v.text;
       }
+
       if (v.title && v.title.length > info.title.length) {
-        info.title = v.text;
+        info.title = v.title;
       }
     }
     return info;
   };
 
-  renderValue = (value: FieldDisplay, width: number, height: number, info: BarGaugeAlignmentFactors): JSX.Element => {
+  renderValue = (
+    value: FieldDisplay,
+    width: number,
+    height: number,
+    alignmentFactors: BarGaugeAlignmentFactors
+  ): JSX.Element => {
     const { options } = this.props;
     const { field, display } = value;
 
@@ -48,7 +55,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
               maxValue={field.max}
               onClick={openMenu}
               className={targetClassName}
-              maxDimensionInput={info}
+              alignmentFactors={alignmentFactors}
             />
           );
         }}
