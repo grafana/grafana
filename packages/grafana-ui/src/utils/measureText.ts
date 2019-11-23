@@ -1,7 +1,7 @@
 let canvas: HTMLCanvasElement | null;
-const cache: Record<string, number> = {};
+const cache: Record<string, TextMetrics> = {};
 
-export function getTextWidth(text: string, fontSize: number): number {
+export function measureText(text: string, fontSize: number): TextMetrics {
   const fontStyle = `${fontSize}px 'Roboto'`;
   const cacheKey = text + fontStyle;
   const fromCache = cache[cacheKey];
@@ -15,6 +15,6 @@ export function getTextWidth(text: string, fontSize: number): number {
   context.font = fontStyle;
   const metrics = context.measureText(text);
 
-  cache[cacheKey] = metrics.width + 15;
-  return metrics.width + 15;
+  cache[cacheKey] = metrics;
+  return metrics;
 }

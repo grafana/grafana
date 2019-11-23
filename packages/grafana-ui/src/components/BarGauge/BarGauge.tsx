@@ -5,7 +5,7 @@ import { Threshold, TimeSeriesValue, getActiveThreshold, DisplayValue } from '@g
 
 // Utils
 import { getColorFromHexRgbOrName } from '@grafana/data';
-import { getTextWidth } from '../../utils/getTextWidth';
+import { measureText } from '../../utils/measureText';
 
 // Types
 import { VizOrientation } from '@grafana/data';
@@ -17,6 +17,7 @@ const MIN_VALUE_WIDTH = 50;
 const MAX_VALUE_WIDTH = 150;
 const TITLE_LINE_HEIGHT = 1.5;
 const VALUE_LINE_HEIGHT = 1;
+const VALUE_LEFT_PADDING = 10;
 
 /**
  * These values calculate the internal font sizes and
@@ -151,7 +152,7 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   renderRetroBars(): ReactNode {
-    const { maxValue, minValue, value, itemSpacing, alignmentFactors } = this.props;
+    const { maxValue, minValue, value, itemSpacing, alignmentFactors, orientation } = this.props;
     const {
       valueHeight,
       valueWidth,
@@ -161,7 +162,7 @@ export class BarGauge extends PureComponent<Props> {
       wrapperHeight,
     } = calculateBarAndValueDimensions(this.props);
 
-    const isVert = isVertical(this.props);
+    const isVert = isVertical(orientation);
     const valueRange = maxValue - minValue;
     const maxSize = isVert ? maxBarHeight : maxBarWidth;
     const cellSpacing = itemSpacing!;
@@ -171,7 +172,7 @@ export class BarGauge extends PureComponent<Props> {
     const valueColor = getValueColor(this.props);
 
     const valueTextToBaseSizeOn = alignmentFactors ? alignmentFactors.text : value.text;
-    const valueStyles = getValueStyles(valueTextToBaseSizeOn, valueColor, valueWidth, valueHeight);
+    const valueStyles = getValueStyles(valueTextToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation);
 
     const containerStyles: CSSProperties = {
       width: `${wrapperWidth}px`,
@@ -182,11 +183,9 @@ export class BarGauge extends PureComponent<Props> {
     if (isVert) {
       containerStyles.flexDirection = 'column-reverse';
       containerStyles.alignItems = 'center';
-      valueStyles.justifyContent = 'center';
     } else {
       containerStyles.flexDirection = 'row';
       containerStyles.alignItems = 'center';
-      valueStyles.justifyContent = 'flex-end';
     }
 
     const cells: JSX.Element[] = [];
@@ -242,19 +241,19 @@ interface TitleDimensions {
   height: number;
 }
 
-function isVertical(props: Props) {
-  return props.orientation === VizOrientation.Vertical;
+function isVertical(orientation: VizOrientation) {
+  return orientation === VizOrientation.Vertical;
 }
 
 function calculateTitleDimensions(props: Props): TitleDimensions {
-  const { height, width, alignmentFactors } = props;
+  const { height, width, alignmentFactors, orientation } = props;
   const title = alignmentFactors ? alignmentFactors.title : props.value.title;
 
   if (!title) {
     return { fontSize: 0, width: 0, height: 0, placement: 'above' };
   }
 
-  if (isVertical(props)) {
+  if (isVertical(orientation)) {
     return {
       fontSize: 14,
       width: width,
@@ -280,12 +279,12 @@ function calculateTitleDimensions(props: Props): TitleDimensions {
   const maxTitleHeightRatio = 0.6;
   const titleHeight = Math.max(height * maxTitleHeightRatio, MIN_VALUE_HEIGHT);
   const titleFontSize = titleHeight / TITLE_LINE_HEIGHT;
-  const titleWidth = getTextWidth(title, titleFontSize);
+  const textSize = measureText(title, titleFontSize);
 
   return {
     fontSize: titleFontSize,
     height: 0,
-    width: titleWidth,
+    width: textSize.width + 15,
     placement: 'left',
   };
 }
@@ -308,7 +307,7 @@ export function getTitleStyles(props: Props): { wrapper: CSSProperties; title: C
     alignSelf: 'center',
   };
 
-  if (isVertical(props)) {
+  if (isVertical(props.orientation)) {
     wrapperStyles.flexDirection = 'column-reverse';
     titleStyles.textAlign = 'center';
   } else {
@@ -345,7 +344,7 @@ interface BarAndValueDimensions {
 }
 
 function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
-  const { height, width } = props;
+  const { height, width, orientation } = props;
   const titleDim = calculateTitleDimensions(props);
 
   let maxBarHeight = 0;
@@ -355,7 +354,7 @@ function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
   let wrapperWidth = 0;
   let wrapperHeight = 0;
 
-  if (isVertical(props)) {
+  if (isVertical(orientation)) {
     valueHeight = Math.min(Math.max(height * 0.1, MIN_VALUE_HEIGHT), MAX_VALUE_HEIGHT);
     valueWidth = width;
     maxBarHeight = height - (titleDim.height + valueHeight);
@@ -395,14 +394,14 @@ export function getValuePercent(value: number, minValue: number, maxValue: numbe
  * Only exported to for unit test
  */
 export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles {
-  const { displayMode, maxValue, minValue, value, alignmentFactors } = props;
+  const { displayMode, maxValue, minValue, value, alignmentFactors, orientation } = props;
   const { valueWidth, valueHeight, maxBarHeight, maxBarWidth } = calculateBarAndValueDimensions(props);
 
   const valuePercent = getValuePercent(value.numeric, minValue, maxValue);
   const valueColor = getValueColor(props);
 
   const valueTextToBaseSizeOn = alignmentFactors ? alignmentFactors.text : value.text;
-  const valueStyles = getValueStyles(valueTextToBaseSizeOn, valueColor, valueWidth, valueHeight);
+  const valueStyles = getValueStyles(valueTextToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation);
 
   const isBasic = displayMode === 'basic';
   const wrapperStyles: CSSProperties = {
@@ -413,7 +412,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
     borderRadius: '3px',
   };
 
-  if (isVertical(props)) {
+  if (isVertical(orientation)) {
     const barHeight = Math.max(valuePercent * maxBarHeight, 1);
 
     // vertical styles
@@ -423,9 +422,6 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
     barStyles.transition = 'height 1s';
     barStyles.height = `${barHeight}px`;
     barStyles.width = `${maxBarWidth}px`;
-
-    // value styles centered
-    valueStyles.justifyContent = 'center';
 
     if (isBasic) {
       // Basic styles
@@ -448,8 +444,6 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
     barStyles.transition = 'width 1s';
     barStyles.height = `${maxBarHeight}px`;
     barStyles.width = `${barWidth}px`;
-
-    valueStyles.paddingLeft = '10px';
 
     if (isBasic) {
       // Basic styles
@@ -474,8 +468,8 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
  * Only exported to for unit test
  */
 export function getBarGradient(props: Props, maxSize: number): string {
-  const { minValue, maxValue, thresholds, value } = props;
-  const cssDirection = isVertical(props) ? '0deg' : '90deg';
+  const { minValue, maxValue, thresholds, value, orientation } = props;
+  const cssDirection = isVertical(orientation) ? '0deg' : '90deg';
 
   let gradient = '';
   let lastpos = 0;
@@ -515,22 +509,40 @@ export function getValueColor(props: Props): string {
   return getColorFromHexRgbOrName('gray', theme.type);
 }
 
-/**
- * Only exported to for unit test
- */
-function getValueStyles(value: string, color: string, width: number, height: number): CSSProperties {
-  // calculate width in 14px
-  const realWidthIn14 = getTextWidth(value, 14) + 10;
-  // how much bigger than 14px can we make it while staying within our width constraints
-  const fontSize = (width / realWidthIn14) * 14;
-
-  return {
+function getValueStyles(
+  value: string,
+  color: string,
+  width: number,
+  height: number,
+  orientation: VizOrientation
+): CSSProperties {
+  const valueStyles: CSSProperties = {
     color: color,
     height: `${height}px`,
     width: `${width}px`,
     display: 'flex',
     alignItems: 'center',
     lineHeight: VALUE_LINE_HEIGHT,
-    fontSize: fontSize.toFixed(4) + 'px',
   };
+
+  let textWidth = width;
+
+  if (isVertical(orientation)) {
+    valueStyles.justifyContent = `center`;
+  } else {
+    valueStyles.justifyContent = `flex-end`;
+    valueStyles.paddingLeft = `${VALUE_LEFT_PADDING}px`;
+    textWidth -= VALUE_LEFT_PADDING;
+  }
+
+  // calculate width in 14px
+  const textSize = measureText(value, 14);
+  // how much bigger than 14px can we make it while staying within our width constraints
+  const fontSizeBasedOnWidth = (textWidth / (textSize.width + 0)) * 14;
+  const fontSizeBasedOnHeight = height / VALUE_LINE_HEIGHT;
+
+  // final fontSize
+  valueStyles.fontSize = Math.min(fontSizeBasedOnHeight, fontSizeBasedOnWidth).toFixed(4) + 'px';
+
+  return valueStyles;
 }
