@@ -7,7 +7,6 @@ export function getTextWidth(text: string, fontSize: number): number {
   const fromCache = cache[cacheKey];
 
   if (fromCache) {
-    console.log('using cache', fromCache);
     return fromCache;
   }
 

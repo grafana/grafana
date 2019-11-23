@@ -13,10 +13,6 @@ import {
 import { VizOrientation } from '@grafana/data';
 import { getTheme } from '../../themes';
 
-// jest.mock('jquery', () => ({
-//   plot: jest.fn(),
-// }));
-
 const green = '#73BF69';
 const orange = '#FF9830';
 // const red = '#BB';
@@ -98,7 +94,7 @@ describe('BarGauge', () => {
         orientation: VizOrientation.Vertical,
       });
       const styles = getBasicAndGradientStyles(props);
-      expect(styles.bar.height).toBe('249px');
+      expect(styles.bar.height).toBe('270px');
     });
   });
 
@@ -135,6 +131,38 @@ describe('BarGauge', () => {
       });
       const styles = getTitleStyles(props);
       expect(styles.wrapper.flexDirection).toBe('row');
+    });
+
+    it('should calculate title width based on title', () => {
+      const props = getProps({
+        height: 30,
+        value: getValue(100, 'AA'),
+        orientation: VizOrientation.Horizontal,
+      });
+      const styles = getTitleStyles(props);
+      expect(styles.title.width).toBe('17px');
+
+      const props2 = getProps({
+        height: 30,
+        value: getValue(120, 'Longer title with many words'),
+        orientation: VizOrientation.Horizontal,
+      });
+      const styles2 = getTitleStyles(props2);
+      expect(styles2.title.width).toBe('43px');
+    });
+
+    it('should use alignmentFactors if provided', () => {
+      const props = getProps({
+        height: 30,
+        value: getValue(100, 'AA'),
+        alignmentFactors: {
+          title: 'Super duper long title',
+          value: '1000',
+        },
+        orientation: VizOrientation.Horizontal,
+      });
+      const styles = getTitleStyles(props);
+      expect(styles.title.width).toBe('37px');
     });
   });
 

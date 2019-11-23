@@ -246,7 +246,7 @@ function isVertical(props: Props) {
 
 function calculateTitleDimensions(props: Props): TitleDimensions {
   const { height, width, alignmentFactors } = props;
-  const title = alignmentFactors ? alignmentFactors.title : props.value.text;
+  const title = alignmentFactors ? alignmentFactors.title : props.value.title;
 
   if (!title) {
     return { fontSize: 0, width: 0, height: 0, placement: 'above' };
