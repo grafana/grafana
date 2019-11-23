@@ -6,7 +6,7 @@ import { dateMath } from '@grafana/data';
 import { angularMocks, sinon } from '../lib/common';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { RawTimeRange } from '@grafana/data';
-import { PanelPluginMeta } from '@grafana/ui';
+import { PanelPluginMeta } from '@grafana/data';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export function ControllerTestContext(this: any) {

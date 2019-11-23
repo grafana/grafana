@@ -8,7 +8,7 @@ aliases = ["/installation/installation/debian"]
 name = "Installing on Ubuntu / Debian"
 identifier = "debian"
 parent = "installation"
-weight = 1
+weight = 200
 +++
 
 # Installing on Debian / Ubuntu
@@ -27,34 +27,35 @@ sudo apt-get install -y adduser libfontconfig1
 sudo dpkg -i grafana_<version>_amd64.deb
 ```
 
-You will find package urls on the [download page](https://grafana.com/grafana/download?platform=linux).
+You will find package URLs on the [download page](https://grafana.com/grafana/download?platform=linux).
 
 ## APT Repository
 
-The command `add-apt-repository` isn't a default app on Debian 9 and requires
+The command `add-apt-repository` isn't a default app on Debian 9 and requires you to run:
+
 ```bash
 apt-get install -y software-properties-common
 ```
 
-Install the repository for stable releases
+Install the repository for stable releases:
 
 ```bash
 sudo add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"
 ```
 
-There is a separate repository if you want beta releases.
+There is a separate repository if you want beta releases:
 
 ```bash
 sudo add-apt-repository "deb https://packages.grafana.com/oss/deb beta main"
 ```
 
-Use the above line even if you are on Ubuntu or another Debian version. Then add our gpg key. This allows you to install signed packages.
+Use the above line even if you are on Ubuntu or another Debian version. Then add our GPG key. This allows you to install signed packages.
 
 ```bash
 wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
 ```
 
-Update your Apt repositories and install Grafana
+Update your Apt repositories and install Grafana:
 
 ```bash
 sudo apt-get update

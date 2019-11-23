@@ -1,5 +1,5 @@
 import { ResultTransformer } from '../result_transformer';
-import { DataQueryResponseData } from '@grafana/ui';
+import { DataQueryResponseData } from '@grafana/data';
 
 describe('Prometheus Result Transformer', () => {
   const ctx: any = {};
@@ -59,7 +59,7 @@ describe('Prometheus Result Transformer', () => {
     };
 
     it('should return table model', () => {
-      const table = ctx.resultTransformer.transformMetricDataToTable(response.data.result);
+      const table = ctx.resultTransformer.transformMetricDataToTable(response.data.result, 0, 'A');
       expect(table.type).toBe('table');
       expect(table.rows).toEqual([
         [1443454528000, 'test', '', 'testjob', 3846],
@@ -73,6 +73,7 @@ describe('Prometheus Result Transformer', () => {
         { text: 'Value' },
       ]);
       expect(table.columns[4].filterable).toBeUndefined();
+      expect(table.refId).toBe('A');
     });
 
     it('should column title include refId if response count is more than 2', () => {
@@ -123,15 +124,27 @@ describe('Prometheus Result Transformer', () => {
         result: [
           {
             metric: { __name__: 'test', job: 'testjob', le: '1' },
-            values: [[1445000010, '10'], [1445000020, '10'], [1445000030, '0']],
+            values: [
+              [1445000010, '10'],
+              [1445000020, '10'],
+              [1445000030, '0'],
+            ],
           },
           {
             metric: { __name__: 'test', job: 'testjob', le: '2' },
-            values: [[1445000010, '20'], [1445000020, '10'], [1445000030, '30']],
+            values: [
+              [1445000010, '20'],
+              [1445000020, '10'],
+              [1445000030, '30'],
+            ],
           },
           {
             metric: { __name__: 'test', job: 'testjob', le: '3' },
-            values: [[1445000010, '30'], [1445000020, '10'], [1445000030, '40']],
+            values: [
+              [1445000010, '30'],
+              [1445000020, '10'],
+              [1445000030, '40'],
+            ],
           },
         ],
       },
@@ -150,19 +163,31 @@ describe('Prometheus Result Transformer', () => {
         {
           target: '1',
           query: undefined,
-          datapoints: [[10, 1445000010000], [10, 1445000020000], [0, 1445000030000]],
+          datapoints: [
+            [10, 1445000010000],
+            [10, 1445000020000],
+            [0, 1445000030000],
+          ],
           tags: { __name__: 'test', job: 'testjob', le: '1' },
         },
         {
           target: '2',
           query: undefined,
-          datapoints: [[10, 1445000010000], [0, 1445000020000], [30, 1445000030000]],
+          datapoints: [
+            [10, 1445000010000],
+            [0, 1445000020000],
+            [30, 1445000030000],
+          ],
           tags: { __name__: 'test', job: 'testjob', le: '2' },
         },
         {
           target: '3',
           query: undefined,
-          datapoints: [[10, 1445000010000], [0, 1445000020000], [10, 1445000030000]],
+          datapoints: [
+            [10, 1445000010000],
+            [0, 1445000020000],
+            [10, 1445000030000],
+          ],
           tags: { __name__: 'test', job: 'testjob', le: '3' },
         },
       ]);
@@ -170,14 +195,46 @@ describe('Prometheus Result Transformer', () => {
 
     it('should handle missing datapoints', () => {
       const seriesList = [
-        { datapoints: [[1, 1000], [2, 2000]] },
-        { datapoints: [[2, 1000], [5, 2000], [1, 3000]] },
-        { datapoints: [[3, 1000], [7, 2000]] },
+        {
+          datapoints: [
+            [1, 1000],
+            [2, 2000],
+          ],
+        },
+        {
+          datapoints: [
+            [2, 1000],
+            [5, 2000],
+            [1, 3000],
+          ],
+        },
+        {
+          datapoints: [
+            [3, 1000],
+            [7, 2000],
+          ],
+        },
       ];
       const expected = [
-        { datapoints: [[1, 1000], [2, 2000]] },
-        { datapoints: [[1, 1000], [3, 2000], [1, 3000]] },
-        { datapoints: [[1, 1000], [2, 2000]] },
+        {
+          datapoints: [
+            [1, 1000],
+            [2, 2000],
+          ],
+        },
+        {
+          datapoints: [
+            [1, 1000],
+            [3, 2000],
+            [1, 3000],
+          ],
+        },
+        {
+          datapoints: [
+            [1, 1000],
+            [2, 2000],
+          ],
+        },
       ];
       const result = ctx.resultTransformer.transformToHistogramOverTime(seriesList);
       expect(result).toEqual(expected);
@@ -208,7 +265,11 @@ describe('Prometheus Result Transformer', () => {
           result: [
             {
               metric: { __name__: 'test', job: 'testjob' },
-              values: [[0, '10'], [1, '10'], [2, '0']],
+              values: [
+                [0, '10'],
+                [1, '10'],
+                [2, '0'],
+              ],
             },
           ],
         },
@@ -217,6 +278,7 @@ describe('Prometheus Result Transformer', () => {
         format: 'timeseries',
         start: 0,
         end: 2,
+        refId: 'B',
       };
 
       const result = ctx.resultTransformer.transform({ data: response }, options);
@@ -224,8 +286,13 @@ describe('Prometheus Result Transformer', () => {
         {
           target: 'test{job="testjob"}',
           query: undefined,
-          datapoints: [[10, 0], [10, 1000], [0, 2000]],
+          datapoints: [
+            [10, 0],
+            [10, 1000],
+            [0, 2000],
+          ],
           tags: { job: 'testjob' },
+          refId: 'B',
         },
       ]);
     });
@@ -238,7 +305,10 @@ describe('Prometheus Result Transformer', () => {
           result: [
             {
               metric: { __name__: 'test', job: 'testjob' },
-              values: [[1, '10'], [2, '0']],
+              values: [
+                [1, '10'],
+                [2, '0'],
+              ],
             },
           ],
         },
@@ -255,7 +325,11 @@ describe('Prometheus Result Transformer', () => {
         {
           target: 'test{job="testjob"}',
           query: undefined,
-          datapoints: [[null, 0], [10, 1000], [0, 2000]],
+          datapoints: [
+            [null, 0],
+            [10, 1000],
+            [0, 2000],
+          ],
           tags: { job: 'testjob' },
         },
       ]);
@@ -269,7 +343,10 @@ describe('Prometheus Result Transformer', () => {
           result: [
             {
               metric: { __name__: 'test', job: 'testjob' },
-              values: [[4, '10'], [8, '10']],
+              values: [
+                [4, '10'],
+                [8, '10'],
+              ],
             },
           ],
         },
@@ -286,7 +363,13 @@ describe('Prometheus Result Transformer', () => {
         {
           target: 'test{job="testjob"}',
           query: undefined,
-          datapoints: [[null, 0], [null, 2000], [10, 4000], [null, 6000], [10, 8000]],
+          datapoints: [
+            [null, 0],
+            [null, 2000],
+            [10, 4000],
+            [null, 6000],
+            [10, 8000],
+          ],
           tags: { job: 'testjob' },
         },
       ]);

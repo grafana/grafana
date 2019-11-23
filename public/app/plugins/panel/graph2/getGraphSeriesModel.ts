@@ -1,5 +1,8 @@
-import { colors, getFlotPairs, getColorFromHexRgbOrName, getDisplayProcessor } from '@grafana/ui';
+import { colors } from '@grafana/ui';
 import {
+  getFlotPairs,
+  getColorFromHexRgbOrName,
+  getDisplayProcessor,
   NullValueMode,
   reduceField,
   FieldType,
@@ -7,6 +10,12 @@ import {
   GraphSeriesXY,
   getTimeField,
   DataFrame,
+  FieldDisplayOptions,
+  getSeriesTimeStep,
+  TimeZone,
+  hasMsResolution,
+  MS_DATE_TIME_FORMAT,
+  DEFAULT_DATE_TIME_FORMAT,
 } from '@grafana/data';
 
 import { SeriesOptions, GraphOptions } from './types';
@@ -14,9 +23,11 @@ import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
 
 export const getGraphSeriesModel = (
   dataFrames: DataFrame[],
+  timeZone: TimeZone,
   seriesOptions: SeriesOptions,
   graphOptions: GraphOptions,
-  legendOptions: GraphLegendEditorLegendOptions
+  legendOptions: GraphLegendEditorLegendOptions,
+  fieldOptions?: FieldDisplayOptions
 ) => {
   const graphs: GraphSeriesXY[] = [];
 
@@ -26,6 +37,7 @@ export const getGraphSeriesModel = (
     },
   });
 
+  let fieldColumnIndex = -1;
   for (const series of dataFrames) {
     const { timeField } = getTimeField(series);
     if (!timeField) {
@@ -36,6 +48,8 @@ export const getGraphSeriesModel = (
       if (field.type !== FieldType.number) {
         continue;
       }
+      // Storing index of series field for future inspection
+      fieldColumnIndex++;
 
       // Use external calculator just to make sure it works :)
       const points = getFlotPairs({
@@ -60,10 +74,39 @@ export const getGraphSeriesModel = (
           });
         }
 
-        const seriesColor =
-          seriesOptions[field.name] && seriesOptions[field.name].color
-            ? getColorFromHexRgbOrName(seriesOptions[field.name].color)
-            : colors[graphs.length % colors.length];
+        let seriesColor;
+        if (seriesOptions[field.name] && seriesOptions[field.name].color) {
+          // Case when panel has settings provided via SeriesOptions, i.e. graph panel
+          seriesColor = getColorFromHexRgbOrName(seriesOptions[field.name].color);
+        } else if (field.config && field.config.color) {
+          // Case when color settings are set on field, i.e. Explore logs histogram (see makeSeriesForLogs)
+          seriesColor = field.config.color;
+        } else {
+          seriesColor = colors[graphs.length % colors.length];
+        }
+
+        field.config = fieldOptions
+          ? {
+              ...field.config,
+              unit: fieldOptions.defaults.unit,
+              decimals: fieldOptions.defaults.decimals,
+              color: seriesColor,
+            }
+          : { ...field.config, color: seriesColor };
+
+        field.display = getDisplayProcessor({ config: { ...field.config }, type: field.type });
+
+        // Time step is used to determine bars width when graph is rendered as bar chart
+        const timeStep = getSeriesTimeStep(timeField);
+        const useMsDateFormat = hasMsResolution(timeField);
+
+        timeField.display = getDisplayProcessor({
+          type: timeField.type,
+          isUtc: timeZone === 'utc',
+          config: {
+            dateDisplayFormat: useMsDateFormat ? MS_DATE_TIME_FORMAT : DEFAULT_DATE_TIME_FORMAT,
+          },
+        });
 
         graphs.push({
           label: field.name,
@@ -74,6 +117,11 @@ export const getGraphSeriesModel = (
           yAxis: {
             index: (seriesOptions[field.name] && seriesOptions[field.name].yAxis) || 1,
           },
+          // This index is used later on to retrieve appropriate series/time for X and Y axes
+          seriesIndex: fieldColumnIndex,
+          timeField: { ...timeField },
+          valueField: { ...field },
+          timeStep,
         });
       }
     }

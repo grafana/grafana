@@ -10,14 +10,21 @@ import {
   refreshIntervalToSortOrder,
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
-import { LoadingState, toLegacyResponseData, DefaultTimeRange } from '@grafana/data';
-import { DataQuery, DataSourceApi, PanelData, DataQueryRequest, RefreshPicker, PanelEvents } from '@grafana/ui';
+import {
+  LoadingState,
+  toLegacyResponseData,
+  DefaultTimeRange,
+  DataQuery,
+  DataSourceApi,
+  PanelData,
+  DataQueryRequest,
+  PanelEvents,
+  TimeZone,
+} from '@grafana/data';
+import { RefreshPicker } from '@grafana/ui';
 import {
   HigherOrderAction,
   ActionTypes,
-  testDataSourcePendingAction,
-  testDataSourceSuccessAction,
-  testDataSourceFailureAction,
   splitCloseAction,
   SplitCloseActionPayload,
   loadExploreDatasources,
@@ -82,7 +89,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
   containerWidth: 0,
   datasourceInstance: null,
   requestedDatasourceName: null,
-  datasourceError: null,
   datasourceLoading: null,
   datasourceMissing: false,
   exploreDatasources: [],
@@ -269,30 +275,46 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: updateDatasourceInstanceAction,
     mapper: (state, action): ExploreItemState => {
-      const { datasourceInstance } = action.payload;
-      const [supportedModes, mode] = getModesForDatasource(datasourceInstance, state.mode);
-
-      const originPanelId = state.urlState && state.urlState.originPanelId;
+      const { datasourceInstance, version } = action.payload;
 
       // Custom components
       const StartPage = datasourceInstance.components.ExploreStartPage;
       stopQueryState(state.querySubscription);
 
+      let newMetadata = datasourceInstance.meta;
+
+      // HACK: Temporary hack for Loki datasource. Can remove when plugin.json structure is changed.
+      if (version && version.length && datasourceInstance.meta.name === 'Loki') {
+        const lokiVersionMetadata: Record<string, { metrics: boolean }> = {
+          v0: {
+            metrics: false,
+          },
+
+          v1: {
+            metrics: true,
+          },
+        };
+        newMetadata = { ...newMetadata, ...lokiVersionMetadata[version] };
+      }
+
+      const updatedDatasourceInstance = Object.assign(datasourceInstance, { meta: newMetadata });
+      const [supportedModes, mode] = getModesForDatasource(updatedDatasourceInstance, state.mode);
+
       return {
         ...state,
-        datasourceInstance,
+        datasourceInstance: updatedDatasourceInstance,
         graphResult: null,
         tableResult: null,
         logsResult: null,
         latency: 0,
         queryResponse: createEmptyQueryResponse(),
         loading: false,
-        StartPage,
+        StartPage: datasourceInstance.components.ExploreStartPage,
         showingStartPage: Boolean(StartPage),
         queryKeys: [],
         supportedModes,
         mode,
-        originPanelId,
+        originPanelId: state.urlState && state.urlState.originPanelId,
       };
     },
   })
@@ -476,37 +498,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     },
   })
   .addMapper({
-    filter: testDataSourcePendingAction,
-    mapper: (state): ExploreItemState => {
-      return {
-        ...state,
-        datasourceError: null,
-      };
-    },
-  })
-  .addMapper({
-    filter: testDataSourceSuccessAction,
-    mapper: (state): ExploreItemState => {
-      return {
-        ...state,
-        datasourceError: null,
-      };
-    },
-  })
-  .addMapper({
-    filter: testDataSourceFailureAction,
-    mapper: (state, action): ExploreItemState => {
-      return {
-        ...state,
-        datasourceError: action.payload.error,
-        graphResult: undefined,
-        tableResult: undefined,
-        logsResult: undefined,
-        update: makeInitialUpdateState(),
-      };
-    },
-  })
-  .addMapper({
     filter: loadExploreDatasources,
     mapper: (state, action): ExploreItemState => {
       return {
@@ -615,7 +606,7 @@ export const processQueryResponse = (
   }
 
   const latency = request.endTime ? request.endTime - request.startTime : 0;
-  const processor = new ResultProcessor(state, series, request.intervalMs);
+  const processor = new ResultProcessor(state, series, request.intervalMs, request.timezone as TimeZone);
   const graphResult = processor.getGraphResult();
   const tableResult = processor.getTableResult();
   const logsResult = processor.getLogsResult();
@@ -682,10 +673,7 @@ export const updateChildRefreshState = (
 };
 
 const getModesForDatasource = (dataSource: DataSourceApi, currentMode: ExploreMode): [ExploreMode[], ExploreMode] => {
-  // Temporary hack here. We want Loki to work in dashboards for which it needs to have metrics = true which is weird
-  // for Explore.
-  // TODO: need to figure out a better way to handle this situation
-  const supportsGraph = dataSource.meta.name === 'Loki' ? false : dataSource.meta.metrics;
+  const supportsGraph = dataSource.meta.metrics;
   const supportsLogs = dataSource.meta.logs;
 
   let mode = currentMode || ExploreMode.Metrics;
@@ -701,6 +689,12 @@ const getModesForDatasource = (dataSource: DataSourceApi, currentMode: ExploreMo
 
   if (supportedModes.length === 1) {
     mode = supportedModes[0];
+  }
+
+  // HACK: Used to set Loki's default explore mode to Logs mode.
+  // A better solution would be to introduce a "default" or "preferred" mode to the datasource config
+  if (dataSource.meta.name === 'Loki' && !currentMode) {
+    mode = ExploreMode.Logs;
   }
 
   return [supportedModes, mode];

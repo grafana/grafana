@@ -24,17 +24,18 @@ import ReactDOM from 'react-dom';
 import { GraphLegendProps, Legend } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
+import { ContextMenuGroup, ContextMenuItem } from '@grafana/ui';
+import { provideTheme, getCurrentTheme } from 'app/core/utils/ConfigProvider';
 import {
+  toUtc,
+  LinkModelSupplier,
+  DataFrameView,
   getValueFormat,
-  ContextMenuGroup,
   FieldDisplay,
-  ContextMenuItem,
   getDisplayProcessor,
   getFlotPairsConstant,
   PanelEvents,
-} from '@grafana/ui';
-import { provideTheme, getCurrentTheme } from 'app/core/utils/ConfigProvider';
-import { toUtc, LinkModelSupplier, DataFrameView } from '@grafana/data';
+} from '@grafana/data';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ContextSrv } from 'app/core/services/context_srv';
@@ -479,13 +480,11 @@ class GraphElement {
       this.plot = $.plot(this.elem, this.sortedSeries, options);
       if (this.ctrl.renderError) {
         delete this.ctrl.error;
-        delete this.ctrl.inspector;
       }
     } catch (e) {
       console.log('flotcharts error', e);
       this.ctrl.error = e.message || 'Render Error';
       this.ctrl.renderError = true;
-      this.ctrl.inspector = { error: e };
     }
 
     if (incrementRenderCounter) {

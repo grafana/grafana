@@ -5,10 +5,10 @@ import { Chart, Geom } from 'bizcharts';
 import { DisplayValue } from '@grafana/data';
 
 // Utils
-import { getColorFromHexRgbOrName } from '../../utils';
+import { getColorFromHexRgbOrName, GrafanaTheme } from '@grafana/data';
 
 // Types
-import { Themeable, GrafanaTheme } from '../../types';
+import { Themeable } from '../../types';
 
 export interface BigValueSparkline {
   data: any[][];

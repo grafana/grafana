@@ -1,18 +1,16 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import {
-  PanelEditorProps,
   ThresholdsEditor,
   PanelOptionsGrid,
   ValueMappingsEditor,
-  FieldDisplayOptions,
   FieldDisplayEditor,
   FieldPropertiesEditor,
   Switch,
   PanelOptionsGroup,
   DataLinksEditor,
 } from '@grafana/ui';
-import { Threshold, ValueMapping, FieldConfig, DataLink } from '@grafana/data';
+import { PanelEditorProps, FieldDisplayOptions, Threshold, ValueMapping, FieldConfig, DataLink } from '@grafana/data';
 
 import { GaugeOptions } from './types';
 import {

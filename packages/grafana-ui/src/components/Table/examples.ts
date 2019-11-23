@@ -1,6 +1,5 @@
-import { toDataFrame } from '@grafana/data';
+import { toDataFrame, getColorDefinitionByName } from '@grafana/data';
 import { ColumnStyle } from './TableCellBuilder';
-import { getColorDefinitionByName } from '../../utils/namedColorsPalette';
 
 const SemiDarkOrange = getColorDefinitionByName('semi-dark-orange');
 
@@ -162,5 +161,9 @@ export const migratedTestStyles: ColumnStyle[] = [
 export const simpleTable = {
   type: 'table',
   fields: [{ name: 'First' }, { name: 'Second' }, { name: 'Third' }],
-  rows: [[701, 205, 305], [702, 206, 301], [703, 207, 304]],
+  rows: [
+    [701, 205, 305],
+    [702, 206, 301],
+    [703, 207, 304],
+  ],
 };

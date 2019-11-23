@@ -6,8 +6,8 @@ import { StoreState } from 'app/types';
 import { addDataSource, loadDataSourceTypes, setDataSourceTypeSearchQuery } from './state/actions';
 import { getDataSourceTypes } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
-import { DataSourcePluginMeta, List, PluginType } from '@grafana/ui';
-import { NavModel } from '@grafana/data';
+import { List } from '@grafana/ui';
+import { DataSourcePluginMeta, NavModel, PluginType } from '@grafana/data';
 
 export interface Props {
   navModel: NavModel;
@@ -105,16 +105,13 @@ class NewDataSourcePage extends PureComponent<Props> {
       return null;
     }
 
-    const categories = dataSourceTypes.reduce(
-      (accumulator, item) => {
-        const category = item.category || 'other';
-        const list = accumulator[category] || [];
-        list.push(item);
-        accumulator[category] = list;
-        return accumulator;
-      },
-      {} as DataSourceCategories
-    );
+    const categories = dataSourceTypes.reduce((accumulator, item) => {
+      const category = item.category || 'other';
+      const list = accumulator[category] || [];
+      list.push(item);
+      accumulator[category] = list;
+      return accumulator;
+    }, {} as DataSourceCategories);
 
     categories['cloud'].push(getGrafanaCloudPhantomPlugin());
 
@@ -224,7 +221,7 @@ function getGrafanaCloudPhantomPlugin(): DataSourcePluginMeta {
       author: { name: 'Grafana Labs' },
       links: [
         {
-          url: 'https://grafana.com/cloud',
+          url: 'https://grafana.com/products/cloud/',
           name: 'Learn more',
         },
       ],
@@ -265,9 +262,4 @@ const mapDispatchToProps = {
   setDataSourceTypeSearchQuery,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(NewDataSourcePage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(NewDataSourcePage));

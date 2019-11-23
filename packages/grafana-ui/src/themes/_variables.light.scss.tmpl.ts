@@ -1,6 +1,6 @@
 /* tslint:disable:max-line-length */
 
-import { GrafanaTheme } from '../types';
+import { GrafanaTheme } from '@grafana/data';
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
 
 export const lightThemeVarsTemplate = (theme: GrafanaTheme) =>
@@ -179,6 +179,8 @@ $btn-divider-right: $gray-7;
 $btn-drag-image: '../img/grab_light.svg';
 
 $navbar-btn-gicon-brightness: brightness(1.5);
+
+$btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
 
 // Forms
 // -------------------------

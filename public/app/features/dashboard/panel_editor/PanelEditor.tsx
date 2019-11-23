@@ -2,7 +2,8 @@ import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { PanelPlugin, PanelPluginMeta, Tooltip } from '@grafana/ui';
+import { Tooltip } from '@grafana/ui';
+import { PanelPlugin, PanelPluginMeta } from '@grafana/data';
 import { AngularComponent, config } from '@grafana/runtime';
 
 import { QueriesTab } from './QueriesTab';
@@ -113,12 +114,7 @@ export const mapStateToProps = (state: StoreState) => getActiveTabAndTabs(state.
 
 const mapDispatchToProps = { refreshPanelEditor, panelEditorCleanUp, changePanelEditorTab };
 
-export const PanelEditor = hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(UnConnectedPanelEditor)
-);
+export const PanelEditor = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedPanelEditor));
 
 interface TabItemParams {
   tab: PanelEditorTab;

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Themeable, GrafanaTheme } from '../../types/theme';
+import { Themeable } from '../../types/theme';
+import { GrafanaTheme } from '@grafana/data';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import { css, cx } from 'emotion';
 import { stylesFactory } from '../../themes';

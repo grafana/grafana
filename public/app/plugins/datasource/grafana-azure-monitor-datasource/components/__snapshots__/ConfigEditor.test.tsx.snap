@@ -1,0 +1,102 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<Fragment>
+  <MonitorConfig
+    datasourceConfig={
+      Object {
+        "access": "proxy",
+        "basicAuth": false,
+        "basicAuthPassword": "",
+        "basicAuthUser": "",
+        "database": "",
+        "id": 21,
+        "isDefault": false,
+        "jsonData": Object {
+          "azureLogAnalyticsSameAs": true,
+          "cloudName": "azuremonitor",
+        },
+        "name": "Azure Monitor-10-10",
+        "orgId": 1,
+        "password": "",
+        "readOnly": false,
+        "secureJsonData": Object {},
+        "secureJsonFields": Object {},
+        "type": "grafana-azure-monitor-datasource",
+        "typeLogoUrl": "",
+        "url": "/api/datasources/proxy/21",
+        "user": "",
+        "version": 1,
+        "withCredentials": false,
+      }
+    }
+    onDatasourceUpdate={[Function]}
+    onLoadSubscriptions={[Function]}
+    subscriptions={Array []}
+  />
+  <AnalyticsConfig
+    datasourceConfig={
+      Object {
+        "access": "proxy",
+        "basicAuth": false,
+        "basicAuthPassword": "",
+        "basicAuthUser": "",
+        "database": "",
+        "id": 21,
+        "isDefault": false,
+        "jsonData": Object {
+          "azureLogAnalyticsSameAs": true,
+          "cloudName": "azuremonitor",
+        },
+        "name": "Azure Monitor-10-10",
+        "orgId": 1,
+        "password": "",
+        "readOnly": false,
+        "secureJsonData": Object {},
+        "secureJsonFields": Object {},
+        "type": "grafana-azure-monitor-datasource",
+        "typeLogoUrl": "",
+        "url": "/api/datasources/proxy/21",
+        "user": "",
+        "version": 1,
+        "withCredentials": false,
+      }
+    }
+    logAnalyticsSubscriptions={Array []}
+    logAnalyticsWorkspaces={Array []}
+    onDatasourceUpdate={[Function]}
+    onLoadSubscriptions={[Function]}
+    onLoadWorkspaces={[Function]}
+  />
+  <InsightsConfig
+    datasourceConfig={
+      Object {
+        "access": "proxy",
+        "basicAuth": false,
+        "basicAuthPassword": "",
+        "basicAuthUser": "",
+        "database": "",
+        "id": 21,
+        "isDefault": false,
+        "jsonData": Object {
+          "azureLogAnalyticsSameAs": true,
+          "cloudName": "azuremonitor",
+        },
+        "name": "Azure Monitor-10-10",
+        "orgId": 1,
+        "password": "",
+        "readOnly": false,
+        "secureJsonData": Object {},
+        "secureJsonFields": Object {},
+        "type": "grafana-azure-monitor-datasource",
+        "typeLogoUrl": "",
+        "url": "/api/datasources/proxy/21",
+        "user": "",
+        "version": 1,
+        "withCredentials": false,
+      }
+    }
+    onDatasourceUpdate={[Function]}
+  />
+</Fragment>
+`;

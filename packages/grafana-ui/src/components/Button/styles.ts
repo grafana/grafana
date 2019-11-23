@@ -24,12 +24,11 @@ const buttonVariantStyles = (
   }
 `;
 
-export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: StyleDeps) => {
+export const getButtonStyles = stylesFactory(({ theme, size, variant }: StyleDeps) => {
   const borderRadius = theme.border.radius.sm;
   let padding,
     background,
     fontSize,
-    iconDistance,
     height,
     fontWeight = theme.typography.weight.semibold;
 
@@ -37,14 +36,12 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }
     case 'sm':
       padding = `${theme.spacing.xs} ${theme.spacing.sm}`;
       fontSize = theme.typography.size.sm;
-      iconDistance = theme.spacing.xs;
       height = theme.height.sm;
       break;
 
     case 'md':
       padding = `${theme.spacing.sm} ${theme.spacing.md}`;
       fontSize = theme.typography.size.md;
-      iconDistance = theme.spacing.sm;
       height = theme.height.md;
       break;
 
@@ -52,13 +49,11 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }
       padding = `${theme.spacing.md} ${theme.spacing.lg}`;
       fontSize = theme.typography.size.lg;
       fontWeight = theme.typography.weight.regular;
-      iconDistance = theme.spacing.sm;
       height = theme.height.lg;
       break;
 
     default:
       padding = `${theme.spacing.sm} ${theme.spacing.md}`;
-      iconDistance = theme.spacing.sm;
       fontSize = theme.typography.size.base;
       height = theme.height.md;
   }
@@ -111,7 +106,6 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }
       font-family: ${theme.typography.fontFamily.sansSerif};
       line-height: ${theme.typography.lineHeight.xs};
       padding: ${padding};
-      text-align: ${withIcon ? 'left' : 'center'};
       vertical-align: middle;
       cursor: pointer;
       border: none;
@@ -130,11 +124,6 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }
       label: button-icon-wrap;
       display: flex;
       align-items: center;
-    `,
-    icon: css`
-      label: button-icon;
-      margin-right: ${iconDistance};
-      filter: brightness(100);
     `,
   };
 });

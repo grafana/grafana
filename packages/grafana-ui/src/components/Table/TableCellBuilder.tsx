@@ -3,10 +3,16 @@ import _ from 'lodash';
 import React, { ReactElement } from 'react';
 import { GridCellProps } from 'react-virtualized';
 import { Table, Props } from './Table';
-import { ValueFormatter, getValueFormat, getColorFromHexRgbOrName } from '../../utils/index';
-import { GrafanaTheme } from '../../types/theme';
-import { InterpolateFunction } from '../../types/panel';
-import { Field, dateTime, FieldConfig } from '@grafana/data';
+import {
+  Field,
+  dateTime,
+  FieldConfig,
+  getValueFormat,
+  GrafanaTheme,
+  ValueFormatter,
+  getColorFromHexRgbOrName,
+  InterpolateFunction,
+} from '@grafana/data';
 
 export interface TableCellBuilderOptions {
   value: any;
@@ -283,5 +289,35 @@ class CellBuilderWithStyle {
     }
 
     return simpleCellBuilder({ value, props, className });
+  };
+}
+
+export function getFieldCellBuilder(field: Field, style: ColumnStyle | null, p: Props): TableCellBuilder {
+  if (!field.display) {
+    return getCellBuilder(field.config || {}, style, p);
+  }
+
+  return (cell: TableCellBuilderOptions) => {
+    const { props } = cell;
+    const disp = field.display!(cell.value);
+
+    let style = props.style;
+    if (disp.color) {
+      style = {
+        ...props.style,
+        background: disp.color,
+      };
+    }
+
+    let clazz = 'gf-table-cell';
+    if (cell.className) {
+      clazz += ' ' + cell.className;
+    }
+
+    return (
+      <div style={style} className={clazz} title={disp.title}>
+        {disp.text}
+      </div>
+    );
   };
 }

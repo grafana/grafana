@@ -1,5 +1,5 @@
 import defaultTheme, { commonColorsPalette } from './default';
-import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
+import { GrafanaThemeType, GrafanaTheme } from '@grafana/data';
 
 const basicColors = {
   ...commonColorsPalette,
@@ -87,7 +87,8 @@ const darkTheme: GrafanaTheme = {
     formInputBorderActive: basicColors.blue95,
     formInputBorderInvalid: basicColors.red88,
     formInputFocusOutline: basicColors.blue77,
-    formInputText: basicColors.gray70,
+    formInputText: basicColors.gray85,
+    formInputDisabledText: basicColors.gray70,
     formInputTextStrong: basicColors.gray85,
     formInputTextWhite: basicColors.white,
     formValidationMessageText: basicColors.white,

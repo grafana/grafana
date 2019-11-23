@@ -18,6 +18,9 @@ exports[`Render should render team members when sync enabled 1`] = `
   <td>
     test@test.com
   </td>
+  <td>
+    testName
+  </td>
   <Component
     featureToggle={false}
   >
@@ -70,6 +73,9 @@ exports[`Render when feature toggle editorsCanAdmin is turned off should not ren
   </td>
   <td>
     test@test.com
+  </td>
+  <td>
+    testName
   </td>
   <Component
     featureToggle={false}
@@ -157,6 +163,9 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
   <td>
     test@test.com
   </td>
+  <td>
+    testName
+  </td>
   <Component
     featureToggle={true}
   >
@@ -242,6 +251,9 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render s
   </td>
   <td>
     test@test.com
+  </td>
+  <td>
+    testName
   </td>
   <Component
     featureToggle={true}

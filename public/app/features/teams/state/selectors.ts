@@ -26,7 +26,7 @@ export const getTeamMembers = (state: TeamState) => {
   const regex = RegExp(state.searchMemberQuery, 'i');
 
   return state.members.filter(member => {
-    return regex.test(member.login) || regex.test(member.email);
+    return regex.test(member.login) || regex.test(member.email) || regex.test(member.name);
   });
 };
 

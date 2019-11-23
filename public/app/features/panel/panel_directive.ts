@@ -4,7 +4,8 @@ import $ from 'jquery';
 import Drop from 'tether-drop';
 // @ts-ignore
 import baron from 'baron';
-import { PanelEvents } from '@grafana/ui';
+import { PanelEvents } from '@grafana/data';
+import { getLocationSrv } from '@grafana/runtime';
 
 const module = angular.module('grafana.directives');
 
@@ -64,6 +65,12 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       function resizeScrollableContent() {
         if (panelScrollbar) {
           panelScrollbar.update();
+        }
+      }
+
+      function infoCornerClicked() {
+        if (ctrl.error) {
+          getLocationSrv().update({ partial: true, query: { inspect: ctrl.panel.id } });
         }
       }
 
@@ -199,6 +206,8 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
 
       elem.on('mouseenter', mouseEnter);
       elem.on('mouseleave', mouseLeave);
+
+      cornerInfoElem.on('click', infoCornerClicked);
 
       scope.$on('$destroy', () => {
         elem.off();

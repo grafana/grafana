@@ -2,7 +2,7 @@ import angular, { IQService } from 'angular';
 import _ from 'lodash';
 
 import { getPluginSettings } from './PluginSettingsCache';
-import { PluginMeta } from '@grafana/ui';
+import { PluginMeta } from '@grafana/data';
 import { NavModelSrv } from 'app/core/core';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { AppEvents } from '@grafana/data';

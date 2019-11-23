@@ -1,11 +1,10 @@
 import _ from 'lodash';
 
-import { dateMath } from '@grafana/data';
+import { dateMath, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
 import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
 import { InfluxQueryBuilder } from './query_builder';
-import { DataSourceApi, DataSourceInstanceSettings } from '@grafana/ui';
 import { InfluxQuery, InfluxOptions } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -92,48 +91,46 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
     // replace templated variables
     allQueries = this.templateSrv.replace(allQueries, scopedVars);
 
-    return this._seriesQuery(allQueries, options).then(
-      (data: any): any => {
-        if (!data || !data.results) {
-          return [];
-        }
-
-        const seriesList = [];
-        for (i = 0; i < data.results.length; i++) {
-          const result = data.results[i];
-          if (!result || !result.series) {
-            continue;
-          }
-
-          const target = queryTargets[i];
-          let alias = target.alias;
-          if (alias) {
-            alias = this.templateSrv.replace(target.alias, options.scopedVars);
-          }
-
-          const influxSeries = new InfluxSeries({
-            series: data.results[i].series,
-            alias: alias,
-          });
-
-          switch (target.resultFormat) {
-            case 'table': {
-              seriesList.push(influxSeries.getTable());
-              break;
-            }
-            default: {
-              const timeSeries = influxSeries.getTimeSeries();
-              for (y = 0; y < timeSeries.length; y++) {
-                seriesList.push(timeSeries[y]);
-              }
-              break;
-            }
-          }
-        }
-
-        return { data: seriesList };
+    return this._seriesQuery(allQueries, options).then((data: any): any => {
+      if (!data || !data.results) {
+        return [];
       }
-    );
+
+      const seriesList = [];
+      for (i = 0; i < data.results.length; i++) {
+        const result = data.results[i];
+        if (!result || !result.series) {
+          continue;
+        }
+
+        const target = queryTargets[i];
+        let alias = target.alias;
+        if (alias) {
+          alias = this.templateSrv.replace(target.alias, options.scopedVars);
+        }
+
+        const influxSeries = new InfluxSeries({
+          series: data.results[i].series,
+          alias: alias,
+        });
+
+        switch (target.resultFormat) {
+          case 'table': {
+            seriesList.push(influxSeries.getTable());
+            break;
+          }
+          default: {
+            const timeSeries = influxSeries.getTimeSeries();
+            for (y = 0; y < timeSeries.length; y++) {
+              seriesList.push(timeSeries[y]);
+            }
+            break;
+          }
+        }
+      }
+
+      return { data: seriesList };
+    });
   }
 
   annotationQuery(options: any) {

@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { DataSourceSettings } from '@grafana/ui';
+import { DataSourceSettings } from '@grafana/data';
 
 export interface Props {
   dataSource: DataSourceSettings;
@@ -19,7 +19,7 @@ export class DataSourcesListItem extends PureComponent<Props> {
               <img src={dataSource.typeLogoUrl} alt={dataSource.name} />
             </figure>
             <div className="card-item-details">
-              <div className="card-item-name">
+              <div className="card-item-name" aria-label={`Data source list item for ${dataSource.name}`}>
                 {dataSource.name}
                 {dataSource.isDefault && <span className="btn btn-secondary btn-small card-item-label">default</span>}
               </div>

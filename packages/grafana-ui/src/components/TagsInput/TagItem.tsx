@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { getTagColorsFromName } from '../../utils';
 import { stylesFactory, useTheme } from '../../themes';
-import { GrafanaTheme } from '../../types';
+import { GrafanaTheme } from '@grafana/data';
 
 interface Props {
   name: string;

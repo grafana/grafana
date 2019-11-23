@@ -8,14 +8,16 @@ import { importDataSourcePlugin } from './plugin_loader';
 import { DataSourceSrv as DataSourceService, getDataSourceSrv as getDataSourceService } from '@grafana/runtime';
 
 // Types
-import { DataSourceApi, DataSourceSelectItem } from '@grafana/ui';
-import { ScopedVars, AppEvents } from '@grafana/data';
+import { DataSourceApi, DataSourceSelectItem, ScopedVars, AppEvents } from '@grafana/data';
 import { auto } from 'angular';
 import { TemplateSrv } from '../templating/template_srv';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
+// Pretend Datasource
+import { expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
+
 export class DatasourceSrv implements DataSourceService {
-  datasources: { [name: string]: DataSourceApi };
+  datasources: Record<string, DataSourceApi>;
 
   /** @ngInject */
   constructor(
@@ -55,10 +57,16 @@ export class DatasourceSrv implements DataSourceService {
     return this.loadDatasource(name);
   }
 
-  loadDatasource(name: string): Promise<DataSourceApi> {
+  loadDatasource(name: string): Promise<DataSourceApi<any, any>> {
+    // Expression Datasource (not a real datasource)
+    if (name === expressionDatasource.name) {
+      this.datasources[name] = expressionDatasource as any;
+      return this.$q.when(expressionDatasource);
+    }
+
     const dsConfig = config.datasources[name];
     if (!dsConfig) {
-      return this.$q.reject({ message: 'Datasource named ' + name + ' was not found' });
+      return this.$q.reject({ message: `Datasource named ${name} was not found` });
     }
 
     const deferred = this.$q.defer();

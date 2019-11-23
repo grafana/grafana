@@ -1,4 +1,4 @@
-import { GrafanaTheme } from '../../types';
+import { GrafanaTheme } from '@grafana/data';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'inverse' | 'transparent' | 'destructive';
 
@@ -8,11 +8,10 @@ export interface StyleDeps {
   theme: GrafanaTheme;
   size: ButtonSize;
   variant: ButtonVariant;
-  withIcon: boolean;
 }
 
 export interface ButtonStyles {
   button: string;
   iconWrap: string;
-  icon: string;
+  icon?: string;
 }

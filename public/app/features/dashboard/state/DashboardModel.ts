@@ -15,7 +15,7 @@ import { PanelModel, GridPos, panelAdded, panelRemoved } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
 import { TimeRange, TimeZone, AppEvent } from '@grafana/data';
 import { UrlQueryValue } from '@grafana/runtime';
-import { PanelEvents } from '@grafana/ui';
+import { PanelEvents } from '@grafana/data';
 import { KIOSK_MODE_TV, DashboardMeta, CoreEvents } from 'app/types';
 import { toUtc, DateTimeInput, dateTime, isDateTime } from '@grafana/data';
 

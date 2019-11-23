@@ -35,6 +35,7 @@ type Props = {
   data: {
     imgUrl?: string;
     loading?: boolean;
+    hideText?: boolean;
   };
 };
 
@@ -56,7 +57,7 @@ export const SingleValue = (props: Props) => {
             </div>
           </SlideOutTransition>
         )}
-        {children}
+        {!data.hideText && children}
       </div>
     </components.SingleValue>
   );

@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { PanelMenuItem } from '@grafana/ui';
+import { PanelMenuItem } from '@grafana/data';
 
 interface Props {
   children: any;

@@ -8,7 +8,7 @@ type = "docs"
 name = "Installing on Centos / Redhat"
 identifier = "rpm"
 parent = "installation"
-weight = 2
+weight = 300
 +++
 
 # Installing on RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)
@@ -22,13 +22,13 @@ Go to the [download page](https://grafana.com/grafana/download?platform=linux) f
 links.
 
 
-You can install Grafana using Yum directly.
+You can install Grafana using Yum directly:
 
 ```bash
 $ sudo yum install <rpm package url>
 ```
 
-You will find package urls on the [download page](https://grafana.com/grafana/download?platform=linux).
+You will find package URLs on the [download page](https://grafana.com/grafana/download?platform=linux).
 
 Or install manually using `rpm`. First execute
 
@@ -87,8 +87,7 @@ $ sudo yum install grafana
 
 ### RPM GPG Key
 
-The RPMs are signed, you can verify the signature with this [public GPG
-key](https://packages.grafana.com/gpg.key).
+The RPMs are signed, you can verify the signature with this [public GPG key](https://packages.grafana.com/gpg.key).
 
 ## Package details
 

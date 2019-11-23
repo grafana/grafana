@@ -24,7 +24,7 @@ import {
 import { DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult, DashboardDTO, ExploreItemState } from 'app/types';
 import { DashboardModel } from './DashboardModel';
 import { resetExploreAction } from 'app/features/explore/state/actionTypes';
-import { DataQuery } from '@grafana/ui';
+import { DataQuery } from '@grafana/data';
 
 export interface InitDashboardArgs {
   $injector: any;

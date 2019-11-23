@@ -1,6 +1,5 @@
 import { PanelQueryRunner } from './PanelQueryRunner';
-import { PanelData, DataQueryRequest } from '@grafana/ui';
-import { dateTime, ScopedVars } from '@grafana/data';
+import { PanelData, DataQueryRequest, dateTime, ScopedVars } from '@grafana/data';
 import { PanelModel } from './PanelModel';
 
 jest.mock('app/core/services/backend_srv');
@@ -57,7 +56,15 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
     };
 
     const response: any = {
-      data: [{ target: 'hello', datapoints: [[1, 1000], [2, 2000]] }],
+      data: [
+        {
+          target: 'hello',
+          datapoints: [
+            [1, 1000],
+            [2, 2000],
+          ],
+        },
+      ],
     };
 
     beforeEach(async () => {

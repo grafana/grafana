@@ -2,8 +2,8 @@ import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
 
-import { Themeable, withTheme, GrafanaTheme, getLogRowStyles } from '@grafana/ui';
-import { LogsModel, LogRowModel, TimeZone } from '@grafana/data';
+import { Themeable, withTheme, getLogRowStyles } from '@grafana/ui';
+import { GrafanaTheme, LogRowModel, TimeZone } from '@grafana/data';
 
 import ElapsedTime from './ElapsedTime';
 
@@ -50,7 +50,7 @@ const getStyles = (theme: GrafanaTheme) => ({
 });
 
 export interface Props extends Themeable {
-  logsResult?: LogsModel;
+  logRows?: LogRowModel[];
   timeZone: TimeZone;
   stopLive: () => void;
   onPause: () => void;
@@ -59,7 +59,7 @@ export interface Props extends Themeable {
 }
 
 interface State {
-  logsResultToRender?: LogsModel;
+  logRowsToRender?: LogRowModel[];
 }
 
 class LiveLogs extends PureComponent<Props, State> {
@@ -70,7 +70,7 @@ class LiveLogs extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      logsResultToRender: props.logsResult,
+      logRowsToRender: props.logRows,
     };
   }
 
@@ -99,7 +99,7 @@ class LiveLogs extends PureComponent<Props, State> {
         // We update what we show only if not paused. We keep any background subscriptions running and keep updating
         // our state, but we do not show the updates, this allows us start again showing correct result after resuming
         // without creating a gap in the log results.
-        logsResultToRender: nextProps.logsResult,
+        logRowsToRender: nextProps.logRows,
       };
     } else {
       return null;
@@ -123,7 +123,7 @@ class LiveLogs extends PureComponent<Props, State> {
 
   rowsToRender = () => {
     const { isPaused } = this.props;
-    let rowsToRender: LogRowModel[] = this.state.logsResultToRender ? this.state.logsResultToRender.rows : [];
+    let rowsToRender: LogRowModel[] = this.state.logRowsToRender;
     if (!isPaused) {
       // A perf optimisation here. Show just 100 rows when streaming and full length when the streaming is paused.
       rowsToRender = rowsToRender.slice(-100);
@@ -184,7 +184,7 @@ class LiveLogs extends PureComponent<Props, State> {
           </button>
           {isPaused || (
             <span>
-              Last line received: <ElapsedTime resetKey={this.props.logsResult} humanize={true} /> ago
+              Last line received: <ElapsedTime resetKey={this.props.logRows} humanize={true} /> ago
             </span>
           )}
         </div>

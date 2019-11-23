@@ -17,7 +17,7 @@ weight = 4
 
 Grafana ships with built-in support for Google Stackdriver. Just add it as a data source and you are ready to build dashboards for your Stackdriver metrics.
 
-## Adding the data source to Grafana
+## Adding the data source
 
 1. Open the side menu by clicking the Grafana icon in the top header.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
