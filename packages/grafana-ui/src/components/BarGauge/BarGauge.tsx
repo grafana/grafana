@@ -151,7 +151,7 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   renderRetroBars(): ReactNode {
-    const { maxValue, minValue, value, itemSpacing } = this.props;
+    const { maxValue, minValue, value, itemSpacing, alignmentFactors } = this.props;
     const {
       valueHeight,
       valueWidth,
@@ -169,7 +169,9 @@ export class BarGauge extends PureComponent<Props> {
     const cellCount = Math.floor(maxSize / cellWidth);
     const cellSize = Math.floor((maxSize - cellSpacing * cellCount) / cellCount);
     const valueColor = getValueColor(this.props);
-    const valueStyles = getValueStyles(value.text, valueColor, valueWidth, valueHeight);
+
+    const valueTextToBaseSizeOn = alignmentFactors ? alignmentFactors.text : value.text;
+    const valueStyles = getValueStyles(valueTextToBaseSizeOn, valueColor, valueWidth, valueHeight);
 
     const containerStyles: CSSProperties = {
       width: `${wrapperWidth}px`,
@@ -393,14 +395,16 @@ export function getValuePercent(value: number, minValue: number, maxValue: numbe
  * Only exported to for unit test
  */
 export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles {
-  const { displayMode, maxValue, minValue, value } = props;
+  const { displayMode, maxValue, minValue, value, alignmentFactors } = props;
   const { valueWidth, valueHeight, maxBarHeight, maxBarWidth } = calculateBarAndValueDimensions(props);
 
   const valuePercent = getValuePercent(value.numeric, minValue, maxValue);
   const valueColor = getValueColor(props);
-  const valueStyles = getValueStyles(value.text, valueColor, valueWidth, valueHeight);
-  const isBasic = displayMode === 'basic';
 
+  const valueTextToBaseSizeOn = alignmentFactors ? alignmentFactors.text : value.text;
+  const valueStyles = getValueStyles(valueTextToBaseSizeOn, valueColor, valueWidth, valueHeight);
+
+  const isBasic = displayMode === 'basic';
   const wrapperStyles: CSSProperties = {
     display: 'flex',
   };
@@ -516,8 +520,10 @@ export function getValueColor(props: Props): string {
  */
 function getValueStyles(value: string, color: string, width: number, height: number): CSSProperties {
   const heightFont = height / VALUE_LINE_HEIGHT;
-  const guess = width / (value.length * 1.1);
-  const fontSize = Math.min(Math.max(guess, 14), heightFont);
+  // calculate width in 14px
+  const realWidthIn14 = getTextWidth(value, 14) + 10;
+  // how much bigger than 14px can we make it while staying within our width constraints
+  const fontSize = (width / realWidthIn14) * 14;
 
   return {
     color: color,
