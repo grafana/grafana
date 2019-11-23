@@ -531,7 +531,7 @@ function getValueStyles(
   if (isVertical(orientation)) {
     valueStyles.justifyContent = `center`;
   } else {
-    valueStyles.justifyContent = `flex-end`;
+    valueStyles.justifyContent = `flex-start`;
     valueStyles.paddingLeft = `${VALUE_LEFT_PADDING}px`;
     // Need to remove the left padding from the text width constraints
     textWidth -= VALUE_LEFT_PADDING;
@@ -540,7 +540,7 @@ function getValueStyles(
   // calculate width in 14px
   const textSize = measureText(value, 14);
   // how much bigger than 14px can we make it while staying within our width constraints
-  const fontSizeBasedOnWidth = (textWidth / (textSize.width + 0)) * 14;
+  const fontSizeBasedOnWidth = (textWidth / (textSize.width + 2)) * 14;
   const fontSizeBasedOnHeight = height / VALUE_LINE_HEIGHT;
 
   // final fontSize
