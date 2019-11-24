@@ -12,7 +12,7 @@ weight = 2
 
 # Using InfluxDB in Grafana
 
-Grafana ships with very feature rich data source plugin for InfluxDB. Supporting a feature rich query editor, annotation and templating queries.
+Grafana ships with a very feature rich data source plugin for InfluxDB. It supports a feature rich query editor, annotation and templating queries.
 
 ## Adding the data source
 
@@ -64,8 +64,8 @@ Identifier | Description
 
 {{< docs-imagebox img="/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v45/influxdb_query.gif" >}}
 
-You find the InfluxDB editor in the metrics tab in Graph or Singlestat panel's edit mode. You enter edit mode by clicking the
-panel title, then edit. The editor allows you to select metrics and tags.
+You can find the InfluxDB editor in the metrics tab in a Graph or Singlestat panel's edit mode. 
+You can enter edit mode by clicking the panel title, then edit. The editor allows you to select metrics and tags.
 
 ### Filter data (WHERE)
 To add a tag filter click the plus icon to the right of the `WHERE` condition. You can remove tag filters by clicking on
@@ -73,7 +73,7 @@ the tag key and select `--remove tag filter--`.
 
 **Regex matching**
 
-You can type in regex patterns for metric names or tag filter values, be sure to wrap the regex pattern in forward slashes (`/`). Grafana
+You can type in regex patterns for metric names or tag filter values. Be sure to wrap the regex pattern in forward slashes (`/`). Grafana
 will automatically adjust the filter tag condition to use the InfluxDB regex match condition operator (`=~`).
 
 ### Field and Aggregation functions
@@ -203,7 +203,7 @@ be applied to all your InfluxDB queries.
 
 ## Annotations
 
-[Annotations]({{< relref "reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You can add annotation
 queries via the Dashboard menu / Annotations view.
 
 An example query:
@@ -212,15 +212,15 @@ An example query:
 SELECT title, description from events WHERE $timeFilter ORDER BY time ASC
 ```
 
-For InfluxDB you need to enter a query like in the above example. You need to have the ```where $timeFilter```
-part. If you only select one column you will not need to enter anything in the column mapping fields. The
+For InfluxDB you need to enter a query like in the above example. The ```where $timeFilter``` component is required.
+If you only select one column you do not need to enter anything in the column mapping fields. The
 Tags field can be a comma separated string.
 
 ## Configure the data source with provisioning
 
 It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources)
 
-Here are some provisioning examples for this dat asource.
+Here are some provisioning examples for this data source.
 
 ```yaml
 apiVersion: 1
