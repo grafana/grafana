@@ -38,7 +38,7 @@ In Grafana [v6.4](/guides/whats-new-in-v6-4/#alpine-based-docker-image), we swit
 
 This change has received both negative and positive feedback as well as some bug reports. We learned that switching to an Alpine-based Docker image was a big breaking change for a lot of users. We should have more clearly highlighted this in blog post, release notes, changelog, and the [Docker Hub readme](https://hub.docker.com/r/grafana/grafana).
 
-We also broke the Docker images for ARM, but this is fixed, in Grafana v6.5.
+We also broke the Docker images for ARM, but this is fixed in Grafana v6.5.
 
 Grafana Docker images should be as secure as possible by default and that’s why the Alpine-based Docker images will continue to be the Grafana default (`grafana/grafana:<version>`). With that said, it’s good to give users options, and that’s why starting from Grafana v6.5, Ubuntu-based Docker images are also (`grafana/grafana:<version>-ubuntu`) available.
 
