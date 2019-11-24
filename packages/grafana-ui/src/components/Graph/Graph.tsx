@@ -265,11 +265,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     };
 
     try {
-      $.plot(
-        this.element,
-        series.filter(s => s.isVisible),
-        flotOptions
-      );
+      $.plot(this.element, series.filter(s => s.isVisible), flotOptions);
     } catch (err) {
       console.log('Graph rendering error', err, flotOptions, series);
       throw new Error('Error rendering panel');
