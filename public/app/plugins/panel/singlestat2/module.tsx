@@ -7,6 +7,6 @@ import { SingleStatEditor } from './SingleStatEditor';
 export const plugin = new PanelPlugin<SingleStatOptions>(SingleStatPanel)
   .setDefaults(defaults)
   .setEditor(SingleStatEditor)
-  .setFullChromeControl()
+  .setNoPadding()
   .setPanelChangeHandler(sharedSingleStatPanelChangedHandler)
   .setMigrationHandler(sharedSingleStatMigrationHandler);

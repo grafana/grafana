@@ -263,15 +263,15 @@ export class PanelChrome extends PureComponent<Props, State> {
     const PanelComponent = plugin.panel;
     const timeRange = data.timeRange || this.timeSrv.timeRange();
 
-    const headerHeight = panel.hasTitle() ? theme.panelHeaderHeight : 0;
-    const chromePadding = plugin.hasFullChromeControl ? 0 : theme.panelPadding;
-    const chromeBorder = plugin.hasFullChromeControl ? 0 : PANEL_BORDER;
+    const headerHeight = this.hasOverlayHeader() ? 0 : theme.panelHeaderHeight;
+    const chromePadding = plugin.noPadding ? 0 : theme.panelPadding;
+    const chromeBorder = plugin.noPadding ? 0 : PANEL_BORDER;
     const panelWidth = width - chromePadding * 2 - chromeBorder;
     const innerPanelHeight = height - headerHeight - chromePadding * 2;
 
     const panelContentClassNames = classNames({
       'panel-content': true,
-      'panel-content--no-padding': plugin.hasFullChromeControl,
+      'panel-content--no-padding': plugin.noPadding,
     });
 
     return (
@@ -306,7 +306,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   hasOverlayHeader() {
-    const { panel, plugin } = this.props;
+    const { panel } = this.props;
     const { errorMessage, data } = this.state;
 
     // always show normal header if we have an error message
@@ -319,7 +319,7 @@ export class PanelChrome extends PureComponent<Props, State> {
       return false;
     }
 
-    return !panel.hasTitle() || plugin.hasFullChromeControl;
+    return !panel.hasTitle();
   }
 
   render() {
@@ -331,7 +331,7 @@ export class PanelChrome extends PureComponent<Props, State> {
       'panel-container': true,
       'panel-container--absolute': true,
       'panel-container--transparent': transparent,
-      'panel-container--no-title': !panel.hasTitle(),
+      'panel-container--no-title': this.hasOverlayHeader(),
     });
 
     return (
