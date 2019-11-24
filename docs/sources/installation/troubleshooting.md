@@ -46,6 +46,8 @@ the default HTTP port (`6060`) where the pprof debugging endpoints will be avail
 ./grafana-server -profile -profile-port=8080
 ```
 
+Note that pprof debugging endpoints are served on a different port than the Grafana HTTP server.
+
 You can configure/override profiling settings using environment variables:
 
 ```bash
