@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"net/http"
@@ -38,46 +37,6 @@ var commit = "NA"
 var buildBranch = "master"
 var buildstamp string
 
-func getProfilingProps(profileFlag bool, profilePortFlag uint) (bool, uint, error) {
-	profileEnabled := profileFlag
-	profilePort := profilePortFlag
-	profileEnv := os.Getenv("GF_PROCESS_PROFILE")
-	if profileEnv != "" {
-		enabled, parseErr := strconv.ParseBool(profileEnv)
-		if parseErr != nil {
-			return false, 0, errors.New("Failed to parse GF_PROCESS_PROFILE environment variable")
-		}
-		profileEnabled = enabled
-		profilePortEnv := os.Getenv("GF_PROCESS_PROFILE_PORT")
-		if profilePortEnv != "" {
-			port, parseErr := strconv.ParseUint(profilePortEnv, 0, 64)
-			if parseErr != nil {
-				return false, 0, errors.New("Failed to parse GF_PROCESS_PROFILE_PORT enviroment variable")
-			}
-			profilePort = uint(port)
-		}
-	}
-	return profileEnabled, profilePort, nil
-}
-
-func getTracingProps(tracingFlag bool, tracingFileFlag string) (bool, string, error) {
-	tracingEnabled := tracingFlag
-	tracingFile := tracingFileFlag
-	tracingEnv := os.Getenv("GF_PROCESS_TRACING")
-	if tracingEnv != "" {
-		enabled, parseErr := strconv.ParseBool(tracingEnv)
-		if parseErr != nil {
-			return false, "", errors.New("Failed to parse GF_PROCESS_TRACING environment variable")
-		}
-		tracingEnabled = enabled
-		tracingFileEnv := os.Getenv("GF_PROCESS_TRACING_FILE")
-		if tracingFileEnv != "" {
-			tracingFile = tracingFileEnv
-		}
-	}
-	return tracingEnabled, tracingFile, nil
-}
-
 func main() {
 	var (
 		configFile = flag.String("config", "", "path to config file")
@@ -99,30 +58,32 @@ func main() {
 		os.Exit(0)
 	}
 
-	finalProfileEnabled, finalProfilePort, err := getProfilingProps(*profile, *profilePort)
-	if err != nil {
+	profileDiagnostics := newProfilingDiagnostics(*profile, *profilePort)
+	if err := profileDiagnostics.overrideWithEnv(); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
 
-	finalTracingEnabled, finalTracingFile, err := getTracingProps(*tracing, *tracingFile)
-	if err != nil {
+	traceDiagnostics := newTracingDiagnostics(*tracing, *tracingFile)
+	if err := traceDiagnostics.overrideWithEnv(); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
 
-	if finalProfileEnabled {
+	if profileDiagnostics.enabled {
+		fmt.Println("diagnostics: pprof profiling enabled", "port", profileDiagnostics.port)
 		runtime.SetBlockProfileRate(1)
 		go func() {
-			err := http.ListenAndServe(fmt.Sprintf("localhost:%d", finalProfilePort), nil)
+			err := http.ListenAndServe(fmt.Sprintf("localhost:%d", profileDiagnostics.port), nil)
 			if err != nil {
 				panic(err)
 			}
 		}()
 	}
 
-	if finalTracingEnabled {
-		f, err := os.Create(finalTracingFile)
+	if traceDiagnostics.enabled {
+		fmt.Println("diagnostics: tracing enabled", "file", traceDiagnostics.file)
+		f, err := os.Create(traceDiagnostics.file)
 		if err != nil {
 			panic(err)
 		}
@@ -153,7 +114,7 @@ func main() {
 
 	go listenToSystemSignals(server)
 
-	err = server.Run()
+	err := server.Run()
 
 	code := server.ExitCode(err)
 	trace.Stop()
