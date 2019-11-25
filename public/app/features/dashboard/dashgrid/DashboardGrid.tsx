@@ -58,7 +58,10 @@ function GridWrapper({
     }
   }
 
-  // Disable draggable if mobile device
+  /*
+    Disable draggable if mobile device, solving an issue with unintentionally
+     moving panels. https://github.com/grafana/grafana/issues/18497
+  */
   const draggable = width <= 420 ? false : isDraggable;
 
   return (
