@@ -16,7 +16,7 @@ COPY build.go package.json ./
 RUN go run build.go build
 
 # Node build container
-FROM node:12.13.0-alpine
+FROM node:12.13.1-alpine
 
 # PhantomJS
 RUN apk add --no-cache curl &&\
