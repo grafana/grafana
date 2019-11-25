@@ -227,6 +227,8 @@ github.com/smartystreets/assertions/internal/oglematchers
 github.com/smartystreets/goconvey/convey
 github.com/smartystreets/goconvey/convey/gotest
 github.com/smartystreets/goconvey/convey/reporting
+# github.com/sony/gobreaker v0.4.1
+github.com/sony/gobreaker
 # github.com/stretchr/testify v1.4.0
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
