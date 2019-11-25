@@ -14,12 +14,12 @@ interface ReduxActions {
 }
 
 export class Wrapper extends ReduxComponent<{}, {}, ExploreState, ReduxActions> {
-  constructor(props: {}) {
-    super({
-      props,
-      stateSelector: (state: StoreState) => state.explore,
-      actionsToDispatch: { resetExploreAction },
-    });
+  stateSelector(state: StoreState): ExploreState {
+    return state.explore;
+  }
+
+  actionsToDispatch(): ReduxActions {
+    return { resetExploreAction };
   }
 
   componentWillUnmount() {

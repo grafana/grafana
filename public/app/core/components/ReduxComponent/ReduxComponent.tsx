@@ -7,21 +7,18 @@ import { distinctUntilChanged } from 'rxjs/operators';
 import { bindActionCreators } from 'redux';
 import { isEqual } from 'lodash';
 
-export interface ReduxComponentArguments<Props, ReduxState, ReduxActions> {
-  props: Props;
-  stateSelector: (state: StoreState) => ReduxState;
-  actionsToDispatch: ReduxActions;
-}
-
-export class ReduxComponent<Props, State, ReduxState, ReduxActions> extends PureComponent<Props, State & ReduxState> {
+export abstract class ReduxComponent<Props, State, ReduxState, ReduxActions> extends PureComponent<
+  Props,
+  State & ReduxState
+> {
   protected actions: { [P in keyof ReduxActions]?: ReduxActions[P] } = {};
   private readonly subscription: Subscription = null;
-  constructor({ props, stateSelector, actionsToDispatch }: ReduxComponentArguments<Props, ReduxState, ReduxActions>) {
+  constructor(props: Props) {
     super(props);
 
     this.subscription = new Observable((observer: Subscriber<ReduxState>) => {
-      const unsubscribeFromStore = store.subscribe(() => observer.next(stateSelector(store.getState())));
-      observer.next(stateSelector(store.getState()));
+      const unsubscribeFromStore = store.subscribe(() => observer.next(this.stateSelector(store.getState())));
+      observer.next(this.stateSelector(store.getState()));
       return function unsubscribe() {
         unsubscribeFromStore();
       };
@@ -43,11 +40,15 @@ export class ReduxComponent<Props, State, ReduxState, ReduxActions> extends Pure
         },
       });
 
+    const actionsToDispatch = this.actionsToDispatch();
     Object.keys(actionsToDispatch).map(key => {
       // @ts-ignore
       this.actions[key] = bindActionCreators(actionsToDispatch[key], store.dispatch);
     });
   }
+
+  abstract stateSelector(state: StoreState): ReduxState;
+  abstract actionsToDispatch(): ReduxActions;
 
   componentWillUnmount() {
     if (this.subscription) {

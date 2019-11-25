@@ -145,97 +145,99 @@ export class Explore extends ReduxComponent<ExploreProps, ExploreState, ReduxSta
   exploreEvents: Emitter;
 
   constructor(props: ExploreProps) {
-    super({
-      props,
-      stateSelector: (state: StoreState) => {
-        const explore = state.explore;
-        const { split, syncedTimes } = explore;
-        const item: ExploreItemState = explore[props.exploreId];
-        const timeZone = getTimeZone(state.user);
-        const {
-          StartPage,
-          datasourceInstance,
-          datasourceMissing,
-          initialized,
-          showingStartPage,
-          queryKeys,
-          urlState,
-          update,
-          isLive,
-          supportedModes,
-          mode,
-          graphResult,
-          loading,
-          showingGraph,
-          showingTable,
-          absoluteRange,
-          queryResponse,
-        } = item;
-
-        const { datasource, queries, range: urlRange, mode: urlMode, ui, originPanelId } = (urlState ||
-          {}) as ExploreUrlState;
-        const initialDatasource = datasource || store.get(lastUsedDatasourceKeyForOrgId(state.user.orgId));
-        const initialQueries: DataQuery[] = ensureQueriesMemoized(queries);
-        const initialRange = urlRange ? getTimeRangeFromUrlMemoized(urlRange, timeZone).raw : DEFAULT_RANGE;
-
-        let newMode: ExploreMode;
-
-        if (supportedModes.length) {
-          const urlModeIsValid = supportedModes.includes(urlMode);
-          const modeStateIsValid = supportedModes.includes(mode);
-
-          if (modeStateIsValid) {
-            newMode = mode;
-          } else if (urlModeIsValid) {
-            newMode = urlMode;
-          } else {
-            newMode = supportedModes[0];
-          }
-        } else {
-          newMode = [ExploreMode.Metrics, ExploreMode.Logs].includes(urlMode) ? urlMode : null;
-        }
-
-        const initialUI = ui || DEFAULT_UI_STATE;
-
-        return {
-          StartPage,
-          datasourceInstance,
-          datasourceMissing,
-          initialized,
-          showingStartPage,
-          split,
-          queryKeys,
-          update,
-          initialDatasource,
-          initialQueries,
-          initialRange,
-          mode: newMode,
-          initialUI,
-          isLive,
-          graphResult,
-          loading,
-          showingGraph,
-          showingTable,
-          absoluteRange,
-          queryResponse,
-          originPanelId,
-          syncedTimes,
-        };
-      },
-      actionsToDispatch: {
-        changeSize,
-        initializeExplore,
-        modifyQueries,
-        refreshExplore: refreshExplore,
-        scanStart,
-        scanStopAction,
-        setQueries,
-        updateTimeRange,
-        toggleGraph,
-      },
-    });
+    super(props);
 
     this.exploreEvents = new Emitter();
+  }
+
+  stateSelector(state: StoreState): ReduxState {
+    const explore = state.explore;
+    const { split, syncedTimes } = explore;
+    const item: ExploreItemState = explore[this.props.exploreId];
+    const timeZone = getTimeZone(state.user);
+    const {
+      StartPage,
+      datasourceInstance,
+      datasourceMissing,
+      initialized,
+      showingStartPage,
+      queryKeys,
+      urlState,
+      update,
+      isLive,
+      supportedModes,
+      mode,
+      graphResult,
+      loading,
+      showingGraph,
+      showingTable,
+      absoluteRange,
+      queryResponse,
+    } = item;
+
+    const { datasource, queries, range: urlRange, mode: urlMode, ui, originPanelId } = (urlState ||
+      {}) as ExploreUrlState;
+    const initialDatasource = datasource || store.get(lastUsedDatasourceKeyForOrgId(state.user.orgId));
+    const initialQueries: DataQuery[] = ensureQueriesMemoized(queries);
+    const initialRange = urlRange ? getTimeRangeFromUrlMemoized(urlRange, timeZone).raw : DEFAULT_RANGE;
+
+    let newMode: ExploreMode;
+
+    if (supportedModes.length) {
+      const urlModeIsValid = supportedModes.includes(urlMode);
+      const modeStateIsValid = supportedModes.includes(mode);
+
+      if (modeStateIsValid) {
+        newMode = mode;
+      } else if (urlModeIsValid) {
+        newMode = urlMode;
+      } else {
+        newMode = supportedModes[0];
+      }
+    } else {
+      newMode = [ExploreMode.Metrics, ExploreMode.Logs].includes(urlMode) ? urlMode : null;
+    }
+
+    const initialUI = ui || DEFAULT_UI_STATE;
+
+    return {
+      StartPage,
+      datasourceInstance,
+      datasourceMissing,
+      initialized,
+      showingStartPage,
+      split,
+      queryKeys,
+      update,
+      initialDatasource,
+      initialQueries,
+      initialRange,
+      mode: newMode,
+      initialUI,
+      isLive,
+      graphResult,
+      loading,
+      showingGraph,
+      showingTable,
+      absoluteRange,
+      queryResponse,
+      originPanelId,
+      syncedTimes,
+    };
+  }
+
+  actionsToDispatch(): ReduxActions {
+    return {
+      changeSize,
+      initializeExplore,
+      modifyQueries,
+      refreshExplore: refreshExplore,
+      scanStart,
+      scanStopAction,
+      setQueries,
+      updateTimeRange,
+      toggleGraph,
+    };
   }
 
   componentDidMount() {
