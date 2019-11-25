@@ -13,12 +13,13 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
     fieldValidationMessage: css`
       font-size: ${theme.typography.size.sm};
       font-weight: ${theme.typography.weight.semibold};
-      margin: ${theme.spacing.formLabelMargin};
+      margin: ${theme.spacing.formValidationMessageMargin};
       padding: ${theme.spacing.formValidationMessagePadding};
       color: ${theme.colors.formValidationMessageText};
       background: ${theme.colors.formValidationMessageBg};
       border-radius: ${theme.border.radius.sm};
       position: relative;
+      display: inline-block;
 
       &:before {
         content: '';
