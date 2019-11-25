@@ -17,10 +17,9 @@ Grafana ships with built in support for CloudWatch. You just have to add it as a
 
 ## Adding the data source
 
-1. Open the side menu by clicking the Grafana icon in the top header.
-2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
-3. Click the `+ Add data source` button in the top header.
-4. Select `Cloudwatch` from the _Type_ dropdown.
+1. In the side menu under the `Configuration` link, click on `Data Sources`.
+2. Click the `Add data source` button.
+3. Select `Cloudwatch` in the `Cloud` section.
 
 > NOTE: If at any moment you have issues with getting this data source to work and Grafana is giving you undescriptive errors then don't
 > forget to check your log file (try looking in /var/log/grafana/grafana.log).
@@ -34,25 +33,6 @@ Grafana ships with built in support for CloudWatch. You just have to add it as a
 | _Auth Provider_            | Specify the provider to get credentials.                                                                |
 | _Credentials_ profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default. |
 | _Assume Role Arn_          | Specify the ARN of the role to assume                                                                   |
-
-### Min time interval
-
-> Only available in Grafana v6.5+.
-
-A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example `1m` if your data is written every minute.
-This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
-number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
-
-| Identifier | Description |
-| ---------- | ----------- |
-| `y`        | year        |
-| `M`        | month       |
-| `w`        | week        |
-| `d`        | day         |
-| `h`        | hour        |
-| `m`        | minute      |
-| `s`        | second      |
-| `ms`       | millisecond |
 
 ## Authentication
 
