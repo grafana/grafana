@@ -213,7 +213,7 @@ module.exports = {
 };
 ```
 
-### How do I add 3rd party dependencies that are not npm packages?
+### How do I add third-party dependencies that are not npm packages?
 You can add such dependencies by putting them in `static` directory in the root of your project. The `static` directory will be copied when building the plugin.
 
 ### I have encountered `Unable to dynamically transpile ES module A loader plugin needs to be configured via SystemJS.config({ transpiler: 'transpiler-module' }).`. What should I do?
