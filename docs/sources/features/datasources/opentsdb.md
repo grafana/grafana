@@ -106,3 +106,8 @@ datasources:
       tsdbResolution: 1
       tsdbVersion: 1
 ```
+
+## Lookup limits
+
+By default, at most 1000 records are looked up from OpenTSDB.
+You can change this by modifying the "Lookup Limit" in the OpenTSDB settings page.
