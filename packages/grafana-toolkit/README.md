@@ -216,7 +216,7 @@ module.exports = {
 ### How do I add third-party dependencies that are not npm packages?
 Put them in the `static` directory in the root of your project. The `static` directory is copied when the plugin is built.
 
-### I have encountered `Unable to dynamically transpile ES module A loader plugin needs to be configured via SystemJS.config({ transpiler: 'transpiler-module' }).`. What should I do?
+### I am getting this message: `Unable to dynamically transpile ES module A loader plugin needs to be configured via SystemJS.config({ transpiler: 'transpiler-module' }).`
 This error can occur when you bundle your plugin using `grafana-toolkit plugin:dev` task. This task does not remove comments from the bundled package, so **make sure your comments does not include ES2016 code**. If they do, SystemJS v0.20.19 which Grafana uses internally to load plugins, will interprete your code as an [ES module](https://hacks.mozilla.org/2018/03/es-modules-a-cartoon-deep-dive/). Grafana does not support ESM.
 
 ## Contribute to grafana-toolkit
