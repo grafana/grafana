@@ -228,7 +228,7 @@ If your comments include ES2016 code, then SystemJS v0.20.19, which Grafana uses
 To fix this error, remove the ES2016 code from your comments.
 
 ## Contribute to grafana-toolkit
-You can contribute to grafana-toolkit in the by helping develop it or by debugging it.
+You can contribute to grafana-toolkit by helping develop it or by debugging it.
 
 ### Develop grafana-toolkit
 Typically plugins should be developed using the `@grafana/toolkit` installed from npm. However, when working on the toolkit, you might want to use the local version. Follow the steps below to develop with a local version:
