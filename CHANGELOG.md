@@ -114,6 +114,12 @@
 
 * **CloudWatch**: In previous versions of Grafana, there was partial support for using multi template variables as dimension values. When a multi template variable is being used for dimension values in Grafana 6.5, a [search expression](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-search-expressions.html) will be generated. In the GetMetricData API, expressions are limited to 1024 characters, so it might be the case that this limit is reached when a multi template variable that has a lot of values is being used. Read about the suggested workaround in [upgrading to 6.5](https://grafana.com/docs/installation/upgrading/#upgrading-to-v6-5).
 
+# 6.4.5 (2019-11-25)
+
+### Bug Fixes
+
+* **CloudWatch**: Fix high CPU load [#20579](https://github.com/grafana/grafana/pull/20579)
+
 # 6.4.4 (2019-11-06)
 
 ### Bug Fixes
