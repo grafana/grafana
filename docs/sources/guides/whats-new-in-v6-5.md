@@ -131,14 +131,18 @@ Metrictank returns 2 kinds of additional metadata along its responses:
 - **Performance information:** Time spent querying index, fetching data, running processing functions, the number of series and points fetched, cache hits/misses, etc. This can be useful for optimizing queries or tuning the chunk cache.
 - **Lineage information about the returned series:** Which archive was fetched from (raw or rollup), which (if any) runtime consolidation was applied (using which processing function), etc.  This is very useful information for anyone trying to understand how their data was generated and why it may not look as expected.
 
-To see the metadata response from Metrictank you'll need to enable the new `Panel Inspector` in the Grafana configuration file, currently in alpha/preview.
+To see the metadata response from Metrictank you can inspect the response using the Query Inspector found in the panel queries tab.
+Grafana 6.5 includes a new `Panel Inspector` in alpha/preview where you also can see the metadata response from Metrictank.
+You can try it out by enabling a feature flag in the Grafana configuration file:
 
 ```bash
 [feature_toggles]
 enable = inspect
 ```
 
-In Grafana 6.6, this should have a more user friendly display. In the future, additional Metrictank functionality will become available when the Graphite datasource option is set to the “metrictank” type.
+{{< docs-imagebox img="/img/docs/v65/panel-inspector.png" max-width="400px" caption="New Panel Inspector modal" >}}
+
+In Grafana 6.6, this will have a more user friendly display. In the future, additional Metrictank functionality will become available when the Graphite datasource option is set to the `Metrictank` type.
 
 ### Explore/Metrics: Graph hover/tooltip
 
