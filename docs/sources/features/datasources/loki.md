@@ -36,6 +36,21 @@ Just add it as a data source and you are ready to query your log data in [Explor
 | _URL_           | The URL of the Loki instance, e.g., `http://localhost:3100`                                                                                   |
 | _Maximum lines_ | Upper limit for number of log lines returned by Loki (default is 1000). Decrease if your browser is sluggish when displaying logs in Explore. |
 
+### Derived fields
+
+Derived fields configuration allow you to add additional fields parsed from the log message and optionally add link that uses the value of the field. This can be used for example to link to trace in your tracing backend from your logs or user profile page if userId is present int the log line. They are then showed in the [log details](/features/explore/#labels-and-parsed-fields)
+{{< docs-imagebox img="/img/docs/v65/loki_derived_fields.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields configuration" >}}
+Each derived field consists of:
+- Name: will be shown in the log details as label
+- Regex: regex pattern that will be run on the log message and should capture some part of it to be used as the value of the new field. Can only contain single capture group.
+- URL: a url template that will be used to construct a link next to the field value in log details. Use special `${__value.raw}` to insert the value of the field.
+
+You can also use a debug section to see what does your fields extract and how the URL is interpolated. Click on Show example log message button to show text area where you can write or copy paste a log message.
+{{< docs-imagebox img="/img/docs/v65/loki_derived_fields_debug.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields debugging" >}}
+
+The new field with the link shown in log details:
+{{< docs-imagebox img="/img/docs/v65/loki_derived_fields_detail.png" class="docs-image--no-shadow" caption="Screenshot of the derived field in log detail" >}}
+
 ## Querying Logs
 
 Querying and displaying log data from Loki is available via [Explore](/features/explore), and with the [logs panel](/features/panels/logs/) in dashboards. Select the Loki data source, and then enter a log query to display your logs.
