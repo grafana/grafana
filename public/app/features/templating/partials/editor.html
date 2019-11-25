@@ -1,9 +1,13 @@
 <div ng-controller="VariableEditorCtrl" ng-init="init()">
   <div class="page-action-bar">
     <h3 class="dashboard-settings__header">
-      <a ng-click="setMode('list')">Variables</a>
-      <span ng-show="mode === 'new'"><i class="fa fa-fw fa-chevron-right"></i> New</span>
-      <span ng-show="mode === 'edit'"><i class="fa fa-fw fa-chevron-right"></i> Edit</span>
+      <a ng-click="setMode('list')" aria-label="Variable editor Header link">Variables</a>
+      <span ng-show="mode === 'new'"
+        ><i class="fa fa-fw fa-chevron-right" aria-label="Variable editor Header mode New"></i> New</span
+      >
+      <span ng-show="mode === 'edit'"
+        ><i class="fa fa-fw fa-chevron-right" aria-label="Variable editor Header mode Edit"></i> Edit</span
+      >
     </h3>
 
     <div class="page-action-bar__spacer"></div>
@@ -12,25 +16,27 @@
       class="btn btn-primary"
       ng-click="setMode('new');"
       ng-if="variables.length > 0"
-			ng-hide="mode === 'edit' || mode === 'new'">
-			New
-	  </a>
+      ng-hide="mode === 'edit' || mode === 'new'"
+      aria-label="Variable editor New variable button"
+    >
+      New
+    </a>
   </div>
 
   <div ng-if="mode === 'list'">
     <div ng-if="variables.length === 0">
-        <empty-list-cta
+      <empty-list-cta
         on-click="setNewMode"
         title="emptyListCta.title"
         infoBox="emptyListCta.infoBox"
         infoBoxTitle="emptyListCta.infoBoxTitle"
         buttonTitle="emptyListCta.buttonTitle"
         buttonIcon="emptyListCta.buttonIcon"
-        />
+      />
     </div>
 
     <div ng-if="variables.length">
-      <table class="filter-table filter-table--hover">
+      <table class="filter-table filter-table--hover" aria-label="Variable editor Table">
         <thead>
           <tr>
             <th>Variable</th>
@@ -41,24 +47,53 @@
         <tbody>
           <tr ng-repeat="variable in variables">
             <td style="width: 1%">
-              <span ng-click="edit(variable)" class="pointer template-variable"> ${{ variable.name }} </span>
+              <span
+                ng-click="edit(variable)"
+                class="pointer template-variable"
+                aria-label="Variable editor Table Name field"
+              >
+                ${{ variable.name }}
+              </span>
             </td>
-            <td style="max-width: 200px;" ng-click="edit(variable)" class="pointer max-width">
+            <td
+              style="max-width: 200px;"
+              ng-click="edit(variable)"
+              class="pointer max-width"
+              aria-label="Variable editor Table Definition field"
+            >
               {{ variable.definition ? variable.definition : variable.query }}
             </td>
             <td style="width: 1%">
-              <i ng-click="_.move(variables,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i>
+              <i
+                ng-click="_.move(variables,$index,$index-1)"
+                ng-hide="$first"
+                class="pointer fa fa-arrow-up"
+                aria-label="Variable editor Table ArrowUp button"
+              ></i>
             </td>
             <td style="width: 1%">
-              <i ng-click="_.move(variables,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i>
+              <i
+                ng-click="_.move(variables,$index,$index+1)"
+                ng-hide="$last"
+                class="pointer fa fa-arrow-down"
+                aria-label="Variable editor Table ArrowDown button"
+              ></i>
             </td>
             <td style="width: 1%">
-              <a ng-click="duplicate(variable)" class="btn btn-inverse btn-small">
+              <a
+                ng-click="duplicate(variable)"
+                class="btn btn-inverse btn-small"
+                aria-label="Variable editor Table Duplicate button"
+              >
                 Duplicate
               </a>
             </td>
             <td style="width: 1%">
-              <a ng-click="removeVariable(variable)" class="btn btn-danger btn-small">
+              <a
+                ng-click="removeVariable(variable)"
+                class="btn btn-danger btn-small"
+                aria-label="Variable editor Table Remove button"
+              >
                 <i class="fa fa-remove"></i>
               </a>
             </td>
@@ -68,7 +103,7 @@
     </div>
   </div>
 
-  <form ng-if="mode === 'edit' || mode === 'new'" name="ctrl.form">
+  <form ng-if="mode === 'edit' || mode === 'new'" name="ctrl.form" aria-label="Variable editor Form">
     <h5 class="section-heading">General</h5>
     <div class="gf-form-group">
       <div class="gf-form-inline">
@@ -82,6 +117,7 @@
             ng-model="current.name"
             required
             ng-pattern="namePattern"
+            aria-label="Variable editor Form Name field"
           />
         </div>
         <div class="gf-form max-width-19">
@@ -97,6 +133,7 @@
               ng-model="current.type"
               ng-options="k as v.name for (k, v) in variableTypes"
               ng-change="typeChanged()"
+              aria-label="Variable editor Form Type select"
             ></select>
           </div>
         </div>
@@ -111,7 +148,13 @@
       <div class="gf-form-inline">
         <div class="gf-form max-width-19">
           <span class="gf-form-label width-6">Label</span>
-          <input type="text" class="gf-form-input" ng-model="current.label" placeholder="optional display name" />
+          <input
+            type="text"
+            class="gf-form-input"
+            ng-model="current.label"
+            placeholder="optional display name"
+            aria-label="Variable editor Form Label field"
+          />
         </div>
         <div class="gf-form max-width-19">
           <span class="gf-form-label width-6">Hide</span>
@@ -120,6 +163,7 @@
               class="gf-form-input"
               ng-model="current.hide"
               ng-options="f.value as f.text for f in hideOptions"
+              aria-label="Variable editor Form Hide select"
             ></select>
           </div>
         </div>
@@ -139,6 +183,7 @@
           ng-model-onblur
           ng-change="runQuery()"
           required
+          aria-label="Variable editor Form Interval Query field"
         />
       </div>
 
@@ -149,6 +194,7 @@
           label-class="width-9"
           checked="current.auto"
           on-change="runQuery()"
+          aria-label="Variable editor Form Interval AutoOption switch"
         >
         </gf-form-switch>
 
@@ -162,6 +208,7 @@
               ng-model="current.auto_count"
               ng-options="f for f in [1,2,3,4,5,10,20,30,40,50,100,200,300,400,500]"
               ng-change="runQuery()"
+              aria-label="Variable editor Form Interval AutoCount select"
             ></select>
           </div>
         </div>
@@ -176,6 +223,7 @@
             ng-model="current.auto_min"
             ng-change="runQuery()"
             placeholder="10s"
+            aria-label="Variable editor Form Interval AutoMin field"
           />
         </div>
       </div>
@@ -192,6 +240,7 @@
           ng-blur="runQuery()"
           placeholder="1, 10, 20, myvalue, escaped\,value"
           required
+          aria-label="Variable editor Form Custom Query field"
         />
       </div>
     </div>
@@ -206,6 +255,7 @@
           ng-model="current.query"
           ng-blur="runQuery()"
           placeholder="your metric prefix"
+          aria-label="Variable editor Form Constant Query field"
         />
       </div>
     </div>
@@ -220,6 +270,7 @@
           ng-model="current.query"
           ng-blur="runQuery()"
           placeholder="default value, if any"
+          aria-label="Variable editor Form TextBox Query field"
         />
       </div>
     </div>
@@ -237,6 +288,7 @@
               ng-options="f.value as f.name for f in datasources"
               ng-change="datasourceChanged()"
               required
+              aria-label="Variable editor Form Query DataSource select"
             >
               <option value="" ng-if="false"></option>
             </select>
@@ -255,6 +307,7 @@
               class="gf-form-input"
               ng-model="current.refresh"
               ng-options="f.value as f.text for f in refreshOptions"
+              aria-label="Variable editor Form Query Refresh select"
             ></select>
           </div>
         </div>
@@ -278,6 +331,7 @@
           placeholder="/.*-(.*)-.*/"
           ng-model-onblur
           ng-change="runQuery()"
+          aria-label="Variable editor Form Query RegEx field"
         />
       </div>
       <div class="gf-form max-width-21">
@@ -293,6 +347,7 @@
             ng-model="current.sort"
             ng-options="f.value as f.text for f in sortOptions"
             ng-change="runQuery()"
+            aria-label="Variable editor Form Query Sort select"
           ></select>
         </div>
       </div>
@@ -309,6 +364,7 @@
             ng-model="current.query"
             ng-options="f.value as f.text for f in datasourceTypes"
             ng-change="runQuery()"
+            aria-label="Variable editor Form DataSource Query field"
           ></select>
         </div>
       </div>
@@ -330,6 +386,7 @@
           placeholder="/.*-(.*)-.*/"
           ng-model-onblur
           ng-change="runQuery()"
+          aria-label="Variable editor Form DataSource RegEx field"
         />
       </div>
     </div>
@@ -345,6 +402,7 @@
             ng-options="f.value as f.name for f in datasources"
             required
             ng-change="validate()"
+            aria-label="Variable editor Form AdHoc DataSource select"
           >
             <option value="" ng-if="false"></option>
           </select>
@@ -362,6 +420,7 @@
           tooltip="Enables multiple values to be selected at the same time"
           checked="current.multi"
           on-change="runQuery()"
+          aria-label="Variable editor Form Multi switch"
         >
         </gf-form-switch>
         <gf-form-switch
@@ -370,12 +429,19 @@
           label-class="width-10"
           checked="current.includeAll"
           on-change="runQuery()"
+          aria-label="Variable editor Form IncludeAll switch"
         >
         </gf-form-switch>
       </div>
       <div class="gf-form" ng-if="current.includeAll">
         <span class="gf-form-label width-10">Custom all value</span>
-        <input type="text" class="gf-form-input max-width-15" ng-model="current.allValue" placeholder="blank = auto" />
+        <input
+          type="text"
+          class="gf-form-input max-width-15"
+          ng-model="current.allValue"
+          placeholder="blank = auto"
+          aria-label="Variable editor Form IncludeAll field"
+        />
       </div>
     </div>
 
@@ -387,6 +453,7 @@
         label-class="width-10"
         checked="current.useTags"
         on-change="runQuery()"
+        aria-label="Variable editor Form Query UseTags switch"
       >
       </gf-form-switch>
       <div class="gf-form last" ng-if="current.useTags">
@@ -397,6 +464,7 @@
           ng-model="current.tagsQuery"
           placeholder="metric name or tags query"
           ng-model-onblur
+          aria-label="Variable editor Form Query TagsQuery field"
         />
       </div>
       <div class="gf-form" ng-if="current.useTags">
@@ -407,6 +475,7 @@
           ng-model="current.tagValuesQuery"
           placeholder="apps.$tag.*"
           ng-model-onblur
+          aria-label="Variable editor Form Query TagsValuesQuery field"
         />
       </div>
     </div>
@@ -415,21 +484,43 @@
       <h5>Preview of values</h5>
       <div class="gf-form-inline">
         <div class="gf-form" ng-repeat="option in current.options | limitTo: optionsLimit">
-          <span class="gf-form-label">{{ option.text }}</span>
+          <span class="gf-form-label" aria-label="Variable editor Preview of Values option">{{ option.text }}</span>
         </div>
         <div class="gf-form" ng-if="current.options.length > optionsLimit">
-          <a class="gf-form-label btn-secondary" ng-click="showMoreOptions()">Show more</a>
+          <a
+            class="gf-form-label btn-secondary"
+            ng-click="showMoreOptions()"
+            aria-label="Variable editor Preview of Values Show More link"
+          >
+            Show more
+          </a>
         </div>
       </div>
     </div>
 
-    <div class="alert alert-info gf-form-group" ng-if="infoText">
+    <div class="alert alert-info gf-form-group" ng-if="infoText" aria-label="Variable editor Form Alert">
       {{ infoText }}
     </div>
 
     <div class="gf-form-button-row p-y-0">
-      <button type="submit" class="btn btn-primary" ng-show="mode === 'edit'" ng-click="update();">Update</button>
-      <button type="submit" class="btn btn-primary" ng-show="mode === 'new'" ng-click="add();">Add</button>
+      <button
+        type="submit"
+        class="btn btn-primary"
+        ng-show="mode === 'edit'"
+        ng-click="update();"
+        aria-label="Variable editor Update button"
+      >
+        Update
+      </button>
+      <button
+        type="submit"
+        class="btn btn-primary"
+        ng-show="mode === 'new'"
+        ng-click="add();"
+        aria-label="Variable editor Add button"
+      >
+        Add
+      </button>
     </div>
   </form>
 </div>

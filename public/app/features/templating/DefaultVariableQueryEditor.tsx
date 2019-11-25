@@ -37,6 +37,7 @@ export default class DefaultVariableQueryEditor extends PureComponent<VariableQu
           onBlur={this.onBlur}
           placeholder="metric name or tags query"
           required
+          aria-label="Variable editor Form Default Variable Query Editor textarea"
         />
       </div>
     );

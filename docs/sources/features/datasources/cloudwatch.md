@@ -61,7 +61,7 @@ number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 se
 Currently all access to CloudWatch is done server side by the Grafana backend using the official AWS SDK. If your Grafana
 server is running on AWS you can use IAM Roles and authentication will be handled automatically.
 
-Checkout AWS docs on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
+See the AWS documentation on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
 
 > NOTE: AWS Role Switching as described [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-cli.html) it not supported at the moment.
 
@@ -106,14 +106,14 @@ Here is a minimal policy example:
 
 ### AWS credentials
 
-If Auth Provider is `Credentials file`, Grafana try to get credentials by following order.
+If Auth Provider is `Credentials file`, Grafana tries to get credentials in the following order.
 
 - Environment variables. (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`)
 - Hard-code credentials.
 - Shared credentials file.
 - IAM role for Amazon EC2.
 
-Checkout AWS docs on [Configuring the AWS SDK for Go](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html)
+See the AWS documentation on [Configuring the AWS SDK for Go](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html)
 
 ### AWS credentials file
 
@@ -174,7 +174,7 @@ Please note that in the case you use the expression field to reference another q
 
 Left clicking a time series in the panel shows a context menu with a link to `View in CloudWatch console`. Clicking that link will open a new tab that will take you to the CloudWatch console and display all the metrics for that query. If you're not currently logged in to the CloudWatch console, the link will forward you to the login page. The provided link is valid for any account but will only display the right metrics if you're logged in to the account that corresponds to the selected data source in Grafana.
 
-This feature is not available for metrics that are based on math expressions.
+This feature is not available for metrics that are based on metric math expressions.
 
 ## Curated Dashboards
 
@@ -314,7 +314,7 @@ The Amazon CloudWatch data source for Grafana uses the `ListMetrics` and `GetMet
 Every time you pick a dimension in the query editor Grafana will issue a ListMetrics request.
 Whenever you make a change to the queries in the query editor, one new request to GetMetricData will be issued.
 
-Please note that for Grafana version 6.5 or higher, all API requests to GetMetricStatistics have been replaced with calls to GetMetricData. This change enables better support for CloudWatch metric math and enables the use of search expressions. While GetMetricStatistics qualified for the CloudWatch API free tier, this is not the case for GetMetricData calls. For more information, please refer to the [CloudWatch pricing page](https://aws.amazon.com/cloudwatch/pricing/).
+Please note that for Grafana version 6.5 or higher, all API requests to GetMetricStatistics have been replaced with calls to GetMetricData. This change enables better support for CloudWatch metric math and enables the automatic generation of search expressions when using wildcards or disabling the `Match Exact` option. While GetMetricStatistics qualified for the CloudWatch API free tier, this is not the case for GetMetricData calls. For more information, please refer to the [CloudWatch pricing page](https://aws.amazon.com/cloudwatch/pricing/).
 
 ## Service Quotas
 

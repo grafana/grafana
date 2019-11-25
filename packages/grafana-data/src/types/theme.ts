@@ -223,13 +223,19 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     formInputBorderHover: string;
     formInputBorderActive: string;
     formInputBorderInvalid: string;
-    formInputFocusOutline: string;
+    formFocusOutline: string;
     formInputText: string;
     formInputDisabledText: string;
     formInputTextStrong: string;
     formInputTextWhite: string;
     formValidationMessageText: string;
     formValidationMessageBg: string;
+    formSwitchBg: string;
+    formSwitchBgActive: string;
+    formSwitchBgActiveHover: string;
+    formSwitchBgHover: string;
+    formSwitchBgDisabled: string;
+    formSwitchDot: string;
   };
   shadow: {
     pageHeader: string;

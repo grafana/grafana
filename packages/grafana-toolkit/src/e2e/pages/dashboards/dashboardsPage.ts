@@ -1,4 +1,5 @@
-import { TestPage, ClickablePageObjectType, ClickablePageObject, Selector } from '@grafana/toolkit/src/e2e';
+import { ClickablePageObjectType } from '../../pageObjects';
+import { TestPage } from '../../pageInfo';
 
 export interface DashboardsPage {
   dashboard: ClickablePageObjectType;
@@ -8,6 +9,6 @@ export const dashboardsPageFactory = (dashboardTitle: string) =>
   new TestPage<DashboardsPage>({
     url: '/dashboards',
     pageObjects: {
-      dashboard: new ClickablePageObject(Selector.fromAriaLabel(dashboardTitle)),
+      dashboard: dashboardTitle,
     },
   });
