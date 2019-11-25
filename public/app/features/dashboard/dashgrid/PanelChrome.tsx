@@ -7,13 +7,14 @@ import { PanelHeader } from './PanelHeader/PanelHeader';
 import { ErrorBoundary } from '@grafana/ui';
 // Utils & Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
-import { applyPanelTimeOverrides, calculateInnerPanelHeight } from 'app/features/dashboard/utils/panel';
+import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { profiler } from 'app/core/profiler';
 import { getProcessedDataFrames } from '../state/runRequest';
 import templateSrv from 'app/features/templating/template_srv';
 import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
+import { PANEL_BORDER } from 'app/core/constants';
 import {
   LoadingState,
   ScopedVars,
@@ -260,13 +261,22 @@ export class PanelChrome extends PureComponent<Props, State> {
     }
 
     const PanelComponent = plugin.panel;
-    const innerPanelHeight = calculateInnerPanelHeight(panel, height);
     const timeRange = data.timeRange || this.timeSrv.timeRange();
+
+    const headerHeight = this.hasOverlayHeader() ? 0 : theme.panelHeaderHeight;
+    const chromePadding = plugin.noPadding ? 0 : theme.panelPadding;
+    const panelWidth = width - chromePadding * 2 - PANEL_BORDER;
+    const innerPanelHeight = height - headerHeight - chromePadding * 2 - PANEL_BORDER;
+
+    const panelContentClassNames = classNames({
+      'panel-content': true,
+      'panel-content--no-padding': plugin.noPadding,
+    });
 
     return (
       <>
         {loading === LoadingState.Loading && this.renderLoadingState()}
-        <div className="panel-content">
+        <div className={panelContentClassNames}>
           <PanelComponent
             id={panel.id}
             data={data}
@@ -274,7 +284,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             timeZone={this.props.dashboard.getTimezone()}
             options={panel.getOptions()}
             transparent={panel.transparent}
-            width={width - theme.panelPadding * 2}
+            width={panelWidth}
             height={innerPanelHeight}
             renderCounter={renderCounter}
             replaceVariables={this.replaceVariables}
@@ -294,6 +304,23 @@ export class PanelChrome extends PureComponent<Props, State> {
     );
   }
 
+  hasOverlayHeader() {
+    const { panel } = this.props;
+    const { errorMessage, data } = this.state;
+
+    // always show normal header if we have an error message
+    if (errorMessage) {
+      return false;
+    }
+
+    // always show normal header if we have time override
+    if (data.request && data.request.timeInfo) {
+      return false;
+    }
+
+    return !panel.hasTitle();
+  }
+
   render() {
     const { dashboard, panel, isFullscreen, width, height } = this.props;
     const { errorMessage, data } = this.state;
@@ -302,8 +329,8 @@ export class PanelChrome extends PureComponent<Props, State> {
     const containerClassNames = classNames({
       'panel-container': true,
       'panel-container--absolute': true,
-      'panel-container--no-title': !panel.hasTitle(),
-      'panel-transparent': transparent,
+      'panel-container--transparent': transparent,
+      'panel-container--no-title': this.hasOverlayHeader(),
     });
 
     return (

@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, CSSProperties } from 'react';
 import { VizOrientation } from '@grafana/data';
 
 interface Props<V, D> {
@@ -87,12 +87,13 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
       repeaterStyle.flexDirection = 'column';
       itemStyles.marginBottom = `${itemSpacing}px`;
       vizWidth = width;
-      vizHeight = height / values.length - itemSpacing;
+      vizHeight = height / values.length - itemSpacing + itemSpacing / values.length;
     } else {
       repeaterStyle.flexDirection = 'row';
+      repeaterStyle.justifyContent = 'space-between';
       itemStyles.marginRight = `${itemSpacing}px`;
       vizHeight = height;
-      vizWidth = width / values.length - itemSpacing;
+      vizWidth = width / values.length - itemSpacing + itemSpacing / values.length;
     }
 
     itemStyles.width = `${vizWidth}px`;
@@ -103,7 +104,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
       <div style={repeaterStyle}>
         {values.map((value, index) => {
           return (
-            <div key={index} style={itemStyles}>
+            <div key={index} style={getItemStylesForIndex(itemStyles, index, values.length)}>
               {renderValue(value, vizWidth, vizHeight, dims)}
             </div>
           );
@@ -111,4 +112,18 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
       </div>
     );
   }
+}
+
+/*
+ * Removes any padding on the last item
+ */
+function getItemStylesForIndex(itemStyles: CSSProperties, index: number, length: number): CSSProperties {
+  if (index === length - 1) {
+    return {
+      ...itemStyles,
+      marginRight: 0,
+      marginBottom: 0,
+    };
+  }
+  return itemStyles;
 }

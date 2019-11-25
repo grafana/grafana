@@ -20,8 +20,8 @@ datasources:
     url: http://localhost:3011
 
   - name: gdev-testdata
-    type: testdata
     isDefault: true
+    type: testdata
 
   - name: gdev-influxdb
     type: influxdb

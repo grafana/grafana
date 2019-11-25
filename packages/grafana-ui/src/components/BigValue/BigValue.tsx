@@ -160,7 +160,7 @@ export function calculateLayout(props: Props): LayoutResult {
 export function getTitleStyles(layout: LayoutResult) {
   const styles: CSSProperties = {
     fontSize: `${layout.titleFontSize}px`,
-    textShadow: '#333 1px 1px 5px',
+    textShadow: '#333 0px 0px 1px',
     color: '#EEE',
   };
 
@@ -175,7 +175,8 @@ export function getValueStyles(layout: LayoutResult) {
   const styles: CSSProperties = {
     fontSize: `${layout.valueFontSize}px`,
     color: '#EEE',
-    textShadow: '#333 1px 1px 5px',
+    textShadow: '#333 0px 0px 1px',
+    fontWeight: 500,
     lineHeight: LINE_HEIGHT,
   };
 
@@ -347,7 +348,7 @@ function renderLineGeom(layout: LayoutResult) {
   const lineStyle: any = {
     stroke: '#CCC',
     lineWidth: 2,
-    shadowBlur: 15,
+    shadowBlur: 10,
     shadowColor: '#444',
     shadowOffsetY: 7,
   };
@@ -359,7 +360,7 @@ function renderVibrant2Geom(layout: LayoutResult) {
   const lineStyle: any = {
     stroke: '#CCC',
     lineWidth: 2,
-    shadowBlur: 15,
+    shadowBlur: 10,
     shadowColor: '#444',
     shadowOffsetY: -5,
   };

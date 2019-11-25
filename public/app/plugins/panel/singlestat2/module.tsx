@@ -7,5 +7,6 @@ import { SingleStatEditor } from './SingleStatEditor';
 export const plugin = new PanelPlugin<SingleStatOptions>(SingleStatPanel)
   .setDefaults(defaults)
   .setEditor(SingleStatEditor)
+  .setNoPadding()
   .setPanelChangeHandler(sharedSingleStatPanelChangedHandler)
   .setMigrationHandler(sharedSingleStatMigrationHandler);
