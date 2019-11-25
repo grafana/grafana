@@ -79,6 +79,7 @@ export interface GrafanaThemeCommons {
     formLabelPadding: string;
     formLabelMargin: string;
     formValidationMessagePadding: string;
+    formValidationMessageMargin: string;
   };
   border: {
     radius: {
