@@ -217,7 +217,15 @@ module.exports = {
 Put them in the `static` directory in the root of your project. The `static` directory is copied when the plugin is built.
 
 ### I am getting this message: `Unable to dynamically transpile ES module A loader plugin needs to be configured via SystemJS.config({ transpiler: 'transpiler-module' }).`
-This error can occur when you bundle your plugin using `grafana-toolkit plugin:dev` task. This task does not remove comments from the bundled package, so **make sure your comments does not include ES2016 code**. If they do, SystemJS v0.20.19 which Grafana uses internally to load plugins, will interprete your code as an [ES module](https://hacks.mozilla.org/2018/03/es-modules-a-cartoon-deep-dive/). Grafana does not support ESM.
+This error occurs when you bundle your plugin using the `grafana-toolkit plugin:dev` task and your code comments include ES2016 code.
+
+There are two issues at play:
+* The `grafana-toolkit plugin:dev` task does not remove comments from your bundled package.
+* Grafana does not support ESM.
+
+If your comments include ES2016 code, then SystemJS v0.20.19, which Grafana uses internally to load plugins, interprets your code as an [ES module](https://hacks.mozilla.org/2018/03/es-modules-a-cartoon-deep-dive/) and fails.
+
+To fix this error, remove the ES2016 code from your comments.
 
 ## Contribute to grafana-toolkit
 You can contribute to grafana-toolkit in the by helping develop it or by debugging it.
