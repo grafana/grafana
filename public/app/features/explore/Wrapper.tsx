@@ -23,6 +23,7 @@ export class Wrapper extends ReduxComponent<{}, {}, ExploreState, ReduxActions> 
   }
 
   componentWillUnmount() {
+    super.componentWillUnmount();
     this.actions.resetExploreAction({});
   }
 

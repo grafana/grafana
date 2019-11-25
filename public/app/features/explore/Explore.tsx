@@ -262,6 +262,7 @@ export class Explore extends ReduxComponent<ExploreProps, ExploreState, ReduxSta
   }
 
   componentWillUnmount() {
+    super.componentWillUnmount();
     this.exploreEvents.removeAllListeners();
   }
 
