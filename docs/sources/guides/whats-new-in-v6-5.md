@@ -174,7 +174,7 @@ The [Azure Monitor](/features/datasources/azuremonitor/) data source supports mu
 
 ### Allow saving of provisioned dashboards from UI
 
-Historically it has been possible to make changes to a provisioned dashboard in the Grafana UI. However, it hasn't been possible to save the changes without manual intervention. In Grafana 6.5 we introduce a new dashboard provisioning setting named `allowUiUpdates`. If `allowUiUpdates` is set to `true` and you make changes to a provisioned dashboard, you can Save the dashboard and the changes will be persisted to the Grafana database.
+Historically it has been possible to make changes to a provisioned dashboard in the Grafana UI. However, it hasn't been possible to save the changes without manual intervention. In Grafana 6.5 we introduce a new dashboard provisioning setting named `allowUiUpdates`. If `allowUiUpdates` is set to `true` and you make changes to a provisioned dashboard, you can save the dashboard and the changes will be persisted to the Grafana database.
 
 Read more about this new feature in [Provisioning Grafana](/administration/provisioning/#making-changes-to-a-provisioned-dashboard).
 
@@ -192,7 +192,7 @@ Read more about this new feature in [Generic OAuth Authentication](/auth/generic
 
 ### Image renderer plugin
 
-Since we announced the deprecation of PhantomJS and new [Image Renderer Plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) in Grafana [6.4](/guides/whats-new-in-v6-4/#phantomjs-deprecation) we’ve received bug reports and valuable feedback.
+Since we announced the deprecation of PhantomJS and the new [Image Renderer Plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) in Grafana [6.4](/guides/whats-new-in-v6-4/#phantomjs-deprecation), we’ve received bug reports and valuable feedback.
 
 In Grafana 6.5 we’ve updated documentation to make it easier to understand how to install and troubleshoot possible problems. Read more about [Image Rendering](/administration/image_rendering/).
 
