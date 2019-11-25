@@ -1,26 +1,33 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
 
-import { StoreState } from 'app/types';
+import { ExploreState, StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
 import Explore from './Explore';
 import { CustomScrollbar, ErrorBoundaryAlert } from '@grafana/ui';
 import { resetExploreAction } from './state/actionTypes';
+import { ReduxComponent } from '../../core/components/ReduxComponent/ReduxComponent';
 
-interface WrapperProps {
-  split: boolean;
+interface ReduxActions {
   resetExploreAction: typeof resetExploreAction;
 }
 
-export class Wrapper extends Component<WrapperProps> {
+export class Wrapper extends ReduxComponent<{}, {}, ExploreState, ReduxActions> {
+  constructor(props: {}) {
+    super({
+      props,
+      stateSelector: (state: StoreState) => state.explore,
+      actionsToDispatch: { resetExploreAction },
+    });
+  }
+
   componentWillUnmount() {
-    this.props.resetExploreAction({});
+    this.actions.resetExploreAction({});
   }
 
   render() {
-    const { split } = this.props;
+    const { split } = this.state;
 
     return (
       <div className="page-scrollbar-wrapper">
@@ -41,13 +48,4 @@ export class Wrapper extends Component<WrapperProps> {
   }
 }
 
-const mapStateToProps = (state: StoreState) => {
-  const { split } = state.explore;
-  return { split };
-};
-
-const mapDispatchToProps = {
-  resetExploreAction,
-};
-
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(Wrapper));
+export default hot(module)(Wrapper);
