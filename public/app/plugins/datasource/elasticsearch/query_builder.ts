@@ -5,7 +5,7 @@ export class ElasticQueryBuilder {
   timeField: string;
   esVersion: number;
 
-  constructor(options: any) {
+  constructor(options: { timeField: string; esVersion: number }) {
     this.timeField = options.timeField;
     this.esVersion = options.esVersion;
   }
