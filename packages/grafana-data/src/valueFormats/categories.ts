@@ -165,7 +165,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     name: 'Date & Time',
     formats: [
       { name: 'YYYY-MM-DD HH:mm:ss', id: 'dateTimeAsIso', fn: dateTimeAsIso },
-      { name: 'DD/MM/YYYY h:mm:ss a', id: 'dateTimeAsUS', fn: dateTimeAsUS },
+      { name: 'MM/DD/YYYY h:mm:ss a', id: 'dateTimeAsUS', fn: dateTimeAsUS },
       { name: 'From Now', id: 'dateTimeFromNow', fn: dateTimeFromNow },
     ],
   },

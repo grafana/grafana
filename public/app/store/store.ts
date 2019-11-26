@@ -1,5 +1,8 @@
-export let store: any;
+import { StoreState } from 'app/types';
+import { Store } from 'redux';
 
-export function setStore(newStore: any) {
+export let store: Store<StoreState>;
+
+export function setStore(newStore: Store<StoreState>) {
   store = newStore;
 }

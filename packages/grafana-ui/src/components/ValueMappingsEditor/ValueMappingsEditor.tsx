@@ -28,7 +28,12 @@ export class ValueMappingsEditor extends PureComponent<Props, State> {
   }
 
   getMaxIdFromValueMappings(mappings: ValueMapping[]) {
-    return Math.max.apply(null, mappings.map(mapping => mapping.id).map(m => m)) + 1;
+    return (
+      Math.max.apply(
+        null,
+        mappings.map(mapping => mapping.id).map(m => m)
+      ) + 1
+    );
   }
 
   onAddMapping = () =>

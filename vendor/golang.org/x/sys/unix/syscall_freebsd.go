@@ -36,8 +36,6 @@ var (
 // INO64_FIRST from /usr/src/lib/libc/sys/compat-ino64.h
 const _ino64First = 1200031
 
-//sys	sysctl(mib []_C_int, old *byte, oldlen *uintptr, new *byte, newlen uintptr) (err error) = SYS___SYSCTL
-
 func supportsABI(ver uint32) bool {
 	osreldateOnce.Do(func() { osreldate, _ = SysctlUint32("kern.osreldate") })
 	return osreldate >= ver
@@ -202,6 +200,8 @@ func setattrlistTimes(path string, times []Timespec, flags int) error {
 }
 
 //sys   ioctl(fd int, req uint, arg uintptr) (err error)
+
+//sys   sysctl(mib []_C_int, old *byte, oldlen *uintptr, new *byte, newlen uintptr) (err error) = SYS___SYSCTL
 
 func Uname(uname *Utsname) error {
 	mib := []_C_int{CTL_KERN, KERN_OSTYPE}
@@ -462,8 +462,12 @@ func convertFromDirents11(buf []byte, old []byte) int {
 	dstPos := 0
 	srcPos := 0
 	for dstPos+fixedSize < len(buf) && srcPos+oldFixedSize < len(old) {
-		dstDirent := (*Dirent)(unsafe.Pointer(&buf[dstPos]))
-		srcDirent := (*dirent_freebsd11)(unsafe.Pointer(&old[srcPos]))
+		var dstDirent Dirent
+		var srcDirent dirent_freebsd11
+
+		// If multiple direntries are written, sometimes when we reach the final one,
+		// we may have cap of old less than size of dirent_freebsd11.
+		copy((*[unsafe.Sizeof(srcDirent)]byte)(unsafe.Pointer(&srcDirent))[:], old[srcPos:])
 
 		reclen := roundup(fixedSize+int(srcDirent.Namlen)+1, 8)
 		if dstPos+reclen > len(buf) {
@@ -479,6 +483,7 @@ func convertFromDirents11(buf []byte, old []byte) int {
 		dstDirent.Pad1 = 0
 
 		copy(dstDirent.Name[:], srcDirent.Name[:srcDirent.Namlen])
+		copy(buf[dstPos:], (*[unsafe.Sizeof(dstDirent)]byte)(unsafe.Pointer(&dstDirent))[:])
 		padding := buf[dstPos+fixedSize+int(dstDirent.Namlen) : dstPos+reclen]
 		for i := range padding {
 			padding[i] = 0
@@ -653,7 +658,7 @@ func PtraceSingleStep(pid int) (err error) {
 //sys	Revoke(path string) (err error)
 //sys	Rmdir(path string) (err error)
 //sys	Seek(fd int, offset int64, whence int) (newoffset int64, err error) = SYS_LSEEK
-//sys	Select(n int, r *FdSet, w *FdSet, e *FdSet, timeout *Timeval) (err error)
+//sys	Select(nfd int, r *FdSet, w *FdSet, e *FdSet, timeout *Timeval) (n int, err error)
 //sysnb	Setegid(egid int) (err error)
 //sysnb	Seteuid(euid int) (err error)
 //sysnb	Setgid(gid int) (err error)

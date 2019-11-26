@@ -322,7 +322,7 @@ func addOAuthPassThruAuth(c *m.ReqContext, req *http.Request) {
 		TokenType:    authInfoQuery.Result.OAuthTokenType,
 	}).Token()
 	if err != nil {
-		logger.Error("Failed to retrieve access token from oauth provider", "provider", authInfoQuery.Result.AuthModule)
+		logger.Error("Failed to retrieve access token from oauth provider", "provider", authInfoQuery.Result.AuthModule, "error", err)
 		return
 	}
 

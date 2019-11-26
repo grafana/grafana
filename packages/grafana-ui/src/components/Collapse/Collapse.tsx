@@ -83,7 +83,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 }));
 
 interface Props {
-  isOpen: boolean;
+  isOpen?: boolean;
   label: string;
   loading?: boolean;
   collapsible?: boolean;
