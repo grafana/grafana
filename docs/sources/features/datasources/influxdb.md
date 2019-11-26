@@ -65,7 +65,7 @@ Identifier | Description
 {{< docs-imagebox img="/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v45/influxdb_query.gif" >}}
 
 Find the InfluxDB editor under the metrics tab, while in the edit mode of the Graph or Singlestat panels. 
-You can enter edit mode by clicking the panel title, then edit. The editor allows you to select metrics and tags.
+Enter edit mode by clicking the panel title, and clicking **Edit**. The editor allows you to select metrics and tags.
 
 ### Filter data (WHERE)
 To add a tag filter click the plus icon to the right of the `WHERE` condition. You can remove tag filters by clicking on
