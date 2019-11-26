@@ -64,7 +64,7 @@ Identifier | Description
 
 {{< docs-imagebox img="/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v45/influxdb_query.gif" >}}
 
-You can find the InfluxDB editor in the metrics tab in a Graph or Singlestat panel's edit mode. 
+Find the InfluxDB editor under the metrics tab, while in the edit mode of the Graph or Singlestat panels. 
 You can enter edit mode by clicking the panel title, then edit. The editor allows you to select metrics and tags.
 
 ### Filter data (WHERE)
