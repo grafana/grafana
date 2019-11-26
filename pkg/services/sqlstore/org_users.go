@@ -120,7 +120,15 @@ func GetOrgUsers(query *m.GetOrgUsersQuery) error {
 		sess.Limit(query.Limit, 0)
 	}
 
-	sess.Cols("org_user.org_id", "org_user.user_id", "user.email", "user.login", "org_user.role", "user.last_seen_at")
+	sess.Cols(
+		"org_user.org_id",
+		"org_user.user_id",
+		"user.email",
+		"user.name",
+		"user.login",
+		"org_user.role",
+		"user.last_seen_at",
+	)
 	sess.Asc("user.email", "user.login")
 
 	if err := sess.Find(&query.Result); err != nil {

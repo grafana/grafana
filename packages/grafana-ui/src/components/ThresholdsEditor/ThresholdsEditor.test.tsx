@@ -1,7 +1,9 @@
 import React, { ChangeEvent } from 'react';
 import { mount } from 'enzyme';
+import { GrafanaThemeType } from '@grafana/data';
 import { ThresholdsEditor, Props, thresholdsWithoutKey } from './ThresholdsEditor';
 import { colors } from '../../utils';
+import { mockThemeContext } from '../../themes/ThemeContext';
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
@@ -25,6 +27,15 @@ function getCurrentThresholds(editor: ThresholdsEditor) {
 }
 
 describe('Render', () => {
+  let restoreThemeContext: any;
+  beforeAll(() => {
+    restoreThemeContext = mockThemeContext({ type: GrafanaThemeType.Dark });
+  });
+
+  afterAll(() => {
+    restoreThemeContext();
+  });
+
   it('should render with base threshold', () => {
     const { wrapper } = setup();
     expect(wrapper).toMatchSnapshot();

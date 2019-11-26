@@ -74,10 +74,16 @@ export const getGraphSeriesModel = (
           });
         }
 
-        const seriesColor =
-          seriesOptions[field.name] && seriesOptions[field.name].color
-            ? getColorFromHexRgbOrName(seriesOptions[field.name].color)
-            : colors[graphs.length % colors.length];
+        let seriesColor;
+        if (seriesOptions[field.name] && seriesOptions[field.name].color) {
+          // Case when panel has settings provided via SeriesOptions, i.e. graph panel
+          seriesColor = getColorFromHexRgbOrName(seriesOptions[field.name].color);
+        } else if (field.config && field.config.color) {
+          // Case when color settings are set on field, i.e. Explore logs histogram (see makeSeriesForLogs)
+          seriesColor = field.config.color;
+        } else {
+          seriesColor = colors[graphs.length % colors.length];
+        }
 
         field.config = fieldOptions
           ? {
@@ -86,7 +92,7 @@ export const getGraphSeriesModel = (
               decimals: fieldOptions.defaults.decimals,
               color: seriesColor,
             }
-          : { ...field.config };
+          : { ...field.config, color: seriesColor };
 
         field.display = getDisplayProcessor({ config: { ...field.config }, type: field.type });
 

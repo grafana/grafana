@@ -884,7 +884,7 @@ func anyToSockaddr(fd int, rsa *RawSockaddrAny) (Sockaddr, error) {
 		for n < len(pp.Path) && pp.Path[n] != 0 {
 			n++
 		}
-		bytes := (*[10000]byte)(unsafe.Pointer(&pp.Path[0]))[0:n]
+		bytes := (*[len(pp.Path)]byte)(unsafe.Pointer(&pp.Path[0]))[0:n]
 		sa.Name = string(bytes)
 		return sa, nil
 
@@ -1493,7 +1493,11 @@ func PtraceSyscall(pid int, signal int) (err error) {
 
 func PtraceSingleStep(pid int) (err error) { return ptrace(PTRACE_SINGLESTEP, pid, 0, 0) }
 
+func PtraceInterrupt(pid int) (err error) { return ptrace(PTRACE_INTERRUPT, pid, 0, 0) }
+
 func PtraceAttach(pid int) (err error) { return ptrace(PTRACE_ATTACH, pid, 0, 0) }
+
+func PtraceSeize(pid int) (err error) { return ptrace(PTRACE_SEIZE, pid, 0, 0) }
 
 func PtraceDetach(pid int) (err error) { return ptrace(PTRACE_DETACH, pid, 0, 0) }
 
@@ -1849,6 +1853,17 @@ func NameToHandleAt(dirfd int, path string, flags int) (handle FileHandle, mount
 // file via a handle as previously returned by NameToHandleAt.
 func OpenByHandleAt(mountFD int, handle FileHandle, flags int) (fd int, err error) {
 	return openByHandleAt(mountFD, handle.fileHandle, flags)
+}
+
+// Klogset wraps the sys_syslog system call; it sets console_loglevel to
+// the value specified by arg and passes a dummy pointer to bufp.
+func Klogset(typ int, arg int) (err error) {
+	var p unsafe.Pointer
+	_, _, errno := Syscall(SYS_SYSLOG, uintptr(typ), uintptr(p), uintptr(arg))
+	if errno != 0 {
+		return errnoErr(errno)
+	}
+	return nil
 }
 
 /*

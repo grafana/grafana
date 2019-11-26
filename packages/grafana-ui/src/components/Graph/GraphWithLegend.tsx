@@ -94,7 +94,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
     <div className={wrapper}>
       <div className={graphContainer}>
         <Graph
-          series={series.filter(s => !!s.isVisible)}
+          series={series}
           timeRange={timeRange}
           timeZone={timeZone}
           showLines={showLines}

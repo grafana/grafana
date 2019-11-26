@@ -15,7 +15,6 @@ import { StoreState } from 'app/types';
 import {
   DataQuery,
   DataSourceApi,
-  QueryFixAction,
   PanelData,
   HistoryItem,
   TimeRange,
@@ -97,14 +96,6 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     this.props.changeQuery(exploreId, newQuery, index, true);
   };
 
-  onClickHintFix = (action: QueryFixAction) => {
-    const { datasourceInstance, exploreId, index } = this.props;
-    if (datasourceInstance && datasourceInstance.modifyQuery) {
-      const modifier = (queries: DataQuery, action: QueryFixAction) => datasourceInstance.modifyQuery(queries, action);
-      this.props.modifyQueries(exploreId, action, index, modifier);
-    }
-  };
-
   onClickRemoveButton = () => {
     const { exploreId, index } = this.props;
     this.props.removeQueryRowAction({ exploreId, index });
@@ -143,25 +134,23 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
     let QueryField;
 
-    if (mode === ExploreMode.Metrics && datasourceInstance.components.ExploreMetricsQueryField) {
+    if (mode === ExploreMode.Metrics && datasourceInstance.components?.ExploreMetricsQueryField) {
       QueryField = datasourceInstance.components.ExploreMetricsQueryField;
-    } else if (mode === ExploreMode.Logs && datasourceInstance.components.ExploreLogsQueryField) {
+    } else if (mode === ExploreMode.Logs && datasourceInstance.components?.ExploreLogsQueryField) {
       QueryField = datasourceInstance.components.ExploreLogsQueryField;
     } else {
-      QueryField = datasourceInstance.components.ExploreQueryField;
+      QueryField = datasourceInstance.components?.ExploreQueryField;
     }
 
     return (
       <div className="query-row">
         <div className="query-row-field flex-shrink-1">
           {QueryField ? (
-            //@ts-ignore
             <QueryField
               datasource={datasourceInstance}
               query={query}
               history={history}
               onRunQuery={this.onRunQuery}
-              onHint={this.onClickHintFix}
               onBlur={noopOnBlur}
               onChange={this.onChange}
               data={queryResponse}
@@ -224,7 +213,6 @@ const mapDispatchToProps = {
   runQueries,
 };
 
-export default hot(module)(connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(QueryRow) as React.ComponentType<PropsFromParent>);
+export default hot(module)(
+  connect(mapStateToProps, mapDispatchToProps)(QueryRow) as React.ComponentType<PropsFromParent>
+);

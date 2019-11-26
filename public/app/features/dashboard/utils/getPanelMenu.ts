@@ -83,7 +83,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
   const onNavigateToExplore = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     const openInNewWindow = event.ctrlKey || event.metaKey ? (url: string) => window.open(url) : undefined;
-    store.dispatch(navigateToExplore(panel, { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow }));
+    store.dispatch(navigateToExplore(panel, { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow }) as any);
   };
 
   const menu: PanelMenuItem[] = [];

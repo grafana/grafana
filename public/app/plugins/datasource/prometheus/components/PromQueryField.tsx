@@ -1,10 +1,16 @@
 import _ from 'lodash';
 import React from 'react';
-// @ts-ignore
-import Cascader from 'rc-cascader';
 
 import { Plugin } from 'slate';
-import { SlatePrism, TypeaheadInput, TypeaheadOutput, QueryField, BracesPlugin } from '@grafana/ui';
+import {
+  Cascader,
+  CascaderOption,
+  SlatePrism,
+  TypeaheadInput,
+  TypeaheadOutput,
+  QueryField,
+  BracesPlugin,
+} from '@grafana/ui';
 
 import Prism from 'prismjs';
 
@@ -91,13 +97,6 @@ export function willApplySuggestion(suggestion: string, { typeaheadContext, type
     default:
   }
   return suggestion;
-}
-
-interface CascaderOption {
-  label: string;
-  value: string;
-  children?: CascaderOption[];
-  disabled?: boolean;
 }
 
 interface PromQueryFieldProps extends ExploreQueryFieldProps<PrometheusDatasource, PromQuery, PromOptions> {
@@ -221,11 +220,11 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   onClickHintFix = () => {
+    const { datasource, query, onChange, onRunQuery } = this.props;
     const { hint } = this.state;
-    const { onHint } = this.props;
-    if (onHint && hint && hint.fix) {
-      onHint(hint.fix.action);
-    }
+
+    onChange(datasource.modifyQuery(query, hint.fix.action));
+    onRunQuery();
   };
 
   onUpdateLanguage = () => {
@@ -284,11 +283,13 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       <>
         <div className="gf-form-inline gf-form-inline--nowrap">
           <div className="gf-form flex-shrink-0">
-            <Cascader options={metricsOptions} onChange={this.onChangeMetrics} expandIcon={null}>
-              <button className="gf-form-label gf-form-label--btn" disabled={buttonDisabled}>
-                {chooserText} <i className="fa fa-caret-down" />
-              </button>
-            </Cascader>
+            <Cascader
+              options={metricsOptions}
+              buttonText={chooserText}
+              disabled={buttonDisabled}
+              onChange={this.onChangeMetrics}
+              expandIcon={null}
+            />
           </div>
           <div className="gf-form gf-form--grow flex-shrink-1">
             <QueryField

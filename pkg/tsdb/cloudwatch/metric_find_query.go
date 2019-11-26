@@ -550,6 +550,8 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 				}
 				if attr, ok := v.Interface().(*string); ok {
 					data = *attr
+				} else if attr, ok := v.Interface().(*time.Time); ok {
+					data = (*attr).String()
 				} else {
 					return nil, errors.New("invalid attribute path")
 				}
@@ -637,8 +639,11 @@ func (e *CloudWatchExecutor) cloudwatchListMetrics(region string, namespace stri
 
 	params := &cloudwatch.ListMetricsInput{
 		Namespace:  aws.String(namespace),
-		MetricName: aws.String(metricName),
 		Dimensions: dimensions,
+	}
+
+	if metricName != "" {
+		params.MetricName = aws.String(metricName)
 	}
 
 	var resp cloudwatch.ListMetricsOutput

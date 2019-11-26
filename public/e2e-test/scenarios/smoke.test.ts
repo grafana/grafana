@@ -1,84 +1,81 @@
 import { Browser, Page, Target } from 'puppeteer-core';
 
-import { e2eScenario, constants, takeScreenShot, compareScreenShots } from '@grafana/toolkit/src/e2e';
-import { addDataSourcePage } from 'e2e-test/pages/datasources/addDataSourcePage';
-import { editDataSourcePage } from 'e2e-test/pages/datasources/editDataSourcePage';
-import { dataSourcesPage } from 'e2e-test/pages/datasources/dataSources';
-import { createDashboardPage } from 'e2e-test/pages/dashboards/createDashboardPage';
-import { saveDashboardModal } from 'e2e-test/pages/dashboards/saveDashboardModal';
-import { dashboardsPageFactory } from 'e2e-test/pages/dashboards/dashboardsPage';
+import { compareScreenShots, constants, e2eScenario, takeScreenShot } from '@grafana/toolkit/src/e2e';
+import {
+  cleanDashboard,
+  createDashboardPage,
+  dashboardsPageFactory,
+  saveDashboardModal,
+} from '@grafana/toolkit/src/e2e/pages';
 import { panel } from 'e2e-test/pages/panels/panel';
 import { editPanelPage } from 'e2e-test/pages/panels/editPanel';
 import { sharePanelModal } from 'e2e-test/pages/panels/sharePanelModal';
 
-e2eScenario(
-  'Login scenario, create test data source, dashboard, panel, and export scenario',
-  'should pass',
-  async (browser: Browser, page: Page) => {
-    // Add TestData DB
-    await addDataSourcePage.init(page);
-    await addDataSourcePage.navigateTo();
-    await addDataSourcePage.pageObjects.testDataDB.exists();
-    await addDataSourcePage.pageObjects.testDataDB.click();
+export const addDashboardAndSetupTestDataGraph = async (page: Page) => {
+  // Create a new Dashboard
+  const dashboardTitle = `e2e - Dashboard-${new Date().getTime()}`;
+  await createDashboardPage.init(page);
+  await createDashboardPage.navigateTo();
+  await createDashboardPage.pageObjects.addQuery.click();
 
-    await editDataSourcePage.init(page);
-    await editDataSourcePage.waitForNavigation();
-    await editDataSourcePage.pageObjects.saveAndTest.click();
-    await editDataSourcePage.pageObjects.alert.exists();
-    await editDataSourcePage.pageObjects.alertMessage.containsText('Data source is working');
+  await editPanelPage.init(page);
+  await editPanelPage.waitForNavigation();
+  await editPanelPage.pageObjects.queriesTab.click();
+  await editPanelPage.pageObjects.scenarioSelect.select('string:csv_metric_values');
+  await editPanelPage.pageObjects.visualizationTab.click();
+  await editPanelPage.pageObjects.showXAxis.click();
+  await editPanelPage.pageObjects.saveDashboard.click();
 
-    // Verify that data source is listed
-    const url = await editDataSourcePage.getUrlWithoutBaseUrl();
-    const expectedUrl = url.substring(1, url.length - 1);
-    const selector = `a[href="${expectedUrl}"]`;
+  // Confirm save modal
+  await saveDashboardModal.init(page);
+  await saveDashboardModal.expectSelector({ selector: 'save-dashboard-as-modal' });
+  await saveDashboardModal.pageObjects.name.enter(dashboardTitle);
+  await saveDashboardModal.pageObjects.save.click();
+  await saveDashboardModal.pageObjects.success.exists();
 
-    await dataSourcesPage.init(page);
-    await dataSourcesPage.navigateTo();
-    await dataSourcesPage.expectSelector({ selector });
+  return dashboardTitle;
+};
 
-    // Create a new Dashboard
-    await createDashboardPage.init(page);
-    await createDashboardPage.navigateTo();
-    await createDashboardPage.pageObjects.addQuery.click();
+export const clickOnSharePanelImageLinkAndCompareImages = async (
+  browser: Browser,
+  page: Page,
+  dashboardTitle: string
+) => {
+  // Share the dashboard
+  const dashboardsPage = dashboardsPageFactory(dashboardTitle);
+  await dashboardsPage.init(page);
+  await dashboardsPage.navigateTo();
+  await dashboardsPage.pageObjects.dashboard.exists();
+  await dashboardsPage.pageObjects.dashboard.click();
 
-    await editPanelPage.init(page);
-    await editPanelPage.waitForNavigation();
-    await editPanelPage.pageObjects.queriesTab.click();
-    await editPanelPage.pageObjects.scenarioSelect.select('string:csv_metric_values');
-    await editPanelPage.pageObjects.visualizationTab.click();
-    await editPanelPage.pageObjects.showXAxis.click();
-    await editPanelPage.pageObjects.saveDashboard.click();
+  await panel.init(page);
+  await panel.pageObjects.panelTitle.click();
+  await panel.pageObjects.share.click();
 
-    // Confirm save modal
-    await saveDashboardModal.init(page);
-    await saveDashboardModal.expectSelector({ selector: 'save-dashboard-as-modal' });
-    const dashboardTitle = new Date().toISOString();
-    await saveDashboardModal.pageObjects.name.enter(dashboardTitle);
-    await saveDashboardModal.pageObjects.save.click();
-    await saveDashboardModal.pageObjects.success.exists();
+  // Verify that a new tab is opened
+  const targetPromise = new Promise(resolve => browser.once('targetcreated', resolve));
+  await sharePanelModal.init(page);
+  await sharePanelModal.pageObjects.directLinkRenderedImage.click();
+  const newTarget: Target = (await targetPromise) as Target;
+  expect(newTarget.url()).toContain(`${constants.baseUrl}/render/d-solo`);
 
-    // Share the dashboard
-    const dashboardsPage = dashboardsPageFactory(dashboardTitle);
-    await dashboardsPage.init(page);
-    await dashboardsPage.navigateTo();
-    await dashboardsPage.pageObjects.dashboard.exists();
-    await dashboardsPage.pageObjects.dashboard.click();
-
-    await panel.init(page);
-    await panel.pageObjects.panelTitle.click();
-    await panel.pageObjects.share.click();
-
-    // Verify that a new tab is opened
-    const targetPromise = new Promise(resolve => browser.once('targetcreated', resolve));
-    await sharePanelModal.init(page);
-    await sharePanelModal.pageObjects.directLinkRenderedImage.click();
-    const newTarget: Target = (await targetPromise) as Target;
-    expect(newTarget.url()).toContain(`${constants.baseUrl}/render/d-solo`);
-
-    // Take snapshot of page
+  // Take snapshot of page only when running on CircleCI
+  if (process.env.CIRCLE_SHA1) {
     const newPage = await newTarget.page();
     const fileName = 'smoke-test-scenario';
     await takeScreenShot(newPage, fileName);
     await compareScreenShots(fileName);
   }
-);
+};
+
+e2eScenario({
+  describeName: 'Smoke tests',
+  itName: 'Login scenario, create test data source, dashboard, panel, and export scenario',
+  skipScenario: false,
+  createTestDataSource: true,
+  scenario: async (browser: Browser, page: Page) => {
+    const dashboardTitle = await addDashboardAndSetupTestDataGraph(page);
+    await clickOnSharePanelImageLinkAndCompareImages(browser, page, dashboardTitle);
+    await cleanDashboard(page, dashboardTitle);
+  },
+});

@@ -253,8 +253,8 @@ describe('updateUIBoundOptions', () => {
       ctrl.updateUIBoundOptions($scope, options);
     });
 
-    it('then highlightIndex should be reset', () => {
-      expect(ctrl.highlightIndex).toEqual(-1);
+    it('then highlightIndex should be reset to first item', () => {
+      expect(ctrl.highlightIndex).toEqual(0);
     });
 
     it('then search.options should be same as options but capped to 1000', () => {

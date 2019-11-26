@@ -46,6 +46,12 @@ var (
 	ERR_TEMPLATE_NAME = "error"
 )
 
+// This constant corresponds to the default value for ldap_sync_ttl in .ini files
+// it is used for comparision and has to be kept in sync
+const (
+	AUTH_PROXY_SYNC_TTL = 60
+)
+
 var (
 	// App settings.
 	Env              = DEV
@@ -143,13 +149,14 @@ var (
 	AnonymousOrgRole string
 
 	// Auth proxy settings
-	AuthProxyEnabled        bool
-	AuthProxyHeaderName     string
-	AuthProxyHeaderProperty string
-	AuthProxyAutoSignUp     bool
-	AuthProxySyncTtl        int
-	AuthProxyWhitelist      string
-	AuthProxyHeaders        map[string]string
+	AuthProxyEnabled          bool
+	AuthProxyHeaderName       string
+	AuthProxyHeaderProperty   string
+	AuthProxyAutoSignUp       bool
+	AuthProxyEnableLoginToken bool
+	AuthProxySyncTtl          int
+	AuthProxyWhitelist        string
+	AuthProxyHeaders          map[string]string
 
 	// Basic Auth
 	BasicAuthEnabled bool
@@ -236,6 +243,7 @@ type Cfg struct {
 	RendererLimitAlerting int
 
 	// Security
+	DisableInitAdminCreation         bool
 	DisableBruteForceLoginProtection bool
 	CookieSecure                     bool
 	CookieSameSite                   http.SameSite
@@ -756,6 +764,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	// admin
+	cfg.DisableInitAdminCreation = security.Key("disable_initial_admin_creation").MustBool(false)
 	AdminUser, err = valueAsString(security, "admin_user", "")
 	if err != nil {
 		return err
@@ -854,11 +863,12 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
+	AuthProxyEnableLoginToken = authProxy.Key("enable_login_token").MustBool(false)
 
 	ldapSyncVal := authProxy.Key("ldap_sync_ttl").MustInt()
 	syncVal := authProxy.Key("sync_ttl").MustInt()
 
-	if ldapSyncVal != 60 {
+	if ldapSyncVal != AUTH_PROXY_SYNC_TTL {
 		AuthProxySyncTtl = ldapSyncVal
 		cfg.Logger.Warn("[Deprecated] the configuration setting 'ldap_sync_ttl' is deprecated, please use 'sync_ttl' instead")
 	} else {

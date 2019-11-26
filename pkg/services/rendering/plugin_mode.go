@@ -63,6 +63,9 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, opts Opts) (*Re
 		return nil, err
 	}
 
+	ctx, cancel := context.WithTimeout(ctx, opts.Timeout)
+	defer cancel()
+
 	rsp, err := rs.grpcPlugin.Render(ctx, &pluginModel.RenderRequest{
 		Url:       rs.getURL(opts.Path),
 		Width:     int32(opts.Width),

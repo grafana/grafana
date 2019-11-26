@@ -189,10 +189,6 @@ describe('dataFrameToLogsModel', () => {
   it('given one series should return expected logs model', () => {
     const series: DataFrame[] = [
       new MutableDataFrame({
-        labels: {
-          filename: '/var/log/grafana/grafana.log',
-          job: 'grafana',
-        },
         fields: [
           {
             name: 'time',
@@ -206,6 +202,10 @@ describe('dataFrameToLogsModel', () => {
               't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
               't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
             ],
+            labels: {
+              filename: '/var/log/grafana/grafana.log',
+              job: 'grafana',
+            },
           },
           {
             name: 'id',
@@ -244,7 +244,7 @@ describe('dataFrameToLogsModel', () => {
     expect(logsModel.meta).toHaveLength(2);
     expect(logsModel.meta[0]).toMatchObject({
       label: 'Common labels',
-      value: series[0].labels,
+      value: series[0].fields[1].labels,
       kind: LogsMetaKind.LabelsMap,
     });
     expect(logsModel.meta[1]).toMatchObject({
@@ -291,11 +291,6 @@ describe('dataFrameToLogsModel', () => {
   it('given multiple series with unique times should return expected logs model', () => {
     const series: DataFrame[] = [
       toDataFrame({
-        labels: {
-          foo: 'bar',
-          baz: '1',
-          level: 'dbug',
-        },
         fields: [
           {
             name: 'ts',
@@ -306,16 +301,16 @@ describe('dataFrameToLogsModel', () => {
             name: 'line',
             type: FieldType.string,
             values: ['WARN boooo'],
+            labels: {
+              foo: 'bar',
+              baz: '1',
+              level: 'dbug',
+            },
           },
         ],
       }),
       toDataFrame({
         name: 'logs',
-        labels: {
-          foo: 'bar',
-          baz: '2',
-          level: 'err',
-        },
         fields: [
           {
             name: 'time',
@@ -326,6 +321,11 @@ describe('dataFrameToLogsModel', () => {
             name: 'message',
             type: FieldType.string,
             values: ['INFO 1', 'INFO 2'],
+            labels: {
+              foo: 'bar',
+              baz: '2',
+              level: 'err',
+            },
           },
         ],
       }),
@@ -367,11 +367,6 @@ describe('dataFrameToLogsModel', () => {
   it('given multiple series with equal times should return expected logs model', () => {
     const series: DataFrame[] = [
       toDataFrame({
-        labels: {
-          foo: 'bar',
-          baz: '1',
-          level: 'dbug',
-        },
         fields: [
           {
             name: 'ts',
@@ -382,15 +377,15 @@ describe('dataFrameToLogsModel', () => {
             name: 'line',
             type: FieldType.string,
             values: ['WARN boooo 1'],
+            labels: {
+              foo: 'bar',
+              baz: '1',
+              level: 'dbug',
+            },
           },
         ],
       }),
       toDataFrame({
-        labels: {
-          foo: 'bar',
-          baz: '2',
-          level: 'dbug',
-        },
         fields: [
           {
             name: 'ts',
@@ -401,16 +396,16 @@ describe('dataFrameToLogsModel', () => {
             name: 'line',
             type: FieldType.string,
             values: ['WARN boooo 2'],
+            labels: {
+              foo: 'bar',
+              baz: '2',
+              level: 'dbug',
+            },
           },
         ],
       }),
       toDataFrame({
         name: 'logs',
-        labels: {
-          foo: 'bar',
-          baz: '2',
-          level: 'err',
-        },
         fields: [
           {
             name: 'time',
@@ -421,6 +416,11 @@ describe('dataFrameToLogsModel', () => {
             name: 'message',
             type: FieldType.string,
             values: ['INFO 1', 'INFO 2'],
+            labels: {
+              foo: 'bar',
+              baz: '2',
+              level: 'err',
+            },
           },
         ],
       }),
