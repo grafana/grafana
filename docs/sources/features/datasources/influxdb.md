@@ -81,7 +81,7 @@ group by time you need an aggregation function. Some functions like derivative r
 
 ![](/img/docs/influxdb/select_editor.png)
 
-The above will generate the following InfluxDB `SELECT` clause:
+The above generates the following InfluxDB `SELECT` clause:
 
 ```sql
 SELECT derivative(mean("value"), 10s) /10 AS "REQ/s" FROM ....
