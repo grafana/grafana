@@ -84,7 +84,7 @@ export class GraphiteDetails extends PureComponent<Props, State> {
             <Select
               value={versions.find(version =>
                 !value.jsonData.graphiteVersion
-                  ? version.value === graphiteVersion
+                  ? version.value === '0.9'
                   : version.value === value.jsonData.graphiteVersion
               )}
               options={versions}
