@@ -211,7 +211,7 @@ An example query:
 SELECT title, description from events WHERE $timeFilter ORDER BY time ASC
 ```
 
-For InfluxDB, you need to enter a query like the one in the example above. The ```where $timeFilter``` component is required. If you only select one column you need not enter anything in the column mapping fields. The Tags field can be a comma separated string.
+For InfluxDB, you need to enter a query like the one in the example above. The ```where $timeFilter``` component is required. If you only select one column, then you do not need to enter anything in the column mapping fields. The **Tags** field can be a comma-separated string.
 
 ## Configure the data source with provisioning
 
