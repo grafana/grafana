@@ -1,7 +1,7 @@
 import React, { FC, HTMLProps } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
-import { selectThemeVariant, stylesFactory, useTheme } from '../../../themes';
+import { stylesFactory, useTheme } from '../../../themes';
 import { getFocusStyle, inputSizes, sharedInputStyle } from '../commonStyles';
 import { FormInputSize } from '../types';
 
