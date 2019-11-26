@@ -157,6 +157,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 				hs.log.Debug("server was shutdown gracefully")
 				return nil
 			}
+			return err
 		}
 	default:
 		panic(fmt.Sprintf("Unhandled protocol %q", setting.Protocol))
