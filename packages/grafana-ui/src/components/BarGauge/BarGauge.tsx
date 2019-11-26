@@ -1,7 +1,13 @@
 // Library
 import React, { PureComponent, CSSProperties, ReactNode } from 'react';
 import tinycolor from 'tinycolor2';
-import { Threshold, TimeSeriesValue, getActiveThreshold, DisplayValue } from '@grafana/data';
+import {
+  Threshold,
+  TimeSeriesValue,
+  getActiveThreshold,
+  DisplayValue,
+  DisplayValueAlignmentFactors,
+} from '@grafana/data';
 
 // Utils
 import { getColorFromHexRgbOrName } from '@grafana/data';
@@ -19,18 +25,6 @@ const TITLE_LINE_HEIGHT = 1.5;
 const VALUE_LINE_HEIGHT = 1;
 const VALUE_LEFT_PADDING = 10;
 
-/**
- * These values calculate the internal font sizes and
- * placement.  For consistent behavior across repeating
- * panels, we can optionally pass in the maximum values.
- *
- * If performace becomes a problem, we can cache the results
- */
-export interface BarGaugeAlignmentFactors {
-  title: string;
-  text: string;
-}
-
 export interface Props extends Themeable {
   height: number;
   width: number;
@@ -43,7 +37,7 @@ export interface Props extends Themeable {
   displayMode: 'basic' | 'lcd' | 'gradient';
   onClick?: React.MouseEventHandler<HTMLElement>;
   className?: string;
-  alignmentFactors?: BarGaugeAlignmentFactors;
+  alignmentFactors?: DisplayValueAlignmentFactors;
 }
 
 export class BarGauge extends PureComponent<Props> {
