@@ -28,12 +28,14 @@ export interface LayoutResult {
   valueColor: string;
   justifyCenter: boolean;
 }
+
 export enum LayoutType {
   Stacked,
   StackedNoChart,
   Wide,
   WideNoChart,
 }
+
 export function shouldJustifyCenter(props: Props) {
   const { value, justifyMode } = props;
   if (justifyMode === BigValueJustifyMode.Center) {
