@@ -1,7 +1,7 @@
 {
   "type": "panel",
-  "name": "Singlestat (react)",
-  "id": "singlestat2",
+  "name": "Stat",
+  "id": "stat",
   "state": "alpha",
 
   "info": {

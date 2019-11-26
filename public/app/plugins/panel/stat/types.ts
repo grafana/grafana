@@ -1,4 +1,4 @@
-import { SingleStatBaseOptions, SingleStatDisplayMode } from '@grafana/ui';
+import { SingleStatBaseOptions, BigValueDisplayMode } from '@grafana/ui';
 import { VizOrientation, ReducerID, FieldDisplayOptions, SelectableValue } from '@grafana/data';
 
 export interface SparklineOptions {
@@ -6,15 +6,15 @@ export interface SparklineOptions {
 }
 
 // Structure copied from angular
-export interface SingleStatOptions extends SingleStatBaseOptions {
+export interface StatPanelOptions extends SingleStatBaseOptions {
   sparkline: SparklineOptions;
-  displayMode: SingleStatDisplayMode;
+  displayMode: BigValueDisplayMode;
 }
 
-export const displayModes: Array<SelectableValue<SingleStatDisplayMode>> = [
-  { value: SingleStatDisplayMode.Classic, label: 'Classic' },
-  { value: SingleStatDisplayMode.Vibrant, label: 'Vibrant' },
-  { value: SingleStatDisplayMode.Vibrant2, label: 'Vibrant 2' },
+export const displayModes: Array<SelectableValue<BigValueDisplayMode>> = [
+  { value: BigValueDisplayMode.Classic, label: 'Classic' },
+  { value: BigValueDisplayMode.Vibrant, label: 'Vibrant' },
+  { value: BigValueDisplayMode.Vibrant2, label: 'Vibrant 2' },
 ];
 
 export const standardFieldDisplayOptions: FieldDisplayOptions = {
@@ -32,11 +32,11 @@ export const standardFieldDisplayOptions: FieldDisplayOptions = {
   override: {},
 };
 
-export const defaults: SingleStatOptions = {
+export const defaults: StatPanelOptions = {
   sparkline: {
     show: true,
   },
-  displayMode: SingleStatDisplayMode.Vibrant,
+  displayMode: BigValueDisplayMode.Vibrant,
   fieldOptions: standardFieldDisplayOptions,
   orientation: VizOrientation.Auto,
 };

@@ -15,14 +15,14 @@ import {
 
 import { Threshold, ValueMapping, FieldConfig, DataLink, PanelEditorProps, FieldDisplayOptions } from '@grafana/data';
 
-import { SingleStatOptions, SparklineOptions, displayModes } from './types';
+import { StatPanelOptions, SparklineOptions, displayModes } from './types';
 import { SparklineEditor } from './SparklineEditor';
 import {
   getDataLinksVariableSuggestions,
   getCalculationValueDataLinksVariableSuggestions,
 } from 'app/features/panel/panellinks/link_srv';
 
-export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatOptions>> {
+export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOptions>> {
   onThresholdsChanged = (thresholds: Threshold[]) => {
     const current = this.props.options.fieldOptions.defaults;
     this.onDefaultsChange({

@@ -1,6 +1,6 @@
 import { storiesOf } from '@storybook/react';
 import { text } from '@storybook/addon-knobs';
-import { BigValue, SingleStatDisplayMode } from './BigValue';
+import { BigValue, BigValueDisplayMode } from './BigValue';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
@@ -16,14 +16,14 @@ const BigValueStories = storiesOf('UI/BigValue', module);
 BigValueStories.addDecorator(withCenteredStory);
 
 interface StoryOptions {
-  mode: SingleStatDisplayMode;
+  mode: BigValueDisplayMode;
   width?: number;
   height?: number;
   noSparkline?: boolean;
 }
 
 function addStoryForMode(options: StoryOptions) {
-  BigValueStories.add(`Mode: ${SingleStatDisplayMode[options.mode]}`, () => {
+  BigValueStories.add(`Mode: ${BigValueDisplayMode[options.mode]}`, () => {
     const { value, title } = getKnobs();
 
     return renderComponentWithTheme(BigValue, {
@@ -52,7 +52,7 @@ function addStoryForMode(options: StoryOptions) {
   });
 }
 
-addStoryForMode({ mode: SingleStatDisplayMode.Classic });
-addStoryForMode({ mode: SingleStatDisplayMode.Classic2 });
-addStoryForMode({ mode: SingleStatDisplayMode.Vibrant });
-addStoryForMode({ mode: SingleStatDisplayMode.Vibrant2 });
+addStoryForMode({ mode: BigValueDisplayMode.Classic });
+addStoryForMode({ mode: BigValueDisplayMode.Classic2 });
+addStoryForMode({ mode: BigValueDisplayMode.Vibrant });
+addStoryForMode({ mode: BigValueDisplayMode.Vibrant2 });
