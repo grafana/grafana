@@ -12,7 +12,7 @@ weight = 2
 
 # Using InfluxDB in Grafana
 
-Grafana ships with a very feature rich data source plugin for InfluxDB. It supports a feature rich query editor, annotation and templating queries.
+Grafana ships with a feature-rich data source plugin for InfluxDB. It offers a custom query editor, and support for annotations and templated queries.
 
 ## Adding the data source
 
