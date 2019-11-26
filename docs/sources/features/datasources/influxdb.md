@@ -73,7 +73,7 @@ the tag key and select `--remove tag filter--`.
 
 **Regex matching**
 
-You can type in regex patterns for metric names or tag filter values. Be sure to wrap the regex pattern in forward slashes (`/`). Grafana will automatically adjust the filter tag condition to use the InfluxDB regex match condition operator (`=~`).
+You can type in regex patterns for metric names or tag filter values. Be sure to wrap the regex pattern in forward slashes (`/`). Grafana automatically adjusts the filter tag condition to use the InfluxDB regex match condition operator (`=~`).
 
 ### Field and Aggregation functions
 In the `SELECT` row you can specify what fields and functions you want to use. If you have a
