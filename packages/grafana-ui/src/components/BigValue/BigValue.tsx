@@ -2,7 +2,7 @@
 import React, { PureComponent, CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 import { Chart, Geom } from 'bizcharts';
-import { DisplayValue } from '@grafana/data';
+import { DisplayValue, GraphSeriesValue } from '@grafana/data';
 
 // Utils
 import { getColorFromHexRgbOrName, GrafanaTheme } from '@grafana/data';
@@ -11,16 +11,25 @@ import { getColorFromHexRgbOrName, GrafanaTheme } from '@grafana/data';
 import { Themeable } from '../../types';
 
 export interface BigValueSparkline {
-  data: any[][];
+  data: GraphSeriesValue[][];
   minX: number;
   maxX: number;
 }
 
-export enum BigValueDisplayMode {
-  Classic,
-  Classic2,
-  Vibrant,
-  Vibrant2,
+export enum BigValueColorMode {
+  Value = 0,
+  Background = 2,
+}
+
+export enum BigValueGraphMode {
+  None = 0,
+  Line = 1,
+  LineWithFill = 2,
+}
+
+export enum BigValueJustifyMode {
+  Auto = 0,
+  Center = 1,
 }
 
 export interface Props extends Themeable {
@@ -30,10 +39,16 @@ export interface Props extends Themeable {
   sparkline?: BigValueSparkline;
   onClick?: React.MouseEventHandler<HTMLElement>;
   className?: string;
-  displayMode: BigValueDisplayMode;
+  colorMode: BigValueColorMode;
+  graphMode: BigValueGraphMode;
+  justifyMode?: BigValueJustifyMode;
 }
 
 export class BigValue extends PureComponent<Props> {
+  static defaultProps: Partial<Props> = {
+    justifyMode: BigValueJustifyMode.Auto,
+  };
+
   render() {
     const { value, onClick, className, sparkline } = this.props;
 
@@ -73,9 +88,11 @@ interface LayoutResult {
   type: LayoutType;
   width: number;
   height: number;
-  displayMode: BigValueDisplayMode;
+  colorMode: BigValueColorMode;
+  graphMode: BigValueGraphMode;
   theme: GrafanaTheme;
   valueColor: string;
+  justifyCenter: boolean;
 }
 
 enum LayoutType {
@@ -86,9 +103,14 @@ enum LayoutType {
 }
 
 export function calculateLayout(props: Props): LayoutResult {
-  const { width, height, sparkline, displayMode, theme, value } = props;
+  const { width, height, sparkline, colorMode, theme, value, graphMode, justifyMode } = props;
   const useWideLayout = width / height > 2.8;
   const valueColor = getColorFromHexRgbOrName(value.color || 'green', theme.type);
+  let justifyCenter = false;
+
+  if (justifyMode === BigValueJustifyMode.Center) {
+    justifyCenter = true;
+  }
 
   // handle wide layouts
   if (useWideLayout) {
@@ -114,9 +136,11 @@ export function calculateLayout(props: Props): LayoutResult {
       type,
       width,
       height,
-      displayMode,
+      colorMode,
+      graphMode,
       theme,
       valueColor,
+      justifyCenter,
     };
   }
 
@@ -134,13 +158,9 @@ export function calculateLayout(props: Props): LayoutResult {
     type = LayoutType.StackedNoChart;
   }
 
-  switch (displayMode) {
-    case BigValueDisplayMode.Vibrant2:
-    case BigValueDisplayMode.Classic:
-    case BigValueDisplayMode.Classic2:
-      chartWidth = width;
-      chartHeight += PANEL_PADDING;
-      break;
+  if (graphMode === BigValueGraphMode.LineWithFill) {
+    chartWidth = width;
+    chartHeight += PANEL_PADDING;
   }
 
   return {
@@ -151,9 +171,11 @@ export function calculateLayout(props: Props): LayoutResult {
     type,
     width,
     height,
-    displayMode,
+    colorMode,
+    graphMode,
     theme,
     valueColor,
+    justifyCenter,
   };
 }
 
@@ -180,9 +202,8 @@ export function getValueStyles(layout: LayoutResult) {
     lineHeight: LINE_HEIGHT,
   };
 
-  switch (layout.displayMode) {
-    case BigValueDisplayMode.Classic:
-    case BigValueDisplayMode.Classic2:
+  switch (layout.colorMode) {
+    case BigValueColorMode.Value:
       styles.color = layout.valueColor;
   }
 
@@ -190,35 +211,37 @@ export function getValueStyles(layout: LayoutResult) {
 }
 
 export function getValueAndTitleContainerStyles(layout: LayoutResult): CSSProperties {
+  const styles: CSSProperties = {
+    display: 'flex',
+  };
+
   switch (layout.type) {
     case LayoutType.Wide:
-      return {
-        display: 'flex',
-        flexDirection: 'column',
-        flexGrow: 1,
-      };
+      styles.flexDirection = 'column';
+      styles.flexGrow = 1;
+      break;
     case LayoutType.WideNoChart:
-      return {
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexGrow: 1,
-      };
+      styles.flexDirection = 'row';
+      styles.justifyContent = 'space-between';
+      styles.alignItems = 'center';
+      styles.flexGrow = 1;
+      break;
     case LayoutType.StackedNoChart:
-      return {
-        display: 'flex',
-        flexDirection: 'column',
-        flexGrow: 1,
-      };
+      styles.flexDirection = 'column';
+      styles.flexGrow = 1;
+      break;
     case LayoutType.Stacked:
     default:
-      return {
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-      };
+      styles.flexDirection = 'column';
+      styles.justifyContent = 'center';
   }
+
+  if (layout.justifyCenter) {
+    styles.alignItems = 'center';
+    styles.justifyContent = 'center';
+  }
+
+  return styles;
 }
 
 export function getPanelStyles(layout: LayoutResult) {
@@ -233,9 +256,8 @@ export function getPanelStyles(layout: LayoutResult) {
 
   const themeFactor = layout.theme.isDark ? 1 : -0.7;
 
-  switch (layout.displayMode) {
-    case BigValueDisplayMode.Vibrant:
-    case BigValueDisplayMode.Vibrant2:
+  switch (layout.colorMode) {
+    case BigValueColorMode.Background:
       const bgColor2 = tinycolor(layout.valueColor)
         .darken(15 * themeFactor)
         .spin(8)
@@ -246,8 +268,7 @@ export function getPanelStyles(layout: LayoutResult) {
         .toRgbString();
       panelStyles.background = `linear-gradient(120deg, ${bgColor2}, ${bgColor3})`;
       break;
-    case BigValueDisplayMode.Classic:
-    case BigValueDisplayMode.Classic2:
+    case BigValueColorMode.Value:
       panelStyles.background = `${layout.theme.colors.dark4}`;
       break;
   }
@@ -292,7 +313,7 @@ function renderGraph(layout: LayoutResult, sparkline?: BigValueSparkline) {
   };
 
   // default to line graph
-  let geomRender = renderLineGeom;
+  const geomRender = getGraphGeom(layout.colorMode, layout.graphMode);
 
   switch (layout.type) {
     case LayoutType.Wide:
@@ -317,18 +338,6 @@ function renderGraph(layout: LayoutResult, sparkline?: BigValueSparkline) {
     chartStyles.top = 'unset';
   }
 
-  switch (layout.displayMode) {
-    case BigValueDisplayMode.Vibrant2:
-      geomRender = renderVibrant2Geom;
-      break;
-    case BigValueDisplayMode.Classic:
-      geomRender = renderClassicAreaGeom;
-      break;
-    case BigValueDisplayMode.Classic2:
-      geomRender = renderAreaGeom;
-      break;
-  }
-
   return (
     <Chart
       height={layout.chartHeight}
@@ -342,6 +351,20 @@ function renderGraph(layout: LayoutResult, sparkline?: BigValueSparkline) {
       {geomRender(layout)}
     </Chart>
   );
+}
+
+function getGraphGeom(colorMode: BigValueColorMode, graphMode: BigValueGraphMode) {
+  // background color mode
+  if (colorMode === BigValueColorMode.Background) {
+    if (graphMode === BigValueGraphMode.Line) {
+      return renderLineGeom;
+    }
+    if (graphMode === BigValueGraphMode.LineWithFill) {
+      return renderVibrant2Geom;
+    }
+  }
+
+  return renderClassicAreaGeom;
 }
 
 function renderLineGeom(layout: LayoutResult) {
@@ -393,22 +416,22 @@ function renderClassicAreaGeom(layout: LayoutResult) {
   );
 }
 
-function renderAreaGeom(layout: LayoutResult) {
-  const lineStyle: any = {
-    opacity: 1,
-    fillOpacity: 1,
-  };
-
-  const color1 = tinycolor(layout.valueColor)
-    .darken(0)
-    .spin(20)
-    .toRgbString();
-  const color2 = tinycolor(layout.valueColor)
-    .lighten(0)
-    .spin(-20)
-    .toRgbString();
-
-  const fillColor = `l (0) 0:${color1} 1:${color2}`;
-
-  return <Geom type="area" position="time*value" size={0} color={fillColor} style={lineStyle} shape="smooth" />;
-}
+/* function renderAreaGeom(layout: LayoutResult) { */
+/*   const lineStyle: any = { */
+/*     opacity: 1, */
+/*     fillOpacity: 1, */
+/*   }; */
+/*  */
+/*   const color1 = tinycolor(layout.valueColor) */
+/*     .darken(0) */
+/*     .spin(20) */
+/*     .toRgbString(); */
+/*   const color2 = tinycolor(layout.valueColor) */
+/*     .lighten(0) */
+/*     .spin(-20) */
+/*     .toRgbString(); */
+/*  */
+/*   const fillColor = `l (0) 0:${color1} 1:${color2}`; */
+/*  */
+/*   return <Geom type="area" position="time*value" size={0} color={fillColor} style={lineStyle} shape="smooth" />; */
+/* } */

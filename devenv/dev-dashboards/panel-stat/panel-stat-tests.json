@@ -28,8 +28,7 @@
       "id": 2,
       "interval": "10m",
       "options": {
-        "colorMode": 0,
-        "displayMode": 2,
+        "colorMode": 2,
         "fieldOptions": {
           "calcs": ["mean"],
           "defaults": {
@@ -63,12 +62,13 @@
           "override": {},
           "values": false
         },
+        "graphMode": 1,
         "orientation": "auto",
         "sparkline": {
           "show": true
         }
       },
-      "pluginVersion": "6.5.0-pre",
+      "pluginVersion": "6.6.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -107,16 +107,15 @@
     {
       "datasource": null,
       "gridPos": {
-        "h": 20,
+        "h": 17,
         "w": 4,
         "x": 20,
         "y": 0
       },
-      "id": 8,
+      "id": 9,
       "interval": "10m",
       "options": {
-        "colorMode": 0,
-        "displayMode": 2,
+        "colorMode": 2,
         "fieldOptions": {
           "calcs": ["mean"],
           "defaults": {
@@ -150,12 +149,13 @@
           "override": {},
           "values": false
         },
+        "graphMode": 1,
         "orientation": "auto",
         "sparkline": {
           "show": true
         }
       },
-      "pluginVersion": "6.5.0-pre",
+      "pluginVersion": "6.6.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -202,8 +202,7 @@
       "id": 6,
       "interval": "10m",
       "options": {
-        "colorMode": 0,
-        "displayMode": 2,
+        "colorMode": 2,
         "fieldOptions": {
           "calcs": ["mean"],
           "defaults": {
@@ -237,12 +236,13 @@
           "override": {},
           "values": false
         },
+        "graphMode": 1,
         "orientation": "auto",
         "sparkline": {
           "show": true
         }
       },
-      "pluginVersion": "6.5.0-pre",
+      "pluginVersion": "6.6.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -289,8 +289,7 @@
       "id": 3,
       "interval": "10m",
       "options": {
-        "colorMode": 0,
-        "displayMode": 3,
+        "colorMode": 2,
         "fieldOptions": {
           "calcs": ["mean"],
           "defaults": {
@@ -324,12 +323,13 @@
           "override": {},
           "values": false
         },
+        "graphMode": 1,
         "orientation": "auto",
         "sparkline": {
           "show": true
         }
       },
-      "pluginVersion": "6.5.0-pre",
+      "pluginVersion": "6.6.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -411,12 +411,13 @@
           "override": {},
           "values": false
         },
+        "graphMode": 1,
         "orientation": "auto",
         "sparkline": {
           "show": true
         }
       },
-      "pluginVersion": "6.5.0-pre",
+      "pluginVersion": "6.6.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -455,16 +456,15 @@
     {
       "datasource": null,
       "gridPos": {
-        "h": 21,
+        "h": 11,
         "w": 4,
         "x": 20,
-        "y": 20
+        "y": 17
       },
-      "id": 9,
+      "id": 8,
       "interval": "10m",
       "options": {
-        "colorMode": 0,
-        "displayMode": 0,
+        "colorMode": 2,
         "fieldOptions": {
           "calcs": ["mean"],
           "defaults": {
@@ -498,12 +498,13 @@
           "override": {},
           "values": false
         },
+        "graphMode": 1,
         "orientation": "auto",
         "sparkline": {
           "show": true
         }
       },
-      "pluginVersion": "6.5.0-pre",
+      "pluginVersion": "6.6.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -551,7 +552,6 @@
       "interval": "10m",
       "options": {
         "colorMode": 0,
-        "displayMode": 1,
         "fieldOptions": {
           "calcs": ["mean"],
           "defaults": {
@@ -585,12 +585,13 @@
           "override": {},
           "values": false
         },
+        "graphMode": 1,
         "orientation": "auto",
         "sparkline": {
           "show": true
         }
       },
-      "pluginVersion": "6.5.0-pre",
+      "pluginVersion": "6.6.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -627,7 +628,7 @@
       "type": "stat"
     }
   ],
-  "schemaVersion": 20,
+  "schemaVersion": 21,
   "style": "dark",
   "tags": ["gdev", "panel-tests"],
   "templating": {
@@ -643,5 +644,5 @@
   "timezone": "",
   "title": "Panel Tests - Stat",
   "uid": "jWWHNJpWz",
-  "version": 6
+  "version": 7
 }

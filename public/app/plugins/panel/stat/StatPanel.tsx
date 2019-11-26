@@ -6,7 +6,8 @@ import { config } from 'app/core/config';
 
 // Types
 import { StatPanelOptions } from './types';
-import { VizRepeater, BigValue, DataLinksContextMenu, BigValueSparkline } from '@grafana/ui';
+import { VizRepeater, BigValue, DataLinksContextMenu, BigValueSparkline, BigValueGraphMode } from '@grafana/ui';
+
 import { PanelProps, getFieldDisplayValues, FieldDisplay } from '@grafana/data';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
@@ -17,7 +18,6 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
 
     if (value.sparkline) {
       sparkline = {
-        ...options.sparkline,
         data: value.sparkline,
         minX: timeRange.from.valueOf(),
         maxX: timeRange.to.valueOf(),
@@ -31,7 +31,9 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
             <BigValue
               value={value.display}
               sparkline={sparkline}
-              displayMode={options.displayMode}
+              colorMode={options.colorMode}
+              graphMode={options.graphMode}
+              justifyMode={options.justifyMode}
               width={width}
               height={height}
               theme={config.theme}
@@ -52,7 +54,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
       replaceVariables,
       theme: config.theme,
       data: data.series,
-      sparkline: options.sparkline.show,
+      sparkline: options.graphMode !== BigValueGraphMode.None,
     });
   };
 

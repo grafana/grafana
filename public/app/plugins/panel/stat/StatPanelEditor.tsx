@@ -15,8 +15,7 @@ import {
 
 import { Threshold, ValueMapping, FieldConfig, DataLink, PanelEditorProps, FieldDisplayOptions } from '@grafana/data';
 
-import { StatPanelOptions, SparklineOptions, displayModes } from './types';
-import { SparklineEditor } from './SparklineEditor';
+import { StatPanelOptions, colorModes, graphModes, justifyModes } from './types';
 import {
   getDataLinksVariableSuggestions,
   getCalculationValueDataLinksVariableSuggestions,
@@ -45,13 +44,9 @@ export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOpt
       fieldOptions,
     });
 
-  onSparklineChanged = (sparkline: SparklineOptions) =>
-    this.props.onOptionsChange({
-      ...this.props.options,
-      sparkline,
-    });
-
-  onDisplayModeChange = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, displayMode: value });
+  onColorModeChanged = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, colorMode: value });
+  onGraphModeChanged = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, graphMode: value });
+  onJustifyModeChanged = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, justifyMode: value });
 
   onDefaultsChange = (field: FieldConfig) => {
     this.onDisplayOptionsChanged({
@@ -81,16 +76,35 @@ export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOpt
           <PanelOptionsGroup title="Display">
             <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} value={fieldOptions} labelWidth={8} />
             <div className="form-field">
-              <FormLabel width={8}>Display mode</FormLabel>
+              <FormLabel width={8}>Color</FormLabel>
               <Select
                 width={12}
-                options={displayModes}
-                defaultValue={displayModes[0]}
-                onChange={this.onDisplayModeChange}
-                value={displayModes.find(item => item.value === options.displayMode)}
+                options={colorModes}
+                defaultValue={colorModes[0]}
+                onChange={this.onColorModeChanged}
+                value={colorModes.find(item => item.value === options.colorMode)}
               />
             </div>
-            <SparklineEditor options={options.sparkline} onChange={this.onSparklineChanged} />
+            <div className="form-field">
+              <FormLabel width={8}>Graph</FormLabel>
+              <Select
+                width={12}
+                options={graphModes}
+                defaultValue={graphModes[0]}
+                onChange={this.onGraphModeChanged}
+                value={graphModes.find(item => item.value === options.graphMode)}
+              />
+            </div>
+            <div className="form-field">
+              <FormLabel width={8}>Justify</FormLabel>
+              <Select
+                width={12}
+                options={justifyModes}
+                defaultValue={justifyModes[0]}
+                onChange={this.onJustifyModeChanged}
+                value={justifyModes.find(item => item.value === options.justifyMode)}
+              />
+            </div>
           </PanelOptionsGroup>
 
           <PanelOptionsGroup title="Field">
