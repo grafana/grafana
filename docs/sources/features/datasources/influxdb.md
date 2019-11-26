@@ -14,7 +14,7 @@ weight = 2
 
 Grafana ships with a feature-rich data source plugin for InfluxDB. The plugin includes a custom query editor and supports annotations and query templates.
 
-## Adding the data source
+## Add the data source
 
 1. Open the side menu by clicking the Grafana icon in the top header.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
