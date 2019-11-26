@@ -118,7 +118,7 @@ export interface LoadDatasourceReadyPayload {
 export interface ModifyQueriesPayload {
   exploreId: ExploreId;
   modification: QueryFixAction;
-  index: number;
+  index?: number;
   modifier: (query: DataQuery, modification: QueryFixAction) => DataQuery;
 }
 

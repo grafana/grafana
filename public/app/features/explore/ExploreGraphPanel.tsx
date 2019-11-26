@@ -39,17 +39,17 @@ const getStyles = (theme: GrafanaTheme) => ({
 });
 
 interface Props extends Themeable {
-  series: GraphSeriesXY[];
+  series?: GraphSeriesXY[];
   width: number;
   absoluteRange: AbsoluteTimeRange;
-  loading: boolean;
+  loading?: boolean;
   showPanel: boolean;
   showBars: boolean;
   showLines: boolean;
   isStacked: boolean;
-  showingGraph: boolean;
-  showingTable: boolean;
-  timeZone: TimeZone;
+  showingGraph?: boolean;
+  showingTable?: boolean;
+  timeZone?: TimeZone;
   onUpdateTimeRange: (absoluteRange: AbsoluteTimeRange) => void;
   onToggleGraph?: (showingGraph: boolean) => void;
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
@@ -75,7 +75,7 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
   onClickGraphButton = () => {
     const { onToggleGraph, showingGraph } = this.props;
     if (onToggleGraph) {
-      onToggleGraph(showingGraph);
+      onToggleGraph(showingGraph ?? false);
     }
   };
 
