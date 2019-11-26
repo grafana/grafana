@@ -94,7 +94,10 @@ def _main():
         sys.exit(1)
 
 
-_main()
+try:
+    _main()
+except KeyboardInterrupt:
+    sys.exit(0)
 
 '''
 with open("CHANGELOG.md") as f:
