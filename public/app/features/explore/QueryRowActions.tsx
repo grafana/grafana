@@ -2,7 +2,7 @@ import React from 'react';
 
 export type Props = {
   canToggleEditorModes: boolean;
-  isDisabled: boolean;
+  isDisabled?: boolean;
   isNotStarted: boolean;
   onClickToggleEditorMode: () => void;
   onClickToggleDisabled: () => void;

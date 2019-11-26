@@ -116,12 +116,12 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
     let QueryField;
 
-    if (mode === ExploreMode.Metrics && datasourceInstance.components.ExploreMetricsQueryField) {
+    if (mode === ExploreMode.Metrics && datasourceInstance.components?.ExploreMetricsQueryField) {
       QueryField = datasourceInstance.components.ExploreMetricsQueryField;
-    } else if (mode === ExploreMode.Logs && datasourceInstance.components.ExploreLogsQueryField) {
+    } else if (mode === ExploreMode.Logs && datasourceInstance.components?.ExploreLogsQueryField) {
       QueryField = datasourceInstance.components.ExploreLogsQueryField;
     } else {
-      QueryField = datasourceInstance.components.ExploreQueryField;
+      QueryField = datasourceInstance.components?.ExploreQueryField;
     }
 
     return (
@@ -189,7 +189,6 @@ const mapDispatchToProps = {
   runQueries,
 };
 
-export default hot(module)(connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(QueryRow) as React.ComponentType<PropsFromParent>);
+export default hot(module)(
+  connect(mapStateToProps, mapDispatchToProps)(QueryRow) as React.ComponentType<PropsFromParent>
+);

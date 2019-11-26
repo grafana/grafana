@@ -5,6 +5,7 @@ export const initialApiKeysState: ApiKeysState = {
   keys: [],
   searchQuery: '',
   hasFetched: false,
+  includeExpired: false,
 };
 
 export const apiKeysReducer = (state = initialApiKeysState, action: Action): ApiKeysState => {

@@ -57,6 +57,7 @@ const template = `
         class="btn btn-primary"
         ng-class="{'btn-primary--processing': ctrl.isSaving}"
         ng-disabled="ctrl.saveForm.$invalid || ctrl.isSaving"
+        aria-label="Dashboard settings Save Dashboard Modal Save button"
       >
         <span ng-if="!ctrl.isSaving">Save</span>
         <span ng-if="ctrl.isSaving === true">Saving...</span>

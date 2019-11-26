@@ -1,9 +1,11 @@
 import React, { PureComponent } from 'react';
-import { LogLabelStatsModel } from '@grafana/data';
+import { css, cx } from 'emotion';
+import { LogLabelStatsModel, GrafanaTheme } from '@grafana/data';
 
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
+import { stylesFactory } from '../../themes/stylesFactory';
 
 //Components
 import { LogLabelStats } from './LogLabelStats';
@@ -23,6 +25,17 @@ interface State {
   fieldCount: number;
   fieldStats: LogLabelStatsModel[] | null;
 }
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    noHoverEffect: css`
+      label: noHoverEffect;
+      :hover {
+        background-color: transparent;
+      }
+    `,
+  };
+});
 
 class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   state: State = {
@@ -66,22 +79,28 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   render() {
     const { theme, parsedKey, parsedValue, isLabel, links } = this.props;
     const { showFieldsStats, fieldStats, fieldCount } = this.state;
+    const styles = getStyles(theme);
     const style = getLogRowStyles(theme);
     return (
-      <div className={style.logsRowDetailsValue}>
+      <div className={cx(style.logsRowDetailsValue, { [styles.noHoverEffect]: showFieldsStats })}>
         {/* Action buttons - show stats/filter results */}
-        <div onClick={this.showStats} aria-label={'Field stats'} className={style.logsRowDetailsIcon}>
+        <div
+          title="Ad-hoc statistics"
+          onClick={this.showStats}
+          aria-label={'Field stats'}
+          className={style.logsRowDetailsIcon}
+        >
           <i className={'fa fa-signal'} />
         </div>
         {isLabel ? (
-          <div onClick={() => this.filterLabel()} className={style.logsRowDetailsIcon}>
+          <div title="Filter for value" onClick={() => this.filterLabel()} className={style.logsRowDetailsIcon}>
             <i className={'fa fa-search-plus'} />
           </div>
         ) : (
           <div className={style.logsRowDetailsIcon} />
         )}
         {isLabel ? (
-          <div onClick={() => this.filterOutLabel()} className={style.logsRowDetailsIcon}>
+          <div title="Filter out value" onClick={() => this.filterOutLabel()} className={style.logsRowDetailsIcon}>
             <i className={'fa fa-search-minus'} />
           </div>
         ) : (

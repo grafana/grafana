@@ -138,9 +138,4 @@ const mapDispatchToProps = {
   removeUser,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(UsersListPage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UsersListPage));

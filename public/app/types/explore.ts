@@ -65,7 +65,7 @@ export interface ExploreItemState {
   /**
    * Datasource instance that has been selected. Datasource-specific logic can be run on this object.
    */
-  datasourceInstance: DataSourceApi | null;
+  datasourceInstance?: DataSourceApi;
   /**
    * Current data source name or null if default
    */
@@ -73,7 +73,7 @@ export interface ExploreItemState {
   /**
    * True if the datasource is loading. `null` if the loading has not started yet.
    */
-  datasourceLoading: boolean | null;
+  datasourceLoading?: boolean;
   /**
    * True if there is no datasource to be selected.
    */

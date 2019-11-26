@@ -111,7 +111,10 @@ describe('InfluxQuery', () => {
           refId: 'A',
           measurement: 'cpu',
           groupBy: [{ type: 'time', params: ['auto'] }],
-          tags: [{ key: 'hostname', value: 'server1' }, { key: 'app', value: 'email', condition: 'AND' }],
+          tags: [
+            { key: 'hostname', value: 'server1' },
+            { key: 'app', value: 'email', condition: 'AND' },
+          ],
         },
         templateSrv,
         {}
@@ -132,7 +135,10 @@ describe('InfluxQuery', () => {
           refId: 'A',
           measurement: 'cpu',
           groupBy: [{ type: 'time', params: ['auto'] }],
-          tags: [{ key: 'hostname', value: 'server1' }, { key: 'hostname', value: 'server2', condition: 'OR' }],
+          tags: [
+            { key: 'hostname', value: 'server1' },
+            { key: 'hostname', value: 'server2', condition: 'OR' },
+          ],
         },
         templateSrv,
         {}
@@ -153,7 +159,10 @@ describe('InfluxQuery', () => {
           refId: 'A',
           measurement: 'cpu',
           groupBy: [{ type: 'time', params: ['auto'] }],
-          tags: [{ key: 'name', value: "Let's encrypt." }, { key: 'hostname', value: 'server2', condition: 'OR' }],
+          tags: [
+            { key: 'name', value: "Let's encrypt." },
+            { key: 'hostname', value: 'server2', condition: 'OR' },
+          ],
         },
         templateSrv,
         {}
@@ -192,7 +201,10 @@ describe('InfluxQuery', () => {
           refId: 'A',
           measurement: 'cpu',
           tags: [],
-          groupBy: [{ type: 'time', interval: 'auto' }, { type: 'tag', params: ['host'] }],
+          groupBy: [
+            { type: 'time', interval: 'auto' },
+            { type: 'tag', params: ['host'] },
+          ],
         },
         templateSrv,
         {}

@@ -1,6 +1,6 @@
 import { Page } from 'puppeteer-core';
 import { constants } from './constants';
-import { PageObject } from './pageObjects';
+import { PageObject, Selector } from './pageObjects';
 
 export interface ExpectSelectorConfig {
   selector: string;
@@ -22,22 +22,34 @@ export interface TestPageType<T> {
 }
 
 type PageObjects<T> = { [P in keyof T]: T[P] };
+type SelectorFunc = () => string;
 
 export interface TestPageConfig<T> {
   url?: string;
-  pageObjects: PageObjects<T>;
+  pageObjects: { [P in keyof T]: string | SelectorFunc };
 }
 
 export class TestPage<T> implements TestPageType<T> {
   pageObjects: PageObjects<T>;
   private page?: Page;
-  private pageUrl?: string;
+  private readonly pageUrl?: string;
 
   constructor(config: TestPageConfig<T>) {
     if (config.url) {
       this.pageUrl = `${constants.baseUrl}${config.url}`;
     }
-    this.pageObjects = config.pageObjects;
+
+    this.pageObjects = {} as PageObjects<T>;
+    Object.keys(config.pageObjects).map(async key => {
+      const selector = (config.pageObjects as any)[key];
+      if (typeof selector === 'function') {
+        (this.pageObjects as any)[key] = new PageObject(selector());
+      }
+
+      if (typeof selector === 'string') {
+        (this.pageObjects as any)[key] = new PageObject(Selector.fromAriaLabel(selector));
+      }
+    });
   }
 
   init = async (page: Page): Promise<void> => {

@@ -202,20 +202,20 @@ describe('hasNonEmptyQuery', () => {
 
 describe('hasRefId', () => {
   describe('when called with a null value', () => {
-    it('then it should return null', () => {
+    it('then it should return undefined', () => {
       const input: any = null;
       const result = getValueWithRefId(input);
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
   });
 
   describe('when called with a non object value', () => {
-    it('then it should return null', () => {
+    it('then it should return undefined', () => {
       const input = 123;
       const result = getValueWithRefId(input);
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
   });
 
@@ -249,11 +249,11 @@ describe('hasRefId', () => {
 
 describe('getFirstQueryErrorWithoutRefId', () => {
   describe('when called with a null value', () => {
-    it('then it should return null', () => {
+    it('then it should return undefined', () => {
       const errors: DataQueryError[] = null;
       const result = getFirstQueryErrorWithoutRefId(errors);
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
   });
 
