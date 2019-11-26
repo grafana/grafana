@@ -22,3 +22,7 @@ func (v *nullableBoolVector) At(i int) interface{} {
 func (v *nullableBoolVector) Len() int {
 	return len(*v)
 }
+
+func (v *nullableBoolVector) PrimitiveType() VectorPType {
+	return VectorPTypeNullableBool
+}

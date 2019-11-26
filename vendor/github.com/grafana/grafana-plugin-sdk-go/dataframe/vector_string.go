@@ -22,3 +22,7 @@ func (v *stringVector) At(i int) interface{} {
 func (v *stringVector) Len() int {
 	return len(*v)
 }
+
+func (v *stringVector) PrimitiveType() VectorPType {
+	return VectorPTypeString
+}

@@ -26,4 +26,7 @@ func (v *timeVector) At(i int) interface{} {
 func (v *timeVector) Len() int {
 	return len(*v)
 }
-	
+
+func (v *timeVector) PrimitiveType() VectorPType {
+	return VectorPTypeTime
+}
