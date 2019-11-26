@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import _, { fromPairs } from 'lodash';
 
 import {
   parseLabels,
@@ -10,6 +10,8 @@ import {
   MutableDataFrame,
   findUniqueLabels,
   dateTime,
+  FieldConfig,
+  DataFrameView,
 } from '@grafana/data';
 import templateSrv from 'app/features/templating/template_srv';
 import TableModel from 'app/core/table_model';
@@ -25,6 +27,7 @@ import {
   LokiStreamResult,
   LokiTailResponse,
   LokiQuery,
+  LokiOptions,
 } from './types';
 
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
@@ -301,16 +304,21 @@ export function lokiStreamsToDataframes(
   data: LokiStreamResult[],
   target: { refId: string; expr?: string; regexp?: string },
   limit: number,
+  config: LokiOptions,
   reverse = false
 ): DataFrame[] {
-  const series: DataFrame[] = data.map(stream => ({
-    ...lokiStreamResultToDataFrame(stream, reverse),
-    refId: target.refId,
-    meta: {
-      searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.expr, target.regexp)),
-      limit,
-    },
-  }));
+  const series: DataFrame[] = data.map(stream => {
+    const dataFrame = lokiStreamResultToDataFrame(stream, reverse);
+    enhanceDataFrame(dataFrame, config);
+    return {
+      ...lokiStreamResultToDataFrame(stream, reverse),
+      refId: target.refId,
+      meta: {
+        searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.expr, target.regexp)),
+        limit,
+      },
+    };
+  });
 
   return series;
 }
@@ -319,6 +327,7 @@ export function lokiLegacyStreamsToDataframes(
   data: LokiLegacyStreamResult | LokiLegacyStreamResponse,
   target: { refId: string; query?: string; regexp?: string },
   limit: number,
+  config: LokiOptions,
   reverse = false
 ): DataFrame[] {
   if (Object.keys(data).length === 0) {
@@ -326,19 +335,70 @@ export function lokiLegacyStreamsToDataframes(
   }
 
   if (isLokiLogsStream(data)) {
-    return [legacyLogStreamToDataFrame(data, reverse, target.refId)];
+    return [legacyLogStreamToDataFrame(data, false, target.refId)];
   }
 
-  const series: DataFrame[] = data.streams.map(stream => ({
-    ...legacyLogStreamToDataFrame(stream, reverse),
-    refId: target.refId,
-    meta: {
-      searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.query, target.regexp)),
-      limit,
-    },
-  }));
+  const series: DataFrame[] = data.streams.map(stream => {
+    const dataFrame = legacyLogStreamToDataFrame(stream, reverse);
+    enhanceDataFrame(dataFrame, config);
+
+    return {
+      ...dataFrame,
+      refId: target.refId,
+      meta: {
+        searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.query, target.regexp)),
+        limit,
+      },
+    };
+  });
 
   return series;
+}
+
+/**
+ * Adds new fields and DataLinks to DataFrame based on DataSource instance config.
+ * @param dataFrame
+ */
+export function enhanceDataFrame(dataFrame: DataFrame, config: LokiOptions): void {
+  if (!config) {
+    return;
+  }
+
+  const derivedFields = config.derivedFields ?? [];
+
+  if (derivedFields.length) {
+    const fields = fromPairs(
+      derivedFields.map(field => {
+        const config: FieldConfig = {};
+        if (field.url) {
+          config.links = [
+            {
+              url: field.url,
+              title: '',
+            },
+          ];
+        }
+        const dataFrameField = {
+          name: field.name,
+          type: FieldType.string,
+          config,
+          values: new ArrayVector<string>([]),
+        };
+
+        return [field.name, dataFrameField];
+      })
+    );
+
+    const view = new DataFrameView(dataFrame);
+    view.forEachRow((row: { line: string }) => {
+      for (const field of derivedFields) {
+        const logMatch = row.line.match(field.matcherRegex);
+        fields[field.name].values.add(logMatch && logMatch[1]);
+      }
+    });
+
+    dataFrame.fields = [...dataFrame.fields, ...Object.values(fields)];
+  }
 }
 
 export function rangeQueryResponseToTimeSeries(
@@ -377,12 +437,13 @@ export function processRangeQueryResponse(
   query: LokiRangeQueryRequest,
   responseListLength: number,
   limit: number,
+  config: LokiOptions,
   reverse = false
 ) {
   switch (response.data.resultType) {
     case LokiResultType.Stream:
       return of({
-        data: lokiStreamsToDataframes(response.data.result, target, limit, reverse),
+        data: lokiStreamsToDataframes(response.data.result, target, limit, config, reverse),
         key: `${target.refId}_log`,
       });
 
