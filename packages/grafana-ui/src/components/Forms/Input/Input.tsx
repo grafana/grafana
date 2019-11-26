@@ -1,12 +1,11 @@
 import React, { FC, HTMLProps, ReactNode } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
-import { getFocusStyle, sharedInputStyle } from '../commonStyles';
+import { getFocusStyle, inputSizes, sharedInputStyle } from '../commonStyles';
 import { stylesFactory, useTheme } from '../../../themes';
 import { Icon } from '../../Icon/Icon';
 import { useClientRect } from '../../../utils/useClientRect';
-
-export type FormInputSize = 'sm' | 'md' | 'lg' | 'auto';
+import { FormInputSize } from '../types';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'size'> {
   /** Show an invalid state around the input */
@@ -202,20 +201,6 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
         right: 0;
       `
     ),
-    inputSize: {
-      sm: css`
-        width: 200px;
-      `,
-      md: css`
-        width: 320px;
-      `,
-      lg: css`
-        width: 580px;
-      `,
-      auto: css`
-        width: 100%;
-      `,
-    },
   };
 });
 
@@ -233,7 +218,7 @@ export const Input: FC<Props> = props => {
   const styles = getInputStyles({ theme, invalid: !!invalid });
 
   return (
-    <div className={cx(styles.wrapper, styles.inputSize[size])}>
+    <div className={cx(styles.wrapper, inputSizes()[size])}>
       {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
 
       <div className={styles.inputWrapper}>

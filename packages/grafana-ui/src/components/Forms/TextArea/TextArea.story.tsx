@@ -1,7 +1,7 @@
 import React from 'react';
 import { TextArea } from './TextArea';
 import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
-import { boolean, number, text } from '@storybook/addon-knobs';
+import { boolean, number, select, text } from '@storybook/addon-knobs';
 import mdx from './TextArea.mdx';
 
 export default {
@@ -25,6 +25,7 @@ export const simple = () => {
   // ---
   const placeholder = text('Placeholder', 'This is just a placeholder', VISUAL_GROUP);
   const cols = number('Cols', 30, { range: true, min: 5, max: 50, step: 5 }, VISUAL_GROUP);
+  const size = select('Size', ['sm', 'md', 'lg', 'auto'], undefined, VISUAL_GROUP);
 
   const CONTAINER_GROUP = 'Container options';
   // ---
@@ -42,7 +43,7 @@ export const simple = () => {
 
   return (
     <div style={{ width: containerWidth }}>
-      <TextArea invalid={invalid} placeholder={placeholder} cols={cols} disabled={disabled} />
+      <TextArea invalid={invalid} placeholder={placeholder} cols={cols} disabled={disabled} size={size} />
     </div>
   );
 };

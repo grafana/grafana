@@ -33,3 +33,20 @@ export const sharedInputStyle = (theme: GrafanaTheme) => {
     }
   `;
 };
+
+export const inputSizes = () => {
+  return {
+    sm: css`
+      width: 200px;
+    `,
+    md: css`
+      width: 320px;
+    `,
+    lg: css`
+      width: 580px;
+    `,
+    auto: css`
+      width: 100%;
+    `,
+  };
+};

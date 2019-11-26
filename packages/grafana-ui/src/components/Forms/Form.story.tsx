@@ -9,6 +9,7 @@ import { Button } from './Button';
 import { Form } from './Form';
 import { Switch } from './Switch';
 import { Icon } from '../Icon/Icon';
+import { TextArea } from './TextArea/TextArea';
 
 export default {
   title: 'UI/Forms/Test forms/Server admin',
@@ -82,7 +83,7 @@ export const users = () => {
             label="Path to client cert"
             description="Authentication against LDAP servers requiring client certificates if not required leave empty "
           >
-            <Input
+            <TextArea
               id="clientCert"
               value={''}
               // onChange={e => setPassword(e.currentTarget.value)}
