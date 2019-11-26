@@ -13,17 +13,11 @@ export interface Props extends Omit<HTMLProps<HTMLTextAreaElement>, 'size'> {
 }
 
 const getTextAreaStyle = stylesFactory((theme: GrafanaTheme, invalid = false) => {
-  const colors = theme.colors;
-  const borderColor = invalid
-    ? colors.redBase
-    : selectThemeVariant({ light: colors.gray4, dark: colors.gray25 }, theme.type);
-
   return {
     textarea: cx(
       sharedInputStyle(theme),
       getFocusStyle(theme),
       css`
-        border: 1px solid ${borderColor};
         border-radius: ${theme.border.radius.sm};
         padding: ${theme.spacing.formSpacingBase / 4}px ${theme.spacing.formSpacingBase}px;
         width: 100%;

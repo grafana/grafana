@@ -10,14 +10,16 @@ export const getFocusStyle = (theme: GrafanaTheme) => css`
   }
 `;
 
-export const sharedInputStyle = (theme: GrafanaTheme) => {
+export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
   const colors = theme.colors;
+  const borderColor = invalid ? colors.redBase : colors.formInputBorder;
 
   return css`
     background-color: ${colors.formInputBg};
     line-height: ${theme.typography.lineHeight.lg};
     font-size: ${theme.typography.size.md};
     color: ${colors.formInputText};
+    border: 1px solid ${borderColor};
 
     &:hover {
       border-color: ${colors.formInputBorder};

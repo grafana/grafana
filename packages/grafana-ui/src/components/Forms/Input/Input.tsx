@@ -28,7 +28,6 @@ interface StyleDeps {
 
 export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDeps) => {
   const colors = theme.colors;
-  const inputBorderColor = invalid ? colors.redBase : colors.formInputBorder;
   const borderRadius = theme.border.radius.sm;
   const height = theme.spacing.formInputHeight;
 
@@ -122,7 +121,6 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
         position: relative;
         z-index: 0;
         flex-grow: 1;
-        border: 1px solid ${inputBorderColor};
         border-radius: ${borderRadius};
         height: 100%;
         width: 100%;

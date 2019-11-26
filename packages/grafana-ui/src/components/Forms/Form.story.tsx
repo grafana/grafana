@@ -83,12 +83,7 @@ export const users = () => {
             label="Path to client cert"
             description="Authentication against LDAP servers requiring client certificates if not required leave empty "
           >
-            <TextArea
-              id="clientCert"
-              value={''}
-              // onChange={e => setPassword(e.currentTarget.value)}
-              size="lg"
-            />
+            <TextArea id="clientCert" value={''} size="lg" />
           </Field>
         </fieldset>
         <Button>Update</Button>
