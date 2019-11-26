@@ -77,7 +77,8 @@ You can type in regex patterns for metric names or tag filter values. Be sure to
 
 ### Field and Aggregation functions
 In the `SELECT` row you can specify what fields and functions you want to use. If you have a
-group by time you need an aggregation function. Some functions like derivative require an aggregation function. The editor tries to simplify and unify this part of the query. For example:<br>
+group by time you need an aggregation function. Some functions like derivative require an aggregation function. The editor tries to simplify and unify this part of the query. For example:
+
 ![](/img/docs/influxdb/select_editor.png)<br>
 
 The above will generate the following InfluxDB `SELECT` clause:
