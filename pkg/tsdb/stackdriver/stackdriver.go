@@ -55,12 +55,18 @@ func NewStackdriverExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, 
 		return nil, err
 	}
 
+	var (
+		timeout         = dsInfo.JsonData.GetPath("circuit", "timeout_ms").MustInt(3000)
+		minReqs         = dsInfo.JsonData.GetPath("circuit", "min_requests").MustInt(3)
+		minFailureRatio = dsInfo.JsonData.GetPath("circuit", "min_failure_ratio").MustFloat64(0.6)
+	)
+
 	breaker := gobreaker.NewCircuitBreaker(gobreaker.Settings{
 		Name:    "stackdriver",
-		Timeout: 3 * time.Second,
+		Timeout: time.Duration(timeout) * time.Millisecond,
 		ReadyToTrip: func(counts gobreaker.Counts) bool {
 			failureRatio := float64(counts.TotalFailures) / float64(counts.Requests)
-			return counts.Requests >= 3 && failureRatio >= 0.6
+			return counts.Requests >= uint32(minReqs) && failureRatio >= minFailureRatio
 		},
 	})
 
