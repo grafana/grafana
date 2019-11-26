@@ -69,7 +69,7 @@ Enter edit mode by clicking the panel title, and clicking **Edit**. The editor a
 
 ### Filter data (WHERE)
 To add a tag filter click the plus icon to the right of the `WHERE` condition. You can remove tag filters by clicking on
-the tag key and select `--remove tag filter--`.
+the tag key and then selecting `--remove tag filter--`.
 
 **Regex matching**
 
