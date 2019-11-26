@@ -73,8 +73,7 @@ the tag key and select `--remove tag filter--`.
 
 **Regex matching**
 
-You can type in regex patterns for metric names or tag filter values. Be sure to wrap the regex pattern in forward slashes (`/`). Grafana
-will automatically adjust the filter tag condition to use the InfluxDB regex match condition operator (`=~`).
+You can type in regex patterns for metric names or tag filter values. Be sure to wrap the regex pattern in forward slashes (`/`). Grafana will automatically adjust the filter tag condition to use the InfluxDB regex match condition operator (`=~`).
 
 ### Field and Aggregation functions
 In the `SELECT` row you can specify what fields and functions you want to use. If you have a
@@ -211,9 +210,7 @@ An example query:
 SELECT title, description from events WHERE $timeFilter ORDER BY time ASC
 ```
 
-For InfluxDB, you need to enter a query like the one in the example above. The ```where $timeFilter``` component is required.
-If you only select one column you need not enter anything in the column mapping fields. The
-Tags field can be a comma separated string.
+For InfluxDB, you need to enter a query like the one in the example above. The ```where $timeFilter``` component is required. If you only select one column you need not enter anything in the column mapping fields. The Tags field can be a comma separated string.
 
 ## Configure the data source with provisioning
 
