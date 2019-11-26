@@ -21,7 +21,6 @@ export class DatasourceSrv implements DataSourceService {
 
   /** @ngInject */
   constructor(
-    private $q: any,
     private $injector: auto.IInjectorService,
     private $rootScope: GrafanaRootScope,
     private templateSrv: TemplateSrv
@@ -51,7 +50,7 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     if (this.datasources[name]) {
-      return this.$q.when(this.datasources[name]);
+      return Promise.resolve(this.datasources[name]);
     }
 
     return this.loadDatasource(name);
@@ -61,22 +60,19 @@ export class DatasourceSrv implements DataSourceService {
     // Expression Datasource (not a real datasource)
     if (name === expressionDatasource.name) {
       this.datasources[name] = expressionDatasource as any;
-      return this.$q.when(expressionDatasource);
+      return Promise.resolve(expressionDatasource);
     }
 
     const dsConfig = config.datasources[name];
     if (!dsConfig) {
-      return this.$q.reject({ message: `Datasource named ${name} was not found` });
+      return Promise.reject({ message: `Datasource named ${name} was not found` });
     }
 
-    const deferred = this.$q.defer();
-
-    importDataSourcePlugin(dsConfig.meta)
+    return importDataSourcePlugin(dsConfig.meta)
       .then(dsPlugin => {
         // check if its in cache now
         if (this.datasources[name]) {
-          deferred.resolve(this.datasources[name]);
-          return;
+          return this.datasources[name];
         }
 
         // If there is only one constructor argument it is instanceSettings
@@ -92,13 +88,12 @@ export class DatasourceSrv implements DataSourceService {
 
         // store in instance cache
         this.datasources[name] = instance;
-        deferred.resolve(instance);
+        return instance;
       })
       .catch(err => {
         this.$rootScope.appEvent(AppEvents.alertError, [dsConfig.name + ' plugin failed', err.toString()]);
+        return undefined;
       });
-
-    return deferred.promise;
   }
 
   getAll() {

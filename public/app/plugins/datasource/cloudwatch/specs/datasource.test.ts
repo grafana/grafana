@@ -36,7 +36,7 @@ describe('CloudWatchDatasource', () => {
   } as any;
 
   beforeEach(() => {
-    ctx.ds = new CloudWatchDatasource(instanceSettings, {} as any, backendSrv, templateSrv, timeSrv);
+    ctx.ds = new CloudWatchDatasource(instanceSettings, backendSrv, templateSrv, timeSrv);
   });
 
   describe('When performing CloudWatch query', () => {

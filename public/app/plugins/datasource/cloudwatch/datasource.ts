@@ -1,5 +1,5 @@
 import React from 'react';
-import angular, { IQService } from 'angular';
+import angular from 'angular';
 import _ from 'lodash';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -48,7 +48,6 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
   /** @ngInject */
   constructor(
     instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
-    private $q: IQService,
     private backendSrv: BackendSrv,
     private templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
@@ -110,9 +109,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
 
     // No valid targets, return the empty result to save a round trip.
     if (_.isEmpty(queries)) {
-      const d = this.$q.defer();
-      d.resolve({ data: [] });
-      return d.promise;
+      return Promise.resolve({ data: [] });
     }
 
     const request = {
@@ -475,7 +472,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
       return this.standardStatistics.map((s: string) => ({ value: s, label: s, text: s }));
     }
 
-    return this.$q.when([]);
+    return Promise.resolve([]);
   }
 
   annotationQuery(options: any) {
