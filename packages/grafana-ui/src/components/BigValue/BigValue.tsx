@@ -1,6 +1,6 @@
 // Library
 import React, { PureComponent } from 'react';
-import { DisplayValue, GraphSeriesValue } from '@grafana/data';
+import { DisplayValue, GraphSeriesValue, DisplayValueAlignmentFactors } from '@grafana/data';
 
 // Types
 import { Themeable } from '../../types';
@@ -45,6 +45,7 @@ export interface Props extends Themeable {
   colorMode: BigValueColorMode;
   graphMode: BigValueGraphMode;
   justifyMode?: BigValueJustifyMode;
+  alignmentFactors?: DisplayValueAlignmentFactors;
 }
 
 export class BigValue extends PureComponent<Props> {
