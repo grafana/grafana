@@ -17,19 +17,19 @@ export interface BigValueSparkline {
 }
 
 export enum BigValueColorMode {
-  Value = 0,
-  Background = 2,
+  Value = 'value',
+  Background = 'background',
 }
 
 export enum BigValueGraphMode {
-  None = 0,
-  Line = 1,
-  LineWithFill = 2,
+  None = 'none',
+  Line = 'line',
+  Area = 'area',
 }
 
 export enum BigValueJustifyMode {
-  Auto = 0,
-  Center = 1,
+  Auto = 'auto',
+  Center = 'center',
 }
 
 export interface Props extends Themeable {
@@ -158,7 +158,7 @@ export function calculateLayout(props: Props): LayoutResult {
     type = LayoutType.StackedNoChart;
   }
 
-  if (graphMode === BigValueGraphMode.LineWithFill) {
+  if (graphMode === BigValueGraphMode.Area) {
     chartWidth = width;
     chartHeight += PANEL_PADDING;
   }
@@ -359,8 +359,8 @@ function getGraphGeom(colorMode: BigValueColorMode, graphMode: BigValueGraphMode
     if (graphMode === BigValueGraphMode.Line) {
       return renderLineGeom;
     }
-    if (graphMode === BigValueGraphMode.LineWithFill) {
-      return renderVibrant2Geom;
+    if (graphMode === BigValueGraphMode.Area) {
+      return renderAreaGeomOnColoredBackground;
     }
   }
 
@@ -379,19 +379,20 @@ function renderLineGeom(layout: LayoutResult) {
   return <Geom type="line" position="time*value" size={2} color="white" style={lineStyle} shape="smooth" />;
 }
 
-function renderVibrant2Geom(layout: LayoutResult) {
+function renderAreaGeomOnColoredBackground(layout: LayoutResult) {
+  const lineColor = tinycolor(layout.valueColor)
+    .brighten(40)
+    .toRgbString();
+
   const lineStyle: any = {
-    stroke: '#CCC',
+    stroke: lineColor,
     lineWidth: 2,
-    shadowBlur: 10,
-    shadowColor: '#444',
-    shadowOffsetY: -5,
   };
 
   return (
     <>
       <Geom type="area" position="time*value" size={0} color="rgba(255,255,255,0.4)" style={lineStyle} shape="smooth" />
-      <Geom type="line" position="time*value" size={1} color="white" style={lineStyle} shape="smooth" />
+      <Geom type="line" position="time*value" size={1} color={lineColor} style={lineStyle} shape="smooth" />
     </>
   );
 }

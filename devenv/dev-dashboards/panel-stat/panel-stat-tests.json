@@ -20,15 +20,15 @@
     {
       "datasource": null,
       "gridPos": {
-        "h": 7,
-        "w": 20,
+        "h": 2,
+        "w": 24,
         "x": 0,
         "y": 0
       },
-      "id": 2,
+      "id": 6,
       "interval": "10m",
       "options": {
-        "colorMode": 2,
+        "colorMode": "background",
         "fieldOptions": {
           "calcs": ["mean"],
           "defaults": {
@@ -62,7 +62,8 @@
           "override": {},
           "values": false
         },
-        "graphMode": 1,
+        "graphMode": "area",
+        "justifyMode": "auto",
         "orientation": "auto",
         "sparkline": {
           "show": true
@@ -75,7 +76,255 @@
           "scenarioId": "random_walk"
         },
         {
-          "refId": "B",
+          "refId": "C",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "D",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "E",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "F",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "G",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 2
+      },
+      "id": 2,
+      "interval": "10m",
+      "options": {
+        "colorMode": "background",
+        "fieldOptions": {
+          "calcs": ["mean"],
+          "defaults": {
+            "mappings": [],
+            "max": 100,
+            "min": 0,
+            "thresholds": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 10
+              },
+              {
+                "color": "purple",
+                "value": 20
+              },
+              {
+                "color": "orange",
+                "value": 40
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ],
+            "unit": "percent"
+          },
+          "override": {},
+          "values": false
+        },
+        "graphMode": "line",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "sparkline": {
+          "show": true
+        }
+      },
+      "pluginVersion": "6.6.0-pre",
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "C",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "D",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "E",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "F",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "G",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Panel Title",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 7
+      },
+      "id": 10,
+      "interval": "10m",
+      "options": {
+        "colorMode": "background",
+        "fieldOptions": {
+          "calcs": ["mean"],
+          "defaults": {
+            "mappings": [],
+            "max": 100,
+            "min": 0,
+            "thresholds": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 10
+              },
+              {
+                "color": "purple",
+                "value": 20
+              },
+              {
+                "color": "orange",
+                "value": 40
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ],
+            "unit": "percent"
+          },
+          "override": {},
+          "values": false
+        },
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "sparkline": {
+          "show": true
+        }
+      },
+      "pluginVersion": "6.6.0-pre",
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "C",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "D",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "E",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "F",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "G",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Panel Title",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "id": 11,
+      "interval": "10m",
+      "options": {
+        "colorMode": "value",
+        "fieldOptions": {
+          "calcs": ["mean"],
+          "defaults": {
+            "mappings": [],
+            "max": 100,
+            "min": 0,
+            "thresholds": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 10
+              },
+              {
+                "color": "purple",
+                "value": 20
+              },
+              {
+                "color": "orange",
+                "value": 40
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ],
+            "unit": "percent"
+          },
+          "override": {},
+          "values": false
+        },
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "sparkline": {
+          "show": true
+        }
+      },
+      "pluginVersion": "6.6.0-pre",
+      "targets": [
+        {
+          "refId": "A",
           "scenarioId": "random_walk"
         },
         {
@@ -109,13 +358,13 @@
       "gridPos": {
         "h": 17,
         "w": 4,
-        "x": 20,
-        "y": 0
+        "x": 0,
+        "y": 17
       },
       "id": 9,
       "interval": "10m",
       "options": {
-        "colorMode": 2,
+        "colorMode": "background",
         "fieldOptions": {
           "calcs": ["mean"],
           "defaults": {
@@ -149,7 +398,8 @@
           "override": {},
           "values": false
         },
-        "graphMode": 1,
+        "graphMode": "line",
+        "justifyMode": "auto",
         "orientation": "auto",
         "sparkline": {
           "show": true
@@ -194,277 +444,15 @@
     {
       "datasource": null,
       "gridPos": {
-        "h": 3,
-        "w": 20,
-        "x": 0,
-        "y": 7
-      },
-      "id": 6,
-      "interval": "10m",
-      "options": {
-        "colorMode": 2,
-        "fieldOptions": {
-          "calcs": ["mean"],
-          "defaults": {
-            "mappings": [],
-            "max": 100,
-            "min": 0,
-            "thresholds": [
-              {
-                "color": "blue",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 10
-              },
-              {
-                "color": "purple",
-                "value": 20
-              },
-              {
-                "color": "orange",
-                "value": 40
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ],
-            "unit": "percent"
-          },
-          "override": {},
-          "values": false
-        },
-        "graphMode": 1,
-        "orientation": "auto",
-        "sparkline": {
-          "show": true
-        }
-      },
-      "pluginVersion": "6.6.0-pre",
-      "targets": [
-        {
-          "refId": "A",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "B",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "C",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "D",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "E",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "F",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "G",
-          "scenarioId": "random_walk"
-        }
-      ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Panel Title",
-      "type": "stat"
-    },
-    {
-      "datasource": null,
-      "gridPos": {
-        "h": 6,
-        "w": 20,
-        "x": 0,
-        "y": 10
-      },
-      "id": 3,
-      "interval": "10m",
-      "options": {
-        "colorMode": 2,
-        "fieldOptions": {
-          "calcs": ["mean"],
-          "defaults": {
-            "mappings": [],
-            "max": 100,
-            "min": 0,
-            "thresholds": [
-              {
-                "color": "blue",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 10
-              },
-              {
-                "color": "purple",
-                "value": 20
-              },
-              {
-                "color": "orange",
-                "value": 40
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ],
-            "unit": "percent"
-          },
-          "override": {},
-          "values": false
-        },
-        "graphMode": 1,
-        "orientation": "auto",
-        "sparkline": {
-          "show": true
-        }
-      },
-      "pluginVersion": "6.6.0-pre",
-      "targets": [
-        {
-          "refId": "A",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "B",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "C",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "D",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "E",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "F",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "G",
-          "scenarioId": "random_walk"
-        }
-      ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Panel Title",
-      "type": "stat"
-    },
-    {
-      "datasource": null,
-      "gridPos": {
-        "h": 6,
-        "w": 20,
-        "x": 0,
-        "y": 16
-      },
-      "id": 4,
-      "interval": "10m",
-      "options": {
-        "colorMode": 0,
-        "displayMode": 0,
-        "fieldOptions": {
-          "calcs": ["mean"],
-          "defaults": {
-            "mappings": [],
-            "max": 100,
-            "min": 0,
-            "thresholds": [
-              {
-                "color": "blue",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 10
-              },
-              {
-                "color": "purple",
-                "value": 20
-              },
-              {
-                "color": "orange",
-                "value": 40
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ],
-            "unit": "percent"
-          },
-          "override": {},
-          "values": false
-        },
-        "graphMode": 1,
-        "orientation": "auto",
-        "sparkline": {
-          "show": true
-        }
-      },
-      "pluginVersion": "6.6.0-pre",
-      "targets": [
-        {
-          "refId": "A",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "B",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "C",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "D",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "E",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "F",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "G",
-          "scenarioId": "random_walk"
-        }
-      ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Panel Title",
-      "type": "stat"
-    },
-    {
-      "datasource": null,
-      "gridPos": {
-        "h": 11,
+        "h": 10,
         "w": 4,
-        "x": 20,
+        "x": 4,
         "y": 17
       },
       "id": 8,
       "interval": "10m",
       "options": {
-        "colorMode": 2,
+        "colorMode": "background",
         "fieldOptions": {
           "calcs": ["mean"],
           "defaults": {
@@ -498,94 +486,8 @@
           "override": {},
           "values": false
         },
-        "graphMode": 1,
-        "orientation": "auto",
-        "sparkline": {
-          "show": true
-        }
-      },
-      "pluginVersion": "6.6.0-pre",
-      "targets": [
-        {
-          "refId": "A",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "B",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "C",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "D",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "E",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "F",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "G",
-          "scenarioId": "random_walk"
-        }
-      ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Panel Title",
-      "type": "stat"
-    },
-    {
-      "datasource": null,
-      "gridPos": {
-        "h": 6,
-        "w": 20,
-        "x": 0,
-        "y": 22
-      },
-      "id": 5,
-      "interval": "10m",
-      "options": {
-        "colorMode": 0,
-        "fieldOptions": {
-          "calcs": ["mean"],
-          "defaults": {
-            "mappings": [],
-            "max": 100,
-            "min": 0,
-            "thresholds": [
-              {
-                "color": "blue",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 10
-              },
-              {
-                "color": "purple",
-                "value": 20
-              },
-              {
-                "color": "orange",
-                "value": 40
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ],
-            "unit": "percent"
-          },
-          "override": {},
-          "values": false
-        },
-        "graphMode": 1,
+        "graphMode": "line",
+        "justifyMode": "auto",
         "orientation": "auto",
         "sparkline": {
           "show": true
@@ -644,5 +546,5 @@
   "timezone": "",
   "title": "Panel Tests - Stat",
   "uid": "jWWHNJpWz",
-  "version": 7
+  "version": 10
 }

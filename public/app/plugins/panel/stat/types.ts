@@ -16,7 +16,7 @@ export const colorModes: Array<SelectableValue<BigValueColorMode>> = [
 export const graphModes: Array<SelectableValue<BigValueGraphMode>> = [
   { value: BigValueGraphMode.None, label: 'None' },
   { value: BigValueGraphMode.Line, label: 'Line graph' },
-  { value: BigValueGraphMode.LineWithFill, label: 'Area graph' },
+  { value: BigValueGraphMode.Area, label: 'Area graph' },
 ];
 
 export const justifyModes: Array<SelectableValue<BigValueJustifyMode>> = [
