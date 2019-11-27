@@ -1,6 +1,7 @@
 import React from 'react';
 import { ConfirmButton } from './ConfirmButton';
-import { shallow } from 'enzyme';
+import { mount, ShallowWrapper } from 'enzyme';
+import { Button } from '../Button/Button';
 
 describe('ConfirmButton', () => {
   let wrapper: any;
@@ -13,32 +14,20 @@ describe('ConfirmButton', () => {
       deleted = true;
     }
 
-    wrapper = shallow(<ConfirmButton onConfirm={() => deleteItem()} />);
-  });
-
-  it('should show confirm delete when clicked', () => {
-    expect(wrapper.state().showConfirm).toBe(false);
-    wrapper.find('.delete-button').simulate('click');
-    expect(wrapper.state().showConfirm).toBe(true);
-  });
-
-  it('should hide confirm delete when clicked', () => {
-    wrapper.find('.delete-button').simulate('click');
-    expect(wrapper.state().showConfirm).toBe(true);
-    wrapper
-      .find('.confirm-delete')
-      .find('.btn')
-      .at(0)
-      .simulate('click');
-    expect(wrapper.state().showConfirm).toBe(false);
+    wrapper = mount(
+      <ConfirmButton confirmText="Confirm delete" onConfirm={() => deleteItem()}>
+        Delete
+      </ConfirmButton>
+    );
   });
 
   it('should show confirm delete when clicked', () => {
     expect(deleted).toBe(false);
     wrapper
-      .find('.confirm-delete')
-      .find('.btn')
-      .at(1)
+      .find(Button)
+      .findWhere((n: ShallowWrapper) => {
+        return n.text() === 'Confirm delete' && n.type() === Button;
+      })
       .simulate('click');
     expect(deleted).toBe(true);
   });
