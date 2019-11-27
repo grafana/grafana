@@ -135,11 +135,12 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 
 	// handle http shutdown on server context done
 	go func() {
+		defer wg.Done()
+
 		<-ctx.Done()
 		if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
 			hs.log.Error("Failed to shutdown server", "error", err)
 		}
-		wg.Done()
 	}()
 
 	switch setting.Protocol {
