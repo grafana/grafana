@@ -13,13 +13,13 @@ interface Props {
 }
 
 export class UserSessions extends PureComponent<Props> {
-  handleSessionRevoke = (id: number) => {
+  onSessionRevoke = (id: number) => {
     return () => {
       this.props.onSessionRevoke(id);
     };
   };
 
-  handleAllSessionsRevoke = () => {
+  onAllSessionsRevoke = () => {
     appEvents.emit(CoreEvents.showConfirmModal, {
       title: 'Force logout from all devices',
       text: 'Are you sure you want to force logout from all devices?',
@@ -67,7 +67,7 @@ export class UserSessions extends PureComponent<Props> {
                           <ConfirmButton
                             confirmText="Confirm logout"
                             confirmButtonVariant="danger"
-                            onConfirm={this.handleSessionRevoke(session.id)}
+                            onConfirm={this.onSessionRevoke(session.id)}
                           >
                             Force logout
                           </ConfirmButton>
@@ -80,7 +80,7 @@ export class UserSessions extends PureComponent<Props> {
           </div>
           <div className={logoutFromAllDevicesClass}>
             {sessions.length > 0 && (
-              <ActionButton text="Force logout from all devices" onClick={this.handleAllSessionsRevoke} />
+              <ActionButton text="Force logout from all devices" onClick={this.onAllSessionsRevoke} />
             )}
           </div>
         </div>

@@ -58,41 +58,41 @@ export class UserAdminPage extends PureComponent<Props, State> {
     }
   }
 
-  handleUserUpdate = (user: UserDTO) => {
+  onUserUpdate = (user: UserDTO) => {
     console.log('update user', user);
   };
 
-  handleUserDelete = (userId: number) => {
+  onUserDelete = (userId: number) => {
     console.log('delete user', userId);
   };
 
-  handleUserDisable = (userId: number) => {
+  onUserDisable = (userId: number) => {
     console.log('disable user', userId);
   };
 
-  handleGrafanaAdminChange = (isGrafanaAdmin: boolean) => {
-    console.log('handleGrafanaAdminChange', isGrafanaAdmin);
+  onGrafanaAdminChange = (isGrafanaAdmin: boolean) => {
+    console.log('onGrafanaAdminChange', isGrafanaAdmin);
   };
 
-  handleOrgRemove = (orgId: number) => {
-    console.log('handleOrgRemove', orgId);
+  onOrgRemove = (orgId: number) => {
+    console.log('onOrgRemove', orgId);
   };
 
-  handleOrgRoleChange = (orgId: number, newRole: string) => {
-    console.log('handleOrgRoleChange', orgId, newRole);
+  onOrgRoleChange = (orgId: number, newRole: string) => {
+    console.log('onOrgRoleChange', orgId, newRole);
   };
 
-  handleSessionRevoke = (tokenId: number) => {
+  onSessionRevoke = (tokenId: number) => {
     const { userId, revokeSession } = this.props;
     revokeSession(tokenId, userId);
   };
 
-  handleAllSessionsRevoke = () => {
+  onAllSessionsRevoke = () => {
     const { userId, revokeAllSessions } = this.props;
     revokeAllSessions(userId);
   };
 
-  handleUserSync = () => {
+  onUserSync = () => {
     console.log('sync user', this.props.user.login);
   };
 
@@ -108,29 +108,24 @@ export class UserAdminPage extends PureComponent<Props, State> {
             <>
               <UserProfile
                 user={user}
-                onUserUpdate={this.handleUserUpdate}
-                onUserDelete={this.handleUserDelete}
-                onUserDisable={this.handleUserDisable}
+                onUserUpdate={this.onUserUpdate}
+                onUserDelete={this.onUserDelete}
+                onUserDisable={this.onUserDisable}
               />
               {isLDAPUser && config.buildInfo.isEnterprise && ldapSyncInfo && (
-                <UserLdapSyncInfo ldapSyncInfo={ldapSyncInfo} onUserSync={this.handleUserSync} />
+                <UserLdapSyncInfo ldapSyncInfo={ldapSyncInfo} onUserSync={this.onUserSync} />
               )}
-              <UserPermissions
-                isGrafanaAdmin={user.isGrafanaAdmin}
-                onGrafanaAdminChange={this.handleGrafanaAdminChange}
-              />
+              <UserPermissions isGrafanaAdmin={user.isGrafanaAdmin} onGrafanaAdminChange={this.onGrafanaAdminChange} />
             </>
           )}
 
-          {orgs && (
-            <UserOrgs orgs={orgs} onOrgRemove={this.handleOrgRemove} onOrgRoleChange={this.handleOrgRoleChange} />
-          )}
+          {orgs && <UserOrgs orgs={orgs} onOrgRemove={this.onOrgRemove} onOrgRoleChange={this.onOrgRoleChange} />}
 
           {sessions && (
             <UserSessions
               sessions={sessions}
-              onSessionRevoke={this.handleSessionRevoke}
-              onAllSessionsRevoke={this.handleAllSessionsRevoke}
+              onSessionRevoke={this.onSessionRevoke}
+              onAllSessionsRevoke={this.onAllSessionsRevoke}
             />
           )}
         </Page.Contents>
@@ -155,9 +150,4 @@ const mapDispatchToProps = {
   loadLdapSyncStatus,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(UserAdminPage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UserAdminPage));

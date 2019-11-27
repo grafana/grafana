@@ -21,11 +21,11 @@ export class UserOrgs extends PureComponent<Props, State> {
     showAddOrgModal: false,
   };
 
-  handleAddOrg = () => {
+  onAddOrg = () => {
     this.setState({ showAddOrgModal: true });
   };
 
-  handleAddOrgModalDismiss = () => {
+  onAddOrgModalDismiss = () => {
     this.setState({ showAddOrgModal: false });
   };
 
@@ -55,9 +55,9 @@ export class UserOrgs extends PureComponent<Props, State> {
             </table>
           </div>
           <div className={addToOrgContainerClass}>
-            <ActionButton text="Add this user to another organisation" onClick={this.handleAddOrg} />
+            <ActionButton text="Add this user to another organisation" onClick={this.onAddOrg} />
           </div>
-          <AddToOrgModal isOpen={showAddOrgModal} onDismiss={this.handleAddOrgModalDismiss} />
+          <AddToOrgModal isOpen={showAddOrgModal} onDismiss={this.onAddOrgModalDismiss} />
         </div>
       </>
     );
@@ -98,30 +98,30 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
     isRemovingFromOrg: false,
   };
 
-  handleOrgRemove = () => {
+  onOrgRemove = () => {
     const { org } = this.props;
     this.props.onOrgRemove(org.orgId);
   };
 
-  handleChangeRoleClick = () => {
+  onChangeRoleClick = () => {
     const { org } = this.props;
     this.setState({ isChangingRole: true, currentRole: org.role });
   };
 
-  handleOrgRemoveClick = () => {
+  onOrgRemoveClick = () => {
     this.setState({ isRemovingFromOrg: true });
   };
 
-  handleOrgRoleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  onOrgRoleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newRole = event.target.value;
     this.setState({ currentRole: newRole });
   };
 
-  handleOrgRoleSave = () => {
+  onOrgRoleSave = () => {
     this.props.onOrgRoleChange(this.props.org.orgId, this.state.currentRole);
   };
 
-  handleCancelClick = () => {
+  onCancelClick = () => {
     this.setState({ isChangingRole: false, isRemovingFromOrg: false });
   };
 
@@ -137,7 +137,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
         {isChangingRole ? (
           <td>
             <div className="gf-form-select-wrapper width-8">
-              <select value={currentRole} className="gf-form-input" onChange={this.handleOrgRoleChange}>
+              <select value={currentRole} className="gf-form-input" onChange={this.onOrgRoleChange}>
                 {ORG_ROLES.map((option, index) => {
                   return (
                     <option value={option} key={`${option}-${index}`}>
@@ -156,9 +156,9 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
             <div className="pull-right">
               <ConfirmButton
                 confirmText="Save"
-                onClick={this.handleChangeRoleClick}
-                onCancel={this.handleCancelClick}
-                onConfirm={this.handleOrgRoleSave}
+                onClick={this.onChangeRoleClick}
+                onCancel={this.onCancelClick}
+                onConfirm={this.onOrgRoleSave}
               >
                 Change role
               </ConfirmButton>
@@ -171,9 +171,9 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
               <ConfirmButton
                 confirmText="Confirmn removal"
                 confirmButtonVariant="danger"
-                onClick={this.handleOrgRemoveClick}
-                onCancel={this.handleCancelClick}
-                onConfirm={this.handleOrgRemove}
+                onClick={this.onOrgRemoveClick}
+                onCancel={this.onCancelClick}
+                onConfirm={this.onOrgRemove}
               >
                 Remove from organisation
               </ConfirmButton>
@@ -203,24 +203,24 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
     role: 'Admin',
   };
 
-  handleOrgNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  onOrgNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({
       orgName: event.target.value,
     });
   };
 
-  handleOrgRoleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  onOrgRoleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     this.setState({
       role: event.target.value,
     });
   };
 
-  handleAddUserToOrg = () => {
+  onAddUserToOrg = () => {
     const { orgName, role } = this.state;
     console.log(`Add user to ${orgName} as ${role}`);
   };
 
-  handleCancel = () => {
+  onCancel = () => {
     this.props.onDismiss();
   };
 
@@ -229,18 +229,18 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
     const { orgName, role } = this.state;
 
     return (
-      <Modal title="Add to an organization" isOpen={isOpen} onDismiss={this.handleCancel}>
+      <Modal title="Add to an organization" isOpen={isOpen} onDismiss={this.onCancel}>
         <div className="gf-form-group">
           <h6 className="">Organisation's name</h6>
           <span>You can add users only to an already existing organisation</span>
           <div className="gf-form">
-            <input type="text" className="gf-form-input width-25" value={orgName} onChange={this.handleOrgNameChange} />
+            <input type="text" className="gf-form-input width-25" value={orgName} onChange={this.onOrgNameChange} />
           </div>
         </div>
         <div className="gf-form-group">
           <h6 className="">Role</h6>
           <div className="gf-form-select-wrapper width-8">
-            <select value={role} className="gf-form-input" onChange={this.handleOrgRoleChange}>
+            <select value={role} className="gf-form-input" onChange={this.onOrgRoleChange}>
               {ORG_ROLES.map((option, index) => {
                 return (
                   <option value={option} key={`${option}-${index}`}>
@@ -252,10 +252,10 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
           </div>
         </div>
         <div className="gf-form-button-row">
-          <button className="btn btn-inverse" onClick={this.handleCancel}>
+          <button className="btn btn-inverse" onClick={this.onCancel}>
             Cancel
           </button>
-          <button className="btn btn-secondary" onClick={this.handleAddUserToOrg}>
+          <button className="btn btn-secondary" onClick={this.onAddUserToOrg}>
             Add to organization
           </button>
         </div>

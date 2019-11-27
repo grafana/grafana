@@ -19,24 +19,24 @@ export class UserPermissions extends PureComponent<Props, State> {
     currentAdminOption: this.props.isGrafanaAdmin ? 'YES' : 'NO',
   };
 
-  handleChangeClick = () => {
+  onChangeClick = () => {
     this.setState({ isEditing: true });
   };
 
-  handleCancelClick = () => {
+  onCancelClick = () => {
     this.setState({
       isEditing: false,
       currentAdminOption: this.props.isGrafanaAdmin ? 'YES' : 'NO',
     });
   };
 
-  handleGrafanaAdminChange = () => {
+  onGrafanaAdminChange = () => {
     const { currentAdminOption } = this.state;
     const newIsGrafanaAdmin = currentAdminOption === 'YES' ? true : false;
     this.props.onGrafanaAdminChange(newIsGrafanaAdmin);
   };
 
-  handleAdminOptionSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  onAdminOptionSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
     this.setState({ currentAdminOption: event.target.value });
   };
 
@@ -65,7 +65,7 @@ export class UserPermissions extends PureComponent<Props, State> {
                         <select
                           value={currentAdminOption}
                           className="gf-form-input"
-                          onChange={this.handleAdminOptionSelect}
+                          onChange={this.onAdminOptionSelect}
                         >
                           {['YES', 'NO'].map((option, index) => {
                             return (
@@ -92,9 +92,9 @@ export class UserPermissions extends PureComponent<Props, State> {
                     <div className={changeButtonContainerClass}>
                       <ConfirmButton
                         className="pull-right"
-                        onClick={this.handleChangeClick}
-                        onConfirm={this.handleGrafanaAdminChange}
-                        onCancel={this.handleCancelClick}
+                        onClick={this.onChangeClick}
+                        onConfirm={this.onGrafanaAdminChange}
+                        onCancel={this.onCancelClick}
                         confirmText="Change"
                       >
                         Change

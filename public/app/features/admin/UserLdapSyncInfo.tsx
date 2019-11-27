@@ -13,7 +13,7 @@ const syncTimeFormat = 'dddd YYYY-MM-DD HH:mm zz';
 const debugLDAPMappingURL = '/admin/ldap';
 
 export class UserLdapSyncInfo extends PureComponent<Props, State> {
-  handleUserSync = () => {
+  onUserSync = () => {
     console.log('Sync user');
     this.props.onUserSync();
   };
@@ -66,7 +66,7 @@ export class UserLdapSyncInfo extends PureComponent<Props, State> {
             </table>
           </div>
           <div className="gf-form-button-row">
-            <button className="btn btn-secondary" onClick={this.handleUserSync}>
+            <button className="btn btn-secondary" onClick={this.onUserSync}>
               Sync user
             </button>
             <a className="btn btn-inverse" href={debugLDAPMappingURL}>

@@ -20,7 +20,7 @@ interface State {
 }
 
 export class UserProfile extends PureComponent<Props, State> {
-  handleUserDelete = () => {
+  onUserDelete = () => {
     const { user, onUserDelete } = this.props;
     appEvents.emit(CoreEvents.showConfirmModal, {
       title: 'Delete user',
@@ -33,7 +33,7 @@ export class UserProfile extends PureComponent<Props, State> {
     });
   };
 
-  handleUserDisable = () => {
+  onUserDisable = () => {
     const { user, onUserDisable } = this.props;
     appEvents.emit(CoreEvents.showConfirmModal, {
       title: 'Disable user',
@@ -46,7 +46,7 @@ export class UserProfile extends PureComponent<Props, State> {
     });
   };
 
-  handleUserNameChange = (newValue: string) => {
+  onUserNameChange = (newValue: string) => {
     const { user, onUserUpdate } = this.props;
     onUserUpdate({
       ...user,
@@ -54,7 +54,7 @@ export class UserProfile extends PureComponent<Props, State> {
     });
   };
 
-  handleUserEmailChange = (newValue: string) => {
+  onUserEmailChange = (newValue: string) => {
     const { user, onUserUpdate } = this.props;
     onUserUpdate({
       ...user,
@@ -62,7 +62,7 @@ export class UserProfile extends PureComponent<Props, State> {
     });
   };
 
-  handleUserLoginChange = (newValue: string) => {
+  onUserLoginChange = (newValue: string) => {
     const { user, onUserUpdate } = this.props;
     onUserUpdate({
       ...user,
@@ -87,31 +87,31 @@ export class UserProfile extends PureComponent<Props, State> {
                   value={user.name}
                   locked={user.isExternal}
                   lockMessage={lockMessage}
-                  onChange={this.handleUserNameChange}
+                  onChange={this.onUserNameChange}
                 />
                 <UserProfileRow
                   label="Email"
                   value={user.email}
                   locked={user.isExternal}
                   lockMessage={lockMessage}
-                  onChange={this.handleUserEmailChange}
+                  onChange={this.onUserEmailChange}
                 />
                 <UserProfileRow
                   label="Username"
                   value={user.login}
                   locked={user.isExternal}
                   lockMessage={lockMessage}
-                  onChange={this.handleUserLoginChange}
+                  onChange={this.onUserLoginChange}
                 />
                 <UserProfileRow label="Password" value="******" locked={user.isExternal} lockMessage={lockMessage} />
               </tbody>
             </table>
           </div>
           <div className="gf-form-button-row">
-            <button className="btn btn-danger" onClick={this.handleUserDelete}>
+            <button className="btn btn-danger" onClick={this.onUserDelete}>
               Delete User
             </button>
-            <button className="btn btn-inverse" onClick={this.handleUserDisable}>
+            <button className="btn btn-inverse" onClick={this.onUserDisable}>
               Disable User
             </button>
           </div>
@@ -142,15 +142,15 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
     value: this.props.value || '',
   };
 
-  handleEditClick = () => {
+  onEditClick = () => {
     this.setState({ editing: true }, this.focusInput);
   };
 
-  handleCancelClick = () => {
+  onCancelClick = () => {
     this.setState({ editing: false });
   };
 
-  handleInputChange = (event: React.ChangeEvent<HTMLInputElement>, status?: InputStatus) => {
+  onInputChange = (event: React.ChangeEvent<HTMLInputElement>, status?: InputStatus) => {
     if (status === InputStatus.Invalid) {
       return;
     }
@@ -158,7 +158,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
     this.setState({ value: event.target.value });
   };
 
-  handleInputBlur = (event: React.FocusEvent<HTMLInputElement>, status?: InputStatus) => {
+  onInputBlur = (event: React.FocusEvent<HTMLInputElement>, status?: InputStatus) => {
     if (status === InputStatus.Invalid) {
       return;
     }
@@ -172,7 +172,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
     }
   };
 
-  handleSave = () => {
+  onSave = () => {
     if (this.props.onChange) {
       this.props.onChange(this.state.value);
     }
@@ -202,12 +202,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
         <td className={labelClass}>{label}</td>
         <td className="width-25" colSpan={2}>
           {this.state.editing ? (
-            <Input
-              className="width-20"
-              defaultValue={value}
-              onBlur={this.handleInputBlur}
-              onChange={this.handleInputChange}
-            />
+            <Input className="width-20" defaultValue={value} onBlur={this.onInputBlur} onChange={this.onInputChange} />
           ) : (
             <span>{value}</span>
           )}
@@ -216,9 +211,9 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
           <div className={editButtonContainerClass}>
             <ConfirmButton
               confirmText="Save"
-              onClick={this.handleEditClick}
-              onConfirm={this.handleSave}
-              onCancel={this.handleCancelClick}
+              onClick={this.onEditClick}
+              onConfirm={this.onSave}
+              onCancel={this.onCancelClick}
             >
               Edit
             </ConfirmButton>
