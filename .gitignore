@@ -97,3 +97,7 @@ theOutput/
 
 # Ignore compilation stats from `yarn stats`
 compilation-stats.json
+
+# e2e tests
+screenshots/
+videos/

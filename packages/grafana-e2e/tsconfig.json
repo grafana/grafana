@@ -1,0 +1,11 @@
+{
+  "extends": "../tsconfig.json",
+  "include": ["../../node_modules/cypress/types/index.d.ts", "../node_modules/cypress", "src/**/*.ts"],
+  "exclude": ["dist", "node_modules"],
+  "compilerOptions": {
+    "rootDirs": ["."],
+    "typeRoots": ["./node_modules/@types", "types"],
+    "declarationDir": "dist",
+    "outDir": "compiled"
+  }
+}
