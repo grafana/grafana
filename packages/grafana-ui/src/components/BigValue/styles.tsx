@@ -9,11 +9,6 @@ import { calculateFontSize } from '../../utils/measureText';
 // Types
 import { BigValueColorMode, BigValueGraphMode, Props, BigValueJustifyMode } from './BigValue';
 
-const MIN_VALUE_FONT_SIZE = 20;
-const MAX_VALUE_FONT_SIZE = 50;
-const MIN_TITLE_FONT_SIZE = 14;
-const TITLE_VALUE_RATIO = 0.45;
-const VALUE_HEIGHT_RATIO_WIDE = 0.3;
 const LINE_HEIGHT = 1.2;
 const PANEL_PADDING = 16;
 const CHART_HEIGHT_RATIO = 0.25;
@@ -71,25 +66,37 @@ export function calculateLayout(props: Props): LayoutResult {
 
     // Wide no chart mode
     if (layoutType === LayoutType.WideNoChart) {
+      valueFontSize = calculateFontSize(value.text, maxTextWidth * 0.3, maxTextHeight, LINE_HEIGHT);
+
       if (value.title && value.title.length > 0) {
+        // How big can we make the title and still have it fit
         titleFontSize = calculateFontSize(value.title, maxTextWidth * 0.6, maxTextHeight, LINE_HEIGHT);
+        // make sure it's a bit smaller than valueFontSize
+        titleFontSize = Math.min(valueFontSize * 0.7, valueFontSize);
+        titleHeight = titleFontSize * LINE_HEIGHT;
+      }
+    } else {
+      // wide with chart
+      chartHeight = height - PANEL_PADDING * 2;
+      chartWidth = width / 2 - PANEL_PADDING * 2;
+
+      if (graphMode === BigValueGraphMode.Area) {
+        chartWidth = width;
+        chartHeight += PANEL_PADDING;
+      }
+
+      if (value.title && value.title.length > 0) {
+        titleFontSize = calculateFontSize(value.title, maxTextWidth, height * 0.25, LINE_HEIGHT);
         titleHeight = titleFontSize * LINE_HEIGHT;
       }
 
-      valueFontSize = calculateFontSize(value.text, maxTextWidth * 0.3, maxTextHeight, LINE_HEIGHT);
-    } else {
-      // stacked left side
+      valueFontSize = calculateFontSize(value.text, maxTextWidth, maxTextHeight - titleHeight, LINE_HEIGHT);
     }
-
-    //
-    // const titleFontSize = Math.max(valueFontSize * TITLE_VALUE_RATIO, MIN_TITLE_FONT_SIZE);
-    // const chartHeight = height - PANEL_PADDING * 2;
-    // const chartWidth = width / 2;
   } else {
     const maxTextWidth = width - PANEL_PADDING * 2;
     const maxTextHeight = height - PANEL_PADDING * 2;
 
-    // Does the fit / exist?
+    // Does a chart fit or exist?
     if (height < 100 || !sparkline) {
       layoutType = LayoutType.StackedNoChart;
     } else {

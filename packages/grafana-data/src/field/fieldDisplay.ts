@@ -21,6 +21,7 @@ export interface FieldDisplayOptions {
   defaults: FieldConfig; // Use these values unless otherwise stated
   override: FieldConfig; // Set these values regardless of the source
 }
+
 // TODO: use built in variables, same as for data links?
 export const VAR_SERIES_NAME = '__series.name';
 export const VAR_FIELD_NAME = '__field.name';

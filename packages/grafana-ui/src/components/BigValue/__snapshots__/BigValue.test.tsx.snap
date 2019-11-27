@@ -8,6 +8,7 @@ exports[`BigValue Render with basic options should render 1`] = `
       "background": "linear-gradient(120deg, rgb(66, 154, 67), rgb(111, 183, 87))",
       "borderRadius": "3px",
       "display": "flex",
+      "flexDirection": "row",
       "height": "300px",
       "padding": "16px",
       "position": "relative",
@@ -30,7 +31,7 @@ exports[`BigValue Render with basic options should render 1`] = `
       style={
         Object {
           "color": "#EEE",
-          "fontSize": "50px",
+          "fontSize": "223.33333333333334px",
           "fontWeight": 500,
           "lineHeight": 1.2,
           "textShadow": "#333 0px 0px 1px",
