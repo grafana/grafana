@@ -47,7 +47,7 @@ You can use this functionality to link to your tracing backend directly from you
 They are shown in the [log details](/features/explore/#labels-and-parsed-fields).
 {{< docs-imagebox img="/img/docs/v65/loki_derived_fields.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields configuration" >}}
 Each derived field consists of:
-- Name: will be shown in the log details as label
+- **Name:** Shown in the log details as a label.
 - Regex: regex pattern that will be run on the log message and should capture some part of it to be used as the value of the new field. Can only contain single capture group.
 - URL: a url template that will be used to construct a link next to the field value in log details. Use special `${__value.raw}` to insert the value of the field.
 
