@@ -9,6 +9,7 @@ import { Button } from './Button';
 import { Form } from './Form';
 import { Switch } from './Switch';
 import { Icon } from '../Icon/Icon';
+import { Checkbox } from './Checkbox';
 
 export default {
   title: 'UI/Forms/Test forms/Server admin',
@@ -21,6 +22,7 @@ export const users = () => {
   const [username, setUsername] = useState();
   const [password, setPassword] = useState();
   const [disabledUser, setDisabledUser] = useState(false);
+  const [checked, setChecked] = useState(false);
 
   return (
     <>
@@ -56,6 +58,14 @@ export const users = () => {
         </Field>
         <Field label="Disable" description="Added for testing purposes">
           <Switch checked={disabledUser} onChange={(_e, checked) => setDisabledUser(checked)} />
+        </Field>
+        <Field>
+          <Checkbox
+            label="Skip SLL cert validation"
+            description="Set to true if you want to skip sll cert validation"
+            value={checked}
+            onChange={setChecked}
+          />
         </Field>
         <Button>Update</Button>
       </Form>
