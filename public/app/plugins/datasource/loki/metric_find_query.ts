@@ -1,4 +1,3 @@
-import { map } from 'lodash';
 import { LokiDatasource } from './datasource';
 
 export default class LokiMetricFindQuery {
@@ -24,22 +23,15 @@ export default class LokiMetricFindQuery {
     return Promise.resolve([]);
   }
 
-  labelNamesQuery() {
+  async labelNamesQuery() {
     const url = '/loki/api/v1/label';
-    return this.datasource.metadataRequest(url).then((result: any) => {
-      return map(result.data.data, value => {
-        return { text: value };
-      });
-    });
+    const result = await this.datasource.metadataRequest(url);
+    return result.data.data.map((value: string) => ({ text: value }));
   }
 
-  labelValuesQuery(label: string) {
-    let url: string;
-    url = '/loki/api/v1/label/' + label + '/values';
-    return this.datasource.metadataRequest(url).then((result: any) => {
-      return map(result.data.data, value => {
-        return { text: value };
-      });
-    });
+  async labelValuesQuery(label: string) {
+    const url = `/loki/api/v1/label/${label}/values`;
+    const result = await this.datasource.metadataRequest(url);
+    return result.data.data.map((value: string) => ({ text: value }));
   }
 }
