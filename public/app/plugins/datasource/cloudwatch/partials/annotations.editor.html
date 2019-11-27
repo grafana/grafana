@@ -1,4 +1,10 @@
-<cloudwatch-query-parameter target="ctrl.annotation" datasource="ctrl.datasource"></cloudwatch-query-parameter>
+<cloudwatch-annotation-query-editor
+  datasource="ctrl.datasource"
+  on-change="ctrl.onChange"
+  query="ctrl.annotation.target"
+></cloudwatch-annotation-query-editor>
+
+<!-- <cloudwatch-query-parameter target="ctrl.annotation" datasource="ctrl.datasource"></cloudwatch-query-parameter>
 
 <div class="editor-row" style="padding: 2rem 0">
 	<div class="section">
@@ -15,4 +21,4 @@
 			</div>
 		</div>
 	</div>
-</div>
+</div> -->

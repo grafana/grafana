@@ -1,19 +1,41 @@
 import React, { PureComponent, ChangeEvent } from 'react';
-import { SelectableValue, ExploreQueryFieldProps } from '@grafana/data';
+import { SelectableValue, PanelData } from '@grafana/data';
 import { Input, Segment, SegmentAsync, ValidationEvents, EventsWithValidation, Switch } from '@grafana/ui';
 import { CloudWatchQuery } from '../types';
 import CloudWatchDatasource from '../datasource';
-import { QueryFieldsEditor } from './QueryFieldsEditor';
+import { SelectableStrings } from '../types';
+import { Stats, Dimensions, QueryInlineField, QueryField, Alias } from './';
 
-export type Props = ExploreQueryFieldProps<CloudWatchDatasource, CloudWatchQuery>;
+export type Props = {
+  query: CloudWatchQuery;
+  datasource: CloudWatchDatasource;
+  onRunQuery: () => void;
+  onChange: (value: CloudWatchQuery) => void;
+  data?: PanelData;
+};
 
-interface State {}
+interface State {
+  regions: SelectableStrings;
+  namespaces: SelectableStrings;
+  metricNames: SelectableStrings;
+  variableOptionGroup: SelectableValue<string>;
+  showMeta: boolean;
+}
 
-export class QueryEditor extends PureComponent<Props, State> {
+const idValidationEvents: ValidationEvents = {
+  [EventsWithValidation.onBlur]: [
+    {
+      rule: value => new RegExp(/^$|^[a-z][a-zA-Z0-9_]*$/).test(value),
+      errorMessage: 'Invalid format. Only alphanumeric characters and underscores are allowed',
+    },
+  ],
+};
+
+export class QueryFieldsEditor extends PureComponent<Props, State> {
   state: State = { regions: [], namespaces: [], metricNames: [], variableOptionGroup: {}, showMeta: false };
 
-  static getDerivedStateFromProps(props: Props, state: State) {
-    const { query } = props;
+  componentWillMount() {
+    const { query } = this.props;
 
     if (!query.namespace) {
       query.namespace = '';
@@ -50,8 +72,6 @@ export class QueryEditor extends PureComponent<Props, State> {
     if (!query.hasOwnProperty('matchExact')) {
       query.matchExact = true;
     }
-
-    return state;
   }
 
   componentDidMount() {
@@ -90,21 +110,6 @@ export class QueryEditor extends PureComponent<Props, State> {
     onRunQuery();
   }
 
-  // Load dimension values based on current selected dimensions.
-  // Remove the new dimension key and all dimensions that has a wildcard as selected value
-  loadDimensionValues = (newKey: string) => {
-    const { datasource, query } = this.props;
-    const { [newKey]: value, ...dim } = query.dimensions;
-    const newDimensions = Object.entries(dim).reduce(
-      (result, [key, value]) => (value === '*' ? result : { ...result, [key]: value }),
-      {}
-    );
-    return datasource
-      .getDimensionValues(query.region, query.namespace, query.metricName, newKey, newDimensions)
-      .then(values => (values.length ? [{ value: '*', text: '*', label: '*' }, ...values] : values))
-      .then(this.appendTemplateVariables);
-  };
-
   render() {
     const { query, datasource, onChange, onRunQuery, data } = this.props;
     const { regions, namespaces, variableOptionGroup: variableOptionGroup, showMeta } = this.state;
@@ -113,11 +118,10 @@ export class QueryEditor extends PureComponent<Props, State> {
       <>
         <QueryInlineField label="Region">
           <Segment
-            value={query.region}
-            placeholder="Select region"
+            value={query.region || 'Select region'}
             options={regions}
             allowCustomValue
-            onChange={({ value: region }) => this.onChange({ ...query, region })}
+            onChange={region => this.onChange({ ...query, region })}
           />
         </QueryInlineField>
 
@@ -125,21 +129,19 @@ export class QueryEditor extends PureComponent<Props, State> {
           <>
             <QueryInlineField label="Namespace">
               <Segment
-                value={query.namespace}
-                placeholder="Select namespace"
+                value={query.namespace || 'Select namespace'}
                 allowCustomValue
                 options={namespaces}
-                onChange={({ value: namespace }) => this.onChange({ ...query, namespace })}
+                onChange={namespace => this.onChange({ ...query, namespace })}
               />
             </QueryInlineField>
 
             <QueryInlineField label="Metric Name">
               <SegmentAsync
-                value={query.metricName}
-                placeholder="Select metric name"
+                value={query.metricName || 'Select metric name'}
                 allowCustomValue
                 loadOptions={this.loadMetricNames}
-                onChange={({ value: metricName }) => this.onChange({ ...query, metricName })}
+                onChange={metricName => this.onChange({ ...query, metricName })}
               />
             </QueryInlineField>
 
@@ -159,7 +161,13 @@ export class QueryEditor extends PureComponent<Props, State> {
                 loadKeys={() =>
                   datasource.getDimensionKeys(query.namespace, query.region).then(this.appendTemplateVariables)
                 }
-                loadValues={this.loadDimensionValues}
+                loadValues={newKey => {
+                  const { [newKey]: value, ...newDimensions } = query.dimensions;
+                  return datasource
+                    .getDimensionValues(query.region, query.namespace, query.metricName, newKey, newDimensions)
+                    .then(values => (values.length ? [{ value: '*', text: '*', label: '*' }, ...values] : values))
+                    .then(this.appendTemplateVariables);
+                }}
               />
             </QueryInlineField>
           </>
