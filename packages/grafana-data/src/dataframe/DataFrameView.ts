@@ -26,22 +26,24 @@ export class DataFrameView<T = any> implements Vector<T> {
 
   constructor(private data: DataFrame) {
     const obj = ({} as unknown) as T;
+
     for (let i = 0; i < data.fields.length; i++) {
       const field = data.fields[i];
-      const getter = () => {
-        return field.values.get(this.index);
-      };
+      const getter = () => field.values.get(this.index);
+
       if (!(obj as any).hasOwnProperty(field.name)) {
         Object.defineProperty(obj, field.name, {
           enumerable: true, // Shows up as enumerable property
           get: getter,
         });
       }
+
       Object.defineProperty(obj, i, {
         enumerable: false, // Don't enumerate array index
         get: getter,
       });
     }
+
     this.obj = obj;
   }
 
@@ -59,11 +61,7 @@ export class DataFrameView<T = any> implements Vector<T> {
   }
 
   toArray(): T[] {
-    const arr: T[] = [];
-    for (let i = 0; i < this.data.length; i++) {
-      arr.push({ ...this.get(i) });
-    }
-    return arr;
+    return new Array(this.data.length).fill(0).map((_, i) => ({ ...this.get(i) }));
   }
 
   toJSON(): T[] {

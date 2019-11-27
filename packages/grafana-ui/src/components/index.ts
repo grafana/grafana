@@ -49,13 +49,13 @@ export { Table } from './Table/Table';
 export { TableInputCSV } from './Table/TableInputCSV';
 
 // Visualizations
-export { BigValue, SingleStatDisplayMode, BigValueSparkline } from './BigValue/BigValue';
+export { BigValue, BigValueDisplayMode, BigValueSparkline } from './BigValue/BigValue';
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { GraphLegend } from './Graph/GraphLegend';
 export { GraphWithLegend } from './Graph/GraphWithLegend';
+export { BarGauge, BarGaugeAlignmentFactors } from './BarGauge/BarGauge';
 export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
-export { BarGauge } from './BarGauge/BarGauge';
 export { VizRepeater } from './VizRepeater/VizRepeater';
 export {
   LegendOptions,
@@ -99,6 +99,7 @@ export { FadeTransition } from './transitions/FadeTransition';
 export { SlideOutTransition } from './transitions/SlideOutTransition';
 export { Segment, SegmentAsync, SegmentSelect } from './Segment/';
 export { default as Chart } from './Chart';
+export { Icon } from './Icon/Icon';
 
 // Next-gen forms
 export { default as Forms } from './Forms';

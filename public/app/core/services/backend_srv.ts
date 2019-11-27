@@ -10,6 +10,17 @@ import { FolderInfo, DashboardDTO, CoreEvents } from 'app/types';
 import { BackendSrv as BackendService, getBackendSrv as getBackendService, BackendSrvRequest } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
 
+export interface DatasourceRequestOptions {
+  retry?: number;
+  method?: string;
+  requestId?: string;
+  timeout?: angular.IPromise<any>;
+  url?: string;
+  headers?: { [key: string]: any };
+  silent?: boolean;
+  data?: { [key: string]: any };
+}
+
 export class BackendSrv implements BackendService {
   private inFlightRequests: { [key: string]: Array<angular.IDeferred<any>> } = {};
   private HTTP_REQUEST_CANCELED = -1;

@@ -102,7 +102,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Panel Title",
-      "type": "singlestat2"
+      "type": "stat"
     },
     {
       "datasource": null,
@@ -189,7 +189,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Panel Title",
-      "type": "singlestat2"
+      "type": "stat"
     },
     {
       "datasource": null,
@@ -276,7 +276,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Panel Title",
-      "type": "singlestat2"
+      "type": "stat"
     },
     {
       "datasource": null,
@@ -363,7 +363,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Panel Title",
-      "type": "singlestat2"
+      "type": "stat"
     },
     {
       "datasource": null,
@@ -450,7 +450,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Panel Title",
-      "type": "singlestat2"
+      "type": "stat"
     },
     {
       "datasource": null,
@@ -537,7 +537,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Panel Title",
-      "type": "singlestat2"
+      "type": "stat"
     },
     {
       "datasource": null,
@@ -624,7 +624,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Panel Title",
-      "type": "singlestat2"
+      "type": "stat"
     }
   ],
   "schemaVersion": 20,

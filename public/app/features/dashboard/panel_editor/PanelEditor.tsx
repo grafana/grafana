@@ -114,12 +114,7 @@ export const mapStateToProps = (state: StoreState) => getActiveTabAndTabs(state.
 
 const mapDispatchToProps = { refreshPanelEditor, panelEditorCleanUp, changePanelEditorTab };
 
-export const PanelEditor = hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(UnConnectedPanelEditor)
-);
+export const PanelEditor = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedPanelEditor));
 
 interface TabItemParams {
   tab: PanelEditorTab;

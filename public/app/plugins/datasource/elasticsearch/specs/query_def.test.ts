@@ -12,7 +12,10 @@ describe('ElasticQueryDef', () => {
 
     describe('with count and sum targets', () => {
       const targets = {
-        metrics: [{ type: 'count', field: '@value' }, { type: 'sum', field: '@value' }],
+        metrics: [
+          { type: 'count', field: '@value' },
+          { type: 'sum', field: '@value' },
+        ],
       };
 
       const response = queryDef.getPipelineAggOptions(targets);
@@ -24,7 +27,10 @@ describe('ElasticQueryDef', () => {
 
     describe('with count and moving average targets', () => {
       const targets = {
-        metrics: [{ type: 'count', field: '@value' }, { type: 'moving_avg', field: '@value' }],
+        metrics: [
+          { type: 'count', field: '@value' },
+          { type: 'moving_avg', field: '@value' },
+        ],
       };
 
       const response = queryDef.getPipelineAggOptions(targets);

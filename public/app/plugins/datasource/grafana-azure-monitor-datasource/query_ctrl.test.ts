@@ -47,7 +47,10 @@ describe('AzureMonitorQueryCtrl', () => {
 
   describe('when the query type is Azure Monitor', () => {
     describe('and getOptions for the Resource Group dropdown is called', () => {
-      const response = [{ text: 'nodeapp', value: 'nodeapp' }, { text: 'otherapp', value: 'otherapp' }];
+      const response = [
+        { text: 'nodeapp', value: 'nodeapp' },
+        { text: 'otherapp', value: 'otherapp' },
+      ];
 
       beforeEach(() => {
         queryCtrl.datasource.getResourceGroups = () => {
@@ -105,7 +108,10 @@ describe('AzureMonitorQueryCtrl', () => {
 
     describe('when getOptions for the ResourceNames dropdown is called', () => {
       describe('and resourceGroup and metricDefinition have values', () => {
-        const response = [{ text: 'test1', value: 'test1' }, { text: 'test2', value: 'test2' }];
+        const response = [
+          { text: 'test1', value: 'test1' },
+          { text: 'test2', value: 'test2' },
+        ];
 
         beforeEach(() => {
           queryCtrl.target.subscription = 'sub1';
@@ -145,7 +151,10 @@ describe('AzureMonitorQueryCtrl', () => {
 
     describe('when getOptions for the Metric Names dropdown is called', () => {
       describe('and resourceGroup, metricDefinition, resourceName and metricNamespace have values', () => {
-        const response = [{ text: 'metric1', value: 'metric1' }, { text: 'metric2', value: 'metric2' }];
+        const response = [
+          { text: 'metric1', value: 'metric1' },
+          { text: 'metric2', value: 'metric2' },
+        ];
 
         beforeEach(() => {
           queryCtrl.target.subscription = 'sub1';
@@ -195,7 +204,10 @@ describe('AzureMonitorQueryCtrl', () => {
       const response: any = {
         primaryAggType: 'Average',
         supportedAggTypes: ['Average', 'Total'],
-        supportedTimeGrains: [{ text: 'PT1M', value: 'PT1M' }, { text: 'P1D', value: 'P1D' }],
+        supportedTimeGrains: [
+          { text: 'PT1M', value: 'PT1M' },
+          { text: 'P1D', value: 'P1D' },
+        ],
         dimensions: [],
       };
 
@@ -269,7 +281,10 @@ describe('AzureMonitorQueryCtrl', () => {
     });
 
     describe('when getOptions for the Metric Names dropdown is called', () => {
-      const response = [{ text: 'metric1', value: 'metric1' }, { text: 'metric2', value: 'metric2' }];
+      const response = [
+        { text: 'metric1', value: 'metric1' },
+        { text: 'metric2', value: 'metric2' },
+      ];
 
       beforeEach(() => {
         queryCtrl.datasource.appInsightsDatasource.isConfigured = () => true;

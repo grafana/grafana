@@ -10,6 +10,18 @@ import { beforeEach } from 'test/lib/common';
 import { makeMockLokiDatasource } from './mocks';
 import LokiDatasource from './datasource';
 
+jest.mock('app/store/store', () => ({
+  store: {
+    getState: jest.fn().mockReturnValue({
+      explore: {
+        left: {
+          mode: 'Logs',
+        },
+      },
+    }),
+  },
+}));
+
 describe('Language completion provider', () => {
   const datasource = makeMockLokiDatasource({});
 

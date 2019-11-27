@@ -54,18 +54,18 @@ interface StateProps {
   loading: boolean;
   range: TimeRange;
   timeZone: TimeZone;
-  selectedDatasource: DataSourceSelectItem;
+  selectedDatasource?: DataSourceSelectItem;
   splitted: boolean;
   syncedTimes: boolean;
-  refreshInterval: string;
+  refreshInterval?: string;
   supportedModes: ExploreMode[];
   selectedMode: ExploreMode;
   hasLiveOption: boolean;
   isLive: boolean;
   isPaused: boolean;
-  originPanelId: number;
+  originPanelId?: number;
   queries: DataQuery[];
-  datasourceLoading: boolean | null;
+  datasourceLoading?: boolean;
   containerWidth: number;
 }
 
@@ -163,7 +163,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
     } = this.props;
 
     const styles = getStyles();
-    const originDashboardIsEditable = Number.isInteger(originPanelId);
+    const originDashboardIsEditable = originPanelId && Number.isInteger(originPanelId);
     const panelReturnClasses = classNames('btn', 'navbar-button', {
       'btn--radius-right-0': originDashboardIsEditable,
       'navbar-button navbar-button--border-right-0': originDashboardIsEditable,
@@ -234,7 +234,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
               </div>
             ) : null}
 
-            {Number.isInteger(originPanelId) && !splitted && (
+            {originPanelId && Number.isInteger(originPanelId) && !splitted && (
               <div className="explore-toolbar-content-item">
                 <Tooltip content={'Return to panel'} placement="bottom">
                   <button className={panelReturnClasses} onClick={() => this.returnToPanel()}>
@@ -278,15 +278,16 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
               </div>
             )}
 
-            <div className="explore-toolbar-content-item explore-icon-align">
-              <ResponsiveButton
-                splitted={splitted}
-                title="Clear All"
-                onClick={this.onClearAll}
-                iconClassName="fa fa-fw fa-trash icon-margin-right"
-                disabled={isLive}
-              />
-            </div>
+            {!isLive && (
+              <div className="explore-toolbar-content-item explore-icon-align">
+                <ResponsiveButton
+                  splitted={splitted}
+                  title="Clear All"
+                  onClick={this.onClearAll}
+                  iconClassName="fa fa-fw fa-trash icon-margin-right"
+                />
+              </div>
+            )}
             <div className="explore-toolbar-content-item">
               <RunButton
                 refreshInterval={refreshInterval}
@@ -347,7 +348,9 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     ? exploreDatasources.find(datasource => datasource.name === datasourceInstance.name)
     : undefined;
   const hasLiveOption =
-    datasourceInstance && datasourceInstance.meta && datasourceInstance.meta.streaming ? true : false;
+    datasourceInstance && datasourceInstance.meta && datasourceInstance.meta.streaming && mode === ExploreMode.Logs
+      ? true
+      : false;
 
   return {
     datasourceMissing,
@@ -384,9 +387,4 @@ const mapDispatchToProps: DispatchProps = {
   clearOrigin,
 };
 
-export const ExploreToolbar = hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(UnConnectedExploreToolbar)
-);
+export const ExploreToolbar = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedExploreToolbar));

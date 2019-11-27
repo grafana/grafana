@@ -10,7 +10,6 @@ export interface CloudWatchQuery extends DataQuery {
   period: string;
   expression: string;
   alias: string;
-  highResolution: boolean;
   matchExact: boolean;
 }
 

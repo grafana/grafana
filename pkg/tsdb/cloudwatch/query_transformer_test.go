@@ -15,14 +15,13 @@ func TestQueryTransformer(t *testing.T) {
 			Convey("one cloudwatchQuery is generated when its request query has one stat", func() {
 				requestQueries := []*requestQuery{
 					{
-						RefId:          "D",
-						Region:         "us-east-1",
-						Namespace:      "ec2",
-						MetricName:     "CPUUtilization",
-						Statistics:     aws.StringSlice([]string{"Average"}),
-						Period:         600,
-						Id:             "",
-						HighResolution: false,
+						RefId:      "D",
+						Region:     "us-east-1",
+						Namespace:  "ec2",
+						MetricName: "CPUUtilization",
+						Statistics: aws.StringSlice([]string{"Average"}),
+						Period:     600,
+						Id:         "",
 					},
 				}
 
@@ -34,14 +33,13 @@ func TestQueryTransformer(t *testing.T) {
 			Convey("two cloudwatchQuery is generated when there's two stats", func() {
 				requestQueries := []*requestQuery{
 					{
-						RefId:          "D",
-						Region:         "us-east-1",
-						Namespace:      "ec2",
-						MetricName:     "CPUUtilization",
-						Statistics:     aws.StringSlice([]string{"Average", "Sum"}),
-						Period:         600,
-						Id:             "",
-						HighResolution: false,
+						RefId:      "D",
+						Region:     "us-east-1",
+						Namespace:  "ec2",
+						MetricName: "CPUUtilization",
+						Statistics: aws.StringSlice([]string{"Average", "Sum"}),
+						Period:     600,
+						Id:         "",
 					},
 				}
 
@@ -53,14 +51,13 @@ func TestQueryTransformer(t *testing.T) {
 				Convey("that id will be used in the cloudwatch query", func() {
 					requestQueries := []*requestQuery{
 						{
-							RefId:          "D",
-							Region:         "us-east-1",
-							Namespace:      "ec2",
-							MetricName:     "CPUUtilization",
-							Statistics:     aws.StringSlice([]string{"Average"}),
-							Period:         600,
-							Id:             "myid",
-							HighResolution: false,
+							RefId:      "D",
+							Region:     "us-east-1",
+							Namespace:  "ec2",
+							MetricName: "CPUUtilization",
+							Statistics: aws.StringSlice([]string{"Average"}),
+							Period:     600,
+							Id:         "myid",
 						},
 					}
 
@@ -75,14 +72,13 @@ func TestQueryTransformer(t *testing.T) {
 				Convey("id will be generated based on ref id if query only has one stat", func() {
 					requestQueries := []*requestQuery{
 						{
-							RefId:          "D",
-							Region:         "us-east-1",
-							Namespace:      "ec2",
-							MetricName:     "CPUUtilization",
-							Statistics:     aws.StringSlice([]string{"Average"}),
-							Period:         600,
-							Id:             "",
-							HighResolution: false,
+							RefId:      "D",
+							Region:     "us-east-1",
+							Namespace:  "ec2",
+							MetricName: "CPUUtilization",
+							Statistics: aws.StringSlice([]string{"Average"}),
+							Period:     600,
+							Id:         "",
 						},
 					}
 
@@ -95,14 +91,13 @@ func TestQueryTransformer(t *testing.T) {
 				Convey("id will be generated based on ref and stat name if query has two stats", func() {
 					requestQueries := []*requestQuery{
 						{
-							RefId:          "D",
-							Region:         "us-east-1",
-							Namespace:      "ec2",
-							MetricName:     "CPUUtilization",
-							Statistics:     aws.StringSlice([]string{"Average", "Sum"}),
-							Period:         600,
-							Id:             "",
-							HighResolution: false,
+							RefId:      "D",
+							Region:     "us-east-1",
+							Namespace:  "ec2",
+							MetricName: "CPUUtilization",
+							Statistics: aws.StringSlice([]string{"Average", "Sum"}),
+							Period:     600,
+							Id:         "",
 						},
 					}
 
@@ -117,14 +112,13 @@ func TestQueryTransformer(t *testing.T) {
 			Convey("dot should be removed when query has more than one stat and one of them is a percentile", func() {
 				requestQueries := []*requestQuery{
 					{
-						RefId:          "D",
-						Region:         "us-east-1",
-						Namespace:      "ec2",
-						MetricName:     "CPUUtilization",
-						Statistics:     aws.StringSlice([]string{"Average", "p46.32"}),
-						Period:         600,
-						Id:             "",
-						HighResolution: false,
+						RefId:      "D",
+						Region:     "us-east-1",
+						Namespace:  "ec2",
+						MetricName: "CPUUtilization",
+						Statistics: aws.StringSlice([]string{"Average", "p46.32"}),
+						Period:     600,
+						Id:         "",
 					},
 				}
 
@@ -137,24 +131,22 @@ func TestQueryTransformer(t *testing.T) {
 			Convey("should return an error if two queries have the same id", func() {
 				requestQueries := []*requestQuery{
 					{
-						RefId:          "D",
-						Region:         "us-east-1",
-						Namespace:      "ec2",
-						MetricName:     "CPUUtilization",
-						Statistics:     aws.StringSlice([]string{"Average", "p46.32"}),
-						Period:         600,
-						Id:             "myId",
-						HighResolution: false,
+						RefId:      "D",
+						Region:     "us-east-1",
+						Namespace:  "ec2",
+						MetricName: "CPUUtilization",
+						Statistics: aws.StringSlice([]string{"Average", "p46.32"}),
+						Period:     600,
+						Id:         "myId",
 					},
 					{
-						RefId:          "E",
-						Region:         "us-east-1",
-						Namespace:      "ec2",
-						MetricName:     "CPUUtilization",
-						Statistics:     aws.StringSlice([]string{"Average", "p46.32"}),
-						Period:         600,
-						Id:             "myId",
-						HighResolution: false,
+						RefId:      "E",
+						Region:     "us-east-1",
+						Namespace:  "ec2",
+						MetricName: "CPUUtilization",
+						Statistics: aws.StringSlice([]string{"Average", "p46.32"}),
+						Period:     600,
+						Id:         "myId",
 					},
 				}
 
