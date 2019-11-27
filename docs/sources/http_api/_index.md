@@ -2,7 +2,7 @@
 title = "HTTP API"
 description = "Grafana HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "overview"]
-aliases = ["/http_api/overview"]
+aliases = ["/overview"]
 type = "docs"
 [menu.docs]
 name = "HTTP API"
@@ -19,21 +19,21 @@ dashboards, creating users and updating data sources.
 ## Supported HTTP APIs:
 
 
-* [Authentication API]({{< relref "http_api/auth.md" >}})
-* [Dashboard API]({{< relref "http_api/dashboard.md" >}})
-* [Dashboard Versions API]({{< relref "http_api/dashboard_versions.md" >}})
-* [Dashboard Permissions API]({{< relref "http_api/dashboard_permissions.md" >}})
-* [Folder API]({{< relref "http_api/folder.md" >}})
-* [Folder Permissions API]({{< relref "http_api/folder_permissions.md" >}})
-* [Folder/dashboard search API]({{< relref "http_api/folder_dashboard_search.md" >}})
-* [Data Source API]({{< relref "http_api/data_source.md" >}})
-* [Organization API]({{< relref "http_api/org.md" >}})
-* [Snapshot API]({{< relref "http_api/snapshot.md" >}})
-* [Annotations API]({{< relref "http_api/annotations.md" >}})
-* [Alerting API]({{< relref "http_api/alerting.md" >}})
-* [Alert Notification Channels API]({{< relref "http_api/alerting_notification_channels.md" >}})
-* [User API]({{< relref "http_api/user.md" >}})
-* [Team API]({{< relref "http_api/team.md" >}})
-* [Admin API]({{< relref "http_api/admin.md" >}})
-* [Preferences API]({{< relref "http_api/preferences.md" >}})
-* [Other API]({{< relref "http_api/other.md" >}})
+* [Authentication API]({{< relref "auth.md" >}})
+* [Dashboard API]({{< relref "dashboard.md" >}})
+* [Dashboard Versions API]({{< relref "dashboard_versions.md" >}})
+* [Dashboard Permissions API]({{< relref "dashboard_permissions.md" >}})
+* [Folder API]({{< relref "folder.md" >}})
+* [Folder Permissions API]({{< relref "folder_permissions.md" >}})
+* [Folder/dashboard search API]({{< relref "folder_dashboard_search.md" >}})
+* [Data Source API]({{< relref "data_source.md" >}})
+* [Organization API]({{< relref "org.md" >}})
+* [Snapshot API]({{< relref "snapshot.md" >}})
+* [Annotations API]({{< relref "annotations.md" >}})
+* [Alerting API]({{< relref "alerting.md" >}})
+* [Alert Notification Channels API]({{< relref "alerting_notification_channels.md" >}})
+* [User API]({{< relref "user.md" >}})
+* [Team API]({{< relref "team.md" >}})
+* [Admin API]({{< relref "admin.md" >}})
+* [Preferences API]({{< relref "preferences.md" >}})
+* [Other API]({{< relref "other.md" >}})

@@ -14,7 +14,7 @@ Description | Download
 ------------ | -------------
 Latest stable package for Windows | [x64](https://grafana.com/grafana/download?platform=windows)
 
-Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
+Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing
 installation.
 
 ## Configure

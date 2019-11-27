@@ -18,10 +18,10 @@ This page includes useful information on the supported Operating Systems as well
 
 The following operating systems are supported for Grafana installation:
 
-- [Debian / Ubuntu](/installation/debian)
-- [RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)](/installation/rpm)
-- [macOS](/installation/mac)
-- [Windows](/installation/windows)
+- [Debian / Ubuntu](debian)
+- [RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)](rpm)
+- [macOS](mac)
+- [Windows](windows)
 
 ## Unsupported operating systems
 

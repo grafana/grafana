@@ -13,7 +13,7 @@ weight = 200
 
 # Installing on Debian / Ubuntu
 
-Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
+Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing
 installation.
 
 ## Download

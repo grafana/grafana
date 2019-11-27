@@ -163,7 +163,7 @@ Checkout the [Advanced Formatting Options section in the Variables]({{< relref "
 
 ## Annotations
 
-[Annotations]({{< relref "reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../../reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view.
 
 Graphite supports two ways to query annotations. A regular metric query, for this you use the `Graphite query` textbox. A Graphite events query, use the `Graphite event tags` textbox,

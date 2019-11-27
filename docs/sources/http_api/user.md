@@ -319,7 +319,8 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
   "oldPassword": "old_password",
-  "newPassword": "new_password"
+  "newPassword": "new_password",
+  "confirmNew": "confirm_new_password"
 }
 ```
 
