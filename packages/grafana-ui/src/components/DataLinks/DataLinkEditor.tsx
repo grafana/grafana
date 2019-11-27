@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent, useContext } from 'react';
+import React, { ChangeEvent, useContext } from 'react';
 import { DataLink } from '@grafana/data';
 import { FormField, Switch } from '../index';
 import { VariableSuggestion } from './DataLinkSuggestions';
@@ -31,17 +31,12 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
   ({ index, value, onChange, onRemove, suggestions, isLast }) => {
     const theme = useContext(ThemeContext);
     const styles = getStyles(theme);
-    const [title, setTitle] = useState(value.title);
 
     const onUrlChange = (url: string, callback?: () => void) => {
       onChange(index, { ...value, url }, callback);
     };
     const onTitleChange = (event: ChangeEvent<HTMLInputElement>) => {
-      setTitle(event.target.value);
-    };
-
-    const onTitleBlur = () => {
-      onChange(index, { ...value, title: title });
+      onChange(index, { ...value, title: event.target.value });
     };
 
     const onRemoveClick = () => {
@@ -58,9 +53,8 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
           <FormField
             className="gf-form--grow"
             label="Title"
-            value={title}
+            value={value.title}
             onChange={onTitleChange}
-            onBlur={onTitleBlur}
             inputWidth={0}
             labelWidth={5}
             placeholder="Show details"
