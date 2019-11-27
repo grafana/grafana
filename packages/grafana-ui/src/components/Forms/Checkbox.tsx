@@ -14,18 +14,23 @@ export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'onChan
 
 export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
   const labelStyles = getLabelStyles(theme);
-
+  const checkboxSize = '16px';
   return {
-    ...labelStyles,
     label: cx(
       labelStyles.label,
       css`
-        padding-left: 0;
+        padding-left: ${theme.spacing.formSpacingBase}px;
+      `
+    ),
+    description: cx(
+      labelStyles.description,
+      css`
+        padding-left: ${theme.spacing.formSpacingBase}px;
       `
     ),
     wrapper: css`
       position: relative;
-      padding-left: ${theme.spacing.formSpacingBase + 16}px;
+      padding-left: ${checkboxSize};
     `,
     input: css`
       position: absolute;
@@ -65,8 +70,8 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     checkmark: css`
       display: inline-block;
-      width: 16px;
-      height: 16px;
+      width: ${checkboxSize};
+      height: ${checkboxSize};
       border-radius: ${theme.border.radius.sm};
       margin-right: ${theme.spacing.formSpacingBase}px;
       background: ${theme.colors.formCheckboxBg};
@@ -79,7 +84,6 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
         border-color: ${theme.colors.formInputBorderHover};
       }
     `,
-    checkmarkChecked: css``,
   };
 });
 
@@ -111,11 +115,13 @@ export const Checkbox: React.FC<CheckboxProps> = ({
         {...inputProps}
       />
       <span className={styles.checkmark} />
-      <span>
-        <span className={styles.label}>{label}</span>
-        <br />
-        {description && <span className={styles.description}>{description}</span>}
-      </span>
+      {label && <span className={styles.label}>{label}</span>}
+      {description && (
+        <>
+          <br />
+          <span className={styles.description}>{description}</span>
+        </>
+      )}
     </label>
   );
 };
