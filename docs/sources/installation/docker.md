@@ -190,7 +190,7 @@ Supported variables:
 docker volume create grafana-storage
 
 # start grafana
-docker run -d -p 3000:3000--name=grafana -v grafana-storage:/var/lib/grafana grafana/grafana
+docker run -d -p 3000:3000 --name=grafana -v grafana-storage:/var/lib/grafana grafana/grafana
 ```
 
 ## Grafana container using bind mounts
