@@ -51,7 +51,7 @@ Each derived field consists of:
 - **Regex:** A Regex pattern that runs on the log message and captures part of it to as the value of the new field. Can only contain capture a single group.
 - URL: A URL template used to construct a link next to the field value in log details. Use special `${__value.raw}` to insert the value of the field.
 
-You can also use a debug section to see what does your fields extract and how the URL is interpolated. Click on Show example log message button to show text area where you can write or copy paste a log message.
+You can use a debug section to see what your fields extract and how the URL is interpolated. Click **Show example log message** to show the text area where you can enter a log message.
 {{< docs-imagebox img="/img/docs/v65/loki_derived_fields_debug.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields debugging" >}}
 
 The new field with the link shown in log details:
