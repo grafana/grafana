@@ -133,6 +133,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
+                confirmText="Confirm Delete"
                 disabled={false}
                 onConfirm={[Function]}
               />
@@ -184,6 +185,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
+                confirmText="Confirm Delete"
                 disabled={false}
                 onConfirm={[Function]}
               />
@@ -235,6 +237,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
+                confirmText="Confirm Delete"
                 disabled={false}
                 onConfirm={[Function]}
               />
@@ -286,6 +289,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
+                confirmText="Confirm Delete"
                 disabled={false}
                 onConfirm={[Function]}
               />
@@ -337,6 +341,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
+                confirmText="Confirm Delete"
                 disabled={false}
                 onConfirm={[Function]}
               />
@@ -463,6 +468,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
               className="text-right"
             >
               <DeleteButton
+                confirmText="Confirm Delete"
                 disabled={true}
                 onConfirm={[Function]}
               />
@@ -589,6 +595,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
               className="text-right"
             >
               <DeleteButton
+                confirmText="Confirm Delete"
                 disabled={true}
                 onConfirm={[Function]}
               />
