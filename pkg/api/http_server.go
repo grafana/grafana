@@ -3,13 +3,12 @@ package api
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"path"
-	"time"
+	"sync"
 
 	"github.com/grafana/grafana/pkg/api/live"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -84,84 +83,97 @@ func (hs *HTTPServer) Init() error {
 }
 
 func (hs *HTTPServer) Run(ctx context.Context) error {
-	var err error
-
 	hs.context = ctx
 
 	hs.applyRoutes()
 	hs.streamManager.Run(ctx)
 
-	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
-	listener, err := net.Listen("tcp", listenAddr)
-	if err != nil {
-		return errutil.Wrapf(err, "failed to open listener on address %s", listenAddr)
+	hs.httpSrv = &http.Server{
+		Addr:    fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort),
+		Handler: hs.macaron,
 	}
-
-	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol", setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
-
-	hs.httpSrv = &http.Server{Addr: listenAddr, Handler: hs.macaron}
-
-	// handle http shutdown on server context done
-	go func() {
-		<-ctx.Done()
-		// Hacky fix for race condition between ListenAndServe and Shutdown
-		time.Sleep(time.Millisecond * 100)
-		if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
-			hs.log.Error("Failed to shutdown server", "error", err)
-		}
-	}()
-
 	switch setting.Protocol {
-	case setting.HTTP:
-		err = hs.httpSrv.Serve(listener)
-		if err == http.ErrServerClosed {
-			hs.log.Debug("server was shutdown gracefully")
-			return nil
-		}
 	case setting.HTTP2:
-		err = hs.listenAndServeH2TLS(listener, setting.CertFile, setting.KeyFile)
-		if err == http.ErrServerClosed {
-			hs.log.Debug("server was shutdown gracefully")
-			return nil
+		if err := hs.configureHttp2(); err != nil {
+			return err
 		}
 	case setting.HTTPS:
-		err = hs.listenAndServeTLS(listener, setting.CertFile, setting.KeyFile)
-		if err == http.ErrServerClosed {
-			hs.log.Debug("server was shutdown gracefully")
-			return nil
+		if err := hs.configureHttps(); err != nil {
+			return err
+		}
+	}
+
+	var listener net.Listener
+	switch setting.Protocol {
+	case setting.HTTP, setting.HTTPS, setting.HTTP2:
+		var err error
+		listener, err = net.Listen("tcp", hs.httpSrv.Addr)
+		if err != nil {
+			return errutil.Wrapf(err, "failed to open listener on address %s", hs.httpSrv.Addr)
 		}
 	case setting.SOCKET:
-		ln, err := net.ListenUnix("unix", &net.UnixAddr{Name: setting.SocketPath, Net: "unix"})
+		var err error
+		listener, err = net.ListenUnix("unix", &net.UnixAddr{Name: setting.SocketPath, Net: "unix"})
 		if err != nil {
-			hs.log.Debug("server was shutdown gracefully", "err", err)
-			return nil
+			return errutil.Wrapf(err, "failed to open listener for socket %s", setting.SocketPath)
 		}
 
 		// Make socket writable by group
 		if err := os.Chmod(setting.SocketPath, 0660); err != nil {
-			hs.log.Debug("server was shutdown gracefully", "err", err)
-			return nil
-		}
-
-		err = hs.httpSrv.Serve(ln)
-		if err != nil {
-			hs.log.Debug("server was shutdown gracefully", "err", err)
-			return nil
+			return errutil.Wrapf(err, "failed to change socket permissions")
 		}
 	default:
 		hs.log.Error("Invalid protocol", "protocol", setting.Protocol)
-		err = errors.New("Invalid Protocol")
+		return fmt.Errorf("invalid protocol %q", setting.Protocol)
 	}
 
-	return err
+	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol",
+		setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	// handle http shutdown on server context done
+	go func() {
+		<-ctx.Done()
+		if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
+			hs.log.Error("Failed to shutdown server", "error", err)
+		}
+		wg.Done()
+	}()
+
+	switch setting.Protocol {
+	case setting.HTTP, setting.SOCKET:
+		if err := hs.httpSrv.Serve(listener); err != nil {
+			if err == http.ErrServerClosed {
+				hs.log.Debug("server was shutdown gracefully")
+				return nil
+			}
+			return err
+		}
+	case setting.HTTP2, setting.HTTPS:
+		if err := hs.httpSrv.ServeTLS(listener, setting.CertFile, setting.KeyFile); err != nil {
+			if err == http.ErrServerClosed {
+				hs.log.Debug("server was shutdown gracefully")
+				return nil
+			}
+			return err
+		}
+	default:
+		panic(fmt.Sprintf("Unhandled protocol %q", setting.Protocol))
+	}
+
+	wg.Wait()
+
+	return nil
 }
 
-func (hs *HTTPServer) listenAndServeTLS(listener net.Listener, certfile, keyfile string) error {
-	if certfile == "" {
+func (hs *HTTPServer) configureHttps() error {
+	if setting.CertFile == "" {
 		return fmt.Errorf("cert_file cannot be empty when using HTTPS")
 	}
 
-	if keyfile == "" {
+	if setting.KeyFile == "" {
 		return fmt.Errorf("cert_key cannot be empty when using HTTPS")
 	}
 
@@ -195,15 +207,15 @@ func (hs *HTTPServer) listenAndServeTLS(listener net.Listener, certfile, keyfile
 	hs.httpSrv.TLSConfig = tlsCfg
 	hs.httpSrv.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler))
 
-	return hs.httpSrv.ServeTLS(listener, setting.CertFile, setting.KeyFile)
+	return nil
 }
 
-func (hs *HTTPServer) listenAndServeH2TLS(listener net.Listener, certfile, keyfile string) error {
-	if certfile == "" {
+func (hs *HTTPServer) configureHttp2() error {
+	if setting.CertFile == "" {
 		return fmt.Errorf("cert_file cannot be empty when using HTTP2")
 	}
 
-	if keyfile == "" {
+	if setting.KeyFile == "" {
 		return fmt.Errorf("cert_key cannot be empty when using HTTP2")
 	}
 
@@ -234,7 +246,7 @@ func (hs *HTTPServer) listenAndServeH2TLS(listener net.Listener, certfile, keyfi
 
 	hs.httpSrv.TLSConfig = tlsCfg
 
-	return hs.httpSrv.ServeTLS(listener, setting.CertFile, setting.KeyFile)
+	return nil
 }
 
 func (hs *HTTPServer) newMacaron() *macaron.Macaron {
