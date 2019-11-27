@@ -375,7 +375,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
       dimensions: this.convertDimensionFormat(filterDimensions, {}),
     });
 
-    return values.length ? [{ value: '*', text: '*', label: '*' }, ...values] : values;
+    return values;
   }
 
   getEbsVolumeIds(region: string, instanceId: string) {
