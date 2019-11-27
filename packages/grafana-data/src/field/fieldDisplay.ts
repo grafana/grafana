@@ -12,15 +12,36 @@ import { GrafanaTheme } from '../types/theme';
 import { ReducerID, reduceField } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
 import { getTimeField } from '../dataframe/processDataFrame';
+import { MatcherConfig } from '../types/transformations';
 
-export interface FieldDisplayOptions {
+export interface ConfigPropertyInfo {
+  path: string;
+  name: string;
+  description: string;
+  type: string; //
+}
+
+export interface DynamicConfigValue {
+  path: string;
+  value: any;
+}
+
+export interface ConfigOverrideRule {
+  matcher: MatcherConfig;
+  properties: DynamicConfigValue[];
+}
+
+export interface FieldConfigSource {
+  defaults: FieldConfig; // Use these values unless otherwise stated
+  overrides: ConfigOverrideRule[]; // Set these values regardless of the source
+}
+
+export interface FieldDisplayOptions extends FieldConfigSource {
   values?: boolean; // If true show each row value
   limit?: number; // if showing all values limit
   calcs: string[]; // when !values, pick one value for the whole field
-
-  defaults: FieldConfig; // Use these values unless otherwise stated
-  override: FieldConfig; // Set these values regardless of the source
 }
+
 // TODO: use built in variables, same as for data links?
 export const VAR_SERIES_NAME = '__series.name';
 export const VAR_FIELD_NAME = '__field.name';
@@ -80,7 +101,7 @@ export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
   const { data, replaceVariables, fieldOptions } = options;
-  const { defaults, override } = fieldOptions;
+  const { defaults } = fieldOptions;
   const calcs = fieldOptions.calcs.length ? fieldOptions.calcs : [ReducerID.last];
 
   const values: FieldDisplay[] = [];
@@ -112,7 +133,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         if (field.type !== FieldType.number) {
           continue;
         }
-        const config = getFieldProperties(defaults, field.config || {}, override);
+        const config = getFieldProperties(defaults, field.config || {});
 
         let name = field.name;
         if (!name) {
@@ -255,6 +276,40 @@ export function applyFieldProperties(field: FieldConfig, props?: FieldConfig): F
     }
   }
   return copy as FieldConfig;
+}
+
+/**
+ * Takes a data frame, applies defaults, and override rules.
+ * Updating the data frame field config and returns a new DataFrame
+ */
+export function applyFieldConfigOverridesAndDefaults(data: DataFrame, source: FieldConfigSource): DataFrame {
+  return {
+    ...data,
+    fields: data.fields.map(field => {
+      return {
+        ...field,
+        config: getFieldConfigFromSource(field, data, source),
+      };
+    }),
+  };
+}
+
+export function getFieldConfigFromSource(field: Field, data: DataFrame, source: FieldConfigSource): FieldConfig {
+  const config = field.config;
+  //
+  return config;
+}
+
+export function attachFieldDisplayProcessor(data: DataFrame, theme: GrafanaTheme): DataFrame {
+  return {
+    ...data,
+    fields: data.fields.map(field => {
+      return {
+        ...field,
+        processor: getDisplayProcessor(),
+      };
+    }),
+  };
 }
 
 export function getFieldProperties(...props: FieldConfig[]): FieldConfig {
