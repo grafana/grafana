@@ -261,7 +261,7 @@ export abstract class DataSourceApi<
    */
   languageProvider?: any;
 
-  getVersion?(): Promise<string>;
+  getVersion?(optionalOptions?: any): Promise<string>;
 
   /**
    * Can be optionally implemented to allow datasource to be a source of annotations for dashboard. To be visible
