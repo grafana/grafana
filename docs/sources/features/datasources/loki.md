@@ -38,7 +38,13 @@ Just add it as a data source and you are ready to query your log data in [Explor
 
 ### Derived fields
 
-Derived fields configuration allow you to add additional fields parsed from the log message and optionally add link that uses the value of the field. This can be used for example to link to trace in your tracing backend from your logs or user profile page if userId is present int the log line. They are then showed in the [log details](/features/explore/#labels-and-parsed-fields)
+The Derived Fields configuration allows you to: 
+* Add fields parsed from the log message. 
+* Add a link that uses the value of the field. 
+
+You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. 
+
+They are shown in the [log details](/features/explore/#labels-and-parsed-fields).
 {{< docs-imagebox img="/img/docs/v65/loki_derived_fields.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields configuration" >}}
 Each derived field consists of:
 - Name: will be shown in the log details as label
