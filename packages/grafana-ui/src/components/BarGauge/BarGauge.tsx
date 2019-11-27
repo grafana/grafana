@@ -11,7 +11,7 @@ import {
 
 // Utils
 import { getColorFromHexRgbOrName } from '@grafana/data';
-import { measureText } from '../../utils/measureText';
+import { measureText, calculateFontSize } from '../../utils/measureText';
 
 // Types
 import { VizOrientation } from '@grafana/data';
@@ -531,14 +531,6 @@ function getValueStyles(
     textWidth -= VALUE_LEFT_PADDING;
   }
 
-  // calculate width in 14px
-  const textSize = measureText(value, 14);
-  // how much bigger than 14px can we make it while staying within our width constraints
-  const fontSizeBasedOnWidth = (textWidth / (textSize.width + 2)) * 14;
-  const fontSizeBasedOnHeight = height / VALUE_LINE_HEIGHT;
-
-  // final fontSize
-  valueStyles.fontSize = Math.min(fontSizeBasedOnHeight, fontSizeBasedOnWidth).toFixed(4) + 'px';
-
+  valueStyles.fontSize = calculateFontSize(value, textWidth, height, VALUE_LINE_HEIGHT).toFixed(4);
   return valueStyles;
 }

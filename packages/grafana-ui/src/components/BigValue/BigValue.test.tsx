@@ -14,7 +14,7 @@ function getProps(propOverrides?: Partial<Props>): Props {
     maxValue: 100,
     minValue: 0,
     colorMode: BigValueColorMode.Background,
-    graphMode: BigValueColorMode.Line,
+    graphMode: BigValueGraphMode.Line,
     thresholds: [
       { value: -Infinity, color: 'green' },
       { value: 70, color: 'orange' },
@@ -37,17 +37,13 @@ function getProps(propOverrides?: Partial<Props>): Props {
 const setup = (propOverrides?: object) => {
   const props = getProps(propOverrides);
   const wrapper = shallow(<BigValue {...props} />);
-  const instance = wrapper.instance() as BarGauge;
+  const instance = wrapper.instance() as BigValue;
 
   return {
     instance,
     wrapper,
   };
 };
-
-function getValue(value: number, title?: string): DisplayValue {
-  return { numeric: value, text: value.toString(), title: title };
-}
 
 describe('BigValue', () => {
   describe('Render with basic options', () => {

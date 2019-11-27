@@ -1,18 +1,23 @@
+// Libraries
 import { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 
+// Utils
 import { getColorFromHexRgbOrName, GrafanaTheme } from '@grafana/data';
+import { calculateFontSize } from '../../utils/measureText';
+
+// Types
 import { BigValueColorMode, BigValueGraphMode, Props, BigValueJustifyMode } from './BigValue';
 
 const MIN_VALUE_FONT_SIZE = 20;
 const MAX_VALUE_FONT_SIZE = 50;
 const MIN_TITLE_FONT_SIZE = 14;
 const TITLE_VALUE_RATIO = 0.45;
-const VALUE_HEIGHT_RATIO = 0.25;
 const VALUE_HEIGHT_RATIO_WIDE = 0.3;
 const LINE_HEIGHT = 1.2;
 const PANEL_PADDING = 16;
-export const CHART_TOP_MARGIN = 8;
+const CHART_HEIGHT_RATIO = 0.25;
+const TITLE_HEIGHT_RATIO = 0.15;
 
 export interface LayoutResult {
   titleFontSize: number;
@@ -50,54 +55,60 @@ export function calculateLayout(props: Props): LayoutResult {
   const valueColor = getColorFromHexRgbOrName(value.color || 'green', theme.type);
   const justifyCenter = shouldJustifyCenter(props);
 
-  // handle wide layouts
+  let layoutType = LayoutType.Stacked;
+  let chartHeight = 0;
+  let chartWidth = 0;
+  let titleHeight = 0;
+  let titleFontSize = 0;
+  let valueFontSize = 14;
+
   if (useWideLayout) {
-    const valueFontSize = Math.min(
-      Math.max(height * VALUE_HEIGHT_RATIO_WIDE, MIN_VALUE_FONT_SIZE),
-      MAX_VALUE_FONT_SIZE
-    );
+    const maxTextWidth = width - PANEL_PADDING;
+    const maxTextHeight = height - PANEL_PADDING;
 
-    const titleFontSize = Math.max(valueFontSize * TITLE_VALUE_RATIO, MIN_TITLE_FONT_SIZE);
-    const chartHeight = height - PANEL_PADDING * 2;
-    const chartWidth = width / 2;
-    let type = !!sparkline ? LayoutType.Wide : LayoutType.WideNoChart;
+    // Detect auto wide layout type
+    layoutType = height > 80 && !!sparkline ? LayoutType.Wide : LayoutType.WideNoChart;
 
-    if (height < 80 || !sparkline) {
-      type = LayoutType.WideNoChart;
+    // Wide no chart mode
+    if (layoutType === LayoutType.WideNoChart) {
+      if (value.title && value.title.length > 0) {
+        titleFontSize = calculateFontSize(value.title, maxTextWidth * 0.6, maxTextHeight, LINE_HEIGHT);
+        titleHeight = titleFontSize * LINE_HEIGHT;
+      }
+
+      valueFontSize = calculateFontSize(value.text, maxTextWidth * 0.3, maxTextHeight, LINE_HEIGHT);
+    } else {
+      // stacked left side
     }
 
-    return {
-      valueFontSize,
-      titleFontSize,
-      chartHeight,
-      chartWidth,
-      type,
-      width,
-      height,
-      colorMode,
-      graphMode,
-      theme,
-      valueColor,
-      justifyCenter,
-    };
-  }
+    //
+    // const titleFontSize = Math.max(valueFontSize * TITLE_VALUE_RATIO, MIN_TITLE_FONT_SIZE);
+    // const chartHeight = height - PANEL_PADDING * 2;
+    // const chartWidth = width / 2;
+  } else {
+    const maxTextWidth = width - PANEL_PADDING * 2;
+    const maxTextHeight = height - PANEL_PADDING * 2;
 
-  // handle stacked layouts
-  const valueFontSize = Math.min(Math.max(height * VALUE_HEIGHT_RATIO, MIN_VALUE_FONT_SIZE), MAX_VALUE_FONT_SIZE);
-  const titleFontSize = Math.max(valueFontSize * TITLE_VALUE_RATIO, MIN_TITLE_FONT_SIZE);
-  const valueHeight = valueFontSize * LINE_HEIGHT;
-  const titleHeight = titleFontSize * LINE_HEIGHT;
-  let chartHeight = height - valueHeight - titleHeight - PANEL_PADDING * 2 - CHART_TOP_MARGIN;
-  let chartWidth = width - PANEL_PADDING * 2;
-  let type = LayoutType.Stacked;
+    // Does the fit / exist?
+    if (height < 100 || !sparkline) {
+      layoutType = LayoutType.StackedNoChart;
+    } else {
+      // we have chart
+      chartHeight = height * CHART_HEIGHT_RATIO;
+      chartWidth = width - PANEL_PADDING * 2;
 
-  if (height < 100 || !sparkline) {
-    type = LayoutType.StackedNoChart;
-  }
+      if (graphMode === BigValueGraphMode.Area) {
+        chartWidth = width;
+        chartHeight += PANEL_PADDING;
+      }
+    }
 
-  if (graphMode === BigValueGraphMode.Area) {
-    chartWidth = width;
-    chartHeight += PANEL_PADDING;
+    if (value.title && value.title.length > 0) {
+      titleFontSize = calculateFontSize(value.title, maxTextWidth, height * TITLE_HEIGHT_RATIO, LINE_HEIGHT);
+      titleHeight = titleFontSize * LINE_HEIGHT;
+    }
+
+    valueFontSize = calculateFontSize(value.text, maxTextWidth, maxTextHeight - chartHeight - titleHeight, LINE_HEIGHT);
   }
 
   return {
@@ -105,7 +116,7 @@ export function calculateLayout(props: Props): LayoutResult {
     titleFontSize,
     chartHeight,
     chartWidth,
-    type,
+    type: layoutType,
     width,
     height,
     colorMode,
@@ -225,5 +236,11 @@ export function getPanelStyles(layout: LayoutResult) {
       panelStyles.alignItems = 'center';
       break;
   }
+
+  if (layout.justifyCenter) {
+    panelStyles.alignItems = 'center';
+    panelStyles.flexDirection = 'row';
+  }
+
   return panelStyles;
 }

@@ -2,7 +2,7 @@ import React, { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { Chart, Geom } from 'bizcharts';
-import { LayoutResult, CHART_TOP_MARGIN, LayoutType } from './styles';
+import { LayoutResult, LayoutType } from './styles';
 import { BigValueSparkline, BigValueColorMode, BigValueGraphMode } from './BigValue';
 
 export function renderGraph(layout: LayoutResult, sparkline?: BigValueSparkline) {
@@ -20,20 +20,19 @@ export function renderGraph(layout: LayoutResult, sparkline?: BigValueSparkline)
     },
   };
 
-  const chartStyles: CSSProperties = {
-    marginTop: `${CHART_TOP_MARGIN}`,
-  };
+  const chartStyles: CSSProperties = {};
+  const chartTopMargin = 8;
 
   // default to line graph
   const geomRender = getGraphGeom(layout.colorMode, layout.graphMode);
   switch (layout.type) {
     case LayoutType.Wide:
       chartStyles.width = `${layout.chartWidth}px`;
-      chartStyles.height = `${layout.chartHeight}px`;
+      chartStyles.height = `${layout.chartHeight - chartTopMargin}px`;
       break;
     case LayoutType.Stacked:
-      chartStyles.position = 'relative';
-      chartStyles.top = '8px';
+      chartStyles.position = 'absolute';
+      chartStyles.bottom = '8px';
       break;
     case LayoutType.WideNoChart:
     case LayoutType.StackedNoChart:
@@ -51,7 +50,7 @@ export function renderGraph(layout: LayoutResult, sparkline?: BigValueSparkline)
 
   return (
     <Chart
-      height={layout.chartHeight}
+      height={layout.chartHeight - chartTopMargin}
       width={layout.chartWidth}
       data={data}
       animate={false}
