@@ -311,7 +311,7 @@ export function lokiStreamsToDataframes(
     const dataFrame = lokiStreamResultToDataFrame(stream, reverse);
     enhanceDataFrame(dataFrame, config);
     return {
-      ...lokiStreamResultToDataFrame(stream, reverse),
+      ...dataFrame(stream, reverse),
       refId: target.refId,
       meta: {
         searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.expr, target.regexp)),
