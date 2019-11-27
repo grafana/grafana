@@ -175,6 +175,8 @@
 - name: What's New In Grafana
   link: /whatsnew/
   children:
+  - name: Version 6.5
+    link: /guides/whats-new-in-v6-5/
   - name: Version 6.4
     link: /guides/whats-new-in-v6-4/
   - name: Version 6.3
