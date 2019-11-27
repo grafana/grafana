@@ -1,10 +1,7 @@
-import _ from 'lodash';
-import { TimeRange } from '@grafana/data';
+import { map } from 'lodash';
 import { LokiDatasource } from './datasource';
 
 export default class LokiMetricFindQuery {
-  range: TimeRange;
-
   constructor(private datasource: LokiDatasource, private query: string) {
     this.datasource = datasource;
     this.query = query;
@@ -30,7 +27,7 @@ export default class LokiMetricFindQuery {
   labelNamesQuery() {
     const url = '/loki/api/v1/label';
     return this.datasource.metadataRequest(url).then((result: any) => {
-      return _.map(result.data.data, value => {
+      return map(result.data.data, value => {
         return { text: value };
       });
     });
@@ -40,7 +37,7 @@ export default class LokiMetricFindQuery {
     let url: string;
     url = '/loki/api/v1/label/' + label + '/values';
     return this.datasource.metadataRequest(url).then((result: any) => {
-      return _.map(result.data.data, value => {
+      return map(result.data.data, value => {
         return { text: value };
       });
     });
