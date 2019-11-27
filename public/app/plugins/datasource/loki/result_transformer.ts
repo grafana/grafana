@@ -80,12 +80,16 @@ export function lokiStreamResultToDataFrame(stream: LokiStreamResult, reverse?: 
   const uids = new ArrayVector<string>([]);
 
   for (const [ts, line] of stream.values) {
-    times.add(dateTime(Number.parseFloat(ts) / 1e6).format('YYYY-MM-DD HH:mm:ss'));
+    times.add(
+      dateTime(Number.parseFloat(ts) / 1e6)
+        .utc()
+        .format()
+    );
     lines.add(line);
     uids.add(
-      `${ts}_${Object.entries(labels)
-        .map(([key, val]) => `${key}=${val}`)
-        .join('')}`
+      `${ts}_{${Object.entries(labels)
+        .map(([key, val]) => `${key}="${val}"`)
+        .join('')}}`
     );
   }
 
@@ -359,7 +363,7 @@ export function lokiLegacyStreamsToDataframes(
  * Adds new fields and DataLinks to DataFrame based on DataSource instance config.
  * @param dataFrame
  */
-export function enhanceDataFrame(dataFrame: DataFrame, config: LokiOptions): void {
+export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | null): void => {
   if (!config) {
     return;
   }
@@ -399,7 +403,7 @@ export function enhanceDataFrame(dataFrame: DataFrame, config: LokiOptions): voi
 
     dataFrame.fields = [...dataFrame.fields, ...Object.values(fields)];
   }
-}
+};
 
 export function rangeQueryResponseToTimeSeries(
   response: LokiResponse,
