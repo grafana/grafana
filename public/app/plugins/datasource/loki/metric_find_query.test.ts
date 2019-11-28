@@ -33,9 +33,9 @@ describe('processMetricFindQuery', () => {
 });
 
 function makeMocks() {
-  let mocks = [];
+  const mocks = [];
   for (let i = 0; i <= 1; i++) {
-    let mock: LokiDatasource = makeMockLokiDatasource({ label1: ['value1', 'value2'], label2: ['value3', 'value4'] });
+    const mock: LokiDatasource = makeMockLokiDatasource({ label1: ['value1', 'value2'], label2: ['value3', 'value4'] });
     mock.getVersion = jest.fn().mockReturnValue(`v${i}`);
     mocks.push(mock);
   }
