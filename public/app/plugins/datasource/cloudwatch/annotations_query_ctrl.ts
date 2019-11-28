@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { AnnotationQuery } from './types';
 
 export class CloudWatchAnnotationsQueryCtrl {
@@ -6,11 +7,34 @@ export class CloudWatchAnnotationsQueryCtrl {
 
   /** @ngInject */
   constructor() {
-    this.annotation.target = this.annotation.target || {};
+    // this.annotation = {
+    //   namespace: '',
+    //   metricName: '',
+    //   expression: '',
+    //   dimensions: {},
+    //   region: 'default',
+    //   id: '',
+    //   alias: '',
+    //   statistics: ['Average'],
+    //   matchExact: true,
+    //   ...this.annotation,
+    // };
+    _.defaultsDeep(this.annotation, {
+      namespace: '',
+      metricName: '',
+      expression: '',
+      dimensions: {},
+      region: 'default',
+      id: '',
+      alias: '',
+      statistics: ['Average'],
+      matchExact: true,
+    });
+
     this.onChange = this.onChange.bind(this);
   }
 
-  onChange(target: AnnotationQuery) {
-    Object.assign(this.annotation.target, target);
+  onChange(query: AnnotationQuery) {
+    Object.assign(this.annotation, query);
   }
 }

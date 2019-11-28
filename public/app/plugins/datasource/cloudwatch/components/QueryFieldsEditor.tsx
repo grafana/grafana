@@ -12,6 +12,7 @@ export type Props = {
   onRunQuery: () => void;
   onChange: (value: CloudWatchQuery) => void;
   data?: PanelData;
+  hideWilcard: boolean;
 };
 
 interface State {
@@ -111,7 +112,7 @@ export class QueryFieldsEditor extends PureComponent<Props, State> {
   }
 
   render() {
-    const { query, datasource, onChange, onRunQuery, data } = this.props;
+    const { query, datasource, onChange, onRunQuery, data, hideWilcard } = this.props;
     const { regions, namespaces, variableOptionGroup: variableOptionGroup, showMeta } = this.state;
     const metaDataExist = data && Object.values(data).length && data.state === 'Done';
     return (
@@ -165,7 +166,9 @@ export class QueryFieldsEditor extends PureComponent<Props, State> {
                   const { [newKey]: value, ...newDimensions } = query.dimensions;
                   return datasource
                     .getDimensionValues(query.region, query.namespace, query.metricName, newKey, newDimensions)
-                    .then(values => (values.length ? [{ value: '*', text: '*', label: '*' }, ...values] : values))
+                    .then(values =>
+                      values.length && !hideWilcard ? [{ value: '*', text: '*', label: '*' }, ...values] : values
+                    )
                     .then(this.appendTemplateVariables);
                 }}
               />

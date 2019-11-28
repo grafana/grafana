@@ -37,6 +37,7 @@ export class AnnotationQueryEditor extends PureComponent<AnnotationQueryEditorPr
         <QueryFieldsEditor
           {...this.props}
           onChange={(editorQuery: CloudWatchQuery) => onChange({ ...query, ...editorQuery })}
+          hideWilcard
           onRunQuery={() => {}}
         ></QueryFieldsEditor>
         <div className="gf-form-inline">
@@ -50,6 +51,7 @@ export class AnnotationQueryEditor extends PureComponent<AnnotationQueryEditorPr
           <div className="gf-form gf-form--grow">
             <QueryField className="query-keyword" label="Action">
               <input
+                disabled={!query.prefixMatching}
                 className="gf-form-input width-12"
                 value={query.actionPrefix || ''}
                 onChange={(event: ChangeEvent<HTMLInputElement>) =>
@@ -59,6 +61,7 @@ export class AnnotationQueryEditor extends PureComponent<AnnotationQueryEditorPr
             </QueryField>
             <QueryField className="query-keyword" label="Alarm Name">
               <input
+                disabled={!query.prefixMatching}
                 className="gf-form-input width-12"
                 value={query.alarmNamePrefix || ''}
                 onChange={(event: ChangeEvent<HTMLInputElement>) =>

@@ -54,7 +54,7 @@ func (e *CloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 		alarmNames = filterAlarms(resp, namespace, metricName, dimensions, statistics, period)
 	} else {
 		if region == "" || namespace == "" || metricName == "" || len(statistics) == 0 {
-			return result, nil
+			return result, errors.New("Invalid annotations query")
 		}
 
 		var qd []*cloudwatch.Dimension
