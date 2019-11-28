@@ -61,7 +61,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     verticalScroll: css`
       label: verticalScroll;
       height: 1.4em;
-      overflow: scroll;
+      /* overflow: scroll; */
     `,
   };
 });

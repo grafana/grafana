@@ -106,43 +106,45 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
     return (
       <div className={logsRows}>
-        {hasData &&
-          firstRows.map((row, index) => (
-            <LogRow
-              key={row.uid}
-              getRows={getRows}
-              getRowContext={getRowContext}
-              highlighterExpressions={highlighterExpressions}
-              row={row}
-              showDuplicates={showDuplicates}
-              showTime={showTime}
-              wrapLogMessage={wrapLogMessage}
-              timeZone={timeZone}
-              allowDetails={allowDetails}
-              onClickFilterLabel={onClickFilterLabel}
-              onClickFilterOutLabel={onClickFilterOutLabel}
-              getFieldLinks={getFieldLinks}
-            />
-          ))}
-        {hasData &&
-          renderAll &&
-          lastRows.map((row, index) => (
-            <LogRow
-              key={row.uid}
-              getRows={getRows}
-              getRowContext={getRowContext}
-              row={row}
-              showDuplicates={showDuplicates}
-              showTime={showTime}
-              wrapLogMessage={wrapLogMessage}
-              timeZone={timeZone}
-              allowDetails={allowDetails}
-              onClickFilterLabel={onClickFilterLabel}
-              onClickFilterOutLabel={onClickFilterOutLabel}
-              getFieldLinks={getFieldLinks}
-            />
-          ))}
-        {hasData && !renderAll && <span>Rendering {rowCount - previewLimit!} rows...</span>}
+        <div style={{ overflowY: 'scroll' }}>
+          {hasData &&
+            firstRows.map((row, index) => (
+              <LogRow
+                key={row.uid}
+                getRows={getRows}
+                getRowContext={getRowContext}
+                highlighterExpressions={highlighterExpressions}
+                row={row}
+                showDuplicates={showDuplicates}
+                showTime={showTime}
+                wrapLogMessage={wrapLogMessage}
+                timeZone={timeZone}
+                allowDetails={allowDetails}
+                onClickFilterLabel={onClickFilterLabel}
+                onClickFilterOutLabel={onClickFilterOutLabel}
+                getFieldLinks={getFieldLinks}
+              />
+            ))}
+          {hasData &&
+            renderAll &&
+            lastRows.map((row, index) => (
+              <LogRow
+                key={row.uid}
+                getRows={getRows}
+                getRowContext={getRowContext}
+                row={row}
+                showDuplicates={showDuplicates}
+                showTime={showTime}
+                wrapLogMessage={wrapLogMessage}
+                timeZone={timeZone}
+                allowDetails={allowDetails}
+                onClickFilterLabel={onClickFilterLabel}
+                onClickFilterOutLabel={onClickFilterOutLabel}
+                getFieldLinks={getFieldLinks}
+              />
+            ))}
+          {hasData && !renderAll && <span>Rendering {rowCount - previewLimit!} rows...</span>}
+        </div>
       </div>
     );
   }

@@ -67,6 +67,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       label: logs-row;
       display: table-row;
       cursor: pointer;
+      white-space: nowrap;
       &:hover {
         .${context} {
           visibility: visible;
