@@ -357,43 +357,6 @@ describe('LokiDatasource', () => {
       expect(res[1].tags).toEqual(['value2']);
     });
   });
-
-  describe('metricFindQuery', () => {
-    let ds: LokiDatasource;
-    beforeEach(() => {
-      ds = new LokiDatasource(instanceSettings, backendSrv, templateSrvMock);
-      backendSrvMock.datasourceRequest = jest.fn().mockReturnValueOnce(
-        Promise.resolve({
-          data: {
-            values: ['value1', 'value2'],
-          },
-        })
-      );
-    });
-
-    it('should return label names', async () => {
-      const query = 'label_names()';
-      const res = await ds.metricFindQuery(query);
-      expect(res.length).toBe(2);
-      expect(res[0].text).toEqual('value1');
-      expect(res[1].text).toEqual('value2');
-    });
-
-    it('should return label values', async () => {
-      const query = 'label_values(name)';
-      const res = await ds.metricFindQuery(query);
-      expect(res.length).toBe(2);
-      expect(res[0].text).toEqual('value1');
-      expect(res[1].text).toEqual('value2');
-    });
-
-    it('should return empty array when incorrect query', async () => {
-      const query = 'incorrect_query';
-      const res = await ds.metricFindQuery(query);
-      expect(res.length).toBe(0);
-      expect(res).toEqual([]);
-    });
-  });
 });
 
 type LimitTestArgs = {
