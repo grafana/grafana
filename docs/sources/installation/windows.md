@@ -5,7 +5,7 @@ keywords = ["grafana", "configuration", "documentation", "windows"]
 type = "docs"
 [menu.docs]
 parent = "installation"
-weight = 3
+weight = 400
 +++
 
 # Installing on Windows

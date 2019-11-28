@@ -37,7 +37,7 @@ interface Props {
   dedupedRows?: LogRowModel[];
 
   width: number;
-  highlighterExpressions: string[];
+  highlighterExpressions?: string[];
   loading: boolean;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;

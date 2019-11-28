@@ -33,7 +33,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
         showTime={showTime}
         wrapLogMessage={wrapLogMessage}
         timeZone={timeZone}
-        isLogsPanel={true}
+        allowDetails={true}
       />
     </CustomScrollbar>
   );

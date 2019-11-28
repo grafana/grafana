@@ -159,9 +159,7 @@ const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick }) => 
   );
 };
 
-export const filterFramesByRefIdTransformRegistryItem: TransformerUIRegistyItem<
-  FilterFramesByRefIdTransformerOptions
-> = {
+export const filterFramesByRefIdTransformRegistryItem: TransformerUIRegistyItem<FilterFramesByRefIdTransformerOptions> = {
   id: DataTransformerID.filterByRefId,
   component: FilterByRefIdTransformerEditor,
   transformer: transformersRegistry.get(DataTransformerID.filterByRefId),

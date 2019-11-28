@@ -14,7 +14,7 @@ export class ResultProcessor {
     private timeZone: TimeZone
   ) {}
 
-  getGraphResult(): GraphSeriesXY[] {
+  getGraphResult(): GraphSeriesXY[] | null {
     if (this.state.mode !== ExploreMode.Metrics) {
       return null;
     }
@@ -34,7 +34,7 @@ export class ResultProcessor {
     );
   }
 
-  getTableResult(): TableModel {
+  getTableResult(): TableModel | null {
     if (this.state.mode !== ExploreMode.Metrics) {
       return null;
     }
@@ -78,7 +78,7 @@ export class ResultProcessor {
     return mergeTablesIntoModel(new TableModel(), ...tables);
   }
 
-  getLogsResult(): LogsModel {
+  getLogsResult(): LogsModel | null {
     if (this.state.mode !== ExploreMode.Logs) {
       return null;
     }

@@ -16,7 +16,7 @@ export interface BigValueSparkline {
   maxX: number;
 }
 
-export enum SingleStatDisplayMode {
+export enum BigValueDisplayMode {
   Classic,
   Classic2,
   Vibrant,
@@ -30,7 +30,7 @@ export interface Props extends Themeable {
   sparkline?: BigValueSparkline;
   onClick?: React.MouseEventHandler<HTMLElement>;
   className?: string;
-  displayMode: SingleStatDisplayMode;
+  displayMode: BigValueDisplayMode;
 }
 
 export class BigValue extends PureComponent<Props> {
@@ -73,7 +73,7 @@ interface LayoutResult {
   type: LayoutType;
   width: number;
   height: number;
-  displayMode: SingleStatDisplayMode;
+  displayMode: BigValueDisplayMode;
   theme: GrafanaTheme;
   valueColor: string;
 }
@@ -135,9 +135,9 @@ export function calculateLayout(props: Props): LayoutResult {
   }
 
   switch (displayMode) {
-    case SingleStatDisplayMode.Vibrant2:
-    case SingleStatDisplayMode.Classic:
-    case SingleStatDisplayMode.Classic2:
+    case BigValueDisplayMode.Vibrant2:
+    case BigValueDisplayMode.Classic:
+    case BigValueDisplayMode.Classic2:
       chartWidth = width;
       chartHeight += PANEL_PADDING;
       break;
@@ -160,7 +160,7 @@ export function calculateLayout(props: Props): LayoutResult {
 export function getTitleStyles(layout: LayoutResult) {
   const styles: CSSProperties = {
     fontSize: `${layout.titleFontSize}px`,
-    textShadow: '#333 1px 1px 5px',
+    textShadow: '#333 0px 0px 1px',
     color: '#EEE',
   };
 
@@ -175,13 +175,14 @@ export function getValueStyles(layout: LayoutResult) {
   const styles: CSSProperties = {
     fontSize: `${layout.valueFontSize}px`,
     color: '#EEE',
-    textShadow: '#333 1px 1px 5px',
+    textShadow: '#333 0px 0px 1px',
+    fontWeight: 500,
     lineHeight: LINE_HEIGHT,
   };
 
   switch (layout.displayMode) {
-    case SingleStatDisplayMode.Classic:
-    case SingleStatDisplayMode.Classic2:
+    case BigValueDisplayMode.Classic:
+    case BigValueDisplayMode.Classic2:
       styles.color = layout.valueColor;
   }
 
@@ -233,8 +234,8 @@ export function getPanelStyles(layout: LayoutResult) {
   const themeFactor = layout.theme.isDark ? 1 : -0.7;
 
   switch (layout.displayMode) {
-    case SingleStatDisplayMode.Vibrant:
-    case SingleStatDisplayMode.Vibrant2:
+    case BigValueDisplayMode.Vibrant:
+    case BigValueDisplayMode.Vibrant2:
       const bgColor2 = tinycolor(layout.valueColor)
         .darken(15 * themeFactor)
         .spin(8)
@@ -245,8 +246,8 @@ export function getPanelStyles(layout: LayoutResult) {
         .toRgbString();
       panelStyles.background = `linear-gradient(120deg, ${bgColor2}, ${bgColor3})`;
       break;
-    case SingleStatDisplayMode.Classic:
-    case SingleStatDisplayMode.Classic2:
+    case BigValueDisplayMode.Classic:
+    case BigValueDisplayMode.Classic2:
       panelStyles.background = `${layout.theme.colors.dark4}`;
       break;
   }
@@ -317,13 +318,13 @@ function renderGraph(layout: LayoutResult, sparkline?: BigValueSparkline) {
   }
 
   switch (layout.displayMode) {
-    case SingleStatDisplayMode.Vibrant2:
+    case BigValueDisplayMode.Vibrant2:
       geomRender = renderVibrant2Geom;
       break;
-    case SingleStatDisplayMode.Classic:
+    case BigValueDisplayMode.Classic:
       geomRender = renderClassicAreaGeom;
       break;
-    case SingleStatDisplayMode.Classic2:
+    case BigValueDisplayMode.Classic2:
       geomRender = renderAreaGeom;
       break;
   }
@@ -347,7 +348,7 @@ function renderLineGeom(layout: LayoutResult) {
   const lineStyle: any = {
     stroke: '#CCC',
     lineWidth: 2,
-    shadowBlur: 15,
+    shadowBlur: 10,
     shadowColor: '#444',
     shadowOffsetY: 7,
   };
@@ -359,7 +360,7 @@ function renderVibrant2Geom(layout: LayoutResult) {
   const lineStyle: any = {
     stroke: '#CCC',
     lineWidth: 2,
-    shadowBlur: 15,
+    shadowBlur: 10,
     shadowColor: '#444',
     shadowOffsetY: -5,
   };

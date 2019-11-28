@@ -123,8 +123,15 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
     const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
     const queries = getState().explore[exploreId].queries;
     const orgId = getState().user.orgId;
+    const datasourceVersion = newDataSourceInstance.getVersion && (await newDataSourceInstance.getVersion());
 
-    dispatch(updateDatasourceInstanceAction({ exploreId, datasourceInstance: newDataSourceInstance }));
+    dispatch(
+      updateDatasourceInstanceAction({
+        exploreId,
+        datasourceInstance: newDataSourceInstance,
+        version: datasourceVersion,
+      })
+    );
 
     await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, newDataSourceInstance));
 
@@ -155,7 +162,7 @@ export function changeQuery(
   exploreId: ExploreId,
   query: DataQuery,
   index: number,
-  override: boolean
+  override = false
 ): ThunkResult<void> {
   return (dispatch, getState) => {
     // Null query means reset
@@ -382,8 +389,8 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi, or
 export function modifyQueries(
   exploreId: ExploreId,
   modification: QueryFixAction,
-  index: number,
-  modifier: any
+  modifier: any,
+  index?: number
 ): ThunkResult<void> {
   return dispatch => {
     dispatch(modifyQueriesAction({ exploreId, modification, index, modifier }));
@@ -436,6 +443,7 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
       liveStreaming: live,
       showingGraph,
       showingTable,
+      mode,
     };
 
     const datasourceId = datasourceInstance.meta.id;

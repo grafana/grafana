@@ -14,7 +14,7 @@ import { DashboardModel } from '../dashboard/state/DashboardModel';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv } from '../dashboard/services/TimeSrv';
-import { DataSourceApi, PanelEvents, AnnotationEvent, AppEvents } from '@grafana/data';
+import { DataSourceApi, PanelEvents, AnnotationEvent, AppEvents, PanelModel, TimeRange } from '@grafana/data';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export class AnnotationsSrv {
@@ -44,7 +44,7 @@ export class AnnotationsSrv {
     this.datasourcePromises = null;
   }
 
-  getAnnotations(options: any) {
+  getAnnotations(options: { dashboard: DashboardModel; panel: PanelModel; range: TimeRange }) {
     return this.$q
       .all([this.getGlobalAnnotations(options), this.getAlertStates(options)])
       .then(results => {
@@ -104,7 +104,7 @@ export class AnnotationsSrv {
     return this.alertStatesPromise;
   }
 
-  getGlobalAnnotations(options: any) {
+  getGlobalAnnotations(options: { dashboard: DashboardModel; panel: PanelModel; range: TimeRange }) {
     const dashboard = options.dashboard;
 
     if (this.globalAnnotationsPromise) {
@@ -130,7 +130,7 @@ export class AnnotationsSrv {
           .then((datasource: DataSourceApi) => {
             // issue query against data source
             return datasource.annotationQuery({
-              range: range,
+              range,
               rangeRaw: range.raw,
               annotation: annotation,
               dashboard: dashboard,

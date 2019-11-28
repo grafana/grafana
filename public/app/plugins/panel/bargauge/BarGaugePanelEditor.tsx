@@ -97,7 +97,12 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
             </div>
           </PanelOptionsGroup>
           <PanelOptionsGroup title="Field">
-            <FieldPropertiesEditor showMinMax={true} onChange={this.onDefaultsChange} value={defaults} />
+            <FieldPropertiesEditor
+              showMinMax={true}
+              showTitle={true}
+              onChange={this.onDefaultsChange}
+              value={defaults}
+            />
           </PanelOptionsGroup>
 
           <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />

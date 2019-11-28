@@ -115,9 +115,4 @@ const mapDispatchToProps = {
   deleteFolder,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(FolderSettingsPage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(FolderSettingsPage));
