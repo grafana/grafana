@@ -6,59 +6,58 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestStatsDataAccess(t *testing.T) {
-	Convey("Testing Stats Data Access", t, func() {
+	t.Run("Testing Stats Data Access", func(t *testing.T) {
 		InitTestDB(t)
 
-		Convey("Get system stats should not results in error", func() {
-			populateDB()
+		t.Run("Get system stats should not results in error", func(t *testing.T) {
+			populateDB(t)
 
 			query := models.GetSystemStatsQuery{}
 			err := GetSystemStats(&query)
-			So(err, ShouldBeNil)
-			So(query.Result.Users, ShouldEqual, 3)
-			So(query.Result.Editors, ShouldEqual, 1)
-			So(query.Result.Viewers, ShouldEqual, 1)
-			So(query.Result.Admins, ShouldEqual, 3)
+			assert.Nil(t, err)
+			assert.Equal(t, query.Result.Users, int64(3))
+			assert.Equal(t, query.Result.Editors, 1)
+			assert.Equal(t, query.Result.Viewers, 1)
+			assert.Equal(t, query.Result.Admins, 3)
 		})
 
-		Convey("Get system user count stats should not results in error", func() {
+		t.Run("Get system user count stats should not results in error", func(t *testing.T) {
 			query := models.GetSystemUserCountStatsQuery{}
 			err := GetSystemUserCountStats(context.Background(), &query)
-			So(err, ShouldBeNil)
+			assert.Nil(t, err)
 		})
 
-		Convey("Get datasource stats should not results in error", func() {
+		t.Run("Get datasource stats should not results in error", func(t *testing.T) {
 			query := models.GetDataSourceStatsQuery{}
 			err := GetDataSourceStats(&query)
-			So(err, ShouldBeNil)
+			assert.Nil(t, err)
 		})
 
-		Convey("Get datasource access stats should not results in error", func() {
+		t.Run("Get datasource access stats should not results in error", func(t *testing.T) {
 			query := models.GetDataSourceAccessStatsQuery{}
 			err := GetDataSourceAccessStats(&query)
-			So(err, ShouldBeNil)
+			assert.Nil(t, err)
 		})
 
-		Convey("Get alert notifier stats should not results in error", func() {
+		t.Run("Get alert notifier stats should not results in error", func(t *testing.T) {
 			query := models.GetAlertNotifierUsageStatsQuery{}
 			err := GetAlertNotifiersUsageStats(context.Background(), &query)
-			So(err, ShouldBeNil)
+			assert.Nil(t, err)
 		})
 
-		Convey("Get admin stats should not result in error", func() {
+		t.Run("Get admin stats should not result in error", func(t *testing.T) {
 			query := models.GetAdminStatsQuery{}
 			err := GetAdminStats(&query)
-			So(err, ShouldBeNil)
+			assert.Nil(t, err)
 		})
 	})
 }
 
-func populateDB() {
-	fmt.Println(">>> populateDB")
+func populateDB(t *testing.T) {
 	users := make([]models.User, 3)
 	for i := range users {
 		cmd := &models.CreateUserCommand{
@@ -68,28 +67,46 @@ func populateDB() {
 			OrgName: fmt.Sprintf("Org #%v", i),
 		}
 		err := CreateUser(context.Background(), cmd)
-		So(err, ShouldBeNil)
+		assert.Nil(t, err)
 		users[i] = cmd.Result
 	}
 
+	// get 1st user's organisation
 	getOrgByIdQuery := &models.GetOrgByIdQuery{Id: users[0].OrgId}
 	err := GetOrgById(getOrgByIdQuery)
-	So(err, ShouldBeNil)
+	assert.Nil(t, err)
 	org := getOrgByIdQuery.Result
 
+	// add 2nd user as editor
 	cmd := &models.AddOrgUserCommand{
 		OrgId:  org.Id,
 		UserId: users[1].Id,
 		Role:   models.ROLE_EDITOR,
 	}
 	err = AddOrgUser(cmd)
-	So(err, ShouldBeNil)
+	assert.Nil(t, err)
 
+	// add 3rd user as viewer
 	cmd = &models.AddOrgUserCommand{
 		OrgId:  org.Id,
 		UserId: users[2].Id,
 		Role:   models.ROLE_VIEWER,
 	}
 	err = AddOrgUser(cmd)
-	So(err, ShouldBeNil)
+	assert.Nil(t, err)
+
+	// get 2nd user's organisation
+	getOrgByIdQuery = &models.GetOrgByIdQuery{Id: users[2].OrgId}
+	err = GetOrgById(getOrgByIdQuery)
+	assert.Nil(t, err)
+	org = getOrgByIdQuery.Result
+
+	// add 1st user as admin
+	cmd = &models.AddOrgUserCommand{
+		OrgId:  org.Id,
+		UserId: users[0].Id,
+		Role:   models.ROLE_ADMIN,
+	}
+	err = AddOrgUser(cmd)
+	assert.Nil(t, err)
 }
