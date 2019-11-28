@@ -65,6 +65,8 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
       let text = _.toString(value);
       let numeric = toNumber(value);
+      let prefix: string | undefined = undefined;
+      let suffix: string | undefined = undefined;
 
       let shouldFormat = true;
       if (mappings && mappings.length > 0) {
@@ -85,7 +87,10 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       if (!isNaN(numeric)) {
         if (shouldFormat && !_.isBoolean(value)) {
           const { decimals, scaledDecimals } = getDecimalsForValue(value, field.decimals);
-          text = formatFunc(numeric, decimals, scaledDecimals, options.isUtc);
+          const v = formatFunc(numeric, decimals, scaledDecimals, options.isUtc);
+          text = v.text;
+          suffix = v.suffix;
+          prefix = v.prefix;
 
           // Check if the formatted text mapped to a different value
           if (mappings && mappings.length > 0) {
@@ -107,7 +112,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
           text = ''; // No data?
         }
       }
-      return { text, numeric, color };
+      return { text, numeric, color, prefix, suffix };
     };
   }
 

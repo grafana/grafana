@@ -6,7 +6,7 @@ export function currency(symbol: string, asSuffix?: boolean): ValueFormatter {
   const scaler = scaledUnits(1000, units);
   return (size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) => {
     if (size === null) {
-      return { prefix: '', value: '', suffix: '' };
+      return { text: '' };
     }
     const scaled = scaler(size, decimals, scaledDecimals);
     if (asSuffix) {

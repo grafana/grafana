@@ -75,21 +75,20 @@ export function toFixedScaled(
   ext?: string
 ): FormattedValue {
   if (scaledDecimals === null || scaledDecimals === undefined) {
-    return { prefix: '', value: toFixed(value, decimals), suffix: ext ? ext : '' };
+    return { text: toFixed(value, decimals), suffix: ext };
   }
   return {
-    prefix: '',
-    value: toFixed(value, scaledDecimals + additionalDecimals),
-    suffix: ext ? ext : '',
+    text: toFixed(value, scaledDecimals + additionalDecimals),
+    suffix: ext,
   };
 }
 
 export function toFixedUnit(unit: string): ValueFormatter {
   return (size: number, decimals?: DecimalCount) => {
     if (size === null) {
-      return { prefix: '', value: '', suffix: '' };
+      return { text: '' };
     }
-    return { prefix: '', value: toFixed(size, decimals), suffix: unit ? ' ' + unit : '' };
+    return { text: toFixed(size, decimals), suffix: unit };
   };
 }
 
@@ -99,10 +98,10 @@ export function toFixedUnit(unit: string): ValueFormatter {
 export function scaledUnits(factor: number, extArray: string[]): ValueFormatter {
   return (size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) => {
     if (size === null) {
-      return { prefix: '', value: '', suffix: '' };
+      return { text: '' };
     }
     if (size === Number.NEGATIVE_INFINITY || size === Number.POSITIVE_INFINITY || isNaN(size)) {
-      return { prefix: '', value: size.toLocaleString(), suffix: '' };
+      return { text: size.toLocaleString() };
     }
 
     let steps = 0;
@@ -113,7 +112,7 @@ export function scaledUnits(factor: number, extArray: string[]): ValueFormatter 
       size /= factor;
 
       if (steps >= limit) {
-        return { prefix: '', value: 'NA', suffix: '' };
+        return { text: 'NA' };
       }
     }
 
@@ -121,18 +120,16 @@ export function scaledUnits(factor: number, extArray: string[]): ValueFormatter 
       decimals = scaledDecimals + 3 * steps;
     }
 
-    return { prefix: '', value: toFixed(size, decimals), suffix: extArray[steps] };
+    return { text: toFixed(size, decimals), suffix: extArray[steps] };
   };
 }
 
 export function locale(value: number, decimals: DecimalCount): FormattedValue {
   if (value == null) {
-    return { prefix: '', value: '', suffix: '' };
+    return { text: '' };
   }
   return {
-    prefix: '',
-    value: value.toLocaleString(undefined, { maximumFractionDigits: decimals as number }),
-    suffix: '',
+    text: value.toLocaleString(undefined, { maximumFractionDigits: decimals as number }),
   };
 }
 
@@ -141,7 +138,7 @@ export function simpleCountUnit(symbol: string): ValueFormatter {
   const scaler = scaledUnits(1000, units);
   return (size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) => {
     if (size === null) {
-      return { prefix: '', value: '', suffix: '' };
+      return { text: '' };
     }
     const v = scaler(size, decimals, scaledDecimals);
     v.suffix += ' ' + symbol;
