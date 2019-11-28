@@ -3,11 +3,22 @@ import { SelectableValue, ExploreQueryFieldProps } from '@grafana/data';
 import { Input, Segment, SegmentAsync, ValidationEvents, EventsWithValidation, Switch } from '@grafana/ui';
 import { CloudWatchQuery } from '../types';
 import CloudWatchDatasource from '../datasource';
-import { QueryFieldsEditor } from './QueryFieldsEditor';
+import { QueryField, Alias, QueryFieldsEditor } from './';
 
 export type Props = ExploreQueryFieldProps<CloudWatchDatasource, CloudWatchQuery>;
 
-interface State {}
+interface State {
+  showMeta: boolean;
+}
+
+const idValidationEvents: ValidationEvents = {
+  [EventsWithValidation.onBlur]: [
+    {
+      rule: value => new RegExp(/^$|^[a-z][a-zA-Z0-9_]*$/).test(value),
+      errorMessage: 'Invalid format. Only alphanumeric characters and underscores are allowed',
+    },
+  ],
+};
 
 export class QueryEditor extends PureComponent<Props, State> {
   state: State = { regions: [], namespaces: [], metricNames: [], variableOptionGroup: {}, showMeta: false };
