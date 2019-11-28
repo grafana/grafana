@@ -88,7 +88,11 @@ export function toFixedUnit(unit: string): ValueFormatter {
     if (size === null) {
       return { text: '' };
     }
-    return { text: toFixed(size, decimals), suffix: unit };
+    const text = toFixed(size, decimals);
+    if (unit) {
+      return { text, suffix: ' ' + unit };
+    }
+    return { text };
   };
 }
 
