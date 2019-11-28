@@ -2,8 +2,10 @@ import { processMetricFindQuery } from './metric_find_query';
 import { makeMockLokiDatasource } from './mocks';
 import LokiDatasource from './datasource';
 
+const mocks = makeMocks();
+
 describe('processMetricFindQuery', () => {
-  makeMocks().forEach((mock, index) => {
+  mocks.forEach((mock, index) => {
     it(`should return label names for Loki v${index}`, async () => {
       const query = 'label_names()';
       const res = await processMetricFindQuery(mock, query);
@@ -13,7 +15,7 @@ describe('processMetricFindQuery', () => {
     });
   });
 
-  makeMocks().forEach((mock, index) => {
+  mocks.forEach((mock, index) => {
     it(`should return label values for Loki v${index}`, async () => {
       const query = 'label_values(label1)';
       const res = await processMetricFindQuery(mock, query);
@@ -23,7 +25,7 @@ describe('processMetricFindQuery', () => {
     });
   });
 
-  makeMocks().forEach((mock, index) => {
+  mocks.forEach((mock, index) => {
     it(`should return empty array when incorrect query for Loki v${index}`, async () => {
       const query = 'incorrect_query';
       const res = await processMetricFindQuery(mock, query);
