@@ -147,6 +147,10 @@ export function getValueFormat(id: string): ValueFormatter {
     buildFormats();
   }
 
+  if (!index[id]) {
+    return toFixedUnit(id);
+  }
+
   return index[id];
 }
 

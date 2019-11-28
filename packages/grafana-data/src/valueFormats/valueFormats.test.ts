@@ -1,6 +1,35 @@
 import { toFixed, getValueFormat, scaledUnits } from './valueFormats';
+import { DecimalCount } from '../types/DisplayValue';
+import { TimeZone } from '../types';
+
+interface ValueFormatTest {
+  id: string;
+  decimal?: DecimalCount;
+  scaledDecimals?: DecimalCount;
+  timeZone?: TimeZone;
+  value: number;
+  result: string;
+}
+
+const formatTests: ValueFormatTest[] = [{ id: 'ms', decimals: 4, value: 0.0024, result: '0.0024 ms' }];
+
+// describeValueFormat('ms', 0.0024, 0.0005, 4, '0.0024 ms');
+// describeValueFormat('ms', 100, 1, 0, '100 ms');
+// describeValueFormat('ms', 1250, 10, 0, '1.25 s');
+// describeValueFormat('ms', 1250, 300, 0, '1.3 s');
+// describeValueFormat('ms', 65150, 10000, 0, '1.1 min');
+// describeValueFormat('ms', 6515000, 1500000, 0, '1.8 hour');
+// describeValueFormat('ms', 651500000, 150000000, 0, '8 day');
 
 describe('valueFormats', () => {
+  for (const test of formatTests) {
+    describe(`value format: ${test.id}`, () => {
+      it(`should translate ${test.value} as ${test.result}`, () => {
+        expect(getValueFormat(test.id)(test.value, test.decimals, test.scaledDecimals)).toBe(test.result);
+      });
+    });
+  }
+
   describe('normal cases', () => {
     it('toFixed should handle number correctly if decimal is null', () => {
       expect(toFixed(100)).toBe('100');
