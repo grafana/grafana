@@ -1,4 +1,4 @@
-import { LokiDatasource } from './datasource';
+import { LokiDatasource, LOKI_ENDPOINT, LEGACY_LOKI_ENDPOINT } from './datasource';
 
 export async function processMetricFindQuery(datasource: LokiDatasource, query: string) {
   const labelNamesRegex = /^label_names\(\)\s*$/;
@@ -18,13 +18,18 @@ export async function processMetricFindQuery(datasource: LokiDatasource, query: 
 }
 
 async function labelNamesQuery(datasource: LokiDatasource) {
-  const url = '/loki/api/v1/label';
+  const url = (await datasource.getVersion()) === 'v0' ? `${LEGACY_LOKI_ENDPOINT}/label` : `${LOKI_ENDPOINT}/label`;
+
   const result = await datasource.metadataRequest(url);
   return result.data.data.map((value: string) => ({ text: value }));
 }
 
 async function labelValuesQuery(datasource: LokiDatasource, label: string) {
-  const url = `/loki/api/v1/label/${label}/values`;
+  const url =
+    (await datasource.getVersion()) === 'v0'
+      ? `${LEGACY_LOKI_ENDPOINT}/label/${label}/values`
+      : `${LOKI_ENDPOINT}/label/${label}/values`;
+
   const result = await datasource.metadataRequest(url);
   return result.data.data.map((value: string) => ({ text: value }));
 }

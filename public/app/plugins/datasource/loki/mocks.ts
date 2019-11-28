@@ -1,14 +1,14 @@
-import LokiDatasource from './datasource';
+import { LokiDatasource, LOKI_ENDPOINT, LEGACY_LOKI_ENDPOINT } from './datasource';
 import { DataSourceSettings } from '@grafana/data';
 import { LokiOptions } from './types';
 import { createDatasourceSettings } from '../../../features/datasources/mocks';
 
 export function makeMockLokiDatasource(labelsAndValues: { [label: string]: string[] }): LokiDatasource {
   const legacyLokiLabelsAndValuesEndpointRegex = /^\/api\/prom\/label\/(\w*)\/values/;
-  const legacyLokiLabelsEndpoint = '/api/prom/label';
-
   const lokiLabelsAndValuesEndpointRegex = /^\/loki\/api\/v1\/label\/(\w*)\/values/;
-  const lokiLabelsEndpoint = '/loki/api/v1/label';
+
+  const legacyLokiLabelsEndpoint = `${LEGACY_LOKI_ENDPOINT}/label`;
+  const lokiLabelsEndpoint = `${LOKI_ENDPOINT}/label`;
 
   const labels = Object.keys(labelsAndValues);
   return {

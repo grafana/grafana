@@ -58,9 +58,12 @@ import LanguageProvider from './language_provider';
 
 export type RangeQueryOptions = Pick<DataQueryRequest<LokiQuery>, 'range' | 'intervalMs' | 'maxDataPoints' | 'reverse'>;
 export const DEFAULT_MAX_LINES = 1000;
-const LEGACY_QUERY_ENDPOINT = '/api/prom/query';
-const RANGE_QUERY_ENDPOINT = '/loki/api/v1/query_range';
-const INSTANT_QUERY_ENDPOINT = '/loki/api/v1/query';
+export const LEGACY_LOKI_ENDPOINT = '/api/prom';
+export const LOKI_ENDPOINT = '/loki/api/v1';
+
+const LEGACY_QUERY_ENDPOINT = `${LEGACY_LOKI_ENDPOINT}/query`;
+const RANGE_QUERY_ENDPOINT = `${LOKI_ENDPOINT}/query_range`;
+const INSTANT_QUERY_ENDPOINT = `${LOKI_ENDPOINT}/query`;
 
 const DEFAULT_QUERY_PARAMS: Partial<LokiLegacyQueryRequest> = {
   direction: 'BACKWARD',
@@ -82,9 +85,9 @@ interface LokiContextQueryOptions {
 
 export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   private streams = new LiveStreams();
+  private version: string;
   languageProvider: LanguageProvider;
   maxLines: number;
-  version: string;
 
   /** @ngInject */
   constructor(
