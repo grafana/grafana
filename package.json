@@ -160,7 +160,7 @@
     "typecheck": "tsc --noEmit",
     "typecheckPackages": "yarn workspaces run typecheck",
     "jest": "jest --notify --watch",
-    "e2e-tests": "cd packages/grafana-e2e && yarn start --config integrationFolder=../../public/e2e-tests/integration,fileServerFolder=./cypress",
+    "e2e-tests": "cd packages/grafana-e2e && yarn start --env BASE_URL=$BASE_URL --config integrationFolder=../../public/e2e-tests/integration,fileServerFolder=./cypress,video=false,viewportWidth=1920,viewportHeight=1080",
     "api-tests": "jest --notify --watch --config=devenv/e2e-api-tests/jest.js",
     "storybook": "cd packages/grafana-ui && yarn storybook --ci",
     "storybook:build": "cd packages/grafana-ui && yarn storybook:build",
