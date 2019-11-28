@@ -370,6 +370,7 @@ WHERE
 Name | Description
 ------------ | -------------
 time | The name of the date/time field. Could be a column with a native sql date/time data type or epoch value.
+timeend | Optional name of the time end field, needs to be date/time data type. If set, then annotations will be marked as a regions between time and time-end.
 text | Event description field.
 tags | Optional field name to use for event tags as a comma separated string.
 
