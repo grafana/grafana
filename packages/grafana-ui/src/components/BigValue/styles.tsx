@@ -67,14 +67,16 @@ export function calculateLayout(props: Props): LayoutResult {
 
     // Wide no chart mode
     if (layoutType === LayoutType.WideNoChart) {
-      valueFontSize = calculateFontSize(value.text, maxTextWidth * 0.3, maxTextHeight, LINE_HEIGHT);
-
       if (value.title && value.title.length > 0) {
+        valueFontSize = calculateFontSize(value.text, maxTextWidth * 0.3, maxTextHeight, LINE_HEIGHT);
         // How big can we make the title and still have it fit
         titleFontSize = calculateFontSize(value.title, maxTextWidth * 0.6, maxTextHeight, LINE_HEIGHT);
         // make sure it's a bit smaller than valueFontSize
         titleFontSize = Math.min(valueFontSize * 0.7, titleFontSize);
         titleHeight = titleFontSize * LINE_HEIGHT;
+      } else {
+        // if no title wide
+        valueFontSize = calculateFontSize(value.text, maxTextWidth, maxTextHeight, LINE_HEIGHT);
       }
     } else {
       // wide with chart
