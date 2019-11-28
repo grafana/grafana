@@ -10,6 +10,10 @@ interface Props {
   width?: number;
 }
 
+function formatCreateLabel(input: string) {
+  return `Unit suffix: ${input}`;
+}
+
 export class UnitPicker extends PureComponent<Props> {
   static defaultProps = {
     width: 12,
@@ -44,6 +48,8 @@ export class UnitPicker extends PureComponent<Props> {
         width={width}
         defaultValue={value}
         isSearchable={true}
+        allowCustomValue={true}
+        formatCreateLabel={formatCreateLabel}
         options={groupOptions}
         placeholder="Choose"
         onChange={onChange}
