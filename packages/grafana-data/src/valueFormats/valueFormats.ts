@@ -69,8 +69,6 @@ export function toFixedScaled(
   } else {
     return toFixed(value, scaledDecimals + additionalDecimals) + ext;
   }
-
-  return toFixed(value, decimals) + ext;
 }
 
 export function toFixedUnit(unit: string): ValueFormatter {

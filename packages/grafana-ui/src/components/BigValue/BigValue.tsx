@@ -66,10 +66,25 @@ export class BigValue extends PureComponent<Props> {
       <div className={className} style={panelStyles} onClick={onClick}>
         <div style={valueAndTitleContainerStyles}>
           {value.title && <div style={titleStyles}>{value.title}</div>}
-          <div style={valueStyles}>{value.text}</div>
+          <div style={valueStyles}>{renderValueWithSmallerUnit(value.text, layout.valueFontSize)}</div>
         </div>
         {renderGraph(layout, sparkline)}
       </div>
     );
   }
+}
+
+function renderValueWithSmallerUnit(value: string, fontSize: number) {
+  const valueParts = value.split(' ');
+  const unitSize = `${fontSize * 0.7}px`;
+
+  if (valueParts.length === 2) {
+    return (
+      <>
+        {valueParts[0]} <span style={{ fontSize: unitSize }}>{valueParts[1]}</span>
+      </>
+    );
+  }
+
+  return value;
 }
