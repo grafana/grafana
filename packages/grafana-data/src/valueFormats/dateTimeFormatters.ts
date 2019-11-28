@@ -1,6 +1,6 @@
 import { toDuration as duration, toUtc, dateTime } from '../datetime/moment_wrapper';
 
-import { toFixed, toFixedScaled } from './valueFormats';
+import { toFixed, toFixedScaled, FormattedValue } from './valueFormats';
 import { DecimalCount } from '../types/displayValue';
 
 interface IntervalsInSeconds {
@@ -29,13 +29,13 @@ const INTERVALS_IN_SECONDS: IntervalsInSeconds = {
   [Interval.Millisecond]: 0.001,
 };
 
-export function toNanoSeconds(size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) {
+export function toNanoSeconds(size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount): FormattedValue {
   if (size === null) {
-    return '';
+    return { prefix: '', value: '', suffix: '' };
   }
 
   if (Math.abs(size) < 1000) {
-    return toFixed(size, decimals) + ' ns';
+    return { prefix: '', value: toFixed(size, decimals), suffix: ' ns' };
   } else if (Math.abs(size) < 1000000) {
     return toFixedScaled(size / 1000, decimals, scaledDecimals, 3, ' µs');
   } else if (Math.abs(size) < 1000000000) {
@@ -47,13 +47,13 @@ export function toNanoSeconds(size: number, decimals?: DecimalCount, scaledDecim
   }
 }
 
-export function toMicroSeconds(size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) {
+export function toMicroSeconds(size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount): FormattedValue {
   if (size === null) {
-    return '';
+    return { prefix: '', value: '', suffix: '' };
   }
 
   if (Math.abs(size) < 1000) {
-    return toFixed(size, decimals) + ' µs';
+    return { prefix: '', value: toFixed(size, decimals), suffix: ' µs' };
   } else if (Math.abs(size) < 1000000) {
     return toFixedScaled(size / 1000, decimals, scaledDecimals, 3, ' ms');
   } else {
@@ -61,13 +61,13 @@ export function toMicroSeconds(size: number, decimals?: DecimalCount, scaledDeci
   }
 }
 
-export function toMilliSeconds(size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) {
+export function toMilliSeconds(size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount): FormattedValue {
   if (size === null) {
-    return '';
+    return { prefix: '', value: '', suffix: '' };
   }
 
   if (Math.abs(size) < 1000) {
-    return toFixed(size, decimals) + ' ms';
+    return { prefix: '', value: toFixed(size, decimals), suffix: ' ms' };
   } else if (Math.abs(size) < 60000) {
     // Less than 1 min
     return toFixedScaled(size / 1000, decimals, scaledDecimals, 3, ' s');
@@ -92,9 +92,9 @@ export function trySubstract(value1: DecimalCount, value2: DecimalCount): Decima
   return undefined;
 }
 
-export function toSeconds(size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) {
+export function toSeconds(size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount): FormattedValue {
   if (size === null) {
-    return '';
+    return { prefix: '', value: '', suffix: '' };
   }
 
   // Less than 1 µs, divide in ns
@@ -111,7 +111,7 @@ export function toSeconds(size: number, decimals?: DecimalCount, scaledDecimals?
   }
 
   if (Math.abs(size) < 60) {
-    return toFixed(size, decimals) + ' s';
+    return { prefix: '', value: toFixed(size, decimals), suffix: ' s' };
   } else if (Math.abs(size) < 3600) {
     // Less than 1 hour, divide in minutes
     return toFixedScaled(size / 60, decimals, scaledDecimals, 1, ' min');
@@ -129,13 +129,13 @@ export function toSeconds(size: number, decimals?: DecimalCount, scaledDecimals?
   return toFixedScaled(size / 3.15569e7, decimals, scaledDecimals, 7, ' year');
 }
 
-export function toMinutes(size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) {
+export function toMinutes(size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount): FormattedValue {
   if (size === null) {
-    return '';
+    return { prefix: '', value: '', suffix: '' };
   }
 
   if (Math.abs(size) < 60) {
-    return toFixed(size, decimals) + ' min';
+    return { prefix: '', value: toFixed(size, decimals), suffix: ' min' };
   } else if (Math.abs(size) < 1440) {
     return toFixedScaled(size / 60, decimals, scaledDecimals, 2, ' hour');
   } else if (Math.abs(size) < 10080) {
@@ -147,13 +147,13 @@ export function toMinutes(size: number, decimals?: DecimalCount, scaledDecimals?
   }
 }
 
-export function toHours(size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) {
+export function toHours(size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount): FormattedValue {
   if (size === null) {
-    return '';
+    return { prefix: '', value: '', suffix: '' };
   }
 
   if (Math.abs(size) < 24) {
-    return toFixed(size, decimals) + ' hour';
+    return { prefix: '', value: toFixed(size, decimals), suffix: ' hour' };
   } else if (Math.abs(size) < 168) {
     return toFixedScaled(size / 24, decimals, scaledDecimals, 2, ' day');
   } else if (Math.abs(size) < 8760) {
@@ -165,11 +165,11 @@ export function toHours(size: number, decimals?: DecimalCount, scaledDecimals?: 
 
 export function toDays(size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) {
   if (size === null) {
-    return '';
+    return { prefix: '', value: '', suffix: '' };
   }
 
   if (Math.abs(size) < 7) {
-    return toFixed(size, decimals) + ' day';
+    return { prefix: '', value: toFixed(size, decimals), suffix: ' day' };
   } else if (Math.abs(size) < 365) {
     return toFixedScaled(size / 7, decimals, scaledDecimals, 2, ' week');
   } else {
@@ -177,17 +177,19 @@ export function toDays(size: number, decimals?: DecimalCount, scaledDecimals?: D
   }
 }
 
-export function toDuration(size: number, decimals: DecimalCount, timeScale: Interval): string {
+export function toDuration(size: number, decimals: DecimalCount, timeScale: Interval): FormattedValue {
   if (size === null) {
-    return '';
+    return { prefix: '', value: '', suffix: '' };
   }
 
   if (size === 0) {
-    return '0 ' + timeScale + 's';
+    return { prefix: '', value: '0', suffix: ' ' + timeScale + 's' };
   }
 
   if (size < 0) {
-    return toDuration(-size, decimals, timeScale) + ' ago';
+    const v = toDuration(-size, decimals, timeScale);
+    v.suffix += ' ago';
+    return v;
   }
 
   const units = [
@@ -228,17 +230,21 @@ export function toDuration(size: number, decimals: DecimalCount, timeScale: Inte
     }
   }
 
-  return strings.join(', ');
+  return { prefix: '', value: strings.join(', '), suffix: '' };
 }
 
-export function toClock(size: number, decimals?: DecimalCount) {
+export function toClock(size: number, decimals?: DecimalCount): FormattedValue {
   if (size === null) {
-    return '';
+    return { prefix: '', value: '', suffix: '' };
   }
 
   // < 1 second
   if (size < 1000) {
-    return toUtc(size).format('SSS\\m\\s');
+    return {
+      prefix: '',
+      value: toUtc(size).format('SSS\\m\\s'),
+      suffix: '',
+    };
   }
 
   // < 1 minute
@@ -247,7 +253,7 @@ export function toClock(size: number, decimals?: DecimalCount) {
     if (decimals === 0) {
       format = 'ss\\s';
     }
-    return toUtc(size).format(format);
+    return { prefix: '', value: toUtc(size).format(format), suffix: '' };
   }
 
   // < 1 hour
@@ -258,7 +264,7 @@ export function toClock(size: number, decimals?: DecimalCount) {
     } else if (decimals === 1) {
       format = 'mm\\m:ss\\s';
     }
-    return toUtc(size).format(format);
+    return { prefix: '', value: toUtc(size).format(format), suffix: '' };
   }
 
   let format = 'mm\\m:ss\\s:SSS\\m\\s';
@@ -273,20 +279,23 @@ export function toClock(size: number, decimals?: DecimalCount) {
     format = 'mm\\m:ss\\s';
   }
 
-  return format ? `${hours}:${toUtc(size).format(format)}` : hours;
+  const value = format ? `${hours}:${toUtc(size).format(format)}` : hours;
+  return { prefix: '', value, suffix: '' };
 }
 
-export function toDurationInMilliseconds(size: number, decimals: DecimalCount) {
+export function toDurationInMilliseconds(size: number, decimals: DecimalCount): FormattedValue {
   return toDuration(size, decimals, Interval.Millisecond);
 }
 
-export function toDurationInSeconds(size: number, decimals: DecimalCount) {
+export function toDurationInSeconds(size: number, decimals: DecimalCount): FormattedValue {
   return toDuration(size, decimals, Interval.Second);
 }
 
-export function toDurationInHoursMinutesSeconds(size: number): string {
+export function toDurationInHoursMinutesSeconds(size: number): FormattedValue {
   if (size < 0) {
-    return toDurationInHoursMinutesSeconds(-size) + ' ago';
+    const v = toDurationInHoursMinutesSeconds(-size);
+    v.suffix += ' ago';
+    return v;
   }
   const strings = [];
   const numHours = Math.floor(size / 3600);
@@ -295,7 +304,7 @@ export function toDurationInHoursMinutesSeconds(size: number): string {
   numHours > 9 ? strings.push('' + numHours) : strings.push('0' + numHours);
   numMinutes > 9 ? strings.push('' + numMinutes) : strings.push('0' + numMinutes);
   numSeconds > 9 ? strings.push('' + numSeconds) : strings.push('0' + numSeconds);
-  return strings.join(':');
+  return { prefix: '', value: strings.join(':'), suffix: '' };
 }
 
 export function toTimeTicks(size: number, decimals: DecimalCount, scaledDecimals: DecimalCount) {
@@ -314,21 +323,21 @@ export function dateTimeAsIso(value: number, decimals: DecimalCount, scaledDecim
   const time = isUtc ? toUtc(value) : dateTime(value);
 
   if (dateTime().isSame(value, 'day')) {
-    return time.format('HH:mm:ss');
+    return { value: time.format('HH:mm:ss'), prefix: '', suffix: '' };
   }
-  return time.format('YYYY-MM-DD HH:mm:ss');
+  return { value: time.format('YYYY-MM-DD HH:mm:ss'), prefix: '', suffix: '' };
 }
 
 export function dateTimeAsUS(value: number, decimals: DecimalCount, scaledDecimals: DecimalCount, isUtc?: boolean) {
   const time = isUtc ? toUtc(value) : dateTime(value);
 
   if (dateTime().isSame(value, 'day')) {
-    return time.format('h:mm:ss a');
+    return { value: time.format('h:mm:ss a'), prefix: '', suffix: '' };
   }
-  return time.format('MM/DD/YYYY h:mm:ss a');
+  return { value: time.format('MM/DD/YYYY h:mm:ss a'), prefix: '', suffix: '' };
 }
 
 export function dateTimeFromNow(value: number, decimals: DecimalCount, scaledDecimals: DecimalCount, isUtc?: boolean) {
   const time = isUtc ? toUtc(value) : dateTime(value);
-  return time.fromNow();
+  return { value: time.fromNow(), prefix: '', suffix: '' };
 }

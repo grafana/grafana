@@ -1,12 +1,22 @@
 import { getCategories } from './categories';
 import { DecimalCount } from '../types/displayValue';
 
+export interface FormattedValue {
+  prefix: string;
+  value: string;
+  suffix: string;
+}
+
+export function formattedValueToString(val: FormattedValue): string {
+  return `${val.prefix}${val.value}${val.suffix}`;
+}
+
 export type ValueFormatter = (
   value: number,
   decimals?: DecimalCount,
   scaledDecimals?: DecimalCount,
-  isUtc?: boolean
-) => string;
+  isUtc?: boolean // TODO: timezone?: string,
+) => FormattedValue;
 
 export interface ValueFormat {
   name: string;
@@ -63,32 +73,36 @@ export function toFixedScaled(
   scaledDecimals: DecimalCount,
   additionalDecimals: number,
   ext?: string
-) {
+): FormattedValue {
   if (scaledDecimals === null || scaledDecimals === undefined) {
-    return toFixed(value, decimals) + ext;
+    return { prefix: '', value: toFixed(value, decimals), suffix: ext ? ext : '' };
   }
-  return toFixed(value, scaledDecimals + additionalDecimals) + ext;
+  return {
+    prefix: '',
+    value: toFixed(value, scaledDecimals + additionalDecimals),
+    suffix: ext ? ext : '',
+  };
 }
 
 export function toFixedUnit(unit: string): ValueFormatter {
   return (size: number, decimals?: DecimalCount) => {
     if (size === null) {
-      return '';
+      return { prefix: '', value: '', suffix: '' };
     }
-    return toFixed(size, decimals) + ' ' + unit;
+    return { prefix: '', value: toFixed(size, decimals), suffix: unit ? ' ' + unit : '' };
   };
 }
 
 // Formatter which scales the unit string geometrically according to the given
 // numeric factor. Repeatedly scales the value down by the factor until it is
 // less than the factor in magnitude, or the end of the array is reached.
-export function scaledUnits(factor: number, extArray: string[]) {
+export function scaledUnits(factor: number, extArray: string[]): ValueFormatter {
   return (size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) => {
     if (size === null) {
-      return '';
+      return { prefix: '', value: '', suffix: '' };
     }
     if (size === Number.NEGATIVE_INFINITY || size === Number.POSITIVE_INFINITY || isNaN(size)) {
-      return size.toLocaleString();
+      return { prefix: '', value: size.toLocaleString(), suffix: '' };
     }
 
     let steps = 0;
@@ -99,7 +113,7 @@ export function scaledUnits(factor: number, extArray: string[]) {
       size /= factor;
 
       if (steps >= limit) {
-        return 'NA';
+        return { prefix: '', value: 'NA', suffix: '' };
       }
     }
 
@@ -107,26 +121,31 @@ export function scaledUnits(factor: number, extArray: string[]) {
       decimals = scaledDecimals + 3 * steps;
     }
 
-    return toFixed(size, decimals) + extArray[steps];
+    return { prefix: '', value: toFixed(size, decimals), suffix: extArray[steps] };
   };
 }
 
-export function locale(value: number, decimals: DecimalCount) {
+export function locale(value: number, decimals: DecimalCount): FormattedValue {
   if (value == null) {
-    return '';
+    return { prefix: '', value: '', suffix: '' };
   }
-  return value.toLocaleString(undefined, { maximumFractionDigits: decimals as number });
+  return {
+    prefix: '',
+    value: value.toLocaleString(undefined, { maximumFractionDigits: decimals as number }),
+    suffix: '',
+  };
 }
 
-export function simpleCountUnit(symbol: string) {
+export function simpleCountUnit(symbol: string): ValueFormatter {
   const units = ['', 'K', 'M', 'B', 'T'];
   const scaler = scaledUnits(1000, units);
   return (size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) => {
     if (size === null) {
-      return '';
+      return { prefix: '', value: '', suffix: '' };
     }
-    const scaled = scaler(size, decimals, scaledDecimals);
-    return scaled + ' ' + symbol;
+    const v = scaler(size, decimals, scaledDecimals);
+    v.suffix += ' ' + symbol;
+    return v;
   };
 }
 

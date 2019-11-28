@@ -1,15 +1,20 @@
-import { scaledUnits } from './valueFormats';
+import { scaledUnits, ValueFormatter } from './valueFormats';
 import { DecimalCount } from '../types/displayValue';
 
-export function currency(symbol: string) {
+export function currency(symbol: string, asSuffix?: boolean): ValueFormatter {
   const units = ['', 'K', 'M', 'B', 'T'];
   const scaler = scaledUnits(1000, units);
   return (size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) => {
     if (size === null) {
-      return '';
+      return { prefix: '', value: '', suffix: '' };
     }
     const scaled = scaler(size, decimals, scaledDecimals);
-    return symbol + scaled;
+    if (asSuffix) {
+      scaled.suffix = symbol;
+    } else {
+      scaled.prefix = symbol;
+    }
+    return scaled;
   };
 }
 

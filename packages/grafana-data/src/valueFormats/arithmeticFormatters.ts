@@ -1,43 +1,49 @@
-import { toFixed } from './valueFormats';
+import { toFixed, FormattedValue } from './valueFormats';
 import { DecimalCount } from '../types/displayValue';
 
-export function toPercent(size: number, decimals: DecimalCount) {
+export function toPercent(size: number, decimals: DecimalCount): FormattedValue {
   if (size === null) {
-    return '';
+    return { prefix: '', value: '', suffix: '' };
   }
-  return toFixed(size, decimals) + '%';
+  return { prefix: '', value: toFixed(size, decimals), suffix: '%' };
 }
 
-export function toPercentUnit(size: number, decimals: DecimalCount) {
+export function toPercentUnit(size: number, decimals: DecimalCount): FormattedValue {
   if (size === null) {
-    return '';
+    return { prefix: '', value: '', suffix: '' };
   }
-  return toFixed(100 * size, decimals) + '%';
+  return { prefix: '', value: toFixed(100 * size, decimals), suffix: '%' };
 }
 
-export function toHex0x(value: number, decimals: DecimalCount) {
+export function toHex0x(value: number, decimals: DecimalCount): FormattedValue {
   if (value == null) {
-    return '';
+    return { prefix: '', value: '', suffix: '' };
   }
-  const hexString = toHex(value, decimals);
-  if (hexString.substring(0, 1) === '-') {
-    return '-0x' + hexString.substring(1);
+  const asHex = toHex(value, decimals);
+  if (asHex.value.substring(0, 1) === '-') {
+    asHex.value = '-0x' + asHex.value.substring(1);
+  } else {
+    asHex.value = '0x' + asHex.value;
   }
-  return '0x' + hexString;
+  return asHex;
 }
 
-export function toHex(value: number, decimals: DecimalCount) {
+export function toHex(value: number, decimals: DecimalCount): FormattedValue {
   if (value == null) {
-    return '';
+    return { prefix: '', value: '', suffix: '' };
   }
-  return parseFloat(toFixed(value, decimals))
-    .toString(16)
-    .toUpperCase();
+  return {
+    prefix: '',
+    value: parseFloat(toFixed(value, decimals))
+      .toString(16)
+      .toUpperCase(),
+    suffix: '',
+  };
 }
 
-export function sci(value: number, decimals: DecimalCount) {
+export function sci(value: number, decimals: DecimalCount): FormattedValue {
   if (value == null) {
-    return '';
+    return { prefix: '', value: '', suffix: '' };
   }
-  return value.toExponential(decimals as number);
+  return { value: value.toExponential(decimals as number), prefix: '', suffix: '' };
 }

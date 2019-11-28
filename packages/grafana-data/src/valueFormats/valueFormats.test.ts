@@ -1,4 +1,5 @@
-import { toFixed, getValueFormat, scaledUnits } from './valueFormats';
+import { toFixed, getValueFormat, scaledUnits, formattedValueToString } from './valueFormats';
+import { DecimalCount } from '../types';
 
 describe('valueFormats', () => {
   describe('normal cases', () => {
@@ -21,7 +22,10 @@ describe('valueFormats', () => {
 
     it('scaledUnit should handle number correctly if scaledDecimals is not null', () => {
       const units = ['', 'K', 'M', 'B', 'T'];
-      const scaler = scaledUnits(1000, units);
+      const raw = scaledUnits(1000, units);
+      const scaler = (value: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) => {
+        return formattedValueToString(raw(value, decimals, scaledDecimals));
+      };
 
       expect(scaler(98765, 0, 0)).toBe('98.765K');
       expect(scaler(98765, 0, -1)).toBe('98.77K');
