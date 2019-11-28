@@ -4,26 +4,23 @@ import { Url } from './url';
 export type Selectors = Record<string, string | Function>;
 export type PageObjects<S> = { [P in keyof S]: () => Cypress.Chainable<JQuery<HTMLElement>> };
 
-export interface PageObject<S> {
+export interface PageFactory<S> {
   visit: () => Cypress.Chainable<Window>;
-  pageObjects: PageObjects<S>;
+  pageObjects: () => PageObjects<S>;
 }
 
-export abstract class Page<S extends Selectors> implements PageObject<S> {
-  constructor() {}
+export interface PageFactoryArgs<S extends Selectors> {
+  url?: string;
+  selectors: S;
+}
 
-  abstract url: string;
-  abstract selectors: S;
-
-  visit() {
-    return cy.visit(Url.fromBaseUrl(this.url));
-  }
-
-  get pageObjects(): PageObjects<S> {
+export const pageFactory = <S extends Selectors>({ url, selectors }: PageFactoryArgs<S>): PageFactory<S> => {
+  const visit = () => cy.visit(Url.fromBaseUrl(url));
+  const pageObjects = (): PageObjects<S> => {
     const pageObjects = {};
-    const keys = Object.keys(this.selectors);
+    const keys = Object.keys(selectors);
     keys.forEach(key => {
-      const value = this.selectors[key];
+      const value = selectors[key];
       if (typeof value === 'string') {
         // @ts-ignore
         pageObjects[key] = () => cy.get(Selector.fromAriaLabel(value));
@@ -35,5 +32,10 @@ export abstract class Page<S extends Selectors> implements PageObject<S> {
     });
 
     return pageObjects as PageObjects<S>;
-  }
-}
+  };
+
+  return {
+    visit,
+    pageObjects,
+  };
+};

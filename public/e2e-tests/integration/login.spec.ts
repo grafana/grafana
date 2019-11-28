@@ -1,9 +1,7 @@
-import { LoginPage } from '@grafana/e2e/src/pages/login/LoginPage';
+import { Flows } from '@grafana/e2e';
 
 describe('Login', () => {
   it('should pass', () => {
-    const loginPage = new LoginPage();
-    loginPage.visit();
-    loginPage.login('admin', 'admin');
+    Flows.login('admin', 'admin');
   });
 });

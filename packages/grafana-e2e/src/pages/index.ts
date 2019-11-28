@@ -1,5 +1,5 @@
-import { LoginPage } from './login/LoginPage';
+import { Login } from './login';
 
 export const Pages = {
-  LoginPage,
+  Login: Login.Page,
 };
