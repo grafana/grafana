@@ -428,6 +428,10 @@
             {
               "text": "Bitcoin (฿)",
               "value": "currencyBTC"
+            },
+            {
+              "text": "ADA (₳)",
+              "value": "currencyADA"
             }
           ],
           "text": "currency"
