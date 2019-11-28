@@ -1,9 +1,9 @@
 import Plain from 'slate-plain-serializer';
 import { Editor as SlateEditor } from 'slate';
-import LanguageProvider from '../language_provider';
-import { PrometheusDatasource } from '../datasource';
+import LanguageProvider from './language_provider';
+import { PrometheusDatasource } from './datasource';
 import { HistoryItem } from '@grafana/data';
-import { PromQuery } from '../types';
+import { PromQuery } from './types';
 
 describe('Language completion provider', () => {
   const datasource: PrometheusDatasource = ({
