@@ -37,7 +37,7 @@ export interface Props {
 export class RefreshPickerBase extends PureComponent<Props> {
   static offOption = { label: 'Off', value: '' };
   static liveOption = { label: 'Live', value: 'LIVE' };
-  static isLive = (refreshInterval: string): boolean => refreshInterval === RefreshPicker.liveOption.value;
+  static isLive = (refreshInterval?: string): boolean => refreshInterval === RefreshPicker.liveOption.value;
 
   constructor(props: Props) {
     super(props);

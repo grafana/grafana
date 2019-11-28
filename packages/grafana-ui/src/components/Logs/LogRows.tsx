@@ -16,7 +16,7 @@ export interface Props extends Themeable {
   logRows?: LogRowModel[];
   deduplicatedRows?: LogRowModel[];
   dedupStrategy: LogsDedupStrategy;
-  highlighterExpressions: string[];
+  highlighterExpressions?: string[];
   showTime: boolean;
   timeZone: TimeZone;
   rowLimit?: number;

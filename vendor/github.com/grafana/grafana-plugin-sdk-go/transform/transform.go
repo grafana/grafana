@@ -152,7 +152,7 @@ func (w *grafanaAPIWrapper) QueryDatasource(ctx context.Context, orgID int64, da
 		// TODO Error property etc
 		dfs := make([]*dataframe.Frame, len(rawRes.Dataframes))
 		for dfIdx, b := range rawRes.Dataframes {
-			dfs[dfIdx], err = dataframe.UnMarshalArrow(b)
+			dfs[dfIdx], err = dataframe.UnmarshalArrow(b)
 			if err != nil {
 				return nil, err
 			}

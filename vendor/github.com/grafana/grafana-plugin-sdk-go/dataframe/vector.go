@@ -11,6 +11,7 @@ type Vector interface {
 	Append(i interface{})
 	At(i int) interface{}
 	Len() int
+	PrimitiveType() VectorPType
 }
 
 func newVector(t interface{}, n int) (v Vector) {
@@ -44,3 +45,38 @@ func newVector(t interface{}, n int) (v Vector) {
 	}
 	return
 }
+
+// VectorPType indicates the go type underlying the Vector.
+type VectorPType int
+
+const (
+	// VectorPTypeInt64 indicates the underlying primitive is a []int64.
+	VectorPTypeInt64 VectorPType = iota
+	// VectorPTypeNullableInt64 indicates the underlying primitive is a []*int64.
+	VectorPTypeNullableInt64
+
+	// VectorPTypeUint64 indicates the underlying primitive is a []uint64.
+	VectorPTypeUint64
+	// VectorPTypeNullableUInt64 indicates the underlying primitive is a []*uint64.
+	VectorPTypeNullableUInt64
+
+	// VectorPTypeFloat64 indicates the underlying primitive is a []float64.
+	VectorPTypeFloat64
+	// VectorPTypeNullableFloat64 indicates the underlying primitive is a []*float64.
+	VectorPTypeNullableFloat64
+
+	// VectorPTypeString indicates the underlying primitive is a []string.
+	VectorPTypeString
+	// VectorPTypeNullableString indicates the underlying primitive is a []*string.
+	VectorPTypeNullableString
+
+	// VectorPTypeBool indicates the underlying primitive is a []bool.
+	VectorPTypeBool
+	// VectorPTypeNullableBool indicates the underlying primitive is a []*bool.
+	VectorPTypeNullableBool
+
+	// VectorPTypeTime indicates the underlying primitive is a []time.Time.
+	VectorPTypeTime
+	// VectorPTypeNullableTime indicates the underlying primitive is a []*time.Time.
+	VectorPTypeNullableTime
+)
