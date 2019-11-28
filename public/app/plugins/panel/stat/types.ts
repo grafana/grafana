@@ -15,7 +15,6 @@ export const colorModes: Array<SelectableValue<BigValueColorMode>> = [
 
 export const graphModes: Array<SelectableValue<BigValueGraphMode>> = [
   { value: BigValueGraphMode.None, label: 'None' },
-  { value: BigValueGraphMode.Line, label: 'Line graph' },
   { value: BigValueGraphMode.Area, label: 'Area graph' },
 ];
 
@@ -40,7 +39,7 @@ export const standardFieldDisplayOptions: FieldDisplayOptions = {
 };
 
 export const defaults: StatPanelOptions = {
-  graphMode: BigValueGraphMode.Line,
+  graphMode: BigValueGraphMode.Area,
   colorMode: BigValueColorMode.Value,
   justifyMode: BigValueJustifyMode.Auto,
   fieldOptions: standardFieldDisplayOptions,

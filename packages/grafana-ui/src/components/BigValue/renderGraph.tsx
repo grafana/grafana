@@ -3,7 +3,7 @@ import tinycolor from 'tinycolor2';
 
 import { Chart, Geom } from 'bizcharts';
 import { LayoutResult, LayoutType } from './styles';
-import { BigValueSparkline, BigValueColorMode, BigValueGraphMode } from './BigValue';
+import { BigValueSparkline, BigValueColorMode } from './BigValue';
 
 export function renderGraph(layout: LayoutResult, sparkline?: BigValueSparkline) {
   if (!sparkline || layout.type === LayoutType.WideNoChart || layout.type === LayoutType.StackedNoChart) {
@@ -25,42 +25,21 @@ export function renderGraph(layout: LayoutResult, sparkline?: BigValueSparkline)
   };
 
   // default to line graph
-  const geomRender = getGraphGeom(layout.colorMode, layout.graphMode);
+  const geomRender = getGraphGeom(layout.colorMode);
 
   if (layout.type === LayoutType.Wide) {
-    if (layout.graphMode === BigValueGraphMode.Line) {
-      // need some top padding
-      layout.chartHeight -= 8;
-      chartStyles.width = `${layout.chartWidth}px`;
-      chartStyles.height = `${layout.chartHeight}px`;
-      chartStyles.bottom = '8px';
-      chartStyles.right = '8px';
-    } else {
-      // Area chart
-      chartStyles.width = `${layout.chartWidth}px`;
-      chartStyles.height = `${layout.chartHeight}px`;
-      chartStyles.bottom = 0;
-      chartStyles.right = 0;
-      chartStyles.top = 0;
-    }
+    // Area chart
+    chartStyles.bottom = 0;
+    chartStyles.right = 0;
+    chartStyles.top = 0;
   } else {
-    // Stacked mode
-    if (layout.graphMode === BigValueGraphMode.Line) {
-      // need some top padding
-      layout.chartHeight -= 8;
-      chartStyles.width = `${layout.chartWidth}px`;
-      chartStyles.height = `${layout.chartHeight}px`;
-      chartStyles.bottom = '8px';
-    } else {
-      // need some top padding
-      layout.chartHeight -= 8;
-      chartStyles.width = `${layout.chartWidth}px`;
-      chartStyles.height = `${layout.chartHeight}px`;
-      chartStyles.bottom = 0;
-      chartStyles.right = 0;
-      chartStyles.left = 0;
-      chartStyles.right = 0;
-    }
+    // need some top padding
+    chartStyles.width = `${layout.chartWidth}px`;
+    chartStyles.height = `${layout.chartHeight}px`;
+    chartStyles.bottom = 0;
+    chartStyles.right = 0;
+    chartStyles.left = 0;
+    chartStyles.right = 0;
   }
 
   return (
@@ -77,30 +56,12 @@ export function renderGraph(layout: LayoutResult, sparkline?: BigValueSparkline)
     </Chart>
   );
 }
-function getGraphGeom(colorMode: BigValueColorMode, graphMode: BigValueGraphMode) {
+function getGraphGeom(colorMode: BigValueColorMode) {
   // background color mode
   if (colorMode === BigValueColorMode.Background) {
-    if (graphMode === BigValueGraphMode.Line) {
-      return renderLineGeom;
-    }
-    if (graphMode === BigValueGraphMode.Area) {
-      return renderAreaGeomOnColoredBackground;
-    }
+    return renderAreaGeomOnColoredBackground;
   }
   return renderClassicAreaGeom;
-}
-
-function renderLineGeom(layout: LayoutResult) {
-  const lineColor = '#F9F9F9';
-
-  const lineStyle: any = {
-    lineWidth: 1,
-    shadowBlur: 4,
-    shadowColor: '#555',
-    shadowOffsetY: 4,
-  };
-
-  return <Geom type="line" position="time*value" size={2} color={lineColor} style={lineStyle} shape="smooth" />;
 }
 
 function renderAreaGeomOnColoredBackground(layout: LayoutResult) {

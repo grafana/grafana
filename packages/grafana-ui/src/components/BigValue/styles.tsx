@@ -82,13 +82,8 @@ export function calculateLayout(props: Props): LayoutResult {
       }
     } else {
       // wide with chart
-      chartHeight = height - panelPadding * 2;
-      chartWidth = width / 2 - panelPadding * 2;
-
-      if (graphMode === BigValueGraphMode.Area) {
-        chartWidth = width / 2;
-        chartHeight += panelPadding * 2;
-      }
+      chartWidth = width / 2;
+      chartHeight = height;
 
       if (titleToAlignTo && titleToAlignTo.length > 0) {
         titleFontSize = calculateFontSize(value.title, maxTextWidth, height * 0.25, LINE_HEIGHT);
@@ -99,7 +94,7 @@ export function calculateLayout(props: Props): LayoutResult {
     }
   } else {
     const maxTextWidth = width - panelPadding * 2;
-    let maxTextHeight = height - panelPadding;
+    const maxTextHeight = height - panelPadding * 2;
 
     // Does a chart fit or exist?
     if (height < 100 || !sparkline) {
@@ -107,14 +102,7 @@ export function calculateLayout(props: Props): LayoutResult {
     } else {
       // we have chart
       chartHeight = height * CHART_HEIGHT_RATIO;
-      chartWidth = width - panelPadding * 2;
-
-      if (graphMode === BigValueGraphMode.Area) {
-        chartWidth = width;
-        chartHeight += panelPadding;
-        // need to add more space back here for text, as in area mode we have no padding
-        maxTextHeight += panelPadding;
-      }
+      chartWidth = width;
     }
 
     if (titleToAlignTo && titleToAlignTo.length > 0) {
