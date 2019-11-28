@@ -13,6 +13,7 @@ interface Props {
   onUserUpdate: (user: UserDTO) => void;
   onUserDelete: (userId: number) => void;
   onUserDisable: (userId: number) => void;
+  onUserEnable: (userId: number) => void;
 }
 
 interface State {
@@ -44,6 +45,11 @@ export class UserProfile extends PureComponent<Props, State> {
         onUserDisable(user.id);
       },
     });
+  };
+
+  onUserEnable = () => {
+    const { user, onUserEnable } = this.props;
+    onUserEnable(user.id);
   };
 
   onUserNameChange = (newValue: string) => {
@@ -111,9 +117,15 @@ export class UserProfile extends PureComponent<Props, State> {
             <button className="btn btn-danger" onClick={this.onUserDelete}>
               Delete User
             </button>
-            <button className="btn btn-inverse" onClick={this.onUserDisable}>
-              Disable User
-            </button>
+            {user.isDisabled ? (
+              <button className="btn btn-inverse" onClick={this.onUserEnable}>
+                Enable User
+              </button>
+            ) : (
+              <button className="btn btn-inverse" onClick={this.onUserDisable}>
+                Disable User
+              </button>
+            )}
           </div>
         </div>
       </>

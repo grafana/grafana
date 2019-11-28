@@ -91,6 +91,13 @@ export interface UserOrg {
 
 export interface UserAdminState {
   user: UserDTO;
-  sessions?: UserSession[];
-  orgs?: UserOrg[];
+  sessions: UserSession[];
+  orgs: UserOrg[];
+  isLoading: boolean;
+  error?: UserAdminError;
+}
+
+export interface UserAdminError {
+  title: string;
+  body: string;
 }

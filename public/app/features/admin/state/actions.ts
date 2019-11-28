@@ -1,4 +1,5 @@
 import { actionCreatorFactory } from 'app/core/redux';
+import { updateLocation } from 'app/core/actions';
 import config from 'app/core/config';
 import { getBackendSrv } from '@grafana/runtime';
 import {
@@ -11,6 +12,7 @@ import {
   User,
   UserDTO,
   UserOrg,
+  UserAdminError,
 } from 'app/types';
 import {
   getUserInfo,
@@ -36,13 +38,16 @@ export const clearUserErrorAction = actionCreatorFactory('ldap/CLEAR_USER_ERROR'
 export const ldapFailedAction = actionCreatorFactory<LdapError>('ldap/LDAP_FAILED').create();
 
 export const userLoadedAction = actionCreatorFactory<User>('USER_LOADED').create();
-export const userSessionsLoadedAction = actionCreatorFactory<UserSession[]>('USER_SESSIONS_LOADED').create();
 export const userSyncFailedAction = actionCreatorFactory('USER_SYNC_FAILED').create();
-export const revokeUserSessionAction = actionCreatorFactory('REVOKE_USER_SESSION').create();
-export const revokeAllUserSessionsAction = actionCreatorFactory('REVOKE_ALL_USER_SESSIONS').create();
 
+// UserAdminPage
+export const userAdminPageLoadedAction = actionCreatorFactory<boolean>('admin/user/PAGE_LOADED').create();
 export const userProfileLoadedAction = actionCreatorFactory<UserDTO>('admin/user/PROFILE_LOADED').create();
 export const userOrgsLoadedAction = actionCreatorFactory<UserOrg[]>('admin/user/ORGS_LOADED').create();
+export const userSessionsLoadedAction = actionCreatorFactory<UserSession[]>('admin/user/SESSIONS_LOADED').create();
+export const revokeUserSessionAction = actionCreatorFactory('admin/user/REVOKE_SESSION').create();
+export const revokeAllUserSessionsAction = actionCreatorFactory('admin/user/REVOKE_ALL_SESSIONS').create();
+export const userAdminPageFailedAction = actionCreatorFactory<UserAdminError>('admin/user/PAGE_FAILED').create();
 
 // Actions
 
@@ -132,6 +137,76 @@ export function loadLdapUserInfo(userId: number): ThunkResult<void> {
   };
 }
 
+// UserAdminPage
+
+export function loadAdminUserPage(userId: number): ThunkResult<void> {
+  return async dispatch => {
+    try {
+      dispatch(userAdminPageLoadedAction(false));
+      await dispatch(loadUserProfile(userId));
+      await dispatch(loadUserOrgs(userId));
+      await dispatch(loadUserSessions(userId));
+      if (config.ldapEnabled && config.buildInfo.isEnterprise) {
+        await dispatch(loadLdapSyncStatus());
+      }
+      dispatch(userAdminPageLoadedAction(true));
+    } catch (error) {
+      console.log(error);
+      error.isHandled = true;
+      const userError = {
+        title: error.data.message,
+        body: error.data.error,
+      };
+      dispatch(userAdminPageFailedAction(userError));
+    }
+  };
+}
+
+export function loadUserProfile(userId: number): ThunkResult<void> {
+  return async dispatch => {
+    const user = await getBackendSrv().get(`/api/users/${userId}`);
+    dispatch(userProfileLoadedAction(user));
+  };
+}
+
+export function updateUser(user: UserDTO): ThunkResult<void> {
+  return async dispatch => {
+    console.log('update user', user);
+    await getBackendSrv().put(`/api/users/${user.id}`, user);
+    dispatch(loadAdminUserPage(user.id));
+  };
+}
+
+export function disableUser(userId: number): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv().post(`/api/admin/users/${userId}/disable`);
+    // dispatch(loadAdminUserPage(userId));
+    dispatch(updateLocation({ path: '/admin/users' }));
+  };
+}
+
+export function enableUser(userId: number): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv().post(`/api/admin/users/${userId}/enable`);
+    dispatch(loadAdminUserPage(userId));
+  };
+}
+
+export function deleteUser(userId: number): ThunkResult<void> {
+  return async dispatch => {
+    console.log('delete user', userId);
+    // await getBackendSrv().delete(`/api/admin/users/${userId}`);
+    dispatch(updateLocation({ path: '/admin/users' }));
+  };
+}
+
+export function loadUserOrgs(userId: number): ThunkResult<void> {
+  return async dispatch => {
+    const orgs = await getBackendSrv().get(`/api/users/${userId}/orgs`);
+    dispatch(userOrgsLoadedAction(orgs));
+  };
+}
+
 export function loadUserSessions(userId: number): ThunkResult<void> {
   return async dispatch => {
     const sessions = await getUserSessions(userId);
@@ -150,21 +225,5 @@ export function revokeAllSessions(userId: number): ThunkResult<void> {
   return async dispatch => {
     await revokeAllUserSessions(userId);
     dispatch(loadUserSessions(userId));
-  };
-}
-
-// UserAdminPage
-
-export function loadUserProfile(userId: number): ThunkResult<void> {
-  return async dispatch => {
-    const user = await getBackendSrv().get(`/api/users/${userId}`);
-    dispatch(userProfileLoadedAction(user));
-  };
-}
-
-export function loadUserOrgs(userId: number): ThunkResult<void> {
-  return async dispatch => {
-    const orgs = await getBackendSrv().get(`/api/users/${userId}/orgs`);
-    dispatch(userOrgsLoadedAction(orgs));
   };
 }

@@ -10,14 +10,19 @@ import { UserProfile } from './UserProfile';
 import { UserPermissions } from './UserPermissions';
 import { UserSessions } from './UserSessions';
 import { UserLdapSyncInfo } from './UserLdapSyncInfo';
-import { StoreState, UserDTO, UserOrg, UserSession, SyncInfo } from 'app/types';
+import { StoreState, UserDTO, UserOrg, UserSession, SyncInfo, UserAdminError } from 'app/types';
 import {
+  loadAdminUserPage,
   loadUserProfile,
   loadUserOrgs,
   loadUserSessions,
   revokeSession,
   revokeAllSessions,
   loadLdapSyncStatus,
+  updateUser,
+  disableUser,
+  enableUser,
+  deleteUser,
 } from './state/actions';
 import { UserOrgs } from './UserOrgs';
 
@@ -28,46 +33,50 @@ interface Props {
   orgs: UserOrg[];
   sessions: UserSession[];
   ldapSyncInfo: SyncInfo;
+  isLoading: boolean;
+  error: UserAdminError;
 
+  loadAdminUserPage: typeof loadAdminUserPage;
   loadUserProfile: typeof loadUserProfile;
   loadUserOrgs: typeof loadUserOrgs;
   loadUserSessions: typeof loadUserSessions;
   loadLdapSyncStatus: typeof loadLdapSyncStatus;
   revokeSession: typeof revokeSession;
   revokeAllSessions: typeof revokeAllSessions;
+  updateUser: typeof updateUser;
+  disableUser: typeof disableUser;
+  enableUser: typeof enableUser;
+  deleteUser: typeof deleteUser;
 }
 
 interface State {
-  isLoading: boolean;
+  // isLoading: boolean;
 }
 
 export class UserAdminPage extends PureComponent<Props, State> {
   state = {
-    isLoading: true,
+    // isLoading: true,
   };
 
   async componentDidMount() {
-    const { userId, loadUserProfile, loadUserOrgs, loadUserSessions, loadLdapSyncStatus } = this.props;
-    try {
-      await loadUserProfile(userId);
-      await loadUserOrgs(userId);
-      await loadUserSessions(userId);
-      await loadLdapSyncStatus();
-    } finally {
-      this.setState({ isLoading: false });
-    }
+    const { userId, loadAdminUserPage } = this.props;
+    loadAdminUserPage(userId);
   }
 
   onUserUpdate = (user: UserDTO) => {
-    console.log('update user', user);
+    this.props.updateUser(user);
   };
 
   onUserDelete = (userId: number) => {
-    console.log('delete user', userId);
+    this.props.deleteUser(userId);
   };
 
   onUserDisable = (userId: number) => {
-    console.log('disable user', userId);
+    this.props.disableUser(userId);
+  };
+
+  onUserEnable = (userId: number) => {
+    this.props.enableUser(userId);
   };
 
   onGrafanaAdminChange = (isGrafanaAdmin: boolean) => {
@@ -97,8 +106,8 @@ export class UserAdminPage extends PureComponent<Props, State> {
   };
 
   render() {
-    const { navModel, user, orgs, sessions, ldapSyncInfo } = this.props;
-    const { isLoading } = this.state;
+    const { navModel, user, orgs, sessions, ldapSyncInfo, isLoading } = this.props;
+    // const { isLoading } = this.state;
     const isLDAPUser = user && user.isExternal && user.authLabels && user.authLabels.includes('LDAP');
 
     return (
@@ -111,6 +120,7 @@ export class UserAdminPage extends PureComponent<Props, State> {
                 onUserUpdate={this.onUserUpdate}
                 onUserDelete={this.onUserDelete}
                 onUserDisable={this.onUserDisable}
+                onUserEnable={this.onUserEnable}
               />
               {isLDAPUser && config.buildInfo.isEnterprise && ldapSyncInfo && (
                 <UserLdapSyncInfo ldapSyncInfo={ldapSyncInfo} onUserSync={this.onUserSync} />
@@ -141,13 +151,20 @@ const mapStateToProps = (state: StoreState) => ({
   sessions: state.userAdmin.sessions,
   orgs: state.userAdmin.orgs,
   ldapSyncInfo: state.ldap.syncInfo,
+  isLoading: state.userAdmin.isLoading,
+  error: state.userAdmin.error,
 });
 
 const mapDispatchToProps = {
+  loadAdminUserPage,
   loadUserProfile,
   loadUserOrgs,
   loadUserSessions,
   loadLdapSyncStatus,
+  updateUser,
+  disableUser,
+  enableUser,
+  deleteUser,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UserAdminPage));

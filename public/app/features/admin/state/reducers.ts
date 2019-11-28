@@ -6,12 +6,14 @@ import {
   userMappingInfoLoadedAction,
   userMappingInfoFailedAction,
   clearUserErrorAction,
+  userAdminPageLoadedAction,
   userLoadedAction,
   userSessionsLoadedAction,
   ldapSyncStatusLoadedAction,
   clearUserMappingInfoAction,
   userProfileLoadedAction,
   userOrgsLoadedAction,
+  userAdminPageFailedAction,
 } from './actions';
 
 const initialLdapState: LdapState = {
@@ -27,12 +29,6 @@ const initialLdapUserState: LdapUserState = {
   ldapUser: null,
   ldapSyncInfo: null,
   sessions: [],
-};
-
-const initialUserAdminState: UserAdminState = {
-  user: null,
-  sessions: [],
-  orgs: [],
 };
 
 export const ldapReducer = reducerFactory(initialLdapState)
@@ -137,6 +133,15 @@ export const ldapUserReducer = reducerFactory(initialLdapUserState)
   })
   .create();
 
+// UserAdminPage
+
+const initialUserAdminState: UserAdminState = {
+  user: null,
+  sessions: [],
+  orgs: [],
+  isLoading: true,
+};
+
 export const userAdminReducer = reducerFactory(initialUserAdminState)
   .addMapper({
     filter: userProfileLoadedAction,
@@ -157,6 +162,21 @@ export const userAdminReducer = reducerFactory(initialUserAdminState)
     mapper: (state, action) => ({
       ...state,
       sessions: action.payload,
+    }),
+  })
+  .addMapper({
+    filter: userAdminPageLoadedAction,
+    mapper: (state, action) => ({
+      ...state,
+      isLoading: !action.payload,
+    }),
+  })
+  .addMapper({
+    filter: userAdminPageFailedAction,
+    mapper: (state, action) => ({
+      ...state,
+      error: action.payload,
+      isLoading: false,
     }),
   })
   .create();
