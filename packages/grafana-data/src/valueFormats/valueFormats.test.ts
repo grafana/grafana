@@ -21,8 +21,8 @@ const formatTests: ValueFormatTest[] = [
   { id: 'short', decimals: 0, scaledDecimals: 0, value: 9876543, result: '9.876543 Mil' },
   { id: 'kbytes', decimals: 3, value: 10000000, result: '9.537 GiB' },
   { id: 'deckbytes', decimals: 3, value: 10000000, result: '10.000 GB' },
+  { id: 'megwatt', decimals: 3, value: 1000, result: '1.000 GW' },
 
-  // describe('megawatt format when scaled decimals is null do not use it', () => {
   //   it('should use specified decimals', () => {
   //     const str = getValueFormat('megwatt')(1000, 3, null);
   //     expect(str).toBe('1.000 GW');
