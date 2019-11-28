@@ -1,6 +1,6 @@
 import { pageFactory } from '../../support';
 
-const Selectors = {
+const selectors = {
   username: 'Username input field',
   password: 'Password input field',
   submit: 'Login button',
@@ -8,7 +8,7 @@ const Selectors = {
 
 const Page = pageFactory({
   url: '/login',
-  selectors: Selectors,
+  selectors,
 });
 
-export const Login = { Page, Selectors };
+export const Login = { Page, Selectors: selectors };

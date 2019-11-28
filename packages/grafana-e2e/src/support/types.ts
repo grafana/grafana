@@ -3,11 +3,8 @@ import { Url } from './url';
 
 export type Selectors = Record<string, string | Function>;
 export type PageObjects<S> = { [P in keyof S]: () => Cypress.Chainable<JQuery<HTMLElement>> };
-
-export interface PageFactory<S> {
-  visit: () => Cypress.Chainable<Window>;
-  pageObjects: () => PageObjects<S>;
-}
+export type Visit = { visit: () => Cypress.Chainable<Window> };
+export type PageFactory<S> = Visit & PageObjects<S>;
 
 export interface PageFactoryArgs<S extends Selectors> {
   url?: string;
@@ -16,26 +13,23 @@ export interface PageFactoryArgs<S extends Selectors> {
 
 export const pageFactory = <S extends Selectors>({ url, selectors }: PageFactoryArgs<S>): PageFactory<S> => {
   const visit = () => cy.visit(Url.fromBaseUrl(url));
-  const pageObjects = (): PageObjects<S> => {
-    const pageObjects = {};
-    const keys = Object.keys(selectors);
-    keys.forEach(key => {
-      const value = selectors[key];
-      if (typeof value === 'string') {
-        // @ts-ignore
-        pageObjects[key] = () => cy.get(Selector.fromAriaLabel(value));
-      }
-      if (typeof value === 'function') {
-        // @ts-ignore
-        pageObjects[key] = () => cy.get(value());
-      }
-    });
+  const pageObjects: PageObjects<S> = {} as PageObjects<S>;
+  const keys = Object.keys(selectors);
 
-    return pageObjects as PageObjects<S>;
-  };
+  keys.forEach(key => {
+    const value = selectors[key];
+    if (typeof value === 'string') {
+      // @ts-ignore
+      pageObjects[key] = () => cy.get(Selector.fromAriaLabel(value));
+    }
+    if (typeof value === 'function') {
+      // @ts-ignore
+      pageObjects[key] = () => cy.get(value());
+    }
+  });
 
   return {
     visit,
-    pageObjects,
+    ...pageObjects,
   };
 };
