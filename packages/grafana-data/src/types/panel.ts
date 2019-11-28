@@ -5,6 +5,7 @@ import { ScopedVars } from './ScopedVars';
 import { LoadingState } from './data';
 import { DataFrame } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
+import { AppEvent } from './appEvents';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -23,6 +24,8 @@ export interface PanelData {
   timeRange: TimeRange;
 }
 
+export type PanelEventHandler<T = any> = (payload?: T) => void;
+
 export interface PanelProps<T = any> {
   id: number; // ID within the current dashboard
   data: PanelData;
@@ -36,6 +39,7 @@ export interface PanelProps<T = any> {
   height: number;
   replaceVariables: InterpolateFunction;
   onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
+  subscribe<P = any>(event: AppEvent<P>, handler: PanelEventHandler<P>): () => void;
 }
 
 export interface PanelEditorProps<T = any> {

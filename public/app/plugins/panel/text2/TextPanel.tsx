@@ -10,10 +10,13 @@ import config from 'app/core/config';
 // Types
 import { TextOptions } from './types';
 import { PanelProps } from '@grafana/data';
+import { graphHover, GraphHoverPayload } from 'app/types/events';
 
 interface Props extends PanelProps<TextOptions> {}
+
 interface State {
   html: string;
+  hover: GraphHoverPayload | null;
 }
 
 export class TextPanel extends PureComponent<Props, State> {
@@ -22,6 +25,7 @@ export class TextPanel extends PureComponent<Props, State> {
 
     this.state = {
       html: this.processContent(props.options),
+      hover: null,
     };
   }
 
@@ -31,6 +35,12 @@ export class TextPanel extends PureComponent<Props, State> {
       this.setState({ html });
     }
   }, 150);
+
+  componentDidMount() {
+    this.props.subscribe(graphHover, (payload: GraphHoverPayload) => {
+      this.setState({ hover: payload });
+    });
+  }
 
   componentDidUpdate(prevProps: Props) {
     // Since any change could be referenced in a template variable,
@@ -78,8 +88,26 @@ export class TextPanel extends PureComponent<Props, State> {
   }
 
   render() {
-    const { html } = this.state;
+    const { html, hover } = this.state;
 
-    return <div className="markdown-html panel-text-content" dangerouslySetInnerHTML={{ __html: html }} />;
+    return (
+      <div>
+        <div className="markdown-html panel-text-content" dangerouslySetInnerHTML={{ __html: html }} />
+        {hover && (
+          <table>
+            <tbody>
+              <tr>
+                <th>x</th>
+                <th>y</th>
+              </tr>
+              <tr>
+                <td>{hover.pos.x}</td>
+                <td>{hover.pos.y}</td>
+              </tr>
+            </tbody>
+          </table>
+        )}
+      </div>
+    );
   }
 }

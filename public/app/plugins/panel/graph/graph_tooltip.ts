@@ -1,5 +1,4 @@
 import $ from 'jquery';
-import { appEvents } from 'app/core/core';
 import { CoreEvents } from 'app/types';
 
 export default function GraphTooltip(this: any, elem: any, dashboard: any, scope: any, getSeriesFn: any) {
@@ -156,7 +155,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
         plot.unhighlight();
       }
     }
-    appEvents.emit(CoreEvents.graphHoverClear);
+    dashboard.events.emit(CoreEvents.graphHoverClear);
   });
 
   elem.bind('plothover', (event: any, pos: { panelRelY: number; pageY: number }, item: any) => {
@@ -164,11 +163,11 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
 
     // broadcast to other graph panels that we are hovering!
     pos.panelRelY = (pos.pageY - elem.offset().top) / elem.height();
-    appEvents.emit(CoreEvents.graphHover, { pos: pos, panel: panel });
+    dashboard.events.emit(CoreEvents.graphHover, { pos: pos, panel: panel });
   });
 
   elem.bind('plotclick', (event: any, pos: any, item: any) => {
-    appEvents.emit(CoreEvents.graphClicked, { pos: pos, panel: panel, item: item });
+    dashboard.events.emit(CoreEvents.graphClicked, { pos: pos, panel: panel, item: item });
   });
 
   this.clear = (plot: { clearCrosshair: () => void; unhighlight: () => void }) => {

@@ -25,6 +25,8 @@ import {
   PanelEvents,
   PanelData,
   PanelPlugin,
+  PanelEventHandler,
+  AppEvent,
 } from '@grafana/data';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
@@ -52,6 +54,7 @@ export interface State {
 export class PanelChrome extends PureComponent<Props, State> {
   timeSrv: TimeSrv = getTimeSrv();
   querySubscription: Unsubscribable;
+  eventSubscriptions: Record<string, PanelEventHandler> = {};
 
   constructor(props: Props) {
     super(props);
@@ -96,6 +99,11 @@ export class PanelChrome extends PureComponent<Props, State> {
     if (this.querySubscription) {
       this.querySubscription.unsubscribe();
       this.querySubscription = null;
+    }
+
+    for (const key in this.eventSubscriptions) {
+      console.log('PanelChrome.unmount unsubscribing', key);
+      this.props.dashboard.events.off(key, this.eventSubscriptions[key]);
     }
   }
 
@@ -243,6 +251,20 @@ export class PanelChrome extends PureComponent<Props, State> {
     });
   };
 
+  subscribeToEvent = (event: AppEvent<any>, handler: PanelEventHandler) => {
+    if (this.eventSubscriptions[event.name]) {
+      throw Error('Event is already subscribed to');
+    }
+
+    this.eventSubscriptions[event.name] = handler;
+    this.props.dashboard.events.on(event, handler);
+
+    return () => {
+      delete this.eventSubscriptions[event.name];
+      this.props.dashboard.events.off(event, handler);
+    };
+  };
+
   renderPanel(width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
     const { renderCounter, data, isFirstLoad } = this.state;
@@ -290,6 +312,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             replaceVariables={this.replaceVariables}
             onOptionsChange={this.onOptionsChange}
             onChangeTimeRange={this.onChangeTimeRange}
+            subscribe={this.subscribeToEvent}
           />
         </div>
       </>

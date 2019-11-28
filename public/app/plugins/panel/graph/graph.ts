@@ -11,7 +11,7 @@ import './jquery.flot.events';
 import $ from 'jquery';
 import _ from 'lodash';
 import { tickStep } from 'app/core/utils/ticks';
-import { appEvents, coreModule, updateLegendValues } from 'app/core/core';
+import { coreModule, updateLegendValues } from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
 import { ThresholdManager } from './threshold_manager';
 import { TimeRegionManager } from './time_region_manager';
@@ -81,8 +81,8 @@ class GraphElement {
     this.ctrl.events.on(PanelEvents.render, this.onRender.bind(this));
 
     // global events
-    appEvents.on(CoreEvents.graphHover, this.onGraphHover.bind(this), scope);
-    appEvents.on(CoreEvents.graphHoverClear, this.onGraphHoverClear.bind(this), scope);
+    this.dashboard.on(CoreEvents.graphHover, this.onGraphHover.bind(this), scope);
+    this.dashboard.on(CoreEvents.graphHoverClear, this.onGraphHoverClear.bind(this), scope);
     this.elem.bind('plotselected', this.onPlotSelected.bind(this));
     this.elem.bind('plotclick', this.onPlotClick.bind(this));
 
