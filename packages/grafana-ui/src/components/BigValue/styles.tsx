@@ -45,11 +45,13 @@ export function shouldJustifyCenter(props: Props) {
 }
 
 export function calculateLayout(props: Props): LayoutResult {
-  const { width, height, sparkline, colorMode, theme, value, graphMode } = props;
+  const { width, height, sparkline, colorMode, theme, value, graphMode, alignmentFactors } = props;
   const useWideLayout = width / height > 2.5;
   const valueColor = getColorFromHexRgbOrName(value.color || 'green', theme.type);
   const justifyCenter = shouldJustifyCenter(props);
-  const panelPadding = height > 100 ? 16 : 8;
+  const panelPadding = height > 100 ? 12 : 8;
+  const titleToAlignTo = alignmentFactors ? alignmentFactors.title : value.title;
+  const valueToAlignTo = alignmentFactors ? alignmentFactors.text : value.text;
 
   let layoutType = LayoutType.Stacked;
   let chartHeight = 0;
@@ -59,24 +61,24 @@ export function calculateLayout(props: Props): LayoutResult {
   let valueFontSize = 14;
 
   if (useWideLayout) {
-    const maxTextWidth = width - panelPadding;
-    const maxTextHeight = height - panelPadding;
+    const maxTextWidth = width - panelPadding * 2;
+    const maxTextHeight = height - panelPadding * 2;
 
     // Detect auto wide layout type
     layoutType = height > 50 && !!sparkline ? LayoutType.Wide : LayoutType.WideNoChart;
 
     // Wide no chart mode
     if (layoutType === LayoutType.WideNoChart) {
-      if (value.title && value.title.length > 0) {
-        valueFontSize = calculateFontSize(value.text, maxTextWidth * 0.3, maxTextHeight, LINE_HEIGHT);
+      if (titleToAlignTo && titleToAlignTo.length > 0) {
+        valueFontSize = calculateFontSize(valueToAlignTo, maxTextWidth * 0.3, maxTextHeight, LINE_HEIGHT);
         // How big can we make the title and still have it fit
-        titleFontSize = calculateFontSize(value.title, maxTextWidth * 0.6, maxTextHeight, LINE_HEIGHT);
+        titleFontSize = calculateFontSize(titleToAlignTo, maxTextWidth * 0.6, maxTextHeight, LINE_HEIGHT);
         // make sure it's a bit smaller than valueFontSize
         titleFontSize = Math.min(valueFontSize * 0.7, titleFontSize);
         titleHeight = titleFontSize * LINE_HEIGHT;
       } else {
         // if no title wide
-        valueFontSize = calculateFontSize(value.text, maxTextWidth, maxTextHeight, LINE_HEIGHT);
+        valueFontSize = calculateFontSize(valueToAlignTo, maxTextWidth, maxTextHeight, LINE_HEIGHT);
       }
     } else {
       // wide with chart
@@ -88,16 +90,16 @@ export function calculateLayout(props: Props): LayoutResult {
         chartHeight += panelPadding * 2;
       }
 
-      if (value.title && value.title.length > 0) {
+      if (titleToAlignTo && titleToAlignTo.length > 0) {
         titleFontSize = calculateFontSize(value.title, maxTextWidth, height * 0.25, LINE_HEIGHT);
         titleHeight = titleFontSize * LINE_HEIGHT;
       }
 
-      valueFontSize = calculateFontSize(value.text, maxTextWidth, maxTextHeight - titleHeight, LINE_HEIGHT);
+      valueFontSize = calculateFontSize(titleToAlignTo, maxTextWidth, maxTextHeight - titleHeight, LINE_HEIGHT);
     }
   } else {
     const maxTextWidth = width - panelPadding * 2;
-    let maxTextHeight = height - panelPadding * 2;
+    let maxTextHeight = height - panelPadding;
 
     // Does a chart fit or exist?
     if (height < 100 || !sparkline) {
@@ -109,18 +111,23 @@ export function calculateLayout(props: Props): LayoutResult {
 
       if (graphMode === BigValueGraphMode.Area) {
         chartWidth = width;
-        chartHeight += panelPadding * 2;
+        chartHeight += panelPadding;
         // need to add more space back here for text, as in area mode we have no padding
-        maxTextHeight += panelPadding * 2;
+        maxTextHeight += panelPadding;
       }
     }
 
-    if (value.title && value.title.length > 0) {
-      titleFontSize = calculateFontSize(value.title, maxTextWidth, height * TITLE_HEIGHT_RATIO, LINE_HEIGHT);
+    if (titleToAlignTo && titleToAlignTo.length > 0) {
+      titleFontSize = calculateFontSize(titleToAlignTo, maxTextWidth, height * TITLE_HEIGHT_RATIO, LINE_HEIGHT);
       titleHeight = titleFontSize * LINE_HEIGHT;
     }
 
-    valueFontSize = calculateFontSize(value.text, maxTextWidth, maxTextHeight - chartHeight - titleHeight, LINE_HEIGHT);
+    valueFontSize = calculateFontSize(
+      valueToAlignTo,
+      maxTextWidth,
+      maxTextHeight - chartHeight - titleHeight,
+      LINE_HEIGHT
+    );
     // make title fontsize it's a bit smaller than valueFontSize
     titleFontSize = Math.min(valueFontSize * 0.7, titleFontSize);
   }
@@ -147,6 +154,7 @@ export function getTitleStyles(layout: LayoutResult) {
     fontSize: `${layout.titleFontSize}px`,
     textShadow: '#333 0px 0px 1px',
     color: '#EEE',
+    lineHeight: LINE_HEIGHT,
   };
 
   if (layout.theme.isLight) {

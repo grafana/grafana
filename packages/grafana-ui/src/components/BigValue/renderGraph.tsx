@@ -91,24 +91,28 @@ function getGraphGeom(colorMode: BigValueColorMode, graphMode: BigValueGraphMode
 }
 
 function renderLineGeom(layout: LayoutResult) {
+  const lineColor = '#F9F9F9';
+
   const lineStyle: any = {
-    stroke: '#CCC',
-    lineWidth: 2,
-    shadowBlur: 10,
-    shadowColor: '#444',
-    shadowOffsetY: 7,
+    lineWidth: 1,
+    shadowBlur: 4,
+    shadowColor: '#555',
+    shadowOffsetY: 4,
   };
-  return <Geom type="line" position="time*value" size={2} color="white" style={lineStyle} shape="smooth" />;
+
+  return <Geom type="line" position="time*value" size={2} color={lineColor} style={lineStyle} shape="smooth" />;
 }
 
 function renderAreaGeomOnColoredBackground(layout: LayoutResult) {
   const lineColor = tinycolor(layout.valueColor)
     .brighten(40)
     .toRgbString();
+
   const lineStyle: any = {
     stroke: lineColor,
     lineWidth: 2,
   };
+
   return (
     <>
       <Geom type="area" position="time*value" size={0} color="rgba(255,255,255,0.4)" style={lineStyle} shape="smooth" />
