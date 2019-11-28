@@ -81,7 +81,8 @@ function renderValueWithSmallerUnit(value: string, fontSize: number) {
   if (valueParts.length === 2) {
     return (
       <>
-        {valueParts[0]} <span style={{ fontSize: unitSize }}>{valueParts[1]}</span>
+        {valueParts[0]}
+        <span style={{ fontSize: unitSize, paddingLeft: '2px' }}>{valueParts[1]}</span>
       </>
     );
   }
