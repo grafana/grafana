@@ -86,7 +86,7 @@ export function calculateLayout(props: Props): LayoutResult {
       chartHeight = height * 0.5;
 
       if (titleToAlignTo && titleToAlignTo.length > 0) {
-        titleFontSize = calculateFontSize(value.title, maxTextWidth * 0.6, maxTextHeight * 0.4, LINE_HEIGHT);
+        titleFontSize = calculateFontSize(titleToAlignTo, maxTextWidth * 0.6, maxTextHeight * 0.4, LINE_HEIGHT);
         titleHeight = titleFontSize * LINE_HEIGHT;
       }
 
