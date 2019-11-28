@@ -17,7 +17,7 @@ import {
   isLokiLogsStream,
 } from './result_transformer';
 import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
-import LokiMetricFindQuery from './metric_find_query';
+import { processMetricFindQuery } from './metric_find_query';
 
 // Types
 import {
@@ -402,8 +402,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       return Promise.resolve([]);
     }
     const interpolated = this.templateSrv.replace(query, {}, this.interpolateQueryExpr);
-    const metricFindQuery = new LokiMetricFindQuery(this, interpolated);
-    return metricFindQuery.process();
+    return processMetricFindQuery(this, interpolated);
   }
 
   interpolateQueryExpr(value: any, variable: any) {

@@ -4,14 +4,20 @@ import { LokiOptions } from './types';
 import { createDatasourceSettings } from '../../../features/datasources/mocks';
 
 export function makeMockLokiDatasource(labelsAndValues: { [label: string]: string[] }): LokiDatasource {
+  const legacyLokiLabelsAndValuesEndpointRegex = /^\/api\/prom\/label\/(\w*)\/values/;
+  const legacyLokiLabelsEndpoint = '/api/prom/label';
+
+  const lokiLabelsAndValuesEndpointRegex = /^\/loki\/api\/v1\/label\/(\w*)\/values/;
+  const lokiLabelsEndpoint = '/loki/api/v1/label';
+
   const labels = Object.keys(labelsAndValues);
   return {
     metadataRequest: (url: string) => {
       let responseData;
-      if (url === '/api/prom/label') {
+      if (url === legacyLokiLabelsEndpoint || url === lokiLabelsEndpoint) {
         responseData = labels;
       } else {
-        const match = url.match(/^\/api\/prom\/label\/(\w*)\/values/);
+        const match = url.match(legacyLokiLabelsAndValuesEndpointRegex) || url.match(lokiLabelsAndValuesEndpointRegex);
         if (match) {
           responseData = labelsAndValues[match[1]];
         }
