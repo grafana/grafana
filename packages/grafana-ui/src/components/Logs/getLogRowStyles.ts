@@ -66,8 +66,8 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     logsRow: css`
       label: logs-row;
       display: table-row;
+      white-space: normal;
       cursor: pointer;
-      white-space: nowrap;
       &:hover {
         .${context} {
           visibility: visible;
@@ -131,6 +131,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       display: table-cell;
       white-space: nowrap;
       width: 12.5em;
+      padding-right: 1em;
     `,
     logsRowMessage: css`
       label: logs-row__message;
