@@ -1,7 +1,8 @@
+import { FormattedValue } from '../valueFormats';
+
 export type DisplayProcessor = (value: any) => DisplayValue;
 
-export interface DisplayValue {
-  text: string; // Show in the UI
+export interface DisplayValue extends FormattedValue {
   numeric: number; // Use isNaN to check if it is a real number
   color?: string; // color based on configs or Threshold
   title?: string;

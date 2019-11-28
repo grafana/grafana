@@ -2,13 +2,13 @@ import { getCategories } from './categories';
 import { DecimalCount } from '../types/displayValue';
 
 export interface FormattedValue {
-  prefix: string;
-  value: string;
-  suffix: string;
+  text: string;
+  prefix?: string;
+  suffix?: string;
 }
 
 export function formattedValueToString(val: FormattedValue): string {
-  return `${val.prefix}${val.value}${val.suffix}`;
+  return `${val.prefix ? val.prefix : ''}${val.text}${val.suffix ? val.suffix : ''}`;
 }
 
 export type ValueFormatter = (
