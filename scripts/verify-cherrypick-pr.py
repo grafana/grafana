@@ -28,17 +28,18 @@ def _get_label(repo):
 
 def _main():
     try:
-        token = sys.argv[1]
-    except IndexError:
-        sys.stderr.write('Please provide a valid GitHub access token\n')
+        version, pr_id, token = sys.argv[1:]
+    except ValueError:
+        sys.stderr.write(
+            'Please provide the version, the cherry-pick PR ID and a valid GitHub access token\n'
+        )
         sys.exit(1)
+    pr_id = int(pr_id)
 
     g = Github(token)
     repo = g.get_repo('grafana/grafana')
 
-    milestone_name = '6.5.0'
-
-    milestone = _get_milestone(repo, milestone_name)
+    milestone = _get_milestone(repo, version)
     label = _get_label(repo)
 
     pr_commits = {}
@@ -54,7 +55,7 @@ def _main():
 
     re_cherry = re.compile('cherry picked from commit ([0-9a-f]+)')
 
-    cherrypick_pr = repo.get_pull(20619)
+    cherrypick_pr = repo.get_pull(pr_id)
     num_commits = 0
     commits_lacking_source = []
     uncorrelated_commits = []
@@ -98,39 +99,3 @@ try:
     _main()
 except KeyboardInterrupt:
     sys.exit(0)
-
-'''
-with open("CHANGELOG.md") as f:
-  all_lines = f.read().splitlines()
-
-# Compile changes for this version in CHANGELOG.md
-lines = []
-state = None
-for i, l in enumerate(all_lines):
-    if state is None:
-        if l.startswith('# 6.5.0-beta1'):
-            print('Entering collecting state at line {}'.format(i + 1))
-            state = 'collecting'
-            continue
-
-    l = l.strip()
-
-    if not l:
-        continue
-
-    # We are in the collecting state
-    if l.startswith('# '):
-        print('Exiting collecting state at line {}, hit new version: {}'.format(i + 1, l))
-        break
-
-    if l.startswith('* '):
-        #print('Appending line {}'.format(l))
-        lines.append(l)
-    else:
-        print('Not appending line \'{}\' ({})'.format(l, l.startswith('*')))
-
-print("{} lines".format(len(lines)))
-
-for l in lines:
-    print(l + '\n')
-'''
