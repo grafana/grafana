@@ -1,9 +1,10 @@
 import Plain from 'slate-plain-serializer';
 import { Editor as SlateEditor } from 'slate';
-import LanguageProvider from '../language_provider';
-import { PrometheusDatasource } from '../datasource';
+import LanguageProvider from './language_provider';
+import { PrometheusDatasource } from './datasource';
 import { HistoryItem } from '@grafana/data';
-import { PromQuery } from '../types';
+import { PromQuery } from './types';
+import Mock = jest.Mock;
 
 describe('Language completion provider', () => {
   const datasource: PrometheusDatasource = ({
@@ -410,6 +411,29 @@ describe('Language completion provider', () => {
           label: 'Labels',
         },
       ]);
+    });
+
+    it('does not re-fetch default labels', async () => {
+      const datasource: PrometheusDatasource = ({
+        metadataRequest: jest.fn(() => ({ data: { data: [] as any[] } })),
+        getTimeRange: jest.fn(() => ({ start: 0, end: 1 })),
+      } as any) as PrometheusDatasource;
+
+      const instance = new LanguageProvider(datasource);
+      const value = Plain.deserialize('{}');
+      const ed = new SlateEditor({ value });
+      const valueWithSelection = ed.moveForward(1).value;
+      const args = {
+        text: '',
+        prefix: '',
+        wrapperClasses: ['context-labels'],
+        value: valueWithSelection,
+      };
+      await instance.provideCompletionItems(args);
+      // one call for 2 default labels job, instance
+      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(2);
+      await instance.provideCompletionItems(args);
+      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(2);
     });
   });
 });
