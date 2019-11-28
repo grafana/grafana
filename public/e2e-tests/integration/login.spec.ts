@@ -1,6 +1,6 @@
-import { LoginPage } from '../../src/pages/login/LoginPage';
+import { LoginPage } from '@grafana/e2e/src/pages/login/LoginPage';
 
-context('Login', () => {
+describe('Login', () => {
   it('should pass', () => {
     const loginPage = new LoginPage();
     loginPage.visit();

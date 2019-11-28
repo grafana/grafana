@@ -21,8 +21,7 @@
     "bundle": "rollup -c rollup.config.ts",
     "build": "grafana-toolkit package:build --scope=e2e",
     "open": "cypress open",
-    "start": "cypress run",
-    "e2e": "cypress run --spec ../../public/e2e-tests/login_spec.ts"
+    "start": "cypress run"
   },
   "devDependencies": {
     "@cypress/webpack-preprocessor": "4.1.1",
