@@ -96,7 +96,7 @@ func populateDB(t *testing.T) {
 	assert.Nil(t, err)
 
 	// get 2nd user's organisation
-	getOrgByIdQuery = &models.GetOrgByIdQuery{Id: users[2].OrgId}
+	getOrgByIdQuery = &models.GetOrgByIdQuery{Id: users[1].OrgId}
 	err = GetOrgById(getOrgByIdQuery)
 	assert.Nil(t, err)
 	org = getOrgByIdQuery.Result
