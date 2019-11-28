@@ -1335,6 +1335,10 @@ workflows:
               - postgres-integration-test
               - cache-server-test
             filters: *filter-not-release-or-master
+        - end-to-end-test:
+            requires:
+              - grafana-docker-pr
+            filters: *filter-not-release-or-master
         - store-build-artifacts:
             requires:
               - build-fast-package
