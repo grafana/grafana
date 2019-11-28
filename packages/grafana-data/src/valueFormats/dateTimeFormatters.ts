@@ -163,7 +163,7 @@ export function toHours(size: number, decimals?: DecimalCount, scaledDecimals?: 
   }
 }
 
-export function toDays(size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) {
+export function toDays(size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount): FormattedValue {
   if (size === null) {
     return { text: '' };
   }
@@ -305,19 +305,24 @@ export function toDurationInHoursMinutesSeconds(size: number): FormattedValue {
   return { text: strings.join(':') };
 }
 
-export function toTimeTicks(size: number, decimals: DecimalCount, scaledDecimals: DecimalCount) {
+export function toTimeTicks(size: number, decimals: DecimalCount, scaledDecimals: DecimalCount): FormattedValue {
   return toSeconds(size / 100, decimals, scaledDecimals);
 }
 
-export function toClockMilliseconds(size: number, decimals: DecimalCount) {
+export function toClockMilliseconds(size: number, decimals: DecimalCount): FormattedValue {
   return toClock(size, decimals);
 }
 
-export function toClockSeconds(size: number, decimals: DecimalCount) {
+export function toClockSeconds(size: number, decimals: DecimalCount): FormattedValue {
   return toClock(size * 1000, decimals);
 }
 
-export function dateTimeAsIso(value: number, decimals: DecimalCount, scaledDecimals: DecimalCount, isUtc?: boolean) {
+export function dateTimeAsIso(
+  value: number,
+  decimals: DecimalCount,
+  scaledDecimals: DecimalCount,
+  isUtc?: boolean
+): FormattedValue {
   const time = isUtc ? toUtc(value) : dateTime(value);
 
   if (dateTime().isSame(value, 'day')) {
@@ -326,7 +331,12 @@ export function dateTimeAsIso(value: number, decimals: DecimalCount, scaledDecim
   return { text: time.format('YYYY-MM-DD HH:mm:ss') };
 }
 
-export function dateTimeAsUS(value: number, decimals: DecimalCount, scaledDecimals: DecimalCount, isUtc?: boolean) {
+export function dateTimeAsUS(
+  value: number,
+  decimals: DecimalCount,
+  scaledDecimals: DecimalCount,
+  isUtc?: boolean
+): FormattedValue {
   const time = isUtc ? toUtc(value) : dateTime(value);
 
   if (dateTime().isSame(value, 'day')) {
@@ -335,7 +345,12 @@ export function dateTimeAsUS(value: number, decimals: DecimalCount, scaledDecima
   return { text: time.format('MM/DD/YYYY h:mm:ss a') };
 }
 
-export function dateTimeFromNow(value: number, decimals: DecimalCount, scaledDecimals: DecimalCount, isUtc?: boolean) {
+export function dateTimeFromNow(
+  value: number,
+  decimals: DecimalCount,
+  scaledDecimals: DecimalCount,
+  isUtc?: boolean
+): FormattedValue {
   const time = isUtc ? toUtc(value) : dateTime(value);
   return { text: time.fromNow() };
 }
