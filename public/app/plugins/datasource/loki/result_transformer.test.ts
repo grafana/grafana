@@ -44,7 +44,7 @@ describe('loki result transformer', () => {
   });
 
   afterEach(() => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
   });
 
   describe('legacyLogStreamToDataFrame', () => {
@@ -65,8 +65,27 @@ describe('loki result transformer', () => {
   describe('lokiLegacyStreamsToDataframes', () => {
     it('should enhance data frames', () => {
       jest.spyOn(ResultTransformer, 'enhanceDataFrame');
-      ResultTransformer.lokiLegacyStreamsToDataframes({ streams: legacyStreamResult }, { refId: 'A' }, 500, {});
+      const dataFrames = ResultTransformer.lokiLegacyStreamsToDataframes(
+        { streams: legacyStreamResult },
+        { refId: 'A' },
+        500,
+        {
+          derivedFields: [
+            {
+              matcherRegex: 'tracer=(w+)',
+              name: 'test',
+              url: 'example.com',
+            },
+          ],
+        }
+      );
+
       expect(ResultTransformer.enhanceDataFrame).toBeCalled();
+      dataFrames.forEach(frame => {
+        expect(
+          frame.fields.filter(field => field.name === 'test' && field.type === 'string').length
+        ).toBeGreaterThanOrEqual(1);
+      });
     });
   });
 
@@ -88,8 +107,22 @@ describe('loki result transformer', () => {
   describe('lokiStreamsToDataframes', () => {
     it('should enhance data frames', () => {
       jest.spyOn(ResultTransformer, 'enhanceDataFrame');
-      ResultTransformer.lokiStreamsToDataframes(streamResult, { refId: 'A' }, 500, {});
+      const dataFrames = ResultTransformer.lokiStreamsToDataframes(streamResult, { refId: 'B' }, 500, {
+        derivedFields: [
+          {
+            matcherRegex: 'trace=(w+)',
+            name: 'test',
+            url: 'example.com',
+          },
+        ],
+      });
+
       expect(ResultTransformer.enhanceDataFrame).toBeCalled();
+      dataFrames.forEach(frame => {
+        expect(
+          frame.fields.filter(field => field.name === 'test' && field.type === 'string').length
+        ).toBeGreaterThanOrEqual(1);
+      });
     });
   });
 

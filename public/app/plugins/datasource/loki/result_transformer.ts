@@ -1,4 +1,4 @@
-import _, { fromPairs } from 'lodash';
+import _ from 'lodash';
 
 import {
   parseLabels,
@@ -369,40 +369,40 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
   }
 
   const derivedFields = config.derivedFields ?? [];
-
-  if (derivedFields.length) {
-    const fields = fromPairs(
-      derivedFields.map(field => {
-        const config: FieldConfig = {};
-        if (field.url) {
-          config.links = [
-            {
-              url: field.url,
-              title: '',
-            },
-          ];
-        }
-        const dataFrameField = {
-          name: field.name,
-          type: FieldType.string,
-          config,
-          values: new ArrayVector<string>([]),
-        };
-
-        return [field.name, dataFrameField];
-      })
-    );
-
-    const view = new DataFrameView(dataFrame);
-    view.forEachRow((row: { line: string }) => {
-      for (const field of derivedFields) {
-        const logMatch = row.line.match(field.matcherRegex);
-        fields[field.name].values.add(logMatch && logMatch[1]);
-      }
-    });
-
-    dataFrame.fields = [...dataFrame.fields, ...Object.values(fields)];
+  if (!derivedFields.length) {
+    return;
   }
+
+  const fields = derivedFields.reduce((acc, field) => {
+    const config: FieldConfig = {};
+    if (field.url) {
+      config.links = [
+        {
+          url: field.url,
+          title: '',
+        },
+      ];
+    }
+    const dataFrameField = {
+      name: field.name,
+      type: FieldType.string,
+      config,
+      values: new ArrayVector<string>([]),
+    };
+
+    acc[field.name] = dataFrameField;
+    return acc;
+  }, {} as Record<string, any>);
+
+  const view = new DataFrameView(dataFrame);
+  view.forEachRow((row: { line: string }) => {
+    for (const field of derivedFields) {
+      const logMatch = row.line.match(field.matcherRegex);
+      fields[field.name].values.add(logMatch && logMatch[1]);
+    }
+  });
+
+  dataFrame.fields = [...dataFrame.fields, ...Object.values(fields)];
 };
 
 export function rangeQueryResponseToTimeSeries(
