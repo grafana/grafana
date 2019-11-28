@@ -351,12 +351,13 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Panel Title",
+      "transparent": true,
       "type": "stat"
     },
     {
       "datasource": null,
       "gridPos": {
-        "h": 17,
+        "h": 14,
         "w": 4,
         "x": 0,
         "y": 17
@@ -408,6 +409,95 @@
       "pluginVersion": "6.6.0-pre",
       "targets": [
         {
+          "labels": "",
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "B",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "C",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "D",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "E",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "F",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "G",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Panel Title",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "gridPos": {
+        "h": 14,
+        "w": 6,
+        "x": 4,
+        "y": 17
+      },
+      "id": 13,
+      "interval": "10m",
+      "options": {
+        "colorMode": "background",
+        "fieldOptions": {
+          "calcs": ["mean"],
+          "defaults": {
+            "mappings": [],
+            "max": 100,
+            "min": 0,
+            "thresholds": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 10
+              },
+              {
+                "color": "purple",
+                "value": 20
+              },
+              {
+                "color": "orange",
+                "value": 40
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ],
+            "unit": "percent"
+          },
+          "override": {},
+          "values": false
+        },
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "sparkline": {
+          "show": true
+        }
+      },
+      "pluginVersion": "6.6.0-pre",
+      "targets": [
+        {
           "refId": "A",
           "scenarioId": "random_walk"
         },
@@ -446,7 +536,7 @@
       "gridPos": {
         "h": 10,
         "w": 4,
-        "x": 4,
+        "x": 10,
         "y": 17
       },
       "id": 8,
@@ -528,6 +618,94 @@
       "timeShift": null,
       "title": "Panel Title",
       "type": "stat"
+    },
+    {
+      "datasource": null,
+      "gridPos": {
+        "h": 8,
+        "w": 9,
+        "x": 14,
+        "y": 17
+      },
+      "id": 12,
+      "interval": "10m",
+      "options": {
+        "colorMode": "background",
+        "fieldOptions": {
+          "calcs": ["mean"],
+          "defaults": {
+            "mappings": [],
+            "max": 100,
+            "min": 0,
+            "thresholds": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 10
+              },
+              {
+                "color": "purple",
+                "value": 20
+              },
+              {
+                "color": "orange",
+                "value": 40
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ],
+            "unit": "percent"
+          },
+          "override": {},
+          "values": false
+        },
+        "graphMode": "line",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "sparkline": {
+          "show": true
+        }
+      },
+      "pluginVersion": "6.6.0-pre",
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "B",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "C",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "D",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "E",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "F",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "G",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Panel Title",
+      "type": "stat"
     }
   ],
   "schemaVersion": 21,
@@ -546,5 +724,5 @@
   "timezone": "",
   "title": "Panel Tests - Stat",
   "uid": "jWWHNJpWz",
-  "version": 10
+  "version": 17
 }

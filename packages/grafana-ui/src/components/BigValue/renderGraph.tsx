@@ -6,7 +6,7 @@ import { LayoutResult, LayoutType } from './styles';
 import { BigValueSparkline, BigValueColorMode, BigValueGraphMode } from './BigValue';
 
 export function renderGraph(layout: LayoutResult, sparkline?: BigValueSparkline) {
-  if (!sparkline) {
+  if (!sparkline || layout.type === LayoutType.WideNoChart || layout.type === LayoutType.StackedNoChart) {
     return null;
   }
 
@@ -20,37 +20,52 @@ export function renderGraph(layout: LayoutResult, sparkline?: BigValueSparkline)
     },
   };
 
-  const chartStyles: CSSProperties = {};
-  const chartTopMargin = 8;
+  const chartStyles: CSSProperties = {
+    position: 'absolute',
+  };
 
   // default to line graph
   const geomRender = getGraphGeom(layout.colorMode, layout.graphMode);
-  switch (layout.type) {
-    case LayoutType.Wide:
-      chartStyles.width = `${layout.chartWidth}px`;
-      chartStyles.height = `${layout.chartHeight - chartTopMargin}px`;
-      break;
-    case LayoutType.Stacked:
-      chartStyles.position = 'absolute';
-      chartStyles.bottom = '8px';
-      break;
-    case LayoutType.WideNoChart:
-    case LayoutType.StackedNoChart:
-      return null;
-  }
 
-  if (layout.chartWidth === layout.width) {
-    chartStyles.position = 'absolute';
-    chartStyles.bottom = 0;
-    chartStyles.right = 0;
-    chartStyles.left = 0;
-    chartStyles.right = 0;
-    chartStyles.top = 'unset';
+  if (layout.type === LayoutType.Wide) {
+    if (layout.graphMode === BigValueGraphMode.Line) {
+      // need some top padding
+      layout.chartHeight -= 8;
+      chartStyles.width = `${layout.chartWidth}px`;
+      chartStyles.height = `${layout.chartHeight}px`;
+      chartStyles.bottom = '8px';
+      chartStyles.right = '8px';
+    } else {
+      // Area chart
+      chartStyles.width = `${layout.chartWidth}px`;
+      chartStyles.height = `${layout.chartHeight}px`;
+      chartStyles.bottom = 0;
+      chartStyles.right = 0;
+      chartStyles.top = 0;
+    }
+  } else {
+    // Stacked mode
+    if (layout.graphMode === BigValueGraphMode.Line) {
+      // need some top padding
+      layout.chartHeight -= 8;
+      chartStyles.width = `${layout.chartWidth}px`;
+      chartStyles.height = `${layout.chartHeight}px`;
+      chartStyles.bottom = '8px';
+    } else {
+      // need some top padding
+      layout.chartHeight -= 8;
+      chartStyles.width = `${layout.chartWidth}px`;
+      chartStyles.height = `${layout.chartHeight}px`;
+      chartStyles.bottom = 0;
+      chartStyles.right = 0;
+      chartStyles.left = 0;
+      chartStyles.right = 0;
+    }
   }
 
   return (
     <Chart
-      height={layout.chartHeight - chartTopMargin}
+      height={layout.chartHeight}
       width={layout.chartWidth}
       data={data}
       animate={false}

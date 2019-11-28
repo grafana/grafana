@@ -10,7 +10,6 @@ import { calculateFontSize } from '../../utils/measureText';
 import { BigValueColorMode, BigValueGraphMode, Props, BigValueJustifyMode } from './BigValue';
 
 const LINE_HEIGHT = 1.2;
-const PANEL_PADDING = 16;
 const CHART_HEIGHT_RATIO = 0.25;
 const TITLE_HEIGHT_RATIO = 0.15;
 
@@ -26,6 +25,7 @@ export interface LayoutResult {
   graphMode: BigValueGraphMode;
   theme: GrafanaTheme;
   valueColor: string;
+  panelPadding: number;
   justifyCenter: boolean;
 }
 
@@ -46,9 +46,10 @@ export function shouldJustifyCenter(props: Props) {
 
 export function calculateLayout(props: Props): LayoutResult {
   const { width, height, sparkline, colorMode, theme, value, graphMode } = props;
-  const useWideLayout = width / height > 2.8;
+  const useWideLayout = width / height > 2.5;
   const valueColor = getColorFromHexRgbOrName(value.color || 'green', theme.type);
   const justifyCenter = shouldJustifyCenter(props);
+  const panelPadding = height > 100 ? 16 : 8;
 
   let layoutType = LayoutType.Stacked;
   let chartHeight = 0;
@@ -58,11 +59,11 @@ export function calculateLayout(props: Props): LayoutResult {
   let valueFontSize = 14;
 
   if (useWideLayout) {
-    const maxTextWidth = width - PANEL_PADDING;
-    const maxTextHeight = height - PANEL_PADDING;
+    const maxTextWidth = width - panelPadding;
+    const maxTextHeight = height - panelPadding;
 
     // Detect auto wide layout type
-    layoutType = height > 80 && !!sparkline ? LayoutType.Wide : LayoutType.WideNoChart;
+    layoutType = height > 50 && !!sparkline ? LayoutType.Wide : LayoutType.WideNoChart;
 
     // Wide no chart mode
     if (layoutType === LayoutType.WideNoChart) {
@@ -72,17 +73,17 @@ export function calculateLayout(props: Props): LayoutResult {
         // How big can we make the title and still have it fit
         titleFontSize = calculateFontSize(value.title, maxTextWidth * 0.6, maxTextHeight, LINE_HEIGHT);
         // make sure it's a bit smaller than valueFontSize
-        titleFontSize = Math.min(valueFontSize * 0.7, valueFontSize);
+        titleFontSize = Math.min(valueFontSize * 0.7, titleFontSize);
         titleHeight = titleFontSize * LINE_HEIGHT;
       }
     } else {
       // wide with chart
-      chartHeight = height - PANEL_PADDING * 2;
-      chartWidth = width / 2 - PANEL_PADDING * 2;
+      chartHeight = height - panelPadding * 2;
+      chartWidth = width / 2 - panelPadding * 2;
 
       if (graphMode === BigValueGraphMode.Area) {
-        chartWidth = width;
-        chartHeight += PANEL_PADDING;
+        chartWidth = width / 2;
+        chartHeight += panelPadding * 2;
       }
 
       if (value.title && value.title.length > 0) {
@@ -93,8 +94,8 @@ export function calculateLayout(props: Props): LayoutResult {
       valueFontSize = calculateFontSize(value.text, maxTextWidth, maxTextHeight - titleHeight, LINE_HEIGHT);
     }
   } else {
-    const maxTextWidth = width - PANEL_PADDING * 2;
-    const maxTextHeight = height - PANEL_PADDING * 2;
+    const maxTextWidth = width - panelPadding * 2;
+    let maxTextHeight = height - panelPadding * 2;
 
     // Does a chart fit or exist?
     if (height < 100 || !sparkline) {
@@ -102,11 +103,13 @@ export function calculateLayout(props: Props): LayoutResult {
     } else {
       // we have chart
       chartHeight = height * CHART_HEIGHT_RATIO;
-      chartWidth = width - PANEL_PADDING * 2;
+      chartWidth = width - panelPadding * 2;
 
       if (graphMode === BigValueGraphMode.Area) {
         chartWidth = width;
-        chartHeight += PANEL_PADDING;
+        chartHeight += panelPadding * 2;
+        // need to add more space back here for text, as in area mode we have no padding
+        maxTextHeight += panelPadding * 2;
       }
     }
 
@@ -116,6 +119,8 @@ export function calculateLayout(props: Props): LayoutResult {
     }
 
     valueFontSize = calculateFontSize(value.text, maxTextWidth, maxTextHeight - chartHeight - titleHeight, LINE_HEIGHT);
+    // make title fontsize it's a bit smaller than valueFontSize
+    titleFontSize = Math.min(valueFontSize * 0.7, titleFontSize);
   }
 
   return {
@@ -131,6 +136,7 @@ export function calculateLayout(props: Props): LayoutResult {
     theme,
     valueColor,
     justifyCenter,
+    panelPadding,
   };
 }
 
@@ -202,7 +208,7 @@ export function getPanelStyles(layout: LayoutResult) {
   const panelStyles: CSSProperties = {
     width: `${layout.width}px`,
     height: `${layout.height}px`,
-    padding: `${PANEL_PADDING}px`,
+    padding: `${layout.panelPadding}px`,
     borderRadius: '3px',
     position: 'relative',
     display: 'flex',
