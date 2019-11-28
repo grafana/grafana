@@ -82,15 +82,15 @@ export function calculateLayout(props: Props): LayoutResult {
       }
     } else {
       // wide with chart
-      chartWidth = width / 2;
-      chartHeight = height;
+      chartWidth = width;
+      chartHeight = height * 0.5;
 
       if (titleToAlignTo && titleToAlignTo.length > 0) {
-        titleFontSize = calculateFontSize(value.title, maxTextWidth, height * 0.25, LINE_HEIGHT);
+        titleFontSize = calculateFontSize(value.title, maxTextWidth * 0.6, maxTextHeight * 0.4, LINE_HEIGHT);
         titleHeight = titleFontSize * LINE_HEIGHT;
       }
 
-      valueFontSize = calculateFontSize(titleToAlignTo, maxTextWidth, maxTextHeight - titleHeight, LINE_HEIGHT);
+      valueFontSize = calculateFontSize(valueToAlignTo, maxTextWidth * 0.4, maxTextHeight * 0.5, LINE_HEIGHT);
     }
   } else {
     const maxTextWidth = width - panelPadding * 2;
@@ -175,7 +175,8 @@ export function getValueAndTitleContainerStyles(layout: LayoutResult): CSSProper
 
   switch (layout.type) {
     case LayoutType.Wide:
-      styles.flexDirection = 'column';
+      styles.flexDirection = 'row';
+      styles.justifyContent = 'space-between';
       styles.flexGrow = 1;
       break;
     case LayoutType.WideNoChart:
@@ -197,6 +198,7 @@ export function getValueAndTitleContainerStyles(layout: LayoutResult): CSSProper
   if (layout.justifyCenter) {
     styles.alignItems = 'center';
     styles.justifyContent = 'center';
+    styles.flexGrow = 1;
   }
 
   return styles;
@@ -240,7 +242,6 @@ export function getPanelStyles(layout: LayoutResult) {
       break;
     case LayoutType.Wide:
       panelStyles.flexDirection = 'row';
-      panelStyles.alignItems = 'center';
       panelStyles.justifyContent = 'space-between';
       break;
     case LayoutType.WideNoChart:

@@ -31,7 +31,6 @@ export function renderGraph(layout: LayoutResult, sparkline?: BigValueSparkline)
     // Area chart
     chartStyles.bottom = 0;
     chartStyles.right = 0;
-    chartStyles.top = 0;
   } else {
     // need some top padding
     chartStyles.width = `${layout.chartWidth}px`;
