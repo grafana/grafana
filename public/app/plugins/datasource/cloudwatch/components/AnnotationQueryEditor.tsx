@@ -1,5 +1,6 @@
 import React, { ChangeEvent } from 'react';
 import { Switch } from '@grafana/ui';
+import { PanelData } from '@grafana/data';
 import { CloudWatchQuery, AnnotationQuery } from '../types';
 import CloudWatchDatasource from '../datasource';
 import { QueryField, QueryFieldsEditor } from './';
@@ -8,6 +9,7 @@ export type Props = {
   query: AnnotationQuery;
   datasource: CloudWatchDatasource;
   onChange: (value: AnnotationQuery) => void;
+  data?: PanelData;
 };
 
 export function AnnotationQueryEditor(props: React.PropsWithChildren<Props>) {
