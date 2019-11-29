@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { SelectableValue, PanelData } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { Segment, SegmentAsync } from '@grafana/ui';
-import { CloudWatchQuery } from '../types';
+import { CloudWatchQuery, SelectableStrings } from '../types';
 import CloudWatchDatasource from '../datasource';
-import { SelectableStrings } from '../types';
 import { Stats, Dimensions, QueryInlineField } from './';
 
 export type Props = {
   query: CloudWatchQuery;
   datasource: CloudWatchDatasource;
-  onRunQuery: () => void;
+  onRunQuery?: () => void;
   onChange: (value: CloudWatchQuery) => void;
-  data?: PanelData;
   hideWilcard?: boolean;
 };
 
@@ -26,9 +24,8 @@ interface State {
 export function QueryFieldsEditor({
   query,
   datasource,
-  onRunQuery,
   onChange,
-  data,
+  onRunQuery = () => {},
   hideWilcard = false,
 }: React.PropsWithChildren<Props>) {
   const [state, setState] = useState<State>({

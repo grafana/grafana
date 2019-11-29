@@ -7,18 +7,6 @@ export class CloudWatchAnnotationsQueryCtrl {
 
   /** @ngInject */
   constructor() {
-    // this.annotation = {
-    //   namespace: '',
-    //   metricName: '',
-    //   expression: '',
-    //   dimensions: {},
-    //   region: 'default',
-    //   id: '',
-    //   alias: '',
-    //   statistics: ['Average'],
-    //   matchExact: true,
-    //   ...this.annotation,
-    // };
     _.defaultsDeep(this.annotation, {
       namespace: '',
       metricName: '',
@@ -29,6 +17,9 @@ export class CloudWatchAnnotationsQueryCtrl {
       alias: '',
       statistics: ['Average'],
       matchExact: true,
+      prefixMatching: false,
+      actionPrefix: '',
+      alarmNamePrefix: '',
     });
 
     this.onChange = this.onChange.bind(this);
