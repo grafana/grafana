@@ -39,6 +39,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'scientific notation', id: 'sci', fn: sci },
       { name: 'locale format', id: 'locale', fn: locale },
       { name: 'Pixels', id: 'pixel', fn: toFixedUnit('px') },
+      { name: 'Baud', id: 'baud', fn: decimalSIPrefix('Bd') },
     ],
   },
   {

@@ -363,6 +363,10 @@
             {
               "text": "locale format",
               "value": "locale"
+            },
+            {
+              "text": "Baud",
+              "value": "Bd"  
             }
           ],
           "text": "none"
