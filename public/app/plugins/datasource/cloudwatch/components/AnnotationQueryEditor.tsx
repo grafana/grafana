@@ -20,7 +20,6 @@ export function AnnotationQueryEditor(props: React.PropsWithChildren<Props>) {
         {...props}
         onChange={(editorQuery: CloudWatchQuery) => onChange({ ...query, ...editorQuery })}
         hideWilcard
-        onRunQuery={() => {}}
       ></QueryFieldsEditor>
       <div className="gf-form-inline">
         <Switch
