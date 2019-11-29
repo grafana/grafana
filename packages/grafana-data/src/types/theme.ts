@@ -241,6 +241,14 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     formCheckboxBgChecked: string;
     formCheckboxBgCheckedHover: string;
     formCheckboxCheckmark: string;
+    formRadioButtonText: string;
+    formRadioButtonTextHover: string;
+    formRadioButtonBg: string;
+    formRadioButtonBgDisabled: string;
+    formRadioButtonBgActive: string;
+    formRadioButtonBorder: string;
+    formRadioButtonBorderHover: string;
+    formRadioButtonBorderActive: string;
   };
   shadow: {
     pageHeader: string;

@@ -103,6 +103,15 @@ const darkTheme: GrafanaTheme = {
     formCheckboxBgChecked: basicColors.blueLight,
     formCheckboxBgCheckedHover: basicColors.blueBase,
     formCheckboxCheckmark: basicColors.gray25,
+
+    formRadioButtonText: basicColors.gray70,
+    formRadioButtonTextHover: basicColors.blueLight,
+    formRadioButtonBg: basicColors.gray10,
+    formRadioButtonBgDisabled: basicColors.gray15,
+    formRadioButtonBgActive: basicColors.gray05,
+    formRadioButtonBorder: basicColors.gray25,
+    formRadioButtonBorderHover: basicColors.gray33,
+    formRadioButtonBorderActive: basicColors.blueLight,
   },
   background: {
     dropdown: basicColors.dark3,
