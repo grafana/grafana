@@ -1,5 +1,9 @@
 # 6.6.0 (unreleased)
 
+### Features / Enhancements
+
+* **Graphite**: Add Metrictank dashboard to Graphite datasource
+
 # 6.5.1 (2019-11-28)
 
 ### Bug Fixes
