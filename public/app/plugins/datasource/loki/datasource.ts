@@ -5,7 +5,7 @@ import { map, filter, catchError, switchMap, mergeMap } from 'rxjs/operators';
 
 // Services & Utils
 import { dateMath } from '@grafana/data';
-import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
+import { addLabelToSelector, keepSelectorFilters } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import { BackendSrv, DatasourceRequestOptions } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
@@ -55,7 +55,7 @@ import { ExploreMode } from 'app/types';
 import { LegacyTarget, LiveStreams } from './live_streams';
 import LanguageProvider from './language_provider';
 
-type RangeQueryOptions = Pick<DataQueryRequest<LokiQuery>, 'range' | 'intervalMs' | 'maxDataPoints' | 'reverse'>;
+export type RangeQueryOptions = Pick<DataQueryRequest<LokiQuery>, 'range' | 'intervalMs' | 'maxDataPoints' | 'reverse'>;
 export const DEFAULT_MAX_LINES = 1000;
 const LEGACY_QUERY_ENDPOINT = '/api/prom/query';
 const RANGE_QUERY_ENDPOINT = '/loki/api/v1/query_range';
@@ -267,7 +267,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       const startNs = this.getTime(options.range.from, false);
       const endNs = this.getTime(options.range.to, true);
       const rangeMs = Math.ceil((endNs - startNs) / 1e6);
-      const step = this.adjustInterval(options.intervalMs, rangeMs) / 1000;
+      const step = Math.ceil(this.adjustInterval(options.intervalMs, rangeMs) / 1000);
       const alignedTimes = {
         start: startNs - (startNs % 1e9),
         end: endNs + (1e9 - (endNs % 1e9)),
@@ -413,13 +413,18 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   modifyQuery(query: LokiQuery, action: any): LokiQuery {
     const parsed = parseQuery(query.expr || '');
     let { query: selector } = parsed;
+    let selectorLabels, selectorFilters;
     switch (action.type) {
       case 'ADD_FILTER': {
-        selector = addLabelToSelector(selector, action.key, action.value);
+        selectorLabels = addLabelToSelector(selector, action.key, action.value);
+        selectorFilters = keepSelectorFilters(selector);
+        selector = `${selectorLabels} ${selectorFilters}`;
         break;
       }
       case 'ADD_FILTER_OUT': {
-        selector = addLabelToSelector(selector, action.key, action.value, '!=');
+        selectorLabels = addLabelToSelector(selector, action.key, action.value, '!=');
+        selectorFilters = keepSelectorFilters(selector);
+        selector = `${selectorLabels} ${selectorFilters}`;
         break;
       }
       default:

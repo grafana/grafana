@@ -129,13 +129,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
   // If 50ms without a response emit a loading state
   // mapTo will translate the timer event into state.panelData (which has state set to loading)
   // takeUntil will cancel the timer emit when first response packet is received on the dataObservable
-  return merge(
-    timer(200).pipe(
-      mapTo(state.panelData),
-      takeUntil(dataObservable)
-    ),
-    dataObservable
-  );
+  return merge(timer(200).pipe(mapTo(state.panelData), takeUntil(dataObservable)), dataObservable);
 }
 
 function cancelNetworkRequestsOnUnsubscribe(req: DataQueryRequest) {

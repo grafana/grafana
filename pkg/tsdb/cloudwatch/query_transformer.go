@@ -26,19 +26,18 @@ func (e *CloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQ
 			}
 
 			query := &cloudWatchQuery{
-				Id:             id,
-				RefId:          requestQuery.RefId,
-				Region:         requestQuery.Region,
-				Namespace:      requestQuery.Namespace,
-				MetricName:     requestQuery.MetricName,
-				Dimensions:     requestQuery.Dimensions,
-				Stats:          *stat,
-				Period:         requestQuery.Period,
-				Alias:          requestQuery.Alias,
-				Expression:     requestQuery.Expression,
-				ReturnData:     requestQuery.ReturnData,
-				HighResolution: requestQuery.HighResolution,
-				MatchExact:     requestQuery.MatchExact,
+				Id:         id,
+				RefId:      requestQuery.RefId,
+				Region:     requestQuery.Region,
+				Namespace:  requestQuery.Namespace,
+				MetricName: requestQuery.MetricName,
+				Dimensions: requestQuery.Dimensions,
+				Stats:      *stat,
+				Period:     requestQuery.Period,
+				Alias:      requestQuery.Alias,
+				Expression: requestQuery.Expression,
+				ReturnData: requestQuery.ReturnData,
+				MatchExact: requestQuery.MatchExact,
 			}
 
 			if _, ok := cloudwatchQueries[id]; ok {

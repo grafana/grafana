@@ -114,7 +114,10 @@ describe('AzureMonitorDatasource', () => {
           series: [
             {
               name: 'Percentage CPU',
-              points: [[2.2075, 1558278660000], [2.29, 1558278720000]],
+              points: [
+                [2.2075, 1558278660000],
+                [2.29, 1558278720000],
+              ],
             },
           ],
           tables: null,

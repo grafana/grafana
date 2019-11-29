@@ -25,7 +25,7 @@ import {
 import {
   TableCellBuilder,
   ColumnStyle,
-  getCellBuilder,
+  getFieldCellBuilder,
   TableCellBuilderOptions,
   simpleCellBuilder,
 } from './TableCellBuilder';
@@ -153,7 +153,7 @@ export class Table extends Component<Props, State> {
       return {
         header: title,
         width: columnWidth,
-        builder: getCellBuilder(col.config || {}, style, this.props),
+        builder: getFieldCellBuilder(col, style, this.props),
       };
     });
   }

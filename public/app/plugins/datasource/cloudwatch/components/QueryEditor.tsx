@@ -51,12 +51,16 @@ export class QueryEditor extends PureComponent<Props, State> {
       query.region = 'default';
     }
 
-    if (!query.statistics || !query.statistics.length) {
-      query.statistics = ['Average'];
+    if (!query.id) {
+      query.id = '';
     }
 
-    if (!query.hasOwnProperty('highResolution')) {
-      query.highResolution = false;
+    if (!query.alias) {
+      query.alias = '';
+    }
+
+    if (!query.statistics || !query.statistics.length) {
+      query.statistics = ['Average'];
     }
 
     if (!query.hasOwnProperty('matchExact')) {
@@ -155,6 +159,7 @@ export class QueryEditor extends PureComponent<Props, State> {
                   const { [newKey]: value, ...newDimensions } = query.dimensions;
                   return datasource
                     .getDimensionValues(query.region, query.namespace, query.metricName, newKey, newDimensions)
+                    .then(values => (values.length ? [{ value: '*', text: '*', label: '*' }, ...values] : values))
                     .then(this.appendTemplateVariables);
                 }}
               />
@@ -198,11 +203,7 @@ export class QueryEditor extends PureComponent<Props, State> {
         )}
         <div className="gf-form-inline">
           <div className="gf-form">
-            <QueryField
-              className="query-keyword"
-              label="Min Period"
-              tooltip="Minimum interval between points in seconds"
-            >
+            <QueryField className="query-keyword" label="Period" tooltip="Minimum interval between points in seconds">
               <Input
                 className="gf-form-input width-8"
                 value={query.period || ''}
@@ -220,12 +221,6 @@ export class QueryEditor extends PureComponent<Props, State> {
             >
               <Alias value={query.alias} onChange={(value: string) => this.onChange({ ...query, alias: value })} />
             </QueryField>
-            <Switch
-              label="HighRes"
-              labelClass="query-keyword"
-              checked={query.highResolution}
-              onChange={() => this.onChange({ ...query, highResolution: !query.highResolution })}
-            />
             <Switch
               label="Match Exact"
               labelClass="query-keyword"

@@ -124,7 +124,6 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
           'gf-form-input',
           css`
             position: relative;
-            height: auto;
           `
         )}
       >

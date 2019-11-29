@@ -139,7 +139,10 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
     this.panelCtrl.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on(PanelEvents.dataError, this.onDataError.bind(this), $scope);
-    this.resultFormats = [{ text: 'Time series', value: 'time_series' }, { text: 'Table', value: 'table' }];
+    this.resultFormats = [
+      { text: 'Time series', value: 'time_series' },
+      { text: 'Table', value: 'table' },
+    ];
     this.getSubscriptions();
     if (this.target.queryType === 'Azure Log Analytics') {
       this.getWorkspaces();

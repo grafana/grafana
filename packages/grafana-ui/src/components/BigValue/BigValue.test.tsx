@@ -1,6 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { BigValue, Props, SingleStatDisplayMode } from './BigValue';
+import { BigValue, Props, BigValueDisplayMode } from './BigValue';
 import { getTheme } from '../../themes/index';
 
 jest.mock('jquery', () => ({
@@ -11,7 +11,7 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     height: 300,
     width: 300,
-    displayMode: SingleStatDisplayMode.Classic,
+    displayMode: BigValueDisplayMode.Classic,
     value: {
       text: '25',
       numeric: 25,

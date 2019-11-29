@@ -158,9 +158,4 @@ const mapDispatchToProps = {
   clearUserError,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(LdapUserPage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(LdapUserPage));

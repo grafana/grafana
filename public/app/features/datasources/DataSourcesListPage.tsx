@@ -116,9 +116,4 @@ const mapDispatchToProps = {
   setDataSourcesLayoutMode,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(DataSourcesListPage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DataSourcesListPage));
