@@ -1,4 +1,4 @@
-import { Threshold } from './threshold';
+import { Scale } from './scale';
 import { ValueMapping } from './valueMapping';
 import { QueryResultBase, Labels, NullValueMode } from './data';
 import { DisplayProcessor } from './displayValue';
@@ -32,8 +32,8 @@ export interface FieldConfig {
   // Convert input values into a display string
   mappings?: ValueMapping[];
 
-  // Must be sorted by 'value', first value is always -Infinity
-  thresholds?: Threshold[];
+  // Scale
+  scale?: Scale;
 
   // Used when reducing field values
   nullValueMode?: NullValueMode;

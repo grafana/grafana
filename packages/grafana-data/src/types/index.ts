@@ -5,7 +5,7 @@ export * from './logs';
 export * from './navModel';
 export * from './select';
 export * from './time';
-export * from './threshold';
+export * from './scale';
 export * from './utils';
 export * from './valueMapping';
 export * from './displayValue';
@@ -17,6 +17,7 @@ export * from './app';
 export * from './datasource';
 export * from './panel';
 export * from './plugin';
+export * from './scale';
 export * from './theme';
 
 import * as AppEvents from './appEvents';
