@@ -1,14 +1,9 @@
 import { pageFactory } from '../../support';
-
-const selectors = {
-  username: 'Username input field',
-  password: 'Password input field',
-  submit: 'Login button',
-};
+import { Selectors } from '../../selectors';
 
 const Page = pageFactory({
   url: '/login',
-  selectors,
+  selectors: Selectors.Login,
 });
 
-export const Login = { Page, Selectors: selectors };
+export const Login = { Page };

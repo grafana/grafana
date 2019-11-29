@@ -1,4 +1,5 @@
-import React, { PureComponent, SyntheticEvent, ChangeEvent } from 'react';
+import React, { ChangeEvent, PureComponent, SyntheticEvent } from 'react';
+import { Selectors } from '@grafana/e2e/src/selectors';
 import { FormModel } from './LoginCtrl';
 
 interface Props {
@@ -72,7 +73,7 @@ export class LoginForm extends PureComponent<Props, State> {
             className="gf-form-input login-form-input"
             required
             placeholder={this.props.loginHint}
-            aria-label="Username input field"
+            aria-label={Selectors.Login.username}
             onChange={this.onChangeUsername}
           />
         </div>
