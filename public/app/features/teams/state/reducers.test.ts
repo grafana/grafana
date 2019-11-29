@@ -1,17 +1,21 @@
-import { Action, ActionTypes } from './actions';
-import { initialTeamsState, initialTeamState, teamReducer, teamsReducer } from './reducers';
+import {
+  initialTeamsState,
+  initialTeamState,
+  loadTeamAction,
+  loadTeamMembersAction,
+  loadTeamsAction,
+  setSearchMemberQueryAction,
+  setSearchQueryAction,
+  teamSlice,
+  teamsSlice,
+} from './reducers';
 import { getMockTeam, getMockTeamMember } from '../__mocks__/teamMocks';
 
 describe('teams reducer', () => {
   it('should set teams', () => {
     const payload = [getMockTeam()];
 
-    const action: Action = {
-      type: ActionTypes.LoadTeams,
-      payload,
-    };
-
-    const result = teamsReducer(initialTeamsState, action);
+    const result = teamsSlice.reducer(initialTeamsState, loadTeamsAction(payload));
 
     expect(result.teams).toEqual(payload);
   });
@@ -19,12 +23,7 @@ describe('teams reducer', () => {
   it('should set search query', () => {
     const payload = 'test';
 
-    const action: Action = {
-      type: ActionTypes.SetSearchQuery,
-      payload,
-    };
-
-    const result = teamsReducer(initialTeamsState, action);
+    const result = teamsSlice.reducer(initialTeamsState, setSearchQueryAction(payload));
 
     expect(result.searchQuery).toEqual('test');
   });
@@ -34,12 +33,7 @@ describe('team reducer', () => {
   it('should set team', () => {
     const payload = getMockTeam();
 
-    const action: Action = {
-      type: ActionTypes.LoadTeam,
-      payload,
-    };
-
-    const result = teamReducer(initialTeamState, action);
+    const result = teamSlice.reducer(initialTeamState, loadTeamAction(payload));
 
     expect(result.team).toEqual(payload);
   });
@@ -47,12 +41,7 @@ describe('team reducer', () => {
   it('should set team members', () => {
     const mockTeamMember = getMockTeamMember();
 
-    const action: Action = {
-      type: ActionTypes.LoadTeamMembers,
-      payload: [mockTeamMember],
-    };
-
-    const result = teamReducer(initialTeamState, action);
+    const result = teamSlice.reducer(initialTeamState, loadTeamMembersAction([mockTeamMember]));
 
     expect(result.members).toEqual([mockTeamMember]);
   });
@@ -60,12 +49,7 @@ describe('team reducer', () => {
   it('should set member search query', () => {
     const payload = 'member';
 
-    const action: Action = {
-      type: ActionTypes.SetSearchMemberQuery,
-      payload,
-    };
-
-    const result = teamReducer(initialTeamState, action);
+    const result = teamSlice.reducer(initialTeamState, setSearchMemberQueryAction(payload));
 
     expect(result.searchMemberQuery).toEqual('member');
   });

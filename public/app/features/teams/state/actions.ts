@@ -1,99 +1,24 @@
 import { ThunkAction } from 'redux-thunk';
 import { getBackendSrv } from '@grafana/runtime';
-import { StoreState, Team, TeamGroup, TeamMember } from 'app/types';
+import { StoreState, TeamMember } from 'app/types';
 import { updateNavIndex, UpdateNavIndexAction } from 'app/core/actions';
 import { buildNavModel } from './navModel';
+import { loadTeamAction, loadTeamGroupsAction, loadTeamMembersAction, loadTeamsAction } from './reducers';
+import { PayloadAction } from '@reduxjs/toolkit';
 
-export enum ActionTypes {
-  LoadTeams = 'LOAD_TEAMS',
-  LoadTeam = 'LOAD_TEAM',
-  SetSearchQuery = 'SET_TEAM_SEARCH_QUERY',
-  SetSearchMemberQuery = 'SET_TEAM_MEMBER_SEARCH_QUERY',
-  LoadTeamMembers = 'TEAM_MEMBERS_LOADED',
-  LoadTeamGroups = 'TEAM_GROUPS_LOADED',
-}
-
-export interface LoadTeamsAction {
-  type: ActionTypes.LoadTeams;
-  payload: Team[];
-}
-
-export interface LoadTeamAction {
-  type: ActionTypes.LoadTeam;
-  payload: Team;
-}
-
-export interface LoadTeamMembersAction {
-  type: ActionTypes.LoadTeamMembers;
-  payload: TeamMember[];
-}
-
-export interface LoadTeamGroupsAction {
-  type: ActionTypes.LoadTeamGroups;
-  payload: TeamGroup[];
-}
-
-export interface SetSearchQueryAction {
-  type: ActionTypes.SetSearchQuery;
-  payload: string;
-}
-
-export interface SetSearchMemberQueryAction {
-  type: ActionTypes.SetSearchMemberQuery;
-  payload: string;
-}
-
-export type Action =
-  | LoadTeamsAction
-  | SetSearchQueryAction
-  | LoadTeamAction
-  | LoadTeamMembersAction
-  | SetSearchMemberQueryAction
-  | LoadTeamGroupsAction;
-
-type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action | UpdateNavIndexAction>;
-
-const teamsLoaded = (teams: Team[]): LoadTeamsAction => ({
-  type: ActionTypes.LoadTeams,
-  payload: teams,
-});
-
-const teamLoaded = (team: Team): LoadTeamAction => ({
-  type: ActionTypes.LoadTeam,
-  payload: team,
-});
-
-const teamMembersLoaded = (teamMembers: TeamMember[]): LoadTeamMembersAction => ({
-  type: ActionTypes.LoadTeamMembers,
-  payload: teamMembers,
-});
-
-const teamGroupsLoaded = (teamGroups: TeamGroup[]): LoadTeamGroupsAction => ({
-  type: ActionTypes.LoadTeamGroups,
-  payload: teamGroups,
-});
-
-export const setSearchMemberQuery = (searchQuery: string): SetSearchMemberQueryAction => ({
-  type: ActionTypes.SetSearchMemberQuery,
-  payload: searchQuery,
-});
-
-export const setSearchQuery = (searchQuery: string): SetSearchQueryAction => ({
-  type: ActionTypes.SetSearchQuery,
-  payload: searchQuery,
-});
+type ThunkResult<R> = ThunkAction<R, StoreState, undefined, PayloadAction<any> | UpdateNavIndexAction>;
 
 export function loadTeams(): ThunkResult<void> {
   return async dispatch => {
     const response = await getBackendSrv().get('/api/teams/search', { perpage: 1000, page: 1 });
-    dispatch(teamsLoaded(response.teams));
+    dispatch(loadTeamsAction(response.teams));
   };
 }
 
 export function loadTeam(id: number): ThunkResult<void> {
   return async dispatch => {
     const response = await getBackendSrv().get(`/api/teams/${id}`);
-    dispatch(teamLoaded(response));
+    dispatch(loadTeamAction(response));
     dispatch(updateNavIndex(buildNavModel(response)));
   };
 }
@@ -102,7 +27,7 @@ export function loadTeamMembers(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const team = getStore().team.team;
     const response = await getBackendSrv().get(`/api/teams/${team.id}/members`);
-    dispatch(teamMembersLoaded(response));
+    dispatch(loadTeamMembersAction(response));
   };
 }
 
@@ -134,7 +59,7 @@ export function loadTeamGroups(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const team = getStore().team.team;
     const response = await getBackendSrv().get(`/api/teams/${team.id}/groups`);
-    dispatch(teamGroupsLoaded(response));
+    dispatch(loadTeamGroupsAction(response));
   };
 }
 

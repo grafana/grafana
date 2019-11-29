@@ -4,19 +4,20 @@ import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { TeamMember, User } from 'app/types';
-import { addTeamMember, setSearchMemberQuery } from './state/actions';
+import { addTeamMember } from './state/actions';
 import { getSearchMemberQuery, isSignedInUserTeamAdmin } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { WithFeatureToggle } from 'app/core/components/WithFeatureToggle';
 import { config } from 'app/core/config';
 import { contextSrv, User as SignedInUser } from 'app/core/services/context_srv';
 import TeamMemberRow from './TeamMemberRow';
+import { setSearchMemberQueryAction } from './state/reducers';
 
 export interface Props {
   members: TeamMember[];
   searchMemberQuery: string;
   addTeamMember: typeof addTeamMember;
-  setSearchMemberQuery: typeof setSearchMemberQuery;
+  setSearchMemberQuery: typeof setSearchMemberQueryAction;
   syncEnabled: boolean;
   editorsCanAdmin?: boolean;
   signedInUser?: SignedInUser;
@@ -154,7 +155,7 @@ function mapStateToProps(state: any) {
 
 const mapDispatchToProps = {
   addTeamMember,
-  setSearchMemberQuery,
+  setSearchMemberQuery: setSearchMemberQueryAction,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(TeamMembers);

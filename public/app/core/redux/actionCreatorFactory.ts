@@ -60,5 +60,9 @@ export const mockActionCreator = (creator: ActionCreator<any>) => {
   return Object.assign(jest.fn(), creator);
 };
 
+export const mockPayloadActionCreator = (creator: any) => {
+  return Object.assign(jest.fn(), creator);
+};
+
 // Should only be used by tests
 export const resetAllActionCreatorTypes = () => allActionCreators.clear();

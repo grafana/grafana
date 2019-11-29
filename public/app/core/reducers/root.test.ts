@@ -3,10 +3,9 @@ import { describe, expect } from '../../../test/lib/common';
 import { NavModelItem } from '@grafana/data';
 import { reducerTester } from '../../../test/core/redux/reducerTester';
 import { StoreState } from '../../types/store';
-import { ActionTypes } from '../../features/teams/state/actions';
-import { Team } from '../../types';
+import { Team, TeamPermissionLevel } from '../../types';
 import { cleanUpAction } from '../actions/cleanUp';
-import { initialTeamsState } from '../../features/teams/state/reducers';
+import { initialTeamsState, loadTeamsAction } from '../../features/teams/state/reducers';
 
 jest.mock('@grafana/runtime', () => ({
   config: {
@@ -56,17 +55,16 @@ describe('rootReducer', () => {
 
   describe('when called with any action except cleanUpAction', () => {
     it('then it should not clean state', () => {
-      const teams = [{ id: 1 }];
+      const teams: Team[] = [
+        { id: 1, avatarUrl: '', email: '', memberCount: 1, name: 'Jane Doe', permission: TeamPermissionLevel.Admin },
+      ];
       const state = {
         teams: { ...initialTeamsState },
       } as StoreState;
 
       reducerTester<StoreState>()
         .givenReducer(rootReducer, state)
-        .whenActionIsDispatched({
-          type: ActionTypes.LoadTeams,
-          payload: teams,
-        })
+        .whenActionIsDispatched(loadTeamsAction(teams))
         .thenStatePredicateShouldEqual(resultingState => {
           expect(resultingState.teams).toEqual({
             hasFetched: true,
