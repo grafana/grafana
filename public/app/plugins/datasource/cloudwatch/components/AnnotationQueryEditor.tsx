@@ -29,7 +29,7 @@ export function AnnotationQueryEditor(props: React.PropsWithChildren<Props>) {
         />
 
         <div className="gf-form gf-form--grow">
-          <QueryField className="query-keyword" label="Action">
+          <QueryField label="Action">
             <input
               disabled={!query.prefixMatching}
               className="gf-form-input width-12"
@@ -39,7 +39,7 @@ export function AnnotationQueryEditor(props: React.PropsWithChildren<Props>) {
               }
             />
           </QueryField>
-          <QueryField className="query-keyword" label="Alarm Name">
+          <QueryField label="Alarm Name">
             <input
               disabled={!query.prefixMatching}
               className="gf-form-input width-12"
