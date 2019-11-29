@@ -80,7 +80,8 @@ func buildArrowFields(f *Frame) ([]arrow.Field, error) {
 		}
 
 		fieldMeta := map[string]string{
-			"name": field.Name,
+			"name":   field.Name,
+			"labels": field.Labels.String(),
 		}
 
 		arrowFields[i] = arrow.Field{
@@ -146,10 +147,6 @@ func buildArrowSchema(f *Frame, fs []arrow.Field) (*arrow.Schema, error) {
 		"refId": f.RefID,
 	}
 
-	if f.Labels != nil {
-		tableMetaMap["labels"] = f.Labels.String()
-	}
-
 	tableMeta := arrow.MetadataFrom(tableMetaMap)
 
 	return arrow.NewSchema(fs, &tableMeta), nil
@@ -195,38 +192,26 @@ func fieldToArrow(f *Field) (arrow.DataType, bool, error) {
 	}
 }
 
-// UnMarshalArrow converts a byte representation of an arrow table to a Frame
-// TODO: Break up this function.
-func UnMarshalArrow(b []byte) (*Frame, error) {
-	fB := filebuffer.New(b)
-	fR, err := ipc.NewFileReader(fB)
-	if err != nil {
-		return nil, err
+func getMDKey(key string, metaData arrow.Metadata) (string, bool) {
+	idx := metaData.FindKey(key)
+	if idx < 0 {
+		return "", false
 	}
-	defer fR.Close()
+	return metaData.Values()[idx], true
+}
 
-	schema := fR.Schema()
-	metaData := schema.Metadata()
-	frame := &Frame{}
-	getMDKey := func(key string) (string, bool) {
-		idx := metaData.FindKey(key)
-		if idx < 0 {
-			return "", false
-		}
-		return metaData.Values()[idx], true
-	}
-	frame.Name, _ = getMDKey("name") // No need to check ok, zero value ("") is returned
-	frame.RefID, _ = getMDKey("refId")
-	if labelsAsString, ok := getMDKey("labels"); ok {
-		frame.Labels, err = LabelsFromString(labelsAsString)
-		if err != nil {
-			return nil, err
-		}
-	}
+func initializeFrameFields(schema *arrow.Schema, frame *Frame) ([]bool, error) {
 	nullable := make([]bool, len(schema.Fields()))
 	for idx, field := range schema.Fields() {
 		sdkField := &Field{
 			Name: field.Name,
+		}
+		if labelsAsString, ok := getMDKey("labels", field.Metadata); ok {
+			var err error
+			sdkField.Labels, err = LabelsFromString(labelsAsString)
+			if err != nil {
+				return nil, err
+			}
 		}
 		nullable[idx] = field.Nullable
 		switch field.Type.ID() {
@@ -267,18 +252,21 @@ func UnMarshalArrow(b []byte) (*Frame, error) {
 			}
 			sdkField.Vector = newTimeVector(0)
 		default:
-			return nil, fmt.Errorf("unsupported conversion from arrow to sdk type for arrow type %v", field.Type.ID().String())
+			return nullable, fmt.Errorf("unsupported conversion from arrow to sdk type for arrow type %v", field.Type.ID().String())
 		}
 		frame.Fields = append(frame.Fields, sdkField)
 	}
+	return nullable, nil
+}
 
+func populateFrameFields(fR *ipc.FileReader, nullable []bool, frame *Frame) error {
 	for {
 		record, err := fR.Read()
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
-			return nil, err
+			return err
 		}
 		for i := 0; i < len(frame.Fields); i++ {
 			col := record.Column(i)
@@ -374,10 +362,35 @@ func UnMarshalArrow(b []byte) (*Frame, error) {
 					frame.Fields[i].Vector.Append(t)
 				}
 			default:
-				return nil, fmt.Errorf("unsupported arrow type %s for conversion", col.DataType().ID())
+				return fmt.Errorf("unsupported arrow type %s for conversion", col.DataType().ID())
 			}
 		}
 	}
+	return nil
+}
 
+// UnmarshalArrow converts a byte representation of an arrow table to a Frame
+func UnmarshalArrow(b []byte) (*Frame, error) {
+	fB := filebuffer.New(b)
+	fR, err := ipc.NewFileReader(fB)
+	if err != nil {
+		return nil, err
+	}
+	defer fR.Close()
+
+	schema := fR.Schema()
+	metaData := schema.Metadata()
+	frame := &Frame{}
+	frame.Name, _ = getMDKey("name", metaData) // No need to check ok, zero value ("") is returned
+	frame.RefID, _ = getMDKey("refId", metaData)
+	nullable, err := initializeFrameFields(schema, frame)
+	if err != nil {
+		return nil, err
+	}
+
+	err = populateFrameFields(fR, nullable, frame)
+	if err != nil {
+		return nil, err
+	}
 	return frame, nil
 }

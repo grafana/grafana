@@ -18,3 +18,7 @@ func (v *nullableFloatVector) Append(val interface{}) {
 func (v *nullableFloatVector) At(i int) interface{} { return (*v)[i] }
 
 func (v *nullableFloatVector) Len() int { return len(*v) }
+
+func (v *nullableFloatVector) PrimitiveType() VectorPType {
+	return VectorPTypeNullableFloat64
+}

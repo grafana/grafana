@@ -203,9 +203,10 @@ export class Explore extends React.PureComponent<ExploreProps> {
 
   onModifyQueries = (action: any, index?: number) => {
     const { datasourceInstance } = this.props;
-    if (datasourceInstance && datasourceInstance.modifyQuery) {
-      const modifier = (queries: DataQuery, modification: any) => datasourceInstance.modifyQuery(queries, modification);
-      this.props.modifyQueries(this.props.exploreId, action, index, modifier);
+    if (datasourceInstance?.modifyQuery) {
+      const modifier = (queries: DataQuery, modification: any) =>
+        datasourceInstance.modifyQuery!(queries, modification);
+      this.props.modifyQueries(this.props.exploreId, action, modifier, index);
     }
   };
 
@@ -277,7 +278,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
         {datasourceInstance && (
           <div className="explore-container">
             <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
-            <ErrorContainer queryErrors={[queryResponse.error]} />
+            <ErrorContainer queryErrors={queryResponse.error ? [queryResponse.error] : undefined} />
             <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {
@@ -287,7 +288,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
                 return (
                   <main className={`m-t-2 ${styles.logsMain}`} style={{ width }}>
                     <ErrorBoundaryAlert>
-                      {showingStartPage && (
+                      {showingStartPage && StartPage && (
                         <div className="grafana-info-box grafana-info-box--max-lg">
                           <StartPage
                             onClickExample={this.onClickExample}
@@ -377,7 +378,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
   const initialQueries: DataQuery[] = ensureQueriesMemoized(queries);
   const initialRange = urlRange ? getTimeRangeFromUrlMemoized(urlRange, timeZone).raw : DEFAULT_RANGE;
 
-  let newMode: ExploreMode;
+  let newMode: ExploreMode | undefined;
 
   if (supportedModes.length) {
     const urlModeIsValid = supportedModes.includes(urlMode);
@@ -391,7 +392,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
       newMode = supportedModes[0];
     }
   } else {
-    newMode = [ExploreMode.Metrics, ExploreMode.Logs].includes(urlMode) ? urlMode : null;
+    newMode = [ExploreMode.Metrics, ExploreMode.Logs].includes(urlMode) ? urlMode : undefined;
   }
 
   const initialUI = ui || DEFAULT_UI_STATE;

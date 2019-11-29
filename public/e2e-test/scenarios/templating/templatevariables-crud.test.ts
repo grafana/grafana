@@ -15,6 +15,7 @@ e2eScenario({
   itName: 'Template Variables QueryVariable CRUD',
   createTestDataSource: true,
   createTestDashboard: true,
+  skipScenario: true,
   scenario: async (browser: Browser, page: Page, datasourceName?: string, dashboardPage?: TestPage<DashboardPage>) => {
     await dashboardPage.pageObjects.settings.click();
 

@@ -334,8 +334,8 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
     return this.doMetricQueryRequest('namespaces', null);
   }
 
-  async getMetrics(namespace: string, region: string) {
-    if (!namespace || !region) {
+  async getMetrics(namespace: string, region?: string) {
+    if (!namespace) {
       return [];
     }
 
@@ -375,7 +375,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
       dimensions: this.convertDimensionFormat(filterDimensions, {}),
     });
 
-    return values.length ? [{ value: '*', text: '*', label: '*' }, ...values] : values;
+    return values;
   }
 
   getEbsVolumeIds(region: string, instanceId: string) {

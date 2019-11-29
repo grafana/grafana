@@ -1,12 +1,11 @@
 import React, { FC, HTMLProps, ReactNode } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
-import { getFocusStyle } from '../commonStyles';
+import { getFocusStyle, inputSizes, sharedInputStyle } from '../commonStyles';
 import { stylesFactory, useTheme } from '../../../themes';
 import { Icon } from '../../Icon/Icon';
 import { useClientRect } from '../../../utils/useClientRect';
-
-export type FormInputSize = 'sm' | 'md' | 'lg' | 'auto';
+import { FormInputSize } from '../types';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'size'> {
   /** Show an invalid state around the input */
@@ -29,7 +28,6 @@ interface StyleDeps {
 
 export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDeps) => {
   const colors = theme.colors;
-  const inputBorderColor = invalid ? colors.redBase : colors.formInputBorder;
   const borderRadius = theme.border.radius.sm;
   const height = theme.spacing.formInputHeight;
 
@@ -117,24 +115,17 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
 
     input: cx(
       getFocusStyle(theme),
+      sharedInputStyle(theme),
       css`
         label: input-input;
         position: relative;
         z-index: 0;
         flex-grow: 1;
-        color: ${colors.formInputText};
-        background-color: ${colors.formInputBg};
-        border: 1px solid ${inputBorderColor};
         border-radius: ${borderRadius};
         height: 100%;
         width: 100%;
         padding: 0 ${theme.spacing.sm} 0 ${theme.spacing.sm};
         font-size: ${theme.typography.size.md};
-
-        &:disabled {
-          background-color: ${colors.formInputBgDisabled};
-          color: ${colors.formInputDisabledText};
-        }
 
         /*
          Restoring increase/decrease spinner on number inputs. Overwriting rules implemented in
@@ -208,20 +199,6 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
         right: 0;
       `
     ),
-    inputSize: {
-      sm: css`
-        width: 200px;
-      `,
-      md: css`
-        width: 320px;
-      `,
-      lg: css`
-        width: 580px;
-      `,
-      auto: css`
-        width: 100%;
-      `,
-    },
   };
 });
 
@@ -239,7 +216,7 @@ export const Input: FC<Props> = props => {
   const styles = getInputStyles({ theme, invalid: !!invalid });
 
   return (
-    <div className={cx(styles.wrapper, styles.inputSize[size])}>
+    <div className={cx(styles.wrapper, inputSizes()[size])}>
       {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
 
       <div className={styles.inputWrapper}>
