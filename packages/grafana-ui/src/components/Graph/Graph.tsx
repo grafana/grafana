@@ -14,7 +14,7 @@ export interface GraphProps {
   children?: JSX.Element | JSX.Element[];
   series: GraphSeriesXY[];
   timeRange: TimeRange; // NOTE: we should aim to make `time` a property of the axis, not force it for all graphs
-  timeZone: TimeZone; // NOTE: we should aim to make `time` a property of the axis, not force it for all graphs
+  timeZone?: TimeZone; // NOTE: we should aim to make `time` a property of the axis, not force it for all graphs
   showLines?: boolean;
   showPoints?: boolean;
   showBars?: boolean;
@@ -246,7 +246,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         label: 'Datetime',
         ticks: ticks,
         timeformat: timeFormat(ticks, min, max),
-        timezone: timeZone ? timeZone : DefaultTimeZone,
+        timezone: timeZone ?? DefaultTimeZone,
       },
       yaxes,
       grid: {
