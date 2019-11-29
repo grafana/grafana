@@ -112,6 +112,10 @@ To follow the tests in the browser while they're running, add the `BROWSER` and 
 BROWSER=1 SLOWMO=1 yarn e2e-tests
 ```
 
+### Building on Windows
+
+The Grafana backend includes Sqlite3 which requires GCC to compile. So in order to compile Grafana on Windows you need to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download).
+
 ## Configure Grafana for development
 
 The default configuration, `grafana.ini`, is located in the `conf` directory. 
