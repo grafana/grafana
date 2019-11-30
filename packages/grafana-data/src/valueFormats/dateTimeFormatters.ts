@@ -188,6 +188,9 @@ export function toDuration(size: number, decimals: DecimalCount, timeScale: Inte
 
   if (size < 0) {
     const v = toDuration(-size, decimals, timeScale);
+    if (!v.suffix) {
+      v.suffix = '';
+    }
     v.suffix += ' ago';
     return v;
   }
@@ -292,6 +295,9 @@ export function toDurationInSeconds(size: number, decimals: DecimalCount): Forma
 export function toDurationInHoursMinutesSeconds(size: number): FormattedValue {
   if (size < 0) {
     const v = toDurationInHoursMinutesSeconds(-size);
+    if (!v.suffix) {
+      v.suffix = '';
+    }
     v.suffix += ' ago';
     return v;
   }

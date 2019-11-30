@@ -8,7 +8,7 @@ export interface FormattedValue {
 }
 
 export function formattedValueToString(val: FormattedValue): string {
-  return `${val.prefix ? val.prefix : ''}${val.text}${val.suffix ? val.suffix : ''}`;
+  return `${val.prefix ?? ''}${val.text}${val.suffix ?? ''}`;
 }
 
 export type ValueFormatter = (
