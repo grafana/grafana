@@ -12,6 +12,7 @@ import {
   PanelProps,
   getFieldDisplayValues,
   FieldDisplay,
+  ReducerID,
   getDisplayValueAlignmentFactors,
   DisplayValueAlignmentFactors,
 } from '@grafana/data';
@@ -33,6 +34,11 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
         minX: timeRange.from.valueOf(),
         maxX: timeRange.to.valueOf(),
       };
+
+      const calc = options.fieldOptions.calcs[0];
+      if (calc === ReducerID.last) {
+        sparkline.highlightIndex = sparkline.data.length - 1;
+      }
     }
 
     return (

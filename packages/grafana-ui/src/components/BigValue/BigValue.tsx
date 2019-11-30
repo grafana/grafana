@@ -17,6 +17,7 @@ export interface BigValueSparkline {
   data: GraphSeriesValue[][];
   minX: number;
   maxX: number;
+  highlightIndex?: number;
 }
 
 export enum BigValueColorMode {

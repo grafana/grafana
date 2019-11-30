@@ -1,9 +1,11 @@
 import React, { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { Chart, Geom } from 'bizcharts';
+import { Chart, Geom, Guide } from 'bizcharts';
 import { LayoutResult, LayoutType } from './styles';
 import { BigValueSparkline, BigValueColorMode } from './BigValue';
+
+const { DataMarker } = Guide;
 
 export function renderGraph(layout: LayoutResult, sparkline?: BigValueSparkline) {
   if (!sparkline || layout.type === LayoutType.WideNoChart || layout.type === LayoutType.StackedNoChart) {
@@ -51,7 +53,7 @@ export function renderGraph(layout: LayoutResult, sparkline?: BigValueSparkline)
       scale={scales}
       style={chartStyles}
     >
-      {geomRender(layout)}
+      {geomRender(layout, sparkline)}
     </Chart>
   );
 }
@@ -63,7 +65,7 @@ function getGraphGeom(colorMode: BigValueColorMode) {
   return renderClassicAreaGeom;
 }
 
-function renderAreaGeomOnColoredBackground(layout: LayoutResult) {
+function renderAreaGeomOnColoredBackground(layout: LayoutResult, sparkline: BigValueSparkline) {
   const lineColor = tinycolor(layout.valueColor)
     .brighten(40)
     .toRgbString();
@@ -77,23 +79,53 @@ function renderAreaGeomOnColoredBackground(layout: LayoutResult) {
     <>
       <Geom type="area" position="time*value" size={0} color="rgba(255,255,255,0.4)" style={lineStyle} shape="smooth" />
       <Geom type="line" position="time*value" size={1} color={lineColor} style={lineStyle} shape="smooth" />
+      {highlightPoint(lineColor, sparkline)}
     </>
   );
 }
 
-function renderClassicAreaGeom(layout: LayoutResult) {
+function highlightPoint(lineColor: string, sparkline: BigValueSparkline) {
+  if (!sparkline.highlightIndex) {
+    return null;
+  }
+
+  const pointPos = sparkline.data[sparkline.highlightIndex];
+
+  return (
+    <Guide>
+      <DataMarker
+        top
+        position={pointPos}
+        lineLength={0}
+        display={{ point: true }}
+        style={{
+          point: {
+            color: lineColor,
+            stroke: lineColor,
+            r: 2,
+          },
+        }}
+      />
+    </Guide>
+  );
+}
+
+function renderClassicAreaGeom(layout: LayoutResult, sparkline: BigValueSparkline) {
   const lineStyle: any = {
     opacity: 1,
     fillOpacity: 1,
   };
+
   const fillColor = tinycolor(layout.valueColor)
     .setAlpha(0.2)
     .toRgbString();
   lineStyle.stroke = layout.valueColor;
+
   return (
     <>
       <Geom type="area" position="time*value" size={0} color={fillColor} style={lineStyle} shape="smooth" />
       <Geom type="line" position="time*value" size={1} color={layout.valueColor} style={lineStyle} shape="smooth" />
+      {highlightPoint('#EEE', sparkline)}
     </>
   );
 }
