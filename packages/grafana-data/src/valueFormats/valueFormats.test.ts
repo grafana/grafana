@@ -13,8 +13,8 @@ interface ValueFormatTest {
 
 const formatTests: ValueFormatTest[] = [
   // Currancy
-  { id: '$', decimals: 4, value: 1532.82, result: '$1.53K' },
-  { id: '₩', decimals: 4, value: 1532.82, result: '₩1.53K' },
+  { id: 'currencyUSD', decimals: 4, value: 1532.82, result: '$1.53K' },
+  { id: 'currencyKRW', decimals: 4, value: 1532.82, result: '₩1.53K' },
 
   // Typical
   { id: 'ms', decimals: 4, value: 0.0024, result: '0.0024 ms' },
