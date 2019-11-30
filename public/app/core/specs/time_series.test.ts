@@ -384,11 +384,11 @@ describe('TimeSeries', () => {
     });
 
     it('should format non-numeric values as empty string', () => {
-      expect(series.formatValue(null).text).toBe('');
-      expect(series.formatValue(undefined).text).toBe('');
-      expect(series.formatValue(NaN).text).toBe('');
-      expect(series.formatValue(Infinity).text).toBe('');
-      expect(series.formatValue(-Infinity).text).toBe('');
+      expect(series.formatValue(null)).toBe('');
+      expect(series.formatValue(undefined)).toBe('');
+      expect(series.formatValue(NaN)).toBe('');
+      expect(series.formatValue(Infinity)).toBe('');
+      expect(series.formatValue(-Infinity)).toBe('');
     });
   });
 
