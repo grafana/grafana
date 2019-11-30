@@ -189,7 +189,7 @@ export class TableRenderer {
         }
 
         this.setColorState(v, column.style);
-        return valueFormatter(v, column.style.decimals, null);
+        return formattedValueToString(valueFormatter(v, column.style.decimals, null));
       };
     }
 
@@ -229,7 +229,7 @@ export class TableRenderer {
   formatColumnValue(colIndex: number, value: any) {
     const fmt = this.formatters[colIndex];
     if (fmt) {
-      return formattedValueToString(fmt(value));
+      return fmt(value);
     }
     return value;
   }
