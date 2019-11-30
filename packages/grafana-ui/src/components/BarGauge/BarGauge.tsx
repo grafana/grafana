@@ -1,7 +1,7 @@
 // Library
 import React, { PureComponent, CSSProperties, ReactNode } from 'react';
 import tinycolor from 'tinycolor2';
-import { Threshold, TimeSeriesValue, getActiveThreshold, DisplayValue } from '@grafana/data';
+import { Threshold, TimeSeriesValue, getActiveThreshold, DisplayValue, formattedValueToString } from '@grafana/data';
 
 // Utils
 import { getColorFromHexRgbOrName } from '@grafana/data';
@@ -100,7 +100,7 @@ export class BarGauge extends PureComponent<Props> {
     return (
       <div style={styles.wrapper}>
         <div className="bar-gauge__value" style={styles.value}>
-          {value.text}
+          {formattedValueToString(value)}
         </div>
         <div style={styles.bar} />
       </div>
@@ -171,7 +171,7 @@ export class BarGauge extends PureComponent<Props> {
     const cellSize = Math.floor((maxSize - cellSpacing * cellCount) / cellCount);
     const valueColor = getValueColor(this.props);
 
-    const valueTextToBaseSizeOn = alignmentFactors ? alignmentFactors.text : value.text;
+    const valueTextToBaseSizeOn = alignmentFactors ? alignmentFactors.text : formattedValueToString(value);
     const valueStyles = getValueStyles(valueTextToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation);
 
     const containerStyles: CSSProperties = {
@@ -220,7 +220,7 @@ export class BarGauge extends PureComponent<Props> {
       <div style={containerStyles}>
         {cells}
         <div className="bar-gauge__value" style={valueStyles}>
-          {value.text}
+          {formattedValueToString(value)}
         </div>
       </div>
     );
@@ -400,7 +400,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   const valuePercent = getValuePercent(value.numeric, minValue, maxValue);
   const valueColor = getValueColor(props);
 
-  const valueTextToBaseSizeOn = alignmentFactors ? alignmentFactors.text : value.text;
+  const valueTextToBaseSizeOn = alignmentFactors ? alignmentFactors.text : formattedValueToString(value);
   const valueStyles = getValueStyles(valueTextToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation);
 
   const isBasic = displayMode === 'basic';
