@@ -292,8 +292,8 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Exposure (C/kg)', id: 'radexpckg', fn: decimalSIPrefix('C/kg') },
       { name: 'roentgen (R)', id: 'radr', fn: decimalSIPrefix('R') },
       { name: 'Sievert/hour (Sv/h)', id: 'radsvh', fn: decimalSIPrefix('Sv/h') },
-      { name: 'milliSievert/hour (mSv/h)', id: 'radmsvh', fn: decimalSIPrefix('mSv/h', -1) },
-      { name: 'microSievert/hour (µSv/h)', id: 'radusvh', fn: decimalSIPrefix('µSv/h', -2) },
+      { name: 'milliSievert/hour (mSv/h)', id: 'radmsvh', fn: decimalSIPrefix('Sv/h', -1) },
+      { name: 'microSievert/hour (µSv/h)', id: 'radusvh', fn: decimalSIPrefix('Sv/h', -2) },
     ],
   },
   {
