@@ -531,6 +531,6 @@ function getValueStyles(
     textWidth -= VALUE_LEFT_PADDING;
   }
 
-  valueStyles.fontSize = calculateFontSize(value, textWidth, height, VALUE_LINE_HEIGHT).toFixed(4) + 'px';
+  valueStyles.fontSize = calculateFontSize(value, textWidth, height, VALUE_LINE_HEIGHT) + 'px';
   return valueStyles;
 }
