@@ -284,6 +284,8 @@ export function getDisplayValueAlignmentFactors(values: FieldDisplay[]): Display
   const info: DisplayValueAlignmentFactors = {
     title: '',
     text: '',
+    prefix: '',
+    suffix: '',
   };
 
   for (let i = 0; i < values.length; i++) {
@@ -294,6 +296,14 @@ export function getDisplayValueAlignmentFactors(values: FieldDisplay[]): Display
 
     if (v.title && v.title.length > info.title.length) {
       info.title = v.title;
+    }
+
+    if (v.prefix && v.prefix.length > info.prefix.length) {
+      info.prefix = v.prefix;
+    }
+
+    if (v.suffix && v.suffix.length > info.suffix.length) {
+      info.suffix = v.suffix;
     }
   }
   return info;

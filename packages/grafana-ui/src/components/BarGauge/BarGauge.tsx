@@ -7,6 +7,7 @@ import {
   getActiveThreshold,
   DisplayValue,
   formattedValueToString,
+  FormattedValue,
   DisplayValueAlignmentFactors,
 } from '@grafana/data';
 
@@ -166,8 +167,8 @@ export class BarGauge extends PureComponent<Props> {
     const cellSize = Math.floor((maxSize - cellSpacing * cellCount) / cellCount);
     const valueColor = getValueColor(this.props);
 
-    const valueTextToBaseSizeOn = alignmentFactors ? alignmentFactors.text : formattedValueToString(value);
-    const valueStyles = getValueStyles(valueTextToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation);
+    const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
+    const valueStyles = getValueStyles(valueToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation);
 
     const containerStyles: CSSProperties = {
       width: `${wrapperWidth}px`,
@@ -395,8 +396,8 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   const valuePercent = getValuePercent(value.numeric, minValue, maxValue);
   const valueColor = getValueColor(props);
 
-  const valueTextToBaseSizeOn = alignmentFactors ? alignmentFactors.text : formattedValueToString(value);
-  const valueStyles = getValueStyles(valueTextToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation);
+  const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
+  const valueStyles = getValueStyles(valueToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation);
 
   const isBasic = displayMode === 'basic';
   const wrapperStyles: CSSProperties = {
@@ -505,7 +506,7 @@ export function getValueColor(props: Props): string {
 }
 
 function getValueStyles(
-  value: string,
+  value: FormattedValue,
   color: string,
   width: number,
   height: number,
@@ -532,6 +533,7 @@ function getValueStyles(
     textWidth -= VALUE_LEFT_PADDING;
   }
 
-  valueStyles.fontSize = calculateFontSize(value, textWidth, height, VALUE_LINE_HEIGHT) + 'px';
+  const formattedValueString = formattedValueToString(value);
+  valueStyles.fontSize = calculateFontSize(formattedValueString, textWidth, height, VALUE_LINE_HEIGHT) + 'px';
   return valueStyles;
 }
