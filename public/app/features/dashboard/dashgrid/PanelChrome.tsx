@@ -312,7 +312,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             replaceVariables={this.replaceVariables}
             onOptionsChange={this.onOptionsChange}
             onChangeTimeRange={this.onChangeTimeRange}
-            subscribe={this.subscribeToEvent}
+            subscribeToEvent={this.subscribeToEvent}
           />
         </div>
       </>

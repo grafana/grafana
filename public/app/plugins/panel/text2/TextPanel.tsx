@@ -37,7 +37,7 @@ export class TextPanel extends PureComponent<Props, State> {
   }, 150);
 
   componentDidMount() {
-    this.props.subscribe(graphHover, (payload: GraphHoverPayload) => {
+    this.props.subscribeToEvent(graphHover, (payload: GraphHoverPayload) => {
       this.setState({ hover: payload });
     });
   }
