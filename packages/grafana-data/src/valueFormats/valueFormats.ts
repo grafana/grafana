@@ -1,5 +1,6 @@
 import { getCategories } from './categories';
 import { DecimalCount } from '../types/displayValue';
+import { toDateTimeValueFormatter } from './dateTimeFormatters';
 
 export interface FormattedValue {
   text: string;
@@ -83,13 +84,16 @@ export function toFixedScaled(
   };
 }
 
-export function toFixedUnit(unit: string): ValueFormatter {
+export function toFixedUnit(unit: string, asPrefix?: boolean): ValueFormatter {
   return (size: number, decimals?: DecimalCount) => {
     if (size === null) {
       return { text: '' };
     }
     const text = toFixed(size, decimals);
     if (unit) {
+      if (asPrefix) {
+        return { text, prefix: unit };
+      }
       return { text, suffix: ' ' + unit };
     }
     return { text };
@@ -167,11 +171,22 @@ export function getValueFormat(id: string): ValueFormatter {
     buildFormats();
   }
 
-  if (!index[id]) {
+  const fmt = index[id];
+  if (!fmt) {
+    const idx = id.indexOf(':');
+    if (idx > 0) {
+      const key = id.substring(0, idx);
+      const sub = id.substring(idx + 1);
+      if (key === 'prefix') {
+        return toFixedUnit(sub, true);
+      }
+      if (key === 'time') {
+        return toDateTimeValueFormatter(sub);
+      }
+    }
     return toFixedUnit(id);
   }
-
-  return index[id];
+  return fmt;
 }
 
 export function getValueFormatterIndex(): ValueFormatterIndex {
