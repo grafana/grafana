@@ -11,6 +11,9 @@ import {
   DisplayValueAlignmentFactors,
 } from '@grafana/data';
 
+// Compontents
+import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
+
 // Utils
 import { getColorFromHexRgbOrName } from '@grafana/data';
 import { measureText, calculateFontSize } from '../../utils/measureText';
@@ -95,9 +98,7 @@ export class BarGauge extends PureComponent<Props> {
 
     return (
       <div style={styles.wrapper}>
-        <div className="bar-gauge__value" style={styles.value}>
-          {formattedValueToString(value)}
-        </div>
+        <FormattedValueDisplay className="bar-gauge__value" value={value} style={styles.value} />
         <div style={styles.bar} />
       </div>
     );
@@ -182,6 +183,7 @@ export class BarGauge extends PureComponent<Props> {
     } else {
       containerStyles.flexDirection = 'row';
       containerStyles.alignItems = 'center';
+      valueStyles.justifyContent = 'flex-end';
     }
 
     const cells: JSX.Element[] = [];
@@ -215,9 +217,7 @@ export class BarGauge extends PureComponent<Props> {
     return (
       <div style={containerStyles}>
         {cells}
-        <div className="bar-gauge__value" style={valueStyles}>
-          {formattedValueToString(value)}
-        </div>
+        <FormattedValueDisplay className="bar-gauge__value" value={value} style={valueStyles} />
       </div>
     );
   }
@@ -512,7 +512,7 @@ function getValueStyles(
   height: number,
   orientation: VizOrientation
 ): CSSProperties {
-  const valueStyles: CSSProperties = {
+  const styles: CSSProperties = {
     color: color,
     height: `${height}px`,
     width: `${width}px`,
@@ -525,15 +525,16 @@ function getValueStyles(
   let textWidth = width;
 
   if (isVertical(orientation)) {
-    valueStyles.justifyContent = `center`;
+    styles.justifyContent = `center`;
   } else {
-    valueStyles.justifyContent = `flex-start`;
-    valueStyles.paddingLeft = `${VALUE_LEFT_PADDING}px`;
+    styles.justifyContent = `flex-start`;
+    styles.paddingLeft = `${VALUE_LEFT_PADDING}px`;
     // Need to remove the left padding from the text width constraints
     textWidth -= VALUE_LEFT_PADDING;
   }
 
   const formattedValueString = formattedValueToString(value);
-  valueStyles.fontSize = calculateFontSize(formattedValueString, textWidth, height, VALUE_LINE_HEIGHT) + 'px';
-  return valueStyles;
+  styles.fontSize = calculateFontSize(formattedValueString, textWidth, height, VALUE_LINE_HEIGHT);
+
+  return styles;
 }
