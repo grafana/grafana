@@ -10,8 +10,6 @@ import { calculateFontSize } from '../../utils/measureText';
 import { BigValueColorMode, BigValueGraphMode, Props, BigValueJustifyMode } from './BigValue';
 
 const LINE_HEIGHT = 1.2;
-const CHART_HEIGHT_RATIO = 0.25;
-const TITLE_HEIGHT_RATIO = 0.15;
 
 export interface LayoutResult {
   titleFontSize: number;
@@ -53,6 +51,10 @@ export function calculateLayout(props: Props): LayoutResult {
   const titleToAlignTo = alignmentFactors ? alignmentFactors.title : value.title;
   const valueToAlignTo = alignmentFactors ? alignmentFactors.text : value.text;
 
+  const maxTitleFontSize = 30;
+  const maxTextWidth = width - panelPadding * 2;
+  const maxTextHeight = height - panelPadding * 2;
+
   let layoutType = LayoutType.Stacked;
   let chartHeight = 0;
   let chartWidth = 0;
@@ -61,18 +63,25 @@ export function calculateLayout(props: Props): LayoutResult {
   let valueFontSize = 14;
 
   if (useWideLayout) {
-    const maxTextWidth = width - panelPadding * 2;
-    const maxTextHeight = height - panelPadding * 2;
-
     // Detect auto wide layout type
     layoutType = height > 50 && !!sparkline ? LayoutType.Wide : LayoutType.WideNoChart;
 
     // Wide no chart mode
     if (layoutType === LayoutType.WideNoChart) {
+      const valueWidthPercent = 0.3;
+
       if (titleToAlignTo && titleToAlignTo.length > 0) {
-        valueFontSize = calculateFontSize(valueToAlignTo, maxTextWidth * 0.3, maxTextHeight, LINE_HEIGHT);
+        // initial value size
+        valueFontSize = calculateFontSize(valueToAlignTo, maxTextWidth * valueWidthPercent, maxTextHeight, LINE_HEIGHT);
         // How big can we make the title and still have it fit
-        titleFontSize = calculateFontSize(titleToAlignTo, maxTextWidth * 0.6, maxTextHeight, LINE_HEIGHT);
+        titleFontSize = calculateFontSize(
+          titleToAlignTo,
+          maxTextWidth * 0.6,
+          maxTextHeight,
+          LINE_HEIGHT,
+          maxTitleFontSize
+        );
+
         // make sure it's a bit smaller than valueFontSize
         titleFontSize = Math.min(valueFontSize * 0.7, titleFontSize);
         titleHeight = titleFontSize * LINE_HEIGHT;
@@ -82,31 +91,54 @@ export function calculateLayout(props: Props): LayoutResult {
       }
     } else {
       // wide with chart
+      const chartHeightPercent = 0.5;
+      const titleWidthPercent = 0.6;
+      const valueWidthPercent = 1 - titleWidthPercent;
+      const textHeightPercent = 0.4;
+
       chartWidth = width;
-      chartHeight = height * 0.5;
+      chartHeight = height * chartHeightPercent;
 
       if (titleToAlignTo && titleToAlignTo.length > 0) {
-        titleFontSize = calculateFontSize(titleToAlignTo, maxTextWidth * 0.6, maxTextHeight * 0.4, LINE_HEIGHT);
+        titleFontSize = calculateFontSize(
+          titleToAlignTo,
+          maxTextWidth * titleWidthPercent,
+          maxTextHeight * textHeightPercent,
+          LINE_HEIGHT,
+          maxTitleFontSize
+        );
         titleHeight = titleFontSize * LINE_HEIGHT;
       }
 
-      valueFontSize = calculateFontSize(valueToAlignTo, maxTextWidth * 0.4, maxTextHeight * 0.5, LINE_HEIGHT);
+      valueFontSize = calculateFontSize(
+        valueToAlignTo,
+        maxTextWidth * valueWidthPercent,
+        maxTextHeight * chartHeightPercent,
+        LINE_HEIGHT
+      );
     }
   } else {
-    const maxTextWidth = width - panelPadding * 2;
-    const maxTextHeight = height - panelPadding * 2;
+    // Stacked layout (title, value, chart)
+    const titleHeightPercent = 0.15;
+    const chartHeightPercent = 0.25;
 
     // Does a chart fit or exist?
     if (height < 100 || !sparkline) {
       layoutType = LayoutType.StackedNoChart;
     } else {
       // we have chart
-      chartHeight = height * CHART_HEIGHT_RATIO;
+      chartHeight = height * chartHeightPercent;
       chartWidth = width;
     }
 
     if (titleToAlignTo && titleToAlignTo.length > 0) {
-      titleFontSize = calculateFontSize(titleToAlignTo, maxTextWidth, height * TITLE_HEIGHT_RATIO, LINE_HEIGHT);
+      titleFontSize = calculateFontSize(
+        titleToAlignTo,
+        maxTextWidth,
+        height * titleHeightPercent,
+        LINE_HEIGHT,
+        maxTitleFontSize
+      );
       titleHeight = titleFontSize * LINE_HEIGHT;
     }
 

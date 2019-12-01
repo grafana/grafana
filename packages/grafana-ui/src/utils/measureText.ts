@@ -26,7 +26,7 @@ export function measureText(text: string, fontSize: number): TextMetrics {
   return metrics;
 }
 
-export function calculateFontSize(text: string, width: number, height: number, lineHeight: number) {
+export function calculateFontSize(text: string, width: number, height: number, lineHeight: number, maxSize?: number) {
   // calculate width in 14px
   const textSize = measureText(text, 14);
   // how much bigger than 14px can we make it while staying within our width constraints
@@ -34,5 +34,6 @@ export function calculateFontSize(text: string, width: number, height: number, l
   const fontSizeBasedOnHeight = height / lineHeight;
 
   // final fontSize
-  return Math.min(fontSizeBasedOnHeight, fontSizeBasedOnWidth);
+  const optimialSize = Math.min(fontSizeBasedOnHeight, fontSizeBasedOnWidth);
+  return Math.min(optimialSize, maxSize ?? optimialSize);
 }
