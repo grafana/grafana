@@ -49,8 +49,12 @@ const formatTests: ValueFormatTest[] = [
   { id: 'prefix:a', decimals: 0, value: 1532.82, result: 'a1532' },
   { id: 'prefix:b', decimals: 0, value: 1532.82, result: 'b1532' },
 
+  // SI Units
+  { id: 'si:µF', decimals: 3, value: 1234, result: '1.234 F' },
+
   // Time format
   { id: 'time:YYYY', decimals: 0, value: dateTime(new Date(1999)).valueOf(), result: '1999' },
+  { id: 'time:YYYY.MM', decimals: 0, value: dateTime(new Date(2010)).valueOf(), result: '2010.01' },
 ];
 
 describe('valueFormats', () => {

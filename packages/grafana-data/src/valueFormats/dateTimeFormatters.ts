@@ -1,6 +1,6 @@
 import { toDuration as duration, toUtc, dateTime } from '../datetime/moment_wrapper';
 
-import { toFixed, toFixedScaled, FormattedValue, ValueFormat, ValueFormatter } from './valueFormats';
+import { toFixed, toFixedScaled, FormattedValue, ValueFormatter } from './valueFormats';
 import { DecimalCount } from '../types/displayValue';
 
 interface IntervalsInSeconds {

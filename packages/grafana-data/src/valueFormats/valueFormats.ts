@@ -1,6 +1,7 @@
 import { getCategories } from './categories';
 import { DecimalCount } from '../types/displayValue';
 import { toDateTimeValueFormatter } from './dateTimeFormatters';
+import { getOffsetFromSIPrefix, decimalSIPrefix } from './symbolFormatters';
 
 export interface FormattedValue {
   text: string;
@@ -182,6 +183,11 @@ export function getValueFormat(id: string): ValueFormatter {
       }
       if (key === 'time') {
         return toDateTimeValueFormatter(sub);
+      }
+      if (key === 'si') {
+        const offset = getOffsetFromSIPrefix(sub.charAt(0));
+        const unit = offset === 0 ? sub : sub.substring(1);
+        return decimalSIPrefix(unit, offset);
       }
     }
     return toFixedUnit(id);
