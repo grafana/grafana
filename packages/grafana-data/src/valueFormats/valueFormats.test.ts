@@ -1,6 +1,7 @@
 import { toFixed, getValueFormat, scaledUnits, formattedValueToString } from './valueFormats';
 import { DecimalCount } from '../types/displayValue';
 import { TimeZone } from '../types';
+import { dateTime } from '../datetime';
 
 interface ValueFormatTest {
   id: string;
@@ -16,7 +17,7 @@ const formatTests: ValueFormatTest[] = [
   { id: 'currencyUSD', decimals: 2, value: 1532.82, result: '$1.53K' },
   { id: 'currencyKRW', decimals: 2, value: 1532.82, result: '₩1.53K' },
 
-  // Typical
+  // Standard
   { id: 'ms', decimals: 4, value: 0.0024, result: '0.0024 ms' },
   { id: 'ms', decimals: 0, value: 100, result: '100 ms' },
   { id: 'ms', decimals: 2, value: 1250, result: '1.25 s' },
@@ -39,6 +40,21 @@ const formatTests: ValueFormatTest[] = [
   { id: 'henry', decimals: 3, value: 1000, result: '1.000 kH' },
   { id: 'mhenry', decimals: 3, value: 1000, result: '1.000 H' },
   { id: 'µhenry', decimals: 3, value: 1000, result: '1.000 mH' },
+
+  // Suffix (unknown units append to the end)
+  { id: 'a', decimals: 0, value: 1532.82, result: '1532 a' },
+  { id: 'b', decimals: 0, value: 1532.82, result: '1532 b' },
+
+  // Prefix (unknown units append to the end)
+  { id: 'prefix:a', decimals: 0, value: 1532.82, result: 'a1532' },
+  { id: 'prefix:b', decimals: 0, value: 1532.82, result: 'b1532' },
+
+  // SI Units
+  { id: 'si:µF', decimals: 3, value: 1234, result: '1.234 F' },
+
+  // Time format
+  { id: 'time:YYYY', decimals: 0, value: dateTime(new Date(1999)).valueOf(), result: '1999' },
+  { id: 'time:YYYY.MM', decimals: 0, value: dateTime(new Date(2010)).valueOf(), result: '2010.01' },
 ];
 
 describe('valueFormats', () => {

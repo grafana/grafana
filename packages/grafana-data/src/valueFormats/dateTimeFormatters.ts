@@ -1,6 +1,6 @@
 import { toDuration as duration, toUtc, dateTime } from '../datetime/moment_wrapper';
 
-import { toFixed, toFixedScaled, FormattedValue } from './valueFormats';
+import { toFixed, toFixedScaled, FormattedValue, ValueFormatter } from './valueFormats';
 import { DecimalCount } from '../types/displayValue';
 
 interface IntervalsInSeconds {
@@ -323,33 +323,20 @@ export function toClockSeconds(size: number, decimals: DecimalCount): FormattedV
   return toClock(size * 1000, decimals);
 }
 
-export function dateTimeAsIso(
-  value: number,
-  decimals: DecimalCount,
-  scaledDecimals: DecimalCount,
-  isUtc?: boolean
-): FormattedValue {
-  const time = isUtc ? toUtc(value) : dateTime(value);
-
-  if (dateTime().isSame(value, 'day')) {
-    return { text: time.format('HH:mm:ss') };
-  }
-  return { text: time.format('YYYY-MM-DD HH:mm:ss') };
+export function toDateTimeValueFormatter(pattern: string, todayPattern?: string): ValueFormatter {
+  return (value: number, decimals: DecimalCount, scaledDecimals: DecimalCount, isUtc?: boolean): FormattedValue => {
+    const time = isUtc ? toUtc(value) : dateTime(value);
+    if (todayPattern) {
+      if (dateTime().isSame(value, 'day')) {
+        return { text: time.format(todayPattern) };
+      }
+    }
+    return { text: time.format(pattern) };
+  };
 }
 
-export function dateTimeAsUS(
-  value: number,
-  decimals: DecimalCount,
-  scaledDecimals: DecimalCount,
-  isUtc?: boolean
-): FormattedValue {
-  const time = isUtc ? toUtc(value) : dateTime(value);
-
-  if (dateTime().isSame(value, 'day')) {
-    return { text: time.format('h:mm:ss a') };
-  }
-  return { text: time.format('MM/DD/YYYY h:mm:ss a') };
-}
+export const dateTimeAsIso = toDateTimeValueFormatter('YYYY-MM-DD HH:mm:ss', 'HH:mm:ss');
+export const dateTimeAsUS = toDateTimeValueFormatter('MM/DD/YYYY h:mm:ss a', 'h:mm:ss a');
 
 export function dateTimeFromNow(
   value: number,

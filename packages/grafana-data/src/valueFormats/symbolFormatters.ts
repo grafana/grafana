@@ -18,6 +18,40 @@ export function currency(symbol: string, asSuffix?: boolean): ValueFormatter {
   };
 }
 
+export function getOffsetFromSIPrefix(c: string): number {
+  switch (c) {
+    case 'f':
+      return -5;
+    case 'p':
+      return -4;
+    case 'n':
+      return -3;
+    case 'µ':
+      return -2;
+    case 'm':
+      return -1;
+    case '':
+      return 0;
+    case 'k':
+      return 1;
+    case 'M':
+      return 2;
+    case 'G':
+      return 3;
+    case 'T':
+      return 4;
+    case 'P':
+      return 5;
+    case 'E':
+      return 6;
+    case 'Z':
+      return 7;
+    case 'Y':
+      return 8;
+  }
+  return 0;
+}
+
 export function binarySIPrefix(unit: string, offset = 0): ValueFormatter {
   const prefixes = ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi', 'Yi'].slice(offset);
   const units = prefixes.map(p => {
