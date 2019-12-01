@@ -48,14 +48,22 @@ export { Table } from './Table/Table';
 export { TableInputCSV } from './Table/TableInputCSV';
 
 // Visualizations
-export { BigValue, BigValueDisplayMode, BigValueSparkline } from './BigValue/BigValue';
+export {
+  BigValue,
+  BigValueColorMode,
+  BigValueSparkline,
+  BigValueGraphMode,
+  BigValueJustifyMode,
+} from './BigValue/BigValue';
+
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { GraphLegend } from './Graph/GraphLegend';
 export { GraphWithLegend } from './Graph/GraphWithLegend';
-export { BarGauge, BarGaugeAlignmentFactors } from './BarGauge/BarGauge';
+export { BarGauge } from './BarGauge/BarGauge';
 export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { VizRepeater } from './VizRepeater/VizRepeater';
+
 export {
   LegendOptions,
   LegendBasicOptions,
@@ -66,6 +74,7 @@ export {
   LegendPlacement,
   LegendDisplayMode,
 } from './Legend/Legend';
+
 export { Alert, AlertVariant } from './Alert/Alert';
 export { GraphSeriesToggler, GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
 export { Collapse } from './Collapse/Collapse';
