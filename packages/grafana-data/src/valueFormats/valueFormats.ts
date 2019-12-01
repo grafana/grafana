@@ -173,7 +173,7 @@ export function getValueFormat(id: string): ValueFormatter {
   }
 
   const fmt = index[id];
-  if (!fmt) {
+  if (!fmt && id) {
     const idx = id.indexOf(':');
     if (idx > 0) {
       const key = id.substring(0, idx);
