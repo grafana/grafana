@@ -42,22 +42,34 @@ const formatTests: ValueFormatTest[] = [
   { id: 'µhenry', decimals: 3, value: 1000, result: '1.000 mH' },
 
   // Suffix (unknown units append to the end)
-  { id: 'a', decimals: 0, value: 1532.82, result: '1532 a' },
-  { id: 'b', decimals: 0, value: 1532.82, result: '1532 b' },
+  { id: 'a', decimals: 0, value: 1532.82, result: '1533 a' },
+  { id: 'b', decimals: 0, value: 1532.82, result: '1533 b' },
 
   // Prefix (unknown units append to the end)
-  { id: 'prefix:a', decimals: 0, value: 1532.82, result: 'a1532' },
-  { id: 'prefix:b', decimals: 0, value: 1532.82, result: 'b1532' },
+  { id: 'prefix:b', value: 1532.82, result: 'b1533' },
 
   // SI Units
-  { id: 'si:µF', decimals: 3, value: 1234, result: '1.234 F' },
+  { id: 'si:µF', value: 1234, decimals: 2, result: '1.23 mF' },
+  { id: 'si:µF', value: 1234000000, decimals: 2, result: '1.23 kF' },
+  { id: 'si:µF', value: 1234000000000000, decimals: 2, result: '1.23 GF' },
 
   // Time format
-  { id: 'time:YYYY', decimals: 0, value: dateTime(new Date(1999)).valueOf(), result: '1999' },
-  { id: 'time:YYYY.MM', decimals: 0, value: dateTime(new Date(2010)).valueOf(), result: '2010.01' },
+  { id: 'time:YYYY', decimals: 0, value: dateTime(new Date(1999, 6, 2)).valueOf(), result: '1999' },
+  { id: 'time:YYYY.MM', decimals: 0, value: dateTime(new Date(2010, 6, 2)).valueOf(), result: '2010.07' },
 ];
 
 describe('valueFormats', () => {
+  it('Manually check a format', () => {
+    // helpful for adding tests one at a time with the debugger
+    const tests: ValueFormatTest = [
+      { id: 'time:YYYY.MM', decimals: 0, value: dateTime(new Date(2010, 6, 2)).valueOf(), result: '2010.07' },
+    ];
+    const test = tests[0];
+    const result = getValueFormat(test.id)(test.value, test.decimals, test.scaledDecimals);
+    const full = formattedValueToString(result);
+    expect(full).toBe(test.result);
+  });
+
   for (const test of formatTests) {
     describe(`value format: ${test.id}`, () => {
       it(`should translate ${test.value} as ${test.result}`, () => {
