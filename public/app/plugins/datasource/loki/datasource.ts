@@ -17,7 +17,6 @@ import {
   isLokiLogsStream,
 } from './result_transformer';
 import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
-import { processMetricFindQuery } from './metric_find_query';
 
 // Types
 import {
@@ -122,7 +121,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   _request(apiUrl: string, data?: any, options?: DatasourceRequestOptions): Observable<Record<string, any>> {
     const baseUrl = this.instanceSettings.url;
     const params = data ? serializeParams(data) : '';
-    const url = `${baseUrl}${apiUrl}${params.length ? `?${params}` : ''}`;
+    const url = `${baseUrl}${apiUrl}${params.length ? `? ${params}` : ''}`;
     const req = {
       ...options,
       url,
@@ -400,12 +399,44 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     };
   }
 
-  metricFindQuery(query: string) {
+  async metricFindQuery(query: string) {
     if (!query) {
       return Promise.resolve([]);
     }
     const interpolated = this.templateSrv.replace(query, {}, this.interpolateQueryExpr);
-    return processMetricFindQuery(this, interpolated);
+    return await this.processMetricFindQuery(interpolated);
+  }
+
+  async processMetricFindQuery(query: string) {
+    const labelNamesRegex = /^label_names\(\)\s*$/;
+    const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
+
+    const labelNames = query.match(labelNamesRegex);
+    if (labelNames) {
+      return await this.labelNamesQuery();
+    }
+
+    const labelValues = query.match(labelValuesRegex);
+    if (labelValues) {
+      return await this.labelValuesQuery(labelValues[2]);
+    }
+
+    return Promise.resolve([]);
+  }
+
+  async labelNamesQuery() {
+    const url = (await this.getVersion()) === 'v0' ? `${LEGACY_LOKI_ENDPOINT}/label` : `${LOKI_ENDPOINT}/label`;
+    const result = await this.metadataRequest(url);
+    return result.data.data.map((value: string) => ({ text: value }));
+  }
+
+  async labelValuesQuery(label: string) {
+    const url =
+      (await this.getVersion()) === 'v0'
+        ? `${LEGACY_LOKI_ENDPOINT}/label/${label}/values`
+        : `${LOKI_ENDPOINT}/label/${label}/values`;
+    const result = await this.metadataRequest(url);
+    return result.data.data.map((value: string) => ({ text: value }));
   }
 
   interpolateQueryExpr(value: any, variable: any) {
