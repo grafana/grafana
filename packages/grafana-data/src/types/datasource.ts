@@ -281,8 +281,8 @@ export interface QueryEditorProps<
   query: TQuery;
   onRunQuery: () => void;
   onChange: (value: TQuery) => void;
-  /*
-   * Contains query response filtered by refId and possible query error
+  /**
+   * Contains query response filtered by refId of QueryResultBase and possible query error
    */
   data?: PanelData;
 }
