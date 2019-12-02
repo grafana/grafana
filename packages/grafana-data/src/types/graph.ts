@@ -1,5 +1,6 @@
 import { DisplayValue } from './displayValue';
 import { Field } from './dataFrame';
+
 export interface YAxis {
   index: number;
   min?: number;

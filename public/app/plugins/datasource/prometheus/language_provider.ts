@@ -308,12 +308,17 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const existingKeys = parsedSelector ? parsedSelector.labelKeys : [];
 
     // Query labels for selector
-    if (selector && (!this.labelValues[selector] || this.timeRangeChanged())) {
+    if (selector) {
       if (selector === EMPTY_SELECTOR) {
-        // Query label values for default labels
-        await Promise.all(DEFAULT_KEYS.map(key => this.fetchLabelValues(key)));
+        // For empty selector we do not need to check range
+        if (!this.labelValues[selector]) {
+          // Query label values for default labels
+          await Promise.all(DEFAULT_KEYS.map(key => this.fetchLabelValues(key)));
+        }
       } else {
-        await this.fetchSeriesLabels(selector, !containsMetric);
+        if (!this.labelValues[selector] || this.timeRangeChanged()) {
+          await this.fetchSeriesLabels(selector, !containsMetric);
+        }
       }
     }
 

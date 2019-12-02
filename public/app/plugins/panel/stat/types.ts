@@ -1,20 +1,26 @@
-import { SingleStatBaseOptions, BigValueDisplayMode } from '@grafana/ui';
+import { SingleStatBaseOptions, BigValueColorMode, BigValueGraphMode, BigValueJustifyMode } from '@grafana/ui';
 import { VizOrientation, ReducerID, FieldDisplayOptions, SelectableValue } from '@grafana/data';
-
-export interface SparklineOptions {
-  show: boolean;
-}
 
 // Structure copied from angular
 export interface StatPanelOptions extends SingleStatBaseOptions {
-  sparkline: SparklineOptions;
-  displayMode: BigValueDisplayMode;
+  graphMode: BigValueGraphMode;
+  colorMode: BigValueColorMode;
+  justifyMode: BigValueJustifyMode;
 }
 
-export const displayModes: Array<SelectableValue<BigValueDisplayMode>> = [
-  { value: BigValueDisplayMode.Classic, label: 'Classic' },
-  { value: BigValueDisplayMode.Vibrant, label: 'Vibrant' },
-  { value: BigValueDisplayMode.Vibrant2, label: 'Vibrant 2' },
+export const colorModes: Array<SelectableValue<BigValueColorMode>> = [
+  { value: BigValueColorMode.Value, label: 'Value' },
+  { value: BigValueColorMode.Background, label: 'Background' },
+];
+
+export const graphModes: Array<SelectableValue<BigValueGraphMode>> = [
+  { value: BigValueGraphMode.None, label: 'None' },
+  { value: BigValueGraphMode.Area, label: 'Area graph' },
+];
+
+export const justifyModes: Array<SelectableValue<BigValueJustifyMode>> = [
+  { value: BigValueJustifyMode.Auto, label: 'Auto' },
+  { value: BigValueJustifyMode.Center, label: 'Center' },
 ];
 
 export const standardFieldDisplayOptions: FieldDisplayOptions = {
@@ -33,10 +39,9 @@ export const standardFieldDisplayOptions: FieldDisplayOptions = {
 };
 
 export const defaults: StatPanelOptions = {
-  sparkline: {
-    show: true,
-  },
-  displayMode: BigValueDisplayMode.Vibrant,
+  graphMode: BigValueGraphMode.Area,
+  colorMode: BigValueColorMode.Value,
+  justifyMode: BigValueJustifyMode.Auto,
   fieldOptions: standardFieldDisplayOptions,
   orientation: VizOrientation.Auto,
 };
