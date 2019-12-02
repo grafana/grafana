@@ -1,13 +1,13 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "module": "esnext",
-    "declaration": true,
-    "strict": true,
     "alwaysStrict": true,
+    "declaration": true,
+    "module": "esnext",
     "noImplicitAny": true,
-    "strictNullChecks": true,
+    "removeComments": false,
     "skipLibCheck": true, // Temp workaround for Duplicate identifier tsc errors,
-    "removeComments": false
+    "strict": true,
+    "strictNullChecks": true
   }
 }
