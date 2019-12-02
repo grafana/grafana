@@ -6,6 +6,14 @@
   }
 }
 
+.icon-brand-gradient {
+  text-shadow: none;
+  background: linear-gradient(180deg, #f05a28 30%, #fbca0a 100%);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -moz-text-fill-color: transparent;
+}
+
 .icon-margin-left {
   margin-left: 0.25em;
 
@@ -14,6 +22,9 @@
   }
 }
 
+.explore-active-button-glow {
+  box-shadow: $btn-active-box-shadow;
+}
 .explore-ds-picker {
   min-width: 200px;
   max-width: 300px;

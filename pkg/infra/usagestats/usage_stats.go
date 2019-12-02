@@ -28,12 +28,13 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 
 	metrics := map[string]interface{}{}
 	report := map[string]interface{}{
-		"version":   version,
-		"metrics":   metrics,
-		"os":        runtime.GOOS,
-		"arch":      runtime.GOARCH,
-		"edition":   getEdition(uss.License.HasValidLicense()),
-		"packaging": setting.Packaging,
+		"version":         version,
+		"metrics":         metrics,
+		"os":              runtime.GOOS,
+		"arch":            runtime.GOARCH,
+		"edition":         getEdition(),
+		"hasValidLicense": uss.License.HasValidLicense(),
+		"packaging":       setting.Packaging,
 	}
 
 	statsQuery := models.GetSystemStatsQuery{}
@@ -60,6 +61,9 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	metrics["stats.snapshots.count"] = statsQuery.Result.Snapshots
 	metrics["stats.teams.count"] = statsQuery.Result.Teams
 	metrics["stats.total_auth_token.count"] = statsQuery.Result.AuthTokens
+	metrics["stats.valid_license.count"] = getValidLicenseCount(uss.License.HasValidLicense())
+	metrics["stats.edition.oss.count"] = getOssEditionCount()
+	metrics["stats.edition.enterprise.count"] = getEnterpriseEditionCount()
 
 	userCount := statsQuery.Result.Users
 	avgAuthTokensPerUser := statsQuery.Result.AuthTokens
@@ -182,9 +186,32 @@ func (uss *UsageStatsService) updateTotalStats() {
 	metrics.StatsTotalActiveAdmins.Set(float64(statsQuery.Result.ActiveAdmins))
 }
 
-func getEdition(validLicense bool) string {
-	if validLicense {
-		return "enterprise"
+func getEdition() string {
+	edition := "oss"
+	if setting.IsEnterprise {
+		edition = "enterprise"
 	}
-	return "oss"
+
+	return edition
+}
+
+func getEnterpriseEditionCount() int {
+	if setting.IsEnterprise {
+		return 1
+	}
+	return 0
+}
+
+func getOssEditionCount() int {
+	if setting.IsEnterprise {
+		return 0
+	}
+	return 1
+}
+
+func getValidLicenseCount(validLicense bool) int {
+	if validLicense {
+		return 1
+	}
+	return 0
 }

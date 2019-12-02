@@ -22,3 +22,7 @@ func (v *boolVector) At(i int) interface{} {
 func (v *boolVector) Len() int {
 	return len(*v)
 }
+
+func (v *boolVector) PrimitiveType() VectorPType {
+	return VectorPTypeBool
+}

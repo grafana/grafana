@@ -1,3 +1,4 @@
+import './query_parameter_ctrl';
 import { DataSourcePlugin } from '@grafana/data';
 import { ConfigEditor } from './components/ConfigEditor';
 import { QueryEditor } from './components/QueryEditor';

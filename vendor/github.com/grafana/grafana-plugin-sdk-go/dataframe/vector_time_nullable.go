@@ -26,3 +26,7 @@ func (v *nullableTimeVector) At(i int) interface{} {
 func (v *nullableTimeVector) Len() int {
 	return len(*v)
 }
+
+func (v *nullableTimeVector) PrimitiveType() VectorPType {
+	return VectorPTypeNullableTime
+}

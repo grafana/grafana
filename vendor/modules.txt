@@ -17,7 +17,7 @@ github.com/apache/arrow/go/arrow/internal/debug
 github.com/apache/arrow/go/arrow/internal/flatbuf
 github.com/apache/arrow/go/arrow/ipc
 github.com/apache/arrow/go/arrow/memory
-# github.com/aws/aws-sdk-go v1.25.6
+# github.com/aws/aws-sdk-go v1.25.38
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/awserr
 github.com/aws/aws-sdk-go/aws/awsutil
@@ -131,7 +131,7 @@ github.com/gosimple/slug
 # github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 github.com/grafana/grafana-plugin-model/go/datasource
 github.com/grafana/grafana-plugin-model/go/renderer
-# github.com/grafana/grafana-plugin-sdk-go v0.2.0
+# github.com/grafana/grafana-plugin-sdk-go v0.4.0
 github.com/grafana/grafana-plugin-sdk-go/common
 github.com/grafana/grafana-plugin-sdk-go/dataframe
 github.com/grafana/grafana-plugin-sdk-go/datasource

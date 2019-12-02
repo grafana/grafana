@@ -676,9 +676,9 @@ func (c *STS) DecodeAuthorizationMessageRequest(input *DecodeAuthorizationMessag
 //
 // Returned Error Codes:
 //   * ErrCodeInvalidAuthorizationMessageException "InvalidAuthorizationMessageException"
-//   The error returned if the message passed to DecodeAuthorizationMessage was
-//   invalid. This can happen if the token contains invalid characters, such as
-//   linebreaks.
+//   This error is returned if the message passed to DecodeAuthorizationMessage
+//   was invalid. This can happen if the token contains invalid characters, such
+//   as linebreaks.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/sts-2011-06-15/DecodeAuthorizationMessage
 func (c *STS) DecodeAuthorizationMessage(input *DecodeAuthorizationMessageInput) (*DecodeAuthorizationMessageOutput, error) {
