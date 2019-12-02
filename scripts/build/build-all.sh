@@ -2,6 +2,8 @@
 
 # shellcheck disable=SC2086
 
+# shellcheck source=./scripts/helpers/exit-if-fail.sh
+source "$(dirname "$0")/../helpers/exit-if-fail.sh"
 #
 #   This script is executed from within the container.
 #
@@ -24,6 +26,16 @@ CCX64_MUSL=/tmp/x86_64-linux-musl-cross/bin/x86_64-linux-musl-gcc
 cd /go/src/github.com/grafana/grafana
 echo "current dir: $(pwd)"
 
+function reportFrontEndBuildTime() {
+  if echo "$EXTRA_OPTS" | grep -vq enterprise ; then
+    # Only report for build job
+    # build-enterprise happens right after build on master
+    # so there is no need for reporting the same metric again
+    exit_if_fail ./scripts/ci-metrics-publisher.sh "grafana.ci-performance.frontend-build=$1"
+  fi
+}
+
+
 if [ "$CIRCLE_TAG" != "" ]; then
   echo "Building releases from tag $CIRCLE_TAG"
   OPT="-includeBuildId=false ${EXTRA_OPTS}"
@@ -35,15 +47,13 @@ fi
 echo "Build arguments: $OPT"
 echo "current dir: $(pwd)"
 
-# build only amd64 for enterprise
-if echo "$EXTRA_OPTS" | grep -vq enterprise ; then
-  go run build.go -goarch armv6 -cc ${CCARMV6} ${OPT} build
-  go run build.go -goarch armv7 -cc ${CCARMV7} ${OPT} build
-  go run build.go -goarch arm64 -cc ${CCARM64} ${OPT} build
-  go run build.go -goarch armv7 -libc musl -cc ${CCARMV7_MUSL} ${OPT} build
-  go run build.go -goarch arm64 -libc musl -cc ${CCARM64_MUSL} ${OPT} build
-  go run build.go -goos darwin -cc ${CCOSX64} ${OPT} build
-fi
+go run build.go -goarch armv6 -cc ${CCARMV6} ${OPT} build
+go run build.go -goarch armv7 -cc ${CCARMV7} ${OPT} build
+go run build.go -goarch arm64 -cc ${CCARM64} ${OPT} build
+go run build.go -goarch armv7 -libc musl -cc ${CCARMV7_MUSL} ${OPT} build
+go run build.go -goarch arm64 -libc musl -cc ${CCARM64_MUSL} ${OPT} build
+go run build.go -goos darwin -cc ${CCOSX64} ${OPT} build
+
 
 go run build.go -goos windows -cc ${CCWIN64} ${OPT} build
 
@@ -60,7 +70,11 @@ else
   echo "Building frontend and packaging incremental build for $CIRCLE_BRANCH"
 fi
 echo "Building frontend"
+start=$(date +%s%N)
 go run build.go ${OPT} build-frontend
+runtime=$((($(date +%s%N) - start)/1000000))
+echo "Frontent build took $runtime"
+reportFrontEndBuildTime $runtime
 
 if [ -d "dist" ]; then
   rm -rf dist

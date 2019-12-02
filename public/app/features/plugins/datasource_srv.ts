@@ -17,7 +17,7 @@ import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 
 export class DatasourceSrv implements DataSourceService {
-  datasources: { [name: string]: DataSourceApi };
+  datasources: Record<string, DataSourceApi>;
 
   /** @ngInject */
   constructor(
@@ -57,16 +57,16 @@ export class DatasourceSrv implements DataSourceService {
     return this.loadDatasource(name);
   }
 
-  loadDatasource(name: string): Promise<DataSourceApi> {
+  loadDatasource(name: string): Promise<DataSourceApi<any, any>> {
     // Expression Datasource (not a real datasource)
     if (name === expressionDatasource.name) {
-      this.datasources[name] = expressionDatasource;
+      this.datasources[name] = expressionDatasource as any;
       return this.$q.when(expressionDatasource);
     }
 
     const dsConfig = config.datasources[name];
     if (!dsConfig) {
-      return this.$q.reject({ message: 'Datasource named ' + name + ' was not found' });
+      return this.$q.reject({ message: `Datasource named ${name} was not found` });
     }
 
     const deferred = this.$q.defer();

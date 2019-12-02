@@ -6,81 +6,84 @@ import store from 'app/core/store';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { Emitter } from 'app/core/core';
 import {
-  ensureQueries,
-  generateEmptyQuery,
-  parseUrlState,
-  getTimeRange,
-  getTimeRangeFromUrl,
-  generateNewKeyAndAddRefIdIfMissing,
-  lastUsedDatasourceKeyForOrgId,
-  hasNonEmptyQuery,
   buildQueryTransaction,
   clearQueryKeys,
+  ensureQueries,
+  generateEmptyQuery,
+  generateNewKeyAndAddRefIdIfMissing,
+  GetExploreUrlArguments,
+  getTimeRange,
+  getTimeRangeFromUrl,
+  hasNonEmptyQuery,
+  lastUsedDatasourceKeyForOrgId,
+  parseUrlState,
   serializeStateToUrlParam,
   stopQueryState,
   updateHistory,
 } from 'app/core/utils/explore';
 // Types
-import { ThunkResult, ExploreUrlState, ExploreItemState } from 'app/types';
+import { ExploreItemState, ExploreUrlState, ThunkResult } from 'app/types';
 import { RefreshPicker } from '@grafana/ui';
 
 import {
-  DataSourceApi,
-  DataQuery,
-  DataSourceSelectItem,
-  QueryFixAction,
-  PanelData,
-  RawTimeRange,
-  LogsDedupStrategy,
   AbsoluteTimeRange,
-  LoadingState,
-  TimeRange,
-  isDateTime,
+  DataQuery,
+  DataSourceApi,
+  DataSourceSelectItem,
   dateTimeForTimeZone,
+  isDateTime,
+  LoadingState,
+  LogsDedupStrategy,
+  PanelData,
+  QueryFixAction,
+  RawTimeRange,
+  TimeRange,
 } from '@grafana/data';
-import { ExploreId, ExploreUIState, ExploreMode, QueryOptions } from 'app/types/explore';
+import { ExploreId, ExploreMode, ExploreUIState, QueryOptions } from 'app/types/explore';
 import {
-  updateDatasourceInstanceAction,
+  addQueryRowAction,
+  changeModeAction,
   changeQueryAction,
+  changeRangeAction,
   changeRefreshIntervalAction,
   ChangeRefreshIntervalPayload,
   changeSizeAction,
   ChangeSizePayload,
+  clearOriginAction,
   clearQueriesAction,
+  historyUpdatedAction,
   initializeExploreAction,
   loadDatasourceMissingAction,
   loadDatasourcePendingAction,
-  queriesImportedAction,
-  LoadDatasourceReadyPayload,
   loadDatasourceReadyAction,
+  LoadDatasourceReadyPayload,
+  loadExploreDatasources,
   modifyQueriesAction,
+  queriesImportedAction,
+  queryStoreSubscriptionAction,
+  queryStreamUpdatedAction,
   scanStartAction,
+  scanStopAction,
   setQueriesAction,
+  setUrlReplacedAction,
   splitCloseAction,
   splitOpenAction,
-  addQueryRowAction,
-  toggleGraphAction,
-  toggleTableAction,
-  ToggleGraphPayload,
-  ToggleTablePayload,
-  updateUIStateAction,
-  loadExploreDatasources,
-  changeModeAction,
-  scanStopAction,
-  setUrlReplacedAction,
-  changeRangeAction,
-  historyUpdatedAction,
-  queryStreamUpdatedAction,
-  queryStoreSubscriptionAction,
-  clearOriginAction,
   syncTimesAction,
+  toggleGraphAction,
+  ToggleGraphPayload,
+  toggleTableAction,
+  ToggleTablePayload,
+  updateDatasourceInstanceAction,
+  updateUIStateAction,
 } from './actionTypes';
-import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
+import { ActionCreator, ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { updateLocation } from '../../../core/actions';
-import { getTimeSrv } from '../../dashboard/services/TimeSrv';
-import { runRequest, preProcessPanelData } from '../../dashboard/state/runRequest';
+import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
+import { preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
+import { PanelModel } from 'app/features/dashboard/state';
+import { DataSourceSrv } from '@grafana/runtime';
 
 /**
  * Updates UI state and save it to the URL
@@ -120,8 +123,15 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
     const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
     const queries = getState().explore[exploreId].queries;
     const orgId = getState().user.orgId;
+    const datasourceVersion = newDataSourceInstance.getVersion && (await newDataSourceInstance.getVersion());
 
-    dispatch(updateDatasourceInstanceAction({ exploreId, datasourceInstance: newDataSourceInstance }));
+    dispatch(
+      updateDatasourceInstanceAction({
+        exploreId,
+        datasourceInstance: newDataSourceInstance,
+        version: datasourceVersion,
+      })
+    );
 
     await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, newDataSourceInstance));
 
@@ -152,7 +162,7 @@ export function changeQuery(
   exploreId: ExploreId,
   query: DataQuery,
   index: number,
-  override: boolean
+  override = false
 ): ThunkResult<void> {
   return (dispatch, getState) => {
     // Null query means reset
@@ -379,8 +389,8 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi, or
 export function modifyQueries(
   exploreId: ExploreId,
   modification: QueryFixAction,
-  index: number,
-  modifier: any
+  modifier: any,
+  index?: number
 ): ThunkResult<void> {
   return dispatch => {
     dispatch(modifyQueriesAction({ exploreId, modification, index, modifier }));
@@ -433,6 +443,7 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
       liveStreaming: live,
       showingGraph,
       showingTable,
+      mode,
     };
 
     const datasourceId = datasourceInstance.meta.id;
@@ -764,3 +775,36 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     }
   };
 }
+
+export interface NavigateToExploreDependencies {
+  getDataSourceSrv: () => DataSourceSrv;
+  getTimeSrv: () => TimeSrv;
+  getExploreUrl: (args: GetExploreUrlArguments) => Promise<string>;
+  openInNewWindow?: (url: string) => void;
+}
+
+export const navigateToExplore = (
+  panel: PanelModel,
+  dependencies: NavigateToExploreDependencies
+): ThunkResult<void> => {
+  return async dispatch => {
+    const { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow } = dependencies;
+    const datasourceSrv = getDataSourceSrv();
+    const datasource = await datasourceSrv.get(panel.datasource);
+    const path = await getExploreUrl({
+      panel,
+      panelTargets: panel.targets,
+      panelDatasource: datasource,
+      datasourceSrv,
+      timeSrv: getTimeSrv(),
+    });
+
+    if (openInNewWindow) {
+      openInNewWindow(path);
+      return;
+    }
+
+    const query = {}; // strips any angular query param
+    dispatch(updateLocation({ path, query }));
+  };
+};

@@ -1,10 +1,10 @@
 import { ComponentClass, ComponentType } from 'react';
-import { DataQueryRequest, DataQueryError } from './datasource';
-import { PluginMeta, GrafanaPlugin } from './plugin';
+import { DataQueryError, DataQueryRequest } from './datasource';
+import { GrafanaPlugin, PluginMeta } from './plugin';
 import { ScopedVars } from './ScopedVars';
 import { LoadingState } from './data';
 import { DataFrame } from './dataFrame';
-import { TimeRange, TimeZone, AbsoluteTimeRange } from './time';
+import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -74,6 +74,7 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
   defaults?: TOptions;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
+  noPadding?: boolean;
 
   /**
    * Legacy angular ctrl.  If this exists it will be used instead of the panel
@@ -92,6 +93,11 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
 
   setDefaults(defaults: TOptions) {
     this.defaults = defaults;
+    return this;
+  }
+
+  setNoPadding() {
+    this.noPadding = true;
     return this;
   }
 
@@ -125,7 +131,7 @@ export interface PanelMenuItem {
   type?: 'submenu' | 'divider';
   text?: string;
   iconClassName?: string;
-  onClick?: () => void;
+  onClick?: (event: React.MouseEvent<any>) => void;
   shortcut?: string;
   subMenu?: PanelMenuItem[];
 }

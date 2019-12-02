@@ -21,7 +21,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
     );
   }
 
-  const newResults = data ? dataFrameToLogsModel(data.series, data.request.intervalMs) : null;
+  const newResults = data ? dataFrameToLogsModel(data.series, data.request.intervalMs, timeZone) : null;
   const sortedNewResults = sortLogsResult(newResults, sortOrder);
 
   return (
@@ -32,7 +32,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
         highlighterExpressions={[]}
         showTime={showTime}
         timeZone={timeZone}
-        isLogsPanel={true}
+        allowDetails={true}
       />
     </CustomScrollbar>
   );

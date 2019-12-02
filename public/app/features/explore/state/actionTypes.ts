@@ -118,7 +118,7 @@ export interface LoadDatasourceReadyPayload {
 export interface ModifyQueriesPayload {
   exploreId: ExploreId;
   modification: QueryFixAction;
-  index: number;
+  index?: number;
   modifier: (query: DataQuery, modification: QueryFixAction) => DataQuery;
 }
 
@@ -186,6 +186,7 @@ export interface UpdateUIStatePayload extends Partial<ExploreUIState> {
 export interface UpdateDatasourceInstancePayload {
   exploreId: ExploreId;
   datasourceInstance: DataSourceApi;
+  version?: string;
 }
 
 export interface ToggleLogLevelPayload {

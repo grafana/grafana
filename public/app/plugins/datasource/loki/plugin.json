@@ -4,10 +4,10 @@
   "id": "loki",
   "category": "logging",
 
+  "logs": true,
   "metrics": true,
   "alerting": false,
   "annotations": true,
-  "logs": true,
   "streaming": true,
 
   "queryOptions": {

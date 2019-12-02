@@ -230,7 +230,12 @@ func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 	// delete any removed org roles
 	for _, orgId := range deleteOrgIds {
 		cmd := &models.RemoveOrgUserCommand{OrgId: orgId, UserId: user.Id}
-		if err := bus.Dispatch(cmd); err != nil {
+		err := bus.Dispatch(cmd)
+		if err == models.ErrLastOrgAdmin {
+			logger.Error(err.Error(), "userId", cmd.UserId, "orgId", cmd.OrgId)
+			continue
+		}
+		if err != nil {
 			return err
 		}
 	}

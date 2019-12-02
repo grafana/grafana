@@ -290,7 +290,10 @@ describe('AppInsightsDatasource', () => {
             series: [
               {
                 name: 'exceptions/server',
-                points: [[3, 1504108800000], [6, 1504112400000]],
+                points: [
+                  [3, 1504108800000],
+                  [6, 1504112400000],
+                ],
               },
             ],
             tables: null,
@@ -333,11 +336,17 @@ describe('AppInsightsDatasource', () => {
             series: [
               {
                 name: 'exceptions/server{client/city="Miami"}',
-                points: [[10, 1504108800000], [20, 1504112400000]],
+                points: [
+                  [10, 1504108800000],
+                  [20, 1504112400000],
+                ],
               },
               {
                 name: 'exceptions/server{client/city="San Antonio"}',
-                points: [[1, 1504108800000], [2, 1504112400000]],
+                points: [
+                  [1, 1504108800000],
+                  [2, 1504112400000],
+                ],
               },
             ],
             tables: null,

@@ -7,16 +7,16 @@ import { getExploreUrl } from 'app/core/utils/explore';
 import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/utils/panel';
 import { ContextSrv } from 'app/core/services/context_srv';
 import {
-  toLegacyResponseData,
-  toDataFrameDTO,
-  TimeRange,
-  LoadingState,
   DataFrame,
-  LegacyResponseData,
-  DataSourceApi,
-  PanelData,
   DataQueryResponse,
+  DataSourceApi,
+  LegacyResponseData,
+  LoadingState,
+  PanelData,
   PanelEvents,
+  TimeRange,
+  toDataFrameDTO,
+  toLegacyResponseData,
 } from '@grafana/data';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -106,7 +106,6 @@ class MetricsPanelCtrl extends PanelCtrl {
       return;
     }
 
-    this.loading = false;
     this.error = err.message || 'Request Error';
 
     if (err.data) {
@@ -116,10 +115,6 @@ class MetricsPanelCtrl extends PanelCtrl {
         this.error = err.data.error;
       }
     }
-
-    return this.$timeout(() => {
-      this.events.emit(PanelEvents.dataError, err);
-    });
   }
 
   // Updates the response with information from the stream
@@ -128,10 +123,6 @@ class MetricsPanelCtrl extends PanelCtrl {
       if (data.state === LoadingState.Error) {
         this.loading = false;
         this.processDataError(data.error);
-        if (!data.series) {
-          // keep current data if the response is empty
-          return;
-        }
       }
 
       // Ignore data in loading state
@@ -256,7 +247,13 @@ class MetricsPanelCtrl extends PanelCtrl {
         text: 'Explore',
         icon: 'gicon gicon-explore',
         shortcut: 'x',
-        href: await getExploreUrl(this.panel, this.panel.targets, this.datasource, this.datasourceSrv, this.timeSrv),
+        href: await getExploreUrl({
+          panel: this.panel,
+          panelTargets: this.panel.targets,
+          panelDatasource: this.datasource,
+          datasourceSrv: this.datasourceSrv,
+          timeSrv: this.timeSrv,
+        }),
       });
     }
     return items;

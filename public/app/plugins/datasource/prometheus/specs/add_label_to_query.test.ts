@@ -1,4 +1,4 @@
-import { addLabelToQuery, addLabelToSelector } from '../add_label_to_query';
+import { addLabelToQuery, addLabelToSelector, keepSelectorFilters } from '../add_label_to_query';
 
 describe('addLabelToQuery()', () => {
   it('should add label to simple query', () => {
@@ -44,7 +44,7 @@ describe('addLabelToQuery()', () => {
     );
   });
 
-  it('should not add duplicate labels to aquery', () => {
+  it('should not add duplicate labels to a query', () => {
     expect(addLabelToQuery(addLabelToQuery('foo{x="yy"}', 'bar', 'baz', '!='), 'bar', 'baz', '!=')).toBe(
       'foo{bar!="baz",x="yy"}'
     );
@@ -70,5 +70,17 @@ describe('addLabelToSelector()', () => {
   });
   test('should add a label to a selector with custom operator', () => {
     expect(addLabelToSelector('{}', 'baz', '42', '!=')).toBe('{baz!="42"}');
+  });
+});
+
+describe('keepSelectorFilters()', () => {
+  test('should return empty string if no filter is in selector', () => {
+    expect(keepSelectorFilters('{foo="bar"}')).toBe('');
+  });
+  test('should return a filter if filter is in selector', () => {
+    expect(keepSelectorFilters('{foo="bar"} |="baz"')).toBe('|="baz"');
+  });
+  test('should return multiple filters if multiple filters are in selector', () => {
+    expect(keepSelectorFilters('{foo!="bar"} |="baz" |~"yy" !~"xx"')).toBe('|="baz" |~"yy" !~"xx"');
   });
 });

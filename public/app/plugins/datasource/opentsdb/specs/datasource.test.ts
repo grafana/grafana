@@ -24,7 +24,15 @@ describe('opentsdb', () => {
       ctx.backendSrv.datasourceRequest = await ((options: any) => {
         requestOptions = options;
         return Promise.resolve({
-          data: [{ target: 'prod1.count', datapoints: [[10, 1], [12, 1]] }],
+          data: [
+            {
+              target: 'prod1.count',
+              datapoints: [
+                [10, 1],
+                [12, 1],
+              ],
+            },
+          ],
         });
       });
     });

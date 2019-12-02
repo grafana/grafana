@@ -64,18 +64,15 @@ const addRangeToTextMappingText = (
 };
 
 const getAllFormattedValueMappings = (valueMappings: ValueMapping[], value: TimeSeriesValue) => {
-  const allFormattedValueMappings = valueMappings.reduce(
-    (allValueMappings, valueMapping) => {
-      if (valueMapping.type === MappingType.ValueToText) {
-        allValueMappings = addValueToTextMappingText(allValueMappings, valueMapping as ValueMap, value);
-      } else if (valueMapping.type === MappingType.RangeToText) {
-        allValueMappings = addRangeToTextMappingText(allValueMappings, valueMapping as RangeMap, value);
-      }
+  const allFormattedValueMappings = valueMappings.reduce((allValueMappings, valueMapping) => {
+    if (valueMapping.type === MappingType.ValueToText) {
+      allValueMappings = addValueToTextMappingText(allValueMappings, valueMapping as ValueMap, value);
+    } else if (valueMapping.type === MappingType.RangeToText) {
+      allValueMappings = addRangeToTextMappingText(allValueMappings, valueMapping as RangeMap, value);
+    }
 
-      return allValueMappings;
-    },
-    [] as ValueMapping[]
-  );
+    return allValueMappings;
+  }, [] as ValueMapping[]);
 
   allFormattedValueMappings.sort((t1, t2) => {
     return t1.id - t2.id;

@@ -4,16 +4,24 @@ import React, { PureComponent } from 'react';
 // Services & Utils
 import { config } from 'app/core/config';
 
-// Components
 import { BarGauge, VizRepeater, DataLinksContextMenu } from '@grafana/ui';
-
-// Types
 import { BarGaugeOptions } from './types';
-import { getFieldDisplayValues, FieldDisplay, PanelProps } from '@grafana/data';
+import {
+  getFieldDisplayValues,
+  FieldDisplay,
+  PanelProps,
+  getDisplayValueAlignmentFactors,
+  DisplayValueAlignmentFactors,
+} from '@grafana/data';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
-  renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
+  renderValue = (
+    value: FieldDisplay,
+    width: number,
+    height: number,
+    alignmentFactors: DisplayValueAlignmentFactors
+  ): JSX.Element => {
     const { options } = this.props;
     const { field, display } = value;
 
@@ -34,6 +42,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
               maxValue={field.max}
               onClick={openMenu}
               className={targetClassName}
+              alignmentFactors={alignmentFactors}
             />
           );
         }}
@@ -65,6 +74,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     return (
       <VizRepeater
         source={data}
+        getAlignmentFactors={getDisplayValueAlignmentFactors}
         getValues={this.getValues}
         renderValue={this.renderValue}
         renderCounter={renderCounter}
