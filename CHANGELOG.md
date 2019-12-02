@@ -135,6 +135,7 @@
 # 6.4.4 (2019-11-06)
 
 ### Bug Fixes
+* **MySQL**: Fix encoding in connection string [#20192](https://github.com/grafana/grafana/pull/20192)
 * **DataLinks**: Fix blur issues. [#19883](https://github.com/grafana/grafana/pull/19883), [@aocenas](https://github.com/aocenas)
 * **Docker**: Makes it possible to parse timezones in the docker image. [#20081](https://github.com/grafana/grafana/pull/20081), [@xlson](https://github.com/xlson)
 * **LDAP**: All LDAP servers should be tried even if one of them returns a connection error. [#20077](https://github.com/grafana/grafana/pull/20077), [@jongyllen](https://github.com/jongyllen)
