@@ -1,20 +1,19 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { Portal } from '../Portal/Portal';
 import { css, cx } from 'emotion';
-import { stylesFactory, ThemeContext } from '../../themes';
+import { stylesFactory, withTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   modal: css`
     position: fixed;
     z-index: ${theme.zIndex.modal};
-    width: 100%;
     background: ${theme.colors.pageBg};
     box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
     background-clip: padding-box;
     outline: none;
-
-    max-width: 750px;
+    width: 750px;
+    max-width: 100%;
     left: 0;
     right: 0;
     margin-left: auto;
@@ -49,6 +48,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
   modalContent: css`
     padding: calc(${theme.spacing.d} * 2);
+    overflow: auto;
+    width: 100%;
+    max-height: calc(90vh - ${theme.spacing.d} * 2);
   `,
 }));
 
@@ -63,36 +65,40 @@ interface Props {
   onClickBackdrop?: () => void;
 }
 
-export const UnthemedModal: React.FC<Props> = props => {
-  const onDismiss = () => {
-    if (props.onDismiss) {
-      props.onDismiss();
+export class UnthemedModal extends React.PureComponent<Props> {
+  onDismiss = () => {
+    if (this.props.onDismiss) {
+      this.props.onDismiss();
     }
   };
 
-  const onClickBackdrop = () => {
-    onDismiss();
+  onClickBackdrop = () => {
+    this.onDismiss();
   };
-  const { title, isOpen = false } = props;
-  const theme = useContext(ThemeContext);
-  const styles = getStyles(theme);
 
-  if (!isOpen) {
-    return null;
-  }
+  render() {
+    const { title, isOpen = false, theme } = this.props;
+    const styles = getStyles(theme);
 
-  return (
-    <Portal>
-      <div className={cx(styles.modal)}>
-        <div className={cx(styles.modalHeader)}>
-          {typeof title === 'string' ? <h2 className={cx(styles.modalHeaderTitle)}>{title}</h2> : <>{title}</>}
-          <a className={cx(styles.modalHeaderClose)} onClick={onDismiss}>
-            <i className="fa fa-remove" />
-          </a>
+    if (!isOpen) {
+      return null;
+    }
+
+    return (
+      <Portal>
+        <div className={cx(styles.modal)}>
+          <div className={cx(styles.modalHeader)}>
+            {typeof title === 'string' ? <h2 className={cx(styles.modalHeaderTitle)}>{title}</h2> : <>{title}</>}
+            <a className={cx(styles.modalHeaderClose)} onClick={this.onDismiss}>
+              <i className="fa fa-remove" />
+            </a>
+          </div>
+          <div className={cx(styles.modalContent)}>{this.props.children}</div>
         </div>
-        <div className={cx(styles.modalContent)}>{props.children}</div>
-      </div>
-      <div className={cx(styles.modalBackdrop)} onClick={props.onClickBackdrop || onClickBackdrop} />
-    </Portal>
-  );
-};
+        <div className={cx(styles.modalBackdrop)} onClick={this.props.onClickBackdrop || this.onClickBackdrop} />
+      </Portal>
+    );
+  }
+}
+
+export const Modal = withTheme(UnthemedModal);
