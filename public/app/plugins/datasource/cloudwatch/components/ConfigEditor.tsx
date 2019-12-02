@@ -39,6 +39,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
     });
   }
 
+  componentWillUnmount() {
+    if (this.loadRegionsPromise) {
+      this.loadRegionsPromise.cancel();
+    }
+  }
+
   async loadRegions() {
     await getDatasourceSrv()
       .loadDatasource(this.props.options.name)
