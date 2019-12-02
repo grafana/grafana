@@ -1,5 +1,5 @@
 // Libraries
-import { isEmpty, map as lodashMap, fromPairs } from 'lodash';
+import { isEmpty, map as lodashMap } from 'lodash';
 import { Observable, from, merge, of, iif, defer } from 'rxjs';
 import { map, filter, catchError, switchMap, mergeMap } from 'rxjs/operators';
 
@@ -14,7 +14,7 @@ import {
   processRangeQueryResponse,
   legacyLogStreamToDataFrame,
   lokiStreamResultToDataFrame,
-  isLokiLogsStream,
+  lokiLegacyStreamsToDataframes,
 } from './result_transformer';
 import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 
@@ -26,10 +26,6 @@ import {
   AnnotationEvent,
   DataFrameView,
   TimeRange,
-  FieldConfig,
-  ArrayVector,
-  FieldType,
-  DataFrame,
   TimeSeries,
   PluginMeta,
   DataSourceApi,
@@ -49,7 +45,6 @@ import {
   LokiResultType,
   LokiRangeQueryRequest,
   LokiStreamResponse,
-  LokiLegacyStreamResult,
 } from './types';
 import { ExploreMode } from 'app/types';
 import { LegacyTarget, LiveStreams } from './live_streams';
@@ -195,41 +190,16 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       catchError((err: any) => this.throwUnless(err, err.cancelled, target)),
       filter((response: any) => !response.cancelled),
       map((response: { data: LokiLegacyStreamResponse }) => ({
-        data: this.lokiLegacyStreamsToDataframes(response.data, query, this.maxLines, options.reverse),
+        data: lokiLegacyStreamsToDataframes(
+          response.data,
+          query,
+          this.maxLines,
+          this.instanceSettings.jsonData,
+          options.reverse
+        ),
         key: `${target.refId}_log`,
       }))
     );
-  };
-
-  lokiLegacyStreamsToDataframes = (
-    data: LokiLegacyStreamResult | LokiLegacyStreamResponse,
-    target: { refId: string; query?: string; regexp?: string },
-    limit: number,
-    reverse = false
-  ): DataFrame[] => {
-    if (Object.keys(data).length === 0) {
-      return [];
-    }
-
-    if (isLokiLogsStream(data)) {
-      return [legacyLogStreamToDataFrame(data, false, target.refId)];
-    }
-
-    const series: DataFrame[] = data.streams.map(stream => {
-      const dataFrame = legacyLogStreamToDataFrame(stream, reverse);
-      this.enhanceDataFrame(dataFrame);
-
-      return {
-        ...dataFrame,
-        refId: target.refId,
-        meta: {
-          searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.query, target.regexp)),
-          limit: this.maxLines,
-        },
-      };
-    });
-
-    return series;
   };
 
   runInstantQuery = (
@@ -309,7 +279,15 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           () => response.status === 404,
           defer(() => this.runLegacyQuery(target, options)),
           defer(() =>
-            processRangeQueryResponse(response.data, target, query, responseListLength, this.maxLines, options.reverse)
+            processRangeQueryResponse(
+              response.data,
+              target,
+              query,
+              responseListLength,
+              this.maxLines,
+              this.instanceSettings.jsonData,
+              options.reverse
+            )
           )
         )
       )
@@ -605,51 +583,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     }
 
     return annotations;
-  }
-
-  /**
-   * Adds new fields and DataLinks to DataFrame based on DataSource instance config.
-   * @param dataFrame
-   */
-  enhanceDataFrame(dataFrame: DataFrame): void {
-    if (!this.instanceSettings.jsonData) {
-      return;
-    }
-
-    const derivedFields = this.instanceSettings.jsonData.derivedFields || [];
-    if (derivedFields.length) {
-      const fields = fromPairs(
-        derivedFields.map(field => {
-          const config: FieldConfig = {};
-          if (field.url) {
-            config.links = [
-              {
-                url: field.url,
-                title: '',
-              },
-            ];
-          }
-          const dataFrameField = {
-            name: field.name,
-            type: FieldType.string,
-            config,
-            values: new ArrayVector<string>([]),
-          };
-
-          return [field.name, dataFrameField];
-        })
-      );
-
-      const view = new DataFrameView(dataFrame);
-      view.forEachRow((row: { line: string }) => {
-        for (const field of derivedFields) {
-          const logMatch = row.line.match(field.matcherRegex);
-          fields[field.name].values.add(logMatch && logMatch[1]);
-        }
-      });
-
-      dataFrame.fields = [...dataFrame.fields, ...Object.values(fields)];
-    }
   }
 
   throwUnless = (err: any, condition: boolean, target: LokiQuery) => {
