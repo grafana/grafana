@@ -1,4 +1,4 @@
-import { expandRecordingRules, parseSelector } from '../language_utils';
+import { expandRecordingRules, parseSelector } from './language_utils';
 
 describe('parseSelector()', () => {
   let parsed;
