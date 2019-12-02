@@ -61,7 +61,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     }
   };
 
-  onOptionsUpdate = async (options: AzureDataSourceSettings) => {
+  onOptionsUpdate = (options: AzureDataSourceSettings) => {
     if (options.hasOwnProperty('secureJsonData')) {
       if (options.secureJsonData.hasOwnProperty('clientSecret') && options.secureJsonData.clientSecret.length === 0) {
         delete options.secureJsonData.clientSecret;
@@ -157,22 +157,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
       azureMonitorUrl +
       `/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
 
-    return this.backendSrv
-      .datasourceRequest({
-        url: this.props.options.url + workspaceListUrl,
-        method: 'GET',
-      })
-      .then((result: any) => {
-        return result.data.value.map((val: any) => {
-          return {
-            value: val.properties.customerId,
-            label: val.name,
-          };
-        });
-      })
-      .catch((error: any) => {
-        throw error;
-      });
+    const result = await this.backendSrv.datasourceRequest({
+      url: this.props.options.url + workspaceListUrl,
+      method: 'GET',
+    });
+
+    return ResponseParser.parseWorkspacesForSelect(result);
   };
 
   getSubscriptions = async () => {

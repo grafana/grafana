@@ -33,7 +33,6 @@ export class InsightsConfig extends PureComponent<Props> {
     const { onDatasourceUpdate, options } = this.props;
     onDatasourceUpdate({
       ...options,
-      version: options.version + 1,
       secureJsonData: {
         ...options.secureJsonData,
         appInsightsApiKey: '',
