@@ -217,13 +217,15 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	var rawUserInfoResponse HttpGetResponse
 	var err error
 
-	if !s.extractToken(&data, token) {
+	payload := s.extractToken(&data, token)
+	if payload == nil {
 		rawUserInfoResponse, err = HttpGet(client, s.apiUrl)
 		if err != nil {
 			return nil, fmt.Errorf("Error getting user info: %s", err)
 		}
+		payload = rawUserInfoResponse.Body
 
-		err = json.Unmarshal(rawUserInfoResponse.Body, &data)
+		err = json.Unmarshal(payload, &data)
 		if err != nil {
 			return nil, fmt.Errorf("Error decoding user info JSON: %s", err)
 		}
@@ -231,7 +233,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 
 	name := s.extractName(&data)
 
-	email := s.extractEmail(&data, rawUserInfoResponse.Body)
+	email := s.extractEmail(&data, payload)
 	if email == "" {
 		email, err = s.FetchPrivateEmail(client)
 		if err != nil {
@@ -239,7 +241,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		}
 	}
 
-	role := s.extractRole(&data, rawUserInfoResponse.Body)
+	role := s.extractRole(&data, payload)
 
 	login := s.extractLogin(&data, email)
 
@@ -261,39 +263,39 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	return userInfo, nil
 }
 
-func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Token) bool {
+func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Token) []byte {
 	idToken := token.Extra("id_token")
 	if idToken == nil {
 		s.log.Debug("No id_token found", "token", token)
-		return false
+		return nil
 	}
 
 	jwtRegexp := regexp.MustCompile("^([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)$")
 	matched := jwtRegexp.FindStringSubmatch(idToken.(string))
 	if matched == nil {
 		s.log.Debug("id_token is not in JWT format", "id_token", idToken.(string))
-		return false
+		return nil
 	}
 
 	payload, err := base64.RawURLEncoding.DecodeString(matched[2])
 	if err != nil {
 		s.log.Error("Error base64 decoding id_token", "raw_payload", matched[2], "err", err)
-		return false
+		return nil
 	}
 
 	err = json.Unmarshal(payload, data)
 	if err != nil {
 		s.log.Error("Error decoding id_token JSON", "payload", string(payload), "err", err)
-		return false
+		return nil
 	}
 
 	if email := s.extractEmail(data, payload); email == "" {
 		s.log.Debug("No email found in id_token", "json", string(payload), "data", data)
-		return false
+		return nil
 	}
 
 	s.log.Debug("Received id_token", "json", string(payload), "data", data)
-	return true
+	return payload
 }
 
 func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson, userInfoResp []byte) string {
