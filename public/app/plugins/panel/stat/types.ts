@@ -27,8 +27,6 @@ export const standardFieldDisplayOptions: FieldDisplayOptions = {
   values: false,
   calcs: [ReducerID.mean],
   defaults: {
-    min: 0,
-    max: 100,
     thresholds: [
       { value: -Infinity, color: 'green' },
       { value: 80, color: 'red' }, // 80%

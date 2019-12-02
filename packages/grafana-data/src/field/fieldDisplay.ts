@@ -3,7 +3,7 @@ import toString from 'lodash/toString';
 
 import { getDisplayProcessor } from './displayProcessor';
 import { getFlotPairs } from '../utils/flotPairs';
-import { FieldConfig, DataFrame, FieldType } from '../types/dataFrame';
+import { FieldConfig, DataFrame, FieldType, Field } from '../types/dataFrame';
 import { InterpolateFunction } from '../types/panel';
 import { DataFrameView } from '../dataframe/DataFrameView';
 import { GraphSeriesValue } from '../types/graph';
@@ -74,12 +74,43 @@ export interface GetFieldDisplayValuesOptions {
   fieldOptions: FieldDisplayOptions;
   replaceVariables: InterpolateFunction;
   sparkline?: boolean; // Calculate the sparkline
+  calculatePercent?: boolean; // Force a min/max calculation
   theme: GrafanaTheme;
 }
 
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
-export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
+export function verifyFieldMinMax(field: Field, config?: FieldConfig) {
+  const cfg = config ?? field.config;
+
+  const calcMin = cfg.min === undefined || cfg.min === null;
+  const calcMax = cfg.max === undefined || cfg.max === null;
+  const reducers: string[] = [];
+  if (calcMin) {
+    reducers.push(ReducerID.min);
+  }
+  if (calcMax) {
+    reducers.push(ReducerID.max);
+  }
+  if (calcMin || calcMax) {
+    const results = reduceField({ field, reducers });
+    if (calcMin) {
+      cfg.min = results[ReducerID.min];
+    }
+    if (calcMax) {
+      cfg.max = results[ReducerID.max];
+    }
+  }
+
+  // Fix min/max if necessary
+  if (cfg.min! > cfg.max!) {
+    const temp = cfg.max;
+    cfg.max = cfg.min;
+    cfg.min = temp;
+  }
+}
+
+export function getFieldDisplayValues(options: GetFieldDisplayValuesOptions): FieldDisplay[] {
   const { data, replaceVariables, fieldOptions } = options;
   const { defaults, override } = fieldOptions;
   const calcs = fieldOptions.calcs.length ? fieldOptions.calcs : [ReducerID.last];
@@ -114,6 +145,10 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           continue;
         }
         const config = getFieldProperties(defaults, field.config || {}, override);
+
+        if (options.calculatePercent) {
+          verifyFieldMinMax(field, config);
+        }
 
         let name = field.name;
         if (!name) {
@@ -212,7 +247,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
   }
 
   return values;
-};
+}
 
 const numericFieldProps: any = {
   decimals: true,

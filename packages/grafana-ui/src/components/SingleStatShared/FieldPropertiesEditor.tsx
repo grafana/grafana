@@ -112,6 +112,7 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
             onChange={onMinChange}
             onBlur={commitChanges}
             value={min}
+            placeholder="Auto"
             type="number"
           />
           <FormField
@@ -121,6 +122,7 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
             onBlur={commitChanges}
             value={max}
             type="number"
+            placeholder="Auto"
           />
         </>
       )}
