@@ -1,5 +1,9 @@
-import { DataFrame, FieldType, Field, Vector } from '@grafana/data';
+import { DataFrame, FieldType, Field, Vector } from '../../types';
 import { Table, ArrowType } from 'apache-arrow';
+
+export interface ArrowDataFrame extends DataFrame {
+  table: Table;
+}
 
 export function base64StringToArrowTable(text: string): Table {
   const b64 = atob(text);
@@ -13,7 +17,7 @@ function valueOrUndefined(val?: string) {
   return val ? val : undefined;
 }
 
-export function arrowTableToDataFrame(table: Table): DataFrame {
+export function arrowTableToDataFrame(table: Table): ArrowDataFrame {
   const fields: Field[] = [];
 
   for (let i = 0; i < table.numCols; i++) {
@@ -56,10 +60,11 @@ export function arrowTableToDataFrame(table: Table): DataFrame {
     length: table.length,
     refId: valueOrUndefined(meta.get('refId')),
     name: valueOrUndefined(meta.get('name')),
+    table,
   };
 }
 
-export function gelResponseToDataFrames(rsp: any): DataFrame[] {
+export function resultsToDataFrames(rsp: any): DataFrame[] {
   const frames: DataFrame[] = [];
   for (const res of Object.values(rsp.results)) {
     for (const b of (res as any).dataframes) {
