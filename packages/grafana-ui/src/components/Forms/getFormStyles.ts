@@ -6,6 +6,7 @@ import { getFieldValidationMessageStyles } from './FieldValidationMessage';
 import { getButtonStyles, ButtonVariant } from './Button';
 import { ButtonSize } from '../Button/types';
 import { getInputStyles } from './Input/Input';
+import { getSwitchStyles } from './Switch';
 
 export const getFormStyles = stylesFactory(
   (theme: GrafanaTheme, options: { variant: ButtonVariant; size: ButtonSize; invalid: boolean }) => {
@@ -19,6 +20,7 @@ export const getFormStyles = stylesFactory(
         size: options.size,
       }),
       ...getInputStyles({ theme, invalid: options.invalid }),
+      ...getSwitchStyles(theme),
     };
   }
 );

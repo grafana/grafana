@@ -444,7 +444,7 @@ func evalConfigValues(file *ini.File) {
 	}
 }
 
-func loadSpecifedConfigFile(configFile string, masterFile *ini.File) error {
+func loadSpecifiedConfigFile(configFile string, masterFile *ini.File) error {
 	if configFile == "" {
 		configFile = filepath.Join(HomePath, CustomInitPath)
 		// return without error if custom file does not exist
@@ -511,7 +511,7 @@ func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	applyCommandLineDefaultProperties(commandLineProps, parsedFile)
 
 	// load specified config file
-	err = loadSpecifedConfigFile(args.Config, parsedFile)
+	err = loadSpecifiedConfigFile(args.Config, parsedFile)
 	if err != nil {
 		err2 := cfg.initLogging(parsedFile)
 		if err2 != nil {
@@ -1083,8 +1083,7 @@ func (cfg *Cfg) initLogging(file *ini.File) error {
 		return err
 	}
 	cfg.LogsPath = makeAbsolute(logsPath, HomePath)
-	log.ReadLoggingConfig(logModes, cfg.LogsPath, file)
-	return nil
+	return log.ReadLoggingConfig(logModes, cfg.LogsPath, file)
 }
 
 func (cfg *Cfg) LogConfigSources() {

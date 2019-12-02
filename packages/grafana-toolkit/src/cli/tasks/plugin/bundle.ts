@@ -56,6 +56,8 @@ export const bundlePlugin = async ({ watch, production }: PluginBundleOptions) =
       compiler.run((err: Error, stats: webpack.Stats) => {
         if (err) {
           reject(err.message);
+
+          return;
         }
         if (stats.hasErrors()) {
           stats.compilation.errors.forEach(e => {

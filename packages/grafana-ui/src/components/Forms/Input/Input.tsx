@@ -1,12 +1,13 @@
 import React, { FC, HTMLProps, ReactNode } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
-import { getFocusStyle } from '../commonStyles';
+import { getFocusStyle, inputSizes, sharedInputStyle } from '../commonStyles';
 import { stylesFactory, useTheme } from '../../../themes';
 import { Icon } from '../../Icon/Icon';
 import { useClientRect } from '../../../utils/useClientRect';
+import { FormInputSize } from '../types';
 
-export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix'> {
+export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'size'> {
   /** Show an invalid state around the input */
   invalid?: boolean;
   /** Show an icon as a prefix in the input */
@@ -17,6 +18,7 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix'> {
   addonBefore?: ReactNode;
   /** Add a component as an addon after the input */
   addonAfter?: ReactNode;
+  size?: FormInputSize;
 }
 
 interface StyleDeps {
@@ -26,7 +28,6 @@ interface StyleDeps {
 
 export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDeps) => {
   const colors = theme.colors;
-  const inputBorderColor = invalid ? colors.redBase : colors.formInputBorder;
   const borderRadius = theme.border.radius.sm;
   const height = theme.spacing.formInputHeight;
 
@@ -55,7 +56,6 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
         width: 100%;
         height: ${height};
         border-radius: ${borderRadius};
-        margin-bottom: ${invalid ? theme.spacing.formSpacingBase / 2 : theme.spacing.formSpacingBase * 2}px;
         &:hover {
           > .prefix,
           .suffix,
@@ -115,24 +115,17 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
 
     input: cx(
       getFocusStyle(theme),
+      sharedInputStyle(theme),
       css`
         label: input-input;
         position: relative;
         z-index: 0;
         flex-grow: 1;
-        color: ${colors.formInputText};
-        background-color: ${colors.formInputBg};
-        border: 1px solid ${inputBorderColor};
         border-radius: ${borderRadius};
         height: 100%;
         width: 100%;
         padding: 0 ${theme.spacing.sm} 0 ${theme.spacing.sm};
         font-size: ${theme.typography.size.md};
-
-        &:disabled {
-          background-color: ${colors.formInputBgDisabled};
-          color: ${colors.formInputDisabledText};
-        }
 
         /*
          Restoring increase/decrease spinner on number inputs. Overwriting rules implemented in
@@ -210,7 +203,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
 });
 
 export const Input: FC<Props> = props => {
-  const { addonAfter, addonBefore, prefix, invalid, loading, ...restProps } = props;
+  const { addonAfter, addonBefore, prefix, invalid, loading, size = 'auto', ...restProps } = props;
   /**
    * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects below to apply correct padding to the input
    * when prefix/suffix is larger than default (28px = 16px(icon) + 12px(left/right paddings)).
@@ -223,7 +216,7 @@ export const Input: FC<Props> = props => {
   const styles = getInputStyles({ theme, invalid: !!invalid });
 
   return (
-    <div className={styles.wrapper}>
+    <div className={cx(styles.wrapper, inputSizes()[size])}>
       {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
 
       <div className={styles.inputWrapper}>

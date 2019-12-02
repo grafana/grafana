@@ -1,11 +1,5 @@
 import { TestPage } from '../pageInfo';
-import {
-  Selector,
-  InputPageObject,
-  InputPageObjectType,
-  ClickablePageObjectType,
-  ClickablePageObject,
-} from '../pageObjects';
+import { ClickablePageObjectType, InputPageObjectType } from '../pageObjects';
 
 export interface LoginPage {
   username: InputPageObjectType;
@@ -16,8 +10,8 @@ export interface LoginPage {
 export const loginPage = new TestPage<LoginPage>({
   url: '/login',
   pageObjects: {
-    username: new InputPageObject(Selector.fromAriaLabel('Username input field')),
-    password: new InputPageObject(Selector.fromAriaLabel('Password input field')),
-    submit: new ClickablePageObject(Selector.fromAriaLabel('Login button')),
+    username: 'Username input field',
+    password: 'Password input field',
+    submit: 'Login button',
   },
 });
