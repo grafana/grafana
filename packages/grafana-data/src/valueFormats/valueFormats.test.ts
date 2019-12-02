@@ -61,7 +61,7 @@ const formatTests: ValueFormatTest[] = [
 describe('valueFormats', () => {
   it('Manually check a format', () => {
     // helpful for adding tests one at a time with the debugger
-    const tests: ValueFormatTest = [
+    const tests: ValueFormatTest[] = [
       { id: 'time:YYYY.MM', decimals: 0, value: dateTime(new Date(2010, 6, 2)).valueOf(), result: '2010.07' },
     ];
     const test = tests[0];
