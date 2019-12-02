@@ -232,7 +232,7 @@ describe('Date display options', () => {
       type: FieldType.time,
       isUtc: true,
       config: {
-        dateDisplayFormat: 'YYYY',
+        unit: 'time:YYYY',
       },
     });
     expect(processor(0).text).toEqual('1970');

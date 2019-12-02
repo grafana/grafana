@@ -11,7 +11,7 @@ import { DisplayProcessor, DisplayValue, DecimalCount, DecimalInfo } from '../ty
 import { getValueFormat } from '../valueFormats/valueFormats';
 import { getMappedValue } from '../utils/valueMappings';
 import { Threshold } from '../types/threshold';
-import { DateTime, DEFAULT_DATE_TIME_FORMAT, isDateTime, dateTime, toUtc } from '../datetime';
+import { DEFAULT_DATE_TIME_FORMAT } from '../datetime';
 import { KeyValue } from '../types';
 
 interface DisplayProcessorOptions {
@@ -37,22 +37,10 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     if (options.type === FieldType.time) {
       if (field.unit && timeFormats[field.unit]) {
         // Currently selected unit is valid for time fields
+      } else if (field.unit && field.unit.startsWith('time:')) {
+        // Also OK
       } else {
-        const dateFormat = field.dateDisplayFormat || DEFAULT_DATE_TIME_FORMAT;
-
-        // UTC or browser based timezone
-        let fmt = (date: DateTime) => date.format(dateFormat);
-        if (options.isUtc) {
-          fmt = (date: DateTime) => toUtc(date).format(dateFormat);
-        }
-
-        return (value: any) => {
-          const date: DateTime = isDateTime(value) ? value : dateTime(value);
-          return {
-            numeric: isNaN(value) ? date.valueOf() : value,
-            text: fmt(date),
-          };
-        };
+        field.unit = `time:${DEFAULT_DATE_TIME_FORMAT}`;
       }
     }
 
