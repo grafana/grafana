@@ -1,8 +1,9 @@
-import { Flows } from '@grafana/e2e';
+import { e2eScenario } from '@grafana/e2e';
 
-describe('Login', () => {
-  it('should pass', () => {
-    Flows.login('admin', 'admin');
-    Flows.addDataSource();
-  });
+e2eScenario({
+  describeName: 'Login',
+  itName: 'Should pass',
+  createTestDataSource: true,
+  skipScenario: false,
+  scenario: scenarioDataSourceName => {},
 });
