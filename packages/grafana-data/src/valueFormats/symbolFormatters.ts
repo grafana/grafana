@@ -26,6 +26,7 @@ export function getOffsetFromSIPrefix(c: string): number {
       return -4;
     case 'n':
       return -3;
+    case 'μ': // Two different unicode chars for µ
     case 'µ':
       return -2;
     case 'm':
