@@ -177,7 +177,12 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		if !setting.DisableSignoutMenu {
 			// add sign out first
 			profileNode.Children = append(profileNode.Children, &dtos.NavLink{
-				Text: "Sign out", Id: "sign-out", Url: setting.AppSubUrl + "/logout", Icon: "fa fa-fw fa-sign-out", Target: "_self",
+				Text:         "Sign out",
+				Id:           "sign-out",
+				Url:          setting.AppSubUrl + "/logout",
+				Icon:         "fa fa-fw fa-sign-out",
+				Target:       "_self",
+				HideFromTabs: true,
 			})
 		}
 
