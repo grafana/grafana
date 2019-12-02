@@ -142,6 +142,11 @@
 * **LDAP**: No longer shows incorrectly matching groups based on role in debug page. [#20018](https://github.com/grafana/grafana/pull/20018), [@xlson](https://github.com/xlson)
 * **Singlestat**: Fix no data / null value mapping . [#19951](https://github.com/grafana/grafana/pull/19951), [@ryantxu](https://github.com/ryantxu)
 
+#### Security vulnerability
+
+The MySQL data source connnection string fix, [#20192](https://github.com/grafana/grafana/pull/20192), that was part of this release
+also fixed a security vulnerability. Thanks Yuriy Dyachenko for discovering and notifying us about this.
+
 # 6.4.3 (2019-10-16)
 
 ### Bug Fixes
