@@ -3,7 +3,10 @@ import { EventsWithValidation, FormField, FormLabel, Input, regexValidation, Sel
 import { DataSourceSettings } from '@grafana/data';
 import { PromOptions } from '../types';
 
-const httpOptions = [{ value: 'GET', label: 'GET' }, { value: 'POST', label: 'POST' }];
+const httpOptions = [
+  { value: 'GET', label: 'GET' },
+  { value: 'POST', label: 'POST' },
+];
 
 type Props = {
   value: DataSourceSettings<PromOptions>;

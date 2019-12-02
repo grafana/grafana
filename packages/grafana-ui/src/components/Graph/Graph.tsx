@@ -14,7 +14,7 @@ export interface GraphProps {
   children?: JSX.Element | JSX.Element[];
   series: GraphSeriesXY[];
   timeRange: TimeRange; // NOTE: we should aim to make `time` a property of the axis, not force it for all graphs
-  timeZone: TimeZone; // NOTE: we should aim to make `time` a property of the axis, not force it for all graphs
+  timeZone?: TimeZone; // NOTE: we should aim to make `time` a property of the axis, not force it for all graphs
   showLines?: boolean;
   showPoints?: boolean;
   showBars?: boolean;
@@ -139,7 +139,6 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
 
     // Check if tooltip needs to be rendered with custom tooltip component, otherwise default to GraphTooltip
     const tooltipContentRenderer = tooltipElementProps.tooltipComponent || GraphTooltip;
-
     // Indicates column(field) index in y-axis dimension
     const seriesIndex = activeItem ? activeItem.series.seriesIndex : 0;
     // Indicates row index in active field values
@@ -157,8 +156,14 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     const tooltipContentProps: TooltipContentProps<GraphDimensions> = {
       dimensions: {
         // time/value dimension columns are index-aligned - see getGraphSeriesModel
-        xAxis: createDimension('xAxis', series.map(s => s.timeField)),
-        yAxis: createDimension('yAxis', series.map(s => s.valueField)),
+        xAxis: createDimension(
+          'xAxis',
+          series.map(s => s.timeField)
+        ),
+        yAxis: createDimension(
+          'yAxis',
+          series.map(s => s.valueField)
+        ),
       },
       activeDimensions,
       pos,
@@ -241,7 +246,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         label: 'Datetime',
         ticks: ticks,
         timeformat: timeFormat(ticks, min, max),
-        timezone: timeZone ? timeZone : DefaultTimeZone,
+        timezone: timeZone ?? DefaultTimeZone,
       },
       yaxes,
       grid: {
@@ -266,7 +271,11 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     };
 
     try {
-      $.plot(this.element, series, flotOptions);
+      $.plot(
+        this.element,
+        series.filter(s => s.isVisible),
+        flotOptions
+      );
     } catch (err) {
       console.log('Graph rendering error', err, flotOptions, series);
       throw new Error('Error rendering panel');

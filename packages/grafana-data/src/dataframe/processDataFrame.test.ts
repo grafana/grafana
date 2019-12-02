@@ -15,7 +15,10 @@ describe('toDataFrame', () => {
   it('converts timeseries to series', () => {
     const input1 = {
       target: 'Field Name',
-      datapoints: [[100, 1], [200, 2]],
+      datapoints: [
+        [100, 1],
+        [200, 2],
+      ],
     };
     let series = toDataFrame(input1);
     expect(series.fields[0].name).toBe(input1.target);
@@ -33,7 +36,10 @@ describe('toDataFrame', () => {
     const input2 = {
       // without target
       target: '',
-      datapoints: [[100, 1], [200, 2]],
+      datapoints: [
+        [100, 1],
+        [200, 2],
+      ],
     };
     series = toDataFrame(input2);
     expect(series.fields[0].name).toEqual('Value');
@@ -42,7 +48,10 @@ describe('toDataFrame', () => {
   it('assumes TimeSeries values are numbers', () => {
     const input1 = {
       target: 'time',
-      datapoints: [[100, 1], [200, 2]],
+      datapoints: [
+        [100, 1],
+        [200, 2],
+      ],
     };
     const data = toDataFrame(input1);
     expect(data.fields[0].type).toBe(FieldType.number);
@@ -50,7 +59,10 @@ describe('toDataFrame', () => {
 
   it('keeps dataFrame unchanged', () => {
     const input = toDataFrame({
-      datapoints: [[100, 1], [200, 2]],
+      datapoints: [
+        [100, 1],
+        [200, 2],
+      ],
     });
     expect(input.length).toEqual(2);
 
@@ -59,10 +71,23 @@ describe('toDataFrame', () => {
     expect(again).toBe(input);
   });
 
+  it('throws when table rows is not array', () => {
+    expect(() =>
+      toDataFrame({
+        columns: [],
+        rows: {},
+      })
+    ).toThrowError('Expected table rows to be array, got object.');
+  });
+
   it('migrate from 6.3 style rows', () => {
     const oldDataFrame = {
       fields: [{ name: 'A' }, { name: 'B' }, { name: 'C' }],
-      rows: [[100, 'A', 1], [200, 'B', 2], [300, 'C', 3]],
+      rows: [
+        [100, 'A', 1],
+        [200, 'B', 2],
+        [300, 'C', 3],
+      ],
     };
     const data = toDataFrame(oldDataFrame);
     expect(data.length).toBe(oldDataFrame.rows.length);
@@ -140,7 +165,10 @@ describe('SerisData backwards compatibility', () => {
   it('can convert TimeSeries to series and back again', () => {
     const timeseries = {
       target: 'Field Name',
-      datapoints: [[100, 1], [200, 2]],
+      datapoints: [
+        [100, 1],
+        [200, 2],
+      ],
     };
     const series = toDataFrame(timeseries);
     expect(isDataFrame(timeseries)).toBeFalsy();
@@ -166,8 +194,15 @@ describe('SerisData backwards compatibility', () => {
 
   it('converts TableData to series and back again', () => {
     const table = {
-      columns: [{ text: 'a', unit: 'ms' }, { text: 'b', unit: 'zz' }, { text: 'c', unit: 'yy' }],
-      rows: [[100, 1, 'a'], [200, 2, 'a']],
+      columns: [
+        { text: 'a', unit: 'ms' },
+        { text: 'b', unit: 'zz' },
+        { text: 'c', unit: 'yy' },
+      ],
+      rows: [
+        [100, 1, 'a'],
+        [200, 2, 'a'],
+      ],
     };
     const series = toDataFrame(table);
     expect(isTableData(table)).toBeTruthy();

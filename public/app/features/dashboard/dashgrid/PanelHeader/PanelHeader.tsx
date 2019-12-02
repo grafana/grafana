@@ -103,13 +103,11 @@ export class PanelHeader extends Component<Props, State> {
               <span className="panel-title-text">
                 {title} <span className="fa fa-caret-down panel-menu-toggle" />
               </span>
-
               {this.state.panelMenuOpen && (
                 <ClickOutsideWrapper onClick={this.closeMenu}>
                   <PanelHeaderMenu panel={panel} dashboard={dashboard} />
                 </ClickOutsideWrapper>
               )}
-
               {timeInfo && (
                 <span className="panel-time-info">
                   <i className="fa fa-clock-o" /> {timeInfo}

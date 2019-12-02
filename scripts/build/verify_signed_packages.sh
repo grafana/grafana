@@ -13,7 +13,7 @@ curl -s https://packages.grafana.com/gpg.key > ~/.rpmdb/pubkeys/grafana.key
 ALL_SIGNED=0
 
 for file in $_files; do
-  if rpm -K "$file" | grep "pgp.*OK" -q ; then
+  if rpm -K "$file" | grep "digests signatures OK" -q ; then
     echo "$file" OK
   else
     ALL_SIGNED=1

@@ -12,7 +12,11 @@ GraphWithLegendStories.addDecorator(withHorizontallyCenteredStory);
 
 const series: GraphSeriesXY[] = [
   {
-    data: [[1546372800000, 10], [1546376400000, 20], [1546380000000, 10]],
+    data: [
+      [1546372800000, 10],
+      [1546376400000, 20],
+      [1546380000000, 10],
+    ],
     color: 'red',
     isVisible: true,
     label: 'A-series',
@@ -35,7 +39,11 @@ const series: GraphSeriesXY[] = [
     },
   },
   {
-    data: [[1546372800000, 20], [1546376400000, 30], [1546380000000, 40]],
+    data: [
+      [1546372800000, 20],
+      [1546376400000, 30],
+      [1546380000000, 40],
+    ],
     color: 'blue',
     isVisible: true,
     label: 'B-series',

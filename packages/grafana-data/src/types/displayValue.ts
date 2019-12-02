@@ -8,6 +8,15 @@ export interface DisplayValue {
   fontSize?: string;
 }
 
+/**
+ * These represents the displau value with the longest title and text.
+ * Used to align widths and heights when displaying multiple DisplayValues
+ */
+export interface DisplayValueAlignmentFactors {
+  title: string;
+  text: string;
+}
+
 export type DecimalCount = number | null | undefined;
 
 export interface DecimalInfo {

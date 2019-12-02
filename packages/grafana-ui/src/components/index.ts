@@ -13,6 +13,7 @@ export { IndicatorsContainer } from './Select/IndicatorsContainer';
 export { NoOptionsMessage } from './Select/NoOptionsMessage';
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export { ButtonSelect } from './Select/ButtonSelect';
+export { Cascader, CascaderOption } from './Cascader/Cascader';
 
 // Forms
 export { FormLabel } from './FormLabel/FormLabel';
@@ -47,14 +48,22 @@ export { Table } from './Table/Table';
 export { TableInputCSV } from './Table/TableInputCSV';
 
 // Visualizations
-export { BigValue, SingleStatDisplayMode, BigValueSparkline } from './BigValue/BigValue';
+export {
+  BigValue,
+  BigValueColorMode,
+  BigValueSparkline,
+  BigValueGraphMode,
+  BigValueJustifyMode,
+} from './BigValue/BigValue';
+
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { GraphLegend } from './Graph/GraphLegend';
 export { GraphWithLegend } from './Graph/GraphWithLegend';
-export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { BarGauge } from './BarGauge/BarGauge';
+export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { VizRepeater } from './VizRepeater/VizRepeater';
+
 export {
   LegendOptions,
   LegendBasicOptions,
@@ -65,6 +74,7 @@ export {
   LegendPlacement,
   LegendDisplayMode,
 } from './Legend/Legend';
+
 export { Alert, AlertVariant } from './Alert/Alert';
 export { GraphSeriesToggler, GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
 export { Collapse } from './Collapse/Collapse';
@@ -97,6 +107,7 @@ export { FadeTransition } from './transitions/FadeTransition';
 export { SlideOutTransition } from './transitions/SlideOutTransition';
 export { Segment, SegmentAsync, SegmentSelect } from './Segment/';
 export { default as Chart } from './Chart';
+export { Icon } from './Icon/Icon';
 
 // Next-gen forms
 export { default as Forms } from './Forms';

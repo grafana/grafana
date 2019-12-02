@@ -1,0 +1,369 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`QueryEditor should render component 1`] = `
+Array [
+  <div
+    className="gf-form-inline"
+  >
+    <label
+      className="gf-form-label width-8 query-keyword"
+    >
+      Region
+    </label>
+    <div
+      className="gf-form"
+      onClick={[Function]}
+    >
+      <a
+        className="gf-form-label query-part"
+      >
+        us-east-1
+      </a>
+    </div>
+    <div
+      className="gf-form gf-form--grow"
+    >
+      <div
+        className="gf-form-label gf-form-label--grow"
+      />
+    </div>
+  </div>,
+  <div
+    className="gf-form-inline"
+  >
+    <label
+      className="gf-form-label width-8 query-keyword"
+    >
+      Namespace
+    </label>
+    <div
+      className="gf-form"
+      onClick={[Function]}
+    >
+      <a
+        className="gf-form-label query-part"
+      >
+        ec2
+      </a>
+    </div>
+    <div
+      className="gf-form gf-form--grow"
+    >
+      <div
+        className="gf-form-label gf-form-label--grow"
+      />
+    </div>
+  </div>,
+  <div
+    className="gf-form-inline"
+  >
+    <label
+      className="gf-form-label width-8 query-keyword"
+    >
+      Metric Name
+    </label>
+    <div
+      className="gf-form"
+      onClick={[Function]}
+    >
+      <a
+        className="gf-form-label query-part"
+      >
+        CPUUtilization
+      </a>
+    </div>
+    <div
+      className="gf-form gf-form--grow"
+    >
+      <div
+        className="gf-form-label gf-form-label--grow"
+      />
+    </div>
+  </div>,
+  <div
+    className="gf-form-inline"
+  >
+    <label
+      className="gf-form-label width-8 query-keyword"
+    >
+      Stats
+    </label>
+    <div
+      className="gf-form"
+      onClick={[Function]}
+    >
+      <a
+        className="gf-form-label query-part"
+      >
+        Average
+      </a>
+    </div>
+    <div
+      className="gf-form"
+      onClick={[Function]}
+    >
+      <a
+        className="gf-form-label query-part"
+      >
+        <i
+          className="fa fa-plus"
+        />
+      </a>
+    </div>
+    <div
+      className="gf-form gf-form--grow"
+    >
+      <div
+        className="gf-form-label gf-form-label--grow"
+      />
+    </div>
+  </div>,
+  <div
+    className="gf-form-inline"
+  >
+    <label
+      className="gf-form-label width-8 query-keyword"
+    >
+      Dimensions
+    </label>
+    <div
+      className="gf-form"
+      onClick={[Function]}
+    >
+      <a
+        className="gf-form-label query-part"
+      >
+        somekey
+      </a>
+    </div>
+    <label
+      className="gf-form-label query-segment-operator"
+    >
+      =
+    </label>
+    <div
+      className="gf-form"
+      onClick={[Function]}
+    >
+      <a
+        className="gf-form-label query-part"
+      >
+        somevalue
+      </a>
+    </div>
+    <div
+      className="gf-form"
+      onClick={[Function]}
+    >
+      <a
+        className="gf-form-label query-part"
+      >
+        <i
+          className="fa fa-plus"
+        />
+      </a>
+    </div>
+    <div
+      className="gf-form gf-form--grow"
+    >
+      <div
+        className="gf-form-label gf-form-label--grow"
+      />
+    </div>
+  </div>,
+  <div
+    className="gf-form-inline"
+  >
+    <div
+      className="gf-form"
+    >
+      <label
+        className="gf-form-label width-8 query-keyword"
+      >
+        Id
+        <div
+          className="gf-form-help-icon gf-form-help-icon--right-normal"
+          onMouseEnter={[Function]}
+          onMouseLeave={[Function]}
+        >
+          <i
+            className="fa fa-info-circle"
+          />
+        </div>
+      </label>
+      <div
+        style={
+          Object {
+            "flexGrow": 1,
+          }
+        }
+      >
+        <input
+          className="gf-form-input gf-form-input width-8"
+          onBlur={[Function]}
+          onChange={[Function]}
+          value=""
+        />
+      </div>
+    </div>
+    <div
+      className="gf-form gf-form--grow"
+    >
+      <label
+        className="gf-form-label width-8 query-keyword"
+      >
+        Expression
+        <div
+          className="gf-form-help-icon gf-form-help-icon--right-normal"
+          onMouseEnter={[Function]}
+          onMouseLeave={[Function]}
+        >
+          <i
+            className="fa fa-info-circle"
+          />
+        </div>
+      </label>
+      <div
+        style={
+          Object {
+            "flexGrow": 1,
+          }
+        }
+      >
+        <input
+          className="gf-form-input gf-form-input"
+          onBlur={[MockFunction]}
+          onChange={[Function]}
+          value=""
+        />
+      </div>
+    </div>
+  </div>,
+  <div
+    className="gf-form-inline"
+  >
+    <div
+      className="gf-form"
+    >
+      <label
+        className="gf-form-label width-8 query-keyword"
+      >
+        Period
+        <div
+          className="gf-form-help-icon gf-form-help-icon--right-normal"
+          onMouseEnter={[Function]}
+          onMouseLeave={[Function]}
+        >
+          <i
+            className="fa fa-info-circle"
+          />
+        </div>
+      </label>
+      <div
+        style={
+          Object {
+            "flexGrow": 1,
+          }
+        }
+      >
+        <input
+          className="gf-form-input gf-form-input width-8"
+          onBlur={[MockFunction]}
+          onChange={[Function]}
+          placeholder="auto"
+          value=""
+        />
+      </div>
+    </div>
+    <div
+      className="gf-form"
+    >
+      <label
+        className="gf-form-label width-8 query-keyword"
+      >
+        Alias
+        <div
+          className="gf-form-help-icon gf-form-help-icon--right-normal"
+          onMouseEnter={[Function]}
+          onMouseLeave={[Function]}
+        >
+          <i
+            className="fa fa-info-circle"
+          />
+        </div>
+      </label>
+      <div
+        style={
+          Object {
+            "flexGrow": 1,
+          }
+        }
+      >
+        <input
+          className="gf-form-input gf-form-input width-16"
+          onChange={[Function]}
+          type="text"
+          value=""
+        />
+      </div>
+      <div
+        className="gf-form-switch-container-react"
+      >
+        <label
+          className="gf-form gf-form-switch-container "
+          htmlFor="1"
+        >
+          <div
+            className="gf-form-label query-keyword  pointer"
+          >
+            Match Exact
+            <div
+              className="gf-form-help-icon gf-form-help-icon--right-normal"
+              onMouseEnter={[Function]}
+              onMouseLeave={[Function]}
+            >
+              <i
+                className="fa fa-info-circle"
+              />
+            </div>
+          </div>
+          <div
+            className="gf-form-switch  "
+          >
+            <input
+              checked={true}
+              id="1"
+              onChange={[Function]}
+              type="checkbox"
+            />
+            <span
+              className="gf-form-switch__slider"
+            />
+          </div>
+        </label>
+      </div>
+      <label
+        className="gf-form-label"
+      >
+        <a
+          onClick={[Function]}
+        >
+          <i
+            className="fa fa-caret-right"
+          />
+           
+          Show
+           Query Preview
+        </a>
+      </label>
+    </div>
+    <div
+      className="gf-form gf-form--grow"
+    >
+      <div
+        className="gf-form-label gf-form-label--grow"
+      />
+    </div>
+  </div>,
+]
+`;

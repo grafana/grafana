@@ -35,71 +35,64 @@ export interface Props extends Themeable {
 class UnThemedLogDetails extends PureComponent<Props> {
   getParser = memoizeOne(getParser);
 
-  parseMessage = memoizeOne(
-    (rowEntry): FieldDef[] => {
-      const parser = this.getParser(rowEntry);
-      if (!parser) {
-        return [];
-      }
-      // Use parser to highlight detected fields
-      const parsedFields = parser.getFields(rowEntry);
-      const fields = parsedFields.map(field => {
-        const key = parser.getLabelFromField(field);
-        const value = parser.getValueFromField(field);
-        return { key, value };
-      });
-
-      return fields;
+  parseMessage = memoizeOne((rowEntry): FieldDef[] => {
+    const parser = this.getParser(rowEntry);
+    if (!parser) {
+      return [];
     }
-  );
+    // Use parser to highlight detected fields
+    const parsedFields = parser.getFields(rowEntry);
+    const fields = parsedFields.map(field => {
+      const key = parser.getLabelFromField(field);
+      const value = parser.getValueFromField(field);
+      return { key, value };
+    });
 
-  getDerivedFields = memoizeOne(
-    (row: LogRowModel): FieldDef[] => {
-      return (
-        row.dataFrame.fields
-          .map((field, index) => ({ ...field, index }))
-          // Remove Id which we use for react key and entry field which we are showing as the log message.
-          .filter((field, index) => 'id' !== field.name && row.entryFieldIndex !== index)
-          // Filter out fields without values. For example in elastic the fields are parsed from the document which can
-          // have different structure per row and so the dataframe is pretty sparse.
-          .filter(field => {
-            const value = field.values.get(row.rowIndex);
-            // Not sure exactly what will be the empty value here. And we want to keep 0 as some values can be non
-            // string.
-            return value !== null && value !== undefined;
-          })
-          .map(field => {
-            const { getFieldLinks } = this.props;
-            const links = getFieldLinks ? getFieldLinks(field, row.rowIndex) : [];
-            return {
-              key: field.name,
-              value: field.values.get(row.rowIndex).toString(),
-              links: links.map(link => link.href),
-              fieldIndex: field.index,
-            };
-          })
-      );
-    }
-  );
+    return fields;
+  });
+
+  getDerivedFields = memoizeOne((row: LogRowModel): FieldDef[] => {
+    return (
+      row.dataFrame.fields
+        .map((field, index) => ({ ...field, index }))
+        // Remove Id which we use for react key and entry field which we are showing as the log message.
+        .filter((field, index) => 'id' !== field.name && row.entryFieldIndex !== index)
+        // Filter out fields without values. For example in elastic the fields are parsed from the document which can
+        // have different structure per row and so the dataframe is pretty sparse.
+        .filter(field => {
+          const value = field.values.get(row.rowIndex);
+          // Not sure exactly what will be the empty value here. And we want to keep 0 as some values can be non
+          // string.
+          return value !== null && value !== undefined;
+        })
+        .map(field => {
+          const { getFieldLinks } = this.props;
+          const links = getFieldLinks ? getFieldLinks(field, row.rowIndex) : [];
+          return {
+            key: field.name,
+            value: field.values.get(row.rowIndex).toString(),
+            links: links.map(link => link.href),
+            fieldIndex: field.index,
+          };
+        })
+    );
+  });
 
   getAllFields = memoizeOne((row: LogRowModel) => {
     const fields = this.parseMessage(row.entry);
     const derivedFields = this.getDerivedFields(row);
-    const fieldsMap = [...derivedFields, ...fields].reduce(
-      (acc, field) => {
-        // Strip enclosing quotes for hashing. When values are parsed from log line the quotes are kept, but if same
-        // value is in the dataFrame it will be without the quotes. We treat them here as the same value.
-        const value = field.value.replace(/(^")|("$)/g, '');
-        const fieldHash = `${field.key}=${value}`;
-        if (acc[fieldHash]) {
-          acc[fieldHash].links = [...(acc[fieldHash].links || []), ...(field.links || [])];
-        } else {
-          acc[fieldHash] = field;
-        }
-        return acc;
-      },
-      {} as { [key: string]: FieldDef }
-    );
+    const fieldsMap = [...derivedFields, ...fields].reduce((acc, field) => {
+      // Strip enclosing quotes for hashing. When values are parsed from log line the quotes are kept, but if same
+      // value is in the dataFrame it will be without the quotes. We treat them here as the same value.
+      const value = field.value.replace(/(^")|("$)/g, '');
+      const fieldHash = `${field.key}=${value}`;
+      if (acc[fieldHash]) {
+        acc[fieldHash].links = [...(acc[fieldHash].links || []), ...(field.links || [])];
+      } else {
+        acc[fieldHash] = field;
+      }
+      return acc;
+    }, {} as { [key: string]: FieldDef });
     return Object.values(fieldsMap);
   });
 

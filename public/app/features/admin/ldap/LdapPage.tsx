@@ -132,9 +132,4 @@ const mapDispatchToProps = {
   clearUserMappingInfo,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(LdapPage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(LdapPage));

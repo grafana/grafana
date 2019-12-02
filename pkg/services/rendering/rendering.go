@@ -3,11 +3,10 @@ package rendering
 import (
 	"context"
 	"fmt"
+	plugin "github.com/hashicorp/go-plugin"
 	"net/url"
 	"os"
 	"path/filepath"
-
-	plugin "github.com/hashicorp/go-plugin"
 
 	pluginModel "github.com/grafana/grafana-plugin-model/go/renderer"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -91,6 +90,14 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	}
 
 	return err
+}
+
+func (rs *RenderingService) RenderErrorImage(err error) (*RenderResult, error) {
+	imgUrl := "public/img/rendering_error.png"
+
+	return &RenderResult{
+		FilePath: filepath.Join(setting.HomePath, imgUrl),
+	}, nil
 }
 
 func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResult, error) {
