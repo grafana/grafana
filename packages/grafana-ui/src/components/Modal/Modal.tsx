@@ -27,7 +27,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     bottom: 0;
     left: 0;
     z-index: ${theme.zIndex.modalBackdrop};
-    background-color: ${theme.colors.bodyBg};
+    background-color: ${theme.colors.blueFaint};
     opacity: 0.8;
     backdrop-filter: blur(4px);
   `,
