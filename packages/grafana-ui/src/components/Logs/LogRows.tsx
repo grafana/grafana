@@ -86,12 +86,14 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       getFieldLinks,
     } = this.props;
     const { renderAll } = this.state;
+    const { logsRows, logsRowsHorizontalScroll } = getLogRowStyles(theme);
     const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
       ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
       : 0;
     const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
+    const horizontalScrollWindow = wrapLogMessage ? '' : logsRowsHorizontalScroll;
 
     // Staged rendering
     const processedRows = dedupedRows ? dedupedRows : [];
@@ -102,11 +104,10 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = this.makeGetRows(processedRows);
     const getRowContext = this.props.getRowContext ? this.props.getRowContext : () => Promise.resolve([]);
-    const { logsRows } = getLogRowStyles(theme);
 
     return (
       <div className={logsRows}>
-        <div style={{ overflowY: 'scroll' }}>
+        <div className={horizontalScrollWindow}>
           {hasData &&
             firstRows.map((row, index) => (
               <LogRow

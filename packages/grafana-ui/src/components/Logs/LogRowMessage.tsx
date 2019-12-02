@@ -58,10 +58,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: whiteSpacePreWrap;
       white-space: pre-wrap;
     `,
-    verticalScroll: css`
+    horizontalScroll: css`
       label: verticalScroll;
-      height: 1.4em;
-      overflow: hidden;
       white-space: nowrap;
     `,
   };
@@ -99,7 +97,7 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
     const styles = getStyles(theme);
     return (
       <div className={style.logsRowMessage}>
-        <div className={cx(styles.positionRelative, { [styles.verticalScroll]: !wrapLogMessage })}>
+        <div className={cx(styles.positionRelative, { [styles.horizontalScroll]: !wrapLogMessage })}>
           {showContext && context && (
             <LogRowContext
               row={row}

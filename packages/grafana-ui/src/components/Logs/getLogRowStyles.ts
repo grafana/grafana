@@ -62,11 +62,14 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       table-layout: fixed;
       width: 100%;
     `,
+    logsRowsHorizontalScroll: css`
+      label: logs-rows__horizontal-scroll;
+      overflow-y: scroll;
+    `,
     context: context,
     logsRow: css`
       label: logs-row;
       display: table-row;
-      white-space: normal;
       cursor: pointer;
       &:hover {
         .${context} {
