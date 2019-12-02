@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 // import mdx from './Checkbox.mdx';
 import { RadioButtonGroup } from './RadioButtonGroup';
-import { RadioButton } from './RadioButton';
+import { RadioButtonSize } from './RadioButton';
+import { boolean, select } from '@storybook/addon-knobs';
 
 export default {
   title: 'UI/Forms/RadioButtonGroup',
@@ -13,20 +14,20 @@ export default {
   // },
 };
 
+const sizes: RadioButtonSize[] = ['sm', 'md'];
+
 export const simple = () => {
   const [selected, setSelected] = useState();
+  const BEHAVIOUR_GROUP = 'Behaviour props';
+  const disabled = boolean('Disabled', false, BEHAVIOUR_GROUP);
+  const VISUAL_GROUP = 'Visual options';
+  const size = select<RadioButtonSize>('Size', sizes, 'md', VISUAL_GROUP);
 
-  const values = ['Prometheus', 'Graphite', 'Elastic'];
+  const options = [
+    { label: 'Prometheus', value: 'prometheus' },
+    { label: 'Graphite', value: 'graphite' },
+    { label: 'Elastic', value: 'elastic' },
+  ];
 
-  return (
-    <RadioButtonGroup>
-      {values.map(v => {
-        return (
-          <RadioButton value={v} onClick={setSelected} active={selected === v}>
-            {v}
-          </RadioButton>
-        );
-      })}
-    </RadioButtonGroup>
-  );
+  return <RadioButtonGroup options={options} disabled={disabled} value={selected} onChange={setSelected} size={size} />;
 };

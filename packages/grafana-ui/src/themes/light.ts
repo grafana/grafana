@@ -107,6 +107,7 @@ const lightTheme: GrafanaTheme = {
 
     formRadioButtonText: basicColors.gray33,
     formRadioButtonTextHover: basicColors.blueShade,
+    formRadioButtonTextActive: basicColors.blueShade,
     formRadioButtonBg: basicColors.gray98,
     formRadioButtonBgDisabled: basicColors.gray95,
     formRadioButtonBgActive: basicColors.white,
