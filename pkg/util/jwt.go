@@ -290,14 +290,14 @@ func (d *keySourceKeys) getVerificationKeys(header jose.Header) []interface{} {
 func newKeySource(source string) (keySource, error) {
 
 	// Read the bytes
-	bytes, err := getBytesForSource(source)
+	sourceBytes, err := getBytesForSource(source)
 	if err != nil {
 		return nil, fmt.Errorf("Error reading JWT Source: %v", err)
 	}
 
 	// Try to parse this as a JSON Web Key Set
 	ks := &jose.JSONWebKeySet{}
-	err = json.Unmarshal(bytes, ks)
+	err = json.Unmarshal(sourceBytes, ks)
 	if err == nil && len(ks.Keys) > 0 {
 		return &keySourceJSONWebKeySet{
 			keySet: ks,
@@ -306,7 +306,7 @@ func newKeySource(source string) (keySource, error) {
 
 	// Try to parse as json
 	var parsed map[string]interface{}
-	if err := json.Unmarshal(bytes, &parsed); err == nil {
+	if err := json.Unmarshal(sourceBytes, &parsed); err == nil {
 		// keyID -> Certificate (like firebase)
 		reg := make(map[string]interface{})
 		for kid, value := range parsed {
@@ -323,7 +323,7 @@ func newKeySource(source string) (keySource, error) {
 	}
 
 	// Is this a single public key file
-	key, err := LoadPublicKey(bytes)
+	key, err := LoadPublicKey(sourceBytes)
 	if err == nil {
 		var keys []interface{}
 		return &keySourceKeys{
@@ -331,7 +331,7 @@ func newKeySource(source string) (keySource, error) {
 		}, nil
 	}
 
-	return nil, fmt.Errorf("Unable to parse jwt keys")
+	return nil, fmt.Errorf("unable to parse jwt keys")
 }
 
 // Read bytes from a URL, File, or directly from the string

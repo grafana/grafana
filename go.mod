@@ -3,6 +3,7 @@ module github.com/grafana/grafana
 go 1.13
 
 require (
+	github.com/Bowery/prompt v0.0.0-20190916142128-fa8279994f75 // indirect
 	github.com/BurntSushi/toml v0.3.1
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
 	github.com/aws/aws-sdk-go v1.25.6
@@ -13,7 +14,9 @@ require (
 	github.com/codegangsta/cli v1.20.0
 	github.com/crewjam/saml v0.0.0-20191031171751-c42136edf9b1
 	github.com/davecgh/go-spew v1.1.1
+	github.com/dchest/safefile v0.0.0-20151022103144-855e8d98f185 // indirect
 	github.com/denisenkom/go-mssqldb v0.0.0-20190315220205-a8ed825ac853
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
 	github.com/facebookgo/inject v0.0.0-20180706035515-f23751cae28b
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
@@ -28,6 +31,7 @@ require (
 	github.com/go-xorm/core v0.6.2
 	github.com/go-xorm/xorm v0.7.1
 	github.com/gobwas/glob v0.2.3
+	github.com/google/shlex v0.0.0-20181106134648-c34317bd91bf // indirect
 	github.com/gorilla/websocket v1.4.0
 	github.com/gosimple/slug v1.4.2
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
@@ -39,6 +43,7 @@ require (
 	github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
 	github.com/jung-kurt/gofpdf v1.10.1
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
+	github.com/kardianos/govendor v1.0.9 // indirect
 	github.com/klauspost/compress v1.4.1 // indirect
 	github.com/klauspost/cpuid v1.2.0 // indirect
 	github.com/lib/pq v1.2.0
@@ -55,7 +60,7 @@ require (
 	github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 	github.com/robfig/cron/v3 v3.0.0
 	github.com/sergi/go-diff v1.0.0 // indirect
-	github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337
+	github.com/smartystreets/goconvey v1.6.4
 	github.com/stretchr/testify v1.4.0
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 	github.com/ua-parser/uap-go v0.0.0-20190826212731-daf92ba38329
@@ -71,6 +76,8 @@ require (
 	golang.org/x/net v0.0.0-20190724013045-ca1201d0de80
 	golang.org/x/oauth2 v0.0.0-20190319182350-c85d3e98c914
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
+	golang.org/x/sys v0.0.0-20191023151326-f89234f9a2c2 // indirect
+	golang.org/x/tools v0.0.0-20191024044240-7b6f5d95f3a9 // indirect
 	golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
@@ -79,6 +86,6 @@ require (
 	gopkg.in/macaron.v1 v1.3.4
 	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/redis.v5 v5.2.9
-	gopkg.in/square/go-jose.v2 v2.3.0
+	gopkg.in/square/go-jose.v2 v2.4.0
 	gopkg.in/yaml.v2 v2.2.4
 )
