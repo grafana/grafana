@@ -33,16 +33,15 @@ exemptLabels:
   - no stalebot
 
 # Issue specific configuration
-# issues:
-#   # TODO: Consider increasing the limitPerRun once we are satisfied with the bot's performance
-#   limitPerRun: 1
-#   daysUntilStale: 100
-#   daysUntilClose: 100
-#   markComment: >
-#     This issue has been automatically marked as stale because it has not had activity in the
-#     last 100 days. It will be closed in the next 100 days if no activity occurs.
-#     Thank you for your contributions.
-#   closeComment: >
-#     This issue has been automatically closed because it has not had activity in the
-#     last month and a half. If this issue is still valid, please ping a maintainer and ask them to check this again.
-#     Thank you for your contributions.
+issues:
+  limitPerRun: 1
+  daysUntilStale: false
+  daysUntilClose: false
+  markComment: >
+    This issue has been automatically marked as stale because it has not had activity in the
+    last 100 days. It will be closed in the next 100 days if no activity occurs.
+    Thank you for your contributions.
+  closeComment: >
+    This issue has been automatically closed because it has not had activity in the
+    last month and a half. If this issue is still valid, please ping a maintainer and ask them to check this again.
+    Thank you for your contributions.
