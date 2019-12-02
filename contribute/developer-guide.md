@@ -10,7 +10,7 @@ Before you begin, you might want to read [How to contribute to Grafana as a juni
 Make sure you have the following dependencies installed before setting up your developer environment:
 
 - [Git](https://git-scm.com/)
-- [Go](https://golang.org/dl/)
+- [Go](https://golang.org/dl/) (see [go.mod](../go.mod#L3) for minimum required version)
 - [Node.js (Long Term Support)](https://nodejs.org)
 - [Yarn](https://yarnpkg.com)
 

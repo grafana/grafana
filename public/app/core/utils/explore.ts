@@ -418,13 +418,9 @@ export const getTimeRangeFromUrl = (range: RawTimeRange, timeZone: TimeZone): Ti
   };
 };
 
-export const getValueWithRefId = (value: any): any | null => {
-  if (!value) {
-    return null;
-  }
-
-  if (typeof value !== 'object') {
-    return null;
+export const getValueWithRefId = (value?: any): any => {
+  if (!value || typeof value !== 'object') {
+    return undefined;
   }
 
   if (value.refId) {
@@ -440,12 +436,12 @@ export const getValueWithRefId = (value: any): any | null => {
     }
   }
 
-  return null;
+  return undefined;
 };
 
-export const getFirstQueryErrorWithoutRefId = (errors: DataQueryError[]) => {
+export const getFirstQueryErrorWithoutRefId = (errors?: DataQueryError[]) => {
   if (!errors) {
-    return null;
+    return undefined;
   }
 
   return errors.filter(error => (error && error.refId ? false : true))[0];
@@ -503,7 +499,7 @@ export enum SortOrder {
   Ascending = 'Ascending',
 }
 
-export const refreshIntervalToSortOrder = (refreshInterval: string) =>
+export const refreshIntervalToSortOrder = (refreshInterval?: string) =>
   RefreshPicker.isLive(refreshInterval) ? SortOrder.Ascending : SortOrder.Descending;
 
 export const sortLogsResult = (logsResult: LogsModel, sortOrder: SortOrder): LogsModel => {

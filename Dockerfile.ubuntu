@@ -1,4 +1,4 @@
-FROM golang:1.13.1 AS go-builder
+FROM golang:1.13.4 AS go-builder
 
 WORKDIR /src/grafana
 
@@ -12,7 +12,7 @@ COPY pkg pkg/
 
 RUN go run build.go build
 
-FROM node:10.17 AS js-builder
+FROM node:12.13 AS js-builder
 
 # PhantomJS
 RUN apt-get update && apt-get install -y curl &&\

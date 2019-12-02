@@ -131,7 +131,7 @@ export class AdHocFilterField<
         return allPairs;
       }
       return allPairs.concat(pair);
-    }, []);
+    }, [] as KeyValuePair[]);
 
     this.setState({ pairs });
   };

@@ -1,23 +1,22 @@
 import _ from 'lodash';
-import { sanitize, escapeHtml } from 'app/core/utils/text';
+import { escapeHtml, sanitize } from 'app/core/utils/text';
 
 import config from 'app/core/config';
-import { profiler } from 'app/core/core';
-import { Emitter } from 'app/core/core';
+import { Emitter, profiler } from 'app/core/core';
 import getFactors from 'app/core/utils/factors';
 import {
-  duplicatePanel,
-  removePanel,
-  copyPanel as copyPanelUtil,
-  editPanelJson as editPanelJsonUtil,
-  sharePanel as sharePanelUtil,
   calculateInnerPanelHeight,
+  copyPanel as copyPanelUtil,
+  duplicatePanel,
+  editPanelJson as editPanelJsonUtil,
+  removePanel,
+  sharePanel as sharePanelUtil,
 } from 'app/features/dashboard/utils/panel';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { auto } from 'angular';
 import { TemplateSrv } from '../templating/template_srv';
 import { getPanelLinksSupplier } from './panellinks/linkSuppliers';
-import { renderMarkdown, AppEvent, PanelEvents, PanelPluginMeta } from '@grafana/data';
+import { AppEvent, PanelEvents, PanelPluginMeta, renderMarkdown } from '@grafana/data';
 import { getLocationSrv } from '@grafana/runtime';
 
 export class PanelCtrl {
@@ -39,7 +38,6 @@ export class PanelCtrl {
   timing: any;
   maxPanelsPerRowOptions: number[];
 
-  /** @ngInject */
   constructor($scope: any, $injector: auto.IInjectorService) {
     this.$injector = $injector;
     this.$location = $injector.get('$location');
