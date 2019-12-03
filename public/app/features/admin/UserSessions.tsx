@@ -1,9 +1,8 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
-import appEvents from 'app/core/app_events';
+import { ConfirmButton, ConfirmModal } from '@grafana/ui';
 import { ActionButton } from './ActionButton';
-import { UserSession, CoreEvents } from 'app/types';
-import { ConfirmButton } from '@grafana/ui';
+import { UserSession } from 'app/types';
 
 interface Props {
   sessions: UserSession[];
@@ -12,7 +11,19 @@ interface Props {
   onAllSessionsRevoke: () => void;
 }
 
-export class UserSessions extends PureComponent<Props> {
+interface State {
+  showLogoutModal: boolean;
+}
+
+export class UserSessions extends PureComponent<Props, State> {
+  state: State = {
+    showLogoutModal: false,
+  };
+
+  showLogoutConfirmationModal = (show: boolean) => () => {
+    this.setState({ showLogoutModal: show });
+  };
+
   onSessionRevoke = (id: number) => {
     return () => {
       this.props.onSessionRevoke(id);
@@ -20,19 +31,13 @@ export class UserSessions extends PureComponent<Props> {
   };
 
   onAllSessionsRevoke = () => {
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Force logout from all devices',
-      text: 'Are you sure you want to force logout from all devices?',
-      yesText: 'Force logout',
-      icon: 'fa-warning',
-      onConfirm: () => {
-        this.props.onAllSessionsRevoke();
-      },
-    });
+    this.props.onAllSessionsRevoke();
   };
 
   render() {
     const { sessions } = this.props;
+    const { showLogoutModal } = this.state;
+
     const logoutFromAllDevicesClass = cx(
       'pull-right',
       css`
@@ -80,8 +85,16 @@ export class UserSessions extends PureComponent<Props> {
           </div>
           <div className={logoutFromAllDevicesClass}>
             {sessions.length > 0 && (
-              <ActionButton text="Force logout from all devices" onClick={this.onAllSessionsRevoke} />
+              <ActionButton text="Force logout from all devices" onClick={this.showLogoutConfirmationModal(true)} />
             )}
+            <ConfirmModal
+              isOpen={showLogoutModal}
+              title="Force logout from all devices"
+              body="Are you sure you want to force logout from all devices?"
+              confirmText="Force logout"
+              onConfirm={this.onAllSessionsRevoke}
+              onDismiss={this.showLogoutConfirmationModal(false)}
+            />
           </div>
         </div>
       </>
