@@ -3,7 +3,6 @@ import _ from 'lodash';
 
 // Services & Utils
 import { parseSelector, labelRegexp, selectorRegexp } from 'app/plugins/datasource/prometheus/language_utils';
-import { store } from 'app/store/store';
 import syntax, { FUNCTIONS } from './syntax';
 
 // Types
@@ -113,16 +112,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * @param context.history Optional used only in getEmptyCompletionItems
    */
   async provideCompletionItems(input: TypeaheadInput, context?: TypeaheadContext): Promise<TypeaheadOutput> {
-    const exploreMode = store.getState().explore.left.mode;
-
-    if (exploreMode === ExploreMode.Logs) {
-      return this.provideLogCompletionItems(input, context);
-    }
-
-    return this.provideMetricsCompletionItems(input, context);
-  }
-
-  async provideMetricsCompletionItems(input: TypeaheadInput, context?: TypeaheadContext): Promise<TypeaheadOutput> {
     const { wrapperClasses, value, prefix, text } = input;
 
     // Local text properties
@@ -160,23 +149,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
     } else if ((prefixUnrecognized && noSuffix) || safeEmptyPrefix || isNextOperand) {
       // Show term suggestions in a couple of scenarios
       return this.getTermCompletionItems();
-    }
-
-    return {
-      suggestions: [],
-    };
-  }
-
-  async provideLogCompletionItems(input: TypeaheadInput, context?: TypeaheadContext): Promise<TypeaheadOutput> {
-    const { wrapperClasses, value } = input;
-    // Local text properties
-    const empty = value.document.text.length === 0;
-    // Determine candidates by CSS context
-    if (wrapperClasses.includes('context-labels')) {
-      // Suggestions for {|} and {foo=|}
-      return await this.getLabelCompletionItems(input, context);
-    } else if (empty) {
-      return this.getEmptyCompletionItems(context || {}, ExploreMode.Logs);
     }
 
     return {
