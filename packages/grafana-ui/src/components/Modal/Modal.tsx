@@ -63,6 +63,7 @@ interface Props {
   icon?: string;
   title: string | JSX.Element;
   theme: GrafanaTheme;
+  className?: string;
 
   isOpen?: boolean;
   onDismiss?: () => void;
@@ -95,7 +96,7 @@ export class UnthemedModal extends React.PureComponent<Props> {
   }
 
   render() {
-    const { title, isOpen = false, theme } = this.props;
+    const { title, isOpen = false, theme, className } = this.props;
     const styles = getStyles(theme);
 
     if (!isOpen) {
@@ -104,10 +105,10 @@ export class UnthemedModal extends React.PureComponent<Props> {
 
     return (
       <Portal>
-        <div className={styles.modal}>
-          <div className={styles.modalHeader}>
-            {typeof title === 'string' ? this.renderDefaultHeader() : title}
-            <a className={styles.modalHeaderClose} onClick={this.onDismiss}>
+        <div className={cx(styles.modal, className)}>
+          <div className={cx(styles.modalHeader)}>
+            {typeof title === 'string' ? <h2 className={cx(styles.modalHeaderTitle)}>{title}</h2> : <>{title}</>}
+            <a className={cx(styles.modalHeaderClose)} onClick={this.onDismiss}>
               <i className="fa fa-remove" />
             </a>
           </div>
