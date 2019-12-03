@@ -9,6 +9,13 @@ export const getFocusCss = (theme: GrafanaTheme) => `
   transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1);
 `;
 
+export const getFocusCss = (theme: GrafanaTheme) => `
+  outline: 2px dotted transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px ${theme.colors.pageBg}, 0 0 0px 4px ${theme.colors.formFocusOutline};
+  transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1);
+`;
+
 export const getFocusStyle = (theme: GrafanaTheme) => css`
   &:focus {
     ${getFocusCss(theme)}
