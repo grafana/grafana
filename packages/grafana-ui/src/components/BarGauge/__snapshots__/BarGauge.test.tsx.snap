@@ -27,7 +27,7 @@ exports[`BarGauge Render with basic options should render 1`] = `
           "alignItems": "center",
           "color": "#73BF69",
           "display": "flex",
-          "fontSize": "175.0000px",
+          "fontSize": "175px",
           "height": "300px",
           "justifyContent": "flex-start",
           "lineHeight": 1,
