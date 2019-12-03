@@ -29,7 +29,6 @@ import {
   AbsoluteTimeRange,
   DataQuery,
   DataSourceApi,
-  DataSourceSelectItem,
   dateTimeForTimeZone,
   isDateTime,
   LoadingState,
@@ -57,7 +56,6 @@ import {
   loadDatasourcePendingAction,
   loadDatasourceReadyAction,
   LoadDatasourceReadyPayload,
-  loadExploreDatasources,
   modifyQueriesAction,
   queriesImportedAction,
   queryStoreSubscriptionAction,
@@ -84,6 +82,7 @@ import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
 import { PanelModel } from 'app/features/dashboard/state';
 import { DataSourceSrv } from '@grafana/runtime';
+import { getExploreDatasources } from './selectors';
 
 /**
  * Updates UI state and save it to the URL
@@ -244,18 +243,7 @@ export function loadExploreDatasourcesAndSetDatasource(
   datasourceName: string
 ): ThunkResult<void> {
   return dispatch => {
-    const exploreDatasources: DataSourceSelectItem[] = getDatasourceSrv()
-      .getExternal()
-      .map(
-        (ds: any) =>
-          ({
-            value: ds.name,
-            name: ds.name,
-            meta: ds.meta,
-          } as DataSourceSelectItem)
-      );
-
-    dispatch(loadExploreDatasources({ exploreId, exploreDatasources }));
+    const exploreDatasources = getExploreDatasources();
 
     if (exploreDatasources.length >= 1) {
       dispatch(changeDatasource(exploreId, datasourceName));
@@ -320,6 +308,14 @@ export const loadDatasourceReady = (
   });
 };
 
+/**
+ * Import queries from previous datasource if possible eg Loki and Prometheus have similar query language so the
+ * labels part can be reused to get similar data.
+ * @param exploreId
+ * @param queries
+ * @param sourceDataSource
+ * @param targetDataSource
+ */
 export function importQueries(
   exploreId: ExploreId,
   queries: DataQuery[],
@@ -464,6 +460,8 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
           // Side-effect: Saving history in localstorage
           const nextHistory = updateHistory(history, datasourceId, queries);
           dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
+
+          // We save queries to the URL here so that only successfully run queries change the URL.
           dispatch(stateSave());
         }
 
@@ -505,6 +503,10 @@ const toRawTimeRange = (range: TimeRange): RawTimeRange => {
   };
 };
 
+/**
+ * Save local redux state back to the URL. Should be called when there is some change that should affect the URL.
+ * Not all of the redux state is reflected in URL though.
+ */
 export const stateSave = (): ThunkResult<void> => {
   return (dispatch, getState) => {
     const { left, right, split } = getState().explore;
@@ -714,6 +716,11 @@ export const changeDedupStrategy = (exploreId: ExploreId, dedupStrategy: LogsDed
   };
 };
 
+/**
+ * Reacts to changes in URL state that we need to sync back to our redux state. Checks the internal update variable
+ * to see which parts change and need to be synced.
+ * @param exploreId
+ */
 export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
     const itemState = getState().explore[exploreId];
