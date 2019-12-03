@@ -171,7 +171,7 @@ datasources:
       maxLines: 1000
 ```
 
-Here's another with basic auth:
+Here's another with basic auth and derived field. Keep in mind that `$` character needs to be escaped in yaml values as it is used to interpolate environment variables:
 
 ```yaml
 apiVersion: 1
@@ -190,5 +190,5 @@ datasources:
         - datasourceName: Jaeger
           matcherRegex: "traceID=(\\w+)"
           name: TraceID
-          url: "http://localhost:16686/trace/${__value.raw}"
+          url: "http://localhost:16686/trace/$${__value.raw}"
 ```
