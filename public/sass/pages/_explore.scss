@@ -82,10 +82,18 @@
   background: transparent;
   border: none;
 
+  &:nth-child(2) {
+    display: flex;
+    margin-left: auto;
+  }
+
   .navbar-button {
-    height: 35px;
     margin-left: 0;
     margin-right: 0.5em;
+
+    span {
+      display: initial;
+    }
   }
 }
 
