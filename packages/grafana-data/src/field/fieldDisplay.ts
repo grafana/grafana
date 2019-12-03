@@ -1,6 +1,9 @@
 import toNumber from 'lodash/toNumber';
 import toString from 'lodash/toString';
+import some from 'lodash/some';
+import isEmpty from 'lodash/isEmpty';
 
+import { isNullValueMap } from '../utils/valueMappings';
 import { getDisplayProcessor } from './displayProcessor';
 import { getFlotPairs } from '../utils/flotPairs';
 import { FieldConfig, DataFrame, FieldType } from '../types/dataFrame';
@@ -12,6 +15,7 @@ import { GrafanaTheme } from '../types/theme';
 import { ReducerID, reduceField } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
 import { getTimeField } from '../dataframe/processDataFrame';
+import { MappingType, ValueMap } from '../types';
 
 export interface FieldDisplayOptions {
   values?: boolean; // If true show each row value
@@ -196,16 +200,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
   }
 
   if (values.length === 0) {
-    values.push({
-      name: 'No data',
-      field: {
-        ...defaults,
-      },
-      display: {
-        numeric: 0,
-        text: 'No data',
-      },
-    });
+    values.push(createNoValuesFieldDisplay(options));
   } else if (values.length === 1 && !fieldOptions.defaults.title) {
     // Don't show title for single item
     values[0].display.title = undefined;
@@ -297,4 +292,52 @@ export function getDisplayValueAlignmentFactors(values: FieldDisplay[]): Display
     }
   }
   return info;
+}
+
+function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): FieldDisplay {
+  const defaultDisplayText = 'No data';
+  const { fieldOptions } = options;
+  const { defaults, override } = fieldOptions;
+
+  const config = getFieldProperties(defaults, {}, override);
+
+  if (!hasMappingForEmptyValue(config)) {
+    return {
+      name: defaultDisplayText,
+      field: {
+        ...defaults,
+      },
+      display: {
+        numeric: 0,
+        text: defaultDisplayText,
+      },
+    };
+  }
+
+  const display = getDisplayProcessor({
+    config,
+    theme: options.theme,
+    type: FieldType.other,
+  });
+
+  return {
+    name: defaultDisplayText,
+    field: {
+      ...defaults,
+    },
+    display: display(null),
+  };
+}
+
+function hasMappingForEmptyValue(config: FieldConfig): boolean {
+  if (!config || isEmpty(config.mappings)) {
+    return false;
+  }
+
+  return some(config.mappings, mapping => {
+    if (!mapping || mapping.type !== MappingType.ValueToText) {
+      return false;
+    }
+    return isNullValueMap(mapping as ValueMap);
+  });
 }

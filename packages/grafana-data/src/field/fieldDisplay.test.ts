@@ -3,6 +3,7 @@ import { toDataFrame } from '../dataframe/processDataFrame';
 import { ReducerID } from '../transformations/fieldReducer';
 import { Threshold } from '../types/threshold';
 import { GrafanaTheme } from '../types/theme';
+import { MappingType } from '../types';
 
 describe('FieldDisplay', () => {
   it('Construct simple field properties', () => {
@@ -155,5 +156,65 @@ describe('FieldDisplay', () => {
 
     const display = getFieldDisplayValues(options);
     expect(display[0].field.thresholds!.length).toEqual(1);
+  });
+
+  it('Should return field mapped value when there is no data', () => {
+    const mapEmptyToText = '0';
+
+    const options: GetFieldDisplayValuesOptions = {
+      data: [
+        {
+          name: 'No data',
+          fields: [],
+          length: 0,
+        },
+      ],
+      replaceVariables: (value: string) => {
+        return value;
+      },
+      fieldOptions: {
+        calcs: [],
+        override: {
+          mappings: [
+            {
+              id: 1,
+              operator: '',
+              text: mapEmptyToText,
+              type: MappingType.ValueToText,
+              value: 'null',
+            },
+          ],
+        },
+        defaults: {},
+      },
+      theme: {} as GrafanaTheme,
+    };
+
+    const display = getFieldDisplayValues(options);
+    expect(display[0].display.text).toEqual(mapEmptyToText);
+  });
+
+  it('Should return field with default text when no mapping available and no data', () => {
+    const options: GetFieldDisplayValuesOptions = {
+      data: [
+        {
+          name: 'No data',
+          fields: [],
+          length: 0,
+        },
+      ],
+      replaceVariables: (value: string) => {
+        return value;
+      },
+      fieldOptions: {
+        calcs: [],
+        override: {},
+        defaults: {},
+      },
+      theme: {} as GrafanaTheme,
+    };
+
+    const display = getFieldDisplayValues(options);
+    expect(display[0].display.text).toEqual('No data');
   });
 });
