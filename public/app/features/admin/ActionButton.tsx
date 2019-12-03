@@ -7,7 +7,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     button: css`
       text-decoration: underline;
-      color: ${theme.colors.blue95};
+      color: ${theme.colors.linkExternal};
     `,
   };
 });
