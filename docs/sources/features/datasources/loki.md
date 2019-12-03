@@ -47,7 +47,7 @@ You can use this functionality to link to your tracing backend directly from you
 Each derived field consists of:
 - **Name:** Shown in the log details as a label.
 - **Regex:** A Regex pattern that runs on the log message and captures part of it to as the value of the new field. Can only contain capture a single group.
-- URL: A URL template used to construct a link next to the field value in log details. Use special `${__value.raw}` to insert the value of the field.
+- **URL**: A URL template used to construct a link next to the field value in log details. Use special `${__value.raw}` to insert the value of the field.
 
 You can use a debug section to see what your fields extract and how the URL is interpolated. Click **Show example log message** to show the text area where you can enter a log message.
 {{< docs-imagebox img="/img/docs/v65/loki_derived_fields_debug.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields debugging" >}}
@@ -186,4 +186,9 @@ datasources:
     basicAuthPassword: test_password
     jsonData:
       maxLines: 1000
+      derivedFields:
+        - datasourceName: Jaeger
+          matcherRegex: "traceID=(\\w+)"
+          name: TraceID
+          url: "http://localhost:16686/trace/${__value.raw}"
 ```
