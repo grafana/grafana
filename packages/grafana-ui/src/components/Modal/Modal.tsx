@@ -39,8 +39,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
   modalHeaderTitle: css`
     font-size: ${theme.typography.heading.h3};
-    padding-top: calc(${theme.spacing.d} * 0.75);
-    margin: 0 calc(${theme.spacing.d} * 3) 0 calc(${theme.spacing.d} * 1.5);
+    padding-top: ${theme.spacing.sm};
+    margin: 0 ${theme.spacing.md};
+  `,
+  modalHeaderIcon: css`
+    position: relative;
+    top: 2px;
+    padding-right: ${theme.spacing.md};
   `,
   modalHeaderClose: css`
     margin-left: auto;
@@ -55,6 +60,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 }));
 
 interface Props {
+  icon?: string;
   title: string | JSX.Element;
   theme: GrafanaTheme;
 
@@ -76,6 +82,18 @@ export class UnthemedModal extends React.PureComponent<Props> {
     this.onDismiss();
   };
 
+  renderDefaultHeader() {
+    const { title, icon, theme } = this.props;
+    const styles = getStyles(theme);
+
+    return (
+      <h2 className={styles.modalHeaderTitle}>
+        {icon && <i className={cx(icon, styles.modalHeaderIcon)} />}
+        {title}
+      </h2>
+    );
+  }
+
   render() {
     const { title, isOpen = false, theme } = this.props;
     const styles = getStyles(theme);
@@ -86,16 +104,16 @@ export class UnthemedModal extends React.PureComponent<Props> {
 
     return (
       <Portal>
-        <div className={cx(styles.modal)}>
-          <div className={cx(styles.modalHeader)}>
-            {typeof title === 'string' ? <h2 className={cx(styles.modalHeaderTitle)}>{title}</h2> : <>{title}</>}
-            <a className={cx(styles.modalHeaderClose)} onClick={this.onDismiss}>
+        <div className={styles.modal}>
+          <div className={styles.modalHeader}>
+            {typeof title === 'string' ? this.renderDefaultHeader() : title}
+            <a className={styles.modalHeaderClose} onClick={this.onDismiss}>
               <i className="fa fa-remove" />
             </a>
           </div>
-          <div className={cx(styles.modalContent)}>{this.props.children}</div>
+          <div className={styles.modalContent}>{this.props.children}</div>
         </div>
-        <div className={cx(styles.modalBackdrop)} onClick={this.props.onClickBackdrop || this.onClickBackdrop} />
+        <div className={styles.modalBackdrop} onClick={this.props.onClickBackdrop || this.onClickBackdrop} />
       </Portal>
     );
   }

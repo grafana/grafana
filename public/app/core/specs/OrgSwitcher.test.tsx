@@ -3,7 +3,7 @@ import React from 'react';
 import { getBackendSrv } from '@grafana/runtime/src/services/backendSrv';
 import { OrgSwitcher } from '../components/OrgSwitcher';
 import { shallow } from 'enzyme';
-import { Role } from '@grafana/data';
+import { OrgRole } from '@grafana/data';
 
 const getMock = jest.fn(() => Promise.resolve([]));
 const postMock = jest.fn();
@@ -37,7 +37,7 @@ describe('OrgSwitcher', () => {
       orgSwitcher = wrapper.instance() as OrgSwitcher;
       orgSwitcher.setWindowLocation = jest.fn();
       wrapper.update();
-      await orgSwitcher.setCurrentOrg({ name: 'mock org', orgId: 2, role: Role.Viewer });
+      await orgSwitcher.setCurrentOrg({ name: 'mock org', orgId: 2, role: OrgRole.Viewer });
     });
 
     it('should switch orgId in call to backend', () => {

@@ -48,16 +48,7 @@ export class OrgSwitcher extends React.PureComponent<Props, State> {
     const currentOrgId = contextSrv.user.orgId;
 
     return (
-      <Modal
-        title={
-          <h2 className="modal-header-title">
-            <i className="fa fa-random" />
-            <span className="p-l-1">Switch Organization</span>
-          </h2>
-        }
-        onDismiss={onDismiss}
-        isOpen={isOpen}
-      >
+      <Modal title="Switch Organization" icon="fa fa-random" onDismiss={onDismiss} isOpen={isOpen}>
         <table className="filter-table form-inline">
           <thead>
             <tr>
