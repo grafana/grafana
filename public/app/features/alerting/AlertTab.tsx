@@ -1,4 +1,5 @@
-import React, { PureComponent } from 'react';
+import _ from 'lodash';
+import React, { Component, useEffect } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { css } from 'emotion';
@@ -20,6 +21,7 @@ import { AppNotificationSeverity, StoreState } from 'app/types';
 import { PanelEditorTabIds, getPanelEditorTab } from '../dashboard/panel_editor/state/reducers';
 import { changePanelEditorTab } from '../dashboard/panel_editor/state/actions';
 import { CoreEvents } from 'app/types';
+import { PanelCtrl } from '../panel/panel_ctrl';
 
 interface Props {
   angularPanel?: AngularComponent;
@@ -29,38 +31,48 @@ interface Props {
 }
 
 interface State {
-  validatonMessage: string;
+  validationMessage: string;
+  alerts: any[];
 }
 
-class UnConnectedAlertTab extends PureComponent<Props, State> {
-  element: any;
-  component: AngularComponent;
+class UnConnectedAlertTab extends Component<Props, State> {
   panelCtrl: any;
 
   state: State = {
-    validatonMessage: '',
+    validationMessage: '',
+    alerts: [],
   };
 
   componentDidMount() {
+    this.migrateAlert();
     if (this.shouldLoadAlertTab()) {
       this.loadAlertTab();
     }
   }
 
   componentDidUpdate(prevProps: Props) {
+    this.migrateAlert();
     if (this.shouldLoadAlertTab()) {
       this.loadAlertTab();
     }
   }
 
-  shouldLoadAlertTab() {
-    return this.props.angularPanel && this.element && !this.component;
+  migrateAlert() {
+    if (_.isArray(this.props.panel.alert)) {
+      if (this.props.panel.alert !== this.state.alerts) {
+        this.setState({ ...this.state, alerts: this.props.panel.alert });
+      }
+    } else if (_.isObject(this.props.panel.alert)) {
+      this.props.panel.alert = [this.props.panel.alert];
+      this.setState({ ...this.state, alerts: this.props.panel.alert });
+    } else {
+      this.props.panel.alert = [];
+      this.setState({ ...this.state, alerts: this.props.panel.alert });
+    }
   }
 
-  componentWillUnmount() {
-    if (this.component) {
-      this.component.destroy();
-    }
+  shouldLoadAlertTab() {
+    return this.props.angularPanel;
   }
 
   async loadAlertTab() {
@@ -77,78 +89,28 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
     }
 
     this.panelCtrl = scope.$$childHead.ctrl;
-    const loader = getAngularLoader();
-    const template = '<alert-tab />';
 
-    const scopeProps = { ctrl: this.panelCtrl };
-
-    this.component = loader.load(this.element, scopeProps, template);
-
-    const validatonMessage = await getAlertingValidationMessage(
+    const validationMessage = await getAlertingValidationMessage(
       panel.transformations,
       panel.targets,
       getDataSourceSrv(),
       panel.datasource
     );
 
-    if (validatonMessage) {
-      this.setState({ validatonMessage });
+    if (validationMessage) {
+      this.setState({ ...this.state, validationMessage });
     }
   }
 
-  stateHistory = (): EditorToolbarView => {
-    return {
-      title: 'State history',
-      render: () => {
-        return (
-          <StateHistory
-            dashboard={this.props.dashboard}
-            panelId={this.props.panel.id}
-            onRefresh={this.panelCtrl.refresh}
-          />
-        );
-      },
-    };
-  };
-
-  deleteAlert = (): EditorToolbarView => {
-    const { panel } = this.props;
-    return {
-      title: 'Delete',
-      btnType: 'danger',
-      onClick: () => {
-        appEvents.emit(CoreEvents.showConfirmModal, {
-          title: 'Delete Alert',
-          text: 'Are you sure you want to delete this alert rule?',
-          text2: 'You need to save dashboard for the delete to take effect',
-          icon: 'fa-trash',
-          yesText: 'Delete',
-          onConfirm: () => {
-            delete panel.alert;
-            panel.thresholds = [];
-            this.panelCtrl.alertState = null;
-            this.panelCtrl.render();
-            this.forceUpdate();
-          },
-        });
-      },
-    };
-  };
-
-  renderTestRuleResult = () => {
-    const { panel, dashboard } = this.props;
-    return <TestRuleResult panelId={panel.id} dashboard={dashboard} />;
-  };
-
-  testRule = (): EditorToolbarView => ({
-    title: 'Test Rule',
-    render: () => this.renderTestRuleResult(),
-  });
-
   onAddAlert = () => {
-    this.panelCtrl._enableAlert();
-    this.component.digest();
-    this.forceUpdate();
+    this.state.alerts.push({});
+    this.setState(this.state);
+  };
+
+  onDeleteAlert = (key: number) => () => {
+    // this.state.alerts.splice(key, 1);
+    delete this.state.alerts[key];
+    this.setState(this.state);
   };
 
   switchToQueryTab = () => {
@@ -157,7 +119,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   };
 
   renderValidationMessage = () => {
-    const { validatonMessage } = this.state;
+    const { validationMessage } = this.state;
 
     return (
       <div
@@ -166,7 +128,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
           margin: 128px auto;
         `}
       >
-        <h2>{validatonMessage}</h2>
+        <h2>{validationMessage}</h2>
         <br />
         <div className="gf-form-group">
           <Button size={'md'} variant={'secondary'} icon="fa fa-arrow-left" onClick={this.switchToQueryTab}>
@@ -179,24 +141,26 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
 
   render() {
     const { alert, transformations } = this.props.panel;
-    const { validatonMessage } = this.state;
+    const { validationMessage } = this.state;
     const hasTransformations = transformations && transformations.length > 0;
 
-    if (!alert && validatonMessage) {
+    if (!alert && validationMessage) {
       return this.renderValidationMessage();
     }
 
-    const toolbarItems = alert ? [this.stateHistory(), this.testRule(), this.deleteAlert()] : [];
-
     const model = {
-      title: 'Panel has no alert rule defined',
+      title: 'Add an alert rule',
       buttonIcon: 'gicon gicon-alert',
       onClick: this.onAddAlert,
       buttonTitle: 'Create Alert',
     };
 
+    if (!this.panelCtrl) {
+      setTimeout(() => this.forceUpdate(), 0);
+      return null;
+    }
     return (
-      <EditorTabBody heading="Alert" toolbarItems={toolbarItems}>
+      <EditorTabBody heading="Alert">
         <>
           {alert && hasTransformations && (
             <Alert
@@ -204,9 +168,16 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
               title="Transformations are not supported in alert queries"
             />
           )}
-
-          <div ref={element => (this.element = element)} />
-          {!alert && !validatonMessage && <EmptyListCTA {...model} />}
+          {this.state.alerts.map((alert, index) => (
+            <SingleAlertTab
+              onDelete={this.onDeleteAlert(index)}
+              panelCtrl={this.panelCtrl}
+              alert={alert}
+              key={index}
+              index={index}
+            />
+          ))}
+          {!validationMessage && <EmptyListCTA {...model} />}
         </>
       </EditorTabBody>
     );
@@ -218,3 +189,70 @@ export const mapStateToProps = (state: StoreState) => ({});
 const mapDispatchToProps = { changePanelEditorTab };
 
 export const AlertTab = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedAlertTab));
+
+interface SingleAlertTabProps {
+  panelCtrl: PanelCtrl;
+  alert: any;
+  onDelete: () => void;
+  index: number;
+}
+
+const SingleAlertTab = ({ index, panelCtrl, alert, onDelete }: SingleAlertTabProps) => {
+  let element: any;
+  useEffect(() => {
+    const component = getAngularLoader().load(element, { ctrl: panelCtrl, alert: alert }, `<alert-tab />`);
+    return () => component.destroy();
+  }, [panelCtrl]);
+  const stateHistory = (): EditorToolbarView => {
+    return {
+      title: 'State history',
+      render: () => {
+        return (
+          <StateHistory dashboard={panelCtrl.dashboard} panelId={panelCtrl.panel.id} onRefresh={panelCtrl.refresh} />
+        );
+      },
+    };
+  };
+  const testRule = (): EditorToolbarView => ({
+    title: 'Test Rule',
+    render: () => {
+      const { panel, dashboard } = panelCtrl;
+      return <TestRuleResult panelId={panel.id} dashboard={dashboard} />;
+    },
+  });
+  const deleteAlert = (): EditorToolbarView => {
+    return {
+      title: 'Delete',
+      btnType: 'danger',
+      onClick: () => {
+        appEvents.emit(CoreEvents.showConfirmModal, {
+          title: 'Delete Alert',
+          text: 'Are you sure you want to delete this alert rule?',
+          text2: 'You need to save dashboard for the delete to take effect',
+          icon: 'fa-trash',
+          yesText: 'Delete',
+          onConfirm: () => {
+            onDelete();
+          },
+        });
+      },
+    };
+  };
+
+  const { transformations } = panelCtrl.panel;
+  const hasTransformations = transformations && transformations.length > 0;
+  const toolbarItems = [stateHistory(), testRule(), deleteAlert()];
+  return (
+    <EditorTabBody heading={`Alert ${index}`} toolbarItems={toolbarItems}>
+      {hasTransformations ? (
+        <Alert severity={AppNotificationSeverity.Error} title="Transformations are not supported in alert queries" />
+      ) : (
+        <div
+          ref={e => {
+            element = e;
+          }}
+        />
+      )}
+    </EditorTabBody>
+  );
+};

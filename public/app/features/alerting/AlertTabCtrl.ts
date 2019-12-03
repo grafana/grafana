@@ -41,6 +41,7 @@ export class AlertTabCtrl {
     private $q: any,
     private datasourceSrv: DatasourceSrv
   ) {
+    this.alert = $scope.alert;
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
     this.$scope.ctrl = this;
@@ -51,7 +52,6 @@ export class AlertTabCtrl {
     this.noDataModes = alertDef.noDataModes;
     this.executionErrorModes = alertDef.executionErrorModes;
     this.appSubUrl = config.appSubUrl;
-    this.panelCtrl._enableAlert = this.enable;
   }
 
   $onInit() {
@@ -76,7 +76,12 @@ export class AlertTabCtrl {
     return this.backendSrv.get('/api/alert-notifications/lookup').then((res: any) => {
       this.notifications = res;
 
-      this.initModel();
+      // An empty alert mean a new alert
+      if (_.isEmpty(this.alert)) {
+        this.enable();
+      } else {
+        this.initModel();
+      }
       this.validateModel();
     });
   }
@@ -174,7 +179,7 @@ export class AlertTabCtrl {
   }
 
   initModel() {
-    const alert = (this.alert = this.panel.alert);
+    const alert = this.alert;
     if (!alert) {
       return;
     }
@@ -352,28 +357,9 @@ export class AlertTabCtrl {
     this.conditionModels.splice(index, 1);
   }
 
-  delete() {
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Delete Alert',
-      text: 'Are you sure you want to delete this alert rule?',
-      text2: 'You need to save dashboard for the delete to take effect',
-      icon: 'fa-trash',
-      yesText: 'Delete',
-      onConfirm: () => {
-        delete this.panel.alert;
-        this.alert = null;
-        this.panel.thresholds = [];
-        this.conditionModels = [];
-        this.panelCtrl.alertState = null;
-        this.panelCtrl.render();
-      },
-    });
-  }
-
   enable = () => {
-    this.panel.alert = {};
     this.initModel();
-    this.panel.alert.for = '5m'; //default value for new alerts. for existing alerts we use 0m to avoid breaking changes
+    this.alert.for = '5m'; //default value for new alerts. for existing alerts we use 0m to avoid breaking changes
   };
 
   evaluatorParamsChanged() {

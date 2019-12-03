@@ -7,14 +7,16 @@ describe('ThresholdMapper', () => {
     it('can map query conditions to thresholds', () => {
       const panel: any = {
         type: 'graph',
-        alert: {
-          conditions: [
-            {
-              type: 'query',
-              evaluator: { type: 'gt', params: [100] },
-            },
-          ],
-        },
+        alert: [
+          {
+            conditions: [
+              {
+                type: 'query',
+                evaluator: { type: 'gt', params: [100] },
+              },
+            ],
+          },
+        ],
       };
 
       const updated = ThresholdMapper.alertToGraphThresholds(panel);
@@ -28,14 +30,16 @@ describe('ThresholdMapper', () => {
     it('can map query conditions to thresholds', () => {
       const panel: any = {
         type: 'graph',
-        alert: {
-          conditions: [
-            {
-              type: 'query',
-              evaluator: { type: 'outside_range', params: [100, 200] },
-            },
-          ],
-        },
+        alert: [
+          {
+            conditions: [
+              {
+                type: 'query',
+                evaluator: { type: 'outside_range', params: [100, 200] },
+              },
+            ],
+          },
+        ],
       };
 
       const updated = ThresholdMapper.alertToGraphThresholds(panel);
@@ -52,14 +56,16 @@ describe('ThresholdMapper', () => {
     it('can map query conditions to thresholds', () => {
       const panel: any = {
         type: 'graph',
-        alert: {
-          conditions: [
-            {
-              type: 'query',
-              evaluator: { type: 'within_range', params: [100, 200] },
-            },
-          ],
-        },
+        alert: [
+          {
+            conditions: [
+              {
+                type: 'query',
+                evaluator: { type: 'within_range', params: [100, 200] },
+              },
+            ],
+          },
+        ],
       };
 
       const updated = ThresholdMapper.alertToGraphThresholds(panel);

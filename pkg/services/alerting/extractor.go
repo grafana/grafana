@@ -99,108 +99,126 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 			continue
 		}
 
-		panelID, err := panel.Get("id").Int64()
-		if err != nil {
-			return nil, ValidationError{Reason: "A numeric panel id property is missing"}
-		}
-
-		// backward compatibility check, can be removed later
-		enabled, hasEnabled := jsonAlert.CheckGet("enabled")
-		if hasEnabled && !enabled.MustBool() {
-			continue
-		}
-
-		frequency, err := getTimeDurationStringToSeconds(jsonAlert.Get("frequency").MustString())
-		if err != nil {
-			return nil, ValidationError{Reason: err.Error()}
-		}
-
-		rawFor := jsonAlert.Get("for").MustString()
-		var forValue time.Duration
-		if rawFor != "" {
-			forValue, err = time.ParseDuration(rawFor)
-			if err != nil {
-				return nil, ValidationError{Reason: "Could not parse for"}
-			}
-		}
-
-		alert := &models.Alert{
-			DashboardId: e.Dash.Id,
-			OrgId:       e.OrgID,
-			PanelId:     panelID,
-			Id:          jsonAlert.Get("id").MustInt64(),
-			Name:        jsonAlert.Get("name").MustString(),
-			Handler:     jsonAlert.Get("handler").MustInt64(),
-			Message:     jsonAlert.Get("message").MustString(),
-			Frequency:   frequency,
-			For:         forValue,
-		}
-
-		for _, condition := range jsonAlert.Get("conditions").MustArray() {
-			jsonCondition := simplejson.NewFromAny(condition)
-
-			jsonQuery := jsonCondition.Get("query")
-			queryRefID := jsonQuery.Get("params").MustArray()[0].(string)
-			panelQuery := findPanelQueryByRefID(panel, queryRefID)
-
-			if panelQuery == nil {
-				reason := fmt.Sprintf("Alert on PanelId: %v refers to query(%s) that cannot be found", alert.PanelId, queryRefID)
-				return nil, ValidationError{Reason: reason}
-			}
-
-			dsName := ""
-			if panelQuery.Get("datasource").MustString() != "" {
-				dsName = panelQuery.Get("datasource").MustString()
-			} else if panel.Get("datasource").MustString() != "" {
-				dsName = panel.Get("datasource").MustString()
-			}
-
-			datasource, err := e.lookupDatasourceID(dsName)
-			if err != nil {
-				e.log.Debug("Error looking up datasource", "error", err)
-				return nil, ValidationError{Reason: fmt.Sprintf("Data source used by alert rule not found, alertName=%v, datasource=%s", alert.Name, dsName)}
-			}
-
-			dsFilterQuery := models.DatasourcesPermissionFilterQuery{
-				User:        e.User,
-				Datasources: []*models.DataSource{datasource},
-			}
-
-			if err := bus.Dispatch(&dsFilterQuery); err != nil {
-				if err != bus.ErrHandlerNotFound {
+		if list, err := jsonAlert.Array(); err == nil {
+			for i := range list {
+				alert, err := e.getAlertFromAlert(jsonAlert.GetIndex(i), panel, validateAlertFunc)
+				if err != nil {
 					return nil, err
 				}
-			} else {
-				if len(dsFilterQuery.Result) == 0 {
-					return nil, models.ErrDataSourceAccessDenied
-				}
+				alerts = append(alerts, alert)
 			}
-
-			jsonQuery.SetPath([]string{"datasourceId"}, datasource.Id)
-
-			if interval, err := panel.Get("interval").String(); err == nil {
-				panelQuery.Set("interval", interval)
+		} else {
+			alert, err := e.getAlertFromAlert(jsonAlert, panel, validateAlertFunc)
+			if err != nil {
+				return nil, err
 			}
-
-			jsonQuery.Set("model", panelQuery.Interface())
+			alerts = append(alerts, alert)
 		}
-
-		alert.Settings = jsonAlert
-
-		// validate
-		_, err = NewRuleFromDBAlert(alert)
-		if err != nil {
-			return nil, err
-		}
-
-		if !validateAlertFunc(alert) {
-			return nil, ValidationError{Reason: fmt.Sprintf("Panel id is not correct, alertName=%v, panelId=%v", alert.Name, alert.PanelId)}
-		}
-
-		alerts = append(alerts, alert)
 	}
 
 	return alerts, nil
+}
+
+func (e *DashAlertExtractor) getAlertFromAlert(jsonAlert, panel *simplejson.Json, validateAlertFunc func(*models.Alert) bool) (*models.Alert, error) {
+	panelID, err := panel.Get("id").Int64()
+	if err != nil {
+		return nil, ValidationError{Reason: "A numeric panel id property is missing"}
+	}
+
+	// backward compatibility check, can be removed later
+	enabled, hasEnabled := jsonAlert.CheckGet("enabled")
+	if hasEnabled && !enabled.MustBool() {
+		return nil, nil
+	}
+
+	frequency, err := getTimeDurationStringToSeconds(jsonAlert.Get("frequency").MustString())
+	if err != nil {
+		return nil, ValidationError{Reason: err.Error()}
+	}
+
+	rawFor := jsonAlert.Get("for").MustString()
+	var forValue time.Duration
+	if rawFor != "" {
+		forValue, err = time.ParseDuration(rawFor)
+		if err != nil {
+			return nil, ValidationError{Reason: "Could not parse for"}
+		}
+	}
+
+	alert := &models.Alert{
+		DashboardId: e.Dash.Id,
+		OrgId:       e.OrgID,
+		PanelId:     panelID,
+		Id:          jsonAlert.Get("id").MustInt64(),
+		Name:        jsonAlert.Get("name").MustString(),
+		Handler:     jsonAlert.Get("handler").MustInt64(),
+		Message:     jsonAlert.Get("message").MustString(),
+		Frequency:   frequency,
+		For:         forValue,
+	}
+
+	for _, condition := range jsonAlert.Get("conditions").MustArray() {
+		jsonCondition := simplejson.NewFromAny(condition)
+
+		jsonQuery := jsonCondition.Get("query")
+		queryRefID := jsonQuery.Get("params").MustArray()[0].(string)
+		panelQuery := findPanelQueryByRefID(panel, queryRefID)
+
+		if panelQuery == nil {
+			reason := fmt.Sprintf("Alert on PanelId: %v refers to query(%s) that cannot be found", alert.PanelId, queryRefID)
+			return nil, ValidationError{Reason: reason}
+		}
+
+		dsName := ""
+		if panelQuery.Get("datasource").MustString() != "" {
+			dsName = panelQuery.Get("datasource").MustString()
+		} else if panel.Get("datasource").MustString() != "" {
+			dsName = panel.Get("datasource").MustString()
+		}
+
+		datasource, err := e.lookupDatasourceID(dsName)
+		if err != nil {
+			e.log.Debug("Error looking up datasource", "error", err)
+			return nil, ValidationError{Reason: fmt.Sprintf("Data source used by alert rule not found, alertName=%v, datasource=%s", alert.Name, dsName)}
+		}
+
+		dsFilterQuery := models.DatasourcesPermissionFilterQuery{
+			User:        e.User,
+			Datasources: []*models.DataSource{datasource},
+		}
+
+		if err := bus.Dispatch(&dsFilterQuery); err != nil {
+			if err != bus.ErrHandlerNotFound {
+				return nil, err
+			}
+		} else {
+			if len(dsFilterQuery.Result) == 0 {
+				return nil, models.ErrDataSourceAccessDenied
+			}
+		}
+
+		jsonQuery.SetPath([]string{"datasourceId"}, datasource.Id)
+
+		if interval, err := panel.Get("interval").String(); err == nil {
+			panelQuery.Set("interval", interval)
+		}
+
+		jsonQuery.Set("model", panelQuery.Interface())
+	}
+
+	alert.Settings = jsonAlert
+
+	// validate
+	_, err = NewRuleFromDBAlert(alert)
+	if err != nil {
+		return nil, err
+	}
+
+	if !validateAlertFunc(alert) {
+		return nil, ValidationError{Reason: fmt.Sprintf("Panel id is not correct, alertName=%v, panelId=%v", alert.Name, alert.PanelId)}
+	}
+
+	return alert, nil
 }
 
 func validateAlertRule(alert *models.Alert) bool {
