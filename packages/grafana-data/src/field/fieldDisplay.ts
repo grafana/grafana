@@ -7,7 +7,7 @@ import { FieldConfig, DataFrame, FieldType } from '../types/dataFrame';
 import { InterpolateFunction } from '../types/panel';
 import { DataFrameView } from '../dataframe/DataFrameView';
 import { GraphSeriesValue } from '../types/graph';
-import { DisplayValue } from '../types/displayValue';
+import { DisplayValue, DisplayValueAlignmentFactors } from '../types/displayValue';
 import { GrafanaTheme } from '../types/theme';
 import { ReducerID, reduceField } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
@@ -21,6 +21,7 @@ export interface FieldDisplayOptions {
   defaults: FieldConfig; // Use these values unless otherwise stated
   override: FieldConfig; // Set these values regardless of the source
 }
+
 // TODO: use built in variables, same as for data links?
 export const VAR_SERIES_NAME = '__series.name';
 export const VAR_FIELD_NAME = '__field.name';
@@ -277,4 +278,23 @@ export function getFieldProperties(...props: FieldConfig[]): FieldConfig {
     };
   }
   return field;
+}
+
+export function getDisplayValueAlignmentFactors(values: FieldDisplay[]): DisplayValueAlignmentFactors {
+  const info: DisplayValueAlignmentFactors = {
+    title: '',
+    text: '',
+  };
+
+  for (let i = 0; i < values.length; i++) {
+    const v = values[i].display;
+    if (v.text && v.text.length > info.text.length) {
+      info.text = v.text;
+    }
+
+    if (v.title && v.title.length > info.title.length) {
+      info.title = v.title;
+    }
+  }
+  return info;
 }

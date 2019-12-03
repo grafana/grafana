@@ -1,15 +1,23 @@
 import _ from 'lodash';
-import { DataFrame, dateMath, ScopedVars, DataQueryResponse, DataQueryRequest, toDataFrame } from '@grafana/data';
+import {
+  DataFrame,
+  dateMath,
+  ScopedVars,
+  DataQueryResponse,
+  DataQueryRequest,
+  toDataFrame,
+  DataSourceApi,
+} from '@grafana/data';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import gfunc from './gfunc';
 import { IQService } from 'angular';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 //Types
-import { GraphiteQuery, GraphiteType } from './types';
+import { GraphiteOptions, GraphiteQuery, GraphiteType } from './types';
 import { getSearchFilterScopedVar } from '../../../features/templating/variable';
 
-export class GraphiteDatasource {
+export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
   basicAuth: string;
   url: string;
   name: string;
@@ -29,6 +37,7 @@ export class GraphiteDatasource {
     private backendSrv: BackendSrv,
     private templateSrv: TemplateSrv
   ) {
+    super(instanceSettings);
     this.basicAuth = instanceSettings.basicAuth;
     this.url = instanceSettings.url;
     this.name = instanceSettings.name;
@@ -157,7 +166,7 @@ export class GraphiteDatasource {
     return expandedQueries;
   }
 
-  annotationQuery(options: { annotation: { target: string; tags: string }; rangeRaw: any }) {
+  annotationQuery(options: any) {
     // Graphite metric as annotation
     if (options.annotation.target) {
       const target = this.templateSrv.replace(options.annotation.target, {}, 'glob');
@@ -237,7 +246,7 @@ export class GraphiteDatasource {
     }
   }
 
-  targetContainsTemplate(target: { target: any }) {
+  targetContainsTemplate(target: GraphiteQuery) {
     return this.templateSrv.variableExists(target.target);
   }
 
@@ -366,12 +375,10 @@ export class GraphiteDatasource {
     });
   }
 
-  getTagValues(tag: string, optionalOptions: any) {
-    const options = optionalOptions || {};
-
+  getTagValues(options: any = {}) {
     const httpOptions: any = {
       method: 'GET',
-      url: '/tags/' + this.templateSrv.replace(tag),
+      url: '/tags/' + this.templateSrv.replace(options.key),
       // for cancellations
       requestId: options.requestId,
     };

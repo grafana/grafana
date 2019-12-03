@@ -307,6 +307,39 @@ describe('CloudWatchDatasource', () => {
         });
       });
     });
+
+    describe('when regions query is used', () => {
+      beforeEach(() => {
+        ctx.backendSrv.datasourceRequest = jest.fn(() => {
+          return Promise.resolve({});
+        });
+        ctx.ds = new CloudWatchDatasource(instanceSettings, {} as any, backendSrv, templateSrv, timeSrv);
+        ctx.ds.doMetricQueryRequest = jest.fn(() => []);
+      });
+      describe('and region param is left out', () => {
+        it('should use the default region', done => {
+          ctx.ds.metricFindQuery('metrics(testNamespace)').then(() => {
+            expect(ctx.ds.doMetricQueryRequest).toHaveBeenCalledWith('metrics', {
+              namespace: 'testNamespace',
+              region: instanceSettings.jsonData.defaultRegion,
+            });
+            done();
+          });
+        });
+      });
+
+      describe('and region param is defined by user', () => {
+        it('should use the user defined region', done => {
+          ctx.ds.metricFindQuery('metrics(testNamespace2, custom-region)').then(() => {
+            expect(ctx.ds.doMetricQueryRequest).toHaveBeenCalledWith('metrics', {
+              namespace: 'testNamespace2',
+              region: 'custom-region',
+            });
+            done();
+          });
+        });
+      });
+    });
   });
 
   describe('When query region is "default"', () => {

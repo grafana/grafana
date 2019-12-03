@@ -1,4 +1,4 @@
-import { ResultTransformer } from '../result_transformer';
+import { ResultTransformer } from './result_transformer';
 import { DataQueryResponseData } from '@grafana/data';
 
 describe('Prometheus Result Transformer', () => {

@@ -1421,6 +1421,10 @@ type EC2API interface {
 	ModifyInstanceEventStartTimeWithContext(aws.Context, *ec2.ModifyInstanceEventStartTimeInput, ...request.Option) (*ec2.ModifyInstanceEventStartTimeOutput, error)
 	ModifyInstanceEventStartTimeRequest(*ec2.ModifyInstanceEventStartTimeInput) (*request.Request, *ec2.ModifyInstanceEventStartTimeOutput)
 
+	ModifyInstanceMetadataOptions(*ec2.ModifyInstanceMetadataOptionsInput) (*ec2.ModifyInstanceMetadataOptionsOutput, error)
+	ModifyInstanceMetadataOptionsWithContext(aws.Context, *ec2.ModifyInstanceMetadataOptionsInput, ...request.Option) (*ec2.ModifyInstanceMetadataOptionsOutput, error)
+	ModifyInstanceMetadataOptionsRequest(*ec2.ModifyInstanceMetadataOptionsInput) (*request.Request, *ec2.ModifyInstanceMetadataOptionsOutput)
+
 	ModifyInstancePlacement(*ec2.ModifyInstancePlacementInput) (*ec2.ModifyInstancePlacementOutput, error)
 	ModifyInstancePlacementWithContext(aws.Context, *ec2.ModifyInstancePlacementInput, ...request.Option) (*ec2.ModifyInstancePlacementOutput, error)
 	ModifyInstancePlacementRequest(*ec2.ModifyInstancePlacementInput) (*request.Request, *ec2.ModifyInstancePlacementOutput)
