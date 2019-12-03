@@ -5,7 +5,7 @@ import { Select } from '../Select/Select';
 import { getValueFormats, SelectableValue } from '@grafana/data';
 
 interface Props {
-  onChange: (item: string | undefined) => void;
+  onChange: (item?: string) => void;
   value?: string;
   width?: number;
 }

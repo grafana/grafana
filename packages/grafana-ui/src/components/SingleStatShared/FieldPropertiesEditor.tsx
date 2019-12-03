@@ -61,7 +61,7 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
     [value.max, onChange]
   );
 
-  const onUnitChange = (unit: string) => {
+  const onUnitChange = (unit?: string) => {
     onChange({ ...value, unit });
   };
 
