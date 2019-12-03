@@ -10,6 +10,7 @@ const setup = (propOverrides?: object) => {
     onClickToggleEditorMode: () => {},
     onClickToggleDisabled: () => {},
     onClickRemoveButton: () => {},
+    latency: 0,
   };
 
   Object.assign(props, propOverrides);

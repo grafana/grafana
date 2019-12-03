@@ -296,7 +296,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
             <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
             <div className="query-row">
               <div className="query-row-field align-items-center flex-shrink-1">
-                <div className="explore-container-content-item explore-icon-align">
+                <div className="explore-container-content-item">
                   <button className={'btn navbar-button'} onClick={this.onClickAddQueryRowButton} disabled={isLive}>
                     <i className={'fa fa-fw fa-plus icon-margin-right'} />
                     <span className="btn-title">{'\xA0' + 'Add query'}</span>
