@@ -1,9 +1,8 @@
 import React, { PureComponent, FC } from 'react';
-import appEvents from 'app/core/app_events';
 // import { dateTime } from '@grafana/data';
-import { UserDTO, CoreEvents } from 'app/types';
+import { UserDTO } from 'app/types';
 import { cx, css } from 'emotion';
-import { ConfirmButton, Input, InputStatus } from '@grafana/ui';
+import { ConfirmButton, Input, ConfirmModal, InputStatus, Button } from '@grafana/ui';
 
 // const defaultTimeFormat = 'dddd YYYY-MM-DD HH:mm:ss';
 
@@ -18,33 +17,33 @@ interface Props {
 
 interface State {
   isLoading: boolean;
+  showDeleteModal: boolean;
+  showDisableModal: boolean;
 }
 
 export class UserProfile extends PureComponent<Props, State> {
+  state = {
+    isLoading: false,
+    showDeleteModal: false,
+    showDisableModal: false,
+  };
+
+  showDeleteUserModal = (show: boolean) => () => {
+    this.setState({ showDeleteModal: show });
+  };
+
+  showDisableUserModal = (show: boolean) => () => {
+    this.setState({ showDisableModal: show });
+  };
+
   onUserDelete = () => {
     const { user, onUserDelete } = this.props;
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Delete user',
-      text: 'Are you sure you want to delete this user?',
-      yesText: 'Delete user',
-      icon: 'fa-warning',
-      onConfirm: () => {
-        onUserDelete(user.id);
-      },
-    });
+    onUserDelete(user.id);
   };
 
   onUserDisable = () => {
     const { user, onUserDisable } = this.props;
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Disable user',
-      text: 'Are you sure you want to disable this user?',
-      yesText: 'Disable user',
-      icon: 'fa-warning',
-      onConfirm: () => {
-        onUserDisable(user.id);
-      },
-    });
+    onUserDisable(user.id);
   };
 
   onUserEnable = () => {
@@ -78,6 +77,7 @@ export class UserProfile extends PureComponent<Props, State> {
 
   render() {
     const { user } = this.props;
+    const { showDeleteModal, showDisableModal } = this.state;
     const lockMessage = 'Synced via LDAP';
     // const updateTime = dateTime(user.updatedAt).format(defaultTimeFormat);
 
@@ -114,18 +114,34 @@ export class UserProfile extends PureComponent<Props, State> {
             </table>
           </div>
           <div className="gf-form-button-row">
-            <button className="btn btn-danger" onClick={this.onUserDelete}>
+            <Button variant="danger" onClick={this.showDeleteUserModal(true)}>
               Delete User
-            </button>
+            </Button>
+            <ConfirmModal
+              isOpen={showDeleteModal}
+              title="Delete user"
+              body="Are you sure you want to delete this user?"
+              confirmText="Delete user"
+              onConfirm={this.onUserDelete}
+              onDismiss={this.showDeleteUserModal(false)}
+            />
             {user.isDisabled ? (
-              <button className="btn btn-inverse" onClick={this.onUserEnable}>
+              <Button variant="secondary" onClick={this.onUserEnable}>
                 Enable User
-              </button>
+              </Button>
             ) : (
-              <button className="btn btn-inverse" onClick={this.onUserDisable}>
+              <Button variant="inverse" onClick={this.showDisableUserModal(true)}>
                 Disable User
-              </button>
+              </Button>
             )}
+            <ConfirmModal
+              isOpen={showDisableModal}
+              title="Disable user"
+              body="Are you sure you want to disable this user?"
+              confirmText="Disable user"
+              onConfirm={this.onUserDisable}
+              onDismiss={this.showDisableUserModal(false)}
+            />
           </div>
         </div>
       </>
