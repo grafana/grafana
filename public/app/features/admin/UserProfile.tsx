@@ -165,6 +165,12 @@ interface UserProfileRowState {
 export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfileRowState> {
   inputElem: HTMLInputElement;
 
+  static defaultProps: Partial<UserProfileRowProps> = {
+    value: '',
+    locked: false,
+    lockMessage: '',
+  };
+
   state = {
     editing: false,
     value: this.props.value || '',
@@ -207,7 +213,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
   };
 
   render() {
-    const { label, value, locked } = this.props;
+    const { label, value, locked, lockMessage } = this.props;
     const labelClass = cx(
       'width-16',
       css`
@@ -222,7 +228,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
     );
 
     if (locked) {
-      return <LockedRow label={label} value={value} lockMessage="Synced via LDAP" />;
+      return <LockedRow label={label} value={value} lockMessage={lockMessage} />;
     }
 
     return (
