@@ -25,8 +25,6 @@ const mssqlPlugin = async () =>
   await import(/* webpackChunkName: "mssqlPlugin" */ 'app/plugins/datasource/mssql/module');
 const testDataDSPlugin = async () =>
   await import(/* webpackChunkName: "testDataDSPlugin" */ 'app/plugins/datasource/testdata/module');
-const inputDatasourcePlugin = async () =>
-  await import(/* webpackChunkName: "inputDatasourcePlugin" */ 'app/plugins/datasource/input/module');
 const stackdriverPlugin = async () =>
   await import(/* webpackChunkName: "stackdriverPlugin" */ 'app/plugins/datasource/stackdriver/module');
 const azureMonitorPlugin = async () =>
@@ -53,8 +51,6 @@ import * as pieChartPanel from 'app/plugins/panel/piechart/module';
 import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
 import * as logsPanel from 'app/plugins/panel/logs/module';
 
-const exampleApp = async () => await import(/* webpackChunkName: "exampleApp" */ 'app/plugins/app/example-app/module');
-
 const builtInPlugins: any = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
   'app/plugins/datasource/cloudwatch/module': cloudwatchPlugin,
@@ -70,7 +66,6 @@ const builtInPlugins: any = {
   'app/plugins/datasource/mssql/module': mssqlPlugin,
   'app/plugins/datasource/prometheus/module': prometheusPlugin,
   'app/plugins/datasource/testdata/module': testDataDSPlugin,
-  'app/plugins/datasource/input/module': inputDatasourcePlugin,
   'app/plugins/datasource/stackdriver/module': stackdriverPlugin,
   'app/plugins/datasource/grafana-azure-monitor-datasource/module': azureMonitorPlugin,
 
@@ -92,8 +87,6 @@ const builtInPlugins: any = {
   'app/plugins/panel/piechart/module': pieChartPanel,
   'app/plugins/panel/bargauge/module': barGaugePanel,
   'app/plugins/panel/logs/module': logsPanel,
-
-  'app/plugins/app/example-app/module': exampleApp,
 };
 
 export default builtInPlugins;

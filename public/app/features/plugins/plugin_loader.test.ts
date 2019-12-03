@@ -65,8 +65,8 @@ describe('Load App', () => {
   });
 });
 
-import { ExampleConfigCtrl as ConfigCtrl } from 'app/plugins/app/example-app/legacy/config';
-import { AngularExamplePageCtrl } from 'app/plugins/app/example-app/legacy/angular_example_page';
+import { ExampleConfigCtrl as ConfigCtrl } from '../plugins/app/example-app/legacy/config';
+import { AngularExamplePageCtrl } from '../plugins/app/example-app/legacy/angular_example_page';
 
 describe('Load Legacy App', () => {
   const app = {
