@@ -1,4 +1,4 @@
-import { addLabelToQuery, addLabelToSelector, keepSelectorFilters } from '../add_label_to_query';
+import { addLabelToQuery, addLabelToSelector, keepSelectorFilters } from './add_label_to_query';
 
 describe('addLabelToQuery()', () => {
   it('should add label to simple query', () => {

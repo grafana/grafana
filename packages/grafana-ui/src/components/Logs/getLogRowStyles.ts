@@ -62,6 +62,10 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       table-layout: fixed;
       width: 100%;
     `,
+    logsRowsHorizontalScroll: css`
+      label: logs-rows__horizontal-scroll;
+      overflow-y: scroll;
+    `,
     context: context,
     logsRow: css`
       label: logs-row;
@@ -130,6 +134,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       display: table-cell;
       white-space: nowrap;
       width: 12.5em;
+      padding-right: 1em;
     `,
     logsRowMessage: css`
       label: logs-row__message;
