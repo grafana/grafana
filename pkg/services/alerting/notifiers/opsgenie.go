@@ -122,7 +122,7 @@ func (on *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) error
 		if len(tag.Value) > 0 {
 			tags = append(tags, fmt.Sprintf("%s:%s", tag.Key, tag.Value))
 		} else {
-			tags = append(tags, fmt.Sprintf("%s", tag.Key))
+			tags = append(tags, tag.Key)
 		}
 
 	}
