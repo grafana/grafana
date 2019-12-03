@@ -236,11 +236,11 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   createRangeQuery(target: LokiQuery, options: RangeQueryOptions): LokiRangeQueryRequest {
     const { query } = parseQuery(target.expr);
     let range: { start?: number; end?: number; step?: number } = {};
-    if (options.range && options.intervalMs) {
+    if (options.range) {
       const startNs = this.getTime(options.range.from, false);
       const endNs = this.getTime(options.range.to, true);
       const rangeMs = Math.ceil((endNs - startNs) / 1e6);
-      const step = Math.ceil(this.adjustInterval(options.intervalMs, rangeMs) / 1000);
+      const step = Math.ceil(this.adjustInterval(options.intervalMs || 1000, rangeMs) / 1000);
       const alignedTimes = {
         start: startNs - (startNs % 1e9),
         end: endNs + (1e9 - (endNs % 1e9)),
