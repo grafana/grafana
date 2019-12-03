@@ -38,7 +38,7 @@ Some features might require more memory or CPUs. Features require more resources
 
 - [Server-side rendering of images](/administration/image_rendering/#requirements)
 - [Alerting](/alerting/rules/)
-- Data source proxies
+- Grafana data source proxy
 
 ## Supported databases
 
