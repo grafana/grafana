@@ -35,6 +35,9 @@ describe('VariableSrv', function(this: any) {
     $location: {
       search: () => {},
     },
+    contextSrv: {
+      user: { id: 1, orgId: 1, orgName: 'testOrg' },
+    },
   } as any;
 
   function describeUpdateVariable(desc: string, fn: Function) {
@@ -50,7 +53,14 @@ describe('VariableSrv', function(this: any) {
         const ds: any = {};
         ds.metricFindQuery = () => Promise.resolve(scenario.queryResult);
 
-        ctx.variableSrv = new VariableSrv($q, ctx.$location, ctx.$injector, ctx.templateSrv, ctx.timeSrv);
+        ctx.variableSrv = new VariableSrv(
+          $q,
+          ctx.$location,
+          ctx.$injector,
+          ctx.templateSrv,
+          ctx.timeSrv,
+          ctx.contextSrv
+        );
 
         ctx.variableSrv.timeSrv = ctx.timeSrv;
         ctx.datasourceSrv = {
@@ -627,7 +637,7 @@ describe('VariableSrv', function(this: any) {
 });
 
 function setupSetFromUrlTest(ctx: any, model = {}) {
-  const variableSrv = new VariableSrv($q, ctx.$location, ctx.$injector, ctx.templateSrv, ctx.timeSrv);
+  const variableSrv = new VariableSrv($q, ctx.$location, ctx.$injector, ctx.templateSrv, ctx.timeSrv, ctx.contextSrv);
   const finalModel = {
     type: 'custom',
     options: ['one', 'two', 'three'].map(v => ({ text: v, value: v })),
