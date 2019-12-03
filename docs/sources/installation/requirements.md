@@ -18,14 +18,14 @@ This page includes useful information on the supported Operating Systems as well
 
 The following operating systems are supported for Grafana installation:
 
-- [Debian / Ubuntu](debian)
-- [RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)](rpm)
-- [macOS](mac)
-- [Windows](windows)
+- [Debian / Ubuntu]({{< relref "debian" >}})
+- [RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)]({{< relref "rpm" >}})
+- [macOS]({{< relref "mac" >}})
+- [Windows]({{< relref "windows" >}})
 
 ## Unsupported operating systems
 
-Installation of Grafana on other operating systems is possible, but not supported. Please see the [building from source](/project/building_from_source/#building-grafana-from-source) guide for more information.
+Installation of Grafana on other operating systems is possible, but not supported. Please see the [building from source]({{< relref "../project/building_from_source/#building-grafana-from-source" >}}) guide for more information.
 
 ## Hardware requirements
 
@@ -33,8 +33,8 @@ Grafana does not use a lot of resources and is very lightweight in use of memory
 
 Depending on what features are being used and to what extent the requirements varies. Features that consume and requires more resources:
 
-- [Server side rendering of images](/administration/image_rendering/#requirements)
-- [Alerting](/alerting/rules/)
+- [Server side rendering of images]({{< relref "../administration/image_rendering/#requirements" >}})
+- [Alerting]({{< relref "../alerting/rules" >}})
 - Data source proxy
 
 ## Database

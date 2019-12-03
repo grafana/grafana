@@ -27,7 +27,7 @@ that organization. For example a user with `Viewer` role can still issue any pos
 those queries that exist on dashboards he/she has access to.
 
 When permissions are enabled for a data source in an organization you will restrict admin and query access for that
-data source to [admin users](/permissions/organization_roles/#admin-role) in that organization.
+data source to [admin users]({{< relref "../permissions/organization_roles/#admin-role" >}}) in that organization.
 
 **To enable permissions for a data source:**
 

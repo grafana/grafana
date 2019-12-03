@@ -223,7 +223,7 @@
   - name: 'API Tutorial: How To Create API Tokens And Dashboards For A Specific Organization'
     link: /tutorials/api_org_token_howto/
   - name: Grafana with IIS Reverse Proxy on Windows
-    name: Grafana with IIS Reverse Proxy on Windows
+    link: /tutorials/iis/
   - name: How To integrate Hubot and Grafana
     link: /tutorials/hubot_howto/
   - name: Setup Grafana for High availability

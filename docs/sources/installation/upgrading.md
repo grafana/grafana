@@ -133,7 +133,7 @@ If you're using systemd and have a large amount of annotations consider temporar
 ## Upgrading to v6.0
 
 If you have text panels with script tags they will no longer work due to a new setting that per default disallow unsanitized HTML.
-Read more [here](/installation/configuration/#disable-sanitize-html) about this new setting.
+Read more [here]({{< relref "configuration/#disable-sanitize-html" >}}) about this new setting.
 
 ### Authentication and security
 
@@ -172,13 +172,13 @@ you can do that by:
 - For data sources created through UI, you need to go to data source config, re enter the password or basic auth
 password and save the data source.
 - For data sources created by provisioning, you need to update your config file and use secureJsonData.password or
-secureJsonData.basicAuthPassword field. See [provisioning docs](/administration/provisioning) for example of current
+secureJsonData.basicAuthPassword field. See [provisioning docs]({{< relref "../administration/provisioning" >}}) for example of current
 configuration.
 
 ### Embedding Grafana
 
 If you're embedding Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>` on a different website it will no longer work due to a new setting
-that per default instructs the browser to not allow Grafana to be embedded. Read more [here](/installation/configuration/#allow-embedding) about
+that per default instructs the browser to not allow Grafana to be embedded. Read more [here]({{< relref "configuration/#allow-embedding" >}}) about
 this new setting.
 
 ### Session storage is no longer used

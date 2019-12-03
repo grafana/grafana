@@ -121,7 +121,7 @@ change the option `Format As` to `Table` if you want to show raw data in the `Ta
 
 > Only available in Grafana v6.3+.
 
-Querying and displaying log data from InfluxDB is available via [Explore](/features/explore).
+Querying and displaying log data from InfluxDB is available via [Explore]({{< relref "../explore" >}}).
 
 ![](/img/docs/v63/influxdb_explore_logs.png)
 

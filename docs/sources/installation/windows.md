@@ -44,7 +44,7 @@ Read more about the [configuration options]({{< relref "configuration.md" >}}).
 ## Logging in for the first time
 
 To run Grafana open your browser and go to the port you configured above, e.g. http://localhost:8080/.
-Then follow the instructions [here](/guides/getting_started/).
+Then follow the instructions [here]({{< relref "../guides/getting_started/" >}}).
 
 ## Building on Windows
 
