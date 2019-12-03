@@ -1,6 +1,7 @@
 export interface PluginSourceReference {
   clone: string; // Will be downloaded
   auth?: string; // Auth key to clone?
+  branch?: string; // defaults to 'master'
 }
 
 export interface PluginBuildManifest {
