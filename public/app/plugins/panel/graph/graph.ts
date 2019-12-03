@@ -470,6 +470,7 @@ class GraphElement {
       }
       default: {
         options.series.bars.barWidth = this.getMinTimeStepOfSeries(this.data) / 1.5;
+        options.series.bars.align = 'center';
         this.addTimeAxis(options);
         break;
       }

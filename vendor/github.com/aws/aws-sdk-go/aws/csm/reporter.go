@@ -66,7 +66,6 @@ func (rep *Reporter) sendAPICallAttemptMetric(r *request.Request) {
 
 		XAmzRequestID: aws.String(r.RequestID),
 
-		AttemptCount:   aws.Int(r.RetryCount + 1),
 		AttemptLatency: aws.Int(int(now.Sub(r.AttemptTime).Nanoseconds() / int64(time.Millisecond))),
 		AccessKey:      aws.String(creds.AccessKeyID),
 	}
