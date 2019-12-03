@@ -38,7 +38,8 @@ const setup = (propOverrides?: object) => {
     },
     subscriptions: [],
     workspaces: [],
-    onDatasourceUpdate: jest.fn(),
+    onUpdateOption: jest.fn(),
+    onResetOptionKey: jest.fn(),
     onLoadSubscriptions: jest.fn(),
     onLoadWorkspaces: jest.fn(),
   };

@@ -13,79 +13,34 @@ const azureClouds = [
 export interface Props {
   options: AzureDataSourceSettings;
   subscriptions: SelectableValue[];
-  onDatasourceUpdate: (config: AzureDataSourceSettings) => void;
+  onUpdateOption: (key: string, val: any, secure: boolean) => void;
+  onResetOptionKey: (key: string) => void;
   onLoadSubscriptions: () => void;
 }
 
 export class MonitorConfig extends PureComponent<Props> {
   onAzureCloudSelect = (cloudName: SelectableValue<string>) => {
-    const { onDatasourceUpdate, options } = this.props;
-    onDatasourceUpdate({
-      ...options,
-      jsonData: {
-        ...options.jsonData,
-        cloudName: cloudName.value,
-      },
-    });
+    this.props.onUpdateOption('cloudName', cloudName.value, false);
   };
 
   onTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onDatasourceUpdate, options } = this.props;
-    onDatasourceUpdate({
-      ...options,
-      jsonData: {
-        ...options.jsonData,
-        tenantId: event.target.value,
-      },
-    });
+    this.props.onUpdateOption('tenantId', event.target.value, false);
   };
 
   onClientIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onDatasourceUpdate, options } = this.props;
-    onDatasourceUpdate({
-      ...options,
-      jsonData: {
-        ...options.jsonData,
-        clientId: event.target.value,
-      },
-    });
+    this.props.onUpdateOption('clientId', event.target.value, false);
   };
 
   onClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onDatasourceUpdate, options } = this.props;
-    onDatasourceUpdate({
-      ...options,
-      secureJsonData: {
-        ...options.secureJsonData,
-        clientSecret: event.target.value,
-      },
-    });
+    this.props.onUpdateOption('clientSecret', event.target.value, true);
   };
 
   onResetClientSecret = () => {
-    const { onDatasourceUpdate, options } = this.props;
-    onDatasourceUpdate({
-      ...options,
-      secureJsonData: {
-        ...options.secureJsonData,
-        clientSecret: '',
-      },
-      secureJsonFields: {
-        ...options.secureJsonFields,
-        clientSecret: false,
-      },
-    });
+    this.props.onResetOptionKey('clientSecret');
   };
 
   onSubscriptionSelect = (subscription: SelectableValue<string>) => {
-    const { onDatasourceUpdate, options } = this.props;
-    onDatasourceUpdate({
-      ...options,
-      jsonData: {
-        ...options.jsonData,
-        subscriptionId: subscription.value,
-      },
-    });
+    this.props.onUpdateOption('subscriptionId', subscription.value, true);
   };
 
   render() {

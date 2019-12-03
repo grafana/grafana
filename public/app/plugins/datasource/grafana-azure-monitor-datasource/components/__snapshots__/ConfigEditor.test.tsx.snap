@@ -3,8 +3,9 @@
 exports[`Render should render component 1`] = `
 <Fragment>
   <MonitorConfig
-    onDatasourceUpdate={[Function]}
     onLoadSubscriptions={[Function]}
+    onResetOptionKey={[Function]}
+    onUpdateOption={[Function]}
     options={
       Object {
         "access": "proxy",
@@ -36,9 +37,10 @@ exports[`Render should render component 1`] = `
     subscriptions={Array []}
   />
   <AnalyticsConfig
-    onDatasourceUpdate={[Function]}
     onLoadSubscriptions={[Function]}
     onLoadWorkspaces={[Function]}
+    onResetOptionKey={[Function]}
+    onUpdateOption={[Function]}
     options={
       Object {
         "access": "proxy",
@@ -71,7 +73,8 @@ exports[`Render should render component 1`] = `
     workspaces={Array []}
   />
   <InsightsConfig
-    onDatasourceUpdate={[Function]}
+    onResetOptionKey={[Function]}
+    onUpdateOption={[Function]}
     options={
       Object {
         "access": "proxy",

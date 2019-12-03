@@ -8,90 +8,39 @@ export interface Props {
   options: AzureDataSourceSettings;
   subscriptions: SelectableValue[];
   workspaces: SelectableValue[];
-  onDatasourceUpdate: (config: any) => void;
+  onUpdateOption: (key: string, val: any, secure: boolean) => void;
+  onResetOptionKey: (key: string) => void;
   onLoadSubscriptions: (type?: string) => void;
   onLoadWorkspaces: (type?: string) => void;
 }
 export class AnalyticsConfig extends PureComponent<Props> {
   onLogAnalyticsTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onDatasourceUpdate, options } = this.props;
-    onDatasourceUpdate({
-      ...options,
-      jsonData: {
-        ...options.jsonData,
-        logAnalyticsTenantId: event.target.value,
-      },
-    });
+    this.props.onUpdateOption('logAnalyticsTenantId', event.target.value, false);
   };
 
   onLogAnalyticsClientIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onDatasourceUpdate, options } = this.props;
-    onDatasourceUpdate({
-      ...options,
-      jsonData: {
-        ...options.jsonData,
-        logAnalyticsClientId: event.target.value,
-      },
-    });
+    this.props.onUpdateOption('logAnalyticsClientId', event.target.value, false);
   };
 
   onLogAnalyticsClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onDatasourceUpdate, options } = this.props;
-    onDatasourceUpdate({
-      ...options,
-      secureJsonData: {
-        ...options.secureJsonData,
-        logAnalyticsClientSecret: event.target.value,
-      },
-    });
-  };
-
-  onLogAnalyticsResetClientSecret = () => {
-    const { onDatasourceUpdate, options } = this.props;
-    onDatasourceUpdate({
-      ...options,
-      secureJsonData: {
-        ...options.secureJsonData,
-        logAnalyticsClientSecret: '',
-      },
-      secureJsonFields: {
-        ...options.secureJsonFields,
-        logAnalyticsClientSecret: false,
-      },
-    });
+    this.props.onUpdateOption('logAnalyticsClientSecret', event.target.value, true);
   };
 
   onLogAnalyticsSubscriptionSelect = (logAnalyticsSubscription: SelectableValue<string>) => {
-    const { onDatasourceUpdate, options } = this.props;
-    onDatasourceUpdate({
-      ...options,
-      jsonData: {
-        ...options.jsonData,
-        logAnalyticsSubscriptionId: logAnalyticsSubscription.value,
-      },
-    });
+    this.props.onUpdateOption('logAnalyticsSubscriptionId', logAnalyticsSubscription.value, false);
   };
 
   onWorkspaceSelectChange = (logAnalyticsDefaultWorkspace: SelectableValue<string>) => {
-    const { onDatasourceUpdate, options } = this.props;
-    onDatasourceUpdate({
-      ...options,
-      jsonData: {
-        ...options.jsonData,
-        logAnalyticsDefaultWorkspace: logAnalyticsDefaultWorkspace.value,
-      },
-    });
+    this.props.onUpdateOption('logAnalyticsDefaultWorkspace', logAnalyticsDefaultWorkspace.value, false);
   };
 
   onAzureLogAnalyticsSameAsChange = () => {
-    const { onDatasourceUpdate, options } = this.props;
-    onDatasourceUpdate({
-      ...options,
-      jsonData: {
-        ...options.jsonData,
-        azureLogAnalyticsSameAs: !options.jsonData.azureLogAnalyticsSameAs,
-      },
-    });
+    const { options } = this.props;
+    this.props.onUpdateOption('azureLogAnalyticsSameAs', !options.jsonData.azureLogAnalyticsSameAs, false);
+  };
+
+  onLogAnalyticsResetClientSecret = () => {
+    this.props.onResetOptionKey('logAnalyticsClientSecret');
   };
 
   hasWorkspaceRequiredFields = () => {

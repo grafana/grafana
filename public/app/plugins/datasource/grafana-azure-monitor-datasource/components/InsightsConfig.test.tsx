@@ -34,7 +34,8 @@ const setup = (propOverrides?: object) => {
       version: 1,
       readOnly: false,
     },
-    onDatasourceUpdate: jest.fn(),
+    onUpdateOption: jest.fn(),
+    onResetOptionKey: jest.fn(),
   };
 
   Object.assign(props, propOverrides);

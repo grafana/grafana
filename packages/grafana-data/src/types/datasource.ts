@@ -272,6 +272,53 @@ export abstract class DataSourceApi<
   interpolateVariablesInQueries?(queries: TQuery[]): TQuery[];
 }
 
+export function updateDatasourcePluginOption(
+  props: DataSourcePluginOptionsEditorProps,
+  key: string,
+  val: any,
+  secure: boolean
+) {
+  let config = props.options;
+
+  if (secure) {
+    config = {
+      ...config,
+      secureJsonData: {
+        ...config.secureJsonData,
+        [key]: val,
+      },
+    };
+  } else {
+    config = {
+      ...config,
+      jsonData: {
+        ...config.jsonData,
+        [key]: val,
+      },
+    };
+  }
+
+  props.onOptionsChange(config);
+}
+
+export function updateDatasourcePluginResetKeyOption(props: DataSourcePluginOptionsEditorProps, key: string) {
+  let config = props.options;
+
+  config = {
+    ...config,
+    secureJsonData: {
+      ...config.secureJsonData,
+      [key]: '',
+    },
+    secureJsonFields: {
+      ...config.secureJsonFields,
+      [key]: false,
+    },
+  };
+
+  props.onOptionsChange(config);
+}
+
 export interface QueryEditorProps<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,

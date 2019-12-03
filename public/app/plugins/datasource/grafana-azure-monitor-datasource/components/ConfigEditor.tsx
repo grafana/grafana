@@ -1,5 +1,10 @@
 import React, { PureComponent } from 'react';
-import { SelectableValue, DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import {
+  SelectableValue,
+  DataSourcePluginOptionsEditorProps,
+  updateDatasourcePluginOption,
+  updateDatasourcePluginResetKeyOption,
+} from '@grafana/data';
 import { MonitorConfig } from './MonitorConfig';
 import { AnalyticsConfig } from './AnalyticsConfig';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -33,7 +38,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
       this.props.options.url = '/api/datasources/proxy/' + this.props.options.id;
     }
 
-    this.onOptionsUpdate(this.props.options);
+    this.updateOptions(this.props.options);
   }
 
   initPromise: CancelablePromise<any> = null;
@@ -61,7 +66,15 @@ export class ConfigEditor extends PureComponent<Props, State> {
     }
   };
 
-  onOptionsUpdate = (options: AzureDataSourceSettings) => {
+  updateOption = (key: string, val: any, secure: boolean) => {
+    updateDatasourcePluginOption(this.props, key, val, secure);
+  };
+
+  resetKey = (key: string) => {
+    updateDatasourcePluginResetKeyOption(this.props, key);
+  };
+
+  updateOptions = (options: AzureDataSourceSettings) => {
     if (options.hasOwnProperty('secureJsonData')) {
       if (options.secureJsonData.hasOwnProperty('clientSecret') && options.secureJsonData.clientSecret.length === 0) {
         delete options.secureJsonData.clientSecret;
@@ -116,7 +129,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
   onLoadSubscriptions = async (type?: string) => {
     await this.backendSrv.put(`/api/datasources/${this.props.options.id}`, this.props.options).then(() => {
-      this.onOptionsUpdate({
+      this.updateOptions({
         ...this.props.options,
         version: this.props.options.version + 1,
       });
@@ -234,19 +247,21 @@ export class ConfigEditor extends PureComponent<Props, State> {
           options={options}
           subscriptions={subscriptions}
           onLoadSubscriptions={this.onLoadSubscriptions}
-          onDatasourceUpdate={this.onOptionsUpdate}
+          onUpdateOption={this.updateOption}
+          onResetOptionKey={this.resetKey}
         />
 
         <AnalyticsConfig
           options={options}
           workspaces={logAnalyticsWorkspaces}
           subscriptions={logAnalyticsSubscriptions}
+          onUpdateOption={this.updateOption}
+          onResetOptionKey={this.resetKey}
           onLoadSubscriptions={this.onLoadSubscriptions}
-          onDatasourceUpdate={this.onOptionsUpdate}
           onLoadWorkspaces={this.getWorkspaces}
         />
 
-        <InsightsConfig options={options} onDatasourceUpdate={this.onOptionsUpdate} />
+        <InsightsConfig options={options} onUpdateOption={this.updateOption} onResetOptionKey={this.resetKey} />
       </>
     );
   }
