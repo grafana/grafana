@@ -18,7 +18,7 @@ const getKnobs = () => {
         inverse: 'inverse',
         transparent: 'transparent',
       },
-      'inverse'
+      'primary'
     ),
     disabled: boolean('Disabled', false),
   };

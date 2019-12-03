@@ -77,7 +77,7 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
   static defaultProps: Partial<Props> = {
     confirmText: 'Save',
     disabled: false,
-    confirmButtonVariant: 'inverse',
+    confirmButtonVariant: 'primary',
   };
 
   state: State = {
