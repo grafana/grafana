@@ -35,11 +35,11 @@ export function RadioButtonGroup<T>({
   return (
     <div className={styles.wrapper}>
       {options.map(o => {
-        const isItemDisabled = !!disabledOptions && disabledOptions.indexOf(value) > -1;
+        const isItemDisabled = disabledOptions && o.value && disabledOptions.indexOf(o.value) > -1;
         return (
           <RadioButton
             size={size}
-            disabled={disabled || isItemDisabled}
+            disabled={isItemDisabled || disabled}
             active={value === o.value}
             key={o.label}
             onClick={() => {
