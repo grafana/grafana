@@ -2,6 +2,7 @@ import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { Selectors } from '@grafana/e2e/src/selectors';
 
 export class UtilSrv {
   modalScope: any;
@@ -71,6 +72,7 @@ export class UtilSrv {
     scope.yesText = payload.yesText || 'Yes';
     scope.noText = payload.noText || 'Cancel';
     scope.confirmTextValid = scope.confirmText ? false : true;
+    scope.selectors = Selectors.ConfirmModal;
 
     appEvents.emit(CoreEvents.showModal, {
       src: 'public/app/partials/confirm_modal.html',

@@ -3,9 +3,10 @@ import { Flows } from '../flows';
 export interface ScenarioArguments {
   describeName: string;
   itName: string;
-  scenario: (scenarioDataSourceName?: string) => void;
+  scenario: (scenarioDataSourceName?: string, scenarioDashBoard?: string) => void;
   skipScenario?: boolean;
-  createTestDataSource?: boolean;
+  addScenarioDataSource?: boolean;
+  addScenarioDashBoard?: boolean;
 }
 
 export const e2eScenario = ({
@@ -13,22 +14,27 @@ export const e2eScenario = ({
   itName,
   scenario,
   skipScenario = false,
-  createTestDataSource = false,
+  addScenarioDataSource = false,
+  addScenarioDashBoard = false,
 }: ScenarioArguments) => {
   describe(describeName, () => {
     if (skipScenario) {
-      it.skip(itName, async () => {
+      it.skip(itName, () => {
         expect(false).equals(true);
       });
       return;
     }
 
     let scenarioDataSource: string;
+    let scenarioDashBoard: string;
 
     beforeEach(() => {
       Flows.login('admin', 'admin');
-      if (createTestDataSource) {
+      if (addScenarioDataSource) {
         scenarioDataSource = Flows.addDataSource('TestData DB');
+      }
+      if (addScenarioDashBoard) {
+        scenarioDashBoard = Flows.addDashboard();
       }
     });
 
@@ -36,10 +42,13 @@ export const e2eScenario = ({
       if (scenarioDataSource) {
         Flows.deleteDataSource(scenarioDataSource);
       }
+      if (scenarioDashBoard) {
+        Flows.deleteDashboard(scenarioDashBoard);
+      }
     });
 
-    it(itName, async () => {
-      await scenario(scenarioDataSource);
+    it(itName, () => {
+      scenario(scenarioDataSource, scenarioDashBoard);
     });
   });
 };
