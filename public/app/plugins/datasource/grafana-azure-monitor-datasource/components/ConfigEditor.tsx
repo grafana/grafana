@@ -42,8 +42,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
     if (this.props.options.id) {
       updateDatasourcePluginOption(this.props, 'url', '/api/datasources/proxy/' + this.props.options.id);
     }
-
-    this.updateOptions(this.props.options);
   }
 
   initPromise: CancelablePromise<any> = null;
@@ -133,11 +131,14 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   onLoadSubscriptions = async (type?: string) => {
-    await this.backendSrv.put(`/api/datasources/${this.props.options.id}`, this.props.options).then(() => {
-      this.updateOptions({
-        ...this.props.options,
+    await this.backendSrv
+      .put(`/api/datasources/${this.props.options.id}`, this.props.options)
+      .then((result: AzureDataSourceSettings) => {
+        this.updateOptions({
+          ...this.props.options,
+          version: result.version,
+        });
       });
-    });
 
     if (type && type === 'workspacesloganalytics') {
       this.getLogAnalyticsSubscriptions();
