@@ -1,5 +1,5 @@
 import merge from 'lodash/merge';
-import { getFieldProperties, getFieldDisplayValues, GetFieldDisplayValuesOptions, FieldDisplay } from './fieldDisplay';
+import { getFieldProperties, getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { ReducerID } from '../transformations/fieldReducer';
 import { Threshold } from '../types/threshold';
