@@ -43,7 +43,6 @@ import { PerformanceBackend } from './core/services/echo/backends/PerformanceBac
 
 import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
-import { MetaAnalyticsBackend } from './core/services/echo/backends/MetaAnalyticsBackend';
 
 // import symlinked extensions
 const extensionsIndex = (require as any).context('.', true, /extensions\/index.ts/);
@@ -185,7 +184,6 @@ export class GrafanaApp {
     });
 
     registerEchoBackend(new PerformanceBackend({}));
-    registerEchoBackend(new MetaAnalyticsBackend({ url: 'http://localhost:8089' }));
 
     window.addEventListener('DOMContentLoaded', () => {
       reportPerformance('dcl', Math.round(performance.now()));
