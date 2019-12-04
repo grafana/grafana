@@ -60,7 +60,7 @@ export class PromExploreQueryEditor extends PureComponent<Props, State> {
           data={data}
         />
 
-        <div className="gf-form-inline">
+        <div className="gf-form-inline explore-input--ml">
           <div className="gf-form">
             <FormLabel width={4}>Step</FormLabel>
             <input
