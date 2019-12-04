@@ -25,10 +25,8 @@ export class PerformanceBackend implements EchoBackend<PerformanceEvent, Perform
   constructor(private echoInstance: Echo, public options: PerformanceBackendOptions) {}
 
   addEvent = (e: EchoEvent) => {
-    if (this.supportedEvents.indexOf(e.type) > -1) {
-      this.echoInstance.logDebug('Performance consumer consumed: ', e);
-      this.buffer.push(e);
-    }
+    this.echoInstance.logDebug('Performance consumer consumed: ', e);
+    this.buffer.push(e);
   };
 
   getPageLoadMetrics = () => {

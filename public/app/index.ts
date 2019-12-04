@@ -22,7 +22,6 @@ setEchoMeta({
   url: window.location.href,
 });
 
-// TODO: Pass url from env
 registerEchoBackend(getPerformanceBackend({}));
 
 window.addEventListener('DOMContentLoaded', () => {

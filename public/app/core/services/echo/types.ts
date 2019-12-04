@@ -12,7 +12,7 @@ export interface EchoMeta {
 
 export interface EchoBackend<T extends EchoEvent = any, O = any> {
   options: O;
-  supportedEvents?: string[];
+  supportedEvents?: EchoEventType[];
   flush: () => void;
   addEvent: (event: T) => void;
 }

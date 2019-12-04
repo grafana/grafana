@@ -59,11 +59,13 @@ export class Echo implements EchoSrv {
       ts: performance.now(),
     };
 
-    this.backends.forEach(c => {
-      c.addEvent(_event);
+    this.backends.forEach(backend => {
+      if (!backend.supportedEvents || (backend.supportedEvents && backend.supportedEvents.indexOf(_event.type) > -1)) {
+        backend.addEvent(_event);
+      }
     });
 
-    this.logDebug('Consuming event', _event);
+    this.logDebug('Adding event', _event);
   };
 
   setMeta = (meta: Partial<EchoMeta>) => {
