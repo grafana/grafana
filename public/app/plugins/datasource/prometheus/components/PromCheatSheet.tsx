@@ -18,20 +18,26 @@ const CHEAT_SHEET_ITEMS = [
     expression: 'sort_desc(sum(sum_over_time(ALERTS{alertstate="firing"}[24h])) by (alertname))',
     label: 'Sums up the alerts that have been firing over the last 24 hours.',
   },
+  {
+    title: 'Step',
+    label: 'Sets up query resolution step width in duration format (e.g. 5s, 10m, 2h, 1d). Default: auto.',
+  },
 ];
 
 export default (props: ExploreStartPageProps) => (
   <div>
     <h2>PromQL Cheat Sheet</h2>
-    {CHEAT_SHEET_ITEMS.map(item => (
-      <div className="cheat-sheet-item" key={item.expression}>
+    {CHEAT_SHEET_ITEMS.map((item, index) => (
+      <div className="cheat-sheet-item" key={index}>
         <div className="cheat-sheet-item__title">{item.title}</div>
-        <div
-          className="cheat-sheet-item__example"
-          onClick={e => props.onClickExample({ refId: 'A', expr: item.expression } as DataQuery)}
-        >
-          <code>{item.expression}</code>
-        </div>
+        {item.expression ? (
+          <div
+            className="cheat-sheet-item__example"
+            onClick={e => props.onClickExample({ refId: 'A', expr: item.expression } as DataQuery)}
+          >
+            <code>{item.expression}</code>
+          </div>
+        ) : null}
         <div className="cheat-sheet-item__label">{item.label}</div>
       </div>
     ))}
