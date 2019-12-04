@@ -1,6 +1,6 @@
 import { PanelQueryRunner } from './PanelQueryRunner';
 import { PanelData, DataQueryRequest, dateTime, ScopedVars } from '@grafana/data';
-import { DashboardModel, PanelModel } from './index';
+import { DashboardModel } from './index';
 import { setEchoSrv } from '@grafana/runtime';
 import { Echo } from '../../../core/services/echo/Echo';
 
