@@ -40,7 +40,7 @@ export class MonitorConfig extends PureComponent<Props> {
   };
 
   onSubscriptionSelect = (subscription: SelectableValue<string>) => {
-    this.props.onUpdateOption('subscriptionId', subscription.value, true);
+    this.props.onUpdateOption('subscriptionId', subscription.value, false);
   };
 
   render() {

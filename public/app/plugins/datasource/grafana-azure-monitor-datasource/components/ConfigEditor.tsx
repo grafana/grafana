@@ -20,6 +20,8 @@ export interface State {
   subscriptions: SelectableValue[];
   logAnalyticsSubscriptions: SelectableValue[];
   logAnalyticsWorkspaces: SelectableValue[];
+  subscriptionId: string;
+  logAnalyticsSubscriptionId: string;
 }
 
 export class ConfigEditor extends PureComponent<Props, State> {
@@ -30,6 +32,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
       subscriptions: [],
       logAnalyticsSubscriptions: [],
       logAnalyticsWorkspaces: [],
+      subscriptionId: '',
+      logAnalyticsSubscriptionId: '',
     };
 
     this.backendSrv = getBackendSrv();
@@ -131,7 +135,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
     await this.backendSrv.put(`/api/datasources/${this.props.options.id}`, this.props.options).then(() => {
       this.updateOptions({
         ...this.props.options,
-        version: this.props.options.version + 1,
       });
     });
 
@@ -188,7 +191,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     if (subscriptions && subscriptions.length > 0) {
       this.setState({ subscriptions });
 
-      this.props.options.jsonData.subscriptionId = this.props.options.jsonData.subscriptionId || subscriptions[0].value;
+      this.updateOption('subscriptionId', this.props.options.jsonData.subscriptionId || subscriptions[0].value, false);
     }
 
     if (this.props.options.jsonData.subscriptionId && this.props.options.jsonData.azureLogAnalyticsSameAs) {
@@ -207,8 +210,11 @@ export class ConfigEditor extends PureComponent<Props, State> {
     if (logAnalyticsSubscriptions && logAnalyticsSubscriptions.length > 0) {
       this.setState({ logAnalyticsSubscriptions });
 
-      this.props.options.jsonData.logAnalyticsSubscriptionId =
-        this.props.options.jsonData.logAnalyticsSubscriptionId || logAnalyticsSubscriptions[0].value;
+      this.updateOption(
+        'logAnalyticsSubscriptionId',
+        this.props.options.jsonData.logAnalyticsSubscriptionId || logAnalyticsSubscriptions[0].value,
+        false
+      );
     }
 
     if (this.props.options.jsonData.logAnalyticsSubscriptionId) {
@@ -229,8 +235,11 @@ export class ConfigEditor extends PureComponent<Props, State> {
     if (logAnalyticsWorkspaces.length > 0) {
       this.setState({ logAnalyticsWorkspaces });
 
-      this.props.options.jsonData.logAnalyticsDefaultWorkspace =
-        this.props.options.jsonData.logAnalyticsDefaultWorkspace || logAnalyticsWorkspaces[0].value;
+      this.updateOption(
+        'logAnalyticsDefaultWorkspace',
+        this.props.options.jsonData.logAnalyticsDefaultWorkspace || logAnalyticsWorkspaces[0].value,
+        false
+      );
     }
   };
 
