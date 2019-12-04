@@ -3,7 +3,7 @@ import { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 
 // Utils
-import { getColorFromHexRgbOrName, GrafanaTheme } from '@grafana/data';
+import { getColorFromHexRgbOrName, GrafanaTheme, formattedValueToString } from '@grafana/data';
 import { calculateFontSize } from '../../utils/measureText';
 
 // Types
@@ -49,7 +49,7 @@ export function calculateLayout(props: Props): LayoutResult {
   const justifyCenter = shouldJustifyCenter(props);
   const panelPadding = height > 100 ? 12 : 8;
   const titleToAlignTo = alignmentFactors ? alignmentFactors.title : value.title;
-  const valueToAlignTo = alignmentFactors ? alignmentFactors.text : value.text;
+  const valueToAlignTo = formattedValueToString(alignmentFactors ? alignmentFactors : value);
 
   const maxTitleFontSize = 30;
   const maxTextWidth = width - panelPadding * 2;
@@ -186,7 +186,7 @@ export function getTitleStyles(layout: LayoutResult) {
 
 export function getValueStyles(layout: LayoutResult) {
   const styles: CSSProperties = {
-    fontSize: `${layout.valueFontSize}px`,
+    fontSize: layout.valueFontSize,
     color: '#EEE',
     textShadow: '#333 0px 0px 1px',
     fontWeight: 500,

@@ -1,4 +1,4 @@
-import { GraphSeriesValue, Field } from '@grafana/data';
+import { GraphSeriesValue, Field, formattedValueToString } from '@grafana/data';
 
 /**
  * Returns index of the closest datapoint BEFORE hover position
@@ -72,18 +72,18 @@ export const getMultiSeriesGraphHoverInfo = (
       (hoverDistance < 0 && hoverDistance > minDistance)
     ) {
       minDistance = hoverDistance;
-      minTime = time.display ? time.display(pointTime).text : pointTime;
+      minTime = time.display ? formattedValueToString(time.display(pointTime)) : pointTime;
     }
 
     value = series.values.get(hoverIndex);
 
     results.push({
-      value: series.display ? series.display(value).text : value,
+      value: series.display ? formattedValueToString(series.display(value)) : value,
       datapointIndex: hoverIndex,
       seriesIndex: i,
       color: series.config.color,
       label: series.name,
-      time: time.display ? time.display(pointTime).text : pointTime,
+      time: time.display ? formattedValueToString(time.display(pointTime)) : pointTime,
     });
   }
 

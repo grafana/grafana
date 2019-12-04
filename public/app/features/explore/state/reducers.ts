@@ -55,7 +55,6 @@ import {
   updateUIStateAction,
   toggleLogLevelAction,
   changeLoadingStateAction,
-  resetExploreAction,
   queryStreamUpdatedAction,
   QueryEndedPayload,
   queryStoreSubscriptionAction,
@@ -727,6 +726,11 @@ export const exploreReducer = (state = initialExploreState, action: HigherOrderA
     }
 
     case ActionTypes.ResetExplore: {
+      const leftState = state[ExploreId.left];
+      const rightState = state[ExploreId.right];
+      stopQueryState(leftState.querySubscription);
+      stopQueryState(rightState.querySubscription);
+
       if (action.payload.force || !Number.isInteger(state.left.originPanelId)) {
         return initialExploreState;
       }
@@ -754,19 +758,6 @@ export const exploreReducer = (state = initialExploreState, action: HigherOrderA
       return {
         ...state,
         split,
-        [ExploreId.left]: updateChildRefreshState(leftState, action.payload, ExploreId.left),
-        [ExploreId.right]: updateChildRefreshState(rightState, action.payload, ExploreId.right),
-      };
-    }
-
-    case resetExploreAction.type: {
-      const leftState = state[ExploreId.left];
-      const rightState = state[ExploreId.right];
-      stopQueryState(leftState.querySubscription);
-      stopQueryState(rightState.querySubscription);
-
-      return {
-        ...state,
         [ExploreId.left]: updateChildRefreshState(leftState, action.payload, ExploreId.left),
         [ExploreId.right]: updateChildRefreshState(rightState, action.payload, ExploreId.right),
       };

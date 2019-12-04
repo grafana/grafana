@@ -18,8 +18,9 @@ const toOption = (value: any) => ({ label: value, value: value });
 
 SegmentStories.add('Array Options', () => {
   const options = ['Option1', 'Option2', 'OptionWithLooongLabel', 'Option4'].map(toOption);
+  options[0].label = 'Option1 Label';
   return (
-    <UseState initialState={options[0].value}>
+    <UseState initialState={options[0] as SelectableValue}>
       {(value, updateValue) => (
         <>
           <div className="gf-form-inline">
@@ -29,9 +30,9 @@ SegmentStories.add('Array Options', () => {
             <Segment
               value={value}
               options={options}
-              onChange={(value: SelectableValue<string>) => {
-                updateValue(value);
-                action('Segment value changed')(value);
+              onChange={item => {
+                updateValue(item);
+                action('Segment value changed')(item.value);
               }}
             />
             <Segment
@@ -53,7 +54,7 @@ const groupedOptions = [
 
 SegmentStories.add('Grouped Array Options', () => {
   return (
-    <UseState initialState={groupedOptions[0].options[0].value}>
+    <UseState initialState={groupedOptions[0].options[0] as SelectableValue}>
       {(value, updateValue) => (
         <>
           <div className="gf-form-inline">
@@ -63,9 +64,9 @@ SegmentStories.add('Grouped Array Options', () => {
             <Segment
               value={value}
               options={groupedOptions}
-              onChange={(value: SelectableValue<string>) => {
-                updateValue(value);
-                action('Segment value changed')(value);
+              onChange={item => {
+                updateValue(item);
+                action('Segment value changed')(item.value);
               }}
             />
             <Segment
@@ -83,7 +84,7 @@ SegmentStories.add('Grouped Array Options', () => {
 SegmentStories.add('With custom options allowed', () => {
   const options = ['Option1', 'Option2', 'OptionWithLooongLabel', 'Option4'].map(toOption);
   return (
-    <UseState initialState={options[0].value}>
+    <UseState initialState={options[0] as SelectableValue}>
       {(value, updateValue) => (
         <>
           <div className="gf-form-inline">
@@ -94,9 +95,9 @@ SegmentStories.add('With custom options allowed', () => {
               allowCustomValue
               value={value}
               options={options}
-              onChange={(value: SelectableValue<string>) => {
-                updateValue(value);
-                action('Segment value changed')(value);
+              onChange={item => {
+                updateValue(item);
+                action('Segment value changed')(item.value);
               }}
             />
             <Segment
@@ -112,11 +113,11 @@ SegmentStories.add('With custom options allowed', () => {
   );
 });
 
-const CustomLabelComponent = ({ value }: any) => <div className="gf-form-label">custom({value})</div>;
+const CustomLabelComponent = ({ value: { value } }: any) => <div className="gf-form-label">custom({value})</div>;
 
 SegmentStories.add('Custom Label Field', () => {
   return (
-    <UseState initialState={groupedOptions[0].options[0].value}>
+    <UseState initialState={groupedOptions[0].options[0] as SelectableValue}>
       {(value, setValue) => (
         <>
           <div className="gf-form-inline">
@@ -126,9 +127,9 @@ SegmentStories.add('Custom Label Field', () => {
             <Segment
               Component={<CustomLabelComponent value={value} />}
               options={groupedOptions}
-              onChange={(value: SelectableValue<string>) => {
-                setValue(value);
-                action('Segment value changed')(value);
+              onChange={item => {
+                setValue(item);
+                action('Segment value changed')(item.value);
               }}
             />
             <Segment
