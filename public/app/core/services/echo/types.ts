@@ -28,10 +28,6 @@ export enum EchoEventType {
   Performance = 'performance',
 }
 
-export interface EchoBackendCtor<T extends EchoEvent, O> {
-  new (echoInstance: EchoSrv, opts: O): EchoBackend<T, O>;
-}
-
 export interface EchoSrv {
   flush(): void;
   addBackend(backend: EchoBackend): void;

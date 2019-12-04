@@ -1,6 +1,4 @@
 import { EchoBackend, EchoEvent, EchoEventType } from '../types';
-import { Echo } from '../Echo';
-import { echoBackendFactory } from './echoBackendFactory';
 
 export interface PerformanceEventPayload {
   metricName: string;
@@ -18,38 +16,16 @@ export interface PerformanceBackendOptions {
  * Reports performance metrics to given url (TODO)
  */
 export class PerformanceBackend implements EchoBackend<PerformanceEvent, PerformanceBackendOptions> {
-  private collectedPageLoadMetrics = false;
   private buffer: PerformanceEvent[] = [];
   supportedEvents = [EchoEventType.Performance];
 
-  constructor(private echoInstance: Echo, public options: PerformanceBackendOptions) {}
+  constructor(public options: PerformanceBackendOptions) {}
 
   addEvent = (e: EchoEvent) => {
-    this.echoInstance.logDebug('Performance consumer consumed: ', e);
     this.buffer.push(e);
   };
 
-  getPageLoadMetrics = () => {
-    const paintMetrics = performance.getEntriesByType('paint');
-    for (const metric of paintMetrics) {
-      this.buffer.push({
-        type: EchoEventType.Performance,
-        payload: {
-          metricName: metric.name,
-          duration: Math.round(metric.startTime + metric.duration),
-        },
-        meta: { ...this.echoInstance.getMeta() },
-        ts: performance.now(),
-      });
-    }
-  };
-
   flush = () => {
-    if (!this.collectedPageLoadMetrics) {
-      this.getPageLoadMetrics();
-      this.collectedPageLoadMetrics = true;
-    }
-
     if (this.buffer.length === 0) {
       return;
     }
@@ -58,7 +34,10 @@ export class PerformanceBackend implements EchoBackend<PerformanceEvent, Perform
       metrics: this.buffer,
     };
 
-    this.echoInstance.logDebug('PerformanceConsumer flushing: ', result);
+    // Currently we don have API for sending the metrics hence loging to console in dev environment
+    if (process.env.NODE_ENV === 'development') {
+      console.log('PerformanceBackend flushing:', result);
+    }
 
     this.buffer = [];
 
@@ -68,5 +47,3 @@ export class PerformanceBackend implements EchoBackend<PerformanceEvent, Perform
     // }
   };
 }
-
-export const getPerformanceBackend = (opts: PerformanceBackendOptions) => echoBackendFactory(PerformanceBackend, opts);

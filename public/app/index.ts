@@ -2,11 +2,21 @@ import app from './app';
 // @ts-ignore
 import ttiPolyfill from 'tti-polyfill';
 
-import { getPerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
+import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 import { setEchoMeta, reportPerformance, registerEchoBackend } from './core/services/echo/EchoSrv';
 
 ttiPolyfill.getFirstConsistentlyInteractive().then((tti: any) => {
+  // Collecting paint metrics first
+  const paintMetrics = performance.getEntriesByType('paint');
+
+  for (const metric of paintMetrics) {
+    reportPerformance(metric.name, Math.round(metric.startTime + metric.duration));
+  }
   reportPerformance('tti', tti);
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  reportPerformance('dcl', Math.round(performance.now()));
 });
 
 setEchoMeta({
@@ -22,10 +32,6 @@ setEchoMeta({
   url: window.location.href,
 });
 
-registerEchoBackend(getPerformanceBackend({}));
-
-window.addEventListener('DOMContentLoaded', () => {
-  reportPerformance('dcl', Math.round(performance.now()));
-});
+registerEchoBackend(new PerformanceBackend({}));
 
 app.init();
