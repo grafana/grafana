@@ -1,18 +1,18 @@
 +++
-title = "Upgrading"
-description = "Upgrading Grafana guide"
+title = "Upgrade Grafana"
+description = "Guide for upgrading Grafana"
 keywords = ["grafana", "configuration", "documentation", "upgrade"]
 type = "docs"
 [menu.docs]
-name = "Upgrading"
+name = "Upgrade Grafana"
 identifier = "upgrading"
 parent = "installation"
 weight = 800
 +++
 
-# Upgrading Grafana
+# Upgrade Grafana
 
-We recommend everyone to upgrade Grafana often to stay up to date with the latest fixes and enhancements.
+We recommend that you upgrade Grafana often to stay up to date with the latest fixes and enhancements.
 In order make this a reality, Grafana upgrades are backward compatible and the upgrade process is simple and quick.
 
 Upgrading is generally always safe (between many minor and one major version) and dashboards and graphs will look the same. There can be minor breaking changes in some edge cases which are usually outlined in the [Release Notes](https://community.grafana.com/c/releases) and [Changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
@@ -58,29 +58,44 @@ restore:
 > psql grafana < grafana_backup
 ```
 
-### Ubuntu / Debian
+### Ubuntu or Debian
 
-If you installed grafana by downloading a debian package (`.deb`) you can just follow the same installation guide
-and execute the same `dpkg -i` command but with the new package. It will upgrade your Grafana install.
+You upgrade Grafana by following the same procedure as when you installed it.
 
-If you used our APT repository:
+#### Upgrade Debian package
+
+If you installed Grafana by downloading a Debian package (`.deb`), then you can execute the same `dpkg -i` command but with the new package. It will upgrade your Grafana installation.
+
+Go to the [download page](https://grafana.com/grafana/download?platform=linux) for the latest download
+links.
+
+```bash
+wget <debian package url>
+sudo apt-get install -y adduser libfontconfig1
+sudo dpkg -i grafana_<version>_amd64.deb
+```
+
+#### Upgrade from APT repository
+
+If you installed Grafana from our APT repository:
 
 ```bash
 sudo apt-get update
 sudo apt-get install grafana
 ```
 
-#### Upgrading from binary tar file
+#### Upgrade from binary tar file
 
-If you downloaded the binary tar package you can just download and extract a new package
-and overwrite all your existing files. But this might overwrite your config changes. We
-recommend you place your config changes in a file named `<grafana_install_dir>/conf/custom.ini`
-as this will make upgrades easier without risking losing your config changes.
+If you downloaded the binary tar package, then you can just download and extract a new package
+and overwrite all your existing files. However, this might overwrite your config changes. 
+
+We recommend that you save your custom config changes in a file named `<grafana_install_dir>/conf/custom.ini`.
+This allows you to upgrade Grafana without risking losing your configuration changes.
 
 ### Centos / RHEL
 
-If you installed grafana by downloading a rpm package you can just follow the same installation guide
-and execute the same `yum install` or `rpm -i` command but with the new package. It will upgrade your Grafana install.
+If you installed Grafana by downloading an RPM package you can just follow the same installation guide
+and execute the same `yum install` or `rpm -i` command but with the new package. It will upgrade your Grafana installation.
 
 If you used our YUM repository:
 
