@@ -13,7 +13,7 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
   render() {
     return (
       <>
-        <div>TODO: show metric tank metadata</div>
+        <div>TODO: show metric tank metadata!</div>
       </>
     );
   }

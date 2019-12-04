@@ -13,19 +13,17 @@ interface Props {
 }
 
 interface State {
+  last?: any;
   meta?: MetadataInspectorProps<any, any, any>;
 }
 
 export class PanelInspector extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
+    this.state = {};
   }
 
-  async componentDidMount() {}
-
-  async componentDidUpdate(prevProps: Props) {}
-
-  updateMeta() {
+  async componentDidMount() {
     const { panel } = this.props;
     if (!panel) {
       this.onDismiss(); // Try to close the component
@@ -33,9 +31,28 @@ export class PanelInspector extends PureComponent<Props, State> {
     }
 
     // TODO? should we get the result with an observable once?
-    const data = (panel.getQueryRunner() as any).lastResult;
-    const inspectable = getInspectableMetadata(data?.series as DataFrame[]);
-    console.log('TODO', inspectable);
+    const lastResult = (panel.getQueryRunner() as any).lastResult;
+    if (!lastResult) {
+      this.onDismiss(); // Usually opened from refresh?
+      return null;
+    }
+
+    const inspectable = getInspectableMetadata(lastResult?.series as DataFrame[]);
+    for (const key in inspectable) {
+      const ds = await getDataSourceSrv().get(key);
+      if (ds && ds.components.MetadataInspector) {
+        this.setState({
+          last: lastResult,
+          meta: {
+            datasource: ds,
+            data: inspectable[key],
+          },
+        });
+        return; // Only the first one for now!
+      }
+    }
+
+    this.setState({ last: lastResult });
   }
 
   onDismiss = () => {
@@ -45,20 +62,18 @@ export class PanelInspector extends PureComponent<Props, State> {
     });
   };
 
-  renderInspectable(meta: Record<string, DataFrame[]>) {
-    for (const key in inspectable) {
-      // const ds = await getDataSourceSrv().get(key);
-      // if (ds) {
-      //   console.log('TODO, inspect', ds);
-      //   return <div>TODO... show inspector...</div>;
-      // }
+  renderInspectable = () => {
+    const { meta } = this.state;
+    const { MetadataInspector } = meta.datasource.components;
+    if (MetadataInspector) {
+      return <MetadataInspector {...meta} />;
     }
-    return <></>;
-  }
+    return <div>MISSING inspector</div>;
+  };
 
   render() {
     const { panel } = this.props;
-    const { meta } = this.state;
+    const { last, meta } = this.state;
     if (!panel) {
       this.onDismiss(); // Try to close the component
       return null;
@@ -68,13 +83,11 @@ export class PanelInspector extends PureComponent<Props, State> {
       overflow-y: scroll;
     `;
 
-    // TODO? should we get the result with an observable once?
-    const data = (panel.getQueryRunner() as any).lastResult;
     return (
       <Modal title={panel.title} icon="fa fa-info-circle" onDismiss={this.onDismiss} isOpen={true}>
-        {meta && this.renderInspectable(meta)}
+        {meta && this.renderInspectable()}
         <div className={bodyStyle}>
-          <JSONFormatter json={data} open={2} />
+          <JSONFormatter json={last} open={2} />
         </div>
       </Modal>
     );
