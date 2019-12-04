@@ -9,7 +9,6 @@ parent = "panels"
 weight = 4
 +++
 
-
 # Singlestat Panel
 
 {{< docs-imagebox img="/img/docs/v45/singlestat-panel.png" class="docs-image--no-shadow" max-width="900px" >}}
@@ -23,17 +22,17 @@ The singlestat panel has a normal query editor to allow you define your exact me
 {{< docs-imagebox img="/img/docs/v45/singlestat-value-options.png" class="docs-image--no-shadow" max-width="900px" >}}
 
 1. **Stats**: The Stats field let you set the function (min, max, average, current, total, first, delta, range) that your entire query is reduced into a single value with. This reduces the entire query into a single summary value that is displayed.
-   * **min** - The smallest value in the series
-   * **max** - The largest value in the series
-   * **avg** - The average of all the non-null values in the series
-   * **current** - The last value in the series. If the series ends on null the previous value will be used.
-   * **total** - The sum of all the non-null values in the series
-   * **first** - The first value in the series
-   * **delta** - The total incremental increase (of a counter) in the series. An attempt is made to account for counter resets, but this will only be accurate for single instance metrics. Used to show total counter increase in time series.
-   * **diff** - The difference between 'current' (last value) and 'first'.
-   * **range** - The difference between 'min' and 'max'. Useful the show the range of change for a gauge.
-2. **Prefix/Postfix**: The Prefix/Postfix fields let you define a custom label to appear *before/after* the value. The `$__name` variable can be used here to use the series name or alias from the metric query.
-3. **Units**: Units are appended to the the Singlestat  within the panel, and will respect the color and threshold settings for the value.
+   - **min** - The smallest value in the series
+   - **max** - The largest value in the series
+   - **avg** - The average of all the non-null values in the series
+   - **current** - The last value in the series. If the series ends on null the previous value will be used.
+   - **total** - The sum of all the non-null values in the series
+   - **first** - The first value in the series
+   - **delta** - The total incremental increase (of a counter) in the series. An attempt is made to account for counter resets, but this will only be accurate for single instance metrics. Used to show total counter increase in time series.
+   - **diff** - The difference between 'current' (last value) and 'first'.
+   - **range** - The difference between 'min' and 'max'. Useful the show the range of change for a gauge.
+2. **Prefix/Postfix**: The Prefix/Postfix fields let you define a custom label to appear _before/after_ the value. The `$__name` variable can be used here to use the series name or alias from the metric query.
+3. **Units**: Units are appended to the the Singlestat within the panel, and will respect the color and threshold settings for the value.
 4. **Decimals**: The Decimal field allows you to override the automatic decimal precision, and set it explicitly.
 5. **Font Size**: You can use this section to select the font size of the different texts in the Singlestat Panel, i.e. prefix, value and postfix.
 
@@ -64,7 +63,7 @@ Sparklines are a great way of seeing the historical data related to the summary 
 
 <div class="clearfix"></div>
 
-> ***Pro-tip:*** Reduce the opacity on  fill colors for nice looking panels.
+> **_Pro-tip:_** Reduce the opacity on fill colors for nice looking panels.
 
 ### Gauge
 
@@ -85,6 +84,8 @@ Gauges gives a clear picture of how high a value is in it's context. It's a grea
 
 Value/Range to text mapping allows you to translate the value of the summary stat into explicit text. The text will respect all styling, thresholds and customization defined for the value. This can be useful to translate the number of the main Singlestat value into a context-specific human-readable word or message.
 
+If you want to replace the default "No data" text being displayed when no data is available. You can do this by adding a `value to text mapping` from `null` to your preferred custom text value.
+
 <div class="clearfix"></div>
 
 ## Troubleshooting
@@ -97,10 +98,11 @@ Grafana 2.5 introduced stricter checking for multiple-series on singlestat panel
 
 To fix your singlestat panel:
 
-- Edit your panel by clicking the Panel Title and selecting *Edit*.
+- Edit your panel by clicking the Panel Title and selecting _Edit_.
 
 - Do you have multiple queries in the metrics tab?
-    - Solution: Select a single query to visualize. You can toggle whether a query is visualized by clicking the eye icon on each line. If the error persists, continue to the next solution.
+
+  - Solution: Select a single query to visualize. You can toggle whether a query is visualized by clicking the eye icon on each line. If the error persists, continue to the next solution.
 
 - Do you have one query?
-    - Solution: This likely means your query is returning multiple series. You will want to reduce this down to a single series. This can be accomplished in many ways, depending on your data source. Some common practices include summing the series, averaging or any number of other functions. Consult the documentation for your data source for additional information.
+  - Solution: This likely means your query is returning multiple series. You will want to reduce this down to a single series. This can be accomplished in many ways, depending on your data source. Some common practices include summing the series, averaging or any number of other functions. Consult the documentation for your data source for additional information.
