@@ -4,6 +4,7 @@ import {
   DataSourcePluginOptionsEditorProps,
   updateDatasourcePluginOption,
   updateDatasourcePluginResetKeyOption,
+  updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { MonitorConfig } from './MonitorConfig';
 import { AnalyticsConfig } from './AnalyticsConfig';
@@ -39,7 +40,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     this.backendSrv = getBackendSrv();
     this.templateSrv = new TemplateSrv();
     if (this.props.options.id) {
-      this.props.options.url = '/api/datasources/proxy/' + this.props.options.id;
+      updateDatasourcePluginOption(this.props, 'url', '/api/datasources/proxy/' + this.props.options.id);
     }
 
     this.updateOptions(this.props.options);
@@ -71,7 +72,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   updateOption = (key: string, val: any, secure: boolean) => {
-    updateDatasourcePluginOption(this.props, key, val, secure);
+    updateDatasourcePluginJsonDataOption(this.props, key, val, secure);
   };
 
   resetKey = (key: string) => {

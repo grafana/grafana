@@ -272,7 +272,18 @@ export abstract class DataSourceApi<
   interpolateVariablesInQueries?(queries: TQuery[]): TQuery[];
 }
 
-export function updateDatasourcePluginOption(
+export function updateDatasourcePluginOption(props: DataSourcePluginOptionsEditorProps, key: string, val: any) {
+  let config = props.options;
+
+  config = {
+    ...config,
+    [key]: val,
+  };
+
+  props.onOptionsChange(config);
+}
+
+export function updateDatasourcePluginJsonDataOption(
   props: DataSourcePluginOptionsEditorProps,
   key: string,
   val: any,
