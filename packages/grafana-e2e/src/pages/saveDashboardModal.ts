@@ -1,7 +1,7 @@
 import { pageFactory } from '../support';
 import { Selectors } from '../selectors';
 
-export const SaveAsModal = pageFactory({
+export const SaveDashboardModal = pageFactory({
   url: '',
-  selectors: Selectors.SaveAsModal,
+  selectors: Selectors.SaveDashboardModal,
 });

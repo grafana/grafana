@@ -5,6 +5,8 @@ import { addDashboard } from './addDashboard';
 import { assertSuccessNotification } from './assertSuccessNotification';
 import { deleteDashboard } from './deleteDashboard';
 import { openDashboard } from './openDashboard';
+import { saveNewDashboard } from './saveNewDashboard';
+import { saveDashboard } from './saveDashboard';
 
 export const Flows = {
   login,
@@ -14,4 +16,6 @@ export const Flows = {
   assertSuccessNotification,
   deleteDashboard,
   openDashboard,
+  saveNewDashboard,
+  saveDashboard,
 };

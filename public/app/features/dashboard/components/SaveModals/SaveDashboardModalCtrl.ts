@@ -1,3 +1,5 @@
+import { Selectors } from '@grafana/e2e/src/selectors';
+
 import coreModule from 'app/core/core_module';
 import { DashboardSrv } from '../../services/DashboardSrv';
 import { CloneOptions } from '../../state/DashboardModel';
@@ -57,7 +59,7 @@ const template = `
         class="btn btn-primary"
         ng-class="{'btn-primary--processing': ctrl.isSaving}"
         ng-disabled="ctrl.saveForm.$invalid || ctrl.isSaving"
-        aria-label="Dashboard settings Save Dashboard Modal Save button"
+        aria-label={{ctrl.selectors.save}}
       >
         <span ng-if="!ctrl.isSaving">Save</span>
         <span ng-if="ctrl.isSaving === true">Saving...</span>
@@ -82,6 +84,7 @@ export class SaveDashboardModalCtrl {
   dismiss: () => void;
   timeChange = false;
   variableValueChange = false;
+  selectors: typeof Selectors.SaveDashboardModal;
 
   /** @ngInject */
   constructor(private dashboardSrv: DashboardSrv) {
@@ -90,6 +93,7 @@ export class SaveDashboardModalCtrl {
     this.isSaving = false;
     this.timeChange = this.dashboardSrv.getCurrent().hasTimeChanged();
     this.variableValueChange = this.dashboardSrv.getCurrent().hasVariableValuesChanged();
+    this.selectors = Selectors.SaveDashboardModal;
   }
 
   save() {

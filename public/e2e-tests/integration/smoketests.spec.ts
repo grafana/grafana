@@ -1,4 +1,4 @@
-import { e2eScenario, Pages } from '@grafana/e2e';
+import { e2eScenario, Flows, Pages } from '@grafana/e2e';
 import { ScenarioContext } from '@grafana/e2e/src/support';
 
 e2eScenario({
@@ -8,7 +8,8 @@ e2eScenario({
   addScenarioDashBoard: true,
   skipScenario: false,
   scenario: ({ dataSourceName, dashboardTitle, dashboardUid }: ScenarioContext) => {
-    Pages.AddDashboard.visit();
+    Flows.openDashboard(dashboardTitle);
+    Pages.Dashboard.toolbarItems('Add panel').click();
     Pages.AddDashboard.ctaButtons('Add Query').click();
 
     Pages.Panels.EditPanel.tabItems('Queries').click();
@@ -19,5 +20,13 @@ e2eScenario({
     Pages.Panels.Visualization.Graph.VisualizationTab.xAxisSection()
       .contains('Show')
       .click();
+
+    Flows.saveDashboard();
+
+    Pages.Dashboard.backArrow().click();
+
+    Pages.Panels.Panel.title('Panel Title').click();
+
+    Pages.Panels.Panel.headerItems('Share').click();
   },
 });
