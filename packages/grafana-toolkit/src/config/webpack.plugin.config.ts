@@ -10,11 +10,15 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 import * as webpack from 'webpack';
 import { getStyleLoaders, getStylesheetEntries, getFileLoaders } from './webpack/loaders';
 
-interface WebpackConfigurationOptions {
+export interface WebpackConfigurationOptions {
   watch?: boolean;
   production?: boolean;
 }
 type WebpackConfigurationGetter = (options: WebpackConfigurationOptions) => webpack.Configuration;
+export type CustomWebpackConfigurationGetter = (
+  originalConfig: webpack.Configuration,
+  options: WebpackConfigurationOptions
+) => webpack.Configuration;
 
 export const findModuleFiles = (base: string, files?: string[], result?: string[]) => {
   files = files || fs.readdirSync(base);
@@ -114,7 +118,7 @@ const getCommonPlugins = (options: WebpackConfigurationOptions) => {
   ];
 };
 
-export const getWebpackConfig: WebpackConfigurationGetter = options => {
+const getBaseWebpackConfig: WebpackConfigurationGetter = options => {
   const plugins = getCommonPlugins(options);
   const optimization: { [key: string]: any } = {};
 
@@ -223,4 +227,23 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
     },
     optimization,
   };
+};
+
+export const loadWebpackConfig: WebpackConfigurationGetter = options => {
+  const baseConfig = getBaseWebpackConfig(options);
+  const customWebpackPath = path.resolve(process.cwd(), 'webpack.plugin.config.ts');
+
+  try {
+    fs.accessSync(customWebpackPath);
+    const customConfig = require(customWebpackPath);
+    if (typeof customConfig !== 'function') {
+      throw Error('Custom webpack config needs to export a function implementing CustomWebpackConfigurationGetter ');
+    }
+    return (customConfig as CustomWebpackConfigurationGetter)(baseConfig, options);
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      return baseConfig;
+    }
+    throw err;
+  }
 };
