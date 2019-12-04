@@ -21,7 +21,7 @@ jobs:
         repository: grafana/website
         branch: docs-grafana
         host: github.com
-        github_pat: '${{ secrets.GH_PAT }}'
+        github_pat: '${{ secrets.GH_BOT_ACCESS_TOKEN }}'
         source_folder: docs/sources
         target_folder: content/docs/grafana/latest
     - shell: bash
