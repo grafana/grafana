@@ -20,7 +20,7 @@ export class DataSourcesListItem extends PureComponent<Props> {
               <img src={dataSource.typeLogoUrl} alt={dataSource.name} />
             </figure>
             <div className="card-item-details">
-              <div className="card-item-name" aria-label={Selectors.DataSources.dataSources}>
+              <div className="card-item-name" aria-label={Selectors.DataSources.dataSources(dataSource.name)}>
                 {dataSource.name}
                 {dataSource.isDefault && <span className="btn btn-secondary btn-small card-item-label">default</span>}
               </div>

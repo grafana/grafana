@@ -1,3 +1,3 @@
 export const AddDataSource = {
-  dataSourcePlugin: 'Data source plugin item',
+  dataSourcePlugins: (pluginName: string) => `Data source plugin item ${pluginName}`,
 };

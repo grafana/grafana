@@ -6,12 +6,7 @@ export const addDataSource = (pluginName?: string): string => {
   Pages.DataSources.visit();
   Pages.DataSources.addDataSource().click();
 
-  Pages.AddDataSource.dataSourcePlugin().each(item => {
-    const text = item.text();
-    if (pluginName && text && text.indexOf(pluginName) !== -1) {
-      item.click();
-    }
-  });
+  Pages.AddDataSource.dataSourcePlugins(pluginName).click();
 
   const dataSourceName = `e2e-${new Date().getTime()}`;
   Pages.DataSource.name().clear();

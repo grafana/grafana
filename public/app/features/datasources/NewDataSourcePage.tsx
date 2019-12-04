@@ -185,7 +185,11 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
   const learnMoreLink = plugin.info.links && plugin.info.links.length > 0 ? plugin.info.links[0].url : null;
 
   return (
-    <div className="add-data-source-item" onClick={onClick} aria-label={Selectors.AddDataSource.dataSourcePlugin}>
+    <div
+      className="add-data-source-item"
+      onClick={onClick}
+      aria-label={Selectors.AddDataSource.dataSourcePlugins(plugin.name)}
+    >
       <img className="add-data-source-item-logo" src={plugin.info.logos.small} />
       <div className="add-data-source-item-text-wrapper">
         <span className="add-data-source-item-text">{plugin.name}</span>

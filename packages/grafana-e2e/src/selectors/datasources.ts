@@ -1,4 +1,4 @@
 export const DataSources = {
-  dataSources: 'Data source list item',
+  dataSources: (dataSourceName: string) => `Data source list item ${dataSourceName}`,
   addDataSource: () => '.page-action-bar > .btn',
 };

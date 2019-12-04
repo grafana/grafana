@@ -5,13 +5,7 @@ export const deleteDataSource = (dataSourceName: string) => {
 
   /* https://github.com/cypress-io/cypress/issues/2831
   Pages.DataSources.visit();
-  Pages.DataSources.dataSources().each(item => {
-    const text = item.text();
-    Cypress.log({ message: [text] });
-    if (text && text.indexOf(dataSourceName) !== -1) {
-      item.click();
-    }
-  });
+  Pages.DataSources.dataSources(dataSourceName).click();
 
   Pages.DataSource.delete().click();
 

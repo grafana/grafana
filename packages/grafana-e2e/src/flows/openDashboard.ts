@@ -1,8 +1,6 @@
 import { Pages } from '../pages';
 
-export const openDashboard = (dashboardName: string) => {
+export const openDashboard = (dashboardTitle: string) => {
   Pages.Dashboards.visit();
-  Pages.Dashboards.dashboards()
-    .contains(dashboardName)
-    .click();
+  Pages.Dashboards.dashboards(dashboardTitle).click();
 };

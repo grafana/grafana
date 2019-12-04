@@ -5,7 +5,7 @@ import { Url } from '../support/url';
 export const addDashboard = async (): Promise<{ dashboardTitle: string; uid: string }> => {
   Pages.AddDashboard.visit();
 
-  Pages.Dashboard.save().click();
+  Pages.Dashboard.toolbarItems('Save dashboard').click();
 
   const dashboardTitle = `e2e-${new Date().getTime()}`;
   Pages.SaveAsModal.newName().clear();

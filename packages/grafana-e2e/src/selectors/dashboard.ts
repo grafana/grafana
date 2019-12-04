@@ -1,4 +1,3 @@
 export const Dashboard = {
-  save: () => '.btn.navbar-button.navbar-button--save',
-  settings: () => '.btn.navbar-button.navbar-button--settings',
+  toolbarItems: (button: string) => `Dashboard navigation bar button ${button}`,
 };
