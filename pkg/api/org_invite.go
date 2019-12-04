@@ -132,9 +132,9 @@ func RevokeInvite(c *m.ReqContext) Response {
 	return Success("Invite revoked")
 }
 
-// GetInviteInfoByCode gets a user invite corresponding to a certain code.
+// GetInviteInfoByCode gets a pending user invite corresponding to a certain code.
 // A response containing an InviteInfo object is returned if the invite is found.
-// If the invite is not found, 404 is returned.
+// If a (pending) invite is not found, 404 is returned.
 func GetInviteInfoByCode(c *m.ReqContext) Response {
 	query := m.GetTempUserByCodeQuery{Code: c.Params(":code")}
 	if err := bus.Dispatch(&query); err != nil {
