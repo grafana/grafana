@@ -262,7 +262,7 @@ export abstract class DataSourceApi<
    */
   languageProvider?: any;
 
-  getVersion?(): Promise<string>;
+  getVersion?(optionalOptions?: any): Promise<string>;
 
   /**
    * Can be optionally implemented to allow datasource to be a source of annotations for dashboard. To be visible
@@ -282,8 +282,8 @@ export interface QueryEditorProps<
   query: TQuery;
   onRunQuery: () => void;
   onChange: (value: TQuery) => void;
-  /*
-   * Contains query response filtered by refId and possible query error
+  /**
+   * Contains query response filtered by refId of QueryResultBase and possible query error
    */
   data?: PanelData;
 }

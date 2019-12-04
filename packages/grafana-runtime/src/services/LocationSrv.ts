@@ -18,8 +18,8 @@ export interface LocationUpdate {
   replace?: boolean;
 }
 
-export type UrlQueryValue = string | number | boolean | string[] | number[] | boolean[];
-export type UrlQueryMap = { [s: string]: UrlQueryValue };
+export type UrlQueryValue = string | number | boolean | string[] | number[] | boolean[] | undefined;
+export type UrlQueryMap = Record<string, UrlQueryValue>;
 
 export interface LocationSrv {
   update(options: LocationUpdate): void;

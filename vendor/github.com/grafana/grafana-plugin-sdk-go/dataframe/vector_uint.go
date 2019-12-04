@@ -22,3 +22,7 @@ func (v *uintVector) At(i int) interface{} {
 func (v *uintVector) Len() int {
 	return len(*v)
 }
+
+func (v *uintVector) PrimitiveType() VectorPType {
+	return VectorPTypeUint64
+}

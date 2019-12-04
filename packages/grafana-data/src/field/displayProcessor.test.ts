@@ -151,7 +151,9 @@ describe('Format value', () => {
   it('should use override decimals', () => {
     const value = 100030303;
     const instance = getDisplayProcessor({ config: { decimals: 2, unit: 'bytes' } });
-    expect(instance(value).text).toEqual('95.40 MiB');
+    const disp = instance(value);
+    expect(disp.text).toEqual('95.40');
+    expect(disp.suffix).toEqual(' MiB');
   });
 
   it('should return mapped value if there are matching value mappings', () => {
@@ -172,25 +174,33 @@ describe('Format value', () => {
   it('with value 1000 and unit short', () => {
     const value = 1000;
     const instance = getDisplayProcessor({ config: { decimals: null, unit: 'short' } });
-    expect(instance(value).text).toEqual('1.000 K');
+    const disp = instance(value);
+    expect(disp.text).toEqual('1.000');
+    expect(disp.suffix).toEqual(' K');
   });
 
   it('with value 1200 and unit short', () => {
     const value = 1200;
     const instance = getDisplayProcessor({ config: { decimals: null, unit: 'short' } });
-    expect(instance(value).text).toEqual('1.200 K');
+    const disp = instance(value);
+    expect(disp.text).toEqual('1.200');
+    expect(disp.suffix).toEqual(' K');
   });
 
   it('with value 1250 and unit short', () => {
     const value = 1250;
     const instance = getDisplayProcessor({ config: { decimals: null, unit: 'short' } });
-    expect(instance(value).text).toEqual('1.250 K');
+    const disp = instance(value);
+    expect(disp.text).toEqual('1.250');
+    expect(disp.suffix).toEqual(' K');
   });
 
   it('with value 10000000 and unit short', () => {
     const value = 1000000;
     const instance = getDisplayProcessor({ config: { decimals: null, unit: 'short' } });
-    expect(instance(value).text).toEqual('1.000 Mil');
+    const disp = instance(value);
+    expect(disp.text).toEqual('1.000');
+    expect(disp.suffix).toEqual(' Mil');
   });
 });
 
@@ -222,7 +232,7 @@ describe('Date display options', () => {
       type: FieldType.time,
       isUtc: true,
       config: {
-        dateDisplayFormat: 'YYYY',
+        unit: 'time:YYYY',
       },
     });
     expect(processor(0).text).toEqual('1970');

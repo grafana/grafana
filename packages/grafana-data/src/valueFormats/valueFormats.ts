@@ -1,12 +1,24 @@
 import { getCategories } from './categories';
 import { DecimalCount } from '../types/displayValue';
+import { toDateTimeValueFormatter } from './dateTimeFormatters';
+import { getOffsetFromSIPrefix, decimalSIPrefix } from './symbolFormatters';
+
+export interface FormattedValue {
+  text: string;
+  prefix?: string;
+  suffix?: string;
+}
+
+export function formattedValueToString(val: FormattedValue): string {
+  return `${val.prefix ?? ''}${val.text}${val.suffix ?? ''}`;
+}
 
 export type ValueFormatter = (
   value: number,
   decimals?: DecimalCount,
   scaledDecimals?: DecimalCount,
-  isUtc?: boolean
-) => string;
+  isUtc?: boolean // TODO: timezone?: string,
+) => FormattedValue;
 
 export interface ValueFormat {
   name: string;
@@ -63,35 +75,42 @@ export function toFixedScaled(
   scaledDecimals: DecimalCount,
   additionalDecimals: number,
   ext?: string
-) {
+): FormattedValue {
   if (scaledDecimals === null || scaledDecimals === undefined) {
-    return toFixed(value, decimals) + ext;
-  } else {
-    return toFixed(value, scaledDecimals + additionalDecimals) + ext;
+    return { text: toFixed(value, decimals), suffix: ext };
   }
-
-  return toFixed(value, decimals) + ext;
+  return {
+    text: toFixed(value, scaledDecimals + additionalDecimals),
+    suffix: ext,
+  };
 }
 
-export function toFixedUnit(unit: string): ValueFormatter {
+export function toFixedUnit(unit: string, asPrefix?: boolean): ValueFormatter {
   return (size: number, decimals?: DecimalCount) => {
     if (size === null) {
-      return '';
+      return { text: '' };
     }
-    return toFixed(size, decimals) + ' ' + unit;
+    const text = toFixed(size, decimals);
+    if (unit) {
+      if (asPrefix) {
+        return { text, prefix: unit };
+      }
+      return { text, suffix: ' ' + unit };
+    }
+    return { text };
   };
 }
 
 // Formatter which scales the unit string geometrically according to the given
 // numeric factor. Repeatedly scales the value down by the factor until it is
 // less than the factor in magnitude, or the end of the array is reached.
-export function scaledUnits(factor: number, extArray: string[]) {
+export function scaledUnits(factor: number, extArray: string[]): ValueFormatter {
   return (size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) => {
     if (size === null) {
-      return '';
+      return { text: '' };
     }
     if (size === Number.NEGATIVE_INFINITY || size === Number.POSITIVE_INFINITY || isNaN(size)) {
-      return size.toLocaleString();
+      return { text: size.toLocaleString() };
     }
 
     let steps = 0;
@@ -102,7 +121,7 @@ export function scaledUnits(factor: number, extArray: string[]) {
       size /= factor;
 
       if (steps >= limit) {
-        return 'NA';
+        return { text: 'NA' };
       }
     }
 
@@ -110,26 +129,29 @@ export function scaledUnits(factor: number, extArray: string[]) {
       decimals = scaledDecimals + 3 * steps;
     }
 
-    return toFixed(size, decimals) + extArray[steps];
+    return { text: toFixed(size, decimals), suffix: extArray[steps] };
   };
 }
 
-export function locale(value: number, decimals: DecimalCount) {
+export function locale(value: number, decimals: DecimalCount): FormattedValue {
   if (value == null) {
-    return '';
+    return { text: '' };
   }
-  return value.toLocaleString(undefined, { maximumFractionDigits: decimals as number });
+  return {
+    text: value.toLocaleString(undefined, { maximumFractionDigits: decimals as number }),
+  };
 }
 
-export function simpleCountUnit(symbol: string) {
+export function simpleCountUnit(symbol: string): ValueFormatter {
   const units = ['', 'K', 'M', 'B', 'T'];
   const scaler = scaledUnits(1000, units);
   return (size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) => {
     if (size === null) {
-      return '';
+      return { text: '' };
     }
-    const scaled = scaler(size, decimals, scaledDecimals);
-    return scaled + ' ' + symbol;
+    const v = scaler(size, decimals, scaledDecimals);
+    v.suffix += ' ' + symbol;
+    return v;
   };
 }
 
@@ -150,7 +172,27 @@ export function getValueFormat(id: string): ValueFormatter {
     buildFormats();
   }
 
-  return index[id];
+  const fmt = index[id];
+  if (!fmt && id) {
+    const idx = id.indexOf(':');
+    if (idx > 0) {
+      const key = id.substring(0, idx);
+      const sub = id.substring(idx + 1);
+      if (key === 'prefix') {
+        return toFixedUnit(sub, true);
+      }
+      if (key === 'time') {
+        return toDateTimeValueFormatter(sub);
+      }
+      if (key === 'si') {
+        const offset = getOffsetFromSIPrefix(sub.charAt(0));
+        const unit = offset === 0 ? sub : sub.substring(1);
+        return decimalSIPrefix(unit, offset);
+      }
+    }
+    return toFixedUnit(id);
+  }
+  return fmt;
 }
 
 export function getValueFormatterIndex(): ValueFormatterIndex {

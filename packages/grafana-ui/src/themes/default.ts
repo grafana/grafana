@@ -99,6 +99,7 @@ const theme: GrafanaThemeCommons = {
     formLabelPadding: '0 0 0 2px',
     formLabelMargin: `0 0 ${SPACING_BASE / 2 + 'px'} 0`,
     formValidationMessagePadding: '4px 8px',
+    formValidationMessageMargin: '4px 0 0 0',
   },
   border: {
     radius: {

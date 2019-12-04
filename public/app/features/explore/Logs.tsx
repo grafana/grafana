@@ -37,7 +37,7 @@ interface Props {
   dedupedRows?: LogRowModel[];
 
   width: number;
-  highlighterExpressions: string[];
+  highlighterExpressions?: string[];
   loading: boolean;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
@@ -57,11 +57,13 @@ interface Props {
 
 interface State {
   showTime: boolean;
+  wrapLogMessage: boolean;
 }
 
 export class Logs extends PureComponent<Props, State> {
   state = {
     showTime: true,
+    wrapLogMessage: true,
   };
 
   onChangeDedup = (dedup: LogsDedupStrategy) => {
@@ -77,6 +79,15 @@ export class Logs extends PureComponent<Props, State> {
     if (target) {
       this.setState({
         showTime: target.checked,
+      });
+    }
+  };
+
+  onChangewrapLogMessage = (event?: React.SyntheticEvent) => {
+    const target = event && (event.target as HTMLInputElement);
+    if (target) {
+      this.setState({
+        wrapLogMessage: target.checked,
       });
     }
   };
@@ -123,7 +134,7 @@ export class Logs extends PureComponent<Props, State> {
       return null;
     }
 
-    const { showTime } = this.state;
+    const { showTime, wrapLogMessage } = this.state;
     const { dedupStrategy } = this.props;
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
@@ -164,6 +175,7 @@ export class Logs extends PureComponent<Props, State> {
         <div className="logs-panel-options">
           <div className="logs-panel-controls">
             <Switch label="Time" checked={showTime} onChange={this.onChangeTime} transparent />
+            <Switch label="Wrap lines" checked={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
             <ToggleButtonGroup label="Dedup" transparent={true}>
               {Object.keys(LogsDedupStrategy).map((dedupType: string, i) => (
                 <ToggleButton
@@ -202,6 +214,7 @@ export class Logs extends PureComponent<Props, State> {
           onClickFilterLabel={onClickFilterLabel}
           onClickFilterOutLabel={onClickFilterOutLabel}
           showTime={showTime}
+          wrapLogMessage={wrapLogMessage}
           timeZone={timeZone}
           getFieldLinks={getFieldLinks}
         />

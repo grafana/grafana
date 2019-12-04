@@ -22,3 +22,7 @@ func (v *nullableStringVector) At(i int) interface{} {
 func (v *nullableStringVector) Len() int {
 	return len(*v)
 }
+
+func (v *nullableStringVector) PrimitiveType() VectorPType {
+	return VectorPTypeNullableString
+}

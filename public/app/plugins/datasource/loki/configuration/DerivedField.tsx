@@ -9,6 +9,7 @@ import { DataSourceSelectItem } from '@grafana/data';
 const getStyles = stylesFactory(() => ({
   row: css`
     display: flex;
+    align-items: baseline;
   `,
   nameField: css`
     flex: 2;
@@ -69,6 +70,9 @@ export const DerivedField = (props: Props) => {
             event.preventDefault();
             onDelete();
           }}
+          className={css`
+            margin-left: 8px;
+          `}
         />
       </div>
 

@@ -1,10 +1,11 @@
-import LokiDatasource from './datasource';
+import LokiDatasource, { RangeQueryOptions } from './datasource';
 import { LokiQuery, LokiResultType, LokiResponse, LokiLegacyStreamResponse } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import { AnnotationQueryRequest, DataSourceApi, DataFrame, dateTime } from '@grafana/data';
+import { AnnotationQueryRequest, DataSourceApi, DataFrame, dateTime, TimeRange } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/custom_variable';
+import { makeMockLokiDatasource } from './mocks';
 import { ExploreMode } from 'app/types';
 import { of } from 'rxjs';
 import omit from 'lodash/omit';
@@ -302,6 +303,23 @@ describe('LokiDatasource', () => {
     });
   });
 
+  describe('when creating a range query', () => {
+    const ds = new LokiDatasource(instanceSettings, backendSrv, templateSrvMock);
+    const query: LokiQuery = { expr: 'foo', refId: 'bar' };
+
+    // Loki v1 API has an issue with float step parameters, can be removed when API is fixed
+    it('should produce an integer step parameter', () => {
+      const range: TimeRange = {
+        from: dateTime(0),
+        to: dateTime(1e9 + 1),
+        raw: { from: '0', to: '1000000001' },
+      };
+      // Odd timerange/interval combination that would lead to a float step
+      const options: RangeQueryOptions = { range, intervalMs: 2000 };
+      expect(Number.isInteger(ds.createRangeQuery(query, options).step)).toBeTruthy();
+    });
+  });
+
   describe('annotationQuery', () => {
     it('should transform the loki data to annotation response', async () => {
       const ds = new LokiDatasource(instanceSettings, backendSrv, templateSrvMock);
@@ -338,6 +356,57 @@ describe('LokiDatasource', () => {
 
       expect(res[1].text).toBe('hello 2');
       expect(res[1].tags).toEqual(['value2']);
+    });
+  });
+
+  describe('metricFindQuery', () => {
+    const ds = new LokiDatasource(instanceSettings, backendSrv, templateSrvMock);
+    const mocks = makeMetadataAndVersionsMocks();
+
+    mocks.forEach((mock, index) => {
+      it(`should return label names for Loki v${index}`, async () => {
+        ds.getVersion = mock.getVersion;
+        ds.metadataRequest = mock.metadataRequest;
+        const query = 'label_names()';
+        const res = await ds.metricFindQuery(query);
+        expect(res[0].text).toEqual('label1');
+        expect(res[1].text).toEqual('label2');
+        expect(res.length).toBe(2);
+      });
+    });
+
+    mocks.forEach((mock, index) => {
+      it(`should return label names for Loki v${index}`, async () => {
+        ds.getVersion = mock.getVersion;
+        ds.metadataRequest = mock.metadataRequest;
+        const query = 'label_names()';
+        const res = await ds.metricFindQuery(query);
+        expect(res[0].text).toEqual('label1');
+        expect(res[1].text).toEqual('label2');
+        expect(res.length).toBe(2);
+      });
+    });
+
+    mocks.forEach((mock, index) => {
+      it(`should return label values for Loki v${index}`, async () => {
+        ds.getVersion = mock.getVersion;
+        ds.metadataRequest = mock.metadataRequest;
+        const query = 'label_values(label1)';
+        const res = await ds.metricFindQuery(query);
+        expect(res[0].text).toEqual('value1');
+        expect(res[1].text).toEqual('value2');
+        expect(res.length).toBe(2);
+      });
+    });
+
+    mocks.forEach((mock, index) => {
+      it(`should return empty array when incorrect query for Loki v${index}`, async () => {
+        ds.getVersion = mock.getVersion;
+        ds.metadataRequest = mock.metadataRequest;
+        const query = 'incorrect_query';
+        const res = await ds.metricFindQuery(query);
+        expect(res.length).toBe(0);
+      });
     });
   });
 });
@@ -400,4 +469,14 @@ function makeAnnotationQueryRequest(): AnnotationQueryRequest<LokiQuery> {
     },
     rangeRaw: timeRange,
   };
+}
+
+function makeMetadataAndVersionsMocks() {
+  const mocks = [];
+  for (let i = 0; i <= 1; i++) {
+    const mock: LokiDatasource = makeMockLokiDatasource({ label1: ['value1', 'value2'], label2: ['value3', 'value4'] });
+    mock.getVersion = jest.fn().mockReturnValue(`v${i}`);
+    mocks.push(mock);
+  }
+  return mocks;
 }

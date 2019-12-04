@@ -163,7 +163,7 @@ export function changeQuery(
   exploreId: ExploreId,
   query: DataQuery,
   index: number,
-  override: boolean
+  override = false
 ): ThunkResult<void> {
   return (dispatch, getState) => {
     // Null query means reset
@@ -390,8 +390,8 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi, or
 export function modifyQueries(
   exploreId: ExploreId,
   modification: QueryFixAction,
-  index: number,
-  modifier: any
+  modifier: any,
+  index?: number
 ): ThunkResult<void> {
   return dispatch => {
     dispatch(modifyQueriesAction({ exploreId, modification, index, modifier }));

@@ -31,7 +31,7 @@ import { LiveTailControls } from './useLiveTailControls';
 import { getLinksFromLogsField } from '../panel/panellinks/linkSuppliers';
 
 interface LogsContainerProps {
-  datasourceInstance: DataSourceApi | null;
+  datasourceInstance?: DataSourceApi;
   exploreId: ExploreId;
   loading: boolean;
 
@@ -82,7 +82,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   getLogRowContext = async (row: LogRowModel, options?: any): Promise<any> => {
     const { datasourceInstance } = this.props;
 
-    if (datasourceInstance) {
+    if (datasourceInstance?.getLogRowContext) {
       return datasourceInstance.getLogRowContext(row, options);
     }
 

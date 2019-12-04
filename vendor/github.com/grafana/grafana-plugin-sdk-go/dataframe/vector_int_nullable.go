@@ -18,3 +18,7 @@ func (v *nullableIntVector) Append(val interface{}) {
 func (v *nullableIntVector) At(i int) interface{} { return (*v)[i] }
 
 func (v *nullableIntVector) Len() int { return len(*v) }
+
+func (v *nullableIntVector) PrimitiveType() VectorPType {
+	return VectorPTypeNullableInt64
+}

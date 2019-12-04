@@ -177,7 +177,7 @@ Hipchat | `hipchat` | yes, external only | no
 Kafka | `kafka` | yes, external only | no
 Line | `line` | yes, external only | no
 Microsoft Teams | `teams` | yes, external only | no
-OpsGenie | `opsgenie` | yes, external only | no
+OpsGenie | `opsgenie` | yes, external only | yes
 Pagerduty | `pagerduty` | yes, external only | no
 Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
 Pushover | `pushover` | yes | no
