@@ -73,7 +73,7 @@ export const LegendTable: React.FunctionComponent<LegendTableProps> = ({
             itemRenderer(item, index)
           ) : (
             <tr key={`${item.label}-${index}`}>
-              <td>{item.label}XXXXX</td>
+              <td>{item.label}</td>
             </tr>
           );
         })}
