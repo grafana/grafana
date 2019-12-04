@@ -13,8 +13,8 @@ interface EchoConfig {
 
 /**
  * Echo is a service for collecting metrics from Grafana client-app
- * It collects metrics, distributes them across registered consumers and flushes once per configured interval
- * It's up to the registered consumer to decide what to do with a given type of metric
+ * It collects metrics, distributes them across registered backend and flushes once per configured interval
+ * It's up to the registered backend to decide what to do with a given type of metric
  */
 export class Echo implements EchoSrv {
   private metrics: KeyValue<CircularVector> = {};
@@ -24,6 +24,7 @@ export class Echo implements EchoSrv {
     buffersSize: 100,
     debug: false,
   };
+
   private consumers: EchoConsumer[] = [];
   // meta data added to every metric consumed
   private meta: EchoMeta;
@@ -55,11 +56,14 @@ export class Echo implements EchoSrv {
     this.consumers.push(consumer);
   };
 
-  consumeEvent = <T extends EchoEvent>(event: Omit<T, 'meta' | 'ts'>) => {
+  consumeEvent = <T extends EchoEvent>(event: Omit<T, 'meta' | 'ts'>, _meta?: {}) => {
     const meta = this.getMeta();
     const metric = {
       ...event,
-      meta,
+      meta: {
+        ...meta,
+        ..._meta,
+      },
       ts: performance.now(),
     };
 

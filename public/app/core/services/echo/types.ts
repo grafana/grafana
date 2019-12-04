@@ -35,6 +35,6 @@ export interface EchoConsumerCtor<T extends EchoEvent, O> {
 export interface EchoSrv {
   flush(): void;
   addConsumer(consumer: EchoConsumer): void;
-  consumeEvent<T extends EchoEvent>(event: Omit<T, 'meta' | 'ts'>): void;
+  consumeEvent<T extends EchoEvent>(event: Omit<T, 'meta' | 'ts'>, meta?: {}): void;
   setMeta(meta: Partial<EchoMeta>): void;
 }
