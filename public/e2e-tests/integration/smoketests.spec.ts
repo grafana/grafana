@@ -28,5 +28,7 @@ e2eScenario({
     Pages.Panels.Panel.title('Panel Title').click();
 
     Pages.Panels.Panel.headerItems('Share').click();
+
+    Pages.SharePanelModal.linkToRenderedImage().click();
   },
 });

@@ -13,6 +13,7 @@ import { TestData } from './testdata';
 import { Graph } from './graph';
 import { SaveDashboardModal } from './saveDashboardModal';
 import { Panel } from './panel';
+import { SharePanelModal } from './sharePanelModal';
 
 export const Selectors = {
   Login,
@@ -26,6 +27,7 @@ export const Selectors = {
   SaveDashboardAsModal,
   SaveDashboardModal,
   DashboardSettings,
+  SharePanelModal,
   Panels: {
     Panel,
     EditPanel,
