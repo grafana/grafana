@@ -68,7 +68,9 @@ describe('LokiDatasource', () => {
         range,
       };
 
-      ds.createRangeQuery(target, options);
+      const req = ds.createRangeQuery(target, options);
+      expect(req.start).toBeDefined();
+      expect(req.end).toBeDefined();
       expect(adjustIntervalSpy).toHaveBeenCalledWith(1000, expect.anything());
     });
 
@@ -81,7 +83,9 @@ describe('LokiDatasource', () => {
         intervalMs: 2000,
       };
 
-      ds.createRangeQuery(target, options);
+      const req = ds.createRangeQuery(target, options);
+      expect(req.start).toBeDefined();
+      expect(req.end).toBeDefined();
       expect(adjustIntervalSpy).toHaveBeenCalledWith(2000, expect.anything());
     });
   });
