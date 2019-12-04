@@ -1,4 +1,4 @@
-import { locale, scaledUnits, simpleCountUnit, toFixed, toFixedUnit, ValueFormatCategory } from './valueFormats';
+import { locale, scaledUnits, simpleCountUnit, toFixedUnit, ValueFormatCategory } from './valueFormats';
 import {
   dateTimeAsIso,
   dateTimeAsUS,
@@ -24,7 +24,7 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Misc',
     formats: [
-      { name: 'none', id: 'none', fn: toFixed },
+      { name: 'none', id: 'none', fn: toFixedUnit('') },
       {
         name: 'short',
         id: 'short',
@@ -107,10 +107,10 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Rubles (₽)', id: 'currencyRUB', fn: currency('₽') },
       { name: 'Hryvnias (₴)', id: 'currencyUAH', fn: currency('₴') },
       { name: 'Real (R$)', id: 'currencyBRL', fn: currency('R$') },
-      { name: 'Danish Krone (kr)', id: 'currencyDKK', fn: currency('kr') },
-      { name: 'Icelandic Króna (kr)', id: 'currencyISK', fn: currency('kr') },
-      { name: 'Norwegian Krone (kr)', id: 'currencyNOK', fn: currency('kr') },
-      { name: 'Swedish Krona (kr)', id: 'currencySEK', fn: currency('kr') },
+      { name: 'Danish Krone (kr)', id: 'currencyDKK', fn: currency('kr', true) },
+      { name: 'Icelandic Króna (kr)', id: 'currencyISK', fn: currency('kr', true) },
+      { name: 'Norwegian Krone (kr)', id: 'currencyNOK', fn: currency('kr', true) },
+      { name: 'Swedish Krona (kr)', id: 'currencySEK', fn: currency('kr', true) },
       { name: 'Czech koruna (czk)', id: 'currencyCZK', fn: currency('czk') },
       { name: 'Swiss franc (CHF)', id: 'currencyCHF', fn: currency('CHF') },
       { name: 'Polish Złoty (PLN)', id: 'currencyPLN', fn: currency('PLN') },
@@ -292,8 +292,8 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Exposure (C/kg)', id: 'radexpckg', fn: decimalSIPrefix('C/kg') },
       { name: 'roentgen (R)', id: 'radr', fn: decimalSIPrefix('R') },
       { name: 'Sievert/hour (Sv/h)', id: 'radsvh', fn: decimalSIPrefix('Sv/h') },
-      { name: 'milliSievert/hour (mSv/h)', id: 'radmsvh', fn: decimalSIPrefix('mSv/h', -1) },
-      { name: 'microSievert/hour (µSv/h)', id: 'radusvh', fn: decimalSIPrefix('µSv/h', -2) },
+      { name: 'milliSievert/hour (mSv/h)', id: 'radmsvh', fn: decimalSIPrefix('Sv/h', -1) },
+      { name: 'microSievert/hour (µSv/h)', id: 'radusvh', fn: decimalSIPrefix('Sv/h', -2) },
     ],
   },
   {

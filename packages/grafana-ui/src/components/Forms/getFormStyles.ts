@@ -7,20 +7,22 @@ import { getButtonStyles, ButtonVariant } from './Button';
 import { ButtonSize } from '../Button/types';
 import { getInputStyles } from './Input/Input';
 import { getSwitchStyles } from './Switch';
+import { getCheckboxStyles } from './Checkbox';
 
 export const getFormStyles = stylesFactory(
   (theme: GrafanaTheme, options: { variant: ButtonVariant; size: ButtonSize; invalid: boolean }) => {
     return {
-      ...getLabelStyles(theme),
-      ...getLegendStyles(theme),
-      ...getFieldValidationMessageStyles(theme),
-      ...getButtonStyles({
+      label: getLabelStyles(theme),
+      legend: getLegendStyles(theme),
+      fieldValidationMessage: getFieldValidationMessageStyles(theme),
+      button: getButtonStyles({
         theme,
         variant: options.variant,
         size: options.size,
       }),
-      ...getInputStyles({ theme, invalid: options.invalid }),
-      ...getSwitchStyles(theme),
+      input: getInputStyles({ theme, invalid: options.invalid }),
+      switch: getSwitchStyles(theme),
+      checkbox: getCheckboxStyles(theme),
     };
   }
 );

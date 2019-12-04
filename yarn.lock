@@ -4425,10 +4425,10 @@ anymatch@^2.0.0:
     micromatch "^3.1.4"
     normalize-path "^2.1.1"
 
-apache-arrow@0.15.0:
-  version "0.15.0"
-  resolved "https://registry.yarnpkg.com/apache-arrow/-/apache-arrow-0.15.0.tgz#aa34ba635c5e73579566be4d25008c412dae31b9"
-  integrity sha512-TLF7Bq7hPolQgFUsKVvYk2Qq7axg8k8yQ4J1uCLitkiUotdYACqN/j3ZE03cVJvSnXRKmqS2TCIjN4h7rOJKEQ==
+apache-arrow@0.15.1:
+  version "0.15.1"
+  resolved "https://registry.yarnpkg.com/apache-arrow/-/apache-arrow-0.15.1.tgz#136c03e18c3fa2617b41999608e7e685b0966147"
+  integrity sha512-3H+sC789nWn8JDnMwfd2j19NJ4gMcdtbpp2Haa22wBoDGUbbA5FgD2OqfE9Mr4yPlJZFWVJDw7C1hgJo2UolxA==
   dependencies:
     "@types/flatbuffers" "^1.9.1"
     "@types/node" "^12.0.4"

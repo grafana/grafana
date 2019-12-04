@@ -11,6 +11,7 @@ import {
   ColorPicker,
   SeriesColorPickerPopoverWithTheme,
   SecretFormField,
+  UnitPicker,
   DataLinksEditor,
   DataSourceHttpSettings,
 } from '@grafana/ui';
@@ -60,6 +61,11 @@ export function registerAngularDirectives() {
     'series',
     'onColorChange',
     'onToggleAxis',
+  ]);
+  react2AngularDirective('unitPicker', UnitPicker, [
+    'value',
+    'width',
+    ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
   react2AngularDirective('metricSelect', MetricSelect, [
     'options',

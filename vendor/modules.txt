@@ -17,7 +17,7 @@ github.com/apache/arrow/go/arrow/internal/debug
 github.com/apache/arrow/go/arrow/internal/flatbuf
 github.com/apache/arrow/go/arrow/ipc
 github.com/apache/arrow/go/arrow/memory
-# github.com/aws/aws-sdk-go v1.25.6
+# github.com/aws/aws-sdk-go v1.25.38
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/awserr
 github.com/aws/aws-sdk-go/aws/awsutil

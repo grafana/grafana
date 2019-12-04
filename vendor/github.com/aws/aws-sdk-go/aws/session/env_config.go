@@ -1,12 +1,14 @@
 package session
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/defaults"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 )
 
 // EnvProviderName provides a name of the provider when config is loaded from environment.
@@ -125,6 +127,20 @@ type envConfig struct {
 	//
 	//  AWS_ROLE_SESSION_NAME=session_name
 	RoleSessionName string
+
+	// Specifies the STS Regional Endpoint flag for the SDK to resolve the endpoint
+	// for a service.
+	//
+	// AWS_STS_REGIONAL_ENDPOINTS=regional
+	// This can take value as `regional` or `legacy`
+	STSRegionalEndpoint endpoints.STSRegionalEndpoint
+
+	// Specifies the S3 Regional Endpoint flag for the SDK to resolve the
+	// endpoint for a service.
+	//
+	// AWS_S3_US_EAST_1_REGIONAL_ENDPOINT=regional
+	// This can take value as `regional` or `legacy`
+	S3UsEast1RegionalEndpoint endpoints.S3UsEast1RegionalEndpoint
 }
 
 var (
@@ -179,6 +195,12 @@ var (
 	roleSessionNameEnvKey = []string{
 		"AWS_ROLE_SESSION_NAME",
 	}
+	stsRegionalEndpointKey = []string{
+		"AWS_STS_REGIONAL_ENDPOINTS",
+	}
+	s3UsEast1RegionalEndpoint = []string{
+		"AWS_S3_US_EAST_1_REGIONAL_ENDPOINT",
+	}
 )
 
 // loadEnvConfig retrieves the SDK's environment configuration.
@@ -187,7 +209,7 @@ var (
 // If the environment variable `AWS_SDK_LOAD_CONFIG` is set to a truthy value
 // the shared SDK config will be loaded in addition to the SDK's specific
 // configuration values.
-func loadEnvConfig() envConfig {
+func loadEnvConfig() (envConfig, error) {
 	enableSharedConfig, _ := strconv.ParseBool(os.Getenv("AWS_SDK_LOAD_CONFIG"))
 	return envConfigLoad(enableSharedConfig)
 }
@@ -198,11 +220,11 @@ func loadEnvConfig() envConfig {
 // Loads the shared configuration in addition to the SDK's specific configuration.
 // This will load the same values as `loadEnvConfig` if the `AWS_SDK_LOAD_CONFIG`
 // environment variable is set.
-func loadSharedEnvConfig() envConfig {
+func loadSharedEnvConfig() (envConfig, error) {
 	return envConfigLoad(true)
 }
 
-func envConfigLoad(enableSharedConfig bool) envConfig {
+func envConfigLoad(enableSharedConfig bool) (envConfig, error) {
 	cfg := envConfig{}
 
 	cfg.EnableSharedConfig = enableSharedConfig
@@ -264,12 +286,33 @@ func envConfigLoad(enableSharedConfig bool) envConfig {
 
 	cfg.CustomCABundle = os.Getenv("AWS_CA_BUNDLE")
 
-	return cfg
+	var err error
+	// STS Regional Endpoint variable
+	for _, k := range stsRegionalEndpointKey {
+		if v := os.Getenv(k); len(v) != 0 {
+			cfg.STSRegionalEndpoint, err = endpoints.GetSTSRegionalEndpoint(v)
+			if err != nil {
+				return cfg, fmt.Errorf("failed to load, %v from env config, %v", k, err)
+			}
+		}
+	}
+
+	// S3 Regional Endpoint variable
+	for _, k := range s3UsEast1RegionalEndpoint {
+		if v := os.Getenv(k); len(v) != 0 {
+			cfg.S3UsEast1RegionalEndpoint, err = endpoints.GetS3UsEast1RegionalEndpoint(v)
+			if err != nil {
+				return cfg, fmt.Errorf("failed to load, %v from env config, %v", k, err)
+			}
+		}
+	}
+
+	return cfg, nil
 }
 
 func setFromEnvVal(dst *string, keys []string) {
 	for _, k := range keys {
-		if v := os.Getenv(k); len(v) > 0 {
+		if v := os.Getenv(k); len(v) != 0 {
 			*dst = v
 			break
 		}

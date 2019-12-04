@@ -135,11 +135,12 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 
 	// handle http shutdown on server context done
 	go func() {
+		defer wg.Done()
+
 		<-ctx.Done()
 		if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
 			hs.log.Error("Failed to shutdown server", "error", err)
 		}
-		wg.Done()
 	}()
 
 	switch setting.Protocol {
@@ -284,7 +285,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	for _, route := range plugins.StaticRoutes {
 		pluginRoute := path.Join("/public/plugins/", route.PluginId)
 		hs.log.Debug("Plugins: Adding route", "route", pluginRoute, "dir", route.Directory)
-		hs.mapStatic(hs.macaron, route.Directory, "", pluginRoute)
+		hs.mapStatic(m, route.Directory, "", pluginRoute)
 	}
 
 	hs.mapStatic(m, setting.StaticRootPath, "build", "public/build")
