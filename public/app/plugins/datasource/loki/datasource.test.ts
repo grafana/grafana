@@ -50,6 +50,42 @@ describe('LokiDatasource', () => {
     replace: (a: string) => a,
   } as unknown) as TemplateSrv;
 
+  describe('when creating range query', () => {
+    let ds: LokiDatasource;
+    let adjustIntervalSpy: jest.SpyInstance;
+    beforeEach(() => {
+      const customData = { ...(instanceSettings.jsonData || {}), maxLines: 20 };
+      const customSettings = { ...instanceSettings, jsonData: customData };
+      ds = new LokiDatasource(customSettings, backendSrv, templateSrvMock);
+      adjustIntervalSpy = jest.spyOn(ds, 'adjustInterval');
+    });
+
+    it('should use default intervalMs if one is not provided', () => {
+      const target = { expr: '{job="grafana"}', refId: 'B' };
+      const raw = { from: 'now', to: 'now-1h' };
+      const range = { from: dateTime(), to: dateTime(), raw: raw };
+      const options = {
+        range,
+      };
+
+      ds.createRangeQuery(target, options);
+      expect(adjustIntervalSpy).toHaveBeenCalledWith(1000, expect.anything());
+    });
+
+    it('should use provided intervalMs', () => {
+      const target = { expr: '{job="grafana"}', refId: 'B' };
+      const raw = { from: 'now', to: 'now-1h' };
+      const range = { from: dateTime(), to: dateTime(), raw: raw };
+      const options = {
+        range,
+        intervalMs: 2000,
+      };
+
+      ds.createRangeQuery(target, options);
+      expect(adjustIntervalSpy).toHaveBeenCalledWith(2000, expect.anything());
+    });
+  });
+
   describe('when running range query with fallback', () => {
     let ds: LokiDatasource;
     beforeEach(() => {
