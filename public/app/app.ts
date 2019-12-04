@@ -36,13 +36,14 @@ _.move = (array: [], fromIndex: number, toIndex: number) => {
 import { coreModule, angularModules } from 'app/core/core_module';
 import { registerAngularDirectives } from 'app/core/core';
 import { setupAngularRoutes } from 'app/routes/routes';
-import { setEchoSrv, setEchoMeta, registerEchoBackend } from '@grafana/runtime';
+import { setEchoSrv, registerEchoBackend } from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 
 import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
+import { MetaAnalyticsBackend } from './core/services/echo/backends/MetaAnalyticsBackend';
 
 // import symlinked extensions
 const extensionsIndex = (require as any).context('.', true, /extensions\/index.ts/);
@@ -184,6 +185,7 @@ export class GrafanaApp {
     });
 
     registerEchoBackend(new PerformanceBackend({}));
+    registerEchoBackend(new MetaAnalyticsBackend({ url: 'http://localhost:8089' }));
 
     window.addEventListener('DOMContentLoaded', () => {
       reportPerformance('dcl', Math.round(performance.now()));

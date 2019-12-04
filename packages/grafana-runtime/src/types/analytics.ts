@@ -1,4 +1,7 @@
+import { EchoEvent, EchoEventType } from '../services/EchoSrv';
+
 export interface MetaAnalyticsEventPayload {
+  eventName: string;
   dashboardId?: number;
   dashboardUid?: string;
   dashboardName?: string;
@@ -12,10 +15,4 @@ export interface MetaAnalyticsEventPayload {
   dataSize?: number;
 }
 
-export interface PerformanceEvent extends EchoEvent<EchoEventType.Performance, PerformanceEventPayload> {}
-
-reporteMA = (payload, meta) => {
-  getEchoSrv().addEvent({
-    type: 'metaanal',
-  });
-};
+export interface MetaAnalyticsEvent extends EchoEvent<EchoEventType.MetaAnalytics, MetaAnalyticsEventPayload> {}

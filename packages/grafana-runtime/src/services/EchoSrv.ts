@@ -26,7 +26,7 @@ export interface EchoBackend<T extends EchoEvent = any, O = any> {
 }
 
 export interface EchoEvent<T extends EchoEventType = any, P = any> {
-  type: T;
+  type: EchoEventType;
   payload: P;
   meta: EchoMeta;
 }

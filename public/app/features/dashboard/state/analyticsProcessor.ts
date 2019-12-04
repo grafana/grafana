@@ -1,10 +1,8 @@
-import { appEvents } from 'app/core/app_events';
-import { contextSrv } from 'app/core/services/context_srv';
 import { getDashboardSrv } from '../services/DashboardSrv';
 
 import { PanelData, LoadingState, DataSourceApi } from '@grafana/data';
 
-import { getEchoSrv, MetaAnalyticsEvent } from '@grafana/runtime';
+import { reportMetaAnalytics, MetaAnalyticsEventPayload } from '@grafana/runtime';
 
 export function getAnalyticsProcessor(datasource: DataSourceApi) {
   let done = false;
@@ -18,21 +16,17 @@ export function getAnalyticsProcessor(datasource: DataSourceApi) {
       return;
     }
 
-    const eventData: DataRequestAnalyticsEvent = {
-      userId: contextSrv.user.id,
-      userLogin: contextSrv.user.login,
-      userSignedIn: contextSrv.user.isSignedIn,
-      timestamp: new Date().getTime(),
+    const eventData: MetaAnalyticsEventPayload = {
       datasourceName: datasource.name,
       datasourceId: datasource.id,
       panelId: data.request.panelId,
       dashboardId: data.request.dashboardId,
-      app: 'dashboard',
-      count: 1,
+      // app: 'dashboard',
+      // count: 1,
       dataSize: 0,
-      requestMs: data.request.endTime - data.request.startTime,
+      duration: data.request.endTime - data.request.startTime,
       eventName: 'data-request',
-      sessionId: '',
+      // sessionId: '',
     };
 
     // enrich with dashboard info
@@ -53,8 +47,7 @@ export function getAnalyticsProcessor(datasource: DataSourceApi) {
       eventData.error = data.error.message;
     }
 
-    console.log('analytics event', eventData);
-    appEvents.emit(dataRequestAnalyticsEvent, eventData);
+    reportMetaAnalytics(eventData);
 
     // this done check is to make sure we do not double emit events in case
     // there are multiple responses with done state

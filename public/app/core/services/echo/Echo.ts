@@ -21,7 +21,6 @@ export class Echo implements EchoSrv {
 
   private backends: EchoBackend[] = [];
   // meta data added to every event collected
-  private meta: EchoMeta;
 
   constructor(config?: Partial<EchoConfig>) {
     this.config = {
@@ -70,7 +69,7 @@ export class Echo implements EchoSrv {
 
   getMeta = (): EchoMeta => {
     return {
-      ...this.meta,
+      sessionId: '',
       userId: contextSrv.user.id,
       userLogin: contextSrv.user.login,
       userSignedIn: contextSrv.user.isSignedIn,
