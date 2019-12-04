@@ -84,9 +84,9 @@ sudo apt-get update
 sudo apt-get install grafana
 ```
 
-#### Upgrade from binary tar file
+#### Upgrade from binary .tar file
 
-If you downloaded the binary tar package, then you can just download and extract a new package
+If you downloaded the binary .tar package, then you can just download and extract a new package
 and overwrite all your existing files. However, this might overwrite your config changes. 
 
 We recommend that you save your custom config changes in a file named `<grafana_install_dir>/conf/custom.ini`.

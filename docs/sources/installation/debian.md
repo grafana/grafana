@@ -13,20 +13,9 @@ weight = 200
 
 # Install on Debian or Ubuntu
 
-This page explains what the installation package does, how to install Grafana dependencies, download and install Grafana, and then get the service up and running on your system.
+This page explains how to install Grafana dependencies, download and install Grafana, get the service up and running on your system, and the package details.
 
 **Note on upgrading:** While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing installation.
-
-## Package details
-
-- Installs binary to `/usr/sbin/grafana-server`
-- Installs Init.d script to `/etc/init.d/grafana-server`
-- Creates default file (environment vars) to `/etc/default/grafana-server`
-- Installs configuration file to `/etc/grafana/grafana.ini`
-- Installs systemd service (if systemd is available) name `grafana-server.service`
-- The default configuration sets the log file at `/var/log/grafana/grafana.log`
-- The default configuration specifies an sqlite3 db at `/var/lib/grafana/grafana.db`
-- Installs HTML/JS/CSS and other Grafana files at `/usr/share/grafana`
 
 ## 1. Download and install
 
@@ -36,7 +25,15 @@ You can install Grafana using an APT repository, by downloading a .deb package, 
 
 ### Install from APT repository 
 
-The command `add-apt-repository` is not a default app on Debian 9 and requires you to run:
+On some older versions of Ubuntu and Debian you may need to install the
+`apt-transport-https` package which is needed to fetch packages over
+HTTPS.
+
+```bash
+sudo apt-get install -y apt-transport-https
+```
+
+Install any missing dependencies:
 
 ```bash
 sudo apt-get install -y software-properties-common
@@ -65,14 +62,6 @@ Update your APT repositories and install Grafana:
 ```bash
 sudo apt-get update
 sudo apt-get install grafana
-```
-
-On some older versions of Ubuntu and Debian you may need to install the
-`apt-transport-https` package which is needed to fetch packages over
-HTTPS.
-
-```bash
-sudo apt-get install -y apt-transport-https
 ```
 
 ### Install .deb package
@@ -152,6 +141,17 @@ Start Grafana by running:
 ```bash
 ./bin/grafana-server web
 ```
+
+## Package details
+
+- Installs binary to `/usr/sbin/grafana-server`
+- Installs Init.d script to `/etc/init.d/grafana-server`
+- Creates default file (environment vars) to `/etc/default/grafana-server`
+- Installs configuration file to `/etc/grafana/grafana.ini`
+- Installs systemd service (if systemd is available) name `grafana-server.service`
+- The default configuration sets the log file at `/var/log/grafana/grafana.log`
+- The default configuration specifies an sqlite3 db at `/var/lib/grafana/grafana.db`
+- Installs HTML/JS/CSS and other Grafana files at `/usr/share/grafana`
 
 ## Next steps
 

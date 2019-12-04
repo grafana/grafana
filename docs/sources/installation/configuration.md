@@ -31,8 +31,6 @@ A common problem is forgetting to uncomment a line in the `custom.ini` (or `graf
 
 **Note:** If you have installed Grafana using the `deb` or `rpm` packages, then your configuration file is located at `/etc/grafana/grafana.ini` and a separate `custom.ini` is not used. This path is specified in the Grafana init.d script using `--config` file parameter.
 
-**Debian and Ubuntu:** When you upgrade Grafana, the default `grafana.ini` is overwritten. We recommend that you save your custom config changes in a file named `<grafana_install_dir>/conf/custom.ini`. This allows you to upgrade Grafana without risking losing your configuration changes.
-
 **macOS:** By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`.
 
 ## Using environment variables
