@@ -1,3 +1,3 @@
 export const AddDashboard = {
-  ctaButtons: 'Add Panel Widget CTA Button',
+  ctaButtons: (text: string) => `Add Panel Widget CTA Button ${text}`,
 };

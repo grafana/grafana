@@ -138,7 +138,7 @@ export class AddPanelWidget extends React.Component<Props, State> {
           href="#"
           onClick={onClick}
           className="add-panel-widget__link btn btn-inverse"
-          aria-label={Selectors.AddDashboard.ctaButtons}
+          aria-label={Selectors.AddDashboard.ctaButtons(text)}
         >
           <div className="add-panel-widget__icon">
             <i className={`gicon gicon-${icon}`} />

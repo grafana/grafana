@@ -9,19 +9,12 @@ e2eScenario({
   skipScenario: false,
   scenario: ({ dataSourceName, dashboardTitle, dashboardUid }: ScenarioContext) => {
     Pages.AddDashboard.visit();
-    Pages.AddDashboard.ctaButtons()
-      .first()
-      .click();
+    Pages.AddDashboard.ctaButtons('Add Query').click();
 
-    Pages.Panels.EditPanel.tabItems()
-      .first()
-      .click();
+    Pages.Panels.EditPanel.tabItems('Queries').click();
     Pages.Panels.DataSource.TestData.QueryTab.scenarioSelect().select('CSV Metric Values');
 
-    Pages.Panels.EditPanel.tabItems()
-      .first()
-      .next()
-      .click();
+    Pages.Panels.EditPanel.tabItems('Visualization').click();
 
     Pages.Panels.Visualization.Graph.VisualizationTab.xAxisSection()
       .contains('Show')

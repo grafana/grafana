@@ -1,8 +1,9 @@
 import { Selector } from './selector';
 import { Url } from './url';
 
+export type SelectorFunction = (text?: string) => Cypress.Chainable<JQuery<HTMLElement>>;
 export type Selectors = Record<string, string | Function>;
-export type PageObjects<S> = { [P in keyof S]: () => Cypress.Chainable<JQuery<HTMLElement>> };
+export type PageObjects<S> = { [P in keyof S]: SelectorFunction };
 export type Visit = { visit: () => Cypress.Chainable<Window> };
 export type PageFactory<S> = Visit & PageObjects<S>;
 
@@ -24,7 +25,12 @@ export const pageFactory = <S extends Selectors>({ url, selectors }: PageFactory
     }
     if (typeof value === 'function') {
       // @ts-ignore
-      pageObjects[key] = () => cy.get(value());
+      pageObjects[key] = (text?: string) => {
+        if (!text) {
+          return cy.get(value());
+        }
+        return cy.get(Selector.fromAriaLabel(value(text)));
+      };
     }
   });
 

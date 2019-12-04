@@ -115,12 +115,7 @@ export const mapStateToProps = (state: StoreState) => getActiveTabAndTabs(state.
 
 const mapDispatchToProps = { refreshPanelEditor, panelEditorCleanUp, changePanelEditorTab };
 
-export const PanelEditor = hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(UnConnectedPanelEditor)
-);
+export const PanelEditor = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedPanelEditor));
 
 interface TabItemParams {
   tab: PanelEditorTab;
@@ -136,7 +131,7 @@ function TabItem({ tab, activeTab, onClick }: TabItemParams) {
 
   return (
     <div className="panel-editor-tabs__item" onClick={() => onClick(tab)}>
-      <a className={tabClasses} aria-label={Selectors.Panels.EditPanel.tabItems}>
+      <a className={tabClasses} aria-label={Selectors.Panels.EditPanel.tabItems(tab.text)}>
         <Tooltip content={`${tab.text}`} placement="auto">
           <i className={`gicon gicon-${tab.id}${activeTab === tab.id ? '-active' : ''}`} />
         </Tooltip>

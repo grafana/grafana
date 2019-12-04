@@ -1,3 +1,3 @@
 export const EditPanel = {
-  tabItems: 'Edit panel tab item',
+  tabItems: (text: string) => `Edit panel tab item ${text}`,
 };
