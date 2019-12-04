@@ -959,35 +959,6 @@ jobs:
       - store_artifacts:
           path: ./dist
 
-  trigger-docs-update:
-    docker:
-      - image: circleci/python:3.6.8
-    steps:
-      - checkout
-      - run:
-          name: ci job started
-          command: './scripts/ci-job-started.sh'
-      - run:
-          name: Trigger Docs update
-          command: |
-            if git diff --name-only HEAD^ | grep -q "^docs"; then
-              echo "Build URL:"
-              curl -s -u "$DOCS_CIRCLE_TOKEN:" \
-                -d build_parameters[CIRCLE_JOB]=pull-submodule-changes \
-                https://circleci.com/api/v1.1/project/github/grafana/docs.grafana.com/tree/master \
-              | jq .build_url
-            else
-              echo "-- no changes to docs files --"
-            fi
-      - run:
-          name: ci job failed
-          command: './scripts/ci-job-failed.sh'
-          when: on_fail
-      - run:
-          name: ci job succeeded
-          command: './scripts/ci-job-succeeded.sh'
-          when: on_success
-
   build-grafana-packages:
     docker:
       - image: circleci/node:12
