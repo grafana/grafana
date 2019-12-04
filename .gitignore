@@ -30,6 +30,7 @@ docs/changed-files
 
 # locally required config files
 public/css/*.min.css
+public/sass/*generated.scss
 
 # Editor junk
 *.sublime-workspace
