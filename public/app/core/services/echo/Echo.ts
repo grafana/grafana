@@ -1,14 +1,10 @@
 import { EchoBackend, EchoMeta, EchoEvent, EchoSrv } from './types';
-import { KeyValue, CircularVector } from '@grafana/data';
 
 interface EchoConfig {
   // How often should metrics be reported
   flushInterval: number;
   // Enables debug mode
   debug: boolean;
-
-  // Size of given metric type buffer
-  buffersSize: number;
 }
 
 /**
@@ -17,16 +13,13 @@ interface EchoConfig {
  * It's up to the registered backend to decide what to do with a given type of metric
  */
 export class Echo implements EchoSrv {
-  private metrics: KeyValue<CircularVector> = {};
-
   private config: EchoConfig = {
-    flushInterval: 10000,
-    buffersSize: 100,
+    flushInterval: 10000, // By default Echo flushes every 10s
     debug: false,
   };
 
   private backends: EchoBackend[] = [];
-  // meta data added to every metric consumed
+  // meta data added to every event collected
   private meta: EchoMeta;
 
   constructor(config?: Partial<EchoConfig>) {
@@ -57,7 +50,7 @@ export class Echo implements EchoSrv {
 
   addEvent = <T extends EchoEvent>(event: Omit<T, 'meta' | 'ts'>, _meta?: {}) => {
     const meta = this.getMeta();
-    const metric = {
+    const _event = {
       ...event,
       meta: {
         ...meta,
@@ -66,19 +59,11 @@ export class Echo implements EchoSrv {
       ts: performance.now(),
     };
 
-    if (!this.metrics[event.type]) {
-      const buffer = new CircularVector({
-        capacity: this.config.buffersSize,
-      });
-      this.metrics[event.type] = buffer;
-    }
-    this.metrics[event.type].add(metric);
-
     this.backends.forEach(c => {
-      c.addEvent(metric);
+      c.addEvent(_event);
     });
 
-    this.logDebug('Consuming metric', metric);
+    this.logDebug('Consuming event', _event);
   };
 
   setMeta = (meta: Partial<EchoMeta>) => {
@@ -94,9 +79,5 @@ export class Echo implements EchoSrv {
       ...this.meta,
       url: window.location.href,
     };
-  };
-
-  getMetrics = () => {
-    return this.metrics;
   };
 }
