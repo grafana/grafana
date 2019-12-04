@@ -1,9 +1,12 @@
 package setting
 
+import "net/url"
+
 type OAuthInfo struct {
 	ClientId, ClientSecret       string
 	Scopes                       []string
 	AuthUrl, TokenUrl            string
+	TokenUrlParams               url.Values
 	Enabled                      bool
 	EmailAttributeName           string
 	EmailAttributePath           string

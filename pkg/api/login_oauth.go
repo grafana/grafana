@@ -133,8 +133,16 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 
 	oauthCtx := context.WithValue(context.Background(), oauth2.HTTPClient, oauthClient)
 
+	var opts []oauth2.AuthCodeOption
+	if setting.OAuthService.OAuthInfos[name].TokenUrlParams != nil {
+		params := setting.OAuthService.OAuthInfos[name].TokenUrlParams
+		for k := range params {
+			opts = append(opts, oauth2.SetAuthURLParam(k, params.Get(k)))
+		}
+	}
+
 	// get token from provider
-	token, err := connect.Exchange(oauthCtx, code)
+	token, err := connect.Exchange(oauthCtx, code, opts...)
 	if err != nil {
 		ctx.Handle(500, "login.OAuthLogin(NewTransportWithCode)", err)
 		return

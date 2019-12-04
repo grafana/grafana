@@ -2,6 +2,7 @@ package social
 
 import (
 	"net/http"
+	"net/url"
 	"strings"
 
 	"context"
@@ -84,6 +85,12 @@ func NewOAuthService() {
 			TlsClientCa:                  sec.Key("tls_client_ca").String(),
 			TlsSkipVerify:                sec.Key("tls_skip_verify_insecure").MustBool(),
 			SendClientCredentialsViaPost: sec.Key("send_client_credentials_via_post").MustBool(),
+		}
+
+		if params := sec.Key("token_url_params").String(); params != "" {
+			if values, err := url.ParseQuery(params); err == nil {
+				info.TokenUrlParams = values
+			}
 		}
 
 		if !info.Enabled {

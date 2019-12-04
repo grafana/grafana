@@ -234,6 +234,26 @@ send via POST body, which can be enabled via the following settings:
 send_client_credentials_via_post = true
 ```
 
+## Additional Token Exchange Parameters
+
+Some OAuth 2.0 providers require additional posted form parameters as part of the token retrieval.
+For example, Auth0 requires an "audience" parameter be sent with the token exchange.  
+
+To specify this use the `token_url_params` configuration and provide values in a query string format.
+Be sure to url encode any parameter values that may contain url escapable characters.
+
+```bash
+[auth.generic_oauth]
+token_url_params = audience=https%3A%2F%2Fmy.custom.domain.com%2Fapi%2Fv1
+```
+
+Note: even though it is possible to configure more than one parameter with a given name, only the first value
+specified for each named parameter is sent to the oauth2 `token_url`.
+```bash
+[auth.generic_oauth]
+token_url_params = some_param=a_value&another_param=another_value&another_param=ignored_value
+```
+
 ## JMESPath examples
 
 To ease configuring a proper JMESPath expression you can test/evaluate expression with a custom payload at http://jmespath.org/.
