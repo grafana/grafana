@@ -1,4 +1,4 @@
-import { EchoConsumer, EchoMeta, EchoEvent, EchoSrv } from './types';
+import { EchoBackend, EchoMeta, EchoEvent, EchoSrv } from './types';
 import { KeyValue, CircularVector } from '@grafana/data';
 
 interface EchoConfig {
@@ -25,7 +25,7 @@ export class Echo implements EchoSrv {
     debug: false,
   };
 
-  private consumers: EchoConsumer[] = [];
+  private backends: EchoBackend[] = [];
   // meta data added to every metric consumed
   private meta: EchoMeta;
 
@@ -45,18 +45,17 @@ export class Echo implements EchoSrv {
   };
 
   flush = () => {
-    this.logDebug('Flushing');
-    this.consumers.forEach(c => {
+    this.backends.forEach(c => {
       c.flush();
     });
   };
 
-  addConsumer = (consumer: EchoConsumer) => {
-    this.logDebug('Adding consumer', consumer);
-    this.consumers.push(consumer);
+  addBackend = (backend: EchoBackend) => {
+    this.logDebug('Adding backend', backend);
+    this.backends.push(backend);
   };
 
-  consumeEvent = <T extends EchoEvent>(event: Omit<T, 'meta' | 'ts'>, _meta?: {}) => {
+  addEvent = <T extends EchoEvent>(event: Omit<T, 'meta' | 'ts'>, _meta?: {}) => {
     const meta = this.getMeta();
     const metric = {
       ...event,
@@ -75,8 +74,8 @@ export class Echo implements EchoSrv {
     }
     this.metrics[event.type].add(metric);
 
-    this.consumers.forEach(c => {
-      c.consume(metric);
+    this.backends.forEach(c => {
+      c.addEvent(metric);
     });
 
     this.logDebug('Consuming metric', metric);

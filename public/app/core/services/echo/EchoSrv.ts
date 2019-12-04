@@ -1,5 +1,5 @@
-import { EchoSrv, EchoMeta, EchoEventType, EchoConsumer } from './types';
-import { PerformanceEvent } from './consumers/PerformanceConsumer';
+import { EchoSrv, EchoMeta, EchoEventType, EchoBackend } from './types';
+import { PerformanceEvent } from './backends/PerformanceBackend';
 import { Echo } from './Echo';
 
 let instance: EchoSrv;
@@ -7,14 +7,16 @@ let instance: EchoSrv;
 export const getEcho = () => {
   if (!instance) {
     instance = new Echo({ debug: process.env.NODE_ENV === 'development' });
+
+    // Attaching Echo to window object to enable debug
     // @ts-ignore
     window.Echo = instance;
   }
   return instance;
 };
 
-export const registerEchoConsumer = (consumer: EchoConsumer) => {
-  getEcho().addConsumer(consumer);
+export const registerEchoBackend = (backend: EchoBackend) => {
+  getEcho().addBackend(backend);
 };
 
 export const setEchoMeta = (meta: EchoMeta) => {
@@ -22,7 +24,7 @@ export const setEchoMeta = (meta: EchoMeta) => {
 };
 
 export const reportPerformance = (metric: string, value: number) => {
-  getEcho().consumeEvent<PerformanceEvent>({
+  getEcho().addEvent<PerformanceEvent>({
     type: EchoEventType.Performance,
     payload: {
       metricName: metric,

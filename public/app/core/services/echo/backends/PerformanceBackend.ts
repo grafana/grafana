@@ -1,7 +1,6 @@
-import { getBackendSrv } from '@grafana/runtime';
-import { EchoConsumer, EchoEvent, EchoEventType } from '../types';
+import { EchoBackend, EchoEvent, EchoEventType } from '../types';
 import { Echo } from '../Echo';
-import { echoConsumerFactory } from '../echoConsumerFactory';
+import { echoBackendFactory } from './echoBackendFactory';
 
 export interface PerformanceEventPayload {
   metricName: string;
@@ -10,22 +9,22 @@ export interface PerformanceEventPayload {
 
 export interface PerformanceEvent extends EchoEvent<EchoEventType.Performance, PerformanceEventPayload> {}
 
-export interface PerformanceConsumerOptions {
-  url: string;
+export interface PerformanceBackendOptions {
+  url?: string;
 }
 
 /**
  * Echo's performance metrics consumer
- * Reports performance metrics to given url
+ * Reports performance metrics to given url (TODO)
  */
-export class PerformanceConsumer implements EchoConsumer<PerformanceEvent, PerformanceConsumerOptions> {
-  private consumedPageLoadMetrics = false;
+export class PerformanceBackend implements EchoBackend<PerformanceEvent, PerformanceBackendOptions> {
+  private collectedPageLoadMetrics = false;
   private buffer: PerformanceEvent[] = [];
   supportedEvents = [EchoEventType.Performance];
 
-  constructor(private echoInstance: Echo, public options: PerformanceConsumerOptions) {}
+  constructor(private echoInstance: Echo, public options: PerformanceBackendOptions) {}
 
-  consume = (e: EchoEvent) => {
+  addEvent = (e: EchoEvent) => {
     if (this.supportedEvents.indexOf(e.type) > -1) {
       this.echoInstance.logDebug('Performance consumer consumed: ', e);
       this.buffer.push(e);
@@ -48,9 +47,9 @@ export class PerformanceConsumer implements EchoConsumer<PerformanceEvent, Perfo
   };
 
   flush = () => {
-    if (!this.consumedPageLoadMetrics) {
+    if (!this.collectedPageLoadMetrics) {
       this.getPageLoadMetrics();
-      this.consumedPageLoadMetrics = true;
+      this.collectedPageLoadMetrics = true;
     }
 
     if (this.buffer.length === 0) {
@@ -63,12 +62,13 @@ export class PerformanceConsumer implements EchoConsumer<PerformanceEvent, Perfo
 
     this.echoInstance.logDebug('PerformanceConsumer flushing: ', result);
 
-    if (this.options.url) {
-      getBackendSrv().post(this.options.url, result);
-      this.buffer = [];
-    }
+    this.buffer = [];
+
+    // TODO: Enable backend request when we have metrics API
+    // if (this.options.url) {
+    // getBackendSrv().post(this.options.url, result);
+    // }
   };
 }
 
-export const getPerformanceConsumer = (opts: PerformanceConsumerOptions) =>
-  echoConsumerFactory(PerformanceConsumer, opts);
+export const getPerformanceBackend = (opts: PerformanceBackendOptions) => echoBackendFactory(PerformanceBackend, opts);
