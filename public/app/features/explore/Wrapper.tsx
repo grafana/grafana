@@ -7,7 +7,7 @@ import { ExploreId } from 'app/types/explore';
 
 import { CustomScrollbar, ErrorBoundaryAlert } from '@grafana/ui';
 import { resetExploreAction } from './state/actionTypes';
-import { SplitPane } from './SplitPane';
+import Explore from './Explore';
 
 interface WrapperProps {
   split: boolean;
@@ -27,11 +27,11 @@ export class Wrapper extends Component<WrapperProps> {
         <CustomScrollbar autoHeightMin={'100%'} autoHeightMax={''} className="custom-scrollbar--page">
           <div style={{ height: '100%' }} className="explore-wrapper">
             <ErrorBoundaryAlert style="page">
-              <SplitPane exploreId={ExploreId.left} />
+              <Explore exploreId={ExploreId.left} />
             </ErrorBoundaryAlert>
             {split && (
               <ErrorBoundaryAlert style="page">
-                <SplitPane exploreId={ExploreId.right} />
+                <Explore exploreId={ExploreId.right} />
               </ErrorBoundaryAlert>
             )}
           </div>

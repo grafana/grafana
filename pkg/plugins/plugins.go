@@ -39,10 +39,12 @@ var (
 type PluginScanner struct {
 	pluginPath string
 	errors     []error
+	cfg        *setting.Cfg
 }
 
 type PluginManager struct {
 	log log.Logger
+	Cfg *setting.Cfg `inject:""`
 }
 
 func init() {
@@ -180,6 +182,7 @@ func (pm *PluginManager) checkPluginPaths() error {
 func (pm *PluginManager) scan(pluginDir string) error {
 	scanner := &PluginScanner{
 		pluginPath: pluginDir,
+		cfg:        pm.Cfg,
 	}
 
 	if err := util.Walk(pluginDir, true, true, scanner.walker); err != nil {
@@ -218,6 +221,14 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 
 	if f.IsDir() {
 		return nil
+	}
+
+	if !scanner.cfg.FeatureToggles["tracing_integration"] {
+		// Do not load tracing datasources if
+		prefix := path.Join(setting.StaticRootPath, "app/plugins/datasource")
+		if strings.Contains(currentPath, path.Join(prefix, "jaeger")) || strings.Contains(currentPath, path.Join(prefix, "zipkin")) {
+			return nil
+		}
 	}
 
 	if f.Name() == "plugin.json" {

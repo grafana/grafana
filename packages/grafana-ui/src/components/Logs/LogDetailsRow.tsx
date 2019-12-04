@@ -5,7 +5,6 @@ import { Field, LinkModel, LogLabelStatsModel, GrafanaTheme } from '@grafana/dat
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
-import { OpenDetailContext } from '../../utils/ui';
 import { stylesFactory } from '../../themes/stylesFactory';
 
 //Components
@@ -119,28 +118,26 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
             links.map(link => {
               return (
                 <span key={link.href}>
-                  <OpenDetailContext.Consumer>
-                    {openDetail => {
-                      return (
-                        <>
-                          &nbsp;
-                          <LinkButton
-                            variant={'transparent'}
-                            size={'sm'}
-                            icon={'fa fa-list'}
-                            href={link.href}
-                            onClick={event => {
+                  <>
+                    &nbsp;
+                    <LinkButton
+                      variant={'transparent'}
+                      size={'sm'}
+                      icon={cx('fa', link.onClick ? 'fa-list' : 'fa-external-link')}
+                      href={link.href}
+                      target={'_blank'}
+                      onClick={
+                        link.onClick
+                          ? event => {
                               if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
                                 event.preventDefault();
                                 link.onClick(event);
-                                // openDetail({ datasourceId: 'Jaeger', query: parsedValue });
                               }
-                            }}
-                          />
-                        </>
-                      );
-                    }}
-                  </OpenDetailContext.Consumer>
+                            }
+                          : undefined
+                      }
+                    />
+                  </>
                 </span>
               );
             })}

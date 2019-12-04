@@ -8,6 +8,7 @@ import { getDataSourceTypes } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { List } from '@grafana/ui';
 import { DataSourcePluginMeta, NavModel, PluginType } from '@grafana/data';
+import { config } from '../../core/config';
 
 export interface Props {
   navModel: NavModel;
@@ -33,11 +34,11 @@ class NewDataSourcePage extends PureComponent<Props> {
   categoryInfoList: DataSourceCategoryInfo[] = [
     { id: 'tsdb', title: 'Time series databases' },
     { id: 'logging', title: 'Logging & document databases' },
-    { id: 'tracing', title: 'Distributed tracing' },
+    config.featureToggles.tracing_integration ? { id: 'tracing', title: 'Distributed tracing' } : null,
     { id: 'sql', title: 'SQL' },
     { id: 'cloud', title: 'Cloud' },
     { id: 'other', title: 'Others' },
-  ];
+  ].filter(item => item);
 
   sortingRules: { [id: string]: number } = {
     prometheus: 100,

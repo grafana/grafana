@@ -380,9 +380,11 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
         {
           url: field.url,
           title: '',
-          meta: {
-            datasourceName: field.datasourceName,
-          },
+          meta: field.datasourceName
+            ? {
+                datasourceName: field.datasourceName,
+              }
+            : undefined,
         },
       ];
     }

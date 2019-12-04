@@ -155,7 +155,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               getFieldLinks={(field: Field, rowIndex: number) => {
                 const data = getLinksFromLogsField(field, rowIndex);
                 return data.map(d => {
-                  if (d.link.meta && d.link.meta.datasourceName) {
+                  if (d.link.meta?.datasourceName) {
                     return {
                       ...d.linkModel,
                       onClick: () => {

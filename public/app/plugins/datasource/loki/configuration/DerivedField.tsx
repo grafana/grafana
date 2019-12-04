@@ -5,6 +5,7 @@ import { DerivedFieldConfig } from '../types';
 import DataSourcePicker from '../../../../core/components/Select/DataSourcePicker';
 import { getDatasourceSrv } from '../../../../features/plugins/datasource_srv';
 import { DataSourceSelectItem } from '@grafana/data';
+import { config } from '../../../../core/config';
 
 const getStyles = stylesFactory(() => ({
   row: css`
@@ -97,33 +98,35 @@ export const DerivedField = (props: Props) => {
         `}
       />
 
-      <div className={styles.row}>
-        <Switch
-          label="Internal link"
-          checked={hasIntenalLink}
-          onChange={() => {
-            if (hasIntenalLink) {
-              onChange({
-                ...value,
-                datasourceName: undefined,
-              });
-            }
-            setHasInternalLink(!hasIntenalLink);
-          }}
-        />
-
-        {hasIntenalLink && (
-          <DataSourceSection
-            onChange={datasourceName => {
-              onChange({
-                ...value,
-                datasourceName,
-              });
+      {config.featureToggles.tracing_integration && (
+        <div className={styles.row}>
+          <Switch
+            label="Internal link"
+            checked={hasIntenalLink}
+            onChange={() => {
+              if (hasIntenalLink) {
+                onChange({
+                  ...value,
+                  datasourceName: undefined,
+                });
+              }
+              setHasInternalLink(!hasIntenalLink);
             }}
-            datasourceName={value.datasourceName}
           />
-        )}
-      </div>
+
+          {hasIntenalLink && (
+            <DataSourceSection
+              onChange={datasourceName => {
+                onChange({
+                  ...value,
+                  datasourceName,
+                });
+              }}
+              datasourceName={value.datasourceName}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 };
