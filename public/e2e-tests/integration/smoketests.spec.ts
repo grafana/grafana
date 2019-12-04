@@ -29,6 +29,12 @@ e2eScenario({
 
     Pages.Panels.Panel.headerItems('Share').click();
 
-    Pages.SharePanelModal.linkToRenderedImage().click();
+    Pages.SharePanelModal.linkToRenderedImage().then($a => {
+      // extract the fully qualified href property
+      const url = $a.prop('href');
+
+      // Test that the image renderer returns 200 OK
+      cy.request({ method: 'GET', url, timeout: 120000 });
+    });
   },
 });

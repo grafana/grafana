@@ -99,5 +99,6 @@ theOutput/
 compilation-stats.json
 
 # e2e tests
-screenshots/
-videos/
+**/cypress/screenshots/
+**/cypress/videos/
+**/cypress/logs/
