@@ -151,6 +151,11 @@ export interface VariableActions {
   setValueFromUrl(urlValue: any): any;
   getValueForUrl(): any;
   getSaveModel(): any;
+
+  /**
+   * unlink with variableSrv, for alert query variables
+   */
+  unlink(): void;
 }
 
 export type CtorType = new (...args: any[]) => {};

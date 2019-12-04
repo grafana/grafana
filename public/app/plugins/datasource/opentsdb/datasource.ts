@@ -119,24 +119,21 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     });
   }
 
-  targetContainsTemplate(target: any) {
+  getTemplateVariables(target: any) {
+    const variableNames: string[] = [];
     if (target.filters && target.filters.length > 0) {
       for (let i = 0; i < target.filters.length; i++) {
-        if (this.templateSrv.variableExists(target.filters[i].filter)) {
-          return true;
-        }
+        variableNames.push(...this.templateSrv.getVariableNames(target.filters[i].filter));
       }
     }
 
     if (target.tags && Object.keys(target.tags).length > 0) {
       for (const tagKey in target.tags) {
-        if (this.templateSrv.variableExists(target.tags[tagKey])) {
-          return true;
-        }
+        variableNames.push(...this.templateSrv.getVariableNames(target.tags[tagKey]));
       }
     }
 
-    return false;
+    return [...new Set(variableNames)];
   }
 
   performTimeSeriesQuery(queries: any[], start: any, end: any) {

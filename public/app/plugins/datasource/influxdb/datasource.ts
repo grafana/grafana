@@ -8,6 +8,7 @@ import { InfluxQueryBuilder } from './query_builder';
 import { InfluxQuery, InfluxOptions } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { VariableWithOptions } from '../../../features/templating/variable';
 
 export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxOptions> {
   type: string;
@@ -153,25 +154,27 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
     });
   }
 
-  targetContainsTemplate(target: any) {
+  getTemplateVariables(target: any) {
+    const variableNames: string[] = [];
     for (const group of target.groupBy) {
       for (const param of group.params) {
-        if (this.templateSrv.variableExists(param)) {
-          return true;
-        }
+        variableNames.push(...this.templateSrv.getVariableNames(param));
       }
     }
 
     for (const i in target.tags) {
       if (this.templateSrv.variableExists(target.tags[i].value)) {
-        return true;
+        variableNames.push(...this.templateSrv.getVariableNames(target.tags[i].value));
       }
     }
 
-    return false;
+    return [...new Set(variableNames)];
   }
 
-  interpolateVariablesInQueries(queries: InfluxQuery[]): InfluxQuery[] {
+  interpolateVariablesInQueries(
+    queries: InfluxQuery[],
+    variables?: { [key: number]: VariableWithOptions }
+  ): InfluxQuery[] {
     if (!queries || queries.length === 0) {
       return [];
     }
@@ -182,18 +185,18 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          measurement: this.templateSrv.replace(query.measurement, null, 'regex'),
+          measurement: this.templateSrv.replace(query.measurement, null, 'regex', variables),
         };
 
         if (query.rawQuery) {
-          expandedQuery.query = this.templateSrv.replace(query.query, null, 'regex');
+          expandedQuery.query = this.templateSrv.replace(query.query, null, 'regex', variables);
         }
 
         if (query.tags) {
           const expandedTags = query.tags.map(tag => {
             const expandedTag = {
               ...tag,
-              value: this.templateSrv.replace(tag.value, null, 'regex'),
+              value: this.templateSrv.replace(tag.value, null, 'regex', variables),
             };
             return expandedTag;
           });

@@ -72,8 +72,8 @@ export class QueryVariable implements QueryVariableModel, VariableActions {
     private model: any,
     private datasourceSrv: DatasourceSrv,
     private templateSrv: TemplateSrv,
-    private variableSrv: VariableSrv,
-    private timeSrv: TimeSrv
+    private timeSrv: TimeSrv,
+    private variableSrv?: VariableSrv
   ) {
     // copy model properties to this instance
     assignModelProperties(this, model, this.defaults);
@@ -93,11 +93,11 @@ export class QueryVariable implements QueryVariableModel, VariableActions {
   }
 
   setValue(option: any) {
-    return this.variableSrv.setOptionAsCurrent(this, option);
+    return this.variableSrv?.setOptionAsCurrent(this, option);
   }
 
   setValueFromUrl(urlValue: any) {
-    return this.variableSrv.setOptionFromUrl(this, urlValue);
+    return this.variableSrv?.setOptionFromUrl(this, urlValue);
   }
 
   getValueForUrl() {
@@ -112,7 +112,7 @@ export class QueryVariable implements QueryVariableModel, VariableActions {
       .get(this.datasource)
       .then(ds => this.updateOptionsFromMetricFindQuery(ds, searchFilter))
       .then(this.updateTags.bind(this))
-      .then(this.variableSrv.validateVariableSelectionState.bind(this.variableSrv, this));
+      .then(this.variableSrv?.validateVariableSelectionState.bind(this.variableSrv, this));
   }
 
   updateTags(datasource: any) {
@@ -242,6 +242,10 @@ export class QueryVariable implements QueryVariableModel, VariableActions {
 
   dependsOn(variable: any) {
     return containsVariable(this.query, this.datasource, this.regex, variable.name);
+  }
+
+  unlink(): void {
+    this.variableSrv = null;
   }
 }
 // @ts-ignore

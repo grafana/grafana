@@ -14,7 +14,7 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 //Types
 import { GraphiteOptions, GraphiteQuery, GraphiteType } from './types';
-import { getSearchFilterScopedVar } from '../../../features/templating/variable';
+import { getSearchFilterScopedVar, VariableWithOptions } from '../../../features/templating/variable';
 
 export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
   basicAuth: string;
@@ -145,14 +145,17 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     return tags;
   }
 
-  interpolateVariablesInQueries(queries: GraphiteQuery[]): GraphiteQuery[] {
+  interpolateVariablesInQueries(
+    queries: GraphiteQuery[],
+    variables?: { [key: number]: VariableWithOptions }
+  ): GraphiteQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          target: this.templateSrv.replace(query.target),
+          target: this.templateSrv.replace(query.target, undefined, undefined, variables),
         };
         return expandedQuery;
       });
@@ -242,8 +245,8 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     }
   }
 
-  targetContainsTemplate(target: GraphiteQuery) {
-    return this.templateSrv.variableExists(target.target);
+  getTemplateVariables(target: GraphiteQuery) {
+    return this.templateSrv.getVariableNames(target.target);
   }
 
   translateTime(date: any, roundUp: any, timezone: any) {

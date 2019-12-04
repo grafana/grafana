@@ -70,6 +70,15 @@
                     ng-change="ctrl.evaluatorParamsChanged()" />
           </div>
           <div class="gf-form">
+            <div ng-repeat="(name, value) in conditionModel.variables" class="gf-form-inline">
+              <label class="gf-form-label template-variable">{{name}}</label>
+              <value-select-dropdown ng-if="ctrl.getVariable(name).type !== 'adhoc' && ctrl.getVariable(name).type !== 'textbox'"
+              dashboard="ctrl.panelCtrl.dashboard" variable="value" on-updated="ctrl.updateVariables(conditionModel, name)"></value-select-dropdown>
+              <input type="text" class="gf-form-input width-12"
+                     ng-if="ctrl.getVariable(name).type === 'textbox'" ng-model="conditionModel.variables[name]"/>
+            </div>
+          </div>
+          <div class="gf-form">
             <label class="gf-form-label">
               <a class="pointer" tabindex="1" ng-click="ctrl.removeCondition($index)">
                 <i class="fa fa-trash"></i>

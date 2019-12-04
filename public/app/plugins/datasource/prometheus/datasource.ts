@@ -34,6 +34,7 @@ import { safeStringifyValue } from 'app/core/utils/explore';
 import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import TableModel from 'app/core/table_model';
+import { VariableWithOptions } from '../../../features/templating/variable';
 
 interface RequestOptions {
   method?: string;
@@ -169,8 +170,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return escapedValues.join('|');
   }
 
-  targetContainsTemplate(target: PromQuery) {
-    return templateSrv.variableExists(target.expr);
+  getTemplateVariables(target: PromQuery) {
+    return templateSrv.getVariableNames(target.expr);
   }
 
   processResult = (response: any, query: PromQueryRequest, target: PromQuery, responseListLength: number) => {
@@ -614,14 +615,14 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       : { status: 'error', message: response.error };
   }
 
-  interpolateVariablesInQueries(queries: PromQuery[]): PromQuery[] {
+  interpolateVariablesInQueries(queries: PromQuery[], variables?: { [key: number]: VariableWithOptions }): PromQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length) {
       expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          expr: templateSrv.replace(query.expr, {}, this.interpolateQueryExpr),
+          expr: templateSrv.replace(query.expr, {}, this.interpolateQueryExpr, variables),
         };
         return expandedQuery;
       });

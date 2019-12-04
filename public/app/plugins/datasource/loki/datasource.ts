@@ -49,6 +49,7 @@ import {
 import { ExploreMode } from 'app/types';
 import { LegacyTarget, LiveStreams } from './live_streams';
 import LanguageProvider from './language_provider';
+import { VariableWithOptions } from '../../../features/templating/variable';
 
 export type RangeQueryOptions = Pick<DataQueryRequest<LokiQuery>, 'range' | 'intervalMs' | 'maxDataPoints' | 'reverse'>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -353,13 +354,13 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     );
   };
 
-  interpolateVariablesInQueries(queries: LokiQuery[]): LokiQuery[] {
+  interpolateVariablesInQueries(queries: LokiQuery[], variables?: { [key: number]: VariableWithOptions }): LokiQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length) {
       expandedQueries = queries.map(query => ({
         ...query,
         datasource: this.name,
-        expr: this.templateSrv.replace(query.expr, {}, this.interpolateQueryExpr),
+        expr: this.templateSrv.replace(query.expr, {}, this.interpolateQueryExpr, variables),
       }));
     }
 

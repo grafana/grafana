@@ -33,8 +33,8 @@ export class DatasourceVariable implements VariableActions {
   constructor(
     private model: any,
     private datasourceSrv: DatasourceSrv,
-    private variableSrv: VariableSrv,
-    private templateSrv: TemplateSrv
+    private templateSrv: TemplateSrv,
+    private variableSrv?: VariableSrv
   ) {
     assignModelProperties(this, model, this.defaults);
     this.refresh = 1;
@@ -49,7 +49,7 @@ export class DatasourceVariable implements VariableActions {
   }
 
   setValue(option: any) {
-    return this.variableSrv.setOptionAsCurrent(this, option);
+    return this.variableSrv?.setOptionAsCurrent(this, option);
   }
 
   updateOptions() {
@@ -84,7 +84,7 @@ export class DatasourceVariable implements VariableActions {
     if (this.includeAll) {
       this.addAllOption();
     }
-    return this.variableSrv.validateVariableSelectionState(this);
+    return this.variableSrv?.validateVariableSelectionState(this);
   }
 
   addAllOption() {
@@ -99,7 +99,7 @@ export class DatasourceVariable implements VariableActions {
   }
 
   setValueFromUrl(urlValue: string | string[]) {
-    return this.variableSrv.setOptionFromUrl(this, urlValue);
+    return this.variableSrv?.setOptionFromUrl(this, urlValue);
   }
 
   getValueForUrl() {
@@ -107,6 +107,10 @@ export class DatasourceVariable implements VariableActions {
       return 'All';
     }
     return this.current.value;
+  }
+
+  unlink(): void {
+    this.variableSrv = null;
   }
 }
 

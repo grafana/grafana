@@ -90,7 +90,7 @@ describe('getAlertingValidationMessage', () => {
 
       const result = await getAlertingValidationMessage(transformations, targets, datasourceSrv, datasource.name);
 
-      expect(result).toBe('Template variables are not supported in alert queries');
+      expect(result).toBe('');
       expect(getMock).toHaveBeenCalledTimes(2);
       expect(getMock).toHaveBeenCalledWith(datasource.name);
     });

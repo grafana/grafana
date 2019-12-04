@@ -1,6 +1,6 @@
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
-import { variableRegex } from 'app/features/templating/variable';
+import { variableRegex, VariableWithOptions } from 'app/features/templating/variable';
 import { escapeHtml } from 'app/core/utils/text';
 import { ScopedVars, TimeRange } from '@grafana/data';
 
@@ -205,6 +205,21 @@ export class TemplateSrv {
     return variableName;
   }
 
+  getVariableNames(expression: string): string[] {
+    const matches = expression.match(this.regex);
+    return matches
+      ? matches
+          .map(e => {
+            this.regex.lastIndex = 0;
+            return this.regex
+              .exec(e)
+              ?.slice(1)
+              ?.find(match => match !== undefined);
+          })
+          .filter(e => this.index[e] !== void 0)
+      : [];
+  }
+
   variableExists(expression: string) {
     const name = this.getVariableName(expression);
     return name && this.index[name] !== void 0;
@@ -258,7 +273,12 @@ export class TemplateSrv {
     return scopedVar.value;
   }
 
-  replace(target: string, scopedVars?: ScopedVars, format?: string | Function): any {
+  replace(
+    target: string,
+    scopedVars?: ScopedVars,
+    format?: string | Function,
+    index?: { [key: string]: VariableWithOptions }
+  ): any {
     if (!target) {
       return target;
     }
@@ -267,7 +287,7 @@ export class TemplateSrv {
 
     return target.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
       const variableName = var1 || var2 || var3;
-      const variable = this.index[variableName];
+      const variable = (index ?? this.index)[variableName];
       const fmt = fmt2 || fmt3 || format;
 
       if (scopedVars) {

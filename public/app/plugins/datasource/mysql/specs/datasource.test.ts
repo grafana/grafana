@@ -336,7 +336,7 @@ describe('MySQLDatasource', () => {
     });
   });
 
-  describe('targetContainsTemplate', () => {
+  describe('getTemplateVariables', () => {
     it('given query that contains template variable it should return true', () => {
       const rawSql = `SELECT
       $__timeGroup(createdAt,'$summarize') as time_sec,
@@ -358,7 +358,7 @@ describe('MySQLDatasource', () => {
         { type: 'query', name: 'summarize', current: { value: '1m' } },
         { type: 'query', name: 'host', current: { value: 'a' } },
       ]);
-      expect(ctx.ds.targetContainsTemplate(query)).toBeTruthy();
+      expect(ctx.ds.getTemplateVariables(query)).not.toHaveLength(0);
     });
 
     it('given query that only contains global template variable it should return false', () => {
@@ -381,7 +381,7 @@ describe('MySQLDatasource', () => {
         { type: 'query', name: 'summarize', current: { value: '1m' } },
         { type: 'query', name: 'host', current: { value: 'a' } },
       ]);
-      expect(ctx.ds.targetContainsTemplate(query)).toBeFalsy();
+      expect(ctx.ds.getTemplateVariables(query)).toHaveLength(0);
     });
   });
 });

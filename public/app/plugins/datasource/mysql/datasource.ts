@@ -6,9 +6,10 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 //Types
 import { MysqlQueryForInterpolation } from './types';
-import { getSearchFilterScopedVar } from '../../../features/templating/variable';
+import { getSearchFilterScopedVar, VariableWithOptions } from '../../../features/templating/variable';
+import { DataSourceApi } from '@grafana/data';
 
-export class MysqlDatasource {
+export class MysqlDatasource implements DataSourceApi {
   id: any;
   name: any;
   responseParser: ResponseParser;
@@ -48,14 +49,17 @@ export class MysqlDatasource {
     return quotedValues.join(',');
   };
 
-  interpolateVariablesInQueries(queries: MysqlQueryForInterpolation[]): MysqlQueryForInterpolation[] {
+  interpolateVariablesInQueries(
+    queries: MysqlQueryForInterpolation[],
+    variables?: { [key: number]: VariableWithOptions }
+  ): MysqlQueryForInterpolation[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          rawSql: this.templateSrv.replace(query.rawSql, {}, this.interpolateVariable),
+          rawSql: this.templateSrv.replace(query.rawSql, {}, this.interpolateVariable, variables),
         };
         return expandedQuery;
       });
@@ -198,7 +202,7 @@ export class MysqlDatasource {
       });
   }
 
-  targetContainsTemplate(target: any) {
+  getTemplateVariables(target: any) {
     let rawSql = '';
 
     if (target.rawQuery) {
@@ -210,6 +214,6 @@ export class MysqlDatasource {
 
     rawSql = rawSql.replace('$__', '');
 
-    return this.templateSrv.variableExists(rawSql);
+    return this.templateSrv.getVariableNames(rawSql);
   }
 }

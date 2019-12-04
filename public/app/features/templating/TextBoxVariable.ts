@@ -31,7 +31,7 @@ export class TextBoxVariable implements TextBoxVariableModel, VariableActions {
   };
 
   /** @ngInject */
-  constructor(private model: any, private variableSrv: VariableSrv) {
+  constructor(private model: any, private variableSrv?: VariableSrv) {
     assignModelProperties(this, model, this.defaults);
   }
 
@@ -61,6 +61,10 @@ export class TextBoxVariable implements TextBoxVariableModel, VariableActions {
 
   getValueForUrl() {
     return this.current.value;
+  }
+
+  unlink(): void {
+    this.variableSrv = null;
   }
 }
 // @ts-ignore

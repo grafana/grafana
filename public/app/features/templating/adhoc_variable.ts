@@ -91,6 +91,8 @@ export class AdhocVariable implements AdHocVariableModel, VariableActions {
   setFilters(filters: any[]) {
     this.filters = filters;
   }
+
+  unlink(): void {}
 }
 
 variableTypes['adhoc'] = {

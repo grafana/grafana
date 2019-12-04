@@ -31,7 +31,7 @@ export class ConstantVariable implements ConstantVariableModel, VariableActions 
   };
 
   /** @ngInject */
-  constructor(private model: any, private variableSrv: VariableSrv) {
+  constructor(private model: any, private variableSrv?: VariableSrv) {
     assignModelProperties(this, model, this.defaults);
   }
 
@@ -41,7 +41,7 @@ export class ConstantVariable implements ConstantVariableModel, VariableActions 
   }
 
   setValue(option: any) {
-    this.variableSrv.setOptionAsCurrent(this, option);
+    this.variableSrv?.setOptionAsCurrent(this, option);
   }
 
   updateOptions() {
@@ -55,11 +55,15 @@ export class ConstantVariable implements ConstantVariableModel, VariableActions 
   }
 
   setValueFromUrl(urlValue: string) {
-    return this.variableSrv.setOptionFromUrl(this, urlValue);
+    return this.variableSrv?.setOptionFromUrl(this, urlValue);
   }
 
   getValueForUrl() {
     return this.current.value;
+  }
+
+  unlink(): void {
+    this.variableSrv = null;
   }
 }
 

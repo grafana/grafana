@@ -523,15 +523,17 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
     });
   }
 
-  targetContainsTemplate(target: any) {
-    return (
-      this.templateSrv.variableExists(target.region) ||
-      this.templateSrv.variableExists(target.namespace) ||
-      this.templateSrv.variableExists(target.metricName) ||
-      _.find(target.dimensions, (v, k) => {
-        return this.templateSrv.variableExists(k) || this.templateSrv.variableExists(v);
-      })
+  getTemplateVariables(target: any) {
+    const variableNames: string[] = [];
+    variableNames.push(
+      ...this.templateSrv.getVariableNames(target.region),
+      ...this.templateSrv.getVariableNames(target.namespace),
+      ...this.templateSrv.getVariableNames(target.metricName)
     );
+    _.forEach(target.dimensions, (v, k) => {
+      variableNames.push(...this.templateSrv.getVariableNames(k), ...this.templateSrv.getVariableNames(v));
+    });
+    return [...new Set(variableNames)];
   }
 
   testDatasource() {

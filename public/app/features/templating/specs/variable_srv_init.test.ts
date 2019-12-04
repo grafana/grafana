@@ -254,9 +254,9 @@ describe('VariableSrv init', function(this: any) {
 function getVarMockConstructor(variable: any, model: any, ctx: any) {
   switch (model.model.type) {
     case 'datasource':
-      return new variable(model.model, ctx.datasourceSrv, ctx.variableSrv, ctx.templateSrv);
-    case 'query':
       return new variable(model.model, ctx.datasourceSrv, ctx.templateSrv, ctx.variableSrv);
+    case 'query':
+      return new variable(model.model, ctx.datasourceSrv, ctx.templateSrv, undefined, ctx.variableSrv);
     case 'interval':
       return new variable(model.model, {}, ctx.templateSrv, ctx.variableSrv);
     case 'custom':

@@ -48,7 +48,7 @@ export class IntervalVariable implements IntervalVariableModel, VariableActions 
     private model: any,
     private timeSrv: TimeSrv,
     private templateSrv: TemplateSrv,
-    private variableSrv: VariableSrv
+    private variableSrv?: VariableSrv
   ) {
     assignModelProperties(this, model, this.defaults);
     this.refresh = VariableRefresh.onTimeRangeChanged;
@@ -61,7 +61,7 @@ export class IntervalVariable implements IntervalVariableModel, VariableActions 
 
   setValue(option: any) {
     this.updateAutoValue();
-    return this.variableSrv.setOptionAsCurrent(this, option);
+    return this.variableSrv?.setOptionAsCurrent(this, option);
   }
 
   updateAutoValue() {
@@ -92,7 +92,7 @@ export class IntervalVariable implements IntervalVariableModel, VariableActions 
     });
 
     this.updateAutoValue();
-    return this.variableSrv.validateVariableSelectionState(this);
+    return this.variableSrv?.validateVariableSelectionState(this);
   }
 
   dependsOn(variable: any) {
@@ -101,11 +101,15 @@ export class IntervalVariable implements IntervalVariableModel, VariableActions 
 
   setValueFromUrl(urlValue: string | string[]) {
     this.updateAutoValue();
-    return this.variableSrv.setOptionFromUrl(this, urlValue);
+    return this.variableSrv?.setOptionFromUrl(this, urlValue);
   }
 
   getValueForUrl() {
     return this.current.value;
+  }
+
+  unlink(): void {
+    this.variableSrv = null;
   }
 }
 

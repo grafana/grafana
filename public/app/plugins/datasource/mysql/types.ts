@@ -1,7 +1,9 @@
-export interface MysqlQueryForInterpolation {
+import { DataQuery } from '@grafana/data';
+
+export interface MysqlQueryForInterpolation extends DataQuery {
   alias?: any;
   format?: any;
   rawSql?: any;
-  refId?: any;
+  refId: any;
   hide?: any;
 }

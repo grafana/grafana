@@ -38,12 +38,12 @@ export class CustomVariable implements CustomVariableModel, VariableActions {
   };
 
   /** @ngInject */
-  constructor(private model: any, private variableSrv: VariableSrv) {
+  constructor(private model: any, private variableSrv?: VariableSrv) {
     assignModelProperties(this, model, this.defaults);
   }
 
   setValue(option: any) {
-    return this.variableSrv.setOptionAsCurrent(this, option);
+    return this.variableSrv?.setOptionAsCurrent(this, option);
   }
 
   getSaveModel() {
@@ -62,7 +62,7 @@ export class CustomVariable implements CustomVariableModel, VariableActions {
       this.addAllOption();
     }
 
-    return this.variableSrv.validateVariableSelectionState(this);
+    return this.variableSrv?.validateVariableSelectionState(this);
   }
 
   addAllOption() {
@@ -74,7 +74,7 @@ export class CustomVariable implements CustomVariableModel, VariableActions {
   }
 
   setValueFromUrl(urlValue: string[]) {
-    return this.variableSrv.setOptionFromUrl(this, urlValue);
+    return this.variableSrv?.setOptionFromUrl(this, urlValue);
   }
 
   getValueForUrl() {
@@ -82,6 +82,10 @@ export class CustomVariable implements CustomVariableModel, VariableActions {
       return 'All';
     }
     return this.current.value;
+  }
+
+  unlink(): void {
+    this.variableSrv = null;
   }
 }
 

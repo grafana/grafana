@@ -182,7 +182,11 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 				panelQuery.Set("interval", interval)
 			}
 
-			jsonQuery.Set("model", panelQuery.Interface())
+			// Alerting with variables
+			// If client specific model, then use it
+			if _, ok := jsonQuery.CheckGet("model"); !ok {
+				jsonQuery.Set("model", panelQuery.Interface())
+			}
 		}
 
 		alert.Settings = jsonAlert

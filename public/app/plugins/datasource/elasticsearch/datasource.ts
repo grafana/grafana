@@ -10,6 +10,7 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ElasticsearchOptions, ElasticsearchQuery } from './types';
+import { VariableWithOptions } from '../../../features/templating/variable';
 
 export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, ElasticsearchOptions> {
   basicAuth: string;
@@ -256,14 +257,17 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     });
   }
 
-  interpolateVariablesInQueries(queries: ElasticsearchQuery[]): ElasticsearchQuery[] {
+  interpolateVariablesInQueries(
+    queries: ElasticsearchQuery[],
+    variables?: { [key: number]: VariableWithOptions }
+  ): ElasticsearchQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          query: this.templateSrv.replace(query.query, {}, 'lucene'),
+          query: this.templateSrv.replace(query.query, {}, 'lucene', variables),
         };
         return expandedQuery;
       });
@@ -523,28 +527,29 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return this.getTerms({ field: options.key, query: '*' });
   }
 
-  targetContainsTemplate(target: any) {
-    if (this.templateSrv.variableExists(target.query) || this.templateSrv.variableExists(target.alias)) {
-      return true;
-    }
+  getTemplateVariables(target: any) {
+    const variableNames: string[] = [];
+    variableNames.push(
+      ...this.templateSrv.getVariableNames(target.query),
+      ...this.templateSrv.getVariableNames(target.alias)
+    );
 
     for (const bucketAgg of target.bucketAggs) {
-      if (this.templateSrv.variableExists(bucketAgg.field) || this.objectContainsTemplate(bucketAgg.settings)) {
-        return true;
-      }
+      variableNames.push(
+        ...this.templateSrv.getVariableNames(bucketAgg.field),
+        ...this.getObjectVariableNames(bucketAgg.settings)
+      );
     }
 
     for (const metric of target.metrics) {
-      if (
-        this.templateSrv.variableExists(metric.field) ||
-        this.objectContainsTemplate(metric.settings) ||
-        this.objectContainsTemplate(metric.meta)
-      ) {
-        return true;
-      }
+      variableNames.push(
+        ...this.templateSrv.getVariableNames(metric.field),
+        ...this.getObjectVariableNames(metric.settings),
+        ...this.getObjectVariableNames(metric.meta)
+      );
     }
 
-    return false;
+    return [...new Set(variableNames)];
   }
 
   private isPrimitive(obj: any) {
@@ -558,29 +563,24 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return false;
   }
 
-  private objectContainsTemplate(obj: any) {
+  private getObjectVariableNames(obj: any) {
     if (!obj) {
-      return false;
+      return [];
     }
 
+    const variableNames: string[] = [];
     for (const key of Object.keys(obj)) {
       if (this.isPrimitive(obj[key])) {
-        if (this.templateSrv.variableExists(obj[key])) {
-          return true;
-        }
+        variableNames.push(...this.templateSrv.getVariableNames(obj[key]));
       } else if (Array.isArray(obj[key])) {
         for (const item of obj[key]) {
-          if (this.objectContainsTemplate(item)) {
-            return true;
-          }
+          variableNames.push(...this.getObjectVariableNames(item));
         }
       } else {
-        if (this.objectContainsTemplate(obj[key])) {
-          return true;
-        }
+        variableNames.push(...this.getObjectVariableNames(obj[key]));
       }
     }
 
-    return false;
+    return [...new Set(variableNames)];
   }
 }

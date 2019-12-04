@@ -5,8 +5,10 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 //Types
 import { MssqlQueryForInterpolation } from './types';
+import { DataSourceApi } from '@grafana/data';
+import { VariableWithOptions } from '../../../features/templating/variable';
 
-export class MssqlDatasource {
+export class MssqlDatasource implements DataSourceApi {
   id: any;
   name: any;
   responseParser: ResponseParser;
@@ -48,14 +50,17 @@ export class MssqlDatasource {
     return quotedValues.join(',');
   }
 
-  interpolateVariablesInQueries(queries: MssqlQueryForInterpolation[]): MssqlQueryForInterpolation[] {
+  interpolateVariablesInQueries(
+    queries: MssqlQueryForInterpolation[],
+    variables?: { [key: number]: VariableWithOptions }
+  ): MssqlQueryForInterpolation[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          rawSql: this.templateSrv.replace(query.rawSql, {}, this.interpolateVariable),
+          rawSql: this.templateSrv.replace(query.rawSql, {}, this.interpolateVariable, variables),
         };
         return expandedQuery;
       });
@@ -181,8 +186,8 @@ export class MssqlDatasource {
       });
   }
 
-  targetContainsTemplate(target: any) {
+  getTemplateVariables(target: any) {
     const rawSql = target.rawSql.replace('$__', '');
-    return this.templateSrv.variableExists(rawSql);
+    return this.templateSrv.getVariableNames(rawSql);
   }
 }

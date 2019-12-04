@@ -7,6 +7,7 @@ import { AnnotationEvent, KeyValue, LoadingState, TableData, TimeSeries } from '
 import { DataFrame, DataFrameDTO } from './dataFrame';
 import { RawTimeRange, TimeRange, AbsoluteTimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
+import { VariableWithOptions } from '../../../../public/app/features/templating/variable';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
   options: DataSourceSettings<JSONData, SecureJSONData>;
@@ -242,9 +243,10 @@ export abstract class DataSourceApi<
   meta?: DataSourcePluginMeta;
 
   /**
-   * Used by alerting to check if query contains template variables
+   * Used in alerting.
+   * get variables if query contains template variables.
    */
-  targetContainsTemplate?(query: TQuery): boolean;
+  getTemplateVariables?(query: TQuery): string[];
 
   /**
    * Used in explore
@@ -269,7 +271,7 @@ export abstract class DataSourceApi<
    */
   annotationQuery?(options: AnnotationQueryRequest<TQuery>): Promise<AnnotationEvent[]>;
 
-  interpolateVariablesInQueries?(queries: TQuery[]): TQuery[];
+  interpolateVariablesInQueries?(queries: TQuery[], variables?: { [key: number]: VariableWithOptions }): TQuery[];
 }
 
 export function updateDatasourcePluginOption(props: DataSourcePluginOptionsEditorProps, key: string, val: any) {
