@@ -20,7 +20,8 @@ const CHEAT_SHEET_ITEMS = [
   },
   {
     title: 'Step',
-    label: 'Sets up query resolution step width in duration format (e.g. 5s, 10m, 2h, 1d). Default: auto.',
+    label:
+      'Defines the graph resolution using a duration format (15s, 1m, 3h, ...). Small steps create high-resolution graphs but can be slow over larger time ranges. Using a longer step lowers the resolution and smooths the graph by producing fewer datapoints. If no step is given the resolution is calculated automatically.',
   },
 ];
 
