@@ -163,7 +163,6 @@ export class GrafanaApp {
     for (const modulePath of config.pluginsToPreload) {
       importPluginModule(modulePath);
     }
-    // debugger
   }
 }
 
