@@ -14,7 +14,7 @@ import { IQService } from 'angular';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 //Types
-import { GraphiteOptions, GraphiteQuery, GraphiteType } from './types';
+import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankMeta } from './types';
 import { getSearchFilterScopedVar } from '../../../features/templating/variable';
 
 export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
@@ -109,7 +109,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     }
   }
 
-  convertResponseToDataFrames(result: any): DataQueryResponse {
+  convertResponseToDataFrames = (result: any): DataQueryResponse => {
     const data: DataFrame[] = [];
     if (!result || !result.data) {
       return { data };
@@ -128,16 +128,21 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       const frame = toDataFrame(s);
 
       // Metrictank metadata
-      if (s.meta) {
+      if (s.meta || true) {
+        const meta: MetricTankMeta = {
+          datasourceId: this.id,
+          datasourceName: this.name, // :(
+          request: result.data.meta, // info on the request
+          info: s.meta, // Array of metadata
+        };
         frame.meta = {
-          metrictank: s.meta, // array of metadata
-          metrictankReq: result.data.meta, // info on the request
+          ds: meta,
         };
       }
       data.push(frame);
     }
     return { data };
-  }
+  };
 
   parseTags(tagString: string) {
     let tags: string[] = [];

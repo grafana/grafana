@@ -8,6 +8,12 @@ export enum LoadingState {
   Error = 'Error',
 }
 
+export interface QueryResultDataSourceMeta {
+  datasourceId: number;
+  datasourceName: string; // If we have the ID... do we need the name?!?!
+  // Explicit classes will extend with their custom metadata fields
+}
+
 export interface QueryResultMeta {
   [key: string]: any;
 
@@ -19,6 +25,9 @@ export interface QueryResultMeta {
 
   // Used in Explore to show limit applied to search result
   limit?: number;
+
+  // Information that the datasource can support
+  ds?: QueryResultDataSourceMeta;
 }
 
 export interface QueryResultBase {
