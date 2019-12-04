@@ -1,6 +1,11 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 import { FormLabel, Select, Input, Button } from '@grafana/ui';
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import {
+  DataSourcePluginOptionsEditorProps,
+  updateDatasourcePluginJsonDataOption,
+  updateDatasourcePluginResetKeyOption,
+  updateDatasourcePluginOption,
+} from '@grafana/data';
 import { SelectableValue } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import CloudWatchDatasource from '../datasource';
@@ -44,6 +49,14 @@ export class ConfigEditor extends PureComponent<Props, State> {
       this.loadRegionsPromise.cancel();
     }
   }
+
+  onUpdateOption = (key: string, val: any, secure: boolean) => {
+    updateDatasourcePluginJsonDataOption(this.props, key, val, secure);
+  };
+
+  onResetKey = (key: string) => {
+    updateDatasourcePluginResetKeyOption(this.props, key);
+  };
 
   async loadRegions() {
     await getDatasourceSrv()
@@ -107,98 +120,39 @@ export class ConfigEditor extends PureComponent<Props, State> {
   }
 
   onAuthProviderChange = (authType: SelectableValue<string>) => {
-    this.props.onOptionsChange({
-      ...this.props.options,
-      jsonData: {
-        ...this.props.options.jsonData,
-        authType: authType.value,
-      },
-    });
+    this.onUpdateOption('authType', authType.value, false);
   };
 
   onRegionChange = (defaultRegion: SelectableValue<string>) => {
-    this.props.onOptionsChange({
-      ...this.props.options,
-      jsonData: {
-        ...this.props.options.jsonData,
-        defaultRegion: defaultRegion.value,
-      },
-    });
+    this.onUpdateOption('defaultRegion', defaultRegion.value, false);
   };
 
   onResetAccessKey = () => {
-    this.props.onOptionsChange({
-      ...this.props.options,
-      secureJsonData: {
-        ...this.props.options.secureJsonData,
-        accessKey: '',
-      },
-      secureJsonFields: {
-        ...this.props.options.secureJsonFields,
-        accessKey: false,
-      },
-    });
+    this.onResetKey('accessKey');
   };
 
   onAccessKeyChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onOptionsChange({
-      ...this.props.options,
-      secureJsonData: {
-        ...this.props.options.secureJsonData,
-        accessKey: event.target.value,
-      },
-    });
+    this.onUpdateOption('accessKey', event.target.value, true);
   };
 
   onResetSecretKey = () => {
-    this.props.onOptionsChange({
-      ...this.props.options,
-      secureJsonData: {
-        ...this.props.options.secureJsonData,
-        secretKey: '',
-      },
-      secureJsonFields: {
-        ...this.props.options.secureJsonFields,
-        secretKey: false,
-      },
-    });
+    this.onResetKey('secretKey');
   };
 
   onSecretKeyChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onOptionsChange({
-      ...this.props.options,
-      secureJsonData: {
-        ...this.props.options.secureJsonData,
-        secretKey: event.target.value,
-      },
-    });
+    this.onUpdateOption('secretKey', event.target.value, true);
   };
 
   onCredentialProfileNameChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onOptionsChange({
-      ...this.props.options,
-      database: event.target.value,
-    });
+    updateDatasourcePluginOption(this.props, 'database', event.target.value);
   };
 
   onArnAssumeRoleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onOptionsChange({
-      ...this.props.options,
-      jsonData: {
-        ...this.props.options.jsonData,
-        assumeRoleArn: event.target.value,
-      },
-    });
+    this.onUpdateOption('assumeRoleArn', event.target.value, false);
   };
 
   onCustomMetricsNamespacesChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onOptionsChange({
-      ...this.props.options,
-      jsonData: {
-        ...this.props.options.jsonData,
-        customMetricsNamespaces: event.target.value,
-      },
-    });
+    this.onUpdateOption('customMetricsNamespaces', event.target.value, false);
   };
 
   render() {
