@@ -27,14 +27,14 @@ export class PanelInspector extends PureComponent<Props, State> {
     const { panel } = this.props;
     if (!panel) {
       this.onDismiss(); // Try to close the component
-      return null;
+      return;
     }
 
     // TODO? should we get the result with an observable once?
     const lastResult = (panel.getQueryRunner() as any).lastResult;
     if (!lastResult) {
       this.onDismiss(); // Usually opened from refresh?
-      return null;
+      return;
     }
 
     const inspectable = getInspectableMetadata(lastResult?.series as DataFrame[]);
@@ -52,6 +52,7 @@ export class PanelInspector extends PureComponent<Props, State> {
       }
     }
 
+    // Set last result, but no metadata inspector
     this.setState({ last: lastResult });
   }
 
