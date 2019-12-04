@@ -100,6 +100,10 @@ const lightTheme: GrafanaTheme = {
     formSwitchBgActiveHover: basicColors.blueBase,
     formSwitchBgDisabled: basicColors.gray4,
     formSwitchDot: basicColors.white,
+    formCheckboxBg: basicColors.white,
+    formCheckboxBgChecked: basicColors.blueShade,
+    formCheckboxBgCheckedHover: basicColors.blueBase,
+    formCheckboxCheckmark: basicColors.white,
   },
   background: {
     dropdown: basicColors.white,

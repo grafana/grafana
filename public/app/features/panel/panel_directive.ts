@@ -140,7 +140,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         }
 
         if (transparentLastState !== ctrl.panel.transparent) {
-          panelContainer.toggleClass('panel-transparent', ctrl.panel.transparent === true);
+          panelContainer.toggleClass('panel-container--transparent', ctrl.panel.transparent === true);
           transparentLastState = ctrl.panel.transparent;
         }
 

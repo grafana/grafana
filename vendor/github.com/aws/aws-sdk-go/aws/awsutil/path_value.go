@@ -70,7 +70,7 @@ func rValuesAtPath(v interface{}, path string, createPath, caseSensitive, nilTer
 			value = value.FieldByNameFunc(func(name string) bool {
 				if c == name {
 					return true
-				} else if !caseSensitive && strings.ToLower(name) == strings.ToLower(c) {
+				} else if !caseSensitive && strings.EqualFold(name, c) {
 					return true
 				}
 				return false

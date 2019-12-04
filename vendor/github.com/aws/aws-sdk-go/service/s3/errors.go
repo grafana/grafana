@@ -13,6 +13,12 @@ const (
 
 	// ErrCodeBucketAlreadyOwnedByYou for service response error code
 	// "BucketAlreadyOwnedByYou".
+	//
+	// The bucket you tried to create already exists, and you own it. Amazon S3
+	// returns this error in all AWS Regions except in the North Virginia region.
+	// For legacy compatibility, if you re-create an existing bucket that you already
+	// own in the North Virginia region, Amazon S3 returns 200 OK and resets the
+	// bucket access control lists (ACLs).
 	ErrCodeBucketAlreadyOwnedByYou = "BucketAlreadyOwnedByYou"
 
 	// ErrCodeNoSuchBucket for service response error code

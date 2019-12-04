@@ -1,11 +1,22 @@
 // Library
 import React, { PureComponent, CSSProperties, ReactNode } from 'react';
 import tinycolor from 'tinycolor2';
-import { Threshold, TimeSeriesValue, getActiveThreshold, DisplayValue } from '@grafana/data';
+import {
+  Threshold,
+  TimeSeriesValue,
+  getActiveThreshold,
+  DisplayValue,
+  formattedValueToString,
+  FormattedValue,
+  DisplayValueAlignmentFactors,
+} from '@grafana/data';
+
+// Compontents
+import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
 // Utils
 import { getColorFromHexRgbOrName } from '@grafana/data';
-import { measureText } from '../../utils/measureText';
+import { measureText, calculateFontSize } from '../../utils/measureText';
 
 // Types
 import { VizOrientation } from '@grafana/data';
@@ -19,18 +30,6 @@ const TITLE_LINE_HEIGHT = 1.5;
 const VALUE_LINE_HEIGHT = 1;
 const VALUE_LEFT_PADDING = 10;
 
-/**
- * These values calculate the internal font sizes and
- * placement.  For consistent behavior across repeating
- * panels, we can optionally pass in the maximum values.
- *
- * If performace becomes a problem, we can cache the results
- */
-export interface BarGaugeAlignmentFactors {
-  title: string;
-  text: string;
-}
-
 export interface Props extends Themeable {
   height: number;
   width: number;
@@ -43,7 +42,7 @@ export interface Props extends Themeable {
   displayMode: 'basic' | 'lcd' | 'gradient';
   onClick?: React.MouseEventHandler<HTMLElement>;
   className?: string;
-  alignmentFactors?: BarGaugeAlignmentFactors;
+  alignmentFactors?: DisplayValueAlignmentFactors;
 }
 
 export class BarGauge extends PureComponent<Props> {
@@ -99,9 +98,7 @@ export class BarGauge extends PureComponent<Props> {
 
     return (
       <div style={styles.wrapper}>
-        <div className="bar-gauge__value" style={styles.value}>
-          {value.text}
-        </div>
+        <FormattedValueDisplay className="bar-gauge__value" value={value} style={styles.value} />
         <div style={styles.bar} />
       </div>
     );
@@ -171,8 +168,8 @@ export class BarGauge extends PureComponent<Props> {
     const cellSize = Math.floor((maxSize - cellSpacing * cellCount) / cellCount);
     const valueColor = getValueColor(this.props);
 
-    const valueTextToBaseSizeOn = alignmentFactors ? alignmentFactors.text : value.text;
-    const valueStyles = getValueStyles(valueTextToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation);
+    const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
+    const valueStyles = getValueStyles(valueToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation);
 
     const containerStyles: CSSProperties = {
       width: `${wrapperWidth}px`,
@@ -186,6 +183,7 @@ export class BarGauge extends PureComponent<Props> {
     } else {
       containerStyles.flexDirection = 'row';
       containerStyles.alignItems = 'center';
+      valueStyles.justifyContent = 'flex-end';
     }
 
     const cells: JSX.Element[] = [];
@@ -219,9 +217,7 @@ export class BarGauge extends PureComponent<Props> {
     return (
       <div style={containerStyles}>
         {cells}
-        <div className="bar-gauge__value" style={valueStyles}>
-          {value.text}
-        </div>
+        <FormattedValueDisplay className="bar-gauge__value" value={value} style={valueStyles} />
       </div>
     );
   }
@@ -400,8 +396,8 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   const valuePercent = getValuePercent(value.numeric, minValue, maxValue);
   const valueColor = getValueColor(props);
 
-  const valueTextToBaseSizeOn = alignmentFactors ? alignmentFactors.text : value.text;
-  const valueStyles = getValueStyles(valueTextToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation);
+  const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
+  const valueStyles = getValueStyles(valueToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation);
 
   const isBasic = displayMode === 'basic';
   const wrapperStyles: CSSProperties = {
@@ -510,13 +506,13 @@ export function getValueColor(props: Props): string {
 }
 
 function getValueStyles(
-  value: string,
+  value: FormattedValue,
   color: string,
   width: number,
   height: number,
   orientation: VizOrientation
 ): CSSProperties {
-  const valueStyles: CSSProperties = {
+  const styles: CSSProperties = {
     color: color,
     height: `${height}px`,
     width: `${width}px`,
@@ -529,22 +525,16 @@ function getValueStyles(
   let textWidth = width;
 
   if (isVertical(orientation)) {
-    valueStyles.justifyContent = `center`;
+    styles.justifyContent = `center`;
   } else {
-    valueStyles.justifyContent = `flex-start`;
-    valueStyles.paddingLeft = `${VALUE_LEFT_PADDING}px`;
+    styles.justifyContent = `flex-start`;
+    styles.paddingLeft = `${VALUE_LEFT_PADDING}px`;
     // Need to remove the left padding from the text width constraints
     textWidth -= VALUE_LEFT_PADDING;
   }
 
-  // calculate width in 14px
-  const textSize = measureText(value, 14);
-  // how much bigger than 14px can we make it while staying within our width constraints
-  const fontSizeBasedOnWidth = (textWidth / (textSize.width + 2)) * 14;
-  const fontSizeBasedOnHeight = height / VALUE_LINE_HEIGHT;
+  const formattedValueString = formattedValueToString(value);
+  styles.fontSize = calculateFontSize(formattedValueString, textWidth, height, VALUE_LINE_HEIGHT);
 
-  // final fontSize
-  valueStyles.fontSize = Math.min(fontSizeBasedOnHeight, fontSizeBasedOnWidth).toFixed(4) + 'px';
-
-  return valueStyles;
+  return styles;
 }

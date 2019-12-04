@@ -33,6 +33,7 @@ export const getGraphSeriesModel = (
 
   const displayProcessor = getDisplayProcessor({
     config: {
+      unit: fieldOptions?.defaults?.unit,
       decimals: legendOptions.decimals,
     },
   });
@@ -68,7 +69,6 @@ export const getGraphSeriesModel = (
 
             return {
               ...statDisplayValue,
-              text: statDisplayValue.text,
               title: stat,
             };
           });
@@ -104,7 +104,7 @@ export const getGraphSeriesModel = (
           type: timeField.type,
           isUtc: timeZone === 'utc',
           config: {
-            dateDisplayFormat: useMsDateFormat ? MS_DATE_TIME_FORMAT : DEFAULT_DATE_TIME_FORMAT,
+            unit: `time:${useMsDateFormat ? MS_DATE_TIME_FORMAT : DEFAULT_DATE_TIME_FORMAT}`,
           },
         });
 

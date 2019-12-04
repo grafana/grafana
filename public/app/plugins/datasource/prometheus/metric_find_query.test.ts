@@ -1,7 +1,7 @@
-import { PrometheusDatasource } from '../datasource';
-import PrometheusMetricFindQuery from '../metric_find_query';
+import { PrometheusDatasource } from './datasource';
+import PrometheusMetricFindQuery from './metric_find_query';
 import { toUtc, DataSourceInstanceSettings } from '@grafana/data';
-import { PromOptions } from '../types';
+import { PromOptions } from './types';
 
 import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';

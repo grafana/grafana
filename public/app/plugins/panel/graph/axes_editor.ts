@@ -52,9 +52,11 @@ export class AxesEditorCtrl {
     this.selectors = Selectors.Panels.Visualization.Graph.VisualizationTab;
   }
 
-  setUnitFormat(axis: { format: any }, subItem: { value: any }) {
-    axis.format = subItem.value;
-    this.panelCtrl.render();
+  setUnitFormat(axis: { format: any }) {
+    return (unit: string) => {
+      axis.format = unit;
+      this.panelCtrl.render();
+    };
   }
 
   render() {

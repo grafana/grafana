@@ -1,11 +1,19 @@
+import { FormattedValue } from '../valueFormats';
+
 export type DisplayProcessor = (value: any) => DisplayValue;
 
-export interface DisplayValue {
-  text: string; // Show in the UI
+export interface DisplayValue extends FormattedValue {
   numeric: number; // Use isNaN to check if it is a real number
   color?: string; // color based on configs or Threshold
   title?: string;
-  fontSize?: string;
+}
+
+/**
+ * These represents the display value with the longest title and text.
+ * Used to align widths and heights when displaying multiple DisplayValues
+ */
+export interface DisplayValueAlignmentFactors extends FormattedValue {
+  title: string;
 }
 
 export type DecimalCount = number | null | undefined;

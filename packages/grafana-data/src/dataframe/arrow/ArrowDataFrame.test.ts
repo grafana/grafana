@@ -1,5 +1,5 @@
-import { gelResponseToDataFrames } from './util';
-import { toDataFrameDTO } from '@grafana/data';
+import { resultsToDataFrames } from './ArrowDataFrame';
+import { toDataFrameDTO } from '../processDataFrame';
 
 /* tslint:disable */
 const resp = {
@@ -19,22 +19,8 @@ const resp = {
 /* tslint:enable */
 
 describe('GEL Utils', () => {
-  // test('should parse sample GEL output', () => {
-  //   const frames = gelResponseToDataFrames(resp);
-  //   const frame = frames[0];
-  //   expect(frame.name).toEqual('BBB');
-  //   expect(frame.fields.length).toEqual(2);
-  //   expect(frame.length).toEqual(resp.Frames[0].fields[0].values.length);
-
-  //   const timeField = frame.fields[0];
-  //   expect(timeField.name).toEqual('Time');
-
-  //   // The whole response
-  //   expect(frames).toMatchSnapshot();
-  // });
-
   test('should parse output with dataframe', () => {
-    const frames = gelResponseToDataFrames(resp);
+    const frames = resultsToDataFrames(resp);
     for (const frame of frames) {
       console.log('Frame', frame.refId);
       for (const field of frame.fields) {
