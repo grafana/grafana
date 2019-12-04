@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { FormLabel } from '@grafana/ui';
 import { ExploreQueryFieldProps } from '@grafana/data';
 
 import { PrometheusDatasource } from '../datasource';
@@ -58,21 +57,10 @@ export class PromExploreQueryEditor extends PureComponent<Props, State> {
           onChange={this.onFieldChange}
           history={history}
           data={data}
+          explore={true}
+          interval={interval}
+          onIntervalChange={this.onIntervalChange}
         />
-
-        <div className="gf-form-inline explore-input--ml">
-          <div className="gf-form">
-            <FormLabel width={4}>Step</FormLabel>
-            <input
-              type="text"
-              className="gf-form-input width-6"
-              placeholder={'auto'}
-              onChange={this.onIntervalChange}
-              onBlur={this.onRunQuery}
-              value={interval}
-            />
-          </div>
-        </div>
       </div>
     );
   }
