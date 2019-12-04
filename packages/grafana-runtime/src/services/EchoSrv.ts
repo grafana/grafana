@@ -8,11 +8,19 @@ export interface EchoMeta {
   windowSize: SizeMeta;
   userAgent: string;
   url?: string;
+  /**
+   * A unique browser session
+   */
+  sessionId: string;
+  userLogin: string;
+  userId: number;
+  userSignedIn: boolean;
+  ts: number;
 }
 
 export interface EchoBackend<T extends EchoEvent = any, O = any> {
   options: O;
-  supportedEvents?: EchoEventType[];
+  supportedEvents: EchoEventType[];
   flush: () => void;
   addEvent: (event: T) => void;
 }
@@ -21,18 +29,17 @@ export interface EchoEvent<T extends EchoEventType = any, P = any> {
   type: T;
   payload: P;
   meta: EchoMeta;
-  ts: number;
 }
 
 export enum EchoEventType {
   Performance = 'performance',
+  MetaAnalytics = 'meta-analytics',
 }
 
 export interface EchoSrv {
   flush(): void;
   addBackend(backend: EchoBackend): void;
-  addEvent<T extends EchoEvent>(event: Omit<T, 'meta' | 'ts'>, meta?: {}): void;
-  setMeta(meta: Partial<EchoMeta>): void;
+  addEvent<T extends EchoEvent>(event: Omit<T, 'meta'>, meta?: {}): void;
 }
 
 let singletonInstance: EchoSrv;
@@ -47,8 +54,4 @@ export function getEchoSrv(): EchoSrv {
 
 export const registerEchoBackend = (backend: EchoBackend) => {
   getEchoSrv().addBackend(backend);
-};
-
-export const setEchoMeta = (meta: EchoMeta) => {
-  getEchoSrv().setMeta(meta);
 };

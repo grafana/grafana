@@ -1,4 +1,5 @@
 import { EchoBackend, EchoMeta, EchoEvent, EchoSrv } from '@grafana/runtime';
+import { contextSrv } from '../context_srv';
 
 interface EchoConfig {
   // How often should metrics be reported
@@ -38,9 +39,9 @@ export class Echo implements EchoSrv {
   };
 
   flush = () => {
-    this.backends.forEach(c => {
-      c.flush();
-    });
+    for (const backend of this.backends) {
+      backend.flush();
+    }
   };
 
   addBackend = (backend: EchoBackend) => {
@@ -48,7 +49,7 @@ export class Echo implements EchoSrv {
     this.backends.push(backend);
   };
 
-  addEvent = <T extends EchoEvent>(event: Omit<T, 'meta' | 'ts'>, _meta?: {}) => {
+  addEvent = <T extends EchoEvent>(event: Omit<T, 'meta'>, _meta?: {}) => {
     const meta = this.getMeta();
     const _event = {
       ...event,
@@ -56,29 +57,33 @@ export class Echo implements EchoSrv {
         ...meta,
         ..._meta,
       },
-      ts: performance.now(),
     };
 
-    this.backends.forEach(backend => {
-      if (!backend.supportedEvents || (backend.supportedEvents && backend.supportedEvents.indexOf(_event.type) > -1)) {
+    for (const backend of this.backends) {
+      if (backend.supportedEvents.length === 0 || backend.supportedEvents.indexOf(_event.type) > -1) {
         backend.addEvent(_event);
       }
-    });
+    }
 
     this.logDebug('Adding event', _event);
-  };
-
-  setMeta = (meta: Partial<EchoMeta>) => {
-    this.logDebug('Setting meta', meta);
-    this.meta = {
-      ...this.meta,
-      ...meta,
-    };
   };
 
   getMeta = (): EchoMeta => {
     return {
       ...this.meta,
+      userId: contextSrv.user.id,
+      userLogin: contextSrv.user.login,
+      userSignedIn: contextSrv.user.isSignedIn,
+      screenSize: {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      },
+      windowSize: {
+        width: window.screen.width,
+        height: window.screen.height,
+      },
+      userAgent: window.navigator.userAgent,
+      ts: performance.now(),
       url: window.location.href,
     };
   };
