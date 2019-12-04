@@ -18,18 +18,23 @@ export function Segment<T>({
   const [Label, width, expanded, setExpanded] = useExpandableLabel(false);
 
   if (!expanded) {
-    return <Label Component={Component || <a className={cx('gf-form-label', 'query-part', className)}>{value}</a>} />;
+    return (
+      <Label
+        Component={Component || <a className={cx('gf-form-label', 'query-part', className)}>{value && value.label}</a>}
+      />
+    );
   }
 
   return (
     <SegmentSelect
-      width={width}
+      value={value}
       options={options}
+      width={width}
       onClickOutside={() => setExpanded(false)}
       allowCustomValue={allowCustomValue}
-      onChange={value => {
+      onChange={item => {
         setExpanded(false);
-        onChange(value);
+        onChange(item);
       }}
     />
   );

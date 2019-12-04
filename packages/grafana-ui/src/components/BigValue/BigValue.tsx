@@ -11,7 +11,9 @@ import {
   getValueStyles,
   getTitleStyles,
 } from './styles';
+
 import { renderGraph } from './renderGraph';
+import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
 export interface BigValueSparkline {
   data: GraphSeriesValue[][];
@@ -67,26 +69,10 @@ export class BigValue extends PureComponent<Props> {
       <div className={className} style={panelStyles} onClick={onClick}>
         <div style={valueAndTitleContainerStyles}>
           {value.title && <div style={titleStyles}>{value.title}</div>}
-          <div style={valueStyles}>{renderValueWithSmallerUnit(value.text, layout.valueFontSize)}</div>
+          <FormattedValueDisplay value={value} style={valueStyles} />
         </div>
         {renderGraph(layout, sparkline)}
       </div>
     );
   }
-}
-
-function renderValueWithSmallerUnit(value: string, fontSize: number) {
-  const valueParts = value.split(' ');
-  const unitSize = `${fontSize * 0.7}px`;
-
-  if (valueParts.length === 2) {
-    return (
-      <>
-        {valueParts[0]}
-        <span style={{ fontSize: unitSize, paddingLeft: '2px' }}>{valueParts[1]}</span>
-      </>
-    );
-  }
-
-  return value;
 }

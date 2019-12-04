@@ -1,5 +1,6 @@
 import toNumber from 'lodash/toNumber';
 import toString from 'lodash/toString';
+import isEmpty from 'lodash/isEmpty';
 
 import { getDisplayProcessor } from './displayProcessor';
 import { getFlotPairs } from '../utils/flotPairs';
@@ -196,16 +197,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
   }
 
   if (values.length === 0) {
-    values.push({
-      name: 'No data',
-      field: {
-        ...defaults,
-      },
-      display: {
-        numeric: 0,
-        text: 'No data',
-      },
-    });
+    values.push(createNoValuesFieldDisplay(options));
   } else if (values.length === 1 && !fieldOptions.defaults.title) {
     // Don't show title for single item
     values[0].display.title = undefined;
@@ -286,8 +278,12 @@ export function getDisplayValueAlignmentFactors(values: FieldDisplay[]): Display
     text: '',
   };
 
+  let prefixLength = 0;
+  let suffixLength = 0;
+
   for (let i = 0; i < values.length; i++) {
     const v = values[i].display;
+
     if (v.text && v.text.length > info.text.length) {
       info.text = v.text;
     }
@@ -295,6 +291,50 @@ export function getDisplayValueAlignmentFactors(values: FieldDisplay[]): Display
     if (v.title && v.title.length > info.title.length) {
       info.title = v.title;
     }
+
+    if (v.prefix && v.prefix.length > prefixLength) {
+      info.prefix = v.prefix;
+      prefixLength = v.prefix.length;
+    }
+
+    if (v.suffix && v.suffix.length > suffixLength) {
+      info.suffix = v.suffix;
+      suffixLength = v.suffix.length;
+    }
   }
   return info;
+}
+
+function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): FieldDisplay {
+  const displayName = 'No data';
+  const { fieldOptions } = options;
+  const { defaults, override } = fieldOptions;
+
+  const config = getFieldProperties(defaults, {}, override);
+  const displayProcessor = getDisplayProcessor({
+    config,
+    theme: options.theme,
+    type: FieldType.other,
+  });
+
+  const display = displayProcessor(null);
+  const text = getDisplayText(display, displayName);
+
+  return {
+    name: displayName,
+    field: {
+      ...defaults,
+    },
+    display: {
+      text,
+      numeric: 0,
+    },
+  };
+}
+
+function getDisplayText(display: DisplayValue, fallback: string): string {
+  if (!display || isEmpty(display.text)) {
+    return fallback;
+  }
+  return display.text;
 }
