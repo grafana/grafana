@@ -13,9 +13,7 @@
 // https://on.cypress.io/configuration
 // ***********************************************************
 
-// Import commands.js using ES2015 syntax:
-import './commands';
-
-// Alternatively you can use CommonJS syntax:
-// require('./commands')
-require('cypress-failed-log');
+// yarn build fails with:
+// >> /Users/hugo/go/src/github.com/grafana/grafana/node_modules/stringmap/stringmap.js:99
+// >>             throw new Error("StringMap expected string key");
+// require('cypress-failed-log');

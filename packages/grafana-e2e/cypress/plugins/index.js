@@ -1,8 +1,11 @@
 const cypressTypeScriptPreprocessor = require('./cy-ts-preprocessor');
 
 module.exports = on => {
-  on('task', {
-    failed: require('cypress-failed-log/src/failed')(),
-  });
+  // yarn build fails with:
+  // >> /Users/hugo/go/src/github.com/grafana/grafana/node_modules/stringmap/stringmap.js:99
+  // >>             throw new Error("StringMap expected string key");
+  // on('task', {
+  //   failed: require('cypress-failed-log/src/failed')(),
+  // });
   on('file:preprocessor', cypressTypeScriptPreprocessor);
 };

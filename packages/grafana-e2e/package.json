@@ -26,7 +26,6 @@
   "devDependencies": {
     "@cypress/webpack-preprocessor": "4.1.1",
     "cypress": "3.6.1",
-    "cypress-failed-log": "2.5.1",
     "rollup": "1.6.0",
     "rollup-plugin-commonjs": "9.2.1",
     "rollup-plugin-node-resolve": "4.0.1",
