@@ -106,7 +106,7 @@ jobs:
   end-to-end-test:
       docker:
         - image: circleci/node:12-browsers
-        - image: grafana/grafana:master
+        - image: grafana/grafana-dev:master-$CIRCLE_SHA1
       steps:
           - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
           - checkout
@@ -1305,10 +1305,6 @@ workflows:
               - mysql-integration-test
               - postgres-integration-test
               - cache-server-test
-            filters: *filter-not-release-or-master
-        - end-to-end-test:
-            requires:
-              - grafana-docker-pr
             filters: *filter-not-release-or-master
         - store-build-artifacts:
             requires:
