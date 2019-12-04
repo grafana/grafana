@@ -1,9 +1,7 @@
 import toNumber from 'lodash/toNumber';
 import toString from 'lodash/toString';
-import some from 'lodash/some';
 import isEmpty from 'lodash/isEmpty';
 
-import { isNullValueMap } from '../utils/valueMappings';
 import { getDisplayProcessor } from './displayProcessor';
 import { getFlotPairs } from '../utils/flotPairs';
 import { FieldConfig, DataFrame, FieldType } from '../types/dataFrame';
@@ -15,7 +13,6 @@ import { GrafanaTheme } from '../types/theme';
 import { ReducerID, reduceField } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
 import { getTimeField } from '../dataframe/processDataFrame';
-import { MappingType, ValueMap } from '../types';
 
 export interface FieldDisplayOptions {
   values?: boolean; // If true show each row value
@@ -295,49 +292,35 @@ export function getDisplayValueAlignmentFactors(values: FieldDisplay[]): Display
 }
 
 function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): FieldDisplay {
-  const defaultDisplayText = 'No data';
+  const displayName = 'No data';
   const { fieldOptions } = options;
   const { defaults, override } = fieldOptions;
 
   const config = getFieldProperties(defaults, {}, override);
-
-  if (!hasMappingForEmptyValue(config)) {
-    return {
-      name: defaultDisplayText,
-      field: {
-        ...defaults,
-      },
-      display: {
-        numeric: 0,
-        text: defaultDisplayText,
-      },
-    };
-  }
-
-  const display = getDisplayProcessor({
+  const displayProcessor = getDisplayProcessor({
     config,
     theme: options.theme,
     type: FieldType.other,
   });
 
+  const display = displayProcessor(null);
+  const text = getDisplayText(display, displayName);
+
   return {
-    name: defaultDisplayText,
+    name: displayName,
     field: {
       ...defaults,
     },
-    display: display(null),
+    display: {
+      text,
+      numeric: 0,
+    },
   };
 }
 
-function hasMappingForEmptyValue(config: FieldConfig): boolean {
-  if (!config || isEmpty(config.mappings)) {
-    return false;
+function getDisplayText(display: DisplayValue, fallback: string): string {
+  if (!display || isEmpty(display.text)) {
+    return fallback;
   }
-
-  return some(config.mappings, mapping => {
-    if (!mapping || mapping.type !== MappingType.ValueToText) {
-      return false;
-    }
-    return isNullValueMap(mapping as ValueMap);
-  });
+  return display.text;
 }

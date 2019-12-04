@@ -156,6 +156,7 @@ describe('FieldDisplay', () => {
 
     const display = getFieldDisplayValues(options);
     expect(display[0].field.thresholds!.length).toEqual(1);
+    expect(display[0].display.numeric).toEqual(0);
   });
 
   it('Should return field mapped value when there is no data', () => {
@@ -192,6 +193,7 @@ describe('FieldDisplay', () => {
 
     const display = getFieldDisplayValues(options);
     expect(display[0].display.text).toEqual(mapEmptyToText);
+    expect(display[0].display.numeric).toEqual(0);
   });
 
   it('Should return field with default text when no mapping available and no data', () => {
@@ -216,5 +218,42 @@ describe('FieldDisplay', () => {
 
     const display = getFieldDisplayValues(options);
     expect(display[0].display.text).toEqual('No data');
+    expect(display[0].display.numeric).toEqual(0);
+  });
+
+  it('Should always return display numeric 0 when there is no data', () => {
+    const mapEmptyToText = '0';
+
+    const options: GetFieldDisplayValuesOptions = {
+      data: [
+        {
+          name: 'No data',
+          fields: [],
+          length: 0,
+        },
+      ],
+      replaceVariables: (value: string) => {
+        return value;
+      },
+      fieldOptions: {
+        calcs: [],
+        override: {
+          mappings: [
+            {
+              id: 1,
+              operator: '',
+              text: mapEmptyToText,
+              type: MappingType.ValueToText,
+              value: 'null',
+            },
+          ],
+        },
+        defaults: {},
+      },
+      theme: {} as GrafanaTheme,
+    };
+
+    const display = getFieldDisplayValues(options);
+    expect(display[0].display.numeric).toEqual(0);
   });
 });
