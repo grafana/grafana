@@ -29,15 +29,16 @@ export function SegmentAsync<T>({
           setLoadedOptions(opts);
           setSelectPlaceholder(opts.length ? '' : 'No options found');
         }}
-        Component={Component || <a className={cx('gf-form-label', 'query-part', className)}>{value}</a>}
+        Component={Component || <a className={cx('gf-form-label', 'query-part', className)}>{value && value.label}</a>}
       />
     );
   }
 
   return (
     <SegmentSelect
-      width={width}
+      value={value}
       options={loadedOptions}
+      width={width}
       noOptionsMessage={selectPlaceholder}
       allowCustomValue={allowCustomValue}
       onClickOutside={() => {
@@ -45,11 +46,11 @@ export function SegmentAsync<T>({
         setLoadedOptions([]);
         setExpanded(false);
       }}
-      onChange={value => {
+      onChange={item => {
         setSelectPlaceholder('');
         setLoadedOptions([]);
         setExpanded(false);
-        onChange(value);
+        onChange(item);
       }}
     />
   );
