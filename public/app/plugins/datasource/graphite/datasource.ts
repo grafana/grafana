@@ -177,7 +177,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
         maxDataPoints: 100,
       } as unknown) as DataQueryRequest<GraphiteQuery>;
 
-      return this.query(graphiteQuery).then((result: { data }) => {
+      return this.query(graphiteQuery).then(result => {
         const list = [];
 
         for (let i = 0; i < result.data.length; i++) {
