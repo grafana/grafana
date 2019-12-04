@@ -121,7 +121,6 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 		return err
 
 	})
-
 	if err != nil {
 		return nil, err
 	}
