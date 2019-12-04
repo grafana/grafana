@@ -15,7 +15,7 @@
   },
   "main": "src/index.ts",
   "scripts": {
-    "tslint": "tslint -c tslint.json --project tsconfig.json",
+    "lint": "eslint cypress/ src/ --ext=.js,.ts,.tsx",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf ./dist ./compiled",
     "bundle": "rollup -c rollup.config.ts",

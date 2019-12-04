@@ -16,7 +16,7 @@
   },
   "main": "src/index.ts",
   "scripts": {
-    "tslint": "tslint -c tslint.json --project tsconfig.json",
+    "lint": "eslint .storybook/ src/ --ext=.js,.ts,.tsx",
     "typecheck": "tsc --noEmit",
     "storybook": "start-storybook -p 9001 -c .storybook",
     "storybook:build": "build-storybook -o ./dist/storybook -c .storybook",

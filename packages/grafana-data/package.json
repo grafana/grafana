@@ -14,13 +14,14 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "scripts": {
-    "tslint": "tslint -c tslint.json --project tsconfig.json",
+    "lint": "eslint src/ --ext=.js,.ts,.tsx",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf ./dist ./compiled",
     "bundle": "rollup -c rollup.config.ts",
     "build": "grafana-toolkit package:build --scope=data"
   },
   "devDependencies": {
+    "@grafana/eslint-config": "^1.0.0-rc1",
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@types/jest": "23.3.14",
     "@types/jquery": "1.10.35",
