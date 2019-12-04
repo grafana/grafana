@@ -11,7 +11,7 @@ const addValueToTextMappingText = (
     return allValueMappings;
   }
 
-  if (value === null && valueToTextMapping.value && valueToTextMapping.value.toLowerCase() === 'null') {
+  if (value === null && isNullValueMap(valueToTextMapping)) {
     return allValueMappings.concat(valueToTextMapping);
   }
 
@@ -86,4 +86,11 @@ const getAllFormattedValueMappings = (valueMappings: ValueMapping[], value: Time
 
 export const getMappedValue = (valueMappings: ValueMapping[], value: TimeSeriesValue): ValueMapping => {
   return getAllFormattedValueMappings(valueMappings, value)[0];
+};
+
+const isNullValueMap = (mapping: ValueMap): boolean => {
+  if (!mapping || !mapping.value) {
+    return false;
+  }
+  return mapping.value.toLowerCase() === 'null';
 };
