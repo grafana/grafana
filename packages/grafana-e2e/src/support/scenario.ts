@@ -1,9 +1,15 @@
 import { Flows } from '../flows';
 
+export interface ScenarioContext {
+  dataSourceName?: string;
+  dashboardTitle?: string;
+  dashboardUid?: string;
+}
+
 export interface ScenarioArguments {
   describeName: string;
   itName: string;
-  scenario: (scenarioDataSourceName?: string, scenarioDashBoard?: string) => void;
+  scenario: (context: ScenarioContext) => void;
   skipScenario?: boolean;
   addScenarioDataSource?: boolean;
   addScenarioDashBoard?: boolean;
@@ -26,15 +32,18 @@ export const e2eScenario = ({
     }
 
     let scenarioDataSource: string;
-    let scenarioDashBoard: string;
+    let scenarioDashBoardTitle: string;
+    let scenarioDashBoardUid: string;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       Flows.login('admin', 'admin');
       if (addScenarioDataSource) {
         scenarioDataSource = Flows.addDataSource('TestData DB');
       }
       if (addScenarioDashBoard) {
-        scenarioDashBoard = Flows.addDashboard();
+        const { dashboardTitle, uid } = await Flows.addDashboard();
+        scenarioDashBoardTitle = dashboardTitle;
+        scenarioDashBoardUid = uid;
       }
     });
 
@@ -42,13 +51,17 @@ export const e2eScenario = ({
       if (scenarioDataSource) {
         Flows.deleteDataSource(scenarioDataSource);
       }
-      if (scenarioDashBoard) {
-        Flows.deleteDashboard(scenarioDashBoard);
+      if (scenarioDashBoardUid) {
+        Flows.deleteDashboard(scenarioDashBoardUid);
       }
     });
 
     it(itName, () => {
-      scenario(scenarioDataSource, scenarioDashBoard);
+      scenario({
+        dashboardTitle: scenarioDashBoardTitle,
+        dashboardUid: scenarioDashBoardUid,
+        dataSourceName: scenarioDataSource,
+      });
     });
   });
 };

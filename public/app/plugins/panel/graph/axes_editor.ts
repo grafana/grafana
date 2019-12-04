@@ -1,4 +1,5 @@
 import { getValueFormats } from '@grafana/data';
+import { Selectors } from '@grafana/e2e/src/selectors';
 import { GraphCtrl } from './module';
 
 export class AxesEditorCtrl {
@@ -9,6 +10,7 @@ export class AxesEditorCtrl {
   xAxisModes: any;
   xAxisStatOptions: any;
   xNameSegment: any;
+  selectors: typeof Selectors.Panels.Visualization.Graph.VisualizationTab;
 
   /** @ngInject */
   constructor(private $scope: any) {
@@ -47,6 +49,7 @@ export class AxesEditorCtrl {
         this.panel.xaxis.name = 'specify field';
       }
     }
+    this.selectors = Selectors.Panels.Visualization.Graph.VisualizationTab;
   }
 
   setUnitFormat(axis: { format: any }, subItem: { value: any }) {

@@ -13,7 +13,8 @@ export const addDataSource = (pluginName?: string): string => {
     }
   });
 
-  const dataSourceName = `e2e - DataSource - ${new Date().getTime()}`;
+  const dataSourceName = `e2e-${new Date().getTime()}`;
+  Pages.DataSource.name().clear();
   Pages.DataSource.name().type(dataSourceName);
   Pages.DataSource.saveAndTest().click();
   Pages.DataSource.alert().should('exist');

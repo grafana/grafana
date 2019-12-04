@@ -8,6 +8,9 @@ import { Dashboard } from './dashboard';
 import { SaveAsModal } from './saveAsModal';
 import { Dashboards } from './dashboards';
 import { DashboardSettings } from './dashboardSettings';
+import { EditPanel } from './editPanel';
+import { TestData } from './testdata';
+import { Graph } from './graph';
 
 export const Selectors = {
   Login,
@@ -20,4 +23,13 @@ export const Selectors = {
   Dashboards,
   SaveAsModal,
   DashboardSettings,
+  Panels: {
+    EditPanel,
+    DataSource: {
+      TestData,
+    },
+    Visualization: {
+      Graph,
+    },
+  },
 };

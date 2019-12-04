@@ -4,6 +4,7 @@ import { deleteDataSource } from './deleteDataSource';
 import { addDashboard } from './addDashboard';
 import { assertSuccessNotification } from './assertSuccessNotification';
 import { deleteDashboard } from './deleteDashboard';
+import { openDashboard } from './openDashboard';
 
 export const Flows = {
   login,
@@ -12,4 +13,5 @@ export const Flows = {
   addDashboard,
   assertSuccessNotification,
   deleteDashboard,
+  openDashboard,
 };
