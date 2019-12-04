@@ -1,4 +1,4 @@
-import { EchoBackend, EchoEvent, EchoEventType } from '../types';
+import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
 
 export interface PerformanceEventPayload {
   metricName: string;

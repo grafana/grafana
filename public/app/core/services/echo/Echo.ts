@@ -1,4 +1,4 @@
-import { EchoBackend, EchoMeta, EchoEvent, EchoSrv } from './types';
+import { EchoBackend, EchoMeta, EchoEvent, EchoSrv } from '@grafana/runtime';
 
 interface EchoConfig {
   // How often should metrics be reported
@@ -8,8 +8,8 @@ interface EchoConfig {
 }
 
 /**
- * Echo is a service for collecting metrics from Grafana client-app
- * It collects metrics, distributes them across registered backend and flushes once per configured interval
+ * Echo is a service for collecting events from Grafana client-app
+ * It collects events, distributes them across registered backend and flushes once per configured interval
  * It's up to the registered backend to decide what to do with a given type of metric
  */
 export class Echo implements EchoSrv {

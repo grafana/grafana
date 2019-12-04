@@ -34,3 +34,21 @@ export interface EchoSrv {
   addEvent<T extends EchoEvent>(event: Omit<T, 'meta' | 'ts'>, meta?: {}): void;
   setMeta(meta: Partial<EchoMeta>): void;
 }
+
+let singletonInstance: EchoSrv;
+
+export function setEchoSrv(instance: EchoSrv) {
+  singletonInstance = instance;
+}
+
+export function getEchoSrv(): EchoSrv {
+  return singletonInstance;
+}
+
+export const registerEchoBackend = (backend: EchoBackend) => {
+  getEchoSrv().addBackend(backend);
+};
+
+export const setEchoMeta = (meta: EchoMeta) => {
+  getEchoSrv().setMeta(meta);
+};

@@ -2,8 +2,12 @@ import app from './app';
 // @ts-ignore
 import ttiPolyfill from 'tti-polyfill';
 
+import { setEchoSrv, setEchoMeta, registerEchoBackend } from '@grafana/runtime';
+import { Echo } from './core/services/echo/Echo';
+import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
-import { setEchoMeta, reportPerformance, registerEchoBackend } from './core/services/echo/EchoSrv';
+
+setEchoSrv(new Echo({ debug: process.env.NODE_ENV === 'development' }));
 
 ttiPolyfill.getFirstConsistentlyInteractive().then((tti: any) => {
   // Collecting paint metrics first
@@ -13,10 +17,6 @@ ttiPolyfill.getFirstConsistentlyInteractive().then((tti: any) => {
     reportPerformance(metric.name, Math.round(metric.startTime + metric.duration));
   }
   reportPerformance('tti', tti);
-});
-
-window.addEventListener('DOMContentLoaded', () => {
-  reportPerformance('dcl', Math.round(performance.now()));
 });
 
 setEchoMeta({
@@ -33,5 +33,9 @@ setEchoMeta({
 });
 
 registerEchoBackend(new PerformanceBackend({}));
+
+window.addEventListener('DOMContentLoaded', () => {
+  reportPerformance('dcl', Math.round(performance.now()));
+});
 
 app.init();
