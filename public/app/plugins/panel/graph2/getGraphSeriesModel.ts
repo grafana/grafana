@@ -33,7 +33,7 @@ export const getGraphSeriesModel = (
 
   const displayProcessor = getDisplayProcessor({
     config: {
-      unit: fieldOptions.defaults.unit,
+      unit: fieldOptions?.defaults?.unit,
       decimals: legendOptions.decimals,
     },
   });
