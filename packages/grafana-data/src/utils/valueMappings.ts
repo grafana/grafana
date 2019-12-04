@@ -85,7 +85,7 @@ export const getMappedValue = (valueMappings: ValueMapping[], value: TimeSeriesV
   return getAllFormattedValueMappings(valueMappings, value)[0];
 };
 
-export const isNullValueMap = (mapping: ValueMap): boolean => {
+const isNullValueMap = (mapping: ValueMap): boolean => {
   if (!mapping || !mapping.value) {
     return false;
   }
