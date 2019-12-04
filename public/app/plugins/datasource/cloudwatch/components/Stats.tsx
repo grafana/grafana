@@ -12,6 +12,7 @@ export interface Props {
 
 const removeText = '-- remove stat --';
 const removeOption: SelectableValue<string> = { label: removeText, value: removeText };
+const toOption = (value: any) => ({ label: value, value });
 
 export const Stats: FunctionComponent<Props> = ({ stats, values, onChange, variableOptionGroup }) => (
   <>
@@ -20,9 +21,9 @@ export const Stats: FunctionComponent<Props> = ({ stats, values, onChange, varia
         <Segment
           allowCustomValue
           key={value + index}
-          value={value}
+          value={toOption(value)}
           options={[removeOption, ...stats, variableOptionGroup]}
-          onChange={value =>
+          onChange={({ value }) =>
             onChange(
               value === removeText
                 ? values.filter((_, i) => i !== index)
@@ -39,7 +40,7 @@ export const Stats: FunctionComponent<Props> = ({ stats, values, onChange, varia
           </a>
         }
         allowCustomValue
-        onChange={(value: string) => onChange([...values, value])}
+        onChange={({ value }) => onChange([...values, value])}
         options={[...stats.filter(({ value }) => !values.includes(value)), variableOptionGroup]}
       />
     )}

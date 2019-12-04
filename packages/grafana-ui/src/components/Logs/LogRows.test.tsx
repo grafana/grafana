@@ -14,6 +14,7 @@ describe('LogRows', () => {
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
         showTime={false}
+        wrapLogMessage={true}
         timeZone={'utc'}
       />
     );
@@ -33,6 +34,7 @@ describe('LogRows', () => {
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
         showTime={false}
+        wrapLogMessage={true}
         timeZone={'utc'}
         previewLimit={1}
       />
@@ -61,6 +63,7 @@ describe('LogRows', () => {
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
         showTime={false}
+        wrapLogMessage={true}
         timeZone={'utc'}
       />
     );
@@ -79,6 +82,7 @@ describe('LogRows', () => {
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
         showTime={false}
+        wrapLogMessage={true}
         timeZone={'utc'}
       />
     );

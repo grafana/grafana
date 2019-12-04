@@ -177,22 +177,24 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
         maxDataPoints: 100,
       } as unknown) as DataQueryRequest<GraphiteQuery>;
 
-      return this.query(graphiteQuery).then((result: { data: any[] }) => {
+      return this.query(graphiteQuery).then(result => {
         const list = [];
 
         for (let i = 0; i < result.data.length; i++) {
           const target = result.data[i];
 
-          for (let y = 0; y < target.datapoints.length; y++) {
-            const datapoint = target.datapoints[y];
-            if (!datapoint[0]) {
+          for (let y = 0; y < target.length; y++) {
+            const time = target.fields[1].values.get(y);
+            const value = target.fields[0].values.get(y);
+
+            if (!value) {
               continue;
             }
 
             list.push({
               annotation: options.annotation,
-              time: datapoint[1],
-              title: target.target,
+              time,
+              title: target.name,
             });
           }
         }
