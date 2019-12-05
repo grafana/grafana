@@ -19,9 +19,9 @@ This page explains how to install Grafana dependencies, download and install Gra
 
 ## 1. Download and install
 
-We recommend  you run all the listed commands before you download and install Grafana. They might not be necessary on all systems, but if you run them first then you will not be interrupted by dependency errors.
+We recommend that you run all the listed commands before you download and install Grafana. They might not be necessary on all systems, but if you run them first then you will not be interrupted by dependency errors.
 
-You can install Grafana using an APT repository, by downloading a .deb package, or by using a binary .tar file.
+You can install Grafana using our official APT repository, by downloading a `.deb` package, or by using a binary `.tar.gz` file.
 
 ### Install from APT repository 
 
@@ -70,12 +70,12 @@ Go to the [download page](https://grafana.com/grafana/download?platform=linux) f
 links.
 
 ```bash
-sudo wget <tar.gz package url>
+sudo wget <.deb package url>
 sudo apt-get install -y adduser libfontconfig1
 sudo dpkg -i grafana_<version>_amd64.deb
 ```
 
-## Install from binary .tar file
+## Install from binary .tar.gz file
 
 Download the latest [`.tar.gz` file](https://grafana.com/grafana/download?platform=linux) and extract it. The files extract into a folder named after the Grafana version that you downloaded. This folder contains all files required to run Grafana. There are no init scripts or install scripts in this package.
 
@@ -85,11 +85,11 @@ sudo apt-get install -y adduser libfontconfig1
 sudo tar -zxvf <tar.gz package>
 ```
 
-## 2. Start the server 
+## 2. Start the server
 
 This starts the `grafana-server` process as the `grafana` user, which was created during the package installation.
 
-If you installed with the APT repository or .deb package, then you can start the server using systemd or init.d. If you installed a binary .tar file, then you need to execute the binary.
+If you installed with the APT repository or `.deb` package, then you can start the server using `systemd` or `init.d`. If you installed a binary `.tar.gz` file, then you need to execute the binary.
 
 ### Start the server with systemd
 
@@ -124,7 +124,7 @@ sudo service grafana-server start
 Verify that the service has started:
 
 ```bash
-sudo NEED CONTENT HERE
+sudo service grafana-server status
 ```
 
 Configure the Grafana server to start at boot:
