@@ -433,7 +433,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
   modifyQuery(query: LokiQuery, action: any): LokiQuery {
     const parsed = parseQuery(query.expr || '');
-
     let { query: selector } = parsed;
     let selectorLabels, selectorFilters;
     switch (action.type) {
@@ -451,14 +450,10 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       }
       default:
         break;
-      }
-    
-    let search = parsed.regexp 
-    if (!query.expr.includes('(?i)')) {
-      search = formatSearch(parsed.regexp)
-    };
+    }
 
-    let expression = formatQuery(selector, search);
+    const search = formatSearch(query.expr, parsed.regexp);
+    const expression = formatQuery(selector, search);
     return { ...query, expr: expression };
   }
 

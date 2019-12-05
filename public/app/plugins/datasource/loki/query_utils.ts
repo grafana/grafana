@@ -28,10 +28,10 @@ export function formatQuery(selector: string, search: string): string {
   return `${selector || ''} ${search || ''}`.trim();
 }
 
-export function formatSearch(search: string): string {
-  let formattedSearch = search;
-  if (search.includes('(?i)')) {
-    formattedSearch = search.replace(/(\(\?i\))/, '');
+export function formatSearch(queryString: string, parsedSearch: string): string {
+  let formattedSearch = parsedSearch;
+  if (!queryString.includes(caseInsensitive) && parsedSearch.includes(caseInsensitive)) {
+    formattedSearch = formattedSearch.replace(/(\(\?i\))/, '');
   }
   return formattedSearch.trim();
 }
