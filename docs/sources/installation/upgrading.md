@@ -85,16 +85,14 @@ sudo apt-get update
 
 #### Upgrade from binary .tar file
 
-If you downloaded the binary `.tar.gz` package, then you can just download and extract the new package
-and overwrite all your existing files. However, this might overwrite your config changes. 
+If you downloaded the binary `.tar.gz` package, then you can just download and extract the new package and overwrite all your existing files. However, this might overwrite your config changes. 
 
 We recommend that you save your custom config changes in a file named `<grafana_install_dir>/conf/custom.ini`.
 This allows you to upgrade Grafana without risking losing your configuration changes.
 
 ### Centos / RHEL
 
-If you installed Grafana by downloading an RPM package you can just follow the same installation guide
-and execute the same `yum install` or `rpm -i` command but with the new package. It will upgrade your Grafana installation.
+If you installed Grafana by downloading an RPM package you can just follow the same installation guide and execute the same `yum install` or `rpm -i` command but with the new package. It will upgrade your Grafana installation.
 
 If you used our YUM repository:
 
@@ -115,10 +113,7 @@ docker run --name=my-grafana-container --restart=always -v /var/lib/grafana:/var
 
 ### Windows
 
-If you downloaded the Windows binary package you can just download a newer package and extract
-to the same location (and overwrite the existing files). This might overwrite your config changes. We
-recommend you place your config changes in a file named `<grafana_install_dir>/conf/custom.ini`
-as this will make upgrades easier without risking losing your config changes.
+If you downloaded the Windows binary package you can just download a newer package and extract to the same location (and overwrite the existing files). This might overwrite your config changes. We recommend that you save your config changes in a file named `<grafana_install_dir>/conf/custom.ini` as this will make upgrades easier without risking losing your config changes.
 
 ## Upgrading from 1.x
 
@@ -130,9 +125,7 @@ We are not aware of any issues upgrading directly from 2.x to 4.x but to be on t
 
 ## Upgrading to v5.0
 
-The dashboard grid layout engine has changed. All dashboards will be automatically upgraded to new
-positioning system when you load them in v5. Dashboards saved in v5 will not work in older versions of Grafana. Some
-external panel plugins might need to be updated to work properly.
+The dashboard grid layout engine has changed. All dashboards will be automatically upgraded to new positioning system when you load them in v5. Dashboards saved in v5 will not work in older versions of Grafana. Some external panel plugins might need to be updated to work properly.
 
 For more details on the new panel positioning system, [click here]({{< relref "reference/dashboard.md#panel-size-position" >}})
 
