@@ -28,6 +28,14 @@ export function formatQuery(selector: string, search: string): string {
   return `${selector || ''} ${search || ''}`.trim();
 }
 
+export function formatSearch(search: string): string {
+  let formattedSearch = search;
+  if (search.includes('(?i)')) {
+    formattedSearch = search.replace(/(\(\?i\))/, '');
+  }
+  return formattedSearch.trim();
+}
+
 /**
  * Returns search terms from a LogQL query.
  * E.g., `{} |= foo |=bar != baz` returns `['foo', 'bar']`.

@@ -16,7 +16,7 @@ import {
   lokiStreamResultToDataFrame,
   lokiLegacyStreamsToDataframes,
 } from './result_transformer';
-import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
+import { formatQuery, formatSearch, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 
 // Types
 import {
@@ -433,26 +433,32 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
   modifyQuery(query: LokiQuery, action: any): LokiQuery {
     const parsed = parseQuery(query.expr || '');
+
     let { query: selector } = parsed;
     let selectorLabels, selectorFilters;
     switch (action.type) {
       case 'ADD_FILTER': {
         selectorLabels = addLabelToSelector(selector, action.key, action.value);
         selectorFilters = keepSelectorFilters(selector);
-        selector = `${selectorLabels} ${selectorFilters}`;
+        selector = `${selectorLabels} ${selectorFilters}`.trim();
         break;
       }
       case 'ADD_FILTER_OUT': {
         selectorLabels = addLabelToSelector(selector, action.key, action.value, '!=');
         selectorFilters = keepSelectorFilters(selector);
-        selector = `${selectorLabels} ${selectorFilters}`;
+        selector = `${selectorLabels} ${selectorFilters}`.trim();
         break;
       }
       default:
         break;
-    }
+      }
+    
+    let search = parsed.regexp 
+    if (!query.expr.includes('(?i)')) {
+      search = formatSearch(parsed.regexp)
+    };
 
-    const expression = formatQuery(selector, parsed.regexp);
+    let expression = formatQuery(selector, search);
     return { ...query, expr: expression };
   }
 
