@@ -35,19 +35,17 @@ export function SegmentInput<T>({
   `;
 
   return (
-    <div className="gf-form">
-      <input
-        ref={ref}
-        autoFocus
-        className={cx(`gf-form-input`, inputWidthStyle)}
-        value={value}
-        onChange={item => {
-          setInputWidth(textWidth(item.target.value));
-          onChange(item.target.value);
-        }}
-        onBlur={() => setExpanded(false)}
-        onKeyDown={e => e.keyCode === 13 && setExpanded(false)}
-      />
-    </div>
+    <input
+      ref={ref}
+      autoFocus
+      className={cx(`gf-form gf-form-input`, inputWidthStyle)}
+      value={value}
+      onChange={item => {
+        setInputWidth(textWidth(item.target.value));
+        onChange(item.target.value);
+      }}
+      onBlur={() => setExpanded(false)}
+      onKeyDown={e => e.keyCode === 13 && setExpanded(false)}
+    />
   );
 }
