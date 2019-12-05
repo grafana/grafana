@@ -104,16 +104,18 @@ export const users = () => {
   );
 };
 export const jsonSchemaForms = () => {
-  // const [name, setName] = useState();
-  // const [email, setEmail] = useState();
-  // const [username, setUsername] = useState();
-  // const [password, setPassword] = useState();
-  // const [disabledUser, setDisabledUser] = useState(false);
-  // const [checked, setChecked] = useState(false);
+  // const formData: {
+  //   name: string;
+  //   email: string;
+  //   username: string;
+  //   disabled: boolean;
+  //   sslVerification: boolean;
+  //   datasource: string;
+  // } = {};
   const schema: JSONSchema6 = {
-    title: 'Todo',
+    title: 'Sample json-schema form',
     type: 'object',
-    required: ['name'],
+    required: ['name', 'datasource'],
     properties: {
       name: { type: 'string', title: 'Name', default: '', minLength: 5 },
       email: { type: 'string', title: 'E-mail', default: '', format: 'email' },
@@ -126,14 +128,23 @@ export const jsonSchemaForms = () => {
       },
       datasource: {
         type: 'string',
-        enum: [{ val: 1 }, { val: 2 }, { val: 3 }],
+        enum: ['prometheus', 'graphite', 'elastic'],
         // @ts-ignore
         enumNames: ['Prometheus', 'Graphite', 'Elastic'],
+      },
+      address: {
+        type: 'object',
+        required: ['city'],
+        properties: {
+          city: { type: 'string', title: 'City', default: '', minLength: 1 },
+          country: { type: 'string', title: 'Country', default: '' },
+        },
       },
     },
   };
 
   const uiSchema: UiSchema = {
+    'ui:rootFieldId': 'myform',
     name: {
       'ui:placeholder': 'Your name pretty please',
     },
@@ -157,9 +168,10 @@ export const jsonSchemaForms = () => {
           console.log(data, es);
         }}
       >
-        <div>
+        <></>
+        {/* <div>
           <Button type="submit">Whatever</Button>
-        </div>
+        </div> */}
       </Form>
     </>
   );

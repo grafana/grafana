@@ -6,7 +6,7 @@ import React from 'react';
 import { stylesFactory, useTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
-import { default as JSForm, UiSchema, ISubmitEvent, IChangeEvent, ErrorSchema } from 'react-jsonschema-form';
+import { UiSchema, ISubmitEvent, IChangeEvent, ErrorSchema } from 'react-jsonschema-form';
 import { JSONSchema6 } from 'json-schema';
 import { FieldTemplate } from './JSFormWrappers/FieldTemplate';
 import { ObjectFieldTemplate } from './JSFormWrappers/ObjectFieldTemplate';
@@ -14,6 +14,9 @@ import { TextWidget } from './JSFormWrappers/TextWidget';
 import { BooleanFieldTemplate } from './JSFormWrappers/BooleanFieldTemplate';
 import { CheckboxWidget } from './JSFormWrappers/CheckboxWidget';
 import { SwitchWidget } from './JSFormWrappers/SwitchWidget';
+
+import { JSFormWrapper } from './JSFormWrappers/JSFormWrapper';
+import _ from 'lodash';
 
 const getFormStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -37,10 +40,12 @@ export const Form: React.FC<FormProps> = ({ children, schema, uiSchema, onSubmit
 
   if (schema) {
     return (
-      <JSForm
+      <JSFormWrapper
+        noHtml5Validate
+        idPrefix={_.uniqueId('form-')}
         onSubmit={onSubmit}
         onBlur={(id, value) => {
-          console.log(id, value);
+          // console.log(id, value);
         }}
         showErrorList={false}
         onChange={onChange}
@@ -59,7 +64,7 @@ export const Form: React.FC<FormProps> = ({ children, schema, uiSchema, onSubmit
         }}
       >
         {children}
-      </JSForm>
+      </JSFormWrapper>
     );
   }
   return <div className={styles.form}>{children}</div>;
