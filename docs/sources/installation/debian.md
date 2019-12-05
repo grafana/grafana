@@ -70,7 +70,7 @@ Go to the [download page](https://grafana.com/grafana/download?platform=linux) f
 links.
 
 ```bash
-sudo wget <tar.gz package url>
+sudo wget <.deb package url>
 sudo apt-get install -y adduser libfontconfig1
 sudo dpkg -i grafana_<version>_amd64.deb
 ```
