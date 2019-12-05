@@ -16,6 +16,9 @@ const webpackOptions = {
         ]
       }
     ]
+  },
+  externals: {
+    fs: require('fs'),
   }
 };
 

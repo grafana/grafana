@@ -29,12 +29,20 @@ e2eScenario({
 
     Pages.Panels.Panel.headerItems('Share').click();
 
-    Pages.SharePanelModal.linkToRenderedImage().then($a => {
+    Pages.SharePanelModal.linkToRenderedImage().then(async $a => {
       // extract the fully qualified href property
       const url = $a.prop('href');
 
       // Test that the image renderer returns 200 OK
       cy.request({ method: 'GET', url, timeout: 120000 });
+
+      // Download image
+      if (Cypress.env('CIRCLE_SHA1')) {
+        const blob = await Cypress.Blob.imgSrcToBlob(url);
+        const base64String = await Cypress.Blob.blobToBase64String(blob);
+        const data = base64String.replace(/^data:image\/\w+;base64,/, '');
+        cy.writeFile(`${Cypress.config().screenshotsFolder}/theOutput/smoke-test-scenario.png`, data, 'base64');
+      }
     });
   },
 });

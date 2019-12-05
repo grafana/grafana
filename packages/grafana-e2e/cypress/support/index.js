@@ -17,3 +17,19 @@
 // >> /Users/hugo/go/src/github.com/grafana/grafana/node_modules/stringmap/stringmap.js:99
 // >>             throw new Error("StringMap expected string key");
 // require('cypress-failed-log');
+
+const COMMAND_DELAY = 1000;
+
+if (Cypress.env('SLOWMO')) {
+  for (const command of ['visit', 'click', 'trigger', 'type', 'clear', 'reload', 'contains', 'then']) {
+    Cypress.Commands.overwrite(command, (originalFn, ...args) => {
+      const origVal = originalFn(...args);
+
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve(origVal);
+        }, COMMAND_DELAY);
+      });
+    });
+  }
+}
