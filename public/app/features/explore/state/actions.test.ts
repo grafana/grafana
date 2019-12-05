@@ -107,7 +107,7 @@ describe('refreshExplore', () => {
           .givenThunk(refreshExplore)
           .whenThunkIsDispatched(exploreId);
 
-        const initializeExplore = dispatchedActions[2] as ActionOf<InitializeExplorePayload>;
+        const initializeExplore = dispatchedActions[1] as ActionOf<InitializeExplorePayload>;
         const { type, payload } = initializeExplore;
 
         expect(type).toEqual(initializeExploreAction.type);

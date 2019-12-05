@@ -1,7 +1,6 @@
 import AzureMonitorDatasource from '../datasource';
 import FakeSchemaData from './__mocks__/schema';
-// @ts-ignore
-import Q from 'q';
+
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { KustoSchema } from '../types';
 import { toUtc } from '@grafana/data';
@@ -13,13 +12,12 @@ describe('AzureLogAnalyticsDatasource', () => {
   };
 
   beforeEach(() => {
-    ctx.$q = Q;
     ctx.instanceSettings = {
       jsonData: { logAnalyticsSubscriptionId: 'xxx' },
       url: 'http://azureloganalyticsapi',
     };
 
-    ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
+    ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
   });
 
   describe('When the config option "Same as Azure Monitor" has been chosen', () => {
@@ -58,15 +56,15 @@ describe('AzureLogAnalyticsDatasource', () => {
       ctx.instanceSettings.jsonData.tenantId = 'xxx';
       ctx.instanceSettings.jsonData.clientId = 'xxx';
       ctx.instanceSettings.jsonData.azureLogAnalyticsSameAs = true;
-      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
 
       ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
         if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
           workspacesUrl = options.url;
-          return ctx.$q.when({ data: workspaceResponse, status: 200 });
+          return Promise.resolve({ data: workspaceResponse, status: 200 });
         } else {
           azureLogAnalyticsUrl = options.url;
-          return ctx.$q.when({ data: tableResponseWithOneColumn, status: 200 });
+          return Promise.resolve({ data: tableResponseWithOneColumn, status: 200 });
         }
       };
 
@@ -97,7 +95,7 @@ describe('AzureLogAnalyticsDatasource', () => {
         ctx.instanceSettings.jsonData.logAnalyticsTenantId = 'xxx';
         ctx.instanceSettings.jsonData.logAnalyticsClientId = 'xxx';
         ctx.backendSrv.datasourceRequest = () => {
-          return ctx.$q.reject(error);
+          return Promise.reject(error);
         };
       });
 
@@ -170,7 +168,7 @@ describe('AzureLogAnalyticsDatasource', () => {
         beforeEach(() => {
           ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
             expect(options.url).toContain('query=AzureActivity');
-            return ctx.$q.when({ data: response, status: 200 });
+            return Promise.resolve({ data: response, status: 200 });
           };
         });
 
@@ -209,7 +207,7 @@ describe('AzureLogAnalyticsDatasource', () => {
           };
           ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
             expect(options.url).toContain('query=AzureActivity');
-            return ctx.$q.when({ data: invalidResponse, status: 200 });
+            return Promise.resolve({ data: invalidResponse, status: 200 });
           };
         });
 
@@ -226,7 +224,7 @@ describe('AzureLogAnalyticsDatasource', () => {
         options.targets[0].azureLogAnalytics.resultFormat = 'table';
         ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
           expect(options.url).toContain('query=AzureActivity');
-          return ctx.$q.when({ data: response, status: 200 });
+          return Promise.resolve({ data: response, status: 200 });
         };
       });
 
@@ -253,7 +251,7 @@ describe('AzureLogAnalyticsDatasource', () => {
     beforeEach(() => {
       ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
         expect(options.url).toContain('metadata');
-        return ctx.$q.when({ data: FakeSchemaData.getlogAnalyticsFakeMetadata(), status: 200 });
+        return Promise.resolve({ data: FakeSchemaData.getlogAnalyticsFakeMetadata(), status: 200 });
       };
     });
 
@@ -306,9 +304,9 @@ describe('AzureLogAnalyticsDatasource', () => {
     beforeEach(async () => {
       ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
         if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
-          return ctx.$q.when({ data: workspaceResponse, status: 200 });
+          return Promise.resolve({ data: workspaceResponse, status: 200 });
         } else {
-          return ctx.$q.when({ data: tableResponseWithOneColumn, status: 200 });
+          return Promise.resolve({ data: tableResponseWithOneColumn, status: 200 });
         }
       };
 
@@ -368,9 +366,9 @@ describe('AzureLogAnalyticsDatasource', () => {
     beforeEach(async () => {
       ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
         if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
-          return ctx.$q.when({ data: workspaceResponse, status: 200 });
+          return Promise.resolve({ data: workspaceResponse, status: 200 });
         } else {
-          return ctx.$q.when({ data: tableResponse, status: 200 });
+          return Promise.resolve({ data: tableResponse, status: 200 });
         }
       };
 

@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import angular, { ILocationService, IQService } from 'angular';
+import angular, { ILocationService } from 'angular';
 
 import locationUtil from 'app/core/utils/location_util';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -29,7 +29,6 @@ export class HistoryListCtrl {
     private $route: any,
     private $rootScope: GrafanaRootScope,
     private $location: ILocationService,
-    private $q: IQService,
     private historySrv: HistorySrv,
     public $scope: any
   ) {
@@ -81,15 +80,13 @@ export class HistoryListCtrl {
     return then.from(now);
   }
 
-  getDiff(diff: string) {
+  getDiff(diff: 'basic' | 'json') {
     this.diff = diff;
     this.mode = 'compare';
 
-    // have it already been fetched?
-    // @ts-ignore
-    if (this.delta[this.diff]) {
-      // @ts-ignore
-      return this.$q.when(this.delta[this.diff]);
+    // has it already been fetched?
+    if (this.delta[diff]) {
+      return Promise.resolve(this.delta[diff]);
     }
 
     const selected = _.filter(this.revisions, { checked: true });
