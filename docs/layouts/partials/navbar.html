@@ -12,13 +12,6 @@
 			</a>
 		</div>
 		<div class="page-header__menu float-right">
-			{{ with .Params.landing }}{{ else }}
-			<button class="site-nav__toggle" id="siteNavToggle">
-				<span class="t"></span>
-				<span class="m"></span>
-				<span class="b"></span>
-			</button>
-			{{ end }}
 			<div class="site-nav-canvas">
 				<div class="site-nav-dropdown__menu">
 					<div class="site-nav-dropdown__container">
@@ -37,120 +30,8 @@
 									</div>
 								</a>
 							</div>
-							{{ with .Params.landing }}{{ else }}
-							<ul class="mega-wrapper">
-								<li class="mega-item" itemscope="itemscope" itemtype="https://www.schema.org/SiteNavigationElement">
-									<a class="mega-item__main-link" href="https://grafana.com/grafana">Grafana</a>
-									<div class="mega-item__dropdown">
-										<ul class="mega-item__sub-pages">
-											<li class="mega-item__list-item">
-												<a class="mega-item__sub-page-link" href="https://grafana.com/grafana">Features</a>
-											</li>
-											{{ range where $.Site.RegularPages.ByWeight "Section" "grafana" }}
-											<li class="mega-item__list-item">
-												<a class="mega-item__sub-page-link" href="https://grafana.com{{ .RelPermalink }}">{{ if .Params.menuTitle }}{{ .Params.menuTitle }}{{ else }}{{ .Title }}{{ end }}	</a>
-											</li>
-											{{ end }}
-										</ul>
-										<div class="mega-item__feature-highlight text-center">
-											<a class="mega-item__feature-highlight-link" href="/grafana">
-												<img class="mega-item__feature-highlight-img" src="/static/img/grafana/showcase_visualize.jpg" width="250" />
-												<p class="mega-item__feature-highlight-text">Learn about Grafana the monitoring solution for every database</p>
-											</a>
-										</div>
-									</div>
-								</li>
-								<li class="mega-item" itemscope="itemscope" itemtype="https://www.schema.org/SiteNavigationElement">
-									<a class="mega-item__main-link" href="/products/enterprise">Products</a>
-									<div class="mega-item__dropdown">
-										<div class="mega-item__feature-highlight">
-											<a class="mega-item__feature-highlight-link" href="/products/enterprise">
-												<img class="mega-item__feature-highlight-img" src="/static/img/platform/grafana_enterprise.svg" alt="Grafana Enterprise" width="175" />
-											</a>
-										</div>
-										<div class="mega-item__feature-highlight text-center">
-											<a class="mega-item__feature-highlight-link" href="/products/cloud">
-												<div>
-													<img class="mega-item__feature-highlight-img" src="/static/assets/img/platform/grafana_cloud_hero.svg" alt="Grafana Cloud" width="275" />
-													<span>Grafana Cloud</span>
-												</div>
-											</a>
-										</div>
-										<ul class="mega-item__mobile-only">
-											{{ range where $.Site.RegularPages.ByWeight "Section" "products" }}
-											<li class="mega-item__list-item">
-												<a class="mega-item__sub-page-link" href="{{ .RelPermalink }}">{{ if .Params.menuTitle }}{{ .Params.menuTitle }}{{ else }}{{ .Title }}{{ end }}	</a>
-											</li>
-											{{ end }}
-										</ul>
-									</div>
-								</li>
-								<li class="mega-item" itemscope="itemscope" itemtype="https://www.schema.org/SiteNavigationElement">
-									<a class="mega-item__main-link" href="/oss">Open Source</a>
-									<div class="mega-item__dropdown">
-										<div class="mega-item__feature-highlight text-center">
-											<a class="mega-item__feature-highlight-link" href="/oss">
-												<img class="mega-item__feature-highlight-img" src="https://octodex.github.com/images/jetpacktocat.png" width="130" />
-												<p class="mega-item__feature-highlight-text">Open Source is at the heart of what we do at Grafana Labs.</p>
-											</a>
-										</div>
-										<ul class="mega-item__sub-pages">
-											{{ range where $.Site.RegularPages.ByWeight "Section" "oss" }}
-											<li class="mega-item__list-item">
-												<a class="mega-item__sub-page-link" href="{{ .RelPermalink }}">{{ if .Params.menuTitle }}{{ .Params.menuTitle }}{{ else }}{{ .Title }}{{ end }}	</a>
-											</li>
-											{{ end }}
-										</ul>
-									</div>
-
-								</li>
-								<li class="mega-item" itemscope="itemscope" itemtype="https://www.schema.org/SiteNavigationElement">
-									<a class="mega-item__main-link" href="/blog">Learn</a>
-									<div class="mega-item__dropdown d-flex justify-content-center">
-										<div class="mega-item__feature-highlight text-center">
-											<a class="mega-item__feature-highlight-link" href="/docs">
-												<img class="mega-item__feature-highlight-img" src="/static/img/icon_training.svg" width="130" />
-												<p class="mega-item__feature-highlight-text">Check out the docs for installation, getting started & feature guides.</p>
-											</a>
-										</div>
-										<ul class="mega-item__sub-pages">
-											<li class="mega-item__list-item">
-												<a class="mega-item__sub-page-link" href="/blog">Blog</a>
-											</li>
-											<li class="mega-item__list-item">
-												<a class="mega-item__sub-page-link" href="/docs">Documentation</a>
-											</li>	
-											<li class="mega-item__list-item">
-												<a class="mega-item__sub-page-link" href="https://community.grafana.com/">Community</a>
-											</li>
-											<li class="mega-item__list-item">
-												<a class="mega-item__sub-page-link" href="/case-study">Case Studies</a>
-											</li>
-											<!-- <li class="mega-item__list-item">
-												<a class="mega-item__sub-page-link" href="https://www.grafanacon.org">GrafanaCon</a>
-											</li> -->
-										</ul>
-									</div>
-								</li>
-							</ul>
-							{{ end }}
+						
 						</div>
-						{{ with .Params.landing }}{{ else }}
-						<nav class="site-nav site-nav--no-border">
-							
-							<ul class="ui-list">
-								<li class="site-nav__item site-nav__item--inline">
-									<a class="site-nav__link site-nav__link--small site-nav__link--bold" href="/get">Downloads</a>
-								</li>
-								<li class="site-nav__item site-nav__item--inline">
-									<a class="site-nav__link site-nav__link--small site-nav__link--bold" href="/login">Login</a>
-								</li>
-								<li class="site-nav__item site-nav__item--inline">
-									<a class="ghost-button" href="/contact">Contact Us</a>
-								</li>
-							</ul>
-						</nav>
-						{{ end }}
 					</div>
 				</div>
 			</div>
