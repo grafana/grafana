@@ -26,29 +26,27 @@ export const bundlePlugin = useSpinner<PluginBundleOptions>('Compiling...', asyn
 export const clean = useSpinner<void>('Cleaning', async () => await execa('rimraf', [`${process.cwd()}/dist`]));
 
 export const prepare = useSpinner<void>('Preparing', async () => {
-  // Make sure a local tsconfig exists.  Otherwise this will work, but have odd behavior
+  // Copy only if local tsconfig does not exist.  Otherwise this will work, but have odd behavior
   let filePath = resolvePath(process.cwd(), 'tsconfig.json');
-  if (!fs.existsSync(filePath)) {
-    const srcFile = resolvePath(__dirname, '../../config/tsconfig.plugin.local.json');
-    fs.copyFile(srcFile, filePath, err => {
-      if (err) {
-        throw err;
-      }
+  let srcFile = resolvePath(__dirname, '../../config/tsconfig.plugin.local.json');
+  fs.copyFile(srcFile, filePath, fs.constants.COPYFILE_EXCL, err => {
+    if (err != null && err.code !== 'EEXIST') {
+      throw err;
+    } else if (!err) {
       console.log(`Created: ${filePath}`);
-    });
-  }
-  // Make sure a local .prettierrc.js exists.  Otherwise this will work, but have odd behavior
+    }
+  });
+
+  // Copy only if local .prettierrc.js does not exist.  Otherwise this will work, but have odd behavior
   filePath = resolvePath(process.cwd(), '.prettierrc.js');
-  if (!fs.existsSync(filePath)) {
-    const srcFile = resolvePath(__dirname, '../../config/prettier.plugin.rc.js');
-    fs.copyFile(srcFile, filePath, err => {
-      if (err) {
-        throw err;
-      }
+  srcFile = resolvePath(__dirname, '../../config/prettier.plugin.rc.js');
+  fs.copyFile(srcFile, filePath, fs.constants.COPYFILE_EXCL, err => {
+    if (err != null && err.code !== 'EEXIST') {
+      throw err;
+    } else if (!err) {
       console.log(`Created: ${filePath}`);
-    });
-  }
-  return Promise.resolve();
+    }
+  });
 });
 
 // @ts-ignore
