@@ -124,7 +124,7 @@ sudo service grafana-server start
 Verify that the service has started:
 
 ```bash
-sudo NEED CONTENT HERE
+sudo service grafana-server status
 ```
 
 Configure the Grafana server to start at boot:
