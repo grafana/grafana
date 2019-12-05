@@ -1,5 +1,7 @@
 # Building the docs locally
 
+When you contribute to documentation, it is a good practice to build the docs on your local machine to make sure your changes appear as you expect. This README explains the process for doing that.
+
 ## Requirements
 
 Docker >= 2.1.0.3
