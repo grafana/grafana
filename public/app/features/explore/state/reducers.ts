@@ -657,7 +657,7 @@ const getModesForDatasource = (dataSource: DataSourceApi, currentMode: ExploreMo
 
   // HACK: Used to set Loki's default explore mode to Logs mode.
   // A better solution would be to introduce a "default" or "preferred" mode to the datasource config
-  if (dataSource.meta.name === 'Loki' && !currentMode) {
+  if (dataSource.meta.name === 'Loki') {
     mode = ExploreMode.Logs;
   }
 
