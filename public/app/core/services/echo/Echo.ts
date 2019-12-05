@@ -82,7 +82,7 @@ export class Echo implements EchoSrv {
         height: window.screen.height,
       },
       userAgent: window.navigator.userAgent,
-      ts: performance.now(),
+      ts: new Date().getTime(),
       url: window.location.href,
     };
   };
