@@ -37,6 +37,6 @@ Images are currently hosted in the grafana/website repo.
 
 ## Deploy changes to grafana.com
 
-Anytime a PR is merged to master with changes in the `docs` directory, those changes are synced via GitHub action to the grafana/website repo on the `docs-grafana` branch.
+When a PR is merged to master with changes in the `docs` directory, those changes are automatically synched to the grafana/website repo on the `docs-grafana` branch.
 
 In order to make those changes live, open a PR in the website repo that merges the `docs-grafna` branch into `master`. Then follow the publishing guidelines in that repo.
