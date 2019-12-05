@@ -115,6 +115,14 @@ class MetricsPanelCtrl extends PanelCtrl {
         this.error = err.data.error;
       }
     }
+
+    this.angularDirtyCheck();
+  }
+
+  angularDirtyCheck() {
+    if (!this.$scope.$$phase) {
+      this.$scope.$digest();
+    }
   }
 
   // Updates the response with information from the stream
@@ -128,6 +136,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       // Ignore data in loading state
       if (data.state === LoadingState.Loading) {
         this.loading = true;
+        this.angularDirtyCheck();
         return;
       }
 
@@ -149,6 +158,8 @@ class MetricsPanelCtrl extends PanelCtrl {
         const legacy = data.series.map(v => toLegacyResponseData(v));
         this.handleQueryResult({ data: legacy });
       }
+
+      this.angularDirtyCheck();
     },
   };
 
