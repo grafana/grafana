@@ -108,7 +108,7 @@ as this will make upgrades easier without risking losing your config changes.
 
 ## Upgrading from 1.x
 
-[Migrating from 1.x to 2.x]({{< relref "installation/migrating_to2.md" >}})
+[Migrating from 1.x to 2.x]({{< relref "migrating_to2.md" >}})
 
 ## Upgrading from 2.x
 
@@ -120,7 +120,7 @@ The dashboard grid layout engine has changed. All dashboards will be automatical
 positioning system when you load them in v5. Dashboards saved in v5 will not work in older versions of Grafana. Some
 external panel plugins might need to be updated to work properly.
 
-For more details on the new panel positioning system, [click here]({{< relref "reference/dashboard.md#panel-size-position" >}})
+For more details on the new panel positioning system, [click here]({{< relref "../reference/dashboard.md#panel-size-position" >}})
 
 ## Upgrading to v5.2
 
@@ -133,7 +133,7 @@ If you're using systemd and have a large amount of annotations consider temporar
 ## Upgrading to v6.0
 
 If you have text panels with script tags they will no longer work due to a new setting that per default disallow unsanitized HTML.
-Read more [here](/installation/configuration/#disable-sanitize-html) about this new setting.
+Read more [here]({{< relref "configuration/#disable-sanitize-html" >}}) about this new setting.
 
 ### Authentication and security
 
@@ -170,15 +170,15 @@ will keep working with unencrypted passwords. If you want to migrate to encrypte
 you can do that by:
 
 - For data sources created through UI, you need to go to data source config, re enter the password or basic auth
-  password and save the data source.
+password and save the data source.
 - For data sources created by provisioning, you need to update your config file and use secureJsonData.password or
-  secureJsonData.basicAuthPassword field. See [provisioning docs](/administration/provisioning) for example of current
-  configuration.
+secureJsonData.basicAuthPassword field. See [provisioning docs]({{< relref "../administration/provisioning" >}}) for example of current
+configuration.
 
 ### Embedding Grafana
 
 If you're embedding Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>` on a different website it will no longer work due to a new setting
-that per default instructs the browser to not allow Grafana to be embedded. Read more [here](/installation/configuration/#allow-embedding) about
+that per default instructs the browser to not allow Grafana to be embedded. Read more [here]({{< relref "configuration/#allow-embedding" >}}) about
 this new setting.
 
 ### Session storage is no longer used
