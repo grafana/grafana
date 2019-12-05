@@ -429,10 +429,12 @@ describe('Language completion provider', () => {
         wrapperClasses: ['context-labels'],
         value: valueWithSelection,
       };
-      await instance.provideCompletionItems(args);
+      const promise1 = instance.provideCompletionItems(args);
       // one call for 2 default labels job, instance
       expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(2);
-      await instance.provideCompletionItems(args);
+      const promise2 = instance.provideCompletionItems(args);
+      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(2);
+      await Promise.all([promise1, promise2]);
       expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(2);
     });
   });

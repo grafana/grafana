@@ -312,8 +312,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       if (selector === EMPTY_SELECTOR) {
         // For empty selector we do not need to check range
         if (!this.labelValues[selector]) {
-          // Query label values for default labels
-          await Promise.all(DEFAULT_KEYS.map(key => this.fetchLabelValues(key)));
+          await this.fetchDefaultLabels();
         }
       } else {
         if (!this.labelValues[selector] || this.timeRangeChanged()) {
@@ -378,4 +377,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       console.error(e);
     }
   };
+
+  fetchDefaultLabels = _.once(() => {
+    return Promise.all(DEFAULT_KEYS.map(key => this.fetchLabelValues(key)));
+  });
 }
