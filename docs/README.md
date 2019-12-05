@@ -6,7 +6,7 @@ When you contribute to documentation, it is a good practice to build the docs on
 
 Docker >= 2.1.0.3
 
-## Getting Started
+## Build the doc site
 
 To build the docs locally:
 
