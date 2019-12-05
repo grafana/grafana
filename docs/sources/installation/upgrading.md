@@ -77,11 +77,10 @@ sudo dpkg -i grafana_<version>_amd64.deb
 
 #### Upgrade from APT repository
 
-If you installed Grafana from our APT repository:
+If you installed Grafana from our APT repository, then Grafana will automatically update when you run apt-get upgrade to upgrade all system packages.
 
 ```bash
 sudo apt-get update
-sudo apt-get install grafana
 ```
 
 #### Upgrade from binary .tar file
