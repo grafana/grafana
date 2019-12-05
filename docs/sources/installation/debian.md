@@ -36,7 +36,7 @@ sudo apt-get install -y apt-transport-https
 Install any missing dependencies:
 
 ```bash
-sudo apt-get install -y software-properties-common
+sudo apt-get install -y software-properties-common wget
 ```
 
 Install the repository for stable releases:
