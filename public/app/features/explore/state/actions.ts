@@ -75,6 +75,7 @@ import {
   ToggleTablePayload,
   updateDatasourceInstanceAction,
   updateUIStateAction,
+  willImportChangesAction,
 } from './actionTypes';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
@@ -235,6 +236,12 @@ export function clearQueries(exploreId: ExploreId): ThunkResult<void> {
 export function clearOrigin(): ThunkResult<void> {
   return dispatch => {
     dispatch(clearOriginAction({ exploreId: ExploreId.left }));
+  };
+}
+
+export function willImportChanges(): ThunkResult<void> {
+  return dispatch => {
+    dispatch(willImportChangesAction({ exploreId: ExploreId.left, toggle: true }));
   };
 }
 

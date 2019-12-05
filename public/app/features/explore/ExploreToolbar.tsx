@@ -21,6 +21,7 @@ import {
   changeRefreshInterval,
   changeMode,
   clearOrigin,
+  willImportChanges,
 } from './state/actions';
 import { updateLocation } from 'app/core/actions';
 import { getTimeZone } from '../profile/state/selectors';
@@ -80,6 +81,7 @@ interface DispatchProps {
   changeMode: typeof changeMode;
   clearOrigin: typeof clearOrigin;
   updateLocation: typeof updateLocation;
+  willImportChanges: typeof willImportChanges;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -121,6 +123,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
 
     if (!withChanges) {
       this.props.clearOrigin();
+    } else {
+      this.props.willImportChanges();
     }
 
     const dashViewOptions = {
@@ -382,6 +386,7 @@ const mapDispatchToProps: DispatchProps = {
   syncTimes,
   changeMode: changeMode,
   clearOrigin,
+  willImportChanges,
 };
 
 export const ExploreToolbar = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedExploreToolbar));

@@ -174,7 +174,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     annotationsSrv.init(dashboard);
 
     const left = storeState.explore && storeState.explore.left;
-    dashboard.meta.fromExplore = !!(left && left.originPanelId);
+    dashboard.meta.fromExplore = !!(left && left.originPanelId && left.willImportChanges);
 
     // template values service needs to initialize completely before
     // the rest of the dashboard can load
