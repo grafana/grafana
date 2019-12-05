@@ -112,10 +112,10 @@ export class QueryEditor extends PureComponent<Props, State> {
       <>
         <QueryInlineField label="Region">
           <Segment
-            value={query.region || 'Select region'}
+            value={this.toOption(query.region || 'Select region')}
             options={regions}
             allowCustomValue
-            onChange={region => this.onChange({ ...query, region })}
+            onChange={({ value: region }) => this.onChange({ ...query, region })}
           />
         </QueryInlineField>
 
@@ -123,19 +123,19 @@ export class QueryEditor extends PureComponent<Props, State> {
           <>
             <QueryInlineField label="Namespace">
               <Segment
-                value={query.namespace || 'Select namespace'}
+                value={this.toOption(query.namespace || 'Select namespace')}
                 allowCustomValue
                 options={namespaces}
-                onChange={namespace => this.onChange({ ...query, namespace })}
+                onChange={({ value: namespace }) => this.onChange({ ...query, namespace })}
               />
             </QueryInlineField>
 
             <QueryInlineField label="Metric Name">
               <SegmentAsync
-                value={query.metricName || 'Select metric name'}
+                value={this.toOption(query.metricName || 'Select metric name')}
                 allowCustomValue
                 loadOptions={this.loadMetricNames}
-                onChange={metricName => this.onChange({ ...query, metricName })}
+                onChange={({ value: metricName }) => this.onChange({ ...query, metricName })}
               />
             </QueryInlineField>
 

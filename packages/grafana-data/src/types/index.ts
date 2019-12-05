@@ -18,6 +18,7 @@ export * from './datasource';
 export * from './panel';
 export * from './plugin';
 export * from './theme';
+export * from './orgs';
 
 import * as AppEvents from './appEvents';
 import { AppEvent } from './appEvents';

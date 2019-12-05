@@ -47,67 +47,61 @@ export function ControllerTestContext(this: any) {
   };
 
   this.createPanelController = (Ctrl: any) => {
-    return angularMocks.inject(
-      ($controller: any, $rootScope: GrafanaRootScope, $q: any, $location: any, $browser: any) => {
-        self.scope = $rootScope.$new();
-        self.$location = $location;
-        self.$browser = $browser;
-        self.$q = $q;
-        self.panel = new PanelModel({ type: 'test' });
-        self.dashboard = { meta: {} };
-        self.isUtc = false;
-        self.dashboard.isTimezoneUtc = () => {
-          return self.isUtc;
-        };
+    return angularMocks.inject(($controller: any, $rootScope: GrafanaRootScope, $location: any, $browser: any) => {
+      self.scope = $rootScope.$new();
+      self.$location = $location;
+      self.$browser = $browser;
+      self.panel = new PanelModel({ type: 'test' });
+      self.dashboard = { meta: {} };
+      self.isUtc = false;
+      self.dashboard.isTimezoneUtc = () => {
+        return self.isUtc;
+      };
 
-        $rootScope.appEvent = sinon.spy();
-        $rootScope.onAppEvent = sinon.spy();
-        $rootScope.colors = [];
+      $rootScope.appEvent = sinon.spy();
+      $rootScope.onAppEvent = sinon.spy();
+      $rootScope.colors = [];
 
-        for (let i = 0; i < 50; i++) {
-          $rootScope.colors.push('#' + i);
-        }
-
-        config.panels['test'] = { info: {} } as PanelPluginMeta;
-        self.ctrl = $controller(
-          Ctrl,
-          { $scope: self.scope },
-          {
-            panel: self.panel,
-            dashboard: self.dashboard,
-          }
-        );
+      for (let i = 0; i < 50; i++) {
+        $rootScope.colors.push('#' + i);
       }
-    );
+
+      config.panels['test'] = { info: {} } as PanelPluginMeta;
+      self.ctrl = $controller(
+        Ctrl,
+        { $scope: self.scope },
+        {
+          panel: self.panel,
+          dashboard: self.dashboard,
+        }
+      );
+    });
   };
 
   this.createControllerPhase = (controllerName: string) => {
-    return angularMocks.inject(
-      ($controller: any, $rootScope: GrafanaRootScope, $q: any, $location: any, $browser: any) => {
-        self.scope = $rootScope.$new();
-        self.$location = $location;
-        self.$browser = $browser;
-        self.scope.contextSrv = {};
-        self.scope.panel = {};
-        self.scope.dashboard = { meta: {} };
-        self.scope.dashboardMeta = {};
-        self.scope.dashboardViewState = DashboardViewStateStub();
-        self.scope.appEvent = sinon.spy();
-        self.scope.onAppEvent = sinon.spy();
+    return angularMocks.inject(($controller: any, $rootScope: GrafanaRootScope, $location: any, $browser: any) => {
+      self.scope = $rootScope.$new();
+      self.$location = $location;
+      self.$browser = $browser;
+      self.scope.contextSrv = {};
+      self.scope.panel = {};
+      self.scope.dashboard = { meta: {} };
+      self.scope.dashboardMeta = {};
+      self.scope.dashboardViewState = DashboardViewStateStub();
+      self.scope.appEvent = sinon.spy();
+      self.scope.onAppEvent = sinon.spy();
 
-        $rootScope.colors = [];
-        for (let i = 0; i < 50; i++) {
-          $rootScope.colors.push('#' + i);
-        }
-
-        self.$q = $q;
-        self.scope.skipDataOnInit = true;
-        self.scope.skipAutoInit = true;
-        self.controller = $controller(controllerName, {
-          $scope: self.scope,
-        });
+      $rootScope.colors = [];
+      for (let i = 0; i < 50; i++) {
+        $rootScope.colors.push('#' + i);
       }
-    );
+
+      self.scope.skipDataOnInit = true;
+      self.scope.skipAutoInit = true;
+      self.controller = $controller(controllerName, {
+        $scope: self.scope,
+      });
+    });
   };
 
   this.setIsUtc = (isUtc: any = false) => {
@@ -134,8 +128,7 @@ export function ServiceTestContext(this: any) {
   this.createService = (name: string) => {
     // @ts-ignore
     return angularMocks.inject(
-      ($q: any, $rootScope: GrafanaRootScope, $httpBackend: any, $injector: any, $location: any, $timeout: any) => {
-        self.$q = $q;
+      ($rootScope: GrafanaRootScope, $httpBackend: any, $injector: any, $location: any, $timeout: any) => {
         self.$rootScope = $rootScope;
         self.$httpBackend = $httpBackend;
         self.$location = $location;

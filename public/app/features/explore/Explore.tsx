@@ -420,6 +420,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     queryResponse,
     originPanelId,
     syncedTimes,
+    timeZone,
   };
 }
 

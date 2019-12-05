@@ -424,39 +424,25 @@ export class ElasticResponse {
         throw this.getErrorFromElasticResponse(this.response, response.error);
       }
 
-      const hits = response.hits;
+      // We keep a list of all props so that we can create all the fields in the dataFrame, this can lead
+      // to wide sparse dataframes in case the scheme is different per document.
       let propNames: string[] = [];
-      let propName, hit, doc: any, i;
 
-      for (i = 0; i < hits.hits.length; i++) {
-        hit = hits.hits[i];
+      for (const hit of response.hits.hits) {
         const flattened = hit._source ? flatten(hit._source, null) : {};
-        doc = {};
-        doc[this.targets[0].timeField] = null;
-        doc = {
-          ...doc,
+        const doc = {
           _id: hit._id,
           _type: hit._type,
           _index: hit._index,
+          _source: { ...flattened },
           ...flattened,
         };
 
-        // Note: the order of for...in is arbitrary amd implementation dependant
-        // and should probably not be relied upon.
-        for (propName in hit.fields) {
-          if (propNames.indexOf(propName) === -1) {
-            propNames.push(propName);
-          }
-          doc[propName] = hit.fields[propName];
-        }
-
-        for (propName in doc) {
+        for (const propName of Object.keys(doc)) {
           if (propNames.indexOf(propName) === -1) {
             propNames.push(propName);
           }
         }
-
-        doc._source = { ...flattened };
 
         docs.push(doc);
       }
@@ -468,9 +454,7 @@ export class ElasticResponse {
         series.addField({
           name: this.targets[0].timeField,
           type: FieldType.time,
-        }).parse = (v: any) => {
-          return v[0] || '';
-        };
+        });
 
         if (logMessageField) {
           series.addField({

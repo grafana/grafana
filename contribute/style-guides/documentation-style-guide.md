@@ -87,6 +87,15 @@ When possible, use the exact title of the page or section you are linking to as 
 
 Grafana products has some words, abbreviations, and slang particular to this discourse community.
 
+#### checkout, check out
+
+Two words if used as a verb, one word if used as a noun.
+
+**Examples**
+
+* Check out these new features!
+* Proceed to checkout.
+
 #### data source
 
 Two words, not one
