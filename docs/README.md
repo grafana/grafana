@@ -8,7 +8,6 @@ Docker >= 2.1.0.3
 
 ## Build the doc site
 
-To build the docs locally:
 
 1. Make sure you are in the docs folder: `cd docs`.
 2. Run `make build`. This builds the docker image with the correct version of Hugo.
