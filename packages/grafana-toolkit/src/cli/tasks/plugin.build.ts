@@ -1,16 +1,20 @@
 import { Task, TaskRunner } from './task';
 import { resolve as resolvePath } from 'path';
-import fs from 'fs';
+import globby from 'globby';
+import { constants as fsConstants, promises as fs } from 'fs';
 
 // @ts-ignore
 import execa = require('execa');
-import glob = require('glob');
 import { Linter, Configuration, RuleFailure } from 'tslint';
 import * as prettier from 'prettier';
 
 import { useSpinner } from '../utils/useSpinner';
 import { testPlugin } from './plugin/tests';
 import { bundlePlugin as bundleFn, PluginBundleOptions } from './plugin/bundle';
+import { Configuration, Linter, LintResult, RuleFailure } from 'tslint';
+
+const { access, copyFile, readFile, writeFile } = fs;
+const { COPYFILE_EXCL, F_OK } = fsConstants;
 
 interface PluginBuildOptions {
   coverage: boolean;
@@ -25,28 +29,30 @@ export const bundlePlugin = useSpinner<PluginBundleOptions>('Compiling...', asyn
 // @ts-ignore
 export const clean = useSpinner<void>('Cleaning', async () => await execa('rimraf', [`${process.cwd()}/dist`]));
 
-export const prepare = useSpinner<void>('Preparing', async () => {
-  // Copy only if local tsconfig does not exist.  Otherwise this will work, but have odd behavior
-  let filePath = resolvePath(process.cwd(), 'tsconfig.json');
-  let srcFile = resolvePath(__dirname, '../../config/tsconfig.plugin.local.json');
-  fs.copyFile(srcFile, filePath, fs.constants.COPYFILE_EXCL, err => {
-    if (err != null && err.code !== 'EEXIST') {
-      throw err;
-    } else if (!err) {
-      console.log(`Created: ${filePath}`);
-    }
-  });
+const copyIfNonExistent = (srcPath: string, destPath: string) =>
+  copyFile(srcPath, destPath, COPYFILE_EXCL)
+    .then(() => console.log(`Created: ${destPath}`))
+    .catch(error => {
+      if (error.code !== 'EEXIST') {
+        throw error;
+      }
+    });
 
-  // Copy only if local .prettierrc.js does not exist.  Otherwise this will work, but have odd behavior
-  filePath = resolvePath(process.cwd(), '.prettierrc.js');
-  srcFile = resolvePath(__dirname, '../../config/prettier.plugin.rc.js');
-  fs.copyFile(srcFile, filePath, fs.constants.COPYFILE_EXCL, err => {
-    if (err != null && err.code !== 'EEXIST') {
-      throw err;
-    } else if (!err) {
-      console.log(`Created: ${filePath}`);
-    }
-  });
+export const prepare = useSpinner<void>('Preparing', async () => {
+  await Promise.all([
+    // Copy only if local tsconfig does not exist.  Otherwise this will work, but have odd behavior
+    copyIfNonExistent(
+      resolvePath(process.cwd(), 'tsconfig.json'),
+      resolvePath(__dirname, '../../config/tsconfig.plugin.local.json')
+    ),
+    // Copy only if local prettierrc does not exist.  Otherwise this will work, but have odd behavior
+    copyIfNonExistent(
+      resolvePath(process.cwd(), '.prettierrc.js'),
+      resolvePath(__dirname, '../../config/prettier.plugin.rc.js')
+    ),
+  ]);
+
+  // Nothing is returned
 });
 
 // @ts-ignore
@@ -54,66 +60,60 @@ const typecheckPlugin = useSpinner<void>('Typechecking', async () => {
   await execa('tsc', ['--noEmit']);
 });
 
-const getTypescriptSources = () => {
-  const globPattern = resolvePath(process.cwd(), 'src/**/*.+(ts|tsx)');
-  return glob.sync(globPattern);
-};
+const getTypescriptSources = () => globby(resolvePath(process.cwd(), 'src/**/*.+(ts|tsx)'));
 
-const getStylesSources = () => {
-  const globPattern = resolvePath(process.cwd(), 'src/**/*.+(scss|css)');
-  return glob.sync(globPattern);
-};
+const getStylesSources = () => globby(resolvePath(process.cwd(), 'src/**/*.+(scss|css)'));
 
 export const prettierCheckPlugin = useSpinner<Fixable>('Prettier check', async ({ fix }) => {
-  const prettierConfig = require(resolvePath(__dirname, '../../config/prettier.plugin.config.json'));
-  const sources = [...getStylesSources(), ...getTypescriptSources()];
+  // @todo remove explicit params when possible -- https://github.com/microsoft/TypeScript/issues/35626
+  const [prettierConfig, paths] = await Promise.all<object, string[]>([
+    readFile(resolvePath(__dirname, '../../config/prettier.plugin.config.json'), 'utf8').then(
+      contents => JSON.parse(contents) as object
+    ),
 
-  const promises = sources.map((s, i) => {
-    return new Promise<{ path: string; failed: boolean }>((resolve, reject) => {
-      fs.readFile(s, (err, data) => {
-        let failed = false;
-        if (err) {
-          throw new Error(err.message);
-        }
+    Promise.all([getStylesSources(), getTypescriptSources()]).then(results => results.flat()),
+  ]);
 
-        const opts = {
+  const promises: Array<Promise<{ path: string; success: boolean }>> = paths.map(path =>
+    readFile(path, 'utf8')
+      .then(contents => {
+        const config = {
           ...prettierConfig,
-          filepath: s,
+          filepath: path,
         };
-        if (!prettier.check(data.toString(), opts)) {
-          if (fix) {
-            const fixed = prettier.format(data.toString(), opts);
-            if (fixed && fixed.length > 10) {
-              fs.writeFile(s, fixed, err => {
-                if (err) {
-                  console.log('Error fixing ' + s, err);
-                  failed = true;
-                } else {
-                  console.log('Fixed: ' + s);
-                }
-              });
-            } else {
-              console.log('No automatic fix for: ' + s);
-              failed = true;
-            }
-          } else {
-            failed = true;
-          }
+
+        if (fix && !prettier.check(contents, config)) {
+          return prettier.format(contents, config);
+        } else {
+          return undefined;
         }
+      })
+      .then(newContents => {
+        if (fix && newContents && newContents.length > 10) {
+          return writeFile(path, newContents)
+            .then(() => {
+              console.log(`Fixed: ${path}`);
+              return true;
+            })
+            .catch(error => {
+              console.log(`Error fixing ${path}`, error);
+              return false;
+            });
+        } else if (fix) {
+          console.log(`No automatic fix for: ${path}`);
+          return false;
+        } else {
+          return false;
+        }
+      })
+      .then(success => ({ path, success }))
+  );
 
-        resolve({
-          path: s,
-          failed,
-        });
-      });
-    });
-  });
+  const failures = (await Promise.all(promises)).filter(({ success }) => !success);
 
-  const results = await Promise.all(promises);
-  const failures = results.filter(r => r.failed);
-  if (failures.length) {
+  if (failures.length > 0) {
     console.log('\nFix Prettier issues in following files:');
-    failures.forEach(f => console.log(f.path));
+    failures.forEach(({ path }) => console.log(path));
     console.log('\nRun toolkit:dev to fix errors');
     throw new Error('Prettier failed');
   }
@@ -122,27 +122,32 @@ export const prettierCheckPlugin = useSpinner<Fixable>('Prettier check', async (
 // @ts-ignore
 export const lintPlugin = useSpinner<Fixable>('Linting', async ({ fix }) => {
   let tsLintConfigPath = resolvePath(process.cwd(), 'tslint.json');
-  if (!fs.existsSync(tsLintConfigPath)) {
+
+  try {
+    await access(tsLintConfigPath, F_OK);
+  } catch (error) {
     tsLintConfigPath = resolvePath(__dirname, '../../config/tslint.plugin.json');
   }
+
   const options = {
     fix: fix === true,
     formatter: 'json',
   };
 
   const configuration = Configuration.findConfiguration(tsLintConfigPath).results;
-  const sourcesToLint = getTypescriptSources();
+  const sourcesToLint = await getTypescriptSources();
 
-  const lintResults = sourcesToLint
-    .map(fileName => {
+  const lintPromises = sourcesToLint.map(fileName =>
+    readFile(fileName, 'utf8').then(contents => {
       const linter = new Linter(options);
-      const fileContents = fs.readFileSync(fileName, 'utf8');
-      linter.lint(fileName, fileContents, configuration);
+      linter.lint(fileName, contents, configuration);
       return linter.getResult();
     })
-    .filter(result => {
-      return result.errorCount > 0 || result.warningCount > 0;
-    });
+  );
+
+  const lintResults: LintResult[] = (await Promise.all(lintPromises)).filter(
+    ({ errorCount, warningCount }) => errorCount > 0 || warningCount > 0
+  );
 
   if (lintResults.length > 0) {
     console.log('\n');

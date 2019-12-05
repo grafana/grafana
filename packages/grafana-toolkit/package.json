@@ -37,6 +37,7 @@
     "@types/jest": "24.0.13",
     "@types/jest-cli": "^23.6.0",
     "@types/node": "^12.0.4",
+    "@types/prettier": "^1.16.4",
     "@types/puppeteer-core": "1.9.0",
     "@types/react-dev-utils": "^9.0.1",
     "@types/semver": "^6.0.0",
@@ -55,7 +56,7 @@
     "execa": "^1.0.0",
     "expect-puppeteer": "4.1.1",
     "file-loader": "^4.0.0",
-    "glob": "^7.1.4",
+    "globby": "^10.0.1",
     "html-loader": "0.5.5",
     "html-webpack-plugin": "^3.2.0",
     "inquirer": "^6.3.1",
@@ -93,10 +94,6 @@
     "typescript": "3.7.2",
     "url-loader": "^2.0.1",
     "webpack": "4.35.0"
-  },
-  "devDependencies": {
-    "@types/glob": "^7.1.1",
-    "@types/prettier": "^1.16.4"
   },
   "_moduleAliases": {
     "puppeteer": "node_modules/puppeteer-core"
