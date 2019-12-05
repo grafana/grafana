@@ -11,7 +11,7 @@ parent = "http_api"
 
 # Data Source Permissions API
 
-> The Data Source Permissions is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "enterprise" >}}).
+> The Data Source Permissions is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
 This API can be used to enable, disable, list, add and remove permissions for a data source.
 

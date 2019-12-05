@@ -1147,10 +1147,6 @@ workflows:
           requires:
             - grafana-docker-master
           filters: *filter-only-master
-      - trigger-docs-update:
-          requires:
-            - end-to-end-test
-          filters: *filter-only-master
       - release-next-packages:
           requires:
             - build-all

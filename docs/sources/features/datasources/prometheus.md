@@ -62,7 +62,7 @@ Open a graph in edit mode by click the title > Edit (or by pressing `e` key whil
 The Prometheus datasource allows you to run "instant" queries, which queries only the latest value.
 You can visualize the results in a table panel to see all available labels of a timeseries.
 
-Instant query results are made up only of one datapoint per series but can be shown in the graph panel with the help of [series overrides](/features/panels/graph/#series-overrides).
+Instant query results are made up only of one datapoint per series but can be shown in the graph panel with the help of [series overrides]({{< relref "../panels/graph/#series-overrides" >}}).
 To show them in the graph as a latest value point, add a series override and select `Points > true`.
 To show a horizontal line across the whole graph, add a series override and select `Transform > constant`.
 
@@ -96,7 +96,7 @@ For details of _metric names_, _label names_ and _label values_ are please refer
 
 > Support for `$__range`, `$__range_s` and `$__range_ms` only available from Grafana v5.3
 
-It's possible to use some global built-in variables in query variables; `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`, see [Global built-in variables](/reference/templating/#global-built-in-variables) for more information. These can be convenient to use in conjunction with the `query_result` function when you need to filter variable queries since
+It's possible to use some global built-in variables in query variables; `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`, see [Global built-in variables]({{< relref "../../reference/templating/#global-built-in-variables" >}}) for more information. These can be convenient to use in conjunction with the `query_result` function when you need to filter variable queries since
 `label_values` function doesn't support queries.
 
 Make sure to set the variable's `refresh` trigger to be `On Time Range Change` to get the correct instances when changing the time range on the dashboard.
@@ -129,7 +129,7 @@ options are enabled, Grafana converts the labels from plain text to a regex comp
 
 ## Annotations
 
-[Annotations]({{< relref "reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../../reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view.
 
 Prometheus supports two ways to query annotations.
@@ -145,7 +145,7 @@ Since 4.6.0 Grafana exposes metrics for Prometheus on the `/metrics` endpoint. W
 
 ## Configure the data source with provisioning
 
-It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
 
 Here are some provisioning examples for this data source.
 

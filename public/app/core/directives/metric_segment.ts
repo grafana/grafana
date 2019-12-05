@@ -186,8 +186,7 @@ export function metricSegment($compile: any, $sce: any, templateSrv: TemplateSrv
   };
 }
 
-/** @ngInject */
-export function metricSegmentModel(uiSegmentSrv: any, $q: any) {
+export function metricSegmentModel(uiSegmentSrv: any) {
   return {
     template:
       '<metric-segment segment="segment" get-options="getOptionsInternal()" on-change="onSegmentChange()"></metric-segment>',
@@ -217,7 +216,7 @@ export function metricSegmentModel(uiSegmentSrv: any, $q: any) {
         $scope.getOptionsInternal = () => {
           if ($scope.options) {
             cachedOptions = $scope.options;
-            return $q.when(
+            return Promise.resolve(
               _.map($scope.options, option => {
                 return { value: option.text };
               })

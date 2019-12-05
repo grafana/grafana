@@ -3,7 +3,10 @@
 exports[`Render should render component 1`] = `
 <Fragment>
   <MonitorConfig
-    datasourceConfig={
+    onLoadSubscriptions={[Function]}
+    onResetOptionKey={[Function]}
+    onUpdateOption={[Function]}
+    options={
       Object {
         "access": "proxy",
         "basicAuth": false,
@@ -15,6 +18,7 @@ exports[`Render should render component 1`] = `
         "jsonData": Object {
           "azureLogAnalyticsSameAs": true,
           "cloudName": "azuremonitor",
+          "subscriptionId": "44987801-6nn6-49he-9b2d-9106972f9789",
         },
         "name": "Azure Monitor-10-10",
         "orgId": 1,
@@ -24,52 +28,20 @@ exports[`Render should render component 1`] = `
         "secureJsonFields": Object {},
         "type": "grafana-azure-monitor-datasource",
         "typeLogoUrl": "",
-        "url": "/api/datasources/proxy/21",
+        "url": "",
         "user": "",
         "version": 1,
         "withCredentials": false,
       }
     }
-    onDatasourceUpdate={[Function]}
-    onLoadSubscriptions={[Function]}
     subscriptions={Array []}
   />
   <AnalyticsConfig
-    datasourceConfig={
-      Object {
-        "access": "proxy",
-        "basicAuth": false,
-        "basicAuthPassword": "",
-        "basicAuthUser": "",
-        "database": "",
-        "id": 21,
-        "isDefault": false,
-        "jsonData": Object {
-          "azureLogAnalyticsSameAs": true,
-          "cloudName": "azuremonitor",
-        },
-        "name": "Azure Monitor-10-10",
-        "orgId": 1,
-        "password": "",
-        "readOnly": false,
-        "secureJsonData": Object {},
-        "secureJsonFields": Object {},
-        "type": "grafana-azure-monitor-datasource",
-        "typeLogoUrl": "",
-        "url": "/api/datasources/proxy/21",
-        "user": "",
-        "version": 1,
-        "withCredentials": false,
-      }
-    }
-    logAnalyticsSubscriptions={Array []}
-    logAnalyticsWorkspaces={Array []}
-    onDatasourceUpdate={[Function]}
     onLoadSubscriptions={[Function]}
     onLoadWorkspaces={[Function]}
-  />
-  <InsightsConfig
-    datasourceConfig={
+    onResetOptionKey={[Function]}
+    onUpdateOption={[Function]}
+    options={
       Object {
         "access": "proxy",
         "basicAuth": false,
@@ -81,6 +53,7 @@ exports[`Render should render component 1`] = `
         "jsonData": Object {
           "azureLogAnalyticsSameAs": true,
           "cloudName": "azuremonitor",
+          "subscriptionId": "44987801-6nn6-49he-9b2d-9106972f9789",
         },
         "name": "Azure Monitor-10-10",
         "orgId": 1,
@@ -90,13 +63,46 @@ exports[`Render should render component 1`] = `
         "secureJsonFields": Object {},
         "type": "grafana-azure-monitor-datasource",
         "typeLogoUrl": "",
-        "url": "/api/datasources/proxy/21",
+        "url": "",
         "user": "",
         "version": 1,
         "withCredentials": false,
       }
     }
-    onDatasourceUpdate={[Function]}
+    subscriptions={Array []}
+    workspaces={Array []}
+  />
+  <InsightsConfig
+    onResetOptionKey={[Function]}
+    onUpdateOption={[Function]}
+    options={
+      Object {
+        "access": "proxy",
+        "basicAuth": false,
+        "basicAuthPassword": "",
+        "basicAuthUser": "",
+        "database": "",
+        "id": 21,
+        "isDefault": false,
+        "jsonData": Object {
+          "azureLogAnalyticsSameAs": true,
+          "cloudName": "azuremonitor",
+          "subscriptionId": "44987801-6nn6-49he-9b2d-9106972f9789",
+        },
+        "name": "Azure Monitor-10-10",
+        "orgId": 1,
+        "password": "",
+        "readOnly": false,
+        "secureJsonData": Object {},
+        "secureJsonFields": Object {},
+        "type": "grafana-azure-monitor-datasource",
+        "typeLogoUrl": "",
+        "url": "",
+        "user": "",
+        "version": 1,
+        "withCredentials": false,
+      }
+    }
   />
 </Fragment>
 `;

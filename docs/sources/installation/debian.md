@@ -14,6 +14,7 @@ weight = 200
 # Install on Debian or Ubuntu
 
 This page explains how to install Grafana dependencies, download and install Grafana, get the service up and running on your system, and the package details.
+aster
 
 **Note on upgrading:** While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing installation.
 
@@ -163,3 +164,4 @@ Refer to the [Getting Started](/guides/getting_started/) guide for information a
 ## Configure Grafana
 
 Refer the [Configuration]({{< relref "configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
+
