@@ -1,0 +1,21 @@
+<div class="docs-image {{ .Get "class"}}" style="max-width: {{ .Get "max-width" }}">
+	<div class="screenshot">
+		{{ if .Get "animated-gif" }}
+			<a href="{{ .Get "animated-gif"}}" title="{{ .Get "caption"}}">
+				<img alt="{{ .Get "caption"}}" src="{{if .Get "thumbnail" }}{{ .Get "thumbnail" }}{{ else }}{{ .Get "img" }}{{ end }}" class="screenshot__still">
+				<img alt="{{ .Get "caption"}}" src="{{ .Get "animated-gif" }}" class="screenshot__animated-gif">
+				<div class="screenshot__play">
+					<i class="fa fa-play"></i>
+				</div>
+			</a>
+		{{ else }}
+			<a href="{{ .Get "img"}}" title="{{ .Get "caption"}}">
+				<img alt="{{ .Get "caption"}}" src="{{ .Get "img" }}">
+				<div class="screenshot__zoom">
+					<img src="/static/assets/img/zoom.png">
+				</div>
+			</a>
+		{{ end}}
+	</div>
+</div>
+

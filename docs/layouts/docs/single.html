@@ -1,0 +1,23 @@
+{{ define "main" }}
+
+{{ partial "docs/submenu.html" . }}
+
+<div class="">
+	<div class="container-fluid docs-container">
+
+		{{ partial "docs/sidebar.html" . }}
+
+		<div class="docs-content">
+			<div class="docs-content-inner" id="doc-article-text">
+				{{ .Content | replaceRE "/img/docs/" "/static/img/docs/" | safeHTML }}
+			</div>
+
+			{{ partial "docs/aside.html" . }}
+
+			<div class="clearfix"></div>
+		</div>
+	</div>
+
+</div>
+
+{{ end }}

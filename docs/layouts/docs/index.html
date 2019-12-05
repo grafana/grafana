@@ -1,0 +1,15 @@
+
+{{ define "main" }}
+    <div class="wrapper my-2">
+        {{ .Content }}
+        {{ $current := .File.Dir }}
+        <h2>Projects:</h2>
+        <ul>
+        {{ range .Sections }}
+            <li>
+                <a href="{{ .RelPermalink }}">{{ .Title }}</a>    
+            </li>
+        {{ end }}
+        </ul>
+    </div>
+{{ end }}

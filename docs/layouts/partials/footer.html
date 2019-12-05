@@ -1,0 +1,174 @@
+</div>
+{{ $.Scratch.Set "navBaseUrl" "https://grafana.com" }}
+{{ $.Scratch.Set "docsUrl" "https://grafana.com/docs" }}
+{{ $baseUrl := (printf "%v" $.Site.BaseURL) }}
+
+{{ if hasPrefix $baseUrl "http://localhost" }}
+	{{ $.Scratch.Set "navBaseUrl" "http://localhost"}}
+	{{ $.Scratch.Set "docsUrl" "http://localhost:3004"}}
+{{ end }}
+
+{{ if hasPrefix $baseUrl "http://staging" }}
+	{{ $.Scratch.Set "navBaseUrl" "http://grafana-net.raintank.io"}}
+	{{ $.Scratch.Set "docsUrl" "http://staging-docs.grafana.org"}}
+{{ end }}
+
+{{ $navBaseUrl := (printf "%v" $.Site.BaseURL) }}
+{{ $docsUrl := (printf "%v/docs" $.Site.BaseURL) }}
+{{ $isPageOrHome := or (.IsPage) (.IsHome) (eq .Kind "section") }}
+
+<div class="page-footer" data-reactid="166">
+	<div class="wrapper">
+		<div class="page-footer__nav" data-reactid="167">
+			<nav class="site-nav" data-reactid="169">
+				<ul class="ui-list" data-reactid="170">
+					<li class="site-nav__item site-nav__item--heading" data-reactid="171">
+						<h4 data-reactid="172">Grafana</h4>
+					</li>
+					<li class="site-nav__item site-nav__item--text" data-reactid="173">
+						<a class="site-nav__link site-nav__link--discrete" href="{{ $navBaseUrl }}/grafana" data-reactid="174">Features</a>
+					</li>
+					<li class="site-nav__item site-nav__item--text" data-reactid="175">
+						<a class="site-nav__link site-nav__link--discrete" href="{{ $navBaseUrl }}/grafana/testimonials" data-reactid="176">Testimonials</a>
+					</li>
+					<li class="site-nav__item site-nav__item--text" data-reactid="177">
+						<a class="site-nav__link site-nav__link--discrete" href="{{ $navBaseUrl }}/grafana/contribute" data-reactid="178">Contribute</a>
+					</li>
+					<li class="site-nav__item site-nav__item--text">
+						<a class="site-nav__link site-nav__link--discrete" href="{{ $navBaseUrl }}/dashboards">Dashboards</a>
+					</li>
+					<li class="site-nav__item site-nav__item--text">
+						<a class="site-nav__link site-nav__link--discrete" href="{{ $navBaseUrl }}/plugins">Plugins</a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="site-nav" data-reactid="179">
+				<ul class="ui-list" data-reactid="180">
+					<li class="site-nav__item site-nav__item--heading" data-reactid="181">
+						<h4 data-reactid="182">Products</h4>
+					</li>
+					{{ range where $.Site.RegularPages.ByWeight "Section" "products" }}
+					<li class="site-nav__item site-nav__item--text">
+						<a class="site-nav__link site-nav__link--discrete" href="{{ $navBaseUrl }}{{ .RelPermalink }}">{{ if .Params.menuTitle }}
+							{{ .Params.menuTitle }}
+						{{ else }}
+							{{ .Title }}
+						{{ end }}</a>
+					</li>
+					{{ end }}
+				</ul>
+			</nav>
+			<!--<nav class="site-nav" data-reactid="187">
+				<ul class="ui-list" data-reactid="188">
+					<li class="site-nav__item site-nav__item--heading" data-reactid="189">
+						<h4 data-reactid="190">Solutions</h4>
+					</li>
+					<li class="site-nav__item site-nav__item--text" data-reactid="191">
+						<a class="site-nav__link site-nav__link--discrete" href="{{ $navBaseUrl }}solutions/metrics">Metrics</a>
+					</li>
+					<li class="site-nav__item site-nav__item--text" data-reactid="193">
+						<a class="site-nav__link site-nav__link--discrete" href="{{ $navBaseUrl }}/solutions/logs">Logs</a>
+					</li>
+					<li class="site-nav__item site-nav__item--text" data-reactid="195">
+						<a class="site-nav__link site-nav__link--discrete" href="{{ $navBaseUrl }}/solutions/kubernetes">Kubernetes</a>
+					</li>
+				</ul>
+			</nav>-->
+			<nav class="site-nav" data-reactid="187">
+				<ul class="ui-list" data-reactid="188">
+					<li class="site-nav__item site-nav__item--heading" data-reactid="189">
+						<h4 data-reactid="190">Open Source</h4>
+					</li>
+					{{ range where $.Site.RegularPages.ByWeight "Section" "oss" }}
+					<li class="site-nav__item site-nav__item--text">
+						<a class="site-nav__link site-nav__link--discrete" href="{{ $navBaseUrl }}{{ .RelPermalink }}">{{ if .Params.menuTitle }}
+							{{ .Params.menuTitle }}
+						{{ else }}
+							{{ .Title }}
+						{{ end }}</a>
+					</li>
+					{{ end }}
+					<li class="site-nav__item site-nav__item--text">
+						<a class="site-nav__link site-nav__link--discrete" href="https://github.com/grafana/"><i class="fa fa-github"></i> GitHub</a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="site-nav" data-reactid="202">
+				<ul class="ui-list" data-reactid="203">
+					<li class="site-nav__item site-nav__item--heading" data-reactid="204">
+						<h4 data-reactid="205">Learn</h4>
+					</li>
+					<li class="site-nav__item site-nav__item--text" data-reactid="222">
+						<a class="site-nav__link site-nav__link--discrete" href="{{ $navBaseUrl }}/blog" data-reactid="223">Blog</a>
+					</li>
+					<li class="site-nav__item site-nav__item--text" data-reactid="220">
+						<a class="site-nav__link site-nav__link--discrete" href="{{ $docsUrl }}" data-reactid="221">Documentation</a>
+					</li>
+					<li class="site-nav__item site-nav__item--text" data-reactid="220">
+						<a class="site-nav__link site-nav__link--discrete" href="{{ $navBaseUrl }}/get">Downloads</a>
+					</li>
+					<li class="site-nav__item site-nav__item--text">
+						<a class="site-nav__link site-nav__link--discrete" href="https://community.grafana.com/">Grafana Community</a>
+					</li>
+					<li class="site-nav__item site-nav__item--text" data-reactid="220">
+						<a class="site-nav__link site-nav__link--discrete" href="https://www.grafanacon.org/" data-reactid="194">GrafanaCon</a>
+					</li>
+					<li class="site-nav__item site-nav__item--text">
+						<a class="site-nav__link site-nav__link--discrete" href="{{ $navBaseUrl }}/case-study">Case Studies</a>
+					</li>
+					</li>
+					<li class="site-nav__item site-nav__item--text">
+						<a class="site-nav__link site-nav__link--discrete" href="https://status.grafana.com/">Grafana Cloud Status</a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="site-nav" data-reactid="216">
+				<ul class="ui-list" data-reactid="217">
+					<li class="site-nav__item site-nav__item--heading" data-reactid="218">
+						<h4 data-reactid="219">Company</h4>
+					</li>
+					<li class="site-nav__item site-nav__item--text" data-reactid="208">
+						<a class="site-nav__link site-nav__link--discrete" href="{{ $navBaseUrl }}/about/mission" data-reactid="209">Our Mission</a>
+					</li>
+					<li class="site-nav__item site-nav__item--text" data-reactid="208">
+						<a class="site-nav__link site-nav__link--discrete" href="{{ $navBaseUrl }}/about/team" data-reactid="209">The Team</a>
+					</li>
+					<li class="site-nav__item site-nav__item--text" data-reactid="212">
+						<a class="site-nav__link site-nav__link--discrete" href="{{ $navBaseUrl }}/about/press" data-reactid="213">Press</a>
+					</li>
+					<li class="site-nav__item site-nav__item--text" data-reactid="214">
+						<a class="site-nav__link site-nav__link--discrete" href="{{ $navBaseUrl }}/about/careers" data-reactid="215">We're Hiring!</a>
+					</li>
+					<li class="site-nav__item site-nav__item--text" data-reactid="220">
+						<a class="site-nav__link site-nav__link--discrete" href="{{ $navBaseUrl }}/about/events" data-reactid="194">Events</a>
+					</li>					
+					<li class="site-nav__item site-nav__item--text">
+						<a class="site-nav__link site-nav__link--discrete" href="https://twitter.com/grafana">Twitter</a>
+					</li>
+					<li class="site-nav__item site-nav__item--text" data-reactid="212">
+						<a class="site-nav__link site-nav__link--discrete" href="{{ $navBaseUrl }}/contact">Contact Us</a>
+					</li>
+				</ul>
+			</nav>
+		</div>
+		<div class="meta" data-reactid="230">
+			Copyright 2019 © Grafana Labs |
+			<a href="{{ $navBaseUrl }}/trademark-policy">Trademark Policy</a> |
+			<a href="{{ $navBaseUrl }}/terms">Terms of Service</a>
+		</div>
+  </div>
+</div>
+
+{{ if and $isPageOrHome (eq .Type "docs") }}
+{{ .CurrentSection.RelPermalink }}
+   <script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/2/docsearch.min.js"></script>
+   <script type="text/javascript"> docsearch({
+      apiKey: '0bd2bd6939038c5ce2c9395732dcf040',
+	  indexName: 'grafana',
+	  "start_urls": ["https://grafana.com/docs/grafana/latest/"],
+	  "sitemap_urls": ["https://grafana.com/static/sitemap.xml"],
+      inputSelector: '#docs-search-input',
+      debug: true // Set debug to true if you want to inspect the dropdown
+   });
+   </script>
+{{ end }}

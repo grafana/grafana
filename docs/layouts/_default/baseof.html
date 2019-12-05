@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+		<title>
+		{{ block "title" . }}
+			{{ if .Title }}
+				{{ .Title }} | {{ .Site.Title }}
+			{{ else }}
+				{{ .Site.Title }}
+			{{ end }}
+		{{ end }}
+		</title>
+		{{ if eq (getenv "HUGO_ENV") "prod" | or (eq .Site.Params.env "prod")  }}
+		<meta name="robots" content="index, follow">
+		{{ else }}
+		<meta name="robots" content="noindex" />
+		{{ end }}
+		<meta name="keywords" content="{{ with .Keywords }}{{ delimit . ","}}{{ else }}Grafana, Graphite, Dashboard, InfluxDB, OpenTSDB, Elasticsearch, Metrics, Editor, Composer, Analytics, Graphana, Prometheus, Cloudwatch{{end}}">
+		<meta name="description" content="{{ if .Description }}{{ .Description }}{{ else }}Grafana is the leading open source project for visualizing metrics. Supporting rich integration for every popular database like Graphite, Prometheus and InfluxDB.{{ end }}">
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+		<link rel="shortcut icon" href="/static/assets/img/fav32.png" type="image/x-icon">
+
+		<meta name="application-name" content="Grafana Labs" />
+		<meta name="Copyright" content="Grafana Labs" />
+
+		<meta name="twitter:card" content="summary_large_image">
+		<meta name="twitter:site" content="@grafana">
+		<meta name="twitter:url" content="https://twitter.com/grafana" />
+		<meta name="twitter:title" content="{{ .Title }}">
+
+		{{ if (isset .Params "meta_image") }}
+			<meta property="og:image" content="{{ default "" (trim (index .Params "meta_image") "/") | absURL }}" />
+			<meta name="twitter:image" content="{{ default "" (trim (index .Params "meta_image") "/") | absURL }}" />
+		{{ else if (isset .Params "cover_image") }}
+			<meta property="og:image" content="{{ default "" (trim (index .Params "cover_image") "/") | absURL }}" />
+			<meta name="twitter:image" content="{{ default "" (trim (index .Params "cover_image") "/") | absURL }}" />
+		{{ else }}
+			<meta name="twitter:image" content="https://grafana.com/img/home_panel_collage1.png" />
+			<meta property="og:image" content="https://grafana.com/img/home_panel_collage1.png" />
+		{{ end }}
+
+		{{ if (isset .Params "excerpt") }}
+			<meta property="og:description" content="{{ index .Params "excerpt" }}" />
+			<meta name="twitter:description" content="{{ index .Params "excerpt" }}" />
+		{{ else }}
+			<meta property="og:description" content="{{ .Summary }}" />
+			<meta name="twitter:description" content="{{ .Summary }}" />
+		{{ end }}
+
+		<meta property="og:site_name" content="Grafana Labs" />
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="{{ .Title }}" />
+
+		{{ with .OutputFormats.Get "RSS" }}
+			<link href="{{ .Permalink }}" rel="alternate" type="application/rss+xml" title="Grafana Labs Blog" />
+			<link href="{{ .Permalink }}" rel="feed" type="application/rss+xml" title="Grafana Labs Blog" />
+		{{ end }}
+
+		{{ $stylesheet := getJSON "https://grafana.com/static/webpack_assets.json" }}
+		{{ with $stylesheet.app.css }}
+		  <link href="https://grafana.com{{ relURL (printf "%s%s" "static/" .) }}" type='text/css' rel="stylesheet">
+		{{ end }}
+		{{ with $stylesheet.shared.css }}
+		  <link href="https://grafana.com{{ relURL (printf "%s%s" "static/" .) }}" type='text/css' rel="stylesheet">
+		{{ end }}
+
+		<link href="//netdna.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.css" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css?family=PT+Sans:400,400i,700,700i" rel="stylesheet">
+
+
+		{{ block "head-bottom" . }}
+		{{ end }}
+	</head>
+
+	<body class="section-{{ .Type }}">
+
+		{{ partial "navbar.html" . }}
+
+		<div class="main">
+
+			{{ block "main" . }}
+			{{ end }}
+
+
+
+		</div>
+		{{ block "body-bottom" . }}
+		{{ end }}
+
+		
+
+		{{ $vendor := $stylesheet }}
+		{{ with $vendor.js }}
+		<script src="https://grafana.com{{ relURL (printf "%s%s" "static/" .) }}"></script>
+		{{ end }}
+		{{ $script := .Site.Data.webpack_assets.app }}
+		{{ with $script.js }}
+		<script src="https://grafana.com{{ relURL (printf "%s%s" "static/" .) }}"></script>
+		{{ end }}
+		{{ $shared := .Site.Data.webpack_assets.shared }}
+		{{ with $shared.js }}
+		<script src="https://grafana.com{{ relURL (printf "%s%s" "static/" .) }}"></script>
+		{{ end }}
+	</body>
+</html>

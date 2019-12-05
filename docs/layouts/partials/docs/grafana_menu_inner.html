@@ -1,0 +1,22 @@
+<ul class="nav-sub ui-list">
+    {{ $current := .current }}
+    {{ $version := .version }}
+    
+    {{ range .children.children }}
+    {{ $path := (printf "%s%s" "/docs/grafana/" $version ) }}
+    {{ $compare := string ($current.RelPermalink | replaceRE $path "" | safeHTML) }}
+        {{ if .children }}
+        <li class="leaf{{ if eq $compare .link }} active menu-open{{ else }} menu-closed{{ end }}">
+            <a class="expand-menu {{ if eq $current.RelPermalink .link }}active{{ end }}" href="/docs/grafana/{{ $version }}{{ .link }}">
+                <span class="menu-icon" aria-hidden="true"></span>
+                {{ .name }}
+            </a>
+            {{ partial "docs/grafana_menu_inner.html" (dict "children" . "current" $current "version" $version) }}
+        </li>
+        {{ else }}
+        <li class="leaf">
+            <a class="{{ if eq $compare .link }}active current-page{{ end }}" href="/docs/grafana/{{ $version }}{{ .link }}">{{ .name }}</a>
+        </li>
+        {{ end }}
+    {{ end }}
+</ul>
