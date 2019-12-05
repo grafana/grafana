@@ -5,7 +5,7 @@ const SegmentStories = storiesOf('UI/Segment/SegmentInput', module);
 import { SegmentInput } from '.';
 import { UseState } from '../../utils/storybook/UseState';
 
-SegmentStories.add('Array Options', () => {
+SegmentStories.add('Segment Input', () => {
   return (
     <UseState initialState={'some text' as string}>
       {(value, updateValue) => (
