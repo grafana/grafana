@@ -348,8 +348,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     containerWidth,
   } = exploreItem;
 
-  const hasLiveOption =
-    datasourceInstance && datasourceInstance.meta && datasourceInstance.meta.streaming && mode === ExploreMode.Logs;
+  const hasLiveOption = datasourceInstance?.meta?.streaming && mode === ExploreMode.Logs;
 
   return {
     datasourceMissing,
