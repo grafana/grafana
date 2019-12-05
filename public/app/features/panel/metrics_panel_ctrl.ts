@@ -25,7 +25,6 @@ import { CoreEvents } from 'app/types';
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
   datasource: DataSourceApi;
-  $q: any;
   $timeout: any;
   contextSrv: ContextSrv;
   datasourceSrv: any;
@@ -44,7 +43,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   constructor($scope: any, $injector: any) {
     super($scope, $injector);
 
-    this.$q = $injector.get('$q');
     this.contextSrv = $injector.get('contextSrv');
     this.datasourceSrv = $injector.get('datasourceSrv');
     this.timeSrv = $injector.get('timeSrv');

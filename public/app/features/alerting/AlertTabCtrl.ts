@@ -38,7 +38,6 @@ export class AlertTabCtrl {
     private backendSrv: BackendSrv,
     private dashboardSrv: DashboardSrv,
     private uiSegmentSrv: any,
-    private $q: any,
     private datasourceSrv: DatasourceSrv
   ) {
     this.panelCtrl = $scope.ctrl;
@@ -121,7 +120,7 @@ export class AlertTabCtrl {
   }
 
   getNotifications() {
-    return this.$q.when(
+    return Promise.resolve(
       this.notifications.map((item: any) => {
         return this.uiSegmentSrv.newSegment(item.name);
       })
@@ -305,7 +304,7 @@ export class AlertTabCtrl {
         break;
       }
       case 'get-part-actions': {
-        return this.$q.when([]);
+        return Promise.resolve([]);
       }
       case 'part-param-changed': {
         this.validateModel();
@@ -315,9 +314,14 @@ export class AlertTabCtrl {
           return this.uiSegmentSrv.newSegment({ value: target.refId });
         });
 
-        return this.$q.when(result);
+        return Promise.resolve(result);
+      }
+      default: {
+        return Promise.resolve();
       }
     }
+
+    return Promise.resolve();
   }
 
   handleReducerPartEvent(conditionModel: any, evt: any) {
@@ -334,9 +338,11 @@ export class AlertTabCtrl {
             result.push(type);
           }
         }
-        return this.$q.when(result);
+        return Promise.resolve(result);
       }
     }
+
+    return Promise.resolve();
   }
 
   addCondition(type: string) {
