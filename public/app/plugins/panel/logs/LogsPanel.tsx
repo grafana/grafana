@@ -10,7 +10,7 @@ interface LogsPanelProps extends PanelProps<Options> {}
 export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   data,
   timeZone,
-  options: { showTime, sortOrder },
+  options: { showTime, wrapLogMessage, sortOrder },
   width,
 }) => {
   if (!data) {
@@ -21,7 +21,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
     );
   }
 
-  const newResults = data ? dataFrameToLogsModel(data.series, data.request.intervalMs) : null;
+  const newResults = data ? dataFrameToLogsModel(data.series, data.request.intervalMs, timeZone) : null;
   const sortedNewResults = sortLogsResult(newResults, sortOrder);
 
   return (
@@ -31,8 +31,9 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
         dedupStrategy={LogsDedupStrategy.none}
         highlighterExpressions={[]}
         showTime={showTime}
+        wrapLogMessage={wrapLogMessage}
         timeZone={timeZone}
-        isLogsPanel={true}
+        allowDetails={true}
       />
     </CustomScrollbar>
   );

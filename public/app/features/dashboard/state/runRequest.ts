@@ -1,7 +1,7 @@
 // Libraries
 import { Observable, of, timer, merge, from } from 'rxjs';
 import { flatten, map as lodashMap, isArray, isString } from 'lodash';
-import { map, catchError, takeUntil, mapTo, share, finalize } from 'rxjs/operators';
+import { map, catchError, takeUntil, mapTo, share, finalize, tap } from 'rxjs/operators';
 // Utils & Services
 import { getBackendSrv } from 'app/core/services/backend_srv';
 // Types
@@ -18,6 +18,7 @@ import {
   DataFrame,
   guessFieldTypes,
 } from '@grafana/data';
+import { getAnalyticsProcessor } from './analyticsProcessor';
 import { ExpressionDatasourceID, expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
@@ -38,6 +39,9 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
 
   packets[packet.key || 'A'] = packet;
 
+  let loadingState = packet.state || LoadingState.Done;
+  let error: DataQueryError | undefined = undefined;
+
   // Update the time range
   const range = { ...request.range };
   const timeRange = isString(range.raw.from)
@@ -50,13 +54,18 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
 
   const combinedData = flatten(
     lodashMap(packets, (packet: DataQueryResponse) => {
+      if (packet.error) {
+        loadingState = LoadingState.Error;
+        error = packet.error;
+      }
       return packet.data;
     })
   );
 
   const panelData = {
-    state: packet.state || LoadingState.Done,
+    state: loadingState,
     series: combinedData,
+    error,
     request,
     timeRange,
   };
@@ -70,7 +79,7 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
  * It will
  *  * Merge multiple responses into a single DataFrame array based on the packet key
  *  * Will emit a loading state if no response after 50ms
- *  * Cancel any still runnning network requests on unsubscribe (using request.requestId)
+ *  * Cancel any still running network requests on unsubscribe (using request.requestId)
  */
 export function runRequest(datasource: DataSourceApi, request: DataQueryRequest): Observable<PanelData> {
   let state: RunningQueryState = {
@@ -111,6 +120,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
         error: processQueryError(err),
       })
     ),
+    tap(getAnalyticsProcessor(datasource)),
     // finalize is triggered when subscriber unsubscribes
     // This makes sure any still running network requests are cancelled
     finalize(cancelNetworkRequestsOnUnsubscribe(request)),
@@ -121,13 +131,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
   // If 50ms without a response emit a loading state
   // mapTo will translate the timer event into state.panelData (which has state set to loading)
   // takeUntil will cancel the timer emit when first response packet is received on the dataObservable
-  return merge(
-    timer(200).pipe(
-      mapTo(state.panelData),
-      takeUntil(dataObservable)
-    ),
-    dataObservable
-  );
+  return merge(timer(200).pipe(mapTo(state.panelData), takeUntil(dataObservable)), dataObservable);
 }
 
 function cancelNetworkRequestsOnUnsubscribe(req: DataQueryRequest) {

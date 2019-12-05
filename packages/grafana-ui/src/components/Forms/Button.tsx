@@ -71,10 +71,11 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
 
       return {
         borderColor: selectThemeVariant({ light: theme.colors.gray70, dark: theme.colors.gray33 }, theme.type),
-        background: buttonVariantStyles(from, to, selectThemeVariant(
-          { light: theme.colors.gray25, dark: theme.colors.gray4 },
-          theme.type
-        ) as string),
+        background: buttonVariantStyles(
+          from,
+          to,
+          selectThemeVariant({ light: theme.colors.gray25, dark: theme.colors.gray4 }, theme.type) as string
+        ),
       };
 
     case 'destructive':

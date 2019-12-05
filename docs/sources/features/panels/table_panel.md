@@ -6,7 +6,7 @@ aliases = ["/reference/table/"]
 [menu.docs]
 name = "Table"
 parent = "panels"
-weight = 2
+weight = 4
 +++
 
 

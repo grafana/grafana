@@ -36,6 +36,25 @@ Just add it as a data source and you are ready to query your log data in [Explor
 | _URL_           | The URL of the Loki instance, e.g., `http://localhost:3100`                                                                                   |
 | _Maximum lines_ | Upper limit for number of log lines returned by Loki (default is 1000). Decrease if your browser is sluggish when displaying logs in Explore. |
 
+### Derived fields
+
+The Derived Fields configuration allows you to: 
+* Add fields parsed from the log message. 
+* Add a link that uses the value of the field. 
+
+You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links will be shown in the [log details](/features/explore/#labels-and-parsed-fields).
+{{< docs-imagebox img="/img/docs/v65/loki_derived_fields.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields configuration" >}}
+Each derived field consists of:
+- **Name:** Shown in the log details as a label.
+- **Regex:** A Regex pattern that runs on the log message and captures part of it to as the value of the new field. Can only contain capture a single group.
+- **URL**: A URL template used to construct a link next to the field value in log details. Use special `${__value.raw}` value in your template to interpolate the real field value into your URL template.
+
+You can use a debug section to see what your fields extract and how the URL is interpolated. Click **Show example log message** to show the text area where you can enter a log message.
+{{< docs-imagebox img="/img/docs/v65/loki_derived_fields_debug.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields debugging" >}}
+
+The new field with the link shown in log details:
+{{< docs-imagebox img="/img/docs/v65/loki_derived_fields_detail.png" class="docs-image--no-shadow" caption="Screenshot of the derived field in log detail" >}}
+
 ## Querying Logs
 
 Querying and displaying log data from Loki is available via [Explore](/features/explore), and with the [logs panel](/features/panels/logs/) in dashboards. Select the Loki data source, and then enter a log query to display your logs.
@@ -152,7 +171,7 @@ datasources:
       maxLines: 1000
 ```
 
-Here's another with basic auth:
+Here's another with basic auth and derived field. Keep in mind that `$` character needs to be escaped in yaml values as it is used to interpolate environment variables:
 
 ```yaml
 apiVersion: 1
@@ -167,4 +186,9 @@ datasources:
     basicAuthPassword: test_password
     jsonData:
       maxLines: 1000
+      derivedFields:
+        - datasourceName: Jaeger
+          matcherRegex: "traceID=(\\w+)"
+          name: TraceID
+          url: "http://localhost:16686/trace/$${__value.raw}"
 ```

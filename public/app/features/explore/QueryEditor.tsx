@@ -45,13 +45,13 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
         target,
         refresh: () => {
           setTimeout(() => {
-            this.props.onQueryChange(target);
-            this.props.onExecuteQuery();
+            this.props.onQueryChange?.(target);
+            this.props.onExecuteQuery?.();
           }, 1);
         },
         onQueryChange: () => {
           setTimeout(() => {
-            this.props.onQueryChange(target);
+            this.props.onQueryChange?.(target);
           }, 1);
         },
         events: exploreEvents,
@@ -64,8 +64,8 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
     this.angularScope = scopeProps.ctrl;
 
     setTimeout(() => {
-      this.props.onQueryChange(target);
-      this.props.onExecuteQuery();
+      this.props.onQueryChange?.(target);
+      this.props.onExecuteQuery?.();
     }, 1);
   }
 

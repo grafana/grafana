@@ -3,13 +3,22 @@ import appEvents from '../../app_events';
 import { User } from '../../services/context_srv';
 import { NavModelItem } from '@grafana/data';
 import { CoreEvents } from 'app/types';
+import { OrgSwitcher } from '../OrgSwitcher';
 
 export interface Props {
   link: NavModelItem;
   user: User;
 }
 
-class BottomNavLinks extends PureComponent<Props> {
+interface State {
+  showSwitcherModal: boolean;
+}
+
+class BottomNavLinks extends PureComponent<Props, State> {
+  state: State = {
+    showSwitcherModal: false,
+  };
+
   itemClicked = (event: React.SyntheticEvent, child: NavModelItem) => {
     if (child.url === '/shortcuts') {
       event.preventDefault();
@@ -19,14 +28,16 @@ class BottomNavLinks extends PureComponent<Props> {
     }
   };
 
-  switchOrg = () => {
-    appEvents.emit(CoreEvents.showModal, {
-      templateHtml: '<org-switcher dismiss="dismiss()"></org-switcher>',
-    });
+  toggleSwitcherModal = () => {
+    this.setState(prevState => ({
+      showSwitcherModal: !prevState.showSwitcherModal,
+    }));
   };
 
   render() {
     const { link, user } = this.props;
+    const { showSwitcherModal } = this.state;
+
     return (
       <div className="sidemenu-item dropdown dropup">
         <a href={link.url} className="sidemenu-link" target={link.target}>
@@ -43,7 +54,7 @@ class BottomNavLinks extends PureComponent<Props> {
           )}
           {link.showOrgSwitcher && (
             <li className="sidemenu-org-switcher">
-              <a onClick={this.switchOrg}>
+              <a onClick={this.toggleSwitcherModal}>
                 <div>
                   <div className="sidemenu-org-switcher__org-name">{user.orgName}</div>
                   <div className="sidemenu-org-switcher__org-current">Current Org:</div>
@@ -55,6 +66,9 @@ class BottomNavLinks extends PureComponent<Props> {
               </a>
             </li>
           )}
+
+          <OrgSwitcher onDismiss={this.toggleSwitcherModal} isOpen={showSwitcherModal} />
+
           {link.children &&
             link.children.map((child, index) => {
               if (!child.hideFromMenu) {

@@ -9,6 +9,19 @@ import { beforeEach } from 'test/lib/common';
 
 import { makeMockLokiDatasource } from './mocks';
 import LokiDatasource from './datasource';
+import { FUNCTIONS } from './syntax';
+
+jest.mock('app/store/store', () => ({
+  store: {
+    getState: jest.fn().mockReturnValue({
+      explore: {
+        left: {
+          mode: 'Logs',
+        },
+      },
+    }),
+  },
+}));
 
 describe('Language completion provider', () => {
   const datasource = makeMockLokiDatasource({});
@@ -19,16 +32,17 @@ describe('Language completion provider', () => {
   };
 
   describe('empty query suggestions', () => {
-    it('returns no suggestions on empty context', async () => {
+    it('returns function suggestions on empty context', async () => {
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('');
       const result = await instance.provideCompletionItems({ text: '', prefix: '', value, wrapperClasses: [] });
       expect(result.context).toBeUndefined();
 
-      expect(result.suggestions.length).toEqual(0);
+      expect(result.suggestions.length).toEqual(1);
+      expect(result.suggestions[0].label).toEqual('Functions');
     });
 
-    it('returns default suggestions with history on empty context when history was provided', async () => {
+    it('returns function suggestions with history on empty context when history was provided', async () => {
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('');
       const history: LokiHistoryItem[] = [
@@ -52,10 +66,14 @@ describe('Language completion provider', () => {
             },
           ],
         },
+        {
+          label: 'Functions',
+          items: FUNCTIONS,
+        },
       ]);
     });
 
-    it('returns no suggestions within regexp', async () => {
+    it('returns function suggestions within regexp', async () => {
       const instance = new LanguageProvider(datasource);
       const input = createTypeaheadInput('{} ()', '', undefined, 4, []);
       const history: LokiHistoryItem[] = [
@@ -66,8 +84,8 @@ describe('Language completion provider', () => {
       ];
       const result = await instance.provideCompletionItems(input, { history });
       expect(result.context).toBeUndefined();
-
-      expect(result.suggestions.length).toEqual(0);
+      expect(result.suggestions.length).toEqual(1);
+      expect(result.suggestions[0].label).toEqual('Functions');
     });
   });
 
