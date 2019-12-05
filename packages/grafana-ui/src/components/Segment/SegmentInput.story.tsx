@@ -5,9 +5,9 @@ const SegmentStories = storiesOf('UI/Segment/SegmentInput', module);
 import { SegmentInput } from '.';
 import { UseState } from '../../utils/storybook/UseState';
 
-SegmentStories.add('Segment Input', () => {
+SegmentStories.add('Array Options', () => {
   return (
-    <UseState initialState={'some text'}>
+    <UseState initialState={'some text' as string}>
       {(value, updateValue) => (
         <>
           <div className="gf-form-inline">
@@ -15,10 +15,11 @@ SegmentStories.add('Segment Input', () => {
               <span className="gf-form-label width-8 query-keyword">Segment Name</span>
             </div>
             <SegmentInput
+              width={20}
               value={value}
-              onChange={text => {
-                updateValue(text as string);
-                action('Segment value changed')(text);
+              onChange={item => {
+                updateValue(item as string);
+                action('Segment value changed')(item);
               }}
             />
           </div>
