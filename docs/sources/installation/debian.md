@@ -66,7 +66,10 @@ sudo apt-get install grafana
 
 ### Install .deb package
 
-Go to the [download page](https://grafana.com/grafana/download?platform=linux) for the latest download
+Go to the [Linux download page](https://grafana.com/grafana/download?platform=linux) for the latest download
+links.
+
+If you use ARM, then use the [ARM download page](https://grafana.com/grafana/download?platform=arm) for the latest download
 links.
 
 ```bash
