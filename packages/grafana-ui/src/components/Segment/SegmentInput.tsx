@@ -5,13 +5,12 @@ import { useExpandableLabel, SegmentProps } from '.';
 
 export interface SegmentInputProps<T> extends SegmentProps<T> {
   value: string | number;
-  onChange: (item: string | number) => void;
-  width?: number;
+  onChange: (text: string | number) => void;
 }
 
 const textWidth = (text: string) => {
   const element = document.createElement('canvas');
-  const context: any = element.getContext('2d');
+  const context = element.getContext('2d')!;
   context.font = '14px Roboto';
   return context.measureText(text).width;
 };
@@ -23,7 +22,7 @@ export function SegmentInput<T>({
   className,
 }: React.PropsWithChildren<SegmentInputProps<T>>) {
   const ref = useRef(null);
-  const [inputWidth, setInputWidth] = useState<number>(textWidth(value!.toString()));
+  const [inputWidth, setInputWidth] = useState<number>(textWidth(value.toString()));
   const [Label, , expanded, setExpanded] = useExpandableLabel(false);
   useClickAway(ref, () => setExpanded(false));
 
@@ -31,17 +30,16 @@ export function SegmentInput<T>({
     return <Label Component={Component || <a className={cx('gf-form-label', 'query-part', className)}>{value}</a>} />;
   }
 
+  const inputWidthStyle = css`
+    width: ${Math.max(inputWidth + 20, 32)}px;
+  `;
+
   return (
     <div className="gf-form">
       <input
         ref={ref}
         autoFocus
-        className={cx(
-          `gf-form-input`,
-          css`
-            width: ${Math.max(inputWidth + 20, 32)}px;
-          `
-        )}
+        className={cx(`gf-form-input`, inputWidthStyle)}
         value={value}
         onChange={item => {
           setInputWidth(textWidth(item.target.value));
