@@ -7,12 +7,12 @@
 
 <ul class="nav-sub ui-list">
 {{ $current := . }}
-{{ range .Site.Data.docs.grafana.latest.menu }}
+{{ range .Site.Data.menu }}
     {{ if .children }}
     {{ $path := (printf "%s%s" "/docs/grafana/" $version ) }}
     {{ $compare := string ($current.RelPermalink | replaceRE $path "" | safeHTML) }}  
     <li class="leaf{{ if eq $compare .link }} active menu-open{{ else }} menu-closed{{ end }}">
-        <a class="expand-menu {{ if eq $current.RelPermalink .link }}active{{ end }}" href="/docs/grafana/{{ $version }}{{ .link }}">
+        <a class="expand-menu {{ if eq $current.RelPermalink .link }}active{{ end }}" href="{{ .link }}">
             <span class="menu-icon" aria-hidden="true"></span>
             {{ .name }}
         </a>       
@@ -20,7 +20,7 @@
     </li>  
     {{ else }}
     <li class="leaf{{ if eq $current.RelPermalink .link }} active menu-open{{ else }} menu-closed{{ end }}">
-        <a class="{{ if eq $current.RelPermalink .link }}active{{ end }}" href="/docs/grafana/{{ $version }}{{ .link }}">
+        <a class="{{ if eq $current.RelPermalink .link }}active{{ end }}" href="{{ .link }}">
             {{ .name }}
         </a>       
     </li>  

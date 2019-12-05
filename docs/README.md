@@ -14,12 +14,28 @@ To build the docs locally:
 
 You can then edit files in the `sources` directory which will update `localhost:1313` when changes are saved.
 
+---
+
 ## Content Guidelines
+
+Edit content in the `sources` directory.
 
 ### Using `relref` for internal links
 
-Coming soon.
+Use the hugo shortcode [relref](https://gohugo.io/content-management/cross-references/#use-ref-and-relref) anytime you are linking to other internal docs pages.
 
-## Adding Images
+### Editing the Sidebar Menu
 
-Coming soon.
+Edit [sources/menu.yaml](sources/menu.yaml) to make changes to the sidebar. Restart the `make run` command for changes to take effect.
+
+### Adding Images
+
+Images are currently hosted in the grafana/website repo.
+
+---
+
+## Making changes live on grafana.com
+
+Anytime a PR is merged to master with changes in the `docs` directory, those changes are synced via GitHub action to the grafana/website repo on the `docs-grafana` branch.
+
+In order to make those changes live, open a PR in the website repo that merges the `docs-grafna` branch into `master`. Then follow the publishing guidelines in that repo.

@@ -1,40 +1,5 @@
 <aside class="docs-toc-aside">
-    <div class="docs-toc-aside__box">
-        <div class="docs-toc">
-            {{ with .File }}
-                <ul>
-                    <li>
-                        {{ $version := "" }}
-                        {{ range $i, $e := (split .Dir "/") }}
-                            {{ if eq $i 2 }}
-                                {{ $version = $e }}
-                            {{ end }}
-                        {{ end }}
-                        {{ $path := string (.Dir | replaceRE "docs/grafana/" "" | replaceRE $version "" | safeHTML) }}
-                        <a href="https://github.com/grafana/grafana/edit/{{ if eq $version "latest" }}master{{ else }}{{ $version }}{{ end }}{{ if ne $version "latest" }}.x{{ end }}/docs/sources{{ $path }}{{ .LogicalName }}" target="_blank">
-                            <i class="fa fa-fw fa-edit"></i> Edit this page
-                        </a>
-                    </li>
-                    <li>
-                        {{ $title := (print "Docs feedback: " $path .LogicalName) }}
-                        <a href="https://github.com/grafana/grafana/issues/new?title={{ $title | safeURL }}" target="_blank">
-                            <i class="fa fa-fw fa-check"></i> Request doc changes
-                        </a>
-                    </li>
-                    <li>
-                        <a href="https://grafana.com/services/support">
-                            <i class="fa fa-fw fa-question"></i> Get Support
-                        </a>
-                    </li>
-                    <li>
-                        <a href="https://community.grafana.com">
-                            <i class="fa fa-fw fa-comments-o"></i> Community
-                        </a>
-                    </li>
-                </ul>
-            {{ end }}
-        </div>
-    </div>
+
 
     <div class="docs-toc-aside__box">
         <div class="docs-toc-heading">On this page</div>

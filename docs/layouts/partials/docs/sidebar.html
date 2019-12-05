@@ -1,14 +1,6 @@
 <aside class="docs-aside-menu">
     {{ $current := . }}
-    {{ range $i, $e := (split .RelPermalink "/") }}
-        {{ if eq $i 2 }}
-            {{ if eq $e "grafana" }}
-                {{ partial "docs/grafana_menu.html" $current }}
-            {{ else }}
-                {{ partial "docs/menu.html" $current }}
-            {{ end }}
-        {{ end }}
-    {{ end }}
+    {{ partial "docs/grafana_menu.html" $current }}
     
     <hr>
 </aside>

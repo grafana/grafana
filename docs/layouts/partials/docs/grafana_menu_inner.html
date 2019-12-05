@@ -7,7 +7,7 @@
     {{ $compare := string ($current.RelPermalink | replaceRE $path "" | safeHTML) }}
         {{ if .children }}
         <li class="leaf{{ if eq $compare .link }} active menu-open{{ else }} menu-closed{{ end }}">
-            <a class="expand-menu {{ if eq $current.RelPermalink .link }}active{{ end }}" href="/docs/grafana/{{ $version }}{{ .link }}">
+            <a class="expand-menu {{ if eq $current.RelPermalink .link }}active{{ end }}" href="{{ .link }}">
                 <span class="menu-icon" aria-hidden="true"></span>
                 {{ .name }}
             </a>
@@ -15,7 +15,7 @@
         </li>
         {{ else }}
         <li class="leaf">
-            <a class="{{ if eq $compare .link }}active current-page{{ end }}" href="/docs/grafana/{{ $version }}{{ .link }}">{{ .name }}</a>
+            <a class="{{ if eq $compare .link }}active current-page{{ end }}" href="{{ .link }}">{{ .name }}</a>
         </li>
         {{ end }}
     {{ end }}

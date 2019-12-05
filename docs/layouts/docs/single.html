@@ -7,7 +7,7 @@
 
 		<div class="docs-content">
 			<div class="docs-content-inner" id="doc-article-text">
-				{{ .Content | replaceRE "/img/docs/" "/static/img/docs/" | safeHTML }}
+				{{ .Content | replaceRE "/img/docs/" "https://grafana.com/static/img/docs/" | safeHTML }}
 			</div>
 
 			{{ partial "docs/aside.html" . }}
