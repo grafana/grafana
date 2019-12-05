@@ -14,7 +14,6 @@ weight = 200
 # Install on Debian or Ubuntu
 
 This page explains how to install Grafana dependencies, download and install Grafana, get the service up and running on your system, and the package details.
-aster
 
 **Note on upgrading:** While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing installation.
 
@@ -26,9 +25,7 @@ You can install Grafana using our official APT repository, by downloading a `.de
 
 ### Install from APT repository 
 
-On some older versions of Ubuntu and Debian you may need to install the
-`apt-transport-https` package which is needed to fetch packages over
-HTTPS.
+On some older versions of Ubuntu and Debian you may need to install the `apt-transport-https` package which is needed to fetch packages over HTTPS.
 
 ```bash
 sudo apt-get install -y apt-transport-https
@@ -40,13 +37,13 @@ Install any missing dependencies:
 sudo apt-get install -y software-properties-common wget
 ```
 
-Install the repository for stable releases:
+Add this repository for stable releases:
 
 ```bash
 sudo add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"
 ```
 
-There is a separate repository if you want beta releases:
+Add this repository if you want beta releases:
 
 ```bash
 sudo add-apt-repository "deb https://packages.grafana.com/oss/deb beta main"
@@ -67,11 +64,9 @@ sudo apt-get install grafana
 
 ### Install .deb package
 
-Go to the [Linux download page](https://grafana.com/grafana/download?platform=linux) for the latest download
-links.
+Go to the [Linux download page](https://grafana.com/grafana/download?platform=linux) for the latest download links.
 
-If you use ARM, then use the [ARM download page](https://grafana.com/grafana/download?platform=arm) for the latest download
-links.
+If you use ARM, then use the [ARM download page](https://grafana.com/grafana/download?platform=arm) for the latest download links.
 
 ```bash
 sudo wget <.deb package url>
@@ -102,7 +97,6 @@ To start the service using systemd:
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl start grafana-server
-sudo systemctl status grafana-server
 ```
 
 Verify that the service has started:
