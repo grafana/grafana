@@ -29,7 +29,7 @@ Use the hugo shortcode [relref](https://gohugo.io/content-management/cross-refer
 
 Edit [sources/menu.yaml](sources/menu.yaml) to make changes to the sidebar. Restart the `make run` command for changes to take effect.
 
-### Adding Images
+### Add images
 
 Images are currently hosted in the grafana/website repo.
 
