@@ -85,7 +85,7 @@ sudo apt-get install -y adduser libfontconfig1
 sudo tar -zxvf <tar.gz package>
 ```
 
-## 2. Start the server 
+## 2. Start the server
 
 This starts the `grafana-server` process as the `grafana` user, which was created during the package installation.
 
