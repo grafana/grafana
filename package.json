@@ -256,6 +256,7 @@
     "tether": "1.4.5",
     "tether-drop": "https://github.com/torkelo/drop/tarball/master",
     "tinycolor2": "1.4.1",
+    "tti-polyfill": "0.2.2",
     "xss": "1.0.3"
   },
   "resolutions": {
