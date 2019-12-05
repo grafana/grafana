@@ -89,7 +89,7 @@ sudo tar -zxvf <tar.gz package>
 
 This starts the `grafana-server` process as the `grafana` user, which was created during the package installation.
 
-If you installed with the APT repository or .deb package, then you can start the server using systemd or init.d. If you installed a binary .tar file, then you need to execute the binary.
+If you installed with the APT repository or `.deb` package, then you can start the server using `systemd` or `init.d`. If you installed a binary `.tar.gz` file, then you need to execute the binary.
 
 ### Start the server with systemd
 
