@@ -17,7 +17,7 @@ SegmentStories.add('Segment Input', () => {
             <SegmentInput
               value={value}
               onChange={text => {
-                updateValue(text);
+                updateValue(text as string);
                 action('Segment value changed')(text);
               }}
             />
