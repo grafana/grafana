@@ -15,7 +15,7 @@ weight = 800
 We recommend that you upgrade Grafana often to stay up to date with the latest fixes and enhancements.
 In order make this a reality, Grafana upgrades are backward compatible and the upgrade process is simple and quick.
 
-Upgrading is generally always safe (between many minor and one major version) and dashboards and graphs will look the same. There can be minor breaking changes in some edge cases which are usually outlined in the [Release Notes](https://community.grafana.com/c/releases) and [Changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
+Upgrading is generally safe (between many minor and one major version) and dashboards and graphs will look the same. There may be minor breaking changes in some edge cases, which are outlined in the [Release Notes](https://community.grafana.com/c/releases) and [Changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
 
 ## Update plugins
 
@@ -60,7 +60,7 @@ restore:
 
 ### Ubuntu or Debian
 
-You upgrade Grafana by following the same procedure as when you installed it.
+You can upgrade Grafana by following the same procedure as when you installed it.
 
 #### Upgrade Debian package
 
@@ -86,7 +86,7 @@ sudo apt-get install grafana
 
 #### Upgrade from binary .tar file
 
-If you downloaded the binary .tar package, then you can just download and extract a new package
+If you downloaded the binary `.tar.gz` package, then you can just download and extract the new package
 and overwrite all your existing files. However, this might overwrite your config changes. 
 
 We recommend that you save your custom config changes in a file named `<grafana_install_dir>/conf/custom.ini`.
