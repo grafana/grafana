@@ -15,7 +15,14 @@ export interface EchoMeta {
   userLogin: string;
   userId: number;
   userSignedIn: boolean;
+  /**
+   * A millisecond epoch
+   */
   ts: number;
+  /**
+   * A highres timestamp since navigation start
+   */
+  timeSinceNavigationStart: number;
 }
 
 export interface EchoBackend<T extends EchoEvent = any, O = any> {
