@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@cypress/webpack-preprocessor": "4.1.1",
+    "blink-diff": "1.0.13",
     "cypress": "3.6.1",
     "rollup": "1.6.0",
     "rollup-plugin-commonjs": "9.2.1",

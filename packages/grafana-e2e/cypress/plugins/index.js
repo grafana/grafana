@@ -1,4 +1,5 @@
 const cypressTypeScriptPreprocessor = require('./cy-ts-preprocessor');
+const compareSnapshotsPlugin = require('./cy-compare-images');
 
 module.exports = on => {
   // yarn build fails with:
@@ -8,4 +9,7 @@ module.exports = on => {
   //   failed: require('cypress-failed-log/src/failed')(),
   // });
   on('file:preprocessor', cypressTypeScriptPreprocessor);
+  on('task', {
+    compareSnapshotsPlugin
+  });
 };

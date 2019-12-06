@@ -1,1 +1,3 @@
-{}
+{
+  "supportFile": "cypress/support/index.ts"
+}

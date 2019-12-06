@@ -29,7 +29,7 @@ e2eScenario({
 
     Pages.Panels.Panel.headerItems('Share').click();
 
-    Pages.SharePanelModal.linkToRenderedImage().then(async $a => {
+    Pages.SharePanelModal.linkToRenderedImage().then($a => {
       // extract the fully qualified href property
       const url = $a.prop('href');
 
@@ -37,12 +37,22 @@ e2eScenario({
       cy.request({ method: 'GET', url, timeout: 120000 });
 
       // Download image
-      if (Cypress.env('CIRCLE_SHA1')) {
-        const blob = await Cypress.Blob.imgSrcToBlob(url);
-        const base64String = await Cypress.Blob.blobToBase64String(blob);
-        const data = base64String.replace(/^data:image\/\w+;base64,/, '');
-        cy.writeFile(`${Cypress.config().screenshotsFolder}/theOutput/smoke-test-scenario.png`, data, 'base64');
+      if (!Cypress.env('CIRCLE_SHA1')) {
+        return;
       }
+
+      const theOutputImage = `${Cypress.config().screenshotsFolder}/theOutput/smoke-test-scenario.png`;
+      const theTruthImage = `${Cypress.config().screenshotsFolder}/theTruth/smoke-test-scenario.png`;
+
+      cy.wrap(
+        Cypress.Blob.imgSrcToBlob(url).then(blob => {
+          Cypress.Blob.blobToBase64String(blob).then(base64String => {
+            const data = base64String.replace(/^data:image\/\w+;base64,/, '');
+            cy.writeFile(theOutputImage, data, 'base64');
+          });
+        })
+      );
+      cy.compareSnapshot({ pathToFileA: theTruthImage, pathToFileB: theOutputImage });
     });
   },
 });

@@ -18,6 +18,19 @@
 // >>             throw new Error("StringMap expected string key");
 // require('cypress-failed-log');
 
+// Import commands.js using ES2015 syntax:
+import './commands';
+
+Cypress.Screenshot.defaults({
+  screenshotOnRunFailure: false,
+});
+
+Cypress.on('uncaught:exception', (err, runnable) => {
+  // returning false here prevents Cypress from
+  // failing the test
+  return true;
+});
+
 const COMMAND_DELAY = 1000;
 
 if (Cypress.env('SLOWMO')) {

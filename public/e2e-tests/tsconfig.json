@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": ["cypress"]
   },
-  "include": ["**/*.ts"]
+  "include": ["**/*.ts", "/Users/hugo/go/src/github.com/grafana/grafana/packages/grafana-e2e/cypress/support/index.ts"]
 }
