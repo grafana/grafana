@@ -49,6 +49,7 @@ const setup = () => {
       matchExact: true,
     },
     datasource,
+    history: [],
     onChange: jest.fn(),
     onRunQuery: jest.fn(),
   };
