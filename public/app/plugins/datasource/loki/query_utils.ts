@@ -9,6 +9,7 @@ export function parseQuery(input: string): LokiExpression {
   let regexp = '';
 
   if (match) {
+    // Regexp result is ignored on the server side 
     regexp = input.replace(selectorRegexp, '').trim();
     // Keep old-style regexp, otherwise take whole query
     if (regexp && regexp.search(/\|=|\|~|!=|!~/) === -1) {
