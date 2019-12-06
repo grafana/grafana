@@ -187,7 +187,7 @@ Time regions allow you to highlight certain time regions of the graph to make it
 
 The time range tab allows you to override the dashboard time range and specify a panel specific time.
 Either through a relative from now time option or through a timeshift.
-Panel time overrides and timeshift are described in more detail [here]({{< relref "reference/timerange.md#panel-time-overrides-timeshift" >}}).
+Panel time overrides and timeshift are described in more detail [here]({{< relref "../../reference/timerange.md#panel-time-overrides-timeshift" >}}).
 
 ### Data link
 

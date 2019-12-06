@@ -166,17 +166,12 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			})
 		})
 
-		Convey("and query has has invalid characters in dimension values", func() {
+		Convey("and query has invalid characters in dimension values", func() {
 			query := &cloudWatchQuery{
 				Namespace:  "AWS/EC2",
 				MetricName: "CPUUtilization",
 				Dimensions: map[string][]string{
-					"lb1": {`lb\1\`},
-					"lb2": {`)lb2`},
-					"lb3": {`l(b3`},
 					"lb4": {`lb4""`},
-					"lb5": {`l\(b5"`},
-					"lb6": {`l\\(b5"`},
 				},
 				Period:     300,
 				Expression: "",
@@ -184,20 +179,8 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			}
 			res := buildSearchExpression(query, "Average")
 
-			Convey("it should escape backslash", func() {
-				So(res, ShouldContainSubstring, `"lb1"="lb\\1\\"`)
-			})
-
-			Convey("it should escape closing parenthesis", func() {
-				So(res, ShouldContainSubstring, `"lb2"="\)lb2"`)
-			})
-
-			Convey("it should escape open parenthesis", func() {
-				So(res, ShouldContainSubstring, `"lb3"="l\(b3"`)
-			})
-
 			Convey("it should escape double quotes", func() {
-				So(res, ShouldContainSubstring, `"lb6"="l\\\\\(b5\""`)
+				So(res, ShouldContainSubstring, `lb4\"\"`)
 			})
 
 		})

@@ -4,6 +4,8 @@ import { SelectableValue } from '@grafana/data';
 import { SegmentSelect, useExpandableLabel, SegmentProps } from './';
 
 export interface SegmentSyncProps<T> extends SegmentProps<T> {
+  value?: SelectableValue<T>;
+  onChange: (item: SelectableValue<T>) => void;
   options: Array<SelectableValue<T>>;
 }
 

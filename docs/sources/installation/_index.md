@@ -12,13 +12,13 @@ weight = 1
 
 ## Installing Grafana
 
-- [Requirements](requirements)
-- [Installing on Debian / Ubuntu](debian)
-- [Installing on RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)](rpm)
-- [Installing on macOS](mac)
-- [Installing on Windows](windows)
-- [Installing on Docker](docker)
-- [Installing using Provisioning (Chef, Puppet, Salt, Ansible, etc)](provisioning)
+- [Requirements]({{< relref "requirements" >}})
+- [Installing on Debian / Ubuntu]({{< relref "debian" >}})
+- [Installing on RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)]({{< relref "rpm" >}})
+- [Installing on macOS]({{< relref "mac" >}})
+- [Installing on Windows]({{< relref "windows" >}})
+- [Installing on Docker]({{< relref "docker" >}})
+- [Installing using Provisioning (Chef, Puppet, Salt, Ansible, etc)]({{< relref "../administration/provisioning" >}})
 - [Nightly Builds](https://grafana.com/grafana/download)
 
 

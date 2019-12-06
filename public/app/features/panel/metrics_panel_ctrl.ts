@@ -25,7 +25,6 @@ import { CoreEvents } from 'app/types';
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
   datasource: DataSourceApi;
-  $q: any;
   $timeout: any;
   contextSrv: ContextSrv;
   datasourceSrv: any;
@@ -44,7 +43,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   constructor($scope: any, $injector: any) {
     super($scope, $injector);
 
-    this.$q = $injector.get('$q');
     this.contextSrv = $injector.get('contextSrv');
     this.datasourceSrv = $injector.get('datasourceSrv');
     this.timeSrv = $injector.get('timeSrv');
@@ -115,6 +113,14 @@ class MetricsPanelCtrl extends PanelCtrl {
         this.error = err.data.error;
       }
     }
+
+    this.angularDirtyCheck();
+  }
+
+  angularDirtyCheck() {
+    if (!this.$scope.$root.$$phase) {
+      this.$scope.$digest();
+    }
   }
 
   // Updates the response with information from the stream
@@ -128,6 +134,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       // Ignore data in loading state
       if (data.state === LoadingState.Loading) {
         this.loading = true;
+        this.angularDirtyCheck();
         return;
       }
 
@@ -149,6 +156,8 @@ class MetricsPanelCtrl extends PanelCtrl {
         const legacy = data.series.map(v => toLegacyResponseData(v));
         this.handleQueryResult({ data: legacy });
       }
+
+      this.angularDirtyCheck();
     },
   };
 

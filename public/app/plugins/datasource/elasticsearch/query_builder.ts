@@ -393,7 +393,7 @@ export class ElasticQueryBuilder {
       query.query.bool.filter.push({
         query_string: {
           analyze_wildcard: true,
-          query: target.query,
+          query: querystring,
         },
       });
     }
