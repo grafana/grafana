@@ -439,13 +439,13 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       case 'ADD_FILTER': {
         selectorLabels = addLabelToSelector(selector, action.key, action.value);
         selectorFilters = keepSelectorFilters(selector);
-        selector = `${selectorLabels} ${selectorFilters}`;
+        selector = `${selectorLabels} ${selectorFilters}`.trim();
         break;
       }
       case 'ADD_FILTER_OUT': {
         selectorLabels = addLabelToSelector(selector, action.key, action.value, '!=');
         selectorFilters = keepSelectorFilters(selector);
-        selector = `${selectorLabels} ${selectorFilters}`;
+        selector = `${selectorLabels} ${selectorFilters}`.trim();
         break;
       }
       default:
