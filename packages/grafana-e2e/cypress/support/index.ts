@@ -25,12 +25,6 @@ Cypress.Screenshot.defaults({
   screenshotOnRunFailure: false,
 });
 
-Cypress.on('uncaught:exception', (err, runnable) => {
-  // returning false here prevents Cypress from
-  // failing the test
-  return true;
-});
-
 const COMMAND_DELAY = 1000;
 
 if (Cypress.env('SLOWMO')) {
