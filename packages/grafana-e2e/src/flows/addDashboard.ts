@@ -1,12 +1,10 @@
-import { Pages } from '../pages';
-import { Flows } from './index';
-import { Url } from '../support/url';
 import { e2e } from '../index';
+import { Url } from '../support/url';
 
 export const addDashboard = async (): Promise<{ dashboardTitle: string; uid: string }> => {
-  Pages.AddDashboard.visit();
+  e2e.pages.AddDashboard.visit();
 
-  const dashboardTitle = Flows.saveNewDashboard();
+  const dashboardTitle = e2e.flows.saveNewDashboard();
 
   return new Promise(resolve => {
     e2e()
