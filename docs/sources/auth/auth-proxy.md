@@ -37,7 +37,7 @@ whitelist =
 # Optionally define more headers to sync other user attributes
 # Example `headers = Name:X-WEBAUTH-NAME Email:X-WEBAUTH-EMAIL Groups:X-WEBAUTH-GROUPS`
 headers =
-# Checkout docs on this for more details on the below setting
+# Check out docs on this for more details on the below setting
 enable_login_token = false
 ```
 

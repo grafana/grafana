@@ -76,7 +76,7 @@ are reserved as global built in variables. We might add more global built in var
 
 ## Changelog
 
-Checkout the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list
+Check out the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list
 of new features, changes, and bug fixes.
 
 ## Download
