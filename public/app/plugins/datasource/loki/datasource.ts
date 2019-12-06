@@ -452,7 +452,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         break;
     }
 
-    const expression = formatQuery(selector,  parsed.regexp);
+    const expression = formatQuery(selector, parsed.regexp);
     return { ...query, expr: expression };
   }
 
