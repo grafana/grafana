@@ -5,7 +5,7 @@
     <p>
       Gauge visualizations within the Singlestat panel are deprecated.  Please
       migrate this panel to use the Gauge panel
-    
+
       <div class="gf-form-button-row">
         <button class="btn btn-primary" ng-click="ctrl.migrateToGaugePanel(true)">
           Migrate to Gauge Panel
@@ -14,9 +14,9 @@
           Show as single stat
         </button>
       </div>
-    
+
       <br/>
-      
+
       <div ng-if="ctrl.panel.sparkline.show">
         <b>NOTE:</b> Sparklines are not supported in the gauge panel
       </div>
@@ -34,7 +34,7 @@
       </div>
     </p>
   </div>
-    
+
 
   <div class="section gf-form-group">
     <h5 class="section-heading">Value</h5>
@@ -88,7 +88,7 @@
     </div>
     <div class="gf-form">
       <label class="gf-form-label width-6">Unit</label>
-      <div class="gf-form-dropdown-typeahead width-18" ng-model="ctrl.panel.format" dropdown-typeahead2="ctrl.unitFormats" dropdown-typeahead-on-select="ctrl.setUnitFormat($subItem)"></div>
+      <unit-picker onChange="ctrl.setUnitFormat()" value="ctrl.panel.format" width="18" />
     </div>
     <div class="gf-form">
       <label class="gf-form-label width-6">Decimals</label>

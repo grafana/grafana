@@ -22,7 +22,6 @@ export function getAnalyticsProcessor(datasource: DataSourceApi) {
       panelId: data.request.panelId,
       dashboardId: data.request.dashboardId,
       // app: 'dashboard',
-      // count: 1,
       dataSize: 0,
       duration: data.request.endTime - data.request.startTime,
       eventName: 'data-request',
@@ -38,9 +37,9 @@ export function getAnalyticsProcessor(datasource: DataSourceApi) {
       eventData.folderName = dashboard.meta.folderTitle;
     }
 
-    if (data.series.length > 0) {
+    if (data.series && data.series.length > 0) {
       // estimate size
-      eventData.dataSize = data.series.length * data.series[0].length;
+      eventData.dataSize = data.series.length;
     }
 
     if (data.error) {

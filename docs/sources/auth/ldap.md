@@ -24,7 +24,7 @@ This means that you should be able to configure LDAP integration using any compl
 
 ## Enable LDAP
 
-In order to use LDAP integration you'll first need to enable LDAP in the [main config file]({{< relref "installation/configuration.md" >}}) as well as specify the path to the LDAP
+In order to use LDAP integration you'll first need to enable LDAP in the [main config file]({{< relref "../installation/configuration.md" >}}) as well as specify the path to the LDAP
 specific configuration file (default: `/etc/grafana/ldap.toml`).
 
 ```bash
@@ -334,7 +334,7 @@ Please inspect your Active Directory configuration and documentation to find the
 
 ## Troubleshooting
 
-To troubleshoot and get more log info enable ldap debug logging in the [main config file]({{< relref "installation/configuration.md" >}}).
+To troubleshoot and get more log info enable ldap debug logging in the [main config file]({{< relref "../installation/configuration.md" >}}).
 
 ```bash
 [log]
