@@ -1,9 +1,6 @@
 import _ from 'lodash';
-import { IQService } from 'angular';
 
 export default class ResponseParser {
-  constructor(private $q: IQService) {}
-
   processQueryResult(res: any) {
     const data: any[] = [];
 
@@ -121,7 +118,7 @@ export default class ResponseParser {
     }
 
     if (timeColumnIndex === -1) {
-      return this.$q.reject({ message: 'Missing mandatory time column (with time column alias) in annotation query.' });
+      return Promise.reject({ message: 'Missing mandatory time column (with time column alias) in annotation query.' });
     }
 
     const list = [];

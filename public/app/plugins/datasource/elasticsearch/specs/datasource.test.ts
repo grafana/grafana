@@ -1,4 +1,4 @@
-import angular, { IQService } from 'angular';
+import angular from 'angular';
 import { dateMath } from '@grafana/data';
 import _ from 'lodash';
 import { ElasticDatasource } from '../datasource';
@@ -52,7 +52,6 @@ describe('ElasticDatasource', function(this: any) {
     instanceSettings.jsonData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
     ctx.ds = new ElasticDatasource(
       instanceSettings,
-      {} as IQService,
       backendSrv as BackendSrv,
       templateSrv as TemplateSrv,
       timeSrv as TimeSrv
