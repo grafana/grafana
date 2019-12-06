@@ -52,7 +52,8 @@ e2eScenario({
           });
         })
       );
-      cy.compareSnapshot({ pathToFileA: theTruthImage, pathToFileB: theOutputImage });
+
+      cy.compareSnapshot({ pathToFileA: theOutputImage, pathToFileB: theTruthImage });
     });
   },
 });
