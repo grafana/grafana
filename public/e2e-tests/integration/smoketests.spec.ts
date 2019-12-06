@@ -52,7 +52,7 @@ e2eScenario({
           });
         })
       );
-
+      cy.wait(1000);
       cy.compareSnapshot({ pathToFileA: theOutputImage, pathToFileB: theTruthImage });
     });
   },

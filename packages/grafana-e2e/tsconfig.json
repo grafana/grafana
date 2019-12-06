@@ -1,8 +1,9 @@
 {
   "extends": "../tsconfig.json",
-  "include": ["../../node_modules/cypress/types/index.d.ts", "../node_modules/cypress", "src/**/*.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["dist", "node_modules"],
   "compilerOptions": {
+    "types": ["cypress"],
     "rootDirs": ["."],
     "typeRoots": ["./node_modules/@types", "types"],
     "declarationDir": "dist",
