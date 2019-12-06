@@ -216,7 +216,7 @@ export class DashboardModel {
 
     panel.setViewMode(fullscreen, this.meta.isEditing);
 
-    this.events.emit(PanelEvents.viewModeChanged, panel);
+    this.events.emit(CoreEvents.viewModeChanged, panel);
   }
 
   timeRangeUpdated(timeRange: TimeRange) {

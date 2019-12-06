@@ -8,7 +8,6 @@ import { store } from 'app/store/store';
 import { AppEventEmitter, CoreEvents } from 'app/types';
 
 import Mousetrap from 'mousetrap';
-import { PanelEvents } from '@grafana/data';
 import 'mousetrap-global-bind';
 import { ContextSrv } from './context_srv';
 import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
@@ -124,7 +123,7 @@ export class KeybindingSrv {
     }
 
     if (search.fullscreen) {
-      appEvents.emit(PanelEvents.panelChangeView, { fullscreen: false, edit: false });
+      appEvents.emit(CoreEvents.panelChangeView, { fullscreen: false, edit: false });
       return;
     }
 
@@ -172,7 +171,7 @@ export class KeybindingSrv {
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
       appEvents.emit(CoreEvents.graphHoverClear);
-      dashboard.startRefresh();
+      dashboard.render();
     });
 
     this.bind('mod+s', () => {
@@ -198,7 +197,7 @@ export class KeybindingSrv {
     // edit panel
     this.bind('e', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
-        appEvents.emit(PanelEvents.panelChangeView, {
+        appEvents.emit(CoreEvents.panelChangeView, {
           fullscreen: true,
           edit: true,
           panelId: dashboard.meta.focusPanelId,
@@ -210,7 +209,7 @@ export class KeybindingSrv {
     // view panel
     this.bind('v', () => {
       if (dashboard.meta.focusPanelId) {
-        appEvents.emit(PanelEvents.panelChangeView, {
+        appEvents.emit(CoreEvents.panelChangeView, {
           fullscreen: true,
           panelId: dashboard.meta.focusPanelId,
           toggle: true,

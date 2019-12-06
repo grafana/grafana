@@ -14,6 +14,7 @@ import {
   ScopedVars,
 } from '@grafana/data';
 
+import { CoreEvents } from 'app/types';
 import config from 'app/core/config';
 
 import { PanelQueryRunner } from './PanelQueryRunner';
@@ -190,7 +191,7 @@ export class PanelModel {
   setViewMode(fullscreen: boolean, isEditing: boolean) {
     this.fullscreen = fullscreen;
     this.isEditing = isEditing;
-    this.events.emit(PanelEvents.viewModeChanged);
+    this.events.emit(CoreEvents.viewModeChanged);
   }
 
   updateGridPos(newPos: GridPos) {

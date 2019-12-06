@@ -18,6 +18,7 @@ import { TemplateSrv } from '../templating/template_srv';
 import { getPanelLinksSupplier } from './panellinks/linkSuppliers';
 import { AppEvent, PanelEvents, PanelPluginMeta, renderMarkdown } from '@grafana/data';
 import { getLocationSrv } from '@grafana/runtime';
+import { CoreEvents } from 'app/types';
 
 export class PanelCtrl {
   panel: any;
@@ -74,7 +75,7 @@ export class PanelCtrl {
   }
 
   changeView(fullscreen: boolean, edit: boolean) {
-    this.publishAppEvent(PanelEvents.panelChangeView, {
+    this.publishAppEvent(CoreEvents.panelChangeView, {
       fullscreen,
       edit,
       panelId: this.panel.id,

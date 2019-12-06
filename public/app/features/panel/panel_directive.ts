@@ -4,6 +4,7 @@ import $ from 'jquery';
 import Drop from 'tether-drop';
 // @ts-ignore
 import baron from 'baron';
+import { CoreEvents } from 'app/types';
 import { PanelEvents } from '@grafana/data';
 import { getLocationSrv } from '@grafana/runtime';
 
@@ -118,7 +119,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         });
       });
 
-      ctrl.events.on(PanelEvents.viewModeChanged, () => {
+      ctrl.events.on(CoreEvents.viewModeChanged, () => {
         // first wait one pass for dashboard fullscreen view mode to take effect (classses being applied)
         setTimeout(() => {
           // then recalc style

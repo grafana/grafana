@@ -155,3 +155,9 @@ export enum VizOrientation {
   Vertical = 'vertical',
   Horizontal = 'horizontal',
 }
+
+export interface PanelTimeHoverEventPayload {
+  time?: number;
+  panelId: number;
+  panelData: PanelData;
+}

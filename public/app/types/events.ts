@@ -75,10 +75,27 @@ export interface DashScrollPayload {
   pos?: number;
 }
 
+/** Payloads */
+export interface PanelChangeViewPayload {
+  fullscreen?: boolean;
+  edit?: boolean;
+  panelId?: number;
+  toggle?: boolean;
+}
+
+export interface MenuElement {
+  text: string;
+  click: string;
+  role?: string;
+  shortcut?: string;
+}
+
 /**
  * Events
  */
 
+export const viewModeChanged = eventFactory('view-mode-changed');
+export const panelChangeView = eventFactory<PanelChangeViewPayload>('panel-change-view');
 export const showDashSearch = eventFactory<ShowDashSearchPayload>('show-dash-search');
 export const hideDashSearch = eventFactory('hide-dash-search');
 export const hideDashEditor = eventFactory('hide-dash-editor');

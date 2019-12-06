@@ -11,7 +11,6 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core
 import { DashboardPanel } from './DashboardPanel';
 import { DashboardModel, PanelModel } from '../state';
 import { CoreEvents } from 'app/types';
-import { PanelEvents } from '@grafana/data';
 import { panelAdded, panelRemoved } from '../state/PanelModel';
 
 let lastGridWidth = 1200;
@@ -105,7 +104,7 @@ export class DashboardGrid extends PureComponent<Props> {
     dashboard.on(panelAdded, this.triggerForceUpdate);
     dashboard.on(panelRemoved, this.triggerForceUpdate);
     dashboard.on(CoreEvents.repeatsProcessed, this.triggerForceUpdate);
-    dashboard.on(PanelEvents.viewModeChanged, this.onViewModeChanged);
+    dashboard.on(CoreEvents.viewModeChanged, this.onViewModeChanged);
     dashboard.on(CoreEvents.rowCollapsed, this.triggerForceUpdate);
     dashboard.on(CoreEvents.rowExpanded, this.triggerForceUpdate);
   }
@@ -115,7 +114,7 @@ export class DashboardGrid extends PureComponent<Props> {
     dashboard.off(panelAdded, this.triggerForceUpdate);
     dashboard.off(panelRemoved, this.triggerForceUpdate);
     dashboard.off(CoreEvents.repeatsProcessed, this.triggerForceUpdate);
-    dashboard.off(PanelEvents.viewModeChanged, this.onViewModeChanged);
+    dashboard.off(CoreEvents.viewModeChanged, this.onViewModeChanged);
     dashboard.off(CoreEvents.rowCollapsed, this.triggerForceUpdate);
     dashboard.off(CoreEvents.rowExpanded, this.triggerForceUpdate);
   }
