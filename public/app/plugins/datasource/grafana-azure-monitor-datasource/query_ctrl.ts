@@ -540,8 +540,16 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
         if (list.length > 0 && !this.target.azureLogAnalytics.workspace) {
           if (this.datasource.azureLogAnalyticsDatasource.defaultOrFirstWorkspace) {
-            this.target.azureLogAnalytics.workspace = this.datasource.azureLogAnalyticsDatasource.defaultOrFirstWorkspace;
-          } else {
+            const found = list.find(workspace => {
+              return workspace.value === this.datasource.azureLogAnalyticsDatasource.defaultOrFirstWorkspace;
+            });
+
+            if (found) {
+              this.target.azureLogAnalytics.workspace = found.value;
+            }
+          }
+
+          if (!this.target.azureLogAnalytics.workspace) {
             this.target.azureLogAnalytics.workspace = list[0].value;
           }
         }
