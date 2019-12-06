@@ -120,7 +120,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
     const titleSlug = kbn.slugifyForUrl(dash.title);
 
     if (withChanges) {
-      this.props.setDashboardQueriesToUpdateOnLoad(originPanelId, queries);
+      this.props.setDashboardQueriesToUpdateOnLoad(originPanelId, this.cleanQueries(queries));
     }
 
     const dashViewOptions = {
@@ -136,6 +136,15 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
       },
     });
   };
+
+  // Remove explore specific parameters from queries
+  private cleanQueries(queries: DataQuery[]) {
+    return queries.map((query: DataQuery & { context?: string }) => {
+      delete query.context;
+      delete query.key;
+      return query;
+    });
+  }
 
   getSelectedDatasource = () => {
     const { datasourceName } = this.props;

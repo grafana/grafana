@@ -251,11 +251,7 @@ async function updateQueriesWhenComingFromExplore(
   const panelArrId = dashboard.panels.findIndex(panel => panel.id === originPanelId);
 
   if (panelArrId > -1) {
-    dashboard.panels[panelArrId].targets = queries.map((query: DataQuery & { context?: string }) => {
-      delete query.context;
-      delete query.key;
-      return query;
-    });
+    dashboard.panels[panelArrId].targets = queries;
   }
 
   // Clear update state now that we're done
