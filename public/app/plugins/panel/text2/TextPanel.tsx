@@ -87,6 +87,21 @@ export class TextPanel extends PureComponent<Props, State> {
     return this.prepareText(content);
   }
 
+  onMouseEnter = () => {
+    const { hover } = this.state;
+    const { emitEvent } = this.props;
+
+    emitEvent(graphHover, {
+      pos: {
+        x: hover.pos.x,
+        y: hover.pos.y,
+      },
+      panel: {
+        id: this.props.id,
+      },
+    });
+  };
+
   render() {
     const { html, hover } = this.state;
 
@@ -94,7 +109,7 @@ export class TextPanel extends PureComponent<Props, State> {
       <div>
         <div className="markdown-html panel-text-content" dangerouslySetInnerHTML={{ __html: html }} />
         {hover && (
-          <table>
+          <table onMouseMove={this.onMouseEnter}>
             <tbody>
               <tr>
                 <th>x</th>

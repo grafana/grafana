@@ -83,13 +83,6 @@ export interface PanelChangeViewPayload {
   toggle?: boolean;
 }
 
-export interface MenuElement {
-  text: string;
-  click: string;
-  role?: string;
-  shortcut?: string;
-}
-
 /**
  * Events
  */

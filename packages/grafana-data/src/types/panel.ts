@@ -40,6 +40,7 @@ export interface PanelProps<T = any> {
   replaceVariables: InterpolateFunction;
   onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
   subscribeToEvent<P = any>(event: AppEvent<P>, handler: PanelEventHandler<P>): () => void;
+  emitEvent<P = any>(event: AppEvent<P>, payload?: P): void;
 }
 
 export interface PanelEditorProps<T = any> {

@@ -265,6 +265,10 @@ export class PanelChrome extends PureComponent<Props, State> {
     };
   };
 
+  emitEvent = <P extends any>(event: AppEvent<P>, payload?: P) => {
+    this.props.dashboard.events.emit(event, payload);
+  };
+
   renderPanel(width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
     const { renderCounter, data, isFirstLoad } = this.state;
@@ -313,6 +317,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             onOptionsChange={this.onOptionsChange}
             onChangeTimeRange={this.onChangeTimeRange}
             subscribeToEvent={this.subscribeToEvent}
+            emitEvent={this.emitEvent}
           />
         </div>
       </>
