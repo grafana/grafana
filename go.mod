@@ -42,6 +42,7 @@ require (
 	github.com/klauspost/compress v1.4.1 // indirect
 	github.com/klauspost/cpuid v1.2.0 // indirect
 	github.com/lib/pq v1.2.0
+	github.com/linkedin/goavro v2.1.0+incompatible
 	github.com/mattn/go-isatty v0.0.10
 	github.com/mattn/go-sqlite3 v1.11.0
 	github.com/opentracing/opentracing-go v1.1.0
@@ -75,6 +76,7 @@ require (
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
 	gopkg.in/ini.v1 v1.46.0
 	gopkg.in/ldap.v3 v3.0.2
+	gopkg.in/linkedin/goavro.v1 v1.0.5 // indirect
 	gopkg.in/macaron.v1 v1.3.4
 	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/redis.v5 v5.2.9
