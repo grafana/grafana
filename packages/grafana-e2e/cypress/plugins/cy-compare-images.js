@@ -23,8 +23,4 @@ function compareSnapshotsPlugin(args) {
   });
 }
 
-function getCompareSnapshotsPlugin(on) {
-  on('task', { compareSnapshotsPlugin });
-}
-
 module.exports = compareSnapshotsPlugin;

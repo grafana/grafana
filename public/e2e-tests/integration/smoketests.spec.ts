@@ -52,7 +52,7 @@ e2e.scenario({
           });
         })
       );
-      e2e().wait(1000);
+      e2e().wait(1000); // give the io a chance to flush image to disk
       e2e().compareSnapshot({ pathToFileA: theOutputImage, pathToFileB: theTruthImage });
     });
   },
