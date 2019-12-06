@@ -1,7 +1,8 @@
 import { Url } from '../support/url';
+import { e2e } from '../index';
 
 export const deleteDataSource = (dataSourceName: string) => {
-  cy.request('DELETE', Url.fromBaseUrl(`/api/datasources/name/${dataSourceName}`));
+  e2e().request('DELETE', Url.fromBaseUrl(`/api/datasources/name/${dataSourceName}`));
 
   /* https://github.com/cypress-io/cypress/issues/2831
   Pages.DataSources.visit();

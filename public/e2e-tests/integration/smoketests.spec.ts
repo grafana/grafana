@@ -1,4 +1,4 @@
-import { e2eScenario, Flows, Pages } from '@grafana/e2e';
+import { e2e, e2eBlobToBase64String, e2eImgSrcToBlob, e2eScenario, Flows, Pages } from '@grafana/e2e';
 import { ScenarioContext } from '@grafana/e2e/src/support';
 
 e2eScenario({
@@ -34,7 +34,7 @@ e2eScenario({
       const url = $a.prop('href');
 
       // Test that the image renderer returns 200 OK
-      cy.request({ method: 'GET', url, timeout: 120000 });
+      e2e().request({ method: 'GET', url, timeout: 120000 });
 
       // Download image
       if (!Cypress.env('CIRCLE_SHA1')) {
@@ -44,16 +44,16 @@ e2eScenario({
       const theOutputImage = `${Cypress.config().screenshotsFolder}/theOutput/smoke-test-scenario.png`;
       const theTruthImage = `${Cypress.config().screenshotsFolder}/theTruth/smoke-test-scenario.png`;
 
-      cy.wrap(
-        Cypress.Blob.imgSrcToBlob(url).then(blob => {
-          Cypress.Blob.blobToBase64String(blob).then(base64String => {
+      e2e().wrap(
+        e2eImgSrcToBlob(url).then(blob => {
+          e2eBlobToBase64String(blob).then(base64String => {
             const data = base64String.replace(/^data:image\/\w+;base64,/, '');
-            cy.writeFile(theOutputImage, data, 'base64');
+            e2e().writeFile(theOutputImage, data, 'base64');
           });
         })
       );
-      cy.wait(1000);
-      cy.compareSnapshot({ pathToFileA: theOutputImage, pathToFileB: theTruthImage });
+      e2e().wait(1000);
+      e2e().compareSnapshot({ pathToFileA: theOutputImage, pathToFileB: theTruthImage });
     });
   },
 });

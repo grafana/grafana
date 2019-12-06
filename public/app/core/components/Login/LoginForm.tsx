@@ -1,6 +1,6 @@
 import React, { ChangeEvent, PureComponent, SyntheticEvent } from 'react';
-import { Selectors } from '@grafana/e2e/src/selectors';
 import { FormModel } from './LoginCtrl';
+import { Pages } from '@grafana/e2e';
 
 interface Props {
   displayForgotPassword: boolean;
@@ -73,7 +73,7 @@ export class LoginForm extends PureComponent<Props, State> {
             className="gf-form-input login-form-input"
             required
             placeholder={this.props.loginHint}
-            aria-label={Selectors.Login.username}
+            aria-label={Pages.Login.selectors.username}
             onChange={this.onChangeUsername}
           />
         </div>

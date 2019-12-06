@@ -1,7 +1,8 @@
 import { Url } from '../support/url';
+import { e2e } from '../index';
 
 export const deleteDashboard = (dashBoardUid: string) => {
-  cy.request('DELETE', Url.fromBaseUrl(`/api/dashboards/uid/${dashBoardUid}`));
+  e2e().request('DELETE', Url.fromBaseUrl(`/api/dashboards/uid/${dashBoardUid}`));
 
   /* https://github.com/cypress-io/cypress/issues/2831
   Flows.openDashboard(dashboardName);

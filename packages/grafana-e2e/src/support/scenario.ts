@@ -26,6 +26,7 @@ export const e2eScenario = ({
   describe(describeName, () => {
     if (skipScenario) {
       it.skip(itName, () => {
+        // @ts-ignore yarn start in root throws error otherwise
         expect(false).equals(true);
       });
       return;

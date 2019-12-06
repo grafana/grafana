@@ -1,3 +1,7 @@
+import { e2e } from '../index';
+
 export const assertSuccessNotification = () => {
-  cy.get('.alert-success').should('exist');
+  e2e()
+    .get('.alert-success')
+    .should('exist');
 };
