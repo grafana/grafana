@@ -187,7 +187,6 @@ export interface ExploreItemState {
    * query of that panel.
    */
   originPanelId?: number;
-  willImportChanges?: boolean;
 }
 
 export interface ExploreUpdateState {

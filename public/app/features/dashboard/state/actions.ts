@@ -16,6 +16,7 @@ import {
   PermissionLevel,
   ThunkResult,
 } from 'app/types';
+import { DataQuery } from '@grafana/data';
 
 export const loadDashboardPermissions = createAction<DashboardAclDTO[]>('dashboard/loadDashboardPermissions');
 
@@ -52,6 +53,21 @@ function toUpdateItem(item: DashboardAcl): DashboardAclUpdateDTO {
     permission: item.permission,
   };
 }
+
+interface SetDashboardQueriesToUpdatePayload {
+  panelId: number;
+  queries: DataQuery[];
+}
+
+export const clearDashboardQueriesToUpdateAction = actionCreatorFactory('CLEAR_DASH_QUERIES_TO_UPDATE').create();
+export const setDashboardQueriesToUpdateAction = actionCreatorFactory<SetDashboardQueriesToUpdatePayload>(
+  'SET_DASH_QUERIES_TO_UPDATE'
+).create();
+export const setDashboardQueriesToUpdateOnLoad = (panelId: number, queries: DataQuery[]): ThunkResult<void> => {
+  return async dispatch => {
+    await dispatch(setDashboardQueriesToUpdateAction({ panelId, queries }));
+  };
+};
 
 export function updateDashboardPermission(
   dashboardId: number,

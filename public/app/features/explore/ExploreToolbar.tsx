@@ -20,8 +20,6 @@ import {
   syncTimes,
   changeRefreshInterval,
   changeMode,
-  clearOrigin,
-  willImportChanges,
 } from './state/actions';
 import { updateLocation } from 'app/core/actions';
 import { getTimeZone } from '../profile/state/selectors';
@@ -33,6 +31,7 @@ import { ResponsiveButton } from './ResponsiveButton';
 import { RunButton } from './RunButton';
 import { LiveTailControls } from './useLiveTailControls';
 import { getExploreDatasources } from './state/selectors';
+import { setDashboardQueriesToUpdateOnLoad } from '../dashboard/state/actions';
 
 const getStyles = memoizeOne(() => {
   return {
@@ -79,9 +78,8 @@ interface DispatchProps {
   syncTimes: typeof syncTimes;
   changeRefreshInterval: typeof changeRefreshInterval;
   changeMode: typeof changeMode;
-  clearOrigin: typeof clearOrigin;
   updateLocation: typeof updateLocation;
-  willImportChanges: typeof willImportChanges;
+  setDashboardQueriesToUpdateOnLoad: typeof setDashboardQueriesToUpdateOnLoad;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -115,16 +113,14 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
   };
 
   returnToPanel = async ({ withChanges = false } = {}) => {
-    const { originPanelId } = this.props;
+    const { originPanelId, queries } = this.props;
 
     const dashboardSrv = getDashboardSrv();
     const dash = dashboardSrv.getCurrent();
     const titleSlug = kbn.slugifyForUrl(dash.title);
 
-    if (!withChanges) {
-      this.props.clearOrigin();
-    } else {
-      this.props.willImportChanges();
+    if (withChanges) {
+      this.props.setDashboardQueriesToUpdateOnLoad(originPanelId, queries);
     }
 
     const dashViewOptions = {
@@ -385,8 +381,7 @@ const mapDispatchToProps: DispatchProps = {
   split: splitOpen,
   syncTimes,
   changeMode: changeMode,
-  clearOrigin,
-  willImportChanges,
+  setDashboardQueriesToUpdateOnLoad,
 };
 
 export const ExploreToolbar = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedExploreToolbar));

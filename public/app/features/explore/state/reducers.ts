@@ -115,7 +115,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
   isLive: false,
   isPaused: false,
   urlReplaced: false,
-  willImportChanges: false,
   queryResponse: createEmptyQueryResponse(),
 });
 
