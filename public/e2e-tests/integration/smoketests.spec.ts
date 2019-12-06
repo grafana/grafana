@@ -29,7 +29,7 @@ e2e.scenario({
 
     e2e.pages.Panels.Panel.headerItems('Share').click();
 
-    e2e.pages.SharePanelModal.linkToRenderedImage().then($a => {
+    e2e.pages.SharePanelModal.linkToRenderedImage().then(($a: any) => {
       // extract the fully qualified href property
       const url = $a.prop('href');
 
@@ -37,16 +37,16 @@ e2e.scenario({
       e2e().request({ method: 'GET', url, timeout: 120000 });
 
       // Download image
-      if (!Cypress.env('CIRCLE_SHA1')) {
+      if (!e2e.env('CIRCLE_SHA1')) {
         return;
       }
 
-      const theOutputImage = `${Cypress.config().screenshotsFolder}/theOutput/smoke-test-scenario.png`;
-      const theTruthImage = `${Cypress.config().screenshotsFolder}/theTruth/smoke-test-scenario.png`;
+      const theOutputImage = `${e2e.config().screenshotsFolder}/theOutput/smoke-test-scenario.png`;
+      const theTruthImage = `${e2e.config().screenshotsFolder}/theTruth/smoke-test-scenario.png`;
 
       e2e().wrap(
-        e2e.imgSrcToBlob(url).then(blob => {
-          e2e.blobToBase64String(blob).then(base64String => {
+        e2e.imgSrcToBlob(url).then((blob: any) => {
+          e2e.blobToBase64String(blob).then((base64String: string) => {
             const data = base64String.replace(/^data:image\/\w+;base64,/, '');
             e2e().writeFile(theOutputImage, data, 'base64');
           });
