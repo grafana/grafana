@@ -120,7 +120,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   angularDirtyCheck() {
-    if (!this.$scope.$$phase) {
+    if (!this.$scope.$root.$$phase) {
       this.$scope.$digest();
     }
   }
