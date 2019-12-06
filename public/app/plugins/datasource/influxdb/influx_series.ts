@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
-import { FieldType } from '@grafana/data';
+import { FieldType, getValueFormats } from '@grafana/data';
 
 export default class InfluxSeries {
   series: any;
@@ -47,7 +47,11 @@ export default class InfluxSeries {
           }
         }
 
-        output.push({ target: seriesName, datapoints: datapoints });
+        output.push({
+          target: seriesName,
+          datapoints: datapoints,
+          unit: series.tags ? this.getValueFormatFromTags(series.tags) : undefined,
+        });
       }
     });
 
@@ -188,5 +192,33 @@ export default class InfluxSeries {
     });
 
     return table;
+  }
+
+  getValueFormatFromTags(tags: any): string {
+    let unit;
+    const unitTag = Object.keys(tags).find(tag => tag.toLocaleLowerCase() === 'unit');
+    if (unitTag) {
+      // Try to find an existing value format id
+      const unitTagNormalized = tags[unitTag].normalize('NFKD');
+      const categories = getValueFormats();
+      for (const cat of categories) {
+        unit = cat.submenu.find((u: any) => {
+          const unitSymbol = u.text.match(/\(([^)]+)\)/);
+          if (
+            (unitSymbol && unitSymbol[1].normalize('NFKD') === unitTagNormalized) ||
+            (!unitSymbol && (u.text.normalize('NFKD') === unitTagNormalized || u.id === unitTagNormalized))
+          ) {
+            return true;
+          } else {
+            return false;
+          }
+        });
+        if (unit) {
+          return unit.value;
+        }
+      }
+      return tags[unitTag];
+    }
+    return undefined;
   }
 }
