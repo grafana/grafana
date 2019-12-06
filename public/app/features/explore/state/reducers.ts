@@ -27,12 +27,10 @@ import {
   ActionTypes,
   splitCloseAction,
   SplitCloseActionPayload,
-  loadExploreDatasources,
   historyUpdatedAction,
   changeModeAction,
   setUrlReplacedAction,
   scanStopAction,
-  queryStartAction,
   changeRangeAction,
   clearOriginAction,
   addQueryRowAction,
@@ -55,7 +53,6 @@ import {
   updateUIStateAction,
   toggleLogLevelAction,
   changeLoadingStateAction,
-  resetExploreAction,
   queryStreamUpdatedAction,
   QueryEndedPayload,
   queryStoreSubscriptionAction,
@@ -85,13 +82,11 @@ export const makeInitialUpdateState = (): ExploreUpdateState => ({
  * Returns a fresh Explore area state
  */
 export const makeExploreItemState = (): ExploreItemState => ({
-  StartPage: undefined,
   containerWidth: 0,
   datasourceInstance: null,
   requestedDatasourceName: null,
   datasourceLoading: null,
   datasourceMissing: false,
-  exploreDatasources: [],
   history: [],
   queries: [],
   initialized: false,
@@ -230,7 +225,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         graphResult: null,
         tableResult: null,
         logsResult: null,
-        showingStartPage: Boolean(state.StartPage),
         queryKeys: getQueryKeys(queries, state.datasourceInstance),
         queryResponse: createEmptyQueryResponse(),
         loading: false,
@@ -278,7 +272,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const { datasourceInstance, version } = action.payload;
 
       // Custom components
-      const StartPage = datasourceInstance.components.ExploreStartPage;
       stopQueryState(state.querySubscription);
 
       let newMetadata = datasourceInstance.meta;
@@ -309,8 +302,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         latency: 0,
         queryResponse: createEmptyQueryResponse(),
         loading: false,
-        StartPage: datasourceInstance.components.ExploreStartPage,
-        showingStartPage: Boolean(StartPage),
         queryKeys: [],
         supportedModes,
         mode,
@@ -380,22 +371,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         ...state,
         queries: nextQueries,
         queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
-      };
-    },
-  })
-  .addMapper({
-    filter: queryStartAction,
-    mapper: (state): ExploreItemState => {
-      return {
-        ...state,
-        latency: 0,
-        queryResponse: {
-          ...state.queryResponse,
-          state: LoadingState.Loading,
-          error: null,
-        },
-        loading: true,
-        update: makeInitialUpdateState(),
       };
     },
   })
@@ -498,15 +473,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     },
   })
   .addMapper({
-    filter: loadExploreDatasources,
-    mapper: (state, action): ExploreItemState => {
-      return {
-        ...state,
-        exploreDatasources: action.payload.exploreDatasources,
-      };
-    },
-  })
-  .addMapper({
     filter: historyUpdatedAction,
     mapper: (state, action): ExploreItemState => {
       return {
@@ -600,7 +566,6 @@ export const processQueryResponse = (
       graphResult: null,
       tableResult: null,
       logsResult: null,
-      showingStartPage: false,
       update: makeInitialUpdateState(),
     };
   }
@@ -626,7 +591,6 @@ export const processQueryResponse = (
     tableResult,
     logsResult,
     loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
-    showingStartPage: false,
     update: makeInitialUpdateState(),
   };
 };
@@ -727,6 +691,11 @@ export const exploreReducer = (state = initialExploreState, action: HigherOrderA
     }
 
     case ActionTypes.ResetExplore: {
+      const leftState = state[ExploreId.left];
+      const rightState = state[ExploreId.right];
+      stopQueryState(leftState.querySubscription);
+      stopQueryState(rightState.querySubscription);
+
       if (action.payload.force || !Number.isInteger(state.left.originPanelId)) {
         return initialExploreState;
       }
@@ -754,19 +723,6 @@ export const exploreReducer = (state = initialExploreState, action: HigherOrderA
       return {
         ...state,
         split,
-        [ExploreId.left]: updateChildRefreshState(leftState, action.payload, ExploreId.left),
-        [ExploreId.right]: updateChildRefreshState(rightState, action.payload, ExploreId.right),
-      };
-    }
-
-    case resetExploreAction.type: {
-      const leftState = state[ExploreId.left];
-      const rightState = state[ExploreId.right];
-      stopQueryState(leftState.querySubscription);
-      stopQueryState(rightState.querySubscription);
-
-      return {
-        ...state,
         [ExploreId.left]: updateChildRefreshState(leftState, action.payload, ExploreId.left),
         [ExploreId.right]: updateChildRefreshState(rightState, action.payload, ExploreId.right),
       };

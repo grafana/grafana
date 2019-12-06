@@ -27,6 +27,7 @@ import { UtilSrv } from 'app/core/services/util_srv';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { BridgeSrv } from 'app/core/services/bridge_srv';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
+import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { ILocationService, ITimeoutService, IRootScopeService, IAngularEvent } from 'angular';
 import { AppEvent, AppEvents } from '@grafana/data';
 
@@ -45,6 +46,7 @@ export class GrafanaCtrl {
     linkSrv: LinkSrv,
     datasourceSrv: DatasourceSrv,
     keybindingSrv: KeybindingSrv,
+    dashboardSrv: DashboardSrv,
     angularLoader: AngularLoader
   ) {
     // make angular loader service available to react components
@@ -54,6 +56,8 @@ export class GrafanaCtrl {
     setTimeSrv(timeSrv);
     setLinkSrv(linkSrv);
     setKeybindingSrv(keybindingSrv);
+    setDashboardSrv(dashboardSrv);
+
     const store = configureStore();
     setLocationSrv({
       update: (opt: LocationUpdate) => {
@@ -141,7 +145,6 @@ export function grafanaAppDirective(
     controller: GrafanaCtrl,
     link: (scope: IRootScopeService & AppEventEmitter, elem: JQuery) => {
       const body = $('body');
-
       // see https://github.com/zenorocha/clipboard.js/issues/155
       $.fn.modal.Constructor.prototype.enforceFocus = () => {};
 

@@ -1,5 +1,5 @@
 // Libaries
-import angular, { IQService } from 'angular';
+import angular from 'angular';
 import _ from 'lodash';
 
 // Components
@@ -25,7 +25,6 @@ export class AnnotationsSrv {
   /** @ngInject */
   constructor(
     private $rootScope: GrafanaRootScope,
-    private $q: IQService,
     private datasourceSrv: DatasourceSrv,
     private backendSrv: BackendSrv,
     private timeSrv: TimeSrv
@@ -45,8 +44,7 @@ export class AnnotationsSrv {
   }
 
   getAnnotations(options: { dashboard: DashboardModel; panel: PanelModel; range: TimeRange }) {
-    return this.$q
-      .all([this.getGlobalAnnotations(options), this.getAlertStates(options)])
+    return Promise.all([this.getGlobalAnnotations(options), this.getAlertStates(options)])
       .then(results => {
         // combine the annotations and flatten results
         let annotations: AnnotationEvent[] = _.flattenDeep(results[0]);
@@ -82,16 +80,16 @@ export class AnnotationsSrv {
 
   getAlertStates(options: any) {
     if (!options.dashboard.id) {
-      return this.$q.when([]);
+      return Promise.resolve([]);
     }
 
     // ignore if no alerts
     if (options.panel && !options.panel.alert) {
-      return this.$q.when([]);
+      return Promise.resolve([]);
     }
 
     if (options.range.raw.to !== 'now') {
-      return this.$q.when([]);
+      return Promise.resolve([]);
     }
 
     if (this.alertStatesPromise) {
@@ -146,8 +144,8 @@ export class AnnotationsSrv {
           })
       );
     }
-    this.datasourcePromises = this.$q.all(dsPromises);
-    this.globalAnnotationsPromise = this.$q.all(promises);
+    this.datasourcePromises = Promise.all(dsPromises);
+    this.globalAnnotationsPromise = Promise.all(promises);
     return this.globalAnnotationsPromise;
   }
 
