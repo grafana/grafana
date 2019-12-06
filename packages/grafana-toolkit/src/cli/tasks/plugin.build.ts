@@ -1,17 +1,13 @@
+import * as prettier from 'prettier';
+import { useSpinner } from '../utils/useSpinner';
+import { testPlugin } from './plugin/tests';
 import { Task, TaskRunner } from './task';
 import rimrafCallback from 'rimraf';
 import { resolve as resolvePath } from 'path';
 import { promisify } from 'util';
 import globby from 'globby';
+import execa from 'execa';
 import { constants as fsConstants, promises as fs } from 'fs';
-
-// @ts-ignore
-import execa = require('execa');
-import { Linter, Configuration, RuleFailure } from 'tslint';
-import * as prettier from 'prettier';
-
-import { useSpinner } from '../utils/useSpinner';
-import { testPlugin } from './plugin/tests';
 import { bundlePlugin as bundleFn, PluginBundleOptions } from './plugin/bundle';
 import { Configuration, Linter, LintResult, RuleFailure } from 'tslint';
 
@@ -121,7 +117,6 @@ export const prettierCheckPlugin = useSpinner<Fixable>('Prettier check', async (
   }
 });
 
-// @ts-ignore
 export const lintPlugin = useSpinner<Fixable>('Linting', async ({ fix }) => {
   let tsLintConfigPath = resolvePath(process.cwd(), 'tslint.json');
 
@@ -153,9 +148,7 @@ export const lintPlugin = useSpinner<Fixable>('Linting', async ({ fix }) => {
 
   if (lintResults.length > 0) {
     console.log('\n');
-    const failures = lintResults.reduce<RuleFailure[]>((failures, result) => {
-      return [...failures, ...result.failures];
-    }, []);
+    const failures: RuleFailure[] = lintResults.flat();
     failures.forEach(f => {
       // tslint:disable-next-line
       console.log(
