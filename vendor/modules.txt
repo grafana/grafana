@@ -120,6 +120,8 @@ github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
+# github.com/golang/snappy v0.0.1
+github.com/golang/snappy
 # github.com/google/flatbuffers v1.11.0
 github.com/google/flatbuffers/go
 # github.com/gopherjs/gopherjs v0.0.0-20190430165422-3e4dfb77656c
@@ -165,6 +167,8 @@ github.com/klauspost/cpuid
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
+# github.com/linkedin/goavro v2.1.0+incompatible
+github.com/linkedin/goavro
 # github.com/mattetti/filebuffer v1.0.0
 github.com/mattetti/filebuffer
 # github.com/mattn/go-colorable v0.1.4
