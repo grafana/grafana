@@ -16,7 +16,7 @@ import {
   lokiStreamResultToDataFrame,
   lokiLegacyStreamsToDataframes,
 } from './result_transformer';
-import { formatQuery, formatSearch, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
+import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 
 // Types
 import {
@@ -452,8 +452,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         break;
     }
 
-    const search = formatSearch(query.expr, parsed.regexp);
-    const expression = formatQuery(selector, search);
+    const expression = formatQuery(selector,  parsed.regexp);
     return { ...query, expr: expression };
   }
 
