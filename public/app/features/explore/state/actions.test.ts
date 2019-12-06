@@ -202,7 +202,7 @@ describe('changing datasource', () => {
     const initialState = {
       explore: {
         [exploreId]: {
-          requestedDatasourceName: name,
+          requestedDatasourceName: 'Loki',
           datasourceInstance: mockPromDatasourceInstance,
         },
       },
