@@ -1,4 +1,4 @@
-import { Flows } from '../flows';
+import { e2e } from '../index';
 
 export interface ScenarioContext {
   dataSourceName?: string;
@@ -37,12 +37,12 @@ export const e2eScenario = ({
     let scenarioDashBoardUid: string;
 
     beforeEach(async () => {
-      Flows.login('admin', 'admin');
+      e2e.flows.login('admin', 'admin');
       if (addScenarioDataSource) {
-        scenarioDataSource = Flows.addDataSource('TestData DB');
+        scenarioDataSource = e2e.flows.addDataSource('TestData DB');
       }
       if (addScenarioDashBoard) {
-        const { dashboardTitle, uid } = await Flows.addDashboard();
+        const { dashboardTitle, uid } = await e2e.flows.addDashboard();
         scenarioDashBoardTitle = dashboardTitle;
         scenarioDashBoardUid = uid;
       }
@@ -50,10 +50,10 @@ export const e2eScenario = ({
 
     afterEach(() => {
       if (scenarioDataSource) {
-        Flows.deleteDataSource(scenarioDataSource);
+        e2e.flows.deleteDataSource(scenarioDataSource);
       }
       if (scenarioDashBoardUid) {
-        Flows.deleteDashboard(scenarioDashBoardUid);
+        e2e.flows.deleteDashboard(scenarioDashBoardUid);
       }
     });
 

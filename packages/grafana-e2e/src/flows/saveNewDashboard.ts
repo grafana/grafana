@@ -1,15 +1,14 @@
-import { Pages } from '../pages';
-import { Flows } from './index';
+import { e2e } from '../index';
 
 export const saveNewDashboard = () => {
-  Pages.Dashboard.toolbarItems('Save dashboard').click();
+  e2e.pages.Dashboard.toolbarItems('Save dashboard').click();
 
   const dashboardTitle = `e2e-${new Date().getTime()}`;
-  Pages.SaveDashboardAsModal.newName().clear();
-  Pages.SaveDashboardAsModal.newName().type(dashboardTitle);
-  Pages.SaveDashboardAsModal.save().click();
+  e2e.pages.SaveDashboardAsModal.newName().clear();
+  e2e.pages.SaveDashboardAsModal.newName().type(dashboardTitle);
+  e2e.pages.SaveDashboardAsModal.save().click();
 
-  Flows.assertSuccessNotification();
+  e2e.flows.assertSuccessNotification();
 
   return dashboardTitle;
 };

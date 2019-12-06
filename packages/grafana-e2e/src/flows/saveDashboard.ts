@@ -1,10 +1,9 @@
-import { Pages } from '../pages';
-import { Flows } from './index';
+import { e2e } from '../index';
 
 export const saveDashboard = () => {
-  Pages.Dashboard.toolbarItems('Save dashboard').click();
+  e2e.pages.Dashboard.toolbarItems('Save dashboard').click();
 
-  Pages.SaveDashboardModal.save().click();
+  e2e.pages.SaveDashboardModal.save().click();
 
-  Flows.assertSuccessNotification();
+  e2e.flows.assertSuccessNotification();
 };

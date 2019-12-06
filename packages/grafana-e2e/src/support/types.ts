@@ -1,14 +1,11 @@
 import { Selector } from './selector';
 import { Url } from './url';
 import { e2e } from '../index';
+import { SelectorFunction, SelectorObject } from '../noTypeCheck';
 
-// @ts-ignore yarn start in root throws error otherwise
-export type SelectorFunction = (text?: string) => Cypress.Chainable<any>;
 export type Selectors = Record<string, string | Function>;
 export type PageObjects<S> = { [P in keyof S]: SelectorFunction };
-// @ts-ignore yarn start in root throws error otherwise
-export type PageFactory<S> = PageObjects<S> & { visit: () => Cypress.Chainable<any>; selectors: S };
-
+export type PageFactory<S> = PageObjects<S> & SelectorObject<S>;
 export interface PageFactoryArgs<S extends Selectors> {
   url?: string;
   selectors: S;

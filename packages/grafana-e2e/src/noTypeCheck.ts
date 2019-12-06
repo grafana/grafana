@@ -1,7 +1,10 @@
 // @ts-nocheck
-import { e2eScenario, ScenarioArguments } from './support';
+import { e2eScenario, ScenarioArguments } from './support/scenario';
 import { Pages } from './pages';
 import { Flows } from './flows';
+
+export type SelectorFunction = (text?: string) => Cypress.Chainable<any>;
+export type SelectorObject<S> = { visit: () => Cypress.Chainable<any>; selectors: S };
 
 const e2eObject = {
   env: (args: string) => Cypress.env(args),

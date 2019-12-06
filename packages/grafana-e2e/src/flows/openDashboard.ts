@@ -1,6 +1,6 @@
-import { Pages } from '../pages';
+import { e2e } from '../index';
 
 export const openDashboard = (dashboardTitle: string) => {
-  Pages.Dashboards.visit();
-  Pages.Dashboards.dashboards(dashboardTitle).click();
+  e2e.pages.Dashboards.visit();
+  e2e.pages.Dashboards.dashboards(dashboardTitle).click();
 };
