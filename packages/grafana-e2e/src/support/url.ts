@@ -1,4 +1,4 @@
-import { e2eConfig, e2eEnv } from '../index';
+import { e2e } from '../index';
 
 export interface UrlApi {
   fromBaseUrl: (url: string | undefined) => string;
@@ -6,7 +6,7 @@ export interface UrlApi {
 }
 
 const uidRegex = '\\/d\\/(.*)\\/';
-const getBaseUrl = () => e2eEnv('BASE_URL') || e2eConfig().baseUrl || 'http://localhost:3000';
+const getBaseUrl = () => e2e.env('BASE_URL') || e2e.config().baseUrl || 'http://localhost:3000';
 
 export const Url: UrlApi = {
   fromBaseUrl: (url: string | undefined) => {

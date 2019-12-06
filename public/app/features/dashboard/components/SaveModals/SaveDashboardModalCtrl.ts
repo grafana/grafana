@@ -1,4 +1,4 @@
-import { Selectors } from '@grafana/e2e/src/selectors';
+import { e2e } from '@grafana/e2e';
 
 import coreModule from 'app/core/core_module';
 import { DashboardSrv } from '../../services/DashboardSrv';
@@ -84,7 +84,7 @@ export class SaveDashboardModalCtrl {
   dismiss: () => void;
   timeChange = false;
   variableValueChange = false;
-  selectors: typeof Selectors.SaveDashboardModal;
+  selectors: typeof e2e.pages.SaveDashboardModal.selectors;
 
   /** @ngInject */
   constructor(private dashboardSrv: DashboardSrv) {
@@ -93,7 +93,7 @@ export class SaveDashboardModalCtrl {
     this.isSaving = false;
     this.timeChange = this.dashboardSrv.getCurrent().hasTimeChanged();
     this.variableValueChange = this.dashboardSrv.getCurrent().hasVariableValuesChanged();
-    this.selectors = Selectors.SaveDashboardModal;
+    this.selectors = e2e.pages.SaveDashboardModal.selectors;
   }
 
   save() {

@@ -1,6 +1,6 @@
 import { coreModule } from 'app/core/core';
 import { AngularPanelMenuItem } from '@grafana/data';
-import { Selectors } from '@grafana/e2e/src/selectors';
+import { e2e } from '@grafana/e2e';
 
 const template = `
 <span class="panel-title">
@@ -36,7 +36,7 @@ function renderMenuItem(item: AngularPanelMenuItem, ctrl: any) {
   }
 
   html += `><i class="${item.icon}"></i>`;
-  html += `<span class="dropdown-item-text" aria-label="${Selectors.Panels.Panel.headerItems(item.text)}">${
+  html += `<span class="dropdown-item-text" aria-label="${e2e.pages.Panels.Panel.selectors.headerItems(item.text)}">${
     item.text
   }</span>`;
 

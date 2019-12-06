@@ -1,7 +1,9 @@
 import { pageFactory } from '../support';
-import { Selectors } from '../selectors';
 
 export const Panel = pageFactory({
   url: '',
-  selectors: Selectors.Panels.Panel,
+  selectors: {
+    title: (title: string) => `Panel header title item ${title}`,
+    headerItems: (item: string) => `Panel header item ${item}`,
+  },
 });

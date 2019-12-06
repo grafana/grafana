@@ -6,7 +6,7 @@ import Drop from 'tether-drop';
 import baron from 'baron';
 import { PanelEvents } from '@grafana/data';
 import { getLocationSrv } from '@grafana/runtime';
-import { Selectors } from '@grafana/e2e/src/selectors';
+import { e2e } from '@grafana/e2e';
 
 const module = angular.module('grafana.directives');
 
@@ -43,7 +43,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       const panelContent = elem.find('.panel-content');
       const cornerInfoElem = elem.find('.panel-info-corner');
       const ctrl = scope.ctrl;
-      ctrl.selectors = Selectors.Panels.Panel;
+      ctrl.selectors = e2e.pages.Panels.Panel.selectors;
       let infoDrop: any;
       let panelScrollbar: any;
 

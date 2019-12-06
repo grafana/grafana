@@ -1,14 +1,15 @@
 import React, { FC, PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
+import { DataSourcePluginMeta, NavModel, PluginType } from '@grafana/data';
+import { List } from '@grafana/ui';
+import { e2e } from '@grafana/e2e';
+
 import Page from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
 import { addDataSource, loadDataSourceTypes, setDataSourceTypeSearchQuery } from './state/actions';
 import { getDataSourceTypes } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
-import { List } from '@grafana/ui';
-import { DataSourcePluginMeta, NavModel, PluginType } from '@grafana/data';
-import { Selectors } from '@grafana/e2e/src/selectors';
 
 export interface Props {
   navModel: NavModel;
@@ -188,7 +189,7 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
     <div
       className="add-data-source-item"
       onClick={onClick}
-      aria-label={Selectors.AddDataSource.dataSourcePlugins(plugin.name)}
+      aria-label={e2e.pages.AddDataSource.selectors.dataSourcePlugins(plugin.name)}
     >
       <img className="add-data-source-item-logo" src={plugin.info.logos.small} />
       <div className="add-data-source-item-text-wrapper">

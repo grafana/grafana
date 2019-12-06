@@ -2,7 +2,7 @@
 import React from 'react';
 import _ from 'lodash';
 import { LocationUpdate } from '@grafana/runtime';
-import { Selectors } from '@grafana/e2e/src/selectors';
+import { e2e } from '@grafana/e2e';
 // Utils
 import config from 'app/core/config';
 import store from 'app/core/store';
@@ -138,7 +138,7 @@ export class AddPanelWidget extends React.Component<Props, State> {
           href="#"
           onClick={onClick}
           className="add-panel-widget__link btn btn-inverse"
-          aria-label={Selectors.AddDashboard.ctaButtons(text)}
+          aria-label={e2e.pages.AddDashboard.selectors.ctaButtons(text)}
         >
           <div className="add-panel-widget__icon">
             <i className={`gicon gicon-${icon}`} />

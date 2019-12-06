@@ -1,35 +1,35 @@
-import { e2e, e2eBlobToBase64String, e2eImgSrcToBlob, e2eScenario, Flows, Pages } from '@grafana/e2e';
+import { e2e } from '@grafana/e2e';
 import { ScenarioContext } from '@grafana/e2e/src/support';
 
-e2eScenario({
+e2e.scenario({
   describeName: 'Smoke tests',
   itName: 'Login scenario, create test data source, dashboard, panel, and export scenario',
   addScenarioDataSource: true,
   addScenarioDashBoard: true,
   skipScenario: false,
   scenario: ({ dataSourceName, dashboardTitle, dashboardUid }: ScenarioContext) => {
-    Flows.openDashboard(dashboardTitle);
-    Pages.Dashboard.toolbarItems('Add panel').click();
-    Pages.AddDashboard.ctaButtons('Add Query').click();
+    e2e.flows.openDashboard(dashboardTitle);
+    e2e.pages.Dashboard.toolbarItems('Add panel').click();
+    e2e.pages.AddDashboard.ctaButtons('Add Query').click();
 
-    Pages.Panels.EditPanel.tabItems('Queries').click();
-    Pages.Panels.DataSource.TestData.QueryTab.scenarioSelect().select('CSV Metric Values');
+    e2e.pages.Panels.EditPanel.tabItems('Queries').click();
+    e2e.pages.Panels.DataSource.TestData.QueryTab.scenarioSelect().select('CSV Metric Values');
 
-    Pages.Panels.EditPanel.tabItems('Visualization').click();
+    e2e.pages.Panels.EditPanel.tabItems('Visualization').click();
 
-    Pages.Panels.Visualization.Graph.VisualizationTab.xAxisSection()
+    e2e.pages.Panels.Visualization.Graph.VisualizationTab.xAxisSection()
       .contains('Show')
       .click();
 
-    Flows.saveDashboard();
+    e2e.flows.saveDashboard();
 
-    Pages.Dashboard.backArrow().click();
+    e2e.pages.Dashboard.backArrow().click();
 
-    Pages.Panels.Panel.title('Panel Title').click();
+    e2e.pages.Panels.Panel.title('Panel Title').click();
 
-    Pages.Panels.Panel.headerItems('Share').click();
+    e2e.pages.Panels.Panel.headerItems('Share').click();
 
-    Pages.SharePanelModal.linkToRenderedImage().then($a => {
+    e2e.pages.SharePanelModal.linkToRenderedImage().then($a => {
       // extract the fully qualified href property
       const url = $a.prop('href');
 
@@ -45,8 +45,8 @@ e2eScenario({
       const theTruthImage = `${Cypress.config().screenshotsFolder}/theTruth/smoke-test-scenario.png`;
 
       e2e().wrap(
-        e2eImgSrcToBlob(url).then(blob => {
-          e2eBlobToBase64String(blob).then(base64String => {
+        e2e.imgSrcToBlob(url).then(blob => {
+          e2e.blobToBase64String(blob).then(base64String => {
             const data = base64String.replace(/^data:image\/\w+;base64,/, '');
             e2e().writeFile(theOutputImage, data, 'base64');
           });

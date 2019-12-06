@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { isEqual } from 'lodash';
 import { DataLink, ScopedVars } from '@grafana/data';
 import { ClickOutsideWrapper } from '@grafana/ui';
-import { Selectors } from '@grafana/e2e/src/selectors';
+import { e2e } from '@grafana/e2e';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
 import { PanelHeaderMenu } from './PanelHeaderMenu';
@@ -96,7 +96,7 @@ export class PanelHeader extends Component<Props, State> {
             className="panel-title-container"
             onClick={this.onMenuToggle}
             onMouseDown={this.onMouseDown}
-            aria-label={Selectors.Panels.Panel.title(title)}
+            aria-label={e2e.pages.Panels.Panel.selectors.title(title)}
           >
             <div className="panel-title">
               <span className="icon-gf panel-alert-icon" />

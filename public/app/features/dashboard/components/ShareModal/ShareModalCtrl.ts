@@ -1,6 +1,6 @@
 import angular, { ILocationService } from 'angular';
 import { dateTime } from '@grafana/data';
-import { Selectors } from '@grafana/e2e/src/selectors';
+import { e2e } from '@grafana/e2e';
 
 import config from 'app/core/config';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
@@ -25,7 +25,7 @@ export function ShareModalCtrl(
     theme: 'current',
   };
   $scope.editor = { index: $scope.tabIndex || 0 };
-  $scope.selectors = Selectors.SharePanelModal;
+  $scope.selectors = e2e.pages.SharePanelModal.selectors;
 
   $scope.init = () => {
     $scope.panel = $scope.model && $scope.model.panel ? $scope.model.panel : $scope.panel; // React pass panel and dashboard in the "model" property

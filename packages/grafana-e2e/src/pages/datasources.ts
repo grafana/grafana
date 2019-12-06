@@ -1,7 +1,9 @@
 import { pageFactory } from '../support';
-import { Selectors } from '../selectors';
 
 export const DataSources = pageFactory({
   url: '/datasources',
-  selectors: Selectors.DataSources,
+  selectors: {
+    dataSources: (dataSourceName: string) => `Data source list item ${dataSourceName}`,
+    addDataSource: () => '.page-action-bar > .btn',
+  },
 });

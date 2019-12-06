@@ -1,8 +1,8 @@
-import { Pages } from '../index';
+import { e2e } from '../index';
 
 export const login = (username: string, password: string) => {
-  Pages.Login.visit();
-  Pages.Login.username().type(username);
-  Pages.Login.password().type(password);
-  Pages.Login.submit().click();
+  e2e.pages.Login.visit();
+  e2e.pages.Login.username().type(username);
+  e2e.pages.Login.password().type(password);
+  e2e.pages.Login.submit().click();
 };

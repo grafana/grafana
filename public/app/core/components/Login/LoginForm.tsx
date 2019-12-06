@@ -1,6 +1,7 @@
 import React, { ChangeEvent, PureComponent, SyntheticEvent } from 'react';
+import { e2e } from '@grafana/e2e';
+
 import { FormModel } from './LoginCtrl';
-import { Pages } from '@grafana/e2e';
 
 interface Props {
   displayForgotPassword: boolean;
@@ -73,7 +74,7 @@ export class LoginForm extends PureComponent<Props, State> {
             className="gf-form-input login-form-input"
             required
             placeholder={this.props.loginHint}
-            aria-label={Pages.Login.selectors.username}
+            aria-label={e2e.pages.Login.selectors.username}
             onChange={this.onChangeUsername}
           />
         </div>
@@ -86,7 +87,7 @@ export class LoginForm extends PureComponent<Props, State> {
             ng-model="formModel.password"
             id="inputPassword"
             placeholder={this.props.passwordHint}
-            aria-label="Password input field"
+            aria-label={e2e.pages.Login.selectors.password}
             onChange={this.onChangePassword}
           />
         </div>
@@ -94,7 +95,7 @@ export class LoginForm extends PureComponent<Props, State> {
           {!this.props.isLoggingIn ? (
             <button
               type="submit"
-              aria-label="Login button"
+              aria-label={e2e.pages.Login.selectors.submit}
               className={`btn btn-large p-x-2 ${this.state.valid ? 'btn-primary' : 'btn-inverse'}`}
               onClick={this.onSubmit}
               disabled={!this.state.valid}

@@ -1,7 +1,9 @@
 import { pageFactory } from '../support';
-import { Selectors } from '../selectors';
 
 export const Dashboard = pageFactory({
   url: '',
-  selectors: Selectors.Dashboard,
+  selectors: {
+    toolbarItems: (button: string) => `Dashboard navigation bar button ${button}`,
+    backArrow: 'Dashboard settings Go Back button',
+  },
 });
