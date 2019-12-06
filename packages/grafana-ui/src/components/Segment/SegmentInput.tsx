@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { cx, css } from 'emotion';
 import useClickAway from 'react-use/lib/useClickAway';
+import { measureText } from '../../utils/measureText';
 import { useExpandableLabel, SegmentProps } from '.';
 
 export interface SegmentInputProps<T> extends SegmentProps<T> {
@@ -8,12 +9,7 @@ export interface SegmentInputProps<T> extends SegmentProps<T> {
   onChange: (text: string | number) => void;
 }
 
-const textWidth = (text: string) => {
-  const element = document.createElement('canvas');
-  const context = element.getContext('2d')!;
-  context.font = '14px Roboto';
-  return context.measureText(text).width;
-};
+const FONT_SIZE = 14;
 
 export function SegmentInput<T>({
   value,
@@ -22,7 +18,7 @@ export function SegmentInput<T>({
   className,
 }: React.PropsWithChildren<SegmentInputProps<T>>) {
   const ref = useRef(null);
-  const [inputWidth, setInputWidth] = useState<number>(textWidth(value.toString()));
+  const [inputWidth, setInputWidth] = useState<number>(measureText(value.toString(), FONT_SIZE).width);
   const [Label, , expanded, setExpanded] = useExpandableLabel(false);
   useClickAway(ref, () => setExpanded(false));
 
@@ -41,11 +37,12 @@ export function SegmentInput<T>({
       className={cx(`gf-form gf-form-input`, inputWidthStyle)}
       value={value}
       onChange={item => {
-        setInputWidth(textWidth(item.target.value));
+        const { width } = measureText(item.target.value, FONT_SIZE);
+        setInputWidth(width);
         onChange(item.target.value);
       }}
       onBlur={() => setExpanded(false)}
-      onKeyDown={e => e.keyCode === 13 && setExpanded(false)}
+      onKeyDown={e => [13, 27].includes(e.keyCode) && setExpanded(false)}
     />
   );
 }
