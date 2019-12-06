@@ -2,10 +2,10 @@ import React from 'react';
 import { WidgetProps } from 'react-jsonschema-form';
 import { Input } from '../Input/Input';
 
-export const TextWidget: React.FC<WidgetProps> = ({ value, id, onChange, placeholder, onBlur }) => {
+export const TextWidget: React.FC<WidgetProps> = ({ value, id, onChange, placeholder, onBlur, schema }) => {
   return (
     <Input
-      type="text"
+      type={schema.type === 'number' || schema.type === 'integer' ? 'number' : 'text'}
       id={id}
       value={value}
       onChange={e => {

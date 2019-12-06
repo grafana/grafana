@@ -11,8 +11,7 @@ import { Switch } from './Switch';
 import { Icon } from '../Icon/Icon';
 import { Checkbox } from './Checkbox';
 import { TextArea } from './TextArea/TextArea';
-import { JSONSchema6 } from 'json-schema';
-import { UiSchema } from 'react-jsonschema-form';
+import { FormSchemaBuilder } from './JSFormWrappers/FormSchemaBuilder';
 
 export default {
   title: 'UI/Forms/Test forms',
@@ -103,75 +102,75 @@ export const users = () => {
     </>
   );
 };
-export const jsonSchemaForms = () => {
-  // const formData: {
-  //   name: string;
-  //   email: string;
-  //   username: string;
-  //   disabled: boolean;
-  //   sslVerification: boolean;
-  //   datasource: string;
-  // } = {};
-  const schema: JSONSchema6 = {
-    title: 'Sample json-schema form',
-    type: 'object',
-    required: ['name', 'datasource'],
-    properties: {
-      name: { type: 'string', title: 'Name', default: '', minLength: 5 },
-      email: { type: 'string', title: 'E-mail', default: '', format: 'email' },
-      username: { type: 'string', title: 'Username', default: '' },
-      disabled: { type: 'boolean', title: 'Disabled', description: 'Added for testing purposes' },
-      sslVerification: {
-        type: 'boolean',
-        title: 'Skip SSL cert verification',
-        description: 'Set to true if you want to skip sll cert validation',
-      },
-      datasource: {
-        type: 'string',
-        enum: ['prometheus', 'graphite', 'elastic'],
-        // @ts-ignore
-        enumNames: ['Prometheus', 'Graphite', 'Elastic'],
-      },
-      address: {
-        type: 'object',
-        required: ['city'],
-        properties: {
-          city: { type: 'string', title: 'City', default: '', minLength: 1 },
-          country: { type: 'string', title: 'Country', default: '' },
-        },
-      },
-    },
-  };
 
-  const uiSchema: UiSchema = {
-    'ui:rootFieldId': 'myform',
-    name: {
-      'ui:placeholder': 'Your name pretty please',
-    },
-    disabled: {
-      'ui:widget': 'switch',
-      'ui:options': {
-        horizontal: true,
-      },
-    },
-  };
+export const jsonSchemaForms = () => {
+  const formSchema = new FormSchemaBuilder('Sample form')
+    .addTextInput('username', {
+      label: 'Username',
+      description: 'Provide the username you create',
+      placeholder: 'Your username',
+      required: true,
+      minLength: 5,
+    })
+    .addTextInput('email', {
+      label: 'E-mail',
+      placeholder: 'roger@waters.io',
+      required: true,
+      minLength: 5,
+      format: 'email',
+    })
+    .addTextInput('hex', {
+      label: 'HEX color',
+      description: 'This uses regex for validating HEX',
+      placeholder: '#cccccc',
+      pattern: /^#?([a-f0-9]{6}|[a-f0-9]{3})$/,
+      required: true,
+    })
+    .addNumberInput('age', {
+      label: 'Your age',
+      description: 'Are you young enough?',
+      placeholder: '11',
+    })
+    .addSwitch('over', true, {
+      label: 'Are you sure you are young enough...?',
+      description: 'Just checking...',
+      required: true,
+    })
+    .addSelect(
+      'datasource',
+      [
+        {
+          label: 'Prometheus',
+          value: 'prometheus',
+        },
+        {
+          label: 'Graphite',
+          value: 'graphite',
+        },
+        {
+          label: 'InfluxDB',
+          value: 'influx',
+        },
+      ],
+      {
+        label: 'Select datasource',
+      }
+    );
 
   return (
     <>
       <Form
-        schema={schema}
-        uiSchema={uiSchema}
+        {...formSchema.getFormProps()}
         onSubmit={data => {
           console.log(data);
         }}
-        onChange={(data, es) => {
-          console.log(data, es);
+        onChange={data => {
+          console.log(data);
         }}
       >
-        <></>
-        {/* <div>
-          <Button type="submit">Whatever</Button>
-        </div> */}
+        <div>
+          <Button type="submit">Just send it...</Button>
+        </div>
       </Form>
     </>
   );

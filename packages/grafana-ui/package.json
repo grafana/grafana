@@ -37,6 +37,7 @@
     "classnames": "2.2.6",
     "d3": "5.9.1",
     "flat": "^5.0.0",
+    "fluent-schema": "^0.9.0",
     "immutable": "3.8.2",
     "jquery": "3.4.1",
     "lodash": "4.17.15",
