@@ -269,7 +269,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: updateDatasourceInstanceAction,
     mapper: (state, action): ExploreItemState => {
-      const { datasourceInstance, version } = action.payload;
+      const { datasourceInstance, version, mode } = action.payload;
 
       // Custom components
       stopQueryState(state.querySubscription);
@@ -291,7 +291,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       }
 
       const updatedDatasourceInstance = Object.assign(datasourceInstance, { meta: newMetadata });
-      const [supportedModes, mode] = getModesForDatasource(updatedDatasourceInstance, state.mode);
+      const [supportedModes, newMode] = getModesForDatasource(updatedDatasourceInstance, state.mode);
 
       return {
         ...state,
@@ -304,7 +304,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         loading: false,
         queryKeys: [],
         supportedModes,
-        mode,
+        mode: mode ?? newMode,
         originPanelId: state.urlState && state.urlState.originPanelId,
       };
     },
