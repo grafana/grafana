@@ -12,18 +12,21 @@ export interface SegmentInputProps<T> extends SegmentProps<T> {
 const FONT_SIZE = 14;
 
 export function SegmentInput<T>({
-  value,
+  value: initialValue,
   onChange,
   Component,
   className,
 }: React.PropsWithChildren<SegmentInputProps<T>>) {
   const ref = useRef(null);
-  const [inputWidth, setInputWidth] = useState<number>(measureText(value.toString(), FONT_SIZE).width);
+  const [value, setValue] = useState<number | string>(initialValue);
+  const [inputWidth, setInputWidth] = useState<number>(measureText(initialValue.toString(), FONT_SIZE).width);
   const [Label, , expanded, setExpanded] = useExpandableLabel(false);
   useClickAway(ref, () => setExpanded(false));
 
   if (!expanded) {
-    return <Label Component={Component || <a className={cx('gf-form-label', 'query-part', className)}>{value}</a>} />;
+    return (
+      <Label Component={Component || <a className={cx('gf-form-label', 'query-part', className)}>{initialValue}</a>} />
+    );
   }
 
   const inputWidthStyle = css`
@@ -39,10 +42,18 @@ export function SegmentInput<T>({
       onChange={item => {
         const { width } = measureText(item.target.value, FONT_SIZE);
         setInputWidth(width);
-        onChange(item.target.value);
+        setValue(item.target.value);
       }}
-      onBlur={() => setExpanded(false)}
-      onKeyDown={e => [13, 27].includes(e.keyCode) && setExpanded(false)}
+      onBlur={() => {
+        setExpanded(false);
+        onChange(value);
+      }}
+      onKeyDown={e => {
+        if ([13, 27].includes(e.keyCode)) {
+          setExpanded(false);
+          onChange(value);
+        }
+      }}
     />
   );
 }
