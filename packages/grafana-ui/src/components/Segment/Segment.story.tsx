@@ -174,3 +174,35 @@ SegmentStories.add('Custom Label Field', () => {
     </UseState>
   );
 });
+
+SegmentStories.add('Array Options With Placeholder', () => {
+  const options = ['Option1', 'Option2', 'OptionWithLooongLabel', 'Option4'].map(toOption);
+  options[0].label = 'Option1 Label';
+  return (
+    <UseState initialState={undefined}>
+      {(value, updateValue) => (
+        <>
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <span className="gf-form-label width-8 query-keyword">Segment Name</span>
+            </div>
+            <Segment
+              value={value}
+              options={options}
+              placeholder="Enter a value"
+              onChange={item => {
+                updateValue(item);
+                action('Segment value changed')(item.value);
+              }}
+            />
+            <Segment
+              Component={AddButton}
+              onChange={value => action('New value added')(value as SelectableValue<string>)}
+              options={options}
+            />
+          </div>
+        </>
+      )}
+    </UseState>
+  );
+});

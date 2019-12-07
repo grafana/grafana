@@ -18,6 +18,7 @@ export function SegmentAsync<T>({
   Component,
   className,
   allowCustomValue,
+  placeholder,
 }: React.PropsWithChildren<SegmentAsyncProps<T>>) {
   const [selectPlaceholder, setSelectPlaceholder] = useState<string>('');
   const [loadedOptions, setLoadedOptions] = useState<Array<SelectableValue<T>>>([]);
@@ -33,7 +34,13 @@ export function SegmentAsync<T>({
           setLoadedOptions(opts);
           setSelectPlaceholder(opts.length ? '' : 'No options found');
         }}
-        Component={Component || <a className={cx('gf-form-label', 'query-part', className)}>{label}</a>}
+        Component={
+          Component || (
+            <a className={cx('gf-form-label', 'query-part', !value && placeholder && 'query-placeholder', className)}>
+              {label || placeholder}
+            </a>
+          )
+        }
       />
     );
   }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { cx } from 'emotion';
+import { cx, css } from 'emotion';
 import { isObject } from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import { SegmentSelect, useExpandableLabel, SegmentProps } from './';
@@ -17,12 +17,23 @@ export function Segment<T>({
   Component,
   className,
   allowCustomValue,
+  placeholder,
 }: React.PropsWithChildren<SegmentSyncProps<T>>) {
   const [Label, width, expanded, setExpanded] = useExpandableLabel(false);
 
   if (!expanded) {
     const label = isObject(value) ? value.label : value;
-    return <Label Component={Component || <a className={cx('gf-form-label', 'query-part', className)}>{label}</a>} />;
+    return (
+      <Label
+        Component={
+          Component || (
+            <a className={cx('gf-form-label', 'query-part', !value && placeholder && 'query-placeholder', className)}>
+              {label || placeholder}
+            </a>
+          )
+        }
+      />
+    );
   }
 
   return (

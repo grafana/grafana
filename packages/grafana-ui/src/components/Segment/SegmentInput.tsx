@@ -16,10 +16,11 @@ export function SegmentInput<T>({
   onChange,
   Component,
   className,
+  placeholder,
 }: React.PropsWithChildren<SegmentInputProps<T>>) {
   const ref = useRef(null);
   const [value, setValue] = useState<number | string>(initialValue);
-  const [inputWidth, setInputWidth] = useState<number>(measureText(initialValue.toString(), FONT_SIZE).width);
+  const [inputWidth, setInputWidth] = useState<number>(measureText((initialValue || '').toString(), FONT_SIZE).width);
   const [Label, , expanded, setExpanded] = useExpandableLabel(false);
 
   useClickAway(ref, () => {
@@ -29,7 +30,15 @@ export function SegmentInput<T>({
 
   if (!expanded) {
     return (
-      <Label Component={Component || <a className={cx('gf-form-label', 'query-part', className)}>{initialValue}</a>} />
+      <Label
+        Component={
+          Component || (
+            <a className={cx('gf-form-label', 'query-part', !value && placeholder && 'query-placeholder', className)}>
+              {initialValue || placeholder}
+            </a>
+          )
+        }
+      />
     );
   }
 
