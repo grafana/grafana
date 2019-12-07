@@ -54,7 +54,8 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
           <label className="gf-form-label query-segment-operator">=</label>
           <SegmentAsync
             allowCustomValue
-            value={value || 'select dimension value'}
+            value={value}
+            placeholder="select dimension value"
             loadOptions={() => loadValues(key)}
             onChange={(newValue: string) => setData({ ...data, [key]: newValue })}
           />
