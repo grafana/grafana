@@ -34,17 +34,15 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
     return options.filter(({ value }) => !Object.keys(data).includes(value));
   };
 
-  const toOption = (value: any) => ({ label: value, value });
-
   return (
     <>
       {Object.entries(data).map(([key, value], index) => (
         <Fragment key={index}>
           <SegmentAsync
             allowCustomValue
-            value={toOption(key)}
+            value={key}
             loadOptions={() => loadKeys().then(keys => [removeOption, ...excludeUsedKeys(keys)])}
-            onChange={({ value: newKey }) => {
+            onChange={(newKey: string) => {
               const { [key]: value, ...newDimensions } = data;
               if (newKey === removeText) {
                 setData({ ...newDimensions });
@@ -56,9 +54,9 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
           <label className="gf-form-label query-segment-operator">=</label>
           <SegmentAsync
             allowCustomValue
-            value={toOption(value || 'select dimension value')}
+            value={value || 'select dimension value'}
             loadOptions={() => loadValues(key)}
-            onChange={({ value: newValue }) => setData({ ...data, [key]: newValue })}
+            onChange={(newValue: string) => setData({ ...data, [key]: newValue })}
           />
           {Object.values(data).length > 1 && index + 1 !== Object.values(data).length && (
             <label className="gf-form-label query-keyword">AND</label>
@@ -74,7 +72,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
             </a>
           }
           loadOptions={() => loadKeys().then(excludeUsedKeys)}
-          onChange={({ value: newKey }) => setData({ ...data, [newKey]: '' })}
+          onChange={(newKey: string) => setData({ ...data, [newKey]: '' })}
         />
       )}
     </>
