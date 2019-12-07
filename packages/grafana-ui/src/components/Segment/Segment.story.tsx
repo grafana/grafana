@@ -37,7 +37,38 @@ SegmentStories.add('Array Options', () => {
             />
             <Segment
               Component={AddButton}
-              onChange={(value: SelectableValue<string>) => action('New value added')(value)}
+              onChange={value => action('New value added')(value as SelectableValue<string>)}
+              options={options}
+            />
+          </div>
+        </>
+      )}
+    </UseState>
+  );
+});
+
+SegmentStories.add('Array Options With Primitive value', () => {
+  const options = ['Option1', 'Option2', 'OptionWithLooongLabel', 'Option4'].map(toOption);
+  options[0].label = 'Option1 Label';
+  return (
+    <UseState initialState={options[0].value}>
+      {(value, updateValue) => (
+        <>
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <span className="gf-form-label width-8 query-keyword">Segment Name</span>
+            </div>
+            <Segment
+              value={value}
+              options={options}
+              onChange={value => {
+                updateValue(value);
+                action('Segment value changed')(value);
+              }}
+            />
+            <Segment
+              Component={AddButton}
+              onChange={value => action('New value added')(value as SelectableValue<string>)}
               options={options}
             />
           </div>
@@ -103,7 +134,7 @@ SegmentStories.add('With custom options allowed', () => {
             <Segment
               allowCustomValue
               Component={AddButton}
-              onChange={(value: SelectableValue<string>) => action('New value added')(value)}
+              onChange={value => action('New value added')(value as SelectableValue<string>)}
               options={options}
             />
           </div>
@@ -128,8 +159,8 @@ SegmentStories.add('Custom Label Field', () => {
               Component={<CustomLabelComponent value={value} />}
               options={groupedOptions}
               onChange={item => {
-                setValue(item);
-                action('Segment value changed')(item.value);
+                setValue(item as SelectableValue<string>);
+                action('Segment value changed')((item as SelectableValue<string>).value);
               }}
             />
             <Segment

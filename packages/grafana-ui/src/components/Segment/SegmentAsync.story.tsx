@@ -47,6 +47,36 @@ SegmentStories.add('Array Options', () => {
   );
 });
 
+SegmentStories.add('Array Options With Primitive Value', () => {
+  const options = ['Option1', 'Option2', 'OptionWithLooongLabel', 'Option4'].map(toOption);
+  return (
+    <UseState initialState={options[0] as SelectableValue}>
+      {(value, updateValue) => (
+        <>
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <span className="gf-form-label width-8 query-keyword">Segment Name</span>
+            </div>
+            <SegmentAsync
+              value={value}
+              loadOptions={() => loadOptions(options)}
+              onChange={item => {
+                updateValue(item);
+                action('Segment value changed')(item.value);
+              }}
+            />
+            <SegmentAsync
+              Component={AddButton}
+              onChange={value => action('New value added')(value)}
+              loadOptions={() => loadOptions(options)}
+            />
+          </div>
+        </>
+      )}
+    </UseState>
+  );
+});
+
 const groupedOptions = [
   { label: 'Names', options: ['Jane', 'Tom', 'Lisa'].map(toOption) },
   { label: 'Prime', options: [2, 3, 5, 7, 11, 13].map(toOption) },
@@ -127,8 +157,8 @@ SegmentStories.add('Custom Label Field', () => {
               Component={<CustomLabelComponent value={value} />}
               loadOptions={() => loadOptions(groupedOptions)}
               onChange={item => {
-                updateValue(item);
-                action('Segment value changed')(item.value);
+                updateValue(item as SelectableValue<string>);
+                action('Segment value changed')((item as SelectableValue<string>).value);
               }}
             />
             <SegmentAsync
