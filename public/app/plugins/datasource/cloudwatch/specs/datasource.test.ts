@@ -36,7 +36,7 @@ describe('CloudWatchDatasource', () => {
   } as any;
 
   beforeEach(() => {
-    ctx.ds = new CloudWatchDatasource(instanceSettings, {} as any, backendSrv, templateSrv, timeSrv);
+    ctx.ds = new CloudWatchDatasource(instanceSettings, backendSrv, templateSrv, timeSrv);
   });
 
   describe('When performing CloudWatch query', () => {
@@ -313,7 +313,7 @@ describe('CloudWatchDatasource', () => {
         ctx.backendSrv.datasourceRequest = jest.fn(() => {
           return Promise.resolve({});
         });
-        ctx.ds = new CloudWatchDatasource(instanceSettings, {} as any, backendSrv, templateSrv, timeSrv);
+        ctx.ds = new CloudWatchDatasource(instanceSettings, backendSrv, templateSrv, timeSrv);
         ctx.ds.doMetricQueryRequest = jest.fn(() => []);
       });
       describe('and region param is left out', () => {
