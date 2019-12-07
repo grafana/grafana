@@ -54,7 +54,7 @@ export function SegmentAsync<T>({
         setSelectPlaceholder('');
         setLoadedOptions([]);
         setExpanded(false);
-        onChange(item);
+        onChange(isObject(value) ? item : item.value!);
       }}
     />
   );
