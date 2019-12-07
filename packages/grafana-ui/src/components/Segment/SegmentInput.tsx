@@ -21,7 +21,11 @@ export function SegmentInput<T>({
   const [value, setValue] = useState<number | string>(initialValue);
   const [inputWidth, setInputWidth] = useState<number>(measureText(initialValue.toString(), FONT_SIZE).width);
   const [Label, , expanded, setExpanded] = useExpandableLabel(false);
-  useClickAway(ref, () => setExpanded(false));
+
+  useClickAway(ref, () => {
+    setExpanded(false);
+    onChange(value);
+  });
 
   if (!expanded) {
     return (
