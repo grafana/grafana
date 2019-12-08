@@ -148,9 +148,4 @@ const mapDispatchToProps = {
   loadTeamMembers,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(TeamPages)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TeamPages));

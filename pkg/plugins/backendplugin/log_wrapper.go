@@ -13,20 +13,41 @@ type logWrapper struct {
 	Logger glog.Logger
 }
 
+func formatArgs(args ...interface{}) []interface{} {
+	if len(args) == 0 || len(args)%2 != 0 {
+		return args
+	}
+
+	res := []interface{}{}
+
+	for n := 0; n < len(args); n += 2 {
+		key := args[n]
+
+		if stringKey, ok := key.(string); ok && stringKey == "timestamp" {
+			continue
+		}
+
+		res = append(res, key)
+		res = append(res, args[n+1])
+	}
+
+	return res
+}
+
 func (lw logWrapper) Trace(msg string, args ...interface{}) {
-	lw.Logger.Debug(msg, args...)
+	lw.Logger.Debug(msg, formatArgs(args...)...)
 }
 func (lw logWrapper) Debug(msg string, args ...interface{}) {
-	lw.Logger.Debug(msg, args...)
+	lw.Logger.Debug(msg, formatArgs(args...)...)
 }
 func (lw logWrapper) Info(msg string, args ...interface{}) {
-	lw.Logger.Info(msg, args...)
+	lw.Logger.Info(msg, formatArgs(args...)...)
 }
 func (lw logWrapper) Warn(msg string, args ...interface{}) {
-	lw.Logger.Warn(msg, args...)
+	lw.Logger.Warn(msg, formatArgs(args...)...)
 }
 func (lw logWrapper) Error(msg string, args ...interface{}) {
-	lw.Logger.Error(msg, args...)
+	lw.Logger.Error(msg, formatArgs(args...)...)
 }
 
 func (lw logWrapper) IsTrace() bool { return true }

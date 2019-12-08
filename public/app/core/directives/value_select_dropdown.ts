@@ -28,7 +28,7 @@ export class ValueSelectDropdownCtrl {
   debouncedQueryChanged: Function;
 
   /** @ngInject */
-  constructor(private $q: any, private $scope: IScope) {
+  constructor(private $scope: IScope) {
     this.queryHasSearchFilter = this.variable ? containsSearchFilter(this.variable.query) : false;
     this.debouncedQueryChanged = debounce(this.queryChanged.bind(this), 200);
   }
@@ -114,7 +114,7 @@ export class ValueSelectDropdownCtrl {
     if (!tag.values) {
       tagValuesPromise = this.variable.getValuesForTag(tag.text);
     } else {
-      tagValuesPromise = this.$q.when(tag.values);
+      tagValuesPromise = Promise.resolve(tag.values);
     }
 
     return tagValuesPromise.then((values: any) => {
@@ -279,7 +279,7 @@ export class ValueSelectDropdownCtrl {
   }
 
   updateUIBoundOptions($scope: IScope, options: any[]) {
-    this.highlightIndex = -1;
+    this.highlightIndex = 0;
     this.search.options = options.slice(0, Math.min(options.length, 1000));
     $scope.$apply();
   }

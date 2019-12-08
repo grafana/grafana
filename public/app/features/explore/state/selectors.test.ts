@@ -59,7 +59,7 @@ const state: any = {
 describe('Deduplication selector', () => {
   it('returns the same rows if no deduplication', () => {
     const dedups = deduplicatedRowsSelector(state as ExploreItemState);
-    expect(dedups.length).toBe(11);
+    expect(dedups?.length).toBe(11);
     expect(dedups).toBe(state.logsResult.rows);
   });
 
@@ -68,7 +68,7 @@ describe('Deduplication selector', () => {
       ...state,
       dedupStrategy: LogsDedupStrategy.numbers,
     } as ExploreItemState);
-    expect(dedups.length).toBe(2);
+    expect(dedups?.length).toBe(2);
     expect(dedups).not.toBe(state.logsResult.rows);
   });
 
@@ -77,7 +77,7 @@ describe('Deduplication selector', () => {
       ...state,
       hiddenLogLevels: [LogLevel.debug],
     } as ExploreItemState);
-    expect(dedups.length).toBe(2);
+    expect(dedups?.length).toBe(2);
     expect(dedups).not.toBe(state.logsResult.rows);
 
     dedups = deduplicatedRowsSelector({
@@ -86,7 +86,7 @@ describe('Deduplication selector', () => {
       hiddenLogLevels: [LogLevel.debug],
     } as ExploreItemState);
 
-    expect(dedups.length).toBe(2);
+    expect(dedups?.length).toBe(2);
     expect(dedups).not.toBe(state.logsResult.rows);
   });
 });

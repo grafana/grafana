@@ -1,12 +1,9 @@
 import { Unsubscribable } from 'rxjs';
-import { ComponentType } from 'react';
 import {
   HistoryItem,
   DataQuery,
-  DataSourceSelectItem,
   DataSourceApi,
   QueryHint,
-  ExploreStartPageProps,
   PanelData,
   DataQueryRequest,
   RawTimeRange,
@@ -55,17 +52,13 @@ export interface ExploreState {
 
 export interface ExploreItemState {
   /**
-   * React component to be shown when no queries have been run yet, e.g., for a query language cheat sheet.
-   */
-  StartPage?: ComponentType<ExploreStartPageProps>;
-  /**
    * Width used for calculating the graph interval (can't have more datapoints than pixels)
    */
   containerWidth: number;
   /**
    * Datasource instance that has been selected. Datasource-specific logic can be run on this object.
    */
-  datasourceInstance: DataSourceApi | null;
+  datasourceInstance?: DataSourceApi;
   /**
    * Current data source name or null if default
    */
@@ -73,7 +66,7 @@ export interface ExploreItemState {
   /**
    * True if the datasource is loading. `null` if the loading has not started yet.
    */
-  datasourceLoading: boolean | null;
+  datasourceLoading?: boolean;
   /**
    * True if there is no datasource to be selected.
    */
@@ -82,10 +75,6 @@ export interface ExploreItemState {
    * Emitter to send events to the rest of Grafana.
    */
   eventBridge?: Emitter;
-  /**
-   * List of datasources to be shown in the datasource selector.
-   */
-  exploreDatasources: DataSourceSelectItem[];
   /**
    * List of timeseries to be shown in the Explore graph result viewer.
    */
@@ -133,10 +122,6 @@ export interface ExploreItemState {
    */
   showingGraph: boolean;
   /**
-   * True StartPage needs to be shown. Typically set to `false` once queries have been run.
-   */
-  showingStartPage?: boolean;
-  /**
    * True if table result viewer is expanded. Query runs will contain table queries.
    */
   showingTable: boolean;
@@ -167,8 +152,15 @@ export interface ExploreItemState {
    */
   refreshInterval?: string;
 
+  /**
+   * Copy of the state of the URL which is in store.location.query. This is duplicated here so we can diff the two
+   * after a change to see if we need to sync url state back to redux store (like on clicking Back in browser).
+   */
   urlState: ExploreUrlState;
 
+  /**
+   * Map of what changed between real url and local urlState so we can partially update just the things that are needed.
+   */
   update: ExploreUpdateState;
 
   latency: number;
@@ -189,6 +181,11 @@ export interface ExploreItemState {
   querySubscription?: Unsubscribable;
 
   queryResponse: PanelData;
+
+  /**
+   * Panel Id that is set if we come to explore from a penel. Used so we can get back to it and optionally modify the
+   * query of that panel.
+   */
   originPanelId?: number;
 }
 
@@ -217,17 +214,13 @@ export interface ExploreUrlState {
   context?: string;
 }
 
-export interface QueryIntervals {
-  interval: string;
-  intervalMs: number;
-}
-
 export interface QueryOptions {
   minInterval: string;
   maxDataPoints?: number;
   liveStreaming?: boolean;
   showingGraph?: boolean;
   showingTable?: boolean;
+  mode?: ExploreMode;
 }
 
 export interface QueryTransaction {

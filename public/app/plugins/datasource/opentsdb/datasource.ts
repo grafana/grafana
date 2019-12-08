@@ -1,10 +1,11 @@
-import angular, { IQService } from 'angular';
+import angular from 'angular';
 import _ from 'lodash';
-import { dateMath, DataQueryRequest } from '@grafana/data';
+import { dateMath, DataQueryRequest, DataSourceApi } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { OpenTsdbOptions, OpenTsdbQuery } from './types';
 
-export default class OpenTsDatasource {
+export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenTsdbOptions> {
   type: any;
   url: any;
   name: any;
@@ -17,13 +18,9 @@ export default class OpenTsDatasource {
   aggregatorsPromise: any;
   filterTypesPromise: any;
 
-  /** @ngInject */
-  constructor(
-    instanceSettings: any,
-    private $q: IQService,
-    private backendSrv: BackendSrv,
-    private templateSrv: TemplateSrv
-  ) {
+  constructor(instanceSettings: any, private backendSrv: BackendSrv, private templateSrv: TemplateSrv) {
+    super(instanceSettings);
+
     this.type = 'opentsdb';
     this.url = instanceSettings.url;
     this.name = instanceSettings.name;
@@ -55,9 +52,7 @@ export default class OpenTsDatasource {
 
     // No valid targets, return the empty result to save a round trip.
     if (_.isEmpty(queries)) {
-      const d = this.$q.defer();
-      d.resolve({ data: [] });
-      return d.promise;
+      return Promise.resolve({ data: [] });
     }
 
     const groupByTags: any = {};
@@ -175,7 +170,7 @@ export default class OpenTsDatasource {
   }
 
   suggestTagKeys(metric: string | number) {
-    return this.$q.when(this.tagKeys[metric] || []);
+    return Promise.resolve(this.tagKeys[metric] || []);
   }
 
   _saveTagKeys(metricData: { tags: {}; aggregateTags: any; metric: string | number }) {
@@ -195,7 +190,7 @@ export default class OpenTsDatasource {
 
   _performMetricKeyValueLookup(metric: string, keys: any) {
     if (!metric || !keys) {
-      return this.$q.when([]);
+      return Promise.resolve([]);
     }
 
     const keysArray = keys.split(',').map((key: any) => {
@@ -224,7 +219,7 @@ export default class OpenTsDatasource {
 
   _performMetricKeyLookup(metric: any) {
     if (!metric) {
-      return this.$q.when([]);
+      return Promise.resolve([]);
     }
 
     return this._get('/api/search/lookup', { m: metric, limit: 1000 }).then((result: any) => {
@@ -264,14 +259,14 @@ export default class OpenTsDatasource {
 
   metricFindQuery(query: string) {
     if (!query) {
-      return this.$q.when([]);
+      return Promise.resolve([]);
     }
 
     let interpolated;
     try {
       interpolated = this.templateSrv.replace(query, {}, 'distributed');
     } catch (err) {
-      return this.$q.reject(err);
+      return Promise.reject(err);
     }
 
     const responseTransform = (result: any) => {
@@ -311,7 +306,7 @@ export default class OpenTsDatasource {
       return this._performSuggestQuery(tagValuesSuggestQuery[1], 'tagv').then(responseTransform);
     }
 
-    return this.$q.when([]);
+    return Promise.resolve([]);
   }
 
   testDatasource() {

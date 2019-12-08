@@ -12,11 +12,6 @@ export const displayModes: Array<SelectableValue<string>> = [
   { value: 'basic', label: 'Basic' },
 ];
 
-export const orientationOptions: Array<SelectableValue<VizOrientation>> = [
-  { value: VizOrientation.Horizontal, label: 'Horizontal' },
-  { value: VizOrientation.Vertical, label: 'Vertical' },
-];
-
 export const defaults: BarGaugeOptions = {
   displayMode: 'lcd',
   orientation: VizOrientation.Horizontal,

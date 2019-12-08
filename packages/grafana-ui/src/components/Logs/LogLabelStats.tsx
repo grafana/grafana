@@ -58,7 +58,7 @@ interface Props extends Themeable {
   label: string;
   value: string;
   rowCount: number;
-  isLabel: boolean;
+  isLabel?: boolean;
 }
 
 class UnThemedLogLabelStats extends PureComponent<Props> {

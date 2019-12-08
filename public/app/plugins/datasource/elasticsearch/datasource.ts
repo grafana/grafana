@@ -1,4 +1,4 @@
-import angular, { IQService } from 'angular';
+import angular from 'angular';
 import _ from 'lodash';
 import { DataSourceApi, DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse } from '@grafana/data';
 import { ElasticResponse } from './elastic_response';
@@ -29,7 +29,6 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   /** @ngInject */
   constructor(
     instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
-    private $q: IQService,
     private backendSrv: BackendSrv,
     private templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
@@ -264,7 +263,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          query: this.templateSrv.replace(query.query),
+          query: this.templateSrv.replace(query.query, {}, 'lucene'),
         };
         return expandedQuery;
       });
@@ -332,9 +331,11 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       }
 
       let queryObj;
-      if (target.isLogsQuery) {
+      if (target.isLogsQuery || queryDef.hasMetricOfType(target, 'logs')) {
         target.bucketAggs = [queryDef.defaultBucketAgg()];
         target.metrics = [queryDef.defaultMetricAgg()];
+        // Setting this for metrics queries that are typed as logs
+        target.isLogsQuery = true;
         queryObj = this.queryBuilder.getLogsQuery(target, queryString);
       } else {
         if (target.alias) {
@@ -499,7 +500,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   metricFindQuery(query: any) {
     query = angular.fromJson(query);
     if (!query) {
-      return this.$q.when([]);
+      return Promise.resolve([]);
     }
 
     if (query.find === 'fields') {

@@ -15,7 +15,7 @@ All packages are versioned according to the current Grafana version:
 ### Stable releases
 > **Even though packages are released under a stable version, they are considered ALPHA until further notice!**
 
-Stable releases are published under the `latest` tag on npm.
+Stable releases are published under the `latest` tag on npm. If there was alpha/beta version released previously, the `next` tag is updated to stable version.
 
 ### Alpha and beta releases
 Alpha and beta releases are published under the `next` tag on npm.
@@ -47,7 +47,7 @@ Automatic prereleases are published under the `canary` dist tag.
 5. Push version commit to the release branch.
 
 ### Building individual packages
-To build individual packages, run: 
+To build individual packages, run:
 
 ```
 grafana-toolkit package:build --scope=<ui|toolkit|runtime|data>

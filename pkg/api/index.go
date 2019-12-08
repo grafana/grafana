@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -115,11 +116,12 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		children = append(children, &dtos.NavLink{Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "import", Icon: "gicon gicon-dashboard-import", Url: setting.AppSubUrl + "/dashboard/import"})
 
 		data.NavTree = append(data.NavTree, &dtos.NavLink{
-			Text:     "Create",
-			Id:       "create",
-			Icon:     "fa fa-fw fa-plus",
-			Url:      setting.AppSubUrl + "/dashboard/new",
-			Children: children,
+			Text:       "Create",
+			Id:         "create",
+			Icon:       "fa fa-fw fa-plus",
+			Url:        setting.AppSubUrl + "/dashboard/new",
+			Children:   children,
+			SortWeight: dtos.WeightCreate,
 		})
 	}
 
@@ -132,21 +134,23 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 	}
 
 	data.NavTree = append(data.NavTree, &dtos.NavLink{
-		Text:     "Dashboards",
-		Id:       "dashboards",
-		SubTitle: "Manage dashboards & folders",
-		Icon:     "gicon gicon-dashboard",
-		Url:      setting.AppSubUrl + "/",
-		Children: dashboardChildNavs,
+		Text:       "Dashboards",
+		Id:         "dashboards",
+		SubTitle:   "Manage dashboards & folders",
+		Icon:       "gicon gicon-dashboard",
+		Url:        setting.AppSubUrl + "/",
+		SortWeight: dtos.WeightDashboard,
+		Children:   dashboardChildNavs,
 	})
 
 	if setting.ExploreEnabled && (c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR || setting.ViewersCanEdit) {
 		data.NavTree = append(data.NavTree, &dtos.NavLink{
-			Text:     "Explore",
-			Id:       "explore",
-			SubTitle: "Explore your data",
-			Icon:     "gicon gicon-explore",
-			Url:      setting.AppSubUrl + "/explore",
+			Text:       "Explore",
+			Id:         "explore",
+			SubTitle:   "Explore your data",
+			Icon:       "gicon gicon-explore",
+			SortWeight: dtos.WeightExplore,
+			Url:        setting.AppSubUrl + "/explore",
 		})
 	}
 
@@ -163,6 +167,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 			Img:          data.User.GravatarUrl,
 			Url:          setting.AppSubUrl + "/profile",
 			HideFromMenu: true,
+			SortWeight:   dtos.WeightProfile,
 			Children: []*dtos.NavLink{
 				{Text: "Preferences", Id: "profile-settings", Url: setting.AppSubUrl + "/profile", Icon: "gicon gicon-preferences"},
 				{Text: "Change Password", Id: "change-password", Url: setting.AppSubUrl + "/profile/password", Icon: "fa fa-fw fa-lock", HideFromMenu: true},
@@ -172,7 +177,12 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		if !setting.DisableSignoutMenu {
 			// add sign out first
 			profileNode.Children = append(profileNode.Children, &dtos.NavLink{
-				Text: "Sign out", Id: "sign-out", Url: setting.AppSubUrl + "/logout", Icon: "fa fa-fw fa-sign-out", Target: "_self",
+				Text:         "Sign out",
+				Id:           "sign-out",
+				Url:          setting.AppSubUrl + "/logout",
+				Icon:         "fa fa-fw fa-sign-out",
+				Target:       "_self",
+				HideFromTabs: true,
 			})
 		}
 
@@ -186,12 +196,13 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		}
 
 		data.NavTree = append(data.NavTree, &dtos.NavLink{
-			Text:     "Alerting",
-			SubTitle: "Alert rules & notifications",
-			Id:       "alerting",
-			Icon:     "gicon gicon-alert",
-			Url:      setting.AppSubUrl + "/alerting/list",
-			Children: alertChildNavs,
+			Text:       "Alerting",
+			SubTitle:   "Alert rules & notifications",
+			Id:         "alerting",
+			Icon:       "gicon gicon-alert",
+			Url:        setting.AppSubUrl + "/alerting/list",
+			Children:   alertChildNavs,
+			SortWeight: dtos.WeightAlerting,
 		})
 	}
 
@@ -203,10 +214,11 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 	for _, plugin := range enabledPlugins.Apps {
 		if plugin.Pinned {
 			appLink := &dtos.NavLink{
-				Text: plugin.Name,
-				Id:   "plugin-page-" + plugin.Id,
-				Url:  plugin.DefaultNavUrl,
-				Img:  plugin.Info.Logos.Small,
+				Text:       plugin.Name,
+				Id:         "plugin-page-" + plugin.Id,
+				Url:        plugin.DefaultNavUrl,
+				Img:        plugin.Info.Logos.Small,
+				SortWeight: dtos.WeightPlugin,
 			}
 
 			for _, include := range plugin.Includes {
@@ -297,12 +309,13 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 	}
 
 	data.NavTree = append(data.NavTree, &dtos.NavLink{
-		Id:       "cfg",
-		Text:     "Configuration",
-		SubTitle: "Organization: " + c.OrgName,
-		Icon:     "gicon gicon-cog",
-		Url:      configNodes[0].Url,
-		Children: configNodes,
+		Id:         "cfg",
+		Text:       "Configuration",
+		SubTitle:   "Organization: " + c.OrgName,
+		Icon:       "gicon gicon-cog",
+		Url:        configNodes[0].Url,
+		SortWeight: dtos.WeightConfig,
+		Children:   configNodes,
 	})
 
 	if c.IsGrafanaAdmin {
@@ -326,6 +339,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 			Id:           "admin",
 			Icon:         "gicon gicon-shield",
 			Url:          setting.AppSubUrl + "/admin/users",
+			SortWeight:   dtos.WeightAdmin,
 			Children:     adminNavLinks,
 		})
 	}
@@ -337,6 +351,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		Url:          "#",
 		Icon:         "gicon gicon-question",
 		HideFromMenu: true,
+		SortWeight:   dtos.WeightHelp,
 		Children: []*dtos.NavLink{
 			{Text: "Keyboard shortcuts", Url: "/shortcuts", Icon: "fa fa-fw fa-keyboard-o", Target: "_self"},
 			{Text: "Community site", Url: "http://community.grafana.com", Icon: "fa fa-fw fa-comment", Target: "_blank"},
@@ -345,6 +360,10 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 	})
 
 	hs.HooksService.RunIndexDataHooks(&data)
+
+	sort.SliceStable(data.NavTree, func(i, j int) bool {
+		return data.NavTree[i].SortWeight < data.NavTree[j].SortWeight
+	})
 	return &data, nil
 }
 

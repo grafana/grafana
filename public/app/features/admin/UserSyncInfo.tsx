@@ -3,6 +3,7 @@ import { dateTime } from '@grafana/data';
 import { LdapUserSyncInfo } from 'app/types';
 
 interface Props {
+  disableSync: boolean;
   syncInfo: LdapUserSyncInfo;
   onSync?: () => void;
 }
@@ -31,21 +32,23 @@ export class UserSyncInfo extends PureComponent<Props, State> {
   };
 
   render() {
-    const { syncInfo } = this.props;
+    const { syncInfo, disableSync } = this.props;
     const { isSyncing } = this.state;
     const nextSyncTime = syncInfo.nextSync ? dateTime(syncInfo.nextSync).format(syncTimeFormat) : '';
     const prevSyncSuccessful = syncInfo && syncInfo.prevSync;
     const prevSyncTime = prevSyncSuccessful ? dateTime(syncInfo.prevSync).format(syncTimeFormat) : '';
+    const isDisabled = isSyncing || disableSync;
 
     return (
       <>
-        <h3 className="page-heading">
-          LDAP
-          <button className={`btn btn-secondary pull-right`} onClick={this.handleSyncClick} hidden={true}>
-            <span className="btn-title">Sync user</span>
-            {isSyncing && <i className="fa fa-spinner fa-fw fa-spin run-icon" />}
-          </button>
-        </h3>
+        <button className={`btn btn-secondary pull-right`} onClick={this.handleSyncClick} disabled={isDisabled}>
+          <span className="btn-title">Sync user</span>
+          {isSyncing && <i className="fa fa-spinner fa-fw fa-spin run-icon" />}
+        </button>
+
+        <div className="clearfix" />
+
+        <h3 className="page-heading">LDAP</h3>
         <div className="gf-form-group">
           <div className="gf-form">
             <table className="filter-table form-inline">

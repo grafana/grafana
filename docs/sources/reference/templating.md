@@ -236,11 +236,11 @@ demo.robustperception.io:9100
 
 The query expressions are different for each data source.
 
-- [Graphite templating queries]({{< relref "features/datasources/graphite.md#templating" >}})
-- [Elasticsearch templating queries]({{< relref "features/datasources/elasticsearch.md#templating" >}})
-- [InfluxDB templating queries]({{< relref "features/datasources/influxdb.md#templating" >}})
-- [Prometheus templating queries]({{< relref "features/datasources/prometheus.md#templating" >}})
-- [OpenTSDB templating queries]({{< relref "features/datasources/opentsdb.md#templating" >}})
+- [Graphite templating queries]({{< relref "../features/datasources/graphite.md#templating" >}})
+- [Elasticsearch templating queries]({{< relref "../features/datasources/elasticsearch.md#templating" >}})
+- [InfluxDB templating queries]({{< relref "../features/datasources/influxdb.md#templating" >}})
+- [Prometheus templating queries]({{< relref "../features/datasources/prometheus.md#templating" >}})
+- [OpenTSDB templating queries]({{< relref "../features/datasources/opentsdb.md#templating" >}})
 
 One thing to note is that query expressions can contain references to other variables and in effect create linked variables.
 Grafana will detect this and automatically refresh a variable when one of it's containing variables change.

@@ -115,8 +115,9 @@ export class TeamMembers extends PureComponent<Props, State> {
             <thead>
               <tr>
                 <th />
-                <th>Name</th>
+                <th>Login</th>
                 <th>Email</th>
+                <th>Name</th>
                 <WithFeatureToggle featureToggle={editorsCanAdmin}>
                   <th>Permission</th>
                 </WithFeatureToggle>
@@ -156,7 +157,4 @@ const mapDispatchToProps = {
   setSearchMemberQuery,
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(TeamMembers);
+export default connect(mapStateToProps, mapDispatchToProps)(TeamMembers);
