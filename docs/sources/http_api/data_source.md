@@ -202,6 +202,7 @@ Content-Type: application/json
 
 {"id":1,"message":"Datasource added", "name": "test_datasource"}
 ```
+> NOTE: `password` and `basicAuthPassword` should be defined under `secureJsonData` in order to be stored in an encrypted blob in the database and no more sent to the browser. Check also the [Encrypting Sensitive Data]({{< relref "../plugins/developing/auth-for-datasources.md/#encrypting-sensitive-data">}}) documentation for more details.
 
 ## Update an existing data source
 
@@ -241,6 +242,7 @@ Content-Type: application/json
 
 {"message":"Datasource updated", "id": 1, "name": "test_datasource"}
 ```
+> NOTE: `password` and `basicAuthPassword` should be defined under `secureJsonData` in order to be stored in an encrypted blob in the database and no more sent to the browser. Check also the [Encrypting Sensitive Data]({{< relref "../plugins/developing/auth-for-datasources.md/#encrypting-sensitive-data">}}) documentation for more details.
 
 ## Delete an existing data source by id
 
