@@ -52,9 +52,12 @@ import LanguageProvider from './language_provider';
 
 export type RangeQueryOptions = Pick<DataQueryRequest<LokiQuery>, 'range' | 'intervalMs' | 'maxDataPoints' | 'reverse'>;
 export const DEFAULT_MAX_LINES = 1000;
-const LEGACY_QUERY_ENDPOINT = '/api/prom/query';
-const RANGE_QUERY_ENDPOINT = '/loki/api/v1/query_range';
-const INSTANT_QUERY_ENDPOINT = '/loki/api/v1/query';
+export const LEGACY_LOKI_ENDPOINT = '/api/prom';
+export const LOKI_ENDPOINT = '/loki/api/v1';
+
+const LEGACY_QUERY_ENDPOINT = `${LEGACY_LOKI_ENDPOINT}/query`;
+const RANGE_QUERY_ENDPOINT = `${LOKI_ENDPOINT}/query_range`;
+const INSTANT_QUERY_ENDPOINT = `${LOKI_ENDPOINT}/query`;
 
 const DEFAULT_QUERY_PARAMS: Partial<LokiLegacyQueryRequest> = {
   direction: 'BACKWARD',
@@ -76,9 +79,9 @@ interface LokiContextQueryOptions {
 
 export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   private streams = new LiveStreams();
+  private version: string;
   languageProvider: LanguageProvider;
   maxLines: number;
-  version: string;
 
   /** @ngInject */
   constructor(
@@ -233,11 +236,11 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   createRangeQuery(target: LokiQuery, options: RangeQueryOptions): LokiRangeQueryRequest {
     const { query } = parseQuery(target.expr);
     let range: { start?: number; end?: number; step?: number } = {};
-    if (options.range && options.intervalMs) {
+    if (options.range) {
       const startNs = this.getTime(options.range.from, false);
       const endNs = this.getTime(options.range.to, true);
       const rangeMs = Math.ceil((endNs - startNs) / 1e6);
-      const step = Math.ceil(this.adjustInterval(options.intervalMs, rangeMs) / 1000);
+      const step = Math.ceil(this.adjustInterval(options.intervalMs || 1000, rangeMs) / 1000);
       const alignedTimes = {
         start: startNs - (startNs % 1e9),
         end: endNs + (1e9 - (endNs % 1e9)),
@@ -374,6 +377,46 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     };
   }
 
+  async metricFindQuery(query: string) {
+    if (!query) {
+      return Promise.resolve([]);
+    }
+    const interpolated = this.templateSrv.replace(query, {}, this.interpolateQueryExpr);
+    return await this.processMetricFindQuery(interpolated);
+  }
+
+  async processMetricFindQuery(query: string) {
+    const labelNamesRegex = /^label_names\(\)\s*$/;
+    const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
+
+    const labelNames = query.match(labelNamesRegex);
+    if (labelNames) {
+      return await this.labelNamesQuery();
+    }
+
+    const labelValues = query.match(labelValuesRegex);
+    if (labelValues) {
+      return await this.labelValuesQuery(labelValues[2]);
+    }
+
+    return Promise.resolve([]);
+  }
+
+  async labelNamesQuery() {
+    const url = (await this.getVersion()) === 'v0' ? `${LEGACY_LOKI_ENDPOINT}/label` : `${LOKI_ENDPOINT}/label`;
+    const result = await this.metadataRequest(url);
+    return result.data.data.map((value: string) => ({ text: value }));
+  }
+
+  async labelValuesQuery(label: string) {
+    const url =
+      (await this.getVersion()) === 'v0'
+        ? `${LEGACY_LOKI_ENDPOINT}/label/${label}/values`
+        : `${LOKI_ENDPOINT}/label/${label}/values`;
+    const result = await this.metadataRequest(url);
+    return result.data.data.map((value: string) => ({ text: value }));
+  }
+
   interpolateQueryExpr(value: any, variable: any) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
@@ -396,13 +439,13 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       case 'ADD_FILTER': {
         selectorLabels = addLabelToSelector(selector, action.key, action.value);
         selectorFilters = keepSelectorFilters(selector);
-        selector = `${selectorLabels} ${selectorFilters}`;
+        selector = `${selectorLabels} ${selectorFilters}`.trim();
         break;
       }
       case 'ADD_FILTER_OUT': {
         selectorLabels = addLabelToSelector(selector, action.key, action.value, '!=');
         selectorFilters = keepSelectorFilters(selector);
-        selector = `${selectorLabels} ${selectorFilters}`;
+        selector = `${selectorLabels} ${selectorFilters}`.trim();
         break;
       }
       default:

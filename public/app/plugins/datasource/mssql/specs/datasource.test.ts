@@ -1,8 +1,7 @@
 import { MssqlDatasource } from '../datasource';
 import { TimeSrvStub } from 'test/specs/helpers';
 import { CustomVariable } from 'app/features/templating/custom_variable';
-// @ts-ignore
-import q from 'q';
+
 import { dateTime } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -15,10 +14,9 @@ describe('MSSQLDatasource', () => {
   };
 
   beforeEach(() => {
-    ctx.$q = q;
     ctx.instanceSettings = { name: 'mssql' };
 
-    ctx.ds = new MssqlDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.$q, templateSrv, ctx.timeSrv);
+    ctx.ds = new MssqlDatasource(ctx.instanceSettings, ctx.backendSrv, templateSrv, ctx.timeSrv);
   });
 
   describe('When performing annotationQuery', () => {
@@ -57,7 +55,7 @@ describe('MSSQLDatasource', () => {
 
     beforeEach(() => {
       ctx.backendSrv.datasourceRequest = (options: any) => {
-        return ctx.$q.when({ data: response, status: 200 });
+        return Promise.resolve({ data: response, status: 200 });
       };
 
       return ctx.ds.annotationQuery(options).then((data: any) => {
@@ -105,7 +103,7 @@ describe('MSSQLDatasource', () => {
 
     beforeEach(() => {
       ctx.backendSrv.datasourceRequest = (options: any) => {
-        return ctx.$q.when({ data: response, status: 200 });
+        return Promise.resolve({ data: response, status: 200 });
       };
 
       return ctx.ds.metricFindQuery(query).then((data: any) => {
@@ -146,7 +144,7 @@ describe('MSSQLDatasource', () => {
 
     beforeEach(() => {
       ctx.backendSrv.datasourceRequest = (options: any) => {
-        return ctx.$q.when({ data: response, status: 200 });
+        return Promise.resolve({ data: response, status: 200 });
       };
 
       return ctx.ds.metricFindQuery(query).then((data: any) => {
@@ -189,7 +187,7 @@ describe('MSSQLDatasource', () => {
 
     beforeEach(() => {
       ctx.backendSrv.datasourceRequest = (options: any) => {
-        return ctx.$q.when({ data: response, status: 200 });
+        return Promise.resolve({ data: response, status: 200 });
       };
 
       return ctx.ds.metricFindQuery(query).then((data: any) => {
@@ -233,7 +231,7 @@ describe('MSSQLDatasource', () => {
 
       ctx.backendSrv.datasourceRequest = (options: any) => {
         results = options.data;
-        return ctx.$q.when({ data: response, status: 200 });
+        return Promise.resolve({ data: response, status: 200 });
       };
 
       return ctx.ds.metricFindQuery(query);

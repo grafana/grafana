@@ -1,4 +1,4 @@
-import angular, { IQService } from 'angular';
+import angular from 'angular';
 import _ from 'lodash';
 import { DataSourceApi, DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse } from '@grafana/data';
 import { ElasticResponse } from './elastic_response';
@@ -29,7 +29,6 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   /** @ngInject */
   constructor(
     instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
-    private $q: IQService,
     private backendSrv: BackendSrv,
     private templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
@@ -501,7 +500,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   metricFindQuery(query: any) {
     query = angular.fromJson(query);
     if (!query) {
-      return this.$q.when([]);
+      return Promise.resolve([]);
     }
 
     if (query.find === 'fields') {

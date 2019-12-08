@@ -1,5 +1,5 @@
 import React from 'react';
-import angular, { IQService } from 'angular';
+import angular from 'angular';
 import _ from 'lodash';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -48,7 +48,6 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
   /** @ngInject */
   constructor(
     instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
-    private $q: IQService,
     private backendSrv: BackendSrv,
     private templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
@@ -79,8 +78,8 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
       item.dimensions = this.convertDimensionFormat(item.dimensions, options.scopedVars);
       item.statistics = item.statistics.map(stat => this.replace(stat, options.scopedVars, true, 'statistics'));
       item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
-      item.id = this.replace(item.id, options.scopedVars, true, 'id');
-      item.expression = this.replace(item.expression, options.scopedVars, true, 'expression');
+      item.id = this.templateSrv.replace(item.id, options.scopedVars);
+      item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
 
       // valid ExtendedStatistics is like p90.00, check the pattern
       const hasInvalidStatistics = item.statistics.some(s => {
@@ -110,9 +109,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
 
     // No valid targets, return the empty result to save a round trip.
     if (_.isEmpty(queries)) {
-      const d = this.$q.defer();
-      d.resolve({ data: [] });
-      return d.promise;
+      return Promise.resolve({ data: [] });
     }
 
     const request = {
@@ -475,7 +472,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
       return this.standardStatistics.map((s: string) => ({ value: s, label: s, text: s }));
     }
 
-    return this.$q.when([]);
+    return Promise.resolve([]);
   }
 
   annotationQuery(options: any) {

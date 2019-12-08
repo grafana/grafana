@@ -34,9 +34,9 @@ const (
 	// ErrCodeInvalidAuthorizationMessageException for service response error code
 	// "InvalidAuthorizationMessageException".
 	//
-	// The error returned if the message passed to DecodeAuthorizationMessage was
-	// invalid. This can happen if the token contains invalid characters, such as
-	// linebreaks.
+	// This error is returned if the message passed to DecodeAuthorizationMessage
+	// was invalid. This can happen if the token contains invalid characters, such
+	// as linebreaks.
 	ErrCodeInvalidAuthorizationMessageException = "InvalidAuthorizationMessageException"
 
 	// ErrCodeInvalidIdentityTokenException for service response error code

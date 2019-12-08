@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import ResponseParser from './response_parser';
 import PostgresQuery from 'app/plugins/datasource/postgres/postgres_query';
-import { IQService } from 'angular';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -21,14 +20,13 @@ export class PostgresDatasource {
   constructor(
     instanceSettings: { name: any; id?: any; jsonData?: any },
     private backendSrv: BackendSrv,
-    private $q: IQService,
     private templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
   ) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.jsonData = instanceSettings.jsonData;
-    this.responseParser = new ResponseParser(this.$q);
+    this.responseParser = new ResponseParser();
     this.queryModel = new PostgresQuery({});
     this.interval = (instanceSettings.jsonData || {}).timeInterval || '1m';
   }
@@ -84,7 +82,7 @@ export class PostgresDatasource {
     });
 
     if (queries.length === 0) {
-      return this.$q.when({ data: [] });
+      return Promise.resolve({ data: [] });
     }
 
     return this.backendSrv
@@ -102,7 +100,7 @@ export class PostgresDatasource {
 
   annotationQuery(options: any) {
     if (!options.annotation.rawQuery) {
-      return this.$q.reject({
+      return Promise.reject({
         message: 'Query missing in annotation definition',
       });
     }

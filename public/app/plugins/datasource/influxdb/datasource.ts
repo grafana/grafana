@@ -8,7 +8,6 @@ import { InfluxQueryBuilder } from './query_builder';
 import { InfluxQuery, InfluxOptions } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { IQService } from 'angular';
 
 export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxOptions> {
   type: string;
@@ -26,7 +25,6 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
   /** @ngInject */
   constructor(
     instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
-    private $q: IQService,
     private backendSrv: BackendSrv,
     private templateSrv: TemplateSrv
   ) {
@@ -76,7 +74,7 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
     });
 
     if (allQueries === '') {
-      return this.$q.when({ data: [] });
+      return Promise.resolve({ data: [] });
     }
 
     // add global adhoc filters to timeFilter
@@ -135,7 +133,7 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
 
   annotationQuery(options: any) {
     if (!options.annotation.query) {
-      return this.$q.reject({
+      return Promise.reject({
         message: 'Query missing in annotation definition',
       });
     }
@@ -227,7 +225,7 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
 
   _seriesQuery(query: string, options?: any) {
     if (!query) {
-      return this.$q.when({ results: [] });
+      return Promise.resolve({ results: [] });
     }
 
     if (options && options.range) {

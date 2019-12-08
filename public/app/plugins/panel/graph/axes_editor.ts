@@ -1,10 +1,8 @@
-import { getValueFormats } from '@grafana/data';
 import { GraphCtrl } from './module';
 
 export class AxesEditorCtrl {
   panel: any;
   panelCtrl: GraphCtrl;
-  unitFormats: any;
   logScales: any;
   xAxisModes: any;
   xAxisStatOptions: any;
@@ -15,8 +13,6 @@ export class AxesEditorCtrl {
     this.panelCtrl = $scope.ctrl as GraphCtrl;
     this.panel = this.panelCtrl.panel;
     this.$scope.ctrl = this;
-
-    this.unitFormats = getValueFormats();
 
     this.logScales = {
       linear: 1,
@@ -49,9 +45,11 @@ export class AxesEditorCtrl {
     }
   }
 
-  setUnitFormat(axis: { format: any }, subItem: { value: any }) {
-    axis.format = subItem.value;
-    this.panelCtrl.render();
+  setUnitFormat(axis: { format: any }) {
+    return (unit: string) => {
+      axis.format = unit;
+      this.panelCtrl.render();
+    };
   }
 
   render() {

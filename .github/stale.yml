@@ -35,8 +35,8 @@ exemptLabels:
 # Issue specific configuration
 issues:
   limitPerRun: 1
-  daysUntilStale: false
-  daysUntilClose: false
+  daysUntilStale: 100000
+  daysUntilClose: 100000
   markComment: >
     This issue has been automatically marked as stale because it has not had activity in the
     last 100 days. It will be closed in the next 100 days if no activity occurs.
