@@ -1,20 +1,25 @@
 import React, { PureComponent } from 'react';
 import { MetadataInspectorProps } from '@grafana/data';
 import { GraphiteDatasource } from './datasource';
-import { GraphiteQuery, GraphiteOptions } from './types';
+import { GraphiteQuery, GraphiteOptions, MetricTankMeta } from './types';
 
 export type Props = MetadataInspectorProps<GraphiteDatasource, GraphiteQuery, GraphiteOptions>;
 
-interface State {}
-
-export class MetricTankMetaInspector extends PureComponent<Props, State> {
-  state: State = {};
-
+export class MetricTankMetaInspector extends PureComponent<Props> {
   render() {
+    const { data } = this.props;
+    if (!data) {
+      return <div>TODO: Show Global Response Metadata</div>;
+    }
+    const meta = data.meta?.ds as MetricTankMeta;
+    if (!meta || !meta.info) {
+      return <></>;
+    }
     return (
-      <>
-        <div>TODO: show metric tank metadata!</div>
-      </>
+      <div>
+        <h3>MetricTank Meta</h3>
+        <pre>{JSON.stringify(meta.info, null, 2)}</pre>
+      </div>
     );
   }
 }

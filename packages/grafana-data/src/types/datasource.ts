@@ -342,7 +342,12 @@ export interface MetadataInspectorProps<
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > {
   datasource: DSType;
-  data: DataFrame[];
+
+  // // The entire panel data
+  // panel: PanelData;
+
+  // Each selected frame.  or empty if it should show global metadata
+  data?: DataFrame;
 }
 
 export interface QueryEditorProps<

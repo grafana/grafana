@@ -1,11 +1,10 @@
-// Libraries
 import React, { PureComponent } from 'react';
+import { css } from 'emotion';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { JSONFormatter, Modal } from '@grafana/ui';
-import { css } from 'emotion';
+import { JSONFormatter, Modal, Select, Table, getTheme } from '@grafana/ui';
 import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
-import { DataFrame, MetadataInspectorProps } from '@grafana/data';
+import { DataFrame, DataSourceApi, SelectableValue, ScopedVars } from '@grafana/data';
 
 interface Props {
   dashboard: DashboardModel;
@@ -14,13 +13,18 @@ interface Props {
 
 interface State {
   last?: any;
-  meta?: MetadataInspectorProps<any, any, any>;
+  data: DataFrame[];
+  selected: number;
+  ds?: DataSourceApi;
 }
 
 export class PanelInspector extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = {};
+    this.state = {
+      data: [],
+      selected: 0,
+    };
   }
 
   async componentDidMount() {
@@ -37,23 +41,40 @@ export class PanelInspector extends PureComponent<Props, State> {
       return;
     }
 
-    const inspectable = getInspectableMetadata(lastResult?.series as DataFrame[]);
-    for (const key in inspectable) {
-      const ds = await getDataSourceSrv().get(key);
-      if (ds && ds.components.MetadataInspector) {
-        this.setState({
-          last: lastResult,
-          meta: {
-            datasource: ds,
-            data: inspectable[key],
-          },
-        });
-        return; // Only the first one for now!
-      }
-    }
+    const data = lastResult?.series as DataFrame[];
+
+    // const inspectable = getInspectableMetadata();
+    // for (const key in inspectable) {
+    //   const ds = await getDataSourceSrv().get(key);
+    //   if (ds && ds.components.MetadataInspector) {
+    //     this.setState({
+    //       last: lastResult,
+    //       meta: {
+    //         datasource: ds,
+    //         data: inspectable[key],
+    //       },
+    //     });
+    //     return; // Only the first one for now!
+    //   }
+    // }
 
     // Set last result, but no metadata inspector
-    this.setState({ last: lastResult });
+    this.setState({
+      last: lastResult,
+      data,
+    });
+  }
+
+  async componentDidUpdate(prevProps: Props, prevState: State) {
+    const { data, selected } = this.state;
+    if (data !== prevState.data || selected !== prevState.selected) {
+      let ds: DataSourceApi | undefined = undefined;
+      const id = data[selected].meta?.ds?.datasourceName;
+      if (id) {
+        ds = await getDataSourceSrv().get(id);
+      }
+      this.setState({ ds });
+    }
   }
 
   onDismiss = () => {
@@ -63,18 +84,13 @@ export class PanelInspector extends PureComponent<Props, State> {
     });
   };
 
-  renderInspectable = () => {
-    const { meta } = this.state;
-    const { MetadataInspector } = meta.datasource.components;
-    if (MetadataInspector) {
-      return <MetadataInspector {...meta} />;
-    }
-    return <div>MISSING inspector</div>;
+  onSelectFrame = (item: SelectableValue<number>) => {
+    this.setState({ selected: item.value || 0 });
   };
 
   render() {
     const { panel } = this.props;
-    const { last, meta } = this.state;
+    const { last, data, selected, ds } = this.state;
     if (!panel) {
       this.onDismiss(); // Try to close the component
       return null;
@@ -84,36 +100,46 @@ export class PanelInspector extends PureComponent<Props, State> {
       overflow-y: scroll;
     `;
 
+    const frames = data.map((frame, index) => {
+      const title = frame.name || frame.refId;
+      return {
+        value: index,
+        label: `${title} (${index})`,
+      };
+    });
+
+    const replaceVariables = (value: string, scopedVars?: ScopedVars) => {
+      return value;
+    };
+
     return (
       <Modal title={panel.title} icon="fa fa-info-circle" onDismiss={this.onDismiss} isOpen={true}>
-        {meta && this.renderInspectable()}
         <div className={bodyStyle}>
+          {frames && (
+            <>
+              <Select options={frames} value={frames[selected]} onChange={this.onSelectFrame} />
+              <div>
+                {ds?.components?.MetadataInspector && (
+                  <ds.components.MetadataInspector datasource={ds} data={data[selected]} />
+                )}
+              </div>
+              <Table
+                theme={getTheme()}
+                showHeader={true}
+                width={680}
+                height={180}
+                styles={[]}
+                replaceVariables={replaceVariables}
+                data={data[selected]}
+              />
+              <br />
+              <br />
+              <br />
+            </>
+          )}
           <JSONFormatter json={last} open={2} />
         </div>
       </Modal>
     );
   }
-}
-
-export function getInspectableMetadata(data: DataFrame[]): Record<string, DataFrame[]> | undefined {
-  if (!data || !data.length) {
-    return undefined;
-  }
-
-  let found = false;
-  const grouped: Record<string, DataFrame[]> = {};
-  for (const frame of data) {
-    const id = frame.meta?.ds?.datasourceName;
-    if (id) {
-      if (!grouped[id]) {
-        grouped[id] = [];
-      }
-      grouped[id].push(frame);
-      found = true;
-    }
-  }
-  if (found) {
-    return grouped;
-  }
-  return undefined;
 }
