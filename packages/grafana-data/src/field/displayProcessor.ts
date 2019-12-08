@@ -112,7 +112,7 @@ function toNumber(value: any): number {
   if (typeof value === 'number') {
     return value;
   }
-  if (value === null || value === undefined || Array.isArray(value)) {
+  if (value === '' || value === null || value === undefined || Array.isArray(value)) {
     return NaN; // lodash calls them 0
   }
   if (typeof value === 'boolean') {
