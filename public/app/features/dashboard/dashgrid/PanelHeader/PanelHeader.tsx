@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
 import classNames from 'classnames';
 import { isEqual } from 'lodash';
-import { ScopedVars } from '@grafana/data';
+import { DataLink, ScopedVars } from '@grafana/data';
+import { ClickOutsideWrapper } from '@grafana/ui';
+import { e2e } from '@grafana/e2e';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
 import { PanelHeaderMenu } from './PanelHeaderMenu';
@@ -9,8 +11,6 @@ import templateSrv from 'app/features/templating/template_srv';
 
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { ClickOutsideWrapper } from '@grafana/ui';
-import { DataLink } from '@grafana/data';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export interface Props {
@@ -96,7 +96,7 @@ export class PanelHeader extends Component<Props, State> {
             className="panel-title-container"
             onClick={this.onMenuToggle}
             onMouseDown={this.onMouseDown}
-            aria-label="Panel Title"
+            aria-label={e2e.pages.Panels.Panel.selectors.title(title)}
           >
             <div className="panel-title">
               <span className="icon-gf panel-alert-icon" />
