@@ -261,7 +261,7 @@ describe('LokiDatasource', () => {
             return Promise.resolve({
               status: 200,
               data: {
-                values: ['avalue'],
+                data: ['avalue'],
               },
             });
           },
