@@ -1256,7 +1256,7 @@
     },
     {
       "content": "For more information, see [Amazon CloudWatch Metrics for Amazon EBS](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using_cloudwatch_ebs.html).\n\n\n\n",
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
       "gridPos": {
         "h": 2,
         "w": 24,
@@ -1301,7 +1301,7 @@
           "text": "default",
           "value": "default"
         },
-        "datasource": "${DS_CLOUDWATCH}",
+        "datasource": "$datasource",
         "definition": "regions()",
         "hide": 0,
         "includeAll": false,
