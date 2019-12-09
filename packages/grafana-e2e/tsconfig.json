@@ -7,6 +7,6 @@
     "types": ["cypress"]
   },
   "exclude": ["dist", "node_modules"],
-  "extends": "../tsconfig.json",
+  "extends": "@grafana/tsconfig",
   "include": ["src/**/*.ts", "cypress/support/index.d.ts"]
 }

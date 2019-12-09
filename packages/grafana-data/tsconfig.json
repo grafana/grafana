@@ -6,6 +6,6 @@
     "typeRoots": ["node_modules/@types"]
   },
   "exclude": ["dist", "node_modules"],
-  "extends": "../tsconfig.json",
+  "extends": "@grafana/tsconfig",
   "include": ["src/**/*.ts*", "../../public/app/types/jquery/*.ts"]
 }

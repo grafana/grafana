@@ -27,6 +27,7 @@
   "dependencies": {
     "@grafana/data": "6.7.0-pre",
     "@grafana/slate-react": "0.22.9-grafana",
+    "@grafana/tsconfig": "^1.0.0-rc1",
     "@torkelo/react-select": "3.0.8",
     "@types/react-color": "2.17.0",
     "@types/react-select": "3.0.8",

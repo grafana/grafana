@@ -2,5 +2,5 @@
   "compilerOptions": {
     "module": "commonjs"
   },
-  "extends": "../../../tsconfig.json"
+  "extends": "@grafana/tsconfig"
 }

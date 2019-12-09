@@ -1,40 +1,15 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
     "baseUrl": "public/",
-    "declaration": false,
-    "downlevelIteration": true,
-    "emitDecoratorMetadata": false,
-    "esModuleInterop": true,
-    "experimentalDecorators": true,
-    "forceConsistentCasingInFileNames": true,
-    "importHelpers": true,
-    "inlineSourceMap": false,
-    "jsx": "react",
-    "lib": ["dom", "es2019"],
-    "module": "esnext",
-    "moduleResolution": "node",
-    "noEmitHelpers": true,
-    "noEmitOnError": false,
-    "noImplicitAny": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "noImplicitUseStrict": false,
-    "noUnusedLocals": true,
     "outDir": "public/dist",
     "paths": {
       "@grafana/slate-react": ["../node_modules/@types/slate-react"],
       "app": ["app/"],
       "sass": ["sass/"]
     },
-    "pretty": true,
-    "removeComments": false,
     "rootDirs": ["public/"],
-    "skipLibCheck": true,
-    "sourceMap": true,
-    "strictNullChecks": false,
-    "target": "es5",
     "typeRoots": ["node_modules/@types", "public/app/types"]
   },
+  "extends": "@grafana/tsconfig/base.json",
   "include": ["public/app/**/*.ts*", "public/e2e-test/**/*.ts", "public/test/**/*.ts", "public/vendor/**/*.ts"]
 }
