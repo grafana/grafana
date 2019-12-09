@@ -87,6 +87,15 @@ When possible, use the exact title of the page or section you are linking to as 
 
 Grafana products has some words, abbreviations, and slang particular to this discourse community.
 
+#### checkout, check out
+
+Two words if used as a verb, one word if used as a noun.
+
+**Examples**
+
+* Check out these new features!
+* Proceed to checkout.
+
 #### data source
 
 Two words, not one
@@ -94,7 +103,6 @@ Two words, not one
 **Exceptions:**
 * "datasource" used as an identifier
 * "datasource" in a URL
-* "Open source" should be hyphenated when used as an adjective, e.g. *open-source software*. The open form should be preferred when used as a noun, e.g. *Grafana is open source*.
 * Use "data source" instead of "datasource" unless used as an identifier, in code, or as part of a URL.
 * Spell out "repository" and avoid the shorter "repo."
 * Use "Unix" as the preferred spelling (as opposed to "UNIX", or "unix") when referring to the family of operating systems.
@@ -108,7 +116,7 @@ Two words, not one
 
 #### open source, open-source
 
-Hyphenate when used as an adjective. For example: _open-source software._ 
+Do not hyphenate when used as an adjective unless the lack of hyphen would cause confusion. For example: _Open source software design is the most open open-source system I can imagine._ 
 
 Do not hyphenate when it is used as a noun. For example: _Open source is the best way to develop software._
 

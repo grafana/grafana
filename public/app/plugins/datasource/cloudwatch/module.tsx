@@ -1,3 +1,4 @@
+import './query_parameter_ctrl';
 import { DataSourcePlugin } from '@grafana/data';
 import { ConfigEditor } from './components/ConfigEditor';
 import { QueryEditor } from './components/QueryEditor';
@@ -13,4 +14,5 @@ export const plugin = new DataSourcePlugin<CloudWatchDatasource, CloudWatchQuery
 )
   .setConfigEditor(ConfigEditor)
   .setQueryEditor(QueryEditor)
+  .setExploreQueryField(QueryEditor)
   .setAnnotationQueryCtrl(CloudWatchAnnotationsQueryCtrl);

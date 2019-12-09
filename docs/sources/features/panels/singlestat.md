@@ -85,6 +85,8 @@ Gauges gives a clear picture of how high a value is in it's context. It's a grea
 
 Value/Range to text mapping allows you to translate the value of the summary stat into explicit text. The text will respect all styling, thresholds and customization defined for the value. This can be useful to translate the number of the main Singlestat value into a context-specific human-readable word or message.
 
+If you want to replace the default "No data" text being displayed when no data is available, add a `value to text mapping` from `null` to your preferred custom text value.
+
 <div class="clearfix"></div>
 
 ## Troubleshooting

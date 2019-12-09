@@ -46,8 +46,8 @@
 .modal-header-title {
   font-size: $font-size-h3;
   float: left;
-  padding-top: $spacer * 0.75;
-  margin: 0 $spacer * 3 0 $spacer * 1.5;
+  padding-top: $space-sm;
+  margin: 0 $space-md;
 
   .gicon {
     position: relative;

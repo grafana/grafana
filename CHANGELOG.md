@@ -1,5 +1,18 @@
 # 6.6.0 (unreleased)
 
+### Features / Enhancements
+
+* **Graphite**: Add Metrictank dashboard to Graphite datasource
+
+# 6.5.1 (2019-11-28)
+
+### Bug Fixes
+* **CloudWatch**: Region template query fix. [#20661](https://github.com/grafana/grafana/pull/20661), [@sunker](https://github.com/sunker)
+* **CloudWatch**: Fix annotations query editor loading. [#20687](https://github.com/grafana/grafana/pull/20687), [@sunker](https://github.com/sunker)
+* **Panel**: Fixes undefined services/dependencies in plugins without `/**@ngInject*/`. [#20696](https://github.com/grafana/grafana/pull/20696), [@hugohaggmark](https://github.com/hugohaggmark)
+* **Server**: Fix failure to start with "bind: address already in use" when using socket as protocol. [#20679](https://github.com/grafana/grafana/pull/20679), [@aknuds1](https://github.com/aknuds1)
+* **Stats**: Fix active admins/editors/viewers stats are counted more than once if the user is part of more than one org. [#20711](https://github.com/grafana/grafana/pull/20711), [@papagian](https://github.com/papagian)
+
 # 6.5.0 (2019-11-25)
 
 ### Features / Enhancements
@@ -122,11 +135,17 @@
 # 6.4.4 (2019-11-06)
 
 ### Bug Fixes
+* **MySQL**: Fix encoding in connection string [#20192](https://github.com/grafana/grafana/pull/20192)
 * **DataLinks**: Fix blur issues. [#19883](https://github.com/grafana/grafana/pull/19883), [@aocenas](https://github.com/aocenas)
 * **Docker**: Makes it possible to parse timezones in the docker image. [#20081](https://github.com/grafana/grafana/pull/20081), [@xlson](https://github.com/xlson)
 * **LDAP**: All LDAP servers should be tried even if one of them returns a connection error. [#20077](https://github.com/grafana/grafana/pull/20077), [@jongyllen](https://github.com/jongyllen)
 * **LDAP**: No longer shows incorrectly matching groups based on role in debug page. [#20018](https://github.com/grafana/grafana/pull/20018), [@xlson](https://github.com/xlson)
 * **Singlestat**: Fix no data / null value mapping . [#19951](https://github.com/grafana/grafana/pull/19951), [@ryantxu](https://github.com/ryantxu)
+
+#### Security vulnerability
+
+The MySQL data source connnection string fix, [#20192](https://github.com/grafana/grafana/pull/20192), that was part of this release
+also fixed a security vulnerability. Thanks Yuriy Dyachenko for discovering and notifying us about this.
 
 # 6.4.3 (2019-10-16)
 

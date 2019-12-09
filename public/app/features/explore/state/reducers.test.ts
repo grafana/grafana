@@ -90,15 +90,11 @@ describe('Explore item reducer', () => {
           const queryKeys: string[] = [];
           const initalState: Partial<ExploreItemState> = {
             datasourceInstance: null,
-            StartPage: null,
-            showingStartPage: false,
             queries,
             queryKeys,
           };
           const expectedState: any = {
             datasourceInstance,
-            StartPage,
-            showingStartPage: true,
             queries,
             queryKeys,
             graphResult: null,
