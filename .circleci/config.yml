@@ -128,10 +128,10 @@ jobs:
               command: 'env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests'
               no_output_timeout: 5m
           - store_artifacts:
-                path: public/e2e-test/screenShots/theTruth
+                path: public/e2e-tests/screenShots/theTruth
                 destination: expected-screenshots
           - store_artifacts:
-                path: public/e2e-test/screenShots/theOutput
+                path: public/e2e-tests/screenShots/theOutput
                 destination: output-screenshots
           - run:
               name: ci job failed
@@ -167,10 +167,10 @@ jobs:
               command: 'env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests'
               no_output_timeout: 5m
           - store_artifacts:
-                path: public/e2e-test/screenShots/theTruth
+                path: public/e2e-tests/screenShots/theTruth
                 destination: expected-screenshots
           - store_artifacts:
-                path: public/e2e-test/screenShots/theOutput
+                path: public/e2e-tests/screenShots/theOutput
                 destination: output-screenshots
           - run:
               name: ci job failed

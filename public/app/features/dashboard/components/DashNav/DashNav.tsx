@@ -1,6 +1,7 @@
 // Libaries
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
+import { e2e } from '@grafana/e2e';
 // Utils & Services
 import { appEvents } from 'app/core/app_events';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
@@ -159,7 +160,7 @@ export class DashNav extends PureComponent<Props> {
           <button
             className="navbar-edit__back-btn"
             onClick={this.onClose}
-            aria-label="Dashboard settings Go Back button"
+            aria-label={e2e.pages.Dashboard.selectors.backArrow}
           >
             <i className="fa fa-arrow-left" />
           </button>

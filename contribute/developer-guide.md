@@ -106,10 +106,10 @@ By default, the end-to-end tests assumes Grafana is available on `localhost:3000
 BASE_URL=http://localhost:3333 yarn e2e-tests
 ```
 
-To follow the tests in the browser while they're running, add the `BROWSER` and `SLOWMO` environment variables:
+To follow the tests in the browser while they're running, use the `yarn e2e-tests:debug` instead.
 
 ```
-BROWSER=1 SLOWMO=1 yarn e2e-tests
+yarn e2e-tests:debug
 ```
 
 ## Configure Grafana for development
