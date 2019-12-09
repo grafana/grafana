@@ -1,7 +1,6 @@
 import React, { FC, useContext } from 'react';
 import { css } from 'emotion';
 import { Modal } from '../Modal/Modal';
-import { Icon } from '../Icon/Icon';
 import { IconType } from '../Icon/types';
 import { Button } from '../Button/Button';
 import { stylesFactory, ThemeContext } from '../../themes';
@@ -10,20 +9,6 @@ import { GrafanaTheme } from '@grafana/data';
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   modal: css`
     width: 500px;
-  `,
-  modalHeaderTitle: css`
-    font-size: ${theme.typography.heading.h3};
-    padding-top: calc(${theme.spacing.d} * 0.75);
-    margin: 0 calc(${theme.spacing.d} * 3) 0 calc(${theme.spacing.d} * 1.5);
-  `,
-  modalHeaderIcon: css`
-    font-size: inherit;
-    &:before {
-      vertical-align: baseline;
-    }
-  `,
-  modalHeaderText: css`
-    padding-left: 14px;
   `,
   modalContent: css`
     text-align: center;
@@ -61,17 +46,7 @@ export const ConfirmModal: FC<Props> = ({ isOpen, title, body, confirmText, icon
   const styles = getStyles(theme);
 
   return (
-    <Modal
-      className={styles.modal}
-      title={
-        <h2 className={styles.modalHeaderTitle}>
-          <Icon name={icon || defaultIcon} className={styles.modalHeaderIcon} />
-          <span className={styles.modalHeaderText}>{title}</span>
-        </h2>
-      }
-      isOpen={isOpen}
-      onDismiss={onDismiss}
-    >
+    <Modal className={styles.modal} title={title} icon={icon || defaultIcon} isOpen={isOpen} onDismiss={onDismiss}>
       <div className={styles.modalContent}>
         <div className={styles.modalText}>{body}</div>
         <div className={styles.modalButtonRow}>
