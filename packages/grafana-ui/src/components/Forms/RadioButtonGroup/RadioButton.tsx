@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTheme, stylesFactory } from '../../../themes';
+import { useTheme, stylesFactory, selectThemeVariant as stv } from '../../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
 import { getFocusCss, getPropertiesForButtonSize } from '../commonStyles';
@@ -14,20 +14,31 @@ export interface RadioButtonProps {
 
 const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButtonSize) => {
   const { padding, fontSize, height } = getPropertiesForButtonSize(theme, size);
-  const border = `1px solid ${theme.colors.formRadioButtonBorder}`;
-  const borderActive = `1px solid ${theme.colors.formRadioButtonBorderActive}`;
-  const borderHover = `1px solid ${theme.colors.formRadioButtonBorderHover}`;
-  const fakeBold = `0 0 0.65px ${theme.colors.formRadioButtonTextHover},
-  0 0 0.65px ${theme.colors.formRadioButtonTextHover}`;
+  const c = theme.colors;
+
+  const textColor = stv({ light: c.gray33, dark: c.gray70 }, theme.type);
+  const textColorHover = stv({ light: c.blueShade, dark: c.blueLight }, theme.type);
+  const textColorActive = stv({ light: c.blueShade, dark: c.blueLight }, theme.type);
+  const borderColor = stv({ light: c.gray4, dark: c.gray25 }, theme.type);
+  const borderColorHover = stv({ light: c.gray70, dark: c.gray33 }, theme.type);
+  const borderColorActive = stv({ light: c.blueShade, dark: c.blueLight }, theme.type);
+  const bg = stv({ light: c.gray98, dark: c.gray10 }, theme.type);
+  const bgDisabled = stv({ light: c.gray95, dark: c.gray15 }, theme.type);
+  const bgActive = stv({ light: c.white, dark: c.gray05 }, theme.type);
+
+  const border = `1px solid ${borderColor}`;
+  const borderActive = `1px solid ${borderColorActive}`;
+  const borderHover = `1px solid ${borderColorHover}`;
+  const fakeBold = `0 0 0.65px ${textColorHover}, 0 0 0.65px ${textColorHover}`;
 
   return {
     button: css`
       cursor: pointer;
       position: relative;
       z-index: 0;
-      background: ${theme.colors.formRadioButtonBg};
+      background: ${bg};
       border: ${border};
-      color: ${theme.colors.formRadioButtonText};
+      color: ${textColor};
       font-size: ${fontSize};
       padding: ${padding};
       height: ${height};
@@ -48,7 +59,7 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
         border-left: 0;
         &:before {
           /* renders line between elements */
-          background: ${theme.colors.formRadioButtonBorderHover};
+          background: ${borderColorHover};
         }
         &:first-child {
           border-left: ${borderHover};
@@ -63,7 +74,7 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       }
 
       &:not(:disabled):hover {
-        color: ${theme.colors.formRadioButtonTextHover};
+        color: ${textColorHover};
         /* The text shadow imitates font-weight:bold;
          * Using font weight on hover makes the button size slighlty change which looks like a glitch
          * */
@@ -74,18 +85,18 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
         z-index: 1;
         ${getFocusCss(theme)};
         &:before {
-          background: ${theme.colors.formRadioButtonBorder};
+          background: ${borderColor};
         }
         &:hover {
           &:before {
-            background: ${theme.colors.formRadioButtonBorderHover};
+            background: ${borderColorHover};
           }
         }
       }
 
       &:disabled {
-        background: ${theme.colors.formRadioButtonBgDisabled};
-        color: ${theme.colors.formRadioButtonText};
+        background: ${bgDisabled};
+        color: ${textColor};
       }
 
       &:first-child {
@@ -101,10 +112,10 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
     `,
 
     buttonActive: css`
-      background: ${theme.colors.formRadioButtonBgActive};
+      background: ${bgActive};
       border: ${borderActive};
       border-left: none;
-      color: ${theme.colors.formRadioButtonTextActive};
+      color: ${textColorActive};
       text-shadow: ${fakeBold};
 
       &:hover {
@@ -114,16 +125,16 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
 
       &:focus {
         &:before {
-          background: ${theme.colors.formRadioButtonBorderActive};
+          background: ${borderColorActive};
         }
         &:hover:before {
-          background: ${theme.colors.formRadioButtonBorderActive};
+          background: ${borderColorActive};
         }
       }
 
       &:before,
       &:hover:before {
-        background: ${theme.colors.formRadioButtonBorderActive};
+        background: ${borderColorActive};
       }
 
       &:first-child,
@@ -147,7 +158,7 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
         }
       }
       &:focus {
-        border-color: ${theme.colors.formRadioButtonBorderActive};
+        border-color: ${borderActive};
       }
     `,
   };
