@@ -8,7 +8,7 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   maxConcurrentShardRequests?: number;
   logMessageField?: string;
   logLevelField?: string;
-  derivedFields?: DerivedFieldConfig[];
+  dataLinks?: DataLinkConfig[];
 }
 
 export interface ElasticsearchAggregation {
@@ -26,7 +26,7 @@ export interface ElasticsearchQuery extends DataQuery {
   metrics?: ElasticsearchAggregation[];
 }
 
-export type DerivedFieldConfig = {
+export type DataLinkConfig = {
   pattern: string;
   url: string;
 };

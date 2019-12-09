@@ -2,51 +2,53 @@ import React from 'react';
 import { css } from 'emotion';
 import { Button, DataLinkBuiltInVars, stylesFactory, useTheme, VariableOrigin } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { DerivedFieldConfig } from '../types';
-import { DerivedField } from './DerivedField';
+import { DataLinkConfig } from '../types';
+import { DataLink } from './DataLink';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   infoText: css`
     padding-bottom: ${theme.spacing.md};
     color: ${theme.colors.textWeak};
   `,
-  derivedField: css`
+  dataLink: css`
     margin-bottom: ${theme.spacing.sm};
   `,
 }));
 
 type Props = {
-  value?: DerivedFieldConfig[];
-  onChange: (value: DerivedFieldConfig[]) => void;
+  value?: DataLinkConfig[];
+  onChange: (value: DataLinkConfig[]) => void;
 };
-export const DerivedFields = (props: Props) => {
+export const DataLinks = (props: Props) => {
   const { value, onChange } = props;
   const theme = useTheme();
   const styles = getStyles(theme);
 
   return (
     <>
-      <h3 className="page-heading">Field enhancement</h3>
+      <h3 className="page-heading">Data links</h3>
 
-      <div className={styles.infoText}>You can add links to existing fields.</div>
+      <div className={styles.infoText}>
+        Add links to existing fields. Links will be shown in log row details next to the field value.
+      </div>
 
       <div className="gf-form-group">
         {value &&
           value.map((field, index) => {
             return (
-              <DerivedField
-                className={styles.derivedField}
+              <DataLink
+                className={styles.dataLink}
                 key={index}
                 value={field}
                 onChange={newField => {
-                  const newDerivedFields = [...value];
-                  newDerivedFields.splice(index, 1, newField);
-                  onChange(newDerivedFields);
+                  const newDataLinks = [...value];
+                  newDataLinks.splice(index, 1, newField);
+                  onChange(newDataLinks);
                 }}
                 onDelete={() => {
-                  const newDerivedFields = [...value];
-                  newDerivedFields.splice(index, 1);
-                  onChange(newDerivedFields);
+                  const newDataLinks = [...value];
+                  newDataLinks.splice(index, 1);
+                  onChange(newDataLinks);
                 }}
                 suggestions={[
                   {
@@ -68,8 +70,8 @@ export const DerivedFields = (props: Props) => {
             icon="fa fa-plus"
             onClick={event => {
               event.preventDefault();
-              const newDerivedFields = [...(value || []), { pattern: '', url: '' }];
-              onChange(newDerivedFields);
+              const newDataLinks = [...(value || []), { pattern: '', url: '' }];
+              onChange(newDataLinks);
             }}
           >
             Add

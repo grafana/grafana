@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from 'emotion';
 import { Button, FormField, VariableSuggestion, DataLinkInput, stylesFactory } from '@grafana/ui';
-import { DerivedFieldConfig } from '../types';
+import { DataLinkConfig } from '../types';
 
 const getStyles = stylesFactory(() => ({
   firstRow: css`
@@ -16,13 +16,13 @@ const getStyles = stylesFactory(() => ({
 }));
 
 type Props = {
-  value: DerivedFieldConfig;
-  onChange: (value: DerivedFieldConfig) => void;
+  value: DataLinkConfig;
+  onChange: (value: DataLinkConfig) => void;
   onDelete: () => void;
   suggestions: VariableSuggestion[];
   className?: string;
 };
-export const DerivedField = (props: Props) => {
+export const DataLink = (props: Props) => {
   const { value, onChange, onDelete, suggestions, className } = props;
   const styles = getStyles();
 

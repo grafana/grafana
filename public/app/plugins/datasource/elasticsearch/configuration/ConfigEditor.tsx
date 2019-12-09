@@ -4,7 +4,7 @@ import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { ElasticsearchOptions } from '../types';
 import { defaultMaxConcurrentShardRequests, ElasticDetails } from './ElasticDetails';
 import { LogsConfig } from './LogsConfig';
-import { DerivedFields } from './DerivedFields';
+import { DataLinks } from './DataLinks';
 
 export type Props = DataSourcePluginOptionsEditorProps<ElasticsearchOptions>;
 export const ConfigEditor = (props: Props) => {
@@ -48,14 +48,14 @@ export const ConfigEditor = (props: Props) => {
         }
       />
 
-      <DerivedFields
-        value={options.jsonData.derivedFields}
+      <DataLinks
+        value={options.jsonData.dataLinks}
         onChange={newValue => {
           onOptionsChange({
             ...options,
             jsonData: {
               ...options.jsonData,
-              derivedFields: newValue,
+              dataLinks: newValue,
             },
           });
         }}
