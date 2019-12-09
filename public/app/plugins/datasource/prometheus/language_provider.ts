@@ -14,6 +14,7 @@ const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
 const HISTORY_ITEM_COUNT = 5;
 const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
+export const DEFAULT_LOOKUP_METRICS_THRESHOLD = 10000; // number of metrics defining an installation that's too big
 
 const wrapLabel = (label: string): CompletionItem => ({ label });
 
@@ -46,6 +47,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   metrics?: string[];
   startTask: Promise<any>;
   datasource: PrometheusDatasource;
+  lookupMetricsThreshold: number;
+  lookupsDisabled: boolean; // Dynamically set to true for big/slow instances
 
   /**
    *  Cache for labels of series. This is bit simplistic in the sense that it just counts responses each as a 1 and does
@@ -54,13 +57,18 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   private labelsCache = new LRU<string, Record<string, string[]>>(10);
 
-  constructor(datasource: PrometheusDatasource) {
+  constructor(datasource: PrometheusDatasource, initialValues?: Partial<PromQlLanguageProvider>) {
     super();
 
     this.datasource = datasource;
     this.histogramMetrics = [];
     this.timeRange = { start: 0, end: 0 };
     this.metrics = [];
+    // Disable lookups until we know the instance is small enough
+    this.lookupMetricsThreshold = DEFAULT_LOOKUP_METRICS_THRESHOLD;
+    this.lookupsDisabled = true;
+
+    Object.assign(this, initialValues);
   }
 
   // Strip syntax chars
@@ -83,22 +91,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return [];
   };
 
-  start = () => {
-    if (!this.startTask) {
-      this.startTask = this.fetchMetrics();
-    }
-    return this.startTask;
-  };
-
-  fetchMetrics = async () => {
-    this.metrics = await this.fetchMetricNames();
+  start = async (): Promise<any[]> => {
+    this.metrics = await this.request('/api/v1/label/__name__/values');
+    this.lookupsDisabled = this.metrics.length > this.lookupMetricsThreshold;
     this.processHistogramMetrics(this.metrics);
-
-    return Promise.resolve([]);
-  };
-
-  fetchMetricNames = async (): Promise<string[]> => {
-    return this.request('/api/v1/label/__name__/values');
+    return [];
   };
 
   processHistogramMetrics = (data: string[]) => {
@@ -333,6 +330,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   async getLabelValues(selector: string, withName?: boolean) {
+    if (this.lookupsDisabled) {
+      return undefined;
+    }
     try {
       if (selector === EMPTY_SELECTOR) {
         return await this.fetchDefaultLabels();
