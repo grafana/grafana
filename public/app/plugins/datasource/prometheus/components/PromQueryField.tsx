@@ -174,6 +174,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   refreshMetrics = (cancelablePromise: CancelablePromise<any>) => {
     this.languageProviderInitializationPromise = cancelablePromise;
     this.languageProviderInitializationPromise.promise
+      .then(remaining => {
+        remaining.map((task: Promise<any>) => task.then(this.onUpdateLanguage).catch(() => {}));
+      })
       .then(() => this.onUpdateLanguage())
       .catch(({ isCanceled }) => {
         if (isCanceled) {

@@ -91,10 +91,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return [];
   };
 
-  start = async (): Promise<any> => {
+  start = async (): Promise<any[]> => {
     this.metrics = await this.request('/api/v1/label/__name__/values');
     this.lookupsDisabled = this.metrics.length > this.lookupMetricsThreshold;
     this.processHistogramMetrics(this.metrics);
+    return [];
   };
 
   processHistogramMetrics = (data: string[]) => {
