@@ -15,7 +15,7 @@ import * as queryDef from './query_def';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { DerivedFieldConfig, ElasticsearchOptions, ElasticsearchQuery } from './types';
+import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery } from './types';
 
 export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, ElasticsearchOptions> {
   basicAuth: string;
@@ -31,7 +31,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   indexPattern: IndexPattern;
   logMessageField?: string;
   logLevelField?: string;
-  derivedFields: DerivedFieldConfig[];
+  dataLinks: DataLinkConfig[];
 
   /** @ngInject */
   constructor(
@@ -59,7 +59,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     });
     this.logMessageField = settingsData.logMessageField || '';
     this.logLevelField = settingsData.logLevelField || '';
-    this.derivedFields = settingsData.derivedFields || [];
+    this.dataLinks = settingsData.dataLinks || [];
 
     if (this.logMessageField === '') {
       this.logMessageField = null;
@@ -560,17 +560,15 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   enhanceDataFrame(dataFrame: DataFrame) {
-    if (this.derivedFields.length) {
+    if (this.dataLinks.length) {
       for (const field of dataFrame.fields) {
-        const derivedField = this.derivedFields.find(
-          derivedField => field.name && field.name.match(derivedField.pattern)
-        );
-        if (derivedField) {
+        const dataLink = this.dataLinks.find(dataLink => field.name && field.name.match(dataLink.pattern));
+        if (dataLink) {
           field.config = field.config || {};
           field.config.links = [
             ...(field.config.links || []),
             {
-              url: derivedField.url,
+              url: dataLink.url,
               title: '',
             },
           ];

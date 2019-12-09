@@ -200,7 +200,7 @@ describe('ElasticDatasource', function(this: any) {
 
     it('should enhance fields with links', async () => {
       const { response } = await setupDataSource({
-        derivedFields: [
+        dataLinks: [
           {
             pattern: 'host',
             url: 'http://localhost:3000/${__value.raw}',
