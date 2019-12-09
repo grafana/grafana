@@ -3,9 +3,7 @@ import { e2e } from '../index';
 export const addDataSource = (pluginName?: string): string => {
   pluginName = pluginName || 'TestData DB';
 
-  e2e.pages.DataSources.visit();
-  e2e.pages.DataSources.addDataSource().click();
-
+  e2e.pages.AddDataSource.visit();
   e2e.pages.AddDataSource.dataSourcePlugins(pluginName).click();
 
   const dataSourceName = `e2e-${new Date().getTime()}`;
