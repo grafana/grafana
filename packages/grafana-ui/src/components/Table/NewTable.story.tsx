@@ -74,7 +74,7 @@ const mockDataFrame: DataFrame = toDataFrame({
     {
       name: 'Value',
       config: {},
-      values: [23.1, 23.1, 23.1, 23.1, 23.1, 23.1, 23.1, 23.1, 23.1, 23.1],
+      values: [21, 22, 24, 25, 26, 27, 28, 29, 30, 31],
       type: 'number',
       calcs: null,
     },

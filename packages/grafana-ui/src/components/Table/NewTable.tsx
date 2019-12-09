@@ -1,15 +1,11 @@
 import React from 'react';
-import { DataFrame, GrafanaTheme } from '@grafana/data';
-import { useTable } from 'react-table';
-import { stylesFactory, useTheme } from '../../themes';
+import { DataFrame } from '@grafana/data';
+// @ts-ignore
+import { useSortBy, useTable } from 'react-table';
 
 export interface Props {
   data: DataFrame;
 }
-
-const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {};
-});
 
 const getTableData = (data: DataFrame) => {
   const tableData = [];
@@ -36,33 +32,34 @@ const getColumns = (data: DataFrame) => {
 };
 
 export const NewTable = ({ data }: Props) => {
-  const theme = useTheme();
-  const styles = getTableStyles(theme);
-
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable({
-    columns: React.useMemo(() => getColumns(data), []),
-    data: React.useMemo(() => getTableData(data), []),
-  });
+  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable(
+    {
+      columns: React.useMemo(() => getColumns(data), []),
+      data: React.useMemo(() => getTableData(data), []),
+    },
+    useSortBy
+  );
 
   return (
     <table {...getTableProps()}>
       <thead>
-        {headerGroups.map(headerGroup => (
+        {headerGroups.map((headerGroup: any) => (
           <tr {...headerGroup.getHeaderGroupProps()}>
-            {headerGroup.headers.map(column => (
-              <th className="gf-table-header" {...column.getHeaderProps()}>
+            {headerGroup.headers.map((column: any) => (
+              <th className="gf-table-header" {...column.getHeaderProps(column.getSortByToggleProps())}>
                 {column.render('Header')}
+                <span>{column.isSorted ? (column.isSortedDesc ? ' 🔽' : ' 🔼') : ''}</span>
               </th>
             ))}
           </tr>
         ))}
       </thead>
       <tbody {...getTableBodyProps()}>
-        {rows.map(row => {
+        {rows.map((row: any) => {
           prepareRow(row);
           return (
             <tr {...row.getRowProps()}>
-              {row.cells.map(cell => {
+              {row.cells.map((cell: any) => {
                 return (
                   <td className="gf-table-cell" {...cell.getCellProps()}>
                     {cell.render('Cell')}

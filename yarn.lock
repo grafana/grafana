@@ -5862,6 +5862,11 @@ caniuse-api@^3.0.0:
     lodash.memoize "^4.1.2"
     lodash.uniq "^4.5.0"
 
+caniuse-db@1.0.30000772:
+  version "1.0.30000772"
+  resolved "https://registry.yarnpkg.com/caniuse-db/-/caniuse-db-1.0.30000772.tgz#51aae891768286eade4a3d8319ea76d6a01b512b"
+  integrity sha1-UarokXaChureSj2DGep21qAbUSs=
+
 caniuse-lite@^1.0.0, caniuse-lite@^1.0.30000939, caniuse-lite@^1.0.30000947, caniuse-lite@^1.0.30000989, caniuse-lite@^1.0.30000999:
   version "1.0.30000999"
   resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30000999.tgz#427253a69ad7bea4aa8d8345687b8eec51ca0e43"
@@ -17291,17 +17296,10 @@ react-syntax-highlighter@^8.0.1:
     prismjs "^1.8.4"
     refractor "^2.4.1"
 
-react-table@6.9.2:
-  version "6.9.2"
-  resolved "https://registry.yarnpkg.com/react-table/-/react-table-6.9.2.tgz#6a59adfeb8d5deced288241ed1c7847035b5ec5f"
-  integrity sha512-sTbNHU8Um0xRtmCd1js873HXnXaMWeBwZoiljuj0l1d44eaqjKyYPK/3HCBbJg1yeE2O5pQJ3Km0tlm9niNL9w==
-  dependencies:
-    classnames "^2.2.5"
-
-react-table@^7.0.0-beta.20:
-  version "7.0.0-beta.20"
-  resolved "https://registry.yarnpkg.com/react-table/-/react-table-7.0.0-beta.20.tgz#2125726549a15d5fd1d264145c92b9807a82aa1e"
-  integrity sha512-809Zj/OHX+Jbfnb+kxULZDvDstHrpzjFl2+mYOF9pU1CcJKkL2GdBmlWr9pcDmznxMU6veJUYnAxXYqvAWKVrQ==
+react-table@7.0.0-rc.4:
+  version "7.0.0-rc.4"
+  resolved "https://registry.yarnpkg.com/react-table/-/react-table-7.0.0-rc.4.tgz#88bc61747821f3c3bbbfc7e1a4a088cbe94ed9ee"
+  integrity sha512-NOYmNmAIvQ9sSZd5xMNSthqiZ/o5h8h28MhFQFSxCu5u3v9J8PNh7x9wYMnk737MTjoKCZWIZT/dMFCPItXzEg==
 
 react-test-renderer@16.8.4:
   version "16.8.4"
