@@ -10,6 +10,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var netTransport = &http.Transport{
@@ -55,6 +57,8 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, opts Opts) (*Rend
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
 	reqContext, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)
 	defer cancel()
