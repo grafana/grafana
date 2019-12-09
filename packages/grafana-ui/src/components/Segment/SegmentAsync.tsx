@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { cx } from 'emotion';
-import { isObject } from 'lodash';
+import _ from 'lodash';
 import { SegmentSelect } from './SegmentSelect';
 import { SelectableValue } from '@grafana/data';
 import { useExpandableLabel, SegmentProps } from '.';
@@ -25,7 +25,7 @@ export function SegmentAsync<T>({
   const [Label, width, expanded, setExpanded] = useExpandableLabel(false);
 
   if (!expanded) {
-    const label = isObject(value) ? value.label : value;
+    const label = _.isObject(value) ? value.label : value;
     return (
       <Label
         onClick={async () => {
@@ -61,7 +61,7 @@ export function SegmentAsync<T>({
         setSelectPlaceholder('');
         setLoadedOptions([]);
         setExpanded(false);
-        onChange(isObject(value) ? item : item.value!);
+        onChange(_.isObject(value) ? item : item.value!);
       }}
     />
   );

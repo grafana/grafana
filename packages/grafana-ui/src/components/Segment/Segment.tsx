@@ -1,6 +1,6 @@
 import React from 'react';
 import { cx } from 'emotion';
-import { isObject } from 'lodash';
+import _ from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import { SegmentSelect, useExpandableLabel, SegmentProps } from './';
 
@@ -22,7 +22,7 @@ export function Segment<T>({
   const [Label, width, expanded, setExpanded] = useExpandableLabel(false);
 
   if (!expanded) {
-    const label = isObject(value) ? value.label : value;
+    const label = _.isObject(value) ? value.label : value;
     return (
       <Label
         Component={
@@ -45,7 +45,7 @@ export function Segment<T>({
       allowCustomValue={allowCustomValue}
       onChange={item => {
         setExpanded(false);
-        onChange(isObject(value) ? item : item.value!);
+        onChange(_.isObject(value) ? item : item.value!);
       }}
     />
   );
