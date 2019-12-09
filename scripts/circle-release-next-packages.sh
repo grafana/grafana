@@ -52,7 +52,7 @@ else
 
   echo $'\nBuilding packages'
 
-  for PACKAGE in ui data toolkit runtime
+  for PACKAGE in ui data toolkit runtime e2e
   do
     start=$(date +%s%N)
     yarn workspace @grafana/$PACKAGE run build
