@@ -187,7 +187,7 @@ $btn-drag-image: '../img/grab_dark.svg';
 
 $navbar-btn-gicon-brightness: brightness(0.5);
 
-$btn-active-box-shadow: 0px 0px 4px rgba(255,120,10,0.5);
+$btn-active-box-shadow: 0px 0px 4px rgba(255, 120, 10, 0.5);
 
 // Forms
 // -------------------------

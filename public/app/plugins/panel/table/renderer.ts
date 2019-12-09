@@ -6,6 +6,7 @@ import {
   GrafanaThemeType,
   stringToJsRegex,
   ScopedVars,
+  formattedValueToString,
 } from '@grafana/data';
 import { ColumnStyle } from '@grafana/ui/src/components/Table/TableCellBuilder';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -188,7 +189,7 @@ export class TableRenderer {
         }
 
         this.setColorState(v, column.style);
-        return valueFormatter(v, column.style.decimals, null);
+        return formattedValueToString(valueFormatter(v, column.style.decimals, null));
       };
     }
 
@@ -226,7 +227,11 @@ export class TableRenderer {
   }
 
   formatColumnValue(colIndex: number, value: any) {
-    return this.formatters[colIndex] ? this.formatters[colIndex](value) : value;
+    const fmt = this.formatters[colIndex];
+    if (fmt) {
+      return fmt(value);
+    }
+    return value;
   }
 
   renderCell(columnIndex: number, rowIndex: number, value: any, addWidthHack = false) {

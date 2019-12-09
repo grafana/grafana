@@ -31,8 +31,8 @@ const setup = () => {
     ),
   ]);
 
-  const datasource = new CloudWatchDatasource(instanceSettings, {} as any, {} as any, templateSrv as any, {} as any);
-  datasource.metricFindQuery = async param => [{ value: 'test', label: 'test' }];
+  const datasource = new CloudWatchDatasource(instanceSettings, {} as any, templateSrv as any, {} as any);
+  datasource.metricFindQuery = async () => [{ value: 'test', label: 'test' }];
 
   const props: Props = {
     query: {
@@ -49,6 +49,7 @@ const setup = () => {
       matchExact: true,
     },
     datasource,
+    history: [],
     onChange: jest.fn(),
     onRunQuery: jest.fn(),
   };

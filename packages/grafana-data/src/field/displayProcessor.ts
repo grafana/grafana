@@ -11,7 +11,7 @@ import { DisplayProcessor, DisplayValue, DecimalCount, DecimalInfo } from '../ty
 import { getValueFormat } from '../valueFormats/valueFormats';
 import { getMappedValue } from '../utils/valueMappings';
 import { Threshold } from '../types/threshold';
-import { DateTime, DEFAULT_DATE_TIME_FORMAT, isDateTime, dateTime, toUtc } from '../datetime';
+import { DEFAULT_DATE_TIME_FORMAT } from '../datetime';
 import { KeyValue } from '../types';
 
 interface DisplayProcessorOptions {
@@ -37,22 +37,10 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     if (options.type === FieldType.time) {
       if (field.unit && timeFormats[field.unit]) {
         // Currently selected unit is valid for time fields
+      } else if (field.unit && field.unit.startsWith('time:')) {
+        // Also OK
       } else {
-        const dateFormat = field.dateDisplayFormat || DEFAULT_DATE_TIME_FORMAT;
-
-        // UTC or browser based timezone
-        let fmt = (date: DateTime) => date.format(dateFormat);
-        if (options.isUtc) {
-          fmt = (date: DateTime) => toUtc(date).format(dateFormat);
-        }
-
-        return (value: any) => {
-          const date: DateTime = isDateTime(value) ? value : dateTime(value);
-          return {
-            numeric: isNaN(value) ? date.valueOf() : value,
-            text: fmt(date),
-          };
-        };
+        field.unit = `time:${DEFAULT_DATE_TIME_FORMAT}`;
       }
     }
 
@@ -65,6 +53,8 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
       let text = _.toString(value);
       let numeric = toNumber(value);
+      let prefix: string | undefined = undefined;
+      let suffix: string | undefined = undefined;
 
       let shouldFormat = true;
       if (mappings && mappings.length > 0) {
@@ -85,7 +75,10 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       if (!isNaN(numeric)) {
         if (shouldFormat && !_.isBoolean(value)) {
           const { decimals, scaledDecimals } = getDecimalsForValue(value, field.decimals);
-          text = formatFunc(numeric, decimals, scaledDecimals, options.isUtc);
+          const v = formatFunc(numeric, decimals, scaledDecimals, options.isUtc);
+          text = v.text;
+          suffix = v.suffix;
+          prefix = v.prefix;
 
           // Check if the formatted text mapped to a different value
           if (mappings && mappings.length > 0) {
@@ -107,7 +100,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
           text = ''; // No data?
         }
       }
-      return { text, numeric, color };
+      return { text, numeric, color, prefix, suffix };
     };
   }
 
@@ -119,7 +112,7 @@ function toNumber(value: any): number {
   if (typeof value === 'number') {
     return value;
   }
-  if (value === null || value === undefined || Array.isArray(value)) {
+  if (value === '' || value === null || value === undefined || Array.isArray(value)) {
     return NaN; // lodash calls them 0
   }
   if (typeof value === 'boolean') {

@@ -1,121 +1,62 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ChangeEvent } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
+import { AzureDataSourceSettings } from '../types';
+
+const azureClouds = [
+  { value: 'azuremonitor', label: 'Azure' },
+  { value: 'govazuremonitor', label: 'Azure US Government' },
+  { value: 'germanyazuremonitor', label: 'Azure Germany' },
+  { value: 'chinaazuremonitor', label: 'Azure China' },
+] as SelectableValue[];
 
 export interface Props {
-  datasourceConfig: any;
+  options: AzureDataSourceSettings;
   subscriptions: SelectableValue[];
-  onDatasourceUpdate: (config: any) => void;
+  onUpdateOption: (key: string, val: any, secure: boolean) => void;
+  onResetOptionKey: (key: string) => void;
   onLoadSubscriptions: () => void;
 }
 
-export interface State {
-  config: any;
-  azureClouds: SelectableValue[];
-  subscriptions: SelectableValue[];
-}
-
-export class MonitorConfig extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
-
-    const { datasourceConfig } = this.props;
-
-    this.state = {
-      config: datasourceConfig,
-      azureClouds: [
-        { value: 'azuremonitor', label: 'Azure' },
-        { value: 'govazuremonitor', label: 'Azure US Government' },
-        { value: 'germanyazuremonitor', label: 'Azure Germany' },
-        { value: 'chinaazuremonitor', label: 'Azure China' },
-      ],
-      subscriptions: [],
-    };
-  }
-
-  static getDerivedStateFromProps(props: Props, state: State) {
-    return {
-      ...state,
-      config: props.datasourceConfig,
-      subscriptions: props.subscriptions,
-    };
-  }
-
+export class MonitorConfig extends PureComponent<Props> {
   onAzureCloudSelect = (cloudName: SelectableValue<string>) => {
-    this.props.onDatasourceUpdate({
-      ...this.state.config,
-      jsonData: {
-        ...this.state.config.jsonData,
-        cloudName: cloudName.value,
-      },
-    });
+    this.props.onUpdateOption('cloudName', cloudName.value, false);
   };
 
-  onTenantIdChange = (tenantId: string) => {
-    this.props.onDatasourceUpdate({
-      ...this.state.config,
-      jsonData: {
-        ...this.state.config.jsonData,
-        tenantId,
-      },
-    });
+  onTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
+    this.props.onUpdateOption('tenantId', event.target.value, false);
   };
 
-  onClientIdChange = (clientId: string) => {
-    this.props.onDatasourceUpdate({
-      ...this.state.config,
-      jsonData: {
-        ...this.state.config.jsonData,
-        clientId,
-      },
-    });
+  onClientIdChange = (event: ChangeEvent<HTMLInputElement>) => {
+    this.props.onUpdateOption('clientId', event.target.value, false);
   };
 
-  onClientSecretChange = (clientSecret: string) => {
-    this.props.onDatasourceUpdate({
-      ...this.state.config,
-      secureJsonData: {
-        ...this.state.config.secureJsonData,
-        clientSecret,
-      },
-    });
+  onClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
+    this.props.onUpdateOption('clientSecret', event.target.value, true);
   };
 
   onResetClientSecret = () => {
-    this.props.onDatasourceUpdate({
-      ...this.state.config,
-      version: this.state.config.version + 1,
-      secureJsonFields: {
-        ...this.state.config.secureJsonFields,
-        clientSecret: false,
-      },
-    });
+    this.props.onResetOptionKey('clientSecret');
   };
 
   onSubscriptionSelect = (subscription: SelectableValue<string>) => {
-    this.props.onDatasourceUpdate({
-      ...this.state.config,
-      jsonData: {
-        ...this.state.config.jsonData,
-        subscriptionId: subscription.value,
-      },
-    });
+    this.props.onUpdateOption('subscriptionId', subscription.value, false);
   };
 
   render() {
-    const { azureClouds, config, subscriptions } = this.state;
+    const { options, subscriptions } = this.props;
     return (
       <>
         <h3 className="page-heading">Azure Monitor Details</h3>
         <AzureCredentialsForm
-          selectedAzureCloud={config.jsonData.cloudName}
+          selectedAzureCloud={options.jsonData.cloudName || 'azuremonitor'}
           azureCloudOptions={azureClouds}
           subscriptionOptions={subscriptions}
-          selectedSubscription={config.jsonData.subscriptionId}
-          tenantId={config.jsonData.tenantId}
-          clientId={config.jsonData.clientId}
-          clientSecret={config.secureJsonData.clientSecret}
-          clientSecretConfigured={config.secureJsonFields.clientSecret}
+          selectedSubscription={options.jsonData.subscriptionId}
+          tenantId={options.jsonData.tenantId}
+          clientId={options.jsonData.clientId}
+          clientSecret={options.secureJsonData.clientSecret}
+          clientSecretConfigured={options.secureJsonFields.clientSecret}
           onAzureCloudChange={this.onAzureCloudSelect}
           onSubscriptionSelectChange={this.onSubscriptionSelect}
           onTenantIdChange={this.onTenantIdChange}
