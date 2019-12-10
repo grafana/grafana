@@ -1,8 +1,6 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-import { Threshold, DisplayValue } from '@grafana/data';
-
-import { getColorFromHexRgbOrName } from '@grafana/data';
+import { Threshold, DisplayValue, getColorFromHexRgbOrName, formattedValueToString } from '@grafana/data';
 import { Themeable } from '../../types';
 import { selectThemeVariant } from '../../themes';
 
@@ -82,7 +80,8 @@ export class Gauge extends PureComponent<Props> {
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
     const gaugeWidth = Math.min(dimension / 5.5, 40) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
-    const fontSize = Math.min(dimension / 4, 100) * (value.text !== null ? this.getFontScale(value.text.length) : 1);
+    const text = formattedValueToString(value);
+    const fontSize = Math.min(dimension / 4, 100) * (text !== null ? this.getFontScale(text.length) : 1);
 
     const thresholdLabelFontSize = fontSize / 2.5;
 
@@ -114,7 +113,7 @@ export class Gauge extends PureComponent<Props> {
           value: {
             color: value.color,
             formatter: () => {
-              return value.text;
+              return text;
             },
             font: { size: fontSize, family: theme.typography.fontFamily.sansSerif },
           },

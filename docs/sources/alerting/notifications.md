@@ -40,7 +40,7 @@ When checked, this option will notify for all alert rules - existing and new.
 When this option is checked additional notifications (reminders) will be sent for triggered alerts. You can specify how often reminders
 should be sent using number of seconds (s), minutes (m) or hours (h), for example `30s`, `3m`, `5m` or `1h` etc.
 
-**Important:** Alert reminders are sent after rules are evaluated. Therefore a reminder can never be sent more frequently than a configured [alert rule evaluation interval](/alerting/rules/#name-evaluation-interval).
+**Important:** Alert reminders are sent after rules are evaluated. Therefore a reminder can never be sent more frequently than a configured [alert rule evaluation interval]({{< relref "rules/#name-evaluation-interval" >}}).
 
 These examples show how often and when reminders are sent for a triggered alert.
 
@@ -65,7 +65,7 @@ Grafana ships with the following set of notification types:
 
 ### Email
 
-To enable email notifications you have to setup [SMTP settings](/installation/configuration/#smtp)
+To enable email notifications you have to setup [SMTP settings]({{< relref "../installation/configuration/#smtp" >}})
 in the Grafana config. Email notifications will upload an image of the alert graph to an
 external image destination if available or fallback to attaching the image to the email.
 Be aware that if you use the `local` image storage email servers and clients might not be
@@ -177,7 +177,7 @@ Hipchat | `hipchat` | yes, external only | no
 Kafka | `kafka` | yes, external only | no
 Line | `line` | yes, external only | no
 Microsoft Teams | `teams` | yes, external only | no
-OpsGenie | `opsgenie` | yes, external only | no
+OpsGenie | `opsgenie` | yes, external only | yes
 Pagerduty | `pagerduty` | yes, external only | no
 Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
 Pushover | `pushover` | yes | no
@@ -190,10 +190,10 @@ Webhook | `webhook` | yes, external only | yes
 
 # Enable images in notifications {#external-image-store}
 
-Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure image rendering [here](/administration/image_rendering/).
+Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure image rendering [here]({{< relref "../administration/image_rendering/" >}}).
 
 Most Notification Channels require that this image be publicly accessible (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
-Amazon S3, Webdav, Google Cloud Storage and Azure Blob Storage. So to set that up you need to configure the [external image uploader](/installation/configuration/#external-image-storage) in your grafana-server ini config file.
+Amazon S3, Webdav, Google Cloud Storage and Azure Blob Storage. So to set that up you need to configure the [external image uploader]({{< relref "../installation/configuration/#external-image-storage" >}}) in your grafana-server ini config file.
 
 Be aware that some notifiers requires public access to the image to be able to include it in the notification. So make sure to enable public access to the images. If you're using local image uploader, your Grafana instance need to be accessible by the internet.
 
@@ -212,4 +212,4 @@ It currently supports only the Prometheus Alertmanager notifier.
 # Configure the link back to Grafana from alert notifications
 
 All alert notifications contain a link back to the triggered alert in the Grafana instance.
-This url is based on the [domain](/installation/configuration/#domain) setting in Grafana.
+This url is based on the [domain]({{< relref "../installation/configuration/#domain" >}}) setting in Grafana.

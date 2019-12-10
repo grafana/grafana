@@ -12,6 +12,7 @@ import {
   ValueFormatter,
   getColorFromHexRgbOrName,
   InterpolateFunction,
+  formattedValueToString,
 } from '@grafana/data';
 
 export interface TableCellBuilderOptions {
@@ -316,7 +317,7 @@ export function getFieldCellBuilder(field: Field, style: ColumnStyle | null, p: 
 
     return (
       <div style={style} className={clazz} title={disp.title}>
-        {disp.text}
+        {formattedValueToString(disp)}
       </div>
     );
   };

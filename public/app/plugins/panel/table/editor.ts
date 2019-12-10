@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import { transformers } from './transformers';
-import { IQService } from 'angular';
 import { Column } from 'react-virtualized';
 
 export class TablePanelEditorCtrl {
@@ -14,7 +13,7 @@ export class TablePanelEditorCtrl {
   columnsHelpMessage: string;
 
   /** @ngInject */
-  constructor($scope: any, private $q: IQService, private uiSegmentSrv: any) {
+  constructor($scope: any, private uiSegmentSrv: any) {
     $scope.editor = this;
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
@@ -45,11 +44,11 @@ export class TablePanelEditorCtrl {
 
   getColumnOptions() {
     if (!this.panelCtrl.dataRaw) {
-      return this.$q.when([]);
+      return Promise.resolve([]);
     }
     const columns = this.transformers[this.panel.transform].getColumns(this.panelCtrl.dataRaw);
     const segments = _.map(columns, (c: any) => this.uiSegmentSrv.newSegment({ value: c.text }));
-    return this.$q.when(segments);
+    return Promise.resolve(segments);
   }
 
   addColumn() {
@@ -86,8 +85,7 @@ export class TablePanelEditorCtrl {
   }
 }
 
-/** @ngInject */
-export function tablePanelEditor($q: IQService, uiSegmentSrv: any) {
+export function tablePanelEditor(uiSegmentSrv: any) {
   'use strict';
   return {
     restrict: 'E',

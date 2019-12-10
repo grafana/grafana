@@ -1,12 +1,17 @@
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
+import { ButtonSize } from '../Button/types';
+
+export const getFocusCss = (theme: GrafanaTheme) => `
+  outline: 2px dotted transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px ${theme.colors.pageBg}, 0 0 0px 4px ${theme.colors.formFocusOutline};
+  transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1);
+`;
 
 export const getFocusStyle = (theme: GrafanaTheme) => css`
   &:focus {
-    outline: 2px dotted transparent;
-    outline-offset: 2px;
-    box-shadow: 0 0 0 2px ${theme.colors.pageBg}, 0 0 0px 4px ${theme.colors.formFocusOutline};
-    transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1);
+    ${getFocusCss(theme)}
   }
 `;
 
@@ -51,4 +56,36 @@ export const inputSizes = () => {
       width: 100%;
     `,
   };
+};
+
+export const getPropertiesForButtonSize = (theme: GrafanaTheme, size: ButtonSize) => {
+  switch (size) {
+    case 'sm':
+      return {
+        padding: `0 ${theme.spacing.sm}`,
+        fontSize: theme.typography.size.sm,
+        height: theme.height.sm,
+      };
+
+    case 'md':
+      return {
+        padding: `0 ${theme.spacing.md}`,
+        fontSize: theme.typography.size.md,
+        height: `${theme.spacing.formButtonHeight}px`,
+      };
+
+    case 'lg':
+      return {
+        padding: `0 ${theme.spacing.lg}`,
+        fontSize: theme.typography.size.lg,
+        height: theme.height.lg,
+      };
+
+    default:
+      return {
+        padding: `0 ${theme.spacing.md}`,
+        fontSize: theme.typography.size.base,
+        height: theme.height.md,
+      };
+  }
 };

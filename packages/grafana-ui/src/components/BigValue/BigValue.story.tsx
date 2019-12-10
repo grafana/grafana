@@ -1,6 +1,6 @@
 import { storiesOf } from '@storybook/react';
 import { text } from '@storybook/addon-knobs';
-import { BigValue, BigValueDisplayMode } from './BigValue';
+import { BigValue, BigValueColorMode, BigValueGraphMode } from './BigValue';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
@@ -16,20 +16,22 @@ const BigValueStories = storiesOf('UI/BigValue', module);
 BigValueStories.addDecorator(withCenteredStory);
 
 interface StoryOptions {
-  mode: BigValueDisplayMode;
+  colorMode: BigValueColorMode;
+  graphMode: BigValueGraphMode;
   width?: number;
   height?: number;
   noSparkline?: boolean;
 }
 
 function addStoryForMode(options: StoryOptions) {
-  BigValueStories.add(`Mode: ${BigValueDisplayMode[options.mode]}`, () => {
+  BigValueStories.add(`Color: ${options.colorMode}`, () => {
     const { value, title } = getKnobs();
 
     return renderComponentWithTheme(BigValue, {
       width: options.width || 400,
       height: options.height || 300,
-      displayMode: options.mode,
+      colorMode: options.colorMode,
+      graphMode: options.graphMode,
       value: {
         text: value,
         numeric: 5022,
@@ -52,7 +54,5 @@ function addStoryForMode(options: StoryOptions) {
   });
 }
 
-addStoryForMode({ mode: BigValueDisplayMode.Classic });
-addStoryForMode({ mode: BigValueDisplayMode.Classic2 });
-addStoryForMode({ mode: BigValueDisplayMode.Vibrant });
-addStoryForMode({ mode: BigValueDisplayMode.Vibrant2 });
+addStoryForMode({ colorMode: BigValueColorMode.Value, graphMode: BigValueGraphMode.Area });
+addStoryForMode({ colorMode: BigValueColorMode.Background, graphMode: BigValueGraphMode.Line });
