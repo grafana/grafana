@@ -112,15 +112,40 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
     calendar: css`
       position: absolute;
       right: 546px;
-      box-shadow: 0px 4px 4px 0px #c7d0d9;
+      box-shadow: 0px 4px 4px #c7d0d9;
       z-index: -1;
+
+      &:after {
+        display: block;
+        background-color: ${theme.background.dropdown};
+        width: 4px;
+        height: 205px;
+        content: ' ';
+        position: absolute;
+        top: 0;
+        right: -3px;
+        border-left: 1px solid ${theme.colors.gray4};
+      }
 
       @media only screen and (max-width: ${theme.breakpoints.lg}) {
         right: 218px;
       }
     `,
     calendarTitle: css`
-      background: white;
+      color: $text-color;
+      background-color: inherit;
+      line-height: 26px;
+      font-size: $font-size-md;
+      border: 1px solid transparent;
+      border-radius: $border-radius;
+
+      &:hover {
+        box-shadow: $panel-editor-viz-item-shadow-hover;
+        background: $panel-editor-viz-item-bg-hover;
+        border: $panel-editor-viz-item-border-hover;
+        color: $text-color-strong;
+        position: relative;
+      }
     `,
     calendarBody: css`
       background-color: white;
@@ -130,8 +155,50 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
       .react-calendar__navigation__arrow,
       .react-calendar__navigation {
         color: $input-color;
-        background-color: #fff;
+        background-color: ${theme.background.dropdown};
         border: 0;
+      }
+
+      .react-calendar__month-view__weekdays {
+        background-color: inherit;
+        text-align: center;
+
+        abbr {
+          border: 0;
+          text-decoration: none;
+          cursor: default;
+          color: $orange;
+          font-weight: $font-weight-semi-bold;
+          display: block;
+          padding: 4px 0 0 0;
+        }
+      }
+
+      .react-calendar__month-view__days {
+        background-color: inherit;
+      }
+
+      .react-calendar__tile--now {
+        background-color: inherit;
+      }
+
+      .react-calendar__navigation__label,
+      .react-calendar__navigation > button:focus,
+      .time-picker-calendar-tile:focus {
+        outline: 0;
+      }
+
+      .react-calendar__tile--now {
+        border-radius: $border-radius;
+      }
+
+      .react-calendar__tile--active,
+      .react-calendar__tile--active:hover {
+        color: $white;
+        font-weight: $font-weight-semi-bold;
+        background: linear-gradient(0deg, $blue-base, $blue-shade);
+        box-shadow: none;
+        border: 1px solid transparent;
       }
     `,
   };
