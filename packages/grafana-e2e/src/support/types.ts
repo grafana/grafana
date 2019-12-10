@@ -20,14 +20,19 @@ export const pageFactory = <S extends Selectors>({ url, selectors }: PageFactory
     const value = selectors[key];
     if (typeof value === 'string') {
       // @ts-ignore
-      pageObjects[key] = () => e2e().get(Selector.fromAriaLabel(value));
+      pageObjects[key] = () => {
+        e2e().logToConsole('Retrieving Selector:', value);
+        return e2e().get(Selector.fromAriaLabel(value));
+      };
     }
     if (typeof value === 'function') {
       // @ts-ignore
       pageObjects[key] = (text?: string) => {
         if (!text) {
+          e2e().logToConsole('Retrieving Selector:', value());
           return e2e().get(value());
         }
+        e2e().logToConsole('Retrieving Selector:', value(text));
         return e2e().get(Selector.fromAriaLabel(value(text)));
       };
     }
