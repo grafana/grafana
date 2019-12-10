@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTheme, stylesFactory } from '../../../themes';
 import { GrafanaTheme, TimeOption, TimeRange } from '@grafana/data';
 import { css } from 'emotion';
@@ -52,17 +52,29 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
       height: 381px;
       top: 38px;
       right: 136.5px;
+
+      @media only screen and (max-width: ${theme.breakpoints.md}) {
+        width: 218px;
+      }
     `,
     leftSide: css`
       display: flex;
       flex-direction: column;
       border-right: 1px solid ${theme.colors.gray4};
       width: 60%;
+
+      @media only screen and (max-width: ${theme.breakpoints.md}) {
+        display: none;
+      }
     `,
     rightSide: css`
       width: 40% !important;
+
+      @media only screen and (max-width: ${theme.breakpoints.md}) {
+        width: 100% !important;
+      }
     `,
-    rangesForm: css`
+    fullscreenForm: css`
       padding-top: 9px;
       padding-left: 6px;
       padding-right: 20%;
@@ -72,6 +84,26 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
+    `,
+    narrowscreenForm: css`
+      display: none;
+
+      @media only screen and (max-width: ${theme.breakpoints.md}) {
+        display: block;
+      }
+    `,
+    accordionHeader: css`
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid ${theme.colors.gray4};
+      padding: 6px 9px 6px 9px;
+    `,
+    accordionBody: css`
+      border-bottom: 1px solid ${theme.colors.gray4};
+      background: #f7f8fa;
+      box-shadow: inset 0px 2px 2px rgba(199, 208, 217, 0.5);
     `,
   };
 });
@@ -84,11 +116,12 @@ interface Props {
 const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }: Props) => {
   const theme = useTheme();
   const styles = getLabelStyles(theme);
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
     <div className={styles.container}>
       <div className={styles.leftSide}>
-        <div className={styles.rangesForm}>
+        <div className={styles.fullscreenForm}>
           <TimeRangeTitle>Absolute time range</TimeRangeTitle>
           <TimeRangeForm value={selected} onApply={onChange} />
         </div>
@@ -102,6 +135,23 @@ const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }: Props) => {
         </div>
       </div>
       <CustomScrollbar className={styles.rightSide}>
+        <div className={styles.narrowscreenForm}>
+          <div className={styles.accordionHeader} onClick={() => setCollapsed(!collapsed)}>
+            <TimeRangeTitle>Absolute time range</TimeRangeTitle>
+            {collapsed ? <i className="fa fa-caret-up" /> : <i className="fa fa-caret-down" />}
+          </div>
+          {collapsed && (
+            <div className={styles.accordionBody}>
+              <TimeRangeForm value={selected} onApply={onChange} calendarTrigger="onButton" />
+              <TimeRangeList
+                title="Recently used absolute ranges"
+                options={defaultSelectOptions.slice(0, 5)}
+                onSelect={onChange}
+                selected={selected}
+              />
+            </div>
+          )}
+        </div>
         <TimeRangeList
           title="Relative time range from now"
           options={defaultSelectOptions.slice(0, 50)}

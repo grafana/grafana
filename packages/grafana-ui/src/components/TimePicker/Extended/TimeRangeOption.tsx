@@ -15,10 +15,10 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 6px 16px 6px 9px;
-      border-left: 2px solid ${theme.background.dropdown};
+      padding: 6px 9px 6px 9px;
+      border-left: 2px solid rgba(255, 255, 255, 0);
 
-      :hover {
+      &:hover {
         background: ${theme.colors.gray98};
         border-image: linear-gradient(#f05a28 30%, #fbca0a 99%);
         border-image-slice: 1;

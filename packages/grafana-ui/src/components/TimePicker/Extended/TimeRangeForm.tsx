@@ -1,9 +1,12 @@
-import React, { PureComponent, FormEvent } from 'react';
+import React, { PureComponent, FormEvent, ReactNode } from 'react';
 import Forms from '../../Forms';
 import { TIME_FORMAT, TimeZone, isDateTime, TimeRange, DateTime } from '@grafana/data';
 import { stringToDateTimeType, isValidTimeString } from '../time';
 
+type CalendarTrigger = 'onFocus' | 'onButton';
+
 interface Props {
+  calendarTrigger?: CalendarTrigger;
   value: TimeRange;
   onApply: (range: TimeRange) => void;
 }
@@ -45,19 +48,35 @@ export default class TimeRangeForm extends PureComponent<Props, State> {
 
   render() {
     const { from, to } = this.state;
+    const { calendarTrigger = 'onFocus' } = this.props;
 
     return (
       <>
         <Forms.Field label="From">
-          <Forms.Input onChange={event => this.onChange(event, 'from')} {...from} />
+          <Forms.Input
+            onChange={event => this.onChange(event, 'from')}
+            addonAfter={calendarIcon(calendarTrigger)}
+            {...from}
+          />
         </Forms.Field>
         <Forms.Field label="To">
-          <Forms.Input onChange={event => this.onChange(event, 'to')} {...to} />
+          <Forms.Input
+            onChange={event => this.onChange(event, 'to')}
+            addonAfter={calendarIcon(calendarTrigger)}
+            {...to}
+          />
         </Forms.Field>
         <Forms.Button onClick={this.onApply}>Apply time interval</Forms.Button>
       </>
     );
   }
+}
+
+function calendarIcon(calendarTrigger: CalendarTrigger): ReactNode {
+  if (calendarTrigger === 'onButton') {
+    return <Forms.Button icon="fa fa-calendar" variant="secondary" />;
+  }
+  return null;
 }
 
 function toTimeRange(state: State): TimeRange {
