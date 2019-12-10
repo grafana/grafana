@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { SelectableValue } from '@grafana/data';
 import { action } from '@storybook/addon-actions';
 import { SegmentInput } from '.';
-import { UseState } from '../../utils/storybook/UseState';
 
 const SegmentFrame = ({ children }: any) => (
   <>

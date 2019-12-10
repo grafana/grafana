@@ -32,7 +32,7 @@ const SegmentFrame = ({ loadOptions, children }: any) => (
 );
 
 export const ArrayOptions = () => {
-  const [value, setValue] = useState(options[0]);
+  const [value, setValue] = useState<any>(options[0]);
   return (
     <SegmentFrame loadOptions={() => loadOptions(options)}>
       <SegmentAsync
@@ -59,9 +59,9 @@ export const ArrayOptionsWithPrimitiveValue = () => {
       <SegmentAsync
         value={value}
         loadOptions={() => loadOptions(options)}
-        onChange={item => {
-          setValue(item as string);
-          action('Segment value changed')(item);
+        onChange={({ value }) => {
+          setValue(value);
+          action('Segment value changed')(value);
         }}
       />
     </SegmentFrame>
@@ -81,7 +81,7 @@ export const GroupedArrayOptions = () => {
         value={value}
         loadOptions={() => loadOptions(groupedOptions)}
         onChange={item => {
-          setValue(item as SelectableValue<any>);
+          setValue(item);
           action('Segment value changed')(item.value);
         }}
       />
@@ -115,9 +115,9 @@ export const CustomLabel = () => {
       <SegmentAsync
         Component={<CustomLabelComponent value={value} />}
         loadOptions={() => loadOptions(groupedOptions)}
-        onChange={value => {
-          setValue(value as string);
-          action('Segment value changed')(value as string);
+        onChange={({ value }) => {
+          setValue(value);
+          action('Segment value changed')(value);
         }}
       />
     </SegmentFrame>

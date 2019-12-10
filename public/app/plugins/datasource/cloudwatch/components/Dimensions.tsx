@@ -42,7 +42,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
             allowCustomValue
             value={key}
             loadOptions={() => loadKeys().then(keys => [removeOption, ...excludeUsedKeys(keys)])}
-            onChange={(newKey: string) => {
+            onChange={({ value: newKey }) => {
               const { [key]: value, ...newDimensions } = data;
               if (newKey === removeText) {
                 setData({ ...newDimensions });
@@ -57,7 +57,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
             value={value}
             placeholder="select dimension value"
             loadOptions={() => loadValues(key)}
-            onChange={(newValue: string) => setData({ ...data, [key]: newValue })}
+            onChange={({ value: newValue }) => setData({ ...data, [key]: newValue })}
           />
           {Object.values(data).length > 1 && index + 1 !== Object.values(data).length && (
             <label className="gf-form-label query-keyword">AND</label>
@@ -73,7 +73,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
             </a>
           }
           loadOptions={() => loadKeys().then(excludeUsedKeys)}
-          onChange={(newKey: string) => setData({ ...data, [newKey]: '' })}
+          onChange={({ value: newKey }) => setData({ ...data, [newKey]: '' })}
         />
       )}
     </>

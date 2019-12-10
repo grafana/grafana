@@ -6,7 +6,7 @@ import { SegmentSelect, useExpandableLabel, SegmentProps } from './';
 
 export interface SegmentSyncProps<T> extends SegmentProps<T> {
   value?: T | SelectableValue<T>;
-  onChange: (item: T | SelectableValue<T>) => void;
+  onChange: (item: SelectableValue<T>) => void;
   options: Array<SelectableValue<T>>;
 }
 
@@ -38,14 +38,14 @@ export function Segment<T>({
 
   return (
     <SegmentSelect
-      value={value}
+      value={value && !_.isObject(value) ? { value } : value}
       options={options}
       width={width}
       onClickOutside={() => setExpanded(false)}
       allowCustomValue={allowCustomValue}
       onChange={item => {
         setExpanded(false);
-        onChange(_.isObject(value) ? item : item.value!);
+        onChange(item);
       }}
     />
   );

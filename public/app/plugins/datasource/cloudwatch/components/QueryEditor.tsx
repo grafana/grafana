@@ -116,7 +116,7 @@ export class QueryEditor extends PureComponent<Props, State> {
             placeholder="Select region"
             options={regions}
             allowCustomValue
-            onChange={(region: string) => this.onChange({ ...query, region })}
+            onChange={({ value: region }) => this.onChange({ ...query, region })}
           />
         </QueryInlineField>
 
@@ -128,7 +128,7 @@ export class QueryEditor extends PureComponent<Props, State> {
                 placeholder="Select namespace"
                 allowCustomValue
                 options={namespaces}
-                onChange={(namespace: string) => this.onChange({ ...query, namespace })}
+                onChange={({ value: namespace }) => this.onChange({ ...query, namespace })}
               />
             </QueryInlineField>
 
@@ -138,7 +138,7 @@ export class QueryEditor extends PureComponent<Props, State> {
                 placeholder="Select metric name"
                 allowCustomValue
                 loadOptions={this.loadMetricNames}
-                onChange={metricName => this.onChange({ ...query, metricName })}
+                onChange={({ value: metricName }) => this.onChange({ ...query, metricName })}
               />
             </QueryInlineField>
 

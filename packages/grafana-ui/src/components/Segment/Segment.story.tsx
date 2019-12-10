@@ -24,17 +24,13 @@ const SegmentFrame = ({ options, children }: any) => (
         <span className="gf-form-label width-8 query-keyword">Segment Name</span>
       </div>
       {children}
-      <Segment
-        Component={AddButton}
-        onChange={value => action('New value added')(value as SelectableValue<string>)}
-        options={options}
-      />
+      <Segment Component={AddButton} onChange={({ value }) => action('New value added')(value)} options={options} />
     </div>
   </>
 );
 
 export const ArrayOptions = () => {
-  const [value, setValue] = useState(options[0]);
+  const [value, setValue] = useState<any>(options[0]);
   return (
     <SegmentFrame options={options}>
       <Segment
@@ -61,7 +57,7 @@ export const ArrayOptionsWithPrimitiveValue = () => {
       <Segment
         value={value}
         options={options}
-        onChange={value => {
+        onChange={({ value }) => {
           setValue(value);
           action('Segment value changed')(value);
         }}
@@ -71,7 +67,7 @@ export const ArrayOptionsWithPrimitiveValue = () => {
 };
 
 export const ArrayOptionsWithPlaceholder = () => {
-  const [value, setValue] = useState(undefined);
+  const [value, setValue] = useState<any>(undefined);
   return (
     <SegmentFrame options={options}>
       <Segment
@@ -88,7 +84,7 @@ export const ArrayOptionsWithPlaceholder = () => {
 };
 
 export const GroupedArrayOptions = () => {
-  const [value, setValue] = useState(groupedOptions[0].options[0]);
+  const [value, setValue] = useState<any>(groupedOptions[0].options[0]);
   return (
     <SegmentFrame options={options}>
       <Segment
@@ -111,9 +107,9 @@ export const CustomOptionsAllowed = () => {
         allowCustomValue
         value={value}
         options={options}
-        onChange={item => {
-          setValue(item);
-          action('Segment value changed')(item.value);
+        onChange={({ value }) => {
+          setValue(value);
+          action('Segment value changed')(value);
         }}
       />
     </SegmentFrame>
@@ -123,16 +119,15 @@ export const CustomOptionsAllowed = () => {
 const CustomLabelComponent = ({ value }: any) => <div className="gf-form-label">custom({value})</div>;
 
 export const CustomLabelField = () => {
-  const [value, setValue] = useState<SelectableValue<string>>(groupedOptions[0].options[0].value);
+  const [value, setValue] = useState<any>(groupedOptions[0].options[0].value);
   return (
     <SegmentFrame options={options}>
       <Segment
         Component={<CustomLabelComponent value={value} />}
         options={groupedOptions}
-        onChange={item => {
-          console.log({ item });
-          setValue(item as SelectableValue<string>);
-          action('Segment value changed')((item as SelectableValue<string>).value);
+        onChange={({ value }) => {
+          setValue(value);
+          action('Segment value changed')(value);
         }}
       />
     </SegmentFrame>

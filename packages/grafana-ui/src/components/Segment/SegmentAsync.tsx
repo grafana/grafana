@@ -8,7 +8,7 @@ import { useExpandableLabel, SegmentProps } from '.';
 export interface SegmentAsyncProps<T> extends SegmentProps<T> {
   value?: T | SelectableValue<T>;
   loadOptions: (query?: string) => Promise<Array<SelectableValue<T>>>;
-  onChange: (item: T | SelectableValue<T>) => void;
+  onChange: (item: SelectableValue<T>) => void;
 }
 
 export function SegmentAsync<T>({
@@ -47,7 +47,7 @@ export function SegmentAsync<T>({
 
   return (
     <SegmentSelect
-      value={value}
+      value={value && !_.isObject(value) ? { value } : value}
       options={loadedOptions}
       width={width}
       noOptionsMessage={selectPlaceholder}
@@ -61,7 +61,7 @@ export function SegmentAsync<T>({
         setSelectPlaceholder('');
         setLoadedOptions([]);
         setExpanded(false);
-        onChange(_.isObject(value) ? item : item.value!);
+        onChange(item);
       }}
     />
   );
