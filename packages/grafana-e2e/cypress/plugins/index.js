@@ -10,6 +10,12 @@ module.exports = on => {
   // });
   on('file:preprocessor', cypressTypeScriptPreprocessor);
   on('task', {
-    compareSnapshotsPlugin
+    compareSnapshotsPlugin,
+  });
+  on('task', {
+    log(args) {
+      args.optional ? console.log(args.message, args.optional) : console.log(args.message);
+      return null;
+    },
   });
 };
