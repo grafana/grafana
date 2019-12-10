@@ -1,8 +1,10 @@
 import React from 'react';
-import { DataFrame } from '@grafana/data';
+import { DataFrame, GrafanaTheme } from '@grafana/data';
 // @ts-ignore
 import { useBlockLayout, useSortBy, useTable } from 'react-table';
 import { FixedSizeList } from 'react-window';
+import { css } from 'emotion';
+import { stylesFactory, useTheme } from '../../themes';
 
 export interface Props {
   data: DataFrame;
@@ -34,7 +36,40 @@ const getColumns = (data: DataFrame) => {
   });
 };
 
+const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
+  const colors = theme.colors;
+
+  return {
+    tableHeader: css`
+      padding: 3px 10px;
+
+      background: linear-gradient(135deg, ${colors.dark8}, ${colors.dark6});
+      border-top: 2px solid ${colors.bodyBg};
+      border-bottom: 2px solid ${colors.bodyBg};
+
+      cursor: pointer;
+      white-space: nowrap;
+
+      color: ${colors.blue};
+    `,
+    tableCell: css`
+      padding: 3px 10px;
+
+      background: linear-gradient(180deg, ${colors.dark5} 10px, ${colors.dark2} 100px);
+
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+
+      border-right: 2px solid ${colors.bodyBg};
+      border-bottom: 2px solid ${colors.bodyBg};
+    `,
+  };
+});
+
 export const NewTable = ({ data }: Props) => {
+  const theme = useTheme();
+  const tableStyles = getTableStyles(theme);
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow, totalColumnsWidth } = useTable(
     {
       columns: React.useMemo(() => getColumns(data), []),
@@ -53,11 +88,10 @@ export const NewTable = ({ data }: Props) => {
           {...row.getRowProps({
             style,
           })}
-          className="tr"
         >
           {row.cells.map((cell: any) => {
             return (
-              <div {...cell.getCellProps()} className="td">
+              <div className={tableStyles.tableCell} {...cell.getCellProps()}>
                 {cell.render('Cell')}
               </div>
             );
@@ -74,7 +108,7 @@ export const NewTable = ({ data }: Props) => {
         {headerGroups.map((headerGroup: any) => (
           <div {...headerGroup.getHeaderGroupProps()}>
             {headerGroup.headers.map((column: any) => (
-              <div className="gf-table-header" {...column.getHeaderProps(column.getSortByToggleProps())}>
+              <div className={tableStyles.tableHeader} {...column.getHeaderProps(column.getSortByToggleProps())}>
                 {column.render('Header')}
                 <span>{column.isSorted ? (column.isSortedDesc ? ' 🔽' : ' 🔼') : ''}</span>
               </div>
@@ -83,7 +117,7 @@ export const NewTable = ({ data }: Props) => {
         ))}
       </div>
       <div {...getTableBodyProps()}>
-        <FixedSizeList height={400} itemCount={rows.length} itemSize={35} width={totalColumnsWidth}>
+        <FixedSizeList height={400} itemCount={rows.length} itemSize={27} width={totalColumnsWidth}>
           {RenderRow}
         </FixedSizeList>
       </div>
