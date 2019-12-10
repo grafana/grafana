@@ -14,8 +14,8 @@ import { ReducerID, reduceField } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { MatcherConfig } from '../types/transformations';
-import { frameMatchers, fieldMatchers } from '../transformations';
-import { FrameMatcher, FieldMatcher } from '../types/transformations';
+import { fieldMatchers } from '../transformations';
+import { FieldMatcher } from '../types/transformations';
 
 export interface DynamicConfigValue {
   path: string;
