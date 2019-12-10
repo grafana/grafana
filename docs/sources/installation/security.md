@@ -12,7 +12,7 @@ weight = 2
 
 # Security
 
-If you run non-Grafana web services on your Grafana server or within its local network, then they might be vulnerable to exploitation through the Grafana data source proxy.
+If you run non-Grafana web services on your Grafana server or within its local network, then they might be vulnerable to exploitation through the Grafana data source proxy or other methods.
 
 To prevent this type of exploitation from happening, we recommend that you apply one or more of the precautions listed below.
 
@@ -22,11 +22,13 @@ You can configure Grafana to only allow certain IP addresses or hostnames to be 
 
 ## Firewall rules
 
-Configure a firewall, for example using iptables, to restrict Grafana from making network requests to certain internal web services.
+Configure a firewall to restrict Grafana from making network requests to certain internal web services. 
+
+There are many firewall tools available, refer to the documentation for your specific security tool. For example, Linux users can use [iptables](https://en.wikipedia.org/wiki/Iptables).
 
 ## Proxy server
 
-Require all network requests being made by Grafana to go through a proxy server.
+Require all network requests being made by Grafana to go through a proxy server. Refer to [Running Grafana behind a reverse proxy](https://grafana.com/docs/grafana/latest/installation/behind_proxy/) for examples.
 
 ## Viewer query permissions
 
