@@ -192,7 +192,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
-**Example Response**:
+**Example Graphite Response**:
 
 ```http
 HTTP/1.1 200
