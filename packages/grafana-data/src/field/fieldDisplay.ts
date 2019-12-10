@@ -4,7 +4,7 @@ import isEmpty from 'lodash/isEmpty';
 
 import { getDisplayProcessor } from './displayProcessor';
 import { getFlotPairs } from '../utils/flotPairs';
-import { FieldConfig, DataFrame, FieldType } from '../types/dataFrame';
+import { Field, FieldConfig, DataFrame, FieldType } from '../types/dataFrame';
 import { InterpolateFunction } from '../types/panel';
 import { DataFrameView } from '../dataframe/DataFrameView';
 import { GraphSeriesValue } from '../types/graph';
@@ -14,13 +14,6 @@ import { ReducerID, reduceField } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { MatcherConfig } from '../types/transformations';
-
-export interface ConfigPropertyInfo {
-  path: string;
-  name: string;
-  description: string;
-  type: string; //
-}
 
 export interface DynamicConfigValue {
   path: string;
@@ -288,7 +281,7 @@ export function applyFieldConfigOverridesAndDefaults(data: DataFrame, source: Fi
 
 export function getFieldConfigFromSource(field: Field, data: DataFrame, source: FieldConfigSource): FieldConfig {
   const config = field.config;
-  //
+  // TODO:
   return config;
 }
 
@@ -362,9 +355,9 @@ export function getDisplayValueAlignmentFactors(values: FieldDisplay[]): Display
 function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): FieldDisplay {
   const displayName = 'No data';
   const { fieldOptions } = options;
-  const { defaults, override } = fieldOptions;
+  const { defaults } = fieldOptions;
 
-  const config = getFieldProperties(defaults, {}, override);
+  const config = getFieldProperties(defaults, {});
   const displayProcessor = getDisplayProcessor({
     config,
     theme: options.theme,

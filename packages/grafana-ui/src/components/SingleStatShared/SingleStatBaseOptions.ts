@@ -110,6 +110,20 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     options = moveThresholdsAndMappingsToField(options);
   }
 
+  if (previousVersion < 6.6) {
+    // discard the old `override` options and enter an empty array
+    if (options.fieldOptions && options.fieldOptions.override) {
+      const { override, ...rest } = options.fieldOptions;
+      options = {
+        ...options,
+        fieldOptions: {
+          ...rest,
+          overrides: [],
+        },
+      };
+    }
+  }
+
   return options as SingleStatBaseOptions;
 }
 

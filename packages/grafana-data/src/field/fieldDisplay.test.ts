@@ -130,7 +130,7 @@ describe('FieldDisplay', () => {
     const mapEmptyToText = '0';
     const options = createEmptyDisplayOptions({
       fieldOptions: {
-        override: {
+        defaults: {
           mappings: [
             {
               id: 1,
@@ -203,8 +203,8 @@ function createDisplayOptions(extend = {}): GetFieldDisplayValuesOptions {
     },
     fieldOptions: {
       calcs: [],
-      override: {},
       defaults: {},
+      overrides: [],
     },
     theme: {} as GrafanaTheme,
   };
