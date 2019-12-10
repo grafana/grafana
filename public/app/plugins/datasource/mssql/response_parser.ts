@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { toUtc } from '@grafana/data';
 
 export default class ResponseParser {
   processQueryResult(res: any) {
@@ -104,12 +105,15 @@ export default class ResponseParser {
     const table = data.data.results[options.annotation.name].tables[0];
 
     let timeColumnIndex = -1;
+    let timeEndColumnIndex = -1;
     let textColumnIndex = -1;
     let tagsColumnIndex = -1;
 
     for (let i = 0; i < table.columns.length; i++) {
       if (table.columns[i].text === 'time') {
         timeColumnIndex = i;
+      } else if (table.columns[i].text === 'timeend') {
+        timeEndColumnIndex = i;
       } else if (table.columns[i].text === 'text') {
         textColumnIndex = i;
       } else if (table.columns[i].text === 'tags') {
@@ -124,9 +128,14 @@ export default class ResponseParser {
     const list = [];
     for (let i = 0; i < table.rows.length; i++) {
       const row = table.rows[i];
+      const timeEnd =
+        timeEndColumnIndex !== -1 && row[timeEndColumnIndex]
+          ? Math.floor(toUtc(row[timeEndColumnIndex]).valueOf())
+          : undefined;
       list.push({
         annotation: options.annotation,
         time: Math.floor(row[timeColumnIndex]),
+        timeEnd,
         text: row[textColumnIndex],
         tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : [],
       });
