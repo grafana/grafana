@@ -38,7 +38,7 @@ export class EventBus {
     return new EventBusGroup(this);
   }
 
-  public on<T extends BusEvent>(typeFilter: BusEventType<T>, handler: BusEventHandler): Unsubscribable {
+  public on<T extends BusEvent>(typeFilter: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
     return this.eventStream
       .pipe(
         filter(event => {
@@ -48,7 +48,7 @@ export class EventBus {
       .subscribe({ next: handler });
   }
 
-  public subscribe(handler: BusEventHandler): Unsubscribable {
+  public subscribe(handler: BusEventHandler<T>): Unsubscribable {
     return this.eventStream.subscribe({ next: handler });
   }
 }
