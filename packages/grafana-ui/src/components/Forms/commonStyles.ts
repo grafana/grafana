@@ -24,6 +24,7 @@ export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
     font-size: ${theme.typography.size.md};
     color: ${colors.formInputText};
     border: 1px solid ${borderColor};
+    padding: 0 ${theme.spacing.sm} 0 ${theme.spacing.sm};
 
     &:hover {
       border-color: ${colors.formInputBorder};

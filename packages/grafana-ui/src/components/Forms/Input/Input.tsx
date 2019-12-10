@@ -129,8 +129,6 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
         border-radius: ${borderRadius};
         height: 100%;
         width: 100%;
-        padding: 0 ${theme.spacing.sm} 0 ${theme.spacing.sm};
-        font-size: ${theme.typography.size.md};
 
         /*
          Restoring increase/decrease spinner on number inputs. Overwriting rules implemented in

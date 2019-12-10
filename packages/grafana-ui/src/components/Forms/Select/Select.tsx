@@ -7,12 +7,12 @@ import { default as ReactSelect, Creatable, components } from '@torkelo/react-se
 import { Icon } from '../../Icon/Icon';
 import { useTheme } from '../../../themes';
 import { cx, css } from 'emotion';
-import { getFocusCss, inputSizes } from '../commonStyles';
+import { getFocusCss, inputSizes, sharedInputStyle } from '../commonStyles';
 import { FormInputSize } from '../types';
 import resetSelectStyles from './resetSelectStyles';
 import { SelectMenu, SelectMenuOptions } from './SelectMenu';
 import { SingleValue } from './SingleValue';
-import { InputControl } from './InputControl';
+import { IndicatorsContainer } from './IndicatorsContainer';
 
 export interface SelectCommonProps<T> {
   defaultValue?: any;
@@ -59,11 +59,11 @@ const renderDefaultControl = (props: any) => {
   const styles = getInputStyles({ theme, invalid: false });
 
   return (
-    // <InputControl />
     <>
       <div
         className={cx(
           styles.wrapper,
+          sharedInputStyle(theme),
           props.isFocused &&
             css`
               ${getFocusCss(theme)}
@@ -71,6 +71,9 @@ const renderDefaultControl = (props: any) => {
           css`
             min-height: 32px;
             height: auto;
+            flex-direction: row;
+            padding-right: 0;
+            max-width: 100%;
           `
         )}
         ref={ref}
@@ -81,10 +84,12 @@ const renderDefaultControl = (props: any) => {
             styles.inputWrapper,
             css`
               max-width: 100%;
+              display: flex;
+              flex-direction: row;
             `
           )}
         >
-          <div className={styles.input}>{children}</div>
+          {children}
         </div>
       </div>
     </>
@@ -98,24 +103,20 @@ const renderDefaultValueContainer = (props: any) => {
   return (
     <div
       className={css`
-        padding-right: 40px;
         display: flex;
         flex-grow: 1;
         flex-direction: row;
         align-items: center;
         height: 100%;
+        position: relative;
+        max-width: 100%;
+        flex: 1 1 0%;
+        overflow: hidden;
       `}
     >
       {children}
     </div>
   );
-};
-
-const renderDefaultIndicatorsContainer = (props: any) => {
-  const { children, ...otherProps } = props;
-  const theme = useTheme();
-  const styles = getInputStyles({ theme, invalid: false });
-  return <div {...otherProps}>{children}</div>;
 };
 
 export function Select<T>({
@@ -147,7 +148,6 @@ export function Select<T>({
   renderOptionLabel,
 }: SelectProps<T>) {
   const SelectComponent: ReactSelect | Creatable = ReactSelect;
-  const theme = useTheme();
   const selectedValue = options.filter(o => o.value === value)[0];
   console.log(selectedValue);
 
@@ -162,7 +162,7 @@ export function Select<T>({
           Control: renderDefaultControl,
           Option: (props: any) => <SelectMenuOptions {...props} renderOptionLabel={renderOptionLabel} />,
           ValueContainer: renderDefaultValueContainer,
-          IndicatorsContainer: renderDefaultIndicatorsContainer,
+          IndicatorsContainer: IndicatorsContainer,
           IndicatorSeparator: () => null,
           ClearIndicator: () => {
             return <Icon name="calendar" />;
@@ -192,8 +192,9 @@ export function Select<T>({
         }}
         styles={{
           ...resetSelectStyles(),
-          input: () =>
-            css`
+          // @ts-ignore
+          input: () => {
+            return css`
               height: 100%;
               max-width: 100%;
               > div {
@@ -204,7 +205,8 @@ export function Select<T>({
                 height: 100%;
                 max-width: 100%;
               }
-            `,
+            `;
+          },
         }}
         menuShouldScrollIntoView={false}
         placeholder={placeholder || 'Choose'}
