@@ -1,16 +1,16 @@
-# End to End test framework
-As our company grows our need for end to end (called e2e from now on) tests have also grown. Today we're using a minimal home grown solution built on top of Cypress for our e2e tests. 
+# End to end test framework
+Grafana Labs uses a minimal home grown solution built on top of Cypress for our end to end (e2e) tests. 
 
 ## Basic concepts
-A good introduction to some good e2e practices can be found [here](https://martinfowler.com/bliki/PageObject.html).
-- `Selector`, an unique identifier that is used from the e2e framework to retrieve an element from the Browser 
-- `Page`, an abstraction for an object that contains one or more `Selectors`
-- `Flow`, an abstraction that contains a sequence of actions on one or more `Pages` that can be reused and shared between tests
+Here is a good introduction to e2e best practices: https://martinfowler.com/bliki/PageObject.html.
+- `Selector`: A unique identifier that is used from the e2e framework to retrieve an element from the Browser 
+- `Page`: An abstraction for an object that contains one or more `Selectors`
+- `Flow`: An abstraction that contains a sequence of actions on one or more `Pages` that can be reused and shared between tests
 
 ## Basic example
 Lets start with a simple example with a single selector and for simplicity all examples will be in JSX.
 
-In our example app we have an input that we during our e2e test want to type some text in.
+In our example app, we have an input that we want to type some text into during our e2e test.
 ```jsx harmony
 <div>
     <input type="text" className="gf-form-input login-form-input"/>
@@ -20,16 +20,16 @@ In our example app we have an input that we during our e2e test want to type som
 We could define a selector using `JQuery` [type selectors](https://api.jquery.com/category/selectors/) with a string like `'.gf-form-input.login-form-input'` but that would be brittle as style changes occur frequently and there is nothing that signalizes to future developers that this input is part of an e2e test.
 
 At Grafana we've decided to use `aria-label` as our preferred way of defining our selectors instead of for instance`data-*` attributes because it also aids in accessibility.
-Lets add an descriptive `aria-label` to our simple example.
+Let's add a descriptive `aria-label` to our simple example.
 ```jsx harmony
 <div>
     <input type="text" className="gf-form-input login-form-input" aria-label="Username input field"/>
 </div>
 ```
 
-Now that we added the `aria-label` we suddenly get more information about this particular field. It's an input field that represents an username but there it's still not really signalizing that it's part of a e2e test.
+Now that we added the `aria-label` we suddenly get more information about this particular field. It's an input field that represents a username, but there it's still not really signaling that it's part of an e2e test.
 
-The next step is to create a `Page` representation in our e2e test framework to glue the test with the real implementation using the `pageFactory` function. For that function we can supply an `url` and `selectors` like the example below.
+The next step is to create a `Page` representation in our e2e test framework to glue the test with the real implementation using the `pageFactory` function. For that function we can supply a `url` and `selectors` like in the example below:
 ```typescript
 export const Login = pageFactory({
   url: '/login', // used when called from Login.visit()
@@ -56,9 +56,9 @@ Now that we have a `Page` called `Login` in our `Pages` const we can use that to
 </div>
 ```
 
-The last step in our example is to use our `Login` page as part of a test. The `pageFactory` function we used before gives us 2 things by using it. 
-- Firstly the `url` property will be used whenever we call the `visit` function and is equivalent to the Cypress function [cy.visit()](https://docs.cypress.io/api/commands/visit.html#Syntax)
-- Secondly any defined selector in the `selectors` property can be accessed from `Login` page by invoking it and this is equivalent to the result of the Cypress function [cy.get(...)](https://docs.cypress.io/api/commands/get.html#Syntax) 
+The last step in our example is to use our `Login` page as part of a test. The `pageFactory` function we used before gives us two things by using it. 
+- The `url` property is used whenever we call the `visit` function and is equivalent to the Cypress function [cy.visit()](https://docs.cypress.io/api/commands/visit.html#Syntax).
+- Any defined selector in the `selectors` property can be accessed from `Login` page by invoking it and this is equivalent to the result of the Cypress function [cy.get(...)](https://docs.cypress.io/api/commands/get.html#Syntax).
 ```ecmascript 6
 describe('Login test', () => {
   it('Should pass', () => {
@@ -86,7 +86,7 @@ Lets take a look at an example that uses the same `selector` for multiple items 
 ```
 ```
 
-Just as before in the basic example we'll start by creating a page abstraction using the `pageFactory` function. 
+Just as before in the basic example we'll start by creating a page abstraction using the `pageFactory` function: 
 ```typescript
 export const DataSources = pageFactory({
   url: '/datasources',
@@ -95,11 +95,11 @@ export const DataSources = pageFactory({
   },
 });
 ```
-You might have noticed that instead of a simple `string` as the `selector` we're using a `function` that takes a string parameter as an argument and returns a formatted string using the argument.
+You might have noticed that instead of a simple `string` as the `selector`, we're using a `function` that takes a string parameter as an argument and returns a formatted string using the argument.
 
-Just as before we need to add `DataSources` page to the exported const `Pages` in `packages/grafana-e2e/src/pages/index.ts`.
+Just as before we need to add the `DataSources` page to the exported const `Pages` in `packages/grafana-e2e/src/pages/index.ts`.
 
-The next step is to use the `dataSources` selector function as in our example like below
+The next step is to use the `dataSources` selector function as in our example like below:
 ```jsx harmony
 <ul>
   {dataSources.map(dataSource => (
@@ -114,7 +114,7 @@ The next step is to use the `dataSources` selector function as in our example li
 </ul>
 ```
 
-When this list is rendered with the data sources with names `A`, `B`, `C` the resulting html would become
+When this list is rendered with the data sources with names `A`, `B`, `C` the resulting html would become:
 ```jsx harmony
 <div class="card-item-name" aria-label="Data source list item A">
  A
@@ -129,7 +129,7 @@ When this list is rendered with the data sources with names `A`, `B`, `C` the re
 </div>
 ```
 
-Now we can go ahead and write our test and the one thing that differs from the `Basic example` is that we pass in which data source we want to click on as an argument to the selector function.
+Now we can go ahead and write our test and the one thing that differs from the `Basic example` is that we pass in which data source we want to click on as an argument to the selector function:
 ```ecmascript 6
 describe('List test', () => {
   it('Clicking on data source named B', () => {
