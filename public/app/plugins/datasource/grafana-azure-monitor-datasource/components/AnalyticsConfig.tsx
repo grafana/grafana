@@ -8,6 +8,8 @@ export interface Props {
   options: AzureDataSourceSettings;
   subscriptions: SelectableValue[];
   workspaces: SelectableValue[];
+  copyAzureMonitorCreds: () => void;
+  onUpdateOptions: (options: AzureDataSourceSettings) => void;
   onUpdateOption: (key: string, val: any, secure: boolean) => void;
   onResetOptionKey: (key: string) => void;
   onLoadSubscriptions: (type?: string) => void;
@@ -35,8 +37,39 @@ export class AnalyticsConfig extends PureComponent<Props> {
   };
 
   onAzureLogAnalyticsSameAsChange = () => {
-    const { options } = this.props;
-    this.props.onUpdateOption('azureLogAnalyticsSameAs', !options.jsonData.azureLogAnalyticsSameAs, false);
+    const { options, onUpdateOptions, copyAzureMonitorCreds } = this.props;
+
+    if (!options.jsonData.azureLogAnalyticsSameAs && options.secureJsonData.clientSecret) {
+      copyAzureMonitorCreds();
+    }
+
+    if (!options.jsonData.azureLogAnalyticsSameAs) {
+      // if currently off, clear monitor secret
+      onUpdateOptions({
+        ...options,
+        jsonData: {
+          ...options.jsonData,
+          azureLogAnalyticsSameAs: !options.jsonData.azureLogAnalyticsSameAs,
+        },
+        secureJsonData: {
+          ...options.secureJsonData,
+          clientSecret: '',
+        },
+        secureJsonFields: {
+          clientSecret: false,
+        },
+      });
+    } else {
+      onUpdateOptions({
+        ...options,
+        jsonData: {
+          ...options.jsonData,
+          azureLogAnalyticsSameAs: !options.jsonData.azureLogAnalyticsSameAs,
+        },
+      });
+    }
+
+    // init popover to warn secret needs to be re-entered
   };
 
   onLogAnalyticsResetClientSecret = () => {

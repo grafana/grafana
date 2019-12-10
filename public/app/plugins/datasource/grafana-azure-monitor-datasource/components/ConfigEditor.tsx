@@ -77,6 +77,24 @@ export class ConfigEditor extends PureComponent<Props, State> {
     updateDatasourcePluginResetKeyOption(this.props, key);
   };
 
+  copyAzureMonitorCreds = () => {
+    const { options, onOptionsChange } = this.props;
+    onOptionsChange({
+      ...options,
+      jsonData: {
+        ...options.jsonData,
+        azureLogAnalyticsSameAs: true,
+        logAnalyticsSubscriptionId: options.jsonData.subscriptionId,
+        logAnalyticsTenantId: options.jsonData.tenantId,
+        logAnalyticsClientId: options.jsonData.clientId,
+      },
+      secureJsonData: {
+        ...options.secureJsonData,
+        logAnalyticsClientSecret: options.secureJsonData.clientSecret,
+      },
+    });
+  };
+
   updateOptions = (options: AzureDataSourceSettings) => {
     if (options.hasOwnProperty('secureJsonData')) {
       if (options.secureJsonData.hasOwnProperty('clientSecret') && options.secureJsonData.clientSecret.length === 0) {
@@ -134,10 +152,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     await this.backendSrv
       .put(`/api/datasources/${this.props.options.id}`, this.props.options)
       .then((result: AzureDataSourceSettings) => {
-        this.updateOptions({
-          ...this.props.options,
-          version: result.version,
-        });
+        updateDatasourcePluginOption(this.props, 'version', result.version);
       });
 
     if (type && type === 'workspacesloganalytics') {
@@ -257,6 +272,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         <MonitorConfig
           options={options}
           subscriptions={subscriptions}
+          copyAzureMonitorCreds={this.copyAzureMonitorCreds}
           onLoadSubscriptions={this.onLoadSubscriptions}
           onUpdateOption={this.updateOption}
           onResetOptionKey={this.resetKey}
@@ -266,6 +282,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
           options={options}
           workspaces={logAnalyticsWorkspaces}
           subscriptions={logAnalyticsSubscriptions}
+          copyAzureMonitorCreds={this.copyAzureMonitorCreds}
+          onUpdateOptions={this.props.onOptionsChange}
           onUpdateOption={this.updateOption}
           onResetOptionKey={this.resetKey}
           onLoadSubscriptions={this.onLoadSubscriptions}

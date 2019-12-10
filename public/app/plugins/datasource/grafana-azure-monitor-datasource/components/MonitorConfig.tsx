@@ -13,6 +13,7 @@ const azureClouds = [
 export interface Props {
   options: AzureDataSourceSettings;
   subscriptions: SelectableValue[];
+  copyAzureMonitorCreds: () => void;
   onUpdateOption: (key: string, val: any, secure: boolean) => void;
   onResetOptionKey: (key: string) => void;
   onLoadSubscriptions: () => void;
@@ -33,6 +34,12 @@ export class MonitorConfig extends PureComponent<Props> {
 
   onClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.props.onUpdateOption('clientSecret', event.target.value, true);
+
+    const { options, copyAzureMonitorCreds } = this.props;
+
+    if (options.jsonData.azureLogAnalyticsSameAs && event.target.value) {
+      copyAzureMonitorCreds();
+    }
   };
 
   onResetClientSecret = () => {
