@@ -1,10 +1,16 @@
 import { Subject, Unsubscribable } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
+/*
+ * Base event type
+ */
 export abstract class BusEvent {
   readonly type: string;
 }
 
+/*
+ * Bas event type with payload
+ */
 export abstract class BusEventWithPayload<T> extends BusEvent {
   readonly payload: T;
 
@@ -14,16 +20,36 @@ export abstract class BusEventWithPayload<T> extends BusEvent {
   }
 }
 
+/*
+ * Interface for an event type constructor
+ */
 export interface BusEventType<T extends BusEvent> {
   type: string;
   new (...args: any[]): T;
 }
 
+/*
+ * Event callback/handler type
+ */
 export interface BusEventHandler<T extends BusEvent> {
   (event: T): void;
 }
 
-export class EventBus {
+/*
+ * Main minimal interface
+ */
+export interface EventBus {
+  /*
+   * Emit single vent
+   */
+  emit<T extends BusEvent>(event: T): void;
+  /*
+   * Subscribe to single event
+   */
+  on<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable;
+}
+
+export class EventBusSrv implements EventBus {
   private eventStream: Subject<any>;
 
   constructor() {
@@ -32,10 +58,6 @@ export class EventBus {
 
   public emit<T extends BusEvent>(event: T): void {
     this.eventStream.next(event);
-  }
-
-  public newGroup(): EventBusGroup {
-    return new EventBusGroup(this);
   }
 
   public on<T extends BusEvent>(typeFilter: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
@@ -47,16 +69,12 @@ export class EventBus {
       )
       .subscribe({ next: handler });
   }
-
-  public subscribe<T extends BusEvent>(handler: BusEventHandler<T>): Unsubscribable {
-    return this.eventStream.subscribe({ next: handler });
-  }
 }
 
 /**
  * Handles unsubscribing to all events subscribed through this group
  */
-export class EventBusGroup {
+export class EventBusGroup implements EventBus {
   private subscriptions: Unsubscribable[];
 
   constructor(private bus: EventBus) {
@@ -77,7 +95,6 @@ export class EventBusGroup {
     for (const subscription of this.subscriptions) {
       subscription.unsubscribe();
     }
-
     this.subscriptions = [];
   }
 }

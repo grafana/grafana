@@ -13,7 +13,7 @@ import sortByKeys from 'app/core/utils/sort_by_keys';
 // Types
 import { PanelModel, GridPos, panelAdded, panelRemoved } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
-import { TimeRange, TimeZone, AppEvent } from '@grafana/data';
+import { TimeRange, TimeZone, AppEvent, EventBus, EventBusSrv } from '@grafana/data';
 import { UrlQueryValue } from '@grafana/runtime';
 import { PanelEvents } from '@grafana/data';
 import { KIOSK_MODE_TV, DashboardMeta, CoreEvents } from 'app/types';
@@ -59,9 +59,11 @@ export class DashboardModel {
   iteration: number;
   meta: DashboardMeta;
   events: Emitter;
+  eventBus: EventBus;
 
   static nonPersistedProperties: { [str: string]: boolean } = {
     events: true,
+    eventBus: true,
     meta: true,
     panels: true, // needs special handling
     templating: true, // needs special handling
@@ -75,6 +77,7 @@ export class DashboardModel {
     }
 
     this.events = new Emitter();
+    this.eventBus = new EventBusSrv();
     this.id = data.id || null;
     this.uid = data.uid || null;
     this.revision = data.revision;

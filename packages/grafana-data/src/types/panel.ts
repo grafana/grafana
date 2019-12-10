@@ -1,4 +1,3 @@
-import { Unsubscribable } from 'rxjs';
 import { ComponentClass, ComponentType } from 'react';
 import { DataQueryError, DataQueryRequest } from './datasource';
 import { GrafanaPlugin, PluginMeta } from './plugin';
@@ -6,7 +5,7 @@ import { ScopedVars } from './ScopedVars';
 import { LoadingState } from './data';
 import { DataFrame } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
-import { BusEvent, BusEventWithPayload, BusEventType, BusEventHandler } from '../utils/EventBus';
+import { BusEventWithPayload, EventBus } from '../utils/EventBus';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -25,11 +24,6 @@ export interface PanelData {
   timeRange: TimeRange;
 }
 
-export interface PanelEventBus {
-  emit<T extends BusEvent>(event: T): void;
-  on<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable;
-}
-
 export interface PanelProps<T = any> {
   id: number; // ID within the current dashboard
   data: PanelData;
@@ -43,7 +37,7 @@ export interface PanelProps<T = any> {
   height: number;
   replaceVariables: InterpolateFunction;
   onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
-  eventBus: PanelEventBus;
+  eventBus: EventBus;
 }
 
 export interface PanelEditorProps<T = any> {

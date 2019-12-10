@@ -25,7 +25,6 @@ import {
   PanelEvents,
   PanelData,
   PanelPlugin,
-  EventBus,
   EventBusGroup,
 } from '@grafana/data';
 
@@ -60,7 +59,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    this.panelBus = new EventBusGroup(new EventBus());
+    this.panelBus = new EventBusGroup(this.props.dashboard.eventBus);
 
     this.state = {
       isFirstLoad: true,
@@ -103,6 +102,9 @@ export class PanelChrome extends PureComponent<Props, State> {
   componentWillUnmount() {
     this.props.panel.events.off(PanelEvents.refresh, this.onRefresh);
     this.props.panel.events.off(PanelEvents.render, this.onRender);
+
+    // unsubscribe to any events the panel subscribed to
+    this.panelBus.unsubscribe();
 
     if (this.querySubscription) {
       this.querySubscription.unsubscribe();

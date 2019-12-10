@@ -90,12 +90,7 @@ export class TextPanel extends PureComponent<Props, State> {
   }
 
   onMouseEnter = () => {
-    this.props.eventBus.emit(
-      new PanelHoverEvent({
-        panelId: 10,
-        pos: { x: 10, y: 15 },
-      })
-    );
+    this.props.eventBus.emit(new PanelHoverEvent({ panelId: 10, pos: { x: 10, y: 15 } }));
   };
 
   render() {

@@ -1,5 +1,6 @@
 import $ from 'jquery';
 import { CoreEvents } from 'app/types';
+import { PanelHoverEvent } from '@grafana/data';
 
 export default function GraphTooltip(this: any, elem: any, dashboard: any, scope: any, getSeriesFn: any) {
   const self = this;
@@ -158,12 +159,14 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
     dashboard.events.emit(CoreEvents.graphHoverClear);
   });
 
-  elem.bind('plothover', (event: any, pos: { panelRelY: number; pageY: number }, item: any) => {
+  elem.bind('plothover', (event: any, pos: { panelRelY: number; pageY: number; x: number; y: number }, item: any) => {
     self.show(pos, item);
 
     // broadcast to other graph panels that we are hovering!
     pos.panelRelY = (pos.pageY - elem.offset().top) / elem.height();
     dashboard.events.emit(CoreEvents.graphHover, { pos: pos, panel: panel });
+    // emit new event
+    dashboard.eventBus.emit(new PanelHoverEvent({ panelId: 1, pos: { x: pos.x, y: pos.y } }));
   });
 
   elem.bind('plotclick', (event: any, pos: any, item: any) => {
