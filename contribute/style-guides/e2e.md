@@ -69,7 +69,7 @@ describe('Login test', () => {
 ```
 
 ## Advanced example
-Lets take a look at an example that uses the same `selector` for multiple items in a list for instance. In this example app we have an list of data sources that we during a e2e test want to click on.
+Let's take a look at an example that uses the same `selector` for multiple items in a list for instance. In this example app we have a list of data sources that we want to click on during an e2e test.
 
 ```jsx harmony
 <ul>
