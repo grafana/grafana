@@ -6,6 +6,7 @@ import { stringToDateTimeType, isValidTimeString } from '../time';
 type CalendarTrigger = 'onFocus' | 'onButton';
 
 interface Props {
+  className?: string;
   calendarTrigger?: CalendarTrigger;
   value: TimeRange;
   onApply: (range: TimeRange) => void;

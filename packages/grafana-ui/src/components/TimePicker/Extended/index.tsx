@@ -76,7 +76,7 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     fullscreenForm: css`
       padding-top: 9px;
-      padding-left: 6px;
+      padding-left: 11px;
       padding-right: 20%;
     `,
     recentRanges: css`
@@ -105,6 +105,9 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
       background: #f7f8fa;
       box-shadow: inset 0px 2px 2px rgba(199, 208, 217, 0.5);
     `,
+    narrowForm: css`
+      padding: 6px 9px 6px 9px;
+    `,
   };
 });
 
@@ -122,13 +125,19 @@ const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }: Props) => {
     <div className={styles.container}>
       <div className={styles.leftSide}>
         <div className={styles.fullscreenForm}>
-          <TimeRangeTitle>Absolute time range</TimeRangeTitle>
+          <div
+            className={css`
+              margin-bottom: 11px;
+            `}
+          >
+            <TimeRangeTitle>Absolute time range</TimeRangeTitle>
+          </div>
           <TimeRangeForm value={selected} onApply={onChange} />
         </div>
         <div className={styles.recentRanges}>
           <TimeRangeList
             title="Recently used absolute ranges"
-            options={defaultSelectOptions.slice(0, 5)}
+            options={defaultSelectOptions.slice(0, 4)}
             onSelect={onChange}
             selected={selected}
           />
@@ -142,10 +151,12 @@ const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }: Props) => {
           </div>
           {collapsed && (
             <div className={styles.accordionBody}>
-              <TimeRangeForm value={selected} onApply={onChange} calendarTrigger="onButton" />
+              <div class={styles.narrowForm}>
+                <TimeRangeForm value={selected} onApply={onChange} calendarTrigger="onButton" />
+              </div>
               <TimeRangeList
                 title="Recently used absolute ranges"
-                options={defaultSelectOptions.slice(0, 5)}
+                options={defaultSelectOptions.slice(0, 4)}
                 onSelect={onChange}
                 selected={selected}
               />
