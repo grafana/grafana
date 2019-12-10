@@ -29,8 +29,6 @@ export interface ConfigOverrideRule {
 }
 
 export interface FieldConfigSource {
-  // TODO: need a better name!  essentially the defaults tend to apply to only the 'number' fields
-  applyDefaultsToEverything?: boolean;
   defaults: FieldConfig; // Use these values unless otherwise stated
   overrides: ConfigOverrideRule[]; // Set these values regardless of the source
 }
@@ -333,7 +331,7 @@ export function prepareDataFramesForDisplay(
 
     const fields = frame.fields.map(field => {
       let config: FieldConfig = field.config || {};
-      if (field.type === FieldType.number || source.applyDefaultsToEverything) {
+      if (field.type === FieldType.number) {
         config = getFieldProperties(config, source.defaults);
       }
       // Find any matching rules and then override
