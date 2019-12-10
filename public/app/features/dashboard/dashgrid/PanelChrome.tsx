@@ -248,7 +248,6 @@ export class PanelChrome extends PureComponent<Props, State> {
   getEventStream = <T extends PanelEvent<any>>(eventType: PanelEventType<T>) => {
     return new Observable<T>(subscriber => {
       // listen for event
-      console.log('litening to', eventType.type);
       this.props.dashboard.events.on(eventType.type, payload => {
         subscriber.next(payload);
       });

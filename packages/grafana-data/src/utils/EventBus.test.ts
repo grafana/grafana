@@ -1,33 +1,75 @@
 import { EventBus, BusEventWithPayload } from './EventBus';
 
-interface CustomEventPayload {
-  count: number;
+interface LoginEventPayload {
+  logins: number;
 }
 
-class CustomEvent extends BusEventWithPayload<CustomEventPayload> {
-  public static type = 'custom-event';
-  public type = CustomEvent.type;
+interface HelloEventPayload {
+  hellos: number;
+}
+class LoginEvent extends BusEventWithPayload<LoginEventPayload> {
+  public static type = 'login-event';
+  public type = LoginEvent.type;
+}
+
+class HelloEvent extends BusEventWithPayload<HelloEventPayload> {
+  public static type = 'hello-event';
+  public type = HelloEvent.type;
 }
 
 describe('EventBus', () => {
-  it('Can subscribe to all events', done => {
+  it('Can subscribe specific event', () => {
     const bus = new EventBus();
-    const gotEvent: CustomEvent | null = null;
+    let gotLoginEvent: LoginEvent | null = null;
 
-    bus.subscribe(CustomEvent, (event: CustomEvent) => {
-      console.log('aaa');
-      getEvent = event;
+    bus.on(LoginEvent, event => {
+      gotLoginEvent = event;
     });
 
-    bus.emit(new CustomEvent({ count: 10 }));
+    bus.emit(new LoginEvent({ logins: 10 }));
 
-    setTimeout(() => {
-      if (gotEvent) {
-        expect(gotEvent.count).toBe(10);
-      } else {
-        throw new Error('Got no event');
+    expect(gotLoginEvent.payload.logins).toBe(10);
+  });
+
+  it('Can subscribe to all events', () => {
+    const bus = new EventBus();
+    let gotLoginEvent: LoginEvent | null = null;
+    let gotHelloEvent: HelloEvent | null = null;
+
+    bus.subscribe((event: LoginEvent | HelloEvent) => {
+      switch (event.type) {
+        case LoginEvent.type: {
+          gotLoginEvent = event;
+        }
+        case HelloEvent.type: {
+          gotHelloEvent = event;
+        }
       }
-      done();
     });
+
+    bus.emit(new LoginEvent({ logins: 10 }));
+    bus.emit(new HelloEvent({ hellos: 20 }));
+
+    expect(gotLoginEvent.payload.logins).toBe(10);
+    expect(gotHelloEvent.payload.hellos).toBe(20);
+  });
+
+  it('New group handles unsub', () => {
+    const bus = new EventBus();
+    const group = bus.newGroup();
+    const events: LoginEvent[] = [];
+
+    group.on(LoginEvent, event => {
+      events.push(event);
+    });
+
+    bus.emit(new LoginEvent({ logins: 10 }));
+
+    expect(events.length).toBe(1);
+
+    group.unsubscribe();
+
+    bus.emit(new LoginEvent({ logins: 10 }));
+    expect(events.length).toBe(1);
   });
 });

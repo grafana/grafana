@@ -1,4 +1,4 @@
-import { Subject } from 'rxjs';
+import { Subject, Unsubscribable } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
 export abstract class BusEvent {
@@ -19,7 +19,7 @@ export interface BusEventType<T extends BusEvent> {
   new (...args: any[]): T;
 }
 
-interface BusEventHandler<T = BusEvent> {
+export interface BusEventHandler<T extends BusEvent> {
   (event: T): void;
 }
 
@@ -30,16 +30,15 @@ export class EventBus {
     this.eventStream = new Subject();
   }
 
-  public emit(event: any): void {
-    console.log('emit');
+  public emit<T extends BusEvent>(event: T): void {
     this.eventStream.next(event);
   }
 
-  // public group(): BusEventGroup {
-  //   return new BusEventGroup(this);
-  // }
+  public newGroup(): EventBusGroup {
+    return new EventBusGroup(this);
+  }
 
-  public on<T>(typeFilter: BusEventType<T>, handler: BusEventHandler): Subscription {
+  public on<T extends BusEvent>(typeFilter: BusEventType<T>, handler: BusEventHandler): Unsubscribable {
     return this.eventStream
       .pipe(
         filter(event => {
@@ -49,67 +48,34 @@ export class EventBus {
       .subscribe({ next: handler });
   }
 
-  public subscribe(handler: BusEventHandler): Subscription {
-    console.log('sub');
+  public subscribe(handler: BusEventHandler): Unsubscribable {
     return this.eventStream.subscribe({ next: handler });
   }
 }
 
-// // ----------------------------------------------------------------------------------- //
-// // ----------------------------------------------------------------------------------- //
-//
-// // I am a convenience class that keeps track of subscriptions within the group and can
-// // mass-unsubscribe from them as needed. Because of this tracking, the methods on this
-// // class return a reference to THIS class, instead of a Subscription, allowing for a
-// // more fluent API.
-// export class MessageBusGroup {
-//   private messageBus: MessageBusService;
-//   private subscriptions: Subscription[];
-//
-//   // I initialize the message bus group service.
-//   constructor(messageBus: MessageBusService) {
-//     this.messageBus = messageBus;
-//     this.subscriptions = [];
-//   }
-//
-//   // ---
-//   // PUBLIC METHODS.
-//   // ---
-//
-//   // I push the given event onto the message bus.
-//   public emit(event: any): MessageBusGroup {
-//     this.messageBus.emit(event);
-//
-//     return this;
-//   }
-//
-//   // I subscribe to the message bus, but only invoke the callback when the event is
-//   // of the given newable type (ie, it's a Class definition, not an instance).
-//   public on<T>(
-//     typeFilter: NewableType<T>,
-//     callback: CallbackFunction<T>,
-//     callbackContext: any = null
-//   ): MessageBusGroup {
-//     this.subscriptions.push(this.messageBus.on(typeFilter, callback, callbackContext));
-//
-//     return this;
-//   }
-//
-//   // I subscribe to all events on the message bus.
-//   public subscribe(callback: CallbackFunction, callbackContext: any = null): MessageBusGroup {
-//     this.subscriptions.push(this.messageBus.subscribe(callback, callbackContext));
-//
-//     return this;
-//   }
-//
-//   // I unsubscribe from all the current subscriptions.
-//   public unsubscribe(): MessageBusGroup {
-//     for (var subscription of this.subscriptions) {
-//       subscription.unsubscribe();
-//     }
-//
-//     this.subscriptions = [];
-//
-//     return this;
-//   }
-// }
+export class EventBusGroup {
+  private bus: EventBus;
+  private subscriptions: Unsubscribable[];
+
+  constructor(private bus: EventBus) {
+    this.subscriptions = [];
+  }
+
+  public emit<T extends BusEvent>(event: T) {
+    this.bus.emit(event);
+  }
+
+  public on<T extends BusEvent>(typeFilter: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
+    const sub = this.bus.on(typeFilter, handler);
+    this.subscriptions.push(sub);
+    return sub;
+  }
+
+  public unsubscribe() {
+    for (const subscription of this.subscriptions) {
+      subscription.unsubscribe();
+    }
+
+    this.subscriptions = [];
+  }
+}
