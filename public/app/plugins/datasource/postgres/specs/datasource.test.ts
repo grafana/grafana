@@ -2,7 +2,6 @@ import { PostgresDatasource } from '../datasource';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 import { dateTime, toUtc } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
-import { IQService } from 'angular';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 describe('PostgreSQLDatasource', () => {
@@ -26,13 +25,7 @@ describe('PostgreSQLDatasource', () => {
   } as any;
 
   beforeEach(() => {
-    ctx.ds = new PostgresDatasource(
-      instanceSettings,
-      backendSrv as BackendSrv,
-      {} as IQService,
-      templateSrv,
-      ctx.timeSrvMock
-    );
+    ctx.ds = new PostgresDatasource(instanceSettings, backendSrv as BackendSrv, templateSrv, ctx.timeSrvMock);
   });
 
   describe('When performing annotationQuery', () => {

@@ -129,7 +129,7 @@ Replace `Dockerfile` in above example with `ubuntu.Dockerfile` to build a custom
 
 > Only available in Grafana v6.5+ and experimental.
 
-The [Grafana Image Renderer plugin](/administration/image_rendering/#grafana-image-renderer-plugin) does not
+The [Grafana Image Renderer plugin]({{< relref "../administration/image_rendering/#grafana-image-renderer-plugin" >}}) does not
 currently work if it is installed in Grafana docker image.
 You can build a custom docker image by using the `GF_INSTALL_IMAGE_RENDERER_PLUGIN` build argument.
 This will install additional dependencies needed for the Grafana Image Renderer plugin to run.
@@ -292,5 +292,5 @@ Grafana Docker image now comes in two variants, one [Alpine](http://alpinelinux.
 
 ## Logging in for the first time
 
-To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default HTTP port that Grafana listens to if you haven't [configured a different port](/installation/configuration/#http-port).
-Then follow the instructions [here](/guides/getting_started/).
+To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default HTTP port that Grafana listens to if you haven't [configured a different port]({{< relref "configuration/#http-port" >}}).
+Then follow the instructions [here]({{< relref "../guides/getting_started/" >}}).

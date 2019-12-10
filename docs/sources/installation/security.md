@@ -20,7 +20,7 @@ To prevent this type of exploitation from happening we explain a couple of diffe
 
 ### Configure Grafana to only allow certain IP addresses/hostnames to be used as data source url
 
-You can configure Grafana to only allow certain IP addresses/hostnames to be used as data source url and by that proxied through the Grafana data source proxy. See [data_source_proxy_whitelist](/installation/configuration/#data-source-proxy-whitelist) for usage instructions.
+You can configure Grafana to only allow certain IP addresses/hostnames to be used as data source url and by that proxied through the Grafana data source proxy. See [data_source_proxy_whitelist]({{< relref "configuration/#data-source-proxy-whitelist" >}}) for usage instructions.
 
 ### Firewall rules
 
@@ -36,5 +36,5 @@ Important to understand that users with Viewer role can still issue any possible
 
 There are a couple of ways you can restrict data source query access:
 
-- Create multiple data sources with some restrictions added in data source config that restrict access (like database name or credentials). Then use the [Data Source Permissions]({{< relref "permissions/datasource_permissions.md" >}}) Enterprise feature to restrict user access to the data source in Grafana.
+- Create multiple data sources with some restrictions added in data source config that restrict access (like database name or credentials). Then use the [Data Source Permissions]({{< relref "../permissions/datasource_permissions.md" >}}) Enterprise feature to restrict user access to the data source in Grafana.
 - Create a separate Grafana organization and in that organization create a separate data source. Make sure the data source has some option/user/credentials setting that limits access to a subset of the data. Not all data sources have an option to limit access.

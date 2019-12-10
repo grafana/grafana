@@ -6,22 +6,41 @@ import { config } from 'app/core/config';
 
 // Types
 import { StatPanelOptions } from './types';
-import { VizRepeater, BigValue, DataLinksContextMenu, BigValueSparkline } from '@grafana/ui';
-import { PanelProps, getFieldDisplayValues, FieldDisplay } from '@grafana/data';
+import { VizRepeater, BigValue, DataLinksContextMenu, BigValueSparkline, BigValueGraphMode } from '@grafana/ui';
+
+import {
+  PanelProps,
+  getFieldDisplayValues,
+  FieldDisplay,
+  ReducerID,
+  getDisplayValueAlignmentFactors,
+  DisplayValueAlignmentFactors,
+  VizOrientation,
+} from '@grafana/data';
+
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
-  renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
+  renderValue = (
+    value: FieldDisplay,
+    width: number,
+    height: number,
+    alignmentFactors: DisplayValueAlignmentFactors
+  ): JSX.Element => {
     const { timeRange, options } = this.props;
     let sparkline: BigValueSparkline | undefined;
 
     if (value.sparkline) {
       sparkline = {
-        ...options.sparkline,
         data: value.sparkline,
         minX: timeRange.from.valueOf(),
         maxX: timeRange.to.valueOf(),
       };
+
+      const calc = options.fieldOptions.calcs[0];
+      if (calc === ReducerID.last) {
+        sparkline.highlightIndex = sparkline.data.length - 1;
+      }
     }
 
     return (
@@ -31,7 +50,10 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
             <BigValue
               value={value.display}
               sparkline={sparkline}
-              displayMode={options.displayMode}
+              colorMode={options.colorMode}
+              graphMode={options.graphMode}
+              justifyMode={options.justifyMode}
+              alignmentFactors={alignmentFactors}
               width={width}
               height={height}
               theme={config.theme}
@@ -52,22 +74,39 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
       replaceVariables,
       theme: config.theme,
       data: data.series,
-      sparkline: options.sparkline.show,
+      sparkline: options.graphMode !== BigValueGraphMode.None,
     });
   };
 
   render() {
-    const { height, width, options, data, renderCounter } = this.props;
+    const { height, options, width, data, renderCounter } = this.props;
+
     return (
       <VizRepeater
         getValues={this.getValues}
+        getAlignmentFactors={getDisplayValueAlignmentFactors}
         renderValue={this.renderValue}
         width={width}
         height={height}
         source={data}
         renderCounter={renderCounter}
-        orientation={options.orientation}
+        orientation={getOrientation(width, height, options.orientation)}
       />
     );
+  }
+}
+
+/**
+ * Stat panel custom auto orientation
+ */
+function getOrientation(width: number, height: number, orientation: VizOrientation): VizOrientation {
+  if (orientation !== VizOrientation.Auto) {
+    return orientation;
+  }
+
+  if (width / height > 2) {
+    return VizOrientation.Vertical;
+  } else {
+    return VizOrientation.Horizontal;
   }
 }

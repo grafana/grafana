@@ -50,6 +50,7 @@ export interface CommonProps<T> {
   onOpenMenu?: () => void;
   onCloseMenu?: () => void;
   tabSelectsValue?: boolean;
+  formatCreateLabel?: (input: string) => string;
   allowCustomValue: boolean;
 }
 
@@ -125,6 +126,7 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
       onCloseMenu,
       onOpenMenu,
       allowCustomValue,
+      formatCreateLabel,
     } = this.props;
 
     let widthClass = '';
@@ -137,7 +139,7 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
 
     if (allowCustomValue) {
       SelectComponent = Creatable;
-      creatableOptions.formatCreateLabel = (input: string) => input;
+      creatableOptions.formatCreateLabel = formatCreateLabel ?? ((input: string) => input);
     }
 
     const selectClassNames = classNames('gf-form-input', 'gf-form-input--form-dropdown', widthClass, className);

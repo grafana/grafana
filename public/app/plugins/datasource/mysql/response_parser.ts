@@ -1,9 +1,6 @@
 import _ from 'lodash';
-import { IQService } from 'angular';
 
 export default class ResponseParser {
-  constructor(private $q: IQService) {}
-
   processQueryResult(res: any) {
     const data: any[] = [];
 
@@ -117,7 +114,7 @@ export default class ResponseParser {
       if (table.columns[i].text === 'time_sec' || table.columns[i].text === 'time') {
         timeColumnIndex = i;
       } else if (table.columns[i].text === 'title') {
-        return this.$q.reject({
+        return Promise.reject({
           message: 'The title column for annotations is deprecated, now only a column named text is returned',
         });
       } else if (table.columns[i].text === 'text') {
@@ -128,7 +125,7 @@ export default class ResponseParser {
     }
 
     if (timeColumnIndex === -1) {
-      return this.$q.reject({
+      return Promise.reject({
         message: 'Missing mandatory time column (with time_sec column alias) in annotation query.',
       });
     }
