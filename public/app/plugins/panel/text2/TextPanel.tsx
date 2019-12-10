@@ -1,5 +1,4 @@
 // Libraries
-import { Unsubscribable } from 'rxjs';
 import React, { PureComponent } from 'react';
 import { debounce } from 'lodash';
 import { renderMarkdown } from '@grafana/data';
@@ -20,8 +19,6 @@ interface State {
 }
 
 export class TextPanel extends PureComponent<Props, State> {
-  subscription: Unsubscribable;
-
   constructor(props: Props) {
     super(props);
 
