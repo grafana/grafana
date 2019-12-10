@@ -13,11 +13,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       align-items: center;
     `,
-    button: css`
-      position: absolute;
-      text-decoration: underline;
-      color: ${theme.colors.linkExternal};
-    `,
     buttonDisabled: css`
       text-decoration: none;
       color: ${theme.colors.text};
@@ -59,7 +54,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 
 interface Props extends Themeable {
   className?: string;
-  style?: React.CSSProperties;
   confirmText?: string;
   disabled?: boolean;
   confirmButtonVariant?: ButtonVariant;
@@ -111,10 +105,9 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
   };
 
   render() {
-    const { onConfirm, disabled, confirmText, confirmButtonVariant, className, style, theme, children } = this.props;
+    const { onConfirm, disabled, confirmText, confirmButtonVariant, className, theme, children } = this.props;
     const styles = getStyles(theme);
     const buttonClass = cx(
-      styles.button,
       className,
       this.state.showConfirm ? styles.buttonHide : styles.buttonShow,
       disabled && styles.buttonDisabled
@@ -127,9 +120,15 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
 
     return (
       <span className={styles.buttonContainer}>
-        <a className={buttonClass} style={style} onClick={onClick}>
-          {children}
-        </a>
+        {typeof children === 'string' ? (
+          <Button className={buttonClass} size="sm" variant="link" onClick={onClick}>
+            {children}
+          </Button>
+        ) : (
+          <span className={buttonClass} onClick={onClick}>
+            {children}
+          </span>
+        )}
         <span className={styles.confirmButtonContainer}>
           <span className={confirmButtonClass}>
             <Button size="sm" variant="transparent" onClick={this.onClickCancel}>
