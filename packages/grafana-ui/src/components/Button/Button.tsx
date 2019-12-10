@@ -18,7 +18,8 @@ type CommonProps = {
 };
 
 type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
-export const Button: React.FunctionComponent<ButtonProps> = props => {
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
+  console.log(props);
   const theme = useContext(ThemeContext);
   const { size, variant, icon, children, className, styles: stylesProp, ...buttonProps } = props;
 
@@ -33,13 +34,13 @@ export const Button: React.FunctionComponent<ButtonProps> = props => {
     });
 
   return (
-    <button className={cx(styles.button, className)} {...buttonProps}>
+    <button className={cx(styles.button, className)} {...buttonProps} ref={ref}>
       <ButtonContent iconClassName={styles.icon} className={styles.iconWrap} icon={icon}>
         {children}
       </ButtonContent>
     </button>
   );
-};
+});
 Button.displayName = 'Button';
 
 type LinkButtonProps = CommonProps &

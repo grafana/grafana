@@ -52,7 +52,7 @@ export const inputSizes = () => {
       width: 580px;
     `,
     auto: css`
-      width: 100%;
+      width: auto;
     `,
   };
 };

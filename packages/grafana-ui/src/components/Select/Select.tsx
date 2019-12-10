@@ -18,50 +18,23 @@ import { SingleValue } from './SingleValue';
 import SelectOptionGroup from './SelectOptionGroup';
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
-import resetSelectStyles from './resetSelectStyles';
+import resetSelectStyles from '../Forms/Select/resetSelectStyles';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { PopoverContent } from '../Tooltip/Tooltip';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { SelectableValue } from '@grafana/data';
+import { SelectCommonProps, SelectProps } from '../Forms/Select/Select';
 
-export interface CommonProps<T> {
-  defaultValue?: any;
-  getOptionLabel?: (item: SelectableValue<T>) => string;
-  getOptionValue?: (item: SelectableValue<T>) => string;
-  onChange: (item: SelectableValue<T>) => {} | void;
-  placeholder?: string;
-  width?: number;
-  value?: SelectableValue<T>;
-  className?: string;
-  isDisabled?: boolean;
-  isSearchable?: boolean;
-  isClearable?: boolean;
-  autoFocus?: boolean;
-  openMenuOnFocus?: boolean;
-  onBlur?: () => void;
-  maxMenuHeight?: number;
-  isLoading?: boolean;
-  noOptionsMessage?: () => string;
-  isMulti?: boolean;
-  backspaceRemovesValue?: boolean;
-  isOpen?: boolean;
-  components?: any;
-  tooltipContent?: PopoverContent;
-  onOpenMenu?: () => void;
-  onCloseMenu?: () => void;
-  tabSelectsValue?: boolean;
-  formatCreateLabel?: (input: string) => string;
-  allowCustomValue: boolean;
-}
-
-export interface SelectProps<T> extends CommonProps<T> {
-  options: Array<SelectableValue<T>>;
-}
-
-interface AsyncProps<T> extends CommonProps<T> {
+interface AsyncProps<T> extends SelectCommonProps<T> {
   defaultOptions: boolean;
   loadOptions: (query: string) => Promise<Array<SelectableValue<T>>>;
   loadingMessage?: () => string;
+  tooltipContent?: PopoverContent;
+}
+
+interface LegacySelectProps<T> extends Omit<SelectProps<T>, 'value'> {
+  tooltipContent?: PopoverContent;
+  value: SelectableValue<T>;
 }
 
 export const MenuList = (props: any) => {
@@ -73,8 +46,7 @@ export const MenuList = (props: any) => {
     </components.MenuList>
   );
 };
-
-export class Select<T> extends PureComponent<SelectProps<T>> {
+export class Select<T> extends PureComponent<LegacySelectProps<T>> {
   static defaultProps: Partial<SelectProps<any>> = {
     className: '',
     isDisabled: false,

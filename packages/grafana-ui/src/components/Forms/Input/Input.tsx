@@ -12,6 +12,8 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'siz
   invalid?: boolean;
   /** Show an icon as a prefix in the input */
   prefix?: JSX.Element | string | null;
+  /** Show an icon as a suffix in the input */
+  suffix?: JSX.Element | string | null;
   /** Show a loading indicator as a suffix in the input */
   loading?: boolean;
   /** Add a component as an addon before the input  */
@@ -110,12 +112,15 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
         &:not(:last-child) {
           padding-right: ${prefixSuffixStaticWidth};
         }
+        &[readonly] {
+          cursor: default;
+        }
       }
     `,
 
     input: cx(
       getFocusStyle(theme),
-      sharedInputStyle(theme),
+      sharedInputStyle(theme, invalid),
       css`
         label: input-input;
         position: relative;
@@ -199,11 +204,16 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
         right: 0;
       `
     ),
+    loadingIndicator: css`
+      & + * {
+        margin-left: ${theme.spacing.xs};
+      }
+    `,
   };
 });
 
-export const Input: FC<Props> = props => {
-  const { addonAfter, addonBefore, prefix, invalid, loading, size = 'auto', ...restProps } = props;
+export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
+  const { addonAfter, addonBefore, prefix, suffix, invalid, loading, size = 'auto', ...restProps } = props;
   /**
    * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects below to apply correct padding to the input
    * when prefix/suffix is larger than default (28px = 16px(icon) + 12px(left/right paddings)).
@@ -227,6 +237,7 @@ export const Input: FC<Props> = props => {
         )}
 
         <input
+          ref={ref}
           className={styles.input}
           {...restProps}
           style={{
@@ -235,9 +246,10 @@ export const Input: FC<Props> = props => {
           }}
         />
 
-        {loading && (
+        {(suffix || loading) && (
           <div className={styles.suffix} ref={suffixRef}>
-            <Icon name="spinner" className="fa-spin" />
+            {loading && <Icon name="spinner" className={cx('fa-spin', styles.loadingIndicator)} />}
+            {suffix}
           </div>
         )}
       </div>
@@ -245,4 +257,4 @@ export const Input: FC<Props> = props => {
       {!!addonAfter && <div className={styles.addon}>{addonAfter}</div>}
     </div>
   );
-};
+});
