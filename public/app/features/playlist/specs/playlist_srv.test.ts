@@ -2,6 +2,7 @@
 import configureMockStore from 'redux-mock-store';
 import { PlaylistSrv } from '../playlist_srv';
 import { setStore } from 'app/store/store';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 const mockStore = configureMockStore<any, any>();
 
@@ -14,19 +15,6 @@ setStore(
 const dashboards = [{ url: 'dash1' }, { url: 'dash2' }];
 
 const createPlaylistSrv = (): [PlaylistSrv, { url: jest.MockInstance<any, any> }] => {
-  const mockBackendSrv = {
-    get: jest.fn(url => {
-      switch (url) {
-        case '/api/playlists/1':
-          return Promise.resolve({ interval: '1s' });
-        case '/api/playlists/1/dashboards':
-          return Promise.resolve(dashboards);
-        default:
-          throw new Error(`Unexpected url=${url}`);
-      }
-    }),
-  };
-
   const mockLocation = {
     url: jest.fn(),
     search: () => ({}),
@@ -36,7 +24,7 @@ const createPlaylistSrv = (): [PlaylistSrv, { url: jest.MockInstance<any, any> }
   const mockTimeout = jest.fn();
   (mockTimeout as any).cancel = jest.fn();
 
-  return [new PlaylistSrv(mockLocation, mockTimeout, mockBackendSrv), mockLocation];
+  return [new PlaylistSrv(mockLocation, mockTimeout), mockLocation];
 };
 
 const mockWindowLocation = (): [jest.MockInstance<any, any>, () => void] => {
@@ -66,7 +54,23 @@ describe('PlaylistSrv', () => {
   let unmockLocation: () => void;
   const initialUrl = 'http://localhost/playlist';
 
+  const getMock = jest.spyOn(backendSrv, 'get');
+
   beforeEach(() => {
+    jest.clearAllMocks();
+    getMock.mockImplementation(
+      jest.fn(url => {
+        switch (url) {
+          case '/api/playlists/1':
+            return Promise.resolve({ interval: '1s' });
+          case '/api/playlists/1/dashboards':
+            return Promise.resolve(dashboards);
+          default:
+            throw new Error(`Unexpected url=${url}`);
+        }
+      })
+    );
+
     [srv] = createPlaylistSrv();
     [hrefMock, unmockLocation] = mockWindowLocation();
 

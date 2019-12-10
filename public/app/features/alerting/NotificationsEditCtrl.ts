@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { appEvents, coreModule, NavModelSrv } from 'app/core/core';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { AppEvents } from '@grafana/data';
 
 export class AlertNotificationEditCtrl {
@@ -28,7 +28,6 @@ export class AlertNotificationEditCtrl {
   /** @ngInject */
   constructor(
     private $routeParams: any,
-    private backendSrv: BackendSrv,
     private $location: any,
     private $templateCache: any,
     navModelSrv: NavModelSrv
@@ -40,7 +39,7 @@ export class AlertNotificationEditCtrl {
       return ['1m', '5m', '10m', '15m', '30m', '1h'];
     };
 
-    this.backendSrv
+    backendSrv
       .get(`/api/alert-notifiers`)
       .then((notifiers: any) => {
         this.notifiers = notifiers;
@@ -56,7 +55,7 @@ export class AlertNotificationEditCtrl {
           return _.defaults(this.model, this.defaults);
         }
 
-        return this.backendSrv.get(`/api/alert-notifications/${this.$routeParams.id}`).then((result: any) => {
+        return backendSrv.get(`/api/alert-notifications/${this.$routeParams.id}`).then((result: any) => {
           this.navModel.breadcrumbs.push({ text: result.name });
           this.navModel.node = { text: result.name };
           result.settings = _.defaults(result.settings, this.defaults.settings);
@@ -75,7 +74,7 @@ export class AlertNotificationEditCtrl {
     }
 
     if (this.model.id) {
-      this.backendSrv
+      backendSrv
         .put(`/api/alert-notifications/${this.model.id}`, this.model)
         .then((res: any) => {
           this.model = res;
@@ -87,7 +86,7 @@ export class AlertNotificationEditCtrl {
           }
         });
     } else {
-      this.backendSrv
+      backendSrv
         .post(`/api/alert-notifications`, this.model)
         .then((res: any) => {
           appEvents.emit(AppEvents.alertSuccess, ['Notification created']);
@@ -102,7 +101,7 @@ export class AlertNotificationEditCtrl {
   }
 
   deleteNotification() {
-    this.backendSrv.delete(`/api/alert-notifications/${this.model.id}`).then((res: any) => {
+    backendSrv.delete(`/api/alert-notifications/${this.model.id}`).then((res: any) => {
       this.model = res;
       this.$location.path('alerting/notifications');
     });
@@ -129,7 +128,7 @@ export class AlertNotificationEditCtrl {
       settings: this.model.settings,
     };
 
-    this.backendSrv.post(`/api/alert-notifications/test`, payload);
+    backendSrv.post(`/api/alert-notifications/test`, payload);
   }
 }
 

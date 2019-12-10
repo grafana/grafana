@@ -7,7 +7,7 @@ import { AsyncSelect } from '@grafana/ui';
 
 // Utils & Services
 import { debounce } from 'lodash';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 // Types
 import { User } from 'app/types';
@@ -36,7 +36,6 @@ export class UserPicker extends Component<Props, State> {
   }
 
   search(query?: string) {
-    const backendSrv = getBackendSrv();
     this.setState({ isLoading: true });
 
     if (_.isNil(query)) {

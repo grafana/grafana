@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/core';
 import { User } from 'app/core/services/context_srv';
 import { UserSession, Scope, CoreEvents, AppEventEmitter } from 'app/types';
@@ -7,13 +7,7 @@ import { dateTime } from '@grafana/data';
 
 export default class AdminEditUserCtrl {
   /** @ngInject */
-  constructor(
-    $scope: Scope & AppEventEmitter,
-    $routeParams: any,
-    backendSrv: BackendSrv,
-    $location: any,
-    navModelSrv: NavModelSrv
-  ) {
+  constructor($scope: Scope & AppEventEmitter, $routeParams: any, $location: any, navModelSrv: NavModelSrv) {
     $scope.user = {};
     $scope.sessions = [];
     $scope.newOrg = { name: '', role: 'Editor' };

@@ -1,20 +1,20 @@
 import { coreModule, NavModelSrv } from 'app/core/core';
 import { dateTime } from '@grafana/data';
 import { UserSession } from 'app/types';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 export class ProfileCtrl {
   sessions: object[] = [];
   navModel: any;
 
   /** @ngInject */
-  constructor(private backendSrv: BackendSrv, navModelSrv: NavModelSrv) {
+  constructor(navModelSrv: NavModelSrv) {
     this.getUserSessions();
     this.navModel = navModelSrv.getNav('profile', 'profile-settings', 0);
   }
 
   getUserSessions() {
-    this.backendSrv.get('/api/user/auth-tokens').then((sessions: UserSession[]) => {
+    backendSrv.get('/api/user/auth-tokens').then((sessions: UserSession[]) => {
       sessions.reverse();
 
       const found = sessions.findIndex((session: UserSession) => {
@@ -45,7 +45,7 @@ export class ProfileCtrl {
   }
 
   revokeUserSession(tokenId: number) {
-    this.backendSrv
+    backendSrv
       .post('/api/user/revoke-auth-token', {
         authTokenId: tokenId,
       })

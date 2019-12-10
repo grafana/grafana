@@ -5,7 +5,7 @@ import { QueryPart } from 'app/core/components/query_part/query_part';
 import alertDef from './state/alertDef';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../dashboard/services/DashboardSrv';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { DataQuery } from '@grafana/data';
@@ -35,7 +35,6 @@ export class AlertTabCtrl {
   /** @ngInject */
   constructor(
     private $scope: any,
-    private backendSrv: BackendSrv,
     private dashboardSrv: DashboardSrv,
     private uiSegmentSrv: any,
     private datasourceSrv: DatasourceSrv
@@ -72,7 +71,7 @@ export class AlertTabCtrl {
     this.alertNotifications = [];
     this.alertHistory = [];
 
-    return this.backendSrv.get('/api/alert-notifications/lookup').then((res: any) => {
+    return backendSrv.get('/api/alert-notifications/lookup').then((res: any) => {
       this.notifications = res;
 
       this.initModel();
@@ -81,7 +80,7 @@ export class AlertTabCtrl {
   }
 
   getAlertHistory() {
-    this.backendSrv
+    backendSrv
       .get(`/api/annotations?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}&limit=50&type=alert`)
       .then((res: any) => {
         this.alertHistory = _.map(res, ah => {
@@ -415,7 +414,7 @@ export class AlertTabCtrl {
       icon: 'fa-trash',
       yesText: 'Yes',
       onConfirm: () => {
-        this.backendSrv
+        backendSrv
           .post('/api/annotations/mass-delete', {
             dashboardId: this.panelCtrl.dashboard.id,
             panelId: this.panel.id,

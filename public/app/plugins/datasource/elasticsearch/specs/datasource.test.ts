@@ -3,16 +3,18 @@ import { dateMath } from '@grafana/data';
 import _ from 'lodash';
 import { ElasticDatasource } from '../datasource';
 import { toUtc, dateTime } from '@grafana/data';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { ElasticsearchOptions } from '../types';
 
 describe('ElasticDatasource', function(this: any) {
-  const backendSrv: any = {
-    datasourceRequest: jest.fn(),
-  };
+  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   const $rootScope = {
     $on: jest.fn(),
@@ -45,17 +47,11 @@ describe('ElasticDatasource', function(this: any) {
 
   const ctx = {
     $rootScope,
-    backendSrv,
   } as any;
 
   function createDatasource(instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>) {
     instanceSettings.jsonData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
-    ctx.ds = new ElasticDatasource(
-      instanceSettings,
-      backendSrv as BackendSrv,
-      templateSrv as TemplateSrv,
-      timeSrv as TimeSrv
-    );
+    ctx.ds = new ElasticDatasource(instanceSettings, templateSrv as TemplateSrv, timeSrv as TimeSrv);
   }
 
   describe('When testing datasource with index pattern', () => {
@@ -69,7 +65,7 @@ describe('ElasticDatasource', function(this: any) {
 
     it('should translate index pattern to current day', () => {
       let requestOptions: any;
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
+      datasourceRequestMock.mockImplementation(options => {
         requestOptions = options;
         return Promise.resolve({ data: {} });
       });
@@ -91,7 +87,7 @@ describe('ElasticDatasource', function(this: any) {
         jsonData: { interval: 'Daily', esVersion: 2 } as ElasticsearchOptions,
       } as DataSourceInstanceSettings<ElasticsearchOptions>);
 
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
+      datasourceRequestMock.mockImplementation(options => {
         requestOptions = options;
         return Promise.resolve({
           data: {
@@ -162,7 +158,7 @@ describe('ElasticDatasource', function(this: any) {
         jsonData: { interval: 'Daily', esVersion: 2, timeField: '@timestamp' } as ElasticsearchOptions,
       } as DataSourceInstanceSettings<ElasticsearchOptions>);
 
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
+      datasourceRequestMock.mockImplementation(options => {
         return Promise.resolve({
           data: {
             responses: [
@@ -257,7 +253,7 @@ describe('ElasticDatasource', function(this: any) {
         jsonData: { esVersion: 2 } as ElasticsearchOptions,
       } as DataSourceInstanceSettings<ElasticsearchOptions>);
 
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
+      datasourceRequestMock.mockImplementation(options => {
         requestOptions = options;
         return Promise.resolve({ data: { responses: [] } });
       });
@@ -298,7 +294,7 @@ describe('ElasticDatasource', function(this: any) {
         jsonData: { esVersion: 50 } as ElasticsearchOptions,
       } as DataSourceInstanceSettings<ElasticsearchOptions>);
 
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
+      datasourceRequestMock.mockImplementation(options => {
         return Promise.resolve({
           data: {
             metricbeat: {
@@ -394,7 +390,7 @@ describe('ElasticDatasource', function(this: any) {
         jsonData: { esVersion: 70 } as ElasticsearchOptions,
       } as DataSourceInstanceSettings<ElasticsearchOptions>);
 
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
+      datasourceRequestMock.mockImplementation(options => {
         return Promise.resolve({
           data: {
             'genuine.es7._mapping.response': {
@@ -547,7 +543,7 @@ describe('ElasticDatasource', function(this: any) {
         jsonData: { esVersion: 5 } as ElasticsearchOptions,
       } as DataSourceInstanceSettings<ElasticsearchOptions>);
 
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
+      datasourceRequestMock.mockImplementation(options => {
         requestOptions = options;
         return Promise.resolve({ data: { responses: [] } });
       });
@@ -590,7 +586,7 @@ describe('ElasticDatasource', function(this: any) {
         jsonData: { esVersion: 5 } as ElasticsearchOptions,
       } as DataSourceInstanceSettings<ElasticsearchOptions>);
 
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
+      datasourceRequestMock.mockImplementation(options => {
         requestOptions = options;
         return Promise.resolve({
           data: {

@@ -1,10 +1,10 @@
 import _ from 'lodash';
 import { PanelCtrl } from '../../../features/panel/panel_ctrl';
 import { auto } from 'angular';
-import { BackendSrv } from '@grafana/runtime';
 import { PanelEvents } from '@grafana/data';
 import { ContextSrv } from '../../../core/services/context_srv';
 import { CoreEvents } from 'app/types';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 class PluginListCtrl extends PanelCtrl {
   static templateUrl = 'module.html';
@@ -18,7 +18,7 @@ class PluginListCtrl extends PanelCtrl {
   panelDefaults = {};
 
   /** @ngInject */
-  constructor($scope: any, $injector: auto.IInjectorService, private backendSrv: BackendSrv, contextSrv: ContextSrv) {
+  constructor($scope: any, $injector: auto.IInjectorService, contextSrv: ContextSrv) {
     super($scope, $injector);
 
     _.defaults(this.panel, this.panelDefaults);
@@ -60,7 +60,7 @@ class PluginListCtrl extends PanelCtrl {
   }
 
   update() {
-    this.backendSrv.get('api/plugins', { embedded: 0, core: 0 }).then(plugins => {
+    backendSrv.get('api/plugins', { embedded: 0, core: 0 }).then(plugins => {
       this.pluginList = plugins;
       this.viewModel[0].list = _.filter(plugins, { type: 'app' });
       this.viewModel[1].list = _.filter(plugins, { type: 'panel' });

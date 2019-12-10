@@ -1,4 +1,4 @@
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { StoreState } from 'app/types';
 import { ThunkAction } from 'redux-thunk';
 import { FolderDTO, FolderState } from 'app/types';
@@ -58,7 +58,7 @@ export const loadFolderPermissions = (items: DashboardAclDTO[]): LoadFolderPermi
 
 export function getFolderByUid(uid: string): ThunkResult<void> {
   return async dispatch => {
-    const folder = await getBackendSrv().getFolderByUid(uid);
+    const folder = await backendSrv.getFolderByUid(uid);
     dispatch(loadFolder(folder));
     dispatch(updateNavIndex(buildNavModel(folder)));
   };
@@ -66,7 +66,7 @@ export function getFolderByUid(uid: string): ThunkResult<void> {
 
 export function saveFolder(folder: FolderState): ThunkResult<void> {
   return async dispatch => {
-    const res = await getBackendSrv().put(`/api/folders/${folder.uid}`, {
+    const res = await backendSrv.put(`/api/folders/${folder.uid}`, {
       title: folder.title,
       version: folder.version,
     });
@@ -80,14 +80,14 @@ export function saveFolder(folder: FolderState): ThunkResult<void> {
 
 export function deleteFolder(uid: string): ThunkResult<void> {
   return async dispatch => {
-    await getBackendSrv().deleteFolder(uid, true);
+    await backendSrv.deleteFolder(uid, true);
     dispatch(updateLocation({ path: `dashboards` }));
   };
 }
 
 export function getFolderPermissions(uid: string): ThunkResult<void> {
   return async dispatch => {
-    const permissions = await getBackendSrv().get(`/api/folders/${uid}/permissions`);
+    const permissions = await backendSrv.get(`/api/folders/${uid}/permissions`);
     dispatch(loadFolderPermissions(permissions));
   };
 }
@@ -121,7 +121,7 @@ export function updateFolderPermission(itemToUpdate: DashboardAcl, level: Permis
       itemsToUpdate.push(updated);
     }
 
-    await getBackendSrv().post(`/api/folders/${folder.uid}/permissions`, { items: itemsToUpdate });
+    await backendSrv.post(`/api/folders/${folder.uid}/permissions`, { items: itemsToUpdate });
     await dispatch(getFolderPermissions(folder.uid));
   };
 }
@@ -138,7 +138,7 @@ export function removeFolderPermission(itemToDelete: DashboardAcl): ThunkResult<
       itemsToUpdate.push(toUpdateItem(item));
     }
 
-    await getBackendSrv().post(`/api/folders/${folder.uid}/permissions`, { items: itemsToUpdate });
+    await backendSrv.post(`/api/folders/${folder.uid}/permissions`, { items: itemsToUpdate });
     await dispatch(getFolderPermissions(folder.uid));
   };
 }
@@ -162,7 +162,7 @@ export function addFolderPermission(newItem: NewDashboardAclItem): ThunkResult<v
       permission: newItem.permission,
     });
 
-    await getBackendSrv().post(`/api/folders/${folder.uid}/permissions`, { items: itemsToUpdate });
+    await backendSrv.post(`/api/folders/${folder.uid}/permissions`, { items: itemsToUpdate });
     await dispatch(getFolderPermissions(folder.uid));
   };
 }

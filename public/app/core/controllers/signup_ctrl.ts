@@ -1,9 +1,10 @@
 import config from 'app/core/config';
 import coreModule from '../core_module';
+import { getBackendSrv } from '@grafana/runtime/src/services';
 
 export class SignUpCtrl {
   /** @ngInject */
-  constructor(private $scope: any, private backendSrv: any, $location: any, contextSrv: any) {
+  constructor(private $scope: any, $location: any, contextSrv: any) {
     contextSrv.sidemenu = false;
     $scope.ctrl = this;
 
@@ -34,10 +35,12 @@ export class SignUpCtrl {
       },
     };
 
-    backendSrv.get('/api/user/signup/options').then((options: any) => {
-      $scope.verifyEmailEnabled = options.verifyEmailEnabled;
-      $scope.autoAssignOrg = options.autoAssignOrg;
-    });
+    getBackendSrv()
+      .get('/api/user/signup/options')
+      .then((options: any) => {
+        $scope.verifyEmailEnabled = options.verifyEmailEnabled;
+        $scope.autoAssignOrg = options.autoAssignOrg;
+      });
   }
 
   submit() {
@@ -45,13 +48,15 @@ export class SignUpCtrl {
       return;
     }
 
-    this.backendSrv.post('/api/user/signup/step2', this.$scope.formModel).then((rsp: any) => {
-      if (rsp.code === 'redirect-to-select-org') {
-        window.location.href = config.appSubUrl + '/profile/select-org?signup=1';
-      } else {
-        window.location.href = config.appSubUrl + '/';
-      }
-    });
+    getBackendSrv()
+      .post('/api/user/signup/step2', this.$scope.formModel)
+      .then((rsp: any) => {
+        if (rsp.code === 'redirect-to-select-org') {
+          window.location.href = config.appSubUrl + '/profile/select-org?signup=1';
+        } else {
+          window.location.href = config.appSubUrl + '/';
+        }
+      });
   }
 }
 

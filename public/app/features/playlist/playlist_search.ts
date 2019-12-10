@@ -1,5 +1,5 @@
 import coreModule from '../../core/core_module';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 export class PlaylistSearchCtrl {
   query: any;
@@ -8,7 +8,7 @@ export class PlaylistSearchCtrl {
   searchStarted: any;
 
   /** @ngInject */
-  constructor($timeout: any, private backendSrv: BackendSrv) {
+  constructor($timeout: any) {
     this.query = { query: '', tag: [], starred: false, limit: 20 };
 
     $timeout(() => {
@@ -22,7 +22,7 @@ export class PlaylistSearchCtrl {
     this.tagsMode = false;
     const prom: any = {};
 
-    prom.promise = this.backendSrv.search(this.query).then(result => {
+    prom.promise = backendSrv.search(this.query).then(result => {
       return {
         dashboardResult: result,
         tagResult: [],
@@ -52,7 +52,7 @@ export class PlaylistSearchCtrl {
 
   getTags() {
     const prom: any = {};
-    prom.promise = this.backendSrv.get('/api/dashboards/tags').then((result: any) => {
+    prom.promise = backendSrv.get('/api/dashboards/tags').then((result: any) => {
       return {
         dashboardResult: [],
         tagResult: result,

@@ -2,7 +2,7 @@ import angular from 'angular';
 import _ from 'lodash';
 import { iconMap } from './DashLinksEditorCtrl';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../../services/DashboardSrv';
 import { PanelEvents } from '@grafana/data';
 import { CoreEvents } from 'app/types';
@@ -94,13 +94,7 @@ function dashLink($compile: any, $sanitize: any, linkSrv: LinkSrv) {
 
 export class DashLinksContainerCtrl {
   /** @ngInject */
-  constructor(
-    $scope: any,
-    $rootScope: GrafanaRootScope,
-    backendSrv: BackendSrv,
-    dashboardSrv: DashboardSrv,
-    linkSrv: LinkSrv
-  ) {
+  constructor($scope: any, $rootScope: GrafanaRootScope, dashboardSrv: DashboardSrv, linkSrv: LinkSrv) {
     const currentDashId = dashboardSrv.getCurrent().id;
 
     function buildLinks(linkDef: any) {

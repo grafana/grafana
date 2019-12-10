@@ -6,7 +6,7 @@ import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
 import { toUtc } from '@grafana/data';
 import * as queryDef from './query_def';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ElasticsearchOptions, ElasticsearchQuery } from './types';
@@ -29,7 +29,6 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   /** @ngInject */
   constructor(
     instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
-    private backendSrv: BackendSrv,
     private templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
   ) {
@@ -78,7 +77,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       };
     }
 
-    return this.backendSrv.datasourceRequest(options);
+    return backendSrv.datasourceRequest(options);
   }
 
   private get(url: string) {
@@ -115,7 +114,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       });
   }
 
-  annotationQuery(options: any) {
+  annotationQuery(options: any): Promise<any> {
     const annotation = options.annotation;
     const timeField = annotation.timeField || '@timestamp';
     const timeEndField = annotation.timeEndField || null;
@@ -499,20 +498,20 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
   metricFindQuery(query: any) {
     query = angular.fromJson(query);
-    if (!query) {
-      return Promise.resolve([]);
+    if (query) {
+      if (query.find === 'fields') {
+        query.field = this.templateSrv.replace(query.field, {}, 'lucene');
+        return this.getFields(query);
+      }
+
+      if (query.find === 'terms') {
+        query.field = this.templateSrv.replace(query.field, {}, 'lucene');
+        query.query = this.templateSrv.replace(query.query || '*', {}, 'lucene');
+        return this.getTerms(query);
+      }
     }
 
-    if (query.find === 'fields') {
-      query.field = this.templateSrv.replace(query.field, {}, 'lucene');
-      return this.getFields(query);
-    }
-
-    if (query.find === 'terms') {
-      query.field = this.templateSrv.replace(query.field, {}, 'lucene');
-      query.query = this.templateSrv.replace(query.query || '*', {}, 'lucene');
-      return this.getTerms(query);
-    }
+    return Promise.resolve([]);
   }
 
   getTagKeys() {

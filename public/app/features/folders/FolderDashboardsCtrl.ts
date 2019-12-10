@@ -9,16 +9,11 @@ export default class FolderDashboardsCtrl {
   uid: string;
 
   /** @ngInject */
-  constructor(
-    private backendSrv: any,
-    navModelSrv: NavModelSrv,
-    private $routeParams: any,
-    $location: ILocationService
-  ) {
+  constructor(navModelSrv: NavModelSrv, private $routeParams: any, $location: ILocationService) {
     if (this.$routeParams.uid) {
       this.uid = $routeParams.uid;
 
-      const loader = new FolderPageLoader(this.backendSrv);
+      const loader = new FolderPageLoader();
 
       loader.load(this, this.uid, 'manage-folder-dashboards').then((folder: any) => {
         const url = locationUtil.stripBaseFromUrl(folder.url);

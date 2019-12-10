@@ -5,7 +5,7 @@ import { PanelCtrl } from 'app/plugins/sdk';
 import { dateMath, dateTime } from '@grafana/data';
 import { PanelEvents } from '@grafana/data';
 import { auto } from 'angular';
-import { BackendSrv } from '@grafana/runtime';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 class AlertListPanel extends PanelCtrl {
   static templateUrl = 'module.html';
@@ -41,7 +41,7 @@ class AlertListPanel extends PanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope: any, $injector: auto.IInjectorService, private backendSrv: BackendSrv) {
+  constructor($scope: any, $injector: auto.IInjectorService) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
@@ -120,7 +120,7 @@ class AlertListPanel extends PanelCtrl {
     params.from = dateMath.parse(this.dashboard.time.from).unix() * 1000;
     params.to = dateMath.parse(this.dashboard.time.to).unix() * 1000;
 
-    return this.backendSrv.get(`/api/annotations`, params).then(res => {
+    return backendSrv.get(`/api/annotations`, params).then(res => {
       this.alertHistory = _.map(res, al => {
         al.time = this.dashboard.formatDate(al.time, 'MMM D, YYYY HH:mm:ss');
         al.stateModel = alertDef.getStateDisplayModel(al.newState);
@@ -159,7 +159,7 @@ class AlertListPanel extends PanelCtrl {
       params.dashboardTag = this.panel.dashboardTags;
     }
 
-    return this.backendSrv.get(`/api/alerts`, params).then(res => {
+    return backendSrv.get(`/api/alerts`, params).then(res => {
       this.currentAlerts = this.sortResult(
         _.map(res, al => {
           al.stateModel = alertDef.getStateDisplayModel(al.state);

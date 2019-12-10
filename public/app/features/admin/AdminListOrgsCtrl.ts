@@ -1,19 +1,18 @@
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/core';
 import { Scope, CoreEvents, AppEventEmitter } from 'app/types';
 
 export default class AdminListOrgsCtrl {
   /** @ngInject */
-  constructor($scope: Scope & AppEventEmitter, backendSrv: BackendSrv, navModelSrv: NavModelSrv) {
-    $scope.init = () => {
+  constructor($scope: Scope & AppEventEmitter, navModelSrv: NavModelSrv) {
+    $scope.init = async () => {
       $scope.navModel = navModelSrv.getNav('admin', 'global-orgs', 0);
-      $scope.getOrgs();
+      await $scope.getOrgs();
     };
 
-    $scope.getOrgs = () => {
-      backendSrv.get('/api/orgs').then((orgs: any) => {
-        $scope.orgs = orgs;
-      });
+    $scope.getOrgs = async () => {
+      const orgs = await backendSrv.get('/api/orgs');
+      $scope.orgs = orgs;
     };
 
     $scope.deleteOrg = (org: any) => {

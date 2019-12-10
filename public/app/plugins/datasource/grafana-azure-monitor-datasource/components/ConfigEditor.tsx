@@ -9,7 +9,7 @@ import {
 import { MonitorConfig } from './MonitorConfig';
 import { AnalyticsConfig } from './AnalyticsConfig';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { getBackendSrv, BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { InsightsConfig } from './InsightsConfig';
 import ResponseParser from '../azure_monitor/response_parser';
 import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData, AzureDataSourceSettings } from '../types';
@@ -37,7 +37,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
       logAnalyticsSubscriptionId: '',
     };
 
-    this.backendSrv = getBackendSrv();
     this.templateSrv = new TemplateSrv();
     if (this.props.options.id) {
       updateDatasourcePluginOption(this.props, 'url', '/api/datasources/proxy/' + this.props.options.id);
@@ -45,7 +44,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
   }
 
   initPromise: CancelablePromise<any> = null;
-  backendSrv: BackendSrv = null;
   templateSrv: TemplateSrv = null;
 
   componentDidMount() {
@@ -131,7 +129,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   onLoadSubscriptions = async (type?: string) => {
-    await this.backendSrv
+    await backendSrv
       .put(`/api/datasources/${this.props.options.id}`, this.props.options)
       .then((result: AzureDataSourceSettings) => {
         this.updateOptions({
@@ -150,7 +148,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   loadSubscriptions = async (route?: string) => {
     const url = `/${route || this.props.options.jsonData.cloudName}/subscriptions?api-version=2019-03-01`;
 
-    const result = await this.backendSrv.datasourceRequest({
+    const result = await backendSrv.datasourceRequest({
       url: this.props.options.url + url,
       method: 'GET',
     });
@@ -175,7 +173,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
       azureMonitorUrl +
       `/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
 
-    const result = await this.backendSrv.datasourceRequest({
+    const result = await backendSrv.datasourceRequest({
       url: this.props.options.url + workspaceListUrl,
       method: 'GET',
     });

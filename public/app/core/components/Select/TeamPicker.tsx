@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import _ from 'lodash';
 import { AsyncSelect } from '@grafana/ui';
 import { debounce } from 'lodash';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 export interface Team {
   id: number;
@@ -35,7 +35,6 @@ export class TeamPicker extends Component<Props, State> {
   }
 
   search(query?: string) {
-    const backendSrv = getBackendSrv();
     this.setState({ isLoading: true });
 
     if (_.isNil(query)) {

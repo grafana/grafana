@@ -2,12 +2,9 @@ import React from 'react';
 import { TestRuleResult, Props } from './TestRuleResult';
 import { DashboardModel } from '../dashboard/state';
 import { shallow } from 'enzyme';
+import { backendSrv } from 'app/core/services/backend_srv';
 
-jest.mock('@grafana/runtime/src/services/backendSrv', () => ({
-  getBackendSrv: () => ({
-    post: jest.fn(),
-  }),
-}));
+jest.spyOn(backendSrv, 'post').mockImplementation(jest.fn());
 
 const setup = (propOverrides?: object) => {
   const props: Props = {

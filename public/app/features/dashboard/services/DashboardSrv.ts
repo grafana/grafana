@@ -5,7 +5,7 @@ import { DashboardModel } from '../state/DashboardModel';
 import { removePanel } from '../utils/panel';
 import { DashboardMeta, CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { ILocationService } from 'angular';
 import { AppEvents } from '@grafana/data';
 import { PanelEvents } from '@grafana/data';
@@ -21,11 +21,7 @@ export class DashboardSrv {
   dashboard: DashboardModel;
 
   /** @ngInject */
-  constructor(
-    private backendSrv: BackendSrv,
-    private $rootScope: GrafanaRootScope,
-    private $location: ILocationService
-  ) {
+  constructor(private $rootScope: GrafanaRootScope, private $location: ILocationService) {
     appEvents.on(CoreEvents.saveDashboard, this.saveDashboard.bind(this), $rootScope);
     appEvents.on(PanelEvents.panelChangeView, this.onPanelChangeView);
     appEvents.on(CoreEvents.removePanel, this.onRemovePanel);
@@ -167,7 +163,7 @@ export class DashboardSrv {
   save(clone: any, options?: DashboardSaveOptions) {
     options.folderId = options.folderId >= 0 ? options.folderId : this.dashboard.meta.folderId || clone.folderId;
 
-    return this.backendSrv
+    return backendSrv
       .saveDashboard(clone, options)
       .then((data: any) => this.postSave(data))
       .catch(this.handleSaveDashboardError.bind(this, clone, { folderId: options.folderId }));
@@ -228,11 +224,11 @@ export class DashboardSrv {
     let promise;
 
     if (isStarred) {
-      promise = this.backendSrv.delete('/api/user/stars/dashboard/' + dashboardId).then(() => {
+      promise = backendSrv.delete('/api/user/stars/dashboard/' + dashboardId).then(() => {
         return false;
       });
     } else {
-      promise = this.backendSrv.post('/api/user/stars/dashboard/' + dashboardId).then(() => {
+      promise = backendSrv.post('/api/user/stars/dashboard/' + dashboardId).then(() => {
         return true;
       });
     }

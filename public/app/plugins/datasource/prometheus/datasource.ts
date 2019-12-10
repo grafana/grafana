@@ -24,7 +24,7 @@ import { filter, map, tap } from 'rxjs/operators';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
 import PrometheusLanguageProvider from './language_provider';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import addLabelToQuery from './add_label_to_query';
 import { getQueryHints } from './query_hints';
 import { expandRecordingRules } from './language_utils';
@@ -147,7 +147,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       options.headers.Authorization = this.basicAuth;
     }
 
-    return getBackendSrv().datasourceRequest(options as Required<RequestOptions>);
+    return backendSrv.datasourceRequest(options as Required<RequestOptions>);
   }
 
   // Use this for tab completion features, wont publish response to other components

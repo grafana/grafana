@@ -1,9 +1,10 @@
 import coreModule from '../core_module';
 import config from 'app/core/config';
+import { backendSrv } from '../services/backend_srv';
 
 export class InvitedCtrl {
   /** @ngInject */
-  constructor($scope: any, $routeParams: any, contextSrv: any, backendSrv: any) {
+  constructor($scope: any, $routeParams: any, contextSrv: any) {
     contextSrv.sidemenu = false;
     $scope.formModel = {};
 

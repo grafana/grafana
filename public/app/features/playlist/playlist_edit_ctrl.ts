@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import coreModule from '../../core/core_module';
 import { ILocationService } from 'angular';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/nav_model_srv';
 import { AppEventEmitter } from 'app/types';
 import { AppEvents } from '@grafana/data';
@@ -30,7 +30,6 @@ export class PlaylistEditCtrl {
   /** @ngInject */
   constructor(
     private $scope: AppEventEmitter,
-    private backendSrv: BackendSrv,
     private $location: ILocationService,
     $route: any,
     navModelSrv: NavModelSrv
@@ -99,8 +98,8 @@ export class PlaylistEditCtrl {
     playlist.items = playlistItems;
 
     savePromise = playlist.id
-      ? this.backendSrv.put('/api/playlists/' + playlist.id, playlist)
-      : this.backendSrv.post('/api/playlists', playlist);
+      ? backendSrv.put('/api/playlists/' + playlist.id, playlist)
+      : backendSrv.post('/api/playlists', playlist);
 
     savePromise.then(
       () => {

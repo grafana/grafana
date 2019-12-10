@@ -9,7 +9,7 @@ import {
   DataQueryError,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { queryMetricTree } from './metricTree';
 import { from, merge, Observable } from 'rxjs';
 import { runStream } from './runStreams';
@@ -46,7 +46,7 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
     }
 
     if (queries.length) {
-      const req: Promise<DataQueryResponse> = getBackendSrv()
+      const req: Promise<DataQueryResponse> = backendSrv
         .datasourceRequest({
           method: 'POST',
           url: '/api/tsdb/query',
@@ -128,7 +128,7 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
   }
 
   getScenarios(): Promise<Scenario[]> {
-    return getBackendSrv().get('/api/tsdb/testdata/scenarios');
+    return backendSrv.get('/api/tsdb/testdata/scenarios');
   }
 
   metricFindQuery(query: string, options: any) {

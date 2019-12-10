@@ -1,20 +1,23 @@
 import { MysqlDatasource } from '../datasource';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 import { dateTime, toUtc } from '@grafana/data';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 describe('MySQLDatasource', () => {
   const instanceSettings = { name: 'mysql' };
-  const backendSrv = {};
   const templateSrv: TemplateSrv = new TemplateSrv();
+  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   const raw = {
     from: toUtc('2018-04-25 10:00'),
     to: toUtc('2018-04-25 11:00'),
   };
   const ctx = {
-    backendSrv,
     timeSrvMock: {
       timeRange: () => ({
         from: raw.from,
@@ -25,7 +28,7 @@ describe('MySQLDatasource', () => {
   } as any;
 
   beforeEach(() => {
-    ctx.ds = new MysqlDatasource(instanceSettings, backendSrv as BackendSrv, templateSrv, ctx.timeSrvMock);
+    ctx.ds = new MysqlDatasource(instanceSettings, templateSrv, ctx.timeSrvMock);
   });
 
   describe('When performing annotationQuery', () => {
@@ -63,9 +66,8 @@ describe('MySQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        return Promise.resolve({ data: response, status: 200 });
-      });
+      datasourceRequestMock.mockImplementation(options => Promise.resolve({ data: response, status: 200 }));
+
       ctx.ds.annotationQuery(options).then((data: any) => {
         results = data;
       });
@@ -110,9 +112,8 @@ describe('MySQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        return Promise.resolve({ data: response, status: 200 });
-      });
+      datasourceRequestMock.mockImplementation(options => Promise.resolve({ data: response, status: 200 }));
+
       ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });
@@ -151,7 +152,7 @@ describe('MySQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
+      datasourceRequestMock.mockImplementation(options => {
         calledWith = options;
         return Promise.resolve({ data: response, status: 200 });
       });
@@ -161,7 +162,7 @@ describe('MySQLDatasource', () => {
     });
 
     it('should return list of all column values', () => {
-      expect(ctx.backendSrv.datasourceRequest).toBeCalledTimes(1);
+      expect(datasourceRequestMock).toBeCalledTimes(1);
       expect(calledWith.data.queries[0].rawSql).toBe("select title from atable where title LIKE 'aTit%'");
       expect(results.length).toBe(6);
     });
@@ -193,7 +194,7 @@ describe('MySQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
+      datasourceRequestMock.mockImplementation(options => {
         calledWith = options;
         return Promise.resolve({ data: response, status: 200 });
       });
@@ -203,7 +204,7 @@ describe('MySQLDatasource', () => {
     });
 
     it('should return list of all column values', () => {
-      expect(ctx.backendSrv.datasourceRequest).toBeCalledTimes(1);
+      expect(datasourceRequestMock).toBeCalledTimes(1);
       expect(calledWith.data.queries[0].rawSql).toBe("select title from atable where title LIKE '%'");
       expect(results.length).toBe(6);
     });
@@ -234,9 +235,7 @@ describe('MySQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        return Promise.resolve({ data: response, status: 200 });
-      });
+      datasourceRequestMock.mockImplementation(() => Promise.resolve({ data: response, status: 200 }));
       ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });
@@ -276,9 +275,7 @@ describe('MySQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        return Promise.resolve({ data: response, status: 200 });
-      });
+      datasourceRequestMock.mockImplementation(() => Promise.resolve({ data: response, status: 200 }));
       ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });

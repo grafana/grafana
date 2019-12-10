@@ -1,19 +1,11 @@
 import React from 'react';
-// @ts-ignore
-import { getBackendSrv } from '@grafana/runtime/src/services/backendSrv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { OrgSwitcher } from '../components/OrgSwitcher';
 import { shallow } from 'enzyme';
 import { OrgRole } from '@grafana/data';
 
-const getMock = jest.fn(() => Promise.resolve([]));
-const postMock = jest.fn();
-
-jest.mock('@grafana/runtime/src/services/backendSrv', () => ({
-  getBackendSrv: () => ({
-    get: getMock,
-    post: postMock,
-  }),
-}));
+jest.spyOn(backendSrv, 'get').mockImplementation(() => Promise.resolve([]));
+const postMock = jest.spyOn(backendSrv, 'post').mockImplementation(jest.fn());
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {

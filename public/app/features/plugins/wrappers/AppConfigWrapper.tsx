@@ -7,7 +7,7 @@ import { Button } from '@grafana/ui';
 import { PluginMeta, AppPlugin, deprecationWarning } from '@grafana/data';
 
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { css } from 'emotion';
 
 interface Props {
@@ -109,7 +109,7 @@ export class AppConfigCtrlWrapper extends PureComponent<Props, State> {
           },
           {}
         );
-        return getBackendSrv().post(`/api/plugins/${pluginId}/settings`, updateCmd);
+        return backendSrv.post(`/api/plugins/${pluginId}/settings`, updateCmd);
       })
       .then(this.postUpdateHook)
       .then(res => {

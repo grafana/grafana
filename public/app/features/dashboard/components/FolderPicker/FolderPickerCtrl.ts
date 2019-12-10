@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { ValidationSrv } from 'app/features/manage-dashboards';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { AppEvents } from '@grafana/data';
@@ -28,7 +28,7 @@ export class FolderPickerCtrl {
   dashboardId?: number;
 
   /** @ngInject */
-  constructor(private backendSrv: BackendSrv, private validationSrv: ValidationSrv, private contextSrv: ContextSrv) {
+  constructor(private validationSrv: ValidationSrv, private contextSrv: ContextSrv) {
     this.isEditor = this.contextSrv.isEditor;
 
     if (!this.labelClass) {
@@ -45,7 +45,7 @@ export class FolderPickerCtrl {
       permission: 'Edit',
     };
 
-    return this.backendSrv.get('api/search', params).then((result: any) => {
+    return backendSrv.get('api/search', params).then((result: any) => {
       if (
         this.isEditor &&
         (query === '' ||
@@ -105,7 +105,7 @@ export class FolderPickerCtrl {
       evt.preventDefault();
     }
 
-    return this.backendSrv.createFolder({ title: this.newFolderName }).then((result: { title: string; id: number }) => {
+    return backendSrv.createFolder({ title: this.newFolderName }).then((result: { title: string; id: number }) => {
       appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
 
       this.closeCreateFolder();

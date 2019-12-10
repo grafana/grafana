@@ -4,7 +4,7 @@ import { e2e } from '@grafana/e2e';
 
 import { QueryCtrl } from 'app/plugins/sdk';
 import { defaultQuery } from './runStreams';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 export const defaultPulse: any = {
   timeStep: 60,
@@ -73,12 +73,10 @@ export class TestDataQueryCtrl extends QueryCtrl {
   }
 
   $onInit() {
-    return getBackendSrv()
-      .get('/api/tsdb/testdata/scenarios')
-      .then((res: any) => {
-        this.scenarioList = res;
-        this.scenario = _.find(this.scenarioList, { id: this.target.scenarioId });
-      });
+    return backendSrv.get('/api/tsdb/testdata/scenarios').then((res: any) => {
+      this.scenarioList = res;
+      this.scenario = _.find(this.scenarioList, { id: this.target.scenarioId });
+    });
   }
 
   scenarioChanged() {

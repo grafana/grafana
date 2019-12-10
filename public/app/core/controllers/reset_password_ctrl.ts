@@ -1,11 +1,11 @@
 import coreModule from '../core_module';
 import config from 'app/core/config';
-import { BackendSrv } from '../services/backend_srv';
+import { backendSrv } from '../services/backend_srv';
 import { AppEvents } from '@grafana/data';
 
 export class ResetPasswordCtrl {
   /** @ngInject */
-  constructor($scope: any, backendSrv: BackendSrv, $location: any) {
+  constructor($scope: any, $location: any) {
     $scope.formModel = {};
     $scope.mode = 'send';
     $scope.ldapEnabled = config.ldapEnabled;

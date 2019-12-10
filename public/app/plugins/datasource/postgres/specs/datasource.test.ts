@@ -1,20 +1,24 @@
 import { PostgresDatasource } from '../datasource';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 import { dateTime, toUtc } from '@grafana/data';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 describe('PostgreSQLDatasource', () => {
+  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   const instanceSettings = { name: 'postgresql' };
 
-  const backendSrv = {};
   const templateSrv: TemplateSrv = new TemplateSrv();
   const raw = {
     from: toUtc('2018-04-25 10:00'),
     to: toUtc('2018-04-25 11:00'),
   };
   const ctx = {
-    backendSrv,
     timeSrvMock: {
       timeRange: () => ({
         from: raw.from,
@@ -25,7 +29,7 @@ describe('PostgreSQLDatasource', () => {
   } as any;
 
   beforeEach(() => {
-    ctx.ds = new PostgresDatasource(instanceSettings, backendSrv as BackendSrv, templateSrv, ctx.timeSrvMock);
+    ctx.ds = new PostgresDatasource(instanceSettings, templateSrv, ctx.timeSrvMock);
   });
 
   describe('When performing annotationQuery', () => {
@@ -63,9 +67,8 @@ describe('PostgreSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        return Promise.resolve({ data: response, status: 200 });
-      });
+      datasourceRequestMock.mockImplementation(options => Promise.resolve({ data: response, status: 200 }));
+
       ctx.ds.annotationQuery(options).then((data: any) => {
         results = data;
       });
@@ -110,9 +113,8 @@ describe('PostgreSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        return Promise.resolve({ data: response, status: 200 });
-      });
+      datasourceRequestMock.mockImplementation(options => Promise.resolve({ data: response, status: 200 }));
+
       ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });
@@ -151,17 +153,18 @@ describe('PostgreSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
+      datasourceRequestMock.mockImplementation(options => {
         calledWith = options;
         return Promise.resolve({ data: response, status: 200 });
       });
+
       ctx.ds.metricFindQuery(query, { searchFilter: 'aTit' }).then((data: any) => {
         results = data;
       });
     });
 
     it('should return list of all column values', () => {
-      expect(ctx.backendSrv.datasourceRequest).toBeCalledTimes(1);
+      expect(datasourceRequestMock).toBeCalledTimes(1);
       expect(calledWith.data.queries[0].rawSql).toBe("select title from atable where title LIKE 'aTit%'");
       expect(results.length).toBe(6);
     });
@@ -193,17 +196,18 @@ describe('PostgreSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
+      datasourceRequestMock.mockImplementation(options => {
         calledWith = options;
         return Promise.resolve({ data: response, status: 200 });
       });
+
       ctx.ds.metricFindQuery(query, {}).then((data: any) => {
         results = data;
       });
     });
 
     it('should return list of all column values', () => {
-      expect(ctx.backendSrv.datasourceRequest).toBeCalledTimes(1);
+      expect(datasourceRequestMock).toBeCalledTimes(1);
       expect(calledWith.data.queries[0].rawSql).toBe("select title from atable where title LIKE '%'");
       expect(results.length).toBe(6);
     });
@@ -234,9 +238,8 @@ describe('PostgreSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        return Promise.resolve({ data: response, status: 200 });
-      });
+      datasourceRequestMock.mockImplementation(options => Promise.resolve({ data: response, status: 200 }));
+
       ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });
@@ -276,9 +279,8 @@ describe('PostgreSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        return Promise.resolve({ data: response, status: 200 });
-      });
+      datasourceRequestMock.mockImplementation(options => Promise.resolve({ data: response, status: 200 }));
+
       ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });

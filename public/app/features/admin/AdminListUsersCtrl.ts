@@ -1,5 +1,5 @@
 import { getTagColorsFromName } from '@grafana/ui';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/core';
 
 export default class AdminListUsersCtrl {
@@ -13,14 +13,14 @@ export default class AdminListUsersCtrl {
   navModel: any;
 
   /** @ngInject */
-  constructor(private backendSrv: BackendSrv, navModelSrv: NavModelSrv) {
+  constructor(navModelSrv: NavModelSrv) {
     this.navModel = navModelSrv.getNav('admin', 'global-users', 0);
     this.query = '';
     this.getUsers();
   }
 
   getUsers() {
-    this.backendSrv
+    backendSrv
       .get(`/api/users/search?perpage=${this.perPage}&page=${this.page}&query=${this.query}`)
       .then((result: any) => {
         this.users = result.users;

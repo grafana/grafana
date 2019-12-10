@@ -1,5 +1,5 @@
 import config from 'app/core/config';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/core';
 
 export default class StyleGuideCtrl {
@@ -10,7 +10,7 @@ export default class StyleGuideCtrl {
   navModel: any;
 
   /** @ngInject */
-  constructor(private $routeParams: any, private backendSrv: BackendSrv, navModelSrv: NavModelSrv) {
+  constructor(private $routeParams: any, navModelSrv: NavModelSrv) {
     this.navModel = navModelSrv.getNav('admin', 'styleguide', 0);
     this.theme = config.bootData.user.lightTheme ? 'light' : 'dark';
   }
@@ -22,7 +22,7 @@ export default class StyleGuideCtrl {
       theme: this.$routeParams.theme,
     };
 
-    this.backendSrv.put('/api/user/preferences', cmd).then(() => {
+    backendSrv.put('/api/user/preferences', cmd).then(() => {
       window.location.href = window.location.href;
     });
   }

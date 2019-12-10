@@ -1,13 +1,13 @@
 import _ from 'lodash';
-import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 class GrafanaDatasource {
   /** @ngInject */
-  constructor(private backendSrv: BackendSrv, private templateSrv: TemplateSrv) {}
+  constructor(private templateSrv: TemplateSrv) {}
 
   query(options: any) {
-    return this.backendSrv
+    return backendSrv
       .get('/api/tsdb/testdata/random-walk', {
         from: options.range.from.valueOf(),
         to: options.range.to.valueOf(),
@@ -76,7 +76,7 @@ class GrafanaDatasource {
       params.tags = tags;
     }
 
-    return this.backendSrv.get('/api/annotations', params);
+    return backendSrv.get('/api/annotations', params);
   }
 }
 

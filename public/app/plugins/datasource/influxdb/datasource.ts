@@ -6,7 +6,7 @@ import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
 import { InfluxQueryBuilder } from './query_builder';
 import { InfluxQuery, InfluxOptions } from './types';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxOptions> {
@@ -23,11 +23,7 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
   httpMode: string;
 
   /** @ngInject */
-  constructor(
-    instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
-    private backendSrv: BackendSrv,
-    private templateSrv: TemplateSrv
-  ) {
+  constructor(instanceSettings: DataSourceInstanceSettings<InfluxOptions>, private templateSrv: TemplateSrv) {
     super(instanceSettings);
     this.type = 'influxdb';
     this.urls = _.map(instanceSettings.url.split(','), url => {
@@ -208,7 +204,7 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
   metricFindQuery(query: string, options?: any) {
     const interpolated = this.templateSrv.replace(query, null, 'regex');
 
-    return this._seriesQuery(interpolated, options).then(_.curry(this.responseParser.parse)(query));
+    return this._seriesQuery(interpolated, options).then(() => this.responseParser.parse(query));
   }
 
   getTagKeys(options: any = {}) {
@@ -320,7 +316,7 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
       req.headers['Content-type'] = 'application/x-www-form-urlencoded';
     }
 
-    return this.backendSrv.datasourceRequest(req).then(
+    return backendSrv.datasourceRequest(req).then(
       (result: any) => {
         return result.data;
       },

@@ -1,5 +1,5 @@
 import coreModule from 'app/core/core_module';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/core';
 import { ILocationService } from 'angular';
 
@@ -9,7 +9,7 @@ export class UserInviteCtrl {
   inviteForm: any;
 
   /** @ngInject */
-  constructor(private backendSrv: BackendSrv, navModelSrv: NavModelSrv, private $location: ILocationService) {
+  constructor(navModelSrv: NavModelSrv, private $location: ILocationService) {
     this.navModel = navModelSrv.getNav('cfg', 'users', 0);
 
     this.invite = {
@@ -25,7 +25,7 @@ export class UserInviteCtrl {
       return;
     }
 
-    return this.backendSrv.post('/api/org/invites', this.invite).then(() => {
+    backendSrv.post('/api/org/invites', this.invite).then(() => {
       this.$location.path('org/users/');
     });
   }

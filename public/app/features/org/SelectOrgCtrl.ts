@@ -1,10 +1,10 @@
 import angular from 'angular';
 import config from 'app/core/config';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 export class SelectOrgCtrl {
   /** @ngInject */
-  constructor($scope: any, backendSrv: BackendSrv, contextSrv: any) {
+  constructor($scope: any, contextSrv: any) {
     contextSrv.sidemenu = false;
 
     $scope.navModel = {

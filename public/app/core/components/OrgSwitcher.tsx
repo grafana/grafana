@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { getBackendSrv } from '@grafana/runtime';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { UserOrgDTO } from '@grafana/data';
 import { Modal, Button } from '@grafana/ui';
 
@@ -26,14 +26,14 @@ export class OrgSwitcher extends React.PureComponent<Props, State> {
   }
 
   getUserOrgs = async () => {
-    const orgs: UserOrgDTO[] = await getBackendSrv().get('/api/user/orgs');
+    const orgs: UserOrgDTO[] = await backendSrv.get('/api/user/orgs');
     this.setState({
       orgs: orgs.sort((a, b) => a.orgId - b.orgId),
     });
   };
 
   setCurrentOrg = async (org: UserOrgDTO) => {
-    await getBackendSrv().post(`/api/user/using/${org.orgId}`);
+    await backendSrv.post(`/api/user/using/${org.orgId}`);
     this.setWindowLocation(`${config.appSubUrl}${config.appSubUrl.endsWith('/') ? '' : '/'}?orgId=${org.orgId}`);
   };
 

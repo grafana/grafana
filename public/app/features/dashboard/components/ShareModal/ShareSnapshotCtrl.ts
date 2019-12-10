@@ -1,6 +1,6 @@
 import angular, { ILocationService } from 'angular';
 import _ from 'lodash';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv } from '../../services/TimeSrv';
 import { DashboardModel } from '../../state/DashboardModel';
 import { PanelModel } from '../../state/PanelModel';
@@ -8,14 +8,7 @@ import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export class ShareSnapshotCtrl {
   /** @ngInject */
-  constructor(
-    $scope: any,
-    $rootScope: GrafanaRootScope,
-    $location: ILocationService,
-    backendSrv: BackendSrv,
-    $timeout: any,
-    timeSrv: TimeSrv
-  ) {
+  constructor($scope: any, $rootScope: GrafanaRootScope, $location: ILocationService, $timeout: any, timeSrv: TimeSrv) {
     $scope.snapshot = {
       name: $scope.dashboard.title,
       expires: 0,
