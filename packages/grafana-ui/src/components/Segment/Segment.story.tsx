@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { action } from '@storybook/addon-actions';
-
-import { SelectableValue } from '@grafana/data';
 import { Segment } from './';
 
 const AddButton = (
