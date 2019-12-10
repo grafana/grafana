@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTheme, stylesFactory } from '../../../themes';
-import { GrafanaTheme, TimeOption } from '@grafana/data';
+import { GrafanaTheme, TimeOption, TimeRange } from '@grafana/data';
 import { css } from 'emotion';
 import TimeRangeTitle from './TimeRangeTitle';
 import TimeRangeForm from './TimeRangeForm';
@@ -40,8 +40,6 @@ const defaultSelectOptions: TimeOption[] = [
   { from: 'now/y', to: 'now', display: 'This year so far', section: 3 },
 ];
 
-interface Props {}
-
 const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     container: css`
@@ -78,7 +76,12 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-const ExtendedTimePicker: React.FC<Props> = () => {
+interface Props {
+  selected: TimeRange;
+  onChange: (timeRange: TimeRange) => void;
+}
+
+const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }: Props) => {
   const theme = useTheme();
   const styles = getLabelStyles(theme);
 
@@ -87,13 +90,14 @@ const ExtendedTimePicker: React.FC<Props> = () => {
       <div className={styles.leftSide}>
         <div className={styles.rangesForm}>
           <TimeRangeTitle>Absolute time range</TimeRangeTitle>
-          <TimeRangeForm />
+          <TimeRangeForm value={selected} onApply={onChange} />
         </div>
         <div className={styles.recentRanges}>
           <TimeRangeList
             title="Recently used absolute ranges"
             options={defaultSelectOptions.slice(0, 5)}
-            onSelect={(t: TimeOption) => {}}
+            onSelect={onChange}
+            selected={selected}
           />
         </div>
       </div>
@@ -101,12 +105,14 @@ const ExtendedTimePicker: React.FC<Props> = () => {
         <TimeRangeList
           title="Relative time range from now"
           options={defaultSelectOptions.slice(0, 50)}
-          onSelect={(t: TimeOption) => {}}
+          onSelect={onChange}
+          selected={selected}
         />
         <TimeRangeList
           title="Other relative range"
           options={defaultSelectOptions.slice(0, 50)}
-          onSelect={(t: TimeOption) => {}}
+          onSelect={onChange}
+          selected={selected}
         />
       </CustomScrollbar>
     </div>

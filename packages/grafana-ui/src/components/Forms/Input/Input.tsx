@@ -115,7 +115,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
 
     input: cx(
       getFocusStyle(theme),
-      sharedInputStyle(theme),
+      sharedInputStyle(theme, invalid),
       css`
         label: input-input;
         position: relative;

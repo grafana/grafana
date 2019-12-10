@@ -4,12 +4,14 @@ import { GrafanaTheme, TimeOption } from '@grafana/data';
 import { css } from 'emotion';
 import TimeRangeTitle from './TimeRangeTitle';
 import TimeRangeOption from './TimeRangeOption';
+import { TimeRange } from '@grafana/data';
+import { stringToDateTimeType } from '../time';
 
 interface Props {
   title?: string;
   options: TimeOption[];
-  selected?: TimeOption;
-  onSelect: (option: TimeOption) => void;
+  selected?: TimeRange;
+  onSelect: (option: TimeRange) => void;
 }
 
 const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -44,15 +46,35 @@ const TimeRangeList: React.FC<Props> = props => {
 
 function renderOptions({ options, selected, onSelect }: Props): JSX.Element[] {
   return options.map(option => (
-    <TimeRangeOption value={option} selected={isEqual(option, selected)} onSelect={onSelect} />
+    <TimeRangeOption
+      key={keyForOption(option)}
+      value={option}
+      selected={isEqual(option, selected)}
+      onSelect={option => onSelect(toTimeRange(option))}
+    />
   ));
 }
 
-function isEqual(x: TimeOption, y?: TimeOption): boolean {
+function toTimeRange(option: TimeOption): TimeRange {
+  return {
+    from: stringToDateTimeType(option.from),
+    to: stringToDateTimeType(option.to),
+    raw: {
+      from: option.from,
+      to: option.to,
+    },
+  };
+}
+
+function keyForOption(option: TimeOption): string {
+  return `${option.from}-${option.to}`;
+}
+
+function isEqual(x: TimeOption, y?: TimeRange): boolean {
   if (!y || !x) {
     return false;
   }
-  return y.from === x.from && y.to === x.to;
+  return y.raw.from === x.from && y.raw.to === x.to;
 }
 
 export default TimeRangeList;
