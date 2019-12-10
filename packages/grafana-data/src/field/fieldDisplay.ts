@@ -14,6 +14,8 @@ import { ReducerID, reduceField } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { MatcherConfig } from '../types/transformations';
+import { frameMatchers, fieldMatchers } from '../transformations';
+import { FrameMatcher, FieldMatcher } from '../types/transformations';
 
 export interface DynamicConfigValue {
   path: string;
@@ -26,6 +28,8 @@ export interface ConfigOverrideRule {
 }
 
 export interface FieldConfigSource {
+  // TODO: need a better name!  essentially the defaults tend to apply to only the 'number' fields
+  applyDefaultsToEverything?: boolean;
   defaults: FieldConfig; // Use these values unless otherwise stated
   overrides: ConfigOverrideRule[]; // Set these values regardless of the source
 }
@@ -94,27 +98,21 @@ export interface GetFieldDisplayValuesOptions {
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
-  const { data, replaceVariables, fieldOptions } = options;
-  const { defaults } = fieldOptions;
+  const { replaceVariables, fieldOptions } = options;
   const calcs = fieldOptions.calcs.length ? fieldOptions.calcs : [ReducerID.last];
 
   const values: FieldDisplay[] = [];
 
-  if (data) {
+  if (options.data) {
+    const data = prepareDataFramesForDisplay(options.data, fieldOptions);
+
     let hitLimit = false;
     const limit = fieldOptions.limit ? fieldOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
     const defaultTitle = getTitleTemplate(fieldOptions.defaults.title, calcs, data);
     const scopedVars: ScopedVars = {};
 
     for (let s = 0; s < data.length && !hitLimit; s++) {
-      let series = data[s];
-      if (!series.name) {
-        series = {
-          ...series,
-          name: series.refId ? series.refId : `Series[${s}]`,
-        };
-      }
-
+      const series = data[s]; // Name is already set
       scopedVars['__series'] = { text: 'Series', value: { name: series.name } };
 
       const { timeField } = getTimeField(series);
@@ -127,7 +125,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         if (field.type !== FieldType.number) {
           continue;
         }
-        const config = getFieldProperties(defaults, field.config || {});
+        const config = field.config; // already set by the prepare task
 
         let name = field.name;
         if (!name) {
@@ -263,35 +261,89 @@ export function applyFieldProperties(field: FieldConfig, props?: FieldConfig): F
   return copy as FieldConfig;
 }
 
-/**
- * Takes a data frame, applies defaults, and override rules.
- * Updating the data frame field config and returns a new DataFrame
- */
-export function applyFieldConfigOverridesAndDefaults(data: DataFrame, source: FieldConfigSource): DataFrame {
-  return {
-    ...data,
-    fields: data.fields.map(field => {
-      return {
-        ...field,
-        config: getFieldConfigFromSource(field, data, source),
-      };
-    }),
-  };
+interface OverrideProps {
+  match: FieldMatcher;
+  properties: DynamicConfigValue[];
 }
 
-export function getFieldConfigFromSource(field: Field, data: DataFrame, source: FieldConfigSource): FieldConfig {
-  const config = field.config;
-  // TODO:
+/**
+ * Return a copy of the DataFrame with all rules attached
+ */
+export function prepareDataFramesForDisplay(data: DataFrame[], source: FieldConfigSource): DataFrame[] {
+  if (!source) {
+    return data;
+  }
+
+  // Prepare the Matchers
+  const override: OverrideProps[] = [];
+  if (source.overrides) {
+    for (const rule of source.overrides) {
+      const info = fieldMatchers.get(rule.matcher.id);
+      if (info) {
+        override.push({
+          match: info.get(rule.matcher),
+          properties: rule.properties,
+        });
+      }
+    }
+  }
+
+  return data.map((frame, index) => {
+    let name = frame.name;
+    if (!name) {
+      name = `Series[${index}]`;
+    }
+
+    const fields = frame.fields.map(field => {
+      let config: FieldConfig = field.config || {};
+      if (field.type === FieldType.number || source.applyDefaultsToEverything) {
+        config = getFieldProperties(config, source.defaults);
+      }
+      // Find any matching rules and then override
+      for (const rule of override) {
+        if (rule.match(field)) {
+          for (const prop of rule.properties) {
+            config = applyDynamicConfigValue(prop, config, field, frame);
+          }
+        }
+      }
+
+      return {
+        ...field,
+        config,
+      };
+    });
+
+    return {
+      ...frame,
+      fields,
+      name,
+    };
+  });
+}
+
+export function applyDynamicConfigValue(
+  value: DynamicConfigValue,
+  config: FieldConfig,
+  field: Field,
+  data: DataFrame
+): FieldConfig {
+  console.log('TODO Apply rule', value);
   return config;
 }
 
-export function attachFieldDisplayProcessor(data: DataFrame, theme: GrafanaTheme): DataFrame {
+export function attachFieldDisplayProcessor(data: DataFrame, theme: GrafanaTheme, isUtc?: boolean): DataFrame {
   return {
     ...data,
     fields: data.fields.map(field => {
       return {
         ...field,
-        processor: getDisplayProcessor(),
+        processor: getDisplayProcessor({
+          type: field.type,
+          config: field.config,
+          theme,
+          isUtc,
+        }),
       };
     }),
   };
