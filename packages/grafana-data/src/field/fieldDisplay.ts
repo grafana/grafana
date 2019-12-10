@@ -16,6 +16,7 @@ import { getTimeField } from '../dataframe/processDataFrame';
 import { MatcherConfig } from '../types/transformations';
 import { fieldMatchers } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
+import isNumber from 'lodash/isNumber';
 
 export interface DynamicConfigValue {
   path: string;
@@ -268,6 +269,33 @@ interface OverrideProps {
   properties: DynamicConfigValue[];
 }
 
+interface GlobalMinMax {
+  min: number;
+  max: number;
+}
+
+export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
+  let min = Number.MAX_VALUE;
+  let max = Number.MIN_VALUE;
+
+  const reducers = [ReducerID.min, ReducerID.max];
+  for (const frame of data) {
+    for (const field of frame.fields) {
+      if (field.type === FieldType.number) {
+        const stats = reduceField({ field, reducers });
+        if (stats[ReducerID.min] < min) {
+          min = stats[ReducerID.min];
+        }
+        if (stats[ReducerID.max] > max) {
+          max = stats[ReducerID.max];
+        }
+      }
+    }
+  }
+
+  return { min, max };
+}
+
 /**
  * Return a copy of the DataFrame with all rules applied
  */
@@ -281,6 +309,7 @@ export function prepareDataFramesForDisplay(
   if (!source) {
     return data;
   }
+  let range: GlobalMinMax | undefined = undefined;
 
   // Prepare the Matchers
   const override: OverrideProps[] = [];
@@ -318,6 +347,27 @@ export function prepareDataFramesForDisplay(
               data: frame,
               replaceVariables,
             });
+          }
+        }
+      }
+
+      // Set the Min/Max value automatically
+      if (field.type === FieldType.number) {
+        if (!isNumber(config.min) || !isNumber(config.max)) {
+          if (!range) {
+            range = findNumericFieldMinMax(data);
+          }
+          if (!isNumber(config.min)) {
+            config = {
+              ...config,
+              min: range.min,
+            };
+          }
+          if (!isNumber(config.max)) {
+            config = {
+              ...config,
+              max: range.max,
+            };
           }
         }
       }
