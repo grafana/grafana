@@ -99,7 +99,7 @@ You might have noticed that instead of a simple `string` as the `selector`, we'r
 
 Just as before we need to add the `DataSources` page to the exported const `Pages` in `packages/grafana-e2e/src/pages/index.ts`.
 
-The next step is to use the `dataSources` selector function as in our example like below:
+The next step is to use the `dataSources` selector function as in our example below:
 ```jsx harmony
 <ul>
   {dataSources.map(dataSource => (
