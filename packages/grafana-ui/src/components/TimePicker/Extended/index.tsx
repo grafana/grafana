@@ -6,6 +6,7 @@ import TimeRangeTitle from './TimeRangeTitle';
 import TimeRangeForm from './TimeRangeForm';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import TimeRangeList from './TimeRangeList';
+import Calendar from 'react-calendar/dist/entry.nostyle';
 
 const defaultSelectOptions: TimeOption[] = [
   { from: 'now-5m', to: 'now', display: 'Last 5 minutes', section: 3 },
@@ -50,10 +51,10 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
       z-index: ${theme.zIndex.modal};
       width: 546px;
       height: 381px;
-      top: 38px;
-      right: 136.5px;
+      top: 34px;
+      right: 32px;
 
-      @media only screen and (max-width: ${theme.breakpoints.md}) {
+      @media only screen and (max-width: ${theme.breakpoints.lg}) {
         width: 218px;
       }
     `,
@@ -63,14 +64,14 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
       border-right: 1px solid ${theme.colors.gray4};
       width: 60%;
 
-      @media only screen and (max-width: ${theme.breakpoints.md}) {
+      @media only screen and (max-width: ${theme.breakpoints.lg}) {
         display: none;
       }
     `,
     rightSide: css`
       width: 40% !important;
 
-      @media only screen and (max-width: ${theme.breakpoints.md}) {
+      @media only screen and (max-width: ${theme.breakpoints.lg}) {
         width: 100% !important;
       }
     `,
@@ -88,7 +89,7 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
     narrowscreenForm: css`
       display: none;
 
-      @media only screen and (max-width: ${theme.breakpoints.md}) {
+      @media only screen and (max-width: ${theme.breakpoints.lg}) {
         display: block;
       }
     `,
@@ -107,6 +108,31 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     narrowForm: css`
       padding: 6px 9px 6px 9px;
+    `,
+    calendar: css`
+      position: absolute;
+      right: 546px;
+      box-shadow: 0px 4px 4px 0px #c7d0d9;
+      z-index: -1;
+
+      @media only screen and (max-width: ${theme.breakpoints.lg}) {
+        right: 218px;
+      }
+    `,
+    calendarTitle: css`
+      background: white;
+    `,
+    calendarBody: css`
+      background-color: white;
+      width: 268px;
+
+      .react-calendar__navigation__label,
+      .react-calendar__navigation__arrow,
+      .react-calendar__navigation {
+        color: $input-color;
+        background-color: #fff;
+        border: 0;
+      }
     `,
   };
 });
@@ -151,7 +177,7 @@ const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }: Props) => {
           </div>
           {collapsed && (
             <div className={styles.accordionBody}>
-              <div class={styles.narrowForm}>
+              <div className={styles.narrowForm}>
                 <TimeRangeForm value={selected} onApply={onChange} calendarTrigger="onButton" />
               </div>
               <TimeRangeList
@@ -176,6 +202,17 @@ const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }: Props) => {
           selected={selected}
         />
       </CustomScrollbar>
+      <div className={styles.calendar}>
+        <Calendar
+          selectRange={true}
+          next2Label={null}
+          prev2Label={null}
+          className={styles.calendarBody}
+          tileClassName={styles.calendarTitle}
+          nextLabel={<span className="fa fa-angle-right" />}
+          prevLabel={<span className="fa fa-angle-left" />}
+        />
+      </div>
     </div>
   );
 };
