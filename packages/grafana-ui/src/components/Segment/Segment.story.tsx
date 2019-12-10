@@ -1,12 +1,8 @@
-import React from 'react';
-import { storiesOf } from '@storybook/react';
+import React, { useState } from 'react';
 import { action } from '@storybook/addon-actions';
 
 import { SelectableValue } from '@grafana/data';
 import { Segment } from './';
-import { UseState } from '../../utils/storybook/UseState';
-
-const SegmentStories = storiesOf('UI/Segment/SegmentSync', module);
 
 const AddButton = (
   <a className="gf-form-label query-part">
@@ -15,194 +11,130 @@ const AddButton = (
 );
 
 const toOption = (value: any) => ({ label: value, value: value });
-
-SegmentStories.add('Array Options', () => {
-  const options = ['Option1', 'Option2', 'OptionWithLooongLabel', 'Option4'].map(toOption);
-  options[0].label = 'Option1 Label';
-  return (
-    <UseState initialState={options[0] as SelectableValue}>
-      {(value, updateValue) => (
-        <>
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <span className="gf-form-label width-8 query-keyword">Segment Name</span>
-            </div>
-            <Segment
-              value={value}
-              options={options}
-              onChange={item => {
-                updateValue(item);
-                action('Segment value changed')(item.value);
-              }}
-            />
-            <Segment
-              Component={AddButton}
-              onChange={value => action('New value added')(value as SelectableValue<string>)}
-              options={options}
-            />
-          </div>
-        </>
-      )}
-    </UseState>
-  );
-});
-
-SegmentStories.add('Array Options With Primitive value', () => {
-  const options = ['Option1', 'Option2', 'OptionWithLooongLabel', 'Option4'].map(toOption);
-  options[0].label = 'Option1 Label';
-  return (
-    <UseState initialState={options[0].value}>
-      {(value, updateValue) => (
-        <>
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <span className="gf-form-label width-8 query-keyword">Segment Name</span>
-            </div>
-            <Segment
-              value={value}
-              options={options}
-              onChange={value => {
-                updateValue(value);
-                action('Segment value changed')(value);
-              }}
-            />
-            <Segment
-              Component={AddButton}
-              onChange={value => action('New value added')(value as SelectableValue<string>)}
-              options={options}
-            />
-          </div>
-        </>
-      )}
-    </UseState>
-  );
-});
-
+const options = ['Option1', 'Option2', 'OptionWithLooongLabel', 'Option4'].map(toOption);
 const groupedOptions = [
   { label: 'Names', options: ['Jane', 'Tom', 'Lisa'].map(toOption) },
   { label: 'Prime', options: [2, 3, 5, 7, 11, 13].map(toOption) },
 ];
 
-SegmentStories.add('Grouped Array Options', () => {
-  return (
-    <UseState initialState={groupedOptions[0].options[0] as SelectableValue}>
-      {(value, updateValue) => (
-        <>
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <span className="gf-form-label width-8 query-keyword">Segment Name</span>
-            </div>
-            <Segment
-              value={value}
-              options={groupedOptions}
-              onChange={item => {
-                updateValue(item);
-                action('Segment value changed')(item.value);
-              }}
-            />
-            <Segment
-              Component={AddButton}
-              onChange={value => action('New value added')(value)}
-              options={groupedOptions}
-            />
-          </div>
-        </>
-      )}
-    </UseState>
-  );
-});
+const SegmentFrame = ({ options, children }: any) => (
+  <>
+    <div className="gf-form-inline">
+      <div className="gf-form">
+        <span className="gf-form-label width-8 query-keyword">Segment Name</span>
+      </div>
+      {children}
+      <Segment
+        Component={AddButton}
+        onChange={value => action('New value added')(value as SelectableValue<string>)}
+        options={options}
+      />
+    </div>
+  </>
+);
 
-SegmentStories.add('With custom options allowed', () => {
-  const options = ['Option1', 'Option2', 'OptionWithLooongLabel', 'Option4'].map(toOption);
+export const ArrayOptions = () => {
+  const [value, setValue] = useState(options[0]);
   return (
-    <UseState initialState={options[0] as SelectableValue}>
-      {(value, updateValue) => (
-        <>
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <span className="gf-form-label width-8 query-keyword">Segment Name</span>
-            </div>
-            <Segment
-              allowCustomValue
-              value={value}
-              options={options}
-              onChange={item => {
-                updateValue(item);
-                action('Segment value changed')(item.value);
-              }}
-            />
-            <Segment
-              allowCustomValue
-              Component={AddButton}
-              onChange={value => action('New value added')(value as SelectableValue<string>)}
-              options={options}
-            />
-          </div>
-        </>
-      )}
-    </UseState>
+    <SegmentFrame options={options}>
+      <Segment
+        value={value}
+        options={options}
+        onChange={item => {
+          setValue(item);
+          action('Segment value changed')(item.value);
+        }}
+      />
+    </SegmentFrame>
   );
-});
+};
 
-const CustomLabelComponent = ({ value: { value } }: any) => <div className="gf-form-label">custom({value})</div>;
+export default {
+  title: 'UI/Segment/SegmentSync',
+  component: ArrayOptions,
+};
 
-SegmentStories.add('Custom Label Field', () => {
+export const ArrayOptionsWithPrimitiveValue = () => {
+  const [value, setValue] = useState('Option1');
   return (
-    <UseState initialState={groupedOptions[0].options[0] as SelectableValue}>
-      {(value, setValue) => (
-        <>
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <span className="gf-form-label width-8 query-keyword">Segment Name</span>
-            </div>
-            <Segment
-              Component={<CustomLabelComponent value={value} />}
-              options={groupedOptions}
-              onChange={item => {
-                setValue(item as SelectableValue<string>);
-                action('Segment value changed')((item as SelectableValue<string>).value);
-              }}
-            />
-            <Segment
-              Component={AddButton}
-              onChange={value => action('New value added')(value)}
-              options={groupedOptions}
-            />
-          </div>
-        </>
-      )}
-    </UseState>
+    <SegmentFrame options={options}>
+      <Segment
+        value={value}
+        options={options}
+        onChange={value => {
+          setValue(value);
+          action('Segment value changed')(value);
+        }}
+      />
+    </SegmentFrame>
   );
-});
+};
 
-SegmentStories.add('Array Options With Placeholder', () => {
-  const options = ['Option1', 'Option2', 'OptionWithLooongLabel', 'Option4'].map(toOption);
-  options[0].label = 'Option1 Label';
+export const ArrayOptionsWithPlaceholder = () => {
+  const [value, setValue] = useState(undefined);
   return (
-    <UseState initialState={undefined}>
-      {(value, updateValue) => (
-        <>
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <span className="gf-form-label width-8 query-keyword">Segment Name</span>
-            </div>
-            <Segment
-              value={value}
-              options={options}
-              placeholder="Enter a value"
-              onChange={item => {
-                updateValue(item);
-                action('Segment value changed')(item.value);
-              }}
-            />
-            <Segment
-              Component={AddButton}
-              onChange={value => action('New value added')(value as SelectableValue<string>)}
-              options={options}
-            />
-          </div>
-        </>
-      )}
-    </UseState>
+    <SegmentFrame options={options}>
+      <Segment
+        value={value}
+        options={options}
+        placeholder="Enter a value"
+        onChange={item => {
+          setValue(item);
+          action('Segment value changed')(item.value);
+        }}
+      />
+    </SegmentFrame>
   );
-});
+};
+
+export const GroupedArrayOptions = () => {
+  const [value, setValue] = useState(groupedOptions[0].options[0]);
+  return (
+    <SegmentFrame options={options}>
+      <Segment
+        value={value}
+        options={groupedOptions}
+        onChange={item => {
+          setValue(item);
+          action('Segment value changed')(item.value);
+        }}
+      />
+    </SegmentFrame>
+  );
+};
+
+export const CustomOptionsAllowed = () => {
+  const [value, setValue] = useState(options[0]);
+  return (
+    <SegmentFrame options={options}>
+      <Segment
+        allowCustomValue
+        value={value}
+        options={options}
+        onChange={item => {
+          setValue(item);
+          action('Segment value changed')(item.value);
+        }}
+      />
+    </SegmentFrame>
+  );
+};
+
+const CustomLabelComponent = ({ value }: any) => <div className="gf-form-label">custom({value})</div>;
+
+export const CustomLabelField = () => {
+  const [value, setValue] = useState<SelectableValue<string>>(groupedOptions[0].options[0].value);
+  return (
+    <SegmentFrame options={options}>
+      <Segment
+        Component={<CustomLabelComponent value={value} />}
+        options={groupedOptions}
+        onChange={item => {
+          console.log({ item });
+          setValue(item as SelectableValue<string>);
+          action('Segment value changed')((item as SelectableValue<string>).value);
+        }}
+      />
+    </SegmentFrame>
+  );
+};
