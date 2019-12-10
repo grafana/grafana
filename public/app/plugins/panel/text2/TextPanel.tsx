@@ -9,14 +9,13 @@ import config from 'app/core/config';
 
 // Types
 import { TextOptions } from './types';
-import { PanelProps } from '@grafana/data';
-import { graphHover, GraphHoverPayload } from 'app/types/events';
+import { PanelProps, PanelHoverEvent, PanelHoverEventPayload } from '@grafana/data';
 
 interface Props extends PanelProps<TextOptions> {}
 
 interface State {
   html: string;
-  hover: GraphHoverPayload | null;
+  hover: PanelHoverEventPayload | null;
 }
 
 export class TextPanel extends PureComponent<Props, State> {
@@ -37,8 +36,10 @@ export class TextPanel extends PureComponent<Props, State> {
   }, 150);
 
   componentDidMount() {
-    this.props.subscribeToEvent(graphHover, (payload: GraphHoverPayload) => {
-      this.setState({ hover: payload });
+    this.props.getEventStream(PanelHoverEvent).subscribe({
+      next: event => {
+        this.setState({ hover: event.payload });
+      },
     });
   }
 
@@ -88,18 +89,18 @@ export class TextPanel extends PureComponent<Props, State> {
   }
 
   onMouseEnter = () => {
-    const { hover } = this.state;
-    const { emitEvent } = this.props;
-
-    emitEvent(graphHover, {
-      pos: {
-        x: hover.pos.x,
-        y: hover.pos.y,
-      },
-      panel: {
-        id: this.props.id,
-      },
-    });
+    // const { hover } = this.state;
+    // const { emitEvent } = this.props;
+    //
+    // emitEvent(graphHover, {
+    //   pos: {
+    //     x: hover.pos.x,
+    //     y: hover.pos.y,
+    //   },
+    //   panel: {
+    //     id: this.props.id,
+    //   },
+    // });
   };
 
   render() {

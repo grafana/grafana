@@ -1,7 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
-import { Unsubscribable } from 'rxjs';
+import { Unsubscribable, Observable, Subscriber } from 'rxjs';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
 import { ErrorBoundary } from '@grafana/ui';
@@ -25,8 +25,8 @@ import {
   PanelEvents,
   PanelData,
   PanelPlugin,
-  PanelEventHandler,
-  AppEvent,
+  PanelEvent,
+  PanelEventType,
 } from '@grafana/data';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
@@ -54,7 +54,6 @@ export interface State {
 export class PanelChrome extends PureComponent<Props, State> {
   timeSrv: TimeSrv = getTimeSrv();
   querySubscription: Unsubscribable;
-  eventSubscriptions: Record<string, PanelEventHandler> = {};
 
   constructor(props: Props) {
     super(props);
@@ -99,11 +98,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     if (this.querySubscription) {
       this.querySubscription.unsubscribe();
       this.querySubscription = null;
-    }
-
-    for (const key in this.eventSubscriptions) {
-      console.log('PanelChrome.unmount unsubscribing', key);
-      this.props.dashboard.events.off(key, this.eventSubscriptions[key]);
     }
   }
 
@@ -251,22 +245,12 @@ export class PanelChrome extends PureComponent<Props, State> {
     });
   };
 
-  subscribeToEvent = (event: AppEvent<any>, handler: PanelEventHandler) => {
-    if (this.eventSubscriptions[event.name]) {
-      throw Error('Event is already subscribed to');
-    }
-
-    this.eventSubscriptions[event.name] = handler;
-    this.props.dashboard.events.on(event, handler);
-
-    return () => {
-      delete this.eventSubscriptions[event.name];
-      this.props.dashboard.events.off(event, handler);
-    };
+  getEventStream = <T extends PanelEvent<any>>(eventType: PanelEventType<T>) => {
+    return new Observable<T>(subscriber => {});
   };
 
-  emitEvent = <P extends any>(event: AppEvent<P>, payload?: P) => {
-    this.props.dashboard.events.emit(event, payload);
+  emitEvent = <T extends any>(event: PanelEvent<T>) => {
+    console.log('emit', event);
   };
 
   renderPanel(width: number, height: number): JSX.Element {
@@ -316,7 +300,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             replaceVariables={this.replaceVariables}
             onOptionsChange={this.onOptionsChange}
             onChangeTimeRange={this.onChangeTimeRange}
-            subscribeToEvent={this.subscribeToEvent}
+            getEventStream={this.getEventStream}
             emitEvent={this.emitEvent}
           />
         </div>

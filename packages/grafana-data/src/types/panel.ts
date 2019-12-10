@@ -1,3 +1,4 @@
+import { Observable } from 'rxjs';
 import { ComponentClass, ComponentType } from 'react';
 import { DataQueryError, DataQueryRequest } from './datasource';
 import { GrafanaPlugin, PluginMeta } from './plugin';
@@ -5,7 +6,7 @@ import { ScopedVars } from './ScopedVars';
 import { LoadingState } from './data';
 import { DataFrame } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
-import { AppEvent } from './appEvents';
+import { AppEventWithPayload } from './appEvents';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -24,8 +25,6 @@ export interface PanelData {
   timeRange: TimeRange;
 }
 
-export type PanelEventHandler<T = any> = (payload?: T) => void;
-
 export interface PanelProps<T = any> {
   id: number; // ID within the current dashboard
   data: PanelData;
@@ -39,8 +38,14 @@ export interface PanelProps<T = any> {
   height: number;
   replaceVariables: InterpolateFunction;
   onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
-  subscribeToEvent<P = any>(event: AppEvent<P>, handler: PanelEventHandler<P>): () => void;
-  emitEvent<P = any>(event: AppEvent<P>, payload?: P): void;
+  /*
+   *  Subscribe to events from the other panels
+   */
+  getEventStream<T extends PanelEvent<any>>(eventType: PanelEventType<T>): Observable<T>;
+  /*
+   * Emit your own events to communicate with other panels
+   */
+  emitEvent<T>(event: PanelEvent<T>): void;
 }
 
 export interface PanelEditorProps<T = any> {
@@ -157,8 +162,22 @@ export enum VizOrientation {
   Horizontal = 'horizontal',
 }
 
-export interface PanelTimeHoverEventPayload {
-  time?: number;
+export interface PanelEventType<T extends PanelEvent<any>> {
+  new (...args: any[]): T;
+}
+
+export abstract class PanelEvent<T> extends AppEventWithPayload<T> {}
+
+export interface PanelHoverEventPayload {
   panelId: number;
-  panelData: PanelData;
+  // temp test event
+  pos: {
+    x: number;
+    y: number;
+  };
+}
+
+export class PanelHoverEvent extends PanelEvent<PanelHoverEventPayload> {
+  static readonly type = 'panel-hover-event';
+  public readonly type = PanelHoverEvent.type;
 }
