@@ -26,7 +26,6 @@
   "devDependencies": {
     "@cypress/webpack-preprocessor": "4.1.1",
     "blink-diff": "1.0.13",
-    "cypress": "3.6.1",
     "rollup": "1.6.0",
     "rollup-plugin-commonjs": "9.2.1",
     "rollup-plugin-node-resolve": "4.0.1",
@@ -37,5 +36,8 @@
     "ts-loader": "6.2.1",
     "typescript": "3.7.2"
   },
-  "types": "src/index.ts"
+  "types": "src/index.ts",
+  "dependencies": {
+    "cypress": "3.7.0"
+  }
 }

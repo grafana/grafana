@@ -59,7 +59,7 @@ Elasticsearch 1.x is no longer supported. Please upgrade to Elasticsearch 2.x or
 
 ## Changelog
 
-Checkout the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list
+Check out the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list
 of new features, changes, and bug fixes.
 
 ## Download
