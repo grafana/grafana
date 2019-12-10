@@ -39,7 +39,7 @@ export const Login = pageFactory({
 });
 ```
 
-The next step is to add `Login` page to the exported const `Pages` in `packages/grafana-e2e/src/pages/index.ts` so that it appears when we type `e2e.pages` in our IDE.
+The next step is to add the `Login` page to the exported const `Pages` in `packages/grafana-e2e/src/pages/index.ts` so that it appears when we type `e2e.pages` in our IDE.
 ```ecmascript 6
 export const Pages = {
   Login,
