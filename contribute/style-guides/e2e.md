@@ -8,7 +8,7 @@ Here is a good introduction to e2e best practices: https://martinfowler.com/blik
 - `Flow`: An abstraction that contains a sequence of actions on one or more `Pages` that can be reused and shared between tests
 
 ## Basic example
-Lets start with a simple example with a single selector and for simplicity all examples will be in JSX.
+Let's start with a simple example with a single selector. For simplicity, all examples are in JSX.
 
 In our example app, we have an input that we want to type some text into during our e2e test.
 ```jsx harmony
