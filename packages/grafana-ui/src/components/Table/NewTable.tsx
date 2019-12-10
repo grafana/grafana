@@ -1,10 +1,13 @@
 import React from 'react';
 import { DataFrame } from '@grafana/data';
 // @ts-ignore
-import { useSortBy, useTable } from 'react-table';
+import { useBlockLayout, useSortBy, useTable } from 'react-table';
+import { FixedSizeList } from 'react-window';
 
 export interface Props {
   data: DataFrame;
+  width: number;
+  height: number;
 }
 
 const getTableData = (data: DataFrame) => {
@@ -32,44 +35,58 @@ const getColumns = (data: DataFrame) => {
 };
 
 export const NewTable = ({ data }: Props) => {
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable(
+  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow, totalColumnsWidth } = useTable(
     {
       columns: React.useMemo(() => getColumns(data), []),
       data: React.useMemo(() => getTableData(data), []),
     },
-    useSortBy
+    useSortBy,
+    useBlockLayout
+  );
+
+  const RenderRow = React.useCallback(
+    ({ index, style }) => {
+      const row = rows[index];
+      prepareRow(row);
+      return (
+        <div
+          {...row.getRowProps({
+            style,
+          })}
+          className="tr"
+        >
+          {row.cells.map((cell: any) => {
+            return (
+              <div {...cell.getCellProps()} className="td">
+                {cell.render('Cell')}
+              </div>
+            );
+          })}
+        </div>
+      );
+    },
+    [prepareRow, rows]
   );
 
   return (
-    <table {...getTableProps()}>
-      <thead>
+    <div {...getTableProps()}>
+      <div>
         {headerGroups.map((headerGroup: any) => (
-          <tr {...headerGroup.getHeaderGroupProps()}>
+          <div {...headerGroup.getHeaderGroupProps()}>
             {headerGroup.headers.map((column: any) => (
-              <th className="gf-table-header" {...column.getHeaderProps(column.getSortByToggleProps())}>
+              <div className="gf-table-header" {...column.getHeaderProps(column.getSortByToggleProps())}>
                 {column.render('Header')}
                 <span>{column.isSorted ? (column.isSortedDesc ? ' 🔽' : ' 🔼') : ''}</span>
-              </th>
+              </div>
             ))}
-          </tr>
+          </div>
         ))}
-      </thead>
-      <tbody {...getTableBodyProps()}>
-        {rows.map((row: any) => {
-          prepareRow(row);
-          return (
-            <tr {...row.getRowProps()}>
-              {row.cells.map((cell: any) => {
-                return (
-                  <td className="gf-table-cell" {...cell.getCellProps()}>
-                    {cell.render('Cell')}
-                  </td>
-                );
-              })}
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+      </div>
+      <div {...getTableBodyProps()}>
+        <FixedSizeList height={400} itemCount={rows.length} itemSize={35} width={totalColumnsWidth}>
+          {RenderRow}
+        </FixedSizeList>
+      </div>
+    </div>
   );
 };
