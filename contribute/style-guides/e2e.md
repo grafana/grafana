@@ -49,7 +49,7 @@ export const Pages = {
 };
 
 ```
-Now that we have a `Page` called `Login` in our `Pages` const we can use that to add a selector in our html like shown below and now this really signalizes to future developers that this is part of a e2e test.   
+Now that we have a `Page` called `Login` in our `Pages` const we can use that to add a selector in our html like shown below and now this really signals to future developers that it is part of an e2e test.   
 ```jsx harmony
 <div>
     <input type="text" className="gf-form-input login-form-input" aria-label={e2e.pages.Login.selectors.username}/>
