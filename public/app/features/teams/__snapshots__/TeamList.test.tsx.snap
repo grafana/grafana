@@ -133,8 +133,8 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <ConfirmButton
-                confirmButtonVariant="danger"
                 confirmText="Delete"
+                confirmVariant="danger"
                 disabled={false}
                 onConfirm={[Function]}
               >
@@ -192,8 +192,8 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <ConfirmButton
-                confirmButtonVariant="danger"
                 confirmText="Delete"
+                confirmVariant="danger"
                 disabled={false}
                 onConfirm={[Function]}
               >
@@ -251,8 +251,8 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <ConfirmButton
-                confirmButtonVariant="danger"
                 confirmText="Delete"
+                confirmVariant="danger"
                 disabled={false}
                 onConfirm={[Function]}
               >
@@ -310,8 +310,8 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <ConfirmButton
-                confirmButtonVariant="danger"
                 confirmText="Delete"
+                confirmVariant="danger"
                 disabled={false}
                 onConfirm={[Function]}
               >
@@ -369,8 +369,8 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <ConfirmButton
-                confirmButtonVariant="danger"
                 confirmText="Delete"
+                confirmVariant="danger"
                 disabled={false}
                 onConfirm={[Function]}
               >
@@ -503,8 +503,8 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
               className="text-right"
             >
               <ConfirmButton
-                confirmButtonVariant="danger"
                 confirmText="Delete"
+                confirmVariant="danger"
                 disabled={true}
                 onConfirm={[Function]}
               >
@@ -637,8 +637,8 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
               className="text-right"
             >
               <ConfirmButton
-                confirmButtonVariant="danger"
                 confirmText="Delete"
+                confirmVariant="danger"
                 disabled={true}
                 onConfirm={[Function]}
               >

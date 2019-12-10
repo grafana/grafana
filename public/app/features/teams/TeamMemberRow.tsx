@@ -88,7 +88,7 @@ export class TeamMemberRow extends PureComponent<Props> {
         <td className="text-right">
           <ConfirmButton
             confirmText="Delete"
-            confirmButtonVariant="danger"
+            confirmVariant="danger"
             disabled={!signedInUserIsTeamAdmin}
             onConfirm={() => this.onRemoveMember(member)}
           >

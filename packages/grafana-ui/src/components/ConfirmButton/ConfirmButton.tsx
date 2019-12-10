@@ -56,7 +56,7 @@ interface Props extends Themeable {
   className?: string;
   confirmText?: string;
   disabled?: boolean;
-  confirmButtonVariant?: ButtonVariant;
+  confirmVariant?: ButtonVariant;
 
   onConfirm(): void;
   onClick?(): void;
@@ -71,7 +71,7 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
   static defaultProps: Partial<Props> = {
     confirmText: 'Save',
     disabled: false,
-    confirmButtonVariant: 'primary',
+    confirmVariant: 'primary',
   };
 
   state: State = {
@@ -105,7 +105,15 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
   };
 
   render() {
-    const { onConfirm, disabled, confirmText, confirmButtonVariant, className, theme, children } = this.props;
+    const {
+      onConfirm,
+      disabled,
+      confirmText,
+      confirmVariant: confirmButtonVariant,
+      className,
+      theme,
+      children,
+    } = this.props;
     const styles = getStyles(theme);
     const buttonClass = cx(
       className,

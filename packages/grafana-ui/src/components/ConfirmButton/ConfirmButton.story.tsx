@@ -36,7 +36,7 @@ storiesOf('UI/ConfirmButton', module)
             <ConfirmButton
               confirmText={confirmText}
               disabled={disabled}
-              confirmButtonVariant={confirmVariant}
+              confirmVariant={confirmVariant}
               onConfirm={() => {
                 action('Saved')('save!');
               }}
@@ -56,7 +56,7 @@ storiesOf('UI/ConfirmButton', module)
           <div className="gf-form">
             <ConfirmButton
               confirmText="Delete"
-              confirmButtonVariant="danger"
+              confirmVariant="danger"
               disabled={disabled}
               onConfirm={() => {
                 action('Deleted')('delete!');
@@ -78,7 +78,7 @@ storiesOf('UI/ConfirmButton', module)
             <ConfirmButton
               confirmText={confirmText}
               disabled={disabled}
-              confirmButtonVariant={confirmVariant}
+              confirmVariant={confirmVariant}
               onConfirm={() => {
                 action('Saved')('save!');
               }}

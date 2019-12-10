@@ -289,7 +289,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
                     <td>
                       <ConfirmButton
                         confirmText="Delete"
-                        confirmButtonVariant="danger"
+                        confirmVariant="danger"
                         onConfirm={() => this.onDeleteApiKey(key)}
                       >
                         <Button size="sm" variant="danger" icon="fa fa-remove" />

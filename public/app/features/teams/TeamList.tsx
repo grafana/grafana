@@ -68,7 +68,7 @@ export class TeamList extends PureComponent<Props, any> {
         <td className="text-right">
           <ConfirmButton
             confirmText="Delete"
-            confirmButtonVariant="danger"
+            confirmVariant="danger"
             disabled={!canDelete}
             onConfirm={() => this.deleteTeam(team)}
           >
