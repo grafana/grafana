@@ -9,6 +9,8 @@ e2e.scenario({
   skipScenario: false,
   scenario: ({ dataSourceName, dashboardTitle, dashboardUid }: ScenarioContext) => {
     e2e.flows.openDashboard(dashboardUid);
-    e2e.pages.Dashboard.toolbarItems('Dashboard settings').click();
+    e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
+
+    e2e.pages.Dashboard.Settings.sectionItems('Variables').click();
   },
 });
