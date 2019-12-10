@@ -7,6 +7,7 @@ import { useExpandableLabel, SegmentProps } from '.';
 export interface SegmentInputProps<T> extends SegmentProps<T> {
   value: string | number;
   onChange: (text: string | number) => void;
+  autofocus?: boolean;
 }
 
 const FONT_SIZE = 14;
@@ -17,11 +18,12 @@ export function SegmentInput<T>({
   Component,
   className,
   placeholder,
+  autofocus = false,
 }: React.PropsWithChildren<SegmentInputProps<T>>) {
-  const ref = useRef(null);
+  const ref = useRef<HTMLInputElement>(null);
   const [value, setValue] = useState<number | string>(initialValue);
   const [inputWidth, setInputWidth] = useState<number>(measureText((initialValue || '').toString(), FONT_SIZE).width);
-  const [Label, , expanded, setExpanded] = useExpandableLabel(false);
+  const [Label, , expanded, setExpanded] = useExpandableLabel(autofocus);
 
   useClickAway(ref, () => {
     setExpanded(false);
