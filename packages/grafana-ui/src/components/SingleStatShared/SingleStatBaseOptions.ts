@@ -33,7 +33,7 @@ export function sharedSingleStatPanelChangedHandler(
     const options = {
       fieldOptions: {
         defaults: {} as FieldConfig,
-        override: {} as FieldConfig,
+        overrides: [],
         calcs: [reducer ? reducer.id : ReducerID.mean],
       },
       orientation: VizOrientation.Horizontal,

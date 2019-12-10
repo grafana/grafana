@@ -104,7 +104,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
   const values: FieldDisplay[] = [];
 
   if (options.data) {
-    const data = prepareDataFramesForDisplay(options.data, fieldOptions, options.theme);
+    const data = prepareDataFramesForDisplay(options.data, fieldOptions, replaceVariables, options.theme);
 
     let hitLimit = false;
     const limit = fieldOptions.limit ? fieldOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
@@ -274,6 +274,7 @@ interface OverrideProps {
 export function prepareDataFramesForDisplay(
   data: DataFrame[],
   source: FieldConfigSource,
+  replaceVariables: InterpolateFunction,
   theme: GrafanaTheme,
   isUtc?: boolean
 ): DataFrame[] {
@@ -310,7 +311,13 @@ export function prepareDataFramesForDisplay(
       for (const rule of override) {
         if (rule.match(field)) {
           for (const prop of rule.properties) {
-            config = applyDynamicConfigValue(prop, config, field, frame);
+            config = applyDynamicConfigValue({
+              value: prop,
+              config,
+              field,
+              data: frame,
+              replaceVariables,
+            });
           }
         }
       }
@@ -339,13 +346,19 @@ export function prepareDataFramesForDisplay(
   });
 }
 
-export function applyDynamicConfigValue(
-  value: DynamicConfigValue,
-  config: FieldConfig,
-  field: Field,
-  data: DataFrame
-): FieldConfig {
-  console.log('TODO Apply rule', value);
+interface DynamicConfigValueOptions {
+  value: DynamicConfigValue;
+  config: FieldConfig;
+  field: Field;
+  data: DataFrame;
+  replaceVariables: InterpolateFunction;
+}
+
+export function applyDynamicConfigValue(options: DynamicConfigValueOptions): FieldConfig {
+  const { value } = options;
+  const config = { ...options.config };
+  (config as any)[value.path] = value.value;
+  // TODO... depending on type... need to convert string to number etc
   return config;
 }
 
