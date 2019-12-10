@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import { DeleteButton, Select } from '@grafana/ui';
+import { Select, ConfirmButton, Button } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { TeamMember, teamsPermissionLevels, TeamPermissionLevel } from 'app/types';
@@ -86,7 +86,14 @@ export class TeamMemberRow extends PureComponent<Props> {
         {this.renderPermissions(member)}
         {syncEnabled && this.renderLabels(member.labels)}
         <td className="text-right">
-          <DeleteButton onConfirm={() => this.onRemoveMember(member)} disabled={!signedInUserIsTeamAdmin} />
+          <ConfirmButton
+            confirmText="Delete"
+            confirmButtonVariant="danger"
+            disabled={!signedInUserIsTeamAdmin}
+            onConfirm={() => this.onRemoveMember(member)}
+          >
+            <Button size="sm" variant="danger" icon="fa fa-remove" />
+          </ConfirmButton>
         </td>
       </tr>
     );

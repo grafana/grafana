@@ -132,10 +132,18 @@ exports[`Render should render teams table 1`] = `
             <td
               className="text-right"
             >
-              <DeleteButton
+              <ConfirmButton
+                confirmButtonVariant="danger"
+                confirmText="Delete"
                 disabled={false}
                 onConfirm={[Function]}
-              />
+              >
+                <Button
+                  icon="fa fa-remove"
+                  size="sm"
+                  variant="danger"
+                />
+              </ConfirmButton>
             </td>
           </tr>
           <tr
@@ -183,10 +191,18 @@ exports[`Render should render teams table 1`] = `
             <td
               className="text-right"
             >
-              <DeleteButton
+              <ConfirmButton
+                confirmButtonVariant="danger"
+                confirmText="Delete"
                 disabled={false}
                 onConfirm={[Function]}
-              />
+              >
+                <Button
+                  icon="fa fa-remove"
+                  size="sm"
+                  variant="danger"
+                />
+              </ConfirmButton>
             </td>
           </tr>
           <tr
@@ -234,10 +250,18 @@ exports[`Render should render teams table 1`] = `
             <td
               className="text-right"
             >
-              <DeleteButton
+              <ConfirmButton
+                confirmButtonVariant="danger"
+                confirmText="Delete"
                 disabled={false}
                 onConfirm={[Function]}
-              />
+              >
+                <Button
+                  icon="fa fa-remove"
+                  size="sm"
+                  variant="danger"
+                />
+              </ConfirmButton>
             </td>
           </tr>
           <tr
@@ -285,10 +309,18 @@ exports[`Render should render teams table 1`] = `
             <td
               className="text-right"
             >
-              <DeleteButton
+              <ConfirmButton
+                confirmButtonVariant="danger"
+                confirmText="Delete"
                 disabled={false}
                 onConfirm={[Function]}
-              />
+              >
+                <Button
+                  icon="fa fa-remove"
+                  size="sm"
+                  variant="danger"
+                />
+              </ConfirmButton>
             </td>
           </tr>
           <tr
@@ -336,10 +368,18 @@ exports[`Render should render teams table 1`] = `
             <td
               className="text-right"
             >
-              <DeleteButton
+              <ConfirmButton
+                confirmButtonVariant="danger"
+                confirmText="Delete"
                 disabled={false}
                 onConfirm={[Function]}
-              />
+              >
+                <Button
+                  icon="fa fa-remove"
+                  size="sm"
+                  variant="danger"
+                />
+              </ConfirmButton>
             </td>
           </tr>
         </tbody>
@@ -462,10 +502,18 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
             <td
               className="text-right"
             >
-              <DeleteButton
+              <ConfirmButton
+                confirmButtonVariant="danger"
+                confirmText="Delete"
                 disabled={true}
                 onConfirm={[Function]}
-              />
+              >
+                <Button
+                  icon="fa fa-remove"
+                  size="sm"
+                  variant="danger"
+                />
+              </ConfirmButton>
             </td>
           </tr>
         </tbody>
@@ -588,10 +636,18 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
             <td
               className="text-right"
             >
-              <DeleteButton
+              <ConfirmButton
+                confirmButtonVariant="danger"
+                confirmText="Delete"
                 disabled={true}
                 onConfirm={[Function]}
-              />
+              >
+                <Button
+                  icon="fa fa-remove"
+                  size="sm"
+                  variant="danger"
+                />
+              </ConfirmButton>
             </td>
           </tr>
         </tbody>

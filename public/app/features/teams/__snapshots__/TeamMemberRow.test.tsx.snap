@@ -48,10 +48,18 @@ exports[`Render should render team members when sync enabled 1`] = `
   <td
     className="text-right"
   >
-    <DeleteButton
+    <ConfirmButton
+      confirmButtonVariant="danger"
+      confirmText="Delete"
       disabled={true}
       onConfirm={[Function]}
-    />
+    >
+      <Button
+        icon="fa fa-remove"
+        size="sm"
+        variant="danger"
+      />
+    </ConfirmButton>
   </td>
 </tr>
 `;
@@ -137,10 +145,18 @@ exports[`Render when feature toggle editorsCanAdmin is turned off should not ren
   <td
     className="text-right"
   >
-    <DeleteButton
+    <ConfirmButton
+      confirmButtonVariant="danger"
+      confirmText="Delete"
       disabled={false}
       onConfirm={[Function]}
-    />
+    >
+      <Button
+        icon="fa fa-remove"
+        size="sm"
+        variant="danger"
+      />
+    </ConfirmButton>
   </td>
 </tr>
 `;
@@ -226,10 +242,18 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
   <td
     className="text-right"
   >
-    <DeleteButton
+    <ConfirmButton
+      confirmButtonVariant="danger"
+      confirmText="Delete"
       disabled={false}
       onConfirm={[Function]}
-    />
+    >
+      <Button
+        icon="fa fa-remove"
+        size="sm"
+        variant="danger"
+      />
+    </ConfirmButton>
   </td>
 </tr>
 `;
@@ -273,10 +297,18 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render s
   <td
     className="text-right"
   >
-    <DeleteButton
+    <ConfirmButton
+      confirmButtonVariant="danger"
+      confirmText="Delete"
       disabled={true}
       onConfirm={[Function]}
-    />
+    >
+      <Button
+        icon="fa fa-remove"
+        size="sm"
+        variant="danger"
+      />
+    </ConfirmButton>
   </td>
 </tr>
 `;
