@@ -332,7 +332,6 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   "database":"",
   "basicAuth":true,
   "basicAuthUser":"basicuser",
-  "basicAuthPassword":"",
   "secureJsonData": {
     "basicAuthPassword": "basicpassword"
   },
