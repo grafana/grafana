@@ -29,11 +29,13 @@ export const pageFactory = <S extends Selectors>({ url, selectors }: PageFactory
       // @ts-ignore
       pageObjects[key] = (text?: string) => {
         if (!text) {
-          e2e().logToConsole('Retrieving Selector:', value());
-          return e2e().get(value());
+          const selector = value();
+          e2e().logToConsole('Retrieving Selector:', selector);
+          return e2e().get(selector);
         }
-        e2e().logToConsole('Retrieving Selector:', value(text));
-        return e2e().get(Selector.fromAriaLabel(value(text)));
+        const selector = value(text);
+        e2e().logToConsole('Retrieving Selector:', selector);
+        return e2e().get(Selector.fromAriaLabel(selector));
       };
     }
   });
