@@ -1,7 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
-import { Unsubscribable, Observable } from 'rxjs';
+import { Unsubscribable } from 'rxjs';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
 import { ErrorBoundary } from '@grafana/ui';
@@ -25,8 +25,8 @@ import {
   PanelEvents,
   PanelData,
   PanelPlugin,
-  PanelEvent,
-  PanelEventType,
+  EventBus,
+  EventBusGroup,
 } from '@grafana/data';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
@@ -52,11 +52,16 @@ export interface State {
 }
 
 export class PanelChrome extends PureComponent<Props, State> {
-  timeSrv: TimeSrv = getTimeSrv();
-  querySubscription: Unsubscribable;
+  readonly timeSrv: TimeSrv = getTimeSrv();
+  readonly panelBus: EventBusGroup;
+
+  querySubscription?: Unsubscribable;
 
   constructor(props: Props) {
     super(props);
+
+    this.panelBus = new EventBusGroup(new EventBus());
+
     this.state = {
       isFirstLoad: true,
       renderCounter: 0,
@@ -72,8 +77,12 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   componentDidMount() {
     const { panel, dashboard } = this.props;
+
+    // Subscribe to panel events
     panel.events.on(PanelEvents.refresh, this.onRefresh);
     panel.events.on(PanelEvents.render, this.onRender);
+
+    // Notify dashboard this panel has mounted
     dashboard.panelInitialized(this.props.panel);
 
     // Move snapshot data into the query response
@@ -245,24 +254,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     });
   };
 
-  getEventStream = <T extends PanelEvent<any>>(eventType: PanelEventType<T>) => {
-    return new Observable<T>(subscriber => {
-      // listen for event
-      this.props.dashboard.events.on(eventType.type, payload => {
-        subscriber.next(payload);
-      });
-
-      return () => {
-        console.log('unsub');
-        // this.props.dashboard.events.off(eventType.type);
-      };
-    });
-  };
-
-  emitEvent = <T extends any>(event: PanelEvent<T>) => {
-    console.log('emit', event);
-  };
-
   renderPanel(width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
     const { renderCounter, data, isFirstLoad } = this.state;
@@ -310,8 +301,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             replaceVariables={this.replaceVariables}
             onOptionsChange={this.onOptionsChange}
             onChangeTimeRange={this.onChangeTimeRange}
-            getEventStream={this.getEventStream}
-            emitEvent={this.emitEvent}
+            eventBus={this.panelBus}
           />
         </div>
       </>

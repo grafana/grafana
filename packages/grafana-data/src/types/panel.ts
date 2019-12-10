@@ -6,7 +6,7 @@ import { ScopedVars } from './ScopedVars';
 import { LoadingState } from './data';
 import { DataFrame } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
-import { BusEvent, BusEventWithPayload, BusEventHandler } from '../utils/EventBus';
+import { BusEvent, BusEventWithPayload, BusEventType, BusEventHandler } from '../utils/EventBus';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -27,7 +27,7 @@ export interface PanelData {
 
 export interface PanelEventBus {
   emit<T extends BusEvent>(event: T): void;
-  on<T extends BusEvent>(event: T, handler: BusEventHandler<T>): Unsubscribable;
+  on<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable;
 }
 
 export interface PanelProps<T = any> {

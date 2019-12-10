@@ -48,13 +48,15 @@ export class EventBus {
       .subscribe({ next: handler });
   }
 
-  public subscribe(handler: BusEventHandler<T>): Unsubscribable {
+  public subscribe<T extends BusEvent>(handler: BusEventHandler<T>): Unsubscribable {
     return this.eventStream.subscribe({ next: handler });
   }
 }
 
+/**
+ * Handles unsubscribing to all events subscribed through this group
+ */
 export class EventBusGroup {
-  private bus: EventBus;
   private subscriptions: Unsubscribable[];
 
   constructor(private bus: EventBus) {

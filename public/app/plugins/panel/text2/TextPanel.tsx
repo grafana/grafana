@@ -39,15 +39,9 @@ export class TextPanel extends PureComponent<Props, State> {
   }, 150);
 
   componentDidMount() {
-    this.subscription = this.props.getEventStream(PanelHoverEvent).subscribe({
-      next: event => {
-        this.setState({ hover: event.payload });
-      },
+    this.props.eventBus.on(PanelHoverEvent, event => {
+      this.setState({ hover: event.payload });
     });
-  }
-
-  componentWillUnmount() {
-    this.subscription.unsubscribe();
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -96,7 +90,7 @@ export class TextPanel extends PureComponent<Props, State> {
   }
 
   onMouseEnter = () => {
-    this.props.emitEvent(
+    this.props.eventBus.emit(
       new PanelHoverEvent({
         panelId: 10,
         pos: { x: 10, y: 15 },
@@ -108,10 +102,10 @@ export class TextPanel extends PureComponent<Props, State> {
     const { html, hover } = this.state;
 
     return (
-      <div>
+      <div onMouseMove={this.onMouseEnter}>
         <div className="markdown-html panel-text-content" dangerouslySetInnerHTML={{ __html: html }} />
         {hover && (
-          <table onMouseMove={this.onMouseEnter}>
+          <table>
             <tbody>
               <tr>
                 <th>x</th>
