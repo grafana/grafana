@@ -104,7 +104,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
   const values: FieldDisplay[] = [];
 
   if (options.data) {
-    const data = prepareDataFramesForDisplay(options.data, fieldOptions);
+    const data = prepareDataFramesForDisplay(options.data, fieldOptions, options.theme);
 
     let hitLimit = false;
     const limit = fieldOptions.limit ? fieldOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
@@ -134,11 +134,13 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
         scopedVars['__field'] = { text: 'Field', value: { name } };
 
-        const display = getDisplayProcessor({
-          config,
-          theme: options.theme,
-          type: field.type,
-        });
+        const display =
+          field.display ??
+          getDisplayProcessor({
+            config,
+            theme: options.theme,
+            type: field.type,
+          });
 
         const title = config.title ? config.title : defaultTitle;
         // Show all rows
@@ -267,9 +269,14 @@ interface OverrideProps {
 }
 
 /**
- * Return a copy of the DataFrame with all rules attached
+ * Return a copy of the DataFrame with all rules applied
  */
-export function prepareDataFramesForDisplay(data: DataFrame[], source: FieldConfigSource): DataFrame[] {
+export function prepareDataFramesForDisplay(
+  data: DataFrame[],
+  source: FieldConfigSource,
+  theme: GrafanaTheme,
+  isUtc?: boolean
+): DataFrame[] {
   if (!source) {
     return data;
   }
@@ -310,7 +317,17 @@ export function prepareDataFramesForDisplay(data: DataFrame[], source: FieldConf
 
       return {
         ...field,
+
+        // Overwrite the configs
         config,
+
+        // Set the display processor
+        processor: getDisplayProcessor({
+          type: field.type,
+          config: config,
+          theme,
+          isUtc,
+        }),
       };
     });
 
@@ -330,23 +347,6 @@ export function applyDynamicConfigValue(
 ): FieldConfig {
   console.log('TODO Apply rule', value);
   return config;
-}
-
-export function attachFieldDisplayProcessor(data: DataFrame, theme: GrafanaTheme, isUtc?: boolean): DataFrame {
-  return {
-    ...data,
-    fields: data.fields.map(field => {
-      return {
-        ...field,
-        processor: getDisplayProcessor({
-          type: field.type,
-          config: field.config,
-          theme,
-          isUtc,
-        }),
-      };
-    }),
-  };
 }
 
 export function getFieldProperties(...props: FieldConfig[]): FieldConfig {
