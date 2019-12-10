@@ -163,6 +163,7 @@ export enum VizOrientation {
 }
 
 export interface PanelEventType<T extends PanelEvent<any>> {
+  type: string;
   new (...args: any[]): T;
 }
 

@@ -1,7 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
-import { Unsubscribable, Observable, Subscriber } from 'rxjs';
+import { Unsubscribable, Observable } from 'rxjs';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
 import { ErrorBoundary } from '@grafana/ui';
@@ -246,7 +246,18 @@ export class PanelChrome extends PureComponent<Props, State> {
   };
 
   getEventStream = <T extends PanelEvent<any>>(eventType: PanelEventType<T>) => {
-    return new Observable<T>(subscriber => {});
+    return new Observable<T>(subscriber => {
+      // listen for event
+      console.log('litening to', eventType.type);
+      this.props.dashboard.events.on(eventType.type, payload => {
+        subscriber.next(payload);
+      });
+
+      return () => {
+        console.log('unsub');
+        // this.props.dashboard.events.off(eventType.type);
+      };
+    });
   };
 
   emitEvent = <T extends any>(event: PanelEvent<T>) => {

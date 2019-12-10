@@ -1,4 +1,5 @@
 // Libraries
+import { Unsubscribable } from 'rxjs';
 import React, { PureComponent } from 'react';
 import { debounce } from 'lodash';
 import { renderMarkdown } from '@grafana/data';
@@ -19,6 +20,8 @@ interface State {
 }
 
 export class TextPanel extends PureComponent<Props, State> {
+  subscription: Unsubscribable;
+
   constructor(props: Props) {
     super(props);
 
@@ -36,11 +39,15 @@ export class TextPanel extends PureComponent<Props, State> {
   }, 150);
 
   componentDidMount() {
-    this.props.getEventStream(PanelHoverEvent).subscribe({
+    this.subscription = this.props.getEventStream(PanelHoverEvent).subscribe({
       next: event => {
         this.setState({ hover: event.payload });
       },
     });
+  }
+
+  componentWillUnmount() {
+    this.subscription.unsubscribe();
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -89,18 +96,12 @@ export class TextPanel extends PureComponent<Props, State> {
   }
 
   onMouseEnter = () => {
-    // const { hover } = this.state;
-    // const { emitEvent } = this.props;
-    //
-    // emitEvent(graphHover, {
-    //   pos: {
-    //     x: hover.pos.x,
-    //     y: hover.pos.y,
-    //   },
-    //   panel: {
-    //     id: this.props.id,
-    //   },
-    // });
+    this.props.emitEvent(
+      new PanelHoverEvent({
+        panelId: 10,
+        pos: { x: 10, y: 15 },
+      })
+    );
   };
 
   render() {
