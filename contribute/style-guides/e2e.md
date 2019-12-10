@@ -58,7 +58,7 @@ Now that we have a `Page` called `Login` in our `Pages` const we can use that to
 
 The last step in our example is to use our `Login` page as part of a test. The `pageFactory` function we used before gives us two things: 
 - The `url` property is used whenever we call the `visit` function and is equivalent to the Cypress function [cy.visit()](https://docs.cypress.io/api/commands/visit.html#Syntax).
-- Any defined selector in the `selectors` property can be accessed from `Login` page by invoking it and this is equivalent to the result of the Cypress function [cy.get(...)](https://docs.cypress.io/api/commands/get.html#Syntax).
+- Any defined selector in the `selectors` property can be accessed from the `Login` page by invoking it and this is equivalent to the result of the Cypress function [cy.get(...)](https://docs.cypress.io/api/commands/get.html#Syntax).
 ```ecmascript 6
 describe('Login test', () => {
   it('Should pass', () => {
