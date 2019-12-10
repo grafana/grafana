@@ -373,7 +373,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   async metadataRequest(url: string, params?: Record<string, string>) {
     const res = await this._request(url, params, { silent: true }).toPromise();
     return {
-      data: { data: res.data.values || [] },
+      data: { data: res.data.data || res.data.values || [] },
     };
   }
 
@@ -559,21 +559,24 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           throw err;
         }),
         switchMap((response: { data: { values: string[] }; status: number }) =>
-          iif<DataQueryResponse, DataQueryResponse>(
+          iif<DataQueryResponse, any>(
             () => response.status === 404,
             defer(() => this._request('/api/prom/label', { start })),
             defer(() => of(response))
           )
         ),
-        map(res =>
-          res && res.data && res.data.values && res.data.values.length
-            ? { status: 'success', message: 'Data source connected and labels found.' }
-            : {
-                status: 'error',
-                message:
-                  'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
-              }
-        ),
+        map(res => {
+          const values: any[] = res?.data?.data || res?.data?.values || [];
+          const testResult =
+            values.length > 0
+              ? { status: 'success', message: 'Data source connected and labels found.' }
+              : {
+                  status: 'error',
+                  message:
+                    'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
+                };
+          return testResult;
+        }),
         catchError((err: any) => {
           let message = 'Loki: ';
           if (err.statusText) {
