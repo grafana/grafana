@@ -17,7 +17,7 @@ In our example app, we have an input that we want to type some text into during 
 </div>
 ```
 
-We could define a selector using `JQuery` [type selectors](https://api.jquery.com/category/selectors/) with a string like `'.gf-form-input.login-form-input'` but that would be brittle as style changes occur frequently and there is nothing that signalizes to future developers that this input is part of an e2e test.
+We could define a selector using `JQuery` [type selectors](https://api.jquery.com/category/selectors/) with a string like `'.gf-form-input.login-form-input'` but that would be brittle as style changes occur frequently. Furthermore there is nothing that signals to future developers that this input is part of an e2e test.
 
 At Grafana, we use `aria-label` as our preferred way of defining selectors instead of `data-*` attributes. This also aids in accessibility.
 Let's add a descriptive `aria-label` to our simple example.
