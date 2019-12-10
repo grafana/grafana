@@ -8,7 +8,7 @@ export interface Props {
   options: AzureDataSourceSettings;
   subscriptions: SelectableValue[];
   workspaces: SelectableValue[];
-  copyAzureMonitorCreds: () => void;
+  makeSameAs: () => void;
   onUpdateOptions: (options: AzureDataSourceSettings) => void;
   onUpdateOption: (key: string, val: any, secure: boolean) => void;
   onResetOptionKey: (key: string) => void;
@@ -37,13 +37,11 @@ export class AnalyticsConfig extends PureComponent<Props> {
   };
 
   onAzureLogAnalyticsSameAsChange = () => {
-    const { options, onUpdateOptions, copyAzureMonitorCreds } = this.props;
+    const { options, onUpdateOptions, makeSameAs } = this.props;
 
     if (!options.jsonData.azureLogAnalyticsSameAs && options.secureJsonData.clientSecret) {
-      copyAzureMonitorCreds();
-    }
-
-    if (!options.jsonData.azureLogAnalyticsSameAs) {
+      makeSameAs();
+    } else if (!options.jsonData.azureLogAnalyticsSameAs) {
       // if currently off, clear monitor secret
       onUpdateOptions({
         ...options,
@@ -60,13 +58,7 @@ export class AnalyticsConfig extends PureComponent<Props> {
         },
       });
     } else {
-      onUpdateOptions({
-        ...options,
-        jsonData: {
-          ...options.jsonData,
-          azureLogAnalyticsSameAs: !options.jsonData.azureLogAnalyticsSameAs,
-        },
-      });
+      this.props.onUpdateOption('azureLogAnalyticsSameAs', !options.jsonData.azureLogAnalyticsSameAs, false);
     }
 
     // init popover to warn secret needs to be re-entered

@@ -3,6 +3,7 @@
 exports[`Render should render component 1`] = `
 <Fragment>
   <MonitorConfig
+    makeSameAs={[Function]}
     onLoadSubscriptions={[Function]}
     onResetOptionKey={[Function]}
     onUpdateOption={[Function]}
@@ -37,10 +38,50 @@ exports[`Render should render component 1`] = `
     subscriptions={Array []}
   />
   <AnalyticsConfig
+    makeSameAs={[Function]}
     onLoadSubscriptions={[Function]}
     onLoadWorkspaces={[Function]}
     onResetOptionKey={[Function]}
     onUpdateOption={[Function]}
+    onUpdateOptions={
+      [MockFunction] {
+        "calls": Array [
+          Array [
+            Object {
+              "access": "proxy",
+              "basicAuth": false,
+              "basicAuthPassword": "",
+              "basicAuthUser": "",
+              "database": "",
+              "id": 21,
+              "isDefault": false,
+              "jsonData": Object {
+                "azureLogAnalyticsSameAs": true,
+                "cloudName": "azuremonitor",
+                "subscriptionId": "44987801-6nn6-49he-9b2d-9106972f9789",
+              },
+              "name": "Azure Monitor-10-10",
+              "orgId": 1,
+              "password": "",
+              "readOnly": false,
+              "secureJsonFields": Object {},
+              "type": "grafana-azure-monitor-datasource",
+              "typeLogoUrl": "",
+              "url": "/api/datasources/proxy/21",
+              "user": "",
+              "version": 1,
+              "withCredentials": false,
+            },
+          ],
+        ],
+        "results": Array [
+          Object {
+            "type": "return",
+            "value": undefined,
+          },
+        ],
+      }
+    }
     options={
       Object {
         "access": "proxy",

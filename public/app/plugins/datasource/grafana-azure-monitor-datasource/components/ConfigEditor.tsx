@@ -77,8 +77,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
     updateDatasourcePluginResetKeyOption(this.props, key);
   };
 
-  copyAzureMonitorCreds = () => {
+  makeSameAs = (updatedClientSecret?: string) => {
     const { options, onOptionsChange } = this.props;
+    const clientSecret = updatedClientSecret || options.secureJsonData.clientSecret;
+
     onOptionsChange({
       ...options,
       jsonData: {
@@ -90,7 +92,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
       },
       secureJsonData: {
         ...options.secureJsonData,
-        logAnalyticsClientSecret: options.secureJsonData.clientSecret,
+        clientSecret,
+        logAnalyticsClientSecret: clientSecret,
       },
     });
   };
@@ -272,7 +275,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         <MonitorConfig
           options={options}
           subscriptions={subscriptions}
-          copyAzureMonitorCreds={this.copyAzureMonitorCreds}
+          makeSameAs={this.makeSameAs}
           onLoadSubscriptions={this.onLoadSubscriptions}
           onUpdateOption={this.updateOption}
           onResetOptionKey={this.resetKey}
@@ -282,7 +285,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
           options={options}
           workspaces={logAnalyticsWorkspaces}
           subscriptions={logAnalyticsSubscriptions}
-          copyAzureMonitorCreds={this.copyAzureMonitorCreds}
+          makeSameAs={this.makeSameAs}
           onUpdateOptions={this.props.onOptionsChange}
           onUpdateOption={this.updateOption}
           onResetOptionKey={this.resetKey}
