@@ -5,10 +5,12 @@ import { css } from 'emotion';
 import { connect } from 'react-redux';
 import { AutoSizer } from 'react-virtualized';
 import memoizeOne from 'memoize-one';
+import cx from 'classnames';
+
 // Services & Utils
 import store from 'app/core/store';
 // Components
-import { ErrorBoundaryAlert } from '@grafana/ui';
+import { ErrorBoundaryAlert, stylesFactory } from '@grafana/ui';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
@@ -59,12 +61,24 @@ import { ErrorContainer } from './ErrorContainer';
 import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 
-const getStyles = memoizeOne(() => {
+const getStyles = stylesFactory(() => {
   return {
     logsMain: css`
       label: logsMain;
       // Is needed for some transition animations to work.
       position: relative;
+    `,
+    // Utility class for iframe parents so that we can show iframe content with reasonable height instead of squished
+    // or some random explicit height.
+    fullHeight: css`
+      label: fullHeight;
+      height: 100%;
+    `,
+    iframe: css`
+      label: iframe;
+      border: none;
+      width: 100%;
+      height: 100%;
     `,
   };
 });
@@ -269,21 +283,21 @@ export class Explore extends React.PureComponent<ExploreProps> {
     const showStartPage = !queryResponse || queryResponse.state === LoadingState.NotStarted;
 
     return (
-      <div style={{ height: '100%', overflow: 'hidden' }} className={exploreClass} ref={this.getRef}>
+      <div className={exploreClass} ref={this.getRef}>
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
         {datasourceMissing ? this.renderEmptyState() : null}
         {datasourceInstance && (
-          <div className="explore-container" style={{ height: '100%' }}>
+          <div className="explore-container">
             <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
             <ErrorContainer queryErrors={queryResponse.error ? [queryResponse.error] : undefined} />
-            <AutoSizer style={{ height: '100%' }} onResize={this.onResize} disableHeight>
+            <AutoSizer className={styles.fullHeight} onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {
                   return null;
                 }
 
                 return (
-                  <main className={`m-t-2 ${styles.logsMain}`} style={{ width, height: '100%' }}>
+                  <main className={cx('m-t-2', styles.logsMain, styles.fullHeight)} style={{ width }}>
                     <ErrorBoundaryAlert>
                       {showStartPage && StartPage && (
                         <div className="grafana-info-box grafana-info-box--max-lg">
@@ -328,12 +342,12 @@ export class Explore extends React.PureComponent<ExploreProps> {
                             />
                           )}
                           {mode === ExploreMode.Tracing && (
-                            <div style={{ height: '100%' }}>
+                            <div className={styles.fullHeight}>
                               {queryResponse &&
                                 !!queryResponse.series.length &&
                                 queryResponse.series[0].fields[0].values.get(0) && (
                                   <iframe
-                                    style={{ border: 'none', width: '100%', height: '100%' }}
+                                    className={styles.iframe}
                                     src={queryResponse.series[0].fields[0].values.get(0)}
                                   />
                                 )}

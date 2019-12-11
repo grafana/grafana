@@ -89,6 +89,30 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     return [];
   };
 
+  /**
+   * Get links from the filed of a dataframe that was given to as and in addition check if there is associated
+   * metadata with datasource in which case we will add onClick to open the link in new split window. This assumes
+   * that we just supply datasource name and field value and Explore split window will know how to render that
+   * appropriately. This is for example used for transition from log with traceId to trace datasource to show that
+   * trace.
+   * @param field
+   * @param rowIndex
+   */
+  getFieldLinks = (field: Field, rowIndex: number) => {
+    const data = getLinksFromLogsField(field, rowIndex);
+    return data.map(d => {
+      if (d.link.meta?.datasourceName) {
+        return {
+          ...d.linkModel,
+          onClick: () => {
+            this.props.splitOpen(d.link.meta.datasourceName, field.values.get(rowIndex));
+          },
+        };
+      }
+      return d.linkModel;
+    });
+  };
+
   render() {
     const {
       loading,
@@ -108,7 +132,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       width,
       isLive,
       exploreId,
-      splitOpen,
     } = this.props;
 
     return (
@@ -152,20 +175,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               scanRange={range.raw}
               width={width}
               getRowContext={this.getLogRowContext}
-              getFieldLinks={(field: Field, rowIndex: number) => {
-                const data = getLinksFromLogsField(field, rowIndex);
-                return data.map(d => {
-                  if (d.link.meta?.datasourceName) {
-                    return {
-                      ...d.linkModel,
-                      onClick: () => {
-                        splitOpen(d.link.meta.datasourceName, field.values.get(rowIndex));
-                      },
-                    };
-                  }
-                  return d.linkModel;
-                });
-              }}
+              getFieldLinks={this.getFieldLinks}
             />
           </Collapse>
         </LogsCrossFadeTransition>
