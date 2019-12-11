@@ -4,7 +4,7 @@ import { getSelectStyles } from './getSelectStyles';
 
 export const ValueContainer = (props: any) => {
   const theme = useTheme();
-  // const styles = getSelectStyles(theme);
+  const styles = getSelectStyles(theme);
   const { children } = props;
-  return <div>{children}</div>;
+  return <div className={styles.valueContainer}>{children}</div>;
 };

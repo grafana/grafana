@@ -1,13 +1,10 @@
 import React from 'react';
 import { SelectableValue } from '@grafana/data';
-import { getInputStyles } from '../Input/Input';
 // @ts-ignore
 import { default as ReactSelect, Creatable, components } from '@torkelo/react-select';
-// import resetSelectStyles from './resetSelectStyles';
 import { Icon } from '../../Icon/Icon';
-import { useTheme } from '../../../themes';
-import { cx, css } from 'emotion';
-import { getFocusCss, inputSizes, sharedInputStyle } from '../commonStyles';
+import { css } from 'emotion';
+import { inputSizes } from '../commonStyles';
 import { FormInputSize } from '../types';
 import resetSelectStyles from './resetSelectStyles';
 import { SelectMenu, SelectMenuOptions } from './SelectMenu';
@@ -15,6 +12,7 @@ import { SingleValue } from './SingleValue';
 import { IndicatorsContainer } from './IndicatorsContainer';
 import { ValueContainer } from './ValueContainer';
 import { InputControl } from './InputControl';
+import { DropdownIndicator } from './DropdownIndicator';
 
 export interface SelectCommonProps<T> {
   defaultValue?: any;
@@ -23,7 +21,7 @@ export interface SelectCommonProps<T> {
   onChange: (item: SelectableValue<T>) => {} | void;
   placeholder?: string;
   width?: number;
-  value?: T;
+  value?: SelectableValue<T>;
   isDisabled?: boolean;
   isSearchable?: boolean;
   isClearable?: boolean;
@@ -43,22 +41,26 @@ export interface SelectCommonProps<T> {
   formatCreateLabel?: (input: string) => string;
   allowCustomValue?: boolean;
   size?: FormInputSize;
+  /** Renders value */
   renderValue?: (v: SelectableValue<T>) => JSX.Element;
+  /** Renders custom label for a single option in the menu */
   renderOptionLabel?: (v: SelectableValue<T>) => JSX.Element;
+  prefix?: JSX.Element | string | null;
 }
 
 export interface SelectProps<T> extends SelectCommonProps<T> {
   options: Array<SelectableValue<T>>;
 }
 
-const renderControl = (props: any) => {
+const renderControl = (prefix?: JSX.Element | string | null) => (props: any) => {
   const {
     children,
     innerProps: { ref, ...restInnerProps },
     isFocused,
   } = props;
+  console.log(props.selectProps);
   return (
-    <InputControl ref={ref} innerProps={restInnerProps} isFocused={isFocused}>
+    <InputControl ref={ref} innerProps={restInnerProps} isFocused={isFocused} prefix={prefix}>
       {children}
     </InputControl>
   );
@@ -91,65 +93,63 @@ export function Select<T>({
   size = 'auto',
   renderValue,
   renderOptionLabel,
+  prefix,
+  formatCreateLabel,
 }: SelectProps<T>) {
-  const SelectComponent: ReactSelect | Creatable = ReactSelect;
-  const selectedValue = options.filter(o => o.value === value)[0];
-  console.log(selectedValue);
+  let Component: ReactSelect | Creatable = ReactSelect;
+  // const selectedValue = options.filter(o => o.value === value)[0];
+  const creatableOptions: any = {};
+
+  if (allowCustomValue) {
+    Component = Creatable;
+    creatableOptions.formatCreateLabel = formatCreateLabel ?? ((input: string) => `Create: ${input}`);
+  }
 
   return (
-    // <div className={cx(inputSizes()[size])}>
-    <SelectComponent
+    <Component
       options={options}
       onChange={onChange}
       onBlur={onBlur}
       components={{
         MenuList: SelectMenu,
-        Control: renderControl,
-        Option: (props: any) => <SelectMenuOptions {...props} renderOptionLabel={renderOptionLabel} />,
         ValueContainer: ValueContainer,
         IndicatorsContainer: IndicatorsContainer,
         IndicatorSeparator: () => null,
-        ClearIndicator: () => {
-          return <Icon name="calendar" />;
-        },
-        DropdownIndicator: () => {
-          return <Icon name="caret-down" />;
-        },
-        SingleValue: (props: any) => <SingleValue {...props} value={selectedValue} renderValue={renderValue} />,
-        Placeholder: (props: any) => {
-          const { innerProps, children } = props;
-          const styles = css`
-            color: hsl(0, 0%, 50%);
-            position: absolute;
-            top: 50%;
-            -webkit-transform: translateY(-50%);
-            -ms-transform: translateY(-50%);
-            transform: translateY(-50%);
-            box-sizing: border-box;
-          `;
-
+        Control: renderControl(prefix),
+        Option: (props: any) => <SelectMenuOptions {...props} renderOptionLabel={renderOptionLabel} />,
+        ClearIndicator: (props: any) => {
+          const { clearValue } = props;
           return (
-            <div className={styles} {...innerProps}>
-              {children}
-            </div>
+            <Icon
+              name="times"
+              onMouseDown={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                clearValue();
+              }}
+            />
           );
         },
+        DropdownIndicator: (props: any) => <DropdownIndicator isOpen={props.menuIsOpen} />,
+        SingleValue: (props: any) => <SingleValue {...props} value={value} renderValue={renderValue} />,
       }}
       styles={{
         ...resetSelectStyles(),
-        // @ts-ignore
-        input: () => {
+        container: () => {
           return css`
-            height: 100%;
-            max-width: 100%;
-            > div {
-              max-width: 100%;
-              height: 100%;
-            }
-            input {
-              height: 100%;
-              max-width: 100%;
-            }
+            position: relative;
+            ${inputSizes()[size]}
+          `;
+        },
+        placeholder: () => {
+          return css`
+            display: inline-block;
+            color: hsl(0, 0%, 50%);
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            box-sizing: border-box;
+            line-height: 1;
           `;
         },
       }}
@@ -158,10 +158,10 @@ export function Select<T>({
       isSearchable={isSearchable}
       isDisabled={isDisabled}
       isClearable={isClearable}
-      menuIsOpen={true}
+      menuIsOpen={isOpen}
       autoFocus={autoFocus}
       defaultValue={defaultValue}
-      value={selectedValue}
+      value={value}
       getOptionLabel={getOptionLabel}
       getOptionValue={getOptionValue}
       isLoading={isLoading}
@@ -173,9 +173,7 @@ export function Select<T>({
       onMenuOpen={onOpenMenu}
       onMenuClose={onCloseMenu}
       tabSelectsValue={tabSelectsValue}
-
-      // {...creatableOptions}
+      {...creatableOptions}
     />
-    // </div>
   );
 }

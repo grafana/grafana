@@ -3,6 +3,9 @@ import { Select } from './Select';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../../utils/storybook/withCenteredStory';
 import { withStoryContainer } from '../../../utils/storybook/withStoryContainer';
 import { SelectableValue } from '@grafana/data';
+import { getAvailableIcons, IconType } from '../../Icon/types';
+import { select } from '@storybook/addon-knobs';
+import { Icon } from '../../Icon/Icon';
 
 export default {
   title: 'UI/Forms/Select',
@@ -18,8 +21,26 @@ export default {
 export const simple = () => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
-  // const BEHAVIOUR_GROUP = 'Behaviour props';
-  // const disabled = boolean('Disabled', false, BEHAVIOUR_GROUP);
+  console.log(value);
+
+  const prefixSuffixOpts = {
+    None: null,
+    Text: '$',
+    ...getAvailableIcons().reduce<Record<string, string>>((prev, c) => {
+      return {
+        ...prev,
+        [`Icon: ${c}`]: `icon-${c}`,
+      };
+    }, {}),
+  };
+  const VISUAL_GROUP = 'Visual options';
+  // ---
+  const prefix = select('Prefix', prefixSuffixOpts, null, VISUAL_GROUP);
+
+  let prefixEl: any = prefix;
+  if (prefix && prefix.match(/icon-/g)) {
+    prefixEl = <Icon name={prefix.replace(/icon-/g, '') as IconType} />;
+  }
   return (
     <div>
       <Select
@@ -36,51 +57,14 @@ export const simple = () => {
             label: 'InlufxDB',
             value: 'inlufxdb',
           },
-          {
-            label: 'InlufxDB',
-            value: 'inlufxdb0',
-          },
-          {
-            label: 'InlufxDB',
-            value: 'inlufxdb1',
-          },
-          {
-            label: 'InlufxDB',
-            value: 'inlufxdb2',
-          },
-          {
-            label: 'InlufxDB',
-            value: 'inlufxdb3',
-          },
-          {
-            label: 'InlufxDB',
-            value: 'inlufxdb4',
-          },
-          {
-            label: 'InlufxDB',
-            value: 'inlufxdb5',
-          },
-          {
-            label: 'InlufxDB',
-            value: 'inlufxdb6',
-          },
-          {
-            label: 'InlufxDB',
-            value: 'inlufxdb7',
-          },
         ]}
-        value={value && value.value}
+        value={value}
         onChange={v => {
           setValue(v);
         }}
-        size="auto"
-        renderOptionLabel={v => {
-          return (
-            <span>
-              {v.value} - {v.label}
-            </span>
-          );
-        }}
+        size="md"
+        prefix={prefixEl}
+        allowCustomValue
       />
       <h1>test</h1>
     </div>

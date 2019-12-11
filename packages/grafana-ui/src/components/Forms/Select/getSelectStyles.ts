@@ -37,26 +37,29 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     singleValue: css`
       color: ${theme.colors.formInputText};
-      position: absolute;
+      /* position: absolute;
       top: 50%;
-      transform: translateY(-50%);
+      transform: translateY(-50%); */
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       box-sizing: border-box;
       max-width: 100%;
-      padding-right: 40px;
+      /* padding-right: 40px; */
     `,
     valueContainer: css`
-      display: flex;
-      flex-grow: 1;
-      flex-direction: row;
       align-items: center;
-      height: 100%;
+      display: flex;
+      /* flex-wrap: wrap; ONLY WHEN IT"S MULTI*/
       position: relative;
-      max-width: 100%;
+      box-sizing: border-box;
       flex: 1 1 0%;
+      outline: none;
+      /* padding: 2px 8px; */
       overflow: hidden;
+      > * {
+        display: inline-block;
+      }
     `,
   };
 });
