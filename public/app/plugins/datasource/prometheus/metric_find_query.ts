@@ -1,16 +1,16 @@
 import _ from 'lodash';
 import { TimeRange } from '@grafana/data';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PrometheusDatasource, PromDataQueryResponse } from './datasource';
 import { PromQueryRequest } from './types';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 export default class PrometheusMetricFindQuery {
   range: TimeRange;
 
-  constructor(private datasource: PrometheusDatasource, private query: string, timeSrv: TimeSrv) {
+  constructor(private datasource: PrometheusDatasource, private query: string) {
     this.datasource = datasource;
     this.query = query;
-    this.range = timeSrv.timeRange();
+    this.range = getTimeSrv().timeRange();
   }
 
   process() {
@@ -18,7 +18,6 @@ export default class PrometheusMetricFindQuery {
     const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
     const metricNamesRegex = /^metrics\((.+)\)\s*$/;
     const queryResultRegex = /^query_result\((.+)\)\s*$/;
-
     const labelNamesQuery = this.query.match(labelNamesRegex);
     if (labelNamesQuery) {
       return this.labelNamesQuery();

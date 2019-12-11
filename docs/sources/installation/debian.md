@@ -1,72 +1,143 @@
 +++
-title = "Installing on Debian / Ubuntu"
-description = "Install guide for Grafana"
+title = "Install on Debian/Ubuntu"
+description = "Install guide for Grafana on Debian or Ubuntu"
 keywords = ["grafana", "installation", "documentation"]
 type = "docs"
 aliases = ["/installation/installation/debian"]
 [menu.docs]
-name = "Installing on Ubuntu / Debian"
+name = "Install on Ubuntu/Debian"
 identifier = "debian"
 parent = "installation"
-weight = 1
+weight = 200
 +++
 
-# Installing on Debian / Ubuntu
+# Install on Debian or Ubuntu
 
-Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
-installation.
+This page explains how to install Grafana dependencies, download and install Grafana, get the service up and running on your system, and the package details.
 
-## Download
+**Note on upgrading:** While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing installation.
 
-Go to the [download page](https://grafana.com/grafana/download?platform=linux) for the latest download
-links.
+## 1. Download and install
+
+We recommend that you run all the listed commands before you download and install Grafana. They might not be necessary on all systems, but if you run them first then you will not be interrupted by dependency errors.
+
+You can install Grafana using our official APT repository, by downloading a `.deb` package, or by using a binary `.tar.gz` file.
+
+### Install from APT repository 
+
+On some older versions of Ubuntu and Debian you may need to install the `apt-transport-https` package which is needed to fetch packages over HTTPS.
 
 ```bash
-wget <debian package url>
-sudo apt-get install -y adduser libfontconfig1
-sudo dpkg -i grafana_<version>_amd64.deb
+sudo apt-get install -y apt-transport-https
 ```
 
-You will find package urls on the [download page](https://grafana.com/grafana/download?platform=linux).
+Install any missing dependencies:
 
-## APT Repository
-
-The command `add-apt-repository` isn't a default app on Debian 9 and requires
 ```bash
-apt-get install -y software-properties-common
+sudo apt-get install -y software-properties-common wget
 ```
 
-Install the repository for stable releases
+Add this repository for stable releases:
 
 ```bash
 sudo add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"
 ```
 
-There is a separate repository if you want beta releases.
+Add this repository if you want beta releases:
 
 ```bash
 sudo add-apt-repository "deb https://packages.grafana.com/oss/deb beta main"
 ```
 
-Use the above line even if you are on Ubuntu or another Debian version. Then add our gpg key. This allows you to install signed packages.
+Add our GPG key to install signed packages:
 
 ```bash
 wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
 ```
 
-Update your Apt repositories and install Grafana
+Update your APT repositories and install Grafana:
 
 ```bash
 sudo apt-get update
 sudo apt-get install grafana
 ```
 
-On some older versions of Ubuntu and Debian you may need to install the
-`apt-transport-https` package which is needed to fetch packages over
-HTTPS.
+### Install .deb package
+
+Go to the [Linux download page](https://grafana.com/grafana/download?platform=linux) for the latest download links.
+
+If you use ARM, then use the [ARM download page](https://grafana.com/grafana/download?platform=arm) for the latest download links.
 
 ```bash
-sudo apt-get install -y apt-transport-https
+sudo wget <.deb package url>
+sudo apt-get install -y adduser libfontconfig1
+sudo dpkg -i grafana_<version>_amd64.deb
+```
+
+## Install from binary .tar.gz file
+
+Download the latest [`.tar.gz` file](https://grafana.com/grafana/download?platform=linux) and extract it. The files extract into a folder named after the Grafana version that you downloaded. This folder contains all files required to run Grafana. There are no init scripts or install scripts in this package.
+
+```bash
+sudo wget <tar.gz package url>
+sudo apt-get install -y adduser libfontconfig1
+sudo tar -zxvf <tar.gz package>
+```
+
+## 2. Start the server
+
+This starts the `grafana-server` process as the `grafana` user, which was created during the package installation.
+
+If you installed with the APT repository or `.deb` package, then you can start the server using `systemd` or `init.d`. If you installed a binary `.tar.gz` file, then you need to execute the binary.
+
+### Start the server with systemd
+
+To start the service using systemd:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl start grafana-server
+```
+
+Verify that the service has started:
+
+```bash
+sudo systemctl status grafana-server
+```
+
+Enable the systemd service so that Grafana starts at boot:
+
+```bash
+sudo systemctl enable grafana-server.service
+```
+
+### Start the server with init.d
+
+Start Grafana by running:
+
+```bash
+sudo service grafana-server start
+```
+
+Verify that the service has started:
+
+```bash
+sudo service grafana-server status
+```
+
+Configure the Grafana server to start at boot:
+
+```bash
+sudo update-rc.d grafana-server defaults
+```
+
+### Execute the binary
+
+The `grafana-server` binary needs the working directory to be the root install directory where the binary and the `public` folder are located.
+
+Start Grafana by running: 
+```bash
+./bin/grafana-server web
 ```
 
 ## Package details
@@ -80,88 +151,11 @@ sudo apt-get install -y apt-transport-https
 - The default configuration specifies an sqlite3 db at `/var/lib/grafana/grafana.db`
 - Installs HTML/JS/CSS and other Grafana files at `/usr/share/grafana`
 
-## Start the server (init.d service)
+## Next steps
 
-Start Grafana by running:
+Refer to the [Getting Started](/guides/getting_started/) guide for information about logging in, setting up data sources, and so on.
 
-```bash
-sudo service grafana-server start
-```
+## Configure Grafana
 
-This will start the `grafana-server` process as the `grafana` user,
-which was created during the package installation. The default HTTP port
-is `3000` and default user and group is `admin`.
+Refer the [Configuration]({{< relref "configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
 
-Default login and password `admin`/ `admin`
-
-To configure the Grafana server to start at boot time:
-
-```bash
-sudo update-rc.d grafana-server defaults
-```
-
-## Start the server (via systemd)
-
-To start the service using systemd:
-
-```bash
-systemctl daemon-reload
-systemctl start grafana-server
-systemctl status grafana-server
-```
-
-Enable the systemd service so that Grafana starts at boot.
-
-```bash
-sudo systemctl enable grafana-server.service
-```
-
-## Environment file
-
-The systemd service file and init.d script both use the file located at
-`/etc/default/grafana-server` for environment variables used when
-starting the back-end. Here you can override log directory, data
-directory and other variables.
-
-### Logging
-
-By default Grafana will log to `/var/log/grafana`
-
-### Database
-
-The default configuration specifies a sqlite3 database located at
-`/var/lib/grafana/grafana.db`. Please backup this database before
-upgrades. You can also use MySQL or Postgres as the Grafana database, as detailed on [the configuration page]({{< relref "configuration.md#database" >}}).
-
-## Configuration
-
-The configuration file is located at `/etc/grafana/grafana.ini`.  Go the
-[Configuration]({{< relref "configuration.md" >}}) page for details on all
-those options.
-
-### Adding data sources
-
-- [Graphite]({{< relref "../features/datasources/graphite.md" >}})
-- [InfluxDB]({{< relref "../features/datasources/influxdb.md" >}})
-- [OpenTSDB]({{< relref "../features/datasources/opentsdb.md" >}})
-- [Prometheus]({{< relref "../features/datasources/prometheus.md" >}})
-
-## Installing from binary tar file
-
-Download [the latest `.tar.gz` file](https://grafana.com/get) and
-extract it.  This will extract into a folder named after the version you
-downloaded. This folder contains all files required to run Grafana.  There are
-no init scripts or install scripts in this package.
-
-To configure Grafana add a configuration file named `custom.ini` to the
-`conf` folder and override any of the settings defined in
-`conf/defaults.ini`.
-
-Start Grafana by executing `./bin/grafana-server web`. The `grafana-server`
-binary needs the working directory to be the root install directory (where the
-binary and the `public` folder is located).
-
-## Logging in for the first time
-
-To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default HTTP port that Grafana listens to if you haven't [configured a different port](/installation/configuration/#http-port).
-Then follow the instructions [here](/guides/getting_started/).

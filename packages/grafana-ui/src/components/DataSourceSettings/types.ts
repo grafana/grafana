@@ -1,4 +1,4 @@
-import { DataSourceSettings } from '../../types';
+import { DataSourceSettings } from '@grafana/data';
 
 export interface HttpSettingsBaseProps {
   dataSourceConfig: DataSourceSettings<any, any>;

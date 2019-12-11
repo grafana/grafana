@@ -176,11 +176,9 @@ export class GraphiteQueryCtrl extends QueryCtrl {
           return altSegments;
         }
       })
-      .catch(
-        (err: any): any[] => {
-          return [];
-        }
-      );
+      .catch((err: any): any[] => {
+        return [];
+      });
   }
 
   addAltTagSegments(prefix: string, altSegments: any[]) {

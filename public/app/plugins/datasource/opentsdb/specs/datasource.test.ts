@@ -1,6 +1,4 @@
 import OpenTsDatasource from '../datasource';
-// @ts-ignore
-import $q from 'q';
 
 describe('opentsdb', () => {
   const ctx = {
@@ -13,7 +11,7 @@ describe('opentsdb', () => {
   const instanceSettings = { url: '', jsonData: { tsdbVersion: 1 } };
 
   beforeEach(() => {
-    ctx.ctrl = new OpenTsDatasource(instanceSettings, $q, ctx.backendSrv, ctx.templateSrv);
+    ctx.ctrl = new OpenTsDatasource(instanceSettings, ctx.backendSrv, ctx.templateSrv);
   });
 
   describe('When performing metricFindQuery', () => {
@@ -24,7 +22,15 @@ describe('opentsdb', () => {
       ctx.backendSrv.datasourceRequest = await ((options: any) => {
         requestOptions = options;
         return Promise.resolve({
-          data: [{ target: 'prod1.count', datapoints: [[10, 1], [12, 1]] }],
+          data: [
+            {
+              target: 'prod1.count',
+              datapoints: [
+                [10, 1],
+                [12, 1],
+              ],
+            },
+          ],
         });
       });
     });

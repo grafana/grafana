@@ -1,22 +1,19 @@
 // Libaries
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-
+import { e2e } from '@grafana/e2e';
 // Utils & Services
 import { appEvents } from 'app/core/app_events';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
-
 // Components
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
 import { Tooltip } from '@grafana/ui';
-
 // State
 import { updateLocation } from 'app/core/actions';
-
 // Types
 import { DashboardModel } from '../../state';
-import { StoreState, CoreEvents } from 'app/types';
+import { CoreEvents, StoreState } from 'app/types';
 
 export interface OwnProps {
   dashboard: DashboardModel;
@@ -160,7 +157,11 @@ export class DashNav extends PureComponent<Props> {
     return (
       <div className="navbar-edit">
         <Tooltip content="Go back (Esc)">
-          <button className="navbar-edit__back-btn" onClick={this.onClose}>
+          <button
+            className="navbar-edit__back-btn"
+            onClick={this.onClose}
+            aria-label={e2e.pages.Dashboard.selectors.backArrow}
+          >
             <i className="fa fa-arrow-left" />
           </button>
         </Tooltip>
@@ -284,7 +285,4 @@ const mapDispatchToProps = {
   updateLocation,
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(DashNav);
+export default connect(mapStateToProps, mapDispatchToProps)(DashNav);

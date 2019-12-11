@@ -162,7 +162,7 @@ func init() {
 		"AWS/IoT":               {"ActionType", "BehaviorName", "CheckName", "JobId", "Protocol", "RuleName", "ScheduledAuditName", "SecurityProfileName"},
 		"AWS/IoTAnalytics":      {"ActionType", "ChannelName", "DatasetName", "DatastoreName", "PipelineActivityName", "PipelineActivityType", "PipelineName"},
 		"AWS/KMS":               {"KeyId"},
-		"AWS/Kafka":             {"Broker", "Cluster", "Topic"},
+		"AWS/Kafka":             {"Broker ID", "Cluster Name", "Topic"},
 		"AWS/Kinesis":           {"ShardId", "StreamName"},
 		"AWS/KinesisAnalytics":  {"Application", "Flow", "Id"},
 		"AWS/KinesisVideo":      {},
@@ -180,7 +180,7 @@ func init() {
 		"AWS/OpsWorks":          {"InstanceId", "LayerId", "StackId"},
 		"AWS/Polly":             {"Operation"},
 		"AWS/RDS":               {"DBClusterIdentifier", "DBInstanceIdentifier", "DatabaseClass", "DbClusterIdentifier", "EngineName", "Role", "SourceRegion"},
-		"AWS/Redshift":          {"ClusterIdentifier", "NodeID", "Service class", "Stage", "latency", "wlmid"},
+		"AWS/Redshift":          {"ClusterIdentifier", "NodeID", "service class", "stage", "latency", "wlmid"},
 		"AWS/Route53":           {"HealthCheckId", "Region"},
 		"AWS/S3":                {"BucketName", "FilterId", "StorageType"},
 		"AWS/SES":               {},
@@ -550,6 +550,8 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 				}
 				if attr, ok := v.Interface().(*string); ok {
 					data = *attr
+				} else if attr, ok := v.Interface().(*time.Time); ok {
+					data = (*attr).String()
 				} else {
 					return nil, errors.New("invalid attribute path")
 				}
@@ -637,8 +639,11 @@ func (e *CloudWatchExecutor) cloudwatchListMetrics(region string, namespace stri
 
 	params := &cloudwatch.ListMetricsInput{
 		Namespace:  aws.String(namespace),
-		MetricName: aws.String(metricName),
 		Dimensions: dimensions,
+	}
+
+	if metricName != "" {
+		params.MetricName = aws.String(metricName)
 	}
 
 	var resp cloudwatch.ListMetricsOutput

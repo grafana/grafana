@@ -4,10 +4,11 @@ import { css, cx } from 'emotion';
 // Ignoring because I couldn't get @types/react-select work wih Torkel's fork
 // @ts-ignore
 import { components } from '@torkelo/react-select';
-import { FadeTransition, Spinner } from '..';
 import { useDelayedSwitch } from '../../utils/useDelayedSwitch';
 import { stylesFactory } from '../../themes';
 import { SlideOutTransition } from '../transitions/SlideOutTransition';
+import { FadeTransition } from '../transitions/FadeTransition';
+import { Spinner } from '../Spinner/Spinner';
 
 const getStyles = stylesFactory(() => {
   const container = css`
@@ -34,6 +35,7 @@ type Props = {
   data: {
     imgUrl?: string;
     loading?: boolean;
+    hideText?: boolean;
   };
 };
 
@@ -55,7 +57,7 @@ export const SingleValue = (props: Props) => {
             </div>
           </SlideOutTransition>
         )}
-        {children}
+        {!data.hideText && children}
       </div>
     </components.SingleValue>
   );

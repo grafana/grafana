@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { QueryHint, QueryFix } from '@grafana/ui';
+import { QueryHint, QueryFix } from '@grafana/data';
 
 /**
  * Number of time series results needed before starting to suggest sum aggregation hints

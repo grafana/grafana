@@ -1,5 +1,5 @@
-import { MapStateToPropsParam, MapDispatchToPropsParam, connect, useDispatch } from 'react-redux';
-import { StateSelector, cleanUpAction } from '../actions/cleanUp';
+import { connect, MapDispatchToPropsParam, MapStateToPropsParam, useDispatch } from 'react-redux';
+import { cleanUpAction, StateSelector } from '../actions/cleanUp';
 import React, { ComponentType, FunctionComponent, useEffect } from 'react';
 import hoistNonReactStatics from 'hoist-non-react-statics';
 
@@ -18,6 +18,7 @@ export const connectWithCleanUp = <
   const ConnectedComponent = connect(
     mapStateToProps,
     mapDispatchToProps
+    // @ts-ignore
   )(Component);
 
   const ConnectedComponentWithCleanUp: FunctionComponent = props => {
