@@ -185,7 +185,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
   }
 
   _performSuggestQuery(query: string, type: string) {
-      return this._get('/api/suggest', { type, q: query, max: this.lookupLimit }).then((result: any) => {
+    return this._get('/api/suggest', { type, q: query, max: this.lookupLimit }).then((result: any) => {
       return result.data;
     });
   }
