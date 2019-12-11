@@ -140,7 +140,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       label: logs-row__labels;
       display: table-cell;
       white-space: nowrap;
-      width: 20%;
+      width: 22em;
       padding-right: 1em;
     `,
     logsRowMessage: css`
