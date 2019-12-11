@@ -125,6 +125,7 @@ export class VariableEditorCtrl {
         datasourceSrv.get($scope.current.datasource).then(ds => {
           if (!ds.getTagKeys) {
             $scope.infoText = 'This datasource does not support adhoc filters yet.';
+            $scope.$evalAsync();
           }
         });
       }
@@ -156,6 +157,7 @@ export class VariableEditorCtrl {
       $scope.validate();
       datasourceSrv.get($scope.current.datasource).then(ds => {
         $scope.currentDatasource = ds;
+        $scope.$evalAsync();
       });
     };
 
@@ -172,6 +174,7 @@ export class VariableEditorCtrl {
           $scope.reset();
           $scope.mode = 'list';
           templateSrv.updateIndex();
+          $scope.$evalAsync();
         });
       }
     };
@@ -221,6 +224,7 @@ export class VariableEditorCtrl {
       datasourceSrv.get($scope.current.datasource).then(ds => {
         $scope.current.query = '';
         $scope.currentDatasource = ds;
+        $scope.$evalAsync();
       });
     };
   }
