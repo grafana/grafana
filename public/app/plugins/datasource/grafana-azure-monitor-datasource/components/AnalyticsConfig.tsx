@@ -108,6 +108,13 @@ export class AnalyticsConfig extends PureComponent<Props> {
         tooltip: 'Workspaces are pulled from default subscription selected above.',
       }),
     };
+
+    const showSameAsHelpMsg =
+      jsonData.azureLogAnalyticsSameAs &&
+      secureJsonFields &&
+      !secureJsonFields.clientSecret &&
+      !secureJsonData.clientSecret;
+
     return (
       <>
         <h3 className="page-heading">Azure Log Analytics API Details</h3>
@@ -117,6 +124,13 @@ export class AnalyticsConfig extends PureComponent<Props> {
           onChange={this.onAzureLogAnalyticsSameAsChange}
           {...addtlAttrs}
         />
+        {showSameAsHelpMsg && (
+          <div className="grafana-info-box m-t-2">
+            <div className="alert-body">
+              <p>Re-enter your Azure Monitor Client Secret to use this setting.</p>
+            </div>
+          </div>
+        )}
         {!jsonData.azureLogAnalyticsSameAs && (
           <AzureCredentialsForm
             subscriptionOptions={subscriptions}

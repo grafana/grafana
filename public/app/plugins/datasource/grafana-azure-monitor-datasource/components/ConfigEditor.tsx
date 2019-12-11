@@ -78,10 +78,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   makeSameAs = (updatedClientSecret?: string) => {
-    const { options, onOptionsChange } = this.props;
+    const { options } = this.props;
     const clientSecret = updatedClientSecret || options.secureJsonData.clientSecret;
 
-    onOptionsChange({
+    this.updateOptions({
       ...options,
       jsonData: {
         ...options.jsonData,
@@ -286,7 +286,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
           workspaces={logAnalyticsWorkspaces}
           subscriptions={logAnalyticsSubscriptions}
           makeSameAs={this.makeSameAs}
-          onUpdateOptions={this.props.onOptionsChange}
+          onUpdateOptions={this.updateOptions}
           onUpdateOption={this.updateOption}
           onResetOptionKey={this.resetKey}
           onLoadSubscriptions={this.onLoadSubscriptions}
