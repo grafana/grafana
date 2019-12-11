@@ -4,9 +4,7 @@ import { filter } from 'rxjs/operators';
 /*
  * Base event type
  */
-export abstract class BusEvent {
-  readonly type: string = '';
-}
+export abstract class BusEvent {}
 
 /*
  * Base event type with payload
