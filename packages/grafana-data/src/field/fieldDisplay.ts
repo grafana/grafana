@@ -1,19 +1,25 @@
-import toNumber from 'lodash/toNumber';
 import toString from 'lodash/toString';
 import isEmpty from 'lodash/isEmpty';
 
+import { getFieldProperties } from './fieldOverrides';
 import { getDisplayProcessor } from './displayProcessor';
 import { getFlotPairs } from '../utils/flotPairs';
-import { FieldConfig, DataFrame, FieldType } from '../types/dataFrame';
-import { InterpolateFunction } from '../types/panel';
+import {
+  FieldConfig,
+  DataFrame,
+  FieldType,
+  DisplayValue,
+  DisplayValueAlignmentFactors,
+  FieldConfigSource,
+  InterpolateFunction,
+} from '../types';
 import { DataFrameView } from '../dataframe/DataFrameView';
 import { GraphSeriesValue } from '../types/graph';
-import { DisplayValue, DisplayValueAlignmentFactors } from '../types/displayValue';
 import { GrafanaTheme } from '../types/theme';
 import { ReducerID, reduceField } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
 import { getTimeField } from '../dataframe/processDataFrame';
-import { FieldConfigSource, prepareDataFramesForDisplay } from './fieldOverrides';
+import { applyFieldOverrides } from './fieldOverrides';
 
 export interface FieldDisplayOptions extends FieldConfigSource {
   values?: boolean; // If true show each row value
@@ -85,7 +91,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
   const values: FieldDisplay[] = [];
 
   if (options.data) {
-    const data = prepareDataFramesForDisplay(options.data, fieldOptions, replaceVariables, options.theme);
+    const data = applyFieldOverrides(options.data, fieldOptions, replaceVariables, options.theme);
 
     let hitLimit = false;
     const limit = fieldOptions.limit ? fieldOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
@@ -199,72 +205,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
   return values;
 };
-
-const numericFieldProps: any = {
-  decimals: true,
-  min: true,
-  max: true,
-};
-
-/**
- * Returns a version of the field with the overries applied.  Any property with
- * value: null | undefined | empty string are skipped.
- *
- * For numeric values, only valid numbers will be applied
- * for units, 'none' will be skipped
- */
-export function applyFieldProperties(field: FieldConfig, props?: FieldConfig): FieldConfig {
-  if (!props) {
-    return field;
-  }
-  const keys = Object.keys(props);
-  if (!keys.length) {
-    return field;
-  }
-  const copy = { ...field } as any; // make a copy that we will manipulate directly
-  for (const key of keys) {
-    const val = (props as any)[key];
-    if (val === null || val === undefined) {
-      continue;
-    }
-
-    if (numericFieldProps[key]) {
-      const num = toNumber(val);
-      if (!isNaN(num)) {
-        copy[key] = num;
-      }
-    } else if (val) {
-      // skips empty string
-      if (key === 'unit' && val === 'none') {
-        continue;
-      }
-      copy[key] = val;
-    }
-  }
-  return copy as FieldConfig;
-}
-
-export function getFieldProperties(...props: FieldConfig[]): FieldConfig {
-  let field = props[0] as FieldConfig;
-  for (let i = 1; i < props.length; i++) {
-    field = applyFieldProperties(field, props[i]);
-  }
-
-  // First value is always -Infinity
-  if (field.thresholds && field.thresholds.length) {
-    field.thresholds[0].value = -Infinity;
-  }
-
-  // Verify that max > min
-  if (field.hasOwnProperty('min') && field.hasOwnProperty('max') && field.min! > field.max!) {
-    return {
-      ...field,
-      min: field.max,
-      max: field.min,
-    };
-  }
-  return field;
-}
 
 export function getDisplayValueAlignmentFactors(values: FieldDisplay[]): DisplayValueAlignmentFactors {
   const info: DisplayValueAlignmentFactors = {

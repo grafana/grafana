@@ -1,39 +1,13 @@
 import merge from 'lodash/merge';
-import { getFieldProperties, getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
+import { getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { ReducerID } from '../transformations/fieldReducer';
 import { Threshold } from '../types/threshold';
 import { GrafanaTheme } from '../types/theme';
 import { MappingType } from '../types';
+import { getFieldProperties } from './fieldOverrides';
 
 describe('FieldDisplay', () => {
-  it('Construct simple field properties', () => {
-    const f0 = {
-      min: 0,
-      max: 100,
-    };
-    const f1 = {
-      unit: 'ms',
-      dateFormat: '', // should be ignored
-      max: parseFloat('NOPE'), // should be ignored
-      min: null,
-    };
-    let field = getFieldProperties(f0, f1);
-    expect(field.min).toEqual(0);
-    expect(field.max).toEqual(100);
-    expect(field.unit).toEqual('ms');
-
-    // last one overrieds
-    const f2 = {
-      unit: 'none', // ignore 'none'
-      max: -100, // lower than min! should flip min/max
-    };
-    field = getFieldProperties(f0, f1, f2);
-    expect(field.max).toEqual(0);
-    expect(field.min).toEqual(-100);
-    expect(field.unit).toEqual('ms');
-  });
-
   it('show first numeric values', () => {
     const options = createDisplayOptions({
       fieldOptions: {
