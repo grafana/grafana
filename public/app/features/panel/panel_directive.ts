@@ -7,6 +7,7 @@ import baron from 'baron';
 import { CoreEvents } from 'app/types';
 import { PanelEvents } from '@grafana/data';
 import { getLocationSrv } from '@grafana/runtime';
+import { e2e } from '@grafana/e2e';
 
 const module = angular.module('grafana.directives');
 
@@ -22,7 +23,7 @@ const panelTemplate = `
           <i class="fa fa-spinner fa-spin"></i>
         </span>
 
-        <panel-header class="panel-title-container" panel-ctrl="ctrl" aria-label="Panel Title"></panel-header>
+        <panel-header class="panel-title-container" panel-ctrl="ctrl" aria-label={{ctrl.selectors.title(ctrl.panel.title)}}></panel-header>
       </div>
 
       <div class="panel-content">
@@ -43,6 +44,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       const panelContent = elem.find('.panel-content');
       const cornerInfoElem = elem.find('.panel-info-corner');
       const ctrl = scope.ctrl;
+      ctrl.selectors = e2e.pages.Panels.Panel.selectors;
       let infoDrop: any;
       let panelScrollbar: any;
 

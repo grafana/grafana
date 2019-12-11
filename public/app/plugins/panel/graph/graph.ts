@@ -84,6 +84,8 @@ class GraphElement {
     // global events
     this.dashboard.on(CoreEvents.graphHover, this.onGraphHover.bind(this), scope);
     this.dashboard.on(CoreEvents.graphHoverClear, this.onGraphHoverClear.bind(this), scope);
+
+    // plot events
     this.elem.bind('plotselected', this.onPlotSelected.bind(this));
     this.elem.bind('plotclick', this.onPlotClick.bind(this));
 
@@ -155,6 +157,9 @@ class GraphElement {
     this.elem.off();
     this.elem.remove();
 
+    // unsub to dashboard events
+    this.dashboard.off(CoreEvents.graphHover, this.onGraphHover);
+    this.dashboard.off(CoreEvents.graphHoverClear, this.onGraphHoverClear);
     ReactDOM.unmountComponentAtNode(this.legendElem);
   }
 

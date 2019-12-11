@@ -656,7 +656,7 @@
     },
     {
       "content": "For more information about the available metrics for Amazon CloudWatch Logs, please visit the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Monitoring-CloudWatch-Metrics.html).",
-      "datasource": "${DS_CLOUDWATCH}",
+      "datasource": "$datasource",
       "gridPos": {
         "h": 2,
         "w": 24,

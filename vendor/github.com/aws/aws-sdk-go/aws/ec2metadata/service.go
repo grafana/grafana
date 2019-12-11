@@ -158,6 +158,7 @@ type tokenOutput struct {
 var unmarshalTokenHandler = request.NamedHandler{
 	Name: unmarshalTokenHandlerName,
 	Fn: func(r *request.Request) {
+		defer r.HTTPResponse.Body.Close()
 		var b bytes.Buffer
 		if _, err := io.Copy(&b, r.HTTPResponse.Body); err != nil {
 			r.Error = awserr.NewRequestFailure(awserr.New(request.ErrCodeSerialization,

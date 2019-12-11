@@ -83,6 +83,8 @@ describe('grafanaGraph', () => {
       hiddenSeries: {},
       dashboard: {
         getTimezone: () => 'browser',
+        on: jest.fn(),
+        off: jest.fn(),
       },
       range: {
         from: dateTime([2015, 1, 1, 10]),

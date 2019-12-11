@@ -24,7 +24,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     liveButton: css`
       label: liveButton;
-      transition: background-color 1s, border-color 1s, color 1s;
       margin: 0;
     `,
     isLive: css`
@@ -84,7 +83,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: stopButtonEnterActive;
       opacity: 1;
       width: 32px;
-      transition: opacity 500ms ease-in 50ms, width 500ms ease-in 50ms;
     `,
     stopButtonExit: css`
       label: stopButtonExit;
@@ -96,7 +94,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: stopButtonExitActive;
       opacity: 0;
       width: 0;
-      transition: opacity 500ms ease-in 50ms, width 500ms ease-in 50ms;
     `,
   };
 });

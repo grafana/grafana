@@ -424,16 +424,6 @@ export interface DataStreamState {
   error?: DataQueryError;
 
   /**
-   * @deprecated: DO NOT USE IN ANYTHING NEW!!!!
-   *
-   * merging streaming rows should be handled in the DataSource
-   * and/or we should add metadata to this state event that
-   * indicates that the PanelQueryRunner should manage the row
-   * additions.
-   */
-  delta?: DataFrame[];
-
-  /**
    * Stop listening to this stream
    */
   unsubscribe: () => void;
