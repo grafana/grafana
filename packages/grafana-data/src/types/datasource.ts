@@ -7,6 +7,7 @@ import { AnnotationEvent, KeyValue, LoadingState, TableData, TimeSeries } from '
 import { DataFrame, DataFrameDTO } from './dataFrame';
 import { RawTimeRange, TimeRange, AbsoluteTimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
+import { SelectableValue } from './select';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
   options: DataSourceSettings<JSONData, SecureJSONData>;
@@ -271,6 +272,34 @@ export abstract class DataSourceApi<
 
   interpolateVariablesInQueries?(queries: TQuery[]): TQuery[];
 }
+
+export const onUpdateDatasourceOption = (props: DataSourcePluginOptionsEditorProps, key: string) => (
+  event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
+) => {
+  updateDatasourcePluginOption(props, key, event.currentTarget.value);
+};
+
+export const onUpdateDatasourceJsonDataOption = (
+  props: DataSourcePluginOptionsEditorProps,
+  key: string,
+  secure: boolean
+) => (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
+  updateDatasourcePluginJsonDataOption(props, key, event.currentTarget.value, secure);
+};
+
+export const onUpdateDatasourceJsonDataOptionSelect = (
+  props: DataSourcePluginOptionsEditorProps,
+  key: string,
+  secure: boolean
+) => (selected: SelectableValue) => {
+  updateDatasourcePluginJsonDataOption(props, key, selected.value, secure);
+};
+
+export const onUpdateDatasourceResetKeyOption = (props: DataSourcePluginOptionsEditorProps, key: string) => (
+  event: React.MouseEvent<HTMLButtonElement, MouseEvent>
+) => {
+  updateDatasourcePluginResetKeyOption(props, key);
+};
 
 export function updateDatasourcePluginOption(props: DataSourcePluginOptionsEditorProps, key: string, val: any) {
   let config = props.options;
