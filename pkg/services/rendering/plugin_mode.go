@@ -66,7 +66,7 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, opts Opts) (*Re
 	ctx, cancel := context.WithTimeout(ctx, opts.Timeout)
 	defer cancel()
 
-	rsp, err := rs.grpcPlugin.Render(ctx, &pluginModel.RenderRequest{
+	req := &pluginModel.RenderRequest{
 		Url:       rs.getURL(opts.Path),
 		Width:     int32(opts.Width),
 		Height:    int32(opts.Height),
@@ -76,7 +76,10 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, opts Opts) (*Re
 		Encoding:  opts.Encoding,
 		Timezone:  isoTimeOffsetToPosixTz(opts.Timezone),
 		Domain:    rs.domain,
-	})
+	}
+	rs.log.Debug("calling renderer plugin", "req", req)
+
+	rsp, err := rs.grpcPlugin.Render(ctx, req)
 	if err != nil {
 		return nil, err
 	}
