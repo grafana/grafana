@@ -1,4 +1,5 @@
 import { PanelChrome } from './PanelChrome';
+import { DashboardModel } from '../state';
 
 describe('PanelChrome', () => {
   let chrome: PanelChrome;
@@ -11,6 +12,7 @@ describe('PanelChrome', () => {
           bbb: { value: 'BBB', text: 'upperB' },
         },
       },
+      dashboard: new DashboardModel(),
       isFullscreen: false,
     } as any);
   });

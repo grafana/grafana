@@ -68,6 +68,16 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "autoUpdate": undefined,
           "description": undefined,
           "editable": true,
+          "eventBus": EventBusSrv {
+            "eventStream": Subject {
+              "_isScalar": false,
+              "closed": false,
+              "hasError": false,
+              "isStopped": false,
+              "observers": Array [],
+              "thrownError": null,
+            },
+          },
           "events": Emitter {
             "emitter": EventEmitter {
               "_events": Object {
@@ -305,6 +315,16 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "autoUpdate": undefined,
           "description": undefined,
           "editable": true,
+          "eventBus": EventBusSrv {
+            "eventStream": Subject {
+              "_isScalar": false,
+              "closed": false,
+              "hasError": false,
+              "isStopped": false,
+              "observers": Array [],
+              "thrownError": null,
+            },
+          },
           "events": Emitter {
             "emitter": EventEmitter {
               "_events": Object {
@@ -542,6 +562,16 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "autoUpdate": undefined,
           "description": undefined,
           "editable": true,
+          "eventBus": EventBusSrv {
+            "eventStream": Subject {
+              "_isScalar": false,
+              "closed": false,
+              "hasError": false,
+              "isStopped": false,
+              "observers": Array [],
+              "thrownError": null,
+            },
+          },
           "events": Emitter {
             "emitter": EventEmitter {
               "_events": Object {
@@ -779,6 +809,16 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "autoUpdate": undefined,
           "description": undefined,
           "editable": true,
+          "eventBus": EventBusSrv {
+            "eventStream": Subject {
+              "_isScalar": false,
+              "closed": false,
+              "hasError": false,
+              "isStopped": false,
+              "observers": Array [],
+              "thrownError": null,
+            },
+          },
           "events": Emitter {
             "emitter": EventEmitter {
               "_events": Object {

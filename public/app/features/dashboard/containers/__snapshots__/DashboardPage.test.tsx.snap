@@ -24,6 +24,16 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
         "autoUpdate": undefined,
         "description": undefined,
         "editable": true,
+        "eventBus": EventBusSrv {
+          "eventStream": Subject {
+            "_isScalar": false,
+            "closed": false,
+            "hasError": false,
+            "isStopped": false,
+            "observers": Array [],
+            "thrownError": null,
+          },
+        },
         "events": Emitter {
           "emitter": EventEmitter {
             "_events": Object {},
@@ -137,6 +147,16 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "autoUpdate": undefined,
               "description": undefined,
               "editable": true,
+              "eventBus": EventBusSrv {
+                "eventStream": Subject {
+                  "_isScalar": false,
+                  "closed": false,
+                  "hasError": false,
+                  "isStopped": false,
+                  "observers": Array [],
+                  "thrownError": null,
+                },
+              },
               "events": Emitter {
                 "emitter": EventEmitter {
                   "_events": Object {},
@@ -229,6 +249,16 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "autoUpdate": undefined,
               "description": undefined,
               "editable": true,
+              "eventBus": EventBusSrv {
+                "eventStream": Subject {
+                  "_isScalar": false,
+                  "closed": false,
+                  "hasError": false,
+                  "isStopped": false,
+                  "observers": Array [],
+                  "thrownError": null,
+                },
+              },
               "events": Emitter {
                 "emitter": EventEmitter {
                   "_events": Object {},
@@ -353,6 +383,16 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         "autoUpdate": undefined,
         "description": undefined,
         "editable": true,
+        "eventBus": EventBusSrv {
+          "eventStream": Subject {
+            "_isScalar": false,
+            "closed": false,
+            "hasError": false,
+            "isStopped": false,
+            "observers": Array [],
+            "thrownError": null,
+          },
+        },
         "events": Emitter {
           "emitter": EventEmitter {
             "_events": Object {},
@@ -464,6 +504,16 @@ exports[`DashboardPage When dashboard has editview url state should render setti
             "autoUpdate": undefined,
             "description": undefined,
             "editable": true,
+            "eventBus": EventBusSrv {
+              "eventStream": Subject {
+                "_isScalar": false,
+                "closed": false,
+                "hasError": false,
+                "isStopped": false,
+                "observers": Array [],
+                "thrownError": null,
+              },
+            },
             "events": Emitter {
               "emitter": EventEmitter {
                 "_events": Object {},
@@ -559,6 +609,16 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "autoUpdate": undefined,
               "description": undefined,
               "editable": true,
+              "eventBus": EventBusSrv {
+                "eventStream": Subject {
+                  "_isScalar": false,
+                  "closed": false,
+                  "hasError": false,
+                  "isStopped": false,
+                  "observers": Array [],
+                  "thrownError": null,
+                },
+              },
               "events": Emitter {
                 "emitter": EventEmitter {
                   "_events": Object {},
@@ -651,6 +711,16 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "autoUpdate": undefined,
               "description": undefined,
               "editable": true,
+              "eventBus": EventBusSrv {
+                "eventStream": Subject {
+                  "_isScalar": false,
+                  "closed": false,
+                  "hasError": false,
+                  "isStopped": false,
+                  "observers": Array [],
+                  "thrownError": null,
+                },
+              },
               "events": Emitter {
                 "emitter": EventEmitter {
                   "_events": Object {},
