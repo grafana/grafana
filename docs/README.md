@@ -13,7 +13,7 @@ Docker >= 2.1.0.3
 
 ---
 
-## Content Guidelines
+## Content guidelines
 
 Edit content in the `sources` directory.
 
