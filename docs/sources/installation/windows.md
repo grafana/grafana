@@ -28,14 +28,13 @@ Download the .msi installation file and run it, then follow the instructions in 
    **Important:** After you've downloaded the zip file and before extracting it, make sure to open the properties for that file (right-click **Properties**) and select the `unblock` check box and then click `Ok`.
 
 1. Extract this folder to anywhere you want Grafana to run from. 
- 
-1. Go into the `conf` directory and copy `sample.ini` to `custom.ini`. **Note:** You should edit `custom.ini`, never `defaults.ini`.
-
-1. The default Grafana port is `3000`. This port requires extra permissions on Windows. Edit `custom.ini` and uncomment the `http_port` configuration option (`;` is the comment character in ini files) and change it to something like `8080` or similar. That port should not require extra Windows privileges.
 
 1. Start Grafana by executing `grafana-server.exe`, located in the `bin` directory, preferably from the command line. If you want to run Grafana as a Windows service, then download
 [NSSM](https://nssm.cc/). It is very easy to add Grafana as a Windows service using that tool.
 
-Read more about the [configuration options]({{< relref "configuration.md" >}}).
+To run Grafana open your browser and go to the Grafana port (http://localhost:3000/ is default) and then follow the instructions in [Getting Started](/guides/getting_started/).
 
-To run Grafana open your browser and go to the port you configured above, such as http://localhost:8080/, and then follow the instructions in [Getting Started](/guides/getting_started/).
+> **Note:** The default Grafana port is `3000`. This port might require extra permissions on Windows. If it does not appear in the default port, you can try changing to a different port.
+> 1. Go into the `conf` directory and copy `sample.ini` to `custom.ini`. **Note:** You should edit `custom.ini`, never `defaults.ini`.
+> 1.  Edit `custom.ini` and uncomment the `http_port` configuration option (`;` is the comment character in ini files) and change it to something like `8080` or similar. That port should not require extra Windows privileges.
+> Read more about the [configuration options]({{< relref "configuration.md" >}}).
