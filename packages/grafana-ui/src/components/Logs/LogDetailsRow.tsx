@@ -37,7 +37,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     hoverCursor: css`
       label: hoverCursor;
       cursor: pointer;
-  `,
+    `,
   };
 });
 
@@ -91,12 +91,15 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
         <td title="Ad-hoc statistics" onClick={this.showStats} className={style.logsDetailsIcon}>
           <i className={`fa fa-signal ${styles.hoverCursor}`} />
         </td>
+
         <td title="Filter for value" onClick={() => isLabel && this.filterLabel()} className={style.logsDetailsIcon}>
           {isLabel && <i className={`fa fa-search-plus ${styles.hoverCursor}`} />}
         </td>
+
         <td title="Filter out value" onClick={() => isLabel && this.filterOutLabel()} className={style.logsDetailsIcon}>
           {isLabel && <i className={`fa fa-search-minus ${styles.hoverCursor}`} />}
         </td>
+
         {/* Key - value columns */}
         <td className={style.logDetailsLabel}>{parsedKey}</td>
         <td className={style.logsRowCell}>

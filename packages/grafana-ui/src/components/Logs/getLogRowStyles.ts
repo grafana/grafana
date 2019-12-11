@@ -190,7 +190,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       cursor: default;
       &:hover {
         background-color: ${bgColor};
-      };
+      }
     `,
   };
 });
