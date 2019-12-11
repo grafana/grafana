@@ -22,7 +22,7 @@ You can configure Grafana to only allow certain IP addresses or hostnames to be 
 
 ## Firewall rules
 
-Configure a firewall to restrict Grafana from making network requests to certain internal web services. 
+Configure a firewall to restrict Grafana from making network requests to sensitive internal web services. 
 
 There are many firewall tools available, refer to the documentation for your specific security tool. For example, Linux users can use [iptables](https://en.wikipedia.org/wiki/Iptables).
 
