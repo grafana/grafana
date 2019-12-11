@@ -65,7 +65,6 @@ import {
 import { reducerFactory, ActionOf } from 'app/core/redux';
 import { updateLocation } from 'app/core/actions/location';
 import { LocationUpdate } from '@grafana/runtime';
-import TableModel from 'app/core/table_model';
 import { ResultProcessor } from '../utils/ResultProcessor';
 
 export const DEFAULT_RANGE = {
@@ -462,7 +461,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         return { ...state, showingGraph };
       }
 
-      return { ...state, showingGraph, graphResult: null };
+      return { ...state, showingGraph, graphResult: undefined };
     },
   })
   .addMapper({
@@ -473,7 +472,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         return { ...state, showingTable };
       }
 
-      return { ...state, showingTable, tableResult: new TableModel() };
+      return { ...state, showingTable, tableResult: undefined };
     },
   })
   .addMapper({

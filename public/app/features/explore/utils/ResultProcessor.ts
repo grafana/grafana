@@ -1,7 +1,7 @@
 import { LogsModel, GraphSeriesXY, DataFrame, FieldType, TimeZone } from '@grafana/data';
 
 import { ExploreItemState, ExploreMode } from 'app/types/explore';
-import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
+// import { mergeTablesIntoModel } from 'app/core/table_model';
 import { sortLogsResult, refreshIntervalToSortOrder } from 'app/core/utils/explore';
 import { dataFrameToLogsModel } from 'app/core/logs_model';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
@@ -34,7 +34,7 @@ export class ResultProcessor {
     );
   }
 
-  getTableResult(): TableModel | null {
+  getTableResult(): DataFrame | null {
     if (this.state.mode !== ExploreMode.Metrics) {
       return null;
     }
@@ -42,40 +42,43 @@ export class ResultProcessor {
     // For now ignore time series
     // We can change this later, just need to figure out how to
     // Ignore time series only for prometheus
-    const onlyTables = this.dataFrames.filter(frame => !isTimeSeries(frame));
+    // const onlyTables = this.dataFrames.filter(frame => !isTimeSeries(frame));
+    // const onlyTables = this.dataFrames;
 
-    if (onlyTables.length === 0) {
-      return null;
-    }
+    return this.dataFrames.length ? this.dataFrames[0] : null;
 
-    const tables = onlyTables.map(frame => {
-      const { fields } = frame;
-      const fieldCount = fields.length;
-      const rowCount = frame.length;
-
-      const columns = fields.map(field => ({
-        text: field.name,
-        type: field.type,
-        filterable: field.config.filterable,
-      }));
-
-      const rows: any[][] = [];
-      for (let i = 0; i < rowCount; i++) {
-        const row: any[] = [];
-        for (let j = 0; j < fieldCount; j++) {
-          row.push(frame.fields[j].values.get(i));
-        }
-        rows.push(row);
-      }
-
-      return new TableModel({
-        columns,
-        rows,
-        meta: frame.meta,
-      });
-    });
-
-    return mergeTablesIntoModel(new TableModel(), ...tables);
+    // if (onlyTables.length === 0) {
+    //   return null;
+    // }
+    //
+    // const tables = onlyTables.map(frame => {
+    //   const { fields } = frame;
+    //   const fieldCount = fields.length;
+    //   const rowCount = frame.length;
+    //
+    //   const columns = fields.map(field => ({
+    //     text: field.name,
+    //     type: field.type,
+    //     filterable: field.config.filterable,
+    //   }));
+    //
+    //   const rows: any[][] = [];
+    //   for (let i = 0; i < rowCount; i++) {
+    //     const row: any[] = [];
+    //     for (let j = 0; j < fieldCount; j++) {
+    //       row.push(frame.fields[j].values.get(i));
+    //     }
+    //     rows.push(row);
+    //   }
+    //
+    //   return new TableModel({
+    //     columns,
+    //     rows,
+    //     meta: frame.meta,
+    //   });
+    // });
+    //
+    // return mergeTablesIntoModel(new TableModel(), ...tables);
   }
 
   getLogsResult(): LogsModel | null {
