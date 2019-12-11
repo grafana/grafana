@@ -35,7 +35,7 @@ Content-Type: application/json
    {
      "id": 1,
      "orgId": 1,
-     "name": "datasource_elastic",
+     "name": "datasource_elastic2",
      "type": "elasticsearch",
      "typeLogoUrl": "public/app/plugins/datasource/elasticsearch/img/elasticsearch.svg",
      "access": "proxy",
