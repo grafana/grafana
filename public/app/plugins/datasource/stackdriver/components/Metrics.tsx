@@ -162,7 +162,6 @@ export class Metrics extends React.Component<Props, State> {
               onChange={this.onServiceChange}
               value={service}
               options={services}
-              isSearchable={false}
               placeholder="Select Services"
               className="width-15"
             />

@@ -19,6 +19,16 @@ function translateFillOption(fill: number) {
   return fill === 0 ? 0.001 : fill / 10;
 }
 
+function getFillGradient(amount: number) {
+  if (!amount) {
+    return null;
+  }
+
+  return {
+    colors: [{ opacity: 0.0 }, { opacity: amount / 10 }],
+  };
+}
+
 /**
  * Calculate decimals for legend and update values for each series.
  * @param data series data
@@ -156,6 +166,9 @@ export default class TimeSeries {
       }
       if (override.fill !== void 0) {
         this.lines.fill = translateFillOption(override.fill);
+      }
+      if (override.fillGradient !== void 0) {
+        this.lines.fillColor = getFillGradient(override.fillGradient);
       }
       if (override.stack !== void 0) {
         this.stack = override.stack;

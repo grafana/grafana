@@ -29,18 +29,13 @@ A common problem is forgetting to uncomment a line in the `custom.ini` (or `graf
 - Custom configuration from `$WORKING_DIR/conf/custom.ini`
 - The custom configuration file path can be overridden using the `--config` parameter
 
-> **Note.** If you have installed Grafana using the `deb` or `rpm`
-> packages, then your configuration file is located at
-> `/etc/grafana/grafana.ini` and a separate `custom.ini` is not
-> used. This path is specified in the Grafana
-> init.d script using `--config` file parameter.
+**Note:** If you have installed Grafana using the `deb` or `rpm` packages, then your configuration file is located at `/etc/grafana/grafana.ini` and a separate `custom.ini` is not used. This path is specified in the Grafana init.d script using `--config` file parameter.
 
 **macOS:** By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`.
 
 ## Using environment variables
 
-All options in the configuration file (listed below) can be overridden
-using environment variables using the syntax:
+All options in the configuration file (listed below) can be overridden using environment variables using the syntax:
 
 ```bash
 GF_<SectionName>_<KeyName>
@@ -104,7 +99,7 @@ Directory where Grafana will automatically scan and look for plugins. Manually o
 
 ### provisioning
 
-Folder that contains [provisioning](/administration/provisioning) config files that grafana will apply on startup. Dashboards will be reloaded when the json files changes
+Folder that contains [provisioning]({{< relref "../administration/provisioning" >}}) config files that grafana will apply on startup. Dashboards will be reloaded when the json files changes
 
 ## [server]
 
@@ -387,7 +382,7 @@ Set to `false` to disable the X-XSS-Protection header, which tells browsers to s
 
 Set to `false` to prohibit users from being able to sign up / create
 user accounts. Defaults to `false`.  The admin user can still create
-users from the [Grafana Admin Pages](../../reference/admin)
+users from the [Grafana Admin Pages](/reference/admin)
 
 ### allow_org_create
 
@@ -493,7 +488,7 @@ Number dashboard versions to keep (per dashboard). Default: `20`, Minimum: `1`.
 
 ## [dashboards.json]
 
-> This have been replaced with dashboards [provisioning](/administration/provisioning) in 5.0+
+> This have been replaced with dashboards [provisioning]({{< relref "../administration/provisioning" >}}) in 5.0+
 
 ### enabled
 `true` or `false`. Is disabled by default.

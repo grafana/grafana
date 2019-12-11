@@ -1,6 +1,3 @@
-// @ts-ignore
-import { IQService } from 'angular';
-
 import { SearchSrv } from 'app/core/services/search_srv';
 import { BackendSrvMock } from 'test/mocks/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
@@ -26,7 +23,7 @@ describe('SearchSrv', () => {
 
   beforeEach(() => {
     backendSrvMock = new BackendSrvMock();
-    searchSrv = new SearchSrv(backendSrvMock as BackendSrv, (Promise as any) as IQService);
+    searchSrv = new SearchSrv(backendSrvMock as BackendSrv);
 
     contextSrv.isSignedIn = true;
     impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([]);
