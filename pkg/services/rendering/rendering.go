@@ -77,7 +77,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		return nil
 	}
 
-	rs.log = rs.log.New("renderer", plugins.Renderer.Id)
+	rs.log = rs.log.New("renderer", "plugin")
 	rs.pluginInfo = plugins.Renderer
 
 	if err := rs.startPlugin(ctx); err != nil {
