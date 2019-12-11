@@ -562,7 +562,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   enhanceDataFrame(dataFrame: DataFrame) {
     if (this.dataLinks.length) {
       for (const field of dataFrame.fields) {
-        const dataLink = this.dataLinks.find(dataLink => field.name && field.name.match(dataLink.pattern));
+        const dataLink = this.dataLinks.find(dataLink => field.name && field.name.match(dataLink.field));
         if (dataLink) {
           field.config = field.config || {};
           field.config.links = [

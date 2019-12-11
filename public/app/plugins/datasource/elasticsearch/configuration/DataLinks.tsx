@@ -70,7 +70,7 @@ export const DataLinks = (props: Props) => {
             icon="fa fa-plus"
             onClick={event => {
               event.preventDefault();
-              const newDataLinks = [...(value || []), { pattern: '', url: '' }];
+              const newDataLinks = [...(value || []), { field: '', url: '' }];
               onChange(newDataLinks);
             }}
           >

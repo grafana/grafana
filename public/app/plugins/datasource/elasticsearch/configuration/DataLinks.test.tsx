@@ -56,11 +56,11 @@ describe('DataLinks', () => {
 
 const testValue = [
   {
-    pattern: 'regex1',
+    field: 'regex1',
     url: 'localhost1',
   },
   {
-    pattern: 'regex2',
+    field: 'regex2',
     url: 'localhost2',
   },
 ];

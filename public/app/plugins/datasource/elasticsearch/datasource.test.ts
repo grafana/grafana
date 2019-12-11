@@ -202,7 +202,7 @@ describe('ElasticDatasource', function(this: any) {
       const { response } = await setupDataSource({
         dataLinks: [
           {
-            pattern: 'host',
+            field: 'host',
             url: 'http://localhost:3000/${__value.raw}',
           },
         ],

@@ -38,13 +38,14 @@ export const DataLink = (props: Props) => {
       <div className={styles.firstRow}>
         <FormField
           className={styles.nameField}
-          labelWidth={5}
+          labelWidth={6}
           // A bit of a hack to prevent using default value for the width from FormField
           inputWidth={null}
-          label="Pattern"
+          label="Field"
           type="text"
-          value={value.pattern}
-          onChange={handleChange('pattern')}
+          value={value.field}
+          tooltip={'Can be exact field name or a regex pattern that will match on the field name.'}
+          onChange={handleChange('field')}
         />
         <Button
           variant={'inverse'}
@@ -59,7 +60,7 @@ export const DataLink = (props: Props) => {
 
       <FormField
         label="URL"
-        labelWidth={5}
+        labelWidth={6}
         inputEl={
           <DataLinkInput
             placeholder={'http://example.com/${__value.raw}'}

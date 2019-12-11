@@ -27,6 +27,6 @@ export interface ElasticsearchQuery extends DataQuery {
 }
 
 export type DataLinkConfig = {
-  pattern: string;
+  field: string;
   url: string;
 };
