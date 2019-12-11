@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { DataFrame, GrafanaTheme } from '@grafana/data';
 // @ts-ignore
 import { useBlockLayout, useSortBy, useTable } from 'react-table';
@@ -67,13 +67,13 @@ const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-export const NewTable = ({ data }: Props) => {
+export const NewTable = ({ data, height, width }: Props) => {
   const theme = useTheme();
   const tableStyles = getTableStyles(theme);
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow, totalColumnsWidth } = useTable(
     {
-      columns: React.useMemo(() => getColumns(data), []),
-      data: React.useMemo(() => getTableData(data), []),
+      columns: useMemo(() => getColumns(data), []),
+      data: useMemo(() => getTableData(data), []),
     },
     useSortBy,
     useBlockLayout
@@ -117,7 +117,7 @@ export const NewTable = ({ data }: Props) => {
         ))}
       </div>
       <div {...getTableBodyProps()}>
-        <FixedSizeList height={400} itemCount={rows.length} itemSize={27} width={totalColumnsWidth}>
+        <FixedSizeList height={height} itemCount={rows.length} itemSize={27} width={totalColumnsWidth}>
           {RenderRow}
         </FixedSizeList>
       </div>
