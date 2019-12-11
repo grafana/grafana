@@ -67,6 +67,7 @@ export class TeamList extends PureComponent<Props, any> {
         </td>
         <td className="text-right">
           <ConfirmButton
+            size="sm"
             confirmText="Delete"
             confirmVariant="danger"
             disabled={!canDelete}

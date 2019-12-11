@@ -137,6 +137,7 @@ exports[`Render should render teams table 1`] = `
                 confirmVariant="danger"
                 disabled={false}
                 onConfirm={[Function]}
+                size="sm"
               >
                 <Button
                   icon="fa fa-remove"
@@ -196,6 +197,7 @@ exports[`Render should render teams table 1`] = `
                 confirmVariant="danger"
                 disabled={false}
                 onConfirm={[Function]}
+                size="sm"
               >
                 <Button
                   icon="fa fa-remove"
@@ -255,6 +257,7 @@ exports[`Render should render teams table 1`] = `
                 confirmVariant="danger"
                 disabled={false}
                 onConfirm={[Function]}
+                size="sm"
               >
                 <Button
                   icon="fa fa-remove"
@@ -314,6 +317,7 @@ exports[`Render should render teams table 1`] = `
                 confirmVariant="danger"
                 disabled={false}
                 onConfirm={[Function]}
+                size="sm"
               >
                 <Button
                   icon="fa fa-remove"
@@ -373,6 +377,7 @@ exports[`Render should render teams table 1`] = `
                 confirmVariant="danger"
                 disabled={false}
                 onConfirm={[Function]}
+                size="sm"
               >
                 <Button
                   icon="fa fa-remove"
@@ -507,6 +512,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
                 confirmVariant="danger"
                 disabled={true}
                 onConfirm={[Function]}
+                size="sm"
               >
                 <Button
                   icon="fa fa-remove"
@@ -641,6 +647,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
                 confirmVariant="danger"
                 disabled={true}
                 onConfirm={[Function]}
+                size="sm"
               >
                 <Button
                   icon="fa fa-remove"

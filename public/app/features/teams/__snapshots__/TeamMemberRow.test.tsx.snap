@@ -53,6 +53,7 @@ exports[`Render should render team members when sync enabled 1`] = `
       confirmVariant="danger"
       disabled={true}
       onConfirm={[Function]}
+      size="sm"
     >
       <Button
         icon="fa fa-remove"
@@ -150,6 +151,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned off should not ren
       confirmVariant="danger"
       disabled={false}
       onConfirm={[Function]}
+      size="sm"
     >
       <Button
         icon="fa fa-remove"
@@ -247,6 +249,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
       confirmVariant="danger"
       disabled={false}
       onConfirm={[Function]}
+      size="sm"
     >
       <Button
         icon="fa fa-remove"
@@ -302,6 +305,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render s
       confirmVariant="danger"
       disabled={true}
       onConfirm={[Function]}
+      size="sm"
     >
       <Button
         icon="fa fa-remove"

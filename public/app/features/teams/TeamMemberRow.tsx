@@ -87,6 +87,7 @@ export class TeamMemberRow extends PureComponent<Props> {
         {syncEnabled && this.renderLabels(member.labels)}
         <td className="text-right">
           <ConfirmButton
+            size="sm"
             confirmText="Delete"
             confirmVariant="danger"
             disabled={!signedInUserIsTeamAdmin}
