@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTheme } from '../../../themes/ThemeContext';
-import { getFocusCss } from '../commonStyles';
+import { getFocusCss, sharedInputStyle } from '../commonStyles';
 import { getInputStyles } from '../Input/Input';
 import { cx, css } from 'emotion';
 
@@ -16,34 +16,39 @@ export const InputControl = React.forwardRef<HTMLDivElement, React.PropsWithChil
     const styles = getInputStyles({ theme, invalid: false });
 
     return (
-      <>
+      <div
+        className={cx(
+          styles.wrapper,
+          sharedInputStyle(theme),
+          isFocused &&
+            css`
+              ${getFocusCss(theme)}
+            `,
+          css`
+            min-height: 32px;
+            height: auto;
+            flex-direction: row;
+            padding-right: 0;
+            max-width: 100%;
+          `
+        )}
+        ref={ref}
+        {...innerProps}
+      >
         <div
           className={cx(
-            styles.wrapper,
-            isFocused &&
-              css`
-                ${getFocusCss(theme)}
-              `,
+            styles.inputWrapper,
             css`
-              min-height: 32px;
-              height: auto;
+              max-width: 100%;
+              display: flex;
+              flex-direction: row;
+              justify-content: space-between;
             `
           )}
-          ref={ref}
-          {...innerProps}
         >
-          <div
-            className={cx(
-              styles.inputWrapper,
-              css`
-                max-width: 100%;
-              `
-            )}
-          >
-            <div className={styles.input}>{children}</div>
-          </div>
+          {children}
         </div>
-      </>
+      </div>
     );
   }
 );

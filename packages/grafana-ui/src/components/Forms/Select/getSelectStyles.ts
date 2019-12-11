@@ -12,6 +12,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
     menu: css`
       background: ${bgColor};
       box-shadow: 0px 4px 4px ${menuShadowColor};
+      position: absolute;
     `,
     option: css`
       padding: 8px;
@@ -45,6 +46,17 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
       box-sizing: border-box;
       max-width: 100%;
       padding-right: 40px;
+    `,
+    valueContainer: css`
+      display: flex;
+      flex-grow: 1;
+      flex-direction: row;
+      align-items: center;
+      height: 100%;
+      position: relative;
+      max-width: 100%;
+      flex: 1 1 0%;
+      overflow: hidden;
     `,
   };
 });

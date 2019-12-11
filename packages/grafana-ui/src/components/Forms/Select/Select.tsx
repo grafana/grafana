@@ -13,6 +13,8 @@ import resetSelectStyles from './resetSelectStyles';
 import { SelectMenu, SelectMenuOptions } from './SelectMenu';
 import { SingleValue } from './SingleValue';
 import { IndicatorsContainer } from './IndicatorsContainer';
+import { ValueContainer } from './ValueContainer';
+import { InputControl } from './InputControl';
 
 export interface SelectCommonProps<T> {
   defaultValue?: any;
@@ -22,7 +24,6 @@ export interface SelectCommonProps<T> {
   placeholder?: string;
   width?: number;
   value?: T;
-  className?: string;
   isDisabled?: boolean;
   isSearchable?: boolean;
   isClearable?: boolean;
@@ -50,72 +51,16 @@ export interface SelectProps<T> extends SelectCommonProps<T> {
   options: Array<SelectableValue<T>>;
 }
 
-const renderDefaultControl = (props: any) => {
-  const theme = useTheme();
+const renderControl = (props: any) => {
   const {
     children,
     innerProps: { ref, ...restInnerProps },
+    isFocused,
   } = props;
-  const styles = getInputStyles({ theme, invalid: false });
-
   return (
-    <>
-      <div
-        className={cx(
-          styles.wrapper,
-          sharedInputStyle(theme),
-          props.isFocused &&
-            css`
-              ${getFocusCss(theme)}
-            `,
-          css`
-            min-height: 32px;
-            height: auto;
-            flex-direction: row;
-            padding-right: 0;
-            max-width: 100%;
-          `
-        )}
-        ref={ref}
-        {...restInnerProps}
-      >
-        <div
-          className={cx(
-            styles.inputWrapper,
-            css`
-              max-width: 100%;
-              display: flex;
-              flex-direction: row;
-            `
-          )}
-        >
-          {children}
-        </div>
-      </div>
-    </>
-  );
-};
-
-const renderDefaultValueContainer = (props: any) => {
-  const { children } = props;
-  const theme = useTheme();
-  const styles = getInputStyles({ theme, invalid: false });
-  return (
-    <div
-      className={css`
-        display: flex;
-        flex-grow: 1;
-        flex-direction: row;
-        align-items: center;
-        height: 100%;
-        position: relative;
-        max-width: 100%;
-        flex: 1 1 0%;
-        overflow: hidden;
-      `}
-    >
+    <InputControl ref={ref} innerProps={restInnerProps} isFocused={isFocused}>
       {children}
-    </div>
+    </InputControl>
   );
 };
 
@@ -135,7 +80,7 @@ export function Select<T>({
   isClearable = false,
   isMulti = false,
   isLoading = false,
-  isOpen = true,
+  isOpen,
   autoFocus = false,
   openMenuOnFocus = true,
   maxMenuHeight = 300,
@@ -152,85 +97,85 @@ export function Select<T>({
   console.log(selectedValue);
 
   return (
-    <div className={cx(inputSizes()[size])}>
-      <SelectComponent
-        options={options}
-        onChange={onChange}
-        onBlur={onBlur}
-        components={{
-          MenuList: SelectMenu,
-          Control: renderDefaultControl,
-          Option: (props: any) => <SelectMenuOptions {...props} renderOptionLabel={renderOptionLabel} />,
-          ValueContainer: renderDefaultValueContainer,
-          IndicatorsContainer: IndicatorsContainer,
-          IndicatorSeparator: () => null,
-          ClearIndicator: () => {
-            return <Icon name="calendar" />;
-          },
-          DropdownIndicator: () => {
-            return <Icon name="caret-down" />;
-          },
-          SingleValue: (props: any) => <SingleValue {...props} value={selectedValue} renderValue={renderValue} />,
-          Placeholder: (props: any) => {
-            const { innerProps, children } = props;
-            const styles = css`
-              color: hsl(0, 0%, 50%);
-              position: absolute;
-              top: 50%;
-              -webkit-transform: translateY(-50%);
-              -ms-transform: translateY(-50%);
-              transform: translateY(-50%);
-              box-sizing: border-box;
-            `;
+    // <div className={cx(inputSizes()[size])}>
+    <SelectComponent
+      options={options}
+      onChange={onChange}
+      onBlur={onBlur}
+      components={{
+        MenuList: SelectMenu,
+        Control: renderControl,
+        Option: (props: any) => <SelectMenuOptions {...props} renderOptionLabel={renderOptionLabel} />,
+        ValueContainer: ValueContainer,
+        IndicatorsContainer: IndicatorsContainer,
+        IndicatorSeparator: () => null,
+        ClearIndicator: () => {
+          return <Icon name="calendar" />;
+        },
+        DropdownIndicator: () => {
+          return <Icon name="caret-down" />;
+        },
+        SingleValue: (props: any) => <SingleValue {...props} value={selectedValue} renderValue={renderValue} />,
+        Placeholder: (props: any) => {
+          const { innerProps, children } = props;
+          const styles = css`
+            color: hsl(0, 0%, 50%);
+            position: absolute;
+            top: 50%;
+            -webkit-transform: translateY(-50%);
+            -ms-transform: translateY(-50%);
+            transform: translateY(-50%);
+            box-sizing: border-box;
+          `;
 
-            return (
-              <div className={styles} {...innerProps}>
-                {children}
-              </div>
-            );
-          },
-        }}
-        styles={{
-          ...resetSelectStyles(),
-          // @ts-ignore
-          input: () => {
-            return css`
+          return (
+            <div className={styles} {...innerProps}>
+              {children}
+            </div>
+          );
+        },
+      }}
+      styles={{
+        ...resetSelectStyles(),
+        // @ts-ignore
+        input: () => {
+          return css`
+            height: 100%;
+            max-width: 100%;
+            > div {
+              max-width: 100%;
+              height: 100%;
+            }
+            input {
               height: 100%;
               max-width: 100%;
-              > div {
-                max-width: 100%;
-                height: 100%;
-              }
-              input {
-                height: 100%;
-                max-width: 100%;
-              }
-            `;
-          },
-        }}
-        menuShouldScrollIntoView={false}
-        placeholder={placeholder || 'Choose'}
-        isSearchable={isSearchable}
-        isDisabled={isDisabled}
-        isClearable={isClearable}
-        menuIsOpen={isOpen}
-        autoFocus={autoFocus}
-        defaultValue={defaultValue}
-        value={selectedValue}
-        getOptionLabel={getOptionLabel}
-        getOptionValue={getOptionValue}
-        isLoading={isLoading}
-        openMenuOnFocus={openMenuOnFocus}
-        maxMenuHeight={maxMenuHeight}
-        noOptionsMessage={noOptionsMessage}
-        isMulti={isMulti}
-        backspaceRemovesValue={true}
-        onMenuOpen={onOpenMenu}
-        onMenuClose={onCloseMenu}
-        tabSelectsValue={tabSelectsValue}
+            }
+          `;
+        },
+      }}
+      menuShouldScrollIntoView={false}
+      placeholder={placeholder || 'Choose'}
+      isSearchable={isSearchable}
+      isDisabled={isDisabled}
+      isClearable={isClearable}
+      menuIsOpen={true}
+      autoFocus={autoFocus}
+      defaultValue={defaultValue}
+      value={selectedValue}
+      getOptionLabel={getOptionLabel}
+      getOptionValue={getOptionValue}
+      isLoading={isLoading}
+      openMenuOnFocus={openMenuOnFocus}
+      maxMenuHeight={maxMenuHeight}
+      noOptionsMessage={noOptionsMessage}
+      isMulti={isMulti}
+      backspaceRemovesValue={true}
+      onMenuOpen={onOpenMenu}
+      onMenuClose={onCloseMenu}
+      tabSelectsValue={tabSelectsValue}
 
-        // {...creatableOptions}
-      />
-    </div>
+      // {...creatableOptions}
+    />
+    // </div>
   );
 }

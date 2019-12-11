@@ -30,11 +30,13 @@ interface AsyncProps<T> extends SelectCommonProps<T> {
   loadOptions: (query: string) => Promise<Array<SelectableValue<T>>>;
   loadingMessage?: () => string;
   tooltipContent?: PopoverContent;
+  className?: string;
 }
 
 interface LegacySelectProps<T> extends Omit<SelectProps<T>, 'value'> {
   tooltipContent?: PopoverContent;
   value: SelectableValue<T>;
+  className?: string;
 }
 
 export const MenuList = (props: any) => {
@@ -47,7 +49,7 @@ export const MenuList = (props: any) => {
   );
 };
 export class Select<T> extends PureComponent<LegacySelectProps<T>> {
-  static defaultProps: Partial<SelectProps<any>> = {
+  static defaultProps: Partial<LegacySelectProps<any>> = {
     className: '',
     isDisabled: false,
     isSearchable: true,

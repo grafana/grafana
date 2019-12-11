@@ -7,7 +7,7 @@ import { SelectableValue } from '@grafana/data';
 export default {
   title: 'UI/Forms/Select',
   component: Select,
-  decorators: [withStoryContainer, withCenteredStory, withHorizontallyCenteredStory],
+  decorators: [withCenteredStory, withHorizontallyCenteredStory],
   // parameters: {
   //   docs: {
   //     page: mdx,
@@ -82,6 +82,7 @@ export const simple = () => {
           );
         }}
       />
+      <h1>test</h1>
     </div>
   );
 };
