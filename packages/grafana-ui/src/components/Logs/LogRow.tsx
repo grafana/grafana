@@ -140,7 +140,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             )}
             {showLabels && row.uniqueLabels && (
               <div className={style.logsRowLabels}>
-                // Only show labels that are unique to this row
                 <LogLabels labels={row.uniqueLabels} />
               </div>
             )}
