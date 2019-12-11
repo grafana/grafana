@@ -17,7 +17,6 @@ import { PrometheusDatasource } from '../datasource';
 import PromQlLanguageProvider from '../language_provider';
 
 const HISTOGRAM_GROUP = '__histograms__';
-const METRIC_MARK = 'metric';
 const PRISM_SYNTAX = 'promql';
 export const RECORDING_RULES_GROUP = '__recording_rules__';
 
@@ -235,10 +234,6 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     }
 
     Prism.languages[PRISM_SYNTAX] = this.languageProvider.syntax;
-    Prism.languages[PRISM_SYNTAX][METRIC_MARK] = {
-      alias: 'variable',
-      pattern: new RegExp(`(?:^|\\s)(${metrics.join('|')})(?:$|\\s)`),
-    };
 
     // Build metrics tree
     const metricsByPrefix = groupMetricsByPrefix(metrics);
