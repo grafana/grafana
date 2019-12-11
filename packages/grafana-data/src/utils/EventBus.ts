@@ -1,11 +1,11 @@
-import { Subject, Unsubscribable } from 'rxjs';
+import { Subject, Unsubscribable, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
 /*
  * Base event type
  */
 export abstract class BusEvent {
-  readonly type: string;
+  readonly type: string = '';
 }
 
 /*
@@ -75,26 +75,29 @@ export class EventBusSrv implements EventBus {
  * Handles unsubscribing to all events subscribed through this group
  */
 export class EventBusGroup implements EventBus {
-  private subscriptions: Unsubscribable[];
+  private groupSub?: Subscription;
 
-  constructor(private bus: EventBus) {
-    this.subscriptions = [];
-  }
+  constructor(private bus: EventBus) {}
 
   public emit<T extends BusEvent>(event: T) {
     this.bus.emit(event);
   }
 
   public on<T extends BusEvent>(typeFilter: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
-    const sub = this.bus.on(typeFilter, handler);
-    this.subscriptions.push(sub);
-    return sub;
+    return this.addToGroupSub(this.bus.on(typeFilter, handler));
+  }
+
+  private addToGroupSub(childSub: Unsubscribable): Unsubscribable {
+    if (!this.groupSub) {
+      this.groupSub = new Subscription();
+    }
+
+    return this.groupSub.add(childSub);
   }
 
   public unsubscribe() {
-    for (const subscription of this.subscriptions) {
-      subscription.unsubscribe();
+    if (this.groupSub) {
+      this.groupSub.unsubscribe();
     }
-    this.subscriptions = [];
   }
 }
