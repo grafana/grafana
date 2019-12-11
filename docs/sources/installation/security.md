@@ -30,11 +30,13 @@ There are many firewall tools available, refer to the documentation for your spe
 
 Require all network requests being made by Grafana to go through a proxy server. Refer to [Running Grafana behind a reverse proxy](https://grafana.com/docs/grafana/latest/installation/behind_proxy/) for examples.
 
-## Viewer query permissions
+## Limit Viewer query permissions
 
-Users with the Viewer role can still issue any possible query to all data sources available in the **organization**, not just the queries that are defined on the dashboards the user with Viewer role has permissions to view.
+Users with the Viewer role can enter *any possible query* in *all* data sources available in the **organization**, not just the queries that are defined on the dashboards for which the user has Viewer permissions.
 
-There are a couple of ways you can restrict data source query access:
+**For example:** In a Grafana instance with one data source, one dashboard, and one panel that has one query defined, you might assume that a Viewer can only see the result of the query defined in that panel. Actually, the Viewer has access to send any query to the data source. With a command-line tool like curl (there are lots of tools for this), the Viewer can make their own query to the data source and potentially access sensitive data.
+
+To address this vulnerability, you can restrict data source query access in the following ways:
 
 - Create multiple data sources with some restrictions added in data source config that restrict access (like database name or credentials). Then use the [Data Source Permissions]({{< relref "../permissions/datasource_permissions.md" >}}) Enterprise feature to restrict user access to the data source in Grafana.
 - Create a separate Grafana organization, and in that organization, create a separate data source. Make sure the data source has some option/user/credentials setting that limits access to a subset of the data. Not all data sources have an option to limit access.
