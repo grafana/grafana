@@ -16,7 +16,7 @@ function prapare_version_commit () {
 
 function unpublish_previous_canary () {
   echo $'\nUnpublishing previous canary packages'
-  for PACKAGE in ui toolkit data runtime
+  for PACKAGE in ui toolkit data runtime e2e
   do
     # dist-tag next to be changed to canary when https://github.com/grafana/grafana/pull/18195 is merged
     CURRENT_CANARY=$(npm view @grafana/${PACKAGE} dist-tags.canary)
@@ -52,7 +52,7 @@ else
 
   echo $'\nBuilding packages'
 
-  for PACKAGE in ui data toolkit runtime
+  for PACKAGE in ui data toolkit runtime e2e
   do
     start=$(date +%s%N)
     yarn workspace @grafana/$PACKAGE run build

@@ -46,6 +46,10 @@ describe('Process simple display values', () => {
     assertSame('3', processors, { text: '3', numeric: 3 });
   });
 
+  it('Empty string is NaN', () => {
+    assertSame('', processors, { text: '', numeric: NaN });
+  });
+
   it('Simple String', () => {
     assertSame('hello', processors, { text: 'hello', numeric: NaN });
   });
@@ -167,8 +171,19 @@ describe('Format value', () => {
     expect(instance(value).text).toEqual('1-20');
   });
 
+  it('should return mapped value and leave numeric value in tact if value mapping maps to empty string', () => {
+    const valueMappings: ValueMapping[] = [
+      { id: 1, operator: '', text: '', type: MappingType.ValueToText, value: '1' },
+    ];
+    const value = '1';
+    const instance = getDisplayProcessor({ config: { decimals: 1, mappings: valueMappings } });
+
+    expect(instance(value).text).toEqual('');
+    expect(instance(value).numeric).toEqual(1);
+  });
+
   //
-  // Below is current behavior but I it's clearly not working great
+  // Below is current behavior but it's clearly not working great
   //
 
   it('with value 1000 and unit short', () => {

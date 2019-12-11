@@ -1,7 +1,6 @@
 import { LokiExpression } from './types';
 
 const selectorRegexp = /(?:^|\s){[^{]*}/g;
-const caseInsensitive = '(?i)'; // Golang mode modifier for Loki, doesn't work in JavaScript
 export function parseQuery(input: string): LokiExpression {
   input = input || '';
   const match = input.match(selectorRegexp);
@@ -9,13 +8,11 @@ export function parseQuery(input: string): LokiExpression {
   let regexp = '';
 
   if (match) {
+    // Regexp result is ignored on the server side
     regexp = input.replace(selectorRegexp, '').trim();
     // Keep old-style regexp, otherwise take whole query
     if (regexp && regexp.search(/\|=|\|~|!=|!~/) === -1) {
       query = match[0].trim();
-      if (!regexp.startsWith(caseInsensitive)) {
-        regexp = `${caseInsensitive}${regexp}`;
-      }
     } else {
       regexp = '';
     }

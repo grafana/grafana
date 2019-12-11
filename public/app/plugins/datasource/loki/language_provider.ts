@@ -324,8 +324,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const url = '/api/prom/label';
     try {
       this.logLabelFetchTs = Date.now();
-
-      const res = await this.request(url, rangeToParams(absoluteRange));
+      const rangeParams = absoluteRange ? rangeToParams(absoluteRange) : {};
+      const res = await this.request(url, rangeParams);
       const labelKeys = res.data.data.slice().sort();
 
       this.labelKeys = {
@@ -351,7 +351,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
   async fetchLabelValues(key: string, absoluteRange: AbsoluteTimeRange) {
     const url = `/api/prom/label/${key}/values`;
     try {
-      const res = await this.request(url, rangeToParams(absoluteRange));
+      const rangeParams = absoluteRange ? rangeToParams(absoluteRange) : {};
+      const res = await this.request(url, rangeParams);
       const values = res.data.data.slice().sort();
 
       // Add to label options
