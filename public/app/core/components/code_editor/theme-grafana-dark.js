@@ -1,4 +1,4 @@
-/* jshint ignore:start */
+/* eslint-disable prettier/prettier */
 
 ace.define("ace/theme/grafana-dark",["require","exports","module","ace/lib/dom"], function(acequire, exports, module) {
   "use strict";
@@ -112,5 +112,3 @@ ace.define("ace/theme/grafana-dark",["require","exports","module","ace/lib/dom"]
   var dom = acequire("../lib/dom");
   dom.importCssString(exports.cssText, exports.cssClass);
 });
-
-/* jshint ignore:end */
