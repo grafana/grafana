@@ -106,50 +106,50 @@ class UnThemedLogDetails extends PureComponent<Props> {
     const style = getLogRowStyles(theme, row.logLevel);
     const labels = row.labels ? row.labels : {};
     const labelsAvailable = Object.keys(labels).length > 0;
-
     const fields = this.getAllFields(row);
-
     const parsedFieldsAvailable = fields && fields.length > 0;
 
     return (
-      <table className={style.logsRowDetailsTable}>
-        <tbody>
-        {labelsAvailable && <tr><td colSpan={5} className={style.logsRowDetailsHeading} aria-label="Log Labels">Log Labels:</td></tr> }
-        {Object.keys(labels).map(key => {
-          const value = labels[key];
-          return (
-            <LogDetailsRow
-              key={`${key}=${value}`}
-              parsedKey={key}
-              parsedValue={value}
-              isLabel={true}
-              getStats={() => calculateLogsLabelStats(getRows(), key)}
-              onClickFilterOutLabel={onClickFilterOutLabel}
-              onClickFilterLabel={onClickFilterLabel}
-            />
-          );
-        })}
+      <div className={style.logDetailsContainer}>
+        <table className={style.logDetailsTable}>
+          <tbody>
+          {labelsAvailable && <tr><td colSpan={5} className={style.logDetailsHeading} aria-label="Log Labels">Log Labels:</td></tr>}
+          {Object.keys(labels).map(key => {
+            const value = labels[key];
+            return (
+              <LogDetailsRow
+                key={`${key}=${value}`}
+                parsedKey={key}
+                parsedValue={value}
+                isLabel={true}
+                getStats={() => calculateLogsLabelStats(getRows(), key)}
+                onClickFilterOutLabel={onClickFilterOutLabel}
+                onClickFilterLabel={onClickFilterLabel}
+              />
+            );
+          })}
 
-        {parsedFieldsAvailable && <tr><td colSpan={5} className={style.logsRowDetailsHeading} aria-label="Parsed Fields">Parsed Fields:</td></tr> }
-        {fields.map(field => {
-          const { key, value, links, fieldIndex } = field;
-          return (
-            <LogDetailsRow
-              key={`${key}=${value}`}
-              parsedKey={key}
-              parsedValue={value}
-              links={links}
-              getStats={() =>
-                fieldIndex === undefined
-                  ? this.getStatsForParsedField(key)
-                  : calculateStats(row.dataFrame.fields[fieldIndex].values.toArray())
-              }
-            />
-          );
-        })}
-        {!parsedFieldsAvailable && !labelsAvailable && <div aria-label="No details">No details available</div>}
-        </tbody>
-      </table>
+          {parsedFieldsAvailable && <tr><td colSpan={5} className={style.logDetailsHeading} aria-label="Parsed Fields">Parsed Fields:</td></tr> }
+          {fields.map(field => {
+            const { key, value, links, fieldIndex } = field;
+            return (
+              <LogDetailsRow
+                key={`${key}=${value}`}
+                parsedKey={key}
+                parsedValue={value}
+                links={links}
+                getStats={() =>
+                  fieldIndex === undefined
+                    ? this.getStatsForParsedField(key)
+                    : calculateStats(row.dataFrame.fields[fieldIndex].values.toArray())
+                }
+              />
+            );
+          })}
+          {!parsedFieldsAvailable && !labelsAvailable && <div aria-label="No details">No details available</div>}
+          </tbody>
+        </table>
+      </div>
     );
   }
 }

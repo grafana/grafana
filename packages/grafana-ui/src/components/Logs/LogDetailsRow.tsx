@@ -86,31 +86,19 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     const styles = getStyles(theme);
     const style = getLogRowStyles(theme);
     return (
-      <tr className={cx(style.logsRowDetailsValue, { [styles.noHoverBackground]: showFieldsStats })}>
+      <tr className={cx(style.logDetailsValue, { [styles.noHoverBackground]: showFieldsStats })}>
         {/* Action buttons - show stats/filter results */}
-        <td title="Ad-hoc statistics"
-          onClick={this.showStats}
-          className={style.logsRowDetailsIcon}
-        >
+        <td title="Ad-hoc statistics" onClick={this.showStats} className={style.logsDetailsIcon}>
           <i className={`fa fa-signal ${styles.hoverCursor}`} />
         </td>
-
-        <td title="Filter for value"
-          onClick={() => isLabel && this.filterLabel()}
-          className={style.logsRowDetailsIcon}
-        >
+        <td title="Filter for value" onClick={() => isLabel && this.filterLabel()} className={style.logsDetailsIcon}>
           {isLabel && <i className={`fa fa-search-plus ${styles.hoverCursor}`} />}
         </td>
-
-        <td title="Filter out value"
-          onClick={() => isLabel && this.filterOutLabel()}
-          className={style.logsRowDetailsIcon}
-        >
+        <td title="Filter out value" onClick={() => isLabel && this.filterOutLabel()} className={style.logsDetailsIcon}>
           {isLabel && <i className={`fa fa-search-minus ${styles.hoverCursor}`} />}
         </td>
-
         {/* Key - value columns */}
-        <td className={style.logsRowDetailsLabel}>{parsedKey}</td>
+        <td className={style.logDetailsLabel}>{parsedKey}</td>
         <td className={style.logsRowCell}>
           {parsedValue}
           {links &&

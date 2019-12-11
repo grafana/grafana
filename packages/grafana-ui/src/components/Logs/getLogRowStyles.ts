@@ -45,7 +45,6 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       label: logs-row__match-highlight;
       background: inherit;
       padding: inherit;
-
       color: ${theme.colors.yellow};
       background-color: rgba(${theme.colors.yellow}, 0.1);
     `,
@@ -126,7 +125,6 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       label: logs-row-toggle-details__level;
       position: relative;
       width: 15px;
-      padding-right: ${theme.spacing.sm};
       font-size: 9px;
     `,
     logsRowLocalTime: css`
@@ -153,36 +151,37 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       margin: 5px 0;
     `,
     //Log details sepcific CSS
-    logsRowDetailsTable: css`
+    logDetailsContainer: css`
       label: logs-row-details-table;
       border: 1px solid ${borderColor};
+      padding: 0 ${theme.spacing.sm} ${theme.spacing.sm};
       border-radius: 3px;
       margin: 20px 0;
-      width: 100%;
       cursor: default;
     `,
-    logsRowDetailsIcon: css`
+    logDetailsTable: css`
+      label: logs-row-details-table;
+      width: 100%;
+    `,
+    logsDetailsIcon: css`
       label: logs-row-details__icon;
       position: relative;
       padding-right: ${theme.spacing.sm};
       color: ${theme.colors.gray3};
-      &:first-of-type {
-        padding-left: ${theme.spacing.sm};
-      }
     `,
-    logsRowDetailsLabel: css`
+    logDetailsLabel: css`
       label: logs-row-details__label;
       max-width: 25em;
-      min-width: 14em;
+      min-width: 12em;
       padding: 0 ${theme.spacing.sm};
       word-break: break-all;
     `,
-    logsRowDetailsHeading: css`
+    logDetailsHeading: css`
       label: logs-row-details__heading;
-      padding: ${theme.spacing.sm};
       font-weight: ${theme.typography.weight.bold};
+      padding: ${theme.spacing.sm} 0 ${theme.spacing.xs};
     `,
-    logsRowDetailsValue: css`
+    logDetailsValue: css`
       label: logs-row-details__row;
       line-height: 2;
       padding: ${theme.spacing.sm};
