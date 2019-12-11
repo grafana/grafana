@@ -199,7 +199,7 @@ export class Logs extends PureComponent<Props, State> {
         <div className="logs-panel-options">
           <div className="logs-panel-controls">
             <Switch label="Time" checked={showTime} onChange={this.onChangeTime} transparent />
-            <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
+            <Switch label="Unique labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
             <Switch label="Wrap lines" checked={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
             <ToggleButtonGroup label="Dedup" transparent={true}>
               {Object.keys(LogsDedupStrategy).map((dedupType: string, i) => (
