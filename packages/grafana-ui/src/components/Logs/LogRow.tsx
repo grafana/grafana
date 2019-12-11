@@ -16,11 +16,13 @@ import { stylesFactory } from '../../themes/stylesFactory';
 //Components
 import { LogDetails } from './LogDetails';
 import { LogRowMessage } from './LogRowMessage';
+import { LogLabels } from './LogLabels';
 
 interface Props extends Themeable {
   highlighterExpressions?: string[];
   row: LogRowModel;
   showDuplicates: boolean;
+  showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
   timeZone: TimeZone;
@@ -93,6 +95,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       row,
       showDuplicates,
       timeZone,
+      showLabels,
       showTime,
       wrapLogMessage,
       theme,
@@ -133,6 +136,11 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             {showTime && !showUtc && (
               <div className={style.logsRowLocalTime} title={`${row.timeUtc} (${row.timeFromNow})`}>
                 {row.timeLocal}
+              </div>
+            )}
+            {showLabels && row.uniqueLabels && (
+              <div className={style.logsRowLabels}>
+                <LogLabels labels={row.uniqueLabels} />
               </div>
             )}
             <LogRowMessage
