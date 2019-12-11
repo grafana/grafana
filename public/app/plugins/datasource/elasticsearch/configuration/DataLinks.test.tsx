@@ -48,7 +48,7 @@ describe('DataLinks', () => {
     const newValue = onChangeMock.mock.calls[0][0];
     expect(newValue.length).toBe(1);
     expect(newValue[0]).toMatchObject({
-      pattern: 'regex2',
+      field: 'regex2',
       url: 'localhost2',
     });
   });
