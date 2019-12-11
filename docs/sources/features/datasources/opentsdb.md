@@ -53,7 +53,7 @@ Instead of hard-coding things like server, application and sensor name in you me
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
 being displayed in your dashboard.
 
-Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -86,11 +86,11 @@ Query | Description
 *tag_values(cpu, hostname, env=$env)*  | Return tag values for cpu metric, selected env tag value and tag key hostname
 *tag_values(cpu, hostname, env=$env, region=$region)* | Return tag values for cpu metric, selected env tag value, selected region tag value and tag key hostname
 
-For details on OpenTSDB metric queries checkout the official [OpenTSDB documentation](http://opentsdb.net/docs/build/html/index.html)
+For details on OpenTSDB metric queries, check out the official [OpenTSDB documentation](http://opentsdb.net/docs/build/html/index.html)
 
 ## Configure the data source with provisioning
 
-It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
 
 Here are some provisioning examples for this data source.
 

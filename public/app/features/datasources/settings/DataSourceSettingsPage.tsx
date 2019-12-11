@@ -3,6 +3,7 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import isString from 'lodash/isString';
+import { e2e } from '@grafana/e2e';
 // Components
 import Page from 'app/core/components/Page/Page';
 import { GenericDataSourcePlugin, PluginSettings } from './PluginSettings';
@@ -271,7 +272,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
 
         <div className="gf-form-group">
           {testingMessage && (
-            <div className={`alert-${testingStatus} alert`} aria-label="Datasource settings page Alert">
+            <div className={`alert-${testingStatus} alert`} aria-label={e2e.pages.DataSource.selectors.alert}>
               <div className="alert-icon">
                 {testingStatus === 'error' ? (
                   <i className="fa fa-exclamation-triangle" />
@@ -280,7 +281,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
                 )}
               </div>
               <div className="alert-body">
-                <div className="alert-title" aria-label="Datasource settings page Alert message">
+                <div className="alert-title" aria-label={e2e.pages.DataSource.selectors.alertMessage}>
                   {testingMessage}
                 </div>
               </div>

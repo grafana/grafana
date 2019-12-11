@@ -16,12 +16,15 @@ import { stylesFactory } from '../../themes/stylesFactory';
 //Components
 import { LogDetails } from './LogDetails';
 import { LogRowMessage } from './LogRowMessage';
+import { LogLabels } from './LogLabels';
 
 interface Props extends Themeable {
   highlighterExpressions?: string[];
   row: LogRowModel;
   showDuplicates: boolean;
+  showLabels: boolean;
   showTime: boolean;
+  wrapLogMessage: boolean;
   timeZone: TimeZone;
   allowDetails?: boolean;
   getRows: () => LogRowModel[];
@@ -92,7 +95,9 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       row,
       showDuplicates,
       timeZone,
+      showLabels,
       showTime,
+      wrapLogMessage,
       theme,
       getFieldLinks,
     } = this.props;
@@ -103,6 +108,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     const showDetailsClassName = showDetails
       ? cx(['fa fa-chevron-down', styles.topVerticalAlign])
       : cx(['fa fa-chevron-right', styles.topVerticalAlign]);
+
     return (
       <div className={style.logsRow}>
         {showDuplicates && (
@@ -132,6 +138,11 @@ class UnThemedLogRow extends PureComponent<Props, State> {
                 {row.timeLocal}
               </div>
             )}
+            {showLabels && row.uniqueLabels && (
+              <div className={style.logsRowLabels}>
+                <LogLabels labels={row.uniqueLabels} />
+              </div>
+            )}
             <LogRowMessage
               highlighterExpressions={highlighterExpressions}
               row={row}
@@ -141,6 +152,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               updateLimit={updateLimit}
               context={context}
               showContext={showContext}
+              wrapLogMessage={wrapLogMessage}
               onToggleContext={this.toggleContext}
             />
           </div>

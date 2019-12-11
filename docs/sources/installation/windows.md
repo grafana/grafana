@@ -14,7 +14,7 @@ weight = 400
 
 You can either download the Windows installer package or a standalone Windows binary file.
 
-Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
+Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing
 installation.
 
 ## Install with Windows installer

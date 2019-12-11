@@ -1,5 +1,5 @@
 import React from 'react';
-import { getValueFromDimension, getColumnFromDimension } from '@grafana/data';
+import { getValueFromDimension, getColumnFromDimension, formattedValueToString } from '@grafana/data';
 import { SeriesTable } from './SeriesTable';
 import { GraphTooltipContentProps } from './types';
 
@@ -15,11 +15,11 @@ export const SingleModeGraphTooltip: React.FC<GraphTooltipContentProps> = ({ dim
   }
   const time = getValueFromDimension(dimensions.xAxis, activeDimensions.xAxis[0], activeDimensions.xAxis[1]);
   const timeField = getColumnFromDimension(dimensions.xAxis, activeDimensions.xAxis[0]);
-  const processedTime = timeField.display ? timeField.display(time).text : time;
+  const processedTime = timeField.display ? formattedValueToString(timeField.display(time)) : time;
 
   const valueField = getColumnFromDimension(dimensions.yAxis, activeDimensions.yAxis[0]);
   const value = getValueFromDimension(dimensions.yAxis, activeDimensions.yAxis[0], activeDimensions.yAxis[1]);
-  const processedValue = valueField.display ? valueField.display(value).text : value;
+  const processedValue = valueField.display ? formattedValueToString(valueField.display(value)) : value;
 
   return (
     <SeriesTable

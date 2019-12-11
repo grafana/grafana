@@ -16,14 +16,21 @@ import {
   Field,
 } from '@grafana/data';
 import { Switch, LogLabels, ToggleButtonGroup, ToggleButton, LogRows } from '@grafana/ui';
+import store from 'app/core/store';
 
 import { ExploreGraphPanel } from './ExploreGraphPanel';
+
+const SETTINGS_KEYS = {
+  showLabels: 'grafana.explore.logs.showLabels',
+  showTime: 'grafana.explore.logs.showTime',
+  wrapLogMessage: 'grafana.explore.logs.wrapLogMessage',
+};
 
 function renderMetaItem(value: any, kind: LogsMetaKind) {
   if (kind === LogsMetaKind.LabelsMap) {
     return (
       <span className="logs-meta-item__labels">
-        <LogLabels labels={value} plain getRows={() => []} />
+        <LogLabels labels={value} />
       </span>
     );
   }
@@ -56,12 +63,16 @@ interface Props {
 }
 
 interface State {
+  showLabels: boolean;
   showTime: boolean;
+  wrapLogMessage: boolean;
 }
 
 export class Logs extends PureComponent<Props, State> {
   state = {
-    showTime: true,
+    showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
+    showTime: store.getBool(SETTINGS_KEYS.showTime, true),
+    wrapLogMessage: store.getBool(SETTINGS_KEYS.wrapLogMessage, true),
   };
 
   onChangeDedup = (dedup: LogsDedupStrategy) => {
@@ -72,12 +83,36 @@ export class Logs extends PureComponent<Props, State> {
     return onDedupStrategyChange(dedup);
   };
 
+  onChangeLabels = (event?: React.SyntheticEvent) => {
+    const target = event && (event.target as HTMLInputElement);
+    if (target) {
+      const showLabels = target.checked;
+      this.setState({
+        showLabels,
+      });
+      store.set(SETTINGS_KEYS.showLabels, showLabels);
+    }
+  };
+
   onChangeTime = (event?: React.SyntheticEvent) => {
     const target = event && (event.target as HTMLInputElement);
     if (target) {
+      const showTime = target.checked;
       this.setState({
-        showTime: target.checked,
+        showTime,
       });
+      store.set(SETTINGS_KEYS.showTime, showTime);
+    }
+  };
+
+  onChangewrapLogMessage = (event?: React.SyntheticEvent) => {
+    const target = event && (event.target as HTMLInputElement);
+    if (target) {
+      const wrapLogMessage = target.checked;
+      this.setState({
+        wrapLogMessage,
+      });
+      store.set(SETTINGS_KEYS.wrapLogMessage, wrapLogMessage);
     }
   };
 
@@ -123,7 +158,7 @@ export class Logs extends PureComponent<Props, State> {
       return null;
     }
 
-    const { showTime } = this.state;
+    const { showLabels, showTime, wrapLogMessage } = this.state;
     const { dedupStrategy } = this.props;
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
@@ -164,6 +199,8 @@ export class Logs extends PureComponent<Props, State> {
         <div className="logs-panel-options">
           <div className="logs-panel-controls">
             <Switch label="Time" checked={showTime} onChange={this.onChangeTime} transparent />
+            <Switch label="Unique labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
+            <Switch label="Wrap lines" checked={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
             <ToggleButtonGroup label="Dedup" transparent={true}>
               {Object.keys(LogsDedupStrategy).map((dedupType: string, i) => (
                 <ToggleButton
@@ -201,7 +238,9 @@ export class Logs extends PureComponent<Props, State> {
           rowLimit={logRows ? logRows.length : undefined}
           onClickFilterLabel={onClickFilterLabel}
           onClickFilterOutLabel={onClickFilterOutLabel}
+          showLabels={showLabels}
           showTime={showTime}
+          wrapLogMessage={wrapLogMessage}
           timeZone={timeZone}
           getFieldLinks={getFieldLinks}
         />

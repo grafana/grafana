@@ -1,4 +1,4 @@
-import angular, { IQService } from 'angular';
+import angular from 'angular';
 import _ from 'lodash';
 
 import { getPluginSettings } from './PluginSettingsCache';
@@ -14,16 +14,10 @@ export class AppPageCtrl {
   navModel: any;
 
   /** @ngInject */
-  constructor(
-    private $routeParams: any,
-    private $rootScope: GrafanaRootScope,
-    private navModelSrv: NavModelSrv,
-    private $q: IQService
-  ) {
+  constructor(private $routeParams: any, private $rootScope: GrafanaRootScope, private navModelSrv: NavModelSrv) {
     this.pluginId = $routeParams.pluginId;
 
-    this.$q
-      .when(getPluginSettings(this.pluginId))
+    Promise.resolve(getPluginSettings(this.pluginId))
       .then(settings => {
         this.initPage(settings);
       })

@@ -4,8 +4,6 @@ import glob
 import re
 import shutil
 import wget
-from jinja2 import Template, Environment, FileSystemLoader
-
 
 
 def extract_zip(filename, target_dir):

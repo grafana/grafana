@@ -219,7 +219,7 @@ created and maintained by [Alexander Zobnin](https://github.com/alexanderzobnin/
 
 <img src="/img/docs/v3/zabbix_app.png">
 
-Checkout the full list of plugins on [Grafana.com](https://grafana.com/plugins)
+Check out the full list of plugins on [Grafana.com](https://grafana.com/plugins)
 
 ## CHANGELOG
 
