@@ -1,5 +1,5 @@
 // Libraries
-import React, { ComponentType } from 'react';
+import React from 'react';
 import { hot } from 'react-hot-loader';
 import { css } from 'emotion';
 import { connect } from 'react-redux';
@@ -28,11 +28,11 @@ import {
   AbsoluteTimeRange,
   DataQuery,
   DataSourceApi,
-  ExploreStartPageProps,
   GraphSeriesXY,
   PanelData,
   RawTimeRange,
   TimeZone,
+  LoadingState,
 } from '@grafana/data';
 
 import {
@@ -70,7 +70,6 @@ const getStyles = memoizeOne(() => {
 });
 
 interface ExploreProps {
-  StartPage?: ComponentType<ExploreStartPageProps>;
   changeSize: typeof changeSize;
   datasourceInstance: DataSourceApi;
   datasourceMissing: boolean;
@@ -86,7 +85,6 @@ interface ExploreProps {
   scanStopAction: typeof scanStopAction;
   setQueries: typeof setQueries;
   split: boolean;
-  showingStartPage?: boolean;
   queryKeys: string[];
   initialDatasource: string;
   initialQueries: DataQuery[];
@@ -250,11 +248,9 @@ export class Explore extends React.PureComponent<ExploreProps> {
 
   render() {
     const {
-      StartPage,
       datasourceInstance,
       datasourceMissing,
       exploreId,
-      showingStartPage,
       split,
       queryKeys,
       mode,
@@ -269,6 +265,8 @@ export class Explore extends React.PureComponent<ExploreProps> {
     } = this.props;
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const styles = getStyles();
+    const StartPage = datasourceInstance?.components?.ExploreStartPage;
+    const showStartPage = !queryResponse || queryResponse.state === LoadingState.NotStarted;
 
     return (
       <div style={{ height: '100%', overflow: 'hidden' }} className={exploreClass} ref={this.getRef}>
@@ -287,7 +285,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
                 return (
                   <main className={`m-t-2 ${styles.logsMain}`} style={{ width, height: '100%' }}>
                     <ErrorBoundaryAlert>
-                      {showingStartPage && StartPage && (
+                      {showStartPage && StartPage && (
                         <div className="grafana-info-box grafana-info-box--max-lg">
                           <StartPage
                             onClickExample={this.onClickExample}
@@ -296,7 +294,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
                           />
                         </div>
                       )}
-                      {!showingStartPage && (
+                      {!showStartPage && (
                         <>
                           {mode === ExploreMode.Metrics && (
                             <ExploreGraphPanel
@@ -364,11 +362,9 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
   const item: ExploreItemState = explore[exploreId];
   const timeZone = getTimeZone(state.user);
   const {
-    StartPage,
     datasourceInstance,
     datasourceMissing,
     initialized,
-    showingStartPage,
     queryKeys,
     urlState,
     update,
@@ -409,11 +405,9 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
   const initialUI = ui || DEFAULT_UI_STATE;
 
   return {
-    StartPage,
     datasourceInstance,
     datasourceMissing,
     initialized,
-    showingStartPage,
     split,
     queryKeys,
     update,

@@ -81,7 +81,7 @@ module.exports = (env = {}) =>
       new HtmlWebpackPlugin({
         filename: path.resolve(__dirname, '../../public/views/index.html'),
         template: path.resolve(__dirname, '../../public/views/index-template.html'),
-        inject: 'body',
+        inject: false,
         chunksSortMode: 'none',
         excludeChunks: ['dark', 'light']
       }),

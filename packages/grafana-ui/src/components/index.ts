@@ -39,6 +39,7 @@ export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
 export { Modal } from './Modal/Modal';
+export { ConfirmModal } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
 
 // Renderless
@@ -105,7 +106,7 @@ export { DataSourceHttpSettings } from './DataSourceSettings/DataSourceHttpSetti
 export { Spinner } from './Spinner/Spinner';
 export { FadeTransition } from './transitions/FadeTransition';
 export { SlideOutTransition } from './transitions/SlideOutTransition';
-export { Segment, SegmentAsync, SegmentSelect } from './Segment/';
+export { Segment, SegmentAsync, SegmentInput, SegmentSelect } from './Segment/';
 export { default as Chart } from './Chart';
 export { Icon } from './Icon/Icon';
 

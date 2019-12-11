@@ -115,6 +115,9 @@ if [ -d '/tmp/phantomjs/windows' ]; then
 else
     echo 'PhantomJS binaries for Windows missing!'
 fi
+
+cp /usr/local/go/lib/time/zoneinfo.zip tools/zoneinfo.zip
 go run build.go -goos windows -pkg-arch amd64 ${OPT} package-only
+rm tools/zoneinfo.zip
 
 go run build.go latest

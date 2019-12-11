@@ -17,7 +17,7 @@ const templateSrv: any = {
 };
 
 describe('datasource_srv', () => {
-  const _datasourceSrv = new DatasourceSrv({}, {} as any, {} as any, templateSrv);
+  const _datasourceSrv = new DatasourceSrv({} as any, {} as any, templateSrv);
 
   describe('when loading external datasources', () => {
     beforeEach(() => {

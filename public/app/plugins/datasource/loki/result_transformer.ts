@@ -284,7 +284,7 @@ function createMetricLabel(labelData: { [key: string]: string }, options?: Trans
       ? getOriginalMetricName(labelData)
       : renderTemplate(templateSrv.replace(options.legendFormat), labelData);
 
-  if (!label || label === '{}') {
+  if (!label) {
     label = options.query;
   }
   return label;
