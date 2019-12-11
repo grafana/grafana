@@ -1,13 +1,13 @@
 import angular from 'angular';
-import { dateMath } from '@grafana/data';
+import { dateMath, Field } from '@grafana/data';
 import _ from 'lodash';
-import { ElasticDatasource } from '../datasource';
+import { ElasticDatasource } from './datasource';
 import { toUtc, dateTime } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { ElasticsearchOptions } from '../types';
+import { ElasticsearchOptions } from './types';
 
 describe('ElasticDatasource', function(this: any) {
   const backendSrv: any = {
@@ -153,73 +153,23 @@ describe('ElasticDatasource', function(this: any) {
   });
 
   describe('When issuing logs query with interval pattern', () => {
-    let query, queryBuilderSpy: any;
-
-    beforeEach(async () => {
+    async function setupDataSource(jsonData?: Partial<ElasticsearchOptions>) {
       createDatasource({
         url: 'http://es.com',
         database: 'mock-index',
-        jsonData: { interval: 'Daily', esVersion: 2, timeField: '@timestamp' } as ElasticsearchOptions,
+        jsonData: {
+          interval: 'Daily',
+          esVersion: 2,
+          timeField: '@timestamp',
+          ...(jsonData || {}),
+        } as ElasticsearchOptions,
       } as DataSourceInstanceSettings<ElasticsearchOptions>);
 
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        return Promise.resolve({
-          data: {
-            responses: [
-              {
-                aggregations: {
-                  '2': {
-                    buckets: [
-                      {
-                        doc_count: 10,
-                        key: 1000,
-                      },
-                      {
-                        doc_count: 15,
-                        key: 2000,
-                      },
-                    ],
-                  },
-                },
-                hits: {
-                  hits: [
-                    {
-                      '@timestamp': ['2019-06-24T09:51:19.765Z'],
-                      _id: 'fdsfs',
-                      _type: '_doc',
-                      _index: 'mock-index',
-                      _source: {
-                        '@timestamp': '2019-06-24T09:51:19.765Z',
-                        host: 'djisaodjsoad',
-                        message: 'hello, i am a message',
-                      },
-                      fields: {
-                        '@timestamp': ['2019-06-24T09:51:19.765Z'],
-                      },
-                    },
-                    {
-                      '@timestamp': ['2019-06-24T09:52:19.765Z'],
-                      _id: 'kdospaidopa',
-                      _type: '_doc',
-                      _index: 'mock-index',
-                      _source: {
-                        '@timestamp': '2019-06-24T09:52:19.765Z',
-                        host: 'dsalkdakdop',
-                        message: 'hello, i am also message',
-                      },
-                      fields: {
-                        '@timestamp': ['2019-06-24T09:52:19.765Z'],
-                      },
-                    },
-                  ],
-                },
-              },
-            ],
-          },
-        });
+        return Promise.resolve(logsResponse);
       });
 
-      query = {
+      const query = {
         range: {
           from: toUtc([2015, 4, 30, 10]),
           to: toUtc([2019, 7, 1, 10]),
@@ -238,12 +188,30 @@ describe('ElasticDatasource', function(this: any) {
         ],
       };
 
-      queryBuilderSpy = jest.spyOn(ctx.ds.queryBuilder, 'getLogsQuery');
-      await ctx.ds.query(query);
+      const queryBuilderSpy = jest.spyOn(ctx.ds.queryBuilder, 'getLogsQuery');
+      const response = await ctx.ds.query(query);
+      return { queryBuilderSpy, response };
+    }
+
+    it('should call getLogsQuery()', async () => {
+      const { queryBuilderSpy } = await setupDataSource();
+      expect(queryBuilderSpy).toHaveBeenCalled();
     });
 
-    it('should call getLogsQuery()', () => {
-      expect(queryBuilderSpy).toHaveBeenCalled();
+    it('should enhance fields with links', async () => {
+      const { response } = await setupDataSource({
+        dataLinks: [
+          {
+            field: 'host',
+            url: 'http://localhost:3000/${__value.raw}',
+          },
+        ],
+      });
+      // 1 for logs and 1 for counts.
+      expect(response.data.length).toBe(2);
+      const links = response.data[0].fields.find((field: Field) => field.name === 'host').config.links;
+      expect(links.length).toBe(1);
+      expect(links[0].url).toBe('http://localhost:3000/${__value.raw}');
     });
   });
 
@@ -645,3 +613,58 @@ describe('ElasticDatasource', function(this: any) {
     });
   });
 });
+
+const logsResponse = {
+  data: {
+    responses: [
+      {
+        aggregations: {
+          '2': {
+            buckets: [
+              {
+                doc_count: 10,
+                key: 1000,
+              },
+              {
+                doc_count: 15,
+                key: 2000,
+              },
+            ],
+          },
+        },
+        hits: {
+          hits: [
+            {
+              '@timestamp': ['2019-06-24T09:51:19.765Z'],
+              _id: 'fdsfs',
+              _type: '_doc',
+              _index: 'mock-index',
+              _source: {
+                '@timestamp': '2019-06-24T09:51:19.765Z',
+                host: 'djisaodjsoad',
+                message: 'hello, i am a message',
+              },
+              fields: {
+                '@timestamp': ['2019-06-24T09:51:19.765Z'],
+              },
+            },
+            {
+              '@timestamp': ['2019-06-24T09:52:19.765Z'],
+              _id: 'kdospaidopa',
+              _type: '_doc',
+              _index: 'mock-index',
+              _source: {
+                '@timestamp': '2019-06-24T09:52:19.765Z',
+                host: 'dsalkdakdop',
+                message: 'hello, i am also message',
+              },
+              fields: {
+                '@timestamp': ['2019-06-24T09:52:19.765Z'],
+              },
+            },
+          ],
+        },
+      },
+    ],
+  },
+};
