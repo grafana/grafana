@@ -7,6 +7,7 @@ import config from 'app/core/config';
 import { PanelModel } from '../../state/PanelModel';
 import { DashboardModel } from '../../state/DashboardModel';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
+import { QueriesTab } from '../../panel_editor/QueriesTab';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
@@ -20,6 +21,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     bottom: 0;
     background: ${theme.colors.pageBg};
     display: flex;
+    padding: ${theme.spacing.md};
     flex-direction: row;
   `,
   leftPane: css`
@@ -38,6 +40,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   leftPaneData: css`
     width: 100%;
     height: 50%;
+    padding-top: ${theme.spacing.md};
   `,
 }));
 
@@ -63,7 +66,9 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
               isInView={true}
             />
           </div>
-          <div className={styles.leftPaneData}>Data</div>
+          <div className={styles.leftPaneData}>
+            <QueriesTab panel={panel} dashboard={dashboard} />;
+          </div>
         </div>
         <div className={styles.rightPane}>Visualization settings</div>
       </div>
