@@ -1,7 +1,5 @@
 import 'app/core/directives/value_select_dropdown';
 import { ValueSelectDropdownCtrl } from '../directives/value_select_dropdown';
-// @ts-ignore
-import q from 'q';
 import { IScope } from 'angular';
 
 describe('SelectDropdownCtrl', () => {
@@ -13,7 +11,7 @@ describe('SelectDropdownCtrl', () => {
 
   describe('Given simple variable', () => {
     beforeEach(() => {
-      ctrl = new ValueSelectDropdownCtrl(q, $scope);
+      ctrl = new ValueSelectDropdownCtrl($scope);
       ctrl.variable = {
         current: { text: 'hej', value: 'hej' },
         getValuesForTag: (key: string) => {
@@ -30,7 +28,7 @@ describe('SelectDropdownCtrl', () => {
 
   describe('Given variable with tags and dropdown is opened', () => {
     beforeEach(() => {
-      ctrl = new ValueSelectDropdownCtrl(q, $scope);
+      ctrl = new ValueSelectDropdownCtrl($scope);
       ctrl.variable = {
         current: { text: 'server-1', value: 'server-1' },
         options: [
@@ -133,7 +131,7 @@ describe('SelectDropdownCtrl', () => {
 
   describe('Given variable with selected tags', () => {
     beforeEach(() => {
-      ctrl = new ValueSelectDropdownCtrl(q, $scope);
+      ctrl = new ValueSelectDropdownCtrl($scope);
       ctrl.variable = {
         current: {
           text: 'server-1',
@@ -165,7 +163,7 @@ describe('queryChanged', () => {
   describe('when called and variable query contains search filter', () => {
     it('then it should use lazy loading', async () => {
       const $scope = {} as IScope;
-      const ctrl = new ValueSelectDropdownCtrl(q, $scope);
+      const ctrl = new ValueSelectDropdownCtrl($scope);
       const options = [
         { text: 'server-1', value: 'server-1' },
         { text: 'server-2', value: 'server-2' },
@@ -190,7 +188,7 @@ describe('queryChanged', () => {
   describe('when called and variable query does not contain search filter', () => {
     it('then it should not use lazy loading', async () => {
       const $scope = {} as IScope;
-      const ctrl = new ValueSelectDropdownCtrl(q, $scope);
+      const ctrl = new ValueSelectDropdownCtrl($scope);
       ctrl.lazyLoadOptions = jest.fn().mockResolvedValue([]);
       ctrl.updateUIBoundOptions = jest.fn();
       ctrl.search = {
@@ -210,7 +208,7 @@ describe('lazyLoadOptions', () => {
   describe('when called with a query', () => {
     it('then the variables updateOptions should be called with the query', async () => {
       const $scope = {} as IScope;
-      const ctrl = new ValueSelectDropdownCtrl(q, $scope);
+      const ctrl = new ValueSelectDropdownCtrl($scope);
       ctrl.variable = {
         updateOptions: jest.fn(),
         options: [
@@ -244,7 +242,7 @@ describe('updateUIBoundOptions', () => {
       for (let index = 0; index < 1001; index++) {
         options.push({ text: `server-${index}`, value: `server-${index}` });
       }
-      ctrl = new ValueSelectDropdownCtrl(q, $scope);
+      ctrl = new ValueSelectDropdownCtrl($scope);
       ctrl.highlightIndex = 0;
       ctrl.options = [];
       ctrl.search = {

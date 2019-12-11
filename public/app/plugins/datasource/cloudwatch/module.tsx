@@ -14,4 +14,5 @@ export const plugin = new DataSourcePlugin<CloudWatchDatasource, CloudWatchQuery
 )
   .setConfigEditor(ConfigEditor)
   .setQueryEditor(QueryEditor)
+  .setExploreQueryField(QueryEditor)
   .setAnnotationQueryCtrl(CloudWatchAnnotationsQueryCtrl);
