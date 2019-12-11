@@ -7,9 +7,9 @@ import { e2eScenario, ScenarioArguments } from './support/scenario';
 import { Pages } from './pages';
 import { Flows } from './flows';
 
-export type SelectorFunction = (text?: string) => Cypress.Chainable<any>;
+export type SelectorFunction = (text?: string) => Cypress.Chainable<JQuery<HTMLElement>>;
 export type SelectorObject<S> = {
-  visit: (args?: string) => Cypress.Chainable<any>;
+  visit: (args?: string) => Cypress.Chainable<Window>;
   selectors: S;
 };
 

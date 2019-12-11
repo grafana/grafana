@@ -14,7 +14,7 @@ import { Graph } from './graph';
 import { SaveDashboardModal } from './saveDashboardModal';
 import { Panel } from './panel';
 import { SharePanelModal } from './sharePanelModal';
-import { VariablesSection } from './variablesSection';
+import { QueryVariable, VariableGeneral, Variables } from './variables';
 
 export const Pages = {
   Login,
@@ -26,8 +26,16 @@ export const Pages = {
   Dashboard: {
     visit: (uid: string) => Dashboard.visit(uid),
     Toolbar: Dashboard,
-    Settings: DashboardSettings,
-    VariablesSection,
+    Settings: {
+      General: DashboardSettings,
+      Variables: {
+        List: Variables,
+        Edit: {
+          General: VariableGeneral,
+          QueryVariable: QueryVariable,
+        },
+      },
+    },
     Panels: {
       Panel,
       EditPanel,
