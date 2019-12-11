@@ -30,9 +30,9 @@ Dashboards can be tagged, and the dashboard picker provides quick, searchable ac
 
 ## Data source
 
-Grafana supports many storage backends for your time series *data source*. Each data source has a specific Query Editor that is customized for the features and capabilities that the particular data source exposes.
+Grafana can visualize, explore, and alert on data from many different databases and cloud services. Each database or service type is accessed from a *data source*. 
 
-The query language and capabilities of each data source are obviously very different. You can combine data from multiple data sources into a single dashboard, but each panel is connected to a specific data source that belongs to a particular organization.
+Each data source has a specific query editor that is customized for the features and capabilities that the particular data source exposes. The query language and capabilities of each data source are obviously very different. You can combine data from multiple data sources into a single dashboard, but each panel is connected to a specific data source that belongs to a particular organization.
 
 Refer to the [Data sources section](https://grafana.com/docs/grafana/latest/features/datasources/) for a list of data sources that Grafana officially supports.
 
