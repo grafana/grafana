@@ -4,7 +4,8 @@ import { stylesFactory, withTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { Themeable } from '../../types';
 import { Button } from '../Button/Button';
-import { ButtonVariant } from '../Button/types';
+import Forms from '../Forms';
+import { ButtonVariant, ButtonSize } from '../Button/types';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -54,6 +55,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 
 interface Props extends Themeable {
   className?: string;
+  size?: ButtonSize;
   confirmText?: string;
   disabled?: boolean;
   confirmVariant?: ButtonVariant;
@@ -69,6 +71,7 @@ interface State {
 
 class UnThemedConfirmButton extends PureComponent<Props, State> {
   static defaultProps: Partial<Props> = {
+    size: 'md',
     confirmText: 'Save',
     disabled: false,
     confirmVariant: 'primary',
@@ -106,12 +109,13 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
 
   render() {
     const {
-      onConfirm,
+      theme,
+      className,
+      size,
       disabled,
       confirmText,
       confirmVariant: confirmButtonVariant,
-      className,
-      theme,
+      onConfirm,
       children,
     } = this.props;
     const styles = getStyles(theme);
@@ -129,9 +133,9 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
     return (
       <span className={styles.buttonContainer}>
         {typeof children === 'string' ? (
-          <Button className={buttonClass} size="sm" variant="link" onClick={onClick}>
+          <Forms.Button className={buttonClass} size={size} variant="link" onClick={onClick}>
             {children}
-          </Button>
+          </Forms.Button>
         ) : (
           <span className={buttonClass} onClick={onClick}>
             {children}
@@ -139,10 +143,10 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
         )}
         <span className={styles.confirmButtonContainer}>
           <span className={confirmButtonClass}>
-            <Button size="sm" variant="transparent" onClick={this.onClickCancel}>
+            <Button size={size} variant="transparent" onClick={this.onClickCancel}>
               Cancel
             </Button>
-            <Button size="sm" variant={confirmButtonVariant} onClick={onConfirm}>
+            <Button size={size} variant={confirmButtonVariant} onClick={onConfirm}>
               {confirmText}
             </Button>
           </span>
