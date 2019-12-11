@@ -18,13 +18,14 @@ var (
 type RoleType string
 
 const (
+	ROLE_NONE   RoleType = "None"
 	ROLE_VIEWER RoleType = "Viewer"
 	ROLE_EDITOR RoleType = "Editor"
 	ROLE_ADMIN  RoleType = "Admin"
 )
 
 func (r RoleType) IsValid() bool {
-	return r == ROLE_VIEWER || r == ROLE_ADMIN || r == ROLE_EDITOR
+	return r == ROLE_NONE || r == ROLE_VIEWER || r == ROLE_ADMIN || r == ROLE_EDITOR
 }
 
 func (r RoleType) Includes(other RoleType) bool {
