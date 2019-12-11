@@ -9,7 +9,7 @@ export abstract class BusEvent {
 }
 
 /*
- * Bas event type with payload
+ * Base event type with payload
  */
 export abstract class BusEventWithPayload<T> extends BusEvent {
   readonly payload: T;
@@ -64,7 +64,7 @@ export class EventBusSrv implements EventBus {
     return this.eventStream
       .pipe(
         filter(event => {
-          return event instanceof typeFilter;
+          return event.__proto__.constructor.type === typeFilter.type;
         })
       )
       .subscribe({ next: handler });

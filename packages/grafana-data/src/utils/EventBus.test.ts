@@ -10,12 +10,10 @@ interface HelloEventPayload {
 
 class LoginEvent extends BusEventWithPayload<LoginEventPayload> {
   public static type = 'login-event';
-  public type = LoginEvent.type;
 }
 
 class HelloEvent extends BusEventWithPayload<HelloEventPayload> {
   public static type = 'hello-event';
-  public type = HelloEvent.type;
 }
 
 describe('EventBus', () => {

@@ -165,5 +165,4 @@ export interface PanelHoverEventPayload {
 
 export class PanelHoverEvent extends BusEventWithPayload<PanelHoverEventPayload> {
   static readonly type = 'panel-hover-event';
-  public readonly type = PanelHoverEvent.type;
 }
