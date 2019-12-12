@@ -1,6 +1,6 @@
 import React, { SyntheticEvent } from 'react';
 import { EventsWithValidation, FormField, FormLabel, Input, regexValidation, Select } from '@grafana/ui';
-import { DataSourceSettings } from '@grafana/data';
+import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { PromOptions } from '../types';
 
 const httpOptions = [
@@ -112,14 +112,26 @@ export const PromSettings = (props: Props) => {
   );
 };
 
+export const getValueFromEventItem = (eventItem: SyntheticEvent<HTMLInputElement> | SelectableValue<string>) => {
+  if (!eventItem) {
+    return '';
+  }
+
+  if (eventItem.hasOwnProperty('currentTarget')) {
+    return eventItem.currentTarget.value;
+  }
+
+  return (eventItem as SelectableValue<string>).value;
+};
+
 const onChangeHandler = (key: keyof PromOptions, value: Props['value'], onChange: Props['onChange']) => (
-  event: SyntheticEvent<HTMLInputElement | HTMLSelectElement>
+  eventItem: SyntheticEvent<HTMLInputElement> | SelectableValue<string>
 ) => {
   onChange({
     ...value,
     jsonData: {
       ...value.jsonData,
-      [key]: event.currentTarget.value,
+      [key]: getValueFromEventItem(eventItem),
     },
   });
 };
