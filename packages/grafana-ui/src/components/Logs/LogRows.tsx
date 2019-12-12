@@ -17,6 +17,7 @@ export interface Props extends Themeable {
   deduplicatedRows?: LogRowModel[];
   dedupStrategy: LogsDedupStrategy;
   highlighterExpressions?: string[];
+  showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
   timeZone: TimeZone;
@@ -71,6 +72,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   render() {
     const {
       dedupStrategy,
+      showLabels,
       showTime,
       wrapLogMessage,
       logRows,
@@ -117,6 +119,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 highlighterExpressions={highlighterExpressions}
                 row={row}
                 showDuplicates={showDuplicates}
+                showLabels={showLabels}
                 showTime={showTime}
                 wrapLogMessage={wrapLogMessage}
                 timeZone={timeZone}
@@ -135,6 +138,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getRowContext={getRowContext}
                 row={row}
                 showDuplicates={showDuplicates}
+                showLabels={showLabels}
                 showTime={showTime}
                 wrapLogMessage={wrapLogMessage}
                 timeZone={timeZone}
