@@ -83,8 +83,6 @@ func NewOAuthService() {
 			TlsClientKey:       sec.Key("tls_client_key").String(),
 			TlsClientCa:        sec.Key("tls_client_ca").String(),
 			TlsSkipVerify:      sec.Key("tls_skip_verify_insecure").MustBool(),
-			// TODO: Deprecate send_client_credentials_via_post as auth style is autodetected
-			SendClientCredentialsViaPost: sec.Key("send_client_credentials_via_post").MustBool(),
 		}
 
 		if !info.Enabled {
@@ -101,8 +99,9 @@ func NewOAuthService() {
 			ClientID:     info.ClientId,
 			ClientSecret: info.ClientSecret,
 			Endpoint: oauth2.Endpoint{
-				AuthURL:  info.AuthUrl,
-				TokenURL: info.TokenUrl,
+				AuthURL:   info.AuthUrl,
+				TokenURL:  info.TokenUrl,
+				AuthStyle: oauth2.AuthStyleAutoDetect,
 			},
 			RedirectURL: strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
 			Scopes:      info.Scopes,
@@ -176,8 +175,9 @@ func NewOAuthService() {
 				ClientID:     info.ClientId,
 				ClientSecret: info.ClientSecret,
 				Endpoint: oauth2.Endpoint{
-					AuthURL:  setting.GrafanaComUrl + "/oauth2/authorize",
-					TokenURL: setting.GrafanaComUrl + "/api/oauth2/token",
+					AuthURL:   setting.GrafanaComUrl + "/oauth2/authorize",
+					TokenURL:  setting.GrafanaComUrl + "/api/oauth2/token",
+					AuthStyle: oauth2.AuthStyleInHeader,
 				},
 				RedirectURL: strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
 				Scopes:      info.Scopes,
