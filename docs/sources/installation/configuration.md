@@ -12,7 +12,7 @@ weight = 1
 
 # Configuration
 
-Grafana has a number of configuration options that you can specified in a `.ini` configuration file or specified using environment variables.
+Grafana has a number of configuration options that you can specify in a `.ini` configuration file or specified using environment variables.
 
 > **Note.** You must restart Grafana for any configuration changes to take effect.
 
@@ -778,4 +778,3 @@ Set to true if you host Grafana behind HTTPS only. Defaults to `false`.
 ### session_life_time
 
 How long sessions lasts in seconds. Defaults to `86400` (24 hours).
-
