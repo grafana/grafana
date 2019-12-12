@@ -3,6 +3,7 @@ import Forms from '../../Forms';
 import { TIME_FORMAT, TimeZone, isDateTime, TimeRange, DateTime } from '@grafana/data';
 import { stringToDateTimeType, isValidTimeString } from '../time';
 import TimePickerCalendar from './Calendar';
+import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 
 type CalendarTrigger = 'onFocus' | 'onButton';
 
@@ -45,10 +46,18 @@ export default class TimeRangeForm extends PureComponent<Props, State> {
     });
   };
 
-  onCalendarTrigger = (trigger: CalendarTrigger) => {
+  onCalendarShow = (event: FormEvent<HTMLInputElement> | FormEvent<HTMLButtonElement>, trigger: CalendarTrigger) => {
     if (this.props.calendarTrigger === trigger) {
       this.setState({ displayCalendar: true });
     }
+  };
+
+  onCalendarHide = () => {
+    this.setState({ displayCalendar: false });
+  };
+
+  onCalendarDontHide = (event: FormEvent<HTMLInputElement> | FormEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
   };
 
   onCalendarChange = (timeRange: TimeRange) => {
@@ -75,24 +84,28 @@ export default class TimeRangeForm extends PureComponent<Props, State> {
 
     return (
       <>
-        <TimePickerCalendar
-          visible={displayCalendar}
-          selected={toTimeRange(this.state)}
-          onChange={this.onCalendarChange}
-        />
+        <ClickOutsideWrapper onClick={this.onCalendarHide}>
+          <TimePickerCalendar
+            visible={displayCalendar}
+            selected={toTimeRange(this.state)}
+            onChange={this.onCalendarChange}
+          />
+        </ClickOutsideWrapper>
         <Forms.Field label="From">
           <Forms.Input
-            onFocus={() => this.onCalendarTrigger('onFocus')}
+            onClick={this.onCalendarDontHide}
+            onFocus={event => this.onCalendarShow(event, 'onFocus')}
             onChange={event => this.onInputChange(event, 'from')}
-            addonAfter={calendarIcon(calendarTrigger, this.onCalendarTrigger)}
+            addonAfter={calendarIcon(calendarTrigger, this.onCalendarShow)}
             {...from}
           />
         </Forms.Field>
         <Forms.Field label="To">
           <Forms.Input
-            onFocus={() => this.onCalendarTrigger('onFocus')}
+            onClick={this.onCalendarDontHide}
+            onFocus={event => this.onCalendarShow(event, 'onFocus')}
             onChange={event => this.onInputChange(event, 'to')}
-            addonAfter={calendarIcon(calendarTrigger, this.onCalendarTrigger)}
+            addonAfter={calendarIcon(calendarTrigger, this.onCalendarShow)}
             {...to}
           />
         </Forms.Field>
@@ -102,9 +115,12 @@ export default class TimeRangeForm extends PureComponent<Props, State> {
   }
 }
 
-function calendarIcon(calendarTrigger: CalendarTrigger, onTrigger: (onTrigger: CalendarTrigger) => void): ReactNode {
+function calendarIcon(
+  calendarTrigger: CalendarTrigger,
+  onTrigger: (event: FormEvent<HTMLButtonElement>, trigger: CalendarTrigger) => void
+): ReactNode {
   if (calendarTrigger === 'onButton') {
-    return <Forms.Button icon="fa fa-calendar" variant="secondary" onClick={() => onTrigger('onButton')} />;
+    return <Forms.Button icon="fa fa-calendar" variant="secondary" onClick={event => onTrigger(event, 'onButton')} />;
   }
   return null;
 }
