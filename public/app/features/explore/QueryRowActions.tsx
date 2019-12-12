@@ -39,7 +39,7 @@ export function QueryRowActions(props: Props) {
         </div>
       )}
       <div className="gf-form">
-        <button disabled className="gf-form-label gf-form-label--btn" title="Query row latency">
+        <button disabled className="gf-form-label" title="Query row latency">
           {formatLatency(latency)}
         </button>
       </div>
