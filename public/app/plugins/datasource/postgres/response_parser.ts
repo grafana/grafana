@@ -1,5 +1,4 @@
 import _ from 'lodash';
-import { toUtc } from '@grafana/data';
 
 export default class ResponseParser {
   processQueryResult(res: any) {
@@ -135,9 +134,7 @@ export default class ResponseParser {
     for (let i = 0; i < table.rows.length; i++) {
       const row = table.rows[i];
       const timeEnd =
-        timeEndColumnIndex !== -1 && row[timeEndColumnIndex]
-          ? Math.floor(toUtc(row[timeEndColumnIndex]).valueOf())
-          : undefined;
+        timeEndColumnIndex !== -1 && row[timeEndColumnIndex] ? Math.floor(row[timeEndColumnIndex]) : undefined;
       list.push({
         annotation: options.annotation,
         time: Math.floor(row[timeColumnIndex]),
