@@ -53,23 +53,22 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       background-color: rgba(${theme.colors.yellow}, 0.2);
       border-bottom-style: dotted;
     `,
-    logsRows: css`
+    logsRowsTable: css`
       label: logs-rows;
       font-family: ${theme.typography.fontFamily.monospace};
       font-size: ${theme.typography.size.sm};
-      display: table;
-      table-layout: fixed;
       width: 100%;
     `,
     logsRowsHorizontalScroll: css`
       label: logs-rows__horizontal-scroll;
-      overflow-y: scroll;
+      overflow: scroll;
     `,
     context: context,
     logsRow: css`
       label: logs-row;
-      display: table-row;
+      width: 100%;
       cursor: pointer;
+      vertical-align: top;
       &:hover {
         .${context} {
           visibility: visible;
@@ -82,8 +81,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
         }
       }
 
-      > div {
-        display: table-cell;
+      > td {
         padding-right: ${theme.spacing.sm};
         border-top: ${theme.border.width.sm} solid transparent;
         border-bottom: ${theme.border.width.sm} solid transparent;
@@ -124,27 +122,24 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     logsRowToggleDetails: css`
       label: logs-row-toggle-details__level;
       position: relative;
-      width: 15px;
       font-size: 9px;
+      padding-top: 5px;
     `,
     logsRowLocalTime: css`
       label: logs-row__localtime;
       display: table-cell;
       white-space: nowrap;
-      width: 12.5em;
       padding-right: 1em;
     `,
     logsRowLabels: css`
       label: logs-row__labels;
-      display: table-cell;
       white-space: nowrap;
-      width: 22em;
       padding-right: 1em;
+      max-width: 22em;
     `,
     logsRowMessage: css`
       label: logs-row__message;
       word-break: break-all;
-      display: table-cell;
     `,
     logsRowStats: css`
       label: logs-row__stats;
@@ -153,19 +148,22 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     //Log details sepcific CSS
     logDetailsContainer: css`
       label: logs-row-details-table;
+      width: 100%;
       border: 1px solid ${borderColor};
       padding: 0 ${theme.spacing.sm} ${theme.spacing.sm};
       border-radius: 3px;
-      margin: 20px 0;
+      margin: 20px 10px 20px 0;
       cursor: default;
     `,
     logDetailsTable: css`
       label: logs-row-details-table;
+      table-layout: auto;
       width: 100%;
     `,
     logsDetailsIcon: css`
       label: logs-row-details__icon;
       position: relative;
+      width: 2.5em;
       padding-right: ${theme.spacing.sm};
       color: ${theme.colors.gray3};
     `,

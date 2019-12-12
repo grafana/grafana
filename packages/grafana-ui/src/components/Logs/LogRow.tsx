@@ -12,6 +12,7 @@ import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
 import { stylesFactory } from '../../themes/stylesFactory';
+import { selectThemeVariant } from '../../themes/selectThemeVariant';
 
 //Components
 import { LogDetails } from './LogDetails';
@@ -38,13 +39,19 @@ interface Props extends Themeable {
 interface State {
   showContext: boolean;
   showDetails: boolean;
+  hasHoverBackground: boolean;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const bgColor = selectThemeVariant({ light: theme.colors.gray7, dark: theme.colors.dark2 }, theme.type);
   return {
     topVerticalAlign: css`
       label: topVerticalAlign;
       vertical-align: top;
+    `,
+    hoverBackground: css`
+      label: hoverBackground;
+      background-color: ${bgColor};
     `,
   };
 });
@@ -59,6 +66,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   state: State = {
     showContext: false,
     showDetails: false,
+    hasHoverBackground: false,
   };
 
   toggleContext = () => {
@@ -66,6 +74,12 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       return {
         showContext: !state.showContext,
       };
+    });
+  };
+
+  onChangeHoverBackground = (bool: boolean) => {
+    this.setState({
+      hasHoverBackground: bool,
     });
   };
 
@@ -101,7 +115,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       theme,
       getFieldLinks,
     } = this.props;
-    const { showDetails, showContext } = this.state;
+    const { showDetails, showContext, hasHoverBackground } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
     const styles = getStyles(theme);
     const showUtc = timeZone === 'utc';
@@ -110,63 +124,68 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       : cx(['fa fa-chevron-right', styles.topVerticalAlign]);
 
     return (
-      <div className={style.logsRow}>
-        {showDuplicates && (
-          <div className={style.logsRowDuplicates}>
-            {row.duplicates && row.duplicates > 0 ? `${row.duplicates + 1}x` : null}
-          </div>
-        )}
-        <div className={style.logsRowLevel} />
-        {!allowDetails && (
-          <div
-            title={showDetails ? 'Hide log details' : 'See log details'}
-            onClick={this.toggleDetails}
-            className={style.logsRowToggleDetails}
-          >
-            <i className={showDetailsClassName} />
-          </div>
-        )}
-        <div>
-          <div onClick={this.toggleDetails}>
-            {showTime && showUtc && (
-              <div className={style.logsRowLocalTime} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
-                {row.timeUtc}
-              </div>
-            )}
-            {showTime && !showUtc && (
-              <div className={style.logsRowLocalTime} title={`${row.timeUtc} (${row.timeFromNow})`}>
-                {row.timeLocal}
-              </div>
-            )}
-            {showLabels && row.uniqueLabels && (
-              <div className={style.logsRowLabels}>
-                <LogLabels labels={row.uniqueLabels} />
-              </div>
-            )}
-            <LogRowMessage
-              highlighterExpressions={highlighterExpressions}
-              row={row}
-              getRows={getRows}
-              errors={errors}
-              hasMoreContextRows={hasMoreContextRows}
-              updateLimit={updateLimit}
-              context={context}
-              showContext={showContext}
-              wrapLogMessage={wrapLogMessage}
-              onToggleContext={this.toggleContext}
-            />
-          </div>
-          {this.state.showDetails && (
-            <LogDetails
-              getFieldLinks={getFieldLinks}
-              onClickFilterLabel={onClickFilterLabel}
-              onClickFilterOutLabel={onClickFilterOutLabel}
-              getRows={getRows}
-              row={row}
-            />
+      <>
+        <tr
+          className={cx(style.logsRow, { [styles.hoverBackground]: hasHoverBackground })}
+          onMouseEnter={() => this.onChangeHoverBackground(true)}
+          onMouseLeave={() => this.onChangeHoverBackground(false)}
+        >
+          {showDuplicates && (
+            <td className={style.logsRowDuplicates}>
+              {row.duplicates && row.duplicates > 0 ? `${row.duplicates + 1}x` : null}
+            </td>
           )}
-        </div>
-      </div>
+          <td className={style.logsRowLevel} />
+          {!allowDetails && (
+            <td
+              title={showDetails ? 'Hide log details' : 'See log details'}
+              onClick={this.toggleDetails}
+              className={style.logsRowToggleDetails}
+            >
+              <i className={showDetailsClassName} />
+            </td>
+          )}
+          {showTime && showUtc && (
+            <td className={style.logsRowLocalTime} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
+              {row.timeUtc}
+            </td>
+          )}
+          {showTime && !showUtc && (
+            <td className={style.logsRowLocalTime} title={`${row.timeUtc} (${row.timeFromNow})`}>
+              {row.timeLocal}
+            </td>
+          )}
+          {showLabels && row.uniqueLabels && (
+            <td className={style.logsRowLabels}>
+              <LogLabels labels={row.uniqueLabels} />
+            </td>
+          )}
+          <LogRowMessage
+            highlighterExpressions={highlighterExpressions}
+            row={row}
+            getRows={getRows}
+            errors={errors}
+            hasMoreContextRows={hasMoreContextRows}
+            updateLimit={updateLimit}
+            context={context}
+            showContext={showContext}
+            wrapLogMessage={wrapLogMessage}
+            onToggleContext={this.toggleContext}
+          />
+        </tr>
+        {this.state.showDetails && (
+          <LogDetails
+            hasHoverBackground={hasHoverBackground}
+            onChangeHoverBackground={this.onChangeHoverBackground}
+            showDuplicates={showDuplicates}
+            getFieldLinks={getFieldLinks}
+            onClickFilterLabel={onClickFilterLabel}
+            onClickFilterOutLabel={onClickFilterOutLabel}
+            getRows={getRows}
+            row={row}
+          />
+        )}
+      </>
     );
   }
 
