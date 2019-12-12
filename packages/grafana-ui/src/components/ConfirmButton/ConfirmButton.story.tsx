@@ -50,28 +50,6 @@ storiesOf('UI/ConfirmButton', module)
       </>
     );
   })
-  .add('delete button', () => {
-    const { disabled, size } = getKnobs();
-    return (
-      <>
-        <div className="gf-form-group">
-          <div className="gf-form">
-            <ConfirmButton
-              size={size}
-              confirmText="Delete"
-              confirmVariant="danger"
-              disabled={disabled}
-              onConfirm={() => {
-                action('Deleted')('delete!');
-              }}
-            >
-              <Button size={size} variant="danger" icon="fa fa-remove" />
-            </ConfirmButton>
-          </div>
-        </div>
-      </>
-    );
-  })
   .add('with custom button', () => {
     const { buttonText, confirmText, confirmVariant, disabled, size } = getKnobs();
     return (
