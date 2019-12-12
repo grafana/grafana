@@ -2,6 +2,7 @@ import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
 export enum MetricFindQueryTypes {
   Services = 'services',
+  DefaultProject = 'defaultProject',
   MetricTypes = 'metricTypes',
   LabelKeys = 'labelKeys',
   LabelValues = 'labelValues',

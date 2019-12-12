@@ -61,7 +61,6 @@ export class QueryEditor extends React.Component<Props, State> {
     const { perSeriesAligner, alignOptions } = getAlignmentPickerData(target, templateSrv);
     this.setState({
       ...this.props.target,
-      defaultProject: null,
       alignOptions,
       perSeriesAligner,
     });
@@ -155,7 +154,11 @@ export class QueryEditor extends React.Component<Props, State> {
 
     return (
       <>
-        <Project datasource={datasource} onChange={value => this.onPropertyChange('defaultProject', value)} />
+        <Project
+          datasource={datasource}
+          defaultProject={defaultProject}
+          onChange={value => this.onPropertyChange('defaultProject', value)}
+        />
         <Metrics
           defaultProject={defaultProject}
           metricType={metricType}

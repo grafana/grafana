@@ -5,6 +5,7 @@ import { MetricSelect } from 'app/core/components/Select/MetricSelect';
 export interface Props {
   datasource: StackdriverDatasource;
   onChange: (project: any) => void;
+  defaultProject: string;
 }
 
 export interface State {
@@ -29,6 +30,7 @@ export class Project extends React.Component<Props, State> {
 
   render() {
     const { projectList } = this.state;
+    const { defaultProject } = this.props;
     return (
       <div className="gf-form-inline">
         <div className="gf-form">
@@ -36,6 +38,7 @@ export class Project extends React.Component<Props, State> {
           <MetricSelect
             onChange={this.onProjectChange}
             options={projectList}
+            value={defaultProject}
             isSearchable={true}
             placeholder="Select Project"
             className="width-15"
