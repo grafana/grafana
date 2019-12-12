@@ -172,6 +172,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   onInitPanelActions(actions: any[]) {
     actions.push({ text: 'Export CSV', click: 'ctrl.exportCsv()' });
+    actions.push({ text: 'Toggle X-Axis', click: 'ctrl.toggleXAxis()' });
     actions.push({ text: 'Toggle legend', click: 'ctrl.toggleLegend()', shortcut: 'p l' });
   }
 
@@ -316,6 +317,11 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   toggleLegend() {
     this.panel.legend.show = !this.panel.legend.show;
+    this.render();
+  }
+
+  toggleXAxis() {
+    this.panel.xaxis.show = !this.panel.xaxis.show;
     this.render();
   }
 
