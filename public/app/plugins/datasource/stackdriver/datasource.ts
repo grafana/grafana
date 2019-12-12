@@ -52,6 +52,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
           filters: this.interpolateFilters(t.filters, options.scopedVars),
           aliasBy: this.templateSrv.replace(t.aliasBy, options.scopedVars || {}),
           type: 'timeSeriesQuery',
+          project: t.defaultProject,
         };
       });
 

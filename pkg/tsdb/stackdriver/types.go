@@ -12,6 +12,7 @@ type StackdriverQuery struct {
 	RefID    string
 	GroupBys []string
 	AliasBy  string
+	Project  string
 }
 
 type StackdriverBucketOptions struct {
@@ -72,4 +73,11 @@ type StackdriverResponse struct {
 			} `json:"value"`
 		} `json:"points"`
 	} `json:"timeSeries"`
+}
+
+type ResourceManagerProjectList struct {
+	Projects []ResourceManagerProject `json:"projects"`
+}
+type ResourceManagerProject struct {
+	ProjectID string `json:"projectId"`
 }

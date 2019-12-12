@@ -4,21 +4,28 @@ import { MetricSelect } from 'app/core/components/Select/MetricSelect';
 
 export interface Props {
   datasource: StackdriverDatasource;
+  onChange: (project: any) => void;
 }
 
-interface State {
+export interface State {
+  value: string;
   projectList: any[];
 }
 
 export class Project extends React.Component<Props, State> {
   state: State = {
     projectList: ['Loading projects...'],
+    value: '',
   };
 
   async componentDidMount() {
     const projectList = await this.props.datasource.getProjects();
     this.setState({ projectList });
   }
+
+  onProjectChange = (project: string) => {
+    this.props.onChange(project);
+  };
 
   render() {
     const { projectList } = this.state;
@@ -27,7 +34,7 @@ export class Project extends React.Component<Props, State> {
         <div className="gf-form">
           <span className="gf-form-label width-9 query-keyword">Project</span>
           <MetricSelect
-            //onChange={this.onProjectChange} // TODO
+            onChange={this.onProjectChange}
             options={projectList}
             isSearchable={true}
             placeholder="Select Project"

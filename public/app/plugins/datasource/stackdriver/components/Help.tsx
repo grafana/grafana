@@ -1,10 +1,7 @@
 import React from 'react';
-import { Project } from './Project';
-import StackdriverDatasource from '../datasource';
 import { MetricDescriptor } from '../types';
 
 export interface Props {
-  datasource: StackdriverDatasource;
   rawQuery: string;
   lastQueryError: string;
   metricDescriptor?: MetricDescriptor;
@@ -35,12 +32,11 @@ export class Help extends React.Component<Props, State> {
 
   render() {
     const { displayHelp, displaRawQuery } = this.state;
-    const { datasource, rawQuery, lastQueryError } = this.props;
+    const { rawQuery, lastQueryError } = this.props;
 
     return (
       <>
         <div className="gf-form-inline">
-          <Project datasource={datasource} />
           <div className="gf-form" onClick={this.onHelpClicked}>
             <label className="gf-form-label query-keyword pointer">
               Show Help <i className={`fa fa-caret-${displayHelp ? 'down' : 'right'}`} />

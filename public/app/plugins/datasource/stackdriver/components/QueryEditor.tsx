@@ -1,5 +1,4 @@
 import React from 'react';
-import _ from 'lodash';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -10,11 +9,11 @@ import { Alignments } from './Alignments';
 import { AlignmentPeriods } from './AlignmentPeriods';
 import { AliasBy } from './AliasBy';
 import { Help } from './Help';
-import { StackdriverQuery, MetricDescriptor } from '../types';
+import { MetricDescriptor, StackdriverQuery } from '../types';
 import { getAlignmentPickerData } from '../functions';
 import StackdriverDatasource from '../datasource';
-import { TimeSeries, SelectableValue } from '@grafana/data';
-import { PanelEvents } from '@grafana/data';
+import { PanelEvents, SelectableValue, TimeSeries } from '@grafana/data';
+import { Project } from './Project';
 
 export interface Props {
   onQueryChange: (target: StackdriverQuery) => void;
@@ -33,7 +32,7 @@ interface State extends StackdriverQuery {
 }
 
 export const DefaultTarget: State = {
-  defaultProject: 'loading project...',
+  defaultProject: null,
   metricType: '',
   metricKind: '',
   valueType: '',
@@ -62,6 +61,7 @@ export class QueryEditor extends React.Component<Props, State> {
     const { perSeriesAligner, alignOptions } = getAlignmentPickerData(target, templateSrv);
     this.setState({
       ...this.props.target,
+      defaultProject: null,
       alignOptions,
       perSeriesAligner,
     });
@@ -119,7 +119,9 @@ export class QueryEditor extends React.Component<Props, State> {
       },
       () => {
         onQueryChange(this.state);
-        onExecuteQuery();
+        if (this.state.defaultProject !== null) {
+          onExecuteQuery();
+        }
       }
     );
   };
@@ -127,7 +129,9 @@ export class QueryEditor extends React.Component<Props, State> {
   onPropertyChange(prop: string, value: string[]) {
     this.setState({ [prop]: value }, () => {
       this.props.onQueryChange(this.state);
-      this.props.onExecuteQuery();
+      if (this.state.defaultProject !== null) {
+        this.props.onExecuteQuery();
+      }
     });
   }
 
@@ -151,6 +155,7 @@ export class QueryEditor extends React.Component<Props, State> {
 
     return (
       <>
+        <Project datasource={datasource} onChange={value => this.onPropertyChange('defaultProject', value)} />
         <Metrics
           defaultProject={defaultProject}
           metricType={metricType}
@@ -197,7 +202,7 @@ export class QueryEditor extends React.Component<Props, State> {
                 onChange={value => this.onPropertyChange('alignmentPeriod', value)}
               />
               <AliasBy value={aliasBy} onChange={value => this.onPropertyChange('aliasBy', value)} />
-              <Help datasource={datasource} rawQuery={lastQuery} lastQueryError={lastQueryError} />
+              <Help rawQuery={lastQuery} lastQueryError={lastQueryError} />
             </>
           )}
         </Metrics>
