@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import Page from 'app/core/components/Page/Page';
-import { ConfirmButton, Button } from '@grafana/ui';
+import { DeleteButton } from '@grafana/ui';
 import { NavModel } from '@grafana/data';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Team, OrgRole, StoreState } from 'app/types';
@@ -66,15 +66,7 @@ export class TeamList extends PureComponent<Props, any> {
           <a href={teamUrl}>{team.memberCount}</a>
         </td>
         <td className="text-right">
-          <ConfirmButton
-            size="sm"
-            confirmText="Delete"
-            confirmVariant="danger"
-            disabled={!canDelete}
-            onConfirm={() => this.deleteTeam(team)}
-          >
-            <Button size="sm" variant="danger" icon="fa fa-remove" />
-          </ConfirmButton>
+          <DeleteButton disabled={!canDelete} onConfirm={() => this.deleteTeam(team)} />
         </td>
       </tr>
     );
