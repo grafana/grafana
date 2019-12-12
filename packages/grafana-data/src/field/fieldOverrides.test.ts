@@ -2,7 +2,6 @@ import { setFieldConfigDefaults, findNumericFieldMinMax, applyFieldOverrides } f
 import { MutableDataFrame } from '../dataframe';
 import { FieldConfig, FieldConfigSource, InterpolateFunction, GrafanaTheme } from '../types';
 import { FieldMatcherID } from '../transformations';
-import { Int } from 'apache-arrow';
 
 describe('FieldOverrides', () => {
   it('will merge FieldConfig with default values', () => {
