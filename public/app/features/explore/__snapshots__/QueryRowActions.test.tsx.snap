@@ -21,7 +21,7 @@ exports[`QueryRowActions should render component 1`] = `
     className="gf-form"
   >
     <button
-      className="gf-form-label gf-form-label--btn"
+      className="gf-form-label"
       disabled={true}
       title="Query row latency"
     >
