@@ -119,7 +119,7 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
         display: block;
         background-color: ${theme.background.dropdown};
         width: 4px;
-        height: 205px;
+        height: 221px;
         content: ' ';
         position: absolute;
         top: 0;
@@ -132,12 +132,11 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     calendarTitle: css`
-      color: $text-color;
+      color: ${theme.colors.text}
       background-color: inherit;
-      line-height: 26px;
-      font-size: $font-size-md;
+      line-height: 21px;
+      font-size: ${theme.typography.size.md};
       border: 1px solid transparent;
-      border-radius: $border-radius;
 
       &:hover {
         box-shadow: $panel-editor-viz-item-shadow-hover;
@@ -154,14 +153,15 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
       .react-calendar__navigation__label,
       .react-calendar__navigation__arrow,
       .react-calendar__navigation {
-        color: $input-color;
-        background-color: ${theme.background.dropdown};
+        color: ${theme.colors.text};
         border: 0;
+        font-weight: ${theme.typography.weight.semibold};
       }
 
       .react-calendar__month-view__weekdays {
         background-color: inherit;
         text-align: center;
+        color: ${theme.colors.blueShade};
 
         abbr {
           border: 0;
@@ -194,11 +194,34 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
 
       .react-calendar__tile--active,
       .react-calendar__tile--active:hover {
-        color: $white;
-        font-weight: $font-weight-semi-bold;
-        background: linear-gradient(0deg, $blue-base, $blue-shade);
+        color: ${theme.colors.white};
+        font-weight: ${theme.typography.weight.semibold};
+        background: #5794f2;
         box-shadow: none;
-        border: 1px solid transparent;
+        border: 0px;
+      }
+
+      .react-calendar__tile--rangeEnd,
+      .react-calendar__tile--rangeStart {
+        padding: 0;
+        border: 0px;
+
+        abbr {
+          background-color: #1f60c4;
+          border-radius: 100px;
+          display: block;
+          padding: 2px 7px 3px;
+        }
+      }
+
+      .react-calendar__tile--rangeStart {
+        border-top-left-radius: 20px;
+        border-bottom-left-radius: 20px;
+      }
+
+      .react-calendar__tile--rangeEnd {
+        border-top-right-radius: 20px;
+        border-bottom-right-radius: 20px;
       }
     `,
   };
