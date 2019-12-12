@@ -1,4 +1,5 @@
-import { getFieldProperties } from './fieldOverrides';
+import { getFieldProperties, findNumericFieldMinMax } from './fieldOverrides';
+import { MutableDataFrame } from '../dataframe';
 
 describe('FieldOverrides', () => {
   it('Construct simple field properties', () => {
@@ -26,5 +27,19 @@ describe('FieldOverrides', () => {
     expect(field.max).toEqual(0);
     expect(field.min).toEqual(-100);
     expect(field.unit).toEqual('ms');
+  });
+});
+
+describe('Global MinMax', () => {
+  it('find global min max', () => {
+    const f0 = new MutableDataFrame();
+    f0.add({ title: 'AAA', value: 100 }, true);
+    f0.add({ title: 'BBB', value: 20 }, true);
+    f0.add({ title: 'CCC', value: 200 }, true);
+    expect(f0.length).toEqual(3);
+
+    const minmax = findNumericFieldMinMax([f0]);
+    expect(minmax.min).toEqual(20);
+    expect(minmax.max).toEqual(200);
   });
 });
