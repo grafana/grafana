@@ -8,6 +8,9 @@ import { Options } from './types';
 
 interface Props extends PanelProps<Options> {}
 
+// So that the table does not go all the way to the edge of the panel chrome
+const paddingBottom = 35;
+
 export class TablePanel extends Component<Props> {
   constructor(props: Props) {
     super(props);
@@ -20,6 +23,6 @@ export class TablePanel extends Component<Props> {
       return <div>No Table Data...</div>;
     }
 
-    return <NewTable height={height} width={width} data={data.series[0]} />;
+    return <NewTable height={height - paddingBottom} width={width} data={data.series[0]} />;
   }
 }
