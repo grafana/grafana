@@ -331,6 +331,7 @@ const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }: Props) => {
           prev2Label={null}
           className={styles.calendarBody}
           tileClassName={styles.calendarTitle}
+          value={toCalendarDate(selected)}
           nextLabel={<span className="fa fa-angle-right" />}
           prevLabel={<span className="fa fa-angle-left" />}
           onChange={value => onChange(onCalendarChange(value))}
@@ -351,6 +352,10 @@ const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }: Props) => {
     </div>
   );
 };
+
+function toCalendarDate(selected: TimeRange): Date[] {
+  return [selected.from.toDate(), selected.to.toDate()];
+}
 
 function onCalendarChange(value: Date | Date[]): TimeRange {
   const [from, to] = value;
