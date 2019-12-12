@@ -79,7 +79,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       // set initial transparency
       if (ctrl.panel.transparent) {
         transparentLastState = true;
-        panelContainer.addClass('panel-transparent');
+        panelContainer.addClass('panel-container--transparent');
       }
 
       // update scrollbar after mounting
