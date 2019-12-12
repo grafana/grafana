@@ -159,6 +159,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     logDetailsTable: css`
       label: logs-row-details-table;
       table-layout: auto;
+      width: 100%;
     `,
     logsDetailsIcon: css`
       label: logs-row-details__icon;
@@ -182,6 +183,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     logDetailsValue: css`
       label: logs-row-details__row;
       line-height: 2;
+      width: 100%;
       padding: ${theme.spacing.sm};
       position: relative;
       vertical-align: top;
