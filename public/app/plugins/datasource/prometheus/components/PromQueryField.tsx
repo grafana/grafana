@@ -5,7 +5,6 @@ import { Plugin } from 'slate';
 import {
   Cascader,
   CascaderOption,
-  FormLabel,
   SlatePrism,
   TypeaheadInput,
   TypeaheadOutput,
@@ -101,9 +100,6 @@ export function willApplySuggestion(suggestion: string, { typeaheadContext, type
 
 interface PromQueryFieldProps extends ExploreQueryFieldProps<PrometheusDatasource, PromQuery, PromOptions> {
   history: Array<HistoryItem<PromQuery>>;
-  explore?: boolean;
-  interval?: string;
-  onIntervalChange?: (e: React.SyntheticEvent<HTMLInputElement>) => void;
 }
 
 interface PromQueryFieldState {
@@ -279,7 +275,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   render() {
-    const { data, query, explore, interval } = this.props;
+    const { data, query, children } = this.props;
     const { metricsOptions, syntaxLoaded, hint } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
     const chooserText = getChooserText(syntaxLoaded, metricsOptions);
@@ -313,31 +309,23 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
               syntaxLoaded={syntaxLoaded}
             />
           </div>
-          {explore ? (
-            <div className="gf-form-inline explore-input--ml">
-              <div className="gf-form">
-                <FormLabel width={4}>Step</FormLabel>
-                <input
-                  type="text"
-                  className="gf-form-input width-6"
-                  placeholder={'auto'}
-                  onChange={this.props.onIntervalChange}
-                  onBlur={this.props.onRunQuery}
-                  value={interval}
-                />
-              </div>
-            </div>
-          ) : null}
+          {children}
         </div>
-        {showError ? <div className="prom-query-field-info text-error">{data.error.message}</div> : null}
+        {showError ? (
+          <div className="query-row-break">
+            <div className="prom-query-field-info text-error">{data.error.message}</div>
+          </div>
+        ) : null}
         {hint ? (
-          <div className="prom-query-field-info text-warning">
-            {hint.label}{' '}
-            {hint.fix ? (
-              <a className="text-link muted" onClick={this.onClickHintFix}>
-                {hint.fix.label}
-              </a>
-            ) : null}
+          <div className="query-row-break">
+            <div className="prom-query-field-info text-warning">
+              {hint.label}{' '}
+              {hint.fix ? (
+                <a className="text-link muted" onClick={this.onClickHintFix}>
+                  {hint.fix.label}
+                </a>
+              ) : null}
+            </div>
           </div>
         ) : null}
       </>

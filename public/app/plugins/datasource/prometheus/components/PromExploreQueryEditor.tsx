@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { ExploreQueryFieldProps } from '@grafana/data';
+import { FormLabel } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery, PromOptions } from '../types';
@@ -44,6 +45,12 @@ export class PromExploreQueryEditor extends PureComponent<Props, State> {
     this.props.onRunQuery();
   };
 
+  onReturnKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      this.onRunQuery();
+    }
+  };
+
   render() {
     const { datasource, query, data, history } = this.props;
     const { interval } = this.state;
@@ -57,10 +64,21 @@ export class PromExploreQueryEditor extends PureComponent<Props, State> {
           onChange={this.onFieldChange}
           history={history}
           data={data}
-          explore={true}
-          interval={interval}
-          onIntervalChange={this.onIntervalChange}
-        />
+        >
+          <div className="gf-form-inline explore-input--ml">
+            <div className="gf-form">
+              <FormLabel width={4}>Step</FormLabel>
+              <input
+                type="text"
+                className="gf-form-input width-6"
+                placeholder={'auto'}
+                onChange={this.onIntervalChange}
+                onKeyDown={this.onReturnKeyDown}
+                value={interval}
+              />
+            </div>
+          </div>
+        </PromQueryField>
       </div>
     );
   }
