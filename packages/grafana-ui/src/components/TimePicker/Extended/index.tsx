@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTheme, stylesFactory } from '../../../themes';
-import { GrafanaTheme, TimeOption, TimeRange } from '@grafana/data';
+import { GrafanaTheme, TimeOption, TimeRange, DateTime, dateTime } from '@grafana/data';
 import { css } from 'emotion';
 import TimeRangeTitle from './TimeRangeTitle';
 import TimeRangeForm from './TimeRangeForm';
@@ -8,7 +8,6 @@ import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import TimeRangeList from './TimeRangeList';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import Forms from '../../Forms';
-import { style } from 'd3';
 
 const defaultSelectOptions: TimeOption[] = [
   { from: 'now-5m', to: 'now', display: 'Last 5 minutes', section: 3 },
@@ -334,6 +333,7 @@ const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }: Props) => {
           tileClassName={styles.calendarTitle}
           nextLabel={<span className="fa fa-angle-right" />}
           prevLabel={<span className="fa fa-angle-left" />}
+          onChange={value => onChange(onCalendarChange(value))}
         />
         <div className={styles.calendarFooter}>
           <Forms.Button
@@ -351,5 +351,15 @@ const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }: Props) => {
     </div>
   );
 };
+
+function onCalendarChange(value: Date | Date[]): TimeRange {
+  const [from, to] = value;
+
+  return {
+    from: dateTime(from),
+    to: dateTime(to),
+    raw: { from: dateTime(from), to: dateTime(to) },
+  };
+}
 
 export default ExtendedTimePicker;
