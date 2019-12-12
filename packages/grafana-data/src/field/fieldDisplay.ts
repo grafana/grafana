@@ -1,7 +1,6 @@
 import toString from 'lodash/toString';
 import isEmpty from 'lodash/isEmpty';
 
-import { getFieldProperties } from './fieldOverrides';
 import { getDisplayProcessor } from './displayProcessor';
 import { getFlotPairs } from '../utils/flotPairs';
 import {
@@ -244,9 +243,8 @@ function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): Fiel
   const { fieldOptions } = options;
   const { defaults } = fieldOptions;
 
-  const config = getFieldProperties(defaults, {});
   const displayProcessor = getDisplayProcessor({
-    config,
+    config: defaults,
     theme: options.theme,
     type: FieldType.other,
   });

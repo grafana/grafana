@@ -1,3 +1,4 @@
+import set from 'lodash/set';
 import {
   DynamicConfigValue,
   FieldConfigSource,
@@ -82,15 +83,17 @@ export function applyFieldOverrides(
     }
 
     const fields = frame.fields.map(field => {
-      let config: FieldConfig = field.config || {};
+      // Config is mutable within this scope
+      const config: FieldConfig = { ...field.config } || {};
       if (field.type === FieldType.number) {
-        config = getFieldProperties(config, source.defaults);
+        setFieldConfigDefaults(config, source.defaults);
       }
+
       // Find any matching rules and then override
       for (const rule of override) {
         if (rule.match(field)) {
           for (const prop of rule.properties) {
-            config = applyDynamicConfigValue({
+            setDynamicConfigValue(config, {
               value: prop,
               config,
               field,
@@ -108,16 +111,10 @@ export function applyFieldOverrides(
             range = findNumericFieldMinMax(data);
           }
           if (!isNumber(config.min)) {
-            config = {
-              ...config,
-              min: range.min,
-            };
+            config.min = range.min;
           }
           if (!isNumber(config.max)) {
-            config = {
-              ...config,
-              max: range.max,
-            };
+            config.max = range.max;
           }
         }
       }
@@ -154,76 +151,63 @@ interface DynamicConfigValueOptions {
   replaceVariables: InterpolateFunction;
 }
 
-export function applyDynamicConfigValue(options: DynamicConfigValueOptions): FieldConfig {
-  const { value } = options;
-  const config = { ...options.config };
-  (config as any)[value.path] = value.value;
-  // TODO... depending on type... need to convert string to number etc
-  return config;
-}
-
-export function getFieldProperties(...props: FieldConfig[]): FieldConfig {
-  let field = props[0] as FieldConfig;
-  for (let i = 1; i < props.length; i++) {
-    field = applyFieldProperties(field, props[i]);
-  }
-
-  // First value is always -Infinity
-  if (field.thresholds && field.thresholds.length) {
-    field.thresholds[0].value = -Infinity;
-  }
-
-  // Verify that max > min
-  if (field.hasOwnProperty('min') && field.hasOwnProperty('max') && field.min! > field.max!) {
-    return {
-      ...field,
-      min: field.max,
-      max: field.min,
-    };
-  }
-  return field;
-}
-
 const numericFieldProps: any = {
   decimals: true,
   min: true,
   max: true,
 };
 
+function prepareConfigValue(key: string, input: any, options?: DynamicConfigValueOptions): any {
+  if (options) {
+    // TODO template variables etc
+  }
+
+  if (numericFieldProps[key]) {
+    const num = toNumber(input);
+    if (isNaN(num)) {
+      return null;
+    }
+    return num;
+  } else if (input) {
+    // skips empty string
+    if (key === 'unit' && input === 'none') {
+      return null;
+    }
+  }
+  return input;
+}
+
+export function setDynamicConfigValue(config: FieldConfig, options: DynamicConfigValueOptions) {
+  const { value } = options;
+  const v = prepareConfigValue(value.path, value.value, options);
+  set(config, value.path, v);
+}
+
 /**
- * Returns a version of the field with the overries applied.  Any property with
- * value: null | undefined | empty string are skipped.
- *
  * For numeric values, only valid numbers will be applied
  * for units, 'none' will be skipped
  */
-export function applyFieldProperties(field: FieldConfig, props?: FieldConfig): FieldConfig {
-  if (!props) {
-    return field;
-  }
-  const keys = Object.keys(props);
-  if (!keys.length) {
-    return field;
-  }
-  const copy = { ...field } as any; // make a copy that we will manipulate directly
-  for (const key of keys) {
-    const val = (props as any)[key];
-    if (val === null || val === undefined) {
-      continue;
-    }
-
-    if (numericFieldProps[key]) {
-      const num = toNumber(val);
-      if (!isNaN(num)) {
-        copy[key] = num;
-      }
-    } else if (val) {
-      // skips empty string
-      if (key === 'unit' && val === 'none') {
+export function setFieldConfigDefaults(config: FieldConfig, props?: FieldConfig) {
+  if (props) {
+    const keys = Object.keys(props);
+    for (const key of keys) {
+      const val = prepareConfigValue(key, (props as any)[key]);
+      if (val === null || val === undefined) {
         continue;
       }
-      copy[key] = val;
+      set(config, key, val);
     }
   }
-  return copy as FieldConfig;
+
+  // First value is always -Infinity
+  if (config.thresholds && config.thresholds.length) {
+    config.thresholds[0].value = -Infinity;
+  }
+
+  // Verify that max > min (swap if necessary)
+  if (config.hasOwnProperty('min') && config.hasOwnProperty('max') && config.min! > config.max!) {
+    const tmp = config.max;
+    config.max = config.min;
+    config.min = tmp;
+  }
 }

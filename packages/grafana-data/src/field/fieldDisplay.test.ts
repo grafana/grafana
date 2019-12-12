@@ -5,7 +5,7 @@ import { ReducerID } from '../transformations/fieldReducer';
 import { Threshold } from '../types/threshold';
 import { GrafanaTheme } from '../types/theme';
 import { MappingType } from '../types';
-import { getFieldProperties } from './fieldOverrides';
+import { setFieldConfigDefaults } from './fieldOverrides';
 
 describe('FieldDisplay', () => {
   it('show first numeric values', () => {
@@ -63,7 +63,7 @@ describe('FieldDisplay', () => {
   });
 
   it('should restore -Infinity value for base threshold', () => {
-    const field = getFieldProperties({
+    const field = {
       thresholds: [
         ({
           color: '#73BF69',
@@ -74,7 +74,8 @@ describe('FieldDisplay', () => {
           value: 50,
         },
       ],
-    });
+    };
+    setFieldConfigDefaults(field);
     expect(field.thresholds!.length).toEqual(2);
     expect(field.thresholds![0].value).toBe(-Infinity);
   });
