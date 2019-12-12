@@ -82,7 +82,6 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       }
 
       > td {
-        padding-right: ${theme.spacing.sm};
         border-top: ${theme.border.width.sm} solid transparent;
         border-bottom: ${theme.border.width.sm} solid transparent;
         height: 100%;
@@ -160,6 +159,9 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       label: logs-row-details-table;
       table-layout: auto;
       width: 100%;
+      td:last-child {
+        width: 100%;
+      };
     `,
     logsDetailsIcon: css`
       label: logs-row-details__icon;
@@ -171,7 +173,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     logDetailsLabel: css`
       label: logs-row-details__label;
       max-width: 25em;
-      min-width: 12em;
+      min-width: 15em;
       padding: 0 ${theme.spacing.sm};
       word-break: break-all;
     `,
@@ -183,7 +185,6 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     logDetailsValue: css`
       label: logs-row-details__row;
       line-height: 2;
-      width: 100%;
       padding: ${theme.spacing.sm};
       position: relative;
       vertical-align: top;
