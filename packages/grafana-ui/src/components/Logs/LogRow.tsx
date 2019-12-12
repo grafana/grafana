@@ -138,10 +138,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           )}
           <td className={style.logsRowLevel} />
           {!allowDetails && (
-            <td
-              title={showDetails ? 'Hide log details' : 'See log details'}
-              className={style.logsRowToggleDetails}
-            >
+            <td title={showDetails ? 'Hide log details' : 'See log details'} className={style.logsRowToggleDetails}>
               <i className={showDetailsClassName} />
             </td>
           )}
