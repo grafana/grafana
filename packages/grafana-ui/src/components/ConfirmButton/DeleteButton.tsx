@@ -14,7 +14,7 @@ export const DeleteButton: FC<Props> = ({ size, disabled, onConfirm }) => {
     <ConfirmButton
       confirmText="Delete"
       confirmVariant="danger"
-      size={size || 'sm'}
+      size={size || 'md'}
       disabled={disabled}
       onConfirm={onConfirm}
     >

@@ -7,7 +7,7 @@ import { DeleteButton } from './DeleteButton';
 
 const getKnobs = () => {
   return {
-    size: select('Size', ['sm', 'md', 'lg'], 'sm'),
+    size: select('Size', ['sm', 'md', 'lg'], 'md'),
     disabled: boolean('Disabled', false),
   };
 };

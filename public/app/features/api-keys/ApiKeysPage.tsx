@@ -287,7 +287,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
                     <td>{key.role}</td>
                     <td>{this.formatDate(key.expiration)}</td>
                     <td>
-                      <DeleteButton onConfirm={() => this.onDeleteApiKey(key)} />
+                      <DeleteButton size="sm" onConfirm={() => this.onDeleteApiKey(key)} />
                     </td>
                   </tr>
                 );
