@@ -547,6 +547,8 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
             this.target.azureLogAnalytics.workspace = list[0].value;
           }
         }
+
+        return this.workspaces;
       })
       .catch(this.handleQueryCtrlError.bind(this));
   };
