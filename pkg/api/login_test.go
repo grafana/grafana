@@ -119,7 +119,7 @@ func TestLoginErrorCookieApiEndpoint(t *testing.T) {
 	assert.Equal(t, sc.resp.Code, 200)
 
 	responseString, err := getBody(sc.resp)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.True(t, strings.Contains(responseString, oauthError.Error()))
 }
 
@@ -214,7 +214,7 @@ func TestLoginViewRedirect(t *testing.T) {
 			}
 
 			responseString, err := getBody(sc.resp)
-			assert.Nil(t, err)
+			assert.NoError(t, err)
 			if c.err != nil {
 				assert.True(t, strings.Contains(responseString, c.err.Error()))
 			}
@@ -303,7 +303,7 @@ func TestLoginPostRedirect(t *testing.T) {
 			assert.Equal(t, sc.resp.Code, 200)
 
 			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-			assert.Nil(t, err)
+			assert.NoError(t, err)
 			redirectURL := respJSON.Get("redirectUrl").MustString()
 			if c.err != nil {
 				assert.Equal(t, "", redirectURL)
