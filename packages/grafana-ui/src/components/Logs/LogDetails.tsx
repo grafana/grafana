@@ -150,6 +150,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
       >
         {showDuplicates && <td />}
         <td className={cx(style.logsRowLevel, styles.logsRowLevelDetails)} />
+        <td />
         <td colSpan={10}>
           <div className={style.logDetailsContainer}>
             <table className={style.logDetailsTable}>

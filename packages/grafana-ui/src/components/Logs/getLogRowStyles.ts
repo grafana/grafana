@@ -100,6 +100,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     logsRowLevel: css`
       label: logs-row__level;
       position: relative;
+      padding-right: ${theme.spacing.sm};
       width: 10px;
       cursor: default;
 
@@ -124,26 +125,23 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       width: 15px;
       font-size: 9px;
       padding-top: 5px;
+      padding-right: ${theme.spacing.sm};
     `,
     logsRowLocalTime: css`
       label: logs-row__localtime;
       display: table-cell;
       white-space: nowrap;
-      padding-right: 1em;
+      padding-right: ${theme.spacing.sm};
     `,
     logsRowLabels: css`
       label: logs-row__labels;
       white-space: nowrap;
-      padding-right: 1em;
+      padding-right: ${theme.spacing.sm};
       max-width: 22em;
     `,
     logsRowMessage: css`
       label: logs-row__message;
       word-break: break-all;
-    `,
-    logsRowStats: css`
-      label: logs-row__stats;
-      margin: 5px 0;
     `,
     //Log details sepcific CSS
     logDetailsContainer: css`
@@ -161,13 +159,13 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       width: 100%;
       td:last-child {
         width: 100%;
-      };
+      }
     `,
     logsDetailsIcon: css`
       label: logs-row-details__icon;
       position: relative;
       width: 2.5em;
-      padding-right: ${theme.spacing.sm};
+      padding-right: ${theme.spacing.md};
       color: ${theme.colors.gray3};
     `,
     logDetailsLabel: css`
