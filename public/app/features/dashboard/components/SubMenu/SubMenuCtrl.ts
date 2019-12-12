@@ -13,7 +13,7 @@ export class SubMenuCtrl {
   constructor(private variableSrv: VariableSrv, private $location: ILocationService) {
     this.annotations = this.dashboard.templating.list;
     this.variables = this.variableSrv.variables;
-    this.submenuEnabled = false;
+    this.submenuEnabled = this.dashboard.meta.submenuEnabled;
     this.dashboard.events.on(CoreEvents.submenuVisibilityChanged, (enabled: boolean) => {
       this.submenuEnabled = enabled;
     });
