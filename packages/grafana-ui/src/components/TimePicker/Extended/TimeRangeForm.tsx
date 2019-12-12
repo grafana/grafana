@@ -35,10 +35,6 @@ export default class TimeRangeForm extends PureComponent<Props, State> {
     };
   }
 
-  onInputFocus = (event: FormEvent<HTMLInputElement>) => {
-    this.setState({ displayCalendar: true });
-  };
-
   onInputChange = (event: FormEvent<HTMLInputElement>, name: keyof State) => {
     const { value } = event.currentTarget;
     const invalid = !isValid(value);
@@ -47,6 +43,12 @@ export default class TimeRangeForm extends PureComponent<Props, State> {
       ...this.state,
       [name]: { value, invalid },
     });
+  };
+
+  onCalendarTrigger = (trigger: CalendarTrigger) => {
+    if (this.props.calendarTrigger === trigger) {
+      this.setState({ displayCalendar: true });
+    }
   };
 
   onCalendarChange = (timeRange: TimeRange) => {
@@ -80,17 +82,17 @@ export default class TimeRangeForm extends PureComponent<Props, State> {
         />
         <Forms.Field label="From">
           <Forms.Input
-            onFocus={this.onInputFocus}
+            onFocus={() => this.onCalendarTrigger('onFocus')}
             onChange={event => this.onInputChange(event, 'from')}
-            addonAfter={calendarIcon(calendarTrigger)}
+            addonAfter={calendarIcon(calendarTrigger, this.onCalendarTrigger)}
             {...from}
           />
         </Forms.Field>
         <Forms.Field label="To">
           <Forms.Input
-            onFocus={this.onInputFocus}
+            onFocus={() => this.onCalendarTrigger('onFocus')}
             onChange={event => this.onInputChange(event, 'to')}
-            addonAfter={calendarIcon(calendarTrigger)}
+            addonAfter={calendarIcon(calendarTrigger, this.onCalendarTrigger)}
             {...to}
           />
         </Forms.Field>
@@ -100,9 +102,9 @@ export default class TimeRangeForm extends PureComponent<Props, State> {
   }
 }
 
-function calendarIcon(calendarTrigger: CalendarTrigger): ReactNode {
+function calendarIcon(calendarTrigger: CalendarTrigger, onTrigger: (onTrigger: CalendarTrigger) => void): ReactNode {
   if (calendarTrigger === 'onButton') {
-    return <Forms.Button icon="fa fa-calendar" variant="secondary" />;
+    return <Forms.Button icon="fa fa-calendar" variant="secondary" onClick={() => onTrigger('onButton')} />;
   }
   return null;
 }

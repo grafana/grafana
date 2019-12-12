@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTheme, stylesFactory } from '../../../themes';
-import { GrafanaTheme, TimeRange, dateTime, DefaultTimeRange } from '@grafana/data';
+import { GrafanaTheme, TimeRange, dateTime } from '@grafana/data';
 import { css } from 'emotion';
 import TimeRangeTitle from './TimeRangeTitle';
 import Calendar from 'react-calendar/dist/entry.nostyle';

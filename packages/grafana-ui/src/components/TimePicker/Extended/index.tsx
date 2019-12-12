@@ -132,7 +132,7 @@ const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }: Props) => {
           >
             <TimeRangeTitle>Absolute time range</TimeRangeTitle>
           </div>
-          <TimeRangeForm value={selected} onApply={onChange} />
+          <TimeRangeForm value={selected} onApply={onChange} calendarTrigger="onFocus" />
         </div>
         <div className={styles.recentRanges}>
           <TimeRangeList
