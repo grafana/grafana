@@ -2,7 +2,7 @@
 import React, { Component } from 'react';
 
 // Types
-import { NewTable } from '@grafana/ui';
+import { Table } from '@grafana/ui';
 import { PanelProps } from '@grafana/data';
 import { Options } from './types';
 
@@ -23,6 +23,6 @@ export class TablePanel extends Component<Props> {
       return <div>No Table Data...</div>;
     }
 
-    return <NewTable height={height - paddingBottom} width={width} data={data.series[0]} />;
+    return <Table height={height - paddingBottom} width={width} data={data.series[0]} />;
   }
 }

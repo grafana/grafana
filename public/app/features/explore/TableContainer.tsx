@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { NewTable, Collapse } from '@grafana/ui';
+import { Table, Collapse } from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
@@ -28,7 +28,7 @@ export class TableContainer extends PureComponent<TableContainerProps> {
 
     return (
       <Collapse label="Table" loading={loading} collapsible isOpen={showingTable} onToggle={this.onClickTableButton}>
-        {tableResult && <NewTable data={tableResult} loading={loading} onClickCell={onClickCell} />}
+        {tableResult && <Table data={tableResult} loading={loading} onClickCell={onClickCell} />}
       </Collapse>
     );
   }
