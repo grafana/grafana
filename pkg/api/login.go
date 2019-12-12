@@ -81,7 +81,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
 			if err := validateRedirectTo(redirectTo); err != nil {
 				viewData.Settings["loginError"] = err.Error()
-				c.HTML(200, ViewIndex, viewData)
+				c.HTML(200, getViewIndex(), viewData)
 				c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
 				return
 			}
@@ -94,7 +94,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		return
 	}
 
-	c.HTML(200, ViewIndex, viewData)
+	c.HTML(200, getViewIndex(), viewData)
 }
 
 func (hs *HTTPServer) loginAuthProxyUser(c *models.ReqContext) {
