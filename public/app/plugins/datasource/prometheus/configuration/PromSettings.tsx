@@ -28,14 +28,7 @@ export const PromSettings = (props: Props) => {
                   value={value.jsonData.timeInterval}
                   spellCheck={false}
                   onChange={onChangeHandler('timeInterval', value, onChange)}
-                  validationEvents={{
-                    [EventsWithValidation.onBlur]: [
-                      regexValidation(
-                        /^\d+(ms|[Mwdhmsy])$/,
-                        'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s'
-                      ),
-                    ],
-                  }}
+                  validationEvents={promSettingsValidationEvents}
                 />
               }
               tooltip="Set this to your global scrape interval defined in your Prometheus config file. This will be used as a lower limit for the
@@ -55,14 +48,7 @@ export const PromSettings = (props: Props) => {
                   onChange={onChangeHandler('queryTimeout', value, onChange)}
                   spellCheck={false}
                   placeholder="60s"
-                  validationEvents={{
-                    [EventsWithValidation.onBlur]: [
-                      regexValidation(
-                        /^\d+(ms|[Mwdhmsy])$/,
-                        'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s'
-                      ),
-                    ],
-                  }}
+                  validationEvents={promSettingsValidationEvents}
                 />
               }
               tooltip="Set the Prometheus query timeout."
@@ -107,6 +93,15 @@ export const PromSettings = (props: Props) => {
       </div>
     </>
   );
+};
+
+export const promSettingsValidationEvents = {
+  [EventsWithValidation.onBlur]: [
+    regexValidation(
+      /^$|^\d+(ms|[Mwdhmsy])$/,
+      'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s'
+    ),
+  ],
 };
 
 export const getValueFromEventItem = (eventItem: SyntheticEvent<HTMLInputElement> | SelectableValue<string>) => {
