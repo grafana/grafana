@@ -129,6 +129,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           className={cx(style.logsRow, { [styles.hoverBackground]: hasHoverBackground })}
           onMouseEnter={() => this.onChangeHoverBackground(true)}
           onMouseLeave={() => this.onChangeHoverBackground(false)}
+          onClick={this.toggleDetails}
         >
           {showDuplicates && (
             <td className={style.logsRowDuplicates}>
@@ -139,7 +140,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           {!allowDetails && (
             <td
               title={showDetails ? 'Hide log details' : 'See log details'}
-              onClick={this.toggleDetails}
               className={style.logsRowToggleDetails}
             >
               <i className={showDetailsClassName} />
