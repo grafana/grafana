@@ -90,10 +90,16 @@ debug.test
 /packages/**/compiled
 /packages/**/.rpt2_cache
 
-theOutput/
-
 # Ignore go local build dependencies
 /scripts/go/bin/**
 
 # Ignore compilation stats from `yarn stats`
 compilation-stats.json
+
+# e2e tests
+/packages/grafana-e2e/cypress/screenshots
+/packages/grafana-e2e/cypress/videos
+/packages/grafana-e2e/cypress/logs
+/public/e2e-test/screenShots/theOutput
+/public/e2e-tests/screenShots/theOutput/*.png
+

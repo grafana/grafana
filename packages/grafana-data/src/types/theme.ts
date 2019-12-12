@@ -237,6 +237,10 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     formSwitchBgHover: string;
     formSwitchBgDisabled: string;
     formSwitchDot: string;
+    formCheckboxBg: string;
+    formCheckboxBgChecked: string;
+    formCheckboxBgCheckedHover: string;
+    formCheckboxCheckmark: string;
   };
   shadow: {
     pageHeader: string;

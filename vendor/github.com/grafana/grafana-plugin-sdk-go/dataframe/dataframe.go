@@ -7,17 +7,26 @@ import (
 	"time"
 )
 
+// Frame represents a columnar storage with optional labels.
+type Frame struct {
+	Name   string
+	Fields []*Field
+
+	RefID string
+}
+
 // Field represents a column of data with a specific type.
 type Field struct {
 	Name   string
 	Vector Vector
+	Labels Labels
 }
 
 // Fields is a slice of Field pointers.
 type Fields []*Field
 
 // NewField returns a new instance of Field.
-func NewField(name string, values interface{}) *Field {
+func NewField(name string, labels Labels, values interface{}) *Field {
 	var vec Vector
 	switch v := values.(type) {
 	case []int64:
@@ -87,6 +96,7 @@ func NewField(name string, values interface{}) *Field {
 	return &Field{
 		Name:   name,
 		Vector: vec,
+		Labels: labels,
 	}
 }
 
@@ -152,10 +162,10 @@ func (l Labels) String() string {
 // LabelsFromString parses the output of Labels.String() into
 // a Labels object. It probably has some flaws.
 func LabelsFromString(s string) (Labels, error) {
-	labels := make(map[string]string)
 	if s == "" {
-		return labels, nil
+		return nil, nil
 	}
+	labels := make(map[string]string)
 
 	for _, rawKV := range strings.Split(s, ", ") {
 		kV := strings.SplitN(rawKV, "=", 2)
@@ -168,20 +178,10 @@ func LabelsFromString(s string) (Labels, error) {
 	return labels, nil
 }
 
-// Frame represents a columnar storage with optional labels.
-type Frame struct {
-	Name   string
-	Labels Labels
-	Fields []*Field
-
-	RefID string
-}
-
 // New returns a new instance of a Frame.
-func New(name string, labels Labels, fields ...*Field) *Frame {
+func New(name string, fields ...*Field) *Frame {
 	return &Frame{
 		Name:   name,
-		Labels: labels,
 		Fields: fields,
 	}
 }

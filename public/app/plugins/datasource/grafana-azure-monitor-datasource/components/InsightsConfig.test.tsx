@@ -4,7 +4,7 @@ import InsightsConfig, { Props } from './InsightsConfig';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
-    datasourceConfig: {
+    options: {
       id: 21,
       orgId: 1,
       name: 'Azure Monitor-10-10',
@@ -24,15 +24,18 @@ const setup = (propOverrides?: object) => {
         appInsightsApiKey: false,
       },
       jsonData: {
-        appInsightsAppId: 'cddcc020-2c94-460a-a3d0-df3147ffa792',
+        cloudName: '',
+        subscriptionId: '',
+        appInsightsAppId: 'cvvcc020-2cpo-123a-a3d0-df6547fki792',
       },
       secureJsonData: {
-        appInsightsApiKey: 'e7f3f661-a933-4b3f-8176-51c4f982ec48',
+        appInsightsApiKey: 'e7f3f775-a987-4b3f-3835-51c4f982kl48',
       },
       version: 1,
       readOnly: false,
     },
-    onDatasourceUpdate: jest.fn(),
+    onUpdateOption: jest.fn(),
+    onResetOptionKey: jest.fn(),
   };
 
   Object.assign(props, propOverrides);

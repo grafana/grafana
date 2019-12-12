@@ -20,12 +20,12 @@ Grafana supports many different storage backends for your time series data (Data
 
 The following data sources are officially supported:
 
-* [CloudWatch]({{< relref "features/datasources/cloudwatch.md" >}})
-* [Elasticsearch]({{< relref "features/datasources/elasticsearch.md" >}})
-* [Graphite]({{< relref "features/datasources/graphite.md" >}})
-* [InfluxDB]({{< relref "features/datasources/influxdb.md" >}})
-* [OpenTSDB]({{< relref "features/datasources/opentsdb.md" >}})
-* [Prometheus]({{< relref "features/datasources/prometheus.md" >}})
+* [CloudWatch]({{< relref "../features/datasources/cloudwatch.md" >}})
+* [Elasticsearch]({{< relref "../features/datasources/elasticsearch.md" >}})
+* [Graphite]({{< relref "../features/datasources/graphite.md" >}})
+* [InfluxDB]({{< relref "../features/datasources/influxdb.md" >}})
+* [OpenTSDB]({{< relref "../features/datasources/opentsdb.md" >}})
+* [Prometheus]({{< relref "../features/datasources/prometheus.md" >}})
 
 The query language and capabilities of each Data Source are obviously very different. You can combine data from multiple Data Sources onto a single Dashboard, but each Panel is tied to a specific Data Source that belongs to a particular Organization.
 

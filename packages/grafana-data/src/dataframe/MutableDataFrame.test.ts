@@ -58,7 +58,7 @@ describe('Apending DataFrame', () => {
     ]);
 
     // Add a time value that has an array type
-    frame.add({ time: [300] });
+    frame.add({ time: 300 });
     expect(frame.toArray()).toEqual([
       { time: 100, name: 'a', value: 1, value2: null }, // 1
       { time: 200, name: 'BB', value: 20, value2: null }, // 2

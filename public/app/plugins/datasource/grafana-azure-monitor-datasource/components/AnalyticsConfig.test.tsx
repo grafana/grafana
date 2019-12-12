@@ -4,7 +4,7 @@ import AnalyticsConfig, { Props } from './AnalyticsConfig';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
-    datasourceConfig: {
+    options: {
       id: 21,
       orgId: 1,
       name: 'Azure Monitor-10-10',
@@ -24,9 +24,10 @@ const setup = (propOverrides?: object) => {
         logAnalyticsClientSecret: false,
       },
       jsonData: {
+        cloudName: '',
+        subscriptionId: '',
         azureLogAnalyticsSameAs: false,
         logAnalyticsDefaultWorkspace: '',
-        logAnalyticsClientSecret: '',
         logAnalyticsTenantId: '',
       },
       secureJsonData: {
@@ -35,9 +36,10 @@ const setup = (propOverrides?: object) => {
       version: 1,
       readOnly: false,
     },
-    logAnalyticsSubscriptions: [],
-    logAnalyticsWorkspaces: [],
-    onDatasourceUpdate: jest.fn(),
+    subscriptions: [],
+    workspaces: [],
+    onUpdateOption: jest.fn(),
+    onResetOptionKey: jest.fn(),
     onLoadSubscriptions: jest.fn(),
     onLoadWorkspaces: jest.fn(),
   };

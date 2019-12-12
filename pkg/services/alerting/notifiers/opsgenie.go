@@ -116,6 +116,18 @@ func (on *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) error
 	}
 
 	bodyJSON.Set("details", details)
+
+	tags := make([]string, 0)
+	for _, tag := range evalContext.Rule.AlertRuleTags {
+		if len(tag.Value) > 0 {
+			tags = append(tags, fmt.Sprintf("%s:%s", tag.Key, tag.Value))
+		} else {
+			tags = append(tags, tag.Key)
+		}
+
+	}
+	bodyJSON.Set("tags", tags)
+
 	body, _ := bodyJSON.MarshalJSON()
 
 	cmd := &models.SendWebhookSync{

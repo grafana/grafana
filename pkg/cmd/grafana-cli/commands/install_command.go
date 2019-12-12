@@ -241,11 +241,9 @@ func extractFiles(archiveFile string, pluginName string, filePath string, allowS
 					continue
 				}
 			} else {
-
 				err = extractFile(zf, newFile)
 				if err != nil {
-					logger.Errorf("Failed to extract file: %v \n", err)
-					continue
+					return errutil.Wrap("Failed to extract file", err)
 				}
 			}
 		}
@@ -288,6 +286,12 @@ func extractFile(file *zip.File, filePath string) (err error) {
 		if os.IsPermission(err) {
 			return xerrors.Errorf(permissionsDeniedMessage, filePath)
 		}
+
+		unwrappedError := xerrors.Unwrap(err)
+		if unwrappedError != nil && strings.EqualFold(unwrappedError.Error(), "text file busy") {
+			return fmt.Errorf("file %s is in use. Please stop Grafana, install the plugin and restart Grafana", filePath)
+		}
+
 		return errutil.Wrap("Failed to open file", err)
 	}
 	defer func() {

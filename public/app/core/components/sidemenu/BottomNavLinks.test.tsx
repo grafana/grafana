@@ -21,6 +21,7 @@ const setup = (propOverrides?: object) => {
         orgCount: 2,
         orgRole: '',
         orgId: 1,
+        login: 'hello',
         orgName: 'Grafana',
         timezone: 'UTC',
         helpFlags1: 1,

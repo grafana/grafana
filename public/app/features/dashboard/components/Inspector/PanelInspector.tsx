@@ -39,16 +39,7 @@ export class PanelInspector extends PureComponent<Props, State> {
     // TODO? should we get the result with an observable once?
     const data = (panel.getQueryRunner() as any).lastResult;
     return (
-      <Modal
-        title={
-          <div className="modal-header-title">
-            <i className="fa fa-info-circle" />
-            <span className="p-l-1">{panel.title ? panel.title : 'Panel'}</span>
-          </div>
-        }
-        onDismiss={this.onDismiss}
-        isOpen={true}
-      >
+      <Modal title={panel.title} icon="info-circle" onDismiss={this.onDismiss} isOpen={true}>
         <div className={bodyStyle}>
           <JSONFormatter json={data} open={2} />
         </div>

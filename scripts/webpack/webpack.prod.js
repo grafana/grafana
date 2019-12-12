@@ -77,7 +77,7 @@ module.exports = merge(common, {
     new HtmlWebpackPlugin({
       filename: path.resolve(__dirname, '../../public/views/index.html'),
       template: path.resolve(__dirname, '../../public/views/index-template.html'),
-      inject: 'body',
+      inject: false,
       excludeChunks: ['manifest', 'dark', 'light'],
       chunksSortMode: 'none'
     }),

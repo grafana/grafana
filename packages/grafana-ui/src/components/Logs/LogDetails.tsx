@@ -106,18 +106,20 @@ class UnThemedLogDetails extends PureComponent<Props> {
     const style = getLogRowStyles(theme, row.logLevel);
     const labels = row.labels ? row.labels : {};
     const labelsAvailable = Object.keys(labels).length > 0;
-
     const fields = this.getAllFields(row);
-
     const parsedFieldsAvailable = fields && fields.length > 0;
 
     return (
-      <div className={style.logsRowDetailsTable}>
-        {labelsAvailable && (
-          <div className={style.logsRowDetailsSectionTable}>
-            <div className={style.logsRowDetailsHeading} aria-label="Log labels">
-              Log Labels:
-            </div>
+      <div className={style.logDetailsContainer}>
+        <table className={style.logDetailsTable}>
+          <tbody>
+            {labelsAvailable && (
+              <tr>
+                <td colSpan={5} className={style.logDetailsHeading} aria-label="Log Labels">
+                  Log Labels:
+                </td>
+              </tr>
+            )}
             {Object.keys(labels).map(key => {
               const value = labels[key];
               return (
@@ -132,14 +134,14 @@ class UnThemedLogDetails extends PureComponent<Props> {
                 />
               );
             })}
-          </div>
-        )}
 
-        {parsedFieldsAvailable && (
-          <div className={style.logsRowDetailsSectionTable}>
-            <div className={style.logsRowDetailsHeading} aria-label="Parsed fields">
-              Parsed fields:
-            </div>
+            {parsedFieldsAvailable && (
+              <tr>
+                <td colSpan={5} className={style.logDetailsHeading} aria-label="Parsed Fields">
+                  Parsed Fields:
+                </td>
+              </tr>
+            )}
             {fields.map(field => {
               const { key, value, links, fieldIndex } = field;
               return (
@@ -156,9 +158,15 @@ class UnThemedLogDetails extends PureComponent<Props> {
                 />
               );
             })}
-          </div>
-        )}
-        {!parsedFieldsAvailable && !labelsAvailable && <div aria-label="No details">No details available</div>}
+            {!parsedFieldsAvailable && !labelsAvailable && (
+              <tr>
+                <td colSpan={5} aria-label="No details">
+                  No details available
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     );
   }

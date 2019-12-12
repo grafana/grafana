@@ -1,15 +1,22 @@
 import _ from 'lodash';
-import { DataFrame, dateMath, ScopedVars, DataQueryResponse, DataQueryRequest, toDataFrame } from '@grafana/data';
+import {
+  DataFrame,
+  dateMath,
+  ScopedVars,
+  DataQueryResponse,
+  DataQueryRequest,
+  toDataFrame,
+  DataSourceApi,
+} from '@grafana/data';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import gfunc from './gfunc';
-import { IQService } from 'angular';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 //Types
-import { GraphiteQuery, GraphiteType } from './types';
+import { GraphiteOptions, GraphiteQuery, GraphiteType } from './types';
 import { getSearchFilterScopedVar } from '../../../features/templating/variable';
 
-export class GraphiteDatasource {
+export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
   basicAuth: string;
   url: string;
   name: string;
@@ -23,12 +30,8 @@ export class GraphiteDatasource {
   _seriesRefLetters: string;
 
   /** @ngInject */
-  constructor(
-    instanceSettings: any,
-    private $q: IQService,
-    private backendSrv: BackendSrv,
-    private templateSrv: TemplateSrv
-  ) {
+  constructor(instanceSettings: any, private backendSrv: BackendSrv, private templateSrv: TemplateSrv) {
+    super(instanceSettings);
     this.basicAuth = instanceSettings.basicAuth;
     this.url = instanceSettings.url;
     this.name = instanceSettings.name;
@@ -67,7 +70,7 @@ export class GraphiteDatasource {
 
     const params = this.buildGraphiteParams(graphOptions, options.scopedVars);
     if (params.length === 0) {
-      return this.$q.when({ data: [] });
+      return Promise.resolve({ data: [] });
     }
 
     if (this.isMetricTank) {
@@ -157,7 +160,7 @@ export class GraphiteDatasource {
     return expandedQueries;
   }
 
-  annotationQuery(options: { annotation: { target: string; tags: string }; rangeRaw: any }) {
+  annotationQuery(options: any) {
     // Graphite metric as annotation
     if (options.annotation.target) {
       const target = this.templateSrv.replace(options.annotation.target, {}, 'glob');
@@ -168,22 +171,24 @@ export class GraphiteDatasource {
         maxDataPoints: 100,
       } as unknown) as DataQueryRequest<GraphiteQuery>;
 
-      return this.query(graphiteQuery).then((result: { data: any[] }) => {
+      return this.query(graphiteQuery).then(result => {
         const list = [];
 
         for (let i = 0; i < result.data.length; i++) {
           const target = result.data[i];
 
-          for (let y = 0; y < target.datapoints.length; y++) {
-            const datapoint = target.datapoints[y];
-            if (!datapoint[0]) {
+          for (let y = 0; y < target.length; y++) {
+            const time = target.fields[1].values.get(y);
+            const value = target.fields[0].values.get(y);
+
+            if (!value) {
               continue;
             }
 
             list.push({
               annotation: options.annotation,
-              time: datapoint[1],
-              title: target.target,
+              time,
+              title: target.name,
             });
           }
         }
@@ -233,11 +238,11 @@ export class GraphiteDatasource {
           tags,
       });
     } catch (err) {
-      return this.$q.reject(err);
+      return Promise.reject(err);
     }
   }
 
-  targetContainsTemplate(target: { target: any }) {
+  targetContainsTemplate(target: GraphiteQuery) {
     return this.templateSrv.variableExists(target.target);
   }
 
@@ -366,12 +371,10 @@ export class GraphiteDatasource {
     });
   }
 
-  getTagValues(tag: string, optionalOptions: any) {
-    const options = optionalOptions || {};
-
+  getTagValues(options: any = {}) {
     const httpOptions: any = {
       method: 'GET',
-      url: '/tags/' + this.templateSrv.replace(tag),
+      url: '/tags/' + this.templateSrv.replace(options.key),
       // for cancellations
       requestId: options.requestId,
     };
