@@ -14,6 +14,7 @@ const props: VariableQueryProps = {
   onChange: (query, definition) => {},
   query: {},
   datasource: {
+    getProjects: () => Promise.resolve('project'),
     getMetricTypes: async (p: any): Promise<any[]> => [],
   },
   templateSrv: { replace: (s: string) => s, variables: [] },
