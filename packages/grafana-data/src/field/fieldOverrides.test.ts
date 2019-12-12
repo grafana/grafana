@@ -1,9 +1,11 @@
-import { setFieldConfigDefaults, findNumericFieldMinMax } from './fieldOverrides';
+import { setFieldConfigDefaults, findNumericFieldMinMax, applyFieldOverrides } from './fieldOverrides';
 import { MutableDataFrame } from '../dataframe';
-import { FieldConfig } from '../types';
+import { FieldConfig, FieldConfigSource, InterpolateFunction, GrafanaTheme } from '../types';
+import { FieldMatcherID } from '../transformations';
+import { Int } from 'apache-arrow';
 
 describe('FieldOverrides', () => {
-  it('Construct simple field properties', () => {
+  it('will merge FieldConfig with default values', () => {
     const field: FieldConfig = {
       min: 0,
       max: 100,
@@ -18,6 +20,58 @@ describe('FieldOverrides', () => {
     expect(field.min).toEqual(0);
     expect(field.max).toEqual(100);
     expect(field.unit).toEqual('ms');
+  });
+
+  it('will apply field overrides', () => {
+    const f0 = new MutableDataFrame();
+    f0.add({ title: 'AAA', value: 100, value2: 1234 }, true);
+    f0.add({ title: 'BBB', value: -20 }, true);
+    f0.add({ title: 'CCC', value: 200, value2: 1000 }, true);
+    expect(f0.length).toEqual(3);
+
+    // Hardcode the max value
+    f0.fields[1].config.max = 0;
+    f0.fields[1].config.decimals = 6;
+
+    const src: FieldConfigSource = {
+      defaults: {
+        unit: 'xyz',
+        decimals: 2,
+      },
+      overrides: [
+        {
+          matcher: { id: FieldMatcherID.numeric },
+          properties: [
+            { path: 'decimals', value: 1 }, // Numeric
+            { path: 'title', value: 'Kittens' }, // Text
+          ],
+        },
+      ],
+    };
+
+    const data = applyFieldOverrides(
+      [f0], // the frame
+      src, // defaults + overrides
+      (undefined as any) as InterpolateFunction,
+      (undefined as any) as GrafanaTheme
+    )[0];
+    const valueColumn = data.fields[1];
+    const config = valueColumn.config;
+
+    // Keep max from the original setting
+    expect(config.max).toEqual(0);
+
+    // Automatically pick the min value
+    expect(config.min).toEqual(-20);
+
+    // The default value applied
+    expect(config.unit).toEqual('xyz');
+
+    // The default value applied
+    expect(config.title).toEqual('Kittens');
+
+    // The override applied
+    expect(config.decimals).toEqual(1);
   });
 });
 
