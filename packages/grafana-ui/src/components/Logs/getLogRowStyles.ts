@@ -122,6 +122,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     logsRowToggleDetails: css`
       label: logs-row-toggle-details__level;
       position: relative;
+      width: 15px;
       font-size: 9px;
       padding-top: 5px;
     `,
