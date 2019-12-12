@@ -7,6 +7,8 @@ import TimeRangeForm from './TimeRangeForm';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import TimeRangeList from './TimeRangeList';
 import Calendar from 'react-calendar/dist/entry.nostyle';
+import Forms from '../../Forms';
+import { style } from 'd3';
 
 const defaultSelectOptions: TimeOption[] = [
   { from: 'now-5m', to: 'now', display: 'Last 5 minutes', section: 3 },
@@ -115,16 +117,18 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
       box-shadow: 0px 4px 4px #c7d0d9;
       z-index: -1;
 
-      &:after {
-        display: block;
-        background-color: ${theme.background.dropdown};
-        width: 4px;
-        height: 221px;
-        content: ' ';
-        position: absolute;
-        top: 0;
-        right: -3px;
-        border-left: 1px solid ${theme.colors.gray4};
+      @media only screen and (min-width: ${theme.breakpoints.lg}) {
+        &:after {
+          display: block;
+          background-color: ${theme.background.dropdown};
+          width: 4px;
+          height: 221px;
+          content: ' ';
+          position: absolute;
+          top: 0;
+          right: -3px;
+          border-left: 1px solid ${theme.colors.gray4};
+        }
       }
 
       @media only screen and (max-width: ${theme.breakpoints.lg}) {
@@ -224,6 +228,31 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
         border-bottom-right-radius: 20px;
       }
     `,
+    calendarHeader: css`
+      @media only screen and (min-width: ${theme.breakpoints.lg}) {
+        display: none;
+      }
+
+      background-color: ${theme.background.dropdown};
+      display: flex;
+      justify-content: space-between;
+      padding: 7px;
+
+      i {
+        font-size: ${theme.typography.size.lg};
+      }
+    `,
+    calendarFooter: css`
+      @media only screen and (min-width: ${theme.breakpoints.lg}) {
+        display: none;
+      }
+
+      background-color: ${theme.background.dropdown};
+      display: flex;
+      justify-content: center;
+      padding: 10px;
+      align-items: stretch;
+    `,
   };
 });
 
@@ -293,6 +322,10 @@ const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }: Props) => {
         />
       </CustomScrollbar>
       <div className={styles.calendar}>
+        <div className={styles.calendarHeader}>
+          <TimeRangeTitle>Select a time range</TimeRangeTitle>
+          <i className="fa fa-times" />
+        </div>
         <Calendar
           selectRange={true}
           next2Label={null}
@@ -302,6 +335,18 @@ const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }: Props) => {
           nextLabel={<span className="fa fa-angle-right" />}
           prevLabel={<span className="fa fa-angle-left" />}
         />
+        <div className={styles.calendarFooter}>
+          <Forms.Button
+            className={css`
+              margin-right: 4px;
+              width: 100%;
+              justify-content: center;
+            `}
+          >
+            Apply time range
+          </Forms.Button>
+          <Forms.Button variant="secondary">Cancel</Forms.Button>
+        </div>
       </div>
     </div>
   );
