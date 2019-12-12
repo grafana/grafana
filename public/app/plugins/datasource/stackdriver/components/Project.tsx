@@ -10,12 +10,12 @@ export interface Props {
 
 export interface State {
   value: string;
-  projectList: any[];
+  projectList: string[][];
 }
 
 export class Project extends React.Component<Props, State> {
   state: State = {
-    projectList: ['Loading projects...'],
+    projectList: [],
     value: '',
   };
 
