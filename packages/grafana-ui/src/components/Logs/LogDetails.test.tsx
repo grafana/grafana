@@ -27,7 +27,7 @@ const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowMode
       ...(rowOverrides || {}),
     },
     getRows: () => [],
-    onChangeHoverBackground: (bool) => {},
+    onChangeHoverBackground: () => {},
     onClickFilterLabel: () => {},
     onClickFilterOutLabel: () => {},
     ...(propOverrides || {}),
