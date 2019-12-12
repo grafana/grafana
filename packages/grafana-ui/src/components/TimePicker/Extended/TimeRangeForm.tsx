@@ -2,6 +2,7 @@ import React, { PureComponent, FormEvent, ReactNode } from 'react';
 import Forms from '../../Forms';
 import { TIME_FORMAT, TimeZone, isDateTime, TimeRange, DateTime } from '@grafana/data';
 import { stringToDateTimeType, isValidTimeString } from '../time';
+import TimePickerCalendar from './Calendar';
 
 type CalendarTrigger = 'onFocus' | 'onButton';
 
@@ -12,6 +13,7 @@ interface Props {
   onApply: (range: TimeRange) => void;
 }
 interface State {
+  displayCalendar: boolean;
   from: { value: string; invalid: boolean };
   to: { value: string; invalid: boolean };
 }
@@ -29,10 +31,15 @@ export default class TimeRangeForm extends PureComponent<Props, State> {
         value: valueAsString(props.value.raw.to),
         invalid: false,
       },
+      displayCalendar: false,
     };
   }
 
-  onChange = (event: FormEvent<HTMLInputElement>, name: keyof State) => {
+  onInputFocus = (event: FormEvent<HTMLInputElement>) => {
+    this.setState({ displayCalendar: true });
+  };
+
+  onInputChange = (event: FormEvent<HTMLInputElement>, name: keyof State) => {
     const { value } = event.currentTarget;
     const invalid = !isValid(value);
 
@@ -42,27 +49,47 @@ export default class TimeRangeForm extends PureComponent<Props, State> {
     });
   };
 
+  onCalendarChange = (timeRange: TimeRange) => {
+    this.setState({
+      from: {
+        value: valueAsString(timeRange.raw.from),
+        invalid: false,
+      },
+      to: {
+        value: valueAsString(timeRange.raw.to),
+        invalid: false,
+      },
+    });
+  };
+
   onApply = () => {
     const timeRange = toTimeRange(this.state);
     this.props.onApply(timeRange);
   };
 
   render() {
-    const { from, to } = this.state;
+    const { from, to, displayCalendar } = this.state;
     const { calendarTrigger = 'onFocus' } = this.props;
 
     return (
       <>
+        <TimePickerCalendar
+          visible={displayCalendar}
+          selected={toTimeRange(this.state)}
+          onChange={this.onCalendarChange}
+        />
         <Forms.Field label="From">
           <Forms.Input
-            onChange={event => this.onChange(event, 'from')}
+            onFocus={this.onInputFocus}
+            onChange={event => this.onInputChange(event, 'from')}
             addonAfter={calendarIcon(calendarTrigger)}
             {...from}
           />
         </Forms.Field>
         <Forms.Field label="To">
           <Forms.Input
-            onChange={event => this.onChange(event, 'to')}
+            onFocus={this.onInputFocus}
+            onChange={event => this.onInputChange(event, 'to')}
             addonAfter={calendarIcon(calendarTrigger)}
             {...to}
           />
