@@ -44,15 +44,34 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
 }));
 
-interface PanelEditorProps {
+interface Props {
   dashboard: DashboardModel;
   panel: PanelModel;
 }
 
-export class PanelEditor extends PureComponent<PanelEditorProps> {
+interface State {
+  dirtyPanel?: PanelModel;
+}
+
+export class PanelEditor extends PureComponent<Props, State> {
+  state: State = {};
+
+  componentDidMount() {
+    const { panel } = this.props;
+    const dirtyPanel = new PanelModel(panel.getSaveModel());
+
+    this.setState({ dirtyPanel });
+  }
+
   render() {
-    const { dashboard, panel } = this.props;
+    const { dashboard } = this.props;
+    const { dirtyPanel } = this.state;
+
     const styles = getStyles(config.theme);
+
+    if (!dirtyPanel) {
+      return null;
+    }
 
     return (
       <div className={styles.wrapper}>
@@ -60,14 +79,14 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
           <div className={styles.leftPaneViz}>
             <DashboardPanel
               dashboard={dashboard}
-              panel={panel}
+              panel={dirtyPanel}
               isEditing={false}
               isFullscreen={false}
               isInView={true}
             />
           </div>
           <div className={styles.leftPaneData}>
-            <QueriesTab panel={panel} dashboard={dashboard} />;
+            <QueriesTab panel={dirtyPanel} dashboard={dashboard} />;
           </div>
         </div>
         <div className={styles.rightPane}>Visualization settings</div>
