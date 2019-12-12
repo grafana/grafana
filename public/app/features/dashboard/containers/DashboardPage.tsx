@@ -1,36 +1,33 @@
 // Libraries
 import $ from 'jquery';
-import React, { PureComponent, MouseEvent } from 'react';
+import React, { MouseEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
-
 // Services & Utils
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getMessageFromError } from 'app/core/utils/errors';
-
 // Components
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
 import { SubMenu } from '../components/SubMenu';
 import { DashboardSettings } from '../components/DashboardSettings';
-import { CustomScrollbar, Alert } from '@grafana/ui';
-
+import { Alert, CustomScrollbar } from '@grafana/ui';
 // Redux
 import { initDashboard } from '../state/initDashboard';
 import { cleanUpDashboard } from '../state/actions';
-import { updateLocation } from 'app/core/actions';
-import { notifyApp } from 'app/core/actions';
-
+import { notifyApp, updateLocation } from 'app/core/actions';
 // Types
 import {
-  StoreState,
+  AppNotificationSeverity,
+  DashboardInitError,
   DashboardInitPhase,
   DashboardRouteInfo,
-  DashboardInitError,
-  AppNotificationSeverity,
+  StoreState,
 } from 'app/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { PanelInspector } from '../components/Inspector/PanelInspector';
+
 export interface Props {
   urlUid?: string;
   urlSlug?: string;
@@ -38,6 +35,7 @@ export interface Props {
   editview?: string;
   urlPanelId?: string;
   urlFolderId?: string;
+  inspectPanelId?: string;
   $scope: any;
   $injector: any;
   routeInfo: DashboardRouteInfo;
@@ -250,7 +248,7 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, editview, $injector, isInitSlow, initError } = this.props;
+    const { dashboard, editview, $injector, isInitSlow, initError, inspectPanelId } = this.props;
     const { isSettingsOpening, isEditing, isFullscreen, scrollTop, updateScrollTop } = this.state;
 
     if (!dashboard) {
@@ -269,6 +267,9 @@ export class DashboardPage extends PureComponent<Props, State> {
       'dashboard-container': true,
       'dashboard-container--has-submenu': dashboard.meta.submenuEnabled,
     });
+
+    // Find the panel to inspect
+    const inspectPanel = inspectPanelId ? dashboard.getPanelById(parseInt(inspectPanelId, 10)) : null;
 
     // Only trigger render when the scroll has moved by 25
     const approximateScrollTop = Math.round(scrollTop / 25) * 25;
@@ -296,7 +297,7 @@ export class DashboardPage extends PureComponent<Props, State> {
             {initError && this.renderInitFailedState()}
 
             <div className={gridWrapperClasses}>
-              {dashboard.meta.submenuEnabled && <SubMenu dashboard={dashboard} />}
+              <SubMenu dashboard={dashboard} />
               <DashboardGrid
                 dashboard={dashboard}
                 isEditing={isEditing}
@@ -306,6 +307,8 @@ export class DashboardPage extends PureComponent<Props, State> {
             </div>
           </CustomScrollbar>
         </div>
+
+        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
       </div>
     );
   }
@@ -320,6 +323,7 @@ export const mapStateToProps = (state: StoreState) => ({
   urlFolderId: state.location.query.folderId,
   urlFullscreen: !!state.location.query.fullscreen,
   urlEdit: !!state.location.query.edit,
+  inspectPanelId: state.location.query.inspect,
   initPhase: state.dashboard.initPhase,
   isInitSlow: state.dashboard.isInitSlow,
   initError: state.dashboard.initError,
@@ -333,9 +337,4 @@ const mapDispatchToProps = {
   updateLocation,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(DashboardPage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardPage));

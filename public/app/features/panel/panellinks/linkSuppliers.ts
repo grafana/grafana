@@ -1,16 +1,24 @@
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { FieldDisplay } from '@grafana/ui';
-import { LinkModelSupplier, getTimeField, Labels, ScopedVars, ScopedVar } from '@grafana/data';
+import {
+  FieldDisplay,
+  LinkModelSupplier,
+  getTimeField,
+  Labels,
+  ScopedVars,
+  ScopedVar,
+  Field,
+  LinkModel,
+} from '@grafana/data';
 import { getLinkSrv } from './link_srv';
 
 interface SeriesVars {
   name?: string;
-  labels?: Labels;
   refId?: string;
 }
 
 interface FieldVars {
   name: string;
+  labels?: Labels;
 }
 
 interface ValueVars {
@@ -46,7 +54,6 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
         scopedVars['__series'] = {
           value: {
             name: dataFrame.name,
-            labels: dataFrame.labels,
             refId: dataFrame.refId,
           },
           text: 'Series',
@@ -58,6 +65,7 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
           scopedVars['__field'] = {
             value: {
               name: field.name,
+              labels: field.labels,
             },
             text: 'Field',
           };
@@ -111,4 +119,18 @@ export const getPanelLinksSupplier = (value: PanelModel): LinkModelSupplier<Pane
       });
     },
   };
+};
+
+export const getLinksFromLogsField = (field: Field, rowIndex: number): Array<LinkModel<Field>> => {
+  const scopedVars: any = {};
+  scopedVars['__value'] = {
+    value: {
+      raw: field.values.get(rowIndex),
+    },
+    text: 'Raw value',
+  };
+
+  return field.config.links
+    ? field.config.links.map(link => getLinkSrv().getDataLinkUIModel(link, scopedVars, field))
+    : [];
 };

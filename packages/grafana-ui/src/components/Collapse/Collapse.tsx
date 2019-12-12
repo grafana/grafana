@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useContext } from 'react';
 import { css, cx } from 'emotion';
 
-import { GrafanaTheme } from '../../types/theme';
+import { GrafanaTheme } from '@grafana/data';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import { ThemeContext } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes/stylesFactory';
@@ -83,7 +83,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 }));
 
 interface Props {
-  isOpen: boolean;
+  isOpen?: boolean;
   label: string;
   loading?: boolean;
   collapsible?: boolean;

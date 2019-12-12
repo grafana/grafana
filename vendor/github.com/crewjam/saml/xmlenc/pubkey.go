@@ -94,7 +94,7 @@ func (e RSA) Encrypt(certificate interface{}, plaintext []byte) (*etree.Element,
 
 // Decrypt implements Decryptor. `key` must be an *rsa.PrivateKey.
 func (e RSA) Decrypt(key interface{}, ciphertextEl *etree.Element) ([]byte, error) {
-	rsaKey, err := validateRSAKey(key, ciphertextEl)
+	rsaKey, err := validateRSAKeyIfPresent(key, ciphertextEl)
 	if err != nil {
 		return nil, err
 	}

@@ -12,7 +12,7 @@ weight = 5
 
 # Team Sync
 
-> Team Sync is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "enterprise" >}}).
+> Team Sync is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
 {{< docs-imagebox img="/img/docs/enterprise/team_members_ldap.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" >}}
 
@@ -42,6 +42,6 @@ a user as member of a team and it will not be removed when the user signs in. Th
 
 ### Supported Providers
 
-* [LDAP]({{< relref "auth/enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
-* [GitHub OAuth]({{< relref "auth/github.md#team-sync-enterprise-only" >}})
-* [Auth Proxy]({{< relref "auth/auth-proxy.md#team-sync-enterprise-only">}})
+* [LDAP]({{< relref "enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
+* [GitHub OAuth]({{< relref "github.md#team-sync-enterprise-only" >}})
+* [Auth Proxy]({{< relref "auth-proxy.md#team-sync-enterprise-only">}})

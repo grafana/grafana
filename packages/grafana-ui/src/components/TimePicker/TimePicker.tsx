@@ -1,7 +1,6 @@
 // Libraries
 import React, { PureComponent, createRef } from 'react';
 import { css } from 'emotion';
-import memoizeOne from 'memoize-one';
 import classNames from 'classnames';
 
 // Components
@@ -11,17 +10,16 @@ import { TimePickerPopover } from './TimePickerPopover';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 
 // Utils & Services
-import { isDateTime, DateTime } from '@grafana/data';
-import { rangeUtil } from '@grafana/data';
+import { isDateTime, DateTime, rangeUtil } from '@grafana/data';
 import { rawToTimeRange } from './time';
+import { stylesFactory } from '../../themes/stylesFactory';
 import { withTheme } from '../../themes/ThemeContext';
 
 // Types
-import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue, dateMath } from '@grafana/data';
-import { GrafanaTheme } from '../../types/theme';
+import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue, dateMath, GrafanaTheme } from '@grafana/data';
 import { Themeable } from '../../types';
 
-const getStyles = memoizeOne((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     timePickerSynced: css`
       label: timePickerSynced;
@@ -44,6 +42,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
 });
 
 export interface Props extends Themeable {
+  hideText?: boolean;
   value: TimeRange;
   selectOptions: TimeOption[];
   timeZone?: TimeZone;
@@ -159,6 +158,7 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
       timeSyncButton,
       isSynced,
       theme,
+      hideText,
     } = this.props;
 
     const styles = getStyles(theme);
@@ -175,25 +175,28 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
     };
     const rangeString = rangeUtil.describeTimeRange(adjustedTimeRange);
 
-    const label = (
+    const label = !hideText ? (
       <>
         {isCustomOpen && <span>Custom time range</span>}
         {!isCustomOpen && <span>{rangeString}</span>}
         {isUTC && <span className="time-picker-utc">UTC</span>}
       </>
+    ) : (
+      ''
     );
-    const isAbsolute = isDateTime(value.raw.to);
+    const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
 
     return (
       <div className="time-picker" ref={this.pickerTriggerRef}>
         <div className="time-picker-buttons">
-          {isAbsolute && (
+          {hasAbsolute && (
             <button className="btn navbar-button navbar-button--tight" onClick={onMoveBackward}>
               <i className="fa fa-chevron-left" />
             </button>
           )}
           <ButtonSelect
             className={classNames('time-picker-button-select', {
+              ['explore-active-button-glow']: timeSyncButton && isSynced,
               [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: timeSyncButton,
               [styles.timePickerSynced]: timeSyncButton ? isSynced : null,
             })}
@@ -202,13 +205,13 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
             options={options}
             maxMenuHeight={600}
             onChange={this.onSelectChanged}
-            iconClass={'fa fa-clock-o fa-fw'}
+            iconClass={classNames('fa fa-clock-o fa-fw', isSynced && timeSyncButton && 'icon-brand-gradient')}
             tooltipContent={<TimePickerTooltipContent timeRange={value} />}
           />
 
           {timeSyncButton}
 
-          {isAbsolute && (
+          {hasAbsolute && (
             <button className="btn navbar-button navbar-button--tight" onClick={onMoveForward}>
               <i className="fa fa-chevron-right" />
             </button>

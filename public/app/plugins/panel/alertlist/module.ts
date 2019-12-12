@@ -3,7 +3,7 @@ import alertDef from '../../../features/alerting/state/alertDef';
 import { PanelCtrl } from 'app/plugins/sdk';
 
 import { dateMath, dateTime } from '@grafana/data';
-import { PanelEvents } from '@grafana/ui';
+import { PanelEvents } from '@grafana/data';
 import { auto } from 'angular';
 import { BackendSrv } from '@grafana/runtime';
 
@@ -11,7 +11,10 @@ class AlertListPanel extends PanelCtrl {
   static templateUrl = 'module.html';
   static scrollable = true;
 
-  showOptions = [{ text: 'Current state', value: 'current' }, { text: 'Recent state changes', value: 'changes' }];
+  showOptions = [
+    { text: 'Current state', value: 'current' },
+    { text: 'Recent state changes', value: 'changes' },
+  ];
 
   sortOrderOptions = [
     { text: 'Alphabetical (asc)', value: 1 },

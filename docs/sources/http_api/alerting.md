@@ -155,4 +155,4 @@ Content-Type: application/json
 
 ## Pause all alerts
 
-See [Admin API]({{< relref "http_api/admin.md#pause-all-alerts" >}}).
+See [Admin API]({{< relref "admin.md#pause-all-alerts" >}}).

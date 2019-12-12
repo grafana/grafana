@@ -1,18 +1,16 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import {
-  PanelEditorProps,
   ThresholdsEditor,
   PanelOptionsGrid,
   ValueMappingsEditor,
-  FieldDisplayOptions,
   FieldDisplayEditor,
   FieldPropertiesEditor,
   Switch,
   PanelOptionsGroup,
   DataLinksEditor,
 } from '@grafana/ui';
-import { Threshold, ValueMapping, FieldConfig, DataLink } from '@grafana/data';
+import { PanelEditorProps, FieldDisplayOptions, Threshold, ValueMapping, FieldConfig, DataLink } from '@grafana/data';
 
 import { GaugeOptions } from './types';
 import {
@@ -116,7 +114,12 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
           </PanelOptionsGroup>
 
           <PanelOptionsGroup title="Field">
-            <FieldPropertiesEditor showMinMax={true} onChange={this.onDefaultsChange} value={defaults} />
+            <FieldPropertiesEditor
+              showMinMax={true}
+              showTitle={true}
+              onChange={this.onDefaultsChange}
+              value={defaults}
+            />
           </PanelOptionsGroup>
 
           <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />

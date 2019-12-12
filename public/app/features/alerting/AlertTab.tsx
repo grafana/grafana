@@ -217,9 +217,4 @@ export const mapStateToProps = (state: StoreState) => ({});
 
 const mapDispatchToProps = { changePanelEditorTab };
 
-export const AlertTab = hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(UnConnectedAlertTab)
-);
+export const AlertTab = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedAlertTab));

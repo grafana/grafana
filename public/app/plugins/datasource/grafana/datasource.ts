@@ -1,11 +1,10 @@
 import _ from 'lodash';
 import { BackendSrv } from 'app/core/services/backend_srv';
-import { IQService } from 'angular';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 class GrafanaDatasource {
   /** @ngInject */
-  constructor(private backendSrv: BackendSrv, private $q: IQService, private templateSrv: TemplateSrv) {}
+  constructor(private backendSrv: BackendSrv, private templateSrv: TemplateSrv) {}
 
   query(options: any) {
     return this.backendSrv
@@ -34,7 +33,7 @@ class GrafanaDatasource {
   }
 
   metricFindQuery(options: any) {
-    return this.$q.when({ data: [] });
+    return Promise.resolve({ data: [] });
   }
 
   annotationQuery(options: any) {
@@ -49,7 +48,7 @@ class GrafanaDatasource {
     if (options.annotation.type === 'dashboard') {
       // if no dashboard id yet return
       if (!options.dashboard.id) {
-        return this.$q.when([]);
+        return Promise.resolve([]);
       }
       // filter by dashboard id
       params.dashboardId = options.dashboard.id;
@@ -58,7 +57,7 @@ class GrafanaDatasource {
     } else {
       // require at least one tag
       if (!_.isArray(options.annotation.tags) || options.annotation.tags.length === 0) {
-        return this.$q.when([]);
+        return Promise.resolve([]);
       }
       const delimiter = '__delimiter__';
       const tags = [];

@@ -26,14 +26,14 @@ describe('parseQuery', () => {
   it('returns query for strings with query and search string', () => {
     expect(parseQuery('x {foo="bar"}')).toEqual({
       query: '{foo="bar"}',
-      regexp: '(?i)x',
+      regexp: 'x',
     } as LokiExpression);
   });
 
   it('returns query for strings with query and regexp', () => {
     expect(parseQuery('{foo="bar"} x|y')).toEqual({
       query: '{foo="bar"}',
-      regexp: '(?i)x|y',
+      regexp: 'x|y',
     } as LokiExpression);
   });
 
@@ -47,11 +47,11 @@ describe('parseQuery', () => {
   it('returns query and regexp with quantifiers', () => {
     expect(parseQuery('{foo="bar"} \\.java:[0-9]{1,5}')).toEqual({
       query: '{foo="bar"}',
-      regexp: '(?i)\\.java:[0-9]{1,5}',
+      regexp: '\\.java:[0-9]{1,5}',
     } as LokiExpression);
     expect(parseQuery('\\.java:[0-9]{1,5} {foo="bar"}')).toEqual({
       query: '{foo="bar"}',
-      regexp: '(?i)\\.java:[0-9]{1,5}',
+      regexp: '\\.java:[0-9]{1,5}',
     } as LokiExpression);
   });
 
@@ -73,8 +73,8 @@ describe('getHighlighterExpressionsFromQuery', () => {
   });
 
   it('returns a single expressions for legacy query', () => {
-    expect(getHighlighterExpressionsFromQuery('{} x')).toEqual(['(?i)x']);
-    expect(getHighlighterExpressionsFromQuery('{foo="bar"} x')).toEqual(['(?i)x']);
+    expect(getHighlighterExpressionsFromQuery('{} x')).toEqual(['x']);
+    expect(getHighlighterExpressionsFromQuery('{foo="bar"} x')).toEqual(['x']);
   });
 
   it('returns an expression for query with filter', () => {

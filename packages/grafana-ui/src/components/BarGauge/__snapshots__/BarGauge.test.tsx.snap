@@ -20,23 +20,28 @@ exports[`BarGauge Render with basic options should render 1`] = `
       }
     }
   >
-    <div
+    <FormattedDisplayValue
       className="bar-gauge__value"
       style={
         Object {
           "alignItems": "center",
           "color": "#73BF69",
           "display": "flex",
-          "fontSize": "27.2727px",
+          "fontSize": 175,
           "height": "300px",
+          "justifyContent": "flex-start",
           "lineHeight": 1,
           "paddingLeft": "10px",
           "width": "60px",
         }
       }
-    >
-      25
-    </div>
+      value={
+        Object {
+          "numeric": 25,
+          "text": "25",
+        }
+      }
+    />
     <div
       style={
         Object {

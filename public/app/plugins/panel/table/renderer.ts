@@ -1,8 +1,14 @@
 import _ from 'lodash';
-import { getValueFormat, getColorFromHexRgbOrName, GrafanaThemeType } from '@grafana/ui';
-import { stringToJsRegex, ScopedVars } from '@grafana/data';
+import {
+  dateTime,
+  getValueFormat,
+  getColorFromHexRgbOrName,
+  GrafanaThemeType,
+  stringToJsRegex,
+  ScopedVars,
+  formattedValueToString,
+} from '@grafana/data';
 import { ColumnStyle } from '@grafana/ui/src/components/Table/TableCellBuilder';
-import { dateTime } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TableRenderModel, ColumnRender } from './types';
 
@@ -183,7 +189,7 @@ export class TableRenderer {
         }
 
         this.setColorState(v, column.style);
-        return valueFormatter(v, column.style.decimals, null);
+        return formattedValueToString(valueFormatter(v, column.style.decimals, null));
       };
     }
 
@@ -221,7 +227,11 @@ export class TableRenderer {
   }
 
   formatColumnValue(colIndex: number, value: any) {
-    return this.formatters[colIndex] ? this.formatters[colIndex](value) : value;
+    const fmt = this.formatters[colIndex];
+    if (fmt) {
+      return fmt(value);
+    }
+    return value;
   }
 
   renderCell(columnIndex: number, rowIndex: number, value: any, addWidthHack = false) {
@@ -339,17 +349,20 @@ export class TableRenderer {
 
   render_values() {
     const rows = [];
+    const visibleColumns = this.table.columns.filter(column => !column.hidden);
 
     for (let y = 0; y < this.table.rows.length; y++) {
       const row = this.table.rows[y];
       const newRow = [];
       for (let i = 0; i < this.table.columns.length; i++) {
-        newRow.push(this.formatColumnValue(i, row[i]));
+        if (!this.table.columns[i].hidden) {
+          newRow.push(this.formatColumnValue(i, row[i]));
+        }
       }
       rows.push(newRow);
     }
     return {
-      columns: this.table.columns,
+      columns: visibleColumns,
       rows: rows,
     };
   }

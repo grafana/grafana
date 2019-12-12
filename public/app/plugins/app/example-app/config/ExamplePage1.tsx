@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { PluginConfigPageProps, AppPlugin } from '@grafana/ui';
+import { PluginConfigPageProps, AppPlugin } from '@grafana/data';
 
 interface Props extends PluginConfigPageProps<AppPlugin> {}
 

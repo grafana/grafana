@@ -17,8 +17,9 @@ github.com/apache/arrow/go/arrow/internal/debug
 github.com/apache/arrow/go/arrow/internal/flatbuf
 github.com/apache/arrow/go/arrow/ipc
 github.com/apache/arrow/go/arrow/memory
-# github.com/aws/aws-sdk-go v1.25.6
+# github.com/aws/aws-sdk-go v1.25.48
 github.com/aws/aws-sdk-go/aws
+github.com/aws/aws-sdk-go/aws/arn
 github.com/aws/aws-sdk-go/aws/awserr
 github.com/aws/aws-sdk-go/aws/awsutil
 github.com/aws/aws-sdk-go/aws/client
@@ -60,6 +61,7 @@ github.com/aws/aws-sdk-go/service/ec2/ec2iface
 github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi
 github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface
 github.com/aws/aws-sdk-go/service/s3
+github.com/aws/aws-sdk-go/service/s3/internal/arn
 github.com/aws/aws-sdk-go/service/sts
 github.com/aws/aws-sdk-go/service/sts/stsiface
 # github.com/beevik/etree v1.1.0
@@ -72,7 +74,7 @@ github.com/beorn7/perks/quantile
 github.com/bradfitz/gomemcache/memcache
 # github.com/codegangsta/cli v1.20.0
 github.com/codegangsta/cli
-# github.com/crewjam/saml v0.0.0-20190521120225-344d075952c9
+# github.com/crewjam/saml v0.0.0-20191031171751-c42136edf9b1
 github.com/crewjam/saml
 github.com/crewjam/saml/logger
 github.com/crewjam/saml/xmlenc
@@ -120,6 +122,8 @@ github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
+# github.com/golang/snappy v0.0.1
+github.com/golang/snappy
 # github.com/google/flatbuffers v1.11.0
 github.com/google/flatbuffers/go
 # github.com/gopherjs/gopherjs v0.0.0-20190430165422-3e4dfb77656c
@@ -131,10 +135,12 @@ github.com/gosimple/slug
 # github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 github.com/grafana/grafana-plugin-model/go/datasource
 github.com/grafana/grafana-plugin-model/go/renderer
-# github.com/grafana/grafana-plugin-sdk-go v0.0.0-20191024130641-6756418f682c
-github.com/grafana/grafana-plugin-sdk-go
+# github.com/grafana/grafana-plugin-sdk-go v0.4.0
+github.com/grafana/grafana-plugin-sdk-go/common
 github.com/grafana/grafana-plugin-sdk-go/dataframe
-github.com/grafana/grafana-plugin-sdk-go/genproto/datasource
+github.com/grafana/grafana-plugin-sdk-go/datasource
+github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2
+github.com/grafana/grafana-plugin-sdk-go/transform
 # github.com/hashicorp/go-hclog v0.8.0
 github.com/hashicorp/go-hclog
 # github.com/hashicorp/go-plugin v1.0.1
@@ -163,11 +169,13 @@ github.com/klauspost/cpuid
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
+# github.com/linkedin/goavro/v2 v2.9.7
+github.com/linkedin/goavro/v2
 # github.com/mattetti/filebuffer v1.0.0
 github.com/mattetti/filebuffer
-# github.com/mattn/go-colorable v0.1.1
+# github.com/mattn/go-colorable v0.1.4
 github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.7
+# github.com/mattn/go-isatty v0.0.10
 github.com/mattn/go-isatty
 # github.com/mattn/go-sqlite3 v1.11.0
 github.com/mattn/go-sqlite3
@@ -260,13 +268,13 @@ github.com/yudai/gojsondiff
 github.com/yudai/gojsondiff/formatter
 # github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82
 github.com/yudai/golcs
-# golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4
+# golang.org/x/crypto v0.0.0-20190923035154-9ee001bba392
 golang.org/x/crypto/ed25519
 golang.org/x/crypto/ed25519/internal/edwards25519
 golang.org/x/crypto/md4
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/ripemd160
-# golang.org/x/net v0.0.0-20190724013045-ca1201d0de80
+# golang.org/x/net v0.0.0-20190923162816-aa69164e4478
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/http/httpguts
@@ -283,7 +291,7 @@ golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
 # golang.org/x/sync v0.0.0-20190423024810-112230192c58
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.0.0-20190804053845-51ab0e2deafa
+# golang.org/x/sys v0.0.0-20191104094858-e8c54fb511f6
 golang.org/x/sys/unix
 # golang.org/x/text v0.3.2
 golang.org/x/text/secure/bidirule
@@ -366,5 +374,5 @@ gopkg.in/redis.v5/internal/proto
 gopkg.in/square/go-jose.v2
 gopkg.in/square/go-jose.v2/cipher
 gopkg.in/square/go-jose.v2/json
-# gopkg.in/yaml.v2 v2.2.2
+# gopkg.in/yaml.v2 v2.2.5
 gopkg.in/yaml.v2

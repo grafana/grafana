@@ -5,7 +5,7 @@ keywords = ["grafana", "configuration", "documentation", "windows"]
 type = "docs"
 [menu.docs]
 parent = "installation"
-weight = 3
+weight = 400
 +++
 
 # Installing on Windows
@@ -14,7 +14,7 @@ Description | Download
 ------------ | -------------
 Latest stable package for Windows | [x64](https://grafana.com/grafana/download?platform=windows)
 
-Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
+Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing
 installation.
 
 ## Configure
@@ -44,7 +44,7 @@ Read more about the [configuration options]({{< relref "configuration.md" >}}).
 ## Logging in for the first time
 
 To run Grafana open your browser and go to the port you configured above, e.g. http://localhost:8080/.
-Then follow the instructions [here](/guides/getting_started/).
+Then follow the instructions [here]({{< relref "../guides/getting_started/" >}}).
 
 ## Building on Windows
 

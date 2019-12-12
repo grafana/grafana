@@ -1,8 +1,8 @@
 import React from 'react';
-import { Button } from './Button';
+import { Button, ButtonVariant } from './Button';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { select, text } from '@storybook/addon-knobs';
-import { ButtonSize, ButtonVariant } from '../Button/types';
+import { ButtonSize } from '../Button/types';
 import mdx from './Button.mdx';
 
 export default {
@@ -26,7 +26,7 @@ export const simple = () => {
   const buttonText = text('text', 'Button');
 
   return (
-    <Button variant={variant as ButtonVariant} size={size as ButtonSize} renderAs="button">
+    <Button variant={variant as ButtonVariant} size={size as ButtonSize}>
       {buttonText}
     </Button>
   );

@@ -12,9 +12,9 @@ weight = 3
 
 # Enhanced LDAP Integration
 
-> Enhanced LDAP Integration is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "enterprise" >}}).
+> Enhanced LDAP Integration is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
-The enhanced LDAP integration adds additional functionality on top of the [existing LDAP integration]({{< relref "auth/ldap.md" >}}).
+The enhanced LDAP integration adds additional functionality on top of the [existing LDAP integration]({{< relref "ldap.md" >}}).
 
 ## LDAP Group Synchronization for Teams
 
@@ -28,7 +28,7 @@ Grafana keeps track of all synchronized users in teams and you can see which use
 This mechanism allows Grafana to remove an existing synchronized user from a team when its LDAP group membership changes. This mechanism also enables you to manually add
 a user as member of a team and it will not be removed when the user signs in. This gives you flexibility to combine LDAP group memberships and Grafana team memberships.
 
-[Learn more about Team Sync]({{< relref "auth/team-sync.md">}})
+[Learn more about Team Sync]({{< relref "team-sync.md">}})
 
 <div class="clearfix"></div>
 

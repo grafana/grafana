@@ -8,7 +8,7 @@ import { columnOptionsTab } from './column_options';
 import { TableRenderer } from './renderer';
 import { isTableData } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { PanelEvents } from '@grafana/ui';
+import { PanelEvents } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 
 class TablePanelCtrl extends MetricsPanelCtrl {
@@ -71,7 +71,6 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     _.defaults(this.panel, this.panelDefaults);
 
     this.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this));
-    this.events.on(PanelEvents.dataError, this.onDataError.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onDataReceived.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
     this.events.on(PanelEvents.initPanelActions, this.onInitPanelActions.bind(this));
@@ -106,11 +105,6 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     }
 
     return super.issueQueries(datasource);
-  }
-
-  onDataError(err: any) {
-    this.dataRaw = [];
-    this.render();
   }
 
   onDataReceived(dataList: any) {

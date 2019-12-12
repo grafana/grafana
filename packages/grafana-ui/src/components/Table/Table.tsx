@@ -12,16 +12,23 @@ import {
 } from 'react-virtualized';
 import { Themeable } from '../../types/theme';
 
-import { stringToJsRegex, DataFrame, sortDataFrame, getDataFrameRow, ArrayVector, FieldType } from '@grafana/data';
+import {
+  stringToJsRegex,
+  DataFrame,
+  sortDataFrame,
+  getDataFrameRow,
+  ArrayVector,
+  FieldType,
+  InterpolateFunction,
+} from '@grafana/data';
 
 import {
   TableCellBuilder,
   ColumnStyle,
-  getCellBuilder,
+  getFieldCellBuilder,
   TableCellBuilderOptions,
   simpleCellBuilder,
 } from './TableCellBuilder';
-import { InterpolateFunction } from '../../types/panel';
 
 export interface Props extends Themeable {
   data: DataFrame;
@@ -146,7 +153,7 @@ export class Table extends Component<Props, State> {
       return {
         header: title,
         width: columnWidth,
-        builder: getCellBuilder(col.config || {}, style, this.props),
+        builder: getFieldCellBuilder(col, style, this.props),
       };
     });
   }

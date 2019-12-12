@@ -1,7 +1,6 @@
-import { DataFrame, TimeRange } from '@grafana/data';
+import { DataFrame, eventFactory, TimeRange } from '@grafana/data';
 import { IHttpResponse } from 'angular';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { eventFactory } from '@grafana/data';
 
 /**
  * Event Payloads
@@ -121,6 +120,7 @@ export const repeatsProcessed = eventFactory('repeats-processed');
 export const rowExpanded = eventFactory('row-expanded');
 export const rowCollapsed = eventFactory('row-collapsed');
 export const templateVariableValueUpdated = eventFactory('template-variable-value-updated');
+export const submenuVisibilityChanged = eventFactory<boolean>('submenu-visibility-changed');
 
 export const dataFramesReceived = eventFactory<DataFrame[]>('data-frames-received');
 

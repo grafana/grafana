@@ -3,37 +3,21 @@ package rendering
 import (
 	"context"
 	"fmt"
-	"os/exec"
 	"path"
 	"time"
 
 	pluginModel "github.com/grafana/grafana-plugin-model/go/renderer"
 	"github.com/grafana/grafana/pkg/plugins"
-	plugin "github.com/hashicorp/go-plugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
 func (rs *RenderingService) startPlugin(ctx context.Context) error {
 	cmd := plugins.ComposePluginStartCommmand("plugin_start")
 	fullpath := path.Join(rs.pluginInfo.PluginDir, cmd)
 
-	var handshakeConfig = plugin.HandshakeConfig{
-		ProtocolVersion:  1,
-		MagicCookieKey:   "grafana_plugin_type",
-		MagicCookieValue: "renderer",
-	}
-
 	rs.log.Info("Renderer plugin found, starting", "cmd", cmd)
 
-	rs.pluginClient = plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: handshakeConfig,
-		Plugins: map[string]plugin.Plugin{
-			plugins.Renderer.Id: &pluginModel.RendererPluginImpl{},
-		},
-		Cmd:              exec.Command(fullpath),
-		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
-		Logger:           plugins.LogWrapper{Logger: rs.log},
-	})
-
+	rs.pluginClient = backendplugin.NewRendererClient(plugins.Renderer.Id, fullpath, rs.log)
 	rpcClient, err := rs.pluginClient.Client()
 	if err != nil {
 		return err
@@ -79,7 +63,10 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, opts Opts) (*Re
 		return nil, err
 	}
 
-	rsp, err := rs.grpcPlugin.Render(ctx, &pluginModel.RenderRequest{
+	ctx, cancel := context.WithTimeout(ctx, opts.Timeout)
+	defer cancel()
+
+	req := &pluginModel.RenderRequest{
 		Url:       rs.getURL(opts.Path),
 		Width:     int32(opts.Width),
 		Height:    int32(opts.Height),
@@ -89,7 +76,10 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, opts Opts) (*Re
 		Encoding:  opts.Encoding,
 		Timezone:  isoTimeOffsetToPosixTz(opts.Timezone),
 		Domain:    rs.domain,
-	})
+	}
+	rs.log.Debug("calling renderer plugin", "req", req)
+
+	rsp, err := rs.grpcPlugin.Render(ctx, req)
 	if err != nil {
 		return nil, err
 	}

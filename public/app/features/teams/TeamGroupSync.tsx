@@ -162,7 +162,4 @@ const mapDispatchToProps = {
   removeTeamGroup,
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(TeamGroupSync);
+export default connect(mapStateToProps, mapDispatchToProps)(TeamGroupSync);

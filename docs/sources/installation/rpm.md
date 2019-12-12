@@ -8,12 +8,12 @@ type = "docs"
 name = "Installing on Centos / Redhat"
 identifier = "rpm"
 parent = "installation"
-weight = 2
+weight = 300
 +++
 
 # Installing on RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)
 
-Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
+Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing
 installation.
 
 ## Download
@@ -22,13 +22,13 @@ Go to the [download page](https://grafana.com/grafana/download?platform=linux) f
 links.
 
 
-You can install Grafana using Yum directly.
+You can install Grafana using Yum directly:
 
 ```bash
 $ sudo yum install <rpm package url>
 ```
 
-You will find package urls on the [download page](https://grafana.com/grafana/download?platform=linux).
+You will find package URLs on the [download page](https://grafana.com/grafana/download?platform=linux).
 
 Or install manually using `rpm`. First execute
 
@@ -87,8 +87,7 @@ $ sudo yum install grafana
 
 ### RPM GPG Key
 
-The RPMs are signed, you can verify the signature with this [public GPG
-key](https://packages.grafana.com/gpg.key).
+The RPMs are signed, you can verify the signature with this [public GPG key](https://packages.grafana.com/gpg.key).
 
 ## Package details
 
@@ -159,10 +158,10 @@ those options.
 
 ### Adding data sources
 
-- [Graphite]({{< relref "features/datasources/graphite.md" >}})
-- [InfluxDB]({{< relref "features/datasources/influxdb.md" >}})
-- [OpenTSDB]({{< relref "features/datasources/opentsdb.md" >}})
-- [Prometheus]({{< relref "features/datasources/prometheus.md" >}})
+- [Graphite]({{< relref "../features/datasources/graphite.md" >}})
+- [InfluxDB]({{< relref "../features/datasources/influxdb.md" >}})
+- [OpenTSDB]({{< relref "../features/datasources/opentsdb.md" >}})
+- [Prometheus]({{< relref "../features/datasources/prometheus.md" >}})
 
 ### Server side image rendering
 
@@ -194,5 +193,5 @@ binary and the `public` folder is located).
 
 ## Logging in for the first time
 
-To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default HTTP port that Grafana listens to if you haven't [configured a different port](/installation/configuration/#http-port).
-Then follow the instructions [here](/guides/getting_started/).
+To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default HTTP port that Grafana listens to if you haven't [configured a different port]({{< relref "configuration/#http-port" >}}).
+Then follow the instructions [here]({{< relref "../guides/getting_started/" >}}).

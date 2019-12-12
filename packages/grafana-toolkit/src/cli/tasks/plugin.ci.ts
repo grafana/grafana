@@ -1,36 +1,26 @@
 import { Task, TaskRunner } from './task';
 import { pluginBuildRunner } from './plugin.build';
 import { restoreCwd } from '../utils/cwd';
-import { S3Client } from '../../plugins/aws';
 import { getPluginJson } from '../../config/utils/pluginValidation';
-import { PluginMeta } from '@grafana/ui';
+import { getPluginId } from '../../config/utils/getPluginId';
+import { PluginMeta } from '@grafana/data';
 
 // @ts-ignore
 import execa = require('execa');
 import path = require('path');
 import fs from 'fs';
-import { getPackageDetails, findImagesInFolder, appendPluginHistory, getGrafanaVersions } from '../../plugins/utils';
+import { getPackageDetails, findImagesInFolder, getGrafanaVersions } from '../../plugins/utils';
 import {
   job,
   getJobFolder,
   writeJobStats,
   getCiFolder,
   getPluginBuildInfo,
-  getBuildNumber,
   getPullRequestNumber,
   getCircleDownloadBaseURL,
 } from '../../plugins/env';
 import { agregateWorkflowInfo, agregateCoverageInfo, agregateTestInfo } from '../../plugins/workflow';
-import {
-  PluginPackageDetails,
-  PluginBuildReport,
-  PluginHistory,
-  defaultPluginHistory,
-  TestResultsInfo,
-  PluginDevInfo,
-  PluginDevSummary,
-  DevSummary,
-} from '../../plugins/types';
+import { PluginPackageDetails, PluginBuildReport, TestResultsInfo } from '../../plugins/types';
 import { runEndToEndTests } from '../../plugins/e2e/launcher';
 import { getEndToEndSettings } from '../../plugins/index';
 
@@ -135,6 +125,10 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   await execa('rimraf', [packagesDir, distDir, grafanaEnvDir]);
   fs.mkdirSync(packagesDir);
   fs.mkdirSync(distDir);
+
+  // Updating the dist dir to have a pluginId named directory in it
+  // The zip needs to contain the plugin code wrapped in directory with a pluginId name
+  const distContentDir = path.resolve(distDir, getPluginId());
   fs.mkdirSync(grafanaEnvDir);
 
   console.log('Build Dist Folder');
@@ -142,7 +136,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   // 1. Check for a local 'dist' folder
   const d = path.resolve(process.cwd(), 'dist');
   if (fs.existsSync(d)) {
-    await execa('cp', ['-rn', d + '/.', distDir]);
+    await execa('cp', ['-rn', d + '/.', distContentDir]);
   }
 
   // 2. Look for any 'dist' folders under ci/job/XXX/dist
@@ -151,7 +145,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
     const contents = path.resolve(ciDir, 'jobs', j, 'dist');
     if (fs.existsSync(contents)) {
       try {
-        await execa('cp', ['-rn', contents + '/.', distDir]);
+        await execa('cp', ['-rn', contents + '/.', distContentDir]);
       } catch (er) {
         throw new Error('Duplicate files found in dist folders');
       }
@@ -159,7 +153,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   }
 
   console.log('Save the source info in plugin.json');
-  const pluginJsonFile = path.resolve(distDir, 'plugin.json');
+  const pluginJsonFile = path.resolve(distContentDir, 'plugin.json');
   const pluginInfo = getPluginJson(pluginJsonFile);
   pluginInfo.info.build = await getPluginBuildInfo();
   fs.writeFile(pluginJsonFile, JSON.stringify(pluginInfo, null, 2), err => {
@@ -180,11 +174,14 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
     throw new Error('Invalid zip file: ' + zipFile);
   }
 
+  // Make a copy so it is easy for report to read
+  await execa('cp', [pluginJsonFile, distDir]);
+
   const info: PluginPackageDetails = {
     plugin: await getPackageDetails(zipFile, distDir),
   };
 
-  console.log('Setup Grafan Environment');
+  console.log('Setup Grafana Environment');
   let p = path.resolve(grafanaEnvDir, 'plugins', pluginInfo.id);
   fs.mkdirSync(p, { recursive: true });
   await execa('unzip', [zipFile, '-d', p]);
@@ -341,88 +338,23 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
     }
   });
 
-  console.log('Initalizing S3 Client');
-  const s3 = new S3Client();
-
-  const build = pluginMeta.info.build;
-  if (!build) {
-    throw new Error('Metadata missing build info');
+  const GRAFANA_API_KEY = process.env.GRAFANA_API_KEY;
+  if (!GRAFANA_API_KEY) {
+    console.log('Enter a GRAFANA_API_KEY to upload the plugin report');
+    return;
   }
+  const url = `https://grafana.com/api/plugins/${report.plugin.id}/ci`;
 
-  const version = pluginMeta.info.version || 'unknown';
-  const branch = build.branch || 'unknown';
-  const buildNumber = getBuildNumber();
-  const root = `dev/${pluginMeta.id}`;
-  const dirKey = pr ? `${root}/pr/${pr}/${buildNumber}` : `${root}/branch/${branch}/${buildNumber}`;
-
-  const jobKey = `${dirKey}/index.json`;
-  if (await s3.exists(jobKey)) {
-    throw new Error('Job already registered: ' + jobKey);
-  }
-
-  console.log('Write Job', jobKey);
-  await s3.writeJSON(jobKey, report, {
-    Tagging: `version=${version}&type=${pluginMeta.type}`,
+  console.log('Sending report to:', url);
+  const axios = require('axios');
+  const info = await axios.post(url, report, {
+    headers: { Authorization: 'Bearer ' + GRAFANA_API_KEY },
   });
-
-  // Upload logo
-  const logo = await s3.uploadLogo(report.plugin.info, {
-    local: path.resolve(ciDir, 'dist'),
-    remote: root,
-  });
-
-  const latest: PluginDevInfo = {
-    pluginId: pluginMeta.id,
-    name: pluginMeta.name,
-    logo,
-    build: pluginMeta.info.build!,
-    version,
-  };
-
-  let base = `${root}/branch/${branch}/`;
-  latest.build.number = buildNumber;
-  if (pr) {
-    latest.build.pr = pr;
-    base = `${root}/pr/${pr}/`;
-  }
-
-  const historyKey = base + `history.json`;
-  console.log('Read', historyKey);
-  const history: PluginHistory = await s3.readJSON(historyKey, defaultPluginHistory);
-  appendPluginHistory(report, latest, history);
-
-  await s3.writeJSON(historyKey, history);
-  console.log('wrote history');
-
-  // Private things may want to upload
-  if (upload) {
-    s3.uploadPackages(packageInfo, {
-      local: packageDir,
-      remote: dirKey + '/packages',
-    });
-
-    s3.uploadTestFiles(report.tests, {
-      local: ciDir,
-      remote: dirKey,
-    });
-  }
-
-  console.log('Update Directory Indexes');
-
-  let indexKey = `${root}/index.json`;
-  const index: PluginDevSummary = await s3.readJSON(indexKey, { branch: {}, pr: {} });
-  if (pr) {
-    index.pr[pr] = latest;
+  if (info.status === 200) {
+    console.log('OK: ', info.data);
   } else {
-    index.branch[branch] = latest;
+    console.warn('Error: ', info);
   }
-  await s3.writeJSON(indexKey, index);
-
-  indexKey = `dev/index.json`;
-  const pluginIndex: DevSummary = await s3.readJSON(indexKey, {});
-  pluginIndex[pluginMeta.id] = latest;
-  await s3.writeJSON(indexKey, pluginIndex);
-  console.log('wrote index');
 };
 
 export const ciPluginReportTask = new Task<PluginCIOptions>('Generate Plugin Report', pluginReportRunner);
