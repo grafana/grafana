@@ -225,4 +225,4 @@ The handling of multi-valued template variables in dimension values has been cha
 
 ## Upgrading to v6.6
 
-The Generic OAuth setting, `send_client_credentials_via_post`, used for supporting non-compliant providers have been removed. From now on Grafana will automatically detect if credentials should be sent as part of url or body for a specific provider. The result will be remembered and used for additional OAuth requests for that provider.
+The Generic OAuth setting `send_client_credentials_via_post`, used for supporting non-compliant providers, has been removed. From now on, Grafana will automatically detect if credentials should be sent as part of the URL or request body for a specific provider. The result will be remembered and used for additional OAuth requests for that provider.
