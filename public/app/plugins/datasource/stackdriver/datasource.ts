@@ -36,7 +36,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   async getTimeSeries(options: any) {
     const queries = options.targets
       .filter((target: any) => {
-        return !target.hide && target.metricType;
+        return !target.hide && target.metricType && target.defaultProject !== undefined;
       })
       .map((t: any) => {
         return {
@@ -78,12 +78,13 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
     });
   }
 
-  async getLabels(metricType: string, refId: string) {
+  async getLabels(metricType: string, refId: string, defaultProject: string) {
     const response = await this.getTimeSeries({
       targets: [
         {
           refId: refId,
           datasourceId: this.id,
+          defaultProject,
           metricType: this.templateSrv.replace(metricType),
           crossSeriesReducer: 'REDUCE_NONE',
           view: 'HEADERS',

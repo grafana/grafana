@@ -18,6 +18,7 @@ export interface Props {
   filters: string[];
   datasource: StackdriverDatasource;
   refId: string;
+  defaultProject: string;
   hideGroupBys: boolean;
 }
 
@@ -79,7 +80,11 @@ export class Filter extends React.Component<Props, State> {
       return;
     }
     const scope = this.component.getScope();
-    if (prevProps.metricType !== this.props.metricType) {
+    if (
+      this.props.metricType &&
+      this.props.defaultProject &&
+      (prevProps.metricType !== this.props.metricType || prevProps.defaultProject !== this.props.defaultProject)
+    ) {
       scope.loading = this.loadLabels(scope);
     }
     scope.filters = this.props.filters;
@@ -98,7 +103,11 @@ export class Filter extends React.Component<Props, State> {
         if (!this.props.metricType) {
           scope.labelData = labelData;
         } else {
-          const { meta } = await this.props.datasource.getLabels(this.props.metricType, this.props.refId);
+          const { meta } = await this.props.datasource.getLabels(
+            this.props.metricType,
+            this.props.refId,
+            this.props.defaultProject
+          );
           scope.labelData = meta;
         }
         resolve();

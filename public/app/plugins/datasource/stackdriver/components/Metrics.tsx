@@ -35,7 +35,7 @@ export class Metrics extends React.Component<Props, State> {
     service: '',
     metric: '',
     metricDescriptor: null,
-    defaultProject: '',
+    defaultProject: null,
   };
 
   constructor(props: Props) {
@@ -53,7 +53,7 @@ export class Metrics extends React.Component<Props, State> {
   async getCurrentProject() {
     return new Promise(async (resolve, reject) => {
       try {
-        if (!this.state.defaultProject || this.state.defaultProject === 'loading project...') {
+        if (!this.state.defaultProject) {
           const defaultProject = await this.props.datasource.getDefaultProject();
           this.setState({ defaultProject });
         }
@@ -66,7 +66,7 @@ export class Metrics extends React.Component<Props, State> {
   }
 
   async loadMetricDescriptors() {
-    if (this.state.defaultProject !== 'loading project...') {
+    if (this.state.defaultProject !== null) {
       const metricDescriptors = await this.props.datasource.getMetricTypes(this.state.defaultProject);
       this.setState({ metricDescriptors });
       return metricDescriptors;
@@ -162,7 +162,6 @@ export class Metrics extends React.Component<Props, State> {
               onChange={this.onServiceChange}
               value={service}
               options={services}
-              isSearchable={false}
               placeholder="Select Services"
               className="width-15"
             />

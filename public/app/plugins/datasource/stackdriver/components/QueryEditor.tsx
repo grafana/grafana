@@ -166,6 +166,7 @@ export class QueryEditor extends React.Component<Props, State> {
           {metric => (
             <>
               <Filter
+                defaultProject={defaultProject}
                 filtersChanged={value => this.onPropertyChange('filters', value)}
                 groupBysChanged={value => this.onPropertyChange('groupBys', value)}
                 filters={filters}

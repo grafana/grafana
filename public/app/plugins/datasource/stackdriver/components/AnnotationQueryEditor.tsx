@@ -21,7 +21,7 @@ interface State extends AnnotationTarget {
 }
 
 const DefaultTarget: State = {
-  defaultProject: 'loading project...',
+  defaultProject: null,
   metricType: '',
   filters: [],
   metricKind: '',
@@ -80,6 +80,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
                 filtersChanged={value => this.onChange('filters', value)}
                 filters={filters}
                 refId={refId}
+                defaultProject={defaultProject}
                 hideGroupBys={true}
                 templateSrv={templateSrv}
                 datasource={datasource}
