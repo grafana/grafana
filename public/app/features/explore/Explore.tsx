@@ -60,11 +60,6 @@ import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
 import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
-import ElapsedTime from './ElapsedTime';
-
-function formatLatency(value: number) {
-  return `${(value / 1000).toFixed(1)}s`;
-}
 
 const getStyles = memoizeOne(() => {
   return {
@@ -111,7 +106,6 @@ interface ExploreProps {
   toggleGraph: typeof toggleGraph;
   queryResponse: PanelData;
   originPanelId: number;
-  latency: number;
   addQueryRow: typeof addQueryRow;
 }
 
@@ -276,7 +270,6 @@ export class Explore extends React.PureComponent<ExploreProps> {
       timeZone,
       queryResponse,
       syncedTimes,
-      latency,
       isLive,
     } = this.props;
     const exploreClass = split ? 'explore explore-split' : 'explore';
@@ -299,15 +292,6 @@ export class Explore extends React.PureComponent<ExploreProps> {
                     <span className="btn-title">{'\xA0' + 'Add query'}</span>
                   </button>
                 </div>
-                <button className="explore-container-content-item" disabled>
-                  {`Overall latency: ${
-                    queryResponse.state === LoadingState.Done || LoadingState.Error ? (
-                      formatLatency(latency)
-                    ) : (
-                      <ElapsedTime />
-                    )
-                  }`}
-                </button>
               </div>
             </div>
             <ErrorContainer queryErrors={queryResponse.error ? [queryResponse.error] : undefined} />
@@ -400,7 +384,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     showingTable,
     absoluteRange,
     queryResponse,
-    latency,
   } = item;
 
   const { datasource, queries, range: urlRange, mode: urlMode, ui, originPanelId } = (urlState ||
@@ -449,7 +432,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     queryResponse,
     originPanelId,
     syncedTimes,
-    latency,
     timeZone,
   };
 }
