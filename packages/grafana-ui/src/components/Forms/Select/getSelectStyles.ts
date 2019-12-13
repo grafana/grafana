@@ -13,6 +13,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
       background: ${bgColor};
       box-shadow: 0px 4px 4px ${menuShadowColor};
       position: absolute;
+      min-width: 100%;
     `,
     option: css`
       padding: 8px;
@@ -20,6 +21,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
       justify-content: space-between;
       align-items: center;
       flex-direction: row;
+      white-space: nowrap;
       cursor: pointer;
       &:hover {
         background: ${optionBgHover};
@@ -37,15 +39,11 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     singleValue: css`
       color: ${theme.colors.formInputText};
-      /* position: absolute;
-      top: 50%;
-      transform: translateY(-50%); */
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       box-sizing: border-box;
       max-width: 100%;
-      /* padding-right: 40px; */
     `,
     valueContainer: css`
       align-items: center;
@@ -55,11 +53,15 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
       box-sizing: border-box;
       flex: 1 1 0%;
       outline: none;
-      /* padding: 2px 8px; */
       overflow: hidden;
       > * {
         display: inline-block;
       }
+    `,
+    loadingMessage: css`
+      padding: ${theme.spacing.sm};
+      text-align: center;
+      width: 100%;
     `,
   };
 });
