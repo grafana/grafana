@@ -21,7 +21,7 @@ Edit content in the `sources` directory.
 
 Use the Hugo shortcode [relref](https://gohugo.io/content-management/cross-references/#use-ref-and-relref) anytime you are linking to other internal docs pages.
 
-### Editing the Sidebar Menu
+### Edit the side menu
 
 Edit [sources/menu.yaml](sources/menu.yaml) to make changes to the sidebar. Restart the `make run` command for changes to take effect.
 
