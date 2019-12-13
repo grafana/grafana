@@ -67,7 +67,7 @@ class BottomNavLinks extends PureComponent<Props, State> {
             </li>
           )}
 
-          <OrgSwitcher onDismiss={this.toggleSwitcherModal} isOpen={showSwitcherModal} />
+          {showSwitcherModal && <OrgSwitcher onDismiss={this.toggleSwitcherModal} />}
 
           {link.children &&
             link.children.map((child, index) => {
