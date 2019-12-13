@@ -87,7 +87,11 @@ export default class AzureLogAnalyticsDatasource {
       );
       const generated = querystringBuilder.generate();
 
-      const workspace = this.templateSrv.replace(item.workspace, options.scopedVars);
+      let workspace = this.templateSrv.replace(item.workspace, options.scopedVars);
+
+      if (!workspace && this.defaultOrFirstWorkspace) {
+        workspace = this.defaultOrFirstWorkspace;
+      }
 
       const url = `${this.baseUrl}/${workspace}/query?${generated.uriString}`;
 
