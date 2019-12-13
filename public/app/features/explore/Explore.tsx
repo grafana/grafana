@@ -68,6 +68,22 @@ const getStyles = memoizeOne(() => {
       // Is needed for some transition animations to work.
       position: relative;
     `,
+    exploreContainerContentItem: css`
+      margin-top: 1em;
+      background: transparent;
+      border: none;
+      &:nth-child(2) {
+        display: flex;
+        margin-left: auto;
+      }
+    `,
+    exploreNavbarButton: css`
+      margin-left: 0;
+      margin-right: 0.5em;
+    `,
+    exploreNavbarButtonSpan: css`
+      display: initial;
+    `,
   };
 });
 
@@ -286,10 +302,14 @@ export class Explore extends React.PureComponent<ExploreProps> {
             <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
             <div className="query-row">
               <div className="query-row-field align-items-center flex-shrink-1">
-                <div className="explore-container-content-item">
-                  <button className={'btn navbar-button'} onClick={this.onClickAddQueryRowButton} disabled={isLive}>
+                <div className={styles.exploreContainerContentItem}>
+                  <button
+                    className={`btn navbar-button ${styles.exploreNavbarButton}`}
+                    onClick={this.onClickAddQueryRowButton}
+                    disabled={isLive}
+                  >
                     <i className={'fa fa-fw fa-plus icon-margin-right'} />
-                    <span className="btn-title">{'\xA0' + 'Add query'}</span>
+                    <span className={`btn-title ${styles.exploreNavbarButtonSpan}`}>{'\xA0' + 'Add query'}</span>
                   </button>
                 </div>
               </div>

@@ -77,26 +77,6 @@
   }
 }
 
-.explore-container-content-item {
-  margin-top: 1em;
-  background: transparent;
-  border: none;
-
-  &:nth-child(2) {
-    display: flex;
-    margin-left: auto;
-  }
-
-  .navbar-button {
-    margin-left: 0;
-    margin-right: 0.5em;
-
-    span {
-      display: initial;
-    }
-  }
-}
-
 .explore-toolbar-item:last-child {
   flex: auto;
 }
