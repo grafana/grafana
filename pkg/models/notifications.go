@@ -19,6 +19,7 @@ type SendEmailCommand struct {
 	Subject       string
 	Data          map[string]interface{}
 	Info          string
+	ReplyTo       []string
 	EmbededFiles  []string
 	AttachedFiles []*SendEmailAttachFile
 }
