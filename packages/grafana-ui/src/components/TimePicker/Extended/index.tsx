@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useTheme, stylesFactory } from '../../../themes';
-import { GrafanaTheme, TimeOption, TimeRange } from '@grafana/data';
+import { GrafanaTheme, TimeOption, TimeRange, DateTime, TIME_FORMAT, isDateTime } from '@grafana/data';
 import { css } from 'emotion';
 import TimeRangeTitle from './TimeRangeTitle';
 import TimeRangeForm from './TimeRangeForm';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import TimeRangeList from './TimeRangeList';
+import {} from '../time';
 
-const defaultSelectOptions: TimeOption[] = [
+const quickOptions: TimeOption[] = [
   { from: 'now-5m', to: 'now', display: 'Last 5 minutes', section: 3 },
   { from: 'now-15m', to: 'now', display: 'Last 15 minutes', section: 3 },
   { from: 'now-30m', to: 'now', display: 'Last 30 minutes', section: 3 },
@@ -24,6 +25,9 @@ const defaultSelectOptions: TimeOption[] = [
   { from: 'now-1y', to: 'now', display: 'Last 1 year', section: 3 },
   { from: 'now-2y', to: 'now', display: 'Last 2 years', section: 3 },
   { from: 'now-5y', to: 'now', display: 'Last 5 years', section: 3 },
+];
+
+const otherOptions: TimeOption[] = [
   { from: 'now-1d/d', to: 'now-1d/d', display: 'Yesterday', section: 3 },
   { from: 'now-2d/d', to: 'now-2d/d', display: 'Day before yesterday', section: 3 },
   { from: 'now-7d/d', to: 'now-7d/d', display: 'This day last week', section: 3 },
@@ -116,10 +120,26 @@ interface Props {
   onChange: (timeRange: TimeRange) => void;
 }
 
-const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }: Props) => {
+const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }) => {
   const theme = useTheme();
   const styles = getLabelStyles(theme);
   const [collapsed, setCollapsed] = useState(false);
+  const [recent, setRecent] = useState<TimeOption[]>([]);
+
+  const onSelect = (range: TimeRange) => {
+    const start = recent.length - 3;
+    const nextRecent = recent.slice(start >= 0 ? start : 0);
+
+    nextRecent.push({
+      from: valueAsString(range.from),
+      to: valueAsString(range.to),
+      display: `${valueAsString(range.from)} - ${valueAsString(range.to)}`,
+      section: 3,
+    });
+
+    setRecent(nextRecent);
+    //onChange(range);
+  };
 
   return (
     <div className={styles.container}>
@@ -132,12 +152,12 @@ const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }: Props) => {
           >
             <TimeRangeTitle>Absolute time range</TimeRangeTitle>
           </div>
-          <TimeRangeForm value={selected} onApply={onChange} calendarTrigger="onFocus" />
+          <TimeRangeForm value={selected} onApply={onSelect} calendarTrigger="onFocus" />
         </div>
         <div className={styles.recentRanges}>
           <TimeRangeList
             title="Recently used absolute ranges"
-            options={defaultSelectOptions.slice(0, 4)}
+            options={recent}
             onSelect={onChange}
             selected={selected}
           />
@@ -156,7 +176,7 @@ const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }: Props) => {
               </div>
               <TimeRangeList
                 title="Recently used absolute ranges"
-                options={defaultSelectOptions.slice(0, 4)}
+                options={recent}
                 onSelect={onChange}
                 selected={selected}
               />
@@ -165,19 +185,21 @@ const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }: Props) => {
         </div>
         <TimeRangeList
           title="Relative time range from now"
-          options={defaultSelectOptions.slice(0, 50)}
+          options={quickOptions}
           onSelect={onChange}
           selected={selected}
         />
-        <TimeRangeList
-          title="Other relative range"
-          options={defaultSelectOptions.slice(0, 50)}
-          onSelect={onChange}
-          selected={selected}
-        />
+        <TimeRangeList title="Other relative range" options={otherOptions} onSelect={onChange} selected={selected} />
       </CustomScrollbar>
     </div>
   );
 };
 
 export default ExtendedTimePicker;
+
+function valueAsString(value: DateTime | string): string {
+  if (isDateTime(value)) {
+    return value.format(TIME_FORMAT);
+  }
+  return value;
+}

@@ -45,9 +45,9 @@ const TimeRangeList: React.FC<Props> = props => {
 };
 
 function renderOptions({ options, selected, onSelect }: Props): JSX.Element[] {
-  return options.map(option => (
+  return options.map((option, index) => (
     <TimeRangeOption
-      key={keyForOption(option)}
+      key={keyForOption(option, index)}
       value={option}
       selected={isEqual(option, selected)}
       onSelect={option => onSelect(toTimeRange(option))}
@@ -66,8 +66,8 @@ function toTimeRange(option: TimeOption): TimeRange {
   };
 }
 
-function keyForOption(option: TimeOption): string {
-  return `${option.from}-${option.to}`;
+function keyForOption(option: TimeOption, index: number): string {
+  return `${option.from}-${option.to}-${index}`;
 }
 
 function isEqual(x: TimeOption, y?: TimeRange): boolean {
