@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, PropsWithChildren, FC } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { useTheme, stylesFactory } from '../../../themes';
@@ -13,11 +13,7 @@ const getStyle = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-interface Props {
-  children: string;
-}
-
-const TimePickerTitle: React.FC<Props> = ({ children }) => {
+const TimePickerTitle: FC<PropsWithChildren<{}>> = ({ children }) => {
   const theme = useTheme();
   const styles = getStyle(theme);
 

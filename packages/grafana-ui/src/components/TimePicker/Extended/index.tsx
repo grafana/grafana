@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
+import { useMedia } from 'react-use';
+import { css } from 'emotion';
 import { useTheme, stylesFactory } from '../../../themes';
 import { GrafanaTheme, TimeOption, TimeRange, DateTime, TIME_FORMAT, isDateTime } from '@grafana/data';
-import { css } from 'emotion';
 import TimeRangeTitle from './TimePickerTitle';
 import TimeRangeForm from './TimeRangeForm';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import TimeRangeList from './TimeRangeList';
-import {} from '../time';
 
 const quickOptions: TimeOption[] = [
   { from: 'now-5m', to: 'now', display: 'Last 5 minutes', section: 3 },
@@ -122,6 +122,7 @@ interface Props {
 
 const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }) => {
   const theme = useTheme();
+  const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.lg})`);
   const styles = getLabelStyles(theme);
   const [collapsed, setCollapsed] = useState(false);
   const [recent, setRecent] = useState<TimeOption[]>([]);
@@ -152,7 +153,7 @@ const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }) => {
           >
             <TimeRangeTitle>Absolute time range</TimeRangeTitle>
           </div>
-          <TimeRangeForm value={selected} onApply={onSelect} calendarTrigger="onFocus" />
+          <TimeRangeForm value={selected} onApply={onSelect} isFullscreen={isFullscreen} />
         </div>
         <div className={styles.recentRanges}>
           <TimeRangeList title="Recently used absolute ranges" options={recent} onSelect={onChange} value={selected} />
@@ -167,7 +168,7 @@ const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }) => {
           {collapsed && (
             <div className={styles.accordionBody}>
               <div className={styles.narrowForm}>
-                <TimeRangeForm value={selected} onApply={onChange} calendarTrigger="onButton" />
+                <TimeRangeForm value={selected} onApply={onChange} isFullscreen={isFullscreen} />
               </div>
               <TimeRangeList
                 title="Recently used absolute ranges"

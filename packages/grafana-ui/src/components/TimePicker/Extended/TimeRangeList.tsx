@@ -30,7 +30,7 @@ const TimeRangeList: React.FC<Props> = props => {
   const { title } = props;
 
   if (!title) {
-    return <div>{renderOptions(props)}</div>;
+    return <Options {...props} />;
   }
 
   return (
@@ -38,21 +38,25 @@ const TimeRangeList: React.FC<Props> = props => {
       <div className={styles.title}>
         <TimeRangeTitle>{title}</TimeRangeTitle>
       </div>
-      <div>{renderOptions(props)}</div>
+      <Options {...props} />
     </>
   );
 };
 
-function renderOptions({ options, value, onSelect }: Props): JSX.Element[] {
-  return options.map((option, index) => (
-    <TimeRangeOption
-      key={keyForOption(option, index)}
-      value={option}
-      selected={isEqual(option, value)}
-      onSelect={option => onSelect(mapToTimeRange(option))}
-    />
-  ));
-}
+const Options = memo<Props>(({ options, value, onSelect }) => {
+  return (
+    <div>
+      {options.map((option, index) => (
+        <TimeRangeOption
+          key={keyForOption(option, index)}
+          value={option}
+          selected={isEqual(option, value)}
+          onSelect={option => onSelect(mapToTimeRange(option))}
+        />
+      ))}
+    </div>
+  );
+});
 
 function keyForOption(option: TimeOption, index: number): string {
   return `${option.from}-${option.to}-${index}`;

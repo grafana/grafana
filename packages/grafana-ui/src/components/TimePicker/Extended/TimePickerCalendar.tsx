@@ -1,24 +1,14 @@
-import React, { ReactNode } from 'react';
+import React, { memo } from 'react';
 import { css, cx } from 'emotion';
 import Calendar from 'react-calendar/dist/entry.nostyle';
-import { GrafanaTheme, TimeRange, dateTime } from '@grafana/data';
+import { GrafanaTheme, dateTime, TIME_FORMAT } from '@grafana/data';
 import { useTheme, stylesFactory } from '../../../themes';
+import TimePickerTitle from './TimePickerTitle';
+import Forms from '../../Forms';
+import { Modal } from '../../Modal/Modal';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
-    background: css`
-      @media only screen and (max-width: ${theme.breakpoints.lg}) {
-        display: block;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        background-color: rgb(32, 34, 38, 0.7);
-        z-index: ${theme.zIndex.modalBackdrop};
-      }
-    `,
     container: css`
       top: 0;
       position: absolute;
@@ -38,15 +28,29 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
           border-left: 1px solid ${theme.colors.gray4};
         }
       }
-
-      @media only screen and (max-width: ${theme.breakpoints.lg}) {
-        position: static;
-        margin: 20% auto;
-        z-index: ${theme.zIndex.modal};
-        width: 268px;
-        box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.6);
-      }
     `,
+  };
+});
+
+const getFooterStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    container: css`
+      background-color: ${theme.background.dropdown};
+      display: flex;
+      justify-content: center;
+      padding: 10px;
+      align-items: stretch;
+    `,
+    apply: css`
+      margin-right: 4px;
+      width: 100%;
+      justify-content: center;
+    `,
+  };
+});
+
+const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
     title: css`
       color: ${theme.colors.text}
       background-color: inherit;
@@ -143,88 +147,120 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         border-bottom-right-radius: 20px;
       }
     `,
-    header: css`
-      @media only screen and (min-width: ${theme.breakpoints.lg}) {
-        display: none;
-      }
+  };
+});
 
+const getHeaderStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    container: css`
       background-color: ${theme.background.dropdown};
       display: flex;
       justify-content: space-between;
       padding: 7px;
-
-      i {
-        font-size: ${theme.typography.size.lg};
-      }
     `,
-    footer: css`
-      @media only screen and (min-width: ${theme.breakpoints.lg}) {
-        display: none;
-      }
-
-      background-color: ${theme.background.dropdown};
-      display: flex;
-      justify-content: center;
-      padding: 10px;
-      align-items: stretch;
+    close: css`
+      cursor: pointer;
+      font-size: ${theme.typography.size.lg};
     `,
   };
 });
 
 interface Props {
-  value?: TimeRange;
-  onChange: (value: TimeRange) => void;
-  header?: ReactNode;
-  headerClassName?: string;
-  footer?: ReactNode;
-  footerClassName?: string;
+  isOpen: boolean;
+  from: string;
+  to: string;
+  onClose: () => void;
+  onApply: () => void;
+  onChange: (from: string, to: string) => void;
+  isFullscreen: boolean;
 }
 
 const TimePickerCalendar: React.FC<Props> = props => {
   const theme = useTheme();
   const styles = getStyles(theme);
-  const { value, onChange, header, footer, headerClassName, footerClassName } = props;
+  const { isOpen, isFullscreen } = props;
+
+  if (!isOpen) {
+    return null;
+  }
+
+  if (isFullscreen) {
+    return (
+      <div className={styles.container}>
+        <Body {...props} />
+      </div>
+    );
+  }
 
   return (
-    <div className={styles.background}>
-      <div className={styles.container}>
-        <div className={cx(styles.header, headerClassName)}>{header}</div>
-        <Calendar
-          selectRange={true}
-          next2Label={null}
-          prev2Label={null}
-          className={styles.body}
-          tileClassName={styles.title}
-          value={rangeToValue(value)}
-          nextLabel={<span className="fa fa-angle-right" />}
-          prevLabel={<span className="fa fa-angle-left" />}
-          onChange={value => onChange(valueToRange(value))}
-        />
-        <div className={cx(styles.footer, footerClassName)}>{footer}</div>
-      </div>
-    </div>
+    <Modal title="asdfasdf" isOpen={isOpen}>
+      <Header {...props} />
+      <Body {...props} />
+      <Footer {...props} />
+    </Modal>
   );
 };
 
-function rangeToValue(selected?: TimeRange): Date[] | Date {
-  if (!selected) {
-    return new Date();
-  }
-  const { from, to } = selected;
-  return [from.toDate(), to.toDate()];
+const Header = memo<Props>(({ onClose }) => {
+  const theme = useTheme();
+  const styles = getHeaderStyles(theme);
+
+  return (
+    <div className={styles.container}>
+      <TimePickerTitle>Select a time range</TimePickerTitle>
+      <i className={cx(styles.close, 'fa', 'fa-times')} onClick={onClose} />
+    </div>
+  );
+});
+
+const Body = memo<Props>(props => {
+  const theme = useTheme();
+  const styles = getBodyStyles(theme);
+  const { from, to, onChange } = props;
+
+  return (
+    <Calendar
+      selectRange={true}
+      next2Label={null}
+      prev2Label={null}
+      className={styles.body}
+      tileClassName={styles.title}
+      value={inputToValue(from, to)}
+      nextLabel={<span className="fa fa-angle-right" />}
+      prevLabel={<span className="fa fa-angle-left" />}
+      onChange={value => valueToInput(value, onChange)}
+    />
+  );
+});
+
+const Footer = memo<Props>(({ onClose, onApply }) => {
+  const theme = useTheme();
+  const styles = getFooterStyles(theme);
+
+  return (
+    <div className={styles.container}>
+      <Forms.Button className={styles.apply} onClick={onApply}>
+        Apply time range
+      </Forms.Button>
+      <Forms.Button variant="secondary" onClick={onClose}>
+        Cancel
+      </Forms.Button>
+    </div>
+  );
+});
+
+function inputToValue(from: string, to: string): Date[] {
+  const fromAsDate = from ? dateTime(from).toDate() : new Date();
+  const toAsDate = to ? dateTime(to).toDate() : new Date();
+  return [fromAsDate, toAsDate];
 }
 
-function valueToRange(value: Date | Date[]): TimeRange {
-  const [fromValue, toValue] = value;
+function valueToInput(value: Date | Date[], onChange: (from: string, to: string) => void): void {
+  const [from, to] = value;
+  const fromAsString = dateTime(from).format(TIME_FORMAT);
+  const toAsString = dateTime(to).format(TIME_FORMAT);
 
-  const from = dateTime(fromValue);
-  const to = dateTime(toValue);
-
-  return {
-    from,
-    to,
-    raw: { from, to },
-  };
+  return onChange(fromAsString, toAsString);
 }
 
-export default TimePickerCalendar;
+export default memo(TimePickerCalendar);
