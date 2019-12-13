@@ -82,26 +82,10 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 			if err := validateRedirectTo(redirectTo); err != nil {
 				viewData.Settings["loginError"] = err.Error()
 				c.HTML(200, getViewIndex(), viewData)
-				cookie := http.Cookie{
-					Name:   "redirect_to",
-					Value:  "",
-					HttpOnly: true,
-					Path:   setting.AppSubUrl + "/",
-					Secure: setting.CookieSecure,
-					MaxAge: -1,
-				}
-				http.SetCookie(c.Resp, &cookie)
+				hs.deleteCookie(c.Resp, "redirect_to", http.SameSiteDefaultMode)
 				return
 			}
-			cookie := http.Cookie{
-				Name:   "redirect_to",
-				Value:  "",
-				HttpOnly: true,
-				Path:   setting.AppSubUrl + "/",
-				Secure: setting.CookieSecure,
-				MaxAge: -1,
-			}
-			http.SetCookie(c.Resp, &cookie)
+			hs.deleteCookie(c.Resp, "redirect_to", http.SameSiteDefaultMode)
 			c.Redirect(redirectTo)
 			return
 		}
@@ -189,15 +173,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 		} else {
 			log.Info("Ignored invalid redirect_to cookie value: %v", redirectTo)
 		}
-		cookie := http.Cookie{
-			Name:     "redirect_to",
-			Value:    "",
-			HttpOnly: true,
-			Path:     setting.AppSubUrl + "/",
-			Secure:   setting.CookieSecure,
-			MaxAge:   -1,
-		}
-		http.SetCookie(c.Resp, &cookie)
+		hs.deleteCookie(c.Resp, "redirect_to", http.SameSiteDefaultMode)
 	}
 
 	metrics.MApiLoginPost.Inc()
