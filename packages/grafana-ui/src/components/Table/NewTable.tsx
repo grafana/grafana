@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { DataFrame, GrafanaTheme } from '@grafana/data';
 // @ts-ignore
 import { useBlockLayout, useSortBy, useTable } from 'react-table';
@@ -67,13 +67,14 @@ const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-export const NewTable = ({ data }: Props) => {
+export const NewTable = ({ data, height, width }: Props) => {
   const theme = useTheme();
   const tableStyles = getTableStyles(theme);
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow, totalColumnsWidth } = useTable(
+  const columnWidth = Math.floor(width / data.fields.length);
+  const { getTableProps, headerGroups, rows, prepareRow } = useTable(
     {
-      columns: React.useMemo(() => getColumns(data), []),
-      data: React.useMemo(() => getTableData(data), []),
+      columns: useMemo(() => getColumns(data), []),
+      data: useMemo(() => getTableData(data), []),
     },
     useSortBy,
     useBlockLayout
@@ -91,7 +92,11 @@ export const NewTable = ({ data }: Props) => {
         >
           {row.cells.map((cell: any) => {
             return (
-              <div className={tableStyles.tableCell} {...cell.getCellProps()}>
+              <div
+                className={tableStyles.tableCell}
+                {...cell.getCellProps()}
+                style={{ display: 'table-cell', width: `${columnWidth}px` }}
+              >
                 {cell.render('Cell')}
               </div>
             );
@@ -106,9 +111,13 @@ export const NewTable = ({ data }: Props) => {
     <div {...getTableProps()}>
       <div>
         {headerGroups.map((headerGroup: any) => (
-          <div {...headerGroup.getHeaderGroupProps()}>
+          <div {...headerGroup.getHeaderGroupProps()} style={{ display: 'table-row' }}>
             {headerGroup.headers.map((column: any) => (
-              <div className={tableStyles.tableHeader} {...column.getHeaderProps(column.getSortByToggleProps())}>
+              <div
+                className={tableStyles.tableHeader}
+                {...column.getHeaderProps(column.getSortByToggleProps())}
+                style={{ display: 'table-cell', width: `${columnWidth}px` }}
+              >
                 {column.render('Header')}
                 <span>{column.isSorted ? (column.isSortedDesc ? ' 🔽' : ' 🔼') : ''}</span>
               </div>
@@ -116,11 +125,9 @@ export const NewTable = ({ data }: Props) => {
           </div>
         ))}
       </div>
-      <div {...getTableBodyProps()}>
-        <FixedSizeList height={400} itemCount={rows.length} itemSize={27} width={totalColumnsWidth}>
-          {RenderRow}
-        </FixedSizeList>
-      </div>
+      <FixedSizeList height={height} itemCount={rows.length} itemSize={27} width={width}>
+        {RenderRow}
+      </FixedSizeList>
     </div>
   );
 };

@@ -1,9 +1,8 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { Collapse, NewTable } from '@grafana/ui';
 import { DataFrame } from '@grafana/data';
-
+import { Table, Collapse } from '@grafana/ui';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { toggleTable } from './state/actions';
@@ -27,10 +26,13 @@ export class TableContainer extends PureComponent<TableContainerProps> {
     const { loading, showingTable, tableResult, width } = this.props;
 
     const height = 400;
+    const paddingWidth = 16;
+
+    const tableWidth = width - paddingWidth;
 
     return (
       <Collapse label="Table" loading={loading} collapsible isOpen={showingTable} onToggle={this.onClickTableButton}>
-        {tableResult && <NewTable data={tableResult} width={width} height={height} />}
+        {tableResult && <Table data={tableResult} width={tableWidth} height={height} />}
       </Collapse>
     );
   }
