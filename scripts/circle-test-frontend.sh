@@ -5,8 +5,10 @@ source "$(dirname "$0")/helpers/exit-if-fail.sh"
 
 start=$(date +%s)
 
-exit_if_fail npm run prettier:check
-exit_if_fail npm run test
+# exit_if_fail npm run prettier:check
+# exit_if_fail npm run test
+
+yarn run jest-ci
 
 end=$(date +%s)
 seconds=$((end - start))
