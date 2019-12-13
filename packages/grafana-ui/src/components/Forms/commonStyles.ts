@@ -27,7 +27,7 @@ export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
     padding: 0 ${theme.spacing.sm} 0 ${theme.spacing.sm};
 
     &:hover {
-      border-color: ${colors.formInputBorder};
+      border-color: ${borderColor};
     }
 
     &:focus {
