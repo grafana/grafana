@@ -9,6 +9,7 @@ import { filterFieldsByNameTransformer, FilterFieldsByNameTransformerOptions } f
 import { noopTransformer } from './transformers/noop';
 import { DataTransformerInfo, DataTransformerConfig } from '../types/transformations';
 import { filterFramesByRefIdTransformer } from './transformers/filterByRefId';
+import { joinDataFramesTransformer } from './transformers/joinDataFrames';
 
 /**
  * Apply configured transformations to the input data
@@ -68,6 +69,7 @@ export const transformersRegistry = new TransformerRegistry(() => [
   filterFramesByRefIdTransformer,
   appendTransformer,
   reduceTransformer,
+  joinDataFramesTransformer,
 ]);
 
 export { ReduceTransformerOptions, FilterFieldsByNameTransformerOptions };
