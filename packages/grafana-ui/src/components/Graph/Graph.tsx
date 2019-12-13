@@ -246,7 +246,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         label: 'Datetime',
         ticks: ticks,
         timeformat: timeFormat(ticks, min, max),
-        timezone: timeZone || DefaultTimeZone,
+        timezone: timeZone ?? DefaultTimeZone,
       },
       yaxes,
       grid: {
