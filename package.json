@@ -82,7 +82,7 @@
     "grunt-angular-templates": "1.1.0",
     "grunt-cli": "1.2.0",
     "grunt-contrib-clean": "1.0.0",
-    "grunt-contrib-compress": "1.4.3",
+    "grunt-contrib-compress": "1.6.0",
     "grunt-contrib-copy": "1.0.0",
     "grunt-exec": "1.0.1",
     "grunt-newer": "1.3.0",
