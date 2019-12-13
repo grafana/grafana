@@ -33,7 +33,7 @@ export const standardFieldDisplayOptions: FieldDisplayOptions = {
     ],
     mappings: [],
   },
-  override: {},
+  overrides: [],
 };
 
 export const defaults: StatPanelOptions = {

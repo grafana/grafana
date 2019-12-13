@@ -272,6 +272,64 @@ export abstract class DataSourceApi<
   interpolateVariablesInQueries?(queries: TQuery[]): TQuery[];
 }
 
+export function updateDatasourcePluginOption(props: DataSourcePluginOptionsEditorProps, key: string, val: any) {
+  let config = props.options;
+
+  config = {
+    ...config,
+    [key]: val,
+  };
+
+  props.onOptionsChange(config);
+}
+
+export function updateDatasourcePluginJsonDataOption(
+  props: DataSourcePluginOptionsEditorProps,
+  key: string,
+  val: any,
+  secure: boolean
+) {
+  let config = props.options;
+
+  if (secure) {
+    config = {
+      ...config,
+      secureJsonData: {
+        ...config.secureJsonData,
+        [key]: val,
+      },
+    };
+  } else {
+    config = {
+      ...config,
+      jsonData: {
+        ...config.jsonData,
+        [key]: val,
+      },
+    };
+  }
+
+  props.onOptionsChange(config);
+}
+
+export function updateDatasourcePluginResetKeyOption(props: DataSourcePluginOptionsEditorProps, key: string) {
+  let config = props.options;
+
+  config = {
+    ...config,
+    secureJsonData: {
+      ...config.secureJsonData,
+      [key]: '',
+    },
+    secureJsonFields: {
+      ...config.secureJsonFields,
+      [key]: false,
+    },
+  };
+
+  props.onOptionsChange(config);
+}
+
 export interface QueryEditorProps<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
@@ -281,8 +339,8 @@ export interface QueryEditorProps<
   query: TQuery;
   onRunQuery: () => void;
   onChange: (value: TQuery) => void;
-  /*
-   * Contains query response filtered by refId and possible query error
+  /**
+   * Contains query response filtered by refId of QueryResultBase and possible query error
    */
   data?: PanelData;
 }
@@ -364,16 +422,6 @@ export interface DataStreamState {
    * Error in stream (but may still be running)
    */
   error?: DataQueryError;
-
-  /**
-   * @deprecated: DO NOT USE IN ANYTHING NEW!!!!
-   *
-   * merging streaming rows should be handled in the DataSource
-   * and/or we should add metadata to this state event that
-   * indicates that the PanelQueryRunner should manage the row
-   * additions.
-   */
-  delta?: DataFrame[];
 
   /**
    * Stop listening to this stream

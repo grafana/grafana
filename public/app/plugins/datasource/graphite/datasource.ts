@@ -10,7 +10,6 @@ import {
 } from '@grafana/data';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import gfunc from './gfunc';
-import { IQService } from 'angular';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 //Types
@@ -31,12 +30,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
   _seriesRefLetters: string;
 
   /** @ngInject */
-  constructor(
-    instanceSettings: any,
-    private $q: IQService,
-    private backendSrv: BackendSrv,
-    private templateSrv: TemplateSrv
-  ) {
+  constructor(instanceSettings: any, private backendSrv: BackendSrv, private templateSrv: TemplateSrv) {
     super(instanceSettings);
     this.basicAuth = instanceSettings.basicAuth;
     this.url = instanceSettings.url;
@@ -76,7 +70,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
 
     const params = this.buildGraphiteParams(graphOptions, options.scopedVars);
     if (params.length === 0) {
-      return this.$q.when({ data: [] });
+      return Promise.resolve({ data: [] });
     }
 
     if (this.isMetricTank) {
@@ -177,22 +171,24 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
         maxDataPoints: 100,
       } as unknown) as DataQueryRequest<GraphiteQuery>;
 
-      return this.query(graphiteQuery).then((result: { data: any[] }) => {
+      return this.query(graphiteQuery).then(result => {
         const list = [];
 
         for (let i = 0; i < result.data.length; i++) {
           const target = result.data[i];
 
-          for (let y = 0; y < target.datapoints.length; y++) {
-            const datapoint = target.datapoints[y];
-            if (!datapoint[0]) {
+          for (let y = 0; y < target.length; y++) {
+            const time = target.fields[1].values.get(y);
+            const value = target.fields[0].values.get(y);
+
+            if (!value) {
               continue;
             }
 
             list.push({
               annotation: options.annotation,
-              time: datapoint[1],
-              title: target.target,
+              time,
+              title: target.name,
             });
           }
         }
@@ -242,7 +238,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
           tags,
       });
     } catch (err) {
-      return this.$q.reject(err);
+      return Promise.reject(err);
     }
   }
 

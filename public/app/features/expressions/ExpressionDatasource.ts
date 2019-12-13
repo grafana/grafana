@@ -68,8 +68,10 @@ export class ExpressionDatasourceApi extends DataSourceApi<ExpressionQuery> {
    * This makes the arrow libary loading async.
    */
   async toDataQueryResponse(rsp: any): Promise<DataQueryResponse> {
-    const { gelResponseToDataFrames } = await import(/* webpackChunkName: "apache-arrow-util" */ './util');
-    return { data: gelResponseToDataFrames(rsp) };
+    const { resultsToDataFrames } = await import(
+      /* webpackChunkName: "apache-arrow-util" */ '@grafana/data/src/dataframe/arrow/ArrowDataFrame'
+    );
+    return { data: resultsToDataFrames(rsp) };
   }
 
   testDatasource() {

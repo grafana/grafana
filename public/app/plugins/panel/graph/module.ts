@@ -79,7 +79,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     lines: true,
     // fill factor
     fill: 1,
-    // fill factor
+    // fill gradient
     fillGradient: 0,
     // line width in pixels
     linewidth: 1,
@@ -327,7 +327,9 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   exportCsv() {
     const scope = this.$scope.$new(true);
-    scope.seriesList = this.seriesList;
+    scope.seriesList = this.seriesList
+      .filter(series => !this.panel.legend.hideEmpty || !series.allIsNull)
+      .filter(series => !this.panel.legend.hideZero || !series.allIsZero);
     this.publishAppEvent(CoreEvents.showModal, {
       templateHtml: '<export-data-modal data="seriesList"></export-data-modal>',
       scope,

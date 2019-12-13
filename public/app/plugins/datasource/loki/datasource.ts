@@ -1,5 +1,5 @@
 // Libraries
-import { isEmpty, map as lodashMap, fromPairs } from 'lodash';
+import { isEmpty, map as lodashMap } from 'lodash';
 import { Observable, from, merge, of, iif, defer } from 'rxjs';
 import { map, filter, catchError, switchMap, mergeMap } from 'rxjs/operators';
 
@@ -14,7 +14,7 @@ import {
   processRangeQueryResponse,
   legacyLogStreamToDataFrame,
   lokiStreamResultToDataFrame,
-  isLokiLogsStream,
+  lokiLegacyStreamsToDataframes,
 } from './result_transformer';
 import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 
@@ -26,10 +26,6 @@ import {
   AnnotationEvent,
   DataFrameView,
   TimeRange,
-  FieldConfig,
-  ArrayVector,
-  FieldType,
-  DataFrame,
   TimeSeries,
   PluginMeta,
   DataSourceApi,
@@ -49,7 +45,6 @@ import {
   LokiResultType,
   LokiRangeQueryRequest,
   LokiStreamResponse,
-  LokiLegacyStreamResult,
 } from './types';
 import { ExploreMode } from 'app/types';
 import { LegacyTarget, LiveStreams } from './live_streams';
@@ -57,9 +52,12 @@ import LanguageProvider from './language_provider';
 
 export type RangeQueryOptions = Pick<DataQueryRequest<LokiQuery>, 'range' | 'intervalMs' | 'maxDataPoints' | 'reverse'>;
 export const DEFAULT_MAX_LINES = 1000;
-const LEGACY_QUERY_ENDPOINT = '/api/prom/query';
-const RANGE_QUERY_ENDPOINT = '/loki/api/v1/query_range';
-const INSTANT_QUERY_ENDPOINT = '/loki/api/v1/query';
+export const LEGACY_LOKI_ENDPOINT = '/api/prom';
+export const LOKI_ENDPOINT = '/loki/api/v1';
+
+const LEGACY_QUERY_ENDPOINT = `${LEGACY_LOKI_ENDPOINT}/query`;
+const RANGE_QUERY_ENDPOINT = `${LOKI_ENDPOINT}/query_range`;
+const INSTANT_QUERY_ENDPOINT = `${LOKI_ENDPOINT}/query`;
 
 const DEFAULT_QUERY_PARAMS: Partial<LokiLegacyQueryRequest> = {
   direction: 'BACKWARD',
@@ -81,9 +79,9 @@ interface LokiContextQueryOptions {
 
 export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   private streams = new LiveStreams();
+  private version: string;
   languageProvider: LanguageProvider;
   maxLines: number;
-  version: string;
 
   /** @ngInject */
   constructor(
@@ -195,41 +193,16 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       catchError((err: any) => this.throwUnless(err, err.cancelled, target)),
       filter((response: any) => !response.cancelled),
       map((response: { data: LokiLegacyStreamResponse }) => ({
-        data: this.lokiLegacyStreamsToDataframes(response.data, query, this.maxLines, options.reverse),
+        data: lokiLegacyStreamsToDataframes(
+          response.data,
+          query,
+          this.maxLines,
+          this.instanceSettings.jsonData,
+          options.reverse
+        ),
         key: `${target.refId}_log`,
       }))
     );
-  };
-
-  lokiLegacyStreamsToDataframes = (
-    data: LokiLegacyStreamResult | LokiLegacyStreamResponse,
-    target: { refId: string; query?: string; regexp?: string },
-    limit: number,
-    reverse = false
-  ): DataFrame[] => {
-    if (Object.keys(data).length === 0) {
-      return [];
-    }
-
-    if (isLokiLogsStream(data)) {
-      return [legacyLogStreamToDataFrame(data, false, target.refId)];
-    }
-
-    const series: DataFrame[] = data.streams.map(stream => {
-      const dataFrame = legacyLogStreamToDataFrame(stream, reverse);
-      this.enhanceDataFrame(dataFrame);
-
-      return {
-        ...dataFrame,
-        refId: target.refId,
-        meta: {
-          searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.query, target.regexp)),
-          limit: this.maxLines,
-        },
-      };
-    });
-
-    return series;
   };
 
   runInstantQuery = (
@@ -263,11 +236,11 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   createRangeQuery(target: LokiQuery, options: RangeQueryOptions): LokiRangeQueryRequest {
     const { query } = parseQuery(target.expr);
     let range: { start?: number; end?: number; step?: number } = {};
-    if (options.range && options.intervalMs) {
+    if (options.range) {
       const startNs = this.getTime(options.range.from, false);
       const endNs = this.getTime(options.range.to, true);
       const rangeMs = Math.ceil((endNs - startNs) / 1e6);
-      const step = Math.ceil(this.adjustInterval(options.intervalMs, rangeMs) / 1000);
+      const step = Math.ceil(this.adjustInterval(options.intervalMs || 1000, rangeMs) / 1000);
       const alignedTimes = {
         start: startNs - (startNs % 1e9),
         end: endNs + (1e9 - (endNs % 1e9)),
@@ -309,7 +282,15 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           () => response.status === 404,
           defer(() => this.runLegacyQuery(target, options)),
           defer(() =>
-            processRangeQueryResponse(response.data, target, query, responseListLength, this.maxLines, options.reverse)
+            processRangeQueryResponse(
+              response.data,
+              target,
+              query,
+              responseListLength,
+              this.maxLines,
+              this.instanceSettings.jsonData,
+              options.reverse
+            )
           )
         )
       )
@@ -392,8 +373,48 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   async metadataRequest(url: string, params?: Record<string, string>) {
     const res = await this._request(url, params, { silent: true }).toPromise();
     return {
-      data: { data: res.data.values || [] },
+      data: { data: res.data.data || res.data.values || [] },
     };
+  }
+
+  async metricFindQuery(query: string) {
+    if (!query) {
+      return Promise.resolve([]);
+    }
+    const interpolated = this.templateSrv.replace(query, {}, this.interpolateQueryExpr);
+    return await this.processMetricFindQuery(interpolated);
+  }
+
+  async processMetricFindQuery(query: string) {
+    const labelNamesRegex = /^label_names\(\)\s*$/;
+    const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
+
+    const labelNames = query.match(labelNamesRegex);
+    if (labelNames) {
+      return await this.labelNamesQuery();
+    }
+
+    const labelValues = query.match(labelValuesRegex);
+    if (labelValues) {
+      return await this.labelValuesQuery(labelValues[2]);
+    }
+
+    return Promise.resolve([]);
+  }
+
+  async labelNamesQuery() {
+    const url = (await this.getVersion()) === 'v0' ? `${LEGACY_LOKI_ENDPOINT}/label` : `${LOKI_ENDPOINT}/label`;
+    const result = await this.metadataRequest(url);
+    return result.data.data.map((value: string) => ({ text: value }));
+  }
+
+  async labelValuesQuery(label: string) {
+    const url =
+      (await this.getVersion()) === 'v0'
+        ? `${LEGACY_LOKI_ENDPOINT}/label/${label}/values`
+        : `${LOKI_ENDPOINT}/label/${label}/values`;
+    const result = await this.metadataRequest(url);
+    return result.data.data.map((value: string) => ({ text: value }));
   }
 
   interpolateQueryExpr(value: any, variable: any) {
@@ -418,13 +439,13 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       case 'ADD_FILTER': {
         selectorLabels = addLabelToSelector(selector, action.key, action.value);
         selectorFilters = keepSelectorFilters(selector);
-        selector = `${selectorLabels} ${selectorFilters}`;
+        selector = `${selectorLabels} ${selectorFilters}`.trim();
         break;
       }
       case 'ADD_FILTER_OUT': {
         selectorLabels = addLabelToSelector(selector, action.key, action.value, '!=');
         selectorFilters = keepSelectorFilters(selector);
-        selector = `${selectorLabels} ${selectorFilters}`;
+        selector = `${selectorLabels} ${selectorFilters}`.trim();
         break;
       }
       default:
@@ -538,21 +559,24 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           throw err;
         }),
         switchMap((response: { data: { values: string[] }; status: number }) =>
-          iif<DataQueryResponse, DataQueryResponse>(
+          iif<DataQueryResponse, any>(
             () => response.status === 404,
             defer(() => this._request('/api/prom/label', { start })),
             defer(() => of(response))
           )
         ),
-        map(res =>
-          res && res.data && res.data.values && res.data.values.length
-            ? { status: 'success', message: 'Data source connected and labels found.' }
-            : {
-                status: 'error',
-                message:
-                  'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
-              }
-        ),
+        map(res => {
+          const values: any[] = res?.data?.data || res?.data?.values || [];
+          const testResult =
+            values.length > 0
+              ? { status: 'success', message: 'Data source connected and labels found.' }
+              : {
+                  status: 'error',
+                  message:
+                    'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
+                };
+          return testResult;
+        }),
         catchError((err: any) => {
           let message = 'Loki: ';
           if (err.statusText) {
@@ -605,51 +629,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     }
 
     return annotations;
-  }
-
-  /**
-   * Adds new fields and DataLinks to DataFrame based on DataSource instance config.
-   * @param dataFrame
-   */
-  enhanceDataFrame(dataFrame: DataFrame): void {
-    if (!this.instanceSettings.jsonData) {
-      return;
-    }
-
-    const derivedFields = this.instanceSettings.jsonData.derivedFields || [];
-    if (derivedFields.length) {
-      const fields = fromPairs(
-        derivedFields.map(field => {
-          const config: FieldConfig = {};
-          if (field.url) {
-            config.links = [
-              {
-                url: field.url,
-                title: '',
-              },
-            ];
-          }
-          const dataFrameField = {
-            name: field.name,
-            type: FieldType.string,
-            config,
-            values: new ArrayVector<string>([]),
-          };
-
-          return [field.name, dataFrameField];
-        })
-      );
-
-      const view = new DataFrameView(dataFrame);
-      view.forEachRow((row: { line: string }) => {
-        for (const field of derivedFields) {
-          const logMatch = row.line.match(field.matcherRegex);
-          fields[field.name].values.add(logMatch && logMatch[1]);
-        }
-      });
-
-      dataFrame.fields = [...dataFrame.fields, ...Object.values(fields)];
-    }
   }
 
   throwUnless = (err: any, condition: boolean, target: LokiQuery) => {
