@@ -48,7 +48,7 @@ func (ns *NotificationService) send(msg *Message) (int, error) {
 
 		e := dialer.DialAndSend(m)
 		if e != nil {
-			err = errutil.Wrapf(e, "Failed to send notification to email address: %s", strings.Join(msg.To, ";"))
+			err = errutil.Wrapf(e, "Failed to send notification to email addresses: %s", strings.Join(msg.To, ";"))
 		}
 
 		num++
@@ -58,6 +58,10 @@ func (ns *NotificationService) send(msg *Message) (int, error) {
 			m.SetHeader("To", address)
 			m.SetHeaders(h)
 			ns.setFiles(m, msg)
+
+			for _, replyTo := range msg.ReplyTo {
+				m.SetAddressHeader("Reply-To", replyTo, "")
+			}
 
 			m.SetBody("text/html", msg.Body)
 

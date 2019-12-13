@@ -19,23 +19,25 @@ func init() {
 		Description: "Sends notifications using Grafana server configured SMTP settings",
 		Factory:     NewEmailNotifier,
 		OptionsTemplate: `
-      <h3 class="page-heading">Email addresses</h3>
-      <div class="gf-form">
-         <textarea rows="7" class="gf-form-input width-27" required ng-model="ctrl.model.settings.addresses"></textarea>
-      </div>
-      <div class="gf-form">
-         <span>You can enter multiple email addresses using a ";" separator</span>
-      </div>
-      <br/>
-      <div class="gf-form">
+			<h3 class="page-heading">Email settings</h3>
+			<div class="gf-form">
          <gf-form-switch
            class="gf-form"
-           label="Single email to all recipients"
-           label-class="width-15"
+           label="Single email"
+           label-class="width-8"
            checked="ctrl.model.settings.singleEmail"
-           tooltip="Send a single email to all recipients.">
+           tooltip="Send a single email to all recipients">
         </gf-form-switch>
-      </div>
+			</div>
+			<div class="gf-form">
+				<label class="gf-form-label width-8">
+					Addresses
+				</label>
+				<textarea rows="7" class="gf-form-input width-27" required ng-model="ctrl.model.settings.addresses"></textarea>
+			</div>
+			<div class="gf-form offset-width-8">
+				<span>You can enter multiple email addresses using a ";" separator</span>
+			</div>
     `,
 	})
 }
