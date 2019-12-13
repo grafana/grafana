@@ -366,7 +366,7 @@ WHERE
 Name | Description
 ------------ | -------------
 time | The name of the date/time field. Could be a column with a native sql date/time data type or epoch value.
-timeend | Optional name of the end date/time field. Could be a column with a native sql date/time data type or epoch value.
+timeend | Optional name of the end date/time field. Could be a column with a native SQL date/time data type or epoch value.
 text | Event description field.
 tags | Optional field name to use for event tags as a comma separated string.
 
