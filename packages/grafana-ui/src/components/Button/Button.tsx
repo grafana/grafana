@@ -49,7 +49,8 @@ type LinkButtonProps = CommonProps &
     // disabled.
     disabled?: boolean;
   };
-export const LinkButton: React.FunctionComponent<LinkButtonProps> = props => {
+
+export const LinkButton = React.forwardRef<HTMLAnchorElement, LinkButtonProps>((props, ref) => {
   const theme = useContext(ThemeContext);
   const { size, variant, icon, children, className, styles: stylesProp, ...anchorProps } = props;
   const styles: ButtonStyles =
@@ -61,11 +62,11 @@ export const LinkButton: React.FunctionComponent<LinkButtonProps> = props => {
     });
 
   return (
-    <a className={cx(styles.button, className)} {...anchorProps}>
+    <a className={cx(styles.button, className)} {...anchorProps} ref={ref}>
       <ButtonContent iconClassName={styles.icon} className={styles.iconWrap} icon={icon}>
         {children}
       </ButtonContent>
     </a>
   );
-};
+});
 LinkButton.displayName = 'LinkButton';

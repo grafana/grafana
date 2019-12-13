@@ -148,23 +148,23 @@ type CommonProps = {
 
 type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
-export const Button = (props: ButtonProps) => {
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
   const theme = useContext(ThemeContext);
   const styles = getButtonStyles({
     theme,
     size: props.size || 'md',
     variant: props.variant || 'primary',
   });
-  return <DefaultButton {...props} styles={styles} />;
-};
+  return <DefaultButton {...props} styles={styles} ref={ref} />;
+});
 
 type ButtonLinkProps = CommonProps & AnchorHTMLAttributes<HTMLAnchorElement>;
-export const LinkButton = (props: ButtonLinkProps) => {
+export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>((props, ref) => {
   const theme = useContext(ThemeContext);
   const styles = getButtonStyles({
     theme,
     size: props.size || 'md',
     variant: props.variant || 'primary',
   });
-  return <DefaultLinkButton {...props} styles={styles} />;
-};
+  return <DefaultLinkButton {...props} styles={styles} ref={ref} />;
+});
