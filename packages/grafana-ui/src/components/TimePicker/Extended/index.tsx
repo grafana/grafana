@@ -133,7 +133,7 @@ const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }) => {
     nextRecent.push({
       from: valueAsString(range.from),
       to: valueAsString(range.to),
-      display: `${valueAsString(range.from)} - ${valueAsString(range.to)}`,
+      display: `${valueAsString(range.from)} to ${valueAsString(range.to)}`,
       section: 3,
     });
 
