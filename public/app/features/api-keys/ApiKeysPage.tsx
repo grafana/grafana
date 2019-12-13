@@ -12,7 +12,7 @@ import ApiKeysAddedModal from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { DeleteButton, EventsWithValidation, FormLabel, Input, Switch, ValidationEvents } from '@grafana/ui';
+import { EventsWithValidation, FormLabel, Input, Switch, ValidationEvents, DeleteButton } from '@grafana/ui';
 import { NavModel, dateTime, isDateTime } from '@grafana/data';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { store } from 'app/store/store';
@@ -287,7 +287,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
                     <td>{key.role}</td>
                     <td>{this.formatDate(key.expiration)}</td>
                     <td>
-                      <DeleteButton onConfirm={() => this.onDeleteApiKey(key)} />
+                      <DeleteButton size="sm" onConfirm={() => this.onDeleteApiKey(key)} />
                     </td>
                   </tr>
                 );

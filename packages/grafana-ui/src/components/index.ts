@@ -1,4 +1,5 @@
-export { DeleteButton } from './DeleteButton/DeleteButton';
+export { ConfirmButton } from './ConfirmButton/ConfirmButton';
+export { DeleteButton } from './ConfirmButton/DeleteButton';
 export { Tooltip, PopoverContent } from './Tooltip/Tooltip';
 export { PopoverController } from './Tooltip/PopoverController';
 export { Popover } from './Tooltip/Popover';
