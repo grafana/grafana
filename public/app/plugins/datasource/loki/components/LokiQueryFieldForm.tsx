@@ -136,7 +136,16 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
   };
 
   render() {
-    const { data, query, syntaxLoaded, logLabelOptions, onLoadOptions, onLabelsRefresh, datasource } = this.props;
+    const {
+      children,
+      data,
+      query,
+      syntaxLoaded,
+      logLabelOptions,
+      onLoadOptions,
+      onLabelsRefresh,
+      datasource,
+    } = this.props;
     const lokiLanguageProvider = datasource.languageProvider as LokiLanguageProvider;
     const cleanText = datasource.languageProvider ? lokiLanguageProvider.cleanText : undefined;
     const hasLogLabels = logLabelOptions && logLabelOptions.length > 0;
@@ -146,8 +155,8 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
 
     return (
       <>
-        <div className="gf-form-inline">
-          <div className="gf-form">
+        <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
+          <div className="gf-form flex-shrink-0">
             <Cascader
               options={logLabelOptions || []}
               disabled={buttonDisabled}
@@ -158,7 +167,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
               onPopupVisibleChange={isVisible => isVisible && onLabelsRefresh && onLabelsRefresh()}
             />
           </div>
-          <div className="gf-form gf-form--grow">
+          <div className="gf-form gf-form--grow flex-shrink-1">
             <QueryField
               additionalPlugins={this.plugins}
               cleanText={cleanText}
@@ -173,8 +182,13 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
               syntaxLoaded={syntaxLoaded}
             />
           </div>
+          {children}
         </div>
-        <div>{showError ? <div className="prom-query-field-info text-error">{data.error.message}</div> : null}</div>
+        {showError ? (
+          <div className="query-row-break">
+            <div className="prom-query-field-info text-error">{data.error.message}</div>
+          </div>
+        ) : null}
       </>
     );
   }
