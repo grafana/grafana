@@ -1,20 +1,13 @@
-import React from 'react';
-import { useTheme, stylesFactory } from '../../../themes';
-import { GrafanaTheme, TimeOption } from '@grafana/data';
+import React, { memo } from 'react';
 import { css } from 'emotion';
-import TimeRangeTitle from './TimeRangeTitle';
-import TimeRangeOption from './TimeRangeOption';
+import { TimeOption } from '@grafana/data';
 import { TimeRange } from '@grafana/data';
-import { stringToDateTimeType } from '../time';
+import TimeRangeTitle from './TimePickerTitle';
+import TimeRangeOption from './TimeRangeOption';
+import { mapToTimeRange } from './mapper';
+import { stylesFactory } from '../../../themes';
 
-interface Props {
-  title?: string;
-  options: TimeOption[];
-  selected?: TimeRange;
-  onSelect: (option: TimeRange) => void;
-}
-
-const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory(() => {
   return {
     title: css`
       display: flex;
@@ -25,9 +18,15 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
+interface Props {
+  title?: string;
+  options: TimeOption[];
+  selected?: TimeRange;
+  onSelect: (option: TimeRange) => void;
+}
+
 const TimeRangeList: React.FC<Props> = props => {
-  const theme = useTheme();
-  const styles = getLabelStyles(theme);
+  const styles = getStyles();
   const { title } = props;
 
   if (!title) {
@@ -50,20 +49,9 @@ function renderOptions({ options, selected, onSelect }: Props): JSX.Element[] {
       key={keyForOption(option, index)}
       value={option}
       selected={isEqual(option, selected)}
-      onSelect={option => onSelect(toTimeRange(option))}
+      onSelect={option => onSelect(mapToTimeRange(option))}
     />
   ));
-}
-
-function toTimeRange(option: TimeOption): TimeRange {
-  return {
-    from: stringToDateTimeType(option.from),
-    to: stringToDateTimeType(option.to),
-    raw: {
-      from: option.from,
-      to: option.to,
-    },
-  };
 }
 
 function keyForOption(option: TimeOption, index: number): string {
@@ -77,4 +65,4 @@ function isEqual(x: TimeOption, y?: TimeRange): boolean {
   return y.raw.from === x.from && y.raw.to === x.to;
 }
 
-export default TimeRangeList;
+export default memo(TimeRangeList);

@@ -3,9 +3,9 @@ import Forms from '../../Forms';
 import { css } from 'emotion';
 import { TIME_FORMAT, TimeZone, isDateTime, TimeRange, DateTime } from '@grafana/data';
 import { stringToDateTimeType, isValidTimeString } from '../time';
-import TimePickerCalendar from './Calendar';
+import TimePickerCalendar from './TimePickerCalendar';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
-import TimeRangeTitle from './TimeRangeTitle';
+import TimeRangeTitle from './TimePickerTitle';
 
 type CalendarTrigger = 'onFocus' | 'onButton';
 

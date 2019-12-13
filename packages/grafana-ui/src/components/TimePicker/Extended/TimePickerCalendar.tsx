@@ -1,10 +1,10 @@
 import React, { ReactNode } from 'react';
-import { useTheme, stylesFactory } from '../../../themes';
-import { GrafanaTheme, TimeRange, dateTime } from '@grafana/data';
 import { css } from 'emotion';
 import Calendar from 'react-calendar/dist/entry.nostyle';
+import { GrafanaTheme, TimeRange, dateTime } from '@grafana/data';
+import { useTheme, stylesFactory } from '../../../themes';
 
-const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     background: css`
       @media only screen and (max-width: ${theme.breakpoints.lg}) {
@@ -179,9 +179,9 @@ interface Props {
   footer?: ReactNode;
 }
 
-const TimePickerCalendar: React.FC<Props> = ({ selected, onChange, visible, header, footer }: Props) => {
+const TimePickerCalendar: React.FC<Props> = ({ selected, onChange, visible, header, footer }) => {
   const theme = useTheme();
-  const styles = getLabelStyles(theme);
+  const styles = getStyles(theme);
 
   if (!visible) {
     return null;

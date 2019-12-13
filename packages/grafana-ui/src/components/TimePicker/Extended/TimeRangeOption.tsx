@@ -1,15 +1,9 @@
 import React, { memo } from 'react';
-import { useTheme, stylesFactory } from '../../../themes';
-import { GrafanaTheme, TimeOption } from '@grafana/data';
 import { css } from 'emotion';
+import { GrafanaTheme, TimeOption } from '@grafana/data';
+import { useTheme, stylesFactory } from '../../../themes';
 
-interface Props {
-  value: TimeOption;
-  selected?: boolean;
-  onSelect: (option: TimeOption) => void;
-}
-
-const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     container: css`
       display: flex;
@@ -32,9 +26,15 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
+interface Props {
+  value: TimeOption;
+  selected?: boolean;
+  onSelect: (option: TimeOption) => void;
+}
+
 const TimeRangeOption: React.FC<Props> = ({ value, onSelect, selected = false }) => {
   const theme = useTheme();
-  const styles = getLabelStyles(theme);
+  const styles = getStyles(theme);
 
   return (
     <div className={styles.container} onClick={() => onSelect(value)} tabIndex={-1}>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTheme, stylesFactory } from '../../../themes';
 import { GrafanaTheme, TimeOption, TimeRange, DateTime, TIME_FORMAT, isDateTime } from '@grafana/data';
 import { css } from 'emotion';
-import TimeRangeTitle from './TimeRangeTitle';
+import TimeRangeTitle from './TimePickerTitle';
 import TimeRangeForm from './TimeRangeForm';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import TimeRangeList from './TimeRangeList';
