@@ -33,6 +33,9 @@ export function joinDataFrames(data: DataFrame[]): DataFrame {
       if (fieldNames[field.name] === undefined) {
         fieldNames[field.name] = result.fields.length;
         result.addField(field);
+      } else {
+        // field with same name exists, match values or add values
+        // TODO
       }
     }
   }
