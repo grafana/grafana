@@ -676,11 +676,8 @@ func (e *StackdriverExecutor) getDefaultProject(ctx context.Context) (string, er
 	return e.dsInfo.JsonData.Get("defaultProject").MustString(), nil
 }
 
-func (e *StackdriverExecutor) getProjects(ctx context.Context) (interface{}, error) {
-	var projects []struct {
-		Label string `json:"label"`
-		Value string `json:"value"`
-	}
+func (e *StackdriverExecutor) getProjects(ctx context.Context) ([]ResourceManagerProjectSelect, error) {
+	var projects []ResourceManagerProjectSelect
 
 	req, err := e.createRequestResourceManager(ctx, e.dsInfo)
 	if err != nil {
@@ -711,10 +708,7 @@ func (e *StackdriverExecutor) getProjects(ctx context.Context) (interface{}, err
 	}
 
 	for _, project := range data.Projects {
-		projects = append(projects, struct {
-			Label string `json:"label"`
-			Value string `json:"value"`
-		}{Label: project.ProjectID, Value: project.ProjectID})
+		projects = append(projects, ResourceManagerProjectSelect{Label: project.ProjectID, Value: project.ProjectID})
 	}
 	return projects, nil
 }
