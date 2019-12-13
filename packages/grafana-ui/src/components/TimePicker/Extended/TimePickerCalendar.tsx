@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import { GrafanaTheme, TimeRange, dateTime } from '@grafana/data';
 import { useTheme, stylesFactory } from '../../../themes';
@@ -19,7 +19,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         z-index: ${theme.zIndex.modalBackdrop};
       }
     `,
-    calendar: css`
+    container: css`
       top: 0;
       position: absolute;
       right: 546px;
@@ -47,7 +47,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.6);
       }
     `,
-    calendarTitle: css`
+    title: css`
       color: ${theme.colors.text}
       background-color: inherit;
       line-height: 21px;
@@ -62,7 +62,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         position: relative;
       }
     `,
-    calendarBody: css`
+    body: css`
       background-color: white;
       width: 268px;
 
@@ -143,7 +143,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         border-bottom-right-radius: 20px;
       }
     `,
-    calendarHeader: css`
+    header: css`
       @media only screen and (min-width: ${theme.breakpoints.lg}) {
         display: none;
       }
@@ -157,7 +157,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         font-size: ${theme.typography.size.lg};
       }
     `,
-    calendarFooter: css`
+    footer: css`
       @media only screen and (min-width: ${theme.breakpoints.lg}) {
         display: none;
       }
@@ -172,56 +172,58 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 interface Props {
-  visible: boolean;
-  selected?: TimeRange;
-  onChange: (timeRange: TimeRange) => void;
+  value?: TimeRange;
+  onChange: (value: TimeRange) => void;
   header?: ReactNode;
+  headerClassName?: string;
   footer?: ReactNode;
+  footerClassName?: string;
 }
 
-const TimePickerCalendar: React.FC<Props> = ({ selected, onChange, visible, header, footer }) => {
+const TimePickerCalendar: React.FC<Props> = props => {
   const theme = useTheme();
   const styles = getStyles(theme);
-
-  if (!visible) {
-    return null;
-  }
+  const { value, onChange, header, footer, headerClassName, footerClassName } = props;
 
   return (
     <div className={styles.background}>
-      <div className={styles.calendar}>
-        <div className={styles.calendarHeader}>{header}</div>
+      <div className={styles.container}>
+        <div className={cx(styles.header, headerClassName)}>{header}</div>
         <Calendar
           selectRange={true}
           next2Label={null}
           prev2Label={null}
-          className={styles.calendarBody}
-          tileClassName={styles.calendarTitle}
-          value={toCalendarDate(selected)}
+          className={styles.body}
+          tileClassName={styles.title}
+          value={rangeToValue(value)}
           nextLabel={<span className="fa fa-angle-right" />}
           prevLabel={<span className="fa fa-angle-left" />}
-          onChange={value => onChange(onCalendarChange(value))}
+          onChange={value => onChange(valueToRange(value))}
         />
-        <div className={styles.calendarFooter}>{footer}</div>
+        <div className={cx(styles.footer, footerClassName)}>{footer}</div>
       </div>
     </div>
   );
 };
 
-function toCalendarDate(selected?: TimeRange): Date[] | Date {
+function rangeToValue(selected?: TimeRange): Date[] | Date {
   if (!selected) {
     return new Date();
   }
-  return [selected.from.toDate(), selected.to.toDate()];
+  const { from, to } = selected;
+  return [from.toDate(), to.toDate()];
 }
 
-function onCalendarChange(value: Date | Date[]): TimeRange {
-  const [from, to] = value;
+function valueToRange(value: Date | Date[]): TimeRange {
+  const [fromValue, toValue] = value;
+
+  const from = dateTime(fromValue);
+  const to = dateTime(toValue);
 
   return {
-    from: dateTime(from),
-    to: dateTime(to),
-    raw: { from: dateTime(from), to: dateTime(to) },
+    from,
+    to,
+    raw: { from, to },
   };
 }
 

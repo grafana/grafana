@@ -87,36 +87,37 @@ export default class TimeRangeForm extends PureComponent<Props, State> {
 
     return (
       <>
-        <ClickOutsideWrapper onClick={this.onCalendarHide}>
-          <TimePickerCalendar
-            header={
-              <>
-                <TimeRangeTitle>Select a time range</TimeRangeTitle>
-                <i className="fa fa-times" onClick={this.onCalendarHide} />
-              </>
-            }
-            visible={displayCalendar}
-            selected={toTimeRange(this.state)}
-            onChange={this.onCalendarChange}
-            footer={
-              <>
-                <Forms.Button
-                  className={css`
-                    margin-right: 4px;
-                    width: 100%;
-                    justify-content: center;
-                  `}
-                  onClick={this.onApply}
-                >
-                  Apply time range
-                </Forms.Button>
-                <Forms.Button variant="secondary" onClick={this.onCalendarHide}>
-                  Cancel
-                </Forms.Button>
-              </>
-            }
-          />
-        </ClickOutsideWrapper>
+        {displayCalendar && (
+          <ClickOutsideWrapper onClick={this.onCalendarHide}>
+            <TimePickerCalendar
+              header={
+                <>
+                  <TimeRangeTitle>Select a time range</TimeRangeTitle>
+                  <i className="fa fa-times" onClick={this.onCalendarHide} />
+                </>
+              }
+              value={toTimeRange(this.state)}
+              onChange={this.onCalendarChange}
+              footer={
+                <>
+                  <Forms.Button
+                    className={css`
+                      margin-right: 4px;
+                      width: 100%;
+                      justify-content: center;
+                    `}
+                    onClick={this.onApply}
+                  >
+                    Apply time range
+                  </Forms.Button>
+                  <Forms.Button variant="secondary" onClick={this.onCalendarHide}>
+                    Cancel
+                  </Forms.Button>
+                </>
+              }
+            />
+          </ClickOutsideWrapper>
+        )}
         <Forms.Field label="From">
           <Forms.Input
             onClick={this.onCalendarDontHide}

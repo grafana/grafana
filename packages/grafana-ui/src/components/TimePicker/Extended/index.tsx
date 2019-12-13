@@ -155,12 +155,7 @@ const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }) => {
           <TimeRangeForm value={selected} onApply={onSelect} calendarTrigger="onFocus" />
         </div>
         <div className={styles.recentRanges}>
-          <TimeRangeList
-            title="Recently used absolute ranges"
-            options={recent}
-            onSelect={onChange}
-            selected={selected}
-          />
+          <TimeRangeList title="Recently used absolute ranges" options={recent} onSelect={onChange} value={selected} />
         </div>
       </div>
       <CustomScrollbar className={styles.rightSide}>
@@ -178,7 +173,7 @@ const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }) => {
                 title="Recently used absolute ranges"
                 options={recent}
                 onSelect={onChange}
-                selected={selected}
+                value={selected}
               />
             </div>
           )}
@@ -187,7 +182,7 @@ const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }) => {
           title="Relative time range from now"
           options={quickOptions}
           onSelect={onChange}
-          selected={selected}
+          value={selected}
         />
         <TimeRangeList title="Other relative range" options={otherOptions} onSelect={onChange} selected={selected} />
       </CustomScrollbar>
