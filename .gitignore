@@ -10,13 +10,12 @@ awsconfig
 /public/views/index.html
 /public/views/error.html
 /emails/dist
+/reports
 
 # Enterprise emails
 /emails/templates/enterprise_*
 /public/emails/enterprise_*
 
-/public_gen
-/public/vendor/npm
 /tmp
 tools/phantomjs/phantomjs
 tools/phantomjs/phantomjs.exe
