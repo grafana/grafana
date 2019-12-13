@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/hex"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -82,10 +81,10 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 			if err := validateRedirectTo(redirectTo); err != nil {
 				viewData.Settings["loginError"] = err.Error()
 				c.HTML(200, getViewIndex(), viewData)
-				hs.deleteCookie(c.Resp, "redirect_to", http.SameSiteDefaultMode)
+				middleware.DeleteCookie(c.Resp, "redirect_to", hs.Cfg)
 				return
 			}
-			hs.deleteCookie(c.Resp, "redirect_to", http.SameSiteDefaultMode)
+			middleware.DeleteCookie(c.Resp, "redirect_to", hs.Cfg)
 			c.Redirect(redirectTo)
 			return
 		}
@@ -173,7 +172,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 		} else {
 			log.Info("Ignored invalid redirect_to cookie value: %v", redirectTo)
 		}
-		hs.deleteCookie(c.Resp, "redirect_to", http.SameSiteDefaultMode)
+		middleware.DeleteCookie(c.Resp, "redirect_to", hs.Cfg)
 	}
 
 	metrics.MApiLoginPost.Inc()
@@ -233,18 +232,7 @@ func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName s
 		return err
 	}
 
-	cookie := http.Cookie{
-		Name:     cookieName,
-		MaxAge:   60,
-		Value:    hex.EncodeToString(encryptedError),
-		HttpOnly: true,
-		Path:     setting.AppSubUrl + "/",
-		Secure:   hs.Cfg.CookieSecure,
-	}
-	if hs.Cfg.CookieSameSite != http.SameSiteDefaultMode {
-		cookie.SameSite = hs.Cfg.CookieSameSite
-	}
-	http.SetCookie(ctx.Resp, &cookie)
+	middleware.WriteCookie(ctx.Resp, cookieName, hex.EncodeToString(encryptedError), 60, hs.Cfg)
 
 	return nil
 }

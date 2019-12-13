@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -49,15 +48,7 @@ func notAuthorized(c *m.ReqContext) {
 	}
 
 	c.Resp.Header().Del("Set-Cookie")
-	cookie := http.Cookie{
-		Name:     "redirect_to",
-		Value:    url.QueryEscape(setting.AppSubUrl + c.Req.RequestURI),
-		HttpOnly: true,
-		Path:     setting.AppSubUrl + "/",
-		Secure:   setting.CookieSecure,
-		MaxAge:   0,
-	}
-	http.SetCookie(c.Resp, &cookie)
+	WriteCookie(c.Resp, "redirect_to", url.QueryEscape(setting.AppSubUrl+c.Req.RequestURI), 0, nil)
 
 	c.Redirect(setting.AppSubUrl + "/login")
 }
