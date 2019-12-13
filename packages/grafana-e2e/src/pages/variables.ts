@@ -15,6 +15,19 @@ export const Variables = pageFactory({
   },
 });
 
+export const VariablesSubMenu = pageFactory({
+  url: '',
+  selectors: {
+    submenuItem: 'Dashboard template variables submenu item',
+    submenuItemLabels: (item: string) => `Dashboard template variables submenu Label ${item}`,
+    submenuItemValueDropDownValueLinkTexts: (item: string) =>
+      `Dashboard template variables Variable Value DropDown value link text ${item}`,
+    submenuItemValueDropDownDropDown: 'Dashboard template variables Variable Value DropDown DropDown',
+    submenuItemValueDropDownOptionTexts: (item: string) =>
+      `Dashboard template variables Variable Value DropDown option text ${item}`,
+  },
+});
+
 export const VariableGeneral = pageFactory({
   url: '',
   selectors: {
