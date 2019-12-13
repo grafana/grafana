@@ -19,7 +19,7 @@ Edit content in the `sources` directory.
 
 ### Using `relref` for internal links
 
-Use the hugo shortcode [relref](https://gohugo.io/content-management/cross-references/#use-ref-and-relref) anytime you are linking to other internal docs pages.
+Use the Hugo shortcode [relref](https://gohugo.io/content-management/cross-references/#use-ref-and-relref) anytime you are linking to other internal docs pages.
 
 ### Editing the Sidebar Menu
 
