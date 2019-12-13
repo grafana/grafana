@@ -8,8 +8,10 @@ e2e.scenario({
   addScenarioDashBoard: true,
   skipScenario: false,
   scenario: ({ dataSourceName, dashboardTitle, dashboardUid }: ScenarioContext) => {
-    e2e.flows.openDashboard(dashboardTitle);
-    e2e.pages.Dashboard.toolbarItems('Add panel').click();
+    e2e.flows.openDashboard(dashboardUid);
+    e2e.pages.Dashboard.toolbarItems('Add panel')
+      .should('be.visible') // prevents flakiness
+      .click();
     e2e.pages.AddDashboard.ctaButtons('Add Query').click();
 
     e2e.pages.Panels.EditPanel.tabItems('Queries').click();

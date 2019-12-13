@@ -9,7 +9,7 @@ import { Flows } from './flows';
 
 export type SelectorFunction = (text?: string) => Cypress.Chainable<any>;
 export type SelectorObject<S> = {
-  visit: () => Cypress.Chainable<any>;
+  visit: (args?: string) => Cypress.Chainable<any>;
   selectors: S;
 };
 
