@@ -3,30 +3,32 @@ import { useTheme } from '../../../themes/ThemeContext';
 import { getFocusCss, sharedInputStyle } from '../commonStyles';
 import { getInputStyles } from '../Input/Input';
 import { cx, css } from 'emotion';
-import { Icon } from '../../Icon/Icon';
 
 interface InputControlProps {
   /** Show an icon as a prefix in the input */
   prefix?: JSX.Element | string | null;
   isFocused: boolean;
+  invalid: boolean;
+  disabled: boolean;
   innerProps: any;
 }
 
 export const InputControl = React.forwardRef<HTMLDivElement, React.PropsWithChildren<InputControlProps>>(
-  ({ isFocused, children, innerProps, prefix }, ref) => {
+  ({ isFocused, invalid, disabled, children, innerProps, prefix }, ref) => {
     const theme = useTheme();
-    console.log('hasPrefix', prefix);
-    const styles = getInputStyles({ theme, invalid: false });
+
+    const styles = getInputStyles({ theme, invalid });
 
     return (
       <div
         className={cx(
           styles.wrapper,
-          sharedInputStyle(theme),
+          sharedInputStyle(theme, invalid),
           isFocused &&
             css`
               ${getFocusCss(theme)}
             `,
+          disabled && styles.inputDisabled,
           css`
             min-height: 32px;
             height: auto;

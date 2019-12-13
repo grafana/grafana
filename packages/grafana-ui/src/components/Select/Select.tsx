@@ -14,29 +14,34 @@ import { components } from '@torkelo/react-select';
 
 // Components
 import { SelectOption } from './SelectOption';
-import { SingleValue } from './SingleValue';
-import SelectOptionGroup from './SelectOptionGroup';
+import { SelectOptionGroup } from '../Forms/Select/SelectOptionGroup';
+import { SingleValue } from '../Forms/Select/SingleValue';
+import { SelectCommonProps, SelectAsyncProps } from '../Forms/Select/Select';
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
 import resetSelectStyles from '../Forms/Select/resetSelectStyles';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { PopoverContent } from '../Tooltip/Tooltip';
 import { Tooltip } from '../Tooltip/Tooltip';
-import { SelectableValue } from '@grafana/data';
-import { SelectCommonProps, SelectProps } from '../Forms/Select/Select';
 
-interface AsyncProps<T> extends SelectCommonProps<T> {
-  defaultOptions: boolean;
-  loadOptions: (query: string) => Promise<Array<SelectableValue<T>>>;
+/**
+ * Changes in new selects:
+ * - noOptionsMessage & loadingMessage is of string type
+ * - isDisabled is renamed to disabled
+ */
+type LegacyCommonProps<T> = Omit<SelectCommonProps<T>, 'noOptionsMessage' | 'disabled'>;
+
+interface AsyncProps<T> extends LegacyCommonProps<T>, Omit<SelectAsyncProps<T>, 'loadingMessage'> {
   loadingMessage?: () => string;
+  noOptionsMessage?: () => string;
   tooltipContent?: PopoverContent;
-  className?: string;
+  isDisabled?: boolean;
 }
 
-interface LegacySelectProps<T> extends Omit<SelectProps<T>, 'value'> {
+interface LegacySelectProps<T> extends LegacyCommonProps<T> {
   tooltipContent?: PopoverContent;
-  value: SelectableValue<T>;
-  className?: string;
+  noOptionsMessage?: () => string;
+  isDisabled?: boolean;
 }
 
 export const MenuList = (props: any) => {
@@ -118,7 +123,6 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
 
     const selectClassNames = classNames('gf-form-input', 'gf-form-input--form-dropdown', widthClass, className);
     const selectComponents = { ...Select.defaultProps.components, ...components };
-
     return (
       <WrapInTooltip onCloseMenu={onCloseMenu} onOpenMenu={onOpenMenu} tooltipContent={tooltipContent} isOpen={isOpen}>
         {(onOpenMenuInternal, onCloseMenuInternal) => {
@@ -144,7 +148,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
               onBlur={onBlur}
               openMenuOnFocus={openMenuOnFocus}
               maxMenuHeight={maxMenuHeight}
-              noOptionsMessage={noOptionsMessage}
+              noOptionsMessage={() => noOptionsMessage}
               isMulti={isMulti}
               backspaceRemovesValue={backspaceRemovesValue}
               menuIsOpen={isOpen}
@@ -236,7 +240,7 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
               defaultOptions={defaultOptions}
               placeholder={placeholder || 'Choose'}
               styles={resetSelectStyles()}
-              loadingMessage={loadingMessage}
+              loadingMessage={() => loadingMessage}
               noOptionsMessage={noOptionsMessage}
               isDisabled={isDisabled}
               isSearchable={isSearchable}

@@ -17,25 +17,6 @@ ButtonSelectStories.add('default', () => {
   const options = object<Array<SelectableValue<string>>>('Options:', [
     intialState,
     { label: 'Another label', value: 'Another value' },
-    { label: 'Another label', value: 'Another value' },
-    { label: 'Another label', value: 'Another value' },
-    { label: 'Another label', value: 'Another value' },
-    { label: 'Another label', value: 'Another value' },
-    { label: 'Another label', value: 'Another value' },
-    { label: 'Another label', value: 'Another value' },
-    { label: 'Another label', value: 'Another value' },
-    { label: 'Another label', value: 'Another value' },
-    { label: 'Another label', value: 'Another value' },
-    { label: 'Another label', value: 'Another value' },
-    { label: 'Another label', value: 'Another value' },
-    { label: 'Another label', value: 'Another value' },
-    { label: 'Another label', value: 'Another value' },
-    { label: 'Another label', value: 'Another value' },
-    { label: 'Another label', value: 'Another value' },
-    { label: 'Another label', value: 'Another value' },
-    { label: 'Another label', value: 'Another value' },
-    { label: 'Another label', value: 'Another value' },
-    { label: 'Another label', value: 'Another value' },
   ]);
 
   return (
@@ -43,7 +24,6 @@ ButtonSelectStories.add('default', () => {
       {(value, updateValue) => {
         return (
           <ButtonSelect
-            isMenuOpen={true}
             value={value}
             options={options}
             onChange={value => {

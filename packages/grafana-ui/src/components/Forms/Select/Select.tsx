@@ -1,28 +1,35 @@
 import React from 'react';
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, deprecationWarning } from '@grafana/data';
 // @ts-ignore
 import { default as ReactSelect, Creatable, components } from '@torkelo/react-select';
+// @ts-ignore
+import { default as ReactAsyncSelect } from '@torkelo/react-select/lib/Async';
+
 import { Icon } from '../../Icon/Icon';
 import { css } from 'emotion';
 import { inputSizes } from '../commonStyles';
 import { FormInputSize } from '../types';
 import resetSelectStyles from './resetSelectStyles';
 import { SelectMenu, SelectMenuOptions } from './SelectMenu';
-import { SingleValue } from './SingleValue';
 import { IndicatorsContainer } from './IndicatorsContainer';
 import { ValueContainer } from './ValueContainer';
 import { InputControl } from './InputControl';
 import { DropdownIndicator } from './DropdownIndicator';
+import { SelectOptionGroup } from './SelectOptionGroup';
+import { SingleValue } from './SingleValue';
+import { useTheme } from '../../../themes';
+import { getSelectStyles } from './getSelectStyles';
 
 export interface SelectCommonProps<T> {
+  className?: string;
+  options?: Array<SelectableValue<T>>;
   defaultValue?: any;
+  value?: SelectableValue<T>;
   getOptionLabel?: (item: SelectableValue<T>) => string;
   getOptionValue?: (item: SelectableValue<T>) => string;
   onChange: (item: SelectableValue<T>) => {} | void;
   placeholder?: string;
-  width?: number;
-  value?: SelectableValue<T>;
-  isDisabled?: boolean;
+  disabled?: boolean;
   isSearchable?: boolean;
   isClearable?: boolean;
   autoFocus?: boolean;
@@ -30,7 +37,7 @@ export interface SelectCommonProps<T> {
   onBlur?: () => void;
   maxMenuHeight?: number;
   isLoading?: boolean;
-  noOptionsMessage?: () => string;
+  noOptionsMessage?: string;
   isMulti?: boolean;
   backspaceRemovesValue?: boolean;
   isOpen?: boolean;
@@ -40,45 +47,102 @@ export interface SelectCommonProps<T> {
   tabSelectsValue?: boolean;
   formatCreateLabel?: (input: string) => string;
   allowCustomValue?: boolean;
+  width?: number;
   size?: FormInputSize;
-  /** Renders value */
-  renderValue?: (v: SelectableValue<T>) => JSX.Element;
-  /** Renders custom label for a single option in the menu */
-  renderOptionLabel?: (v: SelectableValue<T>) => JSX.Element;
+  /** item to be rendered in front of the input */
   prefix?: JSX.Element | string | null;
+  renderControl?: ControlComponent<T>;
 }
 
-export interface SelectProps<T> extends SelectCommonProps<T> {
-  options: Array<SelectableValue<T>>;
+export interface SelectAsyncProps<T> {
+  /** When specified as boolean the loadOptions will execute when component is mounted */
+  defaultOptions?: boolean | Array<SelectableValue<T>>;
+  /** Asynchroniously load select options */
+  loadOptions?: (query: string) => Promise<Array<SelectableValue<T>>>;
+  /** Message to display when options are loading */
+  loadingMessage?: string;
 }
 
-const renderControl = (prefix?: JSX.Element | string | null) => (props: any) => {
+export interface SelectBaseProps<T> extends SelectCommonProps<T>, SelectAsyncProps<T> {
+  invalid?: boolean;
+}
+
+export interface CustomControlProps<T> {
+  ref: React.Ref<any>;
+  isOpen: boolean;
+  /** Currently selected value */
+  value?: SelectableValue<T>;
+  /** onClick will be automatically passed to custom control allowing menu toggle */
+  onClick: () => void;
+  /** onBlur will be automatically passed to custom control closing the menu on element blur */
+  onBlur: () => void;
+  disabled: boolean;
+  invalid: boolean;
+}
+
+export type ControlComponent<T> = React.ComponentType<CustomControlProps<T>>;
+
+const getControlComponent = (
+  prefix?: JSX.Element | string | null,
+  disabled?: boolean,
+  invalid?: boolean,
+  controlComponent?: React.ComponentType<CustomControlProps<any>>
+) => (props: any) => {
   const {
     children,
     innerProps: { ref, ...restInnerProps },
+    selectProps: { menuIsOpen, onMenuClose, onMenuOpen },
     isFocused,
+    isMulti,
+    getValue,
   } = props;
-  console.log(props.selectProps);
+  let value;
+
+  if (!isMulti) {
+    value = getValue()[0];
+  } else {
+    // TODO: handle Multi select...
+  }
+
+  if (controlComponent) {
+    return React.createElement(controlComponent, {
+      isOpen: menuIsOpen,
+      value,
+      ref,
+      onClick: menuIsOpen ? onMenuClose : onMenuOpen,
+      onBlur: onMenuClose,
+      disabled: !!disabled,
+      invalid: !!invalid,
+    });
+  }
+
   return (
-    <InputControl ref={ref} innerProps={restInnerProps} isFocused={isFocused} prefix={prefix}>
+    <InputControl
+      ref={ref}
+      innerProps={restInnerProps}
+      prefix={prefix}
+      isFocused={isFocused}
+      invalid={!!invalid}
+      disabled={!!disabled}
+    >
       {children}
     </InputControl>
   );
 };
 
-export function Select<T>({
+export function SelectBase<T>({
   value,
   defaultValue,
-  options,
+  options = [],
   onChange,
   onBlur,
   onCloseMenu,
   onOpenMenu,
-  placeholder,
+  placeholder = 'Choose',
   getOptionValue,
   getOptionLabel,
   isSearchable = true,
-  isDisabled = false,
+  disabled = false,
   isClearable = false,
   isMulti = false,
   isLoading = false,
@@ -86,37 +150,82 @@ export function Select<T>({
   autoFocus = false,
   openMenuOnFocus = true,
   maxMenuHeight = 300,
-  noOptionsMessage,
+  noOptionsMessage = 'No options found',
   tabSelectsValue = true,
   backspaceRemovesValue = true,
-  allowCustomValue = true,
+  allowCustomValue = false,
   size = 'auto',
-  renderValue,
-  renderOptionLabel,
   prefix,
   formatCreateLabel,
-}: SelectProps<T>) {
+  loadOptions,
+  loadingMessage = 'Loading options...',
+  defaultOptions,
+  renderControl,
+  width,
+  invalid,
+}: SelectBaseProps<T>) {
+  const theme = useTheme();
+  const styles = getSelectStyles(theme);
   let Component: ReactSelect | Creatable = ReactSelect;
-  // const selectedValue = options.filter(o => o.value === value)[0];
-  const creatableOptions: any = {};
+  const creatableProps: any = {};
+  let asyncSelectProps: any = {};
+
+  const commonSelectProps = {
+    placeholder,
+    isSearchable,
+    isDisabled: disabled,
+    isClearable,
+    isLoading,
+    menuIsOpen: isOpen,
+    autoFocus,
+    defaultValue,
+    value,
+    getOptionLabel,
+    getOptionValue,
+    openMenuOnFocus,
+    maxMenuHeight,
+    isMulti,
+    backspaceRemovesValue,
+    onMenuOpen: onOpenMenu,
+    onMenuClose: onCloseMenu,
+    tabSelectsValue,
+    options,
+    onChange,
+    onBlur,
+    menuShouldScrollIntoView: false,
+  };
+
+  // width property is deprecated in favor of size or className
+  let widthClass = '';
+  if (width) {
+    deprecationWarning('Select', 'width property', 'size or className');
+    widthClass = 'width-' + width;
+  }
 
   if (allowCustomValue) {
     Component = Creatable;
-    creatableOptions.formatCreateLabel = formatCreateLabel ?? ((input: string) => `Create: ${input}`);
+    creatableProps.formatCreateLabel = formatCreateLabel ?? ((input: string) => `Create: ${input}`);
+  }
+
+  // Instead of having AsyncSelect, as a separate component we render ReactAsyncSelect
+  if (loadOptions) {
+    Component = ReactAsyncSelect;
+    asyncSelectProps = {
+      loadOptions,
+      defaultOptions,
+    };
   }
 
   return (
     <Component
-      options={options}
-      onChange={onChange}
-      onBlur={onBlur}
       components={{
         MenuList: SelectMenu,
+        Group: SelectOptionGroup,
         ValueContainer: ValueContainer,
         IndicatorsContainer: IndicatorsContainer,
-        IndicatorSeparator: () => null,
-        Control: renderControl(prefix),
-        Option: (props: any) => <SelectMenuOptions {...props} renderOptionLabel={renderOptionLabel} />,
+        IndicatorSeparator: () => <></>,
+        Control: getControlComponent(prefix, disabled, invalid, renderControl),
+        Option: SelectMenuOptions,
         ClearIndicator: (props: any) => {
           const { clearValue } = props;
           return (
@@ -130,11 +239,25 @@ export function Select<T>({
             />
           );
         },
-        DropdownIndicator: (props: any) => <DropdownIndicator isOpen={props.menuIsOpen} />,
-        SingleValue: (props: any) => <SingleValue {...props} value={value} renderValue={renderValue} />,
+        LoadingIndicator: (props: any) => {
+          return <Icon name="spinner" className="fa fa-spin" />;
+        },
+        LoadingMessage: (props: any) => {
+          return <div className={styles.loadingMessage}>{loadingMessage}</div>;
+        },
+        NoOptionsMessage: (props: any) => {
+          return <div className={styles.loadingMessage}>{noOptionsMessage}</div>;
+        },
+        DropdownIndicator: (props: any) => <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />,
+        SingleValue: SingleValue,
       }}
       styles={{
         ...resetSelectStyles(),
+        singleValue: () => {
+          return css`
+            overflow: hidden;
+          `;
+        },
         container: () => {
           return css`
             position: relative;
@@ -153,27 +276,20 @@ export function Select<T>({
           `;
         },
       }}
-      menuShouldScrollIntoView={false}
-      placeholder={placeholder || 'Choose'}
-      isSearchable={isSearchable}
-      isDisabled={isDisabled}
-      isClearable={isClearable}
-      menuIsOpen={isOpen}
-      autoFocus={autoFocus}
-      defaultValue={defaultValue}
-      value={value}
-      getOptionLabel={getOptionLabel}
-      getOptionValue={getOptionValue}
-      isLoading={isLoading}
-      openMenuOnFocus={openMenuOnFocus}
-      maxMenuHeight={maxMenuHeight}
-      noOptionsMessage={noOptionsMessage}
-      isMulti={isMulti}
-      backspaceRemovesValue={true}
-      onMenuOpen={onOpenMenu}
-      onMenuClose={onCloseMenu}
-      tabSelectsValue={tabSelectsValue}
-      {...creatableOptions}
+      className={widthClass}
+      {...commonSelectProps}
+      {...creatableProps}
+      {...asyncSelectProps}
     />
   );
+}
+
+export function Select<T>(props: SelectCommonProps<T>) {
+  return <SelectBase {...props} />;
+}
+
+interface AsyncSelectProps<T> extends Omit<SelectCommonProps<T>, 'options'>, SelectAsyncProps<T> {}
+
+export function AsyncSelect<T>(props: AsyncSelectProps<T>) {
+  return <SelectBase {...props} />;
 }

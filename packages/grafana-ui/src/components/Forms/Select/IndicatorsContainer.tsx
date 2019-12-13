@@ -3,8 +3,8 @@ import { useTheme } from '../../../themes/ThemeContext';
 import { getInputStyles } from '../Input/Input';
 import { cx, css } from 'emotion';
 
-export const IndicatorsContainer = React.forwardRef<HTMLDivElement, React.PropsWithChildren<any>>(props => {
-  const { children, ...otherProps } = props;
+export const IndicatorsContainer = React.forwardRef<HTMLDivElement, React.PropsWithChildren<any>>((props, ref) => {
+  const { children } = props;
   const theme = useTheme();
   const styles = getInputStyles({ theme, invalid: false });
 
@@ -17,7 +17,7 @@ export const IndicatorsContainer = React.forwardRef<HTMLDivElement, React.PropsW
           top: auto;
         `
       )}
-      {...otherProps}
+      ref={ref}
     >
       {children}
     </div>

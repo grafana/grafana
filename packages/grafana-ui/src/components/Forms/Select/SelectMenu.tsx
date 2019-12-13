@@ -5,8 +5,6 @@ import { cx } from 'emotion';
 import { SelectableValue } from '@grafana/data';
 import { Icon } from '../../Icon/Icon';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
-// @ts-ignore
-import { components } from '@torkelo/react-select';
 
 interface SelectMenuProps {
   maxHeight: number;
@@ -17,13 +15,11 @@ export const SelectMenu = React.forwardRef<HTMLDivElement, React.PropsWithChildr
   const styles = getSelectStyles(theme);
   const { children, maxHeight } = props;
   return (
-    <components.MenuList {...props}>
-      <div className={styles.menu} ref={ref} style={{ maxHeight }}>
-        <CustomScrollbar autoHide={false} autoHeightMax="inherit">
-          {children}
-        </CustomScrollbar>
-      </div>
-    </components.MenuList>
+    <div className={styles.menu} ref={ref} style={{ maxHeight }}>
+      <CustomScrollbar autoHide={false} autoHeightMax="inherit" hideHorizontalTrack>
+        {children}
+      </CustomScrollbar>
+    </div>
   );
 });
 
