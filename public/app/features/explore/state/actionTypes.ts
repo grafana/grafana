@@ -178,6 +178,7 @@ export interface UpdateDatasourceInstancePayload {
   exploreId: ExploreId;
   datasourceInstance: DataSourceApi;
   version?: string;
+  mode?: ExploreMode;
 }
 
 export interface ToggleLogLevelPayload {

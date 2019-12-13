@@ -1,12 +1,12 @@
 import React, { PureComponent, ChangeEvent } from 'react';
-import { SelectableValue, QueryEditorProps } from '@grafana/data';
+import { SelectableValue, ExploreQueryFieldProps } from '@grafana/data';
 import { Input, Segment, SegmentAsync, ValidationEvents, EventsWithValidation, Switch } from '@grafana/ui';
 import { CloudWatchQuery } from '../types';
 import CloudWatchDatasource from '../datasource';
 import { SelectableStrings } from '../types';
 import { Stats, Dimensions, QueryInlineField, QueryField, Alias } from './';
 
-export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery>;
+export type Props = ExploreQueryFieldProps<CloudWatchDatasource, CloudWatchQuery>;
 
 interface State {
   regions: SelectableStrings;
@@ -112,7 +112,8 @@ export class QueryEditor extends PureComponent<Props, State> {
       <>
         <QueryInlineField label="Region">
           <Segment
-            value={this.toOption(query.region || 'Select region')}
+            value={query.region}
+            placeholder="Select region"
             options={regions}
             allowCustomValue
             onChange={({ value: region }) => this.onChange({ ...query, region })}
@@ -123,7 +124,8 @@ export class QueryEditor extends PureComponent<Props, State> {
           <>
             <QueryInlineField label="Namespace">
               <Segment
-                value={this.toOption(query.namespace || 'Select namespace')}
+                value={query.namespace}
+                placeholder="Select namespace"
                 allowCustomValue
                 options={namespaces}
                 onChange={({ value: namespace }) => this.onChange({ ...query, namespace })}
@@ -132,7 +134,8 @@ export class QueryEditor extends PureComponent<Props, State> {
 
             <QueryInlineField label="Metric Name">
               <SegmentAsync
-                value={this.toOption(query.metricName || 'Select metric name')}
+                value={query.metricName}
+                placeholder="Select metric name"
                 allowCustomValue
                 loadOptions={this.loadMetricNames}
                 onChange={({ value: metricName }) => this.onChange({ ...query, metricName })}

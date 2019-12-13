@@ -124,11 +124,16 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
     const orgId = getState().user.orgId;
     const datasourceVersion = newDataSourceInstance.getVersion && (await newDataSourceInstance.getVersion());
 
+    // HACK: Switch to logs mode if coming from Prometheus to Loki
+    const prometheusToLoki =
+      currentDataSourceInstance?.meta?.name === 'Prometheus' && newDataSourceInstance?.meta?.name === 'Loki';
+
     dispatch(
       updateDatasourceInstanceAction({
         exploreId,
         datasourceInstance: newDataSourceInstance,
         version: datasourceVersion,
+        mode: prometheusToLoki ? ExploreMode.Logs : undefined,
       })
     );
 
@@ -316,12 +321,12 @@ export const loadDatasourceReady = (
  * @param sourceDataSource
  * @param targetDataSource
  */
-export function importQueries(
+export const importQueries = (
   exploreId: ExploreId,
   queries: DataQuery[],
   sourceDataSource: DataSourceApi,
   targetDataSource: DataSourceApi
-): ThunkResult<void> {
+): ThunkResult<void> => {
   return async dispatch => {
     if (!sourceDataSource) {
       // explore not initialized
@@ -346,12 +351,12 @@ export function importQueries(
 
     dispatch(queriesImportedAction({ exploreId, queries: nextQueries }));
   };
-}
+};
 
 /**
  * Main action to asynchronously load a datasource. Dispatches lots of smaller actions for feedback.
  */
-export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi, orgId: number): ThunkResult<void> {
+export const loadDatasource = (exploreId: ExploreId, instance: DataSourceApi, orgId: number): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const datasourceName = instance.name;
 
@@ -373,7 +378,7 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi, or
 
     dispatch(loadDatasourceReady(exploreId, instance, orgId));
   };
-}
+};
 
 /**
  * Action to modify a query given a datasource-specific modifier action.
@@ -399,7 +404,7 @@ export function modifyQueries(
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
-export function runQueries(exploreId: ExploreId): ThunkResult<void> {
+export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
   return (dispatch, getState) => {
     dispatch(updateTime({ exploreId }));
 
@@ -484,7 +489,7 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
 
     dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySub }));
   };
-}
+};
 
 const toRawTimeRange = (range: TimeRange): RawTimeRange => {
   let from = range.raw.from;
