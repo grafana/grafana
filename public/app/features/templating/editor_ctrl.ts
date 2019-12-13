@@ -6,6 +6,7 @@ import DatasourceSrv from '../plugins/datasource_srv';
 import { VariableSrv } from './all';
 import { TemplateSrv } from './template_srv';
 import { AppEvents } from '@grafana/data';
+import { promiseToDigest } from '../../core/utils/promiseToDigest';
 
 export class VariableEditorCtrl {
   /** @ngInject */
@@ -122,12 +123,13 @@ export class VariableEditorCtrl {
       $scope.infoText = '';
       if ($scope.current.type === 'adhoc' && $scope.current.datasource !== null) {
         $scope.infoText = 'Adhoc filters are applied automatically to all queries that target this datasource';
-        datasourceSrv.get($scope.current.datasource).then(ds => {
-          if (!ds.getTagKeys) {
-            $scope.infoText = 'This datasource does not support adhoc filters yet.';
-            $scope.$evalAsync();
-          }
-        });
+        promiseToDigest($scope)(
+          datasourceSrv.get($scope.current.datasource).then(ds => {
+            if (!ds.getTagKeys) {
+              $scope.infoText = 'This datasource does not support adhoc filters yet.';
+            }
+          })
+        );
       }
     };
 
@@ -155,10 +157,11 @@ export class VariableEditorCtrl {
       $scope.currentIsNew = false;
       $scope.mode = 'edit';
       $scope.validate();
-      datasourceSrv.get($scope.current.datasource).then(ds => {
-        $scope.currentDatasource = ds;
-        $scope.$evalAsync();
-      });
+      promiseToDigest($scope)(
+        datasourceSrv.get($scope.current.datasource).then(ds => {
+          $scope.currentDatasource = ds;
+        })
+      );
     };
 
     $scope.duplicate = (variable: { getSaveModel: () => void; name: string }) => {
@@ -170,12 +173,13 @@ export class VariableEditorCtrl {
 
     $scope.update = () => {
       if ($scope.isValid()) {
-        $scope.runQuery().then(() => {
-          $scope.reset();
-          $scope.mode = 'list';
-          templateSrv.updateIndex();
-          $scope.$evalAsync();
-        });
+        promiseToDigest($scope)(
+          $scope.runQuery().then(() => {
+            $scope.reset();
+            $scope.mode = 'list';
+            templateSrv.updateIndex();
+          })
+        );
       }
     };
 
@@ -221,11 +225,12 @@ export class VariableEditorCtrl {
     };
 
     $scope.datasourceChanged = async () => {
-      datasourceSrv.get($scope.current.datasource).then(ds => {
-        $scope.current.query = '';
-        $scope.currentDatasource = ds;
-        $scope.$evalAsync();
-      });
+      promiseToDigest($scope)(
+        datasourceSrv.get($scope.current.datasource).then(ds => {
+          $scope.current.query = '';
+          $scope.currentDatasource = ds;
+        })
+      );
     };
   }
 }
