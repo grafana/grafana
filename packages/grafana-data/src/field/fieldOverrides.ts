@@ -95,7 +95,7 @@ export function applyFieldOverrides(options: GetFieldDisplayValuesOptions): Data
       }
 
       // Set the Min/Max value automatically
-      if (options.calculatePercent && field.type === FieldType.number) {
+      if (options.autoMinMax && field.type === FieldType.number) {
         if (!isNumber(config.min) || !isNumber(config.max)) {
           if (!range) {
             range = findNumericFieldMinMax(options.data!); // Global value

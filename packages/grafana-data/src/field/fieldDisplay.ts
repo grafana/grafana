@@ -79,7 +79,7 @@ export interface GetFieldDisplayValuesOptions {
   replaceVariables: InterpolateFunction;
   sparkline?: boolean; // Calculate the sparkline
   theme: GrafanaTheme;
-  calculatePercent?: boolean;
+  autoMinMax?: boolean;
 }
 
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
