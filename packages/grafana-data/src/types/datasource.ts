@@ -318,6 +318,7 @@ export interface ExploreQueryFieldProps<
   history: any[];
   onBlur?: () => void;
   absoluteRange?: AbsoluteTimeRange;
+  exploreMode?: 'Logs' | 'Metrics';
 }
 
 export interface ExploreStartPageProps {
