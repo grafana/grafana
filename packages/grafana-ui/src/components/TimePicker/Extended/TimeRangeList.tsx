@@ -21,7 +21,7 @@ const getStyles = stylesFactory(() => {
 interface Props {
   title?: string;
   options: TimeOption[];
-  selected?: TimeRange;
+  value?: TimeRange;
   onSelect: (option: TimeRange) => void;
 }
 
@@ -43,12 +43,12 @@ const TimeRangeList: React.FC<Props> = props => {
   );
 };
 
-function renderOptions({ options, selected, onSelect }: Props): JSX.Element[] {
+function renderOptions({ options, value, onSelect }: Props): JSX.Element[] {
   return options.map((option, index) => (
     <TimeRangeOption
       key={keyForOption(option, index)}
       value={option}
-      selected={isEqual(option, selected)}
+      selected={isEqual(option, value)}
       onSelect={option => onSelect(mapToTimeRange(option))}
     />
   ));

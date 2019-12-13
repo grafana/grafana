@@ -21,6 +21,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         border-right: 0;
         border-bottom: 0;
         border-left-width: 2px;
+        cursor: pointer;
       }
     `,
   };
