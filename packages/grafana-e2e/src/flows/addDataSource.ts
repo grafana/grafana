@@ -4,7 +4,10 @@ export const addDataSource = (pluginName?: string): string => {
   pluginName = pluginName || 'TestData DB';
   e2e().logToConsole('Adding data source with pluginName:', pluginName);
   e2e.pages.AddDataSource.visit();
-  e2e.pages.AddDataSource.dataSourcePlugins(pluginName).click();
+  e2e.pages.AddDataSource.dataSourcePlugins(pluginName)
+    .scrollIntoView()
+    .should('be.visible') // prevents flakiness
+    .click();
 
   const dataSourceName = `e2e-${new Date().getTime()}`;
   e2e.pages.DataSource.name().clear();

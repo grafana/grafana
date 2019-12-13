@@ -32,22 +32,28 @@ HTTP/1.1 200
 Content-Type: application/json
 
 [
-  {
-    "id":1,
-    "orgId":1,
-    "name":"datasource_elastic",
-    "type":"elasticsearch",
-    "access":"proxy",
-    "url":"http://mydatasource.com",
-    "password":"",
-    "user":"",
-    "database":"grafana-dash",
-    "basicAuth":false,
-    "basicAuthUser":"",
-    "basicAuthPassword":"",
-    "isDefault":false,
-    "jsonData":null
-  }
+   {
+     "id": 1,
+     "orgId": 1,
+     "name": "datasource_elastic",
+     "type": "elasticsearch",
+     "typeLogoUrl": "public/app/plugins/datasource/elasticsearch/img/elasticsearch.svg",
+     "access": "proxy",
+     "url": "http://mydatasource.com",
+     "password": "",
+     "user": "",
+     "database": "grafana-dash",
+     "basicAuth": false,
+     "isDefault": false,
+     "jsonData": {
+         "esVersion": 5,
+         "logLevelField": "",
+         "logMessageField": "",
+         "maxConcurrentShardRequests": 256,
+         "timeField": "@timestamp"
+     },
+     "readOnly": false
+   }
 ]
 ```
 
@@ -71,20 +77,28 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {
-  "id":1,
-  "orgId":1,
-  "name":"test_datasource",
-  "type":"graphite",
-  "access":"proxy",
-  "url":"http://mydatasource.com",
-  "password":"",
-  "user":"",
-  "database":"",
-  "basicAuth":false,
-  "basicAuthUser":"",
-  "basicAuthPassword":"",
-  "isDefault":false,
-  "jsonData":null
+  "id": 1,
+  "orgId": 1,
+  "name": "test_datasource",
+  "type": "graphite",
+  "typeLogoUrl": "",
+  "access": "proxy",
+  "url": "http://mydatasource.com",
+  "password": "",
+  "user": "",
+  "database": "",
+  "basicAuth": false,
+  "basicAuthUser": "",
+  "basicAuthPassword": "",
+  "withCredentials": false,
+  "isDefault": false,
+  "jsonData": {
+    "graphiteType": "default",
+    "graphiteVersion": "1.1"
+  },
+  "secureJsonFields": {},
+  "version": 1,
+  "readOnly": false
 }
 ```
 
@@ -108,20 +122,28 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {
-  "id":1,
-  "orgId":1,
-  "name":"test_datasource",
-  "type":"graphite",
-  "access":"proxy",
-  "url":"http://mydatasource.com",
-  "password":"",
-  "user":"",
-  "database":"",
-  "basicAuth":false,
-  "basicAuthUser":"",
-  "basicAuthPassword":"",
-  "isDefault":false,
-  "jsonData":null
+  "id": 1,
+  "orgId": 1,
+  "name": "test_datasource",
+  "type": "graphite",
+  "typeLogoUrl": "",
+  "access": "proxy",
+  "url": "http://mydatasource.com",
+  "password": "",
+  "user": "",
+  "database": "",
+  "basicAuth": false,
+  "basicAuthUser": "",
+  "basicAuthPassword": "",
+  "withCredentials": false,
+  "isDefault": false,
+  "jsonData": {
+    "graphiteType": "default",
+    "graphiteVersion": "1.1"
+  },
+  "secureJsonFields": {},
+  "version": 1,
+  "readOnly": false
 }
 ```
 
@@ -170,6 +192,98 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
+**Example Graphite Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+  "datasource": {
+    "id": 1,
+    "orgId": 1,
+    "name": "test_datasource",
+    "type": "graphite",
+    "typeLogoUrl": "",
+    "access": "proxy",
+    "url": "http://mydatasource.com",
+    "password": "",
+    "user": "",
+    "database": "",
+    "basicAuth": false,
+    "basicAuthUser": "",
+    "basicAuthPassword": "",
+    "withCredentials": false,
+    "isDefault": false,
+    "jsonData": {},
+    "secureJsonFields": {},
+    "version": 1,
+    "readOnly": false
+  },
+  "id": 1,
+  "message": "Datasource added",
+  "name": "test_datasource"
+}
+```
+
+> NOTE: `password` and `basicAuthPassword` should be defined under `secureJsonData` in order to be stored securely as an encrypted blob in the database. Then, the encrypted fields are listed under `secureJsonFields` section in the response. See also the [Encrypting Sensitive Data]({{< relref "../plugins/developing/auth-for-datasources.md/#encrypting-sensitive-data">}}) documentation for more details.
+
+**Example Graphite Request with basic auth enabled**:
+
+```http
+POST /api/datasources HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "name": "test_datasource",
+  "type": "graphite",
+  "url": "http://mydatasource.com",
+  "access": "proxy",
+  "basicAuth": true,
+  "basicAuthUser": "basicuser",
+  "secureJsonData": {
+    "basicAuthPassword": "basicpassword"
+  }
+}
+```
+**Example Response with basic auth enabled**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+  "datasource": {
+    "id": 1,
+    "orgId": 1,
+    "name": "test_datasource",
+    "type": "graphite",
+    "typeLogoUrl": "",
+    "access": "proxy",
+    "url": "http://mydatasource.com",
+    "password": "",
+    "user": "",
+    "database": "",
+    "basicAuth": true,
+    "basicAuthUser": "basicuser",
+    "basicAuthPassword": "",
+    "withCredentials": false,
+    "isDefault": false,
+    "jsonData": {},
+    "secureJsonFields": {
+      "basicAuthPassword": true
+    },
+    "version": 1,
+    "readOnly": false
+  },
+  "id": 102,
+  "message": "Datasource added",
+  "name": "test_datasource"
+}
+```
+
 **Example CloudWatch Request**:
 
 ```http
@@ -192,15 +306,6 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
     "secretKey": "dGVzdCBrZXkgYmxlYXNlIGRvbid0IHN0ZWFs"
   }
 }
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{"id":1,"message":"Datasource added", "name": "test_datasource"}
 ```
 
 ## Update an existing data source
@@ -227,7 +332,9 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   "database":"",
   "basicAuth":true,
   "basicAuthUser":"basicuser",
-  "basicAuthPassword":"basicuser",
+  "secureJsonData": {
+    "basicAuthPassword": "basicpassword"
+  },
   "isDefault":false,
   "jsonData":null
 }
@@ -239,8 +346,37 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 
-{"message":"Datasource updated", "id": 1, "name": "test_datasource"}
+{
+  "datasource": {
+    "id": 1,
+    "orgId": 1,
+    "name": "test_datasource",
+    "type": "graphite",
+    "typeLogoUrl": "",
+    "access": "proxy",
+    "url": "http://mydatasource.com",
+    "password": "",
+    "user": "",
+    "database": "",
+    "basicAuth": true,
+    "basicAuthUser": "basicuser",
+    "basicAuthPassword": "",
+    "withCredentials": false,
+    "isDefault": false,
+    "jsonData": {},
+    "secureJsonFields": {
+      "basicAuthPassword": true
+    },
+    "version": 1,
+    "readOnly": false
+  },
+  "id": 102,
+  "message": "Datasource updated",
+  "name": "test_datasource"
+}
 ```
+
+> NOTE: Similar to [creating a data source](#create-a-data-source), `password` and `basicAuthPassword` should be defined under `secureJsonData` in order to be stored securely as an encrypted blob in the database. Then, the encrypted fields are listed under `secureJsonFields` section in the response. See also the [Encrypting Sensitive Data]({{< relref "../plugins/developing/auth-for-datasources.md/#encrypting-sensitive-data">}}) documentation for more details.
 
 ## Delete an existing data source by id
 

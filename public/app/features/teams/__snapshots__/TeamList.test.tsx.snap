@@ -132,10 +132,10 @@ exports[`Render should render teams table 1`] = `
             <td
               className="text-right"
             >
-              <DeleteButton
-                confirmText="Confirm Delete"
+              <Component
                 disabled={false}
                 onConfirm={[Function]}
+                size="sm"
               />
             </td>
           </tr>
@@ -184,10 +184,10 @@ exports[`Render should render teams table 1`] = `
             <td
               className="text-right"
             >
-              <DeleteButton
-                confirmText="Confirm Delete"
+              <Component
                 disabled={false}
                 onConfirm={[Function]}
+                size="sm"
               />
             </td>
           </tr>
@@ -236,10 +236,10 @@ exports[`Render should render teams table 1`] = `
             <td
               className="text-right"
             >
-              <DeleteButton
-                confirmText="Confirm Delete"
+              <Component
                 disabled={false}
                 onConfirm={[Function]}
+                size="sm"
               />
             </td>
           </tr>
@@ -288,10 +288,10 @@ exports[`Render should render teams table 1`] = `
             <td
               className="text-right"
             >
-              <DeleteButton
-                confirmText="Confirm Delete"
+              <Component
                 disabled={false}
                 onConfirm={[Function]}
+                size="sm"
               />
             </td>
           </tr>
@@ -340,10 +340,10 @@ exports[`Render should render teams table 1`] = `
             <td
               className="text-right"
             >
-              <DeleteButton
-                confirmText="Confirm Delete"
+              <Component
                 disabled={false}
                 onConfirm={[Function]}
+                size="sm"
               />
             </td>
           </tr>
@@ -467,10 +467,10 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
             <td
               className="text-right"
             >
-              <DeleteButton
-                confirmText="Confirm Delete"
+              <Component
                 disabled={true}
                 onConfirm={[Function]}
+                size="sm"
               />
             </td>
           </tr>
@@ -594,10 +594,10 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
             <td
               className="text-right"
             >
-              <DeleteButton
-                confirmText="Confirm Delete"
+              <Component
                 disabled={true}
                 onConfirm={[Function]}
+                size="sm"
               />
             </td>
           </tr>

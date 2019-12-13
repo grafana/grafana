@@ -10,6 +10,7 @@ const getKnobs = () => {
   return {
     buttonText: text('Button text', 'Edit'),
     confirmText: text('Confirm text', 'Save'),
+    size: select('Size', ['sm', 'md', 'lg'], 'md'),
     confirmVariant: select(
       'Confirm variant',
       {
@@ -28,15 +29,16 @@ const getKnobs = () => {
 storiesOf('UI/ConfirmButton', module)
   .addDecorator(withCenteredStory)
   .add('default', () => {
-    const { buttonText, confirmText, confirmVariant, disabled } = getKnobs();
+    const { size, buttonText, confirmText, confirmVariant, disabled } = getKnobs();
     return (
       <>
         <div className="gf-form-group">
           <div className="gf-form">
             <ConfirmButton
+              size={size}
               confirmText={confirmText}
               disabled={disabled}
-              confirmButtonVariant={confirmVariant}
+              confirmVariant={confirmVariant}
               onConfirm={() => {
                 action('Saved')('save!');
               }}
@@ -49,20 +51,21 @@ storiesOf('UI/ConfirmButton', module)
     );
   })
   .add('with custom button', () => {
-    const { buttonText, confirmText, confirmVariant, disabled } = getKnobs();
+    const { buttonText, confirmText, confirmVariant, disabled, size } = getKnobs();
     return (
       <>
         <div className="gf-form-group">
           <div className="gf-form">
             <ConfirmButton
+              size={size}
               confirmText={confirmText}
               disabled={disabled}
-              confirmButtonVariant={confirmVariant}
+              confirmVariant={confirmVariant}
               onConfirm={() => {
                 action('Saved')('save!');
               }}
             >
-              <Button size="sm" variant="secondary" icon="fa fa-pencil">
+              <Button size={size} variant="secondary" icon="fa fa-pencil">
                 {buttonText}
               </Button>
             </ConfirmButton>

@@ -7,6 +7,7 @@ import { useExpandableLabel, SegmentProps } from '.';
 export interface SegmentInputProps<T> extends SegmentProps<T> {
   value: string | number;
   onChange: (text: string | number) => void;
+  autofocus?: boolean;
 }
 
 const FONT_SIZE = 14;
@@ -16,16 +17,30 @@ export function SegmentInput<T>({
   onChange,
   Component,
   className,
+  placeholder,
+  autofocus = false,
 }: React.PropsWithChildren<SegmentInputProps<T>>) {
-  const ref = useRef(null);
+  const ref = useRef<HTMLInputElement>(null);
   const [value, setValue] = useState<number | string>(initialValue);
-  const [inputWidth, setInputWidth] = useState<number>(measureText(initialValue.toString(), FONT_SIZE).width);
-  const [Label, , expanded, setExpanded] = useExpandableLabel(false);
-  useClickAway(ref, () => setExpanded(false));
+  const [inputWidth, setInputWidth] = useState<number>(measureText((initialValue || '').toString(), FONT_SIZE).width);
+  const [Label, , expanded, setExpanded] = useExpandableLabel(autofocus);
+
+  useClickAway(ref, () => {
+    setExpanded(false);
+    onChange(value);
+  });
 
   if (!expanded) {
     return (
-      <Label Component={Component || <a className={cx('gf-form-label', 'query-part', className)}>{initialValue}</a>} />
+      <Label
+        Component={
+          Component || (
+            <a className={cx('gf-form-label', 'query-part', !value && placeholder && 'query-placeholder', className)}>
+              {initialValue || placeholder}
+            </a>
+          )
+        }
+      />
     );
   }
 

@@ -48,6 +48,7 @@ describe('Render', () => {
       },
     });
 
+    wrapper.find('.sidemenu-org-switcher a').simulate('click');
     expect(wrapper).toMatchSnapshot();
   });
 
