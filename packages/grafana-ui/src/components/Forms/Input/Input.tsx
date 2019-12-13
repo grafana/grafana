@@ -1,4 +1,4 @@
-import React, { FC, HTMLProps, ReactNode } from 'react';
+import React, { HTMLProps, ReactNode } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
 import { getFocusStyle, inputSizes, sharedInputStyle } from '../commonStyles';
@@ -146,6 +146,10 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
         }
       `
     ),
+    inputDisabled: css`
+      background-color: ${colors.formInputBgDisabled};
+      color: ${colors.formInputDisabledText};
+    `,
     addon: css`
         label: input-addon;
         display: flex;
