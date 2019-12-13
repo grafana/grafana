@@ -23,7 +23,7 @@ export class TableContainer extends PureComponent<TableContainerProps> {
   };
 
   render() {
-    const { loading, showingTable, tableResult, width } = this.props;
+    const { loading, onClickCell, showingTable, tableResult, width } = this.props;
 
     const height = 400;
     const paddingWidth = 16;
@@ -32,7 +32,7 @@ export class TableContainer extends PureComponent<TableContainerProps> {
 
     return (
       <Collapse label="Table" loading={loading} collapsible isOpen={showingTable} onToggle={this.onClickTableButton}>
-        {tableResult && <Table data={tableResult} width={tableWidth} height={height} />}
+        {tableResult && <Table data={tableResult} width={tableWidth} height={height} onCellClick={onClickCell} />}
       </Collapse>
     );
   }

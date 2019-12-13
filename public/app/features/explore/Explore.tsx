@@ -194,6 +194,8 @@ export class Explore extends React.PureComponent<ExploreProps> {
   };
 
   onClickFilterLabel = (key: string, value: string) => {
+    console.log(key);
+    console.log(value);
     this.onModifyQueries({ type: 'ADD_FILTER', key, value });
   };
 

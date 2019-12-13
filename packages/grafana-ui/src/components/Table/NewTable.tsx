@@ -10,6 +10,7 @@ export interface Props {
   data: DataFrame;
   width: number;
   height: number;
+  onCellClick?: any;
 }
 
 const getTableData = (data: DataFrame) => {
@@ -67,14 +68,14 @@ const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-export const NewTable = ({ data, height, width }: Props) => {
+export const NewTable = ({ data, height, onCellClick, width }: Props) => {
   const theme = useTheme();
   const tableStyles = getTableStyles(theme);
   const columnWidth = Math.floor(width / data.fields.length);
   const { getTableProps, headerGroups, rows, prepareRow } = useTable(
     {
-      columns: useMemo(() => getColumns(data), []),
-      data: useMemo(() => getTableData(data), []),
+      columns: useMemo(() => getColumns(data), [data]),
+      data: useMemo(() => getTableData(data), [data]),
     },
     useSortBy,
     useBlockLayout
@@ -95,7 +96,12 @@ export const NewTable = ({ data, height, width }: Props) => {
               <div
                 className={tableStyles.tableCell}
                 {...cell.getCellProps()}
-                style={{ display: 'table-cell', width: `${columnWidth}px` }}
+                onClick={() => onCellClick(cell.column.Header, cell.value)}
+                style={{
+                  display: 'table-cell',
+                  width: `${columnWidth}px`,
+                  cursor: `${onCellClick ? 'pointer' : 'default'}`,
+                }}
               >
                 {cell.render('Cell')}
               </div>
