@@ -8,6 +8,7 @@ start=$(date +%s)
 exit_if_fail npm run prettier:check
 exit_if_fail npm run test
 
+export
 end=$(date +%s)
 seconds=$((end - start))
 

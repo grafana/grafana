@@ -240,6 +240,8 @@ jobs:
       - run:
           name: frontend tests
           command: './scripts/circle-test-frontend.sh'
+      - store_test_results:
+          path: reports/junit
       - run:
           name: ci job failed
           command: './scripts/ci-job-failed.sh'
