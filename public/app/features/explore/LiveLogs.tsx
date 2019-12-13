@@ -146,19 +146,19 @@ class LiveLogs extends PureComponent<Props, State> {
         >
           {this.rowsToRender().map((row: LogRowModel) => {
             return (
-              <div className={cx(logsRow, styles.logsRowFade)} key={row.uid}>
+              <td className={cx(logsRow, styles.logsRowFade)} key={row.uid}>
                 {showUtc && (
-                  <div className={cx(logsRowLocalTime)} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
+                  <td className={cx(logsRowLocalTime)} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
                     {row.timeUtc}
-                  </div>
+                  </td>
                 )}
                 {!showUtc && (
-                  <div className={cx(logsRowLocalTime)} title={`${row.timeUtc} (${row.timeFromNow})`}>
+                  <td className={cx(logsRowLocalTime)} title={`${row.timeUtc} (${row.timeFromNow})`}>
                     {row.timeLocal}
-                  </div>
+                  </td>
                 )}
-                <div className={cx(logsRowMessage)}>{row.entry}</div>
-              </div>
+                <td className={cx(logsRowMessage)}>{row.entry}</td>
+              </td>
             );
           })}
           <div
