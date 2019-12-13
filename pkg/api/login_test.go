@@ -321,7 +321,6 @@ func TestLoginPostRedirect(t *testing.T) {
 			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 			assert.NoError(t, err)
 			redirectURL := respJSON.Get("redirectUrl").MustString()
-			fmt.Println(">>>>", sc.resp.Header()["Set-Cookie"])
 			if c.err != nil {
 				assert.Equal(t, "", redirectURL)
 			} else {
