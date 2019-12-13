@@ -72,11 +72,8 @@ const createQueryVariable = ({ name, label, dataSourceName, query }: CreateQuery
   e2e().logToConsole('Creating a Query Variable with', { name, label, dataSourceName, query });
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().type(name);
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput().type(label);
-  e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect().select(
-    `string:${dataSourceName}`
-  );
-  e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInput()
-    .click()
+  e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
+    .select(`string:${dataSourceName}`)
     .blur();
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput()
     .within(input => {

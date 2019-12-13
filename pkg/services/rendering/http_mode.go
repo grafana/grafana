@@ -65,6 +65,8 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, opts Opts) (*Rend
 
 	req = req.WithContext(reqContext)
 
+	rs.log.Debug("calling remote rendering service", "url", rendererUrl)
+
 	// make request to renderer server
 	resp, err := netClient.Do(req)
 	if err != nil {

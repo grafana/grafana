@@ -72,7 +72,14 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   // Strip syntax chars
-  cleanText = (s: string) => s.replace(/[{}[\]="(),!~+\-*/^%]/g, '').trim();
+  cleanText = (s: string) =>
+    s
+      .replace(/[{}[\]="(),!]/g, '')
+      .replace(/^\s*[~+\-*/^%]/, '')
+      .trim()
+      .split(' ')
+      .pop()
+      .trim();
 
   get syntax() {
     return PromqlSyntax;
@@ -126,7 +133,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const noSuffix = !nextCharacter || nextCharacter === ')';
 
     // Empty prefix is safe if it does not immediately follow a complete expression and has no text after it
-    const safeEmptyPrefix = prefix === '' && !text.match(/^[\]})\s]+$/) && noSuffix;
+    const safePrefix = prefix && !text.match(/^[\]})\s]+$/) && noSuffix;
 
     // About to type next operand if preceded by binary operator
     const operatorsPattern = /[+\-*/^%]/;
@@ -145,13 +152,22 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     } else if (empty) {
       // Suggestions for empty query field
       return this.getEmptyCompletionItems(context);
-    } else if ((prefixUnrecognized && noSuffix) || safeEmptyPrefix || isNextOperand) {
+    } else if (prefixUnrecognized && noSuffix && !isNextOperand) {
+      // Show term suggestions in a couple of scenarios
+      return this.getBeginningCompletionItems(context);
+    } else if (prefixUnrecognized && safePrefix) {
       // Show term suggestions in a couple of scenarios
       return this.getTermCompletionItems();
     }
 
     return {
       suggestions: [],
+    };
+  };
+
+  getBeginningCompletionItems = (context: { history: Array<HistoryItem<PromQuery>> }): TypeaheadOutput => {
+    return {
+      suggestions: [...this.getEmptyCompletionItems(context).suggestions, ...this.getTermCompletionItems().suggestions],
     };
   };
 
@@ -176,9 +192,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
         items: historyItems,
       });
     }
-
-    const termCompletionItems = this.getTermCompletionItems();
-    suggestions.push(...termCompletionItems.suggestions);
 
     return { suggestions };
   };

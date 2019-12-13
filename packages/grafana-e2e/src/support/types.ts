@@ -26,6 +26,7 @@ export const pageFactory = <S extends Selectors>({ url, selectors }: PageFactory
       parsedUrl = Url.fromBaseUrl(url(args));
     }
 
+    e2e().logToConsole('Visiting', parsedUrl);
     return e2e().visit(parsedUrl);
   };
   const pageObjects: PageObjects<S> = {} as PageObjects<S>;

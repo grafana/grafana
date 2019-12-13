@@ -15,7 +15,7 @@ In previous versions of Grafana, you could only use the API for provisioning dat
 
 ## Config File
 
-Checkout the [configuration]({{< relref "../installation/configuration" >}}) page for more information on what you can configure in `grafana.ini`
+Check out the [configuration]({{< relref "../installation/configuration" >}}) page for more information on what you can configure in `grafana.ini`
 
 ### Config File Locations
 

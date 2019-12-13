@@ -13,35 +13,24 @@ describe('Language completion provider', () => {
   } as any) as PrometheusDatasource;
 
   describe('empty query suggestions', () => {
-    it('returns default suggestions on empty context', async () => {
+    it('returns no suggestions on empty context', async () => {
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('');
       const result = await instance.provideCompletionItems({ text: '', prefix: '', value, wrapperClasses: [] });
       expect(result.context).toBeUndefined();
-      expect(result.suggestions).toMatchObject([
-        {
-          label: 'Functions',
-        },
-      ]);
+      expect(result.suggestions).toMatchObject([]);
     });
 
-    it('returns default suggestions with metrics on empty context when metrics were provided', async () => {
+    it('returns no suggestions with metrics on empty context even when metrics were provided', async () => {
       const instance = new LanguageProvider(datasource);
       instance.metrics = ['foo', 'bar'];
       const value = Plain.deserialize('');
       const result = await instance.provideCompletionItems({ text: '', prefix: '', value, wrapperClasses: [] });
       expect(result.context).toBeUndefined();
-      expect(result.suggestions).toMatchObject([
-        {
-          label: 'Functions',
-        },
-        {
-          label: 'Metrics',
-        },
-      ]);
+      expect(result.suggestions).toMatchObject([]);
     });
 
-    it('returns default suggestions with history on empty context when history was provided', async () => {
+    it('returns history on empty context when history was provided', async () => {
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('');
       const history: Array<HistoryItem<PromQuery>> = [
@@ -64,9 +53,6 @@ describe('Language completion provider', () => {
               label: 'metric',
             },
           ],
-        },
-        {
-          label: 'Functions',
         },
       ]);
     });
@@ -101,14 +87,31 @@ describe('Language completion provider', () => {
   });
 
   describe('metric suggestions', () => {
-    it('returns metrics and function suggestions in an unknown context', async () => {
+    it('returns history, metrics and function suggestions in an uknown context ', async () => {
       const instance = new LanguageProvider(datasource);
       instance.metrics = ['foo', 'bar'];
+      const history: Array<HistoryItem<PromQuery>> = [
+        {
+          ts: 0,
+          query: { refId: '1', expr: 'metric' },
+        },
+      ];
       let value = Plain.deserialize('a');
       value = value.setSelection({ anchor: { offset: 1 }, focus: { offset: 1 } });
-      const result = await instance.provideCompletionItems({ text: 'a', prefix: 'a', value, wrapperClasses: [] });
+      const result = await instance.provideCompletionItems(
+        { text: 'm', prefix: 'm', value, wrapperClasses: [] },
+        { history }
+      );
       expect(result.context).toBeUndefined();
       expect(result.suggestions).toMatchObject([
+        {
+          label: 'History',
+          items: [
+            {
+              label: 'metric',
+            },
+          ],
+        },
         {
           label: 'Functions',
         },
@@ -118,11 +121,27 @@ describe('Language completion provider', () => {
       ]);
     });
 
-    it('returns metrics and function  suggestions after a binary operator', async () => {
+    it('returns no suggestions directly after a binary operator', async () => {
       const instance = new LanguageProvider(datasource);
       instance.metrics = ['foo', 'bar'];
       const value = Plain.deserialize('*');
       const result = await instance.provideCompletionItems({ text: '*', prefix: '', value, wrapperClasses: [] });
+      expect(result.context).toBeUndefined();
+      expect(result.suggestions).toMatchObject([]);
+    });
+
+    it('returns metric suggestions with prefix after a binary operator', async () => {
+      const instance = new LanguageProvider(datasource);
+      instance.metrics = ['foo', 'bar'];
+      const value = Plain.deserialize('foo + b');
+      const ed = new SlateEditor({ value });
+      const valueWithSelection = ed.moveForward(7).value;
+      const result = await instance.provideCompletionItems({
+        text: 'foo + b',
+        prefix: 'b',
+        value: valueWithSelection,
+        wrapperClasses: [],
+      });
       expect(result.context).toBeUndefined();
       expect(result.suggestions).toMatchObject([
         {
