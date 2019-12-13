@@ -48,6 +48,7 @@ export default class TimeRangeForm extends PureComponent<Props, State> {
 
   onCalendarShow = (event: FormEvent<HTMLInputElement> | FormEvent<HTMLButtonElement>, trigger: CalendarTrigger) => {
     if (this.props.calendarTrigger === trigger) {
+      this.onCalendarDontHide(event);
       this.setState({ displayCalendar: true });
     }
   };

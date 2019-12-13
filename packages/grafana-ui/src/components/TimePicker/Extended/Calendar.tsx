@@ -8,12 +8,24 @@ import Forms from '../../Forms';
 
 const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
+    background: css`
+      @media only screen and (max-width: ${theme.breakpoints.lg}) {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: rgb(32, 34, 38, 0.7);
+        z-index: ${theme.zIndex.modalBackdrop};
+      }
+    `,
     calendar: css`
       top: 0;
       position: absolute;
       right: 546px;
       box-shadow: 0px 4px 4px #c7d0d9;
-      z-index: -1;
 
       @media only screen and (min-width: ${theme.breakpoints.lg}) {
         &:after {
@@ -30,7 +42,11 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
       }
 
       @media only screen and (max-width: ${theme.breakpoints.lg}) {
-        right: 218px;
+        position: static;
+        margin: 20% auto;
+        z-index: ${theme.zIndex.modal};
+        width: 268px;
+        box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.6);
       }
     `,
     calendarTitle: css`
@@ -172,33 +188,35 @@ const TimePickerCalendar: React.FC<Props> = ({ selected, onChange, visible }: Pr
   }
 
   return (
-    <div className={styles.calendar}>
-      <div className={styles.calendarHeader}>
-        <TimeRangeTitle>Select a time range</TimeRangeTitle>
-        <i className="fa fa-times" />
-      </div>
-      <Calendar
-        selectRange={true}
-        next2Label={null}
-        prev2Label={null}
-        className={styles.calendarBody}
-        tileClassName={styles.calendarTitle}
-        value={toCalendarDate(selected)}
-        nextLabel={<span className="fa fa-angle-right" />}
-        prevLabel={<span className="fa fa-angle-left" />}
-        onChange={value => onChange(onCalendarChange(value))}
-      />
-      <div className={styles.calendarFooter}>
-        <Forms.Button
-          className={css`
-            margin-right: 4px;
-            width: 100%;
-            justify-content: center;
-          `}
-        >
-          Apply time range
-        </Forms.Button>
-        <Forms.Button variant="secondary">Cancel</Forms.Button>
+    <div className={styles.background}>
+      <div className={styles.calendar}>
+        <div className={styles.calendarHeader}>
+          <TimeRangeTitle>Select a time range</TimeRangeTitle>
+          <i className="fa fa-times" />
+        </div>
+        <Calendar
+          selectRange={true}
+          next2Label={null}
+          prev2Label={null}
+          className={styles.calendarBody}
+          tileClassName={styles.calendarTitle}
+          value={toCalendarDate(selected)}
+          nextLabel={<span className="fa fa-angle-right" />}
+          prevLabel={<span className="fa fa-angle-left" />}
+          onChange={value => onChange(onCalendarChange(value))}
+        />
+        <div className={styles.calendarFooter}>
+          <Forms.Button
+            className={css`
+              margin-right: 4px;
+              width: 100%;
+              justify-content: center;
+            `}
+          >
+            Apply time range
+          </Forms.Button>
+          <Forms.Button variant="secondary">Cancel</Forms.Button>
+        </div>
       </div>
     </div>
   );
