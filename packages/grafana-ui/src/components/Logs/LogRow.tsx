@@ -77,9 +77,19 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     });
   };
 
-  onChangeHoverBackground = (bool: boolean) => {
+  /**
+   * We are using onMouse events to change background of Log Details Table to hover-state-background when
+   * hovered over Log Row and vice versa. This can't be done with css.
+   */
+  addHoverBackground = () => {
     this.setState({
-      hasHoverBackground: bool,
+      hasHoverBackground: true,
+    });
+  };
+
+  clearHoverBackground = () => {
+    this.setState({
+      hasHoverBackground: false,
     });
   };
 
@@ -122,13 +132,14 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     const showDetailsClassName = showDetails
       ? cx(['fa fa-chevron-down', styles.topVerticalAlign])
       : cx(['fa fa-chevron-right', styles.topVerticalAlign]);
+    const hoverBackground = cx(style.logsRow, { [styles.hoverBackground]: hasHoverBackground });
 
     return (
       <>
         <tr
-          className={cx(style.logsRow, { [styles.hoverBackground]: hasHoverBackground })}
-          onMouseEnter={() => this.onChangeHoverBackground(true)}
-          onMouseLeave={() => this.onChangeHoverBackground(false)}
+          className={hoverBackground}
+          onMouseEnter={this.addHoverBackground}
+          onMouseLeave={this.clearHoverBackground}
           onClick={this.toggleDetails}
         >
           {showDuplicates && (
@@ -172,8 +183,9 @@ class UnThemedLogRow extends PureComponent<Props, State> {
         </tr>
         {this.state.showDetails && (
           <LogDetails
-            hasHoverBackground={hasHoverBackground}
-            onChangeHoverBackground={this.onChangeHoverBackground}
+            className={hoverBackground}
+            onMouseEnter={this.addHoverBackground}
+            onMouseLeave={this.clearHoverBackground}
             showDuplicates={showDuplicates}
             getFieldLinks={getFieldLinks}
             onClickFilterLabel={onClickFilterLabel}

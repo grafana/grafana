@@ -8,7 +8,6 @@ const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowMode
   const props: Props = {
     theme: {} as GrafanaTheme,
     showDuplicates: false,
-    hasHoverBackground: false,
     row: {
       dataFrame: new MutableDataFrame(),
       entryFieldIndex: 0,
@@ -27,7 +26,6 @@ const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowMode
       ...(rowOverrides || {}),
     },
     getRows: () => [],
-    onChangeHoverBackground: () => {},
     onClickFilterLabel: () => {},
     onClickFilterOutLabel: () => {},
     ...(propOverrides || {}),

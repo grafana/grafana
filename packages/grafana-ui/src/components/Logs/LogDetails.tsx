@@ -31,9 +31,10 @@ type FieldDef = {
 export interface Props extends Themeable {
   row: LogRowModel;
   showDuplicates: boolean;
-  hasHoverBackground: boolean;
   getRows: () => LogRowModel[];
-  onChangeHoverBackground: (bool: boolean) => void;
+  className?: string;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
@@ -132,8 +133,9 @@ class UnThemedLogDetails extends PureComponent<Props> {
       onClickFilterLabel,
       getRows,
       showDuplicates,
-      hasHoverBackground,
-      onChangeHoverBackground,
+      className,
+      onMouseEnter,
+      onMouseLeave,
     } = this.props;
     const style = getLogRowStyles(theme, row.logLevel);
     const styles = getStyles(theme);
@@ -143,14 +145,10 @@ class UnThemedLogDetails extends PureComponent<Props> {
     const parsedFieldsAvailable = fields && fields.length > 0;
 
     return (
-      <tr
-        className={cx({ [styles.hoverBackground]: hasHoverBackground })}
-        onMouseEnter={() => onChangeHoverBackground(true)}
-        onMouseLeave={() => onChangeHoverBackground(false)}
-      >
+      <tr className={className} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
         {showDuplicates && <td />}
         <td className={cx(style.logsRowLevel, styles.logsRowLevelDetails)} />
-        <td colSpan={10}>
+        <td colSpan={4}>
           <div className={style.logDetailsContainer}>
             <table className={style.logDetailsTable}>
               <tbody>
