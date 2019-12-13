@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -134,6 +135,7 @@ func TestLoginViewRedirect(t *testing.T) {
 		Cfg:     setting.NewCfg(),
 		License: models.OSSLicensingService{},
 	}
+	hs.Cfg.CookieSecure = true
 
 	sc.defaultHandler = Wrap(func(w http.ResponseWriter, c *models.ReqContext) {
 		c.IsSignedIn = true
@@ -211,6 +213,19 @@ func TestLoginViewRedirect(t *testing.T) {
 				location, ok := sc.resp.Header()["Location"]
 				assert.True(t, ok)
 				assert.Equal(t, location[0], c.url)
+
+				setCookie, ok := sc.resp.Header()["Set-Cookie"]
+				assert.True(t, ok, "Set-Cookie exists")
+				assert.Greater(t, len(setCookie), 0)
+				var redirectToCookieFound bool
+				expCookieValue := fmt.Sprintf("redirect_to=%v; Path=%v; Max-Age=60; HttpOnly; Secure", c.url, setting.AppSubUrl+"/")
+				for _, cookieValue := range setCookie {
+					if cookieValue == expCookieValue {
+						redirectToCookieFound = true
+						break
+					}
+				}
+				assert.True(t, redirectToCookieFound)
 			}
 
 			responseString, err := getBody(sc.resp)
@@ -235,6 +250,7 @@ func TestLoginPostRedirect(t *testing.T) {
 		License:          models.OSSLicensingService{},
 		AuthTokenService: auth.NewFakeUserAuthTokenService(),
 	}
+	hs.Cfg.CookieSecure = true
 
 	sc.defaultHandler = Wrap(func(w http.ResponseWriter, c *models.ReqContext) Response {
 		cmd := dtos.LoginCommand{
@@ -305,11 +321,25 @@ func TestLoginPostRedirect(t *testing.T) {
 			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 			assert.NoError(t, err)
 			redirectURL := respJSON.Get("redirectUrl").MustString()
+			fmt.Println(">>>>", sc.resp.Header()["Set-Cookie"])
 			if c.err != nil {
 				assert.Equal(t, "", redirectURL)
 			} else {
 				assert.Equal(t, c.url, redirectURL)
 			}
+			// assert redirect_to cookie is deleted
+			setCookie, ok := sc.resp.Header()["Set-Cookie"]
+			assert.True(t, ok, "Set-Cookie exists")
+			assert.Greater(t, len(setCookie), 0)
+			var redirectToCookieFound bool
+			expCookieValue := fmt.Sprintf("redirect_to=; Path=%v; Max-Age=0; HttpOnly; Secure", setting.AppSubUrl+"/")
+			for _, cookieValue := range setCookie {
+				if cookieValue == expCookieValue {
+					redirectToCookieFound = true
+					break
+				}
+			}
+			assert.True(t, redirectToCookieFound)
 		})
 	}
 }
