@@ -17,7 +17,7 @@ describe('PanelChrome', () => {
 
   it('Should replace a panel variable', () => {
     const out = chrome.replaceVariables('hello $aaa');
-    expect(out).toBe('hello AAB');
+    expect(out).toBe('hello AAA');
   });
 
   it('But it should prefer the local variable value', () => {
