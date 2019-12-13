@@ -1,10 +1,8 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { useTheme, stylesFactory } from '../../../themes';
 import { GrafanaTheme, TimeRange, dateTime } from '@grafana/data';
 import { css } from 'emotion';
-import TimeRangeTitle from './TimeRangeTitle';
 import Calendar from 'react-calendar/dist/entry.nostyle';
-import Forms from '../../Forms';
 
 const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -177,9 +175,11 @@ interface Props {
   visible: boolean;
   selected?: TimeRange;
   onChange: (timeRange: TimeRange) => void;
+  header?: ReactNode;
+  footer?: ReactNode;
 }
 
-const TimePickerCalendar: React.FC<Props> = ({ selected, onChange, visible }: Props) => {
+const TimePickerCalendar: React.FC<Props> = ({ selected, onChange, visible, header, footer }: Props) => {
   const theme = useTheme();
   const styles = getLabelStyles(theme);
 
@@ -190,10 +190,7 @@ const TimePickerCalendar: React.FC<Props> = ({ selected, onChange, visible }: Pr
   return (
     <div className={styles.background}>
       <div className={styles.calendar}>
-        <div className={styles.calendarHeader}>
-          <TimeRangeTitle>Select a time range</TimeRangeTitle>
-          <i className="fa fa-times" />
-        </div>
+        <div className={styles.calendarHeader}>{header}</div>
         <Calendar
           selectRange={true}
           next2Label={null}
@@ -205,18 +202,7 @@ const TimePickerCalendar: React.FC<Props> = ({ selected, onChange, visible }: Pr
           prevLabel={<span className="fa fa-angle-left" />}
           onChange={value => onChange(onCalendarChange(value))}
         />
-        <div className={styles.calendarFooter}>
-          <Forms.Button
-            className={css`
-              margin-right: 4px;
-              width: 100%;
-              justify-content: center;
-            `}
-          >
-            Apply time range
-          </Forms.Button>
-          <Forms.Button variant="secondary">Cancel</Forms.Button>
-        </div>
+        <div className={styles.calendarFooter}>{footer}</div>
       </div>
     </div>
   );

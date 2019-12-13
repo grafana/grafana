@@ -1,9 +1,11 @@
 import React, { PureComponent, FormEvent, ReactNode } from 'react';
 import Forms from '../../Forms';
+import { css } from 'emotion';
 import { TIME_FORMAT, TimeZone, isDateTime, TimeRange, DateTime } from '@grafana/data';
 import { stringToDateTimeType, isValidTimeString } from '../time';
 import TimePickerCalendar from './Calendar';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
+import TimeRangeTitle from './TimeRangeTitle';
 
 type CalendarTrigger = 'onFocus' | 'onButton';
 
@@ -46,7 +48,7 @@ export default class TimeRangeForm extends PureComponent<Props, State> {
     });
   };
 
-  onCalendarShow = (event: FormEvent<HTMLInputElement> | FormEvent<HTMLButtonElement>, trigger: CalendarTrigger) => {
+  onCalendarShow = (event: FormEvent<HTMLElement>, trigger: CalendarTrigger) => {
     if (this.props.calendarTrigger === trigger) {
       this.onCalendarDontHide(event);
       this.setState({ displayCalendar: true });
@@ -57,7 +59,7 @@ export default class TimeRangeForm extends PureComponent<Props, State> {
     this.setState({ displayCalendar: false });
   };
 
-  onCalendarDontHide = (event: FormEvent<HTMLInputElement> | FormEvent<HTMLButtonElement>) => {
+  onCalendarDontHide = (event: FormEvent<HTMLElement>) => {
     event.stopPropagation();
   };
 
@@ -87,9 +89,32 @@ export default class TimeRangeForm extends PureComponent<Props, State> {
       <>
         <ClickOutsideWrapper onClick={this.onCalendarHide}>
           <TimePickerCalendar
+            header={
+              <>
+                <TimeRangeTitle>Select a time range</TimeRangeTitle>
+                <i className="fa fa-times" onClick={this.onCalendarHide} />
+              </>
+            }
             visible={displayCalendar}
             selected={toTimeRange(this.state)}
             onChange={this.onCalendarChange}
+            footer={
+              <>
+                <Forms.Button
+                  className={css`
+                    margin-right: 4px;
+                    width: 100%;
+                    justify-content: center;
+                  `}
+                  onClick={this.onApply}
+                >
+                  Apply time range
+                </Forms.Button>
+                <Forms.Button variant="secondary" onClick={this.onCalendarHide}>
+                  Cancel
+                </Forms.Button>
+              </>
+            }
           />
         </ClickOutsideWrapper>
         <Forms.Field label="From">
