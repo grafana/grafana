@@ -6,7 +6,7 @@ export const getSearchMemberQuery = (state: TeamState) => state.searchMemberQuer
 export const getTeamGroups = (state: TeamState) => state.groups;
 export const getTeamsCount = (state: TeamsState) => state.teams.length;
 
-export const getTeam = (state: TeamState, currentTeamId): Team | null => {
+export const getTeam = (state: TeamState, currentTeamId: any): Team | null => {
   if (state.team.id === parseInt(currentTeamId, 10)) {
     return state.team;
   }
@@ -26,7 +26,7 @@ export const getTeamMembers = (state: TeamState) => {
   const regex = RegExp(state.searchMemberQuery, 'i');
 
   return state.members.filter(member => {
-    return regex.test(member.login) || regex.test(member.email);
+    return regex.test(member.login) || regex.test(member.email) || regex.test(member.name);
   });
 };
 

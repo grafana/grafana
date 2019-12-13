@@ -138,12 +138,20 @@ func (db *Postgres) CleanDB() error {
 	return nil
 }
 
-func (db *Postgres) IsUniqueConstraintViolation(err error) bool {
+func (db *Postgres) isThisError(err error, errcode string) bool {
 	if driverErr, ok := err.(*pq.Error); ok {
-		if driverErr.Code == "23505" {
+		if string(driverErr.Code) == errcode {
 			return true
 		}
 	}
 
 	return false
+}
+
+func (db *Postgres) IsUniqueConstraintViolation(err error) bool {
+	return db.isThisError(err, "23505")
+}
+
+func (db *Postgres) IsDeadlock(err error) bool {
+	return db.isThisError(err, "40P01")
 }

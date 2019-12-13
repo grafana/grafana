@@ -20,7 +20,8 @@ You can extend Grafana by writing your own plugins and then share them with othe
 
 Example plugins
 
-- [Typescript data source example](https://github.com/grafana/typescript-template-datasource)
+- ["Hello World" panel using Angular](https://github.com/grafana/simple-angular-panel)
+- ["Hello World" panel using React](https://github.com/grafana/simple-react-panel)
 - [Simple json data source](https://github.com/grafana/simple-json-datasource)
 - [Clock panel](https://github.com/grafana/clock-panel)
 - [Pie chart panel](https://github.com/grafana/piechart-panel)
@@ -43,7 +44,7 @@ All our example plugins have build scripted configured.
 
 ## Keep your plugin up to date
 
-New versions of Grafana can sometimes cause plugins to break. Checkout our [PLUGIN_DEV.md](https://github.com/grafana/grafana/blob/master/PLUGIN_DEV.md) doc for changes in
+New versions of Grafana can sometimes cause plugins to break. Check out our [PLUGIN_DEV.md](https://github.com/grafana/grafana/blob/master/PLUGIN_DEV.md) doc for changes in
 Grafana that can impact your plugin.
 
 ## Metadata
@@ -119,7 +120,7 @@ If a panel receives data and hooks into the `data-received` event then it should
 
 We currently have three different examples that you can fork/download to get started developing your grafana plugin.
 
- - [simple-json-datasource](https://github.com/grafana/simple-json-datasource) (small datasource plugin for querying json data from backends)
+ - [simple-json-datasource](https://github.com/grafana/simple-json-datasource) (small data source plugin for querying json data from backends)
  - [example-app](https://github.com/grafana/example-app)
  - [clock-panel](https://github.com/grafana/clock-panel)
  - [singlestat-panel](https://github.com/grafana/grafana/blob/master/public/app/plugins/panel/singlestat/module.ts)
@@ -131,5 +132,5 @@ We currently have three different examples that you can fork/download to get sta
 - [Plugin Defaults and Editor Mode]({{< relref "defaults-and-editor-mode.md" >}})
 - [Grafana Plugin Code Styleguide]({{< relref "code-styleguide.md" >}})
 - [Grafana Apps]({{< relref "apps.md" >}})
-- [Grafana Datasources]({{< relref "datasources.md" >}})
+- [Grafana Data Sources]({{< relref "datasources.md" >}})
 - [plugin.json Schema]({{< relref "plugin.json.md" >}})

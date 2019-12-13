@@ -1,5 +1,6 @@
-import { PieChartType, ReducerID, VizOrientation, SingleStatBaseOptions } from '@grafana/ui';
-import { standardFieldDisplayOptions } from '../singlestat2/types';
+import { PieChartType, SingleStatBaseOptions } from '@grafana/ui';
+import { standardFieldDisplayOptions } from '../stat/types';
+import { ReducerID, VizOrientation } from '@grafana/data';
 
 export interface PieChartOptions extends SingleStatBaseOptions {
   pieType: PieChartType;

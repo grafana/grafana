@@ -28,6 +28,14 @@ func getUserUserProfile(userID int64) Response {
 		return Error(500, "Failed to get user", err)
 	}
 
+	getAuthQuery := m.GetAuthInfoQuery{UserId: userID}
+	query.Result.AuthLabels = []string{}
+	if err := bus.Dispatch(&getAuthQuery); err == nil {
+		authLabel := GetAuthProviderLabel(getAuthQuery.Result.AuthModule)
+		query.Result.AuthLabels = append(query.Result.AuthLabels, authLabel)
+		query.Result.IsExternal = true
+	}
+
 	return JSON(200, query.Result)
 }
 
@@ -49,6 +57,8 @@ func GetUserByLoginOrEmail(c *m.ReqContext) Response {
 		Theme:          user.Theme,
 		IsGrafanaAdmin: user.IsAdmin,
 		OrgId:          user.OrgId,
+		UpdatedAt:      user.Updated,
+		CreatedAt:      user.Created,
 	}
 	return JSON(200, &result)
 }
@@ -212,7 +222,10 @@ func ChangeUserPassword(c *m.ReqContext, cmd m.ChangeUserPasswordCommand) Respon
 		return Error(500, "Could not read user from database", err)
 	}
 
-	passwordHashed := util.EncodePassword(cmd.OldPassword, userQuery.Result.Salt)
+	passwordHashed, err := util.EncodePassword(cmd.OldPassword, userQuery.Result.Salt)
+	if err != nil {
+		return Error(500, "Failed to encode password", err)
+	}
 	if passwordHashed != userQuery.Result.Password {
 		return Error(401, "Invalid old password", nil)
 	}
@@ -223,7 +236,10 @@ func ChangeUserPassword(c *m.ReqContext, cmd m.ChangeUserPasswordCommand) Respon
 	}
 
 	cmd.UserId = c.UserId
-	cmd.NewPassword = util.EncodePassword(cmd.NewPassword, userQuery.Result.Salt)
+	cmd.NewPassword, err = util.EncodePassword(cmd.NewPassword, userQuery.Result.Salt)
+	if err != nil {
+		return Error(500, "Failed to encode password", err)
+	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		return Error(500, "Failed to change user password", err)
@@ -272,6 +288,12 @@ func searchUser(c *m.ReqContext) (*m.SearchUsersQuery, error) {
 
 	for _, user := range query.Result.Users {
 		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
+		user.AuthLabels = make([]string, 0)
+		if user.AuthModule != nil && len(user.AuthModule) > 0 {
+			for _, authModule := range user.AuthModule {
+				user.AuthLabels = append(user.AuthLabels, GetAuthProviderLabel(authModule))
+			}
+		}
 	}
 
 	query.Result.Page = page
@@ -309,4 +331,23 @@ func ClearHelpFlags(c *m.ReqContext) Response {
 	}
 
 	return JSON(200, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
+}
+
+func GetAuthProviderLabel(authModule string) string {
+	switch authModule {
+	case "oauth_github":
+		return "GitHub"
+	case "oauth_google":
+		return "Google"
+	case "oauth_gitlab":
+		return "GitLab"
+	case "oauth_grafana_com", "oauth_grafananet":
+		return "grafana.com"
+	case "auth.saml":
+		return "SAML"
+	case "ldap", "":
+		return "LDAP"
+	default:
+		return "OAuth"
+	}
 }

@@ -1,6 +1,6 @@
 import coreModule from 'app/core/core_module';
 
-const obj2string = obj => {
+const obj2string = (obj: any) => {
   return Object.keys(obj)
     .reduce((acc, curr) => acc.concat(curr + '=' + obj[curr]), [])
     .join();
@@ -10,7 +10,7 @@ export class GeneralTabCtrl {
   panelCtrl: any;
 
   /** @ngInject */
-  constructor($scope) {
+  constructor($scope: any) {
     this.panelCtrl = $scope.ctrl;
 
     const updatePanel = () => {
@@ -18,7 +18,7 @@ export class GeneralTabCtrl {
       this.panelCtrl.panel.render();
     };
 
-    const generateValueFromPanel = scope => {
+    const generateValueFromPanel = (scope: any) => {
       const { panel } = scope.ctrl;
       const panelPropsToTrack = ['title', 'description', 'transparent', 'repeat', 'repeatDirection', 'minSpan'];
       const panelPropsString = panelPropsToTrack

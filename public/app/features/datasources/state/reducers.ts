@@ -1,5 +1,5 @@
 import { DataSourcesState } from 'app/types';
-import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/ui';
+import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/data';
 import {
   dataSourceLoaded,
   dataSourcesLoaded,

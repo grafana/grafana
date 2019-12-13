@@ -29,6 +29,7 @@ type Scheme string
 const (
 	HTTP              Scheme = "http"
 	HTTPS             Scheme = "https"
+	HTTP2             Scheme = "h2"
 	SOCKET            Scheme = "socket"
 	DEFAULT_HTTP_ADDR string = "0.0.0.0"
 )
@@ -43,6 +44,12 @@ const (
 
 var (
 	ERR_TEMPLATE_NAME = "error"
+)
+
+// This constant corresponds to the default value for ldap_sync_ttl in .ini files
+// it is used for comparision and has to be kept in sync
+const (
+	AUTH_PROXY_SYNC_TTL = 60
 )
 
 var (
@@ -107,6 +114,7 @@ var (
 	ExternalSnapshotName  string
 	ExternalEnabled       bool
 	SnapShotRemoveExpired bool
+	SnapshotPublicMode    bool
 
 	// Dashboard history
 	DashboardVersionsToKeep int
@@ -141,13 +149,14 @@ var (
 	AnonymousOrgRole string
 
 	// Auth proxy settings
-	AuthProxyEnabled        bool
-	AuthProxyHeaderName     string
-	AuthProxyHeaderProperty string
-	AuthProxyAutoSignUp     bool
-	AuthProxyLDAPSyncTtl    int
-	AuthProxyWhitelist      string
-	AuthProxyHeaders        map[string]string
+	AuthProxyEnabled          bool
+	AuthProxyHeaderName       string
+	AuthProxyHeaderProperty   string
+	AuthProxyAutoSignUp       bool
+	AuthProxyEnableLoginToken bool
+	AuthProxySyncTtl          int
+	AuthProxyWhitelist        string
+	AuthProxyHeaders          map[string]string
 
 	// Basic Auth
 	BasicAuthEnabled bool
@@ -204,6 +213,7 @@ var (
 	S3TempImageStoreSecretKey string
 
 	ImageUploadProvider string
+	FeatureToggles      map[string]bool
 )
 
 // TODO move all global vars to this struct
@@ -233,6 +243,7 @@ type Cfg struct {
 	RendererLimitAlerting int
 
 	// Security
+	DisableInitAdminCreation         bool
 	DisableBruteForceLoginProtection bool
 	CookieSecure                     bool
 	CookieSameSite                   http.SameSite
@@ -241,6 +252,7 @@ type Cfg struct {
 	MetricsEndpointEnabled           bool
 	MetricsEndpointBasicAuthUsername string
 	MetricsEndpointBasicAuthPassword string
+	MetricsEndpointDisableTotalStats bool
 	PluginsEnableAlpha               bool
 	PluginsAppsSkipVerifyTLS         bool
 	DisableSanitizeHtml              bool
@@ -252,6 +264,9 @@ type Cfg struct {
 	LoginMaxLifetimeDays         int
 	TokenRotationIntervalMinutes int
 
+	// SAML Auth
+	SAMLEnabled bool
+
 	// Dataproxy
 	SendUserHeader bool
 
@@ -259,6 +274,10 @@ type Cfg struct {
 	RemoteCacheOptions *RemoteCacheOptions
 
 	EditorsCanAdmin bool
+
+	ApiKeyMaxSecondsToLive int64
+
+	FeatureToggles map[string]bool
 }
 
 type CommandLineArgs struct {
@@ -360,7 +379,7 @@ func applyCommandLineDefaultProperties(props map[string]string, file *ini.File) 
 func applyCommandLineProperties(props map[string]string, file *ini.File) {
 	for _, section := range file.Sections() {
 		sectionName := section.Name() + "."
-		if section.Name() == ini.DEFAULT_SECTION {
+		if section.Name() == ini.DefaultSection {
 			sectionName = ""
 		}
 		for _, key := range section.Keys() {
@@ -401,7 +420,7 @@ func makeAbsolute(path string, root string) string {
 	return filepath.Join(root, path)
 }
 
-func evalEnvVarExpression(value string) string {
+func EvalEnvVarExpression(value string) string {
 	regex := regexp.MustCompile(`\${(\w+)}`)
 	return regex.ReplaceAllStringFunc(value, func(envVar string) string {
 		envVar = strings.TrimPrefix(envVar, "${")
@@ -420,12 +439,12 @@ func evalEnvVarExpression(value string) string {
 func evalConfigValues(file *ini.File) {
 	for _, section := range file.Sections() {
 		for _, key := range section.Keys() {
-			key.SetValue(evalEnvVarExpression(key.Value()))
+			key.SetValue(EvalEnvVarExpression(key.Value()))
 		}
 	}
 }
 
-func loadSpecifedConfigFile(configFile string, masterFile *ini.File) error {
+func loadSpecifiedConfigFile(configFile string, masterFile *ini.File) error {
 	if configFile == "" {
 		configFile = filepath.Join(HomePath, CustomInitPath)
 		// return without error if custom file does not exist
@@ -492,7 +511,7 @@ func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	applyCommandLineDefaultProperties(commandLineProps, parsedFile)
 
 	// load specified config file
-	err = loadSpecifedConfigFile(args.Config, parsedFile)
+	err = loadSpecifiedConfigFile(args.Config, parsedFile)
 	if err != nil {
 		err2 := cfg.initLogging(parsedFile)
 		if err2 != nil {
@@ -634,6 +653,11 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		CertFile = server.Key("cert_file").String()
 		KeyFile = server.Key("cert_key").String()
 	}
+	if protocolStr == "h2" {
+		Protocol = HTTP2
+		CertFile = server.Key("cert_file").String()
+		KeyFile = server.Key("cert_key").String()
+	}
 	if protocolStr == "socket" {
 		Protocol = SOCKET
 		SocketPath = server.Key("socket").String()
@@ -723,6 +747,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 	ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
 	SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
+	SnapshotPublicMode = snapshots.Key("public_mode").MustBool(false)
 
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
@@ -739,6 +764,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	// admin
+	cfg.DisableInitAdminCreation = security.Key("disable_initial_admin_creation").MustBool(false)
 	AdminUser, err = valueAsString(security, "admin_user", "")
 	if err != nil {
 		return err
@@ -795,6 +821,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	LoginMaxLifetimeDays = auth.Key("login_maximum_lifetime_days").MustInt(30)
 	cfg.LoginMaxLifetimeDays = LoginMaxLifetimeDays
+	cfg.ApiKeyMaxSecondsToLive = auth.Key("api_key_max_seconds_to_live").MustInt64(-1)
 
 	cfg.TokenRotationIntervalMinutes = auth.Key("token_rotation_interval_minutes").MustInt(10)
 	if cfg.TokenRotationIntervalMinutes < 2 {
@@ -808,6 +835,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
+
+	// SAML auth
+	cfg.SAMLEnabled = iniFile.Section("auth.saml").Key("enabled").MustBool(false)
 
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -833,7 +863,18 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
-	AuthProxyLDAPSyncTtl = authProxy.Key("ldap_sync_ttl").MustInt()
+	AuthProxyEnableLoginToken = authProxy.Key("enable_login_token").MustBool(false)
+
+	ldapSyncVal := authProxy.Key("ldap_sync_ttl").MustInt()
+	syncVal := authProxy.Key("sync_ttl").MustInt()
+
+	if ldapSyncVal != AUTH_PROXY_SYNC_TTL {
+		AuthProxySyncTtl = ldapSyncVal
+		cfg.Logger.Warn("[Deprecated] the configuration setting 'ldap_sync_ttl' is deprecated, please use 'sync_ttl' instead")
+	} else {
+		AuthProxySyncTtl = syncVal
+	}
+
 	AuthProxyWhitelist, err = valueAsString(authProxy, "whitelist", "")
 	if err != nil {
 		return err
@@ -888,6 +929,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
+	cfg.MetricsEndpointDisableTotalStats = iniFile.Section("metrics").Key("disable_total_stats").MustBool(false)
 
 	analytics := iniFile.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
@@ -923,6 +965,18 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	pluginsSection := iniFile.Section("plugins")
 	cfg.PluginsEnableAlpha = pluginsSection.Key("enable_alpha").MustBool(false)
 	cfg.PluginsAppsSkipVerifyTLS = pluginsSection.Key("app_tls_skip_verify_insecure").MustBool(false)
+
+	// Read and populate feature toggles list
+	featureTogglesSection := iniFile.Section("feature_toggles")
+	cfg.FeatureToggles = make(map[string]bool)
+	featuresTogglesStr, err := valueAsString(featureTogglesSection, "enable", "")
+	if err != nil {
+		return err
+	}
+	for _, feature := range util.SplitString(featuresTogglesStr) {
+		cfg.FeatureToggles[feature] = true
+	}
+	FeatureToggles = cfg.FeatureToggles
 
 	// check old location for this option
 	if panelsSection.Key("enable_alpha").MustBool(false) {
@@ -1029,8 +1083,7 @@ func (cfg *Cfg) initLogging(file *ini.File) error {
 		return err
 	}
 	cfg.LogsPath = makeAbsolute(logsPath, HomePath)
-	log.ReadLoggingConfig(logModes, cfg.LogsPath, file)
-	return nil
+	return log.ReadLoggingConfig(logModes, cfg.LogsPath, file)
 }
 
 func (cfg *Cfg) LogConfigSources() {
@@ -1059,4 +1112,12 @@ func (cfg *Cfg) LogConfigSources() {
 	cfg.Logger.Info("Path Plugins", "path", PluginsPath)
 	cfg.Logger.Info("Path Provisioning", "path", cfg.ProvisioningPath)
 	cfg.Logger.Info("App mode " + Env)
+}
+
+func IsExpressionsEnabled() bool {
+	v, ok := FeatureToggles["expressions"]
+	if !ok {
+		return false
+	}
+	return v
 }

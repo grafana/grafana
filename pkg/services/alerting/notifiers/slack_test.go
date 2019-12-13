@@ -26,6 +26,7 @@ func TestSlackNotifier(t *testing.T) {
 				So(err, ShouldNotBeNil)
 			})
 
+			//nolint:goconst
 			Convey("from settings", func() {
 				json := `
 				{

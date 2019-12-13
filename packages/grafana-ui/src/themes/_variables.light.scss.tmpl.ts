@@ -1,6 +1,6 @@
 /* tslint:disable:max-line-length */
 
-import { GrafanaTheme } from '../types';
+import { GrafanaTheme } from '@grafana/data';
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
 
 export const lightThemeVarsTemplate = (theme: GrafanaTheme) =>
@@ -20,6 +20,7 @@ $red-base: ${theme.colors.redBase};
 $red-shade: ${theme.colors.redShade};
 $green-base: ${theme.colors.greenBase};
 $green-shade: ${theme.colors.greenShade};
+$orange-dark: ${theme.colors.orangeDark};
 
 // Grays
 // -------------------------
@@ -27,6 +28,8 @@ $black: ${theme.colors.black};
 
 $dark-1: ${theme.colors.dark1};
 $dark-2: ${theme.colors.dark2};
+$dark-4: ${theme.colors.dark4};
+$dark-10: ${theme.colors.dark10};
 $gray-1: ${theme.colors.gray1};
 $gray-2: ${theme.colors.gray2};
 $gray-3: ${theme.colors.gray3};
@@ -78,8 +81,8 @@ $text-color-emphasis: ${theme.colors.textEmphasis};
 $text-shadow-faint: none;
 
 // gradients
-$brand-gradient: linear-gradient(to right, rgba(255, 213, 0, 1) 0%, rgba(255, 68, 0, 1) 99%, rgba(255, 68, 0, 1) 100%);
-
+$brand-gradient-horizontal: linear-gradient(to right, #f05a28 30%, #fbca0a 99%);
+$brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
 $page-gradient: linear-gradient(180deg, $white 10px, $gray-7 100px);
 $edit-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
 
@@ -177,6 +180,8 @@ $btn-drag-image: '../img/grab_light.svg';
 
 $navbar-btn-gicon-brightness: brightness(1.5);
 
+$btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
+
 // Forms
 // -------------------------
 $input-bg: $white;
@@ -269,6 +274,7 @@ $alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
 $popover-bg: $page-bg;
 $popover-color: $text-color;
 $popover-border-color: $gray-5;
+$popover-header-bg: $gray-5;
 $popover-shadow: 0 0 20px $white;
 
 $popover-help-bg: $btn-secondary-bg;
@@ -382,4 +388,8 @@ $button-toggle-group-btn-seperator-border: 1px solid $gray-6;
 $vertical-resize-handle-bg: $gray-4;
 $vertical-resize-handle-dots: $gray-3;
 $vertical-resize-handle-dots-hover: $gray-2;
+
+// Calendar
+$calendar-bg-days: $white;
+$calendar-bg-now: $gray-6;
 `;

@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 import {
   AzureLogsVariable,
   AzureLogsTableData,
@@ -9,11 +9,11 @@ import {
   KustoSchema,
   KustoColumn,
 } from '../types';
-import { TimeSeries, AnnotationEvent } from '@grafana/ui/src/types';
+import { TimeSeries, AnnotationEvent } from '@grafana/data';
 
 export default class ResponseParser {
   columns: string[];
-  constructor(private results) {}
+  constructor(private results: any) {}
 
   parseQueryResult(): any {
     let data: any[] = [];
@@ -35,7 +35,7 @@ export default class ResponseParser {
     return data;
   }
 
-  parseTimeSeriesResult(query, columns, rows): TimeSeries[] {
+  parseTimeSeriesResult(query: { refId: string; query: any }, columns: any[], rows: any): TimeSeries[] {
     const data: TimeSeries[] = [];
     let timeIndex = -1;
     let metricIndex = -1;
@@ -73,7 +73,7 @@ export default class ResponseParser {
     return data;
   }
 
-  parseTableResult(query, columns, rows): AzureLogsTableData {
+  parseTableResult(query: { refId: string; query: string }, columns: any[], rows: any[]): AzureLogsTableData {
     const tableResult: AzureLogsTableData = {
       type: 'table',
       columns: _.map(columns, col => {
@@ -206,7 +206,7 @@ export default class ResponseParser {
     return functions;
   }
 
-  static findOrCreateBucket(data, target): TimeSeries {
+  static findOrCreateBucket(data: TimeSeries[], target: any): TimeSeries {
     let dataTarget: any = _.find(data, ['target', target]);
     if (!dataTarget) {
       dataTarget = { target: target, datapoints: [], refId: '', query: '' };
@@ -216,7 +216,7 @@ export default class ResponseParser {
     return dataTarget;
   }
 
-  static dateTimeToEpoch(dateTimeValue) {
+  static dateTimeToEpoch(dateTimeValue: any) {
     return dateTime(dateTimeValue).valueOf();
   }
 }

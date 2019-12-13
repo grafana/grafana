@@ -1,20 +1,21 @@
 import { GraphiteDatasource } from '../datasource';
 import _ from 'lodash';
-import $q from 'q';
-import { TemplateSrvStub } from 'test/specs/helpers';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { dateTime } from '@grafana/data';
 
 describe('graphiteDatasource', () => {
   const ctx: any = {
     backendSrv: {},
-    $q: $q,
-    templateSrv: new TemplateSrvStub(),
+    // @ts-ignore
+    templateSrv: new TemplateSrv(),
     instanceSettings: { url: 'url', name: 'graphiteProd', jsonData: {} },
   };
 
   beforeEach(() => {
     ctx.instanceSettings.url = '/api/datasources/proxy/1';
-    ctx.ds = new GraphiteDatasource(ctx.instanceSettings, ctx.$q, ctx.backendSrv, ctx.templateSrv);
+    // @ts-ignore
+    ctx.ds = new GraphiteDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
   });
 
   describe('When querying graphite with one target using query editor target spec', () => {
@@ -26,18 +27,26 @@ describe('graphiteDatasource', () => {
       maxDataPoints: 500,
     };
 
-    let results;
-    let requestOptions;
+    let results: any;
+    let requestOptions: any;
 
     beforeEach(async () => {
-      ctx.backendSrv.datasourceRequest = options => {
+      ctx.backendSrv.datasourceRequest = (options: any) => {
         requestOptions = options;
-        return ctx.$q.when({
-          data: [{ target: 'prod1.count', datapoints: [[10, 1], [12, 1]] }],
+        return Promise.resolve({
+          data: [
+            {
+              target: 'prod1.count',
+              datapoints: [
+                [10, 1],
+                [12, 1],
+              ],
+            },
+          ],
         });
       };
 
-      await ctx.ds.query(query).then(data => {
+      await ctx.ds.query(query).then((data: any) => {
         results = data;
       });
     });
@@ -70,16 +79,16 @@ describe('graphiteDatasource', () => {
 
     it('should return series list', () => {
       expect(results.data.length).toBe(1);
-      expect(results.data[0].target).toBe('prod1.count');
+      expect(results.data[0].name).toBe('prod1.count');
     });
 
     it('should convert to millisecond resolution', () => {
-      expect(results.data[0].datapoints[0][0]).toBe(10);
+      expect(results.data[0].fields[0].values.get(0)).toBe(10);
     });
   });
 
   describe('when fetching Graphite Events as annotations', () => {
-    let results;
+    let results: any;
 
     const options = {
       annotation: {
@@ -106,11 +115,11 @@ describe('graphiteDatasource', () => {
       };
 
       beforeEach(async () => {
-        ctx.backendSrv.datasourceRequest = options => {
-          return ctx.$q.when(response);
+        ctx.backendSrv.datasourceRequest = (options: any) => {
+          return Promise.resolve(response);
         };
 
-        await ctx.ds.annotationQuery(options).then(data => {
+        await ctx.ds.annotationQuery(options).then((data: any) => {
           results = data;
         });
       });
@@ -136,11 +145,11 @@ describe('graphiteDatasource', () => {
         ],
       };
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = options => {
-          return ctx.$q.when(response);
+        ctx.backendSrv.datasourceRequest = (options: any) => {
+          return Promise.resolve(response);
         };
 
-        ctx.ds.annotationQuery(options).then(data => {
+        ctx.ds.annotationQuery(options).then((data: any) => {
           results = data;
         });
         // ctx.$rootScope.$apply();
@@ -215,23 +224,55 @@ describe('graphiteDatasource', () => {
       });
       expect(results.length).toBe(2);
     });
+
+    describe('when formatting targets', () => {
+      it('does not attempt to glob for one variable', () => {
+        ctx.ds.templateSrv.init([
+          {
+            type: 'query',
+            name: 'metric',
+            current: { value: ['b'] },
+          },
+        ]);
+
+        const results = ctx.ds.buildGraphiteParams({
+          targets: [{ target: 'my.$metric.*' }],
+        });
+        expect(results).toStrictEqual(['target=my.b.*', 'format=json']);
+      });
+
+      it('globs for more than one variable', () => {
+        ctx.ds.templateSrv.init([
+          {
+            type: 'query',
+            name: 'metric',
+            current: { value: ['a', 'b'] },
+          },
+        ]);
+
+        const results = ctx.ds.buildGraphiteParams({
+          targets: [{ target: 'my.[[metric]].*' }],
+        });
+        expect(results).toStrictEqual(['target=my.%7Ba%2Cb%7D.*', 'format=json']);
+      });
+    });
   });
 
   describe('querying for template variables', () => {
-    let results;
-    let requestOptions;
+    let results: any;
+    let requestOptions: any;
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = options => {
+      ctx.backendSrv.datasourceRequest = (options: any) => {
         requestOptions = options;
-        return ctx.$q.when({
+        return Promise.resolve({
           data: ['backend_01', 'backend_02'],
         });
       };
     });
 
     it('should generate tags query', () => {
-      ctx.ds.metricFindQuery('tags()').then(data => {
+      ctx.ds.metricFindQuery('tags()').then((data: any) => {
         results = data;
       });
 
@@ -241,7 +282,7 @@ describe('graphiteDatasource', () => {
     });
 
     it('should generate tags query with a filter expression', () => {
-      ctx.ds.metricFindQuery('tags(server=backend_01)').then(data => {
+      ctx.ds.metricFindQuery('tags(server=backend_01)').then((data: any) => {
         results = data;
       });
 
@@ -251,7 +292,7 @@ describe('graphiteDatasource', () => {
     });
 
     it('should generate tags query for an expression with whitespace after', () => {
-      ctx.ds.metricFindQuery('tags(server=backend_01 )').then(data => {
+      ctx.ds.metricFindQuery('tags(server=backend_01 )').then((data: any) => {
         results = data;
       });
 
@@ -261,7 +302,7 @@ describe('graphiteDatasource', () => {
     });
 
     it('should generate tag values query for one tag', () => {
-      ctx.ds.metricFindQuery('tag_values(server)').then(data => {
+      ctx.ds.metricFindQuery('tag_values(server)').then((data: any) => {
         results = data;
       });
 
@@ -272,7 +313,7 @@ describe('graphiteDatasource', () => {
     });
 
     it('should generate tag values query for a tag and expression', () => {
-      ctx.ds.metricFindQuery('tag_values(server,server=~backend*)').then(data => {
+      ctx.ds.metricFindQuery('tag_values(server,server=~backend*)').then((data: any) => {
         results = data;
       });
 
@@ -283,7 +324,7 @@ describe('graphiteDatasource', () => {
     });
 
     it('should generate tag values query for a tag with whitespace after', () => {
-      ctx.ds.metricFindQuery('tag_values(server )').then(data => {
+      ctx.ds.metricFindQuery('tag_values(server )').then((data: any) => {
         results = data;
       });
 
@@ -294,7 +335,7 @@ describe('graphiteDatasource', () => {
     });
 
     it('should generate tag values query for a tag and expression with whitespace after', () => {
-      ctx.ds.metricFindQuery('tag_values(server , server=~backend* )').then(data => {
+      ctx.ds.metricFindQuery('tag_values(server , server=~backend* )').then((data: any) => {
         results = data;
       });
 
@@ -303,15 +344,55 @@ describe('graphiteDatasource', () => {
       expect(requestOptions.params.expr).toEqual(['server=~backend*']);
       expect(results).not.toBe(null);
     });
+
+    it('/metrics/find should be POST', () => {
+      ctx.ds.templateSrv.init([
+        {
+          type: 'query',
+          name: 'foo',
+          current: { value: ['bar'] },
+        },
+      ]);
+      ctx.ds.metricFindQuery('[[foo]]').then((data: any) => {
+        results = data;
+      });
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/metrics/find');
+      expect(requestOptions.method).toEqual('POST');
+      expect(requestOptions.headers).toHaveProperty('Content-Type', 'application/x-www-form-urlencoded');
+      expect(requestOptions.data).toMatch(`query=bar`);
+      expect(requestOptions).toHaveProperty('params');
+    });
+
+    it('should interpolate $__searchFilter with searchFilter', () => {
+      ctx.ds.metricFindQuery('app.$__searchFilter', { searchFilter: 'backend' }).then((data: any) => {
+        results = data;
+      });
+
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/metrics/find');
+      expect(requestOptions.params).toEqual({});
+      expect(requestOptions.data).toEqual('query=app.backend*');
+      expect(results).not.toBe(null);
+    });
+
+    it('should interpolate $__searchFilter with default when searchFilter is missing', () => {
+      ctx.ds.metricFindQuery('app.$__searchFilter', {}).then((data: any) => {
+        results = data;
+      });
+
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/metrics/find');
+      expect(requestOptions.params).toEqual({});
+      expect(requestOptions.data).toEqual('query=app.*');
+      expect(results).not.toBe(null);
+    });
   });
 });
 
-function accessScenario(name, url, fn) {
+function accessScenario(name: string, url: string, fn: any) {
   describe('access scenario ' + name, () => {
     const ctx: any = {
       backendSrv: {},
-      $q: $q,
-      templateSrv: new TemplateSrvStub(),
+      // @ts-ignore
+      templateSrv: new TemplateSrv(),
       instanceSettings: { url: 'url', name: 'graphiteProd', jsonData: {} },
     };
 
@@ -324,7 +405,8 @@ function accessScenario(name, url, fn) {
 
       it('tracing headers should be added', () => {
         ctx.instanceSettings.url = url;
-        const ds = new GraphiteDatasource(ctx.instanceSettings, ctx.$q, ctx.backendSrv, ctx.templateSrv);
+        // @ts-ignore
+        const ds = new GraphiteDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
         ds.addTracingHeaders(httpOptions, options);
         fn(httpOptions);
       });
@@ -332,12 +414,12 @@ function accessScenario(name, url, fn) {
   });
 }
 
-accessScenario('with proxy access', '/api/datasources/proxy/1', httpOptions => {
+accessScenario('with proxy access', '/api/datasources/proxy/1', (httpOptions: any) => {
   expect(httpOptions.headers['X-Dashboard-Id']).toBe(1);
   expect(httpOptions.headers['X-Panel-Id']).toBe(2);
 });
 
-accessScenario('with direct access', 'http://localhost:8080', httpOptions => {
+accessScenario('with direct access', 'http://localhost:8080', (httpOptions: any) => {
   expect(httpOptions.headers['X-Dashboard-Id']).toBe(undefined);
   expect(httpOptions.headers['X-Panel-Id']).toBe(undefined);
 });

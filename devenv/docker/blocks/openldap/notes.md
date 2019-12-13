@@ -12,7 +12,7 @@ After adding ldif files to `prepopulate`:
 
 ## Enabling LDAP in Grafana
 
-Copy the ldap_dev.toml file in this folder into your `conf` folder (it is gitignored already). To enable it in the .ini file to get Grafana to use this block:
+If you want to use users/groups with `memberOf` support Copy the ldap_dev.toml file in this folder into your `conf` folder (it is gitignored already). To enable it in the .ini file to get Grafana to use this block:
 
 ```ini
 [auth.ldap]
@@ -20,6 +20,8 @@ enabled = true
 config_file = conf/ldap_dev.toml
 ; allow_sign_up = true
 ```
+
+Otherwise perform same actions for `ldap_dev_posix.toml` config.
 
 ## Groups & Users
 
@@ -38,3 +40,11 @@ editors
   ldap-editors
 no groups
   ldap-viewer
+
+
+## Groups & Users (POSIX)
+
+admins
+  ldap-posix-admin
+no groups
+  ldap-posix

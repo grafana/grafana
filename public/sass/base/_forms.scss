@@ -5,44 +5,20 @@
 // GENERAL STYLES
 // --------------
 
-// Groups of fields with labels on top (legends)
-legend {
-  display: block;
-  width: 100%;
-  padding: 0;
-  margin-bottom: $line-height-base;
-  font-size: $font-size-base * 1.5;
-  line-height: $line-height-base * 2;
-  color: $gray-3;
-  border: 0;
-  border-bottom: 1px solid #e5e5e5;
-
-  // Small
-  small {
-    font-size: $line-height-base * 0.75;
-    color: $gray-2;
-  }
-}
-
 // Reset height since textareas have rows
 // Set font for forms
-label,
+
 input,
 button,
 select,
 textarea {
-  @include font-shorthand($font-size-base, normal, $line-height-base); // Set size, weight, line-height here
+  @include font-shorthand($font-size-base, normal, $line-height-base);
 }
 input,
 button,
 select,
 textarea {
   font-family: $font-family-sans-serif; // And only set font-family here for those that need it (note the missing label element)
-}
-
-// Identify controls by their labels
-label {
-  display: block;
 }
 
 input,

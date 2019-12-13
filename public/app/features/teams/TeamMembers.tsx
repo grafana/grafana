@@ -28,7 +28,7 @@ export interface State {
 }
 
 export class TeamMembers extends PureComponent<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     this.state = { isAdding: false, newTeamMember: null };
   }
@@ -115,8 +115,9 @@ export class TeamMembers extends PureComponent<Props, State> {
             <thead>
               <tr>
                 <th />
-                <th>Name</th>
+                <th>Login</th>
                 <th>Email</th>
+                <th>Name</th>
                 <WithFeatureToggle featureToggle={editorsCanAdmin}>
                   <th>Permission</th>
                 </WithFeatureToggle>
@@ -143,7 +144,7 @@ export class TeamMembers extends PureComponent<Props, State> {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: any) {
   return {
     searchMemberQuery: getSearchMemberQuery(state.team),
     editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
@@ -156,7 +157,4 @@ const mapDispatchToProps = {
   setSearchMemberQuery,
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(TeamMembers);
+export default connect(mapStateToProps, mapDispatchToProps)(TeamMembers);

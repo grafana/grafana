@@ -1,8 +1,9 @@
 import React, { PureComponent } from 'react';
-import { JSONFormatter } from 'app/core/components/JSONFormatter/JSONFormatter';
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
-import { LoadingPlaceholder } from '@grafana/ui';
+import { LoadingPlaceholder, JSONFormatter } from '@grafana/ui';
+import { CoreEvents } from 'app/types';
+import { AppEvents, PanelEvents } from '@grafana/data';
 
 interface DsQuery {
   isLoading: boolean;
@@ -24,7 +25,7 @@ export class QueryInspector extends PureComponent<Props, State> {
   formattedJson: any;
   clipboard: any;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     this.state = {
       allNodesExpanded: null,
@@ -40,29 +41,29 @@ export class QueryInspector extends PureComponent<Props, State> {
   componentDidMount() {
     const { panel } = this.props;
 
-    appEvents.on('ds-request-response', this.onDataSourceResponse);
-    appEvents.on('ds-request-error', this.onRequestError);
+    appEvents.on(CoreEvents.dsRequestResponse, this.onDataSourceResponse);
+    appEvents.on(CoreEvents.dsRequestError, this.onRequestError);
 
-    panel.events.on('refresh', this.onPanelRefresh);
+    panel.events.on(PanelEvents.refresh, this.onPanelRefresh);
     panel.refresh();
   }
 
   componentWillUnmount() {
     const { panel } = this.props;
 
-    appEvents.off('ds-request-response', this.onDataSourceResponse);
-    appEvents.on('ds-request-error', this.onRequestError);
+    appEvents.off(CoreEvents.dsRequestResponse, this.onDataSourceResponse);
+    appEvents.on(CoreEvents.dsRequestError, this.onRequestError);
 
-    panel.events.off('refresh', this.onPanelRefresh);
+    panel.events.off(PanelEvents.refresh, this.onPanelRefresh);
   }
 
-  handleMocking(response) {
+  handleMocking(response: any) {
     const { mockedResponse } = this.state;
     let mockedData;
     try {
       mockedData = JSON.parse(mockedResponse);
     } catch (err) {
-      appEvents.emit('alert-error', ['R: Failed to parse mocked response']);
+      appEvents.emit(AppEvents.alertError, ['R: Failed to parse mocked response']);
       return;
     }
 
@@ -126,7 +127,7 @@ export class QueryInspector extends PureComponent<Props, State> {
     }));
   };
 
-  setFormattedJson = formattedJson => {
+  setFormattedJson = (formattedJson: any) => {
     this.formattedJson = formattedJson;
   };
 
@@ -135,7 +136,7 @@ export class QueryInspector extends PureComponent<Props, State> {
   };
 
   onClipboardSuccess = () => {
-    appEvents.emit('alert-success', ['Content copied to clipboard']);
+    appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
   };
 
   onToggleExpand = () => {
@@ -161,7 +162,7 @@ export class QueryInspector extends PureComponent<Props, State> {
     return 1;
   };
 
-  setMockedResponse = evt => {
+  setMockedResponse = (evt: any) => {
     const mockedResponse = evt.target.value;
     this.setState(prevState => ({
       ...prevState,

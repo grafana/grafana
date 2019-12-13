@@ -5,11 +5,10 @@ GPG_PASS="${2:-}"
 RELEASE_TAG="${3:-}"
 DIST_PATH="${4:-}"
 GCP_DB_BUCKET="${5:-grafana-aptly-db}"
-GCP_REPO_BUCKET="${6:-grafana-repo}"
 
 REPO="grafana"
 
-if [ -z "$RELEASE_TYPE" -o -z "$GPG_PASS" -o -z "$DIST_PATH" ]; then
+if [ -z "$RELEASE_TYPE" ] || [ -z "$GPG_PASS" ] || [ -z "$DIST_PATH" ]; then
     echo "Both RELEASE_TYPE (arg 1), GPG_PASS (arg 2) and DIST_PATH (arg 4) has to be set"
     exit 1
 fi
@@ -36,7 +35,7 @@ mkdir -p /deb-repo/db   \
 gsutil -m rsync -r -d "gs://$GCP_DB_BUCKET/$RELEASE_TYPE" /deb-repo/db
 
 # Add the new release to the repo
-cp $DIST_PATH/*.deb /deb-repo/tmp
+cp "$DIST_PATH"/*.deb /deb-repo/tmp
 rm /deb-repo/tmp/grafana_latest*.deb || true
 aptly repo add "$REPO" /deb-repo/tmp #adds too many packages in enterprise
 
@@ -54,15 +53,6 @@ rm /tmp/sign-this /tmp/sign-this.asc
 aptly publish update stable filesystem:repo:grafana
 aptly publish update beta filesystem:repo:grafana
 
-# Update the repo and db on gcp
-
-gsutil -m rsync -r -d /deb-repo/db "gs://$GCP_DB_BUCKET/$RELEASE_TYPE"
-
-# Uploads the binaries before the metadata (to prevent 404's for debs)
-gsutil -m rsync -r /deb-repo/repo/grafana/pool "gs://$GCP_REPO_BUCKET/$RELEASE_TYPE/deb/pool"
-
-gsutil -m rsync -r -d /deb-repo/repo/grafana "gs://$GCP_REPO_BUCKET/$RELEASE_TYPE/deb"
-
 # usage:
-# 
+#
 # deb https://packages.grafana.com/oss/deb stable main

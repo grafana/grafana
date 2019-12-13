@@ -1,5 +1,5 @@
 import { DataProcessor } from '../data_processor';
-import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
+import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
 
 describe('Graph DataProcessor', () => {
   const panel: any = {
@@ -11,10 +11,14 @@ describe('Graph DataProcessor', () => {
 
   describe('getTimeSeries from LegacyResponseData', () => {
     // Try each type of data
-    const dataList = getProcessedSeriesData([
+    const dataList = getProcessedDataFrames([
       {
         alias: 'First (time_series)',
-        datapoints: [[1, 1001], [2, 1002], [3, 1003]],
+        datapoints: [
+          [1, 1001],
+          [2, 1002],
+          [3, 1003],
+        ],
         unit: 'watt',
       },
       {
@@ -34,12 +38,11 @@ describe('Graph DataProcessor', () => {
       {
         name: 'series',
         fields: [
-          { name: 'v1' }, // first
-          { name: 'v2' }, // second
-          { name: 'string' }, // skip
-          { name: 'time' }, // Time is last column
+          { name: 'v1', values: [0.1, 0.2, 0.3] }, // first
+          { name: 'v2', values: [1.1, 2.2, 3.3] }, // second
+          { name: 'string', values: ['a', 'b', 'c'] }, // skip
+          { name: 'time', values: [1001, 1002, 1003] }, // Time is last column
         ],
-        rows: [[0.1, 1.1, 'a', 1001], [0.2, 2.2, 'b', 1002], [0.3, 3.3, 'c', 1003]],
       },
     ]);
 
@@ -47,6 +50,7 @@ describe('Graph DataProcessor', () => {
       panel.xaxis.mode = 'series';
       const series = processor.getSeriesList({ dataList });
       expect(series.length).toEqual(5);
+
       expect(series).toMatchSnapshot();
     });
 

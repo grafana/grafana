@@ -1,14 +1,24 @@
 <aside class="dashboard-settings__aside">
-	<a href="{{::section.url}}" class="dashboard-settings__nav-item" ng-class="{active: ctrl.viewId === section.id}" ng-repeat="section in ctrl.sections">
+	<a href="{{::section.url}}" class="dashboard-settings__nav-item" ng-class="{active: ctrl.viewId === section.id}" ng-repeat="section in ctrl.sections" aria-label={{ctrl.selectors.sectionItems}}>
     <i class="{{::section.icon}}"></i>
 		{{::section.title}}
 	</a>
 
 	<div class="dashboard-settings__aside-actions">
-    <button class="btn btn-primary" ng-click="ctrl.saveDashboard()" ng-show="ctrl.canSave">
+    <button
+      class="btn btn-primary"
+      ng-click="ctrl.saveDashboard()"
+      ng-show="ctrl.canSave"
+      aria-label={{ctrl.selectors.saveDashBoard}}
+    >
 			Save
 		</button>
-		<button class="btn btn-inverse" ng-click="ctrl.openSaveAsModal()" ng-show="ctrl.canSaveAs">
+		<button
+      class="btn btn-inverse"
+      ng-click="ctrl.openSaveAsModal()"
+      ng-show="ctrl.canSaveAs"
+      aria-label={{ctrl.selectors.saveAsDashBoard}}
+    >
 			Save As...
 		</button>
 	</div>
@@ -63,7 +73,7 @@
 		</div>
 	</div>
 	<div class="gf-form-button-row">
-	  <button class="btn btn-danger" ng-click="ctrl.deleteDashboard()" ng-show="ctrl.canDelete">
+	  <button class="btn btn-danger" ng-click="ctrl.deleteDashboard()" ng-show="ctrl.canDelete" aria-label="Dashboard settings page delete dashboard button">
 		  Delete Dashboard
 	  </button>
   </div>

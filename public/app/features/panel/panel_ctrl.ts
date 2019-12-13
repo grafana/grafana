@@ -1,20 +1,23 @@
 import _ from 'lodash';
-import Remarkable from 'remarkable';
+import { escapeHtml, sanitize } from 'app/core/utils/text';
 
 import config from 'app/core/config';
-import { profiler } from 'app/core/core';
-import { Emitter } from 'app/core/core';
+import { Emitter, profiler } from 'app/core/core';
 import getFactors from 'app/core/utils/factors';
 import {
-  duplicatePanel,
-  removePanel,
-  copyPanel as copyPanelUtil,
-  editPanelJson as editPanelJsonUtil,
-  sharePanel as sharePanelUtil,
   calculateInnerPanelHeight,
+  copyPanel as copyPanelUtil,
+  duplicatePanel,
+  editPanelJson as editPanelJsonUtil,
+  removePanel,
+  sharePanel as sharePanelUtil,
 } from 'app/features/dashboard/utils/panel';
-
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
+import { auto } from 'angular';
+import { TemplateSrv } from '../templating/template_srv';
+import { getPanelLinksSupplier } from './panellinks/linkSuppliers';
+import { AppEvent, PanelEvents, PanelPluginMeta, renderMarkdown } from '@grafana/data';
+import { getLocationSrv } from '@grafana/runtime';
 
 export class PanelCtrl {
   panel: any;
@@ -24,10 +27,9 @@ export class PanelCtrl {
   pluginId: string;
   editorTabs: any;
   $scope: any;
-  $injector: any;
+  $injector: auto.IInjectorService;
   $location: any;
   $timeout: any;
-  inspector: any;
   editModeInitiated: boolean;
   height: any;
   containerHeight: any;
@@ -36,7 +38,7 @@ export class PanelCtrl {
   timing: any;
   maxPanelsPerRowOptions: number[];
 
-  constructor($scope, $injector) {
+  constructor($scope: any, $injector: auto.IInjectorService) {
     this.$injector = $injector;
     this.$location = $injector.get('$location');
     this.$scope = $scope;
@@ -51,11 +53,11 @@ export class PanelCtrl {
       this.pluginName = plugin.name;
     }
 
-    $scope.$on('component-did-mount', () => this.panelDidMount());
+    $scope.$on(PanelEvents.componentDidMount.name, () => this.panelDidMount());
   }
 
   panelDidMount() {
-    this.events.emit('component-did-mount');
+    this.events.emit(PanelEvents.componentDidMount);
     this.dashboard.panelInitialized(this.panel);
   }
 
@@ -67,14 +69,14 @@ export class PanelCtrl {
     this.panel.refresh();
   }
 
-  publishAppEvent(evtName, evt) {
-    this.$scope.$root.appEvent(evtName, evt);
+  publishAppEvent<T>(event: AppEvent<T>, payload?: T) {
+    this.$scope.$root.appEvent(event, payload);
   }
 
-  changeView(fullscreen, edit) {
-    this.publishAppEvent('panel-change-view', {
-      fullscreen: fullscreen,
-      edit: edit,
+  changeView(fullscreen: boolean, edit: boolean) {
+    this.publishAppEvent(PanelEvents.panelChangeView, {
+      fullscreen,
+      edit,
       panelId: this.panel.id,
     });
   }
@@ -94,12 +96,12 @@ export class PanelCtrl {
   initEditMode() {
     if (!this.editModeInitiated) {
       this.editModeInitiated = true;
-      this.events.emit('init-edit-mode', null);
+      this.events.emit(PanelEvents.editModeInitialized);
       this.maxPanelsPerRowOptions = getFactors(GRID_COLUMN_COUNT);
     }
   }
 
-  addEditorTab(title, directiveFn, index?, icon?) {
+  addEditorTab(title: string, directiveFn: any, index?: number, icon?: any) {
     const editorTab = { title, directiveFn, icon };
 
     if (_.isString(directiveFn)) {
@@ -115,7 +117,7 @@ export class PanelCtrl {
     }
   }
 
-  getMenu() {
+  async getMenu() {
     const menu = [];
     menu.push({
       text: 'View',
@@ -141,8 +143,17 @@ export class PanelCtrl {
       shortcut: 'p s',
     });
 
+    if (config.featureToggles.inspect) {
+      menu.push({
+        text: 'Inspect',
+        icon: 'fa fa-fw fa-info-circle',
+        click: 'ctrl.inspectPanel();',
+        shortcut: 'p i',
+      });
+    }
+
     // Additional items from sub-class
-    menu.push(...this.getAdditionalMenuItems());
+    menu.push(...(await this.getAdditionalMenuItems()));
 
     const extendedMenu = this.getExtendedMenu();
     menu.push({
@@ -188,12 +199,12 @@ export class PanelCtrl {
       click: 'ctrl.editPanelJson(); dismiss();',
     });
 
-    this.events.emit('init-panel-actions', menu);
+    this.events.emit(PanelEvents.initPanelActions, menu);
     return menu;
   }
 
   // Override in sub-class to add items before extended menu
-  getAdditionalMenuItems() {
+  async getAdditionalMenuItems(): Promise<any[]> {
     return [];
   }
 
@@ -201,13 +212,13 @@ export class PanelCtrl {
     return this.dashboard.meta.fullscreen && !this.panel.fullscreen;
   }
 
-  calculatePanelHeight(containerHeight) {
+  calculatePanelHeight(containerHeight: number) {
     this.containerHeight = containerHeight;
     this.height = calculateInnerPanelHeight(this.panel, containerHeight);
   }
 
-  render(payload?) {
-    this.events.emit('render', payload);
+  render(payload?: any) {
+    this.events.emit(PanelEvents.render, payload);
   }
 
   duplicate() {
@@ -230,6 +241,15 @@ export class PanelCtrl {
     sharePanelUtil(this.dashboard, this.panel);
   }
 
+  inspectPanel() {
+    getLocationSrv().update({
+      query: {
+        inspect: this.panel.id,
+      },
+      partial: true,
+    });
+  }
+
   getInfoMode() {
     if (this.error) {
       return 'error';
@@ -243,38 +263,43 @@ export class PanelCtrl {
     return '';
   }
 
-  getInfoContent(options) {
-    let markdown = this.panel.description;
+  getInfoContent(options: { mode: string }) {
+    const { panel } = this;
+    let markdown = panel.description || '';
 
     if (options.mode === 'tooltip') {
-      markdown = this.error || this.panel.description;
+      markdown = this.error || panel.description || '';
     }
 
-    const linkSrv = this.$injector.get('linkSrv');
-    const sanitize = this.$injector.get('$sanitize');
-    const templateSrv = this.$injector.get('templateSrv');
-    const interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
-    let html = '<div class="markdown-html">';
+    const templateSrv: TemplateSrv = this.$injector.get('templateSrv');
+    const interpolatedMarkdown = templateSrv.replace(markdown, panel.scopedVars);
+    let html = '<div class="markdown-html panel-info-content">';
 
-    html += new Remarkable().render(interpolatedMarkdown);
+    const md = renderMarkdown(interpolatedMarkdown);
+    html += config.disableSanitizeHtml ? md : sanitize(md);
 
-    if (this.panel.links && this.panel.links.length > 0) {
-      html += '<ul>';
-      for (const link of this.panel.links) {
-        const info = linkSrv.getPanelLinkAnchorInfo(link, this.panel.scopedVars);
+    if (panel.links && panel.links.length > 0) {
+      const interpolatedLinks = getPanelLinksSupplier(panel).getLinks();
+
+      html += '<ul class="panel-info-corner-links">';
+      for (const link of interpolatedLinks) {
         html +=
           '<li><a class="panel-menu-link" href="' +
-          info.href +
+          escapeHtml(link.href) +
           '" target="' +
-          info.target +
+          escapeHtml(link.target) +
           '">' +
-          info.title +
+          escapeHtml(link.title) +
           '</a></li>';
       }
       html += '</ul>';
     }
 
     html += '</div>';
-    return sanitize(html);
+
+    return html;
   }
+
+  // overriden from react
+  onPluginTypeChange = (plugin: PanelPluginMeta) => {};
 }

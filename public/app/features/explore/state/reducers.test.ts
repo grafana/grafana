@@ -4,61 +4,49 @@ import {
   exploreReducer,
   makeInitialUpdateState,
   initialExploreState,
-  DEFAULT_RANGE,
+  createEmptyQueryResponse,
 } from './reducers';
-import {
-  ExploreId,
-  ExploreItemState,
-  ExploreUrlState,
-  ExploreState,
-  RangeScanner,
-  ExploreMode,
-} from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreUrlState, ExploreState, ExploreMode } from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
 import {
   scanStartAction,
-  testDataSourcePendingAction,
-  testDataSourceSuccessAction,
-  testDataSourceFailureAction,
   updateDatasourceInstanceAction,
   splitOpenAction,
   splitCloseAction,
   changeModeAction,
   scanStopAction,
-  runQueriesAction,
+  toggleGraphAction,
+  toggleTableAction,
+  changeRangeAction,
+  changeRefreshIntervalAction,
 } from './actionTypes';
 import { Reducer } from 'redux';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { updateLocation } from 'app/core/actions/location';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import TableModel from 'app/core/table_model';
-import { DataSourceApi, DataQuery, LogsModel, LogsDedupStrategy, LoadingState, dateTime } from '@grafana/ui';
+import { DataSourceApi, DataQuery, LogsDedupStrategy, dateTime, LoadingState } from '@grafana/data';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
     it('should start scanning', () => {
-      const scanner = jest.fn();
       const initalState = {
         ...makeExploreItemState(),
         scanning: false,
-        scanner: undefined as RangeScanner,
       };
 
       reducerTester()
         .givenReducer(itemReducer as Reducer<ExploreItemState, ActionOf<any>>, initalState)
-        .whenActionIsDispatched(scanStartAction({ exploreId: ExploreId.left, scanner }))
+        .whenActionIsDispatched(scanStartAction({ exploreId: ExploreId.left }))
         .thenStateShouldEqual({
           ...makeExploreItemState(),
           scanning: true,
-          scanner,
         });
     });
     it('should stop scanning', () => {
-      const scanner = jest.fn();
       const initalState = {
         ...makeExploreItemState(),
         scanning: true,
-        scanner,
         scanRange: {},
       };
 
@@ -68,61 +56,12 @@ describe('Explore item reducer', () => {
         .thenStateShouldEqual({
           ...makeExploreItemState(),
           scanning: false,
-          scanner: undefined,
           scanRange: undefined,
         });
     });
   });
 
-  describe('testing datasource', () => {
-    describe('when testDataSourcePendingAction is dispatched', () => {
-      it('then it should set datasourceError', () => {
-        reducerTester()
-          .givenReducer(itemReducer, { datasourceError: {} })
-          .whenActionIsDispatched(testDataSourcePendingAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual({ datasourceError: null });
-      });
-    });
-
-    describe('when testDataSourceSuccessAction is dispatched', () => {
-      it('then it should set datasourceError', () => {
-        reducerTester()
-          .givenReducer(itemReducer, { datasourceError: {} })
-          .whenActionIsDispatched(testDataSourceSuccessAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual({ datasourceError: null });
-      });
-    });
-
-    describe('when testDataSourceFailureAction is dispatched', () => {
-      it('then it should set correct state', () => {
-        const error = 'some error';
-        const initalState: Partial<ExploreItemState> = {
-          datasourceError: null,
-          graphResult: [],
-          tableResult: {} as TableModel,
-          logsResult: {} as LogsModel,
-          update: {
-            datasource: true,
-            queries: true,
-            range: true,
-            ui: true,
-          },
-        };
-        const expectedState = {
-          datasourceError: error,
-          graphResult: undefined as any[],
-          tableResult: undefined as TableModel,
-          logsResult: undefined as LogsModel,
-          update: makeInitialUpdateState(),
-        };
-
-        reducerTester()
-          .givenReducer(itemReducer, initalState)
-          .whenActionIsDispatched(testDataSourceFailureAction({ exploreId: ExploreId.left, error }))
-          .thenStateShouldEqual(expectedState);
-      });
-    });
-
+  describe('changing datasource', () => {
     describe('when changeDataType is dispatched', () => {
       it('then it should set correct state', () => {
         reducerTester()
@@ -133,9 +72,7 @@ describe('Explore item reducer', () => {
           });
       });
     });
-  });
 
-  describe('changing datasource', () => {
     describe('when updateDatasourceInstanceAction is dispatched', () => {
       describe('and datasourceInstance supports graph, logs, table and has a startpage', () => {
         it('then it should set correct state', () => {
@@ -153,22 +90,21 @@ describe('Explore item reducer', () => {
           const queryKeys: string[] = [];
           const initalState: Partial<ExploreItemState> = {
             datasourceInstance: null,
-            StartPage: null,
-            showingStartPage: false,
             queries,
             queryKeys,
           };
-          const expectedState = {
+          const expectedState: any = {
             datasourceInstance,
-            StartPage,
-            showingStartPage: true,
             queries,
             queryKeys,
+            graphResult: null,
+            logsResult: null,
+            tableResult: null,
             supportedModes: [ExploreMode.Metrics, ExploreMode.Logs],
             mode: ExploreMode.Metrics,
-            loadingState: LoadingState.NotStarted,
             latency: 0,
-            queryErrors: [],
+            loading: false,
+            queryResponse: createEmptyQueryResponse(),
           };
 
           reducerTester()
@@ -180,30 +116,95 @@ describe('Explore item reducer', () => {
     });
   });
 
-  describe('run queries', () => {
-    describe('when runQueriesAction is dispatched', () => {
-      it('then it should set correct state', () => {
-        const initalState: Partial<ExploreItemState> = {
-          showingStartPage: true,
-          range: null,
-        };
-        const expectedState = {
-          queryIntervals: {
-            interval: '1s',
-            intervalMs: 1000,
-          },
-          showingStartPage: false,
-          range: {
-            from: dateTime(),
-            to: dateTime(),
-            raw: DEFAULT_RANGE,
-          },
-        };
+  describe('changing refresh intervals', () => {
+    it("should result in 'streaming' state, when live-tailing is active", () => {
+      const initalState = makeExploreItemState();
+      const expectedState = {
+        ...makeExploreItemState(),
+        refreshInterval: 'LIVE',
+        isLive: true,
+        loading: true,
+        logsResult: {
+          hasUniqueLabels: false,
+          rows: [] as any[],
+        },
+        queryResponse: {
+          ...makeExploreItemState().queryResponse,
+          state: LoadingState.Streaming,
+        },
+      };
+      reducerTester()
+        .givenReducer(itemReducer, initalState)
+        .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId: ExploreId.left, refreshInterval: 'LIVE' }))
+        .thenStateShouldEqual(expectedState);
+    });
 
+    it("should result in 'done' state, when live-tailing is stopped", () => {
+      const initalState = makeExploreItemState();
+      const expectedState = {
+        ...makeExploreItemState(),
+        refreshInterval: '',
+        logsResult: {
+          hasUniqueLabels: false,
+          rows: [] as any[],
+        },
+        queryResponse: {
+          ...makeExploreItemState().queryResponse,
+          state: LoadingState.Done,
+        },
+      };
+      reducerTester()
+        .givenReducer(itemReducer, initalState)
+        .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId: ExploreId.left, refreshInterval: '' }))
+        .thenStateShouldEqual(expectedState);
+    });
+  });
+
+  describe('toggling panels', () => {
+    describe('when toggleGraphAction is dispatched', () => {
+      it('then it should set correct state', () => {
         reducerTester()
-          .givenReducer(itemReducer, initalState)
-          .whenActionIsDispatched(runQueriesAction({ exploreId: ExploreId.left, range: expectedState.range }))
-          .thenStateShouldEqual(expectedState);
+          .givenReducer(itemReducer, { graphResult: [] })
+          .whenActionIsDispatched(toggleGraphAction({ exploreId: ExploreId.left }))
+          .thenStateShouldEqual({ showingGraph: true, graphResult: [] })
+          .whenActionIsDispatched(toggleGraphAction({ exploreId: ExploreId.left }))
+          .thenStateShouldEqual({ showingGraph: false, graphResult: null });
+      });
+    });
+
+    describe('when toggleTableAction is dispatched', () => {
+      it('then it should set correct state', () => {
+        reducerTester()
+          .givenReducer(itemReducer, { tableResult: {} })
+          .whenActionIsDispatched(toggleTableAction({ exploreId: ExploreId.left }))
+          .thenStateShouldEqual({ showingTable: true, tableResult: {} })
+          .whenActionIsDispatched(toggleTableAction({ exploreId: ExploreId.left }))
+          .thenStateShouldEqual({ showingTable: false, tableResult: new TableModel() });
+      });
+    });
+  });
+
+  describe('changing range', () => {
+    describe('when changeRangeAction is dispatched', () => {
+      it('then it should set correct state', () => {
+        reducerTester()
+          .givenReducer(itemReducer, {
+            update: { ...makeInitialUpdateState(), range: true },
+            range: null,
+            absoluteRange: null,
+          })
+          .whenActionIsDispatched(
+            changeRangeAction({
+              exploreId: ExploreId.left,
+              absoluteRange: { from: 1546297200000, to: 1546383600000 },
+              range: { from: dateTime('2019-01-01'), to: dateTime('2019-01-02'), raw: { from: 'now-1d', to: 'now' } },
+            })
+          )
+          .thenStateShouldEqual({
+            update: { ...makeInitialUpdateState(), range: false },
+            absoluteRange: { from: 1546297200000, to: 1546383600000 },
+            range: { from: dateTime('2019-01-01'), to: dateTime('2019-01-02'), raw: { from: 'now-1d', to: 'now' } },
+          });
       });
     });
   });
@@ -218,6 +219,7 @@ export const setup = (urlStateOverrides?: any) => {
       from: '',
       to: '',
     },
+    mode: ExploreMode.Metrics,
     ui: {
       dedupStrategy: LogsDedupStrategy.none,
       showingGraph: false,

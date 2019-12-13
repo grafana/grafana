@@ -10,14 +10,16 @@
           <span class="pluginlist-title">{{plugin.name}}</span>
           <span class="pluginlist-version">v{{plugin.info.version}}</span>
         </span>
-        <span class="pluginlist-message pluginlist-message--update" ng-show="plugin.hasUpdate" ng-click="ctrl.updateAvailable(plugin, $event)" bs-tooltip="'New version: ' + plugin.latestVersion">
-          Update available!
-        </span>
-        <span class="pluginlist-message pluginlist-message--enable" ng-show="!plugin.enabled && !plugin.hasUpdate">
-          Enable now
-        </span>
-        <span class="pluginlist-message pluginlist-message--no-update" ng-show="plugin.enabled && !plugin.hasUpdate">
-          Up to date
+        <span ng-if="ctrl.isAdmin">
+          <span class="pluginlist-message pluginlist-message--update" ng-show="plugin.hasUpdate" ng-click="ctrl.updateAvailable(plugin, $event)" bs-tooltip="'New version: ' + plugin.latestVersion">
+            Update available!
+          </span>
+          <span class="pluginlist-message pluginlist-message--enable" ng-show="!plugin.enabled && !plugin.hasUpdate">
+            Enable now
+          </span>
+          <span class="pluginlist-message pluginlist-message--no-update" ng-show="plugin.enabled && !plugin.hasUpdate">
+            Up to date
+          </span>
         </span>
       </a>
     </div>

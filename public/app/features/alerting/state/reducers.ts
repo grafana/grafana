@@ -1,7 +1,7 @@
 import { AlertRuleDTO, AlertRule, AlertRulesState } from 'app/types';
 import { Action, ActionTypes } from './actions';
 import alertDef from './alertDef';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 
 export const initialState: AlertRulesState = { items: [], searchQuery: '', isLoading: false };
 

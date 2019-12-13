@@ -2,10 +2,13 @@ import './bucket_agg';
 import './metric_agg';
 import './pipeline_variables';
 
-import angular from 'angular';
+import angular, { auto } from 'angular';
 import _ from 'lodash';
 import * as queryDef from './query_def';
 import { QueryCtrl } from 'app/plugins/sdk';
+import { ElasticsearchAggregation } from './types';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { CoreEvents } from 'app/types';
 
 export class ElasticQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -14,7 +17,12 @@ export class ElasticQueryCtrl extends QueryCtrl {
   rawQueryOld: string;
 
   /** @ngInject */
-  constructor($scope, $injector, private $rootScope, private uiSegmentSrv) {
+  constructor(
+    $scope: any,
+    $injector: auto.IInjectorService,
+    private $rootScope: GrafanaRootScope,
+    private uiSegmentSrv: any
+  ) {
     super($scope, $injector);
 
     this.esVersion = this.datasource.esVersion;
@@ -34,7 +42,7 @@ export class ElasticQueryCtrl extends QueryCtrl {
     this.queryUpdated();
   }
 
-  getFields(type) {
+  getFields(type: any) {
     const jsonStr = angular.toJson({ find: 'fields', type: type });
     return this.datasource
       .metricFindQuery(jsonStr)
@@ -49,11 +57,11 @@ export class ElasticQueryCtrl extends QueryCtrl {
     }
 
     this.rawQueryOld = newJson;
-    this.$rootScope.appEvent('elastic-query-updated');
+    this.$rootScope.appEvent(CoreEvents.elasticQueryUpdated);
   }
 
   getCollapsedText() {
-    const metricAggs = this.target.metrics;
+    const metricAggs: ElasticsearchAggregation[] = this.target.metrics;
     const bucketAggs = this.target.bucketAggs;
     const metricAggTypes = queryDef.getMetricAggTypes(this.esVersion);
     const bucketAggTypes = queryDef.bucketAggTypes;
@@ -97,7 +105,7 @@ export class ElasticQueryCtrl extends QueryCtrl {
     return text;
   }
 
-  handleQueryError(err) {
+  handleQueryError(err: any): any[] {
     this.error = err.message || 'Failed to issue metric query';
     return [];
   }

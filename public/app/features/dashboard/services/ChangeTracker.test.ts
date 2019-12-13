@@ -10,11 +10,11 @@ jest.mock('app/core/services/context_srv', () => ({
 }));
 
 describe('ChangeTracker', () => {
-  let rootScope;
+  let rootScope: any;
   let location;
   const timeout = () => {};
   let tracker: ChangeTracker;
-  let dash;
+  let dash: any;
   let scope;
 
   beforeEach(() => {
@@ -57,7 +57,7 @@ describe('ChangeTracker', () => {
       path: jest.fn(),
     };
 
-    tracker = new ChangeTracker(dash, scope, undefined, location, window, timeout, contextSrv, rootScope);
+    tracker = new ChangeTracker(dash, scope as any, undefined, location as any, window, timeout, contextSrv, rootScope);
   });
 
   it('No changes should not have changes', () => {

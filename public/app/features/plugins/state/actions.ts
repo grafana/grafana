@@ -3,7 +3,7 @@ import { ThunkAction } from 'redux-thunk';
 import { getBackendSrv } from '@grafana/runtime';
 import { LayoutMode } from '../../../core/components/LayoutSelector/LayoutSelector';
 import { PluginDashboard } from '../../../types/plugins';
-import { PluginMeta } from '@grafana/ui';
+import { PluginMeta } from '@grafana/data';
 
 export enum ActionTypes {
   LoadPlugins = 'LOAD_PLUGINS',

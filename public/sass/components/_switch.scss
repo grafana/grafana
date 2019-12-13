@@ -15,6 +15,7 @@ gf-form-switch[disabled] {
 
 .gf-form-switch-container-react {
   display: flex;
+  flex-shrink: 0;
 }
 
 .gf-form-switch-container {
@@ -33,7 +34,6 @@ gf-form-switch[disabled] {
   border-radius: $input-border-radius;
   align-items: center;
   justify-content: center;
-
   input {
     opacity: 0;
     width: 0;

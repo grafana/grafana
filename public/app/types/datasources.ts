@@ -1,5 +1,5 @@
 import { LayoutMode } from '../core/components/LayoutSelector/LayoutSelector';
-import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/ui/src/types';
+import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/data';
 
 export interface DataSourcesState {
   dataSources: DataSourceSettings[];

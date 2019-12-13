@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
-import { Select, GrafanaTheme, ThemeContext, SelectOptionItem } from '@grafana/ui';
+import { Select, ThemeContext } from '@grafana/ui';
 import { css, cx } from 'emotion';
+import { GrafanaTheme, SelectableValue } from '@grafana/data';
 
 const getStyles = (theme: GrafanaTheme) => ({
   keyValueContainer: css`
@@ -33,8 +34,13 @@ export const AdHocFilter: React.FunctionComponent<Props> = props => {
   const theme = useContext(ThemeContext);
   const styles = getStyles(theme);
 
-  const onChange = (changeType: ChangeType) => (item: SelectOptionItem<string>) => {
+  const onChange = (changeType: ChangeType) => (item: SelectableValue<string>) => {
     const { onKeyChanged, onValueChanged, onOperatorChanged } = props;
+
+    if (!item.value) {
+      return;
+    }
+
     switch (changeType) {
       case ChangeType.Key:
         onKeyChanged(item.value);
@@ -53,13 +59,13 @@ export const AdHocFilter: React.FunctionComponent<Props> = props => {
   const { keys, initialKey, keysPlaceHolder, initialOperator, values, initialValue, valuesPlaceHolder } = props;
   const operators = ['=', '!='];
   const keysAsOptions = keys ? keys.map(stringToOption) : [];
-  const selectedKey = initialKey ? keysAsOptions.filter(option => option.value === initialKey) : null;
+  const selectedKey = initialKey ? keysAsOptions.filter(option => option.value === initialKey) : undefined;
   const valuesAsOptions = values ? values.map(stringToOption) : [];
-  const selectedValue = initialValue ? valuesAsOptions.filter(option => option.value === initialValue) : null;
+  const selectedValue = initialValue ? valuesAsOptions.filter(option => option.value === initialValue) : undefined;
   const operatorsAsOptions = operators.map(stringToOption);
   const selectedOperator = initialOperator
     ? operatorsAsOptions.filter(option => option.value === initialOperator)
-    : null;
+    : undefined;
 
   return (
     <div className={cx([styles.keyValueContainer])}>

@@ -44,7 +44,7 @@
       "nullPointMode": "null",
       "options-gauge": {
         "baseColor": "#299c46",
-        "decimals": "2",
+        "decimals": 2,
         "maxValue": 100,
         "minValue": 0,
         "options": {
@@ -111,7 +111,7 @@
       "nullPointMode": "null",
       "options-gauge": {
         "baseColor": "#299c46",
-        "decimals": "",
+        "decimals": null,
         "maxValue": 100,
         "minValue": 0,
         "options": {
@@ -178,7 +178,7 @@
       "nullPointMode": "null",
       "options-gauge": {
         "baseColor": "#299c46",
-        "decimals": "",
+        "decimals": null,
         "maxValue": 100,
         "minValue": 0,
         "options": {

@@ -2,6 +2,7 @@ import * as d3 from 'd3';
 import * as d3ScaleChromatic from 'd3-scale-chromatic';
 
 export function getColorScale(colorScheme: any, lightTheme: boolean, maxValue: number, minValue = 0): (d: any) => any {
+  //@ts-ignore
   const colorInterpolator = d3ScaleChromatic[colorScheme.value];
   const colorScaleInverted = colorScheme.invert === 'always' || colorScheme.invert === (lightTheme ? 'light' : 'dark');
 
@@ -11,7 +12,11 @@ export function getColorScale(colorScheme: any, lightTheme: boolean, maxValue: n
   return d3.scaleSequential(colorInterpolator).domain([start, end]);
 }
 
-export function getOpacityScale(options, maxValue, minValue = 0) {
+export function getOpacityScale(
+  options: { cardColor?: null; colorScale?: any; exponent?: any },
+  maxValue: number,
+  minValue = 0
+) {
   let legendOpacityScale;
   if (options.colorScale === 'linear') {
     legendOpacityScale = d3

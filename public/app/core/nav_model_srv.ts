@@ -1,7 +1,7 @@
 import coreModule from 'app/core/core_module';
 import config from 'app/core/config';
 import _ from 'lodash';
-import { NavModel } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 
 export class NavModelSrv {
   navItems: any;

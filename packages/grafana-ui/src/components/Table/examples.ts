@@ -1,12 +1,11 @@
-import { SeriesData } from '../../types/data';
+import { toDataFrame, getColorDefinitionByName } from '@grafana/data';
 import { ColumnStyle } from './TableCellBuilder';
-import { getColorDefinitionByName } from '../../utils/namedColorsPalette';
 
 const SemiDarkOrange = getColorDefinitionByName('semi-dark-orange');
 
-export const migratedTestTable = {
+export const migratedTestTable = toDataFrame({
   type: 'table',
-  fields: [
+  columns: [
     { name: 'Time' },
     { name: 'Value' },
     { name: 'Colored' },
@@ -22,7 +21,7 @@ export const migratedTestTable = {
     { name: 'RangeMappingColored' },
   ],
   rows: [[1388556366666, 1230, 40, undefined, '', '', 'my.host.com', 'host1', ['value1', 'value2'], 1, 2, 1, 2]],
-} as SeriesData;
+});
 
 export const migratedTestStyles: ColumnStyle[] = [
   {
@@ -162,5 +161,9 @@ export const migratedTestStyles: ColumnStyle[] = [
 export const simpleTable = {
   type: 'table',
   fields: [{ name: 'First' }, { name: 'Second' }, { name: 'Third' }],
-  rows: [[701, 205, 305], [702, 206, 301], [703, 207, 304]],
+  rows: [
+    [701, 205, 305],
+    [702, 206, 301],
+    [703, 207, 304],
+  ],
 };

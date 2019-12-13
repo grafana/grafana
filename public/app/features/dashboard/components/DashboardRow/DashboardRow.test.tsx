@@ -4,7 +4,7 @@ import { DashboardRow } from './DashboardRow';
 import { PanelModel } from '../../state/PanelModel';
 
 describe('DashboardRow', () => {
-  let wrapper, panel, dashboardMock;
+  let wrapper: any, panel: PanelModel, dashboardMock: any;
 
   beforeEach(() => {
     dashboardMock = {

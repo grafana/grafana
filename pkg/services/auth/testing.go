@@ -15,6 +15,7 @@ type FakeUserAuthTokenService struct {
 	ActiveAuthTokenCount        func(ctx context.Context) (int64, error)
 	GetUserTokenProvider        func(ctx context.Context, userId, userTokenId int64) (*models.UserToken, error)
 	GetUserTokensProvider       func(ctx context.Context, userId int64) ([]*models.UserToken, error)
+	BatchRevokedTokenProvider   func(ctx context.Context, userIds []int64) error
 }
 
 func NewFakeUserAuthTokenService() *FakeUserAuthTokenService {
@@ -38,6 +39,9 @@ func NewFakeUserAuthTokenService() *FakeUserAuthTokenService {
 			return nil
 		},
 		RevokeAllUserTokensProvider: func(ctx context.Context, userId int64) error {
+			return nil
+		},
+		BatchRevokedTokenProvider: func(ctx context.Context, userIds []int64) error {
 			return nil
 		},
 		ActiveAuthTokenCount: func(ctx context.Context) (int64, error) {
@@ -82,4 +86,8 @@ func (s *FakeUserAuthTokenService) GetUserToken(ctx context.Context, userId, use
 
 func (s *FakeUserAuthTokenService) GetUserTokens(ctx context.Context, userId int64) ([]*models.UserToken, error) {
 	return s.GetUserTokensProvider(context.Background(), userId)
+}
+
+func (s *FakeUserAuthTokenService) BatchRevokeAllUserTokens(ctx context.Context, userIds []int64) error {
+	return s.BatchRevokedTokenProvider(ctx, userIds)
 }

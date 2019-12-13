@@ -1,6 +1,6 @@
 +++
 title = "What's New in Grafana v3.0"
-description = "Feature & improvement highlights for Grafana v3.0"
+description = "Feature and improvement highlights for Grafana v3.0"
 keywords = ["grafana", "new", "documentation", "3.0"]
 type = "docs"
 [menu.docs]
@@ -76,7 +76,7 @@ example:
 grafana-cli install grafana-pie-chart-panel
 ```
 
-## Personalization & Preferences
+## Personalization and Preferences
 
 The home dashboard, timezone and theme can now be customized on Organization
 and user Profile level. Grafana can also track recently viewed dashboards, which
@@ -219,7 +219,7 @@ created and maintained by [Alexander Zobnin](https://github.com/alexanderzobnin/
 
 <img src="/img/docs/v3/zabbix_app.png">
 
-Checkout the full list of plugins on [Grafana.com](https://grafana.com/plugins)
+Check out the full list of plugins on [Grafana.com](https://grafana.com/plugins)
 
 ## CHANGELOG
 

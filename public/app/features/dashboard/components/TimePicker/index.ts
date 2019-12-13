@@ -1,1 +1,0 @@
-export { TimePickerCtrl } from './TimePickerCtrl';

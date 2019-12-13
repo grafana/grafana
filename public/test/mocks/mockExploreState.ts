@@ -1,12 +1,11 @@
-import { DataSourceApi } from '@grafana/ui/src/types/datasource';
-
 import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 import { makeExploreItemState } from 'app/features/explore/state/reducers';
-import { StoreState } from 'app/types';
+import { StoreState, UserState } from 'app/types';
+import { TimeRange, dateTime, DataSourceApi } from '@grafana/data';
 
 export const mockExploreState = (options: any = {}) => {
   const isLive = options.isLive || false;
-  const history = [];
+  const history: any[] = [];
   const eventBridge = {
     emit: jest.fn(),
   };
@@ -31,6 +30,14 @@ export const mockExploreState = (options: any = {}) => {
     },
     interval: datasourceInterval,
   };
+  const range: TimeRange = options.range || {
+    from: dateTime('2019-01-01 10:00:00.000Z'),
+    to: dateTime('2019-01-01 16:00:00.000Z'),
+    raw: {
+      from: 'now-6h',
+      to: 'now',
+    },
+  };
   const urlReplaced = options.urlReplaced || false;
   const left: ExploreItemState = options.left || {
     ...makeExploreItemState(),
@@ -45,6 +52,7 @@ export const mockExploreState = (options: any = {}) => {
     scanner,
     scanning,
     urlReplaced,
+    range,
   };
   const right: ExploreItemState = options.right || {
     ...makeExploreItemState(),
@@ -59,15 +67,25 @@ export const mockExploreState = (options: any = {}) => {
     scanner,
     scanning,
     urlReplaced,
+    range,
   };
   const split: boolean = options.split || false;
+  const syncedTimes: boolean = options.syncedTimes || false;
   const explore: ExploreState = {
     left,
     right,
+    syncedTimes,
     split,
   };
+
+  const user: UserState = {
+    orgId: 1,
+    timeZone: 'browser',
+  };
+
   const state: Partial<StoreState> = {
     explore,
+    user,
   };
 
   return {
@@ -82,5 +100,6 @@ export const mockExploreState = (options: any = {}) => {
     refreshInterval,
     state,
     scanner,
+    range,
   };
 };

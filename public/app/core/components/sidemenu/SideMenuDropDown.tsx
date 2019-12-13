@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import DropDownChild from './DropDownChild';
-import { NavModelItem } from '@grafana/ui';
+import { NavModelItem } from '@grafana/data';
 
 interface Props {
   link: NavModelItem;

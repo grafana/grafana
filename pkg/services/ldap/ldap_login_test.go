@@ -1,6 +1,7 @@
 package ldap
 
 import (
+	"errors"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -8,112 +9,83 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestLDAPLogin(t *testing.T) {
+	defaultLogin := &models.LoginUserQuery{
+		Username:  "user",
+		Password:  "pwd",
+		IpAddress: "192.168.1.1:56433",
+	}
+
 	Convey("Login()", t, func() {
-		serverScenario("When user is log in and updated", func(sc *scenarioContext) {
-			// arrange
-			mockConnection := &MockConnection{}
-
-			server := &Server{
-				Config: &ServerConfig{
-					Host:       "",
-					RootCACert: "",
-					Groups: []*GroupToOrgRole{
-						{GroupDN: "*", OrgRole: "Admin"},
-					},
-					Attr: AttributeMap{
-						Username: "username",
-						Surname:  "surname",
-						Email:    "email",
-						Name:     "name",
-						MemberOf: "memberof",
-					},
-					SearchBaseDNs: []string{"BaseDNHere"},
-				},
-				Connection: mockConnection,
-				log:        log.New("test-logger"),
-			}
-
-			entry := ldap.Entry{
-				DN: "dn", Attributes: []*ldap.EntryAttribute{
-					{Name: "username", Values: []string{"roelgerrits"}},
-					{Name: "surname", Values: []string{"Gerrits"}},
-					{Name: "email", Values: []string{"roel@test.com"}},
-					{Name: "name", Values: []string{"Roel"}},
-					{Name: "memberof", Values: []string{"admins"}},
-				}}
-			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
-			mockConnection.setSearchResult(&result)
-
-			query := &models.LoginUserQuery{
-				Username: "roelgerrits",
-			}
-
-			sc.userQueryReturns(&models.User{
-				Id:    1,
-				Email: "roel@test.net",
-				Name:  "Roel Gerrits",
-				Login: "roelgerrits",
-			})
-			sc.userOrgsQueryReturns([]*models.UserOrgDTO{})
-
-			// act
-			extUser, _ := server.Login(query)
-			userInfo, err := user.Upsert(&user.UpsertArgs{
-				SignupAllowed: true,
-				ExternalUser:  extUser,
-			})
-
-			// assert
-
-			// Check absence of the error
-			So(err, ShouldBeNil)
-
-			// User should be searched in ldap
-			So(mockConnection.SearchCalled, ShouldBeTrue)
-
-			// Info should be updated (email differs)
-			So(userInfo.Email, ShouldEqual, "roel@test.com")
-
-			// User should have admin privileges
-			So(sc.addOrgUserCmd.Role, ShouldEqual, "Admin")
-		})
-
-		serverScenario("When login with invalid credentials", func(scenario *scenarioContext) {
+		Convey("Should get invalid credentials when userBind fails", func() {
 			connection := &MockConnection{}
 			entry := ldap.Entry{}
 			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
 			connection.setSearchResult(&result)
 
-			connection.bindProvider = func(username, password string) error {
+			connection.BindProvider = func(username, password string) error {
 				return &ldap.Error{
 					ResultCode: 49,
 				}
 			}
 			server := &Server{
 				Config: &ServerConfig{
-					Attr: AttributeMap{
-						Username: "username",
-						Name:     "name",
-						MemberOf: "memberof",
-					},
 					SearchBaseDNs: []string{"BaseDNHere"},
 				},
 				Connection: connection,
 				log:        log.New("test-logger"),
 			}
 
-			_, err := server.Login(scenario.loginUserQuery)
+			_, err := server.Login(defaultLogin)
 
-			Convey("it should return invalid credentials error", func() {
-				So(err, ShouldEqual, ErrInvalidCredentials)
-			})
+			So(err, ShouldEqual, ErrInvalidCredentials)
 		})
 
-		serverScenario("When login with valid credentials", func(scenario *scenarioContext) {
+		Convey("Returns an error when search didn't find anything", func() {
+			connection := &MockConnection{}
+			result := ldap.SearchResult{Entries: []*ldap.Entry{}}
+			connection.setSearchResult(&result)
+
+			connection.BindProvider = func(username, password string) error {
+				return nil
+			}
+			server := &Server{
+				Config: &ServerConfig{
+					SearchBaseDNs: []string{"BaseDNHere"},
+				},
+				Connection: connection,
+				log:        log.New("test-logger"),
+			}
+
+			_, err := server.Login(defaultLogin)
+
+			So(err, ShouldEqual, ErrCouldNotFindUser)
+		})
+
+		Convey("When search returns an error", func() {
+			connection := &MockConnection{}
+			expected := errors.New("Killa-gorilla")
+			connection.setSearchError(expected)
+
+			connection.BindProvider = func(username, password string) error {
+				return nil
+			}
+			server := &Server{
+				Config: &ServerConfig{
+					SearchBaseDNs: []string{"BaseDNHere"},
+				},
+				Connection: connection,
+				log:        log.New("test-logger"),
+			}
+
+			_, err := server.Login(defaultLogin)
+
+			So(err, ShouldEqual, expected)
+		})
+
+		Convey("When login with valid credentials", func() {
 			connection := &MockConnection{}
 			entry := ldap.Entry{
 				DN: "dn", Attributes: []*ldap.EntryAttribute{
@@ -127,7 +99,7 @@ func TestLDAPLogin(t *testing.T) {
 			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
 			connection.setSearchResult(&result)
 
-			connection.bindProvider = func(username, password string) error {
+			connection.BindProvider = func(username, password string) error {
 				return nil
 			}
 			server := &Server{
@@ -143,82 +115,21 @@ func TestLDAPLogin(t *testing.T) {
 				log:        log.New("test-logger"),
 			}
 
-			resp, err := server.Login(scenario.loginUserQuery)
+			resp, err := server.Login(defaultLogin)
 
 			So(err, ShouldBeNil)
 			So(resp.Login, ShouldEqual, "markelog")
 		})
 
-		serverScenario("When user not found in LDAP, but exist in Grafana", func(scenario *scenarioContext) {
+		Convey("Should perform unauthentificate bind without admin", func() {
 			connection := &MockConnection{}
-			result := ldap.SearchResult{Entries: []*ldap.Entry{}}
-			connection.setSearchResult(&result)
-
-			externalUser := &models.ExternalUserInfo{UserId: 42, IsDisabled: false}
-			scenario.getExternalUserInfoByLoginQueryReturns(externalUser)
-
-			connection.bindProvider = func(username, password string) error {
-				return nil
+			entry := ldap.Entry{
+				DN: "test",
 			}
-			server := &Server{
-				Config: &ServerConfig{
-					SearchBaseDNs: []string{"BaseDNHere"},
-				},
-				Connection: connection,
-				log:        log.New("test-logger"),
-			}
-
-			_, err := server.Login(scenario.loginUserQuery)
-
-			Convey("it should disable user", func() {
-				So(scenario.disableExternalUserCalled, ShouldBeTrue)
-				So(scenario.disableUserCmd.IsDisabled, ShouldBeTrue)
-				So(scenario.disableUserCmd.UserId, ShouldEqual, 42)
-			})
-
-			Convey("it should return invalid credentials error", func() {
-				So(err, ShouldEqual, ErrInvalidCredentials)
-			})
-		})
-
-		serverScenario("When user not found in LDAP, and disabled in Grafana already", func(scenario *scenarioContext) {
-			connection := &MockConnection{}
-			result := ldap.SearchResult{Entries: []*ldap.Entry{}}
-			connection.setSearchResult(&result)
-
-			externalUser := &models.ExternalUserInfo{UserId: 42, IsDisabled: true}
-			scenario.getExternalUserInfoByLoginQueryReturns(externalUser)
-
-			connection.bindProvider = func(username, password string) error {
-				return nil
-			}
-			server := &Server{
-				Config: &ServerConfig{
-					SearchBaseDNs: []string{"BaseDNHere"},
-				},
-				Connection: connection,
-				log:        log.New("test-logger"),
-			}
-
-			_, err := server.Login(scenario.loginUserQuery)
-
-			Convey("it should't call disable function", func() {
-				So(scenario.disableExternalUserCalled, ShouldBeFalse)
-			})
-
-			Convey("it should return invalid credentials error", func() {
-				So(err, ShouldEqual, ErrInvalidCredentials)
-			})
-		})
-
-		serverScenario("When user found in LDAP, and disabled in Grafana", func(scenario *scenarioContext) {
-			connection := &MockConnection{}
-			entry := ldap.Entry{}
 			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
 			connection.setSearchResult(&result)
-			scenario.userQueryReturns(&models.User{Id: 42, IsDisabled: true})
 
-			connection.bindProvider = func(username, password string) error {
+			connection.UnauthenticatedBindProvider = func() error {
 				return nil
 			}
 			server := &Server{
@@ -229,21 +140,95 @@ func TestLDAPLogin(t *testing.T) {
 				log:        log.New("test-logger"),
 			}
 
-			extUser, _ := server.Login(scenario.loginUserQuery)
-			_, err := user.Upsert(&user.UpsertArgs{
-				SignupAllowed: true,
-				ExternalUser:  extUser,
-			})
+			user, err := server.Login(defaultLogin)
 
-			Convey("it should re-enable user", func() {
-				So(scenario.disableExternalUserCalled, ShouldBeTrue)
-				So(scenario.disableUserCmd.IsDisabled, ShouldBeFalse)
-				So(scenario.disableUserCmd.UserId, ShouldEqual, 42)
-			})
+			So(err, ShouldBeNil)
+			So(user.AuthId, ShouldEqual, "test")
+			So(connection.UnauthenticatedBindCalled, ShouldBeTrue)
+		})
 
-			Convey("it should not return error", func() {
-				So(err, ShouldBeNil)
-			})
+		Convey("Should perform authentificate binds", func() {
+			connection := &MockConnection{}
+			entry := ldap.Entry{
+				DN: "test",
+			}
+			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
+			connection.setSearchResult(&result)
+
+			adminUsername := ""
+			adminPassword := ""
+			username := ""
+			password := ""
+
+			i := 0
+			connection.BindProvider = func(name, pass string) error {
+				i++
+				if i == 1 {
+					adminUsername = name
+					adminPassword = pass
+				}
+
+				if i == 2 {
+					username = name
+					password = pass
+				}
+
+				return nil
+			}
+			server := &Server{
+				Config: &ServerConfig{
+					BindDN:        "killa",
+					BindPassword:  "gorilla",
+					SearchBaseDNs: []string{"BaseDNHere"},
+				},
+				Connection: connection,
+				log:        log.New("test-logger"),
+			}
+
+			user, err := server.Login(defaultLogin)
+
+			So(err, ShouldBeNil)
+
+			So(user.AuthId, ShouldEqual, "test")
+			So(connection.BindCalled, ShouldBeTrue)
+
+			So(adminUsername, ShouldEqual, "killa")
+			So(adminPassword, ShouldEqual, "gorilla")
+
+			So(username, ShouldEqual, "test")
+			So(password, ShouldEqual, "pwd")
+		})
+		Convey("Should bind with user if %s exists in the bind_dn", func() {
+			connection := &MockConnection{}
+			entry := ldap.Entry{
+				DN: "test",
+			}
+			connection.setSearchResult(&ldap.SearchResult{Entries: []*ldap.Entry{&entry}})
+
+			authBindUser := ""
+			authBindPassword := ""
+
+			connection.BindProvider = func(name, pass string) error {
+				authBindUser = name
+				authBindPassword = pass
+				return nil
+			}
+			server := &Server{
+				Config: &ServerConfig{
+					BindDN:        "cn=%s,ou=users,dc=grafana,dc=org",
+					SearchBaseDNs: []string{"BaseDNHere"},
+				},
+				Connection: connection,
+				log:        log.New("test-logger"),
+			}
+
+			_, err := server.Login(defaultLogin)
+
+			So(err, ShouldBeNil)
+
+			So(authBindUser, ShouldEqual, "cn=user,ou=users,dc=grafana,dc=org")
+			So(authBindPassword, ShouldEqual, "pwd")
+			So(connection.BindCalled, ShouldBeTrue)
 		})
 	})
 }

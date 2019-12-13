@@ -3,7 +3,8 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Types
-import { PanelEditorProps, Switch, FormField } from '@grafana/ui';
+import { PanelEditorProps } from '@grafana/data';
+import { Switch, FormField } from '@grafana/ui';
 import { Options } from './types';
 
 export class TablePanelEditor extends PureComponent<PanelEditorProps<Options>> {
@@ -19,7 +20,7 @@ export class TablePanelEditor extends PureComponent<PanelEditorProps<Options>> {
     this.props.onOptionsChange({ ...this.props.options, rotate: !this.props.options.rotate });
   };
 
-  onFixedColumnsChange = ({ target }) => {
+  onFixedColumnsChange = ({ target }: any) => {
     this.props.onOptionsChange({ ...this.props.options, fixedColumns: target.value });
   };
 

@@ -134,12 +134,20 @@ func (db *Mysql) CleanDB() error {
 	return nil
 }
 
-func (db *Mysql) IsUniqueConstraintViolation(err error) bool {
+func (db *Mysql) isThisError(err error, errcode uint16) bool {
 	if driverErr, ok := err.(*mysql.MySQLError); ok {
-		if driverErr.Number == mysqlerr.ER_DUP_ENTRY {
+		if driverErr.Number == errcode {
 			return true
 		}
 	}
 
 	return false
+}
+
+func (db *Mysql) IsUniqueConstraintViolation(err error) bool {
+	return db.isThisError(err, mysqlerr.ER_DUP_ENTRY)
+}
+
+func (db *Mysql) IsDeadlock(err error) bool {
+	return db.isThisError(err, mysqlerr.ER_LOCK_DEADLOCK)
 }

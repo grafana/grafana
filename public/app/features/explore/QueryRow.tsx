@@ -1,28 +1,28 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import _ from 'lodash';
+import debounce from 'lodash/debounce';
+import has from 'lodash/has';
 import { hot } from 'react-hot-loader';
 // @ts-ignore
 import { connect } from 'react-redux';
-
 // Components
 import QueryEditor from './QueryEditor';
-
+import { QueryRowActions } from './QueryRowActions';
 // Actions
 import { changeQuery, modifyQueries, runQueries, addQueryRow } from './state/actions';
-
 // Types
 import { StoreState } from 'app/types';
 import {
-  TimeRange,
   DataQuery,
   DataSourceApi,
-  QueryFixAction,
-  DataSourceStatus,
   PanelData,
-  DataQueryError,
-} from '@grafana/ui';
-import { HistoryItem, ExploreItemState, ExploreId, ExploreMode } from 'app/types/explore';
+  HistoryItem,
+  TimeRange,
+  AbsoluteTimeRange,
+  LoadingState,
+} from '@grafana/data';
+
+import { ExploreItemState, ExploreId, ExploreMode } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
 import QueryStatus from './QueryStatus';
@@ -39,21 +39,31 @@ interface QueryRowProps extends PropsFromParent {
   className?: string;
   exploreId: ExploreId;
   datasourceInstance: DataSourceApi;
-  datasourceStatus: DataSourceStatus;
   highlightLogsExpressionAction: typeof highlightLogsExpressionAction;
   history: HistoryItem[];
   query: DataQuery;
   modifyQueries: typeof modifyQueries;
   range: TimeRange;
+  absoluteRange: AbsoluteTimeRange;
   removeQueryRowAction: typeof removeQueryRowAction;
   runQueries: typeof runQueries;
   queryResponse: PanelData;
   latency: number;
-  queryErrors: DataQueryError[];
   mode: ExploreMode;
 }
 
-export class QueryRow extends PureComponent<QueryRowProps> {
+interface QueryRowState {
+  textEditModeEnabled: boolean;
+}
+
+// Empty function to override blur execution on query field
+const noopOnBlur = () => {};
+
+export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
+  state: QueryRowState = {
+    textEditModeEnabled: false,
+  };
+
   onRunQuery = () => {
     const { exploreId } = this.props;
     this.props.runQueries(exploreId);
@@ -77,16 +87,13 @@ export class QueryRow extends PureComponent<QueryRowProps> {
     this.props.addQueryRow(exploreId, index);
   };
 
-  onClickClearButton = () => {
-    this.onChange(null, true);
-  };
-
-  onClickHintFix = (action: QueryFixAction) => {
-    const { datasourceInstance, exploreId, index } = this.props;
-    if (datasourceInstance && datasourceInstance.modifyQuery) {
-      const modifier = (queries: DataQuery, action: QueryFixAction) => datasourceInstance.modifyQuery(queries, action);
-      this.props.modifyQueries(exploreId, action, index, modifier);
-    }
+  onClickToggleDisabled = () => {
+    const { exploreId, index, query } = this.props;
+    const newQuery = {
+      ...query,
+      hide: !query.hide,
+    };
+    this.props.changeQuery(exploreId, newQuery, index, true);
   };
 
   onClickRemoveButton = () => {
@@ -95,7 +102,11 @@ export class QueryRow extends PureComponent<QueryRowProps> {
     this.props.runQueries(exploreId);
   };
 
-  updateLogsHighlights = _.debounce((value: DataQuery) => {
+  onClickToggleEditorMode = () => {
+    this.setState({ textEditModeEnabled: !this.state.textEditModeEnabled });
+  };
+
+  updateLogsHighlights = debounce((value: DataQuery) => {
     const { datasourceInstance } = this.props;
     if (datasourceInstance.getHighlighterExpression) {
       const { exploreId } = this.props;
@@ -111,39 +122,39 @@ export class QueryRow extends PureComponent<QueryRowProps> {
       query,
       exploreEvents,
       range,
-      datasourceStatus,
+      absoluteRange,
       queryResponse,
       latency,
-      queryErrors,
       mode,
     } = this.props;
+
+    const canToggleEditorModes =
+      mode === ExploreMode.Metrics && has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
+    const isNotStarted = queryResponse.state === LoadingState.NotStarted;
+    const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
     let QueryField;
 
-    if (mode === ExploreMode.Metrics && datasourceInstance.components.ExploreMetricsQueryField) {
+    if (mode === ExploreMode.Metrics && datasourceInstance.components?.ExploreMetricsQueryField) {
       QueryField = datasourceInstance.components.ExploreMetricsQueryField;
-    } else if (mode === ExploreMode.Logs && datasourceInstance.components.ExploreLogsQueryField) {
+    } else if (mode === ExploreMode.Logs && datasourceInstance.components?.ExploreLogsQueryField) {
       QueryField = datasourceInstance.components.ExploreLogsQueryField;
     } else {
-      QueryField = datasourceInstance.components.ExploreQueryField;
+      QueryField = datasourceInstance.components?.ExploreQueryField;
     }
 
     return (
       <div className="query-row">
-        <div className="query-row-status">
-          <QueryStatus queryResponse={queryResponse} latency={latency} />
-        </div>
         <div className="query-row-field flex-shrink-1">
           {QueryField ? (
             <QueryField
               datasource={datasourceInstance}
-              datasourceStatus={datasourceStatus}
               query={query}
               history={history}
               onRunQuery={this.onRunQuery}
-              onHint={this.onClickHintFix}
+              onBlur={noopOnBlur}
               onChange={this.onChange}
-              panelData={null}
-              queryResponse={queryResponse}
+              data={queryResponse}
+              absoluteRange={absoluteRange}
             />
           ) : (
             <QueryEditor
@@ -154,26 +165,22 @@ export class QueryRow extends PureComponent<QueryRowProps> {
               initialQuery={query}
               exploreEvents={exploreEvents}
               range={range}
+              textEditModeEnabled={this.state.textEditModeEnabled}
             />
           )}
         </div>
-        <div className="gf-form-inline flex-shrink-0">
-          <div className="gf-form">
-            <button className="gf-form-label gf-form-label--btn" onClick={this.onClickClearButton}>
-              <i className="fa fa-times" />
-            </button>
-          </div>
-          <div className="gf-form">
-            <button className="gf-form-label gf-form-label--btn" onClick={this.onClickAddButton}>
-              <i className="fa fa-plus" />
-            </button>
-          </div>
-          <div className="gf-form">
-            <button className="gf-form-label gf-form-label--btn" onClick={this.onClickRemoveButton}>
-              <i className="fa fa-minus" />
-            </button>
-          </div>
+        <div className="query-row-status">
+          <QueryStatus queryResponse={queryResponse} latency={query.hide ? 0 : latency} />
         </div>
+        <QueryRowActions
+          canToggleEditorModes={canToggleEditorModes}
+          isDisabled={query.hide}
+          isNotStarted={isNotStarted}
+          onClickToggleEditorMode={this.onClickToggleEditorMode}
+          onClickToggleDisabled={this.onClickToggleDisabled}
+          onClickAddButton={this.onClickAddButton}
+          onClickRemoveButton={this.onClickRemoveButton}
+        />
       </div>
     );
   }
@@ -182,37 +189,17 @@ export class QueryRow extends PureComponent<QueryRowProps> {
 function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
-  const {
-    datasourceInstance,
-    history,
-    queries,
-    range,
-    datasourceError,
-    graphResult,
-    loadingState,
-    latency,
-    queryErrors,
-    mode,
-  } = item;
+  const { datasourceInstance, history, queries, range, absoluteRange, latency, mode, queryResponse } = item;
   const query = queries[index];
-  const datasourceStatus = datasourceError ? DataSourceStatus.Disconnected : DataSourceStatus.Connected;
-  const error = queryErrors.filter(queryError => queryError.refId === query.refId)[0];
-  const series = graphResult ? graphResult : []; // TODO: use SeriesData
-  const queryResponse: PanelData = {
-    series,
-    state: loadingState,
-    error,
-  };
 
   return {
     datasourceInstance,
     history,
     query,
     range,
-    datasourceStatus,
+    absoluteRange,
     queryResponse,
     latency,
-    queryErrors,
     mode,
   };
 }
@@ -226,7 +213,6 @@ const mapDispatchToProps = {
   runQueries,
 };
 
-export default hot(module)(connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(QueryRow) as React.ComponentType<PropsFromParent>);
+export default hot(module)(
+  connect(mapStateToProps, mapDispatchToProps)(QueryRow) as React.ComponentType<PropsFromParent>
+);

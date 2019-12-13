@@ -5,7 +5,7 @@ keywords = ["grafana", "configuration", "documentation", "windows"]
 type = "docs"
 [menu.docs]
 parent = "installation"
-weight = 3
+weight = 400
 +++
 
 # Installing on Windows
@@ -14,7 +14,7 @@ Description | Download
 ------------ | -------------
 Latest stable package for Windows | [x64](https://grafana.com/grafana/download?platform=windows)
 
-Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
+Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing
 installation.
 
 ## Configure
@@ -27,7 +27,7 @@ this folder to anywhere you want Grafana to run from.  Go into the
 `custom.ini`, never `defaults.ini`.
 
 The default Grafana port is `3000`, this port requires extra permissions
-on windows. Edit `custom.ini` and uncomment the `http_port`
+on Windows. Edit `custom.ini` and uncomment the `http_port`
 configuration option (`;` is the comment character in ini files) and change it to something like `8080` or similar.
 That port should not require extra Windows privileges.
 
@@ -35,7 +35,7 @@ Default login and password `admin`/ `admin`
 
 
 Start Grafana by executing `grafana-server.exe`, located in the `bin` directory, preferably from the
-command line. If you want to run Grafana as windows service, download
+command line. If you want to run Grafana as Windows service, download
 [NSSM](https://nssm.cc/). It is very easy to add Grafana as a Windows
 service using that tool.
 
@@ -44,7 +44,7 @@ Read more about the [configuration options]({{< relref "configuration.md" >}}).
 ## Logging in for the first time
 
 To run Grafana open your browser and go to the port you configured above, e.g. http://localhost:8080/.
-Then follow the instructions [here](/guides/getting_started/).
+Then follow the instructions [here]({{< relref "../guides/getting_started/" >}}).
 
 ## Building on Windows
 

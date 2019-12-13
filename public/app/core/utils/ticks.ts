@@ -26,7 +26,7 @@ export function tickStep(start: number, stop: number, count: number): number {
   return stop < start ? -step1 : step1;
 }
 
-export function getScaledDecimals(decimals, tickSize) {
+export function getScaledDecimals(decimals: number, tickSize: number) {
   return decimals - Math.floor(Math.log(tickSize) / Math.LN10);
 }
 
@@ -71,7 +71,7 @@ export function getFlotTickSize(min: number, max: number, noTicks: number, tickD
  * Calculate axis range (min and max).
  * Implementation from Flot.
  */
-export function getFlotRange(panelMin, panelMax, datamin, datamax) {
+export function getFlotRange(panelMin: any, panelMax: any, datamin: number, datamax: number) {
   const autoscaleMargin = 0.02;
 
   let min = +(panelMin != null ? panelMin : datamin);
@@ -119,7 +119,7 @@ export function getFlotRange(panelMin, panelMax, datamin, datamax) {
  * Calculate tick decimals.
  * Implementation from Flot.
  */
-export function getFlotTickDecimals(datamin, datamax, axis, height) {
+export function getFlotTickDecimals(datamin: number, datamax: number, axis: { min: any; max: any }, height: number) {
   const { min, max } = getFlotRange(axis.min, axis.max, datamin, datamax);
   const noTicks = 0.3 * Math.sqrt(height);
   const delta = (max - min) / noTicks;
@@ -157,7 +157,7 @@ export function getFlotTickDecimals(datamin, datamax, axis, height) {
  * @param min Time from (in milliseconds)
  * @param max Time to (in milliseconds)
  */
-export function grafanaTimeFormat(ticks, min, max) {
+export function grafanaTimeFormat(ticks: number, min: number, max: number) {
   if (min && max && ticks) {
     const range = max - min;
     const secPerTick = range / ticks / 1000;
@@ -185,7 +185,7 @@ export function grafanaTimeFormat(ticks, min, max) {
 /**
  * Logarithm of value for arbitrary base.
  */
-export function logp(value, base) {
+export function logp(value: number, base: number) {
   return Math.log(value) / Math.log(base);
 }
 

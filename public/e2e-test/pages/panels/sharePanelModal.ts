@@ -1,5 +1,4 @@
-import { ClickablePageObjectType, ClickablePageObject, Selector } from 'e2e-test/core/pageObjects';
-import { TestPage } from 'e2e-test/core/pages';
+import { ClickablePageObjectType, TestPage } from '@grafana/toolkit/src/e2e';
 
 export interface SharePanelModal {
   directLinkRenderedImage: ClickablePageObjectType;
@@ -7,6 +6,6 @@ export interface SharePanelModal {
 
 export const sharePanelModal = new TestPage<SharePanelModal>({
   pageObjects: {
-    directLinkRenderedImage: new ClickablePageObject(Selector.fromAriaLabel('Link to rendered image')),
+    directLinkRenderedImage: 'Link to rendered image',
   },
 });

@@ -3,11 +3,17 @@ import _ from 'lodash';
 import React, { ReactElement } from 'react';
 import { GridCellProps } from 'react-virtualized';
 import { Table, Props } from './Table';
-import { ValueFormatter, getValueFormat, getColorFromHexRgbOrName } from '../../utils/index';
-import { GrafanaTheme } from '../../types/theme';
-import { InterpolateFunction } from '../../types/panel';
-import { Field } from '../../types/data';
-import { dateTime } from '../../utils/moment_wrapper';
+import {
+  Field,
+  dateTime,
+  FieldConfig,
+  getValueFormat,
+  GrafanaTheme,
+  ValueFormatter,
+  getColorFromHexRgbOrName,
+  InterpolateFunction,
+  formattedValueToString,
+} from '@grafana/data';
 
 export interface TableCellBuilderOptions {
   value: any;
@@ -74,7 +80,7 @@ export interface ColumnStyle {
 // private replaceVariables: InterpolateFunction,
 // private fmt?:ValueFormatter) {
 
-export function getCellBuilder(schema: Field, style: ColumnStyle | null, props: Props): TableCellBuilder {
+export function getCellBuilder(schema: FieldConfig, style: ColumnStyle | null, props: Props): TableCellBuilder {
   if (!style) {
     return simpleCellBuilder;
   }
@@ -154,7 +160,7 @@ class CellBuilderWithStyle {
     private mapper: ValueMapper,
     private style: ColumnStyle,
     private theme: GrafanaTheme,
-    private column: Field,
+    private schema: FieldConfig,
     private replaceVariables: InterpolateFunction,
     private fmt?: ValueFormatter
   ) {}
@@ -245,7 +251,7 @@ class CellBuilderWithStyle {
     }
 
     // ??? I don't think this will still work!
-    if (this.column.filterable) {
+    if (this.schema.filterable) {
       cellClasses.push('table-panel-cell-filterable');
       value = (
         <>
@@ -284,5 +290,35 @@ class CellBuilderWithStyle {
     }
 
     return simpleCellBuilder({ value, props, className });
+  };
+}
+
+export function getFieldCellBuilder(field: Field, style: ColumnStyle | null, p: Props): TableCellBuilder {
+  if (!field.display) {
+    return getCellBuilder(field.config || {}, style, p);
+  }
+
+  return (cell: TableCellBuilderOptions) => {
+    const { props } = cell;
+    const disp = field.display!(cell.value);
+
+    let style = props.style;
+    if (disp.color) {
+      style = {
+        ...props.style,
+        background: disp.color,
+      };
+    }
+
+    let clazz = 'gf-table-cell';
+    if (cell.className) {
+      clazz += ' ' + cell.className;
+    }
+
+    return (
+      <div style={style} className={clazz} title={disp.title}>
+        {formattedValueToString(disp)}
+      </div>
+    );
   };
 }

@@ -1,86 +1,70 @@
-import React, { useContext } from 'react';
-import { AbstractButton, ButtonProps, ButtonSize, LinkButtonProps } from './AbstractButton';
+import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, useContext } from 'react';
 import { ThemeContext } from '../../themes';
+import { getButtonStyles } from './styles';
+import { ButtonContent } from './ButtonContent';
+import cx from 'classnames';
+import { ButtonSize, ButtonStyles, ButtonVariant } from './types';
 
-const getSizeNameComponentSegment = (size: ButtonSize) => {
-  switch (size) {
-    case ButtonSize.ExtraSmall:
-      return 'ExtraSmall';
-    case ButtonSize.Small:
-      return 'Small';
-    case ButtonSize.Large:
-      return 'Large';
-    case ButtonSize.ExtraLarge:
-      return 'ExtraLarge';
-    default:
-      return 'Medium';
-  }
+type CommonProps = {
+  size?: ButtonSize;
+  variant?: ButtonVariant;
+  /**
+   * icon prop is a temporary solution. It accepts legacy icon class names for the icon to be rendered.
+   * TODO: migrate to a component when we are going to migrate icons to @grafana/ui
+   */
+  icon?: string;
+  className?: string;
+  styles?: ButtonStyles;
 };
 
-const buttonFactory: <T>(renderAs: string, size: ButtonSize, displayName: string) => React.ComponentType<T> = (
-  renderAs,
-  size,
-  displayName
-) => {
-  const ButtonComponent: React.FunctionComponent<any> = props => {
-    const theme = useContext(ThemeContext);
-    return <AbstractButton {...props} size={size} renderAs={renderAs} theme={theme} />;
-  };
-  ButtonComponent.displayName = displayName;
-
-  return ButtonComponent;
-};
-
+type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 export const Button: React.FunctionComponent<ButtonProps> = props => {
   const theme = useContext(ThemeContext);
-  return <AbstractButton {...props} renderAs="button" theme={theme} />;
+  const { size, variant, icon, children, className, styles: stylesProp, ...buttonProps } = props;
+
+  // Default this to 'button', otherwise html defaults to 'submit' which then submits any form it is in.
+  buttonProps.type = buttonProps.type || 'button';
+  const styles: ButtonStyles =
+    stylesProp ||
+    getButtonStyles({
+      theme,
+      size: size || 'md',
+      variant: variant || 'primary',
+    });
+
+  return (
+    <button className={cx(styles.button, className)} {...buttonProps}>
+      <ButtonContent iconClassName={styles.icon} className={styles.iconWrap} icon={icon}>
+        {children}
+      </ButtonContent>
+    </button>
+  );
 };
 Button.displayName = 'Button';
 
+type LinkButtonProps = CommonProps &
+  AnchorHTMLAttributes<HTMLAnchorElement> & {
+    // We allow disabled here even though it is not standard for a link. We use it as a selector to style it as
+    // disabled.
+    disabled?: boolean;
+  };
 export const LinkButton: React.FunctionComponent<LinkButtonProps> = props => {
   const theme = useContext(ThemeContext);
-  return <AbstractButton {...props} renderAs="a" theme={theme} />;
+  const { size, variant, icon, children, className, styles: stylesProp, ...anchorProps } = props;
+  const styles: ButtonStyles =
+    stylesProp ||
+    getButtonStyles({
+      theme,
+      size: size || 'md',
+      variant: variant || 'primary',
+    });
+
+  return (
+    <a className={cx(styles.button, className)} {...anchorProps}>
+      <ButtonContent iconClassName={styles.icon} className={styles.iconWrap} icon={icon}>
+        {children}
+      </ButtonContent>
+    </a>
+  );
 };
 LinkButton.displayName = 'LinkButton';
-
-export const ExtraSmallButton = buttonFactory<ButtonProps>(
-  'button',
-  ButtonSize.ExtraSmall,
-  `${getSizeNameComponentSegment(ButtonSize.ExtraSmall)}Button`
-);
-export const SmallButton = buttonFactory<ButtonProps>(
-  'button',
-  ButtonSize.Small,
-  `${getSizeNameComponentSegment(ButtonSize.Small)}Button`
-);
-export const LargeButton = buttonFactory<ButtonProps>(
-  'button',
-  ButtonSize.Large,
-  `${getSizeNameComponentSegment(ButtonSize.Large)}Button`
-);
-export const ExtraLargeButton = buttonFactory<ButtonProps>(
-  'button',
-  ButtonSize.ExtraLarge,
-  `${getSizeNameComponentSegment(ButtonSize.ExtraLarge)}Button`
-);
-
-export const ExtraSmallLinkButton = buttonFactory<LinkButtonProps>(
-  'a',
-  ButtonSize.ExtraSmall,
-  `${getSizeNameComponentSegment(ButtonSize.ExtraSmall)}LinkButton`
-);
-export const SmallLinkButton = buttonFactory<LinkButtonProps>(
-  'a',
-  ButtonSize.Small,
-  `${getSizeNameComponentSegment(ButtonSize.Small)}LinkButton`
-);
-export const LargeLinkButton = buttonFactory<LinkButtonProps>(
-  'a',
-  ButtonSize.Large,
-  `${getSizeNameComponentSegment(ButtonSize.Large)}LinkButton`
-);
-export const ExtraLargeLinkButton = buttonFactory<LinkButtonProps>(
-  'a',
-  ButtonSize.ExtraLarge,
-  `${getSizeNameComponentSegment(ButtonSize.ExtraLarge)}LinkButton`
-);

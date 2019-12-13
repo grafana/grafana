@@ -1,4 +1,4 @@
-import { DataQuery } from '@grafana/ui/src/types';
+import { DataQuery } from '@grafana/data';
 
 export interface Scenario {
   id: string;
@@ -18,6 +18,6 @@ export interface StreamingQuery {
   speed: number;
   spread: number;
   noise: number; // wiggle around the signal for min/max
-  buffer?: number;
+  bands?: number; // number of bands around the middle band
   url?: string; // the Fetch URL
 }

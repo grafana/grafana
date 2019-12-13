@@ -11,17 +11,25 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { getColorFromHexRgbOrName, LegacyResponseData, SeriesData } from '@grafana/ui';
-import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
-import { PanelQueryRunnerFormat } from 'app/features/dashboard/state/PanelQueryRunner';
+import { VariableSuggestion } from '@grafana/ui';
+import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
+import { getColorFromHexRgbOrName, PanelEvents, DataFrame, DataLink, DateTimeInput } from '@grafana/data';
+
+import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
+import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
+
+import { auto } from 'angular';
+import { AnnotationsSrv } from 'app/features/annotations/all';
+import { CoreEvents } from 'app/types';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
 
   renderError: boolean;
   hiddenSeries: any = {};
+  hiddenSeriesTainted = false;
   seriesList: TimeSeries[] = [];
-  dataList: SeriesData[] = [];
+  dataList: DataFrame[] = [];
   annotations: any = [];
   alertState: any;
 
@@ -30,8 +38,10 @@ class GraphCtrl extends MetricsPanelCtrl {
   colors: any = [];
   subTabIndex: number;
   processor: DataProcessor;
+  contextMenuCtrl: GraphContextMenuCtrl;
+  linkVariableSuggestions: VariableSuggestion[] = [];
 
-  panelDefaults = {
+  panelDefaults: any = {
     // datasource name, null = default datasource
     datasource: null,
     // sets client side (flot) or native graphite png renderer (png)
@@ -69,10 +79,14 @@ class GraphCtrl extends MetricsPanelCtrl {
     lines: true,
     // fill factor
     fill: 1,
+    // fill gradient
+    fillGradient: 0,
     // line width in pixels
     linewidth: 1,
     // show/hide dashed line
     dashes: false,
+    // show/hide line
+    hiddenSeries: false,
     // length of a dash
     dashLength: 10,
     // length of space between two dashes
@@ -118,26 +132,32 @@ class GraphCtrl extends MetricsPanelCtrl {
     seriesOverrides: [],
     thresholds: [],
     timeRegions: [],
+    options: {
+      dataLinks: [],
+    },
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private annotationsSrv) {
+  constructor($scope: any, $injector: auto.IInjectorService, private annotationsSrv: AnnotationsSrv) {
     super($scope, $injector);
 
     _.defaults(this.panel, this.panelDefaults);
     _.defaults(this.panel.tooltip, this.panelDefaults.tooltip);
     _.defaults(this.panel.legend, this.panelDefaults.legend);
     _.defaults(this.panel.xaxis, this.panelDefaults.xaxis);
+    _.defaults(this.panel.options, this.panelDefaults.options);
 
-    this.dataFormat = PanelQueryRunnerFormat.series;
+    this.useDataFrames = true;
     this.processor = new DataProcessor(this.panel);
+    this.contextMenuCtrl = new GraphContextMenuCtrl($scope);
 
-    this.events.on('render', this.onRender.bind(this));
-    this.events.on('data-received', this.onDataReceived.bind(this));
-    this.events.on('data-error', this.onDataError.bind(this));
-    this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
-    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
-    this.events.on('init-panel-actions', this.onInitPanelActions.bind(this));
+    this.events.on(PanelEvents.render, this.onRender.bind(this));
+    this.events.on(CoreEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
+    this.events.on(PanelEvents.dataSnapshotLoad, this.onDataSnapshotLoad.bind(this));
+    this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
+    this.events.on(PanelEvents.initPanelActions, this.onInitPanelActions.bind(this));
+
+    this.onDataLinksChange = this.onDataLinksChange.bind(this);
   }
 
   onInitEditMode() {
@@ -145,15 +165,17 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Axes', axesEditorComponent);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html');
     this.addEditorTab('Thresholds & Time Regions', 'public/app/plugins/panel/graph/tab_thresholds_time_regions.html');
+    this.addEditorTab('Data links', 'public/app/plugins/panel/graph/tab_drilldown_links.html');
     this.subTabIndex = 0;
+    this.hiddenSeriesTainted = false;
   }
 
-  onInitPanelActions(actions) {
+  onInitPanelActions(actions: any[]) {
     actions.push({ text: 'Export CSV', click: 'ctrl.exportCsv()' });
     actions.push({ text: 'Toggle legend', click: 'ctrl.toggleLegend()', shortcut: 'p l' });
   }
 
-  issueQueries(datasource) {
+  issueQueries(datasource: any) {
     this.annotationsPromise = this.annotationsSrv.getAnnotations({
       dashboard: this.dashboard,
       panel: this.panel,
@@ -166,44 +188,34 @@ class GraphCtrl extends MetricsPanelCtrl {
      * (but not wait for completion). This resolves
      * issue 11806.
      */
-    return this.annotationsSrv.datasourcePromises.then(r => {
+    return this.annotationsSrv.datasourcePromises.then((r: any) => {
       return super.issueQueries(datasource);
     });
   }
 
-  zoomOut(evt) {
-    this.publishAppEvent('zoom-out', 2);
+  zoomOut(evt: any) {
+    this.publishAppEvent(CoreEvents.zoomOut, 2);
   }
 
-  onDataSnapshotLoad(snapshotData) {
+  onDataSnapshotLoad(snapshotData: any) {
     this.annotationsPromise = this.annotationsSrv.getAnnotations({
       dashboard: this.dashboard,
       panel: this.panel,
       range: this.range,
     });
-    this.onDataReceived(snapshotData);
+
+    const frames = getProcessedDataFrames(snapshotData);
+    this.onDataFramesReceived(frames);
   }
 
-  onDataError(err) {
-    this.seriesList = [];
-    this.annotations = [];
-    this.render([]);
-  }
-
-  // This should only be called from the snapshot callback
-  onDataReceived(dataList: LegacyResponseData[]) {
-    this.handleSeriesData(getProcessedSeriesData(dataList));
-  }
-
-  // Directly support SeriesData skipping event callbacks
-  handleSeriesData(data: SeriesData[]) {
-    super.handleSeriesData(data);
-
+  onDataFramesReceived(data: DataFrame[]) {
     this.dataList = data;
     this.seriesList = this.processor.getSeriesList({
       dataList: this.dataList,
       range: this.range,
     });
+
+    this.linkVariableSuggestions = getDataLinksVariableSuggestions(data);
 
     this.dataWarning = null;
     const datapointsCount = this.seriesList.reduce((prev, series) => {
@@ -212,14 +224,14 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     if (datapointsCount === 0) {
       this.dataWarning = {
-        title: 'No data points',
-        tip: 'No datapoints returned from data query',
+        title: 'No data',
+        tip: 'No data returned from query',
       };
     } else {
       for (const series of this.seriesList) {
         if (series.isOutsideRange) {
           this.dataWarning = {
-            title: 'Data points outside time range',
+            title: 'Data outside time range',
             tip: 'Can be caused by timezone mismatch or missing time filter in query',
           };
           break;
@@ -228,7 +240,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     }
 
     this.annotationsPromise.then(
-      result => {
+      (result: { alertState: any; annotations: any }) => {
         this.loading = false;
         this.alertState = result.alertState;
         this.annotations = result.annotations;
@@ -252,27 +264,31 @@ class GraphCtrl extends MetricsPanelCtrl {
       if (series.unit) {
         this.panel.yaxes[series.yaxis - 1].format = series.unit;
       }
+      if (this.hiddenSeriesTainted === false && series.hiddenSeries === true) {
+        this.hiddenSeries[series.alias] = true;
+      }
     }
   }
 
-  onColorChange = (series, color) => {
+  onColorChange = (series: any, color: string) => {
     series.setColor(getColorFromHexRgbOrName(color, config.theme.type));
     this.panel.aliasColors[series.alias] = color;
     this.render();
   };
 
-  onToggleSeries = hiddenSeries => {
+  onToggleSeries = (hiddenSeries: any) => {
+    this.hiddenSeriesTainted = true;
     this.hiddenSeries = hiddenSeries;
     this.render();
   };
 
-  onToggleSort = (sortBy, sortDesc) => {
+  onToggleSort = (sortBy: any, sortDesc: any) => {
     this.panel.legend.sort = sortBy;
     this.panel.legend.sortDesc = sortDesc;
     this.render();
   };
 
-  onToggleAxis = info => {
+  onToggleAxis = (info: { alias: any; yaxis: any }) => {
     let override: any = _.find(this.panel.seriesOverrides, { alias: info.alias });
     if (!override) {
       override = { alias: info.alias };
@@ -282,11 +298,18 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.render();
   };
 
-  addSeriesOverride(override) {
+  onDataLinksChange(dataLinks: DataLink[]) {
+    this.panel.updateOptions({
+      ...this.panel.options,
+      dataLinks,
+    });
+  }
+
+  addSeriesOverride(override: any) {
     this.panel.seriesOverrides.push(override || {});
   }
 
-  removeSeriesOverride(override) {
+  removeSeriesOverride(override: any) {
     this.panel.seriesOverrides = _.without(this.panel.seriesOverrides, override);
     this.render();
   }
@@ -304,13 +327,27 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   exportCsv() {
     const scope = this.$scope.$new(true);
-    scope.seriesList = this.seriesList;
-    this.publishAppEvent('show-modal', {
+    scope.seriesList = this.seriesList
+      .filter(series => !this.panel.legend.hideEmpty || !series.allIsNull)
+      .filter(series => !this.panel.legend.hideZero || !series.allIsZero);
+    this.publishAppEvent(CoreEvents.showModal, {
       templateHtml: '<export-data-modal data="seriesList"></export-data-modal>',
       scope,
       modalClass: 'modal--narrow',
     });
   }
+
+  onContextMenuClose = () => {
+    this.contextMenuCtrl.toggleMenu();
+  };
+
+  formatDate = (date: DateTimeInput, format?: string) => {
+    return this.dashboard.formatDate.apply(this.dashboard, [date, format]);
+  };
+
+  getDataFrameByRefId = (refId: string) => {
+    return this.dataList.filter(dataFrame => dataFrame.refId === refId)[0];
+  };
 }
 
 export { GraphCtrl, GraphCtrl as PanelCtrl };

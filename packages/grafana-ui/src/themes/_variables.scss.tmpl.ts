@@ -1,6 +1,6 @@
 /* tslint:disable:max-line-length */
 
-import { GrafanaThemeCommons } from '../types';
+import { GrafanaThemeCommons } from '@grafana/data';
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
 
 export const commonThemeVarsTemplate = (theme: GrafanaThemeCommons) =>
@@ -171,13 +171,12 @@ $zindex-tooltip: ${theme.zIndex.tooltip};
 $zindex-modal-backdrop: ${theme.zIndex.modalBackdrop};
 $zindex-modal: ${theme.zIndex.modal};
 $zindex-typeahead: ${theme.zIndex.typeahead};
-$zindex-timepicker-popover: 1070;
 
 // Buttons
 //
 
 $btn-padding-x: 14px !default;
-$btn-padding-y: 10px !default;
+$btn-padding-y: 8px !default;
 $btn-line-height: 1 !default;
 $btn-font-weight: ${theme.typography.weight.semibold} !default;
 
@@ -194,6 +193,7 @@ $btn-semi-transparent: rgba(0, 0, 0, 0.2) !default;
 
 // sidemenu
 $side-menu-width: 60px;
+$navbar-padding: 20px;
 
 // dashboard
 $dashboard-padding: $space-md;

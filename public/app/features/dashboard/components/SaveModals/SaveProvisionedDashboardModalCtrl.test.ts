@@ -6,7 +6,7 @@ describe('SaveProvisionedDashboardModalCtrl', () => {
     id: 5,
   };
 
-  const mockDashboardSrv = {
+  const mockDashboardSrv: any = {
     getCurrent: () => {
       return {
         id: 5,
