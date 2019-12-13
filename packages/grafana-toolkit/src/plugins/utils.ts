@@ -2,7 +2,7 @@ import execa from 'execa';
 import path from 'path';
 import fs from 'fs';
 import { KeyValue } from '@grafana/data';
-import { PluginDevInfo, ExtensionSize, ZipFileInfo, PluginBuildReport, PluginHistory } from './types';
+import { ExtensionSize, ZipFileInfo } from './types';
 
 const md5File = require('md5-file');
 
@@ -91,17 +91,4 @@ export function findImagesInFolder(dir: string, prefix = '', append?: string[]):
   }
 
   return imgs;
-}
-
-export function appendPluginHistory(report: PluginBuildReport, info: PluginDevInfo, history: PluginHistory) {
-  history.last = {
-    info,
-    report,
-  };
-
-  if (!history.size) {
-    history.size = [];
-  }
-
-  console.log('TODO, append build stats to the last one');
 }

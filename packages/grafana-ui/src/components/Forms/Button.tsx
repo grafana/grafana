@@ -3,7 +3,7 @@ import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
 import { selectThemeVariant, stylesFactory, ThemeContext } from '../../themes';
 import { Button as DefaultButton, LinkButton as DefaultLinkButton } from '../Button/Button';
-import { getFocusStyle } from './commonStyles';
+import { getFocusStyle, getPropertiesForButtonSize } from './commonStyles';
 import { ButtonSize, StyleDeps } from '../Button/types';
 import { GrafanaTheme } from '@grafana/data';
 
@@ -20,38 +20,6 @@ const buttonVariantStyles = (from: string, to: string, textColor: string) => css
     outline: none;
   }
 `;
-
-const getPropertiesForSize = (theme: GrafanaTheme, size: ButtonSize) => {
-  switch (size) {
-    case 'sm':
-      return {
-        padding: `0 ${theme.spacing.sm}`,
-        fontSize: theme.typography.size.sm,
-        height: theme.height.sm,
-      };
-
-    case 'md':
-      return {
-        padding: `0 ${theme.spacing.md}`,
-        fontSize: theme.typography.size.md,
-        height: `${theme.spacing.formButtonHeight}px`,
-      };
-
-    case 'lg':
-      return {
-        padding: `0 ${theme.spacing.lg}`,
-        fontSize: theme.typography.size.lg,
-        height: theme.height.lg,
-      };
-
-    default:
-      return {
-        padding: `0 ${theme.spacing.md}`,
-        fontSize: theme.typography.size.base,
-        height: theme.height.md,
-      };
-  }
-};
 
 const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) => {
   switch (variant) {
@@ -84,6 +52,19 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
         background: buttonVariantStyles(theme.colors.redBase, theme.colors.redShade, theme.colors.white),
       };
 
+    case 'link':
+      return {
+        borderColor: 'transparent',
+        background: buttonVariantStyles('transparent', 'transparent', theme.colors.linkExternal),
+        variantStyles: css`
+          text-decoration: underline;
+          &:focus {
+            outline: none;
+            box-shadow: none;
+          }
+        `,
+      };
+
     case 'primary':
     default:
       return {
@@ -96,8 +77,8 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
 // Need to do this because of mismatch between variants in standard buttons and here
 type StyleProps = Omit<StyleDeps, 'variant'> & { variant: ButtonVariant };
 export const getButtonStyles = stylesFactory(({ theme, size, variant }: StyleProps) => {
-  const { padding, fontSize, height } = getPropertiesForSize(theme, size);
-  const { background, borderColor } = getPropertiesForVariant(theme, variant);
+  const { padding, fontSize, height } = getPropertiesForButtonSize(theme, size);
+  const { background, borderColor, variantStyles } = getPropertiesForVariant(theme, variant);
 
   return {
     button: cx(
@@ -107,14 +88,14 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant }: StylePro
         display: inline-flex;
         align-items: center;
         font-weight: ${theme.typography.weight.semibold};
-        font-size: ${fontSize};
         font-family: ${theme.typography.fontFamily.sansSerif};
         line-height: ${theme.typography.lineHeight.sm};
+        font-size: ${fontSize};
         padding: ${padding};
+        height: ${height};
         vertical-align: middle;
         cursor: pointer;
         border: 1px solid ${borderColor};
-        height: ${height};
         border-radius: ${theme.border.radius.sm};
         ${background};
 
@@ -125,7 +106,10 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant }: StylePro
           box-shadow: none;
         }
       `,
-      getFocusStyle(theme)
+      getFocusStyle(theme),
+      css`
+        ${variantStyles}
+      `
     ),
     iconWrap: css`
       label: button-icon-wrap;
@@ -135,8 +119,8 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant }: StylePro
   };
 });
 
-// These are different from the standard Button where there are 5 variants.
-export type ButtonVariant = 'primary' | 'secondary' | 'destructive';
+// These are different from the standard Button where there are more variants.
+export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'link';
 
 // These also needs to be different because the ButtonVariant is different
 type CommonProps = {

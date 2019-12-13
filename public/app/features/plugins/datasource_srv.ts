@@ -190,9 +190,9 @@ export class DatasourceSrv implements DataSourceService {
   }
 }
 
-export function getDatasourceSrv(): DatasourceSrv {
+export const getDatasourceSrv = (): DatasourceSrv => {
   return getDataSourceService() as DatasourceSrv;
-}
+};
 
 coreModule.service('datasourceSrv', DatasourceSrv);
 export default DatasourceSrv;

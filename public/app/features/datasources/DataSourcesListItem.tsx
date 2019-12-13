@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import { DataSourceSettings } from '@grafana/data';
+import { e2e } from '@grafana/e2e';
 
 export interface Props {
   dataSource: DataSourceSettings;
@@ -19,7 +20,7 @@ export class DataSourcesListItem extends PureComponent<Props> {
               <img src={dataSource.typeLogoUrl} alt={dataSource.name} />
             </figure>
             <div className="card-item-details">
-              <div className="card-item-name" aria-label={`Data source list item for ${dataSource.name}`}>
+              <div className="card-item-name" aria-label={e2e.pages.DataSources.selectors.dataSources(dataSource.name)}>
                 {dataSource.name}
                 {dataSource.isDefault && <span className="btn btn-secondary btn-small card-item-label">default</span>}
               </div>

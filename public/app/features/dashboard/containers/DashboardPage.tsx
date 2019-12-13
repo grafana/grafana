@@ -1,37 +1,33 @@
 // Libraries
 import $ from 'jquery';
-import React, { PureComponent, MouseEvent } from 'react';
+import React, { MouseEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
-
 // Services & Utils
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getMessageFromError } from 'app/core/utils/errors';
-
 // Components
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
 import { SubMenu } from '../components/SubMenu';
 import { DashboardSettings } from '../components/DashboardSettings';
-import { CustomScrollbar, Alert } from '@grafana/ui';
-
+import { Alert, CustomScrollbar } from '@grafana/ui';
 // Redux
 import { initDashboard } from '../state/initDashboard';
 import { cleanUpDashboard } from '../state/actions';
-import { updateLocation } from 'app/core/actions';
-import { notifyApp } from 'app/core/actions';
-
+import { notifyApp, updateLocation } from 'app/core/actions';
 // Types
 import {
-  StoreState,
+  AppNotificationSeverity,
+  DashboardInitError,
   DashboardInitPhase,
   DashboardRouteInfo,
-  DashboardInitError,
-  AppNotificationSeverity,
+  StoreState,
 } from 'app/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
+
 export interface Props {
   urlUid?: string;
   urlSlug?: string;
@@ -301,7 +297,7 @@ export class DashboardPage extends PureComponent<Props, State> {
             {initError && this.renderInitFailedState()}
 
             <div className={gridWrapperClasses}>
-              {dashboard.meta.submenuEnabled && <SubMenu dashboard={dashboard} />}
+              <SubMenu dashboard={dashboard} />
               <DashboardGrid
                 dashboard={dashboard}
                 isEditing={isEditing}

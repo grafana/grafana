@@ -11,7 +11,7 @@ interface Props {
 }
 
 function formatCreateLabel(input: string) {
-  return `Unit suffix: ${input}`;
+  return `Custom unit: ${input}`;
 }
 
 export class UnitPicker extends PureComponent<Props> {
