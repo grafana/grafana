@@ -33,7 +33,7 @@ let orgSwitcher: OrgSwitcher;
 describe('OrgSwitcher', () => {
   describe('when switching org', () => {
     beforeEach(async () => {
-      wrapper = shallow(<OrgSwitcher onDismiss={() => {}} isOpen={true} />);
+      wrapper = shallow(<OrgSwitcher onDismiss={() => {}} />);
       orgSwitcher = wrapper.instance() as OrgSwitcher;
       orgSwitcher.setWindowLocation = jest.fn();
       wrapper.update();
