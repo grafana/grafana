@@ -1,0 +1,37 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`FolderPicker should render 1`] = `
+<Fragment>
+  <div
+    className="gf-form-inline"
+  >
+    <div
+      className="gf-form"
+    >
+      <label
+        className="gf-form-label width-7"
+      >
+        Folder
+      </label>
+      <AsyncSelect
+        autoFocus={false}
+        backspaceRemovesValue={true}
+        className=""
+        components={Object {}}
+        defaultOptions={true}
+        isClearable={false}
+        isDisabled={false}
+        isLoading={true}
+        isMulti={false}
+        isSearchable={true}
+        loadOptions={[Function]}
+        loadingMessage={[Function]}
+        maxMenuHeight={300}
+        onChange={[Function]}
+        openMenuOnFocus={false}
+        value={Object {}}
+      />
+    </div>
+  </div>
+</Fragment>
+`;

@@ -102,10 +102,10 @@ class AlertListPanel extends PanelCtrl {
     });
   }
 
-  onFolderChange(folder: any) {
+  onFolderChange = (folder: any) => {
     this.panel.folderId = folder.id;
     this.refresh();
-  }
+  };
 
   getStateChanges() {
     const params: any = {

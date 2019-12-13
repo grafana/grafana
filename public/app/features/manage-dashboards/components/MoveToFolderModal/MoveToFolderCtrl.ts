@@ -39,13 +39,13 @@ export class MoveToFolderCtrl {
     );
   }
 
-  onEnterFolderCreation() {
+  onEnterFolderCreation = () => {
     this.isValidFolderSelection = false;
-  }
+  };
 
-  onExitFolderCreation() {
+  onExitFolderCreation = () => {
     this.isValidFolderSelection = true;
-  }
+  };
 }
 
 export function moveToFolderModal() {
