@@ -53,6 +53,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         top: -3px;
       }
     `,
+    logDetailsDefaultCursor: css`
+      label: logDetailsDefaultCursor;
+      cursor: default;
+    `,
   };
 });
 
@@ -145,7 +149,11 @@ class UnThemedLogDetails extends PureComponent<Props> {
     const parsedFieldsAvailable = fields && fields.length > 0;
 
     return (
-      <tr className={className} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+      <tr
+        className={cx(className, styles.logDetailsDefaultCursor)}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+      >
         {showDuplicates && <td />}
         <td className={cx(style.logsRowLevel, styles.logsRowLevelDetails)} />
         <td colSpan={4}>

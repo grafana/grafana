@@ -47,6 +47,10 @@ const getStyles = (theme: GrafanaTheme) => ({
   button: css`
     margin-right: ${theme.spacing.sm};
   `,
+  tableCell: css`
+    display: table-cell;
+    padding-right: ${theme.spacing.sm};
+  `,
 });
 
 export interface Props extends Themeable {
@@ -146,19 +150,22 @@ class LiveLogs extends PureComponent<Props, State> {
         >
           {this.rowsToRender().map((row: LogRowModel) => {
             return (
-              <td className={cx(logsRow, styles.logsRowFade)} key={row.uid}>
+              <div className={cx(styles.tableCell, logsRow, styles.logsRowFade)} key={row.uid}>
                 {showUtc && (
-                  <td className={cx(logsRowLocalTime)} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
+                  <div
+                    className={cx(styles.tableCell, logsRowLocalTime)}
+                    title={`Local: ${row.timeLocal} (${row.timeFromNow})`}
+                  >
                     {row.timeUtc}
-                  </td>
+                  </div>
                 )}
                 {!showUtc && (
-                  <td className={cx(logsRowLocalTime)} title={`${row.timeUtc} (${row.timeFromNow})`}>
+                  <div className={cx(styles.tableCell, logsRowLocalTime)} title={`${row.timeUtc} (${row.timeFromNow})`}>
                     {row.timeLocal}
-                  </td>
+                  </div>
                 )}
-                <td className={cx(logsRowMessage)}>{row.entry}</td>
-              </td>
+                <div className={cx(styles.tableCell, logsRowMessage)}>{row.entry}</div>
+              </div>
             );
           })}
           <div
