@@ -79,7 +79,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
 
   /**
    * We are using onMouse events to change background of Log Details Table to hover-state-background when
-   * hovered over Log Row and vice versa. This can't be done with css.
+   * hovered over Log Row and vice versa. This can't be done with css because we use 2 separate table rows without common parent element.
    */
   addHoverBackground = () => {
     this.setState({
