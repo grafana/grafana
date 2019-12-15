@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, ReactNode } from 'react';
 import { css } from 'emotion';
 import { TimeOption } from '@grafana/data';
 import { TimeRange } from '@grafana/data';
@@ -23,11 +23,16 @@ interface Props {
   options: TimeOption[];
   value?: TimeRange;
   onSelect: (option: TimeRange) => void;
+  placeholderEmpty?: ReactNode;
 }
 
 const TimeRangeList: React.FC<Props> = props => {
   const styles = getStyles();
-  const { title } = props;
+  const { title, options, placeholderEmpty } = props;
+
+  if (typeof placeholderEmpty !== 'undefined' && options.length <= 0) {
+    return <>{placeholderEmpty}</>;
+  }
 
   if (!title) {
     return <Options {...props} />;

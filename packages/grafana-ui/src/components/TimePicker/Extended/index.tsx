@@ -121,6 +121,22 @@ const getFullScreenStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
+const getEmptyListStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    container: css`
+      background-color: #f7f8fa;
+      padding: 12px;
+      margin: 12px;
+    `,
+    section: css`
+      margin-bottom: 12px;
+    `,
+    link: css`
+      color: ${theme.colors.linkExternal};
+    `,
+  };
+});
+
 interface Props {
   selected: TimeRange;
   onChange: (timeRange: TimeRange) => void;
@@ -200,6 +216,7 @@ const NarrowScreenForm = memo<FormProps>(props => {
             options={[]}
             onSelect={props.onChange}
             value={props.selected}
+            placeholderEmpty={null}
           />
         </div>
       )}
@@ -229,17 +246,33 @@ const FullScreenForm = memo<FormProps>(props => {
           options={[]}
           onSelect={props.onChange}
           value={props.selected}
+          placeholderEmpty={<EmptyRecentList />}
         />
       </div>
     </>
   );
 });
 
-// function valueAsString(value: DateTime | string): string {
-//   if (isDateTime(value)) {
-//     return value.format(TIME_FORMAT);
-//   }
-//   return value;
-// }
+const EmptyRecentList = memo(() => {
+  const theme = useTheme();
+  const styles = getEmptyListStyles(theme);
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.section}>
+        <span>
+          It looks like you haven't used this timer picker before. As soon as you enter some time intervals, recently
+          used intervals will appear here.
+        </span>
+      </div>
+      <div>
+        <a className={styles.link} href="#" target="_new">
+          Read the documentation
+        </a>
+        <span> to find out more about how to enter custom tiem ranges.</span>
+      </div>
+    </div>
+  );
+});
 
 export default ExtendedTimePicker;

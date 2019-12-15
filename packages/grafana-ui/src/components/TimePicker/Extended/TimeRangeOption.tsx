@@ -17,7 +17,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 6px 9px 6px 9px;
+      padding: 7px 9px 7px 9px;
       border-left: 2px solid rgba(255, 255, 255, 0);
 
       &:hover {
