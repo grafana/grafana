@@ -4,8 +4,10 @@ import { stringToDateTimeType, isValidTimeString } from '../time';
 import TimePickerCalendar from './TimePickerCalendar';
 import Forms from '../../Forms';
 
+type ShowCalendarOn = 'ClickOnInputButton' | 'FocusOnInput';
+
 interface Props {
-  isFullscreen: boolean;
+  showCalendarOn: ShowCalendarOn;
   value: TimeRange;
   onApply: (range: TimeRange) => void;
 }
@@ -15,7 +17,9 @@ interface InputState {
 }
 
 const TimePickerForm: React.FC<Props> = props => {
-  const { value, isFullscreen } = props;
+  const { value, showCalendarOn } = props;
+  const isFullscreen = showCalendarOn === 'FocusOnInput';
+
   const [from, setFrom] = useState<InputState>(valueToState(value.to));
   const [to, setTo] = useState<InputState>(valueToState(value.from));
   const [isOpen, setOpen] = useState(false);

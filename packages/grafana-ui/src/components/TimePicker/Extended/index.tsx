@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { useMedia } from 'react-use';
 import { css } from 'emotion';
 import { useTheme, stylesFactory } from '../../../themes';
-import { GrafanaTheme, TimeOption, TimeRange, DateTime, TIME_FORMAT, isDateTime } from '@grafana/data';
+import { GrafanaTheme, TimeOption, TimeRange } from '@grafana/data';
 import TimeRangeTitle from './TimePickerTitle';
 import TimeRangeForm from './TimeRangeForm';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
@@ -44,7 +44,7 @@ const otherOptions: TimeOption[] = [
   { from: 'now/y', to: 'now', display: 'This year so far', section: 3 },
 ];
 
-const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     container: css`
       display: flex;
@@ -78,25 +78,12 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
         width: 100% !important;
       }
     `,
-    fullscreenForm: css`
-      padding-top: 9px;
-      padding-left: 11px;
-      padding-right: 20%;
-    `,
-    recentRanges: css`
-      flex-grow: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-    `,
-    narrowscreenForm: css`
-      display: none;
+  };
+});
 
-      @media only screen and (max-width: ${theme.breakpoints.lg}) {
-        display: block;
-      }
-    `,
-    accordionHeader: css`
+const getNarrowScreenStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    header: css`
       display: flex;
       flex-direction: row;
       justify-content: space-between;
@@ -104,13 +91,32 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
       border-bottom: 1px solid ${theme.colors.gray4};
       padding: 6px 9px 6px 9px;
     `,
-    accordionBody: css`
+    body: css`
       border-bottom: 1px solid ${theme.colors.gray4};
       background: #f7f8fa;
       box-shadow: inset 0px 2px 2px rgba(199, 208, 217, 0.5);
     `,
-    narrowForm: css`
+    form: css`
       padding: 6px 9px 6px 9px;
+    `,
+  };
+});
+
+const getFullScreenStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    container: css`
+      padding-top: 9px;
+      padding-left: 11px;
+      padding-right: 20%;
+    `,
+    title: css`
+      margin-bottom: 11px;
+    `,
+    recent: css`
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
     `,
   };
 });
@@ -120,82 +126,120 @@ interface Props {
   onChange: (timeRange: TimeRange) => void;
 }
 
-const ExtendedTimePicker: React.FC<Props> = ({ selected, onChange }) => {
+interface FormProps extends Props {
+  visible: boolean;
+}
+
+const ExtendedTimePicker: React.FC<Props> = props => {
   const theme = useTheme();
   const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.lg})`);
-  const styles = getLabelStyles(theme);
-  const [collapsed, setCollapsed] = useState(false);
-  const [recent, setRecent] = useState<TimeOption[]>([]);
+  const styles = getStyles(theme);
+  // const [recent, setRecent] = useState<TimeOption[]>([]);
 
-  const onSelect = (range: TimeRange) => {
-    const start = recent.length - 3;
-    const nextRecent = recent.slice(start >= 0 ? start : 0);
+  // const onSelect = (range: TimeRange) => {
+  //   const start = recent.length - 3;
+  //   const nextRecent = recent.slice(start >= 0 ? start : 0);
 
-    nextRecent.push({
-      from: valueAsString(range.from),
-      to: valueAsString(range.to),
-      display: `${valueAsString(range.from)} to ${valueAsString(range.to)}`,
-      section: 3,
-    });
+  //   nextRecent.push({
+  //     from: valueAsString(range.from),
+  //     to: valueAsString(range.to),
+  //     display: `${valueAsString(range.from)} to ${valueAsString(range.to)}`,
+  //     section: 3,
+  //   });
 
-    setRecent(nextRecent);
-    //onChange(range);
-  };
+  //   setRecent(nextRecent);
+  //   //onChange(range);
+  // };
 
   return (
     <div className={styles.container}>
       <div className={styles.leftSide}>
-        <div className={styles.fullscreenForm}>
-          <div
-            className={css`
-              margin-bottom: 11px;
-            `}
-          >
-            <TimeRangeTitle>Absolute time range</TimeRangeTitle>
-          </div>
-          <TimeRangeForm value={selected} onApply={onSelect} isFullscreen={isFullscreen} />
-        </div>
-        <div className={styles.recentRanges}>
-          <TimeRangeList title="Recently used absolute ranges" options={recent} onSelect={onChange} value={selected} />
-        </div>
+        <FullScreenForm {...props} visible={isFullscreen} />
       </div>
       <CustomScrollbar className={styles.rightSide}>
-        <div className={styles.narrowscreenForm}>
-          <div className={styles.accordionHeader} onClick={() => setCollapsed(!collapsed)}>
-            <TimeRangeTitle>Absolute time range</TimeRangeTitle>
-            {collapsed ? <i className="fa fa-caret-up" /> : <i className="fa fa-caret-down" />}
-          </div>
-          {collapsed && (
-            <div className={styles.accordionBody}>
-              <div className={styles.narrowForm}>
-                <TimeRangeForm value={selected} onApply={onChange} isFullscreen={isFullscreen} />
-              </div>
-              <TimeRangeList
-                title="Recently used absolute ranges"
-                options={recent}
-                onSelect={onChange}
-                value={selected}
-              />
-            </div>
-          )}
-        </div>
+        <NarrowScreenForm {...props} visible={!isFullscreen} />
         <TimeRangeList
           title="Relative time range from now"
           options={quickOptions}
-          onSelect={onChange}
-          value={selected}
+          onSelect={props.onChange}
+          value={props.selected}
         />
-        <TimeRangeList title="Other relative range" options={otherOptions} onSelect={onChange} selected={selected} />
+        <TimeRangeList
+          title="Other relative range"
+          options={otherOptions}
+          onSelect={props.onChange}
+          value={props.selected}
+        />
       </CustomScrollbar>
     </div>
   );
 };
 
-export default ExtendedTimePicker;
-
-function valueAsString(value: DateTime | string): string {
-  if (isDateTime(value)) {
-    return value.format(TIME_FORMAT);
+const NarrowScreenForm = memo<FormProps>(props => {
+  if (!props.visible) {
+    return null;
   }
-  return value;
-}
+
+  const theme = useTheme();
+  const styles = getNarrowScreenStyles(theme);
+  const [collapsed, setCollapsed] = useState(false);
+
+  return (
+    <>
+      <div className={styles.header} onClick={() => setCollapsed(!collapsed)}>
+        <TimeRangeTitle>Absolute time range</TimeRangeTitle>
+        {collapsed ? <i className="fa fa-caret-up" /> : <i className="fa fa-caret-down" />}
+      </div>
+      {collapsed && (
+        <div className={styles.body}>
+          <div className={styles.form}>
+            <TimeRangeForm value={props.selected} onApply={props.onChange} showCalendarOn="ClickOnInputButton" />
+          </div>
+          <TimeRangeList
+            title="Recently used absolute ranges"
+            options={[]}
+            onSelect={props.onChange}
+            value={props.selected}
+          />
+        </div>
+      )}
+    </>
+  );
+});
+
+const FullScreenForm = memo<FormProps>(props => {
+  if (!props.visible) {
+    return null;
+  }
+
+  const theme = useTheme();
+  const styles = getFullScreenStyles(theme);
+
+  return (
+    <>
+      <div className={styles.container}>
+        <div className={styles.title}>
+          <TimeRangeTitle>Absolute time range</TimeRangeTitle>
+        </div>
+        <TimeRangeForm value={props.selected} onApply={props.onChange} showCalendarOn="FocusOnInput" />
+      </div>
+      <div className={styles.recent}>
+        <TimeRangeList
+          title="Recently used absolute ranges"
+          options={[]}
+          onSelect={props.onChange}
+          value={props.selected}
+        />
+      </div>
+    </>
+  );
+});
+
+// function valueAsString(value: DateTime | string): string {
+//   if (isDateTime(value)) {
+//     return value.format(TIME_FORMAT);
+//   }
+//   return value;
+// }
+
+export default ExtendedTimePicker;
