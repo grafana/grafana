@@ -87,7 +87,7 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     body: css`
       background-color: white;
-      width: 100%;
+      width: 268px;
 
       .react-calendar__navigation__label,
       .react-calendar__navigation__arrow,
