@@ -5,7 +5,7 @@ import { GrafanaTheme, dateTime, TIME_FORMAT } from '@grafana/data';
 import { useTheme, stylesFactory } from '../../../themes';
 import TimePickerTitle from './TimePickerTitle';
 import Forms from '../../Forms';
-import { Modal } from '../../Modal/Modal';
+import { Portal } from '../../Portal/Portal';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -15,19 +15,38 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       right: 546px;
       box-shadow: 0px 4px 4px #c7d0d9;
 
-      @media only screen and (min-width: ${theme.breakpoints.lg}) {
-        &:after {
-          display: block;
-          background-color: ${theme.background.dropdown};
-          width: 4px;
-          height: 221px;
-          content: ' ';
-          position: absolute;
-          top: 0;
-          right: -3px;
-          border-left: 1px solid ${theme.colors.gray4};
-        }
+      &:after {
+        display: block;
+        background-color: ${theme.background.dropdown};
+        width: 4px;
+        height: 221px;
+        content: ' ';
+        position: absolute;
+        top: 0;
+        right: -3px;
+        border-left: 1px solid ${theme.colors.gray4};
       }
+    `,
+    modal: css`
+      position: fixed;
+      top: 20%;
+      width: 100%;
+      z-index: ${theme.zIndex.modal};
+    `,
+    content: css`
+      margin: 0 auto;
+      width: 268px;
+    `,
+    backdrop: css`
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      background: #202226;
+      opacity: 0.7;
+      z-index: ${theme.zIndex.modalBackdrop};
+      text-align: center;
     `,
   };
 });
@@ -68,7 +87,7 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     body: css`
       background-color: white;
-      width: 268px;
+      width: 100%;
 
       .react-calendar__navigation__label,
       .react-calendar__navigation__arrow,
@@ -193,11 +212,16 @@ const TimePickerCalendar: React.FC<Props> = props => {
   }
 
   return (
-    <Modal title="asdfasdf" isOpen={isOpen}>
-      <Header {...props} />
-      <Body {...props} />
-      <Footer {...props} />
-    </Modal>
+    <Portal>
+      <div className={styles.modal} onClick={event => event.stopPropagation()}>
+        <div className={styles.content}>
+          <Header {...props} />
+          <Body {...props} />
+          <Footer {...props} />
+        </div>
+      </div>
+      <div className={styles.backdrop} onClick={event => event.stopPropagation()} />
+    </Portal>
   );
 };
 
