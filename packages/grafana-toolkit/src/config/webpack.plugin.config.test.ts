@@ -29,8 +29,8 @@ describe('Plugin webpack config', () => {
       jest.restoreAllMocks();
     });
 
-    it('finds module.ts and module.tsx files', () => {
-      const moduleFiles = findModuleFiles('/', modulePathsMock);
+    it('finds module.ts and module.tsx files', async () => {
+      const moduleFiles = await findModuleFiles('/', modulePathsMock);
       expect(moduleFiles.length).toBe(2);
       expect(moduleFiles).toEqual(['/some/path/module.ts', '/some/path/module.tsx']);
     });
@@ -38,30 +38,30 @@ describe('Plugin webpack config', () => {
 
   describe('loadWebpackConfig', () => {
     beforeAll(() => {
-      jest.spyOn(webpackConfig, 'findModuleFiles').mockReturnValue([]);
+      jest.spyOn(webpackConfig, 'findModuleFiles').mockReturnValue(new Promise((res, _) => res([])));
     });
 
     afterAll(() => {
       jest.restoreAllMocks();
     });
 
-    it('uses default config if no override exists', () => {
+    it('uses default config if no override exists', async () => {
       const spy = jest.spyOn(process, 'cwd');
       spy.mockReturnValue(`${__dirname}/mocks/webpack/noOverride/`);
-      loadWebpackConfig({});
+      await loadWebpackConfig({});
     });
 
-    it('calls customConfig if it exists', () => {
+    it('calls customConfig if it exists', async () => {
       const spy = jest.spyOn(process, 'cwd');
       spy.mockReturnValue(`${__dirname}/mocks/webpack/overrides/`);
-      const config = loadWebpackConfig({});
+      const config = await loadWebpackConfig({});
       expect(config.name).toBe('customConfig');
     });
 
-    it('throws an error if module does not export function', () => {
+    it('throws an error if module does not export function', async () => {
       const spy = jest.spyOn(process, 'cwd');
       spy.mockReturnValue(`${__dirname}/mocks/webpack/unsupportedOverride/`);
-      expect(() => loadWebpackConfig({})).toThrowError();
+      await expect(loadWebpackConfig({})).rejects.toThrowError();
     });
   });
 });

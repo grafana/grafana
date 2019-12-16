@@ -1,4 +1,5 @@
 const fs = require('fs');
+const util = require('util');
 const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const ReplaceInFileWebpackPlugin = require('replace-in-file-webpack-plugin');
@@ -7,6 +8,9 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
+const readdirPromise = util.promisify(fs.readdir);
+const accessPromise = util.promisify(fs.access);
+
 import * as webpack from 'webpack';
 import { getStyleLoaders, getStylesheetEntries, getFileLoaders } from './webpack/loaders';
 
@@ -14,21 +18,21 @@ export interface WebpackConfigurationOptions {
   watch?: boolean;
   production?: boolean;
 }
-type WebpackConfigurationGetter = (options: WebpackConfigurationOptions) => webpack.Configuration;
+type WebpackConfigurationGetter = (options: WebpackConfigurationOptions) => Promise<webpack.Configuration>;
 export type CustomWebpackConfigurationGetter = (
   originalConfig: webpack.Configuration,
   options: WebpackConfigurationOptions
 ) => webpack.Configuration;
 
-export const findModuleFiles = (base: string, files?: string[], result?: string[]) => {
-  files = files || fs.readdirSync(base);
+export const findModuleFiles = async (base: string, files?: string[], result?: string[]) => {
+  files = files || (await readdirPromise(base));
   result = result || [];
 
   if (files) {
-    files.forEach(file => {
+    files.forEach(async file => {
       const newbase = path.join(base, file);
       if (fs.statSync(newbase).isDirectory()) {
-        result = findModuleFiles(newbase, fs.readdirSync(newbase), result);
+        result = await findModuleFiles(newbase, await readdirPromise(newbase), result);
       } else {
         const filename = path.basename(file);
         if (/^module.(t|j)sx?$/.exec(filename)) {
@@ -60,9 +64,9 @@ const getManualChunk = (id: string) => {
   return null;
 };
 
-const getEntries = () => {
+const getEntries = async () => {
   const entries: { [key: string]: string } = {};
-  const modules = getModuleFiles();
+  const modules = await getModuleFiles();
 
   modules.forEach(modFile => {
     const mod = getManualChunk(modFile);
@@ -118,7 +122,7 @@ const getCommonPlugins = (options: WebpackConfigurationOptions) => {
   ];
 };
 
-const getBaseWebpackConfig: WebpackConfigurationGetter = options => {
+const getBaseWebpackConfig: WebpackConfigurationGetter = async options => {
   const plugins = getCommonPlugins(options);
   const optimization: { [key: string]: any } = {};
 
@@ -138,7 +142,7 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = options => {
     },
     context: path.join(process.cwd(), 'src'),
     devtool: 'source-map',
-    entry: getEntries(),
+    entry: await getEntries(),
     output: {
       filename: '[name].js',
       path: path.join(process.cwd(), 'dist'),
@@ -229,12 +233,12 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = options => {
   };
 };
 
-export const loadWebpackConfig: WebpackConfigurationGetter = options => {
-  const baseConfig = getBaseWebpackConfig(options);
+export const loadWebpackConfig: WebpackConfigurationGetter = async options => {
+  const baseConfig = await getBaseWebpackConfig(options);
   const customWebpackPath = path.resolve(process.cwd(), 'webpack.plugin.config.ts');
 
   try {
-    fs.accessSync(customWebpackPath);
+    await accessPromise(customWebpackPath);
     const customConfig = require(customWebpackPath);
     if (typeof customConfig !== 'function') {
       throw Error('Custom webpack config needs to export a function implementing CustomWebpackConfigurationGetter ');

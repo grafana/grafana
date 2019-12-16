@@ -12,7 +12,7 @@ export interface PluginBundleOptions {
 // export const bundlePlugin = useSpinner<PluginBundleOptions>('Bundle plugin', ({ watch }) => {
 export const bundlePlugin = async ({ watch, production }: PluginBundleOptions) => {
   const compiler = webpack(
-    loadWebpackConfig({
+    await loadWebpackConfig({
       watch,
       production,
     })
