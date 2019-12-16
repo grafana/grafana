@@ -53,6 +53,9 @@ import * as pieChartPanel from 'app/plugins/panel/piechart/module';
 import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
 import * as logsPanel from 'app/plugins/panel/logs/module';
 
+// Includes rss-parser, so lets do this async
+const newsPanel = async () => await import(/* webpackChunkName: "newsPanelPlugin" */ 'app/plugins/panel/news/module');
+
 const exampleApp = async () => await import(/* webpackChunkName: "exampleApp" */ 'app/plugins/app/example-app/module');
 
 const builtInPlugins: any = {
@@ -85,6 +88,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/heatmap/module': heatmapPanel,
   'app/plugins/panel/table/module': tablePanel,
   'app/plugins/panel/table2/module': table2Panel,
+  'app/plugins/panel/news/module': newsPanel,
   'app/plugins/panel/singlestat/module': singlestatPanel,
   'app/plugins/panel/stat/module': singlestatPanel2,
   'app/plugins/panel/gettingstarted/module': gettingStartedPanel,

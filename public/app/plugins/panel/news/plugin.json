@@ -1,0 +1,20 @@
+{
+  "type": "panel",
+  "name": "RSS Panel",
+  "id": "rss-panel",
+
+  "skipDataQuery": true,
+
+  "state": "alpha",
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/rss.svg",
+      "large": "img/rss.svg"
+    }
+  }
+}
