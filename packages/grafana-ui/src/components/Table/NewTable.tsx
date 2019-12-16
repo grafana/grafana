@@ -10,6 +10,7 @@ export interface Props {
   data: DataFrame;
   width: number;
   height: number;
+  onCellClick?: any;
 }
 
 const getTableData = (data: DataFrame) => {
@@ -32,11 +33,12 @@ const getColumns = (data: DataFrame) => {
     return {
       Header: field.name,
       accessor: field.name,
+      field: field,
     };
   });
 };
 
-const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
+const getTableStyles = stylesFactory((theme: GrafanaTheme, columnWidth: number) => {
   const colors = theme.colors;
 
   return {
@@ -53,6 +55,7 @@ const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
       color: ${colors.blue};
     `,
     tableCell: css`
+      display: 'table-cell';
       padding: 3px 10px;
 
       background: linear-gradient(180deg, ${colors.dark5} 10px, ${colors.dark2} 100px);
@@ -60,6 +63,7 @@ const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
       text-overflow: ellipsis;
       white-space: nowrap;
       overflow: hidden;
+      width: ${columnWidth}px;
 
       border-right: 2px solid ${colors.bodyBg};
       border-bottom: 2px solid ${colors.bodyBg};
@@ -67,14 +71,32 @@ const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-export const NewTable = ({ data, height, width }: Props) => {
+const renderCell = (cell: any, columnWidth: number, cellStyles: string, onCellClick?: any) => {
+  const filterable = cell.column.field.config.filterable;
+  const style = {
+    cursor: `${filterable && onCellClick ? 'pointer' : 'default'}`,
+  };
+
+  return (
+    <div
+      className={cellStyles}
+      {...cell.getCellProps()}
+      onClick={filterable ? () => onCellClick(cell.column.Header, cell.value) : undefined}
+      style={style}
+    >
+      {cell.render('Cell')}
+    </div>
+  );
+};
+
+export const NewTable = ({ data, height, onCellClick, width }: Props) => {
   const theme = useTheme();
-  const tableStyles = getTableStyles(theme);
   const columnWidth = Math.floor(width / data.fields.length);
+  const tableStyles = getTableStyles(theme, columnWidth);
   const { getTableProps, headerGroups, rows, prepareRow } = useTable(
     {
-      columns: useMemo(() => getColumns(data), []),
-      data: useMemo(() => getTableData(data), []),
+      columns: useMemo(() => getColumns(data), [data]),
+      data: useMemo(() => getTableData(data), [data]),
     },
     useSortBy,
     useBlockLayout
@@ -85,22 +107,8 @@ export const NewTable = ({ data, height, width }: Props) => {
       const row = rows[index];
       prepareRow(row);
       return (
-        <div
-          {...row.getRowProps({
-            style,
-          })}
-        >
-          {row.cells.map((cell: any) => {
-            return (
-              <div
-                className={tableStyles.tableCell}
-                {...cell.getCellProps()}
-                style={{ display: 'table-cell', width: `${columnWidth}px` }}
-              >
-                {cell.render('Cell')}
-              </div>
-            );
-          })}
+        <div {...row.getRowProps({ style })}>
+          {row.cells.map((cell: any) => renderCell(cell, columnWidth, tableStyles.tableCell, onCellClick))}
         </div>
       );
     },

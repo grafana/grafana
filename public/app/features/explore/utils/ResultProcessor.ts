@@ -1,5 +1,4 @@
-import { LogsModel, GraphSeriesXY, DataFrame, FieldType, TimeZone } from '@grafana/data';
-
+import { LogsModel, GraphSeriesXY, DataFrame, FieldType, TimeZone, toDataFrame } from '@grafana/data';
 import { ExploreItemState, ExploreMode } from 'app/types/explore';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { sortLogsResult, refreshIntervalToSortOrder } from 'app/core/utils/explore';
@@ -34,7 +33,7 @@ export class ResultProcessor {
     );
   }
 
-  getTableResult(): TableModel | null {
+  getTableResult(): DataFrame | null {
     if (this.state.mode !== ExploreMode.Metrics) {
       return null;
     }
@@ -43,6 +42,8 @@ export class ResultProcessor {
     // We can change this later, just need to figure out how to
     // Ignore time series only for prometheus
     const onlyTables = this.dataFrames.filter(frame => !isTimeSeries(frame));
+
+    return this.dataFrames.length ? this.dataFrames[0] : null;
 
     if (onlyTables.length === 0) {
       return null;
@@ -75,7 +76,8 @@ export class ResultProcessor {
       });
     });
 
-    return mergeTablesIntoModel(new TableModel(), ...tables);
+    const mergedTable = mergeTablesIntoModel(new TableModel(), ...tables);
+    return toDataFrame(mergedTable);
   }
 
   getLogsResult(): LogsModel | null {
