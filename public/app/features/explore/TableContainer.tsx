@@ -1,20 +1,19 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
+import { DataFrame } from '@grafana/data';
 import { Table, Collapse } from '@grafana/ui';
-
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
-
 import { toggleTable } from './state/actions';
-import TableModel from 'app/core/table_model';
 
 interface TableContainerProps {
   exploreId: ExploreId;
   loading: boolean;
+  width: number;
   onClickCell: (key: string, value: string) => void;
   showingTable: boolean;
-  tableResult?: TableModel;
+  tableResult?: DataFrame;
   toggleTable: typeof toggleTable;
 }
 
@@ -24,11 +23,16 @@ export class TableContainer extends PureComponent<TableContainerProps> {
   };
 
   render() {
-    const { loading, onClickCell, showingTable, tableResult } = this.props;
+    const { loading, onClickCell, showingTable, tableResult, width } = this.props;
+
+    const height = 400;
+    const paddingWidth = 16;
+
+    const tableWidth = width - paddingWidth;
 
     return (
       <Collapse label="Table" loading={loading} collapsible isOpen={showingTable} onToggle={this.onClickTableButton}>
-        {tableResult && <Table data={tableResult} loading={loading} onClickCell={onClickCell} />}
+        {tableResult && <Table data={tableResult} width={tableWidth} height={height} onCellClick={onClickCell} />}
       </Collapse>
     );
   }
@@ -39,7 +43,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   // @ts-ignore
   const item: ExploreItemState = explore[exploreId];
   const { loading: loadingInState, showingTable, tableResult } = item;
-  const loading = tableResult && tableResult.rows.length > 0 ? false : loadingInState;
+  const loading = tableResult && tableResult.length > 0 ? false : loadingInState;
   return { loading, showingTable, tableResult };
 }
 
