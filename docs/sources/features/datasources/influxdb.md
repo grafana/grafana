@@ -121,7 +121,7 @@ change the option `Format As` to `Table` if you want to show raw data in the `Ta
 
 > Only available in Grafana v6.3+.
 
-Querying and displaying log data from InfluxDB is available via [Explore](/features/explore).
+Querying and displaying log data from InfluxDB is available via [Explore]({{< relref "../explore" >}}).
 
 ![](/img/docs/v63/influxdb_explore_logs.png)
 
@@ -144,7 +144,7 @@ Instead of hard-coding things like server, application and sensor name in you me
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
 being displayed in your dashboard.
 
-Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -203,7 +203,7 @@ be applied to all your InfluxDB queries.
 
 ## Annotations
 
-[Annotations]({{< relref "reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. Add annotation queries using the Annotations view in the Dashboard menu.
+[Annotations]({{< relref "../../reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. Add annotation queries using the Annotations view in the Dashboard menu.
 
 An example query:
 

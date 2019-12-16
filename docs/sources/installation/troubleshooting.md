@@ -86,6 +86,6 @@ See [Go command trace](https://golang.org/cmd/trace/) for more information about
 
 ## FAQ
 
-Checkout the [FAQ](https://community.grafana.com/c/howto/faq) section on our community page for frequently
+Check out the [FAQ](https://community.grafana.com/c/howto/faq) section on our community page for frequently
 asked questions.
 

@@ -145,8 +145,7 @@ export class ColumnOptionsCtrl {
   }
 }
 
-/** @ngInject */
-export function columnOptionsTab($q: any, uiSegmentSrv: any) {
+export function columnOptionsTab(uiSegmentSrv: any) {
   'use strict';
   return {
     restrict: 'E',

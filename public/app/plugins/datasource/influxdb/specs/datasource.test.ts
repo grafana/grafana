@@ -1,12 +1,10 @@
 import InfluxDatasource from '../datasource';
-//@ts-ignore
-import $q from 'q';
+
 import { TemplateSrvStub } from 'test/specs/helpers';
 
 describe('InfluxDataSource', () => {
   const ctx: any = {
     backendSrv: {},
-    $q: $q,
     //@ts-ignore
     templateSrv: new TemplateSrvStub(),
     instanceSettings: { url: 'url', name: 'influxDb', jsonData: { httpMode: 'GET' } },
@@ -14,7 +12,7 @@ describe('InfluxDataSource', () => {
 
   beforeEach(() => {
     ctx.instanceSettings.url = '/api/datasources/proxy/1';
-    ctx.ds = new InfluxDatasource(ctx.instanceSettings, ctx.$q, ctx.backendSrv, ctx.templateSrv);
+    ctx.ds = new InfluxDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
   });
 
   describe('When issuing metricFindQuery', () => {
@@ -32,7 +30,7 @@ describe('InfluxDataSource', () => {
         requestMethod = req.method;
         requestQuery = req.params.q;
         requestData = req.data;
-        return ctx.$q.when({
+        return Promise.resolve({
           results: [
             {
               series: [
@@ -67,7 +65,6 @@ describe('InfluxDataSource', () => {
 describe('InfluxDataSource in POST query mode', () => {
   const ctx: any = {
     backendSrv: {},
-    $q,
     //@ts-ignore
     templateSrv: new TemplateSrvStub(),
     instanceSettings: { url: 'url', name: 'influxDb', jsonData: { httpMode: 'POST' } },
@@ -75,7 +72,7 @@ describe('InfluxDataSource in POST query mode', () => {
 
   beforeEach(() => {
     ctx.instanceSettings.url = '/api/datasources/proxy/1';
-    ctx.ds = new InfluxDatasource(ctx.instanceSettings, ctx.$q, ctx.backendSrv, ctx.templateSrv);
+    ctx.ds = new InfluxDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
   });
 
   describe('When issuing metricFindQuery', () => {
@@ -88,7 +85,7 @@ describe('InfluxDataSource in POST query mode', () => {
         requestMethod = req.method;
         requestQueryParameter = req.params;
         requestQuery = req.data;
-        return ctx.$q.when({
+        return Promise.resolve({
           results: [
             {
               series: [

@@ -236,11 +236,11 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   createRangeQuery(target: LokiQuery, options: RangeQueryOptions): LokiRangeQueryRequest {
     const { query } = parseQuery(target.expr);
     let range: { start?: number; end?: number; step?: number } = {};
-    if (options.range && options.intervalMs) {
+    if (options.range) {
       const startNs = this.getTime(options.range.from, false);
       const endNs = this.getTime(options.range.to, true);
       const rangeMs = Math.ceil((endNs - startNs) / 1e6);
-      const step = Math.ceil(this.adjustInterval(options.intervalMs, rangeMs) / 1000);
+      const step = Math.ceil(this.adjustInterval(options.intervalMs || 1000, rangeMs) / 1000);
       const alignedTimes = {
         start: startNs - (startNs % 1e9),
         end: endNs + (1e9 - (endNs % 1e9)),
@@ -373,7 +373,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   async metadataRequest(url: string, params?: Record<string, string>) {
     const res = await this._request(url, params, { silent: true }).toPromise();
     return {
-      data: { data: res.data.values || [] },
+      data: { data: res.data.data || res.data.values || [] },
     };
   }
 
@@ -439,13 +439,13 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       case 'ADD_FILTER': {
         selectorLabels = addLabelToSelector(selector, action.key, action.value);
         selectorFilters = keepSelectorFilters(selector);
-        selector = `${selectorLabels} ${selectorFilters}`;
+        selector = `${selectorLabels} ${selectorFilters}`.trim();
         break;
       }
       case 'ADD_FILTER_OUT': {
         selectorLabels = addLabelToSelector(selector, action.key, action.value, '!=');
         selectorFilters = keepSelectorFilters(selector);
-        selector = `${selectorLabels} ${selectorFilters}`;
+        selector = `${selectorLabels} ${selectorFilters}`.trim();
         break;
       }
       default:
@@ -559,21 +559,24 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           throw err;
         }),
         switchMap((response: { data: { values: string[] }; status: number }) =>
-          iif<DataQueryResponse, DataQueryResponse>(
+          iif<DataQueryResponse, any>(
             () => response.status === 404,
             defer(() => this._request('/api/prom/label', { start })),
             defer(() => of(response))
           )
         ),
-        map(res =>
-          res && res.data && res.data.values && res.data.values.length
-            ? { status: 'success', message: 'Data source connected and labels found.' }
-            : {
-                status: 'error',
-                message:
-                  'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
-              }
-        ),
+        map(res => {
+          const values: any[] = res?.data?.data || res?.data?.values || [];
+          const testResult =
+            values.length > 0
+              ? { status: 'success', message: 'Data source connected and labels found.' }
+              : {
+                  status: 'error',
+                  message:
+                    'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
+                };
+          return testResult;
+        }),
         catchError((err: any) => {
           let message = 'Loki: ';
           if (err.statusText) {

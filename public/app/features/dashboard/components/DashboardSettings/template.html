@@ -1,5 +1,5 @@
 <aside class="dashboard-settings__aside">
-	<a href="{{::section.url}}" class="dashboard-settings__nav-item" ng-class="{active: ctrl.viewId === section.id}" ng-repeat="section in ctrl.sections" aria-label="{{'Dashboard settings section ' + section.title}}">
+	<a href="{{::section.url}}" class="dashboard-settings__nav-item" ng-class="{active: ctrl.viewId === section.id}" ng-repeat="section in ctrl.sections" aria-label={{ctrl.selectors.sectionItems}}>
     <i class="{{::section.icon}}"></i>
 		{{::section.title}}
 	</a>
@@ -9,7 +9,7 @@
       class="btn btn-primary"
       ng-click="ctrl.saveDashboard()"
       ng-show="ctrl.canSave"
-      aria-label="Dashboard settings aside actions Save button"
+      aria-label={{ctrl.selectors.saveDashBoard}}
     >
 			Save
 		</button>
@@ -17,7 +17,7 @@
       class="btn btn-inverse"
       ng-click="ctrl.openSaveAsModal()"
       ng-show="ctrl.canSaveAs"
-      aria-label="Dashboard settings aside actions Save As button"
+      aria-label={{ctrl.selectors.saveAsDashBoard}}
     >
 			Save As...
 		</button>

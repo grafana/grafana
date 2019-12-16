@@ -1,6 +1,6 @@
 import { getFlotTickDecimals } from 'app/core/utils/ticks';
 import _ from 'lodash';
-import { getValueFormat, ValueFormatter, stringToJsRegex, DecimalCount } from '@grafana/data';
+import { getValueFormat, ValueFormatter, stringToJsRegex, DecimalCount, formattedValueToString } from '@grafana/data';
 
 function matchSeriesOverride(aliasOrRegex: string, seriesAlias: string) {
   if (!aliasOrRegex) {
@@ -17,6 +17,16 @@ function matchSeriesOverride(aliasOrRegex: string, seriesAlias: string) {
 
 function translateFillOption(fill: number) {
   return fill === 0 ? 0.001 : fill / 10;
+}
+
+function getFillGradient(amount: number) {
+  if (!amount) {
+    return null;
+  }
+
+  return {
+    colors: [{ opacity: 0.0 }, { opacity: amount / 10 }],
+  };
 }
 
 /**
@@ -156,6 +166,9 @@ export default class TimeSeries {
       }
       if (override.fill !== void 0) {
         this.lines.fill = translateFillOption(override.fill);
+      }
+      if (override.fillGradient !== void 0) {
+        this.lines.fillColor = getFillGradient(override.fillGradient);
       }
       if (override.stack !== void 0) {
         this.stack = override.stack;
@@ -339,7 +352,7 @@ export default class TimeSeries {
     if (!_.isFinite(value)) {
       value = null; // Prevent NaN formatting
     }
-    return this.valueFormater(value, this.decimals, this.scaledDecimals);
+    return formattedValueToString(this.valueFormater(value, this.decimals, this.scaledDecimals));
   }
 
   isMsResolutionNeeded() {
