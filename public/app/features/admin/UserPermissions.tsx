@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { ConfirmButton } from '@grafana/ui';
-import { cx, css } from 'emotion';
+import { cx } from 'emotion';
 
 interface Props {
   isGrafanaAdmin: boolean;
@@ -43,12 +43,7 @@ export class UserPermissions extends PureComponent<Props, State> {
   render() {
     const { isGrafanaAdmin } = this.props;
     const { isEditing, currentAdminOption } = this.state;
-    const changeButtonContainerClass = cx(
-      'pull-right',
-      css`
-        margin-right: 0.6rem;
-      `
-    );
+    const changeButtonContainerClass = cx('pull-right');
 
     return (
       <>

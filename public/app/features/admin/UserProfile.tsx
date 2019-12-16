@@ -220,12 +220,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
         font-weight: 500;
       `
     );
-    const editButtonContainerClass = cx(
-      'pull-right',
-      css`
-        margin-right: 0.6rem;
-      `
-    );
+    const editButtonContainerClass = cx('pull-right');
 
     if (locked) {
       return <LockedRow label={label} value={value} lockMessage={lockMessage} />;
