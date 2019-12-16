@@ -38,6 +38,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: hoverCursor;
       cursor: pointer;
     `,
+    wordBreakAll: css`
+      label: wordBreakAll;
+      word-break: break-all;
+    `,
   };
 });
 
@@ -102,7 +106,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 
         {/* Key - value columns */}
         <td className={style.logDetailsLabel}>{parsedKey}</td>
-        <td className={style.logsRowCell}>
+        <td className={styles.wordBreakAll}>
           {parsedValue}
           {links &&
             links.map(link => {
