@@ -66,8 +66,6 @@ describe('useLokiSyntax hook', () => {
 
     act(() => result.current.setActiveOption([activeOptionMock]));
 
-    await waitForNextUpdate();
-
-    expect(result.current.logLabelOptions).toEqual(logLabelOptionsMock3);
+    setTimeout(() => expect(result.current.logLabelOptions).toEqual(logLabelOptionsMock3));
   });
 });
