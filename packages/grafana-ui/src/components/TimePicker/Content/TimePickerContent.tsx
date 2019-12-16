@@ -8,42 +8,6 @@ import TimeRangeForm from './TimeRangeForm';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import TimeRangeList from './TimeRangeList';
 
-const quickOptions: TimeOption[] = [
-  { from: 'now-5m', to: 'now', display: 'Last 5 minutes', section: 3 },
-  { from: 'now-15m', to: 'now', display: 'Last 15 minutes', section: 3 },
-  { from: 'now-30m', to: 'now', display: 'Last 30 minutes', section: 3 },
-  { from: 'now-1h', to: 'now', display: 'Last 1 hour', section: 3 },
-  { from: 'now-3h', to: 'now', display: 'Last 3 hours', section: 3 },
-  { from: 'now-6h', to: 'now', display: 'Last 6 hours', section: 3 },
-  { from: 'now-12h', to: 'now', display: 'Last 12 hours', section: 3 },
-  { from: 'now-24h', to: 'now', display: 'Last 24 hours', section: 3 },
-  { from: 'now-2d', to: 'now', display: 'Last 2 days', section: 3 },
-  { from: 'now-7d', to: 'now', display: 'Last 7 days', section: 3 },
-  { from: 'now-30d', to: 'now', display: 'Last 30 days', section: 3 },
-  { from: 'now-90d', to: 'now', display: 'Last 90 days', section: 3 },
-  { from: 'now-6M', to: 'now', display: 'Last 6 months', section: 3 },
-  { from: 'now-1y', to: 'now', display: 'Last 1 year', section: 3 },
-  { from: 'now-2y', to: 'now', display: 'Last 2 years', section: 3 },
-  { from: 'now-5y', to: 'now', display: 'Last 5 years', section: 3 },
-];
-
-const otherOptions: TimeOption[] = [
-  { from: 'now-1d/d', to: 'now-1d/d', display: 'Yesterday', section: 3 },
-  { from: 'now-2d/d', to: 'now-2d/d', display: 'Day before yesterday', section: 3 },
-  { from: 'now-7d/d', to: 'now-7d/d', display: 'This day last week', section: 3 },
-  { from: 'now-1w/w', to: 'now-1w/w', display: 'Previous week', section: 3 },
-  { from: 'now-1M/M', to: 'now-1M/M', display: 'Previous month', section: 3 },
-  { from: 'now-1y/y', to: 'now-1y/y', display: 'Previous year', section: 3 },
-  { from: 'now/d', to: 'now/d', display: 'Today', section: 3 },
-  { from: 'now/d', to: 'now', display: 'Today so far', section: 3 },
-  { from: 'now/w', to: 'now/w', display: 'This week', section: 3 },
-  { from: 'now/w', to: 'now', display: 'This week so far', section: 3 },
-  { from: 'now/M', to: 'now/M', display: 'This month', section: 3 },
-  { from: 'now/M', to: 'now', display: 'This month so far', section: 3 },
-  { from: 'now/y', to: 'now/y', display: 'This year', section: 3 },
-  { from: 'now/y', to: 'now', display: 'This year so far', section: 3 },
-];
-
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     container: css`
@@ -138,35 +102,22 @@ const getEmptyListStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 interface Props {
-  selected: TimeRange;
+  value: TimeRange;
   onChange: (timeRange: TimeRange) => void;
   timeZone?: TimeZone;
+  quickOptions?: TimeOption[];
+  otherOptions?: TimeOption[];
 }
 
 interface FormProps extends Props {
   visible: boolean;
 }
 
-const ExtendedTimePicker: React.FC<Props> = props => {
+const TimePickerExtended: React.FC<Props> = props => {
   const theme = useTheme();
   const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.lg})`);
   const styles = getStyles(theme);
-  // const [recent, setRecent] = useState<TimeOption[]>([]);
-
-  // const onSelect = (range: TimeRange) => {
-  //   const start = recent.length - 3;
-  //   const nextRecent = recent.slice(start >= 0 ? start : 0);
-
-  //   nextRecent.push({
-  //     from: valueAsString(range.from),
-  //     to: valueAsString(range.to),
-  //     display: `${valueAsString(range.from)} to ${valueAsString(range.to)}`,
-  //     section: 3,
-  //   });
-
-  //   setRecent(nextRecent);
-  //   //onChange(range);
-  // };
+  const { quickOptions = [], otherOptions = [] } = props;
 
   return (
     <div className={styles.container}>
@@ -179,13 +130,13 @@ const ExtendedTimePicker: React.FC<Props> = props => {
           title="Relative time range from now"
           options={quickOptions}
           onSelect={props.onChange}
-          value={props.selected}
+          value={props.value}
         />
         <TimeRangeList
           title="Other relative range"
           options={otherOptions}
           onSelect={props.onChange}
-          value={props.selected}
+          value={props.value}
         />
       </CustomScrollbar>
     </div>
@@ -211,7 +162,7 @@ const NarrowScreenForm = memo<FormProps>(props => {
         <div className={styles.body}>
           <div className={styles.form}>
             <TimeRangeForm
-              value={props.selected}
+              value={props.value}
               onApply={props.onChange}
               timeZone={props.timeZone}
               showCalendarOn="ClickOnInputButton"
@@ -221,7 +172,7 @@ const NarrowScreenForm = memo<FormProps>(props => {
             title="Recently used absolute ranges"
             options={[]}
             onSelect={props.onChange}
-            value={props.selected}
+            value={props.value}
             placeholderEmpty={null}
           />
         </div>
@@ -245,7 +196,7 @@ const FullScreenForm = memo<FormProps>(props => {
           <TimeRangeTitle>Absolute time range</TimeRangeTitle>
         </div>
         <TimeRangeForm
-          value={props.selected}
+          value={props.value}
           timeZone={props.timeZone}
           onApply={props.onChange}
           showCalendarOn="FocusOnInput"
@@ -256,7 +207,7 @@ const FullScreenForm = memo<FormProps>(props => {
           title="Recently used absolute ranges"
           options={[]}
           onSelect={props.onChange}
-          value={props.selected}
+          value={props.value}
           placeholderEmpty={<EmptyRecentList />}
         />
       </div>
@@ -286,4 +237,4 @@ const EmptyRecentList = memo(() => {
   );
 });
 
-export default ExtendedTimePicker;
+export default TimePickerExtended;
