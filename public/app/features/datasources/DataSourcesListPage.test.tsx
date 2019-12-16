@@ -12,6 +12,8 @@ const setup = (propOverrides?: object) => {
     dataSources: [] as DataSourceSettings[],
     layoutMode: LayoutModes.Grid,
     loadDataSources: jest.fn(),
+    loadDataSource: jest.fn(),
+    deleteDataSource: jest.fn(),
     navModel: {
       main: {
         text: 'Configuration',
