@@ -148,6 +148,7 @@ exports[`Render should render action bar and datasources 1`] = `
           },
         ]
       }
+      deleteDataSource={[Function]}
       key="list"
       layoutMode="grid"
     />

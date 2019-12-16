@@ -4,11 +4,34 @@ exports[`Render should render component 1`] = `
 <section
   className="card-section card-list-layout-grid"
 >
-  <ol
-    className="card-list"
+  <div
+    className="configuration-card-list-headers"
   >
-    <DataSourcesListItem
-      dataSource={
+    <div
+      className="configuration-card-list-headers-column"
+    />
+    <div
+      className="configuration-card-list-headers-column"
+    >
+      <div
+        className="configuration-card-list-headers-column--left"
+      >
+        Name
+      </div>
+      <div
+        className="configuration-card-list-headers-column--center"
+      >
+        URL
+      </div>
+      <div
+        className="configuration-card-list-headers-column--right"
+      />
+    </div>
+  </div>
+  <List
+    getItemKey={[Function]}
+    items={
+      Array [
         Object {
           "access": "",
           "basicAuth": false,
@@ -27,12 +50,7 @@ exports[`Render should render component 1`] = `
           "typeLogoUrl": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
           "url": "",
           "user": "",
-        }
-      }
-      key="0-0"
-    />
-    <DataSourcesListItem
-      dataSource={
+        },
         Object {
           "access": "",
           "basicAuth": false,
@@ -51,12 +69,7 @@ exports[`Render should render component 1`] = `
           "typeLogoUrl": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
           "url": "",
           "user": "",
-        }
-      }
-      key="1-1"
-    />
-    <DataSourcesListItem
-      dataSource={
+        },
         Object {
           "access": "",
           "basicAuth": false,
@@ -75,12 +88,7 @@ exports[`Render should render component 1`] = `
           "typeLogoUrl": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
           "url": "",
           "user": "",
-        }
-      }
-      key="2-2"
-    />
-    <DataSourcesListItem
-      dataSource={
+        },
         Object {
           "access": "",
           "basicAuth": false,
@@ -99,10 +107,10 @@ exports[`Render should render component 1`] = `
           "typeLogoUrl": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
           "url": "",
           "user": "",
-        }
-      }
-      key="3-3"
-    />
-  </ol>
+        },
+      ]
+    }
+    renderItem={[Function]}
+  />
 </section>
 `;
