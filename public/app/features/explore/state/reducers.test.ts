@@ -24,7 +24,6 @@ import { Reducer } from 'redux';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { updateLocation } from 'app/core/actions/location';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
-import TableModel from 'app/core/table_model';
 import { DataSourceApi, DataQuery, LogsDedupStrategy, dateTime, LoadingState, toDataFrame } from '@grafana/data';
 
 describe('Explore item reducer', () => {
