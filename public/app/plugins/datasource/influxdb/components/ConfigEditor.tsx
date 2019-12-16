@@ -1,5 +1,11 @@
 import React, { PureComponent, ChangeEvent } from 'react';
-import { DataSourcePluginOptionsEditorProps, SelectableValue } from '@grafana/data';
+import {
+  DataSourcePluginOptionsEditorProps,
+  SelectableValue,
+  updateDatasourcePluginJsonDataOption,
+  updateDatasourcePluginResetKeyOption,
+  updateDatasourcePluginOption,
+} from '@grafana/data';
 import { DataSourceHttpSettings, FormLabel, Input, SecretFormField, Select } from '@grafana/ui';
 import { InfluxOptions, InfluxSecureJsonData } from '../types';
 
@@ -11,68 +17,40 @@ const httpModes = [
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 
 export class ConfigEditor extends PureComponent<Props> {
+  onUpdateOption = (key: string, val: any) => {
+    updateDatasourcePluginOption(this.props, key, val);
+  };
+
+  onUpdateJsonDataOption = (key: string, val: any, secure: boolean) => {
+    updateDatasourcePluginJsonDataOption(this.props, key, val, secure);
+  };
+
+  onResetKey = (key: string) => {
+    updateDatasourcePluginResetKeyOption(this.props, key);
+  };
+
   onDatabaseChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onOptionsChange, options } = this.props;
-    onOptionsChange({
-      ...options,
-      database: event.target.value,
-    });
+    this.onUpdateOption('database', event.target.value);
   };
 
   onUserChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onOptionsChange, options } = this.props;
-    onOptionsChange({
-      ...options,
-      user: event.target.value,
-    });
+    this.onUpdateOption('user', event.target.value);
   };
 
   onPasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onOptionsChange, options } = this.props;
-    onOptionsChange({
-      ...options,
-      secureJsonData: {
-        ...options.secureJsonData,
-        password: event.target.value,
-      },
-    });
+    this.onUpdateJsonDataOption('password', event.target.value, true);
   };
 
   onTimeIntervalChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onOptionsChange, options } = this.props;
-    onOptionsChange({
-      ...options,
-      jsonData: {
-        ...options.jsonData,
-        timeInterval: event.target.value,
-      },
-    });
+    this.onUpdateJsonDataOption('timeInterval', event.target.value, false);
   };
 
   onResetPassword = () => {
-    const { onOptionsChange, options } = this.props;
-    onOptionsChange({
-      ...options,
-      secureJsonFields: {
-        ...options.secureJsonFields,
-        password: false,
-      },
-      secureJsonData: {
-        ...options.secureJsonData,
-        password: '',
-      },
-    });
+    this.onResetKey('password');
   };
 
   onHttpModeSelect = (httpMode: SelectableValue) => {
-    const { onOptionsChange, options } = this.props;
-    onOptionsChange({
-      ...options,
-      jsonData: {
-        ...options.jsonData,
-        httpMode: httpMode.value,
-      },
-    });
+    this.onUpdateJsonDataOption('httpMode', httpMode.value, false);
   };
 
   render() {

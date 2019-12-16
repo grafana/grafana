@@ -1,4 +1,6 @@
 import React, { FC } from 'react';
+import { e2e } from '@grafana/e2e';
+
 import config from 'app/core/config';
 
 export interface Props {
@@ -17,7 +19,7 @@ const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest }) => {
           className="btn btn-primary"
           disabled={isReadOnly}
           onClick={event => onSubmit(event)}
-          aria-label="Save and Test button"
+          aria-label={e2e.pages.DataSource.selectors.saveAndTest}
         >
           Save &amp; Test
         </button>
@@ -32,7 +34,7 @@ const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest }) => {
         className="btn btn-danger"
         disabled={isReadOnly}
         onClick={onDelete}
-        aria-label="Delete button"
+        aria-label={e2e.pages.DataSource.selectors.delete}
       >
         Delete
       </button>

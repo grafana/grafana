@@ -21,6 +21,7 @@ const setup = (propOverrides?: object) => {
         orgCount: 2,
         orgRole: '',
         orgId: 1,
+        login: 'hello',
         orgName: 'Grafana',
         timezone: 'UTC',
         helpFlags1: 1,
@@ -47,6 +48,7 @@ describe('Render', () => {
       },
     });
 
+    wrapper.find('.sidemenu-org-switcher a').simulate('click');
     expect(wrapper).toMatchSnapshot();
   });
 

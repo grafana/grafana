@@ -4,12 +4,6 @@
     ports:
       - "3100:3100"
     command: -config.file=/etc/loki/local-config.yaml
-    # Optional jaeger tracing
-    environment:
-      - JAEGER_AGENT_HOST=jaeger
-      - JAEGER_AGENT_PORT=6831
-      - JAEGER_SAMPLER_TYPE=const
-      - JAEGER_SAMPLER_PARAM=1
   promtail:
     image: grafana/promtail:master
     volumes:

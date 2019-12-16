@@ -15,7 +15,6 @@ import { getTheme } from '../../themes';
 
 const green = '#73BF69';
 const orange = '#FF9830';
-// const red = '#BB';
 
 function getProps(propOverrides?: Partial<Props>): Props {
   const props: Props = {

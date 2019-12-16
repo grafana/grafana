@@ -1,6 +1,4 @@
 import _ from 'lodash';
-// @ts-ignore
-import { IQService } from 'angular';
 
 import coreModule from 'app/core/core_module';
 import impressionSrv from 'app/core/services/impression_srv';
@@ -19,7 +17,7 @@ export class SearchSrv {
   starredIsOpen: boolean;
 
   /** @ngInject */
-  constructor(private backendSrv: BackendSrv, private $q: IQService) {
+  constructor(private backendSrv: BackendSrv) {
     this.recentIsOpen = store.getBool('search.sections.recent', true);
     this.starredIsOpen = store.getBool('search.sections.starred', true);
   }
@@ -123,7 +121,7 @@ export class SearchSrv {
       })
     );
 
-    return this.$q.all(promises).then(() => {
+    return Promise.all(promises).then(() => {
       return _.sortBy(_.values(sections), 'score');
     });
   }

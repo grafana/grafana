@@ -1,5 +1,5 @@
 /* tslint:disable:import-blacklist */
-import angular, { IQService } from 'angular';
+import angular from 'angular';
 import moment from 'moment';
 import _ from 'lodash';
 import $ from 'jquery';
@@ -19,7 +19,6 @@ export class DashboardLoaderSrv {
     private dashboardSrv: DashboardSrv,
     private datasourceSrv: DatasourceSrv,
     private $http: any,
-    private $q: IQService,
     private $timeout: any,
     contextSrv: any,
     private $routeParams: any,
@@ -108,7 +107,6 @@ export class DashboardLoaderSrv {
     const services = {
       dashboardSrv: this.dashboardSrv,
       datasourceSrv: this.datasourceSrv,
-      $q: this.$q,
     };
 
     /*jshint -W054 */
@@ -129,13 +127,13 @@ export class DashboardLoaderSrv {
 
     // Handle async dashboard scripts
     if (_.isFunction(scriptResult)) {
-      const deferred = this.$q.defer();
-      scriptResult((dashboard: any) => {
-        this.$timeout(() => {
-          deferred.resolve({ data: dashboard });
+      return new Promise(resolve => {
+        scriptResult((dashboard: any) => {
+          this.$timeout(() => {
+            resolve({ data: dashboard });
+          });
         });
       });
-      return deferred.promise;
     }
 
     return { data: scriptResult };

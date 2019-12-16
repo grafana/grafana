@@ -1,22 +1,19 @@
 import { PanelQueryRunner } from './PanelQueryRunner';
 import { PanelData, DataQueryRequest, dateTime, ScopedVars } from '@grafana/data';
-import { PanelModel } from './PanelModel';
+import { DashboardModel } from './index';
+import { setEchoSrv } from '@grafana/runtime';
+import { Echo } from '../../../core/services/echo/Echo';
 
 jest.mock('app/core/services/backend_srv');
 
-// Defined within setup functions
-const panelsForCurrentDashboardMock: { [key: number]: PanelModel } = {};
+const dashboardModel = new DashboardModel({
+  panels: [{ id: 1, type: 'graph' }],
+});
 
 jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
   getDashboardSrv: () => {
     return {
-      getCurrent: () => {
-        return {
-          getPanelById: (id: number) => {
-            return panelsForCurrentDashboardMock[id];
-          },
-        };
-      },
+      getCurrent: () => dashboardModel,
     };
   },
 }));
@@ -68,6 +65,7 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
     };
 
     beforeEach(async () => {
+      setEchoSrv(new Echo());
       setupFn();
 
       const datasource: any = {
@@ -102,13 +100,6 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
           ctx.events.push(data);
         },
       });
-
-      panelsForCurrentDashboardMock[1] = {
-        id: 1,
-        getQueryRunner: () => {
-          return ctx.runner;
-        },
-      } as PanelModel;
 
       ctx.events = [];
       ctx.runner.run(args);

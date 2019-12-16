@@ -2,12 +2,16 @@ import React, { PureComponent } from 'react';
 
 import { Select } from '../Select/Select';
 
-import { getValueFormats } from '@grafana/data';
+import { getValueFormats, SelectableValue } from '@grafana/data';
 
 interface Props {
-  onChange: (item: any) => void;
-  defaultValue?: string;
+  onChange: (item?: string) => void;
+  value?: string;
   width?: number;
+}
+
+function formatCreateLabel(input: string) {
+  return `Custom unit: ${input}`;
 }
 
 export class UnitPicker extends PureComponent<Props> {
@@ -15,8 +19,12 @@ export class UnitPicker extends PureComponent<Props> {
     width: 12,
   };
 
+  onChange = (value: SelectableValue<string>) => {
+    this.props.onChange(value.value);
+  };
+
   render() {
-    const { defaultValue, onChange, width } = this.props;
+    const { value, width } = this.props;
 
     const unitGroups = getValueFormats();
 
@@ -35,18 +43,20 @@ export class UnitPicker extends PureComponent<Props> {
       };
     });
 
-    const value = groupOptions.map(group => {
-      return group.options.find(option => option.value === defaultValue);
+    const valueOption = groupOptions.map(group => {
+      return group.options.find(option => option.value === value);
     });
 
     return (
       <Select
         width={width}
-        defaultValue={value}
+        defaultValue={valueOption}
         isSearchable={true}
+        allowCustomValue={true}
+        formatCreateLabel={formatCreateLabel}
         options={groupOptions}
         placeholder="Choose"
-        onChange={onChange}
+        onChange={this.onChange}
       />
     );
   }
