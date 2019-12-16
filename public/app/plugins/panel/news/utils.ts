@@ -1,23 +1,28 @@
 import { RssFeed } from './types';
-import { DataFrame, ArrayVector, FieldType } from '@grafana/data';
+import { ArrayVector, FieldType, DataFrame, dateTime } from '@grafana/data';
 
 export function feedToDataFrame(feed: RssFeed): DataFrame {
-  const titles = new ArrayVector<string>([]);
-  const links = new ArrayVector<string>([]);
-  const descr = new ArrayVector<string>([]);
+  const date = new ArrayVector<number>([]);
+  const title = new ArrayVector<string>([]);
+  const link = new ArrayVector<string>([]);
 
   for (const item of feed.items) {
-    titles.buffer.push(item.title);
-    links.buffer.push(item.link);
-    descr.buffer.push(item.description);
+    const val = dateTime(item.isoDate);
+    try {
+      date.buffer.push(val.valueOf());
+      title.buffer.push(item.title);
+      link.buffer.push(item.link);
+    } catch (err) {
+      console.warn('Error reading news item:', err, item);
+    }
   }
 
   return {
     fields: [
-      { name: 'title', type: FieldType.string, config: {}, values: titles },
-      { name: 'link', type: FieldType.string, config: {}, values: links },
-      { name: 'description', type: FieldType.string, config: {}, values: descr },
+      { name: 'date', type: FieldType.time, config: { title: 'Date' }, values: date },
+      { name: 'title', type: FieldType.string, config: {}, values: title },
+      { name: 'link', type: FieldType.string, config: {}, values: link },
     ],
-    length: titles.length,
+    length: date.length,
   };
 }

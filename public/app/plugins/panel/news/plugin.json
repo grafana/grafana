@@ -1,7 +1,7 @@
 {
   "type": "panel",
-  "name": "RSS Panel",
-  "id": "rss-panel",
+  "name": "News Panel",
+  "id": "news",
 
   "skipDataQuery": true,
 
@@ -13,8 +13,8 @@
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "img/rss.svg",
-      "large": "img/rss.svg"
+      "small": "img/news.svg",
+      "large": "img/news.svg"
     }
   }
 }

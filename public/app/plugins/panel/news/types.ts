@@ -6,18 +6,27 @@ export const defaults: NewsOptions = {
   feedUrl: 'https://grafana.com/blog/index.xml',
 };
 
+export interface NewsItem {
+  date: number;
+  title: string;
+  link: string;
+}
+
+/**
+ * Helper class for rss-parser
+ */
 export interface RssFeed {
   description: string;
-  image: string;
   items: RssItem[];
   title: string;
-  url: string;
 }
 
 export interface RssItem {
-  created: number;
-  description: string;
-  link: string;
   title: string;
-  url: string;
+  link: string;
+  pubDate: string;
+  guid: string;
+  isoDate: string;
+  content?: string;
+  contentSnippet?: string;
 }

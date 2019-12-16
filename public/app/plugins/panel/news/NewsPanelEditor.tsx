@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { FormField, PanelOptionsGroup } from '@grafana/ui';
 import { PanelEditorProps } from '@grafana/data';
-import { NewsOptions } from '../types';
+import { NewsOptions } from './types';
 
 interface State {
   feedUrl: string;
