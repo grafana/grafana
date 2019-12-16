@@ -1,5 +1,4 @@
 import { e2e } from '@grafana/e2e';
-import { ScenarioContext } from '@grafana/e2e/src/support';
 
 const assertDefaultsForNewVariable = () => {
   e2e().logToConsole('Asserting defaults for new variable');
@@ -155,8 +154,8 @@ e2e.scenario({
   addScenarioDataSource: true,
   addScenarioDashBoard: true,
   skipScenario: false,
-  scenario: ({ dataSourceName, dashboardTitle, dashboardUid }: ScenarioContext) => {
-    e2e.flows.openDashboard(dashboardUid);
+  scenario: () => {
+    e2e.flows.openDashboard(e2e.context().get('lastAddedDashboardUid'));
     e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
     e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
     e2e.pages.Dashboard.Settings.Variables.List.addVariableCTA().click();
@@ -189,7 +188,7 @@ e2e.scenario({
       const { name, label, query } = queryVariables[queryVariableIndex];
       const asserts = queryVariables.slice(0, queryVariableIndex + 1);
       createQueryVariable({
-        dataSourceName,
+        dataSourceName: e2e.context().get('lastAddedDataSource'),
         name,
         label,
         query,
@@ -199,6 +198,7 @@ e2e.scenario({
 
       e2e.pages.Dashboard.Settings.General.saveDashBoard().click();
       e2e.pages.SaveDashboardModal.save().click();
+      cl;
       e2e.flows.assertSuccessNotification();
 
       e2e.pages.Dashboard.Toolbar.backArrow().click();
