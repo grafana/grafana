@@ -19,7 +19,7 @@ deps-go: ## Install backend dependencies.
 
 deps-js: node_modules ## Install frontend dependencies.
 
-deps: deps-js ## Install all dependencies.
+deps: deps-go deps-js ## Install all dependencies.
 
 node_modules: package.json yarn.lock ## Install node modules.
 	@echo "install frontend dependencies"
