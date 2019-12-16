@@ -280,6 +280,9 @@ function inputToValue(from: string, to: string): Date[] | Date {
   const fromAsDate = fromAsDateTime.isValid() ? fromAsDateTime.toDate() : new Date();
   const toAsDate = toAsDateTime.isValid() ? toAsDateTime.toDate() : new Date();
 
+  if (fromAsDate > toAsDate) {
+    return [toAsDate, fromAsDate];
+  }
   return [fromAsDate, toAsDate];
 }
 
