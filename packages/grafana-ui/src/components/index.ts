@@ -1,4 +1,5 @@
-export { DeleteButton } from './DeleteButton/DeleteButton';
+export { ConfirmButton } from './ConfirmButton/ConfirmButton';
+export { DeleteButton } from './ConfirmButton/DeleteButton';
 export { Tooltip, PopoverContent } from './Tooltip/Tooltip';
 export { PopoverController } from './Tooltip/PopoverController';
 export { Popover } from './Tooltip/Popover';
@@ -39,6 +40,7 @@ export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
 export { Modal } from './Modal/Modal';
+export { ConfirmModal } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
 
 // Renderless
@@ -48,14 +50,22 @@ export { Table } from './Table/Table';
 export { TableInputCSV } from './Table/TableInputCSV';
 
 // Visualizations
-export { BigValue, BigValueDisplayMode, BigValueSparkline } from './BigValue/BigValue';
+export {
+  BigValue,
+  BigValueColorMode,
+  BigValueSparkline,
+  BigValueGraphMode,
+  BigValueJustifyMode,
+} from './BigValue/BigValue';
+
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { GraphLegend } from './Graph/GraphLegend';
 export { GraphWithLegend } from './Graph/GraphWithLegend';
-export { BarGauge, BarGaugeAlignmentFactors } from './BarGauge/BarGauge';
+export { BarGauge } from './BarGauge/BarGauge';
 export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { VizRepeater } from './VizRepeater/VizRepeater';
+
 export {
   LegendOptions,
   LegendBasicOptions,
@@ -66,6 +76,7 @@ export {
   LegendPlacement,
   LegendDisplayMode,
 } from './Legend/Legend';
+
 export { Alert, AlertVariant } from './Alert/Alert';
 export { GraphSeriesToggler, GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
 export { Collapse } from './Collapse/Collapse';
@@ -96,7 +107,7 @@ export { DataSourceHttpSettings } from './DataSourceSettings/DataSourceHttpSetti
 export { Spinner } from './Spinner/Spinner';
 export { FadeTransition } from './transitions/FadeTransition';
 export { SlideOutTransition } from './transitions/SlideOutTransition';
-export { Segment, SegmentAsync, SegmentSelect } from './Segment/';
+export { Segment, SegmentAsync, SegmentInput, SegmentSelect } from './Segment/';
 export { default as Chart } from './Chart';
 export { Icon } from './Icon/Icon';
 

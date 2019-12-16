@@ -202,6 +202,7 @@ export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number,
       // Create metrics from logs
       logsModel.series = makeSeriesForLogs(logsModel.rows, intervalMs, timeZone);
     } else {
+      // We got metrics in the dataFrame so process those
       logsModel.series = getGraphSeriesModel(
         metricSeries,
         timeZone,

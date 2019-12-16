@@ -871,9 +871,6 @@ describe('ElasticResponse', () => {
                     host: 'djisaodjsoad',
                     message: 'hello, i am a message',
                   },
-                  fields: {
-                    '@timestamp': ['2019-06-24T09:51:19.765Z'],
-                  },
                 },
                 {
                   _id: 'kdospaidopa',
@@ -883,9 +880,6 @@ describe('ElasticResponse', () => {
                     '@timestamp': '2019-06-24T09:52:19.765Z',
                     host: 'dsalkdakdop',
                     message: 'hello, i am also message',
-                  },
-                  fields: {
-                    '@timestamp': ['2019-06-24T09:52:19.765Z'],
                   },
                 },
               ],

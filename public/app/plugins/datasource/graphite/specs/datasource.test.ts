@@ -1,14 +1,12 @@
 import { GraphiteDatasource } from '../datasource';
 import _ from 'lodash';
-// @ts-ignore
-import $q from 'q';
+
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { dateTime } from '@grafana/data';
 
 describe('graphiteDatasource', () => {
   const ctx: any = {
     backendSrv: {},
-    $q,
     // @ts-ignore
     templateSrv: new TemplateSrv(),
     instanceSettings: { url: 'url', name: 'graphiteProd', jsonData: {} },
@@ -17,7 +15,7 @@ describe('graphiteDatasource', () => {
   beforeEach(() => {
     ctx.instanceSettings.url = '/api/datasources/proxy/1';
     // @ts-ignore
-    ctx.ds = new GraphiteDatasource(ctx.instanceSettings, ctx.$q, ctx.backendSrv, ctx.templateSrv);
+    ctx.ds = new GraphiteDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
   });
 
   describe('When querying graphite with one target using query editor target spec', () => {
@@ -35,7 +33,7 @@ describe('graphiteDatasource', () => {
     beforeEach(async () => {
       ctx.backendSrv.datasourceRequest = (options: any) => {
         requestOptions = options;
-        return ctx.$q.when({
+        return Promise.resolve({
           data: [
             {
               target: 'prod1.count',
@@ -118,7 +116,7 @@ describe('graphiteDatasource', () => {
 
       beforeEach(async () => {
         ctx.backendSrv.datasourceRequest = (options: any) => {
-          return ctx.$q.when(response);
+          return Promise.resolve(response);
         };
 
         await ctx.ds.annotationQuery(options).then((data: any) => {
@@ -148,7 +146,7 @@ describe('graphiteDatasource', () => {
       };
       beforeEach(() => {
         ctx.backendSrv.datasourceRequest = (options: any) => {
-          return ctx.$q.when(response);
+          return Promise.resolve(response);
         };
 
         ctx.ds.annotationQuery(options).then((data: any) => {
@@ -267,7 +265,7 @@ describe('graphiteDatasource', () => {
     beforeEach(() => {
       ctx.backendSrv.datasourceRequest = (options: any) => {
         requestOptions = options;
-        return ctx.$q.when({
+        return Promise.resolve({
           data: ['backend_01', 'backend_02'],
         });
       };
@@ -393,7 +391,6 @@ function accessScenario(name: string, url: string, fn: any) {
   describe('access scenario ' + name, () => {
     const ctx: any = {
       backendSrv: {},
-      $q,
       // @ts-ignore
       templateSrv: new TemplateSrv(),
       instanceSettings: { url: 'url', name: 'graphiteProd', jsonData: {} },
@@ -409,7 +406,7 @@ function accessScenario(name: string, url: string, fn: any) {
       it('tracing headers should be added', () => {
         ctx.instanceSettings.url = url;
         // @ts-ignore
-        const ds = new GraphiteDatasource(ctx.instanceSettings, ctx.$q, ctx.backendSrv, ctx.templateSrv);
+        const ds = new GraphiteDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
         ds.addTracingHeaders(httpOptions, options);
         fn(httpOptions);
       });

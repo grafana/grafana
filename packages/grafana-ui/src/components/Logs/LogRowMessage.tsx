@@ -21,6 +21,7 @@ interface Props extends Themeable {
   row: LogRowModel;
   hasMoreContextRows?: HasMoreContextRows;
   showContext: boolean;
+  wrapLogMessage: boolean;
   errors?: LogRowContextQueryErrors;
   context?: LogRowContextRows;
   highlighterExpressions?: string[];
@@ -57,6 +58,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: whiteSpacePreWrap;
       white-space: pre-wrap;
     `,
+    horizontalScroll: css`
+      label: verticalScroll;
+      white-space: nowrap;
+    `,
   };
 });
 
@@ -76,6 +81,7 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
       updateLimit,
       context,
       showContext,
+      wrapLogMessage,
       onToggleContext,
     } = this.props;
     const {} = this.state;
@@ -90,8 +96,8 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
       : cx([style.logsRowMatchHighLight]);
     const styles = getStyles(theme);
     return (
-      <div className={style.logsRowMessage}>
-        <div className={styles.positionRelative}>
+      <td className={style.logsRowMessage}>
+        <div className={cx(styles.positionRelative, { [styles.horizontalScroll]: !wrapLogMessage })}>
           {showContext && context && (
             <LogRowContext
               row={row}
@@ -127,7 +133,7 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
             </span>
           )}
         </div>
-      </div>
+      </td>
     );
   }
 }

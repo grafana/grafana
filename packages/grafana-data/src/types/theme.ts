@@ -19,7 +19,6 @@ export interface GrafanaThemeCommons {
       monospace: string;
     };
     size: {
-      root: string;
       base: string;
       xs: string;
       sm: string;
@@ -237,6 +236,10 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     formSwitchBgHover: string;
     formSwitchBgDisabled: string;
     formSwitchDot: string;
+    formCheckboxBg: string;
+    formCheckboxBgChecked: string;
+    formCheckboxBgCheckedHover: string;
+    formCheckboxCheckmark: string;
   };
   shadow: {
     pageHeader: string;

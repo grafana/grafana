@@ -46,9 +46,6 @@ export interface FieldConfig {
 
   // Visual options
   color?: string;
-
-  // Used for time field formatting
-  dateDisplayFormat?: string;
 }
 
 export interface Field<T = any, V = Vector<T>> {

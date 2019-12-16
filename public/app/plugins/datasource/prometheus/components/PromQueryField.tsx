@@ -23,7 +23,6 @@ import { PrometheusDatasource } from '../datasource';
 import PromQlLanguageProvider from '../language_provider';
 
 const HISTOGRAM_GROUP = '__histograms__';
-const METRIC_MARK = 'metric';
 const PRISM_SYNTAX = 'promql';
 export const RECORDING_RULES_GROUP = '__recording_rules__';
 
@@ -138,6 +137,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   componentDidMount() {
     if (this.languageProvider) {
+      Prism.languages[PRISM_SYNTAX] = this.languageProvider.syntax;
       this.refreshMetrics(makePromiseCancelable(this.languageProvider.start()));
     }
     this.refreshHint();
@@ -228,16 +228,10 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   onUpdateLanguage = () => {
-    const { histogramMetrics, metrics } = this.languageProvider;
+    const { histogramMetrics, metrics, lookupsDisabled, lookupMetricsThreshold } = this.languageProvider;
     if (!metrics) {
       return;
     }
-
-    Prism.languages[PRISM_SYNTAX] = this.languageProvider.syntax;
-    Prism.languages[PRISM_SYNTAX][METRIC_MARK] = {
-      alias: 'variable',
-      pattern: new RegExp(`(?:^|\\s)(${metrics.join('|')})(?:$|\\s)`),
-    };
 
     // Build metrics tree
     const metricsByPrefix = groupMetricsByPrefix(metrics);
@@ -250,7 +244,16 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
           ]
         : metricsByPrefix;
 
-    this.setState({ metricsOptions, syntaxLoaded: true });
+    // Hint for big disabled lookups
+    let hint: QueryHint;
+    if (lookupsDisabled) {
+      hint = {
+        label: `Dynamic label lookup is disabled for datasources with more than ${lookupMetricsThreshold} metrics.`,
+        type: 'INFO',
+      };
+    }
+
+    this.setState({ hint, metricsOptions, syntaxLoaded: true });
   };
 
   onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {

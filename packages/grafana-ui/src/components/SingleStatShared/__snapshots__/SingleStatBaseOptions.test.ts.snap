@@ -1,5 +1,22 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`sharedSingleStatMigrationHandler Remove unused \`overrides\` option 1`] = `
+Object {
+  "fieldOptions": Object {
+    "decimals": 5,
+    "defaults": Object {
+      "mappings": undefined,
+      "max": 100,
+      "min": 0,
+      "thresholds": undefined,
+    },
+    "overrides": Array [],
+    "stat": "last",
+    "unit": "watt",
+  },
+}
+`;
+
 exports[`sharedSingleStatMigrationHandler from old valueOptions model without pluginVersion 1`] = `
 Object {
   "fieldOptions": Object {

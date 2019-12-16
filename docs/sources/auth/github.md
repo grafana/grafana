@@ -113,4 +113,4 @@ Your GitHub teams can be referenced in two ways:
 
 Example: `@grafana/developers`
 
-[Learn more about Team Sync]({{< relref "auth/team-sync.md" >}})
+[Learn more about Team Sync]({{< relref "team-sync.md" >}})
