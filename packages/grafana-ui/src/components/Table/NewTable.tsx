@@ -53,6 +53,7 @@ const getTableStyles = stylesFactory((theme: GrafanaTheme, columnWidth: number) 
       white-space: nowrap;
 
       color: ${colors.blue};
+      border-bottom: 2px solid ${colors.bodyBg};
     `,
     tableCell: css`
       display: 'table-cell';

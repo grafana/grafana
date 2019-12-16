@@ -22,12 +22,22 @@ export class TableContainer extends PureComponent<TableContainerProps> {
     this.props.toggleTable(this.props.exploreId, this.props.showingTable);
   };
 
+  getTableHeight() {
+    const { tableResult } = this.props;
+
+    if (!tableResult || tableResult.length === 0) {
+      return 200;
+    }
+
+    // tries to estimate table height
+    return Math.max(Math.min(600, tableResult.length * 35) + 35);
+  }
+
   render() {
     const { loading, onClickCell, showingTable, tableResult, width } = this.props;
 
-    const height = 600;
+    const height = this.getTableHeight();
     const paddingWidth = 16;
-
     const tableWidth = width - paddingWidth;
 
     return (
