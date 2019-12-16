@@ -4,26 +4,26 @@ import { DataTransformerID } from './ids';
 import { DataFrame, Field } from '../../dataframe';
 import { MutableDataFrame } from '../../dataframe/MutableDataFrame';
 
-export interface JoinDataFrameTransformOptions {}
+export interface MergeDataFrameTransformOptions {}
 
-export const joinDataFramesTransformer: DataTransformerInfo<JoinDataFrameTransformOptions> = {
-  id: DataTransformerID.join,
-  name: 'Join',
-  description: 'Joins on column names',
+export const mergeDataFramesTransformer: DataTransformerInfo<MergeDataFrameTransformOptions> = {
+  id: DataTransformerID.merge,
+  name: 'Merge',
+  description: 'Merge many data frames into one',
   defaultOptions: {},
 
   /**
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  transformer: (options: FilterFramesByRefIdTransformerOptions) => {
+  transformer: options => {
     return (data: DataFrame[]) => {
-      return [joinDataFrames(data)];
+      return [mergeDataFrames(data)];
     };
   },
 };
 
-export function joinDataFrames(data: DataFrame[]): DataFrame {
+export function mergeDataFrames(data: DataFrame[]): DataFrame {
   const fieldNames: Record<string, any> = {};
 
   const result = new MutableDataFrame();

@@ -21,10 +21,10 @@ export const allSeries = [
   }),
 ];
 
-describe('Join Transformer', () => {
+describe('Merge Transformer', () => {
   it('simple', () => {
     const cfg = {
-      id: DataTransformerID.join,
+      id: DataTransformerID.merge,
       options: {},
     };
 
