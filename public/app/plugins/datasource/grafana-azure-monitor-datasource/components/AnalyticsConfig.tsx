@@ -8,6 +8,8 @@ export interface Props {
   options: AzureDataSourceSettings;
   subscriptions: SelectableValue[];
   workspaces: SelectableValue[];
+  makeSameAs: () => void;
+  onUpdateOptions: (options: AzureDataSourceSettings) => void;
   onUpdateOption: (key: string, val: any, secure: boolean) => void;
   onResetOptionKey: (key: string) => void;
   onLoadSubscriptions: (type?: string) => void;
@@ -35,8 +37,31 @@ export class AnalyticsConfig extends PureComponent<Props> {
   };
 
   onAzureLogAnalyticsSameAsChange = () => {
-    const { options } = this.props;
-    this.props.onUpdateOption('azureLogAnalyticsSameAs', !options.jsonData.azureLogAnalyticsSameAs, false);
+    const { options, onUpdateOptions, makeSameAs } = this.props;
+
+    if (!options.jsonData.azureLogAnalyticsSameAs && options.secureJsonData.clientSecret) {
+      makeSameAs();
+    } else if (!options.jsonData.azureLogAnalyticsSameAs) {
+      // if currently off, clear monitor secret
+      onUpdateOptions({
+        ...options,
+        jsonData: {
+          ...options.jsonData,
+          azureLogAnalyticsSameAs: !options.jsonData.azureLogAnalyticsSameAs,
+        },
+        secureJsonData: {
+          ...options.secureJsonData,
+          clientSecret: '',
+        },
+        secureJsonFields: {
+          clientSecret: false,
+        },
+      });
+    } else {
+      this.props.onUpdateOption('azureLogAnalyticsSameAs', !options.jsonData.azureLogAnalyticsSameAs, false);
+    }
+
+    // init popover to warn secret needs to be re-entered
   };
 
   onLogAnalyticsResetClientSecret = () => {
@@ -83,6 +108,13 @@ export class AnalyticsConfig extends PureComponent<Props> {
         tooltip: 'Workspaces are pulled from default subscription selected above.',
       }),
     };
+
+    const showSameAsHelpMsg =
+      jsonData.azureLogAnalyticsSameAs &&
+      secureJsonFields &&
+      !secureJsonFields.clientSecret &&
+      !secureJsonData.clientSecret;
+
     return (
       <>
         <h3 className="page-heading">Azure Log Analytics API Details</h3>
@@ -92,6 +124,13 @@ export class AnalyticsConfig extends PureComponent<Props> {
           onChange={this.onAzureLogAnalyticsSameAsChange}
           {...addtlAttrs}
         />
+        {showSameAsHelpMsg && (
+          <div className="grafana-info-box m-t-2">
+            <div className="alert-body">
+              <p>Re-enter your Azure Monitor Client Secret to use this setting.</p>
+            </div>
+          </div>
+        )}
         {!jsonData.azureLogAnalyticsSameAs && (
           <AzureCredentialsForm
             subscriptionOptions={subscriptions}

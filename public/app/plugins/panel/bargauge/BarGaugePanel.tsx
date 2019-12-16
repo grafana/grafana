@@ -57,6 +57,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
       replaceVariables,
       theme: config.theme,
       data: data.series,
+      autoMinMax: true,
     });
   };
 

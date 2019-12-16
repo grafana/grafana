@@ -9,6 +9,7 @@ const hitTypes = {
 export class ValidationSrv {
   rootName = 'general';
 
+  /** @ngInject */
   constructor(private backendSrv: BackendSrv) {}
 
   validateNewDashboardName(folderId: any, name: string) {
