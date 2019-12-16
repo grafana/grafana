@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 
 	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
-	sdk "github.com/grafana/grafana-plugin-sdk-go/datasource"
+	sdk "github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
@@ -108,7 +108,7 @@ func (p *DataSourcePlugin) spawnSubProcess() error {
 		return nil
 	}
 
-	plugin, ok := raw.(sdk.DatasourcePlugin)
+	plugin, ok := raw.(sdk.Plugin)
 	if !ok {
 		return fmt.Errorf("unxpected type %T, expeced sdk.DatasourcePlugin", raw)
 	}

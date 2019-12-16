@@ -3,14 +3,12 @@ package plugins
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"path"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/dataframe"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
-	"github.com/grafana/grafana-plugin-sdk-go/transform"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -79,7 +77,7 @@ func (p *TransformPlugin) spawnSubProcess() error {
 		return err
 	}
 
-	plugin, ok := raw.(transform.TransformPlugin)
+	plugin, ok := raw.(backend.TransformPlugin)
 	if !ok {
 		return fmt.Errorf("unexpected type %T, expected *transform.GRPCClient", raw)
 	}
@@ -125,25 +123,19 @@ func (p *TransformPlugin) Kill() {
 // Wrapper Code
 // ...
 
-func NewTransformWrapper(log log.Logger, plugin transform.TransformPlugin) *TransformWrapper {
-	return &TransformWrapper{plugin, log, &grafanaAPI{log}}
+func NewTransformWrapper(log log.Logger, plugin backend.TransformPlugin) *TransformWrapper {
+	return &TransformWrapper{plugin, log, &transformCallback{log}}
 }
 
 type TransformWrapper struct {
-	transform.TransformPlugin
-	logger log.Logger
-	api    *grafanaAPI
+	backend.TransformPlugin
+	logger   log.Logger
+	callback *transformCallback
 }
 
 func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	pbQuery := &pluginv2.TransformRequest{
-		TimeRange: &pluginv2.TimeRange{
-			FromRaw:     query.TimeRange.From,
-			ToRaw:       query.TimeRange.To,
-			ToEpochMs:   query.TimeRange.GetToAsMsEpoch(),
-			FromEpochMs: query.TimeRange.GetFromAsMsEpoch(),
-		},
-		Queries: []*pluginv2.TransformQuery{},
+	pbQuery := &pluginv2.DataQueryRequest{
+		Queries: []*pluginv2.DataQuery{},
 	}
 
 	for _, q := range query.Queries {
@@ -151,16 +143,19 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 		if err != nil {
 			return nil, err
 		}
-		pbQuery.Queries = append(pbQuery.Queries, &pluginv2.TransformQuery{
-			ModelJson:     string(modelJSON),
-			IntervalMs:    q.IntervalMs,
+		pbQuery.Queries = append(pbQuery.Queries, &pluginv2.DataQuery{
+			Json:          modelJSON,
+			IntervalMS:    q.IntervalMs,
 			RefId:         q.RefId,
 			MaxDataPoints: q.MaxDataPoints,
+			TimeRange: &pluginv2.TimeRange{
+				ToEpochMS:   query.TimeRange.GetToAsMsEpoch(),
+				FromEpochMS: query.TimeRange.GetFromAsMsEpoch(),
+			},
 		})
 	}
 
-	pbres, err := tw.TransformPlugin.Transform(ctx, pbQuery, tw.api)
-
+	_, err := tw.TransformPlugin.DataQuery(ctx, pbQuery, tw.callback)
 	if err != nil {
 		return nil, err
 	}
@@ -169,43 +164,43 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 		Results: map[string]*tsdb.QueryResult{},
 	}
 
-	for _, r := range pbres.Results {
-		qr := &tsdb.QueryResult{
-			RefId: r.RefId,
-		}
+	// for _, r := range pbres.Results {
+	// 	qr := &tsdb.QueryResult{
+	// 		RefId: r.RefId,
+	// 	}
 
-		if r.Error != "" {
-			qr.Error = errors.New(r.Error)
-			qr.ErrorString = r.Error
-		}
+	// 	if r.Error != "" {
+	// 		qr.Error = errors.New(r.Error)
+	// 		qr.ErrorString = r.Error
+	// 	}
 
-		if r.MetaJson != "" {
-			metaJSON, err := simplejson.NewJson([]byte(r.MetaJson))
-			if err != nil {
-				tw.logger.Error("Error parsing JSON Meta field: " + err.Error())
-			}
-			qr.Meta = metaJSON
-		}
-		qr.Dataframes = r.Dataframes
+	// 	if r.MetaJson != "" {
+	// 		metaJSON, err := simplejson.NewJson([]byte(r.MetaJson))
+	// 		if err != nil {
+	// 			tw.logger.Error("Error parsing JSON Meta field: " + err.Error())
+	// 		}
+	// 		qr.Meta = metaJSON
+	// 	}
+	// 	qr.Dataframes = r.Dataframes
 
-		res.Results[r.RefId] = qr
-	}
+	// 	res.Results[r.RefId] = qr
+	// }
 
 	return res, nil
 }
 
-type grafanaAPI struct {
+type transformCallback struct {
 	logger log.Logger
 }
 
-func (s *grafanaAPI) QueryDatasource(ctx context.Context, req *pluginv2.QueryDatasourceRequest) (*pluginv2.QueryDatasourceResponse, error) {
+func (s *transformCallback) DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error) {
 	if len(req.Queries) == 0 {
 		return nil, fmt.Errorf("zero queries found in datasource request")
 	}
 
 	getDsInfo := &models.GetDataSourceByIdQuery{
-		Id:    req.DatasourceId,
-		OrgId: req.OrgId,
+		Id:    req.Config.Id,
+		OrgId: req.Config.OrgId,
 	}
 
 	if err := bus.Dispatch(getDsInfo); err != nil {
@@ -215,63 +210,63 @@ func (s *grafanaAPI) QueryDatasource(ctx context.Context, req *pluginv2.QueryDat
 	// Convert plugin-model (datasource) queries to tsdb queries
 	queries := make([]*tsdb.Query, len(req.Queries))
 	for i, query := range req.Queries {
-		sj, err := simplejson.NewJson([]byte(query.ModelJson))
+		sj, err := simplejson.NewJson([]byte(query.Json))
 		if err != nil {
 			return nil, err
 		}
 		queries[i] = &tsdb.Query{
 			RefId:         query.RefId,
-			IntervalMs:    query.IntervalMs,
+			IntervalMs:    query.IntervalMS,
 			MaxDataPoints: query.MaxDataPoints,
 			DataSource:    getDsInfo.Result,
 			Model:         sj,
 		}
 	}
 
-	timeRange := tsdb.NewTimeRange(req.TimeRange.FromRaw, req.TimeRange.ToRaw)
+	// timeRange := tsdb.NewTimeRange(req.TimeRange.FromRaw, req.TimeRange.ToRaw)
 	tQ := &tsdb.TsdbQuery{
-		TimeRange: timeRange,
-		Queries:   queries,
+		// TimeRange: timeRange,
+		Queries: queries,
 	}
 
 	// Execute the converted queries
-	tsdbRes, err := tsdb.HandleRequest(ctx, getDsInfo.Result, tQ)
+	_, err := tsdb.HandleRequest(ctx, getDsInfo.Result, tQ)
 	if err != nil {
 		return nil, err
 	}
 	// Convert tsdb results (map) to plugin-model/datasource (slice) results.
 	// Only error, tsdb.Series, and encoded Dataframes responses are mapped.
-	results := make([]*pluginv2.DatasourceQueryResult, 0, len(tsdbRes.Results))
-	for refID, res := range tsdbRes.Results {
-		qr := &pluginv2.DatasourceQueryResult{
-			RefId: refID,
-		}
+	// results := make([]*pluginv2.DataQueryResponse, 0, len(tsdbRes.Results))
+	// for refID, res := range tsdbRes.Results {
+	// qr := &pluginv2.DataQueryResponse{
+	// 	RefId: refID,
+	// }
 
-		if res.Error != nil {
-			qr.Error = res.ErrorString
-			results = append(results, qr)
-			continue
-		}
+	// if res.Error != nil {
+	// 	qr.Error = res.ErrorString
+	// 	results = append(results, qr)
+	// 	continue
+	// }
 
-		if res.Dataframes != nil {
-			qr.Dataframes = append(qr.Dataframes, res.Dataframes...)
-			results = append(results, qr)
-			continue
-		}
+	// if res.Dataframes != nil {
+	// 	qr.Dataframes = append(qr.Dataframes, res.Dataframes...)
+	// 	results = append(results, qr)
+	// 	continue
+	// }
 
-		encodedFrames := make([][]byte, len(res.Series))
-		for sIdx, series := range res.Series {
-			frame, err := tsdb.SeriesToFrame(series)
-			if err != nil {
-				return nil, err
-			}
-			encodedFrames[sIdx], err = dataframe.MarshalArrow(frame)
-			if err != nil {
-				return nil, err
-			}
-		}
-		qr.Dataframes = encodedFrames
-		results = append(results, qr)
-	}
-	return &pluginv2.QueryDatasourceResponse{Results: results}, nil
+	// encodedFrames := make([][]byte, len(res.Series))
+	// for sIdx, series := range res.Series {
+	// 	frame, err := tsdb.SeriesToFrame(series)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	encodedFrames[sIdx], err = dataframe.MarshalArrow(frame)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// }
+	// qr.Dataframes = encodedFrames
+	// results = append(results, qr)
+	// }
+	return &pluginv2.DataQueryResponse{}, nil
 }

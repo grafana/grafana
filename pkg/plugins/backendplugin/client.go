@@ -7,9 +7,8 @@ import (
 
 	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
 	rendererV1 "github.com/grafana/grafana-plugin-model/go/renderer"
+	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdk "github.com/grafana/grafana-plugin-sdk-go/common"
-	datasourceV2 "github.com/grafana/grafana-plugin-sdk-go/datasource"
-	transformV2 "github.com/grafana/grafana-plugin-sdk-go/transform"
 	"github.com/hashicorp/go-plugin"
 )
 
@@ -51,7 +50,7 @@ func NewDatasourceClient(pluginID, executablePath string, logger log.Logger) *pl
 			pluginID: &datasourceV1.DatasourcePluginImpl{},
 		},
 		2: {
-			pluginID: &datasourceV2.DatasourcePluginImpl{},
+			"backend": &backend.CoreImpl{},
 		},
 	}
 
@@ -73,7 +72,7 @@ func NewRendererClient(pluginID, executablePath string, logger log.Logger) *plug
 func NewTransformClient(pluginID, executablePath string, logger log.Logger) *plugin.Client {
 	versionedPlugins := map[int]plugin.PluginSet{
 		2: {
-			pluginID: &transformV2.TransformPluginImpl{},
+			"trabsform": &backend.TransformImpl{},
 		},
 	}
 

@@ -2,22 +2,20 @@ package wrapper
 
 import (
 	"context"
-	"errors"
 
-	sdk "github.com/grafana/grafana-plugin-sdk-go/datasource"
+	sdk "github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func NewDatasourcePluginWrapperV2(log log.Logger, plugin sdk.DatasourcePlugin) *DatasourcePluginWrapperV2 {
-	return &DatasourcePluginWrapperV2{DatasourcePlugin: plugin, logger: log}
+func NewDatasourcePluginWrapperV2(log log.Logger, plugin sdk.Plugin) *DatasourcePluginWrapperV2 {
+	return &DatasourcePluginWrapperV2{Plugin: plugin, logger: log}
 }
 
 type DatasourcePluginWrapperV2 struct {
-	sdk.DatasourcePlugin
+	sdk.Plugin
 	logger log.Logger
 }
 
@@ -27,8 +25,8 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 		return nil, err
 	}
 
-	pbQuery := &pluginv2.DatasourceRequest{
-		Datasource: &pluginv2.DatasourceInfo{
+	pbQuery := &pluginv2.DataQueryRequest{
+		Config: &pluginv2.PluginConfig{
 			Name:                    ds.Name,
 			Type:                    ds.Type,
 			Url:                     ds.Url,
@@ -37,13 +35,7 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 			JsonData:                string(jsonData),
 			DecryptedSecureJsonData: ds.SecureJsonData.Decrypt(),
 		},
-		TimeRange: &pluginv2.TimeRange{
-			FromRaw:     query.TimeRange.From,
-			ToRaw:       query.TimeRange.To,
-			ToEpochMs:   query.TimeRange.GetToAsMsEpoch(),
-			FromEpochMs: query.TimeRange.GetFromAsMsEpoch(),
-		},
-		Queries: []*pluginv2.DatasourceQuery{},
+		Queries: []*pluginv2.DataQuery{},
 	}
 
 	for _, q := range query.Queries {
@@ -51,15 +43,19 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 		if err != nil {
 			return nil, err
 		}
-		pbQuery.Queries = append(pbQuery.Queries, &pluginv2.DatasourceQuery{
-			ModelJson:     string(modelJSON),
-			IntervalMs:    q.IntervalMs,
+		pbQuery.Queries = append(pbQuery.Queries, &pluginv2.DataQuery{
+			Json:          modelJSON,
+			IntervalMS:    q.IntervalMs,
 			RefId:         q.RefId,
 			MaxDataPoints: q.MaxDataPoints,
+			TimeRange: &pluginv2.TimeRange{
+				ToEpochMS:   query.TimeRange.GetToAsMsEpoch(),
+				FromEpochMS: query.TimeRange.GetFromAsMsEpoch(),
+			},
 		})
 	}
 
-	pbres, err := tw.DatasourcePlugin.Query(ctx, pbQuery)
+	_, err = tw.Plugin.DataQuery(ctx, pbQuery)
 
 	if err != nil {
 		return nil, err
@@ -69,27 +65,25 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 		Results: map[string]*tsdb.QueryResult{},
 	}
 
-	for _, r := range pbres.Results {
-		qr := &tsdb.QueryResult{
-			RefId: r.RefId,
-		}
+	// qr := &tsdb.QueryResult{
+	// RefId: r.RefId,
+	// }
 
-		if r.Error != "" {
-			qr.Error = errors.New(r.Error)
-			qr.ErrorString = r.Error
-		}
+	// if r.Error != "" {
+	// 	qr.Error = errors.New(r.Error)
+	// 	qr.ErrorString = r.Error
+	// }
 
-		if r.MetaJson != "" {
-			metaJSON, err := simplejson.NewJson([]byte(r.MetaJson))
-			if err != nil {
-				tw.logger.Error("Error parsing JSON Meta field: " + err.Error())
-			}
-			qr.Meta = metaJSON
-		}
-		qr.Dataframes = r.Dataframes
+	// if pbres.Metadata != "" {
+	// 	metaJSON, err := simplejson.NewJson([]byte(pbres.Metadata))
+	// 	if err != nil {
+	// 		tw.logger.Error("Error parsing JSON Meta field: " + err.Error())
+	// 	}
+	// 	qr.Meta = metaJSON
+	// }
+	// qr.Dataframes = pbres.Frames
 
-		res.Results[r.RefId] = qr
-	}
+	// res.Results[r.RefId] = qr
 
 	return res, nil
 }
