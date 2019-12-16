@@ -1,5 +1,4 @@
 import { e2e } from '@grafana/e2e';
-import { ScenarioContext } from '@grafana/e2e/src/support';
 
 e2e.scenario({
   describeName: 'Smoke tests',
@@ -7,8 +6,8 @@ e2e.scenario({
   addScenarioDataSource: true,
   addScenarioDashBoard: true,
   skipScenario: false,
-  scenario: ({ dataSourceName, dashboardTitle, dashboardUid }: ScenarioContext) => {
-    e2e.flows.openDashboard(dashboardUid);
+  scenario: () => {
+    e2e.flows.openDashboard(e2e.context().get('lastAddedDashboardUid'));
     e2e.pages.Dashboard.toolbarItems('Add panel')
       .should('be.visible') // prevents flakiness
       .click();
