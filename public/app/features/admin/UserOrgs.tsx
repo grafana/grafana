@@ -2,13 +2,15 @@ import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
 import { Modal, Themeable, stylesFactory, withTheme, ConfirmButton, Forms } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { UserOrg } from 'app/types';
+import { UserOrg, Organization } from 'app/types';
+import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
 
 interface Props {
   orgs: UserOrg[];
 
   onOrgRemove: (orgId: number) => void;
   onOrgRoleChange: (orgId: number, newRole: string) => void;
+  onOrgAdd: (orgId: number, role: string) => void;
 }
 
 interface State {
@@ -20,16 +22,12 @@ export class UserOrgs extends PureComponent<Props, State> {
     showAddOrgModal: false,
   };
 
-  onAddOrg = () => {
-    this.setState({ showAddOrgModal: true });
-  };
-
-  onAddOrgModalDismiss = () => {
-    this.setState({ showAddOrgModal: false });
+  showOrgAddModal = (show: boolean) => () => {
+    this.setState({ showAddOrgModal: show });
   };
 
   render() {
-    const { orgs, onOrgRoleChange, onOrgRemove } = this.props;
+    const { orgs, onOrgRoleChange, onOrgRemove, onOrgAdd } = this.props;
     const { showAddOrgModal } = this.state;
     const addToOrgContainerClass = css`
       margin-top: 0.8rem;
@@ -57,11 +55,11 @@ export class UserOrgs extends PureComponent<Props, State> {
             </table>
           </div>
           <div className={addToOrgContainerClass}>
-            <Forms.Button className={addToOrgButtonClass} variant="link" onClick={this.onAddOrg}>
+            <Forms.Button className={addToOrgButtonClass} variant="link" onClick={this.showOrgAddModal(true)}>
               Add this user to another organisation
             </Forms.Button>
           </div>
-          <AddToOrgModal isOpen={showAddOrgModal} onDismiss={this.onAddOrgModalDismiss} />
+          <AddToOrgModal isOpen={showAddOrgModal} onOrgAdd={onOrgAdd} onDismiss={this.showOrgAddModal(false)} />
         </div>
       </>
     );
@@ -202,24 +200,23 @@ const getAddToOrgModalStyles = stylesFactory(() => ({
 
 interface AddToOrgModalProps {
   isOpen: boolean;
-  onDismiss?: () => void;
+  onOrgAdd(orgId: number, role: string): void;
+  onDismiss?(): void;
 }
 
 interface AddToOrgModalState {
-  orgName: string;
+  selectedOrg: Organization;
   role: string;
 }
 
 export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgModalState> {
-  state = {
-    orgName: '',
+  state: AddToOrgModalState = {
+    selectedOrg: null,
     role: 'Admin',
   };
 
-  onOrgNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({
-      orgName: event.target.value,
-    });
+  onOrgSelect = (org: OrgSelectItem) => {
+    this.setState({ selectedOrg: { ...org } });
   };
 
   onOrgRoleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -229,8 +226,8 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
   };
 
   onAddUserToOrg = () => {
-    const { orgName, role } = this.state;
-    console.log(`Add user to ${orgName} as ${role}`);
+    const { selectedOrg, role } = this.state;
+    this.props.onOrgAdd(selectedOrg.id, role);
   };
 
   onCancel = () => {
@@ -239,22 +236,19 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
 
   render() {
     const { isOpen } = this.props;
-    const { orgName, role } = this.state;
+    const { role } = this.state;
     const styles = getAddToOrgModalStyles();
     const buttonRowClass = cx('gf-form-button-row', styles.buttonRow);
 
     return (
       <Modal className={styles.modal} title="Add to an organization" isOpen={isOpen} onDismiss={this.onCancel}>
         <div className="gf-form-group">
-          <h6 className="">Organisation's name</h6>
-          <span>You can add users only to an already existing organisation</span>
-          <div className="gf-form">
-            <input type="text" className="gf-form-input width-25" value={orgName} onChange={this.onOrgNameChange} />
-          </div>
+          <h6 className="">Organisation</h6>
+          <OrgPicker className="width-25" onSelected={this.onOrgSelect} />
         </div>
         <div className="gf-form-group">
           <h6 className="">Role</h6>
-          <div className="gf-form-select-wrapper width-8">
+          <div className="gf-form-select-wrapper width-16">
             <select value={role} className="gf-form-input" onChange={this.onOrgRoleChange}>
               {ORG_ROLES.map((option, index) => {
                 return (

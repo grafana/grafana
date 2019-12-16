@@ -91,6 +91,10 @@ export class UserAdminPage extends PureComponent<Props, State> {
     console.log('onOrgRoleChange', orgId, newRole);
   };
 
+  onOrgAdd = (orgId: number, role: string) => {
+    console.log('onOrgAdd', orgId, role);
+  };
+
   onSessionRevoke = (tokenId: number) => {
     const { userId, revokeSession } = this.props;
     revokeSession(tokenId, userId);
@@ -129,7 +133,14 @@ export class UserAdminPage extends PureComponent<Props, State> {
             </>
           )}
 
-          {orgs && <UserOrgs orgs={orgs} onOrgRemove={this.onOrgRemove} onOrgRoleChange={this.onOrgRoleChange} />}
+          {orgs && (
+            <UserOrgs
+              orgs={orgs}
+              onOrgRemove={this.onOrgRemove}
+              onOrgRoleChange={this.onOrgRoleChange}
+              onOrgAdd={this.onOrgAdd}
+            />
+          )}
 
           {sessions && (
             <UserSessions
