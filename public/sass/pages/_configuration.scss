@@ -1,0 +1,131 @@
+.configuration-card-list-headers {
+  display: flex;
+  flex-direction: row;
+  padding: 0 $space-sm;
+
+  @include media-breakpoint-down(md) {
+    display: none;
+  }
+}
+
+.configuration-card-list-headers-column {
+  &:first-child {
+    margin-right: $space-lg;
+    margin-left: $space-sm;
+    width: 55px;
+    min-width: 55px;
+    flex-basis: 10%;
+  }
+
+  &:last-child {
+    flex-basis: 90%;
+    display: flex;
+    font-weight: 700;
+
+    .configuration-card-list-headers-column--left {
+      flex-basis: 35%;
+      flex-grow: 1;
+    }
+
+    .configuration-card-list-headers-column--center {
+      flex-basis: 30%;
+      flex-grow: 1;
+    }
+
+    .configuration-card-list-headers-column--right {
+      flex-basis: 30%;
+      padding-left: 16px;
+    }
+  }
+}
+
+.configuration-card-item {
+  padding: $space-md;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: $card-shadow;
+  background: $panel-editor-viz-item-bg;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  margin-bottom: $space-xxs;
+
+  &:hover {
+    box-shadow: $panel-editor-viz-item-shadow-hover;
+    background: $panel-editor-viz-item-bg-hover;
+    border: $panel-editor-viz-item-border-hover;
+    color: $text-color-strong;
+
+    .configuration-card-item-actions {
+      opacity: 1;
+      transition: 0.15s opacity ease-in-out;
+
+      .configuration-card-item-link {
+        opacity: 0.6;
+
+        &:hover {
+          opacity: 1;
+          transition: 0.15s opacity ease-in-out;
+        }
+      }
+    }
+  }
+}
+
+.configuration-card-item-logo {
+  margin-right: $space-lg;
+  margin-left: $space-sm;
+  width: 55px;
+  min-width: 55px;
+  min-height: 55px;
+  max-height: 55px;
+  flex-basis: 10%;
+}
+
+.configuration-card-item-text-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  flex-basis: 30%;
+}
+
+.configuration-card-item-desc {
+  font-size: $font-size-sm;
+  color: $text-color-weak;
+}
+
+.configuration-card-item-text {
+  font-size: $font-size-h5;
+}
+
+.configuration-card-item-url {
+  padding: 0 $space-sm;
+  flex-basis: 30%;
+  display: flex;
+  flex-grow: 1;
+}
+
+.configuration-card-item-actions {
+  opacity: 0;
+  padding-left: $space-md;
+  display: flex;
+  align-items: center;
+  min-width: 210px;
+  justify-content: flex-end;
+
+  .btn {
+    margin-left: $space-md;
+    cursor: pointer;
+  }
+}
+
+.configuration-card-item-link {
+  opacity: 0;
+  height: 16px;
+  margin: 0 8px;
+
+  &:before {
+    font-size: 16px;
+    position: relative;
+  }
+}
