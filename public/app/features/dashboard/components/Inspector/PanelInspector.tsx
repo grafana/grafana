@@ -113,7 +113,7 @@ export class PanelInspector extends PureComponent<Props, State> {
     };
 
     return (
-      <Modal title={panel.title} icon="fa fa-info-circle" onDismiss={this.onDismiss} isOpen={true}>
+      <Modal title={panel.title} icon="info-circle" onDismiss={this.onDismiss} isOpen={true}>
         <div className={bodyStyle}>
           {frames && (
             <>

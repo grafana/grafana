@@ -79,7 +79,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     lines: true,
     // fill factor
     fill: 1,
-    // fill factor
+    // fill gradient
     fillGradient: 0,
     // line width in pixels
     linewidth: 1,

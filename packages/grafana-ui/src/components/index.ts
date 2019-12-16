@@ -1,4 +1,5 @@
-export { DeleteButton } from './DeleteButton/DeleteButton';
+export { ConfirmButton } from './ConfirmButton/ConfirmButton';
+export { DeleteButton } from './ConfirmButton/DeleteButton';
 export { Tooltip, PopoverContent } from './Tooltip/Tooltip';
 export { PopoverController } from './Tooltip/PopoverController';
 export { Popover } from './Tooltip/Popover';
@@ -39,6 +40,7 @@ export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
 export { Modal } from './Modal/Modal';
+export { ConfirmModal } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
 
 // Renderless

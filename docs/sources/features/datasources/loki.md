@@ -69,7 +69,7 @@ Once the result is returned, the log panel shows a list of log rows and a bar ch
 
 <div class="medium-6 columns">
   <video width="800" height="500" controls>
-    <source src="/assets/videos/explore_loki.mp4" type="video/mp4">
+    <source src="https://grafana.com/static/assets/videos/explore_loki.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
 </div>
@@ -144,7 +144,7 @@ log message you're interested in.
 
 Instead of hard-coding things like server, application and sensor name in your metric queries, you can use variables in their place. Variables are shown as drop-down select boxes at the top of the dashboard. These drop-down boxes make it easy to change the data being displayed in your dashboard.
 
-Checkout the [Templating]({{< relref "../../reference/templating" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+Check out the [Templating]({{< relref "../../reference/templating" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ## Annotations
 

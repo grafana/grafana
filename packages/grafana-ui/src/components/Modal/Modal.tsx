@@ -3,6 +3,8 @@ import { Portal } from '../Portal/Portal';
 import { css, cx } from 'emotion';
 import { stylesFactory, withTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
+import { Icon } from '../Icon/Icon';
+import { IconType } from '../Icon/types';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   modal: css`
@@ -43,9 +45,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     margin: 0 ${theme.spacing.md};
   `,
   modalHeaderIcon: css`
-    position: relative;
-    top: 2px;
-    padding-right: ${theme.spacing.md};
+    margin-right: ${theme.spacing.md};
+    font-size: inherit;
+    &:before {
+      vertical-align: baseline;
+    }
   `,
   modalHeaderClose: css`
     margin-left: auto;
@@ -60,9 +64,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 }));
 
 interface Props {
-  icon?: string;
+  icon?: IconType;
   title: string | JSX.Element;
   theme: GrafanaTheme;
+  className?: string;
 
   isOpen?: boolean;
   onDismiss?: () => void;
@@ -88,14 +93,14 @@ export class UnthemedModal extends React.PureComponent<Props> {
 
     return (
       <h2 className={styles.modalHeaderTitle}>
-        {icon && <i className={cx(icon, styles.modalHeaderIcon)} />}
+        {icon && <Icon name={icon} className={styles.modalHeaderIcon} />}
         {title}
       </h2>
     );
   }
 
   render() {
-    const { title, isOpen = false, theme } = this.props;
+    const { title, isOpen = false, theme, className } = this.props;
     const styles = getStyles(theme);
 
     if (!isOpen) {
@@ -104,7 +109,7 @@ export class UnthemedModal extends React.PureComponent<Props> {
 
     return (
       <Portal>
-        <div className={styles.modal}>
+        <div className={cx(styles.modal, className)}>
           <div className={styles.modalHeader}>
             {typeof title === 'string' ? this.renderDefaultHeader() : title}
             <a className={styles.modalHeaderClose} onClick={this.onDismiss}>
