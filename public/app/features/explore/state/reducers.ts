@@ -436,7 +436,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         return { ...state, showingGraph };
       }
 
-      return { ...state, showingGraph, graphResult: undefined };
+      return { ...state, showingGraph, graphResult: null };
     },
   })
   .addMapper({
@@ -447,7 +447,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         return { ...state, showingTable };
       }
 
-      return { ...state, showingTable, tableResult: undefined };
+      return { ...state, showingTable, tableResult: null };
     },
   })
   .addMapper({
