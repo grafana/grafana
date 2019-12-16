@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/dataframe"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -155,38 +156,19 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 		})
 	}
 
-	_, err := tw.TransformPlugin.DataQuery(ctx, pbQuery, tw.callback)
+	pbRes, err := tw.TransformPlugin.DataQuery(ctx, pbQuery, tw.callback)
 	if err != nil {
 		return nil, err
 	}
 
-	res := &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{},
-	}
-
-	// for _, r := range pbres.Results {
-	// 	qr := &tsdb.QueryResult{
-	// 		RefId: r.RefId,
-	// 	}
-
-	// 	if r.Error != "" {
-	// 		qr.Error = errors.New(r.Error)
-	// 		qr.ErrorString = r.Error
-	// 	}
-
-	// 	if r.MetaJson != "" {
-	// 		metaJSON, err := simplejson.NewJson([]byte(r.MetaJson))
-	// 		if err != nil {
-	// 			tw.logger.Error("Error parsing JSON Meta field: " + err.Error())
-	// 		}
-	// 		qr.Meta = metaJSON
-	// 	}
-	// 	qr.Dataframes = r.Dataframes
-
-	// 	res.Results[r.RefId] = qr
-	// }
-
-	return res, nil
+	return &tsdb.Response{
+		Results: map[string]*tsdb.QueryResult{
+			"": {
+				Dataframes: pbRes.Frames,
+				Meta:       simplejson.NewFromAny(pbRes.Metadata),
+			},
+		},
+	}, nil
 }
 
 type transformCallback struct {
@@ -223,50 +205,48 @@ func (s *transformCallback) DataQuery(ctx context.Context, req *pluginv2.DataQue
 		}
 	}
 
-	// timeRange := tsdb.NewTimeRange(req.TimeRange.FromRaw, req.TimeRange.ToRaw)
+	// For now take Time Range from first query.
+	timeRange := tsdb.NewTimeRange(string(req.Queries[0].TimeRange.FromEpochMS), string(req.Queries[0].TimeRange.ToEpochMS))
+
 	tQ := &tsdb.TsdbQuery{
-		// TimeRange: timeRange,
-		Queries: queries,
+		TimeRange: timeRange,
+		Queries:   queries,
 	}
 
 	// Execute the converted queries
-	_, err := tsdb.HandleRequest(ctx, getDsInfo.Result, tQ)
+	tsdbRes, err := tsdb.HandleRequest(ctx, getDsInfo.Result, tQ)
 	if err != nil {
 		return nil, err
 	}
 	// Convert tsdb results (map) to plugin-model/datasource (slice) results.
 	// Only error, tsdb.Series, and encoded Dataframes responses are mapped.
-	// results := make([]*pluginv2.DataQueryResponse, 0, len(tsdbRes.Results))
-	// for refID, res := range tsdbRes.Results {
-	// qr := &pluginv2.DataQueryResponse{
-	// 	RefId: refID,
-	// }
 
-	// if res.Error != nil {
-	// 	qr.Error = res.ErrorString
-	// 	results = append(results, qr)
-	// 	continue
-	// }
+	encodedFrames := [][]byte{}
+	for refID, res := range tsdbRes.Results {
 
-	// if res.Dataframes != nil {
-	// 	qr.Dataframes = append(qr.Dataframes, res.Dataframes...)
-	// 	results = append(results, qr)
-	// 	continue
-	// }
+		if res.Error != nil {
+			// TODO add Errors property to Frame
+			encodedFrames = append(encodedFrames, nil)
+			continue
+		}
 
-	// encodedFrames := make([][]byte, len(res.Series))
-	// for sIdx, series := range res.Series {
-	// 	frame, err := tsdb.SeriesToFrame(series)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	encodedFrames[sIdx], err = dataframe.MarshalArrow(frame)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// }
-	// qr.Dataframes = encodedFrames
-	// results = append(results, qr)
-	// }
-	return &pluginv2.DataQueryResponse{}, nil
+		if res.Dataframes != nil {
+			encodedFrames = append(encodedFrames, res.Dataframes...)
+			continue
+		}
+
+		for _, series := range res.Series {
+			frame, err := tsdb.SeriesToFrame(series)
+			frame.RefID = refID
+			if err != nil {
+				return nil, err
+			}
+			encFrame, err := dataframe.MarshalArrow(frame)
+			if err != nil {
+				return nil, err
+			}
+			encodedFrames = append(encodedFrames, encFrame)
+		}
+	}
+	return &pluginv2.DataQueryResponse{Frames: encodedFrames}, nil
 }

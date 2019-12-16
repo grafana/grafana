@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -55,35 +56,17 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 		})
 	}
 
-	_, err = tw.Plugin.DataQuery(ctx, pbQuery)
-
+	pbRes, err := tw.Plugin.DataQuery(ctx, pbQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	res := &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{},
-	}
-
-	// qr := &tsdb.QueryResult{
-	// RefId: r.RefId,
-	// }
-
-	// if r.Error != "" {
-	// 	qr.Error = errors.New(r.Error)
-	// 	qr.ErrorString = r.Error
-	// }
-
-	// if pbres.Metadata != "" {
-	// 	metaJSON, err := simplejson.NewJson([]byte(pbres.Metadata))
-	// 	if err != nil {
-	// 		tw.logger.Error("Error parsing JSON Meta field: " + err.Error())
-	// 	}
-	// 	qr.Meta = metaJSON
-	// }
-	// qr.Dataframes = pbres.Frames
-
-	// res.Results[r.RefId] = qr
-
-	return res, nil
+	return &tsdb.Response{
+		Results: map[string]*tsdb.QueryResult{
+			"": {
+				Dataframes: pbRes.Frames,
+				Meta:       simplejson.NewFromAny(pbRes.Metadata),
+			},
+		},
+	}, nil
 }
