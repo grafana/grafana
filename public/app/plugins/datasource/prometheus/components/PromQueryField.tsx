@@ -45,7 +45,7 @@ function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): Cas
   return option;
 }
 
-export function groupMetricsByPrefix(metrics: string[], metadata: PromMetricsMetadata): CascaderOption[] {
+export function groupMetricsByPrefix(metrics: string[], metadata?: PromMetricsMetadata): CascaderOption[] {
   // Filter out recording rules and insert as first option
   const ruleRegex = /:\w+:/;
   const ruleNames = metrics.filter(metric => ruleRegex.test(metric));

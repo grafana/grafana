@@ -39,7 +39,7 @@ export interface PromQueryRequest extends PromQuery {
 export interface PromMetricsMetadataItem {
   type: string;
   help: string;
-  unit: string;
+  unit?: string;
 }
 
 export interface PromMetricsMetadata {
