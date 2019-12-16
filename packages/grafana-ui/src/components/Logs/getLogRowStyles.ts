@@ -104,6 +104,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     logsRowLevel: css`
       label: logs-row__level;
       position: relative;
+      max-width: 10px;
       cursor: default;
       &::after {
         content: '';
@@ -120,10 +121,12 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       position: relative;
       font-size: 9px;
       padding-top: 5px;
+      max-width: 15px;
     `,
     logsRowLocalTime: css`
       label: logs-row__localtime;
       white-space: nowrap;
+      max-width: 12.5em;
     `,
     logsRowLabels: css`
       label: logs-row__labels;
