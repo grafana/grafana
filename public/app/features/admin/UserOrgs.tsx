@@ -1,9 +1,8 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
-import { Modal, Themeable, stylesFactory, withTheme, ConfirmButton } from '@grafana/ui';
+import { Modal, Themeable, stylesFactory, withTheme, ConfirmButton, Forms } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { UserOrg } from 'app/types';
-import { ActionButton } from './ActionButton';
 
 interface Props {
   orgs: UserOrg[];
@@ -55,7 +54,9 @@ export class UserOrgs extends PureComponent<Props, State> {
             </table>
           </div>
           <div className={addToOrgContainerClass}>
-            <ActionButton text="Add this user to another organisation" onClick={this.onAddOrg} />
+            <Forms.Button variant="link" onClick={this.onAddOrg}>
+              Add this user to another organisation
+            </Forms.Button>
           </div>
           <AddToOrgModal isOpen={showAddOrgModal} onDismiss={this.onAddOrgModalDismiss} />
         </div>
