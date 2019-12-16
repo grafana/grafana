@@ -8,6 +8,6 @@ RUN mkdir -p /tmp/dist /tmp/cache && \
 COPY . /package-grafana
 WORKDIR /package-grafana
 
-RUN cp ./oss/cache/nssm-2.24.zip /tmp/cache
+RUN cp ./msigenerator/cache/nssm-2.24.zip /tmp/cache
 
-RUN cd oss && python3 generator/build.py -e
+RUN cd msigenerator && python3 generator/build.py -e
