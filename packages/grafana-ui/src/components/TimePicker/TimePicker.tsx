@@ -1,6 +1,6 @@
 // Libraries
 import React, { PureComponent, createRef } from 'react';
-// import { css } from 'emotion';
+import { css } from 'emotion';
 import classNames from 'classnames';
 
 // Components
@@ -9,35 +9,25 @@ import { TimePickerContent } from './Content';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 
 // Utils & Services
-import { isDateTime, DateTime, rangeUtil, TIME_FORMAT } from '@grafana/data';
-// import { stylesFactory } from '../../themes/stylesFactory';
+import { stylesFactory } from '../../themes/stylesFactory';
 import { withTheme } from '../../themes/ThemeContext';
 
 // Types
+import { isDateTime, DateTime, rangeUtil, TIME_FORMAT, GrafanaTheme } from '@grafana/data';
 import { TimeRange, TimeOption, TimeZone, dateMath } from '@grafana/data';
 import { Themeable } from '../../types';
 
-// const getStyles = stylesFactory((theme: GrafanaTheme) => {
-//   return {
-//     timePickerSynced: css`
-//       label: timePickerSynced;
-//       border-color: ${theme.colors.orangeDark};
-//       background-image: none;
-//       background-color: transparent;
-//       color: ${theme.colors.orangeDark};
-//       &:focus,
-//       :hover {
-//         color: ${theme.colors.orangeDark};
-//         background-image: none;
-//         background-color: transparent;
-//       }
-//     `,
-//     noRightBorderStyle: css`
-//       label: noRightBorderStyle;
-//       border-right: 0;
-//     `,
-//   };
-// });
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    container: css`
+      display: flex;
+      flex-flow: column nowrap;
+    `,
+    buttons: css`
+      display: flex;
+    `,
+  };
+});
 
 const quickOptions: TimeOption[] = [
   { from: 'now-5m', to: 'now', display: 'Last 5 minutes', section: 3 },
@@ -116,11 +106,11 @@ class UnthemedTimePicker extends PureComponent<Props, State> {
       timeZone,
       timeSyncButton,
       isSynced,
-      // theme,
+      theme,
       hideText,
     } = this.props;
 
-    // const styles = getStyles(theme);
+    const styles = getStyles(theme);
     const { isOpen } = this.state;
     const isUTC = timeZone === 'utc';
 
@@ -143,8 +133,8 @@ class UnthemedTimePicker extends PureComponent<Props, State> {
     const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
 
     return (
-      <div className="time-picker" ref={this.pickerTriggerRef}>
-        <div className="time-picker-buttons">
+      <div className={styles.container} ref={this.pickerTriggerRef}>
+        <div className={styles.buttons}>
           {hasAbsolute && (
             <button className="btn navbar-button navbar-button--tight" onClick={onMoveBackward}>
               <i className="fa fa-chevron-left" />

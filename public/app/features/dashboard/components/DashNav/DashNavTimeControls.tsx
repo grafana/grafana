@@ -1,6 +1,7 @@
 // Libaries
 import React, { Component } from 'react';
-import { dateMath } from '@grafana/data';
+import { dateMath, GrafanaTheme } from '@grafana/data';
+import { css } from 'emotion';
 
 // Types
 import { DashboardModel } from '../../state';
@@ -11,19 +12,29 @@ import { TimeRange } from '@grafana/data';
 import { updateLocation } from 'app/core/actions';
 
 // Components
-import { TimePicker, RefreshPicker } from '@grafana/ui';
+import { TimePicker, RefreshPicker, withTheme, stylesFactory } from '@grafana/ui';
 
 // Utils & Services
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    container: css`
+      position: relative;
+      display: flex;
+      padding: 2px 2px;
+    `,
+  };
+});
 
 export interface Props {
   $injector: any;
   dashboard: DashboardModel;
   updateLocation: typeof updateLocation;
   location: LocationState;
+  theme: GrafanaTheme;
 }
-
-export class DashNavTimeControls extends Component<Props> {
+class UnthemedDashNavTimeControls extends Component<Props> {
   timeSrv: TimeSrv = getTimeSrv();
   $rootScope = this.props.$injector.get('$rootScope');
 
@@ -83,13 +94,14 @@ export class DashNavTimeControls extends Component<Props> {
   };
 
   render() {
-    const { dashboard } = this.props;
+    const { dashboard, theme } = this.props;
     const intervals = dashboard.timepicker.refresh_intervals;
     const timePickerValue = this.timeSrv.timeRange();
     const timeZone = dashboard.getTimezone();
+    const styles = getStyles(theme);
 
     return (
-      <div className="dashboard-timepicker-wrapper">
+      <div className={styles.container}>
         <TimePicker
           value={timePickerValue}
           onChange={this.onChangeTimePicker}
@@ -109,3 +121,5 @@ export class DashNavTimeControls extends Component<Props> {
     );
   }
 }
+
+export const DashNavTimeControls = withTheme(UnthemedDashNavTimeControls);
