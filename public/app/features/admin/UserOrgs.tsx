@@ -191,6 +191,15 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
 
 const OrgRow = withTheme(UnThemedOrgRow);
 
+const getAddToOrgModalStyles = stylesFactory(() => ({
+  modal: css`
+    width: 500px;
+  `,
+  buttonRow: css`
+    text-align: center;
+  `,
+}));
+
 interface AddToOrgModalProps {
   isOpen: boolean;
   onDismiss?: () => void;
@@ -231,9 +240,11 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
   render() {
     const { isOpen } = this.props;
     const { orgName, role } = this.state;
+    const styles = getAddToOrgModalStyles();
+    const buttonRowClass = cx('gf-form-button-row', styles.buttonRow);
 
     return (
-      <Modal title="Add to an organization" isOpen={isOpen} onDismiss={this.onCancel}>
+      <Modal className={styles.modal} title="Add to an organization" isOpen={isOpen} onDismiss={this.onCancel}>
         <div className="gf-form-group">
           <h6 className="">Organisation's name</h6>
           <span>You can add users only to an already existing organisation</span>
@@ -255,7 +266,7 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
             </select>
           </div>
         </div>
-        <div className="gf-form-button-row">
+        <div className={buttonRowClass}>
           <button className="btn btn-inverse" onClick={this.onCancel}>
             Cancel
           </button>
