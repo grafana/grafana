@@ -47,7 +47,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 
       @media only screen and (max-width: ${theme.breakpoints.lg}) {
         width: 218px;
-        left: 7px;
+        margin-left: 6px;
       }
     `,
     leftSide: css`
