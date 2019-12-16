@@ -80,6 +80,9 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
           }
         }
       }
+      td:last-child {
+        width: 100%;
+      }
 
       > td {
         padding-right: ${theme.spacing.sm};
@@ -157,7 +160,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     logDetailsLabel: css`
       label: logs-row-details__label;
       max-width: 25em;
-      min-width: 15em;
+      min-width: 20em;
       padding: 0 ${theme.spacing.sm};
       word-break: break-all;
     `,
