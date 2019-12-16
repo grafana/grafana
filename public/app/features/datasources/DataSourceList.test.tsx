@@ -8,6 +8,7 @@ const setup = () => {
   const props = {
     dataSources: getMockDataSources(3),
     layoutMode: LayoutModes.Grid,
+    deleteDataSource: jest.fn(),
   };
 
   return shallow(<DataSourcesList {...props} />);
