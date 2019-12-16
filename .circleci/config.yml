@@ -274,55 +274,43 @@ jobs:
   build-all:
     docker:
       - image: grafana/build-container:1.2.13
-    working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
       - run:
-          name: prepare build tools
-          command: '/tmp/bootstrap.sh'
-      - run:
-          name: ci job started
+          name: CI job started
           command: './scripts/ci-job-started.sh'
-      - restore_cache:
-          key: phantomjs-binaries-{{ checksum "scripts/build/download-phantomjs.sh" }}
       - run:
-          name: download phantomjs binaries
-          command: './scripts/build/download-phantomjs.sh'
-      - save_cache:
-          key: phantomjs-binaries-{{ checksum "scripts/build/download-phantomjs.sh" }}
-          paths:
-            - /tmp/phantomjs
+        name: Check out build-pipeline
+        command: git checkout git@github.com:grafana/build-pipeline.git /tmp/build-pipeline
       - run:
-          name: build and package grafana
-          command: './scripts/build/build-all.sh'
+        name: Build build-pipeline
+        command: cd /tmp/build-pipeline && go build -o bin/grabpl ./cmd/grabpl
+      # TODO
+      #- restore_cache:
+          #key: phantomjs-binaries-{{ checksum "scripts/build/download-phantomjs.sh" }}
+      #- save_cache:
+          #key: phantomjs-binaries-{{ checksum "scripts/build/download-phantomjs.sh" }}
+          #paths:
+            #- /tmp/phantomjs
       - run:
-          name: Prepare GPG private key
-          command: './scripts/build/prepare_signing_key.sh'
-      - run:
-          name: sign packages
-          command: './scripts/build/sign_packages.sh dist/*.rpm'
-      - run:
-          name: verify signed packages
-          command: './scripts/build/verify_signed_packages.sh dist/*.rpm'
-      - run:
-          name: sha-sum packages
-          command: 'go run build.go sha-dist'
-      - run:
-          name: Test and build Grafana.com release publisher
-          command: 'cd scripts/build/release_publisher && go test . && go build -o release_publisher .'
+          name: Build and package grafana
+          command: /tmp/build-pipeline/bin/grabpl build-and-package
+      #- run:
+          #name: Test and build Grafana.com release publisher
+          #command: 'cd scripts/build/release_publisher && go test . && go build -o release_publisher .'
       - persist_to_workspace:
           root: .
           paths:
             - dist/*
-            - scripts/*.sh
-            - scripts/build/release_publisher/release_publisher
-            - scripts/build/publish.sh
+            #- scripts/*.sh
+            #- scripts/build/release_publisher/release_publisher
+            #- scripts/build/publish.sh
       - run:
-          name: ci job failed
+          name: CI job failed
           command: './scripts/ci-job-failed.sh'
           when: on_fail
       - run:
-          name: ci job succeeded
+          name: CI job succeeded
           command: './scripts/ci-job-succeeded.sh'
           when: on_success
 
