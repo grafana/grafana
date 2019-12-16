@@ -43,8 +43,6 @@ export class ResultProcessor {
     // Ignore time series only for prometheus
     const onlyTables = this.dataFrames.filter(frame => !isTimeSeries(frame));
 
-    return this.dataFrames.length ? this.dataFrames[0] : null;
-
     if (onlyTables.length === 0) {
       return null;
     }
