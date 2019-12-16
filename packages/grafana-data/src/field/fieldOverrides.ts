@@ -1,19 +1,11 @@
 import set from 'lodash/set';
-import {
-  DynamicConfigValue,
-  FieldConfigSource,
-  FieldConfig,
-  InterpolateFunction,
-  GrafanaTheme,
-  DataFrame,
-  Field,
-  FieldType,
-} from '../types';
+import { DynamicConfigValue, FieldConfig, InterpolateFunction, DataFrame, Field, FieldType } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
 import isNumber from 'lodash/isNumber';
 import toNumber from 'lodash/toNumber';
 import { getDisplayProcessor } from './displayProcessor';
+import { GetFieldDisplayValuesOptions } from './fieldDisplay';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -50,15 +42,13 @@ export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
 /**
  * Return a copy of the DataFrame with all rules applied
  */
-export function applyFieldOverrides(
-  data: DataFrame[],
-  source: FieldConfigSource,
-  replaceVariables: InterpolateFunction,
-  theme: GrafanaTheme,
-  isUtc?: boolean
-): DataFrame[] {
+export function applyFieldOverrides(options: GetFieldDisplayValuesOptions): DataFrame[] {
+  if (!options.data) {
+    return [];
+  }
+  const source = options.fieldOptions;
   if (!source) {
-    return data;
+    return options.data;
   }
   let range: GlobalMinMax | undefined = undefined;
 
@@ -76,7 +66,7 @@ export function applyFieldOverrides(
     }
   }
 
-  return data.map((frame, index) => {
+  return options.data.map((frame, index) => {
     let name = frame.name;
     if (!name) {
       name = `Series[${index}]`;
@@ -98,17 +88,17 @@ export function applyFieldOverrides(
               config,
               field,
               data: frame,
-              replaceVariables,
+              replaceVariables: options.replaceVariables,
             });
           }
         }
       }
 
       // Set the Min/Max value automatically
-      if (field.type === FieldType.number) {
+      if (options.autoMinMax && field.type === FieldType.number) {
         if (!isNumber(config.min) || !isNumber(config.max)) {
           if (!range) {
-            range = findNumericFieldMinMax(data);
+            range = findNumericFieldMinMax(options.data!); // Global value
           }
           if (!isNumber(config.min)) {
             config.min = range.min;
@@ -129,8 +119,7 @@ export function applyFieldOverrides(
         processor: getDisplayProcessor({
           type: field.type,
           config: config,
-          theme,
-          isUtc,
+          theme: options.theme,
         }),
       };
     });

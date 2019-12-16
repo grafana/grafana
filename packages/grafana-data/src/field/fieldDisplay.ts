@@ -79,6 +79,7 @@ export interface GetFieldDisplayValuesOptions {
   replaceVariables: InterpolateFunction;
   sparkline?: boolean; // Calculate the sparkline
   theme: GrafanaTheme;
+  autoMinMax?: boolean;
 }
 
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
@@ -90,7 +91,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
   const values: FieldDisplay[] = [];
 
   if (options.data) {
-    const data = applyFieldOverrides(options.data, fieldOptions, replaceVariables, options.theme);
+    const data = applyFieldOverrides(options);
 
     let hitLimit = false;
     const limit = fieldOptions.limit ? fieldOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
