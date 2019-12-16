@@ -1,7 +1,7 @@
 import React, { useState, memo } from 'react';
 import { useMedia } from 'react-use';
 import { css } from 'emotion';
-import { useTheme, stylesFactory } from '../../../themes';
+import { useTheme, stylesFactory, selectThemeVariant } from '../../../themes';
 import { GrafanaTheme, TimeOption, TimeRange, TimeZone } from '@grafana/data';
 import TimeRangeTitle from './TimePickerTitle';
 import TimeRangeForm from './TimeRangeForm';
@@ -9,26 +9,51 @@ import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import TimeRangeList from './TimeRangeList';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const shadow = selectThemeVariant(
+    {
+      light: theme.colors.gray85,
+      dark: theme.colors.black,
+    },
+    theme.type
+  );
+
+  const background = selectThemeVariant(
+    {
+      dark: theme.colors.gray15,
+      light: theme.background.dropdown,
+    },
+    theme.type
+  );
+
+  const border = selectThemeVariant(
+    {
+      light: theme.colors.gray4,
+      dark: theme.colors.gray25,
+    },
+    theme.type
+  );
+
   return {
     container: css`
       display: flex;
-      background: ${theme.background.dropdown};
-      box-shadow: 0px 4px 4px #c7d0d9;
+      background: ${background};
+      box-shadow: 0px 4px 4px ${shadow};
       position: absolute;
       z-index: ${theme.zIndex.modal};
       width: 546px;
       height: 381px;
-      top: 34px;
-      right: 32px;
+      top: 35px;
+      left: -320px;
 
       @media only screen and (max-width: ${theme.breakpoints.lg}) {
         width: 218px;
+        left: 7px;
       }
     `,
     leftSide: css`
       display: flex;
       flex-direction: column;
-      border-right: 1px solid ${theme.colors.gray4};
+      border-right: 1px solid ${border};
       width: 60%;
 
       @media only screen and (max-width: ${theme.breakpoints.lg}) {
@@ -46,22 +71,46 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 const getNarrowScreenStyles = stylesFactory((theme: GrafanaTheme) => {
+  const background = selectThemeVariant(
+    {
+      light: theme.colors.gray98,
+      dark: theme.colors.gray10,
+    },
+    theme.type
+  );
+
+  const border = selectThemeVariant(
+    {
+      light: theme.colors.gray4,
+      dark: theme.colors.gray25,
+    },
+    theme.type
+  );
+
+  const shadow = selectThemeVariant(
+    {
+      light: 'rgba(199, 208, 217, 0.5)',
+      dark: theme.colors.black,
+    },
+    theme.type
+  );
+
   return {
     header: css`
       display: flex;
       flex-direction: row;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid ${theme.colors.gray4};
-      padding: 6px 9px 6px 9px;
+      border-bottom: 1px solid ${border};
+      padding: 7px 9px 7px 9px;
     `,
     body: css`
-      border-bottom: 1px solid ${theme.colors.gray4};
-      background: #f7f8fa;
-      box-shadow: inset 0px 2px 2px rgba(199, 208, 217, 0.5);
+      border-bottom: 1px solid ${border};
+      background: ${background};
+      box-shadow: inset 0px 2px 2px ${shadow};
     `,
     form: css`
-      padding: 6px 9px 6px 9px;
+      padding: 7px 9px 7px 9px;
     `,
   };
 });
@@ -86,9 +135,17 @@ const getFullScreenStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 const getEmptyListStyles = stylesFactory((theme: GrafanaTheme) => {
+  const background = selectThemeVariant(
+    {
+      light: theme.colors.gray98,
+      dark: theme.colors.gray10,
+    },
+    theme.type
+  );
+
   return {
     container: css`
-      background-color: #f7f8fa;
+      background-color: ${background};
       padding: 12px;
       margin: 12px;
     `,

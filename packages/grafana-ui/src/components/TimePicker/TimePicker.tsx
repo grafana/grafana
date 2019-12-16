@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent, createRef } from 'react';
+import React, { PureComponent } from 'react';
 import { css } from 'emotion';
 import classNames from 'classnames';
 
@@ -13,7 +13,7 @@ import { stylesFactory } from '../../themes/stylesFactory';
 import { withTheme } from '../../themes/ThemeContext';
 
 // Types
-import { isDateTime, DateTime, rangeUtil, TIME_FORMAT, GrafanaTheme } from '@grafana/data';
+import { isDateTime, DateTime, rangeUtil, GrafanaTheme, TIME_FORMAT } from '@grafana/data';
 import { TimeRange, TimeOption, TimeZone, dateMath } from '@grafana/data';
 import { Themeable } from '../../types';
 
@@ -81,8 +81,6 @@ export interface State {
 }
 
 class UnthemedTimePicker extends PureComponent<Props, State> {
-  pickerTriggerRef = createRef<HTMLDivElement>();
-
   state: State = {
     isOpen: false,
   };
@@ -133,25 +131,38 @@ class UnthemedTimePicker extends PureComponent<Props, State> {
     const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
 
     return (
-      <div className={styles.container} ref={this.pickerTriggerRef}>
+      <div className={styles.container}>
         <div className={styles.buttons}>
           {hasAbsolute && (
             <button className="btn navbar-button navbar-button--tight" onClick={onMoveBackward}>
               <i className="fa fa-chevron-left" />
             </button>
           )}
-          <Tooltip content={<TimePickerTooltipContent timeRange={value} />} placement="bottom">
-            <button
-              className="btn navbar-button navbar-button--zoom"
-              onClick={event => {
-                event.stopPropagation();
-                this.setState({ isOpen: !isOpen });
-              }}
-            >
-              <i className={classNames('fa fa-clock-o fa-fw', isSynced && timeSyncButton && 'icon-brand-gradient')} />
-              {label}
-            </button>
-          </Tooltip>
+          <div>
+            <Tooltip content={<TimePickerTooltipContent timeRange={value} />} placement="bottom">
+              <button
+                className="btn navbar-button navbar-button--zoom"
+                onClick={event => {
+                  event.stopPropagation();
+                  this.setState({ isOpen: !isOpen });
+                }}
+              >
+                <i className={classNames('fa fa-clock-o fa-fw', isSynced && timeSyncButton && 'icon-brand-gradient')} />
+                {label}
+              </button>
+            </Tooltip>
+            {isOpen && (
+              <ClickOutsideWrapper onClick={this.onClose}>
+                <TimePickerContent
+                  timeZone={timeZone}
+                  value={value}
+                  onChange={this.onChange}
+                  otherOptions={otherOptions}
+                  quickOptions={quickOptions}
+                />
+              </ClickOutsideWrapper>
+            )}
+          </div>
 
           {timeSyncButton}
 
@@ -167,18 +178,6 @@ class UnthemedTimePicker extends PureComponent<Props, State> {
             </button>
           </Tooltip>
         </div>
-
-        {isOpen && (
-          <ClickOutsideWrapper onClick={this.onClose}>
-            <TimePickerContent
-              timeZone={timeZone}
-              value={value}
-              onChange={this.onChange}
-              otherOptions={otherOptions}
-              quickOptions={quickOptions}
-            />
-          </ClickOutsideWrapper>
-        )}
       </div>
     );
   }

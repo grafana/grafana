@@ -3,29 +3,54 @@ import { css, cx } from 'emotion';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import { GrafanaTheme, dateTime, TIME_FORMAT } from '@grafana/data';
 import { stringToDateTimeType } from '../time';
-import { useTheme, stylesFactory } from '../../../themes';
+import { useTheme, stylesFactory, selectThemeVariant } from '../../../themes';
 import TimePickerTitle from './TimePickerTitle';
 import Forms from '../../Forms';
 import { Portal } from '../../Portal/Portal';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const border = selectThemeVariant(
+    {
+      light: theme.colors.gray4,
+      dark: theme.colors.gray25,
+    },
+    theme.type
+  );
+
+  const background = selectThemeVariant(
+    {
+      dark: theme.colors.gray15,
+      light: theme.background.dropdown,
+    },
+    theme.type
+  );
+
+  const shadow = selectThemeVariant(
+    {
+      light: theme.colors.gray85,
+      dark: theme.colors.black,
+    },
+    theme.type
+  );
+
   return {
     container: css`
       top: 0;
       position: absolute;
       right: 546px;
-      box-shadow: 0px 4px 4px #c7d0d9;
+      box-shadow: 0px 4px 4px ${shadow};
+      background-color: ${background};
 
       &:after {
         display: block;
-        background-color: ${theme.background.dropdown};
+        background-color: ${background};
         width: 4px;
         height: 221px;
         content: ' ';
         position: absolute;
         top: 0;
         right: -3px;
-        border-left: 1px solid ${theme.colors.gray4};
+        border-left: 1px solid ${border};
       }
     `,
     modal: css`
@@ -53,9 +78,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 const getFooterStyles = stylesFactory((theme: GrafanaTheme) => {
+  const background = selectThemeVariant(
+    {
+      dark: theme.colors.gray15,
+      light: theme.background.dropdown,
+    },
+    theme.type
+  );
+
   return {
     container: css`
-      background-color: ${theme.background.dropdown};
+      background-color: ${background};
       display: flex;
       justify-content: center;
       padding: 10px;
@@ -70,29 +103,34 @@ const getFooterStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
+  const background = selectThemeVariant(
+    {
+      dark: theme.colors.gray15,
+      light: theme.background.dropdown,
+    },
+    theme.type
+  );
+
   return {
     title: css`
       color: ${theme.colors.text}
-      background-color: inherit;
+      background-color: ${background};
       line-height: 21px;
       font-size: ${theme.typography.size.md};
       border: 1px solid transparent;
 
       &:hover {
-        box-shadow: $panel-editor-viz-item-shadow-hover;
-        background: $panel-editor-viz-item-bg-hover;
-        border: $panel-editor-viz-item-border-hover;
-        color: $text-color-strong;
         position: relative;
       }
     `,
     body: css`
-      background-color: white;
+      background-color: ${background};
       width: 268px;
 
       .react-calendar__navigation__label,
       .react-calendar__navigation__arrow,
       .react-calendar__navigation {
+        background-color: inherit;
         color: ${theme.colors.text};
         border: 0;
         font-weight: ${theme.typography.weight.semibold};
@@ -107,8 +145,6 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
           border: 0;
           text-decoration: none;
           cursor: default;
-          color: $orange;
-          font-weight: $font-weight-semi-bold;
           display: block;
           padding: 4px 0 0 0;
         }
@@ -118,6 +154,7 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
         background-color: inherit;
       }
 
+      .react-calendar__tile,
       .react-calendar__tile--now {
         background-color: inherit;
       }
@@ -128,15 +165,11 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
         outline: 0;
       }
 
-      .react-calendar__tile--now {
-        border-radius: $border-radius;
-      }
-
       .react-calendar__tile--active,
       .react-calendar__tile--active:hover {
         color: ${theme.colors.white};
         font-weight: ${theme.typography.weight.semibold};
-        background: #5794f2;
+        background: ${theme.colors.blue95};
         box-shadow: none;
         border: 0px;
       }
@@ -147,10 +180,10 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
         border: 0px;
         color: ${theme.colors.white};
         font-weight: ${theme.typography.weight.semibold};
-        background: #5794f2;
+        background: ${theme.colors.blue95};
 
         abbr {
-          background-color: #1f60c4;
+          background-color: ${theme.colors.blue77};
           border-radius: 100px;
           display: block;
           padding: 2px 7px 3px;
@@ -171,9 +204,17 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 const getHeaderStyles = stylesFactory((theme: GrafanaTheme) => {
+  const background = selectThemeVariant(
+    {
+      dark: theme.colors.gray15,
+      light: theme.background.dropdown,
+    },
+    theme.type
+  );
+
   return {
     container: css`
-      background-color: ${theme.background.dropdown};
+      background-color: ${background};
       display: flex;
       justify-content: space-between;
       padding: 7px;
