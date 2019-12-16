@@ -4,7 +4,7 @@ import { DataFrame, GrafanaTheme } from '@grafana/data';
 import { useBlockLayout, useSortBy, useTable } from 'react-table';
 import { FixedSizeList } from 'react-window';
 import { css } from 'emotion';
-import { stylesFactory, useTheme } from '../../themes';
+import { stylesFactory, useTheme, selectThemeVariant as stv } from '../../themes';
 
 export interface Props {
   data: DataFrame;
@@ -40,14 +40,14 @@ const getColumns = (data: DataFrame) => {
 
 const getTableStyles = stylesFactory((theme: GrafanaTheme, columnWidth: number) => {
   const colors = theme.colors;
+  const headerBg = stv({ light: colors.gray6, dark: colors.dark7 }, theme.type);
+  const padding = 5;
 
   return {
+    cellHeight: padding * 2 + 14 * 1.5 + 2,
     tableHeader: css`
-      padding: 3px 10px;
-
-      background: linear-gradient(135deg, ${colors.dark8}, ${colors.dark6});
-      border-top: 2px solid ${colors.bodyBg};
-      border-bottom: 2px solid ${colors.bodyBg};
+      padding: ${padding}px 10px;
+      background: ${headerBg};
 
       cursor: pointer;
       white-space: nowrap;
@@ -56,9 +56,7 @@ const getTableStyles = stylesFactory((theme: GrafanaTheme, columnWidth: number) 
     `,
     tableCell: css`
       display: 'table-cell';
-      padding: 3px 10px;
-
-      background: linear-gradient(180deg, ${colors.dark5} 10px, ${colors.dark2} 100px);
+      padding: ${padding}px 10px;
 
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -133,7 +131,7 @@ export const NewTable = ({ data, height, onCellClick, width }: Props) => {
           </div>
         ))}
       </div>
-      <FixedSizeList height={height} itemCount={rows.length} itemSize={27} width={width}>
+      <FixedSizeList height={height} itemCount={rows.length} itemSize={tableStyles.cellHeight} width={width}>
         {RenderRow}
       </FixedSizeList>
     </div>

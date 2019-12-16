@@ -25,7 +25,7 @@ export class TableContainer extends PureComponent<TableContainerProps> {
   render() {
     const { loading, onClickCell, showingTable, tableResult, width } = this.props;
 
-    const height = 400;
+    const height = 600;
     const paddingWidth = 16;
 
     const tableWidth = width - paddingWidth;
