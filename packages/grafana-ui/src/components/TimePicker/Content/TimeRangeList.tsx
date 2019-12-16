@@ -26,7 +26,7 @@ interface Props {
   placeholderEmpty?: ReactNode;
 }
 
-const TimeRangeList: React.FC<Props> = props => {
+const TimeRangeList = memo<Props>(props => {
   const styles = getStyles();
   const { title, options, placeholderEmpty } = props;
 
@@ -46,7 +46,7 @@ const TimeRangeList: React.FC<Props> = props => {
       <Options {...props} />
     </>
   );
-};
+});
 
 const Options = memo<Props>(({ options, value, onSelect }) => {
   return (
@@ -74,4 +74,4 @@ function isEqual(x: TimeOption, y?: TimeRange): boolean {
   return y.raw.from === x.from && y.raw.to === x.to;
 }
 
-export default memo(TimeRangeList);
+export default TimeRangeList;

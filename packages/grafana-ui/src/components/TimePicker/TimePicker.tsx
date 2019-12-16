@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import React, { PureComponent, memo } from 'react';
 import { css } from 'emotion';
 import classNames from 'classnames';
 
@@ -16,18 +16,6 @@ import { withTheme } from '../../themes/ThemeContext';
 import { isDateTime, DateTime, rangeUtil, GrafanaTheme, TIME_FORMAT } from '@grafana/data';
 import { TimeRange, TimeOption, TimeZone, dateMath } from '@grafana/data';
 import { Themeable } from '../../types';
-
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    container: css`
-      display: flex;
-      flex-flow: column nowrap;
-    `,
-    buttons: css`
-      display: flex;
-    `,
-  };
-});
 
 const quickOptions: TimeOption[] = [
   { from: 'now-5m', to: 'now', display: 'Last 5 minutes', section: 3 },
@@ -65,6 +53,18 @@ const otherOptions: TimeOption[] = [
   { from: 'now/y', to: 'now', display: 'This year so far', section: 3 },
 ];
 
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    container: css`
+      display: flex;
+      flex-flow: column nowrap;
+    `,
+    buttons: css`
+      display: flex;
+    `,
+  };
+});
+
 export interface Props extends Themeable {
   hideText?: boolean;
   value: TimeRange;
@@ -79,15 +79,13 @@ export interface Props extends Themeable {
 export interface State {
   isOpen: boolean;
 }
-
 class UnthemedTimePicker extends PureComponent<Props, State> {
   state: State = {
     isOpen: false,
   };
 
   onChange = (timeRange: TimeRange) => {
-    const { onChange } = this.props;
-    onChange(timeRange);
+    this.props.onChange(timeRange);
     this.setState({ isOpen: false });
   };
 
@@ -96,38 +94,9 @@ class UnthemedTimePicker extends PureComponent<Props, State> {
   };
 
   render() {
-    const {
-      value,
-      onMoveBackward,
-      onMoveForward,
-      onZoom,
-      timeZone,
-      timeSyncButton,
-      isSynced,
-      theme,
-      hideText,
-    } = this.props;
-
-    const styles = getStyles(theme);
+    const { value, onMoveBackward, onMoveForward, onZoom, timeZone, timeSyncButton, isSynced, theme } = this.props;
     const { isOpen } = this.state;
-    const isUTC = timeZone === 'utc';
-
-    const adjustedTime = (time: DateTime) => (isUTC ? time.utc() : time.local()) || null;
-    const adjustedTimeRange = {
-      to: dateMath.isMathString(value.raw.to) ? value.raw.to : adjustedTime(value.to),
-      from: dateMath.isMathString(value.raw.from) ? value.raw.from : adjustedTime(value.from),
-    };
-    const rangeString = rangeUtil.describeTimeRange(adjustedTimeRange);
-
-    const label = !hideText ? (
-      <>
-        <span>{rangeString}</span>
-        {isUTC && <span className="time-picker-utc">UTC</span>}
-      </>
-    ) : (
-      ''
-    );
-
+    const styles = getStyles(theme);
     const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
 
     return (
@@ -139,7 +108,11 @@ class UnthemedTimePicker extends PureComponent<Props, State> {
             </button>
           )}
           <div>
-            <Tooltip content={<TimePickerTooltipContent timeRange={value} />} placement="bottom">
+            <Tooltip
+              show={!isOpen && !hasAbsolute}
+              content={<TimePickerTooltip timeRange={value} />}
+              placement="bottom"
+            >
               <button
                 className="btn navbar-button navbar-button--zoom"
                 onClick={event => {
@@ -148,7 +121,7 @@ class UnthemedTimePicker extends PureComponent<Props, State> {
                 }}
               >
                 <i className={classNames('fa fa-clock-o fa-fw', isSynced && timeSyncButton && 'icon-brand-gradient')} />
-                {label}
+                <TimePickerButtonLabel {...this.props} />
               </button>
             </Tooltip>
             {isOpen && (
@@ -172,7 +145,7 @@ class UnthemedTimePicker extends PureComponent<Props, State> {
             </button>
           )}
 
-          <Tooltip content={defaultZoomOutTooltip} placement="bottom">
+          <Tooltip content={ZoomOutTooltip} placement="bottom">
             <button className="btn navbar-button navbar-button--zoom" onClick={onZoom}>
               <i className="fa fa-search-minus" />
             </button>
@@ -183,7 +156,7 @@ class UnthemedTimePicker extends PureComponent<Props, State> {
   }
 }
 
-const defaultZoomOutTooltip = () => {
+const ZoomOutTooltip = () => {
   return (
     <>
       Time range zoom out <br /> CTRL+Z
@@ -191,12 +164,42 @@ const defaultZoomOutTooltip = () => {
   );
 };
 
-const TimePickerTooltipContent = ({ timeRange }: { timeRange: TimeRange }) => (
+const TimePickerTooltip = ({ timeRange }: { timeRange: TimeRange }) => (
   <>
     {timeRange.from.format(TIME_FORMAT)}
     <div className="text-center">to</div>
     {timeRange.to.format(TIME_FORMAT)}
   </>
 );
+
+const TimePickerButtonLabel = memo<Props>(props => {
+  const isUTC = props.timeZone === 'utc';
+
+  if (props.hideText) {
+    return null;
+  }
+
+  return (
+    <>
+      <span>{formattedRange(props.value, isUTC)}</span>
+      {isUTC && <span className="time-picker-utc">UTC</span>}
+    </>
+  );
+});
+
+const formattedRange = (value: TimeRange, isUTC: boolean) => {
+  const adjustedTimeRange = {
+    to: dateMath.isMathString(value.raw.to) ? value.raw.to : adjustedTime(value.to, isUTC),
+    from: dateMath.isMathString(value.raw.from) ? value.raw.from : adjustedTime(value.from, isUTC),
+  };
+  return rangeUtil.describeTimeRange(adjustedTimeRange);
+};
+
+const adjustedTime = (time: DateTime, isUTC: boolean) => {
+  if (isUTC) {
+    return time.utc() || null;
+  }
+  return time.local() || null;
+};
 
 export const TimePicker = withTheme(UnthemedTimePicker);

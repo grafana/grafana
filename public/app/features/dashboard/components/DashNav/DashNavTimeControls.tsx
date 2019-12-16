@@ -12,7 +12,7 @@ import { TimeRange } from '@grafana/data';
 import { updateLocation } from 'app/core/actions';
 
 // Components
-import { TimePicker, RefreshPicker, withTheme, stylesFactory } from '@grafana/ui';
+import { TimePicker, RefreshPicker, withTheme, stylesFactory, Themeable } from '@grafana/ui';
 
 // Utils & Services
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -27,12 +27,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-export interface Props {
+export interface Props extends Themeable {
   $injector: any;
   dashboard: DashboardModel;
   updateLocation: typeof updateLocation;
   location: LocationState;
-  theme: GrafanaTheme;
 }
 class UnthemedDashNavTimeControls extends Component<Props> {
   timeSrv: TimeSrv = getTimeSrv();

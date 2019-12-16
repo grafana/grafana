@@ -2,7 +2,7 @@ import React, { useState, memo } from 'react';
 import { useMedia } from 'react-use';
 import { css } from 'emotion';
 import { useTheme, stylesFactory, selectThemeVariant } from '../../../themes';
-import { GrafanaTheme, TimeOption, TimeRange, TimeZone } from '@grafana/data';
+import { GrafanaTheme, TimeOption, TimeRange, TimeZone, isDateTime } from '@grafana/data';
 import TimeRangeTitle from './TimePickerTitle';
 import TimeRangeForm from './TimeRangeForm';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
@@ -38,12 +38,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       background: ${background};
       box-shadow: 0px 4px 4px ${shadow};
-      position: absolute;
+      position: fixed;
       z-index: ${theme.zIndex.modal};
       width: 546px;
       height: 381px;
-      top: 35px;
-      left: -320px;
+      top: 45px;
+      margin-left: -322px;
 
       @media only screen and (max-width: ${theme.breakpoints.lg}) {
         width: 218px;
@@ -200,14 +200,15 @@ const TimePickerExtended: React.FC<Props> = props => {
   );
 };
 
-const NarrowScreenForm = memo<FormProps>(props => {
+const NarrowScreenForm: React.FC<FormProps> = props => {
   if (!props.visible) {
     return null;
   }
 
   const theme = useTheme();
   const styles = getNarrowScreenStyles(theme);
-  const [collapsed, setCollapsed] = useState(false);
+  const isAbsolute = isDateTime(props.value.raw.from) || isDateTime(props.value.raw.to);
+  const [collapsed, setCollapsed] = useState(isAbsolute);
 
   return (
     <>
@@ -236,9 +237,9 @@ const NarrowScreenForm = memo<FormProps>(props => {
       )}
     </>
   );
-});
+};
 
-const FullScreenForm = memo<FormProps>(props => {
+const FullScreenForm: React.FC<FormProps> = props => {
   if (!props.visible) {
     return null;
   }
@@ -270,7 +271,7 @@ const FullScreenForm = memo<FormProps>(props => {
       </div>
     </>
   );
-});
+};
 
 const EmptyRecentList = memo(() => {
   const theme = useTheme();

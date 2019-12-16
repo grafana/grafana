@@ -45,7 +45,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         display: block;
         background-color: ${background};
         width: 4px;
-        height: 221px;
+        height: 201px;
         content: ' ';
         position: absolute;
         top: 0;

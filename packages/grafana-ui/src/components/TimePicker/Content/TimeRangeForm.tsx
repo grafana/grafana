@@ -1,4 +1,4 @@
-import React, { FormEvent, useState, memo } from 'react';
+import React, { FormEvent, useState } from 'react';
 import { TIME_FORMAT, TimeZone, isDateTime, TimeRange, DateTime } from '@grafana/data';
 import { stringToDateTimeType, isValidTimeString } from '../time';
 import TimePickerCalendar from './TimePickerCalendar';
@@ -124,4 +124,4 @@ function isValid(value: string, roundup?: boolean, timeZone?: TimeZone): boolean
   return parsed.isValid();
 }
 
-export default memo(TimePickerForm);
+export default TimePickerForm;

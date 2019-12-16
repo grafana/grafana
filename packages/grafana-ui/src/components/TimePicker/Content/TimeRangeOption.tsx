@@ -41,7 +41,7 @@ interface Props {
   onSelect: (option: TimeOption) => void;
 }
 
-const TimeRangeOption: React.FC<Props> = ({ value, onSelect, selected = false }) => {
+const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
@@ -51,6 +51,6 @@ const TimeRangeOption: React.FC<Props> = ({ value, onSelect, selected = false })
       {selected ? <i className="fa fa-check" /> : null}
     </div>
   );
-};
+});
 
-export default memo(TimeRangeOption);
+export default TimeRangeOption;

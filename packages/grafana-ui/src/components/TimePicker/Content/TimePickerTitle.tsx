@@ -1,4 +1,4 @@
-import React, { memo, PropsWithChildren, FC } from 'react';
+import React, { memo, PropsWithChildren } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { useTheme, stylesFactory } from '../../../themes';
@@ -13,11 +13,11 @@ const getStyle = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-const TimePickerTitle: FC<PropsWithChildren<{}>> = ({ children }) => {
+const TimePickerTitle = memo<PropsWithChildren<{}>>(({ children }) => {
   const theme = useTheme();
   const styles = getStyle(theme);
 
   return <span className={styles.text}>{children}</span>;
-};
+});
 
-export default memo(TimePickerTitle);
+export default TimePickerTitle;
