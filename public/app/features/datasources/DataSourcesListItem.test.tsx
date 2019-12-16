@@ -6,6 +6,7 @@ import { getMockDataSource } from './__mocks__/dataSourcesMocks';
 const setup = () => {
   const props = {
     dataSource: getMockDataSource(),
+    deleteDataSource: jest.fn(),
   };
 
   return shallow(<DataSourcesListItem {...props} />);
