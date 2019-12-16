@@ -40,6 +40,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   fullscreen: true,
   isEditing: true,
   isInView: true,
+  isNewEdit: true,
   hasRefreshed: true,
   cachedPluginOptions: true,
   plugin: true,
@@ -131,6 +132,7 @@ export class PanelModel {
   fullscreen: boolean;
   isEditing: boolean;
   isInView: boolean;
+  isNewEdit: boolean;
   hasRefreshed: boolean;
   events: Emitter;
   cacheTimeout?: any;
