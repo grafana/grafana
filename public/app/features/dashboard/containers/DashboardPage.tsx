@@ -12,7 +12,9 @@ import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
 import { SubMenu } from '../components/SubMenu';
 import { DashboardSettings } from '../components/DashboardSettings';
-import { Alert, CustomScrollbar } from '@grafana/ui';
+import { PanelEditor } from '../components/PanelEditor';
+import { CustomScrollbar, Alert } from '@grafana/ui';
+
 // Redux
 import { initDashboard } from '../state/initDashboard';
 import { cleanUpDashboard } from '../state/actions';
@@ -25,6 +27,7 @@ import {
   DashboardRouteInfo,
   StoreState,
 } from 'app/types';
+
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 
@@ -35,6 +38,7 @@ export interface Props {
   editview?: string;
   urlPanelId?: string;
   urlFolderId?: string;
+  urlEditPanel?: string;
   inspectPanelId?: string;
   $scope: any;
   $injector: any;
@@ -248,7 +252,7 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, editview, $injector, isInitSlow, initError, inspectPanelId } = this.props;
+    const { dashboard, editview, $injector, isInitSlow, initError, inspectPanelId, urlEditPanel } = this.props;
     const { isSettingsOpening, isEditing, isFullscreen, scrollTop, updateScrollTop } = this.state;
 
     if (!dashboard) {
@@ -270,6 +274,8 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     // Find the panel to inspect
     const inspectPanel = inspectPanelId ? dashboard.getPanelById(parseInt(inspectPanelId, 10)) : null;
+    // find panel being edited
+    const editPanel = urlEditPanel ? dashboard.getPanelById(parseInt(urlEditPanel, 10)) : null;
 
     // Only trigger render when the scroll has moved by 25
     const approximateScrollTop = Math.round(scrollTop / 25) * 25;
@@ -309,6 +315,7 @@ export class DashboardPage extends PureComponent<Props, State> {
         </div>
 
         {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
+        {editPanel && <PanelEditor dashboard={dashboard} panel={editPanel} />}
       </div>
     );
   }
@@ -320,6 +327,7 @@ export const mapStateToProps = (state: StoreState) => ({
   urlType: state.location.routeParams.type,
   editview: state.location.query.editview,
   urlPanelId: state.location.query.panelId,
+  urlEditPanel: state.location.query.editPanel,
   urlFolderId: state.location.query.folderId,
   urlFullscreen: !!state.location.query.fullscreen,
   urlEdit: !!state.location.query.edit,
