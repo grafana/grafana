@@ -2,7 +2,7 @@ import React, { useState, memo } from 'react';
 import { useMedia } from 'react-use';
 import { css } from 'emotion';
 import { useTheme, stylesFactory } from '../../../themes';
-import { GrafanaTheme, TimeOption, TimeRange } from '@grafana/data';
+import { GrafanaTheme, TimeOption, TimeRange, TimeZone } from '@grafana/data';
 import TimeRangeTitle from './TimePickerTitle';
 import TimeRangeForm from './TimeRangeForm';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
@@ -140,6 +140,7 @@ const getEmptyListStyles = stylesFactory((theme: GrafanaTheme) => {
 interface Props {
   selected: TimeRange;
   onChange: (timeRange: TimeRange) => void;
+  timeZone?: TimeZone;
 }
 
 interface FormProps extends Props {
@@ -209,7 +210,12 @@ const NarrowScreenForm = memo<FormProps>(props => {
       {collapsed && (
         <div className={styles.body}>
           <div className={styles.form}>
-            <TimeRangeForm value={props.selected} onApply={props.onChange} showCalendarOn="ClickOnInputButton" />
+            <TimeRangeForm
+              value={props.selected}
+              onApply={props.onChange}
+              timeZone={props.timeZone}
+              showCalendarOn="ClickOnInputButton"
+            />
           </div>
           <TimeRangeList
             title="Recently used absolute ranges"
@@ -238,7 +244,12 @@ const FullScreenForm = memo<FormProps>(props => {
         <div className={styles.title}>
           <TimeRangeTitle>Absolute time range</TimeRangeTitle>
         </div>
-        <TimeRangeForm value={props.selected} onApply={props.onChange} showCalendarOn="FocusOnInput" />
+        <TimeRangeForm
+          value={props.selected}
+          timeZone={props.timeZone}
+          onApply={props.onChange}
+          showCalendarOn="FocusOnInput"
+        />
       </div>
       <div className={styles.recent}>
         <TimeRangeList

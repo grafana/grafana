@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { css, cx } from 'emotion';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import { GrafanaTheme, dateTime, TIME_FORMAT } from '@grafana/data';
+import { stringToDateTimeType } from '../time';
 import { useTheme, stylesFactory } from '../../../themes';
 import TimePickerTitle from './TimePickerTitle';
 import Forms from '../../Forms';
@@ -273,9 +274,12 @@ const Footer = memo<Props>(({ onClose, onApply }) => {
   );
 });
 
-function inputToValue(from: string, to: string): Date[] {
-  const fromAsDate = from ? dateTime(from).toDate() : new Date();
-  const toAsDate = to ? dateTime(to).toDate() : new Date();
+function inputToValue(from: string, to: string): Date[] | Date {
+  const fromAsDateTime = stringToDateTimeType(from);
+  const toAsDateTime = stringToDateTimeType(to);
+  const fromAsDate = fromAsDateTime.isValid() ? fromAsDateTime.toDate() : new Date();
+  const toAsDate = toAsDateTime.isValid() ? toAsDateTime.toDate() : new Date();
+
   return [fromAsDate, toAsDate];
 }
 

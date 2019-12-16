@@ -10,6 +10,7 @@ interface Props {
   showCalendarOn: ShowCalendarOn;
   value: TimeRange;
   onApply: (range: TimeRange) => void;
+  timeZone?: TimeZone;
 }
 interface InputState {
   value: string;
@@ -17,11 +18,11 @@ interface InputState {
 }
 
 const TimePickerForm: React.FC<Props> = props => {
-  const { value, showCalendarOn } = props;
+  const { value, showCalendarOn, timeZone } = props;
   const isFullscreen = showCalendarOn === 'FocusOnInput';
 
-  const [from, setFrom] = useState<InputState>(valueToState(value.to));
-  const [to, setTo] = useState<InputState>(valueToState(value.from));
+  const [from, setFrom] = useState<InputState>(valueToState(value.to, false, timeZone));
+  const [to, setTo] = useState<InputState>(valueToState(value.from, true, timeZone));
   const [isOpen, setOpen] = useState(false);
 
   const onOpen = (event: FormEvent<HTMLElement>) => {
@@ -49,22 +50,20 @@ const TimePickerForm: React.FC<Props> = props => {
     <>
       <Forms.Field label="From">
         <Forms.Input
-          onClick={onOpen}
           onFocus={onFocus}
-          invalid={from.invalid}
-          onChange={event => setFrom(eventToState(event))}
+          onChange={event => setFrom(eventToState(event, false, timeZone))}
           addonAfter={icon}
           value={from.value}
+          invalid={from.invalid}
         />
       </Forms.Field>
       <Forms.Field label="To">
         <Forms.Input
-          onClick={onOpen}
           onFocus={onFocus}
-          invalid={to.invalid}
-          onChange={event => setTo(eventToState(event))}
+          onChange={event => setTo(eventToState(event, true, timeZone))}
           addonAfter={icon}
           value={to.value}
+          invalid={to.invalid}
         />
       </Forms.Field>
       <Forms.Button onClick={onApply}>Apply time interval</Forms.Button>
@@ -77,8 +76,8 @@ const TimePickerForm: React.FC<Props> = props => {
         onApply={onApply}
         onClose={() => setOpen(false)}
         onChange={(from, to) => {
-          setFrom(valueToState(from));
-          setTo(valueToState(to));
+          setFrom(valueToState(from, false, timeZone));
+          setTo(valueToState(to, true, timeZone));
         }}
       />
     </>
@@ -87,7 +86,7 @@ const TimePickerForm: React.FC<Props> = props => {
 
 function toTimeRange(from: string, to: string): TimeRange {
   const fromDate = stringToDateTimeType(from);
-  const toDate = stringToDateTimeType(from);
+  const toDate = stringToDateTimeType(to);
 
   return {
     from: fromDate,
@@ -99,13 +98,14 @@ function toTimeRange(from: string, to: string): TimeRange {
   };
 }
 
-function eventToState(event: FormEvent<HTMLInputElement>): InputState {
-  return valueToState(event.currentTarget.value);
+function eventToState(event: FormEvent<HTMLInputElement>, roundup?: boolean, timeZone?: TimeZone): InputState {
+  return valueToState(event.currentTarget.value, roundup, timeZone);
 }
 
-function valueToState(raw: DateTime | string): InputState {
+function valueToState(raw: DateTime | string, roundup?: boolean, timeZone?: TimeZone): InputState {
   const value = valueAsString(raw);
-  return { value, invalid: !isValid(value) };
+  const invalid = !isValid(value, roundup, timeZone);
+  return { value, invalid };
 }
 
 function valueAsString(value: DateTime | string): string {

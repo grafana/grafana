@@ -387,7 +387,7 @@ class CombinedTimePicker extends PureComponent<Props, State> {
 
         {isCustomOpen && (
           <ClickOutsideWrapper onClick={this.onCloseCustom}>
-            <ExtendedTimePicker selected={value} onChange={this.onCustomChange} />
+            <ExtendedTimePicker timeZone={timeZone} selected={value} onChange={this.onCustomChange} />
           </ClickOutsideWrapper>
         )}
       </div>
