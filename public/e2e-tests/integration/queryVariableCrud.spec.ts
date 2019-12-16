@@ -198,7 +198,6 @@ e2e.scenario({
 
       e2e.pages.Dashboard.Settings.General.saveDashBoard().click();
       e2e.pages.SaveDashboardModal.save().click();
-      cl;
       e2e.flows.assertSuccessNotification();
 
       e2e.pages.Dashboard.Toolbar.backArrow().click();
