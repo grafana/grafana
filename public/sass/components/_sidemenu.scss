@@ -191,7 +191,7 @@ li.sidemenu-org-switcher {
   padding-left: $space-lg;
   display: flex;
   align-items: center;
-  > i.fa.fa-random {
+  > i.fa.uil-random {
     margin-right: $space-xs;
     top: 1px;
   }
@@ -259,7 +259,7 @@ li.sidemenu-org-switcher {
       justify-content: space-between;
       align-items: baseline;
 
-      .fa-bars {
+      .uil-bars {
         font-size: 25px;
       }
     }
