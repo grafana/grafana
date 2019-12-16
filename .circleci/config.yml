@@ -175,6 +175,9 @@ jobs:
           - store_artifacts:
                 path: public/e2e-tests/screenShots/theOutput
                 destination: output-screenshots
+          - store_artifacts:
+              path: public/e2e-tests/videos
+              destination: output-videos
           - run:
               name: ci job failed
               command: './scripts/ci-job-failed.sh'
