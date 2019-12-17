@@ -94,7 +94,7 @@ func (p *DataSourcePlugin) spawnSubProcess() error {
 		return err
 	}
 
-	raw, err := rpcClient.Dispense(p.Id)
+	raw, err := rpcClient.Dispense("backend")
 	if err != nil {
 		return err
 	}
