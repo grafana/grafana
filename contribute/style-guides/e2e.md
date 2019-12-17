@@ -133,7 +133,7 @@ When this list is rendered with the data sources with names `A`, `B`, `C` the re
 </div>
 ```
 
-Now we can go ahead and write our test and the one thing that differs from the `Basic example` is that we pass in which data source we want to click on as an argument to the selector function:
+Now we can write our test. The one thing that differs from the `Basic example` is that we pass in which data source we want to click on as an argument to the selector function:
 > Best practice after calling `visit` is to always call `should` on a selector to prevent flaky tests when you try to access an element that isn't ready. Read more about it [here](https://docs.cypress.io/guides/core-concepts/retry-ability.html#Commands-vs-assertions).  
 ```ecmascript 6
 describe('List test', () => {
