@@ -1,6 +1,7 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 import { ExploreQueryFieldProps } from '@grafana/data';
 import { Input, ValidationEvents, EventsWithValidation, Switch } from '@grafana/ui';
+import isEmpty from 'lodash/isEmpty';
 import { CloudWatchQuery } from '../types';
 import CloudWatchDatasource from '../datasource';
 import { QueryField, Alias, QueryFieldsEditor } from './';
@@ -20,50 +21,33 @@ const idValidationEvents: ValidationEvents = {
   ],
 };
 
+export const normalizeQuery = ({
+  namespace,
+  metricName,
+  expression,
+  dimensions,
+  region,
+  id,
+  alias,
+  statistics,
+  ...rest
+}: CloudWatchQuery): CloudWatchQuery => {
+  const normalizedQuery = {
+    namespace: namespace || '',
+    metricName: metricName || '',
+    expression: expression || '',
+    dimensions: dimensions || {},
+    region: region || 'default',
+    id: id || '',
+    alias: alias || '',
+    statistics: isEmpty(statistics) ? ['Average'] : statistics,
+    ...rest,
+  };
+  return !rest.hasOwnProperty('matchExact') ? { ...normalizedQuery, matchExact: true } : normalizedQuery;
+};
+
 export class QueryEditor extends PureComponent<Props, State> {
   state: State = { showMeta: false };
-
-  static getDerivedStateFromProps(props: Props, state: State) {
-    const { query } = props;
-
-    if (!query.namespace) {
-      query.namespace = '';
-    }
-
-    if (!query.metricName) {
-      query.metricName = '';
-    }
-
-    if (!query.expression) {
-      query.expression = '';
-    }
-
-    if (!query.dimensions) {
-      query.dimensions = {};
-    }
-
-    if (!query.region) {
-      query.region = 'default';
-    }
-
-    if (!query.id) {
-      query.id = '';
-    }
-
-    if (!query.alias) {
-      query.alias = '';
-    }
-
-    if (!query.statistics || !query.statistics.length) {
-      query.statistics = ['Average'];
-    }
-
-    if (!query.hasOwnProperty('matchExact')) {
-      query.matchExact = true;
-    }
-
-    return state;
-  }
 
   onChange(query: CloudWatchQuery) {
     const { onChange, onRunQuery } = this.props;
@@ -72,8 +56,9 @@ export class QueryEditor extends PureComponent<Props, State> {
   }
 
   render() {
-    const { data, query, onRunQuery } = this.props;
+    const { data, onRunQuery } = this.props;
     const { showMeta } = this.state;
+    const query = normalizeQuery(this.props.query);
     const metaDataExist = data && Object.values(data).length && data.state === 'Done';
     return (
       <>

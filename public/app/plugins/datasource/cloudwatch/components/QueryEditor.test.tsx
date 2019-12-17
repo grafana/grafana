@@ -5,7 +5,7 @@ import { act } from 'react-dom/test-utils';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
-import { QueryEditor, Props } from './QueryEditor';
+import { QueryEditor, Props, normalizeQuery } from './QueryEditor';
 import CloudWatchDatasource from '../datasource';
 
 const setup = () => {
@@ -85,25 +85,18 @@ describe('QueryEditor', () => {
       });
     });
 
-    it('should init props correctly', async () => {
-      await act(async () => {
-        const props = setup();
-        props.query.namespace = null;
-        props.query.metricName = null;
-        props.query.expression = null;
-        props.query.dimensions = null;
-        props.query.region = null;
-        props.query.statistics = null;
-        const wrapper = mount(<QueryEditor {...props} />);
-        const {
-          query: { namespace, region, metricName, dimensions, statistics, expression },
-        } = wrapper.props();
-        expect(namespace).toEqual('');
-        expect(metricName).toEqual('');
-        expect(expression).toEqual('');
-        expect(region).toEqual('default');
-        expect(statistics).toEqual(['Average']);
-        expect(dimensions).toEqual({});
+    it('should normalize query with default values', () => {
+      expect(normalizeQuery({ refId: '42' } as any)).toEqual({
+        namespace: '',
+        metricName: '',
+        expression: '',
+        dimensions: {},
+        region: 'default',
+        id: '',
+        alias: '',
+        statistics: ['Average'],
+        matchExact: true,
+        refId: '42',
       });
     });
   });
