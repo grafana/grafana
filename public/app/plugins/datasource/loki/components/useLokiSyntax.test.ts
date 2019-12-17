@@ -1,4 +1,4 @@
-import { renderHook, act } from 'react-hooks-testing-library';
+import { renderHook, act } from '@testing-library/react-hooks';
 import { AbsoluteTimeRange } from '@grafana/data';
 import { CascaderOption } from '@grafana/ui';
 
@@ -66,6 +66,8 @@ describe('useLokiSyntax hook', () => {
 
     act(() => result.current.setActiveOption([activeOptionMock]));
 
-    setTimeout(() => expect(result.current.logLabelOptions).toEqual(logLabelOptionsMock3));
+    await waitForNextUpdate();
+
+    expect(result.current.logLabelOptions).toEqual(logLabelOptionsMock3);
   });
 });
