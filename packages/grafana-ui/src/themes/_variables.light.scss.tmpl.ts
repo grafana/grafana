@@ -249,8 +249,8 @@ $side-menu-link-color: $gray-6;
 // Menu dropdowns
 // -------------------------
 $menu-dropdown-bg: $gray-7;
-$menu-dropdown-hover-bg: $gray-6;
-$menu-dropdown-shadow: 5px 5px 10px -5px $gray-1;
+$menu-dropdown-hover-bg: #FFFFFF;
+$menu-dropdown-shadow: 0px 0px 0px 0px #FFFFFF;
 
 // Tabs
 // -------------------------
@@ -284,13 +284,13 @@ $popover-error-bg: $btn-danger-bg;
 
 // Tooltips and popovers
 // -------------------------
-$tooltipColor: $popover-help-color;
+$tooltipColor: #031B4E;
 $tooltipArrowWidth: 5px;
 $tooltipLinkColor: lighten($popover-help-color, 5%);
 $graph-tooltip-bg: $white;
 
 $tooltipBackground: $white;
-$tooltipColor: $gray-7;
+$tooltipColor: #031B4E;
 $tooltipArrowColor: $tooltipBackground; // Used by Angular tooltip
 $tooltipBackgroundError: $brand-danger;
 
