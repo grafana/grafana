@@ -75,6 +75,7 @@ export interface Props extends Themeable {
   onMoveBackward: () => void;
   onMoveForward: () => void;
   onZoom: () => void;
+  history?: TimeRange[];
 }
 export interface State {
   isOpen: boolean;
@@ -94,7 +95,18 @@ export class UnthemedTimePicker extends PureComponent<Props, State> {
   };
 
   render() {
-    const { value, onMoveBackward, onMoveForward, onZoom, timeZone, timeSyncButton, isSynced, theme } = this.props;
+    const {
+      value,
+      onMoveBackward,
+      onMoveForward,
+      onZoom,
+      timeZone,
+      timeSyncButton,
+      isSynced,
+      theme,
+      history,
+    } = this.props;
+
     const { isOpen } = this.state;
     const styles = getStyles(theme);
     const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
@@ -133,6 +145,7 @@ export class UnthemedTimePicker extends PureComponent<Props, State> {
                   onChange={this.onChange}
                   otherOptions={otherOptions}
                   quickOptions={quickOptions}
+                  history={history}
                 />
               </ClickOutsideWrapper>
             )}

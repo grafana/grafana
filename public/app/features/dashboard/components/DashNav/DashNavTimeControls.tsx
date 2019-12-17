@@ -13,6 +13,7 @@ import { updateLocation } from 'app/core/actions';
 
 // Components
 import { TimePicker, RefreshPicker, withTheme, stylesFactory, Themeable } from '@grafana/ui';
+import { TimePickerHistory } from 'app/core/components/LocalStorageWrapper';
 
 // Utils & Services
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -101,14 +102,24 @@ class UnthemedDashNavTimeControls extends Component<Props> {
 
     return (
       <div className={styles.container}>
-        <TimePicker
-          value={timePickerValue}
-          onChange={this.onChangeTimePicker}
-          timeZone={timeZone}
-          onMoveBackward={this.onMoveBack}
-          onMoveForward={this.onMoveForward}
-          onZoom={this.onZoom}
-        />
+        <TimePickerHistory>
+          {(history, onSaveToHistory) => {
+            return (
+              <TimePicker
+                value={timePickerValue}
+                onChange={value => {
+                  this.onChangeTimePicker(value);
+                  onSaveToHistory(value);
+                }}
+                timeZone={timeZone}
+                onMoveBackward={this.onMoveBack}
+                onMoveForward={this.onMoveForward}
+                onZoom={this.onZoom}
+                history={history}
+              />
+            );
+          }}
+        </TimePickerHistory>
         <RefreshPicker
           onIntervalChanged={this.onChangeRefreshInterval}
           onRefresh={this.onRefresh}

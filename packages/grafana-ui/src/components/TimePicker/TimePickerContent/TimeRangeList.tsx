@@ -1,4 +1,4 @@
-import React, { memo, ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import { css } from 'emotion';
 import { TimeOption } from '@grafana/data';
 import { TimeRange } from '@grafana/data';
@@ -26,7 +26,7 @@ interface Props {
   placeholderEmpty?: ReactNode;
 }
 
-const TimeRangeList = memo<Props>(props => {
+const TimeRangeList: React.FC<Props> = props => {
   const styles = getStyles();
   const { title, options, placeholderEmpty } = props;
 
@@ -46,9 +46,9 @@ const TimeRangeList = memo<Props>(props => {
       <Options {...props} />
     </>
   );
-});
+};
 
-const Options = memo<Props>(({ options, value, onSelect }) => {
+const Options: React.FC<Props> = ({ options, value, onSelect }) => {
   return (
     <div>
       {options.map((option, index) => (
@@ -61,7 +61,7 @@ const Options = memo<Props>(({ options, value, onSelect }) => {
       ))}
     </div>
   );
-});
+};
 
 function keyForOption(option: TimeOption, index: number): string {
   return `${option.from}-${option.to}-${index}`;

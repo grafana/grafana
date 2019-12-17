@@ -10,6 +10,7 @@ import { TimeRange, TimeZone, RawTimeRange, dateTimeForTimeZone } from '@grafana
 // Components
 import { TimePicker } from '@grafana/ui';
 import { TimeSyncButton } from './TimeSyncButton';
+import { TimePickerHistory } from 'app/core/components/LocalStorageWrapper';
 
 // Utils & Services
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
@@ -60,7 +61,6 @@ export class ExploreTimeControls extends Component<Props> {
     const timeSyncButton = splitted ? <TimeSyncButton onClick={onChangeTimeSync} isSynced={syncedTimes} /> : undefined;
     const timePickerCommonProps = {
       value: range,
-      onChange: this.onChangeTimePicker,
       timeZone,
       onMoveBackward: this.onMoveBack,
       onMoveForward: this.onMoveForward,
@@ -68,6 +68,22 @@ export class ExploreTimeControls extends Component<Props> {
       hideText,
     };
 
-    return <TimePicker {...timePickerCommonProps} timeSyncButton={timeSyncButton} isSynced={syncedTimes} />;
+    return (
+      <TimePickerHistory>
+        {(history, onSaveToHistory) => {
+          return (
+            <TimePicker
+              {...timePickerCommonProps}
+              timeSyncButton={timeSyncButton}
+              isSynced={syncedTimes}
+              onChange={value => {
+                this.onChangeTimePicker(value), onSaveToHistory(value);
+              }}
+              history={history}
+            />
+          );
+        }}
+      </TimePickerHistory>
+    );
   }
 }

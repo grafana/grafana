@@ -7,6 +7,7 @@ import TimeRangeTitle from './TimePickerTitle';
 import TimeRangeForm from './TimeRangeForm';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import TimeRangeList from './TimeRangeList';
+import { mapRangeToTimeOption } from './mapper';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const shadow = selectThemeVariant(
@@ -164,10 +165,12 @@ interface Props {
   timeZone?: TimeZone;
   quickOptions?: TimeOption[];
   otherOptions?: TimeOption[];
+  history?: TimeRange[];
 }
 
-interface FormProps extends Props {
+interface FormProps extends Omit<Props, 'history'> {
   visible: boolean;
+  historyOptions?: TimeOption[];
 }
 
 const TimePickerContent: React.FC<Props> = props => {
@@ -175,14 +178,15 @@ const TimePickerContent: React.FC<Props> = props => {
   const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.lg})`);
   const styles = getStyles(theme);
   const { quickOptions = [], otherOptions = [] } = props;
+  const historyOptions = mapToHistoryOptions(props.history);
 
   return (
     <div className={styles.container}>
       <div className={styles.leftSide}>
-        <FullScreenForm {...props} visible={isFullscreen} />
+        <FullScreenForm {...props} visible={isFullscreen} historyOptions={historyOptions} />
       </div>
       <CustomScrollbar className={styles.rightSide}>
-        <NarrowScreenForm {...props} visible={!isFullscreen} />
+        <NarrowScreenForm {...props} visible={!isFullscreen} historyOptions={historyOptions} />
         <TimeRangeList
           title="Relative time range from now"
           options={quickOptions}
@@ -228,7 +232,7 @@ const NarrowScreenForm: React.FC<FormProps> = props => {
           </div>
           <TimeRangeList
             title="Recently used absolute ranges"
-            options={[]}
+            options={props.historyOptions || []}
             onSelect={props.onChange}
             value={props.value}
             placeholderEmpty={null}
@@ -263,7 +267,7 @@ const FullScreenForm: React.FC<FormProps> = props => {
       <div className={styles.recent}>
         <TimeRangeList
           title="Recently used absolute ranges"
-          options={[]}
+          options={props.historyOptions || []}
           onSelect={props.onChange}
           value={props.value}
           placeholderEmpty={<EmptyRecentList />}
@@ -294,5 +298,12 @@ const EmptyRecentList = memo(() => {
     </div>
   );
 });
+
+function mapToHistoryOptions(ranges?: TimeRange[]): TimeOption[] {
+  if (!Array.isArray(ranges) || ranges.length === 0) {
+    return [];
+  }
+  return ranges.slice(ranges.length - 4).map(mapRangeToTimeOption);
+}
 
 export default TimePickerContent;
