@@ -35,3 +35,13 @@ export interface PromQueryRequest extends PromQuery {
   end: number;
   headers?: any;
 }
+
+export interface PromMetricsMetadataItem {
+  type: string;
+  help: string;
+  unit?: string;
+}
+
+export interface PromMetricsMetadata {
+  [metric: string]: PromMetricsMetadataItem[];
+}

@@ -8,7 +8,7 @@ import { parseSelector, processLabels, processHistogramLabels } from './language
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 
 import { PrometheusDatasource } from './datasource';
-import { PromQuery } from './types';
+import { PromQuery, PromMetricsMetadata } from './types';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
@@ -41,10 +41,20 @@ export function addHistoryMetadata(item: CompletionItem, history: any[]): Comple
   };
 }
 
+function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): CompletionItem {
+  const item: CompletionItem = { label: metric };
+  if (metadata && metadata[metric]) {
+    const { type, help } = metadata[metric][0];
+    item.documentation = `${type.toUpperCase()}: ${help}`;
+  }
+  return item;
+}
+
 export default class PromQlLanguageProvider extends LanguageProvider {
   histogramMetrics?: string[];
   timeRange?: { start: number; end: number };
   metrics?: string[];
+  metricsMetadata?: PromMetricsMetadata;
   startTask: Promise<any>;
   datasource: PrometheusDatasource;
   lookupMetricsThreshold: number;
@@ -85,7 +95,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return PromqlSyntax;
   }
 
-  request = async (url: string) => {
+  request = async (url: string, defaultValue: any): Promise<any> => {
     try {
       const res = await this.datasource.metadataRequest(url);
       const body = await (res.data || res.json());
@@ -95,12 +105,13 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       console.error(error);
     }
 
-    return [];
+    return defaultValue;
   };
 
   start = async (): Promise<any[]> => {
-    this.metrics = await this.request('/api/v1/label/__name__/values');
+    this.metrics = await this.request('/api/v1/label/__name__/values', []);
     this.lookupsDisabled = this.metrics.length > this.lookupMetricsThreshold;
+    this.metricsMetadata = await this.request('/api/v1/metadata', {});
     this.processHistogramMetrics(this.metrics);
     return [];
   };
@@ -197,7 +208,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   getTermCompletionItems = (): TypeaheadOutput => {
-    const { metrics } = this;
+    const { metrics, metricsMetadata } = this;
     const suggestions = [];
 
     suggestions.push({
@@ -209,7 +220,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     if (metrics && metrics.length) {
       suggestions.push({
         label: 'Metrics',
-        items: metrics.map(wrapLabel),
+        items: metrics.map(m => addMetricsMetadata(m, metricsMetadata)),
       });
     }
 
@@ -360,7 +371,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   fetchLabelValues = async (key: string): Promise<Record<string, string[]>> => {
-    const data = await this.request(`/api/v1/label/${key}/values`);
+    const data = await this.request(`/api/v1/label/${key}/values`, []);
     return { [key]: data };
   };
 
@@ -386,7 +397,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     )}&end=${this.roundToMinutes(tRange['end'])}&withName=${!!withName}`;
     let value = this.labelsCache.get(cacheKey);
     if (!value) {
-      const data = await this.request(url);
+      const data = await this.request(url, []);
       const { values } = processLabels(data, withName);
       value = values;
       this.labelsCache.set(cacheKey, value);
