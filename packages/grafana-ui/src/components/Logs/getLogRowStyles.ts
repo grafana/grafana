@@ -162,10 +162,10 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     `,
     logDetailsLabel: css`
       label: logs-row-details__label;
-      max-width: 25em;
+      max-width: 30em;
       min-width: 20em;
       padding: 0 ${theme.spacing.sm};
-      word-break: break-all;
+      overflow-wrap: break-word;
     `,
     logDetailsHeading: css`
       label: logs-row-details__heading;
