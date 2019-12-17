@@ -1,9 +1,18 @@
+// Libraries
 import React, { PureComponent } from 'react';
 import RssParser from 'rss-parser';
+import { css } from 'emotion';
 
+// Utils & Services
+import { GrafanaTheme } from '@grafana/data';
+import { stylesFactory, CustomScrollbar } from '@grafana/ui';
+import config from 'app/core/config';
+import { feedToDataFrame } from './utils';
+import { sanitize } from 'app/core/utils/text';
+
+// Types
 import { PanelProps, DataFrameView, dateTime } from '@grafana/data';
 import { RssFeed, NewsOptions, NewsItem } from './types';
-import { feedToDataFrame } from './utils';
 
 interface Props extends PanelProps<NewsOptions> {}
 
@@ -52,6 +61,7 @@ export class NewsPanel extends PureComponent<Props, State> {
 
   render() {
     const { isError, news } = this.state;
+    const styles = getStyles(config.theme);
 
     if (isError) {
       return <div>Error Loading News</div>;
@@ -61,27 +71,51 @@ export class NewsPanel extends PureComponent<Props, State> {
     }
 
     return (
-      <div
-        style={{
-          maxHeight: '100%',
-          overflow: 'auto',
-        }}
-      >
-        {news.map((item, index) => {
-          return (
-            <div key={index}>
-              <a href={item.link} target="_blank">
-                <div style={{ display: 'flex', padding: '4px 0' }}>
-                  <div>
-                    <small>{dateTime(item.date).format('LLL')}</small>
-                  </div>
-                  <div>{item.title}</div>
-                </div>
-              </a>
-            </div>
-          );
-        })}
+      <div className={styles.container}>
+        <CustomScrollbar>
+          {news.map((item, index) => {
+            return (
+              <div key={index} className={styles.item}>
+                <a href={item.link} target="_blank">
+                  <div className={styles.title}>{item.title}</div>
+                  <div className={styles.date}>{dateTime(item.date).format('MMM DD')} </div>
+                  <div className={styles.content} dangerouslySetInnerHTML={{ __html: sanitize(item.content) }} />
+                </a>
+              </div>
+            );
+          })}
+        </CustomScrollbar>
       </div>
     );
   }
 }
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  container: css`
+    height: 100%;
+  `,
+  item: css`
+    background: ${theme.colors.pageBg};
+    padding: ${theme.spacing.md};
+    position: relative;
+    margin-bottom: 4px;
+  `,
+  title: css`
+    color: ${theme.colors.linkExternal};
+    max-width: calc(100% - 70px);
+    font-size: ${theme.typography.size.lg};
+  `,
+  content: css`
+    p {
+      margin-bottom: 4px;
+    }
+  `,
+  date: css`
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: ${theme.colors.panelBg};
+    width: 60px;
+    padding: ${theme.spacing.sm};
+  `,
+}));

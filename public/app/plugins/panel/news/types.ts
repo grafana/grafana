@@ -10,6 +10,7 @@ export interface NewsItem {
   date: number;
   title: string;
   link: string;
+  content: string;
 }
 
 /**
