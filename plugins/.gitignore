@@ -1,3 +1,6 @@
-external
+# packaged by toolkit
 dist
 coverage
+
+# Ignore external git configs
+external
