@@ -134,9 +134,6 @@ export class DashNav extends PureComponent<Props> {
                 <i className="fa fa-chevron-right navbar-page-btn__folder-icon" />
               </>
             )}
-            <a onClick={this.onDahboardNameClick}>
-              {dashboard.title} <i className="fa fa-caret-down navbar-page-btn__search" />
-            </a>
           </div>
         </div>
         {this.isSettings && <span className="navbar-settings-title">&nbsp;/ Settings</span>}
