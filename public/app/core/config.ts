@@ -11,7 +11,7 @@ export const getConfig = () => {
 };
 
 export const mockConfig = (mock: Partial<GrafanaBootConfig>) => {
-  configMock = mock as GrafanaBootConfig;
+  configMock = mock;
   return () => {
     configMock = null;
   };
