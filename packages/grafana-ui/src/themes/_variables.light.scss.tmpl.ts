@@ -233,10 +233,10 @@ $navbarHeight: 52px;
 $navbarBackground: $white;
 $navbarBorder: 1px solid $gray-5;
 
-$navbarButtonBackground: lighten($navbarBackground, 3%);
-$navbarButtonBackgroundHighlight: lighten($navbarBackground, 5%);
+$navbarButtonBackground: #FFFFFF;
+$navbarButtonBackgroundHighlight: #FFFFFF;
 
-$navbar-button-border: $gray-4;
+$navbar-button-border: #586987;
 
 // Sidemenu
 // -------------------------
