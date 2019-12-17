@@ -69,7 +69,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		//therefore the loginError should be passed to the view data
 		//and the view should return immediately before attempting
 		//to login again via OAuth and enter to a redirect loop
-		deleteCookie(c, LoginErrorCookieName)
+		middleware.DeleteCookie(c.Resp, LoginErrorCookieName, hs.cookieOptionsFromCfg)
 		viewData.Settings["loginError"] = loginError
 		c.HTML(200, getViewIndex(), viewData)
 		return
@@ -228,10 +228,6 @@ func tryGetEncryptedCookie(ctx *models.ReqContext, cookieName string) (string, b
 
 	decryptedError, err := util.Decrypt(decoded, setting.SecretKey)
 	return string(decryptedError), err == nil
-}
-
-func deleteCookie(ctx *models.ReqContext, cookieName string) {
-	ctx.SetCookie(cookieName, "", -1, setting.AppSubUrl+"/")
 }
 
 func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName string, value string, maxAge int) error {
