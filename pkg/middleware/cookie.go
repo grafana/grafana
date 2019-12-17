@@ -6,27 +6,38 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func DeleteCookie(w http.ResponseWriter, name string, cfg *setting.Cfg) {
-	WriteCookie(w, name, "", -1, cfg)
+type CookieOptions struct {
+	Path     string
+	Secure   bool
+	SameSite http.SameSite
 }
 
-func WriteCookie(w http.ResponseWriter, name string, value string, maxAge int, cfg *setting.Cfg) {
+func newCookieOptions() CookieOptions {
+	return CookieOptions{
+		Path:     setting.AppSubUrl + "/",
+		Secure:   setting.CookieSecure,
+		SameSite: setting.CookieSameSite,
+	}
+}
+
+type GetCookieOptionsFunc func() CookieOptions
+
+func DeleteCookie(w http.ResponseWriter, name string, getCookieOptionsFunc GetCookieOptionsFunc) {
+	WriteCookie(w, name, "", -1, getCookieOptionsFunc)
+}
+
+func WriteCookie(w http.ResponseWriter, name string, value string, maxAge int, getCookieOptionsFunc GetCookieOptionsFunc) {
+	options := getCookieOptionsFunc()
 	cookie := http.Cookie{
 		Name:     name,
 		MaxAge:   maxAge,
 		Value:    value,
 		HttpOnly: true,
-		Path:     setting.AppSubUrl + "/",
+		Path:     options.Path,
+		Secure:   options.Secure,
 	}
-	secure := setting.CookieSecure
-	sameSite := setting.CookieSameSite
-	if cfg != nil {
-		secure = cfg.CookieSecure
-		sameSite = cfg.CookieSameSite
-	}
-	cookie.Secure = secure
-	if sameSite != http.SameSiteDefaultMode {
-		cookie.SameSite = sameSite
+	if options.SameSite != http.SameSiteDefaultMode {
+		cookie.SameSite = options.SameSite
 	}
 	http.SetCookie(w, &cookie)
 }

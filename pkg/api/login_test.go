@@ -194,15 +194,15 @@ func TestLoginViewRedirect(t *testing.T) {
 	}
 
 	for _, c := range redirectCases {
-		setting.AppUrl = c.appURL
-		setting.AppSubUrl = c.appSubURL
+		hs.Cfg.AppUrl = c.appURL
+		hs.Cfg.AppSubUrl = c.appSubURL
 		t.Run(c.desc, func(t *testing.T) {
 			cookie := http.Cookie{
 				Name:     "redirect_to",
 				MaxAge:   60,
 				Value:    c.url,
 				HttpOnly: true,
-				Path:     setting.AppSubUrl + "/",
+				Path:     hs.Cfg.AppSubUrl + "/",
 				Secure:   hs.Cfg.CookieSecure,
 				SameSite: hs.Cfg.CookieSameSite,
 			}
@@ -218,7 +218,7 @@ func TestLoginViewRedirect(t *testing.T) {
 				assert.True(t, ok, "Set-Cookie exists")
 				assert.Greater(t, len(setCookie), 0)
 				var redirectToCookieFound bool
-				expCookieValue := fmt.Sprintf("redirect_to=%v; Path=%v; Max-Age=60; HttpOnly; Secure", c.url, setting.AppSubUrl+"/")
+				expCookieValue := fmt.Sprintf("redirect_to=%v; Path=%v; Max-Age=60; HttpOnly; Secure", c.url, hs.Cfg.AppSubUrl+"/")
 				for _, cookieValue := range setCookie {
 					if cookieValue == expCookieValue {
 						redirectToCookieFound = true
@@ -302,15 +302,15 @@ func TestLoginPostRedirect(t *testing.T) {
 	}
 
 	for _, c := range redirectCases {
-		setting.AppUrl = c.appURL
-		setting.AppSubUrl = c.appSubURL
+		hs.Cfg.AppUrl = c.appURL
+		hs.Cfg.AppSubUrl = c.appSubURL
 		t.Run(c.desc, func(t *testing.T) {
 			cookie := http.Cookie{
 				Name:     "redirect_to",
 				MaxAge:   60,
 				Value:    c.url,
 				HttpOnly: true,
-				Path:     setting.AppSubUrl + "/",
+				Path:     hs.Cfg.AppSubUrl + "/",
 				Secure:   hs.Cfg.CookieSecure,
 				SameSite: hs.Cfg.CookieSameSite,
 			}
@@ -331,7 +331,7 @@ func TestLoginPostRedirect(t *testing.T) {
 			assert.True(t, ok, "Set-Cookie exists")
 			assert.Greater(t, len(setCookie), 0)
 			var redirectToCookieFound bool
-			expCookieValue := fmt.Sprintf("redirect_to=; Path=%v; Max-Age=0; HttpOnly; Secure", setting.AppSubUrl+"/")
+			expCookieValue := fmt.Sprintf("redirect_to=; Path=%v; Max-Age=0; HttpOnly; Secure", hs.Cfg.AppSubUrl+"/")
 			for _, cookieValue := range setCookie {
 				if cookieValue == expCookieValue {
 					redirectToCookieFound = true

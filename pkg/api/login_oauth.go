@@ -70,7 +70,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		}
 
 		hashedState := hashStatecode(state, setting.OAuthService.OAuthInfos[name].ClientSecret)
-		middleware.WriteCookie(ctx.Resp, OauthStateCookieName, hashedState, 60, hs.Cfg)
+		middleware.WriteCookie(ctx.Resp, OauthStateCookieName, hashedState, 60, hs.cookieOptionsFromCfg)
 		if setting.OAuthService.OAuthInfos[name].HostedDomain == "" {
 			ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
 		} else {
@@ -83,7 +83,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 
 	// delete cookie
 	ctx.Resp.Header().Del("Set-Cookie")
-	middleware.DeleteCookie(ctx.Resp, OauthStateCookieName, hs.Cfg)
+	middleware.DeleteCookie(ctx.Resp, OauthStateCookieName, hs.cookieOptionsFromCfg)
 
 	if cookieState == "" {
 		ctx.Handle(500, "login.OAuthLogin(missing saved state)", nil)
@@ -218,7 +218,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	metrics.MApiLoginOAuth.Inc()
 
 	if redirectTo, _ := url.QueryUnescape(ctx.GetCookie("redirect_to")); len(redirectTo) > 0 {
-		middleware.DeleteCookie(ctx.Resp, "redirect_to", hs.Cfg)
+		middleware.DeleteCookie(ctx.Resp, "redirect_to", hs.cookieOptionsFromCfg)
 		ctx.Redirect(redirectTo)
 		return
 	}
