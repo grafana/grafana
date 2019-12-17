@@ -140,6 +140,12 @@ describe('linkSrv', () => {
   });
 
   describe('sanitization', () => {
+    let restoreConfig: () => void;
+
+    afterEach(() => {
+      restoreConfig();
+    });
+
     const url = "javascript:alert('broken!);";
     it.each`
       disableSanitizeHtml | expected
@@ -148,7 +154,7 @@ describe('linkSrv', () => {
     `(
       "when disable disableSanitizeHtml set to '$disableSanitizeHtml' then result should be '$expected'",
       ({ disableSanitizeHtml, expected }) => {
-        const restoreConfig = mockConfig({
+        restoreConfig = mockConfig({
           disableSanitizeHtml,
         });
 
@@ -166,9 +172,7 @@ describe('linkSrv', () => {
           {}
         ).href;
 
-        // console.log(link);
         expect(link).toBe(expected);
-        restoreConfig();
       }
     );
   });

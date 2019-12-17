@@ -211,7 +211,6 @@ export class LinkSrv implements LinkService {
         value: variablesQuery,
       },
     });
-
     info.href = getConfig().disableSanitizeHtml ? info.href : sanitizeUrl(info.href);
     return info;
   };
