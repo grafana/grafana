@@ -2,7 +2,7 @@
   <a
     ng-click="vm.show()"
     class="variable-value-link"
-    aria-label="{{::vm.selectors.submenuItemValueDropDownValueLinkTexts(vm.linkText)}}"
+    aria-label="{{vm.selectors.submenuItemValueDropDownValueLinkTexts(vm.linkText)}}"
   >
     {{vm.linkText}}
     <span ng-repeat="tag in vm.selectedTags" bs-tooltip="tag.valuesText" data-placement="bottom">
@@ -48,7 +48,7 @@
           ng-click="vm.selectValue(option, $event)"
         >
           <span class="variable-option-icon"></span>
-          <span aria-label="{{::vm.selectors.submenuItemValueDropDownOptionTexts(option.text)}}">{{option.text}}</span>
+          <span aria-label="{{vm.selectors.submenuItemValueDropDownOptionTexts(option.text)}}">{{option.text}}</span>
         </a>
       </div>
       <div class="variable-options-column" ng-if="vm.tags.length">
