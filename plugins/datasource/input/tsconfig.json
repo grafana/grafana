@@ -4,8 +4,6 @@
   "compilerOptions": {
     "rootDir": "./src",
     "baseUrl": "./src",
-    "typeRoots": ["./node_modules/@types"],
-    "noImplicitAny": false,
-    "strictNullChecks": false
+    "typeRoots": ["./node_modules/@types"]
   }
 }
