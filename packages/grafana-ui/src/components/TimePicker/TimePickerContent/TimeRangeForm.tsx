@@ -19,6 +19,8 @@ interface InputState {
   invalid: boolean;
 }
 
+const errorMessage = 'Please enter a past date or "now"';
+
 const TimePickerForm: React.FC<Props> = props => {
   const { value, showCalendarOn, timeZone } = props;
   const isFullscreen = showCalendarOn === 'FocusOnInput';
@@ -50,24 +52,20 @@ const TimePickerForm: React.FC<Props> = props => {
 
   return (
     <>
-      <Forms.Field label="From">
+      <Forms.Field label="From" invalid={from.invalid} error={errorMessage}>
         <Forms.Input
           onFocus={onFocus}
           onChange={event => setFrom(eventToState(event, false, timeZone))}
           addonAfter={icon}
           value={from.value}
-          invalid={from.invalid}
-          aria-label="TimePicker From Input"
         />
       </Forms.Field>
-      <Forms.Field label="To">
+      <Forms.Field label="To" invalid={to.invalid} error={errorMessage}>
         <Forms.Input
           onFocus={onFocus}
           onChange={event => setTo(eventToState(event, true, timeZone))}
           addonAfter={icon}
           value={to.value}
-          invalid={to.invalid}
-          aria-label="TimePicker To Input"
         />
       </Forms.Field>
       <Forms.Button onClick={onApply}>Apply time interval</Forms.Button>

@@ -38,11 +38,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       background: ${background};
       box-shadow: 0px 4px 4px ${shadow};
-      position: fixed;
+      position: absolute;
       z-index: ${theme.zIndex.modal};
       width: 546px;
       height: 381px;
-      top: 45px;
+      top: 37px;
       margin-left: -322px;
 
       @media only screen and (max-width: ${theme.breakpoints.lg}) {
