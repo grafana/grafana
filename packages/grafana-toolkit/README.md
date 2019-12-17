@@ -127,11 +127,11 @@ Currently we support following Jest configuration properties:
 - [`snapshotSerializers`](https://jest-bot.github.io/jest/docs/configuration.html#snapshotserializers-array-string)
 - [`moduleNameMapper`](https://jestjs.io/docs/en/configuration#modulenamemapper-object-string-string)
 
-### Can I add custom Webpack rules or plugins?
+### How can I customize Webpack rules or plugins?
 You can provide your own webpack configuration.
-Provide a function implementing `CustomWebpackConfigurationGetter` in a file named `webpack.plugin.config.ts`.
+Provide a function implementing `CustomWebpackConfigurationGetter` in a file named `webpack.config.ts`.
 
-You can import the correct interface and Options from `@grafana/toolkit/src/config/webpack.plugin.config`.
+You can import the correct interface and Options from `@grafana/toolkit/src/config`.
 
 Example
 

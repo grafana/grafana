@@ -58,6 +58,13 @@ describe('Plugin webpack config', () => {
       expect(config.name).toBe('customConfig');
     });
 
+    it('loads export named getWebpackConfiguration', async () => {
+      const spy = jest.spyOn(process, 'cwd');
+      spy.mockReturnValue(`${__dirname}/mocks/webpack/overridesNamedExport/`);
+      const config = await loadWebpackConfig({});
+      expect(config.name).toBe('customConfig');
+    });
+
     it('throws an error if module does not export function', async () => {
       const spy = jest.spyOn(process, 'cwd');
       spy.mockReturnValue(`${__dirname}/mocks/webpack/unsupportedOverride/`);

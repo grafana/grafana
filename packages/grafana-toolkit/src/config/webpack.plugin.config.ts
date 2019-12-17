@@ -235,15 +235,19 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async options => {
 
 export const loadWebpackConfig: WebpackConfigurationGetter = async options => {
   const baseConfig = await getBaseWebpackConfig(options);
-  const customWebpackPath = path.resolve(process.cwd(), 'webpack.plugin.config.ts');
+  const customWebpackPath = path.resolve(process.cwd(), 'webpack.config.ts');
 
   try {
     await accessPromise(customWebpackPath);
     const customConfig = require(customWebpackPath);
-    if (typeof customConfig !== 'function') {
-      throw Error('Custom webpack config needs to export a function implementing CustomWebpackConfigurationGetter ');
+    const configGetter = customConfig.getWebpackConfig || customConfig;
+    if (typeof configGetter !== 'function') {
+      throw Error(
+        'Custom webpack config needs to export a function implementing CustomWebpackConfigurationGetter. Function needs to be ' +
+          'module export or named "getWebpackConfig"'
+      );
     }
-    return (customConfig as CustomWebpackConfigurationGetter)(baseConfig, options);
+    return (configGetter as CustomWebpackConfigurationGetter)(baseConfig, options);
   } catch (err) {
     if (err.code === 'ENOENT') {
       return baseConfig;
