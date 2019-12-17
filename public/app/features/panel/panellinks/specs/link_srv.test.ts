@@ -4,7 +4,7 @@ import _ from 'lodash';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { advanceTo } from 'jest-date-mock';
-import { mockConfig } from '../../../../core/config';
+import { updateConfig } from '../../../../core/config';
 
 jest.mock('angular', () => {
   const AngularJSMock = require('test/mocks/angular');
@@ -140,21 +140,15 @@ describe('linkSrv', () => {
   });
 
   describe('sanitization', () => {
-    let restoreConfig: () => void;
-
-    afterEach(() => {
-      restoreConfig();
-    });
-
     const url = "javascript:alert('broken!);";
     it.each`
       disableSanitizeHtml | expected
       ${true}             | ${url}
-      ${false}            | ${'about:blank'}
+      ${false}            | ${''}
     `(
       "when disable disableSanitizeHtml set to '$disableSanitizeHtml' then result should be '$expected'",
       ({ disableSanitizeHtml, expected }) => {
-        restoreConfig = mockConfig({
+        updateConfig({
           disableSanitizeHtml,
         });
 

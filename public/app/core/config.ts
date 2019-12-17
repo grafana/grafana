@@ -2,17 +2,17 @@ import { config, GrafanaBootConfig } from '@grafana/runtime';
 // Legacy binding paths
 export { config, GrafanaBootConfig as Settings };
 
-let configMock: Partial<GrafanaBootConfig> | null = null;
+let grafanaConfig: GrafanaBootConfig = config;
 
-export default config;
+export default grafanaConfig;
 
 export const getConfig = () => {
-  return configMock || config;
+  return grafanaConfig;
 };
 
-export const mockConfig = (mock: Partial<GrafanaBootConfig>) => {
-  configMock = mock;
-  return () => {
-    configMock = null;
+export const updateConfig = (update: Partial<GrafanaBootConfig>) => {
+  grafanaConfig = {
+    ...grafanaConfig,
+    ...update,
   };
 };

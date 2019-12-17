@@ -1,4 +1,4 @@
-import xss from 'xss';
+import xss, { safeAttrValue } from 'xss';
 
 const XSSWL = Object.keys(xss.whiteList).reduce((acc, element) => {
   // @ts-ignore
@@ -23,6 +23,15 @@ export function sanitize(unsanitizedString: string): string {
   } catch (error) {
     console.log('String could not be sanitized', unsanitizedString);
     return unsanitizedString;
+  }
+}
+
+export function sanitizeUrl(url: string): string {
+  try {
+    return safeAttrValue('a', 'href', url, sanitizeXSS);
+  } catch (error) {
+    console.log('Url could not be sanitized', url);
+    return url;
   }
 }
 
