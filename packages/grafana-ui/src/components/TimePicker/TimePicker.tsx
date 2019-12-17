@@ -5,7 +5,7 @@ import classNames from 'classnames';
 
 // Components
 import { Tooltip } from '../Tooltip/Tooltip';
-import { TimePickerContent } from './Content';
+import TimePickerContent from './TimePickerContent/TimePickerContent';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 
 // Utils & Services
@@ -79,7 +79,7 @@ export interface Props extends Themeable {
 export interface State {
   isOpen: boolean;
 }
-class UnthemedTimePicker extends PureComponent<Props, State> {
+export class UnthemedTimePicker extends PureComponent<Props, State> {
   state: State = {
     isOpen: false,
   };
@@ -114,6 +114,7 @@ class UnthemedTimePicker extends PureComponent<Props, State> {
               placement="bottom"
             >
               <button
+                aria-label="TimePicker Open Button"
                 className="btn navbar-button navbar-button--zoom"
                 onClick={event => {
                   event.stopPropagation();

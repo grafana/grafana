@@ -4,12 +4,12 @@ import { action } from '@storybook/addon-actions';
 
 import { TimePicker } from './TimePicker';
 import { UseState } from '../../utils/storybook/UseState';
-import { withRightAlignedStory } from '../../utils/storybook/withRightAlignedStory';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { TimeFragment, dateTime } from '@grafana/data';
 
 const TimePickerStories = storiesOf('UI/TimePicker', module);
 
-TimePickerStories.addDecorator(withRightAlignedStory);
+TimePickerStories.addDecorator(withCenteredStory);
 
 TimePickerStories.add('default', () => {
   return (

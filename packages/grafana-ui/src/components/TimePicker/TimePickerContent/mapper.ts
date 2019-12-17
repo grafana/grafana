@@ -9,8 +9,9 @@ import {
   dateTimeForTimeZone,
   TIME_FORMAT,
 } from '@grafana/data';
+import { stringToDateTimeType } from '../time';
 
-export const mapToTimeRange = (option: TimeOption): TimeRange => {
+export const mapOptionToTimeRange = (option: TimeOption): TimeRange => {
   return {
     from: stringToDateTime(option.from),
     to: stringToDateTime(option.to),
@@ -21,7 +22,7 @@ export const mapToTimeRange = (option: TimeOption): TimeRange => {
   };
 };
 
-export const mapToTimeOption = (range: TimeRange): TimeOption => {
+export const mapRangeToTimeOption = (range: TimeRange): TimeOption => {
   const from = dateTimeToString(range.from);
   const to = dateTimeToString(range.to);
 
@@ -30,6 +31,20 @@ export const mapToTimeOption = (range: TimeRange): TimeOption => {
     to,
     section: 3,
     display: `${from} to ${to}`,
+  };
+};
+
+export const mapStringsToTimeRange = (from: string, to: string): TimeRange => {
+  const fromDate = stringToDateTimeType(from);
+  const toDate = stringToDateTimeType(to);
+
+  return {
+    from: fromDate,
+    to: toDate,
+    raw: {
+      from: fromDate,
+      to: toDate,
+    },
   };
 };
 

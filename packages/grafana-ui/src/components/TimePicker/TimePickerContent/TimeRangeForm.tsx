@@ -1,6 +1,7 @@
 import React, { FormEvent, useState } from 'react';
 import { TIME_FORMAT, TimeZone, isDateTime, TimeRange, DateTime } from '@grafana/data';
 import { stringToDateTimeType, isValidTimeString } from '../time';
+import { mapStringsToTimeRange } from './mapper';
 import TimePickerCalendar from './TimePickerCalendar';
 import Forms from '../../Forms';
 
@@ -12,6 +13,7 @@ interface Props {
   onApply: (range: TimeRange) => void;
   timeZone?: TimeZone;
 }
+
 interface InputState {
   value: string;
   invalid: boolean;
@@ -41,7 +43,7 @@ const TimePickerForm: React.FC<Props> = props => {
     if (to.invalid || from.invalid) {
       return;
     }
-    props.onApply(toTimeRange(from.value, to.value));
+    props.onApply(mapStringsToTimeRange(from.value, to.value));
   };
 
   const icon = isFullscreen ? null : <Forms.Button icon="fa fa-calendar" variant="secondary" onClick={onOpen} />;
@@ -55,6 +57,7 @@ const TimePickerForm: React.FC<Props> = props => {
           addonAfter={icon}
           value={from.value}
           invalid={from.invalid}
+          aria-label="TimePicker From Input"
         />
       </Forms.Field>
       <Forms.Field label="To">
@@ -64,6 +67,7 @@ const TimePickerForm: React.FC<Props> = props => {
           addonAfter={icon}
           value={to.value}
           invalid={to.invalid}
+          aria-label="TimePicker To Input"
         />
       </Forms.Field>
       <Forms.Button onClick={onApply}>Apply time interval</Forms.Button>
@@ -83,20 +87,6 @@ const TimePickerForm: React.FC<Props> = props => {
     </>
   );
 };
-
-function toTimeRange(from: string, to: string): TimeRange {
-  const fromDate = stringToDateTimeType(from);
-  const toDate = stringToDateTimeType(to);
-
-  return {
-    from: fromDate,
-    to: toDate,
-    raw: {
-      from: fromDate,
-      to: toDate,
-    },
-  };
-}
 
 function eventToState(event: FormEvent<HTMLInputElement>, roundup?: boolean, timeZone?: TimeZone): InputState {
   return valueToState(event.currentTarget.value, roundup, timeZone);

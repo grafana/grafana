@@ -4,7 +4,7 @@ import { TimeOption } from '@grafana/data';
 import { TimeRange } from '@grafana/data';
 import TimeRangeTitle from './TimePickerTitle';
 import TimeRangeOption from './TimeRangeOption';
-import { mapToTimeRange } from './mapper';
+import { mapOptionToTimeRange } from './mapper';
 import { stylesFactory } from '../../../themes';
 
 const getStyles = stylesFactory(() => {
@@ -56,7 +56,7 @@ const Options = memo<Props>(({ options, value, onSelect }) => {
           key={keyForOption(option, index)}
           value={option}
           selected={isEqual(option, value)}
-          onSelect={option => onSelect(mapToTimeRange(option))}
+          onSelect={option => onSelect(mapOptionToTimeRange(option))}
         />
       ))}
     </div>

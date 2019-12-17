@@ -170,7 +170,7 @@ interface FormProps extends Props {
   visible: boolean;
 }
 
-const TimePickerExtended: React.FC<Props> = props => {
+const TimePickerContent: React.FC<Props> = props => {
   const theme = useTheme();
   const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.lg})`);
   const styles = getStyles(theme);
@@ -295,4 +295,4 @@ const EmptyRecentList = memo(() => {
   );
 });
 
-export default TimePickerExtended;
+export default TimePickerContent;
