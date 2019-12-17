@@ -408,6 +408,8 @@ export class DashboardModel {
     // insert after source panel + value index
     this.panels.splice(sourcePanelIndex + valueIndex, 0, clone);
 
+    // alert should not be repeat
+    delete clone.alert;
     clone.repeatIteration = this.iteration;
     clone.repeatPanelId = sourcePanel.id;
     clone.repeat = null;
