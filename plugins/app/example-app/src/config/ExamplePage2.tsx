@@ -3,8 +3,9 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { PluginConfigPageProps, AppPlugin } from '@grafana/data';
+import { ExampleAppSettings } from 'types';
 
-interface Props extends PluginConfigPageProps<AppPlugin> {}
+interface Props extends PluginConfigPageProps<AppPlugin<ExampleAppSettings>> {}
 
 export class ExamplePage2 extends PureComponent<Props> {
   constructor(props: Props) {

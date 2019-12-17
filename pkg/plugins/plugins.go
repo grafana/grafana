@@ -72,6 +72,14 @@ func (pm *PluginManager) Init() error {
 		return errutil.Wrapf(err, "Failed to scan main plugin directory '%s'", plugDir)
 	}
 
+	pm.log.Info("Checking managed plugins")
+	plugDir = path.Join(setting.HomePath, "plugins-managed")
+	if _, err := os.Stat(plugDir); !os.IsNotExist(err) {
+		if err := pm.scan(plugDir); err != nil {
+			return errutil.Wrapf(err, "Failed to scan managed plugin directory '%s'", plugDir)
+		}
+	}
+
 	// check if plugins dir exists
 	if _, err := os.Stat(setting.PluginsPath); os.IsNotExist(err) {
 		if err = os.MkdirAll(setting.PluginsPath, os.ModePerm); err != nil {

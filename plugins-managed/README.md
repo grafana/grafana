@@ -7,5 +7,5 @@ Any changes to this folder will be overwritten at the next install
 For now manual:
 ```
 ln -s ../plugins/app/example-app/dist/ example-app
-ln -s ../plugins/datasource/input/dist/ input-datasourc
+ln -s ../plugins/datasource/input/dist/ input-datasource
 ```
