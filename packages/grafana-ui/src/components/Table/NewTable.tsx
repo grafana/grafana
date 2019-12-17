@@ -10,7 +10,7 @@ export interface Props {
   data: DataFrame;
   width: number;
   height: number;
-  onCellClick?: any;
+  onCellClick?: (key: string, value: string) => void;
 }
 
 const getTableData = (data: DataFrame) => {
