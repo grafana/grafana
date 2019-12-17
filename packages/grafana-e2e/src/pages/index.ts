@@ -14,7 +14,7 @@ import { Graph } from './graph';
 import { SaveDashboardModal } from './saveDashboardModal';
 import { Panel } from './panel';
 import { SharePanelModal } from './sharePanelModal';
-import { QueryVariable, VariableGeneral, Variables, VariablesSubMenu } from './variables';
+import { ConstantVariable, QueryVariable, VariableGeneral, Variables, VariablesSubMenu } from './variables';
 
 export const Pages = {
   Login,
@@ -34,6 +34,7 @@ export const Pages = {
         Edit: {
           General: VariableGeneral,
           QueryVariable: QueryVariable,
+          ConstantVariable: ConstantVariable,
         },
       },
     },

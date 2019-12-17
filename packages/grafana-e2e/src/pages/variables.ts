@@ -60,3 +60,10 @@ export const QueryVariable = pageFactory({
     valueGroupsTagsTagsValuesQueryInput: 'Variable editor Form Query TagsValuesQuery field',
   },
 });
+
+export const ConstantVariable = pageFactory({
+  url: '',
+  selectors: {
+    constantOptionsQueryInput: 'Variable editor Form Constant Query field',
+  },
+});

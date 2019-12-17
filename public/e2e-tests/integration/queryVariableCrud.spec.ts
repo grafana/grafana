@@ -66,6 +66,7 @@ interface CreateQueryVariableArguments extends QueryVariableData {
 
 const createQueryVariable = ({ name, label, dataSourceName, query }: CreateQueryVariableArguments) => {
   logSection('Creating a Query Variable with', { name, label, dataSourceName, query });
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().should('be.visible');
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().type(name);
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput().type(label);
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
@@ -146,6 +147,13 @@ const assertVariableLabelsAndComponents = (args: QueryVariableData[]) => {
   logSection('Asserting variable components and labels');
   e2e.pages.Dashboard.SubMenu.submenuItem().should('have.length', args.length);
   for (let index = 0; index < args.length; index++) {
+    e2e.pages.Dashboard.SubMenu.submenuItem()
+      .eq(index)
+      .within(() => {
+        e2e()
+          .get('label')
+          .contains(args[index].name);
+      });
     assertVariableLabelAndComponent(args[index]);
   }
   logSection('Asserting variable components and labels, Ok');
@@ -238,6 +246,178 @@ const assertDuplicateItem = (queryVariables: QueryVariableData[]) => {
   }
 
   logSection('Asserting variable duplicate, OK!');
+  return [...queryVariables, newItem];
+};
+
+const assertDeleteItem = (queryVariables: QueryVariableData[]) => {
+  logSection('Asserting variable delete');
+
+  const itemToDelete = queryVariables[1];
+  e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
+  e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
+
+  e2e.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(itemToDelete.name).click();
+  e2e.pages.Dashboard.Settings.Variables.List.table()
+    .should('be.visible')
+    .within(() => {
+      e2e()
+        .get('tbody > tr')
+        .should('have.length', queryVariables.length - 1);
+    });
+
+  e2e.pages.Dashboard.Settings.General.saveDashBoard().click();
+  e2e.pages.SaveDashboardModal.save().click();
+  e2e.flows.assertSuccessNotification();
+
+  e2e.pages.Dashboard.Toolbar.backArrow().click();
+
+  e2e.pages.Dashboard.SubMenu.submenuItemLabels(itemToDelete.label).should('not.exist');
+
+  logSection('Asserting variable delete, OK!');
+
+  return queryVariables.filter(item => item.name !== itemToDelete.name);
+};
+
+const assertUpdateItem = (queryVariables: QueryVariableData[]) => {
+  logSection('Asserting variable update');
+  // updates an item to a constant variable instead
+  const itemToUpdate = queryVariables[1];
+  const updatedItem = {
+    ...itemToUpdate,
+    name: `update_of_${itemToUpdate.name}`,
+    label: `update_of_${itemToUpdate.label}`,
+    query: 'A constant',
+    options: ['A constant'],
+    selectedOption: 'undefined',
+  };
+  queryVariables[1] = updatedItem;
+
+  e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
+  e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
+  e2e.pages.Dashboard.Settings.Variables.List.tableRowNameFields(itemToUpdate.name).click();
+
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().should('be.visible');
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput()
+    .should('have.value', itemToUpdate.name)
+    .clear()
+    .type(updatedItem.name);
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput()
+    .should('have.value', itemToUpdate.label)
+    .clear()
+    .type(updatedItem.label);
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelect().select('Constant');
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect().within(select => {
+    e2e()
+      .get('option:selected')
+      .should('have.text', 'Variable');
+  });
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect().select('');
+  e2e.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.constantOptionsQueryInput().type(updatedItem.query);
+
+  e2e.pages.Dashboard.Toolbar.backArrow().click();
+
+  assertVariableLabelAndComponent(queryVariables[1]);
+
+  e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
+  e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
+
+  assertVariableTableRow(queryVariables[1]);
+
+  logSection('Asserting variable update, OK!');
+  return queryVariables;
+};
+
+const assertMoveDownItem = (data: QueryVariableData[]) => {
+  logSection('Asserting variable move down');
+  const queryVariables = [...data];
+  e2e.pages.Dashboard.Settings.Variables.List.tableRowArrowDownButtons(queryVariables[0].name).click();
+  const temp = { ...queryVariables[0] };
+  queryVariables[0] = { ...queryVariables[1] };
+  queryVariables[1] = temp;
+  e2e.pages.Dashboard.Settings.Variables.List.table().within(() => {
+    e2e()
+      .get('tbody > tr')
+      .eq(0)
+      .within(() => {
+        e2e()
+          .get('td')
+          .eq(0)
+          .contains(queryVariables[0].name);
+        e2e()
+          .get('td')
+          .eq(1)
+          .contains(queryVariables[0].query);
+      });
+    e2e()
+      .get('tbody > tr')
+      .eq(1)
+      .within(() => {
+        e2e()
+          .get('td')
+          .eq(0)
+          .contains(queryVariables[1].name);
+        e2e()
+          .get('td')
+          .eq(1)
+          .contains(queryVariables[1].query);
+      });
+  });
+
+  e2e.pages.Dashboard.Toolbar.backArrow().click();
+
+  assertVariableLabelsAndComponents(queryVariables);
+
+  logSection('Asserting variable move down, OK!');
+
+  return queryVariables;
+};
+
+const assertMoveUpItem = (data: QueryVariableData[]) => {
+  logSection('Asserting variable move up');
+  const queryVariables = [...data];
+  e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
+  e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
+
+  e2e.pages.Dashboard.Settings.Variables.List.tableRowArrowUpButtons(queryVariables[1].name).click();
+  const temp = { ...queryVariables[0] };
+  queryVariables[0] = { ...queryVariables[1] };
+  queryVariables[1] = temp;
+  e2e.pages.Dashboard.Settings.Variables.List.table().within(() => {
+    e2e()
+      .get('tbody > tr')
+      .eq(0)
+      .within(() => {
+        e2e()
+          .get('td')
+          .eq(0)
+          .contains(queryVariables[0].name);
+        e2e()
+          .get('td')
+          .eq(1)
+          .contains(queryVariables[0].query);
+      });
+    e2e()
+      .get('tbody > tr')
+      .eq(1)
+      .within(() => {
+        e2e()
+          .get('td')
+          .eq(0)
+          .contains(queryVariables[1].name);
+        e2e()
+          .get('td')
+          .eq(1)
+          .contains(queryVariables[1].query);
+      });
+  });
+
+  e2e.pages.Dashboard.Toolbar.backArrow().click();
+
+  assertVariableLabelsAndComponents(queryVariables);
+
+  logSection('Asserting variable move up, OK!');
+
+  return queryVariables;
 };
 
 e2e.scenario({
@@ -258,8 +438,14 @@ e2e.scenario({
     e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
     e2e.pages.Dashboard.Settings.Variables.List.addVariableCTA().click();
 
-    const queryVariables: QueryVariableData[] = [
-      { name: 'query1', query: '*', label: 'query1-label', options: ['All', 'A', 'B', 'C'], selectedOption: 'A' },
+    let queryVariables: QueryVariableData[] = [
+      {
+        name: 'query1',
+        query: '*',
+        label: 'query1-label',
+        options: ['All', 'A', 'B', 'C'],
+        selectedOption: 'A',
+      },
       {
         name: 'query2',
         query: '$query1.*',
@@ -279,15 +465,20 @@ e2e.scenario({
     assertAdding3dependantQueryVariablesScenario(queryVariables);
 
     // assert that duplicate works
-    assertDuplicateItem(queryVariables);
+    queryVariables = assertDuplicateItem(queryVariables);
 
-    logSection('Asserting variable duplicate, OK!');
     // assert that delete works
+    queryVariables = assertDeleteItem(queryVariables);
 
     // assert that update works
+    queryVariables = assertUpdateItem(queryVariables);
 
     // assert that move down works
+    queryVariables = assertMoveDownItem(queryVariables);
 
     // assert that move up works
+    queryVariables = assertMoveUpItem(queryVariables);
+
+    // assert select updates
   },
 });

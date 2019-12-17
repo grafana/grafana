@@ -63,6 +63,7 @@ export class VariableEditorCtrl {
       ...e2e.pages.Dashboard.Settings.Variables.List.selectors,
       ...e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors,
       ...e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.selectors,
+      ...e2e.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.selectors,
     };
 
     $scope.init = () => {

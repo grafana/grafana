@@ -5,7 +5,7 @@ e2e.scenario({
   itName: 'Login scenario, create test data source, dashboard, panel, and export scenario',
   addScenarioDataSource: true,
   addScenarioDashBoard: true,
-  skipScenario: false,
+  skipScenario: true,
   scenario: () => {
     e2e.flows.openDashboard(e2e.context().get('lastAddedDashboardUid'));
     e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
