@@ -23,7 +23,8 @@ describe('Plugin webpack config', () => {
     it('finds module.ts and module.tsx files', () => {
       const moduleFiles = findModuleFiles('/', modulePathsMock);
       expect(moduleFiles.length).toBe(2);
-      expect(moduleFiles).toEqual(['/some/path/module.ts', '/some/path/module.tsx']);
+      // normalize windows path - \\ -> /
+      expect(moduleFiles.map(p => p.replace(/\\/g, '/'))).toEqual(['/some/path/module.ts', '/some/path/module.tsx']);
     });
   });
 });
