@@ -1,4 +1,4 @@
-import React, { FormEvent, useState } from 'react';
+import React, { FormEvent, useState, useCallback } from 'react';
 import { TIME_FORMAT, TimeZone, isDateTime, TimeRange, DateTime } from '@grafana/data';
 import { stringToDateTimeType, isValidTimeString } from '../time';
 import { mapStringsToTimeRange } from './mapper';
@@ -30,24 +30,38 @@ const TimePickerForm: React.FC<Props> = props => {
   const [to, setTo] = useState<InputState>(valueToState(value.raw.to, true, timeZone));
   const [isOpen, setOpen] = useState(false);
 
-  const onOpen = (event: FormEvent<HTMLElement>) => {
-    event.preventDefault();
-    setOpen(true);
-  };
+  const onOpen = useCallback(
+    (event: FormEvent<HTMLElement>) => {
+      event.preventDefault();
+      setOpen(true);
+    },
+    [props]
+  );
 
-  const onFocus = (event: FormEvent<HTMLElement>) => {
-    if (!isFullscreen) {
-      return;
-    }
-    onOpen(event);
-  };
+  const onFocus = useCallback(
+    (event: FormEvent<HTMLElement>) => {
+      if (!isFullscreen) {
+        return;
+      }
+      onOpen(event);
+    },
+    [props]
+  );
 
-  const onApply = () => {
+  const onApply = useCallback(() => {
     if (to.invalid || from.invalid) {
       return;
     }
     props.onApply(mapStringsToTimeRange(from.value, to.value, roundup, timeZone));
-  };
+  }, [props]);
+
+  const onChange = useCallback(
+    (from: string, to: string) => {
+      setFrom(valueToState(from, false, timeZone));
+      setTo(valueToState(to, true, timeZone));
+    },
+    [props]
+  );
 
   const icon = isFullscreen ? null : <Forms.Button icon="fa fa-calendar" variant="secondary" onClick={onOpen} />;
 
@@ -78,10 +92,7 @@ const TimePickerForm: React.FC<Props> = props => {
         to={to.value}
         onApply={onApply}
         onClose={() => setOpen(false)}
-        onChange={(from, to) => {
-          setFrom(valueToState(from, false, timeZone));
-          setTo(valueToState(to, true, timeZone));
-        }}
+        onChange={onChange}
       />
     </>
   );
