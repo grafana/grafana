@@ -190,13 +190,11 @@ export class UnthemedTimePicker extends PureComponent<Props, State> {
   }
 }
 
-const ZoomOutTooltip = () => {
-  return (
-    <>
-      Time range zoom out <br /> CTRL+Z
-    </>
-  );
-};
+const ZoomOutTooltip = () => (
+  <>
+    Time range zoom out <br /> CTRL+Z
+  </>
+);
 
 const TimePickerTooltip = ({ timeRange }: { timeRange: TimeRange }) => (
   <>
