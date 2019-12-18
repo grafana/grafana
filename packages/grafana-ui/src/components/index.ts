@@ -46,7 +46,7 @@ export { QueryField } from './QueryField/QueryField';
 // Renderless
 export { SetInterval } from './SetInterval/SetInterval';
 
-export { Table } from './Table/Table';
+export { NewTable as Table } from './Table/NewTable';
 export { TableInputCSV } from './Table/TableInputCSV';
 
 // Visualizations
