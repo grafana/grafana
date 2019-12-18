@@ -4,6 +4,7 @@ import { stringToDateTimeType, isValidTimeString } from '../time';
 import { mapStringsToTimeRange } from './mapper';
 import { TimePickerCalendar } from './TimePickerCalendar';
 import Forms from '../../Forms';
+import { isMathString } from '@grafana/data/src/datetime/datemath';
 
 type ShowCalendarOn = 'ClickOnInputButton' | 'FocusOnInput';
 
@@ -116,7 +117,7 @@ function valueAsString(value: DateTime | string): string {
 }
 
 function isValid(value: string, roundup?: boolean, timeZone?: TimeZone): boolean {
-  if (value.indexOf('now') !== -1) {
+  if (isMathString(value)) {
     return isValidTimeString(value);
   }
 
