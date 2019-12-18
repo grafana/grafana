@@ -778,10 +778,10 @@ Default value is `1`.
 
 This is the sampler configuration parameter. Depending on the value of `sampler_type`, it can be `0`, `1`, or a decimal value in between.
 
-- for `const` sampler, `0` or `1` for always `false`/`true` respectively
-- for `probabilistic` sampler, a probability between `0` and `1.0`
-- for `rateLimiting` sampler, the number of spans per second
-- for `remote` sampler, param is the same as for `probabilistic`
+- For `const` sampler, `0` or `1` for always `false`/`true` respectively
+- For `probabilistic` sampler, a probability between `0` and `1.0`
+- For `rateLimiting` sampler, the number of spans per second
+- For `remote` sampler, param is the same as for `probabilistic`
   and indicates the initial sampling rate before the actual one
   is received from the mothership
 
@@ -791,7 +791,7 @@ May be set with the environment variable `JAEGER_SAMPLER_PARAM`.
 
 Default value is `false`.
 
-Whether or not to use Zipkin span propagation (`x-b3-` HTTP headers).
+Controls whether or not to use Zipkin's span propagation format (with `x-b3-` HTTP headers). By default, Jaeger's format is used.
 
 Can be set with the environment variable and value `JAEGER_PROPAGATION=b3`.
 
