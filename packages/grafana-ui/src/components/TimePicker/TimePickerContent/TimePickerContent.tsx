@@ -1,44 +1,23 @@
 import React, { useState, memo } from 'react';
 import { useMedia } from 'react-use';
 import { css } from 'emotion';
-import { useTheme, stylesFactory, selectThemeVariant } from '../../../themes';
+import { useTheme, stylesFactory } from '../../../themes';
 import { GrafanaTheme, TimeOption, TimeRange, TimeZone, isDateTime } from '@grafana/data';
 import TimeRangeTitle from './TimePickerTitle';
 import TimeRangeForm from './TimeRangeForm';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import TimeRangeList from './TimeRangeList';
 import { mapRangeToTimeOption } from './mapper';
+import { getThemeColors } from './colors';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const shadow = selectThemeVariant(
-    {
-      light: theme.colors.gray85,
-      dark: theme.colors.black,
-    },
-    theme.type
-  );
-
-  const background = selectThemeVariant(
-    {
-      dark: theme.colors.gray15,
-      light: theme.background.dropdown,
-    },
-    theme.type
-  );
-
-  const border = selectThemeVariant(
-    {
-      light: theme.colors.gray4,
-      dark: theme.colors.gray25,
-    },
-    theme.type
-  );
+  const colors = getThemeColors(theme);
 
   return {
     container: css`
       display: flex;
-      background: ${background};
-      box-shadow: 0px 4px 4px ${shadow};
+      background: ${colors.background};
+      box-shadow: 0px 4px 4px ${colors.shadow};
       position: absolute;
       z-index: ${theme.zIndex.modal};
       width: 546px;
@@ -54,7 +33,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     leftSide: css`
       display: flex;
       flex-direction: column;
-      border-right: 1px solid ${border};
+      border-right: 1px solid ${colors.border};
       width: 60%;
 
       @media only screen and (max-width: ${theme.breakpoints.lg}) {
@@ -72,29 +51,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 const getNarrowScreenStyles = stylesFactory((theme: GrafanaTheme) => {
-  const background = selectThemeVariant(
-    {
-      light: theme.colors.gray98,
-      dark: theme.colors.gray10,
-    },
-    theme.type
-  );
-
-  const border = selectThemeVariant(
-    {
-      light: theme.colors.gray4,
-      dark: theme.colors.gray25,
-    },
-    theme.type
-  );
-
-  const shadow = selectThemeVariant(
-    {
-      light: 'rgba(199, 208, 217, 0.5)',
-      dark: theme.colors.black,
-    },
-    theme.type
-  );
+  const colors = getThemeColors(theme);
 
   return {
     header: css`
@@ -102,13 +59,13 @@ const getNarrowScreenStyles = stylesFactory((theme: GrafanaTheme) => {
       flex-direction: row;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid ${border};
+      border-bottom: 1px solid ${colors.border};
       padding: 7px 9px 7px 9px;
     `,
     body: css`
-      border-bottom: 1px solid ${border};
-      background: ${background};
-      box-shadow: inset 0px 2px 2px ${shadow};
+      border-bottom: 1px solid ${colors.border};
+      background: ${colors.background};
+      box-shadow: inset 0px 2px 2px ${colors.shadow};
     `,
     form: css`
       padding: 7px 9px 7px 9px;
@@ -127,6 +84,7 @@ const getFullScreenStyles = stylesFactory((theme: GrafanaTheme) => {
       margin-bottom: 11px;
     `,
     recent: css`
+      padding-top: 7px;
       flex-grow: 1;
       display: flex;
       flex-direction: column;
@@ -136,17 +94,11 @@ const getFullScreenStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 const getEmptyListStyles = stylesFactory((theme: GrafanaTheme) => {
-  const background = selectThemeVariant(
-    {
-      light: theme.colors.gray98,
-      dark: theme.colors.gray10,
-    },
-    theme.type
-  );
+  const colors = getThemeColors(theme);
 
   return {
     container: css`
-      background-color: ${background};
+      background-color: ${colors.background};
       padding: 12px;
       margin: 12px;
     `,
@@ -188,13 +140,13 @@ const TimePickerContent: React.FC<Props> = props => {
       <CustomScrollbar className={styles.rightSide}>
         <NarrowScreenForm {...props} visible={!isFullscreen} historyOptions={historyOptions} />
         <TimeRangeList
-          title="Relative time range from now"
+          title="Relative time ranges"
           options={quickOptions}
           onSelect={props.onChange}
           value={props.value}
         />
         <TimeRangeList
-          title="Other relative range"
+          title="Other quick ranges"
           options={otherOptions}
           onSelect={props.onChange}
           value={props.value}

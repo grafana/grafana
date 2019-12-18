@@ -12,6 +12,7 @@ interface Props {
   value: TimeRange;
   onApply: (range: TimeRange) => void;
   timeZone?: TimeZone;
+  roundup?: boolean;
 }
 
 interface InputState {
@@ -22,11 +23,11 @@ interface InputState {
 const errorMessage = 'Please enter a past date or "now"';
 
 const TimePickerForm: React.FC<Props> = props => {
-  const { value, showCalendarOn, timeZone } = props;
+  const { value, showCalendarOn, timeZone, roundup } = props;
   const isFullscreen = showCalendarOn === 'FocusOnInput';
 
-  const [from, setFrom] = useState<InputState>(valueToState(value.to, false, timeZone));
-  const [to, setTo] = useState<InputState>(valueToState(value.from, true, timeZone));
+  const [from, setFrom] = useState<InputState>(valueToState(value.raw.from, false, timeZone));
+  const [to, setTo] = useState<InputState>(valueToState(value.raw.to, true, timeZone));
   const [isOpen, setOpen] = useState(false);
 
   const onOpen = (event: FormEvent<HTMLElement>) => {
@@ -45,7 +46,7 @@ const TimePickerForm: React.FC<Props> = props => {
     if (to.invalid || from.invalid) {
       return;
     }
-    props.onApply(mapStringsToTimeRange(from.value, to.value));
+    props.onApply(mapStringsToTimeRange(from.value, to.value, roundup, timeZone));
   };
 
   const icon = isFullscreen ? null : <Forms.Button icon="fa fa-calendar" variant="secondary" onClick={onOpen} />;
@@ -68,7 +69,7 @@ const TimePickerForm: React.FC<Props> = props => {
           value={to.value}
         />
       </Forms.Field>
-      <Forms.Button onClick={onApply}>Apply time interval</Forms.Button>
+      <Forms.Button onClick={onApply}>Apply time range</Forms.Button>
 
       <TimePickerCalendar
         isFullscreen={isFullscreen}

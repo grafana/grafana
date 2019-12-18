@@ -6,7 +6,7 @@ import { useTheme, stylesFactory } from '../../../themes';
 const getStyle = stylesFactory((theme: GrafanaTheme) => {
   return {
     text: css`
-      font-size: ${theme.typography.size.sm};
+      font-size: ${theme.typography.size.md};
       font-weight: ${theme.typography.weight.semibold};
       color: ${theme.colors.formLabel};
     `,

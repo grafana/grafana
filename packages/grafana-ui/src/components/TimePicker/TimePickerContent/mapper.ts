@@ -26,6 +26,8 @@ export const mapRangeToTimeOption = (range: TimeRange): TimeOption => {
   const from = dateTimeToString(range.from);
   const to = dateTimeToString(range.to);
 
+  // TODO: Add formatting here
+
   return {
     from,
     to,
@@ -34,9 +36,20 @@ export const mapRangeToTimeOption = (range: TimeRange): TimeOption => {
   };
 };
 
-export const mapStringsToTimeRange = (from: string, to: string): TimeRange => {
-  const fromDate = stringToDateTimeType(from);
-  const toDate = stringToDateTimeType(to);
+export const mapStringsToTimeRange = (from: string, to: string, roundup?: boolean, timeZone?: TimeZone): TimeRange => {
+  const fromDate = stringToDateTimeType(from, roundup, timeZone);
+  const toDate = stringToDateTimeType(to, roundup, timeZone);
+
+  if (from.indexOf('now') !== -1 || to.indexOf('now') !== 1) {
+    return {
+      from: fromDate,
+      to: toDate,
+      raw: {
+        from,
+        to,
+      },
+    };
+  }
 
   return {
     from: fromDate,

@@ -3,54 +3,33 @@ import { css, cx } from 'emotion';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import { GrafanaTheme, dateTime, TIME_FORMAT } from '@grafana/data';
 import { stringToDateTimeType } from '../time';
-import { useTheme, stylesFactory, selectThemeVariant } from '../../../themes';
+import { useTheme, stylesFactory } from '../../../themes';
 import TimePickerTitle from './TimePickerTitle';
 import Forms from '../../Forms';
 import { Portal } from '../../Portal/Portal';
+import { getThemeColors } from './colors';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const border = selectThemeVariant(
-    {
-      light: theme.colors.gray4,
-      dark: theme.colors.gray25,
-    },
-    theme.type
-  );
-
-  const background = selectThemeVariant(
-    {
-      dark: theme.colors.gray15,
-      light: theme.background.dropdown,
-    },
-    theme.type
-  );
-
-  const shadow = selectThemeVariant(
-    {
-      light: theme.colors.gray85,
-      dark: theme.colors.black,
-    },
-    theme.type
-  );
+  const colors = getThemeColors(theme);
 
   return {
     container: css`
       top: 0;
       position: absolute;
       right: 546px;
-      box-shadow: 0px 4px 4px ${shadow};
-      background-color: ${background};
+      box-shadow: 0px 4px 4px ${colors.shadow};
+      background-color: ${colors.background};
 
       &:after {
         display: block;
-        background-color: ${background};
+        background-color: ${colors.background};
         width: 4px;
         height: 201px;
         content: ' ';
         position: absolute;
         top: 0;
         right: -3px;
-        border-left: 1px solid ${border};
+        border-left: 1px solid ${colors.border};
       }
     `,
     modal: css`
@@ -78,17 +57,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 const getFooterStyles = stylesFactory((theme: GrafanaTheme) => {
-  const background = selectThemeVariant(
-    {
-      dark: theme.colors.gray15,
-      light: theme.background.dropdown,
-    },
-    theme.type
-  );
+  const colors = getThemeColors(theme);
 
   return {
     container: css`
-      background-color: ${background};
+      background-color: ${colors.background};
       display: flex;
       justify-content: center;
       padding: 10px;
@@ -103,18 +76,12 @@ const getFooterStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
-  const background = selectThemeVariant(
-    {
-      dark: theme.colors.gray15,
-      light: theme.background.dropdown,
-    },
-    theme.type
-  );
+  const colors = getThemeColors(theme);
 
   return {
     title: css`
       color: ${theme.colors.text}
-      background-color: ${background};
+      background-color: ${colors.background};
       line-height: 21px;
       font-size: ${theme.typography.size.md};
       border: 1px solid transparent;
@@ -124,7 +91,7 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     body: css`
-      background-color: ${background};
+      background-color: ${colors.background};
       width: 268px;
 
       .react-calendar__navigation__label,
@@ -204,17 +171,11 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 const getHeaderStyles = stylesFactory((theme: GrafanaTheme) => {
-  const background = selectThemeVariant(
-    {
-      dark: theme.colors.gray15,
-      light: theme.background.dropdown,
-    },
-    theme.type
-  );
+  const colors = getThemeColors(theme);
 
   return {
     container: css`
-      background-color: ${background};
+      background-color: ${colors.background};
       display: flex;
       justify-content: space-between;
       padding: 7px;
@@ -236,7 +197,7 @@ interface Props {
   isFullscreen: boolean;
 }
 
-const TimePickerCalendar: React.FC<Props> = props => {
+const TimePickerCalendar = memo<Props>(props => {
   const theme = useTheme();
   const styles = getStyles(theme);
   const { isOpen, isFullscreen } = props;
@@ -265,7 +226,7 @@ const TimePickerCalendar: React.FC<Props> = props => {
       <div className={styles.backdrop} onClick={event => event.stopPropagation()} />
     </Portal>
   );
-};
+});
 
 const Header = memo<Props>(({ onClose }) => {
   const theme = useTheme();
@@ -335,4 +296,4 @@ function valueToInput(value: Date | Date[], onChange: (from: string, to: string)
   return onChange(fromAsString, toAsString);
 }
 
-export default memo(TimePickerCalendar);
+export default TimePickerCalendar;
