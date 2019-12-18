@@ -236,7 +236,7 @@ $navbarBorder: 1px solid $gray-5;
 $navbarButtonBackground: #FFFFFF;
 $navbarButtonBackgroundHighlight: #FFFFFF;
 
-$navbar-button-border: #586987;
+$navbar-button-border: #dfdfdf;
 
 // Sidemenu
 // -------------------------
@@ -284,13 +284,13 @@ $popover-error-bg: $btn-danger-bg;
 
 // Tooltips and popovers
 // -------------------------
-$tooltipColor: #031B4E;
+$tooltipColor: #333;
 $tooltipArrowWidth: 5px;
 $tooltipLinkColor: lighten($popover-help-color, 5%);
 $graph-tooltip-bg: $white;
 
 $tooltipBackground: $white;
-$tooltipColor: #031B4E;
+$tooltipColor: #333;
 $tooltipArrowColor: $tooltipBackground; // Used by Angular tooltip
 $tooltipBackgroundError: $brand-danger;
 

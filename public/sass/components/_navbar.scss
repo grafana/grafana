@@ -130,17 +130,19 @@ i.navbar-page-btn__search {
 
 .navbar-button {
   background: #ffffff;
-  mix-blend-mode: normal;
   box-sizing: border-box;
   border-radius: 3px;
 
   display: flex;
   align-items: center;
-  font-weight: $btn-font-weight;
+  font-family: 'proxima-nova', 'proxima nova', 'helvetica neue', 'helvetica', 'arial', 'sans-serif';
+  font-weight: 400;
+  font-style: normal;
+  font-size: 16px;
   padding: 6px $space-sm;
-  line-height: 150%;
-  color: #031b4e;
-  border: 1px solid $navbar-button-border;
+  line-height: 1.5;
+  color: #333;
+  border: 1px solid #dfdfdf;
   margin-left: $space-xs;
   white-space: nowrap;
 

@@ -102,7 +102,6 @@ $select-input-bg-disabled: $input-bg-disabled;
   &.gf-form-select-box__option--is-focused {
     color: $dropdownLinkColorHover;
     background: $menu-dropdown-hover-bg;
-    @include left-brand-border-gradient();
   }
 
   &.gf-form-select-box__option--is-selected {
