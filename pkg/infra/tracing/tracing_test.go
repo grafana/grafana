@@ -1,6 +1,8 @@
 package tracing
 
 import (
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
 )
@@ -31,63 +33,62 @@ func TestGroupSplit(t *testing.T) {
 		tags := splitTagSettings(test.input)
 		for k, v := range test.expected {
 			value, exists := tags[k]
-			if !exists || value != v {
-				t.Errorf("tags does not match %v ", test)
-			}
+			assert.Truef(t, exists, "Tag %q not found for input %q", k, test.input)
+			assert.Equalf(t, v, value, "Tag %q has wrong value for input %q", k, test.input)
 		}
 	}
 }
 
-func TestInitJaegerCfg(t *testing.T) {
+func TestInitJaegerCfg_Default(t *testing.T) {
 	ts := &TracingService{}
 	cfg, err := ts.initJaegerCfg()
-	if err != nil {
-		t.Error(err)
-	}
-	if !cfg.Disabled {
-		t.Errorf("jaeger should be disabled by default")
-	}
+	require.NoError(t, err)
 
-	ts = &TracingService{enabled: true}
-	cfg, err = ts.initJaegerCfg()
-	if err != nil {
-		t.Error(err)
-	}
+	assert.True(t, cfg.Disabled)
+}
 
-	if cfg.Disabled {
-		t.Errorf("jaeger should have been enabled")
-	}
-	if cfg.Reporter.LocalAgentHostPort != "localhost:6831" {
-		t.Errorf("jaeger address should be set to default: %s", cfg.Reporter.LocalAgentHostPort)
-	}
+func TestInitJaegerCfg_Enabled(t *testing.T) {
+	ts := &TracingService{enabled: true}
+	cfg, err := ts.initJaegerCfg()
+	require.NoError(t, err)
 
+	assert.False(t, cfg.Disabled)
+	assert.Equal(t, "localhost:6831", cfg.Reporter.LocalAgentHostPort)
+}
+
+func TestInitJaegerCfg_DisabledViaEnv(t *testing.T) {
 	os.Setenv("JAEGER_DISABLED", "true")
-	ts = &TracingService{enabled: true}
-	cfg, err = ts.initJaegerCfg()
-	os.Unsetenv("JAEGER_DISABLED")
-	if err != nil {
-		t.Error(err)
-	}
-	if !cfg.Disabled {
-		t.Errorf("JAEGER_DISABLED env var should take precedence")
-	}
+	defer func() {
+		os.Unsetenv("JAEGER_DISABLED")
+	}()
 
+	ts := &TracingService{enabled: true}
+	cfg, err := ts.initJaegerCfg()
+	require.NoError(t, err)
+
+	assert.True(t, cfg.Disabled)
+}
+
+func TestInitJaegerCfg_EnabledViaEnv(t *testing.T) {
 	os.Setenv("JAEGER_DISABLED", "false")
-	ts = &TracingService{}
-	cfg, err = ts.initJaegerCfg()
-	os.Unsetenv("JAEGER_DISABLED")
-	if err != nil {
-		t.Error(err)
-	}
-	if cfg.Disabled {
-		t.Errorf("JAEGER_DISABLED env var should take precedence")
-	}
+	defer func() {
+		os.Unsetenv("JAEGER_DISABLED")
+	}()
 
+	ts := &TracingService{enabled: false}
+	cfg, err := ts.initJaegerCfg()
+	require.NoError(t, err)
+
+	assert.False(t, cfg.Disabled)
+}
+
+func TestInitJaegerCfg_InvalidEnvVar(t *testing.T) {
 	os.Setenv("JAEGER_DISABLED", "totallybogus")
-	ts = &TracingService{}
-	cfg, err = ts.initJaegerCfg()
-	os.Unsetenv("JAEGER_DISABLED")
-	if err == nil {
-		t.Errorf("invalid boolean should return error")
-	}
+	defer func() {
+		os.Unsetenv("JAEGER_DISABLED")
+	}()
+
+	ts := &TracingService{}
+	_, err := ts.initJaegerCfg()
+	require.EqualError(t, err, "cannot parse env var JAEGER_DISABLED=totallybogus: strconv.ParseBool: parsing \"totallybogus\": invalid syntax")
 }
