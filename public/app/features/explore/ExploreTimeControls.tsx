@@ -8,9 +8,8 @@ import { TimeRange, TimeZone, RawTimeRange, dateTimeForTimeZone } from '@grafana
 // State
 
 // Components
-import { TimePicker } from '@grafana/ui';
 import { TimeSyncButton } from './TimeSyncButton';
-import { TimePickerHistory } from 'app/core/components/LocalStorageWrapper';
+import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 
 // Utils & Services
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
@@ -69,21 +68,12 @@ export class ExploreTimeControls extends Component<Props> {
     };
 
     return (
-      <TimePickerHistory>
-        {(history, onSaveToHistory) => {
-          return (
-            <TimePicker
-              {...timePickerCommonProps}
-              timeSyncButton={timeSyncButton}
-              isSynced={syncedTimes}
-              onChange={value => {
-                this.onChangeTimePicker(value), onSaveToHistory(value);
-              }}
-              history={history}
-            />
-          );
-        }}
-      </TimePickerHistory>
+      <TimePickerWithHistory
+        {...timePickerCommonProps}
+        timeSyncButton={timeSyncButton}
+        isSynced={syncedTimes}
+        onChange={this.onChangeTimePicker}
+      />
     );
   }
 }
