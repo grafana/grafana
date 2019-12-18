@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import LRU from 'lru-cache';
+import { Value } from 'slate';
 
 import { dateTime, LanguageProvider, HistoryItem } from '@grafana/data';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
@@ -50,6 +51,8 @@ function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): Com
   return item;
 }
 
+const PREFIX_DELIMITER_REGEX = /(="|!="|=~"|!~"|\{|\[|\(|\+|-|\/|\*|%|\^|and|or|unless|==|>=|!=|<=|>|<|=|~|,)/;
+
 export default class PromQlLanguageProvider extends LanguageProvider {
   histogramMetrics?: string[];
   timeRange?: { start: number; end: number };
@@ -81,15 +84,12 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     Object.assign(this, initialValues);
   }
 
-  // Strip syntax chars
-  cleanText = (s: string) =>
-    s
-      .replace(/[{}[\]="(),!]/g, '')
-      .replace(/^\s*[~+\-*/^%]/, '')
-      .trim()
-      .split(' ')
-      .pop()
-      .trim();
+  // Strip syntax chars so that typeahead suggestions can work on clean inputs
+  cleanText(s: string) {
+    const parts = s.split(PREFIX_DELIMITER_REGEX);
+    const last = parts.pop();
+    return last.trimLeft().replace(/"$/, '');
+  }
 
   get syntax() {
     return PromqlSyntax;
@@ -159,7 +159,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       return this.getLabelCompletionItems({ prefix, text, value, labelKey, wrapperClasses });
     } else if (wrapperClasses.includes('context-aggregation')) {
       // Suggestions for sum(metric) by (|)
-      return this.getAggregationCompletionItems({ prefix, text, value, labelKey, wrapperClasses });
+      return this.getAggregationCompletionItems(value);
     } else if (empty) {
       // Suggestions for empty query field
       return this.getEmptyCompletionItems(context);
@@ -239,7 +239,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     };
   }
 
-  getAggregationCompletionItems = async ({ value }: TypeaheadInput): Promise<TypeaheadOutput> => {
+  getAggregationCompletionItems = async (value: Value): Promise<TypeaheadOutput> => {
     const suggestions: CompletionItemGroup[] = [];
 
     // Stitch all query lines together to support multi-line queries
