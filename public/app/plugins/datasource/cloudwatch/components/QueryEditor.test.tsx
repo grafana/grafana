@@ -96,6 +96,7 @@ describe('QueryEditor', () => {
         alias: '',
         statistics: ['Average'],
         matchExact: true,
+        period: '',
         refId: '42',
       });
     });
