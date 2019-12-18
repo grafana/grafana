@@ -1,4 +1,4 @@
-import { renderHook, act } from 'react-hooks-testing-library';
+import { renderHook, act } from '@testing-library/react-hooks';
 import { AbsoluteTimeRange } from '@grafana/data';
 import { CascaderOption } from '@grafana/ui';
 
