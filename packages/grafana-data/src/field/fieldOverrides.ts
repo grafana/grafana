@@ -188,9 +188,8 @@ export function setFieldConfigDefaults(config: FieldConfig, props?: FieldConfig)
     }
   }
 
-  // First value is always -Infinity
-  if (config.thresholds && config.thresholds.length) {
-    config.thresholds[0].value = -Infinity;
+  if (config.scale) {
+    config.scale = validateScale(config.scale);
   }
 
   // Verify that max > min (swap if necessary)

@@ -1,3 +1,11 @@
+export interface ScaledValue {
+  percent?: number; // 0-1
+  threshold?: Threshold; // the selected step
+  color?: string; // Selected color (may be range based on threshold)
+}
+
+export type ScaleCalculator = (value: number) => ScaledValue;
+
 export interface Threshold {
   value: number;
   color: string;
@@ -13,10 +21,9 @@ export enum ScaleMode {
 export interface Scale {
   mode: ScaleMode;
   scheme?: ColorScheme; // D3 schema lookup
-  discrete?: number; // When using scheme -- this makes it discrete steps
 
   // Must be sorted by 'value', first value is always -Infinity
-  steps: Threshold[];
+  thresholds: Threshold[];
 }
 
 // https://github.com/d3/d3-scale-chromatic
