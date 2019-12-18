@@ -95,13 +95,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     height: 100%;
   `,
   item: css`
-    background: ${theme.colors.pageBg};
+    ${styleMixins.cardChrome(theme)}
     padding: ${theme.spacing.sm};
     position: relative;
     margin-bottom: 4px;
     border-radius: 3px;
     margin-right: ${theme.spacing.sm};
-    ${styleMixins.cardChrome(theme)}
   `,
   title: css`
     color: ${theme.colors.linkExternal};
