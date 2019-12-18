@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent, memo } from 'react';
+import React, { PureComponent, memo, FormEvent } from 'react';
 import { css } from 'emotion';
 import classNames from 'classnames';
 
@@ -111,6 +111,12 @@ export class UnthemedTimePicker extends PureComponent<Props, State> {
     this.setState({ isOpen: false });
   };
 
+  onOpen = (event: FormEvent<HTMLButtonElement>) => {
+    const { isOpen } = this.state;
+    event.stopPropagation();
+    this.setState({ isOpen: !isOpen });
+  };
+
   onClose = () => {
     this.setState({ isOpen: false });
   };
@@ -145,10 +151,7 @@ export class UnthemedTimePicker extends PureComponent<Props, State> {
               <button
                 aria-label="TimePicker Open Button"
                 className="btn navbar-button navbar-button--zoom"
-                onClick={event => {
-                  event.stopPropagation();
-                  this.setState({ isOpen: !isOpen });
-                }}
+                onClick={this.onOpen}
               >
                 <i className={classNames('fa fa-clock-o fa-fw', isSynced && timeSyncButton && 'icon-brand-gradient')} />
                 <TimePickerButtonLabel {...this.props} />
