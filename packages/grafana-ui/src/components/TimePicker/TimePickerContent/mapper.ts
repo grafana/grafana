@@ -23,16 +23,16 @@ export const mapOptionToTimeRange = (option: TimeOption): TimeRange => {
 };
 
 export const mapRangeToTimeOption = (range: TimeRange): TimeOption => {
+  const formattedFrom = stringToDateTime(range.from).format(TIME_FORMAT);
+  const formattedTo = stringToDateTime(range.to).format(TIME_FORMAT);
   const from = dateTimeToString(range.from);
   const to = dateTimeToString(range.to);
 
-  // TODO: Add formatting here
-
   return {
     from,
-    to,
+    to: to,
     section: 3,
-    display: `${from} to ${to}`,
+    display: `${formattedFrom} to ${formattedTo}`,
   };
 };
 
