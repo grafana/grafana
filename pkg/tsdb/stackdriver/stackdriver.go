@@ -354,10 +354,16 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 	metricLabels := make(map[string][]string)
 	resourceLabels := make(map[string][]string)
 	var resourceTypes []string
+	labels := make(map[string][]string)
+	labels["resource.type"] = make([]string, 0)
 
 	for _, series := range data.TimeSeries {
 		if !containsLabel(resourceTypes, series.Resource.Type) {
 			resourceTypes = append(resourceTypes, series.Resource.Type)
+		}
+
+		if !containsLabel(labels["resource.type"], series.Resource.Type) {
+			labels["resource.type"] = append(labels["resource.type"], series.Resource.Type)
 		}
 	}
 
@@ -373,6 +379,12 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 			if !containsLabel(metricLabels[key], value) {
 				metricLabels[key] = append(metricLabels[key], value)
 			}
+			if _, exist := labels["metric.label."+key]; !exist {
+				labels["metric.label."+key] = make([]string, 0)
+			}
+			if !containsLabel(labels["metric.label."+key], value) {
+				labels["metric.label."+key] = append(labels["metric.label."+key], value)
+			}
 			if len(query.GroupBys) == 0 || containsLabel(query.GroupBys, "metric.label."+key) {
 				defaultMetricName += " " + value
 			}
@@ -384,6 +396,13 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 			}
 			if containsLabel(query.GroupBys, "resource.label."+key) {
 				defaultMetricName += " " + value
+			}
+
+			if _, exist := labels["resource.label."+key]; !exist {
+				labels["resource.label."+key] = make([]string, 0)
+			}
+			if !containsLabel(labels["resource.label."+key], value) {
+				labels["resource.label."+key] = append(labels["resource.label."+key], value)
 			}
 		}
 
@@ -465,6 +484,7 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 		}
 	}
 
+	queryRes.Meta.Set("labels", labels)
 	queryRes.Meta.Set("resourceLabels", resourceLabels)
 	queryRes.Meta.Set("metricLabels", metricLabels)
 	queryRes.Meta.Set("groupBys", query.GroupBys)
