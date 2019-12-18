@@ -754,27 +754,27 @@ for the full list. Environment variables will override any settings provided her
 
 The host:port destination for reporting spans. (ex: `localhost:6381`)
 
-May be set with the environment variables `JAEGER_AGENT_HOST` and `JAEGER_AGENT_PORT`.
+Can be set with the environment variables `JAEGER_AGENT_HOST` and `JAEGER_AGENT_PORT`.
 
 ### always_included_tag
 
-Comma-separated list of tags to include in all new spans, e.g. `tag1:value1,tag2:value2`
+Comma-separated list of tags to include in all new spans, such as `tag1:value1,tag2:value2`.
 
-May be set with the environment variable `JAEGER_TAGS` (use `=` instead of `:` with the env var).
+Can be set with the environment variable `JAEGER_TAGS` (use `=` instead of `:` with the environment variable).
 
 ### sampler_type
 
-Default value is `const`
+Default value is `const`.
 
-Specifies the type of sampler: `const`, `probabilistic`, `ratelimiting`, or `remote`
+Specifies the type of sampler: `const`, `probabilistic`, `ratelimiting`, or `remote`.
 
-See https://www.jaegertracing.io/docs/1.16/sampling/#client-sampling-configuration for details on the different types.
+Refer to https://www.jaegertracing.io/docs/1.16/sampling/#client-sampling-configuration for details on the different tracing types.
 
-May be set with the environment variable `JAEGER_SAMPLER_TYPE`.
+Can be set with the environment variable `JAEGER_SAMPLER_TYPE`.
 
 ### sampler_param
 
-Default value is `1`
+Default value is `1`.
 
 This is the sampler configuration parameter. Depending on the value of `sampler_type`, it can be `0`, `1`, or a decimal value in between.
 
@@ -789,17 +789,17 @@ May be set with the environment variable `JAEGER_SAMPLER_PARAM`.
 
 ### zipkin_propagation
 
-Default value is `false`
+Default value is `false`.
 
 Whether or not to use Zipkin span propagation (`x-b3-` HTTP headers).
 
-May be set with the environment variable and value `JAEGER_PROPAGATION=b3`
+Can be set with the environment variable and value `JAEGER_PROPAGATION=b3`.
 
 ### disable_shared_zipkin_spans
 
-Default value is `false`
+Default value is `false`.
 
-Setting this to `true` disables shared RPC spans. Not disabling is the most common setting when using Zipkin elsewhere in your infrastructure.
+Setting this to `true` turns off shared RPC spans. Leaving this available is the most common setting when using Zipkin elsewhere in your infrastructure.
 
 <hr />
 
