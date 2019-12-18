@@ -1,4 +1,5 @@
-import xss, { safeAttrValue } from 'xss';
+import xss from 'xss';
+import { sanitizeUrl as braintreeSanitizeUrl } from '@braintree/sanitize-url';
 
 const XSSWL = Object.keys(xss.whiteList).reduce((acc, element) => {
   // @ts-ignore
@@ -27,12 +28,7 @@ export function sanitize(unsanitizedString: string): string {
 }
 
 export function sanitizeUrl(url: string): string {
-  try {
-    return safeAttrValue('a', 'href', url, sanitizeXSS);
-  } catch (error) {
-    console.log('Url could not be sanitized', url);
-    return url;
-  }
+  return braintreeSanitizeUrl(url);
 }
 
 export function hasAnsiCodes(input: string): boolean {

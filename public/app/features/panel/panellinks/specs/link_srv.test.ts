@@ -144,7 +144,7 @@ describe('linkSrv', () => {
     it.each`
       disableSanitizeHtml | expected
       ${true}             | ${url}
-      ${false}            | ${''}
+      ${false}            | ${'about:blank'}
     `(
       "when disable disableSanitizeHtml set to '$disableSanitizeHtml' then result should be '$expected'",
       ({ disableSanitizeHtml, expected }) => {

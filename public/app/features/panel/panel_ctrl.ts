@@ -280,7 +280,6 @@ export class PanelCtrl {
 
     if (panel.links && panel.links.length > 0) {
       const interpolatedLinks = getPanelLinksSupplier(panel).getLinks();
-
       html += '<ul class="panel-info-corner-links">';
       for (const link of interpolatedLinks) {
         html +=
