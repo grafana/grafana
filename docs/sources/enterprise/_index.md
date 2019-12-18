@@ -14,7 +14,7 @@ weight = 30
 Grafana Enterprise is a commercial edition of Grafana that includes additional features not found in the open source
 version.
 
-Building on everything you already know and love about Grafana, Grafana Enterprise adds premium data sources,
+Building on everything you already know and love about Grafana, Grafana Enterprise adds enterprise data sources,
 advanced authentication options, more permission controls, 24x7x365 support, and training from the core Grafana team.
 
 Grafana Enterprise includes all of the features found in the open source edition and more.
@@ -47,9 +47,9 @@ Data source permissions allow you to restrict query access to only specific Team
 
 Reporting make it possible to take any Dashboard and generate a PDF report and setup a schedule to have it delivered. [Learn More]({{< relref "../features/reporting.md" >}}).
 
-### Premium Plugins
+### Enterprise Plugins
 
-With a Grafana Enterprise license you will get access to premium plugins, including:
+With a Grafana Enterprise license you will get access to enterprise plugins, including:
 
 * [Splunk](https://grafana.com/plugins/grafana-splunk-datasource)
 * [AppDynamics](https://grafana.com/plugins/dlopes7-appdynamics-datasource)
