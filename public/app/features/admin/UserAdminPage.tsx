@@ -23,6 +23,9 @@ import {
   disableUser,
   enableUser,
   deleteUser,
+  addOrgUser,
+  updateOrgUserRole,
+  deleteOrgUser,
 } from './state/actions';
 import { UserOrgs } from './UserOrgs';
 
@@ -47,6 +50,9 @@ interface Props {
   disableUser: typeof disableUser;
   enableUser: typeof enableUser;
   deleteUser: typeof deleteUser;
+  addOrgUser: typeof addOrgUser;
+  updateOrgUserRole: typeof updateOrgUserRole;
+  deleteOrgUser: typeof deleteOrgUser;
 }
 
 interface State {
@@ -84,15 +90,18 @@ export class UserAdminPage extends PureComponent<Props, State> {
   };
 
   onOrgRemove = (orgId: number) => {
-    console.log('onOrgRemove', orgId);
+    const { userId, deleteOrgUser } = this.props;
+    deleteOrgUser(userId, orgId);
   };
 
   onOrgRoleChange = (orgId: number, newRole: string) => {
-    console.log('onOrgRoleChange', orgId, newRole);
+    const { userId, updateOrgUserRole } = this.props;
+    updateOrgUserRole(userId, orgId, newRole);
   };
 
   onOrgAdd = (orgId: number, role: string) => {
-    console.log('onOrgAdd', orgId, role);
+    const { user, addOrgUser } = this.props;
+    addOrgUser(user, orgId, role);
   };
 
   onSessionRevoke = (tokenId: number) => {
@@ -176,6 +185,9 @@ const mapDispatchToProps = {
   disableUser,
   enableUser,
   deleteUser,
+  addOrgUser,
+  updateOrgUserRole,
+  deleteOrgUser,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UserAdminPage));

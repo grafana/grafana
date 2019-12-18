@@ -207,6 +207,35 @@ export function loadUserOrgs(userId: number): ThunkResult<void> {
   };
 }
 
+export function addOrgUser(user: UserDTO, orgId: number, role: string): ThunkResult<void> {
+  return async dispatch => {
+    console.log(`add user ${user.login} to org ${orgId} as ${role}`);
+    const payload = {
+      loginOrEmail: user.login,
+      role: role,
+    };
+    await getBackendSrv().post(`/api/orgs/${orgId}/users/`, payload);
+    dispatch(loadAdminUserPage(user.id));
+  };
+}
+
+export function updateOrgUserRole(userId: number, orgId: number, role: string): ThunkResult<void> {
+  return async dispatch => {
+    console.log(`update user ${userId} role in org ${orgId} to ${role}`);
+    const payload = { role };
+    await getBackendSrv().patch(`/api/orgs/${orgId}/users/${userId}`, payload);
+    dispatch(loadAdminUserPage(userId));
+  };
+}
+
+export function deleteOrgUser(userId: number, orgId: number): ThunkResult<void> {
+  return async dispatch => {
+    console.log(`delete user ${userId} from org ${orgId}`);
+    await getBackendSrv().delete(`/api/orgs/${orgId}/users/${userId}`);
+    dispatch(loadAdminUserPage(userId));
+  };
+}
+
 export function loadUserSessions(userId: number): ThunkResult<void> {
   return async dispatch => {
     const sessions = await getUserSessions(userId);
