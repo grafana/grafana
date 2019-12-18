@@ -68,7 +68,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
       return (
         (item.id !== '' || item.hide !== true) &&
         ((!!item.region && !!item.namespace && !!item.metricName && !_.isEmpty(item.statistics)) ||
-          item.expression.length > 0)
+          (item.expression && item.expression.length > 0))
       );
     }).map(item => {
       item.region = this.replace(this.getActualRegion(item.region), options.scopedVars, true, 'region');
