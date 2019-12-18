@@ -12,13 +12,19 @@ export const TimePickerWithHistory: React.FC<Props> = props => {
     <LocalStorageValueProvider<TimeRange[]> storageKey={LOCAL_STORAGE_KEY} defaultValue={[]}>
       {(values, onSaveToStore) => {
         return (
-          <TimePicker {...props} history={values} onChange={range => onAppendToHistory(range, values, onSaveToStore)} />
+          <TimePicker
+            {...props}
+            history={values}
+            onChange={value => {
+              onAppendToHistory(value, values, onSaveToStore);
+              props.onChange(value);
+            }}
+          />
         );
       }}
     </LocalStorageValueProvider>
   );
 };
-
 function onAppendToHistory(toAppend: TimeRange, values: TimeRange[], onSaveToStore: (values: TimeRange[]) => void) {
   if (!isAbsolute(toAppend)) {
     return;

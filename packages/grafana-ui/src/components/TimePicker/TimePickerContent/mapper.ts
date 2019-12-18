@@ -30,7 +30,7 @@ export const mapRangeToTimeOption = (range: TimeRange): TimeOption => {
 
   return {
     from,
-    to: to,
+    to,
     section: 3,
     display: `${formattedFrom} to ${formattedTo}`,
   };
