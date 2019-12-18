@@ -5,5 +5,6 @@ export const Dashboard = pageFactory({
   selectors: {
     toolbarItems: (button: string) => `Dashboard navigation bar button ${button}`,
     backArrow: 'Dashboard settings Go Back button',
+    navBar: () => '.navbar',
   },
 });
