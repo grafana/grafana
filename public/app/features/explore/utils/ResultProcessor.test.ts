@@ -131,21 +131,23 @@ describe('ResultProcessor', () => {
       it('then it should return correct table result', () => {
         const { resultProcessor } = testContext();
         const theResult = resultProcessor.getTableResult();
+        const resultDataFrame = toDataFrame(
+          new TableModel({
+            columns: [
+              { text: 'value', type: 'number' },
+              { text: 'time', type: 'time' },
+              { text: 'message', type: 'string' },
+            ],
+            rows: [
+              [4, 100, 'this is a message'],
+              [5, 200, 'second message'],
+              [6, 300, 'third'],
+            ],
+            type: 'table',
+          })
+        );
 
-        expect(theResult).toEqual({
-          columnMap: {},
-          columns: [
-            { text: 'value', type: 'number', filterable: undefined },
-            { text: 'time', type: 'time', filterable: undefined },
-            { text: 'message', type: 'string', filterable: undefined },
-          ],
-          rows: [
-            [4, 100, 'this is a message'],
-            [5, 200, 'second message'],
-            [6, 300, 'third'],
-          ],
-          type: 'table',
-        });
+        expect(theResult).toEqual(resultDataFrame);
       });
     });
 

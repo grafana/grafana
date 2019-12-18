@@ -13,10 +13,10 @@ import {
   LogsDedupStrategy,
   AbsoluteTimeRange,
   GraphSeriesXY,
+  DataFrame,
 } from '@grafana/data';
 
 import { Emitter } from 'app/core/core';
-import TableModel from 'app/core/table_model';
 
 export enum ExploreMode {
   Metrics = 'Metrics',
@@ -130,7 +130,7 @@ export interface ExploreItemState {
   /**
    * Table model that combines all query table results into a single table.
    */
-  tableResult?: TableModel;
+  tableResult?: DataFrame;
 
   /**
    * React keys for rendering of QueryRows

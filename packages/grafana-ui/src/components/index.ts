@@ -46,7 +46,7 @@ export { QueryField } from './QueryField/QueryField';
 // Renderless
 export { SetInterval } from './SetInterval/SetInterval';
 
-export { Table } from './Table/Table';
+export { NewTable as Table } from './Table/NewTable';
 export { TableInputCSV } from './Table/TableInputCSV';
 
 // Visualizations
@@ -110,6 +110,7 @@ export { SlideOutTransition } from './transitions/SlideOutTransition';
 export { Segment, SegmentAsync, SegmentInput, SegmentSelect } from './Segment/';
 export { default as Chart } from './Chart';
 export { Icon } from './Icon/Icon';
+export { Drawer } from './Drawer/Drawer';
 
 // Next-gen forms
 export { default as Forms } from './Forms';

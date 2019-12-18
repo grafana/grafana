@@ -99,7 +99,6 @@ $height-lg: ${theme.height.lg};
 $font-family-sans-serif: ${theme.typography.fontFamily.sansSerif};
 $font-family-monospace: ${theme.typography.fontFamily.monospace};
 
-$font-size-root: ${theme.typography.size.root} !default;
 $font-size-base: ${theme.typography.size.base} !default;
 
 $font-size-lg: ${theme.typography.size.lg} !default;

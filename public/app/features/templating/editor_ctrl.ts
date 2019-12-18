@@ -1,11 +1,13 @@
 import _ from 'lodash';
+import { AppEvents } from '@grafana/data';
+import { e2e } from '@grafana/e2e';
+
 import coreModule from 'app/core/core_module';
 import { variableTypes } from './variable';
 import appEvents from 'app/core/app_events';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { VariableSrv } from './all';
 import { TemplateSrv } from './template_srv';
-import { AppEvents } from '@grafana/data';
 import { promiseToDigest } from '../../core/utils/promiseToDigest';
 
 export class VariableEditorCtrl {
@@ -56,6 +58,13 @@ export class VariableEditorCtrl {
       { value: 1, text: 'Label' },
       { value: 2, text: 'Variable' },
     ];
+
+    $scope.selectors = {
+      ...e2e.pages.Dashboard.Settings.Variables.List.selectors,
+      ...e2e.pages.Dashboard.Settings.Variables.Edit.General.selectors,
+      ...e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.selectors,
+      ...e2e.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.selectors,
+    };
 
     $scope.init = () => {
       $scope.mode = 'list';

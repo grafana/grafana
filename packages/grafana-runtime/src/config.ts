@@ -15,6 +15,7 @@ interface FeatureToggles {
   transformations: boolean;
   inspect: boolean;
   expressions: boolean;
+  newEdit: boolean;
 }
 export class GrafanaBootConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
@@ -51,6 +52,7 @@ export class GrafanaBootConfig {
     transformations: false,
     inspect: false,
     expressions: false,
+    newEdit: false,
   };
 
   constructor(options: GrafanaBootConfig) {
