@@ -1,7 +1,5 @@
 /* WRONG CONFIG ON PURPOSE - DO NOT COPY THIS */
 
-const config = {
+module.exports.config = {
   name: 'test',
 };
-
-export = config;
