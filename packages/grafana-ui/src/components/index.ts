@@ -48,6 +48,7 @@ export { SetInterval } from './SetInterval/SetInterval';
 
 export { NewTable as Table } from './Table/NewTable';
 export { TableInputCSV } from './Table/TableInputCSV';
+export { Tabs } from './Tabs/Tabs';
 
 // Visualizations
 export {
