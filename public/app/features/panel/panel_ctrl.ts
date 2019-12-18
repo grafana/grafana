@@ -276,11 +276,10 @@ export class PanelCtrl {
     let html = '<div class="markdown-html panel-info-content">';
 
     const md = renderMarkdown(interpolatedMarkdown);
-    html += config.disableSanitizeHtml ? md : sanitize(md);
+    html += md;
 
     if (panel.links && panel.links.length > 0) {
       const interpolatedLinks = getPanelLinksSupplier(panel).getLinks();
-
       html += '<ul class="panel-info-corner-links">';
       for (const link of interpolatedLinks) {
         html +=
@@ -297,7 +296,7 @@ export class PanelCtrl {
 
     html += '</div>';
 
-    return html;
+    return config.disableSanitizeHtml ? html : sanitize(html);
   }
 
   // overriden from react
