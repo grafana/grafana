@@ -235,7 +235,7 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async options => {
 
 export const loadWebpackConfig: WebpackConfigurationGetter = async options => {
   const baseConfig = await getBaseWebpackConfig(options);
-  const customWebpackPath = path.resolve(process.cwd(), 'webpack.config.ts');
+  const customWebpackPath = path.resolve(process.cwd(), 'webpack.config.js');
 
   try {
     await accessPromise(customWebpackPath);
