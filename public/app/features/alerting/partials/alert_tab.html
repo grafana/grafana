@@ -13,7 +13,11 @@
           </div>
           <div class="gf-form">
             <span class="gf-form-label width-9">Evaluate every</span>
-            <input class="gf-form-input max-width-6" type="text" ng-model="ctrl.alert.frequency">
+            <input class="gf-form-input max-width-6" type="text" ng-model="ctrl.alert.frequency" ng-blur="ctrl.checkFrequency()">
+          </div>
+          <div class="gf-form" ng-show="ctrl.alertingMinIntervalSecs > 1">
+            <span class="gf-form-label width-11">Minimum interval</span>
+            <input class="gf-form-input max-width-6" type="text" ng-model="ctrl.alertingMinInterval" readonly="true">
           </div>
           <div class="gf-form max-width-11">
             <label class="gf-form-label width-5">For</label>
@@ -29,8 +33,13 @@
               been firing for more than For duration, it will change to Alerting and send alert
               notifications.
             </info-popover>
-          </div>
         </div>
+      </div>
+      <div class="gf-form" ng-if="ctrl.frequencyWarning">
+        <label class="gf-form-label text-warning">
+          <i
+          class="fa fa-warning"></i> {{ctrl.frequencyWarning}}
+        </label>
       </div>
 
       <div class="gf-form-group">

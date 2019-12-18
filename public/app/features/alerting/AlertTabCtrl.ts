@@ -12,6 +12,7 @@ import { DataQuery, DataSourceApi } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getDefaultCondition } from './getAlertingValidationMessage';
 import { CoreEvents } from 'app/types';
+import kbn from 'app/core/utils/kbn';
 
 export class AlertTabCtrl {
   panel: PanelModel;
@@ -31,6 +32,9 @@ export class AlertTabCtrl {
   appSubUrl: string;
   alertHistory: any;
   newAlertRuleTag: any;
+  alertingMinIntervalSecs: number;
+  alertingMinInterval: string;
+  frequencyWarning: any;
 
   /** @ngInject */
   constructor(
@@ -51,6 +55,8 @@ export class AlertTabCtrl {
     this.executionErrorModes = alertDef.executionErrorModes;
     this.appSubUrl = config.appSubUrl;
     this.panelCtrl._enableAlert = this.enable;
+    this.alertingMinIntervalSecs = config.alertingMinInterval;
+    this.alertingMinInterval = kbn.secondsToHms(config.alertingMinInterval);
   }
 
   $onInit() {
@@ -178,6 +184,8 @@ export class AlertTabCtrl {
       return;
     }
 
+    this.checkFrequency();
+
     alert.conditions = alert.conditions || [];
     if (alert.conditions.length === 0) {
       alert.conditions.push(getDefaultCondition());
@@ -230,6 +238,23 @@ export class AlertTabCtrl {
 
     this.panelCtrl.editingThresholds = true;
     this.panelCtrl.render();
+  }
+
+  checkFrequency() {
+    this.frequencyWarning = '';
+
+    try {
+      const frequencySecs = kbn.interval_to_seconds(this.alert.frequency);
+      if (frequencySecs < this.alertingMinIntervalSecs) {
+        this.frequencyWarning =
+          'The rule will be evaluated every ' +
+          this.alertingMinInterval +
+          ' because the frequency is set to a lower value' +
+          ' than the minimum interval between evaluations';
+      }
+    } catch (err) {
+      this.frequencyWarning = err;
+    }
   }
 
   graphThresholdChanged(evt: any) {
