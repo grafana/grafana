@@ -115,7 +115,7 @@ func (ts *TracingService) initGlobalTracer() error {
 		return err
 	}
 
-	opentracing.InitGlobalTracer(tracer)
+	opentracing.SetGlobalTracer(tracer)
 
 	ts.closer = closer
 
