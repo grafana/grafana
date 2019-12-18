@@ -29,7 +29,8 @@ function onAppendToHistory(toAppend: TimeRange, values: TimeRange[], onSaveToSto
   if (!isAbsolute(toAppend)) {
     return;
   }
-  onSaveToStore(limit([toAppend, ...values]));
+  const toStore = limit([toAppend, ...values]);
+  onSaveToStore(toStore);
 }
 
 function isAbsolute(value: TimeRange): boolean {

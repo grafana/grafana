@@ -33,7 +33,7 @@ export const TimeRangeForm: React.FC<Props> = props => {
       event.preventDefault();
       setOpen(true);
     },
-    [props]
+    [setOpen]
   );
 
   const onFocus = useCallback(
@@ -43,7 +43,7 @@ export const TimeRangeForm: React.FC<Props> = props => {
       }
       onOpen(event);
     },
-    [props]
+    [isFullscreen, onOpen]
   );
 
   const onApply = useCallback(() => {
@@ -51,14 +51,14 @@ export const TimeRangeForm: React.FC<Props> = props => {
       return;
     }
     props.onApply(mapStringsToTimeRange(from.value, to.value, roundup, timeZone));
-  }, [props]);
+  }, [from, to, roundup, timeZone]);
 
   const onChange = useCallback(
     (from: string, to: string) => {
       setFrom(valueToState(from, false, timeZone));
       setTo(valueToState(to, true, timeZone));
     },
-    [props]
+    [timeZone]
   );
 
   const icon = isFullscreen ? null : <Forms.Button icon="fa fa-calendar" variant="secondary" onClick={onOpen} />;

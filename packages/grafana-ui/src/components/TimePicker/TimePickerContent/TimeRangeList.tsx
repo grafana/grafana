@@ -13,7 +13,16 @@ const getStyles = stylesFactory(() => {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 5px 16px 5px 9px;
+      padding: 8px 16px 5px 9px;
+    `,
+  };
+});
+
+const getOptionsStyles = stylesFactory(() => {
+  return {
+    grow: css`
+      flex-grow: 1;
+      align-items: flex-start;
     `,
   };
 });
@@ -49,17 +58,22 @@ export const TimeRangeList: React.FC<Props> = props => {
 };
 
 const Options: React.FC<Props> = ({ options, value, onSelect }) => {
+  const styles = getOptionsStyles();
+
   return (
-    <div>
-      {options.map((option, index) => (
-        <TimeRangeOption
-          key={keyForOption(option, index)}
-          value={option}
-          selected={isEqual(option, value)}
-          onSelect={option => onSelect(mapOptionToTimeRange(option))}
-        />
-      ))}
-    </div>
+    <>
+      <div>
+        {options.map((option, index) => (
+          <TimeRangeOption
+            key={keyForOption(option, index)}
+            value={option}
+            selected={isEqual(option, value)}
+            onSelect={option => onSelect(mapOptionToTimeRange(option))}
+          />
+        ))}
+      </div>
+      <div className={styles.grow}></div>
+    </>
   );
 };
 
