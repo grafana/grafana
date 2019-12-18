@@ -5,8 +5,6 @@ import (
 	"strconv"
 	"time"
 
-	"fmt"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -80,18 +78,10 @@ func (pn *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if evalContext.Rule.State == models.AlertStateOK {
 		eventType = "resolve"
 	}
-	customData := triggMetrString
 
-	evalMatches := simplejson.New()
+	customData := simplejson.New()
 	for _, evt := range evalContext.EvalMatches {
-		customData = customData + fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
-		evalMatches.Set("eval_metric", evt.Metric)
-		evalMatches.Set("eval_value", evt.Value)
-		if len(evt.Tags) > 0 {
-			for k, v := range evt.Tags {
-				evalMatches.Set(k, v)
-			}
-		}
+		customData.Set(evt.Metric, evt.Value)
 	}
 
 	pn.log.Info("Notifying Pagerduty", "event_type", eventType)
@@ -111,7 +101,6 @@ func (pn *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 	payloadJSON.Set("timestamp", time.Now())
 	payloadJSON.Set("component", "Grafana")
 	payloadJSON.Set("custom_details", customData)
-	payloadJSON.Set("evalMatches", evalMatches)
 
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("routing_key", pn.Key)
