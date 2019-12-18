@@ -40,7 +40,7 @@ export const mapStringsToTimeRange = (from: string, to: string, roundup?: boolea
   const fromDate = stringToDateTimeType(from, roundup, timeZone);
   const toDate = stringToDateTimeType(to, roundup, timeZone);
 
-  if (from.indexOf('now') !== -1 || to.indexOf('now') !== 1) {
+  if (from.indexOf('now') !== -1 || to.indexOf('now') !== -1) {
     return {
       from: fromDate,
       to: toDate,

@@ -35,5 +35,6 @@ function isAbsolute(value: TimeRange): boolean {
 
 function limit(value: TimeRange[]): TimeRange[] {
   const start = value.length > 4 ? value.length - 4 : 0;
+  console.log('start', start);
   return value.splice(start);
 }
