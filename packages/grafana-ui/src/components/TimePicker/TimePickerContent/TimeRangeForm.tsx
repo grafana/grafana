@@ -6,10 +6,8 @@ import { TimePickerCalendar } from './TimePickerCalendar';
 import Forms from '../../Forms';
 import { isMathString } from '@grafana/data/src/datetime/datemath';
 
-type ShowCalendarOn = 'ClickOnInputButton' | 'FocusOnInput';
-
 interface Props {
-  showCalendarOn: ShowCalendarOn;
+  isFullscreen: boolean;
   value: TimeRange;
   onApply: (range: TimeRange) => void;
   timeZone?: TimeZone;
@@ -24,8 +22,7 @@ interface InputState {
 const errorMessage = 'Please enter a past date or "now"';
 
 export const TimeRangeForm: React.FC<Props> = props => {
-  const { value, showCalendarOn, timeZone, roundup } = props;
-  const isFullscreen = showCalendarOn === 'FocusOnInput';
+  const { value, isFullscreen = false, timeZone, roundup } = props;
 
   const [from, setFrom] = useState<InputState>(valueToState(value.raw.from, false, timeZone));
   const [to, setTo] = useState<InputState>(valueToState(value.raw.to, true, timeZone));

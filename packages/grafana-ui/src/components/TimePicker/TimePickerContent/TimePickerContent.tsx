@@ -179,7 +179,7 @@ const NarrowScreenForm: React.FC<FormProps> = props => {
               value={props.value}
               onApply={props.onChange}
               timeZone={props.timeZone}
-              showCalendarOn="ClickOnInputButton"
+              isFullscreen={false}
             />
           </div>
           <TimeRangeList
@@ -209,12 +209,7 @@ const FullScreenForm: React.FC<FormProps> = props => {
         <div className={styles.title}>
           <TimePickerTitle>Absolute time range</TimePickerTitle>
         </div>
-        <TimeRangeForm
-          value={props.value}
-          timeZone={props.timeZone}
-          onApply={props.onChange}
-          showCalendarOn="FocusOnInput"
-        />
+        <TimeRangeForm value={props.value} timeZone={props.timeZone} onApply={props.onChange} isFullscreen={true} />
       </div>
       <div className={styles.recent}>
         <TimeRangeList
