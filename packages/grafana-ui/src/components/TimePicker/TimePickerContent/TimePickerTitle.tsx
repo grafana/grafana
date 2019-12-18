@@ -13,11 +13,9 @@ const getStyle = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-const TimePickerTitle = memo<PropsWithChildren<{}>>(({ children }) => {
+export const TimePickerTitle = memo<PropsWithChildren<{}>>(({ children }) => {
   const theme = useTheme();
   const styles = getStyle(theme);
 
   return <span className={styles.text}>{children}</span>;
 });
-
-export default TimePickerTitle;

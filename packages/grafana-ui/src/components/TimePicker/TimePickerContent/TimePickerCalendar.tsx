@@ -4,7 +4,7 @@ import Calendar from 'react-calendar/dist/entry.nostyle';
 import { GrafanaTheme, dateTime, TIME_FORMAT } from '@grafana/data';
 import { stringToDateTimeType } from '../time';
 import { useTheme, stylesFactory } from '../../../themes';
-import TimePickerTitle from './TimePickerTitle';
+import { TimePickerTitle } from './TimePickerTitle';
 import Forms from '../../Forms';
 import { Portal } from '../../Portal/Portal';
 import { getThemeColors } from './colors';
@@ -197,7 +197,7 @@ interface Props {
   isFullscreen: boolean;
 }
 
-const TimePickerCalendar = memo<Props>(props => {
+export const TimePickerCalendar = memo<Props>(props => {
   const theme = useTheme();
   const styles = getStyles(theme);
   const { isOpen, isFullscreen } = props;
@@ -295,5 +295,3 @@ function valueToInput(value: Date | Date[], onChange: (from: string, to: string)
 
   return onChange(fromAsString, toAsString);
 }
-
-export default TimePickerCalendar;

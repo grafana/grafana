@@ -41,7 +41,7 @@ interface Props {
   onSelect: (option: TimeOption) => void;
 }
 
-const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false }) => {
+export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
@@ -52,5 +52,3 @@ const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false }) => {
     </div>
   );
 });
-
-export default TimeRangeOption;

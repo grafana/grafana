@@ -3,10 +3,10 @@ import { useMedia } from 'react-use';
 import { css } from 'emotion';
 import { useTheme, stylesFactory } from '../../../themes';
 import { GrafanaTheme, TimeOption, TimeRange, TimeZone, isDateTime } from '@grafana/data';
-import TimeRangeTitle from './TimePickerTitle';
-import TimeRangeForm from './TimeRangeForm';
+import { TimePickerTitle } from './TimePickerTitle';
+import { TimeRangeForm } from './TimeRangeForm';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
-import TimeRangeList from './TimeRangeList';
+import { TimeRangeList } from './TimeRangeList';
 import { mapRangeToTimeOption } from './mapper';
 import { getThemeColors } from './colors';
 
@@ -125,7 +125,7 @@ interface FormProps extends Omit<Props, 'history'> {
   historyOptions?: TimeOption[];
 }
 
-const TimePickerContent: React.FC<Props> = props => {
+export const TimePickerContent: React.FC<Props> = props => {
   const theme = useTheme();
   const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.lg})`);
   const styles = getStyles(theme);
@@ -169,7 +169,7 @@ const NarrowScreenForm: React.FC<FormProps> = props => {
   return (
     <>
       <div className={styles.header} onClick={() => setCollapsed(!collapsed)}>
-        <TimeRangeTitle>Absolute time range</TimeRangeTitle>
+        <TimePickerTitle>Absolute time range</TimePickerTitle>
         {collapsed ? <i className="fa fa-caret-up" /> : <i className="fa fa-caret-down" />}
       </div>
       {collapsed && (
@@ -207,7 +207,7 @@ const FullScreenForm: React.FC<FormProps> = props => {
     <>
       <div className={styles.container}>
         <div className={styles.title}>
-          <TimeRangeTitle>Absolute time range</TimeRangeTitle>
+          <TimePickerTitle>Absolute time range</TimePickerTitle>
         </div>
         <TimeRangeForm
           value={props.value}
@@ -257,5 +257,3 @@ function mapToHistoryOptions(ranges?: TimeRange[]): TimeOption[] {
   }
   return ranges.slice(ranges.length - 4).map(mapRangeToTimeOption);
 }
-
-export default TimePickerContent;

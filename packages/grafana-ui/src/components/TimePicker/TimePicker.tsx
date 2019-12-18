@@ -5,7 +5,7 @@ import classNames from 'classnames';
 
 // Components
 import { Tooltip } from '../Tooltip/Tooltip';
-import TimePickerContent from './TimePickerContent/TimePickerContent';
+import { TimePickerContent } from './TimePickerContent/TimePickerContent';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 
 // Utils & Services

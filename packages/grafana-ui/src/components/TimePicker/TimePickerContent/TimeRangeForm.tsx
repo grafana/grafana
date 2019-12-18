@@ -2,7 +2,7 @@ import React, { FormEvent, useState, useCallback } from 'react';
 import { TIME_FORMAT, TimeZone, isDateTime, TimeRange, DateTime } from '@grafana/data';
 import { stringToDateTimeType, isValidTimeString } from '../time';
 import { mapStringsToTimeRange } from './mapper';
-import TimePickerCalendar from './TimePickerCalendar';
+import { TimePickerCalendar } from './TimePickerCalendar';
 import Forms from '../../Forms';
 
 type ShowCalendarOn = 'ClickOnInputButton' | 'FocusOnInput';
@@ -22,7 +22,7 @@ interface InputState {
 
 const errorMessage = 'Please enter a past date or "now"';
 
-const TimePickerForm: React.FC<Props> = props => {
+export const TimeRangeForm: React.FC<Props> = props => {
   const { value, showCalendarOn, timeZone, roundup } = props;
   const isFullscreen = showCalendarOn === 'FocusOnInput';
 
@@ -123,5 +123,3 @@ function isValid(value: string, roundup?: boolean, timeZone?: TimeZone): boolean
   const parsed = stringToDateTimeType(value, roundup, timeZone);
   return parsed.isValid();
 }
-
-export default TimePickerForm;

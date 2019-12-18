@@ -2,8 +2,8 @@ import React, { ReactNode } from 'react';
 import { css } from 'emotion';
 import { TimeOption } from '@grafana/data';
 import { TimeRange } from '@grafana/data';
-import TimeRangeTitle from './TimePickerTitle';
-import TimeRangeOption from './TimeRangeOption';
+import { TimePickerTitle } from './TimePickerTitle';
+import { TimeRangeOption } from './TimeRangeOption';
 import { mapOptionToTimeRange } from './mapper';
 import { stylesFactory } from '../../../themes';
 
@@ -26,7 +26,7 @@ interface Props {
   placeholderEmpty?: ReactNode;
 }
 
-const TimeRangeList: React.FC<Props> = props => {
+export const TimeRangeList: React.FC<Props> = props => {
   const styles = getStyles();
   const { title, options, placeholderEmpty } = props;
 
@@ -41,7 +41,7 @@ const TimeRangeList: React.FC<Props> = props => {
   return (
     <>
       <div className={styles.title}>
-        <TimeRangeTitle>{title}</TimeRangeTitle>
+        <TimePickerTitle>{title}</TimePickerTitle>
       </div>
       <Options {...props} />
     </>
@@ -73,5 +73,3 @@ function isEqual(x: TimeOption, y?: TimeRange): boolean {
   }
   return y.raw.from === x.from && y.raw.to === x.to;
 }
-
-export default TimeRangeList;
