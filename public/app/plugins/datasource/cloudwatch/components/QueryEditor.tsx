@@ -30,6 +30,7 @@ export const normalizeQuery = ({
   id,
   alias,
   statistics,
+  period,
   ...rest
 }: CloudWatchQuery): CloudWatchQuery => {
   const normalizedQuery = {
@@ -41,6 +42,7 @@ export const normalizeQuery = ({
     id: id || '',
     alias: alias || '',
     statistics: isEmpty(statistics) ? ['Average'] : statistics,
+    period: period || '',
     ...rest,
   };
   return !rest.hasOwnProperty('matchExact') ? { ...normalizedQuery, matchExact: true } : normalizedQuery;
@@ -77,7 +79,7 @@ export class QueryEditor extends PureComponent<Props, State> {
                     this.onChange({ ...query, id: event.target.value })
                   }
                   validationEvents={idValidationEvents}
-                  value={query.id || ''}
+                  value={query.id}
                 />
               </QueryField>
             </div>
@@ -90,7 +92,7 @@ export class QueryEditor extends PureComponent<Props, State> {
                 <Input
                   className="gf-form-input"
                   onBlur={onRunQuery}
-                  value={query.expression || ''}
+                  value={query.expression}
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
                     this.onChange({ ...query, expression: event.target.value })
                   }
@@ -104,7 +106,7 @@ export class QueryEditor extends PureComponent<Props, State> {
             <QueryField label="Period" tooltip="Minimum interval between points in seconds">
               <Input
                 className="gf-form-input width-8"
-                value={query.period || ''}
+                value={query.period}
                 placeholder="auto"
                 onBlur={onRunQuery}
                 onChange={(event: ChangeEvent<HTMLInputElement>) =>
