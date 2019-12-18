@@ -52,9 +52,6 @@ import * as gaugePanel from 'app/plugins/panel/gauge/module';
 import * as pieChartPanel from 'app/plugins/panel/piechart/module';
 import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
 import * as logsPanel from 'app/plugins/panel/logs/module';
-
-// Includes rss-parser, so lets do this async
-// const newsPanel = async () => await import(/* webpackChunkName: "newsPanelPlugin" */ 'app/plugins/panel/news/module');
 import * as newsPanel from 'app/plugins/panel/news/module';
 
 const exampleApp = async () => await import(/* webpackChunkName: "exampleApp" */ 'app/plugins/app/example-app/module');
