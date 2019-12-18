@@ -1,5 +1,5 @@
 import React, { FormEvent } from 'react';
-import classNames from 'classnames';
+import { Tabs } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { NavModel, NavModelItem, NavModelBreadcrumb } from '@grafana/data';
 import { CoreEvents } from 'app/types';
@@ -42,32 +42,6 @@ const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string 
         })}
       </select>
     </div>
-  );
-};
-
-const Tabs = ({ main, customCss }: { main: NavModelItem; customCss: string }) => {
-  return (
-    <ul className={`gf-tabs ${customCss}`}>
-      {main.children.map((tab, idx) => {
-        if (tab.hideFromTabs) {
-          return null;
-        }
-
-        const tabClasses = classNames({
-          'gf-tabs-link': true,
-          active: tab.active,
-        });
-
-        return (
-          <li className="gf-tabs-item" key={tab.url}>
-            <a className={tabClasses} target={tab.target} href={tab.url}>
-              <i className={tab.icon} />
-              {tab.text}
-            </a>
-          </li>
-        );
-      })}
-    </ul>
   );
 };
 
