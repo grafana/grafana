@@ -62,6 +62,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     buttons: css`
       display: flex;
     `,
+    caretIcon: css`
+      margin-left: 3px;
+
+      i {
+        font-size: ${theme.typography.size.md};
+      }
+    `,
   };
 });
 
@@ -134,11 +141,7 @@ export class UnthemedTimePicker extends PureComponent<Props, State> {
             </button>
           )}
           <div>
-            <Tooltip
-              show={!isOpen && !hasAbsolute}
-              content={<TimePickerTooltip timeRange={value} />}
-              placement="bottom"
-            >
+            <Tooltip content={<TimePickerTooltip timeRange={value} />} placement="bottom">
               <button
                 aria-label="TimePicker Open Button"
                 className="btn navbar-button navbar-button--zoom"
@@ -149,6 +152,9 @@ export class UnthemedTimePicker extends PureComponent<Props, State> {
               >
                 <i className={classNames('fa fa-clock-o fa-fw', isSynced && timeSyncButton && 'icon-brand-gradient')} />
                 <TimePickerButtonLabel {...this.props} />
+                <span className={styles.caretIcon}>
+                  {isOpen ? <i className="fa fa-caret-up fa-fw" /> : <i className="fa fa-caret-down fa-fw" />}
+                </span>
               </button>
             </Tooltip>
             {isOpen && (
