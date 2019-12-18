@@ -84,9 +84,6 @@ func (wn *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 	bodyJSON.Set("dashboardId", evalContext.Rule.DashboardID)
 	bodyJSON.Set("panelId", evalContext.Rule.PanelID)
 
-	dashboardUid, _ := evalContext.GetDashboardUID()
-	bodyJSON.Set("dashboardUid", dashboardUid)
-
 	tags := make(map[string]string)
 
 	for _, tag := range evalContext.Rule.AlertRuleTags {
