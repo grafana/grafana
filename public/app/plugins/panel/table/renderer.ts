@@ -51,7 +51,6 @@ export class TableRenderer {
           ? style.pattern
           : escapeStringForRegex(unEscapeStringFromRegex(style.pattern));
         const regex = stringToJsRegex(escapedPattern);
-        // const regex = stringToJsRegex(style.pattern);
         if (column.text.match(regex)) {
           column.style = style;
 

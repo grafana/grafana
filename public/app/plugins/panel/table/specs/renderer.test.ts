@@ -185,13 +185,6 @@ describe('when rendering table', () => {
           pattern: 'HiddenType',
           type: 'hidden',
         },
-        {
-          pattern: 'RegEx (without escape)',
-          type: 'number',
-          unit: 'ms',
-          decimals: 3,
-          alias: 'RegEx (without escape)',
-        },
       ],
     };
 
