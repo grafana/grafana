@@ -7,6 +7,7 @@ import { select, boolean } from '@storybook/addon-knobs';
 import { Icon } from '../../Icon/Icon';
 import { Button } from '../Button';
 import { ButtonSelect } from './ButtonSelect';
+import { getIconKnob } from '../../../utils/storybook/knobs';
 
 export default {
   title: 'UI/Forms/Select',
@@ -95,7 +96,6 @@ export const basic = () => {
           setValue(v);
         }}
         size="md"
-        isOpen
         allowCustomValue
         {...getDynamicProps()}
       />
@@ -105,7 +105,7 @@ export const basic = () => {
 
 export const buttonSelect = () => {
   const [value, setValue] = useState<SelectableValue<string>>();
-
+  const icon = getIconKnob();
   return (
     <ButtonSelect
       placeholder="Select all the things..."
@@ -116,6 +116,7 @@ export const buttonSelect = () => {
       }}
       size="md"
       allowCustomValue
+      icon={icon}
       {...getDynamicProps()}
     />
   );
@@ -127,6 +128,7 @@ export const async = () => {
   return (
     <AsyncSelect
       loadOptions={loadAsyncOptions}
+      defaultOptions
       value={value}
       onChange={v => {
         setValue(v);

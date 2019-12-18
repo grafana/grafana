@@ -127,10 +127,16 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant }: StylePro
       `,
       getFocusStyle(theme)
     ),
+    buttonWithIcon: css`
+      padding-left: ${theme.spacing.sm};
+    `,
+    // used for buttons with icon onlys
+    iconButton: css`
+      padding-right: 0;
+    `,
     iconWrap: css`
       label: button-icon-wrap;
-      display: flex;
-      align-items: center;
+      padding: 0 ${theme.spacing.sm} 0 0;
     `,
   };
 });
@@ -146,7 +152,7 @@ type CommonProps = {
   className?: string;
 };
 
-type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
+export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
   const theme = useContext(ThemeContext);

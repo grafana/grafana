@@ -1,11 +1,14 @@
 import React from 'react';
-import cx from 'classnames';
 import { css } from 'emotion';
 import { stylesFactory } from '../../themes';
 
 const getStyles = stylesFactory(() => ({
   content: css`
+    display: flex;
+    flex-direction: row;
+    align-items: center;
     white-space: nowrap;
+    height: 100%;
   `,
 }));
 
@@ -16,24 +19,19 @@ type Props = {
   children: React.ReactNode;
 };
 export function ButtonContent(props: Props) {
-  const { icon, className, iconClassName, children } = props;
+  const { icon, iconClassName, children } = props;
   const styles = getStyles();
-  if (icon && children) {
-    return (
-      <span className={cx(styles.content, className)}>
-        <i className={cx([icon, iconClassName])} />
-        &nbsp; &nbsp;
-        <span>{children}</span>
-      </span>
-    );
-  }
-  if (icon) {
-    return (
-      <span className={cx(styles.content, className)}>
-        <i className={cx([icon, iconClassName])} />
-      </span>
-    );
-  }
 
-  return <span className={styles.content}>{children}</span>;
+  const iconElement = icon && (
+    <span className={iconClassName}>
+      <i className={icon} />
+    </span>
+  );
+
+  return (
+    <span className={styles.content}>
+      {iconElement}
+      {children}
+    </span>
+  );
 }

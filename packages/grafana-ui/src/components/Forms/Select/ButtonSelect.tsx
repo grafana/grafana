@@ -1,15 +1,53 @@
 import React from 'react';
 
-import { Button, ButtonVariant } from '../Button';
+import { Button, ButtonVariant, ButtonProps } from '../Button';
 import { ButtonSize } from '../../Button/types';
 import { SelectCommonProps, SelectBase } from './Select';
-import { DropdownIndicator } from './DropdownIndicator';
+import { css } from 'emotion';
+import { useTheme } from '../../../themes';
+import { Icon } from '../../Icon/Icon';
+import { IconType } from '../../Icon/types';
 
 interface ButtonSelectProps<T> extends Omit<SelectCommonProps<T>, 'renderControl' | 'size' | 'prefix'> {
-  icon?: string;
+  icon?: IconType;
   variant?: ButtonVariant;
   size?: ButtonSize;
 }
+
+interface SelectButtonProps extends Omit<ButtonProps, 'icon'> {
+  icon?: IconType;
+  isOpen?: boolean;
+}
+const SelectButton: React.FC<SelectButtonProps> = ({ icon, children, isOpen, ...buttonProps }) => {
+  const theme = useTheme();
+  const styles = {
+    wrapper: css`
+      display: flex;
+      justify-content: space-between;
+    `,
+    iconWrap: css`
+      padding: 0 15px 0 0;
+    `,
+    caretWrap: css`
+      padding-left: ${theme.spacing.sm};
+      margin-left: ${theme.spacing.sm};
+      margin-right: -${theme.spacing.sm};
+      height: 100%;
+    `,
+  };
+  const buttonIcon = `fa fa-${icon}`;
+  const caretIcon = isOpen ? 'caret-up' : 'caret-down';
+  return (
+    <Button {...buttonProps} icon={buttonIcon}>
+      <div className={styles.wrapper}>
+        {children}
+        <div className={styles.caretWrap}>
+          <Icon name={caretIcon} />
+        </div>
+      </div>
+    </Button>
+  );
+};
 
 export function ButtonSelect<T>({
   placeholder,
@@ -33,12 +71,9 @@ export function ButtonSelect<T>({
       {...selectProps}
       renderControl={({ onBlur, onClick, value, isOpen }) => {
         return (
-          <Button {...buttonProps} onBlur={onBlur} onClick={onClick}>
-            <>
-              {value ? value.label : placeholder}
-              <DropdownIndicator isOpen={isOpen} />
-            </>
-          </Button>
+          <SelectButton {...buttonProps} onBlur={onBlur} onClick={onClick} isOpen={isOpen}>
+            {value ? value.label : placeholder}
+          </SelectButton>
         );
       }}
     />

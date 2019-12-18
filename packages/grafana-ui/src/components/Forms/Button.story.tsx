@@ -1,6 +1,8 @@
 import React from 'react';
 import { Button, ButtonVariant } from './Button';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { getIconKnob } from '../../utils/storybook/knobs';
+
 import { select, text } from '@storybook/addon-knobs';
 import { ButtonSize } from '../Button/types';
 import mdx from './Button.mdx';
@@ -24,9 +26,10 @@ export const simple = () => {
   const variant = select('Variant', variants, 'primary');
   const size = select('Size', sizes, 'md');
   const buttonText = text('text', 'Button');
+  const icon = getIconKnob();
 
   return (
-    <Button variant={variant as ButtonVariant} size={size as ButtonSize}>
+    <Button variant={variant as ButtonVariant} size={size as ButtonSize} icon={icon && `fa fa-${icon}`}>
       {buttonText}
     </Button>
   );

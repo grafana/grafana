@@ -19,12 +19,12 @@ type CommonProps = {
 
 type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
-  console.log(props);
   const theme = useContext(ThemeContext);
   const { size, variant, icon, children, className, styles: stylesProp, ...buttonProps } = props;
 
   // Default this to 'button', otherwise html defaults to 'submit' which then submits any form it is in.
   buttonProps.type = buttonProps.type || 'button';
+
   const styles: ButtonStyles =
     stylesProp ||
     getButtonStyles({
@@ -33,14 +33,16 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, r
       variant: variant || 'primary',
     });
 
+  const buttonClassName = cx(styles.button, icon && styles.buttonWithIcon, icon && !children && styles.iconButton);
   return (
-    <button className={cx(styles.button, className)} {...buttonProps} ref={ref}>
-      <ButtonContent iconClassName={styles.icon} className={styles.iconWrap} icon={icon}>
+    <button className={buttonClassName} {...buttonProps} ref={ref}>
+      <ButtonContent iconClassName={styles.iconWrap} icon={icon}>
         {children}
       </ButtonContent>
     </button>
   );
 });
+
 Button.displayName = 'Button';
 
 type LinkButtonProps = CommonProps &
@@ -61,8 +63,9 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, LinkButtonProps>((
       variant: variant || 'primary',
     });
 
+  const buttonClassName = cx(styles.button, icon && styles.buttonWithIcon, icon && !children && styles.iconButton);
   return (
-    <a className={cx(styles.button, className)} {...anchorProps} ref={ref}>
+    <a className={buttonClassName} {...anchorProps} ref={ref}>
       <ButtonContent iconClassName={styles.icon} className={styles.iconWrap} icon={icon}>
         {children}
       </ButtonContent>
