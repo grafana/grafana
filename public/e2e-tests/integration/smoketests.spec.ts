@@ -8,27 +8,25 @@ e2e.scenario({
   skipScenario: false,
   scenario: () => {
     e2e.flows.openDashboard(e2e.context().get('lastAddedDashboardUid'));
-    e2e.pages.Dashboard.toolbarItems('Add panel')
-      .should('be.visible') // prevents flakiness
-      .click();
+    e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
     e2e.pages.AddDashboard.ctaButtons('Add Query').click();
 
-    e2e.pages.Panels.EditPanel.tabItems('Queries').click();
-    e2e.pages.Panels.DataSource.TestData.QueryTab.scenarioSelect().select('CSV Metric Values');
+    e2e.pages.Dashboard.Panels.EditPanel.tabItems('Queries').click();
+    e2e.pages.Dashboard.Panels.DataSource.TestData.QueryTab.scenarioSelect().select('CSV Metric Values');
 
-    e2e.pages.Panels.EditPanel.tabItems('Visualization').click();
+    e2e.pages.Dashboard.Panels.EditPanel.tabItems('Visualization').click();
 
-    e2e.pages.Panels.Visualization.Graph.VisualizationTab.xAxisSection()
+    e2e.pages.Dashboard.Panels.Visualization.Graph.VisualizationTab.xAxisSection()
       .contains('Show')
       .click();
 
     e2e.flows.saveDashboard();
 
-    e2e.pages.Dashboard.backArrow().click();
+    e2e.pages.Dashboard.Toolbar.backArrow().click();
 
-    e2e.pages.Panels.Panel.title('Panel Title').click();
+    e2e.pages.Dashboard.Panels.Panel.title('Panel Title').click();
 
-    e2e.pages.Panels.Panel.headerItems('Share').click();
+    e2e.pages.Dashboard.Panels.Panel.headerItems('Share').click();
 
     e2e.pages.SharePanelModal.linkToRenderedImage().then(($a: any) => {
       // extract the fully qualified href property
