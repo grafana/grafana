@@ -15,10 +15,10 @@ export function feedToDataFrame(feed: RssFeed): DataFrame {
       title.buffer.push(item.title);
       link.buffer.push(item.link);
 
-      let body = item.content;
+      let body = item.content.replace(/<\/?[^>]+(>|$)/g, '');
 
-      if (body && body.length > 200) {
-        body = body.substr(0, 200);
+      if (body && body.length > 300) {
+        body = body.substr(0, 300);
       }
 
       content.buffer.push(body);

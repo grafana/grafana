@@ -5,7 +5,7 @@ import { css } from 'emotion';
 
 // Utils & Services
 import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, CustomScrollbar } from '@grafana/ui';
+import { stylesFactory, CustomScrollbar, styleMixins } from '@grafana/ui';
 import config from 'app/core/config';
 import { feedToDataFrame } from './utils';
 import { sanitize } from 'app/core/utils/text';
@@ -96,14 +96,18 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
   item: css`
     background: ${theme.colors.pageBg};
-    padding: ${theme.spacing.md};
+    padding: ${theme.spacing.sm};
     position: relative;
     margin-bottom: 4px;
+    border-radius: 3px;
+    margin-right: ${theme.spacing.sm};
+    ${styleMixins.cardChrome(theme)}
   `,
   title: css`
     color: ${theme.colors.linkExternal};
     max-width: calc(100% - 70px);
-    font-size: ${theme.typography.size.lg};
+    font-size: 16px;
+    margin-bottom: ${theme.spacing.sm};
   `,
   content: css`
     p {
@@ -114,8 +118,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     position: absolute;
     top: 0;
     right: 0;
-    background: ${theme.colors.panelBg};
-    width: 60px;
-    padding: ${theme.spacing.sm};
+    background: ${theme.colors.bodyBg};
+    width: 55px;
+    text-align: right;
+    padding: ${theme.spacing.xs};
+    font-weight: 500;
+    border-radius: 0 0 0 3px;
+    color: ${theme.colors.textWeak};
   `,
 }));
