@@ -10,10 +10,10 @@ import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper'
 
 // Utils & Services
 import { stylesFactory } from '../../themes/stylesFactory';
-import { withTheme } from '../../themes/ThemeContext';
+import { withTheme, useTheme } from '../../themes/ThemeContext';
 
 // Types
-import { isDateTime, DateTime, rangeUtil, GrafanaTheme, TIME_FORMAT } from '@grafana/data';
+import { isDateTime, DateTime, rangeUtil, GrafanaTheme, TIME_FORMAT, GrafanaThemeType } from '@grafana/data';
 import { TimeRange, TimeOption, TimeZone, dateMath } from '@grafana/data';
 import { Themeable } from '../../types';
 
@@ -61,6 +61,20 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     buttons: css`
       display: flex;
+    `,
+  };
+});
+
+const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    container: css`
+      display: inline-block;
+    `,
+    utc: css`
+      color: ${theme.colors.orange};
+      font-size: 75%;
+      padding: 3px;
+      font-weight: ${theme.typography.weight.semibold};
     `,
   };
 });
@@ -187,6 +201,8 @@ const TimePickerTooltip = ({ timeRange }: { timeRange: TimeRange }) => (
 );
 
 const TimePickerButtonLabel = memo<Props>(props => {
+  const theme = useTheme();
+  const styles = getLabelStyles(theme);
   const isUTC = props.timeZone === 'utc';
 
   if (props.hideText) {
@@ -194,10 +210,10 @@ const TimePickerButtonLabel = memo<Props>(props => {
   }
 
   return (
-    <>
+    <span className={styles.container}>
       <span>{formattedRange(props.value, isUTC)}</span>
-      {isUTC && <span className="time-picker-utc">UTC</span>}
-    </>
+      {isUTC && <span className={styles.utc}>UTC</span>}
+    </span>
   );
 });
 
