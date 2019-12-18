@@ -39,12 +39,19 @@ export function BracesPlugin(): Plugin {
             text[focusOffset] === ' ' ||
             Object.values(BRACES).includes(text[focusOffset])
           ) {
-            editor
-              .insertText(`${keyEvent.key}${BRACES[keyEvent.key]}`)
-              .moveAnchorBackward(1)
-              .addMark(MATCH_MARK)
-              .moveAnchorForward(1)
-              .moveBackward(1);
+            editor.insertText(`${keyEvent.key}${BRACES[keyEvent.key]}`).moveBackward(1);
+            editor.value.anchorBlock.createDecoration({
+              object: 'decoration',
+              anchor: {
+                key: value.anchorText.key,
+                offset: startOffset,
+              },
+              focus: {
+                key: value.anchorText.key,
+                offset: startOffset + 1,
+              },
+              type: MATCH_MARK,
+            });
           } else {
             editor.insertText(keyEvent.key);
           }
