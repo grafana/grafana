@@ -114,28 +114,24 @@ Example json body:
   "dashboardId":1,
   "evalMatches":[
     {
-      "value":100,
-      "metric":"High value",
-      "tags":null
-    },
-    {
-      "value":200,
-      "metric":"Higher Value",
-      "tags":null
+      "value":1,
+      "metric":"Count",
+      "tags":{}
     }
   ],
   "imageUrl":"https://grafana.com/assets/img/blog/mixed_styles.png",
-  "message":"Someone is testing the alert notification within grafana.",
-  "orgId":0,
-  "panelId":1,
-  "ruleId":0,
-  "ruleName":"Test notification",
-  "ruleUrl":"http://localhost:3000/",
+  "message":"Notification Message",
+  "orgId":1,
+  "panelId":2,
+  "ruleId":1,
+  "ruleName":"Panel Title alert",
+  "ruleUrl":"http://localhost:3000/d/hZ7BuVbWz/test-dashboard?fullscreen\u0026edit\u0026tab=alert\u0026panelId=2\u0026orgId=1",
   "state":"alerting",
-  "tags":{},
-  "title":"[Alerting] Test notification"
-}
-```
+  "tags":{
+    "tag name":"tag value"
+  },
+  "title":"[Alerting] Panel Title alert"
+}```
 
 - **state** - The possible values for alert state are: `ok`, `paused`, `alerting`, `pending`, `no_data`.
 
