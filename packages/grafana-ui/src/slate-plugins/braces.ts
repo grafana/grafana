@@ -7,6 +7,8 @@ const BRACES: any = {
   '(': ')',
 };
 
+const MATCH_MARK = 'brace_match';
+
 export function BracesPlugin(): Plugin {
   return {
     onKeyDown(event: Event, editor: CoreEditor, next: Function) {
@@ -32,15 +34,42 @@ export function BracesPlugin(): Plugin {
               .insertTextByKey(endKey, endOffset + 1, BRACES[keyEvent.key])
               .moveEndBackward(1);
           } else if (
+            // Insert matching brace when there is no input after caret
             focusOffset === text.length ||
             text[focusOffset] === ' ' ||
             Object.values(BRACES).includes(text[focusOffset])
           ) {
-            editor.insertText(`${keyEvent.key}${BRACES[keyEvent.key]}`).moveBackward(1);
+            editor
+              .insertText(`${keyEvent.key}${BRACES[keyEvent.key]}`)
+              .moveAnchorBackward(1)
+              .addMark(MATCH_MARK)
+              .moveAnchorForward(1)
+              .moveBackward(1);
           } else {
             editor.insertText(keyEvent.key);
           }
 
+          return true;
+        }
+
+        case ')':
+        case '}':
+        case ']': {
+          const text = value.anchorText.text;
+          const offset = value.selection.anchor.offset;
+          const nextChar = text[offset];
+          // Handle closing brace when it's already the next character
+          if (nextChar === keyEvent.key && !value.selection.isExpanded) {
+            keyEvent.preventDefault();
+            editor.moveEndForward(1);
+            const marks = value.anchorBlock.getMarksAtRange(editor.value.selection);
+            // If the plugin inserted the brace, simply move over it
+            if (!marks?.isEmpty() && marks.first().type === MATCH_MARK) {
+              editor.moveForward(1);
+            } else {
+              editor.insertText(keyEvent.key);
+            }
+          }
           return true;
         }
 

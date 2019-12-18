@@ -37,4 +37,13 @@ describe('braces', () => {
     const handled = handler(event as Event, editor.instance().moveForward(5) as any, nextMock);
     expect(handled).toBeFalsy();
   });
+
+  it('overrides an automatically inserted brace', () => {
+    const value = Plain.deserialize('()');
+    const editor = shallow<Editor>(<Editor value={value} />);
+    const event = new window.KeyboardEvent('keydown', { key: ')' });
+    const handled = handler(event as Event, editor.instance().moveForward(1) as any, nextMock);
+    expect(handled).toBeTruthy();
+    expect(Plain.serialize(editor.instance().value)).toEqual('()');
+  });
 });
