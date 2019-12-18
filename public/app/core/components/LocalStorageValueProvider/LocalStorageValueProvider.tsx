@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import store from '../../store';
 
 export interface Props<T> {
-  key: string;
+  storageKey: string;
   defaultValue?: T;
   children: (value: T, onSaveToStore: (value: T) => void) => React.ReactNode;
 }
@@ -15,16 +15,16 @@ export class LocalStorageValueProvider<T> extends PureComponent<Props<T>, State<
   constructor(props: Props<T>) {
     super(props);
 
-    const { key, defaultValue } = props;
+    const { storageKey, defaultValue } = props;
 
     this.state = {
-      value: store.getObject(key, defaultValue),
+      value: store.getObject(storageKey, defaultValue),
     };
   }
 
   onSaveToStore = (value: T) => {
-    const { key } = this.props;
-    store.setObject(key, value);
+    const { storageKey } = this.props;
+    store.setObject(storageKey, value);
     this.setState({ value });
   };
 

@@ -9,7 +9,7 @@ interface Props extends Omit<TimePickerProps, 'history' | 'theme'> {}
 
 export const TimePickerWithHistory: React.FC<Props> = props => {
   return (
-    <LocalStorageValueProvider<TimeRange[]> key={LOCAL_STORAGE_KEY} defaultValue={[]}>
+    <LocalStorageValueProvider<TimeRange[]> storageKey={LOCAL_STORAGE_KEY} defaultValue={[]}>
       {(values, onSaveToStore) => {
         return (
           <TimePicker {...props} history={values} onChange={range => onAppendToHistory(range, values, onSaveToStore)} />
