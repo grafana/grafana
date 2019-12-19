@@ -119,47 +119,45 @@ export class PanelChrome extends PureComponent<Props, State> {
   // Updates the response with information from the stream
   // The next is outside a react synthetic event so setState is not batched
   // So in this context we can only do a single call to setState
-  panelDataObserver = {
-    next: (data: PanelData) => {
-      if (!this.props.isInView) {
-        // Ignore events when not visible.
-        // The call will be repeated when the panel comes into view
-        return;
-      }
+  onDataUpdate(data: PanelData) {
+    if (!this.props.isInView) {
+      // Ignore events when not visible.
+      // The call will be repeated when the panel comes into view
+      return;
+    }
 
-      let { isFirstLoad } = this.state;
-      let errorMessage: string | null = null;
+    let { isFirstLoad } = this.state;
+    let errorMessage: string | null = null;
 
-      switch (data.state) {
-        case LoadingState.Loading:
-          // Skip updating state data if it is already in loading state
-          // This is to avoid rendering partial loading responses
-          if (this.state.data.state === LoadingState.Loading) {
-            return;
+    switch (data.state) {
+      case LoadingState.Loading:
+        // Skip updating state data if it is already in loading state
+        // This is to avoid rendering partial loading responses
+        if (this.state.data.state === LoadingState.Loading) {
+          return;
+        }
+        break;
+      case LoadingState.Error:
+        const { error } = data;
+        if (error) {
+          if (errorMessage !== error.message) {
+            errorMessage = error.message;
           }
-          break;
-        case LoadingState.Error:
-          const { error } = data;
-          if (error) {
-            if (errorMessage !== error.message) {
-              errorMessage = error.message;
-            }
-          }
-          break;
-        case LoadingState.Done:
-          // If we are doing a snapshot save data in panel model
-          if (this.props.dashboard.snapshot) {
-            this.props.panel.snapshotData = data.series.map(frame => toDataFrameDTO(frame));
-          }
-          if (isFirstLoad) {
-            isFirstLoad = false;
-          }
-          break;
-      }
+        }
+        break;
+      case LoadingState.Done:
+        // If we are doing a snapshot save data in panel model
+        if (this.props.dashboard.snapshot) {
+          this.props.panel.snapshotData = data.series.map(frame => toDataFrameDTO(frame));
+        }
+        if (isFirstLoad) {
+          isFirstLoad = false;
+        }
+        break;
+    }
 
-      this.setState({ isFirstLoad, errorMessage, data });
-    },
-  };
+    this.setState({ isFirstLoad, errorMessage, data });
+  }
 
   onRefresh = () => {
     const { panel, isInView, width } = this.props;
@@ -182,7 +180,9 @@ export class PanelChrome extends PureComponent<Props, State> {
       const queryRunner = panel.getQueryRunner();
 
       if (!this.querySubscription) {
-        this.querySubscription = queryRunner.getData().subscribe(this.panelDataObserver);
+        this.querySubscription = queryRunner.getData().subscribe({
+          next: data => this.onDataUpdate(data),
+        });
       }
 
       queryRunner.run({
