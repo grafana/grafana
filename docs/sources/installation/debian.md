@@ -55,6 +55,20 @@ Add this repository if you want beta releases:
 sudo add-apt-repository "deb https://packages.grafana.com/oss/deb beta main"
 ```
 
+If `add-apt-repository` doesn't work, you can create the repository definition manually. This can be useful on ARM systems.
+
+Create `/etc/apt/sources.list.d/grafana.list` with the following content:
+
+```bash
+deb https://packages.grafana.com/oss/deb stable main
+```
+
+Or, for beta:
+
+```bash
+deb https://packages.grafana.com/oss/deb beta main
+```
+
 Update your APT repositories and install Grafana:
 
 ```bash
