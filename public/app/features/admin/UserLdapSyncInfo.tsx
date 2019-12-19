@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { dateTime } from '@grafana/data';
 import { SyncInfo } from 'app/types';
+import { Button, LinkButton } from '@grafana/ui';
 
 interface Props {
   ldapSyncInfo: SyncInfo;
@@ -14,7 +15,6 @@ const debugLDAPMappingURL = '/admin/ldap';
 
 export class UserLdapSyncInfo extends PureComponent<Props, State> {
   onUserSync = () => {
-    console.log('Sync user');
     this.props.onUserSync();
   };
 
@@ -66,12 +66,12 @@ export class UserLdapSyncInfo extends PureComponent<Props, State> {
             </table>
           </div>
           <div className="gf-form-button-row">
-            <button className="btn btn-secondary" onClick={this.onUserSync}>
+            <Button variant="secondary" onClick={this.onUserSync}>
               Sync user
-            </button>
-            <a className="btn btn-inverse" href={debugLDAPMappingURL}>
+            </Button>
+            <LinkButton variant="inverse" href={debugLDAPMappingURL}>
               Debug LDAP Mapping
-            </a>
+            </LinkButton>
           </div>
         </div>
       </>

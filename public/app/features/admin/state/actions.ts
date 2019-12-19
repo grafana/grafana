@@ -14,16 +14,7 @@ import {
   UserOrg,
   UserAdminError,
 } from 'app/types';
-import {
-  getUserInfo,
-  getLdapState,
-  syncLdapUser,
-  getUser,
-  getUserSessions,
-  revokeUserSession,
-  revokeAllUserSessions,
-  getLdapSyncStatus,
-} from './apis';
+import { getUserInfo, getLdapState, getUser, getUserSessions, revokeUserSession, revokeAllUserSessions } from './apis';
 
 // Action types
 
@@ -67,16 +58,6 @@ export function loadLdapState(): ThunkResult<void> {
   };
 }
 
-export function loadLdapSyncStatus(): ThunkResult<void> {
-  return async dispatch => {
-    if (config.buildInfo.isEnterprise) {
-      // Available only in enterprise
-      const syncStatus = await getLdapSyncStatus();
-      dispatch(ldapSyncStatusLoadedAction(syncStatus));
-    }
-  };
-}
-
 export function loadUserMapping(username: string): ThunkResult<void> {
   return async dispatch => {
     try {
@@ -104,18 +85,6 @@ export function clearUserMappingInfo(): ThunkResult<void> {
   return dispatch => {
     dispatch(clearUserErrorAction());
     dispatch(clearUserMappingInfoAction());
-  };
-}
-
-export function syncUser(userId: number): ThunkResult<void> {
-  return async dispatch => {
-    try {
-      await syncLdapUser(userId);
-      dispatch(loadLdapUserInfo(userId));
-      dispatch(loadLdapSyncStatus());
-    } catch (error) {
-      dispatch(userSyncFailedAction());
-    }
   };
 }
 
@@ -261,5 +230,24 @@ export function revokeAllSessions(userId: number): ThunkResult<void> {
   return async dispatch => {
     await revokeAllUserSessions(userId);
     dispatch(loadUserSessions(userId));
+  };
+}
+
+// LDAP user actions
+
+export function loadLdapSyncStatus(): ThunkResult<void> {
+  return async dispatch => {
+    // Available only in enterprise
+    if (config.buildInfo.isEnterprise) {
+      const syncStatus = await getBackendSrv().get(`/api/admin/ldap-sync-status`);
+      dispatch(ldapSyncStatusLoadedAction(syncStatus));
+    }
+  };
+}
+
+export function syncLdapUser(userId: number): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv().post(`/api/admin/ldap/sync/${userId}`);
+    dispatch(loadAdminUserPage(userId));
   };
 }

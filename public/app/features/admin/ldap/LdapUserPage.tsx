@@ -21,7 +21,7 @@ import {
   revokeSession,
   revokeAllSessions,
   loadLdapSyncStatus,
-  syncUser,
+  syncLdapUser,
 } from '../state/actions';
 import { LdapUserInfo } from './LdapUserInfo';
 import { getRouteParamsId } from 'app/core/selectors/location';
@@ -41,7 +41,7 @@ interface Props {
   loadLdapUserInfo: typeof loadLdapUserInfo;
   clearUserError: typeof clearUserError;
   loadLdapSyncStatus: typeof loadLdapSyncStatus;
-  syncUser: typeof syncUser;
+  syncLdapUser: typeof syncLdapUser;
   revokeSession: typeof revokeSession;
   revokeAllSessions: typeof revokeAllSessions;
 }
@@ -70,9 +70,9 @@ export class LdapUserPage extends PureComponent<Props, State> {
   };
 
   onSyncUser = () => {
-    const { syncUser, user } = this.props;
-    if (syncUser && user) {
-      syncUser(user.id);
+    const { syncLdapUser, user } = this.props;
+    if (syncLdapUser && user) {
+      syncLdapUser(user.id);
     }
   };
 
@@ -152,7 +152,7 @@ const mapStateToProps = (state: StoreState) => ({
 const mapDispatchToProps = {
   loadLdapUserInfo,
   loadLdapSyncStatus,
-  syncUser,
+  syncLdapUser,
   revokeSession,
   revokeAllSessions,
   clearUserError,

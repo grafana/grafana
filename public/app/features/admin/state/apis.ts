@@ -1,6 +1,6 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { dateTime } from '@grafana/data';
-import { LdapUser, LdapConnectionInfo, UserSession, SyncInfo, User } from 'app/types';
+import { LdapUser, LdapConnectionInfo, UserSession, User } from 'app/types';
 
 export interface ServerStat {
   name: string;
@@ -36,14 +36,6 @@ export const getServerStats = async (): Promise<ServerStat[]> => {
 
 export const getLdapState = async (): Promise<LdapConnectionInfo> => {
   return await getBackendSrv().get(`/api/admin/ldap/status`);
-};
-
-export const getLdapSyncStatus = async (): Promise<SyncInfo> => {
-  return await getBackendSrv().get(`/api/admin/ldap-sync-status`);
-};
-
-export const syncLdapUser = async (userId: number) => {
-  return await getBackendSrv().post(`/api/admin/ldap/sync/${userId}`);
 };
 
 export const getUserInfo = async (username: string): Promise<LdapUser> => {

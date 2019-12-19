@@ -27,6 +27,7 @@ import {
   addOrgUser,
   updateOrgUserRole,
   deleteOrgUser,
+  syncLdapUser,
 } from './state/actions';
 import { UserOrgs } from './UserOrgs';
 
@@ -55,6 +56,7 @@ interface Props {
   addOrgUser: typeof addOrgUser;
   updateOrgUserRole: typeof updateOrgUserRole;
   deleteOrgUser: typeof deleteOrgUser;
+  syncLdapUser: typeof syncLdapUser;
 }
 
 interface State {
@@ -118,7 +120,8 @@ export class UserAdminPage extends PureComponent<Props, State> {
   };
 
   onUserSync = () => {
-    console.log('sync user', this.props.user.login);
+    const { userId, syncLdapUser } = this.props;
+    syncLdapUser(userId);
   };
 
   render() {
@@ -194,6 +197,7 @@ const mapDispatchToProps = {
   deleteOrgUser,
   revokeSession,
   revokeAllSessions,
+  syncLdapUser,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UserAdminPage));
