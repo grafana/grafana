@@ -4,12 +4,12 @@ import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardSearchHit } from 'app/types/search';
-import { FolderInfo, DashboardDTO, CoreEvents } from 'app/types';
+import { CoreEvents, DashboardDTO, FolderInfo } from 'app/types';
 import { BackendSrv as BackendService, BackendSrvRequest } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
 import { contextSrv } from './context_srv';
-import { Observable, throwError, Subject, from, of } from 'rxjs';
-import { map, mergeMap, tap, retryWhen, catchError, takeUntil, finalize } from 'rxjs/operators';
+import { from, Observable, of, Subject, throwError } from 'rxjs';
+import { catchError, finalize, map, mergeMap, retryWhen, takeUntil, tap } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
 import { coreModule } from 'app/core/core_module';
 
@@ -121,7 +121,13 @@ export class BackendSrv implements BackendService {
       body: JSON.stringify(options.data),
     })
       .pipe(
-        mergeMap(res => res.json()),
+        mergeMap(res => {
+          if (res.ok) {
+            return res.json();
+          } else {
+            return throwError(res);
+          }
+        }),
         tap(res => {
           if (options.method !== 'GET' && res?.message && options.showSuccessAlert) {
             appEvents.emit(AppEvents.alertSuccess, [res.message]);
@@ -130,7 +136,7 @@ export class BackendSrv implements BackendService {
         retryWhen((attempts: Observable<any>) =>
           attempts.pipe(
             mergeMap((error, i) => {
-              const firstAttempt = i === 0;
+              const firstAttempt = i === 0 && options.retry === 0;
 
               if (error.status !== 401 || !contextSrv.user.isSignedIn || !firstAttempt) {
                 return throwError(error);
@@ -218,7 +224,13 @@ export class BackendSrv implements BackendService {
       body: JSON.stringify(options.data),
     })
       .pipe(
-        mergeMap(res => res.json()),
+        mergeMap(res => {
+          if (res.ok) {
+            return res.json();
+          } else {
+            return throwError(res);
+          }
+        }),
         tap(res => {
           if (!options.silent) {
             appEvents.emit(CoreEvents.dsRequestResponse, res);
@@ -228,7 +240,7 @@ export class BackendSrv implements BackendService {
         retryWhen((attempts: Observable<any>) =>
           attempts.pipe(
             mergeMap((error, i) => {
-              const firstAttempt = i === 0;
+              const firstAttempt = i === 0  && options.retry === 0;
 
               if (error.status !== 401 || !requestIsLocal || !firstAttempt) {
                 return throwError(error);
