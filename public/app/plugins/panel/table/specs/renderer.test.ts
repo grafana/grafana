@@ -477,43 +477,70 @@ describe('when rendering table with different patterns', () => {
   );
 });
 
+// noinspection CssInvalidPropertyValue
+const cases = [
+  //align,   preserve fmt, color mode, expected
+  ['default', false, null, '<td style="text-align:default">42</td>'],
+  ['left', false, null, '<td style="text-align:left">42</td>'],
+  ['left', true, null, '<td class="table-panel-cell-pre" style="text-align:left">42</td>'],
+  ['center', false, null, '<td style="text-align:center">42</td>'],
+  [
+    'center',
+    true,
+    'cell',
+    '<td class="table-panel-color-cell table-panel-cell-pre" style="background-color:rgba(50, 172, 45, 0.97);text-align:center">42</td>',
+  ],
+  [
+    'right',
+    false,
+    'cell',
+    '<td class="table-panel-color-cell" style="background-color:rgba(50, 172, 45, 0.97);text-align:right">42</td>',
+  ],
+  [
+    'right',
+    true,
+    'cell',
+    '<td class="table-panel-color-cell table-panel-cell-pre" style="background-color:rgba(50, 172, 45, 0.97);text-align:right">42</td>',
+  ],
+];
+
 describe('when rendering cells with different alignment options', () => {
-  it.each`
-    align        | expected
-    ${'default'} | ${'<td style="text-align:default">42</td>'}
-    ${'left'}    | ${'<td style="text-align:left">42</td>'}
-    ${'center'}  | ${'<td style="text-align:center">42</td>'}
-    ${'right'}   | ${'<td style="text-align:right">42</td>'}
-    ${'justify'} | ${'<td style="text-align:justify">42</td>'}
-  `('$align-aligned columns should be formatted with correct style', ({ align, expected }) => {
-    const table = new TableModel();
-    table.columns = [{ text: 'Time' }, { text: align }];
-    table.rows = [[0, 42]];
+  it.each(cases)(
+    '%s-aligned, preformatted:%s columns should be formatted with correct style',
+    (align: string, preserveFormat: boolean, colorMode, expected: string) => {
+      const table = new TableModel();
+      table.columns = [{ text: 'Time' }, { text: align }];
+      table.rows = [[0, 42]];
 
-    const panel = {
-      pageSize: 10,
-      styles: [
-        {
-          pattern: 'Time',
-          type: 'date',
-          format: 'LLL',
-          alias: 'Timestamp',
-        },
-        {
-          pattern: `/${align}/`,
-          align: align,
-          type: 'number',
-          unit: 'none',
-        },
-      ],
-    };
+      const panel = {
+        pageSize: 10,
+        styles: [
+          {
+            pattern: 'Time',
+            type: 'date',
+            format: 'LLL',
+            alias: 'Timestamp',
+          },
+          {
+            pattern: `/${align}/`,
+            align: align,
+            type: 'number',
+            unit: 'none',
+            preserveFormat: preserveFormat,
+            colorMode: colorMode,
+            thresholds: [1, 2],
+            colors: ['rgba(245, 54, 54, 0.9)', 'rgba(237, 129, 40, 0.89)', 'rgba(50, 172, 45, 0.97)'],
+          },
+        ],
+      };
 
-    //@ts-ignore
-    const renderer = new TableRenderer(panel, table, 'utc', sanitize, templateSrv);
-    const html = renderer.renderCell(1, 0, 42);
+      //@ts-ignore
+      const renderer = new TableRenderer(panel, table, 'utc', sanitize, templateSrv);
+      const html = renderer.renderCell(1, 0, 42);
 
-    expect(html).toBe(expected);
-  });
+      expect(html).toBe(expected);
+    }
+  );
 });
 
 function normalize(str: string) {
