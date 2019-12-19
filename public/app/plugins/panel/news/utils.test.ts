@@ -4,12 +4,12 @@ import { DataFrameView } from '@grafana/data';
 
 describe('news', () => {
   test('convert RssFeed to DataFrame', () => {
-    const frame = feedToDataFrame(grafana_2019_12_16);
+    const frame = feedToDataFrame(grafana20191216);
     expect(frame.length).toBe(5);
 
     // Iterate the links
     const view = new DataFrameView<NewsItem>(frame);
-    const links = view.map(item => {
+    const links = view.map((item: NewsItem) => {
       return item.link;
     });
     expect(links).toEqual([
@@ -22,7 +22,7 @@ describe('news', () => {
   });
 });
 
-const grafana_2019_12_16 = {
+const grafana20191216 = {
   items: [
     {
       title: 'Meet the Grafana Labs Team: Aengus Rooney',
