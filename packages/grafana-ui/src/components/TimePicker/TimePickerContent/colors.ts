@@ -26,7 +26,7 @@ export const getThemeColors = (theme: GrafanaTheme) => {
     ),
     formBackground: selectThemeVariant(
       {
-        dark: theme.colors.gray10,
+        dark: theme.colors.gray15,
         light: theme.colors.gray98,
       },
       theme.type

@@ -51,6 +51,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         width: 100% !important;
       }
     `,
+    spacing: css`
+      margin-top: 16px;
+    `,
   };
 });
 
@@ -153,6 +156,7 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = pr
           value={props.value}
           timeZone={props.timeZone}
         />
+        <div className={styles.spacing} />
         <TimeRangeList
           title="Other quick ranges"
           options={otherOptions}
@@ -255,7 +259,7 @@ const EmptyRecentList = memo(() => {
         </span>
       </div>
       <div>
-        <a className={styles.link} href="#" target="_new">
+        <a className={styles.link} href="https://grafana.com/docs/grafana/latest/reference/timerange/" target="_new">
           Read the documentation
         </a>
         <span> to find out more about how to enter custom time ranges.</span>

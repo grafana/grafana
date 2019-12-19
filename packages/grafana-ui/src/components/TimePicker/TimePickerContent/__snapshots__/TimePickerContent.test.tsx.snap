@@ -68,6 +68,9 @@ exports[`TimePickerContent renders correctly in full screen 1`] = `
         }
       }
     />
+    <div
+      className="css-1ogeuxc"
+    />
     <Component
       onSelect={[Function]}
       options={Array []}
@@ -155,6 +158,9 @@ exports[`TimePickerContent renders correctly in narrow screen 1`] = `
           "to": "2019-12-18T07:48:27.433Z",
         }
       }
+    />
+    <div
+      className="css-1ogeuxc"
     />
     <Component
       onSelect={[Function]}
@@ -313,6 +319,9 @@ exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
           "to": "2019-12-18T07:48:27.433Z",
         }
       }
+    />
+    <div
+      className="css-1ogeuxc"
     />
     <Component
       onSelect={[Function]}

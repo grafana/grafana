@@ -19,16 +19,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       right: 546px;
       box-shadow: 0px 0px 20px ${colors.shadow};
       background-color: ${colors.background};
+      z-index: -1;
 
       &:after {
         display: block;
         background-color: ${colors.background};
-        width: 4px;
-        height: 201px;
+        width: 19px;
+        height: 381px;
         content: ' ';
         position: absolute;
         top: 0;
-        right: -3px;
+        right: -19px;
         border-left: 1px solid ${colors.border};
       }
     `,
@@ -97,6 +98,7 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
       .react-calendar__navigation__label,
       .react-calendar__navigation__arrow,
       .react-calendar__navigation {
+        margin-top: 4px;
         background-color: inherit;
         color: ${theme.colors.text};
         border: 0;
@@ -113,7 +115,7 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
           text-decoration: none;
           cursor: default;
           display: block;
-          padding: 4px 0 0 0;
+          padding: 4px 0 4px 0;
         }
       }
 
@@ -123,6 +125,7 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
 
       .react-calendar__tile,
       .react-calendar__tile--now {
+        margin-bottom: 4px;
         background-color: inherit;
       }
 
@@ -256,6 +259,7 @@ const Body = memo<Props>(props => {
       nextLabel={<span className="fa fa-angle-right" />}
       prevLabel={<span className="fa fa-angle-left" />}
       onChange={value => valueToInput(value, onChange)}
+      locale="en"
     />
   );
 });
