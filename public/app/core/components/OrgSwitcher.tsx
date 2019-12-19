@@ -9,7 +9,6 @@ import config from 'app/core/config';
 
 interface Props {
   onDismiss: () => void;
-  isOpen: boolean;
 }
 
 interface State {
@@ -42,13 +41,13 @@ export class OrgSwitcher extends React.PureComponent<Props, State> {
   }
 
   render() {
-    const { onDismiss, isOpen } = this.props;
+    const { onDismiss } = this.props;
     const { orgs } = this.state;
 
     const currentOrgId = contextSrv.user.orgId;
 
     return (
-      <Modal title="Switch Organization" icon="random" onDismiss={onDismiss} isOpen={isOpen}>
+      <Modal title="Switch Organization" icon="random" onDismiss={onDismiss} isOpen={true}>
         <table className="filter-table form-inline">
           <thead>
             <tr>

@@ -118,7 +118,7 @@
       <div class="gf-form">
         <label class="gf-form-label query-keyword width-9">Workspace</label>
         <gf-form-dropdown model="ctrl.target.azureLogAnalytics.workspace" allow-custom="true" lookup-text="true"
-          get-options="ctrl.workspaces" on-change="ctrl.refresh()" css-class="min-width-12">
+          get-options="ctrl.getWorkspaces()" on-change="ctrl.refresh()" css-class="min-width-12">
         </gf-form-dropdown>
         <div class="gf-form">
           <div class="width-1"></div>

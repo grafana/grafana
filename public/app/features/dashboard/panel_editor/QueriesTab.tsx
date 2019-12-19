@@ -188,9 +188,13 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   renderMixedPicker = () => {
+    // We cannot filter on mixed flag as some mixed data sources like external plugin
+    // meta queries data source is mixed but also supports it's own queries
+    const filteredDsList = this.datasources.filter(ds => ds.meta.id !== 'mixed');
+
     return (
       <DataSourcePicker
-        datasources={this.datasources.filter(ds => !ds.meta.mixed)}
+        datasources={filteredDsList}
         onChange={this.onAddMixedQuery}
         current={null}
         autoFocus={true}

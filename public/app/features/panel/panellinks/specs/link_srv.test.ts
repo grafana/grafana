@@ -4,6 +4,7 @@ import _ from 'lodash';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { advanceTo } from 'jest-date-mock';
+import { updateConfig } from '../../../../core/config';
 
 jest.mock('angular', () => {
   const AngularJSMock = require('test/mocks/angular');
@@ -136,5 +137,37 @@ describe('linkSrv', () => {
         ).href
       ).toEqual('/d/1?time=1000000001');
     });
+  });
+
+  describe('sanitization', () => {
+    const url = "javascript:alert('broken!);";
+    it.each`
+      disableSanitizeHtml | expected
+      ${true}             | ${url}
+      ${false}            | ${'about:blank'}
+    `(
+      "when disable disableSanitizeHtml set to '$disableSanitizeHtml' then result should be '$expected'",
+      ({ disableSanitizeHtml, expected }) => {
+        updateConfig({
+          disableSanitizeHtml,
+        });
+
+        const link = linkSrv.getDataLinkUIModel(
+          {
+            title: 'Any title',
+            url,
+          },
+          {
+            __value: {
+              value: { time: dataPointMock.datapoint[0] },
+              text: 'Value',
+            },
+          },
+          {}
+        ).href;
+
+        expect(link).toBe(expected);
+      }
+    );
   });
 });

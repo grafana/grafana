@@ -96,7 +96,7 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
       : cx([style.logsRowMatchHighLight]);
     const styles = getStyles(theme);
     return (
-      <div className={style.logsRowMessage}>
+      <td className={style.logsRowMessage}>
         <div className={cx(styles.positionRelative, { [styles.horizontalScroll]: !wrapLogMessage })}>
           {showContext && context && (
             <LogRowContext
@@ -133,7 +133,7 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
             </span>
           )}
         </div>
-      </div>
+      </td>
     );
   }
 }

@@ -12,36 +12,75 @@ describe('Language completion provider', () => {
     getTimeRange: () => ({ start: 0, end: 1 }),
   } as any) as PrometheusDatasource;
 
+  describe('cleanText', () => {
+    const cleanText = new LanguageProvider(datasource).cleanText;
+    it('does not remove metric or label keys', () => {
+      expect(cleanText('foo')).toBe('foo');
+      expect(cleanText('foo_bar')).toBe('foo_bar');
+    });
+
+    it('keeps trailing space but removes leading', () => {
+      expect(cleanText('foo ')).toBe('foo ');
+      expect(cleanText(' foo')).toBe('foo');
+    });
+
+    it('removes label syntax', () => {
+      expect(cleanText('foo="bar')).toBe('bar');
+      expect(cleanText('foo!="bar')).toBe('bar');
+      expect(cleanText('foo=~"bar')).toBe('bar');
+      expect(cleanText('foo!~"bar')).toBe('bar');
+      expect(cleanText('{bar')).toBe('bar');
+    });
+
+    it('removes previous operators', () => {
+      expect(cleanText('foo + bar')).toBe('bar');
+      expect(cleanText('foo+bar')).toBe('bar');
+      expect(cleanText('foo - bar')).toBe('bar');
+      expect(cleanText('foo * bar')).toBe('bar');
+      expect(cleanText('foo / bar')).toBe('bar');
+      expect(cleanText('foo % bar')).toBe('bar');
+      expect(cleanText('foo ^ bar')).toBe('bar');
+      expect(cleanText('foo and bar')).toBe('bar');
+      expect(cleanText('foo or bar')).toBe('bar');
+      expect(cleanText('foo unless bar')).toBe('bar');
+      expect(cleanText('foo == bar')).toBe('bar');
+      expect(cleanText('foo != bar')).toBe('bar');
+      expect(cleanText('foo > bar')).toBe('bar');
+      expect(cleanText('foo < bar')).toBe('bar');
+      expect(cleanText('foo >= bar')).toBe('bar');
+      expect(cleanText('foo <= bar')).toBe('bar');
+    });
+
+    it('removes aggregation syntax', () => {
+      expect(cleanText('(bar')).toBe('bar');
+      expect(cleanText('(foo,bar')).toBe('bar');
+      expect(cleanText('(foo, bar')).toBe('bar');
+    });
+
+    it('removes range syntax', () => {
+      expect(cleanText('[1m')).toBe('1m');
+    });
+  });
+
   describe('empty query suggestions', () => {
-    it('returns default suggestions on empty context', async () => {
+    it('returns no suggestions on empty context', async () => {
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('');
       const result = await instance.provideCompletionItems({ text: '', prefix: '', value, wrapperClasses: [] });
       expect(result.context).toBeUndefined();
-      expect(result.suggestions).toMatchObject([
-        {
-          label: 'Functions',
-        },
-      ]);
+      expect(result.suggestions).toMatchObject([]);
     });
 
-    it('returns default suggestions with metrics on empty context when metrics were provided', async () => {
+    it('returns no suggestions with metrics on empty context even when metrics were provided', async () => {
       const instance = new LanguageProvider(datasource);
       instance.metrics = ['foo', 'bar'];
       const value = Plain.deserialize('');
       const result = await instance.provideCompletionItems({ text: '', prefix: '', value, wrapperClasses: [] });
       expect(result.context).toBeUndefined();
-      expect(result.suggestions).toMatchObject([
-        {
-          label: 'Functions',
-        },
-        {
-          label: 'Metrics',
-        },
-      ]);
+      expect(result.suggestions).toMatchObject([]);
     });
 
-    it('returns default suggestions with history on empty context when history was provided', async () => {
+    it('returns history on empty context when history was provided', async () => {
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('');
       const history: Array<HistoryItem<PromQuery>> = [
@@ -64,9 +103,6 @@ describe('Language completion provider', () => {
               label: 'metric',
             },
           ],
-        },
-        {
-          label: 'Functions',
         },
       ]);
     });
@@ -101,14 +137,32 @@ describe('Language completion provider', () => {
   });
 
   describe('metric suggestions', () => {
-    it('returns metrics and function suggestions in an unknown context', async () => {
+    it('returns history, metrics and function suggestions in an uknown context ', async () => {
       const instance = new LanguageProvider(datasource);
       instance.metrics = ['foo', 'bar'];
-      let value = Plain.deserialize('a');
+      const history: Array<HistoryItem<PromQuery>> = [
+        {
+          ts: 0,
+          query: { refId: '1', expr: 'metric' },
+        },
+      ];
+      let value = Plain.deserialize('m');
       value = value.setSelection({ anchor: { offset: 1 }, focus: { offset: 1 } });
-      const result = await instance.provideCompletionItems({ text: 'a', prefix: 'a', value, wrapperClasses: [] });
+      // Even though no metric with `m` is present, we still get metric completion items, filtering is done by the consumer
+      const result = await instance.provideCompletionItems(
+        { text: 'm', prefix: 'm', value, wrapperClasses: [] },
+        { history }
+      );
       expect(result.context).toBeUndefined();
       expect(result.suggestions).toMatchObject([
+        {
+          label: 'History',
+          items: [
+            {
+              label: 'metric',
+            },
+          ],
+        },
         {
           label: 'Functions',
         },
@@ -118,11 +172,27 @@ describe('Language completion provider', () => {
       ]);
     });
 
-    it('returns metrics and function  suggestions after a binary operator', async () => {
+    it('returns no suggestions directly after a binary operator', async () => {
       const instance = new LanguageProvider(datasource);
       instance.metrics = ['foo', 'bar'];
       const value = Plain.deserialize('*');
       const result = await instance.provideCompletionItems({ text: '*', prefix: '', value, wrapperClasses: [] });
+      expect(result.context).toBeUndefined();
+      expect(result.suggestions).toMatchObject([]);
+    });
+
+    it('returns metric suggestions with prefix after a binary operator', async () => {
+      const instance = new LanguageProvider(datasource);
+      instance.metrics = ['foo', 'bar'];
+      const value = Plain.deserialize('foo + b');
+      const ed = new SlateEditor({ value });
+      const valueWithSelection = ed.moveForward(7).value;
+      const result = await instance.provideCompletionItems({
+        text: 'foo + b',
+        prefix: 'b',
+        value: valueWithSelection,
+        wrapperClasses: [],
+      });
       expect(result.context).toBeUndefined();
       expect(result.suggestions).toMatchObject([
         {
@@ -507,9 +577,11 @@ describe('Language completion provider', () => {
       expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(0);
       await instance.start();
       expect(instance.lookupsDisabled).toBeTruthy();
-      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(1);
+      // Capture request count to metadata
+      const callCount = (datasource.metadataRequest as Mock).mock.calls.length;
+      expect((datasource.metadataRequest as Mock).mock.calls.length).toBeGreaterThan(0);
       await instance.provideCompletionItems(args);
-      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(1);
+      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(callCount);
     });
   });
 });

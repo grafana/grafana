@@ -31,7 +31,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
   selectedPoint: any;
 
   showLabels = false;
-  selectors: typeof e2e.pages.Panels.DataSource.TestData.QueryTab.selectors;
+  selectors: typeof e2e.pages.Dashboard.Panels.DataSource.TestData.QueryTab.selectors;
 
   /** @ngInject */
   constructor($scope: any, $injector: any) {
@@ -42,7 +42,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
     this.newPointTime = dateTime();
     this.selectedPoint = { text: 'Select point', value: null };
     this.showLabels = showLabelsFor.includes(this.target.scenarioId);
-    this.selectors = e2e.pages.Panels.DataSource.TestData.QueryTab.selectors;
+    this.selectors = e2e.pages.Dashboard.Panels.DataSource.TestData.QueryTab.selectors;
   }
 
   getPoints() {

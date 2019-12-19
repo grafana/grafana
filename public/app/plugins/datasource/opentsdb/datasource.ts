@@ -13,6 +13,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
   basicAuth: any;
   tsdbVersion: any;
   tsdbResolution: any;
+  lookupLimit: any;
   tagKeys: any;
 
   aggregatorsPromise: any;
@@ -28,6 +29,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     instanceSettings.jsonData = instanceSettings.jsonData || {};
     this.tsdbVersion = instanceSettings.jsonData.tsdbVersion || 1;
     this.tsdbResolution = instanceSettings.jsonData.tsdbResolution || 1;
+    this.lookupLimit = instanceSettings.jsonData.lookupLimit || 1000;
     this.tagKeys = {};
 
     this.aggregatorsPromise = null;
@@ -182,7 +184,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
   }
 
   _performSuggestQuery(query: string, type: string) {
-    return this._get('/api/suggest', { type, q: query, max: 1000 }).then((result: any) => {
+    return this._get('/api/suggest', { type, q: query, max: this.lookupLimit }).then((result: any) => {
       return result.data;
     });
   }
@@ -204,7 +206,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
 
     const m = metric + '{' + keysQuery + '}';
 
-    return this._get('/api/search/lookup', { m: m, limit: 3000 }).then((result: any) => {
+    return this._get('/api/search/lookup', { m: m, limit: this.lookupLimit }).then((result: any) => {
       result = result.data.results;
       const tagvs: any[] = [];
       _.each(result, r => {

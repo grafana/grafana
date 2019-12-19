@@ -123,6 +123,12 @@ export class KeybindingSrv {
       return;
     }
 
+    if (search.editPanel) {
+      delete search.editPanel;
+      this.$location.search(search);
+      return;
+    }
+
     if (search.fullscreen) {
       appEvents.emit(PanelEvents.panelChangeView, { fullscreen: false, edit: false });
       return;
