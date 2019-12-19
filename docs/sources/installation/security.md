@@ -28,7 +28,7 @@ There are many firewall tools available, refer to the documentation for your spe
 
 ## Proxy server
 
-Require all network requests being made by Grafana to go through a proxy server. Refer to [Running Grafana behind a reverse proxy](https://grafana.com/docs/grafana/latest/installation/behind_proxy/) for examples.
+Require all network requests being made by Grafana to go through a proxy server.
 
 ## Limit Viewer query permissions
 
