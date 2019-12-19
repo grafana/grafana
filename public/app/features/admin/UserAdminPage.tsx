@@ -188,6 +188,8 @@ const mapDispatchToProps = {
   addOrgUser,
   updateOrgUserRole,
   deleteOrgUser,
+  revokeSession,
+  revokeAllSessions,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UserAdminPage));

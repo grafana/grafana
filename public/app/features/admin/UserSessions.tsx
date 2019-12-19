@@ -30,6 +30,7 @@ export class UserSessions extends PureComponent<Props, State> {
   };
 
   onAllSessionsRevoke = () => {
+    this.setState({ showLogoutModal: false });
     this.props.onAllSessionsRevoke();
   };
 
