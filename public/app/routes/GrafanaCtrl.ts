@@ -192,7 +192,7 @@ export function grafanaAppDirective(
         $('#tooltip, .tooltip').remove();
 
         // check for kiosk url param
-        setViewModeBodyClass(body, data.params.kiosk);
+        setViewModeBodyClass(body, 'tv');
 
         // close all drops
         for (const drop of Drop.drops) {
@@ -227,7 +227,7 @@ export function grafanaAppDirective(
         }
 
         $timeout(() => $location.search(search));
-        setViewModeBodyClass(body, search.kiosk!);
+        setViewModeBodyClass(body, 'tv');
       });
 
       // handle in active view state class
