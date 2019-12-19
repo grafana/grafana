@@ -26,14 +26,14 @@ export interface Props {
 }
 
 export interface State {
-  angularPanel?: AngularComponent;
   data: PanelData;
   errorMessage?: string;
 }
 
 export class PanelChromeAngular extends PureComponent<Props, State> {
-  timeSrv: TimeSrv = getTimeSrv();
   element?: HTMLElement;
+  timeSrv: TimeSrv = getTimeSrv();
+  angularPanel?: AngularComponent;
 
   constructor(props: Props) {
     super(props);
@@ -49,28 +49,37 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
   componentDidMount() {
     const { panel, dashboard } = this.props;
     dashboard.panelInitialized(panel);
+    this.loadAngularPanel();
   }
 
   componentWillUnmount() {
     this.cleanUpAngularPanel();
   }
 
-  componentDidUpdate() {
-    if (!this.element || this.state.angularPanel) {
+  componentDidUpdate(prevProps: Props, prevState: State) {
+    if (prevProps.plugin !== this.props.plugin) {
+      this.cleanUpAngularPanel();
+      this.loadAngularPanel();
+    }
+
+    if (!this.element || this.angularPanel) {
       return;
     }
 
+    this.loadAngularPanel();
+  }
+
+  loadAngularPanel() {
     const loader = getAngularLoader();
     const template = '<plugin-component type="panel" class="panel-height-helper"></plugin-component>';
     const scopeProps = { panel: this.props.panel, dashboard: this.props.dashboard };
-    const angularPanel = loader.load(this.element, scopeProps, template);
-
-    this.setState({ angularPanel });
+    this.angularPanel = loader.load(this.element, scopeProps, template);
   }
 
   cleanUpAngularPanel() {
-    if (this.state.angularPanel) {
-      this.state.angularPanel.destroy();
+    if (this.angularPanel) {
+      this.angularPanel.destroy();
+      this.angularPanel = null;
       this.element = null;
     }
   }
