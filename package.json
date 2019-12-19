@@ -270,7 +270,8 @@
   },
   "workspaces": {
     "packages": [
-      "packages/*"
+      "packages/*",
+      "plugins-bundled/internal/*"
     ],
     "nohoist": [
       "**/@types/*",
