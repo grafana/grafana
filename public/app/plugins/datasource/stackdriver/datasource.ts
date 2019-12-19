@@ -279,14 +279,14 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
         data: {
           queries: [
             {
-              refId: 'ensureProjectsListQuery',
-              type: 'ensureProjectsListQuery',
+              refId: 'getProjectsListQuery',
+              type: 'getProjectsListQuery',
               datasourceId: this.id,
             },
           ],
         },
       });
-      this.projectList = data.results.ensureProjectsListQuery.meta.projectsList;
+      this.projectList = data.results.getProjectsListQuery.meta.projectsList;
       return this.projectList;
     } catch (error) {
       throw this.formatStackdriverError(error);

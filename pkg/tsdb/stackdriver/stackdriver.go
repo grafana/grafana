@@ -78,8 +78,8 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 		result, err = e.executeAnnotationQuery(ctx, tsdbQuery)
 	case "ensureDefaultProjectQuery":
 		result, err = e.ensureDefaultProject(ctx, tsdbQuery)
-	case "ensureProjectsListQuery":
-		result, err = e.ensureProjectsList(ctx, tsdbQuery)
+	case "getProjectsListQuery":
+		result, err = e.getProjectList(ctx, tsdbQuery)
 	case "timeSeriesQuery":
 		fallthrough
 	default:
