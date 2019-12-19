@@ -8,7 +8,7 @@ import { CoreEvents, DashboardDTO, FolderInfo } from 'app/types';
 import { BackendSrv as BackendService, BackendSrvRequest } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
 import { contextSrv } from './context_srv';
-import { from, merge, NEVER, Observable, of, Subject, throwError } from 'rxjs';
+import { from, merge, MonoTypeOperatorFunction, NEVER, Observable, of, Subject, throwError } from 'rxjs';
 import { catchError, filter, finalize, map, mergeMap, retryWhen, share, takeUntil, tap } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
 import { coreModule } from 'app/core/core_module';
@@ -24,26 +24,33 @@ export interface DatasourceRequestOptions {
   data?: Record<string, any>;
 }
 
-interface ResponseWithMessage {
+interface FetchResponseProps {
   message?: string;
 }
 
-interface FetchResponse<T extends ResponseWithMessage = any> {
+interface ErrorResponseProps extends FetchResponseProps {
+  status?: string;
+  error?: string | any;
+}
+
+interface FetchResponse<T extends FetchResponseProps = any> {
   status: number;
   statusText: string;
   ok: boolean;
   data: T;
 }
 
-interface SuccessResponse extends ResponseWithMessage, Object {}
+interface SuccessResponse extends FetchResponseProps, Record<any, any> {}
 
-interface DataSourceSuccessResponse<T extends ResponseWithMessage = any> {
+interface DataSourceSuccessResponse<T extends {} = any> {
   data: T;
 }
 
-interface FetchErrorResponse<T = any> {
+interface ErrorResponse<T extends ErrorResponseProps = any> {
   status: number;
-  data: T;
+  statusText?: string;
+  isHandled?: boolean;
+  data: T | string;
 }
 
 function serializeParams(data: Record<string, any>) {
@@ -107,9 +114,32 @@ export class BackendSrv implements BackendService {
         const fetchResponse: FetchResponse = { status, statusText, ok, data };
         return fetchResponse;
       }),
-      share()
+      share() // sharing this so we can split into success and failure and then merge back
     );
   };
+
+  private toFailureStream = (options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse> => $input =>
+    $input.pipe(
+      filter(response => response.ok === false),
+      mergeMap(response => {
+        const { status, statusText, data } = response;
+        const fetchErrorResponse: ErrorResponse = { status, statusText, data };
+        return throwError(fetchErrorResponse);
+      }),
+      retryWhen((attempts: Observable<any>) =>
+        attempts.pipe(
+          mergeMap((error, i) => {
+            const firstAttempt = i === 0 && options.retry === 0;
+
+            if (error.status === 401 && contextSrv.user.isSignedIn && firstAttempt) {
+              return from(this.loginPing());
+            }
+
+            return throwError(error);
+          })
+        )
+      )
+    );
 
   requestErrorHandler = (err: any) => {
     if (err.isHandled) {
@@ -160,6 +190,7 @@ export class BackendSrv implements BackendService {
     }
 
     const fromFetchStream = this.getFromFetchStream(options);
+    const failureStream = fromFetchStream.pipe(this.toFailureStream(options));
     const successStream = fromFetchStream.pipe(
       filter(response => response.ok === true),
       map(response => {
@@ -173,31 +204,9 @@ export class BackendSrv implements BackendService {
       })
     );
 
-    const failureStream = fromFetchStream.pipe(
-      filter(response => response.ok === false),
-      mergeMap(response => {
-        const { status, data } = response;
-        const fetchErrorResponse: FetchErrorResponse = { status, data };
-        return throwError(fetchErrorResponse);
-      }),
-      retryWhen((attempts: Observable<any>) =>
-        attempts.pipe(
-          mergeMap((error: FetchErrorResponse, i: number) => {
-            const firstAttempt = i === 0 && options.retry === 0;
-
-            if (error.status === 401 && contextSrv.user.isSignedIn && firstAttempt) {
-              return from(this.loginPing());
-            }
-
-            return throwError(error);
-          })
-        )
-      )
-    );
-
     return merge(successStream, failureStream)
       .pipe(
-        catchError((err: FetchErrorResponse) => {
+        catchError((err: ErrorResponse) => {
           if (err.status === 401) {
             window.location.href = config.appSubUrl + '/logout';
             return NEVER;
@@ -265,6 +274,7 @@ export class BackendSrv implements BackendService {
     }
 
     const fromFetchStream = this.getFromFetchStream(options);
+    const failureStream = fromFetchStream.pipe(this.toFailureStream(options));
     const successStream = fromFetchStream.pipe(
       filter(response => response.ok === true),
       map(response => {
@@ -277,28 +287,6 @@ export class BackendSrv implements BackendService {
           appEvents.emit(CoreEvents.dsRequestResponse, res);
         }
       })
-    );
-
-    const failureStream = fromFetchStream.pipe(
-      filter(response => response.ok === false),
-      mergeMap(response => {
-        const { status, data } = response;
-        const fetchErrorResponse: FetchErrorResponse = { status, data };
-        return throwError(fetchErrorResponse);
-      }),
-      retryWhen((attempts: Observable<any>) =>
-        attempts.pipe(
-          mergeMap((error, i) => {
-            const firstAttempt = i === 0 && options.retry === 0;
-
-            if (error.status === 401 && contextSrv.user.isSignedIn && firstAttempt) {
-              return from(this.loginPing());
-            }
-
-            return throwError(error);
-          })
-        )
-      )
     );
 
     return merge(successStream, failureStream)
