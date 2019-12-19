@@ -19,7 +19,7 @@ version: 2
 jobs:
   mysql-integration-test:
     docker:
-      - image: circleci/golang:1.13.4
+      - image: cimg/go:1.13.4
       - image: circleci/mysql:5.6-ram
         environment:
           MYSQL_ROOT_PASSWORD: rootpass
@@ -32,8 +32,8 @@ jobs:
         - run:
             name: ci job started
             command: './scripts/ci-job-started.sh'
-        - run: sudo apt update
-        - run: sudo apt install -y default-mysql-client
+        - run: apt update
+        - run: apt install -y default-mysql-client
         - run: dockerize -wait tcp://127.0.0.1:3306 -timeout 120s
         - run: cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h 127.0.0.1 -P 3306 -u root -prootpass
         - run:
@@ -50,7 +50,7 @@ jobs:
 
   postgres-integration-test:
     docker:
-      - image: circleci/golang:1.13.4
+      - image: cimg/go:1.13.4
       - image: circleci/postgres:9.3-ram
         environment:
           POSTGRES_USER: grafanatest
@@ -62,8 +62,8 @@ jobs:
         - run:
             name: ci job started
             command: './scripts/ci-job-started.sh'
-        - run: sudo apt update
-        - run: sudo apt install -y postgresql-client
+        - run: apt update
+        - run: apt install -y postgresql-client
         - run: dockerize -wait tcp://127.0.0.1:5432 -timeout 120s
         - run: 'PGPASSWORD=grafanatest psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql'
         - run:
@@ -80,7 +80,7 @@ jobs:
 
   cache-server-test:
     docker:
-      - image: circleci/golang:1.13.4
+      - image: cimg/go:1.13.4
       - image: circleci/redis:4-alpine
       - image: memcached
     working_directory: /go/src/github.com/grafana/grafana
@@ -189,12 +189,12 @@ jobs:
 
   codespell:
     docker:
-      - image: circleci/python
+      - image: cimg/python:3.6
     steps:
       - checkout
       - run:
           name: install codespell
-          command: 'sudo pip install codespell'
+          command: 'pip install codespell'
       - run:
           # Important: all words have to be in lowercase, and separated by "\n".
           name: exclude known exceptions
@@ -205,7 +205,7 @@ jobs:
 
   lint-go:
     docker:
-      - image: circleci/golang:1.13.4
+      - image: cimg/go:1.13.4
         environment:
           # we need CGO because of go-sqlite3
           CGO_ENABLED: 1
@@ -227,7 +227,7 @@ jobs:
 
   test-frontend:
     docker:
-      - image: circleci/node:12
+      - image: cimg/node:12.13
     steps:
       - checkout
       - run:
@@ -259,7 +259,7 @@ jobs:
 
   test-backend:
     docker:
-      - image: circleci/golang:1.13.4
+      - image: cimg/go:1.13.4
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -960,7 +960,7 @@ jobs:
 
   store-build-artifacts:
     docker:
-      - image: circleci/node:12
+      - image: cimg/node:12.13
     steps:
       - attach_workspace:
           at: .
@@ -969,7 +969,7 @@ jobs:
 
   build-grafana-packages:
     docker:
-      - image: circleci/node:12
+      - image: cimg/node:12.13
     steps:
       - checkout
       - run:
@@ -993,7 +993,7 @@ jobs:
 
   release-next-packages:
     docker:
-      - image: circleci/node:12
+      - image: cimg/node:12.13
     steps:
       - checkout
       - run:
@@ -1019,7 +1019,7 @@ jobs:
 
   release-packages:
     docker:
-      - image: circleci/node:12
+      - image: cimg/node:12.13
     steps:
       - checkout
       - run:
@@ -1045,7 +1045,7 @@ jobs:
 
   scan-docker-master:
     docker:
-      - image: circleci/buildpack-deps:stretch
+      - image: cimg/base:stable
     steps:
       - setup_remote_docker
       - restore_cache:
@@ -1061,7 +1061,7 @@ jobs:
 
             wget https://github.com/aquasecurity/trivy/releases/download/v${VERSION}/trivy_${VERSION}_Linux-64bit.tar.gz
             tar zxvf trivy_${VERSION}_Linux-64bit.tar.gz
-            sudo mv trivy /usr/local/bin
+            mv trivy /usr/local/bin
       - run:
           name: Scan the latest grafana master image with trivy
           command: trivy --exit-code 1 --quiet --auto-refresh --clear-cache grafana/grafana:master
