@@ -141,7 +141,7 @@ interface FormProps extends Omit<Props, 'history'> {
   historyOptions?: TimeOption[];
 }
 
-export const TimePickerContentWithScreenSize = memo<PropsWithScreenSize>(props => {
+export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = props => {
   const theme = useTheme();
   const styles = getStyles(theme);
   const historyOptions = mapToHistoryOptions(props.history);
@@ -169,7 +169,7 @@ export const TimePickerContentWithScreenSize = memo<PropsWithScreenSize>(props =
       </CustomScrollbar>
     </div>
   );
-});
+};
 
 export const TimePickerContent: React.FC<Props> = props => {
   const theme = useTheme();
