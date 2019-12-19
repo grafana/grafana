@@ -56,6 +56,7 @@ const otherOptions: TimeOption[] = [
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     container: css`
+      position: relative;
       display: flex;
       flex-flow: column nowrap;
     `,

@@ -22,7 +22,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       z-index: ${theme.zIndex.modal};
       width: 546px;
       height: 381px;
-      top: 37px;
+      top: 100%;
       margin-left: -322px;
 
       @media only screen and (max-width: ${theme.breakpoints.lg}) {
