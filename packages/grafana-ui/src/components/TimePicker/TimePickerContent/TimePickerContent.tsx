@@ -120,17 +120,20 @@ interface Props {
   history?: TimeRange[];
 }
 
+interface PropsWithScreenSize extends Props {
+  isFullscreen: boolean;
+}
+
 interface FormProps extends Omit<Props, 'history'> {
   visible: boolean;
   historyOptions?: TimeOption[];
 }
 
-export const TimePickerContent: React.FC<Props> = props => {
+export const TimePickerContentWithScreenSize = memo<PropsWithScreenSize>(props => {
   const theme = useTheme();
-  const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.lg})`);
   const styles = getStyles(theme);
-  const { quickOptions = [], otherOptions = [] } = props;
   const historyOptions = mapToHistoryOptions(props.history);
+  const { quickOptions = [], otherOptions = [], isFullscreen } = props;
 
   return (
     <div className={styles.container}>
@@ -154,6 +157,13 @@ export const TimePickerContent: React.FC<Props> = props => {
       </CustomScrollbar>
     </div>
   );
+});
+
+export const TimePickerContent: React.FC<Props> = props => {
+  const theme = useTheme();
+  const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.lg})`);
+
+  return <TimePickerContentWithScreenSize {...props} isFullscreen={isFullscreen} />;
 };
 
 const NarrowScreenForm: React.FC<FormProps> = props => {
@@ -240,7 +250,7 @@ const EmptyRecentList = memo(() => {
         <a className={styles.link} href="#" target="_new">
           Read the documentation
         </a>
-        <span> to find out more about how to enter custom tiem ranges.</span>
+        <span> to find out more about how to enter custom time ranges.</span>
       </div>
     </div>
   );
