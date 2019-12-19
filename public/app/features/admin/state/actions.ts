@@ -200,6 +200,14 @@ export function deleteUser(userId: number): ThunkResult<void> {
   };
 }
 
+export function updateUserPermissions(userId: number, isGrafanaAdmin: boolean): ThunkResult<void> {
+  return async dispatch => {
+    const payload = { isGrafanaAdmin };
+    await getBackendSrv().put(`/api/admin/users/${userId}/permissions`, payload);
+    dispatch(loadAdminUserPage(userId));
+  };
+}
+
 export function loadUserOrgs(userId: number): ThunkResult<void> {
   return async dispatch => {
     const orgs = await getBackendSrv().get(`/api/users/${userId}/orgs`);

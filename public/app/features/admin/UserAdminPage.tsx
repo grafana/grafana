@@ -23,6 +23,7 @@ import {
   disableUser,
   enableUser,
   deleteUser,
+  updateUserPermissions,
   addOrgUser,
   updateOrgUserRole,
   deleteOrgUser,
@@ -50,6 +51,7 @@ interface Props {
   disableUser: typeof disableUser;
   enableUser: typeof enableUser;
   deleteUser: typeof deleteUser;
+  updateUserPermissions: typeof updateUserPermissions;
   addOrgUser: typeof addOrgUser;
   updateOrgUserRole: typeof updateOrgUserRole;
   deleteOrgUser: typeof deleteOrgUser;
@@ -86,7 +88,8 @@ export class UserAdminPage extends PureComponent<Props, State> {
   };
 
   onGrafanaAdminChange = (isGrafanaAdmin: boolean) => {
-    console.log('onGrafanaAdminChange', isGrafanaAdmin);
+    const { userId, updateUserPermissions } = this.props;
+    updateUserPermissions(userId, isGrafanaAdmin);
   };
 
   onOrgRemove = (orgId: number) => {
@@ -185,6 +188,7 @@ const mapDispatchToProps = {
   disableUser,
   enableUser,
   deleteUser,
+  updateUserPermissions,
   addOrgUser,
   updateOrgUserRole,
   deleteOrgUser,
