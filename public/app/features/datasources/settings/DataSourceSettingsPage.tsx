@@ -3,29 +3,32 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import isString from 'lodash/isString';
-
+import { e2e } from '@grafana/e2e';
 // Components
 import Page from 'app/core/components/Page/Page';
-import { PluginSettings, GenericDataSourcePlugin } from './PluginSettings';
+import { GenericDataSourcePlugin, PluginSettings } from './PluginSettings';
 import BasicSettings from './BasicSettings';
 import ButtonRow from './ButtonRow';
-
 // Services & Utils
 import appEvents from 'app/core/app_events';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-
 // Actions & selectors
 import { getDataSource, getDataSourceMeta } from '../state/selectors';
-import { deleteDataSource, loadDataSource, setDataSourceName, setIsDefault, updateDataSource } from '../state/actions';
+import {
+  dataSourceLoaded,
+  deleteDataSource,
+  loadDataSource,
+  setDataSourceName,
+  setIsDefault,
+  updateDataSource,
+} from '../state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
-
 // Types
-import { StoreState } from 'app/types/';
+import { CoreEvents, StoreState } from 'app/types/';
 import { UrlQueryMap } from '@grafana/runtime';
-import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/ui';
-import { NavModel } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSettings, NavModel } from '@grafana/data';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
@@ -40,13 +43,13 @@ export interface Props {
   setDataSourceName: typeof setDataSourceName;
   updateDataSource: typeof updateDataSource;
   setIsDefault: typeof setIsDefault;
+  dataSourceLoaded: typeof dataSourceLoaded;
   plugin?: GenericDataSourcePlugin;
   query: UrlQueryMap;
   page?: string;
 }
 
 interface State {
-  dataSource: DataSourceSettings;
   plugin?: GenericDataSourcePlugin;
   isTesting?: boolean;
   testingMessage?: string;
@@ -59,7 +62,6 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     super(props);
 
     this.state = {
-      dataSource: props.dataSource,
       plugin: props.plugin,
     };
   }
@@ -93,18 +95,10 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     }
   }
 
-  componentDidUpdate(prevProps: Props) {
-    const { dataSource } = this.props;
-
-    if (prevProps.dataSource !== dataSource) {
-      this.setState({ dataSource });
-    }
-  }
-
   onSubmit = async (evt: React.FormEvent<HTMLFormElement>) => {
     evt.preventDefault();
 
-    await this.props.updateDataSource({ ...this.state.dataSource });
+    await this.props.updateDataSource({ ...this.props.dataSource });
 
     this.testDataSource();
   };
@@ -116,7 +110,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   };
 
   onDelete = () => {
-    appEvents.emit('confirm-modal', {
+    appEvents.emit(CoreEvents.showConfirmModal, {
       title: 'Delete',
       text: 'Are you sure you want to delete this data source?',
       yesText: 'Delete',
@@ -132,7 +126,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   };
 
   onModelChange = (dataSource: DataSourceSettings) => {
-    this.setState({ dataSource });
+    this.props.dataSourceLoaded(dataSource);
   };
 
   isReadOnly() {
@@ -149,7 +143,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   }
 
   async testDataSource() {
-    const dsApi = await getDatasourceSrv().get(this.state.dataSource.name);
+    const dsApi = await getDatasourceSrv().get(this.props.dataSource.name);
 
     if (!dsApi.testDatasource) {
       return;
@@ -185,7 +179,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   }
 
   get hasDataSource() {
-    return this.state.dataSource.id > 0;
+    return this.props.dataSource.id > 0;
   }
 
   renderLoadError(loadError: any) {
@@ -245,8 +239,8 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   }
 
   renderSettings() {
-    const { dataSourceMeta, setDataSourceName, setIsDefault } = this.props;
-    const { testingMessage, testingStatus, dataSource, plugin } = this.state;
+    const { dataSourceMeta, setDataSourceName, setIsDefault, dataSource } = this.props;
+    const { testingMessage, testingStatus, plugin } = this.state;
 
     return (
       <form onSubmit={this.onSubmit}>
@@ -270,7 +264,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
         {plugin && (
           <PluginSettings
             plugin={plugin}
-            dataSource={this.state.dataSource}
+            dataSource={dataSource}
             dataSourceMeta={dataSourceMeta}
             onModelChange={this.onModelChange}
           />
@@ -278,7 +272,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
 
         <div className="gf-form-group">
           {testingMessage && (
-            <div className={`alert-${testingStatus} alert`} aria-label="Datasource settings page Alert">
+            <div className={`alert-${testingStatus} alert`} aria-label={e2e.pages.DataSource.selectors.alert}>
               <div className="alert-icon">
                 {testingStatus === 'error' ? (
                   <i className="fa fa-exclamation-triangle" />
@@ -287,7 +281,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
                 )}
               </div>
               <div className="alert-body">
-                <div className="alert-title" aria-label="Datasource settings page Alert message">
+                <div className="alert-title" aria-label={e2e.pages.DataSource.selectors.alertMessage}>
                   {testingMessage}
                 </div>
               </div>
@@ -348,11 +342,7 @@ const mapDispatchToProps = {
   setDataSourceName,
   updateDataSource,
   setIsDefault,
+  dataSourceLoaded,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(DataSourceSettingsPage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DataSourceSettingsPage));

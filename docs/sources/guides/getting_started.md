@@ -13,11 +13,11 @@ weight = 1
 
 # Getting started
 
-This guide will help you get started and acquainted with Grafana. It assumes you have a working Grafana server up and running. If not please read the [installation guide](/installation/).
+This guide will help you get started and acquainted with Grafana. It assumes you have a working Grafana server up and running. If not please read the [installation guide]({{< relref "../installation/" >}}).
 
 ## Logging in for the first time
 
-To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default http port that Grafana listens to if you haven't [configured a different port](/installation/configuration/#http-port).
+To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default HTTP port that Grafana listens to if you haven't [configured a different port]({{< relref "../installation/configuration/#http-port" >}}).
 
 There you will see the login page. Default username is admin and default password is admin. When you log in for the first time you will be asked to change your password. We strongly encourage you to
 follow Grafana’s best practices and change the default administrator password. You can later go to user preferences and change your user name.
@@ -36,20 +36,20 @@ Click Add data source and you will come to the settings page of your new data so
 
 {{< docs-imagebox img="/img/docs/v52/add-datasource.png" max-width="700px" class="docs-image--no-shadow">}}
 
-First, give the data source a Name and then select which Type of data source you'll want to create, see [Supported data sources](/features/datasources/#supported-data-sources/) for more information and how to configure your data source.
+First, give the data source a Name and then select which Type of data source you'll want to create, see [Supported data sources]({{< relref "../features/datasources/#supported-data-sources/" >}}) for more information and how to configure your data source.
 
 
 {{< docs-imagebox img="/img/docs/v52/datasource-settings.png" max-width="700px" class="docs-image--no-shadow">}}
 
-After you have configuered your data source you are ready to save and test.
+After you have configured your data source you are ready to save and test.
 
 ## Beginner guides
 
 Watch the 10min [beginners guide to building dashboards](https://www.youtube.com/watch?v=sKNZMtoSHN4&index=7&list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2) to get a quick intro to setting up Dashboards and Panels.
 
-## Basic Concepts
+## Basic concepts
 
-Read the [Basic Concepts](/guides/basic_concepts) document to get a crash course in key Grafana concepts.
+Read the [Basic Concepts]({{< relref "basic_concepts" >}}) document to get a crash course in key Grafana concepts.
 
 ### Top header
 
@@ -67,9 +67,9 @@ The image above shows you the top header for a Dashboard.
 6. Save dashboard: The current Dashboard will be saved with the current Dashboard name.
 7. Settings: Manage Dashboard settings and features such as Templating and Annotations.
 
-## Dashboards, Panels, the building blocks of Grafana...
+## Dashboards, panels, the building blocks of Grafana...
 
-Dashboards are at the core of what Grafana is all about. Dashboards are composed of individual Panels arranged on a grid. Grafana ships with a variety of Panels. Grafana makes it easy to construct the right queries, and customize the display properties so that you can create the perfect Dashboard for your need. Each Panel can interact with data from any configured Grafana Data Source (currently Graphite, Prometheus, Elasticsearch, InfluxDB, OpenTSDB, MySQL, PostgreSQL, Microsoft SQL Server and AWS Cloudwatch). The [Basic Concepts](/guides/basic_concepts) guide explores these key ideas in detail.
+Dashboards are at the core of what Grafana is all about. Dashboards are composed of individual Panels arranged on a grid. Grafana ships with a variety of Panels. Grafana makes it easy to construct the right queries, and customize the display properties so that you can create the perfect Dashboard for your need. Each Panel can interact with data from any configured Grafana Data Source (currently Graphite, Prometheus, Elasticsearch, InfluxDB, OpenTSDB, MySQL, PostgreSQL, Microsoft SQL Server and AWS Cloudwatch). The [Basic Concepts]({{< relref "basic_concepts" >}}) guide explores these key ideas in detail.
 
 <img src="/img/docs/v50/dashboard_annotated.png" class="no-shadow" width="700px">
 
@@ -80,7 +80,7 @@ Dashboards are at the core of what Grafana is all about. Dashboards are composed
 5. Graph legend. You can change series colors, y-axis and series visibility directly from the legend.
 
 
-## Adding & Editing Graphs and Panels
+## Adding and editing graphs and panels
 
 ![](/img/docs/v45/metrics_tab.png)
 

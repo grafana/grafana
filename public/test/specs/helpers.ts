@@ -1,10 +1,13 @@
-import _ from 'lodash';
+import each from 'lodash/each';
+import template from 'lodash/template';
+
 import config from 'app/core/config';
 import { dateMath } from '@grafana/data';
 import { angularMocks, sinon } from '../lib/common';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { RawTimeRange } from '@grafana/data';
-import { PanelPluginMeta } from '@grafana/ui';
+import { PanelPluginMeta } from '@grafana/data';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export function ControllerTestContext(this: any) {
   const self = this;
@@ -37,18 +40,17 @@ export function ControllerTestContext(this: any) {
       $provide.value('templateSrv', self.templateSrv);
       $provide.value('$element', self.$element);
       $provide.value('$sanitize', self.$sanitize);
-      _.each(mocks, (value: any, key: any) => {
+      each(mocks, (value: any, key: any) => {
         $provide.value(key, value);
       });
     });
   };
 
   this.createPanelController = (Ctrl: any) => {
-    return angularMocks.inject(($controller: any, $rootScope: any, $q: any, $location: any, $browser: any) => {
+    return angularMocks.inject(($controller: any, $rootScope: GrafanaRootScope, $location: any, $browser: any) => {
       self.scope = $rootScope.$new();
       self.$location = $location;
       self.$browser = $browser;
-      self.$q = $q;
       self.panel = new PanelModel({ type: 'test' });
       self.dashboard = { meta: {} };
       self.isUtc = false;
@@ -77,7 +79,7 @@ export function ControllerTestContext(this: any) {
   };
 
   this.createControllerPhase = (controllerName: string) => {
-    return angularMocks.inject(($controller: any, $rootScope: any, $q: any, $location: any, $browser: any) => {
+    return angularMocks.inject(($controller: any, $rootScope: GrafanaRootScope, $location: any, $browser: any) => {
       self.scope = $rootScope.$new();
       self.$location = $location;
       self.$browser = $browser;
@@ -94,7 +96,6 @@ export function ControllerTestContext(this: any) {
         $rootScope.colors.push('#' + i);
       }
 
-      self.$q = $q;
       self.scope.skipDataOnInit = true;
       self.scope.skipAutoInit = true;
       self.controller = $controller(controllerName, {
@@ -118,7 +119,7 @@ export function ServiceTestContext(this: any) {
 
   this.providePhase = (mocks: any) => {
     return angularMocks.module(($provide: any) => {
-      _.each(mocks, (key: string) => {
+      each(mocks, (key: string) => {
         $provide.value(key, self[key]);
       });
     });
@@ -127,8 +128,7 @@ export function ServiceTestContext(this: any) {
   this.createService = (name: string) => {
     // @ts-ignore
     return angularMocks.inject(
-      ($q: any, $rootScope: any, $httpBackend: any, $injector: any, $location: any, $timeout: any) => {
-        self.$q = $q;
+      ($rootScope: GrafanaRootScope, $httpBackend: any, $injector: any, $location: any, $timeout: any) => {
         self.$rootScope = $rootScope;
         self.$httpBackend = $httpBackend;
         self.$location = $location;
@@ -184,7 +184,7 @@ export function TemplateSrvStub(this: any) {
   this.templateSettings = { interpolate: /\[\[([\s\S]+?)\]\]/g };
   this.data = {};
   this.replace = (text: string) => {
-    return _.template(text, this.templateSettings)(this.data);
+    return template(text, this.templateSettings)(this.data);
   };
   this.init = () => {};
   this.getAdhocFilters = (): any => {

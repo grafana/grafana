@@ -30,12 +30,15 @@ describe('HeatmapCtrl', () => {
       const data: any = [
         {
           target: 'test.cpu1',
-          datapoints: [[45, 1234567890], [60, 1234567899]],
+          datapoints: [
+            [45, 1234567890],
+            [60, 1234567899],
+          ],
         },
       ];
 
       ctx.ctrl.range = { from: dateTime().valueOf(), to: dateTime().valueOf() };
-      ctx.ctrl.onDataReceived(data);
+      ctx.ctrl.onSnapshotLoad(data);
     });
 
     it('should set datapointsOutside', () => {
@@ -55,12 +58,15 @@ describe('HeatmapCtrl', () => {
       const data: any = [
         {
           target: 'test.cpu1',
-          datapoints: [[45, range.from + 1000], [60, range.from + 10000]],
+          datapoints: [
+            [45, range.from + 1000],
+            [60, range.from + 10000],
+          ],
         },
       ];
 
       ctx.ctrl.range = range;
-      ctx.ctrl.onDataReceived(data);
+      ctx.ctrl.onSnapshotLoad(data);
     });
 
     it('should set datapointsOutside', () => {
@@ -70,8 +76,11 @@ describe('HeatmapCtrl', () => {
 
   describe('datapointsCount given 2 series', () => {
     beforeEach(() => {
-      const data: any = [{ target: 'test.cpu1', datapoints: [] }, { target: 'test.cpu2', datapoints: [] }];
-      ctx.ctrl.onDataReceived(data);
+      const data: any = [
+        { target: 'test.cpu1', datapoints: [] },
+        { target: 'test.cpu2', datapoints: [] },
+      ];
+      ctx.ctrl.onSnapshotLoad(data);
     });
 
     it('should set datapointsCount warning', () => {

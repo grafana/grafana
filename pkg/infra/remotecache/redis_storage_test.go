@@ -1,11 +1,12 @@
 package remotecache
 
 import (
+	"crypto/tls"
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	redis "gopkg.in/redis.v2"
+	redis "gopkg.in/redis.v5"
 )
 
 func Test_parseRedisConnStr(t *testing.T) {
@@ -15,13 +16,14 @@ func Test_parseRedisConnStr(t *testing.T) {
 		ShouldErr     bool
 	}{
 		"all redis options should parse": {
-			"addr=127.0.0.1:6379,pool_size=100,db=1,password=grafanaRocks",
+			"addr=127.0.0.1:6379,pool_size=100,db=1,password=grafanaRocks,ssl=false",
 			&redis.Options{
-				Addr:     "127.0.0.1:6379",
-				PoolSize: 100,
-				DB:       1,
-				Password: "grafanaRocks",
-				Network:  "tcp",
+				Addr:      "127.0.0.1:6379",
+				PoolSize:  100,
+				DB:        1,
+				Password:  "grafanaRocks",
+				Network:   "tcp",
+				TLSConfig: nil,
 			},
 			false,
 		},
@@ -33,6 +35,39 @@ func Test_parseRedisConnStr(t *testing.T) {
 				Network:  "tcp",
 			},
 			false,
+		},
+		"ssl set to true should result in default TLS configuration with tls set to addr's host": {
+			"addr=grafana.com:6379,ssl=true",
+			&redis.Options{
+				Addr:      "grafana.com:6379",
+				Network:   "tcp",
+				TLSConfig: &tls.Config{ServerName: "grafana.com"},
+			},
+			false,
+		},
+		"ssl to insecure should result in TLS configuration with InsecureSkipVerify": {
+			"addr=127.0.0.1:6379,ssl=insecure",
+			&redis.Options{
+				Addr:      "127.0.0.1:6379",
+				Network:   "tcp",
+				TLSConfig: &tls.Config{InsecureSkipVerify: true},
+			},
+			false,
+		},
+		"invalid SSL option should err": {
+			"addr=127.0.0.1:6379,ssl=dragons",
+			nil,
+			true,
+		},
+		"invalid pool_size value should err": {
+			"addr=127.0.0.1:6379,pool_size=seven",
+			nil,
+			true,
+		},
+		"invalid db value should err": {
+			"addr=127.0.0.1:6379,db=seven",
+			nil,
+			true,
 		},
 		"trailing comma should err": {
 			"addr=127.0.0.1:6379,pool_size=100,",

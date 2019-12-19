@@ -1,9 +1,3 @@
-// DEPENDENCIES
-@import '../../node_modules/react-table/react-table.css';
-
-// VENDOR
-@import '../vendor/css/rc-cascader.scss';
-
 // MIXINS
 @import 'mixins/mixins';
 @import 'mixins/animations';
@@ -90,7 +84,6 @@
 @import 'components/dashboard_list';
 @import 'components/page_header';
 @import 'components/dashboard_settings';
-@import 'components/empty_list_cta';
 @import 'components/panel_editor';
 @import 'components/toolbar';
 @import 'components/add_data_source.scss';

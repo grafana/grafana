@@ -1,5 +1,5 @@
 // Libaries
-import angular, { IQService } from 'angular';
+import angular from 'angular';
 import _ from 'lodash';
 
 // Components
@@ -7,14 +7,15 @@ import './editor_ctrl';
 import coreModule from 'app/core/core_module';
 
 // Utils & Services
-import { makeRegions, dedupAnnotations } from './events_processing';
+import { dedupAnnotations } from './events_processing';
 
 // Types
 import { DashboardModel } from '../dashboard/state/DashboardModel';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv } from '../dashboard/services/TimeSrv';
-import { AnnotationEvent } from '@grafana/data';
+import { DataSourceApi, PanelEvents, AnnotationEvent, AppEvents, PanelModel, TimeRange } from '@grafana/data';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
@@ -23,8 +24,7 @@ export class AnnotationsSrv {
 
   /** @ngInject */
   constructor(
-    private $rootScope: any,
-    private $q: IQService,
+    private $rootScope: GrafanaRootScope,
     private datasourceSrv: DatasourceSrv,
     private backendSrv: BackendSrv,
     private timeSrv: TimeSrv
@@ -34,7 +34,7 @@ export class AnnotationsSrv {
     // always clearPromiseCaches when loading new dashboard
     this.clearPromiseCaches();
     // clear promises on refresh events
-    dashboard.on('refresh', this.clearPromiseCaches.bind(this));
+    dashboard.on(PanelEvents.refresh, this.clearPromiseCaches.bind(this));
   }
 
   clearPromiseCaches() {
@@ -43,12 +43,11 @@ export class AnnotationsSrv {
     this.datasourcePromises = null;
   }
 
-  getAnnotations(options: any) {
-    return this.$q
-      .all([this.getGlobalAnnotations(options), this.getAlertStates(options)])
+  getAnnotations(options: { dashboard: DashboardModel; panel: PanelModel; range: TimeRange }) {
+    return Promise.all([this.getGlobalAnnotations(options), this.getAlertStates(options)])
       .then(results => {
         // combine the annotations and flatten results
-        let annotations: any[] = _.flattenDeep(results[0]);
+        let annotations: AnnotationEvent[] = _.flattenDeep(results[0]);
 
         // filter out annotations that do not belong to requesting panel
         annotations = _.filter(annotations, item => {
@@ -60,7 +59,6 @@ export class AnnotationsSrv {
         });
 
         annotations = dedupAnnotations(annotations);
-        annotations = makeRegions(annotations, options);
 
         // look for alert state for this panel
         const alertState: any = _.find(results[1], { panelId: options.panel.id });
@@ -75,23 +73,23 @@ export class AnnotationsSrv {
           err.message = err.data.message;
         }
         console.log('AnnotationSrv.query error', err);
-        this.$rootScope.appEvent('alert-error', ['Annotation Query Failed', err.message || err]);
+        this.$rootScope.appEvent(AppEvents.alertError, ['Annotation Query Failed', err.message || err]);
         return [];
       });
   }
 
   getAlertStates(options: any) {
     if (!options.dashboard.id) {
-      return this.$q.when([]);
+      return Promise.resolve([]);
     }
 
     // ignore if no alerts
     if (options.panel && !options.panel.alert) {
-      return this.$q.when([]);
+      return Promise.resolve([]);
     }
 
     if (options.range.raw.to !== 'now') {
-      return this.$q.when([]);
+      return Promise.resolve([]);
     }
 
     if (this.alertStatesPromise) {
@@ -104,7 +102,7 @@ export class AnnotationsSrv {
     return this.alertStatesPromise;
   }
 
-  getGlobalAnnotations(options: any) {
+  getGlobalAnnotations(options: { dashboard: DashboardModel; panel: PanelModel; range: TimeRange }) {
     const dashboard = options.dashboard;
 
     if (this.globalAnnotationsPromise) {
@@ -127,10 +125,10 @@ export class AnnotationsSrv {
       dsPromises.push(datasourcePromise);
       promises.push(
         datasourcePromise
-          .then((datasource: any) => {
+          .then((datasource: DataSourceApi) => {
             // issue query against data source
             return datasource.annotationQuery({
-              range: range,
+              range,
               rangeRaw: range.raw,
               annotation: annotation,
               dashboard: dashboard,
@@ -146,8 +144,8 @@ export class AnnotationsSrv {
           })
       );
     }
-    this.datasourcePromises = this.$q.all(dsPromises);
-    this.globalAnnotationsPromise = this.$q.all(promises);
+    this.datasourcePromises = Promise.all(dsPromises);
+    this.globalAnnotationsPromise = Promise.all(promises);
     return this.globalAnnotationsPromise;
   }
 
@@ -163,10 +161,7 @@ export class AnnotationsSrv {
 
   deleteAnnotationEvent(annotation: AnnotationEvent) {
     this.globalAnnotationsPromise = null;
-    let deleteUrl = `/api/annotations/${annotation.id}`;
-    if (annotation.isRegion) {
-      deleteUrl = `/api/annotations/region/${annotation.regionId}`;
-    }
+    const deleteUrl = `/api/annotations/${annotation.id}`;
 
     return this.backendSrv.delete(deleteUrl);
   }
@@ -181,7 +176,9 @@ export class AnnotationsSrv {
 
     for (const item of results) {
       item.source = annotation;
+      item.isRegion = item.timeEnd && item.time !== item.timeEnd;
     }
+
     return results;
   }
 }

@@ -14,9 +14,10 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			parser := &ResponseParser{}
 
 			cfg := setting.NewCfg()
-			cfg.Load(&setting.CommandLineArgs{
+			err := cfg.Load(&setting.CommandLineArgs{
 				HomePath: "../../../",
 			})
+			So(err, ShouldBeNil)
 
 			response := &Response{
 				Results: []Result{

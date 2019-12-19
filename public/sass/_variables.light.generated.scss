@@ -23,6 +23,7 @@ $red-base: #e02f44;
 $red-shade: #c4162a;
 $green-base: #3eb15b;
 $green-shade: #369b4f;
+$orange-dark: #ed5700;
 
 // Grays
 // -------------------------
@@ -83,8 +84,8 @@ $text-color-emphasis: #41444b;
 $text-shadow-faint: none;
 
 // gradients
-$brand-gradient: linear-gradient(to right, rgba(255, 213, 0, 1) 0%, rgba(255, 68, 0, 1) 99%, rgba(255, 68, 0, 1) 100%);
-
+$brand-gradient-horizontal: linear-gradient(to right, #f05a28 30%, #fbca0a 99%);
+$brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
 $page-gradient: linear-gradient(180deg, $white 10px, $gray-7 100px);
 $edit-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
 
@@ -181,6 +182,8 @@ $btn-divider-right: $gray-7;
 $btn-drag-image: '../img/grab_light.svg';
 
 $navbar-btn-gicon-brightness: brightness(1.5);
+
+$btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
 
 // Forms
 // -------------------------

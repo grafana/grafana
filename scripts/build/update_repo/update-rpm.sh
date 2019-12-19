@@ -46,10 +46,6 @@ rm /rpm-repo/repodata/repomd.xml.asc || true
 pkill gpg-agent || true
 ./scripts/build/update_repo/sign-rpm-repo.sh "$GPG_PASS"
 
-# Update the repo and db on gcp
-gsutil -m cp /rpm-repo/*.rpm "$BUCKET" # sync binaries first to avoid cache misses
-gsutil -m rsync -r -d /rpm-repo "$BUCKET"
-
 # usage:
 # [grafana]
 # name=grafana

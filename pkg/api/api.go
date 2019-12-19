@@ -15,6 +15,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqEditorRole := middleware.ReqEditorRole
 	reqOrgAdmin := middleware.ReqOrgAdmin
 	reqCanAccessTeams := middleware.AdminOrFeatureEnabled(hs.Cfg.EditorsCanAdmin)
+	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn()
 	redirectFromLegacyDashboardURL := middleware.RedirectFromLegacyDashboardURL()
 	redirectFromLegacyDashboardSoloURL := middleware.RedirectFromLegacyDashboardSoloURL()
 	quota := middleware.Quota(hs.QuotaService)
@@ -23,7 +24,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r := hs.RouteRegister
 
 	// not logged in views
-	r.Get("/", reqSignedIn, hs.Index)
 	r.Get("/logout", hs.Logout)
 	r.Post("/login", quota("session"), bind(dtos.LoginCommand{}), Wrap(hs.LoginPost))
 	r.Get("/login/:name", quota("session"), hs.OAuthLogin)
@@ -55,6 +55,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/orgs", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/stats", reqGrafanaAdmin, hs.Index)
+	r.Get("/admin/ldap", reqGrafanaAdmin, hs.Index)
 
 	r.Get("/styleguide", reqSignedIn, hs.Index)
 
@@ -70,6 +71,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboard/script/*", reqSignedIn, hs.Index)
 	r.Get("/dashboard-solo/snapshot/*", hs.Index)
 	r.Get("/d-solo/:uid/:slug", reqSignedIn, hs.Index)
+	r.Get("/d-solo/:uid", reqSignedIn, hs.Index)
 	r.Get("/dashboard-solo/db/:slug", reqSignedIn, redirectFromLegacyDashboardSoloURL, hs.Index)
 	r.Get("/dashboard-solo/script/*", reqSignedIn, hs.Index)
 	r.Get("/import/dashboard", reqSignedIn, hs.Index)
@@ -103,13 +105,6 @@ func (hs *HTTPServer) registerRoutes() {
 	// dashboard snapshots
 	r.Get("/dashboard/snapshot/*", hs.Index)
 	r.Get("/dashboard/snapshots/", reqSignedIn, hs.Index)
-
-	// api for dashboard snapshots
-	r.Post("/api/snapshots/", bind(models.CreateDashboardSnapshotCommand{}), CreateDashboardSnapshot)
-	r.Get("/api/snapshot/shared-options/", GetSharingOptions)
-	r.Get("/api/snapshots/:key", GetDashboardSnapshot)
-	r.Get("/api/snapshots-delete/:deleteKey", Wrap(DeleteDashboardSnapshotByDeleteKey))
-	r.Delete("/api/snapshots/:key", reqEditorRole, Wrap(DeleteDashboardSnapshot))
 
 	// api renew session based on cookie
 	r.Get("/api/login/ping", quota("session"), Wrap(hs.LoginAPIPing))
@@ -159,7 +154,7 @@ func (hs *HTTPServer) registerRoutes() {
 			teamsRoute.Post("/", bind(models.CreateTeamCommand{}), Wrap(hs.CreateTeam))
 			teamsRoute.Put("/:teamId", bind(models.UpdateTeamCommand{}), Wrap(hs.UpdateTeam))
 			teamsRoute.Delete("/:teamId", Wrap(hs.DeleteTeamByID))
-			teamsRoute.Get("/:teamId/members", Wrap(GetTeamMembers))
+			teamsRoute.Get("/:teamId/members", Wrap(hs.GetTeamMembers))
 			teamsRoute.Post("/:teamId/members", bind(models.AddTeamMemberCommand{}), Wrap(hs.AddTeamMember))
 			teamsRoute.Put("/:teamId/members/:userId", bind(models.UpdateTeamMemberCommand{}), Wrap(hs.UpdateTeamMember))
 			teamsRoute.Delete("/:teamId/members/:userId", Wrap(hs.RemoveTeamMember))
@@ -183,6 +178,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
 			orgRoute.Put("/", bind(dtos.UpdateOrgForm{}), Wrap(UpdateOrgCurrent))
 			orgRoute.Put("/address", bind(dtos.UpdateOrgAddressForm{}), Wrap(UpdateOrgAddressCurrent))
+			orgRoute.Get("/users", Wrap(GetOrgUsersForCurrentOrg))
 			orgRoute.Post("/users", quota("user"), bind(models.AddOrgUserCommand{}), Wrap(AddOrgUserToCurrentOrg))
 			orgRoute.Patch("/users/:userId", bind(models.UpdateOrgUserCommand{}), Wrap(UpdateOrgUserForCurrentOrg))
 			orgRoute.Delete("/users/:userId", Wrap(RemoveOrgUserForCurrentOrg))
@@ -199,7 +195,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// current org without requirement of user to be org admin
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
-			orgRoute.Get("/users", Wrap(GetOrgUsersForCurrentOrg))
+			orgRoute.Get("/users/lookup", Wrap(GetOrgUsersForCurrentOrgLookup))
 		})
 
 		// create new org
@@ -335,6 +331,9 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/tsdb/testdata/gensql", reqGrafanaAdmin, Wrap(GenerateSQLTestData))
 		apiRoute.Get("/tsdb/testdata/random-walk", Wrap(GetTestDataRandomWalk))
 
+		// DataSource w/ expressions
+		apiRoute.Post("/ds/query", bind(dtos.MetricRequest{}), Wrap(hs.QueryMetricsV2))
+
 		apiRoute.Group("/alerts", func(alertsRoute routing.RouteRegister) {
 			alertsRoute.Post("/test", bind(dtos.AlertTestCommand{}), Wrap(AlertTest))
 			alertsRoute.Post("/:alertId/pause", reqEditorRole, bind(dtos.PauseAlertCommand{}), Wrap(PauseAlert))
@@ -343,10 +342,10 @@ func (hs *HTTPServer) registerRoutes() {
 			alertsRoute.Get("/states-for-dashboard", Wrap(GetAlertStatesForDashboard))
 		})
 
-		apiRoute.Get("/alert-notifications", Wrap(GetAlertNotifications))
-		apiRoute.Get("/alert-notifiers", Wrap(GetAlertNotifiers))
+		apiRoute.Get("/alert-notifiers", reqEditorRole, Wrap(GetAlertNotifiers))
 
 		apiRoute.Group("/alert-notifications", func(alertNotifications routing.RouteRegister) {
+			alertNotifications.Get("/", Wrap(GetAlertNotifications))
 			alertNotifications.Post("/test", bind(dtos.NotificationTestCommand{}), Wrap(NotificationTest))
 			alertNotifications.Post("/", bind(models.CreateAlertNotificationCommand{}), Wrap(CreateAlertNotification))
 			alertNotifications.Put("/:notificationId", bind(models.UpdateAlertNotificationCommand{}), Wrap(UpdateAlertNotification))
@@ -357,6 +356,11 @@ func (hs *HTTPServer) registerRoutes() {
 			alertNotifications.Delete("/uid/:uid", Wrap(DeleteAlertNotificationByUID))
 		}, reqEditorRole)
 
+		// alert notifications without requirement of user to be org editor
+		apiRoute.Group("/alert-notifications", func(orgRoute routing.RouteRegister) {
+			orgRoute.Get("/lookup", Wrap(GetAlertNotificationLookup))
+		})
+
 		apiRoute.Get("/annotations", Wrap(GetAnnotations))
 		apiRoute.Post("/annotations/mass-delete", reqOrgAdmin, bind(dtos.DeleteAnnotationsCmd{}), Wrap(DeleteAnnotations))
 
@@ -365,7 +369,6 @@ func (hs *HTTPServer) registerRoutes() {
 			annotationsRoute.Delete("/:annotationId", Wrap(DeleteAnnotationByID))
 			annotationsRoute.Put("/:annotationId", bind(dtos.UpdateAnnotationsCmd{}), Wrap(UpdateAnnotation))
 			annotationsRoute.Patch("/:annotationId", bind(dtos.PatchAnnotationsCmd{}), Wrap(PatchAnnotation))
-			annotationsRoute.Delete("/region/:regionId", Wrap(DeleteAnnotationRegion))
 			annotationsRoute.Post("/graphite", reqEditorRole, bind(dtos.PostGraphiteAnnotationsCmd{}), Wrap(PostGraphiteAnnotation))
 		})
 
@@ -396,6 +399,9 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Post("/provisioning/datasources/reload", Wrap(hs.AdminProvisioningReloadDatasources))
 		adminRoute.Post("/provisioning/notifications/reload", Wrap(hs.AdminProvisioningReloadNotifications))
 		adminRoute.Post("/ldap/reload", Wrap(hs.ReloadLDAPCfg))
+		adminRoute.Post("/ldap/sync/:id", Wrap(hs.PostSyncUserWithLDAP))
+		adminRoute.Get("/ldap/:username", Wrap(hs.GetUserFromLDAP))
+		adminRoute.Get("/ldap/status", Wrap(hs.GetLDAPStatus))
 	}, reqGrafanaAdmin)
 
 	// rendering
@@ -413,4 +419,13 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// streams
 	//r.Post("/api/streams/push", reqSignedIn, bind(dtos.StreamMessage{}), liveConn.PushToStream)
+
+	// Snapshots
+	r.Post("/api/snapshots/", reqSnapshotPublicModeOrSignedIn, bind(models.CreateDashboardSnapshotCommand{}), CreateDashboardSnapshot)
+	r.Get("/api/snapshot/shared-options/", reqSignedIn, GetSharingOptions)
+	r.Get("/api/snapshots/:key", GetDashboardSnapshot)
+	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, Wrap(DeleteDashboardSnapshotByDeleteKey))
+	r.Delete("/api/snapshots/:key", reqEditorRole, Wrap(DeleteDashboardSnapshot))
+
+	r.Get("/*", reqSignedIn, hs.Index)
 }

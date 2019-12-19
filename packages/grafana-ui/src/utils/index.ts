@@ -1,12 +1,10 @@
-export * from './valueFormats/valueFormats';
 export * from './colors';
-export * from './namedColorsPalette';
-export * from './displayValue';
-export * from './fieldDisplay';
-export * from './deprecationWarning';
 export * from './validate';
-export { getFlotPairs } from './flotPairs';
 export * from './slate';
+export * from './dataLinks';
+export * from './tags';
+export * from './measureText';
+export { default as ansicolor } from './ansicolor';
 
 // Export with a namespace
 import * as DOMUtil from './dom'; // includes Element.closest polyfil

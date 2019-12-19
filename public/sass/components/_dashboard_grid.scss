@@ -1,6 +1,18 @@
 @import '~react-grid-layout/css/styles.css';
 @import '~react-resizable/css/styles.css';
 
+.react-resizable-handle {
+  display: none;
+}
+
+.react-grid-item {
+  &:hover {
+    .react-resizable-handle {
+      display: initial;
+    }
+  }
+}
+
 .panel-in-fullscreen {
   .react-grid-layout {
     height: 100% !important;
@@ -35,7 +47,7 @@
   }
 
   .react-resizable-handle {
-    display: none;
+    display: none !important;
   }
 
   // the react-grid has a height transition

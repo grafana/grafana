@@ -1,23 +1,21 @@
 import { GraphiteDatasource } from '../datasource';
 import _ from 'lodash';
-// @ts-ignore
-import $q from 'q';
-import { TemplateSrvStub } from 'test/specs/helpers';
+
+import { TemplateSrv } from 'app/features/templating/template_srv';
 import { dateTime } from '@grafana/data';
 
 describe('graphiteDatasource', () => {
   const ctx: any = {
     backendSrv: {},
-    $q,
     // @ts-ignore
-    templateSrv: new TemplateSrvStub(),
+    templateSrv: new TemplateSrv(),
     instanceSettings: { url: 'url', name: 'graphiteProd', jsonData: {} },
   };
 
   beforeEach(() => {
     ctx.instanceSettings.url = '/api/datasources/proxy/1';
     // @ts-ignore
-    ctx.ds = new GraphiteDatasource(ctx.instanceSettings, ctx.$q, ctx.backendSrv, ctx.templateSrv);
+    ctx.ds = new GraphiteDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
   });
 
   describe('When querying graphite with one target using query editor target spec', () => {
@@ -35,8 +33,16 @@ describe('graphiteDatasource', () => {
     beforeEach(async () => {
       ctx.backendSrv.datasourceRequest = (options: any) => {
         requestOptions = options;
-        return ctx.$q.when({
-          data: [{ target: 'prod1.count', datapoints: [[10, 1], [12, 1]] }],
+        return Promise.resolve({
+          data: [
+            {
+              target: 'prod1.count',
+              datapoints: [
+                [10, 1],
+                [12, 1],
+              ],
+            },
+          ],
         });
       };
 
@@ -73,11 +79,11 @@ describe('graphiteDatasource', () => {
 
     it('should return series list', () => {
       expect(results.data.length).toBe(1);
-      expect(results.data[0].target).toBe('prod1.count');
+      expect(results.data[0].name).toBe('prod1.count');
     });
 
     it('should convert to millisecond resolution', () => {
-      expect(results.data[0].datapoints[0][0]).toBe(10);
+      expect(results.data[0].fields[0].values.get(0)).toBe(10);
     });
   });
 
@@ -110,7 +116,7 @@ describe('graphiteDatasource', () => {
 
       beforeEach(async () => {
         ctx.backendSrv.datasourceRequest = (options: any) => {
-          return ctx.$q.when(response);
+          return Promise.resolve(response);
         };
 
         await ctx.ds.annotationQuery(options).then((data: any) => {
@@ -140,7 +146,7 @@ describe('graphiteDatasource', () => {
       };
       beforeEach(() => {
         ctx.backendSrv.datasourceRequest = (options: any) => {
-          return ctx.$q.when(response);
+          return Promise.resolve(response);
         };
 
         ctx.ds.annotationQuery(options).then((data: any) => {
@@ -218,6 +224,38 @@ describe('graphiteDatasource', () => {
       });
       expect(results.length).toBe(2);
     });
+
+    describe('when formatting targets', () => {
+      it('does not attempt to glob for one variable', () => {
+        ctx.ds.templateSrv.init([
+          {
+            type: 'query',
+            name: 'metric',
+            current: { value: ['b'] },
+          },
+        ]);
+
+        const results = ctx.ds.buildGraphiteParams({
+          targets: [{ target: 'my.$metric.*' }],
+        });
+        expect(results).toStrictEqual(['target=my.b.*', 'format=json']);
+      });
+
+      it('globs for more than one variable', () => {
+        ctx.ds.templateSrv.init([
+          {
+            type: 'query',
+            name: 'metric',
+            current: { value: ['a', 'b'] },
+          },
+        ]);
+
+        const results = ctx.ds.buildGraphiteParams({
+          targets: [{ target: 'my.[[metric]].*' }],
+        });
+        expect(results).toStrictEqual(['target=my.%7Ba%2Cb%7D.*', 'format=json']);
+      });
+    });
   });
 
   describe('querying for template variables', () => {
@@ -227,7 +265,7 @@ describe('graphiteDatasource', () => {
     beforeEach(() => {
       ctx.backendSrv.datasourceRequest = (options: any) => {
         requestOptions = options;
-        return ctx.$q.when({
+        return Promise.resolve({
           data: ['backend_01', 'backend_02'],
         });
       };
@@ -308,7 +346,13 @@ describe('graphiteDatasource', () => {
     });
 
     it('/metrics/find should be POST', () => {
-      ctx.templateSrv.setGrafanaVariable('foo', 'bar');
+      ctx.ds.templateSrv.init([
+        {
+          type: 'query',
+          name: 'foo',
+          current: { value: ['bar'] },
+        },
+      ]);
       ctx.ds.metricFindQuery('[[foo]]').then((data: any) => {
         results = data;
       });
@@ -318,6 +362,28 @@ describe('graphiteDatasource', () => {
       expect(requestOptions.data).toMatch(`query=bar`);
       expect(requestOptions).toHaveProperty('params');
     });
+
+    it('should interpolate $__searchFilter with searchFilter', () => {
+      ctx.ds.metricFindQuery('app.$__searchFilter', { searchFilter: 'backend' }).then((data: any) => {
+        results = data;
+      });
+
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/metrics/find');
+      expect(requestOptions.params).toEqual({});
+      expect(requestOptions.data).toEqual('query=app.backend*');
+      expect(results).not.toBe(null);
+    });
+
+    it('should interpolate $__searchFilter with default when searchFilter is missing', () => {
+      ctx.ds.metricFindQuery('app.$__searchFilter', {}).then((data: any) => {
+        results = data;
+      });
+
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/metrics/find');
+      expect(requestOptions.params).toEqual({});
+      expect(requestOptions.data).toEqual('query=app.*');
+      expect(results).not.toBe(null);
+    });
   });
 });
 
@@ -325,9 +391,8 @@ function accessScenario(name: string, url: string, fn: any) {
   describe('access scenario ' + name, () => {
     const ctx: any = {
       backendSrv: {},
-      $q,
       // @ts-ignore
-      templateSrv: new TemplateSrvStub(),
+      templateSrv: new TemplateSrv(),
       instanceSettings: { url: 'url', name: 'graphiteProd', jsonData: {} },
     };
 
@@ -341,7 +406,7 @@ function accessScenario(name: string, url: string, fn: any) {
       it('tracing headers should be added', () => {
         ctx.instanceSettings.url = url;
         // @ts-ignore
-        const ds = new GraphiteDatasource(ctx.instanceSettings, ctx.$q, ctx.backendSrv, ctx.templateSrv);
+        const ds = new GraphiteDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
         ds.addTracingHeaders(httpOptions, options);
         fn(httpOptions);
       });

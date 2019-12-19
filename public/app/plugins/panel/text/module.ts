@@ -5,6 +5,7 @@ import { sanitize, escapeHtml } from 'app/core/utils/text';
 import config from 'app/core/config';
 import { auto, ISCEService } from 'angular';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { PanelEvents } from '@grafana/data';
 import { renderMarkdown } from '@grafana/data';
 
 const defaultContent = `
@@ -38,9 +39,9 @@ export class TextPanelCtrl extends PanelCtrl {
 
     _.defaults(this.panel, this.panelDefaults);
 
-    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
-    this.events.on('refresh', this.onRefresh.bind(this));
-    this.events.on('render', this.onRender.bind(this));
+    this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
+    this.events.on(PanelEvents.refresh, this.onRefresh.bind(this));
+    this.events.on(PanelEvents.render, this.onRender.bind(this));
 
     const renderWhenChanged = (scope: any) => {
       const { panel } = scope.ctrl;
@@ -88,13 +89,13 @@ export class TextPanelCtrl extends PanelCtrl {
   }
 
   updateContent(html: string) {
-    html = config.disableSanitizeHtml ? html : sanitize(html);
     try {
-      this.content = this.$sce.trustAsHtml(this.templateSrv.replace(html, this.panel.scopedVars));
+      html = this.templateSrv.replace(html, this.panel.scopedVars, 'html');
     } catch (e) {
       console.log('Text panel error: ', e);
-      this.content = this.$sce.trustAsHtml(html);
     }
+
+    this.content = this.$sce.trustAsHtml(config.disableSanitizeHtml ? html : sanitize(html));
   }
 }
 

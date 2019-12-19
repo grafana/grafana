@@ -96,10 +96,12 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")
 	proxy.addTraceFromHeaderValue(span, "X-Dashboard-Id", "dashboard_id")
 
-	opentracing.GlobalTracer().Inject(
+	if err := opentracing.GlobalTracer().Inject(
 		span.Context(),
 		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(proxy.ctx.Req.Request.Header))
+		opentracing.HTTPHeadersCarrier(proxy.ctx.Req.Request.Header)); err != nil {
+		logger.Error("Failed to inject span context instance", "err", err)
+	}
 
 	originalSetCookie := proxy.ctx.Resp.Header().Get("Set-Cookie")
 
@@ -116,28 +118,6 @@ func (proxy *DataSourceProxy) addTraceFromHeaderValue(span opentracing.Span, hea
 	dashId, err := strconv.Atoi(panelId)
 	if err == nil {
 		span.SetTag(tagName, dashId)
-	}
-}
-
-func (proxy *DataSourceProxy) useCustomHeaders(req *http.Request) {
-	decryptSdj := proxy.ds.SecureJsonData.Decrypt()
-	index := 1
-	for {
-		headerNameSuffix := fmt.Sprintf("httpHeaderName%d", index)
-		headerValueSuffix := fmt.Sprintf("httpHeaderValue%d", index)
-		if key := proxy.ds.JsonData.Get(headerNameSuffix).MustString(); key != "" {
-			if val, ok := decryptSdj[headerValueSuffix]; ok {
-				// remove if exists
-				if req.Header.Get(key) != "" {
-					req.Header.Del(key)
-				}
-				req.Header.Add(key, val)
-				logger.Debug("Using custom header ", "CustomHeaders", key)
-			}
-		} else {
-			break
-		}
-		index += 1
 	}
 }
 
@@ -167,11 +147,6 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 		if proxy.ds.BasicAuth {
 			req.Header.Del("Authorization")
 			req.Header.Add("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser, proxy.ds.DecryptedBasicAuthPassword()))
-		}
-
-		// Lookup and use custom headers
-		if proxy.ds.SecureJsonData != nil {
-			proxy.useCustomHeaders(req)
 		}
 
 		dsAuth := req.Header.Get("X-DS-Authorization")
@@ -347,7 +322,7 @@ func addOAuthPassThruAuth(c *m.ReqContext, req *http.Request) {
 		TokenType:    authInfoQuery.Result.OAuthTokenType,
 	}).Token()
 	if err != nil {
-		logger.Error("Failed to retrieve access token from oauth provider", "provider", authInfoQuery.Result.AuthModule)
+		logger.Error("Failed to retrieve access token from oauth provider", "provider", authInfoQuery.Result.AuthModule, "error", err)
 		return
 	}
 

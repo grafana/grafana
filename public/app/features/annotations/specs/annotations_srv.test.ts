@@ -1,11 +1,11 @@
 import { AnnotationsSrv } from '../annotations_srv';
 
 describe('AnnotationsSrv', () => {
-  const $rootScope = {
+  const $rootScope: any = {
     onAppEvent: jest.fn(),
   };
 
-  const annotationsSrv = new AnnotationsSrv($rootScope, null, null, null, null);
+  const annotationsSrv = new AnnotationsSrv($rootScope, null, null, null);
 
   describe('When translating the query result', () => {
     const annotationSource = {

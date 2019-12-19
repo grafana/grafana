@@ -19,7 +19,7 @@ describe('grafana data source', () => {
       },
     };
 
-    const ds = new GrafanaDatasource(backendSrvStub as any, q, templateSrvStub as any);
+    const ds = new GrafanaDatasource(backendSrvStub as any, templateSrvStub as any);
 
     describe('with tags that have template variables', () => {
       const options = setupAnnotationQueryOptions({ tags: ['tag1:$var'] });

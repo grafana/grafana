@@ -368,7 +368,7 @@ func callbackRet(typ reflect.Type) (callbackRetConverter, error) {
 func callbackError(ctx *C.sqlite3_context, err error) {
 	cstr := C.CString(err.Error())
 	defer C.free(unsafe.Pointer(cstr))
-	C.sqlite3_result_error(ctx, cstr, -1)
+	C.sqlite3_result_error(ctx, cstr, C.int(-1))
 }
 
 // Test support code. Tests are not allowed to import "C", so we can't

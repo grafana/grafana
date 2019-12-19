@@ -5,7 +5,7 @@ export class ElasticQueryBuilder {
   timeField: string;
   esVersion: number;
 
-  constructor(options: any) {
+  constructor(options: { timeField: string; esVersion: number }) {
     this.timeField = options.timeField;
     this.esVersion = options.esVersion;
   }
@@ -129,11 +129,6 @@ export class ElasticQueryBuilder {
     }
 
     query.script_fields = {};
-    if (this.esVersion < 5) {
-      query.fielddata_fields = [this.timeField];
-    } else {
-      query.docvalue_fields = [this.timeField];
-    }
     return query;
   }
 
@@ -224,7 +219,7 @@ export class ElasticQueryBuilder {
     nestedAggs = query;
 
     for (i = 0; i < target.bucketAggs.length; i++) {
-      const aggDef = target.bucketAggs[i];
+      const aggDef: any = target.bucketAggs[i];
       const esAgg: any = {};
 
       switch (aggDef.type) {
@@ -353,17 +348,32 @@ export class ElasticQueryBuilder {
         terms: {
           field: queryDef.field,
           size: size,
-          order: {
-            _term: 'asc',
-          },
+          order: {},
         },
       },
     };
 
-    if (this.esVersion >= 60) {
-      query.aggs['1'].terms.order = {
-        _key: 'asc',
-      };
+    // Default behaviour is to order results by { _key: asc }
+    // queryDef.order allows selection of asc/desc
+    // queryDef.orderBy allows selection of doc_count ordering (defaults desc)
+
+    const { orderBy = 'key', order = orderBy === 'doc_count' ? 'desc' : 'asc' } = queryDef;
+
+    if (['asc', 'desc'].indexOf(order) < 0) {
+      throw { message: `Invalid query sort order ${order}` };
+    }
+
+    switch (orderBy) {
+      case 'key':
+      case 'term':
+        const keyname = this.esVersion >= 60 ? '_key' : '_term';
+        query.aggs['1'].terms.order[keyname] = order;
+        break;
+      case 'doc_count':
+        query.aggs['1'].terms.order['_count'] = order;
+        break;
+      default:
+        throw { message: `Invalid query sort type ${orderBy}` };
     }
 
     return query;
@@ -383,7 +393,7 @@ export class ElasticQueryBuilder {
       query.query.bool.filter.push({
         query_string: {
           analyze_wildcard: true,
-          query: target.query,
+          query: querystring,
         },
       });
     }

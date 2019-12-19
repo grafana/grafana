@@ -1,9 +1,24 @@
 import execa from 'execa';
 import path from 'path';
 import fs from 'fs';
-import { PluginDevInfo, ExtensionSize, ZipFileInfo, PluginBuildReport, PluginHistory } from './types';
+import { KeyValue } from '@grafana/data';
+import { ExtensionSize, ZipFileInfo } from './types';
 
 const md5File = require('md5-file');
+
+export function getGrafanaVersions(): KeyValue<string> {
+  const dir = path.resolve(process.cwd(), 'node_modules', '@grafana');
+  const versions: KeyValue = {};
+  try {
+    fs.readdirSync(dir).forEach(file => {
+      const json = require(path.resolve(dir, file, 'package.json'));
+      versions[file] = json.version;
+    });
+  } catch (err) {
+    console.warn('Error reading toolkit versions', err);
+  }
+  return versions;
+}
 
 export function getFileSizeReportInFolder(dir: string, info?: ExtensionSize): ExtensionSize {
   const acc: ExtensionSize = info ? info : {};
@@ -76,17 +91,4 @@ export function findImagesInFolder(dir: string, prefix = '', append?: string[]):
   }
 
   return imgs;
-}
-
-export function appendPluginHistory(report: PluginBuildReport, info: PluginDevInfo, history: PluginHistory) {
-  history.last = {
-    info,
-    report,
-  };
-
-  if (!history.size) {
-    history.size = [];
-  }
-
-  console.log('TODO, append build stats to the last one');
 }

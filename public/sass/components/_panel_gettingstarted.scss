@@ -96,7 +96,7 @@ $path-position: $marker-size-half - ($path-height / 2);
       .icon-gf {
         color: $brand-primary;
         -webkit-text-fill-color: transparent;
-        background: $brand-gradient;
+        background: $brand-gradient-horizontal;
         -webkit-background-clip: text;
         text-decoration: none;
       }

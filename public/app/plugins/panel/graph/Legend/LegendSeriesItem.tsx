@@ -9,9 +9,9 @@ export interface LegendLabelProps {
   series: TimeSeries;
   asTable?: boolean;
   hidden?: boolean;
-  onLabelClick?: (series: any, event: any) => void;
-  onColorChange?: (series: any, color: string) => void;
-  onToggleAxis?: (series: any) => void;
+  onLabelClick: (series: any, event: any) => void;
+  onColorChange: (series: any, color: string) => void;
+  onToggleAxis: (series: any) => void;
 }
 
 export interface LegendValuesProps {

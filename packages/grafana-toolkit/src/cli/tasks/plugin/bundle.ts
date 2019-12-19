@@ -1,7 +1,7 @@
 import webpack = require('webpack');
-import { getWebpackConfig } from '../../../config/webpack.plugin.config';
 import formatWebpackMessages = require('react-dev-utils/formatWebpackMessages');
 import clearConsole = require('react-dev-utils/clearConsole');
+import { loadWebpackConfig } from '../../../config/webpack.plugin.config';
 
 export interface PluginBundleOptions {
   watch: boolean;
@@ -12,7 +12,7 @@ export interface PluginBundleOptions {
 // export const bundlePlugin = useSpinner<PluginBundleOptions>('Bundle plugin', ({ watch }) => {
 export const bundlePlugin = async ({ watch, production }: PluginBundleOptions) => {
   const compiler = webpack(
-    getWebpackConfig({
+    await loadWebpackConfig({
       watch,
       production,
     })
@@ -28,9 +28,10 @@ export const bundlePlugin = async ({ watch, production }: PluginBundleOptions) =
         console.log('Compiling...');
       });
 
-      compiler.hooks.done.tap('done', stats => {
+      compiler.hooks.done.tap('done', (stats: webpack.Stats) => {
         clearConsole();
-        const output = formatWebpackMessages(stats.toJson());
+        const json: any = stats.toJson(); // different @types/webpack between react-dev-utils and grafana-toolkit
+        const output = formatWebpackMessages(json);
 
         if (!output.errors.length && !output.warnings.length) {
           console.log('Compiled successfully!\n');
@@ -55,6 +56,8 @@ export const bundlePlugin = async ({ watch, production }: PluginBundleOptions) =
       compiler.run((err: Error, stats: webpack.Stats) => {
         if (err) {
           reject(err.message);
+
+          return;
         }
         if (stats.hasErrors()) {
           stats.compilation.errors.forEach(e => {

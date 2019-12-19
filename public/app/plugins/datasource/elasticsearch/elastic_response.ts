@@ -2,8 +2,7 @@ import _ from 'lodash';
 import flatten from 'app/core/utils/flatten';
 import * as queryDef from './query_def';
 import TableModel from 'app/core/table_model';
-import { DataFrame, toDataFrame, FieldType } from '@grafana/data';
-import { DataQueryResponse } from '@grafana/ui';
+import { DataQueryResponse, DataFrame, toDataFrame, FieldType, MutableDataFrame } from '@grafana/data';
 import { ElasticsearchAggregation } from './types';
 
 export class ElasticResponse {
@@ -425,72 +424,61 @@ export class ElasticResponse {
         throw this.getErrorFromElasticResponse(this.response, response.error);
       }
 
-      const hits = response.hits;
+      // We keep a list of all props so that we can create all the fields in the dataFrame, this can lead
+      // to wide sparse dataframes in case the scheme is different per document.
       let propNames: string[] = [];
-      let propName, hit, doc: any, i;
 
-      for (i = 0; i < hits.hits.length; i++) {
-        hit = hits.hits[i];
+      for (const hit of response.hits.hits) {
         const flattened = hit._source ? flatten(hit._source, null) : {};
-        doc = {};
-        doc[this.targets[0].timeField] = null;
-        doc = {
-          ...doc,
+        const doc = {
           _id: hit._id,
           _type: hit._type,
           _index: hit._index,
+          _source: { ...flattened },
           ...flattened,
         };
 
-        // Note: the order of for...in is arbitrary amd implementation dependant
-        // and should probably not be relied upon.
-        for (propName in hit.fields) {
-          if (propNames.indexOf(propName) === -1) {
-            propNames.push(propName);
-          }
-          doc[propName] = hit.fields[propName];
-        }
-
-        for (propName in doc) {
+        for (const propName of Object.keys(doc)) {
           if (propNames.indexOf(propName) === -1) {
             propNames.push(propName);
           }
         }
-
-        doc._source = { ...flattened };
 
         docs.push(doc);
       }
 
       if (docs.length > 0) {
         propNames = propNames.sort();
-        const series: DataFrame = {
-          fields: [
-            {
-              name: this.targets[0].timeField,
-              type: FieldType.time,
-            },
-          ],
-          rows: [],
-        };
+        const series = new MutableDataFrame({ fields: [] });
+
+        series.addField({
+          name: this.targets[0].timeField,
+          type: FieldType.time,
+        });
 
         if (logMessageField) {
-          series.fields.push({
+          series.addField({
             name: logMessageField,
             type: FieldType.string,
-          });
+          }).parse = (v: any) => {
+            return v || '';
+          };
         } else {
-          series.fields.push({
+          series.addField({
             name: '_source',
             type: FieldType.string,
-          });
+          }).parse = (v: any) => {
+            return JSON.stringify(v, null, 2);
+          };
         }
 
         if (logLevelField) {
-          series.fields.push({
+          series.addField({
             name: 'level',
             type: FieldType.string,
-          });
+          }).parse = (v: any) => {
+            return v || '';
+          };
         }
 
         for (const propName of propNames) {
@@ -498,35 +486,17 @@ export class ElasticResponse {
             continue;
           }
 
-          series.fields.push({
+          series.addField({
             name: propName,
             type: FieldType.string,
-          });
+          }).parse = (v: any) => {
+            return v || '';
+          };
         }
 
+        // Add a row for each document
         for (const doc of docs) {
-          const row: any[] = [];
-          row.push(doc[this.targets[0].timeField][0]);
-
-          if (logMessageField) {
-            row.push(doc[logMessageField] || '');
-          } else {
-            row.push(JSON.stringify(doc._source, null, 2));
-          }
-
-          if (logLevelField) {
-            row.push(doc[logLevelField] || '');
-          }
-
-          for (const propName of propNames) {
-            if (doc.hasOwnProperty(propName)) {
-              row.push(doc[propName]);
-            } else {
-              row.push(null);
-            }
-          }
-
-          series.rows.push(row);
+          series.add(doc);
         }
 
         dataFrame.push(series);
@@ -544,7 +514,6 @@ export class ElasticResponse {
 
         for (let y = 0; y < tmpSeriesList.length; y++) {
           const series = toDataFrame(tmpSeriesList[y]);
-          series.labels = {};
           dataFrame.push(series);
         }
       }

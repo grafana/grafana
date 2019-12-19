@@ -1,6 +1,6 @@
 import omit from 'lodash/omit';
 import React, { InputHTMLAttributes, FunctionComponent } from 'react';
-import { FormField } from '..';
+import { FormField } from '../FormField/FormField';
 
 interface Props extends InputHTMLAttributes<HTMLInputElement> {
   // Function to use when reset is clicked. Means you have to reset the input value yourself as this is  uncontrolled

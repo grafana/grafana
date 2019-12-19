@@ -1,4 +1,5 @@
 const fs = require('fs');
+const util = require('util');
 const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const ReplaceInFileWebpackPlugin = require('replace-in-file-webpack-plugin');
@@ -7,26 +8,34 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
+const readdirPromise = util.promisify(fs.readdir);
+const accessPromise = util.promisify(fs.access);
+
 import * as webpack from 'webpack';
 import { getStyleLoaders, getStylesheetEntries, getFileLoaders } from './webpack/loaders';
 
-interface WebpackConfigurationOptions {
+export interface WebpackConfigurationOptions {
   watch?: boolean;
   production?: boolean;
 }
-type WebpackConfigurationGetter = (options: WebpackConfigurationOptions) => webpack.Configuration;
+type WebpackConfigurationGetter = (options: WebpackConfigurationOptions) => Promise<webpack.Configuration>;
+export type CustomWebpackConfigurationGetter = (
+  originalConfig: webpack.Configuration,
+  options: WebpackConfigurationOptions
+) => webpack.Configuration;
 
-const findModuleTs = (base: string, files?: string[], result?: string[]) => {
-  files = files || fs.readdirSync(base);
+export const findModuleFiles = async (base: string, files?: string[], result?: string[]) => {
+  files = files || (await readdirPromise(base));
   result = result || [];
 
   if (files) {
-    files.forEach(file => {
+    files.forEach(async file => {
       const newbase = path.join(base, file);
       if (fs.statSync(newbase).isDirectory()) {
-        result = findModuleTs(newbase, fs.readdirSync(newbase), result);
+        result = await findModuleFiles(newbase, await readdirPromise(newbase), result);
       } else {
-        if (file.indexOf('module.ts') > -1) {
+        const filename = path.basename(file);
+        if (/^module.(t|j)sx?$/.exec(filename)) {
           // @ts-ignore
           result.push(newbase);
         }
@@ -37,11 +46,11 @@ const findModuleTs = (base: string, files?: string[], result?: string[]) => {
 };
 
 const getModuleFiles = () => {
-  return findModuleTs(path.resolve(process.cwd(), 'src'));
+  return findModuleFiles(path.resolve(process.cwd(), 'src'));
 };
 
 const getManualChunk = (id: string) => {
-  if (id.endsWith('module.ts') || id.endsWith('module.tsx')) {
+  if (id.endsWith('module.ts') || id.endsWith('module.js') || id.endsWith('module.tsx')) {
     const idx = id.lastIndexOf(path.sep + 'src' + path.sep);
     if (idx > 0) {
       const name = id.substring(idx + 5, id.lastIndexOf('.'));
@@ -55,9 +64,9 @@ const getManualChunk = (id: string) => {
   return null;
 };
 
-const getEntries = () => {
+const getEntries = async () => {
   const entries: { [key: string]: string } = {};
-  const modules = getModuleFiles();
+  const modules = await getModuleFiles();
 
   modules.forEach(modFile => {
     const mod = getManualChunk(modFile);
@@ -83,11 +92,13 @@ const getCommonPlugins = (options: WebpackConfigurationOptions) => {
         { from: 'plugin.json', to: '.' },
         { from: '../README.md', to: '.' },
         { from: '../LICENSE', to: '.' },
-        { from: 'img/*', to: '.' },
         { from: '**/*.json', to: '.' },
         { from: '**/*.svg', to: '.' },
         { from: '**/*.png', to: '.' },
         { from: '**/*.html', to: '.' },
+        { from: 'img/**/*', to: '.' },
+        { from: 'libs/**/*', to: '.' },
+        { from: 'static/**/*', to: '.' },
       ],
       { logLevel: options.watch ? 'silent' : 'warn' }
     ),
@@ -111,7 +122,7 @@ const getCommonPlugins = (options: WebpackConfigurationOptions) => {
   ];
 };
 
-export const getWebpackConfig: WebpackConfigurationGetter = options => {
+const getBaseWebpackConfig: WebpackConfigurationGetter = async options => {
   const plugins = getCommonPlugins(options);
   const optimization: { [key: string]: any } = {};
 
@@ -131,7 +142,7 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
     },
     context: path.join(process.cwd(), 'src'),
     devtool: 'source-map',
-    entry: getEntries(),
+    entry: await getEntries(),
     output: {
       filename: '[name].js',
       path: path.join(process.cwd(), 'dist'),
@@ -148,9 +159,11 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
       'emotion',
       'prismjs',
       'slate-plain-serializer',
-      'slate-react',
+      '@grafana/slate-react',
       'react',
       'react-dom',
+      'react-redux',
+      'redux',
       'rxjs',
       'd3',
       'angular',
@@ -181,13 +194,26 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
             {
               loader: 'babel-loader',
               options: {
-                presets: ['@babel/preset-env'],
+                presets: [['@babel/preset-env', { modules: false }]],
                 plugins: ['angularjs-annotate'],
               },
             },
             {
               loader: 'ts-loader',
               options: { onlyCompileBundledFiles: true },
+            },
+          ],
+          exclude: /(node_modules)/,
+        },
+        {
+          test: /\.jsx?$/,
+          loaders: [
+            {
+              loader: 'babel-loader',
+              options: {
+                presets: [['@babel/preset-env', { modules: false }]],
+                plugins: ['angularjs-annotate'],
+              },
             },
           ],
           exclude: /(node_modules)/,
@@ -204,11 +230,28 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
       ],
     },
     optimization,
-    // optimization: {
-    //   splitChunks: {
-    //     chunks: 'all',
-    //     name: 'shared'
-    //   }
-    // }
   };
+};
+
+export const loadWebpackConfig: WebpackConfigurationGetter = async options => {
+  const baseConfig = await getBaseWebpackConfig(options);
+  const customWebpackPath = path.resolve(process.cwd(), 'webpack.config.js');
+
+  try {
+    await accessPromise(customWebpackPath);
+    const customConfig = require(customWebpackPath);
+    const configGetter = customConfig.getWebpackConfig || customConfig;
+    if (typeof configGetter !== 'function') {
+      throw Error(
+        'Custom webpack config needs to export a function implementing CustomWebpackConfigurationGetter. Function needs to be ' +
+          'module export or named "getWebpackConfig"'
+      );
+    }
+    return (configGetter as CustomWebpackConfigurationGetter)(baseConfig, options);
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      return baseConfig;
+    }
+    throw err;
+  }
 };

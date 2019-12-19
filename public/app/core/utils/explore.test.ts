@@ -5,15 +5,18 @@ import {
   updateHistory,
   clearHistory,
   hasNonEmptyQuery,
-  instanceOfDataQueryError,
   getValueWithRefId,
   getFirstQueryErrorWithoutRefId,
   getRefIds,
+  refreshIntervalToSortOrder,
+  SortOrder,
+  sortLogsResult,
+  buildQueryTransaction,
 } from './explore';
 import { ExploreUrlState, ExploreMode } from 'app/types/explore';
 import store from 'app/core/store';
-import { LogsDedupStrategy } from '@grafana/data';
-import { DataQueryError } from '@grafana/ui';
+import { DataQueryError, LogsDedupStrategy, LogsModel, LogLevel, dateTime, MutableDataFrame } from '@grafana/data';
+import { RefreshPicker } from '@grafana/ui';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: null,
@@ -26,6 +29,7 @@ const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
     showingLogs: true,
     dedupStrategy: LogsDedupStrategy.none,
   },
+  originPanelId: undefined,
 };
 
 describe('state functions', () => {
@@ -196,46 +200,22 @@ describe('hasNonEmptyQuery', () => {
   });
 });
 
-describe('instanceOfDataQueryError', () => {
-  describe('when called with a DataQueryError', () => {
-    it('then it should return true', () => {
-      const error: DataQueryError = {
-        message: 'A message',
-        status: '200',
-        statusText: 'Ok',
-      };
-      const result = instanceOfDataQueryError(error);
-
-      expect(result).toBe(true);
-    });
-  });
-
-  describe('when called with a non DataQueryError', () => {
-    it('then it should return false', () => {
-      const error = {};
-      const result = instanceOfDataQueryError(error);
-
-      expect(result).toBe(false);
-    });
-  });
-});
-
 describe('hasRefId', () => {
   describe('when called with a null value', () => {
-    it('then it should return null', () => {
+    it('then it should return undefined', () => {
       const input: any = null;
       const result = getValueWithRefId(input);
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
   });
 
   describe('when called with a non object value', () => {
-    it('then it should return null', () => {
+    it('then it should return undefined', () => {
       const input = 123;
       const result = getValueWithRefId(input);
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
   });
 
@@ -269,11 +249,11 @@ describe('hasRefId', () => {
 
 describe('getFirstQueryErrorWithoutRefId', () => {
   describe('when called with a null value', () => {
-    it('then it should return null', () => {
+    it('then it should return undefined', () => {
       const errors: DataQueryError[] = null;
       const result = getFirstQueryErrorWithoutRefId(errors);
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
   });
 
@@ -353,6 +333,135 @@ describe('getRefIds', () => {
       const result = getRefIds(input);
 
       expect(result).toEqual(['B', 'X', 'A']);
+    });
+  });
+});
+
+describe('refreshIntervalToSortOrder', () => {
+  describe('when called with live option', () => {
+    it('then it should return ascending', () => {
+      const result = refreshIntervalToSortOrder(RefreshPicker.liveOption.value);
+
+      expect(result).toBe(SortOrder.Ascending);
+    });
+  });
+
+  describe('when called with off option', () => {
+    it('then it should return descending', () => {
+      const result = refreshIntervalToSortOrder(RefreshPicker.offOption.value);
+
+      expect(result).toBe(SortOrder.Descending);
+    });
+  });
+
+  describe('when called with 5s option', () => {
+    it('then it should return descending', () => {
+      const result = refreshIntervalToSortOrder('5s');
+
+      expect(result).toBe(SortOrder.Descending);
+    });
+  });
+
+  describe('when called with undefined', () => {
+    it('then it should return descending', () => {
+      const result = refreshIntervalToSortOrder(undefined);
+
+      expect(result).toBe(SortOrder.Descending);
+    });
+  });
+});
+
+describe('sortLogsResult', () => {
+  const firstRow = {
+    rowIndex: 0,
+    entryFieldIndex: 0,
+    dataFrame: new MutableDataFrame(),
+    timestamp: '2019-01-01T21:00:0.0000000Z',
+    entry: '',
+    hasAnsi: false,
+    labels: {},
+    logLevel: LogLevel.info,
+    raw: '',
+    timeEpochMs: 0,
+    timeFromNow: '',
+    timeLocal: '',
+    timeUtc: '',
+    uid: '1',
+  };
+  const sameAsFirstRow = firstRow;
+  const secondRow = {
+    rowIndex: 1,
+    entryFieldIndex: 0,
+    dataFrame: new MutableDataFrame(),
+    timestamp: '2019-01-01T22:00:0.0000000Z',
+    entry: '',
+    hasAnsi: false,
+    labels: {},
+    logLevel: LogLevel.info,
+    raw: '',
+    timeEpochMs: 0,
+    timeFromNow: '',
+    timeLocal: '',
+    timeUtc: '',
+    uid: '2',
+  };
+
+  describe('when called with SortOrder.Descending', () => {
+    it('then it should sort descending', () => {
+      const logsResult: LogsModel = {
+        rows: [firstRow, sameAsFirstRow, secondRow],
+        hasUniqueLabels: false,
+      };
+      const result = sortLogsResult(logsResult, SortOrder.Descending);
+
+      expect(result).toEqual({
+        rows: [secondRow, firstRow, sameAsFirstRow],
+        hasUniqueLabels: false,
+      });
+    });
+  });
+
+  describe('when called with SortOrder.Ascending', () => {
+    it('then it should sort ascending', () => {
+      const logsResult: LogsModel = {
+        rows: [secondRow, firstRow, sameAsFirstRow],
+        hasUniqueLabels: false,
+      };
+      const result = sortLogsResult(logsResult, SortOrder.Ascending);
+
+      expect(result).toEqual({
+        rows: [firstRow, sameAsFirstRow, secondRow],
+        hasUniqueLabels: false,
+      });
+    });
+  });
+
+  describe('when buildQueryTransaction', () => {
+    it('it should calculate interval based on time range', () => {
+      const queries = [{ refId: 'A' }];
+      const queryOptions = { maxDataPoints: 1000, minInterval: '15s' };
+      const range = { from: dateTime().subtract(1, 'd'), to: dateTime(), raw: { from: '1h', to: '1h' } };
+      const transaction = buildQueryTransaction(queries, queryOptions, range, false);
+
+      expect(transaction.request.intervalMs).toEqual(60000);
+    });
+
+    it('it should calculate interval taking minInterval into account', () => {
+      const queries = [{ refId: 'A' }];
+      const queryOptions = { maxDataPoints: 1000, minInterval: '15s' };
+      const range = { from: dateTime().subtract(1, 'm'), to: dateTime(), raw: { from: '1h', to: '1h' } };
+      const transaction = buildQueryTransaction(queries, queryOptions, range, false);
+
+      expect(transaction.request.intervalMs).toEqual(15000);
+    });
+
+    it('it should calculate interval taking maxDataPoints into account', () => {
+      const queries = [{ refId: 'A' }];
+      const queryOptions = { maxDataPoints: 10, minInterval: '15s' };
+      const range = { from: dateTime().subtract(1, 'd'), to: dateTime(), raw: { from: '1h', to: '1h' } };
+      const transaction = buildQueryTransaction(queries, queryOptions, range, false);
+
+      expect(transaction.request.interval).toEqual('2h');
     });
   });
 });

@@ -1,9 +1,8 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-import { getColorFromHexRgbOrName } from '../../utils';
-import { DisplayValue, Themeable } from '../../types';
+import { Threshold, DisplayValue, getColorFromHexRgbOrName, formattedValueToString } from '@grafana/data';
+import { Themeable } from '../../types';
 import { selectThemeVariant } from '../../themes';
-import { Threshold } from '@grafana/data';
 
 export interface Props extends Themeable {
   height: number;
@@ -14,6 +13,8 @@ export interface Props extends Themeable {
   showThresholdLabels: boolean;
   width: number;
   value: DisplayValue;
+  onClick?: React.MouseEventHandler<HTMLElement>;
+  className?: string;
 }
 
 const FONT_SCALE = 1;
@@ -79,7 +80,8 @@ export class Gauge extends PureComponent<Props> {
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
     const gaugeWidth = Math.min(dimension / 5.5, 40) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
-    const fontSize = Math.min(dimension / 4, 100) * (value.text !== null ? this.getFontScale(value.text.length) : 1);
+    const text = formattedValueToString(value);
+    const fontSize = Math.min(dimension / 4, 100) * (text !== null ? this.getFontScale(text.length) : 1);
 
     const thresholdLabelFontSize = fontSize / 2.5;
 
@@ -111,7 +113,7 @@ export class Gauge extends PureComponent<Props> {
           value: {
             color: value.color,
             formatter: () => {
-              return value.text;
+              return text;
             },
             font: { size: fontSize, family: theme.typography.fontFamily.sansSerif },
           },
@@ -132,24 +134,16 @@ export class Gauge extends PureComponent<Props> {
     }
   }
 
-  render() {
-    const { width, value, height } = this.props;
+  renderVisualization = () => {
+    const { width, value, height, onClick } = this.props;
     const autoProps = calculateGaugeAutoProps(width, height, value.title);
 
     return (
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          overflow: 'hidden',
-        }}
-      >
+      <>
         <div
           style={{ height: `${autoProps.gaugeHeight}px`, width: '100%' }}
           ref={element => (this.canvasElement = element)}
+          onClick={onClick}
         />
         {autoProps.showLabel && (
           <div
@@ -162,11 +156,30 @@ export class Gauge extends PureComponent<Props> {
               position: 'relative',
               width: '100%',
               top: '-4px',
+              cursor: 'default',
             }}
           >
             {value.title}
           </div>
         )}
+      </>
+    );
+  };
+
+  render() {
+    return (
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          overflow: 'hidden',
+        }}
+        className={this.props.className}
+      >
+        {this.renderVisualization()}
       </div>
     );
   }

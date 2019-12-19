@@ -19,33 +19,35 @@ One of the major new features of Grafana 6.0 is the new query-focused Explore wo
 
 Grafana's dashboard UI is all about building dashboards for visualization. Explore strips away all the dashboard and panel options so that you can focus on the query. Iterate until you have a working query and then think about building a dashboard.
 
-For infrastructure monitoring and incident response, you no longer need to switch to other tools to debug what went wrong. Explore allows you to dig deeper into your metrics and logs to find the cause. Grafana's new logging datasource, [Loki](https://github.com/grafana/loki) is tightly integrated into Explore and allows you to correlate metrics and logs by viewing them side-by-side. This creates a new debugging workflow where you can:
+For infrastructure monitoring and incident response, you no longer need to switch to other tools to debug what went wrong. Explore allows you to dig deeper into your metrics and logs to find the cause. Grafana's new logging data source, [Loki](https://github.com/grafana/loki) is tightly integrated into Explore and allows you to correlate metrics and logs by viewing them side-by-side. This creates a new debugging workflow where you can:
 
 1. Receive an alert
 2. Drill down and examine metrics
 3. Drill down again and search logs related to the metric and time interval (and in the future, distributed traces).
 
-If you just want to explore your data and do not want to create a dashboard then Explore makes this much easier. Explore will show the results as both a graph and a table enabling you to see trends in the data and more detail at the same time (if the datasource supports both graph and table data).
+If you just want to explore your data and do not want to create a dashboard then Explore makes this much easier. Explore will show the results as both a graph and a table enabling you to see trends in the data and more detail at the same time (if the data source supports both graph and table data).
 
 ## How to Start Exploring
 
 There is a new Explore icon on the menu bar to the left. This opens a new empty Explore tab.
 
-{{< docs-imagebox img="/img/docs/v60/explore_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore Icon" >}}
+{{< docs-imagebox img="/img/docs/v65/explore_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore Icon" >}}
 
 If you want to start with an existing query in a panel then choose the Explore option from the Panel menu. This opens an Explore tab with the query from the panel and allows you to tweak or iterate in the query outside of your dashboard.
 
-{{< docs-imagebox img="/img/docs/v60/explore_panel_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
+{{< docs-imagebox img="/img/docs/v65/explore_panel_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
-Choose your datasource in the dropdown in the top left. Prometheus has a custom Explore implementation, the other datasources (for now) use their standard query editor.
+Choose your data source in the dropdown in the top left. Prometheus has a custom Explore implementation, the other data sources (for now) use their standard query editor.
 
 The query field is where you can write your query and explore your data. There are three buttons beside the query field, a clear button (X), an add query button (+) and the remove query button (-). Just like the normal query editor, you can add and remove multiple queries.
 
 ## Split and Compare
 
-The Split feature is an easy way to compare graphs and tables side-by-side or to look at related data together on one page. Click the split button to duplicate the current query and split the page into two side-by-side queries. It is possible to select another datasource for the new query which for example, allows you to compare the same query for two different servers or to compare the staging environment to the production environment.
+The Split feature is an easy way to compare graphs and tables side-by-side or to look at related data together on one page. Click the split button to duplicate the current query and split the page into two side-by-side queries. It is possible to select another data source for the new query which for example, allows you to compare the same query for two different servers or to compare the staging environment to the production environment.
 
-{{< docs-imagebox img="/img/docs/v60/explore_split.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
+{{< docs-imagebox img="/img/docs/v65/explore_split.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
+
+In split view, timepickers for both panels can be linked (if you change one, the other gets changed as well) by clicking on one of the time-sync buttons attached to the timepickers. Linking of timepickers helps with keeping the start and the end times of the split view queries in sync and it will ensure that you’re looking at the same time interval in both split panels.
 
 You can close the newly created query by clicking on the Close Split button.
 
@@ -57,13 +59,13 @@ The first version of Explore features a custom querying experience for Prometheu
 
 On the left-hand side of the query field is a `Metrics` button, clicking on this opens the Metric Explorer. This shows a hierarchical menu with metrics grouped by their prefix. For example, all the Alert Manager metrics will be grouped under the `alertmanager` prefix. This is a good starting point if you just want to explore which metrics are available.
 
-{{< docs-imagebox img="/img/docs/v60/explore_metric_explorer.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
+{{< docs-imagebox img="/img/docs/v65/explore_metric_explorer.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
 ### Query Field
 
 The Query field supports autocomplete for metric names, function and works mostly the same way as the standard Prometheus query editor. Press the enter key to execute a query.
 
-The autocomplete menu can be trigger by pressing Ctrl + Space. The Autocomplete menu contains a new History section with a list of recently executed queries.
+The autocomplete menu can be trigger by pressing Ctrl+Space. The Autocomplete menu contains a new History section with a list of recently executed queries.
 
 Suggestions can appear under the query field - click on them to update your query with the suggested change.
 
@@ -90,13 +92,16 @@ Log data can be very repetitive and Explore can help by hiding duplicate log lin
 * `numbers` Matches on the line after stripping out numbers (durations, IP addresses etc.).
 * `signature` The most aggressive deduping - strips all letters and numbers, and matches on the remaining whitespace and punctuation.
 
-### Timestamp, Local time and Labels
+### Timestamp and Local time
 
 There are some other check boxes under the logging graph apart from the Deduping options.
 
 * Timestamp: shows/hides the Timestamp column
 * Local time: shows/hides the Local time column
-* Labels: shows/hides the label filters column
+
+### Labels and Parsed fields
+
+Each log row has an extendable area with its labels and parsed fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs. 
 
 ### Loki-specific Features
 
@@ -110,8 +115,34 @@ If you switch from a Prometheus query to a logs query (you can do a split first 
 
 `grafana_alerting_active_alerts{job="grafana"}`
 
-after switching to the Logs datasource, the query changes to:
+after switching to the Logs data source, the query changes to:
 
 `{job="grafana"}`
 
 This will return a chunk of logs in the selected time range that can be grepped/text searched.
+
+#### Live tailing
+
+Use the Live tailing feature to see real-time logs on supported data sources.
+
+Click the **Live** button in the Explore toolbar to switch to Live tail view.
+
+While in Live tail view new logs will come from the bottom of the screen and will have fading contrasting background so you can keep track of what is new. Click the **Pause** button or scroll the the logs view to pause the Live tailing and explore previous logs without interruption. Click **Resume** button to resume the Live tailing or click **Stop** button to exit Live tailing and go back to standard Explore view.
+
+{{< docs-imagebox img="/img/docs/v64/explore_live_tailing.gif" class="docs-image--no-shadow" caption="Explore Live tailing in action" >}}
+
+## Navigating between Explore and a dashboard
+
+To help accelerate workflows that involve regularly switching from Explore to a dashboard and vice-versa, we've added the ability to return to the origin dashboard
+after navigating to Explore from the panel's dropdown.
+
+{{< docs-imagebox img="/img/docs/v64/panel_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the panel dropdown" >}}
+
+After you've navigated to Explore, you should notice a "Back" button in the Explore toolbar.
+
+{{< docs-imagebox img="/img/docs/v64/explore_toolbar.png" class="docs-image--no-shadow" caption="Screenshot of the explore toolbar" >}}
+
+Simply clicking the button will return you to the origin dashboard, or, if you'd like to bring changes you make in Explore back to the dashboard, simply click
+the arrow next to the button to reveal a "Return to panel with changes" menu item.
+
+{{< docs-imagebox img="/img/docs/v64/explore_return_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the expanded explore return dropdown" >}}

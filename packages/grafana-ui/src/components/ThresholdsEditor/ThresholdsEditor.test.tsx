@@ -1,7 +1,9 @@
 import React, { ChangeEvent } from 'react';
 import { mount } from 'enzyme';
+import { GrafanaThemeType } from '@grafana/data';
 import { ThresholdsEditor, Props, thresholdsWithoutKey } from './ThresholdsEditor';
 import { colors } from '../../utils';
+import { mockThemeContext } from '../../themes/ThemeContext';
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
@@ -25,9 +27,17 @@ function getCurrentThresholds(editor: ThresholdsEditor) {
 }
 
 describe('Render', () => {
+  let restoreThemeContext: any;
+  beforeAll(() => {
+    restoreThemeContext = mockThemeContext({ type: GrafanaThemeType.Dark });
+  });
+
+  afterAll(() => {
+    restoreThemeContext();
+  });
+
   it('should render with base threshold', () => {
     const { wrapper } = setup();
-
     expect(wrapper).toMatchSnapshot();
   });
 });
@@ -35,8 +45,7 @@ describe('Render', () => {
 describe('Initialization', () => {
   it('should add a base threshold if missing', () => {
     const { instance } = setup();
-
-    expect(getCurrentThresholds(instance)).toEqual([{ value: -Infinity, color: colors[0] }]);
+    expect(getCurrentThresholds(instance)).toEqual([{ value: -Infinity, color: 'green' }]);
   });
 });
 
@@ -47,8 +56,8 @@ describe('Add threshold', () => {
     instance.onAddThresholdAfter(instance.state.thresholds[0]);
 
     expect(getCurrentThresholds(instance)).toEqual([
-      { value: -Infinity, color: colors[0] }, // 0
-      { value: 50, color: colors[2] }, // 1
+      { value: -Infinity, color: 'green' }, // 0
+      { value: 50, color: colors[1] }, // 1
     ]);
   });
 

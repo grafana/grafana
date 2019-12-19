@@ -4,7 +4,7 @@ import { dateMath } from '@grafana/data';
 
 // Types
 import { DashboardModel } from '../../state';
-import { LocationState } from 'app/types';
+import { LocationState, CoreEvents } from 'app/types';
 import { TimeRange, TimeOption, RawTimeRange } from '@grafana/data';
 
 // State
@@ -28,6 +28,21 @@ export class DashNavTimeControls extends Component<Props> {
   timeSrv: TimeSrv = getTimeSrv();
   $rootScope = this.props.$injector.get('$rootScope');
 
+  componentDidMount() {
+    // Only reason for this is that sometimes time updates can happen via redux location changes
+    // and this happens before timeSrv has had chance to update state (as it listens to angular route-updated)
+    // This can be removed after timeSrv listens redux location
+    this.props.dashboard.on(CoreEvents.timeRangeUpdated, this.triggerForceUpdate);
+  }
+
+  componentWillUnmount() {
+    this.props.dashboard.off(CoreEvents.timeRangeUpdated, this.triggerForceUpdate);
+  }
+
+  triggerForceUpdate = () => {
+    this.forceUpdate();
+  };
+
   get refreshParamInUrl(): string {
     return this.props.location.query.refresh as string;
   }
@@ -43,10 +58,10 @@ export class DashNavTimeControls extends Component<Props> {
   };
 
   onMoveBack = () => {
-    this.$rootScope.appEvent('shift-time', -1);
+    this.$rootScope.appEvent(CoreEvents.shiftTime, -1);
   };
   onMoveForward = () => {
-    this.$rootScope.appEvent('shift-time', 1);
+    this.$rootScope.appEvent(CoreEvents.shiftTime, 1);
   };
 
   onChangeTimePicker = (timeRange: TimeRange) => {
@@ -65,7 +80,7 @@ export class DashNavTimeControls extends Component<Props> {
   };
 
   onZoom = () => {
-    this.$rootScope.appEvent('zoom-out', 2);
+    this.$rootScope.appEvent(CoreEvents.zoomOut, 2);
   };
 
   setActiveTimeOption = (timeOptions: TimeOption[], rawTimeRange: RawTimeRange): TimeOption[] => {

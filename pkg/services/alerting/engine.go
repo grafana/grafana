@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/xerrors"
 )
 
 // AlertEngine is the background process that
@@ -117,7 +118,7 @@ func (e *AlertEngine) processJobWithRetry(grafanaCtx context.Context, job *Job) 
 
 	// Initialize with first attemptID=1
 	attemptChan <- 1
-	job.Running = true
+	job.SetRunning(true)
 
 	for {
 		select {
@@ -141,7 +142,7 @@ func (e *AlertEngine) processJobWithRetry(grafanaCtx context.Context, job *Job) 
 }
 
 func (e *AlertEngine) endJob(err error, cancelChan chan context.CancelFunc, job *Job) error {
-	job.Running = false
+	job.SetRunning(false)
 	close(cancelChan)
 	for cancelFn := range cancelChan {
 		cancelFn()
@@ -210,7 +211,16 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 		// dont reuse the evalContext and get its own context.
 		evalContext.Ctx = resultHandleCtx
 		evalContext.Rule.State = evalContext.GetNewState()
-		e.resultHandler.handle(evalContext)
+		if err := e.resultHandler.handle(evalContext); err != nil {
+			if xerrors.Is(err, context.Canceled) {
+				e.log.Debug("Result handler returned context.Canceled")
+			} else if xerrors.Is(err, context.DeadlineExceeded) {
+				e.log.Debug("Result handler returned context.DeadlineExceeded")
+			} else {
+				e.log.Error("Failed to handle result", "err", err)
+			}
+		}
+
 		span.Finish()
 		e.log.Debug("Job Execution completed", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.ID, "name", evalContext.Rule.Name, "firing", evalContext.Firing, "attemptID", attemptID)
 		close(attemptChan)

@@ -1,8 +1,10 @@
-import { LinkSrv, DataLinkBuiltInVars } from '../link_srv';
+import { LinkSrv } from '../link_srv';
+import { DataLinkBuiltInVars } from '@grafana/ui';
 import _ from 'lodash';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { advanceTo } from 'jest-date-mock';
+import { updateConfig } from '../../../../core/config';
 
 jest.mock('angular', () => {
   const AngularJSMock = require('test/mocks/angular');
@@ -11,7 +13,7 @@ jest.mock('angular', () => {
 
 const dataPointMock = {
   seriesName: 'A-series',
-  datapoint: [1000000000, 1],
+  datapoint: [1000000001, 1],
 };
 
 describe('linkSrv', () => {
@@ -80,6 +82,7 @@ describe('linkSrv', () => {
             title: 'Any title',
             url: `/d/1?$${DataLinkBuiltInVars.keepTime}`,
           },
+          {},
           {}
         ).href
       ).toEqual('/d/1?from=now-1h&to=now');
@@ -92,34 +95,79 @@ describe('linkSrv', () => {
             title: 'Any title',
             url: `/d/1?$${DataLinkBuiltInVars.includeVars}`,
           },
+          {},
           {}
         ).href
       ).toEqual('/d/1?var-test1=val1&var-test2=val2');
     });
 
-    it('should interpolate series name from datapoint', () => {
+    it('should interpolate series name', () => {
       expect(
         linkSrv.getDataLinkUIModel(
           {
             title: 'Any title',
-            url: `/d/1?var-test=$${DataLinkBuiltInVars.seriesName}`,
+            url: `/d/1?var-test=$\{${DataLinkBuiltInVars.seriesName}}`,
           },
-          {},
-          dataPointMock
+          {
+            __series: {
+              value: {
+                name: 'A-series',
+              },
+              text: 'A-series',
+            },
+          },
+          {}
         ).href
       ).toEqual('/d/1?var-test=A-series');
     });
-    it('should interpolate time range based on datapoint timestamp', () => {
+    it('should interpolate value time', () => {
       expect(
         linkSrv.getDataLinkUIModel(
           {
             title: 'Any title',
-            url: `/d/1?time=$${DataLinkBuiltInVars.valueTime}`,
+            url: `/d/1?time=$\{${DataLinkBuiltInVars.valueTime}}`,
           },
-          {},
-          dataPointMock
+          {
+            __value: {
+              value: { time: dataPointMock.datapoint[0] },
+              text: 'Value',
+            },
+          },
+          {}
         ).href
-      ).toEqual('/d/1?time=1000000000');
+      ).toEqual('/d/1?time=1000000001');
     });
+  });
+
+  describe('sanitization', () => {
+    const url = "javascript:alert('broken!);";
+    it.each`
+      disableSanitizeHtml | expected
+      ${true}             | ${url}
+      ${false}            | ${'about:blank'}
+    `(
+      "when disable disableSanitizeHtml set to '$disableSanitizeHtml' then result should be '$expected'",
+      ({ disableSanitizeHtml, expected }) => {
+        updateConfig({
+          disableSanitizeHtml,
+        });
+
+        const link = linkSrv.getDataLinkUIModel(
+          {
+            title: 'Any title',
+            url,
+          },
+          {
+            __value: {
+              value: { time: dataPointMock.datapoint[0] },
+              text: 'Value',
+            },
+          },
+          {}
+        ).href;
+
+        expect(link).toBe(expected);
+      }
+    );
   });
 });

@@ -7,9 +7,9 @@ export const login = async (page: Page) => {
   await loginPage.init(page);
   await loginPage.navigateTo();
 
-  await loginPage.pageObjects!.username.enter('admin');
-  await loginPage.pageObjects!.password.enter('admin');
-  await loginPage.pageObjects!.submit.click();
+  await loginPage.pageObjects.username.enter('admin');
+  await loginPage.pageObjects.password.enter('admin');
+  await loginPage.pageObjects.submit.click();
   await loginPage.waitForResponse();
 };
 

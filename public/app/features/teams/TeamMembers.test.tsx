@@ -67,6 +67,8 @@ describe('Functions', () => {
       label: '',
       avatarUrl: '',
       login: '',
+      name: '',
+      email: '',
     };
 
     instance.onAddUserToTeam();

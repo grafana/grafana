@@ -3,21 +3,32 @@ import { appEvents } from 'app/core/app_events';
 import locationUtil from 'app/core/utils/location_util';
 import { DashboardModel } from '../state/DashboardModel';
 import { removePanel } from '../utils/panel';
-import { DashboardMeta } from 'app/types';
+import { DashboardMeta, CoreEvents } from 'app/types';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { ILocationService } from 'angular';
+import { AppEvents } from '@grafana/data';
+import { PanelEvents } from '@grafana/data';
+
+interface DashboardSaveOptions {
+  folderId?: number;
+  overwrite?: boolean;
+  message?: string;
+  makeEditable?: boolean;
+}
 
 export class DashboardSrv {
   dashboard: DashboardModel;
 
   /** @ngInject */
-  constructor(private backendSrv: BackendSrv, private $rootScope: any, private $location: ILocationService) {
-    appEvents.on('save-dashboard', this.saveDashboard.bind(this), $rootScope);
-    appEvents.on('panel-change-view', this.onPanelChangeView);
-    appEvents.on('remove-panel', this.onRemovePanel);
-
-    // Export to react
-    setDashboardSrv(this);
+  constructor(
+    private backendSrv: BackendSrv,
+    private $rootScope: GrafanaRootScope,
+    private $location: ILocationService
+  ) {
+    appEvents.on(CoreEvents.saveDashboard, this.saveDashboard.bind(this), $rootScope);
+    appEvents.on(PanelEvents.panelChangeView, this.onPanelChangeView);
+    appEvents.on(CoreEvents.removePanel, this.onRemovePanel);
   }
 
   create(dashboard: any, meta: DashboardMeta) {
@@ -37,58 +48,59 @@ export class DashboardSrv {
     removePanel(dashboard, dashboard.getPanelById(panelId), true);
   };
 
-  onPanelChangeView = (options: any) => {
+  onPanelChangeView = ({
+    fullscreen = false,
+    edit = false,
+    panelId,
+  }: {
+    fullscreen?: boolean;
+    edit?: boolean;
+    panelId?: number;
+  }) => {
     const urlParams = this.$location.search();
 
     // handle toggle logic
-    if (options.fullscreen === urlParams.fullscreen) {
-      // I hate using these truthy converters (!!) but in this case
-      // I think it's appropriate. edit can be null/false/undefined and
-      // here i want all of those to compare the same
-      if (!!options.edit === !!urlParams.edit) {
-        delete urlParams.fullscreen;
-        delete urlParams.edit;
-        delete urlParams.panelId;
-        delete urlParams.tab;
-        this.$location.search(urlParams);
-        return;
+    // I hate using these truthy converters (!!) but in this case
+    // I think it's appropriate. edit can be null/false/undefined and
+    // here i want all of those to compare the same
+    if (fullscreen === urlParams.fullscreen && edit === !!urlParams.edit) {
+      const paramsToRemove = ['fullscreen', 'edit', 'panelId', 'tab'];
+      for (const key of paramsToRemove) {
+        delete urlParams[key];
       }
+
+      this.$location.search(urlParams);
+      return;
     }
 
-    if (options.fullscreen) {
-      urlParams.fullscreen = true;
-    } else {
-      delete urlParams.fullscreen;
-    }
+    const newUrlParams = {
+      ...urlParams,
+      fullscreen: fullscreen || undefined,
+      edit: edit || undefined,
+      tab: edit ? urlParams.tab : undefined,
+      panelId,
+    };
 
-    if (options.edit) {
-      urlParams.edit = true;
-    } else {
-      delete urlParams.edit;
-      delete urlParams.tab;
-    }
+    Object.keys(newUrlParams).forEach(key => {
+      if (newUrlParams[key] === undefined) {
+        delete newUrlParams[key];
+      }
+    });
 
-    if (options.panelId || options.panelId === 0) {
-      urlParams.panelId = options.panelId;
-    } else {
-      delete urlParams.panelId;
-    }
-
-    this.$location.search(urlParams);
+    this.$location.search(newUrlParams);
   };
 
   handleSaveDashboardError(
     clone: any,
-    options: { overwrite?: any },
+    options: DashboardSaveOptions,
     err: { data: { status: string; message: any }; isHandled: boolean }
   ) {
-    options = options || {};
     options.overwrite = true;
 
     if (err.data && err.data.status === 'version-mismatch') {
       err.isHandled = true;
 
-      this.$rootScope.appEvent('confirm-modal', {
+      this.$rootScope.appEvent(CoreEvents.showConfirmModal, {
         title: 'Conflict',
         text: 'Someone else has updated this dashboard.',
         text2: 'Would you still like to save this dashboard?',
@@ -103,7 +115,7 @@ export class DashboardSrv {
     if (err.data && err.data.status === 'name-exists') {
       err.isHandled = true;
 
-      this.$rootScope.appEvent('confirm-modal', {
+      this.$rootScope.appEvent(CoreEvents.showConfirmModal, {
         title: 'Conflict',
         text: 'A dashboard with the same name in selected folder already exists.',
         text2: 'Would you still like to save this dashboard?',
@@ -118,7 +130,7 @@ export class DashboardSrv {
     if (err.data && err.data.status === 'plugin-dashboard') {
       err.isHandled = true;
 
-      this.$rootScope.appEvent('confirm-modal', {
+      this.$rootScope.appEvent(CoreEvents.showConfirmModal, {
         title: 'Plugin Dashboard',
         text: err.data.message,
         text2: 'Your changes will be lost when you update the plugin. Use Save As to create custom version.',
@@ -129,18 +141,18 @@ export class DashboardSrv {
           this.showSaveAsModal();
         },
         onConfirm: () => {
-          this.save(clone, { overwrite: true });
+          this.save(clone, { ...options, overwrite: true });
         },
       });
     }
   }
 
-  postSave(clone: DashboardModel, data: { version: number; url: string }) {
+  postSave(data: { version: number; url: string }) {
     this.dashboard.version = data.version;
 
-    // important that these happens before location redirect below
-    this.$rootScope.appEvent('dashboard-saved', this.dashboard);
-    this.$rootScope.appEvent('alert-success', ['Dashboard saved']);
+    // important that these happen before location redirect below
+    this.$rootScope.appEvent(CoreEvents.dashboardSaved, this.dashboard);
+    this.$rootScope.appEvent(AppEvents.alertSuccess, ['Dashboard saved']);
 
     const newUrl = locationUtil.stripBaseFromUrl(data.url);
     const currentPath = this.$location.path();
@@ -152,17 +164,19 @@ export class DashboardSrv {
     return this.dashboard;
   }
 
-  save(clone: any, options: { overwrite?: any; folderId?: any }) {
-    options = options || {};
+  save(clone: any, options?: DashboardSaveOptions) {
     options.folderId = options.folderId >= 0 ? options.folderId : this.dashboard.meta.folderId || clone.folderId;
 
     return this.backendSrv
       .saveDashboard(clone, options)
-      .then(this.postSave.bind(this, clone))
-      .catch(this.handleSaveDashboardError.bind(this, clone, options));
+      .then((data: any) => this.postSave(data))
+      .catch(this.handleSaveDashboardError.bind(this, clone, { folderId: options.folderId }));
   }
 
-  saveDashboard(options?: { overwrite?: any; folderId?: any; makeEditable?: any }, clone?: DashboardModel) {
+  saveDashboard(
+    clone?: DashboardModel,
+    { makeEditable = false, folderId, overwrite = false, message }: DashboardSaveOptions = {}
+  ) {
     if (clone) {
       this.setCurrent(this.create(clone, this.dashboard.meta));
     }
@@ -171,7 +185,7 @@ export class DashboardSrv {
       return this.showDashboardProvisionedModal();
     }
 
-    if (!this.dashboard.meta.canSave && options.makeEditable !== true) {
+    if (!(this.dashboard.meta.canSave || makeEditable)) {
       return Promise.resolve();
     }
 
@@ -183,7 +197,7 @@ export class DashboardSrv {
       return this.showSaveModal();
     }
 
-    return this.save(this.dashboard.getSaveModelClone(), options);
+    return this.save(this.dashboard.getSaveModelClone(), { folderId, overwrite, message });
   }
 
   saveJSONDashboard(json: string) {
@@ -191,20 +205,20 @@ export class DashboardSrv {
   }
 
   showDashboardProvisionedModal() {
-    this.$rootScope.appEvent('show-modal', {
+    this.$rootScope.appEvent(CoreEvents.showModal, {
       templateHtml: '<save-provisioned-dashboard-modal dismiss="dismiss()"></save-provisioned-dashboard-modal>',
     });
   }
 
   showSaveAsModal() {
-    this.$rootScope.appEvent('show-modal', {
+    this.$rootScope.appEvent(CoreEvents.showModal, {
       templateHtml: '<save-dashboard-as-modal dismiss="dismiss()"></save-dashboard-as-modal>',
       modalClass: 'modal--narrow',
     });
   }
 
   showSaveModal() {
-    this.$rootScope.appEvent('show-modal', {
+    this.$rootScope.appEvent(CoreEvents.showModal, {
       templateHtml: '<save-dashboard-modal dismiss="dismiss()"></save-dashboard-modal>',
       modalClass: 'modal--narrow',
     });

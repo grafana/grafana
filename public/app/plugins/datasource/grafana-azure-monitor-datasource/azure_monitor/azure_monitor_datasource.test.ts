@@ -1,8 +1,7 @@
 import AzureMonitorDatasource from '../datasource';
-// @ts-ignore
-import Q from 'q';
+
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { toUtc } from '@grafana/data';
+import { toUtc, DataFrame } from '@grafana/data';
 
 describe('AzureMonitorDatasource', () => {
   const ctx: any = {
@@ -11,14 +10,13 @@ describe('AzureMonitorDatasource', () => {
   };
 
   beforeEach(() => {
-    ctx.$q = Q;
     ctx.instanceSettings = {
       url: 'http://azuremonitor.com',
       jsonData: { subscriptionId: '9935389e-9122-4ef9-95f9-1513dd24753f' },
       cloudName: 'azuremonitor',
     };
 
-    ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
+    ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
   });
 
   describe('When performing testDatasource', () => {
@@ -38,7 +36,7 @@ describe('AzureMonitorDatasource', () => {
         ctx.instanceSettings.jsonData.tenantId = 'xxx';
         ctx.instanceSettings.jsonData.clientId = 'xxx';
         ctx.backendSrv.datasourceRequest = () => {
-          return ctx.$q.reject(error);
+          return Promise.reject(error);
         };
       });
 
@@ -65,7 +63,7 @@ describe('AzureMonitorDatasource', () => {
         ctx.instanceSettings.jsonData.tenantId = 'xxx';
         ctx.instanceSettings.jsonData.clientId = 'xxx';
         ctx.backendSrv.datasourceRequest = () => {
-          return ctx.$q.when({ data: response, status: 200 });
+          return Promise.resolve({ data: response, status: 200 });
         };
       });
 
@@ -114,7 +112,10 @@ describe('AzureMonitorDatasource', () => {
           series: [
             {
               name: 'Percentage CPU',
-              points: [[2.2075, 1558278660000], [2.29, 1558278720000]],
+              points: [
+                [2.2075, 1558278660000],
+                [2.29, 1558278720000],
+              ],
             },
           ],
           tables: null,
@@ -125,18 +126,19 @@ describe('AzureMonitorDatasource', () => {
     beforeEach(() => {
       ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
         expect(options.url).toContain('/api/tsdb/query');
-        return ctx.$q.when({ data: response, status: 200 });
+        return Promise.resolve({ data: response, status: 200 });
       };
     });
 
     it('should return a list of datapoints', () => {
       return ctx.ds.query(options).then((results: any) => {
         expect(results.data.length).toBe(1);
-        expect(results.data[0].name).toEqual('Percentage CPU');
-        expect(results.data[0].rows[0][1]).toEqual(1558278660000);
-        expect(results.data[0].rows[0][0]).toEqual(2.2075);
-        expect(results.data[0].rows[1][1]).toEqual(1558278720000);
-        expect(results.data[0].rows[1][0]).toEqual(2.29);
+        const data = results.data[0] as DataFrame;
+        expect(data.name).toEqual('Percentage CPU');
+        expect(data.fields[1].values.get(0)).toEqual(1558278660000);
+        expect(data.fields[0].values.get(0)).toEqual(2.2075);
+        expect(data.fields[1].values.get(1)).toEqual(1558278720000);
+        expect(data.fields[0].values.get(1)).toEqual(2.29);
       });
     });
   });
@@ -156,7 +158,7 @@ describe('AzureMonitorDatasource', () => {
 
       beforeEach(() => {
         ctx.backendSrv.datasourceRequest = () => {
-          return ctx.$q.when(response);
+          return Promise.resolve(response);
         };
       });
 
@@ -182,7 +184,7 @@ describe('AzureMonitorDatasource', () => {
 
       beforeEach(() => {
         ctx.backendSrv.datasourceRequest = () => {
-          return ctx.$q.when(response);
+          return Promise.resolve(response);
         };
       });
 
@@ -209,7 +211,7 @@ describe('AzureMonitorDatasource', () => {
       beforeEach(() => {
         ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
           expect(options.url).toContain('11112222-eeee-4949-9b2d-9106972f9123');
-          return ctx.$q.when(response);
+          return Promise.resolve(response);
         };
       });
 
@@ -245,7 +247,7 @@ describe('AzureMonitorDatasource', () => {
           const baseUrl =
             'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
           expect(options.url).toBe(baseUrl + '/nodesapp/resources?api-version=2018-01-01');
-          return ctx.$q.when(response);
+          return Promise.resolve(response);
         };
       });
 
@@ -279,7 +281,7 @@ describe('AzureMonitorDatasource', () => {
           const baseUrl =
             'http://azuremonitor.com/azuremonitor/subscriptions/11112222-eeee-4949-9b2d-9106972f9123/resourceGroups';
           expect(options.url).toBe(baseUrl + '/nodesapp/resources?api-version=2018-01-01');
-          return ctx.$q.when(response);
+          return Promise.resolve(response);
         };
       });
 
@@ -317,7 +319,7 @@ describe('AzureMonitorDatasource', () => {
           const baseUrl =
             'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
           expect(options.url).toBe(baseUrl + '/nodeapp/resources?api-version=2018-01-01');
-          return ctx.$q.when(response);
+          return Promise.resolve(response);
         };
       });
 
@@ -355,7 +357,7 @@ describe('AzureMonitorDatasource', () => {
           const baseUrl =
             'http://azuremonitor.com/azuremonitor/subscriptions/11112222-eeee-4949-9b2d-9106972f9123/resourceGroups';
           expect(options.url).toBe(baseUrl + '/nodeapp/resources?api-version=2018-01-01');
-          return ctx.$q.when(response);
+          return Promise.resolve(response);
         };
       });
 
@@ -403,7 +405,7 @@ describe('AzureMonitorDatasource', () => {
               '/nodeapp/providers/microsoft.insights/components/rn/providers/microsoft.insights/' +
               'metricdefinitions?api-version=2018-01-01&metricnamespace=default'
           );
-          return ctx.$q.when(response);
+          return Promise.resolve(response);
         };
       });
 
@@ -452,7 +454,7 @@ describe('AzureMonitorDatasource', () => {
               '/nodeapp/providers/microsoft.insights/components/rn/providers/microsoft.insights/' +
               'metricdefinitions?api-version=2018-01-01&metricnamespace=default'
           );
-          return ctx.$q.when(response);
+          return Promise.resolve(response);
         };
       });
 
@@ -502,7 +504,7 @@ describe('AzureMonitorDatasource', () => {
             baseUrl +
               '/nodeapp/providers/Microsoft.Compute/virtualMachines/rn/providers/microsoft.insights/metricNamespaces?api-version=2017-12-01-preview'
           );
-          return ctx.$q.when(response);
+          return Promise.resolve(response);
         };
       });
 
@@ -550,7 +552,7 @@ describe('AzureMonitorDatasource', () => {
             baseUrl +
               '/nodeapp/providers/Microsoft.Compute/virtualMachines/rn/providers/microsoft.insights/metricNamespaces?api-version=2017-12-01-preview'
           );
-          return ctx.$q.when(response);
+          return Promise.resolve(response);
         };
       });
 
@@ -600,7 +602,7 @@ describe('AzureMonitorDatasource', () => {
 
     beforeEach(() => {
       ctx.backendSrv.datasourceRequest = () => {
-        return ctx.$q.when(response);
+        return Promise.resolve(response);
       };
     });
 
@@ -624,7 +626,7 @@ describe('AzureMonitorDatasource', () => {
 
     beforeEach(() => {
       ctx.backendSrv.datasourceRequest = () => {
-        return ctx.$q.when(response);
+        return Promise.resolve(response);
       };
     });
 
@@ -676,7 +678,7 @@ describe('AzureMonitorDatasource', () => {
         const baseUrl =
           'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
         expect(options.url).toBe(baseUrl + '/nodesapp/resources?api-version=2018-01-01');
-        return ctx.$q.when(response);
+        return Promise.resolve(response);
       };
     });
 
@@ -727,7 +729,7 @@ describe('AzureMonitorDatasource', () => {
           const baseUrl =
             'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
           expect(options.url).toBe(baseUrl + '/nodeapp/resources?api-version=2018-01-01');
-          return ctx.$q.when(response);
+          return Promise.resolve(response);
         };
       });
 
@@ -765,7 +767,7 @@ describe('AzureMonitorDatasource', () => {
           const baseUrl =
             'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
           expect(options.url).toBe(baseUrl + '/nodeapp/resources?api-version=2018-01-01');
-          return ctx.$q.when(response);
+          return Promise.resolve(response);
         };
       });
 
@@ -834,7 +836,7 @@ describe('AzureMonitorDatasource', () => {
           '/providers/microsoft.insights/components/resource1' +
           '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=default';
         expect(options.url).toBe(expected);
-        return ctx.$q.when(response);
+        return Promise.resolve(response);
       };
     });
 
@@ -906,7 +908,7 @@ describe('AzureMonitorDatasource', () => {
           '/providers/microsoft.insights/components/resource1' +
           '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=default';
         expect(options.url).toBe(expected);
-        return ctx.$q.when(response);
+        return Promise.resolve(response);
       };
     });
 
@@ -980,7 +982,7 @@ describe('AzureMonitorDatasource', () => {
           '/providers/microsoft.insights/components/resource1' +
           '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=default';
         expect(options.url).toBe(expected);
-        return ctx.$q.when(response);
+        return Promise.resolve(response);
       };
     });
 

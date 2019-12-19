@@ -21,7 +21,7 @@ import (
 	"encoding/gob"
 	"io"
 
-	"github.com/Unknwon/com"
+	"github.com/unknwon/com"
 )
 
 func init() {

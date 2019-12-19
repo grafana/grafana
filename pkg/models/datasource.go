@@ -76,7 +76,7 @@ func (ds *DataSource) DecryptedPassword() string {
 
 // decryptedValue returns decrypted value from secureJsonData
 func (ds *DataSource) decryptedValue(field string, fallback string) string {
-	if value, ok := ds.SecureJsonData.DecryptedValue(field); ok {
+	if value, ok := ds.DecryptedValue(field); ok {
 		return value
 	}
 	return fallback
@@ -144,9 +144,9 @@ type AddDataSourceCommand struct {
 	IsDefault         bool              `json:"isDefault"`
 	JsonData          *simplejson.Json  `json:"jsonData"`
 	SecureJsonData    map[string]string `json:"secureJsonData"`
-	ReadOnly          bool              `json:"readOnly"`
 
-	OrgId int64 `json:"-"`
+	OrgId    int64 `json:"-"`
+	ReadOnly bool  `json:"-"`
 
 	Result *DataSource
 }
@@ -168,10 +168,10 @@ type UpdateDataSourceCommand struct {
 	JsonData          *simplejson.Json  `json:"jsonData"`
 	SecureJsonData    map[string]string `json:"secureJsonData"`
 	Version           int               `json:"version"`
-	ReadOnly          bool              `json:"readOnly"`
 
-	OrgId int64 `json:"-"`
-	Id    int64 `json:"-"`
+	OrgId    int64 `json:"-"`
+	Id       int64 `json:"-"`
+	ReadOnly bool  `json:"-"`
 
 	Result *DataSource
 }

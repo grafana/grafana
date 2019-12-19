@@ -16,13 +16,13 @@ export const processHistogramLabels = (labels: string[]) => {
   return { values: { __name__: result } };
 };
 
-export function processLabels(labels: any, withName = false) {
+export function processLabels(labels: Array<{ [key: string]: string }>, withName = false) {
   const values: { [key: string]: string[] } = {};
-  labels.forEach((l: any) => {
+  labels.forEach(l => {
     const { __name__, ...rest } = l;
     if (withName) {
       values['__name__'] = values['__name__'] || [];
-      if (values['__name__'].indexOf(__name__) === -1) {
+      if (!values['__name__'].includes(__name__)) {
         values['__name__'].push(__name__);
       }
     }
@@ -31,7 +31,7 @@ export function processLabels(labels: any, withName = false) {
       if (!values[key]) {
         values[key] = [];
       }
-      if (values[key].indexOf(rest[key]) === -1) {
+      if (!values[key].includes(rest[key])) {
         values[key].push(rest[key]);
       }
     });

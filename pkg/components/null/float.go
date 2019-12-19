@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"math"
 	"reflect"
 	"strconv"
 )
@@ -99,7 +100,7 @@ func (f *Float) UnmarshalText(text []byte) error {
 // MarshalJSON implements json.Marshaler.
 // It will encode null if this Float is null.
 func (f Float) MarshalJSON() ([]byte, error) {
-	if !f.Valid {
+	if !f.Valid || math.IsNaN(f.Float64) {
 		return []byte(nullString), nil
 	}
 	return []byte(strconv.FormatFloat(f.Float64, 'f', -1, 64)), nil

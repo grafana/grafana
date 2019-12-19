@@ -5,8 +5,6 @@ import (
 	"strconv"
 	"time"
 
-	"fmt"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -80,15 +78,21 @@ func (pn *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if evalContext.Rule.State == models.AlertStateOK {
 		eventType = "resolve"
 	}
-	customData := triggMetrString
+	customData := simplejson.New()
 	for _, evt := range evalContext.EvalMatches {
-		customData = customData + fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
+		customData.Set(evt.Metric, evt.Value)
 	}
 
 	pn.log.Info("Notifying Pagerduty", "event_type", eventType)
 
 	payloadJSON := simplejson.New()
-	payloadJSON.Set("summary", evalContext.Rule.Name+" - "+evalContext.Rule.Message)
+
+	summary := evalContext.Rule.Name + " - " + evalContext.Rule.Message
+	if len(summary) > 1024 {
+		summary = summary[0:1024]
+	}
+	payloadJSON.Set("summary", summary)
+
 	if hostname, err := os.Hostname(); err == nil {
 		payloadJSON.Set("source", hostname)
 	}

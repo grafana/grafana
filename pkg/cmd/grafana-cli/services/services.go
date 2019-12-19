@@ -80,7 +80,9 @@ func ReadPlugin(pluginDir, pluginName string) (m.InstalledPlugin, error) {
 	}
 
 	res := m.InstalledPlugin{}
-	json.Unmarshal(data, &res)
+	if err := json.Unmarshal(data, &res); err != nil {
+		return res, err
+	}
 
 	if res.Info.Version == "" {
 		res.Info.Version = "0.0.0"

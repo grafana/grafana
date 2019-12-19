@@ -2,10 +2,9 @@ import _ from 'lodash';
 import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
 import ResponseParser from './response_parser';
 import { AzureMonitorQuery, AzureDataSourceJsonData } from '../types';
-import { DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui';
+import { DataQueryRequest, DataSourceInstanceSettings } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { IQService } from 'angular';
 
 export default class AzureLogAnalyticsDatasource {
   id: number;
@@ -20,13 +19,10 @@ export default class AzureLogAnalyticsDatasource {
   constructor(
     private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
     private backendSrv: BackendSrv,
-    private templateSrv: TemplateSrv,
-    private $q: IQService
+    private templateSrv: TemplateSrv
   ) {
     this.id = instanceSettings.id;
-    this.baseUrl = this.instanceSettings.jsonData.azureLogAnalyticsSameAs
-      ? '/sameasloganalyticsazure'
-      : `/loganalyticsazure`;
+    this.baseUrl = '/loganalyticsazure';
     this.url = instanceSettings.url;
     this.defaultOrFirstWorkspace = this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace;
 
@@ -91,7 +87,11 @@ export default class AzureLogAnalyticsDatasource {
       );
       const generated = querystringBuilder.generate();
 
-      const workspace = this.templateSrv.replace(item.workspace, options.scopedVars);
+      let workspace = this.templateSrv.replace(item.workspace, options.scopedVars);
+
+      if (!workspace && this.defaultOrFirstWorkspace) {
+        workspace = this.defaultOrFirstWorkspace;
+      }
 
       const url = `${this.baseUrl}/${workspace}/query?${generated.uriString}`;
 
@@ -113,7 +113,7 @@ export default class AzureLogAnalyticsDatasource {
 
     const promises = this.doQueries(queries);
 
-    return this.$q.all(promises).then(results => {
+    return Promise.all(promises).then(results => {
       return new ResponseParser(results).parseQueryResult();
     });
   }
@@ -124,8 +124,7 @@ export default class AzureLogAnalyticsDatasource {
 
       const promises = this.doQueries(queries);
 
-      return this.$q
-        .all(promises)
+      return Promise.all(promises)
         .then(results => {
           return new ResponseParser(results).parseToVariables();
         })
@@ -198,7 +197,7 @@ export default class AzureLogAnalyticsDatasource {
 
   annotationQuery(options: any) {
     if (!options.annotation.rawQuery) {
-      return this.$q.reject({
+      return Promise.reject({
         message: 'Query missing in annotation definition',
       });
     }
@@ -207,7 +206,7 @@ export default class AzureLogAnalyticsDatasource {
 
     const promises = this.doQueries(queries);
 
-    return this.$q.all(promises).then(results => {
+    return Promise.all(promises).then(results => {
       const annotations = new ResponseParser(results).transformToAnnotations(options);
       return annotations;
     });

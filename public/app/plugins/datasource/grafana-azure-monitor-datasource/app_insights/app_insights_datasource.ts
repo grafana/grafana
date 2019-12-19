@@ -1,12 +1,12 @@
-import _ from 'lodash';
-import AppInsightsQuerystringBuilder from './app_insights_querystring_builder';
-import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
-import ResponseParser from './response_parser';
-import { DataSourceInstanceSettings } from '@grafana/ui';
-import { AzureDataSourceJsonData } from '../types';
+import { TimeSeries, toDataFrame } from '@grafana/data';
+import { DataQueryRequest, DataQueryResponseData, DataSourceInstanceSettings } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { IQService } from 'angular';
+import _ from 'lodash';
+
+import TimegrainConverter from '../time_grain_converter';
+import { AzureDataSourceJsonData, AzureMonitorQuery } from '../types';
+import ResponseParser from './response_parser';
 
 export interface LogAnalyticsColumn {
   text: string;
@@ -24,8 +24,7 @@ export default class AppInsightsDatasource {
   constructor(
     instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
     private backendSrv: BackendSrv,
-    private templateSrv: TemplateSrv,
-    private $q: IQService
+    private templateSrv: TemplateSrv
   ) {
     this.id = instanceSettings.id;
     this.applicationId = instanceSettings.jsonData.appInsightsAppId;
@@ -37,73 +36,82 @@ export default class AppInsightsDatasource {
     return !!this.applicationId && this.applicationId.length > 0;
   }
 
-  query(options: any) {
+  createRawQueryRequest(item: any, options: DataQueryRequest<AzureMonitorQuery>, target: AzureMonitorQuery) {
+    if (item.xaxis && !item.timeColumn) {
+      item.timeColumn = item.xaxis;
+    }
+
+    if (item.yaxis && !item.valueColumn) {
+      item.valueColumn = item.yaxis;
+    }
+
+    if (item.spliton && !item.segmentColumn) {
+      item.segmentColumn = item.spliton;
+    }
+
+    return {
+      type: 'timeSeriesQuery',
+      raw: false,
+      appInsights: {
+        rawQuery: true,
+        rawQueryString: this.templateSrv.replace(item.rawQueryString, options.scopedVars),
+        timeColumn: item.timeColumn,
+        valueColumn: item.valueColumn,
+        segmentColumn: item.segmentColumn,
+      },
+    };
+  }
+
+  createMetricsRequest(item: any, options: DataQueryRequest<AzureMonitorQuery>, target: AzureMonitorQuery) {
+    // fix for timeGrainUnit which is a deprecated/removed field name
+    if (item.timeGrainCount) {
+      item.timeGrain = TimegrainConverter.createISO8601Duration(item.timeGrainCount, item.timeGrainUnit);
+    } else if (item.timeGrainUnit && item.timeGrain !== 'auto') {
+      item.timeGrain = TimegrainConverter.createISO8601Duration(item.timeGrain, item.timeGrainUnit);
+    }
+
+    // migration for non-standard names
+    if (item.groupBy && !item.dimension) {
+      item.dimension = item.groupBy;
+    }
+
+    if (item.filter && !item.dimensionFilter) {
+      item.dimensionFilter = item.filter;
+    }
+
+    return {
+      type: 'timeSeriesQuery',
+      raw: false,
+      appInsights: {
+        rawQuery: false,
+        timeGrain: this.templateSrv.replace((item.timeGrain || '').toString(), options.scopedVars),
+        allowedTimeGrainsMs: item.allowedTimeGrainsMs,
+        metricName: this.templateSrv.replace(item.metricName, options.scopedVars),
+        aggregation: this.templateSrv.replace(item.aggregation, options.scopedVars),
+        dimension: this.templateSrv.replace(item.dimension, options.scopedVars),
+        dimensionFilter: this.templateSrv.replace(item.dimensionFilter, options.scopedVars),
+        alias: item.alias,
+        format: target.format,
+      },
+    };
+  }
+
+  async query(options: DataQueryRequest<AzureMonitorQuery>): Promise<DataQueryResponseData[]> {
     const queries = _.filter(options.targets, item => {
       return item.hide !== true;
-    }).map(target => {
+    }).map((target: AzureMonitorQuery) => {
       const item = target.appInsights;
+      let query: any;
       if (item.rawQuery) {
-        const querystringBuilder = new LogAnalyticsQuerystringBuilder(
-          this.templateSrv.replace(item.rawQueryString, options.scopedVars),
-          options,
-          'timestamp'
-        );
-        const generated = querystringBuilder.generate();
-
-        const url = `${this.baseUrl}/query?${generated.uriString}`;
-
-        return {
-          refId: target.refId,
-          intervalMs: options.intervalMs,
-          maxDataPoints: options.maxDataPoints,
-          datasourceId: this.id,
-          url: url,
-          format: options.format,
-          alias: item.alias,
-          query: generated.rawQuery,
-          xaxis: item.xaxis,
-          yaxis: item.yaxis,
-          spliton: item.spliton,
-          raw: true,
-        };
+        query = this.createRawQueryRequest(item, options, target);
       } else {
-        const querystringBuilder = new AppInsightsQuerystringBuilder(
-          options.range.from,
-          options.range.to,
-          options.interval
-        );
-
-        if (item.groupBy !== 'none') {
-          querystringBuilder.setGroupBy(this.templateSrv.replace(item.groupBy, options.scopedVars));
-        }
-        querystringBuilder.setAggregation(item.aggregation);
-        querystringBuilder.setInterval(
-          item.timeGrainType,
-          this.templateSrv.replace(item.timeGrain, options.scopedVars),
-          item.timeGrainUnit
-        );
-
-        querystringBuilder.setFilter(this.templateSrv.replace(item.filter || ''));
-
-        const url = `${this.baseUrl}/metrics/${this.templateSrv.replace(
-          encodeURI(item.metricName),
-          options.scopedVars
-        )}?${querystringBuilder.generate()}`;
-
-        return {
-          refId: target.refId,
-          intervalMs: options.intervalMs,
-          maxDataPoints: options.maxDataPoints,
-          datasourceId: this.id,
-          url: url,
-          format: options.format,
-          alias: item.alias,
-          xaxis: '',
-          yaxis: '',
-          spliton: '',
-          raw: false,
-        };
+        query = this.createMetricsRequest(item, options, target);
       }
+      query.refId = target.refId;
+      query.intervalMs = options.intervalMs;
+      query.datasourceId = this.id;
+      query.queryType = 'Application Insights';
+      return query;
     });
 
     if (!queries || queries.length === 0) {
@@ -111,25 +119,42 @@ export default class AppInsightsDatasource {
       return;
     }
 
-    const promises = this.doQueries(queries);
+    const { data } = await this.backendSrv.datasourceRequest({
+      url: '/api/tsdb/query',
+      method: 'POST',
+      data: {
+        from: options.range.from.valueOf().toString(),
+        to: options.range.to.valueOf().toString(),
+        queries,
+      },
+    });
 
-    return this.$q
-      .all(promises)
-      .then(results => {
-        return new ResponseParser(results).parseQueryResult();
-      })
-      .then(results => {
-        const flattened: any[] = [];
-
-        for (let i = 0; i < results.length; i++) {
-          if (results[i].columnsForDropdown) {
-            this.logAnalyticsColumns[results[i].refId] = results[i].columnsForDropdown;
-          }
-          flattened.push(results[i]);
+    const result: DataQueryResponseData[] = [];
+    if (data.results) {
+      Object.values(data.results).forEach((queryRes: any) => {
+        if (queryRes.meta && queryRes.meta.columns) {
+          const columnNames = queryRes.meta.columns as string[];
+          this.logAnalyticsColumns[queryRes.refId] = _.map(columnNames, n => ({ text: n, value: n }));
         }
 
-        return flattened;
+        if (!queryRes.series) {
+          return;
+        }
+
+        queryRes.series.forEach((series: any) => {
+          const timeSerie: TimeSeries = {
+            target: series.name,
+            datapoints: series.points,
+            refId: queryRes.refId,
+            meta: queryRes.meta,
+          };
+          result.push(toDataFrame(timeSerie));
+        });
       });
+      return result;
+    }
+
+    return Promise.resolve([]);
   }
 
   doQueries(queries: any) {

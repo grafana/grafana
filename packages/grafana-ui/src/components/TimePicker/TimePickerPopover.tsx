@@ -51,7 +51,7 @@ export class TimePickerPopover extends Component<Props, State> {
   onToCalendarChanged = (value: DateTime) => {
     value.set('h', 23);
     value.set('m', 59);
-    value.set('s', 0);
+    value.set('s', 59);
     this.setState({ to: value });
   };
 

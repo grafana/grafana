@@ -128,7 +128,12 @@ func initContextWithApiKey(ctx *models.ReqContext) bool {
 	apikey := keyQuery.Result
 
 	// validate api key
-	if !apikeygen.IsValid(decoded, apikey.Key) {
+	isValid, err := apikeygen.IsValid(decoded, apikey.Key)
+	if err != nil {
+		ctx.JsonApiErr(500, "Validating API key failed", err)
+		return true
+	}
+	if !isValid {
 		ctx.JsonApiErr(401, errStringInvalidAPIKey, err)
 		return true
 	}
@@ -256,7 +261,9 @@ func WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetimeDays in
 		Path:     setting.AppSubUrl + "/",
 		Secure:   setting.CookieSecure,
 		MaxAge:   maxAge,
-		SameSite: setting.CookieSameSite,
+	}
+	if setting.CookieSameSite != http.SameSiteDefaultMode {
+		cookie.SameSite = setting.CookieSameSite
 	}
 
 	http.SetCookie(ctx.Resp, &cookie)
@@ -280,7 +287,7 @@ func AddDefaultResponseHeaders() macaron.Handler {
 
 // AddSecurityHeaders adds various HTTP(S) response headers that enable various security protections behaviors in the client's browser.
 func AddSecurityHeaders(w macaron.ResponseWriter) {
-	if setting.Protocol == setting.HTTPS && setting.StrictTransportSecurity {
+	if (setting.Protocol == setting.HTTPS || setting.Protocol == setting.HTTP2) && setting.StrictTransportSecurity {
 		strictHeaderValues := []string{fmt.Sprintf("max-age=%v", setting.StrictTransportSecurityMaxAge)}
 		if setting.StrictTransportSecurityPreload {
 			strictHeaderValues = append(strictHeaderValues, "preload")

@@ -1,200 +1,173 @@
-import React, { useState, useMemo, useCallback, useContext } from 'react';
+import React, { useState, useMemo, useContext, useRef, RefObject, memo, useEffect } from 'react';
+import usePrevious from 'react-use/lib/usePrevious';
 import { VariableSuggestion, VariableOrigin, DataLinkSuggestions } from './DataLinkSuggestions';
-import { makeValue, ThemeContext } from '../../index';
+import { ThemeContext, DataLinkBuiltInVars, makeValue } from '../../index';
 import { SelectionReference } from './SelectionReference';
 import { Portal } from '../index';
-// @ts-ignore
-import { Editor } from 'slate-react';
-// @ts-ignore
-import { Value, Change, Document } from 'slate';
-// @ts-ignore
+
+import { Editor } from '@grafana/slate-react';
+import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
 import { Popper as ReactPopper } from 'react-popper';
-import useDebounce from 'react-use/lib/useDebounce';
 import { css, cx } from 'emotion';
-// @ts-ignore
-import PluginPrism from 'slate-prism';
+
+import { SlatePrism } from '../../slate-plugins';
+import { SCHEMA } from '../../utils/slate';
+import { stylesFactory } from '../../themes';
+import { GrafanaTheme } from '@grafana/data';
+
+const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 
 interface DataLinkInputProps {
   value: string;
-  onChange: (url: string) => void;
+  onChange: (url: string, callback?: () => void) => void;
   suggestions: VariableSuggestion[];
+  placeholder?: string;
 }
 
 const plugins = [
-  PluginPrism({
+  SlatePrism({
     onlyIn: (node: any) => node.type === 'code_block',
     getSyntax: () => 'links',
   }),
 ];
 
-export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, suggestions }) => {
-  const theme = useContext(ThemeContext);
-  const [showingSuggestions, setShowingSuggestions] = useState(false);
-  const [suggestionsIndex, setSuggestionsIndex] = useState(0);
-  const [usedSuggestions, setUsedSuggestions] = useState(
-    suggestions.filter(suggestion => {
-      return value.indexOf(suggestion.value) > -1;
-    })
-  );
-  // Using any here as TS has problem pickung up `change` method existance on Value
-  // According to code and documentation `change` is an instance method on Value in slate 0.33.8 that we use
-  // https://github.com/ianstormtaylor/slate/blob/slate%400.33.8/docs/reference/slate/value.md#change
-  const [linkUrl, setLinkUrl] = useState<any>(makeValue(value));
-
-  const getStyles = useCallback(() => {
-    return {
-      editor: css`
-        .token.builtInVariable {
-          color: ${theme.colors.queryGreen};
-        }
-        .token.variable {
-          color: ${theme.colors.queryKeyword};
-        }
-      `,
-    };
-  }, [theme]);
-
-  const currentSuggestions = useMemo(
-    () =>
-      suggestions.filter(suggestion => {
-        return usedSuggestions.map(s => s.value).indexOf(suggestion.value) === -1;
-      }),
-    [usedSuggestions, suggestions]
-  );
-
-  // SelectionReference is used to position the variables suggestion relatively to current DOM selection
-  const selectionRef = useMemo(() => new SelectionReference(), [setShowingSuggestions]);
-
-  // Keep track of variables that has been used already
-  const updateUsedSuggestions = () => {
-    const currentLink = Plain.serialize(linkUrl);
-    const next = usedSuggestions.filter(suggestion => {
-      return currentLink.indexOf(suggestion.value) > -1;
-    });
-    if (next.length !== usedSuggestions.length) {
-      setUsedSuggestions(next);
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  editor: css`
+    .token.builtInVariable {
+      color: ${theme.colors.queryGreen};
     }
-  };
+    .token.variable {
+      color: ${theme.colors.queryKeyword};
+    }
+  `,
+}));
 
-  useDebounce(updateUsedSuggestions, 500, [linkUrl]);
+// This memoised also because rerendering the slate editor grabs focus which created problem in some cases this
+// was used and changes to different state were propagated here.
+export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
+  ({ value, onChange, suggestions, placeholder = 'http://your-grafana.com/d/000000010/annotations' }) => {
+    const editorRef = useRef<Editor>() as RefObject<Editor>;
+    const theme = useContext(ThemeContext);
+    const styles = getStyles(theme);
+    const [showingSuggestions, setShowingSuggestions] = useState(false);
+    const [suggestionsIndex, setSuggestionsIndex] = useState(0);
+    const [linkUrl, setLinkUrl] = useState<Value>(makeValue(value));
+    const prevLinkUrl = usePrevious<Value>(linkUrl);
 
-  const onKeyDown = (event: KeyboardEvent) => {
-    if (event.key === 'Backspace') {
+    // Workaround for https://github.com/ianstormtaylor/slate/issues/2927
+    const stateRef = useRef({ showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange });
+    stateRef.current = { showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange };
+
+    // SelectionReference is used to position the variables suggestion relatively to current DOM selection
+    const selectionRef = useMemo(() => new SelectionReference(), [setShowingSuggestions, linkUrl]);
+
+    const onKeyDown = React.useCallback((event: KeyboardEvent, next: () => any) => {
+      if (!stateRef.current.showingSuggestions) {
+        if (event.key === '=' || event.key === '$' || (event.keyCode === 32 && event.ctrlKey)) {
+          return setShowingSuggestions(true);
+        }
+        return next();
+      }
+
+      switch (event.key) {
+        case 'Backspace':
+        case 'Escape':
+          setShowingSuggestions(false);
+          return setSuggestionsIndex(0);
+
+        case 'Enter':
+          event.preventDefault();
+          return onVariableSelect(stateRef.current.suggestions[stateRef.current.suggestionsIndex]);
+
+        case 'ArrowDown':
+        case 'ArrowUp':
+          event.preventDefault();
+          const direction = event.key === 'ArrowDown' ? 1 : -1;
+          return setSuggestionsIndex(index => modulo(index + direction, stateRef.current.suggestions.length));
+        default:
+          return next();
+      }
+    }, []);
+
+    useEffect(() => {
+      // Update the state of the link in the parent. This is basically done on blur but we need to do it after
+      // our state have been updated. The duplicity of state is done for perf reasons and also because local
+      // state also contains things like selection and formating.
+      if (prevLinkUrl && prevLinkUrl.selection.isFocused && !linkUrl.selection.isFocused) {
+        stateRef.current.onChange(Plain.serialize(linkUrl));
+      }
+    }, [linkUrl, prevLinkUrl]);
+
+    const onUrlChange = React.useCallback(({ value }: { value: Value }) => {
+      setLinkUrl(value);
+    }, []);
+
+    const onVariableSelect = (item: VariableSuggestion, editor = editorRef.current!) => {
+      const includeDollarSign = Plain.serialize(editor.value).slice(-1) !== '$';
+      if (item.origin !== VariableOrigin.Template || item.value === DataLinkBuiltInVars.includeVars) {
+        editor.insertText(`${includeDollarSign ? '$' : ''}\{${item.value}}`);
+      } else {
+        editor.insertText(`var-${item.value}=$\{${item.value}}`);
+      }
+
+      setLinkUrl(editor.value);
       setShowingSuggestions(false);
+
       setSuggestionsIndex(0);
-    }
+      stateRef.current.onChange(Plain.serialize(editor.value));
+    };
 
-    if (event.key === 'Enter') {
-      if (showingSuggestions) {
-        onVariableSelect(currentSuggestions[suggestionsIndex]);
-      }
-    }
-
-    if (showingSuggestions) {
-      if (event.key === 'ArrowDown') {
-        event.preventDefault();
-        setSuggestionsIndex(index => {
-          return (index + 1) % currentSuggestions.length;
-        });
-      }
-      if (event.key === 'ArrowUp') {
-        event.preventDefault();
-        setSuggestionsIndex(index => {
-          const nextIndex = index - 1 < 0 ? currentSuggestions.length - 1 : (index - 1) % currentSuggestions.length;
-          return nextIndex;
-        });
-      }
-    }
-
-    if (event.key === '?' || event.key === '&' || event.key === '$' || (event.keyCode === 32 && event.ctrlKey)) {
-      setShowingSuggestions(true);
-    }
-
-    if (event.key === 'Backspace') {
-      // @ts-ignore
-      return;
-    } else {
-      return true;
-    }
-  };
-
-  const onUrlChange = ({ value }: Change) => {
-    setLinkUrl(value);
-  };
-
-  const onUrlBlur = () => {
-    onChange(Plain.serialize(linkUrl));
-  };
-
-  const onVariableSelect = (item: VariableSuggestion) => {
-    const includeDollarSign = Plain.serialize(linkUrl).slice(-1) !== '$';
-
-    const change = linkUrl.change();
-
-    if (item.origin === VariableOrigin.BuiltIn) {
-      change.insertText(`${includeDollarSign ? '$' : ''}\{${item.value}}`);
-    } else {
-      change.insertText(`var-${item.value}=$\{${item.value}}`);
-    }
-
-    setLinkUrl(change.value);
-    setShowingSuggestions(false);
-    setUsedSuggestions((previous: VariableSuggestion[]) => {
-      return [...previous, item];
-    });
-    setSuggestionsIndex(0);
-    onChange(Plain.serialize(change.value));
-  };
-  return (
-    <div
-      className={cx(
-        'gf-form-input',
-        css`
-          position: relative;
-          height: auto;
-        `
-      )}
-    >
-      <div className="slate-query-field">
-        {showingSuggestions && (
-          <Portal>
-            <ReactPopper
-              referenceElement={selectionRef}
-              placement="auto-end"
-              modifiers={{
-                preventOverflow: { enabled: true, boundariesElement: 'window' },
-                arrow: { enabled: false },
-                offset: { offset: 200 }, // width of the suggestions menu
-              }}
-            >
-              {({ ref, style, placement }) => {
-                return (
-                  <div ref={ref} style={style} data-placement={placement}>
-                    <DataLinkSuggestions
-                      suggestions={currentSuggestions}
-                      onSuggestionSelect={onVariableSelect}
-                      onClose={() => setShowingSuggestions(false)}
-                      activeIndex={suggestionsIndex}
-                    />
-                  </div>
-                );
-              }}
-            </ReactPopper>
-          </Portal>
+    return (
+      <div
+        className={cx(
+          'gf-form-input',
+          css`
+            position: relative;
+          `
         )}
-        <Editor
-          placeholder="http://your-grafana.com/d/000000010/annotations"
-          value={linkUrl}
-          onChange={onUrlChange}
-          onBlur={onUrlBlur}
-          onKeyDown={onKeyDown}
-          plugins={plugins}
-          className={getStyles().editor}
-        />
+      >
+        <div className="slate-query-field">
+          {showingSuggestions && (
+            <Portal>
+              <ReactPopper
+                referenceElement={selectionRef}
+                placement="top-end"
+                modifiers={{
+                  preventOverflow: { enabled: true, boundariesElement: 'window' },
+                  arrow: { enabled: false },
+                  offset: { offset: 250 }, // width of the suggestions menu
+                }}
+              >
+                {({ ref, style, placement }) => {
+                  return (
+                    <div ref={ref} style={style} data-placement={placement}>
+                      <DataLinkSuggestions
+                        suggestions={stateRef.current.suggestions}
+                        onSuggestionSelect={onVariableSelect}
+                        onClose={() => setShowingSuggestions(false)}
+                        activeIndex={suggestionsIndex}
+                      />
+                    </div>
+                  );
+                }}
+              </ReactPopper>
+            </Portal>
+          )}
+          <Editor
+            schema={SCHEMA}
+            ref={editorRef}
+            placeholder={placeholder}
+            value={stateRef.current.linkUrl}
+            onChange={onUrlChange}
+            onKeyDown={(event, _editor, next) => onKeyDown(event as KeyboardEvent, next)}
+            plugins={plugins}
+            className={styles.editor}
+          />
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  }
+);
 
 DataLinkInput.displayName = 'DataLinkInput';

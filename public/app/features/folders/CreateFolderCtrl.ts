@@ -4,6 +4,7 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 import { ILocationService } from 'angular';
 import { ValidationSrv } from 'app/features/manage-dashboards';
 import { NavModelSrv } from 'app/core/nav_model_srv';
+import { AppEvents } from '@grafana/data';
 
 export default class CreateFolderCtrl {
   title = '';
@@ -28,7 +29,7 @@ export default class CreateFolderCtrl {
     }
 
     return this.backendSrv.createFolder({ title: this.title }).then((result: any) => {
-      appEvents.emit('alert-success', ['Folder Created', 'OK']);
+      appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
       this.$location.url(locationUtil.stripBaseFromUrl(result.url));
     });
   }

@@ -6,7 +6,7 @@ interface CloseMilestoneOptions {
 }
 
 const closeMilestoneTaskRunner: TaskRunner<CloseMilestoneOptions> = async ({ milestone }) => {
-  const githubClient = new GithubClient(true);
+  const githubClient = new GithubClient({ required: true });
 
   const cherryPickLabel = 'cherry-pick needed';
   const client = githubClient.client;

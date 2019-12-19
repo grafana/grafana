@@ -1,9 +1,10 @@
 import _ from 'lodash';
+import { dateMath, dateTime } from '@grafana/data';
+import { e2e } from '@grafana/e2e';
 
 import { QueryCtrl } from 'app/plugins/sdk';
-import { defaultQuery } from './StreamHandler';
+import { defaultQuery } from './runStreams';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { dateTime } from '@grafana/data';
 
 export const defaultPulse: any = {
   timeStep: 60,
@@ -18,6 +19,8 @@ export const defaultCSVWave: any = {
   valuesCSV: '0,0,2,2,1,1',
 };
 
+const showLabelsFor = ['random_walk', 'predictable_pulse', 'predictable_csv_wave'];
+
 export class TestDataQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
@@ -27,6 +30,9 @@ export class TestDataQueryCtrl extends QueryCtrl {
   newPointTime: any;
   selectedPoint: any;
 
+  showLabels = false;
+  selectors: typeof e2e.pages.Dashboard.Panels.DataSource.TestData.QueryTab.selectors;
+
   /** @ngInject */
   constructor($scope: any, $injector: any) {
     super($scope, $injector);
@@ -35,6 +41,8 @@ export class TestDataQueryCtrl extends QueryCtrl {
     this.scenarioList = [];
     this.newPointTime = dateTime();
     this.selectedPoint = { text: 'Select point', value: null };
+    this.showLabels = showLabelsFor.includes(this.target.scenarioId);
+    this.selectors = e2e.pages.Dashboard.Panels.DataSource.TestData.QueryTab.selectors;
   }
 
   getPoints() {
@@ -58,6 +66,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
 
   addPoint() {
     this.target.points = this.target.points || [];
+    this.newPointTime = dateMath.parse(this.newPointTime);
     this.target.points.push([this.newPointValue, this.newPointTime.valueOf()]);
     this.target.points = _.sortBy(this.target.points, p => p[1]);
     this.refresh();
@@ -75,6 +84,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
   scenarioChanged() {
     this.scenario = _.find(this.scenarioList, { id: this.target.scenarioId });
     this.target.stringInput = this.scenario.stringInput;
+    this.showLabels = showLabelsFor.includes(this.target.scenarioId);
 
     if (this.target.scenarioId === 'manual_entry') {
       this.target.points = this.target.points || [];

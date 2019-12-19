@@ -27,10 +27,6 @@ func GetPendingOrgInvites(c *m.ReqContext) Response {
 }
 
 func AddOrgInvite(c *m.ReqContext, inviteDto dtos.AddInviteForm) Response {
-	if setting.DisableLoginForm {
-		return Error(400, "Cannot invite when login is disabled.", nil)
-	}
-
 	if !inviteDto.Role.IsValid() {
 		return Error(400, "Invalid role specified", nil)
 	}
@@ -45,13 +41,21 @@ func AddOrgInvite(c *m.ReqContext, inviteDto dtos.AddInviteForm) Response {
 		return inviteExistingUserToOrg(c, userQuery.Result, &inviteDto)
 	}
 
+	if setting.DisableLoginForm {
+		return Error(400, "Cannot invite when login is disabled.", nil)
+	}
+
 	cmd := m.CreateTempUserCommand{}
 	cmd.OrgId = c.OrgId
 	cmd.Email = inviteDto.LoginOrEmail
 	cmd.Name = inviteDto.Name
 	cmd.Status = m.TmpUserInvitePending
 	cmd.InvitedByUserId = c.UserId
-	cmd.Code = util.GetRandomString(30)
+	var err error
+	cmd.Code, err = util.GetRandomString(30)
+	if err != nil {
+		return Error(500, "Could not generate random string", err)
+	}
 	cmd.Role = inviteDto.Role
 	cmd.RemoteAddr = c.Req.RemoteAddr
 
@@ -128,9 +132,11 @@ func RevokeInvite(c *m.ReqContext) Response {
 	return Success("Invite revoked")
 }
 
+// GetInviteInfoByCode gets a pending user invite corresponding to a certain code.
+// A response containing an InviteInfo object is returned if the invite is found.
+// If a (pending) invite is not found, 404 is returned.
 func GetInviteInfoByCode(c *m.ReqContext) Response {
 	query := m.GetTempUserByCodeQuery{Code: c.Params(":code")}
-
 	if err := bus.Dispatch(&query); err != nil {
 		if err == m.ErrTempUserNotFound {
 			return Error(404, "Invite not found", nil)
@@ -139,6 +145,9 @@ func GetInviteInfoByCode(c *m.ReqContext) Response {
 	}
 
 	invite := query.Result
+	if invite.Status != m.TmpUserInvitePending {
+		return Error(404, "Invite not found", nil)
+	}
 
 	return JSON(200, dtos.InviteInfo{
 		Email:     invite.Email,
@@ -177,10 +186,12 @@ func (hs *HTTPServer) CompleteInvite(c *m.ReqContext, completeInvite dtos.Comple
 
 	user := &cmd.Result
 
-	bus.Publish(&events.SignUpCompleted{
+	if err := bus.Publish(&events.SignUpCompleted{
 		Name:  user.NameOrFallback(),
 		Email: user.Email,
-	})
+	}); err != nil {
+		return Error(500, "failed to publish event", err)
+	}
 
 	if ok, rsp := applyUserInvite(user, invite, true); !ok {
 		return rsp

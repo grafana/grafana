@@ -1,23 +1,22 @@
 import { MssqlDatasource } from '../datasource';
-import { TemplateSrvStub, TimeSrvStub } from 'test/specs/helpers';
+import { TimeSrvStub } from 'test/specs/helpers';
 import { CustomVariable } from 'app/features/templating/custom_variable';
-// @ts-ignore
-import q from 'q';
+
 import { dateTime } from '@grafana/data';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 describe('MSSQLDatasource', () => {
+  const templateSrv: TemplateSrv = new TemplateSrv();
+
   const ctx: any = {
     backendSrv: {},
-    // @ts-ignore
-    templateSrv: new TemplateSrvStub(),
     timeSrv: new TimeSrvStub(),
   };
 
   beforeEach(() => {
-    ctx.$q = q;
     ctx.instanceSettings = { name: 'mssql' };
 
-    ctx.ds = new MssqlDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.$q, ctx.templateSrv, ctx.timeSrv);
+    ctx.ds = new MssqlDatasource(ctx.instanceSettings, ctx.backendSrv, templateSrv, ctx.timeSrv);
   });
 
   describe('When performing annotationQuery', () => {
@@ -56,7 +55,7 @@ describe('MSSQLDatasource', () => {
 
     beforeEach(() => {
       ctx.backendSrv.datasourceRequest = (options: any) => {
-        return ctx.$q.when({ data: response, status: 200 });
+        return Promise.resolve({ data: response, status: 200 });
       };
 
       return ctx.ds.annotationQuery(options).then((data: any) => {
@@ -91,7 +90,11 @@ describe('MSSQLDatasource', () => {
           tables: [
             {
               columns: [{ text: 'title' }, { text: 'text' }],
-              rows: [['aTitle', 'some text'], ['aTitle2', 'some text2'], ['aTitle3', 'some text3']],
+              rows: [
+                ['aTitle', 'some text'],
+                ['aTitle2', 'some text2'],
+                ['aTitle3', 'some text3'],
+              ],
             },
           ],
         },
@@ -100,7 +103,7 @@ describe('MSSQLDatasource', () => {
 
     beforeEach(() => {
       ctx.backendSrv.datasourceRequest = (options: any) => {
-        return ctx.$q.when({ data: response, status: 200 });
+        return Promise.resolve({ data: response, status: 200 });
       };
 
       return ctx.ds.metricFindQuery(query).then((data: any) => {
@@ -128,7 +131,11 @@ describe('MSSQLDatasource', () => {
           tables: [
             {
               columns: [{ text: '__value' }, { text: '__text' }],
-              rows: [['value1', 'aTitle'], ['value2', 'aTitle2'], ['value3', 'aTitle3']],
+              rows: [
+                ['value1', 'aTitle'],
+                ['value2', 'aTitle2'],
+                ['value3', 'aTitle3'],
+              ],
             },
           ],
         },
@@ -137,7 +144,7 @@ describe('MSSQLDatasource', () => {
 
     beforeEach(() => {
       ctx.backendSrv.datasourceRequest = (options: any) => {
-        return ctx.$q.when({ data: response, status: 200 });
+        return Promise.resolve({ data: response, status: 200 });
       };
 
       return ctx.ds.metricFindQuery(query).then((data: any) => {
@@ -167,7 +174,11 @@ describe('MSSQLDatasource', () => {
           tables: [
             {
               columns: [{ text: '__text' }, { text: '__value' }],
-              rows: [['aTitle', 'same'], ['aTitle', 'same'], ['aTitle', 'diff']],
+              rows: [
+                ['aTitle', 'same'],
+                ['aTitle', 'same'],
+                ['aTitle', 'diff'],
+              ],
             },
           ],
         },
@@ -176,7 +187,7 @@ describe('MSSQLDatasource', () => {
 
     beforeEach(() => {
       ctx.backendSrv.datasourceRequest = (options: any) => {
-        return ctx.$q.when({ data: response, status: 200 });
+        return Promise.resolve({ data: response, status: 200 });
       };
 
       return ctx.ds.metricFindQuery(query).then((data: any) => {
@@ -220,7 +231,7 @@ describe('MSSQLDatasource', () => {
 
       ctx.backendSrv.datasourceRequest = (options: any) => {
         results = options.data;
-        return ctx.$q.when({ data: response, status: 200 });
+        return Promise.resolve({ data: response, status: 200 });
       };
 
       return ctx.ds.metricFindQuery(query);
@@ -276,6 +287,53 @@ describe('MSSQLDatasource', () => {
         ctx.variable.includeAll = true;
         expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual("'abc'");
       });
+    });
+  });
+
+  describe('targetContainsTemplate', () => {
+    it('given query that contains template variable it should return true', () => {
+      const rawSql = `SELECT
+      $__timeGroup(createdAt,'$summarize') as time,
+      avg(value) as value,
+      hostname as metric
+    FROM
+      grafana_metric
+    WHERE
+      $__timeFilter(createdAt) AND
+      measurement = 'logins.count' AND
+      hostname IN($host)
+    GROUP BY $__timeGroup(createdAt,'$summarize'), hostname
+    ORDER BY 1`;
+      const query = {
+        rawSql,
+      };
+      templateSrv.init([
+        { type: 'query', name: 'summarize', current: { value: '1m' } },
+        { type: 'query', name: 'host', current: { value: 'a' } },
+      ]);
+      expect(ctx.ds.targetContainsTemplate(query)).toBeTruthy();
+    });
+
+    it('given query that only contains global template variable it should return false', () => {
+      const rawSql = `SELECT
+      $__timeGroup(createdAt,'$__interval') as time,
+      avg(value) as value,
+      hostname as metric
+    FROM
+      grafana_metric
+    WHERE
+      $__timeFilter(createdAt) AND
+      measurement = 'logins.count'
+    GROUP BY $__timeGroup(createdAt,'$summarize'), hostname
+    ORDER BY 1`;
+      const query = {
+        rawSql,
+      };
+      templateSrv.init([
+        { type: 'query', name: 'summarize', current: { value: '1m' } },
+        { type: 'query', name: 'host', current: { value: 'a' } },
+      ]);
+      expect(ctx.ds.targetContainsTemplate(query)).toBeFalsy();
     });
   });
 });

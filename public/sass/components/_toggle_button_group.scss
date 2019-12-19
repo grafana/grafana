@@ -1,10 +1,10 @@
 .toggle-button-group {
   display: flex;
-  padding-top: 5px;
 
   .btn {
     @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);
 
+    height: $input-height;
     padding: 7px 10px;
     font-weight: $font-weight-semi-bold;
     font-size: $font-size-sm;
