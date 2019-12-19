@@ -169,6 +169,7 @@ export function SelectBase<T>({
   renderControl,
   width,
   invalid,
+  components,
 }: SelectBaseProps<T>) {
   const theme = useTheme();
   const styles = getSelectStyles(theme);
@@ -195,18 +196,18 @@ export function SelectBase<T>({
   }
 
   const commonSelectProps = {
+    autoFocus,
     placeholder,
     isSearchable,
     isDisabled: disabled,
     isClearable,
     isLoading,
     menuIsOpen: isOpen,
-    autoFocus: true,
     defaultValue,
     value: isMulti ? selectedValue : selectedValue[0],
     getOptionLabel,
     getOptionValue,
-    openMenuOnFocus: false,
+    openMenuOnFocus,
     maxMenuHeight,
     isMulti,
     backspaceRemovesValue,
@@ -274,6 +275,7 @@ export function SelectBase<T>({
         },
         DropdownIndicator: (props: any) => <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />,
         SingleValue: SingleValue,
+        ...components,
       }}
       styles={{
         ...resetSelectStyles(),
