@@ -3,6 +3,7 @@ import { NavModelItem } from '@grafana/data';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Tabs } from './Tabs';
 import mdx from './Tabs.mdx';
+import { UseState } from '../../utils/storybook/UseState';
 
 export default {
   title: 'UI/Tabs',
