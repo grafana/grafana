@@ -1,7 +1,7 @@
 import React, { useState, memo } from 'react';
 import { useMedia } from 'react-use';
 import { css } from 'emotion';
-import { useTheme, stylesFactory, selectThemeVariant } from '../../../themes';
+import { useTheme, stylesFactory } from '../../../themes';
 import { GrafanaTheme, TimeOption, TimeRange, TimeZone, isDateTime } from '@grafana/data';
 import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeForm } from './TimeRangeForm';
@@ -57,14 +57,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 const getNarrowScreenStyles = stylesFactory((theme: GrafanaTheme) => {
   const colors = getThemeColors(theme);
 
-  const background = selectThemeVariant(
-    {
-      dark: theme.colors.gray10,
-      light: theme.colors.gray98,
-    },
-    theme.type
-  );
-
   return {
     header: css`
       display: flex;
@@ -76,7 +68,7 @@ const getNarrowScreenStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     body: css`
       border-bottom: 1px solid ${colors.border};
-      background: ${background};
+      background: ${colors.formBackground};
       box-shadow: inset 0px 2px 2px ${colors.shadow};
     `,
     form: css`
@@ -110,7 +102,7 @@ const getEmptyListStyles = stylesFactory((theme: GrafanaTheme) => {
 
   return {
     container: css`
-      background-color: ${colors.background};
+      background-color: ${colors.formBackground};
       padding: 12px;
       margin: 12px;
     `,
