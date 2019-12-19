@@ -8,7 +8,7 @@ import { CoreEvents, DashboardDTO, FolderInfo } from 'app/types';
 import { BackendSrv as BackendService, BackendSrvRequest } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
 import { contextSrv } from './context_srv';
-import { from, merge, Observable, of, Subject, throwError } from 'rxjs';
+import { from, merge, NEVER, Observable, of, Subject, throwError } from 'rxjs';
 import { catchError, filter, finalize, map, mergeMap, retryWhen, share, takeUntil, tap } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
 import { coreModule } from 'app/core/core_module';
@@ -22,6 +22,26 @@ export interface DatasourceRequestOptions {
   headers?: Record<string, any>;
   silent?: boolean;
   data?: Record<string, any>;
+}
+
+interface FetchResponse<T = any> {
+  status: number;
+  ok: boolean;
+  data: T;
+}
+
+interface FetchSuccessResponse {
+  message?: string;
+  [key: string]: any;
+}
+
+interface DataSourceFetchSuccessResponse<T = any> {
+  data: T;
+}
+
+interface FetchErrorResponse<T = any> {
+  status: number;
+  data: T;
 }
 
 function serializeParams(data: Record<string, any>) {
@@ -62,7 +82,7 @@ export class BackendSrv implements BackendService {
     });
   }
 
-  requestErrorHandler(err: any) {
+  requestErrorHandler = (err: any) => {
     if (err.isHandled) {
       return;
     }
@@ -89,7 +109,7 @@ export class BackendSrv implements BackendService {
     }
 
     throw data;
-  }
+  };
 
   async request(options: BackendSrvRequest): Promise<any> {
     options.retry = options.retry ?? 0;
@@ -120,13 +140,27 @@ export class BackendSrv implements BackendService {
       },
       body: JSON.stringify(options.data),
     }).pipe(
-      mergeMap(async response => ({ status: response.status, ok: response.ok, data: await response.json() })),
+      mergeMap(async response => {
+        const { status, ok } = response;
+        const textData = await response.text();
+        let data;
+        try {
+          data = JSON.parse(textData);
+        } catch {
+          data = textData;
+        }
+        const fetchResponse: FetchResponse = { status, ok, data };
+        return fetchResponse;
+      }),
       share()
     );
 
     const successStream = fromFetchStream.pipe(
       filter(response => response.ok === true),
-      map(response => response.data),
+      map(response => {
+        const fetchSuccessResponse: FetchSuccessResponse = response.data;
+        return fetchSuccessResponse;
+      }),
       tap(response => {
         if (options.method !== 'GET' && response?.message && options.showSuccessAlert) {
           appEvents.emit(AppEvents.alertSuccess, [response.message]);
@@ -136,10 +170,14 @@ export class BackendSrv implements BackendService {
 
     const failureStream = fromFetchStream.pipe(
       filter(response => response.ok === false),
-      mergeMap(response => throwError(response)),
+      mergeMap(response => {
+        const { status, data } = response;
+        const fetchErrorResponse: FetchErrorResponse = { status, data };
+        return throwError(fetchErrorResponse);
+      }),
       retryWhen((attempts: Observable<any>) =>
         attempts.pipe(
-          mergeMap((error, i) => {
+          mergeMap((error: FetchErrorResponse, i: number) => {
             const firstAttempt = i === 0 && options.retry === 0;
 
             if (error.status !== 401 || !contextSrv.user.isSignedIn || !firstAttempt) {
@@ -154,13 +192,13 @@ export class BackendSrv implements BackendService {
 
     return merge(successStream, failureStream)
       .pipe(
-        catchError(err => {
+        catchError((err: FetchErrorResponse) => {
           if (err.status === 401) {
             window.location.href = config.appSubUrl + '/logout';
-            return throwError(err);
+            return NEVER;
           }
 
-          setTimeout(this.requestErrorHandler.bind(this, err), 50);
+          setTimeout(() => this.requestErrorHandler(err), 50);
           return throwError(err);
         })
       )
@@ -222,7 +260,8 @@ export class BackendSrv implements BackendService {
     }
 
     const cleanParams = omitBy(options.params, v => v === undefined || v.length === 0);
-    return fromFetch(options.params ? `${options.url}?${serializeParams(cleanParams)}` : options.url, {
+
+    const fromFetchStream = fromFetch(options.params ? `${options.url}?${serializeParams(cleanParams)}` : options.url, {
       method: options.method,
       headers: {
         'Content-Type': 'application/json',
@@ -230,37 +269,66 @@ export class BackendSrv implements BackendService {
         ...options.headers,
       },
       body: JSON.stringify(options.data),
-    })
+    }).pipe(
+      mergeMap(async response => {
+        const { status, ok } = response;
+        const textData = await response.text();
+        let data;
+        try {
+          data = JSON.parse(textData);
+        } catch {
+          data = textData;
+        }
+        const fetchResponse: FetchResponse = { status, ok, data };
+        return fetchResponse;
+      }),
+      share()
+    );
+
+    const successStream = fromFetchStream.pipe(
+      filter(response => response.ok === true),
+      map(response => {
+        const { data } = response;
+        const fetchSuccessResponse: DataSourceFetchSuccessResponse = { data };
+        return fetchSuccessResponse;
+      }),
+      tap(res => {
+        if (!options.silent) {
+          appEvents.emit(CoreEvents.dsRequestResponse, res);
+        }
+      })
+    );
+
+    const failureStream = fromFetchStream.pipe(
+      filter(response => response.ok === false),
+      mergeMap(response => {
+        const { status, data } = response;
+        const fetchErrorResponse: FetchErrorResponse = { status, data };
+        return throwError(fetchErrorResponse);
+      }),
+      retryWhen((attempts: Observable<any>) =>
+        attempts.pipe(
+          mergeMap((error, i) => {
+            const firstAttempt = i === 0 && options.retry === 0;
+
+            if (error.status !== 401 || !contextSrv.user.isSignedIn || !firstAttempt) {
+              return throwError(error);
+            }
+
+            return from(this.loginPing());
+          })
+        )
+      )
+    );
+
+    return merge(successStream, failureStream)
       .pipe(
-        mergeMap(res => {
-          if (res.ok) {
-            return res.json();
-          } else {
-            return throwError(res);
-          }
-        }),
-        tap(res => {
-          if (!options.silent) {
-            appEvents.emit(CoreEvents.dsRequestResponse, res);
-          }
-        }),
-        map(res => ({ data: res })),
-        retryWhen((attempts: Observable<any>) =>
-          attempts.pipe(
-            mergeMap((error, i) => {
-              const firstAttempt = i === 0 && options.retry === 0;
-
-              if (error.status !== 401 || !requestIsLocal || !firstAttempt) {
-                return throwError(error);
-              }
-
-              return from(this.loginPing());
-            })
-          )
-        ),
         catchError(err => {
           if (err.status === this.HTTP_REQUEST_CANCELED) {
-            return throwError({ err, cancelled: true });
+            return throwError({
+              err,
+              cancelled: true,
+            });
           }
 
           if (err.status === 401) {
