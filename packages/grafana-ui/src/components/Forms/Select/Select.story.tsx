@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Select, AsyncSelect } from './Select';
+import React, { useState, useEffect } from 'react';
+import { Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from './Select';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../../utils/storybook/withCenteredStory';
 import { SelectableValue } from '@grafana/data';
 import { getAvailableIcons, IconType } from '../../Icon/types';
@@ -8,6 +8,7 @@ import { Icon } from '../../Icon/Icon';
 import { Button } from '../Button';
 import { ButtonSelect } from './ButtonSelect';
 import { getIconKnob } from '../../../utils/storybook/knobs';
+import kebabCase from 'lodash/kebabCase';
 
 export default {
   title: 'UI/Forms/Select',
@@ -20,25 +21,40 @@ export default {
   // },
 };
 
-const options: Array<SelectableValue<string>> = [
-  {
-    label: 'Prometheus is a veeeeeeeeeeeeeery long value',
-    value: 'prometheus',
-  },
-  {
-    label: 'Graphite',
-    value: 'graphite',
-  },
-  {
-    label: 'InlufxDB',
-    value: 'inlufxdb',
-  },
-];
+const generateOptions = () => {
+  const values = [
+    'Sharilyn Markowitz',
+    'Naomi Striplin',
+    'Beau Bevel',
+    'Garrett Starkes',
+    'Hildegarde Pedro',
+    'Gudrun Seyler',
+    'Eboni Raines',
+    'Hye Felix',
+    'Chau Brito',
+    'Heidy Zook',
+    'Karima Husain',
+    'Virgil Mckinny',
+    'Kaley Dodrill',
+    'Sharan Ruf',
+    'Edgar Loveland',
+    'Judie Sanger',
+    'Season Bundrick',
+    'Ok Vicente',
+    'Garry Spitz',
+    'Han Harnish',
+  ];
+
+  return values.map<SelectableValue<string>>(name => ({
+    value: kebabCase(name),
+    label: name,
+  }));
+};
 
 const loadAsyncOptions = () => {
   return new Promise<Array<SelectableValue<string>>>(resolve => {
     setTimeout(() => {
-      resolve(options);
+      resolve(generateOptions());
     }, 2000);
   });
 };
@@ -90,7 +106,7 @@ export const basic = () => {
   return (
     <>
       <Select
-        options={options}
+        options={generateOptions()}
         value={value}
         onChange={v => {
           setValue(v);
@@ -103,6 +119,80 @@ export const basic = () => {
   );
 };
 
+export const plainValue = () => {
+  const [value, setValue] = useState<string>();
+  return (
+    <>
+      <Select
+        options={generateOptions()}
+        value={value}
+        onChange={v => {
+          setValue(v.value);
+        }}
+        size="md"
+        {...getDynamicProps()}
+      />
+    </>
+  );
+};
+
+export const multiPlainValue = () => {
+  const [value, setValue] = useState<string[]>();
+  useEffect(() => {
+    console.log(value);
+  }, [value]);
+  return (
+    <>
+      <MultiSelect
+        options={generateOptions()}
+        value={value}
+        onChange={v => {
+          console.log(v);
+          setValue(v.map((v: any) => v.value));
+        }}
+        size="md"
+        {...getDynamicProps()}
+      />
+    </>
+  );
+};
+
+export const multiSelect = () => {
+  const [value, setValue] = useState<Array<SelectableValue<string>>>([]);
+
+  return (
+    <>
+      <MultiSelect
+        options={generateOptions()}
+        value={value}
+        onChange={v => {
+          setValue(v);
+        }}
+        size="md"
+        {...getDynamicProps()}
+      />
+    </>
+  );
+};
+
+export const asyncMultiSelect = () => {
+  const [value, setValue] = useState<Array<SelectableValue<string>>>();
+
+  return (
+    <AsyncMultiSelect
+      loadOptions={loadAsyncOptions}
+      defaultOptions
+      value={value}
+      onChange={v => {
+        console.log(v);
+        setValue(v);
+      }}
+      size="md"
+      allowCustomValue
+      {...getDynamicProps()}
+    />
+  );
+};
 export const buttonSelect = () => {
   const [value, setValue] = useState<SelectableValue<string>>();
   const icon = getIconKnob();
@@ -110,7 +200,7 @@ export const buttonSelect = () => {
     <ButtonSelect
       placeholder="Select all the things..."
       value={value}
-      options={options}
+      options={generateOptions()}
       onChange={v => {
         setValue(v);
       }}
@@ -134,7 +224,6 @@ export const async = () => {
         setValue(v);
       }}
       size="md"
-      allowCustomValue
       {...getDynamicProps()}
     />
   );
@@ -145,17 +234,35 @@ export const customControl = () => {
 
   return (
     <Select
-      options={options}
+      options={generateOptions()}
       value={value}
       onChange={v => {
         setValue(v);
       }}
       size="md"
-      allowCustomValue
       renderControl={({ isOpen, value, ...otherProps }) => {
         return <Button {...otherProps}> {isOpen ? 'Open' : 'Closed'}</Button>;
       }}
       {...getDynamicProps()}
     />
+  );
+};
+
+export const customValue = () => {
+  const [value, setValue] = useState<SelectableValue<string>>();
+
+  return (
+    <>
+      <Select
+        options={generateOptions()}
+        value={value}
+        onChange={v => {
+          setValue(v);
+        }}
+        size="md"
+        allowCustomValue
+        {...getDynamicProps()}
+      />
+    </>
   );
 };

@@ -66,7 +66,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, LinkButtonProps>((
   const buttonClassName = cx(styles.button, icon && styles.buttonWithIcon, icon && !children && styles.iconButton);
   return (
     <a className={buttonClassName} {...anchorProps} ref={ref}>
-      <ButtonContent iconClassName={styles.icon} className={styles.iconWrap} icon={icon}>
+      <ButtonContent className={styles.iconWrap} icon={icon}>
         {children}
       </ButtonContent>
     </a>

@@ -95,6 +95,7 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
 
 // Need to do this because of mismatch between variants in standard buttons and here
 type StyleProps = Omit<StyleDeps, 'variant'> & { variant: ButtonVariant };
+
 export const getButtonStyles = stylesFactory(({ theme, size, variant }: StyleProps) => {
   const { padding, fontSize, height } = getPropertiesForSize(theme, size);
   const { background, borderColor } = getPropertiesForVariant(theme, variant);
@@ -102,7 +103,6 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant }: StylePro
   return {
     button: cx(
       css`
-        position: relative;
         label: button;
         display: inline-flex;
         align-items: center;
@@ -130,13 +130,15 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant }: StylePro
     buttonWithIcon: css`
       padding-left: ${theme.spacing.sm};
     `,
-    // used for buttons with icon onlys
+    // used for buttons with icon only
     iconButton: css`
       padding-right: 0;
     `,
     iconWrap: css`
       label: button-icon-wrap;
-      padding: 0 ${theme.spacing.sm} 0 0;
+      & + * {
+        margin-left: ${theme.spacing.sm};
+      }
     `,
   };
 });

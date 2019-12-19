@@ -18,12 +18,16 @@ interface SelectButtonProps extends Omit<ButtonProps, 'icon'> {
   icon?: IconType;
   isOpen?: boolean;
 }
+
 const SelectButton: React.FC<SelectButtonProps> = ({ icon, children, isOpen, ...buttonProps }) => {
   const theme = useTheme();
   const styles = {
     wrapper: css`
       display: flex;
+      align-items: center;
       justify-content: space-between;
+      max-width: 200px;
+      text-overflow: ellipsis;
     `,
     iconWrap: css`
       padding: 0 15px 0 0;
@@ -39,12 +43,12 @@ const SelectButton: React.FC<SelectButtonProps> = ({ icon, children, isOpen, ...
   const caretIcon = isOpen ? 'caret-up' : 'caret-down';
   return (
     <Button {...buttonProps} icon={buttonIcon}>
-      <div className={styles.wrapper}>
-        {children}
-        <div className={styles.caretWrap}>
+      <span className={styles.wrapper}>
+        <span>{children}</span>
+        <span className={styles.caretWrap}>
           <Icon name={caretIcon} />
-        </div>
-      </div>
+        </span>
+      </span>
     </Button>
   );
 };

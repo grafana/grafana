@@ -20,11 +20,12 @@ import { SingleValue } from './SingleValue';
 import { useTheme } from '../../../themes';
 import { getSelectStyles } from './getSelectStyles';
 
+type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>>;
 export interface SelectCommonProps<T> {
   className?: string;
   options?: Array<SelectableValue<T>>;
   defaultValue?: any;
-  value?: SelectableValue<T>;
+  value?: SelectValue<T>;
   getOptionLabel?: (item: SelectableValue<T>) => string;
   getOptionValue?: (item: SelectableValue<T>) => string;
   onChange: (item: SelectableValue<T>) => {} | void;
@@ -61,6 +62,11 @@ export interface SelectAsyncProps<T> {
   loadOptions?: (query: string) => Promise<Array<SelectableValue<T>>>;
   /** Message to display when options are loading */
   loadingMessage?: string;
+}
+
+export interface MultiSelectCommonProps<T> extends Omit<SelectCommonProps<T>, 'onChange' | 'isMulti' | 'value'> {
+  value?: Array<SelectableValue<T>> | T[];
+  onChange: (item: Array<SelectableValue<T>>) => {} | void;
 }
 
 export interface SelectBaseProps<T> extends SelectCommonProps<T>, SelectAsyncProps<T> {
@@ -170,6 +176,24 @@ export function SelectBase<T>({
   const creatableProps: any = {};
   let asyncSelectProps: any = {};
 
+  let selectedValue = [];
+  if (isMulti && loadOptions) {
+    selectedValue = value as any;
+  } else {
+    // If option is passed as a plain value (value property from SelectableValue property)
+    // we are selecting the corresponding value from the options
+    if (isMulti && value && Array.isArray(value) && !loadOptions) {
+      // @ts-ignore
+      selectedValue = value.map(v => {
+        return options.filter(o => {
+          return v === o.value || o.value === v.value;
+        })[0];
+      });
+    } else {
+      selectedValue = options.filter(o => o.value === value || o === value);
+    }
+  }
+
   const commonSelectProps = {
     placeholder,
     isSearchable,
@@ -177,12 +201,12 @@ export function SelectBase<T>({
     isClearable,
     isLoading,
     menuIsOpen: isOpen,
-    autoFocus,
+    autoFocus: true,
     defaultValue,
-    value,
+    value: isMulti ? selectedValue : selectedValue[0],
     getOptionLabel,
     getOptionValue,
-    openMenuOnFocus,
+    openMenuOnFocus: false,
     maxMenuHeight,
     isMulti,
     backspaceRemovesValue,
@@ -288,8 +312,26 @@ export function Select<T>(props: SelectCommonProps<T>) {
   return <SelectBase {...props} />;
 }
 
-interface AsyncSelectProps<T> extends Omit<SelectCommonProps<T>, 'options'>, SelectAsyncProps<T> {}
+export function MultiSelect<T>(props: MultiSelectCommonProps<T>) {
+  // @ts-ignore
+  return <SelectBase {...props} isMulti />;
+}
+
+interface AsyncSelectProps<T> extends Omit<SelectCommonProps<T>, 'options'>, SelectAsyncProps<T> {
+  // AsyncSelect has options stored internally. We cannot enable plain values as we don't have access to the fetched options
+  value?: SelectableValue<T>;
+}
 
 export function AsyncSelect<T>(props: AsyncSelectProps<T>) {
   return <SelectBase {...props} />;
+}
+
+interface AsyncMultiSelectProps<T> extends Omit<MultiSelectCommonProps<T>, 'options'>, SelectAsyncProps<T> {
+  // AsyncSelect has options stored internally. We cannot enable plain values as we don't have access to the fetched options
+  value?: Array<SelectableValue<T>>;
+}
+
+export function AsyncMultiSelect<T>(props: AsyncMultiSelectProps<T>) {
+  // @ts-ignore
+  return <SelectBase {...props} isMulti />;
 }

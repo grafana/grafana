@@ -23,25 +23,28 @@ import resetSelectStyles from '../Forms/Select/resetSelectStyles';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { PopoverContent } from '../Tooltip/Tooltip';
 import { Tooltip } from '../Tooltip/Tooltip';
+import { SelectableValue } from '@grafana/data';
 
 /**
  * Changes in new selects:
  * - noOptionsMessage & loadingMessage is of string type
  * - isDisabled is renamed to disabled
  */
-type LegacyCommonProps<T> = Omit<SelectCommonProps<T>, 'noOptionsMessage' | 'disabled'>;
+type LegacyCommonProps<T> = Omit<SelectCommonProps<T>, 'noOptionsMessage' | 'disabled' | 'value'>;
 
 interface AsyncProps<T> extends LegacyCommonProps<T>, Omit<SelectAsyncProps<T>, 'loadingMessage'> {
   loadingMessage?: () => string;
   noOptionsMessage?: () => string;
   tooltipContent?: PopoverContent;
   isDisabled?: boolean;
+  value?: SelectableValue<T>;
 }
 
 interface LegacySelectProps<T> extends LegacyCommonProps<T> {
   tooltipContent?: PopoverContent;
   noOptionsMessage?: () => string;
   isDisabled?: boolean;
+  value?: SelectableValue<T>;
 }
 
 export const MenuList = (props: any) => {
