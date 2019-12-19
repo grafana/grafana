@@ -24,18 +24,19 @@ export interface DatasourceRequestOptions {
   data?: Record<string, any>;
 }
 
-interface FetchResponse<T = any> {
+interface ResponseWithMessage {
+  message?: string;
+}
+
+interface Response<T extends ResponseWithMessage = any> {
   status: number;
   ok: boolean;
   data: T;
 }
 
-interface FetchSuccessResponse {
-  message?: string;
-  [key: string]: any;
-}
+interface SuccessResponse extends ResponseWithMessage, Object {}
 
-interface DataSourceFetchSuccessResponse<T = any> {
+interface DataSourceSuccessResponse<T extends ResponseWithMessage = any> {
   data: T;
 }
 
@@ -149,7 +150,7 @@ export class BackendSrv implements BackendService {
         } catch {
           data = textData;
         }
-        const fetchResponse: FetchResponse = { status, ok, data };
+        const fetchResponse: Response = { status, ok, data };
         return fetchResponse;
       }),
       share()
@@ -158,7 +159,7 @@ export class BackendSrv implements BackendService {
     const successStream = fromFetchStream.pipe(
       filter(response => response.ok === true),
       map(response => {
-        const fetchSuccessResponse: FetchSuccessResponse = response.data;
+        const fetchSuccessResponse: SuccessResponse = response.data;
         return fetchSuccessResponse;
       }),
       tap(response => {
@@ -180,11 +181,11 @@ export class BackendSrv implements BackendService {
           mergeMap((error: FetchErrorResponse, i: number) => {
             const firstAttempt = i === 0 && options.retry === 0;
 
-            if (error.status !== 401 || !contextSrv.user.isSignedIn || !firstAttempt) {
-              return throwError(error);
+            if (error.status === 401 && contextSrv.user.isSignedIn && firstAttempt) {
+              return from(this.loginPing());
             }
 
-            return from(this.loginPing());
+            return throwError(error);
           })
         )
       )
@@ -279,7 +280,7 @@ export class BackendSrv implements BackendService {
         } catch {
           data = textData;
         }
-        const fetchResponse: FetchResponse = { status, ok, data };
+        const fetchResponse: Response = { status, ok, data };
         return fetchResponse;
       }),
       share()
@@ -289,7 +290,7 @@ export class BackendSrv implements BackendService {
       filter(response => response.ok === true),
       map(response => {
         const { data } = response;
-        const fetchSuccessResponse: DataSourceFetchSuccessResponse = { data };
+        const fetchSuccessResponse: DataSourceSuccessResponse = { data };
         return fetchSuccessResponse;
       }),
       tap(res => {
@@ -311,11 +312,11 @@ export class BackendSrv implements BackendService {
           mergeMap((error, i) => {
             const firstAttempt = i === 0 && options.retry === 0;
 
-            if (error.status !== 401 || !contextSrv.user.isSignedIn || !firstAttempt) {
-              return throwError(error);
+            if (error.status === 401 && contextSrv.user.isSignedIn && firstAttempt) {
+              return from(this.loginPing());
             }
 
-            return from(this.loginPing());
+            return throwError(error);
           })
         )
       )
