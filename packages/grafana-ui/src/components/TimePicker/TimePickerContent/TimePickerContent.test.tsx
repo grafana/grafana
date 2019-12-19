@@ -7,7 +7,7 @@ describe('TimePickerContent', () => {
   it('renders correctly in full screen', () => {
     const value = createTimeRange('2019-12-17T07:48:27.433Z', '2019-12-18T07:48:27.433Z');
     const wrapper = shallow(
-      <TimePickerContentWithScreenSize onChange={value => {}} value={value} isFullscreen={true} />
+      <TimePickerContentWithScreenSize onChange={value => {}} timeZone="utc" value={value} isFullscreen={true} />
     );
     expect(wrapper).toMatchSnapshot();
   });
@@ -15,7 +15,7 @@ describe('TimePickerContent', () => {
   it('renders correctly in narrow screen', () => {
     const value = createTimeRange('2019-12-17T07:48:27.433Z', '2019-12-18T07:48:27.433Z');
     const wrapper = shallow(
-      <TimePickerContentWithScreenSize onChange={value => {}} value={value} isFullscreen={false} />
+      <TimePickerContentWithScreenSize onChange={value => {}} timeZone="utc" value={value} isFullscreen={false} />
     );
     expect(wrapper).toMatchSnapshot();
   });
@@ -28,7 +28,13 @@ describe('TimePickerContent', () => {
     ];
 
     const wrapper = shallow(
-      <TimePickerContentWithScreenSize onChange={value => {}} value={value} isFullscreen={true} history={history} />
+      <TimePickerContentWithScreenSize
+        onChange={value => {}}
+        timeZone="utc"
+        value={value}
+        isFullscreen={true}
+        history={history}
+      />
     );
     expect(wrapper).toMatchSnapshot();
   });

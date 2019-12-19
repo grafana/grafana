@@ -144,7 +144,7 @@ interface FormProps extends Omit<Props, 'history'> {
 export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = props => {
   const theme = useTheme();
   const styles = getStyles(theme);
-  const historyOptions = mapToHistoryOptions(props.history);
+  const historyOptions = mapToHistoryOptions(props.history, props.timeZone);
   const { quickOptions = [], otherOptions = [], isFullscreen } = props;
 
   return (
@@ -159,12 +159,14 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = pr
           options={quickOptions}
           onSelect={props.onChange}
           value={props.value}
+          timeZone={props.timeZone}
         />
         <TimeRangeList
           title="Other quick ranges"
           options={otherOptions}
           onSelect={props.onChange}
           value={props.value}
+          timeZone={props.timeZone}
         />
       </CustomScrollbar>
     </div>
@@ -210,6 +212,7 @@ const NarrowScreenForm: React.FC<FormProps> = props => {
             onSelect={props.onChange}
             value={props.value}
             placeholderEmpty={null}
+            timeZone={props.timeZone}
           />
         </div>
       )}
@@ -240,6 +243,7 @@ const FullScreenForm: React.FC<FormProps> = props => {
           onSelect={props.onChange}
           value={props.value}
           placeholderEmpty={<EmptyRecentList />}
+          timeZone={props.timeZone}
         />
       </div>
     </>
@@ -268,9 +272,9 @@ const EmptyRecentList = memo(() => {
   );
 });
 
-function mapToHistoryOptions(ranges?: TimeRange[]): TimeOption[] {
+function mapToHistoryOptions(ranges?: TimeRange[], timeZone?: TimeZone): TimeOption[] {
   if (!Array.isArray(ranges) || ranges.length === 0) {
     return [];
   }
-  return ranges.slice(ranges.length - 4).map(mapRangeToTimeOption);
+  return ranges.slice(ranges.length - 4).map(range => mapRangeToTimeOption(range, timeZone));
 }

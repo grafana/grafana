@@ -12,10 +12,10 @@ import {
 import { stringToDateTimeType } from '../time';
 import { isMathString } from '@grafana/data/src/datetime/datemath';
 
-export const mapOptionToTimeRange = (option: TimeOption): TimeRange => {
+export const mapOptionToTimeRange = (option: TimeOption, timeZone?: TimeZone): TimeRange => {
   return {
-    from: stringToDateTime(option.from),
-    to: stringToDateTime(option.to),
+    from: stringToDateTime(option.from, false, timeZone),
+    to: stringToDateTime(option.to, true, timeZone),
     raw: {
       from: option.from,
       to: option.to,
@@ -23,11 +23,11 @@ export const mapOptionToTimeRange = (option: TimeOption): TimeRange => {
   };
 };
 
-export const mapRangeToTimeOption = (range: TimeRange): TimeOption => {
-  const formattedFrom = stringToDateTime(range.from).format(TIME_FORMAT);
-  const formattedTo = stringToDateTime(range.to).format(TIME_FORMAT);
-  const from = dateTimeToString(range.from);
-  const to = dateTimeToString(range.to);
+export const mapRangeToTimeOption = (range: TimeRange, timeZone?: TimeZone): TimeOption => {
+  const formattedFrom = stringToDateTime(range.from, false, timeZone).format(TIME_FORMAT);
+  const formattedTo = stringToDateTime(range.to, true, timeZone).format(TIME_FORMAT);
+  const from = dateTimeToString(range.from, timeZone === 'utc');
+  const to = dateTimeToString(range.to, timeZone === 'utc');
 
   return {
     from,
@@ -64,6 +64,9 @@ export const mapStringsToTimeRange = (from: string, to: string, roundup?: boolea
 
 const stringToDateTime = (value: string | DateTime, roundUp?: boolean, timeZone?: TimeZone): DateTime => {
   if (isDateTime(value)) {
+    if (timeZone === 'utc') {
+      return value.utc();
+    }
     return value;
   }
 
@@ -79,9 +82,14 @@ const stringToDateTime = (value: string | DateTime, roundUp?: boolean, timeZone?
   return dateTimeForTimeZone(timeZone, value, TIME_FORMAT);
 };
 
-const dateTimeToString = (value: DateTime): string => {
-  if (isDateTime(value)) {
-    return value.format(TIME_FORMAT);
+const dateTimeToString = (value: DateTime, isUtc: boolean): string => {
+  if (!isDateTime(value)) {
+    return value;
   }
-  return value;
+
+  if (isUtc) {
+    return value.utc().format(TIME_FORMAT);
+  }
+
+  return value.format(TIME_FORMAT);
 };

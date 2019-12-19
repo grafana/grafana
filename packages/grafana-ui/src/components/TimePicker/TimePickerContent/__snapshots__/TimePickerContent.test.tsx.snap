@@ -11,6 +11,7 @@ exports[`TimePickerContent renders correctly in full screen 1`] = `
       historyOptions={Array []}
       isFullscreen={true}
       onChange={[Function]}
+      timeZone="utc"
       value={
         Object {
           "from": "2019-12-17T07:48:27.433Z",
@@ -38,6 +39,7 @@ exports[`TimePickerContent renders correctly in full screen 1`] = `
       historyOptions={Array []}
       isFullscreen={true}
       onChange={[Function]}
+      timeZone="utc"
       value={
         Object {
           "from": "2019-12-17T07:48:27.433Z",
@@ -53,6 +55,7 @@ exports[`TimePickerContent renders correctly in full screen 1`] = `
     <Component
       onSelect={[Function]}
       options={Array []}
+      timeZone="utc"
       title="Relative time ranges"
       value={
         Object {
@@ -68,6 +71,7 @@ exports[`TimePickerContent renders correctly in full screen 1`] = `
     <Component
       onSelect={[Function]}
       options={Array []}
+      timeZone="utc"
       title="Other quick ranges"
       value={
         Object {
@@ -95,6 +99,7 @@ exports[`TimePickerContent renders correctly in narrow screen 1`] = `
       historyOptions={Array []}
       isFullscreen={false}
       onChange={[Function]}
+      timeZone="utc"
       value={
         Object {
           "from": "2019-12-17T07:48:27.433Z",
@@ -122,6 +127,7 @@ exports[`TimePickerContent renders correctly in narrow screen 1`] = `
       historyOptions={Array []}
       isFullscreen={false}
       onChange={[Function]}
+      timeZone="utc"
       value={
         Object {
           "from": "2019-12-17T07:48:27.433Z",
@@ -137,6 +143,7 @@ exports[`TimePickerContent renders correctly in narrow screen 1`] = `
     <Component
       onSelect={[Function]}
       options={Array []}
+      timeZone="utc"
       title="Relative time ranges"
       value={
         Object {
@@ -152,6 +159,7 @@ exports[`TimePickerContent renders correctly in narrow screen 1`] = `
     <Component
       onSelect={[Function]}
       options={Array []}
+      timeZone="utc"
       title="Other quick ranges"
       value={
         Object {
@@ -199,21 +207,22 @@ exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
       historyOptions={
         Array [
           Object {
-            "display": "2019-12-17 08:48:27 to 2019-12-18 08:48:27",
-            "from": "2019-12-17 08:48:27",
+            "display": "2019-12-17 07:48:27 to 2019-12-18 07:48:27",
+            "from": "2019-12-17 07:48:27",
             "section": 3,
-            "to": "2019-12-18 08:48:27",
+            "to": "2019-12-18 07:48:27",
           },
           Object {
-            "display": "2019-10-17 09:48:27 to 2019-10-18 09:48:27",
-            "from": "2019-10-17 09:48:27",
+            "display": "2019-10-17 07:48:27 to 2019-10-18 07:48:27",
+            "from": "2019-10-17 07:48:27",
             "section": 3,
-            "to": "2019-10-18 09:48:27",
+            "to": "2019-10-18 07:48:27",
           },
         ]
       }
       isFullscreen={true}
       onChange={[Function]}
+      timeZone="utc"
       value={
         Object {
           "from": "2019-12-17T07:48:27.433Z",
@@ -261,21 +270,22 @@ exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
       historyOptions={
         Array [
           Object {
-            "display": "2019-12-17 08:48:27 to 2019-12-18 08:48:27",
-            "from": "2019-12-17 08:48:27",
+            "display": "2019-12-17 07:48:27 to 2019-12-18 07:48:27",
+            "from": "2019-12-17 07:48:27",
             "section": 3,
-            "to": "2019-12-18 08:48:27",
+            "to": "2019-12-18 07:48:27",
           },
           Object {
-            "display": "2019-10-17 09:48:27 to 2019-10-18 09:48:27",
-            "from": "2019-10-17 09:48:27",
+            "display": "2019-10-17 07:48:27 to 2019-10-18 07:48:27",
+            "from": "2019-10-17 07:48:27",
             "section": 3,
-            "to": "2019-10-18 09:48:27",
+            "to": "2019-10-18 07:48:27",
           },
         ]
       }
       isFullscreen={true}
       onChange={[Function]}
+      timeZone="utc"
       value={
         Object {
           "from": "2019-12-17T07:48:27.433Z",
@@ -291,6 +301,7 @@ exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
     <Component
       onSelect={[Function]}
       options={Array []}
+      timeZone="utc"
       title="Relative time ranges"
       value={
         Object {
@@ -306,6 +317,7 @@ exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
     <Component
       onSelect={[Function]}
       options={Array []}
+      timeZone="utc"
       title="Other quick ranges"
       value={
         Object {
