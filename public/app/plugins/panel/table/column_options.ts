@@ -49,11 +49,10 @@ export class ColumnOptionsCtrl {
       { text: 'Range to text', value: 2 },
     ];
     this.alignTypes = [
-      { text: 'default', value: '' },
+      { text: 'auto', value: '' },
       { text: 'left', value: 'left' },
       { text: 'center', value: 'center' },
       { text: 'right', value: 'right' },
-      { text: 'justify', value: 'justify' },
     ];
 
     this.getColumnNames = () => {
@@ -89,7 +88,7 @@ export class ColumnOptionsCtrl {
       dateFormat: 'YYYY-MM-DD HH:mm:ss',
       thresholds: [],
       mappingType: 1,
-      align: 'default',
+      align: 'auto',
     };
 
     const styles = this.panel.styles;
