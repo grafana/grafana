@@ -43,6 +43,8 @@ Add our GPG key to install signed packages:
 wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
 ```
 
+#### Setup repo using add-apt-repository
+
 Add this repository for stable releases:
 
 ```bash
@@ -55,19 +57,23 @@ Add this repository if you want beta releases:
 sudo add-apt-repository "deb https://packages.grafana.com/oss/deb beta main"
 ```
 
-If `add-apt-repository` doesn't work, you can create the repository definition manually. This can be useful on ARM systems.
+#### Setup repo manually
 
-Create `/etc/apt/sources.list.d/grafana.list` with the following content:
+Some users have had problems with using `add-apt-repository` on ARM, thankfully it's trivial to setup the repo without it.
+
+Create `/etc/apt/sources.list.d/grafana.list` with the following content for stable releases:
 
 ```bash
 deb https://packages.grafana.com/oss/deb stable main
 ```
 
-Or, for beta:
+Create `/etc/apt/sources.list.d/grafana.list` with the following content for beta releases:
 
 ```bash
 deb https://packages.grafana.com/oss/deb beta main
 ```
+
+#### Install Grafana from APT
 
 Update your APT repositories and install Grafana:
 
