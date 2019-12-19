@@ -13,12 +13,8 @@ import { UserLdapSyncInfo } from './UserLdapSyncInfo';
 import { StoreState, UserDTO, UserOrg, UserSession, SyncInfo, UserAdminError } from 'app/types';
 import {
   loadAdminUserPage,
-  loadUserProfile,
-  loadUserOrgs,
-  loadUserSessions,
   revokeSession,
   revokeAllSessions,
-  loadLdapSyncStatus,
   updateUser,
   disableUser,
   enableUser,
@@ -42,10 +38,6 @@ interface Props {
   error: UserAdminError;
 
   loadAdminUserPage: typeof loadAdminUserPage;
-  loadUserProfile: typeof loadUserProfile;
-  loadUserOrgs: typeof loadUserOrgs;
-  loadUserSessions: typeof loadUserSessions;
-  loadLdapSyncStatus: typeof loadLdapSyncStatus;
   revokeSession: typeof revokeSession;
   revokeAllSessions: typeof revokeAllSessions;
   updateUser: typeof updateUser;
@@ -183,10 +175,6 @@ const mapStateToProps = (state: StoreState) => ({
 
 const mapDispatchToProps = {
   loadAdminUserPage,
-  loadUserProfile,
-  loadUserOrgs,
-  loadUserSessions,
-  loadLdapSyncStatus,
   updateUser,
   disableUser,
   enableUser,

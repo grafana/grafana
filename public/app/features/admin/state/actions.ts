@@ -1,6 +1,7 @@
 import { actionCreatorFactory } from 'app/core/redux';
 import { updateLocation } from 'app/core/actions';
 import config from 'app/core/config';
+import { dateTime } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import {
   ThunkResult,
@@ -13,10 +14,17 @@ import {
   UserOrg,
   UserAdminError,
 } from 'app/types';
-import { getUserInfo, getLdapState, getUserSessions, revokeUserSession, revokeAllUserSessions } from './apis';
 
 // Action types
 
+// UserAdminPage
+export const userAdminPageLoadedAction = actionCreatorFactory<boolean>('admin/user/PAGE_LOADED').create();
+export const userProfileLoadedAction = actionCreatorFactory<UserDTO>('admin/user/PROFILE_LOADED').create();
+export const userOrgsLoadedAction = actionCreatorFactory<UserOrg[]>('admin/user/ORGS_LOADED').create();
+export const userSessionsLoadedAction = actionCreatorFactory<UserSession[]>('admin/user/SESSIONS_LOADED').create();
+export const userAdminPageFailedAction = actionCreatorFactory<UserAdminError>('admin/user/PAGE_FAILED').create();
+
+// LDAP debug page
 export const ldapConnectionInfoLoadedAction = actionCreatorFactory<LdapConnectionInfo>(
   'ldap/CONNECTION_INFO_LOADED'
 ).create();
@@ -27,62 +35,7 @@ export const clearUserMappingInfoAction = actionCreatorFactory('ldap/CLEAR_USER_
 export const clearUserErrorAction = actionCreatorFactory('ldap/CLEAR_USER_ERROR').create();
 export const ldapFailedAction = actionCreatorFactory<LdapError>('ldap/LDAP_FAILED').create();
 
-// UserAdminPage
-export const userAdminPageLoadedAction = actionCreatorFactory<boolean>('admin/user/PAGE_LOADED').create();
-export const userProfileLoadedAction = actionCreatorFactory<UserDTO>('admin/user/PROFILE_LOADED').create();
-export const userOrgsLoadedAction = actionCreatorFactory<UserOrg[]>('admin/user/ORGS_LOADED').create();
-export const userSessionsLoadedAction = actionCreatorFactory<UserSession[]>('admin/user/SESSIONS_LOADED').create();
-export const revokeUserSessionAction = actionCreatorFactory('admin/user/REVOKE_SESSION').create();
-export const revokeAllUserSessionsAction = actionCreatorFactory('admin/user/REVOKE_ALL_SESSIONS').create();
-export const userAdminPageFailedAction = actionCreatorFactory<UserAdminError>('admin/user/PAGE_FAILED').create();
-
 // Actions
-
-export function loadLdapState(): ThunkResult<void> {
-  return async dispatch => {
-    try {
-      const connectionInfo = await getLdapState();
-      dispatch(ldapConnectionInfoLoadedAction(connectionInfo));
-    } catch (error) {
-      error.isHandled = true;
-      const ldapError = {
-        title: error.data.message,
-        body: error.data.error,
-      };
-      dispatch(ldapFailedAction(ldapError));
-    }
-  };
-}
-
-export function loadUserMapping(username: string): ThunkResult<void> {
-  return async dispatch => {
-    try {
-      const userInfo = await getUserInfo(username);
-      dispatch(userMappingInfoLoadedAction(userInfo));
-    } catch (error) {
-      error.isHandled = true;
-      const userError = {
-        title: error.data.message,
-        body: error.data.error,
-      };
-      dispatch(clearUserMappingInfoAction());
-      dispatch(userMappingInfoFailedAction(userError));
-    }
-  };
-}
-
-export function clearUserError(): ThunkResult<void> {
-  return dispatch => {
-    dispatch(clearUserErrorAction());
-  };
-}
-
-export function clearUserMappingInfo(): ThunkResult<void> {
-  return dispatch => {
-    dispatch(clearUserErrorAction());
-    dispatch(clearUserMappingInfoAction());
-  };
-}
 
 // UserAdminPage
 
@@ -118,7 +71,6 @@ export function loadUserProfile(userId: number): ThunkResult<void> {
 
 export function updateUser(user: UserDTO): ThunkResult<void> {
   return async dispatch => {
-    console.log('update user', user);
     await getBackendSrv().put(`/api/users/${user.id}`, user);
     dispatch(loadAdminUserPage(user.id));
   };
@@ -163,7 +115,6 @@ export function loadUserOrgs(userId: number): ThunkResult<void> {
 
 export function addOrgUser(user: UserDTO, orgId: number, role: string): ThunkResult<void> {
   return async dispatch => {
-    console.log(`add user ${user.login} to org ${orgId} as ${role}`);
     const payload = {
       loginOrEmail: user.login,
       role: role,
@@ -175,7 +126,6 @@ export function addOrgUser(user: UserDTO, orgId: number, role: string): ThunkRes
 
 export function updateOrgUserRole(userId: number, orgId: number, role: string): ThunkResult<void> {
   return async dispatch => {
-    console.log(`update user ${userId} role in org ${orgId} to ${role}`);
     const payload = { role };
     await getBackendSrv().patch(`/api/orgs/${orgId}/users/${userId}`, payload);
     dispatch(loadAdminUserPage(userId));
@@ -184,7 +134,6 @@ export function updateOrgUserRole(userId: number, orgId: number, role: string): 
 
 export function deleteOrgUser(userId: number, orgId: number): ThunkResult<void> {
   return async dispatch => {
-    console.log(`delete user ${userId} from org ${orgId}`);
     await getBackendSrv().delete(`/api/orgs/${orgId}/users/${userId}`);
     dispatch(loadAdminUserPage(userId));
   };
@@ -192,21 +141,37 @@ export function deleteOrgUser(userId: number, orgId: number): ThunkResult<void> 
 
 export function loadUserSessions(userId: number): ThunkResult<void> {
   return async dispatch => {
-    const sessions = await getUserSessions(userId);
+    const tokens = await getBackendSrv().get(`/api/admin/users/${userId}/auth-tokens`);
+    tokens.reverse();
+    const sessions = tokens.map((session: UserSession) => {
+      return {
+        id: session.id,
+        isActive: session.isActive,
+        seenAt: dateTime(session.seenAt).fromNow(),
+        createdAt: dateTime(session.createdAt).format('MMMM DD, YYYY'),
+        clientIp: session.clientIp,
+        browser: session.browser,
+        browserVersion: session.browserVersion,
+        os: session.os,
+        osVersion: session.osVersion,
+        device: session.device,
+      };
+    });
     dispatch(userSessionsLoadedAction(sessions));
   };
 }
 
 export function revokeSession(tokenId: number, userId: number): ThunkResult<void> {
   return async dispatch => {
-    await revokeUserSession(tokenId, userId);
+    const payload = { authTokenId: tokenId };
+    await getBackendSrv().post(`/api/admin/users/${userId}/revoke-auth-token`, payload);
     dispatch(loadUserSessions(userId));
   };
 }
 
 export function revokeAllSessions(userId: number): ThunkResult<void> {
   return async dispatch => {
-    await revokeAllUserSessions(userId);
+    await getBackendSrv().post(`/api/admin/users/${userId}/logout`);
     dispatch(loadUserSessions(userId));
   };
 }
@@ -227,5 +192,60 @@ export function syncLdapUser(userId: number): ThunkResult<void> {
   return async dispatch => {
     await getBackendSrv().post(`/api/admin/ldap/sync/${userId}`);
     dispatch(loadAdminUserPage(userId));
+  };
+}
+
+// LDAP debug page
+
+export function loadLdapState(): ThunkResult<void> {
+  return async dispatch => {
+    try {
+      const connectionInfo = await getBackendSrv().get(`/api/admin/ldap/status`);
+      dispatch(ldapConnectionInfoLoadedAction(connectionInfo));
+    } catch (error) {
+      error.isHandled = true;
+      const ldapError = {
+        title: error.data.message,
+        body: error.data.error,
+      };
+      dispatch(ldapFailedAction(ldapError));
+    }
+  };
+}
+
+export function loadUserMapping(username: string): ThunkResult<void> {
+  return async dispatch => {
+    try {
+      const response = await getBackendSrv().get(`/api/admin/ldap/${username}`);
+      const { name, surname, email, login, isGrafanaAdmin, isDisabled, roles, teams } = response;
+      const userInfo: LdapUser = {
+        info: { name, surname, email, login },
+        permissions: { isGrafanaAdmin, isDisabled },
+        roles,
+        teams,
+      };
+      dispatch(userMappingInfoLoadedAction(userInfo));
+    } catch (error) {
+      error.isHandled = true;
+      const userError = {
+        title: error.data.message,
+        body: error.data.error,
+      };
+      dispatch(clearUserMappingInfoAction());
+      dispatch(userMappingInfoFailedAction(userError));
+    }
+  };
+}
+
+export function clearUserError(): ThunkResult<void> {
+  return dispatch => {
+    dispatch(clearUserErrorAction());
+  };
+}
+
+export function clearUserMappingInfo(): ThunkResult<void> {
+  return dispatch => {
+    dispatch(clearUserErrorAction());
+    dispatch(clearUserMappingInfoAction());
   };
 }
