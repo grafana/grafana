@@ -2,7 +2,7 @@
 
 exports[`TimePicker renders buttons correctly 1`] = `
 <div
-  className="css-kyufm4"
+  className="css-16ba5ut"
 >
   <div
     className="css-vyoujf"
@@ -32,7 +32,6 @@ exports[`TimePicker renders buttons correctly 1`] = `
           />
         }
         placement="bottom"
-        show={false}
       >
         <button
           aria-label="TimePicker Open Button"
@@ -273,6 +272,13 @@ exports[`TimePicker renders buttons correctly 1`] = `
               }
             }
           />
+          <span
+            className="css-6x26ye"
+          >
+            <i
+              className="fa fa-caret-down fa-fw"
+            />
+          </span>
         </button>
       </Component>
     </div>
@@ -303,7 +309,7 @@ exports[`TimePicker renders buttons correctly 1`] = `
 
 exports[`TimePicker renders content correctly after beeing open 1`] = `
 <div
-  className="css-kyufm4"
+  className="css-16ba5ut"
 >
   <div
     className="css-vyoujf"
@@ -333,7 +339,6 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
           />
         }
         placement="bottom"
-        show={false}
       >
         <button
           aria-label="TimePicker Open Button"
@@ -574,12 +579,19 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
               }
             }
           />
+          <span
+            className="css-6x26ye"
+          >
+            <i
+              className="fa fa-caret-up fa-fw"
+            />
+          </span>
         </button>
       </Component>
       <ClickOutsideWrapper
         onClick={[Function]}
       >
-        <TimePickerContent
+        <Component
           onChange={[Function]}
           otherOptions={
             Array [
