@@ -37,6 +37,12 @@ Install any missing dependencies:
 sudo apt-get install -y software-properties-common wget
 ```
 
+Add our GPG key to install signed packages:
+
+```bash
+wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
+```
+
 Add this repository for stable releases:
 
 ```bash
@@ -47,12 +53,6 @@ Add this repository if you want beta releases:
 
 ```bash
 sudo add-apt-repository "deb https://packages.grafana.com/oss/deb beta main"
-```
-
-Add our GPG key to install signed packages:
-
-```bash
-wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
 ```
 
 Update your APT repositories and install Grafana:
