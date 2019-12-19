@@ -28,8 +28,9 @@ interface ResponseWithMessage {
   message?: string;
 }
 
-interface Response<T extends ResponseWithMessage = any> {
+interface FetchResponse<T extends ResponseWithMessage = any> {
   status: number;
+  statusText: string;
   ok: boolean;
   data: T;
 }
@@ -83,6 +84,33 @@ export class BackendSrv implements BackendService {
     });
   }
 
+  private getFromFetchStream = (options: BackendSrvRequest) => {
+    const cleanParams = omitBy(options.params, v => v === undefined || v.length === 0);
+    return fromFetch(options.params ? `${options.url}?${serializeParams(cleanParams)}` : options.url, {
+      method: options.method,
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json, text/plain, */*',
+        ...options.headers,
+      },
+      body: JSON.stringify(options.data),
+    }).pipe(
+      mergeMap(async response => {
+        const { status, statusText, ok } = response;
+        const textData = await response.text(); // this could be just a string
+        let data;
+        try {
+          data = JSON.parse(textData); // majority of the requests this will be something that can be parsed
+        } catch {
+          data = textData;
+        }
+        const fetchResponse: FetchResponse = { status, statusText, ok, data };
+        return fetchResponse;
+      }),
+      share()
+    );
+  };
+
   requestErrorHandler = (err: any) => {
     if (err.isHandled) {
       return;
@@ -131,31 +159,7 @@ export class BackendSrv implements BackendService {
       }
     }
 
-    const cleanParams = omitBy(options.params, v => v === undefined || v.length === 0);
-    const fromFetchStream = fromFetch(options.params ? `${options.url}?${serializeParams(cleanParams)}` : options.url, {
-      method: options.method,
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json, text/plain, */*',
-        ...options.headers,
-      },
-      body: JSON.stringify(options.data),
-    }).pipe(
-      mergeMap(async response => {
-        const { status, ok } = response;
-        const textData = await response.text();
-        let data;
-        try {
-          data = JSON.parse(textData);
-        } catch {
-          data = textData;
-        }
-        const fetchResponse: Response = { status, ok, data };
-        return fetchResponse;
-      }),
-      share()
-    );
-
+    const fromFetchStream = this.getFromFetchStream(options);
     const successStream = fromFetchStream.pipe(
       filter(response => response.ok === true),
       map(response => {
@@ -260,32 +264,7 @@ export class BackendSrv implements BackendService {
       }
     }
 
-    const cleanParams = omitBy(options.params, v => v === undefined || v.length === 0);
-
-    const fromFetchStream = fromFetch(options.params ? `${options.url}?${serializeParams(cleanParams)}` : options.url, {
-      method: options.method,
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json, text/plain, */*',
-        ...options.headers,
-      },
-      body: JSON.stringify(options.data),
-    }).pipe(
-      mergeMap(async response => {
-        const { status, ok } = response;
-        const textData = await response.text();
-        let data;
-        try {
-          data = JSON.parse(textData);
-        } catch {
-          data = textData;
-        }
-        const fetchResponse: Response = { status, ok, data };
-        return fetchResponse;
-      }),
-      share()
-    );
-
+    const fromFetchStream = this.getFromFetchStream(options);
     const successStream = fromFetchStream.pipe(
       filter(response => response.ok === true),
       map(response => {
