@@ -16,22 +16,14 @@ This page provides instructions to help you install Grafana on macOS. You can ei
 
 ## Install with Homebrew
 
-Installation can be done using [homebrew](http://brew.sh/).
-
-Install latest stable version:
+To install Grafana using [homebrew](http://brew.sh/), enter the following in the command line:
 
 ```bash
 brew update
 brew install grafana
 ```
 
-You can also install the latest unstable Grafana version from Git:
-
-```bash
-brew install --HEAD grafana/grafana/grafana
-```
-
-To start Grafana, run the command printed after the Homebrew install completes.
+To start Grafana, run the command printed after the Homebrew installation completes.
 
 ## Upgrade with Homebrew
 
@@ -42,23 +34,9 @@ brew update
 brew reinstall grafana
 ```
 
-To upgrade grafana if you installed an unstable version from Git:
-
-```bash
-brew reinstall --HEAD grafana/grafana/grafana
-```
-
 ### Start Grafana
 
 To start Grafana using Homebrew services: 
-
-First make sure that homebrew/services is installed:
-
-```bash
-brew tap homebrew/services
-```
-
-Then start Grafana using:
 
 ```bash
 brew services start grafana
@@ -68,15 +46,6 @@ Refer to [Getting started](docs\sources\guides\getting_started.md) for instructi
 
 ## Install from binary .tar file
 
-Download [the latest `.tar.gz` file](https://grafana.com/get) and
-extract it. The files extract into a folder named after the version you
-downloaded. This folder contains all files required to run Grafana. There are
-no init scripts or install scripts in this package.
-
-To configure Grafana, add a configuration file named `custom.ini` to the
-`conf` folder and override any of the settings defined in
-`conf/defaults.ini`.
-
-### Start Grafana
+Download [the latest `.tar.gz` file](https://grafana.com/get) and extract it. The files extract into a folder named after the version you downloaded. This folder contains all files required to run Grafana. There are no init scripts or install scripts in this package.
 
 Start Grafana by executing `./bin/grafana-server`. The `grafana-server` binary needs the working directory to be the root install directory where the binary and the `public` folder are located.
