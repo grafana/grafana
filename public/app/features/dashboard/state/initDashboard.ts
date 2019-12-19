@@ -192,7 +192,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       // handle auto fix experimental feature
       const queryParams = getState().location.query;
       if (queryParams.autofitpanels) {
-        dashboard.autoFitPanels(window.innerHeight, queryParams.kiosk);
+        dashboard.autoFitPanels(window.innerHeight, 'tv');
       }
 
       // init unsaved changes tracking

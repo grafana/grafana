@@ -875,6 +875,7 @@ export class DashboardModel {
   }
 
   autoFitPanels(viewHeight: number, kioskMode?: UrlQueryValue) {
+    kioskMode = 'tv';
     const currentGridHeight = Math.max(
       ...this.panels.map(panel => {
         return panel.gridPos.h + panel.gridPos.y;

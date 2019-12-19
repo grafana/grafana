@@ -55,7 +55,7 @@ export class LoadDashboardCtrl {
       }
 
       result.meta.autofitpanels = $routeParams.autofitpanels;
-      result.meta.kiosk = $routeParams.kiosk;
+      result.meta.kiosk = 'tv';
 
       $scope.initDashboard(result, $scope);
     });
