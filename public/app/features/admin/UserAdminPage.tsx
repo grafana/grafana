@@ -16,6 +16,7 @@ import {
   revokeSession,
   revokeAllSessions,
   updateUser,
+  setUserPassword,
   disableUser,
   enableUser,
   deleteUser,
@@ -41,6 +42,7 @@ interface Props {
   revokeSession: typeof revokeSession;
   revokeAllSessions: typeof revokeAllSessions;
   updateUser: typeof updateUser;
+  setUserPassword: typeof setUserPassword;
   disableUser: typeof disableUser;
   enableUser: typeof enableUser;
   deleteUser: typeof deleteUser;
@@ -67,6 +69,11 @@ export class UserAdminPage extends PureComponent<Props, State> {
 
   onUserUpdate = (user: UserDTO) => {
     this.props.updateUser(user);
+  };
+
+  onPasswordChange = (password: string) => {
+    const { userId, setUserPassword } = this.props;
+    setUserPassword(userId, password);
   };
 
   onUserDelete = (userId: number) => {
@@ -132,6 +139,7 @@ export class UserAdminPage extends PureComponent<Props, State> {
                 onUserDelete={this.onUserDelete}
                 onUserDisable={this.onUserDisable}
                 onUserEnable={this.onUserEnable}
+                onPasswordChange={this.onPasswordChange}
               />
               {isLDAPUser && config.buildInfo.isEnterprise && ldapSyncInfo && (
                 <UserLdapSyncInfo ldapSyncInfo={ldapSyncInfo} onUserSync={this.onUserSync} />
@@ -176,6 +184,7 @@ const mapStateToProps = (state: StoreState) => ({
 const mapDispatchToProps = {
   loadAdminUserPage,
   updateUser,
+  setUserPassword,
   disableUser,
   enableUser,
   deleteUser,

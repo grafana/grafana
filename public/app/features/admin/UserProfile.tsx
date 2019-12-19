@@ -13,6 +13,7 @@ interface Props {
   onUserDelete: (userId: number) => void;
   onUserDisable: (userId: number) => void;
   onUserEnable: (userId: number) => void;
+  onPasswordChange(password: string): void;
 }
 
 interface State {
@@ -75,6 +76,10 @@ export class UserProfile extends PureComponent<Props, State> {
     });
   };
 
+  onPasswordChange = (newValue: string) => {
+    this.props.onPasswordChange(newValue);
+  };
+
   render() {
     const { user } = this.props;
     const { showDeleteModal, showDisableModal } = this.state;
@@ -109,7 +114,14 @@ export class UserProfile extends PureComponent<Props, State> {
                   lockMessage={lockMessage}
                   onChange={this.onUserLoginChange}
                 />
-                <UserProfileRow label="Password" value="******" locked={user.isExternal} lockMessage={lockMessage} />
+                <UserProfileRow
+                  label="Password"
+                  value="******"
+                  inputType="password"
+                  locked={user.isExternal}
+                  lockMessage={lockMessage}
+                  onChange={this.onPasswordChange}
+                />
               </tbody>
             </table>
           </div>
@@ -154,6 +166,7 @@ interface UserProfileRowProps {
   value?: string;
   locked?: boolean;
   lockMessage?: string;
+  inputType?: string;
   onChange?: (value: string) => void;
 }
 
@@ -169,6 +182,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
     value: '',
     locked: false,
     lockMessage: '',
+    inputType: 'text',
   };
 
   state = {
@@ -213,7 +227,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
   };
 
   render() {
-    const { label, value, locked, lockMessage } = this.props;
+    const { label, value, locked, lockMessage, inputType } = this.props;
     const labelClass = cx(
       'width-16',
       css`
@@ -231,7 +245,13 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
         <td className={labelClass}>{label}</td>
         <td className="width-25" colSpan={2}>
           {this.state.editing ? (
-            <Input className="width-20" defaultValue={value} onBlur={this.onInputBlur} onChange={this.onInputChange} />
+            <Input
+              className="width-20"
+              type={inputType}
+              defaultValue={value}
+              onBlur={this.onInputBlur}
+              onChange={this.onInputChange}
+            />
           ) : (
             <span>{value}</span>
           )}

@@ -76,6 +76,14 @@ export function updateUser(user: UserDTO): ThunkResult<void> {
   };
 }
 
+export function setUserPassword(userId: number, password: string): ThunkResult<void> {
+  return async dispatch => {
+    const payload = { password };
+    await getBackendSrv().put(`/api/admin/users/${userId}/password`, payload);
+    dispatch(loadAdminUserPage(userId));
+  };
+}
+
 export function disableUser(userId: number): ThunkResult<void> {
   return async dispatch => {
     await getBackendSrv().post(`/api/admin/users/${userId}/disable`);
