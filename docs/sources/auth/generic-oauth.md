@@ -183,6 +183,7 @@ allowed_organizations =
     scopes = openid email name
     auth_url = https://login.microsoftonline.com/<directory id>/oauth2/authorize
     token_url = https://login.microsoftonline.com/<directory id>/oauth2/token
+    signout_redirect_url = https://login.microsoftonline.com/<directory id>/oauth2/logout?post_logout_redirect_uri=https://<grafana domain>
     api_url =
     team_ids =
     allowed_organizations =
