@@ -194,8 +194,7 @@ export function enableUser(userId: number): ThunkResult<void> {
 
 export function deleteUser(userId: number): ThunkResult<void> {
   return async dispatch => {
-    console.log('delete user', userId);
-    // await getBackendSrv().delete(`/api/admin/users/${userId}`);
+    await getBackendSrv().delete(`/api/admin/users/${userId}`);
     dispatch(updateLocation({ path: '/admin/users' }));
   };
 }
