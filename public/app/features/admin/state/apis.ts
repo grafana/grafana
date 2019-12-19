@@ -1,6 +1,6 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { dateTime } from '@grafana/data';
-import { LdapUser, LdapConnectionInfo, UserSession, User } from 'app/types';
+import { LdapUser, LdapConnectionInfo, UserSession } from 'app/types';
 
 export interface ServerStat {
   name: string;
@@ -47,10 +47,6 @@ export const getUserInfo = async (username: string): Promise<LdapUser> => {
     roles,
     teams,
   };
-};
-
-export const getUser = async (id: number): Promise<User> => {
-  return await getBackendSrv().get('/api/users/' + id);
 };
 
 export const getUserSessions = async (id: number) => {

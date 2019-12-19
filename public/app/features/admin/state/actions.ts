@@ -9,12 +9,11 @@ import {
   LdapConnectionInfo,
   LdapError,
   UserSession,
-  User,
   UserDTO,
   UserOrg,
   UserAdminError,
 } from 'app/types';
-import { getUserInfo, getLdapState, getUser, getUserSessions, revokeUserSession, revokeAllUserSessions } from './apis';
+import { getUserInfo, getLdapState, getUserSessions, revokeUserSession, revokeAllUserSessions } from './apis';
 
 // Action types
 
@@ -27,9 +26,6 @@ export const userMappingInfoFailedAction = actionCreatorFactory<LdapError>('ldap
 export const clearUserMappingInfoAction = actionCreatorFactory('ldap/CLEAR_USER_MAPPING_INFO').create();
 export const clearUserErrorAction = actionCreatorFactory('ldap/CLEAR_USER_ERROR').create();
 export const ldapFailedAction = actionCreatorFactory<LdapError>('ldap/LDAP_FAILED').create();
-
-export const userLoadedAction = actionCreatorFactory<User>('USER_LOADED').create();
-export const userSyncFailedAction = actionCreatorFactory('USER_SYNC_FAILED').create();
 
 // UserAdminPage
 export const userAdminPageLoadedAction = actionCreatorFactory<boolean>('admin/user/PAGE_LOADED').create();
@@ -85,24 +81,6 @@ export function clearUserMappingInfo(): ThunkResult<void> {
   return dispatch => {
     dispatch(clearUserErrorAction());
     dispatch(clearUserMappingInfoAction());
-  };
-}
-
-export function loadLdapUserInfo(userId: number): ThunkResult<void> {
-  return async dispatch => {
-    try {
-      const user = await getUser(userId);
-      dispatch(userLoadedAction(user));
-      dispatch(loadUserSessions(userId));
-      dispatch(loadUserMapping(user.login));
-    } catch (error) {
-      error.isHandled = true;
-      const userError = {
-        title: error.data.message,
-        body: error.data.error,
-      };
-      dispatch(userMappingInfoFailedAction(userError));
-    }
   };
 }
 

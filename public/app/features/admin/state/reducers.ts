@@ -1,5 +1,5 @@
 import { reducerFactory } from 'app/core/redux';
-import { LdapState, LdapUserState, UserAdminState } from 'app/types';
+import { LdapState, UserAdminState } from 'app/types';
 import {
   ldapConnectionInfoLoadedAction,
   ldapFailedAction,
@@ -7,7 +7,6 @@ import {
   userMappingInfoFailedAction,
   clearUserErrorAction,
   userAdminPageLoadedAction,
-  userLoadedAction,
   userSessionsLoadedAction,
   ldapSyncStatusLoadedAction,
   clearUserMappingInfoAction,
@@ -22,13 +21,6 @@ const initialLdapState: LdapState = {
   user: null,
   connectionError: null,
   userError: null,
-};
-
-const initialLdapUserState: LdapUserState = {
-  user: null,
-  ldapUser: null,
-  ldapSyncInfo: null,
-  sessions: [],
 };
 
 export const ldapReducer = reducerFactory(initialLdapState)
@@ -86,53 +78,6 @@ export const ldapReducer = reducerFactory(initialLdapState)
   })
   .create();
 
-export const ldapUserReducer = reducerFactory(initialLdapUserState)
-  .addMapper({
-    filter: userMappingInfoLoadedAction,
-    mapper: (state, action) => ({
-      ...state,
-      ldapUser: action.payload,
-    }),
-  })
-  .addMapper({
-    filter: userMappingInfoFailedAction,
-    mapper: (state, action) => ({
-      ...state,
-      ldapUser: null,
-      userError: action.payload,
-    }),
-  })
-  .addMapper({
-    filter: clearUserErrorAction,
-    mapper: state => ({
-      ...state,
-      userError: null,
-    }),
-  })
-  .addMapper({
-    filter: ldapSyncStatusLoadedAction,
-    mapper: (state, action) => ({
-      ...state,
-      ldapSyncInfo: action.payload,
-    }),
-  })
-  .addMapper({
-    filter: userLoadedAction,
-    mapper: (state, action) => ({
-      ...state,
-      user: action.payload,
-      userError: null,
-    }),
-  })
-  .addMapper({
-    filter: userSessionsLoadedAction,
-    mapper: (state, action) => ({
-      ...state,
-      sessions: action.payload,
-    }),
-  })
-  .create();
-
 // UserAdminPage
 
 const initialUserAdminState: UserAdminState = {
@@ -183,6 +128,5 @@ export const userAdminReducer = reducerFactory(initialUserAdminState)
 
 export default {
   ldap: ldapReducer,
-  ldapUser: ldapUserReducer,
   userAdmin: userAdminReducer,
 };
