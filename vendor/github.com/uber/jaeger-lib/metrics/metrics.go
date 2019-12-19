@@ -37,7 +37,7 @@ func MustInit(metrics interface{}, factory Factory, globalTags map[string]string
 	}
 }
 
-// Init does the same as Init, but returns an error instead of
+// Init does the same as MustInit, but returns an error instead of
 // panicking.
 func Init(m interface{}, factory Factory, globalTags map[string]string) error {
 	// Allow user to opt out of reporting metrics by passing in nil.
