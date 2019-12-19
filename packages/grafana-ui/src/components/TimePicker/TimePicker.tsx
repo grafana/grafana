@@ -16,7 +16,7 @@ import { stylesFactory } from '../../themes/stylesFactory';
 import { withTheme } from '../../themes/ThemeContext';
 
 // Types
-import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue, dateMath, GrafanaTheme } from '@grafana/data';
+import { TimeRange, TimeOption, TimeZone, SelectableValue, dateMath, GrafanaTheme } from '@grafana/data';
 import { Themeable } from '../../types';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -180,7 +180,6 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
             options={options}
             maxMenuHeight={600}
             onChange={this.onSelectChanged}
-            tooltipContent={<TimePickerTooltipContent timeRange={value} />}
           />
 
           {timeSyncButton}
@@ -207,14 +206,6 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
     );
   }
 }
-
-const TimePickerTooltipContent = ({ timeRange }: { timeRange: TimeRange }) => (
-  <>
-    {timeRange.from.format(TIME_FORMAT)}
-    <div className="text-center">to</div>
-    {timeRange.to.format(TIME_FORMAT)}
-  </>
-);
 
 function isTimeOptionEqualToTimeRange(option: TimeOption, range: TimeRange): boolean {
   return range.raw.from === option.from && range.raw.to === option.to;

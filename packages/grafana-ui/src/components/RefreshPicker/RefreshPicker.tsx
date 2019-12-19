@@ -2,7 +2,6 @@ import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
-import { Tooltip } from '../Tooltip/Tooltip';
 import { ButtonSelect } from '../Select/ButtonSelect';
 import memoizeOne from 'memoize-one';
 import { GrafanaTheme } from '@grafana/data';
@@ -66,7 +65,7 @@ export class RefreshPickerBase extends PureComponent<Props> {
   };
 
   render() {
-    const { onRefresh, intervals, tooltip, value, refreshButton, buttonSelectClassName, theme } = this.props;
+    const { onRefresh, intervals, value, refreshButton, buttonSelectClassName, theme } = this.props;
     const options = this.intervalsToOptions(intervals);
     const currentValue = value || '';
     const selectedValue = options.find(item => item.value === currentValue) || RefreshPicker.offOption;
@@ -84,14 +83,12 @@ export class RefreshPickerBase extends PureComponent<Props> {
           {refreshButton ? (
             refreshButton
           ) : (
-            <Tooltip placement="top" content={tooltip!}>
-              <button
-                className="btn btn--radius-right-0 navbar-button navbar-button--border-right-0"
-                onClick={onRefresh!}
-              >
-                <i className="fa fa-refresh" />
-              </button>
-            </Tooltip>
+            <button
+              className="btn btn--radius-right-0 navbar-button navbar-button--border-right-0"
+              onClick={onRefresh!}
+            >
+              <i className="fa fa-refresh" />
+            </button>
           )}
           <ButtonSelect
             className={classNames('navbar-button--attached', styles.selectButton, buttonSelectClassName)}
