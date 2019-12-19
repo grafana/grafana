@@ -6,6 +6,7 @@ import isNumber from 'lodash/isNumber';
 import toNumber from 'lodash/toNumber';
 import { getDisplayProcessor } from './displayProcessor';
 import { GetFieldDisplayValuesOptions } from './fieldDisplay';
+import { guessFieldTypeForField } from '../dataframe';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -94,8 +95,34 @@ export function applyFieldOverrides(options: GetFieldDisplayValuesOptions): Data
         }
       }
 
+      // Try harder to set a real value that is not 'other'
+      let type = field.type;
+      if (!type || type === FieldType.other) {
+        const t = guessFieldTypeForField(field);
+        if (t) {
+          type = t;
+        }
+      }
+
+      // Some units have an implied range
+      if (config.unit === 'percent') {
+        if (!isNumber(config.min)) {
+          config.min = 0;
+        }
+        if (!isNumber(config.max)) {
+          config.max = 100;
+        }
+      } else if (config.unit === 'percentunit') {
+        if (!isNumber(config.min)) {
+          config.min = 0;
+        }
+        if (!isNumber(config.max)) {
+          config.max = 1;
+        }
+      }
+
       // Set the Min/Max value automatically
-      if (options.autoMinMax && field.type === FieldType.number) {
+      if ((options.autoMinMax || config.scale?.scheme) && field.type === FieldType.number) {
         if (!isNumber(config.min) || !isNumber(config.max)) {
           if (!range) {
             range = findNumericFieldMinMax(options.data!); // Global value
@@ -109,19 +136,15 @@ export function applyFieldOverrides(options: GetFieldDisplayValuesOptions): Data
         }
       }
 
-      return {
+      // Overwrite the configs
+      const f: Field = {
         ...field,
-
-        // Overwrite the configs
         config,
-
-        // Set the display processor
-        processor: getDisplayProcessor({
-          type: field.type,
-          config: config,
-          theme: options.theme,
-        }),
+        type,
       };
+      // and set the display processor using it
+      f.display = getDisplayProcessor({ field: f, theme: options.theme });
+      return f;
     });
 
     return {
@@ -189,7 +212,7 @@ export function setFieldConfigDefaults(config: FieldConfig, props?: FieldConfig)
   }
 
   if (config.scale) {
-    config.scale = validateScale(config.scale);
+    validateScale(config.scale);
   }
 
   // Verify that max > min (swap if necessary)
