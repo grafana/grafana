@@ -1,6 +1,7 @@
 import $ from 'jquery';
 import { appEvents } from 'app/core/core';
 import { CoreEvents } from 'app/types';
+import { sanitize } from 'app/core/utils/text';
 
 export default function GraphTooltip(this: any, elem: any, dashboard: any, scope: any, getSeriesFn: any) {
   const self = this;
@@ -256,12 +257,13 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
 
         series = seriesList[hoverInfo.index];
 
-        value = series.formatValue(hoverInfo.value);
+        value = series.formatValue(sanitize(hoverInfo.value));
+        const color = sanitize(hoverInfo.color);
+        const label = sanitize(hoverInfo.label);
 
         seriesHtml +=
           '<div class="graph-tooltip-list-item ' + highlightClass + '"><div class="graph-tooltip-series-name">';
-        seriesHtml +=
-          '<i class="fa fa-minus" style="color:' + hoverInfo.color + ';"></i> ' + hoverInfo.label + ':</div>';
+        seriesHtml += '<i class="fa fa-minus" style="color:' + color + ';"></i> ' + label + ':</div>';
         seriesHtml += '<div class="graph-tooltip-value">' + value + '</div></div>';
         plot.highlight(hoverInfo.index, hoverInfo.hoverIndex);
       }
