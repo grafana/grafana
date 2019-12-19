@@ -72,11 +72,11 @@ func (pm *PluginManager) Init() error {
 		return errutil.Wrapf(err, "Failed to scan main plugin directory '%s'", plugDir)
 	}
 
-	pm.log.Info("Checking managed plugins")
-	plugDir = path.Join(setting.HomePath, "plugins-managed")
+	pm.log.Info("Checking Bundled Plugins")
+	plugDir = path.Join(setting.HomePath, "plugins-bundled")
 	if _, err := os.Stat(plugDir); !os.IsNotExist(err) {
 		if err := pm.scan(plugDir); err != nil {
-			return errutil.Wrapf(err, "Failed to scan managed plugin directory '%s'", plugDir)
+			return errutil.Wrapf(err, "Failed to scan bundled plugin directory '%s'", plugDir)
 		}
 	}
 

@@ -102,6 +102,3 @@ compilation-stats.json
 /public/e2e-test/screenShots/theOutput
 /public/e2e-tests/screenShots/theOutput/*.png
 public/e2e-tests/videos
-
-# Managed Plugins -- The folder and README are created, but ignore any internal changes
-/plugins-managed/
