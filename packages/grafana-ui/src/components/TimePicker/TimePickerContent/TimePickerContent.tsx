@@ -17,7 +17,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     container: css`
       display: flex;
       background: ${colors.background};
-      box-shadow: 0px 4px 4px ${colors.shadow};
+      box-shadow: 0px 0px 20px ${colors.shadow};
       position: absolute;
       z-index: ${theme.zIndex.modal};
       width: 546px;

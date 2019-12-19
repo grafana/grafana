@@ -99,9 +99,11 @@ export interface Props extends Themeable {
   onZoom: () => void;
   history?: TimeRange[];
 }
+
 export interface State {
   isOpen: boolean;
 }
+
 export class UnthemedTimePicker extends PureComponent<Props, State> {
   state: State = {
     isOpen: false,

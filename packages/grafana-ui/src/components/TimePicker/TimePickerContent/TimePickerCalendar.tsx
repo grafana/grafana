@@ -17,7 +17,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       top: 0;
       position: absolute;
       right: 546px;
-      box-shadow: 0px 4px 4px ${colors.shadow};
+      box-shadow: 0px 0px 20px ${colors.shadow};
       background-color: ${colors.background};
 
       &:after {
