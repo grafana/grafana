@@ -91,7 +91,6 @@ const getFullScreenStyles = stylesFactory((theme: GrafanaTheme) => {
       margin-bottom: 11px;
     `,
     recent: css`
-      padding-top: 7px;
       flex-grow: 1;
       display: flex;
       flex-direction: column;
