@@ -42,7 +42,7 @@ export class NewsPanel extends PureComponent<Props, State> {
     const { options } = this.props;
     try {
       const url = options.feedUrl ?? DEFAULT_FEED_URL;
-      const res = await loadRSSFeed(url, options.proxy);
+      const res = await loadRSSFeed(url);
       const frame = feedToDataFrame(res);
       this.setState({
         news: new DataFrameView<NewsItem>(frame),
