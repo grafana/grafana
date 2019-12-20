@@ -1,10 +1,11 @@
 import React, { useMemo } from 'react';
-import { DataFrame, GrafanaTheme } from '@grafana/data';
+import { DataFrame } from '@grafana/data';
 // @ts-ignore
 import { useBlockLayout, useSortBy, useTable } from 'react-table';
 import { FixedSizeList } from 'react-window';
-import { css } from 'emotion';
-import { stylesFactory, useTheme, selectThemeVariant as stv } from '../../themes';
+import { getTableStyles } from './styles';
+import { getColumns, getTableRows } from './models';
+import { useTheme } from '../../themes';
 
 export interface Props {
   data: DataFrame;
@@ -13,68 +14,12 @@ export interface Props {
   onCellClick?: (key: string, value: string) => void;
 }
 
-const getTableData = (data: DataFrame) => {
-  const tableData = [];
-
-  for (let i = 0; i < data.length; i++) {
-    const row: { [key: string]: string | number } = {};
-    for (let j = 0; j < data.fields.length; j++) {
-      const prop = data.fields[j].name;
-      row[prop] = data.fields[j].values.get(i);
-    }
-    tableData.push(row);
-  }
-
-  return tableData;
-};
-
-const getColumns = (data: DataFrame) => {
-  return data.fields.map(field => {
-    return {
-      Header: field.name,
-      accessor: field.name,
-      field: field,
-    };
-  });
-};
-
-const getTableStyles = stylesFactory((theme: GrafanaTheme, columnWidth: number) => {
-  const colors = theme.colors;
-  const headerBg = stv({ light: colors.gray6, dark: colors.dark7 }, theme.type);
-  const padding = 5;
-
-  return {
-    cellHeight: padding * 2 + 14 * 1.5 + 2,
-    tableHeader: css`
-      padding: ${padding}px 10px;
-      background: ${headerBg};
-
-      cursor: pointer;
-      white-space: nowrap;
-
-      color: ${colors.blue};
-      border-bottom: 2px solid ${colors.bodyBg};
-    `,
-    tableCell: css`
-      display: 'table-cell';
-      padding: ${padding}px 10px;
-
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
-      width: ${columnWidth}px;
-
-      border-right: 2px solid ${colors.bodyBg};
-      border-bottom: 2px solid ${colors.bodyBg};
-    `,
-  };
-});
-
 const renderCell = (cell: any, columnWidth: number, cellStyles: string, onCellClick?: any) => {
   const filterable = cell.column.field.config.filterable;
   const style = {
     cursor: `${filterable && onCellClick ? 'pointer' : 'default'}`,
   };
+  console.log(cell);
 
   return (
     <div
@@ -94,8 +39,8 @@ export const NewTable = ({ data, height, onCellClick, width }: Props) => {
   const tableStyles = getTableStyles(theme, columnWidth);
   const { getTableProps, headerGroups, rows, prepareRow } = useTable(
     {
-      columns: useMemo(() => getColumns(data), [data]),
-      data: useMemo(() => getTableData(data), [data]),
+      columns: useMemo(() => getColumns(data, theme), [data]),
+      data: useMemo(() => getTableRows(data), [data]),
     },
     useSortBy,
     useBlockLayout
