@@ -94,7 +94,9 @@ go test -v ./pkg/...
 
 ### Run end-to-end tests
 
-The end-to-end tests in Grafana uses [puppeteer](https://github.com/GoogleChrome/puppeteer) to run automated scripts in a headless Chrome browser. To run the tests:
+The end to end tests in Grafana use [Cypress](https://www.cypress.io/) to run automated scripts in a headless Chromium browser. Read more about our [e2e framework](/contribute/style-guides/e2e.md). 
+
+To run the tests:
 
 ```
 yarn e2e-tests

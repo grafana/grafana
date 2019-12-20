@@ -9,6 +9,8 @@ export interface CascaderOption {
 
   children?: CascaderOption[];
   disabled?: boolean;
+  // Undocumented tooltip API
+  title?: string;
 }
 
 export interface CascaderProps {

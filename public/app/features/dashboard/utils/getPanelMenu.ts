@@ -41,6 +41,18 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
     );
   };
 
+  const onNewEditPanel = (event: React.MouseEvent<any>) => {
+    event.preventDefault();
+    store.dispatch(
+      updateLocation({
+        query: {
+          editPanel: panel.id,
+        },
+        partial: true,
+      })
+    );
+  };
+
   const onSharePanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     sharePanel(dashboard, panel);
@@ -119,11 +131,21 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
       onClick: onNavigateToExplore,
     });
   }
+
   if (config.featureToggles.inspect) {
     menu.push({
       text: 'Inspect',
       iconClassName: 'fa fa-fw fa-info-circle',
       onClick: onInspectPanel,
+      shortcut: 'p i',
+    });
+  }
+
+  if (config.featureToggles.newEdit) {
+    menu.push({
+      text: 'New edit',
+      iconClassName: 'gicon gicon-editor',
+      onClick: onNewEditPanel,
       shortcut: 'p i',
     });
   }

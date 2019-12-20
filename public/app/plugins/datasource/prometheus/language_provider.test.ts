@@ -12,36 +12,75 @@ describe('Language completion provider', () => {
     getTimeRange: () => ({ start: 0, end: 1 }),
   } as any) as PrometheusDatasource;
 
+  describe('cleanText', () => {
+    const cleanText = new LanguageProvider(datasource).cleanText;
+    it('does not remove metric or label keys', () => {
+      expect(cleanText('foo')).toBe('foo');
+      expect(cleanText('foo_bar')).toBe('foo_bar');
+    });
+
+    it('keeps trailing space but removes leading', () => {
+      expect(cleanText('foo ')).toBe('foo ');
+      expect(cleanText(' foo')).toBe('foo');
+    });
+
+    it('removes label syntax', () => {
+      expect(cleanText('foo="bar')).toBe('bar');
+      expect(cleanText('foo!="bar')).toBe('bar');
+      expect(cleanText('foo=~"bar')).toBe('bar');
+      expect(cleanText('foo!~"bar')).toBe('bar');
+      expect(cleanText('{bar')).toBe('bar');
+    });
+
+    it('removes previous operators', () => {
+      expect(cleanText('foo + bar')).toBe('bar');
+      expect(cleanText('foo+bar')).toBe('bar');
+      expect(cleanText('foo - bar')).toBe('bar');
+      expect(cleanText('foo * bar')).toBe('bar');
+      expect(cleanText('foo / bar')).toBe('bar');
+      expect(cleanText('foo % bar')).toBe('bar');
+      expect(cleanText('foo ^ bar')).toBe('bar');
+      expect(cleanText('foo and bar')).toBe('bar');
+      expect(cleanText('foo or bar')).toBe('bar');
+      expect(cleanText('foo unless bar')).toBe('bar');
+      expect(cleanText('foo == bar')).toBe('bar');
+      expect(cleanText('foo != bar')).toBe('bar');
+      expect(cleanText('foo > bar')).toBe('bar');
+      expect(cleanText('foo < bar')).toBe('bar');
+      expect(cleanText('foo >= bar')).toBe('bar');
+      expect(cleanText('foo <= bar')).toBe('bar');
+    });
+
+    it('removes aggregation syntax', () => {
+      expect(cleanText('(bar')).toBe('bar');
+      expect(cleanText('(foo,bar')).toBe('bar');
+      expect(cleanText('(foo, bar')).toBe('bar');
+    });
+
+    it('removes range syntax', () => {
+      expect(cleanText('[1m')).toBe('1m');
+    });
+  });
+
   describe('empty query suggestions', () => {
-    it('returns default suggestions on empty context', async () => {
+    it('returns no suggestions on empty context', async () => {
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('');
       const result = await instance.provideCompletionItems({ text: '', prefix: '', value, wrapperClasses: [] });
       expect(result.context).toBeUndefined();
-      expect(result.suggestions).toMatchObject([
-        {
-          label: 'Functions',
-        },
-      ]);
+      expect(result.suggestions).toMatchObject([]);
     });
 
-    it('returns default suggestions with metrics on empty context when metrics were provided', async () => {
+    it('returns no suggestions with metrics on empty context even when metrics were provided', async () => {
       const instance = new LanguageProvider(datasource);
       instance.metrics = ['foo', 'bar'];
       const value = Plain.deserialize('');
       const result = await instance.provideCompletionItems({ text: '', prefix: '', value, wrapperClasses: [] });
       expect(result.context).toBeUndefined();
-      expect(result.suggestions).toMatchObject([
-        {
-          label: 'Functions',
-        },
-        {
-          label: 'Metrics',
-        },
-      ]);
+      expect(result.suggestions).toMatchObject([]);
     });
 
-    it('returns default suggestions with history on empty context when history was provided', async () => {
+    it('returns history on empty context when history was provided', async () => {
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('');
       const history: Array<HistoryItem<PromQuery>> = [
@@ -64,9 +103,6 @@ describe('Language completion provider', () => {
               label: 'metric',
             },
           ],
-        },
-        {
-          label: 'Functions',
         },
       ]);
     });
@@ -101,14 +137,32 @@ describe('Language completion provider', () => {
   });
 
   describe('metric suggestions', () => {
-    it('returns metrics and function suggestions in an unknown context', async () => {
+    it('returns history, metrics and function suggestions in an uknown context ', async () => {
       const instance = new LanguageProvider(datasource);
       instance.metrics = ['foo', 'bar'];
-      let value = Plain.deserialize('a');
+      const history: Array<HistoryItem<PromQuery>> = [
+        {
+          ts: 0,
+          query: { refId: '1', expr: 'metric' },
+        },
+      ];
+      let value = Plain.deserialize('m');
       value = value.setSelection({ anchor: { offset: 1 }, focus: { offset: 1 } });
-      const result = await instance.provideCompletionItems({ text: 'a', prefix: 'a', value, wrapperClasses: [] });
+      // Even though no metric with `m` is present, we still get metric completion items, filtering is done by the consumer
+      const result = await instance.provideCompletionItems(
+        { text: 'm', prefix: 'm', value, wrapperClasses: [] },
+        { history }
+      );
       expect(result.context).toBeUndefined();
       expect(result.suggestions).toMatchObject([
+        {
+          label: 'History',
+          items: [
+            {
+              label: 'metric',
+            },
+          ],
+        },
         {
           label: 'Functions',
         },
@@ -118,11 +172,27 @@ describe('Language completion provider', () => {
       ]);
     });
 
-    it('returns metrics and function  suggestions after a binary operator', async () => {
+    it('returns no suggestions directly after a binary operator', async () => {
       const instance = new LanguageProvider(datasource);
       instance.metrics = ['foo', 'bar'];
       const value = Plain.deserialize('*');
       const result = await instance.provideCompletionItems({ text: '*', prefix: '', value, wrapperClasses: [] });
+      expect(result.context).toBeUndefined();
+      expect(result.suggestions).toMatchObject([]);
+    });
+
+    it('returns metric suggestions with prefix after a binary operator', async () => {
+      const instance = new LanguageProvider(datasource);
+      instance.metrics = ['foo', 'bar'];
+      const value = Plain.deserialize('foo + b');
+      const ed = new SlateEditor({ value });
+      const valueWithSelection = ed.moveForward(7).value;
+      const result = await instance.provideCompletionItems({
+        text: 'foo + b',
+        prefix: 'b',
+        value: valueWithSelection,
+        wrapperClasses: [],
+      });
       expect(result.context).toBeUndefined();
       expect(result.suggestions).toMatchObject([
         {
@@ -154,6 +224,7 @@ describe('Language completion provider', () => {
   describe('label suggestions', () => {
     it('returns default label suggestions on label context and no metric', async () => {
       const instance = new LanguageProvider(datasource);
+      instance.lookupsDisabled = false;
       const value = Plain.deserialize('{}');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(1).value;
@@ -173,6 +244,7 @@ describe('Language completion provider', () => {
         getTimeRange: () => ({ start: 0, end: 1 }),
       } as any) as PrometheusDatasource;
       const instance = new LanguageProvider(datasources);
+      instance.lookupsDisabled = false;
       const value = Plain.deserialize('metric{}');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(7).value;
@@ -204,6 +276,7 @@ describe('Language completion provider', () => {
         getTimeRange: () => ({ start: 0, end: 1 }),
       } as any) as PrometheusDatasource;
       const instance = new LanguageProvider(datasource);
+      instance.lookupsDisabled = false;
       const value = Plain.deserialize('{job1="foo",job2!="foo",job3=~"foo",__name__="metric",}');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(54).value;
@@ -224,6 +297,7 @@ describe('Language completion provider', () => {
           return { data: { data: ['value1', 'value2'] } };
         },
       } as any) as PrometheusDatasource);
+      instance.lookupsDisabled = false;
       const value = Plain.deserialize('{job!=}');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(8).value;
@@ -245,6 +319,7 @@ describe('Language completion provider', () => {
 
     it('returns a refresher on label context and unavailable metric', async () => {
       const instance = new LanguageProvider(datasource);
+      instance.lookupsDisabled = false;
       const value = Plain.deserialize('metric{}');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(7).value;
@@ -263,6 +338,7 @@ describe('Language completion provider', () => {
         ...datasource,
         metadataRequest: () => simpleMetricLabelsResponse,
       } as any) as PrometheusDatasource);
+      instance.lookupsDisabled = false;
       const value = Plain.deserialize('metric{bar=ba}');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(13).value;
@@ -282,6 +358,7 @@ describe('Language completion provider', () => {
         ...datasource,
         metadataRequest: () => simpleMetricLabelsResponse,
       } as any) as PrometheusDatasource);
+      instance.lookupsDisabled = false;
       const value = Plain.deserialize('sum(metric{foo="xx"}) by ()');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(26).value;
@@ -300,6 +377,7 @@ describe('Language completion provider', () => {
         ...datasource,
         metadataRequest: () => simpleMetricLabelsResponse,
       } as any) as PrometheusDatasource);
+      instance.lookupsDisabled = false;
       const value = Plain.deserialize('sum(metric) by ()');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(16).value;
@@ -318,6 +396,7 @@ describe('Language completion provider', () => {
         ...datasource,
         metadataRequest: () => simpleMetricLabelsResponse,
       } as any) as PrometheusDatasource);
+      instance.lookupsDisabled = false;
       const value = Plain.deserialize('sum(\nmetric\n)\nby ()');
       const aggregationTextBlock = value.document.getBlocks().get(3);
       const ed = new SlateEditor({ value });
@@ -343,6 +422,7 @@ describe('Language completion provider', () => {
         ...datasource,
         metadataRequest: () => simpleMetricLabelsResponse,
       } as any) as PrometheusDatasource);
+      instance.lookupsDisabled = false;
       const value = Plain.deserialize('sum(rate(metric[1h])) by ()');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(26).value;
@@ -366,6 +446,7 @@ describe('Language completion provider', () => {
         ...datasource,
         metadataRequest: () => simpleMetricLabelsResponse,
       } as any) as PrometheusDatasource);
+      instance.lookupsDisabled = false;
       const value = Plain.deserialize('sum(rate(metric{label1="value"}[1h])) by ()');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(42).value;
@@ -386,6 +467,7 @@ describe('Language completion provider', () => {
 
     it('returns no suggestions inside an unclear aggregation context using alternate syntax', async () => {
       const instance = new LanguageProvider(datasource);
+      instance.lookupsDisabled = false;
       const value = Plain.deserialize('sum by ()');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(8).value;
@@ -404,6 +486,7 @@ describe('Language completion provider', () => {
         ...datasource,
         metadataRequest: () => simpleMetricLabelsResponse,
       } as any) as PrometheusDatasource);
+      instance.lookupsDisabled = false;
       const value = Plain.deserialize('sum by () (metric)');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(8).value;
@@ -429,6 +512,7 @@ describe('Language completion provider', () => {
       } as any) as PrometheusDatasource;
 
       const instance = new LanguageProvider(datasource);
+      instance.lookupsDisabled = false;
       const value = Plain.deserialize('{}');
       const ed = new SlateEditor({ value });
       const valueWithSelection = ed.moveForward(1).value;
@@ -445,6 +529,59 @@ describe('Language completion provider', () => {
       expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(2);
       await Promise.all([promise1, promise2]);
       expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(2);
+    });
+  });
+
+  describe('dynamic lookup protection for big installations', () => {
+    it('dynamic lookup is enabled if number of metrics is reasonably low', async () => {
+      const datasource: PrometheusDatasource = ({
+        metadataRequest: () => ({ data: { data: ['foo'] as string[] } }),
+        getTimeRange: () => ({ start: 0, end: 1 }),
+      } as any) as PrometheusDatasource;
+
+      const instance = new LanguageProvider(datasource, { lookupMetricsThreshold: 1 });
+      expect(instance.lookupsDisabled).toBeTruthy();
+      await instance.start();
+      expect(instance.lookupsDisabled).toBeFalsy();
+    });
+
+    it('dynamic lookup is disabled if number of metrics is higher than threshold', async () => {
+      const datasource: PrometheusDatasource = ({
+        metadataRequest: () => ({ data: { data: ['foo', 'bar'] as string[] } }),
+        getTimeRange: () => ({ start: 0, end: 1 }),
+      } as any) as PrometheusDatasource;
+
+      const instance = new LanguageProvider(datasource, { lookupMetricsThreshold: 1 });
+      expect(instance.lookupsDisabled).toBeTruthy();
+      await instance.start();
+      expect(instance.lookupsDisabled).toBeTruthy();
+    });
+
+    it('does not issue label-based metadata requests when lookup is disabled', async () => {
+      const datasource: PrometheusDatasource = ({
+        metadataRequest: jest.fn(() => ({ data: { data: ['foo', 'bar'] as string[] } })),
+        getTimeRange: jest.fn(() => ({ start: 0, end: 1 })),
+      } as any) as PrometheusDatasource;
+
+      const instance = new LanguageProvider(datasource, { lookupMetricsThreshold: 1 });
+      const value = Plain.deserialize('{}');
+      const ed = new SlateEditor({ value });
+      const valueWithSelection = ed.moveForward(1).value;
+      const args = {
+        text: '',
+        prefix: '',
+        wrapperClasses: ['context-labels'],
+        value: valueWithSelection,
+      };
+      expect(instance.lookupsDisabled).toBeTruthy();
+      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(0);
+      await instance.start();
+      expect(instance.lookupsDisabled).toBeTruthy();
+      // Capture request count to metadata
+      const callCount = (datasource.metadataRequest as Mock).mock.calls.length;
+      expect((datasource.metadataRequest as Mock).mock.calls.length).toBeGreaterThan(0);
+      await instance.provideCompletionItems(args);
+      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(callCount);
     });
   });
 });

@@ -27,7 +27,12 @@ With Reports there are a few things to keep in mind, most importantly, any chang
 
 > SMTP must be configured for reports to be sent
 
-We recommend using the new image rendering plugin with reporting as it supports a wider range of panels than the built-in image rendering. Read more about it [here]({{< relref "../administration/image_rendering.md#grafana-image-renderer-plugin" >}})
+
+### Rendering
+
+> Reporting requires the [rendering plugin]({{< relref "../administration/image_rendering.md#grafana-image-renderer-plugin" >}}).
+
+Reporting with the built-in image rendering is not supported. We recommend installing the image renderer plugin.
 
 ## Usage
 

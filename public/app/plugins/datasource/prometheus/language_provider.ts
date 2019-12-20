@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import LRU from 'lru-cache';
+import { Value } from 'slate';
 
 import { dateTime, LanguageProvider, HistoryItem } from '@grafana/data';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
@@ -8,12 +9,13 @@ import { parseSelector, processLabels, processHistogramLabels } from './language
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 
 import { PrometheusDatasource } from './datasource';
-import { PromQuery } from './types';
+import { PromQuery, PromMetricsMetadata } from './types';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
 const HISTORY_ITEM_COUNT = 5;
 const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
+export const DEFAULT_LOOKUP_METRICS_THRESHOLD = 10000; // number of metrics defining an installation that's too big
 
 const wrapLabel = (label: string): CompletionItem => ({ label });
 
@@ -40,12 +42,26 @@ export function addHistoryMetadata(item: CompletionItem, history: any[]): Comple
   };
 }
 
+function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): CompletionItem {
+  const item: CompletionItem = { label: metric };
+  if (metadata && metadata[metric]) {
+    const { type, help } = metadata[metric][0];
+    item.documentation = `${type.toUpperCase()}: ${help}`;
+  }
+  return item;
+}
+
+const PREFIX_DELIMITER_REGEX = /(="|!="|=~"|!~"|\{|\[|\(|\+|-|\/|\*|%|\^|and|or|unless|==|>=|!=|<=|>|<|=|~|,)/;
+
 export default class PromQlLanguageProvider extends LanguageProvider {
   histogramMetrics?: string[];
   timeRange?: { start: number; end: number };
   metrics?: string[];
+  metricsMetadata?: PromMetricsMetadata;
   startTask: Promise<any>;
   datasource: PrometheusDatasource;
+  lookupMetricsThreshold: number;
+  lookupsDisabled: boolean; // Dynamically set to true for big/slow instances
 
   /**
    *  Cache for labels of series. This is bit simplistic in the sense that it just counts responses each as a 1 and does
@@ -54,23 +70,32 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   private labelsCache = new LRU<string, Record<string, string[]>>(10);
 
-  constructor(datasource: PrometheusDatasource) {
+  constructor(datasource: PrometheusDatasource, initialValues?: Partial<PromQlLanguageProvider>) {
     super();
 
     this.datasource = datasource;
     this.histogramMetrics = [];
     this.timeRange = { start: 0, end: 0 };
     this.metrics = [];
+    // Disable lookups until we know the instance is small enough
+    this.lookupMetricsThreshold = DEFAULT_LOOKUP_METRICS_THRESHOLD;
+    this.lookupsDisabled = true;
+
+    Object.assign(this, initialValues);
   }
 
-  // Strip syntax chars
-  cleanText = (s: string) => s.replace(/[{}[\]="(),!~+\-*/^%]/g, '').trim();
+  // Strip syntax chars so that typeahead suggestions can work on clean inputs
+  cleanText(s: string) {
+    const parts = s.split(PREFIX_DELIMITER_REGEX);
+    const last = parts.pop();
+    return last.trimLeft().replace(/"$/, '');
+  }
 
   get syntax() {
     return PromqlSyntax;
   }
 
-  request = async (url: string) => {
+  request = async (url: string, defaultValue: any): Promise<any> => {
     try {
       const res = await this.datasource.metadataRequest(url);
       const body = await (res.data || res.json());
@@ -80,25 +105,15 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       console.error(error);
     }
 
-    return [];
+    return defaultValue;
   };
 
-  start = () => {
-    if (!this.startTask) {
-      this.startTask = this.fetchMetrics();
-    }
-    return this.startTask;
-  };
-
-  fetchMetrics = async () => {
-    this.metrics = await this.fetchMetricNames();
+  start = async (): Promise<any[]> => {
+    this.metrics = await this.request('/api/v1/label/__name__/values', []);
+    this.lookupsDisabled = this.metrics.length > this.lookupMetricsThreshold;
+    this.metricsMetadata = await this.request('/api/v1/metadata', {});
     this.processHistogramMetrics(this.metrics);
-
-    return Promise.resolve([]);
-  };
-
-  fetchMetricNames = async (): Promise<string[]> => {
-    return this.request('/api/v1/label/__name__/values');
+    return [];
   };
 
   processHistogramMetrics = (data: string[]) => {
@@ -129,7 +144,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const noSuffix = !nextCharacter || nextCharacter === ')';
 
     // Empty prefix is safe if it does not immediately follow a complete expression and has no text after it
-    const safeEmptyPrefix = prefix === '' && !text.match(/^[\]})\s]+$/) && noSuffix;
+    const safePrefix = prefix && !text.match(/^[\]})\s]+$/) && noSuffix;
 
     // About to type next operand if preceded by binary operator
     const operatorsPattern = /[+\-*/^%]/;
@@ -144,17 +159,26 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       return this.getLabelCompletionItems({ prefix, text, value, labelKey, wrapperClasses });
     } else if (wrapperClasses.includes('context-aggregation')) {
       // Suggestions for sum(metric) by (|)
-      return this.getAggregationCompletionItems({ prefix, text, value, labelKey, wrapperClasses });
+      return this.getAggregationCompletionItems(value);
     } else if (empty) {
       // Suggestions for empty query field
       return this.getEmptyCompletionItems(context);
-    } else if ((prefixUnrecognized && noSuffix) || safeEmptyPrefix || isNextOperand) {
+    } else if (prefixUnrecognized && noSuffix && !isNextOperand) {
+      // Show term suggestions in a couple of scenarios
+      return this.getBeginningCompletionItems(context);
+    } else if (prefixUnrecognized && safePrefix) {
       // Show term suggestions in a couple of scenarios
       return this.getTermCompletionItems();
     }
 
     return {
       suggestions: [],
+    };
+  };
+
+  getBeginningCompletionItems = (context: { history: Array<HistoryItem<PromQuery>> }): TypeaheadOutput => {
+    return {
+      suggestions: [...this.getEmptyCompletionItems(context).suggestions, ...this.getTermCompletionItems().suggestions],
     };
   };
 
@@ -180,14 +204,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       });
     }
 
-    const termCompletionItems = this.getTermCompletionItems();
-    suggestions.push(...termCompletionItems.suggestions);
-
     return { suggestions };
   };
 
   getTermCompletionItems = (): TypeaheadOutput => {
-    const { metrics } = this;
+    const { metrics, metricsMetadata } = this;
     const suggestions = [];
 
     suggestions.push({
@@ -199,7 +220,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     if (metrics && metrics.length) {
       suggestions.push({
         label: 'Metrics',
-        items: metrics.map(wrapLabel),
+        items: metrics.map(m => addMetricsMetadata(m, metricsMetadata)),
       });
     }
 
@@ -218,7 +239,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     };
   }
 
-  getAggregationCompletionItems = async ({ value }: TypeaheadInput): Promise<TypeaheadOutput> => {
+  getAggregationCompletionItems = async (value: Value): Promise<TypeaheadOutput> => {
     const suggestions: CompletionItemGroup[] = [];
 
     // Stitch all query lines together to support multi-line queries
@@ -333,6 +354,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   async getLabelValues(selector: string, withName?: boolean) {
+    if (this.lookupsDisabled) {
+      return undefined;
+    }
     try {
       if (selector === EMPTY_SELECTOR) {
         return await this.fetchDefaultLabels();
@@ -347,7 +371,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   fetchLabelValues = async (key: string): Promise<Record<string, string[]>> => {
-    const data = await this.request(`/api/v1/label/${key}/values`);
+    const data = await this.request(`/api/v1/label/${key}/values`, []);
     return { [key]: data };
   };
 
@@ -373,7 +397,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     )}&end=${this.roundToMinutes(tRange['end'])}&withName=${!!withName}`;
     let value = this.labelsCache.get(cacheKey);
     if (!value) {
-      const data = await this.request(url);
+      const data = await this.request(url, []);
       const { values } = processLabels(data, withName);
       value = values;
       this.labelsCache.set(cacheKey, value);

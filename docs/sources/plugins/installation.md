@@ -17,7 +17,7 @@ Grafana already have a strong community of contributors and plugin developers.
 By making it easier to develop and install plugins we hope that the community
 can grow even stronger and develop new plugins that we would never think about.
 
-To discover plugins checkout the official [Plugin Repository](https://grafana.com/plugins).
+To discover plugins, check out the official [Plugin Repository](https://grafana.com/plugins).
 
 # Installing Plugins
 
