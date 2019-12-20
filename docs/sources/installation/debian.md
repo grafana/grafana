@@ -67,12 +67,12 @@ If you have problems using `add-apt-repository`, you can set up the repo without
 Add this repository for stable releases:
 
 ```bash
-echo "deb https://packages.grafana.com/oss/deb stable main" | sudo tee /etc/apt/sources.list.d/grafana.list 
+echo "deb https://packages.grafana.com/oss/deb stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list 
 ```
 
 Add this repository if you want beta releases:
 ```bash
-echo "deb https://packages.grafana.com/oss/deb beta main" | sudo tee /etc/apt/sources.list.d/grafana.list 
+echo "deb https://packages.grafana.com/oss/deb beta main" | sudo tee -a /etc/apt/sources.list.d/grafana.list 
 ```
 
 ### Install .deb package
