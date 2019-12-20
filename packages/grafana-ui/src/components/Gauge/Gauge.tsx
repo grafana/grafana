@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-import { Threshold, DisplayValue, getColorFromHexRgbOrName, formattedValueToString } from '@grafana/data';
+import { DisplayValue, getColorFromHexRgbOrName, formattedValueToString, Scale, ScaleMode } from '@grafana/data';
 import { Themeable } from '../../types';
 import { selectThemeVariant } from '../../themes';
 
@@ -8,7 +8,7 @@ export interface Props extends Themeable {
   height: number;
   maxValue: number;
   minValue: number;
-  thresholds: Threshold[];
+  scale: Scale;
   showThresholdMarkers: boolean;
   showThresholdLabels: boolean;
   width: number;
@@ -27,7 +27,10 @@ export class Gauge extends PureComponent<Props> {
     minValue: 0,
     showThresholdMarkers: true,
     showThresholdLabels: false,
-    thresholds: [],
+    scale: {
+      mode: ScaleMode.absolute,
+      thresholds: [],
+    },
   };
 
   componentDidMount() {
@@ -39,7 +42,8 @@ export class Gauge extends PureComponent<Props> {
   }
 
   getFormattedThresholds() {
-    const { maxValue, minValue, thresholds, theme } = this.props;
+    const { maxValue, minValue, scale, theme } = this.props;
+    const { thresholds } = scale;
 
     const lastThreshold = thresholds[thresholds.length - 1];
 

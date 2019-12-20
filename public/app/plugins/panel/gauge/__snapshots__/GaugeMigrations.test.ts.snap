@@ -21,24 +21,27 @@ Object {
       ],
       "max": "50",
       "min": "-50",
-      "thresholds": Array [
-        Object {
-          "color": "green",
-          "value": -Infinity,
-        },
-        Object {
-          "color": "#EAB839",
-          "value": -25,
-        },
-        Object {
-          "color": "#6ED0E0",
-          "value": 0,
-        },
-        Object {
-          "color": "red",
-          "value": 25,
-        },
-      ],
+      "scale": Object {
+        "mode": "absolute",
+        "thresholds": Array [
+          Object {
+            "color": "green",
+            "value": -Infinity,
+          },
+          Object {
+            "color": "#EAB839",
+            "value": -25,
+          },
+          Object {
+            "color": "#6ED0E0",
+            "value": 0,
+          },
+          Object {
+            "color": "red",
+            "value": 25,
+          },
+        ],
+      },
       "unit": "accMS2",
     },
   },

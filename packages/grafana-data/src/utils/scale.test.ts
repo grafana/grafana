@@ -1,19 +1,44 @@
 import { Scale, ScaleMode, Field, FieldType, ColorScheme } from '../types';
-import { sortThresholds, getScaleCalculator } from './scale';
+import { sortThresholds, getScaleCalculator, getActiveThreshold, validateScale } from './scale';
 import { ArrayVector } from '../vector';
 
 describe('scale', () => {
   test('sort thresholds', () => {
     const scale: Scale = {
       thresholds: [
-        { color: 'RED', value: 10 },
-        { color: 'RED', value: 100 },
-        { color: 'RED', value: 1 },
+        { color: 'TEN', value: 10 },
+        { color: 'HHH', value: 100 },
+        { color: 'ONE', value: 1 },
       ],
       mode: ScaleMode.absolute,
     };
     const sorted = sortThresholds(scale.thresholds).map(t => t.value);
     expect(sorted).toEqual([1, 10, 100]);
+
+    // Mutates and sorts the
+    validateScale(scale);
+    expect(getActiveThreshold(10, scale.thresholds).color).toEqual('TEN');
+  });
+
+  test('find active', () => {
+    const scale: Scale = {
+      thresholds: [
+        { color: 'ONE', value: 1 },
+        { color: 'TEN', value: 10 },
+        { color: 'HHH', value: 100 },
+      ],
+      mode: ScaleMode.absolute,
+    };
+    // Mutates and sets ONE to -Infinity
+    validateScale(scale);
+    expect(getActiveThreshold(-1, scale.thresholds).color).toEqual('ONE');
+    expect(getActiveThreshold(1, scale.thresholds).color).toEqual('ONE');
+    expect(getActiveThreshold(5, scale.thresholds).color).toEqual('ONE');
+    expect(getActiveThreshold(10, scale.thresholds).color).toEqual('TEN');
+    expect(getActiveThreshold(11, scale.thresholds).color).toEqual('TEN');
+    expect(getActiveThreshold(99, scale.thresholds).color).toEqual('TEN');
+    expect(getActiveThreshold(100, scale.thresholds).color).toEqual('HHH');
+    expect(getActiveThreshold(1000, scale.thresholds).color).toEqual('HHH');
   });
 
   test('absolute thresholds', () => {

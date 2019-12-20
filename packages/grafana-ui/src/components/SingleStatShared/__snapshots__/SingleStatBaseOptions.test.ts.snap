@@ -8,7 +8,7 @@ Object {
       "mappings": undefined,
       "max": 100,
       "min": 0,
-      "thresholds": undefined,
+      "scale": undefined,
     },
     "overrides": Array [],
     "stat": "last",
@@ -34,20 +34,23 @@ Object {
       ],
       "max": 100,
       "min": 10,
-      "thresholds": Array [
-        Object {
-          "color": "green",
-          "value": -Infinity,
-        },
-        Object {
-          "color": "orange",
-          "value": 40,
-        },
-        Object {
-          "color": "red",
-          "value": 80,
-        },
-      ],
+      "scale": Object {
+        "mode": "absolute",
+        "thresholds": Array [
+          Object {
+            "color": "green",
+            "value": -Infinity,
+          },
+          Object {
+            "color": "orange",
+            "value": 40,
+          },
+          Object {
+            "color": "red",
+            "value": 80,
+          },
+        ],
+      },
       "unit": "watt",
     },
   },

@@ -26,7 +26,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
               value={display}
               width={width}
               height={height}
-              thresholds={field.thresholds}
+              scale={field.scale}
               showThresholdLabels={options.showThresholdLabels}
               showThresholdMarkers={options.showThresholdMarkers}
               minValue={field.min}

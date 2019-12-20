@@ -1,12 +1,9 @@
 // Libraries
 import _ from 'lodash';
 
-// Utils
-import { getColorFromHexRgbOrName } from '../utils/namedColorsPalette';
-
 // Types
 import { Field, FieldType } from '../types/dataFrame';
-import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
+import { GrafanaTheme } from '../types/theme';
 import { DisplayProcessor, DisplayValue, DecimalCount, DecimalInfo } from '../types/displayValue';
 import { getValueFormat } from '../valueFormats/valueFormats';
 import { getMappedValue } from '../utils/valueMappings';
@@ -15,7 +12,7 @@ import { KeyValue } from '../types';
 import { getScaleCalculator } from '../utils';
 
 interface DisplayProcessorOptions {
-  field: Field;
+  field: Partial<Field>;
 
   // Context
   isUtc?: boolean;
@@ -47,12 +44,10 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   }
 
   const formatFunc = getValueFormat(config.unit || 'none');
-  const scaleFunc = getScaleCalculator(field, options.theme);
+  const scaleFunc = getScaleCalculator(field as Field, options.theme);
 
   return (value: any) => {
-    const { theme } = options;
     const { mappings } = config;
-    let color: string | undefined = undefined;
 
     let text = _.toString(value);
     let numeric = toNumber(value);
@@ -91,20 +86,21 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
           }
         }
       }
-      const v = scaleFunc(numeric);
-      if (v.color) {
-        color = v;
+
+      // Return the value along with scale info
+      if (text) {
+        return { text, numeric, prefix, suffix, ...scaleFunc(numeric) };
       }
     }
 
     if (!text) {
-      if (field && field.noValue) {
-        text = field.noValue;
+      if (config.noValue) {
+        text = config.noValue;
       } else {
         text = ''; // No data?
       }
     }
-    return { text, numeric, color, prefix, suffix };
+    return { text, numeric, prefix, suffix };
   };
 }
 

@@ -3,6 +3,7 @@ import { shallow } from 'enzyme';
 
 import { Gauge, Props } from './Gauge';
 import { getTheme } from '../../themes';
+import { ScaleMode } from '@grafana/data';
 
 jest.mock('jquery', () => ({
   plot: jest.fn(),
@@ -14,7 +15,7 @@ const setup = (propOverrides?: object) => {
     minValue: 0,
     showThresholdMarkers: true,
     showThresholdLabels: false,
-    thresholds: [{ value: -Infinity, color: '#7EB26D' }],
+    scale: { mode: ScaleMode.absolute, thresholds: [{ value: -Infinity, color: '#7EB26D' }] },
     height: 300,
     width: 300,
     value: {
@@ -37,7 +38,9 @@ const setup = (propOverrides?: object) => {
 
 describe('Get thresholds formatted', () => {
   it('should return first thresholds color for min and max', () => {
-    const { instance } = setup({ thresholds: [{ index: 0, value: -Infinity, color: '#7EB26D' }] });
+    const { instance } = setup({
+      scale: { mode: ScaleMode.absolute, thresholds: [{ index: 0, value: -Infinity, color: '#7EB26D' }] },
+    });
 
     expect(instance.getFormattedThresholds()).toEqual([
       { value: 0, color: '#7EB26D' },
@@ -47,11 +50,14 @@ describe('Get thresholds formatted', () => {
 
   it('should get the correct formatted values when thresholds are added', () => {
     const { instance } = setup({
-      thresholds: [
-        { value: -Infinity, color: '#7EB26D' },
-        { value: 50, color: '#EAB839' },
-        { value: 75, color: '#6ED0E0' },
-      ],
+      scale: {
+        mode: ScaleMode.absolute,
+        thresholds: [
+          { value: -Infinity, color: '#7EB26D' },
+          { value: 50, color: '#EAB839' },
+          { value: 75, color: '#6ED0E0' },
+        ],
+      },
     });
 
     expect(instance.getFormattedThresholds()).toEqual([

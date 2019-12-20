@@ -2,13 +2,14 @@
 import React, { PureComponent, CSSProperties, ReactNode } from 'react';
 import tinycolor from 'tinycolor2';
 import {
-  Threshold,
   TimeSeriesValue,
   getActiveThreshold,
   DisplayValue,
   formattedValueToString,
   FormattedValue,
   DisplayValueAlignmentFactors,
+  Scale,
+  ScaleMode,
 } from '@grafana/data';
 
 // Compontents
@@ -33,7 +34,7 @@ const VALUE_LEFT_PADDING = 10;
 export interface Props extends Themeable {
   height: number;
   width: number;
-  thresholds: Threshold[];
+  scale: Scale;
   value: DisplayValue;
   maxValue: number;
   minValue: number;
@@ -55,7 +56,10 @@ export class BarGauge extends PureComponent<Props> {
     },
     displayMode: 'lcd',
     orientation: VizOrientation.Horizontal,
-    thresholds: [],
+    scale: {
+      mode: ScaleMode.absolute,
+      thresholds: [],
+    },
     itemSpacing: 10,
   };
 
@@ -105,7 +109,7 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   getCellColor(positionValue: TimeSeriesValue): CellColors {
-    const { thresholds, theme, value } = this.props;
+    const { scale, theme, value } = this.props;
     if (positionValue === null) {
       return {
         background: 'gray',
@@ -113,7 +117,7 @@ export class BarGauge extends PureComponent<Props> {
       };
     }
 
-    const activeThreshold = getActiveThreshold(positionValue, thresholds);
+    const activeThreshold = getActiveThreshold(positionValue, scale.thresholds);
     if (activeThreshold !== null) {
       const color = getColorFromHexRgbOrName(activeThreshold.color, theme.type);
 
@@ -464,7 +468,8 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
  * Only exported to for unit test
  */
 export function getBarGradient(props: Props, maxSize: number): string {
-  const { minValue, maxValue, thresholds, value, orientation } = props;
+  const { minValue, maxValue, scale, value, orientation } = props;
+  const { thresholds } = scale;
   const cssDirection = isVertical(orientation) ? '0deg' : '90deg';
 
   let gradient = '';
@@ -494,9 +499,9 @@ export function getBarGradient(props: Props, maxSize: number): string {
  * Only exported to for unit test
  */
 export function getValueColor(props: Props): string {
-  const { thresholds, theme, value } = props;
+  const { scale, theme, value } = props;
 
-  const activeThreshold = getActiveThreshold(value.numeric, thresholds);
+  const activeThreshold = getActiveThreshold(value.numeric, scale.thresholds);
 
   if (activeThreshold !== null) {
     return getColorFromHexRgbOrName(activeThreshold.color, theme.type);

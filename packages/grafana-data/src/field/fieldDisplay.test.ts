@@ -2,7 +2,7 @@ import merge from 'lodash/merge';
 import { getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { ReducerID } from '../transformations/fieldReducer';
-import { Threshold } from '../types/threshold';
+import { Threshold, ScaleMode } from '../types/scale';
 import { GrafanaTheme } from '../types/theme';
 import { MappingType } from '../types';
 import { setFieldConfigDefaults } from './fieldOverrides';
@@ -64,33 +64,36 @@ describe('FieldDisplay', () => {
 
   it('should restore -Infinity value for base threshold', () => {
     const field = {
-      thresholds: [
-        ({
-          color: '#73BF69',
-          value: null,
-        } as unknown) as Threshold,
-        {
-          color: '#F2495C',
-          value: 50,
-        },
-      ],
+      scale: {
+        mode: ScaleMode.absolute,
+        thresholds: [
+          ({
+            color: '#73BF69',
+            value: null,
+          } as unknown) as Threshold,
+          {
+            color: '#F2495C',
+            value: 50,
+          },
+        ],
+      },
     };
     setFieldConfigDefaults(field);
-    expect(field.thresholds!.length).toEqual(2);
-    expect(field.thresholds![0].value).toBe(-Infinity);
+    expect(field.scale.thresholds!.length).toEqual(2);
+    expect(field.scale.thresholds![0].value).toBe(-Infinity);
   });
 
   it('Should return field thresholds when there is no data', () => {
     const options = createEmptyDisplayOptions({
       fieldOptions: {
         defaults: {
-          thresholds: [{ color: '#F2495C', value: 50 }],
+          scale: { thresholds: [{ color: '#F2495C', value: 50 }] },
         },
       },
     });
 
     const display = getFieldDisplayValues(options);
-    expect(display[0].field.thresholds!.length).toEqual(1);
+    expect(display[0].field.scale!.thresholds!.length).toEqual(1);
     expect(display[0].display.numeric).toEqual(0);
   });
 

@@ -13,6 +13,8 @@ import {
   PanelModel,
   FieldDisplayOptions,
   ConfigOverrideRule,
+  ScaleMode,
+  Scale,
 } from '@grafana/data';
 
 export interface SingleStatBaseOptions {
@@ -70,7 +72,10 @@ export function sharedSingleStatPanelChangedHandler(
           thresholds.push({ value: -Infinity, color });
         }
       }
-      defaults.thresholds = thresholds;
+      defaults.scale = {
+        mode: ScaleMode.absolute,
+        thresholds,
+      };
     }
 
     // Convert value mappings
@@ -137,6 +142,14 @@ export function moveThresholdsAndMappingsToField(old: any) {
 
   const { mappings, thresholds, ...rest } = old.fieldOptions;
 
+  let scale: Scale | undefined = undefined;
+  if (thresholds && thresholds.length) {
+    scale = {
+      mode: ScaleMode.absolute,
+      thresholds: migrateOldThresholds(thresholds)!,
+    };
+  }
+
   return {
     ...old,
     fieldOptions: {
@@ -144,7 +157,7 @@ export function moveThresholdsAndMappingsToField(old: any) {
       defaults: {
         ...fieldOptions.defaults,
         mappings,
-        thresholds: migrateOldThresholds(thresholds),
+        scale,
       },
     },
   };

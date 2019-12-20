@@ -7,6 +7,7 @@ import toNumber from 'lodash/toNumber';
 import { getDisplayProcessor } from './displayProcessor';
 import { GetFieldDisplayValuesOptions } from './fieldDisplay';
 import { guessFieldTypeForField } from '../dataframe';
+import { validateScale } from '../utils';
 
 interface OverrideProps {
   match: FieldMatcher;

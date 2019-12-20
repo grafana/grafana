@@ -11,7 +11,8 @@ type colorInterpolator = (t: number) => string;
 
 export function getScaleCalculator(field: Field, theme?: GrafanaTheme): ScaleCalculator {
   const themeType = theme ? theme.type : GrafanaThemeType.Dark;
-  const scale = field.config?.scale;
+  const config = field.config || {};
+  const scale = config.scale;
   if (!scale) {
     return (value: number) => {
       return {}; // NOOP
@@ -28,15 +29,20 @@ export function getScaleCalculator(field: Field, theme?: GrafanaTheme): ScaleCal
     };
   }
   // Calculate min/max if required
-  let min = field.config.min;
-  let max = field.config.max;
+  let min = config.min;
+  let max = config.max;
   if (!isNumber(min) || !isNumber(max)) {
-    const stats = reduceField({ field, reducers: [ReducerID.min, ReducerID.max] });
-    if (!isNumber(min)) {
-      min = stats[ReducerID.min];
-    }
-    if (!isNumber(max)) {
-      max = stats[ReducerID.max];
+    if (field.values && field.values.length) {
+      const stats = reduceField({ field, reducers: [ReducerID.min, ReducerID.max] });
+      if (!isNumber(min)) {
+        min = stats[ReducerID.min];
+      }
+      if (!isNumber(max)) {
+        max = stats[ReducerID.max];
+      }
+    } else {
+      min = 0;
+      max = 100;
     }
   }
   const delta = max! - min!;

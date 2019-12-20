@@ -150,8 +150,7 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number, timeZ
 
     const timeField = data.fields[1];
     timeField.display = getDisplayProcessor({
-      config: timeField.config,
-      type: timeField.type,
+      field: timeField,
       isUtc: timeZone === 'utc',
     });
 

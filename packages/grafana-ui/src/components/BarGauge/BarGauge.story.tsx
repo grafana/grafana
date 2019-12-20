@@ -1,7 +1,7 @@
 import { storiesOf } from '@storybook/react';
 import { number, text } from '@storybook/addon-knobs';
 import { BarGauge, Props } from './BarGauge';
-import { VizOrientation } from '@grafana/data';
+import { VizOrientation, ScaleMode } from '@grafana/data';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
@@ -48,11 +48,14 @@ function addBarGaugeStory(name: string, overrides: Partial<Props>) {
       maxValue: maxValue,
       orientation: VizOrientation.Vertical,
       displayMode: 'basic',
-      thresholds: [
-        { value: -Infinity, color: 'green' },
-        { value: threshold1Value, color: threshold1Color },
-        { value: threshold2Value, color: threshold2Color },
-      ],
+      scale: {
+        mode: ScaleMode.absolute,
+        thresholds: [
+          { value: -Infinity, color: 'green' },
+          { value: threshold1Value, color: threshold1Color },
+          { value: threshold2Value, color: threshold2Color },
+        ],
+      },
     };
 
     Object.assign(props, overrides);
