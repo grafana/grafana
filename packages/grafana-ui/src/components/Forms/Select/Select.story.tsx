@@ -151,7 +151,6 @@ export const multiPlainValue = () => {
         options={generateOptions()}
         value={value}
         onChange={v => {
-          console.log(v);
           setValue(v.map((v: any) => v.value));
         }}
         size="md"
