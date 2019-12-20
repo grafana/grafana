@@ -59,7 +59,7 @@ sudo add-apt-repository "deb https://packages.grafana.com/oss/deb beta main"
 
 #### Setup repo manually
 
-Some users have had problems with using `add-apt-repository` on ARM, thankfully it's trivial to setup the repo without it.
+If you have problems using `add-apt-repository` on ARM, then you can set up the repo without it.
 
 Create `/etc/apt/sources.list.d/grafana.list` with the following content for stable releases:
 
@@ -178,4 +178,3 @@ Refer to the [Getting Started](/guides/getting_started/) guide for information a
 ## Configure Grafana
 
 Refer the [Configuration]({{< relref "configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
-
