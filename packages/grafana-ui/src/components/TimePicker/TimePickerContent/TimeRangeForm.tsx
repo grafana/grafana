@@ -67,6 +67,7 @@ export const TimeRangeForm: React.FC<Props> = props => {
     <>
       <Forms.Field label="From" invalid={from.invalid} error={errorMessage}>
         <Forms.Input
+          onClick={event => event.stopPropagation()}
           onFocus={onFocus}
           onChange={event => setFrom(eventToState(event, false, timeZone))}
           addonAfter={icon}
@@ -75,6 +76,7 @@ export const TimeRangeForm: React.FC<Props> = props => {
       </Forms.Field>
       <Forms.Field label="To" invalid={to.invalid} error={errorMessage}>
         <Forms.Input
+          onClick={event => event.stopPropagation()}
           onFocus={onFocus}
           onChange={event => setTo(eventToState(event, true, timeZone))}
           addonAfter={icon}

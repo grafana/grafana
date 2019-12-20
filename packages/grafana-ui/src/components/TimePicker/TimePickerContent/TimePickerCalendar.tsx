@@ -8,6 +8,7 @@ import { TimePickerTitle } from './TimePickerTitle';
 import Forms from '../../Forms';
 import { Portal } from '../../Portal/Portal';
 import { getThemeColors } from './colors';
+import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const colors = getThemeColors(theme);
@@ -92,13 +93,14 @@ const getBodyStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     body: css`
+      z-index: ${theme.zIndex.modal};
       background-color: ${colors.background};
       width: 268px;
 
       .react-calendar__navigation__label,
       .react-calendar__navigation__arrow,
       .react-calendar__navigation {
-        margin-top: 4px;
+        padding-top: 4px;
         background-color: inherit;
         color: ${theme.colors.text};
         border: 0;
@@ -211,9 +213,11 @@ export const TimePickerCalendar = memo<Props>(props => {
 
   if (isFullscreen) {
     return (
-      <div className={styles.container}>
-        <Body {...props} />
-      </div>
+      <ClickOutsideWrapper onClick={props.onClose}>
+        <div className={styles.container}>
+          <Body {...props} />
+        </div>
+      </ClickOutsideWrapper>
     );
   }
 

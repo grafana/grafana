@@ -31,7 +31,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       }
 
       @media only screen and (max-width: ${theme.breakpoints.sm}) {
-        margin-left: -81px;
+        width: 264px;
+        margin-left: -100px;
       }
     `,
     leftSide: css`
@@ -108,9 +109,11 @@ const getEmptyListStyles = stylesFactory((theme: GrafanaTheme) => {
       background-color: ${colors.formBackground};
       padding: 12px;
       margin: 12px;
-    `,
-    section: css`
-      margin-bottom: 12px;
+
+      a,
+      span {
+        font-size: 13px;
+      }
     `,
     link: css`
       color: ${theme.colors.linkExternal};
@@ -252,7 +255,7 @@ const EmptyRecentList = memo(() => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.section}>
+      <div>
         <span>
           It looks like you haven't used this timer picker before. As soon as you enter some time intervals, recently
           used intervals will appear here.
