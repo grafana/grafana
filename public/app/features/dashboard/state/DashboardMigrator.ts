@@ -487,9 +487,7 @@ export class DashboardMigrator {
       });
     }
 
-    // schema version 22 changes
     if (oldVersion < 22) {
-      // move aliasYAxis changes
       panelUpgrades.push((panel: any) => {
         if (panel.type !== 'table') {
           return;
