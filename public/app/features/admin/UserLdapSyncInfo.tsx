@@ -1,17 +1,18 @@
 import React, { PureComponent } from 'react';
 import { dateTime } from '@grafana/data';
-import { SyncInfo } from 'app/types';
+import { SyncInfo, UserDTO } from 'app/types';
 import { Button, LinkButton } from '@grafana/ui';
 
 interface Props {
   ldapSyncInfo: SyncInfo;
+  user: UserDTO;
   onUserSync: () => void;
 }
 
 interface State {}
 
 const syncTimeFormat = 'dddd YYYY-MM-DD HH:mm zz';
-const debugLDAPMappingURL = '/admin/ldap';
+const debugLDAPMappingBaseURL = '/admin/ldap';
 
 export class UserLdapSyncInfo extends PureComponent<Props, State> {
   onUserSync = () => {
@@ -19,10 +20,11 @@ export class UserLdapSyncInfo extends PureComponent<Props, State> {
   };
 
   render() {
-    const { ldapSyncInfo } = this.props;
+    const { ldapSyncInfo, user } = this.props;
     const nextSyncTime = dateTime(ldapSyncInfo.nextSync).format(syncTimeFormat);
     const prevSyncSuccessful = ldapSyncInfo && ldapSyncInfo.prevSync;
     const prevSyncTime = prevSyncSuccessful ? dateTime(ldapSyncInfo.prevSync.started).format(syncTimeFormat) : '';
+    const debugLDAPMappingURL = `${debugLDAPMappingBaseURL}?user=${user && user.login}`;
 
     return (
       <>

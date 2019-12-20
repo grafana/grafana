@@ -142,7 +142,7 @@ export class UserAdminPage extends PureComponent<Props, State> {
                 onPasswordChange={this.onPasswordChange}
               />
               {isLDAPUser && config.buildInfo.isEnterprise && ldapSyncInfo && (
-                <UserLdapSyncInfo ldapSyncInfo={ldapSyncInfo} onUserSync={this.onUserSync} />
+                <UserLdapSyncInfo ldapSyncInfo={ldapSyncInfo} user={user} onUserSync={this.onUserSync} />
               )}
               <UserPermissions isGrafanaAdmin={user.isGrafanaAdmin} onGrafanaAdminChange={this.onGrafanaAdminChange} />
             </>
