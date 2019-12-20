@@ -257,7 +257,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
 
         series = seriesList[hoverInfo.index];
 
-        value = series.formatValue(sanitize(hoverInfo.value));
+        value = series.formatValue(hoverInfo.value);
         const color = sanitize(hoverInfo.color);
         const label = sanitize(hoverInfo.label);
 
@@ -271,10 +271,10 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
       self.renderAndShow(absoluteTime, seriesHtml, pos, xMode);
     } else if (item) {
       // single series tooltip
+      const color = sanitize(item.series.color);
       series = seriesList[item.seriesIndex];
       group = '<div class="graph-tooltip-list-item"><div class="graph-tooltip-series-name">';
-      group +=
-        '<i class="fa fa-minus" style="color:' + item.series.color + ';"></i> ' + series.aliasEscaped + ':</div>';
+      group += '<i class="fa fa-minus" style="color:' + color + ';"></i> ' + series.aliasEscaped + ':</div>';
 
       if (panel.stack && panel.tooltip.value_type === 'individual') {
         value = item.datapoint[1] - item.datapoint[2];
