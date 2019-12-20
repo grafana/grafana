@@ -280,7 +280,9 @@ export class TableRenderer {
     }
 
     if (column.style && column.style.align) {
-      cellStyles.push(`text-align:${column.style.align}`);
+      if (_.includes(['', 'left', 'center', 'right'], column.style.align)) {
+        cellStyles.push(`text-align:${column.style.align}`);
+      }
     }
 
     if (cellStyles.length) {
