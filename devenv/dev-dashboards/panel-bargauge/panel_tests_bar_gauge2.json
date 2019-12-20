@@ -511,7 +511,7 @@
   ],
   "schemaVersion": 21,
   "style": "dark",
-  "tags": [],
+  "tags": ["gdev", "panel-tests"],
   "templating": {
     "list": []
   },
