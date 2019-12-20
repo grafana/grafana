@@ -491,8 +491,6 @@ export function getBarGradient(props: Props, maxSize: number): string {
 
       if (gradient === '') {
         gradient = `linear-gradient(${cssDirection}, ${color}, ${color}`;
-      } else if (false) {
-        break;
       } else {
         lastpos = pos;
         gradient += ` ${offset}px, ${color}`;
