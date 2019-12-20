@@ -28,7 +28,7 @@ export class Gauge extends PureComponent<Props> {
     showThresholdMarkers: true,
     showThresholdLabels: false,
     scale: {
-      mode: ScaleMode.relative,
+      mode: ScaleMode.absolute,
       thresholds: [
         { value: -Infinity, color: 'green' },
         { value: 80, color: 'red' },

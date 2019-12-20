@@ -29,7 +29,7 @@ export class ScaleEditor extends PureComponent<Props> {
     const scale = this.props.scale
       ? { ...this.props.scale }
       : {
-          mode: ScaleMode.relative,
+          mode: ScaleMode.absolute,
           thresholds: [
             { value: -Infinity, color: 'green' },
             { value: 80, color: 'red' },
@@ -65,7 +65,7 @@ export class ScaleEditor extends PureComponent<Props> {
   render() {
     const scale = this.getCurrent();
     return (
-      <PanelOptionsGroup title="Scale">
+      <PanelOptionsGroup title="Thresholds">
         <div>
           <ThresholdsEditor
             theme={getTheme()}
@@ -73,14 +73,18 @@ export class ScaleEditor extends PureComponent<Props> {
             onChange={this.onThresholdsChanged}
             isPercent={scale.mode !== ScaleMode.absolute}
           />
-          <Select options={modes} value={modes.filter(m => m.value === scale.mode)} onChange={this.onModeChanged} />
-          {scale.mode === ScaleMode.scheme && (
+          {false && (
             <div>
-              <Select
-                options={schemes}
-                value={schemes.filter(s => s.value === scale.scheme)}
-                onChange={this.onSchemeChanged}
-              />
+              <Select options={modes} value={modes.filter(m => m.value === scale.mode)} onChange={this.onModeChanged} />
+              {scale.mode === ScaleMode.scheme && (
+                <div>
+                  <Select
+                    options={schemes}
+                    value={schemes.filter(s => s.value === scale.scheme)}
+                    onChange={this.onSchemeChanged}
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>
