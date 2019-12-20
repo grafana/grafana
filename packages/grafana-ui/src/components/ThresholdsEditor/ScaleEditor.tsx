@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Scale, validateScale, ScaleMode, ColorScheme, Threshold, SelectableValue, validateScale } from '@grafana/data';
+import { Scale, ScaleMode, ColorScheme, Threshold, SelectableValue, validateScale } from '@grafana/data';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 import { ThresholdsEditor } from './ThresholdsEditor';
 import { Select } from '../Select/Select';
@@ -16,7 +16,7 @@ const modes: Array<SelectableValue<ScaleMode>> = [
   { value: ScaleMode.scheme, label: 'Scheme', description: 'Use a predefined color scheme' },
 ];
 
-const schemas = Object.values(ColorScheme).map(s => {
+const schemes = Object.values(ColorScheme).map(s => {
   return { value: s, label: s };
 });
 
@@ -74,11 +74,11 @@ export class ScaleEditor extends PureComponent<Props> {
             isPercent={scale.mode !== ScaleMode.absolute}
           />
           <Select options={modes} value={modes.filter(m => m.value === scale.mode)} onChange={this.onModeChanged} />
-          {scale.mode === ScaleMode.schema && (
+          {scale.mode === ScaleMode.scheme && (
             <div>
               <Select
-                options={schemas}
-                value={schemas.filter(s => s.value === scale.scheme)}
+                options={schemes}
+                value={schemes.filter(s => s.value === scale.scheme)}
                 onChange={this.onSchemeChanged}
               />
             </div>

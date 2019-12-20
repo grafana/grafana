@@ -4,9 +4,11 @@ import { GrafanaThemeType } from '@grafana/data';
 import { ThresholdsEditor, Props, thresholdsWithoutKey } from './ThresholdsEditor';
 import { colors } from '../../utils';
 import { mockThemeContext } from '../../themes/ThemeContext';
+import { getTheme } from '../../themes';
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
+    theme: getTheme(GrafanaThemeType.Dark),
     onChange: jest.fn(),
     thresholds: [],
   };

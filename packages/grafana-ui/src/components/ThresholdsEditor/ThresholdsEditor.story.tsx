@@ -3,6 +3,7 @@ import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 
 import { ThresholdsEditor } from './ThresholdsEditor';
+import { getTheme } from '../../themes';
 
 const ThresholdsEditorStories = storiesOf('UI/ThresholdsEditor', module);
 const thresholds = [
@@ -11,9 +12,9 @@ const thresholds = [
 ];
 
 ThresholdsEditorStories.add('default', () => {
-  return <ThresholdsEditor thresholds={[]} onChange={action('Thresholds changed')} />;
+  return <ThresholdsEditor theme={getTheme()} thresholds={[]} onChange={action('Thresholds changed')} />;
 });
 
 ThresholdsEditorStories.add('with thresholds', () => {
-  return <ThresholdsEditor thresholds={thresholds} onChange={action('Thresholds changed')} />;
+  return <ThresholdsEditor theme={getTheme()} thresholds={thresholds} onChange={action('Thresholds changed')} />;
 });
