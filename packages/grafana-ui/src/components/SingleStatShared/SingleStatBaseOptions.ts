@@ -117,8 +117,10 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
   }
 
   if (previousVersion < 6.6) {
+    const { fieldOptions } = options;
+
     // discard the old `override` options and enter an empty array
-    if (options.fieldOptions && options.fieldOptions.override) {
+    if (fieldOptions && fieldOptions.override) {
       const { override, ...rest } = options.fieldOptions;
       options = {
         ...options,
@@ -126,6 +128,22 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
           ...rest,
           overrides: [],
         },
+      };
+    }
+
+    // Move thresholds to scale
+    let thresholds = fieldOptions?.defaults?.thresholds;
+    if (thresholds) {
+      delete fieldOptions.defaults.thresholds;
+    } else {
+      thresholds = fieldOptions?.thresholds;
+      delete fieldOptions.thresholds;
+    }
+
+    if (thresholds) {
+      fieldOptions.defaults.scale = {
+        mode: ScaleMode.absolute,
+        thresholds,
       };
     }
   }
