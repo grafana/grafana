@@ -395,7 +395,7 @@ export function getValuePercent(value: number, minValue: number, maxValue: numbe
  * Only exported to for unit test
  */
 export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles {
-  const { displayMode, maxValue, minValue, value, alignmentFactors, orientation } = props;
+  const { displayMode, maxValue, minValue, value, alignmentFactors, orientation, theme } = props;
   const { valueWidth, valueHeight, maxBarHeight, maxBarWidth } = calculateBarAndValueDimensions(props);
 
   const valuePercent = getValuePercent(value.numeric, minValue, maxValue);
@@ -417,7 +417,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   };
 
   const emptyBar: CSSProperties = {
-    background: 'rgba(255,255,255,0.06)',
+    background: `rgba(${theme.isDark ? '255,255,255' : '0,0,0'}, 0.07)`,
     flexGrow: 1,
     display: 'flex',
     borderRadius: '3px',
@@ -430,14 +430,12 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
     // vertical styles
     wrapperStyles.flexDirection = 'column';
     wrapperStyles.justifyContent = 'flex-end';
-    wrapperStyles.flexGrow = 1;
 
     barStyles.transition = 'height 1s';
     barStyles.height = `${barHeight}px`;
     barStyles.width = `${maxBarWidth}px`;
 
     // adjust so that filled in bar is at the bottom
-    emptyBar.flexDirection = 'column-reverse';
     emptyBar.bottom = '-3px';
 
     if (isBasic) {
@@ -555,7 +553,12 @@ function getValueStyles(
     styles.fontSize = calculateFontSize(formattedValueString, textWidth, height, VALUE_LINE_HEIGHT);
     styles.justifyContent = `center`;
   } else {
-    styles.fontSize = calculateFontSize(formattedValueString, textWidth, height, VALUE_LINE_HEIGHT);
+    styles.fontSize = calculateFontSize(
+      formattedValueString,
+      textWidth - VALUE_LEFT_PADDING * 2,
+      height,
+      VALUE_LINE_HEIGHT
+    );
     styles.justifyContent = `flex-end`;
     styles.paddingLeft = `${VALUE_LEFT_PADDING}px`;
     styles.paddingRight = `${VALUE_LEFT_PADDING}px`;
@@ -563,7 +566,7 @@ function getValueStyles(
     textWidth -= VALUE_LEFT_PADDING;
 
     // adjust width of title box
-    styles.width = measureText(formattedValueString, styles.fontSize).width + 20;
+    styles.width = measureText(formattedValueString, styles.fontSize).width + VALUE_LEFT_PADDING * 2;
   }
 
   return styles;

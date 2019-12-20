@@ -29,7 +29,7 @@ exports[`BarGauge Render with basic options should render 1`] = `
           "alignItems": "center",
           "color": "#73BF69",
           "display": "flex",
-          "fontSize": 210,
+          "fontSize": 140,
           "height": "300px",
           "justifyContent": "flex-end",
           "lineHeight": 1,
@@ -48,7 +48,7 @@ exports[`BarGauge Render with basic options should render 1`] = `
     <div
       style={
         Object {
-          "background": "rgba(255,255,255,0.06)",
+          "background": "rgba(255,255,255, 0.07)",
           "borderRadius": "3px",
           "display": "flex",
           "flexGrow": 1,
