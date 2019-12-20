@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Scale, validateScale, ScaleMode, Threshold, SelectableValue } from '@grafana/data';
+import { Scale, validateScale, ScaleMode, ColorScheme, Threshold, SelectableValue } from '@grafana/data';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 import { ThresholdsEditor } from './ThresholdsEditor';
 import { Select } from '../Select/Select';
@@ -13,8 +13,12 @@ export interface Props {
 const modes: Array<SelectableValue<ScaleMode>> = [
   { value: ScaleMode.absolute, label: 'Absolute', description: 'Set thresholds against the absolute values' },
   { value: ScaleMode.relative, label: 'Relative', description: 'Thresholds are percent between min/max' },
-  { value: ScaleMode.schema, label: 'Scheme', description: 'Use a predefined color scheme' },
+  { value: ScaleMode.scheme, label: 'Scheme', description: 'Use a predefined color scheme' },
 ];
+
+const schemas = Object.values(ColorScheme).map(s => {
+  return { value: s, label: s };
+});
 
 export class ScaleEditor extends PureComponent<Props> {
   constructor(props: Props) {
@@ -43,9 +47,24 @@ export class ScaleEditor extends PureComponent<Props> {
   };
 
   onModeChanged = (item: SelectableValue<ScaleMode>) => {
-    this.props.onChange({
+    const val = {
       ...this.getCurrent(),
       mode: item.value ?? ScaleMode.relative,
+    };
+    if (val.mode === ScaleMode.scheme) {
+      if (!val.scheme) {
+        val.scheme = ColorScheme.BrBG;
+      }
+    } else if (val.scheme) {
+      delete val.scheme;
+    }
+    this.props.onChange(val);
+  };
+
+  onSchemeChanged = (item: SelectableValue<ColorScheme>) => {
+    this.props.onChange({
+      ...this.getCurrent(),
+      scheme: item.value,
     });
   };
 
@@ -53,14 +72,24 @@ export class ScaleEditor extends PureComponent<Props> {
     const scale = this.getCurrent();
     return (
       <PanelOptionsGroup title="Scale">
-        <ThresholdsEditor
-          theme={getTheme()}
-          thresholds={scale.thresholds}
-          onChange={this.onThresholdsChanged}
-          isPercent={scale.mode !== ScaleMode.absolute}
-        />
-        <Select options={modes} value={modes.filter(m => m.value === scale.mode)} onChange={this.onModeChanged} />
-        {scale.mode === ScaleMode.schema && <div>TODO... picker...</div>}
+        <div>
+          <ThresholdsEditor
+            theme={getTheme()}
+            thresholds={scale.thresholds}
+            onChange={this.onThresholdsChanged}
+            isPercent={scale.mode !== ScaleMode.absolute}
+          />
+          <Select options={modes} value={modes.filter(m => m.value === scale.mode)} onChange={this.onModeChanged} />
+          {scale.mode === ScaleMode.schema && (
+            <div>
+              <Select
+                options={schemas}
+                value={schemas.filter(s => s.value === scale.scheme)}
+                onChange={this.onSchemeChanged}
+              />
+            </div>
+          )}
+        </div>
       </PanelOptionsGroup>
     );
   }
