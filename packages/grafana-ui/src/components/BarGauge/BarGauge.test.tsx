@@ -106,6 +106,20 @@ describe('BarGauge', () => {
       });
       const styles = getBasicAndGradientStyles(props);
       expect(styles.bar.height).toBe('249px');
+      expect(styles.emptyBar.bottom).toBe('-3px');
+    });
+  });
+
+  describe('Horizontal bar', () => {
+    it('should stretch items', () => {
+      const props = getProps({
+        height: 300,
+        value: getValue(100, 'ServerA'),
+        orientation: VizOrientation.Horizontal,
+      });
+      const styles = getBasicAndGradientStyles(props);
+      expect(styles.wrapper.alignItems).toBe('stretch');
+      expect(styles.emptyBar.left).toBe('-3px');
     });
   });
 
