@@ -17,7 +17,6 @@ export const SelectMenu = React.forwardRef<HTMLDivElement, React.PropsWithChildr
   // @ts-ignore
   const { children, maxHeight, innerRef } = props;
 
-  console.log('SELECT MENU', props);
   return (
     <div className={styles.menu} ref={innerRef} style={{ maxHeight }}>
       <CustomScrollbar autoHide={false} autoHeightMax="inherit" hideHorizontalTrack>
