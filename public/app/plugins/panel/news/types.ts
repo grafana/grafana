@@ -1,11 +1,11 @@
+export const DEFAULT_FEED_URL = 'https://cors-anywhere.herokuapp.com/' + 'https://grafana.com/blog/index.xml';
+
 export interface NewsOptions {
-  feedUrl: string;
-  proxy?: boolean;
+  feedUrl?: string;
 }
 
 export const defaults: NewsOptions = {
-  feedUrl: 'https://grafana.com/blog/index.xml',
-  proxy: true,
+  // will default to grafana blog
 };
 
 export interface NewsItem {

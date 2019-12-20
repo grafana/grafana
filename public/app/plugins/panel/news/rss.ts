@@ -1,10 +1,6 @@
 import { RssFeed, RssItem } from './types';
 
-const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/';
-
-export async function loadRSSFeed(feedUrl: string, proxy?: boolean): Promise<RssFeed> {
-  const url = proxy ? CORS_PROXY + feedUrl : feedUrl;
-
+export async function loadRSSFeed(url: string): Promise<RssFeed> {
   const rsp = await fetch(url);
   const txt = await rsp.text();
   const domParser = new DOMParser();
