@@ -8,6 +8,7 @@ import { stylesFactory, CustomScrollbar, styleMixins } from '@grafana/ui';
 import config from 'app/core/config';
 import { feedToDataFrame } from './utils';
 import { sanitize } from 'app/core/utils/text';
+import { loadRSSFeed } from './rss';
 
 // Types
 import { PanelProps, DataFrameView, dateTime } from '@grafana/data';
@@ -39,7 +40,6 @@ export class NewsPanel extends PureComponent<Props, State> {
 
   async loadFeed() {
     const { options } = this.props;
-    const { loadRSSFeed } = await import(/* webpackChunkName: "rss-feed-reader" */ './rss');
     try {
       const res = await loadRSSFeed(options.feedUrl, options.proxy);
       const frame = feedToDataFrame(res);
