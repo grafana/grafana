@@ -35,10 +35,16 @@ describe('backend_srv', () => {
 
   it('should cancel in-flight request if new one comes in with same id', async () => {
     (fromFetch as jest.Mock)
-      .mockImplementationOnce(() => of({ json: () => Promise.resolve({ testdata: 'goodbye' }) }).pipe(delay(10000)))
+      .mockImplementationOnce(() =>
+        of({
+          ok: true,
+          text: () => Promise.resolve(JSON.stringify({ testdata: 'goodbye' })),
+        }).pipe(delay(10000))
+      )
       .mockImplementation(() =>
         of({
-          json: () => Promise.resolve({ testdata: 'hello' }),
+          ok: true,
+          text: () => Promise.resolve(JSON.stringify({ testdata: 'hello' })),
         })
       );
 
