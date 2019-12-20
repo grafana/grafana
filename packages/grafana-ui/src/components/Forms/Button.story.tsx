@@ -18,7 +18,7 @@ export default {
   },
 };
 
-const variants = ['primary', 'secondary', 'destructive'];
+const variants = ['primary', 'secondary', 'destructive', 'link'];
 
 const sizes = ['sm', 'md', 'lg'];
 

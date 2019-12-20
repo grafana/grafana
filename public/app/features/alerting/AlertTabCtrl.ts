@@ -8,7 +8,7 @@ import appEvents from 'app/core/app_events';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../dashboard/services/DashboardSrv';
 import DatasourceSrv from '../plugins/datasource_srv';
-import { DataQuery } from '@grafana/data';
+import { DataQuery, DataSourceApi } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getDefaultCondition } from './getAlertingValidationMessage';
 import { CoreEvents } from 'app/types';
@@ -250,6 +250,7 @@ export class AlertTabCtrl {
     let firstTarget;
     let foundTarget: DataQuery = null;
 
+    const promises: Array<Promise<any>> = [];
     for (const condition of this.alert.conditions) {
       if (condition.type !== 'query') {
         continue;
@@ -271,20 +272,34 @@ export class AlertTabCtrl {
           foundTarget = firstTarget;
         } else {
           this.error = 'Could not find any metric queries';
+          return;
         }
       }
 
       const datasourceName = foundTarget.datasource || this.panel.datasource;
-      this.datasourceSrv.get(datasourceName).then(ds => {
-        if (!ds.meta.alerting) {
-          this.error = 'The datasource does not support alerting queries';
-        } else if (ds.targetContainsTemplate && ds.targetContainsTemplate(foundTarget)) {
-          this.error = 'Template variables are not supported in alert queries';
-        } else {
-          this.error = '';
-        }
-      });
+      promises.push(
+        this.datasourceSrv.get(datasourceName).then(
+          (foundTarget => (ds: DataSourceApi) => {
+            if (!ds.meta.alerting) {
+              return Promise.reject('The datasource does not support alerting queries');
+            } else if (ds.targetContainsTemplate && ds.targetContainsTemplate(foundTarget)) {
+              return Promise.reject('Template variables are not supported in alert queries');
+            }
+            return Promise.resolve();
+          })(foundTarget)
+        )
+      );
     }
+    Promise.all(promises).then(
+      () => {
+        this.error = '';
+        this.$scope.$apply();
+      },
+      e => {
+        this.error = e;
+        this.$scope.$apply();
+      }
+    );
   }
 
   buildConditionModel(source: any) {

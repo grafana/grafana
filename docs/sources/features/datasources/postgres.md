@@ -244,7 +244,7 @@ ORDER BY time
 
 Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data being displayed in your dashboard.
 
-Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ### Query Variable
 
@@ -354,7 +354,7 @@ WHERE
   $__unixEpochFilter(epoch_time)
 ```
 
-**Example query using time column of native sql date/time data type:**
+**Example query using time column of native SQL date/time data type:**
 
 ```sql
 SELECT
@@ -369,7 +369,8 @@ WHERE
 
 Name | Description
 ------------ | -------------
-time | The name of the date/time field. Could be a column with a native sql date/time data type or epoch value.
+time | The name of the date/time field. Could be a column with a native SQL date/time data type or epoch value.
+timeend | Optional name of the time end field, needs to be date/time data type. If set, then annotations are marked as regions between time and time-end.
 text | Event description field.
 tags | Optional field name to use for event tags as a comma separated string.
 

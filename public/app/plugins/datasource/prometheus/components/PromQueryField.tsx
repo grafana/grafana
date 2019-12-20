@@ -15,7 +15,7 @@ import {
 import Prism from 'prismjs';
 
 // dom also includes Element polyfills
-import { PromQuery, PromContext, PromOptions } from '../types';
+import { PromQuery, PromContext, PromOptions, PromMetricsMetadata } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
 import { ExploreQueryFieldProps, QueryHint, isDataFrame, toLegacyResponseData, HistoryItem } from '@grafana/data';
 import { DOMUtil, SuggestionsState } from '@grafana/ui';
@@ -23,7 +23,6 @@ import { PrometheusDatasource } from '../datasource';
 import PromQlLanguageProvider from '../language_provider';
 
 const HISTOGRAM_GROUP = '__histograms__';
-const METRIC_MARK = 'metric';
 const PRISM_SYNTAX = 'promql';
 export const RECORDING_RULES_GROUP = '__recording_rules__';
 
@@ -37,7 +36,16 @@ function getChooserText(hasSyntax: boolean, metrics: string[]) {
   return 'Metrics';
 }
 
-export function groupMetricsByPrefix(metrics: string[], delimiter = '_'): CascaderOption[] {
+function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): CascaderOption {
+  const option: CascaderOption = { label: metric, value: metric };
+  if (metadata && metadata[metric]) {
+    const { type = '', help } = metadata[metric][0];
+    option.title = [metric, type.toUpperCase(), help].join('\n');
+  }
+  return option;
+}
+
+export function groupMetricsByPrefix(metrics: string[], metadata?: PromMetricsMetadata): CascaderOption[] {
   // Filter out recording rules and insert as first option
   const ruleRegex = /:\w+:/;
   const ruleNames = metrics.filter(metric => ruleRegex.test(metric));
@@ -52,13 +60,14 @@ export function groupMetricsByPrefix(metrics: string[], delimiter = '_'): Cascad
 
   const options = ruleNames.length > 0 ? [rulesOption] : [];
 
+  const delimiter = '_';
   const metricsOptions = _.chain(metrics)
     .filter((metric: string) => !ruleRegex.test(metric))
     .groupBy((metric: string) => metric.split(delimiter)[0])
     .map(
       (metricsForPrefix: string[], prefix: string): CascaderOption => {
         const prefixIsMetric = metricsForPrefix.length === 1 && metricsForPrefix[0] === prefix;
-        const children = prefixIsMetric ? [] : metricsForPrefix.sort().map(m => ({ label: m, value: m }));
+        const children = prefixIsMetric ? [] : metricsForPrefix.sort().map(m => addMetricsMetadata(m, metadata));
         return {
           children,
           label: prefix,
@@ -138,6 +147,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   componentDidMount() {
     if (this.languageProvider) {
+      Prism.languages[PRISM_SYNTAX] = this.languageProvider.syntax;
       this.refreshMetrics(makePromiseCancelable(this.languageProvider.start()));
     }
     this.refreshHint();
@@ -228,19 +238,19 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   onUpdateLanguage = () => {
-    const { histogramMetrics, metrics } = this.languageProvider;
+    const {
+      histogramMetrics,
+      metrics,
+      metricsMetadata,
+      lookupsDisabled,
+      lookupMetricsThreshold,
+    } = this.languageProvider;
     if (!metrics) {
       return;
     }
 
-    Prism.languages[PRISM_SYNTAX] = this.languageProvider.syntax;
-    Prism.languages[PRISM_SYNTAX][METRIC_MARK] = {
-      alias: 'variable',
-      pattern: new RegExp(`(?:^|\\s)(${metrics.join('|')})(?:$|\\s)`),
-    };
-
     // Build metrics tree
-    const metricsByPrefix = groupMetricsByPrefix(metrics);
+    const metricsByPrefix = groupMetricsByPrefix(metrics, metricsMetadata);
     const histogramOptions = histogramMetrics.map((hm: any) => ({ label: hm, value: hm }));
     const metricsOptions =
       histogramMetrics.length > 0
@@ -250,7 +260,16 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
           ]
         : metricsByPrefix;
 
-    this.setState({ metricsOptions, syntaxLoaded: true });
+    // Hint for big disabled lookups
+    let hint: QueryHint;
+    if (lookupsDisabled) {
+      hint = {
+        label: `Dynamic label lookup is disabled for datasources with more than ${lookupMetricsThreshold} metrics.`,
+        type: 'INFO',
+      };
+    }
+
+    this.setState({ hint, metricsOptions, syntaxLoaded: true });
   };
 
   onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {

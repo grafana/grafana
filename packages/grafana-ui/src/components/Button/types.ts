@@ -1,6 +1,6 @@
 import { GrafanaTheme } from '@grafana/data';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'inverse' | 'transparent' | 'destructive';
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'inverse' | 'transparent' | 'destructive' | 'link';
 
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 

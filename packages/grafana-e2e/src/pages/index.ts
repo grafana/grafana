@@ -14,6 +14,7 @@ import { Graph } from './graph';
 import { SaveDashboardModal } from './saveDashboardModal';
 import { Panel } from './panel';
 import { SharePanelModal } from './sharePanelModal';
+import { ConstantVariable, QueryVariable, VariableGeneral, Variables, VariablesSubMenu } from './variables';
 
 export const Pages = {
   Login,
@@ -22,20 +23,34 @@ export const Pages = {
   AddDataSource,
   ConfirmModal,
   AddDashboard,
-  Dashboard,
+  Dashboard: {
+    visit: (uid: string) => Dashboard.visit(uid),
+    Toolbar: Dashboard,
+    SubMenu: VariablesSubMenu,
+    Settings: {
+      General: DashboardSettings,
+      Variables: {
+        List: Variables,
+        Edit: {
+          General: VariableGeneral,
+          QueryVariable: QueryVariable,
+          ConstantVariable: ConstantVariable,
+        },
+      },
+    },
+    Panels: {
+      Panel,
+      EditPanel,
+      DataSource: {
+        TestData,
+      },
+      Visualization: {
+        Graph,
+      },
+    },
+  },
   Dashboards,
   SaveDashboardAsModal,
   SaveDashboardModal,
-  DashboardSettings,
   SharePanelModal,
-  Panels: {
-    Panel,
-    EditPanel,
-    DataSource: {
-      TestData,
-    },
-    Visualization: {
-      Graph,
-    },
-  },
 };
