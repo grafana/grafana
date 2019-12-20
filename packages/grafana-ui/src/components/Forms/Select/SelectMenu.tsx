@@ -43,7 +43,6 @@ export const SelectMenuOptions = React.forwardRef<HTMLDivElement, React.PropsWit
     const theme = useTheme();
     const styles = getSelectStyles(theme);
     const { children, innerProps, data, renderOptionLabel, isSelected, isFocused } = props;
-    console.log('menu options', innerProps);
     return (
       <div ref={ref} className={cx(styles.option, isFocused && styles.optionFocused)} {...innerProps}>
         <span>{renderOptionLabel ? renderOptionLabel(data) : children}</span>
