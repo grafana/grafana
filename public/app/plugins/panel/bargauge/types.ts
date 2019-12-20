@@ -4,6 +4,7 @@ import { VizOrientation, SelectableValue } from '@grafana/data';
 
 export interface BarGaugeOptions extends SingleStatBaseOptions {
   displayMode: 'basic' | 'lcd' | 'gradient';
+  showUnfilled: boolean;
 }
 
 export const displayModes: Array<SelectableValue<string>> = [
@@ -16,4 +17,5 @@ export const defaults: BarGaugeOptions = {
   displayMode: 'lcd',
   orientation: VizOrientation.Horizontal,
   fieldOptions: standardGaugeFieldOptions,
+  showUnfilled: true,
 };
