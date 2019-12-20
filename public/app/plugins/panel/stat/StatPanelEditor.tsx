@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 import {
-  ThresholdsEditor,
+  ScaleEditor,
   PanelOptionsGrid,
   ValueMappingsEditor,
   FieldDisplayEditor,
@@ -13,7 +13,7 @@ import {
   Select,
 } from '@grafana/ui';
 
-import { Threshold, ValueMapping, FieldConfig, DataLink, PanelEditorProps, FieldDisplayOptions } from '@grafana/data';
+import { Scale, ValueMapping, FieldConfig, DataLink, PanelEditorProps, FieldDisplayOptions } from '@grafana/data';
 
 import { StatPanelOptions, colorModes, graphModes, justifyModes } from './types';
 import { orientationOptions } from '../gauge/types';
@@ -24,11 +24,11 @@ import {
 } from 'app/features/panel/panellinks/link_srv';
 
 export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOptions>> {
-  onThresholdsChanged = (thresholds: Threshold[]) => {
+  onScaleChanged = (scale: Scale) => {
     const current = this.props.options.fieldOptions.defaults;
     this.onDefaultsChange({
       ...current,
-      thresholds,
+      scale,
     });
   };
 
@@ -129,7 +129,7 @@ export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOpt
             />
           </PanelOptionsGroup>
 
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
+          <ScaleEditor onChange={this.onScaleChanged} scale={defaults.scale} />
         </PanelOptionsGrid>
 
         <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />

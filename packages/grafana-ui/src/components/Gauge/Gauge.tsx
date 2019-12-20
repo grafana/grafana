@@ -28,8 +28,11 @@ export class Gauge extends PureComponent<Props> {
     showThresholdMarkers: true,
     showThresholdLabels: false,
     scale: {
-      mode: ScaleMode.absolute,
-      thresholds: [],
+      mode: ScaleMode.relative,
+      thresholds: [
+        { value: -Infinity, color: 'green' },
+        { value: 80, color: 'red' },
+      ],
     },
   };
 
@@ -47,7 +50,7 @@ export class Gauge extends PureComponent<Props> {
 
     const lastThreshold = thresholds[thresholds.length - 1];
 
-    return [
+    const v = [
       ...thresholds.map((threshold, index) => {
         if (index === 0) {
           return { value: minValue, color: getColorFromHexRgbOrName(threshold.color, theme.type) };
@@ -58,6 +61,8 @@ export class Gauge extends PureComponent<Props> {
       }),
       { value: maxValue, color: getColorFromHexRgbOrName(lastThreshold.color, theme.type) },
     ];
+
+    return v;
   }
 
   getFontScale(length: number): number {

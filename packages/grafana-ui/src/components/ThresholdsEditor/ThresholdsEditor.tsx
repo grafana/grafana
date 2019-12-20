@@ -1,13 +1,14 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 import { Threshold, sortThresholds } from '@grafana/data';
 import { colors } from '../../utils';
-import { ThemeContext } from '../../themes';
 import { getColorFromHexRgbOrName } from '@grafana/data';
 import { Input } from '../Input/Input';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
-import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
+import { Themeable } from '../../types';
+import { css } from 'emotion';
 
-export interface Props {
+export interface Props extends Themeable {
+  isPercent?: boolean;
   thresholds?: Threshold[];
   onChange: (thresholds: Threshold[]) => void;
 }
@@ -181,6 +182,11 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                 onBlur={this.onBlur}
               />
             </div>
+            {this.props.isPercent && (
+              <div className={css(`margin-left:-20px; margin-top:5px;`)}>
+                <i className="fa fa-percent" />
+              </div>
+            )}
             <div className="thresholds-row-input-inner-remove" onClick={() => this.onRemoveThreshold(threshold)}>
               <i className="fa fa-times" />
             </div>
@@ -192,34 +198,27 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
 
   render() {
     const { thresholds } = this.state;
+    const { theme } = this.props;
     return (
-      <ThemeContext.Consumer>
-        {theme => {
-          return (
-            <PanelOptionsGroup title="Thresholds">
-              <div className="thresholds">
-                {thresholds
-                  .slice(0)
-                  .reverse()
-                  .map(threshold => {
-                    return (
-                      <div className="thresholds-row" key={`${threshold.key}`}>
-                        <div className="thresholds-row-add-button" onClick={() => this.onAddThresholdAfter(threshold)}>
-                          <i className="fa fa-plus" />
-                        </div>
-                        <div
-                          className="thresholds-row-color-indicator"
-                          style={{ backgroundColor: getColorFromHexRgbOrName(threshold.color, theme.type) }}
-                        />
-                        <div className="thresholds-row-input">{this.renderInput(threshold)}</div>
-                      </div>
-                    );
-                  })}
+      <div className="thresholds">
+        {thresholds
+          .slice(0)
+          .reverse()
+          .map(threshold => {
+            return (
+              <div className="thresholds-row" key={`${threshold.key}`}>
+                <div className="thresholds-row-add-button" onClick={() => this.onAddThresholdAfter(threshold)}>
+                  <i className="fa fa-plus" />
+                </div>
+                <div
+                  className="thresholds-row-color-indicator"
+                  style={{ backgroundColor: getColorFromHexRgbOrName(threshold.color, theme.type) }}
+                />
+                <div className="thresholds-row-input">{this.renderInput(threshold)}</div>
               </div>
-            </PanelOptionsGroup>
-          );
-        }}
-      </ThemeContext.Consumer>
+            );
+          })}
+      </div>
     );
   }
 }

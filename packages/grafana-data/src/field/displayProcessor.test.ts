@@ -247,12 +247,10 @@ describe('Date display options', () => {
     const processor = getDisplayProcessor({
       isUtc: true,
       field: {
-        name: 'test',
         type: FieldType.time,
         config: {
           unit: 'xyz', // ignore non-date formats
         },
-        values: new ArrayVector([]),
       },
     });
     expect(processor(0).text).toEqual('1970-01-01 00:00:00');
@@ -262,12 +260,10 @@ describe('Date display options', () => {
     const processor = getDisplayProcessor({
       isUtc: true,
       field: {
-        name: 'test',
         type: FieldType.time,
         config: {
           unit: 'dateTimeAsUS', // ignore non-date formats
         },
-        values: new ArrayVector([]),
       },
     });
     expect(processor(0).text).toEqual('01/01/1970 12:00:00 am');
@@ -277,12 +273,10 @@ describe('Date display options', () => {
     const processor = getDisplayProcessor({
       isUtc: true,
       field: {
-        name: 'test',
         type: FieldType.time,
         config: {
           unit: 'time:YYYY', // ignore non-date formats
         },
-        values: new ArrayVector([]),
       },
     });
     expect(processor(0).text).toEqual('1970');

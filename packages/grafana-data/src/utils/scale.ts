@@ -68,8 +68,13 @@ export function getScaleCalculator(field: Field, theme?: GrafanaTheme): ScaleCal
  * Mutates the scale making the first value -Infinity
  */
 export function validateScale(scale: Scale) {
-  // First value is always -Infinity
-  if (scale.thresholds && scale.thresholds.length) {
+  if (!scale.mode) {
+    scale.mode = ScaleMode.absolute;
+  }
+  if (!scale.thresholds) {
+    scale.thresholds = [];
+  } else if (scale.thresholds.length) {
+    // First value is always -Infinity
     scale.thresholds[0].value = -Infinity;
   }
 }

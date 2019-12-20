@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 import {
-  ThresholdsEditor,
+  ScaleEditor,
   ValueMappingsEditor,
   PanelOptionsGrid,
   FieldDisplayEditor,
@@ -12,9 +12,7 @@ import {
   Select,
   DataLinksEditor,
 } from '@grafana/ui';
-import { FieldDisplayOptions, FieldConfig, DataLink, PanelEditorProps } from '@grafana/data';
-
-import { Threshold, ValueMapping } from '@grafana/data';
+import { Scale, ValueMapping, FieldDisplayOptions, FieldConfig, DataLink, PanelEditorProps } from '@grafana/data';
 import { BarGaugeOptions, displayModes } from './types';
 import { orientationOptions } from '../gauge/types';
 import {
@@ -23,11 +21,11 @@ import {
 } from 'app/features/panel/panellinks/link_srv';
 
 export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGaugeOptions>> {
-  onThresholdsChanged = (thresholds: Threshold[]) => {
+  onScaleChanged = (scale: Scale) => {
     const current = this.props.options.fieldOptions.defaults;
     this.onDefaultsChange({
       ...current,
-      thresholds,
+      scale,
     });
   };
 
@@ -106,7 +104,7 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
             />
           </PanelOptionsGroup>
 
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
+          <ScaleEditor onChange={this.onScaleChanged} scale={defaults.scale} />
         </PanelOptionsGrid>
 
         <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />

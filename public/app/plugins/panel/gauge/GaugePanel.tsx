@@ -10,13 +10,23 @@ import { Gauge, DataLinksContextMenu } from '@grafana/ui';
 // Types
 import { GaugeOptions } from './types';
 import { VizRepeater } from '@grafana/ui';
-import { FieldDisplay, getFieldDisplayValues, VizOrientation, PanelProps } from '@grafana/data';
+import { FieldDisplay, getFieldDisplayValues, VizOrientation, PanelProps, ScaleMode } from '@grafana/data';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
     const { options } = this.props;
     const { field, display } = value;
+    const { scale } = field;
+
+    // When not absolute, use percent display
+    let min = field.min;
+    let max = field.max;
+    if (scale.mode !== ScaleMode.absolute) {
+      min = 0;
+      max = 100;
+      display.numeric = display.percent * 100;
+    }
 
     return (
       <DataLinksContextMenu links={getFieldLinksSupplier(value)}>
@@ -26,11 +36,11 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
               value={display}
               width={width}
               height={height}
-              scale={field.scale}
+              scale={scale}
               showThresholdLabels={options.showThresholdLabels}
               showThresholdMarkers={options.showThresholdMarkers}
-              minValue={field.min}
-              maxValue={field.max}
+              minValue={min}
+              maxValue={max}
               theme={config.theme}
               onClick={openMenu}
               className={targetClassName}

@@ -32,9 +32,11 @@ export const getGraphSeriesModel = (
   const graphs: GraphSeriesXY[] = [];
 
   const displayProcessor = getDisplayProcessor({
-    config: {
-      unit: fieldOptions?.defaults?.unit,
-      decimals: legendOptions.decimals,
+    field: {
+      config: {
+        unit: fieldOptions?.defaults?.unit,
+        decimals: legendOptions.decimals,
+      },
     },
   });
 
@@ -94,17 +96,20 @@ export const getGraphSeriesModel = (
             }
           : { ...field.config, color: seriesColor };
 
-        field.display = getDisplayProcessor({ config: { ...field.config }, type: field.type });
+        field.display = getDisplayProcessor({ field });
 
         // Time step is used to determine bars width when graph is rendered as bar chart
         const timeStep = getSeriesTimeStep(timeField);
         const useMsDateFormat = hasMsResolution(timeField);
 
         timeField.display = getDisplayProcessor({
-          type: timeField.type,
           isUtc: timeZone === 'utc',
-          config: {
-            unit: `time:${useMsDateFormat ? MS_DATE_TIME_FORMAT : DEFAULT_DATE_TIME_FORMAT}`,
+          field: {
+            ...timeField,
+            type: timeField.type,
+            config: {
+              unit: `time:${useMsDateFormat ? MS_DATE_TIME_FORMAT : DEFAULT_DATE_TIME_FORMAT}`,
+            },
           },
         });
 

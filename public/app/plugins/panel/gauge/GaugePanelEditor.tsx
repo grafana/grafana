@@ -1,7 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import {
-  ThresholdsEditor,
+  ScaleEditor,
   PanelOptionsGrid,
   ValueMappingsEditor,
   FieldDisplayEditor,
@@ -10,7 +10,7 @@ import {
   PanelOptionsGroup,
   DataLinksEditor,
 } from '@grafana/ui';
-import { PanelEditorProps, FieldDisplayOptions, Threshold, ValueMapping, FieldConfig, DataLink } from '@grafana/data';
+import { PanelEditorProps, FieldDisplayOptions, Scale, ValueMapping, FieldConfig, DataLink } from '@grafana/data';
 
 import { GaugeOptions } from './types';
 import {
@@ -30,11 +30,11 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
       showThresholdMarkers: !this.props.options.showThresholdMarkers,
     });
 
-  onThresholdsChanged = (thresholds: Threshold[]) => {
+  onScaleChanged = (scale: Scale) => {
     const current = this.props.options.fieldOptions.defaults;
     this.onDefaultsChange({
       ...current,
-      thresholds,
+      scale,
     });
   };
 
@@ -122,7 +122,7 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
             />
           </PanelOptionsGroup>
 
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
+          <ScaleEditor onChange={this.onScaleChanged} scale={defaults.scale} />
         </PanelOptionsGrid>
 
         <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
