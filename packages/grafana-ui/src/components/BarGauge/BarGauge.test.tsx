@@ -31,7 +31,8 @@ function getProps(propOverrides?: Partial<Props>): Props {
       },
     },
   };
-  field.display = getDisplayProcessor({ field });
+  const theme = getTheme();
+  field.display = getDisplayProcessor({ field, theme });
 
   const props: Props = {
     maxValue: 100,
@@ -45,7 +46,7 @@ function getProps(propOverrides?: Partial<Props>): Props {
       text: '25',
       numeric: 25,
     },
-    theme: getTheme(),
+    theme,
     orientation: VizOrientation.Horizontal,
   };
 
@@ -71,11 +72,13 @@ function getValue(value: number, title?: string): DisplayValue {
 describe('BarGauge', () => {
   describe('Get value color', () => {
     it('should get the threshold color if value is same as a threshold', () => {
-      const props = getProps({ value: getValue(70) });
+      const props = getProps();
+      props.value = props.display(70);
       expect(getValueColor(props)).toEqual(orange);
     });
     it('should get the base threshold', () => {
-      const props = getProps({ value: getValue(-10) });
+      const props = getProps();
+      props.value = props.display(-10);
       expect(getValueColor(props)).toEqual(green);
     });
   });
@@ -119,6 +122,20 @@ describe('BarGauge', () => {
       });
       const styles = getBasicAndGradientStyles(props);
       expect(styles.bar.height).toBe('249px');
+      expect(styles.emptyBar.bottom).toBe('-3px');
+    });
+  });
+
+  describe('Horizontal bar', () => {
+    it('should stretch items', () => {
+      const props = getProps({
+        height: 300,
+        value: getValue(100, 'ServerA'),
+        orientation: VizOrientation.Horizontal,
+      });
+      const styles = getBasicAndGradientStyles(props);
+      expect(styles.wrapper.alignItems).toBe('stretch');
+      expect(styles.emptyBar.left).toBe('-3px');
     });
   });
 

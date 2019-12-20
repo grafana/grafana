@@ -263,3 +263,7 @@ To debug grafana-toolkit you can use standard [NodeJS debugging methods](https:/
 To run grafana-toolkit in a debugging session use the following command in the toolkit's directory:
 
 `node --inspect-brk ./bin/grafana-toolkit.js [task]`
+
+To run [linked](#develop-grafana-toolkit) grafana-toolkit in a debugging session use the following command in the plugin's directory:
+
+`node --inspect-brk ./node_modules/@grafana/toolkit/bin/grafana-toolkit.js [task]`

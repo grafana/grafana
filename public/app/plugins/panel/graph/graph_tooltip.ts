@@ -1,6 +1,7 @@
 import $ from 'jquery';
 import { appEvents } from 'app/core/core';
 import { CoreEvents } from 'app/types';
+import { sanitize } from 'app/core/utils/text';
 
 export default function GraphTooltip(this: any, elem: any, dashboard: any, scope: any, getSeriesFn: any) {
   const self = this;
@@ -256,12 +257,13 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
 
         series = seriesList[hoverInfo.index];
 
-        value = series.formatValue(hoverInfo.value);
+        value = series.formatValue(sanitize(hoverInfo.value));
+        const color = sanitize(hoverInfo.color);
+        const label = sanitize(hoverInfo.label);
 
         seriesHtml +=
           '<div class="graph-tooltip-list-item ' + highlightClass + '"><div class="graph-tooltip-series-name">';
-        seriesHtml +=
-          '<i class="fa fa-minus" style="color:' + hoverInfo.color + ';"></i> ' + hoverInfo.label + ':</div>';
+        seriesHtml += '<i class="fa fa-minus" style="color:' + color + ';"></i> ' + label + ':</div>';
         seriesHtml += '<div class="graph-tooltip-value">' + value + '</div></div>';
         plot.highlight(hoverInfo.index, hoverInfo.hoverIndex);
       }
@@ -269,10 +271,10 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
       self.renderAndShow(absoluteTime, seriesHtml, pos, xMode);
     } else if (item) {
       // single series tooltip
+      const color = sanitize(item.series.color);
       series = seriesList[item.seriesIndex];
       group = '<div class="graph-tooltip-list-item"><div class="graph-tooltip-series-name">';
-      group +=
-        '<i class="fa fa-minus" style="color:' + item.series.color + ';"></i> ' + series.aliasEscaped + ':</div>';
+      group += '<i class="fa fa-minus" style="color:' + color + ';"></i> ' + series.aliasEscaped + ':</div>';
 
       if (panel.stack && panel.tooltip.value_type === 'individual') {
         value = item.datapoint[1] - item.datapoint[2];
@@ -280,7 +282,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
         value = item.datapoint[1];
       }
 
-      value = series.formatValue(value);
+      value = series.formatValue(sanitize(value));
 
       absoluteTime = dashboard.formatDate(item.datapoint[0], tooltipFormat);
 
