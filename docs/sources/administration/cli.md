@@ -23,7 +23,7 @@ grafana-cli -h
 Some commands, such as installing or removing plugins, require `sudo` in order to run.
 
 **Windows users**
-Enter commands in Windows PowerShell, preceded by `.\`. They will not work in the command line.
+Enter commands in Windows PowerShell, preceded by `.\`. They will not work on the regular command line.
 
 Some commands, such as installing or removing plugins, require you to run Windows PowerShell as Administrator. 
 
@@ -104,16 +104,15 @@ grafana-cli --insecure --pluginUrl https://company.com/grafana/plugins/<plugin-i
 
 ### Enable debug logging
 
-`--debug` or `-d` enables debug logging.
-> Where does is the log stored? Why would you want to use this? Is my example in any way realistic?      
+`--debug` or `-d` enables debug logging. Debug output is returned and shown in the terminal.  
 
 **Example:**
 ```bash
 grafana-cli --debug plugins install <plugin-id>
 ```
 
-### --configOverrides value  
-> In plain terms, what does this mean?
+### Override a configuration setting  
+> In plain terms, what does this mean? The text below was copied from the Grafana CLI help.
 Configuration options to override defaults as a string. For example: cfg:default.paths.log=/dev/null
 
 **Example:**
@@ -121,22 +120,22 @@ Configuration options to override defaults as a string. For example: cfg:default
 grafana-cli --configOverrides cfg:default.paths.log=/dev/null plugins install <plugin-id>
 ```
 
-### --homepath value         
-> In plain terms, what does this mean?
-Sets the path for the Grafana install/home path, defaults to working directory.
-> Why would you want to use this? Is my example in any way realistic?  
+### Override homepath value  
+
+Sets the path for the Grafana install/home path, defaults to working directory. You do not need to use this if you are in the Grafana installation directory when using the CLI.
+ 
 **Example:**
 ```bash
-grafana-cli --homepath value plugins install <plugin-id>
+grafana-cli admin reset-admin-password --homepath "c:\Program Files\grafana" mynewpassword
 ```
 
 ### Override config file         
 
 `--config value` overrides the default location where Grafana expects the configuration file. Refer to [Configuration]({{< relref "configuration.md" >}}) for more information about configuring Grafana and default configuration file locations.
-> Why would you want to use this? Is my example in any way realistic?
+
 **Example:**
 ```bash
-grafana-cli --config "/etc/configuration/" plugins install <plugin-id>
+grafana-cli admin reset-admin-password --config "/etc/configuration/" mynewpassword
 ```
 
 ## Plugins commands
