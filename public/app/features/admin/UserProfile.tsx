@@ -190,6 +190,10 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
     value: this.props.value || '',
   };
 
+  setInputElem = (elem: any) => {
+    this.inputElem = elem;
+  };
+
   onEditClick = () => {
     this.setState({ editing: true }, this.focusInput);
   };
@@ -251,6 +255,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
               defaultValue={value}
               onBlur={this.onInputBlur}
               onChange={this.onInputChange}
+              inputRef={this.setInputElem}
             />
           ) : (
             <span>{value}</span>
