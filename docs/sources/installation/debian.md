@@ -57,7 +57,7 @@ Add this repository if you want beta releases:
 sudo add-apt-repository "deb https://packages.grafana.com/oss/deb beta main"
 ```
 
-#### Setup repo manually
+#### Set up repo for ARM
 
 If you have problems using `add-apt-repository` on ARM, then you can set up the repo without it.
 
