@@ -477,36 +477,40 @@ describe('when rendering table with different patterns', () => {
   );
 });
 
-// noinspection CssInvalidPropertyValue
-const cases = [
-  //align,   preserve fmt, color mode, expected
-  ['default', false, null, '<td>42</td>'],
-  ['left', false, null, '<td style="text-align:left">42</td>'],
-  ['left', true, null, '<td class="table-panel-cell-pre" style="text-align:left">42</td>'],
-  ['center', false, null, '<td style="text-align:center">42</td>'],
-  [
-    'center',
-    true,
-    'cell',
-    '<td class="table-panel-color-cell table-panel-cell-pre" style="background-color:rgba(50, 172, 45, 0.97);text-align:center">42</td>',
-  ],
-  [
-    'right',
-    false,
-    'cell',
-    '<td class="table-panel-color-cell" style="background-color:rgba(50, 172, 45, 0.97);text-align:right">42</td>',
-  ],
-  [
-    'right',
-    true,
-    'cell',
-    '<td class="table-panel-color-cell table-panel-cell-pre" style="background-color:rgba(50, 172, 45, 0.97);text-align:right">42</td>',
-  ],
-];
-
 describe('when rendering cells with different alignment options', () => {
+  const cases = [
+    //align, preserve fmt, color mode, expected
+    ['', false, null, '<td>42</td>'],
+    ['invalid_option', false, null, '<td>42</td>'],
+    ['alert("no xss");', false, null, '<td>42</td>'],
+    ['auto', false, null, '<td>42</td>'],
+    ['justify', false, null, '<td>42</td>'],
+    ['auto', true, null, '<td class="table-panel-cell-pre">42</td>'],
+    ['left', false, null, '<td style="text-align:left">42</td>'],
+    ['left', true, null, '<td class="table-panel-cell-pre" style="text-align:left">42</td>'],
+    ['center', false, null, '<td style="text-align:center">42</td>'],
+    [
+      'center',
+      true,
+      'cell',
+      '<td class="table-panel-color-cell table-panel-cell-pre" style="background-color:rgba(50, 172, 45, 0.97);text-align:center">42</td>',
+    ],
+    [
+      'right',
+      false,
+      'cell',
+      '<td class="table-panel-color-cell" style="background-color:rgba(50, 172, 45, 0.97);text-align:right">42</td>',
+    ],
+    [
+      'right',
+      true,
+      'cell',
+      '<td class="table-panel-color-cell table-panel-cell-pre" style="background-color:rgba(50, 172, 45, 0.97);text-align:right">42</td>',
+    ],
+  ];
+
   it.each(cases)(
-    '%s-aligned, preformatted:%s columns should be formatted with correct style',
+    'align option:"%s", preformatted:%s columns should be formatted with correct style',
     (align: string, preserveFormat: boolean, colorMode, expected: string) => {
       const table = new TableModel();
       table.columns = [{ text: 'Time' }, { text: align }];
