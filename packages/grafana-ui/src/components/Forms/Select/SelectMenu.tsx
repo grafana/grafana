@@ -5,7 +5,8 @@ import { cx } from 'emotion';
 import { SelectableValue } from '@grafana/data';
 import { Icon } from '../../Icon/Icon';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
-
+// @ts-ignore
+import { components } from '@torkelo/react-select';
 interface SelectMenuProps {
   maxHeight: number;
 }
@@ -13,15 +14,20 @@ interface SelectMenuProps {
 export const SelectMenu = React.forwardRef<HTMLDivElement, React.PropsWithChildren<SelectMenuProps>>((props, ref) => {
   const theme = useTheme();
   const styles = getSelectStyles(theme);
-  const { children, maxHeight } = props;
+  // @ts-ignore
+  const { children, maxHeight, innerRef } = props;
+
+  console.log('SELECT MENU', props);
   return (
-    <div className={styles.menu} ref={ref} style={{ maxHeight }}>
+    <div className={styles.menu} ref={innerRef} style={{ maxHeight }}>
       <CustomScrollbar autoHide={false} autoHeightMax="inherit" hideHorizontalTrack>
         {children}
       </CustomScrollbar>
     </div>
   );
 });
+
+SelectMenu.displayName = 'SelectMenu';
 
 interface SelectMenuOptionProps<T> {
   isDisabled: boolean;
@@ -37,6 +43,7 @@ export const SelectMenuOptions = React.forwardRef<HTMLDivElement, React.PropsWit
     const theme = useTheme();
     const styles = getSelectStyles(theme);
     const { children, innerProps, data, renderOptionLabel, isSelected, isFocused } = props;
+    console.log('menu options', innerProps);
     return (
       <div ref={ref} className={cx(styles.option, isFocused && styles.optionFocused)} {...innerProps}>
         <span>{renderOptionLabel ? renderOptionLabel(data) : children}</span>

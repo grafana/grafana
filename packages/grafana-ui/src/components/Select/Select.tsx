@@ -16,7 +16,7 @@ import { components } from '@torkelo/react-select';
 import { SelectOption } from './SelectOption';
 import { SelectOptionGroup } from '../Forms/Select/SelectOptionGroup';
 import { SingleValue } from '../Forms/Select/SingleValue';
-import { SelectCommonProps, SelectAsyncProps } from '../Forms/Select/Select';
+import { SelectCommonProps, SelectAsyncProps } from '../Forms/Select/SelectBase';
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
 import resetSelectStyles from '../Forms/Select/resetSelectStyles';

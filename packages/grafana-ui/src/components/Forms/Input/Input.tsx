@@ -191,7 +191,6 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
         border-right: none;
         border-top-right-radius: 0;
         border-bottom-right-radius: 0;
-        left: 0;
       `
     ),
     suffix: cx(

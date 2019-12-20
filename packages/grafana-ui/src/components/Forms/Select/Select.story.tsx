@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from './Select';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../../utils/storybook/withCenteredStory';
 import { SelectableValue } from '@grafana/data';
@@ -100,6 +100,7 @@ const getDynamicProps = () => {
     prefix: knobs.prefixEl,
   };
 };
+
 export const basic = () => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
@@ -112,14 +113,16 @@ export const basic = () => {
           setValue(v);
         }}
         size="md"
-        allowCustomValue
         {...getDynamicProps()}
       />
     </>
   );
 };
 
-export const plainValue = () => {
+/**
+ * Uses plain values instead of SelectableValue<T>
+ */
+export const basicSelectPlainValue = () => {
   const [value, setValue] = useState<string>();
   return (
     <>
@@ -136,11 +139,12 @@ export const plainValue = () => {
   );
 };
 
+/**
+ * Uses plain values instead of SelectableValue<T>
+ */
 export const multiPlainValue = () => {
   const [value, setValue] = useState<string[]>();
-  useEffect(() => {
-    console.log(value);
-  }, [value]);
+
   return (
     <>
       <MultiSelect
@@ -175,7 +179,7 @@ export const multiSelect = () => {
   );
 };
 
-export const asyncMultiSelect = () => {
+export const multiSelectAsync = () => {
   const [value, setValue] = useState<Array<SelectableValue<string>>>();
 
   return (
@@ -212,7 +216,7 @@ export const buttonSelect = () => {
   );
 };
 
-export const async = () => {
+export const basicSelectAsync = () => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
   return (
@@ -229,7 +233,7 @@ export const async = () => {
   );
 };
 
-export const customControl = () => {
+export const customizedControl = () => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
   return (
@@ -248,7 +252,7 @@ export const customControl = () => {
   );
 };
 
-export const customValue = () => {
+export const customValueCreation = () => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
   return (
