@@ -19,17 +19,15 @@ export interface NewsItem {
  * Helper class for rss-parser
  */
 export interface RssFeed {
-  description: string;
+  title?: string;
+  description?: string;
   items: RssItem[];
-  title: string;
 }
 
 export interface RssItem {
   title: string;
   link: string;
-  pubDate: string;
-  guid: string;
-  isoDate: string;
+  pubDate?: string;
   content?: string;
   contentSnippet?: string;
 }

@@ -8,7 +8,7 @@ export function feedToDataFrame(feed: RssFeed): DataFrame {
   const content = new ArrayVector<string>([]);
 
   for (const item of feed.items) {
-    const val = dateTime(item.isoDate);
+    const val = dateTime(item.pubDate);
 
     try {
       date.buffer.push(val.valueOf());
