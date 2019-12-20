@@ -480,7 +480,7 @@ describe('when rendering table with different patterns', () => {
 // noinspection CssInvalidPropertyValue
 const cases = [
   //align,   preserve fmt, color mode, expected
-  ['default', false, null, '<td style="text-align:default">42</td>'],
+  ['default', false, null, '<td>42</td>'],
   ['left', false, null, '<td style="text-align:left">42</td>'],
   ['left', true, null, '<td class="table-panel-cell-pre" style="text-align:left">42</td>'],
   ['center', false, null, '<td style="text-align:center">42</td>'],
