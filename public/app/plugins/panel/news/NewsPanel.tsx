@@ -1,6 +1,5 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import RssParser from 'rss-parser';
 import { css } from 'emotion';
 
 // Utils & Services
@@ -12,7 +11,7 @@ import { sanitize } from 'app/core/utils/text';
 
 // Types
 import { PanelProps, DataFrameView, dateTime } from '@grafana/data';
-import { RssFeed, NewsOptions, NewsItem } from './types';
+import { NewsOptions, NewsItem } from './types';
 
 interface Props extends PanelProps<NewsOptions> {}
 
@@ -20,8 +19,6 @@ interface State {
   news?: DataFrameView<NewsItem>;
   isError?: boolean;
 }
-
-const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/';
 
 export class NewsPanel extends PureComponent<Props, State> {
   constructor(props: Props) {
@@ -31,20 +28,20 @@ export class NewsPanel extends PureComponent<Props, State> {
   }
 
   componentDidMount(): void {
-    this.loadFeed(this.props.options.feedUrl);
+    this.loadFeed();
   }
 
   componentDidUpdate(prevProps: Props): void {
     if (this.props.options.feedUrl !== prevProps.options.feedUrl) {
-      this.loadFeed(this.props.options.feedUrl);
+      this.loadFeed();
     }
   }
 
-  async loadFeed(feedUrl: string) {
-    const parser = new RssParser();
-
+  async loadFeed() {
+    const { options } = this.props;
+    const { loadRSSFeed } = await import(/* webpackChunkName: "rss-feed-reader" */ './rss');
     try {
-      const res = (await parser.parseURL(CORS_PROXY + feedUrl)) as RssFeed;
+      const res = await loadRSSFeed(options.feedUrl, options.proxy);
       const frame = feedToDataFrame(res);
       this.setState({
         news: new DataFrameView<NewsItem>(frame),

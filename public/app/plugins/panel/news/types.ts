@@ -1,9 +1,11 @@
 export interface NewsOptions {
   feedUrl: string;
+  proxy?: boolean;
 }
 
 export const defaults: NewsOptions = {
   feedUrl: 'https://grafana.com/blog/index.xml',
+  proxy: true,
 };
 
 export interface NewsItem {
