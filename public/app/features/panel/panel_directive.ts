@@ -43,7 +43,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       const panelContent = elem.find('.panel-content');
       const cornerInfoElem = elem.find('.panel-info-corner');
       const ctrl = scope.ctrl;
-      ctrl.selectors = e2e.pages.Panels.Panel.selectors;
+      ctrl.selectors = e2e.pages.Dashboard.Panels.Panel.selectors;
       let infoDrop: any;
       let panelScrollbar: any;
 

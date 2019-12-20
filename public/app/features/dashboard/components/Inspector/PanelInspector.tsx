@@ -1,10 +1,9 @@
 import React, { PureComponent } from 'react';
-import { css } from 'emotion';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { JSONFormatter, Modal, Select, Table, getTheme } from '@grafana/ui';
+import { JSONFormatter, Drawer, Select } from '@grafana/ui';
 import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
-import { DataFrame, DataSourceApi, SelectableValue, ScopedVars } from '@grafana/data';
+import { DataFrame, DataSourceApi, SelectableValue } from '@grafana/data';
 
 interface Props {
   dashboard: DashboardModel;
@@ -95,10 +94,6 @@ export class PanelInspector extends PureComponent<Props, State> {
       this.onDismiss(); // Try to close the component
       return null;
     }
-    const bodyStyle = css`
-      max-height: 70vh;
-      overflow-y: scroll;
-    `;
 
     const frames = data.map((frame, index) => {
       const title = frame.name || frame.refId;
@@ -108,38 +103,22 @@ export class PanelInspector extends PureComponent<Props, State> {
       };
     });
 
-    const replaceVariables = (value: string, scopedVars?: ScopedVars) => {
-      return value;
-    };
-
     return (
-      <Modal title={panel.title} icon="info-circle" onDismiss={this.onDismiss} isOpen={true}>
-        <div className={bodyStyle}>
-          {frames && (
-            <>
-              <Select options={frames} value={frames[selected]} onChange={this.onSelectFrame} />
-              <div>
-                {ds?.components?.MetadataInspector && (
-                  <ds.components.MetadataInspector datasource={ds} data={data[selected]} />
-                )}
-              </div>
-              <Table
-                theme={getTheme()}
-                showHeader={true}
-                width={680}
-                height={180}
-                styles={[]}
-                replaceVariables={replaceVariables}
-                data={data[selected]}
-              />
-              <br />
-              <br />
-              <br />
-            </>
-          )}
-          <JSONFormatter json={last} open={2} />
-        </div>
-      </Modal>
+      <Drawer title={panel.title} onClose={this.onDismiss}>
+        {frames && (
+          <>
+            <Select options={frames} value={frames[selected]} onChange={this.onSelectFrame} />
+            <div>
+              {ds?.components?.MetadataInspector && (
+                <ds.components.MetadataInspector datasource={ds} data={data[selected]} />
+              )}
+            </div>
+            <br />
+          </>
+        )}
+
+        <JSONFormatter json={last} open={2} />
+      </Drawer>
     );
   }
 }

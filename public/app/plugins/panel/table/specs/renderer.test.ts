@@ -1,9 +1,24 @@
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
 import { TableRenderer } from '../renderer';
-import { getColorDefinitionByName } from '@grafana/data';
-import { ScopedVars } from '@grafana/data';
+import { getColorDefinitionByName, ScopedVars } from '@grafana/data';
 import { ColumnRender } from '../types';
+
+const sanitize = (value: any): string => {
+  return 'sanitized';
+};
+
+const templateSrv = {
+  replace: (value: any, scopedVars: ScopedVars) => {
+    if (scopedVars) {
+      // For testing variables replacement in link
+      _.each(scopedVars, (val, key) => {
+        value = value.replace('$' + key, val.value);
+      });
+    }
+    return value;
+  },
+};
 
 describe('when rendering table', () => {
   const SemiDarkOrange = getColorDefinitionByName('semi-dark-orange');
@@ -171,22 +186,6 @@ describe('when rendering table', () => {
           type: 'hidden',
         },
       ],
-    };
-
-    const sanitize = (value: any): string => {
-      return 'sanitized';
-    };
-
-    const templateSrv = {
-      replace: (value: any, scopedVars: ScopedVars) => {
-        if (scopedVars) {
-          // For testing variables replacement in link
-          _.each(scopedVars, (val, key) => {
-            value = value.replace('$' + key, val.value);
-          });
-        }
-        return value;
-      },
     };
 
     //@ts-ignore
@@ -405,6 +404,51 @@ describe('when rendering table', () => {
       expect(columns.filter((col: ColumnRender) => col.hidden)).toHaveLength(0);
     });
   });
+});
+
+describe('when rendering table with different patterns', () => {
+  it.each`
+    column                 | pattern                        | expected
+    ${'Requests (Failed)'} | ${'/Requests \\(Failed\\)/'}   | ${'<td>1.230 s</td>'}
+    ${'Requests (Failed)'} | ${'/(Req)uests \\(Failed\\)/'} | ${'<td>1.230 s</td>'}
+    ${'Requests (Failed)'} | ${'Requests (Failed)'}         | ${'<td>1.230 s</td>'}
+    ${'Requests (Failed)'} | ${'Requests \\(Failed\\)'}     | ${'<td>1.230 s</td>'}
+    ${'Requests (Failed)'} | ${'/.*/'}                      | ${'<td>1.230 s</td>'}
+    ${'Some other column'} | ${'/.*/'}                      | ${'<td>1.230 s</td>'}
+    ${'Requests (Failed)'} | ${'/Requests (Failed)/'}       | ${'<td>1230</td>'}
+    ${'Requests (Failed)'} | ${'Response (Failed)'}         | ${'<td>1230</td>'}
+  `(
+    'number column should be formatted for a column:$column with the pattern:$pattern',
+    ({ column, pattern, expected }) => {
+      const table = new TableModel();
+      table.columns = [{ text: 'Time' }, { text: column }];
+      table.rows = [[1388556366666, 1230]];
+      const panel = {
+        pageSize: 10,
+        styles: [
+          {
+            pattern: 'Time',
+            type: 'date',
+            format: 'LLL',
+            alias: 'Timestamp',
+          },
+          {
+            pattern: pattern,
+            type: 'number',
+            unit: 'ms',
+            decimals: 3,
+            alias: pattern,
+          },
+        ],
+      };
+
+      //@ts-ignore
+      const renderer = new TableRenderer(panel, table, 'utc', sanitize, templateSrv);
+      const html = renderer.renderCell(1, 0, 1230);
+
+      expect(html).toBe(expected);
+    }
+  );
 });
 
 function normalize(str: string) {

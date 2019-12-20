@@ -8,9 +8,9 @@ import { Pages } from './pages';
 import { Flows } from './flows';
 import { scenarioContext } from './support/scenarioContext';
 
-export type SelectorFunction = (text?: string) => Cypress.Chainable<any>;
+export type SelectorFunction = (text?: string) => Cypress.Chainable<JQuery<HTMLElement>>;
 export type SelectorObject<S> = {
-  visit: (args?: string) => Cypress.Chainable<any>;
+  visit: (args?: string) => Cypress.Chainable<Window>;
   selectors: S;
 };
 
