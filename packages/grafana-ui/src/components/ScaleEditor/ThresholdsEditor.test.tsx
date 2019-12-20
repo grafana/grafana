@@ -1,14 +1,13 @@
 import React, { ChangeEvent } from 'react';
 import { mount } from 'enzyme';
-import { GrafanaThemeType } from '@grafana/data';
+import { GrafanaThemeType, GrafanaTheme } from '@grafana/data';
 import { ThresholdsEditor, Props, thresholdsWithoutKey } from './ThresholdsEditor';
 import { colors } from '../../utils';
 import { mockThemeContext } from '../../themes/ThemeContext';
-import { getTheme } from '../../themes';
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
-    theme: getTheme(GrafanaThemeType.Dark),
+    theme: { type: GrafanaThemeType.Dark, isDark: true, isLight: false } as GrafanaTheme,
     onChange: jest.fn(),
     thresholds: [],
   };
