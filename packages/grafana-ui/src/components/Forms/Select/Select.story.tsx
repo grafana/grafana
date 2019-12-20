@@ -188,7 +188,6 @@ export const multiSelectAsync = () => {
       defaultOptions
       value={value}
       onChange={v => {
-        console.log(v);
         setValue(v);
       }}
       size="md"
