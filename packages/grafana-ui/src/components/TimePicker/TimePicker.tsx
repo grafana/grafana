@@ -87,12 +87,6 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
         value: timeOption,
       };
     });
-
-    options.unshift({
-      label: 'Custom time range',
-      value: { from: 'custom', to: 'custom', display: 'Custom', section: 1 },
-    });
-
     return options;
   };
 
