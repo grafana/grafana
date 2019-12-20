@@ -45,7 +45,7 @@ Data source permissions allow you to restrict query access to only specific Team
 
 ### Reporting
 
-Reporting make it possible to take any dashboard, generate a PDF report, and set up a schedule to have it delivered. [Learn More]({{< relref "../features/reporting.md" >}}).
+Reporting makes it possible to take any dashboard, generate a PDF report, and set up a schedule to have it delivered. [Learn More]({{< relref "../features/reporting.md" >}}).
 
 ### Enterprise Plugins
 
@@ -82,5 +82,4 @@ license_path = /company/secrets/license.jwt
 This setting can also be set via ENV variable which is useful if you're running Grafana via docker and have a custom
 volume where you have placed the license file. In this case set the ENV variable `GF_ENTERPRISE_LICENSE_PATH` to point
 to the location of your license file.
-
 
