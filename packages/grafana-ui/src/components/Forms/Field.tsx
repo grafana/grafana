@@ -78,14 +78,14 @@ export const Field: React.FC<FieldProps> = ({
       )}
       <div>
         {React.cloneElement(children, { invalid, disabled, loading })}
-        {error && !horizontal && (
+        {invalid && error && !horizontal && (
           <div className={styles.fieldValidationWrapper}>
             <FieldValidationMessage>{error}</FieldValidationMessage>
           </div>
         )}
       </div>
 
-      {error && horizontal && (
+      {invalid && error && horizontal && (
         <div className={cx(styles.fieldValidationWrapper, styles.fieldValidationWrapperHorizontal)}>
           <FieldValidationMessage>{error}</FieldValidationMessage>
         </div>

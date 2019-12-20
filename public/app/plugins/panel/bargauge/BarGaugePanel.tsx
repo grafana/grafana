@@ -43,6 +43,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
               onClick={openMenu}
               className={targetClassName}
               alignmentFactors={alignmentFactors}
+              showUnfilled={options.showUnfilled}
             />
           );
         }}
