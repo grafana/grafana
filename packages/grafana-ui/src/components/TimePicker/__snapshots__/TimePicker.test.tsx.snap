@@ -236,10 +236,9 @@ exports[`TimePicker renders buttons correctly 1`] = `
                     "hoverDecoration": "none",
                   },
                   "size": Object {
-                    "base": "13px",
+                    "base": "14px",
                     "lg": "18px",
                     "md": "14px",
-                    "root": "14px",
                     "sm": "12px",
                     "xs": "10px",
                   },
@@ -543,10 +542,9 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
                     "hoverDecoration": "none",
                   },
                   "size": Object {
-                    "base": "13px",
+                    "base": "14px",
                     "lg": "18px",
                     "md": "14px",
-                    "root": "14px",
                     "sm": "12px",
                     "xs": "10px",
                   },
