@@ -12,6 +12,7 @@ import {
   PanelProps,
   getDisplayValueAlignmentFactors,
   DisplayValueAlignmentFactors,
+  ScaleMode,
 } from '@grafana/data';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
@@ -23,7 +24,17 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     alignmentFactors: DisplayValueAlignmentFactors
   ): JSX.Element => {
     const { options } = this.props;
-    const { field, display } = value;
+    const { field, display, view, colIndex } = value;
+    const f = view.dataFrame.fields[colIndex];
+
+    // When not absolute, use percent display
+    let min = field.min;
+    let max = field.max;
+    if (field.scale.mode !== ScaleMode.absolute) {
+      min = 0;
+      max = 100;
+      display.numeric = display.percent * 100;
+    }
 
     return (
       <DataLinksContextMenu links={getFieldLinksSupplier(value)}>
@@ -35,11 +46,12 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
               height={height}
               orientation={options.orientation}
               scale={field.scale}
+              display={f.display!}
               theme={config.theme}
               itemSpacing={this.getItemSpacing()}
               displayMode={options.displayMode}
-              minValue={field.min}
-              maxValue={field.max}
+              minValue={min}
+              maxValue={max}
               onClick={openMenu}
               className={targetClassName}
               alignmentFactors={alignmentFactors}

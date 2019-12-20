@@ -1,15 +1,16 @@
 // Library
 import React, { PureComponent, CSSProperties, ReactNode } from 'react';
 import tinycolor from 'tinycolor2';
+import * as d3 from 'd3-scale-chromatic';
 import {
   TimeSeriesValue,
-  getActiveThreshold,
   DisplayValue,
   formattedValueToString,
   FormattedValue,
   DisplayValueAlignmentFactors,
   Scale,
   ScaleMode,
+  DisplayProcessor,
 } from '@grafana/data';
 
 // Compontents
@@ -36,6 +37,7 @@ export interface Props extends Themeable {
   width: number;
   scale: Scale;
   value: DisplayValue;
+  display: DisplayProcessor;
   maxValue: number;
   minValue: number;
   orientation: VizOrientation;
@@ -109,7 +111,7 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   getCellColor(positionValue: TimeSeriesValue): CellColors {
-    const { scale, theme, value } = this.props;
+    const { value, display } = this.props;
     if (positionValue === null) {
       return {
         background: 'gray',
@@ -117,10 +119,8 @@ export class BarGauge extends PureComponent<Props> {
       };
     }
 
-    const activeThreshold = getActiveThreshold(positionValue, scale.thresholds);
-    if (activeThreshold !== null) {
-      const color = getColorFromHexRgbOrName(activeThreshold.color, theme.type);
-
+    const color = display(positionValue).color;
+    if (color) {
       // if we are past real value the cell is not "on"
       if (value === null || (positionValue !== null && positionValue > value.numeric)) {
         return {
@@ -469,26 +469,53 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
  */
 export function getBarGradient(props: Props, maxSize: number): string {
   const { minValue, maxValue, scale, value, orientation } = props;
-  const { thresholds } = scale;
   const cssDirection = isVertical(orientation) ? '0deg' : '90deg';
 
   let gradient = '';
   let lastpos = 0;
 
-  for (let i = 0; i < thresholds.length; i++) {
-    const threshold = thresholds[i];
-    const color = getColorFromHexRgbOrName(threshold.color);
-    const valuePercent = getValuePercent(threshold.value, minValue, maxValue);
-    const pos = valuePercent * maxSize;
-    const offset = Math.round(pos - (pos - lastpos) / 2);
-
-    if (gradient === '') {
+  if (scale.scheme) {
+    const steps = (d3 as any)[`scheme${scale.scheme}`] as any[];
+    if (!steps) {
+      const color = '#F00';
       gradient = `linear-gradient(${cssDirection}, ${color}, ${color}`;
-    } else if (value.numeric < threshold.value) {
-      break;
-    } else {
-      lastpos = pos;
-      gradient += ` ${offset}px, ${color}`;
+      gradient += ` ${maxSize}px, ${color}`;
+      return gradient + ')';
+    }
+    const thresholds = steps[steps.length - 1] as string[];
+    for (let i = 0; i < thresholds.length; i++) {
+      const color = thresholds[i];
+      const valuePercent = i / (thresholds.length - 1);
+      const pos = valuePercent * maxSize;
+      const offset = Math.round(pos - (pos - lastpos) / 2);
+
+      if (gradient === '') {
+        gradient = `linear-gradient(${cssDirection}, ${color}, ${color}`;
+      } else if (false) {
+        break;
+      } else {
+        lastpos = pos;
+        gradient += ` ${offset}px, ${color}`;
+      }
+    }
+  } else {
+    const { thresholds } = scale;
+
+    for (let i = 0; i < thresholds.length; i++) {
+      const threshold = thresholds[i];
+      const color = getColorFromHexRgbOrName(threshold.color);
+      const valuePercent = getValuePercent(threshold.value, minValue, maxValue);
+      const pos = valuePercent * maxSize;
+      const offset = Math.round(pos - (pos - lastpos) / 2);
+
+      if (gradient === '') {
+        gradient = `linear-gradient(${cssDirection}, ${color}, ${color}`;
+      } else if (value.numeric < threshold.value) {
+        break;
+      } else {
+        lastpos = pos;
+        gradient += ` ${offset}px, ${color}`;
+      }
     }
   }
 
@@ -499,14 +526,10 @@ export function getBarGradient(props: Props, maxSize: number): string {
  * Only exported to for unit test
  */
 export function getValueColor(props: Props): string {
-  const { scale, theme, value } = props;
-
-  const activeThreshold = getActiveThreshold(value.numeric, scale.thresholds);
-
-  if (activeThreshold !== null) {
-    return getColorFromHexRgbOrName(activeThreshold.color, theme.type);
+  const { theme, value } = props;
+  if (value.color) {
+    return value.color;
   }
-
   return getColorFromHexRgbOrName('gray', theme.type);
 }
 
