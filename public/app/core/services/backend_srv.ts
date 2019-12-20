@@ -1,5 +1,3 @@
-import omitBy from 'lodash/omitBy';
-
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -12,6 +10,7 @@ import { from, merge, MonoTypeOperatorFunction, NEVER, Observable, of, Subject, 
 import { catchError, filter, finalize, map, mergeMap, retryWhen, share, takeUntil, tap } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
 import { coreModule } from 'app/core/core_module';
+import omitBy from 'lodash/omitBy';
 
 export interface DatasourceRequestOptions {
   retry?: number;
@@ -53,9 +52,15 @@ interface ErrorResponse<T extends ErrorResponseProps = any> {
   data: T | string;
 }
 
-function serializeParams(data: Record<string, any>) {
+function serializeParams(data: Record<string, any>): string {
   return Object.keys(data)
-    .map(k => `${encodeURIComponent(k)}=${encodeURIComponent(data[k])}`)
+    .map(key => {
+      const value = data[key];
+      if (Array.isArray(value)) {
+        return value.map(arrayValue => `${encodeURIComponent(key)}=${encodeURIComponent(arrayValue)}`).join('&');
+      }
+      return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+    })
     .join('&');
 }
 
@@ -93,7 +98,9 @@ export class BackendSrv implements BackendService {
 
   private getFromFetchStream = (options: BackendSrvRequest) => {
     const cleanParams = omitBy(options.params, v => v === undefined || v.length === 0);
-    return fromFetch(options.params ? `${options.url}?${serializeParams(cleanParams)}` : options.url, {
+    const serializedParams = serializeParams(cleanParams);
+    const url = options.params ? `${options.url}?${serializedParams}` : options.url;
+    return fromFetch(url, {
       method: options.method,
       headers: {
         'Content-Type': 'application/json',
