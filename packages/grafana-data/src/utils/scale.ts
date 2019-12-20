@@ -1,4 +1,13 @@
-import { Field, Threshold, ScaleCalculator, ScaleMode, GrafanaTheme, GrafanaThemeType, Scale } from '../types';
+import {
+  Field,
+  Threshold,
+  ScaleCalculator,
+  ScaleMode,
+  GrafanaTheme,
+  GrafanaThemeType,
+  Scale,
+  ColorScheme,
+} from '../types';
 import { reduceField, ReducerID } from '../transformations';
 import { getColorFromHexRgbOrName } from './namedColorsPalette';
 import * as d3 from 'd3-scale-chromatic';
@@ -75,7 +84,17 @@ export function validateScale(scale: Scale) {
     scale.thresholds = [];
   } else if (scale.thresholds.length) {
     // First value is always -Infinity
+    // JSON saves it as null
     scale.thresholds[0].value = -Infinity;
+  }
+
+  // Make sure scheme actually has a scheme!
+  if (scale.mode === ScaleMode.scheme) {
+    if (!scale.scheme) {
+      scale.scheme = ColorScheme.BrBG;
+    }
+  } else if (scale.scheme) {
+    delete scale.scheme;
   }
 }
 

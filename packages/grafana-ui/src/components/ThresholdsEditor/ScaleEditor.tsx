@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Scale, validateScale, ScaleMode, ColorScheme, Threshold, SelectableValue } from '@grafana/data';
+import { Scale, validateScale, ScaleMode, ColorScheme, Threshold, SelectableValue, validateScale } from '@grafana/data';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 import { ThresholdsEditor } from './ThresholdsEditor';
 import { Select } from '../Select/Select';
@@ -51,13 +51,7 @@ export class ScaleEditor extends PureComponent<Props> {
       ...this.getCurrent(),
       mode: item.value ?? ScaleMode.relative,
     };
-    if (val.mode === ScaleMode.scheme) {
-      if (!val.scheme) {
-        val.scheme = ColorScheme.BrBG;
-      }
-    } else if (val.scheme) {
-      delete val.scheme;
-    }
+    validateScale(val);
     this.props.onChange(val);
   };
 
