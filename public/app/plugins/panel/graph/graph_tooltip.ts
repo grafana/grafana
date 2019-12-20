@@ -257,7 +257,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
 
         series = seriesList[hoverInfo.index];
 
-        value = series.formatValue(hoverInfo.value);
+        value = series.formatValue(sanitize(hoverInfo.value));
         const color = sanitize(hoverInfo.color);
         const label = sanitize(hoverInfo.label);
 
@@ -282,7 +282,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
         value = item.datapoint[1];
       }
 
-      value = series.formatValue(value);
+      value = series.formatValue(sanitize(value));
 
       absoluteTime = dashboard.formatDate(item.datapoint[0], tooltipFormat);
 
