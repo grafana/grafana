@@ -6,7 +6,7 @@ import { CoreEvents, DashboardDTO, FolderInfo } from 'app/types';
 import { BackendSrv as BackendService, BackendSrvRequest } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
 import { contextSrv } from './context_srv';
-import { from, merge, MonoTypeOperatorFunction, NEVER, Observable, of, Subject, throwError } from 'rxjs';
+import { from, merge, MonoTypeOperatorFunction, Observable, of, Subject, throwError } from 'rxjs';
 import { catchError, filter, finalize, map, mergeMap, retryWhen, share, takeUntil, tap } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
 import { coreModule } from 'app/core/core_module';
@@ -50,6 +50,7 @@ interface ErrorResponse<T extends ErrorResponseProps = any> {
   statusText?: string;
   isHandled?: boolean;
   data: T | string;
+  cancelled?: boolean;
 }
 
 function serializeParams(data: Record<string, any>): string {
@@ -100,7 +101,7 @@ export class BackendSrv implements BackendService {
     const cleanParams = omitBy(options.params, v => v === undefined || v.length === 0);
     const serializedParams = serializeParams(cleanParams);
     const url = options.params ? `${options.url}?${serializedParams}` : options.url;
-    return fromFetch(url, {
+    const init = {
       method: options.method,
       headers: {
         'Content-Type': 'application/json',
@@ -108,10 +109,11 @@ export class BackendSrv implements BackendService {
         ...options.headers,
       },
       body: JSON.stringify(options.data),
-    }).pipe(
+    };
+    return fromFetch(url, init).pipe(
       mergeMap(async response => {
         const { status, statusText, ok } = response;
-        const textData = await response.text(); // this could be just a string
+        const textData = await response.text(); // this could be just a string, prometheus requests for instance
         let data;
         try {
           data = JSON.parse(textData); // majority of the requests this will be something that can be parsed
@@ -125,8 +127,8 @@ export class BackendSrv implements BackendService {
     );
   };
 
-  private toFailureStream = (options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse> => $input =>
-    $input.pipe(
+  private toFailureStream = (options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse> => inputStream =>
+    inputStream.pipe(
       filter(response => response.ok === false),
       mergeMap(response => {
         const { status, statusText, data } = response;
@@ -148,7 +150,7 @@ export class BackendSrv implements BackendService {
       )
     );
 
-  requestErrorHandler = (err: any) => {
+  requestErrorHandler = (err: ErrorResponse) => {
     if (err.isHandled) {
       return;
     }
@@ -216,9 +218,10 @@ export class BackendSrv implements BackendService {
         catchError((err: ErrorResponse) => {
           if (err.status === 401) {
             window.location.href = config.appSubUrl + '/logout';
-            return NEVER;
+            return throwError(err);
           }
 
+          // this setTimeout hack enables any caller catching this err to set isHandled to true
           setTimeout(() => this.requestErrorHandler(err), 50);
           return throwError(err);
         })
