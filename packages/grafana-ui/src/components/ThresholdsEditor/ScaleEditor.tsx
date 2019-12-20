@@ -1,13 +1,20 @@
 import React, { PureComponent } from 'react';
-import { Scale, validateScale, ScaleMode, Threshold } from '@grafana/data';
+import { Scale, validateScale, ScaleMode, Threshold, SelectableValue } from '@grafana/data';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 import { ThresholdsEditor } from './ThresholdsEditor';
+import { Select } from '../Select/Select';
 import { getTheme } from '../../themes';
 
 export interface Props {
   scale?: Scale;
   onChange: (scale: Scale) => void;
 }
+
+const modes: Array<SelectableValue<ScaleMode>> = [
+  { value: ScaleMode.absolute, label: 'Absolute', description: 'Set thresholds against the absolute values' },
+  { value: ScaleMode.relative, label: 'Relative', description: 'Thresholds are percent between min/max' },
+  { value: ScaleMode.schema, label: 'Scheme', description: 'Use a predefined color scheme' },
+];
 
 export class ScaleEditor extends PureComponent<Props> {
   constructor(props: Props) {
@@ -35,6 +42,13 @@ export class ScaleEditor extends PureComponent<Props> {
     });
   };
 
+  onModeChanged = (item: SelectableValue<ScaleMode>) => {
+    this.props.onChange({
+      ...this.getCurrent(),
+      mode: item.value ?? ScaleMode.relative,
+    });
+  };
+
   render() {
     const scale = this.getCurrent();
     return (
@@ -45,6 +59,8 @@ export class ScaleEditor extends PureComponent<Props> {
           onChange={this.onThresholdsChanged}
           isPercent={scale.mode !== ScaleMode.absolute}
         />
+        <Select options={modes} value={modes.filter(m => m.value === scale.mode)} onChange={this.onModeChanged} />
+        {scale.mode === ScaleMode.schema && <div>TODO... picker...</div>}
       </PanelOptionsGroup>
     );
   }
