@@ -10,7 +10,7 @@ Before you begin, you might want to read [How to contribute to Grafana as a juni
 Make sure you have the following dependencies installed before setting up your developer environment:
 
 - [Git](https://git-scm.com/)
-- [Go](https://golang.org/dl/)
+- [Go](https://golang.org/dl/) (see [go.mod](../go.mod#L3) for minimum required version)
 - [Node.js (Long Term Support)](https://nodejs.org)
 - [Yarn](https://yarnpkg.com)
 
@@ -94,7 +94,9 @@ go test -v ./pkg/...
 
 ### Run end-to-end tests
 
-The end-to-end tests in Grafana uses [puppeteer](https://github.com/GoogleChrome/puppeteer) to run automated scripts in a headless Chrome browser. To run the tests:
+The end to end tests in Grafana use [Cypress](https://www.cypress.io/) to run automated scripts in a headless Chromium browser. Read more about our [e2e framework](/contribute/style-guides/e2e.md). 
+
+To run the tests:
 
 ```
 yarn e2e-tests
@@ -106,10 +108,10 @@ By default, the end-to-end tests assumes Grafana is available on `localhost:3000
 BASE_URL=http://localhost:3333 yarn e2e-tests
 ```
 
-To follow the tests in the browser while they're running, add the `BROWSER` and `SLOWMO` environment variables:
+To follow the tests in the browser while they're running, use the `yarn e2e-tests:debug` instead.
 
 ```
-BROWSER=1 SLOWMO=1 yarn e2e-tests
+yarn e2e-tests:debug
 ```
 
 ## Configure Grafana for development

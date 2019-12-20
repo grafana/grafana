@@ -55,8 +55,8 @@ div.flot-text {
   height: 100%;
   width: 100%;
 
-  &.panel-transparent {
-    background-color: transparent;
+  &--transparent {
+    background-color: $page-bg;
     border: none;
   }
 
@@ -82,8 +82,11 @@ div.flot-text {
   height: calc(100% - #{$panel-header-height});
   width: 100%;
   position: relative;
-  // Fixes scrolling on mobile devices
   overflow: auto;
+
+  &--no-padding {
+    padding: 0;
+  }
 }
 
 // For larger screens, set back to hidden to avoid double scroll bars

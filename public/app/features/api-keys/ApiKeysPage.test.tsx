@@ -23,6 +23,7 @@ const setup = (propOverrides?: object) => {
     setSearchQuery: jest.fn(),
     addApiKey: jest.fn(),
     apiKeysCount: 0,
+    includeExpired: false,
   };
 
   Object.assign(props, propOverrides);
@@ -63,7 +64,7 @@ describe('Life cycle', () => {
 
     instance.componentDidMount();
 
-    expect(instance.props.loadApiKeys).toHaveBeenCalled();
+    expect(instance.props.loadApiKeys).toHaveBeenCalledWith(false);
   });
 });
 
@@ -72,7 +73,7 @@ describe('Functions', () => {
     it('should call delete team', () => {
       const { instance } = setup();
       instance.onDeleteApiKey(getMockKey());
-      expect(instance.props.deleteApiKey).toHaveBeenCalledWith(1);
+      expect(instance.props.deleteApiKey).toHaveBeenCalledWith(1, false);
     });
   });
 

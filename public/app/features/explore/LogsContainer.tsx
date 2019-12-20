@@ -27,9 +27,10 @@ import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 import { LiveTailControls } from './useLiveTailControls';
+import { getLinksFromLogsField } from '../panel/panellinks/linkSuppliers';
 
 interface LogsContainerProps {
-  datasourceInstance: DataSourceApi | null;
+  datasourceInstance?: DataSourceApi;
   exploreId: ExploreId;
   loading: boolean;
 
@@ -79,7 +80,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   getLogRowContext = async (row: LogRowModel, options?: any): Promise<any> => {
     const { datasourceInstance } = this.props;
 
-    if (datasourceInstance) {
+    if (datasourceInstance?.getLogRowContext) {
       return datasourceInstance.getLogRowContext(row, options);
     }
 
@@ -148,6 +149,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               scanRange={range.raw}
               width={width}
               getRowContext={this.getLogRowContext}
+              getFieldLinks={getLinksFromLogsField}
             />
           </Collapse>
         </LogsCrossFadeTransition>
@@ -199,9 +201,4 @@ const mapDispatchToProps = {
   updateTimeRange,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(LogsContainer)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(LogsContainer));

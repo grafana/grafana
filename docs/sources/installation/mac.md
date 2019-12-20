@@ -5,11 +5,14 @@ keywords = ["grafana", "configuration", "documentation", "mac", "homebrew", "osx
 type = "docs"
 [menu.docs]
 parent = "installation"
-weight = 4
+weight = 500
 +++
 
 
 # Installing on macOS
+
+This page provides instructions to help you install Grafana on macOS. You can either install using homebrew or a binary tar file.
+
 
 ## Install using homebrew
 
@@ -46,7 +49,7 @@ To upgrade grafana if you've installed from HEAD:
 brew reinstall --HEAD grafana/grafana/grafana
 ```
 
-### Starting Grafana
+### Start Grafana
 
 To start Grafana using homebrew services first make sure homebrew/services is installed.
 
@@ -62,24 +65,7 @@ brew services start grafana
 
 Default login and password `admin`/ `admin`
 
-
-### Configuration
-
-The Configuration file should be located at `/usr/local/etc/grafana/grafana.ini`.
-
-### Logs
-
-The log file should be located at `/usr/local/var/log/grafana/grafana.log`.
-
-### Plugins
-
-If you want to manually install a plugin place it here: `/usr/local/var/lib/grafana/plugins`.
-
-### Database
-
-The default sqlite database is located at `/usr/local/var/lib/grafana`
-
-## Installing from binary tar file
+## Install from binary tar file
 
 Download [the latest `.tar.gz` file](https://grafana.com/get) and
 extract it.  This will extract into a folder named after the version you
@@ -90,11 +76,6 @@ To configure Grafana add a configuration file named `custom.ini` to the
 `conf` folder and override any of the settings defined in
 `conf/defaults.ini`.
 
-Start Grafana by executing `./bin/grafana-server web`. The `grafana-server`
-binary needs the working directory to be the root install directory (where the
-binary and the `public` folder is located).
+### Start Grafana
 
-## Logging in for the first time
-
-To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default HTTP port that Grafana listens to if you haven't [configured a different port](/installation/configuration/#http-port).
-Then follow the instructions [here](/guides/getting_started/).
+Start Grafana by executing `./bin/grafana-server`. The `grafana-server` binary needs the working directory to be the root install directory (where the binary and the `public` folder is located).

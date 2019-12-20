@@ -1,21 +1,21 @@
 +++
-title = "Upgrading"
-description = "Upgrading Grafana guide"
+title = "Upgrade Grafana"
+description = "Guide for upgrading Grafana"
 keywords = ["grafana", "configuration", "documentation", "upgrade"]
 type = "docs"
 [menu.docs]
-name = "Upgrading"
+name = "Upgrade Grafana"
 identifier = "upgrading"
 parent = "installation"
-weight = 10
+weight = 800
 +++
 
-# Upgrading Grafana
+# Upgrade Grafana
 
-We recommend everyone to upgrade Grafana often to stay up to date with the latest fixes and enhancements.
-In order make this a reality Grafana upgrades are backward compatible and the upgrade process is simple and quick.
+We recommend that you upgrade Grafana often to stay up to date with the latest fixes and enhancements.
+In order make this a reality, Grafana upgrades are backward compatible and the upgrade process is simple and quick.
 
-Upgrading is generally always safe (between many minor and one major version) and dashboards and graphs will look the same. There can be minor breaking changes in some edge cases which are usually outlined in the [Release Notes](https://community.grafana.com/c/releases) and [Changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
+Upgrading is generally safe (between many minor and one major version) and dashboards and graphs will look the same. There may be minor breaking changes in some edge cases, which are outlined in the [Release Notes](https://community.grafana.com/c/releases) and [Changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
 
 ## Update plugins
 
@@ -58,29 +58,41 @@ restore:
 > psql grafana < grafana_backup
 ```
 
-### Ubuntu / Debian
+### Ubuntu or Debian
 
-If you installed grafana by downloading a debian package (`.deb`) you can just follow the same installation guide
-and execute the same `dpkg -i` command but with the new package. It will upgrade your Grafana install.
+You can upgrade Grafana by following the same procedure as when you installed it.
 
-If you used our APT repository:
+#### Upgrade Debian package
+
+If you installed Grafana by downloading a Debian package (`.deb`), then you can execute the same `dpkg -i` command but with the new package. It will upgrade your Grafana installation.
+
+Go to the [download page](https://grafana.com/grafana/download?platform=linux) for the latest download
+links.
+
+```bash
+wget <debian package url>
+sudo apt-get install -y adduser libfontconfig1
+sudo dpkg -i grafana_<version>_amd64.deb
+```
+
+#### Upgrade from APT repository
+
+If you installed Grafana from our APT repository, then Grafana will automatically update when you run apt-get upgrade to upgrade all system packages.
 
 ```bash
 sudo apt-get update
-sudo apt-get install grafana
 ```
 
-#### Upgrading from binary tar file
+#### Upgrade from binary .tar file
 
-If you downloaded the binary tar package you can just download and extract a new package
-and overwrite all your existing files. But this might overwrite your config changes. We
-recommend you place your config changes in a file named  `<grafana_install_dir>/conf/custom.ini`
-as this will make upgrades easier without risking losing your config changes.
+If you downloaded the binary `.tar.gz` package, then you can just download and extract the new package and overwrite all your existing files. However, this might overwrite your config changes. 
+
+We recommend that you save your custom config changes in a file named `<grafana_install_dir>/conf/custom.ini`.
+This allows you to upgrade Grafana without risking losing your configuration changes.
 
 ### Centos / RHEL
 
-If you installed grafana by downloading a rpm package you can just follow the same installation guide
-and execute the same `yum install` or `rpm -i` command but with the new package. It will upgrade your Grafana install.
+If you installed Grafana by downloading an RPM package you can just follow the same installation guide and execute the same `yum install` or `rpm -i` command but with the new package. It will upgrade your Grafana installation.
 
 If you used our YUM repository:
 
@@ -91,6 +103,7 @@ sudo yum update grafana
 ### Docker
 
 This just an example, details depend on how you configured your grafana container.
+
 ```bash
 docker pull grafana
 docker stop my-grafana-container
@@ -100,14 +113,11 @@ docker run --name=my-grafana-container --restart=always -v /var/lib/grafana:/var
 
 ### Windows
 
-If you downloaded the Windows binary package you can just download a newer package and extract
-to the same location (and overwrite the existing files). This might overwrite your config changes. We
-recommend you place your config changes in a file named  `<grafana_install_dir>/conf/custom.ini`
-as this will make upgrades easier without risking losing your config changes.
+If you downloaded the Windows binary package you can just download a newer package and extract to the same location (and overwrite the existing files). This might overwrite your config changes. We recommend that you save your config changes in a file named `<grafana_install_dir>/conf/custom.ini` as this will make upgrades easier without risking losing your config changes.
 
 ## Upgrading from 1.x
 
-[Migrating from 1.x to 2.x]({{< relref "installation/migrating_to2.md" >}})
+[Migrating from 1.x to 2.x]({{< relref "migrating_to2.md" >}})
 
 ## Upgrading from 2.x
 
@@ -115,11 +125,9 @@ We are not aware of any issues upgrading directly from 2.x to 4.x but to be on t
 
 ## Upgrading to v5.0
 
-The dashboard grid layout engine has changed. All dashboards will be automatically upgraded to new
-positioning system when you load them in v5. Dashboards saved in v5 will not work in older versions of Grafana. Some
-external panel plugins might need to be updated to work properly.
+The dashboard grid layout engine has changed. All dashboards will be automatically upgraded to new positioning system when you load them in v5. Dashboards saved in v5 will not work in older versions of Grafana. Some external panel plugins might need to be updated to work properly.
 
-For more details on the new panel positioning system, [click here]({{< relref "reference/dashboard.md#panel-size-position" >}})
+For more details on the new panel positioning system, [click here]({{< relref "../reference/dashboard.md#panel-size-position" >}})
 
 ## Upgrading to v5.2
 
@@ -132,8 +140,7 @@ If you're using systemd and have a large amount of annotations consider temporar
 ## Upgrading to v6.0
 
 If you have text panels with script tags they will no longer work due to a new setting that per default disallow unsanitized HTML.
-Read more [here](/installation/configuration/#disable-sanitize-html) about this new setting.
-
+Read more [here]({{< relref "configuration/#disable-sanitize-html" >}}) about this new setting.
 
 ### Authentication and security
 
@@ -172,13 +179,13 @@ you can do that by:
 - For data sources created through UI, you need to go to data source config, re enter the password or basic auth
 password and save the data source.
 - For data sources created by provisioning, you need to update your config file and use secureJsonData.password or
-secureJsonData.basicAuthPassword field. See [provisioning docs](/administration/provisioning) for example of current
+secureJsonData.basicAuthPassword field. See [provisioning docs]({{< relref "../administration/provisioning" >}}) for example of current
 configuration.
 
 ### Embedding Grafana
 
 If you're embedding Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>` on a different website it will no longer work due to a new setting
-that per default instructs the browser to not allow Grafana to be embedded. Read more [here](/installation/configuration/#allow-embedding) about
+that per default instructs the browser to not allow Grafana to be embedded. Read more [here]({{< relref "configuration/#allow-embedding" >}}) about
 this new setting.
 
 ### Session storage is no longer used
@@ -196,11 +203,22 @@ is `7.0+` and `max concurrent shard requests` properly configured. 256 was the d
 
 ## Upgrading to v6.4
 
-One of the database migrations included in this release will merge multiple rows used to represent an annotation range into a single row.  If you have a large number of region annotations the database migration may take a long time to complete.  See [Upgrading to v5.2](#upgrading-to-v5-2) for tips on how to manage this process.
+### Annotations database migration
 
-Plugins that need updating:
+One of the database migrations included in this release will merge multiple rows used to represent an annotation range into a single row. If you have a large number of region annotations the database migration may take a long time to complete. See [Upgrading to v5.2](#upgrading-to-v5-2) for tips on how to manage this process.
 
-* [Splunk](https://grafana.com/grafana/plugins/grafana-splunk-datasource)
+### Docker
 
+Grafana’s docker image is now based on [Alpine](http://alpinelinux.org) instead of [Ubuntu](https://ubuntu.com/).
 
+### Plugins that need updating
 
+- [Splunk](https://grafana.com/grafana/plugins/grafana-splunk-datasource)
+
+## Upgrading to v6.5
+
+Pre Grafana 6.5.0, the CloudWatch datasource used the GetMetricStatistics API for all queries that did not have an ´id´ and did not have an ´expression´ defined in the query editor. The GetMetricStatistics API has a limit of 400 transactions per second (TPS). In this release, all queries use the GetMetricData API which has a limit of 50 TPS and 100 metrics per transaction. We expect this transition to be smooth for most of our users, but in case you do face throttling issues we suggest you increase the TPS quota. To do that, please visit the [AWS Service Quotas console](https://console.aws.amazon.com/servicequotas/home?r#!/services/monitoring/quotas/L-5E141212). For more details around CloudWatch API limits, [see CloudWatch docs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_limits.html).
+
+Each request to the GetMetricData API can include 100 queries. This means that each panel in Grafana will only issue one GetMetricData request, regardless of the number of query rows that are present in the panel. Consequently as it is no longer possible to set `HighRes` on a per query level anymore, this switch is now removed from the query editor. High resolution can still be achieved by choosing a smaller minimum period in the query editor.
+
+The handling of multi-valued template variables in dimension values has been changed in Grafana 6.5. When a multi template variable is being used, Grafana will generate a search expression. In the GetMetricData API, expressions are limited to 1024 characters, so it might be the case that this limit is reached when a multi-valued template variable that has a lot of values is being used. If this is the case, we suggest you start using `*` wildcard as dimension value instead of a multi-valued template variable.

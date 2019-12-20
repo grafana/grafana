@@ -63,7 +63,7 @@ interface State {
 }
 
 class LiveLogs extends PureComponent<Props, State> {
-  private liveEndDiv: HTMLDivElement = null;
+  private liveEndDiv: HTMLDivElement | null = null;
   private scrollContainerRef = React.createRef<HTMLDivElement>();
   private lastScrollPos: number | null = null;
 
@@ -77,7 +77,7 @@ class LiveLogs extends PureComponent<Props, State> {
   componentDidUpdate(prevProps: Props) {
     if (!prevProps.isPaused && this.props.isPaused) {
       // So we paused the view and we changed the content size, but we want to keep the relative offset from the bottom.
-      if (this.lastScrollPos) {
+      if (this.lastScrollPos && this.scrollContainerRef.current) {
         // There is last scroll pos from when user scrolled up a bit so go to that position.
         const { clientHeight, scrollHeight } = this.scrollContainerRef.current;
         const scrollTop = scrollHeight - (this.lastScrollPos + clientHeight);
@@ -123,7 +123,7 @@ class LiveLogs extends PureComponent<Props, State> {
 
   rowsToRender = () => {
     const { isPaused } = this.props;
-    let rowsToRender: LogRowModel[] = this.state.logRowsToRender;
+    let { logRowsToRender: rowsToRender = [] } = this.state;
     if (!isPaused) {
       // A perf optimisation here. Show just 100 rows when streaming and full length when the streaming is paused.
       rowsToRender = rowsToRender.slice(-100);

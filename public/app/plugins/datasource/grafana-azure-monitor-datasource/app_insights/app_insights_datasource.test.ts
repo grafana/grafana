@@ -1,8 +1,6 @@
 import Datasource from '../datasource';
 import { DataFrame, toUtc } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-// @ts-ignore
-import Q from 'q';
 
 describe('AppInsightsDatasource', () => {
   const ctx: any = {
@@ -11,13 +9,12 @@ describe('AppInsightsDatasource', () => {
   };
 
   beforeEach(() => {
-    ctx.$q = Q;
     ctx.instanceSettings = {
       jsonData: { appInsightsAppId: '3ad4400f-ea7d-465d-a8fb-43fb20555d85' },
       url: 'http://appinsightsapi',
     };
 
-    ctx.ds = new Datasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
+    ctx.ds = new Datasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv);
   });
 
   describe('When performing testDatasource', () => {
@@ -42,7 +39,7 @@ describe('AppInsightsDatasource', () => {
 
       beforeEach(() => {
         ctx.backendSrv.datasourceRequest = () => {
-          return ctx.$q.when({ data: response, status: 200 });
+          return Promise.resolve({ data: response, status: 200 });
         };
       });
 
@@ -67,7 +64,7 @@ describe('AppInsightsDatasource', () => {
 
       beforeEach(() => {
         ctx.backendSrv.datasourceRequest = () => {
-          return ctx.$q.reject(error);
+          return Promise.reject(error);
         };
       });
 
@@ -95,7 +92,7 @@ describe('AppInsightsDatasource', () => {
 
       beforeEach(() => {
         ctx.backendSrv.datasourceRequest = () => {
-          return ctx.$q.reject(error);
+          return Promise.reject(error);
         };
       });
 
@@ -162,7 +159,7 @@ describe('AppInsightsDatasource', () => {
           expect(options.data.queries[0].appInsights.timeColumn).toEqual('timestamp');
           expect(options.data.queries[0].appInsights.valueColumn).toEqual('max');
           expect(options.data.queries[0].appInsights.segmentColumn).toBeUndefined();
-          return ctx.$q.when({ data: response, status: 200 });
+          return Promise.resolve({ data: response, status: 200 });
         };
       });
 
@@ -205,7 +202,7 @@ describe('AppInsightsDatasource', () => {
           expect(options.data.queries[0].appInsights.timeColumn).toEqual('timestamp');
           expect(options.data.queries[0].appInsights.valueColumn).toEqual('max');
           expect(options.data.queries[0].appInsights.segmentColumn).toEqual('partition');
-          return ctx.$q.when({ data: response, status: 200 });
+          return Promise.resolve({ data: response, status: 200 });
         };
       });
 
@@ -266,7 +263,7 @@ describe('AppInsightsDatasource', () => {
           expect(options.data.queries[0].refId).toBe('A');
           expect(options.data.queries[0].appInsights.rawQueryString).toBeUndefined();
           expect(options.data.queries[0].appInsights.metricName).toBe('exceptions/server');
-          return ctx.$q.when({ data: response, status: 200 });
+          return Promise.resolve({ data: response, status: 200 });
         };
       });
 
@@ -290,7 +287,10 @@ describe('AppInsightsDatasource', () => {
             series: [
               {
                 name: 'exceptions/server',
-                points: [[3, 1504108800000], [6, 1504112400000]],
+                points: [
+                  [3, 1504108800000],
+                  [6, 1504112400000],
+                ],
               },
             ],
             tables: null,
@@ -306,7 +306,7 @@ describe('AppInsightsDatasource', () => {
           expect(options.data.queries[0].appInsights.rawQueryString).toBeUndefined();
           expect(options.data.queries[0].appInsights.metricName).toBe('exceptions/server');
           expect(options.data.queries[0].appInsights.timeGrain).toBe('PT30M');
-          return ctx.$q.when({ data: response, status: 200 });
+          return Promise.resolve({ data: response, status: 200 });
         };
       });
 
@@ -333,11 +333,17 @@ describe('AppInsightsDatasource', () => {
             series: [
               {
                 name: 'exceptions/server{client/city="Miami"}',
-                points: [[10, 1504108800000], [20, 1504112400000]],
+                points: [
+                  [10, 1504108800000],
+                  [20, 1504112400000],
+                ],
               },
               {
                 name: 'exceptions/server{client/city="San Antonio"}',
-                points: [[1, 1504108800000], [2, 1504112400000]],
+                points: [
+                  [1, 1504108800000],
+                  [2, 1504112400000],
+                ],
               },
             ],
             tables: null,
@@ -354,7 +360,7 @@ describe('AppInsightsDatasource', () => {
             expect(options.data.queries[0].appInsights.rawQueryString).toBeUndefined();
             expect(options.data.queries[0].appInsights.metricName).toBe('exceptions/server');
             expect(options.data.queries[0].appInsights.dimension).toBe('client/city');
-            return ctx.$q.when({ data: response, status: 200 });
+            return Promise.resolve({ data: response, status: 200 });
           };
         });
 
@@ -393,7 +399,7 @@ describe('AppInsightsDatasource', () => {
       beforeEach(() => {
         ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
           expect(options.url).toContain('/metrics/metadata');
-          return ctx.$q.when({ data: response, status: 200 });
+          return Promise.resolve({ data: response, status: 200 });
         };
       });
 
@@ -431,7 +437,7 @@ describe('AppInsightsDatasource', () => {
       beforeEach(() => {
         ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
           expect(options.url).toContain('/metrics/metadata');
-          return ctx.$q.when({ data: response, status: 200 });
+          return Promise.resolve({ data: response, status: 200 });
         };
       });
 
@@ -459,7 +465,7 @@ describe('AppInsightsDatasource', () => {
     beforeEach(() => {
       ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
         expect(options.url).toContain('/metrics/metadata');
-        return ctx.$q.when({ data: response, status: 200 });
+        return Promise.resolve({ data: response, status: 200 });
       };
     });
 
@@ -497,7 +503,7 @@ describe('AppInsightsDatasource', () => {
     beforeEach(() => {
       ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
         expect(options.url).toContain('/metrics/metadata');
-        return ctx.$q.when({ data: response, status: 200 });
+        return Promise.resolve({ data: response, status: 200 });
       };
     });
 

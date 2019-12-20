@@ -1,6 +1,4 @@
 import { AnnotationsSrv } from '../annotations_srv';
-// @ts-ignore
-import $q from 'q';
 import { AnnotationEvent } from '@grafana/data';
 
 describe('AnnotationsSrv', function(this: any) {
@@ -36,7 +34,13 @@ describe('AnnotationsSrv', function(this: any) {
     let translatedAnnotations: any;
 
     beforeEach(() => {
-      const annotationsSrv = new AnnotationsSrv(ctx.$rootScope, null, null, null, null, null);
+      const annotationsSrv = new AnnotationsSrv(
+        ctx.$rootScope,
+        ctx.datasourceSrv,
+        ctx.backendSrv,
+        ctx.timeSrv,
+        ctx.templateSrv
+      );
       translatedAnnotations = annotationsSrv.translateQueryResult(annotationSource, annotations);
     });
 
@@ -65,7 +69,7 @@ describe('AnnotationsSrv', function(this: any) {
         type: 'event',
       };
       options = {
-        panel: { id: 1 },
+        panel: { id: 1, options: {} },
         dashboard: { annotations: { list: [annotationSource] } },
       };
       const ds: any = {};
@@ -76,7 +80,6 @@ describe('AnnotationsSrv', function(this: any) {
       };
       annotationsSrv = new AnnotationsSrv(
         ctx.$rootScope,
-        $q,
         ctx.datasourceSrv,
         ctx.backendSrv,
         ctx.timeSrv,
@@ -92,51 +95,51 @@ describe('AnnotationsSrv', function(this: any) {
     });
     it('should filter annotations with both panelId and tag filters ', async () => {
       options.dashboard.annotations.list[0].type = 'dashboard';
-      options.panel.annotation = { tags: ['foo'] };
+      options.panel.options.annotation = { tags: ['foo'] };
       expect(await annotationsSrv.getAnnotations(options)).toEqual({ alertState: undefined, annotations: [] });
     });
     it('should get all annotations without annotation option', async () => {
       expect(await annotationsSrv.getAnnotations(options)).toEqual({ alertState: undefined, annotations: annotations });
     });
     it('should get all annotations with empty annotation option', async () => {
-      options.panel.annotation = {};
+      options.panel.options.annotation = {};
       expect(await annotationsSrv.getAnnotations(options)).toEqual({ alertState: undefined, annotations: annotations });
     });
     it('should get all annotations with empty annotation tags option', async () => {
-      options.panel.annotation = { tags: [] };
+      options.panel.options.annotation = { tags: [] };
       expect(await annotationsSrv.getAnnotations(options)).toEqual({ alertState: undefined, annotations: annotations });
     });
     it('should get annotations with all tag matching without matchAny option', async () => {
-      options.panel.annotation = { tags: ['other', 'foo'] };
+      options.panel.options.annotation = { tags: ['other', 'foo'] };
       expect(await annotationsSrv.getAnnotations(options)).toEqual({ alertState: undefined, annotations: [] });
     });
     it('should get annotations with any tag matching using matchAny option', async () => {
-      options.panel.annotation = { tags: ['other', 'bar:.*'], matchAny: true };
+      options.panel.options.annotation = { tags: ['other', 'bar:.*'], matchAny: true };
       expect(await annotationsSrv.getAnnotations(options)).toEqual({
         alertState: undefined,
         annotations: [annotation2, annotation3],
       });
     });
     it('should get no annotations with not all tag matching', async () => {
-      options.panel.annotation = { tags: ['other', 'bar:.*'], matchAny: false };
+      options.panel.options.annotation = { tags: ['other', 'bar:.*'], matchAny: false };
       expect(await annotationsSrv.getAnnotations(options)).toEqual({ alertState: undefined, annotations: [] });
     });
     it('should get annotations with all tag matching', async () => {
-      options.panel.annotation = { tags: ['foo', 'bar:.*'], matchAny: false };
+      options.panel.options.annotation = { tags: ['foo', 'bar:.*'], matchAny: false };
       expect(await annotationsSrv.getAnnotations(options)).toEqual({
         alertState: undefined,
         annotations: [annotation2, annotation3],
       });
     });
     it('should get annotations with alternative regexp', async () => {
-      options.panel.annotation = { tags: ['foo', '(other|bar:.*)'], matchAny: false };
+      options.panel.options.annotation = { tags: ['foo', '(other|bar:.*)'], matchAny: false };
       expect(await annotationsSrv.getAnnotations(options)).toEqual({
         alertState: undefined,
         annotations: [annotation2, annotation3],
       });
     });
     it('should get annotations with template variable', async () => {
-      options.panel.annotation = { tags: ['foo', '(other|bar:$var)'], matchAny: false };
+      options.panel.options.annotation = { tags: ['foo', '(other|bar:$var)'], matchAny: false };
       expect(await annotationsSrv.getAnnotations(options)).toEqual({
         alertState: undefined,
         annotations: [annotation3],

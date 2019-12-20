@@ -12,7 +12,7 @@ weight = 5
 
 # SAML Authentication
 
-> SAML Authentication integration is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "enterprise" >}}).
+> SAML Authentication integration is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
 > Only available in Grafana v6.3+
 
@@ -44,7 +44,7 @@ At the moment of writing, Grafana supports:
 
 ## Set up SAML Authentication
 
-To use the SAML integration, you need to enable SAML in the [main config file]({{< relref "installation/configuration.md" >}}).
+To use the SAML integration, you need to enable SAML in the [main config file]({{< relref "../installation/configuration.md" >}}).
 
 ```bash
 [auth.saml]
@@ -90,7 +90,7 @@ assertion_attribute_email = mail
 
 Important to note:
 
-- like any other Grafana configuration, use of [environment variables for these options is supported]({{< relref "installation/configuration.md#using-environment-variables" >}})
+- like any other Grafana configuration, use of [environment variables for these options is supported]({{< relref "../installation/configuration.md#using-environment-variables" >}})
 - only one form of configuration option is required. Using multiple forms, e.g. both `certificate` and `certificate_path` will result in an error
 
 ## Grafana Configuration
@@ -170,7 +170,7 @@ An example is `assertion_attribute_name = "givenName"` where Grafana looks withi
 
 ## Troubleshooting
 
-To troubleshoot and get more log info enable saml debug logging in the [main config file]({{< relref "installation/configuration.md" >}}).
+To troubleshoot and get more log info enable saml debug logging in the [main config file]({{< relref "../installation/configuration.md" >}}).
 
 ```bash
 [log]

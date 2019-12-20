@@ -125,5 +125,5 @@ the correct teams.
 
 Your GitLab groups can be referenced in the same way as `allowed_groups`, like `example` or `foo/bar`.
 
-[Learn more about Team Sync]({{< relref "auth/enhanced_ldap.md" >}})
+[Learn more about Team Sync]({{< relref "enhanced_ldap.md" >}})
 

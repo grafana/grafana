@@ -82,6 +82,7 @@ export class TeamMemberRow extends PureComponent<Props> {
         </td>
         <td>{member.login}</td>
         <td>{member.email}</td>
+        <td>{member.name}</td>
         {this.renderPermissions(member)}
         {syncEnabled && this.renderLabels(member.labels)}
         <td className="text-right">
@@ -101,7 +102,4 @@ const mapDispatchToProps = {
   updateTeamMember,
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(TeamMemberRow);
+export default connect(mapStateToProps, mapDispatchToProps)(TeamMemberRow);

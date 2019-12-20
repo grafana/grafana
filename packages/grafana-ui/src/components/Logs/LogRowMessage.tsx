@@ -21,6 +21,7 @@ interface Props extends Themeable {
   row: LogRowModel;
   hasMoreContextRows?: HasMoreContextRows;
   showContext: boolean;
+  wrapLogMessage: boolean;
   errors?: LogRowContextQueryErrors;
   context?: LogRowContextRows;
   highlighterExpressions?: string[];
@@ -57,6 +58,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: whiteSpacePreWrap;
       white-space: pre-wrap;
     `,
+    horizontalScroll: css`
+      label: verticalScroll;
+      white-space: nowrap;
+    `,
   };
 });
 
@@ -76,6 +81,7 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
       updateLimit,
       context,
       showContext,
+      wrapLogMessage,
       onToggleContext,
     } = this.props;
     const {} = this.state;
@@ -91,7 +97,7 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
     const styles = getStyles(theme);
     return (
       <div className={style.logsRowMessage}>
-        <div className={styles.positionRelative}>
+        <div className={cx(styles.positionRelative, { [styles.horizontalScroll]: !wrapLogMessage })}>
           {showContext && context && (
             <LogRowContext
               row={row}
@@ -122,21 +128,7 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
             )}
           </span>
           {row.searchWords && row.searchWords.length > 0 && (
-            <span
-              onClick={this.onContextToggle}
-              className={css`
-                visibility: hidden;
-                white-space: nowrap;
-                position: relative;
-                z-index: ${showContext ? 1 : 0};
-                cursor: pointer;
-                .${style.logsRow}:hover & {
-                  visibility: visible;
-                  margin-left: 10px;
-                  text-decoration: underline;
-                }
-              `}
-            >
+            <span onClick={this.onContextToggle} className={cx(style.context)}>
               {showContext ? 'Hide' : 'Show'} context
             </span>
           )}

@@ -1,10 +1,16 @@
 import _ from 'lodash';
 import React from 'react';
-// @ts-ignore
-import Cascader from 'rc-cascader';
 
 import { Plugin } from 'slate';
-import { SlatePrism, TypeaheadInput, TypeaheadOutput, QueryField, BracesPlugin } from '@grafana/ui';
+import {
+  Cascader,
+  CascaderOption,
+  SlatePrism,
+  TypeaheadInput,
+  TypeaheadOutput,
+  QueryField,
+  BracesPlugin,
+} from '@grafana/ui';
 
 import Prism from 'prismjs';
 
@@ -17,7 +23,6 @@ import { PrometheusDatasource } from '../datasource';
 import PromQlLanguageProvider from '../language_provider';
 
 const HISTOGRAM_GROUP = '__histograms__';
-const METRIC_MARK = 'metric';
 const PRISM_SYNTAX = 'promql';
 export const RECORDING_RULES_GROUP = '__recording_rules__';
 
@@ -93,13 +98,6 @@ export function willApplySuggestion(suggestion: string, { typeaheadContext, type
   return suggestion;
 }
 
-interface CascaderOption {
-  label: string;
-  value: string;
-  children?: CascaderOption[];
-  disabled?: boolean;
-}
-
 interface PromQueryFieldProps extends ExploreQueryFieldProps<PrometheusDatasource, PromQuery, PromOptions> {
   history: Array<HistoryItem<PromQuery>>;
 }
@@ -139,6 +137,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   componentDidMount() {
     if (this.languageProvider) {
+      Prism.languages[PRISM_SYNTAX] = this.languageProvider.syntax;
       this.refreshMetrics(makePromiseCancelable(this.languageProvider.start()));
     }
     this.refreshHint();
@@ -221,24 +220,18 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   onClickHintFix = () => {
+    const { datasource, query, onChange, onRunQuery } = this.props;
     const { hint } = this.state;
-    const { onHint } = this.props;
-    if (onHint && hint && hint.fix) {
-      onHint(hint.fix.action);
-    }
+
+    onChange(datasource.modifyQuery(query, hint.fix.action));
+    onRunQuery();
   };
 
   onUpdateLanguage = () => {
-    const { histogramMetrics, metrics } = this.languageProvider;
+    const { histogramMetrics, metrics, lookupsDisabled, lookupMetricsThreshold } = this.languageProvider;
     if (!metrics) {
       return;
     }
-
-    Prism.languages[PRISM_SYNTAX] = this.languageProvider.syntax;
-    Prism.languages[PRISM_SYNTAX][METRIC_MARK] = {
-      alias: 'variable',
-      pattern: new RegExp(`(?:^|\\s)(${metrics.join('|')})(?:$|\\s)`),
-    };
 
     // Build metrics tree
     const metricsByPrefix = groupMetricsByPrefix(metrics);
@@ -251,7 +244,16 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
           ]
         : metricsByPrefix;
 
-    this.setState({ metricsOptions, syntaxLoaded: true });
+    // Hint for big disabled lookups
+    let hint: QueryHint;
+    if (lookupsDisabled) {
+      hint = {
+        label: `Dynamic label lookup is disabled for datasources with more than ${lookupMetricsThreshold} metrics.`,
+        type: 'INFO',
+      };
+    }
+
+    this.setState({ hint, metricsOptions, syntaxLoaded: true });
   };
 
   onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
@@ -284,11 +286,13 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       <>
         <div className="gf-form-inline gf-form-inline--nowrap">
           <div className="gf-form flex-shrink-0">
-            <Cascader options={metricsOptions} onChange={this.onChangeMetrics} expandIcon={null}>
-              <button className="gf-form-label gf-form-label--btn" disabled={buttonDisabled}>
-                {chooserText} <i className="fa fa-caret-down" />
-              </button>
-            </Cascader>
+            <Cascader
+              options={metricsOptions}
+              buttonText={chooserText}
+              disabled={buttonDisabled}
+              onChange={this.onChangeMetrics}
+              expandIcon={null}
+            />
           </div>
           <div className="gf-form gf-form--grow flex-shrink-1">
             <QueryField
@@ -297,6 +301,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
               query={query.expr}
               onTypeahead={this.onTypeahead}
               onWillApplySuggestion={willApplySuggestion}
+              onBlur={this.props.onBlur}
               onChange={this.onChangeQuery}
               onRunQuery={this.props.onRunQuery}
               placeholder="Enter a PromQL query"

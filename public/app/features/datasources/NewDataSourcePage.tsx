@@ -1,13 +1,15 @@
-import React, { PureComponent, FC } from 'react';
+import React, { FC, PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
+import { DataSourcePluginMeta, NavModel, PluginType } from '@grafana/data';
+import { List } from '@grafana/ui';
+import { e2e } from '@grafana/e2e';
+
 import Page from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
 import { addDataSource, loadDataSourceTypes, setDataSourceTypeSearchQuery } from './state/actions';
 import { getDataSourceTypes } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
-import { List } from '@grafana/ui';
-import { DataSourcePluginMeta, NavModel, PluginType } from '@grafana/data';
 
 export interface Props {
   navModel: NavModel;
@@ -105,16 +107,13 @@ class NewDataSourcePage extends PureComponent<Props> {
       return null;
     }
 
-    const categories = dataSourceTypes.reduce(
-      (accumulator, item) => {
-        const category = item.category || 'other';
-        const list = accumulator[category] || [];
-        list.push(item);
-        accumulator[category] = list;
-        return accumulator;
-      },
-      {} as DataSourceCategories
-    );
+    const categories = dataSourceTypes.reduce((accumulator, item) => {
+      const category = item.category || 'other';
+      const list = accumulator[category] || [];
+      list.push(item);
+      accumulator[category] = list;
+      return accumulator;
+    }, {} as DataSourceCategories);
 
     categories['cloud'].push(getGrafanaCloudPhantomPlugin());
 
@@ -187,7 +186,11 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
   const learnMoreLink = plugin.info.links && plugin.info.links.length > 0 ? plugin.info.links[0].url : null;
 
   return (
-    <div className="add-data-source-item" onClick={onClick} aria-label={`${plugin.name} datasource plugin`}>
+    <div
+      className="add-data-source-item"
+      onClick={onClick}
+      aria-label={e2e.pages.AddDataSource.selectors.dataSourcePlugins(plugin.name)}
+    >
       <img className="add-data-source-item-logo" src={plugin.info.logos.small} />
       <div className="add-data-source-item-text-wrapper">
         <span className="add-data-source-item-text">{plugin.name}</span>
@@ -224,7 +227,7 @@ function getGrafanaCloudPhantomPlugin(): DataSourcePluginMeta {
       author: { name: 'Grafana Labs' },
       links: [
         {
-          url: 'https://grafana.com/cloud',
+          url: 'https://grafana.com/products/cloud/',
           name: 'Learn more',
         },
       ],
@@ -265,9 +268,4 @@ const mapDispatchToProps = {
   setDataSourceTypeSearchQuery,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(NewDataSourcePage)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(NewDataSourcePage));

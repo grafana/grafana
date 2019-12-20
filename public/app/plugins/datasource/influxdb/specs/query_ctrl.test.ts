@@ -21,7 +21,6 @@ describe('InfluxDBQueryCtrl', () => {
       {},
       {} as any,
       {} as any,
-      {} as any,
       //@ts-ignore
       new uiSegmentSrv({ trustAsHtml: (html: any) => html }, { highlightVariablesAsHtml: () => {} })
     );

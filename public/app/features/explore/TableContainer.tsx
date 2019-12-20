@@ -48,9 +48,4 @@ const mapDispatchToProps = {
   toggleTable,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(TableContainer)
-);
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TableContainer));

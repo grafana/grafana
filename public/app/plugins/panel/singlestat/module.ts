@@ -21,12 +21,12 @@ import {
   getDisplayProcessor,
   getColorFromHexRgbOrName,
   PanelEvents,
+  formattedValueToString,
 } from '@grafana/data';
 
 import { convertOldAngularValueMapping } from '@grafana/ui';
 
 import { CoreEvents } from 'app/types';
-import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
@@ -52,7 +52,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   data: Partial<ShowData> = {};
 
   fontSizes: any[];
-  unitFormats: any[];
   fieldNames: string[] = [];
 
   invalidGaugeRange: boolean;
@@ -85,7 +84,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     postfix: '',
     nullText: null,
     valueMaps: [{ value: 'null', op: '=', text: 'N/A' }],
-    mappingTypes: [{ name: 'value to text', value: 1 }, { name: 'range to text', value: 2 }],
+    mappingTypes: [
+      { name: 'value to text', value: 1 },
+      { name: 'range to text', value: 2 },
+    ],
     rangeMaps: [{ from: 'null', to: 'null', text: 'N/A' }],
     mappingType: 1,
     nullPointMode: 'connected',
@@ -121,7 +123,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     _.defaults(this.panel, this.panelDefaults);
 
     this.events.on(CoreEvents.dataFramesReceived, this.onFramesReceived.bind(this));
-    this.events.on(PanelEvents.dataError, this.onDataError.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onSnapshotLoad.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
 
@@ -135,7 +136,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.fontSizes = ['20%', '30%', '50%', '70%', '80%', '100%', '110%', '120%', '150%', '170%', '200%'];
     this.addEditorTab('Options', 'public/app/plugins/panel/singlestat/editor.html', 2);
     this.addEditorTab('Value Mappings', 'public/app/plugins/panel/singlestat/mappings.html', 3);
-    this.unitFormats = kbn.getUnitFormats();
   }
 
   migrateToGaugePanel(migrate: boolean) {
@@ -147,13 +147,11 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
   }
 
-  setUnitFormat(subItem: { value: any }) {
-    this.panel.format = subItem.value;
-    this.refresh();
-  }
-
-  onDataError(err: any) {
-    this.handleDataFrames([]);
+  setUnitFormat() {
+    return (unit: string) => {
+      this.panel.format = unit;
+      this.refresh();
+    };
   }
 
   onSnapshotLoad(dataList: LegacyResponseData[]) {
@@ -373,7 +371,12 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         body += getSpan('singlestat-panel-prefix', panel.prefixFontSize, panel.colorPrefix, panel.prefix);
       }
 
-      body += getSpan('singlestat-panel-value', panel.valueFontSize, panel.colorValue, data.display.text);
+      body += getSpan(
+        'singlestat-panel-value',
+        panel.valueFontSize,
+        panel.colorValue,
+        formattedValueToString(data.display)
+      );
 
       if (panel.postfix) {
         body += getSpan('singlestat-panel-postfix', panel.postfixFontSize, panel.colorPostfix, panel.postfix);
@@ -387,7 +390,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     function getValueText() {
       const data: ShowData = ctrl.data;
       let result = panel.prefix ? templateSrv.replace(panel.prefix, data.scopedVars) : '';
-      result += data.display.text;
+      result += formattedValueToString(data.display);
       result += panel.postfix ? templateSrv.replace(panel.postfix, data.scopedVars) : '';
 
       return result;

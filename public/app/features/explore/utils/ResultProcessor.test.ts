@@ -58,7 +58,7 @@ const testContext = (options: any = {}) => {
     queryIntervals: { intervalMs: 10 },
   } as any) as ExploreItemState;
 
-  const resultProcessor = new ResultProcessor(state, combinedOptions.dataFrames, 60000);
+  const resultProcessor = new ResultProcessor(state, combinedOptions.dataFrames, 60000, 'utc');
 
   return {
     dataFrames: combinedOptions.dataFrames,
@@ -99,19 +99,29 @@ describe('ResultProcessor', () => {
   describe('constructed with a result that is a DataQueryResponse', () => {
     describe('when calling getGraphResult', () => {
       it('then it should return correct graph result', () => {
-        const { resultProcessor } = testContext();
+        const { resultProcessor, dataFrames } = testContext();
+        const timeField = dataFrames[0].fields[1];
+        const valueField = dataFrames[0].fields[0];
         const theResult = resultProcessor.getGraphResult();
 
         expect(theResult).toEqual([
           {
             label: 'A-series',
             color: '#7EB26D',
-            data: [[100, 4], [200, 5], [300, 6]],
+            data: [
+              [100, 4],
+              [200, 5],
+              [300, 6],
+            ],
             info: undefined,
             isVisible: true,
             yAxis: {
               index: 1,
             },
+            seriesIndex: 0,
+            timeField,
+            valueField,
+            timeStep: 100,
           },
         ]);
       });
@@ -129,7 +139,11 @@ describe('ResultProcessor', () => {
             { text: 'time', type: 'time', filterable: undefined },
             { text: 'message', type: 'string', filterable: undefined },
           ],
-          rows: [[4, 100, 'this is a message'], [5, 200, 'second message'], [6, 300, 'third']],
+          rows: [
+            [4, 100, 'this is a message'],
+            [5, 200, 'second message'],
+            [6, 300, 'third'],
+          ],
           type: 'table',
         });
       });
@@ -137,7 +151,10 @@ describe('ResultProcessor', () => {
 
     describe('when calling getLogsResult', () => {
       it('then it should return correct logs result', () => {
-        const { resultProcessor } = testContext({ mode: ExploreMode.Logs });
+        const { resultProcessor, dataFrames } = testContext({ mode: ExploreMode.Logs });
+        const timeField = dataFrames[0].fields[1];
+        const valueField = dataFrames[0].fields[0];
+        const logsDataFrame = dataFrames[1];
         const theResult = resultProcessor.getLogsResult();
 
         expect(theResult).toEqual({
@@ -145,7 +162,10 @@ describe('ResultProcessor', () => {
           meta: [],
           rows: [
             {
+              rowIndex: 2,
+              dataFrame: logsDataFrame,
               entry: 'third',
+              entryFieldIndex: 2,
               hasAnsi: false,
               labels: undefined,
               logLevel: 'unknown',
@@ -160,7 +180,10 @@ describe('ResultProcessor', () => {
               uniqueLabels: {},
             },
             {
+              rowIndex: 1,
+              dataFrame: logsDataFrame,
               entry: 'second message',
+              entryFieldIndex: 2,
               hasAnsi: false,
               labels: undefined,
               logLevel: 'unknown',
@@ -175,7 +198,10 @@ describe('ResultProcessor', () => {
               uniqueLabels: {},
             },
             {
+              rowIndex: 0,
+              dataFrame: logsDataFrame,
               entry: 'this is a message',
+              entryFieldIndex: 2,
               hasAnsi: false,
               labels: undefined,
               logLevel: 'unknown',
@@ -194,12 +220,20 @@ describe('ResultProcessor', () => {
             {
               label: 'A-series',
               color: '#7EB26D',
-              data: [[100, 4], [200, 5], [300, 6]],
+              data: [
+                [100, 4],
+                [200, 5],
+                [300, 6],
+              ],
               info: undefined,
               isVisible: true,
               yAxis: {
                 index: 1,
               },
+              seriesIndex: 0,
+              timeField,
+              valueField,
+              timeStep: 100,
             },
           ],
         });

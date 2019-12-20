@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import { Tooltip } from '@grafana/ui';
 import { PanelPlugin, PanelPluginMeta } from '@grafana/data';
 import { AngularComponent, config } from '@grafana/runtime';
+import { e2e } from '@grafana/e2e';
 
 import { QueriesTab } from './QueriesTab';
 import VisualizationTab from './VisualizationTab';
@@ -114,12 +115,7 @@ export const mapStateToProps = (state: StoreState) => getActiveTabAndTabs(state.
 
 const mapDispatchToProps = { refreshPanelEditor, panelEditorCleanUp, changePanelEditorTab };
 
-export const PanelEditor = hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(UnConnectedPanelEditor)
-);
+export const PanelEditor = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedPanelEditor));
 
 interface TabItemParams {
   tab: PanelEditorTab;
@@ -135,7 +131,7 @@ function TabItem({ tab, activeTab, onClick }: TabItemParams) {
 
   return (
     <div className="panel-editor-tabs__item" onClick={() => onClick(tab)}>
-      <a className={tabClasses} aria-label={`${tab.text} tab button`}>
+      <a className={tabClasses} aria-label={e2e.pages.Panels.EditPanel.selectors.tabItems(tab.text)}>
         <Tooltip content={`${tab.text}`} placement="auto">
           <i className={`gicon gicon-${tab.id}${activeTab === tab.id ? '-active' : ''}`} />
         </Tooltip>

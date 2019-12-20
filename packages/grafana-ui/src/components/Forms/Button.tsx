@@ -3,7 +3,7 @@ import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
 import { selectThemeVariant, stylesFactory, ThemeContext } from '../../themes';
 import { Button as DefaultButton, LinkButton as DefaultLinkButton } from '../Button/Button';
-import { getFocusStyle } from './commonStyles';
+import { getFocusStyle, getPropertiesForButtonSize } from './commonStyles';
 import { ButtonSize, StyleDeps } from '../Button/types';
 import { GrafanaTheme } from '@grafana/data';
 
@@ -20,38 +20,6 @@ const buttonVariantStyles = (from: string, to: string, textColor: string) => css
     outline: none;
   }
 `;
-
-const getPropertiesForSize = (theme: GrafanaTheme, size: ButtonSize) => {
-  switch (size) {
-    case 'sm':
-      return {
-        padding: `0 ${theme.spacing.sm}`,
-        fontSize: theme.typography.size.sm,
-        height: theme.height.sm,
-      };
-
-    case 'md':
-      return {
-        padding: `0 ${theme.spacing.md}`,
-        fontSize: theme.typography.size.md,
-        height: `${theme.spacing.formButtonHeight}px`,
-      };
-
-    case 'lg':
-      return {
-        padding: `0 ${theme.spacing.lg}`,
-        fontSize: theme.typography.size.lg,
-        height: theme.height.lg,
-      };
-
-    default:
-      return {
-        padding: `0 ${theme.spacing.md}`,
-        fontSize: theme.typography.size.base,
-        height: theme.height.md,
-      };
-  }
-};
 
 const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) => {
   switch (variant) {
@@ -71,10 +39,11 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
 
       return {
         borderColor: selectThemeVariant({ light: theme.colors.gray70, dark: theme.colors.gray33 }, theme.type),
-        background: buttonVariantStyles(from, to, selectThemeVariant(
-          { light: theme.colors.gray25, dark: theme.colors.gray4 },
-          theme.type
-        ) as string),
+        background: buttonVariantStyles(
+          from,
+          to,
+          selectThemeVariant({ light: theme.colors.gray25, dark: theme.colors.gray4 }, theme.type) as string
+        ),
       };
 
     case 'destructive':
@@ -95,7 +64,7 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
 // Need to do this because of mismatch between variants in standard buttons and here
 type StyleProps = Omit<StyleDeps, 'variant'> & { variant: ButtonVariant };
 export const getButtonStyles = stylesFactory(({ theme, size, variant }: StyleProps) => {
-  const { padding, fontSize, height } = getPropertiesForSize(theme, size);
+  const { padding, fontSize, height } = getPropertiesForButtonSize(theme, size);
   const { background, borderColor } = getPropertiesForVariant(theme, variant);
 
   return {
@@ -106,14 +75,14 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant }: StylePro
         display: inline-flex;
         align-items: center;
         font-weight: ${theme.typography.weight.semibold};
-        font-size: ${fontSize};
         font-family: ${theme.typography.fontFamily.sansSerif};
         line-height: ${theme.typography.lineHeight.sm};
+        font-size: ${fontSize};
         padding: ${padding};
+        height: ${height};
         vertical-align: middle;
         cursor: pointer;
         border: 1px solid ${borderColor};
-        height: ${height};
         border-radius: ${theme.border.radius.sm};
         ${background};
 

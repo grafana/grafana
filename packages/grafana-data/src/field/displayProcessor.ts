@@ -5,15 +5,17 @@ import _ from 'lodash';
 import { getColorFromHexRgbOrName } from '../utils/namedColorsPalette';
 
 // Types
-import { FieldConfig } from '../types/dataFrame';
+import { FieldConfig, FieldType } from '../types/dataFrame';
 import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
 import { DisplayProcessor, DisplayValue, DecimalCount, DecimalInfo } from '../types/displayValue';
 import { getValueFormat } from '../valueFormats/valueFormats';
 import { getMappedValue } from '../utils/valueMappings';
 import { Threshold } from '../types/threshold';
-// import { GrafanaTheme, GrafanaThemeType, FieldConfig } from '../types/index';
+import { DEFAULT_DATE_TIME_FORMAT } from '../datetime';
+import { KeyValue } from '../types';
 
 interface DisplayProcessorOptions {
+  type?: FieldType;
   config?: FieldConfig;
 
   // Context
@@ -21,9 +23,27 @@ interface DisplayProcessorOptions {
   theme?: GrafanaTheme; // Will pick 'dark' if not defined
 }
 
+// Reasonable units for time
+const timeFormats: KeyValue<boolean> = {
+  dateTimeAsIso: true,
+  dateTimeAsUS: true,
+  dateTimeFromNow: true,
+};
+
 export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayProcessor {
   if (options && !_.isEmpty(options)) {
     const field = options.config ? options.config : {};
+
+    if (options.type === FieldType.time) {
+      if (field.unit && timeFormats[field.unit]) {
+        // Currently selected unit is valid for time fields
+      } else if (field.unit && field.unit.startsWith('time:')) {
+        // Also OK
+      } else {
+        field.unit = `time:${DEFAULT_DATE_TIME_FORMAT}`;
+      }
+    }
+
     const formatFunc = getValueFormat(field.unit || 'none');
 
     return (value: any) => {
@@ -33,6 +53,8 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
       let text = _.toString(value);
       let numeric = toNumber(value);
+      let prefix: string | undefined = undefined;
+      let suffix: string | undefined = undefined;
 
       let shouldFormat = true;
       if (mappings && mappings.length > 0) {
@@ -53,7 +75,10 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       if (!isNaN(numeric)) {
         if (shouldFormat && !_.isBoolean(value)) {
           const { decimals, scaledDecimals } = getDecimalsForValue(value, field.decimals);
-          text = formatFunc(numeric, decimals, scaledDecimals, options.isUtc);
+          const v = formatFunc(numeric, decimals, scaledDecimals, options.isUtc);
+          text = v.text;
+          suffix = v.suffix;
+          prefix = v.prefix;
 
           // Check if the formatted text mapped to a different value
           if (mappings && mappings.length > 0) {
@@ -75,7 +100,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
           text = ''; // No data?
         }
       }
-      return { text, numeric, color };
+      return { text, numeric, color, prefix, suffix };
     };
   }
 
@@ -87,7 +112,7 @@ function toNumber(value: any): number {
   if (typeof value === 'number') {
     return value;
   }
-  if (value === null || value === undefined || Array.isArray(value)) {
+  if (value === '' || value === null || value === undefined || Array.isArray(value)) {
     return NaN; // lodash calls them 0
   }
   if (typeof value === 'boolean') {
