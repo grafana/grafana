@@ -116,27 +116,8 @@ export class DashNav extends PureComponent<Props> {
   };
 
   renderDashboardTitleSearchButton() {
-    const { dashboard } = this.props;
-
-    const folderTitle = dashboard.meta.folderTitle;
-    const haveFolder = dashboard.meta.folderId > 0;
-
     return (
       <>
-        <div>
-          <div className="navbar-page-btn">
-            {!this.isInFullscreenOrSettings && <i className="gicon gicon-dashboard" />}
-            {haveFolder && (
-              <>
-                <a className="navbar-page-btn__folder" onClick={this.onFolderNameClick}>
-                  {folderTitle}
-                </a>
-                <i className="fa fa-chevron-right navbar-page-btn__folder-icon" />
-              </>
-            )}
-          </div>
-        </div>
-        {this.isSettings && <span className="navbar-settings-title">&nbsp;/ Settings</span>}
         <div className="navbar__spacer" />
       </>
     );
@@ -167,10 +148,7 @@ export class DashNav extends PureComponent<Props> {
   }
 
   render() {
-    const { dashboard, onAddPanel, location, $injector } = this.props;
-    const { canStar, canSave, canShare, showSettings, isStarred } = dashboard.meta;
-    const { snapshot } = dashboard;
-    const snapshotUrl = snapshot && snapshot.originalUrl;
+    const { dashboard, location, $injector } = this.props;
     return (
       <div className="navbar">
         {this.isInFullscreenOrSettings && this.renderBackButton()}
@@ -198,57 +176,6 @@ export class DashNav extends PureComponent<Props> {
             />
           </div>
         )}
-
-        <div className="navbar-buttons navbar-buttons--actions">
-          {canSave && (
-            <DashNavButton
-              tooltip="Add panel"
-              classSuffix="add-panel"
-              icon="gicon gicon-add-panel"
-              onClick={onAddPanel}
-            />
-          )}
-
-          {canStar && (
-            <DashNavButton
-              tooltip="Mark as favorite"
-              classSuffix="star"
-              icon={`${isStarred ? 'fa fa-star' : 'fa fa-star-o'}`}
-              onClick={this.onStarDashboard}
-            />
-          )}
-
-          {canShare && (
-            <DashNavButton
-              tooltip="Share dashboard"
-              classSuffix="share"
-              icon="fa fa-share-square-o"
-              onClick={this.onOpenShare}
-            />
-          )}
-
-          {canSave && (
-            <DashNavButton tooltip="Save dashboard" classSuffix="save" icon="fa fa-save" onClick={this.onSave} />
-          )}
-
-          {snapshotUrl && (
-            <DashNavButton
-              tooltip="Open original dashboard"
-              classSuffix="snapshot-origin"
-              icon="gicon gicon-link"
-              href={snapshotUrl}
-            />
-          )}
-
-          {showSettings && (
-            <DashNavButton
-              tooltip="Dashboard settings"
-              classSuffix="settings"
-              icon="gicon gicon-cog"
-              onClick={this.onOpenSettings}
-            />
-          )}
-        </div>
 
         {!dashboard.timepicker.hidden && (
           <div className="navbar-buttons">
