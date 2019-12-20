@@ -39,6 +39,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       flex-direction: column;
       border-right: 1px solid ${colors.border};
       width: 60%;
+      overflow: hidden;
 
       @media only screen and (max-width: ${theme.breakpoints.lg}) {
         display: none;

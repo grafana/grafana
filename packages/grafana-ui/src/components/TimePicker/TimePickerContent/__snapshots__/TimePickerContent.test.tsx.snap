@@ -5,7 +5,7 @@ exports[`TimePickerContent renders correctly in full screen 1`] = `
   className="css-1tqlm6b"
 >
   <div
-    className="css-8j3dyg"
+    className="css-13dsoi7"
   >
     <FullScreenForm
       historyOptions={Array []}
@@ -96,7 +96,7 @@ exports[`TimePickerContent renders correctly in narrow screen 1`] = `
   className="css-1tqlm6b"
 >
   <div
-    className="css-8j3dyg"
+    className="css-13dsoi7"
   >
     <FullScreenForm
       historyOptions={Array []}
@@ -187,7 +187,7 @@ exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
   className="css-1tqlm6b"
 >
   <div
-    className="css-8j3dyg"
+    className="css-13dsoi7"
   >
     <FullScreenForm
       history={
