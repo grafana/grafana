@@ -1,12 +1,13 @@
 import React from 'react';
 import { NewTable } from './NewTable';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { number } from '@storybook/addon-knobs';
 import { useTheme } from '../../themes';
 import mdx from './NewTable.mdx';
 import { DataFrame, MutableDataFrame, FieldType, GrafanaTheme, applyFieldOverrides } from '@grafana/data';
 
 export default {
-  title: 'UI/Table/NewTable',
+  title: 'Visualizations/Table',
   component: NewTable,
   decorators: [withCenteredStory],
   parameters: {
@@ -55,9 +56,11 @@ function buildData(theme: GrafanaTheme): DataFrame {
 
 export const simple = () => {
   const theme = useTheme();
+  const width = number('width', 700, {}, 'Props');
+
   return (
     <div className="panel-container" style={{ width: 'auto' }}>
-      <NewTable data={buildData(theme)} height={500} width={700} />
+      <NewTable data={buildData(theme)} height={500} width={width} />
     </div>
   );
 };

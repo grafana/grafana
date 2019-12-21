@@ -18163,10 +18163,10 @@ react-syntax-highlighter@^8.0.1:
     prismjs "^1.8.4"
     refractor "^2.4.1"
 
-react-table@7.0.0-rc.4:
-  version "7.0.0-rc.4"
-  resolved "https://registry.yarnpkg.com/react-table/-/react-table-7.0.0-rc.4.tgz#88bc61747821f3c3bbbfc7e1a4a088cbe94ed9ee"
-  integrity sha512-NOYmNmAIvQ9sSZd5xMNSthqiZ/o5h8h28MhFQFSxCu5u3v9J8PNh7x9wYMnk737MTjoKCZWIZT/dMFCPItXzEg==
+react-table@latest:
+  version "7.0.0-rc.15"
+  resolved "https://registry.yarnpkg.com/react-table/-/react-table-7.0.0-rc.15.tgz#bb855e4e2abbb4aaf0ed2334404a41f3ada8e13a"
+  integrity sha512-ofMOlgrioHhhvHjvjsQkxvfQzU98cqwy6BjPGNwhLN1vhgXeWi0mUGreaCPvRenEbTiXsQbMl4k3Xmx3Mut8Rw==
 
 react-test-renderer@16.9.0:
   version "16.9.0"

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { DataFrame } from '@grafana/data';
 // @ts-ignore
-import { useBlockLayout, useSortBy, useTable } from 'react-table';
+import { useSortBy, useTable, useFlexLayout } from 'react-table';
 import { FixedSizeList } from 'react-window';
 import { getTableStyles } from './styles';
 import { getColumns, getTableRows } from './models';
@@ -14,20 +14,18 @@ export interface Props {
   onCellClick?: (key: string, value: string) => void;
 }
 
-const renderCell = (cell: any, columnWidth: number, cellStyles: string, onCellClick?: any) => {
+const renderCell = (cell: any, cellStyles: string, onCellClick?: any) => {
   const filterable = cell.column.field.config.filterable;
-  const style = {
-    cursor: `${filterable && onCellClick ? 'pointer' : 'default'}`,
-  };
-  console.log(cell);
+  const cellProps = cell.getCellProps();
+  let onClick: ((event: React.SyntheticEvent) => void) | undefined = undefined;
+
+  if (filterable && onCellClick) {
+    cellProps.style.cursor = 'pointer';
+    onClick = () => onCellClick(cell.column.Header, cell.value);
+  }
 
   return (
-    <div
-      className={cellStyles}
-      {...cell.getCellProps()}
-      onClick={filterable ? () => onCellClick(cell.column.Header, cell.value) : undefined}
-      style={style}
-    >
+    <div className={cellStyles} {...cell.getCellProps()} onClick={onClick}>
       {cell.render('Cell')}
     </div>
   );
@@ -35,15 +33,26 @@ const renderCell = (cell: any, columnWidth: number, cellStyles: string, onCellCl
 
 export const NewTable = ({ data, height, onCellClick, width }: Props) => {
   const theme = useTheme();
-  const columnWidth = Math.floor(width / data.fields.length);
-  const tableStyles = getTableStyles(theme, columnWidth);
+  const tableStyles = getTableStyles(theme);
+
+  const defaultColumn = React.useMemo(
+    () => ({
+      // When using the useFlexLayout:
+      minWidth: 30, // minWidth is only used as a limit for resizing
+      width: 50, // width is used for both the flex-basis and flex-grow
+      maxWidth: 200, // maxWidth is only used as a limit for resizing
+    }),
+    []
+  );
+
   const { getTableProps, headerGroups, rows, prepareRow } = useTable(
     {
       columns: useMemo(() => getColumns(data, theme), [data]),
       data: useMemo(() => getTableRows(data), [data]),
+      defaultColumn,
     },
     useSortBy,
-    useBlockLayout
+    useFlexLayout
   );
 
   const RenderRow = React.useCallback(
@@ -52,7 +61,7 @@ export const NewTable = ({ data, height, onCellClick, width }: Props) => {
       prepareRow(row);
       return (
         <div {...row.getRowProps({ style })}>
-          {row.cells.map((cell: any) => renderCell(cell, columnWidth, tableStyles.tableCell, onCellClick))}
+          {row.cells.map((cell: any) => renderCell(cell, tableStyles.tableCell, onCellClick))}
         </div>
       );
     },
@@ -60,16 +69,12 @@ export const NewTable = ({ data, height, onCellClick, width }: Props) => {
   );
 
   return (
-    <div {...getTableProps()}>
+    <div {...getTableProps()} className={tableStyles.table}>
       <div>
         {headerGroups.map((headerGroup: any) => (
-          <div {...headerGroup.getHeaderGroupProps()} style={{ display: 'table-row' }}>
+          <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()}>
             {headerGroup.headers.map((column: any) => (
-              <div
-                className={tableStyles.tableHeader}
-                {...column.getHeaderProps(column.getSortByToggleProps())}
-                style={{ display: 'table-cell', width: `${columnWidth}px` }}
-              >
+              <div className={tableStyles.headerCell} {...column.getHeaderProps(column.getSortByToggleProps())}>
                 {column.render('Header')}
                 <span>{column.isSorted ? (column.isSortedDesc ? ' 🔽' : ' 🔼') : ''}</span>
               </div>
