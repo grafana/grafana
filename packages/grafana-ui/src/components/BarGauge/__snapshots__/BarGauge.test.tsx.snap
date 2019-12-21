@@ -27,7 +27,7 @@ exports[`BarGauge Render with basic options should render 1`] = `
       style={
         Object {
           "alignItems": "center",
-          "color": "#808080",
+          "color": "#73BF69",
           "display": "flex",
           "fontSize": 140,
           "height": "300px",
@@ -40,8 +40,15 @@ exports[`BarGauge Render with basic options should render 1`] = `
       }
       value={
         Object {
+          "color": "#73BF69",
           "numeric": 25,
+          "prefix": undefined,
+          "suffix": undefined,
           "text": "25",
+          "threshold": Object {
+            "color": "green",
+            "value": -Infinity,
+          },
         }
       }
     />
@@ -60,9 +67,9 @@ exports[`BarGauge Render with basic options should render 1`] = `
     <div
       style={
         Object {
-          "background": "rgba(128, 128, 128, 0.35)",
+          "background": "rgba(115, 191, 105, 0.35)",
           "borderRadius": "3px",
-          "borderRight": "2px solid #808080",
+          "borderRight": "2px solid #73BF69",
           "height": "300px",
           "position": "relative",
           "transition": "width 1s",

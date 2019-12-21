@@ -42,10 +42,7 @@ function getProps(propOverrides?: Partial<Props>): Props {
     display: field.display!,
     height: 300,
     width: 300,
-    value: {
-      text: '25',
-      numeric: 25,
-    },
+    value: field.display(25),
     theme,
     orientation: VizOrientation.Horizontal,
   };
