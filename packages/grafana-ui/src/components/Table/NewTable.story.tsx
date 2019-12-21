@@ -1,8 +1,9 @@
 import React from 'react';
 import { NewTable } from './NewTable';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { useTheme } from '../../themes';
 import mdx from './NewTable.mdx';
-import { DataFrame, MutableDataFrame, FieldType } from '@grafana/data';
+import { DataFrame, MutableDataFrame, FieldType, GrafanaTheme, applyFieldOverrides } from '@grafana/data';
 
 export default {
   title: 'UI/Table/NewTable',
@@ -15,7 +16,7 @@ export default {
   },
 };
 
-function buildData(): DataFrame {
+function buildData(theme: GrafanaTheme): DataFrame {
   const data = new MutableDataFrame({
     fields: [
       { name: 'Time', type: FieldType.time, values: [] }, // The time field
@@ -41,13 +42,23 @@ function buildData(): DataFrame {
     ]);
   }
 
-  return data;
+  return applyFieldOverrides({
+    data: [data],
+    fieldOptions: {
+      calcs: [],
+      overrides: [],
+      defaults: {},
+    },
+    theme,
+    replaceVariables: (value: string) => value,
+  })[0];
 }
 
 export const simple = () => {
+  const theme = useTheme();
   return (
     <div className="panel-container" style={{ width: 'auto' }}>
-      <NewTable data={buildData()} height={500} width={700} />
+      <NewTable data={buildData(theme)} height={500} width={700} />
     </div>
   );
 };

@@ -46,10 +46,12 @@ export function applyFieldOverrides(options: GetFieldDisplayValuesOptions): Data
   if (!options.data) {
     return [];
   }
+
   const source = options.fieldOptions;
   if (!source) {
     return options.data;
   }
+
   let range: GlobalMinMax | undefined = undefined;
 
   // Prepare the Matchers

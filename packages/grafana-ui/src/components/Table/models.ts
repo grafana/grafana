@@ -1,5 +1,5 @@
 import { ComponentType } from 'react';
-import { DataFrame, Field, formattedValueToString, GrafanaTheme, getDisplayProcessor } from '@grafana/data';
+import { DataFrame, Field, formattedValueToString, GrafanaTheme } from '@grafana/data';
 
 export interface TableColumn {
   // React table props
@@ -12,6 +12,15 @@ export interface TableColumn {
 
 export interface TableRow {
   [x: string]: any;
+}
+
+export interface ReactTableCellProps {
+  cell: ReactTableCell;
+  column: TableColumn;
+}
+
+export interface ReactTableCell {
+  value: any;
 }
 
 export function getTableRows(data: DataFrame): TableRow[] {
@@ -33,14 +42,6 @@ export function getColumns(data: DataFrame, theme: GrafanaTheme): TableColumn[] 
   const cols: TableColumn[] = [];
 
   for (const field of data.fields) {
-    // Add display processor if there is non already
-    if (!field.display) {
-      field.display = getDisplayProcessor({
-        config: field.config,
-        theme,
-      });
-    }
-
     cols.push({
       Header: field.name,
       accessor: field.name,
@@ -50,15 +51,6 @@ export function getColumns(data: DataFrame, theme: GrafanaTheme): TableColumn[] 
   }
 
   return cols;
-}
-
-interface ReactTableCellProps {
-  cell: ReactTableCell;
-  column: TableColumn;
-}
-
-interface ReactTableCell {
-  value: any;
 }
 
 export function formatCellValue(props: ReactTableCellProps): string {
