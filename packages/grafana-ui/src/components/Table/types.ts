@@ -5,6 +5,14 @@ import { Field } from '@grafana/data';
 export interface FieldTableOptions {
   width: number;
   align: FieldTextAlignment;
+  displayMode: CellDisplayMode;
+}
+
+export enum CellDisplayMode {
+  Auto = 'auto',
+  ColorText = 'color-text',
+  ColorBackground = 'color-background',
+  BarGauge = 'bar-gauge',
 }
 
 export type FieldTextAlignment = 'auto' | 'left' | 'right' | 'center';

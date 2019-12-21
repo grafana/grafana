@@ -13,6 +13,7 @@ const fieldNameMacher: FieldMatcherInfo<string> = {
   get: (pattern: string) => {
     const regex = stringToJsRegex(pattern);
     return (field: Field) => {
+      console.log('fieldNameMacher', field.name, pattern);
       return regex.test(field.name);
     };
   },

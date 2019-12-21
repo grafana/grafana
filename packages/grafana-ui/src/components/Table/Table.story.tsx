@@ -4,7 +4,15 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { number } from '@storybook/addon-knobs';
 import { useTheme } from '../../themes';
 import mdx from './Table.mdx';
-import { DataFrame, MutableDataFrame, FieldType, GrafanaTheme, applyFieldOverrides } from '@grafana/data';
+import {
+  DataFrame,
+  MutableDataFrame,
+  FieldType,
+  GrafanaTheme,
+  applyFieldOverrides,
+  FieldMatcherID,
+  ConfigOverrideRule,
+} from '@grafana/data';
 
 export default {
   title: 'Visualizations/Table',
@@ -17,7 +25,7 @@ export default {
   },
 };
 
-function buildData(theme: GrafanaTheme): DataFrame {
+function buildData(theme: GrafanaTheme, overrides: ConfigOverrideRule[]): DataFrame {
   const data = new MutableDataFrame({
     fields: [
       { name: 'Time', type: FieldType.time, values: [] }, // The time field
@@ -55,7 +63,7 @@ function buildData(theme: GrafanaTheme): DataFrame {
   return applyFieldOverrides({
     data: [data],
     fieldOptions: {
-      overrides: [],
+      overrides,
       defaults: {},
     },
     theme,
@@ -63,13 +71,31 @@ function buildData(theme: GrafanaTheme): DataFrame {
   })[0];
 }
 
-export const simple = () => {
+export const Simple = () => {
   const theme = useTheme();
   const width = number('width', 700, {}, 'Props');
+  const data = buildData(theme, []);
 
   return (
     <div className="panel-container" style={{ width: 'auto' }}>
-      <Table data={buildData(theme)} height={500} width={width} />
+      <Table data={data} height={500} width={width} />
+    </div>
+  );
+};
+
+export const BarGaugeCell = () => {
+  const theme = useTheme();
+  const width = number('width', 700, {}, 'Props');
+  const data = buildData(theme, [
+    {
+      matcher: { id: FieldMatcherID.byName, options: 'Min' },
+      properties: [{ path: 'custom.width', value: 200 }],
+    },
+  ]);
+
+  return (
+    <div className="panel-container" style={{ width: 'auto' }}>
+      <Table data={data} height={500} width={width} />
     </div>
   );
 };

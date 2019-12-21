@@ -61,6 +61,7 @@ function renderHeader(column: any, className: string) {
 export const Table = ({ data, height, onCellClick, width }: Props) => {
   const theme = useTheme();
   const tableStyles = getTableStyles(theme);
+
   const { getTableProps, headerGroups, rows, prepareRow } = useTable(
     {
       columns: useMemo(() => getColumns(data, width, theme), [data]),

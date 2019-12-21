@@ -77,7 +77,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       const info = fieldMatchers.get(rule.matcher.id);
       if (info) {
         override.push({
-          match: info.get(rule.matcher),
+          match: info.get(rule.matcher.options),
           properties: rule.properties,
         });
       }
