@@ -4,7 +4,8 @@ import { DataFrame } from '@grafana/data';
 import { useSortBy, useTable, useBlockLayout } from 'react-table';
 import { FixedSizeList } from 'react-window';
 import { getTableStyles } from './styles';
-import { getColumns, getTableRows, TableColumn } from './models';
+import { getColumns, getTableRows } from './utils';
+import { TableColumn } from './types';
 import { useTheme } from '../../themes';
 
 export interface Props {
