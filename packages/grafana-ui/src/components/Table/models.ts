@@ -1,6 +1,6 @@
 import { TextAlignProperty } from 'csstype';
 import { ComponentType } from 'react';
-import { DataFrame, Field, formattedValueToString, GrafanaTheme, FieldType, FieldConfig } from '@grafana/data';
+import { DataFrame, Field, formattedValueToString, GrafanaTheme, FieldType } from '@grafana/data';
 
 export interface FieldTableOptions {
   width: number;
