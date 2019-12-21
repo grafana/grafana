@@ -593,22 +593,22 @@ func getRandomWalkTable(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.Quer
 	table := tsdb.Table{
 		Columns: []tsdb.TableColumn{
 			{Text: "Time"},
+			{Text: "Info"},
 			{Text: "Value"},
 			{Text: "Min"},
 			{Text: "Max"},
-			{Text: "Info"},
 		},
 		Rows: []tsdb.RowValues{},
 	}
 
 	withNil := query.Model.Get("withNil").MustBool(false)
 	walker := query.Model.Get("startValue").MustFloat64(rand.Float64() * 100)
-	spread := 2.5
+	spread := float64(100)
 	var info strings.Builder
 
 	for i := int64(0); i < query.MaxDataPoints && timeWalkerMs < to; i++ {
 		delta := rand.Float64() - 0.5
-		walker += delta
+		walker = delta
 
 		info.Reset()
 		if delta > 0 {
@@ -621,10 +621,10 @@ func getRandomWalkTable(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.Quer
 		}
 		row := tsdb.RowValues{
 			float64(timeWalkerMs),
+			info.String(),
 			walker,
 			walker - ((rand.Float64() * spread) + 0.01), // Min
 			walker + ((rand.Float64() * spread) + 0.01), // Max
-			info.String(),
 		}
 
 		// Add some random null values

@@ -29,6 +29,7 @@ function buildData(theme: GrafanaTheme, overrides: ConfigOverrideRule[]): DataFr
   const data = new MutableDataFrame({
     fields: [
       { name: 'Time', type: FieldType.time, values: [] }, // The time field
+      { name: 'Message', type: FieldType.string, values: [] }, // The time field
       {
         name: 'Value',
         type: FieldType.number,
@@ -38,25 +39,25 @@ function buildData(theme: GrafanaTheme, overrides: ConfigOverrideRule[]): DataFr
         },
       },
       {
-        name: 'Min',
+        name: 'Progress',
         type: FieldType.number,
         values: [],
         config: {
+          unit: 'percent',
           custom: {
             width: 50,
           },
         },
       },
-      { name: 'State', type: FieldType.string, values: [] },
     ],
   });
 
   for (let i = 0; i < 1000; i++) {
     data.appendRow([
       new Date().getTime(),
-      Math.random() * 100,
-      Math.random() * 100,
       i % 2 === 0 ? 'it is ok now' : 'not so good',
+      Math.random() * 100,
+      Math.random() * 100,
     ]);
   }
 
@@ -88,8 +89,13 @@ export const BarGaugeCell = () => {
   const width = number('width', 700, {}, 'Props');
   const data = buildData(theme, [
     {
-      matcher: { id: FieldMatcherID.byName, options: 'Min' },
-      properties: [{ path: 'custom.width', value: 200 }],
+      matcher: { id: FieldMatcherID.byName, options: 'Progress' },
+      properties: [
+        { path: 'custom.width', value: '200' },
+        { path: 'custom.displayMode', value: 'bar-gauge' },
+        { path: 'min', value: '0' },
+        { path: 'max', value: '100' },
+      ],
     },
   ]);
 

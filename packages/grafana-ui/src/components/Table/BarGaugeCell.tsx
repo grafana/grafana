@@ -1,11 +1,25 @@
+import React, { FC } from 'react';
 import { ReactTableCellProps } from './types';
 import { BarGauge } from '../BarGauge/BarGauge';
+import { VizOrientation } from '@grafana/data';
 
-export function BarGaugeCell(props: ReactTableCellProps) {
-  const { column } = props;
+const defaultThresholds = [
+  {
+    color: 'blue',
+    value: -Infinity,
+  },
+  {
+    color: 'green',
+    value: 20,
+  },
+];
 
-  if (!props.column.field.display) {
-    return '';
+export const BarGaugeCell: FC<ReactTableCellProps> = props => {
+  const { column, tableStyles, cell } = props;
+  const { field } = column;
+
+  if (!field.display) {
+    return null;
   }
 
   /* height: number; */
@@ -23,8 +37,21 @@ export function BarGaugeCell(props: ReactTableCellProps) {
   /* alignmentFactors?: DisplayValueAlignmentFactors; */
 
   console.log('BarGaugeCell', props);
-  return '1';
-  /* const displayValue = column.field.display(props.cell.value); */
-  /*  */
-  /* return <BarGauge width={column.width} /> */
-}
+  const displayValue = field.display(cell.value);
+
+  return (
+    <BarGauge
+      width={column.width - tableStyles.cellPadding * 2}
+      height={tableStyles.cellHeight - tableStyles.cellPadding * 2}
+      thresholds={field.config.thresholds || defaultThresholds}
+      value={displayValue}
+      maxValue={field.config.max || 100}
+      minValue={field.config.min || 0}
+      orientation={VizOrientation.Horizontal}
+      theme={tableStyles.theme}
+      itemSpacing={1}
+      cellWidth={8}
+      displayMode="gradient"
+    />
+  );
+};

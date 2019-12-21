@@ -1,6 +1,8 @@
 import { TextAlignProperty } from 'csstype';
-import { DataFrame, Field, formattedValueToString, GrafanaTheme, FieldType } from '@grafana/data';
-import { TableColumn, TableRow, ReactTableCellProps, FieldTableOptions } from './types';
+import { DataFrame, Field, GrafanaTheme, FieldType } from '@grafana/data';
+import { TableColumn, TableRow, FieldTableOptions, CellDisplayMode } from './types';
+import { BarGaugeCell } from './BarGaugeCell';
+import { DefaultCell } from './DefaultCell';
 
 export function getTableRows(data: DataFrame): TableRow[] {
   const tableData = [];
@@ -37,13 +39,21 @@ export function getColumns(data: DataFrame, availableWidth: number, theme: Grafa
       fieldCountWithoutWidth -= 1;
     }
 
+    let Cell = DefaultCell;
+    let textAlign = getTextAlign(field);
+
+    if (fieldTableOptions.displayMode === CellDisplayMode.BarGauge) {
+      Cell = BarGaugeCell;
+      textAlign = 'center';
+    }
+
     cols.push({
       field,
+      Cell,
+      textAlign,
       Header: field.name,
       accessor: field.name,
-      Cell: formatCellValue,
       width: fieldTableOptions.width,
-      textAlign: getTextAlign(field),
     });
   }
 
@@ -56,14 +66,4 @@ export function getColumns(data: DataFrame, availableWidth: number, theme: Grafa
   }
 
   return cols;
-}
-
-export function formatCellValue(props: ReactTableCellProps): string {
-  // if field has a display processor use that
-  if (props.column.field.display) {
-    const displayValue = props.column.field.display(props.cell.value);
-    return formattedValueToString(displayValue);
-  }
-
-  return String(props.cell.value);
 }

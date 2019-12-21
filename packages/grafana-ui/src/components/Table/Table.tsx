@@ -43,7 +43,7 @@ function renderCell(cell: RenderCellProps, className: string, onCellClick?: any)
   );
 }
 
-function renderHeader(column: any, className: string) {
+function renderHeaderCell(column: any, className: string) {
   const headerProps = column.getHeaderProps(column.getSortByToggleProps());
 
   if (column.textAlign) {
@@ -66,6 +66,7 @@ export const Table = ({ data, height, onCellClick, width }: Props) => {
     {
       columns: useMemo(() => getColumns(data, width, theme), [data]),
       data: useMemo(() => getTableRows(data), [data]),
+      tableStyles,
     },
     useSortBy,
     useBlockLayout
@@ -76,7 +77,7 @@ export const Table = ({ data, height, onCellClick, width }: Props) => {
       const row = rows[index];
       prepareRow(row);
       return (
-        <div {...row.getRowProps({ style })}>
+        <div {...row.getRowProps({ style })} className={tableStyles.row}>
           {row.cells.map((cell: RenderCellProps) => renderCell(cell, tableStyles.tableCell, onCellClick))}
         </div>
       );
@@ -89,7 +90,7 @@ export const Table = ({ data, height, onCellClick, width }: Props) => {
       <div>
         {headerGroups.map((headerGroup: any) => (
           <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()}>
-            {headerGroup.headers.map((column: any) => renderHeader(column, tableStyles.headerCell))}
+            {headerGroup.headers.map((column: any) => renderHeaderCell(column, tableStyles.headerCell))}
           </div>
         ))}
       </div>

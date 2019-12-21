@@ -1,13 +1,14 @@
+import { FieldConfigSource } from '@grafana/data';
+
 export interface Options {
+  fieldOptions: FieldConfigSource;
   showHeader: boolean;
-  fixedHeader: boolean;
-  fixedColumns: number;
-  rotate: boolean;
 }
 
 export const defaults: Options = {
+  fieldOptions: {
+    defaults: {},
+    overrides: [],
+  },
   showHeader: true,
-  fixedHeader: true,
-  fixedColumns: 0,
-  rotate: false,
 };

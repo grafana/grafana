@@ -1,6 +1,7 @@
 import { TextAlignProperty } from 'csstype';
 import { ComponentType } from 'react';
 import { Field } from '@grafana/data';
+import { TableStyles } from './styles';
 
 export interface FieldTableOptions {
   width: number;
@@ -21,7 +22,7 @@ export interface TableColumn {
   // React table props
   Header: string;
   accessor: string | Function;
-  Cell?: (props: ReactTableCellProps) => string | ComponentType<ReactTableCellProps>;
+  Cell: ComponentType<ReactTableCellProps>;
   // Grafana additions
   field: Field;
   width: number;
@@ -35,6 +36,7 @@ export interface TableRow {
 export interface ReactTableCellProps {
   cell: ReactTableCell;
   column: TableColumn;
+  tableStyles: TableStyles;
 }
 
 export interface ReactTableCell {
