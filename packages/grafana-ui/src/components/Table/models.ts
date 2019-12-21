@@ -1,6 +1,10 @@
 import { ComponentType } from 'react';
 import { DataFrame, Field, formattedValueToString, GrafanaTheme } from '@grafana/data';
 
+export interface FieldTableOptions {
+  width: number;
+}
+
 export interface TableColumn {
   // React table props
   Header: string;
@@ -8,6 +12,7 @@ export interface TableColumn {
   Cell?: (props: ReactTableCellProps) => string | ComponentType<ReactTableCellProps>;
   // Grafana additions
   field: Field;
+  width: number;
 }
 
 export interface TableRow {
@@ -42,11 +47,14 @@ export function getColumns(data: DataFrame, theme: GrafanaTheme): TableColumn[] 
   const cols: TableColumn[] = [];
 
   for (const field of data.fields) {
+    const tableOptions = (field.config.custom || {}) as FieldTableOptions;
+
     cols.push({
+      field,
       Header: field.name,
       accessor: field.name,
-      field: field,
       Cell: formatCellValue,
+      width: tableOptions.width || 100,
     });
   }
 

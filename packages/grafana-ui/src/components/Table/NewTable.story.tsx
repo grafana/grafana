@@ -29,7 +29,16 @@ function buildData(theme: GrafanaTheme): DataFrame {
           decimals: 2,
         },
       },
-      { name: 'Min', type: FieldType.number, values: [] },
+      {
+        name: 'Min',
+        type: FieldType.number,
+        values: [],
+        config: {
+          custom: {
+            width: 30,
+          },
+        },
+      },
       { name: 'State', type: FieldType.string, values: [] },
     ],
   });
