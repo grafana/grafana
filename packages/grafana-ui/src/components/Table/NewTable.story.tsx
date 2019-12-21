@@ -35,7 +35,7 @@ function buildData(theme: GrafanaTheme): DataFrame {
         values: [],
         config: {
           custom: {
-            width: 30,
+            width: 50,
           },
         },
       },

@@ -1,10 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, CSSProperties } from 'react';
 import { DataFrame } from '@grafana/data';
 // @ts-ignore
-import { useSortBy, useTable, useFlexLayout } from 'react-table';
+import { useSortBy, useTable, useBlockLayout } from 'react-table';
 import { FixedSizeList } from 'react-window';
 import { getTableStyles } from './styles';
-import { getColumns, getTableRows } from './models';
+import { getColumns, getTableRows, TableColumn } from './models';
 import { useTheme } from '../../themes';
 
 export interface Props {
@@ -14,7 +14,14 @@ export interface Props {
   onCellClick?: (key: string, value: string) => void;
 }
 
-const renderCell = (cell: any, cellStyles: string, onCellClick?: any) => {
+interface RenderCellProps {
+  column: TableColumn;
+  value: any;
+  getCellProps: () => { style: CSSProperties };
+  render: (component: string) => React.ReactNode;
+}
+
+function renderCell(cell: RenderCellProps, className: string, onCellClick?: any) {
   const filterable = cell.column.field.config.filterable;
   const cellProps = cell.getCellProps();
   let onClick: ((event: React.SyntheticEvent) => void) | undefined = undefined;
@@ -24,23 +31,42 @@ const renderCell = (cell: any, cellStyles: string, onCellClick?: any) => {
     onClick = () => onCellClick(cell.column.Header, cell.value);
   }
 
+  if (cell.column.textAlign) {
+    cellProps.style.textAlign = cell.column.textAlign;
+  }
+
   return (
-    <div className={cellStyles} {...cell.getCellProps()} onClick={onClick}>
+    <div className={className} {...cellProps} onClick={onClick}>
       {cell.render('Cell')}
     </div>
   );
-};
+}
+
+function renderHeader(column: any, className: string) {
+  const headerProps = column.getHeaderProps(column.getSortByToggleProps());
+
+  if (column.textAlign) {
+    headerProps.style.textAlign = column.textAlign;
+  }
+
+  return (
+    <div className={className} {...headerProps}>
+      {column.render('Header')}
+      <span>{column.isSorted ? (column.isSortedDesc ? ' 🔽' : ' 🔼') : ''}</span>
+    </div>
+  );
+}
 
 export const NewTable = ({ data, height, onCellClick, width }: Props) => {
   const theme = useTheme();
   const tableStyles = getTableStyles(theme);
   const { getTableProps, headerGroups, rows, prepareRow } = useTable(
     {
-      columns: useMemo(() => getColumns(data, theme), [data]),
+      columns: useMemo(() => getColumns(data, width, theme), [data]),
       data: useMemo(() => getTableRows(data), [data]),
     },
     useSortBy,
-    useFlexLayout
+    useBlockLayout
   );
 
   const RenderRow = React.useCallback(
@@ -49,7 +75,7 @@ export const NewTable = ({ data, height, onCellClick, width }: Props) => {
       prepareRow(row);
       return (
         <div {...row.getRowProps({ style })}>
-          {row.cells.map((cell: any) => renderCell(cell, tableStyles.tableCell, onCellClick))}
+          {row.cells.map((cell: RenderCellProps) => renderCell(cell, tableStyles.tableCell, onCellClick))}
         </div>
       );
     },
@@ -61,12 +87,7 @@ export const NewTable = ({ data, height, onCellClick, width }: Props) => {
       <div>
         {headerGroups.map((headerGroup: any) => (
           <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()}>
-            {headerGroup.headers.map((column: any) => (
-              <div className={tableStyles.headerCell} {...column.getHeaderProps(column.getSortByToggleProps())}>
-                {column.render('Header')}
-                <span>{column.isSorted ? (column.isSortedDesc ? ' 🔽' : ' 🔼') : ''}</span>
-              </div>
-            ))}
+            {headerGroup.headers.map((column: any) => renderHeader(column, tableStyles.headerCell))}
           </div>
         ))}
       </div>

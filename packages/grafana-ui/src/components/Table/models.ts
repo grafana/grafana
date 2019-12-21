@@ -1,9 +1,13 @@
+import { TextAlignProperty } from 'csstype';
 import { ComponentType } from 'react';
-import { DataFrame, Field, formattedValueToString, GrafanaTheme } from '@grafana/data';
+import { DataFrame, Field, formattedValueToString, GrafanaTheme, FieldType, FieldConfig } from '@grafana/data';
 
 export interface FieldTableOptions {
   width: number;
+  align: FieldTextAlignment;
 }
+
+export type FieldTextAlignment = 'auto' | 'left' | 'right' | 'center';
 
 export interface TableColumn {
   // React table props
@@ -13,6 +17,7 @@ export interface TableColumn {
   // Grafana additions
   field: Field;
   width: number;
+  textAlign: TextAlignProperty;
 }
 
 export interface TableRow {
@@ -43,19 +48,42 @@ export function getTableRows(data: DataFrame): TableRow[] {
   return tableData;
 }
 
-export function getColumns(data: DataFrame, theme: GrafanaTheme): TableColumn[] {
+function getTextAlign(field: Field): TextAlignProperty {
+  if (field.type === FieldType.number) {
+    return 'right';
+  }
+
+  return 'left';
+}
+
+export function getColumns(data: DataFrame, availableWidth: number, theme: GrafanaTheme): TableColumn[] {
   const cols: TableColumn[] = [];
+  let fieldCountWithoutWidth = data.fields.length;
 
   for (const field of data.fields) {
-    const tableOptions = (field.config.custom || {}) as FieldTableOptions;
+    const fieldTableOptions = (field.config.custom || {}) as FieldTableOptions;
+
+    if (fieldTableOptions.width) {
+      availableWidth -= fieldTableOptions.width;
+      fieldCountWithoutWidth -= 1;
+    }
 
     cols.push({
       field,
       Header: field.name,
       accessor: field.name,
       Cell: formatCellValue,
-      width: tableOptions.width || 100,
+      width: fieldTableOptions.width,
+      textAlign: getTextAlign(field),
     });
+  }
+
+  // divide up the rest of the space
+  const sharedWidth = availableWidth / fieldCountWithoutWidth;
+  for (const column of cols) {
+    if (!column.width) {
+      column.width = sharedWidth;
+    }
   }
 
   return cols;
