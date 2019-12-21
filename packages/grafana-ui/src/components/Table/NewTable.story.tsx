@@ -45,7 +45,6 @@ function buildData(theme: GrafanaTheme): DataFrame {
   return applyFieldOverrides({
     data: [data],
     fieldOptions: {
-      calcs: [],
       overrides: [],
       defaults: {},
     },
