@@ -34,22 +34,10 @@ const renderCell = (cell: any, cellStyles: string, onCellClick?: any) => {
 export const NewTable = ({ data, height, onCellClick, width }: Props) => {
   const theme = useTheme();
   const tableStyles = getTableStyles(theme);
-
-  const defaultColumn = React.useMemo(
-    () => ({
-      // When using the useFlexLayout:
-      minWidth: 30, // minWidth is only used as a limit for resizing
-      width: 50, // width is used for both the flex-basis and flex-grow
-      maxWidth: 200, // maxWidth is only used as a limit for resizing
-    }),
-    []
-  );
-
   const { getTableProps, headerGroups, rows, prepareRow } = useTable(
     {
       columns: useMemo(() => getColumns(data, theme), [data]),
       data: useMemo(() => getTableRows(data), [data]),
-      defaultColumn,
     },
     useSortBy,
     useFlexLayout
