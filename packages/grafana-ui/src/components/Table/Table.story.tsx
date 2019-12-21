@@ -3,7 +3,7 @@ import { Table } from './Table';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { number } from '@storybook/addon-knobs';
 import { useTheme } from '../../themes';
-import mdx from './NewTable.mdx';
+import mdx from './Table.mdx';
 import { DataFrame, MutableDataFrame, FieldType, GrafanaTheme, applyFieldOverrides } from '@grafana/data';
 
 export default {
