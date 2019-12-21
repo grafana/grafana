@@ -92,7 +92,7 @@ export const BarGaugeCell = () => {
       matcher: { id: FieldMatcherID.byName, options: 'Progress' },
       properties: [
         { path: 'custom.width', value: '200' },
-        { path: 'custom.displayMode', value: 'bar-gauge' },
+        { path: 'custom.displayMode', value: 'gradient-gauge' },
         { path: 'min', value: '0' },
         { path: 'max', value: '100' },
       ],
