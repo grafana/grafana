@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
-import { ReactTableCellProps } from './types';
-import { BarGauge } from '../BarGauge/BarGauge';
+import { ReactTableCellProps, TableCellDisplayMode } from './types';
+import { BarGauge, BarGaugeDisplayMode } from '../BarGauge/BarGauge';
 import { VizOrientation } from '@grafana/data';
 
 const defaultThresholds = [
@@ -22,22 +22,12 @@ export const BarGaugeCell: FC<ReactTableCellProps> = props => {
     return null;
   }
 
-  /* height: number; */
-  /* width: number; */
-  /* thresholds: Threshold[]; */
-  /* value: DisplayValue; */
-  /* maxValue: number; */
-  /* minValue: number; */
-  /* orientation: VizOrientation; */
-  /* itemSpacing?: number; */
-  /* displayMode: 'basic' | 'lcd' | 'gradient'; */
-  /* onClick?: React.MouseEventHandler<HTMLElement>; */
-  /* className?: string; */
-  /* showUnfilled?: boolean; */
-  /* alignmentFactors?: DisplayValueAlignmentFactors; */
-
-  console.log('BarGaugeCell', props);
   const displayValue = field.display(cell.value);
+  let barGaugeMode = BarGaugeDisplayMode.Gradient;
+
+  if (field.config.custom && field.config.custom.displayMode === TableCellDisplayMode.LcdGauge) {
+    barGaugeMode = BarGaugeDisplayMode.Lcd;
+  }
 
   return (
     <BarGauge
@@ -51,7 +41,7 @@ export const BarGaugeCell: FC<ReactTableCellProps> = props => {
       theme={tableStyles.theme}
       itemSpacing={1}
       cellWidth={8}
-      displayMode="gradient"
+      displayMode={barGaugeMode}
     />
   );
 };

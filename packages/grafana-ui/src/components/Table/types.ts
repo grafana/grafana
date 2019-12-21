@@ -3,17 +3,18 @@ import { ComponentType } from 'react';
 import { Field } from '@grafana/data';
 import { TableStyles } from './styles';
 
-export interface FieldTableOptions {
+export interface TableFieldOptions {
   width: number;
   align: FieldTextAlignment;
-  displayMode: CellDisplayMode;
+  displayMode: TableCellDisplayMode;
 }
 
-export enum CellDisplayMode {
+export enum TableCellDisplayMode {
   Auto = 'auto',
   ColorText = 'color-text',
   ColorBackground = 'color-background',
-  BarGauge = 'bar-gauge',
+  GradientGauge = 'gradient-gauge',
+  LcdGauge = 'lcd-gauge',
 }
 
 export type FieldTextAlignment = 'auto' | 'left' | 'right' | 'center';

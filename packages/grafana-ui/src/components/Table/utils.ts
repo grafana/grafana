@@ -1,6 +1,6 @@
 import { TextAlignProperty } from 'csstype';
 import { DataFrame, Field, GrafanaTheme, FieldType } from '@grafana/data';
-import { TableColumn, TableRow, FieldTableOptions, CellDisplayMode } from './types';
+import { TableColumn, TableRow, TableFieldOptions, TableCellDisplayMode } from './types';
 import { BarGaugeCell } from './BarGaugeCell';
 import { DefaultCell } from './DefaultCell';
 
@@ -32,7 +32,7 @@ export function getColumns(data: DataFrame, availableWidth: number, theme: Grafa
   let fieldCountWithoutWidth = data.fields.length;
 
   for (const field of data.fields) {
-    const fieldTableOptions = (field.config.custom || {}) as FieldTableOptions;
+    const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
 
     if (fieldTableOptions.width) {
       availableWidth -= fieldTableOptions.width;
@@ -42,9 +42,12 @@ export function getColumns(data: DataFrame, availableWidth: number, theme: Grafa
     let Cell = DefaultCell;
     let textAlign = getTextAlign(field);
 
-    if (fieldTableOptions.displayMode === CellDisplayMode.BarGauge) {
-      Cell = BarGaugeCell;
-      textAlign = 'center';
+    switch (fieldTableOptions.displayMode) {
+      case TableCellDisplayMode.LcdGauge:
+      case TableCellDisplayMode.GradientGauge:
+        Cell = BarGaugeCell;
+        textAlign = 'center';
+        break;
     }
 
     cols.push({

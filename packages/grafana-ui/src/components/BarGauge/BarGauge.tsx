@@ -40,11 +40,17 @@ export interface Props extends Themeable {
   orientation: VizOrientation;
   itemSpacing?: number;
   cellWidth?: number;
-  displayMode: 'basic' | 'lcd' | 'gradient';
+  displayMode: BarGaugeDisplayMode;
   onClick?: React.MouseEventHandler<HTMLElement>;
   className?: string;
   showUnfilled?: boolean;
   alignmentFactors?: DisplayValueAlignmentFactors;
+}
+
+export enum BarGaugeDisplayMode {
+  Basic = 'basic',
+  Lcd = 'lcd',
+  Gradient = 'gradient',
 }
 
 export class BarGauge extends PureComponent<Props> {
@@ -56,7 +62,7 @@ export class BarGauge extends PureComponent<Props> {
       text: '100',
       numeric: 100,
     },
-    displayMode: 'lcd',
+    displayMode: BarGaugeDisplayMode.Gradient,
     orientation: VizOrientation.Horizontal,
     thresholds: [],
     itemSpacing: 10,
