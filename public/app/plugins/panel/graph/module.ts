@@ -79,7 +79,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     lines: true,
     // fill factor
     fill: 1,
-    // fill factor
+    // fill gradient
     fillGradient: 0,
     // line width in pixels
     linewidth: 1,
@@ -153,7 +153,6 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     this.events.on(PanelEvents.render, this.onRender.bind(this));
     this.events.on(CoreEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
-    this.events.on(PanelEvents.dataReceived, this.onDataError.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onDataSnapshotLoad.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
     this.events.on(PanelEvents.initPanelActions, this.onInitPanelActions.bind(this));
@@ -207,12 +206,6 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     const frames = getProcessedDataFrames(snapshotData);
     this.onDataFramesReceived(frames);
-  }
-
-  onDataError(err: any) {
-    this.seriesList = [];
-    this.annotations = [];
-    this.render([]);
   }
 
   onDataFramesReceived(data: DataFrame[]) {
@@ -334,7 +327,9 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   exportCsv() {
     const scope = this.$scope.$new(true);
-    scope.seriesList = this.seriesList;
+    scope.seriesList = this.seriesList
+      .filter(series => !this.panel.legend.hideEmpty || !series.allIsNull)
+      .filter(series => !this.panel.legend.hideZero || !series.allIsZero);
     this.publishAppEvent(CoreEvents.showModal, {
       templateHtml: '<export-data-modal data="seriesList"></export-data-modal>',
       scope,

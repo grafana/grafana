@@ -24,8 +24,7 @@ import { Reducer } from 'redux';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { updateLocation } from 'app/core/actions/location';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
-import TableModel from 'app/core/table_model';
-import { DataSourceApi, DataQuery, LogsDedupStrategy, dateTime, LoadingState } from '@grafana/data';
+import { DataSourceApi, DataQuery, LogsDedupStrategy, dateTime, LoadingState, toDataFrame } from '@grafana/data';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
@@ -90,15 +89,11 @@ describe('Explore item reducer', () => {
           const queryKeys: string[] = [];
           const initalState: Partial<ExploreItemState> = {
             datasourceInstance: null,
-            StartPage: null,
-            showingStartPage: false,
             queries,
             queryKeys,
           };
           const expectedState: any = {
             datasourceInstance,
-            StartPage,
-            showingStartPage: true,
             queries,
             queryKeys,
             graphResult: null,
@@ -178,12 +173,23 @@ describe('Explore item reducer', () => {
 
     describe('when toggleTableAction is dispatched', () => {
       it('then it should set correct state', () => {
+        const table = toDataFrame({
+          name: 'logs',
+          fields: [
+            {
+              name: 'time',
+              type: 'number',
+              values: [1, 2],
+            },
+          ],
+        });
+
         reducerTester()
-          .givenReducer(itemReducer, { tableResult: {} })
+          .givenReducer(itemReducer, { tableResult: table })
           .whenActionIsDispatched(toggleTableAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual({ showingTable: true, tableResult: {} })
+          .thenStateShouldEqual({ showingTable: true, tableResult: table })
           .whenActionIsDispatched(toggleTableAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual({ showingTable: false, tableResult: new TableModel() });
+          .thenStateShouldEqual({ showingTable: false, tableResult: null });
       });
     });
   });

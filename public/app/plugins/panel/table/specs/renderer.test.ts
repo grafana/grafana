@@ -1,8 +1,24 @@
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
 import { TableRenderer } from '../renderer';
-import { getColorDefinitionByName } from '@grafana/data';
-import { ScopedVars } from '@grafana/data';
+import { getColorDefinitionByName, ScopedVars } from '@grafana/data';
+import { ColumnRender } from '../types';
+
+const sanitize = (value: any): string => {
+  return 'sanitized';
+};
+
+const templateSrv = {
+  replace: (value: any, scopedVars: ScopedVars) => {
+    if (scopedVars) {
+      // For testing variables replacement in link
+      _.each(scopedVars, (val, key) => {
+        value = value.replace('$' + key, val.value);
+      });
+    }
+    return value;
+  },
+};
 
 describe('when rendering table', () => {
   const SemiDarkOrange = getColorDefinitionByName('semi-dark-orange');
@@ -23,9 +39,10 @@ describe('when rendering table', () => {
       { text: 'RangeMapping' },
       { text: 'MappingColored' },
       { text: 'RangeMappingColored' },
+      { text: 'HiddenType' },
     ];
     table.rows = [
-      [1388556366666, 1230, 40, undefined, '', '', 'my.host.com', 'host1', ['value1', 'value2'], 1, 2, 1, 2],
+      [1388556366666, 1230, 40, undefined, '', '', 'my.host.com', 'host1', ['value1', 'value2'], 1, 2, 1, 2, 'ignored'],
     ];
 
     const panel = {
@@ -164,23 +181,11 @@ describe('when rendering table', () => {
           thresholds: [2, 5],
           colors: ['#00ff00', SemiDarkOrange.name, 'rgb(1,0,0)'],
         },
+        {
+          pattern: 'HiddenType',
+          type: 'hidden',
+        },
       ],
-    };
-
-    const sanitize = (value: any): string => {
-      return 'sanitized';
-    };
-
-    const templateSrv = {
-      replace: (value: any, scopedVars: ScopedVars) => {
-        if (scopedVars) {
-          // For testing variables replacement in link
-          _.each(scopedVars, (val, key) => {
-            value = value.replace('$' + key, val.value);
-          });
-        }
-        return value;
-      },
     };
 
     //@ts-ignore
@@ -385,7 +390,65 @@ describe('when rendering table', () => {
       const html = renderer.renderCell(12, 0, '7.1');
       expect(html).toBe('<td style="color:rgb(1,0,0)">7.1</td>');
     });
+
+    it('hidden columns should not be rendered', () => {
+      const html = renderer.renderCell(13, 0, 'ignored');
+      expect(html).toBe('');
+    });
+
+    it('render_values should ignore hidden columns', () => {
+      renderer.render(0); // this computes the hidden markers on the columns
+      const { columns, rows } = renderer.render_values();
+      expect(rows).toHaveLength(1);
+      expect(columns).toHaveLength(table.columns.length - 1);
+      expect(columns.filter((col: ColumnRender) => col.hidden)).toHaveLength(0);
+    });
   });
+});
+
+describe('when rendering table with different patterns', () => {
+  it.each`
+    column                 | pattern                        | expected
+    ${'Requests (Failed)'} | ${'/Requests \\(Failed\\)/'}   | ${'<td>1.230 s</td>'}
+    ${'Requests (Failed)'} | ${'/(Req)uests \\(Failed\\)/'} | ${'<td>1.230 s</td>'}
+    ${'Requests (Failed)'} | ${'Requests (Failed)'}         | ${'<td>1.230 s</td>'}
+    ${'Requests (Failed)'} | ${'Requests \\(Failed\\)'}     | ${'<td>1.230 s</td>'}
+    ${'Requests (Failed)'} | ${'/.*/'}                      | ${'<td>1.230 s</td>'}
+    ${'Some other column'} | ${'/.*/'}                      | ${'<td>1.230 s</td>'}
+    ${'Requests (Failed)'} | ${'/Requests (Failed)/'}       | ${'<td>1230</td>'}
+    ${'Requests (Failed)'} | ${'Response (Failed)'}         | ${'<td>1230</td>'}
+  `(
+    'number column should be formatted for a column:$column with the pattern:$pattern',
+    ({ column, pattern, expected }) => {
+      const table = new TableModel();
+      table.columns = [{ text: 'Time' }, { text: column }];
+      table.rows = [[1388556366666, 1230]];
+      const panel = {
+        pageSize: 10,
+        styles: [
+          {
+            pattern: 'Time',
+            type: 'date',
+            format: 'LLL',
+            alias: 'Timestamp',
+          },
+          {
+            pattern: pattern,
+            type: 'number',
+            unit: 'ms',
+            decimals: 3,
+            alias: pattern,
+          },
+        ],
+      };
+
+      //@ts-ignore
+      const renderer = new TableRenderer(panel, table, 'utc', sanitize, templateSrv);
+      const html = renderer.renderCell(1, 0, 1230);
+
+      expect(html).toBe(expected);
+    }
+  );
 });
 
 function normalize(str: string) {

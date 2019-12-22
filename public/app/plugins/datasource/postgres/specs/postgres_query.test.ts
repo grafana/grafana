@@ -61,7 +61,10 @@ describe('PostgresQuery', () => {
 
     let column = [{ type: 'column', params: ['value'] }];
     expect(query.buildValueColumn(column)).toBe('value');
-    column = [{ type: 'column', params: ['value'] }, { type: 'alias', params: ['alias'] }];
+    column = [
+      { type: 'column', params: ['value'] },
+      { type: 'alias', params: ['alias'] },
+    ];
     expect(query.buildValueColumn(column)).toBe('value AS "alias"');
     column = [
       { type: 'column', params: ['v'] },
@@ -87,7 +90,10 @@ describe('PostgresQuery', () => {
 
     let column = [{ type: 'column', params: ['value'] }];
     expect(query.buildValueColumn(column)).toBe('value');
-    column = [{ type: 'column', params: ['value'] }, { type: 'alias', params: ['alias'] }];
+    column = [
+      { type: 'column', params: ['value'] },
+      { type: 'alias', params: ['alias'] },
+    ];
     expect(query.buildValueColumn(column)).toBe('value AS "alias"');
     column = [
       { type: 'column', params: ['v'] },
@@ -130,7 +136,10 @@ describe('PostgresQuery', () => {
     query.target.where = [{ type: 'expression', params: ['v', '=', '1'] }];
     expect(query.buildWhereClause()).toBe('\nWHERE\n  v = 1');
 
-    query.target.where = [{ type: 'macro', name: '$__timeFilter' }, { type: 'expression', params: ['v', '=', '1'] }];
+    query.target.where = [
+      { type: 'macro', name: '$__timeFilter' },
+      { type: 'expression', params: ['v', '=', '1'] },
+    ];
     expect(query.buildWhereClause()).toBe('\nWHERE\n  $__timeFilter(t) AND\n  v = 1');
   });
 

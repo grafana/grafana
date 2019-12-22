@@ -27,19 +27,9 @@ import (
 	gocache "github.com/patrickmn/go-cache"
 )
 
-var gravatarSource string
-
-func UpdateGravatarSource() {
-	srcCfg := "//secure.gravatar.com/avatar/"
-
-	gravatarSource = srcCfg
-	if strings.HasPrefix(gravatarSource, "//") {
-		gravatarSource = "http:" + gravatarSource
-	} else if !strings.HasPrefix(gravatarSource, "http://") &&
-		!strings.HasPrefix(gravatarSource, "https://") {
-		gravatarSource = "http://" + gravatarSource
-	}
-}
+const (
+	gravatarSource = "https://secure.gravatar.com/avatar/"
+)
 
 // Avatar represents the avatar object.
 type Avatar struct {
@@ -88,14 +78,15 @@ func (this *CacheServer) Handler(ctx *macaron.Context) {
 	hash := urlPath[strings.LastIndex(urlPath, "/")+1:]
 
 	var avatar *Avatar
-
-	if obj, exist := this.cache.Get(hash); exist {
+	obj, exists := this.cache.Get(hash)
+	if exists {
 		avatar = obj.(*Avatar)
 	} else {
 		avatar = New(hash)
 	}
 
 	if avatar.Expired() {
+		// The cache item is either expired or newly created, update it from the server
 		if err := avatar.Update(); err != nil {
 			log.Trace("avatar update error: %v", err)
 			avatar = this.notFound
@@ -104,9 +95,9 @@ func (this *CacheServer) Handler(ctx *macaron.Context) {
 
 	if avatar.notFound {
 		avatar = this.notFound
-	} else {
+	} else if !exists {
 		if err := this.cache.Add(hash, avatar, gocache.DefaultExpiration); err != nil {
-			log.Warn("Error adding avatar to cache: %s", err)
+			log.Trace("Error adding avatar to cache: %s", err)
 		}
 	}
 
@@ -125,8 +116,6 @@ func (this *CacheServer) Handler(ctx *macaron.Context) {
 }
 
 func NewCacheServer() *CacheServer {
-	UpdateGravatarSource()
-
 	return &CacheServer{
 		notFound: newNotFound(),
 		cache:    gocache.New(time.Hour, time.Hour*2),
@@ -221,7 +210,6 @@ func (this *thunderTask) fetch() error {
 	req.Header.Set("Cache-Control", "no-cache")
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.154 Safari/537.36")
 	resp, err := client.Do(req)
-
 	if err != nil {
 		this.Avatar.notFound = true
 		return fmt.Errorf("gravatar unreachable, %v", err)

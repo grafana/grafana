@@ -19,6 +19,7 @@ import {
   PanelData,
   DataQueryRequest,
   PanelEvents,
+  TimeZone,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 import {
@@ -26,12 +27,10 @@ import {
   ActionTypes,
   splitCloseAction,
   SplitCloseActionPayload,
-  loadExploreDatasources,
   historyUpdatedAction,
   changeModeAction,
   setUrlReplacedAction,
   scanStopAction,
-  queryStartAction,
   changeRangeAction,
   clearOriginAction,
   addQueryRowAction,
@@ -54,7 +53,6 @@ import {
   updateUIStateAction,
   toggleLogLevelAction,
   changeLoadingStateAction,
-  resetExploreAction,
   queryStreamUpdatedAction,
   QueryEndedPayload,
   queryStoreSubscriptionAction,
@@ -64,7 +62,6 @@ import {
 import { reducerFactory, ActionOf } from 'app/core/redux';
 import { updateLocation } from 'app/core/actions/location';
 import { LocationUpdate } from '@grafana/runtime';
-import TableModel from 'app/core/table_model';
 import { ResultProcessor } from '../utils/ResultProcessor';
 
 export const DEFAULT_RANGE = {
@@ -84,13 +81,11 @@ export const makeInitialUpdateState = (): ExploreUpdateState => ({
  * Returns a fresh Explore area state
  */
 export const makeExploreItemState = (): ExploreItemState => ({
-  StartPage: undefined,
   containerWidth: 0,
   datasourceInstance: null,
   requestedDatasourceName: null,
   datasourceLoading: null,
   datasourceMissing: false,
-  exploreDatasources: [],
   history: [],
   queries: [],
   initialized: false,
@@ -229,7 +224,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         graphResult: null,
         tableResult: null,
         logsResult: null,
-        showingStartPage: Boolean(state.StartPage),
         queryKeys: getQueryKeys(queries, state.datasourceInstance),
         queryResponse: createEmptyQueryResponse(),
         loading: false,
@@ -274,30 +268,43 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: updateDatasourceInstanceAction,
     mapper: (state, action): ExploreItemState => {
-      const { datasourceInstance } = action.payload;
-      const [supportedModes, mode] = getModesForDatasource(datasourceInstance, state.mode);
-
-      const originPanelId = state.urlState && state.urlState.originPanelId;
+      const { datasourceInstance, version, mode } = action.payload;
 
       // Custom components
-      const StartPage = datasourceInstance.components.ExploreStartPage;
       stopQueryState(state.querySubscription);
+
+      let newMetadata = datasourceInstance.meta;
+
+      // HACK: Temporary hack for Loki datasource. Can remove when plugin.json structure is changed.
+      if (version && version.length && datasourceInstance.meta.name === 'Loki') {
+        const lokiVersionMetadata: Record<string, { metrics: boolean }> = {
+          v0: {
+            metrics: false,
+          },
+
+          v1: {
+            metrics: true,
+          },
+        };
+        newMetadata = { ...newMetadata, ...lokiVersionMetadata[version] };
+      }
+
+      const updatedDatasourceInstance = Object.assign(datasourceInstance, { meta: newMetadata });
+      const [supportedModes, newMode] = getModesForDatasource(updatedDatasourceInstance, state.mode);
 
       return {
         ...state,
-        datasourceInstance,
+        datasourceInstance: updatedDatasourceInstance,
         graphResult: null,
         tableResult: null,
         logsResult: null,
         latency: 0,
         queryResponse: createEmptyQueryResponse(),
         loading: false,
-        StartPage,
-        showingStartPage: Boolean(StartPage),
         queryKeys: [],
         supportedModes,
-        mode,
-        originPanelId,
+        mode: mode ?? newMode,
+        originPanelId: state.urlState && state.urlState.originPanelId,
       };
     },
   })
@@ -363,22 +370,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         ...state,
         queries: nextQueries,
         queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
-      };
-    },
-  })
-  .addMapper({
-    filter: queryStartAction,
-    mapper: (state): ExploreItemState => {
-      return {
-        ...state,
-        latency: 0,
-        queryResponse: {
-          ...state.queryResponse,
-          state: LoadingState.Loading,
-          error: null,
-        },
-        loading: true,
-        update: makeInitialUpdateState(),
       };
     },
   })
@@ -456,7 +447,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         return { ...state, showingTable };
       }
 
-      return { ...state, showingTable, tableResult: new TableModel() };
+      return { ...state, showingTable, tableResult: null };
     },
   })
   .addMapper({
@@ -477,15 +468,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         hiddenLogLevels: Array.from(hiddenLogLevels),
-      };
-    },
-  })
-  .addMapper({
-    filter: loadExploreDatasources,
-    mapper: (state, action): ExploreItemState => {
-      return {
-        ...state,
-        exploreDatasources: action.payload.exploreDatasources,
       };
     },
   })
@@ -583,13 +565,12 @@ export const processQueryResponse = (
       graphResult: null,
       tableResult: null,
       logsResult: null,
-      showingStartPage: false,
       update: makeInitialUpdateState(),
     };
   }
 
   const latency = request.endTime ? request.endTime - request.startTime : 0;
-  const processor = new ResultProcessor(state, series, request.intervalMs);
+  const processor = new ResultProcessor(state, series, request.intervalMs, request.timezone as TimeZone);
   const graphResult = processor.getGraphResult();
   const tableResult = processor.getTableResult();
   const logsResult = processor.getLogsResult();
@@ -609,7 +590,6 @@ export const processQueryResponse = (
     tableResult,
     logsResult,
     loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
-    showingStartPage: false,
     update: makeInitialUpdateState(),
   };
 };
@@ -656,10 +636,7 @@ export const updateChildRefreshState = (
 };
 
 const getModesForDatasource = (dataSource: DataSourceApi, currentMode: ExploreMode): [ExploreMode[], ExploreMode] => {
-  // Temporary hack here. We want Loki to work in dashboards for which it needs to have metrics = true which is weird
-  // for Explore.
-  // TODO: need to figure out a better way to handle this situation
-  const supportsGraph = dataSource.meta.name === 'Loki' ? false : dataSource.meta.metrics;
+  const supportsGraph = dataSource.meta.metrics;
   const supportsLogs = dataSource.meta.logs;
 
   let mode = currentMode || ExploreMode.Metrics;
@@ -675,6 +652,12 @@ const getModesForDatasource = (dataSource: DataSourceApi, currentMode: ExploreMo
 
   if (supportedModes.length === 1) {
     mode = supportedModes[0];
+  }
+
+  // HACK: Used to set Loki's default explore mode to Logs mode.
+  // A better solution would be to introduce a "default" or "preferred" mode to the datasource config
+  if (dataSource.meta.name === 'Loki' && !currentMode) {
+    mode = ExploreMode.Logs;
   }
 
   return [supportedModes, mode];
@@ -707,6 +690,11 @@ export const exploreReducer = (state = initialExploreState, action: HigherOrderA
     }
 
     case ActionTypes.ResetExplore: {
+      const leftState = state[ExploreId.left];
+      const rightState = state[ExploreId.right];
+      stopQueryState(leftState.querySubscription);
+      stopQueryState(rightState.querySubscription);
+
       if (action.payload.force || !Number.isInteger(state.left.originPanelId)) {
         return initialExploreState;
       }
@@ -734,19 +722,6 @@ export const exploreReducer = (state = initialExploreState, action: HigherOrderA
       return {
         ...state,
         split,
-        [ExploreId.left]: updateChildRefreshState(leftState, action.payload, ExploreId.left),
-        [ExploreId.right]: updateChildRefreshState(rightState, action.payload, ExploreId.right),
-      };
-    }
-
-    case resetExploreAction.type: {
-      const leftState = state[ExploreId.left];
-      const rightState = state[ExploreId.right];
-      stopQueryState(leftState.querySubscription);
-      stopQueryState(rightState.querySubscription);
-
-      return {
-        ...state,
         [ExploreId.left]: updateChildRefreshState(leftState, action.payload, ExploreId.left),
         [ExploreId.right]: updateChildRefreshState(rightState, action.payload, ExploreId.right),
       };

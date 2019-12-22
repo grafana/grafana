@@ -44,7 +44,7 @@ All our example plugins have build scripted configured.
 
 ## Keep your plugin up to date
 
-New versions of Grafana can sometimes cause plugins to break. Checkout our [PLUGIN_DEV.md](https://github.com/grafana/grafana/blob/master/PLUGIN_DEV.md) doc for changes in
+New versions of Grafana can sometimes cause plugins to break. Check out our [PLUGIN_DEV.md](https://github.com/grafana/grafana/blob/master/PLUGIN_DEV.md) doc for changes in
 Grafana that can impact your plugin.
 
 ## Metadata

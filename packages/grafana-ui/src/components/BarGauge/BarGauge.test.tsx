@@ -13,20 +13,19 @@ import {
 import { VizOrientation } from '@grafana/data';
 import { getTheme } from '../../themes';
 
-// jest.mock('jquery', () => ({
-//   plot: jest.fn(),
-// }));
-
 const green = '#73BF69';
 const orange = '#FF9830';
-// const red = '#BB';
 
 function getProps(propOverrides?: Partial<Props>): Props {
   const props: Props = {
     maxValue: 100,
     minValue: 0,
     displayMode: 'basic',
-    thresholds: [{ value: -Infinity, color: 'green' }, { value: 70, color: 'orange' }, { value: 90, color: 'red' }],
+    thresholds: [
+      { value: -Infinity, color: 'green' },
+      { value: 70, color: 'orange' },
+      { value: 90, color: 'red' },
+    ],
     height: 300,
     width: 300,
     value: {
@@ -107,6 +106,20 @@ describe('BarGauge', () => {
       });
       const styles = getBasicAndGradientStyles(props);
       expect(styles.bar.height).toBe('249px');
+      expect(styles.emptyBar.bottom).toBe('-3px');
+    });
+  });
+
+  describe('Horizontal bar', () => {
+    it('should stretch items', () => {
+      const props = getProps({
+        height: 300,
+        value: getValue(100, 'ServerA'),
+        orientation: VizOrientation.Horizontal,
+      });
+      const styles = getBasicAndGradientStyles(props);
+      expect(styles.wrapper.alignItems).toBe('stretch');
+      expect(styles.emptyBar.left).toBe('-3px');
     });
   });
 
@@ -131,6 +144,38 @@ describe('BarGauge', () => {
       });
       const styles = getTitleStyles(props);
       expect(styles.wrapper.flexDirection).toBe('row');
+    });
+
+    it('should calculate title width based on title', () => {
+      const props = getProps({
+        height: 30,
+        value: getValue(100, 'AA'),
+        orientation: VizOrientation.Horizontal,
+      });
+      const styles = getTitleStyles(props);
+      expect(styles.title.width).toBe('17px');
+
+      const props2 = getProps({
+        height: 30,
+        value: getValue(120, 'Longer title with many words'),
+        orientation: VizOrientation.Horizontal,
+      });
+      const styles2 = getTitleStyles(props2);
+      expect(styles2.title.width).toBe('43px');
+    });
+
+    it('should use alignmentFactors if provided', () => {
+      const props = getProps({
+        height: 30,
+        value: getValue(100, 'AA'),
+        alignmentFactors: {
+          title: 'Super duper long title',
+          text: '1000',
+        },
+        orientation: VizOrientation.Horizontal,
+      });
+      const styles = getTitleStyles(props);
+      expect(styles.title.width).toBe('37px');
     });
   });
 
