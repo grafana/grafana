@@ -22,7 +22,7 @@ function getData() {
         values: [],
         config: {
           custom: {
-            textAlign: 'center',
+            align: 'center',
           },
         },
       },

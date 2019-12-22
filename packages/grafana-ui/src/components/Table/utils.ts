@@ -2,7 +2,7 @@ import { TextAlignProperty } from 'csstype';
 import { DataFrame, Field, GrafanaTheme, FieldType } from '@grafana/data';
 import { TableColumn, TableRow, TableFieldOptions, TableCellDisplayMode } from './types';
 import { BarGaugeCell } from './BarGaugeCell';
-import { DefaultCell } from './DefaultCell';
+import { DefaultCell, BackgroundColoredCell } from './DefaultCell';
 
 export function getTableRows(data: DataFrame): TableRow[] {
   const tableData = [];
@@ -23,7 +23,7 @@ function getTextAlign(field: Field): TextAlignProperty {
   if (field.config.custom) {
     const custom = field.config.custom as TableFieldOptions;
 
-    switch (custom.textAlign) {
+    switch (custom.align) {
       case 'right':
         return 'right';
       case 'left':
@@ -56,6 +56,9 @@ export function getColumns(data: DataFrame, availableWidth: number, theme: Grafa
     let textAlign = getTextAlign(field);
 
     switch (fieldTableOptions.displayMode) {
+      case TableCellDisplayMode.ColorBackground:
+        Cell = BackgroundColoredCell;
+        break;
       case TableCellDisplayMode.LcdGauge:
       case TableCellDisplayMode.GradientGauge:
         Cell = BarGaugeCell;

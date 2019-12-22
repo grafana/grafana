@@ -12,8 +12,10 @@ export interface Props {
   data: DataFrame;
   width: number;
   height: number;
-  onCellClick?: (key: string, value: string) => void;
+  onCellClick?: TableFilterActionCallback;
 }
+
+type TableFilterActionCallback = (key: string, value: string) => void;
 
 export const Table = ({ data, height, onCellClick, width }: Props) => {
   const theme = useTheme();
@@ -35,7 +37,7 @@ export const Table = ({ data, height, onCellClick, width }: Props) => {
       prepareRow(row);
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
-          {row.cells.map((cell: RenderCellProps) => renderCell(cell, tableStyles.tableCell, onCellClick))}
+          {row.cells.map((cell: RenderCellProps) => renderCell(cell, onCellClick))}
         </div>
       );
     },
@@ -51,7 +53,7 @@ export const Table = ({ data, height, onCellClick, width }: Props) => {
           </div>
         ))}
       </div>
-      <FixedSizeList height={height} itemCount={rows.length} itemSize={tableStyles.cellHeight} width={width}>
+      <FixedSizeList height={height} itemCount={rows.length} itemSize={tableStyles.rowHeight} width={width}>
         {RenderRow}
       </FixedSizeList>
     </div>
@@ -65,7 +67,7 @@ interface RenderCellProps {
   render: (component: string) => React.ReactNode;
 }
 
-function renderCell(cell: RenderCellProps, className: string, onCellClick?: any) {
+function renderCell(cell: RenderCellProps, onCellClick?: TableFilterActionCallback) {
   const filterable = cell.column.field.config.filterable;
   const cellProps = cell.getCellProps();
   let onClick: ((event: React.SyntheticEvent) => void) | undefined = undefined;
@@ -80,7 +82,7 @@ function renderCell(cell: RenderCellProps, className: string, onCellClick?: any)
   }
 
   return (
-    <div className={className} {...cellProps} onClick={onClick}>
+    <div {...cellProps} onClick={onClick}>
       {cell.render('Cell')}
     </div>
   );

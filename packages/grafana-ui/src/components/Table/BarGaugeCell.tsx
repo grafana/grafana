@@ -30,18 +30,20 @@ export const BarGaugeCell: FC<ReactTableCellProps> = props => {
   }
 
   return (
-    <BarGauge
-      width={column.width - tableStyles.cellPadding * 2}
-      height={tableStyles.cellHeight - tableStyles.cellPadding * 2}
-      thresholds={field.config.thresholds || defaultThresholds}
-      value={displayValue}
-      maxValue={field.config.max || 100}
-      minValue={field.config.min || 0}
-      orientation={VizOrientation.Horizontal}
-      theme={tableStyles.theme}
-      itemSpacing={1}
-      cellWidth={8}
-      displayMode={barGaugeMode}
-    />
+    <div className={tableStyles.tableCell}>
+      <BarGauge
+        width={column.width - tableStyles.cellPadding * 2}
+        height={tableStyles.cellHeightInner}
+        thresholds={field.config.thresholds || defaultThresholds}
+        value={displayValue}
+        maxValue={field.config.max || 100}
+        minValue={field.config.min || 0}
+        orientation={VizOrientation.Horizontal}
+        theme={tableStyles.theme}
+        itemSpacing={1}
+        cellWidth={8}
+        displayMode={barGaugeMode}
+      />
+    </div>
   );
 };

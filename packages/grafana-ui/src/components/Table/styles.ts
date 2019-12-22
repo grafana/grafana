@@ -4,7 +4,9 @@ import { stylesFactory, selectThemeVariant as stv } from '../../themes';
 
 export interface TableStyles {
   cellHeight: number;
+  cellHeightInner: number;
   cellPadding: number;
+  rowHeight: number;
   table: string;
   thead: string;
   headerCell: string;
@@ -18,11 +20,16 @@ export const getTableStyles = stylesFactory(
     const colors = theme.colors;
     const headerBg = stv({ light: colors.gray6, dark: colors.dark7 }, theme.type);
     const padding = 6;
+    const lineHeight = theme.typography.lineHeight.md;
+    const bodyFontSize = 14;
+    const cellHeight = padding * 2 + bodyFontSize * lineHeight;
 
     return {
       theme,
+      cellHeight,
       cellPadding: padding,
-      cellHeight: padding * 2 + 14 * 1.5 + 2,
+      cellHeightInner: bodyFontSize * lineHeight,
+      rowHeight: cellHeight + 2,
       table: css`
         overflow: auto;
         border-spacing: 0;
@@ -38,14 +45,14 @@ export const getTableStyles = stylesFactory(
         white-space: nowrap;
         color: ${colors.blue};
       `,
-      row: css``,
+      row: css`
+        border-bottom: 2px solid ${colors.bodyBg};
+      `,
       tableCell: css`
-        display: 'table-cell';
         padding: ${padding}px 10px;
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
-        border-bottom: 2px solid ${colors.bodyBg};
       `,
     };
   }

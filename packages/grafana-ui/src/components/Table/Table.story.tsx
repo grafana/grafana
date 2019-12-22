@@ -105,3 +105,37 @@ export const BarGaugeCell = () => {
     </div>
   );
 };
+
+const defaultThresholds = [
+  {
+    color: 'blue',
+    value: -Infinity,
+  },
+  {
+    color: 'green',
+    value: 20,
+  },
+];
+
+export const ColoredCells = () => {
+  const theme = useTheme();
+  const width = number('width', 750, {}, 'Props');
+  const data = buildData(theme, [
+    {
+      matcher: { id: FieldMatcherID.byName, options: 'Progress' },
+      properties: [
+        { path: 'custom.width', value: '80' },
+        { path: 'custom.displayMode', value: 'color-background' },
+        { path: 'min', value: '0' },
+        { path: 'max', value: '100' },
+        { path: 'thresholds', value: defaultThresholds },
+      ],
+    },
+  ]);
+
+  return (
+    <div className="panel-container" style={{ width: 'auto' }}>
+      <Table data={data} height={500} width={width} />
+    </div>
+  );
+};
