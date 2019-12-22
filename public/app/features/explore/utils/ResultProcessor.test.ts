@@ -147,7 +147,11 @@ describe('ResultProcessor', () => {
           })
         );
 
-        expect(theResult).toEqual(resultDataFrame);
+        expect(theResult.fields[0].name).toEqual('value');
+        expect(theResult.fields[1].name).toEqual('time');
+        expect(theResult.fields[2].name).toEqual('message');
+        expect(theResult.fields[1].display).not.toBeNull();
+        expect(theResult.length).toBe(3);
       });
     });
 
