@@ -15,49 +15,6 @@ export interface Props {
   onCellClick?: (key: string, value: string) => void;
 }
 
-interface RenderCellProps {
-  column: TableColumn;
-  value: any;
-  getCellProps: () => { style: CSSProperties };
-  render: (component: string) => React.ReactNode;
-}
-
-function renderCell(cell: RenderCellProps, className: string, onCellClick?: any) {
-  const filterable = cell.column.field.config.filterable;
-  const cellProps = cell.getCellProps();
-  let onClick: ((event: React.SyntheticEvent) => void) | undefined = undefined;
-
-  if (filterable && onCellClick) {
-    cellProps.style.cursor = 'pointer';
-    onClick = () => onCellClick(cell.column.Header, cell.value);
-  }
-
-  if (cell.column.textAlign) {
-    cellProps.style.textAlign = cell.column.textAlign;
-  }
-
-  return (
-    <div className={className} {...cellProps} onClick={onClick}>
-      {cell.render('Cell')}
-    </div>
-  );
-}
-
-function renderHeaderCell(column: any, className: string) {
-  const headerProps = column.getHeaderProps(column.getSortByToggleProps());
-
-  if (column.textAlign) {
-    headerProps.style.textAlign = column.textAlign;
-  }
-
-  return (
-    <div className={className} {...headerProps}>
-      {column.render('Header')}
-      <span>{column.isSorted ? (column.isSortedDesc ? ' 🔽' : ' 🔼') : ''}</span>
-    </div>
-  );
-}
-
 export const Table = ({ data, height, onCellClick, width }: Props) => {
   const theme = useTheme();
   const tableStyles = getTableStyles(theme);
@@ -100,3 +57,46 @@ export const Table = ({ data, height, onCellClick, width }: Props) => {
     </div>
   );
 };
+
+interface RenderCellProps {
+  column: TableColumn;
+  value: any;
+  getCellProps: () => { style: CSSProperties };
+  render: (component: string) => React.ReactNode;
+}
+
+function renderCell(cell: RenderCellProps, className: string, onCellClick?: any) {
+  const filterable = cell.column.field.config.filterable;
+  const cellProps = cell.getCellProps();
+  let onClick: ((event: React.SyntheticEvent) => void) | undefined = undefined;
+
+  if (filterable && onCellClick) {
+    cellProps.style.cursor = 'pointer';
+    onClick = () => onCellClick(cell.column.Header, cell.value);
+  }
+
+  if (cell.column.textAlign) {
+    cellProps.style.textAlign = cell.column.textAlign;
+  }
+
+  return (
+    <div className={className} {...cellProps} onClick={onClick}>
+      {cell.render('Cell')}
+    </div>
+  );
+}
+
+function renderHeaderCell(column: any, className: string) {
+  const headerProps = column.getHeaderProps(column.getSortByToggleProps());
+
+  if (column.textAlign) {
+    headerProps.style.textAlign = column.textAlign;
+  }
+
+  return (
+    <div className={className} {...headerProps}>
+      {column.render('Header')}
+      <span>{column.isSorted ? (column.isSortedDesc ? ' 🔽' : ' 🔼') : ''}</span>
+    </div>
+  );
+}

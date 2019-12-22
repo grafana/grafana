@@ -20,6 +20,19 @@ export function getTableRows(data: DataFrame): TableRow[] {
 }
 
 function getTextAlign(field: Field): TextAlignProperty {
+  if (field.config.custom) {
+    const custom = field.config.custom as TableFieldOptions;
+
+    switch (custom.textAlign) {
+      case 'right':
+        return 'right';
+      case 'left':
+        return 'left';
+      case 'center':
+        return 'center';
+    }
+  }
+
   if (field.type === FieldType.number) {
     return 'right';
   }
