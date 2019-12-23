@@ -19,7 +19,6 @@ export function BracesPlugin(): Plugin {
         case '(':
         case '{':
         case '[': {
-          keyEvent.preventDefault();
           const {
             start: { offset: startOffset, key: startKey },
             end: { offset: endOffset, key: endKey },
@@ -29,34 +28,29 @@ export function BracesPlugin(): Plugin {
 
           // If text is selected, wrap selected text in parens
           if (value.selection.isExpanded) {
+            keyEvent.preventDefault();
             editor
               .insertTextByKey(startKey, startOffset, keyEvent.key)
               .insertTextByKey(endKey, endOffset + 1, BRACES[keyEvent.key])
               .moveEndBackward(1);
+            return true;
           } else if (
             // Insert matching brace when there is no input after caret
             focusOffset === text.length ||
             text[focusOffset] === ' ' ||
             Object.values(BRACES).includes(text[focusOffset])
           ) {
-            editor.insertText(`${keyEvent.key}${BRACES[keyEvent.key]}`).moveBackward(1);
-            editor.value.anchorBlock.createDecoration({
-              object: 'decoration',
-              anchor: {
-                key: value.anchorText.key,
-                offset: startOffset,
-              },
-              focus: {
-                key: value.anchorText.key,
-                offset: startOffset + 1,
-              },
-              type: MATCH_MARK,
-            });
-          } else {
-            editor.insertText(keyEvent.key);
-          }
+            keyEvent.preventDefault();
+            editor
+              .insertText(keyEvent.key)
+              .addMark(MATCH_MARK)
+              .insertText(BRACES[keyEvent.key])
+              .toggleMark(MATCH_MARK)
+              .moveBackward(1);
 
-          return true;
+            return true;
+          }
+          break;
         }
 
         case ')':
@@ -66,18 +60,16 @@ export function BracesPlugin(): Plugin {
           const offset = value.selection.anchor.offset;
           const nextChar = text[offset];
           // Handle closing brace when it's already the next character
-          if (nextChar === keyEvent.key && !value.selection.isExpanded) {
+          const mark = value.anchorBlock.getMarksByType(MATCH_MARK).first();
+          if (mark && nextChar === keyEvent.key && !value.selection.isExpanded) {
             keyEvent.preventDefault();
-            editor.moveEndForward(1);
-            const marks = value.anchorBlock.getMarksAtRange(editor.value.selection);
-            // If the plugin inserted the brace, simply move over it
-            if (!marks?.isEmpty() && marks.first().type === MATCH_MARK) {
-              editor.moveForward(1);
-            } else {
-              editor.insertText(keyEvent.key);
-            }
+            editor
+              .moveFocusForward(1)
+              .removeMark(mark)
+              .moveAnchorForward(1);
+            return true;
           }
-          return true;
+          break;
         }
 
         case 'Backspace': {
