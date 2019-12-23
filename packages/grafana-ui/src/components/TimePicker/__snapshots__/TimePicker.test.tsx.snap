@@ -227,8 +227,8 @@ exports[`TimePicker renders buttons correctly 1`] = `
                     "h6": "14px",
                   },
                   "lineHeight": Object {
-                    "lg": 1.5,
-                    "md": 1.3333333333333333,
+                    "lg": 2,
+                    "md": 1.5,
                     "sm": 1.1,
                     "xs": 1,
                   },
@@ -534,8 +534,8 @@ exports[`TimePicker renders content correctly after beeing open 1`] = `
                     "h6": "14px",
                   },
                   "lineHeight": Object {
-                    "lg": 1.5,
-                    "md": 1.3333333333333333,
+                    "lg": 2,
+                    "md": 1.5,
                     "sm": 1.1,
                     "xs": 1,
                   },
