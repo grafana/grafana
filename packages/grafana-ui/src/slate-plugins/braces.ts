@@ -1,5 +1,5 @@
 import { Plugin } from '@grafana/slate-react';
-import { Editor as CoreEditor } from 'slate';
+import { Editor as CoreEditor, Annotation } from 'slate';
 
 const BRACES: any = {
   '[': ']',
@@ -41,11 +41,26 @@ export function BracesPlugin(): Plugin {
             Object.values(BRACES).includes(text[focusOffset])
           ) {
             keyEvent.preventDefault();
+            const complement = BRACES[keyEvent.key];
+            const matchAnnotation = {
+              key: `${MATCH_MARK}-${Date.now()}`,
+              type: `${MATCH_MARK}-${complement}`,
+              anchor: {
+                key: startKey,
+                offset: startOffset,
+                object: 'point',
+              },
+              focus: {
+                key: endKey,
+                offset: endOffset + 1,
+                object: 'point',
+              },
+              object: 'annotation',
+            } as Annotation;
             editor
               .insertText(keyEvent.key)
-              .addMark(MATCH_MARK)
-              .insertText(BRACES[keyEvent.key])
-              .toggleMark(MATCH_MARK)
+              .insertText(complement)
+              .addAnnotation(matchAnnotation)
               .moveBackward(1);
 
             return true;
@@ -60,12 +75,16 @@ export function BracesPlugin(): Plugin {
           const offset = value.selection.anchor.offset;
           const nextChar = text[offset];
           // Handle closing brace when it's already the next character
-          const mark = value.anchorBlock.getMarksByType(MATCH_MARK).first();
-          if (mark && nextChar === keyEvent.key && !value.selection.isExpanded) {
+          const complement = keyEvent.key;
+          const annotationType = `${MATCH_MARK}-${complement}`;
+          const annotation = value.annotations.find(
+            a => a?.type === annotationType && a.anchor.key === value.anchorText.key
+          );
+          if (annotation && nextChar === complement && !value.selection.isExpanded) {
             keyEvent.preventDefault();
             editor
               .moveFocusForward(1)
-              .removeMark(mark)
+              .removeAnnotation(annotation)
               .moveAnchorForward(1);
             return true;
           }
