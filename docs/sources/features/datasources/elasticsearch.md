@@ -3,7 +3,7 @@ title = "Using Elasticsearch in Grafana"
 description = "Guide for using Elasticsearch in Grafana"
 keywords = ["grafana", "elasticsearch", "guide"]
 type = "docs"
-aliases = ["/datasources/elasticsearch"]
+aliases = ["/docs/grafana/latest/datasources/elasticsearch"]
 [menu.docs]
 name = "Elasticsearch"
 parent = "datasources"
