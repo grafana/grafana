@@ -5,15 +5,23 @@ import { GraphiteQuery, GraphiteOptions, MetricTankMeta } from './types';
 
 export type Props = MetadataInspectorProps<GraphiteDatasource, GraphiteQuery, GraphiteOptions>;
 
-export class MetricTankMetaInspector extends PureComponent<Props> {
+export interface State {
+  index: number;
+}
+
+export class MetricTankMetaInspector extends PureComponent<Props, State> {
+  state = { index: 0 };
+
   render() {
     const { data } = this.props;
-    if (!data) {
-      return <div>TODO: Show Global Response Metadata</div>;
+    if (!data || !data.length) {
+      return <div>No Metadata</div>;
     }
-    const meta = data.meta?.ds as MetricTankMeta;
+
+    const frame = data[this.state.index];
+    const meta = frame.meta?.ds as MetricTankMeta;
     if (!meta || !meta.info) {
-      return <></>;
+      return <>No Metadatata on DataFrame</>;
     }
     return (
       <div>

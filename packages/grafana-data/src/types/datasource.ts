@@ -343,11 +343,8 @@ export interface MetadataInspectorProps<
 > {
   datasource: DSType;
 
-  // // The entire panel data
-  // panel: PanelData;
-
-  // Each selected frame.  or empty if it should show global metadata
-  data?: DataFrame;
+  // All Data from this DataSource
+  data: DataFrame[];
 }
 
 export interface QueryEditorProps<
