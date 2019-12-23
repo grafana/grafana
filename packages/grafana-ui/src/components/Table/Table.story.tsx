@@ -29,7 +29,18 @@ function buildData(theme: GrafanaTheme, overrides: ConfigOverrideRule[]): DataFr
   const data = new MutableDataFrame({
     fields: [
       { name: 'Time', type: FieldType.time, values: [] }, // The time field
-      { name: 'Message', type: FieldType.string, values: [] }, // The time field
+      {
+        name: 'Quantity',
+        type: FieldType.number,
+        values: [],
+        config: {
+          decimals: 0,
+          custom: {
+            align: 'center',
+          },
+        },
+      },
+      { name: 'Status', type: FieldType.string, values: [] }, // The time field
       {
         name: 'Value',
         type: FieldType.number,
@@ -55,7 +66,8 @@ function buildData(theme: GrafanaTheme, overrides: ConfigOverrideRule[]): DataFr
   for (let i = 0; i < 1000; i++) {
     data.appendRow([
       new Date().getTime(),
-      i % 2 === 0 ? 'it is ok now' : 'not so good',
+      Math.random() * 2,
+      Math.random() > 0.7 ? 'Active' : 'Cancelled',
       Math.random() * 100,
       Math.random() * 100,
     ]);
