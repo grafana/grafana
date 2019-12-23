@@ -19207,10 +19207,10 @@ rxjs-spy@^7.5.1:
     error-stack-parser "^2.0.1"
     stacktrace-gps "^3.0.2"
 
-rxjs@6.5.3, rxjs@^6.3.3, rxjs@^6.4.0:
-  version "6.5.3"
-  resolved "https://registry.yarnpkg.com/rxjs/-/rxjs-6.5.3.tgz#510e26317f4db91a7eb1de77d9dd9ba0a4899a3a"
-  integrity sha512-wuYsAYYFdWTAnAaPoKGNhfpWwKZbJW+HgAJ+mImp+Epl7BG8oNWBCTyRM8gba9k4lk8BgWdoYm21Mo/RYhhbgA==
+rxjs@7.0.0-alpha.0:
+  version "7.0.0-alpha.0"
+  resolved "https://registry.yarnpkg.com/rxjs/-/rxjs-7.0.0-alpha.0.tgz#8123daf3a9fa994536ca0089dbc448f7cde98403"
+  integrity sha512-dX5CjwuWIuo4uHI5u1ou8w/2qMZyt025qiLoiYgSoYKiLS4czmJhSlptXGUi/2KAVJlHpMHiKNyhnVODg68xVw==
   dependencies:
     tslib "^1.9.0"
 
@@ -19220,6 +19220,13 @@ rxjs@^5.0.0-beta.11:
   integrity sha512-xx2itnL5sBbqeeiVgNPVuQQ1nC8Jp2WfNJhXWHmElW9YmrpS9UVnNzhP3EH3HFqexO5Tlp8GhYY+WEcqcVMvGw==
   dependencies:
     symbol-observable "1.0.1"
+
+rxjs@^6.3.3, rxjs@^6.4.0:
+  version "6.5.3"
+  resolved "https://registry.yarnpkg.com/rxjs/-/rxjs-6.5.3.tgz#510e26317f4db91a7eb1de77d9dd9ba0a4899a3a"
+  integrity sha512-wuYsAYYFdWTAnAaPoKGNhfpWwKZbJW+HgAJ+mImp+Epl7BG8oNWBCTyRM8gba9k4lk8BgWdoYm21Mo/RYhhbgA==
+  dependencies:
+    tslib "^1.9.0"
 
 safe-buffer@5.1.1:
   version "5.1.1"
