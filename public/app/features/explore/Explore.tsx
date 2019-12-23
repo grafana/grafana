@@ -68,21 +68,8 @@ const getStyles = memoizeOne(() => {
       // Is needed for some transition animations to work.
       position: relative;
     `,
-    exploreContainerContentItem: css`
+    exploreAddButton: css`
       margin-top: 1em;
-      background: transparent;
-      border: none;
-      &:nth-child(2) {
-        display: flex;
-        margin-left: auto;
-      }
-    `,
-    exploreNavbarButton: css`
-      margin-left: 0;
-      margin-right: 0.5em;
-    `,
-    exploreNavbarButtonSpan: css`
-      display: initial;
     `,
   };
 });
@@ -300,19 +287,16 @@ export class Explore extends React.PureComponent<ExploreProps> {
         {datasourceInstance && (
           <div className="explore-container">
             <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
-            <div className="query-row">
-              <div className="query-row-field align-items-center flex-shrink-1">
-                <div className={styles.exploreContainerContentItem}>
-                  <button
-                    className={`btn navbar-button ${styles.exploreNavbarButton}`}
-                    onClick={this.onClickAddQueryRowButton}
-                    disabled={isLive}
-                  >
-                    <i className={'fa fa-fw fa-plus icon-margin-right'} />
-                    <span className={`btn-title ${styles.exploreNavbarButtonSpan}`}>{'\xA0' + 'Add query'}</span>
-                  </button>
-                </div>
-              </div>
+            <div className="gf-form">
+              <button
+                aria-label="Add row button"
+                className={`gf-form-label gf-form-label--btn ${styles.exploreAddButton}`}
+                onClick={this.onClickAddQueryRowButton}
+                disabled={isLive}
+              >
+                <i className={'fa fa-fw fa-plus icon-margin-right'} />
+                <span className="btn-title">{'\xA0' + 'Add query'}</span>
+              </button>
             </div>
             <ErrorContainer queryErrors={queryResponse.error ? [queryResponse.error] : undefined} />
             <AutoSizer onResize={this.onResize} disableHeight>
