@@ -13,6 +13,7 @@ import {
 } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { ColumnRender, TableRenderModel, ColumnStyle } from './types';
+import { ColumnOptionsCtrl } from './column_options';
 
 export class TableRenderer {
   formatters: any[];
@@ -280,8 +281,9 @@ export class TableRenderer {
     }
 
     if (column.style && column.style.align) {
-      if (_.includes(['', 'left', 'center', 'right'], column.style.align)) {
-        cellStyles.push(`text-align:${column.style.align}`);
+      const textAlign = _.find(ColumnOptionsCtrl.alignTypesEnum, ['text', column.style.align]);
+      if (textAlign && textAlign['value']) {
+        cellStyles.push(`text-align:${textAlign['value']}`);
       }
     }
 

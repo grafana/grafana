@@ -14,7 +14,14 @@ export class ColumnOptionsCtrl {
   getColumnNames: any;
   activeStyleIndex: number;
   mappingTypes: any;
+
   alignTypes: any;
+  static readonly alignTypesEnum = [
+    { text: 'auto', value: '' },
+    { text: 'left', value: 'left' },
+    { text: 'center', value: 'center' },
+    { text: 'right', value: 'right' },
+  ];
 
   /** @ngInject */
   constructor($scope: any) {
@@ -48,12 +55,7 @@ export class ColumnOptionsCtrl {
       { text: 'Value to text', value: 1 },
       { text: 'Range to text', value: 2 },
     ];
-    this.alignTypes = [
-      { text: 'auto', value: '' },
-      { text: 'left', value: 'left' },
-      { text: 'center', value: 'center' },
-      { text: 'right', value: 'right' },
-    ];
+    this.alignTypes = ColumnOptionsCtrl.alignTypesEnum;
 
     this.getColumnNames = () => {
       if (!this.panelCtrl.table) {
