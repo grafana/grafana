@@ -79,8 +79,8 @@ describe('FieldDisplay', () => {
       },
     };
     setFieldConfigDefaults(field);
-    expect(field.scale.thresholds!.length).toEqual(2);
-    expect(field.scale.thresholds![0].value).toBe(-Infinity);
+    expect(field.scale.thresholds.length).toEqual(2);
+    expect(field.scale.thresholds[0].value).toBe(-Infinity);
   });
 
   it('Should return field thresholds when there is no data', () => {

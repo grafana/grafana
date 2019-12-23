@@ -13,9 +13,9 @@ export interface Threshold {
 }
 
 export enum ScaleMode {
-  absolute = 'absolute',
-  relative = 'relative', // between 0 and 1 (based on min/max)
-  scheme = 'scheme', // Pick from D3 scheme
+  Absolute = 'absolute',
+  Relative = 'relative', // between 0 and 1 (based on min/max)
+  Scheme = 'scheme', // Pick from D3 scheme
 }
 
 export interface Scale {
