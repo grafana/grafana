@@ -6,8 +6,8 @@ import { CoreEvents, DashboardDTO, FolderInfo } from 'app/types';
 import { BackendSrv as BackendService, BackendSrvRequest } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
 import { contextSrv } from './context_srv';
-import { from, merge, MonoTypeOperatorFunction, Observable, of, Subject, throwError } from 'rxjs';
-import { catchError, filter, finalize, map, mergeMap, retryWhen, share, takeUntil, tap } from 'rxjs/operators';
+import { from, merge, MonoTypeOperatorFunction, Observable, Subject, throwError } from 'rxjs';
+import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
 import { coreModule } from 'app/core/core_module';
 import omitBy from 'lodash/omitBy';
@@ -66,7 +66,7 @@ function serializeParams(data: Record<string, any>): string {
 }
 
 export class BackendSrv implements BackendService {
-  private inFlightRequests: Record<string, Array<Subject<any>>> = {};
+  private inFlightRequests: Subject<string> = new Subject<string>();
   private HTTP_REQUEST_CANCELED = -1;
   private noBackendCache: boolean;
 
@@ -229,36 +229,22 @@ export class BackendSrv implements BackendService {
       .toPromise();
   }
 
-  addCanceler(requestId: string, canceler: Subject<any>) {
-    if (requestId in this.inFlightRequests) {
-      this.inFlightRequests[requestId].push(canceler);
-    } else {
-      this.inFlightRequests[requestId] = [canceler];
-    }
-  }
-
   resolveCancelerIfExists(requestId: string) {
-    const cancelers = this.inFlightRequests[requestId];
-    if (cancelers && cancelers.length) {
-      cancelers[0].next();
-    }
+    this.inFlightRequests.next(requestId);
   }
 
   async datasourceRequest(options: BackendSrvRequest): Promise<any> {
-    let canceler: Subject<any>;
     options.retry = options.retry ?? 0;
 
     // A requestID is provided by the datasource as a unique identifier for a
     // particular query. If the requestID exists, the promise it is keyed to
     // is canceled, canceling the previous datasource request if it is still
     // in-flight.
+    options.requestId = options.requestId ?? 'A';
     const requestId = options.requestId;
 
     if (requestId) {
-      this.resolveCancelerIfExists(requestId);
-      // create new canceler
-      canceler = new Subject();
-      this.addCanceler(requestId, canceler);
+      this.inFlightRequests.next(requestId);
     }
 
     const requestIsLocal = !options.url.match(/^http/);
@@ -333,12 +319,20 @@ export class BackendSrv implements BackendService {
 
           return throwError(err);
         }),
-        takeUntil(canceler ?? of()),
-        finalize(() => {
-          if (options.requestId) {
-            this.inFlightRequests[options.requestId].shift();
-          }
-        })
+        takeUntil(
+          this.inFlightRequests.pipe(
+            filter(requestId => {
+              let cancelRequest = false;
+              if (options?.requestId === requestId) {
+                // when a new requestId is started it will be published to inFlightRequests
+                // if a previous long running request that hasn't finished yet has the same requestId
+                // we need to cancel that request
+                cancelRequest = true;
+              }
+              return cancelRequest;
+            })
+          )
+        )
       )
       .toPromise();
   }
