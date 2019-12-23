@@ -188,7 +188,7 @@ Version 2.20 introduced the ability to delay sampling decisions in the life cycl
 of the root span. It involves several features and architectural changes:
   * **Shared sampling state**: the sampling state is shared across all local
     (i.e. in-process) spans for a given trace.
-  * **New `SamplerV2` API** allows the sampler to be called at multiple points
+  * **New `SamplerV2` API** allows the sampler to be called at multiple points 
     in the life cycle of a span:
     * on span creation
     * on overwriting span operation name

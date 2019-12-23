@@ -1,9 +1,9 @@
 # End to end test framework
-Grafana Labs uses a minimal home grown solution built on top of Cypress for our end to end (e2e) tests.
+Grafana Labs uses a minimal home grown solution built on top of Cypress for our end to end (e2e) tests. 
 
 ## Basic concepts
 Here is a good introduction to e2e best practices: https://martinfowler.com/bliki/PageObject.html.
-- `Selector`: A unique identifier that is used from the e2e framework to retrieve an element from the Browser
+- `Selector`: A unique identifier that is used from the e2e framework to retrieve an element from the Browser 
 - `Page`: An abstraction for an object that contains one or more `Selectors`
 - `Flow`: An abstraction that contains a sequence of actions on one or more `Pages` that can be reused and shared between tests
 
@@ -49,16 +49,16 @@ export const Pages = {
 };
 
 ```
-Now that we have a `Page` called `Login` in our `Pages` const we can use that to add a selector in our html like shown below and now this really signals to future developers that it is part of an e2e test.
+Now that we have a `Page` called `Login` in our `Pages` const we can use that to add a selector in our html like shown below and now this really signals to future developers that it is part of an e2e test.   
 ```jsx harmony
 <div>
     <input type="text" className="gf-form-input login-form-input" aria-label={e2e.pages.Login.selectors.username}/>
 </div>
 ```
 
-The last step in our example is to use our `Login` page as part of a test. The `pageFactory` function we used before gives us two things:
+The last step in our example is to use our `Login` page as part of a test. The `pageFactory` function we used before gives us two things: 
 - The `url` property is used whenever we call the `visit` function and is equivalent to the Cypress function [cy.visit()](https://docs.cypress.io/api/commands/visit.html#Syntax).
-> Best practice after calling `visit` is to always call `should` on a selector to prevent flaky tests when you try to access an element that isn't ready. For more information, refer to [Commands vs. assertions](https://docs.cypress.io/guides/core-concepts/retry-ability.html#Commands-vs-assertions).
+> Best practice after calling `visit` is to always call `should` on a selector to prevent flaky tests when you try to access an element that isn't ready. For more information, refer to [Commands vs. assertions](https://docs.cypress.io/guides/core-concepts/retry-ability.html#Commands-vs-assertions).  
 - Any defined selector in the `selectors` property can be accessed from the `Login` page by invoking it. This is equivalent to the result of the Cypress function [cy.get(...)](https://docs.cypress.io/api/commands/get.html#Syntax).
 ```ecmascript 6
 describe('Login test', () => {
@@ -90,7 +90,7 @@ Let's take a look at an example that uses the same `selector` for multiple items
 ```
 ```
 
-Just as before in the basic example we'll start by creating a page abstraction using the `pageFactory` function:
+Just as before in the basic example we'll start by creating a page abstraction using the `pageFactory` function: 
 ```typescript
 export const DataSources = pageFactory({
   url: '/datasources',
@@ -134,14 +134,14 @@ When this list is rendered with the data sources with names `A`, `B`, `C` the re
 ```
 
 Now we can write our test. The one thing that differs from the `Basic example` is that we pass in which data source we want to click on as an argument to the selector function:
-> Best practice after calling `visit` is to always call `should` on a selector to prevent flaky tests when you try to access an element that isn't ready. For more information, refer to [Commands vs. assertions](https://docs.cypress.io/guides/core-concepts/retry-ability.html#Commands-vs-assertions).
+> Best practice after calling `visit` is to always call `should` on a selector to prevent flaky tests when you try to access an element that isn't ready. For more information, refer to [Commands vs. assertions](https://docs.cypress.io/guides/core-concepts/retry-ability.html#Commands-vs-assertions).  
 ```ecmascript 6
 describe('List test', () => {
   it('Clicking on data source named B', () => {
     e2e.pages.DataSources.visit();
     // To prevent flaky tests, always do a .should on any selector that you expect to be in the DOM.
     // Read more here: https://docs.cypress.io/guides/core-concepts/retry-ability.html#Commands-vs-assertions
-    e2e.pages.DataSources.dataSources('B').should('be.visible');
+    e2e.pages.DataSources.dataSources('B').should('be.visible'); 
     e2e.pages.DataSources.dataSources('B').click();
   });
 });

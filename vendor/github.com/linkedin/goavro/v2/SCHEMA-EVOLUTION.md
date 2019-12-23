@@ -80,7 +80,7 @@ Alice.
 Then the decoder would see 0x02, marking field number 1 again,
 which means, "next record", followed by string length 3, followed by
 Bob, followed by 0x04, which means field number 2 (nickname), followed
-by string length 5, followed by Bruce.
+by string length 5, followed by Bruce.  
 
 Followed by field number 1 (next record), followed by string length 6,
 followed by Charlie, followed by field number 3 (title), followed by
