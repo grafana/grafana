@@ -41,7 +41,7 @@ export const BarGaugeCell: FC<ReactTableCellProps> = props => {
         orientation={VizOrientation.Horizontal}
         theme={tableStyles.theme}
         itemSpacing={1}
-        cellWidth={8}
+        lcdCellWidth={8}
         displayMode={barGaugeMode}
       />
     </div>
