@@ -44,13 +44,23 @@ export interface FieldConfig {
   // Alternative to empty string
   noValue?: string;
 
-  // Visual options
   color?: string;
+
+  custom?: Record<string, any>;
 }
 
 export interface Field<T = any, V = Vector<T>> {
-  name: string; // The column name
+  /**
+   * Name of the field (column)
+   */
+  name: string;
+  /**
+   *  Field value type (string, number, etc)
+   */
   type: FieldType;
+  /**
+   *  Meta info about how field and how to display it
+   */
   config: FieldConfig;
   values: V; // The raw field values
   labels?: Labels;

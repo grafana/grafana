@@ -9,6 +9,7 @@ import {
   getBarGradient,
   getTitleStyles,
   getValuePercent,
+  BarGaugeDisplayMode,
 } from './BarGauge';
 import { getTheme } from '../../themes';
 
@@ -37,7 +38,7 @@ function getProps(propOverrides?: Partial<Props>): Props {
   const props: Props = {
     maxValue: 100,
     minValue: 0,
-    displayMode: 'basic',
+    displayMode: BarGaugeDisplayMode.Basic,
     scale: field.config?.scale!,
     display: field.display!,
     height: 300,

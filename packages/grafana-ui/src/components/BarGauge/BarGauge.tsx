@@ -42,22 +42,30 @@ export interface Props extends Themeable {
   minValue: number;
   orientation: VizOrientation;
   itemSpacing?: number;
-  displayMode: 'basic' | 'lcd' | 'gradient';
+  lcdCellWidth?: number;
+  displayMode: BarGaugeDisplayMode;
   onClick?: React.MouseEventHandler<HTMLElement>;
   className?: string;
   showUnfilled?: boolean;
   alignmentFactors?: DisplayValueAlignmentFactors;
 }
 
+export enum BarGaugeDisplayMode {
+  Basic = 'basic',
+  Lcd = 'lcd',
+  Gradient = 'gradient',
+}
+
 export class BarGauge extends PureComponent<Props> {
   static defaultProps: Partial<Props> = {
     maxValue: 100,
     minValue: 0,
+    lcdCellWidth: 12,
     value: {
       text: '100',
       numeric: 100,
     },
-    displayMode: 'lcd',
+    displayMode: BarGaugeDisplayMode.Gradient,
     orientation: VizOrientation.Horizontal,
     scale: {
       mode: ScaleMode.absolute,
@@ -156,7 +164,7 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   renderRetroBars(): ReactNode {
-    const { maxValue, minValue, value, itemSpacing, alignmentFactors, orientation } = this.props;
+    const { maxValue, minValue, value, itemSpacing, alignmentFactors, orientation, lcdCellWidth } = this.props;
     const {
       valueHeight,
       valueWidth,
@@ -170,8 +178,7 @@ export class BarGauge extends PureComponent<Props> {
     const valueRange = maxValue - minValue;
     const maxSize = isVert ? maxBarHeight : maxBarWidth;
     const cellSpacing = itemSpacing!;
-    const cellWidth = 12;
-    const cellCount = Math.floor(maxSize / cellWidth);
+    const cellCount = Math.floor(maxSize / lcdCellWidth!);
     const cellSize = Math.floor((maxSize - cellSpacing * cellCount) / cellCount);
     const valueColor = getValueColor(this.props);
 

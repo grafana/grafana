@@ -1,11 +1,19 @@
 import set from 'lodash/set';
-import { DynamicConfigValue, FieldConfig, InterpolateFunction, DataFrame, Field, FieldType } from '../types';
+import {
+  GrafanaTheme,
+  DynamicConfigValue,
+  FieldConfig,
+  InterpolateFunction,
+  DataFrame,
+  Field,
+  FieldType,
+  FieldConfigSource,
+} from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
 import isNumber from 'lodash/isNumber';
 import toNumber from 'lodash/toNumber';
 import { getDisplayProcessor } from './displayProcessor';
-import { GetFieldDisplayValuesOptions } from './fieldDisplay';
 import { guessFieldTypeForField } from '../dataframe';
 import { validateScale } from '../utils';
 
@@ -17,6 +25,14 @@ interface OverrideProps {
 interface GlobalMinMax {
   min: number;
   max: number;
+}
+
+export interface ApplyFieldOverrideOptions {
+  data?: DataFrame[];
+  fieldOptions: FieldConfigSource;
+  replaceVariables: InterpolateFunction;
+  theme: GrafanaTheme;
+  autoMinMax?: boolean;
 }
 
 export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
@@ -44,14 +60,16 @@ export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
 /**
  * Return a copy of the DataFrame with all rules applied
  */
-export function applyFieldOverrides(options: GetFieldDisplayValuesOptions): DataFrame[] {
+export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFrame[] {
   if (!options.data) {
     return [];
   }
+
   const source = options.fieldOptions;
   if (!source) {
     return options.data;
   }
+
   let range: GlobalMinMax | undefined = undefined;
 
   // Prepare the Matchers
@@ -61,7 +79,7 @@ export function applyFieldOverrides(options: GetFieldDisplayValuesOptions): Data
       const info = fieldMatchers.get(rule.matcher.id);
       if (info) {
         override.push({
-          match: info.get(rule.matcher),
+          match: info.get(rule.matcher.options),
           properties: rule.properties,
         });
       }
@@ -74,7 +92,7 @@ export function applyFieldOverrides(options: GetFieldDisplayValuesOptions): Data
       name = `Series[${index}]`;
     }
 
-    const fields = frame.fields.map(field => {
+    const fields: Field[] = frame.fields.map(field => {
       // Config is mutable within this scope
       const config: FieldConfig = { ...field.config } || {};
       if (field.type === FieldType.number) {
