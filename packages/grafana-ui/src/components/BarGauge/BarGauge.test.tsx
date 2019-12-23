@@ -9,6 +9,7 @@ import {
   getBarGradient,
   getTitleStyles,
   getValuePercent,
+  BarGaugeDisplayMode,
 } from './BarGauge';
 import { VizOrientation } from '@grafana/data';
 import { getTheme } from '../../themes';
@@ -20,7 +21,7 @@ function getProps(propOverrides?: Partial<Props>): Props {
   const props: Props = {
     maxValue: 100,
     minValue: 0,
-    displayMode: 'basic',
+    displayMode: BarGaugeDisplayMode.Basic,
     thresholds: [
       { value: -Infinity, color: 'green' },
       { value: 70, color: 'orange' },
