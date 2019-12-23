@@ -29,7 +29,6 @@ export const BackgroundColoredCell: FC<ReactTableCellProps> = props => {
     .spin(5)
     .toRgbString();
 
-  const endColor = tinycolor();
   const styles: CSSProperties = {
     background: `linear-gradient(120deg, ${bgColor2}, ${displayValue.color})`,
     borderRadius: '0px',
