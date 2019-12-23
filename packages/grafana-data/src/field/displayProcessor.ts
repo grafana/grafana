@@ -148,22 +148,6 @@ export function getColorFromThreshold(value: number, thresholds: Threshold[], th
   return getColorFromHexRgbOrName(thresholds[0].color, themeType);
 }
 
-// function getSignificantDigitCount(n: number): number {
-//   // remove decimal and make positive
-//   n = Math.abs(parseInt(String(n).replace('.', ''), 10));
-//   if (n === 0) {
-//     return 0;
-//   }
-//
-//   // kill the 0s at the end of n
-//   while (n !== 0 && n % 10 === 0) {
-//     n /= 10;
-//   }
-//
-//   // get number of digits
-//   return Math.floor(Math.log(n) / Math.LN10) + 1;
-// }
-
 export function getDecimalsForValue(value: number, decimalOverride?: DecimalCount): DecimalInfo {
   if (_.isNumber(decimalOverride)) {
     // It's important that scaledDecimals is null here

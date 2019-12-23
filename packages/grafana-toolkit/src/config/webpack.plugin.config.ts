@@ -29,18 +29,20 @@ export const findModuleFiles = async (base: string, files?: string[], result?: s
   result = result || [];
 
   if (files) {
-    files.forEach(async file => {
-      const newbase = path.join(base, file);
-      if (fs.statSync(newbase).isDirectory()) {
-        result = await findModuleFiles(newbase, await readdirPromise(newbase), result);
-      } else {
-        const filename = path.basename(file);
-        if (/^module.(t|j)sx?$/.exec(filename)) {
-          // @ts-ignore
-          result.push(newbase);
+    await Promise.all(
+      files.map(async file => {
+        const newbase = path.join(base, file);
+        if (fs.statSync(newbase).isDirectory()) {
+          result = await findModuleFiles(newbase, await readdirPromise(newbase), result);
+        } else {
+          const filename = path.basename(file);
+          if (/^module.(t|j)sx?$/.exec(filename)) {
+            // @ts-ignore
+            result.push(newbase);
+          }
         }
-      }
-    });
+      })
+    );
   }
   return result;
 };

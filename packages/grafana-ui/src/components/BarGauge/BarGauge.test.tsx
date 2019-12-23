@@ -9,6 +9,7 @@ import {
   getBarGradient,
   getTitleStyles,
   getValuePercent,
+  BarGaugeDisplayMode,
 } from './BarGauge';
 import { VizOrientation } from '@grafana/data';
 import { getTheme } from '../../themes';
@@ -20,7 +21,7 @@ function getProps(propOverrides?: Partial<Props>): Props {
   const props: Props = {
     maxValue: 100,
     minValue: 0,
-    displayMode: 'basic',
+    displayMode: BarGaugeDisplayMode.Basic,
     thresholds: [
       { value: -Infinity, color: 'green' },
       { value: 70, color: 'orange' },
@@ -106,6 +107,20 @@ describe('BarGauge', () => {
       });
       const styles = getBasicAndGradientStyles(props);
       expect(styles.bar.height).toBe('249px');
+      expect(styles.emptyBar.bottom).toBe('-3px');
+    });
+  });
+
+  describe('Horizontal bar', () => {
+    it('should stretch items', () => {
+      const props = getProps({
+        height: 300,
+        value: getValue(100, 'ServerA'),
+        orientation: VizOrientation.Horizontal,
+      });
+      const styles = getBasicAndGradientStyles(props);
+      expect(styles.wrapper.alignItems).toBe('stretch');
+      expect(styles.emptyBar.left).toBe('-3px');
     });
   });
 
