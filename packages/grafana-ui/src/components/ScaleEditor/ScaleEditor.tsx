@@ -11,9 +11,9 @@ export interface Props {
 }
 
 const modes: Array<SelectableValue<ScaleMode>> = [
-  { value: ScaleMode.absolute, label: 'Absolute', description: 'Set thresholds against the absolute values' },
-  { value: ScaleMode.relative, label: 'Relative', description: 'Thresholds are percent between min/max' },
-  { value: ScaleMode.scheme, label: 'Scheme', description: 'Use a predefined color scheme' },
+  { value: ScaleMode.Absolute, label: 'Absolute', description: 'Set thresholds against the absolute values' },
+  { value: ScaleMode.Relative, label: 'Relative', description: 'Thresholds are percent between min/max' },
+  { value: ScaleMode.Scheme, label: 'Scheme', description: 'Use a predefined color scheme' },
 ];
 
 const schemes = Object.values(ColorScheme).map(s => {
@@ -29,7 +29,7 @@ export class ScaleEditor extends PureComponent<Props> {
     const scale = this.props.scale
       ? { ...this.props.scale }
       : {
-          mode: ScaleMode.absolute,
+          mode: ScaleMode.Absolute,
           thresholds: [
             { value: -Infinity, color: 'green' },
             { value: 80, color: 'red' },
@@ -49,7 +49,7 @@ export class ScaleEditor extends PureComponent<Props> {
   onModeChanged = (item: SelectableValue<ScaleMode>) => {
     const val = {
       ...this.getCurrent(),
-      mode: item.value ?? ScaleMode.relative,
+      mode: item.value ?? ScaleMode.Relative,
     };
     validateScale(val);
     this.props.onChange(val);
@@ -71,12 +71,12 @@ export class ScaleEditor extends PureComponent<Props> {
             theme={getTheme()}
             thresholds={scale.thresholds}
             onChange={this.onThresholdsChanged}
-            isPercent={scale.mode !== ScaleMode.absolute}
+            isPercent={scale.mode !== ScaleMode.Absolute}
           />
           {false && (
             <div>
               <Select options={modes} value={modes.filter(m => m.value === scale.mode)} onChange={this.onModeChanged} />
-              {scale.mode === ScaleMode.scheme && (
+              {scale.mode === ScaleMode.Scheme && (
                 <div>
                   <Select
                     options={schemes}

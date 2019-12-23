@@ -73,7 +73,7 @@ export function sharedSingleStatPanelChangedHandler(
         }
       }
       defaults.scale = {
-        mode: ScaleMode.absolute,
+        mode: ScaleMode.Absolute,
         thresholds,
       };
     }
@@ -142,7 +142,7 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
 
     if (thresholds) {
       fieldOptions.defaults.scale = {
-        mode: ScaleMode.absolute,
+        mode: ScaleMode.Absolute,
         thresholds,
       };
     }
@@ -163,7 +163,7 @@ export function moveThresholdsAndMappingsToField(old: any) {
   let scale: Scale | undefined = undefined;
   if (thresholds && thresholds.length) {
     scale = {
-      mode: ScaleMode.absolute,
+      mode: ScaleMode.Absolute,
       thresholds: migrateOldThresholds(thresholds)!,
     };
   }

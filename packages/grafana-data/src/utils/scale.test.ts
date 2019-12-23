@@ -10,7 +10,7 @@ describe('scale', () => {
         { color: 'HHH', value: 100 },
         { color: 'ONE', value: 1 },
       ],
-      mode: ScaleMode.absolute,
+      mode: ScaleMode.Absolute,
     };
     const sorted = sortThresholds(scale.thresholds).map(t => t.value);
     expect(sorted).toEqual([1, 10, 100]);
@@ -27,7 +27,7 @@ describe('scale', () => {
         { color: 'TEN', value: 10 },
         { color: 'HHH', value: 100 },
       ],
-      mode: ScaleMode.absolute,
+      mode: ScaleMode.Absolute,
     };
     // Mutates and sets ONE to -Infinity
     validateScale(scale);
@@ -51,7 +51,7 @@ describe('scale', () => {
         { color: '#F00', state: 'High', value: 50 },
         { color: '#F00', state: 'HighHigh', value: 100 },
       ],
-      mode: ScaleMode.absolute,
+      mode: ScaleMode.Absolute,
       scheme: ColorScheme.Greens,
     };
 

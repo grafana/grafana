@@ -68,7 +68,7 @@ export class BarGauge extends PureComponent<Props> {
     displayMode: BarGaugeDisplayMode.Gradient,
     orientation: VizOrientation.Horizontal,
     scale: {
-      mode: ScaleMode.absolute,
+      mode: ScaleMode.Absolute,
       thresholds: [],
     },
     itemSpacing: 10,

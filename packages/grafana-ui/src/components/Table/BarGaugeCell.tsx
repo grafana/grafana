@@ -4,7 +4,7 @@ import { BarGauge, BarGaugeDisplayMode } from '../BarGauge/BarGauge';
 import { Scale, ScaleMode, VizOrientation } from '@grafana/data';
 
 const defaultScale: Scale = {
-  mode: ScaleMode.absolute,
+  mode: ScaleMode.Absolute,
   thresholds: [
     {
       color: 'blue',

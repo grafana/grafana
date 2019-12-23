@@ -23,7 +23,7 @@ function getProps(propOverrides?: Partial<Props>): Props {
       min: 0,
       max: 100,
       scale: {
-        mode: ScaleMode.absolute,
+        mode: ScaleMode.Absolute,
         thresholds: [
           { value: -Infinity, color: 'green' },
           { value: 70, color: 'orange' },

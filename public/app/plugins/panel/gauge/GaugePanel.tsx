@@ -22,7 +22,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
     // When not absolute, use percent display
     let min = field.min;
     let max = field.max;
-    if (scale.mode !== ScaleMode.absolute) {
+    if (scale.mode !== ScaleMode.Absolute) {
       min = 0;
       max = 100;
       display.numeric = display.percent * 100;

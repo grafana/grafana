@@ -28,7 +28,7 @@ export const standardFieldDisplayOptions: FieldDisplayOptions = {
   calcs: [ReducerID.mean],
   defaults: {
     scale: {
-      mode: ScaleMode.absolute,
+      mode: ScaleMode.Absolute,
       thresholds: [
         { value: -Infinity, color: 'green' },
         { value: 80, color: 'red' }, // 80%

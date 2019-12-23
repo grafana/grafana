@@ -27,7 +27,7 @@ export function getScaleCalculator(field: Field, theme?: GrafanaTheme): ScaleCal
       return {}; // NOOP
     };
   }
-  const absolute = scale.mode === ScaleMode.absolute;
+  const absolute = scale.mode === ScaleMode.Absolute;
   if (absolute && !scale.scheme) {
     return (value: number) => {
       const threshold = getActiveThreshold(value, scale.thresholds);
@@ -78,7 +78,7 @@ export function getScaleCalculator(field: Field, theme?: GrafanaTheme): ScaleCal
  */
 export function validateScale(scale: Scale) {
   if (!scale.mode) {
-    scale.mode = ScaleMode.absolute;
+    scale.mode = ScaleMode.Absolute;
   }
   if (!scale.thresholds) {
     scale.thresholds = [];
@@ -89,7 +89,7 @@ export function validateScale(scale: Scale) {
   }
 
   // Make sure scheme actually has a scheme!
-  if (scale.mode === ScaleMode.scheme) {
+  if (scale.mode === ScaleMode.Scheme) {
     if (!scale.scheme) {
       scale.scheme = ColorScheme.BrBG;
     }

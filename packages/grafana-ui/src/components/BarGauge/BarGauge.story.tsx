@@ -41,7 +41,7 @@ function addBarGaugeStory(name: string, overrides: Partial<Props>) {
         min: minValue,
         max: maxValue,
         scale: {
-          mode: ScaleMode.absolute,
+          mode: ScaleMode.Absolute,
           thresholds: [
             { value: -Infinity, color: 'green' },
             { value: threshold1Value, color: threshold1Color },

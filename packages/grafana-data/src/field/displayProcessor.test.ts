@@ -17,7 +17,7 @@ function getDisplayProcessorFromConfig(config: FieldConfig) {
 function getColorFromThreshold(value: number, thresholds: Threshold[], theme?: GrafanaTheme): string {
   const field: Field = {
     name: 'test',
-    config: { scale: { mode: ScaleMode.absolute, thresholds: sortThresholds(thresholds) } },
+    config: { scale: { mode: ScaleMode.Absolute, thresholds: sortThresholds(thresholds) } },
     type: FieldType.number,
     values: new ArrayVector([]),
   };

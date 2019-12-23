@@ -15,7 +15,7 @@ const setup = (propOverrides?: object) => {
     minValue: 0,
     showThresholdMarkers: true,
     showThresholdLabels: false,
-    scale: { mode: ScaleMode.absolute, thresholds: [{ value: -Infinity, color: '#7EB26D' }] },
+    scale: { mode: ScaleMode.Absolute, thresholds: [{ value: -Infinity, color: '#7EB26D' }] },
     height: 300,
     width: 300,
     value: {
@@ -39,7 +39,7 @@ const setup = (propOverrides?: object) => {
 describe('Get thresholds formatted', () => {
   it('should return first thresholds color for min and max', () => {
     const { instance } = setup({
-      scale: { mode: ScaleMode.absolute, thresholds: [{ index: 0, value: -Infinity, color: '#7EB26D' }] },
+      scale: { mode: ScaleMode.Absolute, thresholds: [{ index: 0, value: -Infinity, color: '#7EB26D' }] },
     });
 
     expect(instance.getFormattedThresholds()).toEqual([
@@ -51,7 +51,7 @@ describe('Get thresholds formatted', () => {
   it('should get the correct formatted values when thresholds are added', () => {
     const { instance } = setup({
       scale: {
-        mode: ScaleMode.absolute,
+        mode: ScaleMode.Absolute,
         thresholds: [
           { value: -Infinity, color: '#7EB26D' },
           { value: 50, color: '#EAB839' },

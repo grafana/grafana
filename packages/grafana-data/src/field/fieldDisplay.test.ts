@@ -65,7 +65,7 @@ describe('FieldDisplay', () => {
   it('should restore -Infinity value for base threshold', () => {
     const field = {
       scale: {
-        mode: ScaleMode.absolute,
+        mode: ScaleMode.Absolute,
         thresholds: [
           ({
             color: '#73BF69',

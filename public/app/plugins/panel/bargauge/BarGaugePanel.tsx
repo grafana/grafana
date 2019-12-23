@@ -30,7 +30,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     // When not absolute, use percent display
     let min = field.min;
     let max = field.max;
-    if (field.scale.mode !== ScaleMode.absolute) {
+    if (field.scale.mode !== ScaleMode.Absolute) {
       min = 0;
       max = 100;
       display.numeric = display.percent * 100;
