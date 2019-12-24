@@ -257,7 +257,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
 
         series = seriesList[hoverInfo.index];
 
-        value = series.formatValue(sanitize(hoverInfo.value));
+        value = series.formatValue(hoverInfo.value);
         const color = sanitize(hoverInfo.color);
         const label = sanitize(hoverInfo.label);
 
