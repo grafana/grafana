@@ -69,7 +69,7 @@
           "show": true
         }
       },
-      "pluginVersion": "6.6.0-pre",
+      "pluginVersion": "6.5.0-pre",
       "targets": [
         {
           "alias": "A longer title",
@@ -160,7 +160,7 @@
           "show": true
         }
       },
-      "pluginVersion": "6.6.0-pre",
+      "pluginVersion": "6.5.0-pre",
       "targets": [
         {
           "alias": "AB",
@@ -251,7 +251,7 @@
           "show": true
         }
       },
-      "pluginVersion": "6.6.0-pre",
+      "pluginVersion": "6.5.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -336,7 +336,7 @@
           "show": true
         }
       },
-      "pluginVersion": "6.6.0-pre",
+      "pluginVersion": "6.5.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -424,7 +424,7 @@
           "show": true
         }
       },
-      "pluginVersion": "6.6.0-pre",
+      "pluginVersion": "6.5.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -512,7 +512,7 @@
           "show": true
         }
       },
-      "pluginVersion": "6.6.0-pre",
+      "pluginVersion": "6.5.0-pre",
       "targets": [
         {
           "refId": "A",
