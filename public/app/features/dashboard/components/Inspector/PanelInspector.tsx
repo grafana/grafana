@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { JSONFormatter, Modal } from '@grafana/ui';
+import { Drawer, JSONFormatter } from '@grafana/ui';
 import { css } from 'emotion';
 import { getLocationSrv } from '@grafana/runtime';
 
@@ -11,13 +11,7 @@ interface Props {
   panel: PanelModel;
 }
 
-interface State {}
-
-export class PanelInspector extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
-  }
-
+export class PanelInspector extends PureComponent<Props> {
   onDismiss = () => {
     getLocationSrv().update({
       query: { inspect: null },
@@ -39,11 +33,11 @@ export class PanelInspector extends PureComponent<Props, State> {
     // TODO? should we get the result with an observable once?
     const data = (panel.getQueryRunner() as any).lastResult;
     return (
-      <Modal title={panel.title} icon="info-circle" onDismiss={this.onDismiss} isOpen={true}>
+      <Drawer title={panel.title} onClose={this.onDismiss}>
         <div className={bodyStyle}>
           <JSONFormatter json={data} open={2} />
         </div>
-      </Modal>
+      </Drawer>
     );
   }
 }

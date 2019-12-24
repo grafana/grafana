@@ -24,7 +24,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       padding: 0 2px;
       background-color: ${selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.dark6 }, theme.type)};
       border-radius: ${theme.border.radius};
-      margin: 0 4px 2px 0;
+      margin: 1px 4px 0 0;
       text-overflow: ellipsis;
       white-space: nowrap;
       overflow: hidden;

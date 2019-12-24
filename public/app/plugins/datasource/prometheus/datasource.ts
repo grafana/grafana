@@ -396,11 +396,9 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   adjustInterval(interval: number, minInterval: number, range: number, intervalFactor: number) {
     // Prometheus will drop queries that might return more than 11000 data points.
-    // Calibrate interval if it is too small.
-    if (interval !== 0 && range / intervalFactor / interval > 11000) {
-      interval = Math.ceil(range / intervalFactor / 11000);
-    }
-    return Math.max(interval * intervalFactor, minInterval, 1);
+    // Calculate a safe interval as an additional minimum to take into account.
+    const safeInterval = Math.ceil(range / 11000);
+    return Math.max(interval * intervalFactor, minInterval, safeInterval, 1);
   }
 
   performTimeSeriesQuery(query: PromQueryRequest, start: number, end: number) {

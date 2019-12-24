@@ -28,7 +28,7 @@ Object {
       ],
       "unit": "watt",
     },
-    "override": Object {},
+    "overrides": Array [],
     "values": false,
   },
   "orientation": "vertical",

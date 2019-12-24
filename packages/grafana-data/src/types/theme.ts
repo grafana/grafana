@@ -19,7 +19,6 @@ export interface GrafanaThemeCommons {
       monospace: string;
     };
     size: {
-      root: string;
       base: string;
       xs: string;
       sm: string;
@@ -206,6 +205,9 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     textWeak: string;
     textFaint: string;
     textEmphasis: string;
+
+    // panel
+    panelBg: string;
 
     // TODO: move to background section
     bodyBg: string;

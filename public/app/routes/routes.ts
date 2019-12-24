@@ -244,9 +244,12 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       },
     })
     .when('/org/teams/new', {
-      templateUrl: 'public/app/features/teams/partials/create_team.html',
-      controller: 'CreateTeamCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        roles: () => (config.editorsCanAdmin ? [] : ['Admin']),
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "CreateTeam" */ 'app/features/teams/CreateTeam')),
+      },
     })
     .when('/org/teams/edit/:id/:page?', {
       template: '<react-container />',
