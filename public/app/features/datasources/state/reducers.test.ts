@@ -81,7 +81,7 @@ describe('dataSourcesReducer', () => {
       reducerTester()
         .givenReducer(dataSourcesReducer, state)
         .whenActionIsDispatched(dataSourcePluginsLoad())
-        .thenStateShouldEqual({ ...initialState, dataSourceTypes: [], isLoadingDataSources: true });
+        .thenStateShouldEqual({ ...initialState, isLoadingDataSources: true });
     });
   });
 
@@ -93,7 +93,7 @@ describe('dataSourcesReducer', () => {
       reducerTester()
         .givenReducer(dataSourcesReducer, state)
         .whenActionIsDispatched(dataSourcePluginsLoaded({ plugins: dataSourceTypes, categories: [] }))
-        .thenStateShouldEqual({ ...initialState, dataSourceTypes, isLoadingDataSources: false });
+        .thenStateShouldEqual({ ...initialState, plugins: dataSourceTypes, isLoadingDataSources: false });
     });
   });
 
