@@ -479,7 +479,6 @@ func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 	var config = server.Config
 	var searchBaseDNs []string
 
-
 	if len(config.GroupSearchBaseDNs) > 0 {
 		searchBaseDNs = config.GroupSearchBaseDNs
 	} else {
