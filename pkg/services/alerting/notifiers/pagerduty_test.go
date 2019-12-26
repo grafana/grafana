@@ -14,7 +14,9 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Convey("empty settings should return error", func() {
 				json := `{ }`
 
-				settingsJSON, _ := simplejson.NewJson([]byte(json))
+				settingsJSON, jerr := simplejson.NewJson([]byte(json))
+				So(jerr, ShouldBeNil)
+
 				model := &models.AlertNotification{
 					Name:     "pageduty_testing",
 					Type:     "pagerduty",
@@ -25,10 +27,12 @@ func TestPagerdutyNotifier(t *testing.T) {
 				So(err, ShouldNotBeNil)
 			})
 
-			Convey("auto resolve should default to false", func() {
-				json := `{ "integrationKey": "abcdefgh0123456789" }`
+			Convey("severity should override default", func() {
+				json := `{ "integrationKey": "abcdefgh0123456789", "severity": "info" }`
 
-				settingsJSON, _ := simplejson.NewJson([]byte(json))
+				settingsJSON, jerr := simplejson.NewJson([]byte(json))
+				So(jerr, ShouldBeNil)
+
 				model := &models.AlertNotification{
 					Name:     "pagerduty_testing",
 					Type:     "pagerduty",
@@ -42,6 +46,30 @@ func TestPagerdutyNotifier(t *testing.T) {
 				So(pagerdutyNotifier.Name, ShouldEqual, "pagerduty_testing")
 				So(pagerdutyNotifier.Type, ShouldEqual, "pagerduty")
 				So(pagerdutyNotifier.Key, ShouldEqual, "abcdefgh0123456789")
+				So(pagerdutyNotifier.Severity, ShouldEqual, "info")
+				So(pagerdutyNotifier.AutoResolve, ShouldBeFalse)
+			})
+
+			Convey("auto resolve and severity should have expected defaults", func() {
+				json := `{ "integrationKey": "abcdefgh0123456789" }`
+
+				settingsJSON, jerr := simplejson.NewJson([]byte(json))
+				So(jerr, ShouldBeNil)
+
+				model := &models.AlertNotification{
+					Name:     "pagerduty_testing",
+					Type:     "pagerduty",
+					Settings: settingsJSON,
+				}
+
+				not, err := NewPagerdutyNotifier(model)
+				pagerdutyNotifier := not.(*PagerdutyNotifier)
+
+				So(err, ShouldBeNil)
+				So(pagerdutyNotifier.Name, ShouldEqual, "pagerduty_testing")
+				So(pagerdutyNotifier.Type, ShouldEqual, "pagerduty")
+				So(pagerdutyNotifier.Key, ShouldEqual, "abcdefgh0123456789")
+				So(pagerdutyNotifier.Severity, ShouldEqual, "critical")
 				So(pagerdutyNotifier.AutoResolve, ShouldBeFalse)
 			})
 
@@ -52,7 +80,9 @@ func TestPagerdutyNotifier(t *testing.T) {
 					"autoResolve": false
 				}`
 
-				settingsJSON, _ := simplejson.NewJson([]byte(json))
+				settingsJSON, jerr := simplejson.NewJson([]byte(json))
+				So(jerr, ShouldBeNil)
+
 				model := &models.AlertNotification{
 					Name:     "pagerduty_testing",
 					Type:     "pagerduty",

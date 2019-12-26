@@ -1,13 +1,13 @@
 import set from 'lodash/set';
 import {
+  GrafanaTheme,
   DynamicConfigValue,
-  FieldConfigSource,
   FieldConfig,
   InterpolateFunction,
-  GrafanaTheme,
   DataFrame,
   Field,
   FieldType,
+  FieldConfigSource,
 } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
@@ -23,6 +23,14 @@ interface OverrideProps {
 interface GlobalMinMax {
   min: number;
   max: number;
+}
+
+export interface ApplyFieldOverrideOptions {
+  data?: DataFrame[];
+  fieldOptions: FieldConfigSource;
+  replaceVariables: InterpolateFunction;
+  theme: GrafanaTheme;
+  autoMinMax?: boolean;
 }
 
 export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
@@ -50,16 +58,16 @@ export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
 /**
  * Return a copy of the DataFrame with all rules applied
  */
-export function applyFieldOverrides(
-  data: DataFrame[],
-  source: FieldConfigSource,
-  replaceVariables: InterpolateFunction,
-  theme: GrafanaTheme,
-  isUtc?: boolean
-): DataFrame[] {
-  if (!source) {
-    return data;
+export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFrame[] {
+  if (!options.data) {
+    return [];
   }
+
+  const source = options.fieldOptions;
+  if (!source) {
+    return options.data;
+  }
+
   let range: GlobalMinMax | undefined = undefined;
 
   // Prepare the Matchers
@@ -69,20 +77,20 @@ export function applyFieldOverrides(
       const info = fieldMatchers.get(rule.matcher.id);
       if (info) {
         override.push({
-          match: info.get(rule.matcher),
+          match: info.get(rule.matcher.options),
           properties: rule.properties,
         });
       }
     }
   }
 
-  return data.map((frame, index) => {
+  return options.data.map((frame, index) => {
     let name = frame.name;
     if (!name) {
       name = `Series[${index}]`;
     }
 
-    const fields = frame.fields.map(field => {
+    const fields: Field[] = frame.fields.map(field => {
       // Config is mutable within this scope
       const config: FieldConfig = { ...field.config } || {};
       if (field.type === FieldType.number) {
@@ -98,17 +106,17 @@ export function applyFieldOverrides(
               config,
               field,
               data: frame,
-              replaceVariables,
+              replaceVariables: options.replaceVariables,
             });
           }
         }
       }
 
       // Set the Min/Max value automatically
-      if (field.type === FieldType.number) {
+      if (options.autoMinMax && field.type === FieldType.number) {
         if (!isNumber(config.min) || !isNumber(config.max)) {
           if (!range) {
-            range = findNumericFieldMinMax(data);
+            range = findNumericFieldMinMax(options.data!); // Global value
           }
           if (!isNumber(config.min)) {
             config.min = range.min;
@@ -126,11 +134,10 @@ export function applyFieldOverrides(
         config,
 
         // Set the display processor
-        processor: getDisplayProcessor({
+        display: getDisplayProcessor({
           type: field.type,
           config: config,
-          theme,
-          isUtc,
+          theme: options.theme,
         }),
       };
     });

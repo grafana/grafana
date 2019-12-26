@@ -229,6 +229,10 @@
   }
 }
 
+.explore-input--ml {
+  margin-left: 4px;
+}
+
 .navbar .elapsed-time {
   position: absolute;
   left: 0;
@@ -271,6 +275,10 @@
 .query-row-field {
   margin-right: 3px;
   flex-grow: 1;
+}
+
+.query-row-break {
+  flex-basis: 100%;
 }
 
 .query-transactions {

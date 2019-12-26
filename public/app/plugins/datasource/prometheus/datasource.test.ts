@@ -1130,9 +1130,10 @@ describe('PrometheusDatasource', () => {
         ],
         interval: '5s',
       };
-      const end = 7 * 24 * 60 * 60;
+      let end = 7 * 24 * 60 * 60;
+      end -= end % 55;
       const start = 0;
-      const urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=' + start + '&end=' + end + '&step=60';
+      const urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=' + start + '&end=' + end + '&step=55';
       getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
       ds.query(query as any);
       const res = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
@@ -1379,7 +1380,8 @@ describe('PrometheusDatasource', () => {
           __interval_ms: { text: 5 * 1000, value: 5 * 1000 },
         },
       };
-      const end = 7 * 24 * 60 * 60;
+      let end = 7 * 24 * 60 * 60;
+      end -= end % 55;
       const start = 0;
       const urlExpected =
         'proxied/api/v1/query_range?query=' +
@@ -1388,7 +1390,7 @@ describe('PrometheusDatasource', () => {
         start +
         '&end=' +
         end +
-        '&step=60';
+        '&step=55';
       getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
       templateSrv.replace = jest.fn(str => str);
       ds.query(query as any);

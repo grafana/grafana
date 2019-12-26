@@ -1,6 +1,6 @@
 import { storiesOf } from '@storybook/react';
 import { number, text } from '@storybook/addon-knobs';
-import { BarGauge, Props } from './BarGauge';
+import { BarGauge, Props, BarGaugeDisplayMode } from './BarGauge';
 import { VizOrientation } from '@grafana/data';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
@@ -18,7 +18,7 @@ const getKnobs = () => {
   };
 };
 
-const BarGaugeStories = storiesOf('UI/BarGauge/BarGauge', module);
+const BarGaugeStories = storiesOf('Visualizations/BarGauge', module);
 
 BarGaugeStories.addDecorator(withCenteredStory);
 
@@ -47,7 +47,7 @@ function addBarGaugeStory(name: string, overrides: Partial<Props>) {
       minValue: minValue,
       maxValue: maxValue,
       orientation: VizOrientation.Vertical,
-      displayMode: 'basic',
+      displayMode: BarGaugeDisplayMode.Basic,
       thresholds: [
         { value: -Infinity, color: 'green' },
         { value: threshold1Value, color: threshold1Color },
@@ -61,21 +61,21 @@ function addBarGaugeStory(name: string, overrides: Partial<Props>) {
 }
 
 addBarGaugeStory('Gradient Vertical', {
-  displayMode: 'gradient',
+  displayMode: BarGaugeDisplayMode.Gradient,
   orientation: VizOrientation.Vertical,
   height: 500,
   width: 100,
 });
 
 addBarGaugeStory('Gradient Horizontal', {
-  displayMode: 'gradient',
+  displayMode: BarGaugeDisplayMode.Gradient,
   orientation: VizOrientation.Horizontal,
   height: 100,
   width: 500,
 });
 
 addBarGaugeStory('LCD Horizontal', {
-  displayMode: 'lcd',
+  displayMode: BarGaugeDisplayMode.Lcd,
   orientation: VizOrientation.Vertical,
   height: 500,
   width: 100,

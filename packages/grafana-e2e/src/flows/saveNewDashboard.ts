@@ -1,7 +1,7 @@
 import { e2e } from '../index';
 
 export const saveNewDashboard = () => {
-  e2e.pages.Dashboard.toolbarItems('Save dashboard').click();
+  e2e.pages.Dashboard.Toolbar.toolbarItems('Save dashboard').click();
 
   const dashboardTitle = `e2e-${new Date().getTime()}`;
   e2e.pages.SaveDashboardAsModal.newName().clear();

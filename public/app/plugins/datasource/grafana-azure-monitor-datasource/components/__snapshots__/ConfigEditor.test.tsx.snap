@@ -3,6 +3,7 @@
 exports[`Render should render component 1`] = `
 <Fragment>
   <MonitorConfig
+    makeSameAs={[Function]}
     onLoadSubscriptions={[Function]}
     onResetOptionKey={[Function]}
     onUpdateOption={[Function]}
@@ -37,10 +38,12 @@ exports[`Render should render component 1`] = `
     subscriptions={Array []}
   />
   <AnalyticsConfig
+    makeSameAs={[Function]}
     onLoadSubscriptions={[Function]}
     onLoadWorkspaces={[Function]}
     onResetOptionKey={[Function]}
     onUpdateOption={[Function]}
+    onUpdateOptions={[Function]}
     options={
       Object {
         "access": "proxy",

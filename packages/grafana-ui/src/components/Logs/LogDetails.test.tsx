@@ -7,6 +7,7 @@ import { LogDetailsRow } from './LogDetailsRow';
 const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowModel>) => {
   const props: Props = {
     theme: {} as GrafanaTheme,
+    showDuplicates: false,
     row: {
       dataFrame: new MutableDataFrame(),
       entryFieldIndex: 0,
