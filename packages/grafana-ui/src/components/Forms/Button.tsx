@@ -57,7 +57,6 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
         borderColor: 'transparent',
         background: buttonVariantStyles('transparent', 'transparent', theme.colors.linkExternal),
         variantStyles: css`
-          text-decoration: underline;
           &:focus {
             outline: none;
             box-shadow: none;

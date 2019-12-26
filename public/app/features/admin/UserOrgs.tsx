@@ -31,6 +31,7 @@ export class UserOrgs extends PureComponent<Props, State> {
     const { showAddOrgModal } = this.state;
     const addToOrgContainerClass = css`
       margin-top: 0.8rem;
+      float: right;
     `;
     const addToOrgButtonClass = css`
       padding-left: 8px;
@@ -55,8 +56,8 @@ export class UserOrgs extends PureComponent<Props, State> {
             </table>
           </div>
           <div className={addToOrgContainerClass}>
-            <Forms.Button className={addToOrgButtonClass} variant="link" onClick={this.showOrgAddModal(true)}>
-              Add this user to another organisation
+            <Forms.Button className={addToOrgButtonClass} variant="secondary" onClick={this.showOrgAddModal(true)}>
+              Add user to organization
             </Forms.Button>
           </div>
           <AddToOrgModal isOpen={showAddOrgModal} onOrgAdd={onOrgAdd} onDismiss={this.showOrgAddModal(false)} />
@@ -171,7 +172,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
           <td colSpan={isRemovingFromOrg ? 2 : 1}>
             <div className="pull-right">
               <ConfirmButton
-                confirmText="Confirmn removal"
+                confirmText="Confirm removal"
                 confirmVariant="danger"
                 onClick={this.onOrgRemoveClick}
                 onCancel={this.onCancelClick}

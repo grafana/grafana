@@ -85,7 +85,7 @@ export class UserSessions extends PureComponent<Props, State> {
           </div>
           <div className={logoutFromAllDevicesClass}>
             {sessions.length > 0 && (
-              <Forms.Button variant="link" onClick={this.showLogoutConfirmationModal(true)}>
+              <Forms.Button variant="secondary" onClick={this.showLogoutConfirmationModal(true)}>
                 Force logout from all devices
               </Forms.Button>
             )}

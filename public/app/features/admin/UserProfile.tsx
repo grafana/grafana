@@ -1,10 +1,9 @@
 import React, { PureComponent, FC } from 'react';
-// import { dateTime } from '@grafana/data';
 import { UserDTO } from 'app/types';
 import { cx, css } from 'emotion';
-import { ConfirmButton, Input, ConfirmModal, InputStatus, Button } from '@grafana/ui';
-
-// const defaultTimeFormat = 'dddd YYYY-MM-DD HH:mm:ss';
+import { config } from 'app/core/config';
+import { GrafanaTheme } from '@grafana/data';
+import { ConfirmButton, Input, ConfirmModal, InputStatus, Forms, stylesFactory } from '@grafana/ui';
 
 interface Props {
   user: UserDTO;
@@ -84,7 +83,7 @@ export class UserProfile extends PureComponent<Props, State> {
     const { user } = this.props;
     const { showDeleteModal, showDisableModal } = this.state;
     const lockMessage = 'Synced via LDAP';
-    // const updateTime = dateTime(user.updatedAt).format(defaultTimeFormat);
+    const styles = getStyles(config.theme);
 
     return (
       <>
@@ -125,10 +124,10 @@ export class UserProfile extends PureComponent<Props, State> {
               </tbody>
             </table>
           </div>
-          <div className="gf-form-button-row">
-            <Button variant="danger" onClick={this.showDeleteUserModal(true)}>
+          <div className={styles.buttonRow}>
+            <Forms.Button variant="destructive" onClick={this.showDeleteUserModal(true)}>
               Delete User
-            </Button>
+            </Forms.Button>
             <ConfirmModal
               isOpen={showDeleteModal}
               title="Delete user"
@@ -138,13 +137,13 @@ export class UserProfile extends PureComponent<Props, State> {
               onDismiss={this.showDeleteUserModal(false)}
             />
             {user.isDisabled ? (
-              <Button variant="secondary" onClick={this.onUserEnable}>
+              <Forms.Button variant="secondary" onClick={this.onUserEnable}>
                 Enable User
-              </Button>
+              </Forms.Button>
             ) : (
-              <Button variant="inverse" onClick={this.showDisableUserModal(true)}>
+              <Forms.Button variant="secondary" onClick={this.showDisableUserModal(true)}>
                 Disable User
-              </Button>
+              </Forms.Button>
             )}
             <ConfirmModal
               isOpen={showDisableModal}
@@ -160,6 +159,19 @@ export class UserProfile extends PureComponent<Props, State> {
     );
   }
 }
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    buttonRow: css`
+      display: flex;
+      display: flex;
+      justify-content: flex-end;
+      > * {
+        margin-left: 16px;
+      }
+    `,
+  };
+});
 
 interface UserProfileRowProps {
   label: string;

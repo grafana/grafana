@@ -99,7 +99,6 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant }: StyleDep
       background = css`
         ${buttonVariantStyles('', '', theme.colors.linkExternal, 'rgba(0, 0, 0, 0.1)', true)};
         background: transparent;
-        text-decoration: underline;
       `;
       break;
   }
