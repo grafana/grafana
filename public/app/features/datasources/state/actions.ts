@@ -14,9 +14,9 @@ import { buildCategories } from './buildCategories';
 export const dataSourceLoaded = actionCreatorFactory<DataSourceSettings>('LOAD_DATA_SOURCE').create();
 export const dataSourcesLoaded = actionCreatorFactory<DataSourceSettings[]>('LOAD_DATA_SOURCES').create();
 export const dataSourceMetaLoaded = actionCreatorFactory<DataSourcePluginMeta>('LOAD_DATA_SOURCE_META').create();
-export const dataSourceTypesLoad = actionCreatorFactory('LOAD_DATA_SOURCE_TYPES').create();
-export const dataSourceTypesLoaded = actionCreatorFactory<DataSourceTypesLoadedPayload>(
-  'LOADED_DATA_SOURCE_TYPES'
+export const dataSourcePluginsLoad = actionCreatorFactory('LOAD_DATA_SOURCE_PLUGINS').create();
+export const dataSourcePluginsLoaded = actionCreatorFactory<DataSourceTypesLoadedPayload>(
+  'LOADED_DATA_SOURCE_PLUGINS'
 ).create();
 export const setDataSourcesSearchQuery = actionCreatorFactory<string>('SET_DATA_SOURCES_SEARCH_QUERY').create();
 export const setDataSourcesLayoutMode = actionCreatorFactory<LayoutMode>('SET_DATA_SOURCES_LAYOUT_MODE').create();
@@ -70,12 +70,12 @@ export function addDataSource(plugin: DataSourcePluginMeta): ThunkResult<void> {
   };
 }
 
-export function loadDataSourceTypes(): ThunkResult<void> {
+export function loadDataSourcePlugins(): ThunkResult<void> {
   return async dispatch => {
-    dispatch(dataSourceTypesLoad());
+    dispatch(dataSourcePluginsLoad());
     const plugins = await getBackendSrv().get('/api/plugins', { enabled: 1, type: 'datasource' });
     const categories = buildCategories(plugins);
-    dispatch(dataSourceTypesLoaded({ plugins, categories }));
+    dispatch(dataSourcePluginsLoaded({ plugins, categories }));
   };
 }
 

@@ -1,57 +1,32 @@
 import React, { FC, PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import { DataSourcePluginMeta, NavModel, PluginType } from '@grafana/data';
+import { DataSourcePluginMeta, NavModel } from '@grafana/data';
 import { List } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
 
 import Page from 'app/core/components/Page/Page';
-import { StoreState } from 'app/types';
-import { addDataSource, loadDataSourceTypes, setDataSourceTypeSearchQuery } from './state/actions';
-import { getDataSourceTypes } from './state/selectors';
+import { StoreState, DataSourcePluginCategory } from 'app/types';
+import { addDataSource, loadDataSourcePlugins, setDataSourceTypeSearchQuery } from './state/actions';
+import { getDataSourcePlugins } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 export interface Props {
   navModel: NavModel;
-  dataSourceTypes: DataSourcePluginMeta[];
+  plugins: DataSourcePluginMeta[];
+  categories: DataSourcePluginCategory[];
   isLoading: boolean;
   addDataSource: typeof addDataSource;
-  loadDataSourceTypes: typeof loadDataSourceTypes;
+  loadDataSourcePlugins: typeof loadDataSourcePlugins;
   searchQuery: string;
   setDataSourceTypeSearchQuery: typeof setDataSourceTypeSearchQuery;
 }
 
-interface DataSourceCategories {
-  [key: string]: DataSourcePluginMeta[];
-}
-
-interface DataSourceCategoryInfo {
-  id: string;
-  title: string;
-}
-
 class NewDataSourcePage extends PureComponent<Props> {
   searchInput: HTMLElement;
-  categoryInfoList: DataSourceCategoryInfo[] = [
-    { id: 'tsdb', title: 'Time series databases' },
-    { id: 'logging', title: 'Logging & document databases' },
-    { id: 'sql', title: 'SQL' },
-    { id: 'cloud', title: 'Cloud' },
-    { id: 'other', title: 'Others' },
-    { id: 'enterprise', title: 'Enterprise' },
-  ];
-
-  sortingRules: { [id: string]: number } = {
-    prometheus: 100,
-    graphite: 95,
-    loki: 90,
-    mysql: 80,
-    postgres: 79,
-    gcloud: -1,
-  };
 
   componentDidMount() {
-    this.props.loadDataSourceTypes();
+    this.props.loadDataSourcePlugins();
     this.searchInput.focus();
   }
 
@@ -63,28 +38,14 @@ class NewDataSourcePage extends PureComponent<Props> {
     this.props.setDataSourceTypeSearchQuery(value);
   };
 
-  renderTypes(types: DataSourcePluginMeta[]) {
-    if (!types) {
+  renderPlugins(plugins: DataSourcePluginMeta[]) {
+    if (!plugins || !plugins.length) {
       return null;
     }
 
-    // apply custom sort ranking
-    types.sort((a, b) => {
-      const aSort = this.sortingRules[a.id] || 0;
-      const bSort = this.sortingRules[b.id] || 0;
-      if (aSort > bSort) {
-        return -1;
-      }
-      if (aSort < bSort) {
-        return 1;
-      }
-
-      return a.name > b.name ? -1 : 1;
-    });
-
     return (
       <List
-        items={types}
+        items={plugins}
         getItemKey={item => item.id.toString()}
         renderItem={item => (
           <DataSourceTypeCard
@@ -101,29 +62,15 @@ class NewDataSourcePage extends PureComponent<Props> {
     evt.stopPropagation();
   };
 
-  renderGroupedList() {
-    const { dataSourceTypes } = this.props;
-
-    if (dataSourceTypes.length === 0) {
-      return null;
-    }
-
-    const categories = dataSourceTypes.reduce((accumulator, item) => {
-      const category = item.category || 'other';
-      const list = accumulator[category] || [];
-      list.push(item);
-      accumulator[category] = list;
-      return accumulator;
-    }, {} as DataSourceCategories);
-
-    categories['cloud'].push(getGrafanaCloudPhantomPlugin());
+  renderCategories() {
+    const { categories } = this.props;
 
     return (
       <>
-        {this.categoryInfoList.map(category => (
+        {categories.map(category => (
           <div className="add-data-source-category" key={category.id}>
             <div className="add-data-source-category__header">{category.title}</div>
-            {this.renderTypes(categories[category.id])}
+            {this.renderPlugins(category.plugins)}
           </div>
         ))}
         <div className="add-data-source-more">
@@ -141,7 +88,7 @@ class NewDataSourcePage extends PureComponent<Props> {
   }
 
   render() {
-    const { navModel, isLoading, searchQuery, dataSourceTypes } = this.props;
+    const { navModel, isLoading, searchQuery, plugins } = this.props;
 
     return (
       <Page navModel={navModel}>
@@ -163,8 +110,8 @@ class NewDataSourcePage extends PureComponent<Props> {
             </a>
           </div>
           <div>
-            {searchQuery && this.renderTypes(dataSourceTypes)}
-            {!searchQuery && this.renderGroupedList()}
+            {searchQuery && this.renderPlugins(plugins)}
+            {!searchQuery && this.renderCategories()}
           </div>
         </Page.Contents>
       </Page>
@@ -215,30 +162,6 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
   );
 };
 
-function getGrafanaCloudPhantomPlugin(): DataSourcePluginMeta {
-  return {
-    id: 'gcloud',
-    name: 'Grafana Cloud',
-    type: PluginType.datasource,
-    module: '',
-    baseUrl: '',
-    info: {
-      description: 'Hosted Graphite, Prometheus and Loki',
-      logos: { small: 'public/img/grafana_icon.svg', large: 'asd' },
-      author: { name: 'Grafana Labs' },
-      links: [
-        {
-          url: 'https://grafana.com/products/cloud/',
-          name: 'Learn more',
-        },
-      ],
-      screenshots: [],
-      updated: '2019-05-10',
-      version: '1.0.0',
-    },
-  };
-}
-
 export function getNavModel(): NavModel {
   const main = {
     icon: 'gicon gicon-add-datasources',
@@ -257,15 +180,16 @@ export function getNavModel(): NavModel {
 function mapStateToProps(state: StoreState) {
   return {
     navModel: getNavModel(),
-    dataSourceTypes: getDataSourceTypes(state.dataSources),
+    dataSourcePlugins: getDataSourcePlugins(state.dataSources),
     searchQuery: state.dataSources.dataSourceTypeSearchQuery,
+    categories: state.dataSources.categories,
     isLoading: state.dataSources.isLoadingDataSources,
   };
 }
 
 const mapDispatchToProps = {
   addDataSource,
-  loadDataSourceTypes,
+  loadDataSourcePlugins,
   setDataSourceTypeSearchQuery,
 };
 
