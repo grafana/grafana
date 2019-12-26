@@ -44,4 +44,12 @@ describe('buildCategories', () => {
     expect(categories[3].plugins.length).toBe(2);
     expect(categories[3].plugins[1].id).toBe('gcloud');
   });
+
+  it('should set module to phantom on phantom plugins', () => {
+    expect(categories[5].plugins[0].module).toBe('phantom');
+  });
+
+  it('should add enterprise phantom plugins', () => {
+    expect(categories[5].plugins.length).toBe(5);
+  });
 });

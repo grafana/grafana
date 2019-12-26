@@ -1,4 +1,5 @@
 import React, { FC, PureComponent } from 'react';
+import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { DataSourcePluginMeta, NavModel } from '@grafana/data';
@@ -76,7 +77,7 @@ class NewDataSourcePage extends PureComponent<Props> {
         <div className="add-data-source-more">
           <a
             className="btn btn-inverse"
-            href="https://grafana.com/plugins?type=datasource&utm_source=new-data-source"
+            href="https://grafana.com/plugins?type=datasource&utm_source=grafana_add_ds"
             target="_blank"
             rel="noopener"
           >
@@ -127,15 +128,18 @@ interface DataSourceTypeCardProps {
 
 const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
   const { plugin, onLearnMoreClick } = props;
-  const canSelect = plugin.id !== 'gcloud';
-  const onClick = canSelect ? props.onClick : () => {};
+  const isPhantom = plugin.module === 'phantom';
+  const onClick = !isPhantom ? props.onClick : () => {};
 
   // find first plugin info link
   const learnMoreLink = plugin.info.links && plugin.info.links.length > 0 ? plugin.info.links[0].url : null;
+  const mainClassName = classNames('add-data-source-item', {
+    'add-data-source-item--phantom': isPhantom,
+  });
 
   return (
     <div
-      className="add-data-source-item"
+      className={mainClassName}
       onClick={onClick}
       aria-label={e2e.pages.AddDataSource.selectors.dataSourcePlugins(plugin.name)}
     >
@@ -156,7 +160,7 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
             Learn more <i className="fa fa-external-link add-datasource-item-actions__btn-icon" />
           </a>
         )}
-        {canSelect && <button className="btn btn-primary">Select</button>}
+        {!isPhantom && <button className="btn btn-primary">Select</button>}
       </div>
     </div>
   );
@@ -180,7 +184,7 @@ export function getNavModel(): NavModel {
 function mapStateToProps(state: StoreState) {
   return {
     navModel: getNavModel(),
-    dataSourcePlugins: getDataSourcePlugins(state.dataSources),
+    plugins: getDataSourcePlugins(state.dataSources),
     searchQuery: state.dataSources.dataSourceTypeSearchQuery,
     categories: state.dataSources.categories,
     isLoading: state.dataSources.isLoadingDataSources,
