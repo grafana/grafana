@@ -4,6 +4,7 @@ import { Unsubscribable } from 'rxjs';
 // Services & Utils
 import {
   DataQuery,
+  CoreApp,
   DataQueryError,
   DataQueryRequest,
   DataSourceApi,
@@ -130,6 +131,7 @@ export function buildQueryTransaction(
   const panelId = `${key}`;
 
   const request: DataQueryRequest = {
+    app: CoreApp.Explore,
     dashboardId: 0,
     // TODO probably should be taken from preferences but does not seem to be used anyway.
     timezone: DefaultTimeZone,
