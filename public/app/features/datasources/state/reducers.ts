@@ -26,6 +26,7 @@ export const initialState: DataSourcesState = {
   hasFetched: false,
   isLoadingDataSources: false,
   dataSourceMeta: {} as DataSourcePluginMeta,
+  categories: [],
 };
 
 export const dataSourcesReducer = reducerFactory(initialState)
@@ -58,7 +59,8 @@ export const dataSourcesReducer = reducerFactory(initialState)
     filter: dataSourceTypesLoaded,
     mapper: (state, action) => ({
       ...state,
-      dataSourceTypes: action.payload,
+      dataSourceTypes: action.payload.plugins,
+      categories: action.payload.categories,
       isLoadingDataSources: false,
     }),
   })

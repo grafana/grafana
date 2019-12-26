@@ -92,7 +92,7 @@ describe('dataSourcesReducer', () => {
 
       reducerTester()
         .givenReducer(dataSourcesReducer, state)
-        .whenActionIsDispatched(dataSourceTypesLoaded(dataSourceTypes))
+        .whenActionIsDispatched(dataSourceTypesLoaded({ plugins: dataSourceTypes, categories: [] }))
         .thenStateShouldEqual({ ...initialState, dataSourceTypes, isLoadingDataSources: false });
     });
   });

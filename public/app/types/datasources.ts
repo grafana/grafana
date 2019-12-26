@@ -12,4 +12,11 @@ export interface DataSourcesState {
   dataSourceMeta: DataSourcePluginMeta;
   hasFetched: boolean;
   isLoadingDataSources: boolean;
+  categories: DataSourcePluginCategory[];
+}
+
+export interface DataSourcePluginCategory {
+  id: string;
+  name: string;
+  plugins: DataSourcePluginMeta[];
 }

@@ -38,6 +38,7 @@ class NewDataSourcePage extends PureComponent<Props> {
     { id: 'sql', title: 'SQL' },
     { id: 'cloud', title: 'Cloud' },
     { id: 'other', title: 'Others' },
+    { id: 'enterprise', title: 'Enterprise' },
   ];
 
   sortingRules: { [id: string]: number } = {
