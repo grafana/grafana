@@ -1,5 +1,5 @@
 // Services & Utils
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, AngularComponent } from '@grafana/runtime';
 import { actionCreatorFactory } from 'app/core/redux';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 // Actions
@@ -18,14 +18,13 @@ import {
 } from 'app/types';
 
 export const loadDashboardPermissions = actionCreatorFactory<DashboardAclDTO[]>('LOAD_DASHBOARD_PERMISSIONS').create();
-
 export const dashboardInitFetching = actionCreatorFactory('DASHBOARD_INIT_FETCHING').create();
-
 export const dashboardInitServices = actionCreatorFactory('DASHBOARD_INIT_SERVICES').create();
-
 export const dashboardInitSlow = actionCreatorFactory('SET_DASHBOARD_INIT_SLOW').create();
-
 export const dashboardInitCompleted = actionCreatorFactory<MutableDashboard>('DASHBOARD_INIT_COMLETED').create();
+export const setEditorAngularPanel = actionCreatorFactory<AngularComponent | undefined>(
+  'DASHBOARD_SET_EDITOR_ANGULAR_PANEL'
+).create();
 
 /*
  * Unrecoverable init failure (fetch or model creation failed)

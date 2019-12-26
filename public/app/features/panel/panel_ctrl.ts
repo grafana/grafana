@@ -3,7 +3,6 @@ import { escapeHtml, sanitize } from 'app/core/utils/text';
 
 import config from 'app/core/config';
 import { Emitter, profiler } from 'app/core/core';
-import getFactors from 'app/core/utils/factors';
 import {
   calculateInnerPanelHeight,
   copyPanel as copyPanelUtil,
@@ -12,7 +11,6 @@ import {
   removePanel,
   sharePanel as sharePanelUtil,
 } from 'app/features/dashboard/utils/panel';
-import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { auto } from 'angular';
 import { TemplateSrv } from '../templating/template_srv';
 import { getPanelLinksSupplier } from './panellinks/linkSuppliers';
@@ -36,7 +34,6 @@ export class PanelCtrl {
   events: Emitter;
   loading: boolean;
   timing: any;
-  maxPanelsPerRowOptions: number[];
 
   constructor($scope: any, $injector: auto.IInjectorService) {
     this.$injector = $injector;
@@ -97,7 +94,6 @@ export class PanelCtrl {
     if (!this.editModeInitiated) {
       this.editModeInitiated = true;
       this.events.emit(PanelEvents.editModeInitialized);
-      this.maxPanelsPerRowOptions = getFactors(GRID_COLUMN_COUNT);
     }
   }
 

@@ -1,5 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
+import { connect } from 'react-redux';
 import classNames from 'classnames';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
@@ -9,7 +10,9 @@ import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { getAngularLoader, AngularComponent } from '@grafana/runtime';
 /* import config from 'app/core/config'; */
 // Types
+import { StoreState } from 'app/types';
 import { DashboardModel, PanelModel } from '../state';
+import { setEditorAngularPanel } from '../state/actions';
 /* import { PANEL_BORDER } from 'app/core/constants'; */
 import { LoadingState, DefaultTimeRange, PanelData, PanelPlugin } from '@grafana/data';
 
@@ -23,6 +26,8 @@ export interface Props {
   isInView: boolean;
   width: number;
   height: number;
+  setEditorAngularPanel: typeof setEditorAngularPanel;
+  angularPanel?: AngularComponent;
 }
 
 export interface State {
@@ -33,7 +38,6 @@ export interface State {
 export class PanelChromeAngular extends PureComponent<Props, State> {
   element?: HTMLElement;
   timeSrv: TimeSrv = getTimeSrv();
-  angularPanel?: AngularComponent;
 
   constructor(props: Props) {
     super(props);
@@ -62,25 +66,27 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
       this.loadAngularPanel();
     }
 
-    if (!this.element || this.angularPanel) {
-      return;
-    }
-
     this.loadAngularPanel();
   }
 
   loadAngularPanel() {
+    // if we have no element or already have loaded the panel return
+    if (!this.element || this.props.angularPanel) {
+      return;
+    }
+
     const loader = getAngularLoader();
     const template = '<plugin-component type="panel" class="panel-height-helper"></plugin-component>';
     const scopeProps = { panel: this.props.panel, dashboard: this.props.dashboard };
-    this.angularPanel = loader.load(this.element, scopeProps, template);
+    const angularPanel = loader.load(this.element, scopeProps, template);
+
+    this.props.setEditorAngularPanel(angularPanel);
   }
 
   cleanUpAngularPanel() {
-    if (this.angularPanel) {
-      this.angularPanel.destroy();
-      this.angularPanel = null;
-      this.element = null;
+    if (this.props.angularPanel) {
+      this.props.angularPanel.destroy();
+      this.props.setEditorAngularPanel(undefined);
     }
   }
 
@@ -146,3 +152,11 @@ export class PanelChromeAngular extends PureComponent<Props, State> {
     );
   }
 }
+
+export const mapStateToProps = (state: StoreState) => ({
+  angularPanel: state.dashboard.editorAngularPanel,
+});
+
+const mapDispatchToProps = { setEditorAngularPanel };
+
+export default connect(mapStateToProps, mapDispatchToProps)(PanelChromeAngular);

@@ -87,7 +87,6 @@ class UnConnectedPanelEditor extends PureComponent<PanelEditorProps> {
             dashboard={dashboard}
             plugin={plugin}
             onPluginTypeChange={this.onPluginTypeChange}
-            angularPanel={angularPanel}
           />
         );
       default:

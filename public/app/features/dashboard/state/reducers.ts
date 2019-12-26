@@ -6,6 +6,7 @@ import {
   dashboardInitServices,
   dashboardInitFailed,
   dashboardInitCompleted,
+  setEditorAngularPanel,
   cleanUpDashboard,
 } from './actions';
 import { reducerFactory } from 'app/core/redux';
@@ -66,6 +67,13 @@ export const dashboardReducer = reducerFactory(initialState)
       initPhase: DashboardInitPhase.Completed,
       model: action.payload,
       isInitSlow: false,
+    }),
+  })
+  .addMapper({
+    filter: setEditorAngularPanel,
+    mapper: (state, action) => ({
+      ...state,
+      editorAngularPanel: action.payload,
     }),
   })
   .addMapper({
