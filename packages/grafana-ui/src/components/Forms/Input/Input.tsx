@@ -115,7 +115,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDe
 
     input: cx(
       getFocusStyle(theme),
-      sharedInputStyle(theme),
+      sharedInputStyle(theme, invalid),
       css`
         label: input-input;
         position: relative;
@@ -211,8 +211,8 @@ export const Input: FC<Props> = props => {
    */
   const [prefixRect, prefixRef] = useClientRect<HTMLDivElement>();
   const [suffixRect, suffixRef] = useClientRect<HTMLDivElement>();
-  const theme = useTheme();
 
+  const theme = useTheme();
   const styles = getInputStyles({ theme, invalid: !!invalid });
 
   return (

@@ -348,8 +348,8 @@ The following sections detail the supported settings for each alert notification
 | url |
 | recipient |
 | username |
-| iconEmoji |
-| iconUrl |
+| icon_emoji |
+| icon_url |
 | uploadImage |
 | mention |
 | token |
