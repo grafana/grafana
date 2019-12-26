@@ -1,11 +1,10 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
 // Utils & Services
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
-import { StoreState } from 'app/types';
 // Types
 import { PanelModel, DashboardModel } from '../state';
+import { angularPanelUpdated } from '../state/PanelModel';
 import { PanelPlugin, PanelPluginMeta } from '@grafana/data';
 import { PanelCtrl } from 'app/plugins/sdk';
 
@@ -13,7 +12,6 @@ interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   plugin: PanelPlugin;
-  angularPanel?: AngularComponent;
   onPluginTypeChange: (newType: PanelPluginMeta) => void;
 }
 
@@ -27,7 +25,12 @@ export class AngularPanelOptions extends PureComponent<Props> {
 
   componentDidMount() {
     this.loadAngularOptions();
+    this.props.panel.events.on(angularPanelUpdated, this.onAngularPanelUpdated);
   }
+
+  onAngularPanelUpdated = () => {
+    this.forceUpdate();
+  };
 
   componentDidUpdate(prevProps: Props) {
     if (this.props.plugin !== prevProps.plugin) {
@@ -39,6 +42,7 @@ export class AngularPanelOptions extends PureComponent<Props> {
 
   componentWillUnmount() {
     this.cleanUpAngularOptions();
+    this.props.panel.events.off(angularPanelUpdated, this.onAngularPanelUpdated);
   }
 
   cleanUpAngularOptions() {
@@ -49,13 +53,13 @@ export class AngularPanelOptions extends PureComponent<Props> {
   }
 
   loadAngularOptions() {
-    const { angularPanel } = this.props;
+    const { panel } = this.props;
 
-    if (!this.element || !angularPanel || this.angularOptions) {
+    if (!this.element || !panel.angularPanel || this.angularOptions) {
       return;
     }
 
-    const scope = angularPanel.getScope();
+    const scope = panel.angularPanel.getScope();
 
     // When full page reloading in edit mode the angular panel has on fully compiled & instantiated yet
     if (!scope.$$childHead) {
@@ -97,11 +101,3 @@ export class AngularPanelOptions extends PureComponent<Props> {
     return <div ref={elem => (this.element = elem)} />;
   }
 }
-
-const mapStateToProps = (state: StoreState) => ({
-  angularPanel: state.dashboard.editorAngularPanel,
-});
-
-const mapDispatchToProps = {};
-
-export default connect(mapStateToProps, mapDispatchToProps)(AngularPanelOptions);

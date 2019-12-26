@@ -1,5 +1,4 @@
 import { DashboardAcl } from './acl';
-import { AngularComponent } from '@grafana/runtime';
 
 export interface MutableDashboard {
   title: string;
@@ -72,5 +71,4 @@ export interface DashboardState {
   isInitSlow: boolean;
   initError?: DashboardInitError;
   permissions: DashboardAcl[] | null;
-  editorAngularPanel?: AngularComponent;
 }

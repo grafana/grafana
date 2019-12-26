@@ -13,6 +13,7 @@ import {
   DataTransformerConfig,
   ScopedVars,
 } from '@grafana/data';
+import { AngularComponent } from '@grafana/runtime';
 
 import config from 'app/core/config';
 
@@ -21,6 +22,7 @@ import { eventFactory } from '@grafana/data';
 
 export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
 export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
+export const angularPanelUpdated = eventFactory('panel-angular-panel-updated');
 
 export interface GridPos {
   x: number;
@@ -40,6 +42,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   cachedPluginOptions: true,
   plugin: true,
   queryRunner: true,
+  angularPanel: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -133,6 +136,8 @@ export class PanelModel {
   cachedPluginOptions?: any;
   legend?: { show: boolean };
   plugin?: PanelPlugin;
+  angularPanel?: AngularComponent;
+
   private queryRunner?: PanelQueryRunner;
 
   constructor(model: any) {
@@ -372,6 +377,11 @@ export class PanelModel {
   setTransformations(transformations: DataTransformerConfig[]) {
     this.transformations = transformations;
     this.getQueryRunner().setTransformations(transformations);
+  }
+
+  setAngularPanel(component: AngularComponent) {
+    this.angularPanel = component;
+    this.events.emit(angularPanelUpdated);
   }
 }
 

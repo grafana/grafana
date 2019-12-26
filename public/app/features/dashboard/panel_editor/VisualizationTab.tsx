@@ -10,7 +10,7 @@ import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { VizTypePicker } from './VizTypePicker';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
-import AngularPanelOptions from './AngularPanelOptions';
+import { AngularPanelOptions } from './AngularPanelOptions';
 // Types
 import { PanelModel, DashboardModel } from '../state';
 import { VizPickerSearch } from './VizPickerSearch';

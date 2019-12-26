@@ -11,7 +11,7 @@ import { DashboardRow } from '../components/DashboardRow';
 import { PanelChrome } from './PanelChrome';
 import { PanelEditor } from '../panel_editor/PanelEditor';
 import { PanelResizer } from './PanelResizer';
-import PanelChromeAngular from './PanelChromeAngular';
+import { PanelChromeAngular } from './PanelChromeAngular';
 
 // Types
 import { PanelModel, DashboardModel } from '../state';
