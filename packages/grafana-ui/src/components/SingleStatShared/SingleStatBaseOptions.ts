@@ -12,6 +12,7 @@ import {
   VizOrientation,
   PanelModel,
   FieldDisplayOptions,
+  ConfigOverrideRule,
 } from '@grafana/data';
 
 export interface SingleStatBaseOptions {
@@ -33,7 +34,7 @@ export function sharedSingleStatPanelChangedHandler(
     const options = {
       fieldOptions: {
         defaults: {} as FieldConfig,
-        override: {} as FieldConfig,
+        overrides: [] as ConfigOverrideRule[],
         calcs: [reducer ? reducer.id : ReducerID.mean],
       },
       orientation: VizOrientation.Horizontal,
@@ -108,6 +109,20 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
 
   if (previousVersion < 6.3) {
     options = moveThresholdsAndMappingsToField(options);
+  }
+
+  if (previousVersion < 6.6) {
+    // discard the old `override` options and enter an empty array
+    if (options.fieldOptions && options.fieldOptions.override) {
+      const { override, ...rest } = options.fieldOptions;
+      options = {
+        ...options,
+        fieldOptions: {
+          ...rest,
+          overrides: [],
+        },
+      };
+    }
   }
 
   return options as SingleStatBaseOptions;

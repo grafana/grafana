@@ -1,16 +1,18 @@
 import _ from 'lodash';
 import {
   dateTime,
-  getValueFormat,
-  getColorFromHexRgbOrName,
-  GrafanaThemeType,
-  stringToJsRegex,
-  ScopedVars,
+  escapeStringForRegex,
   formattedValueToString,
+  getColorFromHexRgbOrName,
+  getValueFormat,
+  GrafanaThemeType,
+  ScopedVars,
+  stringStartsAsRegEx,
+  stringToJsRegex,
+  unEscapeStringFromRegex,
 } from '@grafana/data';
-import { ColumnStyle } from '@grafana/ui/src/components/Table/TableCellBuilder';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { TableRenderModel, ColumnRender } from './types';
+import { ColumnRender, TableRenderModel, ColumnStyle } from './types';
 
 export class TableRenderer {
   formatters: any[];
@@ -44,7 +46,10 @@ export class TableRenderer {
       for (let i = 0; i < this.panel.styles.length; i++) {
         const style = this.panel.styles[i];
 
-        const regex = stringToJsRegex(style.pattern);
+        const escapedPattern = stringStartsAsRegEx(style.pattern)
+          ? style.pattern
+          : escapeStringForRegex(unEscapeStringFromRegex(style.pattern));
+        const regex = stringToJsRegex(escapedPattern);
         if (column.text.match(regex)) {
           column.style = style;
 

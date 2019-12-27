@@ -1,4 +1,5 @@
-export { DeleteButton } from './DeleteButton/DeleteButton';
+export { ConfirmButton } from './ConfirmButton/ConfirmButton';
+export { DeleteButton } from './ConfirmButton/DeleteButton';
 export { Tooltip, PopoverContent } from './Tooltip/Tooltip';
 export { PopoverController } from './Tooltip/PopoverController';
 export { Popover } from './Tooltip/Popover';
@@ -46,7 +47,7 @@ export { QueryField } from './QueryField/QueryField';
 export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
-export { TableInputCSV } from './Table/TableInputCSV';
+export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 
 // Visualizations
 export {
@@ -61,7 +62,7 @@ export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { GraphLegend } from './Graph/GraphLegend';
 export { GraphWithLegend } from './Graph/GraphWithLegend';
-export { BarGauge } from './BarGauge/BarGauge';
+export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
 export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { VizRepeater } from './VizRepeater/VizRepeater';
 
@@ -109,6 +110,7 @@ export { SlideOutTransition } from './transitions/SlideOutTransition';
 export { Segment, SegmentAsync, SegmentInput, SegmentSelect } from './Segment/';
 export { default as Chart } from './Chart';
 export { Icon } from './Icon/Icon';
+export { Drawer } from './Drawer/Drawer';
 
 // Next-gen forms
 export { default as Forms } from './Forms';

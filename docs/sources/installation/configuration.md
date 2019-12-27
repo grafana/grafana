@@ -12,26 +12,39 @@ weight = 1
 
 # Configuration
 
-The Grafana back-end has a number of configuration options that can be
-specified in a `.ini` configuration file or specified using environment variables.
+Grafana has a number of configuration options that you can specify in a `.ini` configuration file or specified using environment variables.
 
-> **Note.** Grafana needs to be restarted for any configuration changes to take effect.
-
-## Comments in .ini Files
-
-Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` file.
-
-A common problem is forgetting to uncomment a line in the `custom.ini` (or `grafana.ini`) file which causes the configuration option to be ignored.
+> **Note.** You must restart Grafana for any configuration changes to take effect.
 
 ## Config file locations
+
+Do not change `defaults.ini`! Grafana defaults are stored in this file. Depending on your OS, make all configuration changes in either `custom.ini` or `grafana.ini`.
 
 - Default configuration from `$WORKING_DIR/conf/defaults.ini`
 - Custom configuration from `$WORKING_DIR/conf/custom.ini`
 - The custom configuration file path can be overridden using the `--config` parameter
 
-**Note:** If you have installed Grafana using the `deb` or `rpm` packages, then your configuration file is located at `/etc/grafana/grafana.ini` and a separate `custom.ini` is not used. This path is specified in the Grafana init.d script using `--config` file parameter.
+**Linux** 
 
-**macOS:** By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`.
+If you installed Grafana using the `deb` or `rpm` packages, then your configuration file is located at `/etc/grafana/grafana.ini` and a separate `custom.ini` is not used. This path is specified in the Grafana init.d script using `--config` file parameter.
+
+**Windows**
+`sample.ini` is in the same directory as `defaults.ini` and contains all the settings commented out. Copy `sample.ini` and name it `custom.ini`.
+
+**macOS** 
+By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`.
+
+## Comments in .ini Files
+
+Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` file. If you want to change a setting, you must delete the semicolon (`;`) in front of the setting before it will work.
+
+**Example**
+```
+# The http port  to use
+;http_port = 3000
+```
+
+A common problem is forgetting to uncomment a line in the `custom.ini` (or `grafana.ini`) file which causes the configuration option to be ignored.
 
 ## Using environment variables
 
@@ -87,7 +100,13 @@ How long temporary images in `data` directory should be kept. Defaults to: `24h`
 
 ### logs
 
-Path to where Grafana will store logs. This path is usually specified via command line in the init.d script or the systemd service file.  It can be overridden in the configuration file or in the default environment variable file.
+Path to where Grafana will store logs. This path is usually specified via command line in the init.d script or the systemd service file. You can override it in the configuration file or in the default environment variable file. However, please note that by overriding this the default log path will be used temporarily until Grafana has fully initialized/started.
+
+Override log path using the command line argument `cfg:default.paths.log`:
+
+```bash
+./grafana-server --config /custom/config.ini --homepath /custom/homepath cfg:default.paths.logs=/custom/path
+```
 
 **macOS:** By default, the log file should be located at `/usr/local/var/log/grafana/grafana.log`.
 
@@ -759,4 +778,3 @@ Set to true if you host Grafana behind HTTPS only. Defaults to `false`.
 ### session_life_time
 
 How long sessions lasts in seconds. Defaults to `86400` (24 hours).
-

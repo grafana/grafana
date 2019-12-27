@@ -3,6 +3,8 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import templateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
 import coreModule from 'app/core/core_module';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
+import { sanitizeUrl } from 'app/core/utils/text';
+import { getConfig } from 'app/core/config';
 import { VariableSuggestion, VariableOrigin, DataLinkBuiltInVars } from '@grafana/ui';
 import { DataLink, KeyValue, deprecationWarning, LinkModel, DataFrame, ScopedVars } from '@grafana/data';
 
@@ -209,7 +211,7 @@ export class LinkSrv implements LinkService {
         value: variablesQuery,
       },
     });
-
+    info.href = getConfig().disableSanitizeHtml ? info.href : sanitizeUrl(info.href);
     return info;
   };
 

@@ -26,19 +26,20 @@ type Option func(c *Options)
 
 // Options control behavior of the client.
 type Options struct {
-	metrics             metrics.Factory
-	logger              jaeger.Logger
-	reporter            jaeger.Reporter
-	sampler             jaeger.Sampler
-	contribObservers    []jaeger.ContribObserver
-	observers           []jaeger.Observer
-	gen128Bit           bool
-	poolSpans           bool
-	zipkinSharedRPCSpan bool
-	maxTagValueLength   int
-	tags                []opentracing.Tag
-	injectors           map[interface{}]jaeger.Injector
-	extractors          map[interface{}]jaeger.Extractor
+	metrics                     metrics.Factory
+	logger                      jaeger.Logger
+	reporter                    jaeger.Reporter
+	sampler                     jaeger.Sampler
+	contribObservers            []jaeger.ContribObserver
+	observers                   []jaeger.Observer
+	gen128Bit                   bool
+	poolSpans                   bool
+	zipkinSharedRPCSpan         bool
+	maxTagValueLength           int
+	noDebugFlagOnForcedSampling bool
+	tags                        []opentracing.Tag
+	injectors                   map[interface{}]jaeger.Injector
+	extractors                  map[interface{}]jaeger.Extractor
 }
 
 // Metrics creates an Option that initializes Metrics in the tracer,
@@ -114,6 +115,14 @@ func ZipkinSharedRPCSpan(zipkinSharedRPCSpan bool) Option {
 func MaxTagValueLength(maxTagValueLength int) Option {
 	return func(c *Options) {
 		c.maxTagValueLength = maxTagValueLength
+	}
+}
+
+// NoDebugFlagOnForcedSampling can be used to decide whether debug flag will be set or not
+// when calling span.setSamplingPriority to force sample a span.
+func NoDebugFlagOnForcedSampling(noDebugFlagOnForcedSampling bool) Option {
+	return func(c *Options) {
+		c.noDebugFlagOnForcedSampling = noDebugFlagOnForcedSampling
 	}
 }
 

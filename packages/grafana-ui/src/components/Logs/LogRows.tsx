@@ -17,6 +17,7 @@ export interface Props extends Themeable {
   deduplicatedRows?: LogRowModel[];
   dedupStrategy: LogsDedupStrategy;
   highlighterExpressions?: string[];
+  showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
   timeZone: TimeZone;
@@ -71,6 +72,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   render() {
     const {
       dedupStrategy,
+      showLabels,
       showTime,
       wrapLogMessage,
       logRows,
@@ -86,7 +88,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       getFieldLinks,
     } = this.props;
     const { renderAll } = this.state;
-    const { logsRows, logsRowsHorizontalScroll } = getLogRowStyles(theme);
+    const { logsRowsTable, logsRowsHorizontalScroll } = getLogRowStyles(theme);
     const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
@@ -106,46 +108,54 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const getRowContext = this.props.getRowContext ? this.props.getRowContext : () => Promise.resolve([]);
 
     return (
-      <div className={logsRows}>
-        <div className={horizontalScrollWindow}>
-          {hasData &&
-            firstRows.map((row, index) => (
-              <LogRow
-                key={row.uid}
-                getRows={getRows}
-                getRowContext={getRowContext}
-                highlighterExpressions={highlighterExpressions}
-                row={row}
-                showDuplicates={showDuplicates}
-                showTime={showTime}
-                wrapLogMessage={wrapLogMessage}
-                timeZone={timeZone}
-                allowDetails={allowDetails}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                getFieldLinks={getFieldLinks}
-              />
-            ))}
-          {hasData &&
-            renderAll &&
-            lastRows.map((row, index) => (
-              <LogRow
-                key={row.uid}
-                getRows={getRows}
-                getRowContext={getRowContext}
-                row={row}
-                showDuplicates={showDuplicates}
-                showTime={showTime}
-                wrapLogMessage={wrapLogMessage}
-                timeZone={timeZone}
-                allowDetails={allowDetails}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                getFieldLinks={getFieldLinks}
-              />
-            ))}
-          {hasData && !renderAll && <span>Rendering {rowCount - previewLimit!} rows...</span>}
-        </div>
+      <div className={horizontalScrollWindow}>
+        <table className={logsRowsTable}>
+          <tbody>
+            {hasData &&
+              firstRows.map((row, index) => (
+                <LogRow
+                  key={row.uid}
+                  getRows={getRows}
+                  getRowContext={getRowContext}
+                  highlighterExpressions={highlighterExpressions}
+                  row={row}
+                  showDuplicates={showDuplicates}
+                  showLabels={showLabels}
+                  showTime={showTime}
+                  wrapLogMessage={wrapLogMessage}
+                  timeZone={timeZone}
+                  allowDetails={allowDetails}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
+                  getFieldLinks={getFieldLinks}
+                />
+              ))}
+            {hasData &&
+              renderAll &&
+              lastRows.map((row, index) => (
+                <LogRow
+                  key={row.uid}
+                  getRows={getRows}
+                  getRowContext={getRowContext}
+                  row={row}
+                  showDuplicates={showDuplicates}
+                  showLabels={showLabels}
+                  showTime={showTime}
+                  wrapLogMessage={wrapLogMessage}
+                  timeZone={timeZone}
+                  allowDetails={allowDetails}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
+                  getFieldLinks={getFieldLinks}
+                />
+              ))}
+            {hasData && !renderAll && (
+              <tr>
+                <td colSpan={5}>Rendering {rowCount - previewLimit!} rows...</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     );
   }

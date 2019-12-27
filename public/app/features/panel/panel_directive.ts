@@ -44,7 +44,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       const panelContent = elem.find('.panel-content');
       const cornerInfoElem = elem.find('.panel-info-corner');
       const ctrl = scope.ctrl;
-      ctrl.selectors = e2e.pages.Panels.Panel.selectors;
+      ctrl.selectors = e2e.pages.Dashboard.Panels.Panel.selectors;
       let infoDrop: any;
       let panelScrollbar: any;
 
@@ -80,7 +80,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       // set initial transparency
       if (ctrl.panel.transparent) {
         transparentLastState = true;
-        panelContainer.addClass('panel-transparent');
+        panelContainer.addClass('panel-container--transparent');
       }
 
       // update scrollbar after mounting
