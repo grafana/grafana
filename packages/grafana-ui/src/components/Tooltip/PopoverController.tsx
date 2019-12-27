@@ -31,7 +31,6 @@ interface Props {
 }
 
 interface State {
-  placement: PopperJS.Placement;
   show: boolean;
 }
 
@@ -42,20 +41,8 @@ class PopoverController extends React.Component<Props, State> {
     super(props);
 
     this.state = {
-      placement: this.props.placement || 'auto',
       show: false,
     };
-  }
-
-  UNSAFE_componentWillReceiveProps(nextProps: Props) {
-    if (nextProps.placement && nextProps.placement !== this.state.placement) {
-      this.setState((prevState: State) => {
-        return {
-          ...prevState,
-          placement: nextProps.placement || 'auto',
-        };
-      });
-    }
   }
 
   showPopper = () => {
@@ -86,8 +73,8 @@ class PopoverController extends React.Component<Props, State> {
   };
 
   render() {
-    const { children, content } = this.props;
-    const { show, placement } = this.state;
+    const { children, content, placement = 'auto' } = this.props;
+    const { show } = this.state;
 
     return children(this.showPopper, this.hidePopper, {
       show,

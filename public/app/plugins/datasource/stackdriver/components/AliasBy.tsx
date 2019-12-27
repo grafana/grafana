@@ -9,6 +9,7 @@ export interface Props {
 
 export interface State {
   value: string;
+  initialValue: string;
 }
 
 export class AliasBy extends Component<Props, State> {
@@ -17,17 +18,21 @@ export class AliasBy extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.propagateOnChange = debounce(this.props.onChange, 500);
-    this.state = { value: '' };
+    this.state = { value: '', initialValue: '' };
   }
 
   componentDidMount() {
-    this.setState({ value: this.props.value });
+    const { value } = this.props;
+    this.setState({ value, initialValue: value });
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps: Props) {
-    if (nextProps.value !== this.props.value) {
-      this.setState({ value: nextProps.value });
-    }
+  static getDerivedStateFromProps({ value }: Props, { initialValue }: State) {
+    return value !== initialValue
+      ? {
+          value,
+          initialValue: value,
+        }
+      : null;
   }
 
   onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
