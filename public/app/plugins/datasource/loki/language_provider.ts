@@ -262,7 +262,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
       return Promise.all(
         queries.map(async query => {
           const expr = await this.importPrometheusQuery(query.expr);
-          const { context, ...rest } = query as PromQuery;
+          const { ...rest } = query as PromQuery;
           return {
             ...rest,
             expr,
