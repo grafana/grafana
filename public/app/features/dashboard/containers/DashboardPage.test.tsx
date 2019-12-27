@@ -1,11 +1,16 @@
 import React from 'react';
 import { shallow, ShallowWrapper } from 'enzyme';
-import { DashboardPage, Props, State, mapStateToProps } from './DashboardPage';
+import { DashboardPage, mapStateToProps, Props, State } from './DashboardPage';
 import { DashboardModel } from '../state';
 import { cleanUpDashboard } from '../state/actions';
-import { getNoPayloadActionCreatorMock, NoPayloadActionCreatorMock, mockActionCreator } from 'app/core/redux';
-import { DashboardRouteInfo, DashboardInitPhase } from 'app/types';
-import { updateLocation } from 'app/core/actions';
+import {
+  getNoPayloadActionCreatorMock,
+  mockActionCreator,
+  mockToolkitActionCreator,
+  NoPayloadActionCreatorMock,
+} from 'app/core/redux';
+import { DashboardInitPhase, DashboardRouteInfo } from 'app/types';
+import { notifyApp, updateLocation } from 'app/core/actions';
 
 jest.mock('app/features/dashboard/components/DashboardSettings/SettingsCtrl', () => ({}));
 
@@ -64,7 +69,7 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
           isInitSlow: false,
           initDashboard: jest.fn(),
           updateLocation: mockActionCreator(updateLocation),
-          notifyApp: jest.fn(),
+          notifyApp: mockToolkitActionCreator(notifyApp),
           cleanUpDashboard: ctx.cleanUpDashboardMock,
           dashboard: null,
         };

@@ -1,5 +1,5 @@
-import { ApplicationState } from 'app/types/application';
 import { createSlice } from '@reduxjs/toolkit';
+import { ApplicationState } from 'app/types/application';
 
 export const initialState: ApplicationState = {
   logActions: false,

@@ -1,4 +1,5 @@
 import { Action } from 'redux';
+import { PayloadActionCreator } from '@reduxjs/toolkit';
 
 const allActionCreators = new Set<string>();
 
@@ -57,6 +58,10 @@ export const getNoPayloadActionCreatorMock = (creator: NoPayloadActionCreator): 
 };
 
 export const mockActionCreator = (creator: ActionCreator<any>) => {
+  return Object.assign(jest.fn(), creator);
+};
+
+export const mockToolkitActionCreator = (creator: PayloadActionCreator<any>) => {
   return Object.assign(jest.fn(), creator);
 };
 
