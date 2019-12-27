@@ -225,7 +225,7 @@ export class BackendSrv implements BackendService {
 
     return merge(successStream, failureStream)
       .pipe(
-        catchError(err => {
+        catchError((err: ErrorResponse) => {
           if (err.status === this.HTTP_REQUEST_CANCELED) {
             return throwError({
               err,
