@@ -14,7 +14,7 @@ import StateHistory from './StateHistory';
 import 'app/features/alerting/AlertTabCtrl';
 
 import { DashboardModel } from '../dashboard/state/DashboardModel';
-import { PanelModel } from '../dashboard/state/PanelModel';
+import { PanelModel, angularPanelUpdated } from '../dashboard/state/PanelModel';
 import { TestRuleResult } from './TestRuleResult';
 import { AppNotificationSeverity, StoreState } from 'app/types';
 import { PanelEditorTabIds, getPanelEditorTab } from '../dashboard/panel_editor/state/reducers';
@@ -22,7 +22,6 @@ import { changePanelEditorTab } from '../dashboard/panel_editor/state/actions';
 import { CoreEvents } from 'app/types';
 
 interface Props {
-  angularPanel?: AngularComponent;
   dashboard: DashboardModel;
   panel: PanelModel;
   changePanelEditorTab: typeof changePanelEditorTab;
@@ -42,19 +41,16 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   };
 
   componentDidMount() {
-    if (this.shouldLoadAlertTab()) {
-      this.loadAlertTab();
-    }
+    this.loadAlertTab();
+    this.props.panel.events.on(angularPanelUpdated, this.onAngularPanelUpdated);
   }
+
+  onAngularPanelUpdated = () => {
+    this.forceUpdate();
+  };
 
   componentDidUpdate(prevProps: Props) {
-    if (this.shouldLoadAlertTab()) {
-      this.loadAlertTab();
-    }
-  }
-
-  shouldLoadAlertTab() {
-    return this.props.angularPanel && this.element && !this.component;
+    this.loadAlertTab();
   }
 
   componentWillUnmount() {
@@ -64,9 +60,13 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   }
 
   async loadAlertTab() {
-    const { angularPanel, panel } = this.props;
+    const { panel } = this.props;
 
-    const scope = angularPanel.getScope();
+    if (!this.element || !panel.angularPanel || this.component) {
+      return;
+    }
+
+    const scope = panel.angularPanel.getScope();
 
     // When full page reloading in edit mode the angular panel has on fully compiled & instantiated yet
     if (!scope.$$childHead) {

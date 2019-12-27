@@ -193,7 +193,6 @@ export class DashboardPanel extends PureComponent<Props, State> {
             panel={panel}
             plugin={plugin}
             dashboard={dashboard}
-            /* angularPanel={angularPanel} */
             onPluginTypeChange={this.onPluginTypeChange}
           />
         )}
