@@ -9,10 +9,6 @@ import { e2e } from '@grafana/e2e';
 const module = angular.module('grafana.directives');
 
 const panelTemplate = `
-  <span class="panel-loading" ng-show="ctrl.loading">
-    <i class="fa fa-spinner fa-spin"></i>
-  </span>
-
   <ng-transclude class="panel-height-helper"></ng-transclude>
 `;
 
