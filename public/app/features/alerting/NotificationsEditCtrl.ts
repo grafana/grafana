@@ -19,6 +19,7 @@ export class AlertNotificationEditCtrl {
     settings: {
       httpMethod: 'POST',
       autoResolve: true,
+      severity: 'critical',
       uploadImage: true,
     },
     isDefault: false,

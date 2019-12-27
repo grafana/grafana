@@ -125,7 +125,7 @@ Please note that PhantomJS binaries are not included for ARM. To support this yo
 
 ## Alerting and render limits
 
-Alert notifications can include images, but rendering many images at the same time can overload the server where the renderer is running. For instructions of how to configure this, see [concurrent_render_limit](/installation/configuration/#concurrent-render-limit).
+Alert notifications can include images, but rendering many images at the same time can overload the server where the renderer is running. For instructions of how to configure this, see [concurrent_render_limit]({{< relref "../installation/configuration/#concurrent_render_limit" >}}).
 
 ## Troubleshooting
 

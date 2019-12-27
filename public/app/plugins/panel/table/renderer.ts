@@ -11,9 +11,8 @@ import {
   stringToJsRegex,
   unEscapeStringFromRegex,
 } from '@grafana/data';
-import { ColumnStyle } from '@grafana/ui/src/components/Table/TableCellBuilder';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { ColumnRender, TableRenderModel } from './types';
+import { ColumnRender, TableRenderModel, ColumnStyle } from './types';
 
 export class TableRenderer {
   formatters: any[];
