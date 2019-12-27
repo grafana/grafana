@@ -1,16 +1,18 @@
+import omitBy from 'lodash/omitBy';
+import { from, merge, MonoTypeOperatorFunction, Observable, Subject, throwError } from 'rxjs';
+import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap } from 'rxjs/operators';
+import { fromFetch } from 'rxjs/fetch';
+import { BackendSrv as BackendService, BackendSrvRequest } from '@grafana/runtime';
+import { AppEvents } from '@grafana/data';
+
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardSearchHit } from 'app/types/search';
 import { CoreEvents, DashboardDTO, FolderInfo } from 'app/types';
-import { BackendSrv as BackendService, BackendSrvRequest } from '@grafana/runtime';
-import { AppEvents } from '@grafana/data';
-import { contextSrv } from './context_srv';
-import { from, merge, MonoTypeOperatorFunction, Observable, Subject, throwError } from 'rxjs';
-import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap } from 'rxjs/operators';
-import { fromFetch } from 'rxjs/fetch';
+import { ContextSrv, contextSrv } from './context_srv';
 import { coreModule } from 'app/core/core_module';
-import omitBy from 'lodash/omitBy';
+import { Emitter } from '../utils/emitter';
 
 export interface DatasourceRequestOptions {
   retry?: number;
@@ -32,7 +34,7 @@ interface ErrorResponseProps extends FetchResponseProps {
   error?: string | any;
 }
 
-interface FetchResponse<T extends FetchResponseProps = any> {
+export interface FetchResponse<T extends FetchResponseProps = any> {
   status: number;
   statusText: string;
   ok: boolean;
@@ -65,10 +67,34 @@ function serializeParams(data: Record<string, any>): string {
     .join('&');
 }
 
+export interface BackendSrvDependencies {
+  fromFetch: (input: string | Request, init?: RequestInit) => Observable<Response>;
+  appEvents: Emitter;
+  contextSrv: ContextSrv;
+  logout: () => void;
+}
+
 export class BackendSrv implements BackendService {
   private inFlightRequests: Subject<string> = new Subject<string>();
   private HTTP_REQUEST_CANCELED = -1;
   private noBackendCache: boolean;
+  private dependencies: BackendSrvDependencies = {
+    fromFetch: fromFetch,
+    appEvents: appEvents,
+    contextSrv: contextSrv,
+    logout: () => {
+      window.location.href = config.appSubUrl + '/logout';
+    },
+  };
+
+  constructor(deps?: BackendSrvDependencies) {
+    if (deps) {
+      this.dependencies = {
+        ...this.dependencies,
+        ...deps,
+      };
+    }
+  }
 
   async get(url: string, params?: any) {
     return await this.request({ method: 'GET', url, params });
@@ -110,7 +136,7 @@ export class BackendSrv implements BackendService {
       },
       body: JSON.stringify(options.data),
     };
-    return fromFetch(url, init).pipe(
+    return this.dependencies.fromFetch(url, init).pipe(
       mergeMap(async response => {
         const { status, statusText, ok } = response;
         const textData = await response.text(); // this could be just a string, prometheus requests for instance
@@ -140,7 +166,7 @@ export class BackendSrv implements BackendService {
           mergeMap((error, i) => {
             const firstAttempt = i === 0 && options.retry === 0;
 
-            if (error.status === 401 && contextSrv.user.isSignedIn && firstAttempt) {
+            if (error.status === 401 && this.dependencies.contextSrv.user.isSignedIn && firstAttempt) {
               return from(this.loginPing());
             }
 
@@ -161,7 +187,7 @@ export class BackendSrv implements BackendService {
     }
 
     if (err.status === 422) {
-      appEvents.emit(AppEvents.alertWarning, ['Validation failed', data.message]);
+      this.dependencies.appEvents.emit(AppEvents.alertWarning, ['Validation failed', data.message]);
       throw data;
     }
 
@@ -173,7 +199,10 @@ export class BackendSrv implements BackendService {
         message = 'Error';
       }
 
-      appEvents.emit(err.status < 500 ? AppEvents.alertWarning : AppEvents.alertError, [message, description]);
+      this.dependencies.appEvents.emit(err.status < 500 ? AppEvents.alertWarning : AppEvents.alertError, [
+        message,
+        description,
+      ]);
     }
 
     throw data;
@@ -184,9 +213,9 @@ export class BackendSrv implements BackendService {
     const requestIsLocal = !options.url.match(/^http/);
 
     if (requestIsLocal) {
-      if (contextSrv.user?.orgId) {
+      if (this.dependencies.contextSrv.user?.orgId) {
         options.headers = options.headers ?? {};
-        options.headers['X-Grafana-Org-Id'] = contextSrv.user.orgId;
+        options.headers['X-Grafana-Org-Id'] = this.dependencies.contextSrv.user.orgId;
       }
 
       if (options.url.startsWith('/')) {
@@ -208,7 +237,7 @@ export class BackendSrv implements BackendService {
       }),
       tap(response => {
         if (options.method !== 'GET' && response?.message && options.showSuccessAlert) {
-          appEvents.emit(AppEvents.alertSuccess, [response.message]);
+          this.dependencies.appEvents.emit(AppEvents.alertSuccess, [response.message]);
         }
       })
     );
@@ -217,7 +246,7 @@ export class BackendSrv implements BackendService {
       .pipe(
         catchError((err: ErrorResponse) => {
           if (err.status === 401) {
-            window.location.href = config.appSubUrl + '/logout';
+            this.dependencies.logout();
             return throwError(err);
           }
 
@@ -240,7 +269,6 @@ export class BackendSrv implements BackendService {
     // particular query. If the requestID exists, the promise it is keyed to
     // is canceled, canceling the previous datasource request if it is still
     // in-flight.
-    options.requestId = options.requestId ?? 'A';
     const requestId = options.requestId;
 
     if (requestId) {
@@ -250,9 +278,9 @@ export class BackendSrv implements BackendService {
     const requestIsLocal = !options.url.match(/^http/);
 
     if (requestIsLocal) {
-      if (contextSrv.user?.orgId) {
+      if (this.dependencies.contextSrv.user?.orgId) {
         options.headers = options.headers || {};
-        options.headers['X-Grafana-Org-Id'] = contextSrv.user.orgId;
+        options.headers['X-Grafana-Org-Id'] = this.dependencies.contextSrv.user.orgId;
       }
 
       if (options.url.startsWith('/')) {
@@ -280,7 +308,7 @@ export class BackendSrv implements BackendService {
       }),
       tap(res => {
         if (!options.silent) {
-          appEvents.emit(CoreEvents.dsRequestResponse, res);
+          this.dependencies.appEvents.emit(CoreEvents.dsRequestResponse, res);
         }
       })
     );
@@ -296,7 +324,7 @@ export class BackendSrv implements BackendService {
           }
 
           if (err.status === 401) {
-            window.location.href = config.appSubUrl + '/logout';
+            this.dependencies.logout();
             return throwError(err);
           }
 
@@ -314,7 +342,7 @@ export class BackendSrv implements BackendService {
           }
 
           if (!options.silent) {
-            appEvents.emit(CoreEvents.dsRequestError, err);
+            this.dependencies.appEvents.emit(CoreEvents.dsRequestError, err);
           }
 
           return throwError(err);
@@ -469,7 +497,7 @@ export class BackendSrv implements BackendService {
   }
 }
 
-coreModule.service('backendSrv', BackendSrv);
+coreModule.factory('backendSrv', () => backendSrv);
 // Used for testing and things that really need BackendSrv
 export const backendSrv = new BackendSrv();
 export const getBackendSrv = (): BackendSrv => backendSrv;
