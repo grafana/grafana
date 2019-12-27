@@ -47,7 +47,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         tooltip={
           <React.Fragment>
             An additional lower limit for the step parameter of the Prometheus query and for the
-
+             
             <code>
               $__interval
             </code>
