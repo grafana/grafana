@@ -11,6 +11,7 @@ import {
   LoadingState,
   TimeRange,
   TimeSeries,
+  CoreApp,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
@@ -29,7 +30,7 @@ import addLabelToQuery from './add_label_to_query';
 import { getQueryHints } from './query_hints';
 import { expandRecordingRules } from './language_utils';
 // Types
-import { PromContext, PromOptions, PromQuery, PromQueryRequest } from './types';
+import { PromOptions, PromQuery, PromQueryRequest } from './types';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -202,7 +203,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
       target.requestId = options.panelId + target.refId;
 
-      if (target.context !== PromContext.Explore) {
+      if (options.app !== CoreApp.Explore) {
         activeTargets.push(target);
         queries.push(this.createQuery(target, options, start, end));
         continue;
@@ -237,11 +238,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     };
   };
 
-  calledFromExplore = (options: DataQueryRequest<PromQuery>): boolean => {
-    const exploreTargets = options.targets.filter(target => target.context === PromContext.Explore).length;
-    return exploreTargets === options.targets.length;
-  };
-
   query(options: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     const start = this.getPrometheusTime(options.range.from, false);
     const end = this.getPrometheusTime(options.range.to, true);
@@ -255,7 +251,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       });
     }
 
-    if (this.calledFromExplore(options)) {
+    if (options.app === CoreApp.Explore) {
       return this.exploreQuery(queries, activeTargets, end);
     }
 

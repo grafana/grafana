@@ -7,6 +7,7 @@ import { AnnotationEvent, KeyValue, LoadingState, TableData, TimeSeries } from '
 import { DataFrame, DataFrameDTO } from './dataFrame';
 import { RawTimeRange, TimeRange, AbsoluteTimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
+import { CoreApp } from './app';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
   options: DataSourceSettings<JSONData, SecureJSONData>;
@@ -449,6 +450,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   scopedVars: ScopedVars;
   targets: TQuery[];
   timezone: string;
+  app: CoreApp | string;
 
   cacheTimeout?: string;
   exploreMode?: 'Logs' | 'Metrics';
