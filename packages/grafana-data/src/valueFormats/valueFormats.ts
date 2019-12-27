@@ -164,6 +164,14 @@ function buildFormats() {
     }
   }
 
+  // Resolve units pointing to old IDs
+  [{ from: 'farenheit', to: 'fahrenheit' }].forEach(alias => {
+    const f = index[alias.to];
+    if (f) {
+      index[alias.from] = f;
+    }
+  });
+
   hasBuiltIndex = true;
 }
 

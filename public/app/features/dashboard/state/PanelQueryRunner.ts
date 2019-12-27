@@ -15,6 +15,7 @@ import { runSharedRequest, isSharedDashboardQuery } from '../../../plugins/datas
 import {
   PanelData,
   DataQuery,
+  CoreApp,
   DataQueryRequest,
   DataSourceApi,
   DataSourceJsonData,
@@ -106,6 +107,7 @@ export class PanelQueryRunner {
     }
 
     const request: DataQueryRequest = {
+      app: CoreApp.Dashboard,
       requestId: getNextRequestId(),
       timezone,
       panelId,
