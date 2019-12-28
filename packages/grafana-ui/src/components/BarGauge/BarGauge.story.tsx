@@ -1,7 +1,7 @@
 import { storiesOf } from '@storybook/react';
 import { number, text } from '@storybook/addon-knobs';
 import { BarGauge, Props, BarGaugeDisplayMode } from './BarGauge';
-import { VizOrientation, ScaleMode, Field, FieldType, getDisplayProcessor } from '@grafana/data';
+import { VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor } from '@grafana/data';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
@@ -40,9 +40,9 @@ function addBarGaugeStory(name: string, overrides: Partial<Props>) {
       config: {
         min: minValue,
         max: maxValue,
-        scale: {
-          mode: ScaleMode.Absolute,
-          thresholds: [
+        thresholds: {
+          mode: ThresholdsMode.Absolute,
+          step: [
             { value: -Infinity, color: 'green' },
             { value: threshold1Value, color: threshold1Color },
             { value: threshold2Value, color: threshold2Color },
@@ -61,11 +61,9 @@ function addBarGaugeStory(name: string, overrides: Partial<Props>) {
         title: title,
         numeric: value,
       },
-      minValue: minValue,
-      maxValue: maxValue,
       orientation: VizOrientation.Vertical,
       displayMode: BarGaugeDisplayMode.Basic,
-      scale: field?.config!.scale!,
+      field: field.config!,
       display: field.display!,
     };
 

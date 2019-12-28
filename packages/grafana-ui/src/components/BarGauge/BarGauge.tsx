@@ -8,9 +8,10 @@ import {
   formattedValueToString,
   FormattedValue,
   DisplayValueAlignmentFactors,
-  Scale,
-  ScaleMode,
+  ThresholdsMode,
   DisplayProcessor,
+  FieldConfig,
+  FieldColorMode,
 } from '@grafana/data';
 
 // Compontents
@@ -35,11 +36,9 @@ const VALUE_LEFT_PADDING = 10;
 export interface Props extends Themeable {
   height: number;
   width: number;
-  scale: Scale;
-  value: DisplayValue;
+  field: FieldConfig;
   display: DisplayProcessor;
-  maxValue: number;
-  minValue: number;
+  value: DisplayValue;
   orientation: VizOrientation;
   itemSpacing?: number;
   lcdCellWidth?: number;
@@ -58,8 +57,6 @@ export enum BarGaugeDisplayMode {
 
 export class BarGauge extends PureComponent<Props> {
   static defaultProps: Partial<Props> = {
-    maxValue: 100,
-    minValue: 0,
     lcdCellWidth: 12,
     value: {
       text: '100',
@@ -67,9 +64,13 @@ export class BarGauge extends PureComponent<Props> {
     },
     displayMode: BarGaugeDisplayMode.Gradient,
     orientation: VizOrientation.Horizontal,
-    scale: {
-      mode: ScaleMode.Absolute,
-      thresholds: [],
+    field: {
+      min: 0,
+      max: 100,
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        step: [],
+      },
     },
     itemSpacing: 10,
     showUnfilled: true,
@@ -164,7 +165,7 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   renderRetroBars(): ReactNode {
-    const { maxValue, minValue, value, itemSpacing, alignmentFactors, orientation, lcdCellWidth } = this.props;
+    const { field, value, itemSpacing, alignmentFactors, orientation, lcdCellWidth } = this.props;
     const {
       valueHeight,
       valueWidth,
@@ -173,6 +174,8 @@ export class BarGauge extends PureComponent<Props> {
       wrapperWidth,
       wrapperHeight,
     } = calculateBarAndValueDimensions(this.props);
+    const minValue = field.min!;
+    const maxValue = field.max!;
 
     const isVert = isVertical(orientation);
     const valueRange = maxValue - minValue;
@@ -406,10 +409,10 @@ export function getValuePercent(value: number, minValue: number, maxValue: numbe
  * Only exported to for unit test
  */
 export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles {
-  const { displayMode, maxValue, minValue, value, alignmentFactors, orientation, theme } = props;
+  const { displayMode, field, value, alignmentFactors, orientation, theme } = props;
   const { valueWidth, valueHeight, maxBarHeight, maxBarWidth } = calculateBarAndValueDimensions(props);
 
-  const valuePercent = getValuePercent(value.numeric, minValue, maxValue);
+  const valuePercent = getValuePercent(value.numeric, field.min!, field.max!);
   const valueColor = getValueColor(props);
 
   const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
@@ -499,14 +502,16 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
  * Only exported to for unit test
  */
 export function getBarGradient(props: Props, maxSize: number): string {
-  const { minValue, maxValue, scale, value, orientation } = props;
+  const { field, value, orientation } = props;
   const cssDirection = isVertical(orientation) ? '0deg' : '90deg';
+  const minValue = field.min!;
+  const maxValue = field.max!;
 
   let gradient = '';
   let lastpos = 0;
 
-  if (scale.scheme) {
-    const steps = (d3 as any)[`scheme${scale.scheme}`] as any[];
+  if (field.color && field.color.mode === FieldColorMode.Scheme) {
+    const steps = (d3 as any)[`scheme${field.color.schemeName}`] as any[];
     if (!steps) {
       const color = '#F00';
       gradient = `linear-gradient(${cssDirection}, ${color}, ${color}`;
@@ -528,10 +533,10 @@ export function getBarGradient(props: Props, maxSize: number): string {
       }
     }
   } else {
-    const { thresholds } = scale;
+    const thresholds = field.thresholds!;
 
-    for (let i = 0; i < thresholds.length; i++) {
-      const threshold = thresholds[i];
+    for (let i = 0; i < thresholds.step.length; i++) {
+      const threshold = thresholds.step[i];
       const color = getColorFromHexRgbOrName(threshold.color);
       const valuePercent = getValuePercent(threshold.value, minValue, maxValue);
       const pos = valuePercent * maxSize;

@@ -1,16 +1,25 @@
 import React, { PureComponent, ChangeEvent } from 'react';
-import { Threshold, sortThresholds } from '@grafana/data';
+import { Threshold, sortThresholds, Thresholds, ThresholdsMode, SelectableValue } from '@grafana/data';
 import { colors } from '../../utils';
 import { getColorFromHexRgbOrName } from '@grafana/data';
 import { Input } from '../Input/Input';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { Themeable } from '../../types';
 import { css } from 'emotion';
+import Select from '../Select/Select';
+
+const modes: Array<SelectableValue<ThresholdsMode>> = [
+  { value: ThresholdsMode.Absolute, label: 'Absolute', description: 'Pick thresholds based on the absolute values' },
+  {
+    value: ThresholdsMode.Percentage,
+    label: 'Percentage',
+    description: 'Pick threshold based on the percent between min/max',
+  },
+];
 
 export interface Props extends Themeable {
-  isPercent?: boolean;
-  thresholds?: Threshold[];
-  onChange: (thresholds: Threshold[]) => void;
+  thresholds: Thresholds;
+  onChange: (thresholds: Thresholds) => void;
 }
 
 interface State {
@@ -41,10 +50,10 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    const thresholds = toThresholdsWithKey(props.thresholds);
-    thresholds[0].value = -Infinity;
+    const steps = toThresholdsWithKey(props.thresholds!.step);
+    steps[0].value = -Infinity;
 
-    this.state = { thresholds };
+    this.state = { thresholds: steps };
   }
 
   onAddThresholdAfter = (threshold: ThresholdWithKey) => {
@@ -148,11 +157,20 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
   };
 
   onChange = () => {
-    const { thresholds } = this.state;
-    this.props.onChange(thresholdsWithoutKey(thresholds));
+    this.props.onChange(thresholdsWithoutKey(this.props.thresholds, this.state.thresholds));
+  };
+
+  onModeChanged = (item: SelectableValue<ThresholdsMode>) => {
+    if (item.value) {
+      this.props.onChange({
+        ...this.props.thresholds,
+        mode: item.value,
+      });
+    }
   };
 
   renderInput = (threshold: ThresholdWithKey) => {
+    const isPercent = this.props.thresholds.mode === ThresholdsMode.Percentage;
     return (
       <div className="thresholds-row-input-inner">
         <span className="thresholds-row-input-inner-arrow" />
@@ -182,7 +200,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                 onBlur={this.onBlur}
               />
             </div>
-            {this.props.isPercent && (
+            {isPercent && (
               <div className={css(`margin-left:-20px; margin-top:5px;`)}>
                 <i className="fa fa-percent" />
               </div>
@@ -199,33 +217,45 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
   render() {
     const { thresholds } = this.state;
     const { theme } = this.props;
+    const t = this.props.thresholds;
     return (
-      <div className="thresholds">
-        {thresholds
-          .slice(0)
-          .reverse()
-          .map(threshold => {
-            return (
-              <div className="thresholds-row" key={`${threshold.key}`}>
-                <div className="thresholds-row-add-button" onClick={() => this.onAddThresholdAfter(threshold)}>
-                  <i className="fa fa-plus" />
+      <div>
+        <div className="thresholds">
+          {thresholds
+            .slice(0)
+            .reverse()
+            .map(threshold => {
+              return (
+                <div className="thresholds-row" key={`${threshold.key}`}>
+                  <div className="thresholds-row-add-button" onClick={() => this.onAddThresholdAfter(threshold)}>
+                    <i className="fa fa-plus" />
+                  </div>
+                  <div
+                    className="thresholds-row-color-indicator"
+                    style={{ backgroundColor: getColorFromHexRgbOrName(threshold.color, theme.type) }}
+                  />
+                  <div className="thresholds-row-input">{this.renderInput(threshold)}</div>
                 </div>
-                <div
-                  className="thresholds-row-color-indicator"
-                  style={{ backgroundColor: getColorFromHexRgbOrName(threshold.color, theme.type) }}
-                />
-                <div className="thresholds-row-input">{this.renderInput(threshold)}</div>
-              </div>
-            );
-          })}
+              );
+            })}
+        </div>
+
+        {false && (
+          <div>
+            <Select options={modes} value={modes.filter(m => m.value === t.mode)} onChange={this.onModeChanged} />
+          </div>
+        )}
       </div>
     );
   }
 }
 
-export function thresholdsWithoutKey(thresholds: ThresholdWithKey[]): Threshold[] {
-  return thresholds.map(t => {
-    const { key, ...rest } = t;
-    return rest; // everything except key
-  });
+export function thresholdsWithoutKey(thresholds: Thresholds, steps: ThresholdWithKey[]): Thresholds {
+  return {
+    ...thresholds,
+    step: steps.map(t => {
+      const { key, ...rest } = t;
+      return rest; // everything except key
+    }),
+  };
 }

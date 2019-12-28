@@ -8,6 +8,9 @@ import {
   Field,
   FieldType,
   FieldConfigSource,
+  ThresholdsMode,
+  FieldColorMode,
+  ColorScheme,
 } from '../types';
 import { fieldMatchers, ReducerID, reduceField } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
@@ -15,7 +18,6 @@ import isNumber from 'lodash/isNumber';
 import toNumber from 'lodash/toNumber';
 import { getDisplayProcessor } from './displayProcessor';
 import { guessFieldTypeForField } from '../dataframe';
-import { validateScale } from '../utils';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -141,7 +143,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       }
 
       // Set the Min/Max value automatically
-      if ((options.autoMinMax || config.scale?.scheme) && field.type === FieldType.number) {
+      if (options.autoMinMax && field.type === FieldType.number) {
         if (!isNumber(config.min) || !isNumber(config.max)) {
           if (!range) {
             range = findNumericFieldMinMax(options.data!); // Global value
@@ -230,8 +232,47 @@ export function setFieldConfigDefaults(config: FieldConfig, props?: FieldConfig)
     }
   }
 
-  if (config.scale) {
-    validateScale(config.scale);
+  validateFieldConfig(config);
+}
+
+/**
+ * This checks that all options on FieldConfig make sense.  It mutates any value that needs
+ * fixed.  In particular this makes sure that the first threshold value is -Infinity (not valid in JSON)
+ */
+export function validateFieldConfig(config: FieldConfig) {
+  const { thresholds } = config;
+  if (thresholds) {
+    if (!thresholds.mode) {
+      thresholds.mode = ThresholdsMode.Absolute;
+    }
+    if (!thresholds.step) {
+      thresholds.step = [];
+    } else if (thresholds.step.length) {
+      // First value is always -Infinity
+      // JSON saves it as null
+      thresholds.step[0].value = -Infinity;
+    }
+  }
+
+  if (!config.color) {
+    if (thresholds) {
+      config.color = {
+        mode: FieldColorMode.Thresholds,
+      };
+    }
+    // No Color settings
+  } else if (!config.color.mode) {
+    // Without a mode, skip color altogether
+    delete config.color;
+  } else {
+    const { color } = config;
+    if (color.mode === FieldColorMode.Scheme) {
+      if (!color.schemeName) {
+        color.schemeName = ColorScheme.BrBG;
+      }
+    } else {
+      delete color.schemeName;
+    }
   }
 
   // Verify that max > min (swap if necessary)

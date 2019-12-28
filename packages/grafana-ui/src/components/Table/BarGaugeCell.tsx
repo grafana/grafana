@@ -1,11 +1,11 @@
 import React, { FC } from 'react';
 import { ReactTableCellProps, TableCellDisplayMode } from './types';
 import { BarGauge, BarGaugeDisplayMode } from '../BarGauge/BarGauge';
-import { Scale, ScaleMode, VizOrientation } from '@grafana/data';
+import { Thresholds, ThresholdsMode, VizOrientation } from '@grafana/data';
 
-const defaultScale: Scale = {
-  mode: ScaleMode.Absolute,
-  thresholds: [
+const defaultScale: Thresholds = {
+  mode: ThresholdsMode.Absolute,
+  step: [
     {
       color: 'blue',
       value: -Infinity,
@@ -25,6 +25,14 @@ export const BarGaugeCell: FC<ReactTableCellProps> = props => {
     return null;
   }
 
+  let { config } = field;
+  if (!config.thresholds) {
+    config = {
+      ...config,
+      thresholds: defaultScale,
+    };
+  }
+
   const displayValue = field.display(cell.value);
   let barGaugeMode = BarGaugeDisplayMode.Gradient;
 
@@ -32,17 +40,13 @@ export const BarGaugeCell: FC<ReactTableCellProps> = props => {
     barGaugeMode = BarGaugeDisplayMode.Lcd;
   }
 
-  const { scale } = field.config;
-
   return (
     <div className={tableStyles.tableCell}>
       <BarGauge
         width={column.width - tableStyles.cellPadding * 2}
         height={tableStyles.cellHeightInner}
-        scale={scale || defaultScale}
+        field={config}
         value={displayValue}
-        maxValue={field.config.max || 100}
-        minValue={field.config.min || 0}
         orientation={VizOrientation.Horizontal}
         theme={tableStyles.theme}
         itemSpacing={1}

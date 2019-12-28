@@ -13,8 +13,8 @@ import {
   PanelModel,
   FieldDisplayOptions,
   ConfigOverrideRule,
-  ScaleMode,
-  Scale,
+  ThresholdsMode,
+  Thresholds,
 } from '@grafana/data';
 
 export interface SingleStatBaseOptions {
@@ -72,9 +72,9 @@ export function sharedSingleStatPanelChangedHandler(
           thresholds.push({ value: -Infinity, color });
         }
       }
-      defaults.scale = {
-        mode: ScaleMode.Absolute,
-        thresholds,
+      defaults.thresholds = {
+        mode: ThresholdsMode.Absolute,
+        step: thresholds,
       };
     }
 
@@ -131,7 +131,7 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
       };
     }
 
-    // Move thresholds to scale
+    // Move thresholds to steps
     let thresholds = fieldOptions?.defaults?.thresholds;
     if (thresholds) {
       delete fieldOptions.defaults.thresholds;
@@ -141,9 +141,9 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     }
 
     if (thresholds) {
-      fieldOptions.defaults.scale = {
-        mode: ScaleMode.Absolute,
-        thresholds,
+      fieldOptions.defaults.thresholds = {
+        mode: ThresholdsMode.Absolute,
+        step: thresholds,
       };
     }
   }
@@ -158,13 +158,13 @@ export function moveThresholdsAndMappingsToField(old: any) {
     return old;
   }
 
-  const { mappings, thresholds, ...rest } = old.fieldOptions;
+  const { mappings, ...rest } = old.fieldOptions;
 
-  let scale: Scale | undefined = undefined;
-  if (thresholds && thresholds.length) {
-    scale = {
-      mode: ScaleMode.Absolute,
-      thresholds: migrateOldThresholds(thresholds)!,
+  let thresholds: Thresholds | undefined = undefined;
+  if (old.thresholds) {
+    thresholds = {
+      mode: ThresholdsMode.Absolute,
+      step: migrateOldThresholds(old.thresholds)!,
     };
   }
 
@@ -175,7 +175,7 @@ export function moveThresholdsAndMappingsToField(old: any) {
       defaults: {
         ...fieldOptions.defaults,
         mappings,
-        scale,
+        thresholds,
       },
     },
   };

@@ -1,6 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { DisplayValue, VizOrientation, ScaleMode, Field, FieldType, getDisplayProcessor } from '@grafana/data';
+import { DisplayValue, VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor } from '@grafana/data';
 import {
   BarGauge,
   Props,
@@ -22,9 +22,9 @@ function getProps(propOverrides?: Partial<Props>): Props {
     config: {
       min: 0,
       max: 100,
-      scale: {
-        mode: ScaleMode.Absolute,
-        thresholds: [
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        step: [
           { value: -Infinity, color: 'green' },
           { value: 70, color: 'orange' },
           { value: 90, color: 'red' },
@@ -36,10 +36,8 @@ function getProps(propOverrides?: Partial<Props>): Props {
   field.display = getDisplayProcessor({ field, theme });
 
   const props: Props = {
-    maxValue: 100,
-    minValue: 0,
     displayMode: BarGaugeDisplayMode.Basic,
-    scale: field.config?.scale!,
+    field: field.config!,
     display: field.display!,
     height: 300,
     width: 300,

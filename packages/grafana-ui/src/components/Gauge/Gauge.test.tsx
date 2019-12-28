@@ -3,29 +3,35 @@ import { shallow } from 'enzyme';
 
 import { Gauge, Props } from './Gauge';
 import { getTheme } from '../../themes';
-import { ScaleMode } from '@grafana/data';
+import { ThresholdsMode, FieldConfig } from '@grafana/data';
 
 jest.mock('jquery', () => ({
   plot: jest.fn(),
 }));
 
-const setup = (propOverrides?: object) => {
+const setup = (propOverrides?: FieldConfig) => {
+  const field: FieldConfig = {
+    min: 0,
+    max: 100,
+    thresholds: {
+      mode: ThresholdsMode.Absolute,
+      step: [{ value: -Infinity, color: '#7EB26D' }],
+    },
+  };
+  Object.assign(field, propOverrides);
+
   const props: Props = {
-    maxValue: 100,
-    minValue: 0,
     showThresholdMarkers: true,
     showThresholdLabels: false,
-    scale: { mode: ScaleMode.Absolute, thresholds: [{ value: -Infinity, color: '#7EB26D' }] },
-    height: 300,
+    field,
     width: 300,
+    height: 300,
     value: {
       text: '25',
       numeric: 25,
     },
     theme: getTheme(),
   };
-
-  Object.assign(props, propOverrides);
 
   const wrapper = shallow(<Gauge {...props} />);
   const instance = wrapper.instance() as Gauge;
@@ -39,7 +45,7 @@ const setup = (propOverrides?: object) => {
 describe('Get thresholds formatted', () => {
   it('should return first thresholds color for min and max', () => {
     const { instance } = setup({
-      scale: { mode: ScaleMode.Absolute, thresholds: [{ index: 0, value: -Infinity, color: '#7EB26D' }] },
+      thresholds: { mode: ThresholdsMode.Absolute, step: [{ value: -Infinity, color: '#7EB26D' }] },
     });
 
     expect(instance.getFormattedThresholds()).toEqual([
@@ -50,9 +56,9 @@ describe('Get thresholds formatted', () => {
 
   it('should get the correct formatted values when thresholds are added', () => {
     const { instance } = setup({
-      scale: {
-        mode: ScaleMode.Absolute,
-        thresholds: [
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        step: [
           { value: -Infinity, color: '#7EB26D' },
           { value: 50, color: '#EAB839' },
           { value: 75, color: '#6ED0E0' },

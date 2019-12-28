@@ -8,7 +8,7 @@ Object {
       "mappings": undefined,
       "max": 100,
       "min": 0,
-      "scale": undefined,
+      "thresholds": undefined,
     },
     "overrides": Array [],
     "stat": "last",
@@ -34,37 +34,9 @@ Object {
       ],
       "max": 100,
       "min": 10,
-      "scale": Object {
+      "thresholds": Object {
         "mode": "absolute",
-        "thresholds": Array [
-          Object {
-            "color": "green",
-            "value": -Infinity,
-          },
-          Object {
-            "color": "orange",
-            "value": 40,
-          },
-          Object {
-            "color": "red",
-            "value": 80,
-          },
-        ],
-      },
-      "unit": "watt",
-    },
-  },
-}
-`;
-
-exports[`sharedSingleStatMigrationHandler move thresholds to scale 1`] = `
-Object {
-  "fieldOptions": Object {
-    "defaults": Object {
-      "mappings": undefined,
-      "scale": Object {
-        "mode": "absolute",
-        "thresholds": Array [
+        "step": Array [
           Object {
             "color": "green",
             "index": 0,
@@ -82,6 +54,18 @@ Object {
           },
         ],
       },
+      "unit": "watt",
+    },
+  },
+}
+`;
+
+exports[`sharedSingleStatMigrationHandler move thresholds to scale 1`] = `
+Object {
+  "fieldOptions": Object {
+    "defaults": Object {
+      "mappings": undefined,
+      "thresholds": undefined,
     },
   },
 }

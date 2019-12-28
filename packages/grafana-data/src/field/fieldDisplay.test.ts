@@ -2,9 +2,9 @@ import merge from 'lodash/merge';
 import { getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { ReducerID } from '../transformations/fieldReducer';
-import { Threshold, ScaleMode } from '../types/scale';
+import { ThresholdsMode } from '../types/thresholds';
 import { GrafanaTheme } from '../types/theme';
-import { MappingType } from '../types';
+import { MappingType, FieldConfig } from '../types';
 import { setFieldConfigDefaults } from './fieldOverrides';
 
 describe('FieldDisplay', () => {
@@ -63,14 +63,14 @@ describe('FieldDisplay', () => {
   });
 
   it('should restore -Infinity value for base threshold', () => {
-    const field = {
-      scale: {
-        mode: ScaleMode.Absolute,
-        thresholds: [
-          ({
+    const config: FieldConfig = {
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        step: [
+          {
             color: '#73BF69',
-            value: null,
-          } as unknown) as Threshold,
+            value: (null as any) as number, // -Infinity becomes null in JSON
+          },
           {
             color: '#F2495C',
             value: 50,
@@ -78,22 +78,22 @@ describe('FieldDisplay', () => {
         ],
       },
     };
-    setFieldConfigDefaults(field);
-    expect(field.scale.thresholds.length).toEqual(2);
-    expect(field.scale.thresholds[0].value).toBe(-Infinity);
+    setFieldConfigDefaults(config);
+    expect(config.thresholds!.step.length).toEqual(2);
+    expect(config.thresholds!.step[0].value).toBe(-Infinity);
   });
 
   it('Should return field thresholds when there is no data', () => {
     const options = createEmptyDisplayOptions({
       fieldOptions: {
         defaults: {
-          scale: { thresholds: [{ color: '#F2495C', value: 50 }] },
+          thresholds: { step: [{ color: '#F2495C', value: 50 }] },
         },
       },
     });
 
     const display = getFieldDisplayValues(options);
-    expect(display[0].field.scale!.thresholds!.length).toEqual(1);
+    expect(display[0].field.thresholds!.step!.length).toEqual(1);
     expect(display[0].display.numeric).toEqual(0);
   });
 

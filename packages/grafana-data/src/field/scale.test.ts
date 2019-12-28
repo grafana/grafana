@@ -1,49 +1,52 @@
-import { Scale, ScaleMode, Field, FieldType, ColorScheme } from '../types';
-import { sortThresholds, getScaleCalculator, getActiveThreshold, validateScale } from './scale';
+import { Field, FieldType, ColorScheme, Thresholds, ThresholdsMode, FieldColorMode, FieldConfig } from '../types';
+import { sortThresholds, getScaleCalculator, getActiveThreshold } from './scale';
 import { ArrayVector } from '../vector';
+import { validateFieldConfig } from './fieldOverrides';
 
 describe('scale', () => {
   test('sort thresholds', () => {
-    const scale: Scale = {
-      thresholds: [
+    const thresholds: Thresholds = {
+      step: [
         { color: 'TEN', value: 10 },
         { color: 'HHH', value: 100 },
         { color: 'ONE', value: 1 },
       ],
-      mode: ScaleMode.Absolute,
+      mode: ThresholdsMode.Absolute,
     };
-    const sorted = sortThresholds(scale.thresholds).map(t => t.value);
+    const sorted = sortThresholds(thresholds.step).map(t => t.value);
     expect(sorted).toEqual([1, 10, 100]);
+    const config: FieldConfig = { thresholds };
 
     // Mutates and sorts the
-    validateScale(scale);
-    expect(getActiveThreshold(10, scale.thresholds).color).toEqual('TEN');
+    validateFieldConfig(config);
+    expect(getActiveThreshold(10, thresholds.step).color).toEqual('TEN');
   });
 
   test('find active', () => {
-    const scale: Scale = {
-      thresholds: [
+    const thresholds: Thresholds = {
+      step: [
         { color: 'ONE', value: 1 },
         { color: 'TEN', value: 10 },
         { color: 'HHH', value: 100 },
       ],
-      mode: ScaleMode.Absolute,
+      mode: ThresholdsMode.Absolute,
     };
+    const config: FieldConfig = { thresholds };
     // Mutates and sets ONE to -Infinity
-    validateScale(scale);
-    expect(getActiveThreshold(-1, scale.thresholds).color).toEqual('ONE');
-    expect(getActiveThreshold(1, scale.thresholds).color).toEqual('ONE');
-    expect(getActiveThreshold(5, scale.thresholds).color).toEqual('ONE');
-    expect(getActiveThreshold(10, scale.thresholds).color).toEqual('TEN');
-    expect(getActiveThreshold(11, scale.thresholds).color).toEqual('TEN');
-    expect(getActiveThreshold(99, scale.thresholds).color).toEqual('TEN');
-    expect(getActiveThreshold(100, scale.thresholds).color).toEqual('HHH');
-    expect(getActiveThreshold(1000, scale.thresholds).color).toEqual('HHH');
+    validateFieldConfig(config);
+    expect(getActiveThreshold(-1, thresholds.step).color).toEqual('ONE');
+    expect(getActiveThreshold(1, thresholds.step).color).toEqual('ONE');
+    expect(getActiveThreshold(5, thresholds.step).color).toEqual('ONE');
+    expect(getActiveThreshold(10, thresholds.step).color).toEqual('TEN');
+    expect(getActiveThreshold(11, thresholds.step).color).toEqual('TEN');
+    expect(getActiveThreshold(99, thresholds.step).color).toEqual('TEN');
+    expect(getActiveThreshold(100, thresholds.step).color).toEqual('HHH');
+    expect(getActiveThreshold(1000, thresholds.step).color).toEqual('HHH');
   });
 
   test('absolute thresholds', () => {
-    const scale: Scale = {
-      thresholds: [
+    const thresholds: Thresholds = {
+      step: [
         // Colors are ignored when 'scheme' exists
         { color: '#F00', state: 'LowLow', value: -Infinity },
         { color: '#F00', state: 'Low', value: -50 },
@@ -51,8 +54,7 @@ describe('scale', () => {
         { color: '#F00', state: 'High', value: 50 },
         { color: '#F00', state: 'HighHigh', value: 100 },
       ],
-      mode: ScaleMode.Absolute,
-      scheme: ColorScheme.Greens,
+      mode: ThresholdsMode.Absolute,
     };
 
     const field: Field<number> = {
@@ -61,7 +63,11 @@ describe('scale', () => {
       config: {
         min: -100, // explicit range
         max: 100, // note less then range of actual data
-        scale,
+        thresholds,
+        color: {
+          mode: FieldColorMode.Scheme,
+          schemeName: ColorScheme.Greens,
+        },
       },
       values: new ArrayVector([
         -1000,
@@ -77,7 +83,7 @@ describe('scale', () => {
         1000,
       ]),
     };
-
+    validateFieldConfig(field.config);
     const calc = getScaleCalculator(field);
     const mapped = field.values.toArray().map(v => {
       return calc(v);

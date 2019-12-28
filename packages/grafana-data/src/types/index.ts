@@ -5,7 +5,7 @@ export * from './logs';
 export * from './navModel';
 export * from './select';
 export * from './time';
-export * from './scale';
+export * from './thresholds';
 export * from './utils';
 export * from './valueMapping';
 export * from './displayValue';
@@ -18,7 +18,8 @@ export * from './app';
 export * from './datasource';
 export * from './panel';
 export * from './plugin';
-export * from './scale';
+export * from './thresholds';
+export * from './fieldColor';
 export * from './theme';
 export * from './orgs';
 

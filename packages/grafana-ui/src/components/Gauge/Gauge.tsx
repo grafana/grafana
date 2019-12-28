@@ -1,14 +1,18 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-import { DisplayValue, getColorFromHexRgbOrName, formattedValueToString, Scale, ScaleMode } from '@grafana/data';
+import {
+  DisplayValue,
+  getColorFromHexRgbOrName,
+  formattedValueToString,
+  FieldConfig,
+  ThresholdsMode,
+} from '@grafana/data';
 import { Themeable } from '../../types';
 import { selectThemeVariant } from '../../themes';
 
 export interface Props extends Themeable {
   height: number;
-  maxValue: number;
-  minValue: number;
-  scale: Scale;
+  field: FieldConfig;
   showThresholdMarkers: boolean;
   showThresholdLabels: boolean;
   width: number;
@@ -23,16 +27,18 @@ export class Gauge extends PureComponent<Props> {
   canvasElement: any;
 
   static defaultProps: Partial<Props> = {
-    maxValue: 100,
-    minValue: 0,
     showThresholdMarkers: true,
     showThresholdLabels: false,
-    scale: {
-      mode: ScaleMode.Absolute,
-      thresholds: [
-        { value: -Infinity, color: 'green' },
-        { value: 80, color: 'red' },
-      ],
+    field: {
+      min: 0,
+      max: 100,
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        step: [
+          { value: -Infinity, color: 'green' },
+          { value: 80, color: 'red' },
+        ],
+      },
     },
   };
 
@@ -45,21 +51,21 @@ export class Gauge extends PureComponent<Props> {
   }
 
   getFormattedThresholds() {
-    const { maxValue, minValue, scale, theme } = this.props;
-    const { thresholds } = scale;
+    const { field, theme } = this.props;
+    const thresholds = field.thresholds!.step;
 
     const lastThreshold = thresholds[thresholds.length - 1];
 
     return [
       ...thresholds.map((threshold, index) => {
         if (index === 0) {
-          return { value: minValue, color: getColorFromHexRgbOrName(threshold.color, theme.type) };
+          return { value: field.min!, color: getColorFromHexRgbOrName(threshold.color, theme.type) };
         }
 
         const previousThreshold = thresholds[index - 1];
         return { value: threshold.value, color: getColorFromHexRgbOrName(previousThreshold.color, theme.type) };
       }),
-      { value: maxValue, color: getColorFromHexRgbOrName(lastThreshold.color, theme.type) },
+      { value: field.max, color: getColorFromHexRgbOrName(lastThreshold.color, theme.type) },
     ];
   }
 
@@ -71,7 +77,7 @@ export class Gauge extends PureComponent<Props> {
   }
 
   draw() {
-    const { maxValue, minValue, showThresholdLabels, showThresholdMarkers, width, height, theme, value } = this.props;
+    const { field, showThresholdLabels, showThresholdMarkers, width, height, theme, value } = this.props;
 
     const autoProps = calculateGaugeAutoProps(width, height, value.title);
     const dimension = Math.min(width, autoProps.gaugeHeight);
@@ -96,8 +102,8 @@ export class Gauge extends PureComponent<Props> {
       series: {
         gauges: {
           gauge: {
-            min: minValue,
-            max: maxValue,
+            min: field.min!,
+            max: field.max!,
             background: { color: backgroundColor },
             border: { color: null },
             shadow: { show: false },

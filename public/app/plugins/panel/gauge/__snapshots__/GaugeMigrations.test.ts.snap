@@ -21,23 +21,27 @@ Object {
       ],
       "max": "50",
       "min": "-50",
-      "scale": Object {
+      "thresholds": Object {
         "mode": "absolute",
-        "thresholds": Array [
+        "step": Array [
           Object {
             "color": "green",
-            "value": -Infinity,
+            "index": 0,
+            "value": null,
           },
           Object {
             "color": "#EAB839",
+            "index": 1,
             "value": -25,
           },
           Object {
             "color": "#6ED0E0",
+            "index": 2,
             "value": 0,
           },
           Object {
             "color": "red",
+            "index": 3,
             "value": 25,
           },
         ],

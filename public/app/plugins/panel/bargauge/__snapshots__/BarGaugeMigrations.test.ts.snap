@@ -12,19 +12,22 @@ Object {
       "mappings": Array [],
       "max": -22,
       "min": 33,
-      "scale": Object {
+      "thresholds": Object {
         "mode": "absolute",
-        "thresholds": Array [
+        "step": Array [
           Object {
             "color": "green",
-            "value": -Infinity,
+            "index": 0,
+            "value": null,
           },
           Object {
             "color": "orange",
+            "index": 1,
             "value": 40,
           },
           Object {
             "color": "red",
+            "index": 2,
             "value": 80,
           },
         ],
@@ -32,6 +35,23 @@ Object {
       "unit": "watt",
     },
     "overrides": Array [],
+    "thresholds": Array [
+      Object {
+        "color": "green",
+        "index": 0,
+        "value": null,
+      },
+      Object {
+        "color": "orange",
+        "index": 1,
+        "value": 40,
+      },
+      Object {
+        "color": "red",
+        "index": 2,
+        "value": 80,
+      },
+    ],
     "values": false,
   },
   "orientation": "vertical",

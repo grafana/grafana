@@ -1,5 +1,5 @@
 import { SingleStatBaseOptions, BigValueColorMode, BigValueGraphMode, BigValueJustifyMode } from '@grafana/ui';
-import { VizOrientation, ReducerID, FieldDisplayOptions, SelectableValue, ScaleMode } from '@grafana/data';
+import { VizOrientation, ReducerID, FieldDisplayOptions, SelectableValue, ThresholdsMode } from '@grafana/data';
 
 // Structure copied from angular
 export interface StatPanelOptions extends SingleStatBaseOptions {
@@ -27,9 +27,9 @@ export const standardFieldDisplayOptions: FieldDisplayOptions = {
   values: false,
   calcs: [ReducerID.mean],
   defaults: {
-    scale: {
-      mode: ScaleMode.Absolute,
-      thresholds: [
+    thresholds: {
+      mode: ThresholdsMode.Absolute,
+      step: [
         { value: -Infinity, color: 'green' },
         { value: 80, color: 'red' }, // 80%
       ],

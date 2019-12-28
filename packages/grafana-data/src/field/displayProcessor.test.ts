@@ -1,9 +1,10 @@
 import { getDisplayProcessor } from './displayProcessor';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { ValueMapping, MappingType } from '../types/valueMapping';
-import { FieldType, Threshold, GrafanaTheme, ScaleMode, Field, FieldConfig } from '../types';
-import { getScaleCalculator, sortThresholds, validateScale } from '../utils';
+import { FieldType, Threshold, GrafanaTheme, Field, FieldConfig, ThresholdsMode } from '../types';
+import { getScaleCalculator, sortThresholds } from './scale';
 import { ArrayVector } from '../vector';
+import { validateFieldConfig } from './fieldOverrides';
 
 function getDisplayProcessorFromConfig(config: FieldConfig) {
   return getDisplayProcessor({
@@ -17,11 +18,11 @@ function getDisplayProcessorFromConfig(config: FieldConfig) {
 function getColorFromThreshold(value: number, thresholds: Threshold[], theme?: GrafanaTheme): string {
   const field: Field = {
     name: 'test',
-    config: { scale: { mode: ScaleMode.Absolute, thresholds: sortThresholds(thresholds) } },
+    config: { thresholds: { mode: ThresholdsMode.Absolute, step: sortThresholds(thresholds) } },
     type: FieldType.number,
     values: new ArrayVector([]),
   };
-  validateScale(field.config.scale!);
+  validateFieldConfig(field.config!);
   const calc = getScaleCalculator(field, theme);
   return calc(value).color!;
 }

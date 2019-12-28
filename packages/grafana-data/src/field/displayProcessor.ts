@@ -9,7 +9,7 @@ import { getValueFormat } from '../valueFormats/valueFormats';
 import { getMappedValue } from '../utils/valueMappings';
 import { DEFAULT_DATE_TIME_FORMAT } from '../datetime';
 import { KeyValue } from '../types';
-import { getScaleCalculator } from '../utils';
+import { getScaleCalculator } from './scale';
 
 interface DisplayProcessorOptions {
   field: Partial<Field>;
