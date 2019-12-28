@@ -1,16 +1,16 @@
-import {
-  Field,
-  Threshold,
-  ScaleCalculator,
-  GrafanaTheme,
-  GrafanaThemeType,
-  ThresholdsMode,
-  FieldColorMode,
-} from '../types';
+import { Field, Threshold, GrafanaTheme, GrafanaThemeType, ThresholdsMode, FieldColorMode } from '../types';
 import { reduceField, ReducerID } from '../transformations';
 import { getColorFromHexRgbOrName } from '../utils/namedColorsPalette';
 import * as d3 from 'd3-scale-chromatic';
 import isNumber from 'lodash/isNumber';
+
+export interface ScaledValue {
+  percent?: number; // 0-1
+  threshold?: Threshold; // the selected step
+  color?: string; // Selected color (may be range based on threshold)
+}
+
+export type ScaleCalculator = (value: number) => ScaledValue;
 
 /**
  * @param t Number in the range [0, 1].

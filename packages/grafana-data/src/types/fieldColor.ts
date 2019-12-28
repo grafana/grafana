@@ -1,13 +1,3 @@
-import { Threshold } from './thresholds';
-
-export interface ScaledValue {
-  percent?: number; // 0-1
-  threshold?: Threshold; // the selected step
-  color?: string; // Selected color (may be range based on threshold)
-}
-
-export type ScaleCalculator = (value: number) => ScaledValue;
-
 export enum FieldColorMode {
   Thresholds = 'thresholds',
   Scheme = 'scheme',
