@@ -511,17 +511,19 @@ export function getBarGradient(props: Props, maxSize: number): string {
   let lastpos = 0;
 
   if (field.color && field.color.mode === FieldColorMode.Scheme) {
-    const steps = (d3 as any)[`scheme${field.color.schemeName}`] as any[];
-    if (!steps) {
+    const schemeSet = (d3 as any)[`scheme${field.color.schemeName}`] as any[];
+    if (!schemeSet) {
+      // Error: unknown scheme
       const color = '#F00';
       gradient = `linear-gradient(${cssDirection}, ${color}, ${color}`;
       gradient += ` ${maxSize}px, ${color}`;
       return gradient + ')';
     }
-    const thresholds = steps[steps.length - 1] as string[];
-    for (let i = 0; i < thresholds.length; i++) {
-      const color = thresholds[i];
-      const valuePercent = i / (thresholds.length - 1);
+    // Get the scheme with as many steps as possible
+    const scheme = schemeSet[schemeSet.length - 1] as string[];
+    for (let i = 0; i < scheme.length; i++) {
+      const color = scheme[i];
+      const valuePercent = i / (scheme.length - 1);
       const pos = valuePercent * maxSize;
       const offset = Math.round(pos - (pos - lastpos) / 2);
 
