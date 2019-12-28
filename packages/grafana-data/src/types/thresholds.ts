@@ -9,9 +9,9 @@ export enum ThresholdsMode {
   Percentage = 'percentage', // between 0 and 1 (based on min/max)
 }
 
-export interface Thresholds {
+export interface ThresholdsConfig {
   mode: ThresholdsMode;
 
   // Must be sorted by 'value', first value is always -Infinity
-  step: Threshold[];
+  steps: Threshold[];
 }

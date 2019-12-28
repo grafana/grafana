@@ -1,11 +1,11 @@
 import React, { FC } from 'react';
 import { ReactTableCellProps, TableCellDisplayMode } from './types';
 import { BarGauge, BarGaugeDisplayMode } from '../BarGauge/BarGauge';
-import { Thresholds, ThresholdsMode, VizOrientation } from '@grafana/data';
+import { ThresholdsConfig, ThresholdsMode, VizOrientation } from '@grafana/data';
 
-const defaultScale: Thresholds = {
+const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
-  step: [
+  steps: [
     {
       color: 'blue',
       value: -Infinity,

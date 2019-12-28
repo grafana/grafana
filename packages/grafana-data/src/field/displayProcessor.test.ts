@@ -15,10 +15,10 @@ function getDisplayProcessorFromConfig(config: FieldConfig) {
   });
 }
 
-function getColorFromThreshold(value: number, thresholds: Threshold[], theme?: GrafanaTheme): string {
+function getColorFromThreshold(value: number, steps: Threshold[], theme?: GrafanaTheme): string {
   const field: Field = {
     name: 'test',
-    config: { thresholds: { mode: ThresholdsMode.Absolute, step: sortThresholds(thresholds) } },
+    config: { thresholds: { mode: ThresholdsMode.Absolute, steps: sortThresholds(steps) } },
     type: FieldType.number,
     values: new ArrayVector([]),
   };

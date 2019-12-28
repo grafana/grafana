@@ -29,7 +29,7 @@ export const standardFieldDisplayOptions: FieldDisplayOptions = {
   defaults: {
     thresholds: {
       mode: ThresholdsMode.Absolute,
-      step: [
+      steps: [
         { value: -Infinity, color: 'green' },
         { value: 80, color: 'red' }, // 80%
       ],

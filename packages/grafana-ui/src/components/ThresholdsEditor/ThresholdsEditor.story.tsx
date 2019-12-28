@@ -4,19 +4,21 @@ import { action } from '@storybook/addon-actions';
 
 import { ThresholdsEditor } from './ThresholdsEditor';
 import { getTheme } from '../../themes';
-import { ThresholdsMode, Thresholds } from '@grafana/data';
+import { ThresholdsMode, ThresholdsConfig } from '@grafana/data';
 
 const ThresholdsEditorStories = storiesOf('UI/ThresholdsEditor', module);
-const thresholds: Thresholds = {
+const thresholds: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
-  step: [
+  steps: [
     { value: -Infinity, color: 'green' },
     { value: 50, color: 'red' },
   ],
 };
 
 ThresholdsEditorStories.add('default', () => {
-  return <ThresholdsEditor theme={getTheme()} thresholds={{} as Thresholds} onChange={action('Thresholds changed')} />;
+  return (
+    <ThresholdsEditor theme={getTheme()} thresholds={{} as ThresholdsConfig} onChange={action('Thresholds changed')} />
+  );
 });
 
 ThresholdsEditorStories.add('with thresholds', () => {

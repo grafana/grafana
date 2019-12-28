@@ -66,7 +66,7 @@ describe('FieldDisplay', () => {
     const config: FieldConfig = {
       thresholds: {
         mode: ThresholdsMode.Absolute,
-        step: [
+        steps: [
           {
             color: '#73BF69',
             value: (null as any) as number, // -Infinity becomes null in JSON
@@ -79,21 +79,21 @@ describe('FieldDisplay', () => {
       },
     };
     setFieldConfigDefaults(config);
-    expect(config.thresholds!.step.length).toEqual(2);
-    expect(config.thresholds!.step[0].value).toBe(-Infinity);
+    expect(config.thresholds!.steps.length).toEqual(2);
+    expect(config.thresholds!.steps[0].value).toBe(-Infinity);
   });
 
   it('Should return field thresholds when there is no data', () => {
     const options = createEmptyDisplayOptions({
       fieldOptions: {
         defaults: {
-          thresholds: { step: [{ color: '#F2495C', value: 50 }] },
+          thresholds: { steps: [{ color: '#F2495C', value: 50 }] },
         },
       },
     });
 
     const display = getFieldDisplayValues(options);
-    expect(display[0].field.thresholds!.step!.length).toEqual(1);
+    expect(display[0].field.thresholds!.steps!.length).toEqual(1);
     expect(display[0].display.numeric).toEqual(0);
   });
 

@@ -14,7 +14,14 @@ import {
   getTheme,
 } from '@grafana/ui';
 
-import { Thresholds, ValueMapping, FieldConfig, DataLink, PanelEditorProps, FieldDisplayOptions } from '@grafana/data';
+import {
+  ThresholdsConfig,
+  ValueMapping,
+  FieldConfig,
+  DataLink,
+  PanelEditorProps,
+  FieldDisplayOptions,
+} from '@grafana/data';
 
 import { StatPanelOptions, colorModes, graphModes, justifyModes } from './types';
 import { orientationOptions } from '../gauge/types';
@@ -25,7 +32,7 @@ import {
 } from 'app/features/panel/panellinks/link_srv';
 
 export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOptions>> {
-  onThresholdsChanged = (thresholds: Thresholds) => {
+  onThresholdsChanged = (thresholds: ThresholdsConfig) => {
     const current = this.props.options.fieldOptions.defaults;
     this.onDefaultsChange({
       ...current,

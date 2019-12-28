@@ -14,7 +14,14 @@ import {
   Switch,
   getTheme,
 } from '@grafana/ui';
-import { Thresholds, ValueMapping, FieldDisplayOptions, FieldConfig, DataLink, PanelEditorProps } from '@grafana/data';
+import {
+  ThresholdsConfig,
+  ValueMapping,
+  FieldDisplayOptions,
+  FieldConfig,
+  DataLink,
+  PanelEditorProps,
+} from '@grafana/data';
 import { BarGaugeOptions, displayModes } from './types';
 import { orientationOptions } from '../gauge/types';
 import {
@@ -23,7 +30,7 @@ import {
 } from 'app/features/panel/panellinks/link_srv';
 
 export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGaugeOptions>> {
-  onThresholdsChanged = (thresholds: Thresholds) => {
+  onThresholdsChanged = (thresholds: ThresholdsConfig) => {
     const current = this.props.options.fieldOptions.defaults;
     this.onDefaultsChange({
       ...current,

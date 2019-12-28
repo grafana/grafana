@@ -42,7 +42,7 @@ function addBarGaugeStory(name: string, overrides: Partial<Props>) {
         max: maxValue,
         thresholds: {
           mode: ThresholdsMode.Absolute,
-          step: [
+          steps: [
             { value: -Infinity, color: 'green' },
             { value: threshold1Value, color: threshold1Color },
             { value: threshold2Value, color: threshold2Color },

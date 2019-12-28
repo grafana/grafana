@@ -245,12 +245,12 @@ export function validateFieldConfig(config: FieldConfig) {
     if (!thresholds.mode) {
       thresholds.mode = ThresholdsMode.Absolute;
     }
-    if (!thresholds.step) {
-      thresholds.step = [];
-    } else if (thresholds.step.length) {
+    if (!thresholds.steps) {
+      thresholds.steps = [];
+    } else if (thresholds.steps.length) {
       // First value is always -Infinity
       // JSON saves it as null
-      thresholds.step[0].value = -Infinity;
+      thresholds.steps[0].value = -Infinity;
     }
   }
 

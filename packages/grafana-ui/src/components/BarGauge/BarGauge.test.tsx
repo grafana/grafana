@@ -24,7 +24,7 @@ function getProps(propOverrides?: Partial<Props>): Props {
       max: 100,
       thresholds: {
         mode: ThresholdsMode.Absolute,
-        step: [
+        steps: [
           { value: -Infinity, color: 'green' },
           { value: 70, color: 'orange' },
           { value: 90, color: 'red' },

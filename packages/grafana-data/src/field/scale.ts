@@ -59,7 +59,7 @@ export function getScaleCalculator(field: Field, theme?: GrafanaTheme): ScaleCal
     return (value: number) => {
       const percent = (value - min!) / delta;
       const threshold = thresholds
-        ? getActiveThreshold(percentThresholds ? percent * 100 : value, thresholds.step)
+        ? getActiveThreshold(percentThresholds ? percent * 100 : value, thresholds.steps)
         : undefined; // 0-100
       let color = fixedColor;
       if (interpolator) {
@@ -78,7 +78,7 @@ export function getScaleCalculator(field: Field, theme?: GrafanaTheme): ScaleCal
 
   if (thresholds) {
     return (value: number) => {
-      const threshold = getActiveThreshold(value, thresholds.step);
+      const threshold = getActiveThreshold(value, thresholds.steps);
       return {
         threshold,
         color: fixedColor ? fixedColor : getColorFromHexRgbOrName(threshold.color, themeType),

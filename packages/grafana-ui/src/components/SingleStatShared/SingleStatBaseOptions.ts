@@ -14,7 +14,7 @@ import {
   FieldDisplayOptions,
   ConfigOverrideRule,
   ThresholdsMode,
-  Thresholds,
+  ThresholdsConfig,
   validateFieldConfig,
   FieldColorMode,
 } from '@grafana/data';
@@ -76,7 +76,7 @@ export function sharedSingleStatPanelChangedHandler(
       }
       defaults.thresholds = {
         mode: ThresholdsMode.Absolute,
-        step: thresholds,
+        steps: thresholds,
       };
     }
 
@@ -145,7 +145,7 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     if (thresholds) {
       fieldOptions.defaults.thresholds = {
         mode: ThresholdsMode.Absolute,
-        step: thresholds,
+        steps: thresholds,
       };
     }
 
@@ -174,11 +174,11 @@ export function moveThresholdsAndMappingsToField(old: any) {
 
   const { mappings, ...rest } = old.fieldOptions;
 
-  let thresholds: Thresholds | undefined = undefined;
+  let thresholds: ThresholdsConfig | undefined = undefined;
   if (old.thresholds) {
     thresholds = {
       mode: ThresholdsMode.Absolute,
-      step: migrateOldThresholds(old.thresholds)!,
+      steps: migrateOldThresholds(old.thresholds)!,
     };
   }
 

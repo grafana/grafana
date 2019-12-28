@@ -1,30 +1,30 @@
-import { Field, FieldType, ColorScheme, Thresholds, ThresholdsMode, FieldColorMode, FieldConfig } from '../types';
+import { Field, FieldType, ColorScheme, ThresholdsConfig, ThresholdsMode, FieldColorMode, FieldConfig } from '../types';
 import { sortThresholds, getScaleCalculator, getActiveThreshold } from './scale';
 import { ArrayVector } from '../vector';
 import { validateFieldConfig } from './fieldOverrides';
 
 describe('scale', () => {
   test('sort thresholds', () => {
-    const thresholds: Thresholds = {
-      step: [
+    const thresholds: ThresholdsConfig = {
+      steps: [
         { color: 'TEN', value: 10 },
         { color: 'HHH', value: 100 },
         { color: 'ONE', value: 1 },
       ],
       mode: ThresholdsMode.Absolute,
     };
-    const sorted = sortThresholds(thresholds.step).map(t => t.value);
+    const sorted = sortThresholds(thresholds.steps).map(t => t.value);
     expect(sorted).toEqual([1, 10, 100]);
     const config: FieldConfig = { thresholds };
 
     // Mutates and sorts the
     validateFieldConfig(config);
-    expect(getActiveThreshold(10, thresholds.step).color).toEqual('TEN');
+    expect(getActiveThreshold(10, thresholds.steps).color).toEqual('TEN');
   });
 
   test('find active', () => {
-    const thresholds: Thresholds = {
-      step: [
+    const thresholds: ThresholdsConfig = {
+      steps: [
         { color: 'ONE', value: 1 },
         { color: 'TEN', value: 10 },
         { color: 'HHH', value: 100 },
@@ -34,19 +34,19 @@ describe('scale', () => {
     const config: FieldConfig = { thresholds };
     // Mutates and sets ONE to -Infinity
     validateFieldConfig(config);
-    expect(getActiveThreshold(-1, thresholds.step).color).toEqual('ONE');
-    expect(getActiveThreshold(1, thresholds.step).color).toEqual('ONE');
-    expect(getActiveThreshold(5, thresholds.step).color).toEqual('ONE');
-    expect(getActiveThreshold(10, thresholds.step).color).toEqual('TEN');
-    expect(getActiveThreshold(11, thresholds.step).color).toEqual('TEN');
-    expect(getActiveThreshold(99, thresholds.step).color).toEqual('TEN');
-    expect(getActiveThreshold(100, thresholds.step).color).toEqual('HHH');
-    expect(getActiveThreshold(1000, thresholds.step).color).toEqual('HHH');
+    expect(getActiveThreshold(-1, thresholds.steps).color).toEqual('ONE');
+    expect(getActiveThreshold(1, thresholds.steps).color).toEqual('ONE');
+    expect(getActiveThreshold(5, thresholds.steps).color).toEqual('ONE');
+    expect(getActiveThreshold(10, thresholds.steps).color).toEqual('TEN');
+    expect(getActiveThreshold(11, thresholds.steps).color).toEqual('TEN');
+    expect(getActiveThreshold(99, thresholds.steps).color).toEqual('TEN');
+    expect(getActiveThreshold(100, thresholds.steps).color).toEqual('HHH');
+    expect(getActiveThreshold(1000, thresholds.steps).color).toEqual('HHH');
   });
 
   test('absolute thresholds', () => {
-    const thresholds: Thresholds = {
-      step: [
+    const thresholds: ThresholdsConfig = {
+      steps: [
         // Colors are ignored when 'scheme' exists
         { color: '#F00', state: 'LowLow', value: -Infinity },
         { color: '#F00', state: 'Low', value: -50 },

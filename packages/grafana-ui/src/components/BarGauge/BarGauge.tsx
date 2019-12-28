@@ -69,7 +69,7 @@ export class BarGauge extends PureComponent<Props> {
       max: 100,
       thresholds: {
         mode: ThresholdsMode.Absolute,
-        step: [],
+        steps: [],
       },
     },
     itemSpacing: 10,
@@ -535,8 +535,8 @@ export function getBarGradient(props: Props, maxSize: number): string {
   } else {
     const thresholds = field.thresholds!;
 
-    for (let i = 0; i < thresholds.step.length; i++) {
-      const threshold = thresholds.step[i];
+    for (let i = 0; i < thresholds.steps.length; i++) {
+      const threshold = thresholds.steps[i];
       const color = getColorFromHexRgbOrName(threshold.color);
       const valuePercent = getValuePercent(threshold.value, minValue, maxValue);
       const pos = valuePercent * maxSize;

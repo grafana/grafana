@@ -43,7 +43,7 @@ Object {
           Object {
             "color": "green",
             "index": 0,
-            "value": -Infinity,
+            "value": null,
           },
           Object {
             "color": "orange",
@@ -56,6 +56,7 @@ Object {
             "value": 80,
           },
         ],
+        "steps": Array [],
       },
       "unit": "watt",
     },

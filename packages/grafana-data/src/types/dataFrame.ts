@@ -1,4 +1,4 @@
-import { Thresholds } from './thresholds';
+import { ThresholdsConfig } from './thresholds';
 import { ValueMapping } from './valueMapping';
 import { QueryResultBase, Labels, NullValueMode } from './data';
 import { DisplayProcessor } from './displayValue';
@@ -34,7 +34,7 @@ export interface FieldConfig {
   mappings?: ValueMapping[];
 
   // Map numeric values to states
-  thresholds?: Thresholds;
+  thresholds?: ThresholdsConfig;
 
   // Map values to a display color
   color?: FieldColor;

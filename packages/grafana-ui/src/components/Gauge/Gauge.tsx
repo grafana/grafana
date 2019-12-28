@@ -34,7 +34,7 @@ export class Gauge extends PureComponent<Props> {
       max: 100,
       thresholds: {
         mode: ThresholdsMode.Absolute,
-        step: [
+        steps: [
           { value: -Infinity, color: 'green' },
           { value: 80, color: 'red' },
         ],
@@ -52,17 +52,17 @@ export class Gauge extends PureComponent<Props> {
 
   getFormattedThresholds() {
     const { field, theme } = this.props;
-    const thresholds = field.thresholds!.step;
+    const steps = field.thresholds!.steps;
 
-    const lastThreshold = thresholds[thresholds.length - 1];
+    const lastThreshold = steps[steps.length - 1];
 
     return [
-      ...thresholds.map((threshold, index) => {
+      ...steps.map((threshold, index) => {
         if (index === 0) {
           return { value: field.min!, color: getColorFromHexRgbOrName(threshold.color, theme.type) };
         }
 
-        const previousThreshold = thresholds[index - 1];
+        const previousThreshold = steps[index - 1];
         return { value: threshold.value, color: getColorFromHexRgbOrName(previousThreshold.color, theme.type) };
       }),
       { value: field.max, color: getColorFromHexRgbOrName(lastThreshold.color, theme.type) },
