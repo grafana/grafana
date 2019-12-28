@@ -7,6 +7,7 @@ import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { Themeable } from '../../types';
 import { css } from 'emotion';
 import Select from '../Select/Select';
+import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [
   { value: ThresholdsMode.Absolute, label: 'Absolute', description: 'Pick thresholds based on the absolute values' },
@@ -54,6 +55,26 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     steps[0].value = -Infinity;
 
     this.state = { thresholds: steps };
+  }
+
+  componentDidMount() {
+    const { thresholds } = this.props;
+    if (!thresholds.step) {
+      this.setState(
+        {
+          thresholds: [
+            { key: 1, value: -Infinity, color: 'green' },
+            { key: 2, value: 80, color: 'red' },
+          ],
+        },
+        () => this.onChange()
+      );
+    } else if (!thresholds.mode) {
+      this.props.onChange({
+        ...thresholds,
+        mode: ThresholdsMode.Absolute,
+      });
+    }
   }
 
   onAddThresholdAfter = (threshold: ThresholdWithKey) => {
@@ -219,7 +240,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     const { theme } = this.props;
     const t = this.props.thresholds;
     return (
-      <div>
+      <PanelOptionsGroup title="Thresholds">
         <div className="thresholds">
           {thresholds
             .slice(0)
@@ -240,19 +261,20 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
             })}
         </div>
 
-        {false && (
+        {true && (
           <div>
             <Select options={modes} value={modes.filter(m => m.value === t.mode)} onChange={this.onModeChanged} />
           </div>
         )}
-      </div>
+      </PanelOptionsGroup>
     );
   }
 }
 
 export function thresholdsWithoutKey(thresholds: Thresholds, steps: ThresholdWithKey[]): Thresholds {
+  const mode = thresholds.mode ?? ThresholdsMode.Absolute;
   return {
-    ...thresholds,
+    mode,
     step: steps.map(t => {
       const { key, ...rest } = t;
       return rest; // everything except key
