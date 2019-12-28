@@ -261,7 +261,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
             })}
         </div>
 
-        {true && (
+        {false && (
           <div>
             <Select options={modes} value={modes.filter(m => m.value === t.mode)} onChange={this.onModeChanged} />
           </div>
