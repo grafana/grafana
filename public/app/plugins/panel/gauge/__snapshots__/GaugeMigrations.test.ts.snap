@@ -26,11 +26,11 @@ Object {
       "min": "-50",
       "thresholds": Object {
         "mode": "absolute",
-        "step": Array [
+        "steps": Array [
           Object {
             "color": "green",
             "index": 0,
-            "value": null,
+            "value": -Infinity,
           },
           Object {
             "color": "#EAB839",
@@ -48,7 +48,6 @@ Object {
             "value": 25,
           },
         ],
-        "steps": Array [],
       },
       "unit": "accMS2",
     },

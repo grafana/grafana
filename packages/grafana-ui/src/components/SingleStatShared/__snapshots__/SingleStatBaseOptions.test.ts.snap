@@ -39,11 +39,11 @@ Object {
       "min": 10,
       "thresholds": Object {
         "mode": "absolute",
-        "step": Array [
+        "steps": Array [
           Object {
             "color": "green",
             "index": 0,
-            "value": null,
+            "value": -Infinity,
           },
           Object {
             "color": "orange",
@@ -56,7 +56,6 @@ Object {
             "value": 80,
           },
         ],
-        "steps": Array [],
       },
       "unit": "watt",
     },
