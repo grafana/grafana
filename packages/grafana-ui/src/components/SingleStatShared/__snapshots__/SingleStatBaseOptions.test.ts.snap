@@ -24,6 +24,9 @@ Object {
       "last",
     ],
     "defaults": Object {
+      "color": Object {
+        "mode": "thresholds",
+      },
       "decimals": 5,
       "mappings": Array [
         Object {
@@ -40,7 +43,7 @@ Object {
           Object {
             "color": "green",
             "index": 0,
-            "value": null,
+            "value": -Infinity,
           },
           Object {
             "color": "orange",

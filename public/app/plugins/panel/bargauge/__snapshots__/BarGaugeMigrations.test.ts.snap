@@ -8,17 +8,20 @@ Object {
       "mean",
     ],
     "defaults": Object {
+      "color": Object {
+        "mode": "thresholds",
+      },
       "decimals": null,
       "mappings": Array [],
-      "max": -22,
-      "min": 33,
+      "max": 33,
+      "min": -22,
       "thresholds": Object {
         "mode": "absolute",
         "step": Array [
           Object {
             "color": "green",
             "index": 0,
-            "value": null,
+            "value": -Infinity,
           },
           Object {
             "color": "orange",
@@ -39,7 +42,7 @@ Object {
       Object {
         "color": "green",
         "index": 0,
-        "value": null,
+        "value": -Infinity,
       },
       Object {
         "color": "orange",

@@ -39,7 +39,7 @@ describe('Render', () => {
 
   it('should render with base threshold', () => {
     const { wrapper } = setup();
-    expect(wrapper).toMatchSnapshot();
+    expect(wrapper.find('.thresholds')).toMatchSnapshot();
   });
 });
 

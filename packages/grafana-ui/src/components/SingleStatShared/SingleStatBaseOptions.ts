@@ -15,6 +15,8 @@ import {
   ConfigOverrideRule,
   ThresholdsMode,
   Thresholds,
+  validateFieldConfig,
+  FieldColorMode,
 } from '@grafana/data';
 
 export interface SingleStatBaseOptions {
@@ -146,6 +148,18 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
         step: thresholds,
       };
     }
+
+    // Migrate color from simple string to a mode
+    const { defaults } = fieldOptions;
+    if (defaults.color) {
+      const old = defaults.color;
+      defaults.color = {
+        mode: FieldColorMode.Fixed,
+        fixedColor: old,
+      };
+    }
+
+    validateFieldConfig(defaults);
   }
 
   return options as SingleStatBaseOptions;
