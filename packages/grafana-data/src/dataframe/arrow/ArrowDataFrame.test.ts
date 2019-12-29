@@ -1,5 +1,6 @@
-import { resultsToDataFrames } from './ArrowDataFrame';
-import { toDataFrameDTO } from '../processDataFrame';
+import { resultsToDataFrames, grafanaDataFrameToArrowTable, arrowTableToDataFrame } from './ArrowDataFrame';
+import { toDataFrameDTO, toDataFrame } from '../processDataFrame';
+import { FieldType } from '../../types';
 
 /* tslint:disable */
 const resp = {
@@ -31,5 +32,32 @@ describe('GEL Utils', () => {
 
     const norm = frames.map(f => toDataFrameDTO(f));
     expect(norm).toMatchSnapshot();
+  });
+});
+
+describe('Read/Write arrow Table to DataFrame', () => {
+  test('should parse output with dataframe', () => {
+    const frame = toDataFrame({
+      name: 'Hello',
+      refId: 'XYZ',
+      meta: {
+        aaa: 'xyz',
+        anything: 'xxx',
+      },
+      fields: [
+        { name: 'time', config: {}, type: FieldType.time, values: [1, 2, 3] },
+        { name: 'value', config: { min: 0, max: 50, unit: 'somthing' }, type: FieldType.number, values: [1, 2, 3] },
+        { name: 'str', config: {}, type: FieldType.string, values: ['a', 'b', 'c'] },
+      ],
+    });
+
+    const table = grafanaDataFrameToArrowTable(frame);
+    const ddddd = table.toString();
+    console.log(ddddd);
+    expect(table.length).toEqual(frame.length);
+
+    // Now back to DataFrame
+    const after = toDataFrameDTO(arrowTableToDataFrame(table));
+    expect(after).toEqual(toDataFrameDTO(frame));
   });
 });
