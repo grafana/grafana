@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC, memo } from 'react';
 import _ from 'lodash';
 
 import { Select } from '@grafana/ui';
@@ -8,83 +8,54 @@ import { Variable } from 'app/types/templates';
 export interface Props {
   onChange: (value: string) => void;
   options: Array<SelectableValue<string>>;
-  isSearchable: boolean;
+  isSearchable?: boolean;
   value: string;
   placeholder?: string;
   className?: string;
   variables?: Variable[];
 }
 
-interface State {
-  options: Array<SelectableValue<string>>;
-}
+export const getSelectedOption = (options: Array<SelectableValue<string>>, value: string) => {
+  const allOptions = options.every(o => o.options) ? _.flatten(options.map(o => o.options)) : options;
+  return allOptions.find(option => option.value === value);
+};
 
-export class MetricSelect extends React.Component<Props, State> {
-  static defaultProps: Partial<Props> = {
-    variables: [],
-    options: [],
-    isSearchable: true,
-  };
+export const buildOptions = ({ variables = [], options }: Props) => {
+  return variables.length
+    ? [
+        {
+          label: 'Template Variables',
+          options: variables.map(({ name }) => ({
+            label: `$${name}`,
+            value: `$${name}`,
+          })),
+        },
+        ...options,
+      ]
+    : options;
+};
 
-  constructor(props: Props) {
-    super(props);
-    this.state = { options: [] };
-  }
+export const compareFn = (nextProps: Props, prevProps: Props) => {
+  return nextProps.value === prevProps.value || !_.isEqual(buildOptions(nextProps), buildOptions(prevProps));
+};
 
-  componentDidMount() {
-    this.setState({ options: this.buildOptions(this.props) });
-  }
+export const MetricSelect: FC<Props> = memo(props => {
+  const { value, placeholder, className, isSearchable = true, onChange } = props;
+  const opts = buildOptions(props);
 
-  UNSAFE_componentWillReceiveProps(nextProps: Props) {
-    if (nextProps.options.length > 0 || nextProps.variables.length) {
-      this.setState({ options: this.buildOptions(nextProps) });
-    }
-  }
-
-  shouldComponentUpdate(nextProps: Props) {
-    const nextOptions = this.buildOptions(nextProps);
-    return nextProps.value !== this.props.value || !_.isEqual(nextOptions, this.state.options);
-  }
-
-  buildOptions({ variables = [], options }: Props) {
-    return variables.length > 0 ? [this.getVariablesGroup(), ...options] : options;
-  }
-
-  getVariablesGroup() {
-    return {
-      label: 'Template Variables',
-      options: this.props.variables.map(v => ({
-        label: `$${v.name}`,
-        value: `$${v.name}`,
-      })),
-    };
-  }
-
-  getSelectedOption() {
-    const { options } = this.state;
-    const allOptions = options.every(o => o.options) ? _.flatten(options.map(o => o.options)) : options;
-    return allOptions.find(option => option.value === this.props.value);
-  }
-
-  render() {
-    const { placeholder, className, isSearchable, onChange } = this.props;
-    const { options } = this.state;
-    const selectedOption = this.getSelectedOption();
-
-    return (
-      <Select
-        className={className}
-        isMulti={false}
-        isClearable={false}
-        backspaceRemovesValue={false}
-        onChange={item => onChange(item.value)}
-        options={options}
-        isSearchable={isSearchable}
-        maxMenuHeight={500}
-        placeholder={placeholder}
-        noOptionsMessage={() => 'No options found'}
-        value={selectedOption}
-      />
-    );
-  }
-}
+  return (
+    <Select
+      className={className}
+      isMulti={false}
+      isClearable={false}
+      backspaceRemovesValue={false}
+      onChange={item => onChange(item.value)}
+      options={opts}
+      isSearchable={isSearchable}
+      maxMenuHeight={500}
+      placeholder={placeholder}
+      noOptionsMessage={() => 'No options found'}
+      value={getSelectedOption(opts, value)}
+    />
+  );
+}, compareFn);
