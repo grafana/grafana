@@ -52,13 +52,16 @@ export function arrowTableToDataFrame(table: Table): ArrowDataFrame {
           type = FieldType.time;
           break;
         }
+        case ArrowType.Utf8: {
+          type = FieldType.string;
+          break;
+        }
         default:
           console.log('UNKNOWN Type:', schema);
       }
       const labelsJson = col.metadata.get('labels');
       const configJson = col.metadata.get('config');
 
-      // console.log(' field>', schema.metadata);
       let config: FieldConfig = {};
       let labels: Labels | undefined = undefined;
       if (labelsJson) {

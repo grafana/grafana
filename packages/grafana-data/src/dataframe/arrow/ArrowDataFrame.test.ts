@@ -57,7 +57,8 @@ describe('Read/Write arrow Table to DataFrame', () => {
     expect(table.length).toEqual(frame.length);
 
     // Now back to DataFrame
-    const after = toDataFrameDTO(arrowTableToDataFrame(table));
-    expect(after).toEqual(toDataFrameDTO(frame));
+    const before = JSON.stringify(toDataFrameDTO(frame), null, 2);
+    const after = JSON.stringify(toDataFrameDTO(arrowTableToDataFrame(table)), null, 2);
+    expect(after).toEqual(before);
   });
 });
