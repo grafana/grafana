@@ -1,7 +1,6 @@
 import React from 'react';
 import renderer from 'react-test-renderer';
-import { Aggregations, Props } from './Aggregations';
-import { shallow } from 'enzyme';
+import { Aggregations, Props, setAggOptions } from './Aggregations';
 import { ValueTypes, MetricKind } from '../constants';
 import { TemplateSrvStub } from 'test/specs/helpers';
 
@@ -20,7 +19,6 @@ const props: Props = {
 };
 
 describe('Aggregations', () => {
-  let wrapper: any;
   it('renders correctly', () => {
     const tree = renderer.create(<Aggregations {...props} />).toJSON();
     expect(tree).toMatchSnapshot();
@@ -28,12 +26,8 @@ describe('Aggregations', () => {
 
   describe('options', () => {
     describe('when DOUBLE and DELTA is passed as props', () => {
-      beforeEach(() => {
-        const newProps = { ...props, metricDescriptor: { valueType: ValueTypes.DOUBLE, metricKind: MetricKind.GAUGE } };
-        wrapper = shallow(<Aggregations {...newProps} />);
-      });
       it('', () => {
-        const options = wrapper.state().aggOptions;
+        const options = setAggOptions(ValueTypes.DOUBLE, MetricKind.GAUGE).options;
         expect(options.length).toEqual(11);
         expect(options.map((o: any) => o.value)).toEqual(
           expect.not.arrayContaining(['REDUCE_COUNT_TRUE', 'REDUCE_COUNT_FALSE'])
@@ -42,15 +36,9 @@ describe('Aggregations', () => {
     });
 
     describe('when MONEY and CUMULATIVE is passed as props', () => {
-      beforeEach(() => {
-        const newProps = {
-          ...props,
-          metricDescriptor: { valueType: ValueTypes.MONEY, metricKind: MetricKind.CUMULATIVE },
-        };
-        wrapper = shallow(<Aggregations {...newProps} />);
-      });
       it('', () => {
-        const options = wrapper.state().aggOptions;
+        const options = setAggOptions(ValueTypes.MONEY, MetricKind.CUMULATIVE).options;
+
         expect(options.length).toEqual(10);
         expect(options.map((o: any) => o.value)).toEqual(expect.arrayContaining(['REDUCE_NONE']));
       });

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { FC, useState } from 'react';
+import memoizeOne from 'memoize-one';
 import _ from 'lodash';
 
 import { SelectableValue } from '@grafana/data';
@@ -18,81 +19,54 @@ export interface Props {
   templateVariableOptions: Array<SelectableValue<string>>;
 }
 
-export interface State {
-  aggOptions: any[];
-  displayAdvancedOptions: boolean;
-}
-
-export class Aggregations extends React.Component<Props, State> {
-  state: State = {
-    aggOptions: [],
-    displayAdvancedOptions: false,
+export const setAggOptions = memoizeOne((valueType: ValueTypes, metricKind: MetricKind) => {
+  return {
+    label: 'Aggregations',
+    expanded: true,
+    options: getAggregationOptionsByMetric(valueType, metricKind).map(a => ({
+      ...a,
+      label: a.text,
+    })),
   };
+});
 
-  componentDidMount() {
-    this.setAggOptions(this.props);
-  }
+export const Aggregations: FC<Props> = ({ templateVariableOptions, onChange, crossSeriesReducer, metricDescriptor, children }) => {
+  const [displayAdvancedOptions, setDisplayAdvancedOptions] = useState(false);
 
-  UNSAFE_componentWillReceiveProps(nextProps: Props) {
-    this.setAggOptions(nextProps);
-  }
-
-  setAggOptions({ metricDescriptor }: Props) {
-    let aggOptions: any[] = [];
-    if (metricDescriptor) {
-      aggOptions = getAggregationOptionsByMetric(
-        metricDescriptor.valueType as ValueTypes,
-        metricDescriptor.metricKind as MetricKind
-      ).map(a => ({
-        ...a,
-        label: a.text,
-      }));
-    }
-    this.setState({ aggOptions });
-  }
-
-  onToggleDisplayAdvanced = () => {
-    this.setState(state => ({
-      displayAdvancedOptions: !state.displayAdvancedOptions,
-    }));
-  };
-
-  render() {
-    const { displayAdvancedOptions, aggOptions } = this.state;
-    const { templateVariableOptions, onChange, crossSeriesReducer } = this.props;
-
-    return (
-      <>
-        <div className="gf-form-inline">
-          <label className="gf-form-label query-keyword width-9">Aggregation</label>
-          <Segment
-            onChange={({ value }) => onChange(value)}
-            value={[...aggOptions, ...templateVariableOptions].find(s => s.value === crossSeriesReducer)}
-            options={[
-              {
-                label: 'Template Variables',
-                options: templateVariableOptions,
-              },
-              {
-                label: 'Aggregations',
-                expanded: true,
-                options: aggOptions,
-              },
-            ]}
-            placeholder="Select Reducer"
-          ></Segment>
-          <div className="gf-form gf-form--grow">
-            <label className="gf-form-label gf-form-label--grow">
-              <a onClick={this.onToggleDisplayAdvanced}>
-                <>
-                  <i className={`fa fa-caret-${displayAdvancedOptions ? 'down' : 'right'}`} /> Advanced Options
-                </>
-              </a>
-            </label>
-          </div>
+  const aggOptions = metricDescriptor
+    ? [setAggOptions(metricDescriptor.valueType as ValueTypes, metricDescriptor.metricKind as MetricKind)]
+    : [] as any;
+  return (
+    <>
+      <div className="gf-form-inline">
+        <label className="gf-form-label query-keyword width-9">Aggregation</label>
+        <Segment
+          onChange={({ value }) => onChange(value)}
+          value={[...aggOptions, ...templateVariableOptions].find(s => s.value === crossSeriesReducer)}
+          options={[
+            {
+              label: 'Template Variables',
+              options: templateVariableOptions,
+            },
+            {
+              label: 'Aggregations',
+              expanded: true,
+              options: aggOptions,
+            },
+          ]}
+          placeholder="Select Reducer"
+        ></Segment>
+        <div className="gf-form gf-form--grow">
+          <label className="gf-form-label gf-form-label--grow">
+            <a onClick={() => setDisplayAdvancedOptions(!displayAdvancedOptions)}>
+              <>
+                <i className={`fa fa-caret-${displayAdvancedOptions ? 'down' : 'right'}`} /> Advanced Options
+              </>
+            </a>
+          </label>
         </div>
-        {this.props.children(this.state.displayAdvancedOptions)}
-      </>
-    );
-  }
-}
+      </div>
+      {children(displayAdvancedOptions)}
+    </>
+  );
+};
