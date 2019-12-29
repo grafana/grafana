@@ -65,8 +65,9 @@ export class UserProvider extends PureComponent<Props, State> {
     },
   };
 
-  componentWillMount() {
-    if (this.props.userId) {
+  constructor(props: Props) {
+    super(props);
+    if (props.userId) {
       this.loadUser();
     }
   }
