@@ -645,6 +645,10 @@
               "value": "wps"
             },
             {
+              "text": "events/sec (eps)",
+              "value": "eps"
+            },
+            {
               "text": "I/O ops/sec (iops)",
               "value": "iops"
             },
@@ -659,6 +663,10 @@
             {
               "text": "writes/min (wpm)",
               "value": "wpm"
+            },
+            {
+              "text": "events/min (epm)",
+              "value": "epm"
             }
           ],
           "text": "throughput"
