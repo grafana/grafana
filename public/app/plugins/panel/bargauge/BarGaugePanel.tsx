@@ -23,7 +23,8 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     alignmentFactors: DisplayValueAlignmentFactors
   ): JSX.Element => {
     const { options } = this.props;
-    const { field, display } = value;
+    const { field, display, view, colIndex } = value;
+    const f = view.dataFrame.fields[colIndex];
 
     return (
       <DataLinksContextMenu links={getFieldLinksSupplier(value)}>
@@ -34,12 +35,11 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
               width={width}
               height={height}
               orientation={options.orientation}
-              thresholds={field.thresholds}
+              field={field}
+              display={f.display!}
               theme={config.theme}
               itemSpacing={this.getItemSpacing()}
               displayMode={options.displayMode}
-              minValue={field.min}
-              maxValue={field.max}
               onClick={openMenu}
               className={targetClassName}
               alignmentFactors={alignmentFactors}

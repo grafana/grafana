@@ -183,9 +183,11 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     if (!fieldInfo) {
       const processor = getDisplayProcessor({
-        config: {
-          mappings: convertOldAngularValueMapping(this.panel),
-          noValue: 'No Data',
+        field: {
+          config: {
+            mappings: convertOldAngularValueMapping(this.panel),
+            noValue: 'No Data',
+          },
         },
         theme: config.theme,
       });
@@ -242,11 +244,14 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     const processor = getDisplayProcessor({
-      config: {
-        ...fieldInfo.field.config,
-        unit: panel.format,
-        decimals: panel.decimals,
-        mappings: convertOldAngularValueMapping(panel),
+      field: {
+        ...fieldInfo.field,
+        config: {
+          ...fieldInfo.field.config,
+          unit: panel.format,
+          decimals: panel.decimals,
+          mappings: convertOldAngularValueMapping(panel),
+        },
       },
       theme: config.theme,
       isUtc: dashboard.isTimezoneUtc && dashboard.isTimezoneUtc(),
