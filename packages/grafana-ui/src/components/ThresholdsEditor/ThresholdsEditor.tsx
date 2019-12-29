@@ -19,6 +19,7 @@ const modes: Array<SelectableValue<ThresholdsMode>> = [
 ];
 
 export interface Props extends Themeable {
+  showAlphaUI?: boolean;
   thresholds: ThresholdsConfig;
   onChange: (thresholds: ThresholdsConfig) => void;
 }
@@ -55,26 +56,6 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     steps[0].value = -Infinity;
 
     this.state = { steps };
-  }
-
-  componentDidMount() {
-    const { thresholds } = this.props;
-    if (!thresholds.steps) {
-      this.setState(
-        {
-          steps: [
-            { key: 1, value: -Infinity, color: 'green' },
-            { key: 2, value: 80, color: 'red' },
-          ],
-        },
-        () => this.onChange()
-      );
-    } else if (!thresholds.mode) {
-      this.props.onChange({
-        ...thresholds,
-        mode: ThresholdsMode.Absolute,
-      });
-    }
   }
 
   onAddThresholdAfter = (threshold: ThresholdWithKey) => {
@@ -262,7 +243,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
               })}
           </div>
 
-          {false && (
+          {this.props.showAlphaUI && (
             <div>
               <Select options={modes} value={modes.filter(m => m.value === t.mode)} onChange={this.onModeChanged} />
             </div>

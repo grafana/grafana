@@ -79,9 +79,10 @@ export function getScaleCalculator(field: Field, theme?: GrafanaTheme): ScaleCal
   if (thresholds) {
     return (value: number) => {
       const threshold = getActiveThreshold(value, thresholds.steps);
+      const color = fixedColor ?? (threshold ? getColorFromHexRgbOrName(threshold.color, themeType) : undefined);
       return {
         threshold,
-        color: fixedColor ? fixedColor : getColorFromHexRgbOrName(threshold.color, themeType),
+        color,
       };
     };
   }

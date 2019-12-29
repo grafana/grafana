@@ -11,7 +11,6 @@ import {
   DataLinksEditor,
   FormLabel,
   Select,
-  getTheme,
 } from '@grafana/ui';
 
 import {
@@ -30,6 +29,7 @@ import {
   getDataLinksVariableSuggestions,
   getCalculationValueDataLinksVariableSuggestions,
 } from 'app/features/panel/panellinks/link_srv';
+import { config } from 'app/core/config';
 
 export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOptions>> {
   onThresholdsChanged = (thresholds: ThresholdsConfig) => {
@@ -137,7 +137,12 @@ export class StatPanelEditor extends PureComponent<PanelEditorProps<StatPanelOpt
             />
           </PanelOptionsGroup>
 
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} theme={getTheme()} />
+          <ThresholdsEditor
+            onChange={this.onThresholdsChanged}
+            thresholds={defaults.thresholds}
+            theme={config.theme}
+            showAlphaUI={config.featureToggles.newEdit}
+          />
         </PanelOptionsGrid>
 
         <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />

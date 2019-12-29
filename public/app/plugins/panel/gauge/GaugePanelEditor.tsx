@@ -9,7 +9,6 @@ import {
   Switch,
   PanelOptionsGroup,
   DataLinksEditor,
-  getTheme,
 } from '@grafana/ui';
 import {
   PanelEditorProps,
@@ -25,6 +24,7 @@ import {
   getCalculationValueDataLinksVariableSuggestions,
   getDataLinksVariableSuggestions,
 } from 'app/features/panel/panellinks/link_srv';
+import { config } from 'app/core/config';
 
 export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOptions>> {
   labelWidth = 6;
@@ -130,7 +130,12 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
             />
           </PanelOptionsGroup>
 
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} theme={getTheme()} />
+          <ThresholdsEditor
+            onChange={this.onThresholdsChanged}
+            thresholds={defaults.thresholds}
+            theme={config.theme}
+            showAlphaUI={config.featureToggles.newEdit}
+          />
         </PanelOptionsGrid>
 
         <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
