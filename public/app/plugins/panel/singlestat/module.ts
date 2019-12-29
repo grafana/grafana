@@ -243,7 +243,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       })[calc];
     }
 
-    const isUtc = dashboard.isTimezoneUtc && dashboard.isTimezoneUtc();
     const processor = getDisplayProcessor({
       field: {
         ...fieldInfo.field,
@@ -255,7 +254,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         },
       },
       theme: config.theme,
-      timeZone: isUtc ? 'utc' : 'browser',
+      timeZone: dashboard.getTimezone(),
     });
 
     const sparkline: any[] = [];
