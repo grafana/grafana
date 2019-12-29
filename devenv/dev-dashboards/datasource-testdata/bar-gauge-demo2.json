@@ -52,7 +52,7 @@
         "orientation": "horizontal",
         "showUnfilled": true
       },
-      "pluginVersion": "6.6.0-pre",
+      "pluginVersion": "6.5.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -169,7 +169,7 @@
         "orientation": "vertical",
         "showUnfilled": true
       },
-      "pluginVersion": "6.6.0-pre",
+      "pluginVersion": "6.5.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -244,7 +244,7 @@
         "orientation": "horizontal",
         "showUnfilled": true
       },
-      "pluginVersion": "6.6.0-pre",
+      "pluginVersion": "6.5.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -351,7 +351,7 @@
         "orientation": "vertical",
         "showUnfilled": true
       },
-      "pluginVersion": "6.6.0-pre",
+      "pluginVersion": "6.5.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -430,7 +430,7 @@
         "orientation": "vertical",
         "showUnfilled": true
       },
-      "pluginVersion": "6.6.0-pre",
+      "pluginVersion": "6.5.0-pre",
       "targets": [
         {
           "refId": "A",
