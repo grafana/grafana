@@ -22,22 +22,33 @@ import (
 )
 
 func (ns *NotificationService) send(msg *Message) (int, error) {
-	dialer, err := ns.createDialer()
-	if err != nil {
-		return 0, err
-	}
-
-	var num int
-
-	h := make(map[string][]string)
-	h["From"] = []string{msg.From}
-	h["Subject"] = []string{msg.Subject}
+	messages := []*Message{}
 
 	if msg.SingleEmail {
-		h["To"] = msg.To
+		messages = append(messages, msg)
+	} else {
+		for _, address := range msg.To {
+			copy := *msg
+			copy.To = []string{address}
+			messages = append(messages, &copy)
+		}
+	}
 
+	return ns.dialAndSend(messages...)
+}
+
+func (ns *NotificationService) dialAndSend(messages ...*Message) (num int, err error) {
+	dialer, err := ns.createDialer()
+	if err != nil {
+		return
+	}
+
+	for _, msg := range messages {
 		m := gomail.NewMessage()
-		m.SetHeaders(h)
+		m.SetHeader("From", msg.From)
+		m.SetHeader("To", msg.To...)
+		m.SetHeader("Subject", msg.Subject)
+
 		ns.setFiles(m, msg)
 
 		for _, replyTo := range msg.ReplyTo {
@@ -46,36 +57,15 @@ func (ns *NotificationService) send(msg *Message) (int, error) {
 
 		m.SetBody("text/html", msg.Body)
 
-		e := dialer.DialAndSend(m)
-		if e != nil {
+		if e := dialer.DialAndSend(m); err != nil {
 			err = errutil.Wrapf(e, "Failed to send notification to email addresses: %s", strings.Join(msg.To, ";"))
+			continue
 		}
 
 		num++
-	} else {
-		for _, address := range msg.To {
-			m := gomail.NewMessage()
-			m.SetHeader("To", address)
-			m.SetHeaders(h)
-			ns.setFiles(m, msg)
-
-			for _, replyTo := range msg.ReplyTo {
-				m.SetAddressHeader("Reply-To", replyTo, "")
-			}
-
-			m.SetBody("text/html", msg.Body)
-
-			e := dialer.DialAndSend(m)
-			if e != nil {
-				err = errutil.Wrapf(e, "Failed to send notification to email address: %s", address)
-				continue
-			}
-
-			num++
-		}
 	}
 
-	return num, err
+	return num, nil
 }
 
 // setFiles attaches files in various forms
