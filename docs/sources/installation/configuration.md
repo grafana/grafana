@@ -742,6 +742,65 @@ Set to true if you want to test alpha plugins that are not yet ready for general
 
 Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`
 
+## [tracing.jaeger]
+
+Configure Grafana's Jaeger client for distributed tracing.
+
+You can also use the standard `JAEGER_*` environment variables to configure
+Jaeger. See the table at the end of https://www.jaegertracing.io/docs/1.16/client-features/
+for the full list. Environment variables will override any settings provided here.
+
+### address
+
+The host:port destination for reporting spans. (ex: `localhost:6381`)
+
+Can be set with the environment variables `JAEGER_AGENT_HOST` and `JAEGER_AGENT_PORT`.
+
+### always_included_tag
+
+Comma-separated list of tags to include in all new spans, such as `tag1:value1,tag2:value2`.
+
+Can be set with the environment variable `JAEGER_TAGS` (use `=` instead of `:` with the environment variable).
+
+### sampler_type
+
+Default value is `const`.
+
+Specifies the type of sampler: `const`, `probabilistic`, `ratelimiting`, or `remote`.
+
+Refer to https://www.jaegertracing.io/docs/1.16/sampling/#client-sampling-configuration for details on the different tracing types.
+
+Can be set with the environment variable `JAEGER_SAMPLER_TYPE`.
+
+### sampler_param
+
+Default value is `1`.
+
+This is the sampler configuration parameter. Depending on the value of `sampler_type`, it can be `0`, `1`, or a decimal value in between.
+
+- For `const` sampler, `0` or `1` for always `false`/`true` respectively
+- For `probabilistic` sampler, a probability between `0` and `1.0`
+- For `rateLimiting` sampler, the number of spans per second
+- For `remote` sampler, param is the same as for `probabilistic`
+  and indicates the initial sampling rate before the actual one
+  is received from the mothership
+
+May be set with the environment variable `JAEGER_SAMPLER_PARAM`.
+
+### zipkin_propagation
+
+Default value is `false`.
+
+Controls whether or not to use Zipkin's span propagation format (with `x-b3-` HTTP headers). By default, Jaeger's format is used.
+
+Can be set with the environment variable and value `JAEGER_PROPAGATION=b3`.
+
+### disable_shared_zipkin_spans
+
+Default value is `false`.
+
+Setting this to `true` turns off shared RPC spans. Leaving this available is the most common setting when using Zipkin elsewhere in your infrastructure.
+
 <hr />
 
 # Removed options
