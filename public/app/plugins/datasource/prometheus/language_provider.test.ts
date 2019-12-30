@@ -49,6 +49,7 @@ describe('Language completion provider', () => {
       expect(cleanText('foo < bar')).toBe('bar');
       expect(cleanText('foo >= bar')).toBe('bar');
       expect(cleanText('foo <= bar')).toBe('bar');
+      expect(cleanText('memory')).toBe('memory');
     });
 
     it('removes aggregation syntax', () => {
