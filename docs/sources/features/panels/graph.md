@@ -2,7 +2,7 @@
 title = "Graph Panel"
 keywords = ["grafana", "graph panel", "documentation", "guide", "graph"]
 type = "docs"
-aliases = ["/reference/graph/"]
+aliases = ["/docs/grafana/latest/reference/graph/"]
 [menu.docs]
 name = "Graph"
 parent = "panels"
