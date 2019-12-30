@@ -3,7 +3,7 @@ title = "Using Stackdriver in Grafana"
 description = "Guide for using Stackdriver in Grafana"
 keywords = ["grafana", "stackdriver", "google", "guide"]
 type = "docs"
-aliases = ["/datasources/stackdriver"]
+aliases = ["/docs/grafana/latest/datasources/stackdriver"]
 [menu.docs]
 name = "Google Stackdriver"
 parent = "datasources"

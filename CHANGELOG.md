@@ -4,6 +4,9 @@
 
 * **Graphite**: Add Metrictank dashboard to Graphite datasource
 
+## Breaking changes
+* **PagerDuty**: Change `payload.custom_details` field in PagerDuty notification to be a JSON object instead of a string.
+
 # 6.5.2 (2019-12-11)
 
 ### Bug Fixes

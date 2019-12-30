@@ -3,7 +3,7 @@ title = "Install on Debian/Ubuntu"
 description = "Install guide for Grafana on Debian or Ubuntu"
 keywords = ["grafana", "installation", "documentation"]
 type = "docs"
-aliases = ["/installation/installation/debian"]
+aliases = ["/docs/grafana/latest/installation/installation/debian"]
 [menu.docs]
 name = "Install on Ubuntu/Debian"
 identifier = "debian"
@@ -37,6 +37,12 @@ Install any missing dependencies:
 sudo apt-get install -y software-properties-common wget
 ```
 
+Add our GPG key to install signed packages:
+
+```bash
+wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
+```
+
 Add this repository for stable releases:
 
 ```bash
@@ -47,12 +53,6 @@ Add this repository if you want beta releases:
 
 ```bash
 sudo add-apt-repository "deb https://packages.grafana.com/oss/deb beta main"
-```
-
-Add our GPG key to install signed packages:
-
-```bash
-wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
 ```
 
 Update your APT repositories and install Grafana:
@@ -153,7 +153,7 @@ Start Grafana by running:
 
 ## Next steps
 
-Refer to the [Getting Started](/guides/getting_started/) guide for information about logging in, setting up data sources, and so on.
+Refer to the [Getting Started]({{< relref "getting_started.md" >}}) guide for information about logging in, setting up data sources, and so on.
 
 ## Configure Grafana
 

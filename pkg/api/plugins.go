@@ -179,7 +179,6 @@ func GetPluginMarkdown(c *m.ReqContext) Response {
 }
 
 func ImportDashboard(c *m.ReqContext, apiCmd dtos.ImportDashboardCommand) Response {
-
 	cmd := plugins.ImportDashboardCommand{
 		OrgId:     c.OrgId,
 		User:      c.SignedInUser,
@@ -192,7 +191,7 @@ func ImportDashboard(c *m.ReqContext, apiCmd dtos.ImportDashboardCommand) Respon
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return Error(500, "Failed to import dashboard", err)
+		return dashboardSaveErrorToApiResponse(err)
 	}
 
 	return JSON(200, cmd.Result)

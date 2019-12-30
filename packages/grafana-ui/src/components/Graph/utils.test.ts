@@ -1,8 +1,17 @@
-import { GraphSeriesValue, toDataFrame, FieldType, FieldCache } from '@grafana/data';
+import {
+  GraphSeriesValue,
+  toDataFrame,
+  FieldType,
+  FieldCache,
+  FieldColorMode,
+  getColorFromHexRgbOrName,
+  GrafanaThemeType,
+  Field,
+} from '@grafana/data';
 import { getMultiSeriesGraphHoverInfo, findHoverIndexFromData } from './utils';
 
 const mockResult = (
-  value: GraphSeriesValue,
+  value: string,
   datapointIndex: number,
   seriesIndex: number,
   color?: string,
@@ -21,22 +30,41 @@ const mockResult = (
 const aSeries = toDataFrame({
   fields: [
     { name: 'time', type: FieldType.time, values: [100, 200, 300] },
-    { name: 'value', type: FieldType.number, values: [10, 20, 10], config: { color: 'red' } },
+    {
+      name: 'value',
+      type: FieldType.number,
+      values: [10, 20, 10],
+      config: { color: { mode: FieldColorMode.Fixed, fixedColor: 'red' } },
+    },
   ],
 });
 const bSeries = toDataFrame({
   fields: [
     { name: 'time', type: FieldType.time, values: [100, 200, 300] },
-    { name: 'value', type: FieldType.number, values: [30, 60, 30], config: { color: 'blue' } },
+    {
+      name: 'value',
+      type: FieldType.number,
+      values: [30, 60, 30],
+      config: { color: { mode: FieldColorMode.Fixed, fixedColor: 'blue' } },
+    },
   ],
 });
 // C-series has the same x-axis range as A and B but is missing the middle point
 const cSeries = toDataFrame({
   fields: [
     { name: 'time', type: FieldType.time, values: [100, 300] },
-    { name: 'value', type: FieldType.number, values: [30, 30], config: { color: 'yellow' } },
+    {
+      name: 'value',
+      type: FieldType.number,
+      values: [30, 30],
+      config: { color: { mode: FieldColorMode.Fixed, fixedColor: 'yellow' } },
+    },
   ],
 });
+
+function getFixedThemedColor(field: Field): string {
+  return getColorFromHexRgbOrName(field.config.color!.fixedColor!, GrafanaThemeType.Dark);
+}
 
 describe('Graph utils', () => {
   describe('getMultiSeriesGraphHoverInfo', () => {
@@ -51,8 +79,12 @@ describe('Graph utils', () => {
 
         const result = getMultiSeriesGraphHoverInfo([aValueField!, bValueField!], [aTimeField!, bTimeField!], 0);
         expect(result.time).toBe(100);
-        expect(result.results[0]).toEqual(mockResult(10, 0, 0, aValueField!.config.color, aValueField!.name, 100));
-        expect(result.results[1]).toEqual(mockResult(30, 0, 1, bValueField!.config.color, bValueField!.name, 100));
+        expect(result.results[0]).toEqual(
+          mockResult('10', 0, 0, getFixedThemedColor(aValueField!), aValueField!.name, 100)
+        );
+        expect(result.results[1]).toEqual(
+          mockResult('30', 0, 1, getFixedThemedColor(bValueField!), bValueField!.name, 100)
+        );
       });
 
       describe('returns the closest datapoints before the hover position', () => {
@@ -67,8 +99,12 @@ describe('Graph utils', () => {
           //  hovering right before middle point
           const result = getMultiSeriesGraphHoverInfo([aValueField!, bValueField!], [aTimeField!, bTimeField!], 199);
           expect(result.time).toBe(100);
-          expect(result.results[0]).toEqual(mockResult(10, 0, 0, aValueField!.config.color, aValueField!.name, 100));
-          expect(result.results[1]).toEqual(mockResult(30, 0, 1, bValueField!.config.color, bValueField!.name, 100));
+          expect(result.results[0]).toEqual(
+            mockResult('10', 0, 0, getFixedThemedColor(aValueField!), aValueField!.name, 100)
+          );
+          expect(result.results[1]).toEqual(
+            mockResult('30', 0, 1, getFixedThemedColor(bValueField!), bValueField!.name, 100)
+          );
         });
 
         it('when hovering right after a datapoint', () => {
@@ -82,8 +118,12 @@ describe('Graph utils', () => {
           //  hovering right after middle point
           const result = getMultiSeriesGraphHoverInfo([aValueField!, bValueField!], [aTimeField!, bTimeField!], 201);
           expect(result.time).toBe(200);
-          expect(result.results[0]).toEqual(mockResult(20, 1, 0, aValueField!.config.color, aValueField!.name, 200));
-          expect(result.results[1]).toEqual(mockResult(60, 1, 1, bValueField!.config.color, bValueField!.name, 200));
+          expect(result.results[0]).toEqual(
+            mockResult('20', 1, 0, getFixedThemedColor(aValueField!), aValueField!.name, 200)
+          );
+          expect(result.results[1]).toEqual(
+            mockResult('60', 1, 1, getFixedThemedColor(bValueField!), bValueField!.name, 200)
+          );
         });
       });
     });
@@ -106,9 +146,13 @@ describe('Graph utils', () => {
         // we expect a time of the hovered point
         expect(result.time).toBe(200);
         // we expect middle point from aSeries (the one we are hovering over)
-        expect(result.results[0]).toEqual(mockResult(20, 1, 0, aValueField!.config.color, aValueField!.name, 200));
+        expect(result.results[0]).toEqual(
+          mockResult('20', 1, 0, getFixedThemedColor(aValueField!), aValueField!.name, 200)
+        );
         // we expect closest point before hovered point from cSeries (1st point)
-        expect(result.results[1]).toEqual(mockResult(30, 0, 1, cValueField!.config.color, cValueField!.name, 100));
+        expect(result.results[1]).toEqual(
+          mockResult('30', 0, 1, getFixedThemedColor(cValueField!), cValueField!.name, 100)
+        );
       });
 
       it('hovering right after over the middle point', () => {
@@ -125,9 +169,13 @@ describe('Graph utils', () => {
         // we expect the time of the closest point before hover
         expect(result.time).toBe(200);
         // we expect the closest datapoint before hover from aSeries
-        expect(result.results[0]).toEqual(mockResult(20, 1, 0, aValueField!.config.color, aValueField!.name, 200));
+        expect(result.results[0]).toEqual(
+          mockResult('20', 1, 0, getFixedThemedColor(aValueField!), aValueField!.name, 200)
+        );
         // we expect the closest datapoint before  hover from cSeries (1st point)
-        expect(result.results[1]).toEqual(mockResult(30, 0, 1, cValueField!.config.color, cValueField!.name, 100));
+        expect(result.results[1]).toEqual(
+          mockResult('30', 0, 1, getFixedThemedColor(cValueField!), cValueField!.name, 100)
+        );
       });
     });
   });

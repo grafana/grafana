@@ -1,7 +1,7 @@
 +++
 title = "Data Sources"
 type = "docs"
-aliases = ["/datasources/overview/"]
+aliases = ["/docs/grafana/latest/datasources/overview/"]
 [menu.docs]
 name = "Data Sources"
 identifier = "datasources"

@@ -18,20 +18,27 @@ const CHEAT_SHEET_ITEMS = [
     expression: 'sort_desc(sum(sum_over_time(ALERTS{alertstate="firing"}[24h])) by (alertname))',
     label: 'Sums up the alerts that have been firing over the last 24 hours.',
   },
+  {
+    title: 'Step',
+    label:
+      'Defines the graph resolution using a duration format (15s, 1m, 3h, ...). Small steps create high-resolution graphs but can be slow over larger time ranges. Using a longer step lowers the resolution and smooths the graph by producing fewer datapoints. If no step is given the resolution is calculated automatically.',
+  },
 ];
 
 export default (props: ExploreStartPageProps) => (
   <div>
     <h2>PromQL Cheat Sheet</h2>
-    {CHEAT_SHEET_ITEMS.map(item => (
-      <div className="cheat-sheet-item" key={item.expression}>
+    {CHEAT_SHEET_ITEMS.map((item, index) => (
+      <div className="cheat-sheet-item" key={index}>
         <div className="cheat-sheet-item__title">{item.title}</div>
-        <div
-          className="cheat-sheet-item__example"
-          onClick={e => props.onClickExample({ refId: 'A', expr: item.expression } as DataQuery)}
-        >
-          <code>{item.expression}</code>
-        </div>
+        {item.expression ? (
+          <div
+            className="cheat-sheet-item__example"
+            onClick={e => props.onClickExample({ refId: 'A', expr: item.expression } as DataQuery)}
+          >
+            <code>{item.expression}</code>
+          </div>
+        ) : null}
         <div className="cheat-sheet-item__label">{item.label}</div>
       </div>
     ))}

@@ -3,7 +3,7 @@ title = "AWS CloudWatch"
 description = "Guide for using CloudWatch in Grafana"
 keywords = ["grafana", "cloudwatch", "guide"]
 type = "docs"
-aliases = ["/datasources/cloudwatch"]
+aliases = ["/docs/grafana/latest/datasources/cloudwatch"]
 [menu.docs]
 name = "AWS Cloudwatch"
 identifier = "cloudwatch"
