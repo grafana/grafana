@@ -430,6 +430,7 @@ The following sections detail the supported settings for each alert notification
 | apiKey |
 | apiUrl |
 | autoClose |
+| overridePriority |
 
 #### Alert notification `telegram`
 
