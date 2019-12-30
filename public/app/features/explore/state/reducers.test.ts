@@ -1,30 +1,30 @@
 import {
+  createEmptyQueryResponse,
+  exploreReducer,
+  initialExploreState,
   itemReducer,
   makeExploreItemState,
-  exploreReducer,
   makeInitialUpdateState,
-  initialExploreState,
-  createEmptyQueryResponse,
 } from './reducers';
-import { ExploreId, ExploreItemState, ExploreUrlState, ExploreState, ExploreMode } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreMode, ExploreState, ExploreUrlState } from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
 import {
-  scanStartAction,
-  updateDatasourceInstanceAction,
-  splitOpenAction,
-  splitCloseAction,
   changeModeAction,
-  scanStopAction,
-  toggleGraphAction,
-  toggleTableAction,
   changeRangeAction,
   changeRefreshIntervalAction,
+  scanStartAction,
+  scanStopAction,
+  splitCloseAction,
+  splitOpenAction,
+  toggleGraphAction,
+  toggleTableAction,
+  updateDatasourceInstanceAction,
 } from './actionTypes';
 import { Reducer } from 'redux';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
-import { updateLocation } from 'app/core/actions/location';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
-import { DataSourceApi, DataQuery, LogsDedupStrategy, dateTime, LoadingState, toDataFrame } from '@grafana/data';
+import { DataQuery, DataSourceApi, dateTime, LoadingState, LogsDedupStrategy, toDataFrame } from '@grafana/data';
+import { updateLocation } from '../../../core/actions';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {

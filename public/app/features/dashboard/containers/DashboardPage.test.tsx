@@ -3,12 +3,7 @@ import { shallow, ShallowWrapper } from 'enzyme';
 import { DashboardPage, mapStateToProps, Props, State } from './DashboardPage';
 import { DashboardModel } from '../state';
 import { cleanUpDashboard } from '../state/actions';
-import {
-  getNoPayloadActionCreatorMock,
-  mockActionCreator,
-  mockToolkitActionCreator,
-  NoPayloadActionCreatorMock,
-} from 'app/core/redux';
+import { getNoPayloadActionCreatorMock, mockToolkitActionCreator, NoPayloadActionCreatorMock } from 'app/core/redux';
 import { DashboardInitPhase, DashboardRouteInfo } from 'app/types';
 import { notifyApp, updateLocation } from 'app/core/actions';
 
@@ -68,7 +63,7 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
           initPhase: DashboardInitPhase.NotStarted,
           isInitSlow: false,
           initDashboard: jest.fn(),
-          updateLocation: mockActionCreator(updateLocation),
+          updateLocation: mockToolkitActionCreator(updateLocation),
           notifyApp: mockToolkitActionCreator(notifyApp),
           cleanUpDashboard: ctx.cleanUpDashboardMock,
           dashboard: null,

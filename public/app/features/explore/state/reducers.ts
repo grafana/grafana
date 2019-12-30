@@ -1,68 +1,68 @@
 import _ from 'lodash';
 import {
+  DEFAULT_UI_STATE,
   ensureQueries,
+  generateNewKeyAndAddRefIdIfMissing,
   getQueryKeys,
   parseUrlState,
-  DEFAULT_UI_STATE,
-  generateNewKeyAndAddRefIdIfMissing,
+  refreshIntervalToSortOrder,
   sortLogsResult,
   stopQueryState,
-  refreshIntervalToSortOrder,
 } from 'app/core/utils/explore';
-import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreMode, ExploreState, ExploreUpdateState } from 'app/types/explore';
 import {
-  LoadingState,
-  toLegacyResponseData,
-  DefaultTimeRange,
   DataQuery,
-  DataSourceApi,
-  PanelData,
   DataQueryRequest,
+  DataSourceApi,
+  DefaultTimeRange,
+  LoadingState,
+  PanelData,
   PanelEvents,
   TimeZone,
+  toLegacyResponseData,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 import {
-  HigherOrderAction,
   ActionTypes,
-  splitCloseAction,
-  SplitCloseActionPayload,
-  historyUpdatedAction,
-  changeModeAction,
-  setUrlReplacedAction,
-  scanStopAction,
-  changeRangeAction,
-  clearOriginAction,
   addQueryRowAction,
+  changeLoadingStateAction,
+  changeModeAction,
   changeQueryAction,
-  changeSizeAction,
+  changeRangeAction,
   changeRefreshIntervalAction,
+  changeSizeAction,
+  clearOriginAction,
   clearQueriesAction,
+  HigherOrderAction,
   highlightLogsExpressionAction,
+  historyUpdatedAction,
   initializeExploreAction,
-  updateDatasourceInstanceAction,
   loadDatasourceMissingAction,
   loadDatasourcePendingAction,
   loadDatasourceReadyAction,
   modifyQueriesAction,
-  removeQueryRowAction,
-  scanStartAction,
-  setQueriesAction,
-  toggleTableAction,
   queriesImportedAction,
-  updateUIStateAction,
-  toggleLogLevelAction,
-  changeLoadingStateAction,
-  queryStreamUpdatedAction,
   QueryEndedPayload,
   queryStoreSubscriptionAction,
+  queryStreamUpdatedAction,
+  removeQueryRowAction,
+  scanStartAction,
+  scanStopAction,
   setPausedStateAction,
+  setQueriesAction,
+  setUrlReplacedAction,
+  splitCloseAction,
+  SplitCloseActionPayload,
   toggleGraphAction,
+  toggleLogLevelAction,
+  toggleTableAction,
+  updateDatasourceInstanceAction,
+  updateUIStateAction,
 } from './actionTypes';
-import { reducerFactory, ActionOf } from 'app/core/redux';
-import { updateLocation } from 'app/core/actions/location';
+import { ActionOf, reducerFactory } from 'app/core/redux';
 import { LocationUpdate } from '@grafana/runtime';
 import { ResultProcessor } from '../utils/ResultProcessor';
+import { updateLocation } from '../../../core/actions';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
