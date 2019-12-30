@@ -109,7 +109,8 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     this.testDataSource();
   };
 
-  onDelete = () => {
+  onDelete = (evt: React.FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    evt.preventDefault();
     appEvents.emit(CoreEvents.showConfirmModal, {
       title: 'Delete',
       text: 'Are you sure you want to delete this data source?',
@@ -209,7 +210,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
           <div>
             <div className="gf-form-button-row">
               {showDelete && (
-                <button type="submit" className="btn btn-danger" onClick={this.onDelete}>
+                <button type="submit" className="btn btn-danger" onClick={event => this.onDelete(event)}>
                   Delete
                 </button>
               )}
@@ -292,7 +293,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
         <ButtonRow
           onSubmit={event => this.onSubmit(event)}
           isReadOnly={this.isReadOnly()}
-          onDelete={this.onDelete}
+          onDelete={event => this.onDelete(event)}
           onTest={event => this.onTest(event)}
         />
       </form>

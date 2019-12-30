@@ -5,7 +5,7 @@ import config from 'app/core/config';
 
 export interface Props {
   isReadOnly: boolean;
-  onDelete: () => void;
+  onDelete: (event: any) => void;
   onSubmit: (event: any) => void;
   onTest: (event: any) => void;
 }
@@ -33,7 +33,7 @@ const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest }) => {
         type="submit"
         className="btn btn-danger"
         disabled={isReadOnly}
-        onClick={onDelete}
+        onClick={event => onDelete(event)}
         aria-label={e2e.pages.DataSource.selectors.delete}
       >
         Delete
