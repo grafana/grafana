@@ -7,6 +7,7 @@ import { mockToolkitActionCreator } from 'app/core/redux';
 import { NavModel } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { updateLocation } from '../../core/actions';
+import { setSearchQuery } from './state/reducers';
 
 jest.mock('../../core/app_events', () => ({
   emit: jest.fn(),
@@ -18,7 +19,7 @@ const setup = (propOverrides?: object) => {
     alertRules: [] as AlertRule[],
     updateLocation: mockToolkitActionCreator(updateLocation),
     getAlertRulesAsync: jest.fn(),
-    setSearchQuery: jest.fn(),
+    setSearchQuery: mockToolkitActionCreator(setSearchQuery),
     togglePauseAlertRule: jest.fn(),
     stateFilter: '',
     search: '',
