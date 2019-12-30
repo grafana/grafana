@@ -65,7 +65,7 @@ func (ns *NotificationService) dialAndSend(messages ...*Message) (num int, err e
 		num++
 	}
 
-	return num, nil
+	return num, err
 }
 
 // setFiles attaches files in various forms
