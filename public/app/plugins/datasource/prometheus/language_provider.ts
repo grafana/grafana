@@ -300,8 +300,15 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     labelKey,
     value,
   }: TypeaheadInput): Promise<TypeaheadOutput> => {
+    const suggestions: CompletionItemGroup[] = [];
     const line = value.anchorBlock.getText();
     const cursorOffset = value.selection.anchor.offset;
+    const nextChar = line[cursorOffset];
+    const isValueContext = wrapperClasses.includes('attr-value');
+    if (!nextChar.match(/["}]/)) {
+      // Don't suggest anything inside a value
+      return { suggestions };
+    }
 
     // Get normalized selector
     let selector;
@@ -316,7 +323,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const containsMetric = selector.includes('__name__=');
     const existingKeys = parsedSelector ? parsedSelector.labelKeys : [];
 
-    const suggestions: CompletionItemGroup[] = [];
     let labelValues;
     // Query labels for selector
     if (selector) {
@@ -329,7 +335,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     }
 
     let context: string;
-    if ((text && text.match(/^!?=~?/)) || wrapperClasses.includes('attr-value')) {
+    if ((text && text.match(/^!?=~?/)) || isValueContext) {
       // Label values
       if (labelKey && labelValues[labelKey]) {
         context = 'context-label-values';
