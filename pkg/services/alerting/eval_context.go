@@ -124,7 +124,14 @@ func (c *EvalContext) GetRuleURL() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf(urlFormat, models.GetFullDashboardUrl(ref.Uid, ref.Slug), c.Rule.PanelID, c.Rule.OrgID), nil
+
+	u := fmt.Sprintf(urlFormat, models.GetFullDashboardUrl(ref.Uid, ref.Slug), c.Rule.PanelID, c.Rule.OrgID)
+	if c.Rule != nil {
+		from := c.Rule.LastStateChange
+		to := from.Add(c.Rule.For)
+		u += fmt.Sprintf("&from=%d&to=%d", from.UnixNano()/int64(time.Millisecond), to.UnixNano()/int64(time.Millisecond))
+	}
+	return u, nil
 }
 
 // GetNewState returns the new state from the alert rule evaluation.
