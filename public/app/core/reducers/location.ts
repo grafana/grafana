@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { Action, createAction } from '@reduxjs/toolkit';
 import { LocationUpdate } from '@grafana/runtime';
 
 import { LocationState } from 'app/types';
@@ -14,31 +14,28 @@ export const initialState: LocationState = {
   lastUpdated: 0,
 };
 
-const locationSlice = createSlice({
-  name: 'location',
-  initialState,
-  reducers: {
-    updateLocation: (state, action: PayloadAction<LocationUpdate>) => {
-      const { path, routeParams, replace } = action.payload;
-      let query = action.payload.query || state.query;
+export const updateLocation = createAction<LocationUpdate>('location/updateLocation');
 
-      if (action.payload.partial) {
-        query = _.defaults(query, state.query);
-        query = _.omitBy(query, _.isNull);
-      }
+export const locationReducer = (state: LocationState = initialState, action: Action<unknown>) => {
+  if (updateLocation.match(action)) {
+    const payload: LocationUpdate = action.payload;
+    const { path, routeParams, replace } = payload;
+    let query = payload.query || state.query;
 
-      return {
-        url: renderUrl(path || state.path, query),
-        path: path || state.path,
-        query: { ...query },
-        routeParams: routeParams || state.routeParams,
-        replace: replace === true,
-        lastUpdated: new Date().getTime(),
-      };
-    },
-  },
-});
+    if (payload.partial) {
+      query = _.defaults(query, state.query);
+      query = _.omitBy(query, _.isNull);
+    }
 
-export const { updateLocation } = locationSlice.actions;
+    return {
+      url: renderUrl(path || state.path, query),
+      path: path || state.path,
+      query: { ...query },
+      routeParams: routeParams || state.routeParams,
+      replace: replace === true,
+      lastUpdated: new Date().getTime(),
+    };
+  }
 
-export const locationReducer = locationSlice.reducer;
+  return state;
+};
