@@ -3,12 +3,15 @@ package alerting
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestStateIsUpdatedWhenNeeded(t *testing.T) {
@@ -203,4 +206,23 @@ func TestGetStateFromEvalContext(t *testing.T) {
 		newState := evalContext.GetNewState()
 		assert.Equal(t, tc.expected, newState, "failed: %s \n expected '%s' have '%s'\n", tc.name, tc.expected, string(newState))
 	}
+}
+
+func TestGetRuleURL(t *testing.T) {
+	dashboardRef, dashboardSlug := "1", "test-dashboard"
+	setting.AppUrl = "http://localhost:12345/"
+	bus.AddHandler("test", func(query *models.GetDashboardRefByIdQuery) error {
+		query.Result = &models.DashboardRef{Uid: dashboardRef, Slug: dashboardSlug}
+		return nil
+	})
+	lastStateChange := time.Date(2019, 12, 30, 17, 34, 11, 0, time.UTC)
+	from := lastStateChange.Unix() * 1000
+	forDuration := 1 * time.Minute
+	to := lastStateChange.Add(forDuration).Unix() * 1000
+
+	ctx := NewEvalContext(context.TODO(), &Rule{PanelID: 1, OrgID: 2, LastStateChange: lastStateChange, For: forDuration})
+	u, err := ctx.GetRuleURL()
+	assert.NoError(t, err)
+	expected := fmt.Sprintf(urlFormat+"&from=%d&to=%d", models.GetFullDashboardUrl(dashboardRef, dashboardSlug), 1, 2, from, to)
+	assert.Equal(t, expected, u)
 }
