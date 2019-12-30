@@ -58,13 +58,18 @@ export const createRootReducer = () => {
 
 export const recursiveCleanState = (state: any, stateSlice: any): boolean => {
   for (const stateKey in state) {
-    if (state[stateKey] === stateSlice) {
+    if (!state.hasOwnProperty(stateKey)) {
+      continue;
+    }
+
+    const slice = state[stateKey];
+    if (slice === stateSlice) {
       state[stateKey] = undefined;
       return true;
     }
 
-    if (typeof state[stateKey] === 'object') {
-      const cleaned = recursiveCleanState(state[stateKey], stateSlice);
+    if (typeof slice === 'object') {
+      const cleaned = recursiveCleanState(slice, stateSlice);
       if (cleaned) {
         return true;
       }
