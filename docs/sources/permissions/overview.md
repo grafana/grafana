@@ -3,7 +3,7 @@ title = "Overview"
 description = "Overview for permissions"
 keywords = ["grafana", "configuration", "documentation", "admin", "users", "datasources", "permissions"]
 type = "docs"
-aliases = ["/reference/admin", "/administration/permissions/"]
+aliases = ["/docs/grafana/latest/reference/admin", "/docs/grafana/latest/administration/permissions/"]
 [menu.docs]
 name = "Overview"
 identifier = "overview-permissions"
