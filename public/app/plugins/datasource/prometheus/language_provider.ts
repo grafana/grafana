@@ -88,7 +88,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   cleanText(s: string) {
     const parts = s.split(PREFIX_DELIMITER_REGEX);
     const last = parts.pop();
-    return last.trimLeft().replace(/"$/, '');
+    return last
+      .trimLeft()
+      .replace(/"$/, '')
+      .replace(/^"/, '');
   }
 
   get syntax() {
