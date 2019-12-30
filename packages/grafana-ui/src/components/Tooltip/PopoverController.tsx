@@ -36,40 +36,17 @@ interface State {
 
 class PopoverController extends React.Component<Props, State> {
   private hideTimeout: any;
-
-  constructor(props: Props) {
-    super(props);
-
-    this.state = {
-      show: false,
-    };
-  }
+  state = { show: false };
 
   showPopper = () => {
-    if (this.hideTimeout) {
-      clearTimeout(this.hideTimeout);
-    }
-
-    this.setState(prevState => ({
-      ...prevState,
-      show: true,
-    }));
+    clearTimeout(this.hideTimeout);
+    this.setState({ show: true });
   };
 
   hidePopper = () => {
-    if (this.props.hideAfter !== 0) {
-      this.hideTimeout = setTimeout(() => {
-        this.setState(prevState => ({
-          ...prevState,
-          show: false,
-        }));
-      }, this.props.hideAfter);
-      return;
-    }
-    this.setState(prevState => ({
-      ...prevState,
-      show: false,
-    }));
+    this.hideTimeout = setTimeout(() => {
+      this.setState({ show: false });
+    }, this.props.hideAfter);
   };
 
   render() {
