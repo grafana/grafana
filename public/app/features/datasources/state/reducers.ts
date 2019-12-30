@@ -1,19 +1,9 @@
+import { createAction } from '@reduxjs/toolkit';
+import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
+
 import { DataSourcesState } from 'app/types';
-import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/data';
-import {
-  dataSourceLoaded,
-  dataSourcesLoaded,
-  setDataSourcesSearchQuery,
-  setDataSourcesLayoutMode,
-  dataSourceTypesLoad,
-  dataSourceTypesLoaded,
-  setDataSourceTypeSearchQuery,
-  dataSourceMetaLoaded,
-  setDataSourceName,
-  setIsDefault,
-} from './actions';
-import { LayoutModes } from 'app/core/components/LayoutSelector/LayoutSelector';
-import { reducerFactory } from 'app/core/redux';
+import { LayoutMode, LayoutModes } from 'app/core/components/LayoutSelector/LayoutSelector';
+import { Action } from 'redux';
 
 export const initialState: DataSourcesState = {
   dataSources: [],
@@ -28,60 +18,120 @@ export const initialState: DataSourcesState = {
   dataSourceMeta: {} as DataSourcePluginMeta,
 };
 
-export const dataSourcesReducer = reducerFactory(initialState)
-  .addMapper({
-    filter: dataSourcesLoaded,
-    mapper: (state, action) => ({
+export const dataSourceLoaded = createAction<DataSourceSettings>('dataSources/dataSourceLoaded');
+
+export const dataSourcesLoaded = createAction<DataSourceSettings[]>('dataSources/dataSourcesLoaded');
+
+export const dataSourceMetaLoaded = createAction<DataSourcePluginMeta>('dataSources/dataSourceMetaLoaded');
+
+export const dataSourceTypesLoad = createAction('dataSources/dataSourceTypesLoad');
+
+export const dataSourceTypesLoaded = createAction<DataSourcePluginMeta[]>('dataSources/dataSourceTypesLoaded');
+
+export const setDataSourcesSearchQuery = createAction<string>('dataSources/setDataSourcesSearchQuery');
+
+export const setDataSourcesLayoutMode = createAction<LayoutMode>('dataSources/setDataSourcesLayoutMode');
+
+export const setDataSourceTypeSearchQuery = createAction<string>('dataSources/setDataSourceTypeSearchQuery');
+
+export const setDataSourceName = createAction<string>('dataSources/setDataSourceName');
+
+export const setIsDefault = createAction<boolean>('dataSources/setIsDefault');
+
+export const dataSourcesReducer = (
+  state: DataSourcesState = initialState,
+  action: Action<unknown>
+): DataSourcesState => {
+  if (dataSourceLoaded.match(action)) {
+    return {
+      ...state,
+      dataSource: action.payload,
+    };
+  }
+
+  if (dataSourcesLoaded.match(action)) {
+    return {
       ...state,
       hasFetched: true,
       dataSources: action.payload,
       dataSourcesCount: action.payload.length,
-    }),
-  })
-  .addMapper({
-    filter: dataSourceLoaded,
-    mapper: (state, action) => ({ ...state, dataSource: action.payload }),
-  })
-  .addMapper({
-    filter: setDataSourcesSearchQuery,
-    mapper: (state, action) => ({ ...state, searchQuery: action.payload }),
-  })
-  .addMapper({
-    filter: setDataSourcesLayoutMode,
-    mapper: (state, action) => ({ ...state, layoutMode: action.payload }),
-  })
-  .addMapper({
-    filter: dataSourceTypesLoad,
-    mapper: state => ({ ...state, dataSourceTypes: [], isLoadingDataSources: true }),
-  })
-  .addMapper({
-    filter: dataSourceTypesLoaded,
-    mapper: (state, action) => ({
+    };
+  }
+
+  if (dataSourceMetaLoaded.match(action)) {
+    return {
+      ...state,
+      dataSourceMeta: action.payload,
+    };
+  }
+
+  if (dataSourceTypesLoad.match(action)) {
+    return {
+      ...state,
+      dataSourceTypes: [],
+      isLoadingDataSources: true,
+    };
+  }
+
+  if (dataSourceTypesLoaded.match(action)) {
+    return {
       ...state,
       dataSourceTypes: action.payload,
       isLoadingDataSources: false,
-    }),
-  })
-  .addMapper({
-    filter: setDataSourceTypeSearchQuery,
-    mapper: (state, action) => ({ ...state, dataSourceTypeSearchQuery: action.payload }),
-  })
-  .addMapper({
-    filter: dataSourceMetaLoaded,
-    mapper: (state, action) => ({ ...state, dataSourceMeta: action.payload }),
-  })
-  .addMapper({
-    filter: setDataSourceName,
-    mapper: (state, action) => ({ ...state, dataSource: { ...state.dataSource, name: action.payload } }),
-  })
-  .addMapper({
-    filter: setIsDefault,
-    mapper: (state, action) => ({
+    };
+  }
+
+  if (dataSourceTypesLoaded.match(action)) {
+    return {
       ...state,
-      dataSource: { ...state.dataSource, isDefault: action.payload },
-    }),
-  })
-  .create();
+      dataSourceTypes: action.payload,
+      isLoadingDataSources: false,
+    };
+  }
+
+  if (setDataSourcesSearchQuery.match(action)) {
+    return {
+      ...state,
+      searchQuery: action.payload,
+    };
+  }
+
+  if (setDataSourcesLayoutMode.match(action)) {
+    return {
+      ...state,
+      layoutMode: action.payload,
+    };
+  }
+
+  if (setDataSourceTypeSearchQuery.match(action)) {
+    return {
+      ...state,
+      dataSourceTypeSearchQuery: action.payload,
+    };
+  }
+
+  if (setDataSourceName.match(action)) {
+    return {
+      ...state,
+      dataSource: {
+        ...state.dataSource,
+        name: action.payload,
+      },
+    };
+  }
+
+  if (setIsDefault.match(action)) {
+    return {
+      ...state,
+      dataSource: {
+        ...state.dataSource,
+        isDefault: action.payload,
+      },
+    };
+  }
+
+  return state;
+};
 
 export default {
   dataSources: dataSourcesReducer,

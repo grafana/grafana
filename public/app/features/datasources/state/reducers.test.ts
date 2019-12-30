@@ -1,21 +1,23 @@
+import { PluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
+
 import { reducerTester } from 'test/core/redux/reducerTester';
-import { dataSourcesReducer, initialState } from './reducers';
 import {
-  dataSourcesLoaded,
   dataSourceLoaded,
-  setDataSourcesSearchQuery,
-  setDataSourcesLayoutMode,
+  dataSourceMetaLoaded,
+  dataSourcesLoaded,
+  dataSourcesReducer,
   dataSourceTypesLoad,
   dataSourceTypesLoaded,
-  setDataSourceTypeSearchQuery,
-  dataSourceMetaLoaded,
+  initialState,
   setDataSourceName,
+  setDataSourcesLayoutMode,
+  setDataSourcesSearchQuery,
+  setDataSourceTypeSearchQuery,
   setIsDefault,
-} from './actions';
-import { getMockDataSources, getMockDataSource } from '../__mocks__/dataSourcesMocks';
+} from './reducers';
+import { getMockDataSource, getMockDataSources } from '../__mocks__/dataSourcesMocks';
 import { LayoutModes } from 'app/core/components/LayoutSelector/LayoutSelector';
 import { DataSourcesState } from 'app/types';
-import { PluginMetaInfo, PluginType, PluginMeta } from '@grafana/data';
 
 const mockPlugin = () =>
   ({

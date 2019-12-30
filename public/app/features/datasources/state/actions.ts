@@ -1,47 +1,19 @@
-import { ThunkAction } from 'redux-thunk';
 import config from '../../../core/config';
-import { getBackendSrv, LocationUpdate } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
 import { updateLocation, updateNavIndex } from 'app/core/actions';
 import { buildNavModel } from './navModel';
-import { DataSourcePluginMeta, DataSourceSettings, NavModelItem } from '@grafana/data';
-import { StoreState } from 'app/types';
-import { actionCreatorFactory } from 'app/core/redux';
-import { ActionOf } from 'app/core/redux/actionCreatorFactory';
+import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
+import { ThunkResult } from 'app/types';
 import { getPluginSettings } from 'app/features/plugins/PluginSettingsCache';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
-import { PayloadAction } from '@reduxjs/toolkit';
-
-export const dataSourceLoaded = actionCreatorFactory<DataSourceSettings>('LOAD_DATA_SOURCE').create();
-
-export const dataSourcesLoaded = actionCreatorFactory<DataSourceSettings[]>('LOAD_DATA_SOURCES').create();
-
-export const dataSourceMetaLoaded = actionCreatorFactory<DataSourcePluginMeta>('LOAD_DATA_SOURCE_META').create();
-
-export const dataSourceTypesLoad = actionCreatorFactory('LOAD_DATA_SOURCE_TYPES').create();
-
-export const dataSourceTypesLoaded = actionCreatorFactory<DataSourcePluginMeta[]>('LOADED_DATA_SOURCE_TYPES').create();
-
-export const setDataSourcesSearchQuery = actionCreatorFactory<string>('SET_DATA_SOURCES_SEARCH_QUERY').create();
-
-export const setDataSourcesLayoutMode = actionCreatorFactory<LayoutMode>('SET_DATA_SOURCES_LAYOUT_MODE').create();
-
-export const setDataSourceTypeSearchQuery = actionCreatorFactory<string>('SET_DATA_SOURCE_TYPE_SEARCH_QUERY').create();
-
-export const setDataSourceName = actionCreatorFactory<string>('SET_DATA_SOURCE_NAME').create();
-
-export const setIsDefault = actionCreatorFactory<boolean>('SET_IS_DEFAULT').create();
-
-export type Action =
-  | ActionOf<DataSourceSettings>
-  | ActionOf<DataSourceSettings[]>
-  | ActionOf<DataSourcePluginMeta>
-  | ActionOf<DataSourcePluginMeta[]>
-  | ActionOf<LocationUpdate>
-  | PayloadAction<NavModelItem>;
-
-type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
+import {
+  dataSourceLoaded,
+  dataSourceMetaLoaded,
+  dataSourcesLoaded,
+  dataSourceTypesLoad,
+  dataSourceTypesLoaded,
+} from './reducers';
 
 export function loadDataSources(): ThunkResult<void> {
   return async dispatch => {

@@ -7,9 +7,10 @@ import { e2e } from '@grafana/e2e';
 
 import Page from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
-import { addDataSource, loadDataSourceTypes, setDataSourceTypeSearchQuery } from './state/actions';
+import { addDataSource, loadDataSourceTypes } from './state/actions';
 import { getDataSourceTypes } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
+import { setDataSourceTypeSearchQuery } from './state/reducers';
 
 export interface Props {
   navModel: NavModel;
