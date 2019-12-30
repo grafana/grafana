@@ -6,7 +6,7 @@ import Drop from 'tether-drop';
 
 // Utils and servies
 import { colors } from '@grafana/ui';
-import { setBackendSrv, BackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import { setBackendSrv, BackendSrv, setDataSourceSrv, setWebSocketSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import { profiler } from 'app/core/profiler';
@@ -30,6 +30,7 @@ import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { ILocationService, ITimeoutService, IRootScopeService, IAngularEvent } from 'angular';
 import { AppEvent, AppEvents } from '@grafana/data';
+import { GrafanaLiveSrv } from 'app/features/live/GrafanaLiveSrv';
 
 export type GrafanaRootScope = IRootScopeService & AppEventEmitter & AppEventConsumer & { colors: string[] };
 
@@ -57,6 +58,7 @@ export class GrafanaCtrl {
     setLinkSrv(linkSrv);
     setKeybindingSrv(keybindingSrv);
     setDashboardSrv(dashboardSrv);
+    setWebSocketSrv(new GrafanaLiveSrv());
 
     const store = configureStore();
     setLocationSrv({

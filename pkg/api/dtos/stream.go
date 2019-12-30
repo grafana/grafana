@@ -1,13 +1,8 @@
 package dtos
 
-import "encoding/json"
-
+// This is broadcast to any connected clients
 type StreamMessage struct {
-	Stream string                `json:"stream"`
-	Series []StreamMessageSeries `json:"series"`
-}
-
-type StreamMessageSeries struct {
-	Name       string          `json:"name"`
-	Datapoints [][]json.Number `json:"datapoints"`
+	Stream string                 `json:"stream"`
+	Time   int64                  `json:"time"`
+	Body   map[string]interface{} `json:"body"`
 }
