@@ -58,7 +58,9 @@ export class GrafanaCtrl {
     setLinkSrv(linkSrv);
     setKeybindingSrv(keybindingSrv);
     setDashboardSrv(dashboardSrv);
-    setWebSocketSrv(new GrafanaLiveSrv());
+    if (config.featureToggles.sockets) {
+      setWebSocketSrv(new GrafanaLiveSrv());
+    }
 
     const store = configureStore();
     setLocationSrv({

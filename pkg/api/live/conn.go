@@ -77,23 +77,34 @@ func (c *connection) handleMessage(message []byte) {
 	json, err := simplejson.NewJson(message)
 	if err != nil {
 		log.Error(3, "Unreadable message on websocket channel. error: %v", err)
+		return
 	}
 
-	msgType := json.Get("action").MustString()
 	streamName := json.Get("stream").MustString()
-
 	if len(streamName) == 0 {
 		log.Error(3, "Not allowed to subscribe to empty stream name")
 		return
 	}
 
-	switch msgType {
-	case "subscribe":
+	// Optional action (subscribe/unsubscribe)
+	action := json.Get("action").MustString()
+	if action == "subscribe" {
+		// TODO: TEMPORARILY... if not exists create it
 		c.hub.subChannel <- &streamSubscription{name: streamName, conn: c}
-	case "unsubscribe":
+		return
+	}
+	if action == "unsubscribe" {
 		c.hub.subChannel <- &streamSubscription{name: streamName, conn: c, remove: true}
+		return
+	}
+	if action != "" {
+		log.Error(3, "Invalid action... TODO return error to the same connectoin")
+		return
 	}
 
+	// TODO: broadcast the message to everyone (except me!)
+	// For now this will be a simple chat example
+	// soon it will pass to plugins
 }
 
 func (c *connection) write(mt int, payload []byte) error {

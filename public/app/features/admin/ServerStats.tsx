@@ -6,6 +6,8 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { getServerStats, ServerStat } from './state/apis';
 import Page from 'app/core/components/Page/Page';
 import { NavModel } from '@grafana/data';
+import { config } from 'app/core/config';
+import { SocketStatusWatcher } from '../live/SocketStatusWatcher';
 
 interface Props {
   navModel: NavModel;
@@ -39,6 +41,15 @@ export class ServerStats extends PureComponent<Props, State> {
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
+          {config.featureToggles.sockets && (
+            <div>
+              <SocketStatusWatcher />
+              <br />
+              <hr />
+              <br />
+            </div>
+          )}
+
           <table className="filter-table form-inline">
             <thead>
               <tr>

@@ -16,7 +16,9 @@ interface FeatureToggles {
   inspect: boolean;
   expressions: boolean;
   newEdit: boolean;
+  sockets: boolean;
 }
+
 export class GrafanaBootConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
@@ -53,6 +55,7 @@ export class GrafanaBootConfig {
     inspect: false,
     expressions: false,
     newEdit: false,
+    sockets: false,
   };
 
   constructor(options: GrafanaBootConfig) {
