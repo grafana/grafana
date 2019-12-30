@@ -3,14 +3,18 @@ import { shallow, ShallowWrapper } from 'enzyme';
 import { DashboardPage, mapStateToProps, Props, State } from './DashboardPage';
 import { DashboardModel } from '../state';
 import { cleanUpDashboard } from '../state/actions';
-import { getNoPayloadActionCreatorMock, mockToolkitActionCreator, NoPayloadActionCreatorMock } from 'app/core/redux';
+import {
+  mockToolkitActionCreator,
+  mockToolkitActionCreatorWithoutPayload,
+  ToolkitActionCreatorWithoutPayloadMockType,
+} from 'app/core/redux';
 import { DashboardInitPhase, DashboardRouteInfo } from 'app/types';
 import { notifyApp, updateLocation } from 'app/core/actions';
 
 jest.mock('app/features/dashboard/components/DashboardSettings/SettingsCtrl', () => ({}));
 
 interface ScenarioContext {
-  cleanUpDashboardMock: NoPayloadActionCreatorMock;
+  cleanUpDashboardMock: ToolkitActionCreatorWithoutPayloadMockType;
   dashboard?: DashboardModel;
   setDashboardProp: (overrides?: any, metaOverrides?: any) => void;
   wrapper?: ShallowWrapper<Props, State, DashboardPage>;
@@ -43,7 +47,7 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
     let setupFn: () => void;
 
     const ctx: ScenarioContext = {
-      cleanUpDashboardMock: getNoPayloadActionCreatorMock(cleanUpDashboard),
+      cleanUpDashboardMock: mockToolkitActionCreatorWithoutPayload(cleanUpDashboard),
       setup: fn => {
         setupFn = fn;
       },
@@ -243,7 +247,7 @@ describe('DashboardPage', () => {
     });
 
     it('Should call clean up action', () => {
-      expect(ctx.cleanUpDashboardMock.calls).toBe(1);
+      expect(ctx.cleanUpDashboardMock).toHaveBeenCalledTimes(1);
     });
   });
 

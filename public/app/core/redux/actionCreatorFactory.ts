@@ -1,5 +1,5 @@
 import { Action } from 'redux';
-import { PayloadActionCreator } from '@reduxjs/toolkit';
+import { ActionCreatorWithoutPayload, PayloadActionCreator } from '@reduxjs/toolkit';
 
 const allActionCreators = new Set<string>();
 
@@ -42,26 +42,14 @@ export function actionCreatorFactory<Payload>(type: string): ActionCreatorFactor
   return { create };
 }
 
-export interface NoPayloadActionCreatorMock extends NoPayloadActionCreator {
-  calls: number;
-}
-
-export const getNoPayloadActionCreatorMock = (creator: NoPayloadActionCreator): NoPayloadActionCreatorMock => {
-  const mock: NoPayloadActionCreatorMock = Object.assign(
-    (): ActionOf<undefined> => {
-      mock.calls++;
-      return { type: creator.type, payload: undefined };
-    },
-    { type: creator.type, calls: 0 }
-  );
-  return mock;
-};
-
-export const mockActionCreator = (creator: ActionCreator<any>) => {
+export const mockToolkitActionCreator = (creator: PayloadActionCreator<any>) => {
   return Object.assign(jest.fn(), creator);
 };
 
-export const mockToolkitActionCreator = (creator: PayloadActionCreator<any>) => {
+export type ToolkitActionCreatorWithoutPayloadMockType = typeof mockToolkitActionCreatorWithoutPayload &
+  ActionCreatorWithoutPayload<any>;
+
+export const mockToolkitActionCreatorWithoutPayload = (creator: ActionCreatorWithoutPayload<any>) => {
   return Object.assign(jest.fn(), creator);
 };
 
