@@ -1,17 +1,17 @@
 import { ThunkAction } from 'redux-thunk';
 import config from '../../../core/config';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, LocationUpdate } from '@grafana/runtime';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
-import { updateLocation, updateNavIndex, UpdateNavIndexAction } from 'app/core/actions';
+import { updateLocation, updateNavIndex } from 'app/core/actions';
 import { buildNavModel } from './navModel';
-import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSettings, NavModelItem } from '@grafana/data';
 import { StoreState } from 'app/types';
-import { LocationUpdate } from '@grafana/runtime';
 import { actionCreatorFactory } from 'app/core/redux';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { getPluginSettings } from 'app/features/plugins/PluginSettingsCache';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
+import { PayloadAction } from '@reduxjs/toolkit';
 
 export const dataSourceLoaded = actionCreatorFactory<DataSourceSettings>('LOAD_DATA_SOURCE').create();
 
@@ -34,12 +34,12 @@ export const setDataSourceName = actionCreatorFactory<string>('SET_DATA_SOURCE_N
 export const setIsDefault = actionCreatorFactory<boolean>('SET_IS_DEFAULT').create();
 
 export type Action =
-  | UpdateNavIndexAction
   | ActionOf<DataSourceSettings>
   | ActionOf<DataSourceSettings[]>
   | ActionOf<DataSourcePluginMeta>
   | ActionOf<DataSourcePluginMeta[]>
-  | ActionOf<LocationUpdate>;
+  | ActionOf<LocationUpdate>
+  | PayloadAction<NavModelItem>;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 

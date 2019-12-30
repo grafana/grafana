@@ -1,7 +1,8 @@
 import { ThunkAction } from 'redux-thunk';
 import { getBackendSrv } from '@grafana/runtime';
+
 import { StoreState, Team, TeamGroup, TeamMember } from 'app/types';
-import { updateNavIndex, UpdateNavIndexAction } from 'app/core/actions';
+import { updateNavIndex } from 'app/core/actions';
 import { buildNavModel } from './navModel';
 
 export enum ActionTypes {
@@ -51,7 +52,7 @@ export type Action =
   | SetSearchMemberQueryAction
   | LoadTeamGroupsAction;
 
-type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action | UpdateNavIndexAction>;
+type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 
 const teamsLoaded = (teams: Team[]): LoadTeamsAction => ({
   type: ActionTypes.LoadTeams,
@@ -94,6 +95,7 @@ export function loadTeam(id: number): ThunkResult<void> {
   return async dispatch => {
     const response = await getBackendSrv().get(`/api/teams/${id}`);
     dispatch(teamLoaded(response));
+    // @ts-ignore
     dispatch(updateNavIndex(buildNavModel(response)));
   };
 }

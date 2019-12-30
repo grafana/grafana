@@ -6,6 +6,7 @@ import { setStore } from './store';
 import { StoreState } from 'app/types/store';
 import { toggleLogActionsMiddleware } from 'app/core/middlewares/application';
 import { addReducer, createRootReducer } from '../core/reducers/root';
+import { buildInitialState } from '../core/reducers/navModel';
 
 export function addRootReducer(reducers: any) {
   // this is ok now because we add reducers before configureStore is called
@@ -27,6 +28,9 @@ export function configureStore() {
     reducer: createRootReducer(),
     middleware,
     devTools: process.env.NODE_ENV !== 'production',
+    preloadedState: {
+      navIndex: buildInitialState(),
+    },
   });
 
   setStore(store);

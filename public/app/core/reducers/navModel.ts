@@ -1,6 +1,6 @@
-import { Action, ActionTypes } from 'app/core/actions/navModel';
 import { NavIndex, NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export function buildInitialState(): NavIndex {
   const navIndex: NavIndex = {};
@@ -22,11 +22,13 @@ function buildNavIndex(navIndex: NavIndex, children: NavModelItem[], parentItem?
   }
 }
 
-export const initialState: NavIndex = buildInitialState();
+export const initialState: NavIndex = {};
 
-export const navIndexReducer = (state = initialState, action: Action): NavIndex => {
-  switch (action.type) {
-    case ActionTypes.UpdateNavIndex:
+export const navIndexSlice = createSlice({
+  name: 'navIndex',
+  initialState,
+  reducers: {
+    updateNavIndex: (state, action: PayloadAction<NavModelItem>) => {
       const newPages: NavIndex = {};
       const payload = action.payload;
 
@@ -38,6 +40,10 @@ export const navIndexReducer = (state = initialState, action: Action): NavIndex 
       }
 
       return { ...state, ...newPages };
-  }
-  return state;
-};
+    },
+  },
+});
+
+export const { updateNavIndex } = navIndexSlice.actions;
+
+export const navIndexReducer = navIndexSlice.reducer;
