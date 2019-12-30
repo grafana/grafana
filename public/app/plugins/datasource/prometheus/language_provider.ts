@@ -51,7 +51,7 @@ function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): Com
   return item;
 }
 
-const PREFIX_DELIMITER_REGEX = /(="|!="|=~"|!~"|\{|\[|\(|\+|-|\/|\*|%|\^|and|or|unless|==|>=|!=|<=|>|<|=|~|,)/;
+const PREFIX_DELIMITER_REGEX = /(="|!="|=~"|!~"|\{|\[|\(|\+|-|\/|\*|%|\^|\band\b|\bor\b|\bunless\b|==|>=|!=|<=|>|<|=|~|,)/;
 
 export default class PromQlLanguageProvider extends LanguageProvider {
   histogramMetrics?: string[];
