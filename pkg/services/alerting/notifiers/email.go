@@ -21,13 +21,13 @@ func init() {
 		OptionsTemplate: `
 			<h3 class="page-heading">Email settings</h3>
 			<div class="gf-form">
-         <gf-form-switch
-           class="gf-form"
-           label="Single email"
-           label-class="width-8"
-           checked="ctrl.model.settings.singleEmail"
-           tooltip="Send a single email to all recipients">
-        </gf-form-switch>
+    		<gf-form-switch
+        	class="gf-form"
+        	label="Single email"
+      		label-class="width-8"
+      		checked="ctrl.model.settings.singleEmail"
+      		tooltip="Send a single email to all recipients">
+      	</gf-form-switch>
 			</div>
 			<div class="gf-form">
 				<label class="gf-form-label width-8">
