@@ -67,12 +67,12 @@ func NewOpsGenieNotifier(model *models.AlertNotification) (alerting.Notifier, er
 	}
 
 	return &OpsGenieNotifier{
-		NotifierBase: NewNotifierBase(model),
-		APIKey:       apiKey,
-		APIUrl:       apiURL,
-		AutoClose:    autoClose,
+		NotifierBase:     NewNotifierBase(model),
+		APIKey:           apiKey,
+		APIUrl:           apiURL,
+		AutoClose:        autoClose,
 		OverridePriority: overridePriority,
-		log:          log.New("alerting.notifier.opsgenie"),
+		log:              log.New("alerting.notifier.opsgenie"),
 	}, nil
 }
 
@@ -80,11 +80,11 @@ func NewOpsGenieNotifier(model *models.AlertNotification) (alerting.Notifier, er
 // alert notifications to OpsGenie
 type OpsGenieNotifier struct {
 	NotifierBase
-	APIKey    string
-	APIUrl    string
-	AutoClose bool
+	APIKey           string
+	APIUrl           string
+	AutoClose        bool
 	OverridePriority bool
-	log       log.Logger
+	log              log.Logger
 }
 
 // Notify sends an alert notification to OpsGenie.
@@ -137,9 +137,9 @@ func (on *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) error
 			tags = append(tags, tag.Key)
 		}
 		if tag.Key == "og_priority" {
-			if on.OverridePriority == true {
-				validPriorities := map[string]bool{"P1": true,"P2": true,"P3": true,"P4": true,"P5": true}
-				if validPriorities[tag.Value] == true {
+			if on.OverridePriority {
+				validPriorities := map[string]bool{"P1": true, "P2": true, "P3": true, "P4": true, "P5": true}
+				if validPriorities[tag.Value] {
 					bodyJSON.Set("priority", tag.Value)
 				}
 			}
