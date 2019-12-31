@@ -1,21 +1,33 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 import { FormField, Button } from '@grafana/ui';
-import { SocketMessage } from '@grafana/runtime';
+import { getWebSocketSrv, SocketMessage } from '@grafana/runtime';
 interface Props {}
 
 interface State {
   connect: string;
   history: SocketMessage[];
+  stream: string;
+  body: string;
 }
 
 export class SocketStatusWatcher extends PureComponent<Props, State> {
   state = {
     connect: '',
     history: [] as SocketMessage[],
+    stream: '',
+    body: '{ "hello":"world" }',
   };
 
   onConnectStreamChanged = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({ connect: event.target.value });
+  };
+
+  onSendStreamChanged = (event: ChangeEvent<HTMLInputElement>) => {
+    this.setState({ stream: event.target.value });
+  };
+
+  onBodyChanged = (event: ChangeEvent<HTMLInputElement>) => {
+    this.setState({ body: event.target.value });
   };
 
   onSubscribeClick = () => {
@@ -36,17 +48,51 @@ export class SocketStatusWatcher extends PureComponent<Props, State> {
     this.setState({ connect: '', history: [msg, ...history] });
   };
 
+  onSendClick = () => {
+    const { stream } = this.state;
+    let { body } = this.state;
+    try {
+      body = JSON.parse(body);
+    } catch {}
+
+    const msg: SocketMessage = {
+      stream: connect,
+      time: Date.now(),
+      body,
+    };
+
+    const x = getWebSocketSrv().write(msg);
+    console.log('yyyy', x);
+    this.setState({ history: [msg, ...history] });
+  };
+
   render() {
-    const { connect, history } = this.state;
+    const { connect, history, stream, body } = this.state;
 
     return (
       <div>
-        <div className="gf-form-inline">
-          <FormField label="Stream" value={connect || ''} onChange={this.onConnectStreamChanged} />
-          <Button onClick={this.onSubscribeClick} variant="primary">
-            Subscribe
-          </Button>
-        </div>
+        <table>
+          <tbody>
+            <tr valign="top">
+              <td>
+                <h3>Connect</h3>
+                <FormField label="Stream" value={connect || ''} onChange={this.onConnectStreamChanged} />
+                <Button onClick={this.onSubscribeClick} variant="primary">
+                  Subscribe
+                </Button>
+              </td>
+              <td>&nbsp;</td>
+              <td>
+                <h3>Send</h3>
+                <FormField label="Stream" value={stream || ''} onChange={this.onSendStreamChanged} />
+                <FormField label="Body" value={body || ''} onChange={this.onBodyChanged} />
+                <Button onClick={this.onSendClick} variant="primary">
+                  Send
+                </Button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
         <table className="filter-table form-inline">
           <thead>

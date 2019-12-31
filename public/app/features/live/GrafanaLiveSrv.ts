@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { WebSocketSrv, WebSocketConnectionOptions, SocketMessage } from '@grafana/runtime';
 
@@ -69,6 +69,11 @@ export class GrafanaLiveSrv implements WebSocketSrv {
   }
 
   write(msg: SocketMessage): SocketMessage {
-    throw new Error('Method not implemented.');
+    const socket = this.getWebSocket();
+    socket.next(msg);
+    return {
+      stream: 'xxxx',
+      body: 'TODO.... actually do this...',
+    };
   }
 }
