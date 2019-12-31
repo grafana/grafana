@@ -3,9 +3,9 @@ package live
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	m "github.com/grafana/grafana/pkg/models"
 )
 
 type hub struct {
@@ -15,7 +15,7 @@ type hub struct {
 
 	register      chan *connection
 	unregister    chan *connection
-	streamChannel chan *dtos.StreamMessage
+	streamChannel chan *m.StreamMessage
 	subChannel    chan *streamSubscription
 }
 
@@ -31,7 +31,7 @@ func newHub() *hub {
 		streams:       make(map[string]map[*connection]bool),
 		register:      make(chan *connection),
 		unregister:    make(chan *connection),
-		streamChannel: make(chan *dtos.StreamMessage),
+		streamChannel: make(chan *m.StreamMessage),
 		subChannel:    make(chan *streamSubscription),
 		log:           log.New("stream.hub"),
 	}

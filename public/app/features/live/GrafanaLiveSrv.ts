@@ -57,6 +57,7 @@ export class GrafanaLiveSrv implements WebSocketSrv {
     const stream = new OpenStream();
 
     const msg = {
+      key: counter++,
       id: stream.id,
       stream: 'aaaa',
       action: 'subscribe',
@@ -70,7 +71,11 @@ export class GrafanaLiveSrv implements WebSocketSrv {
 
   write(msg: SocketMessage): SocketMessage {
     const socket = this.getWebSocket();
-    socket.next(msg);
+    socket.next({
+      ...msg,
+      key: counter++,
+    });
+
     return {
       stream: 'xxxx',
       body: 'TODO.... actually do this...',

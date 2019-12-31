@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	m "github.com/grafana/grafana/pkg/models"
@@ -64,7 +63,7 @@ func (s *StreamManager) GetStreamList() m.StreamList {
 	return list
 }
 
-func (s *StreamManager) Push(packet *dtos.StreamMessage) {
+func (s *StreamManager) Push(packet *m.StreamMessage) {
 	stream, exist := s.streams[packet.Stream]
 
 	if !exist {
@@ -88,7 +87,7 @@ func NewStream(name string) *Stream {
 	}
 }
 
-func (s *Stream) Push(packet *dtos.StreamMessage) {
+func (s *Stream) Push(packet *m.StreamMessage) {
 
 	messageBytes, _ := simplejson.NewFromAny(packet).Encode()
 

@@ -56,7 +56,7 @@ export class SocketStatusWatcher extends PureComponent<Props, State> {
     } catch {}
 
     const msg: SocketMessage = {
-      stream: connect,
+      stream,
       time: Date.now(),
       body,
     };
@@ -111,7 +111,7 @@ export class SocketStatusWatcher extends PureComponent<Props, State> {
 
 function SocketMessageRow(msg: SocketMessage) {
   return (
-    <tr key={msg.time}>
+    <tr key={msg.time + msg.stream}>
       <td>{msg.time}</td>
       <td>{msg.stream}</td>
       <td>{JSON.stringify(msg.body)}</td>
