@@ -437,6 +437,7 @@ The following sections detail the supported settings for each alert notification
 | ---- |
 | bottoken |
 | chatid |
+| uploadImage |
 
 #### Alert notification `threema`
 
