@@ -1,6 +1,6 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 import { FormField, Button } from '@grafana/ui';
-import { getWebSocketSrv, SocketMessage } from '@grafana/runtime';
+import { getWebStreamSrv, SocketMessage } from '@grafana/runtime';
 interface Props {}
 
 interface State {
@@ -40,7 +40,7 @@ export class SocketStatusWatcher extends PureComponent<Props, State> {
       },
     };
 
-    const x = getWebSocketSrv().subscribe({
+    const x = getWebStreamSrv().subscribe({
       stream: connect,
     });
     console.log('x', x);
@@ -61,7 +61,7 @@ export class SocketStatusWatcher extends PureComponent<Props, State> {
       body,
     };
 
-    const x = getWebSocketSrv().write(msg);
+    const x = getWebStreamSrv().write(msg);
     console.log('yyyy', x);
     this.setState({ history: [msg, ...history] });
   };

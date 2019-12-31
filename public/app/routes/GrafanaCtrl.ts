@@ -6,7 +6,7 @@ import Drop from 'tether-drop';
 
 // Utils and servies
 import { colors } from '@grafana/ui';
-import { setBackendSrv, BackendSrv, setDataSourceSrv, setWebSocketSrv } from '@grafana/runtime';
+import { setBackendSrv, BackendSrv, setDataSourceSrv, setWebStreamSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import { profiler } from 'app/core/profiler';
@@ -59,7 +59,7 @@ export class GrafanaCtrl {
     setKeybindingSrv(keybindingSrv);
     setDashboardSrv(dashboardSrv);
     if (config.featureToggles.sockets) {
-      setWebSocketSrv(new GrafanaLiveSrv());
+      setWebStreamSrv(new GrafanaLiveSrv());
     }
 
     const store = configureStore();
