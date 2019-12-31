@@ -1,8 +1,10 @@
-import { Observable, Subject, finalize, share } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
+import { finalize, share } from 'rxjs/operators';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
-import { WebStreamSrv, WebSocketConnectionOptions, StreamEvent } from '@grafana/runtime';
+import { WebStreamSrv, StreamEvent } from '@grafana/runtime';
 
 // Incrementing ID for commands
+// The value is unique within the connection, not globally
 let cmdId = 1;
 
 interface OpenStream {
@@ -25,20 +27,24 @@ export class GrafanaLiveSrv implements WebStreamSrv {
     if (action) {
       const cmd = (evt as any).__cmd;
       if (cmd) {
-        const s = commands.remove(cmd);
+        const s = this.commands.get(cmd);
         if (!s) {
           console.warn('Missing COMMAND', evt);
           return;
         }
+        s.next(evt.stream);
+        s.complete();
+        this.commands.delete(cmd);
+        return;
       }
-      console.warn('INTERNAL message', action, cmd, evt);
+      console.warn('INTERNAL message', action, evt);
       return;
     }
     if (!stream) {
       console.warn('WebSocket message without stream', evt);
       return;
     }
-    stream.lastmessage = Date.now();
+    stream.lastMessage = Date.now();
     stream.messageCount++;
     stream.subject.next(evt);
     console.log('now brodcast: ', evt); // Called whenever there is a message from the server.
@@ -57,7 +63,7 @@ export class GrafanaLiveSrv implements WebStreamSrv {
     this.commands.clear();
   };
 
-  private getWebSocket(): WebSocket {
+  private getWebSocket(): WebSocketSubject<StreamEvent> {
     if (!this.socket) {
       this.socket = webSocket('ws://localhost:3000/ws');
       this.socket.subscribe(this.onMessage, this.onError, this.onComplete);
@@ -69,26 +75,26 @@ export class GrafanaLiveSrv implements WebStreamSrv {
     let open = this.streams.get(stream);
     if (!open) {
       const subject = new Subject<StreamEvent>();
-      const socket = this.getWebSocket();
       const finalizer = () => {
         console.log('No More listeners', stream);
-        socket.next({
+        this.getWebSocket().next(({
           action: 'unsubscribe',
           stream,
-        });
+        } as unknown) as StreamEvent);
       };
+      subject.pipe(finalize(finalizer), share());
       open = {
-        stream: string,
-        subject: subject.pipe(finalize(finalizer), share()),
+        stream,
+        subject, // need subject (not observable) so we can send it events
         connected: Date.now(),
         lastMessage: 0,
         messageCount: 0,
       };
       this.streams.set(stream, open);
-      socket.next({
+      this.getWebSocket().next(({
         action: 'subscribe',
         stream,
-      });
+      } as unknown) as StreamEvent);
     }
     return open.subject.asObservable();
   }
@@ -100,13 +106,13 @@ export class GrafanaLiveSrv implements WebStreamSrv {
     }
     const cmd = cmdId++;
     const subject = new Subject<T>();
-    this.commands.pus(cmd, subject);
-    socket.next({
+    this.commands.set(cmd, subject);
+    this.getWebSocket().next(({
       __cmd: cmd,
       action,
       stream,
       body,
-    });
+    } as unknown) as StreamEvent);
     return subject.asObservable();
   }
 }

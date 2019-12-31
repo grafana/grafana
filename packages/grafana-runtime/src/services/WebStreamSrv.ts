@@ -16,9 +16,9 @@ export interface WebStreamSrv {
   subscribe<T = any>(stream: string): Observable<StreamEvent<T>>;
 
   /**
-   * Send a command to an open stream
+   * Send a command to an open stream, get the response (single)
    */
-  write<T = any>(stream: string, action: string, args?: any): Promise<T>;
+  write<T = any>(stream: string, action: string, args?: any): Observable<T>;
 }
 
 let singletonInstance: WebStreamSrv;
