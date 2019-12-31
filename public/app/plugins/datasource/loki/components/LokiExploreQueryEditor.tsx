@@ -8,7 +8,7 @@ import { LokiDatasource } from '../datasource';
 import { LokiQuery, LokiOptions } from '../types';
 import { LokiQueryField } from './LokiQueryField';
 import { useLokiSyntax } from './useLokiSyntax';
-import { FormLabel } from '@grafana/ui';
+import { LokiExploreExtraField } from './LokiExploreExtraField';
 
 type Props = ExploreQueryFieldProps<LokiDatasource, LokiQuery, LokiOptions>;
 
@@ -62,24 +62,19 @@ export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
         onLabelsRefresh={refreshLabels}
         syntaxLoaded={isSyntaxReady}
         absoluteRange={absolute}
+        ExtraFieldElement={LokiExploreExtraField}
+        extraFieldProps={
+          exploreMode === 'Logs'
+            ? {
+                label: 'Line limit',
+                onChangeFunc: onMaxLinesChange,
+                onKeyDownFunc: onReturnKeyDown,
+                value: maxLines,
+              }
+            : null
+        }
         {...syntaxProps}
-      >
-        {exploreMode === 'Logs' ? (
-          <div className="gf-form-inline explore-input--ml">
-            <div className="gf-form">
-              <FormLabel width={6}>Line limit</FormLabel>
-              <input
-                type="text"
-                className="gf-form-input width-6"
-                placeholder={'auto'}
-                onChange={onMaxLinesChange}
-                onKeyDown={onReturnKeyDown}
-                value={maxLines}
-              />
-            </div>
-          </div>
-        ) : null}
-      </LokiQueryField>
+      />
     </>
   );
 });
