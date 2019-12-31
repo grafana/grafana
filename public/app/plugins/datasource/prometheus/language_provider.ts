@@ -304,9 +304,13 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const line = value.anchorBlock.getText();
     const cursorOffset = value.selection.anchor.offset;
     const nextChar = line[cursorOffset];
-    const isValueContext = wrapperClasses.includes('attr-value');
-    if (!nextChar.match(/["}]/)) {
-      // Don't suggest anything inside a value
+    const isValueStart = text.match(/^(=|=~|!=|!~)/);
+    const isValueEnd = nextChar.match(/[,}]/);
+
+    // Don't suggest anything at the beginning or inside a value
+    const isValueEmpty = isValueStart && isValueEnd;
+    const hasValuePrefix = isValueEnd && !isValueStart;
+    if (!isValueEmpty && !hasValuePrefix) {
       return { suggestions };
     }
 
@@ -335,7 +339,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     }
 
     let context: string;
-    if ((text && text.match(/^!?=~?/)) || isValueContext) {
+    if ((text && isValueStart) || wrapperClasses.includes('attr-value')) {
       // Label values
       if (labelKey && labelValues[labelKey]) {
         context = 'context-label-values';
