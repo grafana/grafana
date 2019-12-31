@@ -1,5 +1,5 @@
 // Libraries
-import React from 'react';
+import React, { NamedExoticComponent } from 'react';
 
 import {
   Cascader,
@@ -69,6 +69,8 @@ export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<LokiData
   absoluteRange: AbsoluteTimeRange;
   onLoadOptions: (selectedOptions: CascaderOption[]) => void;
   onLabelsRefresh?: () => void;
+  ExtraFieldElement?: NamedExoticComponent<any>;
+  extraFieldProps?: any;
 }
 
 export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormProps> {
@@ -137,7 +139,8 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
 
   render() {
     const {
-      children,
+      ExtraFieldElement,
+      extraFieldProps,
       data,
       query,
       syntaxLoaded,
@@ -182,7 +185,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
               syntaxLoaded={syntaxLoaded}
             />
           </div>
-          {children}
+          {ExtraFieldElement ? <ExtraFieldElement {...extraFieldProps} /> : null}
         </div>
         {showError ? (
           <div className="query-row-break">
