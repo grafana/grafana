@@ -27,6 +27,12 @@ export class SocketStatusWatcher extends PureComponent<Props, State> {
         message: 'TODO!!! actually connect...',
       },
     };
+
+    const x = getWebSocketSrv().subscribe({
+      stream: connect,
+    });
+    console.log('x', x);
+
     this.setState({ connect: '', history: [msg, ...history] });
   };
 
