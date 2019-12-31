@@ -34,6 +34,7 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   AnnotationQueryRequest,
+  ExploreMode,
 } from '@grafana/data';
 
 import {
@@ -46,7 +47,6 @@ import {
   LokiRangeQueryRequest,
   LokiStreamResponse,
 } from './types';
-import { ExploreMode } from 'app/types';
 import { LegacyTarget, LiveStreams } from './live_streams';
 import LanguageProvider from './language_provider';
 

@@ -20,9 +20,10 @@ import {
   TimeRange,
   AbsoluteTimeRange,
   LoadingState,
+  ExploreMode,
 } from '@grafana/data';
 
-import { ExploreItemState, ExploreId, ExploreMode } from 'app/types/explore';
+import { ExploreItemState, ExploreId } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
 

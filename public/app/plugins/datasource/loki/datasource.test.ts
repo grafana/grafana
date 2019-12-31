@@ -1,12 +1,11 @@
 import LokiDatasource, { RangeQueryOptions } from './datasource';
 import { LokiQuery, LokiResultType, LokiResponse, LokiLegacyStreamResponse } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import { AnnotationQueryRequest, DataSourceApi, DataFrame, dateTime, TimeRange } from '@grafana/data';
+import { AnnotationQueryRequest, DataSourceApi, DataFrame, dateTime, TimeRange, ExploreMode } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 import { makeMockLokiDatasource } from './mocks';
-import { ExploreMode } from 'app/types';
 import { of } from 'rxjs';
 import omit from 'lodash/omit';
 

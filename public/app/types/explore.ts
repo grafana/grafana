@@ -18,11 +18,6 @@ import {
 
 import { Emitter } from 'app/core/core';
 
-export enum ExploreMode {
-  Metrics = 'Metrics',
-  Logs = 'Logs',
-}
-
 export enum ExploreId {
   left = 'left',
   right = 'right',

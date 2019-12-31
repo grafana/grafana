@@ -3,7 +3,7 @@ import React, { memo, useState } from 'react';
 import _ from 'lodash';
 
 // Types
-import { AbsoluteTimeRange, ExploreQueryFieldProps } from '@grafana/data';
+import { AbsoluteTimeRange, ExploreQueryFieldProps, ExploreMode } from '@grafana/data';
 import { LokiDatasource } from '../datasource';
 import { LokiQuery, LokiOptions } from '../types';
 import { LokiQueryField } from './LokiQueryField';
@@ -39,7 +39,7 @@ export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
 
   function onMaxLinesChange(e: React.SyntheticEvent<HTMLInputElement>) {
     const maxLines = e.currentTarget.value;
-    datasource.maxLines = isNaN(+maxLines) || +maxLines <= 0 ? 1000 : +maxLines;
+    datasource.maxLines = isNaN(+maxLines) || +maxLines < 0 ? 1000 : +maxLines;
     setMaxLines(maxLines);
   }
 
@@ -64,7 +64,7 @@ export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
         absoluteRange={absolute}
         ExtraFieldElement={LokiExploreExtraField}
         extraFieldProps={
-          exploreMode === 'Logs'
+          exploreMode === ExploreMode.Logs
             ? {
                 label: 'Line limit',
                 onChangeFunc: onMaxLinesChange,

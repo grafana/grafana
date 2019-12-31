@@ -13,9 +13,17 @@ import {
   sortLogsResult,
   buildQueryTransaction,
 } from './explore';
-import { ExploreUrlState, ExploreMode } from 'app/types/explore';
+import { ExploreUrlState } from 'app/types/explore';
 import store from 'app/core/store';
-import { DataQueryError, LogsDedupStrategy, LogsModel, LogLevel, dateTime, MutableDataFrame } from '@grafana/data';
+import {
+  DataQueryError,
+  LogsDedupStrategy,
+  LogsModel,
+  LogLevel,
+  dateTime,
+  MutableDataFrame,
+  ExploreMode,
+} from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
