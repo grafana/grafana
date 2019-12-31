@@ -110,9 +110,13 @@ const darkTheme: GrafanaTheme = {
     scrollbar: basicColors.dark9,
     scrollbar2: basicColors.dark9,
     pageHeader: `linear-gradient(90deg, ${basicColors.dark7}, ${basicColors.black})`,
+    panelEditorVizItem: basicColors.black,
+    panelEditorVizItemHover: `darken(${basicColors.blueBase}, 46%)`,
   },
   shadow: {
     pageHeader: `inset 0px -4px 14px ${basicColors.dark3}`,
+    card: `-1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.3)`,
+    panelEditorVizItemHover: `0 0 4px ${basicColors.blueLight}`,
   },
 };
 

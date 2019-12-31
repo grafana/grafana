@@ -117,9 +117,13 @@ const lightTheme: GrafanaTheme = {
     scrollbar: basicColors.gray5,
     scrollbar2: basicColors.gray5,
     pageHeader: `linear-gradient(90deg, ${basicColors.white}, ${basicColors.gray7})`,
+    panelEditorVizItem: basicColors.white,
+    panelEditorVizItemHover: `lighten(${basicColors.blueBase}, 45%)`,
   },
   shadow: {
     pageHeader: `inset 0px -3px 10px ${basicColors.gray6}`,
+    card: `-1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.1)`,
+    panelEditorVizItemHover: `0 0 4px ${basicColors.blueLight}`,
   },
 };
 
