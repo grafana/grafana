@@ -146,7 +146,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     // Prevent suggestions in `function(|suffix)`
     const noSuffix = !nextCharacter || nextCharacter === ')';
 
-    // Empty prefix is safe if it does not immediately follow a complete expression and has no text after it
+    // Prefix is safe if it does not immediately follow a complete expression and has no text after it
     const safePrefix = prefix && !text.match(/^[\]})\s]+$/) && noSuffix;
 
     // About to type next operand if preceded by binary operator
