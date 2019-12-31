@@ -2,47 +2,49 @@
 
 exports[`Render should render component 1`] = `
 <div
-  className="configuration-card-item"
+  className="css-1gj5ide"
+  onMouseEnter={[Function]}
+  onMouseLeave={[Function]}
 >
   <img
-    className="configuration-card-item-logo"
+    className="css-1impe6e"
     src="public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png"
   />
   <div
-    className="configuration-card-item-text-wrapper"
+    className="css-8l6jnu"
   >
     <span
-      className="configuration-card-item-text"
+      className="css-9oecbb"
     >
       gdev-cloudwatch
     </span>
     <span
-      className="configuration-card-item-desc"
+      className="css-11w3ixw"
     >
       cloudwatch
     </span>
   </div>
   <div
-    className="configuration-card-item-url"
+    className="css-g76a14"
   >
     <span
-      className="configuration-card-item-text"
+      className="css-9oecbb"
     />
   </div>
   <div
-    className="configuration-card-item-actions"
+    className="css-gumphn"
   >
     <a
       aria-label="Data source list item gdev-cloudwatch"
-      className="configuration-card-item-link gicon gicon-explore"
+      className="css-8s0imj gicon gicon-explore"
       href="explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22gdev-cloudwatch%22,%7B%7D,%7B%22mode%22:%22Metrics%22%7D,%7B%22ui%22:%5Btrue,true,true,%22none%22%5D%7D%5D"
     />
     <a
-      className="configuration-card-item-link fa fa-trash"
+      className="css-8s0imj fa fa-trash"
       onClick={[Function]}
     />
     <a
-      className="btn btn-primary"
+      className="btn btn-primary css-adltxq"
       href="datasources/edit/13"
     >
       Configure

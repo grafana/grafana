@@ -5,26 +5,26 @@ exports[`Render should render component 1`] = `
   className="card-section card-list-layout-grid"
 >
   <div
-    className="configuration-card-list-headers"
+    className="css-1d6rat4"
   >
     <div
-      className="configuration-card-list-headers-column"
+      className="css-juilez"
     />
     <div
-      className="configuration-card-list-headers-column"
+      className="css-juilez"
     >
       <div
-        className="configuration-card-list-headers-column--left"
+        className="css-jw11sk"
       >
         Name
       </div>
       <div
-        className="configuration-card-list-headers-column--center"
+        className="css-117amqz"
       >
         URL
       </div>
       <div
-        className="configuration-card-list-headers-column--right"
+        className="css-av3rbo"
       />
     </div>
   </div>
