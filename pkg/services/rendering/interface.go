@@ -23,10 +23,12 @@ type Opts struct {
 	Encoding        string
 	Timezone        string
 	ConcurrentLimit int
+	JsonData        string
 }
 
 type RenderResult struct {
-	FilePath string
+	FilePath    string
+	ContentType string
 }
 
 type renderFunc func(ctx context.Context, options Opts) (*RenderResult, error)

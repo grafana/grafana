@@ -52,6 +52,7 @@ func (hs *HTTPServer) RenderToPng(c *m.ReqContext) {
 		Timezone:        queryReader.Get("tz", ""),
 		Encoding:        queryReader.Get("encoding", ""),
 		ConcurrentLimit: maxConcurrentLimitForApiCalls,
+		JsonData:        queryReader.Get("jsonData", ""),
 	})
 
 	if err != nil && err == rendering.ErrTimeout {
@@ -73,6 +74,11 @@ func (hs *HTTPServer) RenderToPng(c *m.ReqContext) {
 		return
 	}
 
-	c.Resp.Header().Set("Content-Type", "image/png")
+	contentType := result.ContentType
+	if contentType == "" {
+		contentType = "image/png"
+	}
+
+	c.Resp.Header().Set("Content-Type", contentType)
 	http.ServeFile(c.Resp, c.Req.Request, result.FilePath)
 }
