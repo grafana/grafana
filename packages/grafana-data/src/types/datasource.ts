@@ -7,6 +7,7 @@ import { AnnotationEvent, KeyValue, LoadingState, TableData, TimeSeries } from '
 import { DataFrame, DataFrameDTO } from './dataFrame';
 import { RawTimeRange, TimeRange, AbsoluteTimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
+import { CoreApp } from './app';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
   options: DataSourceSettings<JSONData, SecureJSONData>;
@@ -373,62 +374,6 @@ export type LegacyResponseData = TimeSeries | TableData | any;
 
 export type DataQueryResponseData = DataFrame | DataFrameDTO | LegacyResponseData;
 
-export type DataStreamObserver = (event: DataStreamState) => void;
-
-export interface DataStreamState {
-  /**
-   * when Done or Error no more events will be processed
-   */
-  state: LoadingState;
-
-  /**
-   * The key is used to identify unique sets of data within
-   * a response, and join or replace them before sending them to the panel.
-   *
-   * For example consider a query that streams four DataFrames (A,B,C,D)
-   * and multiple events with keys K1, and K2
-   *
-   * query(...) returns: {
-   *   state:Streaming
-   *   data:[A]
-   * }
-   *
-   * Events:
-   * 1. {key:K1, data:[B1]}    >> PanelData: [A,B1]
-   * 2. {key:K2, data:[C2,D2]} >> PanelData: [A,B1,C2,D2]
-   * 3. {key:K1, data:[B3]}    >> PanelData: [A,B3,C2,D2]
-   * 4. {key:K2, data:[C4]}    >> PanelData: [A,B3,C4]
-   *
-   * NOTE: that PanelData will not report a `Done` state until all
-   * unique keys have returned with either `Error` or `Done` state.
-   */
-  key: string;
-
-  /**
-   * The stream request.  The properties of this request will be examined
-   * to determine if the stream matches the original query.  If not, it
-   * will be unsubscribed.
-   */
-  request: DataQueryRequest;
-
-  /**
-   * The streaming events return entire DataFrames.  The DataSource
-   * sending the events is responsible for truncating any growing lists
-   * most likely to the requested `maxDataPoints`
-   */
-  data?: DataFrame[];
-
-  /**
-   * Error in stream (but may still be running)
-   */
-  error?: DataQueryError;
-
-  /**
-   * Stop listening to this stream
-   */
-  unsubscribe: () => void;
-}
-
 export interface DataQueryResponse {
   /**
    * The response data.  When streaming, this may be empty
@@ -505,6 +450,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   scopedVars: ScopedVars;
   targets: TQuery[];
   timezone: string;
+  app: CoreApp | string;
 
   cacheTimeout?: string;
   exploreMode?: 'Logs' | 'Metrics';

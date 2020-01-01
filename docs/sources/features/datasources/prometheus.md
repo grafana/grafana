@@ -3,7 +3,7 @@ title = "Using Prometheus in Grafana"
 description = "Guide for using Prometheus in Grafana"
 keywords = ["grafana", "prometheus", "guide"]
 type = "docs"
-aliases = ["/datasources/prometheus"]
+aliases = ["/docs/grafana/latest/datasources/prometheus"]
 [menu.docs]
 name = "Prometheus"
 parent = "datasources"
