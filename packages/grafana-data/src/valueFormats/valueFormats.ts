@@ -2,6 +2,7 @@ import { getCategories } from './categories';
 import { DecimalCount } from '../types/displayValue';
 import { toDateTimeValueFormatter } from './dateTimeFormatters';
 import { getOffsetFromSIPrefix, decimalSIPrefix, currency } from './symbolFormatters';
+import { TimeZone } from '../types';
 
 export interface FormattedValue {
   text: string;
@@ -17,7 +18,7 @@ export type ValueFormatter = (
   value: number,
   decimals?: DecimalCount,
   scaledDecimals?: DecimalCount,
-  isUtc?: boolean // TODO: timezone?: string,
+  timeZone?: TimeZone
 ) => FormattedValue;
 
 export interface ValueFormat {
