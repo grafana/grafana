@@ -406,6 +406,19 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 			}
 		}
 
+		for labelType, labelTypeValues := range series.MetaData {
+			for labelKey, labelValue := range labelTypeValues {
+				key := toSnakeCase(fmt.Sprintf("metadata.%s.%s", labelType, labelKey))
+				if _, exist := labels[key]; !exist {
+					labels[key] = make([]string, 0)
+				}
+
+				if !containsLabel(labels[key], labelValue) {
+					labels[key] = append(labels[key], labelValue)
+				}
+			}
+		}
+
 		// reverse the order to be ascending
 		if series.ValueType != "DISTRIBUTION" {
 			for i := len(series.Points) - 1; i >= 0; i-- {
@@ -491,6 +504,14 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 	queryRes.Meta.Set("resourceTypes", resourceTypes)
 
 	return nil
+}
+
+func toSnakeCase(str string) string {
+	matchFirstCap := regexp.MustCompile("(.)([A-Z][a-z]+)")
+	matchAllCap := regexp.MustCompile("([a-z0-9])([A-Z])")
+	snake := matchFirstCap.ReplaceAllString(str, "${1}_${2}")
+	snake = matchAllCap.ReplaceAllString(snake, "${1}_${2}")
+	return strings.ToLower(snake)
 }
 
 func containsLabel(labels []string, newLabel string) bool {

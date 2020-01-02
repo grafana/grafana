@@ -22,13 +22,6 @@ export interface VariableQueryData {
   services: Array<{ value: string; name: string }>;
 }
 
-export interface Filter {
-  key: string;
-  operator: string;
-  value: string;
-  condition: string;
-}
-
 export interface StackdriverQuery extends DataQuery {
   defaultProject?: string;
   unit?: string;
@@ -40,7 +33,6 @@ export interface StackdriverQuery extends DataQuery {
   perSeriesAligner: string;
   groupBys?: string[];
   filters?: string[];
-  filter?: Filter[];
   aliasBy?: string;
   metricKind: string;
   valueType: string;
@@ -87,4 +79,11 @@ export interface MetricDescriptor {
 export interface Segment {
   type: string;
   value: string;
+}
+
+export interface Filter {
+  key: string;
+  operator: string;
+  value: string;
+  condition: string;
 }

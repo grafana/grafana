@@ -2,6 +2,8 @@ import React, { FunctionComponent } from 'react';
 import _ from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';
+import { labelsToGroupedOptions } from '../functions';
+import { systemLabels } from '../constants';
 
 export interface Props {
   values: string[];
@@ -12,26 +14,9 @@ export interface Props {
 
 const removeText = '-- remove group by --';
 const removeOption: SelectableValue<string> = { label: removeText, value: removeText };
-const groupBysToGroupedOptions = (groupBys: string[]) => {
-  const groups = groupBys.reduce((acc: any, curr: string) => {
-    const arr = curr.split('.').map(_.startCase);
-    const group = (arr.length === 2 ? arr : _.initial(arr)).join(' ');
-    const option = {
-      value: curr,
-      label: _.last(arr),
-    };
-    if (acc[group]) {
-      acc[group] = [...acc[group], option];
-    } else {
-      acc[group] = [option];
-    }
-    return acc;
-  }, {});
-  return Object.entries(groups).map(([label, options]) => ({ label, options, expanded: true }), []);
-};
 
 export const GroupBys: FunctionComponent<Props> = ({ groupBys = [], values = [], onChange, variableOptionGroup }) => {
-  const options = [removeOption, ...groupBysToGroupedOptions(groupBys), variableOptionGroup];
+  const options = [removeOption, ...labelsToGroupedOptions([...groupBys, ...systemLabels]), variableOptionGroup];
   return (
     <div className="gf-form-inline">
       <label className="gf-form-label query-keyword width-9">Group By</label>
@@ -40,7 +25,7 @@ export const GroupBys: FunctionComponent<Props> = ({ groupBys = [], values = [],
           <Segment
             allowCustomValue
             key={value + index}
-            value={{ label: _.startCase(value.replace(/\./g, ' ')), value: value }}
+            value={{ label: value.startsWith('$') ? value : _.startCase(value.replace(/\./g, ' ')), value: value }}
             options={options}
             onChange={({ value }) =>
               onChange(
@@ -61,7 +46,7 @@ export const GroupBys: FunctionComponent<Props> = ({ groupBys = [], values = [],
           allowCustomValue
           onChange={({ value }) => onChange([...values, value])}
           options={[
-            ...groupBysToGroupedOptions(groupBys.filter(groupBy => !values.includes(groupBy))),
+            ...labelsToGroupedOptions([...groupBys.filter(groupBy => !values.includes(groupBy)), ...systemLabels]),
             variableOptionGroup,
           ]}
         />

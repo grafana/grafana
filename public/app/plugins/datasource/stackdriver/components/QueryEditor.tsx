@@ -5,15 +5,15 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { Metrics } from './Metrics';
 import { Filter } from './Filter';
-import { Filter2 } from './Filter2';
+import { Filters } from './Filters';
 import { GroupBys } from './GroupBys';
 import { Aggregations } from './Aggregations';
 import { Alignments } from './Alignments';
 import { AlignmentPeriods } from './AlignmentPeriods';
 import { AliasBy } from './AliasBy';
 import { Help } from './Help';
-import { StackdriverQuery, MetricDescriptor, Filter } from '../types';
-import { getAlignmentPickerData } from '../functions';
+import { StackdriverQuery, MetricDescriptor } from '../types';
+import { getAlignmentPickerData, toOption } from '../functions';
 import StackdriverDatasource from '../datasource';
 import { TimeSeries, SelectableValue } from '@grafana/data';
 import { PanelEvents } from '@grafana/data';
@@ -28,6 +28,7 @@ export interface Props {
 }
 
 interface State extends StackdriverQuery {
+  variableOptionGroup: SelectableValue<string>;
   alignOptions: Array<SelectableValue<string>>;
   lastQuery: string;
   lastQueryError: string;
@@ -55,38 +56,31 @@ export const DefaultTarget: State = {
   lastQueryError: '',
   usedAlignmentPeriod: '',
   labels: {},
+  variableOptionGroup: {},
 };
 
 export class QueryEditor extends React.Component<Props, State> {
   state: State = DefaultTarget;
 
   async componentDidMount() {
-    const { events, target, templateSrv } = this.props;
-
-    if (!target.hasOwnProperty('filter')) {
-      target.filter = _.chunk(target.filters, 4).map(
-        ([key, operator, value, condition = 'AND']) =>
-          ({
-            key,
-            operator,
-            value,
-            condition,
-          } as Filter)
-      );
-    }
-
+    const { events, target, templateSrv, datasource } = this.props;
     events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this));
     events.on(PanelEvents.dataError, this.onDataError.bind(this));
     const { perSeriesAligner, alignOptions } = getAlignmentPickerData(target, templateSrv);
-    const {
-      meta: { labels },
-    } = await this.props.datasource.getLabels(target.metricType, target.refId);
+    const variableOptionGroup = {
+      label: 'Template Variables',
+      options: datasource.variables.map(toOption),
+    };
     this.setState({
       ...this.props.target,
       alignOptions,
       perSeriesAligner,
-      labels,
+      variableOptionGroup,
     });
+
+    datasource
+      .getLabels(target.metricType, target.refId, target.groupBys)
+      .then(labelData => this.setState({ labels: labelData && labelData.meta ? labelData.meta.labels : {} }));
   }
 
   componentWillUnmount() {
@@ -151,6 +145,16 @@ export class QueryEditor extends React.Component<Props, State> {
     );
   };
 
+  async onGroupBysChange(value: string[]) {
+    const { target, datasource } = this.props;
+    this.setState({ groupBys: value }, () => {
+      this.props.onQueryChange(this.state);
+      this.props.onExecuteQuery();
+    });
+    const labelData = await datasource.getLabels(target.metricType, target.refId, value);
+    this.setState({ labels: labelData && labelData.meta ? labelData.meta.labels : {} });
+  }
+
   onPropertyChange(prop: string, value: string[]) {
     this.setState({ [prop]: value }, () => {
       this.props.onQueryChange(this.state);
@@ -166,7 +170,6 @@ export class QueryEditor extends React.Component<Props, State> {
       crossSeriesReducer,
       groupBys,
       filters,
-      filter,
       perSeriesAligner,
       alignOptions,
       alignmentPeriod,
@@ -175,6 +178,7 @@ export class QueryEditor extends React.Component<Props, State> {
       lastQueryError,
       refId,
       labels,
+      variableOptionGroup,
     } = this.state;
     const { datasource, templateSrv } = this.props;
 
@@ -201,17 +205,18 @@ export class QueryEditor extends React.Component<Props, State> {
                 metricType={metric ? metric.type : ''}
               />
 
-              <Filter2
+              <Filters
                 labels={labels}
-                filters={filter}
-                onChange={value => this.onPropertyChange('filter', value)}
-                variableOptionGroup={{}}
+                filters={filters}
+                onChange={value => this.onPropertyChange('filters', value)}
+                variableOptionGroup={variableOptionGroup}
               />
               <GroupBys
                 groupBys={Object.keys(labels)}
                 values={groupBys}
-                onChange={value => this.onPropertyChange('groupBys', value)}
-                variableOptionGroup={{}}
+                // onChange={value => this.onPropertyChange('groupBys', value)}
+                onChange={this.onGroupBysChange.bind(this)}
+                variableOptionGroup={variableOptionGroup}
               />
               <Aggregations
                 metricDescriptor={metric}
