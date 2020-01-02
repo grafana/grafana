@@ -19,7 +19,7 @@ import (
 )
 
 type S3Uploader struct {
-	host            string
+	endpoint        string
 	region          string
 	bucket          string
 	path            string
@@ -30,9 +30,9 @@ type S3Uploader struct {
 	log             log.Logger
 }
 
-func NewS3Uploader(host, region, bucket, path, acl, accessKey, secretKey string, pathStyleAccess bool) *S3Uploader {
+func NewS3Uploader(endpoint, region, bucket, path, acl, accessKey, secretKey string, pathStyleAccess bool) *S3Uploader {
 	return &S3Uploader{
-		host:            host,
+		endpoint:        endpoint,
 		region:          region,
 		bucket:          bucket,
 		path:            path,
@@ -60,7 +60,7 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 		})
 	cfg := &aws.Config{
 		Region:           aws.String(u.region),
-		Endpoint:         aws.String(u.host),
+		Endpoint:         aws.String(u.endpoint),
 		S3ForcePathStyle: aws.Bool(u.pathStyleAccess),
 		Credentials:      creds,
 	}
