@@ -471,7 +471,7 @@ function makeLimitTest(
     const ds = new LokiDatasource(settings, backendSrv, templateSrvMock);
     backendSrvMock.datasourceRequest = jest.fn(() => Promise.resolve(testResp));
 
-    const options = getQueryOptions<LokiQuery>({ targets: [{ expr: 'foo', refId: 'B' }] });
+    const options = getQueryOptions<LokiQuery>({ targets: [{ expr: 'foo', refId: 'B', maxLines: maxDataPoints }] });
     if (Number.isFinite(maxDataPoints)) {
       options.maxDataPoints = maxDataPoints;
     } else {
