@@ -81,7 +81,18 @@ Always give the reader some idea of what to expect in the reference. Avoid blind
 When possible, use the exact title of the page or section you are linking to as the link text.
 
 **Example**
-* Refer to the [Documentation style guide](documentation-style-guide.md) for information about word usage and capitalization guidelines.
+Refer to the [Documentation style guide](documentation-style-guide.md) for information about word usage and capitalization guidelines.
+
+### Commands and codes
+
+* Do not assume everyone is using Linux. Make sure instructions include enough information for Windows and Mac users to successfully complete procedures.
+
+* Do not add `$` before commands. Make it easy for users to copy and paste commands.
+
+  * **Wrong:** `$ sudo yum install grafana`
+  * **Right:** `sudo yum install grafana`
+
+* Include `sudo` before commands that require `sudo` to work.
 
 ### Word usage
 
