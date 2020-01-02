@@ -83,7 +83,7 @@ When possible, use the exact title of the page or section you are linking to as 
 **Example**
 Refer to the [Documentation style guide](documentation-style-guide.md) for information about word usage and capitalization guidelines.
 
-### Commands and codes
+### Commands line examples
 
 * Do not assume everyone is using Linux. Make sure instructions include enough information for Windows and Mac users to successfully complete procedures.
 
