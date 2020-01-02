@@ -316,7 +316,9 @@ export class DashboardMigrator {
           return;
         }
 
-        panel.thresholds = [];
+        if (!panel.thresholds) {
+          panel.thresholds = [];
+        }
         const t1: any = {},
           t2: any = {};
 
@@ -685,11 +687,11 @@ function upgradePanelLink(link: any): DataLink {
   let url = link.url;
 
   if (!url && link.dashboard) {
-    url = `/dashboard/db/${kbn.slugifyForUrl(link.dashboard)}`;
+    url = `dashboard/db/${kbn.slugifyForUrl(link.dashboard)}`;
   }
 
   if (!url && link.dashUri) {
-    url = `/dashboard/${link.dashUri}`;
+    url = `dashboard/${link.dashUri}`;
   }
 
   // some models are incomplete and have no dashboard or dashUri

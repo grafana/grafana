@@ -1,18 +1,25 @@
 // Libraries
 import React from 'react';
-// @ts-ignore
-import Cascader from 'rc-cascader';
 
-import { SlatePrism, TypeaheadOutput, SuggestionsState, QueryField, TypeaheadInput, BracesPlugin } from '@grafana/ui';
+import {
+  Cascader,
+  CascaderOption,
+  SlatePrism,
+  TypeaheadOutput,
+  SuggestionsState,
+  QueryField,
+  TypeaheadInput,
+  BracesPlugin,
+} from '@grafana/ui';
 
 // Utils & Services
 // dom also includes Element polyfills
 import { Plugin, Node } from 'slate';
 
 // Types
-import { LokiQuery } from '../types';
 import { DOMUtil } from '@grafana/ui';
 import { ExploreQueryFieldProps, AbsoluteTimeRange } from '@grafana/data';
+import { LokiQuery, LokiOptions } from '../types';
 import { Grammar } from 'prismjs';
 import LokiLanguageProvider, { LokiHistoryItem } from '../language_provider';
 import LokiDatasource from '../datasource';
@@ -54,17 +61,10 @@ function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadTe
   return suggestion;
 }
 
-export interface CascaderOption {
-  label: string;
-  value: string;
-  children?: CascaderOption[];
-  disabled?: boolean;
-}
-
-export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<LokiDatasource, LokiQuery> {
+export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<LokiDatasource, LokiQuery, LokiOptions> {
   history: LokiHistoryItem[];
   syntax: Grammar;
-  logLabelOptions: any[];
+  logLabelOptions: CascaderOption[];
   syntaxLoaded: boolean;
   absoluteRange: AbsoluteTimeRange;
   onLoadOptions: (selectedOptions: CascaderOption[]) => void;
@@ -150,19 +150,13 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
           <div className="gf-form">
             <Cascader
               options={logLabelOptions || []}
+              disabled={buttonDisabled}
+              buttonText={chooserText}
               onChange={this.onChangeLogLabels}
               loadData={onLoadOptions}
               expandIcon={null}
-              onPopupVisibleChange={(isVisible: boolean) => {
-                if (isVisible && onLabelsRefresh) {
-                  onLabelsRefresh();
-                }
-              }}
-            >
-              <button className="gf-form-label gf-form-label--btn" disabled={buttonDisabled}>
-                {chooserText} <i className="fa fa-caret-down" />
-              </button>
-            </Cascader>
+              onPopupVisibleChange={isVisible => isVisible && onLabelsRefresh && onLabelsRefresh()}
+            />
           </div>
           <div className="gf-form gf-form--grow">
             <QueryField

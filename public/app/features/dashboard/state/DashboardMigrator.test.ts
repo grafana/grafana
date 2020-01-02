@@ -139,6 +139,27 @@ describe('DashboardModel', () => {
       expect(graph.thresholds[1].value).toBe(400);
       expect(graph.thresholds[1].fillColor).toBe('red');
     });
+
+    it('graph thresholds should be migrated onto specified thresholds', () => {
+      model = new DashboardModel({
+        panels: [
+          {
+            type: 'graph',
+            y_formats: ['kbyte', 'ms'],
+            grid: {
+              threshold1: 200,
+              threshold2: 400,
+            },
+            thresholds: [{ value: 100 }],
+          },
+        ],
+      });
+      graph = model.panels[0];
+      expect(graph.thresholds.length).toBe(3);
+      expect(graph.thresholds[0].value).toBe(100);
+      expect(graph.thresholds[1].value).toBe(200);
+      expect(graph.thresholds[2].value).toBe(400);
+    });
   });
 
   describe('when migrating to the grid layout', () => {
@@ -154,7 +175,10 @@ describe('DashboardModel', () => {
       model.rows = [createRow({ collapse: false, height: 8 }, [[6], [6]])];
       const dashboard = new DashboardModel(model);
       const panelGridPos = getGridPositions(dashboard);
-      const expectedGrid = [{ x: 0, y: 0, w: 12, h: 8 }, { x: 12, y: 0, w: 12, h: 8 }];
+      const expectedGrid = [
+        { x: 0, y: 0, w: 12, h: 8 },
+        { x: 12, y: 0, w: 12, h: 8 },
+      ];
 
       expect(panelGridPos).toEqual(expectedGrid);
     });
@@ -438,7 +462,7 @@ describe('DashboardModel', () => {
     });
 
     it('should slugify dashboard name', () => {
-      expect(model.panels[0].links[3].url).toBe(`/dashboard/db/my-other-dashboard`);
+      expect(model.panels[0].links[3].url).toBe(`dashboard/db/my-other-dashboard`);
     });
   });
 

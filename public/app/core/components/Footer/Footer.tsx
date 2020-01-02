@@ -1,4 +1,4 @@
-﻿import React, { FC } from 'react';
+import React, { FC } from 'react';
 import { Tooltip } from '@grafana/ui';
 
 interface Props {
@@ -21,8 +21,12 @@ export const Footer: FC<Props> = React.memo(
               </a>
             </li>
             <li>
-              <a href="https://grafana.com/services/support" target="_blank" rel="noopener">
-                <i className="fa fa-support" /> Support Plans
+              <a
+                href="https://grafana.com/products/enterprise/?utm_source=grafana_footer"
+                target="_blank"
+                rel="noopener"
+              >
+                <i className="fa fa-support" /> Support & Enterprise
               </a>
             </li>
             <li>

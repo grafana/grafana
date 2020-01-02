@@ -1,8 +1,8 @@
-hash: 92cc8f956428fc65bee07d809a752f34376aece141c934eff02aefa08d450b72
-updated: 2019-03-23T18:26:09.960887-04:00
+hash: a4a449cfc060c2d7be850a69b171e4382a3bd00d1a0a72cfc944facc3fe263bf
+updated: 2019-09-23T17:10:15.213856-04:00
 imports:
 - name: github.com/beorn7/perks
-  version: 3a771d992973f24aa725d07868b467d1ddfceafb
+  version: 37c8de3658fcb183f997c4e13e8337516ab753e6
   subpackages:
   - quantile
 - name: github.com/codahale/hdrhistogram
@@ -17,11 +17,11 @@ imports:
   subpackages:
   - spew
 - name: github.com/golang/protobuf
-  version: bbd03ef6da3a115852eaf24c8a1c46aeb39aa175
+  version: 1680a479a2cfb3fa22b972af7e36d0a0fde47bf8
   subpackages:
   - proto
 - name: github.com/matttproud/golang_protobuf_extensions
-  version: c12348ce28de40eed0136aa2b644d0ee0650e56c
+  version: c182affec369e30f25d3eb8cd8a478dee585ae7d
   subpackages:
   - pbutil
 - name: github.com/opentracing/opentracing-go
@@ -33,47 +33,49 @@ imports:
 - name: github.com/pkg/errors
   version: ba968bfe8b2f7e042a574c888954fccecfa385b4
 - name: github.com/pmezard/go-difflib
-  version: 792786c7400a136282c1664665ae0a8db921c6c2
+  version: 5d4384ee4fb2527b0a1256a821ebfc92f91efefc
   subpackages:
   - difflib
 - name: github.com/prometheus/client_golang
-  version: c5b7fccd204277076155f10851dad72b76a49317
+  version: 170205fb58decfd011f1550d4cfb737230d7ae4f
   subpackages:
   - prometheus
+  - prometheus/internal
 - name: github.com/prometheus/client_model
-  version: 99fa1f4be8e564e8a6b613da7fa6f46c9edafc6c
+  version: 14fe0d1b01d4d5fc031dd4bec1823bd3ebbe8016
   subpackages:
   - go
 - name: github.com/prometheus/common
-  version: 38c53a9f4bfcd932d1b00bfc65e256a7fba6b37a
+  version: 287d3e634a1e550c9e463dd7e5a75a422c614505
   subpackages:
   - expfmt
   - internal/bitbucket.org/ww/goautoneg
   - model
 - name: github.com/prometheus/procfs
-  version: 780932d4fbbe0e69b84c34c20f5c8d0981e109ea
+  version: de25ac347ef9305868b04dc42425c973b863b18c
   subpackages:
+  - internal/fs
   - internal/util
-  - nfs
-  - xfs
 - name: github.com/stretchr/testify
-  version: f35b8ab0b5a2cef36673838d662e249dd9c94686
+  version: 85f2b59c4459e5bf57488796be8c3667cb8246d6
   subpackages:
   - assert
   - require
   - suite
+- name: github.com/uber-go/atomic
+  version: df976f2515e274675050de7b3f42545de80594fd
 - name: github.com/uber/jaeger-lib
-  version: 0e30338a695636fe5bcf7301e8030ce8dd2a8530
+  version: a87ae9d84fb038a8d79266298970720be7c80fcd
   subpackages:
   - metrics
   - metrics/metricstest
   - metrics/prometheus
 - name: go.uber.org/atomic
-  version: 1ea20fb1cbb1cc08cbd0d913a96dead89aa18289
+  version: df976f2515e274675050de7b3f42545de80594fd
 - name: go.uber.org/multierr
   version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
 - name: go.uber.org/zap
-  version: ff33455a0e382e8a81d14dd7c922020b6b5e7982
+  version: 27376062155ad36be76b0f12cf1572a221d3a48c
   subpackages:
   - buffer
   - internal/bufferpool
@@ -81,10 +83,14 @@ imports:
   - internal/exit
   - zapcore
 - name: golang.org/x/net
-  version: 49bb7cea24b1df9410e1712aa6433dae904ff66a
+  version: aa69164e4478b84860dc6769c710c699c67058a3
   subpackages:
   - context
   - context/ctxhttp
-testImports:
-- name: github.com/uber-go/atomic
-  version: 8474b86a5a6f79c443ce4b2992817ff32cf208b8
+- name: golang.org/x/sys
+  version: 0a153f010e6963173baba2306531d173aa843137
+  subpackages:
+  - windows
+- name: gopkg.in/yaml.v2
+  version: 51d6538a90f86fe93ac480b35f37b2be17fef232
+testImports: []

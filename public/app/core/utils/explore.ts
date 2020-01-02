@@ -4,6 +4,7 @@ import { Unsubscribable } from 'rxjs';
 // Services & Utils
 import {
   DataQuery,
+  CoreApp,
   DataQueryError,
   DataQueryRequest,
   DataSourceApi,
@@ -130,6 +131,7 @@ export function buildQueryTransaction(
   const panelId = `${key}`;
 
   const request: DataQueryRequest = {
+    app: CoreApp.Explore,
     dashboardId: 0,
     // TODO probably should be taken from preferences but does not seem to be used anyway.
     timezone: DefaultTimeZone,
@@ -148,6 +150,7 @@ export function buildQueryTransaction(
       __interval_ms: { text: intervalMs, value: intervalMs },
     },
     maxDataPoints: queryOptions.maxDataPoints,
+    exploreMode: queryOptions.mode,
   };
 
   return {
@@ -417,13 +420,9 @@ export const getTimeRangeFromUrl = (range: RawTimeRange, timeZone: TimeZone): Ti
   };
 };
 
-export const getValueWithRefId = (value: any): any | null => {
-  if (!value) {
-    return null;
-  }
-
-  if (typeof value !== 'object') {
-    return null;
+export const getValueWithRefId = (value?: any): any => {
+  if (!value || typeof value !== 'object') {
+    return undefined;
   }
 
   if (value.refId) {
@@ -439,12 +438,12 @@ export const getValueWithRefId = (value: any): any | null => {
     }
   }
 
-  return null;
+  return undefined;
 };
 
-export const getFirstQueryErrorWithoutRefId = (errors: DataQueryError[]) => {
+export const getFirstQueryErrorWithoutRefId = (errors?: DataQueryError[]) => {
   if (!errors) {
-    return null;
+    return undefined;
   }
 
   return errors.filter(error => (error && error.refId ? false : true))[0];
@@ -502,7 +501,7 @@ export enum SortOrder {
   Ascending = 'Ascending',
 }
 
-export const refreshIntervalToSortOrder = (refreshInterval: string) =>
+export const refreshIntervalToSortOrder = (refreshInterval?: string) =>
   RefreshPicker.isLive(refreshInterval) ? SortOrder.Ascending : SortOrder.Descending;
 
 export const sortLogsResult = (logsResult: LogsModel, sortOrder: SortOrder): LogsModel => {
@@ -517,7 +516,7 @@ export const convertToWebSocketUrl = (url: string) => {
   const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
   let backend = `${protocol}${window.location.host}${config.appSubUrl}`;
   if (backend.endsWith('/')) {
-    backend = backend.slice(0, backend.length - 1);
+    backend = backend.slice(0, -1);
   }
   return `${backend}${url}`;
 };

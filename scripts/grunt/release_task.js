@@ -33,7 +33,7 @@ module.exports = function(grunt) {
     });
     grunt.config('copy.backend_files', {
       expand: true,
-      src: ['conf/**', 'tools/phantomjs/*', 'scripts/*'],
+      src: ['conf/**', 'tools/**', 'scripts/*'],
       options: { mode: true},
       dest: '<%= tempDir %>'
     });

@@ -46,6 +46,12 @@ var (
 	ERR_TEMPLATE_NAME = "error"
 )
 
+// This constant corresponds to the default value for ldap_sync_ttl in .ini files
+// it is used for comparision and has to be kept in sync
+const (
+	AUTH_PROXY_SYNC_TTL = 60
+)
+
 var (
 	// App settings.
 	Env              = DEV
@@ -237,6 +243,7 @@ type Cfg struct {
 	RendererLimitAlerting int
 
 	// Security
+	DisableInitAdminCreation         bool
 	DisableBruteForceLoginProtection bool
 	CookieSecure                     bool
 	CookieSameSite                   http.SameSite
@@ -437,7 +444,7 @@ func evalConfigValues(file *ini.File) {
 	}
 }
 
-func loadSpecifedConfigFile(configFile string, masterFile *ini.File) error {
+func loadSpecifiedConfigFile(configFile string, masterFile *ini.File) error {
 	if configFile == "" {
 		configFile = filepath.Join(HomePath, CustomInitPath)
 		// return without error if custom file does not exist
@@ -504,7 +511,7 @@ func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	applyCommandLineDefaultProperties(commandLineProps, parsedFile)
 
 	// load specified config file
-	err = loadSpecifedConfigFile(args.Config, parsedFile)
+	err = loadSpecifiedConfigFile(args.Config, parsedFile)
 	if err != nil {
 		err2 := cfg.initLogging(parsedFile)
 		if err2 != nil {
@@ -757,6 +764,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	// admin
+	cfg.DisableInitAdminCreation = security.Key("disable_initial_admin_creation").MustBool(false)
 	AdminUser, err = valueAsString(security, "admin_user", "")
 	if err != nil {
 		return err
@@ -860,7 +868,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	ldapSyncVal := authProxy.Key("ldap_sync_ttl").MustInt()
 	syncVal := authProxy.Key("sync_ttl").MustInt()
 
-	if ldapSyncVal != 60 {
+	if ldapSyncVal != AUTH_PROXY_SYNC_TTL {
 		AuthProxySyncTtl = ldapSyncVal
 		cfg.Logger.Warn("[Deprecated] the configuration setting 'ldap_sync_ttl' is deprecated, please use 'sync_ttl' instead")
 	} else {
@@ -1075,8 +1083,7 @@ func (cfg *Cfg) initLogging(file *ini.File) error {
 		return err
 	}
 	cfg.LogsPath = makeAbsolute(logsPath, HomePath)
-	log.ReadLoggingConfig(logModes, cfg.LogsPath, file)
-	return nil
+	return log.ReadLoggingConfig(logModes, cfg.LogsPath, file)
 }
 
 func (cfg *Cfg) LogConfigSources() {

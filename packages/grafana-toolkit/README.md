@@ -9,7 +9,7 @@ grafana-toolkit is a CLI that enables efficient development of Grafana plugins. 
 Set up a new plugin with `grafana-toolkit plugin:create` command:
 
 ```sh
-npx grafana-toolkit plugin:create my-grafana-plugin
+npx @grafana/toolkit plugin:create my-grafana-plugin
 cd my-grafana-plugin
 yarn install
 yarn dev
@@ -127,6 +127,24 @@ Currently we support following Jest configuration properties:
 - [`snapshotSerializers`](https://jest-bot.github.io/jest/docs/configuration.html#snapshotserializers-array-string)
 - [`moduleNameMapper`](https://jestjs.io/docs/en/configuration#modulenamemapper-object-string-string)
 
+### How can I customize Webpack rules or plugins?
+You can provide your own webpack configuration.
+Provide a function implementing `CustomWebpackConfigurationGetter` in a file named `webpack.config.js`.
+
+You can import the correct interface and Options from `@grafana/toolkit/src/config`.
+
+Example
+
+```js
+import CustomPlugin from 'custom-plugin';
+
+export const getWebpackConfig = (defaultConfig, options) => {
+    console.log('Custom config');
+    defaultConfig.plugins.push(new CustomPlugin())
+    return defaultConfig;
+};
+```
+
 ### How can I style my plugin?
 We support pure CSS, SASS, and CSS-in-JS approach (via [Emotion](https://emotion.sh/)).
 
@@ -213,11 +231,22 @@ module.exports = {
 };
 ```
 
-### How do I add 3rd party dependencies that are not npm packages?
-You can add such dependencies by putting them in `static` directory in the root of your project. The `static` directory will be copied when building the plugin.
+### How do I add third-party dependencies that are not npm packages?
+Put them in the `static` directory in the root of your project. The `static` directory is copied when the plugin is built.
+
+### I am getting this message when I run my plugin: `Unable to dynamically transpile ES module A loader plugin needs to be configured via SystemJS.config({ transpiler: 'transpiler-module' }).`
+This error occurs when you bundle your plugin using the `grafana-toolkit plugin:dev` task and your code comments include ES2016 code.
+
+There are two issues at play:
+* The `grafana-toolkit plugin:dev` task does not remove comments from your bundled package.
+* Grafana does not support [ES modules](https://hacks.mozilla.org/2018/03/es-modules-a-cartoon-deep-dive/).
+
+If your comments include ES2016 code, then SystemJS v0.20.19, which Grafana uses internally to load plugins, interprets your code as an ESM and fails.
+
+To fix this error, remove the ES2016 code from your comments.
 
 ## Contribute to grafana-toolkit
-You can contribute to grafana-toolkit in the by helping develop it or by debugging it.
+You can contribute to grafana-toolkit by helping develop it or by debugging it.
 
 ### Develop grafana-toolkit
 Typically plugins should be developed using the `@grafana/toolkit` installed from npm. However, when working on the toolkit, you might want to use the local version. Follow the steps below to develop with a local version:
@@ -234,3 +263,7 @@ To debug grafana-toolkit you can use standard [NodeJS debugging methods](https:/
 To run grafana-toolkit in a debugging session use the following command in the toolkit's directory:
 
 `node --inspect-brk ./bin/grafana-toolkit.js [task]`
+
+To run [linked](#develop-grafana-toolkit) grafana-toolkit in a debugging session use the following command in the plugin's directory:
+
+`node --inspect-brk ./node_modules/@grafana/toolkit/bin/grafana-toolkit.js [task]`

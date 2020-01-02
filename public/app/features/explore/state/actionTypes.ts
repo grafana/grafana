@@ -4,7 +4,6 @@ import { Emitter } from 'app/core/core';
 
 import {
   DataQuery,
-  DataSourceSelectItem,
   DataSourceApi,
   QueryFixAction,
   PanelData,
@@ -81,10 +80,6 @@ export interface ClearOriginPayload {
   exploreId: ExploreId;
 }
 
-export interface ClearRefreshIntervalPayload {
-  exploreId: ExploreId;
-}
-
 export interface HighlightLogsExpressionPayload {
   exploreId: ExploreId;
   expressions: string[];
@@ -118,12 +113,8 @@ export interface LoadDatasourceReadyPayload {
 export interface ModifyQueriesPayload {
   exploreId: ExploreId;
   modification: QueryFixAction;
-  index: number;
+  index?: number;
   modifier: (query: DataQuery, modification: QueryFixAction) => DataQuery;
-}
-
-export interface QueryStartPayload {
-  exploreId: ExploreId;
 }
 
 export interface QueryEndedPayload {
@@ -186,6 +177,8 @@ export interface UpdateUIStatePayload extends Partial<ExploreUIState> {
 export interface UpdateDatasourceInstancePayload {
   exploreId: ExploreId;
   datasourceInstance: DataSourceApi;
+  version?: string;
+  mode?: ExploreMode;
 }
 
 export interface ToggleLogLevelPayload {
@@ -196,11 +189,6 @@ export interface ToggleLogLevelPayload {
 export interface QueriesImportedPayload {
   exploreId: ExploreId;
   queries: DataQuery[];
-}
-
-export interface LoadExploreDataSourcesPayload {
-  exploreId: ExploreId;
-  exploreDatasources: DataSourceSelectItem[];
 }
 
 export interface SetUrlReplacedPayload {
@@ -311,10 +299,6 @@ export const loadDatasourceReadyAction = actionCreatorFactory<LoadDatasourceRead
  */
 export const modifyQueriesAction = actionCreatorFactory<ModifyQueriesPayload>('explore/MODIFY_QUERIES').create();
 
-export const queryStartAction = actionCreatorFactory<QueryStartPayload>('explore/QUERY_START').create();
-
-export const queryEndedAction = actionCreatorFactory<QueryEndedPayload>('explore/QUERY_ENDED').create();
-
 export const queryStreamUpdatedAction = actionCreatorFactory<QueryEndedPayload>(
   'explore/QUERY_STREAM_UPDATED'
 ).create();
@@ -388,9 +372,6 @@ export const toggleLogLevelAction = actionCreatorFactory<ToggleLogLevelPayload>(
  */
 export const resetExploreAction = actionCreatorFactory<ResetExplorePayload>('explore/RESET_EXPLORE').create();
 export const queriesImportedAction = actionCreatorFactory<QueriesImportedPayload>('explore/QueriesImported').create();
-export const loadExploreDatasources = actionCreatorFactory<LoadExploreDataSourcesPayload>(
-  'explore/LOAD_EXPLORE_DATASOURCES'
-).create();
 
 export const historyUpdatedAction = actionCreatorFactory<HistoryUpdatedPayload>('explore/HISTORY_UPDATED').create();
 

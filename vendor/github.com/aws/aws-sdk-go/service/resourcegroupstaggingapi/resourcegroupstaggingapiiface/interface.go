@@ -26,7 +26,7 @@ import (
 //    // myFunc uses an SDK service client to make a request to
 //    // AWS Resource Groups Tagging API.
 //    func myFunc(svc resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI) bool {
-//        // Make svc.GetResources request
+//        // Make svc.DescribeReportCreation request
 //    }
 //
 //    func main() {
@@ -42,7 +42,7 @@ import (
 //    type mockResourceGroupsTaggingAPIClient struct {
 //        resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
 //    }
-//    func (m *mockResourceGroupsTaggingAPIClient) GetResources(input *resourcegroupstaggingapi.GetResourcesInput) (*resourcegroupstaggingapi.GetResourcesOutput, error) {
+//    func (m *mockResourceGroupsTaggingAPIClient) DescribeReportCreation(input *resourcegroupstaggingapi.DescribeReportCreationInput) (*resourcegroupstaggingapi.DescribeReportCreationOutput, error) {
 //        // mock response/functionality
 //    }
 //
@@ -60,6 +60,17 @@ import (
 // and waiters. Its suggested to use the pattern above for testing, or using
 // tooling to generate mocks to satisfy the interfaces.
 type ResourceGroupsTaggingAPIAPI interface {
+	DescribeReportCreation(*resourcegroupstaggingapi.DescribeReportCreationInput) (*resourcegroupstaggingapi.DescribeReportCreationOutput, error)
+	DescribeReportCreationWithContext(aws.Context, *resourcegroupstaggingapi.DescribeReportCreationInput, ...request.Option) (*resourcegroupstaggingapi.DescribeReportCreationOutput, error)
+	DescribeReportCreationRequest(*resourcegroupstaggingapi.DescribeReportCreationInput) (*request.Request, *resourcegroupstaggingapi.DescribeReportCreationOutput)
+
+	GetComplianceSummary(*resourcegroupstaggingapi.GetComplianceSummaryInput) (*resourcegroupstaggingapi.GetComplianceSummaryOutput, error)
+	GetComplianceSummaryWithContext(aws.Context, *resourcegroupstaggingapi.GetComplianceSummaryInput, ...request.Option) (*resourcegroupstaggingapi.GetComplianceSummaryOutput, error)
+	GetComplianceSummaryRequest(*resourcegroupstaggingapi.GetComplianceSummaryInput) (*request.Request, *resourcegroupstaggingapi.GetComplianceSummaryOutput)
+
+	GetComplianceSummaryPages(*resourcegroupstaggingapi.GetComplianceSummaryInput, func(*resourcegroupstaggingapi.GetComplianceSummaryOutput, bool) bool) error
+	GetComplianceSummaryPagesWithContext(aws.Context, *resourcegroupstaggingapi.GetComplianceSummaryInput, func(*resourcegroupstaggingapi.GetComplianceSummaryOutput, bool) bool, ...request.Option) error
+
 	GetResources(*resourcegroupstaggingapi.GetResourcesInput) (*resourcegroupstaggingapi.GetResourcesOutput, error)
 	GetResourcesWithContext(aws.Context, *resourcegroupstaggingapi.GetResourcesInput, ...request.Option) (*resourcegroupstaggingapi.GetResourcesOutput, error)
 	GetResourcesRequest(*resourcegroupstaggingapi.GetResourcesInput) (*request.Request, *resourcegroupstaggingapi.GetResourcesOutput)
@@ -80,6 +91,10 @@ type ResourceGroupsTaggingAPIAPI interface {
 
 	GetTagValuesPages(*resourcegroupstaggingapi.GetTagValuesInput, func(*resourcegroupstaggingapi.GetTagValuesOutput, bool) bool) error
 	GetTagValuesPagesWithContext(aws.Context, *resourcegroupstaggingapi.GetTagValuesInput, func(*resourcegroupstaggingapi.GetTagValuesOutput, bool) bool, ...request.Option) error
+
+	StartReportCreation(*resourcegroupstaggingapi.StartReportCreationInput) (*resourcegroupstaggingapi.StartReportCreationOutput, error)
+	StartReportCreationWithContext(aws.Context, *resourcegroupstaggingapi.StartReportCreationInput, ...request.Option) (*resourcegroupstaggingapi.StartReportCreationOutput, error)
+	StartReportCreationRequest(*resourcegroupstaggingapi.StartReportCreationInput) (*request.Request, *resourcegroupstaggingapi.StartReportCreationOutput)
 
 	TagResources(*resourcegroupstaggingapi.TagResourcesInput) (*resourcegroupstaggingapi.TagResourcesOutput, error)
 	TagResourcesWithContext(aws.Context, *resourcegroupstaggingapi.TagResourcesInput, ...request.Option) (*resourcegroupstaggingapi.TagResourcesOutput, error)

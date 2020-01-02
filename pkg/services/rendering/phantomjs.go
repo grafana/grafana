@@ -15,8 +15,6 @@ import (
 )
 
 func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (*RenderResult, error) {
-	rs.log.Info("Rendering", "path", opts.Path)
-
 	var executable = "phantomjs"
 	if runtime.GOOS == "windows" {
 		executable = executable + ".exe"

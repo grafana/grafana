@@ -12,33 +12,43 @@ weight = 1
 
 # Configuration
 
-The Grafana back-end has a number of configuration options that can be
-specified in a `.ini` configuration file or specified using environment variables.
+Grafana has a number of configuration options that you can specify in a `.ini` configuration file or specified using environment variables.
 
-> **Note.** Grafana needs to be restarted for any configuration changes to take effect.
-
-## Comments In .ini Files
-
-Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` file.
-
-A common problem is forgetting to uncomment a line in the `custom.ini` (or `grafana.ini`) file which causes the configuration option to be ignored.
+> **Note.** You must restart Grafana for any configuration changes to take effect.
 
 ## Config file locations
+
+Do not change `defaults.ini`! Grafana defaults are stored in this file. Depending on your OS, make all configuration changes in either `custom.ini` or `grafana.ini`.
 
 - Default configuration from `$WORKING_DIR/conf/defaults.ini`
 - Custom configuration from `$WORKING_DIR/conf/custom.ini`
 - The custom configuration file path can be overridden using the `--config` parameter
 
-> **Note.** If you have installed Grafana using the `deb` or `rpm`
-> packages, then your configuration file is located at
-> `/etc/grafana/grafana.ini` and a separate `custom.ini` is not
-> used. This path is specified in the Grafana
-> init.d script using `--config` file parameter.
+**Linux** 
+
+If you installed Grafana using the `deb` or `rpm` packages, then your configuration file is located at `/etc/grafana/grafana.ini` and a separate `custom.ini` is not used. This path is specified in the Grafana init.d script using `--config` file parameter.
+
+**Windows**
+`sample.ini` is in the same directory as `defaults.ini` and contains all the settings commented out. Copy `sample.ini` and name it `custom.ini`.
+
+**macOS** 
+By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`.
+
+## Comments in .ini Files
+
+Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` file. If you want to change a setting, you must delete the semicolon (`;`) in front of the setting before it will work.
+
+**Example**
+```
+# The http port  to use
+;http_port = 3000
+```
+
+A common problem is forgetting to uncomment a line in the `custom.ini` (or `grafana.ini`) file which causes the configuration option to be ignored.
 
 ## Using environment variables
 
-All options in the configuration file (listed below) can be overridden
-using environment variables using the syntax:
+All options in the configuration file (listed below) can be overridden using environment variables using the syntax:
 
 ```bash
 GF_<SectionName>_<KeyName>
@@ -79,9 +89,9 @@ system calls to get the machine name.
 
 ### data
 
-Path to where Grafana stores the sqlite3 database (if used), file based
-sessions (if used), and other data.  This path is usually specified via
-command line in the init.d script or the systemd service file.
+Path to where Grafana stores the sqlite3 database (if used), file based sessions (if used), and other data. This path is usually specified via command line in the init.d script or the systemd service file.
+
+**macOS:** The default SQLite database is located at `/usr/local/var/lib/grafana`
 
 ### temp_data_lifetime
 
@@ -90,18 +100,25 @@ How long temporary images in `data` directory should be kept. Defaults to: `24h`
 
 ### logs
 
-Path to where Grafana will store logs. This path is usually specified via
-command line in the init.d script or the systemd service file.  It can
-be overridden in the configuration file or in the default environment variable
-file.
+Path to where Grafana will store logs. This path is usually specified via command line in the init.d script or the systemd service file. You can override it in the configuration file or in the default environment variable file. However, please note that by overriding this the default log path will be used temporarily until Grafana has fully initialized/started.
+
+Override log path using the command line argument `cfg:default.paths.log`:
+
+```bash
+./grafana-server --config /custom/config.ini --homepath /custom/homepath cfg:default.paths.logs=/custom/path
+```
+
+**macOS:** By default, the log file should be located at `/usr/local/var/log/grafana/grafana.log`.
 
 ### plugins
 
-Directory where grafana will automatically scan and look for plugins
+Directory where Grafana will automatically scan and look for plugins. Manually or automatically install any plugins here.
+
+**macOS:** By default, the Mac plugin location is: `/usr/local/var/lib/grafana/plugins`.
 
 ### provisioning
 
-Folder that contains [provisioning](/administration/provisioning) config files that grafana will apply on startup. Dashboards will be reloaded when the json files changes
+Folder that contains [provisioning]({{< relref "../administration/provisioning" >}}) config files that grafana will apply on startup. Dashboards will be reloaded when the json files changes
 
 ## [server]
 
@@ -305,6 +322,12 @@ Example connstr: `127.0.0.1:11211`
 
 ## [security]
 
+### disable_initial_admin_creation
+
+> Only available in Grafana v6.5+.
+
+Disable creation of admin user on first start of grafana.
+
 ### admin_user
 
 The name of the default Grafana admin user (who has full permissions).
@@ -378,7 +401,7 @@ Set to `false` to disable the X-XSS-Protection header, which tells browsers to s
 
 Set to `false` to prohibit users from being able to sign up / create
 user accounts. Defaults to `false`.  The admin user can still create
-users from the [Grafana Admin Pages](../../reference/admin)
+users from the [Grafana Admin Pages](/reference/admin)
 
 ### allow_org_create
 
@@ -484,7 +507,7 @@ Number dashboard versions to keep (per dashboard). Default: `20`, Minimum: `1`.
 
 ## [dashboards.json]
 
-> This have been replaced with dashboards [provisioning](/administration/provisioning) in 5.0+
+> This have been replaced with dashboards [provisioning]({{< relref "../administration/provisioning" >}}) in 5.0+
 
 ### enabled
 `true` or `false`. Is disabled by default.
@@ -725,6 +748,65 @@ Set to true if you want to test alpha plugins that are not yet ready for general
 
 Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`
 
+## [tracing.jaeger]
+
+Configure Grafana's Jaeger client for distributed tracing.
+
+You can also use the standard `JAEGER_*` environment variables to configure
+Jaeger. See the table at the end of https://www.jaegertracing.io/docs/1.16/client-features/
+for the full list. Environment variables will override any settings provided here.
+
+### address
+
+The host:port destination for reporting spans. (ex: `localhost:6381`)
+
+Can be set with the environment variables `JAEGER_AGENT_HOST` and `JAEGER_AGENT_PORT`.
+
+### always_included_tag
+
+Comma-separated list of tags to include in all new spans, such as `tag1:value1,tag2:value2`.
+
+Can be set with the environment variable `JAEGER_TAGS` (use `=` instead of `:` with the environment variable).
+
+### sampler_type
+
+Default value is `const`.
+
+Specifies the type of sampler: `const`, `probabilistic`, `ratelimiting`, or `remote`.
+
+Refer to https://www.jaegertracing.io/docs/1.16/sampling/#client-sampling-configuration for details on the different tracing types.
+
+Can be set with the environment variable `JAEGER_SAMPLER_TYPE`.
+
+### sampler_param
+
+Default value is `1`.
+
+This is the sampler configuration parameter. Depending on the value of `sampler_type`, it can be `0`, `1`, or a decimal value in between.
+
+- For `const` sampler, `0` or `1` for always `false`/`true` respectively
+- For `probabilistic` sampler, a probability between `0` and `1.0`
+- For `rateLimiting` sampler, the number of spans per second
+- For `remote` sampler, param is the same as for `probabilistic`
+  and indicates the initial sampling rate before the actual one
+  is received from the mothership
+
+May be set with the environment variable `JAEGER_SAMPLER_PARAM`.
+
+### zipkin_propagation
+
+Default value is `false`.
+
+Controls whether or not to use Zipkin's span propagation format (with `x-b3-` HTTP headers). By default, Jaeger's format is used.
+
+Can be set with the environment variable and value `JAEGER_PROPAGATION=b3`.
+
+### disable_shared_zipkin_spans
+
+Default value is `false`.
+
+Setting this to `true` turns off shared RPC spans. Leaving this available is the most common setting when using Zipkin elsewhere in your infrastructure.
+
 <hr />
 
 # Removed options
@@ -761,4 +843,3 @@ Set to true if you host Grafana behind HTTPS only. Defaults to `false`.
 ### session_life_time
 
 How long sessions lasts in seconds. Defaults to `86400` (24 hours).
-

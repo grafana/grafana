@@ -43,7 +43,10 @@ export class ColumnOptionsCtrl {
       { text: 'MMMM D, YYYY LT', value: 'MMMM D, YYYY LT' },
       { text: 'YYYY-MM-DD', value: 'YYYY-MM-DD' },
     ];
-    this.mappingTypes = [{ text: 'Value to text', value: 1 }, { text: 'Range to text', value: 2 }];
+    this.mappingTypes = [
+      { text: 'Value to text', value: 1 },
+      { text: 'Range to text', value: 2 },
+    ];
 
     this.getColumnNames = () => {
       if (!this.panelCtrl.table) {
@@ -142,8 +145,7 @@ export class ColumnOptionsCtrl {
   }
 }
 
-/** @ngInject */
-export function columnOptionsTab($q: any, uiSegmentSrv: any) {
+export function columnOptionsTab(uiSegmentSrv: any) {
   'use strict';
   return {
     restrict: 'E',
