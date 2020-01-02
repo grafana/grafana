@@ -1,0 +1,19 @@
+{
+  "type": "panel",
+  "name": "Stream (debug)",
+  "id": "stream",
+  "state": "alpha",
+
+  "skipDataQuery": true,
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/stream.svg",
+      "large": "img/stream.svg"
+    }
+  }
+}

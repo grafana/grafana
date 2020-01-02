@@ -30,7 +30,7 @@ import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { ILocationService, ITimeoutService, IRootScopeService, IAngularEvent } from 'angular';
 import { AppEvent, AppEvents } from '@grafana/data';
-import { GrafanaLiveSrv } from 'app/features/live/GrafanaLiveSrv';
+import { GrafanaLiveSrv } from 'app/features/stream/GrafanaLiveSrv';
 
 export type GrafanaRootScope = IRootScopeService & AppEventEmitter & AppEventConsumer & { colors: string[] };
 
@@ -58,7 +58,7 @@ export class GrafanaCtrl {
     setLinkSrv(linkSrv);
     setKeybindingSrv(keybindingSrv);
     setDashboardSrv(dashboardSrv);
-    if (config.featureToggles.sockets) {
+    if (config.featureToggles.streams) {
       setWebStreamSrv(new GrafanaLiveSrv());
     }
 

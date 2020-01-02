@@ -1,20 +1,22 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 import { FormField, Button } from '@grafana/ui';
-import { getWebStreamSrv, SocketMessage } from '@grafana/runtime';
+import { getWebStreamSrv, StreamEvent } from '@grafana/runtime';
 interface Props {}
 
 interface State {
   connect: string;
-  history: SocketMessage[];
+  history: StreamEvent[];
   stream: string;
+  action: string;
   body: string;
 }
 
 export class SocketStatusWatcher extends PureComponent<Props, State> {
   state = {
     connect: '',
-    history: [] as SocketMessage[],
+    history: [] as StreamEvent[],
     stream: '',
+    action: 'something',
     body: '{ "hello":"world" }',
   };
 
@@ -26,13 +28,17 @@ export class SocketStatusWatcher extends PureComponent<Props, State> {
     this.setState({ stream: event.target.value });
   };
 
+  onActionChanged = (event: ChangeEvent<HTMLInputElement>) => {
+    this.setState({ action: event.target.value });
+  };
+
   onBodyChanged = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({ body: event.target.value });
   };
 
   onSubscribeClick = () => {
     const { connect, history } = this.state;
-    const msg: SocketMessage = {
+    const msg: StreamEvent = {
       stream: connect,
       time: Date.now(),
       body: {
@@ -40,30 +46,31 @@ export class SocketStatusWatcher extends PureComponent<Props, State> {
       },
     };
 
-    const x = getWebStreamSrv().subscribe({
-      stream: connect,
-    });
+    const x = getWebStreamSrv().subscribe(connect);
     console.log('x', x);
 
     this.setState({ connect: '', history: [msg, ...history] });
   };
 
-  onSendClick = () => {
-    const { stream } = this.state;
+  onSendClick = async () => {
+    const { stream, action } = this.state;
     let { body } = this.state;
     try {
       body = JSON.parse(body);
     } catch {}
 
-    const msg: SocketMessage = {
+    const v = await getWebStreamSrv()
+      .write(stream, action, body)
+      .toPromise();
+    console.log('WRITE response', v);
+
+    const msg: StreamEvent = {
       stream,
       time: Date.now(),
-      body,
+      body: v,
     };
 
-    const x = getWebStreamSrv().write(msg);
-    console.log('yyyy', x);
-    this.setState({ history: [msg, ...history] });
+    this.setState({ history: [msg, ...this.state.history] });
   };
 
   render() {
@@ -102,14 +109,14 @@ export class SocketStatusWatcher extends PureComponent<Props, State> {
               <th>Value</th>
             </tr>
           </thead>
-          <tbody>{history.map(SocketMessageRow)}</tbody>
+          <tbody>{history.map(StreamEventRow)}</tbody>
         </table>
       </div>
     );
   }
 }
 
-function SocketMessageRow(msg: SocketMessage) {
+function StreamEventRow(msg: StreamEvent) {
   return (
     <tr key={msg.time + msg.stream}>
       <td>{msg.time}</td>

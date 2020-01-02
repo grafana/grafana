@@ -13,12 +13,12 @@ export interface WebStreamSrv {
   /**
    * Connect to a stream and recieve all messages from it
    */
-  subscribe<T = any>(stream: string): Observable<StreamEvent<T>>;
+  stream<T = any>(channel: string): Observable<StreamEvent<T>>;
 
   /**
    * Send a command to an open stream, get the response (single)
    */
-  write<T = any>(stream: string, action: string, args?: any): Observable<T>;
+  write<T = any>(channel: string, action: string, body?: any): Observable<T>;
 }
 
 let singletonInstance: WebStreamSrv;

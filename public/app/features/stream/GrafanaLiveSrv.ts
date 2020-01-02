@@ -71,7 +71,7 @@ export class GrafanaLiveSrv implements WebStreamSrv {
     return this.socket;
   }
 
-  subscribe<T = any>(stream: string): Observable<StreamEvent<T>> {
+  stream<T = any>(stream: string): Observable<StreamEvent<T>> {
     let open = this.streams.get(stream);
     if (!open) {
       const subject = new Subject<StreamEvent>();
@@ -104,11 +104,11 @@ export class GrafanaLiveSrv implements WebStreamSrv {
     if (action === 'subscribe' || action === 'unsubscribe') {
       throw new Error('Invalid Action: ' + action);
     }
-    const cmd = cmdId++;
+    const cid = cmdId++;
     const subject = new Subject<T>();
-    this.commands.set(cmd, subject);
+    this.commands.set(cid, subject);
     this.getWebSocket().next(({
-      __cmd: cmd,
+      cid,
       action,
       stream,
       body,

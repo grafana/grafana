@@ -1,4 +1,4 @@
-package live
+package stream
 
 import (
 	"net/http"
@@ -36,6 +36,10 @@ type connection struct {
 	ws   *websocket.Conn
 	send chan []byte
 	log  log.Logger
+
+	// TODO: add
+	// user/userId?
+	// connection time?
 }
 
 func newConnection(ws *websocket.Conn, hub *hub, logger log.Logger) *connection {
@@ -79,42 +83,14 @@ func (c *connection) handleMessage(message []byte) {
 		log.Error(3, "Unreadable message on websocket channel. error: %v", err)
 		return
 	}
-	rsp := make(map[string]interface{})
-
-	// Every message has a key
-	key := json.Get("key").MustInt64()
-	if key == 0 {
-		log.Error(3, "Every request needs a unique key")
-		return
-	}
-	rsp["key"] = key
 
 	streamName := json.Get("stream").MustString()
-	if len(streamName) == 0 {
-		log.Error(3, "Not allowed to subscribe to empty stream name")
-		rsp["error"] = "Missing Stream Name"
-	} else {
-		rsp["stream"] = streamName
+	action := json.Get("action").MustString()
+	cid := json.Get("cid").MustInt64()
+	body := json.Get("body")
 
-		action := json.Get("action").MustString()
-		if action == "" {
-			rsp["TODO"] = "broadcast to the whole channel"
-		} else {
-			rsp["action"] = action
-			if action == "subscribe" {
-				c.hub.subChannel <- &streamSubscription{name: streamName, conn: c}
-			} else if action == "unsubscribe" {
-				c.hub.subChannel <- &streamSubscription{name: streamName, conn: c, remove: true}
-			} else {
-				log.Error(3, "Invalid action... TODO return error to the same connectoin")
-				rsp["error"] = "Invalid Action!!!"
-			}
-		}
-	}
-
-	// Write a response just to the caller
-	messageBytes, _ := simplejson.NewFromAny(rsp).Encode()
-	c.write(websocket.TextMessage, messageBytes)
+	// Will proces channel actions
+	c.hub.action <- &channelAction{name: streamName, conn: c, cid: cid, action: action, body: body}
 }
 
 func (c *connection) write(mt int, payload []byte) error {

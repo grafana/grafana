@@ -16,7 +16,7 @@ interface FeatureToggles {
   inspect: boolean;
   expressions: boolean;
   newEdit: boolean;
-  sockets: boolean;
+  streams: boolean;
 }
 
 export class GrafanaBootConfig {
@@ -55,7 +55,7 @@ export class GrafanaBootConfig {
     inspect: false,
     expressions: false,
     newEdit: false,
-    sockets: false,
+    streams: false,
   };
 
   constructor(options: GrafanaBootConfig) {

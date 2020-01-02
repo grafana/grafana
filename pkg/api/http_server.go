@@ -10,9 +10,9 @@ import (
 	"path"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/api/live"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
+	"github.com/grafana/grafana/pkg/api/stream"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -54,7 +54,7 @@ type HTTPServer struct {
 	log           log.Logger
 	macaron       *macaron.Macaron
 	context       context.Context
-	streamManager *live.StreamManager
+	streamManager *stream.StreamManager
 	httpSrv       *http.Server
 
 	RouteRegister       routing.RouteRegister    `inject:""`
@@ -75,7 +75,7 @@ type HTTPServer struct {
 func (hs *HTTPServer) Init() error {
 	hs.log = log.New("http.server")
 
-	hs.streamManager = live.NewStreamManager()
+	hs.streamManager = stream.NewStreamManager()
 	hs.macaron = hs.newMacaron()
 	hs.registerRoutes()
 
