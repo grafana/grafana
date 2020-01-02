@@ -39,7 +39,7 @@ func (tp *TransformPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 
 	cmd := ComposePluginStartCommmand(tp.Executable)
 	fullpath := path.Join(tp.PluginDir, cmd)
-	descriptor := backendplugin.NewTransformPluginDescriptor(tp.Id, fullpath)
+	descriptor := backendplugin.NewBackendPluginDescriptor(tp.Id, fullpath)
 	if err := backendplugin.Register(descriptor, tp.onPluginStart); err != nil {
 		return errutil.Wrapf(err, "Failed to register backend plugin")
 	}

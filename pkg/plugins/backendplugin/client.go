@@ -49,9 +49,9 @@ type PluginDescriptor struct {
 	versionedPlugins map[int]plugin.PluginSet
 }
 
-// NewDatasourcePluginDescriptor creates a new datasource plugin descriptor
+// NewBackendPluginDescriptor creates a new backend plugin descriptor
 // used for registering a backend datasource plugin.
-func NewDatasourcePluginDescriptor(pluginID, executablePath string) PluginDescriptor {
+func NewBackendPluginDescriptor(pluginID, executablePath string) PluginDescriptor {
 	return PluginDescriptor{
 		pluginID:       pluginID,
 		executablePath: executablePath,
@@ -61,7 +61,8 @@ func NewDatasourcePluginDescriptor(pluginID, executablePath string) PluginDescri
 				pluginID: &datasourceV1.DatasourcePluginImpl{},
 			},
 			2: {
-				"backend": &backend.CoreImpl{},
+				"backend":   &backend.CoreImpl{},
+				"transform": &backend.TransformImpl{},
 			},
 		},
 	}
@@ -77,21 +78,6 @@ func NewRendererPluginDescriptor(pluginID, executablePath string) PluginDescript
 		versionedPlugins: map[int]plugin.PluginSet{
 			1: {
 				pluginID: &rendererV1.RendererPluginImpl{},
-			},
-		},
-	}
-}
-
-// NewTransformPluginDescriptor creates a new transform plugin descriptor
-// used for registering a backend transform plugin.
-func NewTransformPluginDescriptor(pluginID, executablePath string) PluginDescriptor {
-	return PluginDescriptor{
-		pluginID:       pluginID,
-		executablePath: executablePath,
-		managed:        true,
-		versionedPlugins: map[int]plugin.PluginSet{
-			2: {
-				"transform": &backend.TransformImpl{},
 			},
 		},
 	}

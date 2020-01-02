@@ -56,7 +56,7 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string) error {
 	if p.Backend {
 		cmd := ComposePluginStartCommmand(p.Executable)
 		fullpath := path.Join(p.PluginDir, cmd)
-		descriptor := backendplugin.NewDatasourcePluginDescriptor(p.Id, fullpath)
+		descriptor := backendplugin.NewBackendPluginDescriptor(p.Id, fullpath)
 		if err := backendplugin.Register(descriptor, p.onPluginStart); err != nil {
 			return errutil.Wrapf(err, "Failed to register backend plugin")
 		}
