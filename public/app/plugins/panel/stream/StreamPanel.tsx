@@ -53,7 +53,6 @@ export class StreamPanel extends PureComponent<Props, State> {
   }
 
   doSubscriptoin() {
-    debugger;
     const { options } = this.props;
     if (this.state.subscription) {
       this.state.subscription.unsubscribe();

@@ -107,12 +107,14 @@ export class GrafanaLiveSrv implements WebStreamSrv {
     const cid = cmdId++;
     const subject = new Subject<T>();
     this.commands.set(cid, subject);
-    this.getWebSocket().next(({
+    const cmd = {
       cid,
       action,
       stream,
       body,
-    } as unknown) as StreamEvent);
+    };
+    console.log('SEND', cmd);
+    this.getWebSocket().next(cmd);
     return subject.asObservable();
   }
 }

@@ -3,7 +3,6 @@ package stream
 import (
 	"context"
 
-	"github.com/gorilla/websocket"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -84,7 +83,8 @@ func (h *hub) run(ctx context.Context) {
 					var err error
 					stream, err = NewStream(sub.name, h.log)
 					if err != nil {
-
+						h.log.Info("Error creating stream", "channel", sub.name)
+						rsp["__error"] = err.Error
 					}
 					h.streams[sub.name] = stream
 				}
@@ -105,7 +105,9 @@ func (h *hub) run(ctx context.Context) {
 
 			// Write a response just to the caller
 			messageBytes, _ := simplejson.NewFromAny(rsp).Encode()
-			sub.conn.write(websocket.TextMessage, messageBytes)
+			h.log.Info("Action RESPONSE", "json", string(messageBytes))
+			sub.conn.send <- messageBytes
+			//			sub.conn.write(websocket.TextMessage, messageBytes)
 
 		// handle stream messages
 		case broadcast := <-h.broadcast:
@@ -118,28 +120,26 @@ func (h *hub) run(ctx context.Context) {
 				h.log.Info("Message to stream without subscribers", "stream", broadcast.name)
 				continue
 			}
+			rsp := make(map[string]interface{})
+			rsp["stream"] = broadcast.name
+			rsp["body"] = broadcast.body
+			messageBytes, _ := simplejson.NewFromAny(rsp).Encode()
+			h.log.Info("BROADCAST", "channel", broadcast.name, "json", string(messageBytes))
 
-			// 	// handle stream messages
-			// case message := <-h.streamChannel:
-			// 	subscribers, exists := h.streams[message.Stream]
-			//
+			for _, c := range stream.subscribers {
+				if _, ok := h.connections[c]; !ok {
+					//delete(subscribers, sub)
+					continue
+				}
 
-			// 	messageBytes, _ := simplejson.NewFromAny(message).Encode()
-			// 	for sub := range subscribers {
-			// 		// check if channel is open
-			// 		if _, ok := h.connections[sub]; !ok {
-			// 			delete(subscribers, sub)
-			// 			continue
-			// 		}
-
-			// 		select {
-			// 		case sub.send <- messageBytes:
-			// 		default:
-			// 			close(sub.send)
-			// 			delete(h.connections, sub)
-			// 			delete(subscribers, sub)
-			// 		}
-			// 	}
+				select {
+				case c.send <- messageBytes:
+				default:
+					// close(sub.send)
+					// delete(h.connections, sub)
+					// delete(subscribers, sub)
+				}
+			}
 		}
 	}
 }
