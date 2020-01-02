@@ -10,7 +10,6 @@ import (
 
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -41,11 +40,6 @@ func (hs *HTTPServer) RenderToPng(c *m.ReqContext) {
 		return
 	}
 
-	path := c.Params("*") + queryParams
-	if setting.ServeFromSubPath {
-		path = strings.TrimPrefix(setting.AppSubUrl+"/"+path, "/")
-	}
-
 	maxConcurrentLimitForApiCalls := 30
 	result, err := hs.RenderService.Render(c.Req.Context(), rendering.Opts{
 		Width:           width,
@@ -54,7 +48,7 @@ func (hs *HTTPServer) RenderToPng(c *m.ReqContext) {
 		OrgId:           c.OrgId,
 		UserId:          c.UserId,
 		OrgRole:         c.OrgRole,
-		Path:            path,
+		Path:            c.Params("*") + queryParams,
 		Timezone:        queryReader.Get("tz", ""),
 		Encoding:        queryReader.Get("encoding", ""),
 		ConcurrentLimit: maxConcurrentLimitForApiCalls,
