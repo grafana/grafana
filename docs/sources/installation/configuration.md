@@ -610,14 +610,24 @@ You can choose between (s3, webdav, gcs, azure_blob, local). If left empty Grafa
 
 ## [external_image_storage.s3]
 
+### endpoint
+Optional endpoint URL (hostname or fully qualified URI) to override the default generated S3 endpoint. If you want to 
+keep the default, just leave this empty. You must still provide a `region` value if you specify an endpoint.
+
+## path_style_access
+Set this to true to force path-style addressing in S3 requests, i.e., `http://s3.amazonaws.com/BUCKET/KEY`, instead
+of the default, which is virtual hosted bucket addressing when possible (`http://BUCKET.s3.amazonaws.com/KEY`).
+
+Note: This option is specific to the Amazon S3 service.
+
 ### bucket
-Bucket name for S3. e.g. grafana.snapshot
+Bucket name for S3. e.g. grafana.snapshot.
 
 ### region
-Region name for S3. e.g. 'us-east-1', 'cn-north-1', etc
+Region name for S3. e.g. 'us-east-1', 'cn-north-1', etc.
 
 ### path
-Optional extra path inside bucket, useful to apply expiration policies
+Optional extra path inside bucket, useful to apply expiration policies.
 
 ### bucket_url
 (for backward compatibility, only works when no bucket or region are configured)
@@ -626,12 +636,12 @@ Bucket URL for S3. AWS region can be specified within URL or defaults to 'us-eas
 - https://grafana.s3-ap-southeast-2.amazonaws.com/
 
 ### access_key
-Access key. e.g. AAAAAAAAAAAAAAAAAAAA
+Access key, e.g. AAAAAAAAAAAAAAAAAAAA.
 
 Access key requires permissions to the S3 bucket for the 's3:PutObject' and 's3:PutObjectAcl' actions.
 
 ### secret_key
-Secret key. e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+Secret key, e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.
 
 ## [external_image_storage.webdav]
 
