@@ -1,5 +1,5 @@
 // Libraries
-import React, { memo, useState } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import _ from 'lodash';
 
 // Types
@@ -30,17 +30,31 @@ export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
     };
   }
 
-  const [maxLines, setMaxLines] = useState('');
+  const [maxLines, setMaxLines] = useState(query?.maxLines.toString() || datasource.maxLines.toString());
 
   const { isSyntaxReady, setActiveOption, refreshLabels, ...syntaxProps } = useLokiSyntax(
     datasource.languageProvider,
     absolute
   );
 
+  function onChangeQueryLimit(value: string, override?: boolean) {
+    const { query, onChange, onRunQuery } = props;
+    if (onChange) {
+      const nextQuery = { ...query, maxLines: +value };
+      onChange(nextQuery);
+
+      if (override && onRunQuery) {
+        onRunQuery();
+      }
+    }
+  }
+
+  useEffect(() => {
+    onChangeQueryLimit(maxLines);
+  }, [maxLines]);
+
   function onMaxLinesChange(e: React.SyntheticEvent<HTMLInputElement>) {
-    const maxLines = e.currentTarget.value;
-    datasource.maxLines = isNaN(+maxLines) || +maxLines < 0 ? 1000 : +maxLines;
-    setMaxLines(maxLines);
+    setMaxLines(e.currentTarget.value);
   }
 
   function onReturnKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
