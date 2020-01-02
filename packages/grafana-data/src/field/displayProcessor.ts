@@ -8,14 +8,14 @@ import { DisplayProcessor, DisplayValue, DecimalCount, DecimalInfo } from '../ty
 import { getValueFormat } from '../valueFormats/valueFormats';
 import { getMappedValue } from '../utils/valueMappings';
 import { DEFAULT_DATE_TIME_FORMAT } from '../datetime';
-import { KeyValue } from '../types';
+import { KeyValue, TimeZone } from '../types';
 import { getScaleCalculator } from './scale';
 
 interface DisplayProcessorOptions {
   field: Partial<Field>;
 
   // Context
-  isUtc?: boolean;
+  timeZone?: TimeZone;
   theme?: GrafanaTheme; // Will pick 'dark' if not defined
 }
 
@@ -73,7 +73,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     if (!isNaN(numeric)) {
       if (shouldFormat && !_.isBoolean(value)) {
         const { decimals, scaledDecimals } = getDecimalsForValue(value, config.decimals);
-        const v = formatFunc(numeric, decimals, scaledDecimals, options.isUtc);
+        const v = formatFunc(numeric, decimals, scaledDecimals, options.timeZone);
         text = v.text;
         suffix = v.suffix;
         prefix = v.prefix;

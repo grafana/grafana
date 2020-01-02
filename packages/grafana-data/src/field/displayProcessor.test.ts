@@ -246,7 +246,7 @@ describe('Format value', () => {
 describe('Date display options', () => {
   it('should format UTC dates', () => {
     const processor = getDisplayProcessor({
-      isUtc: true,
+      timeZone: 'utc',
       field: {
         type: FieldType.time,
         config: {
@@ -259,7 +259,7 @@ describe('Date display options', () => {
 
   it('should pick configured time format', () => {
     const processor = getDisplayProcessor({
-      isUtc: true,
+      timeZone: 'utc',
       field: {
         type: FieldType.time,
         config: {
@@ -272,7 +272,7 @@ describe('Date display options', () => {
 
   it('respect the configured date format', () => {
     const processor = getDisplayProcessor({
-      isUtc: true,
+      timeZone: 'utc',
       field: {
         type: FieldType.time,
         config: {
