@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceApi, dateTime, LoadingState, LogsDedupStrategy, toDataFrame } from '@grafana/data';
+import { DataQuery, DataSourceApi, dateTime, LoadingState, LogsDedupStrategy, toDataFrame, ExploreMode } from '@grafana/data';
 
 import {
   createEmptyQueryResponse,
@@ -8,7 +8,7 @@ import {
   makeExploreItemState,
   makeInitialUpdateState,
 } from './reducers';
-import { ExploreId, ExploreItemState, ExploreMode, ExploreState, ExploreUrlState } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreState, ExploreUrlState } from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
 import {
   changeModeAction,
