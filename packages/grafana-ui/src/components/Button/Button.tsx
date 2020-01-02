@@ -36,9 +36,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, r
   const buttonClassName = cx(styles.button, icon && styles.buttonWithIcon, icon && !children && styles.iconButton);
   return (
     <button className={buttonClassName} {...buttonProps} ref={ref}>
-      <ButtonContent iconClassName={styles.iconWrap} icon={icon}>
-        {children}
-      </ButtonContent>
+      <ButtonContent icon={icon}>{children}</ButtonContent>
     </button>
   );
 });
@@ -66,9 +64,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, LinkButtonProps>((
   const buttonClassName = cx(styles.button, icon && styles.buttonWithIcon, icon && !children && styles.iconButton);
   return (
     <a className={buttonClassName} {...anchorProps} ref={ref}>
-      <ButtonContent className={styles.iconWrap} icon={icon}>
-        {children}
-      </ButtonContent>
+      <ButtonContent icon={icon}>{children}</ButtonContent>
     </a>
   );
 });

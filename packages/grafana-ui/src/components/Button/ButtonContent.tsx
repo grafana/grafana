@@ -22,7 +22,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 type Props = {
   icon?: string;
   className?: string;
-  iconClassName?: string;
   children: React.ReactNode;
 };
 export function ButtonContent(props: Props) {
