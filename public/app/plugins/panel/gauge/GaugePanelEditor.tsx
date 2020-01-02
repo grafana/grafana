@@ -10,13 +10,21 @@ import {
   PanelOptionsGroup,
   DataLinksEditor,
 } from '@grafana/ui';
-import { PanelEditorProps, FieldDisplayOptions, Threshold, ValueMapping, FieldConfig, DataLink } from '@grafana/data';
+import {
+  PanelEditorProps,
+  FieldDisplayOptions,
+  ThresholdsConfig,
+  ValueMapping,
+  FieldConfig,
+  DataLink,
+} from '@grafana/data';
 
 import { GaugeOptions } from './types';
 import {
   getCalculationValueDataLinksVariableSuggestions,
   getDataLinksVariableSuggestions,
 } from 'app/features/panel/panellinks/link_srv';
+import { config } from 'app/core/config';
 
 export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOptions>> {
   labelWidth = 6;
@@ -30,7 +38,7 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
       showThresholdMarkers: !this.props.options.showThresholdMarkers,
     });
 
-  onThresholdsChanged = (thresholds: Threshold[]) => {
+  onThresholdsChanged = (thresholds: ThresholdsConfig) => {
     const current = this.props.options.fieldOptions.defaults;
     this.onDefaultsChange({
       ...current,
@@ -122,7 +130,12 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
             />
           </PanelOptionsGroup>
 
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
+          <ThresholdsEditor
+            onChange={this.onThresholdsChanged}
+            thresholds={defaults.thresholds}
+            theme={config.theme}
+            showAlphaUI={config.featureToggles.newEdit}
+          />
         </PanelOptionsGrid>
 
         <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />

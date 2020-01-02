@@ -219,6 +219,7 @@ allowed_organizations =
     auth_url = https://<your domain>.my.centrify.com/OAuth2/Authorize/<Application ID>
     token_url = https://<your domain>.my.centrify.com/OAuth2/Token/<Application ID>
     api_url = https://<your domain>.my.centrify.com/OAuth2/UserInfo/<Application ID>
+    ```
 
 ## JMESPath examples
 

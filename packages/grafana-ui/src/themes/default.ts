@@ -54,8 +54,8 @@ const theme: GrafanaThemeCommons = {
     lineHeight: {
       xs: 1,
       sm: 1.1,
-      md: 4 / 3,
-      lg: 1.5,
+      md: 1.5,
+      lg: 2,
     },
     link: {
       decoration: 'none',

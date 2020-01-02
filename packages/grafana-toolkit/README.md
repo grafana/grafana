@@ -127,6 +127,24 @@ Currently we support following Jest configuration properties:
 - [`snapshotSerializers`](https://jest-bot.github.io/jest/docs/configuration.html#snapshotserializers-array-string)
 - [`moduleNameMapper`](https://jestjs.io/docs/en/configuration#modulenamemapper-object-string-string)
 
+### How can I customize Webpack rules or plugins?
+You can provide your own webpack configuration.
+Provide a function implementing `CustomWebpackConfigurationGetter` in a file named `webpack.config.js`.
+
+You can import the correct interface and Options from `@grafana/toolkit/src/config`.
+
+Example
+
+```js
+import CustomPlugin from 'custom-plugin';
+
+export const getWebpackConfig = (defaultConfig, options) => {
+    console.log('Custom config');
+    defaultConfig.plugins.push(new CustomPlugin())
+    return defaultConfig;
+};
+```
+
 ### How can I style my plugin?
 We support pure CSS, SASS, and CSS-in-JS approach (via [Emotion](https://emotion.sh/)).
 
@@ -245,3 +263,7 @@ To debug grafana-toolkit you can use standard [NodeJS debugging methods](https:/
 To run grafana-toolkit in a debugging session use the following command in the toolkit's directory:
 
 `node --inspect-brk ./bin/grafana-toolkit.js [task]`
+
+To run [linked](#develop-grafana-toolkit) grafana-toolkit in a debugging session use the following command in the plugin's directory:
+
+`node --inspect-brk ./node_modules/@grafana/toolkit/bin/grafana-toolkit.js [task]`

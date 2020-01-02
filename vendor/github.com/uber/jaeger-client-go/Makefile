@@ -1,14 +1,14 @@
 PROJECT_ROOT=github.com/uber/jaeger-client-go
-PACKAGES := $(shell glide novendor | grep -v -e ./thrift-gen/... -e ./thrift/...)
+PACKAGES := . $(shell go list ./... | awk -F/ 'NR>1 {print "./"$$4"/..."}' | grep -v -e ./thrift-gen/... -e ./thrift/... | sort -u)
 # all .go files that don't exist in hidden directories
 ALL_SRC := $(shell find . -name "*.go" | grep -v -e vendor -e thrift-gen -e ./thrift/ \
         -e ".*/\..*" \
         -e ".*/_.*" \
         -e ".*/mocks.*")
 
--include crossdock/rules.mk
+USE_DEP := true
 
-export GO15VENDOREXPERIMENT=1
+-include crossdock/rules.mk
 
 RACE=-race
 GOTEST=go test -v $(RACE)
@@ -58,19 +58,24 @@ lint:
 
 .PHONY: install
 install:
-	glide --version || go get github.com/Masterminds/glide
+	@echo install: USE_DEP=$(USE_DEP) USE_GLIDE=$(USE_GLIDE)
 ifeq ($(USE_DEP),true)
+	dep version || make install-dep
 	dep ensure
-else
+endif
+ifeq ($(USE_GLIDE),true)
+	glide --version || go get github.com/Masterminds/glide
 	glide install
 endif
 
 
 .PHONY: cover
 cover:
-	./scripts/cover.sh $(shell go list $(PACKAGES))
-	go tool cover -html=cover.out -o cover.html
+	$(GOTEST) -cover -coverprofile cover.out $(PACKAGES)
 
+.PHONY: cover-html
+cover-html: cover
+	go tool cover -html=cover.out -o cover.html
 
 # This is not part of the regular test target because we don't want to slow it
 # down.
@@ -101,23 +106,23 @@ idl-submodule:
 thrift-image:
 	$(THRIFT) -version
 
-.PHONY: install-dep-ci
-install-dep-ci:
+.PHONY: install-dep
+install-dep:
 	- curl -L -s https://github.com/golang/dep/releases/download/v0.5.0/dep-linux-amd64 -o $$GOPATH/bin/dep
 	- chmod +x $$GOPATH/bin/dep
 
 .PHONY: install-ci
-install-ci: install-dep-ci install
+install-ci: install
 	go get github.com/wadey/gocovmerge
 	go get github.com/mattn/goveralls
 	go get golang.org/x/tools/cmd/cover
 	go get golang.org/x/lint/golint
 
 .PHONY: test-ci
-test-ci:
-	@./scripts/cover.sh $(shell go list $(PACKAGES))
+test-ci: cover
 ifeq ($(CI_SKIP_LINT),true)
 	echo 'skipping lint'
 else
 	make lint
 endif
+

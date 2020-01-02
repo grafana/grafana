@@ -72,6 +72,10 @@ Log in using the default credentials:
 
 When you log in for the first time, Grafana asks you to change your password.
 
+#### Building on Windows
+
+The Grafana backend includes Sqlite3 which requires GCC to compile. So in order to compile Grafana on Windows you need to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download).
+
 ## Test Grafana
 
 The test suite consists of three types of tests: _Frontend tests_, _backend tests_, and _end-to-end tests_.

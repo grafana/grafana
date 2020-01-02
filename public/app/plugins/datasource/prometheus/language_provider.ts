@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import LRU from 'lru-cache';
+import { Value } from 'slate';
 
 import { dateTime, LanguageProvider, HistoryItem } from '@grafana/data';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
@@ -50,6 +51,8 @@ function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): Com
   return item;
 }
 
+const PREFIX_DELIMITER_REGEX = /(="|!="|=~"|!~"|\{|\[|\(|\+|-|\/|\*|%|\^|\band\b|\bor\b|\bunless\b|==|>=|!=|<=|>|<|=|~|,)/;
+
 export default class PromQlLanguageProvider extends LanguageProvider {
   histogramMetrics?: string[];
   timeRange?: { start: number; end: number };
@@ -81,15 +84,15 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     Object.assign(this, initialValues);
   }
 
-  // Strip syntax chars
-  cleanText = (s: string) =>
-    s
-      .replace(/[{}[\]="(),!]/g, '')
-      .replace(/^\s*[~+\-*/^%]/, '')
-      .trim()
-      .split(' ')
-      .pop()
-      .trim();
+  // Strip syntax chars so that typeahead suggestions can work on clean inputs
+  cleanText(s: string) {
+    const parts = s.split(PREFIX_DELIMITER_REGEX);
+    const last = parts.pop();
+    return last
+      .trimLeft()
+      .replace(/"$/, '')
+      .replace(/^"/, '');
+  }
 
   get syntax() {
     return PromqlSyntax;
@@ -143,7 +146,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     // Prevent suggestions in `function(|suffix)`
     const noSuffix = !nextCharacter || nextCharacter === ')';
 
-    // Empty prefix is safe if it does not immediately follow a complete expression and has no text after it
+    // Prefix is safe if it does not immediately follow a complete expression and has no text after it
     const safePrefix = prefix && !text.match(/^[\]})\s]+$/) && noSuffix;
 
     // About to type next operand if preceded by binary operator
@@ -159,7 +162,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       return this.getLabelCompletionItems({ prefix, text, value, labelKey, wrapperClasses });
     } else if (wrapperClasses.includes('context-aggregation')) {
       // Suggestions for sum(metric) by (|)
-      return this.getAggregationCompletionItems({ prefix, text, value, labelKey, wrapperClasses });
+      return this.getAggregationCompletionItems(value);
     } else if (empty) {
       // Suggestions for empty query field
       return this.getEmptyCompletionItems(context);
@@ -239,7 +242,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     };
   }
 
-  getAggregationCompletionItems = async ({ value }: TypeaheadInput): Promise<TypeaheadOutput> => {
+  getAggregationCompletionItems = async (value: Value): Promise<TypeaheadOutput> => {
     const suggestions: CompletionItemGroup[] = [];
 
     // Stitch all query lines together to support multi-line queries
@@ -297,8 +300,15 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     labelKey,
     value,
   }: TypeaheadInput): Promise<TypeaheadOutput> => {
+    const suggestions: CompletionItemGroup[] = [];
     const line = value.anchorBlock.getText();
     const cursorOffset = value.selection.anchor.offset;
+    const nextChar = line[cursorOffset];
+    const isValueContext = wrapperClasses.includes('attr-value');
+    if (!nextChar.match(/["}]/)) {
+      // Don't suggest anything inside a value
+      return { suggestions };
+    }
 
     // Get normalized selector
     let selector;
@@ -313,7 +323,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const containsMetric = selector.includes('__name__=');
     const existingKeys = parsedSelector ? parsedSelector.labelKeys : [];
 
-    const suggestions: CompletionItemGroup[] = [];
     let labelValues;
     // Query labels for selector
     if (selector) {
@@ -326,7 +335,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     }
 
     let context: string;
-    if ((text && text.match(/^!?=~?/)) || wrapperClasses.includes('attr-value')) {
+    if ((text && text.match(/^!?=~?/)) || isValueContext) {
       // Label values
       if (labelKey && labelValues[labelKey]) {
         context = 'context-label-values';
