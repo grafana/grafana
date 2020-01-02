@@ -7,9 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	plugin "github.com/hashicorp/go-plugin"
-
-	pluginModel "github.com/grafana/grafana-plugin-model/go/renderer"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
@@ -25,8 +22,6 @@ func init() {
 
 type RenderingService struct {
 	log             log.Logger
-	pluginClient    *plugin.Client
-	grpcPlugin      pluginModel.RendererPlugin
 	pluginInfo      *plugins.RendererPlugin
 	renderAction    renderFunc
 	domain          string

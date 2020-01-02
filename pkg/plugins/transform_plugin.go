@@ -21,7 +21,6 @@ import (
 
 type TransformPlugin struct {
 	PluginBase
-	// TODO we probably want a Backend Plugin Base? Or some way to dedup proc management code
 
 	Executable string `json:"executable,omitempty"`
 
@@ -142,7 +141,7 @@ func (s *transformCallback) DataQuery(ctx context.Context, req *pluginv2.DataQue
 	// Convert plugin-model (datasource) queries to tsdb queries
 	queries := make([]*tsdb.Query, len(req.Queries))
 	for i, query := range req.Queries {
-		sj, err := simplejson.NewJson([]byte(query.Json))
+		sj, err := simplejson.NewJson(query.Json)
 		if err != nil {
 			return nil, err
 		}
