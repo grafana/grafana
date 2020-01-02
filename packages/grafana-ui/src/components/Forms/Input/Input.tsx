@@ -222,8 +222,8 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
    */
   const [prefixRect, prefixRef] = useClientRect<HTMLDivElement>();
   const [suffixRect, suffixRef] = useClientRect<HTMLDivElement>();
-  const theme = useTheme();
 
+  const theme = useTheme();
   const styles = getInputStyles({ theme, invalid: !!invalid });
 
   return (

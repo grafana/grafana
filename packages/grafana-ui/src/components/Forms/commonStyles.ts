@@ -21,7 +21,7 @@ export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
 
   return css`
     background-color: ${colors.formInputBg};
-    line-height: ${theme.typography.lineHeight.lg};
+    line-height: ${theme.typography.lineHeight.md};
     font-size: ${theme.typography.size.md};
     color: ${colors.formInputText};
     border: 1px solid ${borderColor};

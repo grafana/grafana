@@ -13,6 +13,10 @@ import {
   PanelModel,
   FieldDisplayOptions,
   ConfigOverrideRule,
+  ThresholdsMode,
+  ThresholdsConfig,
+  validateFieldConfig,
+  FieldColorMode,
 } from '@grafana/data';
 
 export interface SingleStatBaseOptions {
@@ -70,7 +74,10 @@ export function sharedSingleStatPanelChangedHandler(
           thresholds.push({ value: -Infinity, color });
         }
       }
-      defaults.thresholds = thresholds;
+      defaults.thresholds = {
+        mode: ThresholdsMode.Absolute,
+        steps: thresholds,
+      };
     }
 
     // Convert value mappings
@@ -112,8 +119,10 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
   }
 
   if (previousVersion < 6.6) {
+    const { fieldOptions } = options;
+
     // discard the old `override` options and enter an empty array
-    if (options.fieldOptions && options.fieldOptions.override) {
+    if (fieldOptions && fieldOptions.override) {
       const { override, ...rest } = options.fieldOptions;
       options = {
         ...options,
@@ -123,6 +132,34 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
         },
       };
     }
+
+    // Move thresholds to steps
+    let thresholds = fieldOptions?.defaults?.thresholds;
+    if (thresholds) {
+      delete fieldOptions.defaults.thresholds;
+    } else {
+      thresholds = fieldOptions?.thresholds;
+      delete fieldOptions.thresholds;
+    }
+
+    if (thresholds) {
+      fieldOptions.defaults.thresholds = {
+        mode: ThresholdsMode.Absolute,
+        steps: thresholds,
+      };
+    }
+
+    // Migrate color from simple string to a mode
+    const { defaults } = fieldOptions;
+    if (defaults.color) {
+      const old = defaults.color;
+      defaults.color = {
+        mode: FieldColorMode.Fixed,
+        fixedColor: old,
+      };
+    }
+
+    validateFieldConfig(defaults);
   }
 
   return options as SingleStatBaseOptions;
@@ -135,7 +172,15 @@ export function moveThresholdsAndMappingsToField(old: any) {
     return old;
   }
 
-  const { mappings, thresholds, ...rest } = old.fieldOptions;
+  const { mappings, ...rest } = old.fieldOptions;
+
+  let thresholds: ThresholdsConfig | undefined = undefined;
+  if (old.thresholds) {
+    thresholds = {
+      mode: ThresholdsMode.Absolute,
+      steps: migrateOldThresholds(old.thresholds)!,
+    };
+  }
 
   return {
     ...old,
@@ -144,7 +189,7 @@ export function moveThresholdsAndMappingsToField(old: any) {
       defaults: {
         ...fieldOptions.defaults,
         mappings,
-        thresholds: migrateOldThresholds(thresholds),
+        thresholds,
       },
     },
   };
