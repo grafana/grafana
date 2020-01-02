@@ -7,6 +7,8 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
   const bgColor = stv({ light: theme.colors.white, dark: theme.colors.gray15 }, theme.type);
   const menuShadowColor = stv({ light: theme.colors.gray4, dark: theme.colors.black }, theme.type);
   const optionBgHover = stv({ light: theme.colors.gray7, dark: theme.colors.gray10 }, theme.type);
+  const multiValueContainerBg = stv({ light: theme.colors.gray6, dark: theme.colors.gray05 }, theme.type);
+  const multiValueColor = stv({ light: theme.colors.gray25, dark: theme.colors.gray85 }, theme.type);
 
   return {
     menu: css`
@@ -48,20 +50,32 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
     valueContainer: css`
       align-items: center;
       display: flex;
-      /* flex-wrap: wrap; ONLY WHEN IT"S MULTI*/
       position: relative;
       box-sizing: border-box;
       flex: 1 1 0%;
       outline: none;
       overflow: hidden;
-      > * {
-        display: inline-block;
-      }
+    `,
+    valueContainerMulti: css`
+      flex-wrap: wrap;
     `,
     loadingMessage: css`
       padding: ${theme.spacing.sm};
       text-align: center;
       width: 100%;
+    `,
+    multiValueContainer: css`
+      display: flex;
+      align-items: center;
+      line-height: 1;
+      background: ${multiValueContainerBg};
+      border-radius: ${theme.border.radius.sm};
+      padding: ${theme.spacing.xs} ${theme.spacing.xxs} ${theme.spacing.xs} ${theme.spacing.sm};
+      margin: ${theme.spacing.xxs} ${theme.spacing.xs} ${theme.spacing.xxs} 0;
+      color: ${multiValueColor};
+    `,
+    multiValueRemove: css`
+      margin-left: ${theme.spacing.xs};
     `,
   };
 });

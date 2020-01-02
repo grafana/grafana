@@ -17,6 +17,7 @@ import { InputControl } from './InputControl';
 import { DropdownIndicator } from './DropdownIndicator';
 import { SelectOptionGroup } from './SelectOptionGroup';
 import { SingleValue } from './SingleValue';
+import { MultiValueContainer, MultiValueRemove } from './MultiValue';
 import { useTheme } from '../../../themes';
 import { getSelectStyles } from './getSelectStyles';
 
@@ -272,6 +273,8 @@ export function SelectBase<T>({
         },
         DropdownIndicator: (props: any) => <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />,
         SingleValue: SingleValue,
+        MultiValueContainer: MultiValueContainer,
+        MultiValueRemove: MultiValueRemove,
         ...components,
       }}
       styles={{
