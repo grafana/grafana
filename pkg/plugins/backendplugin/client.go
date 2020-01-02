@@ -57,10 +57,10 @@ func NewBackendPluginDescriptor(pluginID, executablePath string) PluginDescripto
 		executablePath: executablePath,
 		managed:        true,
 		versionedPlugins: map[int]plugin.PluginSet{
-			1: {
+			DefaultProtocolVersion: {
 				pluginID: &datasourceV1.DatasourcePluginImpl{},
 			},
-			2: {
+			sdk.ProtocolVersion: {
 				"backend":   &backend.CoreImpl{},
 				"transform": &backend.TransformImpl{},
 			},
@@ -76,7 +76,7 @@ func NewRendererPluginDescriptor(pluginID, executablePath string) PluginDescript
 		executablePath: executablePath,
 		managed:        false,
 		versionedPlugins: map[int]plugin.PluginSet{
-			1: {
+			DefaultProtocolVersion: {
 				pluginID: &rendererV1.RendererPluginImpl{},
 			},
 		},
