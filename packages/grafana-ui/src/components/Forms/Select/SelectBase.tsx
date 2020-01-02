@@ -269,7 +269,11 @@ export function SelectBase<T>({
           return <div className={styles.loadingMessage}>{loadingMessage}</div>;
         },
         NoOptionsMessage: (props: any) => {
-          return <div className={styles.loadingMessage}>{noOptionsMessage}</div>;
+          return (
+            <div className={styles.loadingMessage} aria-label="No options provided">
+              {noOptionsMessage}
+            </div>
+          );
         },
         DropdownIndicator: (props: any) => <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />,
         SingleValue: SingleValue,

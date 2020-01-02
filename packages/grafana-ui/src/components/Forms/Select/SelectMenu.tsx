@@ -18,7 +18,7 @@ export const SelectMenu = React.forwardRef<HTMLDivElement, React.PropsWithChildr
   const { children, maxHeight, innerRef } = props;
 
   return (
-    <div className={styles.menu} ref={innerRef} style={{ maxHeight }}>
+    <div className={styles.menu} ref={innerRef} style={{ maxHeight }} aria-label="Select options menu">
       <CustomScrollbar autoHide={false} autoHeightMax="inherit" hideHorizontalTrack>
         {children}
       </CustomScrollbar>
@@ -43,7 +43,12 @@ export const SelectMenuOptions = React.forwardRef<HTMLDivElement, React.PropsWit
     const styles = getSelectStyles(theme);
     const { children, innerProps, data, renderOptionLabel, isSelected, isFocused } = props;
     return (
-      <div ref={ref} className={cx(styles.option, isFocused && styles.optionFocused)} {...innerProps}>
+      <div
+        ref={ref}
+        className={cx(styles.option, isFocused && styles.optionFocused)}
+        {...innerProps}
+        aria-label="Select option"
+      >
         <span>{renderOptionLabel ? renderOptionLabel(data) : children}</span>
         {isSelected && (
           <span>
