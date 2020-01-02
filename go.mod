@@ -2,6 +2,8 @@ module github.com/grafana/grafana
 
 go 1.13
 
+replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.4.1-0.20200101114610-b78469dba5b5
+
 require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
@@ -84,5 +86,3 @@ require (
 	gopkg.in/square/go-jose.v2 v2.3.0
 	gopkg.in/yaml.v2 v2.2.5
 )
-
-replace github.com/grafana/grafana-plugin-sdk-go => ../grafana-plugin-sdk-go
