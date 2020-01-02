@@ -41,7 +41,7 @@ func (t *transformWrapper) DataQuery(ctx context.Context, req *pluginv2.DataQuer
 	}, nil
 }
 
-type TransformHandlers struct {
+type TransformHandlers interface {
 	TransformDataQueryHandler
 }
 

@@ -110,7 +110,7 @@ type coreWrapper struct {
 
 // PluginHandlers is the collection of handlers that corresponds to the
 // grpc "service BackendPlugin".
-type PluginHandlers struct {
+type PluginHandlers interface {
 	DataQueryHandler
 	CheckHandler
 	ResourceHandler

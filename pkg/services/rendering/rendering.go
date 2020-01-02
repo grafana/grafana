@@ -85,15 +85,8 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	}
 
 	rs.renderAction = rs.renderViaPlugin
-
-	err := rs.watchAndRestartPlugin(ctx)
-
-	if rs.pluginClient != nil {
-		rs.log.Debug("Killing renderer plugin process")
-		rs.pluginClient.Kill()
-	}
-
-	return err
+	<-ctx.Done()
+	return nil
 }
 
 func (rs *RenderingService) RenderErrorImage(err error) (*RenderResult, error) {

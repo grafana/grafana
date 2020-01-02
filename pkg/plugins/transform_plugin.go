@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/dataframe"
@@ -16,8 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	plugin "github.com/hashicorp/go-plugin"
-	"golang.org/x/xerrors"
 )
 
 type TransformPlugin struct {
@@ -27,9 +26,6 @@ type TransformPlugin struct {
 	Executable string `json:"executable,omitempty"`
 
 	*TransformWrapper
-
-	client *plugin.Client
-	log    log.Logger
 }
 
 func (tp *TransformPlugin) Load(decoder *json.Decoder, pluginDir string) error {
@@ -41,39 +37,25 @@ func (tp *TransformPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 		return err
 	}
 
+	cmd := ComposePluginStartCommmand(tp.Executable)
+	fullpath := path.Join(tp.PluginDir, cmd)
+	descriptor := backendplugin.NewTransformPluginDescriptor(tp.Id, fullpath)
+	if err := backendplugin.Register(descriptor, tp.onPluginStart); err != nil {
+		return errutil.Wrapf(err, "Failed to register backend plugin")
+	}
+
 	Transform = tp
 
 	return nil
 }
 
-func (p *TransformPlugin) startBackendPlugin(ctx context.Context, log log.Logger) error {
-	p.log = log.New("plugin-id", p.Id)
-
-	if err := p.spawnSubProcess(); err != nil {
-		return err
-	}
-
-	go func() {
-		if err := p.restartKilledProcess(ctx); err != nil {
-			p.log.Error("Attempting to restart killed process failed", "err", err)
-		}
-	}()
-
-	return nil
-}
-
-func (p *TransformPlugin) spawnSubProcess() error {
-	cmd := ComposePluginStartCommmand(p.Executable)
-	fullpath := path.Join(p.PluginDir, cmd)
-
-	p.client = backendplugin.NewTransformClient(p.Id, fullpath, p.log)
-
-	rpcClient, err := p.client.Client()
+func (p *TransformPlugin) onPluginStart(pluginID string, client *plugin.Client, logger log.Logger) error {
+	rpcClient, err := client.Client()
 	if err != nil {
 		return err
 	}
 
-	raw, err := rpcClient.Dispense(p.Id)
+	raw, err := rpcClient.Dispense("transform")
 	if err != nil {
 		return err
 	}
@@ -83,41 +65,9 @@ func (p *TransformPlugin) spawnSubProcess() error {
 		return fmt.Errorf("unexpected type %T, expected *transform.GRPCClient", raw)
 	}
 
-	p.TransformWrapper = NewTransformWrapper(p.log, plugin)
+	p.TransformWrapper = NewTransformWrapper(logger, plugin)
 
 	return nil
-}
-
-func (p *TransformPlugin) restartKilledProcess(ctx context.Context) error {
-	ticker := time.NewTicker(time.Second * 1)
-
-	for {
-		select {
-		case <-ctx.Done():
-			if err := ctx.Err(); err != nil && !xerrors.Is(err, context.Canceled) {
-				return err
-			}
-			return nil
-		case <-ticker.C:
-			if !p.client.Exited() {
-				continue
-			}
-
-			if err := p.spawnSubProcess(); err != nil {
-				p.log.Error("Failed to restart plugin", "err", err)
-				continue
-			}
-
-			p.log.Debug("Plugin process restarted")
-		}
-	}
-}
-
-func (p *TransformPlugin) Kill() {
-	if p.client != nil {
-		p.log.Debug("Killing subprocess ", "name", p.Name)
-		p.client.Kill()
-	}
 }
 
 // ...

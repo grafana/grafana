@@ -31,9 +31,7 @@ var handshake = plugin.HandshakeConfig{
 	MagicCookieValue: sdk.MagicCookieValue,
 }
 
-// NewClientConfig returns a configuration object that can be used to instantiate
-// a client for the plugin described by the given metadata.
-func NewClientConfig(executablePath string, logger log.Logger, versionedPlugins map[int]plugin.PluginSet) *plugin.ClientConfig {
+func newClientConfig(executablePath string, logger log.Logger, versionedPlugins map[int]plugin.PluginSet) *plugin.ClientConfig {
 	return &plugin.ClientConfig{
 		Cmd:              exec.Command(executablePath),
 		HandshakeConfig:  handshake,
@@ -43,38 +41,58 @@ func NewClientConfig(executablePath string, logger log.Logger, versionedPlugins 
 	}
 }
 
-// NewDatasourceClient returns a datasource plugin client.
-func NewDatasourceClient(pluginID, executablePath string, logger log.Logger) *plugin.Client {
-	versionedPlugins := map[int]plugin.PluginSet{
-		1: {
-			pluginID: &datasourceV1.DatasourcePluginImpl{},
-		},
-		2: {
-			"backend": &backend.CoreImpl{},
-		},
-	}
-
-	return plugin.NewClient(NewClientConfig(executablePath, logger, versionedPlugins))
+// PluginDescriptor descriptor used for registering backend plugins.
+type PluginDescriptor struct {
+	pluginID         string
+	executablePath   string
+	managed          bool
+	versionedPlugins map[int]plugin.PluginSet
 }
 
-// NewRendererClient returns a renderer plugin client.
-func NewRendererClient(pluginID, executablePath string, logger log.Logger) *plugin.Client {
-	versionedPlugins := map[int]plugin.PluginSet{
-		1: {
-			pluginID: &rendererV1.RendererPluginImpl{},
+// NewDatasourcePluginDescriptor creates a new datasource plugin descriptor
+// used for registering a backend datasource plugin.
+func NewDatasourcePluginDescriptor(pluginID, executablePath string) PluginDescriptor {
+	return PluginDescriptor{
+		pluginID:       pluginID,
+		executablePath: executablePath,
+		managed:        true,
+		versionedPlugins: map[int]plugin.PluginSet{
+			1: {
+				pluginID: &datasourceV1.DatasourcePluginImpl{},
+			},
+			2: {
+				"backend": &backend.CoreImpl{},
+			},
 		},
 	}
-
-	return plugin.NewClient(NewClientConfig(executablePath, logger, versionedPlugins))
 }
 
-// NewTransformClient returns a transform plugin client.
-func NewTransformClient(pluginID, executablePath string, logger log.Logger) *plugin.Client {
-	versionedPlugins := map[int]plugin.PluginSet{
-		2: {
-			"trabsform": &backend.TransformImpl{},
+// NewRendererPluginDescriptor creates a new renderer plugin descriptor
+// used for registering a backend renderer plugin.
+func NewRendererPluginDescriptor(pluginID, executablePath string) PluginDescriptor {
+	return PluginDescriptor{
+		pluginID:       pluginID,
+		executablePath: executablePath,
+		managed:        false,
+		versionedPlugins: map[int]plugin.PluginSet{
+			1: {
+				pluginID: &rendererV1.RendererPluginImpl{},
+			},
 		},
 	}
+}
 
-	return plugin.NewClient(NewClientConfig(executablePath, logger, versionedPlugins))
+// NewTransformPluginDescriptor creates a new transform plugin descriptor
+// used for registering a backend transform plugin.
+func NewTransformPluginDescriptor(pluginID, executablePath string) PluginDescriptor {
+	return PluginDescriptor{
+		pluginID:       pluginID,
+		executablePath: executablePath,
+		managed:        true,
+		versionedPlugins: map[int]plugin.PluginSet{
+			2: {
+				"transform": &backend.TransformImpl{},
+			},
+		},
+	}
 }
