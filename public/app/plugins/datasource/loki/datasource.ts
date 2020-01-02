@@ -272,8 +272,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     if (target.liveStreaming) {
       return this.runLiveQuery(target, options);
     }
-
-    const query = this.createRangeQuery(target, options);
+    const linesLimit = target.maxLines || this.maxLines;
+    const query = this.createRangeQuery(target, { ...options, maxDataPoints: linesLimit });
     return this._request(RANGE_QUERY_ENDPOINT, query).pipe(
       catchError((err: any) => this.throwUnless(err, err.cancelled || err.status === 404, target)),
       filter((response: any) => (response.cancelled ? false : true)),
@@ -287,7 +287,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
               target,
               query,
               responseListLength,
-              this.maxLines,
+              linesLimit,
               this.instanceSettings.jsonData,
               options.reverse
             )
