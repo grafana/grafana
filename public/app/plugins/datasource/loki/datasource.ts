@@ -269,18 +269,19 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     options: RangeQueryOptions,
     responseListLength = 1
   ): Observable<DataQueryResponse> => {
-    if (target.liveStreaming) {
-      return this.runLiveQuery(target, options);
-    }
     const linesLimit = target.maxLines || this.maxLines;
-    const query = this.createRangeQuery(target, { ...options, maxDataPoints: linesLimit });
+    const queryOptions = { ...options, maxDataPoints: linesLimit };
+    if (target.liveStreaming) {
+      return this.runLiveQuery(target, queryOptions);
+    }
+    const query = this.createRangeQuery(target, queryOptions);
     return this._request(RANGE_QUERY_ENDPOINT, query).pipe(
       catchError((err: any) => this.throwUnless(err, err.cancelled || err.status === 404, target)),
       filter((response: any) => (response.cancelled ? false : true)),
       switchMap((response: { data: LokiResponse; status: number }) =>
         iif<DataQueryResponse, DataQueryResponse>(
           () => response.status === 404,
-          defer(() => this.runLegacyQuery(target, options)),
+          defer(() => this.runLegacyQuery(target, queryOptions)),
           defer(() =>
             processRangeQueryResponse(
               response.data,
