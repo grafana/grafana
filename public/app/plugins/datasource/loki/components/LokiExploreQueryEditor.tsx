@@ -30,7 +30,7 @@ export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
     };
   }
 
-  const [maxLines, setMaxLines] = useState(query?.maxLines.toString() || datasource.maxLines.toString());
+  const [maxLines, setMaxLines] = useState(query?.maxLines?.toString() || datasource?.maxLines?.toString());
 
   const { isSyntaxReady, setActiveOption, refreshLabels, ...syntaxProps } = useLokiSyntax(
     datasource.languageProvider,
@@ -76,7 +76,7 @@ export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
         onLabelsRefresh={refreshLabels}
         syntaxLoaded={isSyntaxReady}
         absoluteRange={absolute}
-        ExtraFieldElement={LokiExploreExtraField}
+        ExtraFieldElement={exploreMode === ExploreMode.Logs ? LokiExploreExtraField : null}
         extraFieldProps={
           exploreMode === ExploreMode.Logs
             ? {
