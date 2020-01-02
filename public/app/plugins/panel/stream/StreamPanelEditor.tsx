@@ -13,8 +13,9 @@ export class StreamPanelEditor extends PureComponent<PanelEditorProps<StreamOpti
     this.props.onOptionsChange({ ...this.props.options, path: event.target.value });
   };
 
-  onSubscribeChanged = (event: React.SyntheticEvent<HTMLInputElement>) => {
-    this.props.onOptionsChange({ ...this.props.options, subscribe: event.target.checked });
+  onToggleSubscribe = () => {
+    const { options } = this.props;
+    this.props.onOptionsChange({ ...options, subscribe: !options.subscribe });
   };
 
   render() {
@@ -33,7 +34,7 @@ export class StreamPanelEditor extends PureComponent<PanelEditorProps<StreamOpti
           label="Subscribe"
           labelClass={'width-6'}
           checked={subscribe || false}
-          onChange={this.onSubscribeChanged}
+          onChange={this.onToggleSubscribe}
         />
       </PanelOptionsGroup>
     );

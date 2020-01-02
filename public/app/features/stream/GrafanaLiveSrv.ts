@@ -22,6 +22,8 @@ export class GrafanaLiveSrv implements WebStreamSrv {
   commands = new Map<number, Subject<any>>();
 
   onMessage = (evt: StreamEvent) => {
+    console.warn('onMessage', evt);
+
     const stream = this.streams.get(evt.stream);
     const action = (evt as any).__action;
     if (action) {
@@ -107,13 +109,13 @@ export class GrafanaLiveSrv implements WebStreamSrv {
     const cid = cmdId++;
     const subject = new Subject<T>();
     this.commands.set(cid, subject);
-    const cmd = {
+    const cmd = ({
       cid,
       action,
       stream,
       body,
-    };
-    console.log('SEND', cmd);
+    } as undefined) as StreamEvent;
+    console.log('WRITE', cmd);
     this.getWebSocket().next(cmd);
     return subject.asObservable();
   }

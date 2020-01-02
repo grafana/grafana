@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ChangeEvent } from 'react';
 
 // Types
 import { StreamOptions } from './types';
@@ -7,7 +7,7 @@ import { PanelProps } from '@grafana/data';
 import { config } from 'app/core/config';
 import { Observer, Unsubscribable } from 'rxjs';
 import { getWebStreamSrv } from '@grafana/runtime';
-import { SocketStatusWatcher } from './SocketStatusWatcher';
+import { FormField, Button } from '@grafana/ui';
 
 let counter = 0;
 
@@ -22,6 +22,8 @@ interface Props extends PanelProps<StreamOptions> {}
 interface State {
   history: RecievedMessage[];
   subscription?: Unsubscribable;
+  action: string;
+  body: string;
 }
 
 export class StreamPanel extends PureComponent<Props, State> {
@@ -30,6 +32,8 @@ export class StreamPanel extends PureComponent<Props, State> {
 
     this.state = {
       history: [],
+      action: 'send',
+      body: JSON.stringify({ text: 'Hello' }),
     };
   }
 
@@ -102,6 +106,37 @@ export class StreamPanel extends PureComponent<Props, State> {
     },
   };
 
+  onActionChanged = (event: ChangeEvent<HTMLInputElement>) => {
+    this.setState({ action: event.target.value });
+  };
+
+  onBodyChanged = (event: ChangeEvent<HTMLInputElement>) => {
+    this.setState({ body: event.target.value });
+  };
+
+  onSendClick = async () => {
+    const { options } = this.props;
+    const { action } = this.state;
+    let { body } = this.state;
+    try {
+      body = JSON.parse(body);
+    } catch {}
+
+    const v = await getWebStreamSrv()
+      .write(options.path, action, body)
+      .toPromise();
+    console.log('WRITE response', v);
+
+    // Add the response to history
+    const msg: RecievedMessage = {
+      key: counter++,
+      type: 'write-response',
+      time: Date.now(),
+      body: v,
+    };
+    this.setState({ history: [msg, ...this.state.history] });
+  };
+
   render() {
     if (!config.featureToggles.streams) {
       return (
@@ -113,12 +148,23 @@ export class StreamPanel extends PureComponent<Props, State> {
         </div>
       );
     }
-    const { connected, history } = this.state;
+    const { subscription, history, action, body } = this.state;
 
     return (
       <div>
-        [connected: {connected}]<br />
-        {history && history.length && (
+        {subscription ? (
+          <div>
+            SUBSCRIBED.... add buttons
+            <FormField label="Action" value={action || ''} onChange={this.onActionChanged} />
+            <FormField label="Body" value={body || ''} onChange={this.onBodyChanged} />
+            <Button onClick={this.onSendClick} variant="primary">
+              Send
+            </Button>
+          </div>
+        ) : (
+          <div>[NOT Connected...]</div>
+        )}
+        {history.length > 0 && (
           <table className="filter-table form-inline">
             <thead>
               <tr>
@@ -129,8 +175,6 @@ export class StreamPanel extends PureComponent<Props, State> {
             <tbody>{history.map(StreamEventRow)}</tbody>
           </table>
         )}
-        <br />
-        <SocketStatusWatcher />
       </div>
     );
   }

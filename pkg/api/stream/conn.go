@@ -36,18 +36,23 @@ type connection struct {
 	ws   *websocket.Conn
 	send chan []byte
 	log  log.Logger
+	id   uint64
 
 	// TODO: add
 	// user/userId?
 	// connection time?
 }
 
+var counter uint64 = 100
+
 func newConnection(ws *websocket.Conn, hub *hub, logger log.Logger) *connection {
+	counter = counter + 1
 	return &connection{
 		hub:  hub,
 		send: make(chan []byte, 256),
 		ws:   ws,
 		log:  logger,
+		id:   counter,
 	}
 }
 
@@ -89,8 +94,13 @@ func (c *connection) handleMessage(message []byte) {
 	cid := json.Get("cid").MustInt64()
 	body := json.Get("body")
 
+	c.log.Info("GOT message!", "action", action)
+
 	// Will proces channel actions
 	c.hub.action <- &channelAction{name: streamName, conn: c, cid: cid, action: action, body: body}
+
+	// WRITE IT BACK TO THE same channel
+	c.write(websocket.TextMessage, message)
 }
 
 func (c *connection) write(mt int, payload []byte) error {
@@ -104,6 +114,7 @@ func (c *connection) write(mt int, payload []byte) error {
 func (c *connection) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
+		c.log.Info("write pump closed!")
 		ticker.Stop()
 		c.ws.Close()
 	}()
@@ -111,15 +122,19 @@ func (c *connection) writePump() {
 		select {
 		case message, ok := <-c.send:
 			if !ok {
+				c.log.Info("Message channel not ok??")
 				if err := c.write(websocket.CloseMessage, []byte{}); err != nil {
 					c.log.Warn("Failed to write close message to connection", "err", err)
 				}
 				return
 			}
+			c.log.Info("WRITE Text", "len", len(message))
 			if err := c.write(websocket.TextMessage, message); err != nil {
+				c.log.Info("CONN Write error", "err", err)
 				return
 			}
 		case <-ticker.C:
+			c.log.Info("Ticker")
 			if err := c.write(websocket.PingMessage, []byte{}); err != nil {
 				return
 			}

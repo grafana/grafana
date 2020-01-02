@@ -49,11 +49,11 @@ func (h *hub) run(ctx context.Context) {
 			return
 		case c := <-h.register:
 			h.connections[c] = true
-			h.log.Info("New connection", "total", len(h.connections))
+			h.log.Info("New connection", "id", c.id, "total", len(h.connections))
 
 		case c := <-h.unregister:
 			if _, ok := h.connections[c]; ok {
-				h.log.Info("Closing connection", "total", len(h.connections))
+				h.log.Info("Closing connection", "id", c.id, "total", len(h.connections))
 				delete(h.connections, c)
 				close(c.send)
 			}
@@ -64,7 +64,7 @@ func (h *hub) run(ctx context.Context) {
 			rsp["__cid"] = sub.cid
 			rsp["__action"] = sub.action
 			rsp["stream"] = sub.name
-			h.log.Info("ACTION", "channel", sub.name, "action", sub.action)
+			h.log.Info("ACTION", "id", sub.conn.id, "channel", sub.name, "action", sub.action)
 
 			// handle unsubscribe
 			if "unsubscribe" == sub.action {
@@ -91,7 +91,7 @@ func (h *hub) run(ctx context.Context) {
 
 				if stream != nil {
 					subscribed := stream.Subscribe(sub.conn)
-					h.log.Info("Subscribe", "channel", sub.name, "subscribed", subscribed)
+					h.log.Info("Subscribe", "channel", sub.name, "subscribed", subscribed, "size", len(stream.subscribers))
 				}
 			} else if !exists {
 				rsp["__error"] = "Channel does not exist"
