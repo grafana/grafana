@@ -134,7 +134,7 @@ func (c *connection) writePump() {
 				return
 			}
 		case <-ticker.C:
-			c.log.Info("Ticker")
+			c.log.Info("Ticker", "id", c.id)
 			if err := c.write(websocket.PingMessage, []byte{}); err != nil {
 				return
 			}
