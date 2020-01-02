@@ -3,7 +3,7 @@ title = "Image Rendering"
 description = ""
 keywords = ["grafana", "image", "rendering", "phantomjs"]
 type = "docs"
-aliases = ["/installation/image-rendering"]
+aliases = ["/docs/grafana/latest/installation/image-rendering"]
 [menu.docs]
 parent = "admin"
 weight = 8

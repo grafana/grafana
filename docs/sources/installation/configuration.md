@@ -610,14 +610,24 @@ You can choose between (s3, webdav, gcs, azure_blob, local). If left empty Grafa
 
 ## [external_image_storage.s3]
 
+### endpoint
+Optional endpoint URL (hostname or fully qualified URI) to override the default generated S3 endpoint. If you want to 
+keep the default, just leave this empty. You must still provide a `region` value if you specify an endpoint.
+
+## path_style_access
+Set this to true to force path-style addressing in S3 requests, i.e., `http://s3.amazonaws.com/BUCKET/KEY`, instead
+of the default, which is virtual hosted bucket addressing when possible (`http://BUCKET.s3.amazonaws.com/KEY`).
+
+Note: This option is specific to the Amazon S3 service.
+
 ### bucket
-Bucket name for S3. e.g. grafana.snapshot
+Bucket name for S3. e.g. grafana.snapshot.
 
 ### region
-Region name for S3. e.g. 'us-east-1', 'cn-north-1', etc
+Region name for S3. e.g. 'us-east-1', 'cn-north-1', etc.
 
 ### path
-Optional extra path inside bucket, useful to apply expiration policies
+Optional extra path inside bucket, useful to apply expiration policies.
 
 ### bucket_url
 (for backward compatibility, only works when no bucket or region are configured)
@@ -626,12 +636,12 @@ Bucket URL for S3. AWS region can be specified within URL or defaults to 'us-eas
 - https://grafana.s3-ap-southeast-2.amazonaws.com/
 
 ### access_key
-Access key. e.g. AAAAAAAAAAAAAAAAAAAA
+Access key, e.g. AAAAAAAAAAAAAAAAAAAA.
 
 Access key requires permissions to the S3 bucket for the 's3:PutObject' and 's3:PutObjectAcl' actions.
 
 ### secret_key
-Secret key. e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+Secret key, e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.
 
 ## [external_image_storage.webdav]
 
@@ -741,6 +751,65 @@ Set to true if you want to test alpha plugins that are not yet ready for general
 ### enable
 
 Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`
+
+## [tracing.jaeger]
+
+Configure Grafana's Jaeger client for distributed tracing.
+
+You can also use the standard `JAEGER_*` environment variables to configure
+Jaeger. See the table at the end of https://www.jaegertracing.io/docs/1.16/client-features/
+for the full list. Environment variables will override any settings provided here.
+
+### address
+
+The host:port destination for reporting spans. (ex: `localhost:6381`)
+
+Can be set with the environment variables `JAEGER_AGENT_HOST` and `JAEGER_AGENT_PORT`.
+
+### always_included_tag
+
+Comma-separated list of tags to include in all new spans, such as `tag1:value1,tag2:value2`.
+
+Can be set with the environment variable `JAEGER_TAGS` (use `=` instead of `:` with the environment variable).
+
+### sampler_type
+
+Default value is `const`.
+
+Specifies the type of sampler: `const`, `probabilistic`, `ratelimiting`, or `remote`.
+
+Refer to https://www.jaegertracing.io/docs/1.16/sampling/#client-sampling-configuration for details on the different tracing types.
+
+Can be set with the environment variable `JAEGER_SAMPLER_TYPE`.
+
+### sampler_param
+
+Default value is `1`.
+
+This is the sampler configuration parameter. Depending on the value of `sampler_type`, it can be `0`, `1`, or a decimal value in between.
+
+- For `const` sampler, `0` or `1` for always `false`/`true` respectively
+- For `probabilistic` sampler, a probability between `0` and `1.0`
+- For `rateLimiting` sampler, the number of spans per second
+- For `remote` sampler, param is the same as for `probabilistic`
+  and indicates the initial sampling rate before the actual one
+  is received from the mothership
+
+May be set with the environment variable `JAEGER_SAMPLER_PARAM`.
+
+### zipkin_propagation
+
+Default value is `false`.
+
+Controls whether or not to use Zipkin's span propagation format (with `x-b3-` HTTP headers). By default, Jaeger's format is used.
+
+Can be set with the environment variable and value `JAEGER_PROPAGATION=b3`.
+
+### disable_shared_zipkin_spans
+
+Default value is `false`.
+
+Setting this to `true` turns off shared RPC spans. Leaving this available is the most common setting when using Zipkin elsewhere in your infrastructure.
 
 <hr />
 

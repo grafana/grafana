@@ -1,7 +1,7 @@
 +++
 title = "Developer Guide"
 type = "docs"
-aliases = ["/plugins/development/", "/plugins/datasources/", "/plugins/apps/", "/plugins/panels/"]
+aliases = ["/docs/grafana/latest/plugins/development/", "/docs/grafana/latest/plugins/datasources/", "/docs/grafana/latest/plugins/apps/", "/docs/grafana/latest/plugins/panels/"]
 [menu.docs]
 name = "Developer Guide"
 parent = "developing"
