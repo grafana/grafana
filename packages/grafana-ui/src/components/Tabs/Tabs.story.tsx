@@ -18,7 +18,11 @@ export default {
 
 const navModelItem: NavModelItem = {
   text: 'Mother tab',
-  children: [{ text: '1st child', active: true }, { text: '2nd child' }, { text: '3rd child' }],
+  children: [
+    { text: '1st child', active: true, url: 'first/link' },
+    { text: '2nd child', url: 'second/link' },
+    { text: '3rd child', url: 'third/link' },
+  ],
 };
 
 export const Simple = () => {

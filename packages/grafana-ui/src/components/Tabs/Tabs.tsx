@@ -14,7 +14,6 @@ export interface Props {
 export const Tabs: FC<Props> = ({ main, onChangeTab, customCss }) => {
   const theme = useTheme();
   const tabsStyles = getTabsStyle(theme);
-  const hasOnChange = !!onChangeTab;
 
   return (
     <ul className={`${tabsStyles.tabs} ${customCss && customCss}`}>
@@ -26,7 +25,7 @@ export const Tabs: FC<Props> = ({ main, onChangeTab, customCss }) => {
         return (
           <li className={tabsStyles.tabItem} key={`${tab.url}-${index}`}>
             {tab.url && <TabLink tab={tab} />}
-            {hasOnChange && <TabItem tab={tab} index={index} onChangeTab={onChangeTab} />}
+            {!!onChangeTab && <TabItem tab={tab} index={index} onChangeTab={onChangeTab} />}
           </li>
         );
       })}
