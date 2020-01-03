@@ -107,8 +107,8 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
       ],
       range: this.timeSrv.timeRange(),
     });
-
-    return response.results[refId];
+    const result = response.results[refId];
+    return result && result.meta ? result.meta.labels : {};
   }
 
   interpolateGroupBys(groupBys: string[], scopedVars: {}): string[] {

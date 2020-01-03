@@ -78,9 +78,7 @@ export class QueryEditor extends React.Component<Props, State> {
       variableOptionGroup,
     });
 
-    datasource
-      .getLabels(target.metricType, target.refId, target.groupBys)
-      .then(labelData => this.setState({ labels: labelData && labelData.meta ? labelData.meta.labels : {} }));
+    datasource.getLabels(target.metricType, target.refId, target.groupBys).then(labels => this.setState({ labels }));
   }
 
   componentWillUnmount() {
@@ -124,10 +122,7 @@ export class QueryEditor extends React.Component<Props, State> {
       { valueType, metricKind, perSeriesAligner: this.state.perSeriesAligner },
       templateSrv
     );
-    const {
-      meta: { labels },
-    } = await this.props.datasource.getLabels(type, target.refId);
-    console.log({ labels });
+    const labels = await this.props.datasource.getLabels(type, target.refId, target.groupBys);
     this.setState(
       {
         alignOptions,
@@ -145,14 +140,13 @@ export class QueryEditor extends React.Component<Props, State> {
     );
   };
 
-  async onGroupBysChange(value: string[]) {
+  onGroupBysChange(value: string[]) {
     const { target, datasource } = this.props;
     this.setState({ groupBys: value }, () => {
       this.props.onQueryChange(this.state);
       this.props.onExecuteQuery();
     });
-    const labelData = await datasource.getLabels(target.metricType, target.refId, value);
-    this.setState({ labels: labelData && labelData.meta ? labelData.meta.labels : {} });
+    datasource.getLabels(target.metricType, target.refId, value).then(labels => this.setState({ labels }));
   }
 
   onPropertyChange(prop: string, value: string[]) {

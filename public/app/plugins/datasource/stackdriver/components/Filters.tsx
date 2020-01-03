@@ -13,7 +13,7 @@ export interface Props {
 }
 
 const removeText = '-- remove filter --';
-const removeOption: SelectableValue<string> = { label: removeText, value: removeText };
+const removeOption: SelectableValue<string> = { label: removeText, value: removeText, icon: 'fa fa-remove' };
 const operators = ['=', '!=', '=~', '!=~'];
 const filtersToStringArray = (filters: Filter[]) =>
   _.flatten(filters.map(({ key, operator, value, condition }) => [key, operator, value, condition]));
@@ -69,7 +69,9 @@ export const Filters: FunctionComponent<Props> = ({
             allowCustomValue
             value={value}
             placeholder="add filter value"
-            options={[...labels[key].map(toOption), variableOptionGroup]}
+            options={
+              labels.hasOwnProperty(key) ? [...labels[key].map(toOption), variableOptionGroup] : [variableOptionGroup]
+            }
             onChange={({ value }) =>
               onChange(filtersToStringArray(filters.map((f, i) => (i === index ? { ...f, value } : f))))
             }

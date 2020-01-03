@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { alignOptions, aggOptions, ValueTypes, MetricKind } from './constants';
+import { alignOptions, aggOptions, ValueTypes, MetricKind, systemLabels } from './constants';
 import { SelectableValue } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { StackdriverQuery } from './types';
@@ -45,14 +45,8 @@ export const getAggregationOptionsByMetric = (valueType: ValueTypes, metricKind:
 
 export const getLabelKeys = async (datasource: any, selectedMetricType: any) => {
   const refId = 'handleLabelKeysQuery';
-  const response = await datasource.getLabels(selectedMetricType, refId);
-  const labelKeys = response.meta
-    ? [
-        ...Object.keys(response.meta.resourceLabels).map(l => `resource.label.${l}`),
-        ...Object.keys(response.meta.metricLabels).map(l => `metric.label.${l}`),
-      ]
-    : [];
-  return labelKeys;
+  const labels = await datasource.getLabels(selectedMetricType, refId);
+  return [...Object.keys(labels), ...systemLabels];
 };
 
 export const getAlignmentPickerData = (
