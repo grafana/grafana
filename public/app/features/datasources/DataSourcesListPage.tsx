@@ -9,8 +9,9 @@ import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import DataSourcesList from './DataSourcesList';
 // Types
 import { DataSourceSettings, NavModel } from '@grafana/data';
-import { StoreState } from 'app/types';
 import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
+import { StoreState } from 'app/types/';
+
 // Actions
 import {
   loadDataSources,
@@ -19,8 +20,9 @@ import {
   loadDataSource,
   deleteDataSource,
 } from './state/actions';
-import { getNavModel } from 'app/core/selectors/navModel';
 
+// Selectors
+import { getNavModel } from 'app/core/selectors/navModel';
 import {
   getDataSources,
   getDataSourcesCount,
