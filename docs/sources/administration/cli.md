@@ -32,9 +32,6 @@ Before you enter commands, `cd` into the plugins directory. The default path is:
 cd "C:\Program Files\GrafanaLabs\grafana\bin"
 ```
 
-**Mac users**
-ANY SPECIAL NOTES FOR MAC USERS?
-
 ## Grafana CLI command syntax
 
 The general syntax for commands in Grafana CLI is:
