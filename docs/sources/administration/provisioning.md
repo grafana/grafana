@@ -48,7 +48,6 @@ datasources:
 If you have a literal `$` in your value and want to avoid interpolation, `$$` can be used.
 
 <hr />
-
 ## Configuration Management Tools
 
 Currently we do not provide any scripts/manifests for configuring Grafana. Rather than spending time learning and creating scripts/manifests for each tool, we think our time is better spent making Grafana easier to provision. Therefore, we heavily relay on the expertise of the community.
@@ -160,6 +159,9 @@ Since not all datasources have the same configuration settings we only have the 
 | tsdbVersion | string | OpenTSDB | Version |
 | tsdbResolution | string | OpenTSDB | Resolution |
 | sslmode | string | PostgreSQL | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full' |
+| sslrootcertfile | string | PostgreSQL | SSL root certificate file, must be readable by the grafana user |
+| sslcertfile | string | PostgreSQL | SSL client certificate file, must be readable by the grafana user |
+| sslkeyfile | string | PostgreSQL | SSL client key file, must be readable by **only** the grafana user |
 | encrypt | string | MSSQL | Connection SSL encryption handling. 'disable', 'false' or 'true' |
 | postgresVersion | number | PostgreSQL | Postgres version as a number (903/904/905/906/1000) meaning v9.3, v9.4, ..., v10 |
 | timescaledb | boolean | PostgreSQL | Enable usage of TimescaleDB extension |
