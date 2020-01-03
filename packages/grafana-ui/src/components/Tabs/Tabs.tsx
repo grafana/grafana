@@ -2,13 +2,12 @@ import React, { FC } from 'react';
 import { NavModelItem } from '@grafana/data';
 import { useTheme } from '../../themes';
 import { getTabsStyle } from './styles';
-import { TabLink } from './TabLink';
-import { TabItem } from './TabItem';
+import { cx } from 'emotion';
 
 export interface Props {
   main: NavModelItem;
   customCss?: string;
-  onChangeTab?: (id: number) => void;
+  onChangeTab: (id: number) => void;
 }
 
 export const Tabs: FC<Props> = ({ main, onChangeTab, customCss }) => {
@@ -24,8 +23,12 @@ export const Tabs: FC<Props> = ({ main, onChangeTab, customCss }) => {
 
         return (
           <li className={tabsStyles.tabItem} key={`${tab.url}-${index}`}>
-            {tab.url && <TabLink tab={tab} />}
-            {!!onChangeTab && <TabItem tab={tab} index={index} onChangeTab={onChangeTab} />}
+            <div
+              onClick={() => onChangeTab(index)}
+              className={cx(tabsStyles.linkItem, tab.active && tabsStyles.activeStyle)}
+            >
+              {tab.text}
+            </div>
           </li>
         );
       })}

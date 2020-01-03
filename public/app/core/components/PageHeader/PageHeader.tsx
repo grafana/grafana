@@ -46,10 +46,18 @@ const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string 
 };
 
 const Navigation = ({ main }: { main: NavModelItem }) => {
+  const goToUrl = (index: number) => {
+    main.children.forEach((child, i) => {
+      if (i === index) {
+        appEvents.emit(CoreEvents.locationChange, { href: child.url });
+      }
+    });
+  };
+
   return (
     <nav>
       <SelectNav customCss="page-header__select-nav" main={main} />
-      <Tabs customCss="page-header__tabs" main={main} />
+      <Tabs customCss="page-header__tabs" main={main} onChangeTab={goToUrl} />
     </nav>
   );
 };

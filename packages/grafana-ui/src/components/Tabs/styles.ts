@@ -24,6 +24,7 @@ export const getTabsStyle = stylesFactory((theme: GrafanaTheme) => {
       border-width: 0 1px 1px;
       border-radius: 3px 3px 0 0;
       color: ${colors.text};
+      cursor: pointer;
 
       i {
         margin-right: 5px;
@@ -44,6 +45,7 @@ export const getTabsStyle = stylesFactory((theme: GrafanaTheme) => {
       background: ${colors.pageBg};
       color: ${colors.link};
       overflow: hidden;
+      cursor: not-allowed;
 
       &::before {
         display: block;
