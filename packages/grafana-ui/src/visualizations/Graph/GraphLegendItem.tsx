@@ -1,9 +1,9 @@
 import React, { useContext } from 'react';
 import { css, cx } from 'emotion';
-import { LegendSeriesIcon } from '../Legend/LegendSeriesIcon';
-import { LegendItem } from '../Legend/Legend';
+import { LegendSeriesIcon } from '../../components/Legend/LegendSeriesIcon';
+import { LegendItem } from '../../components/Legend/Legend';
 import { SeriesColorChangeHandler } from './GraphWithLegend';
-import { LegendStatsList } from '../Legend/LegendStatsList';
+import { LegendStatsList } from '../../components/Legend/LegendStatsList';
 import { ThemeContext } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes';
 import { GrafanaTheme, formattedValueToString } from '@grafana/data';

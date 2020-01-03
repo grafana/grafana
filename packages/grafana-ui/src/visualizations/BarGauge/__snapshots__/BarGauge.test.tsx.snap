@@ -23,7 +23,7 @@ exports[`BarGauge Render with basic options should render 1`] = `
     }
   >
     <FormattedDisplayValue
-      className="bar-gauge__value"
+      className="css-1w4npsm"
       style={
         Object {
           "alignItems": "center",

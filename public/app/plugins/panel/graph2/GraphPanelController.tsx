@@ -4,7 +4,10 @@ import { PanelData, GraphSeriesXY, AbsoluteTimeRange, TimeZone } from '@grafana/
 
 import { getGraphSeriesModel } from './getGraphSeriesModel';
 import { Options, SeriesOptions } from './types';
-import { SeriesColorChangeHandler, SeriesAxisToggleHandler } from '@grafana/ui/src/components/Graph/GraphWithLegend';
+import {
+  SeriesAxisToggleHandler,
+  SeriesColorChangeHandler,
+} from '@grafana/ui/src/visualizations/Graph/GraphWithLegend';
 
 interface GraphPanelControllerAPI {
   series: GraphSeriesXY[];

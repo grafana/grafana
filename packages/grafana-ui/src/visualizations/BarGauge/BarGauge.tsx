@@ -1,6 +1,7 @@
 // Library
 import React, { PureComponent, CSSProperties, ReactNode } from 'react';
 import tinycolor from 'tinycolor2';
+import { css } from 'emotion';
 import * as d3 from 'd3-scale-chromatic';
 import {
   TimeSeriesValue,
@@ -15,7 +16,7 @@ import {
 } from '@grafana/data';
 
 // Compontents
-import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
+import { FormattedValueDisplay } from '../../components/FormattedValueDisplay/FormattedValueDisplay';
 
 // Utils
 import { getColorFromHexRgbOrName } from '@grafana/data';
@@ -24,6 +25,7 @@ import { measureText, calculateFontSize } from '../../utils/measureText';
 // Types
 import { VizOrientation } from '@grafana/data';
 import { Themeable } from '../../types';
+import { stylesFactory } from '../../themes';
 
 const MIN_VALUE_HEIGHT = 18;
 const MAX_VALUE_HEIGHT = 50;
@@ -54,6 +56,19 @@ export enum BarGaugeDisplayMode {
   Lcd = 'lcd',
   Gradient = 'gradient',
 }
+
+const getBarGaugeStyles = stylesFactory(() => {
+  return {
+    barGauge: css`
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    `,
+    value: css`
+      text-align: center;
+    `,
+  };
+});
 
 export class BarGauge extends PureComponent<Props> {
   static defaultProps: Partial<Props> = {
@@ -112,10 +127,11 @@ export class BarGauge extends PureComponent<Props> {
     const { value, showUnfilled } = this.props;
 
     const styles = getBasicAndGradientStyles(this.props);
+    const barGaugeStyles = getBarGaugeStyles();
 
     return (
       <div style={styles.wrapper}>
-        <FormattedValueDisplay className="bar-gauge__value" value={value} style={styles.value} />
+        <FormattedValueDisplay className={barGaugeStyles.value} value={value} style={styles.value} />
         {showUnfilled && <div style={styles.emptyBar} />}
         <div style={styles.bar} />
       </div>
@@ -187,7 +203,7 @@ export class BarGauge extends PureComponent<Props> {
 
     const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
     const valueStyles = getValueStyles(valueToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation);
-
+    const barGaugeStyles = getBarGaugeStyles();
     const containerStyles: CSSProperties = {
       width: `${wrapperWidth}px`,
       height: `${wrapperHeight}px`,
@@ -234,7 +250,7 @@ export class BarGauge extends PureComponent<Props> {
     return (
       <div style={containerStyles}>
         {cells}
-        <FormattedValueDisplay className="bar-gauge__value" value={value} style={valueStyles} />
+        <FormattedValueDisplay className={barGaugeStyles.value} value={value} style={valueStyles} />
       </div>
     );
   }

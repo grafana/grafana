@@ -1,9 +1,9 @@
 import React, { useContext } from 'react';
-import { LegendProps, LegendItem, LegendDisplayMode } from '../Legend/Legend';
+import { LegendProps, LegendItem, LegendDisplayMode } from '../../components/Legend/Legend';
 import { GraphLegendListItem, GraphLegendTableRow } from './GraphLegendItem';
 import { SeriesColorChangeHandler, SeriesAxisToggleHandler } from './GraphWithLegend';
-import { LegendTable } from '../Legend/LegendTable';
-import { LegendList } from '../Legend/LegendList';
+import { LegendTable } from '../../components/Legend/LegendTable';
+import { LegendList } from '../../components/Legend/LegendList';
 import union from 'lodash/union';
 import sortBy from 'lodash/sortBy';
 import { ThemeContext } from '../../themes/ThemeContext';

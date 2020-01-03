@@ -1,7 +1,7 @@
 import React from 'react';
 import { mount } from 'enzyme';
 import Graph from './Graph';
-import Chart from '../Chart';
+import Chart from '../../components/Chart';
 import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorMode } from '@grafana/data';
 
 const series: GraphSeriesXY[] = [

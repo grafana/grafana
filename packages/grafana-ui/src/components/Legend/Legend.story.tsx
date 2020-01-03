@@ -5,7 +5,11 @@ import tinycolor from 'tinycolor2';
 import { DisplayValue } from '@grafana/data';
 import { number, select, text } from '@storybook/addon-knobs';
 import { action } from '@storybook/addon-actions';
-import { GraphLegendListItem, GraphLegendTableRow, GraphLegendItemProps } from '../Graph/GraphLegendItem';
+import {
+  GraphLegendListItem,
+  GraphLegendTableRow,
+  GraphLegendItemProps,
+} from '../../visualizations/Graph/GraphLegendItem';
 
 export const generateLegendItems = (numberOfSeries: number, statsToDisplay?: DisplayValue[]): LegendItem[] => {
   const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');

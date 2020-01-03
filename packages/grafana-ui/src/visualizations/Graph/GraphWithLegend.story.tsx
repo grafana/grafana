@@ -5,7 +5,7 @@ import { select, text } from '@storybook/addon-knobs';
 import { withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { GraphWithLegend, GraphWithLegendProps } from './GraphWithLegend';
 
-import { LegendPlacement, LegendDisplayMode } from '../Legend/Legend';
+import { LegendPlacement, LegendDisplayMode } from '../../components/Legend/Legend';
 import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorMode } from '@grafana/data';
 const GraphWithLegendStories = storiesOf('Visualizations/Graph/GraphWithLegend', module);
 GraphWithLegendStories.addDecorator(withHorizontallyCenteredStory);

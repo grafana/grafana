@@ -5,8 +5,8 @@ import { GraphLegend } from './GraphLegend';
 import { action } from '@storybook/addon-actions';
 import { select, number } from '@storybook/addon-knobs';
 import { withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { generateLegendItems } from '../Legend/Legend.story';
-import { LegendPlacement, LegendDisplayMode } from '../Legend/Legend';
+import { generateLegendItems } from '../../components/Legend/Legend.story';
+import { LegendPlacement, LegendDisplayMode } from '../../components/Legend/Legend';
 
 const GraphLegendStories = storiesOf('Visualizations/Graph/GraphLegend', module);
 GraphLegendStories.addDecorator(withHorizontallyCenteredStory);

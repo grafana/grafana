@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from 'emotion';
 import { Portal } from '../Portal/Portal';
 import { Dimensions } from '@grafana/data';
-import { FlotPosition } from '../Graph/types';
+import { FlotPosition } from '../../visualizations/Graph/types';
 import { TooltipContainer } from './TooltipContainer';
 
 export type TooltipMode = 'single' | 'multi';

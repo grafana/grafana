@@ -1,11 +1,11 @@
 import React from 'react';
 import { Graph } from './Graph';
-import Chart from '../Chart';
+import Chart from '../../components/Chart';
 import { dateTime, ArrayVector, FieldType, GraphSeriesXY, FieldColorMode } from '@grafana/data';
 import { select } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { TooltipContentProps } from '../Chart/Tooltip';
-import { JSONFormatter } from '../JSONFormatter/JSONFormatter';
+import { TooltipContentProps } from '../../components/Chart/Tooltip';
+import { JSONFormatter } from '../../components/JSONFormatter/JSONFormatter';
 
 export default {
   title: 'Visualizations/Graph/Graph',

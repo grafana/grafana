@@ -5,9 +5,9 @@ import { css } from 'emotion';
 import { GraphSeriesValue } from '@grafana/data';
 
 import { Graph, GraphProps } from './Graph';
-import { LegendRenderOptions, LegendItem, LegendDisplayMode } from '../Legend/Legend';
+import { LegendRenderOptions, LegendItem, LegendDisplayMode } from '../../components/Legend/Legend';
 import { GraphLegend } from './GraphLegend';
-import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { CustomScrollbar } from '../../components/CustomScrollbar/CustomScrollbar';
 import { stylesFactory } from '../../themes';
 
 export type SeriesOptionChangeHandler<TOption> = (label: string, option: TOption) => void;

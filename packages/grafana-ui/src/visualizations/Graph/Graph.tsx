@@ -6,7 +6,7 @@ import uniqBy from 'lodash/uniqBy';
 import { TimeRange, GraphSeriesXY, TimeZone, DefaultTimeZone, createDimension } from '@grafana/data';
 import _ from 'lodash';
 import { FlotPosition, FlotItem } from './types';
-import { TooltipProps, TooltipContentProps, ActiveDimensions, Tooltip } from '../Chart/Tooltip';
+import { TooltipProps, TooltipContentProps, ActiveDimensions, Tooltip } from '../../components/Chart/Tooltip';
 import { GraphTooltip } from './GraphTooltip/GraphTooltip';
 import { GraphDimensions } from './GraphTooltip/types';
 

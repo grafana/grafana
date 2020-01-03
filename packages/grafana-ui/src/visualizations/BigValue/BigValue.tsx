@@ -13,7 +13,7 @@ import {
 } from './styles';
 
 import { renderGraph } from './renderGraph';
-import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
+import { FormattedValueDisplay } from '../../components/FormattedValueDisplay/FormattedValueDisplay';
 
 export interface BigValueSparkline {
   data: GraphSeriesValue[][];
