@@ -52,8 +52,6 @@ describe('Read/Write arrow Table to DataFrame', () => {
     });
 
     const table = grafanaDataFrameToArrowTable(frame);
-    const ddddd = table.toString();
-    console.log(ddddd);
     expect(table.length).toEqual(frame.length);
 
     // Now back to DataFrame
