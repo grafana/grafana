@@ -127,7 +127,7 @@ export class PanelCtrl {
       shortcut: 'v',
     });
 
-    if (this.dashboard.meta.canEdit) {
+    if (this.dashboard.canEditPanel(this.panel)) {
       menu.push({
         text: 'Edit',
         click: 'ctrl.editPanel();',
@@ -164,7 +164,7 @@ export class PanelCtrl {
       submenu: extendedMenu,
     });
 
-    if (this.dashboard.meta.canEdit) {
+    if (this.dashboard.canEditPanel(this.panel)) {
       menu.push({ divider: true, role: 'Editor' });
       menu.push({
         text: 'Remove',
@@ -180,7 +180,7 @@ export class PanelCtrl {
 
   getExtendedMenu() {
     const menu = [];
-    if (!this.panel.fullscreen && this.dashboard.meta.canEdit) {
+    if (!this.panel.fullscreen && this.dashboard.canEditPanel(this.panel)) {
       menu.push({
         text: 'Duplicate',
         click: 'ctrl.duplicate()',

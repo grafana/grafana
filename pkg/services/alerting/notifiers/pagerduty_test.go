@@ -31,7 +31,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			})
 
 			Convey("severity should override default", func() {
-				json := `{ "integrationKey": "abcdefgh0123456789", "severity": "info", "tags": ["foo"]}`
+				json := `{ "integrationKey": "abcdefgh0123456789", "severity": "info" }`
 
 				settingsJSON, jerr := simplejson.NewJson([]byte(json))
 				So(jerr, ShouldBeNil)
