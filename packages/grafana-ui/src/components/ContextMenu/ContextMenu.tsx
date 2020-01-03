@@ -135,7 +135,7 @@ const getContextMenuStyles = stylesFactory((theme: GrafanaTheme) => {
     groupLabel: css`
       color: ${groupLabelColor};
       font-size: ${theme.typography.size.sm};
-      line-height: ${theme.typography.lineHeight.lg};
+      line-height: ${theme.typography.lineHeight.md};
       padding: ${theme.spacing.xs} ${theme.spacing.sm};
     `,
     icon: css`

@@ -62,6 +62,8 @@ github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi
 github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface
 github.com/aws/aws-sdk-go/service/s3
 github.com/aws/aws-sdk-go/service/s3/internal/arn
+github.com/aws/aws-sdk-go/service/s3/s3iface
+github.com/aws/aws-sdk-go/service/s3/s3manager
 github.com/aws/aws-sdk-go/service/sts
 github.com/aws/aws-sdk-go/service/sts/stsiface
 # github.com/beevik/etree v1.1.0
@@ -128,7 +130,7 @@ github.com/golang/snappy
 github.com/google/flatbuffers/go
 # github.com/gopherjs/gopherjs v0.0.0-20190430165422-3e4dfb77656c
 github.com/gopherjs/gopherjs/js
-# github.com/gorilla/websocket v1.4.0
+# github.com/gorilla/websocket v1.4.1
 github.com/gorilla/websocket
 # github.com/gosimple/slug v1.4.2
 github.com/gosimple/slug

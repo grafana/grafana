@@ -18,11 +18,12 @@ import { TemplateSrv } from '../templating/template_srv';
 import { getPanelLinksSupplier } from './panellinks/linkSuppliers';
 import { AppEvent, PanelEvents, PanelPluginMeta, renderMarkdown } from '@grafana/data';
 import { getLocationSrv } from '@grafana/runtime';
+import { DashboardModel } from '../dashboard/state';
 
 export class PanelCtrl {
   panel: any;
   error: any;
-  dashboard: any;
+  dashboard: DashboardModel;
   pluginName: string;
   pluginId: string;
   editorTabs: any;
