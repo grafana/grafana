@@ -3,7 +3,7 @@ title = "Using Graphite in Grafana"
 description = "Guide for using graphite in Grafana"
 keywords = ["grafana", "graphite", "guide"]
 type = "docs"
-aliases = ["/datasources/graphite"]
+aliases = ["/docs/grafana/latest/datasources/graphite"]
 [menu.docs]
 name = "Graphite"
 identifier = "graphite"

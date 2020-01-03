@@ -110,7 +110,7 @@ export const getGraphSeriesModel = (
         const useMsDateFormat = hasMsResolution(timeField);
 
         timeField.display = getDisplayProcessor({
-          isUtc: timeZone === 'utc',
+          timeZone,
           field: {
             ...timeField,
             type: timeField.type,

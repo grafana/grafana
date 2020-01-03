@@ -254,7 +254,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         },
       },
       theme: config.theme,
-      isUtc: dashboard.isTimezoneUtc && dashboard.isTimezoneUtc(),
+      timeZone: dashboard.getTimezone(),
     });
 
     const sparkline: any[] = [];

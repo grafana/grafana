@@ -2,7 +2,7 @@
 title = "Team Sync"
 description = "Grafana Team Sync"
 keywords = ["grafana", "auth", "documentation"]
-aliases = ["/auth/saml/"]
+aliases = ["/docs/grafana/latest/auth/saml/"]
 type = "docs"
 [menu.docs]
 name = "Team Sync"
