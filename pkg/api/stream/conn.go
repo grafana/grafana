@@ -99,8 +99,11 @@ func (c *connection) handleMessage(message []byte) {
 	// Will proces channel actions
 	c.hub.action <- &channelAction{name: streamName, conn: c, cid: cid, action: action, body: body}
 
-	// WRITE IT BACK TO THE same channel
-	c.write(websocket.TextMessage, message)
+	// (TEMP) WRITE IT BACK TO THE same channel
+	err = c.write(websocket.TextMessage, message)
+	if err != nil {
+		log.Warn("Error Writing same socket back to the channel", "err", err)
+	}
 }
 
 func (c *connection) write(mt int, payload []byte) error {
