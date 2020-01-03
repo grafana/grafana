@@ -33,12 +33,15 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
     const nameMatch = query.match(/\b(\w+_(total|sum|count))\b/);
     let counterNameMetric = nameMatch ? nameMatch[1] : '';
     const metricsMetadata = datasource?.languageProvider?.metricsMetadata;
+    let certain = false;
     if (_.size(metricsMetadata) > 0) {
       counterNameMetric = Object.keys(metricsMetadata).find(metricName => {
+        // Only considering first type information, could be non-deterministic
         const metadata = metricsMetadata[metricName][0];
         if (metadata.type.toLowerCase() === 'counter') {
           const metricRegex = new RegExp(`\\b${metricName}\\b`);
           if (query.match(metricRegex)) {
+            certain = true;
             return true;
           }
         }
@@ -47,7 +50,8 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
     }
     if (counterNameMetric) {
       const simpleMetric = query.trim().match(/^\w+$/);
-      let label = `Metric ${counterNameMetric} looks like a counter.`;
+      const verb = certain ? 'is' : 'looks like';
+      let label = `Metric ${counterNameMetric} ${verb} a counter.`;
       let fix: QueryFix;
       if (simpleMetric) {
         fix = {

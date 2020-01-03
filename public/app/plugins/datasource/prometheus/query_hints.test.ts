@@ -1,4 +1,5 @@
 import { getQueryHints, SUM_HINT_THRESHOLD_COUNT } from './query_hints';
+import { PrometheusDatasource } from './datasource';
 
 describe('getQueryHints()', () => {
   it('returns no hints for no series', () => {
@@ -30,6 +31,35 @@ describe('getQueryHints()', () => {
         },
       },
     });
+  });
+
+  it('returns a certain rate hint for a counter metric', () => {
+    const series = [
+      {
+        datapoints: [
+          [23, 1000],
+          [24, 1001],
+        ],
+      },
+    ];
+    const mock: unknown = { languageProvider: { metricsMetadata: { foo: [{ type: 'counter' }] } } };
+    const datasource = mock as PrometheusDatasource;
+
+    let hints = getQueryHints('foo', series, datasource);
+    expect(hints!.length).toBe(1);
+    expect(hints![0]).toMatchObject({
+      label: 'Metric foo is a counter.',
+      fix: {
+        action: {
+          type: 'ADD_RATE',
+          query: 'foo',
+        },
+      },
+    });
+
+    // Test substring match not triggering hint
+    hints = getQueryHints('foo_foo', series, datasource);
+    expect(hints).toBe(null);
   });
 
   it('returns no rate hint for a counter metric that already has a rate', () => {
