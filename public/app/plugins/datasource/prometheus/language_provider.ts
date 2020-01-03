@@ -303,14 +303,17 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const suggestions: CompletionItemGroup[] = [];
     const line = value.anchorBlock.getText();
     const cursorOffset = value.selection.anchor.offset;
-    const nextChar = line[cursorOffset];
+    const suffix = line.substr(cursorOffset);
+    const prefix = line.substr(0, cursorOffset);
     const isValueStart = text.match(/^(=|=~|!=|!~)/);
-    const isValueEnd = nextChar.match(/[,}]/);
+    const isValueEnd = suffix.match(/^"?[,}]/);
+    // detect cursor in front of value, e.g., {key=|"}
+    const isPreValue = prefix.match(/(=|=~|!=|!~)$/) && suffix.match(/^"/);
 
-    // Don't suggest anything at the beginning or inside a value
+    // Don't suggestq anything at the beginning or inside a value
     const isValueEmpty = isValueStart && isValueEnd;
     const hasValuePrefix = isValueEnd && !isValueStart;
-    if (!isValueEmpty && !hasValuePrefix) {
+    if ((!isValueEmpty && !hasValuePrefix) || isPreValue) {
       return { suggestions };
     }
 
