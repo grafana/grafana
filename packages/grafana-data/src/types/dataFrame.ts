@@ -1,10 +1,11 @@
-import { Threshold } from './threshold';
+import { ThresholdsConfig } from './thresholds';
 import { ValueMapping } from './valueMapping';
 import { QueryResultBase, Labels, NullValueMode } from './data';
 import { DisplayProcessor } from './displayValue';
 import { DataLink } from './dataLink';
 import { Vector } from './vector';
 import { FieldCalcs } from '../transformations/fieldReducer';
+import { FieldColor } from './fieldColor';
 
 export enum FieldType {
   time = 'time', // or date
@@ -32,8 +33,11 @@ export interface FieldConfig {
   // Convert input values into a display string
   mappings?: ValueMapping[];
 
-  // Must be sorted by 'value', first value is always -Infinity
-  thresholds?: Threshold[];
+  // Map numeric values to states
+  thresholds?: ThresholdsConfig;
+
+  // Map values to a display color
+  color?: FieldColor;
 
   // Used when reducing field values
   nullValueMode?: NullValueMode;
@@ -44,8 +48,7 @@ export interface FieldConfig {
   // Alternative to empty string
   noValue?: string;
 
-  color?: string;
-
+  // Panel Specific Values
   custom?: Record<string, any>;
 }
 

@@ -34,8 +34,7 @@ export const PromSettings = (props: Props) => {
                   validationEvents={promSettingsValidationEvents}
                 />
               }
-              tooltip="Set this to your global scrape interval defined in your Prometheus config file. This will be used as a lower limit for the
-        Prometheus step query parameter."
+              tooltip="Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s."
             />
           </div>
         </div>

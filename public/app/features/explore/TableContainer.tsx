@@ -6,6 +6,8 @@ import { Table, Collapse } from '@grafana/ui';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { toggleTable } from './state/actions';
+import { config } from 'app/core/config';
+import { PANEL_BORDER } from 'app/core/constants';
 
 interface TableContainerProps {
   exploreId: ExploreId;
@@ -37,8 +39,7 @@ export class TableContainer extends PureComponent<TableContainerProps> {
     const { loading, onClickCell, showingTable, tableResult, width } = this.props;
 
     const height = this.getTableHeight();
-    const paddingWidth = 16;
-    const tableWidth = width - paddingWidth;
+    const tableWidth = width - config.theme.panelPadding * 2 - PANEL_BORDER;
 
     return (
       <Collapse label="Table" loading={loading} collapsible isOpen={showingTable} onToggle={this.onClickTableButton}>
