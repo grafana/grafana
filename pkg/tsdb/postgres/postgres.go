@@ -50,7 +50,7 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 
 	// Attach root certificate if provided
 	if sslrootcert := datasource.JsonData.Get("sslrootcertfile").MustString(""); sslrootcert != "" {
-		logger.Debug("Setting CA certificate: %s", sslrootcert)
+		logger.Debug("Setting CA certificate", "sslrootcert", sslrootcert)
 		sslopts += "&sslrootcert=" + url.QueryEscape(sslrootcert)
 	}
 
@@ -59,14 +59,14 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 	sslkey := datasource.JsonData.Get("sslkeyfile").MustString("")
 
 	if sslcert != "" && sslkey != "" {
-		logger.Debug("Setting TLS client certificate: %s key: %s", sslcert, sslkey)
+		logger.Debug("Setting TLS client auth", "sslcert", sslcert, "sslkey", sslkey)
 		sslopts += "&sslcert=" + url.QueryEscape(sslcert) + "&sslkey=" + url.QueryEscape(sslkey)
 
 	} else if (sslcert != "" && sslkey == "") || (sslcert == "" && sslkey != "") {
 		logger.Error("TLS client and certificate must BOTH be specified")
 	}
 
-	logger.Debug("Raw query string: '%s'", sslopts)
+	logger.Debug("Raw query string", "query", sslopts)
 
 	// Build URL
 	u := &url.URL{
