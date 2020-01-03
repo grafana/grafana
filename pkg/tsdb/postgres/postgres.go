@@ -44,12 +44,26 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 
 func generateConnectionString(datasource *models.DataSource) string {
 	sslmode := datasource.JsonData.Get("sslmode").MustString("verify-full")
-	u := &url.URL{
-		Scheme: "postgres",
-		User:   url.UserPassword(datasource.User, datasource.DecryptedPassword()),
-		Host:   datasource.Url, Path: datasource.Database,
-		RawQuery: "sslmode=" + url.QueryEscape(sslmode),
-	}
+		
+    if sslmode == "verify-full" {
+		sslrootcert := datasource.JsonData.Get("sslrootcertfile").MustString("/path/to/sslrootcertfile")
+		sslcert := datasource.JsonData.Get("sslcertfile").MustString("/path/to/sslcertfile")
+		sslkey := datasource.JsonData.Get("sslkeyfile").MustString("/path/to/sslkeyfile")
+		u := &url.URL{
+			Scheme: "postgres",
+			User:   url.UserPassword(datasource.User, datasource.DecryptedPassword()),
+			Host:   datasource.Url, Path: datasource.Database,
+			RawQuery: "sslmode=" + url.QueryEscape(sslmode) + "sslrootcert=" + url.QueryEscape(sslrootcert) + "sslcert=" + url.QueryEscape(sslcert) + "sslkey=" + url.QueryEscape(sslkey), 
+			//Do we need a & separator between the parameters in the RawQuery like in the commented line below?
+			//RawQuery: "sslmode=" + url.QueryEscape(sslmode) + "&sslrootcert=" + url.QueryEscape(sslrootcert) + "&sslcert=" + url.QueryEscape(sslcert) + "&sslkey=" + url.QueryEscape(sslkey), 
+    } else { //additional tests and connection strings might be necessary for the other possible values of "sslmode"
+		u := &url.URL{
+			Scheme: "postgres",
+			User:   url.UserPassword(datasource.User, datasource.DecryptedPassword()),
+			Host:   datasource.Url, Path: datasource.Database,
+			RawQuery: "sslmode=" + url.QueryEscape(sslmode), 
+		}
+    }
 
 	return u.String()
 }
