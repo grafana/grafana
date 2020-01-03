@@ -1,4 +1,4 @@
-import { DataFrame, FieldType, Field, Vector, FieldConfig, Labels } from '../../types';
+import { DataFrame, FieldType, Field, Vector, FieldConfig, Labels } from '../types';
 import {
   Table,
   ArrowType,

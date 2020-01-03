@@ -1,6 +1,6 @@
 import { resultsToDataFrames, grafanaDataFrameToArrowTable, arrowTableToDataFrame } from './ArrowDataFrame';
-import { toDataFrameDTO, toDataFrame } from '../processDataFrame';
-import { FieldType } from '../../types';
+import { toDataFrameDTO, toDataFrame } from './processDataFrame';
+import { FieldType } from '../types';
 
 /* tslint:disable */
 const resp = {
