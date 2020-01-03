@@ -14,11 +14,6 @@ export default {
   title: 'UI/Forms/Select',
   component: Select,
   decorators: [withCenteredStory, withHorizontallyCenteredStory],
-  // parameters: {
-  //   docs: {
-  //     page: mdx,
-  //   },
-  // },
 };
 
 const generateOptions = () => {

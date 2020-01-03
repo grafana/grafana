@@ -5,16 +5,14 @@ import { cx } from 'emotion';
 import { SelectableValue } from '@grafana/data';
 import { Icon } from '../../Icon/Icon';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
-// @ts-ignore
-import { components } from '@torkelo/react-select';
 interface SelectMenuProps {
   maxHeight: number;
+  innerRef: React.Ref<any>;
 }
 
 export const SelectMenu = React.forwardRef<HTMLDivElement, React.PropsWithChildren<SelectMenuProps>>((props, ref) => {
   const theme = useTheme();
   const styles = getSelectStyles(theme);
-  // @ts-ignore
   const { children, maxHeight, innerRef } = props;
 
   return (

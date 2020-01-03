@@ -1,9 +1,8 @@
 import React from 'react';
+import { select, text } from '@storybook/addon-knobs';
 import { Button, ButtonVariant } from './Button';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { getIconKnob } from '../../utils/storybook/knobs';
-
-import { select, text } from '@storybook/addon-knobs';
 import { ButtonSize } from '../Button/types';
 import mdx from './Button.mdx';
 
