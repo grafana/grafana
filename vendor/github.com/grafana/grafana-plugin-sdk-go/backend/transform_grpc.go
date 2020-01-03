@@ -23,7 +23,7 @@ func (t *TransformGRPCServer) DataQuery(ctx context.Context, req *pluginv2.DataQ
 	}
 	rawReqIDValues := md.Get("broker_requestId") // TODO const
 	if len(rawReqIDValues) != 1 {
-		return nil, fmt.Errorf("transform request metadta is missing broker_requestId")
+		return nil, fmt.Errorf("transform request metadata is missing broker_requestId, %v", md)
 	}
 	id64, err := strconv.ParseUint(rawReqIDValues[0], 10, 32)
 	if err != nil {
@@ -54,8 +54,9 @@ func (t *TransformGRPCClient) DataQuery(ctx context.Context, req *pluginv2.DataQ
 		return s
 	}
 	brokerID := t.broker.NextId()
+
 	go t.broker.AcceptAndServe(brokerID, serverFunc)
-	metadata.AppendToOutgoingContext(ctx, "broker_requestId", string(brokerID))
+	ctx = metadata.AppendToOutgoingContext(ctx, "broker_requestId", strconv.FormatUint(uint64(brokerID), 10))
 	res, err := t.client.DataQuery(ctx, req)
 	s.Stop()
 	return res, err

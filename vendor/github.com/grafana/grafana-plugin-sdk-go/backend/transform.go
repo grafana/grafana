@@ -16,7 +16,6 @@ type transformWrapper struct {
 
 func (t *transformWrapper) DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest, callBack TransformCallBack) (*pluginv2.DataQueryResponse, error) {
 	pc := pluginConfigFromProto(req.Config)
-
 	queries := make([]DataQuery, len(req.Queries))
 	for i, q := range req.Queries {
 		queries[i] = *dataQueryFromProtobuf(q)
@@ -67,8 +66,9 @@ func (tw *transformCallBackWrapper) DataQuery(ctx context.Context, pc PluginConf
 	}
 
 	protoReq := &pluginv2.DataQueryRequest{
-		// TODO: Plugin Config?
+		Config:  pc.toProtobuf(),
 		Queries: protoQueries,
+		Headers: headers,
 	}
 
 	protoRes, err := tw.callBack.DataQuery(ctx, protoReq)

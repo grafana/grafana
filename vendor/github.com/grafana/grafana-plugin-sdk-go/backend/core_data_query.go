@@ -11,7 +11,7 @@ import (
 
 // DataQueryHandler handles data source queries.
 type DataQueryHandler interface {
-	DataQuery(ctx context.Context, pc PluginConfig, headers map[string]string, queries []DataQuery) (DataQueryResponse, error)
+	DataQuery(ctx context.Context, pc PluginConfig, headers map[string]string, queries []DataQuery) (*DataQueryResponse, error)
 }
 
 // DataQuery represents the query as sent from the frontend.

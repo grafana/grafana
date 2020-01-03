@@ -136,7 +136,7 @@ github.com/gosimple/slug
 # github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 github.com/grafana/grafana-plugin-model/go/datasource
 github.com/grafana/grafana-plugin-model/go/renderer
-# github.com/grafana/grafana-plugin-sdk-go v0.4.0 => github.com/grafana/grafana-plugin-sdk-go v0.4.1-0.20200101114610-b78469dba5b5
+# github.com/grafana/grafana-plugin-sdk-go v0.0.0-00010101000000-000000000000 => ../grafana-plugin-sdk-go
 github.com/grafana/grafana-plugin-sdk-go/backend
 github.com/grafana/grafana-plugin-sdk-go/common
 github.com/grafana/grafana-plugin-sdk-go/dataframe

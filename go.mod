@@ -2,7 +2,7 @@ module github.com/grafana/grafana
 
 go 1.13
 
-replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.4.1-0.20200101114610-b78469dba5b5
+// replace github.com/grafana/grafana-plugin-sdk-go => ../grafana-plugin-sdk-go
 
 require (
 	github.com/BurntSushi/toml v0.3.1
@@ -33,7 +33,7 @@ require (
 	github.com/gorilla/websocket v1.4.1
 	github.com/gosimple/slug v1.4.2
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
-	github.com/grafana/grafana-plugin-sdk-go v0.4.0
+	github.com/grafana/grafana-plugin-sdk-go v0.4.1-0.20200103142710-7ad32811bfca // indirect
 	github.com/hashicorp/go-hclog v0.8.0
 	github.com/hashicorp/go-plugin v1.0.1
 	github.com/hashicorp/go-version v1.1.0

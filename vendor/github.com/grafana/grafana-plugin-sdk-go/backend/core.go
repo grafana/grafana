@@ -28,7 +28,18 @@ func pluginConfigFromProto(pc *pluginv2.PluginConfig) PluginConfig {
 		Name:     pc.Name,
 		Type:     pc.Type,
 		URL:      pc.Url,
-		JSONData: json.RawMessage(pc.JsonData),
+		JSONData: json.RawMessage([]byte(pc.JsonData)),
+	}
+}
+
+func (pc PluginConfig) toProtobuf() *pluginv2.PluginConfig {
+	return &pluginv2.PluginConfig{
+		Id:       pc.ID,
+		OrgId:    pc.OrgID,
+		Name:     pc.Name,
+		Type:     pc.Type,
+		Url:      pc.URL,
+		JsonData: string(pc.JSONData),
 	}
 }
 
@@ -118,7 +129,7 @@ type PluginHandlers interface {
 
 // CheckHandler handles backend plugin checks.
 type CheckHandler interface {
-	Check(ctx context.Context, pc PluginConfig, headers map[string]string, fetch FetchInfo) (CheckResponse, error)
+	Check(ctx context.Context, pc PluginConfig, headers map[string]string, fetch FetchInfo) (*CheckResponse, error)
 }
 
 func (p *coreWrapper) Check(ctx context.Context, req *pluginv2.PluginStatusRequest) (*pluginv2.PluginStatusResponse, error) {
