@@ -98,7 +98,7 @@ export async function readGitLog(): Promise<GitLogInfo | undefined> {
     let exe = await execa('git', [
       'log',
       '-1', // last line
-      '--pretty=format:\'{%n  "commit": "%H",%n  "tree": "%T",%n  "subject": "%s",%n  "author": {%n    "name": "%aN",%n    "email": "%aE", "time":"%at"  },%n  "commiter": {%n    "name": "%cN",%n    "email": "%cE", "time":"%ct"  }%n}\'',
+      '--pretty=format:{%n  "commit": "%H",%n  "tree": "%T",%n  "subject": "%s",%n  "author": {%n    "name": "%aN",%n    "email": "%aE",%n    "time":"%at"  },%n  "commiter": {%n    "name": "%cN",%n    "email": "%cE",%n    "time":"%ct"  }%n}',
     ]);
     const info = JSON.parse(exe.stdout) as GitLogInfo;
 
@@ -106,7 +106,7 @@ export async function readGitLog(): Promise<GitLogInfo | undefined> {
     exe = await execa('git', [
       'log',
       '-1', // last line
-      "--pretty=format:'%b'", // Just the body (with newlines!)
+      '--pretty=format:%b', // Just the body (with newlines!)
     ]);
     if (exe.stdout && exe.stdout.length) {
       info.body = exe.stdout.trim();
@@ -116,7 +116,7 @@ export async function readGitLog(): Promise<GitLogInfo | undefined> {
     exe = await execa('git', [
       'log',
       '-1', // last line
-      "--pretty=format:'%N'", // commit notes (with newlines!)
+      '--pretty=format:%N', // commit notes (with newlines!)
     ]);
     if (exe.stdout && exe.stdout.length) {
       info.notes = exe.stdout.trim();
