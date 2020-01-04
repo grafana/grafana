@@ -75,6 +75,7 @@ export interface ZipFileInfo {
 interface UserInfo {
   name: string;
   email: string;
+  time?: number;
 }
 
 export interface GitLogInfo {
