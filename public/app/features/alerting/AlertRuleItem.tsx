@@ -3,6 +3,7 @@ import React, { PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
 import classNames from 'classnames';
 import { AlertRule } from '../../types';
+import { Unicon } from '@grafana/ui/src/components/Icon/Unicon';
 
 export interface Props {
   rule: AlertRule;
@@ -25,9 +26,9 @@ class AlertRuleItem extends PureComponent<Props> {
     const { rule, onTogglePause } = this.props;
 
     const iconClassName = classNames({
-      fa: true,
-      'fa-play': rule.state === 'paused',
-      'fa-pause': rule.state !== 'paused',
+      uil: true,
+      'uil-play': rule.state === 'paused',
+      'uil-pause': rule.state !== 'paused',
     });
 
     const ruleUrl = `${rule.url}?panelId=${rule.panelId}&fullscreen&edit&tab=alert`;
@@ -56,10 +57,10 @@ class AlertRuleItem extends PureComponent<Props> {
             title="Pausing an alert rule prevents it from executing"
             onClick={onTogglePause}
           >
-            <i className={iconClassName} />
+            <Unicon name={iconClassName} />
           </button>
           <a className="btn btn-small btn-inverse alert-list__btn width-2" href={ruleUrl} title="Edit alert rule">
-            <i className="gicon gicon-cog" />
+            <Unicon name="cog" />
           </a>
         </div>
       </li>

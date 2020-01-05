@@ -176,12 +176,12 @@ class LiveLogs extends PureComponent<Props, State> {
         </table>
         <div className={cx([styles.logsRowsIndicator])}>
           <button onClick={isPaused ? onResume : onPause} className={cx('btn btn-secondary', styles.button)}>
-            <i className={cx('fa', isPaused ? 'fa-play' : 'fa-pause')} />
+            <i className={cx('uil', isPaused ? 'uil-play' : 'uil-pause')} />
             &nbsp;
             {isPaused ? 'Resume' : 'Pause'}
           </button>
           <button onClick={this.props.stopLive} className={cx('btn btn-inverse', styles.button)}>
-            <i className={'fa fa-stop'} />
+            <i className={'uil uil-square-shape'} />
             &nbsp; Exit live mode
           </button>
           {isPaused || (

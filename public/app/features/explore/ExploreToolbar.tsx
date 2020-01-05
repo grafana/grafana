@@ -32,6 +32,7 @@ import { ResponsiveButton } from './ResponsiveButton';
 import { RunButton } from './RunButton';
 import { LiveTailControls } from './useLiveTailControls';
 import { getExploreDatasources } from './state/selectors';
+import { Unicon } from '@grafana/ui/src/components/Icon/Unicon';
 
 const getStyles = memoizeOne(() => {
   return {
@@ -183,14 +184,14 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
             <div className="explore-toolbar-header-title">
               {exploreId === 'left' && (
                 <span className="navbar-page-btn">
-                  <i className="gicon gicon-explore" />
+                  <Unicon name="compass" />
                   Explore
                 </span>
               )}
             </div>
             {splitted && (
               <a className="explore-toolbar-header-close" onClick={() => closeSplit(exploreId)}>
-                <i className="fa fa-times fa-fw" />
+                <Unicon name="times" />
               </a>
             )}
           </div>
@@ -242,7 +243,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
               <div className="explore-toolbar-content-item">
                 <Tooltip content={'Return to panel'} placement="bottom">
                   <button className={panelReturnClasses} onClick={() => this.returnToPanel()}>
-                    <i className="fa fa-arrow-left" />
+                    <Unicon name="arrow-left" />
                   </button>
                 </Tooltip>
                 {originDashboardIsEditable && (
@@ -262,7 +263,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                   splitted={splitted}
                   title="Split"
                   onClick={split}
-                  iconClassName="fa fa-fw fa-columns icon-margin-right"
+                  iconClassName="uil uil-columns"
                   disabled={isLive}
                 />
               </div>
@@ -288,7 +289,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                   splitted={splitted}
                   title="Clear All"
                   onClick={this.onClearAll}
-                  iconClassName="fa fa-fw fa-trash icon-margin-right"
+                  iconClassName="uil uil-trash-alt"
                 />
               </div>
             )}

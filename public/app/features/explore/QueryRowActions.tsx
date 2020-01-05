@@ -1,4 +1,5 @@
 import React from 'react';
+import { Unicon } from '@grafana/ui/src/components/Icon/Unicon';
 
 export type Props = {
   canToggleEditorModes: boolean;
@@ -30,7 +31,7 @@ export function QueryRowActions(props: Props) {
             className="gf-form-label gf-form-label--btn"
             onClick={onClickToggleEditorMode}
           >
-            <i className="fa fa-pencil" />
+            <Unicon name="pen" />
           </button>
         </div>
       )}
@@ -41,17 +42,17 @@ export function QueryRowActions(props: Props) {
           onClick={onClickToggleDisabled}
           title="Disable/enable query"
         >
-          <i className={isDisabled ? 'fa fa-eye-slash' : 'fa fa-eye'} />
+          <Unicon name={isDisabled ? 'eye-slash' : 'eye'} />
         </button>
       </div>
       <div className="gf-form">
         <button className="gf-form-label gf-form-label--btn" onClick={onClickAddButton} title="Add query">
-          <i className="fa fa-plus" />
+          <Unicon name="plus" />
         </button>
       </div>
       <div className="gf-form">
         <button className="gf-form-label gf-form-label--btn" onClick={onClickRemoveButton} title="Remove query">
-          <i className="fa fa-minus" />
+          <Unicon name="minus" />
         </button>
       </div>
     </div>

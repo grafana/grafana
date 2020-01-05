@@ -73,42 +73,42 @@ function getStateDisplayModel(state: string) {
     case 'ok': {
       return {
         text: 'OK',
-        iconClass: 'icon-gf icon-gf-online',
+        iconClass: 'uil uil-heart',
         stateClass: 'alert-state-ok',
       };
     }
     case 'alerting': {
       return {
         text: 'ALERTING',
-        iconClass: 'icon-gf icon-gf-critical',
+        iconClass: 'uil uil-heartbeat',
         stateClass: 'alert-state-critical',
       };
     }
     case 'no_data': {
       return {
         text: 'NO DATA',
-        iconClass: 'fa fa-question',
+        iconClass: 'uil uil-question-circle',
         stateClass: 'alert-state-warning',
       };
     }
     case 'paused': {
       return {
         text: 'PAUSED',
-        iconClass: 'fa fa-pause',
+        iconClass: 'uil uil-pause',
         stateClass: 'alert-state-paused',
       };
     }
     case 'pending': {
       return {
         text: 'PENDING',
-        iconClass: 'fa fa-exclamation',
+        iconClass: 'uil uil-exclamation-circle',
         stateClass: 'alert-state-warning',
       };
     }
     case 'unknown': {
       return {
         text: 'UNKNOWN',
-        iconClass: 'fa fa-question',
+        iconClass: 'uil uil-question-circle',
         stateClass: 'alert-state-paused',
       };
     }

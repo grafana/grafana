@@ -12,21 +12,21 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
     children: [
       {
         active: false,
-        icon: 'fa fa-fw fa-th-large',
+        icon: 'uil uil-th',
         id: `folder-dashboards-${folder.uid}`,
         text: 'Dashboards',
         url: folder.url,
       },
       {
         active: false,
-        icon: 'fa fa-fw fa-lock',
+        icon: 'uil uil-clock-nine',
         id: `folder-permissions-${folder.uid}`,
         text: 'Permissions',
         url: `${folder.url}/permissions`,
       },
       {
         active: false,
-        icon: 'gicon gicon-cog',
+        icon: 'uil uil-cog',
         id: `folder-settings-${folder.uid}`,
         text: 'Settings',
         url: `${folder.url}/settings`,
