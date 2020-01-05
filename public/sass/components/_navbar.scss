@@ -210,6 +210,8 @@ i.navbar-page-btn__search {
   background: transparent;
   border: 2px solid $text-color;
   border-radius: 50%;
+  display: flex;
+  justify-content: center;
   width: 34px;
   height: 34px;
   transition: transform 0.1s ease 0.1s;
@@ -218,8 +220,6 @@ i.navbar-page-btn__search {
   i {
     font-size: $font-size-lg;
     position: relative;
-    top: 1px;
-    right: 1px;
   }
 
   &:hover {

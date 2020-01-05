@@ -278,7 +278,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 			Text:        "Teams",
 			Id:          "teams",
 			Description: "Manage org groups",
-			Icon:        "users",
+			Icon:        "users-alt",
 			Url:         setting.AppSubUrl + "/org/teams",
 		})
 	}

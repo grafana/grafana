@@ -18,7 +18,7 @@
   box-shadow: $page-header-shadow;
   border-bottom: 1px solid $page-header-border-color;
 
-  .gicon {
+  i {
     font-size: 30px;
     margin-right: $space-md;
   }
@@ -45,12 +45,9 @@
 .add-panel-widget__icon {
   margin-bottom: $space-sm;
 
-  .gicon {
-    color: white;
-    height: 44px;
-    width: 53px;
+  i {
+    font-size: 30px;
     position: relative;
-    left: 5px;
   }
 }
 

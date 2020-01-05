@@ -8,6 +8,7 @@ import { ButtonSelect } from '../Select/ButtonSelect';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { TimePickerPopover } from './TimePickerPopover';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
+import { Unicon } from '@grafana/ui/src/components/Icon/Unicon';
 
 // Utils & Services
 import { isDateTime, DateTime, rangeUtil } from '@grafana/data';
@@ -191,7 +192,7 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
         <div className="time-picker-buttons">
           {hasAbsolute && (
             <button className="btn navbar-button navbar-button--tight" onClick={onMoveBackward}>
-              <i className="fa fa-chevron-left" />
+              <Unicon name="angle-left" />
             </button>
           )}
           <ButtonSelect
@@ -205,7 +206,7 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
             options={options}
             maxMenuHeight={600}
             onChange={this.onSelectChanged}
-            iconClass={classNames('fa fa-clock-o fa-fw', isSynced && timeSyncButton && 'icon-brand-gradient')}
+            iconClass={classNames('uil uil-clock-nine', isSynced && timeSyncButton && 'icon-brand-gradient')}
             tooltipContent={<TimePickerTooltipContent timeRange={value} />}
           />
 
@@ -213,13 +214,13 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
 
           {hasAbsolute && (
             <button className="btn navbar-button navbar-button--tight" onClick={onMoveForward}>
-              <i className="fa fa-chevron-right" />
+              <Unicon name="angle-right" />
             </button>
           )}
 
           <Tooltip content={defaultZoomOutTooltip} placement="bottom">
             <button className="btn navbar-button navbar-button--zoom" onClick={onZoom}>
-              <i className="fa fa-search-minus" />
+              <Unicon name="search-minus" />
             </button>
           </Tooltip>
 

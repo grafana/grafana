@@ -12,6 +12,8 @@ import { updateLocation } from 'app/core/actions';
 // Types
 import { DashboardModel, PanelModel } from '../../state';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
+//Components
+import { Unicon } from '@grafana/ui/src/components/Icon/Unicon';
 
 export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
 
@@ -141,7 +143,7 @@ export class AddPanelWidget extends React.Component<Props, State> {
           aria-label={e2e.pages.AddDashboard.selectors.ctaButtons(text)}
         >
           <div className="add-panel-widget__icon">
-            <i className={`gicon gicon-${icon}`} />
+            <Unicon name={icon} />
           </div>
           <span>{text}</span>
         </a>
@@ -156,16 +158,16 @@ export class AddPanelWidget extends React.Component<Props, State> {
       <div className="panel-container add-panel-widget-container">
         <div className="add-panel-widget">
           <div className="add-panel-widget__header grid-drag-handle">
-            <i className="gicon gicon-add-panel" />
+            <Unicon name="focus-add" />
             <span className="add-panel-widget__title">New Panel</span>
             <button className="add-panel-widget__close" onClick={this.handleCloseAddPanel}>
-              <i className="fa fa-close" />
+              <Unicon name="times" />
             </button>
           </div>
           <div className="add-panel-widget__btn-container">
             <div className="add-panel-widget__create">
-              {this.renderOptionLink('queries', 'Add Query', this.onCreateNewPanel)}
-              {this.renderOptionLink('visualization', 'Choose Visualization', () =>
+              {this.renderOptionLink('search', 'Add Query', this.onCreateNewPanel)}
+              {this.renderOptionLink('chart-line', 'Choose Visualization', () =>
                 this.onCreateNewPanel('visualization')
               )}
             </div>

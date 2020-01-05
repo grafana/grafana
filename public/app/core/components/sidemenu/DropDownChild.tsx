@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+import { Unicon } from '@grafana/ui/src/components/Icon/Unicon';
 
 export interface Props {
   child: any;
@@ -11,7 +12,7 @@ const DropDownChild: FC<Props> = props => {
   return (
     <li className={listItemClassName}>
       <a href={child.url}>
-        {child.icon && <i className={child.icon} />}
+        {child.icon && <Unicon name={child.icon} />}
         {child.text}
       </a>
     </li>
