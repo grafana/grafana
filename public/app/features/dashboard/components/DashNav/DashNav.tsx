@@ -9,6 +9,7 @@ import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
 import { Tooltip } from '@grafana/ui';
+import { Unicon } from '@grafana/ui/src/components/Icon/Unicon';
 // State
 import { updateLocation } from 'app/core/actions';
 // Types
@@ -125,17 +126,17 @@ export class DashNav extends PureComponent<Props> {
       <>
         <div>
           <div className="navbar-page-btn">
-            {!this.isInFullscreenOrSettings && <i className="gicon gicon-dashboard" />}
+            {!this.isInFullscreenOrSettings && <Unicon name="dashboard" />}
             {haveFolder && (
               <>
                 <a className="navbar-page-btn__folder" onClick={this.onFolderNameClick}>
                   {folderTitle}
                 </a>
-                <i className="fa fa-chevron-right navbar-page-btn__folder-icon" />
+                <Unicon name="angle-right" className="navbar-page-btn__folder-icon" />
               </>
             )}
             <a onClick={this.onDahboardNameClick}>
-              {dashboard.title} <i className="fa fa-caret-down navbar-page-btn__search" />
+              {dashboard.title} <Unicon className="navbar-page-btn__search" name="angle-down" />
             </a>
           </div>
         </div>
@@ -162,7 +163,7 @@ export class DashNav extends PureComponent<Props> {
             onClick={this.onClose}
             aria-label={e2e.pages.Dashboard.selectors.backArrow}
           >
-            <i className="fa fa-arrow-left" />
+            <Unicon name="arrow-left" />
           </button>
         </Tooltip>
       </div>
@@ -184,19 +185,19 @@ export class DashNav extends PureComponent<Props> {
             <DashNavButton
               tooltip="Go to previous dashboard"
               classSuffix="tight"
-              icon="fa fa-step-backward"
+              icon="step-backward"
               onClick={this.onPlaylistPrev}
             />
             <DashNavButton
               tooltip="Stop playlist"
               classSuffix="tight"
-              icon="fa fa-stop"
+              icon="square-shape"
               onClick={this.onPlaylistStop}
             />
             <DashNavButton
               tooltip="Go to next dashboard"
               classSuffix="tight"
-              icon="fa fa-forward"
+              icon="forward"
               onClick={this.onPlaylistNext}
             />
           </div>
@@ -204,41 +205,31 @@ export class DashNav extends PureComponent<Props> {
 
         <div className="navbar-buttons navbar-buttons--actions">
           {canSave && (
-            <DashNavButton
-              tooltip="Add panel"
-              classSuffix="add-panel"
-              icon="gicon gicon-add-panel"
-              onClick={onAddPanel}
-            />
+            <DashNavButton tooltip="Add panel" classSuffix="add-panel" icon="focus-add" onClick={onAddPanel} />
           )}
 
           {canStar && (
             <DashNavButton
               tooltip="Mark as favorite"
               classSuffix="star"
-              icon={`${isStarred ? 'fa fa-star' : 'fa fa-star-o'}`}
+              icon={`${isStarred ? 'favorite' : 'star'}`}
               onClick={this.onStarDashboard}
             />
           )}
 
           {canShare && (
-            <DashNavButton
-              tooltip="Share dashboard"
-              classSuffix="share"
-              icon="fa fa-share-square-o"
-              onClick={this.onOpenShare}
-            />
+            <DashNavButton tooltip="Share dashboard" classSuffix="share" icon="share" onClick={this.onOpenShare} />
           )}
 
           {canSave && (
-            <DashNavButton tooltip="Save dashboard" classSuffix="save" icon="fa fa-save" onClick={this.onSave} />
+            <DashNavButton tooltip="Save dashboard" classSuffix="save" icon="file-check" onClick={this.onSave} />
           )}
 
           {snapshotUrl && (
             <DashNavButton
               tooltip="Open original dashboard"
               classSuffix="snapshot-origin"
-              icon="gicon gicon-link"
+              icon="link-alt"
               href={snapshotUrl}
             />
           )}
@@ -247,19 +238,14 @@ export class DashNav extends PureComponent<Props> {
             <DashNavButton
               tooltip="Dashboard settings"
               classSuffix="settings"
-              icon="gicon gicon-cog"
+              icon="cog"
               onClick={this.onOpenSettings}
             />
           )}
         </div>
 
         <div className="navbar-buttons navbar-buttons--tv">
-          <DashNavButton
-            tooltip="Cycle view mode"
-            classSuffix="tv"
-            icon="fa fa-desktop"
-            onClick={this.onToggleTVMode}
-          />
+          <DashNavButton tooltip="Cycle view mode" classSuffix="tv" icon="monitor" onClick={this.onToggleTVMode} />
         </div>
 
         {!dashboard.timepicker.hidden && (

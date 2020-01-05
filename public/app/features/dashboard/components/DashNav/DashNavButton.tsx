@@ -3,6 +3,7 @@ import React, { FunctionComponent } from 'react';
 // Components
 import { Tooltip } from '@grafana/ui';
 import { e2e } from '@grafana/e2e';
+import { Unicon } from '@grafana/ui/src/components/Icon/Unicon';
 
 interface Props {
   icon: string;
@@ -21,7 +22,7 @@ export const DashNavButton: FunctionComponent<Props> = ({ icon, tooltip, classSu
           onClick={onClick}
           aria-label={e2e.pages.Dashboard.selectors.toolbarItems(tooltip)}
         >
-          <i className={icon} />
+          <Unicon name={icon} />
         </button>
       </Tooltip>
     );
@@ -30,7 +31,7 @@ export const DashNavButton: FunctionComponent<Props> = ({ icon, tooltip, classSu
   return (
     <Tooltip content={tooltip}>
       <a className={`btn navbar-button navbar-button--${classSuffix}`} href={href}>
-        <i className={icon} />
+        <Unicon name={icon} />
       </a>
     </Tooltip>
   );
