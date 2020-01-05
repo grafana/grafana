@@ -1,5 +1,6 @@
 import React, { MouseEvent, useContext } from 'react';
 import { CallToActionCard, LinkButton, ThemeContext } from '@grafana/ui';
+import { Unicon } from '@grafana/ui/src/components/Icon/Unicon';
 import { css } from 'emotion';
 
 export interface Props {
@@ -45,7 +46,7 @@ const EmptyListCTA: React.FunctionComponent<Props> = ({
       <>
         {proTip ? (
           <span key="proTipFooter">
-            <i className="fa fa-rocket" />
+            <Unicon name="plane-departure" />
             <> ProTip: {proTip} </>
             <a href={proTipLink} target={proTipTarget} className="text-link">
               {proTipLinkTitle}

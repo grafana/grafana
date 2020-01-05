@@ -131,7 +131,6 @@
 }
 
 .search-section__header__icon {
-  padding: 5px 0px;
   width: 43px;
   text-align: center;
 }
@@ -177,7 +176,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 0 10px;
+  padding: 0 10px 0 0;
 }
 
 .search-item__body-title {
@@ -193,11 +192,10 @@
 }
 
 .search-item__icon {
-  display: flex;
-  align-items: center;
-  flex: 0 0 auto;
-  font-size: 19px;
-  padding: 0 2px 0 10px;
+  font-size: 14px;
+  width: 43px;
+  text-align: center;
+  padding: 9px 0;
 }
 
 .search-item__tags {
