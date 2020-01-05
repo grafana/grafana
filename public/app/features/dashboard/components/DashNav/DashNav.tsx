@@ -212,7 +212,7 @@ export class DashNav extends PureComponent<Props> {
             <DashNavButton
               tooltip="Mark as favorite"
               classSuffix="star"
-              icon={`${isStarred ? 'star' : 'heart'}`}
+              icon={`${isStarred ? 'star-half-alt' : 'star'}`}
               onClick={this.onStarDashboard}
             />
           )}
