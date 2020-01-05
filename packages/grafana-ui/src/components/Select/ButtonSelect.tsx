@@ -2,7 +2,7 @@ import React, { PureComponent, ReactElement } from 'react';
 import Select from './Select';
 import { PopoverContent } from '../Tooltip/Tooltip';
 import { SelectableValue } from '@grafana/data';
-import { Unicon } from '@grafana/ui/src/components/Icon/Unicon';
+import { Unicon } from '../Icon/Unicon';
 
 interface ButtonComponentProps {
   label: ReactElement | string | undefined;

@@ -8,7 +8,7 @@ import { ButtonSelect } from '../Select/ButtonSelect';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { TimePickerPopover } from './TimePickerPopover';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
-import { Unicon } from '@grafana/ui/src/components/Icon/Unicon';
+import { Unicon } from '../Icon/Unicon';
 
 // Utils & Services
 import { isDateTime, DateTime, rangeUtil } from '@grafana/data';

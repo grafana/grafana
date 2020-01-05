@@ -1,6 +1,6 @@
 import React, { FC, ReactNode } from 'react';
 import classNames from 'classnames';
-import { Unicon } from '@grafana/ui/src/components/Icon/Unicon';
+import { Unicon } from '../Icon/Unicon';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
