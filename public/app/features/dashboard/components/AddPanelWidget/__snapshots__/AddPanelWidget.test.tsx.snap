@@ -10,8 +10,8 @@ exports[`Render should render component 1`] = `
     <div
       className="add-panel-widget__header grid-drag-handle"
     >
-      <i
-        className="gicon gicon-add-panel"
+      <Unicon
+        name="focus-add"
       />
       <span
         className="add-panel-widget__title"
@@ -22,8 +22,8 @@ exports[`Render should render component 1`] = `
         className="add-panel-widget__close"
         onClick={[Function]}
       >
-        <i
-          className="fa fa-close"
+        <Unicon
+          name="times"
         />
       </button>
     </div>
@@ -43,8 +43,8 @@ exports[`Render should render component 1`] = `
             <div
               className="add-panel-widget__icon"
             >
-              <i
-                className="gicon gicon-queries"
+              <Unicon
+                name="search"
               />
             </div>
             <span>
@@ -62,8 +62,8 @@ exports[`Render should render component 1`] = `
             <div
               className="add-panel-widget__icon"
             >
-              <i
-                className="gicon gicon-visualization"
+              <Unicon
+                name="chart-line"
               />
             </div>
             <span>
