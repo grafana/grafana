@@ -4,6 +4,7 @@ import { User } from '../../services/context_srv';
 import { NavModelItem } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { OrgSwitcher } from '../OrgSwitcher';
+import { Unicon } from '@grafana/ui/src/components/Icon/Unicon';
 
 export interface Props {
   link: NavModelItem;
@@ -42,7 +43,7 @@ class BottomNavLinks extends PureComponent<Props, State> {
       <div className="sidemenu-item dropdown dropup">
         <a href={link.url} className="sidemenu-link" target={link.target}>
           <span className="icon-circle sidemenu-icon">
-            {link.icon && <i className={link.icon} />}
+            {link.icon && <Unicon name={link.icon} />}
             {link.img && <img src={link.img} />}
           </span>
         </a>
@@ -60,7 +61,7 @@ class BottomNavLinks extends PureComponent<Props, State> {
                   <div className="sidemenu-org-switcher__org-current">Current Org:</div>
                 </div>
                 <div className="sidemenu-org-switcher__switch">
-                  <i className="fa fa-fw fa-random" />
+                  <Unicon name="arrow-random" />
                   Switch
                 </div>
               </a>
@@ -75,7 +76,7 @@ class BottomNavLinks extends PureComponent<Props, State> {
                 return (
                   <li key={`${child.text}-${index}`}>
                     <a href={child.url} target={child.target} onClick={event => this.itemClicked(event, child)}>
-                      {child.icon && <i className={child.icon} />}
+                      {child.icon && <Unicon name={child.icon} />}
                       {child.text}
                     </a>
                   </li>
