@@ -161,7 +161,7 @@ export class DashNav extends PureComponent<Props> {
           <button
             className="navbar-edit__back-btn"
             onClick={this.onClose}
-            aria-label={e2e.pages.Dashboard.selectors.backArrow}
+            aria-label={e2e.pages.Dashboard.Toolbar.selectors.backArrow}
           >
             <Unicon name="arrow-left" />
           </button>
