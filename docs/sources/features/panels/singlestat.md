@@ -2,7 +2,7 @@
 title = "Singlestat Panel"
 keywords = ["grafana", "dashboard", "documentation", "panels", "singlestat"]
 type = "docs"
-aliases = ["/reference/singlestat/"]
+aliases = ["/docs/grafana/latest/reference/singlestat/"]
 [menu.docs]
 name = "Singlestat"
 parent = "panels"

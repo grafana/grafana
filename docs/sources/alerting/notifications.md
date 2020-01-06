@@ -100,6 +100,7 @@ To set up PagerDuty, all you have to do is to provide an API key.
 Setting | Description
 ---------- | -----------
 Integration Key | Integration key for PagerDuty.
+Severity | Level for dynamic notifications, default is `critical`
 Auto resolve incidents | Resolve incidents in PagerDuty once the alert goes back to ok
 
 ### Webhook

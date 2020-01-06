@@ -61,13 +61,17 @@ describe('Explore item reducer', () => {
   });
 
   describe('changing datasource', () => {
-    describe('when changeDataType is dispatched', () => {
+    describe('when changeMode is dispatched', () => {
       it('then it should set correct state', () => {
         reducerTester()
-          .givenReducer(itemReducer, {})
+          .givenReducer(itemReducer as Reducer<ExploreItemState, ActionOf<any>>, {})
           .whenActionIsDispatched(changeModeAction({ exploreId: ExploreId.left, mode: ExploreMode.Logs }))
-          .thenStateShouldEqual({
-            mode: ExploreMode.Logs,
+          .thenStatePredicateShouldEqual((resultingState: ExploreItemState) => {
+            expect(resultingState.mode).toEqual(ExploreMode.Logs);
+            expect(resultingState.logsResult).toBeNull();
+            expect(resultingState.graphResult).toBeNull();
+            expect(resultingState.tableResult).toBeNull();
+            return true;
           });
       });
     });
