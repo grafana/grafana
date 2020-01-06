@@ -19,77 +19,109 @@ This page explains how to install Grafana dependencies, download and install Gra
 
 ## 1. Download and install
 
-You can install Grafana directly using YUM, via YUM repository, or by downloading a binary `.tar.gz` file.
+You can install Grafana from a YUM repository, manually using YUM, manually using RPM, or by downloading a binary `.tar.gz` file.
 
 **Note:** The RPMs are signed, you can verify the signature with this [public GPG key](https://packages.grafana.com/gpg.key).
 
 
-You can install Grafana using Yum directly:
-
-```bash
-sudo yum install <rpm package url>
-```
 
 You will find package URLs on the [download page](https://grafana.com/grafana/download?platform=linux).
 
-Or install manually using `rpm`. First execute
-
-```bash
-wget <rpm package url>
-```
+Or install manually using `rpm`. 
 
 ### On CentOS / Fedora / Redhat:
 
 ```bash
-sudo yum install initscripts urw-fonts
+sudo yum install initscripts urw-fonts wget
+wget <rpm package url>
 sudo rpm -Uvh <local rpm package>
 ```
 
 ### On OpenSuse:
 
 ```bash
+sudo yum install initscripts urw-fonts wget
+wget <rpm package url>
 sudo rpm -i --nodeps <local rpm package>
 ```
 
-## Install via YUM Repository
+### Install from YUM repository
 
-Add the following to a new file at `/etc/yum.repos.d/grafana.repo`
+If you install from the YUM repository, then Grafana is automatically updated every time you run `sudo yum update`. 
+
+#### To install the latest stable release:
+
+1. Add a new file to your YUM repo.
+   ```bash
+   sudo nano `/etc/yum.repos.d/grafana.repo`
+   ```
+1. Enter the following information in grafana.repo and save it.
+   ```bash
+   [grafana]
+   name=grafana
+   baseurl=https://packages.grafana.com/oss/rpm
+   repo_gpgcheck=1
+   enabled=1
+   gpgcheck=1
+   gpgkey=https://packages.grafana.com/gpg.key
+   sslverify=1
+   sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+   ```
+1. Install Grafana.
+   ```bash
+   sudo yum install grafana
+   ```
+
+#### To install the latest beta release:
+
+1. Add a new file to your YUM repo.
+   ```bash
+   sudo nano `/etc/yum.repos.d/grafana.repo`
+   ```
+1. Enter the following information in grafana.repo and save it.
+   ```bash
+   [grafana]
+   name=grafana
+   baseurl=https://packages.grafana.com/oss/rpm-beta
+   repo_gpgcheck=1
+   enabled=1
+   gpgcheck=1
+   gpgkey=https://packages.grafana.com/gpg.key
+   sslverify=1
+   sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+   ```
+1. Install Grafana.
+   ```bash
+   sudo yum install grafana
+   ```
+
+### Install .deb package
+
+If you install the `.deb` package, then you will need to manually update Grafana for each new version.
+
+1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install. 
+   * The most recent Grafana version is selected by default.
+   * The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
+1. Select an **Edition**.
+   * **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
+   * **Open Source** - Functionally identical to the enterprise version, but you will need to download the enterprise version if you want enterprise features.
+1. Depending on which system you are running, click **Linux** or **ARM**.
+1. Copy and paste the code from the installation page into your command line and run. It follows the pattern shown below.
 
 ```bash
-[grafana]
-name=grafana
-baseurl=https://packages.grafana.com/oss/rpm
-repo_gpgcheck=1
-enabled=1
-gpgcheck=1
-gpgkey=https://packages.grafana.com/gpg.key
-sslverify=1
-sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+sudo apt-get install -y adduser libfontconfig1
+wget <.deb package url>
+sudo dpkg -i grafana<edition>_<version>_amd64.deb
 ```
 
-There is a separate repository if you want beta releases.
+## Install from binary .tar.gz file
+
+Download the latest [`.tar.gz` file](https://grafana.com/grafana/download?platform=linux) and extract it. The files extract into a folder named after the Grafana version that you downloaded. This folder contains all files required to run Grafana. There are no init scripts or install scripts in this package.
 
 ```bash
-[grafana]
-name=grafana
-baseurl=https://packages.grafana.com/oss/rpm-beta
-repo_gpgcheck=1
-enabled=1
-gpgcheck=1
-gpgkey=https://packages.grafana.com/gpg.key
-sslverify=1
-sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+wget <tar.gz package url>
+sudo tar -zxvf <tar.gz package>
 ```
-
-Then install Grafana via the `yum` command.
-
-```bash
-sudo yum install grafana
-```
-
-### RPM GPG key
-
-The RPMs are signed, you can verify the signature with this [public GPG key](https://packages.grafana.com/gpg.key).
 
 
 
