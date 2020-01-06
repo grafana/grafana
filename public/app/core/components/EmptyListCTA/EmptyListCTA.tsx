@@ -78,6 +78,7 @@ const EmptyListCTA: React.FunctionComponent<Props> = ({
       onClick={onClick}
       href={buttonLink}
       icon={buttonIcon}
+      variant={'secondary'}
       className={ctaElementClassName}
       aria-label={`Call to action button ${buttonTitle}`}
     >
