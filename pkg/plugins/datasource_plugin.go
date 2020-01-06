@@ -95,7 +95,7 @@ func (p *DataSourcePlugin) onPluginStart(pluginID string, client *plugin.Client,
 	}
 	plugin, ok := raw.(sdk.BackendPlugin)
 	if !ok {
-		return fmt.Errorf("unxpected type %T, expeced sdk.DatasourcePlugin", raw)
+		return fmt.Errorf("unexpected type %T, expected sdk.Plugin", raw)
 	}
 
 	tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {

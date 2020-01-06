@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
+	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/dataframe"
@@ -61,7 +62,7 @@ func (p *TransformPlugin) onPluginStart(pluginID string, client *plugin.Client, 
 
 	plugin, ok := raw.(backend.TransformPlugin)
 	if !ok {
-		return fmt.Errorf("unexpected type %T, expected *transform.GRPCClient", raw)
+		return fmt.Errorf("unexpected type %T, expected *backend.TransformPlugin", raw)
 	}
 
 	p.TransformWrapper = NewTransformWrapper(logger, plugin)
@@ -85,6 +86,7 @@ type TransformWrapper struct {
 
 func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	pbQuery := &pluginv2.DataQueryRequest{
+		Config:  &pluginv2.PluginConfig{},
 		Queries: []*pluginv2.DataQuery{},
 	}
 
@@ -104,7 +106,6 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 			},
 		})
 	}
-
 	pbRes, err := tw.TransformPlugin.DataQuery(ctx, pbQuery, tw.callback)
 	if err != nil {
 		return nil, err
@@ -155,7 +156,7 @@ func (s *transformCallback) DataQuery(ctx context.Context, req *pluginv2.DataQue
 	}
 
 	// For now take Time Range from first query.
-	timeRange := tsdb.NewTimeRange(string(req.Queries[0].TimeRange.FromEpochMS), string(req.Queries[0].TimeRange.ToEpochMS))
+	timeRange := tsdb.NewTimeRange(strconv.FormatInt(req.Queries[0].TimeRange.FromEpochMS, 10), strconv.FormatInt(req.Queries[0].TimeRange.ToEpochMS, 10))
 
 	tQ := &tsdb.TsdbQuery{
 		TimeRange: timeRange,
