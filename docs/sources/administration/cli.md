@@ -12,7 +12,7 @@ weight = 8
 
 Grafana CLI is a small executable that is bundled with Grafana server and is supposed to be executed on the same machine Grafana server is running on.
 
-Grafana CLI has `plugins ` and `admin` commands, as well as global options.
+Grafana CLI has `plugins` and `admin` commands, as well as global options.
 
 To list all commands and options:
 ```
