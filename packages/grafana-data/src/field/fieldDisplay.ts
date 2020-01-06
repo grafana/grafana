@@ -124,9 +124,8 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         const display =
           field.display ??
           getDisplayProcessor({
-            config,
+            field,
             theme: options.theme,
-            type: field.type,
           });
 
         const title = config.title ? config.title : defaultTitle;
@@ -245,9 +244,11 @@ function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): Fiel
   const { defaults } = fieldOptions;
 
   const displayProcessor = getDisplayProcessor({
-    config: defaults,
+    field: {
+      type: FieldType.other,
+      config: defaults,
+    },
     theme: options.theme,
-    type: FieldType.other,
   });
 
   const display = displayProcessor(null);

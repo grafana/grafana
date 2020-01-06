@@ -389,4 +389,4 @@ Variable values are always synced to the URL using the syntax `var-<varname>=val
 
 - [Graphite Templated Dashboard](http://play.grafana.org/dashboard/db/graphite-templated-nested)
 - [Elasticsearch Templated Dashboard](http://play.grafana.org/dashboard/db/elasticsearch-templated)
-- [InfluxDB Templated Dashboard](http://play.grafana.org/dashboard/db/influxdb-templated-queries)
+- [InfluxDB Templated Dashboard](http://play.grafana.org/dashboard/db/influxdb-templated)
