@@ -338,7 +338,7 @@ If you need to change a password with a script, here is an example of changing t
 
 ```bash
 curl -X PUT -H "Content-Type: application/json" -d '{
-  "oldPassword": "admin",
+  "oldPassword": "oldpass",
   "newPassword": "newpass",
   "confirmNew": "newpass"
 }' http://admin:oldpass@<your_grafana_host>:3000/api/user/password
