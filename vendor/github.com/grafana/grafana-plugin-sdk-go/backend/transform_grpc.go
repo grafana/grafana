@@ -15,7 +15,7 @@ import (
 type TransformGRPCPlugin struct {
 	plugin.NetRPCUnsupportedPlugin
 	plugin.GRPCPlugin
-	adapter *sdkAdapter
+	adapter *transformSDKAdapter
 }
 
 func (p *TransformGRPCPlugin) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
@@ -32,7 +32,7 @@ func (p *TransformGRPCPlugin) GRPCClient(ctx context.Context, broker *plugin.GRP
 
 type transformGRPCServer struct {
 	broker  *plugin.GRPCBroker
-	adapter *sdkAdapter
+	adapter *transformSDKAdapter
 }
 
 func (t *transformGRPCServer) DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error) {

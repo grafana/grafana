@@ -11,7 +11,7 @@ func Serve(backendHandlers PluginHandlers, transformHandlers TransformHandlers) 
 
 	pSet := make(plugin.PluginSet)
 	if backendHandlers != nil {
-		pSet["backend"] = &BackendGRPCPlugin{
+		pSet["backend"] = &CoreGRPCPlugin{
 			adapter: &sdkAdapter{
 				handlers: backendHandlers,
 			},
@@ -20,8 +20,8 @@ func Serve(backendHandlers PluginHandlers, transformHandlers TransformHandlers) 
 
 	if transformHandlers != nil {
 		pSet["transform"] = &TransformGRPCPlugin{
-			adapter: &sdkAdapter{
-				transformHandlers: transformHandlers,
+			adapter: &transformSDKAdapter{
+				handlers: transformHandlers,
 			},
 		}
 	}

@@ -33,6 +33,17 @@ type BackendPlugin struct {
 
 func (p *BackendPlugin) start(ctx context.Context) error {
 	p.client = p.clientFactory()
+	// rpcClient, err := p.client.Client()
+	// if err != nil {
+	// 	return err
+	// }
+	// if p.client.NegotiatedVersion() > 1 {
+	// 	_, err = rpcClient.Dispense("diagnostics")
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
+
 	if p.callbackFn != nil {
 		return p.callbackFn(p.id, p.client, p.logger)
 	}

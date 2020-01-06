@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 
-	"github.com/grafana/grafana-plugin-sdk-go/dataframe"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/expfmt"
@@ -12,10 +11,7 @@ import (
 
 // sdkAdapter adapter between protobuf and SDK interfaces.
 type sdkAdapter struct {
-	PluginHandlers
-	TransformHandlers
-	handlers          PluginHandlers
-	transformHandlers TransformHandlers
+	handlers PluginHandlers
 }
 
 func (a *sdkAdapter) CollectMetrics(ctx context.Context, protoReq *pluginv2.CollectMetrics_Request) (*pluginv2.CollectMetrics_Response, error) {
@@ -71,30 +67,4 @@ func (a *sdkAdapter) Resource(ctx context.Context, req *pluginv2.ResourceRequest
 		return nil, err
 	}
 	return res.toProtobuf(), nil
-}
-
-func (a *sdkAdapter) TransformData(ctx context.Context, req *pluginv2.DataQueryRequest, callBack TransformCallBack) (*pluginv2.DataQueryResponse, error) {
-	pc := pluginConfigFromProto(req.Config)
-	queries := make([]DataQuery, len(req.Queries))
-	for i, q := range req.Queries {
-		queries[i] = *dataQueryFromProtobuf(q)
-	}
-
-	resp, err := a.transformHandlers.DataQuery(ctx, pc, req.Headers, queries, &transformCallBackWrapper{callBack})
-	if err != nil {
-		return nil, err
-	}
-
-	encodedFrames := make([][]byte, len(resp.Frames))
-	for i, frame := range resp.Frames {
-		encodedFrames[i], err = dataframe.MarshalArrow(frame)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return &pluginv2.DataQueryResponse{
-		Frames:   encodedFrames,
-		Metadata: resp.Metadata,
-	}, nil
 }

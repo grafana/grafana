@@ -170,29 +170,29 @@ const (
 	HealthStatusError
 )
 
-func (ps HealthStatus) toProtobuf() pluginv2.CheckHealth_Response_HealthStatus {
-	switch ps {
-	case HealthStatusUnknown:
-		return pluginv2.CheckHealth_Response_UNKNOWN
-	case HealthStatusOk:
-		return pluginv2.CheckHealth_Response_OK
-	case HealthStatusError:
-		return pluginv2.CheckHealth_Response_ERROR
-	}
-	panic("unsupported protobuf health status type in sdk")
-}
+// func (ps HealthStatus) toProtobuf() pluginv2.CheckHealth_Response_HealthStatus {
+// 	switch ps {
+// 	case HealthStatusUnknown:
+// 		return pluginv2.CheckHealth_Response_UNKNOWN
+// 	case HealthStatusOk:
+// 		return pluginv2.CheckHealth_Response_OK
+// 	case HealthStatusError:
+// 		return pluginv2.CheckHealth_Response_ERROR
+// 	}
+// 	panic("unsupported protobuf health status type in sdk")
+// }
 
 type CheckHealthResult struct {
 	Status HealthStatus
 	Info   string
 }
 
-func (res *CheckHealthResult) toProtobuf() *pluginv2.CheckHealth_Response {
-	return &pluginv2.CheckHealth_Response{
-		Status: res.Status.toProtobuf(),
-		Info:   res.Info,
-	}
-}
+// func (res *CheckHealthResult) toProtobuf() *pluginv2.CheckHealth_Response {
+// 	return &pluginv2.CheckHealth_Response{
+// 		Status: res.Status.toProtobuf(),
+// 		Info:   res.Info,
+// 	}
+// }
 
 // DataQueryHandler handles data source queries.
 type DataQueryHandler interface {
