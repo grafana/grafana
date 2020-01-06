@@ -104,6 +104,11 @@ const darkTheme: GrafanaTheme = {
     formCheckboxBgChecked: basicColors.blueLight,
     formCheckboxBgCheckedHover: basicColors.blueBase,
     formCheckboxCheckmark: basicColors.gray25,
+
+    primary: `linear-gradient(180deg, #3274D9 0%, #1F60C4 100%)`,
+    primaryHover: `linear-gradient(180deg, #5D91E1 0%, #3779DF 100%)`,
+    primaryBorder: `rgba(199, 208, 217, 0.3)`,
+    primaryBorderHover: `#3274D9`,
   },
   background: {
     dropdown: basicColors.dark3,
