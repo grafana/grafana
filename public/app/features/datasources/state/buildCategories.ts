@@ -7,12 +7,13 @@ export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePlug
     { id: 'logging', title: 'Logging & document databases', plugins: [] },
     { id: 'sql', title: 'SQL', plugins: [] },
     { id: 'cloud', title: 'Cloud', plugins: [] },
-    { id: 'other', title: 'Others', plugins: [] },
     { id: 'enterprise', title: 'Enterprise plugins', plugins: [] },
+    { id: 'other', title: 'Others', plugins: [] },
   ];
 
-  const pluginIndex: Record<string, DataSourcePluginMeta> = {};
   const categoryIndex: Record<string, DataSourcePluginCategory> = {};
+  const pluginIndex: Record<string, DataSourcePluginMeta> = {};
+  const enterprisePlugins = getEnterprisePhantomPlugins();
 
   // build indices
   for (const category of categories) {
@@ -20,6 +21,18 @@ export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePlug
   }
 
   for (const plugin of plugins) {
+    // Force category for enterprise plugins
+    if (enterprisePlugins.find(item => item.id === plugin.id)) {
+      plugin.category = 'enterprise';
+    }
+
+    // Fix link name
+    if (plugin.info.links) {
+      for (const link of plugin.info.links) {
+        link.name = 'Learn more';
+      }
+    }
+
     const category = categories.find(item => item.id === plugin.category) || categoryIndex['other'];
     category.plugins.push(plugin);
     // add to plugin index
@@ -34,7 +47,7 @@ export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePlug
 
     // add phantom plugins
     if (category.id === 'enterprise') {
-      for (const plugin of getEnterprisePhantomPlugins()) {
+      for (const plugin of enterprisePlugins) {
         if (!pluginIndex[plugin.id]) {
           category.plugins.push(plugin);
         }
@@ -151,7 +164,7 @@ function getPhantomPlugin(options: GetPhantomPluginOptions): DataSourcePluginMet
       links: [
         {
           url: 'https://grafana.com/grafana/plugins/' + options.id,
-          name: 'Learn more',
+          name: 'Install now',
         },
       ],
       screenshots: [],

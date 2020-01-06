@@ -132,7 +132,7 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
   const onClick = !isPhantom ? props.onClick : () => {};
 
   // find first plugin info link
-  const learnMoreLink = plugin.info.links && plugin.info.links.length > 0 ? plugin.info.links[0].url : null;
+  const learnMoreLink = plugin.info.links && plugin.info.links.length > 0 ? plugin.info.links[0] : null;
   const mainClassName = classNames('add-data-source-item', {
     'add-data-source-item--phantom': isPhantom,
   });
@@ -152,12 +152,12 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
         {learnMoreLink && (
           <a
             className="btn btn-inverse"
-            href={`${learnMoreLink}?utm_source=grafana_add_ds`}
+            href={`${learnMoreLink.url}?utm_source=grafana_add_ds`}
             target="_blank"
             rel="noopener"
             onClick={onLearnMoreClick}
           >
-            Learn more <i className="fa fa-external-link add-datasource-item-actions__btn-icon" />
+            {learnMoreLink.name} <i className="fa fa-external-link add-datasource-item-actions__btn-icon" />
           </a>
         )}
         {!isPhantom && <button className="btn btn-primary">Select</button>}
