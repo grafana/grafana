@@ -27,7 +27,7 @@ Enter commands in Windows PowerShell, preceded by `.\`. They will not work on th
 
 Some commands, such as installing or removing plugins, require you to run Windows PowerShell as Administrator. 
 
-Before you enter commands, `cd` into the plugins directory. The default path is:
+Before you enter commands, `cd` into the Grafana bin directory. The default path is:
 ```
 cd "C:\Program Files\GrafanaLabs\grafana\bin"
 ```
