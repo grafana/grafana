@@ -1,17 +1,17 @@
 +++
-title = "Installing on RPM-based Linux"
-description = "Grafana Installation guide for Centos, Fedora, OpenSuse, Redhat."
+title = "Install on RPM-based Linux"
+description = "Grafana Installation guide for RPM-based Linux, such as Centos, Fedora, OpenSuse, and Red Hat."
 keywords = ["grafana", "installation", "documentation", "centos", "fedora", "opensuse", "redhat"]
 aliases = ["/docs/grafana/latest/installation/installation/rpm"]
 type = "docs"
 [menu.docs]
-name = "Installing on Centos / Redhat"
+name = "Install on RPM-based Linux"
 identifier = "rpm"
 parent = "installation"
 weight = 300
 +++
 
-# Installing on RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)
+# Install on RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)
 
 Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing
 installation.
