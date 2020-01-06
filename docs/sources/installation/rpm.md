@@ -133,65 +133,21 @@ sudo systemctl status grafana-server
 sudo systemctl enable grafana-server.service
 ```
 
-## Environment file
 
-The systemd service file and init.d script both use the file located at
-`/etc/sysconfig/grafana-server` for environment variables used when
-starting the back-end. Here you can override log directory, data
-directory and other variables.
 
-### Logging
+### Execute the binary
 
-By default Grafana will log to `/var/log/grafana`
+The `grafana-server` binary needs the working directory to be the root install directory where the binary and the `public` folder are located.
 
-### Database
-
-The default configuration specifies a sqlite3 database located at
-`/var/lib/grafana/grafana.db`. Please backup this database before
-upgrades. You can also use MySQL or Postgres as the Grafana database, as detailed on [the configuration page]({{< relref "configuration.md#database" >}}).
-
-## Configuration
-
-The configuration file is located at `/etc/grafana/grafana.ini`.  Go the
-[Configuration]({{< relref "configuration.md" >}}) page for details on all
-those options.
-
-### Adding data sources
-
-- [Graphite]({{< relref "../features/datasources/graphite.md" >}})
-- [InfluxDB]({{< relref "../features/datasources/influxdb.md" >}})
-- [OpenTSDB]({{< relref "../features/datasources/opentsdb.md" >}})
-- [Prometheus]({{< relref "../features/datasources/prometheus.md" >}})
-
-### Server side image rendering
-
-Server side image (png) rendering is a feature that is optional but very useful when sharing visualizations,
-for example in alert notifications.
-
-If the image is missing text make sure you have font packages installed.
-
+Start Grafana by running: 
 ```bash
-sudo yum install fontconfig
-sudo yum install freetype*
-sudo yum install urw-fonts
+./bin/grafana-server web
 ```
 
-## Installing from binary tar file
+## Next steps
 
-Download [the latest `.tar.gz` file](https://grafana.com/get) and
-extract it.  This will extract into a folder named after the version you
-downloaded. This folder contains all files required to run Grafana.  There are
-no init scripts or install scripts in this package.
+Refer to the [Getting Started]({{< relref "../guides/getting_started/" >}}) guide for information about logging in, setting up data sources, and so on.
 
-To configure Grafana add a configuration file named `custom.ini` to the
-`conf` folder and override any of the settings defined in
-`conf/defaults.ini`.
+## Configure Grafana
 
-Start Grafana by executing `./bin/grafana-server web`. The `grafana-server`
-binary needs the working directory to be the root install directory (where the
-binary and the `public` folder is located).
-
-## Logging in for the first time
-
-To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default HTTP port that Grafana listens to if you haven't [configured a different port]({{< relref "configuration/#http-port" >}}).
-Then follow the instructions [here]({{< relref "../guides/getting_started/" >}}).
+Refer the [Configuration]({{< relref "configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
