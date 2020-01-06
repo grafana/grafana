@@ -92,6 +92,8 @@ grafana-cli --pluginUrl https://company.com/grafana/plugins/<plugin-id>-<plugin-
 
 ### Override Transport Layer Security
 
+**Warning:** Turning off TLS is a significant security risk. We do not recommend using this option.
+
 `--insecure` allows you to turn off Transport Layer Security (TLS) verification (insecure). You might want to do this if you are downloading a plugin from a non-default source.
 
 **Example:**
