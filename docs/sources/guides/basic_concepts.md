@@ -18,13 +18,13 @@ This document is an introduction to basic concepts in Grafana. Use it as a start
 
 The *dashboard* is where it all comes together. A dashboard is a set of one or more panels organized and arranged into one or more rows.
 
-The time period for the dashboard can be controlled by the [Time range controls]({{< relref "timerange.md" >}}) in the upper right of the dashboard.
+The time period for the dashboard can be controlled by the [Time range controls]({{< relref "../reference/timerange.md" >}}) in the upper right of the dashboard.
 
-Dashboards can use [templating]({{< relref "templating.md" >}}) to make them more dynamic and interactive.
+Dashboards can use [templating]({{< relref "../reference/templating.md" >}}) to make them more dynamic and interactive.
 
 Dashboards can use [annotations]({{< relref "../reference/annotations.md" >}}) to display event data across panels. This can help correlate the time series data in the panel with other events.
 
-Dashboards can be [shared]({{< relref "share_dashboard.md" >}}) easily in a variety of ways.
+Dashboards can be [shared]({{< relref "../reference/share_dashboard.md" >}}) easily in a variety of ways.
 
 Dashboards can be tagged, and the dashboard picker provides quick, searchable access to all dashboards in a particular organization.
 
@@ -48,7 +48,7 @@ All dashboards are owned by a particular organization.
 
  > Note: Most metric databases do not provide per-user series authentication. This means that organization data sources and dashboards are available to all users in a particular organization.
 
-Refer to [Organization roles]({{< relref "organization_roles.md" >}}) for more information.
+Refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}) for more information.
 
 ## Panel
 
@@ -56,11 +56,11 @@ The *panel* is the basic visualization building block in Grafana. Each panel has
 
 There are a wide variety of styling and formatting options for each panel. Panels can be dragged and dropped and rearranged on the Dashboard. They can also be resized.
 
-Panels like the [Graph]({{< relref "graph.md" >}}) panel allow you to graph as many metrics and series as you want. Other panels like [Singlestat]({{< relref "singlestat.md" >}}) require a reduction of a single query into a single number.
+Panels like the [Graph]({{< relref "../features/panels/graph.md" >}}) panel allow you to graph as many metrics and series as you want. Other panels like [Singlestat]({{< relref "../features/panels/singlestat.md" >}}) require a reduction of a single query into a single number.
 
-Panels can be made more dynamic with [Dashboard Templating]({{< relref "templating.md" >}}) variable strings within the panel configuration. The template can include queries to your data source configured in the Query Editor.
+Panels can be made more dynamic with [Dashboard Templating]({{< relref "../reference/templating.md" >}}) variable strings within the panel configuration. The template can include queries to your data source configured in the Query Editor.
 
-Panels can be [shared]({{< relref "share_panel.md" >}}) easily in a variety of ways.
+Panels can be [shared]({{< relref "../reference/share_panel.md" >}}) easily in a variety of ways.
 
 ## Query editor
 
@@ -68,7 +68,7 @@ The *query editor* exposes capabilities of your data source and allows you to qu
 
 Use the query editor to build one or more queries in your time series database. The panel instantly updates, allowing you to effectively explore your data in real time and build a perfect query for that particular panel.
 
-You can use [template variables]({{< relref "templating.md" >}}) in the query editor within the queries themselves. This provides a powerful way to explore data dynamically based on the templating variables selected on the dashboard.
+You can use [template variables]({{< relref "../reference/templating.md" >}}) in the query editor within the queries themselves. This provides a powerful way to explore data dynamically based on the templating variables selected on the dashboard.
 
 Grafana allows you to reference queries in the query editor by the row that they’re on. If you add a second query to graph, you can reference the first query by typing in #A. This provides an easy and convenient way to build compound queries.
 
@@ -84,7 +84,7 @@ We use a unit abstraction so that Grafana looks great on all screens sizes.
 
 Collapse a row by clicking on the row title. If you save a dashboard with a row collapsed, then it saves in that state and does not load those graphs until you expand the row.
 
-Use the [repeating rows]({{< relref "templating.md#repeating-rows" >}}) functionality to dynamically create or remove entire rows, which can be filled with panels, based on the template variables selected.
+Use the [repeating rows]({{< relref "../reference/templating.md#repeating-rows" >}}) functionality to dynamically create or remove entire rows, which can be filled with panels, based on the template variables selected.
 
 ## User
 
