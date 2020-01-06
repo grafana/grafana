@@ -458,7 +458,6 @@ jobs:
             # https://circleci.com/docs/2.0/building-docker-images/#mounting-folders
             # create a dummy container which will hold a volume with config
             docker create -v /hugo/content/docs/grafana --name docs-website alpine:3.4 /bin/true
-            ls -al
             # copy a config file into this volume
             docker cp ${PWD}/docs/sources docs-website:/hugo/content/docs/grafana/latest
             # start an application container using this volume
@@ -1139,6 +1138,7 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
             - build-oss-msi
+            - build-docs-website
           filters: *filter-only-master
       - grafana-docker-master:
           requires:
