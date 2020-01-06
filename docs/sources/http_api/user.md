@@ -341,7 +341,7 @@ curl -X PUT -H "Content-Type: application/json" -d '{
   "oldPassword": "admin",
   "newPassword": "newpass",
   "confirmNew": "newpass"
-}' http://admin:admin@<your_grafana_host>:3000/api/user/password
+}' http://admin:oldpass@<your_grafana_host>:3000/api/user/password
 ```
 
 ## Switch user context for a specified user
