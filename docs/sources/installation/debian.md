@@ -51,6 +51,8 @@ sudo apt-get install grafana
 
 ### Install .deb package
 
+If you install the `.deb` package, then you will need to manually update Grafana for each new version.
+
 1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install. 
    * The most recent Grafana version is selected by default.
    * The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
