@@ -65,7 +65,7 @@ sudo apt-get install grafana
 ```bash
 sudo apt-get install -y adduser libfontconfig1
 wget <.deb package url>
-sudo dpkg -i grafana_<version>_amd64.deb
+sudo dpkg -i grafana<edition>_<version>_amd64.deb
 ```
 
 ## Install from binary .tar.gz file
