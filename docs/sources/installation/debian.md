@@ -19,8 +19,6 @@ This page explains how to install Grafana dependencies, download and install Gra
 
 ## 1. Download and install
 
-We recommend that you run all the listed commands before you download and install Grafana. They might not be necessary on all systems, but if you run them first then you will not be interrupted by dependency errors.
-
 You can install Grafana using our official APT repository, by downloading a `.deb` package, or by using a binary `.tar.gz` file.
 
 ### Install from APT repository
