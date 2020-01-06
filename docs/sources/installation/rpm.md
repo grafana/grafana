@@ -99,27 +99,17 @@ The RPMs are signed, you can verify the signature with this [public GPG key](htt
 - The default configuration uses a log file at `/var/log/grafana/grafana.log`
 - The default configuration specifies an sqlite3 database at `/var/lib/grafana/grafana.db`
 
-## Start the server (init.d service)
 
-You can start Grafana by running:
 
-```bash
-sudo service grafana-server start
-```
+## 2. Start the server
 
-This will start the `grafana-server` process as the `grafana` user,
-which is created during package installation. The default HTTP port is
-`3000`, and default user and group is `admin`.
+This starts the `grafana-server` process as the `grafana` user, which was created during the package installation.
 
-Default login and password `admin`/ `admin`
+If you installed with an `.rpm` package, then you can start the server using `systemd` or `init.d`. If you installed a binary `.tar.gz` file, then you need to execute the binary.
 
-To configure the Grafana server to start at boot time:
+### Start the server with systemd
 
-```bash
-$ sudo /sbin/chkconfig --add grafana-server
-```
-
-## Start the server (via systemd)
+To start the service and verify that the service has started:
 
 ```bash
 sudo systemctl daemon-reload
@@ -127,12 +117,25 @@ sudo systemctl start grafana-server
 sudo systemctl status grafana-server
 ```
 
-### Enable the systemd service to start at boot
+Configure the Grafana server to start at boot:
 
 ```bash
 sudo systemctl enable grafana-server.service
 ```
+### Start the server with init.d
 
+You can start Grafana by running:
+
+```bash
+sudo service grafana-server start
+```
+
+
+Configure the Grafana server to start at boot
+
+```bash
+$ sudo /sbin/chkconfig --add grafana-server
+```
 
 
 ### Execute the binary
