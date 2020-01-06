@@ -93,7 +93,7 @@ func (p *DataSourcePlugin) onPluginStart(pluginID string, client *plugin.Client,
 	if err != nil {
 		return err
 	}
-	plugin, ok := raw.(sdk.Plugin)
+	plugin, ok := raw.(sdk.BackendPlugin)
 	if !ok {
 		return fmt.Errorf("unxpected type %T, expeced sdk.DatasourcePlugin", raw)
 	}

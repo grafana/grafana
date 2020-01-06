@@ -61,8 +61,8 @@ func NewBackendPluginDescriptor(pluginID, executablePath string) PluginDescripto
 				pluginID: &datasourceV1.DatasourcePluginImpl{},
 			},
 			sdk.ProtocolVersion: {
-				"backend":   &backend.CoreImpl{},
-				"transform": &backend.TransformImpl{},
+				"backend":   &backend.BackendGRPCPlugin{},
+				"transform": &backend.TransformGRPCPlugin{},
 			},
 		},
 	}
