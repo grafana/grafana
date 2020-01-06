@@ -53,10 +53,10 @@ func (slice PluginList) Swap(i, j int) {
 }
 
 type ImportDashboardCommand struct {
-	PluginId  string                         `json:"pluginId"`
-	Path      string                         `json:"path"`
-	Overwrite bool                           `json:"overwrite"`
-	Dashboard *simplejson.Json               `json:"dashboard"`
-	Inputs    []plugins.ImportDashboardInput `json:"inputs"`
-	FolderId  int64                          `json:"folderId"`
+	PluginId  string                         `json:"pluginId" binding:"Required"`
+	Path      string                         `json:"path" binding:"Required"`
+	Overwrite bool                           `json:"overwrite" binding:"Required"`
+	Dashboard *simplejson.Json               `json:"dashboard" binding:"Required"`
+	Inputs    []plugins.ImportDashboardInput `json:"inputs" binding:"Required"`
+	FolderId  int64                          `json:"folderId" binding:"Required"`
 }
