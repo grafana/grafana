@@ -1,37 +1,34 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Render should render component 1`] = `
-<section
-  className="card-section card-list-layout-grid"
+<table
+  className="css-1wm3oco"
 >
-  <div
-    className="css-1d6rat4"
-  >
-    <div
-      className="css-juilez"
-    />
-    <div
-      className="css-juilez"
-    >
-      <div
-        className="css-jw11sk"
+  <thead>
+    <tr>
+      <th
+        className="css-425eul"
+      >
+         
+      </th>
+      <th
+        className="css-1q1k2n6"
       >
         Name
-      </div>
-      <div
-        className="css-117amqz"
+      </th>
+      <th
+        className="css-1q1k2n6"
       >
         URL
-      </div>
-      <div
-        className="css-av3rbo"
+      </th>
+      <th
+        className="css-1l12s6r"
       />
-    </div>
-  </div>
-  <List
-    getItemKey={[Function]}
-    items={
-      Array [
+    </tr>
+  </thead>
+  <tbody>
+    <DataSourcesListItem
+      dataSource={
         Object {
           "access": "",
           "basicAuth": false,
@@ -50,7 +47,13 @@ exports[`Render should render component 1`] = `
           "typeLogoUrl": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
           "url": "",
           "user": "",
-        },
+        }
+      }
+      deleteDataSource={[MockFunction]}
+      key="0"
+    />
+    <DataSourcesListItem
+      dataSource={
         Object {
           "access": "",
           "basicAuth": false,
@@ -69,7 +72,13 @@ exports[`Render should render component 1`] = `
           "typeLogoUrl": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
           "url": "",
           "user": "",
-        },
+        }
+      }
+      deleteDataSource={[MockFunction]}
+      key="1"
+    />
+    <DataSourcesListItem
+      dataSource={
         Object {
           "access": "",
           "basicAuth": false,
@@ -88,7 +97,13 @@ exports[`Render should render component 1`] = `
           "typeLogoUrl": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
           "url": "",
           "user": "",
-        },
+        }
+      }
+      deleteDataSource={[MockFunction]}
+      key="2"
+    />
+    <DataSourcesListItem
+      dataSource={
         Object {
           "access": "",
           "basicAuth": false,
@@ -107,10 +122,11 @@ exports[`Render should render component 1`] = `
           "typeLogoUrl": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
           "url": "",
           "user": "",
-        },
-      ]
-    }
-    renderItem={[Function]}
-  />
-</section>
+        }
+      }
+      deleteDataSource={[MockFunction]}
+      key="3"
+    />
+  </tbody>
+</table>
 `;

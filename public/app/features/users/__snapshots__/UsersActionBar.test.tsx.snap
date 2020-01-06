@@ -84,7 +84,7 @@ exports[`Render should show external user management button 1`] = `
       className="page-action-bar__spacer"
     />
     <a
-      className="btn btn-primary"
+      className="btn btn-primary css-e54m17"
       href="some/url"
       rel="noopener"
       target="_blank"
@@ -111,7 +111,7 @@ exports[`Render should show invite button 1`] = `
       className="page-action-bar__spacer"
     />
     <a
-      className="btn btn-primary"
+      className="btn btn-primary css-e54m17"
       href="org/users/invite"
     >
       <span>

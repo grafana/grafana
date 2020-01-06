@@ -18,7 +18,6 @@ exports[`Render should render action bar and datasources 1`] = `
   >
     <OrgActionBar
       key="action-bar"
-      layoutMode="grid"
       linkButton={
         Object {
           "href": "datasources/new",
@@ -150,7 +149,6 @@ exports[`Render should render action bar and datasources 1`] = `
       }
       deleteDataSource={[Function]}
       key="list"
-      layoutMode="grid"
     />
   </PageContents>
 </Page>
