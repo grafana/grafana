@@ -46,10 +46,11 @@ describe('buildCategories', () => {
   });
 
   it('should set module to phantom on phantom plugins', () => {
-    expect(categories[5].plugins[0].module).toBe('phantom');
+    expect(categories[4].plugins[0].module).toBe('phantom');
   });
 
   it('should add enterprise phantom plugins', () => {
-    expect(categories[5].plugins.length).toBe(5);
+    expect(categories[4].title).toBe('Enterprise plugins');
+    expect(categories[4].plugins.length).toBe(5);
   });
 });
