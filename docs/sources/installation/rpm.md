@@ -11,15 +11,15 @@ parent = "installation"
 weight = 300
 +++
 
-# Install on RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)
+# Install on RPM-based Linux (CentOS, Fedora, OpenSuse, Red Hat)
 
-Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing
-installation.
+This page explains how to install Grafana dependencies, download and install Grafana, get the service up and running on your RPM-based Linux system, and the installation package details.
 
-## Download
+**Note on upgrading:** While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing installation.
 
-Go to the [download page](https://grafana.com/grafana/download?platform=linux) for the latest download
-links.
+## 1. Download and install
+
+You can install Grafana directly using Yum, via Yum repository, or by downloading a binary `.tar.gz` file.
 
 
 You can install Grafana using Yum directly:
