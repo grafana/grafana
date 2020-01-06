@@ -9,83 +9,118 @@ import { stylesFactory, ThemeContext } from '@grafana/ui';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   dataSourceCard: css`
-    padding: ${theme.spacing.md};
-    display: flex;
-    align-items: center;
+    display: table-row;
     cursor: pointer;
-    box-shadow: ${theme.shadow.card};
     background: ${theme.background.panelEditorVizItem};
-    border: 1px solid transparent;
-    border-radius: 3px;
-    margin-bottom: ${theme.spacing.xxs};
 
     &:hover {
-      box-shadow: ${theme.shadow.panelEditorVizItemHover};
       background: ${theme.background.panelEditorVizItemHover};
-      border: 1px solid ${theme.colors.blueLight};
       color: ${theme.colors.textStrong};
     }
   `,
-  cardActions: css`
-    opacity: 0;
-    padding-left: ${theme.spacing.md};
-    display: flex;
-    align-items: center;
-    min-width: 240px;
-    justify-content: flex-end;
+  dataSourceLogoWrapper: css`
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
+    padding: ${theme.spacing.md};
+
+    border-width: 2px 0 2px 2px;
+    border-style: solid;
+    border-color: ${theme.colors.primaryBorder};
+    border-radius: 3px 0 0 3px;
   `,
-  cardActionsBtn: css`
-    margin-left: ${theme.spacing.md};
-    cursor: pointer;
+  dataSourceLogoWrapperOnCardHover: css`
+    border-color: ${theme.colors.primaryBorderHover};
   `,
-  cardActionsOnCardHover: css`
-    opacity: 1;
-    transition: 0.15s opacity ease-in-out;
-  `,
-  cardItemLinkOnCardHover: css`
-    opacity: 0.6;
-    &:hover {
-      opacity: 1;
-      transition: 0.15s opacity ease-in-out;
-    }
-  `,
-  cardLogo: css`
-    margin-right: ${theme.spacing.lg};
-    margin-left: ${theme.spacing.sm};
-    width: 55px;
+  dataSourceLogo: css`
     min-width: 55px;
+    width: 55px;
     min-height: 55px;
     max-height: 55px;
-    flex-basis: 10%;
+    margin-bottom: ${theme.spacing.xxs};
   `,
-  cardTextWrapper: css`
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    flex-basis: 30%;
+  dataSourceNameWrapper: css`
+    display: table-cell;
+    vertical-align: middle;
+    border-width: 2px 0;
+    border-style: solid;
+    border-color: ${theme.colors.primaryBorder};
   `,
-  cardDescription: css`
+  dataSourceNameWrapperOnCardHover: css`
+    border-color: ${theme.colors.primaryBorderHover};
+  `,
+  dataSourceName: css`
+    font-size: ${theme.typography.heading.h5};
+    display: block;
+  `,
+  dataSourceType: css`
     font-size: ${theme.typography.size.sm};
     color: ${theme.colors.textWeak};
+    display: block;
   `,
-  cardText: css`
+  dataSourceURLWrapper: css`
+    border-width: 2px 0;
+    border-style: solid;
+    border-color: ${theme.colors.primaryBorder};
+  `,
+  dataSourceURLWrapperOnCardHover: css`
+    border-color: ${theme.colors.primaryBorderHover};
+  `,
+  dataSourceURL: css`
     font-size: ${theme.typography.heading.h5};
   `,
-  cardUrl: css`
-    padding: 0 ${theme.spacing.sm};
-    flex-basis: 30%;
-    display: flex;
-    flex-grow: 1;
+  dataSourceActionsWrapper: css`
+    text-align: center;
+    min-width: 240px;
+    border-width: 2px 2px 2px 0;
+    border-style: solid;
+    border-color: ${theme.colors.primaryBorder};
+    border-radius: 0 3px 3px 0;
   `,
-  cardLink: css`
+  dataSourceActionsWrapperOnDelete: css`
+    text-align: left;
+  `,
+  dataSourceActionsWrapperOnCardHover: css`
+    opacity: 1;
+    transition: 0.15s opacity ease-in-out;
+    border-color: ${theme.colors.primaryBorderHover};
+  `,
+  actionsLink: css`
     opacity: 0;
     height: 16px;
     margin: 0 8px;
+    vertical-align: middle;
 
     &:before {
       font-size: 16px;
       position: relative;
     }
+  `,
+  actionsLinkOnCardHover: css`
+    opacity: 0.6;
+
+    &:hover {
+      opacity: 1;
+      transition: 0.15s opacity ease-in-out;
+    }
+  `,
+  actionsBtn: css`
+    opacity: 0;
+    margin-left: ${theme.spacing.md};
+    cursor: pointer;
+  `,
+  actionsBtnBackground: css`
+    background: ${theme.colors.primary};
+
+    &:hover {
+      background: ${theme.colors.primaryHover};
+    }
+  `,
+  actionsBtnOnCardHover: css`
+    opacity: 1;
+  `,
+  actionsBtnOnDelete: css`
+    margin-left: ${theme.spacing.sm};
   `,
 }));
 
@@ -123,53 +158,82 @@ const DataSourcesListItem: FunctionComponent<Props> = ({ dataSource, deleteDataS
   }
 
   return (
-    <div className={style.dataSourceCard} onMouseEnter={toggleItemMouseover} onMouseLeave={toggleItemMouseover}>
-      <img className={style.cardLogo} src={dataSource.typeLogoUrl} />
-      <div className={style.cardTextWrapper}>
-        <span className={style.cardText}>{dataSource.name}</span>
-        {dataSource.type && <span className={style.cardDescription}>{dataSource.type}</span>}
-      </div>
-      <div className={style.cardUrl}>
-        <span className={style.cardText}>{dataSource.url}</span>
-      </div>
-      <div className={cx(style.cardActions, itemMouseover ? style.cardActionsOnCardHover : '')}>
+    <tr className={style.dataSourceCard} onMouseEnter={toggleItemMouseover} onMouseLeave={toggleItemMouseover}>
+      <td className={cx(style.dataSourceLogoWrapper, itemMouseover ? style.dataSourceLogoWrapperOnCardHover : '')}>
+        <img className={style.dataSourceLogo} src={dataSource.typeLogoUrl} />
+      </td>
+      <td className={cx(style.dataSourceNameWrapper, itemMouseover ? style.dataSourceNameWrapperOnCardHover : '')}>
+        <span className={style.dataSourceName}>{dataSource.name}</span>
+        {dataSource.type && <span className={style.dataSourceType}>{dataSource.type}</span>}
+      </td>
+      <td className={cx(style.dataSourceURLWrapper, itemMouseover ? style.dataSourceURLWrapperOnCardHover : '')}>
+        <span className={style.dataSourceURL}>{dataSource.url}</span>
+      </td>
+      <td
+        className={cx(
+          style.dataSourceActionsWrapper,
+          itemMouseover ? style.dataSourceActionsWrapperOnCardHover : '',
+          deleteConfirmOpen ? style.dataSourceActionsWrapperOnDelete : ''
+        )}
+      >
         {!deleteConfirmOpen ? (
           <>
             <a
               className={cx(
-                style.cardLink,
+                style.actionsLink,
                 'gicon',
                 'gicon-explore',
-                itemMouseover ? style.cardItemLinkOnCardHover : ''
+                itemMouseover ? style.actionsLinkOnCardHover : ''
               )}
               aria-label={e2e.pages.DataSources.selectors.dataSources(dataSource.name)}
               href={`explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22${dataSource.name}%22,%7B%7D,%7B%22mode%22:%22Metrics%22%7D,%7B%22ui%22:%5Btrue,true,true,%22none%22%5D%7D%5D`}
             />
             {/* <a
-              className={cx(style.cardLink, 'gicon', 'gicon-dashboard')}
+              className={cx(style.actionsLink, 'gicon', 'gicon-dashboard')}
               href={`/datasources/edit/${dataSource.id}/dashboards`}
             /> */}
             <a
-              className={cx(style.cardLink, 'fa', 'fa-trash', itemMouseover ? style.cardItemLinkOnCardHover : '')}
+              className={cx(style.actionsLink, 'fa', 'fa-trash', itemMouseover ? style.actionsLinkOnCardHover : '')}
               onClick={toggleDeleteOpen}
             />
-            <a className={cx('btn', 'btn-primary', style.cardActionsBtn)} href={`datasources/edit/${dataSource.id}`}>
+            <a
+              className={cx(
+                'btn',
+                'btn-primary',
+                style.actionsBtn,
+                style.actionsBtnBackground,
+                itemMouseover ? style.actionsBtnOnCardHover : ''
+              )}
+              href={`datasources/edit/${dataSource.id}`}
+            >
               Configure
             </a>
           </>
         ) : null}
         {deleteConfirmOpen ? (
           <>
-            <a className={cx('btn', 'btn-danger', style.cardActionsBtn)} onClick={onDelete}>
+            <a
+              className={cx(
+                'btn',
+                'btn-danger',
+                style.actionsBtn,
+                itemMouseover ? style.actionsBtnOnCardHover : '',
+                style.actionsBtnOnDelete
+              )}
+              onClick={onDelete}
+            >
               Confirm delete
             </a>
-            <a className={cx('btn', style.cardActionsBtn)} onClick={toggleDeleteOpen}>
+            <a
+              className={cx('btn', style.actionsBtn, itemMouseover ? style.actionsBtnOnCardHover : '')}
+              onClick={toggleDeleteOpen}
+            >
               Cancel
             </a>
           </>
         ) : null}
-      </div>
-    </div>
+      </td>
+    </tr>
   );
 };
 
