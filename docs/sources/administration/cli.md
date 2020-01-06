@@ -208,7 +208,7 @@ To correct this, use the `--homepath` global option to specify the Grafana defau
 grafana-cli --homepath "/usr/share/grafana" admin reset-admin-password <new password>
 ```
 
-If you have not lost the admin password then it is better to set it in the Grafana UI. ((HOW DO I DO THIS? I CANNOT FIND INSTRUCTIONS IN THE DOCS, NOTHING OBVIOUS IN UI.))
+If you have not lost the admin password, we recommend that you change the user password either in the User Preferences or in the server admin > User Details section.
 
 If you need to set the password in a script, then you can use the [Grafana User API]({{{< relref "..\http_api\user.md#change-password).
 ">}}}
