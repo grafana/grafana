@@ -127,8 +127,6 @@ const lightTheme: GrafanaTheme = {
   },
   shadow: {
     pageHeader: `inset 0px -3px 10px ${basicColors.gray6}`,
-    card: `-1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.1)`,
-    panelEditorVizItemHover: `0 0 4px ${basicColors.blueLight}`,
   },
 };
 
