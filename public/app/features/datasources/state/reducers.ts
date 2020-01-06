@@ -5,8 +5,8 @@ import {
   dataSourcesLoaded,
   setDataSourcesSearchQuery,
   setDataSourcesLayoutMode,
-  dataSourceTypesLoad,
-  dataSourceTypesLoaded,
+  dataSourcePluginsLoad,
+  dataSourcePluginsLoaded,
   setDataSourceTypeSearchQuery,
   dataSourceMetaLoaded,
   setDataSourceName,
@@ -17,11 +17,12 @@ import { reducerFactory } from 'app/core/redux';
 
 export const initialState: DataSourcesState = {
   dataSources: [],
+  plugins: [],
+  categories: [],
   dataSource: {} as DataSourceSettings,
   layoutMode: LayoutModes.List,
   searchQuery: '',
   dataSourcesCount: 0,
-  dataSourceTypes: [],
   dataSourceTypeSearchQuery: '',
   hasFetched: false,
   isLoadingDataSources: false,
@@ -51,14 +52,15 @@ export const dataSourcesReducer = reducerFactory(initialState)
     mapper: (state, action) => ({ ...state, layoutMode: action.payload }),
   })
   .addMapper({
-    filter: dataSourceTypesLoad,
-    mapper: state => ({ ...state, dataSourceTypes: [], isLoadingDataSources: true }),
+    filter: dataSourcePluginsLoad,
+    mapper: state => ({ ...state, plugins: [], isLoadingDataSources: true }),
   })
   .addMapper({
-    filter: dataSourceTypesLoaded,
+    filter: dataSourcePluginsLoaded,
     mapper: (state, action) => ({
       ...state,
-      dataSourceTypes: action.payload,
+      plugins: action.payload.plugins,
+      categories: action.payload.categories,
       isLoadingDataSources: false,
     }),
   })
