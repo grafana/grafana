@@ -1,47 +1,33 @@
-import { ThunkAction } from 'redux-thunk';
 import config from '../../../core/config';
 import { getBackendSrv } from '@grafana/runtime';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
-import { updateLocation, updateNavIndex, UpdateNavIndexAction } from 'app/core/actions';
+import { updateLocation, updateNavIndex } from 'app/core/actions';
 import { buildNavModel } from './navModel';
 import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/data';
-import { StoreState } from 'app/types';
-import { LocationUpdate } from '@grafana/runtime';
+import { ThunkResult, DataSourcePluginCategory } from 'app/types';
 import { actionCreatorFactory } from 'app/core/redux';
-import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { getPluginSettings } from 'app/features/plugins/PluginSettingsCache';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
+import { buildCategories } from './buildCategories';
 
 export const dataSourceLoaded = actionCreatorFactory<DataSourceSettings>('LOAD_DATA_SOURCE').create();
-
 export const dataSourcesLoaded = actionCreatorFactory<DataSourceSettings[]>('LOAD_DATA_SOURCES').create();
-
 export const dataSourceMetaLoaded = actionCreatorFactory<DataSourcePluginMeta>('LOAD_DATA_SOURCE_META').create();
-
-export const dataSourceTypesLoad = actionCreatorFactory('LOAD_DATA_SOURCE_TYPES').create();
-
-export const dataSourceTypesLoaded = actionCreatorFactory<DataSourcePluginMeta[]>('LOADED_DATA_SOURCE_TYPES').create();
-
+export const dataSourcePluginsLoad = actionCreatorFactory('LOAD_DATA_SOURCE_PLUGINS').create();
+export const dataSourcePluginsLoaded = actionCreatorFactory<DataSourceTypesLoadedPayload>(
+  'LOADED_DATA_SOURCE_PLUGINS'
+).create();
 export const setDataSourcesSearchQuery = actionCreatorFactory<string>('SET_DATA_SOURCES_SEARCH_QUERY').create();
-
 export const setDataSourcesLayoutMode = actionCreatorFactory<LayoutMode>('SET_DATA_SOURCES_LAYOUT_MODE').create();
-
 export const setDataSourceTypeSearchQuery = actionCreatorFactory<string>('SET_DATA_SOURCE_TYPE_SEARCH_QUERY').create();
-
 export const setDataSourceName = actionCreatorFactory<string>('SET_DATA_SOURCE_NAME').create();
-
 export const setIsDefault = actionCreatorFactory<boolean>('SET_IS_DEFAULT').create();
 
-export type Action =
-  | UpdateNavIndexAction
-  | ActionOf<DataSourceSettings>
-  | ActionOf<DataSourceSettings[]>
-  | ActionOf<DataSourcePluginMeta>
-  | ActionOf<DataSourcePluginMeta[]>
-  | ActionOf<LocationUpdate>;
-
-type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
+export interface DataSourceTypesLoadedPayload {
+  plugins: DataSourcePluginMeta[];
+  categories: DataSourcePluginCategory[];
+}
 
 export function loadDataSources(): ThunkResult<void> {
   return async dispatch => {
@@ -84,11 +70,12 @@ export function addDataSource(plugin: DataSourcePluginMeta): ThunkResult<void> {
   };
 }
 
-export function loadDataSourceTypes(): ThunkResult<void> {
+export function loadDataSourcePlugins(): ThunkResult<void> {
   return async dispatch => {
-    dispatch(dataSourceTypesLoad());
-    const result = await getBackendSrv().get('/api/plugins', { enabled: 1, type: 'datasource' });
-    dispatch(dataSourceTypesLoaded(result as DataSourcePluginMeta[]));
+    dispatch(dataSourcePluginsLoad());
+    const plugins = await getBackendSrv().get('/api/plugins', { enabled: 1, type: 'datasource' });
+    const categories = buildCategories(plugins);
+    dispatch(dataSourcePluginsLoaded({ plugins, categories }));
   };
 }
 

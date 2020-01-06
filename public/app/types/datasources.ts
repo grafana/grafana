@@ -7,9 +7,16 @@ export interface DataSourcesState {
   dataSourceTypeSearchQuery: string;
   layoutMode: LayoutMode;
   dataSourcesCount: number;
-  dataSourceTypes: DataSourcePluginMeta[];
   dataSource: DataSourceSettings;
   dataSourceMeta: DataSourcePluginMeta;
   hasFetched: boolean;
   isLoadingDataSources: boolean;
+  plugins: DataSourcePluginMeta[];
+  categories: DataSourcePluginCategory[];
+}
+
+export interface DataSourcePluginCategory {
+  id: string;
+  title: string;
+  plugins: DataSourcePluginMeta[];
 }
