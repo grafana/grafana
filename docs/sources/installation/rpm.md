@@ -19,7 +19,9 @@ This page explains how to install Grafana dependencies, download and install Gra
 
 ## 1. Download and install
 
-You can install Grafana directly using Yum, via Yum repository, or by downloading a binary `.tar.gz` file.
+You can install Grafana directly using YUM, via YUM repository, or by downloading a binary `.tar.gz` file.
+
+**Note:** The RPMs are signed, you can verify the signature with this [public GPG key](https://packages.grafana.com/gpg.key).
 
 
 You can install Grafana using Yum directly:
@@ -85,19 +87,11 @@ Then install Grafana via the `yum` command.
 sudo yum install grafana
 ```
 
-### RPM GPG Key
+### RPM GPG key
 
 The RPMs are signed, you can verify the signature with this [public GPG key](https://packages.grafana.com/gpg.key).
 
-## Package details
 
-- Installs binary to `/usr/sbin/grafana-server`
-- Copies init.d script to `/etc/init.d/grafana-server`
-- Installs default file (environment vars) to `/etc/sysconfig/grafana-server`
-- Copies configuration file to `/etc/grafana/grafana.ini`
-- Installs systemd service (if systemd is available) name `grafana-server.service`
-- The default configuration uses a log file at `/var/log/grafana/grafana.log`
-- The default configuration specifies an sqlite3 database at `/var/lib/grafana/grafana.db`
 
 
 
@@ -124,19 +118,18 @@ sudo systemctl enable grafana-server.service
 ```
 ### Start the server with init.d
 
-You can start Grafana by running:
+To start the service and verify that the service has started:
 
 ```bash
 sudo service grafana-server start
+sudo service grafana-server status
 ```
-
 
 Configure the Grafana server to start at boot
 
 ```bash
-$ sudo /sbin/chkconfig --add grafana-server
+sudo /sbin/chkconfig --add grafana-server
 ```
-
 
 ### Execute the binary
 
@@ -146,6 +139,16 @@ Start Grafana by running:
 ```bash
 ./bin/grafana-server web
 ```
+
+## Package details
+
+- Installs binary to `/usr/sbin/grafana-server`
+- Copies init.d script to `/etc/init.d/grafana-server`
+- Installs default file (environment vars) to `/etc/sysconfig/grafana-server`
+- Copies configuration file to `/etc/grafana/grafana.ini`
+- Installs systemd service (if systemd is available) name `grafana-server.service`
+- The default configuration uses a log file at `/var/log/grafana/grafana.log`
+- The default configuration specifies an sqlite3 database at `/var/lib/grafana/grafana.db`
 
 ## Next steps
 
