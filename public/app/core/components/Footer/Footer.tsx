@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import config from 'app/core/config';
 
-interface FooterLink {
+export interface FooterLink {
   text: string;
   icon?: string;
   url?: string;
