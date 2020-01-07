@@ -1,4 +1,3 @@
-
 module.exports = {
   verbose: false,
   "transform": {
@@ -26,4 +25,7 @@ module.exports = {
   ],
   "snapshotSerializers": ["enzyme-to-json/serializer"],
   "globals": { "ts-jest": { "isolatedModules": true } },
+  "moduleNameMapper": {
+    '^@grafana/ui/(.*)$': '<rootDir>/packages/grafana-ui/src/$1'
+  },
 };
