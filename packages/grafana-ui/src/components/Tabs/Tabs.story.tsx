@@ -1,7 +1,8 @@
 import React from 'react';
-import { Tab, TabsNavigation } from './TabsNavigation';
+import { TabsNavigation } from './TabsNavigation';
 import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { Tab } from './types';
 import mdx from './Tabs.mdx';
 
 export default {
