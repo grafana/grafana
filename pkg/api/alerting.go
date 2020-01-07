@@ -372,11 +372,11 @@ func PauseAlert(c *models.ReqContext, dto dtos.PauseAlertCommand) Response {
 	}
 
 	// Alert state validation
-	if query.Result.State != "paused" && dto.Paused == false {
+	if query.Result.State != "paused" && !dto.Paused {
 		result["state"] = "un-paused"
 		result["message"] = "Alert is already un-paused"
 		return JSON(200, result)
-	} else if query.Result.State == "paused" && dto.Paused == true {
+	} else if query.Result.State == "paused" && dto.Paused {
 		result["state"] = "paused"
 		result["message"] = "Alert is already paused"
 		return JSON(200, result)
