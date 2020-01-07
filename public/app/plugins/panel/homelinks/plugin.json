@@ -1,11 +1,9 @@
 {
   "type": "panel",
-  "name": "News Panel",
-  "id": "news",
+  "name": "Home Links",
+  "id": "homelinks",
 
   "skipDataQuery": true,
-
-  "state": "beta",
 
   "info": {
     "author": {
