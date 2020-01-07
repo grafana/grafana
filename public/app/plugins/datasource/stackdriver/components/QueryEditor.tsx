@@ -4,7 +4,6 @@ import _ from 'lodash';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { Metrics } from './Metrics';
-import { Filter } from './Filter';
 import { Filters } from './Filters';
 import { GroupBys } from './GroupBys';
 import { Aggregations } from './Aggregations';
@@ -187,18 +186,6 @@ export class QueryEditor extends React.Component<Props, State> {
         >
           {metric => (
             <>
-              <Filter
-                filtersChanged={value => this.onPropertyChange('filters', value)}
-                groupBysChanged={value => this.onPropertyChange('groupBys', value)}
-                filters={filters}
-                groupBys={groupBys}
-                refId={refId}
-                hideGroupBys={false}
-                templateSrv={templateSrv}
-                datasource={datasource}
-                metricType={metric ? metric.type : ''}
-              />
-
               <Filters
                 labels={labels}
                 filters={filters}
@@ -208,7 +195,6 @@ export class QueryEditor extends React.Component<Props, State> {
               <GroupBys
                 groupBys={Object.keys(labels)}
                 values={groupBys}
-                // onChange={value => this.onPropertyChange('groupBys', value)}
                 onChange={this.onGroupBysChange.bind(this)}
                 variableOptionGroup={variableOptionGroup}
               />
