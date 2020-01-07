@@ -23,7 +23,7 @@ You can install Grafana from a YUM repository, manually using YUM, manually usin
 
 **Note:** The RPMs are signed, you can verify the signature with this [public GPG key](https://packages.grafana.com/gpg.key).
 
-
+### Install manually with YUM
 
 You will find package URLs on the [download page](https://grafana.com/grafana/download?platform=linux).
 
@@ -47,7 +47,9 @@ sudo rpm -i --nodeps <local rpm package>
 
 ### Install from YUM repository
 
-If you install from the YUM repository, then Grafana is automatically updated every time you run `sudo yum update`. 
+If you install from the YUM repository, then Grafana is automatically updated every time you run `sudo yum update`.
+
+The YUM repository installs the open source edition of Grafana.
 
 #### To install the latest stable release:
 
@@ -55,7 +57,7 @@ If you install from the YUM repository, then Grafana is automatically updated ev
    ```bash
    sudo nano `/etc/yum.repos.d/grafana.repo`
    ```
-1. Enter the following information in grafana.repo and save it.
+1. Enter the following information in grafana.repo and then save it.
    ```bash
    [grafana]
    name=grafana
@@ -78,7 +80,7 @@ If you install from the YUM repository, then Grafana is automatically updated ev
    ```bash
    sudo nano `/etc/yum.repos.d/grafana.repo`
    ```
-1. Enter the following information in grafana.repo and save it.
+1. Enter the following information in grafana.repo and then save it.
    ```bash
    [grafana]
    name=grafana
