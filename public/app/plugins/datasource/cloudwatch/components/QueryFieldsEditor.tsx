@@ -76,10 +76,11 @@ export function QueryFieldsEditor({
     <>
       <QueryInlineField label="Region">
         <Segment
-          value={query.region || 'Select region'}
+          value={query.region}
+          placeholder="Select region"
           options={regions}
           allowCustomValue
-          onChange={region => onQueryChange({ ...query, region })}
+          onChange={({ value: region }) => onChange({ ...query, region })}
         />
       </QueryInlineField>
 
@@ -87,19 +88,21 @@ export function QueryFieldsEditor({
         <>
           <QueryInlineField label="Namespace">
             <Segment
-              value={query.namespace || 'Select namespace'}
+              value={query.namespace}
+              placeholder="Select namespace"
               allowCustomValue
               options={namespaces}
-              onChange={namespace => onQueryChange({ ...query, namespace })}
+              onChange={({ value: namespace }) => onChange({ ...query, namespace })}
             />
           </QueryInlineField>
 
           <QueryInlineField label="Metric Name">
             <SegmentAsync
-              value={query.metricName || 'Select metric name'}
+              value={query.metricName}
+              placeholder="Select metric name"
               allowCustomValue
               loadOptions={loadMetricNames}
-              onChange={metricName => onQueryChange({ ...query, metricName })}
+              onChange={({ value: metricName }) => onChange({ ...query, metricName })}
             />
           </QueryInlineField>
 
