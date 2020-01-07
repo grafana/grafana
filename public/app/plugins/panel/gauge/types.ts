@@ -1,5 +1,5 @@
 import { VizOrientation, FieldDisplayOptions, SelectableValue } from '@grafana/data';
-import { SingleStatBaseOptions } from '@grafana/ui/src/components/SingleStatShared/SingleStatBaseOptions';
+import { SingleStatBaseOptions } from '@grafana/ui';
 import { standardFieldDisplayOptions } from '../stat/types';
 
 export interface GaugeOptions extends SingleStatBaseOptions {
