@@ -109,8 +109,10 @@ grafana-cli --debug plugins install <plugin-id>
 ```
 
 ### Override a configuration setting  
-> In plain terms, what does this mean? The text below was copied from the Grafana CLI help.
-Configuration options to override defaults as a string. For example: cfg:default.paths.log=/dev/null
+
+`--configOverrides` is a command line argument that acts like an environmental variable override.
+
+For example, you can use it to redirect logging to another file (maybe to log plugin installs in a service like Hosted Grafana) or when resetting the admin password and you have non-default values for some important config value (like where the database is located).
 
 **Example:**
 ```bash
