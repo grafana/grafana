@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react-hooks';
 import { AbsoluteTimeRange } from '@grafana/data';
-import { CascaderOption } from '@grafana/ui';
+import { ButtonCascaderOption } from '@grafana/ui';
 
 import LanguageProvider from 'app/plugins/datasource/loki/language_provider';
 
@@ -29,7 +29,7 @@ describe('useLokiSyntax hook', () => {
     return Promise.resolve([]);
   };
 
-  const activeOptionMock: CascaderOption = {
+  const activeOptionMock: ButtonCascaderOption = {
     label: '',
     value: '',
   };

@@ -14,7 +14,7 @@ export { IndicatorsContainer } from './Select/IndicatorsContainer';
 export { NoOptionsMessage } from './Select/NoOptionsMessage';
 export { default as resetSelectStyles } from './Forms/Select/resetSelectStyles';
 export { ButtonSelect } from './Select/ButtonSelect';
-export { Cascader, CascaderOption } from './Cascader/Cascader';
+export { ButtonCascader, ButtonCascaderOption } from './ButtonCascader/ButtonCascader';
 
 // Forms
 export { FormLabel } from './FormLabel/FormLabel';

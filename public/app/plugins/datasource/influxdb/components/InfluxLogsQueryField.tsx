@@ -1,6 +1,6 @@
 import React from 'react';
 import { ExploreQueryFieldProps } from '@grafana/data';
-import { Cascader, CascaderOption } from '@grafana/ui';
+import { ButtonCascader, ButtonCascaderOption } from '@grafana/ui';
 
 import InfluxQueryModel from '../influx_query_model';
 import { AdHocFilterField, KeyValuePair } from 'app/features/explore/AdHocFilterField';
@@ -12,7 +12,7 @@ import { InfluxQuery, InfluxOptions } from '../types';
 export interface Props extends ExploreQueryFieldProps<InfluxDatasource, InfluxQuery, InfluxOptions> {}
 
 export interface State {
-  measurements: CascaderOption[];
+  measurements: ButtonCascaderOption[];
   measurement: string;
   field: string;
   error: string;

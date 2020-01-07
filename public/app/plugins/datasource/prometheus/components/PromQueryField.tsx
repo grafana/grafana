@@ -3,8 +3,8 @@ import React from 'react';
 
 import { Plugin } from 'slate';
 import {
-  Cascader,
-  CascaderOption,
+  ButtonCascader,
+  ButtonCascaderOption,
   SlatePrism,
   TypeaheadInput,
   TypeaheadOutput,
@@ -36,8 +36,8 @@ function getChooserText(hasSyntax: boolean, metrics: string[]) {
   return 'Metrics';
 }
 
-function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): CascaderOption {
-  const option: CascaderOption = { label: metric, value: metric };
+function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): ButtonCascaderOption {
+  const option: ButtonCascaderOption = { label: metric, value: metric };
   if (metadata && metadata[metric]) {
     const { type = '', help } = metadata[metric][0];
     option.title = [metric, type.toUpperCase(), help].join('\n');
@@ -45,7 +45,7 @@ function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): Cas
   return option;
 }
 
-export function groupMetricsByPrefix(metrics: string[], metadata?: PromMetricsMetadata): CascaderOption[] {
+export function groupMetricsByPrefix(metrics: string[], metadata?: PromMetricsMetadata): ButtonCascaderOption[] {
   // Filter out recording rules and insert as first option
   const ruleRegex = /:\w+:/;
   const ruleNames = metrics.filter(metric => ruleRegex.test(metric));
@@ -65,7 +65,7 @@ export function groupMetricsByPrefix(metrics: string[], metadata?: PromMetricsMe
     .filter((metric: string) => !ruleRegex.test(metric))
     .groupBy((metric: string) => metric.split(delimiter)[0])
     .map(
-      (metricsForPrefix: string[], prefix: string): CascaderOption => {
+      (metricsForPrefix: string[], prefix: string): ButtonCascaderOption => {
         const prefixIsMetric = metricsForPrefix.length === 1 && metricsForPrefix[0] === prefix;
         const children = prefixIsMetric ? [] : metricsForPrefix.sort().map(m => addMetricsMetadata(m, metadata));
         return {
@@ -195,7 +195,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       });
   };
 
-  onChangeMetrics = (values: string[], selectedOptions: CascaderOption[]) => {
+  onChangeMetrics = (values: string[], selectedOptions: ButtonCascaderOption[]) => {
     let query;
     if (selectedOptions.length === 1) {
       if (selectedOptions[0].children.length === 0) {
@@ -302,7 +302,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       <>
         <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
           <div className="gf-form flex-shrink-0">
-            <Cascader
+            <ButtonCascader
               options={metricsOptions}
               buttonText={chooserText}
               disabled={buttonDisabled}

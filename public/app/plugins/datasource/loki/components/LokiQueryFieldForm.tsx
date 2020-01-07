@@ -2,8 +2,8 @@
 import React from 'react';
 
 import {
-  Cascader,
-  CascaderOption,
+  ButtonCascader,
+  ButtonCascaderOption,
   SlatePrism,
   TypeaheadOutput,
   SuggestionsState,
@@ -64,10 +64,10 @@ function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadTe
 export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<LokiDatasource, LokiQuery, LokiOptions> {
   history: LokiHistoryItem[];
   syntax: Grammar;
-  logLabelOptions: CascaderOption[];
+  logLabelOptions: ButtonCascaderOption[];
   syntaxLoaded: boolean;
   absoluteRange: AbsoluteTimeRange;
-  onLoadOptions: (selectedOptions: CascaderOption[]) => void;
+  onLoadOptions: (selectedOptions: ButtonCascaderOption[]) => void;
   onLabelsRefresh?: () => void;
 }
 
@@ -88,11 +88,11 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
     ];
   }
 
-  loadOptions = (selectedOptions: CascaderOption[]) => {
+  loadOptions = (selectedOptions: ButtonCascaderOption[]) => {
     this.props.onLoadOptions(selectedOptions);
   };
 
-  onChangeLogLabels = (values: string[], selectedOptions: CascaderOption[]) => {
+  onChangeLogLabels = (values: string[], selectedOptions: ButtonCascaderOption[]) => {
     if (selectedOptions.length === 2) {
       const key = selectedOptions[0].value;
       const value = selectedOptions[1].value;
@@ -148,7 +148,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
       <>
         <div className="gf-form-inline">
           <div className="gf-form">
-            <Cascader
+            <ButtonCascader
               options={logLabelOptions || []}
               disabled={buttonDisabled}
               buttonText={chooserText}

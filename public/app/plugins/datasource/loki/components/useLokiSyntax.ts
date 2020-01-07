@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Prism from 'prismjs';
 import { AbsoluteTimeRange } from '@grafana/data';
-import { CascaderOption } from '@grafana/ui';
+import { ButtonCascaderOption } from '@grafana/ui';
 import LokiLanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import { useLokiLabels } from 'app/plugins/datasource/loki/components/useLokiLabels';
 import { useRefMounted } from 'app/core/hooks/useRefMounted';
@@ -24,7 +24,7 @@ export const useLokiSyntax = (languageProvider: LokiLanguageProvider, absoluteRa
    * that loads option values not fetched yet. Based on that useLokiLabels hook decides whether or not
    * the option requires additional data fetching
    */
-  const [activeOption, setActiveOption] = useState<CascaderOption[]>();
+  const [activeOption, setActiveOption] = useState<ButtonCascaderOption[]>();
 
   const { logLabelOptions, setLogLabelOptions, refreshLabels } = useLokiLabels(
     languageProvider,
