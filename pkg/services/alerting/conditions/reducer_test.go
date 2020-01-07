@@ -189,12 +189,12 @@ func TestSimpleReducer(t *testing.T) {
 
 		Convey("percent_diff two points", func() {
 			result := testReducer("percent_diff", 30, 40)
-			So(result, ShouldEqual, float64(-33.33333333333333))
+			So(result, ShouldEqual, float64(33.33333333333333))
 		})
 
 		Convey("percent_diff three points", func() {
 			result := testReducer("percent_diff", 30, 40, 40)
-			So(result, ShouldEqual, float64(-33.33333333333333))
+			So(result, ShouldEqual, float64(33.33333333333333))
 		})
 
 		Convey("percent_diff with only nulls", func() {
