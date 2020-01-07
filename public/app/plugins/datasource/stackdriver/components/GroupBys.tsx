@@ -1,5 +1,4 @@
 import React, { FunctionComponent } from 'react';
-import _ from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';
 import { labelsToGroupedOptions } from '../functions';
@@ -25,7 +24,7 @@ export const GroupBys: FunctionComponent<Props> = ({ groupBys = [], values = [],
           <Segment
             allowCustomValue
             key={value + index}
-            value={{ label: value.startsWith('$') ? value : _.startCase(value.replace(/\./g, ' ')), value: value }}
+            value={value}
             options={options}
             onChange={({ value }) =>
               onChange(

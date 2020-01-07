@@ -76,7 +76,7 @@ export const labelsToGroupedOptions = (groupBys: string[]) => {
     const group = (arr.length === 2 ? arr : _.initial(arr)).join(' ');
     const option = {
       value: curr,
-      label: _.last(arr),
+      label: curr,
     };
     if (acc[group]) {
       acc[group] = [...acc[group], option];

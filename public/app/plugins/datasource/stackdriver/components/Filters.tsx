@@ -43,7 +43,7 @@ export const Filters: FunctionComponent<Props> = ({
         <Fragment key={index}>
           <Segment
             allowCustomValue
-            value={{ label: value.startsWith('$') ? value : _.startCase(key.replace(/\./g, ' ')), value: key }}
+            value={key}
             options={options}
             onChange={({ value: key }) => {
               if (key === removeText) {
