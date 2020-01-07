@@ -48,7 +48,7 @@ export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
-export { Tabs } from './Tabs/Tabs';
+export { TabsNavigation } from './Tabs/TabsNavigation';
 
 // Visualizations
 export {

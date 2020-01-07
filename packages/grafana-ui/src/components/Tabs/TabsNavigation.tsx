@@ -1,33 +1,40 @@
-import React, { FC } from 'react';
-import { NavModelItem } from '@grafana/data';
+import React, { FC, ReactNode } from 'react';
+import { cx } from 'emotion';
 import { useTheme } from '../../themes';
 import { getTabsStyle } from './styles';
-import { cx } from 'emotion';
 
-export interface Props {
-  main: NavModelItem;
-  className?: string;
-  onChangeTab: (id: number) => void;
+export interface Tab {
+  label: string;
+  key: string;
+  hide?: boolean;
+  active?: boolean;
+  icon?: ReactNode;
 }
 
-export const Tabs: FC<Props> = ({ main, onChangeTab, className }) => {
+export interface Props {
+  tabs: Tab[];
+  onChangeTab: (tabIndex: number) => void;
+  className?: string;
+}
+
+export const TabsNavigation: FC<Props> = ({ className, onChangeTab, tabs }) => {
   const theme = useTheme();
   const tabsStyles = getTabsStyle(theme);
 
   return (
     <ul className={`${cx(tabsStyles.tabs, className)}`}>
-      {main.children?.map((tab: NavModelItem, index: number) => {
-        if (tab.hideFromTabs) {
+      {tabs.map((tab, index) => {
+        if (tab.hide) {
           return null;
         }
 
         return (
-          <li className={tabsStyles.tabItem} key={`${tab.url}-${index}`}>
+          <li className={tabsStyles.tabItem} key={`${tab.key}-${index}`}>
             <div
               onClick={() => onChangeTab(index)}
               className={cx(tabsStyles.linkItem, tab.active && tabsStyles.activeStyle)}
             >
-              {tab.text}
+              {tab.label}
             </div>
           </li>
         );
