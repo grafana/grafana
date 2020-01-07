@@ -361,7 +361,7 @@ Array [
                 className="css-0 gf-form-select-box__single-value"
               >
                 <div
-                  className="gf-form-select-box__img-value"
+                  className="css-38iae9-singleValue"
                 >
                   stackdriver auto
                 </div>

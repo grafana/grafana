@@ -21,13 +21,14 @@ export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
 
   return css`
     background-color: ${colors.formInputBg};
-    line-height: ${theme.typography.lineHeight.lg};
+    line-height: ${theme.typography.lineHeight.md};
     font-size: ${theme.typography.size.md};
     color: ${colors.formInputText};
     border: 1px solid ${borderColor};
+    padding: 0 ${theme.spacing.sm} 0 ${theme.spacing.sm};
 
     &:hover {
-      border-color: ${colors.formInputBorder};
+      border-color: ${borderColor};
     }
 
     &:focus {
@@ -53,7 +54,7 @@ export const inputSizes = () => {
       width: 580px;
     `,
     auto: css`
-      width: 100%;
+      width: auto;
     `,
   };
 };

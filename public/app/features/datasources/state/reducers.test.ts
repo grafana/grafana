@@ -5,8 +5,8 @@ import {
   dataSourceLoaded,
   setDataSourcesSearchQuery,
   setDataSourcesLayoutMode,
-  dataSourceTypesLoad,
-  dataSourceTypesLoaded,
+  dataSourcePluginsLoad,
+  dataSourcePluginsLoaded,
   setDataSourceTypeSearchQuery,
   dataSourceMetaLoaded,
   setDataSourceName,
@@ -76,12 +76,12 @@ describe('dataSourcesReducer', () => {
 
   describe('when dataSourceTypesLoad is dispatched', () => {
     it('then state should be correct', () => {
-      const state: DataSourcesState = { ...initialState, dataSourceTypes: [mockPlugin()] };
+      const state: DataSourcesState = { ...initialState, plugins: [mockPlugin()] };
 
       reducerTester()
         .givenReducer(dataSourcesReducer, state)
-        .whenActionIsDispatched(dataSourceTypesLoad())
-        .thenStateShouldEqual({ ...initialState, dataSourceTypes: [], isLoadingDataSources: true });
+        .whenActionIsDispatched(dataSourcePluginsLoad())
+        .thenStateShouldEqual({ ...initialState, isLoadingDataSources: true });
     });
   });
 
@@ -92,8 +92,8 @@ describe('dataSourcesReducer', () => {
 
       reducerTester()
         .givenReducer(dataSourcesReducer, state)
-        .whenActionIsDispatched(dataSourceTypesLoaded(dataSourceTypes))
-        .thenStateShouldEqual({ ...initialState, dataSourceTypes, isLoadingDataSources: false });
+        .whenActionIsDispatched(dataSourcePluginsLoaded({ plugins: dataSourceTypes, categories: [] }))
+        .thenStateShouldEqual({ ...initialState, plugins: dataSourceTypes, isLoadingDataSources: false });
     });
   });
 

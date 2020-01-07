@@ -3,7 +3,7 @@ title = "Provisioning"
 description = ""
 keywords = ["grafana", "provisioning"]
 type = "docs"
-aliases = ["/installation/provisioning"]
+aliases = ["/docs/grafana/latest/installation/provisioning"]
 [menu.docs]
 parent = "admin"
 weight = 8
@@ -348,8 +348,8 @@ The following sections detail the supported settings for each alert notification
 | url |
 | recipient |
 | username |
-| iconEmoji |
-| iconUrl |
+| icon_emoji |
+| icon_url |
 | uploadImage |
 | mention |
 | token |
@@ -437,6 +437,7 @@ The following sections detail the supported settings for each alert notification
 | ---- |
 | bottoken |
 | chatid |
+| uploadImage |
 
 #### Alert notification `threema`
 

@@ -2,7 +2,7 @@
 title = "Table Panel"
 keywords = ["grafana", "dashboard", "documentation", "panels", "table panel"]
 type = "docs"
-aliases = ["/reference/table/"]
+aliases = ["/docs/grafana/latest/reference/table/"]
 [menu.docs]
 name = "Table"
 parent = "panels"
@@ -17,7 +17,7 @@ weight = 4
 The table panel is very flexible, supporting both multiple modes for time series as well as for
 table, annotation and raw JSON data. It also provides date formatting and value formatting and coloring options.
 
-To view table panels in action and test different configurations with sample data, check out the [Table Panel Showcase in the Grafana Playground](http://play.grafana.org/dashboard/db/table-panel-showcase).
+To view table panels in action and test different configurations with sample data, check out the [Table Panel Showcase in the Grafana Playground](https://play.grafana.org/dashboard/db/table-panel-showcase).
 
 ## Querying Data
 

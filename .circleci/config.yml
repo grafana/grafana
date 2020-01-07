@@ -1,3 +1,5 @@
+version: 2.1
+
 aliases:
   # Workflow filters
   - &filter-only-release
@@ -13,8 +15,6 @@ aliases:
   - &filter-only-master
     branches:
       only: master
-
-version: 2
 
 jobs:
   mysql-integration-test:
@@ -125,7 +125,7 @@ jobs:
                 - node_modules
           - run:
               name: run end-to-end tests
-              command: 'env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests'
+              command: 'env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests:ci'
               no_output_timeout: 5m
           - store_artifacts:
                 path: public/e2e-tests/screenShots/theTruth
@@ -133,6 +133,9 @@ jobs:
           - store_artifacts:
                 path: public/e2e-tests/screenShots/theOutput
                 destination: output-screenshots
+          - store_artifacts:
+              path: public/e2e-tests/videos
+              destination: output-videos
           - run:
               name: ci job failed
               command: './scripts/ci-job-failed.sh'
@@ -164,7 +167,7 @@ jobs:
                 - node_modules
           - run:
               name: run end-to-end tests
-              command: 'env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests'
+              command: 'env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests:ci'
               no_output_timeout: 5m
           - store_artifacts:
                 path: public/e2e-tests/screenShots/theTruth
@@ -172,6 +175,9 @@ jobs:
           - store_artifacts:
                 path: public/e2e-tests/screenShots/theOutput
                 destination: output-screenshots
+          - store_artifacts:
+              path: public/e2e-tests/videos
+              destination: output-videos
           - run:
               name: ci job failed
               command: './scripts/ci-job-failed.sh'
@@ -240,6 +246,8 @@ jobs:
       - run:
           name: frontend tests
           command: './scripts/circle-test-frontend.sh'
+      - store_test_results:
+          path: reports/junit
       - run:
           name: ci job failed
           command: './scripts/ci-job-failed.sh'
@@ -1063,7 +1071,6 @@ jobs:
             - $HOME/.cache/trivy
 
 workflows:
-  version: 2
   build-master:
     jobs:
       - build-all:

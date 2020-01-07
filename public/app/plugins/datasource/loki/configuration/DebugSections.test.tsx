@@ -46,7 +46,7 @@ describe('DebugSection', () => {
       {
         matcherRegex: 'traceId=(\\w+)',
         name: 'traceIdLink',
-        url: 'localhost/trace/${__value.raw}',
+        url: 'http://localhost/trace/${__value.raw}',
       },
       {
         matcherRegex: 'traceId=(\\w+)',
@@ -70,7 +70,7 @@ describe('DebugSection', () => {
       wrapper
         .find('tr')
         .at(1)
-        .contains('localhost/trace/1234')
+        .contains('http://localhost/trace/1234')
     ).toBeTruthy();
   });
 });
