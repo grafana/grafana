@@ -69,7 +69,7 @@ export class ExpressionDatasourceApi extends DataSourceApi<ExpressionQuery> {
    */
   async toDataQueryResponse(rsp: any): Promise<DataQueryResponse> {
     const { resultsToDataFrames } = await import(
-      /* webpackChunkName: "apache-arrow-util" */ '@grafana/data/src/dataframe/arrow/ArrowDataFrame'
+      /* webpackChunkName: "apache-arrow-util" */ '@grafana/data/src/dataframe/ArrowDataFrame'
     );
     return { data: resultsToDataFrames(rsp) };
   }

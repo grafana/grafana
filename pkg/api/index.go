@@ -43,7 +43,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 	appSubURL := setting.AppSubUrl
 
 	// special case when doing localhost call from phantomjs
-	if c.IsRenderCall {
+	if c.IsRenderCall && !hs.Cfg.ServeFromSubPath {
 		appURL = fmt.Sprintf("%s://localhost:%s", setting.Protocol, setting.HttpPort)
 		appSubURL = ""
 		settings["appSubUrl"] = ""

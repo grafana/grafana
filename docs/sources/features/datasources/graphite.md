@@ -3,7 +3,7 @@ title = "Using Graphite in Grafana"
 description = "Guide for using graphite in Grafana"
 keywords = ["grafana", "graphite", "guide"]
 type = "docs"
-aliases = ["/datasources/graphite"]
+aliases = ["/docs/grafana/latest/datasources/graphite"]
 [menu.docs]
 name = "Graphite"
 identifier = "graphite"
@@ -147,7 +147,7 @@ Why two ways? The first syntax is easier to read and write but does not allow yo
 the second syntax in expressions like  `my.server[[serverNumber]].count`.
 
 Example:
-[Graphite Templated Dashboard](http://play.grafana.org/dashboard/db/graphite-templated-nested)
+[Graphite Templated Dashboard](https://play.grafana.org/dashboard/db/graphite-templated-nested)
 
 ### Variable Usage in Tag Queries
 
