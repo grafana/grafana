@@ -28,8 +28,8 @@ const idValidationEvents: ValidationEvents = {
 export class QueryEditor extends PureComponent<Props, State> {
   state: State = { regions: [], namespaces: [], metricNames: [], variableOptionGroup: {}, showMeta: false };
 
-  componentWillMount() {
-    const { query } = this.props;
+  static getDerivedStateFromProps(props: Props, state: State) {
+    const { query } = props;
 
     if (!query.namespace) {
       query.namespace = '';
@@ -66,6 +66,8 @@ export class QueryEditor extends PureComponent<Props, State> {
     if (!query.hasOwnProperty('matchExact')) {
       query.matchExact = true;
     }
+
+    return state;
   }
 
   componentDidMount() {
