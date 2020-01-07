@@ -303,10 +303,17 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const suggestions: CompletionItemGroup[] = [];
     const line = value.anchorBlock.getText();
     const cursorOffset = value.selection.anchor.offset;
-    const nextChar = line[cursorOffset];
-    const isValueContext = wrapperClasses.includes('attr-value');
-    if (!nextChar.match(/["}]/)) {
-      // Don't suggest anything inside a value
+    const suffix = line.substr(cursorOffset);
+    const prefix = line.substr(0, cursorOffset);
+    const isValueStart = text.match(/^(=|=~|!=|!~)/);
+    const isValueEnd = suffix.match(/^"?[,}]/);
+    // detect cursor in front of value, e.g., {key=|"}
+    const isPreValue = prefix.match(/(=|=~|!=|!~)$/) && suffix.match(/^"/);
+
+    // Don't suggestq anything at the beginning or inside a value
+    const isValueEmpty = isValueStart && isValueEnd;
+    const hasValuePrefix = isValueEnd && !isValueStart;
+    if ((!isValueEmpty && !hasValuePrefix) || isPreValue) {
       return { suggestions };
     }
 
@@ -335,7 +342,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     }
 
     let context: string;
-    if ((text && text.match(/^!?=~?/)) || isValueContext) {
+    if ((text && isValueStart) || wrapperClasses.includes('attr-value')) {
       // Label values
       if (labelKey && labelValues[labelKey]) {
         context = 'context-label-values';
