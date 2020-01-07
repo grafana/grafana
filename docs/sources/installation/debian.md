@@ -27,6 +27,8 @@ If you install from the APT repository, then Grafana is automatically updated ev
 
 The commands below install any missing dependencies, gets the GPG key, adds either the main or beta repository, and then installs Grafana.
 
+The APT repository installs the open source edition of Grafana.
+
 #### To install the latest stable release:
 
 ```bash
