@@ -57,12 +57,10 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 	// Attach client certificate and key if both are provided
 	sslcert := datasource.JsonData.Get("sslcertfile").MustString("")
 	sslkey := datasource.JsonData.Get("sslkeyfile").MustString("")
-
 	if sslcert != "" && sslkey != "" {
 		logger.Debug("Setting TLS client auth", "sslcert", sslcert, "sslkey", sslkey)
 		sslopts += "&sslcert=" + url.QueryEscape(sslcert) + "&sslkey=" + url.QueryEscape(sslkey)
-
-	} else if (sslcert != "" && sslkey == "") || (sslcert == "" && sslkey != "") {
+	} else if sslcert != "" || sslkey != "" {
 		logger.Error("TLS client and certificate must BOTH be specified")
 	}
 
