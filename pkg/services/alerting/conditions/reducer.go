@@ -146,7 +146,7 @@ func calculateDiff(series *tsdb.TimeSeries, allNull bool, value float64, fn func
 			if points[i][0].Valid {
 				allNull = false
 				val := fn(first, points[i][0].Float64)
-				if signed == false {
+				if !signed {
 					value = math.Abs(val)
 				} else {
 					value = val
