@@ -247,10 +247,11 @@ export class AlertTabCtrl {
       const frequencySecs = kbn.interval_to_seconds(this.alert.frequency);
       if (frequencySecs < this.alertingMinIntervalSecs) {
         this.frequencyWarning =
-          'The rule will be evaluated every ' +
+          this.alert.name +
+          ' will be evaluated every ' +
           this.alertingMinInterval +
-          ' because the frequency is set to a lower value' +
-          ' than the minimum interval between evaluations';
+          '. ' +
+          'You can change this by adjusting the minimal interval between evaluations.';
       }
     } catch (err) {
       this.frequencyWarning = err;
