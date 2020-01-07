@@ -3,9 +3,7 @@ import {
   DataSourcePluginOptionsEditorProps,
   SelectableValue,
   onUpdateDatasourceOption,
-  // updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetKeyOption,
-  updateDatasourcePluginOption,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceSecureJsonDataOption,
@@ -21,41 +19,9 @@ const httpModes = [
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 
 export class ConfigEditor extends PureComponent<Props> {
-  onUpdateOption = (key: string, val: any) => {
-    updateDatasourcePluginOption(this.props, key, val);
-  };
-
-  // onUpdateJsonDataOption = (key: string, val: any) => {
-  //   updateDatasourcePluginJsonDataOption(this.props, key, val);
-  // };
-
-  onResetKey = (key: string) => {
-    updateDatasourcePluginResetKeyOption(this.props, key);
-  };
-
-  // onDatabaseChange = (event: ChangeEvent<HTMLInputElement>) => {
-  //   this.onUpdateOption('database', event.target.value);
-  // };
-
-  // onUserChange = (event: ChangeEvent<HTMLInputElement>) => {
-  //   this.onUpdateOption('user', event.target.value);
-  // };
-
-  // onPasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
-  //   this.onUpdateJsonDataOption('password', event.target.value, true);
-  // };
-
-  // onTimeIntervalChange = (event: ChangeEvent<HTMLInputElement>) => {
-  //   this.onUpdateJsonDataOption('timeInterval', event.target.value, false);
-  // };
-
   onResetPassword = () => {
-    this.onResetKey('password');
+    updateDatasourcePluginResetKeyOption(this.props, 'password');
   };
-
-  // onHttpModeSelect = (httpMode: SelectableValue) => {
-  //   this.onUpdateJsonDataOption('httpMode', httpMode.value, false);
-  // };
 
   render() {
     const { options, onOptionsChange } = this.props;
