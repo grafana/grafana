@@ -134,7 +134,7 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
     return (
       <div className="gf-form-inline gf-form-inline--nowrap">
         <div className="gf-form flex-shrink-0">
-          <Cascader
+          <ButtonCascader
             buttonText={cascadeText}
             options={measurements}
             disabled={!hasMeasurement}
