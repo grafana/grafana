@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"database/sql"
+	"fmt"
 	"net/url"
 	"strconv"
 
@@ -21,7 +22,11 @@ func init() {
 func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	logger := log.New("tsdb.postgres")
 
-	cnnstr := generateConnectionString(datasource, logger)
+	cnnstr, err := generateConnectionString(datasource, logger)
+	if err != nil {
+		return nil, err
+	}
+
 	if setting.Env == setting.DEV {
 		logger.Debug("getEngine", "connection", cnnstr)
 	}
@@ -42,7 +47,7 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 	return sqleng.NewSqlQueryEndpoint(&config, &queryResultTransformer, newPostgresMacroEngine(timescaledb), logger)
 }
 
-func generateConnectionString(datasource *models.DataSource, logger log.Logger) string {
+func generateConnectionString(datasource *models.DataSource, logger log.Logger) (string, error) {
 	sslmode := datasource.JsonData.Get("sslmode").MustString("verify-full")
 
 	// Always pass SSL mode
@@ -63,7 +68,7 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 		sslopts += "&sslcert=" + url.QueryEscape(sslcert) + "&sslkey=" + url.QueryEscape(sslkey)
 
 	} else if (sslcert != "" && sslkey == "") || (sslcert == "" && sslkey != "") {
-		logger.Error("TLS client and certificate must BOTH be specified")
+		return "", fmt.Errorf("TLS client and certificate must BOTH be specified")
 	}
 
 	logger.Debug("Raw query string", "query", sslopts)
@@ -76,7 +81,7 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 		RawQuery: sslopts,
 	}
 
-	return u.String()
+	return u.String(), nil
 }
 
 type postgresQueryResultTransformer struct {
