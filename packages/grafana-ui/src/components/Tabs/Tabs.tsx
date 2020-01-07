@@ -6,16 +6,16 @@ import { cx } from 'emotion';
 
 export interface Props {
   main: NavModelItem;
-  customCss?: string;
+  className?: string;
   onChangeTab: (id: number) => void;
 }
 
-export const Tabs: FC<Props> = ({ main, onChangeTab, customCss }) => {
+export const Tabs: FC<Props> = ({ main, onChangeTab, className }) => {
   const theme = useTheme();
   const tabsStyles = getTabsStyle(theme);
 
   return (
-    <ul className={`${tabsStyles.tabs} ${customCss && customCss}`}>
+    <ul className={`${cx(tabsStyles.tabs, className)}`}>
       {main.children?.map((tab: NavModelItem, index: number) => {
         if (tab.hideFromTabs) {
           return null;

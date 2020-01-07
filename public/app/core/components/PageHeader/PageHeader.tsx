@@ -57,7 +57,7 @@ const Navigation = ({ main }: { main: NavModelItem }) => {
   return (
     <nav>
       <SelectNav customCss="page-header__select-nav" main={main} />
-      <Tabs customCss="page-header__tabs" main={main} onChangeTab={goToUrl} />
+      <Tabs className="page-header__tabs" main={main} onChangeTab={goToUrl} />
     </nav>
   );
 };
