@@ -1,9 +1,10 @@
 import React, { PureComponent } from 'react';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { JSONFormatter, Drawer, Select } from '@grafana/ui';
+import { JSONFormatter, Drawer, Select, Table } from '@grafana/ui';
 import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
-import { DataFrame, DataSourceApi, SelectableValue } from '@grafana/data';
+import { DataFrame, DataSourceApi, SelectableValue, applyFieldOverrides } from '@grafana/data';
+import { config } from 'app/core/config';
 
 interface Props {
   dashboard: DashboardModel;
@@ -12,15 +13,25 @@ interface Props {
 
 enum InspectTab {
   Data = 'data',
-  Meta = 'meta',
   Raw = 'raw',
   Issue = 'issue',
+  Meta = 'meta', // When result metadata exists
 }
 
 interface State {
+  // The last raw response
   last?: any;
+
+  // Data frem the last response
   data: DataFrame[];
+
+  // The selected data frame
+  selected: number;
+
+  // The Selected Tab
   tab: InspectTab;
+
+  // If the datasource supports custom metadata
   metaDS?: DataSourceApi;
 }
 
@@ -29,6 +40,7 @@ export class PanelInspector extends PureComponent<Props, State> {
     super(props);
     this.state = {
       data: [],
+      selected: 0,
       tab: InspectTab.Data,
     };
   }
@@ -82,12 +94,60 @@ export class PanelInspector extends PureComponent<Props, State> {
     this.setState({ tab: item.value || InspectTab.Data });
   };
 
+  onSelectedFrameChanged = (item: SelectableValue<number>) => {
+    this.setState({ selected: item.value || 0 });
+  };
+
   renderMetaDataInspector() {
     const { metaDS, data } = this.state;
     if (!metaDS || !metaDS.components?.MetadataInspector) {
       return <div>No Metadata Inspector</div>;
     }
     return <metaDS.components.MetadataInspector datasource={metaDS} data={data} />;
+  }
+
+  renderDataTab() {
+    const { data, selected } = this.state;
+    if (!data || !data.length) {
+      return <div>No Data</div>;
+    }
+    const choices = data.map((frame, index) => {
+      return {
+        value: index,
+        label: `${frame.name} (${index})`,
+      };
+    });
+
+    // Apply dummy styles
+    const processed = applyFieldOverrides({
+      data,
+      theme: config.theme,
+      fieldOptions: { defaults: {}, overrides: [] },
+      replaceVariables: (value: string) => {
+        return value;
+      },
+    });
+
+    return (
+      <div>
+        {choices.length > 1 && (
+          <div>
+            <Select
+              options={choices}
+              value={choices.find(t => t.value === selected)}
+              onChange={this.onSelectedFrameChanged}
+            />
+          </div>
+        )}
+        <div style={{ border: '1px solid #666' }}>
+          <Table width={330} height={400} data={processed[selected]} />
+        </div>
+      </div>
+    );
+  }
+
+  renderIssueTab() {
+    return <div>TODO: show issue form</div>;
   }
 
   render() {
@@ -111,11 +171,11 @@ export class PanelInspector extends PureComponent<Props, State> {
       <Drawer title={panel.title} onClose={this.onDismiss}>
         <Select options={tabs} value={tabs.find(t => t.value === tab)} onChange={this.onSelectTab} />
 
-        {tab === InspectTab.Data && <div>TODO: SHOW Table w/data</div>}
+        {tab === InspectTab.Data && this.renderDataTab()}
 
         {tab === InspectTab.Meta && this.renderMetaDataInspector()}
 
-        {tab === InspectTab.Issue && <div>TODO: Submit issue form</div>}
+        {tab === InspectTab.Issue && this.renderIssueTab()}
 
         {tab === InspectTab.Raw && (
           <div>
