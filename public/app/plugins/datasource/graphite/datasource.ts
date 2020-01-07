@@ -124,8 +124,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       // Metrictank metadata
       if (s.meta) {
         const meta: MetricTankMeta = {
-          datasourceId: this.id,
-          datasourceName: this.name, // :(
+          dataSourceName: this.name, // The unique ID
           request: result.data.meta, // info on the request
           info: s.meta, // Array of metadata
         };

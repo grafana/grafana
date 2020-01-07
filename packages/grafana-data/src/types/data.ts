@@ -9,9 +9,7 @@ export enum LoadingState {
 }
 
 export interface QueryResultDataSourceMeta {
-  datasourceId: number;
-  datasourceName: string; // If we have the ID... do we need the name?!?!
-  // Explicit classes will extend with their custom metadata fields
+  dataSourceName: string; // Used to load the datasource
 }
 
 export interface QueryResultMeta {
