@@ -1,6 +1,6 @@
-import { DataSourcePluginOptionsEditorProps, SelectableValue, KeyValue } from '../types';
+import { DataSourcePluginOptionsEditorProps, SelectableValue, KeyValue, DataSourceSettings } from '../types';
 
-export const onUpdateDatasourceOption = (props: DataSourcePluginOptionsEditorProps, key: string) => (
+export const onUpdateDatasourceOption = (props: DataSourcePluginOptionsEditorProps, key: keyof DataSourceSettings) => (
   event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
 ) => {
   updateDatasourcePluginOption(props, key, event.currentTarget.value);
@@ -40,7 +40,11 @@ export const onUpdateDatasourceResetKeyOption = (props: DataSourcePluginOptionsE
   updateDatasourcePluginResetKeyOption(props, key);
 };
 
-export function updateDatasourcePluginOption(props: DataSourcePluginOptionsEditorProps, key: string, val: any) {
+export function updateDatasourcePluginOption(
+  props: DataSourcePluginOptionsEditorProps,
+  key: keyof DataSourceSettings,
+  val: any
+) {
   const config = props.options;
 
   props.onOptionsChange({
