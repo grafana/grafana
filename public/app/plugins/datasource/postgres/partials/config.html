@@ -43,27 +43,27 @@
 
 <div class="gf-form-group">
 	<div class="gf-form max-width-30">
-		<span class="gf-form-label width-7">SSL Root Cert</span>
- 		<input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslrootcertfile' placeholder="SSL root cert file"></input>
+		<span class="gf-form-label width-7">TLS Root Cert</span>
+ 		<input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslrootcertfile' placeholder="TLS root cert file"></input>
 		<info-popover mode="right-absolute">
-			If the selected SSL mode needs an SSL root certificate, provide here the path to the file. 
-      Be sure that the file is readable by the grafana user.
+			If the selected TLS Mode needs a TLS Root Certificate, provide the path to the file here.
+      		Be sure that the file is readable by the user executing the grafana process.
 		</info-popover>
 	</div>
 	<div class="gf-form max-width-30">
-		<span class="gf-form-label width-7">SSL User Cert</span>
- 		<input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslcertfile' placeholder="SSL user cert file"></input>
+		<span class="gf-form-label width-7">TLS User Cert</span>
+ 		<input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslcertfile' placeholder="TLS user cert file"></input>
 		<info-popover mode="right-absolute">
-			If the selected SSL mode needs an SSL user certificate, provide here the path to the file. 
-      Be sure that the file is readable by the grafana user.
+			If the selected TLS Mode needs a TLS Client Certificate, provide the path to the file here.
+      		Be sure that the file is readable by the user executing the grafana process.
 		</info-popover>
 	</div>
 	<div class="gf-form max-width-30">
-		<span class="gf-form-label width-7">SSL User Key</span>
- 		<input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslkeyfile' placeholder="SSL user key file"></input>
+		<span class="gf-form-label width-7">TLS User Key</span>
+ 		<input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslkeyfile' placeholder="TLS user key file"></input>
 		<info-popover mode="right-absolute">
-			If the selected SSL mode needs an SSL user key, provide here the path to the file. 
-      Be sure that the file is <b>only</b> readable by the grafana user.
+			If the selected TLS Mode needs a TLS Client Key, provide the path to the file here.
+      		Be sure that the file is <i>only</i> readable by the user executing the grafana process.
 		</info-popover>
 	</div>
 </div>
@@ -161,3 +161,4 @@
 		</p>
 	</div>
 </div>
+
