@@ -95,9 +95,13 @@ func (s *queryReducer) Reduce(series *tsdb.TimeSeries) null.Float {
 			}
 		}
 	case "diff":
-		allNull, value = calculateDiff(series, allNull, value, diff)
+		allNull, value = calculateDiff(series, allNull, value, diff, false)
+	case "diff_signed":
+		allNull, value = calculateDiff(series, allNull, value, diff, true)
 	case "percent_diff":
-		allNull, value = calculateDiff(series, allNull, value, percentDiff)
+		allNull, value = calculateDiff(series, allNull, value, percentDiff, false)
+	case "percent_diff_signed":
+		allNull, value = calculateDiff(series, allNull, value, percentDiff, true)
 	case "count_non_null":
 		for _, v := range series.Points {
 			if v[0].Valid {
@@ -121,7 +125,7 @@ func newSimpleReducer(t string) *queryReducer {
 	return &queryReducer{Type: t}
 }
 
-func calculateDiff(series *tsdb.TimeSeries, allNull bool, value float64, fn func(float64, float64) float64) (bool, float64) {
+func calculateDiff(series *tsdb.TimeSeries, allNull bool, value float64, fn func(float64, float64) float64, signed bool) (bool, float64) {
 	var (
 		points = series.Points
 		first  float64
@@ -142,7 +146,11 @@ func calculateDiff(series *tsdb.TimeSeries, allNull bool, value float64, fn func
 			if points[i][0].Valid {
 				allNull = false
 				val := fn(first, points[i][0].Float64)
-				value = math.Abs(val)
+				if signed == false {
+					value = math.Abs(val)
+				} else {
+					value = val
+				}
 				break
 			}
 		}

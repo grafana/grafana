@@ -47,7 +47,9 @@ const reducerTypes = [
   { text: 'last()', value: 'last' },
   { text: 'median()', value: 'median' },
   { text: 'diff()', value: 'diff' },
+  { text: 'diff_signed()', value: 'diff_signed' },
   { text: 'percent_diff()', value: 'percent_diff' },
+  { text: 'percent_diff_signed()', value: 'percent_diff_signed' },
   { text: 'count_non_null()', value: 'count_non_null' },
 ];
 
