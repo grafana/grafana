@@ -1,10 +1,14 @@
-import React, { PureComponent, ChangeEvent } from 'react';
+import React, { PureComponent } from 'react';
 import {
   DataSourcePluginOptionsEditorProps,
   SelectableValue,
-  updateDatasourcePluginJsonDataOption,
+  onUpdateDatasourceOption,
+  // updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetKeyOption,
   updateDatasourcePluginOption,
+  onUpdateDatasourceJsonDataOption,
+  onUpdateDatasourceJsonDataOptionSelect,
+  onUpdateDatasourceSecureJsonDataOption,
 } from '@grafana/data';
 import { DataSourceHttpSettings, FormLabel, Input, SecretFormField, Select } from '@grafana/ui';
 import { InfluxOptions, InfluxSecureJsonData } from '../types';
@@ -21,37 +25,37 @@ export class ConfigEditor extends PureComponent<Props> {
     updateDatasourcePluginOption(this.props, key, val);
   };
 
-  onUpdateJsonDataOption = (key: string, val: any, secure: boolean) => {
-    updateDatasourcePluginJsonDataOption(this.props, key, val, secure);
-  };
+  // onUpdateJsonDataOption = (key: string, val: any) => {
+  //   updateDatasourcePluginJsonDataOption(this.props, key, val);
+  // };
 
   onResetKey = (key: string) => {
     updateDatasourcePluginResetKeyOption(this.props, key);
   };
 
-  onDatabaseChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.onUpdateOption('database', event.target.value);
-  };
+  // onDatabaseChange = (event: ChangeEvent<HTMLInputElement>) => {
+  //   this.onUpdateOption('database', event.target.value);
+  // };
 
-  onUserChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.onUpdateOption('user', event.target.value);
-  };
+  // onUserChange = (event: ChangeEvent<HTMLInputElement>) => {
+  //   this.onUpdateOption('user', event.target.value);
+  // };
 
-  onPasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.onUpdateJsonDataOption('password', event.target.value, true);
-  };
+  // onPasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
+  //   this.onUpdateJsonDataOption('password', event.target.value, true);
+  // };
 
-  onTimeIntervalChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.onUpdateJsonDataOption('timeInterval', event.target.value, false);
-  };
+  // onTimeIntervalChange = (event: ChangeEvent<HTMLInputElement>) => {
+  //   this.onUpdateJsonDataOption('timeInterval', event.target.value, false);
+  // };
 
   onResetPassword = () => {
     this.onResetKey('password');
   };
 
-  onHttpModeSelect = (httpMode: SelectableValue) => {
-    this.onUpdateJsonDataOption('httpMode', httpMode.value, false);
-  };
+  // onHttpModeSelect = (httpMode: SelectableValue) => {
+  //   this.onUpdateJsonDataOption('httpMode', httpMode.value, false);
+  // };
 
   render() {
     const { options, onOptionsChange } = this.props;
@@ -72,7 +76,11 @@ export class ConfigEditor extends PureComponent<Props> {
             <div className="gf-form">
               <FormLabel className="width-10">Database</FormLabel>
               <div className="width-20">
-                <Input className="width-20" value={options.database || ''} onChange={this.onDatabaseChange} />
+                <Input
+                  className="width-20"
+                  value={options.database || ''}
+                  onChange={onUpdateDatasourceOption(this.props, 'database')}
+                />
               </div>
             </div>
           </div>
@@ -80,7 +88,11 @@ export class ConfigEditor extends PureComponent<Props> {
             <div className="gf-form">
               <FormLabel className="width-10">User</FormLabel>
               <div className="width-10">
-                <Input className="width-20" value={options.user || ''} onChange={this.onUserChange} />
+                <Input
+                  className="width-20"
+                  value={options.user || ''}
+                  onChange={onUpdateDatasourceOption(this.props, 'user')}
+                />
               </div>
             </div>
           </div>
@@ -93,7 +105,7 @@ export class ConfigEditor extends PureComponent<Props> {
                 labelWidth={10}
                 inputWidth={20}
                 onReset={this.onResetPassword}
-                onChange={this.onPasswordChange}
+                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'password')}
               />
             </div>
           </div>
@@ -112,7 +124,7 @@ export class ConfigEditor extends PureComponent<Props> {
                 value={httpModes.find(httpMode => httpMode.value === options.jsonData.httpMode)}
                 options={httpModes}
                 defaultValue={options.jsonData.httpMode}
-                onChange={this.onHttpModeSelect}
+                onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'httpMode')}
               />
             </div>
           </div>
@@ -145,7 +157,7 @@ export class ConfigEditor extends PureComponent<Props> {
                   className="width-10"
                   placeholder="10s"
                   value={options.jsonData.timeInterval || ''}
-                  onChange={this.onTimeIntervalChange}
+                  onChange={onUpdateDatasourceJsonDataOption(this.props, 'timeInterval')}
                 />
               </div>
             </div>

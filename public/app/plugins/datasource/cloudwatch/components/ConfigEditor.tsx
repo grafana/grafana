@@ -6,6 +6,7 @@ import {
   onUpdateDatasourceOption,
   onUpdateDatasourceResetKeyOption,
   onUpdateDatasourceJsonDataOption,
+  onUpdateDatasourceSecureJsonDataOption,
 } from '@grafana/data';
 import { SelectableValue } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -129,7 +130,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 value={authProviderOptions.find(authProvider => authProvider.value === options.jsonData.authType)}
                 options={authProviderOptions}
                 defaultValue={options.jsonData.authType}
-                onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'authType', false)}
+                onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'authType')}
               />
             </div>
           </div>
@@ -181,7 +182,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                       <Input
                         className="width-30"
                         value={secureJsonData.accessKey || ''}
-                        onChange={onUpdateDatasourceJsonDataOption(this.props, 'accessKey', true)}
+                        onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'accessKey')}
                       />
                     </div>
                   </div>
@@ -213,7 +214,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                       <Input
                         className="width-30"
                         value={secureJsonData.secretKey || ''}
-                        onChange={onUpdateDatasourceJsonDataOption(this.props, 'secretKey', true)}
+                        onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'secretKey')}
                       />
                     </div>
                   </div>
@@ -232,7 +233,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                     className="width-30"
                     placeholder="arn:aws:iam:*"
                     value={options.jsonData.assumeRoleArn || ''}
-                    onChange={onUpdateDatasourceJsonDataOption(this.props, 'assumeRoleArn', false)}
+                    onChange={onUpdateDatasourceJsonDataOption(this.props, 'assumeRoleArn')}
                   />
                 </div>
               </div>
@@ -251,7 +252,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 value={regions.find(region => region.value === options.jsonData.defaultRegion)}
                 options={regions}
                 defaultValue={options.jsonData.defaultRegion}
-                onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'defaultRegion', false)}
+                onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'defaultRegion')}
               />
             </div>
           </div>
@@ -264,7 +265,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 className="width-30"
                 placeholder="Namespace1,Namespace2"
                 value={options.jsonData.customMetricsNamespaces || ''}
-                onChange={onUpdateDatasourceJsonDataOption(this.props, 'customMetricsNamespaces', false)}
+                onChange={onUpdateDatasourceJsonDataOption(this.props, 'customMetricsNamespaces')}
               />
             </div>
           </div>

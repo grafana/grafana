@@ -7,7 +7,6 @@ import { AnnotationEvent, KeyValue, LoadingState, TableData, TimeSeries } from '
 import { DataFrame, DataFrameDTO } from './dataFrame';
 import { RawTimeRange, TimeRange, AbsoluteTimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
-import { SelectableValue } from './select';
 import { CoreApp } from './app';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
@@ -272,92 +271,6 @@ export abstract class DataSourceApi<
   annotationQuery?(options: AnnotationQueryRequest<TQuery>): Promise<AnnotationEvent[]>;
 
   interpolateVariablesInQueries?(queries: TQuery[]): TQuery[];
-}
-
-export const onUpdateDatasourceOption = (props: DataSourcePluginOptionsEditorProps, key: string) => (
-  event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
-) => {
-  updateDatasourcePluginOption(props, key, event.currentTarget.value);
-};
-
-export const onUpdateDatasourceJsonDataOption = (
-  props: DataSourcePluginOptionsEditorProps,
-  key: string,
-  secure: boolean
-) => (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
-  updateDatasourcePluginJsonDataOption(props, key, event.currentTarget.value, secure);
-};
-
-export const onUpdateDatasourceJsonDataOptionSelect = (
-  props: DataSourcePluginOptionsEditorProps,
-  key: string,
-  secure: boolean
-) => (selected: SelectableValue) => {
-  updateDatasourcePluginJsonDataOption(props, key, selected.value, secure);
-};
-
-export const onUpdateDatasourceResetKeyOption = (props: DataSourcePluginOptionsEditorProps, key: string) => (
-  event: React.MouseEvent<HTMLButtonElement, MouseEvent>
-) => {
-  updateDatasourcePluginResetKeyOption(props, key);
-};
-
-export function updateDatasourcePluginOption(props: DataSourcePluginOptionsEditorProps, key: string, val: any) {
-  let config = props.options;
-
-  config = {
-    ...config,
-    [key]: val,
-  };
-
-  props.onOptionsChange(config);
-}
-
-export function updateDatasourcePluginJsonDataOption(
-  props: DataSourcePluginOptionsEditorProps,
-  key: string,
-  val: any,
-  secure: boolean
-) {
-  let config = props.options;
-
-  if (secure) {
-    config = {
-      ...config,
-      secureJsonData: {
-        ...config.secureJsonData,
-        [key]: val,
-      },
-    };
-  } else {
-    config = {
-      ...config,
-      jsonData: {
-        ...config.jsonData,
-        [key]: val,
-      },
-    };
-  }
-
-  props.onOptionsChange(config);
-}
-
-export function updateDatasourcePluginResetKeyOption(props: DataSourcePluginOptionsEditorProps, key: string) {
-  let config = props.options;
-
-  config = {
-    ...config,
-    secureJsonData: {
-      ...config.secureJsonData,
-      [key]: '',
-    },
-    secureJsonFields: {
-      ...config.secureJsonFields,
-      [key]: false,
-    },
-  };
-
-  props.onOptionsChange(config);
 }
 
 export interface QueryEditorProps<
