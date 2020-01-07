@@ -354,7 +354,8 @@ func NotificationTest(c *models.ReqContext, dto dtos.NotificationTestCommand) Re
 //POST /api/alerts/:alertId/pause
 func PauseAlert(c *models.ReqContext, dto dtos.PauseAlertCommand) Response {
 	alertID := c.ParamsInt64("alertId")
-
+	result := make(map[string]interface{})
+	result["alertId"] = alertID
 	query := models.GetAlertByIdQuery{Id: alertID}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -368,6 +369,17 @@ func PauseAlert(c *models.ReqContext, dto dtos.PauseAlertCommand) Response {
 		}
 
 		return Error(403, "Access denied to this dashboard and alert", nil)
+	}
+
+	// Alert state validation
+	if query.Result.State != "paused" && dto.Paused == false {
+		result["state"] = "un-paused"
+		result["message"] = "Alert is already un-paused"
+		return JSON(200, result)
+	} else if query.Result.State == "paused" && dto.Paused == true {
+		result["state"] = "paused"
+		result["message"] = "Alert is already paused"
+		return JSON(200, result)
 	}
 
 	cmd := models.PauseAlertCommand{
@@ -387,12 +399,8 @@ func PauseAlert(c *models.ReqContext, dto dtos.PauseAlertCommand) Response {
 		pausedState = "paused"
 	}
 
-	result := map[string]interface{}{
-		"alertId": alertID,
-		"state":   response,
-		"message": "Alert " + pausedState,
-	}
-
+	result["state"] = response
+	result["message"] = "Alert " + pausedState
 	return JSON(200, result)
 }
 
