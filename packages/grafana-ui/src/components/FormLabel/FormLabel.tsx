@@ -33,7 +33,7 @@ export const FormLabel: FunctionComponent<Props> = ({
       {tooltip && (
         <Tooltip placement="top" content={tooltip} theme={'info'}>
           <div className="gf-form-help-icon gf-form-help-icon--right-normal">
-            <i className="fa fa-info-circle" />
+            <i className="uil uil-info-circle" />
           </div>
         </Tooltip>
       )}

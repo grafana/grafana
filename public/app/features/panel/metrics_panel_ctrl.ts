@@ -254,7 +254,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     if (this.contextSrv.hasAccessToExplore() && this.datasource) {
       items.push({
         text: 'Explore',
-        icon: 'gicon gicon-explore',
+        icon: 'uil uil-compass',
         shortcut: 'x',
         href: await getExploreUrl({
           panel: this.panel,

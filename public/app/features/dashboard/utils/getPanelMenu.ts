@@ -102,7 +102,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
 
   menu.push({
     text: 'View',
-    iconClassName: 'gicon gicon-viewer',
+    iconClassName: 'eye',
     onClick: onViewPanel,
     shortcut: 'v',
   });
@@ -110,7 +110,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
   if (dashboard.meta.canEdit) {
     menu.push({
       text: 'Edit',
-      iconClassName: 'gicon gicon-editor',
+      iconClassName: 'edit',
       onClick: onEditPanel,
       shortcut: 'e',
     });
@@ -118,7 +118,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
 
   menu.push({
     text: 'Share',
-    iconClassName: 'fa fa-fw fa-share',
+    iconClassName: 'share',
     onClick: onSharePanel,
     shortcut: 'p s',
   });
@@ -126,7 +126,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
   if (contextSrv.hasAccessToExplore() && panel.datasource) {
     menu.push({
       text: 'Explore',
-      iconClassName: 'gicon gicon-explore',
+      iconClassName: 'compass',
       shortcut: 'x',
       onClick: onNavigateToExplore,
     });
@@ -135,7 +135,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
   if (config.featureToggles.inspect) {
     menu.push({
       text: 'Inspect',
-      iconClassName: 'fa fa-fw fa-info-circle',
+      iconClassName: 'circle',
       onClick: onInspectPanel,
       shortcut: 'p i',
     });
@@ -144,7 +144,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
   if (config.featureToggles.newEdit) {
     menu.push({
       text: 'New edit',
-      iconClassName: 'gicon gicon-editor',
+      iconClassName: 'edit',
       onClick: onNewEditPanel,
       shortcut: 'p i',
     });
@@ -173,7 +173,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
   menu.push({
     type: 'submenu',
     text: 'More...',
-    iconClassName: 'fa fa-fw fa-cube',
+    iconClassName: 'uil uil-cube',
     subMenu: subMenu,
     onClick: onMore,
   });
@@ -183,7 +183,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
 
     menu.push({
       text: 'Remove',
-      iconClassName: 'fa fa-fw fa-trash',
+      iconClassName: 'trash',
       onClick: onRemovePanel,
       shortcut: 'p r',
     });

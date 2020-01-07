@@ -6,10 +6,10 @@ import { CoreEvents } from 'app/types';
 const template = `
 <div class="layout-selector">
   <button ng-click="ctrl.listView()" ng-class="{active: ctrl.mode === 'list'}">
-    <i class="fa fa-list"></i>
+    <i class="uil uil-list-ul"></i>
   </button>
   <button ng-click="ctrl.gridView()" ng-class="{active: ctrl.mode === 'grid'}">
-    <i class="fa fa-th"></i>
+    <i class="uil uil-th"></i>
   </button>
 </div>
 `;

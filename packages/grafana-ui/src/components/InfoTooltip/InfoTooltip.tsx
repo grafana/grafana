@@ -8,7 +8,7 @@ interface InfoTooltipProps extends Omit<TooltipProps, 'children' | 'content'> {
 export const InfoTooltip = ({ children, ...restProps }: InfoTooltipProps) => {
   return (
     <Tooltip content={children} {...restProps}>
-      <i className="fa fa-info-circle" />
+      <i className="uil uil-info-circle" />
     </Tooltip>
   );
 };

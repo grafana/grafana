@@ -22,7 +22,7 @@ const LayoutSelector: FC<Props> = props => {
         }}
         className={mode === LayoutModes.List ? 'active' : ''}
       >
-        <i className="fa fa-list" />
+        <i className="uil uil-list-ul" />
       </button>
       <button
         onClick={() => {
@@ -30,7 +30,7 @@ const LayoutSelector: FC<Props> = props => {
         }}
         className={mode === LayoutModes.Grid ? 'active' : ''}
       >
-        <i className="fa fa-th" />
+        <i className="uil uil-th" />
       </button>
     </div>
   );

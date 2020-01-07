@@ -47,7 +47,7 @@ export const TLSAuthSettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceCon
           theme="info"
         >
           <div className="gf-form-help-icon gf-form-help-icon--right-normal">
-            <i className="fa fa-info-circle" />
+            <i className="uil uil-info-circle" />
           </div>
         </Tooltip>
       </div>

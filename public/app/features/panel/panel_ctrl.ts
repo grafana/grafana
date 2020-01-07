@@ -122,7 +122,7 @@ export class PanelCtrl {
     menu.push({
       text: 'View',
       click: 'ctrl.viewPanel();',
-      icon: 'gicon gicon-viewer',
+      icon: 'uil uil-eye',
       shortcut: 'v',
     });
 
@@ -131,7 +131,7 @@ export class PanelCtrl {
         text: 'Edit',
         click: 'ctrl.editPanel();',
         role: 'Editor',
-        icon: 'gicon gicon-editor',
+        icon: 'uil uil-edit',
         shortcut: 'e',
       });
     }
@@ -139,14 +139,14 @@ export class PanelCtrl {
     menu.push({
       text: 'Share',
       click: 'ctrl.sharePanel();',
-      icon: 'fa fa-fw fa-share',
+      icon: 'uil uil-share',
       shortcut: 'p s',
     });
 
     if (config.featureToggles.inspect) {
       menu.push({
         text: 'Inspect',
-        icon: 'fa fa-fw fa-info-circle',
+        icon: 'uil uil-info-circle',
         click: 'ctrl.inspectPanel();',
         shortcut: 'p i',
       });
@@ -159,7 +159,7 @@ export class PanelCtrl {
     menu.push({
       text: 'More ...',
       click: '',
-      icon: 'fa fa-fw fa-cube',
+      icon: 'uil  uil-cube',
       submenu: extendedMenu,
     });
 
@@ -169,7 +169,7 @@ export class PanelCtrl {
         text: 'Remove',
         click: 'ctrl.removePanel();',
         role: 'Editor',
-        icon: 'fa fa-fw fa-trash',
+        icon: 'uil uil-trash',
         shortcut: 'p r',
       });
     }

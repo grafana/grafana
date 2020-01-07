@@ -54,7 +54,7 @@ export class Switch extends PureComponent<Props, State> {
               {tooltip && (
                 <Tooltip placement={tooltipPlacement ? tooltipPlacement : 'auto'} content={tooltip} theme={'info'}>
                   <div className="gf-form-help-icon gf-form-help-icon--right-normal">
-                    <i className="fa fa-info-circle" />
+                    <i className="uil uil-info-circle" />
                   </div>
                 </Tooltip>
               )}

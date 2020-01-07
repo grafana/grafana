@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import { PanelMenuItem } from '@grafana/data';
 import { e2e } from '@grafana/e2e';
+import { Unicon } from '@grafana/ui/src/components/Icon/Unicon';
 
 interface Props {
   children: any;
@@ -14,7 +15,7 @@ export const PanelHeaderMenuItem: FC<Props & PanelMenuItem> = props => {
   ) : (
     <li className={isSubMenu ? 'dropdown-submenu' : null}>
       <a onClick={props.onClick}>
-        {props.iconClassName && <i className={props.iconClassName} />}
+        {props.iconClassName && <Unicon name={props.iconClassName} />}
         <span
           className="dropdown-item-text"
           aria-label={e2e.pages.Dashboard.Panels.Panel.selectors.headerItems(props.text)}
