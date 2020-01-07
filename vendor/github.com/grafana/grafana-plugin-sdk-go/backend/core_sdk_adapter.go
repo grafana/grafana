@@ -44,14 +44,7 @@ func (a *sdkAdapter) CheckHealth(ctx context.Context, protoReq *pluginv2.CheckHe
 }
 
 func (a *sdkAdapter) DataQuery(ctx context.Context, req *pluginv2.DataQueryRequest) (*pluginv2.DataQueryResponse, error) {
-	pc := pluginConfigFromProto(req.Config)
-
-	queries := make([]DataQuery, len(req.Queries))
-	for i, q := range req.Queries {
-		queries[i] = *dataQueryFromProtobuf(q)
-	}
-
-	resp, err := a.handlers.DataQuery(ctx, pc, req.Headers, queries)
+	resp, err := a.handlers.DataQuery(ctx, dataQueryRequestFromProto(req))
 	if err != nil {
 		return nil, err
 	}
@@ -60,9 +53,7 @@ func (a *sdkAdapter) DataQuery(ctx context.Context, req *pluginv2.DataQueryReque
 }
 
 func (a *sdkAdapter) Resource(ctx context.Context, req *pluginv2.ResourceRequest) (*pluginv2.ResourceResponse, error) {
-	pc := pluginConfigFromProto(req.Config)
-	resourceReq := resourceRequestFromProtobuf(req)
-	res, err := a.handlers.Resource(ctx, pc, resourceReq)
+	res, err := a.handlers.Resource(ctx, resourceRequestFromProtobuf(req))
 	if err != nil {
 		return nil, err
 	}

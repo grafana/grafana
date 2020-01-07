@@ -11,33 +11,22 @@ type TransformHandlers interface {
 }
 
 type TransformDataQueryHandler interface {
-	DataQuery(ctx context.Context, pc PluginConfig, headers map[string]string, queries []DataQuery, callBack TransformCallBackHandler) (*DataQueryResponse, error)
+	DataQuery(ctx context.Context, req *DataQueryRequest, callBack TransformCallBackHandler) (*DataQueryResponse, error)
 }
 
 // Callback
 
 type TransformCallBackHandler interface {
 	// TODO: Forget if I actually need PluginConfig on the callback or not.
-	DataQuery(ctx context.Context, pc PluginConfig, headers map[string]string, queries []DataQuery) (*DataQueryResponse, error)
+	DataQuery(ctx context.Context, req *DataQueryRequest) (*DataQueryResponse, error)
 }
 
 type transformCallBackWrapper struct {
 	callBack TransformCallBack
 }
 
-func (tw *transformCallBackWrapper) DataQuery(ctx context.Context, pc PluginConfig, headers map[string]string, queries []DataQuery) (*DataQueryResponse, error) {
-	protoQueries := make([]*pluginv2.DataQuery, len(queries))
-	for i, q := range queries {
-		protoQueries[i] = q.toProtobuf()
-	}
-
-	protoReq := &pluginv2.DataQueryRequest{
-		Config:  pc.toProtobuf(),
-		Queries: protoQueries,
-		Headers: headers,
-	}
-
-	protoRes, err := tw.callBack.DataQuery(ctx, protoReq)
+func (tw *transformCallBackWrapper) DataQuery(ctx context.Context, req *DataQueryRequest) (*DataQueryResponse, error) {
+	protoRes, err := tw.callBack.DataQuery(ctx, req.toProtobuf())
 	if err != nil {
 		return nil, err
 	}

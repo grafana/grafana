@@ -13,13 +13,7 @@ type transformSDKAdapter struct {
 }
 
 func (a *transformSDKAdapter) TransformData(ctx context.Context, req *pluginv2.DataQueryRequest, callBack TransformCallBack) (*pluginv2.DataQueryResponse, error) {
-	pc := pluginConfigFromProto(req.Config)
-	queries := make([]DataQuery, len(req.Queries))
-	for i, q := range req.Queries {
-		queries[i] = *dataQueryFromProtobuf(q)
-	}
-
-	resp, err := a.handlers.DataQuery(ctx, pc, req.Headers, queries, &transformCallBackWrapper{callBack})
+	resp, err := a.handlers.DataQuery(ctx, dataQueryRequestFromProto(req), &transformCallBackWrapper{callBack})
 	if err != nil {
 		return nil, err
 	}

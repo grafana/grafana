@@ -43,6 +43,37 @@ func (pc PluginConfig) toProtobuf() *pluginv2.PluginConfig {
 	}
 }
 
+type DataQueryRequest struct {
+	PluginConfig PluginConfig
+	Headers      map[string]string
+	Queries      []DataQuery
+}
+
+func dataQueryRequestFromProto(pc *pluginv2.DataQueryRequest) *DataQueryRequest {
+	queries := make([]DataQuery, len(pc.Queries))
+	for i, q := range pc.Queries {
+		queries[i] = *dataQueryFromProtobuf(q)
+	}
+	return &DataQueryRequest{
+		PluginConfig: pluginConfigFromProto(pc.Config),
+		Headers:      pc.Headers,
+		Queries:      queries,
+	}
+}
+
+func (dr *DataQueryRequest) toProtobuf() *pluginv2.DataQueryRequest {
+	queries := make([]*pluginv2.DataQuery, len(dr.Queries))
+	for i, q := range dr.Queries {
+		queries[i] = q.toProtobuf()
+	}
+	return &pluginv2.DataQueryRequest{
+		Config:  dr.PluginConfig.toProtobuf(),
+		Headers: dr.Headers,
+		Queries: queries,
+	}
+
+}
+
 // DataQuery represents the query as sent from the frontend.
 type DataQuery struct {
 	RefID         string
@@ -129,18 +160,20 @@ func timeRangeFromProtobuf(tr *pluginv2.TimeRange) TimeRange {
 }
 
 type ResourceRequest struct {
-	Headers map[string]string
-	Method  string
-	Path    string
-	Body    []byte
+	PluginConfig PluginConfig
+	Headers      map[string]string
+	Method       string
+	Path         string
+	Body         []byte
 }
 
 func resourceRequestFromProtobuf(req *pluginv2.ResourceRequest) *ResourceRequest {
 	return &ResourceRequest{
-		Headers: req.Headers,
-		Method:  req.Method,
-		Path:    req.Path,
-		Body:    req.Body,
+		PluginConfig: pluginConfigFromProto(req.Config),
+		Headers:      req.Headers,
+		Method:       req.Method,
+		Path:         req.Path,
+		Body:         req.Body,
 	}
 }
 
@@ -196,12 +229,12 @@ type CheckHealthResult struct {
 
 // DataQueryHandler handles data source queries.
 type DataQueryHandler interface {
-	DataQuery(ctx context.Context, pc PluginConfig, headers map[string]string, queries []DataQuery) (*DataQueryResponse, error)
+	DataQuery(ctx context.Context, req *DataQueryRequest) (*DataQueryResponse, error)
 }
 
 // ResourceHandler handles backend plugin checks.
 type ResourceHandler interface {
-	Resource(ctx context.Context, pc PluginConfig, req *ResourceRequest) (*ResourceResponse, error)
+	Resource(ctx context.Context, req *ResourceRequest) (*ResourceResponse, error)
 }
 
 type CheckHealthHandler interface {
