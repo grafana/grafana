@@ -202,6 +202,14 @@ find ./conf ./pkg ./public/views | wc -l
 
 Another alternative is to limit the files being watched. The directories that are watched for changes are listed in the `.bra.toml` file in the root directory. 
 
+### Error "q.Interval.Milliseconds undefined" when running `make run`
+
+If you get an error similar to the following when running `make run`, you might be running an unsupported version of Go. See [go.mod](../go.mod#L3) for the minimum required version.
+
+```
+vendor/github.com/grafana/grafana-plugin-sdk-go/transform/transform.go:128:29: q.Interval.Milliseconds undefined (type time.Duration has no field or method Milliseconds)
+```
+
 ## Next steps
 
 - Read our [style guides](/contribute/style-guides).
