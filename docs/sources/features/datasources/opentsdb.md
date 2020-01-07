@@ -3,7 +3,7 @@ title = "Using OpenTSDB in Grafana"
 description = "Guide for using OpenTSDB in Grafana"
 keywords = ["grafana", "opentsdb", "guide"]
 type = "docs"
-aliases = ["/datasources/opentsdb",	"docs/features/opentsdb"]
+aliases = ["/docs/grafana/latest/datasources/opentsdb",	"/docs/grafana/latest/features/opentsdb"]
 [menu.docs]
 name = "OpenTSDB"
 parent = "datasources"
@@ -106,3 +106,8 @@ datasources:
       tsdbResolution: 1
       tsdbVersion: 1
 ```
+
+## Lookup limits
+
+By default, at most 1000 records are looked up from OpenTSDB.
+You can change this by modifying the "Lookup Limit" in the OpenTSDB settings page.

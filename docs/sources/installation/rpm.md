@@ -2,7 +2,7 @@
 title = "Installing on RPM-based Linux"
 description = "Grafana Installation guide for Centos, Fedora, OpenSuse, Redhat."
 keywords = ["grafana", "installation", "documentation", "centos", "fedora", "opensuse", "redhat"]
-aliases = ["installation/installation/rpm"]
+aliases = ["/docs/grafana/latest/installation/installation/rpm"]
 type = "docs"
 [menu.docs]
 name = "Installing on Centos / Redhat"
@@ -25,7 +25,7 @@ links.
 You can install Grafana using Yum directly:
 
 ```bash
-$ sudo yum install <rpm package url>
+sudo yum install <rpm package url>
 ```
 
 You will find package URLs on the [download page](https://grafana.com/grafana/download?platform=linux).
@@ -33,20 +33,20 @@ You will find package URLs on the [download page](https://grafana.com/grafana/do
 Or install manually using `rpm`. First execute
 
 ```bash
-$ wget <rpm package url>
+wget <rpm package url>
 ```
 
 ### On CentOS / Fedora / Redhat:
 
 ```bash
-$ sudo yum install initscripts urw-fonts
-$ sudo rpm -Uvh <local rpm package>
+sudo yum install initscripts urw-fonts
+sudo rpm -Uvh <local rpm package>
 ```
 
 ### On OpenSuse:
 
 ```bash
-$ sudo rpm -i --nodeps <local rpm package>
+sudo rpm -i --nodeps <local rpm package>
 ```
 
 ## Install via YUM Repository
@@ -82,7 +82,7 @@ sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 Then install Grafana via the `yum` command.
 
 ```bash
-$ sudo yum install grafana
+sudo yum install grafana
 ```
 
 ### RPM GPG Key
@@ -104,7 +104,7 @@ The RPMs are signed, you can verify the signature with this [public GPG key](htt
 You can start Grafana by running:
 
 ```bash
-$ sudo service grafana-server start
+sudo service grafana-server start
 ```
 
 This will start the `grafana-server` process as the `grafana` user,
@@ -122,9 +122,9 @@ $ sudo /sbin/chkconfig --add grafana-server
 ## Start the server (via systemd)
 
 ```bash
-$ systemctl daemon-reload
-$ systemctl start grafana-server
-$ systemctl status grafana-server
+sudo systemctl daemon-reload
+sudo systemctl start grafana-server
+sudo systemctl status grafana-server
 ```
 
 ### Enable the systemd service to start at boot
@@ -171,9 +171,9 @@ for example in alert notifications.
 If the image is missing text make sure you have font packages installed.
 
 ```bash
-yum install fontconfig
-yum install freetype*
-yum install urw-fonts
+sudo yum install fontconfig
+sudo yum install freetype*
+sudo yum install urw-fonts
 ```
 
 ## Installing from binary tar file

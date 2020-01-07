@@ -131,7 +131,7 @@ function TabItem({ tab, activeTab, onClick }: TabItemParams) {
 
   return (
     <div className="panel-editor-tabs__item" onClick={() => onClick(tab)}>
-      <a className={tabClasses} aria-label={e2e.pages.Panels.EditPanel.selectors.tabItems(tab.text)}>
+      <a className={tabClasses} aria-label={e2e.pages.Dashboard.Panels.EditPanel.selectors.tabItems(tab.text)}>
         <Tooltip content={`${tab.text}`} placement="auto">
           <i className={`gicon gicon-${tab.id}${activeTab === tab.id ? '-active' : ''}`} />
         </Tooltip>

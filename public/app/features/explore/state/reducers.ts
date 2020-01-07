@@ -62,7 +62,6 @@ import {
 import { reducerFactory, ActionOf } from 'app/core/redux';
 import { updateLocation } from 'app/core/actions/location';
 import { LocationUpdate } from '@grafana/runtime';
-import TableModel from 'app/core/table_model';
 import { ResultProcessor } from '../utils/ResultProcessor';
 
 export const DEFAULT_RANGE = {
@@ -184,8 +183,15 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: changeModeAction,
     mapper: (state, action): ExploreItemState => {
-      const mode = action.payload.mode;
-      return { ...state, mode };
+      return {
+        ...state,
+        mode: action.payload.mode,
+        graphResult: null,
+        tableResult: null,
+        logsResult: null,
+        queryResponse: createEmptyQueryResponse(),
+        loading: false,
+      };
     },
   })
   .addMapper({
@@ -448,7 +454,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         return { ...state, showingTable };
       }
 
-      return { ...state, showingTable, tableResult: new TableModel() };
+      return { ...state, showingTable, tableResult: null };
     },
   })
   .addMapper({

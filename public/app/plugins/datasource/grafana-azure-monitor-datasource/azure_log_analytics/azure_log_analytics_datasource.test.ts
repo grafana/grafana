@@ -71,9 +71,9 @@ describe('AzureLogAnalyticsDatasource', () => {
       await ctx.ds.metricFindQuery('workspace("aworkspace").AzureActivity  | distinct Category');
     });
 
-    it('should use the sameasloganalyticsazure plugin route', () => {
+    it('should use the loganalyticsazure plugin route', () => {
       expect(workspacesUrl).toContain('azuremonitor');
-      expect(azureLogAnalyticsUrl).toContain('sameasloganalyticsazure');
+      expect(azureLogAnalyticsUrl).toContain('loganalyticsazure');
     });
   });
 
