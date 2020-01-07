@@ -64,7 +64,7 @@ export class PanelInspector extends PureComponent<Props, State> {
     const data = lastResult?.series as DataFrame[];
     if (data) {
       for (const frame of data) {
-        const key = frame.meta?.ds?.datasourceName;
+        const key = frame.meta?.ds?.dataSourceName;
         if (key) {
           const ds = await getDataSourceSrv().get(key);
           if (ds && ds.components.MetadataInspector) {
