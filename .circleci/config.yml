@@ -1,3 +1,5 @@
+version: 2.1
+
 aliases:
   # Workflow filters
   - &filter-only-release
@@ -13,8 +15,6 @@ aliases:
   - &filter-only-master
     branches:
       only: master
-
-version: 2
 
 jobs:
   mysql-integration-test:
@@ -1071,7 +1071,6 @@ jobs:
             - $HOME/.cache/trivy
 
 workflows:
-  version: 2
   build-master:
     jobs:
       - build-all:
