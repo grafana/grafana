@@ -62,7 +62,7 @@ sudo apt-get install grafana
 
 #### Set up repository for ARM
 
-If you have problems using `add-apt-repository`, you can set up the repository without using it.
+If you have problems using `add-apt-repository`, you can set up the repository without it.
 
 Add this repository for stable releases:
 
