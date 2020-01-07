@@ -1134,7 +1134,17 @@ describe('PrometheusDatasource', () => {
       let end = 7 * 24 * 60 * 60;
       end -= end % 55;
       const start = 0;
-      const urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=' + start + '&end=' + end + '&step=55';
+      const step = 55;
+      const adjusted = alignRange(
+        start,
+        end,
+        step,
+        getTimeSrv()
+          .timeRange()
+          .to.utcOffset() * 60
+      );
+      const urlExpected =
+        'proxied/api/v1/query_range?query=test' + '&start=' + adjusted.start + '&end=' + adjusted.end + '&step=' + step;
       getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
       ds.query(query as any);
       const res = (getBackendSrvMock().datasourceRequest as jest.Mock<any>).mock.calls[0][0];
@@ -1384,14 +1394,24 @@ describe('PrometheusDatasource', () => {
       let end = 7 * 24 * 60 * 60;
       end -= end % 55;
       const start = 0;
+      const step = 55;
+      const adjusted = alignRange(
+        start,
+        end,
+        step,
+        getTimeSrv()
+          .timeRange()
+          .to.utcOffset() * 60
+      );
       const urlExpected =
         'proxied/api/v1/query_range?query=' +
         encodeURIComponent('rate(test[$__interval])') +
         '&start=' +
-        start +
+        adjusted.start +
         '&end=' +
-        end +
-        '&step=55';
+        adjusted.end +
+        '&step=' +
+        step;
       getBackendSrvMock().datasourceRequest = jest.fn(() => Promise.resolve(response));
       templateSrv.replace = jest.fn(str => str);
       ds.query(query as any);
