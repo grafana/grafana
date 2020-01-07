@@ -1,15 +1,8 @@
-import React, { FC, ReactNode } from 'react';
+import React, { FC } from 'react';
 import { cx } from 'emotion';
 import { useTheme } from '../../themes';
 import { getTabsStyle } from './styles';
-
-export interface Tab {
-  label: string;
-  key: string;
-  hide?: boolean;
-  active?: boolean;
-  icon?: ReactNode;
-}
+import { Tab } from './types';
 
 export interface Props {
   tabs: Tab[];
