@@ -64,6 +64,8 @@
     link: /administration/image_rendering/
   - name: Internal metrics
     link: /administration/metrics/
+  - name: Jaeger instrumentation
+    link: /administration/jaeger-instrumentation/
   - name: Provisioning
     link: /administration/provisioning/
   - name: Troubleshooting
