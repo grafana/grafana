@@ -1,5 +1,6 @@
 import React from 'react';
-import { GraphWithLegend, Chart } from '@grafana/ui';
+import { Chart } from '@grafana/ui';
+import { GraphWithLegend } from '@grafana/ui/visualizations';
 import { PanelProps } from '@grafana/data';
 import { Options } from './types';
 import { GraphPanelController } from './GraphPanelController';

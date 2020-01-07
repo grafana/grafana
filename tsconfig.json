@@ -32,7 +32,8 @@
     "paths": {
       "app": ["app"],
       "sass": ["sass"],
-      "@grafana/slate-react": ["../node_modules/@types/slate-react"]
+      "@grafana/slate-react": ["../node_modules/@types/slate-react"],
+      "@grafana/ui/*": ["../packages/grafana-ui/src/*"]
     },
     "skipLibCheck": true
   },
