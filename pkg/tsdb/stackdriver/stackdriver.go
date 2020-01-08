@@ -366,9 +366,6 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 		}
 
 		for key, value := range series.Metric.Labels {
-			if _, exist := labels["metric.label."+key]; !exist {
-				labels["metric.label."+key] = make([]string, 0)
-			}
 			if !containsLabel(labels["metric.label."+key], value) {
 				labels["metric.label."+key] = append(labels["metric.label."+key], value)
 			}
@@ -383,9 +380,6 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 				defaultMetricName += " " + value
 			}
 
-			if _, exist := labels["resource.label."+key]; !exist {
-				labels["resource.label."+key] = make([]string, 0)
-			}
 			if !containsLabel(labels["resource.label."+key], value) {
 				labels["resource.label."+key] = append(labels["resource.label."+key], value)
 			}
@@ -394,16 +388,26 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 
 		for labelType, labelTypeValues := range series.MetaData {
 			for labelKey, labelValue := range labelTypeValues {
-				key := toSnakeCase(fmt.Sprintf("metadata.%s.%s", labelType, labelKey))
-				if _, exist := labels[key]; !exist {
-					labels[key] = make([]string, 0)
+				output := []string{}
+				if values, ok := labelValue.([]interface{}); ok {
+					for _, v := range values {
+						output = append(output, v.(string))
+					}
+				} else if boolValue, ok := labelValue.(bool); ok {
+					output = append(output, strconv.FormatBool(boolValue))
+				} else if strValue, ok := labelValue.(string); ok {
+					output = append(output, strValue)
 				}
 
-				if !containsLabel(labels[key], labelValue) {
-					labels[key] = append(labels[key], labelValue)
-				}
+				for _, value := range output {
+					key := toSnakeCase(fmt.Sprintf("metadata.%s.%s", labelType, labelKey))
 
-				seriesLabels[key] = labelValue
+					if !containsLabel(labels[key], value) {
+						labels[key] = append(labels[key], value)
+					}
+
+					seriesLabels[key] = value
+				}
 			}
 		}
 
@@ -492,11 +496,8 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 }
 
 func toSnakeCase(str string) string {
-	matchFirstCap := regexp.MustCompile("(.)([A-Z][a-z]+)")
-	matchAllCap := regexp.MustCompile("([a-z0-9])([A-Z])")
-	snake := matchFirstCap.ReplaceAllString(str, "${1}_${2}")
-	snake = matchAllCap.ReplaceAllString(snake, "${1}_${2}")
-	return strings.ToLower(snake)
+	matchAllCap := regexp.MustCompile("(.)([A-Z][a-z]*)")
+	return strings.ToLower(matchAllCap.ReplaceAllString(str, "${1}_${2}"))
 }
 
 func containsLabel(labels []string, newLabel string) bool {
