@@ -8,9 +8,7 @@ export interface FooterLink {
 }
 
 let getFooterLinks = (): FooterLink[] => {
-  const { buildInfo } = config;
-
-  const links = [
+  return [
     {
       text: 'Docs',
       icon: 'fa fa-file-code-o',
@@ -26,15 +24,21 @@ let getFooterLinks = (): FooterLink[] => {
       icon: 'fa fa-comments-o',
       url: 'https://community.grafana.com/?utm_source=grafana_footer',
     },
+  ];
+};
+
+let getVersionLinks = (): FooterLink[] => {
+  const { buildInfo } = config;
+
+  const links: FooterLink[] = [
     {
       text: `Grafana v${buildInfo.version} (commit: ${buildInfo.commit})`,
-      icon: 'fa fa-comments-o',
     },
   ];
 
   if (buildInfo.hasUpdate) {
     links.push({
-      text: `New version available`,
+      text: `New version available!`,
       icon: 'fa fa-download',
       url: 'https://grafana.com/grafana/download?utm_source=grafana_footer',
     });
@@ -47,15 +51,19 @@ export function setFooterLinksFn(fn: typeof getFooterLinks) {
   getFooterLinks = fn;
 }
 
+export function setVersionLinkFn(fn: typeof getFooterLinks) {
+  getVersionLinks = fn;
+}
+
 export const Footer: FC = React.memo(() => {
-  const links = getFooterLinks();
+  const links = getFooterLinks().concat(getVersionLinks());
 
   return (
     <footer className="footer">
       <div className="text-center">
         <ul>
           {links.map(link => (
-            <li>
+            <li key={link.text}>
               <a href={link.url} target="_blank" rel="noopener">
                 <i className={link.icon} /> {link.text}
               </a>
