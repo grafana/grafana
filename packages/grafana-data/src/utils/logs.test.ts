@@ -130,6 +130,13 @@ describe('LogsParsers', () => {
       expect(match).toBeDefined();
       expect(match![1]).toBe('bar');
     });
+
+    test('should build a valid complex value matcher', () => {
+      const matcher = parser.buildMatcher('time(ms)');
+      const match = 'time(ms)=50'.match(matcher);
+      expect(match).toBeDefined();
+      expect(match![1]).toBe('50');
+    });
   });
 
   describe('JSON', () => {

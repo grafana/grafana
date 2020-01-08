@@ -1,4 +1,4 @@
-import { countBy, chain } from 'lodash';
+import { countBy, chain, escapeRegExp } from 'lodash';
 
 import { LogLevel, LogRowModel, LogLabelStatsModel, LogsParser } from '../types/logs';
 import { DataFrame, FieldType } from '../types/index';
@@ -85,7 +85,7 @@ export const LogsParsers: { [name: string]: LogsParser } = {
   },
 
   logfmt: {
-    buildMatcher: label => new RegExp(`(?:^|\\s)${label}=("[^"]*"|\\S+)`),
+    buildMatcher: label => new RegExp(`(?:^|\\s)${escapeRegExp(label)}=("[^"]*"|\\S+)`),
     getFields: line => {
       const fields: string[] = [];
       line.replace(new RegExp(LOGFMT_REGEXP, 'g'), substring => {
