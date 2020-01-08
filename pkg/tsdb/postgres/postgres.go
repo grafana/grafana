@@ -66,7 +66,7 @@ func generateConnectionString(datasource *models.DataSource, logger log.Logger) 
 		logger.Debug("Setting TLS client auth", "sslcert", sslcert, "sslkey", sslkey)
 		sslopts += "&sslcert=" + url.QueryEscape(sslcert) + "&sslkey=" + url.QueryEscape(sslkey)
 
-	} else if sslcert != "" || sslkey == "" {
+	} else if sslcert != "" || sslkey != "" {
 		return "", fmt.Errorf("TLS client and certificate must BOTH be specified")
 	}
 
