@@ -269,7 +269,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     options: RangeQueryOptions,
     responseListLength = 1
   ): Observable<DataQueryResponse> => {
-    const linesLimit = target.maxLines || this.maxLines;
+    const linesLimit = target.maxLines > 0 ? target.maxLines || this.maxLines : 0;
     const queryOptions = { ...options, maxDataPoints: linesLimit };
     if (target.liveStreaming) {
       return this.runLiveQuery(target, queryOptions);
