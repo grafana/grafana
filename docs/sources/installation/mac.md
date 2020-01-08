@@ -10,20 +10,11 @@ weight = 500
 
 # Install on macOS
 
-This page provides instructions to help you install Grafana on macOS. You can either install using Homebrew or a binary .tar.gz file.
-
-
-## Install with Homebrew
-
-This page explains how to install Grafana dependencies, download and install Grafana, get the service up and running on your RPM-based Linux system, and the installation package details.
+This page provides instructions to help you install Grafana on macOS. 
 
 **Note on upgrading:** While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing installation.
 
 ## 1. Download and install
-
-You can install Grafana from a YUM repository, manually using YUM, manually using RPM, or by downloading a binary `.tar.gz` file.
-
-### Install with Homebrew
 
 Before you begin, you must have [Homebrew](http://brew.sh/) installed.
 
@@ -41,22 +32,13 @@ Before you begin, you must have [Homebrew](http://brew.sh/) installed.
    brew install grafana
    ```
 
-### Install from binary .tar.gz file
-
-Download [the latest `.tar.gz` file](https://grafana.com/get) and extract it. The files extract into a folder named after the version you downloaded. This folder contains all files required to run Grafana. There are no init scripts or install scripts in this package.
-
 ## 2. Start Grafana
 
-### Homebrew
-To start Grafana using Homebrew services: 
+Start Grafana using Homebrew services: 
 
 ```bash
 brew services start grafana
 ```
-
-### Binary
-
-Start Grafana by executing `./bin/grafana-server`. The `grafana-server` binary needs the working directory to be the root install directory where the binary and the `public` folder are located.
 
 ## Upgrade with Homebrew
 
