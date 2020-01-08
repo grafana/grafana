@@ -1,6 +1,6 @@
 Bundled Plugins
 ===============
 
-Bundled plugins are part of the grafana install
+Bundled plugins are built as true plugins, and managed by the grafana install.
 
-TODO: after build, the 
+TODO: the packaging system should move all `dist` items to the root and remove sources.
