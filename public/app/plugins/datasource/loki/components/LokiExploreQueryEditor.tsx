@@ -76,16 +76,15 @@ export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
         onLabelsRefresh={refreshLabels}
         syntaxLoaded={isSyntaxReady}
         absoluteRange={absolute}
-        ExtraFieldElement={exploreMode === ExploreMode.Logs ? LokiExploreExtraField : null}
-        extraFieldProps={
-          exploreMode === ExploreMode.Logs
-            ? {
-                label: 'Line limit',
-                onChangeFunc: onMaxLinesChange,
-                onKeyDownFunc: onReturnKeyDown,
-                value: maxLines,
-              }
-            : null
+        ExtraFieldElement={
+          exploreMode === ExploreMode.Logs ? (
+            <LokiExploreExtraField
+              label={'Line limit'}
+              onChangeFunc={onMaxLinesChange}
+              onKeyDownFunc={onReturnKeyDown}
+              value={maxLines}
+            />
+          ) : null
         }
         {...syntaxProps}
       />
