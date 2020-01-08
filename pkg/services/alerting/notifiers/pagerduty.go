@@ -24,7 +24,7 @@ func init() {
       <div class="gf-form">
         <span class="gf-form-label width-14">Integration Key</span>
         <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.integrationKey" placeholder="Pagerduty Integration Key"></input>
-			</div>
+      </div>
       <div class="gf-form">
         <span class="gf-form-label width-10">Severity</span>
         <div class="gf-form-select-wrapper width-14">
@@ -80,8 +80,8 @@ type PagerdutyNotifier struct {
 	log         log.Logger
 }
 
-// BuildEventPayload is responsible for building the event payload body for sending to Pagerduty v2 API
-func (pn *PagerdutyNotifier) BuildEventPayload(evalContext *alerting.EvalContext) ([]byte, error) {
+// buildEventPayload is responsible for building the event payload body for sending to Pagerduty v2 API
+func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext) ([]byte, error) {
 
 	eventType := "trigger"
 	if evalContext.Rule.State == models.AlertStateOK {
@@ -95,24 +95,23 @@ func (pn *PagerdutyNotifier) BuildEventPayload(evalContext *alerting.EvalContext
 	pn.log.Info("Notifying Pagerduty", "event_type", eventType)
 
 	payloadJSON := simplejson.New()
-	bodyJSON := simplejson.New()
+
+	// set default, override in following case switch if defined
+	payloadJSON.Set("component", "Grafana")
 
 	for _, tag := range evalContext.Rule.AlertRuleTags {
 		customData.Set(tag.Key, tag.Value)
 
-		// Override tags appropritatly if the are in the Pagerduty v2 API
-		if strings.ToLower(tag.Key) == "group" {
+		// Override tags appropriately if the are in the Pagerduty v2 API
+		switch strings.ToLower(tag.Key) {
+		case "group":
 			payloadJSON.Set("group", tag.Value)
-		}
-
-		if strings.ToLower(tag.Key) == "class" {
+			fallthrough
+		case "class":
 			payloadJSON.Set("class", tag.Value)
-		}
-
-		if strings.ToLower(tag.Key) == "component" {
+			fallthrough
+		case "component":
 			payloadJSON.Set("component", tag.Value)
-		} else {
-			payloadJSON.Set("component", "Grafana")
 		}
 	}
 
@@ -128,6 +127,7 @@ func (pn *PagerdutyNotifier) BuildEventPayload(evalContext *alerting.EvalContext
 	payloadJSON.Set("severity", pn.Severity)
 	payloadJSON.Set("timestamp", time.Now())
 	payloadJSON.Set("custom_details", customData)
+	bodyJSON := simplejson.New()
 
 	bodyJSON.Set("routing_key", pn.Key)
 	bodyJSON.Set("event_action", eventType)
@@ -163,7 +163,7 @@ func (pn *PagerdutyNotifier) BuildEventPayload(evalContext *alerting.EvalContext
 
 // Notify sends an alert notification to PagerDuty
 func (pn *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
-	body, err := pn.BuildEventPayload(evalContext)
+	body, err := pn.buildEventPayload(evalContext)
 	if err != nil {
 		pn.log.Error("Unable to build event pagerduty payload: ", err)
 	}

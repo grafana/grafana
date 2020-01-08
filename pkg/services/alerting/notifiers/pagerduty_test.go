@@ -130,7 +130,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 
 				evalContext.IsTestRun = true
 
-				str, err := pagerdutyNotifier.BuildEventPayload(evalContext)
+				str, err := pagerdutyNotifier.buildEventPayload(evalContext)
 				So(err, ShouldBeNil)
 
 				ja := jsonassert.New(t)
@@ -142,6 +142,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					"event_action":"trigger",
 					"links":[{"href":""}],
 					"payload":{
+						"component": "Grafana",
 						"source" : "<<PRESENCE>>",
 						"custom_details":{},
 						"severity":"critical",
@@ -186,7 +187,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				evalContext.ImagePublicURL = "http://somewhere.com/omg_dont_panic.png"
 				evalContext.IsTestRun = true
 
-				str, err := pagerdutyNotifier.BuildEventPayload(evalContext)
+				str, err := pagerdutyNotifier.buildEventPayload(evalContext)
 				So(err, ShouldBeNil)
 
 				ja := jsonassert.New(t)
