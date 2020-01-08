@@ -161,7 +161,11 @@ export class QueryEditor extends PureComponent<Props, State> {
                   datasource.getDimensionKeys(query.namespace, query.region).then(this.appendTemplateVariables)
                 }
                 loadValues={newKey => {
-                  const { [newKey]: value, ...newDimensions } = query.dimensions;
+                  const { [newKey]: value, ...dim } = query.dimensions;
+                  const newDimensions = Object.entries(dim).reduce(
+                    (result, [key, value]) => (value === '*' ? result : { ...result, [key]: value }),
+                    {}
+                  );
                   return datasource
                     .getDimensionValues(query.region, query.namespace, query.metricName, newKey, newDimensions)
                     .then(values => (values.length ? [{ value: '*', text: '*', label: '*' }, ...values] : values))
