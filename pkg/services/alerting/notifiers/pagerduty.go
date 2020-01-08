@@ -126,7 +126,6 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 	payloadJSON.Set("timestamp", time.Now())
 	payloadJSON.Set("custom_details", customData)
 	bodyJSON := simplejson.New()
-
 	bodyJSON.Set("routing_key", pn.Key)
 	bodyJSON.Set("event_action", eventType)
 	bodyJSON.Set("dedup_key", "alertId-"+strconv.FormatInt(evalContext.Rule.ID, 10))
