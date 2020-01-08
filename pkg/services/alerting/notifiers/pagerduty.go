@@ -102,7 +102,7 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 	for _, tag := range evalContext.Rule.AlertRuleTags {
 		customData.Set(tag.Key, tag.Value)
 
-		// Override tags appropriately if the are in the Pagerduty v2 API
+		// Override tags appropriately if they are in the PagerDuty v2 API
 		switch strings.ToLower(tag.Key) {
 		case "group":
 			payloadJSON.Set("group", tag.Value)
