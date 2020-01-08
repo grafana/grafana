@@ -33,7 +33,7 @@ func init() {
             ng-model="ctrl.model.settings.severity"
             ng-options="s for s in ['critical', 'error', 'warning', 'info']">
           </select>
-      </div>
+        </div>
       </div>
       <div class="gf-form">
         <gf-form-switch
