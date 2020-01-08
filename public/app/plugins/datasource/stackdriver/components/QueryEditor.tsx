@@ -169,7 +169,6 @@ export class QueryEditor extends React.Component<Props, State> {
       aliasBy,
       lastQuery,
       lastQueryError,
-      refId,
       labels,
       variableOptionGroup,
     } = this.state;
