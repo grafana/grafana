@@ -269,7 +269,26 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     options: RangeQueryOptions,
     responseListLength = 1
   ): Observable<DataQueryResponse> => {
-    const linesLimit = target.maxLines > 0 ? target.maxLines || this.maxLines : 0;
+    // target.maxLines value already preprocessed
+    // available cases:
+    // 1) empty input -> mapped to NaN, falls back to dataSource.maxLines limit
+    // 2) input with at least 1 character and that is either incorrect (value in the input field is not a number) or negative
+    //    - mapped to 0, falls back to the limit of 0 lines
+    // 3) default case - correct input, mapped to the value from the input field
+
+    let linesLimit = 0;
+    if (typeof target.maxLines === 'undefined') {
+      // no target.maxLines, using options.maxDataPoints
+      linesLimit = Math.min(options.maxDataPoints || Infinity, this.maxLines);
+    } else {
+      // using target.maxLines
+      if (isNaN(target.maxLines)) {
+        linesLimit = this.maxLines;
+      } else {
+        linesLimit = target.maxLines;
+      }
+    }
+
     const queryOptions = { ...options, maxDataPoints: linesLimit };
     if (target.liveStreaming) {
       return this.runLiveQuery(target, queryOptions);
