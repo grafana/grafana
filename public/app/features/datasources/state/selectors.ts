@@ -10,10 +10,10 @@ export const getDataSources = (state: DataSourcesState) => {
   });
 };
 
-export const getDataSourceTypes = (state: DataSourcesState) => {
+export const getDataSourcePlugins = (state: DataSourcesState) => {
   const regex = new RegExp(state.dataSourceTypeSearchQuery, 'i');
 
-  return state.dataSourceTypes.filter((type: DataSourcePluginMeta) => {
+  return state.plugins.filter((type: DataSourcePluginMeta) => {
     return regex.test(type.name);
   });
 };
