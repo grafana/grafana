@@ -353,7 +353,6 @@ func NotificationTest(c *models.ReqContext, dto dtos.NotificationTestCommand) Re
 
 //POST /api/alerts/:alertId/pause
 func PauseAlert(c *models.ReqContext, dto dtos.PauseAlertCommand) Response {
-	const Pause = "paused"
 	alertID := c.ParamsInt64("alertId")
 	result := make(map[string]interface{})
 	result["alertId"] = alertID
@@ -373,12 +372,12 @@ func PauseAlert(c *models.ReqContext, dto dtos.PauseAlertCommand) Response {
 	}
 
 	// Alert state validation
-	if query.Result.State != Pause && !dto.Paused {
+	if query.Result.State != models.AlertStatePaused && !dto.Paused {
 		result["state"] = "un-paused"
 		result["message"] = "Alert is already un-paused"
 		return JSON(200, result)
-	} else if query.Result.State == Pause && dto.Paused {
-		result["state"] = Pause
+	} else if query.Result.State == models.AlertStatePaused && dto.Paused {
+		result["state"] = models.AlertStatePaused
 		result["message"] = "Alert is already paused"
 		return JSON(200, result)
 	}
@@ -397,7 +396,7 @@ func PauseAlert(c *models.ReqContext, dto dtos.PauseAlertCommand) Response {
 	pausedState := "un-paused"
 	if cmd.Paused {
 		response = models.AlertStatePaused
-		pausedState = Pause
+		pausedState = "paused"
 	}
 
 	result["state"] = response
