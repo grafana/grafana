@@ -20,6 +20,7 @@ import {
   TimeRange,
   AbsoluteTimeRange,
   LoadingState,
+  getDataQueryErrors,
 } from '@grafana/data';
 
 import { ExploreItemState, ExploreId, ExploreMode } from 'app/types/explore';
@@ -124,7 +125,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     const canToggleEditorModes =
       mode === ExploreMode.Metrics && has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
     const isNotStarted = queryResponse.state === LoadingState.NotStarted;
-    const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
+    const queryErrors = getDataQueryErrors(queryResponse.series);
     let QueryField;
 
     if (mode === ExploreMode.Metrics && datasourceInstance.components?.ExploreMetricsQueryField) {

@@ -76,14 +76,13 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
         const fmt = ds.getQueryDisplayText ? ds.getQueryDisplayText : getQueryDisplayText;
 
         const qData = filterPanelDataToQuery(panelData, query.refId);
-        const queryData = qData ? qData : panelData;
+        const queryData = qData ?? panelData;
 
         info.push({
           refId: query.refId,
           query: fmt(query),
           img: ds.meta.info.logos.small,
           data: queryData.series,
-          error: queryData.error,
         });
       }
 

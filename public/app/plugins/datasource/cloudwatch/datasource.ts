@@ -14,6 +14,8 @@ import {
   DataSourceApi,
   DataQueryRequest,
   DataSourceInstanceSettings,
+  DataQueryResponse,
+  DataFrame,
 } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -62,7 +64,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
     this.debouncedCustomAlert = memoizedDebounce(displayCustomError, AppNotificationTimeout.Error);
   }
 
-  query(options: DataQueryRequest<CloudWatchQuery>) {
+  async query(options: DataQueryRequest<CloudWatchQuery>): Promise<DataQueryResponse> {
     options = angular.copy(options);
 
     const queries = _.filter(options.targets, item => {
@@ -216,59 +218,54 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
     )}`;
   }
 
-  performTimeSeriesQuery(request: any, { from, to }: TimeRange) {
+  async performTimeSeriesQuery(request: any, { from, to }: TimeRange): Promise<DataQueryResponse> {
     return this.awsRequest('/api/tsdb/query', request)
       .then((res: any) => {
+        const data: DataFrame[] = [];
         if (!res.results) {
-          return { data: [] };
+          return { data };
         }
-        return Object.values(request.queries).reduce(
-          ({ data, error }: any, queryRequest: any) => {
-            const queryResult = res.results[queryRequest.refId];
-            if (!queryResult) {
-              return { data, error };
+        for (const queryRequest of request.queries) {
+          const queryResult = res.results[queryRequest.refId];
+          if (!queryResult) {
+            continue;
+          }
+
+          const link = this.buildCloudwatchConsoleUrl(
+            queryRequest,
+            from.toISOString(),
+            to.toISOString(),
+            queryRequest.refId,
+            queryResult.meta.gmdMeta
+          );
+          const error = queryResult.error ? { message: queryResult.error } : undefined;
+          for (const [name, points] of Object.entries(queryResult.series)) {
+            const dataFrame = toDataFrame({
+              target: name,
+              datapoints: points,
+              refId: queryRequest.refId,
+              meta: queryResult.meta,
+              error,
+            });
+            if (link) {
+              for (const field of dataFrame.fields) {
+                field.config.links = [
+                  {
+                    url: link,
+                    title: 'View in CloudWatch console',
+                    targetBlank: true,
+                  },
+                ];
+              }
             }
-
-            const link = this.buildCloudwatchConsoleUrl(
-              queryRequest,
-              from.toISOString(),
-              to.toISOString(),
-              queryRequest.refId,
-              queryResult.meta.gmdMeta
-            );
-
-            return {
-              error: error || queryResult.error ? { message: queryResult.error } : null,
-              data: [
-                ...data,
-                ...queryResult.series.map(({ name, points }: any) => {
-                  const dataFrame = toDataFrame({
-                    target: name,
-                    datapoints: points,
-                    refId: queryRequest.refId,
-                    meta: queryResult.meta,
-                  });
-                  if (link) {
-                    for (const field of dataFrame.fields) {
-                      field.config.links = [
-                        {
-                          url: link,
-                          title: 'View in CloudWatch console',
-                          targetBlank: true,
-                        },
-                      ];
-                    }
-                  }
-                  return dataFrame;
-                }),
-              ],
-            };
-          },
-          { data: [], error: null }
-        );
+            data.push(dataFrame);
+          }
+        }
+        return { data };
       })
       .catch((err: any = { data: { error: '' } }) => {
-        if (/^Throttling:.*/.test(err.data.message)) {
+        console.log('GOT ERROR', err);
+        if (/^Throttling:.*/.test(err.data?.message)) {
           const failedRedIds = Object.keys(err.data.results);
           const regionsAffected = Object.values(request.queries).reduce(
             (res: string[], { refId, region }: CloudWatchQuery) =>

@@ -1,6 +1,6 @@
 import { getDashboardSrv } from '../services/DashboardSrv';
 
-import { PanelData, LoadingState, DataSourceApi } from '@grafana/data';
+import { PanelData, LoadingState, DataSourceApi, getDataQueryErrors } from '@grafana/data';
 
 import { reportMetaAnalytics, MetaAnalyticsEventPayload } from '@grafana/runtime';
 
@@ -42,8 +42,9 @@ export function getAnalyticsProcessor(datasource: DataSourceApi) {
       eventData.dataSize = data.series.length;
     }
 
-    if (data.error) {
-      eventData.error = data.error.message;
+    const errors = getDataQueryErrors(data.series);
+    if (errors && errors.length) {
+      eventData.error = errors[0].message;
     }
 
     reportMetaAnalytics(eventData);

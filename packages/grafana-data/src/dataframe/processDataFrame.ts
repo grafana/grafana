@@ -14,6 +14,8 @@ import {
   TimeSeriesValue,
   FieldDTO,
   DataFrameDTO,
+  QueryResultBase,
+  DataQueryError,
 } from '../types/index';
 import { isDateTime } from '../datetime/moment_wrapper';
 import { deprecationWarning } from '../utils/deprecationWarning';
@@ -55,6 +57,7 @@ function convertTableToDataFrame(table: TableData): DataFrame {
     meta: table.meta,
     name: table.name,
     length: table.rows.length,
+    error: table.error,
   };
 }
 
@@ -90,6 +93,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
     meta: timeSeries.meta,
     fields,
     length: values.length,
+    error: timeSeries.error,
   };
 }
 
@@ -435,6 +439,39 @@ export function getDataFrameRow(data: DataFrame, row: number): any[] {
     values.push(field.values.get(row));
   }
   return values;
+}
+
+/**
+ * Check if any result has an error
+ */
+export function dataHasError(data: QueryResultBase[]): boolean {
+  if (data && data.length) {
+    for (const v of data) {
+      if (v.error) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * Check if any result has an error
+ */
+export function getDataQueryErrors(data: QueryResultBase[], refId?: string): DataQueryError[] {
+  const errors: DataQueryError[] = [];
+  if (data && data.length) {
+    for (const v of data) {
+      if (v.error) {
+        // Match refId from the error or the frame
+        if (refId && (refId !== v.refId || v.refId !== refId)) {
+          continue;
+        }
+        errors.push(v);
+      }
+    }
+  }
+  return errors;
 }
 
 /**

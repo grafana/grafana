@@ -138,10 +138,13 @@ export class PanelChrome extends PureComponent<Props, State> {
         }
         break;
       case LoadingState.Error:
-        const { error } = data;
-        if (error) {
-          if (errorMessage !== error.message) {
-            errorMessage = error.message;
+        const { series } = data;
+        if (series && series.length) {
+          for (const frame of series) {
+            const msg = frame.error?.message;
+            if (msg) {
+              errorMessage = errorMessage ? `${errorMessage} // ${msg}` : msg;
+            }
           }
         }
         break;

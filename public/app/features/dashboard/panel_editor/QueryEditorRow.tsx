@@ -18,6 +18,7 @@ import {
   TimeRange,
   LoadingState,
   toLegacyResponseData,
+  dataHasError,
 } from '@grafana/data';
 import { DashboardModel } from '../state/DashboardModel';
 
@@ -283,7 +284,13 @@ function notifyAngularQueryEditorsOfData(panel: PanelModel, data: PanelData, edi
     const legacy = data.series.map(v => toLegacyResponseData(v));
     panel.events.emit(PanelEvents.dataReceived, legacy);
   } else if (data.state === LoadingState.Error) {
-    panel.events.emit(PanelEvents.dataError, data.error);
+    for (const v of data.series) {
+      if (v.error) {
+        // Emit the first error
+        panel.events.emit(PanelEvents.dataError, v.error);
+        break;
+      }
+    }
   }
 
   // Some query controllers listen to data error events and need a digest
@@ -316,19 +323,13 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
   }
 
   // Only say this is an error if the error links to the query
-  let state = LoadingState.Done;
-  const error = data.error && data.error.refId === refId ? data.error : undefined;
-  if (error) {
-    state = LoadingState.Error;
-  }
-
+  const state = dataHasError(series) ? LoadingState.Error : LoadingState.Done;
   const timeRange = data.timeRange;
 
   return {
     ...data,
     state,
     series,
-    error,
     timeRange,
   };
 }

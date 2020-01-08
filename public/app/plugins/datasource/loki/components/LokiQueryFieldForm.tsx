@@ -18,7 +18,7 @@ import { Plugin, Node } from 'slate';
 
 // Types
 import { DOMUtil } from '@grafana/ui';
-import { ExploreQueryFieldProps, AbsoluteTimeRange } from '@grafana/data';
+import { ExploreQueryFieldProps, AbsoluteTimeRange, getDataQueryErrors } from '@grafana/data';
 import { LokiQuery, LokiOptions } from '../types';
 import { Grammar } from 'prismjs';
 import LokiLanguageProvider, { LokiHistoryItem } from '../language_provider';
@@ -142,7 +142,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
     const hasLogLabels = logLabelOptions && logLabelOptions.length > 0;
     const chooserText = getChooserText(syntaxLoaded, hasLogLabels);
     const buttonDisabled = !(syntaxLoaded && hasLogLabels);
-    const showError = data && data.error && data.error.refId === query.refId;
+    const errors = getDataQueryErrors(data.series, query.refId);
 
     return (
       <>
@@ -174,7 +174,17 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
             />
           </div>
         </div>
-        <div>{showError ? <div className="prom-query-field-info text-error">{data.error.message}</div> : null}</div>
+        {errors.length && (
+          <div>
+            {errors.map((error, index) => {
+              return (
+                <div key={index} className="prom-query-field-info text-error">
+                  {error.message}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </>
     );
   }

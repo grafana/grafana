@@ -460,7 +460,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
         map((data: PanelData) => preProcessPanelData(data, queryResponse))
       )
       .subscribe((data: PanelData) => {
-        if (!data.error && firstResponse) {
+        if (firstResponse && data.state !== LoadingState.Error) {
           // Side-effect: Saving history in localstorage
           const nextHistory = updateHistory(history, datasourceId, queries);
           dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));

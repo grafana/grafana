@@ -1,4 +1,4 @@
-import { LoadingState, toDataFrame, dateTime, PanelData, DataQueryRequest } from '@grafana/data';
+import { LoadingState, toDataFrame, dateTime, PanelData, DataQueryRequest, DataQueryError } from '@grafana/data';
 import { filterPanelDataToQuery } from './QueryEditorRow';
 
 function makePretendRequest(requestId: string, subRequests?: DataQueryRequest[]): DataQueryRequest {
@@ -9,19 +9,20 @@ function makePretendRequest(requestId: string, subRequests?: DataQueryRequest[])
 }
 
 describe('filterPanelDataToQuery', () => {
+  const error: DataQueryError = {
+    refId: 'B',
+    message: 'Error!!',
+  };
+
   const data: PanelData = {
     state: LoadingState.Done,
     series: [
       toDataFrame({ refId: 'A', fields: [{ name: 'AAA' }], meta: {} }),
-      toDataFrame({ refId: 'B', fields: [{ name: 'B111' }], meta: {} }),
-      toDataFrame({ refId: 'B', fields: [{ name: 'B222' }], meta: {} }),
-      toDataFrame({ refId: 'B', fields: [{ name: 'B333' }], meta: {} }),
+      toDataFrame({ refId: 'B', fields: [{ name: 'B111' }], meta: {}, error }),
+      toDataFrame({ refId: 'B', fields: [{ name: 'B222' }], meta: {}, error }),
+      toDataFrame({ refId: 'B', fields: [{ name: 'B333' }], meta: {}, error }),
       toDataFrame({ refId: 'C', fields: [{ name: 'CCCC' }], meta: { requestId: 'sub3' } }),
     ],
-    error: {
-      refId: 'B',
-      message: 'Error!!',
-    },
     request: makePretendRequest('111', [
       makePretendRequest('sub1'),
       makePretendRequest('sub2'),
@@ -34,13 +35,13 @@ describe('filterPanelDataToQuery', () => {
     const panelData = filterPanelDataToQuery(data, 'A');
     expect(panelData.series.length).toBe(1);
     expect(panelData.series[0].refId).toBe('A');
-    expect(panelData.error).toBeUndefined();
+    expect(panelData.series[0].error).toBeUndefined();
   });
 
   it('should match the error to the query', () => {
     const panelData = filterPanelDataToQuery(data, 'B');
     expect(panelData.series.length).toBe(3);
     expect(panelData.series[0].refId).toBe('B');
-    expect(panelData.error!.refId).toBe('B');
+    expect(panelData.series[0].error).toBe(error);
   });
 });

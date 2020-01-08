@@ -20,6 +20,7 @@ import {
   DataQueryRequest,
   PanelEvents,
   TimeZone,
+  getDataQueryErrors,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 import {
@@ -119,7 +120,6 @@ export const createEmptyQueryResponse = (): PanelData => ({
   state: LoadingState.NotStarted,
   request: {} as DataQueryRequest<DataQuery>,
   series: [],
-  error: null,
   timeRange: DefaultTimeRange,
 });
 
@@ -555,15 +555,16 @@ export const processQueryResponse = (
   action: ActionOf<QueryEndedPayload>
 ): ExploreItemState => {
   const { response } = action.payload;
-  const { request, state: loadingState, series, error } = response;
+  const { request, state: loadingState, series } = response;
 
-  if (error) {
-    if (error.cancelled) {
+  if (loadingState === LoadingState.Error) {
+    const errors = getDataQueryErrors(series);
+    if (!errors.length || errors[0].cancelled) {
       return state;
     }
 
     // For Angular editors
-    state.eventBridge.emit(PanelEvents.dataError, error);
+    state.eventBridge.emit(PanelEvents.dataError, errors[0]);
 
     return {
       ...state,

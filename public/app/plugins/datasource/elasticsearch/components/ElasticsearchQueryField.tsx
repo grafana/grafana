@@ -2,7 +2,7 @@ import _ from 'lodash';
 import React from 'react';
 
 import { QueryField, SlatePrism } from '@grafana/ui';
-import { ExploreQueryFieldProps } from '@grafana/data';
+import { ExploreQueryFieldProps, getDataQueryErrors } from '@grafana/data';
 import { ElasticDatasource } from '../datasource';
 import { ElasticsearchOptions, ElasticsearchQuery } from '../types';
 
@@ -61,6 +61,7 @@ class ElasticsearchQueryField extends React.PureComponent<Props, State> {
   render() {
     const { data, query } = this.props;
     const { syntaxLoaded } = this.state;
+    const errors = getDataQueryErrors(data.series, query.refId);
 
     return (
       <>
@@ -77,7 +78,17 @@ class ElasticsearchQueryField extends React.PureComponent<Props, State> {
             />
           </div>
         </div>
-        {data && data.error ? <div className="prom-query-field-info text-error">{data.error.message}</div> : null}
+        {errors.length && (
+          <div>
+            {errors.map((error, index) => {
+              return (
+                <div key={index} className="prom-query-field-info text-error">
+                  {error.message}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </>
     );
   }

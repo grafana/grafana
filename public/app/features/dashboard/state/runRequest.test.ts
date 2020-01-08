@@ -203,7 +203,7 @@ describe('runRequest', () => {
     });
 
     it('should emit 1 error result', () => {
-      expect(ctx.results[0].error.message).toBe('Ohh no');
+      expect(ctx.results[0].series[0]?.error?.message).toBe('Ohh no');
       expect(ctx.results[0].state).toBe(LoadingState.Error);
     });
   });
@@ -256,7 +256,7 @@ describe('runRequest', () => {
 const expectThatRangeHasNotMutated = (ctx: ScenarioCtx) => {
   // Make sure that the range for request is not changed and that deepfreeze hasn't thrown
   expect(ctx.results[0].request.range.to.valueOf()).toBe(ctx.toStartTime.valueOf());
-  expect(ctx.results[0].error).not.toBeDefined();
+  expect(ctx.results[0].series[0].error).toBeUndefined();
   expect(ctx.results[0].state).toBe(LoadingState.Done);
 };
 

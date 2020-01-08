@@ -35,6 +35,7 @@ import {
   TimeZone,
   AbsoluteTimeRange,
   LoadingState,
+  getDataQueryErrors,
 } from '@grafana/data';
 
 import {
@@ -279,6 +280,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
     const styles = getStyles();
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
     const showStartPage = !queryResponse || queryResponse.state === LoadingState.NotStarted;
+    const errors = getDataQueryErrors(queryResponse.series);
 
     return (
       <div className={exploreClass} ref={this.getRef}>
@@ -298,7 +300,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
                 <span className="btn-title">{'\xA0' + 'Add query'}</span>
               </button>
             </div>
-            <ErrorContainer queryErrors={queryResponse.error ? [queryResponse.error] : undefined} />
+            <ErrorContainer queryErrors={errors.length ? errors : undefined} />
             <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {

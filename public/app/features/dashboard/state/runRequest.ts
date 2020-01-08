@@ -40,7 +40,6 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
   packets[packet.key || 'A'] = packet;
 
   let loadingState = packet.state || LoadingState.Done;
-  let error: DataQueryError | undefined = undefined;
 
   // Update the time range
   const range = { ...request.range };
@@ -52,20 +51,23 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
       }
     : range;
 
+  // Combind data and look for errors
   const combinedData = flatten(
     lodashMap(packets, (packet: DataQueryResponse) => {
-      if (packet.error) {
-        loadingState = LoadingState.Error;
-        error = packet.error;
+      if (packet.data) {
+        for (const res of packet.data) {
+          if (res.error) {
+            loadingState = LoadingState.Error;
+          }
+        }
       }
       return packet.data;
     })
   );
 
-  const panelData = {
+  const panelData: PanelData = {
     state: loadingState,
     series: combinedData,
-    error,
     request,
     timeRange,
   };
@@ -116,8 +118,8 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
     catchError(err =>
       of({
         ...state.panelData,
+        series: [toErrorDataFrame(err)],
         state: LoadingState.Error,
-        error: processQueryError(err),
       })
     ),
     tap(getAnalyticsProcessor(datasource)),
@@ -151,6 +153,14 @@ export function callQueryMethod(datasource: DataSourceApi, request: DataQueryReq
   // Otherwise it is a standard datasource request
   const returnVal = datasource.query(request);
   return from(returnVal);
+}
+
+export function toErrorDataFrame(err: any): DataFrame {
+  return {
+    error: processQueryError(err),
+    fields: [],
+    length: 0,
+  };
 }
 
 export function processQueryError(err: any): DataQueryError {

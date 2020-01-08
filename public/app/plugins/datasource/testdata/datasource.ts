@@ -6,7 +6,6 @@ import {
   MetricFindValue,
   TableData,
   TimeSeries,
-  DataQueryError,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -68,30 +67,37 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
 
   processQueryResult(queries: any, res: any): DataQueryResponse {
     const data: TestData[] = [];
-    let error: DataQueryError | undefined = undefined;
 
     for (const query of queries) {
       const results = res.data.results[query.refId];
+      const error = results.error
+        ? {
+            message: results.error,
+          }
+        : undefined;
 
       for (const t of results.tables || []) {
         const table = t as TableData;
         table.refId = query.refId;
         table.name = query.alias;
+        if (error) {
+          table.error = error;
+        }
         data.push(table);
       }
 
       for (const series of results.series || []) {
-        data.push({ target: series.name, datapoints: series.points, refId: query.refId, tags: series.tags });
-      }
-
-      if (results.error) {
-        error = {
-          message: results.error,
-        };
+        data.push({
+          target: series.name,
+          datapoints: series.points,
+          refId: query.refId,
+          tags: series.tags,
+          error,
+        });
       }
     }
 
-    return { data, error };
+    return { data };
   }
 
   annotationQuery(options: any) {

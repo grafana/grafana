@@ -1,3 +1,5 @@
+import { DataQueryError } from './datasource';
+
 export type KeyValue<T = any> = { [s: string]: T };
 
 export enum LoadingState {
@@ -31,6 +33,11 @@ export interface QueryResultBase {
    * Used by some backend data sources to communicate back info about the execution (generated sql, timing)
    */
   meta?: QueryResultMeta;
+
+  /**
+   * Optionally include error info along with the response data
+   */
+  error?: DataQueryError;
 }
 
 export interface Labels {

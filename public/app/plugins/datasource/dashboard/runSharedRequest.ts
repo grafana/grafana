@@ -71,8 +71,13 @@ function getPanelIdFromQuery(queries: DataQuery[]): number | undefined {
 function getQueryError(msg: string): PanelData {
   return {
     state: LoadingState.Error,
-    series: [],
-    error: { message: msg },
+    series: [
+      {
+        error: { message: msg },
+        length: 0,
+        fields: [],
+      },
+    ],
     timeRange: DefaultTimeRange,
   };
 }

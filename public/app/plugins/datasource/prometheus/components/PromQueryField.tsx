@@ -17,7 +17,14 @@ import Prism from 'prismjs';
 // dom also includes Element polyfills
 import { PromQuery, PromOptions, PromMetricsMetadata } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
-import { ExploreQueryFieldProps, QueryHint, isDataFrame, toLegacyResponseData, HistoryItem } from '@grafana/data';
+import {
+  ExploreQueryFieldProps,
+  QueryHint,
+  isDataFrame,
+  toLegacyResponseData,
+  HistoryItem,
+  getDataQueryErrors,
+} from '@grafana/data';
 import { DOMUtil, SuggestionsState } from '@grafana/ui';
 import { PrometheusDatasource } from '../datasource';
 import PromQlLanguageProvider from '../language_provider';
@@ -296,7 +303,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
     const chooserText = getChooserText(syntaxLoaded, metricsOptions);
     const buttonDisabled = !(syntaxLoaded && metricsOptions && metricsOptions.length > 0);
-    const showError = data && data.error && data.error.refId === query.refId;
+    const errors = getDataQueryErrors(data.series, query.refId);
 
     return (
       <>
@@ -327,11 +334,17 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
           </div>
           {children}
         </div>
-        {showError ? (
+        {errors.length && (
           <div className="query-row-break">
-            <div className="prom-query-field-info text-error">{data.error.message}</div>
+            {errors.map((error, index) => {
+              return (
+                <div key={index} className="prom-query-field-info text-error">
+                  {error.message}
+                </div>
+              );
+            })}
           </div>
-        ) : null}
+        )}
         {hint ? (
           <div className="query-row-break">
             <div className="prom-query-field-info text-warning">

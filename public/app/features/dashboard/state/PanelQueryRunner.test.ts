@@ -133,7 +133,7 @@ describe('PanelQueryRunner', () => {
     });
 
     it('should return data', async () => {
-      expect(ctx.res.error).toBeUndefined();
+      expect(ctx.res.series[0].error).toBeUndefined();
       expect(ctx.res.series.length).toBe(1);
     });
 

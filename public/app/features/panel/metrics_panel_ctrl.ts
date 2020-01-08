@@ -17,6 +17,7 @@ import {
   TimeRange,
   toDataFrameDTO,
   toLegacyResponseData,
+  getDataQueryErrors,
 } from '@grafana/data';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -128,7 +129,10 @@ class MetricsPanelCtrl extends PanelCtrl {
     next: (data: PanelData) => {
       if (data.state === LoadingState.Error) {
         this.loading = false;
-        this.processDataError(data.error);
+        const errors = getDataQueryErrors(data.series);
+        if (errors.length) {
+          this.processDataError(errors[0]);
+        }
       }
 
       // Ignore data in loading state

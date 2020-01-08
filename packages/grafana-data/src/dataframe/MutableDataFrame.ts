@@ -7,6 +7,7 @@ import { makeFieldParser } from '../utils/fieldParser';
 import { MutableVector, Vector } from '../types/vector';
 import { ArrayVector } from '../vector/ArrayVector';
 import { vectorToArray } from '../vector/vectorToArray';
+import { DataQueryError } from '../types';
 
 export type MutableField<T = any> = Field<T, MutableVector<T>>;
 
@@ -18,6 +19,7 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
   name?: string;
   refId?: string;
   meta?: QueryResultMeta;
+  error?: DataQueryError;
 
   fields: MutableField[] = [];
   values: KeyValue<MutableVector> = {};
@@ -35,7 +37,7 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
 
     // Copy values from
     if (source) {
-      const { name, refId, meta, fields } = source;
+      const { name, refId, meta, fields, error } = source;
       if (name) {
         this.name = name;
       }
@@ -44,6 +46,9 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
       }
       if (meta) {
         this.meta = meta;
+      }
+      if (error) {
+        this.error = error;
       }
       if (fields) {
         for (const f of fields) {
