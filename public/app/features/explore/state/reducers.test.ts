@@ -1,3 +1,7 @@
+import { Reducer } from 'redux';
+import { PayloadAction } from '@reduxjs/toolkit';
+import { DataQuery, DataSourceApi, dateTime, LoadingState, LogsDedupStrategy, toDataFrame } from '@grafana/data';
+
 import {
   createEmptyQueryResponse,
   exploreReducer,
@@ -20,10 +24,7 @@ import {
   toggleTableAction,
   updateDatasourceInstanceAction,
 } from './actionTypes';
-import { Reducer } from 'redux';
-import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
-import { DataQuery, DataSourceApi, dateTime, LoadingState, LogsDedupStrategy, toDataFrame } from '@grafana/data';
 import { updateLocation } from '../../../core/actions';
 
 describe('Explore item reducer', () => {
@@ -35,7 +36,7 @@ describe('Explore item reducer', () => {
       };
 
       reducerTester()
-        .givenReducer(itemReducer as Reducer<ExploreItemState, ActionOf<any>>, initalState)
+        .givenReducer(itemReducer as Reducer<ExploreItemState, PayloadAction<any>>, initalState)
         .whenActionIsDispatched(scanStartAction({ exploreId: ExploreId.left }))
         .thenStateShouldEqual({
           ...makeExploreItemState(),
@@ -50,7 +51,7 @@ describe('Explore item reducer', () => {
       };
 
       reducerTester()
-        .givenReducer(itemReducer as Reducer<ExploreItemState, ActionOf<any>>, initalState)
+        .givenReducer(itemReducer as Reducer<ExploreItemState, PayloadAction<any>>, initalState)
         .whenActionIsDispatched(scanStopAction({ exploreId: ExploreId.left }))
         .thenStateShouldEqual({
           ...makeExploreItemState(),
@@ -261,7 +262,7 @@ describe('Explore reducer', () => {
       } as ExploreState;
 
       reducerTester()
-        .givenReducer(exploreReducer as Reducer<ExploreState, ActionOf<any>>, initalState)
+        .givenReducer(exploreReducer as Reducer<ExploreState, PayloadAction<any>>, initalState)
         .whenActionIsDispatched(splitOpenAction({ itemState: leftItemMock }))
         .thenStateShouldEqual({
           split: true,
@@ -288,7 +289,7 @@ describe('Explore reducer', () => {
 
         // closing left item
         reducerTester()
-          .givenReducer(exploreReducer as Reducer<ExploreState, ActionOf<any>>, initalState)
+          .givenReducer(exploreReducer as Reducer<ExploreState, PayloadAction<any>>, initalState)
           .whenActionIsDispatched(splitCloseAction({ itemId: ExploreId.left }))
           .thenStateShouldEqual({
             split: false,
@@ -313,7 +314,7 @@ describe('Explore reducer', () => {
 
         // closing left item
         reducerTester()
-          .givenReducer(exploreReducer as Reducer<ExploreState, ActionOf<any>>, initalState)
+          .givenReducer(exploreReducer as Reducer<ExploreState, PayloadAction<any>>, initalState)
           .whenActionIsDispatched(splitCloseAction({ itemId: ExploreId.right }))
           .thenStateShouldEqual({
             split: false,

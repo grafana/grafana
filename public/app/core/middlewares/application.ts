@@ -1,9 +1,9 @@
-import { Dispatch, Store } from 'redux';
+import { AnyAction, Dispatch, Store } from 'redux';
+
 import { StoreState } from 'app/types/store';
-import { ActionOf } from '../redux/actionCreatorFactory';
 import { toggleLogActions } from '../reducers/application';
 
-export const toggleLogActionsMiddleware = (store: Store<StoreState>) => (next: Dispatch) => (action: ActionOf<any>) => {
+export const toggleLogActionsMiddleware = (store: Store<StoreState>) => (next: Dispatch) => (action: AnyAction) => {
   const isLogActionsAction = action.type === toggleLogActions.type;
   if (isLogActionsAction) {
     return next(action);

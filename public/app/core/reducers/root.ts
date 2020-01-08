@@ -1,5 +1,4 @@
-import { combineReducers } from 'redux';
-import { ActionOf } from '../redux';
+import { AnyAction, combineReducers } from 'redux';
 import { CleanUp, cleanUpAction } from '../actions/cleanUp';
 import sharedReducers from 'app/core/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
@@ -43,7 +42,7 @@ export const createRootReducer = () => {
     ...addedReducers,
   });
 
-  return (state: any, action: ActionOf<any>): any => {
+  return (state: any, action: AnyAction): any => {
     if (action.type !== cleanUpAction.type) {
       return appReducer(state, action);
     }

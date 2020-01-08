@@ -1,15 +1,6 @@
 import _ from 'lodash';
-import {
-  DEFAULT_UI_STATE,
-  ensureQueries,
-  generateNewKeyAndAddRefIdIfMissing,
-  getQueryKeys,
-  parseUrlState,
-  refreshIntervalToSortOrder,
-  sortLogsResult,
-  stopQueryState,
-} from 'app/core/utils/explore';
-import { ExploreId, ExploreItemState, ExploreMode, ExploreState, ExploreUpdateState } from 'app/types/explore';
+import { AnyAction } from 'redux';
+import { PayloadAction } from '@reduxjs/toolkit';
 import {
   DataQuery,
   DataQueryRequest,
@@ -22,6 +13,19 @@ import {
   toLegacyResponseData,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
+import { LocationUpdate } from '@grafana/runtime';
+
+import {
+  DEFAULT_UI_STATE,
+  ensureQueries,
+  generateNewKeyAndAddRefIdIfMissing,
+  getQueryKeys,
+  parseUrlState,
+  refreshIntervalToSortOrder,
+  sortLogsResult,
+  stopQueryState,
+} from 'app/core/utils/explore';
+import { ExploreId, ExploreItemState, ExploreMode, ExploreState, ExploreUpdateState } from 'app/types/explore';
 import {
   addQueryRowAction,
   changeLoadingStateAction,
@@ -61,11 +65,8 @@ import {
   updateDatasourceInstanceAction,
   updateUIStateAction,
 } from './actionTypes';
-import { ActionOf } from 'app/core/redux';
-import { LocationUpdate } from '@grafana/runtime';
 import { ResultProcessor } from '../utils/ResultProcessor';
 import { updateLocation } from '../../../core/actions';
-import { AnyAction } from 'redux';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -489,7 +490,7 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
 
 export const processQueryResponse = (
   state: ExploreItemState,
-  action: ActionOf<QueryEndedPayload>
+  action: PayloadAction<QueryEndedPayload>
 ): ExploreItemState => {
   const { response } = action.payload;
   const { request, state: loadingState, series, error } = response;
