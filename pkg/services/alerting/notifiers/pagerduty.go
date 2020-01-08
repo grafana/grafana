@@ -163,13 +163,16 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 
 // Notify sends an alert notification to PagerDuty
 func (pn *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
-	body, err := pn.buildEventPayload(evalContext)
-	if err != nil {
-		pn.log.Error("Unable to build event pagerduty payload: ", err)
-	}
+
 	if evalContext.Rule.State == models.AlertStateOK && !pn.AutoResolve {
 		pn.log.Info("Not sending a trigger to Pagerduty", "state", evalContext.Rule.State, "auto resolve", pn.AutoResolve)
 		return nil
+	}
+
+	body, err := pn.buildEventPayload(evalContext)
+	if err != nil {
+		pn.log.Error("Unable to build event pagerduty payload: ", err)
+		return err
 	}
 
 	cmd := &models.SendWebhookSync{
