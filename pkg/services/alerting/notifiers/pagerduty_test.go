@@ -197,7 +197,6 @@ func TestPagerdutyNotifier(t *testing.T) {
 					"client_url":"",
 					"dedup_key":"alertId-0",
 					"event_action":"trigger",
-
 					"links":[
 						{
 							"href":""
