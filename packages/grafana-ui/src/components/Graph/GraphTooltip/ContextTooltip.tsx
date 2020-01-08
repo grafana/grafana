@@ -19,7 +19,7 @@ export const ContextTooltip: React.FC<TooltipContentProps<GraphDimensions>> = ({
   }
 
   return (
-    <div style={{ width: '400px', pointerEvents: 'all', padding: '5px' }}>
+    <div style={{ width: '400px', pointerEvents: 'all', padding: '5px', backgroundColor: 'white' }}>
       <SingleModeGraphTooltip dimensions={dimensions} activeDimensions={activeDimensions} />
     </div>
   );

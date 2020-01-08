@@ -268,6 +268,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       content: tooltipContent,
       position: { x: contextPos.pageX, y: contextPos.pageY },
       offset: { x: 15, y: 15 },
+      className: { backgroundColor: 'white', boxShadow: `0 2px 5px 0 #acb6bf` },
     });
   };
 

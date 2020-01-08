@@ -43,9 +43,10 @@ export interface TooltipProps {
   // - single - display single series info
   // - multi - display all series info
   mode?: TooltipMode;
+  className?: any;
 }
 
-export const Tooltip: React.FC<TooltipProps> = ({ content, position, offset }) => {
+export const Tooltip: React.FC<TooltipProps> = ({ content, position, offset, className }) => {
   if (position) {
     return (
       <Portal
@@ -58,7 +59,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, position, offset }) =
           height: 100%;
         `}
       >
-        <TooltipContainer position={position} offset={offset || { x: 0, y: 0 }}>
+        <TooltipContainer position={position} offset={offset || { x: 0, y: 0 }} className={className}>
           {content}
         </TooltipContainer>
       </Portal>
