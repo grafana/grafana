@@ -213,12 +213,49 @@ Array [
     </div>
   </div>,
   <div
-    style={
-      Object {
-        "width": "100%",
-      }
-    }
-  />,
+    className="gf-form-inline"
+  >
+    <label
+      className="gf-form-label query-keyword width-9"
+    >
+      Filter
+    </label>
+    <div
+      className="gf-form"
+      onClick={[Function]}
+    >
+      <a
+        className="gf-form-label query-part"
+      >
+        <i
+          className="fa fa-plus"
+        />
+      </a>
+    </div>
+    <div
+      className="gf-form gf-form--grow"
+    >
+      <label
+        className="gf-form-label gf-form-label--grow"
+      />
+    </div>
+  </div>,
+  <div
+    className="gf-form-inline"
+  >
+    <label
+      className="gf-form-label query-keyword width-9"
+    >
+      Group By
+    </label>
+    <div
+      className="gf-form gf-form--grow"
+    >
+      <label
+        className="gf-form-label gf-form-label--grow"
+      />
+    </div>
+  </div>,
   <div
     className="gf-form-inline"
   >
