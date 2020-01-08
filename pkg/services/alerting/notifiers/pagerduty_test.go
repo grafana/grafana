@@ -159,7 +159,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				}`
 
 				settingsJSON, jerr := simplejson.NewJson([]byte(json))
-				So(jerr, ShouldBeNil)
+				So(err, ShouldBeNil)
 
 				model := &models.AlertNotification{
 					Name:     "pagerduty_testing",
