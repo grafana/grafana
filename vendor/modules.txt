@@ -162,6 +162,8 @@ github.com/jonboulle/clockwork
 github.com/jtolds/gls
 # github.com/jung-kurt/gofpdf v1.10.1
 github.com/jung-kurt/gofpdf
+# github.com/kinbiko/jsonassert v1.0.1
+github.com/kinbiko/jsonassert
 # github.com/klauspost/compress v1.4.1
 github.com/klauspost/compress/flate
 github.com/klauspost/compress/gzip

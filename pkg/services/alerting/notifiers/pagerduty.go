@@ -106,10 +106,8 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 		switch strings.ToLower(tag.Key) {
 		case "group":
 			payloadJSON.Set("group", tag.Value)
-			fallthrough
 		case "class":
 			payloadJSON.Set("class", tag.Value)
-			fallthrough
 		case "component":
 			payloadJSON.Set("component", tag.Value)
 		}
