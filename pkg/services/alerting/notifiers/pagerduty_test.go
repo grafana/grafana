@@ -127,7 +127,6 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Message: "someMessage",
 					State:   models.AlertStateAlerting,
 				})
-
 				evalContext.IsTestRun = true
 
 				str, err := pagerdutyNotifier.buildEventPayload(evalContext)
