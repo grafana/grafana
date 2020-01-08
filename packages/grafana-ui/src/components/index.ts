@@ -15,6 +15,7 @@ export { NoOptionsMessage } from './Select/NoOptionsMessage';
 export { default as resetSelectStyles } from './Forms/Select/resetSelectStyles';
 export { ButtonSelect } from './Select/ButtonSelect';
 export { ButtonCascader, ButtonCascaderOption } from './ButtonCascader/ButtonCascader';
+export { Cascader } from './Cascader/Cascader';
 
 // Forms
 export { FormLabel } from './FormLabel/FormLabel';
