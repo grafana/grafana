@@ -134,7 +134,6 @@ func TestPagerdutyNotifier(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				ja := jsonassert.New(t)
-
 				ja.Assertf(string(str), `{
 					"client":"Grafana",
 					"client_url":"",
