@@ -18,17 +18,23 @@ import { PromOptions, PromQuery } from './types';
 import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { CustomVariable } from 'app/features/templating/custom_variable';
-import { backendSrv } from 'app/core/services/backend_srv';
 
-const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+const datasourceRequestMock = jest.fn().mockResolvedValue(createDefaultPromResponse());
+
 jest.mock('./metric_find_query');
-jest.mock('app/core/services/backend_srv');
+jest.mock('@grafana/runtime', () => ({
+  getBackendSrv: () => ({
+    datasourceRequest: datasourceRequestMock,
+  }),
+}));
+
 jest.mock('app/features/templating/template_srv', () => {
   return {
     getAdhocFilters: jest.fn(() => [] as any[]),
     replace: jest.fn((a: string) => a),
   };
 });
+
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   __esModule: true,
   getTimeSrv: jest.fn().mockReturnValue({
@@ -126,14 +132,12 @@ describe('PrometheusDatasource', () => {
 
   describe('Datasource metadata requests', () => {
     it('should perform a GET request with the default config', () => {
-      datasourceRequestMock.mockImplementation(jest.fn());
       ds.metadataRequest('/foo');
       expect(datasourceRequestMock.mock.calls.length).toBe(1);
       expect(datasourceRequestMock.mock.calls[0][0].method).toBe('GET');
     });
 
     it('should still perform a GET request with the DS HTTP method set to POST', () => {
-      datasourceRequestMock.mockImplementation(jest.fn());
       const postSettings = _.cloneDeep(instanceSettings);
       postSettings.jsonData.httpMethod = 'POST';
       const promDs = new PrometheusDatasource(postSettings);
@@ -1751,4 +1755,22 @@ function createDataRequest(targets: any[], overrides?: Partial<DataQueryRequest>
   };
 
   return Object.assign(defaults, overrides || {}) as DataQueryRequest<PromQuery>;
+}
+
+function createDefaultPromResponse() {
+  return {
+    data: {
+      data: {
+        result: [
+          {
+            metric: {
+              __name__: 'test_metric',
+            },
+            values: [[1568369640, 1]],
+          },
+        ],
+        resultType: 'matrix',
+      },
+    },
+  };
 }
