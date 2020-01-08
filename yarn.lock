@@ -1957,11 +1957,6 @@
     unique-filename "^1.1.1"
     which "^1.3.1"
 
-"@grafana/data@6.5.2", "@grafana/data@next":
-  version "6.5.2"
-  resolved "https://registry.yarnpkg.com/@grafana/data/-/data-6.5.2.tgz#31117e5b43034fcb3cd6dcbc7c05d08f284e5d85"
-  integrity sha512-695jP9Rdc9yAtnFMHKG5OGO5WTLpnRnwJNGqHjxDOczRWnsQBALdJZHnfvEL1G5W0YW5s+51WzO9eAa5KkgF+A==
-
 "@grafana/slate-react@0.22.9-grafana":
   version "0.22.9-grafana"
   resolved "https://registry.yarnpkg.com/@grafana/slate-react/-/slate-react-0.22.9-grafana.tgz#07f35f0ffc018f616b9f82fa6e5ba65fae75c6a0"
@@ -1983,113 +1978,6 @@
     slate-react-placeholder "^0.2.8"
     tiny-invariant "^1.0.1"
     tiny-warning "^0.0.3"
-
-"@grafana/toolkit@next":
-  version "6.5.2"
-  resolved "https://registry.yarnpkg.com/@grafana/toolkit/-/toolkit-6.5.2.tgz#9b1814ccbcb54f837e3eaef4713cc123ffa25794"
-  integrity sha512-cygbVuAkHGK7yaRtES0s2bQZUt+2dr7GVZO6hL9q56C1EqdZNVnljfFfqa2k8FBJvkJiTejgrRkpvuI3pg4d5w==
-  dependencies:
-    "@babel/core" "7.6.4"
-    "@babel/preset-env" "7.6.3"
-    "@grafana/data" "6.5.2"
-    "@grafana/ui" "6.5.2"
-    "@types/command-exists" "^1.2.0"
-    "@types/execa" "^0.9.0"
-    "@types/expect-puppeteer" "3.3.1"
-    "@types/inquirer" "^6.0.3"
-    "@types/jest" "24.0.13"
-    "@types/jest-cli" "^23.6.0"
-    "@types/node" "^12.0.4"
-    "@types/puppeteer-core" "1.9.0"
-    "@types/react-dev-utils" "^9.0.1"
-    "@types/semver" "^6.0.0"
-    "@types/tmp" "^0.1.0"
-    "@types/webpack" "4.4.34"
-    axios "0.19.0"
-    babel-jest "24.8.0"
-    babel-loader "8.0.6"
-    babel-plugin-angularjs-annotate "0.10.0"
-    chalk "^2.4.2"
-    command-exists "^1.2.8"
-    commander "^2.20.0"
-    concurrently "4.1.0"
-    copy-webpack-plugin "5.0.3"
-    css-loader "^3.0.0"
-    execa "^1.0.0"
-    expect-puppeteer "4.1.1"
-    file-loader "^4.0.0"
-    glob "^7.1.4"
-    html-loader "0.5.5"
-    html-webpack-plugin "^3.2.0"
-    inquirer "^6.3.1"
-    jest "24.8.0"
-    jest-cli "^24.8.0"
-    jest-coverage-badges "^1.1.2"
-    jest-junit "^6.4.0"
-    lodash "4.17.15"
-    md5-file "^4.0.0"
-    mini-css-extract-plugin "^0.7.0"
-    node-sass "^4.12.0"
-    optimize-css-assets-webpack-plugin "^5.0.3"
-    ora "^3.4.0"
-    pixelmatch "^5.0.2"
-    pngjs "^3.4.0"
-    postcss-flexbugs-fixes "4.1.0"
-    postcss-loader "3.0.0"
-    postcss-preset-env "6.6.0"
-    prettier "^1.18.2"
-    puppeteer-core "1.18.1"
-    react-dev-utils "^9.0.1"
-    replace-in-file "^4.1.0"
-    replace-in-file-webpack-plugin "^1.0.6"
-    sass-loader "7.1.0"
-    semver "^6.1.1"
-    simple-git "^1.112.0"
-    style-loader "^0.23.1"
-    terser-webpack-plugin "^1.3.0"
-    ts-jest "24.1.0"
-    ts-loader "6.1.1"
-    ts-node "8.4.1"
-    tslib "1.10.0"
-    tslint "5.20.0"
-    tslint-config-prettier "^1.18.0"
-    typescript "3.6.3"
-    url-loader "^2.0.1"
-    webpack "4.35.0"
-
-"@grafana/ui@6.5.2", "@grafana/ui@next":
-  version "6.5.2"
-  resolved "https://registry.yarnpkg.com/@grafana/ui/-/ui-6.5.2.tgz#1281fba13279267d54dbf3fc0df9877a950243fe"
-  integrity sha512-HzCN9g3jjvs1i/hnHglOM3h2XSlvf1TLfiZJAi9ZZJaQNZ95i5Y/CQ/JZN3pijYLhCtp8PBCQV1BX2H83vyvtw==
-  dependencies:
-    "@grafana/data" "6.5.2"
-    "@grafana/slate-react" "0.22.9-grafana"
-    "@torkelo/react-select" "2.1.1"
-    "@types/react-color" "2.17.0"
-    "@types/slate" "0.47.1"
-    "@types/slate-react" "0.22.5"
-    bizcharts "^3.5.5"
-    classnames "2.2.6"
-    d3 "5.9.1"
-    immutable "3.8.2"
-    jquery "3.4.1"
-    lodash "4.17.15"
-    moment "2.24.0"
-    papaparse "4.6.3"
-    rc-drawer "3.0.2"
-    rc-time-picker "^3.7.2"
-    react "16.8.6"
-    react-calendar "2.18.1"
-    react-color "2.17.0"
-    react-custom-scrollbars "4.2.1"
-    react-dom "16.8.6"
-    react-highlight-words "0.11.0"
-    react-popper "1.3.3"
-    react-storybook-addon-props-combinations "1.1.0"
-    react-transition-group "2.6.1"
-    react-virtualized "9.21.0"
-    slate "0.47.8"
-    tinycolor2 "1.4.1"
 
 "@icons/material@^0.2.4":
   version "0.2.4"
@@ -17147,7 +17035,7 @@ preserve@^0.2.0:
   resolved "https://registry.yarnpkg.com/preserve/-/preserve-0.2.0.tgz#815ed1f6ebc65926f865b310c0713bcb3315ce4b"
   integrity sha1-gV7R9uvGWSb4ZbMQwHE7yzMVzks=
 
-prettier@1.19.1, prettier@^1.18.2, prettier@^1.19.1:
+prettier@1.19.1, prettier@^1.19.1:
   version "1.19.1"
   resolved "https://registry.yarnpkg.com/prettier/-/prettier-1.19.1.tgz#f7d7f5ff8a9cd872a7be4ca142095956a60797cb"
   integrity sha512-s7PoyDv/II1ObgQunCbB9PdLmUcBZcnWOcxDh7O0N/UwDEsHyqkW+Qh28jW+mVuCdx7gLB0BotYI1Y6uI9iyew==
@@ -17815,16 +17703,6 @@ react-dom@16.12.0:
     prop-types "^15.6.2"
     scheduler "^0.18.0"
 
-react-dom@16.8.6:
-  version "16.8.6"
-  resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-16.8.6.tgz#71d6303f631e8b0097f56165ef608f051ff6e10f"
-  integrity sha512-1nL7PIq9LTL3fthPqwkvr2zY7phIPjYrT0jp4HjyEQrEROnw4dG41VVwi/wfoCneoleqrNX7iAD+pXebJZwrwA==
-  dependencies:
-    loose-envify "^1.1.0"
-    object-assign "^4.1.1"
-    prop-types "^15.6.2"
-    scheduler "^0.13.6"
-
 react-dom@^16.8.3:
   version "16.10.2"
   resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-16.10.2.tgz#4840bce5409176bc3a1f2bd8cb10b92db452fda6"
@@ -18178,16 +18056,6 @@ react@16.12.0:
     loose-envify "^1.1.0"
     object-assign "^4.1.1"
     prop-types "^15.6.2"
-
-react@16.8.6:
-  version "16.8.6"
-  resolved "https://registry.yarnpkg.com/react/-/react-16.8.6.tgz#ad6c3a9614fd3a4e9ef51117f54d888da01f2bbe"
-  integrity sha512-pC0uMkhLaHm11ZSJULfOBqV4tIZkx87ZLvbbQYunNixAAvjnC+snJCg0XQXn9VIsttVsbZP/H/ewzgsd5fxKXw==
-  dependencies:
-    loose-envify "^1.1.0"
-    object-assign "^4.1.1"
-    prop-types "^15.6.2"
-    scheduler "^0.13.6"
 
 react@^0.14.0:
   version "0.14.9"
@@ -19268,14 +19136,6 @@ sax@^1.2.4, sax@~1.2.4:
   version "1.2.4"
   resolved "https://registry.yarnpkg.com/sax/-/sax-1.2.4.tgz#2816234e2378bddc4e5354fab5caa895df7100d9"
   integrity sha512-NqVDv9TpANUjFm0N8uM5GxL36UgKi9/atZw+x7YFnQ8ckwFGKrl4xX4yWtrey3UJm5nP1kUbnYgLopqWNSRhWw==
-
-scheduler@^0.13.6:
-  version "0.13.6"
-  resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.13.6.tgz#466a4ec332467b31a91b9bf74e5347072e4cd889"
-  integrity sha512-IWnObHt413ucAYKsD9J1QShUKkbKLQQHdxRyw73sw4FN26iWr3DY/H34xGPe4nmL1DwXyWmSWmMrA9TfQbE/XQ==
-  dependencies:
-    loose-envify "^1.1.0"
-    object-assign "^4.1.1"
 
 scheduler@^0.15.0:
   version "0.15.0"
@@ -21128,17 +20988,6 @@ ts-jest@24.1.0:
     semver "^5.5"
     yargs-parser "10.x"
 
-ts-loader@6.1.1:
-  version "6.1.1"
-  resolved "https://registry.yarnpkg.com/ts-loader/-/ts-loader-6.1.1.tgz#f30c68aa1ce59fa266f0bb70a36959ca68f40ddc"
-  integrity sha512-AoOek8ZWJlWwTRH5ttNmZPBRcASUJZc8wc8E/2PGOXef96H97J8KaLXaW/zUnvyFjvCoRBhTGh9ZIMKL1arcCA==
-  dependencies:
-    chalk "^2.3.0"
-    enhanced-resolve "^4.0.0"
-    loader-utils "^1.0.2"
-    micromatch "^4.0.0"
-    semver "^6.0.0"
-
 ts-loader@6.2.1:
   version "6.2.1"
   resolved "https://registry.yarnpkg.com/ts-loader/-/ts-loader-6.2.1.tgz#67939d5772e8a8c6bdaf6277ca023a4812da02ef"
@@ -21149,17 +20998,6 @@ ts-loader@6.2.1:
     loader-utils "^1.0.2"
     micromatch "^4.0.0"
     semver "^6.0.0"
-
-ts-node@8.4.1:
-  version "8.4.1"
-  resolved "https://registry.yarnpkg.com/ts-node/-/ts-node-8.4.1.tgz#270b0dba16e8723c9fa4f9b4775d3810fd994b4f"
-  integrity sha512-5LpRN+mTiCs7lI5EtbXmF/HfMeCjzt7DH9CZwtkr6SywStrNQC723wG+aOWFiLNn7zT3kD/RnFqi3ZUfr4l5Qw==
-  dependencies:
-    arg "^4.1.0"
-    diff "^4.0.1"
-    make-error "^1.1.1"
-    source-map-support "^0.5.6"
-    yn "^3.0.0"
 
 ts-node@8.5.0:
   version "8.5.0"
@@ -21209,25 +21047,6 @@ tslint-react@4.1.0:
   integrity sha512-Y7CbFn09X7Mpg6rc7t/WPbmjx9xPI8p1RsQyiGCLWgDR6sh3+IBSlT+bEkc0PSZcWwClOkqq2wPsID8Vep6szQ==
   dependencies:
     tsutils "^3.9.1"
-
-tslint@5.20.0:
-  version "5.20.0"
-  resolved "https://registry.yarnpkg.com/tslint/-/tslint-5.20.0.tgz#fac93bfa79568a5a24e7be9cdde5e02b02d00ec1"
-  integrity sha512-2vqIvkMHbnx8acMogAERQ/IuINOq6DFqgF8/VDvhEkBqQh/x6SP0Y+OHnKth9/ZcHQSroOZwUQSN18v8KKF0/g==
-  dependencies:
-    "@babel/code-frame" "^7.0.0"
-    builtin-modules "^1.1.1"
-    chalk "^2.3.0"
-    commander "^2.12.1"
-    diff "^4.0.1"
-    glob "^7.1.1"
-    js-yaml "^3.13.1"
-    minimatch "^3.0.4"
-    mkdirp "^0.5.1"
-    resolve "^1.3.2"
-    semver "^5.3.0"
-    tslib "^1.8.0"
-    tsutils "^2.29.0"
 
 tslint@5.20.1:
   version "5.20.1"
@@ -21333,11 +21152,6 @@ typeface-oswald@0.0.54:
   version "0.0.54"
   resolved "https://registry.yarnpkg.com/typeface-oswald/-/typeface-oswald-0.0.54.tgz#1e253011622cdd50f580c04e7d625e7f449763d7"
   integrity sha512-U1WMNp4qfy4/3khIfHMVAIKnNu941MXUfs3+H9R8PFgnoz42Hh9pboSFztWr86zut0eXC8byalmVhfkiKON/8Q==
-
-typescript@3.6.3:
-  version "3.6.3"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.6.3.tgz#fea942fabb20f7e1ca7164ff626f1a9f3f70b4da"
-  integrity sha512-N7bceJL1CtRQ2RiG0AQME13ksR7DiuQh/QehubYcghzv20tnh+MQnQIuJddTmsbqYj+dztchykemz0zFzlvdQw==
 
 typescript@3.7.2:
   version "3.7.2"
