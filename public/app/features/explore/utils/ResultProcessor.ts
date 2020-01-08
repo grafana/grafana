@@ -102,9 +102,7 @@ export class ResultProcessor {
       return null;
     }
 
-    const maxLinesLimit =
-      this.state?.queries?.reduce((acc, query) => acc + (query.maxLines > 0 ? query.maxLines : 0), 0) || 1000;
-    const newResults = dataFrameToLogsModel(this.dataFrames, this.intervalMs, this.timeZone, maxLinesLimit);
+    const newResults = dataFrameToLogsModel(this.dataFrames, this.intervalMs, this.timeZone);
     const sortOrder = refreshIntervalToSortOrder(this.state.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);
 
