@@ -106,6 +106,21 @@ export class QueryEditor extends PureComponent<Props, State> {
     onRunQuery();
   }
 
+  // Load dimension values based on current selected dimensions.
+  // Remove the new dimension key and all dimensions that has a wildcard as selected value
+  loadDimensionValues = (newKey: string) => {
+    const { datasource, query } = this.props;
+    const { [newKey]: value, ...dim } = query.dimensions;
+    const newDimensions = Object.entries(dim).reduce(
+      (result, [key, value]) => (value === '*' ? result : { ...result, [key]: value }),
+      {}
+    );
+    return datasource
+      .getDimensionValues(query.region, query.namespace, query.metricName, newKey, newDimensions)
+      .then(values => (values.length ? [{ value: '*', text: '*', label: '*' }, ...values] : values))
+      .then(this.appendTemplateVariables);
+  };
+
   render() {
     const { query, datasource, onChange, onRunQuery, data } = this.props;
     const { regions, namespaces, variableOptionGroup: variableOptionGroup, showMeta } = this.state;
@@ -160,13 +175,7 @@ export class QueryEditor extends PureComponent<Props, State> {
                 loadKeys={() =>
                   datasource.getDimensionKeys(query.namespace, query.region).then(this.appendTemplateVariables)
                 }
-                loadValues={newKey => {
-                  const { [newKey]: value, ...newDimensions } = query.dimensions;
-                  return datasource
-                    .getDimensionValues(query.region, query.namespace, query.metricName, newKey, newDimensions)
-                    .then(values => (values.length ? [{ value: '*', text: '*', label: '*' }, ...values] : values))
-                    .then(this.appendTemplateVariables);
-                }}
+                loadValues={this.loadDimensionValues}
               />
             </QueryInlineField>
           </>
