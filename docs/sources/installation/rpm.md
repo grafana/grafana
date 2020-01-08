@@ -21,29 +21,28 @@ This page explains how to install Grafana dependencies, download and install Gra
 
 You can install Grafana from a YUM repository, manually using YUM, manually using RPM, or by downloading a binary `.tar.gz` file.
 
-**Note:** The RPMs are signed, you can verify the signature with this [public GPG key](https://packages.grafana.com/gpg.key).
+### Install with YUM
 
-### Install manually with YUM
+If you install with YUM, then you will need to manually update Grafana for each new version.
 
-You will find package URLs on the [download page](https://grafana.com/grafana/download?platform=linux).
+1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install. 
+   * The most recent Grafana version is selected by default.
+   * The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
+2. Select an **Edition**.
+   * **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
+   * **Open Source** - Functionally identical to the enterprise version, but you will need to download the enterprise version if you want enterprise features.
+3. Depending on which system you are running, click **Linux** or **ARM**.
+4. Copy and paste the code from the installation page into your command line and run. It follows the pattern shown below.
 
-Or install manually using `rpm`. 
+   ```bash
+   wget <rpm package url>
+   sudo yum localinstall <local rpm package>
+   ```
+   You can also install Grafana using YUM directly:
 
-### On CentOS / Fedora / Redhat:
-
-```bash
-sudo yum install initscripts urw-fonts wget
-wget <rpm package url>
-sudo rpm -Uvh <local rpm package>
-```
-
-### On OpenSuse:
-
-```bash
-sudo yum install initscripts urw-fonts wget
-wget <rpm package url>
-sudo rpm -i --nodeps <local rpm package>
-```
+   ```bash
+   sudo yum install <rpm package url>
+   ```
 
 ### Install from YUM repository
 
@@ -97,24 +96,36 @@ The YUM repository installs the open source edition of Grafana.
    sudo yum install grafana
    ```
 
-### Install .deb package
+### Install with RPM
 
-If you install the `.deb` package, then you will need to manually update Grafana for each new version.
+If you install with RPM, then you will need to manually update Grafana for each new version. This method varies according to which Linux OS you are running. Read the instructions fully before you begin.
+
+**Note:** The .rpm files are signed, you can verify the signature with this [public GPG key](https://packages.grafana.com/gpg.key).
 
 1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install. 
    * The most recent Grafana version is selected by default.
    * The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
-1. Select an **Edition**.
+2. Select an **Edition**.
    * **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
    * **Open Source** - Functionally identical to the enterprise version, but you will need to download the enterprise version if you want enterprise features.
-1. Depending on which system you are running, click **Linux** or **ARM**.
-1. Copy and paste the code from the installation page into your command line and run. It follows the pattern shown below.
+3. Depending on which system you are running, click **Linux** or **ARM**.
+4. Copy and paste the .rpm package URL and the local .rpm package information from the installation page into the pattern shown below, then run the commands.
 
-```bash
-sudo apt-get install -y adduser libfontconfig1
-wget <.deb package url>
-sudo dpkg -i grafana<edition>_<version>_amd64.deb
-```
+   **On CentOS, Fedora, Red Hat, or RHEL:**
+
+   ```bash
+   sudo yum install initscripts urw-fonts wget
+   wget <rpm package url>
+   sudo rpm -Uvh <local rpm package>
+   ```
+
+   **On OpenSUSE or SUSE:**
+
+   ```bash
+   sudo yum install initscripts urw-fonts wget
+   wget <rpm package url>
+   sudo rpm -i --nodeps <local rpm package>
+   ```
 
 ## Install from binary .tar.gz file
 
@@ -124,10 +135,6 @@ Download the latest [`.tar.gz` file](https://grafana.com/grafana/download?platfo
 wget <tar.gz package url>
 sudo tar -zxvf <tar.gz package>
 ```
-
-
-
-
 
 ## 2. Start the server
 
