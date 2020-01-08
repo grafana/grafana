@@ -113,6 +113,7 @@ func (c *EvalContext) GetDashboardUID() (*models.DashboardRef, error) {
 }
 
 const urlFormat = "%s?fullscreen&edit&tab=alert&panelId=%d&orgId=%d"
+const alertPadding = 5 * time.Minute
 
 // GetRuleURL returns the url to the dashboard containing the alert.
 func (c *EvalContext) GetRuleURL() (string, error) {
@@ -129,7 +130,7 @@ func (c *EvalContext) GetRuleURL() (string, error) {
 	if c.Rule != nil {
 		from := c.Rule.LastStateChange
 		to := from.Add(c.Rule.For)
-		u += fmt.Sprintf("&from=%d&to=%d", from.UnixNano()/int64(time.Millisecond), to.UnixNano()/int64(time.Millisecond))
+		u += fmt.Sprintf("&from=%d&to=%d", from.Add(-alertPadding).UnixNano()/int64(time.Millisecond), to.Add(alertPadding).UnixNano()/int64(time.Millisecond))
 	}
 	return u, nil
 }

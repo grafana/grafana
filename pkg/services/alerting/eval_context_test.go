@@ -216,13 +216,12 @@ func TestGetRuleURL(t *testing.T) {
 		return nil
 	})
 	lastStateChange := time.Date(2019, 12, 30, 17, 34, 11, 0, time.UTC)
-	from := lastStateChange.Unix() * 1000
 	forDuration := 1 * time.Minute
-	to := lastStateChange.Add(forDuration).Unix() * 1000
+	to := lastStateChange.Add(forDuration)
 
 	ctx := NewEvalContext(context.TODO(), &Rule{PanelID: 1, OrgID: 2, LastStateChange: lastStateChange, For: forDuration})
 	u, err := ctx.GetRuleURL()
 	assert.NoError(t, err)
-	expected := fmt.Sprintf(urlFormat+"&from=%d&to=%d", models.GetFullDashboardUrl(dashboardRef, dashboardSlug), 1, 2, from, to)
+	expected := fmt.Sprintf(urlFormat+"&from=%d&to=%d", models.GetFullDashboardUrl(dashboardRef, dashboardSlug), 1, 2, lastStateChange.Add(-alertPadding).Unix()*1000, to.Add(alertPadding).Unix()*1000)
 	assert.Equal(t, expected, u)
 }
