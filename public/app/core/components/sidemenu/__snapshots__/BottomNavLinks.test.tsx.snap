@@ -16,25 +16,58 @@ exports[`Render should render children 1`] = `
     role="menu"
   >
     <li
-      key="undefined-0"
+      key="keyboard-shortcuts"
     >
       <a
         onClick={[Function]}
-      />
+      >
+        <i
+          className="fa fa-keyboard-o"
+        />
+         Keyboard shortcuts
+      </a>
     </li>
     <li
-      key="undefined-1"
+      key="Docs-0"
     >
       <a
-        onClick={[Function]}
-      />
+        href="https://grafana.com/docs/grafana/latest/?utm_source=grafana_footer"
+        rel="noopener"
+        target="_blank"
+      >
+        <i
+          className="fa fa-file-code-o"
+        />
+        Docs
+      </a>
     </li>
     <li
-      key="undefined-2"
+      key="Support & Enterprise-1"
     >
       <a
-        onClick={[Function]}
-      />
+        href="https://grafana.com/products/enterprise/?utm_source=grafana_footer"
+        rel="noopener"
+        target="_blank"
+      >
+        <i
+          className="fa fa-support"
+        />
+        Support & Enterprise
+      </a>
+    </li>
+    <li
+      key="Community-2"
+    >
+      <a
+        href="https://community.grafana.com/?utm_source=grafana_footer"
+        rel="noopener"
+        target="_blank"
+      >
+        <i
+          className="fa fa-comments-o"
+        />
+        Community
+      </a>
     </li>
     <li
       className="side-menu-header"
@@ -62,6 +95,60 @@ exports[`Render should render component 1`] = `
     className="dropdown-menu dropdown-menu--sidemenu"
     role="menu"
   >
+    <li
+      key="keyboard-shortcuts"
+    >
+      <a
+        onClick={[Function]}
+      >
+        <i
+          className="fa fa-keyboard-o"
+        />
+         Keyboard shortcuts
+      </a>
+    </li>
+    <li
+      key="Docs-0"
+    >
+      <a
+        href="https://grafana.com/docs/grafana/latest/?utm_source=grafana_footer"
+        rel="noopener"
+        target="_blank"
+      >
+        <i
+          className="fa fa-file-code-o"
+        />
+        Docs
+      </a>
+    </li>
+    <li
+      key="Support & Enterprise-1"
+    >
+      <a
+        href="https://grafana.com/products/enterprise/?utm_source=grafana_footer"
+        rel="noopener"
+        target="_blank"
+      >
+        <i
+          className="fa fa-support"
+        />
+        Support & Enterprise
+      </a>
+    </li>
+    <li
+      key="Community-2"
+    >
+      <a
+        href="https://community.grafana.com/?utm_source=grafana_footer"
+        rel="noopener"
+        target="_blank"
+      >
+        <i
+          className="fa fa-comments-o"
+        />
+        Community
+      </a>
+    </li>
     <li
       className="side-menu-header"
     >
@@ -122,6 +209,60 @@ exports[`Render should render organization switcher 1`] = `
       onDismiss={[Function]}
     />
     <li
+      key="keyboard-shortcuts"
+    >
+      <a
+        onClick={[Function]}
+      >
+        <i
+          className="fa fa-keyboard-o"
+        />
+         Keyboard shortcuts
+      </a>
+    </li>
+    <li
+      key="Docs-0"
+    >
+      <a
+        href="https://grafana.com/docs/grafana/latest/?utm_source=grafana_footer"
+        rel="noopener"
+        target="_blank"
+      >
+        <i
+          className="fa fa-file-code-o"
+        />
+        Docs
+      </a>
+    </li>
+    <li
+      key="Support & Enterprise-1"
+    >
+      <a
+        href="https://grafana.com/products/enterprise/?utm_source=grafana_footer"
+        rel="noopener"
+        target="_blank"
+      >
+        <i
+          className="fa fa-support"
+        />
+        Support & Enterprise
+      </a>
+    </li>
+    <li
+      key="Community-2"
+    >
+      <a
+        href="https://community.grafana.com/?utm_source=grafana_footer"
+        rel="noopener"
+        target="_blank"
+      >
+        <i
+          className="fa fa-comments-o"
+        />
+        Community
+      </a>
+    </li>
+    <li
       className="side-menu-header"
     >
       <span
@@ -155,6 +296,60 @@ exports[`Render should render subtitle 1`] = `
       >
         subtitle
       </span>
+    </li>
+    <li
+      key="keyboard-shortcuts"
+    >
+      <a
+        onClick={[Function]}
+      >
+        <i
+          className="fa fa-keyboard-o"
+        />
+         Keyboard shortcuts
+      </a>
+    </li>
+    <li
+      key="Docs-0"
+    >
+      <a
+        href="https://grafana.com/docs/grafana/latest/?utm_source=grafana_footer"
+        rel="noopener"
+        target="_blank"
+      >
+        <i
+          className="fa fa-file-code-o"
+        />
+        Docs
+      </a>
+    </li>
+    <li
+      key="Support & Enterprise-1"
+    >
+      <a
+        href="https://grafana.com/products/enterprise/?utm_source=grafana_footer"
+        rel="noopener"
+        target="_blank"
+      >
+        <i
+          className="fa fa-support"
+        />
+        Support & Enterprise
+      </a>
+    </li>
+    <li
+      key="Community-2"
+    >
+      <a
+        href="https://community.grafana.com/?utm_source=grafana_footer"
+        rel="noopener"
+        target="_blank"
+      >
+        <i
+          className="fa fa-comments-o"
+        />
+        Community
+      </a>
     </li>
     <li
       className="side-menu-header"

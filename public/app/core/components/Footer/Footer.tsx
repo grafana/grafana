@@ -7,7 +7,7 @@ export interface FooterLink {
   url?: string;
 }
 
-let getFooterLinks = (): FooterLink[] => {
+export let getFooterLinks = (): FooterLink[] => {
   return [
     {
       text: 'Docs',
@@ -27,12 +27,13 @@ let getFooterLinks = (): FooterLink[] => {
   ];
 };
 
-let getVersionLinks = (): FooterLink[] => {
+export let getVersionLinks = (): FooterLink[] => {
   const { buildInfo } = config;
 
   const links: FooterLink[] = [
     {
       text: `Grafana v${buildInfo.version} (commit: ${buildInfo.commit})`,
+      url: 'https://grafana.com',
     },
   ];
 
