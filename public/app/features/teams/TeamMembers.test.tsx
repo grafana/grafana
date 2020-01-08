@@ -4,7 +4,7 @@ import { Props, State, TeamMembers } from './TeamMembers';
 import { OrgRole, TeamMember } from '../../types';
 import { getMockTeamMembers } from './__mocks__/teamMocks';
 import { User } from 'app/core/services/context_srv';
-import { mockToolkitActionCreator } from '../../core/redux';
+import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { setSearchMemberQuery } from './state/reducers';
 
 const signedInUserId = 1;

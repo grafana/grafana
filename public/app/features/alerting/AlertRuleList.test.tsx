@@ -3,11 +3,11 @@ import { shallow } from 'enzyme';
 import { AlertRuleList, Props } from './AlertRuleList';
 import { AlertRule } from '../../types';
 import appEvents from '../../core/app_events';
-import { mockToolkitActionCreator } from 'app/core/redux';
 import { NavModel } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { updateLocation } from '../../core/actions';
 import { setSearchQuery } from './state/reducers';
+import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 
 jest.mock('../../core/app_events', () => ({
   emit: jest.fn(),

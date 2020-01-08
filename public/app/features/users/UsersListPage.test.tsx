@@ -5,7 +5,7 @@ import { Invitee, OrgUser } from 'app/types';
 import { getMockUser } from './__mocks__/userMocks';
 import appEvents from '../../core/app_events';
 import { NavModel } from '@grafana/data';
-import { mockToolkitActionCreator } from '../../core/redux';
+import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { setUsersSearchQuery } from './state/reducers';
 
 jest.mock('../../core/app_events', () => ({

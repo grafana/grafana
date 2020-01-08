@@ -4,7 +4,7 @@ import { NavModel } from '@grafana/data';
 
 import { OrgDetailsPage, Props } from './OrgDetailsPage';
 import { Organization } from '../../types';
-import { mockToolkitActionCreator } from '../../core/redux';
+import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { setOrganizationName } from './state/reducers';
 
 const setup = (propOverrides?: object) => {

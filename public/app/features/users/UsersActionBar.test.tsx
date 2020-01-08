@@ -1,7 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { Props, UsersActionBar } from './UsersActionBar';
-import { mockToolkitActionCreator } from '../../core/redux';
+import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { setUsersSearchQuery } from './state/reducers';
 
 const setup = (propOverrides?: object) => {

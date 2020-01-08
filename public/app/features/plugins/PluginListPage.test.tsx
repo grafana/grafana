@@ -3,7 +3,7 @@ import { shallow } from 'enzyme';
 import { PluginListPage, Props } from './PluginListPage';
 import { LayoutModes } from '../../core/components/LayoutSelector/LayoutSelector';
 import { NavModel, PluginMeta } from '@grafana/data';
-import { mockToolkitActionCreator } from '../../core/redux';
+import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { setPluginsLayoutMode, setPluginsSearchQuery } from './state/reducers';
 
 const setup = (propOverrides?: object) => {

@@ -7,7 +7,7 @@ import {
   mockToolkitActionCreator,
   mockToolkitActionCreatorWithoutPayload,
   ToolkitActionCreatorWithoutPayloadMockType,
-} from 'app/core/redux';
+} from 'test/core/redux/mocks';
 import { DashboardInitPhase, DashboardRouteInfo } from 'app/types';
 import { notifyApp, updateLocation } from 'app/core/actions';
 

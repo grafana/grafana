@@ -4,8 +4,8 @@ import { ApiKeysPage, Props } from './ApiKeysPage';
 import { ApiKey } from 'app/types';
 import { getMockKey, getMultipleMockKeys } from './__mocks__/apiKeysMock';
 import { NavModel } from '@grafana/data';
-import { mockToolkitActionCreator } from '../../core/redux';
 import { setSearchQuery } from './state/reducers';
+import { mockToolkitActionCreator } from '../../../test/core/redux/mocks';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
