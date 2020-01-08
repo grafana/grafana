@@ -21,7 +21,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   constructor(
     instanceSettings: DataSourceInstanceSettings<StackdriverOptions>,
     private backendSrv: BackendSrv,
-    private templateSrv: TemplateSrv,
+    public templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
   ) {
     super(instanceSettings);

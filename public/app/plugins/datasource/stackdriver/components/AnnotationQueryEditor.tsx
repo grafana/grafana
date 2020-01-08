@@ -2,10 +2,12 @@ import React from 'react';
 import { Input } from '@grafana/ui';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { SelectableValue } from '@grafana/data';
 
 import StackdriverDatasource from '../datasource';
 import { Metrics } from './Metrics';
-import { Filter } from './Filter';
+import { Filters } from './Filters';
+import { toOption } from '../functions';
 import { AnnotationTarget, MetricDescriptor } from '../types';
 import { AnnotationsHelp } from './AnnotationsHelp';
 
@@ -17,6 +19,8 @@ export interface Props {
 }
 
 interface State extends AnnotationTarget {
+  variableOptionGroup: SelectableValue<string>;
+  labels: any;
   [key: string]: any;
 }
 
@@ -29,19 +33,30 @@ const DefaultTarget: State = {
   refId: 'annotationQuery',
   title: '',
   text: '',
+  labels: {},
+  variableOptionGroup: {},
 };
 
 export class AnnotationQueryEditor extends React.Component<Props, State> {
   state: State = DefaultTarget;
 
   componentDidMount() {
+    const { target, datasource } = this.props;
+    const variableOptionGroup = {
+      label: 'Template Variables',
+      options: datasource.variables.map(toOption),
+    };
+
     this.setState({
-      ...this.props.target,
+      variableOptionGroup,
+      ...target,
     });
+
+    datasource.getLabels(target.metricType, target.refId).then(labels => this.setState({ labels }));
   }
 
   onMetricTypeChange = ({ valueType, metricKind, type, unit }: MetricDescriptor) => {
-    const { onQueryChange } = this.props;
+    const { onQueryChange, datasource } = this.props;
     this.setState(
       {
         metricType: type,
@@ -53,6 +68,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
         onQueryChange(this.state);
       }
     );
+    datasource.getLabels(type, this.state.refId).then(labels => this.setState({ labels }));
   };
 
   onChange(prop: string, value: string | string[]) {
@@ -62,28 +78,25 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
   }
 
   render() {
-    const { defaultProject, metricType, filters, refId, title, text } = this.state;
-    const { datasource, templateSrv } = this.props;
+    const { defaultProject, metricType, filters, title, text, variableOptionGroup, labels } = this.state;
+    const { datasource } = this.props;
 
     return (
       <>
         <Metrics
           defaultProject={defaultProject}
           metricType={metricType}
-          templateSrv={templateSrv}
+          templateSrv={datasource.templateSrv}
           datasource={datasource}
-          onChange={this.onMetricTypeChange}
+          onChange={metric => this.onMetricTypeChange(metric)}
         >
           {metric => (
             <>
-              <Filter
-                filtersChanged={value => this.onChange('filters', value)}
+              <Filters
+                labels={labels}
                 filters={filters}
-                refId={refId}
-                hideGroupBys={true}
-                templateSrv={templateSrv}
-                datasource={datasource}
-                metricType={metric ? metric.type : ''}
+                onChange={value => this.onChange('filters', value)}
+                variableOptionGroup={variableOptionGroup}
               />
             </>
           )}

@@ -89,7 +89,6 @@ export function registerAngularDirectives() {
   react2AngularDirective('stackdriverAnnotationQueryEditor', StackdriverAnnotationQueryEditor, [
     'target',
     'onQueryChange',
-    'onExecuteQuery',
     ['datasource', { watchDepth: 'reference' }],
     ['templateSrv', { watchDepth: 'reference' }],
   ]);
