@@ -50,51 +50,39 @@ If you install from the YUM repository, then Grafana is automatically updated ev
 
 The YUM repository installs the open source edition of Grafana.
 
-#### To install the latest stable release:
-
 1. Add a new file to your YUM repo.
-   ```bash
-   sudo nano `/etc/yum.repos.d/grafana.repo`
-   ```
+```bash
+sudo nano /etc/yum.repos.d/grafana.repo
+```
 1. Enter the following information in grafana.repo and then save it.
-   ```bash
-   [grafana]
-   name=grafana
-   baseurl=https://packages.grafana.com/oss/rpm
-   repo_gpgcheck=1
-   enabled=1
-   gpgcheck=1
-   gpgkey=https://packages.grafana.com/gpg.key
-   sslverify=1
-   sslcacert=/etc/pki/tls/certs/ca-bundle.crt
-   ```
+   For stable releases:
+```bash
+[grafana]
+name=grafana
+baseurl=https://packages.grafana.com/oss/rpm
+repo_gpgcheck=1
+enabled=1
+gpgcheck=1
+gpgkey=https://packages.grafana.com/gpg.key
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+```
+   For beta releases:
+```bash
+[grafana]
+name=grafana
+baseurl=https://packages.grafana.com/oss/rpm-beta
+repo_gpgcheck=1
+enabled=1
+gpgcheck=1
+gpgkey=https://packages.grafana.com/gpg.key
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+```
 1. Install Grafana.
-   ```bash
-   sudo yum install grafana
-   ```
-
-#### To install the latest beta release:
-
-1. Add a new file to your YUM repo.
-   ```bash
-   sudo nano `/etc/yum.repos.d/grafana.repo`
-   ```
-1. Enter the following information in grafana.repo and then save it.
-   ```bash
-   [grafana]
-   name=grafana
-   baseurl=https://packages.grafana.com/oss/rpm-beta
-   repo_gpgcheck=1
-   enabled=1
-   gpgcheck=1
-   gpgkey=https://packages.grafana.com/gpg.key
-   sslverify=1
-   sslcacert=/etc/pki/tls/certs/ca-bundle.crt
-   ```
-1. Install Grafana.
-   ```bash
-   sudo yum install grafana
-   ```
+```bash
+sudo yum install grafana
+```
 
 ### Install with RPM
 
@@ -111,21 +99,21 @@ If you install with RPM, then you will need to manually update Grafana for each 
 3. Depending on which system you are running, click **Linux** or **ARM**.
 4. Copy and paste the .rpm package URL and the local .rpm package information from the installation page into the pattern shown below, then run the commands.
 
-   **On CentOS, Fedora, Red Hat, or RHEL:**
+**On CentOS, Fedora, Red Hat, or RHEL:**
 
-   ```bash
-   sudo yum install initscripts urw-fonts wget
-   wget <rpm package url>
-   sudo rpm -Uvh <local rpm package>
-   ```
+```bash
+sudo yum install initscripts urw-fonts wget
+wget <rpm package url>
+sudo rpm -Uvh <local rpm package>
+```
 
-   **On OpenSUSE or SUSE:**
+**On OpenSUSE or SUSE:**
 
-   ```bash
-   sudo yum install initscripts urw-fonts wget
-   wget <rpm package url>
-   sudo rpm -i --nodeps <local rpm package>
-   ```
+```bash
+sudo yum install initscripts urw-fonts wget
+wget <rpm package url>
+sudo rpm -i --nodeps <local rpm package>
+```
 
 ## Install from binary .tar.gz file
 
@@ -138,7 +126,7 @@ sudo tar -zxvf <tar.gz package>
 
 ## 2. Start the server
 
-This starts the `grafana-server` process as the `grafana` user, which was created during the package installation.
+This starts the `grafana-server` process as the `grafana` user, which was created during the package installation. The systemd commands work in most cases, but some older Linux systems might require init.d. The installer should prompt you with the correct commands.
 
 If you installed with an `.rpm` package, then you can start the server using `systemd` or `init.d`. If you installed a binary `.tar.gz` file, then you need to execute the binary.
 
