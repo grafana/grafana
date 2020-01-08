@@ -192,14 +192,9 @@ function isLogsData(series: DataFrame) {
  * @param dataFrame
  * @param intervalMs In case there are no metrics series, we use this for computing it from log rows.
  */
-export function dataFrameToLogsModel(
-  dataFrame: DataFrame[],
-  intervalMs: number,
-  timeZone: TimeZone,
-  limit?: number
-): LogsModel {
+export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number, timeZone: TimeZone): LogsModel {
   const { logSeries, metricSeries } = separateLogsAndMetrics(dataFrame);
-  const logsModel = logSeriesToLogsModel(logSeries, limit);
+  const logsModel = logSeriesToLogsModel(logSeries);
 
   if (logsModel) {
     if (metricSeries.length === 0) {
@@ -262,7 +257,7 @@ interface LogFields {
  * Converts dataFrames into LogsModel. This involves merging them into one list, sorting them and computing metadata
  * like common labels.
  */
-export function logSeriesToLogsModel(logSeries: DataFrame[], limit?: number): LogsModel | undefined {
+export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefined {
   if (logSeries.length === 0) {
     return undefined;
   }
@@ -357,11 +352,17 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], limit?: number): Lo
   }
 
   const limits = logSeries.filter(series => series.meta && series.meta.limit);
+  const limitValue = Object.values(
+    limits.reduce((acc: any, elem: any) => {
+      acc[elem.refId] = elem.meta.limit;
+      return acc;
+    }, {})
+  ).reduce((acc: number, elem: any) => (acc += elem), 0);
 
   if (limits.length > 0) {
     meta.push({
       label: 'Limit',
-      value: `${limit || limits[0].meta.limit} (${rows.length} returned)`,
+      value: `${limitValue} (${rows.length} returned)`,
       kind: LogsMetaKind.String,
     });
   }
