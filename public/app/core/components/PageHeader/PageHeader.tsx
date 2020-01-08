@@ -1,5 +1,5 @@
 import React, { FormEvent } from 'react';
-import { TabsNavigation } from '@grafana/ui';
+import { Tab, TabBar } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { NavModel, NavModelItem, NavModelBreadcrumb } from '@grafana/data';
 import { CoreEvents } from 'app/types';
@@ -57,17 +57,18 @@ const Navigation = ({ main }: { main: NavModelItem }) => {
   return (
     <nav>
       <SelectNav customCss="page-header__select-nav" main={main} />
-      <TabsNavigation
-        tabs={main.children.map(child => {
-          return {
-            label: child.text,
-            key: child.text,
-            hide: child.hideFromTabs,
-            active: child.active,
-          };
+      <TabBar>
+        {main.children.map((child, index) => {
+          return (
+            <Tab
+              label={child.text}
+              active={child.active}
+              key={`${child.url}-${index}`}
+              onChangeTab={() => goToUrl(index)}
+            />
+          );
         })}
-        onChangeTab={goToUrl}
-      />
+      </TabBar>
     </nav>
   );
 };

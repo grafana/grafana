@@ -1,13 +1,13 @@
 import React from 'react';
-import { TabsNavigation } from './TabsNavigation';
+import { TabBar } from './TabBar';
+import { Tab } from './Tab';
 import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { Tab } from './types';
-import mdx from './Tabs.mdx';
+import mdx from './TabBar.mdx';
 
 export default {
-  title: 'UI/Tabs',
-  component: TabsNavigation,
+  title: 'UI/Tabs/TabBar',
+  component: TabBar,
   decorators: [withCenteredStory],
   parameters: {
     docs: {
@@ -16,7 +16,7 @@ export default {
   },
 };
 
-const tabs: Tab[] = [
+const tabs = [
   { label: '1st child', key: 'first', hide: false, active: true },
   { label: '2nd child', key: 'second', hide: false, active: false },
   { label: '3rd child', key: 'third', hide: false, active: false },
@@ -27,12 +27,18 @@ export const Simple = () => {
     <UseState initialState={tabs}>
       {(state, updateState) => {
         return (
-          <TabsNavigation
-            tabs={state}
-            onChangeTab={newIndex => {
-              updateState(state.map((tab, index) => ({ ...tab, active: newIndex === index })));
-            }}
-          />
+          <TabBar>
+            {state.map((tab, index) => {
+              return (
+                <Tab
+                  key={index}
+                  label={tab.label}
+                  active={tab.active}
+                  onChangeTab={() => updateState(state.map((tab, idx) => ({ ...tab, active: idx === index })))}
+                />
+              );
+            })}
+          </TabBar>
         );
       }}
     </UseState>
