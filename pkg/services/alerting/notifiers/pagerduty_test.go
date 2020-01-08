@@ -17,8 +17,8 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Convey("empty settings should return error", func() {
 				json := `{ }`
 
-				settingsJSON, jerr := simplejson.NewJson([]byte(json))
-				So(jerr, ShouldBeNil)
+				settingsJSON, err := simplejson.NewJson([]byte(json))
+				So(err, ShouldBeNil)
 
 				model := &models.AlertNotification{
 					Name:     "pageduty_testing",
@@ -26,15 +26,15 @@ func TestPagerdutyNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewPagerdutyNotifier(model)
+				_, err = NewPagerdutyNotifier(model)
 				So(err, ShouldNotBeNil)
 			})
 
 			Convey("severity should override default", func() {
 				json := `{ "integrationKey": "abcdefgh0123456789", "severity": "info", "tags": ["foo"]}`
 
-				settingsJSON, jerr := simplejson.NewJson([]byte(json))
-				So(jerr, ShouldBeNil)
+				settingsJSON, err := simplejson.NewJson([]byte(json))
+				So(err, ShouldBeNil)
 
 				model := &models.AlertNotification{
 					Name:     "pagerduty_testing",
@@ -56,8 +56,8 @@ func TestPagerdutyNotifier(t *testing.T) {
 			Convey("auto resolve and severity should have expected defaults", func() {
 				json := `{ "integrationKey": "abcdefgh0123456789" }`
 
-				settingsJSON, jerr := simplejson.NewJson([]byte(json))
-				So(jerr, ShouldBeNil)
+				settingsJSON, err := simplejson.NewJson([]byte(json))
+				So(err, ShouldBeNil)
 
 				model := &models.AlertNotification{
 					Name:     "pagerduty_testing",
@@ -83,8 +83,8 @@ func TestPagerdutyNotifier(t *testing.T) {
 					"autoResolve": false
 				}`
 
-				settingsJSON, jerr := simplejson.NewJson([]byte(json))
-				So(jerr, ShouldBeNil)
+				settingsJSON, err := simplejson.NewJson([]byte(json))
+				So(err, ShouldBeNil)
 
 				model := &models.AlertNotification{
 					Name:     "pagerduty_testing",
@@ -108,8 +108,8 @@ func TestPagerdutyNotifier(t *testing.T) {
 					"autoResolve": false
 				}`
 
-				settingsJSON, jerr := simplejson.NewJson([]byte(json))
-				So(jerr, ShouldBeNil)
+				settingsJSON, err := simplejson.NewJson([]byte(json))
+				So(err, ShouldBeNil)
 
 				model := &models.AlertNotification{
 					Name:     "pagerduty_testing",
@@ -157,7 +157,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					"autoResolve": false
 				}`
 
-				settingsJSON, jerr := simplejson.NewJson([]byte(json))
+				settingsJSON, err := simplejson.NewJson([]byte(json))
 				So(err, ShouldBeNil)
 
 				model := &models.AlertNotification{
