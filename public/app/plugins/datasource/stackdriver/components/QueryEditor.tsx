@@ -3,14 +3,7 @@ import _ from 'lodash';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
-import { Metrics } from './Metrics';
-import { Filters } from './Filters';
-import { GroupBys } from './GroupBys';
-import { Aggregations } from './Aggregations';
-import { Alignments } from './Alignments';
-import { AlignmentPeriods } from './AlignmentPeriods';
-import { AliasBy } from './AliasBy';
-import { Help } from './Help';
+import { Aggregations, Metrics, Filters, GroupBys, Alignments, AlignmentPeriods, AliasBy, Help } from './';
 import { StackdriverQuery, MetricDescriptor } from '../types';
 import { getAlignmentPickerData, toOption } from '../functions';
 import StackdriverDatasource from '../datasource';
