@@ -1,6 +1,6 @@
 # Redux framework
 
-Grafana uses [Redux Toolkit](https://redux-toolkit.js.org/) to handle redux boilerplate code.
+Grafana uses [Redux Toolkit](https://redux-toolkit.js.org/) to handle Redux boilerplate code.
 > Some of our Reducers are used by Angular and therefore state is to be considered as mutable for those reducers.
 
 ## Test functionality
