@@ -12,13 +12,9 @@ interface Props {
   navModel: NavModel;
 }
 
-interface State {}
-
-export class UpgradePage extends PureComponent<Props, State> {
+export class UpgradePage extends PureComponent<Props> {
   constructor(props: Props) {
     super(props);
-
-    this.state = {};
   }
 
   async componentDidMount() {}
@@ -57,12 +53,12 @@ export function UpgradeInfo() {
 
   return (
     <React.Fragment>
-      <div className={'grafana-info-box span8'}>
+      <div className="grafana-info-box span8">
         You are running the open-source version of Grafana. With this version, you cannot run Grafana Enterprise so all
         enterprise features are disabled.
       </div>
 
-      <LicenseChrome header={'Grafana Enterprise'} subheader={subheader}>
+      <LicenseChrome header="Grafana Enterprise" subheader={subheader}>
         <ServiceInfo />
         <FeatureInfo />
         <Footer />
@@ -80,7 +76,7 @@ function Footer() {
         <h2 style={title}>Get Grafana Enterprise</h2>
         {!experiments.HeaderCTA && <CallToAction larger={experiments.LargerCTA} />}
         <p>
-          You can use the trial version for free for <strong>30 days</strong>. We will remind you about it{' '}
+          You can use the trial version for free for <strong>30 days</strong>. We will remind you about it
           <strong>5 days before the trial period ends</strong>.
         </p>
       </div>
@@ -110,7 +106,7 @@ function CallToAction({ larger }: { larger?: boolean }) {
   const size = larger ? 'lg' : 'md';
   return (
     <Button
-      variant={'secondary'}
+      variant="secondary"
       size={size}
       onClick={() =>
         (window.location.href = 'https://grafana.com/contact?about=grafana-enterprise&utm_source=grafana-upgrade-page')
@@ -127,9 +123,9 @@ function ServiceInfo() {
       <h4>At your service</h4>
 
       <List>
-        <Item title="Premium Plugins" image={'/public/img/licensing/plugin_enterprise.svg'} />
-        <Item title="Critical SLA: 2 hours" image={'/public/img/licensing/sla.svg'} />
-        <Item title="Unlimited Expert Support" image={'/public/img/licensing/customer_support.svg'}>
+        <Item title="Premium Plugins" image="/public/img/licensing/plugin_enterprise.svg" />
+        <Item title="Critical SLA: 2 hours" image="/public/img/licensing/sla.svg" />
+        <Item title="Unlimited Expert Support" image="/public/img/licensing/customer_support.svg">
           24x7x365 support via
           <List>
             <Item title="Email" />
@@ -137,7 +133,7 @@ function ServiceInfo() {
             <Item title="Phone" />
           </List>
         </Item>
-        <Item title="Hand-in-hand support" image={'/public/img/licensing/handinhand_support.svg'}>
+        <Item title="Hand-in-hand support" image="/public/img/licensing/handinhand_support.svg">
           in the upgrade process
         </Item>
       </List>
@@ -174,22 +170,30 @@ function FeatureListing() {
   );
 }
 
-class List extends React.PureComponent<any, any> {
-  props: {
-    children: React.ReactNode;
-  };
+interface ListProps {
+  children: React.ReactNode;
+}
+
+class List extends React.PureComponent<ListProps> {
+  constructor(props: ListProps) {
+    super(props);
+  }
 
   render() {
     return <ul style={{ paddingLeft: '1em' }}>{this.props.children}</ul>;
   }
 }
 
-class Item extends React.PureComponent<any, any> {
-  props: {
-    title: string;
-    image?: string;
-    children?: React.ReactNode;
-  };
+interface ItemProps {
+  title: string;
+  image?: string;
+  children?: React.ReactNode;
+}
+
+class Item extends React.PureComponent<ItemProps> {
+  constructor(props: ItemProps) {
+    super(props);
+  }
 
   render() {
     const { title, image } = this.props;
