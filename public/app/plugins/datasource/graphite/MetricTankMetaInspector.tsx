@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import { MetadataInspectorProps, DataFrame } from '@grafana/data';
 import { GraphiteDatasource } from './datasource';
 import { GraphiteQuery, GraphiteOptions, MetricTankMeta, MetricTankResultMeta } from './types';
+import { parseSchemaRetentions } from './meta';
 
 export type Props = MetadataInspectorProps<GraphiteDatasource, GraphiteQuery, GraphiteOptions>;
 
@@ -13,9 +14,23 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
   state = { index: 0 };
 
   renderInfo = (info: MetricTankResultMeta, frame: DataFrame) => {
+    const buckets = parseSchemaRetentions(info['schema-retentions']);
     return (
       <div>
         <h3>Info</h3>
+        <table>
+          <tbody>
+            {buckets.map(row => (
+              <tr key={row.resolution}>
+                <td>{row.resolution} &nbsp;</td>
+                <td>{row.savedFor} &nbsp;</td>
+                <td>{row.window} &nbsp;</td>
+                <td>{row.xxx} &nbsp;</td>
+                <td>{row.yyy} &nbsp;</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
         <pre>{JSON.stringify(info, null, 2)}</pre>
       </div>
     );

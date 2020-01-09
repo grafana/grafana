@@ -98,7 +98,7 @@ export class PanelInspector extends PureComponent<Props, State> {
     this.setState({ selected: item.value || 0 });
   };
 
-  renderMetaDataInspector() {
+  renderMetadataInspector() {
     const { metaDS, data } = this.state;
     if (!metaDS || !metaDS.components?.MetadataInspector) {
       return <div>No Metadata Inspector</div>;
@@ -173,7 +173,7 @@ export class PanelInspector extends PureComponent<Props, State> {
 
         {tab === InspectTab.Data && this.renderDataTab()}
 
-        {tab === InspectTab.Meta && this.renderMetaDataInspector()}
+        {tab === InspectTab.Meta && this.renderMetadataInspector()}
 
         {tab === InspectTab.Issue && this.renderIssueTab()}
 
