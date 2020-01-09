@@ -263,9 +263,9 @@ func TestStackdriver(t *testing.T) {
 					labels := res.Meta.Get("labels").Interface().(map[string][]string)
 					So(labels, ShouldNotBeNil)
 					So(len(labels["metric.label.instance_name"]), ShouldEqual, 3)
-					So(labels["metric.label.instance_name"][0], ShouldEqual, "collector-asia-east-1")
-					So(labels["metric.label.instance_name"][1], ShouldEqual, "collector-europe-west-1")
-					So(labels["metric.label.instance_name"][2], ShouldEqual, "collector-us-east-1")
+					So(labels["metric.label.instance_name"], ShouldContain, "collector-asia-east-1")
+					So(labels["metric.label.instance_name"], ShouldContain, "collector-europe-west-1")
+					So(labels["metric.label.instance_name"], ShouldContain, "collector-us-east-1")
 
 					So(len(labels["resource.label.zone"]), ShouldEqual, 3)
 					So(labels["resource.label.zone"][0], ShouldEqual, "asia-east1-a")

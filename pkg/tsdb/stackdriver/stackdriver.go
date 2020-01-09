@@ -353,39 +353,36 @@ func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (Stackdriver
 }
 
 func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data StackdriverResponse, query *StackdriverQuery) error {
-	labels := make(map[string][]string)
-	labels["resource.type"] = make([]string, 0)
+	labels := make(map[string]map[string]bool)
 
 	for _, series := range data.TimeSeries {
 		points := make([]tsdb.TimePoint, 0)
 		seriesLabels := make(map[string]string)
-
 		defaultMetricName := series.Metric.Type
-
-		seriesLabels["resource.type"] = series.Resource.Type
-		if !containsLabel(labels["resource.type"], series.Resource.Type) {
-			labels["resource.type"] = append(labels["resource.type"], series.Resource.Type)
-		}
+		labels["resource.type"] = map[string]bool{series.Resource.Type: true}
 
 		for key, value := range series.Metric.Labels {
-			if !containsLabel(labels["metric.label."+key], value) {
-				labels["metric.label."+key] = append(labels["metric.label."+key], value)
+			if _, ok := labels["metric.label."+key]; !ok {
+				labels["metric.label."+key] = map[string]bool{}
 			}
+			labels["metric.label."+key][value] = true
+			seriesLabels["metric.label."+key] = value
+
 			if len(query.GroupBys) == 0 || containsLabel(query.GroupBys, "metric.label."+key) {
 				defaultMetricName += " " + value
 			}
-			seriesLabels["metric.label."+key] = value
 		}
 
 		for key, value := range series.Resource.Labels {
+			if _, ok := labels["resource.label."+key]; !ok {
+				labels["resource.label."+key] = map[string]bool{}
+			}
+			labels["resource.label."+key][value] = true
+			seriesLabels["resource.label."+key] = value
+
 			if containsLabel(query.GroupBys, "resource.label."+key) {
 				defaultMetricName += " " + value
 			}
-
-			if !containsLabel(labels["resource.label."+key], value) {
-				labels["resource.label."+key] = append(labels["resource.label."+key], value)
-			}
-			seriesLabels["resource.label."+key] = value
 		}
 
 		for labelType, labelTypeValues := range series.MetaData {
@@ -405,11 +402,10 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 
 				for _, value := range output {
 					key := toSnakeCase(fmt.Sprintf("metadata.%s.%s", labelType, labelKey))
-
-					if !containsLabel(labels[key], value) {
-						labels[key] = append(labels[key], value)
+					if _, ok := labels[key]; !ok {
+						labels[key] = map[string]bool{}
 					}
-
+					labels[key][value] = true
 					seriesLabels[key] = value
 				}
 			}
@@ -493,7 +489,14 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 		}
 	}
 
-	queryRes.Meta.Set("labels", labels)
+	labelsByKey := make(map[string][]string)
+	for key, values := range labels {
+		for value := range values {
+			labelsByKey[key] = append(labelsByKey[key], value)
+		}
+	}
+
+	queryRes.Meta.Set("labels", labelsByKey)
 	queryRes.Meta.Set("groupBys", query.GroupBys)
 
 	return nil
