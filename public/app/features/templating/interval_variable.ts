@@ -2,7 +2,11 @@ import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 import {
   assignModelProperties,
+  createVariableInState,
+  getVariableModel,
+  getVariablePropFromState,
   IntervalVariableModel,
+  setVariablePropInState,
   VariableActions,
   VariableHide,
   VariableOption,
@@ -15,19 +19,7 @@ import { TemplateSrv } from './template_srv';
 import { VariableSrv } from './variable_srv';
 
 export class IntervalVariable implements IntervalVariableModel, VariableActions {
-  type: VariableType;
-  name: string;
-  label: string;
-  hide: VariableHide;
-  skipUrlSync: boolean;
-  auto_count: number; // tslint:disable-line variable-name
-  auto_min: string; // tslint:disable-line variable-name
-  options: VariableOption[];
-  auto: boolean;
-  query: string;
-  refresh: VariableRefresh;
-  current: VariableOption;
-
+  id: number;
   defaults: IntervalVariableModel = {
     type: 'interval',
     name: '',
@@ -42,6 +34,7 @@ export class IntervalVariable implements IntervalVariableModel, VariableActions 
     refresh: VariableRefresh.onTimeRangeChanged,
     current: {} as VariableOption,
   };
+  temporary: IntervalVariableModel = null;
 
   /** @ngInject */
   constructor(
@@ -50,12 +43,92 @@ export class IntervalVariable implements IntervalVariableModel, VariableActions 
     private templateSrv: TemplateSrv,
     private variableSrv: VariableSrv
   ) {
-    assignModelProperties(this, model, this.defaults);
-    this.refresh = VariableRefresh.onTimeRangeChanged;
+    if (model.useTemporary) {
+      this.temporary = {} as IntervalVariableModel;
+      assignModelProperties(this.temporary, model, this.defaults);
+      this.id = -1;
+    } else {
+      this.temporary = null;
+      this.id = createVariableInState(model, this.defaults);
+    }
+  }
+
+  get type(): VariableType {
+    return getVariablePropFromState<VariableType>(this.id, this.temporary, 'type');
+  }
+  get name(): string {
+    return getVariablePropFromState<string>(this.id, this.temporary, 'name');
+  }
+  get label(): string {
+    return getVariablePropFromState<string>(this.id, this.temporary, 'label');
+  }
+  get hide(): VariableHide {
+    return getVariablePropFromState<VariableHide>(this.id, this.temporary, 'hide');
+  }
+  get skipUrlSync(): boolean {
+    return getVariablePropFromState<boolean>(this.id, this.temporary, 'skipUrlSync');
+  }
+  get auto_count(): number {
+    return getVariablePropFromState(this.id, this.temporary, 'auto_count');
+  }
+  get auto_min(): string {
+    return getVariablePropFromState(this.id, this.temporary, 'auto_min');
+  }
+  get options(): VariableOption[] {
+    return getVariablePropFromState(this.id, this.temporary, 'options');
+  }
+  get auto(): boolean {
+    return getVariablePropFromState(this.id, this.temporary, 'auto');
+  }
+  get query(): string {
+    return getVariablePropFromState(this.id, this.temporary, 'query');
+  }
+  get refresh(): VariableRefresh {
+    return getVariablePropFromState(this.id, this.temporary, 'refresh');
+  }
+  get current(): VariableOption {
+    return getVariablePropFromState(this.id, this.temporary, 'current');
+  }
+
+  set type(type: VariableType) {
+    setVariablePropInState(this.id, this.temporary, 'type', type);
+  }
+  set name(name: string) {
+    setVariablePropInState(this.id, this.temporary, 'name', name);
+  }
+  set label(label: string) {
+    setVariablePropInState(this.id, this.temporary, 'label', label);
+  }
+  set hide(hide: VariableHide) {
+    setVariablePropInState(this.id, this.temporary, 'hide', hide);
+  }
+  set skipUrlSync(skipUrlSync: boolean) {
+    setVariablePropInState(this.id, this.temporary, 'skipUrlSync', skipUrlSync);
+  }
+  set auto_count(autoCount: number) {
+    setVariablePropInState(this.id, this.temporary, 'auto_count', autoCount);
+  }
+  set auto_min(autoMin: string) {
+    setVariablePropInState(this.id, this.temporary, 'auto_min', autoMin);
+  }
+  set options(options: VariableOption[]) {
+    setVariablePropInState(this.id, this.temporary, 'options', options);
+  }
+  set auto(auto: boolean) {
+    setVariablePropInState(this.id, this.temporary, 'auto', auto);
+  }
+  set query(query: string) {
+    setVariablePropInState(this.id, this.temporary, 'query', query);
+  }
+  set refresh(refresh: VariableRefresh) {
+    setVariablePropInState(this.id, this.temporary, 'refresh', refresh);
+  }
+  set current(current: VariableOption) {
+    setVariablePropInState(this.id, this.temporary, 'current', current);
   }
 
   getSaveModel() {
-    assignModelProperties(this.model, this, this.defaults);
+    this.model = getVariableModel(this.id, this.temporary);
     return this.model;
   }
 
