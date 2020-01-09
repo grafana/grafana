@@ -12,6 +12,7 @@ import RCCascader, { CascaderOption } from 'rc-cascader';
 interface CascaderState {
   inputValue: string;
   search: boolean;
+  popupVisible: boolean;
 }
 interface CascaderProps {
   separator?: string;
@@ -21,13 +22,26 @@ interface CascaderProps {
 }
 
 export class Cascader extends React.PureComponent<CascaderProps, CascaderState> {
+  private flatOptions: { [key: string]: any[] };
+
   constructor(props: CascaderProps) {
     super(props);
     this.state = {
       inputValue: '',
       search: props.search || false,
+      popupVisible: false,
     };
-    console.log(this.flattenOptions(props.options));
+    this.flatOptions = this.flattenOptions(props.options);
+  }
+
+  search(searchStr: string) {
+    const results = [];
+    for (const key in this.flatOptions) {
+      if (key.match(searchStr)) {
+        results.push({ path: key, value: this.flatOptions[key] });
+      }
+    }
+    return results;
   }
 
   flattenOptions(options: CascaderOption[], optionPath: CascaderOption[] = []) {
@@ -49,6 +63,10 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
     return stringArrayMap;
     // console.log(stringArrayMap);
   }
+  onInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({ inputValue: e.target.value, popupVisible: false });
+    console.log(this.search(e.target.value));
+  };
 
   onChange = (value: CascaderOption, selectedOptions: CascaderOption[]) => {
     this.setState({
@@ -57,10 +75,26 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
     this.props.onSelect(value);
   };
 
+  onPopupVisibleChange = (popupVisible: boolean) => {
+    this.setState({ popupVisible });
+  };
+
   render() {
+    const { inputValue, popupVisible } = this.state;
     return (
-      <RCCascader options={this.props.options} onChange={this.onChange}>
-        <Input value={this.state.inputValue} readOnly={!this.props.search} suffix={<Icon name="caret-down" />} />
+      <RCCascader
+        options={this.props.options}
+        popupVisible={popupVisible}
+        onPopupVisibleChange={this.onPopupVisibleChange}
+        onChange={this.onChange}
+      >
+        <Input
+          value={inputValue}
+          readOnly={!this.props.search}
+          suffix={<Icon name="caret-down" />}
+          onChange={this.onInput}
+          onKeyDown={() => {}}
+        />
       </RCCascader>
     );
   }
