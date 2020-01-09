@@ -36,7 +36,7 @@ describe('Explore item reducer', () => {
       };
 
       reducerTester()
-        .givenReducer(itemReducer as Reducer<ExploreItemState, PayloadAction<any>>, initalState)
+        .givenReducer(itemReducer, initalState)
         .whenActionIsDispatched(scanStartAction({ exploreId: ExploreId.left }))
         .thenStateShouldEqual({
           ...makeExploreItemState(),
@@ -51,7 +51,7 @@ describe('Explore item reducer', () => {
       };
 
       reducerTester()
-        .givenReducer(itemReducer as Reducer<ExploreItemState, PayloadAction<any>>, initalState)
+        .givenReducer(itemReducer, initalState)
         .whenActionIsDispatched(scanStopAction({ exploreId: ExploreId.left }))
         .thenStateShouldEqual({
           ...makeExploreItemState(),
@@ -65,7 +65,7 @@ describe('Explore item reducer', () => {
     describe('when changeMode is dispatched', () => {
       it('then it should set correct state', () => {
         reducerTester()
-          .givenReducer(itemReducer as Reducer<ExploreItemState, PayloadAction<any>>, {})
+          .givenReducer(itemReducer, {})
           .whenActionIsDispatched(changeModeAction({ exploreId: ExploreId.left, mode: ExploreMode.Logs }))
           .thenStatePredicateShouldEqual((resultingState: ExploreItemState) => {
             expect(resultingState.mode).toEqual(ExploreMode.Logs);

@@ -1,6 +1,7 @@
+import { AnyAction, createAction } from '@reduxjs/toolkit';
 import { NavIndex, NavModelItem } from '@grafana/data';
+
 import config from 'app/core/config';
-import { Action, createAction } from '@reduxjs/toolkit';
 
 export function buildInitialState(): NavIndex {
   const navIndex: NavIndex = {};
@@ -26,7 +27,7 @@ export const initialState: NavIndex = {};
 
 export const updateNavIndex = createAction<NavModelItem>('navIndex/updateNavIndex');
 
-export const navIndexReducer = (state: NavIndex = initialState, action: Action<unknown>): NavIndex => {
+export const navIndexReducer = (state: NavIndex = initialState, action: AnyAction): NavIndex => {
   if (updateNavIndex.match(action)) {
     const newPages: NavIndex = {};
     const payload = action.payload;

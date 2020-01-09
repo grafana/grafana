@@ -1,5 +1,6 @@
-﻿import { ApiKeysState } from 'app/types';
-import { createSlice } from '@reduxjs/toolkit';
+﻿import { createSlice } from '@reduxjs/toolkit';
+
+import { ApiKeysState } from 'app/types';
 
 export const initialApiKeysState: ApiKeysState = {
   keys: [],

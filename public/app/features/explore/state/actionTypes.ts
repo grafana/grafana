@@ -191,73 +191,67 @@ export interface ResetExplorePayload {
 /**
  * Adds a query row after the row with the given index.
  */
-export const addQueryRowAction = createAction<AddQueryRowPayload>('explore/ADD_QUERY_ROW');
+export const addQueryRowAction = createAction<AddQueryRowPayload>('explore/addQueryRow');
 
 /**
  * Change the mode of Explore.
  */
-export const changeModeAction = createAction<ChangeModePayload>('explore/CHANGE_MODE');
+export const changeModeAction = createAction<ChangeModePayload>('explore/changeMode');
 
 /**
  * Query change handler for the query row with the given index.
  * If `override` is reset the query modifications and run the queries. Use this to set queries via a link.
  */
-export const changeQueryAction = createAction<ChangeQueryPayload>('explore/CHANGE_QUERY');
+export const changeQueryAction = createAction<ChangeQueryPayload>('explore/changeQuery');
 
 /**
  * Keep track of the Explore container size, in particular the width.
  * The width will be used to calculate graph intervals (number of datapoints).
  */
-export const changeSizeAction = createAction<ChangeSizePayload>('explore/CHANGE_SIZE');
+export const changeSizeAction = createAction<ChangeSizePayload>('explore/changeSize');
 
 /**
  * Change the time range of Explore. Usually called from the Timepicker or a graph interaction.
  */
-export const changeRefreshIntervalAction = createAction<ChangeRefreshIntervalPayload>(
-  'explore/CHANGE_REFRESH_INTERVAL'
-);
+export const changeRefreshIntervalAction = createAction<ChangeRefreshIntervalPayload>('explore/changeRefreshInterval');
 
 /**
  * Clear all queries and results.
  */
-export const clearQueriesAction = createAction<ClearQueriesPayload>('explore/CLEAR_QUERIES');
+export const clearQueriesAction = createAction<ClearQueriesPayload>('explore/clearQueries');
 
 /**
  * Clear origin panel id.
  */
-export const clearOriginAction = createAction<ClearOriginPayload>('explore/CLEAR_ORIGIN');
+export const clearOriginAction = createAction<ClearOriginPayload>('explore/clearOrigin');
 
 /**
  * Highlight expressions in the log results
  */
 export const highlightLogsExpressionAction = createAction<HighlightLogsExpressionPayload>(
-  'explore/HIGHLIGHT_LOGS_EXPRESSION'
+  'explore/highlightLogsExpression'
 );
 
 /**
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
  */
-export const initializeExploreAction = createAction<InitializeExplorePayload>('explore/INITIALIZE_EXPLORE');
+export const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExplore');
 
 /**
  * Display an error when no datasources have been configured
  */
-export const loadDatasourceMissingAction = createAction<LoadDatasourceMissingPayload>(
-  'explore/LOAD_DATASOURCE_MISSING'
-);
+export const loadDatasourceMissingAction = createAction<LoadDatasourceMissingPayload>('explore/loadDatasourceMissing');
 
 /**
  * Start the async process of loading a datasource to display a loading indicator
  */
-export const loadDatasourcePendingAction = createAction<LoadDatasourcePendingPayload>(
-  'explore/LOAD_DATASOURCE_PENDING'
-);
+export const loadDatasourcePendingAction = createAction<LoadDatasourcePendingPayload>('explore/loadDatasourcePending');
 
 /**
  * Datasource loading was completed.
  */
-export const loadDatasourceReadyAction = createAction<LoadDatasourceReadyPayload>('explore/LOAD_DATASOURCE_READY');
+export const loadDatasourceReadyAction = createAction<LoadDatasourceReadyPayload>('explore/loadDatasourceReady');
 
 /**
  * Action to modify a query given a datasource-specific modifier action.
@@ -266,86 +260,86 @@ export const loadDatasourceReadyAction = createAction<LoadDatasourceReadyPayload
  * @param index Optional query row index. If omitted, the modification is applied to all query rows.
  * @param modifier Function that executes the modification, typically `datasourceInstance.modifyQueries`.
  */
-export const modifyQueriesAction = createAction<ModifyQueriesPayload>('explore/MODIFY_QUERIES');
+export const modifyQueriesAction = createAction<ModifyQueriesPayload>('explore/modifyQueries');
 
-export const queryStreamUpdatedAction = createAction<QueryEndedPayload>('explore/QUERY_STREAM_UPDATED');
+export const queryStreamUpdatedAction = createAction<QueryEndedPayload>('explore/queryStreamUpdated');
 
 export const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionPayload>(
-  'explore/QUERY_STORE_SUBSCRIPTION'
+  'explore/queryStoreSubscription'
 );
 
 /**
  * Remove query row of the given index, as well as associated query results.
  */
-export const removeQueryRowAction = createAction<RemoveQueryRowPayload>('explore/REMOVE_QUERY_ROW');
+export const removeQueryRowAction = createAction<RemoveQueryRowPayload>('explore/removeQueryRow');
 
 /**
  * Start a scan for more results using the given scanner.
  * @param exploreId Explore area
  * @param scanner Function that a) returns a new time range and b) triggers a query run for the new range
  */
-export const scanStartAction = createAction<ScanStartPayload>('explore/SCAN_START');
+export const scanStartAction = createAction<ScanStartPayload>('explore/scanStart');
 
 /**
  * Stop any scanning for more results.
  */
-export const scanStopAction = createAction<ScanStopPayload>('explore/SCAN_STOP');
+export const scanStopAction = createAction<ScanStopPayload>('explore/scanStop');
 
 /**
  * Reset queries to the given queries. Any modifications will be discarded.
  * Use this action for clicks on query examples. Triggers a query run.
  */
-export const setQueriesAction = createAction<SetQueriesPayload>('explore/SET_QUERIES');
+export const setQueriesAction = createAction<SetQueriesPayload>('explore/setQueries');
 
 /**
  * Close the split view and save URL state.
  */
-export const splitCloseAction = createAction<SplitCloseActionPayload>('explore/SPLIT_CLOSE');
+export const splitCloseAction = createAction<SplitCloseActionPayload>('explore/splitClose');
 
 /**
  * Open the split view and copy the left state to be the right state.
  * The right state is automatically initialized.
  * The copy keeps all query modifications but wipes the query results.
  */
-export const splitOpenAction = createAction<SplitOpenPayload>('explore/SPLIT_OPEN');
+export const splitOpenAction = createAction<SplitOpenPayload>('explore/splitOpen');
 
-export const syncTimesAction = createAction<SyncTimesPayload>('explore/SYNC_TIMES');
+export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes');
 /**
  * Update state of Explores UI elements (panels visiblity and deduplication  strategy)
  */
-export const updateUIStateAction = createAction<UpdateUIStatePayload>('explore/UPDATE_UI_STATE');
+export const updateUIStateAction = createAction<UpdateUIStatePayload>('explore/updateUIState');
 
 /**
  * Expand/collapse the table result viewer. When collapsed, table queries won't be run.
  */
-export const toggleTableAction = createAction<ToggleTablePayload>('explore/TOGGLE_TABLE');
+export const toggleTableAction = createAction<ToggleTablePayload>('explore/toggleTable');
 
 /**
  * Expand/collapse the graph result viewer. When collapsed, graph queries won't be run.
  */
-export const toggleGraphAction = createAction<ToggleGraphPayload>('explore/TOGGLE_GRAPH');
+export const toggleGraphAction = createAction<ToggleGraphPayload>('explore/toggleGraph');
 
 /**
  * Updates datasource instance before datasouce loading has started
  */
 export const updateDatasourceInstanceAction = createAction<UpdateDatasourceInstancePayload>(
-  'explore/UPDATE_DATASOURCE_INSTANCE'
+  'explore/updateDatasourceInstance'
 );
 
-export const toggleLogLevelAction = createAction<ToggleLogLevelPayload>('explore/TOGGLE_LOG_LEVEL');
+export const toggleLogLevelAction = createAction<ToggleLogLevelPayload>('explore/toggleLogLevel');
 
 /**
  * Resets state for explore.
  */
-export const resetExploreAction = createAction<ResetExplorePayload>('explore/RESET_EXPLORE');
-export const queriesImportedAction = createAction<QueriesImportedPayload>('explore/QueriesImported');
+export const resetExploreAction = createAction<ResetExplorePayload>('explore/resetExplore');
+export const queriesImportedAction = createAction<QueriesImportedPayload>('explore/queriesImported');
 
-export const historyUpdatedAction = createAction<HistoryUpdatedPayload>('explore/HISTORY_UPDATED');
+export const historyUpdatedAction = createAction<HistoryUpdatedPayload>('explore/historyUpdated');
 
-export const setUrlReplacedAction = createAction<SetUrlReplacedPayload>('explore/SET_URL_REPLACED');
+export const setUrlReplacedAction = createAction<SetUrlReplacedPayload>('explore/setUrlReplaced');
 
-export const changeRangeAction = createAction<ChangeRangePayload>('explore/CHANGE_RANGE');
+export const changeRangeAction = createAction<ChangeRangePayload>('explore/changeRange');
 
-export const changeLoadingStateAction = createAction<ChangeLoadingStatePayload>('changeLoadingStateAction');
+export const changeLoadingStateAction = createAction<ChangeLoadingStatePayload>('changeLoadingState');
 
-export const setPausedStateAction = createAction<SetPausedStatePayload>('explore/SET_PAUSED_STATE');
+export const setPausedStateAction = createAction<SetPausedStatePayload>('explore/setPausedState');

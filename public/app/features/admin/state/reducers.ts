@@ -58,7 +58,7 @@ const ldapSlice = createSlice({
     }),
     clearUserErrorAction: (state, action: PayloadAction<undefined>): LdapState => ({
       ...state,
-      user: null,
+      userError: null,
     }),
   },
 });

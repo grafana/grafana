@@ -19,16 +19,18 @@ export const initialState: DataSourcesState = {
   dataSourceMeta: {} as DataSourcePluginMeta,
 };
 
-export const dataSourceLoaded = createAction<DataSourceSettings>('LOAD_DATA_SOURCE');
-export const dataSourcesLoaded = createAction<DataSourceSettings[]>('LOAD_DATA_SOURCES');
-export const dataSourceMetaLoaded = createAction<DataSourcePluginMeta>('LOAD_DATA_SOURCE_META');
-export const dataSourcePluginsLoad = createAction('LOAD_DATA_SOURCE_PLUGINS');
-export const dataSourcePluginsLoaded = createAction<DataSourceTypesLoadedPayload>('LOADED_DATA_SOURCE_PLUGINS');
-export const setDataSourcesSearchQuery = createAction<string>('SET_DATA_SOURCES_SEARCH_QUERY');
-export const setDataSourcesLayoutMode = createAction<LayoutMode>('SET_DATA_SOURCES_LAYOUT_MODE');
-export const setDataSourceTypeSearchQuery = createAction<string>('SET_DATA_SOURCE_TYPE_SEARCH_QUERY');
-export const setDataSourceName = createAction<string>('SET_DATA_SOURCE_NAME');
-export const setIsDefault = createAction<boolean>('SET_IS_DEFAULT');
+export const dataSourceLoaded = createAction<DataSourceSettings>('dataSources/dataSourceLoaded');
+export const dataSourcesLoaded = createAction<DataSourceSettings[]>('dataSources/dataSourcesLoaded');
+export const dataSourceMetaLoaded = createAction<DataSourcePluginMeta>('dataSources/dataSourceMetaLoaded');
+export const dataSourcePluginsLoad = createAction('dataSources/dataSourcePluginsLoad');
+export const dataSourcePluginsLoaded = createAction<DataSourceTypesLoadedPayload>(
+  'dataSources/dataSourcePluginsLoaded'
+);
+export const setDataSourcesSearchQuery = createAction<string>('dataSources/setDataSourcesSearchQuery');
+export const setDataSourcesLayoutMode = createAction<LayoutMode>('dataSources/setDataSourcesLayoutMode');
+export const setDataSourceTypeSearchQuery = createAction<string>('dataSources/setDataSourceTypeSearchQuery');
+export const setDataSourceName = createAction<string>('dataSources/setDataSourceName');
+export const setIsDefault = createAction<boolean>('dataSources/setIsDefault');
 
 export const dataSourcesReducer = (state: DataSourcesState = initialState, action: AnyAction): DataSourcesState => {
   if (dataSourcesLoaded.match(action)) {
