@@ -179,8 +179,15 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
   }
 
   if (changeModeAction.match(action)) {
-    const mode = action.payload.mode;
-    return { ...state, mode };
+    return {
+      ...state,
+      mode: action.payload.mode,
+      graphResult: null,
+      tableResult: null,
+      logsResult: null,
+      queryResponse: createEmptyQueryResponse(),
+      loading: false,
+    };
   }
 
   if (changeRefreshIntervalAction.match(action)) {

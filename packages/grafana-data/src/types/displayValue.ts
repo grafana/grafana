@@ -4,6 +4,7 @@ export type DisplayProcessor = (value: any) => DisplayValue;
 
 export interface DisplayValue extends FormattedValue {
   numeric: number; // Use isNaN to check if it is a real number
+  percent?: number; // 0-1 between min & max
   color?: string; // color based on configs or Threshold
   title?: string;
 }

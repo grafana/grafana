@@ -26,6 +26,9 @@ const getSeriesTableRowStyles = stylesFactory((theme: GrafanaTheme) => {
     seriesTableCell: css`
       display: table-cell;
     `,
+    label: css`
+      word-break: break-all;
+    `,
     value: css`
       padding-left: ${theme.spacing.md};
     `,
@@ -45,7 +48,7 @@ const SeriesTableRow: React.FC<SeriesTableRowProps> = ({ color, label, value, is
           <SeriesIcon color={color} className={styles.icon} />
         </div>
       )}
-      <div className={styles.seriesTableCell}>{label}</div>
+      <div className={cx(styles.seriesTableCell, styles.label)}>{label}</div>
       <div className={cx(styles.seriesTableCell, styles.value)}>{value}</div>
     </div>
   );

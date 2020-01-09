@@ -5,7 +5,6 @@ export * from './logs';
 export * from './labels';
 export * from './labels';
 export * from './object';
-export * from './thresholds';
 export * from './namedColorsPalette';
 export * from './series';
 

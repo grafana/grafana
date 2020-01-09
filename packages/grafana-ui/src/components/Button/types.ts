@@ -12,6 +12,8 @@ export interface StyleDeps {
 
 export interface ButtonStyles {
   button: string;
+  buttonWithIcon: string;
+  iconButton: string;
   iconWrap: string;
   icon?: string;
 }

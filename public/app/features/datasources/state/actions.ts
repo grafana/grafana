@@ -4,16 +4,22 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { updateLocation, updateNavIndex } from 'app/core/actions';
 import { buildNavModel } from './navModel';
 import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
-import { ThunkResult } from 'app/types';
+import { DataSourcePluginCategory, ThunkResult } from 'app/types';
 import { getPluginSettings } from 'app/features/plugins/PluginSettingsCache';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
 import {
   dataSourceLoaded,
   dataSourceMetaLoaded,
+  dataSourcePluginsLoad,
+  dataSourcePluginsLoaded,
   dataSourcesLoaded,
-  dataSourceTypesLoad,
-  dataSourceTypesLoaded,
 } from './reducers';
+import { buildCategories } from './buildCategories';
+
+export interface DataSourceTypesLoadedPayload {
+  plugins: DataSourcePluginMeta[];
+  categories: DataSourcePluginCategory[];
+}
 
 export function loadDataSources(): ThunkResult<void> {
   return async dispatch => {
@@ -56,11 +62,12 @@ export function addDataSource(plugin: DataSourcePluginMeta): ThunkResult<void> {
   };
 }
 
-export function loadDataSourceTypes(): ThunkResult<void> {
+export function loadDataSourcePlugins(): ThunkResult<void> {
   return async dispatch => {
-    dispatch(dataSourceTypesLoad());
-    const result = await getBackendSrv().get('/api/plugins', { enabled: 1, type: 'datasource' });
-    dispatch(dataSourceTypesLoaded(result as DataSourcePluginMeta[]));
+    dispatch(dataSourcePluginsLoad());
+    const plugins = await getBackendSrv().get('/api/plugins', { enabled: 1, type: 'datasource' });
+    const categories = buildCategories(plugins);
+    dispatch(dataSourcePluginsLoaded({ plugins, categories }));
   };
 }
 

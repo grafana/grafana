@@ -1,13 +1,11 @@
-import { PluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
-
 import { reducerTester } from 'test/core/redux/reducerTester';
 import {
   dataSourceLoaded,
   dataSourceMetaLoaded,
+  dataSourcePluginsLoad,
+  dataSourcePluginsLoaded,
   dataSourcesLoaded,
   dataSourcesReducer,
-  dataSourceTypesLoad,
-  dataSourceTypesLoaded,
   initialState,
   setDataSourceName,
   setDataSourcesLayoutMode,
@@ -18,6 +16,7 @@ import {
 import { getMockDataSource, getMockDataSources } from '../__mocks__/dataSourcesMocks';
 import { LayoutModes } from 'app/core/components/LayoutSelector/LayoutSelector';
 import { DataSourcesState } from 'app/types';
+import { PluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
 
 const mockPlugin = () =>
   ({
@@ -76,26 +75,26 @@ describe('dataSourcesReducer', () => {
     });
   });
 
-  describe('when dataSourceTypesLoad is dispatched', () => {
+  describe('when dataSourcePluginsLoad is dispatched', () => {
     it('then state should be correct', () => {
-      const state: DataSourcesState = { ...initialState, dataSourceTypes: [mockPlugin()] };
+      const state: DataSourcesState = { ...initialState, plugins: [mockPlugin()] };
 
       reducerTester()
         .givenReducer(dataSourcesReducer, state)
-        .whenActionIsDispatched(dataSourceTypesLoad())
-        .thenStateShouldEqual({ ...initialState, dataSourceTypes: [], isLoadingDataSources: true });
+        .whenActionIsDispatched(dataSourcePluginsLoad())
+        .thenStateShouldEqual({ ...initialState, isLoadingDataSources: true });
     });
   });
 
-  describe('when dataSourceTypesLoaded is dispatched', () => {
+  describe('when dataSourcePluginsLoaded is dispatched', () => {
     it('then state should be correct', () => {
       const dataSourceTypes = [mockPlugin()];
       const state: DataSourcesState = { ...initialState, isLoadingDataSources: true };
 
       reducerTester()
         .givenReducer(dataSourcesReducer, state)
-        .whenActionIsDispatched(dataSourceTypesLoaded(dataSourceTypes))
-        .thenStateShouldEqual({ ...initialState, dataSourceTypes, isLoadingDataSources: false });
+        .whenActionIsDispatched(dataSourcePluginsLoaded({ plugins: dataSourceTypes, categories: [] }))
+        .thenStateShouldEqual({ ...initialState, plugins: dataSourceTypes, isLoadingDataSources: false });
     });
   });
 
