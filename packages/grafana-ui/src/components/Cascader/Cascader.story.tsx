@@ -35,6 +35,11 @@ const options = [
       },
     ],
   },
+  {
+    label: 'FirstFirst',
+    value: '5',
+  },
 ];
 
-export const basic = () => <Cascader options={options} onSelect={val => console.log(val)} />;
+export const simple = () => <Cascader options={options} onSelect={val => console.log(val)} />;
+export const withSearch = () => <Cascader options={options} search={true} onSelect={val => console.log(val)} />;
