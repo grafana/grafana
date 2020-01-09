@@ -2,18 +2,18 @@
 title = "Installing on RPM-based Linux"
 description = "Grafana Installation guide for Centos, Fedora, OpenSuse, Redhat."
 keywords = ["grafana", "installation", "documentation", "centos", "fedora", "opensuse", "redhat"]
-aliases = ["installation/installation/rpm"]
+aliases = ["/docs/grafana/latest/installation/installation/rpm"]
 type = "docs"
 [menu.docs]
 name = "Installing on Centos / Redhat"
 identifier = "rpm"
 parent = "installation"
-weight = 2
+weight = 300
 +++
 
 # Installing on RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)
 
-Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
+Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing
 installation.
 
 ## Download
@@ -22,31 +22,31 @@ Go to the [download page](https://grafana.com/grafana/download?platform=linux) f
 links.
 
 
-You can install Grafana using Yum directly.
+You can install Grafana using Yum directly:
 
 ```bash
-$ sudo yum install <rpm package url>
+sudo yum install <rpm package url>
 ```
 
-You will find package urls on the [download page](https://grafana.com/grafana/download?platform=linux).
+You will find package URLs on the [download page](https://grafana.com/grafana/download?platform=linux).
 
 Or install manually using `rpm`. First execute
 
 ```bash
-$ wget <rpm package url>
+wget <rpm package url>
 ```
 
 ### On CentOS / Fedora / Redhat:
 
 ```bash
-$ sudo yum install initscripts urw-fonts
-$ sudo rpm -Uvh <local rpm package>
+sudo yum install initscripts urw-fonts
+sudo rpm -Uvh <local rpm package>
 ```
 
 ### On OpenSuse:
 
 ```bash
-$ sudo rpm -i --nodeps <local rpm package>
+sudo rpm -i --nodeps <local rpm package>
 ```
 
 ## Install via YUM Repository
@@ -82,13 +82,12 @@ sslcacert=/etc/pki/tls/certs/ca-bundle.crt
 Then install Grafana via the `yum` command.
 
 ```bash
-$ sudo yum install grafana
+sudo yum install grafana
 ```
 
 ### RPM GPG Key
 
-The RPMs are signed, you can verify the signature with this [public GPG
-key](https://packages.grafana.com/gpg.key).
+The RPMs are signed, you can verify the signature with this [public GPG key](https://packages.grafana.com/gpg.key).
 
 ## Package details
 
@@ -105,7 +104,7 @@ key](https://packages.grafana.com/gpg.key).
 You can start Grafana by running:
 
 ```bash
-$ sudo service grafana-server start
+sudo service grafana-server start
 ```
 
 This will start the `grafana-server` process as the `grafana` user,
@@ -123,9 +122,9 @@ $ sudo /sbin/chkconfig --add grafana-server
 ## Start the server (via systemd)
 
 ```bash
-$ systemctl daemon-reload
-$ systemctl start grafana-server
-$ systemctl status grafana-server
+sudo systemctl daemon-reload
+sudo systemctl start grafana-server
+sudo systemctl status grafana-server
 ```
 
 ### Enable the systemd service to start at boot
@@ -159,10 +158,10 @@ those options.
 
 ### Adding data sources
 
-- [Graphite]({{< relref "features/datasources/graphite.md" >}})
-- [InfluxDB]({{< relref "features/datasources/influxdb.md" >}})
-- [OpenTSDB]({{< relref "features/datasources/opentsdb.md" >}})
-- [Prometheus]({{< relref "features/datasources/prometheus.md" >}})
+- [Graphite]({{< relref "../features/datasources/graphite.md" >}})
+- [InfluxDB]({{< relref "../features/datasources/influxdb.md" >}})
+- [OpenTSDB]({{< relref "../features/datasources/opentsdb.md" >}})
+- [Prometheus]({{< relref "../features/datasources/prometheus.md" >}})
 
 ### Server side image rendering
 
@@ -172,9 +171,9 @@ for example in alert notifications.
 If the image is missing text make sure you have font packages installed.
 
 ```bash
-yum install fontconfig
-yum install freetype*
-yum install urw-fonts
+sudo yum install fontconfig
+sudo yum install freetype*
+sudo yum install urw-fonts
 ```
 
 ## Installing from binary tar file
@@ -194,5 +193,5 @@ binary and the `public` folder is located).
 
 ## Logging in for the first time
 
-To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default HTTP port that Grafana listens to if you haven't [configured a different port](/installation/configuration/#http-port).
-Then follow the instructions [here](/guides/getting_started/).
+To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default HTTP port that Grafana listens to if you haven't [configured a different port]({{< relref "configuration/#http-port" >}}).
+Then follow the instructions [here]({{< relref "../guides/getting_started/" >}}).

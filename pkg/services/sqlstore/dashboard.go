@@ -334,13 +334,13 @@ func DeleteDashboard(cmd *models.DeleteDashboardCommand) error {
 
 			for _, id := range dashIds {
 				if err := deleteAlertDefinition(id.Id, sess); err != nil {
-					return nil
+					return err
 				}
 			}
 		}
 
 		if err := deleteAlertDefinition(dashboard.Id, sess); err != nil {
-			return nil
+			return err
 		}
 
 		for _, sql := range deletes {

@@ -1,23 +1,18 @@
 // Libaries
 import _ from 'lodash';
-
 // Constants
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
-import { GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL, GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
-
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 // Utils & Services
 import { Emitter } from 'app/core/utils/emitter';
 import { contextSrv } from 'app/core/services/context_srv';
 import sortByKeys from 'app/core/utils/sort_by_keys';
-
 // Types
-import { PanelModel, GridPos, panelAdded, panelRemoved } from './PanelModel';
+import { GridPos, panelAdded, PanelModel, panelRemoved } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
-import { TimeRange, TimeZone, AppEvent } from '@grafana/data';
+import { AppEvent, dateTime, DateTimeInput, isDateTime, PanelEvents, TimeRange, TimeZone, toUtc } from '@grafana/data';
 import { UrlQueryValue } from '@grafana/runtime';
-import { PanelEvents } from '@grafana/data';
-import { KIOSK_MODE_TV, DashboardMeta, CoreEvents } from 'app/types';
-import { toUtc, DateTimeInput, dateTime, isDateTime } from '@grafana/data';
+import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -296,6 +291,14 @@ export class DashboardModel {
       }
     }
     return null;
+  }
+
+  canEditPanel(panel?: PanelModel): boolean {
+    return this.meta.canEdit && panel && !panel.repeatPanelId;
+  }
+
+  canEditPanelById(id: number): boolean {
+    return this.canEditPanel(this.getPanelById(id));
   }
 
   addPanel(panelData: any) {
@@ -660,6 +663,7 @@ export class DashboardModel {
 
       return false;
     })();
+    this.events.emit(CoreEvents.submenuVisibilityChanged, this.meta.submenuEnabled);
   }
 
   getPanelInfoById(panelId: number) {

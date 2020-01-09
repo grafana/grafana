@@ -1,12 +1,8 @@
-import { StoreState } from '../types';
-import { ActionOf } from '../core/redux';
+import { StoreState } from 'app/types';
+import { Store } from 'redux';
 
-export let store: {
-  getState: () => StoreState;
-  dispatch: (action: ActionOf<any>) => void;
-  subscribe: (callback: () => void) => () => void;
-};
+export let store: Store<StoreState>;
 
-export function setStore(newStore: any) {
+export function setStore(newStore: Store<StoreState>) {
   store = newStore;
 }

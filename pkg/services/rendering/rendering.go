@@ -7,9 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	plugin "github.com/hashicorp/go-plugin"
-
-	pluginModel "github.com/grafana/grafana-plugin-model/go/renderer"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
@@ -25,8 +22,6 @@ func init() {
 
 type RenderingService struct {
 	log             log.Logger
-	pluginClient    *plugin.Client
-	grpcPlugin      pluginModel.RendererPlugin
 	pluginInfo      *plugins.RendererPlugin
 	renderAction    renderFunc
 	domain          string
@@ -60,6 +55,7 @@ func (rs *RenderingService) Init() error {
 
 func (rs *RenderingService) Run(ctx context.Context) error {
 	if rs.Cfg.RendererUrl != "" {
+		rs.log = rs.log.New("renderer", "http")
 		rs.log.Info("Backend rendering via external http server")
 		rs.renderAction = rs.renderViaHttp
 		<-ctx.Done()
@@ -67,6 +63,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	}
 
 	if plugins.Renderer == nil {
+		rs.log = rs.log.New("renderer", "phantomJS")
 		rs.log.Info("Backend rendering via phantomJS")
 		rs.log.Warn("phantomJS is deprecated and will be removed in a future release. " +
 			"You should consider migrating from phantomJS to grafana-image-renderer plugin.")
@@ -75,6 +72,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		return nil
 	}
 
+	rs.log = rs.log.New("renderer", "plugin")
 	rs.pluginInfo = plugins.Renderer
 
 	if err := rs.startPlugin(ctx); err != nil {
@@ -82,15 +80,16 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	}
 
 	rs.renderAction = rs.renderViaPlugin
+	<-ctx.Done()
+	return nil
+}
 
-	err := rs.watchAndRestartPlugin(ctx)
+func (rs *RenderingService) RenderErrorImage(err error) (*RenderResult, error) {
+	imgUrl := "public/img/rendering_error.png"
 
-	if rs.pluginClient != nil {
-		rs.log.Debug("Killing renderer plugin process")
-		rs.pluginClient.Kill()
-	}
-
-	return err
+	return &RenderResult{
+		FilePath: filepath.Join(setting.HomePath, imgUrl),
+	}, nil
 }
 
 func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResult, error) {
@@ -107,6 +106,7 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 	rs.inProgressCount += 1
 
 	if rs.renderAction != nil {
+		rs.log.Info("Rendering", "path", opts.Path)
 		return rs.renderAction(ctx, opts)
 	}
 	return nil, fmt.Errorf("No renderer found")

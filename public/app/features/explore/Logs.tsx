@@ -7,20 +7,30 @@ import {
   TimeZone,
   AbsoluteTimeRange,
   LogsMetaKind,
-  LogsModel,
   LogsDedupStrategy,
   LogRowModel,
   LogsDedupDescription,
+  LogsMetaItem,
+  GraphSeriesXY,
+  LinkModel,
+  Field,
 } from '@grafana/data';
 import { Switch, LogLabels, ToggleButtonGroup, ToggleButton, LogRows } from '@grafana/ui';
+import store from 'app/core/store';
 
 import { ExploreGraphPanel } from './ExploreGraphPanel';
+
+const SETTINGS_KEYS = {
+  showLabels: 'grafana.explore.logs.showLabels',
+  showTime: 'grafana.explore.logs.showTime',
+  wrapLogMessage: 'grafana.explore.logs.wrapLogMessage',
+};
 
 function renderMetaItem(value: any, kind: LogsMetaKind) {
   if (kind === LogsMetaKind.LabelsMap) {
     return (
       <span className="logs-meta-item__labels">
-        <LogLabels labels={value} plain getRows={() => []} />
+        <LogLabels labels={value} />
       </span>
     );
   }
@@ -28,10 +38,13 @@ function renderMetaItem(value: any, kind: LogsMetaKind) {
 }
 
 interface Props {
-  data?: LogsModel;
-  dedupedData?: LogsModel;
+  logRows?: LogRowModel[];
+  logsMeta?: LogsMetaItem[];
+  logsSeries?: GraphSeriesXY[];
+  dedupedRows?: LogRowModel[];
+
   width: number;
-  highlighterExpressions: string[];
+  highlighterExpressions?: string[];
   loading: boolean;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
@@ -39,23 +52,27 @@ interface Props {
   scanRange?: RawTimeRange;
   dedupStrategy: LogsDedupStrategy;
   onChangeTime: (range: AbsoluteTimeRange) => void;
-  onClickLabel?: (label: string, value: string) => void;
+  onClickFilterLabel?: (key: string, value: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string) => void;
   onStartScanning?: () => void;
   onStopScanning?: () => void;
   onDedupStrategyChange: (dedupStrategy: LogsDedupStrategy) => void;
   onToggleLogLevel: (hiddenLogLevels: LogLevel[]) => void;
   getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
+  getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 
 interface State {
   showLabels: boolean;
   showTime: boolean;
+  wrapLogMessage: boolean;
 }
 
 export class Logs extends PureComponent<Props, State> {
   state = {
-    showLabels: false,
-    showTime: true,
+    showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
+    showTime: store.getBool(SETTINGS_KEYS.showTime, true),
+    wrapLogMessage: store.getBool(SETTINGS_KEYS.wrapLogMessage, true),
   };
 
   onChangeDedup = (dedup: LogsDedupStrategy) => {
@@ -69,18 +86,33 @@ export class Logs extends PureComponent<Props, State> {
   onChangeLabels = (event?: React.SyntheticEvent) => {
     const target = event && (event.target as HTMLInputElement);
     if (target) {
+      const showLabels = target.checked;
       this.setState({
-        showLabels: target.checked,
+        showLabels,
       });
+      store.set(SETTINGS_KEYS.showLabels, showLabels);
     }
   };
 
   onChangeTime = (event?: React.SyntheticEvent) => {
     const target = event && (event.target as HTMLInputElement);
     if (target) {
+      const showTime = target.checked;
       this.setState({
-        showTime: target.checked,
+        showTime,
       });
+      store.set(SETTINGS_KEYS.showTime, showTime);
+    }
+  };
+
+  onChangewrapLogMessage = (event?: React.SyntheticEvent) => {
+    const target = event && (event.target as HTMLInputElement);
+    if (target) {
+      const wrapLogMessage = target.checked;
+      this.setState({
+        wrapLogMessage,
+      });
+      store.set(SETTINGS_KEYS.wrapLogMessage, wrapLogMessage);
     }
   };
 
@@ -105,30 +137,34 @@ export class Logs extends PureComponent<Props, State> {
 
   render() {
     const {
-      data,
+      logRows,
+      logsMeta,
+      logsSeries,
       highlighterExpressions,
       loading = false,
-      onClickLabel,
+      onClickFilterLabel,
+      onClickFilterOutLabel,
       timeZone,
       scanning,
       scanRange,
       width,
-      dedupedData,
+      dedupedRows,
       absoluteRange,
       onChangeTime,
+      getFieldLinks,
     } = this.props;
 
-    if (!data) {
+    if (!logRows) {
       return null;
     }
 
-    const { showLabels, showTime } = this.state;
+    const { showLabels, showTime, wrapLogMessage } = this.state;
     const { dedupStrategy } = this.props;
-    const hasData = data && data.rows && data.rows.length > 0;
-    const dedupCount = dedupedData
-      ? dedupedData.rows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
+    const hasData = logRows && logRows.length > 0;
+    const dedupCount = dedupedRows
+      ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
       : 0;
-    const meta = data && data.meta ? [...data.meta] : [];
+    const meta = logsMeta ? [...logsMeta] : [];
 
     if (dedupStrategy !== LogsDedupStrategy.none) {
       meta.push({
@@ -139,7 +175,7 @@ export class Logs extends PureComponent<Props, State> {
     }
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
-    const series = data && data.series ? data.series : [];
+    const series = logsSeries ? logsSeries : [];
 
     return (
       <div className="logs-panel">
@@ -163,7 +199,8 @@ export class Logs extends PureComponent<Props, State> {
         <div className="logs-panel-options">
           <div className="logs-panel-controls">
             <Switch label="Time" checked={showTime} onChange={this.onChangeTime} transparent />
-            <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
+            <Switch label="Unique labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
+            <Switch label="Wrap lines" checked={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
             <ToggleButtonGroup label="Dedup" transparent={true}>
               {Object.keys(LogsDedupStrategy).map((dedupType: string, i) => (
                 <ToggleButton
@@ -193,16 +230,19 @@ export class Logs extends PureComponent<Props, State> {
         )}
 
         <LogRows
-          data={data}
-          deduplicatedData={dedupedData}
+          logRows={logRows}
+          deduplicatedRows={dedupedRows}
           dedupStrategy={dedupStrategy}
           getRowContext={this.props.getRowContext}
           highlighterExpressions={highlighterExpressions}
-          onClickLabel={onClickLabel}
-          rowLimit={data ? data.rows.length : undefined}
+          rowLimit={logRows ? logRows.length : undefined}
+          onClickFilterLabel={onClickFilterLabel}
+          onClickFilterOutLabel={onClickFilterOutLabel}
           showLabels={showLabels}
           showTime={showTime}
+          wrapLogMessage={wrapLogMessage}
           timeZone={timeZone}
+          getFieldLinks={getFieldLinks}
         />
 
         {!loading && !hasData && !scanning && (

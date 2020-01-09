@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
@@ -18,7 +17,6 @@ import (
 var (
 	getLDAPConfig = multildap.GetConfig
 	newLDAP       = multildap.New
-	tokenService  = AuthToken{}.TokenService
 
 	logger = log.New("LDAP.debug")
 
@@ -59,14 +57,6 @@ type LDAPServerDTO struct {
 	Port      int    `json:"port"`
 	Available bool   `json:"available"`
 	Error     string `json:"error"`
-}
-
-type AuthToken struct {
-	TokenService TokenRevoker `inject:""`
-}
-
-type TokenRevoker interface {
-	RevokeAllUserTokens(context.Context, int64) error
 }
 
 // FetchOrgs fetches the organization(s) information by executing a single query to the database. Then, populating the DTO with the information retrieved.
@@ -199,8 +189,7 @@ func (server *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
 	user, _, err := ldapServer.User(query.Result.Login)
 
 	if err != nil {
-		if err == ldap.ErrCouldNotFindUser { // User was not in the LDAP server - we need to take action:
-
+		if err == multildap.ErrDidNotFindUser { // User was not in the LDAP server - we need to take action:
 			if setting.AdminUser == query.Result.Login { // User is *the* Grafana Admin. We cannot disable it.
 				errMsg := fmt.Sprintf(`Refusing to sync grafana super admin "%s" - it would be disabled`, query.Result.Login)
 				logger.Error(errMsg)
@@ -214,13 +203,16 @@ func (server *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
 				return Error(http.StatusInternalServerError, "Failed to disable the user", err)
 			}
 
-			err = tokenService.RevokeAllUserTokens(context.TODO(), userId)
+			err = server.AuthTokenService.RevokeAllUserTokens(c.Req.Context(), userId)
 			if err != nil {
 				return Error(http.StatusInternalServerError, "Failed to remove session tokens for the user", err)
 			}
 
-			return Success("User disabled without any updates in the information") // should this be a success?
+			return Error(http.StatusBadRequest, "User not found in LDAP. Disabled the user without updating information", nil) // should this be a success?
 		}
+
+		logger.Debug("Failed to sync the user with LDAP", "err", err)
+		return Error(http.StatusBadRequest, "Something went wrong while finding the user in LDAP", err)
 	}
 
 	upsertCmd := &models.UpsertUserCommand{
@@ -278,28 +270,33 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 
 	orgRoles := []LDAPRoleDTO{}
 
-	// First, let's find the groupDN that we did match by inspecting the assigned user OrgRoles.
-	for _, group := range serverConfig.Groups {
-		orgRole, ok := user.OrgRoles[group.OrgId]
-
-		if ok && orgRole == group.OrgRole {
-			r := &LDAPRoleDTO{GroupDN: group.GroupDN, OrgId: group.OrgId, OrgRole: group.OrgRole}
-			orgRoles = append(orgRoles, *r)
+	// Need to iterate based on the config groups as only the first match for an org is used
+	// We are showing all matches as that should help in understanding why one match wins out
+	// over another.
+	for _, configGroup := range serverConfig.Groups {
+		for _, userGroup := range user.Groups {
+			if configGroup.GroupDN == userGroup {
+				r := &LDAPRoleDTO{GroupDN: configGroup.GroupDN, OrgId: configGroup.OrgId, OrgRole: configGroup.OrgRole}
+				orgRoles = append(orgRoles, *r)
+				break
+			}
 		}
+		//}
 	}
 
 	// Then, we find what we did not match by inspecting the list of groups returned from
 	// LDAP against what we have already matched above.
 	for _, userGroup := range user.Groups {
-		var matches int
+		var matched bool
 
 		for _, orgRole := range orgRoles {
 			if orgRole.GroupDN == userGroup { // we already matched it
-				matches++
+				matched = true
+				break
 			}
 		}
 
-		if matches < 1 {
+		if !matched {
 			r := &LDAPRoleDTO{GroupDN: userGroup}
 			orgRoles = append(orgRoles, *r)
 		}

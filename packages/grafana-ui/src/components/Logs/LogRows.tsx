@@ -1,28 +1,33 @@
 import React, { PureComponent } from 'react';
-import { cx } from 'emotion';
-import { LogsModel, TimeZone, LogsDedupStrategy, LogRowModel } from '@grafana/data';
+import memoizeOne from 'memoize-one';
+import { TimeZone, LogsDedupStrategy, LogRowModel, Field, LinkModel } from '@grafana/data';
 
-import { LogRow } from './LogRow';
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
-import memoizeOne from 'memoize-one';
+
+//Components
+import { LogRow } from './LogRow';
 
 export const PREVIEW_LIMIT = 100;
 export const RENDER_LIMIT = 500;
 
 export interface Props extends Themeable {
-  data: LogsModel;
+  logRows?: LogRowModel[];
+  deduplicatedRows?: LogRowModel[];
   dedupStrategy: LogsDedupStrategy;
-  highlighterExpressions: string[];
-  showTime: boolean;
+  highlighterExpressions?: string[];
   showLabels: boolean;
+  showTime: boolean;
+  wrapLogMessage: boolean;
   timeZone: TimeZone;
-  deduplicatedData?: LogsModel;
-  onClickLabel?: (label: string, value: string) => void;
-  getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
   rowLimit?: number;
+  allowDetails?: boolean;
   previewLimit?: number;
+  onClickFilterLabel?: (key: string, value: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string) => void;
+  getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
+  getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 
 interface State {
@@ -43,8 +48,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
   componentDidMount() {
     // Staged rendering
-    const { data, previewLimit } = this.props;
-    const rowCount = data ? data.rows.length : 0;
+    const { logRows, previewLimit } = this.props;
+    const rowCount = logRows ? logRows.length : 0;
     // Render all right away if not too far over the limit
     const renderAll = rowCount <= previewLimit! * 2;
     if (renderAll) {
@@ -67,28 +72,33 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   render() {
     const {
       dedupStrategy,
-      showTime,
-      data,
-      deduplicatedData,
-      highlighterExpressions,
       showLabels,
+      showTime,
+      wrapLogMessage,
+      logRows,
+      deduplicatedRows,
+      highlighterExpressions,
       timeZone,
-      onClickLabel,
+      onClickFilterLabel,
+      onClickFilterOutLabel,
       rowLimit,
       theme,
+      allowDetails,
       previewLimit,
+      getFieldLinks,
     } = this.props;
     const { renderAll } = this.state;
-    const dedupedData = deduplicatedData ? deduplicatedData : data;
-    const hasData = data && data.rows && data.rows.length > 0;
-    const hasLabel = hasData && dedupedData && dedupedData.hasUniqueLabels ? true : false;
-    const dedupCount = dedupedData
-      ? dedupedData.rows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
+    const { logsRowsTable, logsRowsHorizontalScroll } = getLogRowStyles(theme);
+    const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
+    const hasData = logRows && logRows.length > 0;
+    const dedupCount = dedupedRows
+      ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
       : 0;
     const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
+    const horizontalScrollWindow = wrapLogMessage ? '' : logsRowsHorizontalScroll;
 
     // Staged rendering
-    const processedRows = dedupedData ? dedupedData.rows : [];
+    const processedRows = dedupedRows ? dedupedRows : [];
     const firstRows = processedRows.slice(0, previewLimit!);
     const rowCount = Math.min(processedRows.length, rowLimit!);
     const lastRows = processedRows.slice(previewLimit!, rowCount);
@@ -96,41 +106,56 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = this.makeGetRows(processedRows);
     const getRowContext = this.props.getRowContext ? this.props.getRowContext : () => Promise.resolve([]);
-    const { logsRows } = getLogRowStyles(theme);
 
     return (
-      <div className={cx([logsRows])}>
-        {hasData &&
-          firstRows.map((row, index) => (
-            <LogRow
-              key={row.uid}
-              getRows={getRows}
-              getRowContext={getRowContext}
-              highlighterExpressions={highlighterExpressions}
-              row={row}
-              showDuplicates={showDuplicates}
-              showLabels={showLabels && hasLabel}
-              showTime={showTime}
-              timeZone={timeZone}
-              onClickLabel={onClickLabel}
-            />
-          ))}
-        {hasData &&
-          renderAll &&
-          lastRows.map((row, index) => (
-            <LogRow
-              key={row.uid}
-              getRows={getRows}
-              getRowContext={getRowContext}
-              row={row}
-              showDuplicates={showDuplicates}
-              showLabels={showLabels && hasLabel}
-              showTime={showTime}
-              timeZone={timeZone}
-              onClickLabel={onClickLabel}
-            />
-          ))}
-        {hasData && !renderAll && <span>Rendering {rowCount - previewLimit!} rows...</span>}
+      <div className={horizontalScrollWindow}>
+        <table className={logsRowsTable}>
+          <tbody>
+            {hasData &&
+              firstRows.map((row, index) => (
+                <LogRow
+                  key={row.uid}
+                  getRows={getRows}
+                  getRowContext={getRowContext}
+                  highlighterExpressions={highlighterExpressions}
+                  row={row}
+                  showDuplicates={showDuplicates}
+                  showLabels={showLabels}
+                  showTime={showTime}
+                  wrapLogMessage={wrapLogMessage}
+                  timeZone={timeZone}
+                  allowDetails={allowDetails}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
+                  getFieldLinks={getFieldLinks}
+                />
+              ))}
+            {hasData &&
+              renderAll &&
+              lastRows.map((row, index) => (
+                <LogRow
+                  key={row.uid}
+                  getRows={getRows}
+                  getRowContext={getRowContext}
+                  row={row}
+                  showDuplicates={showDuplicates}
+                  showLabels={showLabels}
+                  showTime={showTime}
+                  wrapLogMessage={wrapLogMessage}
+                  timeZone={timeZone}
+                  allowDetails={allowDetails}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
+                  getFieldLinks={getFieldLinks}
+                />
+              ))}
+            {hasData && !renderAll && (
+              <tr>
+                <td colSpan={5}>Rendering {rowCount - previewLimit!} rows...</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     );
   }

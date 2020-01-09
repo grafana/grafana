@@ -11,6 +11,7 @@ import {
   ColorPicker,
   SeriesColorPickerPopoverWithTheme,
   SecretFormField,
+  UnitPicker,
   DataLinksEditor,
   DataSourceHttpSettings,
 } from '@grafana/ui';
@@ -20,8 +21,10 @@ import { GraphContextMenu } from 'app/plugins/panel/graph/GraphContextMenu';
 import ReactProfileWrapper from 'app/features/profile/ReactProfileWrapper';
 import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';
 import { HelpModal } from './components/help/HelpModal';
+import { Footer } from './components/Footer/Footer';
 
 export function registerAngularDirectives() {
+  react2AngularDirective('footer', Footer, []);
   react2AngularDirective('helpModal', HelpModal, []);
   react2AngularDirective('sidemenu', SideMenu, []);
   react2AngularDirective('functionEditor', FunctionEditor, ['func', 'onRemove', 'onMoveLeft', 'onMoveRight']);
@@ -60,6 +63,11 @@ export function registerAngularDirectives() {
     'series',
     'onColorChange',
     'onToggleAxis',
+  ]);
+  react2AngularDirective('unitPicker', UnitPicker, [
+    'value',
+    'width',
+    ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
   react2AngularDirective('metricSelect', MetricSelect, [
     'options',

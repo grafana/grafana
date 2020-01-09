@@ -12,10 +12,11 @@ exports[`Render should render component 1`] = `
     Test
   </button>
   <button
+    aria-label="Data source settings page Delete button"
     className="btn btn-danger"
     disabled={true}
     onClick={[MockFunction]}
-    type="submit"
+    type="button"
   >
     Delete
   </button>
@@ -33,7 +34,7 @@ exports[`Render should render with buttons enabled 1`] = `
   className="gf-form-button-row"
 >
   <button
-    aria-label="Save and Test button"
+    aria-label="Data source settings page Save and Test button"
     className="btn btn-primary"
     disabled={false}
     onClick={[Function]}
@@ -42,10 +43,11 @@ exports[`Render should render with buttons enabled 1`] = `
     Save & Test
   </button>
   <button
+    aria-label="Data source settings page Delete button"
     className="btn btn-danger"
     disabled={false}
     onClick={[MockFunction]}
-    type="submit"
+    type="button"
   >
     Delete
   </button>

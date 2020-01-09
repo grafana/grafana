@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { assignModelProperties } from 'app/core/utils/model_utils';
 import { store } from '../../store/store';
 import { changeVariableType, createVariable, removeVariable, updateVariableProp } from './state/actions';
+import { ScopedVars } from '@grafana/data';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
@@ -17,31 +18,32 @@ export const variableRegexExec = (variableString: string) => {
   return variableRegex.exec(variableString);
 };
 
-export const SEARCH_FILTER_VARIABLE = '$__searchFilter';
-export const containsSearchFilter = (query: string): boolean =>
-  query ? query.indexOf(SEARCH_FILTER_VARIABLE) !== -1 : false;
+export const SEARCH_FILTER_VARIABLE = '__searchFilter';
 
-export interface InterpolateSearchFilterOptions {
+export const containsSearchFilter = (query: string | unknown): boolean =>
+  query && typeof query === 'string' ? query.indexOf(SEARCH_FILTER_VARIABLE) !== -1 : false;
+
+export const getSearchFilterScopedVar = (args: {
   query: string;
-  options: any;
   wildcardChar: string;
-  quoteLiteral: boolean;
-}
-
-export const interpolateSearchFilter = (args: InterpolateSearchFilterOptions): string => {
-  const { query, wildcardChar, quoteLiteral } = args;
-  let { options } = args;
-
+  options: { searchFilter?: string };
+}): ScopedVars => {
+  const { query, wildcardChar } = args;
   if (!containsSearchFilter(query)) {
-    return query;
+    return {};
   }
 
-  options = options || {};
+  let { options } = args;
 
-  const filter = options.searchFilter ? `${options.searchFilter}${wildcardChar}` : `${wildcardChar}`;
-  const replaceValue = quoteLiteral ? `'${filter}'` : filter;
+  options = options || { searchFilter: '' };
+  const value = options.searchFilter ? `${options.searchFilter}${wildcardChar}` : `${wildcardChar}`;
 
-  return query.replace(SEARCH_FILTER_VARIABLE, replaceValue);
+  return {
+    __searchFilter: {
+      value,
+      text: '',
+    },
+  };
 };
 
 export enum VariableRefresh {

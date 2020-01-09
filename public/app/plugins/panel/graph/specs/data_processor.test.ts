@@ -14,7 +14,11 @@ describe('Graph DataProcessor', () => {
     const dataList = getProcessedDataFrames([
       {
         alias: 'First (time_series)',
-        datapoints: [[1, 1001], [2, 1002], [3, 1003]],
+        datapoints: [
+          [1, 1001],
+          [2, 1002],
+          [3, 1003],
+        ],
         unit: 'watt',
       },
       {
