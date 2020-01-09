@@ -4,7 +4,7 @@ import {
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceOption,
-  onUpdateDatasourceResetKeyOption,
+  onUpdateDatasourceResetOption,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceSecureJsonDataOption,
 } from '@grafana/data';
@@ -167,7 +167,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                       <Button
                         variant="secondary"
                         type="button"
-                        onClick={onUpdateDatasourceResetKeyOption(this.props, 'accessKey')}
+                        onClick={onUpdateDatasourceResetOption(this.props, 'accessKey')}
                       >
                         Reset
                       </Button>
@@ -199,7 +199,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                       <Button
                         variant="secondary"
                         type="button"
-                        onClick={onUpdateDatasourceResetKeyOption(this.props, 'secretKey')}
+                        onClick={onUpdateDatasourceResetOption(this.props, 'secretKey')}
                       >
                         Reset
                       </Button>

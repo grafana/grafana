@@ -3,7 +3,7 @@ import {
   DataSourcePluginOptionsEditorProps,
   SelectableValue,
   onUpdateDatasourceOption,
-  updateDatasourcePluginResetKeyOption,
+  updateDatasourcePluginResetOption,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceSecureJsonDataOption,
@@ -20,7 +20,7 @@ export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 
 export class ConfigEditor extends PureComponent<Props> {
   onResetPassword = () => {
-    updateDatasourcePluginResetKeyOption(this.props, 'password');
+    updateDatasourcePluginResetOption(this.props, 'password');
   };
 
   render() {

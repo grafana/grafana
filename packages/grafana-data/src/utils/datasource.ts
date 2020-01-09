@@ -34,10 +34,10 @@ export const onUpdateDatasourceSecureJsonDataOptionSelect = <J, S extends {} = K
   updateDatasourcePluginSecureJsonDataOption(props, key, selected.value);
 };
 
-export const onUpdateDatasourceResetKeyOption = (props: DataSourcePluginOptionsEditorProps, key: string) => (
+export const onUpdateDatasourceResetOption = (props: DataSourcePluginOptionsEditorProps, key: string) => (
   event: React.MouseEvent<HTMLButtonElement, MouseEvent>
 ) => {
-  updateDatasourcePluginResetKeyOption(props, key);
+  updateDatasourcePluginResetOption(props, key);
 };
 
 export function updateDatasourcePluginOption(
@@ -85,7 +85,7 @@ export const updateDatasourcePluginSecureJsonDataOption = <J, S extends {} = Key
   });
 };
 
-export function updateDatasourcePluginResetKeyOption(props: DataSourcePluginOptionsEditorProps, key: string) {
+export function updateDatasourcePluginResetOption(props: DataSourcePluginOptionsEditorProps, key: string) {
   const config = props.options;
 
   props.onOptionsChange({

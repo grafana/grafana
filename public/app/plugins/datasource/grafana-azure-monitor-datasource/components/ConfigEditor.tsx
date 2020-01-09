@@ -3,7 +3,7 @@ import {
   SelectableValue,
   DataSourcePluginOptionsEditorProps,
   updateDatasourcePluginOption,
-  updateDatasourcePluginResetKeyOption,
+  updateDatasourcePluginResetOption,
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginSecureJsonDataOption,
 } from '@grafana/data';
@@ -79,7 +79,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   resetKey = (key: string) => {
-    updateDatasourcePluginResetKeyOption(this.props, key);
+    updateDatasourcePluginResetOption(this.props, key);
   };
 
   makeSameAs = (updatedClientSecret?: string) => {
