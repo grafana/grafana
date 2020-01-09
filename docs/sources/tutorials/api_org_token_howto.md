@@ -48,7 +48,7 @@ The task is to create a new organization and then add a Token that can be used b
 
     Save the key returned here in your password manager as it is not possible to fetch again it in the future.
 
-## How to add a dashboard
+## Add a dashboard
 
 Using the Token that was created in the previous step, you can create a dashboard or carry out other actions without having to switch organizations.
 
