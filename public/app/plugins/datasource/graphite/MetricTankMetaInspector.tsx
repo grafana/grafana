@@ -21,12 +21,12 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
         <table>
           <tbody>
             {buckets.map(row => (
-              <tr key={row.resolution}>
-                <td>{row.resolution} &nbsp;</td>
-                <td>{row.savedFor} &nbsp;</td>
-                <td>{row.window} &nbsp;</td>
-                <td>{row.xxx} &nbsp;</td>
-                <td>{row.yyy} &nbsp;</td>
+              <tr key={row.interval}>
+                <td>{row.interval} &nbsp;</td>
+                <td>{row.retention} &nbsp;</td>
+                <td>{row.chunkspan} &nbsp;</td>
+                <td>{row.numchunks} &nbsp;</td>
+                <td>{row.ready} &nbsp;</td>
               </tr>
             ))}
           </tbody>
