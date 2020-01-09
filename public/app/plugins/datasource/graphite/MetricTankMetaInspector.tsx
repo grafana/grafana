@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
-import { MetadataInspectorProps } from '@grafana/data';
+import { MetadataInspectorProps, DataFrame } from '@grafana/data';
 import { GraphiteDatasource } from './datasource';
-import { GraphiteQuery, GraphiteOptions, MetricTankMeta } from './types';
+import { GraphiteQuery, GraphiteOptions, MetricTankMeta, MetricTankResultMeta } from './types';
 
 export type Props = MetadataInspectorProps<GraphiteDatasource, GraphiteQuery, GraphiteOptions>;
 
@@ -11,6 +11,15 @@ export interface State {
 
 export class MetricTankMetaInspector extends PureComponent<Props, State> {
   state = { index: 0 };
+
+  renderInfo = (info: MetricTankResultMeta, frame: DataFrame) => {
+    return (
+      <div>
+        <h3>Info</h3>
+        <pre>{JSON.stringify(info, null, 2)}</pre>
+      </div>
+    );
+  };
 
   render() {
     const { data } = this.props;
@@ -25,8 +34,9 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
     }
     return (
       <div>
-        <h3>MetricTank Meta</h3>
-        <pre>{JSON.stringify(meta.info, null, 2)}</pre>
+        <h3>MetricTank Request</h3>
+        <pre>{JSON.stringify(meta.request, null, 2)}</pre>
+        {meta.info.map(info => this.renderInfo(info, frame))}
       </div>
     );
   }

@@ -18,7 +18,15 @@ export interface MetricTankRequestMeta {
   [key: string]: string; // TODO -- fill this with real values from metrictank
 }
 export interface MetricTankResultMeta {
-  [key: string]: string; // TODO -- fill this with real values from metrictank
+  'schema-name': string;
+  'schema-retentions': string; //"1s:35d:20min:5:1542274085,1min:38d:2h:1:true,10min:120d:6h:1:true,2h:2y:6h:2",
+  'archive-read': number;
+  'archive-interval': number;
+  'aggnum-norm': number;
+  'consolidate-normfetch': string; //"MaximumConsolidator",
+  'aggnum-rc': number;
+  'consolidate-rc': string; //"MaximumConsolidator",
+  count: number;
 }
 
 export interface MetricTankMeta extends QueryResultDataSourceMeta {
