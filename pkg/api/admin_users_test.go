@@ -157,7 +157,7 @@ func TestAdminApiEndpoint(t *testing.T) {
 	})
 
 	Convey("When a server admin attempts to delete a nonexistent user", t, func() {
-		userId := int64(0)
+		var userId int64
 		bus.AddHandler("test", func(cmd *m.DeleteUserCommand) error {
 			userId = cmd.UserId
 			return m.ErrUserNotFound
