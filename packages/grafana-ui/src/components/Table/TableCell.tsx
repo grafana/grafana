@@ -31,7 +31,7 @@ export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellClick }) 
     cellProps.style.textAlign = fieldTextAlign;
   }
 
-  cell.column.Cell = getCellType(cellProps, field, tableStyles);
+  cell.column.Cell = getCellDisplayType(cellProps, field, tableStyles);
 
   return (
     <div {...cellProps} onClick={onClick}>
@@ -40,7 +40,7 @@ export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellClick }) 
   );
 };
 
-function getCellType(cellProps: TableCellProps, field: Field, tableStyles: TableStyles) {
+function getCellDisplayType(cellProps: TableCellProps, field: Field, tableStyles: TableStyles) {
   let Cell = (cellProps: CellProps<any>) => <DefaultCell field={field} {...cellProps} tableStyles={tableStyles} />;
 
   const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
