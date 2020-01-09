@@ -4,14 +4,30 @@ import { Icon } from '../Icon/Icon';
 // @ts-ignore
 import RCCascader, { CascaderOption } from 'rc-cascader';
 // import { GrafanaTheme } from '@grafana/data';
-// import { css, cx } from 'emotion';
+import { css } from 'emotion';
 // import { getFocusStyle, inputSizes, sharedInputStyle } from '../Forms/commonStyles';
 // import { stylesFactory, useTheme } from '../../themes';
 // import { getInputStyles } from '../Forms/Input/getInputStyles';
 
+const searchStyles = {
+  container: css`
+    position: absolute;
+    min-height: 80px;
+    width: 80px;
+    bacgkround-color: green;
+  `,
+  item: css`
+    background-color: green;
+  `,
+};
+
 interface CascaderState {
   inputValue: string;
   search: boolean;
+  searchResults: Array<{
+    path: string;
+    value: any[];
+  }>;
   popupVisible: boolean;
 }
 interface CascaderProps {
@@ -29,6 +45,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
     this.state = {
       inputValue: '',
       search: props.search || false,
+      searchResults: [],
       popupVisible: false,
     };
     this.flatOptions = this.flattenOptions(props.options);
@@ -44,7 +61,26 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
     return results;
   }
 
-  flattenOptions(options: CascaderOption[], optionPath: CascaderOption[] = []) {
+  renderSearchResults = () => {
+    return (
+      <div className={searchStyles.container}>
+        {this.state.searchResults.map(result => (
+          <div
+            className={searchStyles.item}
+            key={result.path}
+            onClick={() => {
+              this.setState({ inputValue: result.path, search: false });
+              this.props.onSelect(result.value);
+            }}
+          >
+            {result.path}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  flattenOptions = (options: CascaderOption[], optionPath: CascaderOption[] = []) => {
     const stringArrayMap: { [key: string]: any[] } = {};
     for (const option of options) {
       const cpy = [...optionPath];
@@ -62,9 +98,15 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
 
     return stringArrayMap;
     // console.log(stringArrayMap);
-  }
+  };
   onInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ inputValue: e.target.value, popupVisible: false });
+    this.setState({
+      inputValue: e.target.value,
+      popupVisible: false,
+      search: true,
+      searchResults: this.search(e.target.value),
+    });
+
     console.log(this.search(e.target.value));
   };
 
@@ -80,22 +122,25 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   };
 
   render() {
-    const { inputValue, popupVisible } = this.state;
+    const { inputValue, popupVisible, search } = this.state;
     return (
-      <RCCascader
-        options={this.props.options}
-        popupVisible={popupVisible}
-        onPopupVisibleChange={this.onPopupVisibleChange}
-        onChange={this.onChange}
-      >
-        <Input
-          value={inputValue}
-          readOnly={!this.props.search}
-          suffix={<Icon name="caret-down" />}
-          onChange={this.onInput}
-          onKeyDown={() => {}}
-        />
-      </RCCascader>
+      <div style={{ position: 'relative' }}>
+        <RCCascader
+          options={this.props.options}
+          popupVisible={popupVisible}
+          onPopupVisibleChange={this.onPopupVisibleChange}
+          onChange={this.onChange}
+        >
+          <Input
+            value={inputValue}
+            readOnly={!this.props.search}
+            suffix={<Icon name="caret-down" />}
+            onChange={this.onInput}
+            onKeyDown={() => {}} //  rc-cascader blocks certain keys unless there is an onKeyDown on the children
+          />
+        </RCCascader>
+        {search ? this.renderSearchResults() : ''}
+      </div>
     );
   }
 }
