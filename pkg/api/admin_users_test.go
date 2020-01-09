@@ -86,7 +86,7 @@ func TestAdminApiEndpoint(t *testing.T) {
 		})
 	})
 
-	Convey("When a server admin attempts to enable/disable a non-existing user", t, func() {
+	Convey("When a server admin attempts to enable/disable a nonexistent user", t, func() {
 		userId := int64(0)
 		isDisabled := false
 		bus.AddHandler("test", func(cmd *m.GetAuthInfoQuery) error {
