@@ -1,8 +1,7 @@
 import { TextAlignProperty } from 'csstype';
-import { DataFrame, Field, GrafanaTheme, FieldType } from '@grafana/data';
-import { TableColumn, TableRow, TableFieldOptions, TableCellDisplayMode } from './types';
-import { BarGaugeCell } from './BarGaugeCell';
-import { DefaultCell, BackgroundColoredCell } from './DefaultCell';
+import { DataFrame, Field, FieldType } from '@grafana/data';
+import { TableRow, TableFieldOptions } from './types';
+import { Column } from 'react-table';
 
 export function getTableRows(data: DataFrame): TableRow[] {
   const tableData = [];
@@ -19,7 +18,7 @@ export function getTableRows(data: DataFrame): TableRow[] {
   return tableData;
 }
 
-function getTextAlign(field: Field): TextAlignProperty {
+export function getTextAlign(field: Field): TextAlignProperty {
   if (field.config.custom) {
     const custom = field.config.custom as TableFieldOptions;
 
@@ -40,36 +39,18 @@ function getTextAlign(field: Field): TextAlignProperty {
   return 'left';
 }
 
-export function getColumns(data: DataFrame, availableWidth: number, theme: GrafanaTheme): TableColumn[] {
-  const cols: TableColumn[] = [];
+export function getColumns(data: DataFrame, availableWidth: number): Column[] {
+  const cols: Column[] = [];
   let fieldCountWithoutWidth = data.fields.length;
 
   for (const field of data.fields) {
     const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
-
     if (fieldTableOptions.width) {
       availableWidth -= fieldTableOptions.width;
       fieldCountWithoutWidth -= 1;
     }
 
-    let Cell = DefaultCell;
-    let textAlign = getTextAlign(field);
-
-    switch (fieldTableOptions.displayMode) {
-      case TableCellDisplayMode.ColorBackground:
-        Cell = BackgroundColoredCell;
-        break;
-      case TableCellDisplayMode.LcdGauge:
-      case TableCellDisplayMode.GradientGauge:
-        Cell = BarGaugeCell;
-        textAlign = 'center';
-        break;
-    }
-
     cols.push({
-      field,
-      Cell,
-      textAlign,
       Header: field.name,
       accessor: field.name,
       width: fieldTableOptions.width,

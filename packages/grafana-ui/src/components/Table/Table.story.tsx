@@ -56,7 +56,7 @@ function buildData(theme: GrafanaTheme, overrides: ConfigOverrideRule[]): DataFr
         config: {
           unit: 'percent',
           custom: {
-            width: 50,
+            width: 100,
           },
         },
       },

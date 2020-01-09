@@ -18,8 +18,7 @@ const defaultScale: ThresholdsConfig = {
 };
 
 export const BarGaugeCell: FC<ReactTableCellProps> = props => {
-  const { column, tableStyles, cell } = props;
-  const { field } = column;
+  const { field, column, tableStyles, cell } = props;
 
   if (!field.display) {
     return null;
@@ -43,6 +42,7 @@ export const BarGaugeCell: FC<ReactTableCellProps> = props => {
   return (
     <div className={tableStyles.tableCell}>
       <BarGauge
+        //@ts-ignore
         width={column.width - tableStyles.cellPadding * 2}
         height={tableStyles.cellHeightInner}
         field={config}

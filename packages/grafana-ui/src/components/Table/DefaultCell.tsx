@@ -4,25 +4,25 @@ import { formattedValueToString } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 
 export const DefaultCell: FC<ReactTableCellProps> = props => {
-  const { column, cell, tableStyles } = props;
+  const { field, cell, tableStyles } = props;
 
-  if (!column.field.display) {
+  if (!field.display) {
     return null;
   }
 
-  const displayValue = column.field.display(cell.value);
+  const displayValue = field.display(cell.value);
   return <div className={tableStyles.tableCell}>{formattedValueToString(displayValue)}</div>;
 };
 
 export const BackgroundColoredCell: FC<ReactTableCellProps> = props => {
-  const { column, cell, tableStyles } = props;
+  const { cell, tableStyles, field } = props;
 
-  if (!column.field.display) {
+  if (!field.display) {
     return null;
   }
 
   const themeFactor = tableStyles.theme.isDark ? 1 : -0.7;
-  const displayValue = column.field.display(cell.value);
+  const displayValue = field.display(cell.value);
 
   const bgColor2 = tinycolor(displayValue.color)
     .darken(10 * themeFactor)
