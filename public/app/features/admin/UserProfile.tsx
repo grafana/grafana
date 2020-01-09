@@ -163,7 +163,7 @@ export class UserProfile extends PureComponent<Props, State> {
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     buttonRow: css`
-      display: flex;
+      margin-top: 0.8rem;
       > * {
         margin-right: 16px;
       }
