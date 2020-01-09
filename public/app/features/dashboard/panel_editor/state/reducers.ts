@@ -45,7 +45,7 @@ const panelEditorSlice = createSlice({
   name: 'panelEditor',
   initialState,
   reducers: {
-    panelEditorInitCompleted: (state, action: PayloadAction<PanelEditorInitCompleted>) => {
+    panelEditorInitCompleted: (state, action: PayloadAction<PanelEditorInitCompleted>): PanelEditorState => {
       const { activeTab, tabs } = action.payload;
       return {
         ...state,
@@ -53,7 +53,7 @@ const panelEditorSlice = createSlice({
         tabs,
       };
     },
-    panelEditorCleanUp: (state, action: PayloadAction<undefined>) => initialState,
+    panelEditorCleanUp: (state, action: PayloadAction<undefined>): PanelEditorState => initialState,
   },
 });
 

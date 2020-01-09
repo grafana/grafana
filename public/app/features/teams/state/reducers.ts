@@ -8,10 +8,10 @@ const teamsSlice = createSlice({
   name: 'teams',
   initialState: initialTeamsState,
   reducers: {
-    teamsLoaded: (state, action: PayloadAction<Team[]>) => {
+    teamsLoaded: (state, action: PayloadAction<Team[]>): TeamsState => {
       return { ...state, hasFetched: true, teams: action.payload };
     },
-    setSearchQuery: (state, action: PayloadAction<string>) => {
+    setSearchQuery: (state, action: PayloadAction<string>): TeamsState => {
       return { ...state, searchQuery: action.payload };
     },
   },
@@ -32,16 +32,16 @@ const teamSlice = createSlice({
   name: 'team',
   initialState: initialTeamState,
   reducers: {
-    teamLoaded: (state, action: PayloadAction<Team>) => {
+    teamLoaded: (state, action: PayloadAction<Team>): TeamState => {
       return { ...state, team: action.payload };
     },
-    teamMembersLoaded: (state, action: PayloadAction<TeamMember[]>) => {
+    teamMembersLoaded: (state, action: PayloadAction<TeamMember[]>): TeamState => {
       return { ...state, members: action.payload };
     },
-    setSearchMemberQuery: (state, action: PayloadAction<string>) => {
+    setSearchMemberQuery: (state, action: PayloadAction<string>): TeamState => {
       return { ...state, searchMemberQuery: action.payload };
     },
-    teamGroupsLoaded: (state, action: PayloadAction<TeamGroup[]>) => {
+    teamGroupsLoaded: (state, action: PayloadAction<TeamGroup[]>): TeamState => {
       return { ...state, groups: action.payload };
     },
   },

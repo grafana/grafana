@@ -35,7 +35,7 @@ const alertRulesSlice = createSlice({
     loadAlertRules: state => {
       return { ...state, isLoading: true };
     },
-    loadedAlertRules: (state, action: PayloadAction<AlertRuleDTO[]>) => {
+    loadedAlertRules: (state, action: PayloadAction<AlertRuleDTO[]>): AlertRulesState => {
       const alertRules: AlertRuleDTO[] = action.payload;
 
       const alertRulesViewModel: AlertRule[] = alertRules.map(rule => {
@@ -44,7 +44,7 @@ const alertRulesSlice = createSlice({
 
       return { ...state, items: alertRulesViewModel, isLoading: false };
     },
-    setSearchQuery: (state, action: PayloadAction<string>) => {
+    setSearchQuery: (state, action: PayloadAction<string>): AlertRulesState => {
       return { ...state, searchQuery: action.payload };
     },
   },

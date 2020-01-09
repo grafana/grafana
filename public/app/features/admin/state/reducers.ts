@@ -92,23 +92,35 @@ const ldapUserSlice = createSlice({
   },
   extraReducers: builder =>
     builder
-      .addCase(userMappingInfoLoadedAction, (state, action) => ({
-        ...state,
-        ldapUser: action.payload,
-      }))
-      .addCase(userMappingInfoFailedAction, (state, action) => ({
-        ...state,
-        ldapUser: null,
-        userError: action.payload,
-      }))
-      .addCase(clearUserErrorAction, (state, action) => ({
-        ...state,
-        userError: null,
-      }))
-      .addCase(ldapSyncStatusLoadedAction, (state, action) => ({
-        ...state,
-        ldapSyncInfo: action.payload,
-      })),
+      .addCase(
+        userMappingInfoLoadedAction,
+        (state, action): LdapUserState => ({
+          ...state,
+          ldapUser: action.payload,
+        })
+      )
+      .addCase(
+        userMappingInfoFailedAction,
+        (state, action): LdapUserState => ({
+          ...state,
+          ldapUser: null,
+          userError: action.payload,
+        })
+      )
+      .addCase(
+        clearUserErrorAction,
+        (state, action): LdapUserState => ({
+          ...state,
+          userError: null,
+        })
+      )
+      .addCase(
+        ldapSyncStatusLoadedAction,
+        (state, action): LdapUserState => ({
+          ...state,
+          ldapSyncInfo: action.payload,
+        })
+      ),
 });
 
 export const { userLoadedAction, userSessionsLoadedAction, userSyncFailedAction } = ldapUserSlice.actions;

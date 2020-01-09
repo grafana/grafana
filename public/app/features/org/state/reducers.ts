@@ -10,10 +10,10 @@ const organizationSlice = createSlice({
   name: 'organization',
   initialState,
   reducers: {
-    organizationLoaded: (state, action: PayloadAction<Organization>) => {
+    organizationLoaded: (state, action: PayloadAction<Organization>): OrganizationState => {
       return { ...state, organization: action.payload };
     },
-    setOrganizationName: (state, action: PayloadAction<string>) => {
+    setOrganizationName: (state, action: PayloadAction<string>): OrganizationState => {
       return { ...state, organization: { ...state.organization, name: action.payload } };
     },
   },

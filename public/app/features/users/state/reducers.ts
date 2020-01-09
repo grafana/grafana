@@ -18,13 +18,13 @@ const usersSlice = createSlice({
   name: 'users',
   initialState,
   reducers: {
-    usersLoaded: (state, action: PayloadAction<OrgUser[]>) => {
+    usersLoaded: (state, action: PayloadAction<OrgUser[]>): UsersState => {
       return { ...state, hasFetched: true, users: action.payload };
     },
-    inviteesLoaded: (state, action: PayloadAction<Invitee[]>) => {
+    inviteesLoaded: (state, action: PayloadAction<Invitee[]>): UsersState => {
       return { ...state, hasFetched: true, invitees: action.payload };
     },
-    setUsersSearchQuery: (state, action: PayloadAction<string>) => {
+    setUsersSearchQuery: (state, action: PayloadAction<string>): UsersState => {
       return { ...state, searchQuery: action.payload };
     },
   },

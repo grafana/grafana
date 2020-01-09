@@ -18,21 +18,21 @@ const folderSlice = createSlice({
   name: 'folder',
   initialState,
   reducers: {
-    loadFolder: (state, action: PayloadAction<FolderDTO>) => {
+    loadFolder: (state, action: PayloadAction<FolderDTO>): FolderState => {
       return {
         ...state,
         ...action.payload,
         hasChanged: false,
       };
     },
-    setFolderTitle: (state, action: PayloadAction<string>) => {
+    setFolderTitle: (state, action: PayloadAction<string>): FolderState => {
       return {
         ...state,
         title: action.payload,
         hasChanged: action.payload.trim().length > 0,
       };
     },
-    loadFolderPermissions: (state, action: PayloadAction<DashboardAclDTO[]>) => {
+    loadFolderPermissions: (state, action: PayloadAction<DashboardAclDTO[]>): FolderState => {
       return {
         ...state,
         permissions: processAclItems(action.payload),
