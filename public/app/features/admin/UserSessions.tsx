@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import { ConfirmButton, ConfirmModal, Forms } from '@grafana/ui';
 import { UserSession } from 'app/types';
 
@@ -38,12 +38,9 @@ export class UserSessions extends PureComponent<Props, State> {
     const { sessions } = this.props;
     const { showLogoutModal } = this.state;
 
-    const logoutFromAllDevicesClass = cx(
-      'pull-right',
-      css`
-        margin-top: 0.8rem;
-      `
-    );
+    const logoutFromAllDevicesClass = css`
+      margin-top: 0.8rem;
+    `;
 
     return (
       <>

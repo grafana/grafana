@@ -31,10 +31,6 @@ export class UserOrgs extends PureComponent<Props, State> {
     const { showAddOrgModal } = this.state;
     const addToOrgContainerClass = css`
       margin-top: 0.8rem;
-      float: right;
-    `;
-    const addToOrgButtonClass = css`
-      padding-left: 8px;
     `;
 
     return (
@@ -56,7 +52,7 @@ export class UserOrgs extends PureComponent<Props, State> {
             </table>
           </div>
           <div className={addToOrgContainerClass}>
-            <Forms.Button className={addToOrgButtonClass} variant="secondary" onClick={this.showOrgAddModal(true)}>
+            <Forms.Button variant="secondary" onClick={this.showOrgAddModal(true)}>
               Add user to organization
             </Forms.Button>
           </div>

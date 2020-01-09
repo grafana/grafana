@@ -164,10 +164,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     buttonRow: css`
       display: flex;
-      display: flex;
-      justify-content: flex-end;
       > * {
-        margin-left: 16px;
+        margin-right: 16px;
       }
     `,
   };
