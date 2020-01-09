@@ -2,7 +2,6 @@ import { getBackendSrv } from '@grafana/runtime';
 import { NavModelSrv } from 'app/core/core';
 import { Scope, CoreEvents, AppEventEmitter } from 'app/types';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
-import { IScope } from 'angular';
 
 export default class AdminListOrgsCtrl {
   /** @ngInject */
