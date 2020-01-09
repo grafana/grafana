@@ -12,13 +12,17 @@ import { useTheme } from '../../themes';
 const searchStyles = {
   container: css`
     position: absolute;
-    max-height: 100px;
     width: 100px;
+    margin-top: 5px;
+    padding: 3px 0;
   `,
   item: css`
     &: hover {
       cursor: pointer;
     }
+  `,
+  selected: css`
+    text-decoration: underline;
   `,
 };
 
@@ -30,6 +34,7 @@ interface CascaderState {
     value: any[];
   }>;
   popupVisible: boolean;
+  selected: number;
 }
 interface CascaderProps {
   separator?: string;
@@ -47,6 +52,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
       search: false,
       searchResults: [],
       popupVisible: false,
+      selected: 0,
     };
     this.flatOptions = this.flattenOptions(props.options);
   }
@@ -54,7 +60,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   search(searchStr: string) {
     const results = [];
     for (const key in this.flatOptions) {
-      if (key.match(searchStr)) {
+      if (key.match(searchStr) && searchStr !== '') {
         results.push({ path: key, value: this.flatOptions[key] });
       }
     }
@@ -85,6 +91,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
       inputValue: e.target.value,
       popupVisible: false,
       search: true,
+      selected: 0,
       searchResults: this.search(e.target.value),
     });
 
@@ -95,21 +102,41 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
     this.setState({
       inputValue: selectedOptions.map(o => o.label).join(this.props.separator || ' / '),
       search: false,
+      searchResults: [],
     });
     this.props.onSelect(value);
   };
 
   onSearchSelect = (path: string, value: any[]) => {
-    this.setState({ inputValue: path, search: false });
+    this.setState({ inputValue: path, search: false, searchResults: [] });
     this.props.onSelect(value);
   };
 
   onPopupVisibleChange = (popupVisible: boolean) => {
-    this.setState({ popupVisible });
+    this.setState({ popupVisible, search: popupVisible ? false : this.state.search });
+  };
+
+  onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      this.setState({
+        selected: this.state.selected ? this.state.selected - 1 : 0,
+      });
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      this.setState({
+        selected:
+          this.state.selected === this.state.searchResults.length - 1
+            ? this.state.searchResults.length - 1
+            : this.state.selected + 1,
+      });
+    }
   };
 
   render() {
     const { inputValue, popupVisible, search } = this.state;
+
+    console.log(this.state.selected);
     return (
       <div style={{ position: 'relative' }}>
         <RCCascader
@@ -122,10 +149,18 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
             value={inputValue}
             suffix={<Icon name="caret-down" />}
             onChange={this.onInput}
-            onKeyDown={() => {}} //  rc-cascader blocks certain keys unless there is an onKeyDown on the children
+            onKeyDown={this.onKeyDown}
           />
         </RCCascader>
-        {search ? <SearchResults searchResults={this.state.searchResults} onSelect={this.onSearchSelect} /> : ''}
+        {search && this.state.searchResults.length ? (
+          <SearchResults
+            selected={this.state.selected}
+            searchResults={this.state.searchResults}
+            onSelect={this.onSearchSelect}
+          />
+        ) : (
+          ''
+        )}
       </div>
     );
   }
@@ -137,6 +172,7 @@ interface SearchResultProps {
     path: string;
     value: any[];
   }>;
+  selected: number;
 }
 
 const SearchResults = (props: SearchResultProps) => {
@@ -145,9 +181,9 @@ const SearchResults = (props: SearchResultProps) => {
   const focusStyle = getFocusStyle(theme);
   return (
     <div className={cx(searchStyles.container, styles)}>
-      {props.searchResults.map(result => (
+      {props.searchResults.map((result, i) => (
         <div
-          className={cx(searchStyles.item, focusStyle)}
+          className={cx(searchStyles.item, focusStyle, props.selected === i ? searchStyles.selected : '')}
           key={result.path}
           onClick={() => {
             props.onSelect(result.path, result.value);
