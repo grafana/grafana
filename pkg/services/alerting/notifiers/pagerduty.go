@@ -168,7 +168,7 @@ func (pn *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	body, err := pn.buildEventPayload(evalContext)
 	if err != nil {
-		pn.log.Error("Unable to build event pagerduty payload: ", err)
+		pn.log.Error("Unable to build PagerDuty event payload", "error", err)
 		return err
 	}
 
