@@ -531,7 +531,8 @@ func deleteUserInTransaction(sess *DBSession, cmd *models.DeleteUserCommand) err
 	has, err := sess.Get(&user)
 	if err != nil {
 		return err
-	} else if !has {
+	}
+	if !has {
 		return models.ErrUserNotFound
 	}
 
