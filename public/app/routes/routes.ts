@@ -378,11 +378,6 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       controller: 'AppPageCtrl',
       controllerAs: 'ctrl',
     })
-    .when('/styleguide/:page?', {
-      controller: 'StyleGuideCtrl',
-      controllerAs: 'ctrl',
-      templateUrl: 'public/app/features/admin/partials/styleguide.html',
-    })
     .when('/alerting', {
       redirectTo: '/alerting/list',
     })
