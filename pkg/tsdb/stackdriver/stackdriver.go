@@ -389,14 +389,16 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 		for labelType, labelTypeValues := range series.MetaData {
 			for labelKey, labelValue := range labelTypeValues {
 				output := []string{}
-				if values, ok := labelValue.([]interface{}); ok {
-					for _, v := range values {
-						output = append(output, v.(string))
+
+				switch v := labelValue.(type) {
+				case string:
+					output = append(output, v)
+				case bool:
+					output = append(output, strconv.FormatBool(v))
+				case []interface{}:
+					for _, strValue := range v {
+						output = append(output, strValue.(string))
 					}
-				} else if boolValue, ok := labelValue.(bool); ok {
-					output = append(output, strconv.FormatBool(boolValue))
-				} else if strValue, ok := labelValue.(string); ok {
-					output = append(output, strValue)
 				}
 
 				for _, value := range output {
