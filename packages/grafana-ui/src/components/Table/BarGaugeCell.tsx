@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
-import { ReactTableCellProps, TableCellDisplayMode } from './types';
-import { BarGauge, BarGaugeDisplayMode } from '../BarGauge/BarGauge';
 import { ThresholdsConfig, ThresholdsMode, VizOrientation } from '@grafana/data';
+import { BarGauge, BarGaugeDisplayMode } from '../BarGauge/BarGauge';
+import { ReactTableCellProps, TableCellDisplayMode } from './types';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -39,11 +39,21 @@ export const BarGaugeCell: FC<ReactTableCellProps> = props => {
     barGaugeMode = BarGaugeDisplayMode.Lcd;
   }
 
+  let width;
+  if (column.width) {
+    if (typeof column.width === 'string') {
+      width = parseFloat(column.width) - tableStyles.cellPadding * 2;
+    } else {
+      width = column.width - tableStyles.cellPadding * 2;
+    }
+  } else {
+    width = tableStyles.cellPadding * 2;
+  }
+
   return (
     <div className={tableStyles.tableCell}>
       <BarGauge
-        //@ts-ignore
-        width={column.width - tableStyles.cellPadding * 2}
+        width={width}
         height={tableStyles.cellHeightInner}
         field={config}
         value={displayValue}
