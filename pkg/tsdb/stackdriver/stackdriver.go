@@ -30,9 +30,15 @@ import (
 )
 
 var (
-	slog             log.Logger
-	legendKeyFormat  *regexp.Regexp
-	metricNameFormat *regexp.Regexp
+	slog log.Logger
+)
+
+var (
+	matchAllCap       = regexp.MustCompile("(.)([A-Z][a-z]*)")
+	legendKeyFormat   = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
+	metricNameFormat  = regexp.MustCompile(`([\w\d_]+)\.googleapis\.com/(.+)`)
+	wildcardRegexRe   = regexp.MustCompile(`[-\/^$+?.()|[\]{}]`)
+	alignmentPeriodRe = regexp.MustCompile("[0-9]+")
 )
 
 const (
@@ -62,8 +68,6 @@ func NewStackdriverExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, 
 func init() {
 	slog = log.New("tsdb.stackdriver")
 	tsdb.RegisterTsdbQueryEndpoint("stackdriver", NewStackdriverExecutor)
-	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
-	metricNameFormat = regexp.MustCompile(`([\w\d_]+)\.googleapis\.com/(.+)`)
 }
 
 // Query takes in the frontend queries, parses them into the Stackdriver query format
@@ -197,8 +201,7 @@ func interpolateFilterWildcards(value string) string {
 		value = reverse(strings.Replace(reverse(value), "*", "", 1))
 		value = fmt.Sprintf(`starts_with("%s")`, value)
 	} else if matches != 0 {
-		re := regexp.MustCompile(`[-\/^$+?.()|[\]{}]`)
-		value = string(re.ReplaceAllFunc([]byte(value), func(in []byte) []byte {
+		value = string(wildcardRegexRe.ReplaceAllFunc([]byte(value), func(in []byte) []byte {
 			return []byte(strings.Replace(string(in), string(in), `\\`+string(in), 1))
 		}))
 		value = strings.Replace(value, "*", ".*", -1)
@@ -287,8 +290,7 @@ func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *Stackdriv
 	alignmentPeriod, ok := req.URL.Query()["aggregation.alignmentPeriod"]
 
 	if ok {
-		re := regexp.MustCompile("[0-9]+")
-		seconds, err := strconv.ParseInt(re.FindString(alignmentPeriod[0]), 10, 64)
+		seconds, err := strconv.ParseInt(alignmentPeriodRe.FindString(alignmentPeriod[0]), 10, 64)
 		if err == nil {
 			queryResult.Meta.Set("alignmentPeriod", seconds)
 		}
@@ -437,7 +439,7 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 				points = append(points, tsdb.NewTimePoint(null.FloatFrom(value), float64((point.Interval.EndTime).Unix())*1000))
 			}
 
-			metricName := formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels, make(map[string]string), query)
+			metricName := formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels, nil, query)
 
 			queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
 				Name:   metricName,
@@ -463,7 +465,7 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 						bucketBound := calcBucketBound(point.Value.DistributionValue.BucketOptions, i)
 						additionalLabels := map[string]string{"bucket": bucketBound}
 						buckets[i] = &tsdb.TimeSeries{
-							Name:   formatLegendKeys(series.Metric.Type, defaultMetricName, make(map[string]string), additionalLabels, query),
+							Name:   formatLegendKeys(series.Metric.Type, defaultMetricName, nil, additionalLabels, query),
 							Points: make([]tsdb.TimePoint, 0),
 						}
 						if maxKey < i {
@@ -498,7 +500,6 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 }
 
 func toSnakeCase(str string) string {
-	matchAllCap := regexp.MustCompile("(.)([A-Z][a-z]*)")
 	return strings.ToLower(matchAllCap.ReplaceAllString(str, "${1}_${2}"))
 }
 
