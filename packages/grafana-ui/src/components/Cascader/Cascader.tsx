@@ -4,20 +4,21 @@ import { Icon } from '../Icon/Icon';
 // @ts-ignore
 import RCCascader, { CascaderOption } from 'rc-cascader';
 // import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
-// import { getFocusStyle, inputSizes, sharedInputStyle } from '../Forms/commonStyles';
-// import { stylesFactory, useTheme } from '../../themes';
+import { css, cx } from 'emotion';
+import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
+import { useTheme } from '../../themes';
 // import { getInputStyles } from '../Forms/Input/getInputStyles';
 
 const searchStyles = {
   container: css`
     position: absolute;
-    min-height: 80px;
-    width: 80px;
-    bacgkround-color: green;
+    max-height: 100px;
+    width: 100px;
   `,
   item: css`
-    background-color: green;
+    &: hover {
+      cursor: pointer;
+    }
   `,
 };
 
@@ -33,7 +34,6 @@ interface CascaderState {
 interface CascaderProps {
   separator?: string;
   options: CascaderOption[];
-  search?: boolean;
   onSelect(val: CascaderOption): void;
 }
 
@@ -44,7 +44,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
     super(props);
     this.state = {
       inputValue: '',
-      search: props.search || false,
+      search: false,
       searchResults: [],
       popupVisible: false,
     };
@@ -60,25 +60,6 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
     }
     return results;
   }
-
-  renderSearchResults = () => {
-    return (
-      <div className={searchStyles.container}>
-        {this.state.searchResults.map(result => (
-          <div
-            className={searchStyles.item}
-            key={result.path}
-            onClick={() => {
-              this.setState({ inputValue: result.path, search: false });
-              this.props.onSelect(result.value);
-            }}
-          >
-            {result.path}
-          </div>
-        ))}
-      </div>
-    );
-  };
 
   flattenOptions = (options: CascaderOption[], optionPath: CascaderOption[] = []) => {
     const stringArrayMap: { [key: string]: any[] } = {};
@@ -113,7 +94,13 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   onChange = (value: CascaderOption, selectedOptions: CascaderOption[]) => {
     this.setState({
       inputValue: selectedOptions.map(o => o.label).join(this.props.separator || ' / '),
+      search: false,
     });
+    this.props.onSelect(value);
+  };
+
+  onSearchSelect = (path: string, value: any[]) => {
+    this.setState({ inputValue: path, search: false });
     this.props.onSelect(value);
   };
 
@@ -133,14 +120,42 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
         >
           <Input
             value={inputValue}
-            readOnly={!this.props.search}
             suffix={<Icon name="caret-down" />}
             onChange={this.onInput}
             onKeyDown={() => {}} //  rc-cascader blocks certain keys unless there is an onKeyDown on the children
           />
         </RCCascader>
-        {search ? this.renderSearchResults() : ''}
+        {search ? <SearchResults searchResults={this.state.searchResults} onSelect={this.onSearchSelect} /> : ''}
       </div>
     );
   }
 }
+
+interface SearchResultProps {
+  onSelect(path: string, val: any[]): void;
+  searchResults: Array<{
+    path: string;
+    value: any[];
+  }>;
+}
+
+const SearchResults = (props: SearchResultProps) => {
+  const theme = useTheme();
+  const styles = sharedInputStyle(theme);
+  const focusStyle = getFocusStyle(theme);
+  return (
+    <div className={cx(searchStyles.container, styles)}>
+      {props.searchResults.map(result => (
+        <div
+          className={cx(searchStyles.item, focusStyle)}
+          key={result.path}
+          onClick={() => {
+            props.onSelect(result.path, result.value);
+          }}
+        >
+          {result.path}
+        </div>
+      ))}
+    </div>
+  );
+};

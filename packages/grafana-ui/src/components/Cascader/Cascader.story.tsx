@@ -42,4 +42,4 @@ const options = [
 ];
 
 export const simple = () => <Cascader options={options} onSelect={val => console.log(val)} />;
-export const withSearch = () => <Cascader options={options} search={true} onSelect={val => console.log(val)} />;
+export const withSearch = () => <Cascader options={options} onSelect={val => console.log(val)} />;
