@@ -97,14 +97,10 @@ exports[`ServerStats Should render table with stats 1`] = `
                   className="css-13jkosq"
                 >
                   <li
-                    className="css-lydmav"
+                    className="css-b418eg"
+                    onClick={[Function]}
                   >
-                    <div
-                      className="css-wtctmo"
-                      onClick={[Function]}
-                    >
-                      Admin
-                    </div>
+                    Admin
                   </li>
                 </ul>
               </nav>
