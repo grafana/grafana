@@ -1,13 +1,13 @@
 import React from 'react';
-import { TabBar } from './TabBar';
+import { TabsBar } from './TabsBar';
 import { Tab } from './Tab';
 import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import mdx from './TabBar.mdx';
+import mdx from './TabsBar.mdx';
 
 export default {
-  title: 'UI/Tabs/TabBar',
-  component: TabBar,
+  title: 'UI/Tabs/TabsBar',
+  component: TabsBar,
   decorators: [withCenteredStory],
   parameters: {
     docs: {
@@ -27,7 +27,7 @@ export const Simple = () => {
     <UseState initialState={tabs}>
       {(state, updateState) => {
         return (
-          <TabBar>
+          <TabsBar>
             {state.map((tab, index) => {
               return (
                 <Tab
@@ -38,7 +38,7 @@ export const Simple = () => {
                 />
               );
             })}
-          </TabBar>
+          </TabsBar>
         );
       }}
     </UseState>

@@ -14,20 +14,18 @@ export const getTabsStyle = stylesFactory((theme: GrafanaTheme) => {
     `,
     tabItem: css`
       list-style: none;
-    `,
-    linkItem: css`
       padding: 10px 15px 9px;
       margin-right: ${theme.spacing.md};
       position: relative;
       display: block;
       border: solid transparent;
       border-width: 0 1px 1px;
-      border-radius: 3px 3px 0 0;
+      border-radius: ${theme.border.radius.md} ${theme.border.radius.md} 0 0;
       color: ${colors.text};
       cursor: pointer;
 
       i {
-        margin-right: 5px;
+        margin-right: ${theme.spacing.sm};
       }
 
       .gicon {
