@@ -1,5 +1,5 @@
 +++
-title = "How to integrate Hubot and Grafana"
+title = "Integrate Hubot and Grafana"
 type = "docs"
 keywords = ["grafana", "tutorials", "hubot", "slack", "hipchat", "setup", "install", "config"]
 [menu.docs]
@@ -135,5 +135,4 @@ Grafana is going to ship with integrated Slack and Hipchat features some day but
 not have to wait for that. Grafana 2 shipped with a very clever server side rendering feature
 that can render any panel to a png using phantomjs. The hubot plugin for Grafana is something
 you can install and use today!
-
 
