@@ -1,5 +1,5 @@
 +++
-title = "Setup Grafana for high availability"
+title = "Set up Grafana for high availability"
 type = "docs"
 keywords = ["grafana", "tutorials", "HA", "high availability"]
 [menu.docs]
@@ -46,5 +46,4 @@ You can also choose to store session data in a Redis/Memcache/Postgres/MySQL whi
 If you use MySQL/Postgres for session storage, you first need a table to store the session data in. More details about that in [[sessions]]({{< relref "../installation/configuration.md" >}}#session)
 
 For Grafana itself it doesn't really matter if you store the session data on disk or database/redis/memcache. But we recommend using a database/redis/memcache since it makes it easier manage the grafana servers.
-
 
