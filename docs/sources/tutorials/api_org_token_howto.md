@@ -18,7 +18,7 @@ There are two authentication methods to access the API:
 - Basic authentication: A Grafana Admin user can access some parts of the Grafana API through basic authentication. 
 - API Tokens: All organization actions are accessed through an API Token. An API Token is associated with an organization. It can be used to create dashboards and other components specific for that organization.
 
-## How to create a new organization and an API Token
+## Create a new organization and an API Token
 
 The task is to create a new organization and then add a Token that can be used by other users. In the examples below which use basic auth, the user is `admin` and the password is `admin`.
 
