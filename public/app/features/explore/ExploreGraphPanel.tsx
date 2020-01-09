@@ -5,7 +5,6 @@ import { GrafanaTheme, TimeZone, AbsoluteTimeRange, GraphSeriesXY, dateTimeForTi
 import {
   selectThemeVariant,
   Themeable,
-  GraphWithLegend,
   LegendDisplayMode,
   withTheme,
   Collapse,
@@ -13,6 +12,7 @@ import {
   GraphSeriesTogglerAPI,
   Chart,
 } from '@grafana/ui';
+import { GraphWithLegend } from '@grafana/ui/visualizations';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 

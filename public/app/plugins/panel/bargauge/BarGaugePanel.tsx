@@ -4,7 +4,7 @@ import React, { PureComponent } from 'react';
 // Services & Utils
 import { config } from 'app/core/config';
 
-import { BarGauge, VizRepeater, DataLinksContextMenu } from '@grafana/ui';
+import { DataLinksContextMenu } from '@grafana/ui';
 import { BarGaugeOptions } from './types';
 import {
   getFieldDisplayValues,
@@ -14,6 +14,7 @@ import {
   DisplayValueAlignmentFactors,
 } from '@grafana/data';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { BarGauge, VizRepeater } from '@grafana/ui/visualizations';
 
 export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
   renderValue = (

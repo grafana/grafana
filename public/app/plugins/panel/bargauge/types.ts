@@ -1,4 +1,5 @@
-import { SingleStatBaseOptions, BarGaugeDisplayMode } from '@grafana/ui';
+import { SingleStatBaseOptions } from '@grafana/ui';
+import { BarGaugeDisplayMode } from '@grafana/ui/visualizations';
 import { standardGaugeFieldOptions } from '../gauge/types';
 import { VizOrientation, SelectableValue } from '@grafana/data';
 
