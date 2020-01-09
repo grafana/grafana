@@ -40,7 +40,7 @@ export function getTextAlign(field: Field): TextAlignProperty {
 }
 
 export function getColumns(data: DataFrame, availableWidth: number): Column[] {
-  const cols: Column[] = [];
+  const columns: Column[] = [];
   let fieldCountWithoutWidth = data.fields.length;
 
   for (const field of data.fields) {
@@ -50,7 +50,7 @@ export function getColumns(data: DataFrame, availableWidth: number): Column[] {
       fieldCountWithoutWidth -= 1;
     }
 
-    cols.push({
+    columns.push({
       Header: field.name,
       accessor: field.name,
       width: fieldTableOptions.width,
@@ -59,11 +59,11 @@ export function getColumns(data: DataFrame, availableWidth: number): Column[] {
 
   // divide up the rest of the space
   const sharedWidth = availableWidth / fieldCountWithoutWidth;
-  for (const column of cols) {
+  for (const column of columns) {
     if (!column.width) {
       column.width = sharedWidth;
     }
   }
 
-  return cols;
+  return columns;
 }
