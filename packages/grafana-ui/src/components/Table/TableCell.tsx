@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Cell, CellProps } from 'react-table';
+import { Cell, CellProps, TableCellProps } from 'react-table';
 import { Field } from '@grafana/data';
 import { BackgroundColoredCell, DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
@@ -17,8 +17,8 @@ interface Props {
 export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellClick }) => {
   const filterable = field.config.filterable;
   const cellProps = cell.getCellProps();
-  let onClick: ((event: React.SyntheticEvent) => void) | undefined = undefined;
 
+  let onClick: ((event: React.SyntheticEvent) => void) | undefined = undefined;
   if (filterable && onCellClick) {
     if (cellProps.style) {
       cellProps.style.cursor = 'pointer';
@@ -31,9 +31,19 @@ export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellClick }) 
     cellProps.style.textAlign = fieldTextAlign;
   }
 
-  let Cell = (cellProps: CellProps<any>) => <DefaultCell field={field} {...cellProps} tableStyles={tableStyles} />;
-  const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
+  cell.column.Cell = getCellType(cellProps, field, tableStyles);
 
+  return (
+    <div {...cellProps} onClick={onClick}>
+      {cell.render('Cell')}
+    </div>
+  );
+};
+
+function getCellType(cellProps: TableCellProps, field: Field, tableStyles: TableStyles) {
+  let Cell = (cellProps: CellProps<any>) => <DefaultCell field={field} {...cellProps} tableStyles={tableStyles} />;
+
+  const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
   switch (fieldTableOptions.displayMode) {
     case TableCellDisplayMode.ColorBackground:
       Cell = (cellProps: CellProps<any>) => (
@@ -46,11 +56,5 @@ export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellClick }) 
       break;
   }
 
-  cell.column.Cell = Cell;
-
-  return (
-    <div {...cellProps} onClick={onClick}>
-      {cell.render('Cell')}
-    </div>
-  );
-};
+  return Cell;
+}
