@@ -1,6 +1,8 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { NavModelSrv } from 'app/core/core';
 import { Scope, CoreEvents, AppEventEmitter } from 'app/types';
+import { promiseToDigest } from 'app/core/utils/promiseToDigest';
+import { IScope } from 'angular';
 
 export default class AdminListOrgsCtrl {
   /** @ngInject */
@@ -11,7 +13,7 @@ export default class AdminListOrgsCtrl {
     };
 
     $scope.getOrgs = async () => {
-      const orgs = await getBackendSrv().get('/api/orgs');
+      const orgs = await promiseToDigest($scope)(getBackendSrv().get('/api/orgs'));
       $scope.orgs = orgs;
     };
 
