@@ -25,8 +25,7 @@ export class DataSourceWithBackend<
    * Ideally final -- any other implementation would be wrong!
    */
   query(request: DataQueryRequest): Observable<DataQueryResponse> {
-    const { targets, intervalMs, maxDataPoints } = request;
-    let range = request.range;
+    const { targets, intervalMs, maxDataPoints, range } = request;
 
     let expressionCount = 0;
     const orgId = config.bootData.orgId;
