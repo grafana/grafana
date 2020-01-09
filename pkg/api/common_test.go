@@ -143,7 +143,7 @@ func setupScenarioContext(url string) *scenarioContext {
 		Delims:    macaron.Delims{Left: "[[", Right: "]]"},
 	}))
 
-	sc.m.Use(middleware.GetContextHandler(nil, nil))
+	sc.m.Use(middleware.GetContextHandler(nil, nil, nil))
 
 	return sc
 }

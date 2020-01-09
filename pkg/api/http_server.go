@@ -310,10 +310,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.Use(hs.healthHandler)
 	m.Use(hs.metricsEndpoint)
-	m.Use(middleware.GetContextHandler(
-		hs.AuthTokenService,
-		hs.RemoteCacheService,
-	))
+	m.Use(middleware.GetContextHandler(hs.AuthTokenService, hs.RemoteCacheService, hs.License))
 	m.Use(middleware.OrgRedirect())
 
 	// needs to be after context handler

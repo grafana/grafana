@@ -13,6 +13,7 @@ type ReqContext struct {
 	*macaron.Context
 	*SignedInUser
 	UserToken *UserToken
+	License   Licensing
 
 	IsSignedIn     bool
 	IsRenderCall   bool

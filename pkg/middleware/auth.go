@@ -75,6 +75,13 @@ func RoleAuth(roles ...m.RoleType) macaron.Handler {
 
 func Auth(options *AuthOptions) macaron.Handler {
 	return func(c *m.ReqContext) {
+		if options.ReqSignedIn && c.License.HasLicense() && !c.License.HasValidLicense() {
+			c.JSON(402, struct {
+				LicenseError string
+			}{"Provided license is not valid"})
+			return
+		}
+
 		if !c.IsSignedIn && options.ReqSignedIn && !c.AllowAnonymous {
 			notAuthorized(c)
 			return
