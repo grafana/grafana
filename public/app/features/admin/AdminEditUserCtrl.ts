@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { NavModelSrv } from 'app/core/core';
 import { User } from 'app/core/services/context_srv';
 import { UserSession, Scope, CoreEvents, AppEventEmitter } from 'app/types';
@@ -23,36 +23,40 @@ export default class AdminEditUserCtrl {
     };
 
     $scope.getUser = (id: number) => {
-      backendSrv.get('/api/users/' + id).then((user: User) => {
-        $scope.user = user;
-        $scope.user_id = id;
-        $scope.permissions.isGrafanaAdmin = user.isGrafanaAdmin;
-      });
+      getBackendSrv()
+        .get('/api/users/' + id)
+        .then((user: User) => {
+          $scope.user = user;
+          $scope.user_id = id;
+          $scope.permissions.isGrafanaAdmin = user.isGrafanaAdmin;
+        });
     };
 
     $scope.getUserSessions = (id: number) => {
-      backendSrv.get('/api/admin/users/' + id + '/auth-tokens').then((sessions: UserSession[]) => {
-        sessions.reverse();
+      getBackendSrv()
+        .get('/api/admin/users/' + id + '/auth-tokens')
+        .then((sessions: UserSession[]) => {
+          sessions.reverse();
 
-        $scope.sessions = sessions.map((session: UserSession) => {
-          return {
-            id: session.id,
-            isActive: session.isActive,
-            seenAt: dateTime(session.seenAt).fromNow(),
-            createdAt: dateTime(session.createdAt).format('MMMM DD, YYYY'),
-            clientIp: session.clientIp,
-            browser: session.browser,
-            browserVersion: session.browserVersion,
-            os: session.os,
-            osVersion: session.osVersion,
-            device: session.device,
-          };
+          $scope.sessions = sessions.map((session: UserSession) => {
+            return {
+              id: session.id,
+              isActive: session.isActive,
+              seenAt: dateTime(session.seenAt).fromNow(),
+              createdAt: dateTime(session.createdAt).format('MMMM DD, YYYY'),
+              clientIp: session.clientIp,
+              browser: session.browser,
+              browserVersion: session.browserVersion,
+              os: session.os,
+              osVersion: session.osVersion,
+              device: session.device,
+            };
+          });
         });
-      });
     };
 
     $scope.revokeUserSession = (tokenId: number) => {
-      backendSrv
+      getBackendSrv()
         .post('/api/admin/users/' + $scope.user_id + '/revoke-auth-token', {
           authTokenId: tokenId,
         })
@@ -67,9 +71,11 @@ export default class AdminEditUserCtrl {
     };
 
     $scope.revokeAllUserSessions = (tokenId: number) => {
-      backendSrv.post('/api/admin/users/' + $scope.user_id + '/logout').then(() => {
-        $scope.sessions = [];
-      });
+      getBackendSrv()
+        .post('/api/admin/users/' + $scope.user_id + '/logout')
+        .then(() => {
+          $scope.sessions = [];
+        });
     };
 
     $scope.setPassword = () => {
@@ -78,15 +84,17 @@ export default class AdminEditUserCtrl {
       }
 
       const payload = { password: $scope.password };
-      backendSrv.put('/api/admin/users/' + $scope.user_id + '/password', payload).then(() => {
-        $location.path('/admin/users');
-      });
+      getBackendSrv()
+        .put('/api/admin/users/' + $scope.user_id + '/password', payload)
+        .then(() => {
+          $location.path('/admin/users');
+        });
     };
 
     $scope.updatePermissions = () => {
       const payload = $scope.permissions;
 
-      backendSrv.put('/api/admin/users/' + $scope.user_id + '/permissions', payload);
+      getBackendSrv().put('/api/admin/users/' + $scope.user_id + '/permissions', payload);
     };
 
     $scope.create = () => {
@@ -94,15 +102,19 @@ export default class AdminEditUserCtrl {
         return;
       }
 
-      backendSrv.post('/api/admin/users', $scope.user).then(() => {
-        $location.path('/admin/users');
-      });
+      getBackendSrv()
+        .post('/api/admin/users', $scope.user)
+        .then(() => {
+          $location.path('/admin/users');
+        });
     };
 
     $scope.getUserOrgs = (id: number) => {
-      backendSrv.get('/api/users/' + id + '/orgs').then((orgs: any) => {
-        $scope.orgs = orgs;
-      });
+      getBackendSrv()
+        .get('/api/users/' + id + '/orgs')
+        .then((orgs: any) => {
+          $scope.orgs = orgs;
+        });
     };
 
     $scope.update = () => {
@@ -110,20 +122,26 @@ export default class AdminEditUserCtrl {
         return;
       }
 
-      backendSrv.put('/api/users/' + $scope.user_id, $scope.user).then(() => {
-        $location.path('/admin/users');
-      });
+      getBackendSrv()
+        .put('/api/users/' + $scope.user_id, $scope.user)
+        .then(() => {
+          $location.path('/admin/users');
+        });
     };
 
     $scope.updateOrgUser = (orgUser: { orgId: string }) => {
-      backendSrv.patch('/api/orgs/' + orgUser.orgId + '/users/' + $scope.user_id, orgUser).then(() => {});
+      getBackendSrv()
+        .patch('/api/orgs/' + orgUser.orgId + '/users/' + $scope.user_id, orgUser)
+        .then(() => {});
     };
 
     $scope.removeOrgUser = (orgUser: { orgId: string }) => {
-      backendSrv.delete('/api/orgs/' + orgUser.orgId + '/users/' + $scope.user_id).then(() => {
-        $scope.getUser($scope.user_id);
-        $scope.getUserOrgs($scope.user_id);
-      });
+      getBackendSrv()
+        .delete('/api/orgs/' + orgUser.orgId + '/users/' + $scope.user_id)
+        .then(() => {
+          $scope.getUser($scope.user_id);
+          $scope.getUserOrgs($scope.user_id);
+        });
     };
 
     $scope.orgsSearchCache = [];
@@ -134,10 +152,12 @@ export default class AdminEditUserCtrl {
         return;
       }
 
-      backendSrv.get('/api/orgs', { query: '' }).then((result: any) => {
-        $scope.orgsSearchCache = result;
-        callback(_.map(result, 'name'));
-      });
+      getBackendSrv()
+        .get('/api/orgs', { query: '' })
+        .then((result: any) => {
+          $scope.orgsSearchCache = result;
+          callback(_.map(result, 'name'));
+        });
     };
 
     $scope.addOrgUser = () => {
@@ -155,10 +175,12 @@ export default class AdminEditUserCtrl {
 
       $scope.newOrg.loginOrEmail = $scope.user.login;
 
-      backendSrv.post('/api/orgs/' + orgInfo.id + '/users/', $scope.newOrg).then(() => {
-        $scope.getUser($scope.user_id);
-        $scope.getUserOrgs($scope.user_id);
-      });
+      getBackendSrv()
+        .post('/api/orgs/' + orgInfo.id + '/users/', $scope.newOrg)
+        .then(() => {
+          $scope.getUser($scope.user_id);
+          $scope.getUserOrgs($scope.user_id);
+        });
     };
 
     $scope.deleteUser = (user: any) => {
@@ -168,9 +190,11 @@ export default class AdminEditUserCtrl {
         icon: 'fa-trash',
         yesText: 'Delete',
         onConfirm: () => {
-          backendSrv.delete('/api/admin/users/' + user.id).then(() => {
-            $location.path('/admin/users');
-          });
+          getBackendSrv()
+            .delete('/api/admin/users/' + user.id)
+            .then(() => {
+              $location.path('/admin/users');
+            });
         },
       });
     };
@@ -186,9 +210,11 @@ export default class AdminEditUserCtrl {
       }
 
       const actionEndpoint = user.isDisabled ? '/enable' : '/disable';
-      backendSrv.post('/api/admin/users/' + user.id + actionEndpoint).then(() => {
-        $scope.init();
-      });
+      getBackendSrv()
+        .post('/api/admin/users/' + user.id + actionEndpoint)
+        .then(() => {
+          $scope.init();
+        });
     };
 
     $scope.init();

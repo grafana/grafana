@@ -1,5 +1,5 @@
 import { getTagColorsFromName } from '@grafana/ui';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { NavModelSrv } from 'app/core/core';
 
 export default class AdminListUsersCtrl {
@@ -20,7 +20,7 @@ export default class AdminListUsersCtrl {
   }
 
   getUsers() {
-    backendSrv
+    getBackendSrv()
       .get(`/api/users/search?perpage=${this.perPage}&page=${this.page}&query=${this.query}`)
       .then((result: any) => {
         this.users = result.users;

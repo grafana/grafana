@@ -4,7 +4,7 @@ import { LoadingPlaceholder, JSONFormatter } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
 import { DashboardModel } from '../dashboard/state/DashboardModel';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
 
 export interface Props {
@@ -37,7 +37,7 @@ export class TestRuleResult extends PureComponent<Props, State> {
     const payload = { dashboard: dashboard.getSaveModelClone(), panelId };
 
     this.setState({ isLoading: true });
-    const testRuleResponse = await backendSrv.post(`/api/alerts/test`, payload);
+    const testRuleResponse = await getBackendSrv().post(`/api/alerts/test`, payload);
     this.setState({ isLoading: false, testRuleResponse });
   }
 

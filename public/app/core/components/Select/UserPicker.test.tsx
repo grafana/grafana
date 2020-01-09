@@ -2,9 +2,10 @@ import React from 'react';
 // @ts-ignore
 import renderer from 'react-test-renderer';
 import { UserPicker } from './UserPicker';
-import { backendSrv } from 'app/core/services/backend_srv';
 
-jest.spyOn(backendSrv, 'get').mockImplementation(() => Promise.resolve([]));
+jest.mock('@grafana/runtime', () => ({
+  getBackendSrv: () => ({ get: jest.fn().mockResolvedValue([]) }),
+}));
 
 describe('UserPicker', () => {
   it('renders correctly', () => {

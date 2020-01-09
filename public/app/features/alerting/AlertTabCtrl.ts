@@ -5,7 +5,7 @@ import { QueryPart } from 'app/core/components/query_part/query_part';
 import alertDef from './state/alertDef';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { DashboardSrv } from '../dashboard/services/DashboardSrv';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { DataQuery, DataSourceApi } from '@grafana/data';
@@ -71,16 +71,18 @@ export class AlertTabCtrl {
     this.alertNotifications = [];
     this.alertHistory = [];
 
-    return backendSrv.get('/api/alert-notifications/lookup').then((res: any) => {
-      this.notifications = res;
+    return getBackendSrv()
+      .get('/api/alert-notifications/lookup')
+      .then((res: any) => {
+        this.notifications = res;
 
-      this.initModel();
-      this.validateModel();
-    });
+        this.initModel();
+        this.validateModel();
+      });
   }
 
   getAlertHistory() {
-    backendSrv
+    getBackendSrv()
       .get(`/api/annotations?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}&limit=50&type=alert`)
       .then((res: any) => {
         this.alertHistory = _.map(res, ah => {
@@ -429,7 +431,7 @@ export class AlertTabCtrl {
       icon: 'fa-trash',
       yesText: 'Yes',
       onConfirm: () => {
-        backendSrv
+        getBackendSrv()
           .post('/api/annotations/mass-delete', {
             dashboardId: this.panelCtrl.dashboard.id,
             panelId: this.panel.id,

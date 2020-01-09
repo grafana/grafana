@@ -1,5 +1,5 @@
 import config from 'app/core/config';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { NavModelSrv } from 'app/core/core';
 
 export default class StyleGuideCtrl {
@@ -22,8 +22,10 @@ export default class StyleGuideCtrl {
       theme: this.$routeParams.theme,
     };
 
-    backendSrv.put('/api/user/preferences', cmd).then(() => {
-      window.location.href = window.location.href;
-    });
+    getBackendSrv()
+      .put('/api/user/preferences', cmd)
+      .then(() => {
+        window.location.href = window.location.href;
+      });
   }
 }

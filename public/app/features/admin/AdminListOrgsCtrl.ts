@@ -1,4 +1,4 @@
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { NavModelSrv } from 'app/core/core';
 import { Scope, CoreEvents, AppEventEmitter } from 'app/types';
 
@@ -11,7 +11,7 @@ export default class AdminListOrgsCtrl {
     };
 
     $scope.getOrgs = async () => {
-      const orgs = await backendSrv.get('/api/orgs');
+      const orgs = await getBackendSrv().get('/api/orgs');
       $scope.orgs = orgs;
     };
 
@@ -23,9 +23,11 @@ export default class AdminListOrgsCtrl {
         icon: 'fa-trash',
         yesText: 'Delete',
         onConfirm: () => {
-          backendSrv.delete('/api/orgs/' + org.id).then(() => {
-            $scope.getOrgs();
-          });
+          getBackendSrv()
+            .delete('/api/orgs/' + org.id)
+            .then(() => {
+              $scope.getOrgs();
+            });
         },
       });
     };

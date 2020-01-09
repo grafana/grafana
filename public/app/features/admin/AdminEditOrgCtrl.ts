@@ -1,4 +1,4 @@
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { NavModelSrv } from 'app/core/core';
 
 export default class AdminEditOrgCtrl {
@@ -14,15 +14,19 @@ export default class AdminEditOrgCtrl {
     };
 
     $scope.getOrg = (id: number) => {
-      backendSrv.get('/api/orgs/' + id).then((org: any) => {
-        $scope.org = org;
-      });
+      getBackendSrv()
+        .get('/api/orgs/' + id)
+        .then((org: any) => {
+          $scope.org = org;
+        });
     };
 
     $scope.getOrgUsers = (id: number) => {
-      backendSrv.get('/api/orgs/' + id + '/users').then((orgUsers: any) => {
-        $scope.orgUsers = orgUsers;
-      });
+      getBackendSrv()
+        .get('/api/orgs/' + id + '/users')
+        .then((orgUsers: any) => {
+          $scope.orgUsers = orgUsers;
+        });
     };
 
     $scope.update = () => {
@@ -30,19 +34,23 @@ export default class AdminEditOrgCtrl {
         return;
       }
 
-      backendSrv.put('/api/orgs/' + $scope.org.id, $scope.org).then(() => {
-        $location.path('/admin/orgs');
-      });
+      getBackendSrv()
+        .put('/api/orgs/' + $scope.org.id, $scope.org)
+        .then(() => {
+          $location.path('/admin/orgs');
+        });
     };
 
     $scope.updateOrgUser = (orgUser: any) => {
-      backendSrv.patch('/api/orgs/' + orgUser.orgId + '/users/' + orgUser.userId, orgUser);
+      getBackendSrv().patch('/api/orgs/' + orgUser.orgId + '/users/' + orgUser.userId, orgUser);
     };
 
     $scope.removeOrgUser = (orgUser: any) => {
-      backendSrv.delete('/api/orgs/' + orgUser.orgId + '/users/' + orgUser.userId).then(() => {
-        $scope.getOrgUsers($scope.org.id);
-      });
+      getBackendSrv()
+        .delete('/api/orgs/' + orgUser.orgId + '/users/' + orgUser.userId)
+        .then(() => {
+          $scope.getOrgUsers($scope.org.id);
+        });
     };
 
     $scope.init();

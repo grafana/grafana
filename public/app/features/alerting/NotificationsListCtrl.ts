@@ -1,5 +1,5 @@
 import { coreModule, NavModelSrv } from 'app/core/core';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 
 export class AlertNotificationsListCtrl {
   notifications: any;
@@ -12,17 +12,21 @@ export class AlertNotificationsListCtrl {
   }
 
   loadNotifications() {
-    backendSrv.get(`/api/alert-notifications`).then((result: any) => {
-      this.notifications = result;
-    });
+    getBackendSrv()
+      .get(`/api/alert-notifications`)
+      .then((result: any) => {
+        this.notifications = result;
+      });
   }
 
   deleteNotification(id: number) {
-    backendSrv.delete(`/api/alert-notifications/${id}`).then(() => {
-      this.notifications = this.notifications.filter((notification: any) => {
-        return notification.id !== id;
+    getBackendSrv()
+      .delete(`/api/alert-notifications/${id}`)
+      .then(() => {
+        this.notifications = this.notifications.filter((notification: any) => {
+          return notification.id !== id;
+        });
       });
-    });
   }
 }
 

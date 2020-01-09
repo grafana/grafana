@@ -19,7 +19,7 @@ jest.mock('app/core/services/impression_srv', () => {
 
 describe('SearchSrv', () => {
   let searchSrv: SearchSrv;
-  const searchMock = jest.spyOn(backendSrv, 'search');
+  const searchMock = jest.spyOn(backendSrv, 'search'); // will use the mock in __mocks__
 
   beforeEach(() => {
     searchSrv = new SearchSrv();

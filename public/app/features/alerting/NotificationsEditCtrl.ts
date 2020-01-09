@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { appEvents, coreModule, NavModelSrv } from 'app/core/core';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
 
 export class AlertNotificationEditCtrl {
@@ -40,7 +40,7 @@ export class AlertNotificationEditCtrl {
       return ['1m', '5m', '10m', '15m', '30m', '1h'];
     };
 
-    backendSrv
+    getBackendSrv()
       .get(`/api/alert-notifiers`)
       .then((notifiers: any) => {
         this.notifiers = notifiers;
@@ -56,12 +56,14 @@ export class AlertNotificationEditCtrl {
           return _.defaults(this.model, this.defaults);
         }
 
-        return backendSrv.get(`/api/alert-notifications/${this.$routeParams.id}`).then((result: any) => {
-          this.navModel.breadcrumbs.push({ text: result.name });
-          this.navModel.node = { text: result.name };
-          result.settings = _.defaults(result.settings, this.defaults.settings);
-          return result;
-        });
+        return getBackendSrv()
+          .get(`/api/alert-notifications/${this.$routeParams.id}`)
+          .then((result: any) => {
+            this.navModel.breadcrumbs.push({ text: result.name });
+            this.navModel.node = { text: result.name };
+            result.settings = _.defaults(result.settings, this.defaults.settings);
+            return result;
+          });
       })
       .then((model: any) => {
         this.model = model;
@@ -75,7 +77,7 @@ export class AlertNotificationEditCtrl {
     }
 
     if (this.model.id) {
-      backendSrv
+      getBackendSrv()
         .put(`/api/alert-notifications/${this.model.id}`, this.model)
         .then((res: any) => {
           this.model = res;
@@ -87,7 +89,7 @@ export class AlertNotificationEditCtrl {
           }
         });
     } else {
-      backendSrv
+      getBackendSrv()
         .post(`/api/alert-notifications`, this.model)
         .then((res: any) => {
           appEvents.emit(AppEvents.alertSuccess, ['Notification created']);
@@ -102,10 +104,12 @@ export class AlertNotificationEditCtrl {
   }
 
   deleteNotification() {
-    backendSrv.delete(`/api/alert-notifications/${this.model.id}`).then((res: any) => {
-      this.model = res;
-      this.$location.path('alerting/notifications');
-    });
+    getBackendSrv()
+      .delete(`/api/alert-notifications/${this.model.id}`)
+      .then((res: any) => {
+        this.model = res;
+        this.$location.path('alerting/notifications');
+      });
   }
 
   getNotifierTemplateId(type: string) {
@@ -129,7 +133,7 @@ export class AlertNotificationEditCtrl {
       settings: this.model.settings,
     };
 
-    backendSrv.post(`/api/alert-notifications/test`, payload);
+    getBackendSrv().post(`/api/alert-notifications/test`, payload);
   }
 }
 
