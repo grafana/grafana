@@ -21,6 +21,7 @@ import { VariableSrv } from './variable_srv';
 export class IntervalVariable implements IntervalVariableModel, VariableActions {
   id: number;
   defaults: IntervalVariableModel = {
+    id: -1,
     type: 'interval',
     name: '',
     label: '',
