@@ -4,8 +4,13 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
 import { DataSourceInstanceSettings, toUtc } from '@grafana/data';
 import { StackdriverOptions } from '../types';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
 
 interface Result {
   status: any;

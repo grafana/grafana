@@ -1,6 +1,11 @@
 import { dateTime } from '@grafana/data';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { GrafanaDatasource } from '../datasource';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
 
 describe('grafana data source', () => {
   const getMock = jest.spyOn(backendSrv, 'get');

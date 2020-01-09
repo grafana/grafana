@@ -4,7 +4,7 @@ import _ from 'lodash';
 import StackdriverMetricFindQuery from './StackdriverMetricFindQuery';
 import { StackdriverQuery, MetricDescriptor, StackdriverOptions } from './types';
 import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { CoreEvents } from 'app/types';
@@ -54,7 +54,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
       });
 
     if (queries.length > 0) {
-      const { data } = await backendSrv.datasourceRequest({
+      const { data } = await getBackendSrv().datasourceRequest({
         url: '/api/tsdb/query',
         method: 'POST',
         data: {
@@ -164,7 +164,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
       },
     ];
 
-    const { data } = await backendSrv.datasourceRequest({
+    const { data } = await getBackendSrv().datasourceRequest({
       url: '/api/tsdb/query',
       method: 'POST',
       data: {
@@ -244,7 +244,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   async getDefaultProject() {
     try {
       if (this.authenticationType === 'gce' || !this.projectName) {
-        const { data } = await backendSrv.datasourceRequest({
+        const { data } = await getBackendSrv().datasourceRequest({
           url: '/api/tsdb/query',
           method: 'POST',
           data: {
@@ -292,7 +292,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   }
 
   async doRequest(url: string, maxRetries = 1): Promise<any> {
-    return backendSrv
+    return getBackendSrv()
       .datasourceRequest({
         url: this.url + url,
         method: 'GET',

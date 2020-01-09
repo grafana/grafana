@@ -3,7 +3,12 @@ import _ from 'lodash';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { dateTime } from '@grafana/data';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
 
 describe('graphiteDatasource', () => {
   const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');

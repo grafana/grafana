@@ -1,6 +1,7 @@
 import { PrometheusDatasource } from './datasource';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { toUtc, DataSourceInstanceSettings } from '@grafana/data';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { PromOptions } from './types';
 
 jest.mock('app/features/templating/template_srv', () => {
@@ -10,13 +11,12 @@ jest.mock('app/features/templating/template_srv', () => {
   };
 });
 
-const datasourceRequestMock = jest.fn().mockResolvedValue(createDefaultPromResponse());
-
 jest.mock('@grafana/runtime', () => ({
-  getBackendSrv: () => ({
-    datasourceRequest: datasourceRequestMock,
-  }),
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
 }));
+
+const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
 
 const instanceSettings = ({
   url: 'proxied',
@@ -246,21 +246,3 @@ describe('PrometheusMetricFindQuery', () => {
     });
   });
 });
-
-function createDefaultPromResponse() {
-  return {
-    data: {
-      data: {
-        result: [
-          {
-            metric: {
-              __name__: 'test_metric',
-            },
-            values: [[1568369640, 1]],
-          },
-        ],
-        resultType: 'matrix',
-      },
-    },
-  };
-}

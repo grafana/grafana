@@ -13,7 +13,7 @@ import { DataQueryRequest, DataQueryResponseData, DataSourceInstanceSettings } f
 
 import { TimeSeries, toDataFrame } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 
 export default class AzureMonitorDatasource {
   apiVersion = '2018-01-01';
@@ -107,7 +107,7 @@ export default class AzureMonitorDatasource {
       return Promise.resolve([]);
     }
 
-    const { data } = await backendSrv.datasourceRequest({
+    const { data } = await getBackendSrv().datasourceRequest({
       url: '/api/tsdb/query',
       method: 'POST',
       data: {
@@ -434,7 +434,7 @@ export default class AzureMonitorDatasource {
   }
 
   doRequest(url: string, maxRetries = 1): Promise<any> {
-    return backendSrv
+    return getBackendSrv()
       .datasourceRequest({
         url: this.url + url,
         method: 'GET',

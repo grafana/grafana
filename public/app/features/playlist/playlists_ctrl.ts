@@ -3,7 +3,7 @@ import coreModule from '../../core/core_module';
 import { NavModelSrv } from 'app/core/nav_model_srv';
 import { CoreEvents } from 'app/types';
 import { AppEvents } from '@grafana/data';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 
 export class PlaylistsCtrl {
   playlists: any;
@@ -13,26 +13,30 @@ export class PlaylistsCtrl {
   constructor(private $scope: any, navModelSrv: NavModelSrv) {
     this.navModel = navModelSrv.getNav('dashboards', 'playlists', 0);
 
-    backendSrv.get('/api/playlists').then((result: any) => {
-      this.playlists = result.map((item: any) => {
-        item.startUrl = `playlists/play/${item.id}`;
-        return item;
+    getBackendSrv()
+      .get('/api/playlists')
+      .then((result: any) => {
+        this.playlists = result.map((item: any) => {
+          item.startUrl = `playlists/play/${item.id}`;
+          return item;
+        });
       });
-    });
   }
 
   removePlaylistConfirmed(playlist: any) {
     _.remove(this.playlists, { id: playlist.id });
 
-    backendSrv.delete('/api/playlists/' + playlist.id).then(
-      () => {
-        this.$scope.appEvent(AppEvents.alertSuccess, ['Playlist deleted']);
-      },
-      () => {
-        this.$scope.appEvent(AppEvents.alertError, ['Unable to delete playlist']);
-        this.playlists.push(playlist);
-      }
-    );
+    getBackendSrv()
+      .delete('/api/playlists/' + playlist.id)
+      .then(
+        () => {
+          this.$scope.appEvent(AppEvents.alertSuccess, ['Playlist deleted']);
+        },
+        () => {
+          this.$scope.appEvent(AppEvents.alertError, ['Unable to delete playlist']);
+          this.playlists.push(playlist);
+        }
+      );
   }
 
   removePlaylist(playlist: any) {

@@ -9,7 +9,7 @@ import locationUtil from 'app/core/utils/location_util';
 import kbn from 'app/core/utils/kbn';
 import { store } from 'app/store/store';
 import { CoreEvents } from 'app/types';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 
 export const queryParamsToPreserve: { [key: string]: boolean } = {
   kiosk: true,
@@ -90,13 +90,17 @@ export class PlaylistSrv {
 
     appEvents.emit(CoreEvents.playlistStarted);
 
-    return backendSrv.get(`/api/playlists/${playlistId}`).then((playlist: any) => {
-      return backendSrv.get(`/api/playlists/${playlistId}/dashboards`).then((dashboards: any) => {
-        this.dashboards = dashboards;
-        this.interval = kbn.interval_to_ms(playlist.interval);
-        this.next();
+    return getBackendSrv()
+      .get(`/api/playlists/${playlistId}`)
+      .then((playlist: any) => {
+        return getBackendSrv()
+          .get(`/api/playlists/${playlistId}/dashboards`)
+          .then((dashboards: any) => {
+            this.dashboards = dashboards;
+            this.interval = kbn.interval_to_ms(playlist.interval);
+            this.next();
+          });
       });
-    });
   }
 
   stop() {

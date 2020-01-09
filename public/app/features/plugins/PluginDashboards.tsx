@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 import extend from 'lodash/extend';
 
 import { PluginDashboard } from 'app/types';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import DashboardsTable from 'app/features/datasources/DashboardsTable';
 import { AppEvents, PluginMeta, DataSourceApi } from '@grafana/data';
@@ -29,9 +29,11 @@ export class PluginDashboards extends PureComponent<Props, State> {
 
   async componentDidMount() {
     const pluginId = this.props.plugin.id;
-    backendSrv.get(`/api/plugins/${pluginId}/dashboards`).then((dashboards: any) => {
-      this.setState({ dashboards, loading: false });
-    });
+    getBackendSrv()
+      .get(`/api/plugins/${pluginId}/dashboards`)
+      .then((dashboards: any) => {
+        this.setState({ dashboards, loading: false });
+      });
   }
 
   importAll = () => {
@@ -74,18 +76,22 @@ export class PluginDashboards extends PureComponent<Props, State> {
       });
     }
 
-    return backendSrv.post(`/api/dashboards/import`, installCmd).then((res: PluginDashboard) => {
-      appEvents.emit(AppEvents.alertSuccess, ['Dashboard Imported', dash.title]);
-      extend(dash, res);
-      this.setState({ dashboards: [...this.state.dashboards] });
-    });
+    return getBackendSrv()
+      .post(`/api/dashboards/import`, installCmd)
+      .then((res: PluginDashboard) => {
+        appEvents.emit(AppEvents.alertSuccess, ['Dashboard Imported', dash.title]);
+        extend(dash, res);
+        this.setState({ dashboards: [...this.state.dashboards] });
+      });
   };
 
   remove = (dash: PluginDashboard) => {
-    backendSrv.delete('/api/dashboards/' + dash.importedUri).then(() => {
-      dash.imported = false;
-      this.setState({ dashboards: [...this.state.dashboards] });
-    });
+    getBackendSrv()
+      .delete('/api/dashboards/' + dash.importedUri)
+      .then(() => {
+        dash.imported = false;
+        this.setState({ dashboards: [...this.state.dashboards] });
+      });
   };
 
   render() {

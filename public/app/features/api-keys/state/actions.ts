@@ -1,5 +1,5 @@
 ﻿import { ThunkAction } from 'redux-thunk';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { StoreState, ApiKey } from 'app/types';
 
 export enum ActionTypes {
@@ -32,7 +32,7 @@ export function addApiKey(
   includeExpired: boolean
 ): ThunkResult<void> {
   return async dispatch => {
-    const result = await backendSrv.post('/api/auth/keys', apiKey);
+    const result = await getBackendSrv().post('/api/auth/keys', apiKey);
     dispatch(setSearchQuery(''));
     dispatch(loadApiKeys(includeExpired));
     openModal(result.key);
@@ -41,14 +41,16 @@ export function addApiKey(
 
 export function loadApiKeys(includeExpired: boolean): ThunkResult<void> {
   return async dispatch => {
-    const response = await backendSrv.get('/api/auth/keys?includeExpired=' + includeExpired);
+    const response = await getBackendSrv().get('/api/auth/keys?includeExpired=' + includeExpired);
     dispatch(apiKeysLoaded(response));
   };
 }
 
 export function deleteApiKey(id: number, includeExpired: boolean): ThunkResult<void> {
   return async dispatch => {
-    backendSrv.delete(`/api/auth/keys/${id}`).then(() => dispatch(loadApiKeys(includeExpired)));
+    getBackendSrv()
+      .delete(`/api/auth/keys/${id}`)
+      .then(() => dispatch(loadApiKeys(includeExpired)));
   };
 }
 

@@ -1,6 +1,6 @@
 import angular from 'angular';
 import config from 'app/core/config';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { NavModelSrv } from 'app/core/core';
 
 export class NewOrgCtrl {
@@ -10,11 +10,15 @@ export class NewOrgCtrl {
     $scope.newOrg = { name: '' };
 
     $scope.createOrg = () => {
-      backendSrv.post('/api/orgs/', $scope.newOrg).then((result: any) => {
-        backendSrv.post('/api/user/using/' + result.orgId).then(() => {
-          window.location.href = config.appSubUrl + '/org';
+      getBackendSrv()
+        .post('/api/orgs/', $scope.newOrg)
+        .then((result: any) => {
+          getBackendSrv()
+            .post('/api/user/using/' + result.orgId)
+            .then(() => {
+              window.location.href = config.appSubUrl + '/org';
+            });
         });
-      });
     };
   }
 }

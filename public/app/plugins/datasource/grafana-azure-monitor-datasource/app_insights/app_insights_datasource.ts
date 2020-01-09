@@ -1,6 +1,6 @@
 import { TimeSeries, toDataFrame } from '@grafana/data';
 import { DataQueryRequest, DataQueryResponseData, DataSourceInstanceSettings } from '@grafana/data';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import _ from 'lodash';
 
@@ -115,7 +115,7 @@ export default class AppInsightsDatasource {
       return;
     }
 
-    const { data } = await backendSrv.datasourceRequest({
+    const { data } = await getBackendSrv().datasourceRequest({
       url: '/api/tsdb/query',
       method: 'POST',
       data: {
@@ -225,7 +225,7 @@ export default class AppInsightsDatasource {
   }
 
   doRequest(url: any, maxRetries = 1): Promise<any> {
-    return backendSrv
+    return getBackendSrv()
       .datasourceRequest({
         url: this.url + url,
         method: 'GET',

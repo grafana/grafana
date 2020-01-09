@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import coreModule from '../../core/core_module';
 import { ILocationService } from 'angular';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { NavModelSrv } from 'app/core/nav_model_srv';
 import { AppEventEmitter } from 'app/types';
 import { AppEvents } from '@grafana/data';
@@ -40,13 +40,17 @@ export class PlaylistEditCtrl {
     if ($route.current.params.id) {
       const playlistId = $route.current.params.id;
 
-      backendSrv.get('/api/playlists/' + playlistId).then((result: any) => {
-        this.playlist = result;
-      });
+      getBackendSrv()
+        .get('/api/playlists/' + playlistId)
+        .then((result: any) => {
+          this.playlist = result;
+        });
 
-      backendSrv.get('/api/playlists/' + playlistId + '/items').then((result: any) => {
-        this.playlistItems = result;
-      });
+      getBackendSrv()
+        .get('/api/playlists/' + playlistId + '/items')
+        .then((result: any) => {
+          this.playlistItems = result;
+        });
     }
   }
 
@@ -98,8 +102,8 @@ export class PlaylistEditCtrl {
     playlist.items = playlistItems;
 
     savePromise = playlist.id
-      ? backendSrv.put('/api/playlists/' + playlist.id, playlist)
-      : backendSrv.post('/api/playlists', playlist);
+      ? getBackendSrv().put('/api/playlists/' + playlist.id, playlist)
+      : getBackendSrv().post('/api/playlists', playlist);
 
     savePromise.then(
       () => {

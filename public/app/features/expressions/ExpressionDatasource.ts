@@ -9,7 +9,7 @@ import { ExpressionQuery, GELQueryType } from './types';
 import { ExpressionQueryEditor } from './ExpressionQueryEditor';
 import { Observable, from } from 'rxjs';
 import { config } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 
 /**
  * This is a singleton instance that just pretends to be a DataSource
@@ -50,7 +50,7 @@ export class ExpressionDatasourceApi extends DataSourceApi<ExpressionQuery> {
         orgId,
       };
     });
-    const req: Promise<DataQueryResponse> = backendSrv
+    const req: Promise<DataQueryResponse> = getBackendSrv()
       .post('/api/ds/query', {
         from: range.from.valueOf().toString(),
         to: range.to.valueOf().toString(),

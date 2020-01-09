@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import ResponseParser from './response_parser';
 import PostgresQuery from 'app/plugins/datasource/postgres/postgres_query';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 //Types
@@ -84,7 +84,7 @@ export class PostgresDatasource {
       return Promise.resolve({ data: [] });
     }
 
-    return backendSrv
+    return getBackendSrv()
       .datasourceRequest({
         url: '/api/tsdb/query',
         method: 'POST',
@@ -111,7 +111,7 @@ export class PostgresDatasource {
       format: 'table',
     };
 
-    return backendSrv
+    return getBackendSrv()
       .datasourceRequest({
         url: '/api/tsdb/query',
         method: 'POST',
@@ -150,7 +150,7 @@ export class PostgresDatasource {
       to: range.to.valueOf().toString(),
     };
 
-    return backendSrv
+    return getBackendSrv()
       .datasourceRequest({
         url: '/api/tsdb/query',
         method: 'POST',

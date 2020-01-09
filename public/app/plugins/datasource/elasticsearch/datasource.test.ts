@@ -3,11 +3,16 @@ import { dateMath, Field } from '@grafana/data';
 import _ from 'lodash';
 import { ElasticDatasource } from './datasource';
 import { toUtc, dateTime } from '@grafana/data';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { ElasticsearchOptions } from './types';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
 
 describe('ElasticDatasource', function(this: any) {
   const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');

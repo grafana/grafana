@@ -1,6 +1,6 @@
 import angular from 'angular';
 import config from 'app/core/config';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 
 export class SelectOrgCtrl {
   /** @ngInject */
@@ -20,15 +20,19 @@ export class SelectOrgCtrl {
     };
 
     $scope.getUserOrgs = () => {
-      backendSrv.get('/api/user/orgs').then((orgs: any) => {
-        $scope.orgs = orgs;
-      });
+      getBackendSrv()
+        .get('/api/user/orgs')
+        .then((orgs: any) => {
+          $scope.orgs = orgs;
+        });
     };
 
     $scope.setUsingOrg = (org: any) => {
-      backendSrv.post('/api/user/using/' + org.orgId).then(() => {
-        window.location.href = config.appSubUrl + '/';
-      });
+      getBackendSrv()
+        .post('/api/user/using/' + org.orgId)
+        .then(() => {
+          window.location.href = config.appSubUrl + '/';
+        });
     };
 
     $scope.init();

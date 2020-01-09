@@ -4,7 +4,7 @@ import { auto } from 'angular';
 import { PanelEvents } from '@grafana/data';
 import { ContextSrv } from '../../../core/services/context_srv';
 import { CoreEvents } from 'app/types';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 
 class PluginListCtrl extends PanelCtrl {
   static templateUrl = 'module.html';
@@ -60,20 +60,22 @@ class PluginListCtrl extends PanelCtrl {
   }
 
   update() {
-    backendSrv.get('api/plugins', { embedded: 0, core: 0 }).then(plugins => {
-      this.pluginList = plugins;
-      this.viewModel[0].list = _.filter(plugins, { type: 'app' });
-      this.viewModel[1].list = _.filter(plugins, { type: 'panel' });
-      this.viewModel[2].list = _.filter(plugins, { type: 'datasource' });
+    getBackendSrv()
+      .get('api/plugins', { embedded: 0, core: 0 })
+      .then(plugins => {
+        this.pluginList = plugins;
+        this.viewModel[0].list = _.filter(plugins, { type: 'app' });
+        this.viewModel[1].list = _.filter(plugins, { type: 'panel' });
+        this.viewModel[2].list = _.filter(plugins, { type: 'datasource' });
 
-      for (const plugin of this.pluginList) {
-        if (plugin.hasUpdate) {
-          plugin.state = 'has-update';
-        } else if (!plugin.enabled) {
-          plugin.state = 'not-enabled';
+        for (const plugin of this.pluginList) {
+          if (plugin.hasUpdate) {
+            plugin.state = 'has-update';
+          } else if (!plugin.enabled) {
+            plugin.state = 'not-enabled';
+          }
         }
-      }
-    });
+      });
   }
 }
 

@@ -2,7 +2,18 @@
 import configureMockStore from 'redux-mock-store';
 import { PlaylistSrv } from '../playlist_srv';
 import { setStore } from 'app/store/store';
-import { backendSrv } from 'app/core/services/backend_srv';
+
+const getMock = jest.fn();
+
+jest.mock('@grafana/runtime', () => {
+  const original = jest.requireActual('@grafana/runtime');
+  return {
+    ...original,
+    getBackendSrv: () => ({
+      get: getMock,
+    }),
+  };
+});
 
 const mockStore = configureMockStore<any, any>();
 
@@ -53,8 +64,6 @@ describe('PlaylistSrv', () => {
   let hrefMock: jest.MockInstance<any, any>;
   let unmockLocation: () => void;
   const initialUrl = 'http://localhost/playlist';
-
-  const getMock = jest.spyOn(backendSrv, 'get');
 
   beforeEach(() => {
     jest.clearAllMocks();

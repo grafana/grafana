@@ -9,7 +9,7 @@ import {
 import { MonitorConfig } from './MonitorConfig';
 import { AnalyticsConfig } from './AnalyticsConfig';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { InsightsConfig } from './InsightsConfig';
 import ResponseParser from '../azure_monitor/response_parser';
 import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData, AzureDataSourceSettings } from '../types';
@@ -150,7 +150,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   onLoadSubscriptions = async (type?: string) => {
-    await backendSrv
+    await getBackendSrv()
       .put(`/api/datasources/${this.props.options.id}`, this.props.options)
       .then((result: AzureDataSourceSettings) => {
         updateDatasourcePluginOption(this.props, 'version', result.version);
@@ -166,7 +166,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   loadSubscriptions = async (route?: string) => {
     const url = `/${route || this.props.options.jsonData.cloudName}/subscriptions?api-version=2019-03-01`;
 
-    const result = await backendSrv.datasourceRequest({
+    const result = await getBackendSrv().datasourceRequest({
       url: this.props.options.url + url,
       method: 'GET',
     });
@@ -191,7 +191,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
       azureMonitorUrl +
       `/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
 
-    const result = await backendSrv.datasourceRequest({
+    const result = await getBackendSrv().datasourceRequest({
       url: this.props.options.url + workspaceListUrl,
       method: 'GET',
     });

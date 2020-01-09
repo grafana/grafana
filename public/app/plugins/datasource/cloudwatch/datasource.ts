@@ -15,7 +15,7 @@ import {
   DataQueryRequest,
   DataSourceInstanceSettings,
 } from '@grafana/data';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ThrottlingErrorMessage } from './components/ThrottlingErrorMessage';
@@ -552,9 +552,11 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery,
       data,
     };
 
-    return backendSrv.datasourceRequest(options).then((result: any) => {
-      return result.data;
-    });
+    return getBackendSrv()
+      .datasourceRequest(options)
+      .then((result: any) => {
+        return result.data;
+      });
   }
 
   getDefaultRegion() {

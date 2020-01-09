@@ -1,5 +1,5 @@
 import coreModule from 'app/core/core_module';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { NavModelSrv } from 'app/core/core';
 import { ILocationService } from 'angular';
 
@@ -25,9 +25,11 @@ export class UserInviteCtrl {
       return;
     }
 
-    backendSrv.post('/api/org/invites', this.invite).then(() => {
-      this.$location.path('org/users/');
-    });
+    getBackendSrv()
+      .post('/api/org/invites', this.invite)
+      .then(() => {
+        this.$location.path('org/users/');
+      });
   }
 }
 

@@ -6,7 +6,8 @@ import { map, filter, catchError, switchMap, mergeMap } from 'rxjs/operators';
 // Services & Utils
 import { dateMath } from '@grafana/data';
 import { addLabelToSelector, keepSelectorFilters } from 'app/plugins/datasource/prometheus/add_label_to_query';
-import { backendSrv, DatasourceRequestOptions } from 'app/core/services/backend_srv';
+import { DatasourceRequestOptions } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
 import {
@@ -118,7 +119,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       url,
     };
 
-    return from(backendSrv.datasourceRequest(req));
+    return from(getBackendSrv().datasourceRequest(req));
   }
 
   query(options: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {

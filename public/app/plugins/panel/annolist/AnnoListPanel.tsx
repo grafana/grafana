@@ -5,7 +5,7 @@ import React, { PureComponent } from 'react';
 import { AnnoOptions } from './types';
 import { PanelProps, dateTime, DurationUnit, AnnotationEvent, AppEvents } from '@grafana/data';
 import { Tooltip } from '@grafana/ui';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { AbstractList } from '@grafana/ui/src/components/List/AbstractList';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -98,7 +98,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       params.tags = params.tags ? [...params.tags, ...queryTags] : queryTags;
     }
 
-    const annotations = await backendSrv.get('/api/annotations', params);
+    const annotations = await getBackendSrv().get('/api/annotations', params);
     this.setState({
       annotations,
       timeInfo,
@@ -132,19 +132,21 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       return;
     }
 
-    backendSrv.get('/api/search', { dashboardIds: anno.dashboardId }).then((res: any[]) => {
-      if (res && res.length && res[0].id === anno.dashboardId) {
-        const dash = res[0];
-        store.dispatch(
-          updateLocation({
-            query: params,
-            path: dash.url,
-          })
-        );
-        return;
-      }
-      appEvents.emit(AppEvents.alertWarning, ['Unknown Dashboard: ' + anno.dashboardId]);
-    });
+    getBackendSrv()
+      .get('/api/search', { dashboardIds: anno.dashboardId })
+      .then((res: any[]) => {
+        if (res && res.length && res[0].id === anno.dashboardId) {
+          const dash = res[0];
+          store.dispatch(
+            updateLocation({
+              query: params,
+              path: dash.url,
+            })
+          );
+          return;
+        }
+        appEvents.emit(AppEvents.alertWarning, ['Unknown Dashboard: ' + anno.dashboardId]);
+      });
   };
 
   _timeOffset(time: number, offset: string, subtract = false): number {

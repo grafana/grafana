@@ -1,15 +1,26 @@
 import { versions, restore } from './__mocks__/history';
 import { HistorySrv } from './HistorySrv';
 import { DashboardModel } from '../../state/DashboardModel';
-import { backendSrv } from 'app/core/services/backend_srv';
+
+const getMock = jest.fn().mockResolvedValue({});
+const postMock = jest.fn().mockResolvedValue({});
+
 jest.mock('app/core/store');
+jest.mock('@grafana/runtime', () => {
+  const original = jest.requireActual('@grafana/runtime');
+
+  return {
+    ...original,
+    getBackendSrv: () => ({
+      post: postMock,
+      get: getMock,
+    }),
+  };
+});
 
 describe('historySrv', () => {
   const versionsResponse = versions();
   const restoreResponse = restore;
-
-  const getMock = jest.spyOn(backendSrv, 'get').mockImplementation(() => Promise.resolve({}));
-  const postMock = jest.spyOn(backendSrv, 'post').mockImplementation(() => Promise.resolve({}));
 
   let historySrv = new HistorySrv();
 

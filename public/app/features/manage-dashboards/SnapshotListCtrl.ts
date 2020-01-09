@@ -3,7 +3,7 @@ import { NavModelSrv } from 'app/core/core';
 import { ILocationService } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { CoreEvents } from 'app/types';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 
 export class SnapshotListCtrl {
   navModel: any;
@@ -12,23 +12,27 @@ export class SnapshotListCtrl {
   /** @ngInject */
   constructor(private $rootScope: GrafanaRootScope, navModelSrv: NavModelSrv, private $location: ILocationService) {
     this.navModel = navModelSrv.getNav('dashboards', 'snapshots', 0);
-    backendSrv.get('/api/dashboard/snapshots').then((result: any) => {
-      const baseUrl = this.$location.absUrl().replace($location.url(), '');
-      this.snapshots = result.map((snapshot: any) => ({
-        ...snapshot,
-        url: snapshot.externalUrl || `${baseUrl}/dashboard/snapshot/${snapshot.key}`,
-      }));
-    });
+    getBackendSrv()
+      .get('/api/dashboard/snapshots')
+      .then((result: any) => {
+        const baseUrl = this.$location.absUrl().replace($location.url(), '');
+        this.snapshots = result.map((snapshot: any) => ({
+          ...snapshot,
+          url: snapshot.externalUrl || `${baseUrl}/dashboard/snapshot/${snapshot.key}`,
+        }));
+      });
   }
 
   removeSnapshotConfirmed(snapshot: any) {
     _.remove(this.snapshots, { key: snapshot.key });
-    backendSrv.delete('/api/snapshots/' + snapshot.key).then(
-      () => {},
-      () => {
-        this.snapshots.push(snapshot);
-      }
-    );
+    getBackendSrv()
+      .delete('/api/snapshots/' + snapshot.key)
+      .then(
+        () => {},
+        () => {
+          this.snapshots.push(snapshot);
+        }
+      );
   }
 
   removeSnapshot(snapshot: any) {
