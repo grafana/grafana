@@ -4,7 +4,7 @@ import { stylesFactory, withTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { Themeable } from '../../types';
 import { Button } from '../Button/Button';
-import Forms from '../Forms';
+import Forms from '../../forms';
 import { ButtonVariant, ButtonSize } from '../Button/types';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {

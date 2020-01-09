@@ -3,7 +3,7 @@ import { TIME_FORMAT, TimeZone, isDateTime, TimeRange, DateTime } from '@grafana
 import { stringToDateTimeType, isValidTimeString } from '../time';
 import { mapStringsToTimeRange } from './mapper';
 import { TimePickerCalendar } from './TimePickerCalendar';
-import Forms from '../../Forms';
+import Forms from '../../../forms';
 import { isMathString } from '@grafana/data/src/datetime/datemath';
 
 interface Props {

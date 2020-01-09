@@ -14,12 +14,12 @@ import { components } from '@torkelo/react-select';
 
 // Components
 import { SelectOption } from './SelectOption';
-import { SelectOptionGroup } from '../Forms/Select/SelectOptionGroup';
-import { SingleValue } from '../Forms/Select/SingleValue';
-import { SelectCommonProps, SelectAsyncProps } from '../Forms/Select/SelectBase';
+import { SelectOptionGroup } from '../../forms/Select/SelectOptionGroup';
+import { SingleValue } from '../../forms/Select/SingleValue';
+import { SelectCommonProps, SelectAsyncProps } from '../../forms/Select/SelectBase';
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
-import resetSelectStyles from '../Forms/Select/resetSelectStyles';
+import resetSelectStyles from '../../forms/Select/resetSelectStyles';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { PopoverContent } from '../Tooltip/Tooltip';
 import { Tooltip } from '../Tooltip/Tooltip';
