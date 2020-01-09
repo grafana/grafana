@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -110,25 +111,8 @@ func (pm *PluginManager) Init() error {
 	return nil
 }
 
-func (pm *PluginManager) startBackendPlugins(ctx context.Context) {
-	for _, ds := range DataSources {
-		if !ds.Backend {
-			continue
-		}
-
-		if err := ds.startBackendPlugin(ctx, plog); err != nil {
-			pm.log.Error("Failed to init plugin.", "error", err, "plugin", ds.Id)
-		}
-	}
-	if Transform != nil {
-		if err := Transform.startBackendPlugin(ctx, plog); err != nil {
-			pm.log.Error("Failed to init plugin.", "error", err, "plugin", Transform.Id)
-		}
-	}
-}
-
 func (pm *PluginManager) Run(ctx context.Context) error {
-	pm.startBackendPlugins(ctx)
+	backendplugin.Start(ctx)
 	pm.updateAppDashboards()
 	pm.checkForUpdates()
 
@@ -144,14 +128,7 @@ func (pm *PluginManager) Run(ctx context.Context) error {
 		}
 	}
 
-	// kill backend plugins
-	for _, p := range DataSources {
-		p.Kill()
-	}
-
-	if Transform != nil {
-		Transform.Kill()
-	}
+	backendplugin.Stop()
 
 	return ctx.Err()
 }
