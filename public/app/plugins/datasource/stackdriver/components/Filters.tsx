@@ -89,10 +89,7 @@ export const Filters: FunctionComponent<Props> = ({
               <i className="fa fa-plus" />
             </a>
           }
-          options={[
-            ...labelsToGroupedOptions(Object.keys(labels).filter(key => !filters.some(f => f.key === key))),
-            variableOptionGroup,
-          ]}
+          options={[...labelsToGroupedOptions(Object.keys(labels)), variableOptionGroup]}
           onChange={({ value: key }) =>
             onChange(filtersToStringArray([...filters, { key, operator: '=', condition: 'AND', value: '' } as Filter]))
           }
