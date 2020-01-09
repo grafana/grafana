@@ -1,6 +1,6 @@
-import { TableStyles } from './styles';
 import { CellProps } from 'react-table';
 import { Field } from '@grafana/data';
+import { TableStyles } from './styles';
 
 export interface TableFieldOptions {
   width: number;
@@ -25,12 +25,6 @@ export interface TableRow {
 export type TableFilterActionCallback = (key: string, value: string) => void;
 
 export interface ReactTableCellProps extends CellProps<any> {
-  // cell: ReactTableCell;
-  // column: Column;
   tableStyles: TableStyles;
   field: Field;
-}
-
-export interface ReactTableCell {
-  value: any;
 }
