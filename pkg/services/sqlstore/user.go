@@ -526,7 +526,6 @@ func DeleteUser(cmd *models.DeleteUserCommand) error {
 }
 
 func deleteUserInTransaction(sess *DBSession, cmd *models.DeleteUserCommand) error {
-
 	//Check if user exists
 	user := models.User{Id: cmd.UserId}
 	has, err := sess.Get(&user)
