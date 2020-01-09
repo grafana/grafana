@@ -36,7 +36,11 @@ class BottomNavLinks extends PureComponent<Props, State> {
     const { link, user } = this.props;
     const { showSwitcherModal } = this.state;
 
-    const footerLinks = getFooterLinks();
+    let children = link.children || [];
+
+    if (link.id === 'help') {
+      children = getFooterLinks();
+    }
 
     return (
       <div className="sidemenu-item dropdown dropup">
@@ -69,7 +73,7 @@ class BottomNavLinks extends PureComponent<Props, State> {
 
           {showSwitcherModal && <OrgSwitcher onDismiss={this.toggleSwitcherModal} />}
 
-          {footerLinks.map((child, index) => {
+          {children.map((child, index) => {
             return (
               <li key={`${child.text}-${index}`}>
                 <a href={child.url} target="_blank" rel="noopener">
@@ -80,11 +84,13 @@ class BottomNavLinks extends PureComponent<Props, State> {
             );
           })}
 
-          <li key="keyboard-shortcuts">
-            <a onClick={() => this.onOpenShortcuts()}>
-              <i className="fa fa-keyboard-o" /> Keyboard shortcuts
-            </a>
-          </li>
+          {link.id === 'help' && (
+            <li key="keyboard-shortcuts">
+              <a onClick={() => this.onOpenShortcuts()}>
+                <i className="fa fa-keyboard-o" /> Keyboard shortcuts
+              </a>
+            </li>
+          )}
 
           <li className="side-menu-header">
             <span className="sidemenu-item-text">{link.text}</span>

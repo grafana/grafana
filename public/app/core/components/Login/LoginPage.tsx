@@ -5,14 +5,15 @@ import LoginCtrl from './LoginCtrl';
 import { LoginForm } from './LoginForm';
 import { ChangePassword } from './ChangePassword';
 import { CSSTransition } from 'react-transition-group';
+import { Branding } from 'app/core/components/Branding/Branding';
 
 export const LoginPage: FC = () => {
   return (
     <div className="login container">
       <div className="login-content">
         <div className="login-branding">
-          <img className="logo-icon" src="public/img/grafana_icon.svg" alt="Grafana" />
-          <div className="logo-wordmark" />
+          <Branding.LogoIcon className="logo-icon" />
+          <Branding.Wordmark className="logo-wordmark" />
         </div>
         <LoginCtrl>
           {({
