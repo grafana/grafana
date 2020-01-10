@@ -2,6 +2,8 @@ import _ from 'lodash';
 import { appEvents, coreModule, NavModelSrv } from 'app/core/core';
 import { getBackendSrv } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
+import { IScope } from 'angular';
+import { promiseToDigest } from '../../core/utils/promiseToDigest';
 
 export class AlertNotificationEditCtrl {
   theForm: any;
@@ -28,6 +30,7 @@ export class AlertNotificationEditCtrl {
 
   /** @ngInject */
   constructor(
+    private $scope: IScope,
     private $routeParams: any,
     private $location: any,
     private $templateCache: any,
@@ -40,35 +43,37 @@ export class AlertNotificationEditCtrl {
       return ['1m', '5m', '10m', '15m', '30m', '1h'];
     };
 
-    getBackendSrv()
-      .get(`/api/alert-notifiers`)
-      .then((notifiers: any) => {
-        this.notifiers = notifiers;
+    promiseToDigest(this.$scope)(
+      getBackendSrv()
+        .get(`/api/alert-notifiers`)
+        .then((notifiers: any) => {
+          this.notifiers = notifiers;
 
-        // add option templates
-        for (const notifier of this.notifiers) {
-          this.$templateCache.put(this.getNotifierTemplateId(notifier.type), notifier.optionsTemplate);
-        }
+          // add option templates
+          for (const notifier of this.notifiers) {
+            this.$templateCache.put(this.getNotifierTemplateId(notifier.type), notifier.optionsTemplate);
+          }
 
-        if (!this.$routeParams.id) {
-          this.navModel.breadcrumbs.push({ text: 'New channel' });
-          this.navModel.node = { text: 'New channel' };
-          return _.defaults(this.model, this.defaults);
-        }
+          if (!this.$routeParams.id) {
+            this.navModel.breadcrumbs.push({ text: 'New channel' });
+            this.navModel.node = { text: 'New channel' };
+            return _.defaults(this.model, this.defaults);
+          }
 
-        return getBackendSrv()
-          .get(`/api/alert-notifications/${this.$routeParams.id}`)
-          .then((result: any) => {
-            this.navModel.breadcrumbs.push({ text: result.name });
-            this.navModel.node = { text: result.name };
-            result.settings = _.defaults(result.settings, this.defaults.settings);
-            return result;
-          });
-      })
-      .then((model: any) => {
-        this.model = model;
-        this.notifierTemplateId = this.getNotifierTemplateId(this.model.type);
-      });
+          return getBackendSrv()
+            .get(`/api/alert-notifications/${this.$routeParams.id}`)
+            .then((result: any) => {
+              this.navModel.breadcrumbs.push({ text: result.name });
+              this.navModel.node = { text: result.name };
+              result.settings = _.defaults(result.settings, this.defaults.settings);
+              return result;
+            });
+        })
+        .then((model: any) => {
+          this.model = model;
+          this.notifierTemplateId = this.getNotifierTemplateId(this.model.type);
+        })
+    );
   }
 
   save() {
@@ -77,39 +82,45 @@ export class AlertNotificationEditCtrl {
     }
 
     if (this.model.id) {
-      getBackendSrv()
-        .put(`/api/alert-notifications/${this.model.id}`, this.model)
-        .then((res: any) => {
-          this.model = res;
-          appEvents.emit(AppEvents.alertSuccess, ['Notification updated']);
-        })
-        .catch((err: any) => {
-          if (err.data && err.data.error) {
-            appEvents.emit(AppEvents.alertError, [err.data.error]);
-          }
-        });
+      promiseToDigest(this.$scope)(
+        getBackendSrv()
+          .put(`/api/alert-notifications/${this.model.id}`, this.model)
+          .then((res: any) => {
+            this.model = res;
+            appEvents.emit(AppEvents.alertSuccess, ['Notification updated']);
+          })
+          .catch((err: any) => {
+            if (err.data && err.data.error) {
+              appEvents.emit(AppEvents.alertError, [err.data.error]);
+            }
+          })
+      );
     } else {
-      getBackendSrv()
-        .post(`/api/alert-notifications`, this.model)
-        .then((res: any) => {
-          appEvents.emit(AppEvents.alertSuccess, ['Notification created']);
-          this.$location.path('alerting/notifications');
-        })
-        .catch((err: any) => {
-          if (err.data && err.data.error) {
-            appEvents.emit(AppEvents.alertError, [err.data.error]);
-          }
-        });
+      promiseToDigest(this.$scope)(
+        getBackendSrv()
+          .post(`/api/alert-notifications`, this.model)
+          .then((res: any) => {
+            appEvents.emit(AppEvents.alertSuccess, ['Notification created']);
+            this.$location.path('alerting/notifications');
+          })
+          .catch((err: any) => {
+            if (err.data && err.data.error) {
+              appEvents.emit(AppEvents.alertError, [err.data.error]);
+            }
+          })
+      );
     }
   }
 
   deleteNotification() {
-    getBackendSrv()
-      .delete(`/api/alert-notifications/${this.model.id}`)
-      .then((res: any) => {
-        this.model = res;
-        this.$location.path('alerting/notifications');
-      });
+    promiseToDigest(this.$scope)(
+      getBackendSrv()
+        .delete(`/api/alert-notifications/${this.model.id}`)
+        .then((res: any) => {
+          this.model = res;
+          this.$location.path('alerting/notifications');
+        })
+    );
   }
 
   getNotifierTemplateId(type: string) {
@@ -133,7 +144,7 @@ export class AlertNotificationEditCtrl {
       settings: this.model.settings,
     };
 
-    getBackendSrv().post(`/api/alert-notifications/test`, payload);
+    promiseToDigest(this.$scope)(getBackendSrv().post(`/api/alert-notifications/test`, payload));
   }
 }
 
