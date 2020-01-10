@@ -94,20 +94,13 @@ exports[`ServerStats Should render table with stats 1`] = `
                   </select>
                 </div>
                 <ul
-                  className="gf-tabs page-header__tabs"
+                  className="css-13jkosq"
                 >
                   <li
-                    className="gf-tabs-item"
+                    className="css-b418eg"
+                    onClick={[Function]}
                   >
-                    <a
-                      className="gf-tabs-link active"
-                      href="Admin"
-                    >
-                      <i
-                        className="icon"
-                      />
-                      Admin
-                    </a>
+                    Admin
                   </li>
                 </ul>
               </nav>
