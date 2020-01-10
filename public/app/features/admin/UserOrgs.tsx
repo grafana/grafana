@@ -258,12 +258,12 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
           </div>
         </div>
         <div className={buttonRowClass}>
-          <button className="btn btn-inverse" onClick={this.onCancel}>
-            Cancel
-          </button>
-          <button className="btn btn-secondary" onClick={this.onAddUserToOrg}>
+          <Forms.Button variant="primary" onClick={this.onAddUserToOrg}>
             Add to organization
-          </button>
+          </Forms.Button>
+          <Forms.Button variant="secondary" onClick={this.onCancel}>
+            Cancel
+          </Forms.Button>
         </div>
       </Modal>
     );
