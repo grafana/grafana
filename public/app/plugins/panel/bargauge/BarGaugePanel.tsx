@@ -14,7 +14,7 @@ import {
   DisplayValueAlignmentFactors,
 } from '@grafana/data';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
-import { BarGauge, VizRepeater } from '@grafana/ui/visualizations';
+import { BarGauge, VizRepeater } from '@grafana/ui/src/visualizations';
 
 export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
   renderValue = (

@@ -9,7 +9,7 @@ import { DataLinksContextMenu } from '@grafana/ui';
 
 // Types
 import { GaugeOptions } from './types';
-import { Gauge, VizRepeater } from '@grafana/ui/visualizations';
+import { Gauge, VizRepeater } from '@grafana/ui/src/visualizations';
 import { FieldDisplay, getFieldDisplayValues, VizOrientation, PanelProps } from '@grafana/data';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 

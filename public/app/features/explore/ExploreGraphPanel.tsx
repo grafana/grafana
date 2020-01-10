@@ -12,7 +12,7 @@ import {
   GraphSeriesTogglerAPI,
   Chart,
 } from '@grafana/ui';
-import { GraphWithLegend } from '@grafana/ui/visualizations';
+import { GraphWithLegend } from '@grafana/ui/src/visualizations';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 

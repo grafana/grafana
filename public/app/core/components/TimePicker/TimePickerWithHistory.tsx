@@ -1,6 +1,6 @@
 import React from 'react';
 import { TimeRange, isDateTime } from '@grafana/data';
-import { Props as TimePickerProps, TimePicker } from '@grafana/ui/components/TimePicker/TimePicker';
+import { Props as TimePickerProps, TimePicker } from '@grafana/ui/src/components/TimePicker/TimePicker';
 import { LocalStorageValueProvider } from '../LocalStorageValueProvider';
 
 const LOCAL_STORAGE_KEY = 'grafana.dashboard.timepicker.history';

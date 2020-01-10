@@ -6,7 +6,7 @@ import React, { PureComponent } from 'react';
 import { PanelEditorProps, FieldConfig } from '@grafana/data';
 import { Switch, LegendOptions, PanelOptionsGrid, PanelOptionsGroup, FieldPropertiesEditor, Select } from '@grafana/ui';
 
-import { GraphTooltipOptions } from '@grafana/ui/visualizations';
+import { GraphTooltipOptions } from '@grafana/ui/src/visualizations';
 import { Options, GraphOptions } from './types';
 import { GraphLegendEditor } from './GraphLegendEditor';
 

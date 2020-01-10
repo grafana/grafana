@@ -1,5 +1,5 @@
 import { LegendOptions } from '@grafana/ui';
-import { GraphTooltipOptions } from '@grafana/ui/visualizations';
+import { GraphTooltipOptions } from '@grafana/ui/src/visualizations';
 import { YAxis, FieldDisplayOptions } from '@grafana/data';
 
 import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';

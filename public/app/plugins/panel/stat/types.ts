@@ -1,6 +1,6 @@
 import { SingleStatBaseOptions } from '@grafana/ui';
 import { VizOrientation, ReducerID, FieldDisplayOptions, SelectableValue, ThresholdsMode } from '@grafana/data';
-import { BigValueGraphMode, BigValueColorMode, BigValueJustifyMode } from '@grafana/ui/visualizations';
+import { BigValueGraphMode, BigValueColorMode, BigValueJustifyMode } from '@grafana/ui/src/visualizations';
 
 // Structure copied from angular
 export interface StatPanelOptions extends SingleStatBaseOptions {

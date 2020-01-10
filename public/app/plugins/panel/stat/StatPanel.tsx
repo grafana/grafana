@@ -7,7 +7,7 @@ import { config } from 'app/core/config';
 // Types
 import { StatPanelOptions } from './types';
 import { DataLinksContextMenu } from '@grafana/ui';
-import { VizRepeater, BigValue, BigValueSparkline, BigValueGraphMode } from '@grafana/ui/visualizations';
+import { VizRepeater, BigValue, BigValueSparkline, BigValueGraphMode } from '@grafana/ui/src/visualizations';
 
 import {
   PanelProps,
