@@ -14,7 +14,7 @@ describe('HistoryListCtrl', () => {
 
   let historySrv: any;
   let $rootScope: any;
-  const $scope: IScope = {} as IScope;
+  const $scope: IScope = ({ $evalAsync: jest.fn() } as any) as IScope;
   let historyListCtrl: any;
   beforeEach(() => {
     historySrv = {
