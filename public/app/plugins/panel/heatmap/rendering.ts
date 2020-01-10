@@ -362,13 +362,11 @@ export class HeatmapRenderer {
         // Try to format numeric tick labels
         valueFormatted = tickValueFormatter(decimals)(_.toNumber(valueFormatted));
       }
-      console.log('valueFormatted', valIndex, valueFormatted);
       return valueFormatted;
     }
 
     const tsBucketsFormatted = _.map(tsBuckets, (v, i) => tickFormatter(i));
     this.data.tsBucketsFormatted = tsBucketsFormatted;
-    console.log('tsBucketsFormatted', tsBucketsFormatted);
 
     const yAxis = d3
       .axisLeft(this.yScale)
