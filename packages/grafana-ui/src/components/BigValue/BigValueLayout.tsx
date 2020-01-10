@@ -162,7 +162,7 @@ export abstract class BigValueLayout {
   renderChart(): JSX.Element | null {
     const { sparkline } = this.props;
 
-    if (!sparkline) {
+    if (!sparkline && sparkline.data.length) {
       return null;
     }
 
@@ -182,7 +182,16 @@ export abstract class BigValueLayout {
       },
     };
 
-    console.log(this.chartHeight);
+    // Having the last data point align with the edge of the panel looks good
+    // So if it's close adjust time.max to the last data point time
+    const timeDelta = sparkline.xMax - sparkline.xMin;
+    const lastTimeDiffFromMax = Math.abs(sparkline.xMax - data[data.length - 1].time);
+
+    // if last data point is just 5% or lower from the edge adjust it
+    if (lastTimeDiffFromMax / timeDelta < 0.05) {
+      scales.time.max = data[data.length - 1].time;
+    }
+
     return (
       <Chart
         height={this.chartHeight}
