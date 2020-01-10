@@ -1,5 +1,6 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { NavModelSrv } from 'app/core/core';
+import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 
 export default class AdminEditOrgCtrl {
   /** @ngInject */
@@ -8,13 +9,12 @@ export default class AdminEditOrgCtrl {
       $scope.navModel = navModelSrv.getNav('admin', 'global-orgs', 0);
 
       if ($routeParams.id) {
-        $scope.getOrg($routeParams.id);
-        $scope.getOrgUsers($routeParams.id);
+        promiseToDigest($scope)(Promise.all([$scope.getOrg($routeParams.id), $scope.getOrgUsers($routeParams.id)]));
       }
     };
 
     $scope.getOrg = (id: number) => {
-      getBackendSrv()
+      return getBackendSrv()
         .get('/api/orgs/' + id)
         .then((org: any) => {
           $scope.org = org;
@@ -22,7 +22,7 @@ export default class AdminEditOrgCtrl {
     };
 
     $scope.getOrgUsers = (id: number) => {
-      getBackendSrv()
+      return getBackendSrv()
         .get('/api/orgs/' + id + '/users')
         .then((orgUsers: any) => {
           $scope.orgUsers = orgUsers;
@@ -34,11 +34,13 @@ export default class AdminEditOrgCtrl {
         return;
       }
 
-      getBackendSrv()
-        .put('/api/orgs/' + $scope.org.id, $scope.org)
-        .then(() => {
-          $location.path('/admin/orgs');
-        });
+      promiseToDigest($scope)(
+        getBackendSrv()
+          .put('/api/orgs/' + $scope.org.id, $scope.org)
+          .then(() => {
+            $location.path('/admin/orgs');
+          })
+      );
     };
 
     $scope.updateOrgUser = (orgUser: any) => {
@@ -46,11 +48,11 @@ export default class AdminEditOrgCtrl {
     };
 
     $scope.removeOrgUser = (orgUser: any) => {
-      getBackendSrv()
-        .delete('/api/orgs/' + orgUser.orgId + '/users/' + orgUser.userId)
-        .then(() => {
-          $scope.getOrgUsers($scope.org.id);
-        });
+      promiseToDigest($scope)(
+        getBackendSrv()
+          .delete('/api/orgs/' + orgUser.orgId + '/users/' + orgUser.userId)
+          .then(() => $scope.getOrgUsers($scope.org.id))
+      );
     };
 
     $scope.init();
