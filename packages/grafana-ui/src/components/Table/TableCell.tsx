@@ -1,10 +1,8 @@
 import React, { FC } from 'react';
-import { Cell, CellProps, TableCellProps } from 'react-table';
+import { Cell } from 'react-table';
 import { Field } from '@grafana/data';
-import { BackgroundColoredCell, DefaultCell } from './DefaultCell';
-import { BarGaugeCell } from './BarGaugeCell';
 import { getTextAlign } from './utils';
-import { TableCellDisplayMode, TableFieldOptions, TableFilterActionCallback } from './types';
+import { TableFilterActionCallback } from './types';
 import { TableStyles } from './styles';
 
 interface Props {
@@ -31,30 +29,9 @@ export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellClick }) 
     cellProps.style.textAlign = fieldTextAlign;
   }
 
-  cell.column.Cell = getCellDisplayType(cellProps, field, tableStyles);
-
   return (
     <div {...cellProps} onClick={onClick}>
-      {cell.render('Cell')}
+      {cell.render('Cell', { field, tableStyles })}
     </div>
   );
 };
-
-function getCellDisplayType(cellProps: TableCellProps, field: Field, tableStyles: TableStyles) {
-  let Cell = (cellProps: CellProps<any>) => <DefaultCell field={field} {...cellProps} tableStyles={tableStyles} />;
-
-  const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
-  switch (fieldTableOptions.displayMode) {
-    case TableCellDisplayMode.ColorBackground:
-      Cell = (cellProps: CellProps<any>) => (
-        <BackgroundColoredCell field={field} {...cellProps} tableStyles={tableStyles} />
-      );
-      break;
-    case TableCellDisplayMode.LcdGauge:
-    case TableCellDisplayMode.GradientGauge:
-      Cell = (cellProps: CellProps<any>) => <BarGaugeCell field={field} {...cellProps} tableStyles={tableStyles} />;
-      break;
-  }
-
-  return Cell;
-}

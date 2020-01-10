@@ -1,7 +1,11 @@
 import { TextAlignProperty } from 'csstype';
 import { DataFrame, Field, FieldType } from '@grafana/data';
-import { TableRow, TableFieldOptions } from './types';
 import { Column } from 'react-table';
+import { DefaultCell } from './DefaultCell';
+import { BarGaugeCell } from './BarGaugeCell';
+import { BackgroundColoredCell } from './BackgroundColorCell';
+import { TableRow, TableFieldOptions, TableCellDisplayMode } from './types';
+import { ReactNode } from 'react';
 
 export function getTableRows(data: DataFrame): TableRow[] {
   const tableData = [];
@@ -50,7 +54,10 @@ export function getColumns(data: DataFrame, availableWidth: number): Column[] {
       fieldCountWithoutWidth -= 1;
     }
 
+    const Cell = getCellComponent(fieldTableOptions.displayMode);
+
     columns.push({
+      Cell,
       Header: field.name,
       accessor: field.name,
       width: fieldTableOptions.width,
@@ -66,4 +73,16 @@ export function getColumns(data: DataFrame, availableWidth: number): Column[] {
   }
 
   return columns;
+}
+
+function getCellComponent(displayMode: TableCellDisplayMode) {
+  switch (displayMode) {
+    case TableCellDisplayMode.ColorBackground:
+      return BackgroundColoredCell;
+    case TableCellDisplayMode.LcdGauge:
+    case TableCellDisplayMode.GradientGauge:
+      return BarGaugeCell;
+    default:
+      return DefaultCell;
+  }
 }

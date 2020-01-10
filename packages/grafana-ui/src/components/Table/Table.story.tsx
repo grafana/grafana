@@ -5,13 +5,15 @@ import { number } from '@storybook/addon-knobs';
 import { useTheme } from '../../themes';
 import mdx from './Table.mdx';
 import {
+  applyFieldOverrides,
+  ConfigOverrideRule,
   DataFrame,
-  MutableDataFrame,
+  FieldMatcherID,
   FieldType,
   GrafanaTheme,
-  applyFieldOverrides,
-  FieldMatcherID,
-  ConfigOverrideRule,
+  MutableDataFrame,
+  ThresholdsConfig,
+  ThresholdsMode,
 } from '@grafana/data';
 
 export default {
@@ -118,16 +120,19 @@ export const BarGaugeCell = () => {
   );
 };
 
-const defaultThresholds = [
-  {
-    color: 'blue',
-    value: -Infinity,
-  },
-  {
-    color: 'green',
-    value: 20,
-  },
-];
+const defaultThresholds: ThresholdsConfig = {
+  steps: [
+    {
+      color: 'blue',
+      value: -Infinity,
+    },
+    {
+      color: 'green',
+      value: 20,
+    },
+  ],
+  mode: ThresholdsMode.Absolute,
+};
 
 export const ColoredCells = () => {
   const theme = useTheme();

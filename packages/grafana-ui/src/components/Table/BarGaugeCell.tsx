@@ -41,11 +41,7 @@ export const BarGaugeCell: FC<ReactTableCellProps> = props => {
 
   let width;
   if (column.width) {
-    if (typeof column.width === 'string') {
-      width = parseFloat(column.width) - tableStyles.cellPadding * 2;
-    } else {
-      width = column.width - tableStyles.cellPadding * 2;
-    }
+    width = (column.width as number) - tableStyles.cellPadding * 2;
   } else {
     width = tableStyles.cellPadding * 2;
   }
