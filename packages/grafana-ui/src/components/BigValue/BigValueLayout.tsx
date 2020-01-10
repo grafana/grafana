@@ -143,7 +143,7 @@ export abstract class BigValueLayout {
         panelStyles.background = `linear-gradient(120deg, ${bgColor2}, ${bgColor3})`;
         break;
       case BigValueColorMode.Value:
-        panelStyles.background = `${theme.colors.dark4}`;
+        panelStyles.background = `${theme.colors.panelBg}`;
         break;
     }
 
@@ -169,6 +169,12 @@ export abstract class BigValueLayout {
     const scales = {
       time: {
         type: 'time',
+        min: sparkline.xMin,
+        max: sparkline.xMax,
+      },
+      value: {
+        min: sparkline.yMin,
+        max: sparkline.yMax,
       },
     };
 

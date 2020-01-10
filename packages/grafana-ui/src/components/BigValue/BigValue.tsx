@@ -9,8 +9,10 @@ import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDi
 
 export interface BigValueSparkline {
   data: GraphSeriesValue[][];
-  minX: number;
-  maxX: number;
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
   highlightIndex?: number;
 }
 
