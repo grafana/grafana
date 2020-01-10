@@ -7,6 +7,7 @@ import { DashboardSrv } from '../../services/DashboardSrv';
 import { PanelEvents } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
 
 export type DashboardLink = { tags: any; target: string; keepTime: any; includeVars: any };
 
@@ -148,26 +149,28 @@ export class DashLinksContainerCtrl {
     }
 
     $scope.searchDashboards = (link: DashboardLink, limit: any) => {
-      return backendSrv.search({ tag: link.tags, limit: limit }).then(results => {
-        return _.reduce(
-          results,
-          (memo, dash) => {
-            // do not add current dashboard
-            if (dash.id !== currentDashId) {
-              memo.push({
-                title: dash.title,
-                url: dash.url,
-                target: link.target === '_self' ? '' : link.target,
-                icon: 'fa fa-th-large',
-                keepTime: link.keepTime,
-                includeVars: link.includeVars,
-              });
-            }
-            return memo;
-          },
-          []
-        );
-      });
+      return promiseToDigest($scope)(
+        backendSrv.search({ tag: link.tags, limit: limit }).then(results => {
+          return _.reduce(
+            results,
+            (memo, dash) => {
+              // do not add current dashboard
+              if (dash.id !== currentDashId) {
+                memo.push({
+                  title: dash.title,
+                  url: dash.url,
+                  target: link.target === '_self' ? '' : link.target,
+                  icon: 'fa fa-th-large',
+                  keepTime: link.keepTime,
+                  includeVars: link.includeVars,
+                });
+              }
+              return memo;
+            },
+            []
+          );
+        })
+      );
     };
 
     $scope.fillDropdown = (link: { searchHits: any }) => {
