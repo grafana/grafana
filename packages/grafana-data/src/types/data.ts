@@ -9,6 +9,8 @@ export enum LoadingState {
 }
 
 export interface QueryResultMeta {
+  [key: string]: any;
+
   // Match the result to the query
   requestId?: string;
 
