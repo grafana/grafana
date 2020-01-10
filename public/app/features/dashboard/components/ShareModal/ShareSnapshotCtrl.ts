@@ -1,14 +1,22 @@
-import angular, { ILocationService } from 'angular';
+import angular, { ILocationService, IScope } from 'angular';
 import _ from 'lodash';
 import { getBackendSrv } from '@grafana/runtime';
+
 import { TimeSrv } from '../../services/TimeSrv';
 import { DashboardModel } from '../../state/DashboardModel';
 import { PanelModel } from '../../state/PanelModel';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
 
 export class ShareSnapshotCtrl {
   /** @ngInject */
-  constructor($scope: any, $rootScope: GrafanaRootScope, $location: ILocationService, $timeout: any, timeSrv: TimeSrv) {
+  constructor(
+    $scope: IScope & Record<string, any>,
+    $rootScope: GrafanaRootScope,
+    $location: ILocationService,
+    $timeout: any,
+    timeSrv: TimeSrv
+  ) {
     $scope.snapshot = {
       name: $scope.dashboard.title,
       expires: 0,
@@ -31,12 +39,14 @@ export class ShareSnapshotCtrl {
     ];
 
     $scope.init = () => {
-      getBackendSrv()
-        .get('/api/snapshot/shared-options')
-        .then((options: { [x: string]: any }) => {
-          $scope.sharingButtonText = options['externalSnapshotName'];
-          $scope.externalEnabled = options['externalEnabled'];
-        });
+      promiseToDigest($scope)(
+        getBackendSrv()
+          .get('/api/snapshot/shared-options')
+          .then((options: { [x: string]: any }) => {
+            $scope.sharingButtonText = options['externalSnapshotName'];
+            $scope.externalEnabled = options['externalEnabled'];
+          })
+      );
     };
 
     $scope.apiUrl = '/api/snapshots';
@@ -70,19 +80,21 @@ export class ShareSnapshotCtrl {
         external: external,
       };
 
-      getBackendSrv()
-        .post($scope.apiUrl, cmdData)
-        .then(
-          (results: { deleteUrl: any; url: any }) => {
-            $scope.loading = false;
-            $scope.deleteUrl = results.deleteUrl;
-            $scope.snapshotUrl = results.url;
-            $scope.step = 2;
-          },
-          () => {
-            $scope.loading = false;
-          }
-        );
+      promiseToDigest($scope)(
+        getBackendSrv()
+          .post($scope.apiUrl, cmdData)
+          .then(
+            (results: { deleteUrl: any; url: any }) => {
+              $scope.loading = false;
+              $scope.deleteUrl = results.deleteUrl;
+              $scope.snapshotUrl = results.url;
+              $scope.step = 2;
+            },
+            () => {
+              $scope.loading = false;
+            }
+          )
+      );
     };
 
     $scope.getSnapshotUrl = () => {
@@ -149,11 +161,13 @@ export class ShareSnapshotCtrl {
     };
 
     $scope.deleteSnapshot = () => {
-      getBackendSrv()
-        .get($scope.deleteUrl)
-        .then(() => {
-          $scope.step = 3;
-        });
+      promiseToDigest($scope)(
+        getBackendSrv()
+          .get($scope.deleteUrl)
+          .then(() => {
+            $scope.step = 3;
+          })
+      );
     };
   }
 }
