@@ -1,6 +1,7 @@
 import config from 'app/core/config';
 import coreModule from '../core_module';
 import { getBackendSrv } from '@grafana/runtime/src/services';
+import { promiseToDigest } from '../utils/promiseToDigest';
 
 export class SignUpCtrl {
   /** @ngInject */
@@ -35,12 +36,14 @@ export class SignUpCtrl {
       },
     };
 
-    getBackendSrv()
-      .get('/api/user/signup/options')
-      .then((options: any) => {
-        $scope.verifyEmailEnabled = options.verifyEmailEnabled;
-        $scope.autoAssignOrg = options.autoAssignOrg;
-      });
+    promiseToDigest($scope)(
+      getBackendSrv()
+        .get('/api/user/signup/options')
+        .then((options: any) => {
+          $scope.verifyEmailEnabled = options.verifyEmailEnabled;
+          $scope.autoAssignOrg = options.autoAssignOrg;
+        })
+    );
   }
 
   submit() {
