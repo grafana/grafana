@@ -103,7 +103,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     }
   }
 
-  convertResponseToDataFrames(result: any): DataQueryResponse {
+  convertResponseToDataFrames = (result: any): DataQueryResponse => {
     const data: DataFrame[] = [];
     if (!result || !result.data) {
       return { data };
@@ -124,14 +124,17 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       // Metrictank metadata
       if (s.meta) {
         frame.meta = {
-          metrictank: s.meta, // array of metadata
-          metrictankReq: result.data.meta, // info on the request
+          datasource: this.name,
+          custom: {
+            request: result.data.meta, // info for the whole request
+            info: s.meta, // Array of metadata
+          },
         };
       }
       data.push(frame);
     }
     return { data };
-  }
+  };
 
   parseTags(tagString: string) {
     let tags: string[] = [];
