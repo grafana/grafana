@@ -55,7 +55,7 @@
                 "value": 80
               }
             ],
-            "unit": "percent"
+            "unit": "areaM2"
           },
           "override": {},
           "values": false
@@ -233,7 +233,7 @@
                 "value": 80
               }
             ],
-            "unit": "percent"
+            "unit": "areaM2"
           },
           "override": {},
           "values": false
@@ -316,7 +316,7 @@
                 "value": 80
               }
             ],
-            "unit": "percent"
+            "unit": "areaM2"
           },
           "override": {},
           "values": false
@@ -402,7 +402,7 @@
                 "value": 80
               }
             ],
-            "unit": "percent"
+            "unit": "areaM2"
           },
           "override": {},
           "values": false
@@ -488,7 +488,7 @@
                 "value": 80
               }
             ],
-            "unit": "percent"
+            "unit": "areaM2"
           },
           "override": {},
           "values": false
