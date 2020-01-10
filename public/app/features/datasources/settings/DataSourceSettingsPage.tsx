@@ -60,7 +60,7 @@ interface State {
 
 export class DataSourceSettingsPage extends PureComponent<Props, State> {
   importDataSourcePlugin: typeof importDataSourcePlugin;
-  importDataSourcePluginPromise: CancelablePromise<any> = null;
+  importPluginPromise: CancelablePromise<any> = null;
 
   constructor(props: Props) {
     super(props);
@@ -68,29 +68,21 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     this.state = {
       plugin: props.plugin,
     };
+
+    this.importDataSourcePlugin = importDataSourcePlugin;
   }
 
   async loadPlugin(pluginId?: string) {
     const { dataSourceMeta } = this.props;
-    let importedPlugin: GenericDataSourcePlugin;
 
-    this.importDataSourcePluginPromise = makePromiseCancelable(this.importDataSourcePlugin(dataSourceMeta));
-    this.importDataSourcePluginPromise.promise
-      .then(() => {
-        this.setState({ plugin: importedPlugin });
-      })
-      .catch(e => {
-        if (e.isCanceled) {
-          console.warn('Cloud Watch ConfigEditor has unmounted, intialization was canceled');
-        } else {
-          console.log('Failed to import plugin module', e);
-        }
-      });
+    try {
+      await this.importPlugin(makePromiseCancelable(this.importDataSourcePlugin(dataSourceMeta)));
+    } catch (e) {
+      console.log('Failed to import plugin module', e);
+    }
   }
 
   async componentDidMount() {
-    this.importDataSourcePlugin = importDataSourcePlugin;
-
     const { loadDataSource, pageId } = this.props;
     if (isNaN(pageId)) {
       this.setState({ loadError: 'Invalid ID' });
@@ -106,11 +98,18 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     }
   }
 
-  componentWillUnmount() {
-    if (this.importDataSourcePluginPromise) {
-      this.importDataSourcePluginPromise.cancel();
-    }
-  }
+  importPlugin = (cancelablePromise: CancelablePromise<any>) => {
+    this.importPluginPromise = cancelablePromise;
+    this.importPluginPromise.promise
+      .then((importedPlugin: GenericDataSourcePlugin) => {
+        this.setState({ plugin: importedPlugin });
+      })
+      .catch(({ isCanceled }) => {
+        if (isCanceled) {
+          console.warn('DataSourceSettingsPage has unmounted, intialization was canceled');
+        }
+      });
+  };
 
   onSubmit = async (evt: React.FormEvent<HTMLFormElement>) => {
     evt.preventDefault();
