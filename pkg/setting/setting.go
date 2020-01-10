@@ -327,9 +327,7 @@ func applyEnvVariableOverrides(file *ini.File) error {
 	appliedEnvOverrides = make([]string, 0)
 	for _, section := range file.Sections() {
 		for _, key := range section.Keys() {
-			sectionName := strings.ToUpper(strings.Replace(section.Name(), ".", "_", -1))
-			keyName := strings.ToUpper(strings.Replace(key.Name(), ".", "_", -1))
-			envKey := fmt.Sprintf("GF_%s_%s", sectionName, keyName)
+			envKey := envKey(section.Name(), key.Name())
 			envValue := os.Getenv(envKey)
 
 			if len(envValue) > 0 {
@@ -357,6 +355,13 @@ func applyEnvVariableOverrides(file *ini.File) error {
 	}
 
 	return nil
+}
+
+func envKey(sectionName string, keyName string) string {
+	sN := strings.ToUpper(strings.Replace(sectionName, ".", "_", -1))
+	kN := strings.ToUpper(strings.Replace(keyName, ".", "_", -1))
+	envKey := fmt.Sprintf("GF_%s_%s", sN, kN)
+	return envKey
 }
 
 func applyCommandLineDefaultProperties(props map[string]string, file *ini.File) {
@@ -1112,6 +1117,22 @@ func (cfg *Cfg) LogConfigSources() {
 	cfg.Logger.Info("Path Plugins", "path", PluginsPath)
 	cfg.Logger.Info("Path Provisioning", "path", cfg.ProvisioningPath)
 	cfg.Logger.Info("App mode " + Env)
+}
+
+type DynamicSection struct {
+	section *ini.Section
+}
+
+func (s *DynamicSection) Key(k string) *ini.Key {
+	envKey := envKey(s.section.Name(), k)
+	envValue := os.Getenv(envKey)
+	key := s.section.Key(k)
+	key.SetValue(envValue)
+	return key
+}
+
+func (cfg *Cfg) DynamicSection(s string) *DynamicSection {
+	return &DynamicSection{cfg.Raw.Section(s)}
 }
 
 func IsExpressionsEnabled() bool {
