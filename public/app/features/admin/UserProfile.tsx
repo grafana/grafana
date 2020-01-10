@@ -115,7 +115,7 @@ export class UserProfile extends PureComponent<Props, State> {
                 />
                 <UserProfileRow
                   label="Password"
-                  value="******"
+                  value="********"
                   inputType="password"
                   locked={user.isExternal}
                   lockMessage={lockMessage}
@@ -205,11 +205,16 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
   };
 
   onEditClick = () => {
-    this.setState({ editing: true }, this.focusInput);
+    if (this.props.inputType === 'password') {
+      // Reset value for password field
+      this.setState({ editing: true, value: '' }, this.focusInput);
+    } else {
+      this.setState({ editing: true }, this.focusInput);
+    }
   };
 
   onCancelClick = () => {
-    this.setState({ editing: false });
+    this.setState({ editing: false, value: this.props.value || '' });
   };
 
   onInputChange = (event: React.ChangeEvent<HTMLInputElement>, status?: InputStatus) => {
@@ -241,7 +246,8 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
   };
 
   render() {
-    const { label, value, locked, lockMessage, inputType } = this.props;
+    const { label, locked, lockMessage, inputType } = this.props;
+    const { value } = this.state;
     const labelClass = cx(
       'width-16',
       css`
@@ -268,7 +274,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
               inputRef={this.setInputElem}
             />
           ) : (
-            <span>{value}</span>
+            <span>{this.props.value}</span>
           )}
         </td>
         <td>
