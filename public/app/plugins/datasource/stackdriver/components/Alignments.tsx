@@ -1,21 +1,16 @@
 import React, { FC } from 'react';
 
-import { Segment } from '@grafana/ui';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 import { SelectableValue } from '@grafana/data';
+import { Segment } from '@grafana/ui';
 
 export interface Props {
   onChange: (perSeriesAligner: any) => void;
-  templateSrv: TemplateSrv;
+  templateVariableOptions: Array<SelectableValue<string>>;
   alignOptions: Array<SelectableValue<string>>;
   perSeriesAligner: string;
 }
 
-export const Alignments: FC<Props> = ({ perSeriesAligner, templateSrv, onChange, alignOptions }) => {
-  const templateVariableOptions = templateSrv.variables.map(v => ({
-    label: `$${v.name}`,
-    value: `$${v.name}`,
-  }));
+export const Alignments: FC<Props> = ({ perSeriesAligner, templateVariableOptions, onChange, alignOptions }) => {
   return (
     <>
       <div className="gf-form-group">

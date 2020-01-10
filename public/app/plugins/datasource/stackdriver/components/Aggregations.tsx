@@ -1,14 +1,13 @@
 import React from 'react';
 import _ from 'lodash';
 
+import { SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';
 import { getAggregationOptionsByMetric } from '../functions';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 import { ValueTypes, MetricKind } from '../constants';
 
 export interface Props {
   onChange: (metricDescriptor: any) => void;
-  templateSrv: TemplateSrv;
   metricDescriptor: {
     valueType: string;
     metricKind: string;
@@ -16,6 +15,7 @@ export interface Props {
   crossSeriesReducer: string;
   groupBys: string[];
   children?: (renderProps: any) => JSX.Element;
+  templateVariableOptions: Array<SelectableValue<string>>;
 }
 
 export interface State {
@@ -59,11 +59,7 @@ export class Aggregations extends React.Component<Props, State> {
 
   render() {
     const { displayAdvancedOptions, aggOptions } = this.state;
-    const { templateSrv, onChange, crossSeriesReducer } = this.props;
-    const templateVariableOptions = templateSrv.variables.map(v => ({
-      label: `$${v.name}`,
-      value: `$${v.name}`,
-    }));
+    const { templateVariableOptions, onChange, crossSeriesReducer } = this.props;
 
     return (
       <>

@@ -1,16 +1,18 @@
 import React from 'react';
 import _ from 'lodash';
 
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { SelectableValue } from '@grafana/data';
 import StackdriverDatasource from '../datasource';
 import appEvents from 'app/core/app_events';
 import { Segment } from '@grafana/ui';
 import { MetricDescriptor } from '../types';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CoreEvents } from 'app/types';
 
 export interface Props {
   onChange: (metricDescriptor: MetricDescriptor) => void;
   templateSrv: TemplateSrv;
+  templateVariableOptions: Array<SelectableValue<string>>;
   datasource: StackdriverDatasource;
   defaultProject: string;
   metricType: string;
@@ -106,7 +108,7 @@ export class Metrics extends React.Component<Props, State> {
 
   onServiceChange = ({ value: service }: any) => {
     const { metricDescriptors } = this.state;
-    const { templateSrv, metricType } = this.props;
+    const { metricType, templateSrv } = this.props;
 
     const metrics = metricDescriptors
       .filter(m => m.service === templateSrv.replace(service))
@@ -139,23 +141,9 @@ export class Metrics extends React.Component<Props, State> {
     return services.length > 0 ? _.uniqBy(services, s => s.value) : [];
   }
 
-  getTemplateVariablesGroup() {
-    return {
-      label: 'Template Variables',
-      options: this.props.templateSrv.variables.map(v => ({
-        label: `$${v.name}`,
-        value: `$${v.name}`,
-      })),
-    };
-  }
-
   render() {
     const { services, service, metrics } = this.state;
-    const { metricType, templateSrv } = this.props;
-    const templateVariableOptions = templateSrv.variables.map(v => ({
-      label: `$${v.name}`,
-      value: `$${v.name}`,
-    }));
+    const { metricType, templateVariableOptions } = this.props;
 
     return (
       <>

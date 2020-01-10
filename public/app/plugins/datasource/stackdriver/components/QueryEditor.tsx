@@ -20,6 +20,7 @@ export interface Props {
 }
 
 interface State extends StackdriverQuery {
+  variableOptions: Array<SelectableValue<string>>;
   variableOptionGroup: SelectableValue<string>;
   alignOptions: Array<SelectableValue<string>>;
   lastQuery: string;
@@ -49,6 +50,7 @@ export const DefaultTarget: State = {
   usedAlignmentPeriod: '',
   labels: {},
   variableOptionGroup: {},
+  variableOptions: [],
 };
 
 export class QueryEditor extends React.Component<Props, State> {
@@ -68,6 +70,7 @@ export class QueryEditor extends React.Component<Props, State> {
       alignOptions,
       perSeriesAligner,
       variableOptionGroup,
+      variableOptions: variableOptionGroup.options,
     });
 
     datasource.getLabels(target.metricType, target.refId, target.groupBys).then(labels => this.setState({ labels }));
@@ -164,15 +167,17 @@ export class QueryEditor extends React.Component<Props, State> {
       lastQueryError,
       labels,
       variableOptionGroup,
+      variableOptions,
     } = this.state;
     const { datasource, templateSrv } = this.props;
 
     return (
       <>
         <Metrics
+          templateSrv={templateSrv}
           defaultProject={defaultProject}
           metricType={metricType}
-          templateSrv={templateSrv}
+          templateVariableOptions={variableOptions}
           datasource={datasource}
           onChange={this.onMetricTypeChange}
         >
@@ -192,7 +197,7 @@ export class QueryEditor extends React.Component<Props, State> {
               />
               <Aggregations
                 metricDescriptor={metric}
-                templateSrv={templateSrv}
+                templateVariableOptions={variableOptions}
                 crossSeriesReducer={crossSeriesReducer}
                 groupBys={groupBys}
                 onChange={value => this.onPropertyChange('crossSeriesReducer', value)}
@@ -201,7 +206,7 @@ export class QueryEditor extends React.Component<Props, State> {
                   displayAdvancedOptions && (
                     <Alignments
                       alignOptions={alignOptions}
-                      templateSrv={templateSrv}
+                      templateVariableOptions={variableOptions}
                       perSeriesAligner={perSeriesAligner}
                       onChange={value => this.onPropertyChange('perSeriesAligner', value)}
                     />
@@ -210,6 +215,7 @@ export class QueryEditor extends React.Component<Props, State> {
               </Aggregations>
               <AlignmentPeriods
                 templateSrv={templateSrv}
+                templateVariableOptions={variableOptions}
                 alignmentPeriod={alignmentPeriod}
                 perSeriesAligner={perSeriesAligner}
                 usedAlignmentPeriod={usedAlignmentPeriod}

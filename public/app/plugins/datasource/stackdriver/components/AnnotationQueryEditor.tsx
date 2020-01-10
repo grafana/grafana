@@ -5,11 +5,9 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { SelectableValue } from '@grafana/data';
 
 import StackdriverDatasource from '../datasource';
-import { Metrics } from './Metrics';
-import { Filters } from './Filters';
+import { Metrics, Filters, AnnotationsHelp } from './';
 import { toOption } from '../functions';
 import { AnnotationTarget, MetricDescriptor } from '../types';
-import { AnnotationsHelp } from './AnnotationsHelp';
 
 export interface Props {
   onQueryChange: (target: AnnotationTarget) => void;
@@ -20,6 +18,7 @@ export interface Props {
 
 interface State extends AnnotationTarget {
   variableOptionGroup: SelectableValue<string>;
+  variableOptions: Array<SelectableValue<string>>;
   labels: any;
   [key: string]: any;
 }
@@ -35,6 +34,7 @@ const DefaultTarget: State = {
   text: '',
   labels: {},
   variableOptionGroup: {},
+  variableOptions: [],
 };
 
 export class AnnotationQueryEditor extends React.Component<Props, State> {
@@ -49,6 +49,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
 
     this.setState({
       variableOptionGroup,
+      variableOptions: variableOptionGroup.options,
       ...target,
     });
 
@@ -78,7 +79,16 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
   }
 
   render() {
-    const { defaultProject, metricType, filters, title, text, variableOptionGroup, labels } = this.state;
+    const {
+      defaultProject,
+      metricType,
+      filters,
+      title,
+      text,
+      variableOptionGroup,
+      labels,
+      variableOptions,
+    } = this.state;
     const { datasource } = this.props;
 
     return (
@@ -88,6 +98,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
           metricType={metricType}
           templateSrv={datasource.templateSrv}
           datasource={datasource}
+          templateVariableOptions={variableOptions}
           onChange={metric => this.onMetricTypeChange(metric)}
         >
           {metric => (
