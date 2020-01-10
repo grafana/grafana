@@ -66,7 +66,7 @@ export const getAlignmentPickerData = (
 export const labelsToGroupedOptions = (groupBys: string[]) => {
   const groups = groupBys.reduce((acc: any, curr: string) => {
     const arr = curr.split('.').map(_.startCase);
-    const group = (arr.length == 2 ? arr : _.initial(arr)).join(' ');
+    const group = (arr.length === 2 ? arr : _.initial(arr)).join(' ');
     const option = {
       value: curr,
       label: curr,
