@@ -5,7 +5,6 @@ import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { BackgroundColoredCell } from './BackgroundColorCell';
 import { TableRow, TableFieldOptions, TableCellDisplayMode } from './types';
-import { ReactNode } from 'react';
 
 export function getTableRows(data: DataFrame): TableRow[] {
   const tableData = [];
