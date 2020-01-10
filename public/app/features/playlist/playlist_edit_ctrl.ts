@@ -1,10 +1,11 @@
 import _ from 'lodash';
 import coreModule from '../../core/core_module';
-import { ILocationService } from 'angular';
+import { ILocationService, IScope } from 'angular';
 import { getBackendSrv } from '@grafana/runtime';
 import { NavModelSrv } from 'app/core/nav_model_srv';
 import { AppEventEmitter } from 'app/types';
 import { AppEvents } from '@grafana/data';
+import { promiseToDigest } from '../../core/utils/promiseToDigest';
 
 export interface PlaylistItem {
   value: any;
@@ -29,7 +30,7 @@ export class PlaylistEditCtrl {
 
   /** @ngInject */
   constructor(
-    private $scope: AppEventEmitter,
+    private $scope: IScope & AppEventEmitter,
     private $location: ILocationService,
     $route: any,
     navModelSrv: NavModelSrv
@@ -40,17 +41,21 @@ export class PlaylistEditCtrl {
     if ($route.current.params.id) {
       const playlistId = $route.current.params.id;
 
-      getBackendSrv()
-        .get('/api/playlists/' + playlistId)
-        .then((result: any) => {
-          this.playlist = result;
-        });
+      promiseToDigest(this.$scope)(
+        getBackendSrv()
+          .get('/api/playlists/' + playlistId)
+          .then((result: any) => {
+            this.playlist = result;
+          })
+      );
 
-      getBackendSrv()
-        .get('/api/playlists/' + playlistId + '/items')
-        .then((result: any) => {
-          this.playlistItems = result;
-        });
+      promiseToDigest(this.$scope)(
+        getBackendSrv()
+          .get('/api/playlists/' + playlistId + '/items')
+          .then((result: any) => {
+            this.playlistItems = result;
+          })
+      );
     }
   }
 
@@ -102,8 +107,8 @@ export class PlaylistEditCtrl {
     playlist.items = playlistItems;
 
     savePromise = playlist.id
-      ? getBackendSrv().put('/api/playlists/' + playlist.id, playlist)
-      : getBackendSrv().post('/api/playlists', playlist);
+      ? promiseToDigest(this.$scope)(getBackendSrv().put('/api/playlists/' + playlist.id, playlist))
+      : promiseToDigest(this.$scope)(getBackendSrv().post('/api/playlists', playlist));
 
     savePromise.then(
       () => {
