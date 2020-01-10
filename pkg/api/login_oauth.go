@@ -82,7 +82,6 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	cookieState := ctx.GetCookie(OauthStateCookieName)
 
 	// delete cookie
-	ctx.Resp.Header().Del("Set-Cookie")
 	middleware.DeleteCookie(ctx.Resp, OauthStateCookieName, hs.cookieOptionsFromCfg)
 
 	if cookieState == "" {

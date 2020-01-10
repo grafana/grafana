@@ -252,7 +252,6 @@ func WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetimeDays in
 		maxAge = int(maxAgeHours.Seconds())
 	}
 
-	ctx.Resp.Header().Del("Set-Cookie")
 	WriteCookie(ctx.Resp, setting.LoginCookieName, url.QueryEscape(value), maxAge, newCookieOptions)
 }
 
