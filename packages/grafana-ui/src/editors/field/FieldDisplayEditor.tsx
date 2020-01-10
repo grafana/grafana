@@ -2,12 +2,12 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 
 // Components
-import { FormLabel } from '../FormLabel/FormLabel';
-import { FormField } from '../FormField/FormField';
-import { StatsPicker } from '../StatsPicker/StatsPicker';
+import { FormLabel } from '../../components/FormLabel/FormLabel';
+import { FormField } from '../../components/FormField/FormField';
+import { StatsPicker } from '../../components/StatsPicker/StatsPicker';
 
 // Types
-import Select from '../Select/Select';
+import Select from '../../components/Select/Select';
 import {
   FieldDisplayOptions,
   DEFAULT_FIELD_DISPLAY_VALUES_LIMIT,

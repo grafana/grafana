@@ -5,8 +5,9 @@ import coreModule from 'app/core/core_module';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
 import { sanitizeUrl } from 'app/core/utils/text';
 import { getConfig } from 'app/core/config';
-import { VariableSuggestion, VariableOrigin, DataLinkBuiltInVars } from '@grafana/ui';
+import { DataLinkBuiltInVars } from '@grafana/ui';
 import { DataLink, KeyValue, deprecationWarning, LinkModel, DataFrame, ScopedVars } from '@grafana/data';
+import { VariableOrigin, VariableSuggestion } from '@grafana/ui/src/editors';
 
 const timeRangeVars = [
   {

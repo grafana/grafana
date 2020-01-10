@@ -3,7 +3,7 @@ import usePrevious from 'react-use/lib/usePrevious';
 import { VariableSuggestion, VariableOrigin, DataLinkSuggestions } from './DataLinkSuggestions';
 import { ThemeContext, DataLinkBuiltInVars, makeValue } from '../../index';
 import { SelectionReference } from './SelectionReference';
-import { Portal } from '../index';
+import { Portal } from '../../components';
 
 import { Editor } from '@grafana/slate-react';
 import { Value } from 'slate';

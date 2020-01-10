@@ -2,12 +2,12 @@ import React, { PureComponent, ChangeEvent } from 'react';
 import { Threshold, sortThresholds, ThresholdsConfig, ThresholdsMode, SelectableValue } from '@grafana/data';
 import { colors } from '../../utils';
 import { getColorFromHexRgbOrName } from '@grafana/data';
-import { Input } from '../Input/Input';
-import { ColorPicker } from '../ColorPicker/ColorPicker';
+import { Input } from '../../components/Input/Input';
+import { ColorPicker } from '../../components/ColorPicker/ColorPicker';
 import { Themeable } from '../../types';
 import { css } from 'emotion';
-import Select from '../Select/Select';
-import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
+import Select from '../../components/Select/Select';
+import { PanelOptionsGroup } from '../../components/PanelOptionsGroup/PanelOptionsGroup';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [
   { value: ThresholdsMode.Absolute, label: 'Absolute', description: 'Pick thresholds based on the absolute values' },

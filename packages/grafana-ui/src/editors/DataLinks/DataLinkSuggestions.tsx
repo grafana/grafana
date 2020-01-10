@@ -4,7 +4,7 @@ import { css, cx } from 'emotion';
 import _ from 'lodash';
 import React, { useRef, useContext, useMemo } from 'react';
 import useClickAway from 'react-use/lib/useClickAway';
-import { List } from '../index';
+import { List } from '../../components/List/List';
 import tinycolor from 'tinycolor2';
 import { stylesFactory } from '../../themes';
 

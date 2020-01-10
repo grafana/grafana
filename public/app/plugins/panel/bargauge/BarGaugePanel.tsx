@@ -4,7 +4,7 @@ import React, { PureComponent } from 'react';
 // Services & Utils
 import { config } from 'app/core/config';
 
-import { DataLinksContextMenu } from '@grafana/ui';
+import { DataLinksContextMenu } from '@grafana/ui/src/editors';
 import { BarGaugeOptions } from './types';
 import {
   getFieldDisplayValues,

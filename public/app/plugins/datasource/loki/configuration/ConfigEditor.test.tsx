@@ -2,7 +2,7 @@ import React from 'react';
 import { mount } from 'enzyme';
 import { ConfigEditor } from './ConfigEditor';
 import { createDefaultConfigOptions } from '../mocks';
-import { DataSourceHttpSettings } from '@grafana/ui';
+import { DataSourceHttpSettings } from '@grafana/ui/src/editors';
 import { DerivedFields } from './DerivedFields';
 
 describe('ConfigEditor', () => {

@@ -7,12 +7,12 @@ import { HttpProxySettings } from './HttpProxySettings';
 import { TLSAuthSettings } from './TLSAuthSettings';
 import { DataSourceSettings } from '@grafana/data';
 import { HttpSettingsProps } from './types';
-import { Select } from '../Select/Select';
-import { Input } from '../Input/Input';
-import { FormField } from '../FormField/FormField';
-import { FormLabel } from '../FormLabel/FormLabel';
-import { Switch } from '../Switch/Switch';
-import { TagsInput } from '../TagsInput/TagsInput';
+import { Select } from '../../components/Select/Select';
+import { Input } from '../../components/Input/Input';
+import { FormField } from '../../components/FormField/FormField';
+import { FormLabel } from '../../components/FormLabel/FormLabel';
+import { Switch } from '../../components/Switch/Switch';
+import { TagsInput } from '../../components/TagsInput/TagsInput';
 
 const ACCESS_OPTIONS: Array<SelectableValue<string>> = [
   {

@@ -7,14 +7,8 @@ import { TagFilter } from './components/TagFilter/TagFilter';
 import { SideMenu } from './components/sidemenu/SideMenu';
 import { MetricSelect } from './components/Select/MetricSelect';
 import AppNotificationList from './components/AppNotifications/AppNotificationList';
-import {
-  ColorPicker,
-  SeriesColorPickerPopoverWithTheme,
-  SecretFormField,
-  UnitPicker,
-  DataLinksEditor,
-  DataSourceHttpSettings,
-} from '@grafana/ui';
+import { ColorPicker, SeriesColorPickerPopoverWithTheme, SecretFormField, UnitPicker } from '@grafana/ui';
+import { DataLinksEditor, DataSourceHttpSettings } from '@grafana/ui/src/editors';
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import { SearchField } from './components/search/SearchField';
 import { GraphContextMenu } from 'app/plugins/panel/graph/GraphContextMenu';

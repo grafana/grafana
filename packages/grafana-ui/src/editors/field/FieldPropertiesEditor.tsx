@@ -2,9 +2,9 @@
 import React, { ChangeEvent, useState, useCallback } from 'react';
 
 // Components
-import { FormField } from '../FormField/FormField';
-import { FormLabel } from '../FormLabel/FormLabel';
-import { UnitPicker } from '../UnitPicker/UnitPicker';
+import { FormField } from '../../components/FormField/FormField';
+import { FormLabel } from '../../components/FormLabel/FormLabel';
+import { UnitPicker } from '../../components/UnitPicker/UnitPicker';
 
 // Types
 import {

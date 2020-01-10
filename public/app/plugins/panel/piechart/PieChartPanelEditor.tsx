@@ -1,11 +1,6 @@
 import React, { PureComponent } from 'react';
-import {
-  PanelOptionsGrid,
-  ValueMappingsEditor,
-  FieldDisplayEditor,
-  FieldPropertiesEditor,
-  PanelOptionsGroup,
-} from '@grafana/ui';
+import { PanelOptionsGrid, PanelOptionsGroup } from '@grafana/ui';
+import { ValueMappingsEditor, FieldDisplayEditor, FieldPropertiesEditor } from '@grafana/ui/src/editors';
 import { ValueMapping, FieldConfig, PanelEditorProps, FieldDisplayOptions } from '@grafana/data';
 
 import { PieChartOptionsBox } from './PieChartOptionsBox';

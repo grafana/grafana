@@ -5,7 +5,7 @@ import Prism from 'prismjs';
 // Components
 import { css } from 'emotion';
 import { DataLink } from '@grafana/data';
-import { Button } from '../index';
+import { Button } from '../../components/Button/Button';
 import { DataLinkEditor } from './DataLinkEditor';
 import { VariableSuggestion } from './DataLinkSuggestions';
 import { useTheme } from '../../themes/ThemeContext';

@@ -1,7 +1,7 @@
 import React from 'react';
 import { mount, shallow } from 'enzyme';
 import { ConfigEditor } from './ConfigEditor';
-import { DataSourceHttpSettings } from '@grafana/ui';
+import { DataSourceHttpSettings } from '@grafana/ui/src/editors';
 import { ElasticDetails } from './ElasticDetails';
 import { LogsConfig } from './LogsConfig';
 import { createDefaultConfigOptions } from './mocks';

@@ -2,8 +2,8 @@ import React, { PureComponent } from 'react';
 
 import MappingRow from './MappingRow';
 import { MappingType, ValueMapping } from '@grafana/data';
-import { Button } from '../Button/Button';
-import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
+import { Button } from '../../components/Button/Button';
+import { PanelOptionsGroup } from '../../components/PanelOptionsGroup/PanelOptionsGroup';
 
 export interface Props {
   valueMappings?: ValueMapping[];

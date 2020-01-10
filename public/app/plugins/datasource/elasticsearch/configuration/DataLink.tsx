@@ -1,7 +1,8 @@
 import React from 'react';
 import { css } from 'emotion';
-import { Button, FormField, VariableSuggestion, DataLinkInput, stylesFactory } from '@grafana/ui';
+import { Button, FormField, stylesFactory } from '@grafana/ui';
 import { DataLinkConfig } from '../types';
+import { DataLinkInput, VariableSuggestion } from '@grafana/ui/src/editors';
 
 const getStyles = stylesFactory(() => ({
   firstRow: css`

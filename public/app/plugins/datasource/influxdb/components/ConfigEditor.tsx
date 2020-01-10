@@ -6,7 +6,8 @@ import {
   updateDatasourcePluginResetKeyOption,
   updateDatasourcePluginOption,
 } from '@grafana/data';
-import { DataSourceHttpSettings, FormLabel, Input, SecretFormField, Select } from '@grafana/ui';
+import { FormLabel, Input, SecretFormField, Select } from '@grafana/ui';
+import { DataSourceHttpSettings } from '@grafana/ui/src/editors';
 import { InfluxOptions, InfluxSecureJsonData } from '../types';
 
 const httpModes = [

@@ -5,7 +5,7 @@ import React, { PureComponent } from 'react';
 import { config } from 'app/core/config';
 
 // Components
-import { DataLinksContextMenu } from '@grafana/ui';
+import { DataLinksContextMenu } from '@grafana/ui/src/editors';
 
 // Types
 import { GaugeOptions } from './types';

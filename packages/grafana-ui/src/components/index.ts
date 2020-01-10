@@ -27,7 +27,7 @@ export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './C
 
 export { PanelOptionsGroup } from './PanelOptionsGroup/PanelOptionsGroup';
 export { PanelOptionsGrid } from './PanelOptionsGrid/PanelOptionsGrid';
-export { ValueMappingsEditor } from './ValueMappingsEditor/ValueMappingsEditor';
+// export { ValueMappingsEditor } from '../editors/ValueMappingsEditor/ValueMappingsEditor';
 export { Switch } from './Switch/Switch';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { PieChart, PieChartType } from './PieChart/PieChart';
@@ -70,15 +70,18 @@ export { LogRows } from './Logs/LogRows';
 export { getLogRowStyles } from './Logs/getLogRowStyles';
 export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';
 // Panel editors
-export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
+// export { ThresholdsEditor } from '../editors/ThresholdsEditor/ThresholdsEditor';
+
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
 export * from './SingleStatShared/index';
 export { CallToActionCard } from './CallToActionCard/CallToActionCard';
 export { ContextMenu, ContextMenuItem, ContextMenuGroup, ContextMenuProps } from './ContextMenu/ContextMenu';
-export { VariableSuggestion, VariableOrigin } from './DataLinks/DataLinkSuggestions';
-export { DataLinksEditor } from './DataLinks/DataLinksEditor';
-export { DataLinkInput } from './DataLinks/DataLinkInput';
-export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
+
+// export { VariableSuggestion, VariableOrigin } from './DataLinks/DataLinkSuggestions';
+// export { DataLinksEditor } from './DataLinks/DataLinksEditor';
+// export { DataLinkInput } from './DataLinks/DataLinkInput';
+// export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
+
 export { SeriesIcon } from './Legend/SeriesIcon';
 export { transformersUIRegistry } from './TransformersUI/transformers';
 export { TransformationRow } from './TransformersUI/TransformationRow';
@@ -88,7 +91,7 @@ export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
 export { ErrorBoundary, ErrorBoundaryAlert } from './ErrorBoundary/ErrorBoundary';
 export { ErrorWithStack } from './ErrorBoundary/ErrorWithStack';
 export { AlphaNotice } from './AlphaNotice/AlphaNotice';
-export { DataSourceHttpSettings } from './DataSourceSettings/DataSourceHttpSettings';
+// export { DataSourceHttpSettings } from '../editors/DataSourceSettings/DataSourceHttpSettings';
 export { Spinner } from './Spinner/Spinner';
 export { FadeTransition } from './transitions/FadeTransition';
 export { SlideOutTransition } from './transitions/SlideOutTransition';

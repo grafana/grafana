@@ -1,5 +1,5 @@
 import React from 'react';
-import { WithContextMenu } from '../ContextMenu/WithContextMenu';
+import { WithContextMenu } from '../../components/ContextMenu/WithContextMenu';
 import { LinkModelSupplier } from '@grafana/data';
 import { linkModelToContextMenuItems } from '../../utils/dataLinks';
 import { css } from 'emotion';

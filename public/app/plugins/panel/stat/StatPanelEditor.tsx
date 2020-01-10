@@ -1,17 +1,14 @@
 // Libraries
 import React, { PureComponent } from 'react';
 
+import { PanelOptionsGrid, PanelOptionsGroup, FormLabel, Select } from '@grafana/ui';
 import {
+  DataLinksEditor,
   ThresholdsEditor,
-  PanelOptionsGrid,
   ValueMappingsEditor,
   FieldDisplayEditor,
   FieldPropertiesEditor,
-  PanelOptionsGroup,
-  DataLinksEditor,
-  FormLabel,
-  Select,
-} from '@grafana/ui';
+} from '@grafana/ui/src/editors';
 
 import {
   ThresholdsConfig,

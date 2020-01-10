@@ -4,7 +4,8 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { PanelEditorProps, FieldConfig } from '@grafana/data';
-import { Switch, LegendOptions, PanelOptionsGrid, PanelOptionsGroup, FieldPropertiesEditor, Select } from '@grafana/ui';
+import { Switch, LegendOptions, PanelOptionsGrid, PanelOptionsGroup, Select } from '@grafana/ui';
+import { FieldPropertiesEditor } from '@grafana/ui/src/editors';
 
 import { GraphTooltipOptions } from '@grafana/ui/src/visualizations';
 import { Options, GraphOptions } from './types';
