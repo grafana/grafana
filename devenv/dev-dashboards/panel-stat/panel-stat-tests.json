@@ -33,8 +33,6 @@
           "calcs": ["mean"],
           "defaults": {
             "mappings": [],
-            "max": 100,
-            "min": 0,
             "thresholds": [
               {
                 "color": "blue",
@@ -124,8 +122,6 @@
           "calcs": ["mean"],
           "defaults": {
             "mappings": [],
-            "max": 100,
-            "min": 0,
             "thresholds": [
               {
                 "color": "blue",
@@ -215,8 +211,6 @@
           "calcs": ["mean"],
           "defaults": {
             "mappings": [],
-            "max": 100,
-            "min": 0,
             "thresholds": [
               {
                 "color": "blue",
@@ -300,8 +294,6 @@
           "calcs": ["mean"],
           "defaults": {
             "mappings": [],
-            "max": 100,
-            "min": 0,
             "thresholds": [
               {
                 "color": "blue",
@@ -388,8 +380,6 @@
           "calcs": ["mean"],
           "defaults": {
             "mappings": [],
-            "max": 100,
-            "min": 0,
             "thresholds": [
               {
                 "color": "blue",
@@ -476,8 +466,6 @@
           "calcs": ["mean"],
           "defaults": {
             "mappings": [],
-            "max": 100,
-            "min": 0,
             "thresholds": [
               {
                 "color": "blue",
