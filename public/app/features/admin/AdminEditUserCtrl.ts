@@ -205,11 +205,13 @@ export default class AdminEditUserCtrl {
         icon: 'fa-trash',
         yesText: 'Delete',
         onConfirm: () => {
-          getBackendSrv()
-            .delete('/api/admin/users/' + user.id)
-            .then(() => {
-              $location.path('/admin/users');
-            });
+          promiseToDigest($scope)(
+            getBackendSrv()
+              .delete('/api/admin/users/' + user.id)
+              .then(() => {
+                $location.path('/admin/users');
+              })
+          );
         },
       });
     };
