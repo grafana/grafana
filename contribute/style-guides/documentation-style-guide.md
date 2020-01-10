@@ -94,6 +94,18 @@ Refer to the [Documentation style guide](documentation-style-guide.md) for infor
 
 * Include `sudo` before commands that require `sudo` to work.
 
+For terminal examples and Grafana configuration, use a `bash` code block:
+```bash
+sudo yum install grafana
+```
+For HTTP request/response, use an `http` code block:
+```http
+GET /api/dashboards/id/1/permissions HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
 ### Word usage
 
 Grafana products has some words, abbreviations, and slang particular to this discourse community.
