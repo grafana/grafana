@@ -26,7 +26,7 @@ func TestMetrics(t *testing.T) {
 		uss := &UsageStatsService{
 			Bus:      bus.New(),
 			SQLStore: sqlstore.InitTestDB(t),
-			License:  licensing.OSSLicensingService{},
+			License:  &licensing.OSSLicensingService{},
 		}
 
 		var getSystemStatsQuery *models.GetSystemStatsQuery
