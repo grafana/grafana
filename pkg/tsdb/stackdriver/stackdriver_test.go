@@ -432,7 +432,6 @@ func TestStackdriver(t *testing.T) {
 				So(len(res.Series), ShouldEqual, 3)
 
 				Convey("and systemlabel contains key with array of string", func() {
-					fmt.Println(labels)
 					So(len(labels["metadata.system_labels.test"]), ShouldEqual, 5)
 					So(labels["metadata.system_labels.test"], ShouldContain, "value1")
 					So(labels["metadata.system_labels.test"], ShouldContain, "value2")
@@ -442,14 +441,12 @@ func TestStackdriver(t *testing.T) {
 				})
 
 				Convey("and systemlabel contains key with primitive strings", func() {
-					fmt.Println(labels)
 					So(len(labels["metadata.system_labels.region"]), ShouldEqual, 2)
 					So(labels["metadata.system_labels.region"], ShouldContain, "us-central1")
 					So(labels["metadata.system_labels.region"], ShouldContain, "us-west1")
 				})
 
 				Convey("and userLabel contains key with primitive strings", func() {
-					fmt.Println(labels)
 					So(len(labels["metadata.user_labels.region"]), ShouldEqual, 2)
 					So(labels["metadata.user_labels.region"], ShouldContain, "region1")
 					So(labels["metadata.user_labels.region"], ShouldContain, "region3")
@@ -457,6 +454,33 @@ func TestStackdriver(t *testing.T) {
 					So(len(labels["metadata.user_labels.name"]), ShouldEqual, 2)
 					So(labels["metadata.user_labels.name"], ShouldContain, "name1")
 					So(labels["metadata.user_labels.name"], ShouldContain, "name3")
+				})
+			})
+			Convey("when data from query returns metadata system labels and alias by is defined", func() {
+				data, err := loadTestFile("./test-data/5-series-response-meta-data.json")
+				So(err, ShouldBeNil)
+				So(len(data.TimeSeries), ShouldEqual, 3)
+
+				Convey("and systemlabel contains key with array of string", func() {
+					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+					query := &StackdriverQuery{AliasBy: "{{metadata.system_labels.test}}"}
+					err = executor.parseResponse(res, data, query)
+					So(err, ShouldBeNil)
+					So(len(res.Series), ShouldEqual, 3)
+					fmt.Println(res.Series[0].Name)
+					So(res.Series[0].Name, ShouldEqual, "value1, value2")
+					So(res.Series[1].Name, ShouldEqual, "value1, value2, value3")
+					So(res.Series[2].Name, ShouldEqual, "value1, value2, value4, value5")
+				})
+
+				Convey("and systemlabel contains key with array of string2", func() {
+					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+					query := &StackdriverQuery{AliasBy: "{{metadata.system_labels.test2}}"}
+					err = executor.parseResponse(res, data, query)
+					So(err, ShouldBeNil)
+					So(len(res.Series), ShouldEqual, 3)
+					fmt.Println(res.Series[0].Name)
+					So(res.Series[2].Name, ShouldEqual, "testvalue")
 				})
 			})
 		})

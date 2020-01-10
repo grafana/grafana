@@ -65,6 +65,7 @@
         "name": "premium-plugin-staging",
         "region": "us-central1",
         "test": ["value1", "value2","value4", "value5"],
+        "test2": ["testvalue"],
         "spot_instance": true
       },
       "userLabels": {

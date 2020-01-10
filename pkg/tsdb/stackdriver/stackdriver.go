@@ -335,8 +335,6 @@ func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (Stackdriver
 		return StackdriverResponse{}, err
 	}
 
-	// slog.Info("stackdriver", "response", string(body))
-
 	if res.StatusCode/100 != 2 {
 		slog.Error("Request failed", "status", res.Status, "body", string(body))
 		return StackdriverResponse{}, fmt.Errorf(string(body))
@@ -387,26 +385,28 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 
 		for labelType, labelTypeValues := range series.MetaData {
 			for labelKey, labelValue := range labelTypeValues {
-				output := []string{}
+				key := toSnakeCase(fmt.Sprintf("metadata.%s.%s", labelType, labelKey))
+				if _, ok := labels[key]; !ok {
+					labels[key] = map[string]bool{}
+				}
 
 				switch v := labelValue.(type) {
 				case string:
-					output = append(output, v)
+					labels[key][v] = true
+					seriesLabels[key] = v
 				case bool:
-					output = append(output, strconv.FormatBool(v))
+					strVal := strconv.FormatBool(v)
+					labels[key][strVal] = true
+					seriesLabels[key] = strVal
 				case []interface{}:
-					for _, strValue := range v {
-						output = append(output, strValue.(string))
+					for _, v := range v {
+						strVal := v.(string)
+						labels[key][strVal] = true
+						if len(seriesLabels[key]) > 0 {
+							strVal = fmt.Sprintf("%s, %s", seriesLabels[key], strVal)
+						}
+						seriesLabels[key] = strVal
 					}
-				}
-
-				for _, value := range output {
-					key := toSnakeCase(fmt.Sprintf("metadata.%s.%s", labelType, labelKey))
-					if _, ok := labels[key]; !ok {
-						labels[key] = map[string]bool{}
-					}
-					labels[key][value] = true
-					seriesLabels[key] = value
 				}
 			}
 		}

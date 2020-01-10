@@ -57,13 +57,6 @@ export const getAlignmentPickerData = (
     ...option,
     label: option.text,
   }));
-  // const alignOptions = [
-  //   {
-  //     label: 'Alignment options',
-  //     expanded: true,
-  //     options,
-  //   },
-  // ];
   if (!alignOptions.some(o => o.value === templateSrv.replace(perSeriesAligner))) {
     perSeriesAligner = alignOptions.length > 0 ? alignOptions[0].value : '';
   }
@@ -73,7 +66,7 @@ export const getAlignmentPickerData = (
 export const labelsToGroupedOptions = (groupBys: string[]) => {
   const groups = groupBys.reduce((acc: any, curr: string) => {
     const arr = curr.split('.').map(_.startCase);
-    const group = (arr.length === 2 ? arr : _.initial(arr)).join(' ');
+    const group = (arr.length == 2 ? arr : _.initial(arr)).join(' ');
     const option = {
       value: curr,
       label: curr,
