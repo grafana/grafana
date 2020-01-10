@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDynamicSettingsSupport(t *testing.T) {
+func TestDynamicSettingsSupport_Override(t *testing.T) {
 	cfg := NewCfg()
 
 	envKey := "GF_FOO_BAR"
@@ -18,6 +18,17 @@ func TestDynamicSettingsSupport(t *testing.T) {
 	os.Setenv(envKey, expected)
 	defer func() { os.Unsetenv(envKey) }()
 
-	value := cfg.DynamicSection(sectionName).Key(keyName).MustString("default value")
+	value := cfg.SectionWithEnvOverrides(sectionName).Key(keyName).MustString("default value")
+	require.Equal(t, expected, value)
+}
+
+func TestDynamicSettingsSupport_NoOverride(t *testing.T) {
+	cfg := NewCfg()
+	sectionName := "foo"
+	keyName := "bar"
+	expected := "default value"
+
+	cfg.Raw.Section(sectionName).NewKey(keyName, expected)
+	value := cfg.SectionWithEnvOverrides(sectionName).Key(keyName).String()
 	require.Equal(t, expected, value)
 }

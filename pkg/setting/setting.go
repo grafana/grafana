@@ -1121,18 +1121,33 @@ func (cfg *Cfg) LogConfigSources() {
 
 type DynamicSection struct {
 	section *ini.Section
+	Logger  log.Logger
 }
 
+// Key dynamically overrides keys with environment variables.
+// As a side effect, the value of the setting key will be updated if an environment variable is present.
 func (s *DynamicSection) Key(k string) *ini.Key {
 	envKey := envKey(s.section.Name(), k)
 	envValue := os.Getenv(envKey)
 	key := s.section.Key(k)
+
+	if len(envValue) == 0 {
+		return key
+	}
+
 	key.SetValue(envValue)
+	if shouldRedactKey(envKey) {
+		envValue = "*********"
+	}
+	s.Logger.Info("Config overridden from Environment variable", "var", fmt.Sprintf("%s=%s", envKey, envValue))
+
 	return key
 }
 
-func (cfg *Cfg) DynamicSection(s string) *DynamicSection {
-	return &DynamicSection{cfg.Raw.Section(s)}
+// SectionWithEnvOverrides dynamically overrides keys with environment variables.
+// As a side effect, the value of the setting key will be updated if an environment variable is present.
+func (cfg *Cfg) SectionWithEnvOverrides(s string) *DynamicSection {
+	return &DynamicSection{cfg.Raw.Section(s), cfg.Logger}
 }
 
 func IsExpressionsEnabled() bool {
