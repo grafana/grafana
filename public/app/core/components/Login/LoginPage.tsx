@@ -12,8 +12,7 @@ export const LoginPage: FC = () => {
     <div className="login container">
       <div className="login-content">
         <div className="login-branding">
-          <Branding.LogoIcon className="logo-icon" />
-          <Branding.Wordmark className="logo-wordmark" />
+          <Branding.LoginLogo className="logo-icon" />
         </div>
         <LoginCtrl>
           {({
