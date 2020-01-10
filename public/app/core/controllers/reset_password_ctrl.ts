@@ -2,6 +2,7 @@ import coreModule from '../core_module';
 import config from 'app/core/config';
 import { AppEvents } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
+import { promiseToDigest } from '../utils/promiseToDigest';
 
 export class ResetPasswordCtrl {
   /** @ngInject */
@@ -31,11 +32,14 @@ export class ResetPasswordCtrl {
       if (!$scope.sendResetForm.$valid) {
         return;
       }
-      getBackendSrv()
-        .post('/api/user/password/send-reset-email', $scope.formModel)
-        .then(() => {
-          $scope.mode = 'email-sent';
-        });
+
+      promiseToDigest($scope)(
+        getBackendSrv()
+          .post('/api/user/password/send-reset-email', $scope.formModel)
+          .then(() => {
+            $scope.mode = 'email-sent';
+          })
+      );
     };
 
     $scope.submitReset = () => {
