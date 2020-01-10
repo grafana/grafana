@@ -112,10 +112,8 @@ type ButtonMeasures = {
 const calculateMeasures = (theme: GrafanaTheme, size: ButtonSize, textAndIcon: boolean): ButtonMeasures => {
   switch (size) {
     case 'sm': {
-      const leftPadding = textAndIcon ? theme.spacing.xs : theme.spacing.sm;
-
       return {
-        padding: `${theme.spacing.xs} ${leftPadding} ${theme.spacing.xs} ${theme.spacing.sm}`,
+        padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
         fontSize: theme.typography.size.sm,
         height: theme.height.sm,
         fontWeight: theme.typography.weight.semibold,
@@ -126,7 +124,7 @@ const calculateMeasures = (theme: GrafanaTheme, size: ButtonSize, textAndIcon: b
       const leftPadding = textAndIcon ? theme.spacing.sm : theme.spacing.md;
 
       return {
-        padding: `${theme.spacing.sm} ${leftPadding} ${theme.spacing.sm} ${theme.spacing.md}`,
+        padding: `${theme.spacing.sm} ${theme.spacing.md} ${theme.spacing.sm} ${leftPadding}`,
         fontSize: theme.typography.size.md,
         height: theme.height.md,
         fontWeight: theme.typography.weight.semibold,
@@ -137,7 +135,7 @@ const calculateMeasures = (theme: GrafanaTheme, size: ButtonSize, textAndIcon: b
       const leftPadding = textAndIcon ? theme.spacing.md : theme.spacing.lg;
 
       return {
-        padding: `${theme.spacing.md} ${leftPadding} ${theme.spacing.md} ${theme.spacing.lg}`,
+        padding: `${theme.spacing.md} ${theme.spacing.lg} ${theme.spacing.md} ${leftPadding}`,
         fontSize: theme.typography.size.lg,
         height: theme.height.lg,
         fontWeight: theme.typography.weight.regular,
@@ -148,7 +146,7 @@ const calculateMeasures = (theme: GrafanaTheme, size: ButtonSize, textAndIcon: b
       const leftPadding = textAndIcon ? theme.spacing.sm : theme.spacing.md;
 
       return {
-        padding: `${theme.spacing.sm} ${leftPadding} ${theme.spacing.sm} ${theme.spacing.md}`,
+        padding: `${theme.spacing.sm} ${theme.spacing.md} ${theme.spacing.sm} ${leftPadding}`,
         fontSize: theme.typography.size.base,
         height: theme.height.md,
         fontWeight: theme.typography.weight.regular,
