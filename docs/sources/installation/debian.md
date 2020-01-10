@@ -5,7 +5,6 @@ keywords = ["grafana", "installation", "documentation"]
 type = "docs"
 aliases = ["/docs/grafana/latest/installation/installation/debian"]
 [menu.docs]
-name = "Install on Ubuntu/Debian"
 identifier = "debian"
 parent = "installation"
 weight = 200
@@ -24,8 +23,6 @@ You can install Grafana using our official APT repository, by downloading a `.de
 ### Install from APT repository
 
 If you install from the APT repository, then Grafana is automatically updated every time you run `apt-get update`. 
-
-The commands below install any missing dependencies, gets the GPG key, adds either the main or beta repository, and then installs Grafana.
 
 The APT repository installs the open source edition of Grafana.
 
@@ -49,6 +46,21 @@ wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
 sudo add-apt-repository "deb https://packages.grafana.com/oss/deb beta main"
 sudo apt-get update
 sudo apt-get install grafana
+```
+
+### Set up repository for ARM
+
+If you have problems using `add-apt-repository`, you can set up the repository without it.
+
+Add this repository for stable releases:
+
+```bash
+echo "deb https://packages.grafana.com/oss/deb stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list 
+```
+
+Add this repository if you want beta releases:
+```bash
+echo "deb https://packages.grafana.com/oss/deb beta main" | sudo tee -a /etc/apt/sources.list.d/grafana.list 
 ```
 
 ### Install .deb package
@@ -138,9 +150,8 @@ Start Grafana by running:
 
 ## Next steps
 
-Refer to the [Getting Started]({{< relref "getting_started.md" >}}) guide for information about logging in, setting up data sources, and so on.
+Refer to the [Getting Started]({{< relref "../guides/getting_started/" >}}) guide for information about logging in, setting up data sources, and so on.
 
 ## Configure Grafana
 
 Refer the [Configuration]({{< relref "configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
-

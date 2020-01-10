@@ -25,7 +25,7 @@ describe('date time formats', () => {
 
   it('should format as iso date (in UTC)', () => {
     const expected = utcTime.format('YYYY-MM-DD HH:mm:ss');
-    const actual = dateTimeAsIso(epoch, 0, 0);
+    const actual = dateTimeAsIso(epoch, 0, 0, 'utc');
     expect(actual.text).toBe(expected);
   });
 

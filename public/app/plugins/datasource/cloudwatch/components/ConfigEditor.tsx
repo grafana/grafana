@@ -1,18 +1,26 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 import { FormLabel, Select, Input, Button } from '@grafana/ui';
-import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
+import {
+  DataSourcePluginOptionsEditorProps,
+  updateDatasourcePluginJsonDataOption,
+  updateDatasourcePluginResetKeyOption,
+  updateDatasourcePluginOption,
+} from '@grafana/data';
 import { SelectableValue } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import CloudWatchDatasource from '../datasource';
 import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../types';
+import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
 
-export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData>;
+const authProviderOptions = [
+  { label: 'Access & secret key', value: 'keys' },
+  { label: 'Credentials file', value: 'credentials' },
+  { label: 'ARN', value: 'arn' },
+] as SelectableValue[];
 
-type CloudwatchSettings = DataSourceSettings<CloudWatchJsonData, CloudWatchSecureJsonData>;
+export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData, CloudWatchSecureJsonData>;
 
 export interface State {
-  config: CloudwatchSettings;
-  authProviderOptions: SelectableValue[];
   regions: SelectableValue[];
 }
 
@@ -20,54 +28,39 @@ export class ConfigEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    const { options } = this.props;
-
     this.state = {
-      config: ConfigEditor.defaults(options),
-      authProviderOptions: [
-        { label: 'Access & secret key', value: 'keys' },
-        { label: 'Credentials file', value: 'credentials' },
-        { label: 'ARN', value: 'arn' },
-      ],
       regions: [],
     };
-
-    this.updateDatasource(this.state.config);
   }
 
-  static getDerivedStateFromProps(props: Props, state: State) {
-    return {
-      ...state,
-      config: ConfigEditor.defaults(props.options),
-    };
+  loadRegionsPromise: CancelablePromise<any> = null;
+
+  componentDidMount() {
+    this.loadRegionsPromise = makePromiseCancelable(this.loadRegions());
+    this.loadRegionsPromise.promise.catch(({ isCanceled }) => {
+      if (isCanceled) {
+        console.warn('Cloud Watch ConfigEditor has unmounted, intialization was canceled');
+      }
+    });
   }
 
-  static defaults = (options: any) => {
-    options.jsonData.authType = options.jsonData.authType || 'credentials';
-    options.jsonData.timeField = options.jsonData.timeField || '@timestamp';
-
-    if (!options.hasOwnProperty('secureJsonData')) {
-      options.secureJsonData = {};
+  componentWillUnmount() {
+    if (this.loadRegionsPromise) {
+      this.loadRegionsPromise.cancel();
     }
+  }
 
-    if (!options.hasOwnProperty('jsonData')) {
-      options.jsonData = {};
-    }
-
-    if (!options.hasOwnProperty('secureJsonFields')) {
-      options.secureJsonFields = {};
-    }
-
-    return options;
+  onUpdateOption = (key: string, val: any, secure: boolean) => {
+    updateDatasourcePluginJsonDataOption(this.props, key, val, secure);
   };
 
-  async componentDidMount() {
-    this.loadRegions();
-  }
+  onResetKey = (key: string) => {
+    updateDatasourcePluginResetKeyOption(this.props, key);
+  };
 
-  loadRegions() {
-    getDatasourceSrv()
-      .loadDatasource(this.state.config.name)
+  async loadRegions() {
+    await getDatasourceSrv()
+      .loadDatasource(this.props.options.name)
       .then((ds: CloudWatchDatasource) => {
         return ds.getRegions();
       })
@@ -126,113 +119,46 @@ export class ConfigEditor extends PureComponent<Props, State> {
       );
   }
 
-  updateDatasource = async (config: any) => {
-    for (const j in config.jsonData) {
-      if (config.jsonData[j].length === 0) {
-        delete config.jsonData[j];
-      }
-    }
-
-    for (const k in config.secureJsonData) {
-      if (config.secureJsonData[k].length === 0) {
-        delete config.secureJsonData[k];
-      }
-    }
-
-    this.props.onOptionsChange({
-      ...config,
-    });
-  };
-
   onAuthProviderChange = (authType: SelectableValue<string>) => {
-    this.updateDatasource({
-      ...this.state.config,
-      jsonData: {
-        ...this.state.config.jsonData,
-        authType: authType.value,
-      },
-    });
+    this.onUpdateOption('authType', authType.value, false);
   };
 
   onRegionChange = (defaultRegion: SelectableValue<string>) => {
-    this.updateDatasource({
-      ...this.state.config,
-      jsonData: {
-        ...this.state.config.jsonData,
-        defaultRegion: defaultRegion.value,
-      },
-    });
+    this.onUpdateOption('defaultRegion', defaultRegion.value, false);
   };
 
   onResetAccessKey = () => {
-    this.updateDatasource({
-      ...this.state.config,
-      secureJsonFields: {
-        ...this.state.config.secureJsonFields,
-        accessKey: false,
-      },
-    });
+    this.onResetKey('accessKey');
   };
 
-  onAccessKeyChange = (accessKey: string) => {
-    this.updateDatasource({
-      ...this.state.config,
-      secureJsonData: {
-        ...this.state.config.secureJsonData,
-        accessKey,
-      },
-    });
+  onAccessKeyChange = (event: ChangeEvent<HTMLInputElement>) => {
+    this.onUpdateOption('accessKey', event.target.value, true);
   };
 
   onResetSecretKey = () => {
-    this.updateDatasource({
-      ...this.state.config,
-      secureJsonFields: {
-        ...this.state.config.secureJsonFields,
-        secretKey: false,
-      },
-    });
+    this.onResetKey('secretKey');
   };
 
-  onSecretKeyChange = (secretKey: string) => {
-    this.updateDatasource({
-      ...this.state.config,
-      secureJsonData: {
-        ...this.state.config.secureJsonData,
-        secretKey,
-      },
-    });
+  onSecretKeyChange = (event: ChangeEvent<HTMLInputElement>) => {
+    this.onUpdateOption('secretKey', event.target.value, true);
   };
 
-  onCredentialProfileNameChange = (database: string) => {
-    this.updateDatasource({
-      ...this.state.config,
-      database,
-    });
+  onCredentialProfileNameChange = (event: ChangeEvent<HTMLInputElement>) => {
+    updateDatasourcePluginOption(this.props, 'database', event.target.value);
   };
 
-  onArnAssumeRoleChange = (assumeRoleArn: string) => {
-    this.updateDatasource({
-      ...this.state.config,
-      jsonData: {
-        ...this.state.config.jsonData,
-        assumeRoleArn,
-      },
-    });
+  onArnAssumeRoleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    this.onUpdateOption('assumeRoleArn', event.target.value, false);
   };
 
-  onCustomMetricsNamespacesChange = (customMetricsNamespaces: string) => {
-    this.updateDatasource({
-      ...this.state.config,
-      jsonData: {
-        ...this.state.config.jsonData,
-        customMetricsNamespaces,
-      },
-    });
+  onCustomMetricsNamespacesChange = (event: ChangeEvent<HTMLInputElement>) => {
+    this.onUpdateOption('customMetricsNamespaces', event.target.value, false);
   };
 
   render() {
-    const { config, authProviderOptions, regions } = this.state;
+    const { regions } = this.state;
+    const { options } = this.props;
+    const secureJsonData = (options.secureJsonData || {}) as CloudWatchSecureJsonData;
 
     return (
       <>
@@ -243,14 +169,14 @@ export class ConfigEditor extends PureComponent<Props, State> {
               <FormLabel className="width-14">Auth Provider</FormLabel>
               <Select
                 className="width-30"
-                value={authProviderOptions.find(authProvider => authProvider.value === config.jsonData.authType)}
+                value={authProviderOptions.find(authProvider => authProvider.value === options.jsonData.authType)}
                 options={authProviderOptions}
-                defaultValue={config.jsonData.authType}
+                defaultValue={options.jsonData.authType}
                 onChange={this.onAuthProviderChange}
               />
             </div>
           </div>
-          {config.jsonData.authType === 'credentials' && (
+          {options.jsonData.authType === 'credentials' && (
             <div className="gf-form-inline">
               <div className="gf-form">
                 <FormLabel
@@ -263,18 +189,16 @@ export class ConfigEditor extends PureComponent<Props, State> {
                   <Input
                     className="width-30"
                     placeholder="default"
-                    value={config.jsonData.database}
-                    onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                      this.onCredentialProfileNameChange(event.target.value)
-                    }
+                    value={options.jsonData.database}
+                    onChange={this.onCredentialProfileNameChange}
                   />
                 </div>
               </div>
             </div>
           )}
-          {config.jsonData.authType === 'keys' && (
+          {options.jsonData.authType === 'keys' && (
             <div>
-              {config.secureJsonFields.accessKey ? (
+              {options.secureJsonFields.accessKey ? (
                 <div className="gf-form-inline">
                   <div className="gf-form">
                     <FormLabel className="width-14">Access Key ID</FormLabel>
@@ -295,14 +219,14 @@ export class ConfigEditor extends PureComponent<Props, State> {
                     <div className="width-30">
                       <Input
                         className="width-30"
-                        value={config.secureJsonData.accessKey || ''}
-                        onChange={(event: ChangeEvent<HTMLInputElement>) => this.onAccessKeyChange(event.target.value)}
+                        value={secureJsonData.accessKey || ''}
+                        onChange={this.onAccessKeyChange}
                       />
                     </div>
                   </div>
                 </div>
               )}
-              {config.secureJsonFields.secretKey ? (
+              {options.secureJsonFields.secretKey ? (
                 <div className="gf-form-inline">
                   <div className="gf-form">
                     <FormLabel className="width-14">Secret Access Key</FormLabel>
@@ -323,8 +247,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
                     <div className="width-30">
                       <Input
                         className="width-30"
-                        value={config.secureJsonData.secretKey || ''}
-                        onChange={(event: ChangeEvent<HTMLInputElement>) => this.onSecretKeyChange(event.target.value)}
+                        value={secureJsonData.secretKey || ''}
+                        onChange={this.onSecretKeyChange}
                       />
                     </div>
                   </div>
@@ -332,7 +256,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               )}
             </div>
           )}
-          {config.jsonData.authType === 'arn' && (
+          {options.jsonData.authType === 'arn' && (
             <div className="gf-form-inline">
               <div className="gf-form">
                 <FormLabel className="width-14" tooltip="ARN of Assume Role">
@@ -342,8 +266,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
                   <Input
                     className="width-30"
                     placeholder="arn:aws:iam:*"
-                    value={config.jsonData.assumeRoleArn || ''}
-                    onChange={(event: ChangeEvent<HTMLInputElement>) => this.onArnAssumeRoleChange(event.target.value)}
+                    value={options.jsonData.assumeRoleArn || ''}
+                    onChange={this.onArnAssumeRoleChange}
                   />
                 </div>
               </div>
@@ -359,9 +283,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
               </FormLabel>
               <Select
                 className="width-30"
-                value={regions.find(region => region.value === config.jsonData.defaultRegion)}
+                value={regions.find(region => region.value === options.jsonData.defaultRegion)}
                 options={regions}
-                defaultValue={config.jsonData.defaultRegion}
+                defaultValue={options.jsonData.defaultRegion}
                 onChange={this.onRegionChange}
               />
             </div>
@@ -374,10 +298,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
               <Input
                 className="width-30"
                 placeholder="Namespace1,Namespace2"
-                value={config.jsonData.customMetricsNamespaces || ''}
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  this.onCustomMetricsNamespacesChange(event.target.value)
-                }
+                value={options.jsonData.customMetricsNamespaces || ''}
+                onChange={this.onCustomMetricsNamespacesChange}
               />
             </div>
           </div>
