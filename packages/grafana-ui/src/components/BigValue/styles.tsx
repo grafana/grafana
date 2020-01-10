@@ -1,6 +1,7 @@
 // Libraries
-import { CSSProperties } from 'react';
+import React, { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
+import { Chart, Geom } from 'bizcharts';
 
 // Utils
 import { getColorFromHexRgbOrName, GrafanaTheme, formattedValueToString } from '@grafana/data';
@@ -42,249 +43,405 @@ export function shouldJustifyCenter(props: Props) {
   return (value.title ?? '').length === 0;
 }
 
-export function calculateLayout(props: Props): LayoutResult {
-  const { width, height, sparkline, colorMode, theme, value, graphMode, alignmentFactors } = props;
-  const useWideLayout = width / height > 2.5;
-  const valueColor = getColorFromHexRgbOrName(value.color || 'green', theme.type);
-  const justifyCenter = shouldJustifyCenter(props);
-  const panelPadding = height > 100 ? 12 : 8;
-  const titleToAlignTo = alignmentFactors ? alignmentFactors.title : value.title;
-  const valueToAlignTo = formattedValueToString(alignmentFactors ? alignmentFactors : value);
+export abstract class BigValueLayout {
+  titleFontSize: number;
+  valueFontSize: number;
+  chartHeight: number;
+  chartWidth: number;
+  valueColor: string;
+  panelPadding: number;
+  justifyCenter: boolean;
+  titleToAlignTo?: string;
+  valueToAlignTo: string;
+  maxTitleFontSize: number;
+  maxTextWidth: number;
+  maxTextHeight: number;
 
-  const maxTitleFontSize = 30;
-  const maxTextWidth = width - panelPadding * 2;
-  const maxTextHeight = height - panelPadding * 2;
+  constructor(private props: Props) {
+    const { width, height, value, alignmentFactors, theme } = props;
 
-  let layoutType = LayoutType.Stacked;
-  let chartHeight = 0;
-  let chartWidth = 0;
-  let titleHeight = 0;
-  let titleFontSize = 0;
-  let valueFontSize = 14;
+    this.valueColor = getColorFromHexRgbOrName(value.color || 'green', theme.type);
+    this.justifyCenter = shouldJustifyCenter(props);
+    this.panelPadding = height > 100 ? 12 : 8;
+    this.titleToAlignTo = alignmentFactors ? alignmentFactors.title : value.title;
+    this.valueToAlignTo = formattedValueToString(alignmentFactors ? alignmentFactors : value);
 
-  if (useWideLayout) {
-    // Detect auto wide layout type
-    layoutType = height > 50 && !!sparkline ? LayoutType.Wide : LayoutType.WideNoChart;
+    this.maxTitleFontSize = 30;
+    this.maxTextWidth = width - this.panelPadding * 2;
+    this.maxTextHeight = height - this.panelPadding * 2;
+  }
 
-    // Wide no chart mode
-    if (layoutType === LayoutType.WideNoChart) {
-      const valueWidthPercent = 0.3;
+  getTitleStyles(): CSSProperties {
+    const styles: CSSProperties = {
+      fontSize: `${this.titleFontSize}px`,
+      textShadow: '#333 0px 0px 1px',
+      color: '#EEE',
+      lineHeight: LINE_HEIGHT,
+    };
 
-      if (titleToAlignTo && titleToAlignTo.length > 0) {
-        // initial value size
-        valueFontSize = calculateFontSize(valueToAlignTo, maxTextWidth * valueWidthPercent, maxTextHeight, LINE_HEIGHT);
-        // How big can we make the title and still have it fit
-        titleFontSize = calculateFontSize(
-          titleToAlignTo,
-          maxTextWidth * 0.6,
-          maxTextHeight,
-          LINE_HEIGHT,
-          maxTitleFontSize
-        );
+    if (this.props.theme.isLight) {
+      styles.color = 'white';
+    }
 
-        // make sure it's a bit smaller than valueFontSize
-        titleFontSize = Math.min(valueFontSize * 0.7, titleFontSize);
-        titleHeight = titleFontSize * LINE_HEIGHT;
-      } else {
-        // if no title wide
-        valueFontSize = calculateFontSize(valueToAlignTo, maxTextWidth, maxTextHeight, LINE_HEIGHT);
-      }
-    } else {
-      // wide with chart
-      const chartHeightPercent = 0.5;
-      const titleWidthPercent = 0.6;
-      const valueWidthPercent = 1 - titleWidthPercent;
-      const textHeightPercent = 0.4;
+    return styles;
+  }
 
-      chartWidth = width;
-      chartHeight = height * chartHeightPercent;
+  getValueStyles(): CSSProperties {
+    const styles: CSSProperties = {
+      fontSize: this.valueFontSize,
+      color: '#EEE',
+      textShadow: '#333 0px 0px 1px',
+      fontWeight: 500,
+      lineHeight: LINE_HEIGHT,
+    };
 
-      if (titleToAlignTo && titleToAlignTo.length > 0) {
-        titleFontSize = calculateFontSize(
-          titleToAlignTo,
-          maxTextWidth * titleWidthPercent,
-          maxTextHeight * textHeightPercent,
-          LINE_HEIGHT,
-          maxTitleFontSize
-        );
-        titleHeight = titleFontSize * LINE_HEIGHT;
-      }
+    switch (this.props.colorMode) {
+      case BigValueColorMode.Value:
+        styles.color = this.valueColor;
+    }
 
-      valueFontSize = calculateFontSize(
-        valueToAlignTo,
-        maxTextWidth * valueWidthPercent,
-        maxTextHeight * chartHeightPercent,
+    return styles;
+  }
+
+  getValueAndTitleContainerStyles() {
+    const styles: CSSProperties = {
+      display: 'flex',
+    };
+
+    if (this.justifyCenter) {
+      styles.alignItems = 'center';
+      styles.justifyContent = 'center';
+      styles.flexGrow = 1;
+    }
+    return styles;
+  }
+
+  getPanelStyles(): CSSProperties {
+    const { width, height, theme, colorMode } = this.props;
+
+    const panelStyles: CSSProperties = {
+      width: `${width}px`,
+      height: `${height}px`,
+      padding: `${this.panelPadding}px`,
+      borderRadius: '3px',
+      position: 'relative',
+      display: 'flex',
+    };
+
+    const themeFactor = theme.isDark ? 1 : -0.7;
+
+    switch (colorMode) {
+      case BigValueColorMode.Background:
+        const bgColor2 = tinycolor(this.valueColor)
+          .darken(15 * themeFactor)
+          .spin(8)
+          .toRgbString();
+        const bgColor3 = tinycolor(this.valueColor)
+          .darken(5 * themeFactor)
+          .spin(-8)
+          .toRgbString();
+        panelStyles.background = `linear-gradient(120deg, ${bgColor2}, ${bgColor3})`;
+        break;
+      case BigValueColorMode.Value:
+        panelStyles.background = `${theme.colors.dark4}`;
+        break;
+    }
+
+    if (this.justifyCenter) {
+      panelStyles.alignItems = 'center';
+      panelStyles.flexDirection = 'row';
+    }
+
+    return panelStyles;
+  }
+
+  renderChart(): JSX.Element | null {
+    const { sparkline } = this.props;
+
+    if (!sparkline) {
+      return null;
+    }
+
+    const data = sparkline.data.map(values => {
+      return { time: values[0], value: values[1], name: 'A' };
+    });
+
+    const scales = {
+      time: {
+        type: 'time',
+      },
+    };
+
+    console.log(this.chartHeight);
+    return (
+      <Chart
+        height={this.chartHeight}
+        width={this.chartWidth}
+        data={data}
+        animate={false}
+        padding={[4, 0, 0, 0]}
+        scale={scales}
+        style={this.getChartStyles()}
+      >
+        {this.renderGeom()}
+      </Chart>
+    );
+  }
+
+  renderGeom(): JSX.Element {
+    const { colorMode } = this.props;
+
+    const lineStyle: any = {
+      opacity: 1,
+      fillOpacity: 1,
+      lineWidth: 2,
+    };
+
+    let fillColor: string;
+    let lineColor: string;
+
+    switch (colorMode) {
+      case BigValueColorMode.Value:
+        lineColor = this.valueColor;
+        fillColor = tinycolor(this.valueColor)
+          .setAlpha(0.2)
+          .toRgbString();
+        break;
+      case BigValueColorMode.Background:
+        fillColor = 'rgba(255,255,255,0.4)';
+        lineColor = tinycolor(this.valueColor)
+          .brighten(40)
+          .toRgbString();
+    }
+
+    lineStyle.stroke = lineColor;
+
+    return (
+      <>
+        <Geom type="area" position="time*value" size={0} color={fillColor} style={lineStyle} shape="smooth" />
+        <Geom type="line" position="time*value" size={1} color={lineColor} style={lineStyle} shape="smooth" />
+      </>
+    );
+  }
+
+  getChartStyles(): CSSProperties {
+    return {
+      position: 'absolute',
+      right: 0,
+      bottom: 0,
+    };
+  }
+}
+
+export class WideNoChartLayout extends BigValueLayout {
+  constructor(props: Props) {
+    super(props);
+
+    const valueWidthPercent = 0.3;
+
+    if (this.titleToAlignTo && this.titleToAlignTo.length > 0) {
+      // initial value size
+      this.valueFontSize = calculateFontSize(
+        this.valueToAlignTo,
+        this.maxTextWidth * valueWidthPercent,
+        this.maxTextHeight,
         LINE_HEIGHT
       );
-    }
-  } else {
-    // Stacked layout (title, value, chart)
-    const titleHeightPercent = 0.15;
-    const chartHeightPercent = 0.25;
 
-    // Does a chart fit or exist?
-    if (height < 100 || !sparkline) {
-      layoutType = LayoutType.StackedNoChart;
-    } else {
-      // we have chart
-      chartHeight = height * chartHeightPercent;
-      chartWidth = width;
-    }
-
-    if (titleToAlignTo && titleToAlignTo.length > 0) {
-      titleFontSize = calculateFontSize(
-        titleToAlignTo,
-        maxTextWidth,
-        height * titleHeightPercent,
+      // How big can we make the title and still have it fit
+      this.titleFontSize = calculateFontSize(
+        this.titleToAlignTo,
+        this.maxTextWidth * 0.6,
+        this.maxTextHeight,
         LINE_HEIGHT,
-        maxTitleFontSize
+        this.maxTitleFontSize
       );
-      titleHeight = titleFontSize * LINE_HEIGHT;
+
+      // make sure it's a bit smaller than valueFontSize
+      this.titleFontSize = Math.min(this.valueFontSize * 0.7, this.titleFontSize);
+    } else {
+      // if no title wide
+      this.valueFontSize = calculateFontSize(this.valueToAlignTo, this.maxTextWidth, this.maxTextHeight, LINE_HEIGHT);
+    }
+  }
+
+  getValueAndTitleContainerStyles() {
+    const styles = super.getValueAndTitleContainerStyles();
+    styles.flexDirection = 'row';
+    styles.justifyContent = 'space-between';
+    styles.alignItems = 'center';
+    styles.flexGrow = 1;
+    return styles;
+  }
+
+  renderChart(): JSX.Element {
+    return null;
+  }
+
+  getPanelStyles() {
+    const panelStyles = super.getPanelStyles();
+    panelStyles.alignItems = 'center';
+    return panelStyles;
+  }
+}
+
+export class WideWithChartLayout extends BigValueLayout {
+  constructor(props: Props) {
+    super(props);
+
+    const { width, height } = props;
+    const chartHeightPercent = 0.5;
+    const titleWidthPercent = 0.6;
+    const valueWidthPercent = 1 - titleWidthPercent;
+    const textHeightPercent = 0.4;
+
+    this.chartWidth = width;
+    this.chartHeight = height * chartHeightPercent;
+
+    if (this.titleToAlignTo && this.titleToAlignTo.length > 0) {
+      this.titleFontSize = calculateFontSize(
+        this.titleToAlignTo,
+        this.maxTextWidth * titleWidthPercent,
+        this.maxTextHeight * textHeightPercent,
+        LINE_HEIGHT,
+        this.maxTitleFontSize
+      );
     }
 
-    valueFontSize = calculateFontSize(
-      valueToAlignTo,
-      maxTextWidth,
-      maxTextHeight - chartHeight - titleHeight,
+    this.valueFontSize = calculateFontSize(
+      this.valueToAlignTo,
+      this.maxTextWidth * valueWidthPercent,
+      this.maxTextHeight * chartHeightPercent,
       LINE_HEIGHT
     );
-    // make title fontsize it's a bit smaller than valueFontSize
-    titleFontSize = Math.min(valueFontSize * 0.7, titleFontSize);
   }
 
-  return {
-    valueFontSize,
-    titleFontSize,
-    chartHeight,
-    chartWidth,
-    type: layoutType,
-    width,
-    height,
-    colorMode,
-    graphMode,
-    theme,
-    valueColor,
-    justifyCenter,
-    panelPadding,
-  };
-}
-
-export function getTitleStyles(layout: LayoutResult) {
-  const styles: CSSProperties = {
-    fontSize: `${layout.titleFontSize}px`,
-    textShadow: '#333 0px 0px 1px',
-    color: '#EEE',
-    lineHeight: LINE_HEIGHT,
-  };
-
-  if (layout.theme.isLight) {
-    styles.color = 'white';
-  }
-
-  return styles;
-}
-
-export function getValueStyles(layout: LayoutResult) {
-  const styles: CSSProperties = {
-    fontSize: layout.valueFontSize,
-    color: '#EEE',
-    textShadow: '#333 0px 0px 1px',
-    fontWeight: 500,
-    lineHeight: LINE_HEIGHT,
-  };
-
-  switch (layout.colorMode) {
-    case BigValueColorMode.Value:
-      styles.color = layout.valueColor;
-  }
-  return styles;
-}
-
-export function getValueAndTitleContainerStyles(layout: LayoutResult): CSSProperties {
-  const styles: CSSProperties = {
-    display: 'flex',
-  };
-
-  switch (layout.type) {
-    case LayoutType.Wide:
-      styles.flexDirection = 'row';
-      styles.justifyContent = 'space-between';
-      styles.flexGrow = 1;
-      break;
-    case LayoutType.WideNoChart:
-      styles.flexDirection = 'row';
-      styles.justifyContent = 'space-between';
-      styles.alignItems = 'center';
-      styles.flexGrow = 1;
-      break;
-    case LayoutType.StackedNoChart:
-      styles.flexDirection = 'column';
-      styles.flexGrow = 1;
-      break;
-    case LayoutType.Stacked:
-    default:
-      styles.flexDirection = 'column';
-      styles.justifyContent = 'center';
-  }
-
-  if (layout.justifyCenter) {
-    styles.alignItems = 'center';
-    styles.justifyContent = 'center';
+  getValueAndTitleContainerStyles() {
+    const styles = super.getValueAndTitleContainerStyles();
+    styles.flexDirection = 'row';
+    styles.justifyContent = 'space-between';
     styles.flexGrow = 1;
+    return styles;
   }
 
-  return styles;
+  getPanelStyles() {
+    const styles = super.getPanelStyles();
+    styles.flexDirection = 'row';
+    styles.justifyContent = 'space-between';
+    return styles;
+  }
 }
 
-export function getPanelStyles(layout: LayoutResult) {
-  const panelStyles: CSSProperties = {
-    width: `${layout.width}px`,
-    height: `${layout.height}px`,
-    padding: `${layout.panelPadding}px`,
-    borderRadius: '3px',
-    position: 'relative',
-    display: 'flex',
-  };
+export class StackedWithChartLayout extends BigValueLayout {
+  constructor(props: Props) {
+    super(props);
 
-  const themeFactor = layout.theme.isDark ? 1 : -0.7;
+    const { width, height } = props;
+    const titleHeightPercent = 0.15;
+    const chartHeightPercent = 0.25;
+    let titleHeight = 0;
 
-  switch (layout.colorMode) {
-    case BigValueColorMode.Background:
-      const bgColor2 = tinycolor(layout.valueColor)
-        .darken(15 * themeFactor)
-        .spin(8)
-        .toRgbString();
-      const bgColor3 = tinycolor(layout.valueColor)
-        .darken(5 * themeFactor)
-        .spin(-8)
-        .toRgbString();
-      panelStyles.background = `linear-gradient(120deg, ${bgColor2}, ${bgColor3})`;
-      break;
-    case BigValueColorMode.Value:
-      panelStyles.background = `${layout.theme.colors.dark4}`;
-      break;
+    this.chartHeight = height * chartHeightPercent;
+    this.chartWidth = width;
+
+    if (this.titleToAlignTo && this.titleToAlignTo.length > 0) {
+      this.titleFontSize = calculateFontSize(
+        this.titleToAlignTo,
+        this.maxTextWidth,
+        height * titleHeightPercent,
+        LINE_HEIGHT,
+        this.maxTitleFontSize
+      );
+
+      titleHeight = this.titleFontSize * LINE_HEIGHT;
+    }
+
+    this.valueFontSize = calculateFontSize(
+      this.valueToAlignTo,
+      this.maxTextWidth,
+      this.maxTextHeight - this.chartHeight - titleHeight,
+      LINE_HEIGHT
+    );
+
+    // make title fontsize it's a bit smaller than valueFontSize
+    this.titleFontSize = Math.min(this.valueFontSize * 0.7, this.titleFontSize);
   }
 
-  switch (layout.type) {
-    case LayoutType.Stacked:
-      panelStyles.flexDirection = 'column';
-      break;
-    case LayoutType.StackedNoChart:
-      panelStyles.alignItems = 'center';
-      break;
-    case LayoutType.Wide:
-      panelStyles.flexDirection = 'row';
-      panelStyles.justifyContent = 'space-between';
-      break;
-    case LayoutType.WideNoChart:
-      panelStyles.alignItems = 'center';
-      break;
+  getValueAndTitleContainerStyles() {
+    const styles = super.getValueAndTitleContainerStyles();
+    styles.flexDirection = 'column';
+    styles.justifyContent = 'center';
+    return styles;
   }
 
-  if (layout.justifyCenter) {
-    panelStyles.alignItems = 'center';
-    panelStyles.flexDirection = 'row';
+  getPanelStyles() {
+    const styles = super.getPanelStyles();
+    styles.flexDirection = 'column';
+    return styles;
+  }
+}
+
+export class StackedWithNoChartLayout extends BigValueLayout {
+  constructor(props: Props) {
+    super(props);
+
+    const { height } = props;
+    const titleHeightPercent = 0.15;
+    let titleHeight = 0;
+
+    if (this.titleToAlignTo && this.titleToAlignTo.length > 0) {
+      this.titleFontSize = calculateFontSize(
+        this.titleToAlignTo,
+        this.maxTextWidth,
+        height * titleHeightPercent,
+        LINE_HEIGHT,
+        this.maxTitleFontSize
+      );
+
+      titleHeight = this.titleFontSize * LINE_HEIGHT;
+    }
+
+    this.valueFontSize = calculateFontSize(
+      this.valueToAlignTo,
+      this.maxTextWidth,
+      this.maxTextHeight - titleHeight,
+      LINE_HEIGHT
+    );
+
+    // make title fontsize it's a bit smaller than valueFontSize
+    this.titleFontSize = Math.min(this.valueFontSize * 0.7, this.titleFontSize);
   }
 
-  return panelStyles;
+  getValueAndTitleContainerStyles() {
+    const styles = super.getValueAndTitleContainerStyles();
+    styles.flexDirection = 'column';
+    styles.flexGrow = 1;
+    return styles;
+  }
+
+  getPanelStyles() {
+    const styles = super.getPanelStyles();
+    styles.alignItems = 'center';
+    return styles;
+  }
+}
+
+export function buildLayout(props: Props): BigValueLayout {
+  const { width, height, sparkline } = props;
+  const useWideLayout = width / height > 2.5;
+
+  if (useWideLayout) {
+    if (height > 50 && !!sparkline) {
+      return new WideWithChartLayout(props);
+    } else {
+      return new WideNoChartLayout(props);
+    }
+  }
+
+  // stacked layouts
+  if (height > 100 && !!sparkline) {
+    return new StackedWithChartLayout(props);
+  } else {
+    return new StackedWithNoChartLayout(props);
+  }
 }
