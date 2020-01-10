@@ -15,7 +15,7 @@ const removeText = '-- remove group by --';
 const removeOption: SelectableValue<string> = { label: removeText, value: removeText };
 
 export const GroupBys: FunctionComponent<Props> = ({ groupBys = [], values = [], onChange, variableOptionGroup }) => {
-  const options = [removeOption, ...labelsToGroupedOptions([...groupBys, ...systemLabels]), variableOptionGroup];
+  const options = [removeOption, variableOptionGroup, ...labelsToGroupedOptions([...groupBys, ...systemLabels])];
   return (
     <div className="gf-form-inline">
       <label className="gf-form-label query-keyword width-9">Group By</label>
@@ -45,8 +45,8 @@ export const GroupBys: FunctionComponent<Props> = ({ groupBys = [], values = [],
           allowCustomValue
           onChange={({ value }) => onChange([...values, value])}
           options={[
-            ...labelsToGroupedOptions([...groupBys.filter(groupBy => !values.includes(groupBy)), ...systemLabels]),
             variableOptionGroup,
+            ...labelsToGroupedOptions([...groupBys.filter(groupBy => !values.includes(groupBy)), ...systemLabels]),
           ]}
         />
       )}

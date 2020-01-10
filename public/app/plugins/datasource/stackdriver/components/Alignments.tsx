@@ -13,7 +13,7 @@ export interface Props {
 export const Alignments: FC<Props> = ({ perSeriesAligner, templateVariableOptions, onChange, alignOptions }) => {
   return (
     <>
-      <div className="gf-form-group">
+      <div className="gf-form-inline">
         <div className="gf-form offset-width-9">
           <label className="gf-form-label query-keyword width-15">Aligner</label>
           <Segment

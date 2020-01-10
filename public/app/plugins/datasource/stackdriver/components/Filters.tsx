@@ -34,7 +34,7 @@ export const Filters: FunctionComponent<Props> = ({
 }) => {
   const filters = stringArrayToFilters(filterArray);
 
-  const options = [removeOption, ...labelsToGroupedOptions(Object.keys(labels)), variableOptionGroup];
+  const options = [removeOption, variableOptionGroup, ...labelsToGroupedOptions(Object.keys(labels))];
 
   return (
     <div className="gf-form-inline">
@@ -70,7 +70,7 @@ export const Filters: FunctionComponent<Props> = ({
             value={value}
             placeholder="add filter value"
             options={
-              labels.hasOwnProperty(key) ? [...labels[key].map(toOption), variableOptionGroup] : [variableOptionGroup]
+              labels.hasOwnProperty(key) ? [variableOptionGroup, ...labels[key].map(toOption)] : [variableOptionGroup]
             }
             onChange={({ value }) =>
               onChange(filtersToStringArray(filters.map((f, i) => (i === index ? { ...f, value } : f))))
@@ -89,7 +89,7 @@ export const Filters: FunctionComponent<Props> = ({
               <i className="fa fa-plus" />
             </a>
           }
-          options={[...labelsToGroupedOptions(Object.keys(labels)), variableOptionGroup]}
+          options={[variableOptionGroup, ...labelsToGroupedOptions(Object.keys(labels))]}
           onChange={({ value: key }) =>
             onChange(filtersToStringArray([...filters, { key, operator: '=', condition: 'AND', value: '' } as Filter]))
           }

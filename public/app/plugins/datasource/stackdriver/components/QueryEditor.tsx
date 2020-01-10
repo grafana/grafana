@@ -63,6 +63,7 @@ export class QueryEditor extends React.Component<Props, State> {
     const { perSeriesAligner, alignOptions } = getAlignmentPickerData(target, templateSrv);
     const variableOptionGroup = {
       label: 'Template Variables',
+      expanded: false,
       options: datasource.variables.map(toOption),
     };
     this.setState({
