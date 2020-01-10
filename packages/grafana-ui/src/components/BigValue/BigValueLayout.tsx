@@ -77,12 +77,10 @@ export abstract class BigValueLayout {
   getTitleStyles(): CSSProperties {
     const styles: CSSProperties = {
       fontSize: `${this.titleFontSize}px`,
-      textShadow: '#333 0px 0px 1px',
-      color: '#EEE',
       lineHeight: LINE_HEIGHT,
     };
 
-    if (this.props.theme.isLight) {
+    if (this.props.colorMode === BigValueColorMode.Background) {
       styles.color = 'white';
     }
 
@@ -92,7 +90,6 @@ export abstract class BigValueLayout {
   getValueStyles(): CSSProperties {
     const styles: CSSProperties = {
       fontSize: this.valueFontSize,
-      color: '#EEE',
       textShadow: '#333 0px 0px 1px',
       fontWeight: 500,
       lineHeight: LINE_HEIGHT,
@@ -101,6 +98,9 @@ export abstract class BigValueLayout {
     switch (this.props.colorMode) {
       case BigValueColorMode.Value:
         styles.color = this.valueColor;
+        break;
+      case BigValueColorMode.Background:
+        styles.color = 'white';
     }
 
     return styles;
