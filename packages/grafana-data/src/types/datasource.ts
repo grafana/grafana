@@ -91,6 +91,11 @@ export class DataSourcePlugin<
     return this;
   }
 
+  setMetadataInspector(MetadataInspector: ComponentType<MetadataInspectorProps<DSType, TQuery, TOptions>>) {
+    this.components.MetadataInspector = MetadataInspector;
+    return this;
+  }
+
   setComponentsFromLegacyExports(pluginExports: any) {
     this.angularConfigCtrl = pluginExports.ConfigCtrl;
 
@@ -137,6 +142,7 @@ export interface DataSourcePluginComponents<
   ExploreLogsQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
   ExploreStartPage?: ComponentType<ExploreStartPageProps>;
   ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>;
+  MetadataInspector?: ComponentType<MetadataInspectorProps<DSType, TQuery, TOptions>>;
 }
 
 // Only exported for tests
@@ -329,6 +335,17 @@ export function updateDatasourcePluginResetKeyOption(props: DataSourcePluginOpti
   };
 
   props.onOptionsChange(config);
+}
+
+export interface MetadataInspectorProps<
+  DSType extends DataSourceApi<TQuery, TOptions>,
+  TQuery extends DataQuery = DataQuery,
+  TOptions extends DataSourceJsonData = DataSourceJsonData
+> {
+  datasource: DSType;
+
+  // All Data from this DataSource
+  data: DataFrame[];
 }
 
 export interface QueryEditorProps<
