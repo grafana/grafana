@@ -26,6 +26,9 @@ type Metrics struct {
 	// Number of traces started by this tracer as not sampled
 	TracesStartedNotSampled metrics.Counter `metric:"traces" tags:"state=started,sampled=n" help:"Number of traces started by this tracer as not sampled"`
 
+	// Number of traces started by this tracer with delayed sampling
+	TracesStartedDelayedSampling metrics.Counter `metric:"traces" tags:"state=started,sampled=n" help:"Number of traces started by this tracer with delayed sampling"`
+
 	// Number of externally started sampled traces this tracer joined
 	TracesJoinedSampled metrics.Counter `metric:"traces" tags:"state=joined,sampled=y" help:"Number of externally started sampled traces this tracer joined"`
 
@@ -33,13 +36,22 @@ type Metrics struct {
 	TracesJoinedNotSampled metrics.Counter `metric:"traces" tags:"state=joined,sampled=n" help:"Number of externally started not-sampled traces this tracer joined"`
 
 	// Number of sampled spans started by this tracer
-	SpansStartedSampled metrics.Counter `metric:"started_spans" tags:"sampled=y" help:"Number of sampled spans started by this tracer"`
+	SpansStartedSampled metrics.Counter `metric:"started_spans" tags:"sampled=y" help:"Number of spans started by this tracer as sampled"`
 
-	// Number of unsampled spans started by this tracer
-	SpansStartedNotSampled metrics.Counter `metric:"started_spans" tags:"sampled=n" help:"Number of unsampled spans started by this tracer"`
+	// Number of not sampled spans started by this tracer
+	SpansStartedNotSampled metrics.Counter `metric:"started_spans" tags:"sampled=n" help:"Number of spans started by this tracer as not sampled"`
+
+	// Number of spans with delayed sampling started by this tracer
+	SpansStartedDelayedSampling metrics.Counter `metric:"started_spans" tags:"sampled=delayed" help:"Number of spans started by this tracer with delayed sampling"`
 
 	// Number of spans finished by this tracer
-	SpansFinished metrics.Counter `metric:"finished_spans" help:"Number of spans finished by this tracer"`
+	SpansFinishedSampled metrics.Counter `metric:"finished_spans" tags:"sampled=y" help:"Number of sampled spans finished by this tracer"`
+
+	// Number of spans finished by this tracer
+	SpansFinishedNotSampled metrics.Counter `metric:"finished_spans" tags:"sampled=n" help:"Number of not-sampled spans finished by this tracer"`
+
+	// Number of spans finished by this tracer
+	SpansFinishedDelayedSampling metrics.Counter `metric:"finished_spans" tags:"sampled=delayed" help:"Number of spans with delayed sampling finished by this tracer"`
 
 	// Number of errors decoding tracing context
 	DecodingErrors metrics.Counter `metric:"span_context_decoding_errors" help:"Number of errors decoding tracing context"`

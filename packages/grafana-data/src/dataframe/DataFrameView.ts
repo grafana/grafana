@@ -73,4 +73,12 @@ export class DataFrameView<T = any> implements Vector<T> {
       iterator(this.get(i));
     }
   }
+
+  map<V>(iterator: (item: T, index: number) => V) {
+    const acc: V[] = [];
+    for (let i = 0; i < this.data.length; i++) {
+      acc.push(iterator(this.get(i), i));
+    }
+    return acc;
+  }
 }

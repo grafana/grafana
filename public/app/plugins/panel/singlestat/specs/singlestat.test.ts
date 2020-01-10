@@ -2,6 +2,7 @@ import { SingleStatCtrl, ShowData } from '../module';
 import { dateTime, ReducerID } from '@grafana/data';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { LegacyResponseData } from '@grafana/data';
+import { DashboardModel } from 'app/features/dashboard/state';
 
 interface TestContext {
   ctrl: SingleStatCtrl;
@@ -31,9 +32,9 @@ describe('SingleStatCtrl', () => {
       emit: () => {},
     },
   };
-  SingleStatCtrl.prototype.dashboard = {
-    isTimezoneUtc: jest.fn(() => true),
-  };
+  SingleStatCtrl.prototype.dashboard = ({
+    getTimezone: jest.fn(() => 'utc'),
+  } as any) as DashboardModel;
   SingleStatCtrl.prototype.events = {
     on: () => {},
   };
@@ -112,7 +113,7 @@ describe('SingleStatCtrl', () => {
       ];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeAsIso';
-      ctx.ctrl.dashboard.isTimezoneUtc = () => false;
+      ctx.ctrl.dashboard.getTimezone = () => 'browser';
     });
 
     it('Should use time instead of value', () => {
@@ -137,7 +138,7 @@ describe('SingleStatCtrl', () => {
       ];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeAsIso';
-      ctx.ctrl.dashboard.isTimezoneUtc = () => true;
+      ctx.ctrl.dashboard.getTimezone = () => 'utc';
     });
 
     it('should set value', () => {
@@ -158,7 +159,7 @@ describe('SingleStatCtrl', () => {
       ];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeAsUS';
-      ctx.ctrl.dashboard.isTimezoneUtc = () => false;
+      ctx.ctrl.dashboard.getTimezone = () => 'browser';
     });
 
     it('Should use time instead of value', () => {
@@ -183,7 +184,7 @@ describe('SingleStatCtrl', () => {
       ];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeAsUS';
-      ctx.ctrl.dashboard.isTimezoneUtc = () => true;
+      ctx.ctrl.dashboard.getTimezone = () => 'utc';
     });
 
     it('should set formatted value', () => {

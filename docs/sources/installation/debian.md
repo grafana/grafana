@@ -3,7 +3,7 @@ title = "Install on Debian/Ubuntu"
 description = "Install guide for Grafana on Debian or Ubuntu"
 keywords = ["grafana", "installation", "documentation"]
 type = "docs"
-aliases = ["/installation/installation/debian"]
+aliases = ["/docs/grafana/latest/installation/installation/debian"]
 [menu.docs]
 name = "Install on Ubuntu/Debian"
 identifier = "debian"
@@ -15,15 +15,13 @@ weight = 200
 
 This page explains how to install Grafana dependencies, download and install Grafana, get the service up and running on your system, and the package details.
 
-**Note on upgrading:** While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing installation.
+**Note on upgrading:** While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing installation.
 
 ## 1. Download and install
 
 We recommend that you run all the listed commands before you download and install Grafana. They might not be necessary on all systems, but if you run them first then you will not be interrupted by dependency errors.
 
 You can install Grafana using our official APT repository, by downloading a `.deb` package, or by using a binary `.tar.gz` file.
-
-### Install from APT repository 
 
 On some older versions of Ubuntu and Debian you may need to install the `apt-transport-https` package which is needed to fetch packages over HTTPS.
 
@@ -35,6 +33,12 @@ Install any missing dependencies:
 
 ```bash
 sudo apt-get install -y software-properties-common wget
+```
+
+Add our GPG key to install signed packages:
+
+```bash
+wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
 ```
 
 Add this repository for stable releases:
@@ -49,17 +53,26 @@ Add this repository if you want beta releases:
 sudo add-apt-repository "deb https://packages.grafana.com/oss/deb beta main"
 ```
 
-Add our GPG key to install signed packages:
-
-```bash
-wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
-```
-
 Update your APT repositories and install Grafana:
 
 ```bash
 sudo apt-get update
 sudo apt-get install grafana
+```
+
+### Set up repository for ARM
+
+If you have problems using `add-apt-repository`, you can set up the repository without it.
+
+Add this repository for stable releases:
+
+```bash
+echo "deb https://packages.grafana.com/oss/deb stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list 
+```
+
+Add this repository if you want beta releases:
+```bash
+echo "deb https://packages.grafana.com/oss/deb beta main" | sudo tee -a /etc/apt/sources.list.d/grafana.list 
 ```
 
 ### Install .deb package
@@ -153,9 +166,8 @@ Start Grafana by running:
 
 ## Next steps
 
-Refer to the [Getting Started](/guides/getting_started/) guide for information about logging in, setting up data sources, and so on.
+Refer to the [Getting Started]({{< relref "../guides/getting_started/" >}}) guide for information about logging in, setting up data sources, and so on.
 
 ## Configure Grafana
 
 Refer the [Configuration]({{< relref "configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
-

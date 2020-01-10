@@ -9,8 +9,8 @@ const setup = (propOverrides?: object) => {
     canToggleEditorModes: true,
     onClickToggleEditorMode: () => {},
     onClickToggleDisabled: () => {},
-    onClickAddButton: () => {},
     onClickRemoveButton: () => {},
+    latency: 0,
   };
 
   Object.assign(props, propOverrides);

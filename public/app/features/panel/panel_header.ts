@@ -36,9 +36,9 @@ function renderMenuItem(item: AngularPanelMenuItem, ctrl: any) {
   }
 
   html += `><i class="${item.icon}"></i>`;
-  html += `<span class="dropdown-item-text" aria-label="${e2e.pages.Panels.Panel.selectors.headerItems(item.text)}">${
+  html += `<span class="dropdown-item-text" aria-label="${e2e.pages.Dashboard.Panels.Panel.selectors.headerItems(
     item.text
-  }</span>`;
+  )}">${item.text}</span>`;
 
   if (item.shortcut) {
     html += `<span class="dropdown-menu-item-shortcut">${item.shortcut}</span>`;

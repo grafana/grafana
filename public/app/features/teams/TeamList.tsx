@@ -66,7 +66,7 @@ export class TeamList extends PureComponent<Props, any> {
           <a href={teamUrl}>{team.memberCount}</a>
         </td>
         <td className="text-right">
-          <DeleteButton onConfirm={() => this.deleteTeam(team)} disabled={!canDelete} />
+          <DeleteButton size="sm" disabled={!canDelete} onConfirm={() => this.deleteTeam(team)} />
         </td>
       </tr>
     );

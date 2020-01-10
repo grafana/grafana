@@ -40,10 +40,7 @@ Currently alerting supports a limited form of high availability. Since v4.2.0 of
 
 ## Rule Config
 
-
-
-Currently only the graph panel supports alert rules but this will be added to the **Singlestat** and **Table**
-panels as well in a future release.
+Currently only the graph panel supports alert rules.
 
 ### Name and Evaluation interval
 

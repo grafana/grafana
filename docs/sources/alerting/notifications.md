@@ -100,6 +100,7 @@ To set up PagerDuty, all you have to do is to provide an API key.
 Setting | Description
 ---------- | -----------
 Integration Key | Integration key for PagerDuty.
+Severity | Level for dynamic notifications, default is `critical`
 Auto resolve incidents | Resolve incidents in PagerDuty once the alert goes back to ok
 
 ### Webhook
@@ -111,22 +112,27 @@ Example json body:
 
 ```json
 {
-  "title": "My alert",
-  "ruleId": 1,
-  "ruleName": "Load peaking!",
-  "ruleUrl": "http://url.to.grafana/db/dashboard/my_dashboard?panelId=2",
-  "state": "alerting",
-  "imageUrl": "http://s3.image.url",
-  "message": "Load is peaking. Make sure the traffic is real and spin up more webfronts",
-  "evalMatches": [
+  "dashboardId":1,
+  "evalMatches":[
     {
-      "metric": "requests",
-      "tags": {},
-      "value": 122
+      "value":1,
+      "metric":"Count",
+      "tags":{}
     }
-  ]
-}
-```
+  ],
+  "imageUrl":"https://grafana.com/assets/img/blog/mixed_styles.png",
+  "message":"Notification Message",
+  "orgId":1,
+  "panelId":2,
+  "ruleId":1,
+  "ruleName":"Panel Title alert",
+  "ruleUrl":"http://localhost:3000/d/hZ7BuVbWz/test-dashboard?fullscreen\u0026edit\u0026tab=alert\u0026panelId=2\u0026orgId=1",
+  "state":"alerting",
+  "tags":{
+    "tag name":"tag value"
+  },
+  "title":"[Alerting] Panel Title alert"
+}```
 
 - **state** - The possible values for alert state are: `ok`, `paused`, `alerting`, `pending`, `no_data`.
 
@@ -165,6 +171,10 @@ Once these two properties are set, you can send the alerts to Kafka for further 
 
 Notifications can be sent by setting up an incoming webhook in Google Hangouts chat. Configuring such a webhook is described [here](https://developers.google.com/hangouts/chat/how-tos/webhooks).
 
+### Squadcast
+
+Squadcast helps you get alerted via Phone call, SMS, Email and Push notifications and lets you take actions on those alerts. Grafana notifications can be sent to Squadcast via a simple incoming webhook. Refer the official [Squadcast support documentation](https://support.squadcast.com/docs/grafana) for configuring these webhooks.
+
 ### All supported notifiers
 
 Name | Type | Supports images | Support alert rule tags
@@ -183,6 +193,7 @@ Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
 Pushover | `pushover` | yes | no
 Sensu | `sensu` | yes, external only | no
 Slack | `slack` | yes | no
+Squadcast | `webhook` | no | no
 Telegram | `telegram` | yes | no
 Threema | `threema` | yes, external only | no
 VictorOps | `victorops` | yes, external only | no
