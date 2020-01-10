@@ -116,6 +116,7 @@ export abstract class BigValueLayout {
       styles.justifyContent = 'center';
       styles.flexGrow = 1;
     }
+
     return styles;
   }
 
@@ -277,9 +278,13 @@ export class WideNoChartLayout extends BigValueLayout {
   getValueAndTitleContainerStyles() {
     const styles = super.getValueAndTitleContainerStyles();
     styles.flexDirection = 'row';
-    styles.justifyContent = 'space-between';
     styles.alignItems = 'center';
     styles.flexGrow = 1;
+
+    if (!this.justifyCenter) {
+      styles.justifyContent = 'space-between';
+    }
+
     return styles;
   }
 
@@ -328,8 +333,12 @@ export class WideWithChartLayout extends BigValueLayout {
   getValueAndTitleContainerStyles() {
     const styles = super.getValueAndTitleContainerStyles();
     styles.flexDirection = 'row';
-    styles.justifyContent = 'space-between';
     styles.flexGrow = 1;
+
+    if (!this.justifyCenter) {
+      styles.justifyContent = 'space-between';
+    }
+
     return styles;
   }
 
