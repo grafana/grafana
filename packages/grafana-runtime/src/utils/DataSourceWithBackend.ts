@@ -28,7 +28,7 @@ export class DataSourceWithBackend<
     const { targets, intervalMs, maxDataPoints, range } = request;
 
     let expressionCount = 0;
-    const orgId = config.bootData.orgId;
+    const orgId = config.bootData.user.orgId;
     const queries = targets.map(q => {
       if (q.datasource === ExpressionDatasourceID) {
         expressionCount++;
