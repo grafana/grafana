@@ -13,31 +13,35 @@ export default class AdminListUsersCtrl {
   showPaging = false;
   query: any;
   navModel: any;
+  digest: (promise: Promise<any>) => Promise<any>;
 
   /** @ngInject */
   constructor($scope: Scope, navModelSrv: NavModelSrv) {
     this.navModel = navModelSrv.getNav('admin', 'global-users', 0);
     this.query = '';
-    promiseToDigest($scope)(this.getUsers());
+    this.digest = promiseToDigest($scope);
+    this.getUsers();
   }
 
   getUsers() {
-    return getBackendSrv()
-      .get(`/api/users/search?perpage=${this.perPage}&page=${this.page}&query=${this.query}`)
-      .then((result: any) => {
-        this.users = result.users;
-        this.page = result.page;
-        this.perPage = result.perPage;
-        this.totalPages = Math.ceil(result.totalCount / result.perPage);
-        this.showPaging = this.totalPages > 1;
-        this.pages = [];
+    this.digest(
+      getBackendSrv()
+        .get(`/api/users/search?perpage=${this.perPage}&page=${this.page}&query=${this.query}`)
+        .then((result: any) => {
+          this.users = result.users;
+          this.page = result.page;
+          this.perPage = result.perPage;
+          this.totalPages = Math.ceil(result.totalCount / result.perPage);
+          this.showPaging = this.totalPages > 1;
+          this.pages = [];
 
-        for (let i = 1; i < this.totalPages + 1; i++) {
-          this.pages.push({ page: i, current: i === this.page });
-        }
+          for (let i = 1; i < this.totalPages + 1; i++) {
+            this.pages.push({ page: i, current: i === this.page });
+          }
 
-        this.addUsersAuthLabels();
-      });
+          this.addUsersAuthLabels();
+        })
+    );
   }
 
   navigateToPage(page: any) {

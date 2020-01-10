@@ -23,12 +23,9 @@ export default class AdminListOrgsCtrl {
         text2: 'All dashboards for this organization will be removed!',
         icon: 'fa-trash',
         yesText: 'Delete',
-        onConfirm: () => {
-          getBackendSrv()
-            .delete('/api/orgs/' + org.id)
-            .then(() => {
-              $scope.getOrgs();
-            });
+        onConfirm: async () => {
+          await getBackendSrv().delete('/api/orgs/' + org.id);
+          await $scope.getOrgs();
         },
       });
     };
