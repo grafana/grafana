@@ -13,6 +13,7 @@ import {
 } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { ColumnRender, TableRenderModel, ColumnStyle } from './types';
+import { ColumnOptionsCtrl } from './column_options';
 
 export class TableRenderer {
   formatters: any[];
@@ -243,17 +244,17 @@ export class TableRenderer {
     value = this.formatColumnValue(columnIndex, value);
 
     const column = this.table.columns[columnIndex];
+    const cellStyles = [];
     let cellStyle = '';
-    let textStyle = '';
     const cellClasses = [];
     let cellClass = '';
 
     if (this.colorState.cell) {
-      cellStyle = ' style="background-color:' + this.colorState.cell + '"';
+      cellStyles.push('background-color:' + this.colorState.cell);
       cellClasses.push('table-panel-color-cell');
       this.colorState.cell = null;
     } else if (this.colorState.value) {
-      textStyle = ' style="color:' + this.colorState.value + '"';
+      cellStyles.push('color:' + this.colorState.value);
       this.colorState.value = null;
     }
     // because of the fixed table headers css only solution
@@ -265,7 +266,7 @@ export class TableRenderer {
     }
 
     if (value === undefined) {
-      cellStyle = ' style="display:none;"';
+      cellStyles.push('display:none');
       column.hidden = true;
     } else {
       column.hidden = false;
@@ -277,6 +278,17 @@ export class TableRenderer {
 
     if (column.style && column.style.preserveFormat) {
       cellClasses.push('table-panel-cell-pre');
+    }
+
+    if (column.style && column.style.align) {
+      const textAlign = _.find(ColumnOptionsCtrl.alignTypesEnum, ['text', column.style.align]);
+      if (textAlign && textAlign['value']) {
+        cellStyles.push(`text-align:${textAlign['value']}`);
+      }
+    }
+
+    if (cellStyles.length) {
+      cellStyle = ' style="' + cellStyles.join(';') + '"';
     }
 
     if (column.style && column.style.link) {
@@ -291,7 +303,7 @@ export class TableRenderer {
       cellClasses.push('table-panel-cell-link');
 
       columnHtml += `
-        <a href="${cellLink}" target="${cellTarget}" data-link-tooltip data-original-title="${cellLinkTooltip}" data-placement="right"${textStyle}>
+        <a href="${cellLink}" target="${cellTarget}" data-link-tooltip data-original-title="${cellLinkTooltip}" data-placement="right"${cellStyle}>
           ${value}
         </a>
       `;
@@ -316,7 +328,7 @@ export class TableRenderer {
       cellClass = ' class="' + cellClasses.join(' ') + '"';
     }
 
-    columnHtml = '<td' + cellClass + cellStyle + textStyle + '>' + columnHtml + '</td>';
+    columnHtml = '<td' + cellClass + cellStyle + '>' + columnHtml + '</td>';
     return columnHtml;
   }
 
