@@ -123,13 +123,14 @@ export class VariableSrv {
   }
 
   removeVariable(variable: any) {
-    removeVariableFromState(variable.id);
+    const { id } = variable;
     const index = _.indexOf(this.variables, variable);
     this.variables.splice(index, 1);
-    this.variables = this.variables.map((v, index) => {
-      v.id = index;
-      return v;
-    });
+    removeVariableFromState(id);
+    // when we remove an item from state we'll reorganize all the id:s so we need to do this in this.variables as well
+    for (let index = 0; index < this.variables.length; index++) {
+      this.variables[index].id = index;
+    }
     this.templateSrv.updateIndex();
     this.dashboard.updateSubmenuVisibility();
   }
