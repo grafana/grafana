@@ -8,13 +8,7 @@ export enum LoadingState {
   Error = 'Error',
 }
 
-export interface QueryResultDataSourceMeta {
-  dataSourceName: string; // Used to load the datasource
-}
-
 export interface QueryResultMeta {
-  [key: string]: any;
-
   // Match the result to the query
   requestId?: string;
 
@@ -24,8 +18,12 @@ export interface QueryResultMeta {
   // Used in Explore to show limit applied to search result
   limit?: number;
 
-  // Information that the datasource can support
-  ds?: QueryResultDataSourceMeta;
+  // HACK: save the datassource name in the meta so we can load it from the response
+  // we should be able to find the datasource from the refId
+  datasource?: string;
+
+  // DatasSource Specific Values
+  custom?: Record<string, any>;
 }
 
 export interface QueryResultBase {

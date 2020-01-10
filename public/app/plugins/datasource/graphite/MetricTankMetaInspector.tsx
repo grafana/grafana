@@ -43,7 +43,7 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
     }
 
     const frame = data[this.state.index];
-    const meta = frame.meta?.ds as MetricTankMeta;
+    const meta = frame.meta?.custom as MetricTankMeta;
     if (!meta || !meta.info) {
       return <>No Metadatata on DataFrame</>;
     }

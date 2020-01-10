@@ -123,13 +123,12 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
 
       // Metrictank metadata
       if (s.meta) {
-        const meta: MetricTankMeta = {
-          dataSourceName: this.name, // The unique ID
-          request: result.data.meta, // info on the request
-          info: s.meta, // Array of metadata
-        };
         frame.meta = {
-          ds: meta,
+          datasource: this.name,
+          custom: {
+            request: result.data.meta, // info for the whole request
+            info: s.meta, // Array of metadata
+          },
         };
       }
       data.push(frame);

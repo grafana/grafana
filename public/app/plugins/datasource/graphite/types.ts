@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceJsonData, QueryResultDataSourceMeta } from '@grafana/data';
+import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
 export interface GraphiteQuery extends DataQuery {
   target?: string;
@@ -15,8 +15,9 @@ export enum GraphiteType {
 }
 
 export interface MetricTankRequestMeta {
-  [key: string]: string; // TODO -- fill this with real values from metrictank
+  [key: string]: any; // TODO -- fill this with real values from metrictank
 }
+
 export interface MetricTankResultMeta {
   'schema-name': string;
   'schema-retentions': string; //"1s:35d:20min:5:1542274085,1min:38d:2h:1:true,10min:120d:6h:1:true,2h:2y:6h:2",
@@ -29,7 +30,7 @@ export interface MetricTankResultMeta {
   count: number;
 }
 
-export interface MetricTankMeta extends QueryResultDataSourceMeta {
+export interface MetricTankMeta {
   request: MetricTankRequestMeta;
   info: MetricTankResultMeta[];
 }
