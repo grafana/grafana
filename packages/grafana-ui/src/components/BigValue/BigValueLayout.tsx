@@ -90,7 +90,6 @@ export abstract class BigValueLayout {
   getValueStyles(): CSSProperties {
     const styles: CSSProperties = {
       fontSize: this.valueFontSize,
-      textShadow: '#333 0px 0px 1px',
       fontWeight: 500,
       lineHeight: LINE_HEIGHT,
     };
