@@ -11,6 +11,7 @@ import { calculateFontSize } from '../../utils/measureText';
 import { BigValueColorMode, BigValueGraphMode, Props, BigValueJustifyMode } from './BigValue';
 
 const LINE_HEIGHT = 1.2;
+const MAX_TITLE_SIZE = 30;
 
 export interface LayoutResult {
   titleFontSize: number;
@@ -53,7 +54,6 @@ export abstract class BigValueLayout {
   justifyCenter: boolean;
   titleToAlignTo?: string;
   valueToAlignTo: string;
-  maxTitleFontSize: number;
   maxTextWidth: number;
   maxTextHeight: number;
 
@@ -66,7 +66,10 @@ export abstract class BigValueLayout {
     this.titleToAlignTo = alignmentFactors ? alignmentFactors.title : value.title;
     this.valueToAlignTo = formattedValueToString(alignmentFactors ? alignmentFactors : value);
 
-    this.maxTitleFontSize = 30;
+    this.titleFontSize = 14;
+    this.valueFontSize = 14;
+    this.chartHeight = 0;
+    this.chartWidth = 0;
     this.maxTextWidth = width - this.panelPadding * 2;
     this.maxTextHeight = height - this.panelPadding * 2;
   }
@@ -260,7 +263,7 @@ export class WideNoChartLayout extends BigValueLayout {
         this.maxTextWidth * 0.6,
         this.maxTextHeight,
         LINE_HEIGHT,
-        this.maxTitleFontSize
+        MAX_TITLE_SIZE
       );
 
       // make sure it's a bit smaller than valueFontSize
@@ -280,7 +283,7 @@ export class WideNoChartLayout extends BigValueLayout {
     return styles;
   }
 
-  renderChart(): JSX.Element {
+  renderChart(): JSX.Element | null {
     return null;
   }
 
@@ -310,7 +313,7 @@ export class WideWithChartLayout extends BigValueLayout {
         this.maxTextWidth * titleWidthPercent,
         this.maxTextHeight * textHeightPercent,
         LINE_HEIGHT,
-        this.maxTitleFontSize
+        MAX_TITLE_SIZE
       );
     }
 
@@ -356,7 +359,7 @@ export class StackedWithChartLayout extends BigValueLayout {
         this.maxTextWidth,
         height * titleHeightPercent,
         LINE_HEIGHT,
-        this.maxTitleFontSize
+        MAX_TITLE_SIZE
       );
 
       titleHeight = this.titleFontSize * LINE_HEIGHT;
@@ -401,7 +404,7 @@ export class StackedWithNoChartLayout extends BigValueLayout {
         this.maxTextWidth,
         height * titleHeightPercent,
         LINE_HEIGHT,
-        this.maxTitleFontSize
+        MAX_TITLE_SIZE
       );
 
       titleHeight = this.titleFontSize * LINE_HEIGHT;
