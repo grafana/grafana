@@ -4,45 +4,14 @@ import tinycolor from 'tinycolor2';
 import { Chart, Geom } from 'bizcharts';
 
 // Utils
-import { getColorFromHexRgbOrName, GrafanaTheme, formattedValueToString } from '@grafana/data';
+import { getColorFromHexRgbOrName, formattedValueToString } from '@grafana/data';
 import { calculateFontSize } from '../../utils/measureText';
 
 // Types
-import { BigValueColorMode, BigValueGraphMode, Props, BigValueJustifyMode } from './BigValue';
+import { BigValueColorMode, Props, BigValueJustifyMode } from './BigValue';
 
 const LINE_HEIGHT = 1.2;
 const MAX_TITLE_SIZE = 30;
-
-export interface LayoutResult {
-  titleFontSize: number;
-  valueFontSize: number;
-  chartHeight: number;
-  chartWidth: number;
-  type: LayoutType;
-  width: number;
-  height: number;
-  colorMode: BigValueColorMode;
-  graphMode: BigValueGraphMode;
-  theme: GrafanaTheme;
-  valueColor: string;
-  panelPadding: number;
-  justifyCenter: boolean;
-}
-
-export enum LayoutType {
-  Stacked,
-  StackedNoChart,
-  Wide,
-  WideNoChart,
-}
-
-export function shouldJustifyCenter(props: Props) {
-  const { value, justifyMode } = props;
-  if (justifyMode === BigValueJustifyMode.Center) {
-    return true;
-  }
-  return (value.title ?? '').length === 0;
-}
 
 export abstract class BigValueLayout {
   titleFontSize: number;
@@ -470,4 +439,12 @@ export function buildLayout(props: Props): BigValueLayout {
   } else {
     return new StackedWithNoChartLayout(props);
   }
+}
+
+export function shouldJustifyCenter(props: Props) {
+  const { value, justifyMode } = props;
+  if (justifyMode === BigValueJustifyMode.Center) {
+    return true;
+  }
+  return (value.title ?? '').length === 0;
 }
