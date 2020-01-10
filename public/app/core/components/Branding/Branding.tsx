@@ -18,6 +18,7 @@ export const LoginLogo: FC<BrandComponentProps> = ({ className }) => {
 export const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
   const background = css`
     background: url(public/img/heatmap_bg_test.svg);
+    background-size: cover;
   `;
 
   return <div className={cx(background, className)}>{children}</div>;
