@@ -539,6 +539,12 @@ describe('VariableSrv', function(this: any) {
       };
       ctx.timeSrv.timeRange = () => range;
       ctx.templateSrv.setGrafanaVariable = jest.fn();
+      ctx.$injector.instantiate = (ctr: any, model: any) => {
+        return getVarMockConstructor(ctr, model, ctx);
+      };
+      ctx.variableSrv = new VariableSrv($q, ctx.$location, ctx.$injector, ctx.templateSrv, ctx.timeSrv);
+      ctx.variableSrv.variables = [];
+      ctx.variableSrv.dashboard = { updateSubmenuVisibility: jest.fn() };
 
       const variableModel1 = {
         type: 'interval',
@@ -549,7 +555,7 @@ describe('VariableSrv', function(this: any) {
         useTemporary: true,
       };
       variable1 = ctx.variableSrv.createVariableFromModel(variableModel1);
-      ctx.variableSrv.addVariable(variable1);
+      ctx.variableSrv.addVariable(variableModel1);
 
       const variableModel2 = {
         type: 'interval',
@@ -560,7 +566,7 @@ describe('VariableSrv', function(this: any) {
         useTemporary: true,
       };
       variable2 = ctx.variableSrv.createVariableFromModel(variableModel2);
-      ctx.variableSrv.addVariable(variable2);
+      ctx.variableSrv.addVariable(variableModel2);
 
       ctx.variableSrv.updateOptions(variable1);
       ctx.variableSrv.updateOptions(variable2);

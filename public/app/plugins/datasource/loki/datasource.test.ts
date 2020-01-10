@@ -1,7 +1,7 @@
 import LokiDatasource, { RangeQueryOptions } from './datasource';
-import { LokiQuery, LokiResultType, LokiResponse, LokiLegacyStreamResponse } from './types';
+import { LokiLegacyStreamResponse, LokiQuery, LokiResponse, LokiResultType } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import { AnnotationQueryRequest, DataSourceApi, DataFrame, dateTime, TimeRange } from '@grafana/data';
+import { AnnotationQueryRequest, DataFrame, DataSourceApi, dateTime, TimeRange } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/custom_variable';
@@ -210,7 +210,7 @@ describe('LokiDatasource', () => {
       const customData = { ...(instanceSettings.jsonData || {}), maxLines: 20 };
       const customSettings = { ...instanceSettings, jsonData: customData };
       ds = new LokiDatasource(customSettings, backendSrv, templateSrvMock);
-      variable = new CustomVariable({}, {} as any);
+      variable = new CustomVariable({ useTemporary: true }, {} as any);
     });
 
     it('should only escape single quotes', () => {

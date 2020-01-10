@@ -502,6 +502,7 @@ describe('CloudWatchDatasource', () => {
               value: ['var4-foo', 'var4-baz'],
             },
             multi: true,
+            useTemporary: true,
           },
           {} as any
         ),

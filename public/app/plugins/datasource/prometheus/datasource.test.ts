@@ -7,11 +7,11 @@ import {
   prometheusSpecialRegexEscape,
 } from './datasource';
 import {
-  DataSourceInstanceSettings,
-  DataQueryResponseData,
-  DataQueryRequest,
-  dateTime,
   CoreApp,
+  DataQueryRequest,
+  DataQueryResponseData,
+  DataSourceInstanceSettings,
+  dateTime,
   LoadingState,
 } from '@grafana/data';
 import { PromOptions, PromQuery } from './types';
@@ -470,7 +470,7 @@ describe('PrometheusDatasource', () => {
   describe('When interpolating variables', () => {
     let customVariable: CustomVariable;
     beforeEach(() => {
-      customVariable = new CustomVariable({}, {} as any);
+      customVariable = new CustomVariable({ useTemporary: true }, {} as any);
     });
 
     describe('and value is a string', () => {

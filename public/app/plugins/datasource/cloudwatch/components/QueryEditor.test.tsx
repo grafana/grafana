@@ -4,7 +4,7 @@ import { mount } from 'enzyme';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
-import { QueryEditor, Props } from './QueryEditor';
+import { Props, QueryEditor } from './QueryEditor';
 import CloudWatchDatasource from '../datasource';
 
 const setup = () => {
@@ -26,6 +26,7 @@ const setup = () => {
           value: ['var3-foo', 'var3-baz'],
         },
         multi: true,
+        useTemporary: true,
       },
       {} as any
     ),
