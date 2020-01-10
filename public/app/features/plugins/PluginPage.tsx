@@ -374,7 +374,7 @@ function getPluginTabsNav(
           pages.push({
             text: page.title,
             icon: page.icon,
-            url: path + '?page=' + page.id,
+            url: `${appSubUrl}${path}?page=${page.id}`,
             id: page.id,
           });
           if (!defaultPage) {

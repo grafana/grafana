@@ -3,7 +3,6 @@ import '../../../public/vendor/flot/jquery.flot.js';
 import '../../../public/vendor/flot/jquery.flot.selection';
 import '../../../public/vendor/flot/jquery.flot.time';
 import '../../../public/vendor/flot/jquery.flot.stack';
-import '../../../public/vendor/flot/jquery.flot.pie';
 import '../../../public/vendor/flot/jquery.flot.stackpercent';
 import '../../../public/vendor/flot/jquery.flot.fillbelow';
 import '../../../public/vendor/flot/jquery.flot.crosshair';

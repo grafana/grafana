@@ -12,7 +12,7 @@ export * from './Button/Button';
 export { Select, AsyncSelect } from './Select/Select';
 export { IndicatorsContainer } from './Select/IndicatorsContainer';
 export { NoOptionsMessage } from './Select/NoOptionsMessage';
-export { default as resetSelectStyles } from './Select/resetSelectStyles';
+export { default as resetSelectStyles } from './Forms/Select/resetSelectStyles';
 export { ButtonSelect } from './Select/ButtonSelect';
 export { Cascader, CascaderOption } from './Cascader/Cascader';
 

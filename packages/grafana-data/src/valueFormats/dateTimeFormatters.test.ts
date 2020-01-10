@@ -19,81 +19,81 @@ describe('date time formats', () => {
 
   it('should format as iso date', () => {
     const expected = browserTime.format('YYYY-MM-DD HH:mm:ss');
-    const actual = dateTimeAsIso(epoch, 0, 0, false);
+    const actual = dateTimeAsIso(epoch, 0, 0);
     expect(actual.text).toBe(expected);
   });
 
   it('should format as iso date (in UTC)', () => {
     const expected = utcTime.format('YYYY-MM-DD HH:mm:ss');
-    const actual = dateTimeAsIso(epoch, 0, 0, true);
+    const actual = dateTimeAsIso(epoch, 0, 0, 'utc');
     expect(actual.text).toBe(expected);
   });
 
   it('should format as iso date and skip date when today', () => {
     const now = dateTime();
     const expected = now.format('HH:mm:ss');
-    const actual = dateTimeAsIso(now.valueOf(), 0, 0, false);
+    const actual = dateTimeAsIso(now.valueOf(), 0, 0);
     expect(actual.text).toBe(expected);
   });
 
   it('should format as iso date (in UTC) and skip date when today', () => {
     const now = toUtc();
     const expected = now.format('HH:mm:ss');
-    const actual = dateTimeAsIso(now.valueOf(), 0, 0, true);
+    const actual = dateTimeAsIso(now.valueOf(), 0, 0, 'utc');
     expect(actual.text).toBe(expected);
   });
 
   it('should format as US date', () => {
     const expected = browserTime.format('MM/DD/YYYY h:mm:ss a');
-    const actual = dateTimeAsUS(epoch, 0, 0, false);
+    const actual = dateTimeAsUS(epoch, 0, 0);
     expect(actual.text).toBe(expected);
   });
 
   it('should format as US date (in UTC)', () => {
     const expected = utcTime.format('MM/DD/YYYY h:mm:ss a');
-    const actual = dateTimeAsUS(epoch, 0, 0, true);
+    const actual = dateTimeAsUS(epoch, 0, 0, 'utc');
     expect(actual.text).toBe(expected);
   });
 
   it('should format as US date and skip date when today', () => {
     const now = dateTime();
     const expected = now.format('h:mm:ss a');
-    const actual = dateTimeAsUS(now.valueOf(), 0, 0, false);
+    const actual = dateTimeAsUS(now.valueOf(), 0, 0);
     expect(actual.text).toBe(expected);
   });
 
   it('should format as US date (in UTC) and skip date when today', () => {
     const now = toUtc();
     const expected = now.format('h:mm:ss a');
-    const actual = dateTimeAsUS(now.valueOf(), 0, 0, true);
+    const actual = dateTimeAsUS(now.valueOf(), 0, 0, 'utc');
     expect(actual.text).toBe(expected);
   });
 
   it('should format as from now with days', () => {
     const daysAgo = dateTime().add(-7, 'd');
     const expected = '7 days ago';
-    const actual = dateTimeFromNow(daysAgo.valueOf(), 0, 0, false);
+    const actual = dateTimeFromNow(daysAgo.valueOf(), 0, 0);
     expect(actual.text).toBe(expected);
   });
 
   it('should format as from now with days (in UTC)', () => {
     const daysAgo = toUtc().add(-7, 'd');
     const expected = '7 days ago';
-    const actual = dateTimeFromNow(daysAgo.valueOf(), 0, 0, true);
+    const actual = dateTimeFromNow(daysAgo.valueOf(), 0, 0, 'utc');
     expect(actual.text).toBe(expected);
   });
 
   it('should format as from now with minutes', () => {
     const daysAgo = dateTime().add(-2, 'm');
     const expected = '2 minutes ago';
-    const actual = dateTimeFromNow(daysAgo.valueOf(), 0, 0, false);
+    const actual = dateTimeFromNow(daysAgo.valueOf(), 0, 0);
     expect(actual.text).toBe(expected);
   });
 
   it('should format as from now with minutes (in UTC)', () => {
     const daysAgo = toUtc().add(-2, 'm');
     const expected = '2 minutes ago';
-    const actual = dateTimeFromNow(daysAgo.valueOf(), 0, 0, true);
+    const actual = dateTimeFromNow(daysAgo.valueOf(), 0, 0, 'utc');
     expect(actual.text).toBe(expected);
   });
 });

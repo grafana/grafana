@@ -49,6 +49,7 @@ describe('Language completion provider', () => {
       expect(cleanText('foo < bar')).toBe('bar');
       expect(cleanText('foo >= bar')).toBe('bar');
       expect(cleanText('foo <= bar')).toBe('bar');
+      expect(cleanText('memory')).toBe('memory');
     });
 
     it('removes aggregation syntax', () => {
@@ -300,7 +301,7 @@ describe('Language completion provider', () => {
       instance.lookupsDisabled = false;
       const value = Plain.deserialize('{job!=}');
       const ed = new SlateEditor({ value });
-      const valueWithSelection = ed.moveForward(8).value;
+      const valueWithSelection = ed.moveForward(6).value;
       const result = await instance.provideCompletionItems({
         text: '!=',
         prefix: '',
