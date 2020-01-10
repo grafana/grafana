@@ -13,7 +13,7 @@ import gfunc from './gfunc';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 //Types
-import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankMeta } from './types';
+import { GraphiteOptions, GraphiteQuery, GraphiteType } from './types';
 import { getSearchFilterScopedVar } from '../../../features/templating/variable';
 
 export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
