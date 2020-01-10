@@ -1,6 +1,7 @@
 import coreModule from '../core_module';
 import config from 'app/core/config';
 import { getBackendSrv } from '@grafana/runtime';
+import { promiseToDigest } from '../utils/promiseToDigest';
 
 export class InvitedCtrl {
   /** @ngInject */
@@ -18,17 +19,19 @@ export class InvitedCtrl {
     };
 
     $scope.init = () => {
-      getBackendSrv()
-        .get('/api/user/invite/' + $routeParams.code)
-        .then((invite: any) => {
-          $scope.formModel.name = invite.name;
-          $scope.formModel.email = invite.email;
-          $scope.formModel.username = invite.email;
-          $scope.formModel.inviteCode = $routeParams.code;
+      promiseToDigest($scope)(
+        getBackendSrv()
+          .get('/api/user/invite/' + $routeParams.code)
+          .then((invite: any) => {
+            $scope.formModel.name = invite.name;
+            $scope.formModel.email = invite.email;
+            $scope.formModel.username = invite.email;
+            $scope.formModel.inviteCode = $routeParams.code;
 
-          $scope.greeting = invite.name || invite.email || invite.username;
-          $scope.invitedBy = invite.invitedBy;
-        });
+            $scope.greeting = invite.name || invite.email || invite.username;
+            $scope.invitedBy = invite.invitedBy;
+          })
+      );
     };
 
     $scope.submit = () => {
