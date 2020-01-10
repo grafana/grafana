@@ -122,7 +122,7 @@ export class Metrics extends React.Component<Props, State> {
     this.setState({ service, metrics });
 
     if (metrics.length > 0 && !metrics.some(m => m.value === templateSrv.replace(metricType))) {
-      this.onMetricTypeChange(metrics[0].value);
+      this.onMetricTypeChange(metrics[0]);
     }
   };
 
