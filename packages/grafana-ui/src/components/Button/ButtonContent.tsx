@@ -1,5 +1,5 @@
 import React from 'react';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import { stylesFactory, useTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { ButtonSize } from './types';
@@ -47,7 +47,7 @@ export function ButtonContent(props: Props) {
   );
 
   return (
-    <span className={cx(styles.content)}>
+    <span className={styles.content}>
       {iconElement}
       <span>{children}</span>
     </span>
