@@ -32,6 +32,7 @@ import { DataSourcePluginMeta, DataSourceSettings, NavModel } from '@grafana/dat
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
+import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
 
 export interface Props {
   navModel: NavModel;
@@ -58,6 +59,9 @@ interface State {
 }
 
 export class DataSourceSettingsPage extends PureComponent<Props, State> {
+  importDataSourcePlugin: typeof importDataSourcePlugin;
+  importDataSourcePluginPromise: CancelablePromise<any> = null;
+
   constructor(props: Props) {
     super(props);
 
@@ -70,16 +74,23 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     const { dataSourceMeta } = this.props;
     let importedPlugin: GenericDataSourcePlugin;
 
-    try {
-      importedPlugin = await importDataSourcePlugin(dataSourceMeta);
-    } catch (e) {
-      console.log('Failed to import plugin module', e);
-    }
-
-    this.setState({ plugin: importedPlugin });
+    this.importDataSourcePluginPromise = makePromiseCancelable(this.importDataSourcePlugin(dataSourceMeta));
+    this.importDataSourcePluginPromise.promise
+      .then(() => {
+        this.setState({ plugin: importedPlugin });
+      })
+      .catch(e => {
+        if (e.isCanceled) {
+          console.warn('Cloud Watch ConfigEditor has unmounted, intialization was canceled');
+        } else {
+          console.log('Failed to import plugin module', e);
+        }
+      });
   }
 
   async componentDidMount() {
+    this.importDataSourcePlugin = importDataSourcePlugin;
+
     const { loadDataSource, pageId } = this.props;
     if (isNaN(pageId)) {
       this.setState({ loadError: 'Invalid ID' });
@@ -92,6 +103,12 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
       }
     } catch (err) {
       this.setState({ loadError: err });
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.importDataSourcePluginPromise) {
+      this.importDataSourcePluginPromise.cancel();
     }
   }
 
