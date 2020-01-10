@@ -3,8 +3,8 @@ import _ from 'lodash';
 
 import StackdriverDatasource from '../datasource';
 import appEvents from 'app/core/app_events';
+import { Segment } from '@grafana/ui';
 import { MetricDescriptor } from '../types';
-import { MetricSelect } from 'app/core/components/Select/MetricSelect';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CoreEvents } from 'app/types';
 
@@ -104,7 +104,7 @@ export class Metrics extends React.Component<Props, State> {
     return metricsByService;
   }
 
-  onServiceChange = (service: any) => {
+  onServiceChange = ({ value: service }: any) => {
     const { metricDescriptors } = this.state;
     const { templateSrv, metricType } = this.props;
 
@@ -124,7 +124,7 @@ export class Metrics extends React.Component<Props, State> {
     }
   };
 
-  onMetricTypeChange = (value: any) => {
+  onMetricTypeChange = ({ value }: any) => {
     const metricDescriptor = this.getSelectedMetricDescriptor(value);
     this.setState({ metricDescriptor });
     this.props.onChange({ ...metricDescriptor, type: value });
@@ -152,42 +152,47 @@ export class Metrics extends React.Component<Props, State> {
   render() {
     const { services, service, metrics } = this.state;
     const { metricType, templateSrv } = this.props;
+    const templateVariableOptions = templateSrv.variables.map(v => ({
+      label: `$${v.name}`,
+      value: `$${v.name}`,
+    }));
 
     return (
       <>
         <div className="gf-form-inline">
-          <div className="gf-form">
-            <span className="gf-form-label width-9 query-keyword">Service</span>
-            <MetricSelect
-              onChange={this.onServiceChange}
-              value={service}
-              options={services}
-              placeholder="Select Services"
-              className="width-15"
-            />
-          </div>
+          <span className="gf-form-label width-9 query-keyword">Service</span>
+          <Segment
+            onChange={this.onServiceChange}
+            value={[...services, ...templateVariableOptions].find(s => s.value === service)}
+            options={[
+              {
+                label: 'Template Variables',
+                options: templateVariableOptions,
+              },
+              ...services,
+            ]}
+            placeholder="Select Services"
+          ></Segment>
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--grow" />
           </div>
         </div>
         <div className="gf-form-inline">
-          <div className="gf-form">
-            <span className="gf-form-label width-9 query-keyword">Metric</span>
-            <MetricSelect
-              onChange={this.onMetricTypeChange}
-              value={metricType}
-              variables={templateSrv.variables}
-              options={[
-                {
-                  label: 'Metrics',
-                  expanded: true,
-                  options: metrics,
-                },
-              ]}
-              placeholder="Select Metric"
-              className="width-26"
-            />
-          </div>
+          <span className="gf-form-label width-9 query-keyword">Metric</span>
+
+          <Segment
+            className="query-part"
+            onChange={this.onMetricTypeChange}
+            value={[...metrics, ...templateVariableOptions].find(s => s.value === metricType)}
+            options={[
+              {
+                label: 'Template Variables',
+                options: templateVariableOptions,
+              },
+              ...metrics,
+            ]}
+            placeholder="Select Metric"
+          ></Segment>
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--grow" />
           </div>
