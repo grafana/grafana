@@ -35,6 +35,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   fullscreen: true,
   isEditing: true,
   isInView: true,
+  isNewEdit: true,
   hasRefreshed: true,
   cachedPluginOptions: true,
   plugin: true,
@@ -125,6 +126,7 @@ export class PanelModel {
   fullscreen: boolean;
   isEditing: boolean;
   isInView: boolean;
+  isNewEdit: boolean;
   hasRefreshed: boolean;
   events: Emitter;
   cacheTimeout?: any;
@@ -255,7 +257,11 @@ export class PanelModel {
     if (plugin.angularConfigCtrl) {
       return;
     }
-    this.options = _.defaultsDeep({}, this.options || {}, plugin.defaults);
+    this.options = _.mergeWith({}, plugin.defaults, this.options || {}, (objValue: any, srcValue: any): any => {
+      if (_.isArray(srcValue)) {
+        return srcValue;
+      }
+    });
   }
 
   pluginLoaded(plugin: PanelPlugin) {

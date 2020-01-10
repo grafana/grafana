@@ -21,7 +21,7 @@ type DashboardService interface {
 
 // DashboardProvisioningService service for operating on provisioned dashboards
 type DashboardProvisioningService interface {
-	SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning, allowUiUpdates bool) (*models.Dashboard, error)
+	SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
 	SaveFolderForProvisionedDashboards(*SaveDashboardDTO) (*models.Dashboard, error)
 	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
 	GetProvisionedDashboardDataByDashboardId(dashboardId int64) (*models.DashboardProvisioning, error)
@@ -182,14 +182,14 @@ func (dr *dashboardServiceImpl) updateAlerting(cmd *models.SaveDashboardCommand,
 	return bus.Dispatch(&alertCmd)
 }
 
-func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning, allowUiUpdates bool) (*models.Dashboard, error) {
+func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
 	dto.User = &models.SignedInUser{
 		UserId:  0,
 		OrgRole: models.ROLE_ADMIN,
 		OrgId:   dto.OrgId,
 	}
 
-	cmd, err := dr.buildSaveDashboardCommand(dto, true, !allowUiUpdates)
+	cmd, err := dr.buildSaveDashboardCommand(dto, true, false)
 	if err != nil {
 		return nil, err
 	}

@@ -6,6 +6,7 @@ import { setStore } from './store';
 import { StoreState } from 'app/types/store';
 import { toggleLogActionsMiddleware } from 'app/core/middlewares/application';
 import { addReducer, createRootReducer } from '../core/reducers/root';
+import { ActionOf } from 'app/core/redux';
 
 export function addRootReducer(reducers: any) {
   // this is ok now because we add reducers before configureStore is called
@@ -27,7 +28,11 @@ export function configureStore() {
       ? applyMiddleware(toggleLogActionsMiddleware, thunk, logger)
       : applyMiddleware(thunk);
 
-  const store: any = createStore(createRootReducer(), {}, composeEnhancers(storeEnhancers));
+  const store = createStore<StoreState, ActionOf<any>, any, any>(
+    createRootReducer(),
+    {},
+    composeEnhancers(storeEnhancers)
+  );
   setStore(store);
   return store;
 }

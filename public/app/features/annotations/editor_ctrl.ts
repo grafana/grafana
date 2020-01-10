@@ -44,7 +44,10 @@ export class AnnotationsEditorCtrl {
     infoBoxTitle: 'What are annotations?',
   };
 
-  showOptions: any = [{ text: 'All Panels', value: 0 }, { text: 'Specific Panels', value: 1 }];
+  showOptions: any = [
+    { text: 'All Panels', value: 0 },
+    { text: 'Specific Panels', value: 1 },
+  ];
 
   /** @ngInject */
   constructor(private $scope: any, private datasourceSrv: DatasourceSrv) {

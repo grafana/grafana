@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
@@ -25,6 +26,20 @@ var setIndexViewData = (*HTTPServer).setIndexViewData
 
 var getViewIndex = func() string {
 	return ViewIndex
+}
+
+func validateRedirectTo(redirectTo string) error {
+	to, err := url.Parse(redirectTo)
+	if err != nil {
+		return login.ErrInvalidRedirectTo
+	}
+	if to.IsAbs() {
+		return login.ErrAbsoluteRedirectTo
+	}
+	if setting.AppSubUrl != "" && !strings.HasPrefix(to.Path, "/"+setting.AppSubUrl) {
+		return login.ErrInvalidRedirectTo
+	}
+	return nil
 }
 
 func (hs *HTTPServer) LoginView(c *models.ReqContext) {
@@ -57,18 +72,37 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		return
 	}
 
-	if !c.IsSignedIn {
-		c.HTML(200, ViewIndex, viewData)
+	if c.IsSignedIn {
+		// Assign login token to auth proxy users if enable_login_token = true
+		if setting.AuthProxyEnabled && setting.AuthProxyEnableLoginToken {
+			hs.loginAuthProxyUser(c)
+		}
+
+		if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
+			if err := validateRedirectTo(redirectTo); err != nil {
+				viewData.Settings["loginError"] = err.Error()
+				c.HTML(200, getViewIndex(), viewData)
+				c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
+				return
+			}
+			c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
+			c.Redirect(redirectTo)
+			return
+		}
+
+		c.Redirect(setting.AppSubUrl + "/")
 		return
 	}
 
-	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
-		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
-		c.Redirect(redirectTo)
-		return
-	}
+	c.HTML(200, getViewIndex(), viewData)
+}
 
-	c.Redirect(setting.AppSubUrl + "/")
+func (hs *HTTPServer) loginAuthProxyUser(c *models.ReqContext) {
+	hs.loginUserWithUser(&models.User{
+		Id:    c.SignedInUser.UserId,
+		Email: c.SignedInUser.Email,
+		Login: c.SignedInUser.Login,
+	}, c)
 }
 
 func tryOAuthAutoLogin(c *models.ReqContext) bool {
@@ -134,7 +168,11 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 	}
 
 	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
-		result["redirectUrl"] = redirectTo
+		if err := validateRedirectTo(redirectTo); err == nil {
+			result["redirectUrl"] = redirectTo
+		} else {
+			log.Info("Ignored invalid redirect_to cookie value: %v", redirectTo)
+		}
 		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
 	}
 

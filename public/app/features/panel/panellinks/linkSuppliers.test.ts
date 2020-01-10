@@ -32,11 +32,11 @@ describe('getLinksFromLogsField', () => {
         links: [
           {
             title: 'title1',
-            url: 'domain.com/${__value.raw}',
+            url: 'http://domain.com/${__value.raw}',
           },
           {
             title: 'title2',
-            url: 'anotherdomain.sk/${__value.raw}',
+            url: 'http://anotherdomain.sk/${__value.raw}',
           },
         ],
       },
@@ -44,8 +44,8 @@ describe('getLinksFromLogsField', () => {
     };
     const links = getLinksFromLogsField(field, 2);
     expect(links.length).toBe(2);
-    expect(links[0].href).toBe('domain.com/3');
-    expect(links[1].href).toBe('anotherdomain.sk/3');
+    expect(links[0].href).toBe('http://domain.com/3');
+    expect(links[1].href).toBe('http://anotherdomain.sk/3');
   });
 
   it('handles zero links', () => {

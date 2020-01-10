@@ -61,5 +61,8 @@ export function getFlotPairsConstant(seriesData: GraphSeriesValue[][], range: Ti
   const from = range.from.valueOf();
   const to = range.to.valueOf();
   const value = seriesData[0][1];
-  return [[from, value], [to, value]];
+  return [
+    [from, value],
+    [to, value],
+  ];
 }

@@ -120,10 +120,18 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant }: StyleDep
         box-shadow: none;
       }
     `,
+    buttonWithIcon: css`
+      padding-left: ${theme.spacing.sm};
+    `,
+    // used for buttons with icon onlys
+    iconButton: css`
+      padding-right: 0;
+    `,
     iconWrap: css`
       label: button-icon-wrap;
-      display: flex;
-      align-items: center;
+      & + * {
+        margin-left: ${theme.spacing.sm};
+      }
     `,
   };
 });

@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 
-import { changeRefreshInterval } from './state/actions';
+import { changeRefreshInterval, runQueries } from './state/actions';
 import { setPausedStateAction } from './state/actionTypes';
 import { RefreshPicker } from '@grafana/ui';
 import { ExploreId } from '../../types';
@@ -29,6 +29,7 @@ export function useLiveTailControls(exploreId: ExploreId) {
     // TODO referencing this from perspective of refresh picker when there is designated button for it now is not
     //  great. Needs a bit of refactoring.
     dispatch(changeRefreshInterval(exploreId, RefreshPicker.offOption.value));
+    dispatch(runQueries(exploreId));
   }, [exploreId, dispatch, pause]);
 
   const start = useCallback(() => {

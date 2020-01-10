@@ -216,7 +216,11 @@ export class HeatmapTooltip {
     barWidth = Math.max(barWidth, 1);
 
     // Normalize histogram Y axis
-    const histogramDomain = _.reduce(_.map(histogramData, d => d[1]), (sum, val) => sum + val, 0);
+    const histogramDomain = _.reduce(
+      _.map(histogramData, d => d[1]),
+      (sum, val) => sum + val,
+      0
+    );
     const histYScale = d3
       .scaleLinear()
       .domain([0, histogramDomain])

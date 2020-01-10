@@ -103,7 +103,7 @@ $hr-border-color: $gray-4 !default;
 
 // Panel
 // -------------------------
-$panel-bg: $white;
+$panel-bg: ${theme.colors.panelBg};
 $panel-border: solid 1px $gray-5;
 $panel-header-hover-bg: $gray-6;
 $panel-corner: $gray-4;
@@ -179,6 +179,8 @@ $btn-divider-right: $gray-7;
 $btn-drag-image: '../img/grab_light.svg';
 
 $navbar-btn-gicon-brightness: brightness(1.5);
+
+$btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
 
 // Forms
 // -------------------------

@@ -12,10 +12,6 @@ func ptrace(request int, pid int, addr uintptr, data uintptr) error {
 	return ENOTSUP
 }
 
-func sysctl(mib []_C_int, old *byte, oldlen *uintptr, new *byte, newlen uintptr) error {
-	return ENOTSUP
-}
-
 func setTimespec(sec, nsec int64) Timespec {
 	return Timespec{Sec: int32(sec), Nsec: int32(nsec)}
 }
@@ -70,7 +66,3 @@ const SYS___SYSCTL = SYS_SYSCTL
 //sys	Lstat(path string, stat *Stat_t) (err error)
 //sys	Stat(path string, stat *Stat_t) (err error)
 //sys	Statfs(path string, stat *Statfs_t) (err error)
-
-func Getdirentries(fd int, buf []byte, basep *uintptr) (n int, err error) {
-	return 0, ENOSYS
-}
