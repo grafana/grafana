@@ -28,7 +28,8 @@ func TestDynamicSettingsSupport_NoOverride(t *testing.T) {
 	keyName := "bar"
 	expected := "default value"
 
-	cfg.Raw.Section(sectionName).NewKey(keyName, expected)
+	_, err := cfg.Raw.Section(sectionName).NewKey(keyName, expected)
+	require.NoError(t, err)
 	value := cfg.SectionWithEnvOverrides(sectionName).Key(keyName).String()
 	require.Equal(t, expected, value)
 }

@@ -32,6 +32,7 @@ const (
 	HTTP2             Scheme = "h2"
 	SOCKET            Scheme = "socket"
 	DEFAULT_HTTP_ADDR string = "0.0.0.0"
+	REDACTED_PASSWORD string = "*********"
 )
 
 const (
@@ -333,7 +334,7 @@ func applyEnvVariableOverrides(file *ini.File) error {
 			if len(envValue) > 0 {
 				key.SetValue(envValue)
 				if shouldRedactKey(envKey) {
-					envValue = "*********"
+					envValue = REDACTED_PASSWORD
 				}
 				if shouldRedactURLKey(envKey) {
 					u, err := url.Parse(envValue)
@@ -373,7 +374,7 @@ func applyCommandLineDefaultProperties(props map[string]string, file *ini.File) 
 			if exists {
 				key.SetValue(value)
 				if shouldRedactKey(keyString) {
-					value = "*********"
+					value = REDACTED_PASSWORD
 				}
 				appliedCommandLineProperties = append(appliedCommandLineProperties, fmt.Sprintf("%s=%s", keyString, value))
 			}
@@ -1137,7 +1138,7 @@ func (s *DynamicSection) Key(k string) *ini.Key {
 
 	key.SetValue(envValue)
 	if shouldRedactKey(envKey) {
-		envValue = "*********"
+		envValue = REDACTED_PASSWORD
 	}
 	s.Logger.Info("Config overridden from Environment variable", "var", fmt.Sprintf("%s=%s", envKey, envValue))
 
