@@ -4,7 +4,7 @@ import { DisplayValue, GraphSeriesValue, DisplayValueAlignmentFactors } from '@g
 
 // Types
 import { Themeable } from '../../types';
-import { buildLayout } from './styles';
+import { buildLayout } from './BigValueLayout';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
 export interface BigValueSparkline {
