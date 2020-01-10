@@ -460,7 +460,7 @@ export class BackendSrv implements BackendService {
   };
 
   private parseUrlFromOptions = (options: BackendSrvRequest): string => {
-    const cleanParams = omitBy(options.params, v => v === undefined || v.length === 0);
+    const cleanParams = omitBy(options.params, v => v === undefined || (v && v.length === 0));
     const serializedParams = serializeParams(cleanParams);
     return options.params && serializedParams.length ? `${options.url}?${serializedParams}` : options.url;
   };
