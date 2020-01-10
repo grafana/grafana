@@ -1,4 +1,4 @@
-import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourcePluginMeta, DataSourceJsonData } from '@grafana/data';
 import { ExpressionQuery, GELQueryType } from './types';
 import { ExpressionQueryEditor } from './ExpressionQueryEditor';
 import { DataSourceWithBackend } from '@grafana/runtime';
@@ -6,7 +6,7 @@ import { DataSourceWithBackend } from '@grafana/runtime';
 /**
  * This is a singleton instance that just pretends to be a DataSource
  */
-export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQuery> {
+export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQuery, DataSourceJsonData> {
   constructor(instanceSettings: DataSourceInstanceSettings) {
     super(instanceSettings);
   }
