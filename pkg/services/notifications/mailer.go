@@ -57,7 +57,7 @@ func (ns *NotificationService) dialAndSend(messages ...*Message) (num int, err e
 
 		m.SetBody("text/html", msg.Body)
 
-		if e := dialer.DialAndSend(m); err != nil {
+		if e := dialer.DialAndSend(m); e != nil {
 			err = errutil.Wrapf(e, "Failed to send notification to email addresses: %s", strings.Join(msg.To, ";"))
 			continue
 		}
@@ -65,7 +65,7 @@ func (ns *NotificationService) dialAndSend(messages ...*Message) (num int, err e
 		num++
 	}
 
-	return num, err
+	return
 }
 
 // setFiles attaches files in various forms
