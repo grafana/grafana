@@ -75,6 +75,8 @@ func (kn *KafkaNotifier) Notify(evalContext *alerting.EvalContext) error {
 	records := make([]interface{}, 1)
 
 	bodyJSON := simplejson.New()
+	//get alert state in the kafka output issue #11401
+	bodyJSON.Set("alert_state", state)
 	bodyJSON.Set("description", evalContext.Rule.Name+" - "+evalContext.Rule.Message)
 	bodyJSON.Set("client", "Grafana")
 	bodyJSON.Set("details", customData)

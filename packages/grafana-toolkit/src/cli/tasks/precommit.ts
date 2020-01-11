@@ -60,7 +60,7 @@ const precommitRunner: TaskRunner<PrecommitOptions> = async () => {
     return task;
   }
 
-  console.log(chalk.yellow('Skipping precommit checks, not front-end changes detected'));
+  console.log(chalk.yellow('Skipping precommit checks, no front-end changes detected'));
   return;
 };
 

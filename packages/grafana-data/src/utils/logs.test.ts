@@ -1,5 +1,12 @@
 import { LogLevel } from '../types/logs';
-import { getLogLevel, calculateLogsLabelStats, calculateFieldStats, getParser, LogsParsers } from './logs';
+import {
+  getLogLevel,
+  calculateLogsLabelStats,
+  calculateFieldStats,
+  getParser,
+  LogsParsers,
+  calculateStats,
+} from './logs';
 
 describe('getLoglevel()', () => {
   it('returns no log level on empty line', () => {
@@ -91,21 +98,25 @@ describe('LogsParsers', () => {
     test('should return parsed fields', () => {
       expect(
         parser.getFields(
-          'foo=bar baz="42 + 1" msg="[resolver] received A record \\"127.0.0.1\\" for \\"localhost.\\" from udp:192.168.65.1"'
+          'foo=bar baz="42 + 1" msg="[resolver] received A record \\"127.0.0.1\\" for \\"localhost.\\" from udp:192.168.65.1" time(ms)=50 label{foo}=bar'
         )
       ).toEqual([
         'foo=bar',
         'baz="42 + 1"',
         'msg="[resolver] received A record \\"127.0.0.1\\" for \\"localhost.\\" from udp:192.168.65.1"',
+        'time(ms)=50',
+        'label{foo}=bar',
       ]);
     });
 
     test('should return label for field', () => {
       expect(parser.getLabelFromField('foo=bar')).toBe('foo');
+      expect(parser.getLabelFromField('time(ms)=50')).toBe('time(ms)');
     });
 
     test('should return value for field', () => {
       expect(parser.getValueFromField('foo=bar')).toBe('bar');
+      expect(parser.getValueFromField('time(ms)=50')).toBe('50');
       expect(
         parser.getValueFromField(
           'msg="[resolver] received A record \\"127.0.0.1\\" for \\"localhost.\\" from udp:192.168.65.1"'
@@ -118,6 +129,13 @@ describe('LogsParsers', () => {
       const match = 'foo=bar'.match(matcher);
       expect(match).toBeDefined();
       expect(match![1]).toBe('bar');
+    });
+
+    test('should build a valid complex value matcher', () => {
+      const matcher = parser.buildMatcher('time(ms)');
+      const match = 'time(ms)=50'.match(matcher);
+      expect(match).toBeDefined();
+      expect(match![1]).toBe('50');
     });
   });
 
@@ -203,6 +221,28 @@ describe('calculateFieldStats()', () => {
       {
         value: '503',
         count: 2,
+      },
+    ]);
+  });
+});
+
+describe('calculateStats()', () => {
+  test('should return no stats for empty array', () => {
+    expect(calculateStats([])).toEqual([]);
+  });
+
+  test('should return correct stats', () => {
+    const values = ['one', 'one', null, undefined, 'two'];
+    expect(calculateStats(values)).toMatchObject([
+      {
+        value: 'one',
+        count: 2,
+        proportion: 2 / 3,
+      },
+      {
+        value: 'two',
+        count: 1,
+        proportion: 1 / 3,
       },
     ]);
   });

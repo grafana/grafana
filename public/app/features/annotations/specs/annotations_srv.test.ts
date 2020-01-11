@@ -5,7 +5,7 @@ describe('AnnotationsSrv', () => {
     onAppEvent: jest.fn(),
   };
 
-  const annotationsSrv = new AnnotationsSrv($rootScope, null, null, null, null);
+  const annotationsSrv = new AnnotationsSrv($rootScope, null, null, null);
 
   describe('When translating the query result', () => {
     const annotationSource = {

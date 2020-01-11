@@ -4,6 +4,7 @@ import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { ElasticsearchOptions } from '../types';
 import { defaultMaxConcurrentShardRequests, ElasticDetails } from './ElasticDetails';
 import { LogsConfig } from './LogsConfig';
+import { DataLinks } from './DataLinks';
 
 export type Props = DataSourcePluginOptionsEditorProps<ElasticsearchOptions>;
 export const ConfigEditor = (props: Props) => {
@@ -29,7 +30,7 @@ export const ConfigEditor = (props: Props) => {
   return (
     <>
       <DataSourceHttpSettings
-        defaultUrl={'http://localhost:3100'}
+        defaultUrl={'http://localhost:9200'}
         dataSourceConfig={options}
         showAccessOptions={true}
         onChange={onOptionsChange}
@@ -45,6 +46,19 @@ export const ConfigEditor = (props: Props) => {
             jsonData: newValue,
           })
         }
+      />
+
+      <DataLinks
+        value={options.jsonData.dataLinks}
+        onChange={newValue => {
+          onOptionsChange({
+            ...options,
+            jsonData: {
+              ...options.jsonData,
+              dataLinks: newValue,
+            },
+          });
+        }}
       />
     </>
   );

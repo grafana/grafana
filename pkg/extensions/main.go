@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	_ "github.com/jung-kurt/gofpdf"
+	_ "github.com/linkedin/goavro/v2"
 	_ "github.com/pkg/errors"
 	_ "github.com/robfig/cron"
 	_ "github.com/robfig/cron/v3"

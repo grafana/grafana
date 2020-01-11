@@ -1,4 +1,4 @@
-import angular, { IQService } from 'angular';
+import angular from 'angular';
 import _ from 'lodash';
 
 import config from 'app/core/config';
@@ -14,18 +14,17 @@ function pluginDirectiveLoader(
   $compile: any,
   datasourceSrv: DatasourceSrv,
   $rootScope: GrafanaRootScope,
-  $q: IQService,
   $http: any,
   $templateCache: any,
   $timeout: any
 ) {
   function getTemplate(component: { template: any; templateUrl: any }) {
     if (component.template) {
-      return $q.when(component.template);
+      return Promise.resolve(component.template);
     }
     const cached = $templateCache.get(component.templateUrl);
     if (cached) {
-      return $q.when(cached);
+      return Promise.resolve(cached);
     }
     return $http.get(component.templateUrl).then((res: any) => {
       return res.data;
@@ -113,7 +112,7 @@ function pluginDirectiveLoader(
       case 'query-ctrl': {
         const ds: DataSourceApi = scope.ctrl.datasource as DataSourceApi;
 
-        return $q.when({
+        return Promise.resolve({
           baseUrl: ds.meta.baseUrl,
           name: 'query-ctrl-' + ds.meta.id,
           bindings: { target: '=', panelCtrl: '=', datasource: '=' },
@@ -192,7 +191,7 @@ function pluginDirectiveLoader(
         return loadPanelComponentInfo(scope, attrs);
       }
       default: {
-        return $q.reject({
+        return Promise.reject({
           message: 'Could not find component type: ' + attrs.type,
         });
       }

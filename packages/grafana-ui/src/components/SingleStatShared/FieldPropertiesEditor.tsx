@@ -13,7 +13,6 @@ import {
   VAR_CALC,
   VAR_CELL_PREFIX,
   toIntegerOrUndefined,
-  SelectableValue,
   FieldConfig,
   toFloatOrUndefined,
   toNumberString,
@@ -22,12 +21,13 @@ import {
 const labelWidth = 6;
 
 export interface Props {
-  showMinMax: boolean;
+  showMinMax?: boolean;
+  showTitle?: boolean;
   value: FieldConfig;
   onChange: (value: FieldConfig, event?: React.SyntheticEvent<HTMLElement>) => void;
 }
 
-export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMinMax }) => {
+export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMinMax, showTitle }) => {
   const { unit, title } = value;
 
   const [decimals, setDecimals] = useState(
@@ -61,8 +61,8 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
     [value.max, onChange]
   );
 
-  const onUnitChange = (unit: SelectableValue<string>) => {
-    onChange({ ...value, unit: unit.value });
+  const onUnitChange = (unit?: string) => {
+    onChange({ ...value, unit });
   };
 
   const commitChanges = useCallback(() => {
@@ -88,18 +88,20 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
 
   return (
     <>
-      <FormField
-        label="Title"
-        labelWidth={labelWidth}
-        onChange={onTitleChange}
-        value={title}
-        tooltip={titleTooltip}
-        placeholder="Auto"
-      />
+      {showTitle && (
+        <FormField
+          label="Title"
+          labelWidth={labelWidth}
+          onChange={onTitleChange}
+          value={title}
+          tooltip={titleTooltip}
+          placeholder="Auto"
+        />
+      )}
 
       <div className="gf-form">
         <FormLabel width={labelWidth}>Unit</FormLabel>
-        <UnitPicker defaultValue={unit} onChange={onUnitChange} />
+        <UnitPicker value={unit} onChange={onUnitChange} />
       </div>
       {showMinMax && (
         <>
@@ -109,6 +111,7 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
             onChange={onMinChange}
             onBlur={commitChanges}
             value={min}
+            placeholder="Auto"
             type="number"
           />
           <FormField
@@ -118,6 +121,7 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
             onBlur={commitChanges}
             value={max}
             type="number"
+            placeholder="Auto"
           />
         </>
       )}

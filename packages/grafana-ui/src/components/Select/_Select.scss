@@ -44,6 +44,7 @@ $select-input-bg-disabled: $input-bg-disabled;
 
 .gf-form-select-box__input {
   padding-left: 5px;
+
   input {
     line-height: inherit;
   }
@@ -55,6 +56,7 @@ $select-input-bg-disabled: $input-bg-disabled;
   position: absolute;
   z-index: $zindex-dropdown;
   min-width: 100%;
+
   &-notice--no-options {
     background-color: $input-bg;
     padding: 10px;
@@ -122,6 +124,7 @@ $select-input-bg-disabled: $input-bg-disabled;
   display: inline-block;
   padding: 6px 16px 6px 10px;
   vertical-align: middle;
+
   > div {
     display: inline-block;
     vertical-align: middle;
