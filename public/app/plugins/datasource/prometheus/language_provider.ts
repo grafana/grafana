@@ -364,7 +364,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   fetchSeriesLabels = async (name: string, withName?: boolean) => {
     try {
       const tRange = this.datasource.getTimeRange();
-      const data = await this.request(`/api/v1/series?match[]=${name}&start=${tRange['start']}&end=${tRange['end']}`);
+      const data = await this.request(
+        `/api/v1/series?match${encodeURIComponent('[]')}=${name}&start=${tRange['start']}&end=${tRange['end']}`
+      );
       const { keys, values } = processLabels(data, withName);
       this.labelKeys[name] = keys;
       this.labelValues[name] = values;

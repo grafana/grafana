@@ -99,7 +99,9 @@ describe('PrometheusMetricFindQuery', () => {
       expect(ctx.backendSrvMock.datasourceRequest).toHaveBeenCalledTimes(1);
       expect(ctx.backendSrvMock.datasourceRequest).toHaveBeenCalledWith({
         method: 'GET',
-        url: `proxied/api/v1/series?match[]=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
+        url: `proxied/api/v1/series?match${encodeURIComponent(
+          '[]'
+        )}=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
         silent: true,
         headers: {},
       });
@@ -122,7 +124,7 @@ describe('PrometheusMetricFindQuery', () => {
       expect(ctx.backendSrvMock.datasourceRequest).toHaveBeenCalledTimes(1);
       expect(ctx.backendSrvMock.datasourceRequest).toHaveBeenCalledWith({
         method: 'GET',
-        url: `proxied/api/v1/series?match[]=${encodeURIComponent(
+        url: `proxied/api/v1/series?match${encodeURIComponent('[]')}=${encodeURIComponent(
           'metric{label1="foo", label2="bar", label3="baz"}'
         )}&start=${raw.from.unix()}&end=${raw.to.unix()}`,
         silent: true,
@@ -149,7 +151,9 @@ describe('PrometheusMetricFindQuery', () => {
       expect(ctx.backendSrvMock.datasourceRequest).toHaveBeenCalledTimes(1);
       expect(ctx.backendSrvMock.datasourceRequest).toHaveBeenCalledWith({
         method: 'GET',
-        url: `proxied/api/v1/series?match[]=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
+        url: `proxied/api/v1/series?match${encodeURIComponent(
+          '[]'
+        )}=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
         silent: true,
         headers: {},
       });
@@ -222,7 +226,7 @@ describe('PrometheusMetricFindQuery', () => {
       expect(ctx.backendSrvMock.datasourceRequest).toHaveBeenCalledTimes(1);
       expect(ctx.backendSrvMock.datasourceRequest).toHaveBeenCalledWith({
         method: 'GET',
-        url: `proxied/api/v1/series?match[]=${encodeURIComponent(
+        url: `proxied/api/v1/series?match${encodeURIComponent('[]')}=${encodeURIComponent(
           'up{job="job1"}'
         )}&start=${raw.from.unix()}&end=${raw.to.unix()}`,
         silent: true,
