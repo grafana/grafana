@@ -86,11 +86,15 @@ func (p *BackendPlugin) start(ctx context.Context) error {
 	}
 
 	if legacyClient != nil && p.callbacks.LegacyCallback != nil {
-		p.callbacks.LegacyCallback.execute(p.id, legacyClient, p.logger)
+		if err := p.callbacks.LegacyCallback.execute(p.id, legacyClient, p.logger); err != nil {
+			return err
+		}
 	}
 
 	if client != nil && p.callbacks.Callback != nil {
-		p.callbacks.Callback.execute(p.id, client, p.logger)
+		if err := p.callbacks.Callback.execute(p.id, client, p.logger); err != nil {
+			return err
+		}
 	}
 
 	return nil
