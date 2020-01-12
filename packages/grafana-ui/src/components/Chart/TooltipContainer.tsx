@@ -1,7 +1,7 @@
 import React, { useState, useLayoutEffect, useRef } from 'react';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import { useTheme } from '../../themes/ThemeContext';
 import useWindowSize from 'react-use/lib/useWindowSize';
 import { GrafanaTheme } from '@grafana/data';
@@ -10,7 +10,6 @@ interface TooltipContainerProps {
   position: { x: number; y: number };
   offset: { x: number; y: number };
   children?: JSX.Element;
-  className?: any;
 }
 
 const getTooltipContainerStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -27,7 +26,7 @@ const getTooltipContainerStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-export const TooltipContainer: React.FC<TooltipContainerProps> = ({ position, offset, children, className }) => {
+export const TooltipContainer: React.FC<TooltipContainerProps> = ({ position, offset, children }) => {
   const theme = useTheme();
   const tooltipRef = useRef<HTMLDivElement>(null);
   const { width, height } = useWindowSize();
@@ -70,12 +69,7 @@ export const TooltipContainer: React.FC<TooltipContainerProps> = ({ position, of
         top: 0,
         transform: `translate3d(${placement.x}px, ${placement.y}px, 0)`,
       }}
-      className={cx(
-        styles.wrapper,
-        css`
-          ${className}
-        `
-      )}
+      className={styles.wrapper}
     >
       {children}
     </div>
