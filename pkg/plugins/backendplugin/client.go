@@ -41,17 +41,42 @@ func newClientConfig(executablePath string, logger log.Logger, versionedPlugins 
 	}
 }
 
+// LegacyCallbackFunc callback function called when a plugin with old plugin protocol is started.
+type LegacyCallbackFunc func(pluginID string, client *LegacyClient, logger log.Logger) error
+
+func (f LegacyCallbackFunc) execute(pluginID string, client *LegacyClient, logger log.Logger) error {
+	return f(pluginID, client, logger)
+}
+
+// CallbackFunc callback function called when a plugin with current plugin protocol version is started.
+type CallbackFunc func(pluginID string, client *Client, logger log.Logger) error
+
+func (f CallbackFunc) execute(pluginID string, client *Client, logger log.Logger) error {
+	return f(pluginID, client, logger)
+}
+
+// PluginCallbacks callback functions called when plugin is started.
+type PluginCallbacks struct {
+	LegacyCallback LegacyCallbackFunc
+	Callback       CallbackFunc
+}
+
 // PluginDescriptor descriptor used for registering backend plugins.
 type PluginDescriptor struct {
 	pluginID         string
 	executablePath   string
 	managed          bool
 	versionedPlugins map[int]plugin.PluginSet
+	callbacks        *PluginCallbacks
 }
 
 // NewBackendPluginDescriptor creates a new backend plugin descriptor
 // used for registering a backend datasource plugin.
-func NewBackendPluginDescriptor(pluginID, executablePath string) PluginDescriptor {
+func NewBackendPluginDescriptor(pluginID, executablePath string, callbacks *PluginCallbacks) PluginDescriptor {
+	if callbacks == nil {
+		panic("plugin callbacks cannot be nil")
+	}
+
 	return PluginDescriptor{
 		pluginID:       pluginID,
 		executablePath: executablePath,
@@ -65,12 +90,17 @@ func NewBackendPluginDescriptor(pluginID, executablePath string) PluginDescripto
 				"transform": &backend.TransformGRPCPlugin{},
 			},
 		},
+		callbacks: callbacks,
 	}
 }
 
 // NewRendererPluginDescriptor creates a new renderer plugin descriptor
 // used for registering a backend renderer plugin.
-func NewRendererPluginDescriptor(pluginID, executablePath string) PluginDescriptor {
+func NewRendererPluginDescriptor(pluginID, executablePath string, callbacks *PluginCallbacks) PluginDescriptor {
+	if callbacks == nil {
+		panic("plugin callbacks cannot be nil")
+	}
+
 	return PluginDescriptor{
 		pluginID:       pluginID,
 		executablePath: executablePath,
@@ -80,5 +110,18 @@ func NewRendererPluginDescriptor(pluginID, executablePath string) PluginDescript
 				pluginID: &rendererV1.RendererPluginImpl{},
 			},
 		},
+		callbacks: callbacks,
 	}
+}
+
+// LegacyClient client for communicating with a plugin using the old plugin protocol.
+type LegacyClient struct {
+	DatasourcePlugin datasourceV1.DatasourcePlugin
+	RendererPlugin   rendererV1.RendererPlugin
+}
+
+// Client client for communicating with a plugin using the current plugin protocol.
+type Client struct {
+	BackendPlugin   backend.BackendPlugin
+	TransformPlugin backend.TransformPlugin
 }
