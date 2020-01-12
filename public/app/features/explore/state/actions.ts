@@ -750,7 +750,7 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
           exploreId,
           datasource,
           initialQueries,
-          range,
+          range.raw,
           mode,
           containerWidth,
           eventBridge,
