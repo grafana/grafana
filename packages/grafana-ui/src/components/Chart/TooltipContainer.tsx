@@ -10,13 +10,11 @@ interface TooltipContainerProps {
   position: { x: number; y: number };
   offset: { x: number; y: number };
   children?: JSX.Element;
-  isContext?: boolean;
+  className?: any;
 }
 
 const getTooltipContainerStyles = stylesFactory((theme: GrafanaTheme) => {
   const bgColor = selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.dark1 }, theme.type);
-  const contextBg = selectThemeVariant({ light: theme.colors.white, dark: theme.colors.black }, theme.type);
-  const boxShadowColor = selectThemeVariant({ light: theme.colors.gray3, dark: theme.colors.black }, theme.type);
   return {
     wrapper: css`
       overflow: hidden;
@@ -26,14 +24,10 @@ const getTooltipContainerStyles = stylesFactory((theme: GrafanaTheme) => {
       padding: ${theme.spacing.sm};
       border-radius: ${theme.border.radius.sm};
     `,
-    context: css`
-      box-shadow: 0 2px 5px 0 ${boxShadowColor};
-      background: ${contextBg};
-    `,
   };
 });
 
-export const TooltipContainer: React.FC<TooltipContainerProps> = ({ position, offset, children, isContext }) => {
+export const TooltipContainer: React.FC<TooltipContainerProps> = ({ position, offset, children, className }) => {
   const theme = useTheme();
   const tooltipRef = useRef<HTMLDivElement>(null);
   const { width, height } = useWindowSize();
@@ -76,7 +70,12 @@ export const TooltipContainer: React.FC<TooltipContainerProps> = ({ position, of
         top: 0,
         transform: `translate3d(${placement.x}px, ${placement.y}px, 0)`,
       }}
-      className={cx(styles.wrapper, { [styles.context]: isContext })}
+      className={cx(
+        styles.wrapper,
+        css`
+          ${className}
+        `
+      )}
     >
       {children}
     </div>

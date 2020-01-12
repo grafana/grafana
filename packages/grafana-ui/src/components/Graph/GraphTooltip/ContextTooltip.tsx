@@ -1,10 +1,10 @@
 import React from 'react';
 import { TooltipContentProps } from '../../Chart/Tooltip';
 import { SingleModeGraphTooltip } from './SingleModeGraphTooltip';
-import { MultiModeGraphTooltip } from './MultiModeGraphTooltip';
+// import { MultiModeGraphTooltip } from './MultiModeGraphTooltip';
 import { GraphDimensions } from './types';
 
-export const GraphTooltip: React.FC<TooltipContentProps<GraphDimensions>> = ({
+export const ContextTooltip: React.FC<TooltipContentProps<GraphDimensions>> = ({
   mode = 'single',
   dimensions,
   activeDimensions,
@@ -18,11 +18,11 @@ export const GraphTooltip: React.FC<TooltipContentProps<GraphDimensions>> = ({
     return null;
   }
 
-  if (mode === 'single') {
-    return <SingleModeGraphTooltip dimensions={dimensions} activeDimensions={activeDimensions} />;
-  } else {
-    return <MultiModeGraphTooltip dimensions={dimensions} activeDimensions={activeDimensions} pos={pos} />;
-  }
+  return (
+    <div style={{ width: '400px', pointerEvents: 'all', padding: '5px', backgroundColor: 'white' }}>
+      <SingleModeGraphTooltip dimensions={dimensions} activeDimensions={activeDimensions} />
+    </div>
+  );
 };
 
-GraphTooltip.displayName = 'GraphTooltip';
+ContextTooltip.displayName = 'GraphContextTooltip';
