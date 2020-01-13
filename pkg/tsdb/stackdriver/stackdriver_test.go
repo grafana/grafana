@@ -268,9 +268,9 @@ func TestStackdriver(t *testing.T) {
 					So(labels["metric.label.instance_name"], ShouldContain, "collector-us-east-1")
 
 					So(len(labels["resource.label.zone"]), ShouldEqual, 3)
-					So(labels["resource.label.zone"][0], ShouldEqual, "asia-east1-a")
-					So(labels["resource.label.zone"][1], ShouldEqual, "europe-west1-b")
-					So(labels["resource.label.zone"][2], ShouldEqual, "us-east1-b")
+					So(labels["resource.label.zone"], ShouldContain, "asia-east1-a")
+					So(labels["resource.label.zone"], ShouldContain, "europe-west1-b")
+					So(labels["resource.label.zone"], ShouldContain, "us-east1-b")
 
 					So(len(labels["resource.label.project_id"]), ShouldEqual, 1)
 					So(labels["resource.label.project_id"][0], ShouldEqual, "grafana-prod")
