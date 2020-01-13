@@ -5,6 +5,14 @@ import { TimeRange } from '../types/time';
 
 // Types
 // import { NullValueMode, GraphSeriesValue, Field, TimeRange } from '@grafana/data';
+export interface FlotDataPoint {
+  dataIndex: number;
+  datapoint: number[];
+  pageX: number;
+  pageY: number;
+  series: any;
+  seriesIndex: number;
+}
 
 export interface FlotPairsOptions {
   xField: Field;

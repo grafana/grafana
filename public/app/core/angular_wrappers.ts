@@ -17,7 +17,7 @@ import {
 } from '@grafana/ui';
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import { SearchField } from './components/search/SearchField';
-import { GraphContextMenu } from 'app/plugins/panel/graph/GraphContextMenu';
+import { GraphContextMenu } from '@grafana/ui';
 import ReactProfileWrapper from 'app/features/profile/ReactProfileWrapper';
 import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';
 import { HelpModal } from './components/help/HelpModal';

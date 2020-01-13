@@ -9,4 +9,4 @@ export * from './namedColorsPalette';
 export * from './series';
 
 export { getMappedValue } from './valueMappings';
-export { getFlotPairs, getFlotPairsConstant } from './flotPairs';
+export { getFlotPairs, getFlotPairsConstant, FlotDataPoint } from './flotPairs';
