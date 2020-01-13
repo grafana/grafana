@@ -334,7 +334,7 @@ export class BackendSrv implements BackendService {
       tasks.push(this.createTask(this.deleteDashboard.bind(this), true, dashboardUid, true));
     }
 
-    return this.executeInOrder(tasks, []);
+    return this.executeInOrder(tasks);
   }
 
   moveDashboards(dashboardUids: string[], toFolder: FolderInfo) {
@@ -344,7 +344,7 @@ export class BackendSrv implements BackendService {
       tasks.push(this.createTask(this.moveDashboard.bind(this), true, uid, toFolder));
     }
 
-    return this.executeInOrder(tasks, []).then((result: any) => {
+    return this.executeInOrder(tasks).then((result: any) => {
       return {
         totalCount: result.length,
         successCount: result.filter((res: any) => res.succeeded).length,
@@ -390,7 +390,7 @@ export class BackendSrv implements BackendService {
   private createTask(fn: (...args: any[]) => Promise<any>, ignoreRejections: boolean, ...args: any[]) {
     return async (result: any) => {
       try {
-        const res = await fn(args);
+        const res = await fn(...args);
         return Array.prototype.concat(result, [res]);
       } catch (err) {
         if (ignoreRejections) {
@@ -402,8 +402,10 @@ export class BackendSrv implements BackendService {
     };
   }
 
-  private executeInOrder(tasks: any[], initialValue: any[]) {
-    return tasks.reduce(Promise.resolve, initialValue);
+  private executeInOrder(tasks: any[]) {
+    return tasks.reduce((acc, task) => {
+      return Promise.resolve(acc).then(task);
+    }, []);
   }
 
   private parseRequestOptions = (options: BackendSrvRequest, orgId?: number): BackendSrvRequest => {
