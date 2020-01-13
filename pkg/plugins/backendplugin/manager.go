@@ -24,12 +24,8 @@ func init() {
 type Manager interface {
 	// Register registers a backend plugin
 	Register(descriptor PluginDescriptor) error
-	// Start starts all managed backend plugins
-	Start(ctx context.Context)
 	// StartPlugin starts a non-managed backend plugin
 	StartPlugin(ctx context.Context, pluginID string) error
-	// Stop stops all managed backend plugins
-	Stop()
 }
 
 type manager struct {
@@ -45,7 +41,9 @@ func (m *manager) Init() error {
 }
 
 func (m *manager) Run(ctx context.Context) error {
+	m.start(ctx)
 	<-ctx.Done()
+	m.stop()
 	return ctx.Err()
 }
 
@@ -76,8 +74,8 @@ func (m *manager) Register(descriptor PluginDescriptor) error {
 	return nil
 }
 
-// Start starts all managed backend plugins
-func (m *manager) Start(ctx context.Context) {
+// start starts all managed backend plugins
+func (m *manager) start(ctx context.Context) {
 	m.pluginsMu.RLock()
 	defer m.pluginsMu.RUnlock()
 	for _, p := range m.plugins {
@@ -107,8 +105,8 @@ func (m *manager) StartPlugin(ctx context.Context, pluginID string) error {
 	return startPluginAndRestartKilledProcesses(ctx, p)
 }
 
-// Stop stops all managed backend plugins
-func (m *manager) Stop() {
+// stop stops all managed backend plugins
+func (m *manager) stop() {
 	m.pluginsMu.RLock()
 	defer m.pluginsMu.RUnlock()
 	for _, p := range m.plugins {

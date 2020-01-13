@@ -114,7 +114,6 @@ func (pm *PluginManager) Init() error {
 }
 
 func (pm *PluginManager) Run(ctx context.Context) error {
-	pm.BackendPluginManager.Start(ctx)
 	pm.updateAppDashboards()
 	pm.checkForUpdates()
 
@@ -129,8 +128,6 @@ func (pm *PluginManager) Run(ctx context.Context) error {
 			run = false
 		}
 	}
-
-	pm.BackendPluginManager.Stop()
 
 	return ctx.Err()
 }
