@@ -5,7 +5,7 @@ import { SeriesIcon } from '../Legend/SeriesIcon';
 import { DateTimeInput, FlotDataPoint } from '@grafana/data';
 import { css } from 'emotion';
 
-type GraphContextMenuProps = ContextMenuProps & {
+export type GraphContextMenuProps = ContextMenuProps & {
   getContextMenuSource: () => FlotDataPoint | null;
   formatSourceDate: (date: DateTimeInput, format?: string) => string;
 };
@@ -51,7 +51,7 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
                   padding-left: ${theme.spacing.xs};
                 `}
               >
-                {source.series.alias}
+                {source.series.alias || source.series.label}
               </span>
             </div>
           </div>

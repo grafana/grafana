@@ -3,11 +3,20 @@ import $ from 'jquery';
 import React, { PureComponent } from 'react';
 import uniqBy from 'lodash/uniqBy';
 // Types
-import { TimeRange, GraphSeriesXY, TimeZone, DefaultTimeZone, createDimension } from '@grafana/data';
+import {
+  TimeRange,
+  GraphSeriesXY,
+  TimeZone,
+  DefaultTimeZone,
+  createDimension,
+  DateTimeInput,
+  dateTime,
+} from '@grafana/data';
 import _ from 'lodash';
 import { FlotPosition, FlotItem } from './types';
 import { TooltipProps, TooltipContentProps, ActiveDimensions, Tooltip } from '../Chart/Tooltip';
 import { GraphTooltip } from './GraphTooltip/GraphTooltip';
+import { GraphContextMenu, GraphContextMenuProps } from './GraphContextMenu';
 import { GraphDimensions } from './GraphTooltip/types';
 
 export interface GraphProps {
@@ -194,6 +203,44 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     });
   };
 
+  renderContext = () => {
+    const { series } = this.props;
+    const { contextPos, contextItem, isContextVisible } = this.state;
+
+    if (!isContextVisible || !contextPos || !contextItem || series.length === 0) {
+      return null;
+    }
+
+    const formatDate = (date: DateTimeInput, format?: string) => {
+      return dateTime(date)?.format(format);
+    };
+
+    const closeContext = () => this.setState({ isContextVisible: false });
+
+    const getContextMenuSource = () => {
+      return {
+        datapoint: contextItem.datapoint,
+        dataIndex: contextItem.dataIndex,
+        series: contextItem.series,
+        seriesIndex: contextItem.series.seriesIndex,
+        pageX: contextPos.pageX,
+        pageY: contextPos.pageY,
+      };
+    };
+
+    const contextContentProps: GraphContextMenuProps = {
+      x: contextPos.pageX + 5,
+      y: contextPos.pageY + 5,
+      onClose: closeContext,
+      getContextMenuSource: getContextMenuSource,
+      formatSourceDate: formatDate,
+    };
+
+    const contextContentRender = GraphContextMenu;
+    const contextContent = React.createElement(contextContentRender, { ...contextContentProps });
+    return contextContent;
+  };
+
   getBarWidth = () => {
     const { series } = this.props;
     return Math.min(...series.map(s => s.timeStep));
@@ -301,6 +348,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     const { height, width, series } = this.props;
     const noDataToBeDisplayed = series.length === 0;
     const tooltip = this.renderTooltip();
+    const context = this.renderContext();
     return (
       <div className="graph-panel">
         <div
@@ -313,6 +361,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         />
         {noDataToBeDisplayed && <div className="datapoints-warning">No data</div>}
         {tooltip}
+        {context}
       </div>
     );
   }
