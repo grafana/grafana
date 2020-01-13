@@ -34,6 +34,7 @@ export interface DashboardMeta {
   createdBy?: string;
   updated?: string;
   updatedBy?: string;
+  pendingUpdate?: boolean;
 }
 
 export interface DashboardDataDTO {
