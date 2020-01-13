@@ -13,7 +13,7 @@ jest.mock('app/core/app_events', () => {
 
 describe('SearchResultsCtrl', () => {
   let ctrl: any;
-  let $location = {} as ILocationService;
+  const $location = {} as ILocationService;
   const $scope = ({ $evalAsync: jest.fn() } as any) as IScope;
 
   describe('when checking an item that is not checked', () => {
