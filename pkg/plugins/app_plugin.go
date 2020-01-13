@@ -46,7 +46,7 @@ type JwtTokenAuth struct {
 }
 
 func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string) error {
-	if err := decoder.Decode(&app); err != nil {
+	if err := decoder.Decode(app); err != nil {
 		return err
 	}
 

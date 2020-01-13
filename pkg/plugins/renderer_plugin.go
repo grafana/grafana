@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	plugin "github.com/hashicorp/go-plugin"
 )
 
 type RendererPlugin struct {
@@ -20,7 +19,7 @@ type RendererPlugin struct {
 }
 
 func (r *RendererPlugin) Load(decoder *json.Decoder, pluginDir string) error {
-	if err := decoder.Decode(&r); err != nil {
+	if err := decoder.Decode(r); err != nil {
 		return err
 	}
 
@@ -30,8 +29,10 @@ func (r *RendererPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 
 	cmd := ComposePluginStartCommmand("plugin_start")
 	fullpath := path.Join(r.PluginDir, cmd)
-	descriptor := backendplugin.NewRendererPluginDescriptor(r.Id, fullpath)
-	if err := backendplugin.Register(descriptor, r.onPluginStart); err != nil {
+	descriptor := backendplugin.NewRendererPluginDescriptor(r.Id, fullpath, backendplugin.PluginStartFuncs{
+		OnLegacyStart: r.onLegacyPluginStart,
+	})
+	if err := backendplugin.Register(descriptor); err != nil {
 		return errutil.Wrapf(err, "Failed to register backend plugin")
 	}
 
@@ -47,17 +48,7 @@ func (r *RendererPlugin) Start(ctx context.Context) error {
 	return nil
 }
 
-func (r *RendererPlugin) onPluginStart(pluginID string, client *plugin.Client, logger log.Logger) error {
-	rpcClient, err := client.Client()
-	if err != nil {
-		return err
-	}
-
-	raw, err := rpcClient.Dispense(pluginID)
-	if err != nil {
-		return err
-	}
-
-	r.GrpcPlugin = raw.(pluginModel.RendererPlugin)
+func (r *RendererPlugin) onLegacyPluginStart(pluginID string, client *backendplugin.LegacyClient, logger log.Logger) error {
+	r.GrpcPlugin = client.RendererPlugin
 	return nil
 }

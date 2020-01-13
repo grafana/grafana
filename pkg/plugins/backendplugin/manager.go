@@ -6,6 +6,9 @@ import (
 	"sync"
 	"time"
 
+	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
+	rendererV1 "github.com/grafana/grafana-plugin-model/go/renderer"
+	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	plugin "github.com/hashicorp/go-plugin"
 	"golang.org/x/xerrors"
@@ -17,8 +20,6 @@ var (
 	logger    = log.New("plugins.backend")
 )
 
-type BackendPluginCallbackFunc func(pluginID string, client *plugin.Client, logger log.Logger) error
-
 type BackendPlugin struct {
 	id              string
 	executablePath  string
@@ -26,26 +27,74 @@ type BackendPlugin struct {
 	clientFactory   func() *plugin.Client
 	client          *plugin.Client
 	logger          log.Logger
-	callbackFn      BackendPluginCallbackFunc
+	startFns        PluginStartFuncs
 	supportsMetrics bool
 	supportsHealth  bool
 }
 
 func (p *BackendPlugin) start(ctx context.Context) error {
 	p.client = p.clientFactory()
-	// rpcClient, err := p.client.Client()
-	// if err != nil {
-	// 	return err
-	// }
-	// if p.client.NegotiatedVersion() > 1 {
-	// 	_, err = rpcClient.Dispense("diagnostics")
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
+	rpcClient, err := p.client.Client()
+	if err != nil {
+		return err
+	}
 
-	if p.callbackFn != nil {
-		return p.callbackFn(p.id, p.client, p.logger)
+	var legacyClient *LegacyClient
+	var client *Client
+
+	if p.client.NegotiatedVersion() > 1 {
+		rawBackend, err := rpcClient.Dispense("backend")
+		if err != nil {
+			return err
+		}
+
+		rawTransform, err := rpcClient.Dispense("transform")
+		if err != nil {
+			return err
+		}
+
+		client = &Client{}
+		if rawBackend != nil {
+			if plugin, ok := rawBackend.(backend.BackendPlugin); ok {
+				client.BackendPlugin = plugin
+			}
+		}
+
+		if rawTransform != nil {
+			if plugin, ok := rawTransform.(backend.TransformPlugin); ok {
+				client.TransformPlugin = plugin
+			}
+		}
+	} else {
+		raw, err := rpcClient.Dispense(p.id)
+		if err != nil {
+			return err
+		}
+
+		legacyClient = &LegacyClient{}
+		if plugin, ok := raw.(datasourceV1.DatasourcePlugin); ok {
+			legacyClient.DatasourcePlugin = plugin
+		}
+
+		if plugin, ok := raw.(rendererV1.RendererPlugin); ok {
+			legacyClient.RendererPlugin = plugin
+		}
+	}
+
+	if legacyClient == nil && client == nil {
+		return errors.New("no compatible plugin implementation found")
+	}
+
+	if legacyClient != nil && p.startFns.OnLegacyStart != nil {
+		if err := p.startFns.OnLegacyStart(p.id, legacyClient, p.logger); err != nil {
+			return err
+		}
+	}
+
+	if client != nil && p.startFns.OnStart != nil {
+		if err := p.startFns.OnStart(p.id, client, p.logger); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -71,7 +120,7 @@ func (p *BackendPlugin) checkHealth(ctx context.Context) {
 }
 
 // Register registers a backend plugin
-func Register(descriptor PluginDescriptor, callbackFn BackendPluginCallbackFunc) error {
+func Register(descriptor PluginDescriptor) error {
 	logger.Debug("Registering backend plugin", "pluginId", descriptor.pluginID, "executablePath", descriptor.executablePath)
 	pluginsMu.Lock()
 	defer pluginsMu.Unlock()
@@ -88,8 +137,8 @@ func Register(descriptor PluginDescriptor, callbackFn BackendPluginCallbackFunc)
 		clientFactory: func() *plugin.Client {
 			return plugin.NewClient(newClientConfig(descriptor.executablePath, pluginLogger, descriptor.versionedPlugins))
 		},
-		callbackFn: callbackFn,
-		logger:     pluginLogger,
+		startFns: descriptor.startFns,
+		logger:   pluginLogger,
 	}
 
 	plugins[descriptor.pluginID] = plugin

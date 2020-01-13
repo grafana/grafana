@@ -8,7 +8,7 @@ type PanelPlugin struct {
 }
 
 func (p *PanelPlugin) Load(decoder *json.Decoder, pluginDir string) error {
-	if err := decoder.Decode(&p); err != nil {
+	if err := decoder.Decode(p); err != nil {
 		return err
 	}
 

@@ -15,9 +15,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	plugin "github.com/hashicorp/go-plugin"
 )
 
 type TransformPlugin struct {
@@ -28,44 +28,37 @@ type TransformPlugin struct {
 	*TransformWrapper
 }
 
-func (tp *TransformPlugin) Load(decoder *json.Decoder, pluginDir string) error {
-	if err := decoder.Decode(&tp); err != nil {
+func (p *TransformPlugin) Load(decoder *json.Decoder, pluginDir string) error {
+	if err := decoder.Decode(p); err != nil {
 		return err
 	}
 
-	if err := tp.registerPlugin(pluginDir); err != nil {
+	if err := p.registerPlugin(pluginDir); err != nil {
 		return err
 	}
 
-	cmd := ComposePluginStartCommmand(tp.Executable)
-	fullpath := path.Join(tp.PluginDir, cmd)
-	descriptor := backendplugin.NewBackendPluginDescriptor(tp.Id, fullpath)
-	if err := backendplugin.Register(descriptor, tp.onPluginStart); err != nil {
+	cmd := ComposePluginStartCommmand(p.Executable)
+	fullpath := path.Join(p.PluginDir, cmd)
+	descriptor := backendplugin.NewBackendPluginDescriptor(p.Id, fullpath, backendplugin.PluginStartFuncs{
+		OnStart: p.onPluginStart,
+	})
+	if err := backendplugin.Register(descriptor); err != nil {
 		return errutil.Wrapf(err, "Failed to register backend plugin")
 	}
 
-	Transform = tp
+	Transform = p
 
 	return nil
 }
 
-func (p *TransformPlugin) onPluginStart(pluginID string, client *plugin.Client, logger log.Logger) error {
-	rpcClient, err := client.Client()
-	if err != nil {
-		return err
-	}
+func (p *TransformPlugin) onPluginStart(pluginID string, client *backendplugin.Client, logger log.Logger) error {
+	p.TransformWrapper = NewTransformWrapper(logger, client.TransformPlugin)
 
-	raw, err := rpcClient.Dispense("transform")
-	if err != nil {
-		return err
+	if client.BackendPlugin != nil {
+		tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+			return wrapper.NewDatasourcePluginWrapperV2(logger, client.BackendPlugin), nil
+		})
 	}
-
-	plugin, ok := raw.(backend.TransformPlugin)
-	if !ok {
-		return fmt.Errorf("unexpected type %T, expected *backend.TransformPlugin", raw)
-	}
-
-	p.TransformWrapper = NewTransformWrapper(logger, plugin)
 
 	return nil
 }
