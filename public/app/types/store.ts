@@ -1,5 +1,6 @@
 import { ThunkAction, ThunkDispatch as GenericThunkDispatch } from 'redux-thunk';
-import { ActionOf } from 'app/core/redux';
+import { PayloadAction } from '@reduxjs/toolkit';
+import { NavIndex } from '@grafana/data';
 
 import { LocationState } from './location';
 import { AlertRulesState } from './alerting';
@@ -12,7 +13,6 @@ import { UsersState, UserState } from './user';
 import { OrganizationState } from './organization';
 import { AppNotificationsState } from './appNotifications';
 import { PluginsState } from './plugins';
-import { NavIndex } from '@grafana/data';
 import { ApplicationState } from './application';
 import { LdapState, LdapUserState } from './ldap';
 import { PanelEditorState } from '../features/dashboard/panel_editor/state/reducers';
@@ -43,6 +43,6 @@ export interface StoreState {
 /*
  * Utility type to get strongly types thunks
  */
-export type ThunkResult<R> = ThunkAction<R, StoreState, undefined, ActionOf<any>>;
+export type ThunkResult<R> = ThunkAction<R, StoreState, undefined, PayloadAction<any>>;
 
 export type ThunkDispatch = GenericThunkDispatch<StoreState, undefined, any>;
