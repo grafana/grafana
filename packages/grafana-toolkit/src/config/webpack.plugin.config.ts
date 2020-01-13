@@ -7,6 +7,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+// const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 const readdirPromise = util.promisify(fs.readdir);
 const accessPromise = util.promisify(fs.access);
@@ -169,9 +170,7 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async options => {
       'rxjs',
       'd3',
       'angular',
-      '@grafana/ui',
-      '@grafana/runtime',
-      '@grafana/data',
+      /^@grafana.*$/,
       // @ts-ignore
       (context, request, callback) => {
         const prefix = 'grafana/';
@@ -187,6 +186,8 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async options => {
     resolve: {
       extensions: ['.ts', '.tsx', '.js'],
       modules: [path.resolve(process.cwd(), 'src'), 'node_modules'],
+      // modules: [path.resolve(process.cwd(), 'node_modules')],
+      // plugins: [new TsconfigPathsPlugin()]
     },
     module: {
       rules: [
