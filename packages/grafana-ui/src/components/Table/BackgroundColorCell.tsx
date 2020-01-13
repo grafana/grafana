@@ -1,9 +1,9 @@
 import React, { CSSProperties, FC } from 'react';
-import { ReactTableCellProps } from './types';
+import { TableCellProps } from './types';
 import tinycolor from 'tinycolor2';
 import { formattedValueToString } from '@grafana/data';
 
-export const BackgroundColoredCell: FC<ReactTableCellProps> = props => {
+export const BackgroundColoredCell: FC<TableCellProps> = props => {
   const { cell, tableStyles, field } = props;
 
   if (!field.display) {

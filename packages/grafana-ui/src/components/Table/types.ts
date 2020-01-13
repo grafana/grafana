@@ -24,7 +24,7 @@ export interface TableRow {
 
 export type TableFilterActionCallback = (key: string, value: string) => void;
 
-export interface ReactTableCellProps extends CellProps<any> {
+export interface TableCellProps extends CellProps<any> {
   tableStyles: TableStyles;
   field: Field;
 }

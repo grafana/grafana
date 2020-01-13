@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { ThresholdsConfig, ThresholdsMode, VizOrientation } from '@grafana/data';
 import { BarGauge, BarGaugeDisplayMode } from '../BarGauge/BarGauge';
-import { ReactTableCellProps, TableCellDisplayMode } from './types';
+import { TableCellProps, TableCellDisplayMode } from './types';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -17,7 +17,7 @@ const defaultScale: ThresholdsConfig = {
   ],
 };
 
-export const BarGaugeCell: FC<ReactTableCellProps> = props => {
+export const BarGaugeCell: FC<TableCellProps> = props => {
   const { field, column, tableStyles, cell } = props;
 
   if (!field.display) {

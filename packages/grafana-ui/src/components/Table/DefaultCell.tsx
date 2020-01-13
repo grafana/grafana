@@ -1,8 +1,8 @@
 import React, { FC } from 'react';
-import { ReactTableCellProps } from './types';
+import { TableCellProps } from './types';
 import { formattedValueToString } from '@grafana/data';
 
-export const DefaultCell: FC<ReactTableCellProps> = props => {
+export const DefaultCell: FC<TableCellProps> = props => {
   const { field, cell, tableStyles } = props;
 
   if (!field.display) {
