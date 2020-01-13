@@ -56,7 +56,7 @@ See: https://developers.google.com/hangouts/chat/reference/message-formats/cards
 */
 type outerStruct struct {
 	FallbackText string `json:"fallbackText"`
-	Cards []card        `json:"cards"`
+	Cards        []card `json:"cards"`
 }
 
 type card struct {
