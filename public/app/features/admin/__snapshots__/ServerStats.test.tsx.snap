@@ -94,20 +94,13 @@ exports[`ServerStats Should render table with stats 1`] = `
                   </select>
                 </div>
                 <ul
-                  className="gf-tabs page-header__tabs"
+                  className="css-13jkosq"
                 >
                   <li
-                    className="gf-tabs-item"
+                    className="css-b418eg"
+                    onClick={[Function]}
                   >
-                    <a
-                      className="gf-tabs-link active"
-                      href="Admin"
-                    >
-                      <i
-                        className="icon"
-                      />
-                      Admin
-                    </a>
+                    Admin
                   </li>
                 </ul>
               </nav>
@@ -159,14 +152,15 @@ exports[`ServerStats Should render table with stats 1`] = `
             <ul>
               <li>
                 <a
-                  href="http://docs.grafana.org"
+                  href="https://grafana.com/docs/grafana/latest/?utm_source=grafana_footer"
                   rel="noopener"
                   target="_blank"
                 >
                   <i
                     className="fa fa-file-code-o"
                   />
-                   Docs
+                   
+                  Docs
                 </a>
               </li>
               <li>
@@ -178,19 +172,21 @@ exports[`ServerStats Should render table with stats 1`] = `
                   <i
                     className="fa fa-support"
                   />
-                   Support & Enterprise
+                   
+                  Support & Enterprise
                 </a>
               </li>
               <li>
                 <a
-                  href="https://community.grafana.com/"
+                  href="https://community.grafana.com/?utm_source=grafana_footer"
                   rel="noopener"
                   target="_blank"
                 >
                   <i
                     className="fa fa-comments-o"
                   />
-                   Community
+                   
+                  Community
                 </a>
               </li>
               <li>
@@ -199,16 +195,10 @@ exports[`ServerStats Should render table with stats 1`] = `
                   rel="noopener"
                   target="_blank"
                 >
-                  Grafana
+                  <i />
+                   
+                  Grafana vv1.0 (commit: 1)
                 </a>
-                 
-                <span>
-                  v
-                  v1.0
-                   (commit: 
-                  1
-                  )
-                </span>
               </li>
             </ul>
           </div>

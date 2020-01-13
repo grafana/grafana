@@ -2,7 +2,6 @@ import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, useContext } from 'r
 import { ThemeContext } from '../../themes';
 import { getButtonStyles } from './styles';
 import { ButtonContent } from './ButtonContent';
-import cx from 'classnames';
 import { ButtonSize, ButtonStyles, ButtonVariant } from './types';
 
 type CommonProps = {
@@ -18,28 +17,29 @@ type CommonProps = {
 };
 
 type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
-export const Button: React.FunctionComponent<ButtonProps> = props => {
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
   const theme = useContext(ThemeContext);
   const { size, variant, icon, children, className, styles: stylesProp, ...buttonProps } = props;
 
   // Default this to 'button', otherwise html defaults to 'submit' which then submits any form it is in.
   buttonProps.type = buttonProps.type || 'button';
+
   const styles: ButtonStyles =
     stylesProp ||
     getButtonStyles({
       theme,
       size: size || 'md',
       variant: variant || 'primary',
+      textAndIcon: !!(children && icon),
     });
 
   return (
-    <button className={cx(styles.button, className)} {...buttonProps}>
-      <ButtonContent iconClassName={styles.icon} className={styles.iconWrap} icon={icon}>
-        {children}
-      </ButtonContent>
+    <button className={styles.button} {...buttonProps} ref={ref}>
+      <ButtonContent icon={icon}>{children}</ButtonContent>
     </button>
   );
-};
+});
+
 Button.displayName = 'Button';
 
 type LinkButtonProps = CommonProps &
@@ -48,7 +48,8 @@ type LinkButtonProps = CommonProps &
     // disabled.
     disabled?: boolean;
   };
-export const LinkButton: React.FunctionComponent<LinkButtonProps> = props => {
+
+export const LinkButton = React.forwardRef<HTMLAnchorElement, LinkButtonProps>((props, ref) => {
   const theme = useContext(ThemeContext);
   const { size, variant, icon, children, className, styles: stylesProp, ...anchorProps } = props;
   const styles: ButtonStyles =
@@ -57,14 +58,13 @@ export const LinkButton: React.FunctionComponent<LinkButtonProps> = props => {
       theme,
       size: size || 'md',
       variant: variant || 'primary',
+      textAndIcon: !!(children && icon),
     });
 
   return (
-    <a className={cx(styles.button, className)} {...anchorProps}>
-      <ButtonContent iconClassName={styles.icon} className={styles.iconWrap} icon={icon}>
-        {children}
-      </ButtonContent>
+    <a className={styles.button} {...anchorProps} ref={ref}>
+      <ButtonContent icon={icon}>{children}</ButtonContent>
     </a>
   );
-};
+});
 LinkButton.displayName = 'LinkButton';

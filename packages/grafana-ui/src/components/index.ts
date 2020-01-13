@@ -12,7 +12,7 @@ export * from './Button/Button';
 export { Select, AsyncSelect } from './Select/Select';
 export { IndicatorsContainer } from './Select/IndicatorsContainer';
 export { NoOptionsMessage } from './Select/NoOptionsMessage';
-export { default as resetSelectStyles } from './Select/resetSelectStyles';
+export { default as resetSelectStyles } from './Forms/Select/resetSelectStyles';
 export { ButtonSelect } from './Select/ButtonSelect';
 export { Cascader, CascaderOption } from './Cascader/Cascader';
 
@@ -48,6 +48,8 @@ export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
+export { TabsBar } from './Tabs/TabsBar';
+export { Tab } from './Tabs/Tab';
 
 // Visualizations
 export {

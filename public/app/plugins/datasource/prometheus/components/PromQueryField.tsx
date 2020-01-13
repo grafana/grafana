@@ -15,7 +15,7 @@ import {
 import Prism from 'prismjs';
 
 // dom also includes Element polyfills
-import { PromQuery, PromContext, PromOptions, PromMetricsMetadata } from '../types';
+import { PromQuery, PromOptions, PromMetricsMetadata } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
 import { ExploreQueryFieldProps, QueryHint, isDataFrame, toLegacyResponseData, HistoryItem } from '@grafana/data';
 import { DOMUtil, SuggestionsState } from '@grafana/ui';
@@ -220,7 +220,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     // Send text change to parent
     const { query, onChange, onRunQuery } = this.props;
     if (onChange) {
-      const nextQuery: PromQuery = { ...query, expr: value, context: PromContext.Explore };
+      const nextQuery: PromQuery = { ...query, expr: value };
       onChange(nextQuery);
 
       if (override && onRunQuery) {

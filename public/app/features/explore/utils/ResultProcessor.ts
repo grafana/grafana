@@ -89,7 +89,7 @@ export class ResultProcessor {
     // set display processor
     for (const field of data.fields) {
       field.display = getDisplayProcessor({
-        config: field.config,
+        field,
         theme: config.theme,
       });
     }

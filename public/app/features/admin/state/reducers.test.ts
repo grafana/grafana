@@ -1,15 +1,17 @@
-import { Reducer } from 'redux';
 import { reducerTester } from 'test/core/redux/reducerTester';
-import { ActionOf } from 'app/core/redux/actionCreatorFactory';
-import { ldapReducer } from './reducers';
 import {
+  clearUserMappingInfoAction,
   ldapConnectionInfoLoadedAction,
-  ldapSyncStatusLoadedAction,
-  userMappingInfoLoadedAction,
-  userMappingInfoFailedAction,
   ldapFailedAction,
-} from './actions';
-import { LdapState, LdapUser } from 'app/types';
+  ldapReducer,
+  ldapSyncStatusLoadedAction,
+  userAdminReducer,
+  userProfileLoadedAction,
+  userMappingInfoFailedAction,
+  userMappingInfoLoadedAction,
+  userSessionsLoadedAction,
+} from './reducers';
+import { LdapState, LdapUser, UserAdminState, UserDTO } from 'app/types';
 
 const makeInitialLdapState = (): LdapState => ({
   connectionInfo: [],
@@ -18,6 +20,13 @@ const makeInitialLdapState = (): LdapState => ({
   ldapError: null,
   connectionError: null,
   userError: null,
+});
+
+const makeInitialUserAdminState = (): UserAdminState => ({
+  user: null,
+  sessions: [],
+  orgs: [],
+  isLoading: true,
 });
 
 const getTestUserMapping = (): LdapUser => ({
@@ -35,25 +44,26 @@ const getTestUserMapping = (): LdapUser => ({
   teams: [],
 });
 
-// const getTestUser = (): User => ({
-//   id: 1,
-//   email: 'user@localhost',
-//   login: 'user',
-//   name: 'User',
-//   avatarUrl: '',
-//   label: '',
-// });
+const getTestUser = (): UserDTO => ({
+  id: 1,
+  email: 'user@localhost',
+  login: 'user',
+  name: 'User',
+  avatarUrl: '',
+  isGrafanaAdmin: false,
+  isDisabled: false,
+});
 
 describe('LDAP page reducer', () => {
   describe('When page loaded', () => {
     describe('When connection info loaded', () => {
       it('should set connection info and clear error', () => {
-        const initalState = {
+        const initialState = {
           ...makeInitialLdapState(),
         };
 
-        reducerTester()
-          .givenReducer(ldapReducer as Reducer<LdapState, ActionOf<any>>, initalState)
+        reducerTester<LdapState>()
+          .givenReducer(ldapReducer, initialState)
           .whenActionIsDispatched(
             ldapConnectionInfoLoadedAction([
               {
@@ -81,12 +91,12 @@ describe('LDAP page reducer', () => {
 
     describe('When connection failed', () => {
       it('should set ldap error', () => {
-        const initalState = {
+        const initialState = {
           ...makeInitialLdapState(),
         };
 
-        reducerTester()
-          .givenReducer(ldapReducer as Reducer<LdapState, ActionOf<any>>, initalState)
+        reducerTester<LdapState>()
+          .givenReducer(ldapReducer, initialState)
           .whenActionIsDispatched(
             ldapFailedAction({
               title: 'LDAP error',
@@ -105,12 +115,12 @@ describe('LDAP page reducer', () => {
 
     describe('When LDAP sync status loaded', () => {
       it('should set sync info', () => {
-        const initalState = {
+        const initialState = {
           ...makeInitialLdapState(),
         };
 
-        reducerTester()
-          .givenReducer(ldapReducer as Reducer<LdapState, ActionOf<any>>, initalState)
+        reducerTester<LdapState>()
+          .givenReducer(ldapReducer, initialState)
           .whenActionIsDispatched(
             ldapSyncStatusLoadedAction({
               enabled: true,
@@ -132,7 +142,7 @@ describe('LDAP page reducer', () => {
 
   describe('When user mapping info loaded', () => {
     it('should set sync info and clear user error', () => {
-      const initalState = {
+      const initialState = {
         ...makeInitialLdapState(),
         userError: {
           title: 'User not found',
@@ -140,8 +150,8 @@ describe('LDAP page reducer', () => {
         },
       };
 
-      reducerTester()
-        .givenReducer(ldapReducer as Reducer<LdapState, ActionOf<any>>, initalState)
+      reducerTester<LdapState>()
+        .givenReducer(ldapReducer, initialState)
         .whenActionIsDispatched(userMappingInfoLoadedAction(getTestUserMapping()))
         .thenStateShouldEqual({
           ...makeInitialLdapState(),
@@ -153,13 +163,13 @@ describe('LDAP page reducer', () => {
 
   describe('When user not found', () => {
     it('should set user error and clear user info', () => {
-      const initalState = {
+      const initialState = {
         ...makeInitialLdapState(),
         user: getTestUserMapping(),
       };
 
-      reducerTester()
-        .givenReducer(ldapReducer as Reducer<LdapState, ActionOf<any>>, initalState)
+      reducerTester<LdapState>()
+        .givenReducer(ldapReducer, initialState)
         .whenActionIsDispatched(
           userMappingInfoFailedAction({
             title: 'User not found',
@@ -173,6 +183,83 @@ describe('LDAP page reducer', () => {
             title: 'User not found',
             body: 'Cannot find user',
           },
+        });
+    });
+  });
+
+  describe('when clearUserMappingInfoAction is dispatched', () => {
+    it('then state should be correct', () => {
+      reducerTester<LdapState>()
+        .givenReducer(ldapReducer, {
+          ...makeInitialLdapState(),
+          user: getTestUserMapping(),
+        })
+        .whenActionIsDispatched(clearUserMappingInfoAction())
+        .thenStateShouldEqual({
+          ...makeInitialLdapState(),
+          user: null,
+        });
+    });
+  });
+});
+
+describe('Edit Admin user page reducer', () => {
+  describe('When user loaded', () => {
+    it('should set user and clear user error', () => {
+      const initialState = {
+        ...makeInitialUserAdminState(),
+        userError: {
+          title: 'User not found',
+          body: 'Cannot find user',
+        },
+      };
+
+      reducerTester<UserAdminState>()
+        .givenReducer(userAdminReducer, initialState)
+        .whenActionIsDispatched(userProfileLoadedAction(getTestUser()))
+        .thenStateShouldEqual({
+          ...makeInitialUserAdminState(),
+          user: getTestUser(),
+        });
+    });
+  });
+
+  describe('when userSessionsLoadedAction is dispatched', () => {
+    it('then state should be correct', () => {
+      reducerTester<UserAdminState>()
+        .givenReducer(userAdminReducer, { ...makeInitialUserAdminState() })
+        .whenActionIsDispatched(
+          userSessionsLoadedAction([
+            {
+              browser: 'Chrome',
+              id: 1,
+              browserVersion: '79',
+              clientIp: '127.0.0.1',
+              createdAt: '2020-01-01 00:00:00',
+              device: 'a device',
+              isActive: true,
+              os: 'MacOS',
+              osVersion: '15',
+              seenAt: '2020-01-01 00:00:00',
+            },
+          ])
+        )
+        .thenStateShouldEqual({
+          ...makeInitialUserAdminState(),
+          sessions: [
+            {
+              browser: 'Chrome',
+              id: 1,
+              browserVersion: '79',
+              clientIp: '127.0.0.1',
+              createdAt: '2020-01-01 00:00:00',
+              device: 'a device',
+              isActive: true,
+              os: 'MacOS',
+              osVersion: '15',
+              seenAt: '2020-01-01 00:00:00',
+            },
+          ],
         });
     });
   });

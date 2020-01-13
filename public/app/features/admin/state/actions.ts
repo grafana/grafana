@@ -1,41 +1,23 @@
-import { actionCreatorFactory } from 'app/core/redux';
 import { updateLocation } from 'app/core/actions';
 import config from 'app/core/config';
 import { dateTime } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
+import { ThunkResult, LdapUser, UserSession, UserDTO } from 'app/types';
+
 import {
-  ThunkResult,
-  SyncInfo,
-  LdapUser,
-  LdapConnectionInfo,
-  LdapError,
-  UserSession,
-  UserDTO,
-  UserOrg,
-  UserAdminError,
-} from 'app/types';
-
-// Action types
-
-// UserAdminPage
-export const userAdminPageLoadedAction = actionCreatorFactory<boolean>('admin/user/PAGE_LOADED').create();
-export const userProfileLoadedAction = actionCreatorFactory<UserDTO>('admin/user/PROFILE_LOADED').create();
-export const userOrgsLoadedAction = actionCreatorFactory<UserOrg[]>('admin/user/ORGS_LOADED').create();
-export const userSessionsLoadedAction = actionCreatorFactory<UserSession[]>('admin/user/SESSIONS_LOADED').create();
-export const userAdminPageFailedAction = actionCreatorFactory<UserAdminError>('admin/user/PAGE_FAILED').create();
-
-// LDAP debug page
-export const ldapConnectionInfoLoadedAction = actionCreatorFactory<LdapConnectionInfo>(
-  'ldap/CONNECTION_INFO_LOADED'
-).create();
-export const ldapSyncStatusLoadedAction = actionCreatorFactory<SyncInfo>('ldap/SYNC_STATUS_LOADED').create();
-export const userMappingInfoLoadedAction = actionCreatorFactory<LdapUser>('ldap/USER_INFO_LOADED').create();
-export const userMappingInfoFailedAction = actionCreatorFactory<LdapError>('ldap/USER_INFO_FAILED').create();
-export const clearUserMappingInfoAction = actionCreatorFactory('ldap/CLEAR_USER_MAPPING_INFO').create();
-export const clearUserErrorAction = actionCreatorFactory('ldap/CLEAR_USER_ERROR').create();
-export const ldapFailedAction = actionCreatorFactory<LdapError>('ldap/LDAP_FAILED').create();
-
-// Actions
+  userAdminPageLoadedAction,
+  userProfileLoadedAction,
+  userOrgsLoadedAction,
+  userSessionsLoadedAction,
+  userAdminPageFailedAction,
+  ldapConnectionInfoLoadedAction,
+  ldapSyncStatusLoadedAction,
+  userMappingInfoLoadedAction,
+  userMappingInfoFailedAction,
+  clearUserMappingInfoAction,
+  clearUserErrorAction,
+  ldapFailedAction,
+} from './reducers';
 
 // UserAdminPage
 

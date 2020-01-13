@@ -33,8 +33,6 @@
           "calcs": ["mean"],
           "defaults": {
             "mappings": [],
-            "max": 100,
-            "min": 0,
             "thresholds": [
               {
                 "color": "blue",
@@ -57,7 +55,7 @@
                 "value": 80
               }
             ],
-            "unit": "percent"
+            "unit": "areaM2"
           },
           "override": {},
           "values": false
@@ -69,7 +67,7 @@
           "show": true
         }
       },
-      "pluginVersion": "6.6.0-pre",
+      "pluginVersion": "6.5.0-pre",
       "targets": [
         {
           "alias": "A longer title",
@@ -124,8 +122,6 @@
           "calcs": ["mean"],
           "defaults": {
             "mappings": [],
-            "max": 100,
-            "min": 0,
             "thresholds": [
               {
                 "color": "blue",
@@ -160,7 +156,7 @@
           "show": true
         }
       },
-      "pluginVersion": "6.6.0-pre",
+      "pluginVersion": "6.5.0-pre",
       "targets": [
         {
           "alias": "AB",
@@ -215,8 +211,6 @@
           "calcs": ["mean"],
           "defaults": {
             "mappings": [],
-            "max": 100,
-            "min": 0,
             "thresholds": [
               {
                 "color": "blue",
@@ -239,7 +233,7 @@
                 "value": 80
               }
             ],
-            "unit": "percent"
+            "unit": "areaM2"
           },
           "override": {},
           "values": false
@@ -251,7 +245,7 @@
           "show": true
         }
       },
-      "pluginVersion": "6.6.0-pre",
+      "pluginVersion": "6.5.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -300,8 +294,6 @@
           "calcs": ["mean"],
           "defaults": {
             "mappings": [],
-            "max": 100,
-            "min": 0,
             "thresholds": [
               {
                 "color": "blue",
@@ -324,7 +316,7 @@
                 "value": 80
               }
             ],
-            "unit": "percent"
+            "unit": "areaM2"
           },
           "override": {},
           "values": false
@@ -336,7 +328,7 @@
           "show": true
         }
       },
-      "pluginVersion": "6.6.0-pre",
+      "pluginVersion": "6.5.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -388,8 +380,6 @@
           "calcs": ["mean"],
           "defaults": {
             "mappings": [],
-            "max": 100,
-            "min": 0,
             "thresholds": [
               {
                 "color": "blue",
@@ -412,7 +402,7 @@
                 "value": 80
               }
             ],
-            "unit": "percent"
+            "unit": "areaM2"
           },
           "override": {},
           "values": false
@@ -424,7 +414,7 @@
           "show": true
         }
       },
-      "pluginVersion": "6.6.0-pre",
+      "pluginVersion": "6.5.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -476,8 +466,6 @@
           "calcs": ["mean"],
           "defaults": {
             "mappings": [],
-            "max": 100,
-            "min": 0,
             "thresholds": [
               {
                 "color": "blue",
@@ -500,7 +488,7 @@
                 "value": 80
               }
             ],
-            "unit": "percent"
+            "unit": "areaM2"
           },
           "override": {},
           "values": false
@@ -512,7 +500,7 @@
           "show": true
         }
       },
-      "pluginVersion": "6.6.0-pre",
+      "pluginVersion": "6.5.0-pre",
       "targets": [
         {
           "refId": "A",

@@ -75,6 +75,7 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
 
 // Need to do this because of mismatch between variants in standard buttons and here
 type StyleProps = Omit<StyleDeps, 'variant'> & { variant: ButtonVariant };
+
 export const getButtonStyles = stylesFactory(({ theme, size, variant }: StyleProps) => {
   const { padding, fontSize, height } = getPropertiesForButtonSize(theme, size);
   const { background, borderColor, variantStyles } = getPropertiesForVariant(theme, variant);
@@ -82,7 +83,6 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant }: StylePro
   return {
     button: cx(
       css`
-        position: relative;
         label: button;
         display: inline-flex;
         align-items: center;
@@ -110,10 +110,18 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant }: StylePro
         ${variantStyles}
       `
     ),
+    buttonWithIcon: css`
+      padding-left: ${theme.spacing.sm};
+    `,
+    // used for buttons with icon only
+    iconButton: css`
+      padding-right: 0;
+    `,
     iconWrap: css`
       label: button-icon-wrap;
-      display: flex;
-      align-items: center;
+      & + * {
+        margin-left: ${theme.spacing.sm};
+      }
     `,
   };
 });
@@ -129,25 +137,25 @@ type CommonProps = {
   className?: string;
 };
 
-type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
+export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
-export const Button = (props: ButtonProps) => {
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
   const theme = useContext(ThemeContext);
   const styles = getButtonStyles({
     theme,
     size: props.size || 'md',
     variant: props.variant || 'primary',
   });
-  return <DefaultButton {...props} styles={styles} />;
-};
+  return <DefaultButton {...props} styles={styles} ref={ref} />;
+});
 
 type ButtonLinkProps = CommonProps & AnchorHTMLAttributes<HTMLAnchorElement>;
-export const LinkButton = (props: ButtonLinkProps) => {
+export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>((props, ref) => {
   const theme = useContext(ThemeContext);
   const styles = getButtonStyles({
     theme,
     size: props.size || 'md',
     variant: props.variant || 'primary',
   });
-  return <DefaultLinkButton {...props} styles={styles} />;
-};
+  return <DefaultLinkButton {...props} styles={styles} ref={ref} />;
+});
