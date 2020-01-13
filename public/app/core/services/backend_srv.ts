@@ -167,7 +167,7 @@ export class BackendSrv implements BackendService {
         return fetchSuccessResponse;
       }),
       tap(response => {
-        if (options.method !== 'GET' && response?.message && options.showSuccessAlert) {
+        if (options.method !== 'GET' && response?.message && options.showSuccessAlert !== false) {
           this.dependencies.appEvents.emit(AppEvents.alertSuccess, [response.message]);
         }
       })
