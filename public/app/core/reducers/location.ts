@@ -16,6 +16,11 @@ export const initialState: LocationState = {
 
 export const updateLocation = createAction<LocationUpdate>('location/updateLocation');
 
+// Redux Toolkit uses ImmerJs as part of their solution to ensure that state objects are not mutated.
+// ImmerJs has an autoFreeze option that freezes objects from change which means this reducer can't be migrated to createSlice
+// because the state would become frozen and during run time we would get errors because Angular would try to mutate
+// the frozen state.
+// https://github.com/reduxjs/redux-toolkit/issues/242
 export const locationReducer = (state: LocationState = initialState, action: Action<unknown>) => {
   if (updateLocation.match(action)) {
     const payload: LocationUpdate = action.payload;

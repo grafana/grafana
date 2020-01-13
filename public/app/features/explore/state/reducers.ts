@@ -141,6 +141,11 @@ export const initialExploreState: ExploreState = {
 /**
  * Reducer for an Explore area, to be used by the global Explore reducer.
  */
+// Redux Toolkit uses ImmerJs as part of their solution to ensure that state objects are not mutated.
+// ImmerJs has an autoFreeze option that freezes objects from change which means this reducer can't be migrated to createSlice
+// because the state would become frozen and during run time we would get errors because flot (Graph lib) would try to mutate
+// the frozen state.
+// https://github.com/reduxjs/redux-toolkit/issues/242
 export const itemReducer = (state: ExploreItemState = makeExploreItemState(), action: AnyAction): ExploreItemState => {
   if (addQueryRowAction.match(action)) {
     const { queries } = state;

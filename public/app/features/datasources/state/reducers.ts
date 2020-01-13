@@ -32,6 +32,11 @@ export const setDataSourceTypeSearchQuery = createAction<string>('dataSources/se
 export const setDataSourceName = createAction<string>('dataSources/setDataSourceName');
 export const setIsDefault = createAction<boolean>('dataSources/setIsDefault');
 
+// Redux Toolkit uses ImmerJs as part of their solution to ensure that state objects are not mutated.
+// ImmerJs has an autoFreeze option that freezes objects from change which means this reducer can't be migrated to createSlice
+// because the state would become frozen and during run time we would get errors because Angular would try to mutate
+// the frozen state.
+// https://github.com/reduxjs/redux-toolkit/issues/242
 export const dataSourcesReducer = (state: DataSourcesState = initialState, action: AnyAction): DataSourcesState => {
   if (dataSourcesLoaded.match(action)) {
     return {
