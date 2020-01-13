@@ -208,10 +208,6 @@ describe('Edit Admin user page reducer', () => {
     it('should set user and clear user error', () => {
       const initialState = {
         ...makeInitialUserAdminState(),
-        userError: {
-          title: 'User not found',
-          body: 'Cannot find user',
-        },
       };
 
       reducerTester<UserAdminState>()
@@ -219,6 +215,7 @@ describe('Edit Admin user page reducer', () => {
         .whenActionIsDispatched(userProfileLoadedAction(getTestUser()))
         .thenStateShouldEqual({
           ...makeInitialUserAdminState(),
+
           user: getTestUser(),
         });
     });
