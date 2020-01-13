@@ -11,5 +11,9 @@ export const TabsBar: FC<Props> = ({ children }) => {
   const theme = useTheme();
   const tabsStyles = getTabsStyle(theme);
 
-  return <ul className={tabsStyles.tabs}>{children}</ul>;
+  return (
+    <div className={tabsStyles.tabsWrapper}>
+      <ul className={tabsStyles.tabs}>{children}</ul>
+    </div>
+  );
 };

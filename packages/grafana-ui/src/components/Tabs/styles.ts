@@ -7,6 +7,9 @@ export const getTabsStyle = stylesFactory((theme: GrafanaTheme) => {
   const tabBorderColor = selectThemeVariant({ dark: colors.dark9, light: colors.gray5 }, theme.type);
 
   return {
+    tabsWrapper: css`
+      border-bottom: 1px solid ${colors.pageHeaderBorder};
+    `,
     tabs: css`
       position: relative;
       top: 1px;
@@ -55,6 +58,9 @@ export const getTabsStyle = stylesFactory((theme: GrafanaTheme) => {
         top: 0;
         background-image: linear-gradient(to right, #f05a28 30%, #fbca0a 99%);
       }
+    `,
+    tabContent: css`
+      padding: ${theme.spacing.xs} 0;
     `,
   };
 });
