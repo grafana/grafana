@@ -30,7 +30,7 @@ func (r *RendererPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 	cmd := ComposePluginStartCommmand("plugin_start")
 	fullpath := path.Join(r.PluginDir, cmd)
 	descriptor := backendplugin.NewRendererPluginDescriptor(r.Id, fullpath, backendplugin.PluginCallbacks{
-		LegacyCallback: r.onLegacyPluginStart,
+		OnLegacyStart: r.onLegacyPluginStart,
 	})
 	if err := backendplugin.Register(descriptor); err != nil {
 		return errutil.Wrapf(err, "Failed to register backend plugin")

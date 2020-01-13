@@ -85,14 +85,14 @@ func (p *BackendPlugin) start(ctx context.Context) error {
 		return errors.New("no compatible plugin implementation found")
 	}
 
-	if legacyClient != nil && p.callbacks.LegacyCallback != nil {
-		if err := p.callbacks.LegacyCallback(p.id, legacyClient, p.logger); err != nil {
+	if legacyClient != nil && p.callbacks.OnLegacyStart != nil {
+		if err := p.callbacks.OnLegacyStart(p.id, legacyClient, p.logger); err != nil {
 			return err
 		}
 	}
 
-	if client != nil && p.callbacks.Callback != nil {
-		if err := p.callbacks.Callback(p.id, client, p.logger); err != nil {
+	if client != nil && p.callbacks.OnStart != nil {
+		if err := p.callbacks.OnStart(p.id, client, p.logger); err != nil {
 			return err
 		}
 	}

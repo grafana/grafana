@@ -41,16 +41,16 @@ func newClientConfig(executablePath string, logger log.Logger, versionedPlugins 
 	}
 }
 
-// LegacyCallbackFunc callback function called when a plugin with old plugin protocol is started.
-type LegacyCallbackFunc func(pluginID string, client *LegacyClient, logger log.Logger) error
+// LegacyStartFunc callback function called when a plugin with old plugin protocol is started.
+type LegacyStartFunc func(pluginID string, client *LegacyClient, logger log.Logger) error
 
-// CallbackFunc callback function called when a plugin with current plugin protocol version is started.
-type CallbackFunc func(pluginID string, client *Client, logger log.Logger) error
+// StartFunc callback function called when a plugin with current plugin protocol version is started.
+type StartFunc func(pluginID string, client *Client, logger log.Logger) error
 
-// PluginCallbacks callback functions called when plugin is started.
+// PluginCallbacks callback functions called for plugin throughout its lifetime.
 type PluginCallbacks struct {
-	LegacyCallback LegacyCallbackFunc
-	Callback       CallbackFunc
+	OnLegacyStart LegacyStartFunc
+	OnStart       StartFunc
 }
 
 // PluginDescriptor descriptor used for registering backend plugins.
