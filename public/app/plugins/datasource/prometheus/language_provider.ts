@@ -271,7 +271,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     }
 
     const result = {
-      refresher,
       suggestions,
       context: 'context-aggregation',
     };
@@ -404,12 +403,12 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   fetchSeriesLabels = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
     const tRange = this.datasource.getTimeRange();
-    const url = `/api/v1/series?match[]=${name}&start=${tRange['start']}&end=${tRange['end']}`;
+    const url = `/api/v1/series?match$encodeURIComponent('[]')=${name}&start=${tRange['start']}&end=${tRange['end']}`;
     // Cache key is a bit different here. We add the `withName` param and also round up to a minute the intervals.
     // The rounding may seem strange but makes relative intervals like now-1h less prone to need separate request every
     // millisecond while still actually getting all the keys for the correct interval. This still can create problems
     // when user does not the newest values for a minute if already cached.
-    const cacheKey = `/api/v1/series?match[]=${name}&start=${this.roundToMinutes(
+    const cacheKey = `/api/v1/series?match$encodeURIComponent('[]')=${name}&start=${this.roundToMinutes(
       tRange['start']
     )}&end=${this.roundToMinutes(tRange['end'])}&withName=${!!withName}`;
     let value = this.labelsCache.get(cacheKey);
