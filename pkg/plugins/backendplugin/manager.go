@@ -27,7 +27,7 @@ type BackendPlugin struct {
 	clientFactory   func() *plugin.Client
 	client          *plugin.Client
 	logger          log.Logger
-	callbacks       *PluginCallbacks
+	callbacks       PluginCallbacks
 	supportsMetrics bool
 	supportsHealth  bool
 }
@@ -86,13 +86,13 @@ func (p *BackendPlugin) start(ctx context.Context) error {
 	}
 
 	if legacyClient != nil && p.callbacks.LegacyCallback != nil {
-		if err := p.callbacks.LegacyCallback.execute(p.id, legacyClient, p.logger); err != nil {
+		if err := p.callbacks.LegacyCallback(p.id, legacyClient, p.logger); err != nil {
 			return err
 		}
 	}
 
 	if client != nil && p.callbacks.Callback != nil {
-		if err := p.callbacks.Callback.execute(p.id, client, p.logger); err != nil {
+		if err := p.callbacks.Callback(p.id, client, p.logger); err != nil {
 			return err
 		}
 	}

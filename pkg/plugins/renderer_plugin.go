@@ -19,7 +19,7 @@ type RendererPlugin struct {
 }
 
 func (r *RendererPlugin) Load(decoder *json.Decoder, pluginDir string) error {
-	if err := decoder.Decode(&r); err != nil {
+	if err := decoder.Decode(r); err != nil {
 		return err
 	}
 
@@ -29,7 +29,7 @@ func (r *RendererPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 
 	cmd := ComposePluginStartCommmand("plugin_start")
 	fullpath := path.Join(r.PluginDir, cmd)
-	descriptor := backendplugin.NewRendererPluginDescriptor(r.Id, fullpath, &backendplugin.PluginCallbacks{
+	descriptor := backendplugin.NewRendererPluginDescriptor(r.Id, fullpath, backendplugin.PluginCallbacks{
 		LegacyCallback: r.onLegacyPluginStart,
 	})
 	if err := backendplugin.Register(descriptor); err != nil {

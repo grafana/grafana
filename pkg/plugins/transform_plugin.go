@@ -29,7 +29,7 @@ type TransformPlugin struct {
 }
 
 func (p *TransformPlugin) Load(decoder *json.Decoder, pluginDir string) error {
-	if err := decoder.Decode(&p); err != nil {
+	if err := decoder.Decode(p); err != nil {
 		return err
 	}
 
@@ -39,7 +39,7 @@ func (p *TransformPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 
 	cmd := ComposePluginStartCommmand(p.Executable)
 	fullpath := path.Join(p.PluginDir, cmd)
-	descriptor := backendplugin.NewBackendPluginDescriptor(p.Id, fullpath, &backendplugin.PluginCallbacks{
+	descriptor := backendplugin.NewBackendPluginDescriptor(p.Id, fullpath, backendplugin.PluginCallbacks{
 		Callback: p.onPluginStart,
 	})
 	if err := backendplugin.Register(descriptor); err != nil {

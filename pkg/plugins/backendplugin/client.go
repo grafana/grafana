@@ -44,16 +44,8 @@ func newClientConfig(executablePath string, logger log.Logger, versionedPlugins 
 // LegacyCallbackFunc callback function called when a plugin with old plugin protocol is started.
 type LegacyCallbackFunc func(pluginID string, client *LegacyClient, logger log.Logger) error
 
-func (f LegacyCallbackFunc) execute(pluginID string, client *LegacyClient, logger log.Logger) error {
-	return f(pluginID, client, logger)
-}
-
 // CallbackFunc callback function called when a plugin with current plugin protocol version is started.
 type CallbackFunc func(pluginID string, client *Client, logger log.Logger) error
-
-func (f CallbackFunc) execute(pluginID string, client *Client, logger log.Logger) error {
-	return f(pluginID, client, logger)
-}
 
 // PluginCallbacks callback functions called when plugin is started.
 type PluginCallbacks struct {
@@ -67,16 +59,12 @@ type PluginDescriptor struct {
 	executablePath   string
 	managed          bool
 	versionedPlugins map[int]plugin.PluginSet
-	callbacks        *PluginCallbacks
+	callbacks        PluginCallbacks
 }
 
 // NewBackendPluginDescriptor creates a new backend plugin descriptor
 // used for registering a backend datasource plugin.
-func NewBackendPluginDescriptor(pluginID, executablePath string, callbacks *PluginCallbacks) PluginDescriptor {
-	if callbacks == nil {
-		panic("plugin callbacks cannot be nil")
-	}
-
+func NewBackendPluginDescriptor(pluginID, executablePath string, callbacks PluginCallbacks) PluginDescriptor {
 	return PluginDescriptor{
 		pluginID:       pluginID,
 		executablePath: executablePath,
@@ -96,11 +84,7 @@ func NewBackendPluginDescriptor(pluginID, executablePath string, callbacks *Plug
 
 // NewRendererPluginDescriptor creates a new renderer plugin descriptor
 // used for registering a backend renderer plugin.
-func NewRendererPluginDescriptor(pluginID, executablePath string, callbacks *PluginCallbacks) PluginDescriptor {
-	if callbacks == nil {
-		panic("plugin callbacks cannot be nil")
-	}
-
+func NewRendererPluginDescriptor(pluginID, executablePath string, callbacks PluginCallbacks) PluginDescriptor {
 	return PluginDescriptor{
 		pluginID:       pluginID,
 		executablePath: executablePath,
