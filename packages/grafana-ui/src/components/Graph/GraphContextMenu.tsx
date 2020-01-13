@@ -2,18 +2,32 @@ import React, { useContext } from 'react';
 import { ContextMenu, ContextMenuProps } from '../ContextMenu/ContextMenu';
 import { ThemeContext } from '../../themes';
 import { SeriesIcon } from '../Legend/SeriesIcon';
-import { DateTimeInput, FlotDataPoint } from '@grafana/data';
+import { GraphDimensions } from './GraphTooltip/types';
+import {
+  DateTimeInput,
+  FlotDataPoint,
+  getValueFromDimension,
+  getDisplayProcessor,
+  formattedValueToString,
+  Dimensions,
+} from '@grafana/data';
 import { css } from 'emotion';
+
+export type ContextDimensions<T extends Dimensions = any> = { [key in keyof T]: [number, number | undefined] | null };
 
 export type GraphContextMenuProps = ContextMenuProps & {
   getContextMenuSource: () => FlotDataPoint | null;
   formatSourceDate: (date: DateTimeInput, format?: string) => string;
+  dimensions?: GraphDimensions;
+  contextDimensions?: ContextDimensions;
 };
 
 export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
   getContextMenuSource,
   formatSourceDate,
   items,
+  dimensions,
+  contextDimensions,
   ...otherProps
 }) => {
   const theme = useContext(ThemeContext);
@@ -32,12 +46,25 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
       return null;
     }
 
+    // If dimensions supplied, we can calculate and display value
+    let value;
+    if (dimensions && contextDimensions && contextDimensions.yAxis && contextDimensions.yAxis[1]) {
+      const valueFromDimensions = getValueFromDimension(
+        dimensions.yAxis,
+        contextDimensions.yAxis[0],
+        contextDimensions.yAxis[1]
+      );
+      const display = source.series.valueField.display ?? getDisplayProcessor({ field: source.series.valueField });
+      value = display(valueFromDimensions);
+    }
+
     const timeFormat = source.series.hasMsResolution ? 'YYYY-MM-DD HH:mm:ss.SSS' : 'YYYY-MM-DD HH:mm:ss';
     return (
       <div
         className={css`
           padding: ${theme.spacing.xs} ${theme.spacing.sm};
           font-size: ${theme.typography.size.sm};
+          z-index: ${theme.zIndex.tooltip};
         `}
       >
         <strong>{formatSourceDate(source.datapoint[0], timeFormat)}</strong>
@@ -51,6 +78,16 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
           >
             {source.series.alias || source.series.label}
           </span>
+          {value && (
+            <span
+              className={css`
+                white-space: nowrap;
+                padding-left: ${theme.spacing.md};
+              `}
+            >
+              {formattedValueToString(value)}
+            </span>
+          )}
         </div>
       </div>
     );

@@ -16,7 +16,7 @@ import _ from 'lodash';
 import { FlotPosition, FlotItem } from './types';
 import { TooltipProps, TooltipContentProps, ActiveDimensions, Tooltip } from '../Chart/Tooltip';
 import { GraphTooltip } from './GraphTooltip/GraphTooltip';
-import { GraphContextMenu, GraphContextMenuProps } from './GraphContextMenu';
+import { GraphContextMenu, GraphContextMenuProps, ContextDimensions } from './GraphContextMenu';
 import { GraphDimensions } from './GraphTooltip/types';
 
 export interface GraphProps {
@@ -96,12 +96,11 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   };
 
   onPlotClick = (event: JQueryEventObject, contextPos: FlotPosition, item?: FlotItem<GraphSeriesXY>) => {
-    this.setState(state => {
-      return {
-        isContextVisible: true,
-        contextItem: item,
-        contextPos,
-      };
+    this.setState({
+      isContextVisible: true,
+      isTooltipVisible: false,
+      contextItem: item,
+      contextPos,
     });
   };
 
@@ -211,6 +210,30 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       return null;
     }
 
+    // Indicates column(field) index in y-axis dimension
+    const seriesIndex = contextItem ? contextItem.series.seriesIndex : 0;
+    // Indicates row index in context field values
+    const rowIndex = contextItem ? contextItem.dataIndex : undefined;
+
+    const contextDimensions: ContextDimensions<GraphDimensions> = {
+      // Described x-axis context item
+      xAxis: [seriesIndex, rowIndex],
+      // Describes y-axis context item
+      yAxis: contextItem ? [contextItem.series.seriesIndex, contextItem.dataIndex] : null,
+    };
+
+    const dimensions: GraphDimensions = {
+      // time/value dimension columns are index-aligned - see getGraphSeriesModel
+      xAxis: createDimension(
+        'xAxis',
+        series.map(s => s.timeField)
+      ),
+      yAxis: createDimension(
+        'yAxis',
+        series.map(s => s.valueField)
+      ),
+    };
+
     const formatDate = (date: DateTimeInput, format?: string) => {
       return dateTime(date)?.format(format);
     };
@@ -229,11 +252,13 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     };
 
     const contextContentProps: GraphContextMenuProps = {
-      x: contextPos.pageX + 5,
-      y: contextPos.pageY + 5,
+      x: contextPos.pageX,
+      y: contextPos.pageY,
       onClose: closeContext,
       getContextMenuSource: getContextMenuSource,
       formatSourceDate: formatDate,
+      dimensions,
+      contextDimensions,
     };
 
     const contextContentRender = GraphContextMenu;
