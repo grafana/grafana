@@ -23,7 +23,7 @@ You can install Grafana from a YUM repository, manually using YUM, manually usin
 
 ### Install manually with YUM
 
-If you install with YUM, then you will need to manually update Grafana for each new version.
+If you install manually with YUM, then you will need to manually update Grafana for each new version.  To enable automatic updates for your Grafana installation please use the instructions below to install via our YUM repository.
 
 1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install. 
    * The most recent Grafana version is selected by default.
