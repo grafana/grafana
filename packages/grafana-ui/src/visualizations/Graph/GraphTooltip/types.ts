@@ -1,5 +1,5 @@
 import { ActiveDimensions, TooltipMode } from '../../../components/Chart/Tooltip';
-import { Dimension, Dimensions } from '@grafana/data';
+import { Dimension, Dimensions } from '@grafana/data/src/dataframe';
 
 export interface GraphTooltipOptions {
   mode: TooltipMode;

@@ -17,10 +17,11 @@ import Prism from 'prismjs';
 // dom also includes Element polyfills
 import { PromQuery, PromOptions, PromMetricsMetadata } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
-import { ExploreQueryFieldProps, QueryHint, isDataFrame, toLegacyResponseData, HistoryItem } from '@grafana/data';
+import { ExploreQueryFieldProps, QueryHint, HistoryItem } from '@grafana/data';
 import { DOMUtil, SuggestionsState } from '@grafana/ui';
 import { PrometheusDatasource } from '../datasource';
 import PromQlLanguageProvider from '../language_provider';
+import { isDataFrame, toLegacyResponseData } from '@grafana/data/src/dataframe';
 
 const HISTOGRAM_GROUP = '__histograms__';
 const PRISM_SYNTAX = 'promql';

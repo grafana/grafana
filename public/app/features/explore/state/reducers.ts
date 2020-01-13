@@ -10,7 +10,6 @@ import {
   PanelData,
   PanelEvents,
   TimeZone,
-  toLegacyResponseData,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 import { LocationUpdate } from '@grafana/runtime';
@@ -67,6 +66,7 @@ import {
 } from './actionTypes';
 import { ResultProcessor } from '../utils/ResultProcessor';
 import { updateLocation } from '../../../core/actions';
+import { toLegacyResponseData } from '@grafana/data/src/dataframe';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',

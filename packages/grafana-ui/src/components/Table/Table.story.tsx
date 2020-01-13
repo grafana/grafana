@@ -11,10 +11,10 @@ import {
   FieldMatcherID,
   FieldType,
   GrafanaTheme,
-  MutableDataFrame,
   ThresholdsConfig,
   ThresholdsMode,
 } from '@grafana/data';
+import { MutableDataFrame } from '@grafana/data/src/dataframe';
 
 export default {
   title: 'Visualizations/Table',
@@ -32,7 +32,7 @@ function buildData(theme: GrafanaTheme, overrides: ConfigOverrideRule[]): DataFr
     fields: [
       { name: 'Time', type: FieldType.time, values: [] }, // The time field
       {
-        name: 'Quantity',
+        name: 'Quantity blah blah blah bla bla',
         type: FieldType.number,
         values: [],
         config: {

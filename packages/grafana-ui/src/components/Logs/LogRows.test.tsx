@@ -2,8 +2,9 @@ import React from 'react';
 import { range } from 'lodash';
 import { LogRows, PREVIEW_LIMIT } from './LogRows';
 import { mount } from 'enzyme';
-import { LogLevel, LogRowModel, LogsDedupStrategy, MutableDataFrame } from '@grafana/data';
+import { LogLevel, LogRowModel, LogsDedupStrategy } from '@grafana/data';
 import { LogRow } from './LogRow';
+import { MutableDataFrame } from '@grafana/data/src/dataframe';
 
 describe('LogRows', () => {
   it('renders rows', () => {

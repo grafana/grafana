@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from 'emotion';
 import { Portal } from '../Portal/Portal';
-import { Dimensions } from '@grafana/data';
+import { Dimensions } from '@grafana/data/src/dataframe';
 import { FlotPosition } from '../../visualizations/Graph/types';
 import { TooltipContainer } from './TooltipContainer';
 

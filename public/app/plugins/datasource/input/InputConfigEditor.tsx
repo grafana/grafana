@@ -5,8 +5,9 @@ import React, { PureComponent } from 'react';
 import { InputOptions } from './types';
 
 import { TableInputCSV } from '@grafana/ui';
-import { DataSourcePluginOptionsEditorProps, DataFrame, MutableDataFrame } from '@grafana/data';
+import { DataSourcePluginOptionsEditorProps, DataFrame } from '@grafana/data';
 import { dataFrameToCSV } from './utils';
+import { MutableDataFrame } from '@grafana/data/src/dataframe';
 
 interface Props extends DataSourcePluginOptionsEditorProps<InputOptions> {}
 

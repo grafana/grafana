@@ -1,12 +1,8 @@
 import React from 'react';
-import {
-  getValueFromDimension,
-  getColumnFromDimension,
-  formattedValueToString,
-  getDisplayProcessor,
-} from '@grafana/data';
+import { formattedValueToString, getDisplayProcessor } from '@grafana/data';
 import { SeriesTable } from './SeriesTable';
 import { GraphTooltipContentProps } from './types';
+import { getValueFromDimension, getColumnFromDimension } from '@grafana/data/src/dataframe';
 
 export const SingleModeGraphTooltip: React.FC<GraphTooltipContentProps> = ({ dimensions, activeDimensions }) => {
   // not hovering over a point, skip rendering

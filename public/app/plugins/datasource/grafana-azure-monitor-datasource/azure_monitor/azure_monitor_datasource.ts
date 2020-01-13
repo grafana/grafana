@@ -11,9 +11,10 @@ import {
 } from '../types';
 import { DataQueryRequest, DataQueryResponseData, DataSourceInstanceSettings } from '@grafana/data';
 
-import { TimeSeries, toDataFrame } from '@grafana/data';
+import { TimeSeries } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { toDataFrame } from '@grafana/data/src/dataframe';
 
 export default class AzureMonitorDatasource {
   apiVersion = '2018-01-01';

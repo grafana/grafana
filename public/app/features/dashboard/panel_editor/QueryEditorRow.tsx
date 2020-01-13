@@ -10,16 +10,9 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { ErrorBoundaryAlert } from '@grafana/ui';
-import {
-  DataQuery,
-  DataSourceApi,
-  PanelData,
-  PanelEvents,
-  TimeRange,
-  LoadingState,
-  toLegacyResponseData,
-} from '@grafana/data';
+import { DataQuery, DataSourceApi, PanelData, PanelEvents, TimeRange, LoadingState } from '@grafana/data';
 import { DashboardModel } from '../state/DashboardModel';
+import { toLegacyResponseData } from '@grafana/data/src/dataframe';
 
 interface Props {
   panel: PanelModel;

@@ -1,8 +1,9 @@
 import { Subject, Observable } from 'rxjs';
 import * as rxJsWebSocket from 'rxjs/webSocket';
 import { LiveStreams } from './live_streams';
-import { DataFrameView, Labels, formatLabels, DataFrame } from '@grafana/data';
+import { Labels, formatLabels, DataFrame } from '@grafana/data';
 import { noop } from 'lodash';
+import { DataFrameView } from '@grafana/data/src/dataframe';
 
 let fakeSocket: Subject<any>;
 jest.mock('rxjs/webSocket', () => {

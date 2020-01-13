@@ -1,5 +1,6 @@
-import { MutableDataFrame, FieldType } from '@grafana/data';
+import { FieldType } from '@grafana/data';
 import { getColumns, getTextAlign } from './utils';
+import { MutableDataFrame } from '@grafana/data/src/dataframe';
 
 function getData() {
   const data = new MutableDataFrame({

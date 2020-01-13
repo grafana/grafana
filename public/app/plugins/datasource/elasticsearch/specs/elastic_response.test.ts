@@ -1,5 +1,6 @@
-import { DataFrameView, KeyValue, MutableDataFrame } from '@grafana/data';
+import { KeyValue } from '@grafana/data';
 import { ElasticResponse } from '../elastic_response';
+import { MutableDataFrame, DataFrameView } from '@grafana/data/src/dataframe';
 
 describe('ElasticResponse', () => {
   let targets;

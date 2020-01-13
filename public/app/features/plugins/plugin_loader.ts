@@ -41,7 +41,10 @@ import impressionSrv from 'app/core/services/impression_srv';
 import builtInPlugins from './built_in_plugins';
 import * as d3 from 'd3';
 import * as emotion from 'emotion';
-import * as grafanaData from '@grafana/data';
+
+import * as grafanaDataRaw from '@grafana/data';
+import * as grafanaDataDataframe from '@grafana/data/src/dataframe';
+
 import * as grafanaUIraw from '@grafana/ui';
 import * as grafanaUIEditors from '@grafana/ui/src/editors';
 import * as grafanaUIForms from '@grafana/ui/src/forms';
@@ -51,19 +54,25 @@ import * as grafanaRuntime from '@grafana/runtime';
 // The base classes were moved from @grafana/ui to @grafana/data
 // This exposes the same classes on both import paths
 let grafanaUI = grafanaUIraw as any;
-grafanaUI.PanelPlugin = grafanaData.PanelPlugin;
-grafanaUI.DataSourcePlugin = grafanaData.DataSourcePlugin;
-grafanaUI.AppPlugin = grafanaData.AppPlugin;
-grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
+grafanaUI.PanelPlugin = grafanaDataRaw.PanelPlugin;
+grafanaUI.DataSourcePlugin = grafanaDataRaw.DataSourcePlugin;
+grafanaUI.AppPlugin = grafanaDataRaw.AppPlugin;
+grafanaUI.DataSourceApi = grafanaDataRaw.DataSourceApi;
 
 /**
- * 6.XXX introduces namespaced exports from @grafana/ui
- * This makes sure that exports previously accessible via direct imports from @grafana/ui are still available
+ * 6.XXX introduces namespaced exports from @grafana/* packages
+ * This makes sure that exports previously accessible via direct imports from @grafana/* are still available
  * via global namespace
  */
 grafanaUI = {
   ...grafanaUI,
   ...grafanaUIEditors,
+};
+
+let grafanaData = grafanaDataRaw as any;
+grafanaData = {
+  ...grafanaData,
+  ...grafanaDataDataframe,
 };
 
 // rxjs
@@ -109,6 +118,7 @@ exposeToPlugin('@grafana/ui', grafanaUI);
 
 // Expose grafana/ui namespaces to plugins
 exposeToPlugin('@grafana/ui/forms', grafanaUIForms);
+exposeToPlugin('@grafana/ui/editors', grafanaUIEditors);
 
 exposeToPlugin('@grafana/runtime', grafanaRuntime);
 exposeToPlugin('lodash', _);

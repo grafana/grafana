@@ -6,9 +6,10 @@ import { InputDatasource, describeDataFrame } from './InputDatasource';
 import { InputQuery, InputOptions } from './types';
 
 import { FormLabel, Select, TableInputCSV } from '@grafana/ui';
-import { DataFrame, toCSV, SelectableValue, MutableDataFrame, QueryEditorProps } from '@grafana/data';
+import { DataFrame, toCSV, SelectableValue, QueryEditorProps } from '@grafana/data';
 
 import { dataFrameToCSV } from './utils';
+import { MutableDataFrame } from '@grafana/data/src/dataframe';
 
 type Props = QueryEditorProps<InputDatasource, InputQuery, InputOptions>;
 

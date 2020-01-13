@@ -7,7 +7,6 @@ import {
   FieldType,
   DisplayValue,
   GraphSeriesXY,
-  getTimeField,
   DataFrame,
   FieldDisplayOptions,
   getSeriesTimeStep,
@@ -21,6 +20,7 @@ import {
 
 import { SeriesOptions, GraphOptions } from './types';
 import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
+import { getTimeField } from '@grafana/data/src/dataframe';
 
 export const getGraphSeriesModel = (
   dataFrames: DataFrame[],

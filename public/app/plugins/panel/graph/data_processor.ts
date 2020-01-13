@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import { colors } from '@grafana/ui';
-import { getColorFromHexRgbOrName, TimeRange, FieldType, Field, DataFrame, getTimeField } from '@grafana/data';
+import { getColorFromHexRgbOrName, TimeRange, FieldType, Field, DataFrame } from '@grafana/data';
+import { getTimeField } from '@grafana/data/src/dataframe';
 import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
 

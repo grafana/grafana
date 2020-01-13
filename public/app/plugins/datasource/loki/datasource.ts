@@ -24,7 +24,6 @@ import {
   DateTime,
   LoadingState,
   AnnotationEvent,
-  DataFrameView,
   TimeRange,
   TimeSeries,
   PluginMeta,
@@ -49,6 +48,7 @@ import {
 import { ExploreMode } from 'app/types';
 import { LegacyTarget, LiveStreams } from './live_streams';
 import LanguageProvider from './language_provider';
+import { DataFrameView } from '@grafana/data/src/dataframe';
 
 export type RangeQueryOptions = Pick<DataQueryRequest<LokiQuery>, 'range' | 'intervalMs' | 'maxDataPoints' | 'reverse'>;
 export const DEFAULT_MAX_LINES = 1000;

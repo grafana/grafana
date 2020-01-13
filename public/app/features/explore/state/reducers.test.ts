@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceApi, dateTime, LoadingState, LogsDedupStrategy, toDataFrame } from '@grafana/data';
+import { DataQuery, DataSourceApi, dateTime, LoadingState, LogsDedupStrategy } from '@grafana/data';
 
 import {
   createEmptyQueryResponse,
@@ -24,6 +24,7 @@ import {
 } from './actionTypes';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import { updateLocation } from '../../../core/actions';
+import { toDataFrame } from '@grafana/data/src/dataframe';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {

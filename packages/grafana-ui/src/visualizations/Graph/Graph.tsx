@@ -3,12 +3,13 @@ import $ from 'jquery';
 import React, { PureComponent } from 'react';
 import uniqBy from 'lodash/uniqBy';
 // Types
-import { TimeRange, GraphSeriesXY, TimeZone, DefaultTimeZone, createDimension } from '@grafana/data';
+import { TimeRange, GraphSeriesXY, TimeZone, DefaultTimeZone } from '@grafana/data';
 import _ from 'lodash';
 import { FlotPosition, FlotItem } from './types';
 import { TooltipProps, TooltipContentProps, ActiveDimensions, Tooltip } from '../../components/Chart/Tooltip';
 import { GraphTooltip } from './GraphTooltip/GraphTooltip';
 import { GraphDimensions } from './GraphTooltip/types';
+import { createDimension } from '@grafana/data/src/dataframe';
 
 export interface GraphProps {
   children?: JSX.Element | JSX.Element[];

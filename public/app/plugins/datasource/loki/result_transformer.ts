@@ -7,11 +7,9 @@ import {
   Labels,
   DataFrame,
   ArrayVector,
-  MutableDataFrame,
   findUniqueLabels,
   dateTime,
   FieldConfig,
-  DataFrameView,
 } from '@grafana/data';
 import templateSrv from 'app/features/templating/template_srv';
 import TableModel from 'app/core/table_model';
@@ -32,6 +30,7 @@ import {
 
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 import { of } from 'rxjs';
+import { MutableDataFrame, DataFrameView } from '@grafana/data/src/dataframe';
 
 /**
  * Transforms LokiLogStream structure into a dataFrame. Used when doing standard queries.

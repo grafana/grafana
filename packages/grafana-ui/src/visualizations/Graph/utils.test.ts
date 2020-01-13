@@ -1,14 +1,13 @@
 import {
   GraphSeriesValue,
-  toDataFrame,
   FieldType,
-  FieldCache,
   FieldColorMode,
   getColorFromHexRgbOrName,
   GrafanaThemeType,
   Field,
 } from '@grafana/data';
 import { getMultiSeriesGraphHoverInfo, findHoverIndexFromData } from './utils';
+import { toDataFrame, FieldCache } from '@grafana/data/src/dataframe';
 
 const mockResult = (
   value: string,

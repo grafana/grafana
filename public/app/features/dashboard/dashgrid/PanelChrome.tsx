@@ -21,11 +21,11 @@ import {
   AbsoluteTimeRange,
   DefaultTimeRange,
   toUtc,
-  toDataFrameDTO,
   PanelEvents,
   PanelData,
   PanelPlugin,
 } from '@grafana/data';
+import { toDataFrameDTO } from '@grafana/data/src/dataframe';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 

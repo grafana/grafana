@@ -19,9 +19,6 @@ import {
   dateTime,
   toUtc,
   NullValueMode,
-  toDataFrame,
-  FieldCache,
-  FieldWithIndex,
   getFlotPairs,
   TimeZone,
   getDisplayProcessor,
@@ -30,6 +27,7 @@ import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
 import { sortInAscendingOrder } from 'app/core/utils/explore';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
+import { toDataFrame, FieldWithIndex, FieldCache } from '@grafana/data/src/dataframe';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],

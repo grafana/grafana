@@ -1,15 +1,8 @@
 import { defaults } from 'lodash';
 import { Observable } from 'rxjs';
 
-import {
-  DataQueryRequest,
-  DataQueryResponse,
-  FieldType,
-  CircularDataFrame,
-  CSVReader,
-  Field,
-  LoadingState,
-} from '@grafana/data';
+import { DataQueryRequest, DataQueryResponse, FieldType, CSVReader, Field, LoadingState } from '@grafana/data';
+import { CircularDataFrame } from '@grafana/data/src/dataframe';
 
 import { TestDataQuery, StreamingQuery } from './types';
 import { getRandomLine } from './LogIpsum';

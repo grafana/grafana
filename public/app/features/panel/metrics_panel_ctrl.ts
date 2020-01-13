@@ -15,12 +15,11 @@ import {
   PanelData,
   PanelEvents,
   TimeRange,
-  toDataFrameDTO,
-  toLegacyResponseData,
 } from '@grafana/data';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
 import { CoreEvents } from 'app/types';
+import { toLegacyResponseData, toDataFrameDTO } from '@grafana/data/src/dataframe';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;

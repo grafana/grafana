@@ -2,8 +2,9 @@ import _ from 'lodash';
 import flatten from 'app/core/utils/flatten';
 import * as queryDef from './query_def';
 import TableModel from 'app/core/table_model';
-import { DataQueryResponse, DataFrame, toDataFrame, FieldType, MutableDataFrame } from '@grafana/data';
+import { DataQueryResponse, DataFrame, FieldType } from '@grafana/data';
 import { ElasticsearchAggregation } from './types';
+import { MutableDataFrame, toDataFrame } from '@grafana/data/src/dataframe';
 
 export class ElasticResponse {
   constructor(private targets: any, private response: any) {

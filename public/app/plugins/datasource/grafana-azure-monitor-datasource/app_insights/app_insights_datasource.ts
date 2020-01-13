@@ -1,4 +1,4 @@
-import { TimeSeries, toDataFrame } from '@grafana/data';
+import { TimeSeries } from '@grafana/data';
 import { DataQueryRequest, DataQueryResponseData, DataSourceInstanceSettings } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -7,6 +7,7 @@ import _ from 'lodash';
 import TimegrainConverter from '../time_grain_converter';
 import { AzureDataSourceJsonData, AzureMonitorQuery } from '../types';
 import ResponseParser from './response_parser';
+import { toDataFrame } from '@grafana/data/src/dataframe';
 
 export interface LogAnalyticsColumn {
   text: string;

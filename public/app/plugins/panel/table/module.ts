@@ -6,10 +6,10 @@ import { transformDataToTable } from './transformers';
 import { tablePanelEditor } from './editor';
 import { columnOptionsTab } from './column_options';
 import { TableRenderer } from './renderer';
-import { isTableData } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { PanelEvents } from '@grafana/data';
 import { CoreEvents } from 'app/types';
+import { isTableData } from '@grafana/data/src/dataframe';
 
 class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';

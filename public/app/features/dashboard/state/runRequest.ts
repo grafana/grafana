@@ -14,12 +14,11 @@ import {
   DataQueryError,
   LoadingState,
   dateMath,
-  toDataFrame,
   DataFrame,
-  guessFieldTypes,
 } from '@grafana/data';
 import { getAnalyticsProcessor } from './analyticsProcessor';
 import { ExpressionDatasourceID, expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
+import { guessFieldTypes, toDataFrame } from '@grafana/data/src/dataframe';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
 

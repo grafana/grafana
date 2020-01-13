@@ -1,9 +1,10 @@
 import React from 'react';
 import { mount } from 'enzyme';
 import { MultiModeGraphTooltip } from './MultiModeGraphTooltip';
-import { createDimension, ArrayVector, FieldType } from '@grafana/data';
+import { ArrayVector, FieldType } from '@grafana/data';
 import { GraphDimensions } from './types';
 import { ActiveDimensions } from '../../../components/Chart/Tooltip';
+import { createDimension } from '@grafana/data/src/dataframe';
 
 let dimensions: GraphDimensions;
 

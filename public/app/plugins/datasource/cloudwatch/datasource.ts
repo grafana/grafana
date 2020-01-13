@@ -9,7 +9,6 @@ import kbn from 'app/core/utils/kbn';
 import {
   dateMath,
   ScopedVars,
-  toDataFrame,
   TimeRange,
   DataSourceApi,
   DataQueryRequest,
@@ -21,6 +20,7 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ThrottlingErrorMessage } from './components/ThrottlingErrorMessage';
 import memoizedDebounce from './memoizedDebounce';
 import { CloudWatchQuery, CloudWatchJsonData } from './types';
+import { toDataFrame } from '@grafana/data/src/dataframe';
 
 const displayAlert = (datasourceName: string, region: string) =>
   store.dispatch(

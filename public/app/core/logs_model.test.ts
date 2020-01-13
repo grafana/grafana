@@ -1,14 +1,6 @@
-import {
-  DataFrame,
-  FieldType,
-  LogsMetaKind,
-  LogsDedupStrategy,
-  LogLevel,
-  MutableDataFrame,
-  toDataFrame,
-  LogRowModel,
-} from '@grafana/data';
+import { DataFrame, FieldType, LogsMetaKind, LogsDedupStrategy, LogLevel, LogRowModel } from '@grafana/data';
 import { dedupLogRows, dataFrameToLogsModel } from './logs_model';
+import { toDataFrame, MutableDataFrame } from '@grafana/data/src/dataframe';
 
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {

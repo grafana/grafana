@@ -7,10 +7,10 @@ import {
   MetricFindValue,
   DataFrame,
   DataFrameDTO,
-  toDataFrame,
 } from '@grafana/data';
 
 import { InputQuery, InputOptions } from './types';
+import { toDataFrame } from '@grafana/data/src/dataframe';
 
 export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
   data: DataFrame[] = [];

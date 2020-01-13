@@ -1,4 +1,5 @@
-import { FieldType, MutableDataFrame } from '@grafana/data';
+import { FieldType } from '@grafana/data';
+import { MutableDataFrame } from '@grafana/data/src/dataframe';
 import { LokiLegacyStreamResult, LokiStreamResult } from './types';
 import * as ResultTransformer from './result_transformer';
 

@@ -1,8 +1,9 @@
 import InputDatasource, { describeDataFrame } from './InputDatasource';
 import { InputQuery, InputOptions } from './types';
-import { readCSV, DataFrame, MutableDataFrame, DataSourceInstanceSettings, PluginMeta } from '@grafana/data';
+import { readCSV, DataFrame, DataSourceInstanceSettings, PluginMeta } from '@grafana/data';
 
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
+import { MutableDataFrame } from '@grafana/data/src/dataframe';
 
 describe('InputDatasource', () => {
   const data = readCSV('a,b,c\n1,2,3\n4,5,6');

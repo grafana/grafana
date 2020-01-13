@@ -1,9 +1,10 @@
-import { LogRowModel, toDataFrame, Field } from '@grafana/data';
+import { LogRowModel, Field } from '@grafana/data';
 import { useState, useEffect } from 'react';
 import flatten from 'lodash/flatten';
 import useAsync from 'react-use/lib/useAsync';
 
 import { DataQueryResponse, DataQueryError } from '@grafana/data';
+import { toDataFrame } from '@grafana/data/src/dataframe';
 
 export interface LogRowContextRows {
   before?: string[];

@@ -1,9 +1,10 @@
-import { DataFrame, FieldType, parseLabels, KeyValue, CircularDataFrame } from '@grafana/data';
+import { DataFrame, FieldType, parseLabels, KeyValue } from '@grafana/data';
 import { Observable } from 'rxjs';
 import { webSocket } from 'rxjs/webSocket';
 import { LokiLegacyStreamResponse, LokiTailResponse } from './types';
 import { finalize, map } from 'rxjs/operators';
 import { appendLegacyResponseToBufferedData, appendResponseToBufferedData } from './result_transformer';
+import { CircularDataFrame } from '@grafana/data/src/dataframe';
 
 /**
  * Maps directly to a query in the UI (refId is key)
