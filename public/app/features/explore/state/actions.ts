@@ -8,8 +8,6 @@ import {
   AbsoluteTimeRange,
   DataQuery,
   DataSourceApi,
-  dateTimeForTimeZone,
-  isDateTime,
   LoadingState,
   LogsDedupStrategy,
   PanelData,
@@ -83,6 +81,7 @@ import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getExploreDatasources } from './selectors';
+import { isDateTime, dateTimeForTimeZone } from '@grafana/data/src/datetime';
 
 /**
  * Updates UI state and save it to the URL

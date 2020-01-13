@@ -20,7 +20,8 @@ import config from 'app/core/config';
 import ttiPolyfill from 'tti-polyfill';
 // @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
 import _ from 'lodash';
-import { AppEvents, setMarkdownOptions, setLocale } from '@grafana/data';
+import { AppEvents, setMarkdownOptions } from '@grafana/data';
+import { setLocale } from '@grafana/data/src/datetime';
 import appEvents from 'app/core/app_events';
 import { addClassIfNoOverlayScrollbar } from 'app/core/utils/scrollbar';
 import { checkBrowserCompatibility } from 'app/core/utils/browser';

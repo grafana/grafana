@@ -1,5 +1,6 @@
 import _ from 'lodash';
-import { DataFrame, dateMath, ScopedVars, DataQueryResponse, DataQueryRequest, DataSourceApi } from '@grafana/data';
+import { DataFrame, ScopedVars, DataQueryResponse, DataQueryRequest, DataSourceApi } from '@grafana/data';
+import { dateMath } from '@grafana/data/src/datetime';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import gfunc from './gfunc';
 import { BackendSrv } from 'app/core/services/backend_srv';

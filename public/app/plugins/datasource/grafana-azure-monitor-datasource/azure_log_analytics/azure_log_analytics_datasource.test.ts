@@ -3,7 +3,7 @@ import FakeSchemaData from './__mocks__/schema';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { KustoSchema } from '../types';
-import { toUtc } from '@grafana/data';
+import { toUtc } from '@grafana/data/src/datetime';
 
 describe('AzureLogAnalyticsDatasource', () => {
   const ctx: any = {

@@ -13,9 +13,9 @@ import { stylesFactory } from '../../themes/stylesFactory';
 import { withTheme, useTheme } from '../../themes/ThemeContext';
 
 // Types
-import { isDateTime, DateTime, rangeUtil, GrafanaTheme, TIME_FORMAT } from '@grafana/data';
-import { TimeRange, TimeOption, TimeZone, dateMath } from '@grafana/data';
+import { GrafanaTheme, TIME_FORMAT, TimeRange, TimeOption, TimeZone } from '@grafana/data';
 import { Themeable } from '../../types';
+import { isDateTime, dateMath, rangeUtil, DateTime } from '@grafana/data/src/datetime';
 
 const quickOptions: TimeOption[] = [
   { from: 'now-5m', to: 'now', display: 'Last 5 minutes', section: 3 },

@@ -8,8 +8,7 @@ import { TimeRange, AppEvents } from '@grafana/data';
 
 // Utils
 import { isString as _isString } from 'lodash';
-import { rangeUtil } from '@grafana/data';
-import { dateMath } from '@grafana/data';
+import { dateMath, rangeUtil } from '@grafana/data/src/datetime';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 

@@ -1,7 +1,8 @@
 import React from 'react';
 import { Graph } from './Graph';
 import Chart from '../../components/Chart';
-import { dateTime, ArrayVector, FieldType, GraphSeriesXY, FieldColorMode } from '@grafana/data';
+import { ArrayVector, FieldType, GraphSeriesXY, FieldColorMode } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 import { select } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { TooltipContentProps } from '../../components/Chart/Tooltip';

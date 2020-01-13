@@ -1,6 +1,6 @@
 import { TimeSrv } from './TimeSrv';
 import { ContextSrvStub } from 'test/specs/helpers';
-import { isDateTime, dateTime } from '@grafana/data';
+import { isDateTime, dateTime } from '@grafana/data/src/datetime';
 
 describe('timeSrv', () => {
   const rootScope = {

@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 
 import {
-  rangeUtil,
   RawTimeRange,
   LogLevel,
   TimeZone,
@@ -15,6 +14,7 @@ import {
   LinkModel,
   Field,
 } from '@grafana/data';
+import { rangeUtil } from '@grafana/data/src/datetime';
 import { Switch, LogLabels, ToggleButtonGroup, ToggleButton, LogRows } from '@grafana/ui';
 import store from 'app/core/store';
 

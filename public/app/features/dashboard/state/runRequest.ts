@@ -13,9 +13,9 @@ import {
   DataQueryResponseData,
   DataQueryError,
   LoadingState,
-  dateMath,
   DataFrame,
 } from '@grafana/data';
+import { dateMath } from '@grafana/data/src/datetime';
 import { getAnalyticsProcessor } from './analyticsProcessor';
 import { ExpressionDatasourceID, expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { guessFieldTypes, toDataFrame } from '@grafana/data/src/dataframe';

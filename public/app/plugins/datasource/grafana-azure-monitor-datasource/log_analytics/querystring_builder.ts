@@ -1,4 +1,4 @@
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 
 export default class LogAnalyticsQuerystringBuilder {
   constructor(public rawQueryString: string, public options: any, public defaultTimeField: any) {}

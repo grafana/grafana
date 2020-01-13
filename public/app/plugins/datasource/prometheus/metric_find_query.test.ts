@@ -1,6 +1,7 @@
 import { PrometheusDatasource } from './datasource';
 import PrometheusMetricFindQuery from './metric_find_query';
-import { toUtc, DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings } from '@grafana/data';
+import { toUtc } from '@grafana/data/src/datetime';
 import { PromOptions } from './types';
 
 import templateSrv from 'app/features/templating/template_srv';

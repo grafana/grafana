@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 import {
   AzureLogsVariable,
   AzureLogsTableData,

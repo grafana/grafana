@@ -1,4 +1,5 @@
-import { LoadingState, dateTime, PanelData, DataQueryRequest } from '@grafana/data';
+import { LoadingState, PanelData, DataQueryRequest } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 import { filterPanelDataToQuery } from './QueryEditorRow';
 import { toDataFrame } from '@grafana/data/src/dataframe';
 

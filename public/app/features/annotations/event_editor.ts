@@ -2,7 +2,7 @@ import _ from 'lodash';
 import { coreModule } from 'app/core/core';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { AnnotationEvent } from '@grafana/data';
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 import { AnnotationsSrv } from './all';
 
 export class EventEditorCtrl {

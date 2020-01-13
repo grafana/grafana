@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { AnnoOptions } from './types';
-import { PanelProps, dateTime, DurationUnit, AnnotationEvent, AppEvents } from '@grafana/data';
+import { PanelProps, AnnotationEvent, AppEvents } from '@grafana/data';
 import { Tooltip } from '@grafana/ui';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { AbstractList } from '@grafana/ui/src/components/List/AbstractList';
@@ -14,6 +14,7 @@ import appEvents from 'app/core/app_events';
 import { updateLocation } from 'app/core/actions';
 import { store } from 'app/store/store';
 import { cx, css } from 'emotion';
+import { dateTime, DurationUnit } from '@grafana/data/src/datetime';
 
 interface UserInfo {
   id: number;

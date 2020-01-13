@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { dateMath, dateTime } from '@grafana/data';
+import { dateMath, dateTime } from '@grafana/data/src/datetime';
 import { e2e } from '@grafana/e2e';
 
 import { QueryCtrl } from 'app/plugins/sdk';

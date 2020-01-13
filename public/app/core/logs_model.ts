@@ -16,8 +16,6 @@ import {
   LogsMetaKind,
   LogsDedupStrategy,
   GraphSeriesXY,
-  dateTime,
-  toUtc,
   NullValueMode,
   getFlotPairs,
   TimeZone,
@@ -28,6 +26,7 @@ import { sortInAscendingOrder } from 'app/core/utils/explore';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 import { toDataFrame, FieldWithIndex, FieldCache } from '@grafana/data/src/dataframe';
 import { getDisplayProcessor } from '@grafana/data/src/field';
+import { toUtc, dateTime } from '@grafana/data/src/datetime';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],

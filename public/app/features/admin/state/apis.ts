@@ -1,5 +1,5 @@
 import { getBackendSrv } from '@grafana/runtime';
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 import { LdapUser, LdapConnectionInfo, UserSession, SyncInfo, User } from 'app/types';
 
 export interface ServerStat {

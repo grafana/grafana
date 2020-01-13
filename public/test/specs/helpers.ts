@@ -2,7 +2,7 @@ import each from 'lodash/each';
 import template from 'lodash/template';
 
 import config from 'app/core/config';
-import { dateMath } from '@grafana/data';
+import { dateMath } from '@grafana/data/src/datetime';
 import { angularMocks, sinon } from '../lib/common';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { RawTimeRange } from '@grafana/data';

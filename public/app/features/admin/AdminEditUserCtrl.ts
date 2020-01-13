@@ -3,7 +3,7 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/core';
 import { User } from 'app/core/services/context_srv';
 import { UserSession, Scope, CoreEvents, AppEventEmitter } from 'app/types';
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 
 export default class AdminEditUserCtrl {
   /** @ngInject */

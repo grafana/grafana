@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { toDuration } from '@grafana/data';
+import { toDuration } from '@grafana/data/src/datetime';
 
 const INTERVAL = 150;
 

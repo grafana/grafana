@@ -1,5 +1,5 @@
 import { coreModule, NavModelSrv } from 'app/core/core';
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 import { UserSession } from 'app/types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 

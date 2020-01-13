@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import {
-  dateTime,
   escapeStringForRegex,
   formattedValueToString,
   getColorFromHexRgbOrName,
@@ -11,6 +10,7 @@ import {
   stringToJsRegex,
   unEscapeStringFromRegex,
 } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { ColumnRender, TableRenderModel, ColumnStyle } from './types';
 import { ColumnOptionsCtrl } from './column_options';

@@ -2,7 +2,7 @@ import { MssqlDatasource } from '../datasource';
 import { TimeSrvStub } from 'test/specs/helpers';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 describe('MSSQLDatasource', () => {

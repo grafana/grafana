@@ -2,7 +2,7 @@ import _ from 'lodash';
 import alertDef from '../../../features/alerting/state/alertDef';
 import { PanelCtrl } from 'app/plugins/sdk';
 
-import { dateMath, dateTime } from '@grafana/data';
+import { dateMath, dateTime } from '@grafana/data/src/datetime';
 import { PanelEvents } from '@grafana/data';
 import { auto } from 'angular';
 import { BackendSrv } from '@grafana/runtime';

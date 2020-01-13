@@ -5,7 +5,7 @@ import { action } from '@storybook/addon-actions';
 import { TimeOfDayPicker } from './TimeOfDayPicker';
 import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 
 const TimeOfDayPickerStories = storiesOf('UI/TimeOfDayPicker', module);
 

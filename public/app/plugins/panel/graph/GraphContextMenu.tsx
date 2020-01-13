@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { FlotDataPoint } from './GraphContextMenuCtrl';
 import { ContextMenu, ContextMenuProps, SeriesIcon, ThemeContext } from '@grafana/ui';
-import { DateTimeInput } from '@grafana/data';
+import { DateTimeInput } from '@grafana/data/src/datetime';
 import { css } from 'emotion';
 
 type GraphContextMenuProps = ContextMenuProps & {

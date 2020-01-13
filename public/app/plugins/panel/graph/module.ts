@@ -13,7 +13,8 @@ import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import { VariableSuggestion } from '@grafana/ui/src/editors';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
-import { getColorFromHexRgbOrName, PanelEvents, DataFrame, DataLink, DateTimeInput } from '@grafana/data';
+import { getColorFromHexRgbOrName, PanelEvents, DataFrame, DataLink } from '@grafana/data';
+import { DateTimeInput } from '@grafana/data/src/datetime';
 
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';

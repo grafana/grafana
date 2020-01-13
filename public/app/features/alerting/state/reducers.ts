@@ -1,6 +1,6 @@
 import { AlertRule, AlertRuleDTO, AlertRulesState } from 'app/types';
 import alertDef from './alertDef';
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export const initialState: AlertRulesState = { items: [], searchQuery: '', isLoading: false };

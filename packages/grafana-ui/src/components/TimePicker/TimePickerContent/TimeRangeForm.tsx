@@ -1,5 +1,6 @@
 import React, { FormEvent, useState, useCallback } from 'react';
-import { TIME_FORMAT, TimeZone, isDateTime, TimeRange, DateTime } from '@grafana/data';
+import { TIME_FORMAT, TimeZone, TimeRange } from '@grafana/data';
+import { DateTime, isDateTime } from '@grafana/data/src/datetime';
 import { stringToDateTimeType, isValidTimeString } from '../time';
 import { mapStringsToTimeRange } from './mapper';
 import { TimePickerCalendar } from './TimePickerCalendar';

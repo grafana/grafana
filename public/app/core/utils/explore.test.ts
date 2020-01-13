@@ -15,7 +15,8 @@ import {
 } from './explore';
 import { ExploreUrlState, ExploreMode } from 'app/types/explore';
 import store from 'app/core/store';
-import { DataQueryError, LogsDedupStrategy, LogsModel, LogLevel, dateTime } from '@grafana/data';
+import { DataQueryError, LogsDedupStrategy, LogsModel, LogLevel } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 import { RefreshPicker } from '@grafana/ui';
 import { MutableDataFrame } from '@grafana/data/src/dataframe';
 

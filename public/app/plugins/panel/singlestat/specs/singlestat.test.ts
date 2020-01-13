@@ -1,5 +1,6 @@
 import { SingleStatCtrl, ShowData } from '../module';
-import { dateTime, ReducerID } from '@grafana/data';
+import { ReducerID } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { LegacyResponseData } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';

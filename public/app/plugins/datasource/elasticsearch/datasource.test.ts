@@ -1,8 +1,8 @@
 import angular from 'angular';
-import { dateMath, Field } from '@grafana/data';
+import { Field } from '@grafana/data';
 import _ from 'lodash';
 import { ElasticDatasource } from './datasource';
-import { toUtc, dateTime } from '@grafana/data';
+import { toUtc, dateTime, dateMath } from '@grafana/data/src/datetime';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';

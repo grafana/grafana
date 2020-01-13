@@ -1,7 +1,8 @@
 import AzureMonitorDatasource from '../datasource';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { toUtc, DataFrame } from '@grafana/data';
+import { DataFrame } from '@grafana/data';
+import { toUtc } from '@grafana/data/src/datetime';
 
 describe('AzureMonitorDatasource', () => {
   const ctx: any = {

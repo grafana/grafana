@@ -1,6 +1,6 @@
 import { MysqlDatasource } from '../datasource';
 import { CustomVariable } from 'app/features/templating/custom_variable';
-import { dateTime, toUtc } from '@grafana/data';
+import { dateTime, toUtc } from '@grafana/data/src/datetime';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 

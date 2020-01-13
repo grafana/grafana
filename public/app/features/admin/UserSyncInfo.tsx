@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 import { LdapUserSyncInfo } from 'app/types';
 
 interface Props {

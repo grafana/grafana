@@ -1,7 +1,8 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { TimePickerContentWithScreenSize } from './TimePickerContent';
-import { dateTime, TimeRange } from '@grafana/data';
+import { TimeRange } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 
 describe('TimePickerContent', () => {
   it('renders correctly in full screen', () => {

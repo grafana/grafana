@@ -1,12 +1,5 @@
-import {
-  DataFrame,
-  LoadingState,
-  dateTime,
-  PanelData,
-  DataSourceApi,
-  DataQueryRequest,
-  DataQueryResponse,
-} from '@grafana/data';
+import { DataFrame, LoadingState, PanelData, DataSourceApi, DataQueryRequest, DataQueryResponse } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 import { Subscriber, Observable, Subscription } from 'rxjs';
 import { runRequest } from './runRequest';
 import { deepFreeze } from '../../../../test/core/redux/reducerTester';

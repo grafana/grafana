@@ -4,7 +4,7 @@ import { Observable, from, merge, of, iif, defer } from 'rxjs';
 import { map, filter, catchError, switchMap, mergeMap } from 'rxjs/operators';
 
 // Services & Utils
-import { dateMath } from '@grafana/data';
+import { dateMath } from '@grafana/data/src/datetime';
 import { addLabelToSelector, keepSelectorFilters } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import { BackendSrv, DatasourceRequestOptions } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -21,7 +21,6 @@ import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './q
 // Types
 import {
   LogRowModel,
-  DateTime,
   LoadingState,
   AnnotationEvent,
   TimeRange,
@@ -34,7 +33,7 @@ import {
   DataQueryResponse,
   AnnotationQueryRequest,
 } from '@grafana/data';
-
+import { DateTime } from '@grafana/data/src/datetime';
 import {
   LokiQuery,
   LokiOptions,

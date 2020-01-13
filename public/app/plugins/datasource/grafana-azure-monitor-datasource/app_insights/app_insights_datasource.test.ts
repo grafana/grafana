@@ -1,5 +1,6 @@
 import Datasource from '../datasource';
-import { DataFrame, toUtc } from '@grafana/data';
+import { DataFrame } from '@grafana/data';
+import { toUtc } from '@grafana/data/src/datetime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 describe('AppInsightsDatasource', () => {

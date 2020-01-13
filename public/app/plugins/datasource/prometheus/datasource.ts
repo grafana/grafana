@@ -6,8 +6,6 @@ import $ from 'jquery';
 import kbn from 'app/core/utils/kbn';
 import {
   AnnotationEvent,
-  dateMath,
-  DateTime,
   LoadingState,
   TimeRange,
   TimeSeries,
@@ -35,6 +33,7 @@ import { safeStringifyValue } from 'app/core/utils/explore';
 import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import TableModel from 'app/core/table_model';
+import { DateTime, dateMath } from '@grafana/data/src/datetime';
 
 interface RequestOptions {
   method?: string;

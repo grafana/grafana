@@ -10,8 +10,6 @@ import {
   getSeriesTimeStep,
   TimeZone,
   hasMsResolution,
-  MS_DATE_TIME_FORMAT,
-  DEFAULT_DATE_TIME_FORMAT,
   FieldColor,
   FieldColorMode,
 } from '@grafana/data';
@@ -20,6 +18,7 @@ import { SeriesOptions, GraphOptions } from './types';
 import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
 import { getTimeField } from '@grafana/data/src/dataframe';
 import { FieldDisplayOptions, getDisplayProcessor } from '@grafana/data/src/field';
+import { MS_DATE_TIME_FORMAT, DEFAULT_DATE_TIME_FORMAT } from '@grafana/data/src/datetime';
 
 export const getGraphSeriesModel = (
   dataFrames: DataFrame[],

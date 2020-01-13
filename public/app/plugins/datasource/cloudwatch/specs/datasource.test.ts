@@ -1,7 +1,7 @@
 import '../datasource';
 import CloudWatchDatasource from '../datasource';
 import * as redux from 'app/store/store';
-import { dateMath } from '@grafana/data';
+import { dateMath } from '@grafana/data/src/datetime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
 import _ from 'lodash';

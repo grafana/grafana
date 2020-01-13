@@ -1,5 +1,6 @@
 import React from 'react';
-import { TimeRange, isDateTime } from '@grafana/data';
+import { TimeRange } from '@grafana/data';
+import { isDateTime } from '@grafana/data/src/datetime';
 import { Props as TimePickerProps, TimePicker } from '@grafana/ui/src/components/TimePicker/TimePicker';
 import { LocalStorageValueProvider } from '../LocalStorageValueProvider';
 

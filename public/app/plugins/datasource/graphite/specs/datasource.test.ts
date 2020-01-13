@@ -2,7 +2,7 @@ import { GraphiteDatasource } from '../datasource';
 import _ from 'lodash';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 
 describe('graphiteDatasource', () => {
   const ctx: any = {

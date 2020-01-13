@@ -2,7 +2,7 @@ import _ from 'lodash';
 import angular from 'angular';
 import coreModule from '../core_module';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 
 coreModule.filter('stringSort', () => {
   return (input: any) => {

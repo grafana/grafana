@@ -3,7 +3,7 @@ import { DebugSection } from './DebugSection';
 import { mount } from 'enzyme';
 import { getLinkSrv, LinkService, LinkSrv, setLinkSrv } from '../../../../features/panel/panellinks/link_srv';
 import { TimeSrv } from '../../../../features/dashboard/services/TimeSrv';
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 import { TemplateSrv } from '../../../../features/templating/template_srv';
 
 describe('DebugSection', () => {

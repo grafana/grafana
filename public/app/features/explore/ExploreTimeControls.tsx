@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 
 // Types
 import { ExploreId } from 'app/types';
-import { TimeRange, TimeZone, RawTimeRange, dateTimeForTimeZone } from '@grafana/data';
+import { TimeRange, TimeZone, RawTimeRange } from '@grafana/data';
 
 // State
 
@@ -13,6 +13,7 @@ import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePicker
 
 // Utils & Services
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
+import { dateTimeForTimeZone } from '@grafana/data/src/datetime';
 
 export interface Props {
   exploreId: ExploreId;

@@ -3,7 +3,7 @@ import { VariableSrv } from '../variable_srv';
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
 // @ts-ignore
 import $q from 'q';
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 import { CustomVariable } from '../custom_variable';
 
 describe('VariableSrv', function(this: any) {

@@ -1,4 +1,4 @@
-import { toUtc, dateTime } from '@grafana/data';
+import { toUtc, dateTime } from '@grafana/data/src/datetime';
 
 const intervalMap: any = {
   Hourly: { startOf: 'hour', amount: 'hours' },

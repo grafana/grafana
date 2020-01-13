@@ -10,9 +10,10 @@ import sortByKeys from 'app/core/utils/sort_by_keys';
 // Types
 import { GridPos, panelAdded, PanelModel, panelRemoved } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
-import { AppEvent, dateTime, DateTimeInput, isDateTime, PanelEvents, TimeRange, TimeZone, toUtc } from '@grafana/data';
+import { AppEvent, PanelEvents, TimeRange, TimeZone } from '@grafana/data';
 import { UrlQueryValue } from '@grafana/runtime';
 import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
+import { DateTimeInput, isDateTime, dateTime, toUtc } from '@grafana/data/src/datetime';
 
 export interface CloneOptions {
   saveVariables?: boolean;

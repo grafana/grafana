@@ -8,9 +8,9 @@ import {
   DataFrame,
   ArrayVector,
   findUniqueLabels,
-  dateTime,
   FieldConfig,
 } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 import templateSrv from 'app/features/templating/template_srv';
 import TableModel from 'app/core/table_model';
 import {

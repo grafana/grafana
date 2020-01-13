@@ -11,7 +11,8 @@ import { sanitize } from 'app/core/utils/text';
 import { loadRSSFeed } from './rss';
 
 // Types
-import { PanelProps, dateTime } from '@grafana/data';
+import { PanelProps } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 import { NewsOptions, NewsItem, DEFAULT_FEED_URL } from './types';
 import { DataFrameView } from '@grafana/data/src/dataframe';
 

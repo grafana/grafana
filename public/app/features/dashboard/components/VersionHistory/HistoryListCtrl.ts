@@ -4,9 +4,10 @@ import angular, { ILocationService } from 'angular';
 import locationUtil from 'app/core/utils/location_util';
 import { DashboardModel } from '../../state/DashboardModel';
 import { HistoryListOpts, RevisionsModel, CalculateDiffOptions, HistorySrv } from './HistorySrv';
-import { dateTime, toUtc, DateTimeInput, AppEvents } from '@grafana/data';
+import { AppEvents } from '@grafana/data';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { CoreEvents } from 'app/types';
+import { DateTimeInput, dateTime, toUtc } from '@grafana/data/src/datetime';
 
 export class HistoryListCtrl {
   appending: boolean;

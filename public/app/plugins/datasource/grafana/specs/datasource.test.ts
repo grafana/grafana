@@ -1,7 +1,7 @@
 import { GrafanaDatasource } from '../datasource';
 // @ts-ignore
 import q from 'q';
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 
 describe('grafana data source', () => {
   describe('when executing an annotations query', () => {

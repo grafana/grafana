@@ -1,5 +1,6 @@
 import { PayloadAction } from '@reduxjs/toolkit';
-import { DataQuery, DefaultTimeZone, LogsDedupStrategy, RawTimeRange, toUtc } from '@grafana/data';
+import { DataQuery, DefaultTimeZone, LogsDedupStrategy, RawTimeRange } from '@grafana/data';
+import { toUtc } from '@grafana/data/src/datetime';
 
 import * as Actions from './actions';
 import { changeDatasource, loadDatasource, navigateToExplore, refreshExplore } from './actions';

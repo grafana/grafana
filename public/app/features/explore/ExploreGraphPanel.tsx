@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
-import { GrafanaTheme, TimeZone, AbsoluteTimeRange, GraphSeriesXY, dateTimeForTimeZone } from '@grafana/data';
+import { GrafanaTheme, TimeZone, AbsoluteTimeRange, GraphSeriesXY } from '@grafana/data';
 
 import {
   selectThemeVariant,
@@ -13,6 +13,7 @@ import {
   Chart,
 } from '@grafana/ui';
 import { GraphWithLegend } from '@grafana/ui/src/visualizations';
+import { dateTimeForTimeZone } from '@grafana/data/src/datetime';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 

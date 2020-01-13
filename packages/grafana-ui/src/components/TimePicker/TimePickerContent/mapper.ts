@@ -1,16 +1,7 @@
-import {
-  TimeOption,
-  TimeRange,
-  isDateTime,
-  DateTime,
-  TimeZone,
-  dateMath,
-  dateTime,
-  dateTimeForTimeZone,
-  TIME_FORMAT,
-} from '@grafana/data';
+import { TimeOption, TimeRange, TimeZone, TIME_FORMAT } from '@grafana/data';
 import { stringToDateTimeType } from '../time';
 import { isMathString } from '@grafana/data/src/datetime/datemath';
+import { DateTime, isDateTime, dateMath, dateTime, dateTimeForTimeZone } from '@grafana/data/src/datetime';
 
 export const mapOptionToTimeRange = (option: TimeOption, timeZone?: TimeZone): TimeRange => {
   return {

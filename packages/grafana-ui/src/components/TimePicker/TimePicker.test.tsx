@@ -1,7 +1,8 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { UnthemedTimePicker } from './TimePicker';
-import { dateTime, TimeRange } from '@grafana/data';
+import { TimeRange } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 import dark from './../../themes/dark';
 
 const from = '2019-12-17T07:48:27.433Z';

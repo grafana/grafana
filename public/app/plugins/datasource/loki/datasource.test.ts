@@ -1,7 +1,8 @@
 import LokiDatasource, { RangeQueryOptions } from './datasource';
 import { LokiQuery, LokiResultType, LokiResponse, LokiLegacyStreamResponse } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import { AnnotationQueryRequest, DataSourceApi, DataFrame, dateTime, TimeRange } from '@grafana/data';
+import { AnnotationQueryRequest, DataSourceApi, DataFrame, TimeRange } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/custom_variable';

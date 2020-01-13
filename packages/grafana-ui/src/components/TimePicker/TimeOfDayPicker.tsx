@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import RcTimePicker from 'rc-time-picker';
-import { dateTime, DateTime, dateTimeAsMoment } from '@grafana/data';
+import { dateTime, DateTime, dateTimeAsMoment } from '@grafana/data/src/datetime';
 
 interface Props {
   onChange: (value: DateTime) => void;

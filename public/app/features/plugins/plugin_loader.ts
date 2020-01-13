@@ -28,7 +28,6 @@ import {
   PanelPlugin,
   PluginMeta,
   DataSourcePluginMeta,
-  dateMath,
   DataSourceApi,
   DataSourceJsonData,
   DataQuery,
@@ -45,6 +44,7 @@ import * as emotion from 'emotion';
 import * as grafanaDataRaw from '@grafana/data';
 import * as grafanaDataDataframe from '@grafana/data/src/dataframe';
 import * as grafanaDataField from '@grafana/data/src/field';
+import * as grafanaDataDatetime from '@grafana/data/src/datetime';
 
 import * as grafanaUIraw from '@grafana/ui';
 import * as grafanaUIEditors from '@grafana/ui/src/editors';
@@ -75,6 +75,7 @@ grafanaData = {
   ...grafanaData,
   ...grafanaDataDataframe,
   ...grafanaDataField,
+  ...grafanaDataDatetime,
 };
 
 // rxjs
@@ -158,7 +159,7 @@ exposeToPlugin('app/core/services/backend_srv', {
 });
 
 exposeToPlugin('app/plugins/sdk', sdk);
-exposeToPlugin('app/core/utils/datemath', dateMath);
+exposeToPlugin('app/core/utils/datemath', grafanaDataDatetime.dateMath);
 exposeToPlugin('app/core/utils/file_export', fileExport);
 exposeToPlugin('app/core/utils/flatten', flatten);
 exposeToPlugin('app/core/utils/kbn', kbn);

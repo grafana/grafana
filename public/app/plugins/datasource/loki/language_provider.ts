@@ -7,7 +7,8 @@ import syntax, { FUNCTIONS } from './syntax';
 
 // Types
 import { LokiQuery } from './types';
-import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem } from '@grafana/data';
+import { AbsoluteTimeRange, LanguageProvider, HistoryItem } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 import { PromQuery } from '../prometheus/types';
 import { RATE_RANGES } from '../prometheus/promql';
 

@@ -8,7 +8,6 @@ import {
   DataQueryError,
   DataQueryRequest,
   DataSourceApi,
-  dateMath,
   DefaultTimeZone,
   HistoryItem,
   IntervalValues,
@@ -20,8 +19,9 @@ import {
   TimeFragment,
   TimeRange,
   TimeZone,
-  toUtc,
 } from '@grafana/data';
+import { dateMath } from '@grafana/data/src/datetime';
+import { toUtc } from '@grafana/data/src/datetime';
 import { renderUrl } from 'app/core/utils/url';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';

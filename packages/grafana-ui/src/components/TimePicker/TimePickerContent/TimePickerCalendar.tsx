@@ -1,7 +1,8 @@
 import React, { memo } from 'react';
 import { css, cx } from 'emotion';
 import Calendar from 'react-calendar/dist/entry.nostyle';
-import { GrafanaTheme, dateTime, TIME_FORMAT } from '@grafana/data';
+import { GrafanaTheme, TIME_FORMAT } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 import { stringToDateTimeType } from '../time';
 import { useTheme, stylesFactory } from '../../../themes';
 import { TimePickerTitle } from './TimePickerTitle';

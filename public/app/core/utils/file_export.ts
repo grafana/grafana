@@ -1,7 +1,8 @@
 import { isBoolean, isNumber, sortedUniq, sortedIndexOf, unescape as htmlUnescaped } from 'lodash';
 import { saveAs } from 'file-saver';
 import { isNullOrUndefined } from 'util';
-import { dateTime, TimeZone, TableData } from '@grafana/data';
+import { TimeZone, TableData } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 
 const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DDTHH:mm:ssZ';
 const POINT_TIME_INDEX = 1;

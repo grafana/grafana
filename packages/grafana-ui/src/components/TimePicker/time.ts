@@ -1,15 +1,5 @@
-import {
-  TimeRange,
-  TIME_FORMAT,
-  RawTimeRange,
-  TimeZone,
-  rangeUtil,
-  dateMath,
-  isDateTime,
-  dateTime,
-  DateTime,
-  dateTimeForTimeZone,
-} from '@grafana/data';
+import { TimeRange, TIME_FORMAT, RawTimeRange, TimeZone } from '@grafana/data';
+import { DateTime, isDateTime, dateMath, dateTime, dateTimeForTimeZone, rangeUtil } from '@grafana/data/src/datetime';
 
 export const rawToTimeRange = (raw: RawTimeRange, timeZone?: TimeZone): TimeRange => {
   const from = stringToDateTimeType(raw.from, false, timeZone);

@@ -27,7 +27,6 @@ import { GraphCtrl } from './module';
 import { ContextMenuGroup, ContextMenuItem } from '@grafana/ui';
 import { provideTheme, getCurrentTheme } from 'app/core/utils/ConfigProvider';
 import {
-  toUtc,
   LinkModelSupplier,
   getValueFormat,
   getFlotPairsConstant,
@@ -35,6 +34,7 @@ import {
   formattedValueToString,
   FieldType,
 } from '@grafana/data';
+import { toUtc } from '@grafana/data/src/datetime';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ContextSrv } from 'app/core/services/context_srv';

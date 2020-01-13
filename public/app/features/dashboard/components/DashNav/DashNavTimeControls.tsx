@@ -1,6 +1,7 @@
 // Libaries
 import React, { Component } from 'react';
-import { dateMath, GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data';
+import { dateMath } from '@grafana/data/src/datetime';
 import { css } from 'emotion';
 
 // Types

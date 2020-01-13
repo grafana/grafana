@@ -1,5 +1,5 @@
 import angular, { ILocationService } from 'angular';
-import { dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime';
 import { e2e } from '@grafana/e2e';
 
 import config from 'app/core/config';
