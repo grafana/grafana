@@ -722,7 +722,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	if samesiteString == "disabled" {
-		CookieSameSiteDisabled = false
+		CookieSameSiteDisabled = true
 		cfg.CookieSameSiteDisabled = CookieSameSiteDisabled
 	} else {
 		validSameSiteValues := map[string]http.SameSite{

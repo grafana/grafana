@@ -286,8 +286,9 @@ func TestMiddlewareContext(t *testing.T) {
 				})
 			}
 
-			Convey("Should not set cookie with setting.SameSite", func() {
+			Convey("Should not set cookie with SameSite attribute when setting.CookieSameSiteDisabled is true", func() {
 				setting.CookieSameSiteDisabled = true
+				setting.CookieSameSiteMode = http.SameSiteLaxMode
 				expectedCookie := &http.Cookie{
 					Name:     setting.LoginCookieName,
 					Value:    "rotated",
