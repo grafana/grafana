@@ -9,6 +9,7 @@ awsconfig
 /public/build
 /public/views/index.html
 /public/views/error.html
+/public/views/license-error.html
 /emails/dist
 /reports
 

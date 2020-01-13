@@ -75,6 +75,13 @@ module.exports = merge(common, {
       chunksSortMode: 'none'
     }),
     new HtmlWebpackPlugin({
+      filename: path.resolve(__dirname, '../../public/views/license-error.html'),
+      template: path.resolve(__dirname, '../../public/views/license-error-template.html'),
+      inject: false,
+      excludeChunks: ['dark', 'light'],
+      chunksSortMode: 'none'
+    }),
+    new HtmlWebpackPlugin({
       filename: path.resolve(__dirname, '../../public/views/index.html'),
       template: path.resolve(__dirname, '../../public/views/index-template.html'),
       inject: false,
