@@ -247,11 +247,10 @@ export class AlertTabCtrl {
       const frequencySecs = kbn.interval_to_seconds(this.alert.frequency);
       if (frequencySecs < this.alertingMinIntervalSecs) {
         this.frequencyWarning =
-          this.alert.name +
-          ' will be evaluated every ' +
+          'A minimum evaluation interval of ' +
           this.alertingMinInterval +
-          '. ' +
-          'You can change this by adjusting the minimal interval between evaluations.';
+          ' have been configured in Grafana and will be used for this alert rule. ' +
+          'Please contact the administrator to configure a lower interval.';
       }
     } catch (err) {
       this.frequencyWarning = err;
